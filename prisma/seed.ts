@@ -1,6 +1,13 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
+import * as dotenv from "dotenv";
+import path from "path";
+
+// Load .env.local so `npm run seed` (bare ts-node, bypassing prisma.config.ts)
+// sees DATABASE_URL. Without this the pg adapter falls back to localhost:5432
+// and fails with ECONNREFUSED.
+dotenv.config({ path: path.resolve(process.cwd(), ".env.local") });
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });

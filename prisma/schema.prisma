@@ -10,9 +10,9 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  // Prisma 7: connection URLs live in prisma.config.ts (migrations) and the
+  // PrismaClient adapter (runtime). No `url`/`directUrl` here.
 }
 
 /// The lean system principal for auth. NextAuth's credentials provider
