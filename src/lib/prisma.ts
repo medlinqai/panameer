@@ -6,7 +6,6 @@ import { PrismaPg } from "@prisma/adapter-pg";
  * Reused across hot reloads in development so connections aren't exhausted.
  */
 declare global {
-  // eslint-disable-next-line no-var
   var prisma: PrismaClient | undefined;
 }
 
