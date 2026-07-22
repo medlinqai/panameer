@@ -1,0 +1,40 @@
+import { z } from "zod";
+
+/**
+ * Centralised, validated environment access.
+ *
+ * Validation is non-fatal: in development you get a clear console warning for a
+ * missing/invalid var, but the process never hard-crashes a build. Import `env`
+ * anywhere instead of reaching into `process.env` directly.
+ */
+const schema = z.object({
+  // Database (Supabase Postgres)
+  DATABASE_URL: z.string().min(1),
+  DIRECT_URL: z.string().min(1).optional(),
+
+  // Supabase
+  NEXT_PUBLIC_SUPABASE_URL: z.string().min(1),
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
+
+  // Email (Resend)
+  RESEND_API_KEY: z.string().min(1).optional(),
+  EMAIL_FROM: z.string().min(1).optional(),
+
+  // App
+  NEXT_PUBLIC_APP_URL: z.string().min(1).default("http://localhost:3100"),
+});
+
+const parsed = schema.safeParse(process.env);
+
+if (!parsed.success && process.env.NODE_ENV !== "production") {
+  console.warn(
+    "⚠️  Invalid or missing environment variables:\n",
+    parsed.error.flatten().fieldErrors,
+    "\n   Copy .env.example to .env.local and fill in the values.\n"
+  );
+}
+
+export const env = (
+  parsed.success ? parsed.data : (process.env as unknown)
+) as z.infer<typeof schema>;

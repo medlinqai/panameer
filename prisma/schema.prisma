@@ -1,0 +1,35 @@
+// Prisma schema for Panameer Digital Services
+// Docs: https://pris.ly/d/prisma-schema
+//
+// Supabase gives you two connection strings:
+//   - DATABASE_URL : the pooled connection (port 6543, ?pgbouncer=true) used at runtime
+//   - DIRECT_URL   : the direct connection (port 5432) used for migrations
+// Set both in your .env (see .env.example).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+/// Application profile row. `id` mirrors the Supabase auth user id (auth.users.id),
+/// so you can join app data to the authenticated user without duplicating identity.
+model Profile {
+  id        String   @id @db.Uuid
+  email     String   @unique
+  fullName  String?  @map("full_name")
+  role      Role     @default(MEMBER)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("profiles")
+}
+
+enum Role {
+  ADMIN
+  MEMBER
+}
