@@ -1,33 +1,52 @@
+import type { Metadata } from "next";
+
+/**
+ * Public marketing root. Only reachable on panameer.com / www.panameer.com —
+ * every other host redirects `/` into the app. See `src/proxy.ts`.
+ */
+export const metadata: Metadata = {
+  title: "Panameer — Services procurement, reimagined",
+  description:
+    "The next generation of services procurement is being built. Coming soon.",
+};
+
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-6 p-8 text-center">
-      <span className="rounded-full border border-black/10 px-3 py-1 text-xs font-medium tracking-wide text-black/60 dark:border-white/15 dark:text-white/60">
-        Running on port 3100
-      </span>
-      <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
-        Panameer Digital Services
+    <main className="relative flex flex-1 flex-col items-center justify-center overflow-hidden px-6 py-24 text-center">
+      {/* Soft backdrop wash — decorative only. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(60%_50%_at_50%_0%,rgba(0,0,0,0.05),transparent_70%)] dark:bg-[radial-gradient(60%_50%_at_50%_0%,rgba(255,255,255,0.07),transparent_70%)]"
+      />
+
+      <h1 className="text-5xl font-semibold tracking-tight sm:text-6xl">
+        Panameer
       </h1>
-      <p className="max-w-md text-balance text-black/60 dark:text-white/60">
-        Next.js + Prisma + Supabase + Resend. This starter is wired up and ready
-        — configure <code className="font-mono">.env.local</code> and start
-        building.
+
+      <p className="mt-5 max-w-xl text-balance text-lg leading-relaxed text-black/60 dark:text-white/60">
+        The next generation of services procurement is being built.
       </p>
-      <div className="mt-2 flex flex-wrap items-center justify-center gap-3 text-sm">
-        <a
-          className="rounded-full bg-foreground px-5 py-2 font-medium text-background transition-opacity hover:opacity-90"
-          href="/api/health"
-        >
-          Health check
-        </a>
-        <a
-          className="rounded-full border border-black/10 px-5 py-2 font-medium transition-colors hover:bg-black/5 dark:border-white/15 dark:hover:bg-white/10"
-          href="https://supabase.com/docs"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Supabase docs
-        </a>
+
+      <div className="mt-10 flex items-center gap-4 text-sm">
+        <span
+          aria-hidden
+          className="h-px w-8 bg-black/15 dark:bg-white/20"
+        />
+        <span className="font-medium uppercase tracking-[0.2em] text-black/50 dark:text-white/50">
+          Coming soon
+        </span>
+        <span
+          aria-hidden
+          className="h-px w-8 bg-black/15 dark:bg-white/20"
+        />
       </div>
+
+      <a
+        href="/login"
+        className="mt-16 rounded-full px-3 py-1.5 text-sm text-black/45 underline-offset-4 transition-colors hover:text-black/80 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black/40 dark:text-white/45 dark:hover:text-white/80 dark:focus-visible:outline-white/40"
+      >
+        Sign in
+      </a>
     </main>
   );
 }
