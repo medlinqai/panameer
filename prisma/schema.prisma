@@ -1,10 +1,9 @@
 // Prisma schema for Panameer Digital Services
-// Docs: https://pris.ly/d/prisma-schema
+// Prisma 7 + @prisma/adapter-pg (driver adapter) — matches Medlinq.
 //
 // Supabase gives you two connection strings:
-//   - DATABASE_URL : the pooled connection (port 6543, ?pgbouncer=true) used at runtime
-//   - DIRECT_URL   : the direct connection (port 5432) used for migrations
-// Set both in your .env (see .env.example).
+//   - DATABASE_URL : pooled connection (port 6543, ?pgbouncer=true) — runtime (via PrismaPg adapter)
+//   - DIRECT_URL   : direct connection (port 5432) — migrations (see prisma.config.ts)
 
 generator client {
   provider = "prisma-client-js"
@@ -16,17 +15,25 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-/// Application profile row. `id` mirrors the Supabase auth user id (auth.users.id),
-/// so you can join app data to the authenticated user without duplicating identity.
-model Profile {
-  id        String   @id @db.Uuid
-  email     String   @unique
-  fullName  String?  @map("full_name")
-  role      Role     @default(MEMBER)
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+/// The lean system principal for auth. NextAuth's credentials provider
+/// authenticates against this row (bcrypt password hash + account lockout).
+/// Grow the model (profiles, tenancy, etc.) as the product is designed.
+model User {
+  id                    String    @id @default(uuid()) @db.Uuid
+  email                 String    @unique
+  password_hash         String?
+  first_name            String?
+  last_name             String?
+  role                  Role      @default(MEMBER)
+  is_active             Boolean   @default(true)
+  is_system_admin       Boolean   @default(false)
+  locked                Boolean   @default(false)
+  failed_login_attempts Int       @default(0)
+  last_login            DateTime?
+  created_at            DateTime  @default(now())
+  updated_at            DateTime  @updatedAt
 
-  @@map("profiles")
+  @@map("users")
 }
 
 enum Role {

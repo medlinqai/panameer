@@ -8,13 +8,17 @@ import { z } from "zod";
  * anywhere instead of reaching into `process.env` directly.
  */
 const schema = z.object({
-  // Database (Supabase Postgres)
+  // Database (Supabase Postgres, via Prisma + pg adapter)
   DATABASE_URL: z.string().min(1),
   DIRECT_URL: z.string().min(1).optional(),
 
-  // Supabase
-  NEXT_PUBLIC_SUPABASE_URL: z.string().min(1),
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
+  // NextAuth
+  NEXTAUTH_SECRET: z.string().min(1),
+  NEXTAUTH_URL: z.string().min(1).default("http://localhost:3100"),
+
+  // Supabase (storage / server APIs — auth is NextAuth, not Supabase)
+  SUPABASE_URL: z.string().min(1).optional(),
+  SUPABASE_ANON_KEY: z.string().min(1).optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
 
   // Email (Resend)
