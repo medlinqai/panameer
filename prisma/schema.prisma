@@ -156,17 +156,23 @@ model Person {
   status     PersonStatus @default(ACTIVE)
 
   // Actor-role flags — what this person does (a person can wear several hats).
-  is_buyer       Boolean @default(false)
-  is_provider    Boolean @default(false)
-  is_coordinator Boolean @default(false)
-  is_support     Boolean @default(false)
+  // "Service Buyer" is the actor who creates work requests (the ERP Requester)
+  // and is deliberately NOT named `is_buyer`: "Buyer" is an operational SKILL in
+  // the taxonomy (an ERP procurement role), never an actor. The is_service_*
+  // prefix keeps the two from ever being conflated.
+  is_service_buyer       Boolean @default(false)
+  is_service_provider    Boolean @default(false)
+  is_service_coordinator Boolean @default(false)
+  is_support             Boolean @default(false)
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  company Company @relation(fields: [company_id], references: [id], onDelete: Cascade)
-  site    Site?   @relation(fields: [site_id], references: [id], onDelete: SetNull)
-  user    User?   @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  company         Company          @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  site            Site?            @relation(fields: [site_id], references: [id], onDelete: SetNull)
+  user            User?            @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  providerProfile ProviderProfile?
+  buyerProfile    BuyerProfile?
 
   @@index([company_id])
   @@index([site_id])
@@ -299,10 +305,11 @@ model Skill {
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
 
-  catalog     ServiceCatalog @relation(fields: [catalog_id], references: [id], onDelete: Cascade)
-  roleType    RoleType       @relation(fields: [role_type_id], references: [id])
-  pillar      Pillar?        @relation(fields: [pillar_id], references: [id], onDelete: SetNull)
-  application Application?   @relation(fields: [application_id], references: [id], onDelete: SetNull)
+  catalog        ServiceCatalog  @relation(fields: [catalog_id], references: [id], onDelete: Cascade)
+  roleType       RoleType        @relation(fields: [role_type_id], references: [id])
+  pillar         Pillar?         @relation(fields: [pillar_id], references: [id], onDelete: SetNull)
+  application    Application?    @relation(fields: [application_id], references: [id], onDelete: SetNull)
+  providerSkills ProviderSkill[]
 
   @@unique([catalog_id, name])
   @@index([role_type_id])
@@ -344,6 +351,8 @@ model Region {
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 
+  providerProfiles ProviderProfile[]
+
   @@map("regions")
 }
 
@@ -368,4 +377,191 @@ model NonOracleApplication {
   updated_at DateTime @updatedAt
 
   @@map("non_oracle_applications")
+}
+
+// ---------------------------------------------------------------------------
+// Profiles (Phase 1, brief_C)
+//
+//   Person (is_service_provider) ──1:1── ProviderProfile
+//                                          ├─ ProviderSkill → Skill (taxonomy)
+//                                          ├─ WorkExperience → ExperienceProject
+//                                          ├─ Education · Language · Certification
+//                                          └─ Region (optional)
+//   Person (is_service_buyer)    ──1:1── BuyerProfile
+//
+// A published + approved ProviderProfile is a PUBLIC marketplace surface (see
+// GET /api/providers/[id]) — not PAccount-scoped. Rates are stored in integer
+// cents to avoid float drift; money is never a Float.
+// ---------------------------------------------------------------------------
+
+/// A provider's marketplace profile (1:1 with a Person that is a service
+/// provider). Reviewed before going live: `approval_status` gates visibility
+/// alongside `published`.
+model ProviderProfile {
+  id               String   @id @default(uuid()) @db.Uuid
+  person_id        String   @unique @db.Uuid
+  region_id        String?  @db.Uuid
+  headline         String
+  overview         String?
+  experience_level ExperienceLevel  @default(MID_CAREER)
+  goal             ProviderGoal     @default(NONE)
+  work_types       WorkType[]
+  onsite_rate_cents Int?
+  remote_rate_cents Int?
+  currency         String   @default("USD")
+  rating           Decimal? @db.Decimal(3, 2)
+  id_badge         String?
+  published        Boolean  @default(false)
+  approval_status  ApprovalStatus @default(PENDING)
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  person          Person           @relation(fields: [person_id], references: [id], onDelete: Cascade)
+  region          Region?          @relation(fields: [region_id], references: [id], onDelete: SetNull)
+  skills          ProviderSkill[]
+  workExperiences WorkExperience[]
+  education        Education[]
+  languages        Language[]
+  certifications  Certification[]
+
+  @@index([region_id])
+  @@map("provider_profiles")
+}
+
+enum ExperienceLevel {
+  BEGINNER
+  MID_CAREER
+  EXPERT
+}
+
+enum ProviderGoal {
+  SIDE_HUSTLE
+  MAIN_HUSTLE
+  BUILD_SKILLS
+  NONE
+}
+
+enum WorkType {
+  HOURLY
+  PACKAGES
+  AGENCY
+  CONTRACT_TO_HIRE
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+/// Join: a taxonomy Skill this provider offers.
+model ProviderSkill {
+  id                  String   @id @default(uuid()) @db.Uuid
+  provider_profile_id String   @db.Uuid
+  skill_id            String   @db.Uuid
+  created_at          DateTime @default(now())
+
+  providerProfile ProviderProfile @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
+  skill           Skill           @relation(fields: [skill_id], references: [id], onDelete: Cascade)
+
+  @@unique([provider_profile_id, skill_id])
+  @@index([skill_id])
+  @@map("provider_skills")
+}
+
+/// A past employment on a provider's profile, with its notable projects.
+model WorkExperience {
+  id                  String    @id @default(uuid()) @db.Uuid
+  provider_profile_id String    @db.Uuid
+  employer            String
+  role_title          String
+  description         String?
+  start_date          DateTime? @db.Date
+  end_date            DateTime? @db.Date
+  created_at          DateTime  @default(now())
+  updated_at          DateTime  @updatedAt
+
+  providerProfile ProviderProfile     @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
+  projects        ExperienceProject[]
+
+  @@index([provider_profile_id])
+  @@map("work_experiences")
+}
+
+/// A notable project under a WorkExperience.
+model ExperienceProject {
+  id                 String   @id @default(uuid()) @db.Uuid
+  work_experience_id String   @db.Uuid
+  name               String
+  description        String?
+  created_at         DateTime @default(now())
+
+  workExperience WorkExperience @relation(fields: [work_experience_id], references: [id], onDelete: Cascade)
+
+  @@index([work_experience_id])
+  @@map("experience_projects")
+}
+
+/// An education entry on a provider's profile.
+model Education {
+  id                  String   @id @default(uuid()) @db.Uuid
+  provider_profile_id String   @db.Uuid
+  institution         String
+  degree              String?
+  field               String?
+  year                Int?
+  created_at          DateTime @default(now())
+
+  providerProfile ProviderProfile @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
+
+  @@index([provider_profile_id])
+  @@map("education")
+}
+
+/// A language a provider speaks.
+model Language {
+  id                  String   @id @default(uuid()) @db.Uuid
+  provider_profile_id String   @db.Uuid
+  name                String
+  proficiency         String?
+  created_at          DateTime @default(now())
+
+  providerProfile ProviderProfile @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
+
+  @@index([provider_profile_id])
+  @@map("languages")
+}
+
+/// A professional certification on a provider's profile.
+model Certification {
+  id                  String   @id @default(uuid()) @db.Uuid
+  provider_profile_id String   @db.Uuid
+  name                String
+  issuer              String?
+  year                Int?
+  created_at          DateTime @default(now())
+
+  providerProfile ProviderProfile @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
+
+  @@index([provider_profile_id])
+  @@map("certifications")
+}
+
+/// A buyer's marketplace profile (1:1 with a Person that is a service buyer).
+/// Photo/location live on Person/Address; billing is stubbed (out of scope).
+model BuyerProfile {
+  id                String            @id @default(uuid()) @db.Uuid
+  person_id         String            @unique @db.Uuid
+  subscription_tier SubscriptionTier  @default(BASIC)
+  created_at        DateTime          @default(now())
+  updated_at        DateTime          @updatedAt
+
+  person Person @relation(fields: [person_id], references: [id], onDelete: Cascade)
+
+  @@map("buyer_profiles")
+}
+
+enum SubscriptionTier {
+  BASIC
+  BUSINESS_PLUS
 }

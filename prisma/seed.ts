@@ -33,18 +33,20 @@ async function main() {
 
   console.log(`Seeded admin user: ${admin.email}`);
 
+  // --- ERP service-catalog taxonomy (reference data) ---------------------
+  // Seeded before profiles so provider skills can reference the taxonomy.
+  const counts = await seedTaxonomy(prisma);
+  console.log("Seeded ERP taxonomy:", JSON.stringify(counts));
+
   // --- Demo org: PAccount → Company → Site → Address → Person -------------
-  // One nested create builds the whole backbone. Guarded on the Person's
-  // user_id (unique) so re-running the seed is idempotent — if the admin is
-  // already linked to a Person, we skip rather than duplicate the org.
-  const existingPerson = await prisma.person.findUnique({
+  // Guarded on the admin Person's user_id (unique) so the whole backbone is
+  // created once; re-runs reuse it.
+  let adminPerson = await prisma.person.findUnique({
     where: { user_id: admin.id },
-    select: { id: true },
+    include: { company: true, site: true },
   });
 
-  if (existingPerson) {
-    console.log("Demo org already present (admin already linked); skipping.");
-  } else {
+  if (!adminPerson) {
     const pAccount = await prisma.pAccount.create({
       data: {
         kind: "BOTH",
@@ -79,32 +81,176 @@ async function main() {
     const company = pAccount.companies[0];
     const site = company.sites[0];
 
-    // Link the admin User to a Person in the demo org.
-    const person = await prisma.person.create({
+    // Link the admin User to a Person in the demo org. The admin is a Service
+    // Provider (and coordinator/support) for the demo.
+    adminPerson = await prisma.person.create({
       data: {
         company_id: company.id,
         site_id: site.id,
         user_id: admin.id,
         first_name: admin.first_name ?? "Panameer",
         last_name: admin.last_name ?? "Admin",
-        title: "System Administrator",
+        title: "Oracle Cloud P2P / Procurement Cloud Expert",
+        photo_url: null,
         status: "ACTIVE",
-        is_buyer: true,
-        is_provider: true,
-        is_coordinator: true,
+        is_service_provider: true,
+        is_service_coordinator: true,
         is_support: true,
       },
+      include: { company: true, site: true },
     });
 
     console.log(
       `Seeded demo org: ${pAccount.name} → ${company.name} → ${site.name}; ` +
-        `linked admin to Person ${person.first_name} ${person.last_name}.`
+        `linked admin to Person ${adminPerson.first_name} ${adminPerson.last_name}.`
     );
+  } else {
+    console.log("Demo org already present (admin already linked); reusing.");
   }
 
-  // --- ERP service-catalog taxonomy (reference data) ---------------------
-  const counts = await seedTaxonomy(prisma);
-  console.log("Seeded ERP taxonomy:", JSON.stringify(counts));
+  const company = adminPerson.company;
+
+  // Ensure the admin Person's actor flags + title are correct even on reuse —
+  // the flag rename (db push) drops the old columns, so re-assert them here.
+  adminPerson = await prisma.person.update({
+    where: { id: adminPerson.id },
+    data: {
+      title: "Oracle Cloud P2P / Procurement Cloud Expert",
+      is_service_provider: true,
+      is_service_coordinator: true,
+      is_support: true,
+    },
+    include: { company: true, site: true },
+  });
+
+  // --- Demo Service Provider profile (on the admin Person) ----------------
+  // Idempotent: upsert on person_id (unique). Modeled on the mockup persona.
+  const americas = await prisma.region.findUnique({
+    where: { name: "Americas" },
+  });
+
+  const providerProfile = await prisma.providerProfile.upsert({
+    where: { person_id: adminPerson.id },
+    update: {},
+    create: {
+      person_id: adminPerson.id,
+      region_id: americas?.id ?? null,
+      headline: "Oracle Cloud P2P / Procurement Cloud Expert",
+      overview:
+        "15+ years implementing Oracle Cloud Procurement and Payables. " +
+        "Led P2P transformations across manufacturing and retail — " +
+        "requisitions, sourcing, supplier portal, and self-service procurement.",
+      experience_level: "EXPERT",
+      goal: "MAIN_HUSTLE",
+      work_types: ["HOURLY", "PACKAGES"],
+      onsite_rate_cents: 12500,
+      remote_rate_cents: 9000,
+      currency: "USD",
+      rating: "4.90",
+      published: true,
+      approval_status: "APPROVED",
+    },
+  });
+
+  // Tag Procurement skills (idempotent via the unique join key). Match the
+  // seeded taxonomy by name.
+  const procurementSkillNames = [
+    "Requisitions",
+    "Purchasing/Purchase Orders",
+    "Sourcing/Negotiations",
+    "Supplier Portal",
+  ];
+  const procurementSkills = await prisma.skill.findMany({
+    where: { name: { in: procurementSkillNames } },
+    select: { id: true },
+  });
+  for (const skill of procurementSkills) {
+    await prisma.providerSkill.upsert({
+      where: {
+        provider_profile_id_skill_id: {
+          provider_profile_id: providerProfile.id,
+          skill_id: skill.id,
+        },
+      },
+      update: {},
+      create: {
+        provider_profile_id: providerProfile.id,
+        skill_id: skill.id,
+      },
+    });
+  }
+
+  // A couple of work experiences (idempotent guard: only seed if none exist).
+  const existingExperience = await prisma.workExperience.count({
+    where: { provider_profile_id: providerProfile.id },
+  });
+  if (existingExperience === 0) {
+    await prisma.workExperience.create({
+      data: {
+        provider_profile_id: providerProfile.id,
+        employer: "Ceres Holdings",
+        role_title: "Lead Oracle Cloud Procurement Consultant",
+        description:
+          "Owned the end-to-end Procurement Cloud implementation and rollout.",
+        projects: {
+          create: [
+            {
+              name: "Self-Service Procurement rollout",
+              description: "Requisition-to-receipt across 12 sites.",
+            },
+            {
+              name: "Supplier Portal onboarding",
+              description: "Migrated 400+ suppliers to the Supplier Portal.",
+            },
+          ],
+        },
+      },
+    });
+    await prisma.workExperience.create({
+      data: {
+        provider_profile_id: providerProfile.id,
+        employer: "Global Retail Co.",
+        role_title: "Oracle Sourcing Specialist",
+        description: "Sourcing and negotiations optimization.",
+      },
+    });
+  }
+
+  // --- Demo Service Buyer (a second Person in the demo Company) -----------
+  // Idempotent: keyed on (company, name) since Person has no email.
+  let buyerPerson = await prisma.person.findFirst({
+    where: {
+      company_id: company.id,
+      first_name: "Neisha",
+      last_name: "Buyer",
+    },
+  });
+  if (!buyerPerson) {
+    buyerPerson = await prisma.person.create({
+      data: {
+        company_id: company.id,
+        first_name: "Neisha",
+        last_name: "Buyer",
+        title: "Procurement Manager",
+        status: "ACTIVE",
+        is_service_buyer: true,
+      },
+    });
+  }
+  await prisma.buyerProfile.upsert({
+    where: { person_id: buyerPerson.id },
+    update: {},
+    create: {
+      person_id: buyerPerson.id,
+      subscription_tier: "BASIC",
+    },
+  });
+
+  console.log(
+    `Seeded demo provider (profile ${providerProfile.id}, ` +
+      `${procurementSkills.length} skills) and demo buyer ` +
+      `(${buyerPerson.first_name} ${buyerPerson.last_name}).`
+  );
 }
 
 main()

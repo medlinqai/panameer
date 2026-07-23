@@ -49,9 +49,9 @@ export async function getMe(viewer: Viewer) {
       photoUrl: person.photo_url,
       status: person.status,
       roles: {
-        isBuyer: person.is_buyer,
-        isProvider: person.is_provider,
-        isCoordinator: person.is_coordinator,
+        isServiceBuyer: person.is_service_buyer,
+        isServiceProvider: person.is_service_provider,
+        isServiceCoordinator: person.is_service_coordinator,
         isSupport: person.is_support,
       },
       site: person.site,
