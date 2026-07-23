@@ -177,3 +177,195 @@ enum PersonStatus {
   ACTIVE
   INACTIVE
 }
+
+// ---------------------------------------------------------------------------
+// Service-catalog taxonomy (Phase 1, brief_B)
+//
+//   ServiceCatalog (ERP, …future ERPs)
+//     └─ Pillar (ERP/SCM/HCM/CX/EPM/NA)
+//          └─ Offering
+//               └─ Application (+ app_group)
+//
+//   RoleType (global) ─┬─ Skill (normalized Panameer skill)
+//                      └─ SkillTag (incoming job-req term → normalized skill)
+//
+//   Region · EngagementType · NonOracleApplication  (flat lookups)
+//
+// This is REFERENCE / LOOKUP data — global shared marketplace vocabulary, NOT
+// PAccount-scoped. Providers tag Skills, work requests target the catalog, and
+// matching runs over this vocabulary (later briefs). Seeded from
+// prisma/seed-data/erp-catalog.json (parsed from Scott's Work Data File).
+// ---------------------------------------------------------------------------
+
+/// A service catalog. ERP is the first; the model is built Oracle-based but
+/// meant to hold future catalogs for other ERPs.
+model ServiceCatalog {
+  id          String   @id @default(uuid()) @db.Uuid
+  code        String   @unique
+  name        String
+  description String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  pillars  Pillar[]
+  skills   Skill[]
+  tags     SkillTag[]
+
+  @@map("service_catalogs")
+}
+
+/// Global classification of what a person DOES on an engagement (Functional /
+/// Technical / Techno-Functional / Project / Operational). Not catalog-scoped —
+/// role types are shared across every catalog.
+model RoleType {
+  id         String   @id @default(uuid()) @db.Uuid
+  code       String   @unique
+  name       String
+  display    String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  skills Skill[]
+  tags   SkillTag[]
+
+  @@map("role_types")
+}
+
+/// A top-level product pillar within a catalog (ERP, SCM, HCM, CX, EPM, NA).
+model Pillar {
+  id         String   @id @default(uuid()) @db.Uuid
+  catalog_id String   @db.Uuid
+  code       String
+  name       String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  catalog   ServiceCatalog @relation(fields: [catalog_id], references: [id], onDelete: Cascade)
+  offerings Offering[]
+  skills    Skill[]
+  tags      SkillTag[]
+
+  @@unique([catalog_id, code])
+  @@map("pillars")
+}
+
+/// An offering within a pillar (e.g. ERP → Procurement).
+model Offering {
+  id         String   @id @default(uuid()) @db.Uuid
+  pillar_id  String   @db.Uuid
+  name       String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  pillar       Pillar        @relation(fields: [pillar_id], references: [id], onDelete: Cascade)
+  applications Application[]
+
+  @@unique([pillar_id, name])
+  @@index([pillar_id])
+  @@map("offerings")
+}
+
+/// An application within an offering (e.g. Procurement → Requisitions). Carries
+/// its App Group as a field (the source data pairs one app group per app).
+model Application {
+  id          String   @id @default(uuid()) @db.Uuid
+  offering_id String   @db.Uuid
+  name        String
+  app_group   String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  offering Offering @relation(fields: [offering_id], references: [id], onDelete: Cascade)
+  skills   Skill[]
+
+  @@unique([offering_id, name])
+  @@index([offering_id])
+  @@map("applications")
+}
+
+/// A normalized Panameer skill — the matchable vocabulary providers tag and
+/// work requests target. Sourced from the application hierarchy (functional
+/// skills, which set pillar + application), the per-role-type skill lists, and
+/// the freelancer mapping's normalized `panameerSkill` names. Deduped by
+/// (catalog, name); functional (APPLICATION) sources win the role type.
+model Skill {
+  id             String   @id @default(uuid()) @db.Uuid
+  catalog_id     String   @db.Uuid
+  role_type_id   String   @db.Uuid
+  pillar_id      String?  @db.Uuid
+  application_id String?  @db.Uuid
+  name           String
+  image_url      String?
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  catalog     ServiceCatalog @relation(fields: [catalog_id], references: [id], onDelete: Cascade)
+  roleType    RoleType       @relation(fields: [role_type_id], references: [id])
+  pillar      Pillar?        @relation(fields: [pillar_id], references: [id], onDelete: SetNull)
+  application Application?   @relation(fields: [application_id], references: [id], onDelete: SetNull)
+
+  @@unique([catalog_id, name])
+  @@index([role_type_id])
+  @@index([pillar_id])
+  @@map("skills")
+}
+
+/// An incoming job-requisition skill term ("tag"), grouped by role type, that
+/// resolves to a normalized Skill. This is the loadable home for the JSON's
+/// `freelancerMapping`: `panameer_skill` is the normalized target name and
+/// `selling_agent` is the RAW coordinator name from the Work Data File —
+/// preserved as an annotation, deliberately NOT yet linked to a Person. The
+/// coordinator-coverage join is wired in the profiles brief.
+model SkillTag {
+  id            String   @id @default(uuid()) @db.Uuid
+  catalog_id    String   @db.Uuid
+  role_type_id  String   @db.Uuid
+  pillar_id     String?  @db.Uuid
+  name          String
+  panameer_skill String?
+  selling_agent String?
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  catalog  ServiceCatalog @relation(fields: [catalog_id], references: [id], onDelete: Cascade)
+  roleType RoleType       @relation(fields: [role_type_id], references: [id])
+  pillar   Pillar?        @relation(fields: [pillar_id], references: [id], onDelete: SetNull)
+
+  @@unique([catalog_id, role_type_id, name])
+  @@index([role_type_id])
+  @@map("skill_tags")
+}
+
+/// A world region for provider/buyer location + coverage.
+model Region {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @unique
+  description String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  @@map("regions")
+}
+
+/// How an engagement is structured (Contract/Corp-to-Corp, Fulltime, Temporary).
+model EngagementType {
+  id         String   @id @default(uuid()) @db.Uuid
+  code       String   @unique
+  name       String
+  detail     String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("engagement_types")
+}
+
+/// A non-Oracle application a provider may have experience with (PeopleSoft,
+/// SAP, Ariba, Coupa, …). Flat lookup for now.
+model NonOracleApplication {
+  id         String   @id @default(uuid()) @db.Uuid
+  name       String   @unique
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("non_oracle_applications")
+}

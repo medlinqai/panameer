@@ -3,6 +3,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
 import * as dotenv from "dotenv";
 import path from "path";
+import { seedTaxonomy } from "./seed-taxonomy";
 
 // Load .env.local so `npm run seed` (bare ts-node, bypassing prisma.config.ts)
 // sees DATABASE_URL. Without this the pg adapter falls back to localhost:5432
@@ -100,6 +101,10 @@ async function main() {
         `linked admin to Person ${person.first_name} ${person.last_name}.`
     );
   }
+
+  // --- ERP service-catalog taxonomy (reference data) ---------------------
+  const counts = await seedTaxonomy(prisma);
+  console.log("Seeded ERP taxonomy:", JSON.stringify(counts));
 }
 
 main()

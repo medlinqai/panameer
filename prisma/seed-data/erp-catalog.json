@@ -1,0 +1,1067 @@
+{
+  "catalog": {
+    "code": "ERP",
+    "name": "ERP",
+    "description": "Enterprise application services (Oracle-based, but for all ERPs)"
+  },
+  "roleTypes": [
+    {
+      "code": "APPLICATION",
+      "name": "Application-Specific",
+      "display": "Functional"
+    },
+    {
+      "code": "TECHNOLOGY",
+      "name": "Technology-Specific",
+      "display": "Technical"
+    },
+    {
+      "code": "TECHNO_FUNCTIONAL",
+      "name": "Techno-Functional",
+      "display": "Techno-Functional"
+    },
+    {
+      "code": "PROJECT",
+      "name": "Project-Specific",
+      "display": "Project"
+    },
+    {
+      "code": "OPERATIONS",
+      "name": "Operations-Specific",
+      "display": "Operational"
+    }
+  ],
+  "pillars": [
+    {
+      "code": "ERP",
+      "name": "Enterprise Resource Planning"
+    },
+    {
+      "code": "HCM",
+      "name": "Human Capital Management"
+    },
+    {
+      "code": "SCM",
+      "name": "Supply Chain Management"
+    },
+    {
+      "code": "CX",
+      "name": "Customer Experience"
+    },
+    {
+      "code": "EPM",
+      "name": "Enterprise Performance Management"
+    },
+    {
+      "code": "NA",
+      "name": "Not Applicable"
+    }
+  ],
+  "applicationHierarchy": [
+    {
+      "pillar": "SCM",
+      "offering": "Mfg & Materials Mgt",
+      "application": "Inventory",
+      "appGroup": "Inventory & Warehouse Mgt"
+    },
+    {
+      "pillar": "SCM",
+      "offering": "Mfg & Materials Mgt",
+      "application": "Item Costing",
+      "appGroup": "Inventory & Warehouse Mgt"
+    },
+    {
+      "pillar": "SCM",
+      "offering": "Mfg & Materials Mgt",
+      "application": "Warehouse Mgt",
+      "appGroup": "Inventory & Warehouse Mgt"
+    },
+    {
+      "pillar": "SCM",
+      "offering": "Mfg & Materials Mgt",
+      "application": "Manufacturing",
+      "appGroup": "Manufacturing"
+    },
+    {
+      "pillar": "SCM",
+      "offering": "Mfg & Materials Mgt",
+      "application": "Order Management",
+      "appGroup": "Order Management"
+    },
+    {
+      "pillar": "SCM",
+      "offering": "Supply Chain Planning",
+      "application": "Planning",
+      "appGroup": "Supply Chain Planning"
+    },
+    {
+      "pillar": "SCM",
+      "offering": "Product Management",
+      "application": "CPQ",
+      "appGroup": "Configure/Price/Quote"
+    },
+    {
+      "pillar": "ERP",
+      "offering": "Procurement",
+      "application": "Requisitions",
+      "appGroup": "Procurement"
+    },
+    {
+      "pillar": "ERP",
+      "offering": "Procurement",
+      "application": "Purchasing/Purchase Orders",
+      "appGroup": "Procurement"
+    },
+    {
+      "pillar": "ERP",
+      "offering": "Procurement",
+      "application": "My Receipts",
+      "appGroup": "Procurement"
+    },
+    {
+      "pillar": "ERP",
+      "offering": "Procurement",
+      "application": "Supplier Qualifications",
+      "appGroup": "Procurement"
+    },
+    {
+      "pillar": "ERP",
+      "offering": "Procurement",
+      "application": "Supplier Portal",
+      "appGroup": "Procurement"
+    },
+    {
+      "pillar": "ERP",
+      "offering": "Procurement",
+      "application": "Purchase Agreements",
+      "appGroup": "Procurement"
+    },
+    {
+      "pillar": "ERP",
+      "offering": "Procurement",
+      "application": "Sourcing/Negotiations",
+      "appGroup": "Procurement"
+    },
+    {
+      "pillar": "ERP",
+      "offering": "Enterprise Contracts",
+      "application": "Procurement Contracts",
+      "appGroup": "Procurement"
+    },
+    {
+      "pillar": "ERP",
+      "offering": "Oracle Business Network",
+      "application": "Oracle Business Network",
+      "appGroup": "Oracle Business Network"
+    },
+    {
+      "pillar": "ERP",
+      "offering": "Project Execution Mgt",
+      "application": "Projects",
+      "appGroup": "Project Portfolio Mgt"
+    },
+    {
+      "pillar": "ERP",
+      "offering": "Project Financial Mgt",
+      "application": "Projects",
+      "appGroup": "Project Portfolio Mgt"
+    },
+    {
+      "pillar": "ERP",
+      "offering": "Grants Management",
+      "application": "Grants",
+      "appGroup": "Grants"
+    },
+    {
+      "pillar": "ERP",
+      "offering": "Financials",
+      "application": "Payables",
+      "appGroup": "Financials"
+    },
+    {
+      "pillar": "ERP",
+      "offering": "Financials",
+      "application": "General Ledger",
+      "appGroup": "Financials"
+    },
+    {
+      "pillar": "ERP",
+      "offering": "Financials",
+      "application": "Revenue",
+      "appGroup": "Financials"
+    },
+    {
+      "pillar": "ERP",
+      "offering": "Financials",
+      "application": "Collections",
+      "appGroup": "Financials"
+    },
+    {
+      "pillar": "ERP",
+      "offering": "Financials",
+      "application": "Fixed Assets",
+      "appGroup": "Financials"
+    },
+    {
+      "pillar": "ERP",
+      "offering": "Financials",
+      "application": "Receivables",
+      "appGroup": "Financials"
+    },
+    {
+      "pillar": "ERP",
+      "offering": "Financials",
+      "application": "Cash Mgt",
+      "appGroup": "Financials"
+    },
+    {
+      "pillar": "ERP",
+      "offering": "Financials",
+      "application": "Expenses",
+      "appGroup": "Financials"
+    },
+    {
+      "pillar": "ERP",
+      "offering": "Accounting Hub",
+      "application": "Acounting Hub",
+      "appGroup": "Accounting Hub"
+    },
+    {
+      "pillar": "HCM",
+      "offering": "Recruiting",
+      "application": "Recruiting",
+      "appGroup": "Talent & Recruiting"
+    },
+    {
+      "pillar": "HCM",
+      "offering": "Recruiting",
+      "application": "Talent",
+      "appGroup": "Talent & Recruiting"
+    },
+    {
+      "pillar": "HCM",
+      "offering": "Workforce Deployment",
+      "application": "Benefits",
+      "appGroup": "Core HR"
+    },
+    {
+      "pillar": "HCM",
+      "offering": "Compensation Management",
+      "application": "Compensation",
+      "appGroup": "Core HR"
+    },
+    {
+      "pillar": "HCM",
+      "offering": "Workforce Deployment",
+      "application": "HR",
+      "appGroup": "Core HR"
+    },
+    {
+      "pillar": "HCM",
+      "offering": "Payroll",
+      "application": "Payroll",
+      "appGroup": "Payroll"
+    },
+    {
+      "pillar": "HCM",
+      "offering": "Workforce Deployment",
+      "application": "Time & Labor",
+      "appGroup": "Workforce Mgt"
+    },
+    {
+      "pillar": "HCM",
+      "offering": "Workforce Deployment",
+      "application": "Absence Mgt",
+      "appGroup": "Workforce Mgt"
+    },
+    {
+      "pillar": "HCM",
+      "offering": "Workforce Development",
+      "application": "Learning",
+      "appGroup": "Learning"
+    },
+    {
+      "pillar": "CX",
+      "offering": "Sales",
+      "application": "Sales",
+      "appGroup": "CRM Sales"
+    },
+    {
+      "pillar": "CX",
+      "offering": "Service",
+      "application": "Service",
+      "appGroup": "Field Service"
+    },
+    {
+      "pillar": "CX",
+      "offering": "Customer Data Management",
+      "application": "Customer Data Management",
+      "appGroup": "Customer Data Mgt"
+    },
+    {
+      "pillar": "CX",
+      "offering": "Customer Loyalty",
+      "application": "Customer Loyalty",
+      "appGroup": "Customer Loyalty"
+    },
+    {
+      "pillar": "CX",
+      "offering": "Helpdesk",
+      "application": "Helpdesk",
+      "appGroup": "Helpdesk"
+    },
+    {
+      "pillar": "EPM",
+      "offering": "FCCSS",
+      "application": "FCCSS",
+      "appGroup": "Enterprise Performance Mgt"
+    },
+    {
+      "pillar": "EPM",
+      "offering": "EPBCS",
+      "application": "EPBCS",
+      "appGroup": "Enterprise Performance Mgt"
+    }
+  ],
+  "skillsByRoleType": {
+    "PROJECT": [
+      "Program Management",
+      "Project Management",
+      "Technical Architect",
+      "Business Architect",
+      "Testing Specialist",
+      "Support Specialist",
+      "Change Mgt Specialist",
+      "Technical Lead",
+      "Project Manager"
+    ],
+    "TECHNOLOGY": [
+      "Developer (PaaS)",
+      "Integration Specialist",
+      "Reporting Specialist",
+      "PL SQL Specialist",
+      "Workflow & Notification Specialist",
+      "Application Administrator",
+      "Conversion Specialist",
+      "Oracle Cloud Infrastructure",
+      "Security Specialist"
+    ],
+    "OPERATIONS": [
+      "Buyer",
+      "Sourcing Manager",
+      "Category Manager",
+      "Payables Specialist",
+      "Supplier Management"
+    ]
+  },
+  "nonOracleApplications": [
+    "PeopleSoft",
+    "EBS",
+    "Oracle Business Network",
+    "SAP",
+    "SciQuest",
+    "Ariba",
+    "Coupa",
+    "JD Edwards"
+  ],
+  "regions": [
+    {
+      "name": "Americas",
+      "desc": "North, South, Central America, Canada, and the Caribbean"
+    },
+    {
+      "name": "Asia Pacific",
+      "desc": "All of Asia and Australia (plus Oceania)"
+    },
+    {
+      "name": "Europe",
+      "desc": "North, South, East and West Europe"
+    },
+    {
+      "name": "Middle East",
+      "desc": "Muslim countries in the Middle East and North Africa"
+    },
+    {
+      "name": "Africa",
+      "desc": "Continent of Africa excluding the northern Muslim countries"
+    }
+  ],
+  "engagementTypes": [
+    {
+      "code": "CONTRACT",
+      "name": "Contract",
+      "detail": "Corp-to-Corp"
+    },
+    {
+      "code": "FULLTIME",
+      "name": "Fulltime",
+      "detail": "Fulltime / Permanent"
+    },
+    {
+      "code": "TEMPORARY",
+      "name": "Temporary",
+      "detail": "Temporary"
+    }
+  ],
+  "menuIA": [
+    {
+      "menu": "Discover",
+      "service": "What Applications Do",
+      "action": "Discover"
+    },
+    {
+      "menu": "Learn",
+      "service": "How to Use Applications",
+      "action": "Use"
+    },
+    {
+      "menu": "Learn",
+      "service": "How to Deploy Applications",
+      "action": "Deploy"
+    },
+    {
+      "menu": "Work",
+      "service": "Listings & Analytics",
+      "action": "Jobs"
+    },
+    {
+      "menu": "Hire",
+      "service": "Listings & Analytics",
+      "action": "Experts"
+    }
+  ],
+  "freelancerMapping": [
+    {
+      "action": "Hire",
+      "jobReqSkill": "Program Management",
+      "roleType": "Project-Specific",
+      "pillar": null,
+      "panameerSkill": "Program Mgmt",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Project Manager",
+      "roleType": "Project-Specific",
+      "pillar": null,
+      "panameerSkill": "Project Manager",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Technical Architect",
+      "roleType": "Project-Specific",
+      "pillar": null,
+      "panameerSkill": "Technical Architect",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Technical Lead",
+      "roleType": "Project-Specific",
+      "pillar": null,
+      "panameerSkill": "Technical Lead",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Business Architect",
+      "roleType": "Project-Specific",
+      "pillar": null,
+      "panameerSkill": "Business Architect",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Testing Specialist",
+      "roleType": "Project-Specific",
+      "pillar": null,
+      "panameerSkill": "Testing Specialist",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Support Specialist",
+      "roleType": "Project-Specific",
+      "pillar": null,
+      "panameerSkill": "Support Specialist",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Change Mgt Specialist",
+      "roleType": "Project-Specific",
+      "pillar": null,
+      "panameerSkill": "Change Mgmt Specialist",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Developer (PaaS)",
+      "roleType": "Technology-Specific",
+      "pillar": null,
+      "panameerSkill": "Developer (PaaS)",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Conversion Specialist",
+      "roleType": "Technology-Specific",
+      "pillar": null,
+      "panameerSkill": "Conversion Specialist",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Oracle Cloud Infrastructure",
+      "roleType": "Technology-Specific",
+      "pillar": null,
+      "panameerSkill": "Oracle Cloud Infrastructure",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Integration Specialist",
+      "roleType": "Technology-Specific",
+      "pillar": null,
+      "panameerSkill": "Integration Specialist",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Reporting Specialist",
+      "roleType": "Technology-Specific",
+      "pillar": null,
+      "panameerSkill": "Reporting Specialist",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "PL SQL Specialist",
+      "roleType": "Technology-Specific",
+      "pillar": null,
+      "panameerSkill": "PL SQL Specialist",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Workflow & Notification Specialist",
+      "roleType": "Technology-Specific",
+      "pillar": null,
+      "panameerSkill": "Workflow & Notification Specialist",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Security Specialist",
+      "roleType": "Technology-Specific",
+      "pillar": null,
+      "panameerSkill": "Security Specialist",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Application Administrator",
+      "roleType": "Technology-Specific",
+      "pillar": null,
+      "panameerSkill": "Application Administrator",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Inventory Management",
+      "roleType": "Application-Specific",
+      "pillar": "SCM",
+      "panameerSkill": "Inventory & Warehouse Mgmt",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Item Costing",
+      "roleType": "Application-Specific",
+      "pillar": "SCM",
+      "panameerSkill": "Inventory & Warehouse Mgmt",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Warehouse Management",
+      "roleType": "Application-Specific",
+      "pillar": "SCM",
+      "panameerSkill": "Inventory & Warehouse Mgmt",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Manufacturing",
+      "roleType": "Application-Specific",
+      "pillar": "SCM",
+      "panameerSkill": "Manufacturing",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Order Management",
+      "roleType": "Application-Specific",
+      "pillar": "SCM",
+      "panameerSkill": "Order Mgmt",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Supply Chain Planning",
+      "roleType": "Application-Specific",
+      "pillar": "SCM",
+      "panameerSkill": "Supply Chain Planning",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Maintenance",
+      "roleType": "Application-Specific",
+      "pillar": "SCM",
+      "panameerSkill": "Maintenance Cloud",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Configure/Price/Quote",
+      "roleType": "Application-Specific",
+      "pillar": "ERP",
+      "panameerSkill": "Risk Mgmt (GRC)",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Purchase Requisitions",
+      "roleType": "Application-Specific",
+      "pillar": "ERP",
+      "panameerSkill": "Procurement",
+      "sellingAgent": "Ramesh"
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Purchase Orders (aka Purchasing)",
+      "roleType": "Application-Specific",
+      "pillar": "ERP",
+      "panameerSkill": "Procurement",
+      "sellingAgent": "Ramesh"
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "My Receipts",
+      "roleType": "Application-Specific",
+      "pillar": "ERP",
+      "panameerSkill": "Procurement",
+      "sellingAgent": "Ramesh"
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Supplier Qualifications",
+      "roleType": "Application-Specific",
+      "pillar": "ERP",
+      "panameerSkill": "Procurement",
+      "sellingAgent": "Ramesh"
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Supplier Portal",
+      "roleType": "Application-Specific",
+      "pillar": "ERP",
+      "panameerSkill": "Procurement",
+      "sellingAgent": "Ramesh"
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Purchase Agreements",
+      "roleType": "Application-Specific",
+      "pillar": "ERP",
+      "panameerSkill": "Procurement",
+      "sellingAgent": "Ramesh"
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Negotiations (aka Sourcing)",
+      "roleType": "Application-Specific",
+      "pillar": "ERP",
+      "panameerSkill": "Procurement",
+      "sellingAgent": "Ramesh"
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Procurement Contracts",
+      "roleType": "Application-Specific",
+      "pillar": "ERP",
+      "panameerSkill": "Procurement",
+      "sellingAgent": "Ramesh"
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Procurement Contracts",
+      "roleType": "Application-Specific",
+      "pillar": "ERP",
+      "panameerSkill": "Fusion Analytics Warehouse (FAW)",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Oracle Business Network",
+      "roleType": "Application-Specific",
+      "pillar": null,
+      "panameerSkill": "Oracle Business Network",
+      "sellingAgent": "Ramesh"
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Projects",
+      "roleType": "Application-Specific",
+      "pillar": "ERP",
+      "panameerSkill": "Project Portfolio Mgmt",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Grants",
+      "roleType": "Application-Specific",
+      "pillar": "ERP",
+      "panameerSkill": "Grants",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Invoices (aka AP)",
+      "roleType": "Application-Specific",
+      "pillar": "ERP",
+      "panameerSkill": "Financials",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Payments (aka AP)",
+      "roleType": "Application-Specific",
+      "pillar": "ERP",
+      "panameerSkill": "Financials",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "General Ledger",
+      "roleType": "Application-Specific",
+      "pillar": "ERP",
+      "panameerSkill": "Financials",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Revenue",
+      "roleType": "Application-Specific",
+      "pillar": "ERP",
+      "panameerSkill": "Financials",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Collections",
+      "roleType": "Application-Specific",
+      "pillar": "ERP",
+      "panameerSkill": "Financials",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Fixed Assets (aka FA)",
+      "roleType": "Application-Specific",
+      "pillar": "ERP",
+      "panameerSkill": "Financials",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Receivables",
+      "roleType": "Application-Specific",
+      "pillar": "ERP",
+      "panameerSkill": "Financials",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Cash Mgt",
+      "roleType": "Application-Specific",
+      "pillar": "ERP",
+      "panameerSkill": "Financials",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Expenses",
+      "roleType": "Application-Specific",
+      "pillar": "ERP",
+      "panameerSkill": "Financials",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Acounting Hub",
+      "roleType": "Application-Specific",
+      "pillar": "ERP",
+      "panameerSkill": "Accounting Hub",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Recruiting",
+      "roleType": "Application-Specific",
+      "pillar": "HCM",
+      "panameerSkill": "Talent & Recruiting",
+      "sellingAgent": "Madukar"
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Talent",
+      "roleType": "Application-Specific",
+      "pillar": "HCM",
+      "panameerSkill": "Talent & Recruiting",
+      "sellingAgent": "Madukar"
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Benefits Administration",
+      "roleType": "Application-Specific",
+      "pillar": "HCM",
+      "panameerSkill": "Core HR",
+      "sellingAgent": "Madukar"
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Compensation",
+      "roleType": "Application-Specific",
+      "pillar": "HCM",
+      "panameerSkill": "Core HR",
+      "sellingAgent": "Madukar"
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Human Resources (aka HR)",
+      "roleType": "Application-Specific",
+      "pillar": "HCM",
+      "panameerSkill": "Core HR",
+      "sellingAgent": "Madukar"
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Payroll",
+      "roleType": "Application-Specific",
+      "pillar": "HCM",
+      "panameerSkill": "Payroll",
+      "sellingAgent": "Madukar"
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Time & Labor (aka OTL)",
+      "roleType": "Application-Specific",
+      "pillar": "HCM",
+      "panameerSkill": "Workforce Mgmt",
+      "sellingAgent": "Madukar"
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Absence Management",
+      "roleType": "Application-Specific",
+      "pillar": "HCM",
+      "panameerSkill": "Workforce Mgmt",
+      "sellingAgent": "Madukar"
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Learning",
+      "roleType": "Application-Specific",
+      "pillar": "HCM",
+      "panameerSkill": "Learning",
+      "sellingAgent": "Madukar"
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Incentive Compensation",
+      "roleType": "Application-Specific",
+      "pillar": "HCM",
+      "panameerSkill": "Incentive Compensation",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Sales (aka CRM)",
+      "roleType": "Application-Specific",
+      "pillar": "CX",
+      "panameerSkill": "CRM Sales",
+      "sellingAgent": "Rohit Samiya"
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Field Service",
+      "roleType": "Application-Specific",
+      "pillar": "CX",
+      "panameerSkill": "Field Service",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Customer Data Management",
+      "roleType": "Application-Specific",
+      "pillar": "CX",
+      "panameerSkill": "Customer Data Mgmt",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Customer Loyalty",
+      "roleType": "Application-Specific",
+      "pillar": "CX",
+      "panameerSkill": "Customer Loyalty",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Helpdesk",
+      "roleType": "Application-Specific",
+      "pillar": "CX",
+      "panameerSkill": "Helpdesk",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Configure/Price/Quote",
+      "roleType": "Application-Specific",
+      "pillar": "CX",
+      "panameerSkill": "Configure/Price/Quote",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Configure/Price/Quote",
+      "roleType": "Application-Specific",
+      "pillar": "CX",
+      "panameerSkill": "Commerce Cloud",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Subscription Management",
+      "roleType": "Application-Specific",
+      "pillar": "CX",
+      "panameerSkill": "Subscription Mgmt",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "FCCSS",
+      "roleType": "Application-Specific",
+      "pillar": "EPM",
+      "panameerSkill": "FCCS",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "EPBCS",
+      "roleType": "Application-Specific",
+      "pillar": "EPM",
+      "panameerSkill": "EPBCS",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "EPBCS",
+      "roleType": "Application-Specific",
+      "pillar": "EPM",
+      "panameerSkill": "ARCS",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "EPBCS",
+      "roleType": "Application-Specific",
+      "pillar": "EPM",
+      "panameerSkill": "Enterprise Performance Mgmt",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Multiple",
+      "roleType": "Operational",
+      "pillar": "ERP",
+      "panameerSkill": "Buyer",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Contracts",
+      "roleType": "Operational",
+      "pillar": "ERP",
+      "panameerSkill": "Contract Administrator",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Inventory Management",
+      "roleType": "Operational",
+      "pillar": "SCM",
+      "panameerSkill": "Materials Manager",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Inventory Management",
+      "roleType": "Operational",
+      "pillar": "SCM",
+      "panameerSkill": "Cost Accountant",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Negotiations (aka Sourcing)",
+      "roleType": "Operational",
+      "pillar": "ERP",
+      "panameerSkill": "Category Manager",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Negotiations (aka Sourcing)",
+      "roleType": "Operational",
+      "pillar": "ERP",
+      "panameerSkill": "Sourcing Specialist",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Multiple",
+      "roleType": "Operational",
+      "pillar": "ERP",
+      "panameerSkill": "General Accounting Specialist",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Core HR",
+      "roleType": "Operational",
+      "pillar": "HCM",
+      "panameerSkill": "Resource Manager",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Sales (aka CRM)",
+      "roleType": "Operational",
+      "pillar": "CX",
+      "panameerSkill": "Sales Consultant",
+      "sellingAgent": null
+    },
+    {
+      "action": "Hire",
+      "jobReqSkill": "Recruiting",
+      "roleType": "Operational",
+      "pillar": "HCM",
+      "panameerSkill": "Recruiter",
+      "sellingAgent": null
+    }
+  ]
+}
