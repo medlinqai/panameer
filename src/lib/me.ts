@@ -24,10 +24,26 @@ export async function getMe(viewer: Viewer) {
         include: { pAccount: { select: { id: true, name: true, kind: true } } },
       },
       site: { select: { id: true, name: true } },
+      // Profile summaries so the dashboard/self-profile can resolve them from
+      // /api/me without a second round trip.
+      providerProfile: {
+        select: {
+          id: true,
+          published: true,
+          approval_status: true,
+          rating: true,
+          currency: true,
+          onsite_rate_cents: true,
+          remote_rate_cents: true,
+        },
+      },
+      buyerProfile: { select: { id: true, subscription_tier: true } },
     },
   });
 
   if (!person) return null;
+
+  const provider = person.providerProfile;
 
   // Now that we know the person's org, enrich the viewer with the tenancy
   // fence and use it for a genuinely PAccount-scoped read — demonstrating the
@@ -64,6 +80,25 @@ export async function getMe(viewer: Viewer) {
       logoUrl: person.company.logo_url,
     },
     pAccount: person.company.pAccount,
+    providerProfile: provider
+      ? {
+          id: provider.id,
+          published: provider.published,
+          approvalStatus: provider.approval_status,
+          rating: provider.rating === null ? null : Number(provider.rating),
+          rates: {
+            currency: provider.currency,
+            onsiteCents: provider.onsite_rate_cents,
+            remoteCents: provider.remote_rate_cents,
+          },
+        }
+      : null,
+    buyerProfile: person.buyerProfile
+      ? {
+          id: person.buyerProfile.id,
+          subscriptionTier: person.buyerProfile.subscription_tier,
+        }
+      : null,
     orgCompanyCount,
   };
 }

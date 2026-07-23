@@ -48,7 +48,19 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // "/" is the host split; the rest are the protected areas. Add paths here as
-  // the app grows.
-  matcher: ["/", "/dashboard/:path*", "/admin/:path*"],
+  // "/" is the host split; the rest are the authenticated app areas. Public
+  // marketplace pages (e.g. /providers/[id]) are deliberately NOT listed.
+  matcher: [
+    "/",
+    "/dashboard/:path*",
+    "/admin/:path*",
+    "/profile/:path*",
+    "/find-work/:path*",
+    "/deliver-work/:path*",
+    "/manage-money/:path*",
+    "/messages/:path*",
+    "/hire/:path*",
+    "/work/:path*",
+    "/reports/:path*",
+  ],
 };
