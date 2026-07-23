@@ -5,6 +5,29 @@
   --foreground: #171717;
 }
 
+/*
+ * Panameer brand system. Registered in the Tailwind theme so these become
+ * real utilities (bg-magenta, text-ink, border-line, rounded-brand,
+ * shadow-brand, font-display, font-body) AND CSS vars (var(--color-magenta)…)
+ * usable app-wide. This is the app-wide design system; the in-app shell keeps
+ * its current look until a dedicated reskin.
+ */
+@theme {
+  --color-magenta: #d72cd6;
+  --color-magenta-dark: #b324b2;
+  --color-ink: #171e3e;
+  --color-ink-2: #4a4658;
+  --color-line: #ece9f1;
+  --color-bg-soft: #faf8fc;
+
+  --radius-brand: 14px;
+  --shadow-brand: 0 10px 30px rgba(20, 10, 40, 0.08);
+
+  --font-display: var(--font-comfortaa), "Comfortaa", cursive;
+  --font-body: var(--font-montserrat), "Montserrat", -apple-system,
+    BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

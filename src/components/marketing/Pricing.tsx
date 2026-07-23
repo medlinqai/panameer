@@ -1,0 +1,84 @@
+import { Btn } from "@/components/marketing/brand";
+import { Eyebrow, H2, Lead } from "@/components/marketing/section";
+
+const BASIC = [
+  "Unlimited work requests",
+  "Browse & invite providers",
+  "Settle by hour or milestone",
+  "Free learning paths",
+];
+const PLUS = [
+  "Everything in Basic",
+  "Top-1% vetted talent",
+  "One-click ERP punchout",
+  "Priority matching & support",
+];
+const MODELS = [
+  "Hourly Contractor",
+  "Monthly Contractor",
+  "Offshore Outsourcing",
+  "Employer of Record",
+  "Staff Augmentation",
+];
+
+function Check({ children }: { children: string }) {
+  return (
+    <li className="flex items-center gap-2.5 text-ink">
+      <span className="font-black text-magenta">✓</span>
+      {children}
+    </li>
+  );
+}
+
+export function Pricing() {
+  return (
+    <section id="pricing" className="py-[76px]">
+      <div className="mx-auto max-w-[1180px] px-6">
+        <Eyebrow>Pricing</Eyebrow>
+        <H2>Flexible pricing that scales with your business</H2>
+        <Lead>Post for free. Choose the engagement model that fits the work.</Lead>
+
+        <div className="grid max-w-[820px] gap-[22px] md:grid-cols-2">
+          <div className="rounded-[18px] border border-line bg-white p-[30px]">
+            <h3 className="mb-1 text-[22px] font-bold">Basic</h3>
+            <p className="mb-[18px] text-ink-2">
+              Everything you need to post work and hire your first experts.
+            </p>
+            <ul className="mb-[22px] grid gap-2.5">
+              {BASIC.map((f) => (
+                <Check key={f}>{f}</Check>
+              ))}
+            </ul>
+            <Btn href="/join" variant="ghost">
+              Get started for free
+            </Btn>
+          </div>
+
+          <div className="rounded-[18px] border-2 border-magenta bg-white p-[30px] shadow-brand">
+            <h3 className="mb-1 text-[22px] font-bold">Business Plus</h3>
+            <p className="mb-[18px] text-ink-2">
+              Instant access to the top 1% of talent, plus ERP integration.
+            </p>
+            <ul className="mb-[22px] grid gap-2.5">
+              {PLUS.map((f) => (
+                <Check key={f}>{f}</Check>
+              ))}
+            </ul>
+            <Btn href="/join">Get started for free</Btn>
+          </div>
+        </div>
+
+        <div className="mt-[34px] flex flex-wrap gap-3">
+          {MODELS.map((m) => (
+            <span
+              key={m}
+              className="rounded-full border border-line px-[18px] py-2.5 font-bold text-ink-2"
+            >
+              {m}
+            </span>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
