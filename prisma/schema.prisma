@@ -17,7 +17,8 @@ datasource db {
 
 /// The lean system principal for auth. NextAuth's credentials provider
 /// authenticates against this row (bcrypt password hash + account lockout).
-/// Grow the model (profiles, tenancy, etc.) as the product is designed.
+/// Identity/profile data lives on the linked Person (1:1, optional) — this row
+/// stays focused on authentication.
 model User {
   id                    String    @id @default(uuid()) @db.Uuid
   email                 String    @unique
@@ -33,10 +34,146 @@ model User {
   created_at            DateTime  @default(now())
   updated_at            DateTime  @updatedAt
 
+  /// The person this login belongs to (nullable: a User need not have a Person
+  /// yet, e.g. the system admin before onboarding). The FK lives on Person.
+  person Person?
+
   @@map("users")
 }
 
 enum Role {
   ADMIN
   MEMBER
+}
+
+// ---------------------------------------------------------------------------
+// Org & identity backbone (Phase 1)
+//
+//   PAccount → Company → Site → Address           (org hierarchy)
+//                     ↘ Person → User             (people; login is optional)
+//
+// PAccount is the tenancy fence: private business queries filter by
+// p_account_id (see src/lib/access.ts `scopedToPAccount`). Published profiles
+// and posted work requests are shared marketplace surfaces and are explicitly
+// NOT scoped — that boundary is drawn in access.ts, not here.
+// ---------------------------------------------------------------------------
+
+/// The tenant. A buyer org, a provider entity, or both. Subscription/billing
+/// will hang off this row later.
+model PAccount {
+  id         String         @id @default(uuid()) @db.Uuid
+  kind       PAccountKind
+  name       String
+  status     PAccountStatus @default(ACTIVE)
+  created_at DateTime       @default(now())
+  updated_at DateTime       @updatedAt
+
+  companies Company[]
+
+  @@map("p_accounts")
+}
+
+enum PAccountKind {
+  BUYER
+  PROVIDER
+  BOTH
+}
+
+enum PAccountStatus {
+  ACTIVE
+  SUSPENDED
+  CLOSED
+}
+
+/// A company within a P-Account. Carries name, vertical, and branding.
+model Company {
+  id           String   @id @default(uuid()) @db.Uuid
+  p_account_id String   @db.Uuid
+  name         String
+  vertical     String?
+  website      String?
+  logo_url     String?
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  pAccount PAccount @relation(fields: [p_account_id], references: [id], onDelete: Cascade)
+  sites    Site[]
+  people   Person[]
+
+  @@index([p_account_id])
+  @@map("companies")
+}
+
+/// A physical/operational location of a Company.
+model Site {
+  id                String   @id @default(uuid()) @db.Uuid
+  company_id        String   @db.Uuid
+  name              String
+  open_for_business Boolean  @default(true)
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  company   Company  @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  addresses Address[]
+  people    Person[]
+
+  @@index([company_id])
+  @@map("sites")
+}
+
+/// A postal address belonging to a Site.
+model Address {
+  id          String   @id @default(uuid()) @db.Uuid
+  site_id     String   @db.Uuid
+  line1       String
+  line2       String?
+  city        String?
+  state       String?
+  postal_code String?
+  country     String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  site Site @relation(fields: [site_id], references: [id], onDelete: Cascade)
+
+  @@index([site_id])
+  @@map("addresses")
+}
+
+/// A human within a Company (optionally pinned to a Site), optionally linked
+/// 1:1 to a User login. The actor-role flags describe what this person DOES in
+/// the marketplace (distinct from the skill role-types in Brief B).
+model Person {
+  id         String       @id @default(uuid()) @db.Uuid
+  company_id String       @db.Uuid
+  site_id    String?      @db.Uuid
+  user_id    String?      @unique @db.Uuid
+  first_name String
+  last_name  String
+  title      String?
+  phone      String?
+  photo_url  String?
+  status     PersonStatus @default(ACTIVE)
+
+  // Actor-role flags — what this person does (a person can wear several hats).
+  is_buyer       Boolean @default(false)
+  is_provider    Boolean @default(false)
+  is_coordinator Boolean @default(false)
+  is_support     Boolean @default(false)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  company Company @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  site    Site?   @relation(fields: [site_id], references: [id], onDelete: SetNull)
+  user    User?   @relation(fields: [user_id], references: [id], onDelete: SetNull)
+
+  @@index([company_id])
+  @@index([site_id])
+  @@map("people")
+}
+
+enum PersonStatus {
+  ACTIVE
+  INACTIVE
 }
