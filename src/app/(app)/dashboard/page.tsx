@@ -50,6 +50,27 @@ export default function DashboardPage() {
         </p>
       </header>
 
+      {providerProfile &&
+        !providerProfile.published &&
+        providerProfile.approvalStatus === "PENDING" && (
+          <div className="flex items-start gap-3 rounded-2xl border border-amber-600/25 bg-amber-600/5 p-5">
+            <span
+              aria-hidden
+              className="mt-0.5 grid h-6 w-6 flex-none place-items-center rounded-full bg-amber-500 text-sm font-bold text-white"
+            >
+              ⏳
+            </span>
+            <div>
+              <p className="font-semibold">Your profile is under review</p>
+              <p className="mt-1 text-sm text-black/60 dark:text-white/60">
+                Thanks for submitting! Our team is reviewing your provider
+                profile. You&apos;ll be notified once it&apos;s approved and live
+                on the marketplace.
+              </p>
+            </div>
+          </div>
+        )}
+
       <div className="grid gap-6 lg:grid-cols-2">
         {providerProfile && (
           <Card>

@@ -1,11 +1,39 @@
 import Link from "next/link";
 import Image from "next/image";
 
-const COLS: { title: string; links: string[] }[] = [
-  { title: "Hire", links: ["Hire Talent", "Post a Work Request", "ERP Punchout"] },
-  { title: "Work", links: ["Find Work", "Become a Provider", "Coordinators"] },
-  { title: "Learn", links: ["Learning Paths", "Courses", "Categories"] },
-  { title: "Company", links: ["Why Panameer", "Enterprise", "Pricing"] },
+const COLS: { title: string; links: { label: string; href: string }[] }[] = [
+  {
+    title: "Hire",
+    links: [
+      { label: "Hire Talent", href: "#" },
+      { label: "Post a Work Request", href: "#" },
+      { label: "ERP Punchout", href: "#punchout" },
+    ],
+  },
+  {
+    title: "Work",
+    links: [
+      { label: "Find Work", href: "#" },
+      { label: "Become a Provider", href: "/join" },
+      { label: "Coordinators", href: "#" },
+    ],
+  },
+  {
+    title: "Learn",
+    links: [
+      { label: "Learning Paths", href: "#learn" },
+      { label: "Courses", href: "#learn" },
+      { label: "Categories", href: "#learn" },
+    ],
+  },
+  {
+    title: "Company",
+    links: [
+      { label: "Why Panameer", href: "#punchout" },
+      { label: "Enterprise", href: "#punchout" },
+      { label: "Pricing", href: "#pricing" },
+    ],
+  },
 ];
 
 export function MarketingFooter() {
@@ -30,11 +58,11 @@ export function MarketingFooter() {
               <b className="mb-2.5 block text-white">{col.title}</b>
               {col.links.map((l) => (
                 <Link
-                  key={l}
-                  href="#"
+                  key={l.label}
+                  href={l.href}
                   className="my-1.5 block text-[14.5px] text-[#cfc7da] hover:text-white"
                 >
-                  {l}
+                  {l.label}
                 </Link>
               ))}
             </div>

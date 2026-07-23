@@ -30,13 +30,17 @@ model User {
   is_system_admin       Boolean   @default(false)
   locked                Boolean   @default(false)
   failed_login_attempts Int       @default(0)
+  /// When the user's email was verified (null = unverified). Set by the
+  /// tokenized verify link during onboarding (brief_E).
+  email_verified        DateTime?
   last_login            DateTime?
   created_at            DateTime  @default(now())
   updated_at            DateTime  @updatedAt
 
   /// The person this login belongs to (nullable: a User need not have a Person
   /// yet, e.g. the system admin before onboarding). The FK lives on Person.
-  person Person?
+  person             Person?
+  verificationTokens VerificationToken[]
 
   @@map("users")
 }
@@ -44,6 +48,29 @@ model User {
 enum Role {
   ADMIN
   MEMBER
+}
+
+/// A single-use, expiring verification token (email verification for now; the
+/// type enum leaves room for phone/password-reset later). We store only the
+/// SHA-256 hash of the token — the raw token lives only in the emailed link.
+/// Minimal by design (brief_E allowed addition).
+model VerificationToken {
+  id         String                @id @default(uuid()) @db.Uuid
+  user_id    String                @db.Uuid
+  token_hash String                @unique
+  type       VerificationTokenType @default(EMAIL)
+  expires_at DateTime
+  consumed_at DateTime?
+  created_at DateTime              @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@map("verification_tokens")
+}
+
+enum VerificationTokenType {
+  EMAIL
 }
 
 // ---------------------------------------------------------------------------

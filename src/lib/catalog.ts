@@ -1,5 +1,38 @@
 import { prisma } from "@/lib/prisma";
 
+/** Role types (global lookup) — the "one main category" a provider picks. */
+export async function getRoleTypes() {
+  return prisma.roleType.findMany({
+    orderBy: { display: "asc" },
+    select: { id: true, code: true, name: true, display: true },
+  });
+}
+
+/** World regions (global lookup). */
+export async function getRegions() {
+  return prisma.region.findMany({
+    orderBy: { name: "asc" },
+    select: { id: true, name: true, description: true },
+  });
+}
+
+/**
+ * Skills within a single RoleType — the choices shown after the provider picks
+ * their one main category. Includes the pillar name + image where seeded.
+ */
+export async function getSkillsForRoleType(roleTypeId: string) {
+  return prisma.skill.findMany({
+    where: { role_type_id: roleTypeId },
+    orderBy: { name: "asc" },
+    select: {
+      id: true,
+      name: true,
+      image_url: true,
+      pillar: { select: { code: true, name: true } },
+    },
+  });
+}
+
 /**
  * The catalog taxonomy as a nested tree, plus the flat lookups a browse/match
  * screen needs alongside it. Reference data — global, NOT PAccount-scoped — so

@@ -3,8 +3,17 @@ import { Resend } from "resend";
 /**
  * Resend email client + a small typed helper.
  * Set RESEND_API_KEY and EMAIL_FROM in your environment.
+ *
+ * The client is created lazily (not at module load) because the Resend
+ * constructor throws when RESEND_API_KEY is unset — which would break
+ * `next build`'s page-data collection for any route that imports this module.
+ * Callers should only reach sendEmail() when a key is configured.
  */
-export const resend = new Resend(process.env.RESEND_API_KEY);
+let _resend: Resend | null = null;
+function getResend(): Resend {
+  if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY);
+  return _resend;
+}
 
 /** Verified sender. Uses Resend's shared sandbox address until you verify a domain. */
 export const EMAIL_FROM =
@@ -25,7 +34,7 @@ export async function sendEmail({
   text,
   replyTo,
 }: SendEmailArgs) {
-  const { data, error } = await resend.emails.send({
+  const { data, error } = await getResend().emails.send({
     from: EMAIL_FROM,
     to,
     subject,
