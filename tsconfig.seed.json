@@ -6,5 +6,9 @@
     "noEmit": false,
     "types": ["node"]
   },
-  "include": ["prisma/seed.ts", "prisma/seed-taxonomy.ts"]
+  "include": [
+    "prisma/seed.ts",
+    "prisma/seed-taxonomy.ts",
+    "src/lib/completeness.ts"
+  ]
 }

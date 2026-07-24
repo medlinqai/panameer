@@ -1,5 +1,10 @@
 import { prisma } from "@/lib/prisma";
-import { ownedProviderProfile, type Viewer } from "@/lib/access";
+import {
+  ownedProviderProfile,
+  isMarketplaceVisible,
+  VISIBILITY_THRESHOLD,
+  type Viewer,
+} from "@/lib/access";
 import {
   applyProviderSection,
   OnboardingError,
@@ -36,7 +41,13 @@ const SETTINGS_SECTIONS: ProfileSection[] = [
 async function loadOwned(viewer: Viewer) {
   const profile = await prisma.providerProfile.findFirst({
     where: ownedProviderProfile(viewer),
-    select: { id: true, person_id: true, approval_status: true },
+    select: {
+      id: true,
+      person_id: true,
+      status: true,
+      validation_status: true,
+      experience_level: true,
+    },
   });
   if (!profile) {
     throw new OnboardingError("No provider profile for this user", "NOT_A_PROVIDER");
@@ -87,8 +98,12 @@ export async function getProviderSettings(viewer: Viewer) {
     regionId: profile.region_id,
     region: profile.region,
     idBadge: profile.id_badge,
-    published: profile.published,
-    approvalStatus: profile.approval_status,
+    status: profile.status,
+    validationStatus: profile.validation_status,
+    completeness: profile.completeness,
+    visibilityThreshold: VISIBILITY_THRESHOLD,
+    paused: profile.paused_at != null,
+    visible: isMarketplaceVisible(profile),
     rating: profile.rating === null ? null : Number(profile.rating),
     preferences: {
       notifyEmail: profile.notify_email,
@@ -136,22 +151,39 @@ export async function saveProviderSection(
 }
 
 /**
- * Publish / unpublish the profile. Only permitted once APPROVED — a PENDING or
- * REJECTED profile can never be published from here (the admin approval screen
- * that flips approval_status is a later brief).
+ * Pause / unpause the profile (brief_K). Paused = hidden from the marketplace
+ * regardless of completeness. There is NO publish action — visibility is
+ * derived; pausing is the only manual visibility control.
  */
-export async function setPublished(viewer: Viewer, published: boolean) {
+export async function setPaused(viewer: Viewer, paused: boolean) {
   const owned = await loadOwned(viewer);
-  if (owned.approval_status !== "APPROVED") {
-    throw new OnboardingError(
-      "Your profile can be published once it's approved",
-      "INVALID"
-    );
-  }
   await prisma.providerProfile.update({
     where: { id: owned.id },
-    data: { published },
+    data: { paused_at: paused ? new Date() : null },
   });
+  return getProviderSettings(viewer);
+}
+
+/**
+ * Request Validation (brief_K) — the merit track. Sets validation_status to
+ * REQUESTED + a timestamp; an admin grants/rejects it later (brief_M). Only
+ * meaningful from NOT_REQUESTED or REJECTED; already-requested/validated is a
+ * no-op. Never changes base visibility.
+ */
+export async function requestValidation(viewer: Viewer) {
+  const owned = await loadOwned(viewer);
+  if (
+    owned.validation_status === "NOT_REQUESTED" ||
+    owned.validation_status === "REJECTED"
+  ) {
+    await prisma.providerProfile.update({
+      where: { id: owned.id },
+      data: {
+        validation_status: "REQUESTED",
+        validation_requested_at: new Date(),
+      },
+    });
+  }
   return getProviderSettings(viewer);
 }
 

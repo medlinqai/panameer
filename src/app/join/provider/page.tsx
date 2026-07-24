@@ -145,8 +145,31 @@ export default function JoinPage() {
   const [skillOpts, setSkillOpts] = useState<SkillOpt[]>([]);
   const [regions, setRegions] = useState<Region[]>([]);
 
+  // Completeness + visibility (brief_K). `justLive` fires the "you're live"
+  // confirmation the first time completeness crosses the threshold.
+  const [completeness, setCompleteness] = useState(0);
+  const [threshold, setThreshold] = useState(80);
+  const [visible, setVisible] = useState(false);
+  const [justLive, setJustLive] = useState(false);
+
   const idx = SCREENS.indexOf(screen);
   const progress = idx / (SCREENS.length - 1);
+
+  // Absorb the completeness/visibility fields from an onboarding-state response,
+  // firing the one-time "you're live" moment on the first false→true crossing.
+  const absorb = useCallback(
+    (s: { completeness?: number; visible?: boolean; visibilityThreshold?: number }) => {
+      if (typeof s.visibilityThreshold === "number") setThreshold(s.visibilityThreshold);
+      if (typeof s.completeness === "number") setCompleteness(s.completeness);
+      if (typeof s.visible === "boolean") {
+        setVisible((prev) => {
+          if (s.visible && !prev) setJustLive(true);
+          return !!s.visible;
+        });
+      }
+    },
+    []
+  );
 
   // ---- hydrate from server state ----------------------------------------
   const hydrateProfile = useCallback((p: Record<string, unknown>) => {
@@ -204,6 +227,10 @@ export default function JoinPage() {
       } else if (r.ok) {
         const s = await r.json();
         setEmail(s.email);
+        // On initial load, seed visibility without firing the "just live" toast.
+        setVisible(!!s.visible);
+        if (typeof s.completeness === "number") setCompleteness(s.completeness);
+        if (typeof s.visibilityThreshold === "number") setThreshold(s.visibilityThreshold);
         if (!s.emailVerified) {
           setScreen("verify");
         } else {
@@ -270,6 +297,7 @@ export default function JoinPage() {
         return false;
       }
       if (body.profile) hydrateProfile(body.profile);
+      absorb(body);
       return true;
     } finally {
       setBusy(false);
@@ -322,21 +350,9 @@ export default function JoinPage() {
     }
   };
 
-  const submit = async () => {
-    setBusy(true);
-    setError(null);
-    try {
-      const r = await fetch("/api/onboarding/provider/submit", { method: "POST" });
-      const body = await r.json().catch(() => ({}));
-      if (!r.ok) {
-        setError(body.error ?? "Could not submit.");
-        return;
-      }
-      router.push("/dashboard");
-    } finally {
-      setBusy(false);
-    }
-  };
+  // No "submit for review" anymore (brief_K) — the provider is active-on-verify
+  // and visible automatically at ≥ threshold. Finishing just goes to the app.
+  const finish = () => router.push("/dashboard");
 
   // ----------------------------------------------------------------------
   if (!ready) {
@@ -363,6 +379,56 @@ export default function JoinPage() {
     );
   }
 
+  // Profile-build steps show a live completeness meter (brief_K). The review
+  // step has its own full meter; pre-account/verify steps have no profile yet.
+  const METER_STEPS: Screen[] = [
+    "work_type",
+    "skills",
+    "title",
+    "experience",
+    "education_languages",
+    "bio",
+    "rate",
+    "region",
+    "photo",
+  ];
+  const stepBanner = METER_STEPS.includes(screen) ? (
+    <div className="rounded-brand border border-line p-4">
+      {justLive && (
+        <div className="mb-3 flex items-center justify-between gap-3 rounded-[10px] bg-emerald-50 px-3 py-2">
+          <span className="text-[14px] font-semibold text-emerald-700">
+            🎉 You&apos;re live — buyers can now find you.
+          </span>
+          <button
+            onClick={() => setJustLive(false)}
+            className="text-[13px] font-bold text-emerald-700/70 hover:text-emerald-700"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+      <div className="flex items-center justify-between">
+        <span className="text-[13px] font-bold text-ink-2">
+          Profile completeness
+        </span>
+        <span className="text-[14px] font-extrabold text-magenta">
+          {completeness}%{" "}
+          {visible ? (
+            <span className="text-emerald-600">· live</span>
+          ) : (
+            <span className="text-ink-2">· {threshold}% to go live</span>
+          )}
+        </span>
+      </div>
+      <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-line">
+        <div
+          className="h-full bg-magenta transition-[width] duration-500"
+          style={{ width: `${Math.min(100, completeness)}%` }}
+        />
+      </div>
+    </div>
+  ) : undefined;
+
   const shell = (
     props: Partial<React.ComponentProps<typeof WizardShell>> & { title: string }
   ) => ({
@@ -370,6 +436,7 @@ export default function JoinPage() {
     onBack: canBack ? goBack : undefined,
     canBack,
     busy,
+    banner: stepBanner,
     ...props,
   });
 
@@ -515,6 +582,8 @@ export default function JoinPage() {
             initialDevLink={devLink}
             onVerified={(s) => {
               hydrateProfile(s.profile);
+              setVisible(!!s.visible);
+              if (typeof s.completeness === "number") setCompleteness(s.completeness);
               setScreen((s.resumeStep as Screen) ?? "work_type");
             }}
           />
@@ -876,14 +945,43 @@ export default function JoinPage() {
       return (
         <WizardShell
           {...shell({
-            title: "Review & submit",
-            subtitle:
-              "Check everything over. After you submit, your profile goes to review before it's published.",
-            onContinue: submit,
-            continueLabel: "Submit for review",
+            title: "Review your profile",
+            subtitle: visible
+              ? "You're live — buyers can find you. Review anything below, then head to your dashboard."
+              : `You're at ${completeness}% — reach ${threshold}% to become visible to buyers. You can keep editing anytime.`,
+            onContinue: finish,
+            continueLabel: "Go to dashboard",
           })}
         >
           {error && <Notice>{error}</Notice>}
+
+          <div className="mb-6 rounded-brand border border-line p-5">
+            <div className="flex items-center justify-between">
+              <span className="text-[14px] font-bold">Profile completeness</span>
+              <span className="text-[16px] font-extrabold text-magenta">
+                {completeness}%
+              </span>
+            </div>
+            <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-line">
+              <div
+                className="h-full bg-magenta transition-[width] duration-500"
+                style={{ width: `${Math.min(100, completeness)}%` }}
+              />
+            </div>
+            {visible ? (
+              <p className="mt-3 text-[14px] font-semibold text-emerald-600">
+                🎉 You&apos;re live — buyers can now find you.
+              </p>
+            ) : (
+              <p className="mt-3 max-w-2xl text-[13px] leading-relaxed text-ink-2">
+                Panameer is a premium marketplace — the best buyers come here for
+                the best talent. Reach {threshold}% to become visible to service
+                buyers. The stronger our profiles, the better the buyers we
+                attract — and the better the work that finds you.
+              </p>
+            )}
+          </div>
+
           <div className="space-y-4">
             <ReviewRow label="Title" value={profile.headline} onEdit={() => goto("title")} />
             <ReviewRow

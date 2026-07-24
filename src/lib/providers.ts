@@ -1,20 +1,25 @@
 import { prisma } from "@/lib/prisma";
+import { isMarketplaceVisible } from "@/lib/access";
 
 /**
  * A provider's PUBLIC marketplace profile by profile id. Public surface — no
- * viewer, NOT PAccount-scoped — but gated on visibility: only a `published` +
- * `APPROVED` profile is returned (providers are reviewed before going live), so
- * this endpoint can never leak a draft or rejected profile. Returns null when
- * not found or not yet public.
+ * PAccount scope — but gated on VISIBILITY (brief_K): only an ACTIVE, ≥80%-
+ * complete, un-paused profile is returned, so a hidden profile never leaks.
+ * The OWNER bypasses the gate (they always see their own profile) — pass their
+ * user id as `viewerUserId`. Returns null when not found or not visible.
  *
  * Sets the profile-read pattern for the marketplace browse/detail endpoints.
  */
-export async function getPublicProviderProfile(id: string) {
-  const profile = await prisma.providerProfile.findFirst({
-    where: { id, published: true, approval_status: "APPROVED" },
+export async function getPublicProviderProfile(
+  id: string,
+  opts: { viewerUserId?: string } = {}
+) {
+  const profile = await prisma.providerProfile.findUnique({
+    where: { id },
     include: {
       person: {
         select: {
+          user_id: true,
           first_name: true,
           last_name: true,
           title: true,
@@ -47,8 +52,17 @@ export async function getPublicProviderProfile(id: string) {
 
   if (!profile) return null;
 
+  // Visibility gate — owner always bypasses; everyone else needs the profile to
+  // be marketplace-visible.
+  const isOwner =
+    opts.viewerUserId != null && profile.person.user_id === opts.viewerUserId;
+  if (!isOwner && !isMarketplaceVisible(profile)) return null;
+
   return {
     id: profile.id,
+    // Validated is a public badge (brief_K) — visible to everyone; does NOT
+    // affect base visibility.
+    validated: profile.validation_status === "VALIDATED",
     headline: profile.headline,
     overview: profile.overview,
     experienceLevel: profile.experience_level,

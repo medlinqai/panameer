@@ -54,6 +54,9 @@ export function ProfileView({ profile }: { profile: PublicProviderProfile }) {
               <h1 className="text-2xl font-semibold tracking-tight">
                 {person.firstName} {person.lastName}
               </h1>
+              {profile.validated && (
+                <Badge tone="green">✓ Validated</Badge>
+              )}
               {profile.rating !== null && <StarRating rating={profile.rating} />}
             </div>
             <p className="mt-1 text-lg text-black/70 dark:text-white/70">

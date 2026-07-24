@@ -11,8 +11,10 @@ type Roster = {
     id: string;
     name: string;
     headline: string | null;
-    approvalStatus: "PENDING" | "APPROVED" | "REJECTED";
-    published: boolean;
+    status: "PENDING" | "ACTIVE";
+    validationStatus: "NOT_REQUESTED" | "REQUESTED" | "VALIDATED" | "REJECTED";
+    completeness: number;
+    visible: boolean;
   }[];
   pendingInvites: {
     id: string;
@@ -166,26 +168,18 @@ export function CoordinatorConsole() {
                             {p.headline}
                           </p>
                         )}
+                        <p className="text-xs text-black/50 dark:text-white/50">
+                          {p.completeness}% complete
+                        </p>
                       </div>
-                      <Badge
-                        tone={
-                          p.published
-                            ? "green"
-                            : p.approvalStatus === "APPROVED"
-                              ? "blue"
-                              : p.approvalStatus === "REJECTED"
-                                ? "red"
-                                : "amber"
-                        }
-                      >
-                        {p.published
-                          ? "Live"
-                          : p.approvalStatus === "APPROVED"
-                            ? "Approved"
-                            : p.approvalStatus === "REJECTED"
-                              ? "Rejected"
-                              : "Under review"}
-                      </Badge>
+                      <div className="flex gap-2">
+                        {p.validationStatus === "VALIDATED" && (
+                          <Badge tone="green">✓ Validated</Badge>
+                        )}
+                        <Badge tone={p.visible ? "green" : "neutral"}>
+                          {p.visible ? "Live" : "Not visible"}
+                        </Badge>
+                      </div>
                     </li>
                   ))}
                 </ul>

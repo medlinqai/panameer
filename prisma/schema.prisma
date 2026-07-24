@@ -445,8 +445,18 @@ model ProviderProfile {
   currency         String   @default("USD")
   rating           Decimal? @db.Decimal(3, 2)
   id_badge         String?
-  published        Boolean  @default(false)
-  approval_status  ApprovalStatus @default(PENDING)
+  // Account lifecycle (brief_K): PENDING on sign-up → ACTIVE on email verify.
+  status           ProviderStatus @default(PENDING)
+  // Merit-based Validation track (brief_K) — separate from visibility. Provider
+  // requests it; an admin grants on merit. Never purchasable.
+  validation_status       ValidationStatus @default(NOT_REQUESTED)
+  validation_requested_at DateTime?
+  validated_at            DateTime?
+  // Visibility is COMPLETENESS-gated, not approval-gated (brief_K, supersedes
+  // brief_E/H). Marketplace-visible ⇔ status=ACTIVE AND completeness>=80 AND
+  // paused_at IS NULL. No `published` flag/button — visibility is derived.
+  completeness     Int      @default(0)
+  paused_at        DateTime?
   // Minimal preferences store (brief_H). Notification opt-ins; expand later.
   notify_email           Boolean @default(true)
   notify_product_updates Boolean @default(false)
@@ -491,9 +501,17 @@ enum WorkType {
   CONTRACT_TO_HIRE
 }
 
-enum ApprovalStatus {
+/// Provider account lifecycle (brief_K).
+enum ProviderStatus {
   PENDING
-  APPROVED
+  ACTIVE
+}
+
+/// Merit-based validation track (brief_K). Provider requests; admin grants.
+enum ValidationStatus {
+  NOT_REQUESTED
+  REQUESTED
+  VALIDATED
   REJECTED
 }
 

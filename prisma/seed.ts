@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import * as dotenv from "dotenv";
 import path from "path";
 import { seedTaxonomy } from "./seed-taxonomy";
+import { computeProviderCompleteness } from "../src/lib/completeness";
 
 // Load .env.local so `npm run seed` (bare ts-node, bypassing prisma.config.ts)
 // sees DATABASE_URL. Without this the pg adapter falls back to localhost:5432
@@ -20,7 +21,8 @@ async function main() {
 
   const admin = await prisma.user.upsert({
     where: { email },
-    update: {},
+    // brief_K: verify the demo admin's email so its provider profile is ACTIVE.
+    update: { email_verified: new Date() },
     create: {
       email,
       password_hash,
@@ -28,6 +30,7 @@ async function main() {
       last_name: "Admin",
       role: "ADMIN",
       is_system_admin: true,
+      email_verified: new Date(),
     },
   });
 
@@ -131,7 +134,13 @@ async function main() {
 
   const providerProfile = await prisma.providerProfile.upsert({
     where: { person_id: adminPerson.id },
-    update: {},
+    // Re-assert the brief_K demo state on existing rows (the schema rename reset
+    // status/validation to their defaults).
+    update: {
+      status: "ACTIVE",
+      validation_status: "VALIDATED",
+      validated_at: new Date(),
+    },
     create: {
       person_id: adminPerson.id,
       region_id: americas?.id ?? null,
@@ -147,8 +156,12 @@ async function main() {
       remote_rate_cents: 9000,
       currency: "USD",
       rating: "4.90",
-      published: true,
-      approval_status: "APPROVED",
+      // brief_K: active-on-verify (admin email is verified below), and a
+      // Validated demo so the badge is visible in the running app. Completeness
+      // is recomputed at the end of this block from the actual data.
+      status: "ACTIVE",
+      validation_status: "VALIDATED",
+      validated_at: new Date(),
     },
   });
 
@@ -214,6 +227,44 @@ async function main() {
         description: "Sourcing and negotiations optimization.",
       },
     });
+  }
+
+  // Recompute the demo provider's completeness from the actual data (brief_K),
+  // using the same pure helper the app uses — so it reaches the 80% bar and is
+  // marketplace-visible.
+  {
+    const full = await prisma.providerProfile.findUnique({
+      where: { id: providerProfile.id },
+      include: {
+        skills: true,
+        workExperiences: true,
+        education: true,
+        languages: true,
+        certifications: true,
+        person: { select: { photo_url: true } },
+      },
+    });
+    if (full) {
+      const completeness = computeProviderCompleteness({
+        headline: full.headline,
+        overview: full.overview,
+        experience_level: full.experience_level,
+        region_id: full.region_id,
+        onsite_rate_cents: full.onsite_rate_cents,
+        remote_rate_cents: full.remote_rate_cents,
+        work_types: full.work_types,
+        skills: full.skills,
+        workExperiences: full.workExperiences,
+        education: full.education,
+        languages: full.languages,
+        certifications: full.certifications,
+        photoUrl: full.person.photo_url,
+      });
+      await prisma.providerProfile.update({
+        where: { id: providerProfile.id },
+        data: { completeness },
+      });
+    }
   }
 
   // --- Demo Service Buyer (a second Person in the demo Company) -----------

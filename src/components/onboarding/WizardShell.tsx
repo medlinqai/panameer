@@ -23,6 +23,7 @@ export function WizardShell({
   secondaryLabel,
   onSecondary,
   hideFooter = false,
+  banner,
 }: {
   progress: number; // 0..1
   title: string;
@@ -37,6 +38,8 @@ export function WizardShell({
   secondaryLabel?: string;
   onSecondary?: () => void;
   hideFooter?: boolean;
+  /** Optional slot rendered between the title block and step content. */
+  banner?: ReactNode;
 }) {
   return (
     <div className="flex min-h-screen flex-col bg-white font-body text-ink">
@@ -71,6 +74,7 @@ export function WizardShell({
           {subtitle && (
             <p className="mt-2 max-w-xl text-[17px] text-ink-2">{subtitle}</p>
           )}
+          {banner && <div className="mt-6">{banner}</div>}
           <div className="mt-8">{children}</div>
         </div>
 

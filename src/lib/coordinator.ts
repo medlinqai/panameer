@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/resend";
 import { hashToken, appBaseUrl } from "@/lib/verification";
 import { inviteProviderTemplate } from "@/lib/email/templates/invite-provider";
-import type { Viewer } from "@/lib/access";
+import { isMarketplaceVisible, type Viewer } from "@/lib/access";
 
 /**
  * Coordinator → provider invites (brief_I). Reuses the hash-only token pattern
@@ -189,8 +189,11 @@ export async function getRoster(viewer: Viewer) {
       id: p.id,
       name: `${p.person.first_name} ${p.person.last_name}`.trim(),
       headline: p.headline || null,
-      approvalStatus: p.approval_status,
-      published: p.published,
+      // brief_K: status + derived visibility + validation (no approval/publish).
+      status: p.status,
+      validationStatus: p.validation_status,
+      completeness: p.completeness,
+      visible: isMarketplaceVisible(p),
     })),
     pendingInvites: pending.map((i) => ({
       id: i.id,

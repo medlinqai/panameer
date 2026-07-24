@@ -123,6 +123,12 @@ export async function consumeEmailVerification(
       where: { id: record.user_id },
       data: { email_verified: record.user.email_verified ?? new Date() },
     }),
+    // Active-on-verify (brief_K): a provider's account goes PENDING → ACTIVE the
+    // moment their email is verified. No-op for users without a provider profile.
+    prisma.providerProfile.updateMany({
+      where: { person: { user_id: record.user_id }, status: "PENDING" },
+      data: { status: "ACTIVE" },
+    }),
   ]);
 
   return { ok: true, userId: record.user_id };

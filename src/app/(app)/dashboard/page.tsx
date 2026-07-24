@@ -78,22 +78,42 @@ export default function DashboardPage() {
         </p>
       </header>
 
+      {providerProfile && providerProfile.paused && (
+        <div className="flex items-start gap-3 rounded-2xl border border-amber-600/25 bg-amber-600/5 p-5">
+          <span aria-hidden className="text-lg">
+            ⏸
+          </span>
+          <div>
+            <p className="font-semibold">Your profile is paused</p>
+            <p className="mt-1 text-sm text-black/60 dark:text-white/60">
+              You&apos;re hidden from the marketplace. Unpause anytime from{" "}
+              <Link href="/settings/profile" className="underline">
+                Settings
+              </Link>
+              .
+            </p>
+          </div>
+        </div>
+      )}
       {providerProfile &&
-        !providerProfile.published &&
-        providerProfile.approvalStatus === "PENDING" && (
-          <div className="flex items-start gap-3 rounded-2xl border border-amber-600/25 bg-amber-600/5 p-5">
-            <span
-              aria-hidden
-              className="mt-0.5 grid h-6 w-6 flex-none place-items-center rounded-full bg-amber-500 text-sm font-bold text-white"
-            >
-              ⏳
+        !providerProfile.paused &&
+        !providerProfile.visible && (
+          <div className="flex items-start gap-3 rounded-2xl border border-magenta/25 bg-magenta/5 p-5">
+            <span aria-hidden className="text-lg">
+              ✨
             </span>
             <div>
-              <p className="font-semibold">Your profile is under review</p>
+              <p className="font-semibold">
+                You&apos;re at {providerProfile.completeness}% — reach 80% to go
+                live
+              </p>
               <p className="mt-1 text-sm text-black/60 dark:text-white/60">
-                Thanks for submitting! Our team is reviewing your provider
-                profile. You&apos;ll be notified once it&apos;s approved and live
-                on the marketplace.
+                Panameer is a premium marketplace — the best buyers come here for
+                the best talent. Complete your profile in{" "}
+                <Link href="/settings/profile" className="underline">
+                  Settings
+                </Link>{" "}
+                to become visible to service buyers.
               </p>
             </div>
           </div>
@@ -105,21 +125,41 @@ export default function DashboardPage() {
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold">Your provider profile</h2>
               <div className="flex gap-2">
-                <Badge tone={providerProfile.published ? "green" : "neutral"}>
-                  {providerProfile.published ? "Published" : "Draft"}
-                </Badge>
                 <Badge
                   tone={
-                    providerProfile.approvalStatus === "APPROVED"
-                      ? "green"
-                      : providerProfile.approvalStatus === "REJECTED"
-                        ? "red"
-                        : "amber"
+                    providerProfile.paused
+                      ? "amber"
+                      : providerProfile.visible
+                        ? "green"
+                        : "neutral"
                   }
                 >
-                  {providerProfile.approvalStatus.charAt(0) +
-                    providerProfile.approvalStatus.slice(1).toLowerCase()}
+                  {providerProfile.paused
+                    ? "Paused"
+                    : providerProfile.visible
+                      ? "Live"
+                      : "Not visible"}
                 </Badge>
+                {providerProfile.validationStatus === "VALIDATED" && (
+                  <Badge tone="green">✓ Validated</Badge>
+                )}
+                {providerProfile.validationStatus === "REQUESTED" && (
+                  <Badge tone="amber">Validation pending</Badge>
+                )}
+              </div>
+            </div>
+
+            {/* Completeness meter */}
+            <div className="mb-4">
+              <div className="mb-1 flex items-center justify-between text-xs text-black/50 dark:text-white/50">
+                <span>Profile completeness</span>
+                <span className="font-semibold">{providerProfile.completeness}%</span>
+              </div>
+              <div className="h-2 w-full overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
+                <div
+                  className="h-full bg-magenta transition-[width] duration-500"
+                  style={{ width: `${Math.min(100, providerProfile.completeness)}%` }}
+                />
               </div>
             </div>
 

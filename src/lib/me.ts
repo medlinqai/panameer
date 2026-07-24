@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import {
   scopedToPAccount,
   withPAccount,
+  isMarketplaceVisible,
   type Viewer,
 } from "@/lib/access";
 
@@ -29,8 +30,10 @@ export async function getMe(viewer: Viewer) {
       providerProfile: {
         select: {
           id: true,
-          published: true,
-          approval_status: true,
+          status: true,
+          validation_status: true,
+          completeness: true,
+          paused_at: true,
           rating: true,
           currency: true,
           onsite_rate_cents: true,
@@ -83,8 +86,11 @@ export async function getMe(viewer: Viewer) {
     providerProfile: provider
       ? {
           id: provider.id,
-          published: provider.published,
-          approvalStatus: provider.approval_status,
+          status: provider.status,
+          validationStatus: provider.validation_status,
+          completeness: provider.completeness,
+          paused: provider.paused_at != null,
+          visible: isMarketplaceVisible(provider),
           rating: provider.rating === null ? null : Number(provider.rating),
           rates: {
             currency: provider.currency,

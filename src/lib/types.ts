@@ -37,8 +37,11 @@ export type Me = {
   pAccount: { id: string; name: string; kind: string };
   providerProfile: {
     id: string;
-    published: boolean;
-    approvalStatus: "PENDING" | "APPROVED" | "REJECTED";
+    status: "PENDING" | "ACTIVE";
+    validationStatus: "NOT_REQUESTED" | "REQUESTED" | "VALIDATED" | "REJECTED";
+    completeness: number;
+    paused: boolean;
+    visible: boolean;
     rating: number | null;
     rates: Rates;
   } | null;
@@ -51,6 +54,7 @@ export type Me = {
 
 export type PublicProviderProfile = {
   id: string;
+  validated: boolean;
   headline: string;
   overview: string | null;
   experienceLevel: string;

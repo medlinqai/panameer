@@ -2,13 +2,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ProfileView } from "@/components/ProfileView";
 import { getPublicProviderProfile } from "@/lib/providers";
+import { getSessionViewer } from "@/lib/session";
 import type { PublicProviderProfile } from "@/lib/types";
 
 /**
  * Public provider profile — a marketplace surface. Not behind the auth gate;
  * renders server-side straight from the lib (still API-first: logic lives in
- * src/lib/providers). The lib enforces the published + approved gate, so
- * anything not public 404s.
+ * src/lib/providers). The lib enforces the visibility gate (brief_K), so a
+ * hidden profile 404s — but the owner always sees their own.
  */
 export default async function PublicProviderPage({
   params,
@@ -16,9 +17,10 @@ export default async function PublicProviderPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const viewer = await getSessionViewer();
   // The lib returns Date objects; over HTTP they'd be ISO strings. ProfileView's
   // date formatter accepts both, so cast through unknown for the direct call.
-  const raw = await getPublicProviderProfile(id);
+  const raw = await getPublicProviderProfile(id, { viewerUserId: viewer?.userId });
   if (!raw) notFound();
   const profile = raw as unknown as PublicProviderProfile;
 

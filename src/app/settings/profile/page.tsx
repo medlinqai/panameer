@@ -72,7 +72,7 @@ export default function SettingsProfilePage() {
     regionId: string | null;
   } | null>(null);
 
-  const [published, setPublished] = useState(false);
+  const [paused, setPaused] = useState(false);
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const [savedKey, setSavedKey] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -84,7 +84,7 @@ export default function SettingsProfilePage() {
   useEffect(() => {
     if (settings && !initialized.current) {
       initialized.current = true;
-      setPublished(settings.published);
+      setPaused(settings.paused);
       setD({
         headline: settings.headline,
         overview: settings.overview,
@@ -161,25 +161,47 @@ export default function SettingsProfilePage() {
     }
   };
 
-  const togglePublish = async () => {
-    setSavingKey("publish");
+  const togglePause = async () => {
+    setSavingKey("pause");
     setErrors((m) => {
       const n = { ...m };
-      delete n.publish;
+      delete n.pause;
       return n;
     });
     try {
-      const r = await fetch("/api/settings/publish", {
+      const r = await fetch("/api/settings/pause", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ published: !published }),
+        body: JSON.stringify({ paused: !paused }),
       });
       const body = await r.json().catch(() => ({}));
       if (!r.ok) {
-        setErrors((m) => ({ ...m, publish: body.error ?? "Could not update." }));
+        setErrors((m) => ({ ...m, pause: body.error ?? "Could not update." }));
         return;
       }
-      setPublished(body.published);
+      setPaused(body.paused);
+      setSettings(body as ProviderSettings);
+    } finally {
+      setSavingKey(null);
+    }
+  };
+
+  const requestValidation = async () => {
+    setSavingKey("validation");
+    setErrors((m) => {
+      const n = { ...m };
+      delete n.validation;
+      return n;
+    });
+    try {
+      const r = await fetch("/api/settings/request-validation", {
+        method: "POST",
+      });
+      const body = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        setErrors((m) => ({ ...m, validation: body.error ?? "Could not request." }));
+        return;
+      }
       setSettings(body as ProviderSettings);
     } finally {
       setSavingKey(null);
@@ -191,57 +213,125 @@ export default function SettingsProfilePage() {
     saved: savedKey === k,
     error: errors[k] ?? null,
   });
-  const approved = settings.approvalStatus === "APPROVED";
+
+  const pct = settings.completeness;
+  const threshold = settings.visibilityThreshold;
+  const isExpert = settings.experienceLevel === "EXPERT";
 
   return (
     <div className="space-y-6">
-      {/* Status & visibility */}
+      {/* Completeness + visibility */}
       <section className="rounded-brand border border-line p-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 className="text-[18px] font-bold">Profile status</h2>
-            <div className="mt-2 flex items-center gap-2">
-              {settings.approvalStatus === "APPROVED" && (
-                <Badge tone={published ? "green" : "blue"}>
-                  {published ? "Live" : "Approved — not published"}
-                </Badge>
-              )}
-              {settings.approvalStatus === "PENDING" && (
-                <Badge tone="amber">Under review</Badge>
-              )}
-              {settings.approvalStatus === "REJECTED" && (
-                <Badge tone="red">Changes requested</Badge>
-              )}
-            </div>
-          </div>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-[18px] font-bold">Profile completeness</h2>
+          <span className="text-[18px] font-extrabold text-magenta">{pct}%</span>
+        </div>
+        <div className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-line">
+          <div
+            className="h-full bg-magenta transition-[width] duration-500"
+            style={{ width: `${Math.min(100, pct)}%` }}
+          />
+        </div>
 
-          <div className="text-right">
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          {settings.paused ? (
+            <Badge tone="amber">Paused — hidden from buyers</Badge>
+          ) : settings.visible ? (
+            <Badge tone="green">Live — buyers can find you</Badge>
+          ) : (
+            <Badge>Not visible yet</Badge>
+          )}
+        </div>
+
+        {pct < threshold ? (
+          <p className="mt-4 max-w-2xl text-[14px] leading-relaxed text-ink-2">
+            Panameer is a premium marketplace — the best buyers come here for the
+            best talent. Reach {threshold}% to become visible to service buyers.
+            The stronger our profiles, the better the buyers we attract — and the
+            better the work that finds you.
+          </p>
+        ) : (
+          <p className="mt-4 text-[14px] text-ink-2">
+            You&apos;re at {pct}% — over the {threshold}% bar. Keep it fresh; you
+            can pause anytime below.
+          </p>
+        )}
+      </section>
+
+      {/* Pause my profile */}
+      <Section
+        title="Pause my profile"
+        description="Temporarily hide your profile from the marketplace. This is a pause, not a delete — unpause anytime and your profile returns exactly as it was."
+        onSave={togglePause}
+        saving={savingKey === "pause"}
+        saveLabel={paused ? "Unpause my profile" : "Pause my profile"}
+        error={errors.pause ?? null}
+      >
+        <p className="text-[14px] text-ink-2">
+          {paused
+            ? "Your profile is currently paused and hidden from buyers."
+            : "Your profile is active. Pausing hides it regardless of completeness."}
+        </p>
+      </Section>
+
+      {/* Request Validation */}
+      <section className="rounded-brand border border-line p-6">
+        <div className="flex items-center gap-3">
+          <h2 className="text-[18px] font-bold">Validation</h2>
+          {settings.validationStatus === "VALIDATED" && (
+            <Badge tone="green">✓ Validated</Badge>
+          )}
+          {settings.validationStatus === "REQUESTED" && (
+            <Badge tone="amber">Under review</Badge>
+          )}
+        </div>
+        <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-ink-2">
+          Validation is our merit badge for top experts. Validated providers get
+          seen by buyers on the Premium plan. It&apos;s granted on merit by our
+          team — never purchased.
+        </p>
+
+        {settings.validationStatus === "VALIDATED" && (
+          <p className="mt-3 text-[14px] font-semibold text-emerald-600">
+            You&apos;re Validated — the badge shows on your public profile.
+          </p>
+        )}
+        {settings.validationStatus === "REQUESTED" && (
+          <p className="mt-3 text-[14px] text-ink-2">
+            Validation requested — under review. We&apos;ll let you know.
+          </p>
+        )}
+        {(settings.validationStatus === "NOT_REQUESTED" ||
+          settings.validationStatus === "REJECTED") && (
+          <div className="mt-4">
+            {settings.validationStatus === "REJECTED" && (
+              <p className="mb-3 text-[14px] text-ink-2">
+                Not validated yet. Validation favors Expert-level providers with a
+                strong, complete profile — strengthen yours and request again.
+              </p>
+            )}
+            {errors.validation && (
+              <p className="mb-2 text-[14px] text-red-600">{errors.validation}</p>
+            )}
             <button
-              onClick={togglePublish}
-              disabled={!approved || savingKey === "publish"}
+              onClick={requestValidation}
+              disabled={savingKey === "validation"}
               className={
                 "rounded-full px-6 py-2.5 font-bold transition-colors disabled:opacity-50 " +
-                (published
-                  ? "border-[1.5px] border-line text-ink hover:border-[#d9d4e2]"
-                  : "bg-magenta text-white hover:bg-magenta-dark")
+                (isExpert
+                  ? "bg-magenta text-white hover:bg-magenta-dark"
+                  : "border-[1.5px] border-line text-ink hover:border-[#d9d4e2]")
               }
             >
-              {savingKey === "publish"
-                ? "Saving…"
-                : published
-                  ? "Unpublish"
-                  : "Publish profile"}
+              {savingKey === "validation" ? "Requesting…" : "Request Validation"}
             </button>
-            {!approved && (
-              <p className="mt-2 max-w-xs text-[13px] text-ink-2">
-                You can publish once your profile is approved. You can keep
-                editing in the meantime.
+            {!isExpert && (
+              <p className="mt-2 text-[13px] text-ink-2">
+                Validation is aimed at Expert-level providers, but you&apos;re
+                welcome to request — our team decides.
               </p>
             )}
           </div>
-        </div>
-        {errors.publish && (
-          <p className="mt-3 text-[14px] text-red-600">{errors.publish}</p>
         )}
       </section>
 

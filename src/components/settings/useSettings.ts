@@ -20,8 +20,12 @@ export type ProviderSettings = {
   regionId: string | null;
   region: { id: string; name: string } | null;
   idBadge: string | null;
-  published: boolean;
-  approvalStatus: "PENDING" | "APPROVED" | "REJECTED";
+  status: "PENDING" | "ACTIVE";
+  validationStatus: "NOT_REQUESTED" | "REQUESTED" | "VALIDATED" | "REJECTED";
+  completeness: number;
+  visibilityThreshold: number;
+  paused: boolean;
+  visible: boolean;
   rating: number | null;
   preferences: { notifyEmail: boolean; notifyProductUpdates: boolean };
   experiences: {

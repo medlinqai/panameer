@@ -186,3 +186,42 @@ export function ownedProviderProfile(viewer: Viewer): {
 } {
   return { person: { user_id: viewer.userId } };
 }
+
+// ---------------------------------------------------------------------------
+// Marketplace visibility (brief_K — supersedes brief_E/H approval gating).
+//
+// A provider is visible in the marketplace when their account is ACTIVE, their
+// profile is at least VISIBILITY_THRESHOLD (80%) complete, and they have not
+// paused their listing. There is NO `published` flag — visibility is DERIVED.
+// Validation is a separate merit track and does NOT affect base visibility.
+//
+// Keep this predicate here, never inlined in components (conventions).
+// ---------------------------------------------------------------------------
+
+/** The completeness at/above which a provider is marketplace-visible. */
+export const VISIBILITY_THRESHOLD = 80;
+
+/** Is this provider marketplace-visible? Operates on the stored columns. */
+export function isMarketplaceVisible(p: {
+  status: string;
+  completeness: number;
+  paused_at: Date | null;
+}): boolean {
+  return (
+    p.status === "ACTIVE" &&
+    p.completeness >= VISIBILITY_THRESHOLD &&
+    p.paused_at == null
+  );
+}
+
+/**
+ * Prisma `where`-fragment for marketplace-visible providers — use for listings
+ * and the public detail read so the DB never returns a hidden profile.
+ */
+export function marketplaceVisibleWhere() {
+  return {
+    status: "ACTIVE" as const,
+    completeness: { gte: VISIBILITY_THRESHOLD },
+    paused_at: null,
+  };
+}

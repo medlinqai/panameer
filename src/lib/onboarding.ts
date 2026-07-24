@@ -1,6 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/password";
 import { acceptInviteForUser } from "@/lib/coordinator";
+import {
+  computeProviderCompleteness,
+  VISIBILITY_THRESHOLD,
+} from "@/lib/completeness";
 import type { Viewer } from "@/lib/access";
 
 /**
@@ -131,8 +135,8 @@ export async function createProviderAccount(
         headline: "", // set at the Title step
         experience_level: input.experienceLevel,
         goal: input.goal,
-        published: false,
-        approval_status: "PENDING",
+        // status defaults PENDING → ACTIVE on email verify (brief_K);
+        // validation_status defaults NOT_REQUESTED; completeness starts 0.
       },
     });
     return user.id;
@@ -236,32 +240,26 @@ function computeResumeStep(p: Awaited<ReturnType<typeof loadDraft>>): ProviderSt
   return "review";
 }
 
-/** True when every REQUIRED step is satisfied (optional steps don't gate). */
-function isComplete(p: Awaited<ReturnType<typeof loadDraft>>): boolean {
-  const pp = p.providerProfile!;
-  return (
-    pp.work_types.length > 0 &&
-    pp.skills.length > 0 &&
-    pp.headline.trim() !== "" &&
-    pp.workExperiences.length > 0 &&
-    !!pp.overview &&
-    pp.overview.trim() !== "" &&
-    (pp.onsite_rate_cents != null || pp.remote_rate_cents != null) &&
-    pp.region_id != null
-  );
-}
-
 /** The full onboarding snapshot the wizard needs to render + resume. */
 export async function getOnboardingState(viewer: Viewer) {
   const p = await loadDraft(viewer);
   const pp = p.providerProfile!;
   const emailVerified = p.user?.email_verified != null;
+  // Marketplace visibility is completeness-gated (brief_K), no submit step.
+  const visible =
+    pp.status === "ACTIVE" &&
+    pp.completeness >= VISIBILITY_THRESHOLD &&
+    pp.paused_at == null;
 
   return {
     email: p.user?.email ?? "",
     emailVerified,
     resumeStep: emailVerified ? computeResumeStep(p) : ("verify" as const),
-    complete: isComplete(p),
+    status: pp.status,
+    completeness: pp.completeness,
+    visibilityThreshold: VISIBILITY_THRESHOLD,
+    visible,
+    paused: pp.paused_at != null,
     profile: {
       experienceLevel: pp.experience_level,
       goal: pp.goal,
@@ -606,6 +604,49 @@ export async function applyProviderSection(
     case "review":
       break;
   }
+
+  // Every save recomputes stored completeness (brief_K) — the marketplace
+  // visibility gate reads this column, so it must stay current on every write.
+  await recomputeCompleteness(profileId);
+}
+
+/**
+ * Recompute + persist a provider's `completeness` (0–100) from the single
+ * `computeProviderCompleteness` helper. Called after every section save.
+ */
+export async function recomputeCompleteness(profileId: string): Promise<number> {
+  const profile = await prisma.providerProfile.findUnique({
+    where: { id: profileId },
+    include: {
+      skills: true,
+      workExperiences: true,
+      education: true,
+      languages: true,
+      certifications: true,
+      person: { select: { photo_url: true } },
+    },
+  });
+  if (!profile) return 0;
+  const completeness = computeProviderCompleteness({
+    headline: profile.headline,
+    overview: profile.overview,
+    experience_level: profile.experience_level,
+    region_id: profile.region_id,
+    onsite_rate_cents: profile.onsite_rate_cents,
+    remote_rate_cents: profile.remote_rate_cents,
+    work_types: profile.work_types,
+    skills: profile.skills,
+    workExperiences: profile.workExperiences,
+    education: profile.education,
+    languages: profile.languages,
+    certifications: profile.certifications,
+    photoUrl: profile.person.photo_url,
+  });
+  await prisma.providerProfile.update({
+    where: { id: profileId },
+    data: { completeness },
+  });
+  return completeness;
 }
 
 /**
@@ -623,26 +664,6 @@ export async function saveProviderStep(
   }
   await applyProviderSection(p.providerProfile!.id, p.id, step, data);
   return getOnboardingState(viewer);
-}
-
-// ---------------------------------------------------------------------------
-// Submit for review.
-// ---------------------------------------------------------------------------
-
-export async function submitProviderProfile(viewer: Viewer) {
-  const p = await loadDraft(viewer);
-  if (p.user?.email_verified == null) {
-    throw new OnboardingError("Verify your email first", "NOT_VERIFIED");
-  }
-  if (!isComplete(p)) {
-    throw new OnboardingError("Complete all required steps first", "INCOMPLETE");
-  }
-  await prisma.providerProfile.update({
-    where: { id: p.providerProfile!.id },
-    // Under review until an admin approves (separate brief).
-    data: { published: false, approval_status: "PENDING" },
-  });
-  return { ok: true };
 }
 
 // ===========================================================================
