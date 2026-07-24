@@ -75,7 +75,7 @@ function LoginForm() {
           disabled={loading}
           className="w-full rounded-lg bg-foreground px-4 py-2 font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-50"
         >
-          {loading ? "Signing in…" : "Sign in"}
+          {loading ? "Signing in…" : "Sign In"}
         </button>
       </form>
     </main>

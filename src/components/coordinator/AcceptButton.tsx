@@ -62,7 +62,7 @@ export function AcceptButton({ token }: { token: string }) {
         disabled={busy}
         className="rounded-full bg-magenta px-6 py-3 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
       >
-        {busy ? "Accepting…" : "Accept invitation"}
+        {busy ? "Accepting…" : "Accept Invitation"}
       </button>
     </div>
   );

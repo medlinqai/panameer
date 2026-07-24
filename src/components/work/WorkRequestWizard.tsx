@@ -16,20 +16,20 @@ const SCREENS = ["start", "skills", "scope", "location", "review"] as const;
 type Screen = (typeof SCREENS)[number];
 
 const EXPERIENCE_OPTIONS = [
-  { value: "BEGINNER", label: "Entry level" },
+  { value: "BEGINNER", label: "Entry Level" },
   { value: "MID_CAREER", label: "Intermediate" },
   { value: "EXPERT", label: "Expert" },
 ];
 const DURATION_OPTIONS = [
-  { value: "LT_1_MONTH", label: "Less than 1 month" },
-  { value: "ONE_TO_3_MONTHS", label: "1–3 months" },
-  { value: "THREE_TO_6_MONTHS", label: "3–6 months" },
-  { value: "GT_6_MONTHS", label: "More than 6 months" },
+  { value: "LT_1_MONTH", label: "Less Than 1 Month" },
+  { value: "ONE_TO_3_MONTHS", label: "1–3 Months" },
+  { value: "THREE_TO_6_MONTHS", label: "3–6 Months" },
+  { value: "GT_6_MONTHS", label: "More Than 6 Months" },
 ];
 const WORKSITE_OPTIONS = [
   { value: "REMOTE", title: "Remote", description: "Work is performed remotely." },
-  { value: "ONSITE", title: "At your location", description: "On-site at your premises." },
-  { value: "HYBRID", title: "Both (hybrid)", description: "A mix of remote and on-site." },
+  { value: "ONSITE", title: "At Your Location", description: "On-site at your premises." },
+  { value: "HYBRID", title: "Both (Hybrid)", description: "A mix of remote and on-site." },
 ];
 
 type RoleType = { id: string; display: string };
@@ -194,7 +194,7 @@ export function WorkRequestWizard() {
   const shell = (props: Partial<React.ComponentProps<typeof WizardShell>> & { title: string }) => ({
     progress,
     busy,
-    secondaryLabel: "Skip for now",
+    secondaryLabel: "Skip for Now",
     onSecondary: skip,
     ...props,
   });
@@ -204,7 +204,7 @@ export function WorkRequestWizard() {
       return (
         <WizardShell
           {...shell({
-            title: "Post a work request",
+            title: "Post a Work Request",
             subtitle: "Describe the service you need. It only takes a few minutes.",
             canBack: false,
             hideFooter: true,
@@ -214,17 +214,17 @@ export function WorkRequestWizard() {
             <OptionCard
               selected={false}
               onClick={() => goto("skills")}
-              title="Get started using AI"
+              title="Get Started Using AI"
               description="Draft your request with AI assistance. (Coming soon — continues manually for now.)"
             />
             <OptionCard
               selected={false}
               onClick={() => goto("skills")}
-              title="I'll do it without AI"
+              title="I'll Do It Without AI"
               description="Fill in the details yourself, step by step."
             />
             <button onClick={skip} className="text-[14px] font-bold text-ink-2 hover:text-magenta">
-              Skip for now
+              Skip for Now
             </button>
           </div>
         </WizardShell>
@@ -234,7 +234,7 @@ export function WorkRequestWizard() {
       return (
         <WizardShell
           {...shell({
-            title: "What are the main skills required?",
+            title: "What Are the Main Skills Required?",
             subtitle: "Pick one main category, then the skills for this request.",
             canBack: false,
             onContinue: () => {
@@ -248,7 +248,7 @@ export function WorkRequestWizard() {
           {error && <Notice>{error}</Notice>}
           <div className="space-y-5">
             <div>
-              <p className="mb-2 text-[14px] font-bold">Role type (pick one)</p>
+              <p className="mb-2 text-[14px] font-bold">Role Type (Pick One)</p>
               <div className="flex flex-wrap gap-2">
                 {roleTypes.map((rt) => (
                   <Chip
@@ -306,7 +306,7 @@ export function WorkRequestWizard() {
       return (
         <WizardShell
           {...shell({
-            title: "Scope the work",
+            title: "Scope the Work",
             subtitle: "A clear title and scope help you attract the right talent.",
             onBack: back,
             onContinue: () => {
@@ -342,7 +342,7 @@ export function WorkRequestWizard() {
             </Field>
 
             <div>
-              <p className="mb-2 text-[14px] font-bold">Experience level</p>
+              <p className="mb-2 text-[14px] font-bold">Experience Level</p>
               <div className="flex flex-wrap gap-2">
                 {EXPERIENCE_OPTIONS.map((o) => (
                   <Chip
@@ -378,18 +378,18 @@ export function WorkRequestWizard() {
                   selected={f.budgetType === "FIXED"}
                   onClick={() => setF({ ...f, budgetType: "FIXED" })}
                 >
-                  Fixed price
+                  Fixed Price
                 </Chip>
                 <Chip
                   selected={f.budgetType === "HOURLY"}
                   onClick={() => setF({ ...f, budgetType: "HOURLY" })}
                 >
-                  Hourly rate
+                  Hourly Rate
                 </Chip>
               </div>
               {f.budgetType && (
                 <Field
-                  label={f.budgetType === "HOURLY" ? "Rate (USD/hr)" : "Total budget (USD)"}
+                  label={f.budgetType === "HOURLY" ? "Rate (USD/hr)" : "Total Budget (USD)"}
                 >
                   <TextInput
                     type="number"
@@ -402,7 +402,7 @@ export function WorkRequestWizard() {
               )}
             </div>
 
-            <Field label="Description (optional)">
+            <Field label="Description (Optional)">
               <TextArea
                 value={f.description}
                 onChange={(e) => setF({ ...f, description: e.target.value })}
@@ -417,7 +417,7 @@ export function WorkRequestWizard() {
       return (
         <WizardShell
           {...shell({
-            title: "Where is this work located?",
+            title: "Where Is This Work Located?",
             onBack: back,
             onContinue: () => {
               if (!f.worksite) return;
@@ -452,7 +452,7 @@ export function WorkRequestWizard() {
             </div>
             <div>
               <p className="mb-2 text-[14px] font-bold">
-                Where does the provider perform this work?
+                Where Does the Provider Perform This Work?
               </p>
               <div className="space-y-3">
                 {WORKSITE_OPTIONS.map((o) => (
@@ -480,7 +480,7 @@ export function WorkRequestWizard() {
       const worksiteLabel = WORKSITE_OPTIONS.find((o) => o.value === f.worksite)?.title ?? "—";
       const rows: [string, string, Screen][] = [
         ["Title", f.title || "—", "scope"],
-        ["Category & skills", `${roleTypeLabel} · ${f.skillIds.length} skills`, "skills"],
+        ["Category & Skills", `${roleTypeLabel} · ${f.skillIds.length} skills`, "skills"],
         ["Experience", expLabel, "scope"],
         ["Duration", durLabel, "scope"],
         ["Budget", budget, "scope"],
@@ -489,11 +489,11 @@ export function WorkRequestWizard() {
       return (
         <WizardShell
           {...shell({
-            title: "Review & post",
+            title: "Review & Post",
             subtitle: "Check everything over, then post your request.",
             onBack: back,
             onContinue: post,
-            continueLabel: "Post work request",
+            continueLabel: "Post Work Request",
           })}
         >
           {error && <Notice>{error}</Notice>}

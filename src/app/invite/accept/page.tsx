@@ -47,10 +47,10 @@ export default async function InviteAcceptPage({
 
 function ErrorState({ reason }: { reason: "invalid" | "expired" | "revoked" | "used" }) {
   const copy: Record<string, { title: string; body: string }> = {
-    expired: { title: "Invitation expired", body: "This invitation link has expired. Ask your coordinator to send a new one." },
-    revoked: { title: "Invitation revoked", body: "This invitation is no longer valid. Ask your coordinator to send a new one." },
-    used: { title: "Invitation already used", body: "This invitation has already been accepted." },
-    invalid: { title: "Invalid invitation", body: "We couldn't find that invitation. Check the link or ask your coordinator to resend it." },
+    expired: { title: "Invitation Expired", body: "This invitation link has expired. Ask your coordinator to send a new one." },
+    revoked: { title: "Invitation Revoked", body: "This invitation is no longer valid. Ask your coordinator to send a new one." },
+    used: { title: "Invitation Already Used", body: "This invitation has already been accepted." },
+    invalid: { title: "Invalid Invitation", body: "We couldn't find that invitation. Check the link or ask your coordinator to resend it." },
   };
   const c = copy[reason];
   return (
@@ -77,7 +77,7 @@ async function ValidState({
   const header = (
     <>
       <h1 className="text-2xl font-extrabold tracking-[-0.5px]">
-        You&apos;re invited
+        You&apos;re Invited
       </h1>
       <p className="mt-2 text-ink-2">
         <b>{lookup.coordinatorName}</b> invited you to join Panameer as a service
@@ -100,7 +100,7 @@ async function ValidState({
           href={`/join/provider?invite=${encodeURIComponent(token)}`}
           className="mt-6 inline-flex rounded-full bg-magenta px-6 py-3 font-bold text-white transition-colors hover:bg-magenta-dark"
         >
-          Accept &amp; create your account
+          Accept &amp; Create Your Account
         </Link>
       </div>
     );
@@ -122,7 +122,7 @@ async function ValidState({
           href={`/login?callbackUrl=${encodeURIComponent(acceptUrl)}`}
           className="mt-4 inline-flex rounded-full bg-magenta px-6 py-3 font-bold text-white transition-colors hover:bg-magenta-dark"
         >
-          Log in to accept
+          Log In to Accept
         </Link>
       </div>
     );
@@ -148,7 +148,7 @@ async function ValidState({
           href={`/login?callbackUrl=${encodeURIComponent(acceptUrl)}`}
           className="mt-4 inline-flex rounded-full border-[1.5px] border-line px-6 py-3 font-bold text-ink transition-colors hover:border-[#d9d4e2]"
         >
-          Switch account
+          Switch Account
         </Link>
       </div>
     );

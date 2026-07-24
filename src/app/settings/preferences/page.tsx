@@ -97,13 +97,13 @@ export default function PreferencesPage() {
     >
       <div className="space-y-3">
         <Toggle
-          label="Email notifications"
+          label="Email Notifications"
           description="Proposals, messages, and engagement updates."
           checked={notifyEmail}
           onChange={setNotifyEmail}
         />
         <Toggle
-          label="Product updates"
+          label="Product Updates"
           description="Occasional news about new Panameer features."
           checked={notifyProduct}
           onChange={setNotifyProduct}

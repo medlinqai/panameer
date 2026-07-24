@@ -47,20 +47,20 @@ type Screen = (typeof SCREENS)[number];
 
 const EXPERIENCE_OPTIONS = [
   { value: "BEGINNER", title: "Beginner", description: "New to consulting or early in my journey." },
-  { value: "MID_CAREER", title: "Mid-career", description: "Several years delivering real engagements." },
+  { value: "MID_CAREER", title: "Mid-Career", description: "Several years delivering real engagements." },
   { value: "EXPERT", title: "Expert", description: "Seasoned specialist others rely on." },
 ];
 const GOAL_OPTIONS = [
-  { value: "MAIN_HUSTLE", title: "This is my main work", description: "I want Panameer to be my primary source of engagements." },
-  { value: "SIDE_HUSTLE", title: "A side hustle", description: "Extra work alongside a main job." },
-  { value: "BUILD_SKILLS", title: "Build my skills & reputation", description: "Grow experience and a track record." },
-  { value: "NONE", title: "Just exploring", description: "Seeing what's here for now." },
+  { value: "MAIN_HUSTLE", title: "This Is My Main Work", description: "I want Panameer to be my primary source of engagements." },
+  { value: "SIDE_HUSTLE", title: "A Side Hustle", description: "Extra work alongside a main job." },
+  { value: "BUILD_SKILLS", title: "Build My Skills & Reputation", description: "Grow experience and a track record." },
+  { value: "NONE", title: "Just Exploring", description: "Seeing what's here for now." },
 ];
 const WORK_TYPE_OPTIONS = [
   { value: "HOURLY", label: "Hourly" },
-  { value: "PACKAGES", label: "Fixed packages" },
-  { value: "AGENCY", label: "Through my agency" },
-  { value: "CONTRACT_TO_HIRE", label: "Contract-to-hire" },
+  { value: "PACKAGES", label: "Fixed Packages" },
+  { value: "AGENCY", label: "Through My Agency" },
+  { value: "CONTRACT_TO_HIRE", label: "Contract-to-Hire" },
 ];
 
 type RoleType = { id: string; code: string; display: string };
@@ -372,7 +372,7 @@ export default function JoinPage() {
             This account isn&apos;t a provider profile.
           </p>
           <a href="/dashboard" className="mt-4 inline-block font-bold text-magenta">
-            Go to dashboard →
+            Go to Dashboard →
           </a>
         </div>
       </div>
@@ -409,7 +409,7 @@ export default function JoinPage() {
       )}
       <div className="flex items-center justify-between">
         <span className="text-[13px] font-bold text-ink-2">
-          Profile completeness
+          Profile Completeness
         </span>
         <span className="text-[14px] font-extrabold text-magenta">
           {completeness}%{" "}
@@ -446,7 +446,7 @@ export default function JoinPage() {
       return (
         <WizardShell
           {...shell({
-            title: "What's your experience level?",
+            title: "What's Your Experience Level?",
             subtitle: "This helps us match you to the right work.",
             onContinue: () => {
               if (!expLevel) return;
@@ -473,7 +473,7 @@ export default function JoinPage() {
       return (
         <WizardShell
           {...shell({
-            title: "What do you want out of Panameer?",
+            title: "What Do You Want Out of Panameer?",
             onContinue: () => {
               if (!goal) return;
               goNext();
@@ -499,10 +499,10 @@ export default function JoinPage() {
       return (
         <WizardShell
           {...shell({
-            title: "Create your account",
+            title: "Create Your Account",
             subtitle: "You'll verify your email next.",
             onContinue: createAccount,
-            continueLabel: "Create account",
+            continueLabel: "Create Account",
             continueDisabled:
               !acct.firstName || !acct.lastName || !acct.email || !acct.password,
           })}
@@ -516,14 +516,14 @@ export default function JoinPage() {
             )}
             {error && <Notice>{error}</Notice>}
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="First name">
+              <Field label="First Name">
                 <TextInput
                   value={acct.firstName}
                   onChange={(e) => setAcct({ ...acct, firstName: e.target.value })}
                   autoComplete="given-name"
                 />
               </Field>
-              <Field label="Last name">
+              <Field label="Last Name">
                 <TextInput
                   value={acct.lastName}
                   onChange={(e) => setAcct({ ...acct, lastName: e.target.value })}
@@ -552,7 +552,7 @@ export default function JoinPage() {
                   autoComplete="new-password"
                 />
               </Field>
-              <Field label="Confirm password">
+              <Field label="Confirm Password">
                 <TextInput
                   type="password"
                   value={acct.confirm}
@@ -569,7 +569,7 @@ export default function JoinPage() {
       return (
         <WizardShell
           {...shell({
-            title: "Verify your email",
+            title: "Verify Your Email",
             canBack: false,
             onBack: undefined,
             hideFooter: true,
@@ -594,7 +594,7 @@ export default function JoinPage() {
       return (
         <WizardShell
           {...shell({
-            title: "How do you want to work?",
+            title: "How Do You Want to Work?",
             subtitle: "Pick all that apply.",
             onContinue: async () => {
               if (profile.workTypes.length === 0) return;
@@ -633,7 +633,7 @@ export default function JoinPage() {
       return (
         <WizardShell
           {...shell({
-            title: "Your skills",
+            title: "Your Skills",
             subtitle:
               "Pick one main category, then the skills you offer within it.",
             onContinue: async () => {
@@ -653,7 +653,7 @@ export default function JoinPage() {
           {error && <Notice>{error}</Notice>}
           <div className="space-y-6">
             <div>
-              <p className="mb-2 text-[14px] font-bold">Main category (pick one)</p>
+              <p className="mb-2 text-[14px] font-bold">Main Category (Pick One)</p>
               <div className="flex flex-wrap gap-2">
                 {roleTypes.map((rt) => (
                   <Chip
@@ -713,7 +713,7 @@ export default function JoinPage() {
       return (
         <WizardShell
           {...shell({
-            title: "Give yourself a title",
+            title: "Give Yourself a Title",
             subtitle: "This headline appears at the top of your profile.",
             onContinue: async () => {
               if (!profile.headline.trim()) return;
@@ -724,7 +724,7 @@ export default function JoinPage() {
           })}
         >
           {error && <Notice>{error}</Notice>}
-          <Field label="Professional title">
+          <Field label="Professional Title">
             <TextInput
               value={profile.headline}
               onChange={(e) =>
@@ -740,7 +740,7 @@ export default function JoinPage() {
       return (
         <WizardShell
           {...shell({
-            title: "Your experience",
+            title: "Your Experience",
             subtitle: "Add the employers and projects you want to showcase.",
             onContinue: async () => {
               const valid = profile.experiences.filter(
@@ -764,7 +764,7 @@ export default function JoinPage() {
               }
               className="rounded-full bg-magenta px-6 py-3 font-bold text-white hover:bg-magenta-dark"
             >
-              + Add your first employer
+              + Add Your First Employer
             </button>
           ) : (
             <ExperienceEditor
@@ -779,7 +779,7 @@ export default function JoinPage() {
       return (
         <WizardShell
           {...shell({
-            title: "Education & languages",
+            title: "Education & Languages",
             subtitle: "Optional — add what you'd like, or skip for now.",
             onContinue: async () => {
               if (
@@ -790,7 +790,7 @@ export default function JoinPage() {
               )
                 goNext();
             },
-            secondaryLabel: "Skip for now",
+            secondaryLabel: "Skip for Now",
             onSecondary: goNext,
           })}
         >
@@ -808,7 +808,7 @@ export default function JoinPage() {
       return (
         <WizardShell
           {...shell({
-            title: "Write a short bio",
+            title: "Write a Short Bio",
             subtitle: "A few sentences on what you do and the outcomes you drive.",
             onContinue: async () => {
               if (!profile.overview.trim()) return;
@@ -834,7 +834,7 @@ export default function JoinPage() {
       return (
         <WizardShell
           {...shell({
-            title: "Set your rates",
+            title: "Set Your Rates",
             subtitle: "Enter at least one. You can change these anytime.",
             onContinue: async () => {
               if (!profile.onsiteDollars && !profile.remoteDollars) {
@@ -854,7 +854,7 @@ export default function JoinPage() {
         >
           {error && <Notice>{error}</Notice>}
           <div className="grid max-w-md gap-4 sm:grid-cols-2">
-            <Field label="Remote rate (USD/hr)">
+            <Field label="Remote Rate (USD/hr)">
               <TextInput
                 type="number"
                 min="0"
@@ -865,7 +865,7 @@ export default function JoinPage() {
                 placeholder="90"
               />
             </Field>
-            <Field label="Onsite rate (USD/hr)">
+            <Field label="Onsite Rate (USD/hr)">
               <TextInput
                 type="number"
                 min="0"
@@ -884,7 +884,7 @@ export default function JoinPage() {
       return (
         <WizardShell
           {...shell({
-            title: "Where are you based?",
+            title: "Where Are You Based?",
             onContinue: async () => {
               if (!profile.regionId) return;
               if (await postStep("region", { regionId: profile.regionId }))
@@ -912,12 +912,12 @@ export default function JoinPage() {
       return (
         <WizardShell
           {...shell({
-            title: "Add a photo",
+            title: "Add a Photo",
             subtitle:
               "Optional. Without one, we'll use your initials. Uploads are coming soon.",
             onContinue: goNext,
             continueLabel: "Continue",
-            secondaryLabel: "Skip for now",
+            secondaryLabel: "Skip for Now",
             onSecondary: goNext,
           })}
         >
@@ -945,19 +945,19 @@ export default function JoinPage() {
       return (
         <WizardShell
           {...shell({
-            title: "Review your profile",
+            title: "Review Your Profile",
             subtitle: visible
               ? "You're live — buyers can find you. Review anything below, then head to your dashboard."
               : `You're at ${completeness}% — reach ${threshold}% to become visible to buyers. You can keep editing anytime.`,
             onContinue: finish,
-            continueLabel: "Go to dashboard",
+            continueLabel: "Go to Dashboard",
           })}
         >
           {error && <Notice>{error}</Notice>}
 
           <div className="mb-6 rounded-brand border border-line p-5">
             <div className="flex items-center justify-between">
-              <span className="text-[14px] font-bold">Profile completeness</span>
+              <span className="text-[14px] font-bold">Profile Completeness</span>
               <span className="text-[16px] font-extrabold text-magenta">
                 {completeness}%
               </span>
@@ -985,12 +985,12 @@ export default function JoinPage() {
           <div className="space-y-4">
             <ReviewRow label="Title" value={profile.headline} onEdit={() => goto("title")} />
             <ReviewRow
-              label="Work types"
+              label="Work Types"
               value={profile.workTypes.join(", ")}
               onEdit={() => goto("work_type")}
             />
             <ReviewRow
-              label="Category & skills"
+              label="Category & Skills"
               value={`${roleTypeLabel ?? "—"} · ${profile.skillIds.length} skills`}
               onEdit={() => goto("skills")}
             />

@@ -140,7 +140,7 @@ export default function JoinBuyerPage() {
           <h1 className="text-2xl font-extrabold">You&apos;re already signed in</h1>
           <p className="mt-2 text-ink-2">This account isn&apos;t a buyer account.</p>
           <Link href="/dashboard" className="mt-4 inline-block font-bold text-magenta">
-            Go to dashboard →
+            Go to Dashboard →
           </Link>
         </div>
       </div>
@@ -168,14 +168,14 @@ export default function JoinBuyerPage() {
         <div className="space-y-4">
           {error && <Notice>{error}</Notice>}
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="First name">
+            <Field label="First Name">
               <TextInput
                 value={acct.firstName}
                 onChange={(e) => setAcct({ ...acct, firstName: e.target.value })}
                 autoComplete="given-name"
               />
             </Field>
-            <Field label="Last name">
+            <Field label="Last Name">
               <TextInput
                 value={acct.lastName}
                 onChange={(e) => setAcct({ ...acct, lastName: e.target.value })}
@@ -200,7 +200,7 @@ export default function JoinBuyerPage() {
                 autoComplete="new-password"
               />
             </Field>
-            <Field label="Confirm password">
+            <Field label="Confirm Password">
               <TextInput
                 type="password"
                 value={acct.confirm}
@@ -234,7 +234,7 @@ export default function JoinBuyerPage() {
               href="/join/provider"
               className="font-bold text-magenta hover:text-magenta-dark"
             >
-              Apply as a provider
+              Apply as a Provider
             </Link>
           </p>
         </div>
@@ -246,7 +246,7 @@ export default function JoinBuyerPage() {
     return (
       <WizardShell
         progress={progress}
-        title="Verify your email"
+        title="Verify Your Email"
         canBack={false}
         hideFooter
       >
@@ -265,7 +265,7 @@ export default function JoinBuyerPage() {
   return (
     <WizardShell
       progress={progress}
-      title="Choose your plan"
+      title="Choose Your Plan"
       subtitle="Start free, or try Business Plus. No payment required now."
       canBack={false}
       busy={busy}

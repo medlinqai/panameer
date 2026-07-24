@@ -106,13 +106,13 @@ export function VerifyGate({
           onClick={checkNow}
           className="rounded-full bg-magenta px-6 py-3 font-bold text-white transition-colors hover:bg-magenta-dark"
         >
-          I&apos;ve verified — continue
+          I&apos;ve Verified — Continue
         </button>
         <button
           onClick={resend}
           className="rounded-full border-[1.5px] border-line px-6 py-3 font-bold text-ink transition-colors hover:border-[#d9d4e2]"
         >
-          Resend email
+          Resend Email
         </button>
       </div>
 
@@ -124,11 +124,11 @@ export function VerifyGate({
           }}
           className="text-[14px] font-bold text-ink-2 hover:text-magenta"
         >
-          Wrong email? Change it
+          Wrong Email? Change It
         </button>
       ) : (
         <div className="max-w-sm space-y-2">
-          <Field label="New email">
+          <Field label="New Email">
             <TextInput
               type="email"
               value={newEmail}
@@ -140,7 +140,7 @@ export function VerifyGate({
               onClick={saveEmail}
               className="rounded-full bg-magenta px-5 py-2.5 font-bold text-white hover:bg-magenta-dark"
             >
-              Save &amp; resend
+              Save &amp; Resend
             </button>
             <button
               onClick={() => setEditing(false)}

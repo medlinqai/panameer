@@ -42,7 +42,7 @@ export default async function VerifyEmailPage({
               ✓
             </div>
             <h1 className="text-2xl font-extrabold tracking-[-0.5px]">
-              Email verified
+              Email Verified
             </h1>
             <p className="mt-2 text-ink-2">
               You&apos;re all set. Head back to continue building your provider
@@ -52,7 +52,7 @@ export default async function VerifyEmailPage({
               href="/join"
               className="mt-6 inline-flex rounded-full bg-magenta px-6 py-3 font-bold text-white transition-colors hover:bg-magenta-dark"
             >
-              Continue onboarding →
+              Continue Onboarding →
             </Link>
           </>
         ) : (
@@ -61,7 +61,7 @@ export default async function VerifyEmailPage({
               !
             </div>
             <h1 className="text-2xl font-extrabold tracking-[-0.5px]">
-              {reason === "expired" ? "Link expired" : "Invalid link"}
+              {reason === "expired" ? "Link Expired" : "Invalid Link"}
             </h1>
             <p className="mt-2 text-ink-2">
               {reason === "expired"
@@ -72,7 +72,7 @@ export default async function VerifyEmailPage({
               href="/join"
               className="mt-6 inline-flex rounded-full border-[1.5px] border-line px-6 py-3 font-bold text-ink transition-colors hover:border-[#d9d4e2]"
             >
-              Back to onboarding
+              Back to Onboarding
             </Link>
           </>
         )}

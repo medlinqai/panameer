@@ -55,7 +55,7 @@ export default function AdminCompanyDetailPage({
         href="/admin/companies"
         className="mb-4 inline-block text-[14px] font-bold text-ink-2 hover:text-magenta"
       >
-        ← All companies
+        ← All Companies
       </Link>
       <AdminState loading={loading} error={error} />
 
@@ -73,7 +73,7 @@ export default function AdminCompanyDetailPage({
                   <th className="px-4 py-3">Person</th>
                   <th className="px-4 py-3">Email</th>
                   <th className="px-4 py-3">Roles</th>
-                  <th className="px-4 py-3">Profile state</th>
+                  <th className="px-4 py-3">Profile State</th>
                 </tr>
               </thead>
               <tbody>

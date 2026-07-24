@@ -98,7 +98,7 @@ export function CoordinatorConsole() {
             </Notice>
           )}
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Provider email">
+            <Field label="Provider Email">
               <TextInput
                 type="email"
                 value={form.email}
@@ -107,13 +107,13 @@ export function CoordinatorConsole() {
               />
             </Field>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="First name (optional)">
+              <Field label="First Name (Optional)">
                 <TextInput
                   value={form.firstName}
                   onChange={(e) => setForm({ ...form, firstName: e.target.value })}
                 />
               </Field>
-              <Field label="Last name (optional)">
+              <Field label="Last Name (Optional)">
                 <TextInput
                   value={form.lastName}
                   onChange={(e) => setForm({ ...form, lastName: e.target.value })}
@@ -121,7 +121,7 @@ export function CoordinatorConsole() {
               </Field>
             </div>
           </div>
-          <Field label="Message (optional)">
+          <Field label="Message (Optional)">
             <TextArea
               value={form.message}
               onChange={(e) => setForm({ ...form, message: e.target.value })}
@@ -134,7 +134,7 @@ export function CoordinatorConsole() {
             disabled={busy || !form.email.trim()}
             className="rounded-full bg-magenta px-6 py-2.5 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
           >
-            {busy ? "Sending…" : "Send invitation"}
+            {busy ? "Sending…" : "Send Invitation"}
           </button>
         </div>
       </Card>
@@ -177,7 +177,7 @@ export function CoordinatorConsole() {
                           <Badge tone="green">✓ Validated</Badge>
                         )}
                         <Badge tone={p.visible ? "green" : "neutral"}>
-                          {p.visible ? "Live" : "Not visible"}
+                          {p.visible ? "Live" : "Not Visible"}
                         </Badge>
                       </div>
                     </li>
@@ -207,7 +207,7 @@ export function CoordinatorConsole() {
                           {i.email}
                         </p>
                         <p className="text-sm text-black/50 dark:text-white/50">
-                          Invited — pending
+                          Invited — Pending
                         </p>
                       </div>
                       <div className="flex gap-2">

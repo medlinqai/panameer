@@ -53,13 +53,13 @@ export default function IdBadgePage() {
       error={error}
       footer={
         settings.idBadge ? (
-          <Badge tone="green">Badge set</Badge>
+          <Badge tone="green">Badge Set</Badge>
         ) : (
-          <Badge>No badge yet</Badge>
+          <Badge>No Badge Yet</Badge>
         )
       }
     >
-      <Field label="ID badge reference" hint="Simple value for now — no third-party verification in this release.">
+      <Field label="ID Badge Reference" hint="Simple value for now — no third-party verification in this release.">
         <TextInput
           value={value}
           onChange={(e) => setValue(e.target.value)}

@@ -28,20 +28,20 @@ import { useSettings, type ProviderSettings } from "@/components/settings/useSet
 
 const EXPERIENCE_OPTIONS = [
   { value: "BEGINNER", label: "Beginner" },
-  { value: "MID_CAREER", label: "Mid-career" },
+  { value: "MID_CAREER", label: "Mid-Career" },
   { value: "EXPERT", label: "Expert" },
 ];
 const GOAL_OPTIONS = [
-  { value: "MAIN_HUSTLE", label: "Main work" },
-  { value: "SIDE_HUSTLE", label: "Side hustle" },
-  { value: "BUILD_SKILLS", label: "Build skills & reputation" },
-  { value: "NONE", label: "Just exploring" },
+  { value: "MAIN_HUSTLE", label: "Main Work" },
+  { value: "SIDE_HUSTLE", label: "Side Hustle" },
+  { value: "BUILD_SKILLS", label: "Build Skills & Reputation" },
+  { value: "NONE", label: "Just Exploring" },
 ];
 const WORK_TYPE_OPTIONS = [
   { value: "HOURLY", label: "Hourly" },
-  { value: "PACKAGES", label: "Fixed packages" },
-  { value: "AGENCY", label: "Through my agency" },
-  { value: "CONTRACT_TO_HIRE", label: "Contract-to-hire" },
+  { value: "PACKAGES", label: "Fixed Packages" },
+  { value: "AGENCY", label: "Through My Agency" },
+  { value: "CONTRACT_TO_HIRE", label: "Contract-to-Hire" },
 ];
 
 type RoleType = { id: string; display: string };
@@ -223,7 +223,7 @@ export default function SettingsProfilePage() {
       {/* Completeness + visibility */}
       <section className="rounded-brand border border-line p-6">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-[18px] font-bold">Profile completeness</h2>
+          <h2 className="text-[18px] font-bold">Profile Completeness</h2>
           <span className="text-[18px] font-extrabold text-magenta">{pct}%</span>
         </div>
         <div className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-line">
@@ -239,7 +239,7 @@ export default function SettingsProfilePage() {
           ) : settings.visible ? (
             <Badge tone="green">Live — buyers can find you</Badge>
           ) : (
-            <Badge>Not visible yet</Badge>
+            <Badge>Not Visible Yet</Badge>
           )}
         </div>
 
@@ -260,11 +260,11 @@ export default function SettingsProfilePage() {
 
       {/* Pause my profile */}
       <Section
-        title="Pause my profile"
+        title="Pause My Profile"
         description="Temporarily hide your profile from the marketplace. This is a pause, not a delete — unpause anytime and your profile returns exactly as it was."
         onSave={togglePause}
         saving={savingKey === "pause"}
-        saveLabel={paused ? "Unpause my profile" : "Pause my profile"}
+        saveLabel={paused ? "Unpause My Profile" : "Pause My Profile"}
         error={errors.pause ?? null}
       >
         <p className="text-[14px] text-ink-2">
@@ -342,7 +342,7 @@ export default function SettingsProfilePage() {
         saveDisabled={!d.headline.trim()}
         {...s("title")}
       >
-        <Field label="Professional title">
+        <Field label="Professional Title">
           <TextInput
             value={d.headline}
             onChange={(e) => setD({ ...d, headline: e.target.value })}
@@ -367,7 +367,7 @@ export default function SettingsProfilePage() {
 
       {/* Experience level & goal */}
       <Section
-        title="Experience & goal"
+        title="Experience & Goal"
         onSave={async () => {
           await save("experience_level", { experienceLevel: d.experienceLevel });
           await save("goal", { goal: d.goal });
@@ -376,7 +376,7 @@ export default function SettingsProfilePage() {
       >
         <div className="grid gap-6 sm:grid-cols-2">
           <div>
-            <p className="mb-2 text-[14px] font-bold">Experience level</p>
+            <p className="mb-2 text-[14px] font-bold">Experience Level</p>
             <div className="flex flex-wrap gap-2">
               {EXPERIENCE_OPTIONS.map((o) => (
                 <Chip
@@ -408,7 +408,7 @@ export default function SettingsProfilePage() {
 
       {/* Work types */}
       <Section
-        title="Work types"
+        title="Work Types"
         onSave={() => save("work_type", { workTypes: d.workTypes })}
         saveDisabled={d.workTypes.length === 0}
         {...s("work_type")}
@@ -448,7 +448,7 @@ export default function SettingsProfilePage() {
       >
         <div className="space-y-5">
           <div>
-            <p className="mb-2 text-[14px] font-bold">Main category (pick one)</p>
+            <p className="mb-2 text-[14px] font-bold">Main Category (Pick One)</p>
             <div className="flex flex-wrap gap-2">
               {roleTypes.map((rt) => (
                 <Chip
@@ -503,7 +503,7 @@ export default function SettingsProfilePage() {
 
       {/* Work experience */}
       <Section
-        title="Work experience"
+        title="Work Experience"
         onSave={() => save("experience", { experiences: d.experiences })}
         {...s("experience")}
       >
@@ -515,7 +515,7 @@ export default function SettingsProfilePage() {
 
       {/* Education & languages */}
       <Section
-        title="Education & languages"
+        title="Education & Languages"
         onSave={() =>
           save("education_languages", {
             education: d.education,
@@ -557,7 +557,7 @@ export default function SettingsProfilePage() {
         {...s("rate")}
       >
         <div className="grid max-w-md gap-4 sm:grid-cols-2">
-          <Field label="Remote rate (USD/hr)">
+          <Field label="Remote Rate (USD/hr)">
             <TextInput
               type="number"
               min="0"
@@ -565,7 +565,7 @@ export default function SettingsProfilePage() {
               onChange={(e) => setD({ ...d, remoteDollars: e.target.value })}
             />
           </Field>
-          <Field label="Onsite rate (USD/hr)">
+          <Field label="Onsite Rate (USD/hr)">
             <TextInput
               type="number"
               min="0"

@@ -62,7 +62,7 @@ export function CertificationsEditor({
         onClick={() => onChange([...value, { name: "", issuer: "", year: null }])}
         className="text-[14px] font-bold text-magenta hover:text-magenta-dark"
       >
-        + Add certification
+        + Add Certification
       </button>
     </div>
   );

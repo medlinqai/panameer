@@ -91,7 +91,7 @@ export default function DashboardPage() {
       <PostedBanner />
       <header>
         <h1 className="text-3xl font-semibold tracking-tight">
-          Welcome back, {person.firstName}
+          Welcome Back, {person.firstName}
         </h1>
         <p className="mt-1 text-black/60 dark:text-white/60">
           {company.name}
@@ -105,7 +105,7 @@ export default function DashboardPage() {
             ⏸
           </span>
           <div>
-            <p className="font-semibold">Your profile is paused</p>
+            <p className="font-semibold">Your Profile Is Paused</p>
             <p className="mt-1 text-sm text-black/60 dark:text-white/60">
               You&apos;re hidden from the marketplace. Unpause anytime from{" "}
               <Link href="/settings/profile" className="underline">
@@ -144,7 +144,7 @@ export default function DashboardPage() {
         {providerProfile && (
           <Card>
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Your provider profile</h2>
+              <h2 className="text-lg font-semibold">Your Provider Profile</h2>
               <div className="flex gap-2">
                 <Badge
                   tone={
@@ -159,13 +159,13 @@ export default function DashboardPage() {
                     ? "Paused"
                     : providerProfile.visible
                       ? "Live"
-                      : "Not visible"}
+                      : "Not Visible"}
                 </Badge>
                 {providerProfile.validationStatus === "VALIDATED" && (
                   <Badge tone="green">✓ Validated</Badge>
                 )}
                 {providerProfile.validationStatus === "REQUESTED" && (
-                  <Badge tone="amber">Validation pending</Badge>
+                  <Badge tone="amber">Validation Pending</Badge>
                 )}
               </div>
             </div>
@@ -173,7 +173,7 @@ export default function DashboardPage() {
             {/* Completeness meter */}
             <div className="mb-4">
               <div className="mb-1 flex items-center justify-between text-xs text-black/50 dark:text-white/50">
-                <span>Profile completeness</span>
+                <span>Profile Completeness</span>
                 <span className="font-semibold">{providerProfile.completeness}%</span>
               </div>
               <div className="h-2 w-full overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
@@ -224,13 +224,13 @@ export default function DashboardPage() {
                 href="/profile"
                 className="inline-flex rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90"
               >
-                View my profile
+                View My Profile
               </Link>
               <Link
                 href="/settings/profile"
                 className="inline-flex rounded-lg border border-black/10 px-4 py-2 text-sm font-medium transition-colors hover:bg-black/[0.04] dark:border-white/15 dark:hover:bg-white/[0.06]"
               >
-                Manage profile
+                Manage Profile
               </Link>
             </div>
           </Card>
@@ -239,7 +239,7 @@ export default function DashboardPage() {
         {buyerProfile && (
           <Card>
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Hire talent</h2>
+              <h2 className="text-lg font-semibold">Hire Talent</h2>
               <Badge tone="blue">
                 {buyerProfile.subscriptionTier === "BUSINESS_PLUS"
                   ? "Business Plus"
@@ -260,7 +260,7 @@ export default function DashboardPage() {
 
         {!providerProfile && !buyerProfile && (
           <Card>
-            <h2 className="text-lg font-semibold">Get started</h2>
+            <h2 className="text-lg font-semibold">Get Started</h2>
             <p className="mt-2 text-black/70 dark:text-white/70">
               Your profile isn&apos;t set up yet. Onboarding is coming soon.
             </p>

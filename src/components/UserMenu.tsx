@@ -68,7 +68,7 @@ export function UserMenu({ me }: { me: Me }) {
                 onClick={() => setOpen(false)}
                 className="block px-4 py-2.5 text-sm hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
               >
-                My profile
+                My Profile
               </Link>
               <Link
                 href="/settings/profile"
@@ -105,7 +105,7 @@ export function UserMenu({ me }: { me: Me }) {
             onClick={() => signOut({ callbackUrl: "/login" })}
             className="block w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-black/[0.04] dark:text-red-400 dark:hover:bg-white/[0.06]"
           >
-            Sign out
+            Sign Out
           </button>
         </div>
       )}

@@ -66,21 +66,21 @@ export function ExperienceEditor({
                 placeholder="e.g. Ceres Holdings"
               />
             </Field>
-            <Field label="Role title">
+            <Field label="Role Title">
               <TextInput
                 value={exp.roleTitle}
                 onChange={(e) => update(i, { roleTitle: e.target.value })}
                 placeholder="e.g. Lead Oracle Cloud Consultant"
               />
             </Field>
-            <Field label="Start date">
+            <Field label="Start Date">
               <TextInput
                 type="date"
                 value={exp.startDate ?? ""}
                 onChange={(e) => update(i, { startDate: e.target.value || null })}
               />
             </Field>
-            <Field label="End date" hint="Leave blank if current">
+            <Field label="End Date" hint="Leave blank if current">
               <TextInput
                 type="date"
                 value={exp.endDate ?? ""}
@@ -90,7 +90,7 @@ export function ExperienceEditor({
           </div>
 
           <div className="mt-4">
-            <Field label="What did you do?">
+            <Field label="What Did You Do?">
               <TextArea
                 value={exp.description ?? ""}
                 onChange={(e) => update(i, { description: e.target.value })}
@@ -101,7 +101,7 @@ export function ExperienceEditor({
 
           {/* Projects */}
           <div className="mt-4">
-            <p className="mb-2 text-[14px] font-bold">Notable projects</p>
+            <p className="mb-2 text-[14px] font-bold">Notable Projects</p>
             <div className="space-y-3">
               {exp.projects.map((p, pi) => (
                 <div key={pi} className="rounded-[12px] bg-bg-soft p-3">
@@ -143,7 +143,7 @@ export function ExperienceEditor({
               }
               className="mt-3 text-[14px] font-bold text-magenta hover:text-magenta-dark"
             >
-              + Add project
+              + Add Project
             </button>
           </div>
         </div>
@@ -154,7 +154,7 @@ export function ExperienceEditor({
         onClick={() => onChange([...value, emptyExperience()])}
         className="rounded-full border-[1.5px] border-line px-5 py-2.5 font-bold text-ink transition-colors hover:border-[#d9d4e2]"
       >
-        + Add employer
+        + Add Employer
       </button>
     </div>
   );

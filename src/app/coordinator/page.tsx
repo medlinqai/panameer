@@ -30,7 +30,7 @@ export default async function CoordinatorPage() {
             href="/dashboard"
             className="ml-auto text-[14px] font-bold text-ink-2 hover:text-magenta"
           >
-            ← Back to dashboard
+            ← Back to Dashboard
           </Link>
         </div>
       </header>

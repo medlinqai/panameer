@@ -47,7 +47,7 @@ export function EducationLanguagesEditor({
                     onChange={(ev) => updEdu(i, { degree: ev.target.value })}
                   />
                 </Field>
-                <Field label="Field of study">
+                <Field label="Field of Study">
                   <TextInput
                     value={e.field ?? ""}
                     onChange={(ev) => updEdu(i, { field: ev.target.value })}
@@ -85,7 +85,7 @@ export function EducationLanguagesEditor({
           }
           className="mt-3 text-[14px] font-bold text-magenta hover:text-magenta-dark"
         >
-          + Add education
+          + Add Education
         </button>
       </section>
 
@@ -128,7 +128,7 @@ export function EducationLanguagesEditor({
           }
           className="mt-3 text-[14px] font-bold text-magenta hover:text-magenta-dark"
         >
-          + Add language
+          + Add Language
         </button>
       </section>
     </div>

@@ -94,7 +94,7 @@ export default function JoinRoleSelect() {
         <p className="mt-6 text-[14px] text-ink-2">
           Already have an account?{" "}
           <Link href="/login" className="font-bold text-magenta hover:text-magenta-dark">
-            Log in
+            Log In
           </Link>
         </p>
       </main>

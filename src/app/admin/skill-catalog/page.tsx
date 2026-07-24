@@ -29,7 +29,7 @@ export default function AdminSkillCatalogPage() {
       {data && (
         <div className="space-y-6">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[14px] font-bold">Role types:</span>
+            <span className="text-[14px] font-bold">Role Types:</span>
             {data.roleTypes.map((rt) => (
               <Badge key={rt.id}>{rt.display}</Badge>
             ))}

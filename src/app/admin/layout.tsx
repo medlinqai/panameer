@@ -35,7 +35,7 @@ export default async function AdminLayout({
             href="/dashboard"
             className="ml-auto text-[14px] font-bold text-ink-2 hover:text-magenta"
           >
-            ← Back to app
+            ← Back to App
           </Link>
         </div>
       </header>
