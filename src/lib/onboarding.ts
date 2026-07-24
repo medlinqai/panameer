@@ -668,7 +668,7 @@ export async function saveProviderStep(
 
 // ===========================================================================
 // Buyer onboarding (brief_G) — the lighter sibling of the provider flow.
-// Buyers are NOT reviewed: no approval_status/PENDING gate; active on verify +
+// Buyers are NOT reviewed: no review gate; active on verify +
 // tier choice. Reuses the same email-verification machinery (VerificationToken
 // + /verify-email + issue/consume) — nothing new there.
 // ===========================================================================

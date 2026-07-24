@@ -13,7 +13,7 @@ const TONES: Record<Tone, string> = {
   blue: "border-blue-600/20 bg-blue-600/10 text-blue-700 dark:border-blue-400/20 dark:bg-blue-400/10 dark:text-blue-300",
 };
 
-/** A small status pill (profile approval, published state, etc.). */
+/** A small status pill (profile status, validation state, etc.). */
 export function Badge({
   children,
   tone = "neutral",

@@ -2,9 +2,9 @@ import { prisma } from "@/lib/prisma";
 import {
   ownedProviderProfile,
   isMarketplaceVisible,
-  VISIBILITY_THRESHOLD,
   type Viewer,
 } from "@/lib/access";
+import { VISIBILITY_THRESHOLD } from "@/lib/completeness";
 import {
   applyProviderSection,
   OnboardingError,

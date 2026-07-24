@@ -7,6 +7,9 @@
  * helpers as roles are defined in `claude/architecture.md`.
  */
 
+// Single source of the marketplace visibility threshold (pure, seed-safe).
+import { VISIBILITY_THRESHOLD } from "@/lib/completeness";
+
 export type Role = "ADMIN" | "MEMBER";
 
 export type AccessFlags = {
@@ -153,10 +156,11 @@ export function withPAccount(viewer: Viewer, pAccountId: string | null): Viewer 
  * separate path so a missing fence can never leak by default.
  *
  * ── Marketplace boundary ──────────────────────────────────────────────────
- * Do NOT call this for PUBLIC reads. Published provider profiles and posted
- * work requests are shared surfaces meant to be seen across P-Accounts; scoping
- * them would break discovery. Those reads filter by visibility/status
- * (e.g. `{ published: true }`), never by `p_account_id`.
+ * Do NOT call this for PUBLIC reads. Visible provider profiles and posted work
+ * requests are shared surfaces meant to be seen across P-Accounts; scoping them
+ * would break discovery. Those reads filter by visibility (the derived
+ * status/completeness/paused predicate — see `marketplaceVisibleWhere()`),
+ * never by `p_account_id`.
  */
 export function scopedToPAccount<T extends Record<string, unknown>>(
   viewer: Viewer,
@@ -192,14 +196,12 @@ export function ownedProviderProfile(viewer: Viewer): {
 //
 // A provider is visible in the marketplace when their account is ACTIVE, their
 // profile is at least VISIBILITY_THRESHOLD (80%) complete, and they have not
-// paused their listing. There is NO `published` flag — visibility is DERIVED.
+// paused their listing. There is NO publish flag — visibility is DERIVED.
 // Validation is a separate merit track and does NOT affect base visibility.
 //
 // Keep this predicate here, never inlined in components (conventions).
+// The threshold itself is the single source in `completeness.ts` (imported).
 // ---------------------------------------------------------------------------
-
-/** The completeness at/above which a provider is marketplace-visible. */
-export const VISIBILITY_THRESHOLD = 80;
 
 /** Is this provider marketplace-visible? Operates on the stored columns. */
 export function isMarketplaceVisible(p: {

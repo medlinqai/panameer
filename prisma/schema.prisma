@@ -423,14 +423,15 @@ model NonOracleApplication {
 //                                          └─ Region (optional)
 //   Person (is_service_buyer)    ──1:1── BuyerProfile
 //
-// A published + approved ProviderProfile is a PUBLIC marketplace surface (see
+// A ProviderProfile is a PUBLIC marketplace surface when it is visible (see
 // GET /api/providers/[id]) — not PAccount-scoped. Rates are stored in integer
 // cents to avoid float drift; money is never a Float.
 // ---------------------------------------------------------------------------
 
 /// A provider's marketplace profile (1:1 with a Person that is a service
-/// provider). Reviewed before going live: `approval_status` gates visibility
-/// alongside `published`.
+/// provider). Marketplace-visible ⇔ status = ACTIVE AND completeness >= 80 AND
+/// paused_at IS NULL (brief_K). Validation is a separate merit track that does
+/// NOT affect base visibility.
 model ProviderProfile {
   id               String   @id @default(uuid()) @db.Uuid
   person_id        String   @unique @db.Uuid
@@ -454,7 +455,7 @@ model ProviderProfile {
   validated_at            DateTime?
   // Visibility is COMPLETENESS-gated, not approval-gated (brief_K, supersedes
   // brief_E/H). Marketplace-visible ⇔ status=ACTIVE AND completeness>=80 AND
-  // paused_at IS NULL. No `published` flag/button — visibility is derived.
+  // paused_at IS NULL. No publish flag/button — visibility is derived.
   completeness     Int      @default(0)
   paused_at        DateTime?
   // Minimal preferences store (brief_H). Notification opt-ins; expand later.
