@@ -442,6 +442,9 @@ model ProviderProfile {
   id_badge         String?
   published        Boolean  @default(false)
   approval_status  ApprovalStatus @default(PENDING)
+  // Minimal preferences store (brief_H). Notification opt-ins; expand later.
+  notify_email           Boolean @default(true)
+  notify_product_updates Boolean @default(false)
   created_at       DateTime @default(now())
   updated_at       DateTime @updatedAt
 

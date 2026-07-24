@@ -98,3 +98,20 @@ export function scopedToPAccount<T extends Record<string, unknown>>(
   }
   return { ...where, p_account_id: viewer.pAccountId };
 }
+
+/**
+ * Owner scope for a ProviderProfile query — the profile belonging to the viewer,
+ * via the User↔Person 1:1 link. Every read/write in the provider Settings area
+ * (brief_H) runs through this, so a viewer can only ever touch their OWN profile.
+ * There is deliberately no way to target a profile by id — ownership is derived
+ * from the session, never from client input, so cross-account access fails closed.
+ *
+ * Use as the `where` fragment for `providerProfile.findFirst` /
+ * `updateMany`-style ownership checks:
+ *   prisma.providerProfile.findFirst({ where: ownedProviderProfile(viewer) })
+ */
+export function ownedProviderProfile(viewer: Viewer): {
+  person: { user_id: string };
+} {
+  return { person: { user_id: viewer.userId } };
+}

@@ -130,12 +130,20 @@ export default function DashboardPage() {
               </div>
             </dl>
 
-            <Link
-              href="/profile"
-              className="mt-5 inline-flex rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90"
-            >
-              View my profile
-            </Link>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Link
+                href="/profile"
+                className="inline-flex rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90"
+              >
+                View my profile
+              </Link>
+              <Link
+                href="/settings/profile"
+                className="inline-flex rounded-lg border border-black/10 px-4 py-2 text-sm font-medium transition-colors hover:bg-black/[0.04] dark:border-white/15 dark:hover:bg-white/[0.06]"
+              >
+                Manage profile
+              </Link>
+            </div>
           </Card>
         )}
 

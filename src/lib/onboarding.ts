@@ -294,18 +294,31 @@ export async function getOnboardingState(viewer: Viewer) {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type StepData = Record<string, any>;
 
-export async function saveProviderStep(
-  viewer: Viewer,
-  step: ProviderStep,
-  data: StepData
-) {
-  const p = await loadDraft(viewer);
-  if (p.user?.email_verified == null) {
-    throw new OnboardingError("Verify your email first", "NOT_VERIFIED");
-  }
-  const profileId = p.providerProfile!.id;
+/**
+ * Every editable profile section. The onboarding wizard uses PROVIDER_STEPS;
+ * the Settings area (brief_H) additionally edits experience_level, goal, and
+ * certifications on the same live profile.
+ */
+export type ProfileSection =
+  | ProviderStep
+  | "experience_level"
+  | "goal"
+  | "certifications";
 
-  switch (step) {
+/**
+ * Apply ONE profile section — pure persistence + validation, no gating.
+ * Shared by onboarding (`saveProviderStep`, behind the verify gate) and the
+ * Settings area (`saveProviderSection`, owner-scoped) so the write logic —
+ * including the one-main-RoleType rule and cents conversion — lives in exactly
+ * one place. `personId` is needed for the photo (lives on Person).
+ */
+export async function applyProviderSection(
+  profileId: string,
+  personId: string,
+  section: ProfileSection,
+  data: StepData
+): Promise<void> {
+  switch (section) {
     case "work_type": {
       const workTypes: string[] = Array.isArray(data.workTypes)
         ? data.workTypes
@@ -513,16 +526,86 @@ export async function saveProviderStep(
           ? data.photoUrl.trim()
           : null;
       await prisma.person.update({
-        where: { id: p.id },
+        where: { id: personId },
         data: { photo_url: photoUrl },
       });
+      break;
+    }
+
+    case "experience_level": {
+      const level = data.experienceLevel;
+      if (!EXPERIENCE_LEVELS.includes(level)) {
+        throw new OnboardingError("Invalid experience level", "INVALID");
+      }
+      await prisma.providerProfile.update({
+        where: { id: profileId },
+        data: { experience_level: level },
+      });
+      break;
+    }
+
+    case "goal": {
+      const goal = data.goal;
+      if (!PROVIDER_GOALS.includes(goal)) {
+        throw new OnboardingError("Invalid goal", "INVALID");
+      }
+      await prisma.providerProfile.update({
+        where: { id: profileId },
+        data: { goal },
+      });
+      break;
+    }
+
+    case "certifications": {
+      const list: StepData[] = Array.isArray(data.certifications)
+        ? data.certifications
+        : [];
+      const clean = list
+        .map((c) => ({
+          name: (c.name ?? "").trim(),
+          issuer: c.issuer?.trim() || null,
+          year:
+            typeof c.year === "number"
+              ? c.year
+              : c.year
+                ? Number(c.year)
+                : null,
+        }))
+        .filter((c) => c.name);
+      await prisma.$transaction([
+        prisma.certification.deleteMany({
+          where: { provider_profile_id: profileId },
+        }),
+        ...(clean.length
+          ? [
+              prisma.certification.createMany({
+                data: clean.map((c) => ({ provider_profile_id: profileId, ...c })),
+              }),
+            ]
+          : []),
+      ]);
       break;
     }
 
     case "review":
       break;
   }
+}
 
+/**
+ * Save-as-you-go for the onboarding wizard — behind the email-verify gate, then
+ * delegates to the shared `applyProviderSection`. Returns the fresh state.
+ */
+export async function saveProviderStep(
+  viewer: Viewer,
+  step: ProviderStep,
+  data: StepData
+) {
+  const p = await loadDraft(viewer);
+  if (p.user?.email_verified == null) {
+    throw new OnboardingError("Verify your email first", "NOT_VERIFIED");
+  }
+  await applyProviderSection(p.providerProfile!.id, p.id, step, data);
   return getOnboardingState(viewer);
 }
 

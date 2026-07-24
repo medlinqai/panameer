@@ -57,14 +57,24 @@ export function UserMenu({ me }: { me: Me }) {
             )}
           </div>
           {me.providerProfile && (
-            <Link
-              href="/profile"
-              role="menuitem"
-              onClick={() => setOpen(false)}
-              className="block px-4 py-2.5 text-sm hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
-            >
-              My profile
-            </Link>
+            <>
+              <Link
+                href="/profile"
+                role="menuitem"
+                onClick={() => setOpen(false)}
+                className="block px-4 py-2.5 text-sm hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+              >
+                My profile
+              </Link>
+              <Link
+                href="/settings/profile"
+                role="menuitem"
+                onClick={() => setOpen(false)}
+                className="block px-4 py-2.5 text-sm hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+              >
+                Settings
+              </Link>
+            </>
           )}
           <button
             role="menuitem"
