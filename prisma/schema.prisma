@@ -97,7 +97,8 @@ model PAccount {
   created_at DateTime       @default(now())
   updated_at DateTime       @updatedAt
 
-  companies Company[]
+  companies    Company[]
+  workRequests WorkRequest[]
 
   @@map("p_accounts")
 }
@@ -207,6 +208,8 @@ model Person {
   // invites they've sent (brief_I).
   repProviderProfiles ProviderProfile[]   @relation("CoordinatorProviders")
   coordinatorInvites  CoordinatorInvite[] @relation("CoordinatorInvitesSent")
+  // As a BUYER: the work requests this Person created (brief_L).
+  workRequests        WorkRequest[]
 
   @@index([company_id])
   @@index([site_id])
@@ -265,8 +268,9 @@ model RoleType {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  skills Skill[]
-  tags   SkillTag[]
+  skills       Skill[]
+  tags         SkillTag[]
+  workRequests WorkRequest[]
 
   @@map("role_types")
 }
@@ -343,7 +347,8 @@ model Skill {
   roleType       RoleType        @relation(fields: [role_type_id], references: [id])
   pillar         Pillar?         @relation(fields: [pillar_id], references: [id], onDelete: SetNull)
   application    Application?    @relation(fields: [application_id], references: [id], onDelete: SetNull)
-  providerSkills ProviderSkill[]
+  providerSkills    ProviderSkill[]
+  workRequestSkills WorkRequestSkill[]
 
   @@unique([catalog_id, name])
   @@index([role_type_id])
@@ -386,6 +391,7 @@ model Region {
   updated_at  DateTime @updatedAt
 
   providerProfiles ProviderProfile[]
+  workRequests     WorkRequest[]
 
   @@map("regions")
 }
@@ -668,4 +674,90 @@ enum CoordinatorInviteStatus {
   ACCEPTED
   EXPIRED
   REVOKED
+}
+
+// ---------------------------------------------------------------------------
+// Work Requests (brief_L) — a Service Buyer's titled, scoped request for a
+// service, targeting the catalog taxonomy (RoleType + Skills).
+//
+//   Buyer (Person is_service_buyer) → WorkRequest (DRAFT → POSTED) → skills
+//
+// DRAFT is private, fenced by p_account_id (scopedToPAccount). POSTED is the
+// finish line for this brief — a marketplace surface with NO provider-facing UI
+// yet (browse/apply is a later brief). Money is stored in integer cents.
+//
+// Step-collected fields (role_type_id, experience_level, budget_type, worksite,
+// duration, …) are NULLABLE so a DRAFT can be built save-as-you-go; `title`
+// defaults to "" for the same reason. Post enforces the required subset.
+// ---------------------------------------------------------------------------
+
+model WorkRequest {
+  id                  String   @id @default(uuid()) @db.Uuid
+  buyer_person_id     String   @db.Uuid
+  p_account_id        String   @db.Uuid
+  role_type_id        String?  @db.Uuid
+  region_id           String?  @db.Uuid
+  title               String   @default("")
+  description         String?
+  experience_level    ExperienceLevel?
+  budget_type         BudgetType?
+  budget_amount_cents Int?
+  currency            String   @default("USD")
+  worksite            WorksiteType?
+  location_country    String?
+  duration            WorkRequestDuration?
+  status              WorkRequestStatus @default(DRAFT)
+  posted_at           DateTime?
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  buyer    Person    @relation(fields: [buyer_person_id], references: [id], onDelete: Cascade)
+  pAccount PAccount  @relation(fields: [p_account_id], references: [id], onDelete: Cascade)
+  roleType RoleType? @relation(fields: [role_type_id], references: [id], onDelete: SetNull)
+  region   Region?   @relation(fields: [region_id], references: [id], onDelete: SetNull)
+  skills   WorkRequestSkill[]
+
+  @@index([p_account_id])
+  @@index([buyer_person_id])
+  @@index([status])
+  @@map("work_requests")
+}
+
+/// Join: a taxonomy Skill targeted by a WorkRequest (mirrors ProviderSkill).
+/// Skills must share the request's role_type_id (enforced on write).
+model WorkRequestSkill {
+  id              String   @id @default(uuid()) @db.Uuid
+  work_request_id String   @db.Uuid
+  skill_id        String   @db.Uuid
+  created_at      DateTime @default(now())
+
+  workRequest WorkRequest @relation(fields: [work_request_id], references: [id], onDelete: Cascade)
+  skill       Skill       @relation(fields: [skill_id], references: [id], onDelete: Cascade)
+
+  @@unique([work_request_id, skill_id])
+  @@index([skill_id])
+  @@map("work_request_skills")
+}
+
+enum BudgetType {
+  FIXED
+  HOURLY
+}
+
+enum WorksiteType {
+  REMOTE
+  ONSITE
+  HYBRID
+}
+
+enum WorkRequestDuration {
+  LT_1_MONTH
+  ONE_TO_3_MONTHS
+  THREE_TO_6_MONTHS
+  GT_6_MONTHS
+}
+
+enum WorkRequestStatus {
+  DRAFT
+  POSTED
 }

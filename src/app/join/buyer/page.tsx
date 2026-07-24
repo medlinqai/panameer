@@ -117,7 +117,9 @@ export default function JoinBuyerPage() {
         setError(body.error ?? "Could not save your choice.");
         return;
       }
-      router.push("/dashboard");
+      // Hand off into the first Work Request (brief_L). It's skippable — the
+      // wizard's "Skip for now" lands on /dashboard.
+      router.push("/work/new");
     } finally {
       setBusy(false);
     }

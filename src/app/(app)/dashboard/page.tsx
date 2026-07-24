@@ -34,6 +34,26 @@ function NoAccessBanner() {
   );
 }
 
+/** Confirmation shown after a Work Request is posted (?posted=1, brief_L). */
+function PostedBanner() {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).has("posted")) setShow(true);
+  }, []);
+  if (!show) return null;
+  return (
+    <div className="flex items-start gap-3 rounded-2xl border border-emerald-600/25 bg-emerald-600/5 p-4">
+      <span aria-hidden className="text-lg">
+        ✅
+      </span>
+      <p className="text-sm text-black/70 dark:text-white/70">
+        Your work request is posted. Providers can be matched to it in a later
+        release.
+      </p>
+    </div>
+  );
+}
+
 function Skeleton() {
   return (
     <div className="space-y-6">
@@ -68,6 +88,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8">
       <NoAccessBanner />
+      <PostedBanner />
       <header>
         <h1 className="text-3xl font-semibold tracking-tight">
           Welcome back, {person.firstName}
@@ -229,7 +250,7 @@ export default function DashboardPage() {
               Post a work request and match with vetted Oracle Cloud experts.
             </p>
             <Link
-              href="/hire"
+              href="/work/new"
               className="mt-5 inline-flex rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90"
             >
               Create Work Request
