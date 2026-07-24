@@ -227,3 +227,23 @@ export function marketplaceVisibleWhere() {
     paused_at: null,
   };
 }
+
+// ---------------------------------------------------------------------------
+// Platform admin (brief_M) — the EXPLICIT admin path.
+//
+// The admin console reads/writes are platform-wide BY DESIGN. This is NOT a
+// tenancy-scope bypass: `scopedToPAccount` is the fence for TENANT users, and
+// admin has a SEPARATE, explicit gate. Every admin lib call runs `requireAdmin`
+// first (fail closed on `canAdminister`) and then queries across all
+// P-Accounts. Keeping the entry point here — not inlined per query — makes the
+// platform-wide boundary auditable in one place.
+// ---------------------------------------------------------------------------
+
+/**
+ * Assert the viewer is a platform admin — the gate every admin lib call uses
+ * before running an unscoped, platform-wide query. Throws AccessDeniedError
+ * (canAdminister) otherwise. NOT a tenancy bypass — a deliberate, separate path.
+ */
+export function requireAdmin(viewer: Viewer): void {
+  requireCapability(viewer, "canAdminister");
+}

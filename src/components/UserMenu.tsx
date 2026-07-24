@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { Avatar } from "@/components/Avatar";
 import type { Me } from "@/lib/types";
 
@@ -10,6 +10,10 @@ import type { Me } from "@/lib/types";
 export function UserMenu({ me }: { me: Me }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  // Admins get a link into the Platform Console (brief_M) — read from the
+  // session so /api/me stays lean.
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.isSystemAdmin === true;
   const { firstName, lastName, photoUrl } = me.person;
 
   useEffect(() => {
@@ -84,6 +88,16 @@ export function UserMenu({ me }: { me: Me }) {
               className="block px-4 py-2.5 text-sm hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
             >
               Coordinator
+            </Link>
+          )}
+          {isAdmin && (
+            <Link
+              href="/admin"
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              className="block px-4 py-2.5 text-sm hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+            >
+              Platform Console
             </Link>
           )}
           <button
