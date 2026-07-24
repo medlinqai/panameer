@@ -1,17 +1,19 @@
 import Link from "next/link";
 import Image from "next/image";
 import { SettingsNav } from "@/components/settings/SettingsNav";
+import { guardPage } from "@/lib/guard";
 
 /**
- * Settings shell — a focused two-pane area (its own left sub-nav + content),
- * behind the proxy auth gate. Deliberately does NOT mount the global app
- * top-nav (a separate, later brief); it has only the Settings sub-nav.
+ * Settings shell — a focused two-pane area (its own left sub-nav + content).
+ * AUTHORITATIVE server-side gate (brief_J): provider-only. Deliberately does
+ * NOT mount the global app top-nav (a separate, later brief).
  */
-export default function SettingsLayout({
+export default async function SettingsLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  await guardPage("canProvideServices");
   return (
     <div className="min-h-screen bg-white font-body text-ink">
       <header className="border-b border-line px-6 py-4">

@@ -36,6 +36,13 @@ export type Viewer = {
   role: string;
   isSystemAdmin: boolean;
   isAdmin: boolean;
+  // Actor-role flags — "roles as variables", carried in the JWT/session and
+  // derived from the linked Person (brief_J). Pages ask for CAPABILITIES (below),
+  // never these raw flags directly.
+  isServiceBuyer: boolean;
+  isServiceProvider: boolean;
+  isServiceCoordinator: boolean;
+  isSupport: boolean;
   pAccountId: string | null;
 };
 
@@ -48,6 +55,10 @@ export function viewerFromSession(
           role?: string;
           isSystemAdmin?: boolean;
           isAdmin?: boolean;
+          isServiceBuyer?: boolean;
+          isServiceProvider?: boolean;
+          isServiceCoordinator?: boolean;
+          isSupport?: boolean;
         };
       }
     | null
@@ -60,10 +71,70 @@ export function viewerFromSession(
     role: u.role ?? "MEMBER",
     isSystemAdmin: u.isSystemAdmin ?? false,
     isAdmin: u.isAdmin ?? false,
+    isServiceBuyer: u.isServiceBuyer ?? false,
+    isServiceProvider: u.isServiceProvider ?? false,
+    isServiceCoordinator: u.isServiceCoordinator ?? false,
+    isSupport: u.isSupport ?? false,
     // The session/JWT does not carry the org (auth is deliberately lean); the
     // caller resolves it from the linked Person via `withPAccount`.
     pAccountId: null,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Capabilities — the semantic API pages/handlers use. A page asks for a
+// capability ("can this viewer hire talent?"), never a raw column name. These
+// are the authoritative definitions the route map and guards resolve against.
+//
+// Capabilities are LITERAL (canHireTalent === is_service_buyer). System admin
+// is its own axis (canAdminister) and does NOT auto-grant the actor
+// capabilities — the seeded demo admin already carries provider/coordinator
+// flags where it needs them.
+// ---------------------------------------------------------------------------
+
+export type Capability =
+  | "canAdminister"
+  | "canHireTalent"
+  | "canProvideServices"
+  | "canCoordinate"
+  | "canSupport";
+
+export const canAdminister = (v: Viewer): boolean => v.isSystemAdmin;
+export const canHireTalent = (v: Viewer): boolean => v.isServiceBuyer;
+export const canProvideServices = (v: Viewer): boolean => v.isServiceProvider;
+export const canCoordinate = (v: Viewer): boolean => v.isServiceCoordinator;
+export const canSupport = (v: Viewer): boolean => v.isSupport;
+
+/** Resolve a capability by name against a viewer. */
+export function hasCapability(viewer: Viewer, cap: Capability): boolean {
+  switch (cap) {
+    case "canAdminister":
+      return canAdminister(viewer);
+    case "canHireTalent":
+      return canHireTalent(viewer);
+    case "canProvideServices":
+      return canProvideServices(viewer);
+    case "canCoordinate":
+      return canCoordinate(viewer);
+    case "canSupport":
+      return canSupport(viewer);
+  }
+}
+
+/** Thrown by `requireCapability` when a viewer lacks the required capability. */
+export class AccessDeniedError extends Error {
+  constructor(public capability: Capability) {
+    super(`Access denied: requires ${capability}`);
+    this.name = "AccessDeniedError";
+  }
+}
+
+/**
+ * Authoritative capability assertion — fail closed. Throws `AccessDeniedError`
+ * unless the viewer holds `cap`. Used by the server-side page/route guards.
+ */
+export function requireCapability(viewer: Viewer, cap: Capability): void {
+  if (!hasCapability(viewer, cap)) throw new AccessDeniedError(cap);
 }
 
 /** Return a copy of `viewer` with its tenancy fence set to `pAccountId`. */

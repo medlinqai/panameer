@@ -1,18 +1,17 @@
 import { NextResponse } from "next/server";
-import { getSessionViewer } from "@/lib/session";
+import { guardApi } from "@/lib/guard";
 import { getProviderSettings } from "@/lib/profile-settings";
 import { OnboardingError } from "@/lib/onboarding";
 
 /**
- * GET /api/settings/profile — the owner's editable profile snapshot. Owner-
- * scoped: resolves the profile from the session, never a client id. 404 if the
- * signed-in user has no provider profile (fails closed).
+ * GET /api/settings/profile — the owner's editable profile snapshot. Gated to
+ * canProvideServices (server-authoritative), then owner-scoped: resolves the
+ * profile from the session, never a client id. Fails closed.
  */
 export async function GET() {
-  const viewer = await getSessionViewer();
-  if (!viewer) {
-    return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
-  }
+  const gate = await guardApi("canProvideServices");
+  if (gate instanceof NextResponse) return gate;
+  const viewer = gate;
   try {
     return NextResponse.json(await getProviderSettings(viewer));
   } catch (e) {

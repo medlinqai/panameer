@@ -1,11 +1,38 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card } from "@/components/Card";
 import { Badge } from "@/components/Badge";
 import { useMe } from "@/components/MeProvider";
 import { roleLabels } from "@/lib/nav";
 import { formatRate } from "@/lib/types";
+
+/**
+ * "No access" banner shown when a role guard redirected the user here with
+ * ?noaccess=1 (from the edge proxy or a server guard). Read from the URL in an
+ * effect to avoid a Suspense boundary for useSearchParams on this static page.
+ */
+function NoAccessBanner() {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).has("noaccess")) {
+      setShow(true);
+    }
+  }, []);
+  if (!show) return null;
+  return (
+    <div className="flex items-start gap-3 rounded-2xl border border-amber-600/25 bg-amber-600/5 p-4">
+      <span aria-hidden className="text-lg">
+        🔒
+      </span>
+      <p className="text-sm text-black/70 dark:text-white/70">
+        You don&apos;t have access to that area. If you think this is a mistake,
+        your role may still be updating — try signing out and back in.
+      </p>
+    </div>
+  );
+}
 
 function Skeleton() {
   return (
@@ -40,6 +67,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
+      <NoAccessBanner />
       <header>
         <h1 className="text-3xl font-semibold tracking-tight">
           Welcome back, {person.firstName}

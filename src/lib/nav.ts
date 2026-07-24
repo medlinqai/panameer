@@ -2,12 +2,10 @@ import type { Me } from "@/lib/types";
 
 export type NavItem = { label: string; href: string };
 
-const PROVIDER_NAV: NavItem[] = [
-  { label: "Find Work", href: "/find-work" },
-  { label: "Deliver Work", href: "/deliver-work" },
-  { label: "Manage Money", href: "/manage-money" },
-  { label: "Messages", href: "/messages" },
-];
+// Provider IA is unconfirmed — the provider app-nav is a separate, later brief.
+// The Upwork-holdover routes (/find-work, /deliver-work, /manage-money) were
+// removed in brief_J; provider nav is intentionally minimal until its own brief.
+const PROVIDER_NAV: NavItem[] = [{ label: "Messages", href: "/messages" }];
 
 const BUYER_NAV: NavItem[] = [
   { label: "Hire", href: "/hire" },

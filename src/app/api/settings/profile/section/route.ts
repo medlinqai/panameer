@@ -1,17 +1,17 @@
 import { NextResponse } from "next/server";
-import { getSessionViewer } from "@/lib/session";
+import { guardApi } from "@/lib/guard";
 import { saveProviderSection } from "@/lib/profile-settings";
 import { OnboardingError, type ProfileSection } from "@/lib/onboarding";
 
 /**
- * POST /api/settings/profile/section — save one profile section (owner-scoped).
- * Body: { section, data }. Reuses the onboarding persistence via the lib.
+ * POST /api/settings/profile/section — save one profile section. Gated to
+ * canProvideServices (server-authoritative), then owner-scoped. Body:
+ * { section, data }. Reuses the onboarding persistence via the lib.
  */
 export async function POST(request: Request) {
-  const viewer = await getSessionViewer();
-  if (!viewer) {
-    return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
-  }
+  const gate = await guardApi("canProvideServices");
+  if (gate instanceof NextResponse) return gate;
+  const viewer = gate;
   const body = await request.json().catch(() => null);
   const section = body?.section as ProfileSection | undefined;
   if (!section) {

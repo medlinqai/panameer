@@ -3,6 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { deriveAccessFlags } from "@/lib/access";
+import { getActorFlags, NO_ACTOR_FLAGS } from "@/lib/actor-flags";
 
 const MAX_FAILED_LOGINS = 5;
 
@@ -64,6 +65,9 @@ export const authOptions: NextAuthOptions = {
           isSystemAdmin: user.is_system_admin,
         });
 
+        // Actor roles from the linked Person, so the JWT carries them (brief_J).
+        const actor = await getActorFlags(user.id);
+
         return {
           id: user.id,
           email: user.email,
@@ -73,17 +77,33 @@ export const authOptions: NextAuthOptions = {
           role: user.role,
           isSystemAdmin: user.is_system_admin,
           isAdmin: flags.isAdmin,
+          ...actor,
         };
       },
     }),
   ],
   session: { strategy: "jwt" },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
+        // Sign-in: copy admin fields + actor flags from authorize().
         token.role = user.role;
         token.isSystemAdmin = user.isSystemAdmin;
         token.isAdmin = user.isAdmin;
+        token.isServiceBuyer = user.isServiceBuyer;
+        token.isServiceProvider = user.isServiceProvider;
+        token.isServiceCoordinator = user.isServiceCoordinator;
+        token.isSupport = user.isSupport;
+      } else if (trigger === "update" && token.sub) {
+        // Role-change refresh: when a user gains a role mid-session (finishes
+        // provider onboarding, accepts a coordinator invite), the client calls
+        // useSession().update() and we re-read the actor flags from the linked
+        // Person — the only place a per-request DB read happens.
+        const actor = await getActorFlags(token.sub);
+        token.isServiceBuyer = actor.isServiceBuyer;
+        token.isServiceProvider = actor.isServiceProvider;
+        token.isServiceCoordinator = actor.isServiceCoordinator;
+        token.isSupport = actor.isSupport;
       }
       return token;
     },
@@ -93,6 +113,13 @@ export const authOptions: NextAuthOptions = {
         session.user.role = (token.role as string) ?? "MEMBER";
         session.user.isSystemAdmin = (token.isSystemAdmin as boolean) ?? false;
         session.user.isAdmin = (token.isAdmin as boolean) ?? false;
+        session.user.isServiceBuyer =
+          token.isServiceBuyer ?? NO_ACTOR_FLAGS.isServiceBuyer;
+        session.user.isServiceProvider =
+          token.isServiceProvider ?? NO_ACTOR_FLAGS.isServiceProvider;
+        session.user.isServiceCoordinator =
+          token.isServiceCoordinator ?? NO_ACTOR_FLAGS.isServiceCoordinator;
+        session.user.isSupport = token.isSupport ?? NO_ACTOR_FLAGS.isSupport;
       }
       return session;
     },

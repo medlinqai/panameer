@@ -1,20 +1,19 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getSessionViewer } from "@/lib/session";
+import { guardApi } from "@/lib/guard";
 import { setPublished } from "@/lib/profile-settings";
 import { OnboardingError } from "@/lib/onboarding";
 
 const schema = z.object({ published: z.boolean() });
 
 /**
- * POST /api/settings/publish — publish/unpublish the owner's profile. Only
- * permitted once approval_status = APPROVED (enforced in the lib).
+ * POST /api/settings/publish — publish/unpublish the owner's profile. Gated to
+ * canProvideServices; only permitted once approval_status = APPROVED (lib).
  */
 export async function POST(request: Request) {
-  const viewer = await getSessionViewer();
-  if (!viewer) {
-    return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
-  }
+  const gate = await guardApi("canProvideServices");
+  if (gate instanceof NextResponse) return gate;
+  const viewer = gate;
   const parsed = schema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
