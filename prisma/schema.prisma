@@ -33,6 +33,8 @@ model User {
   /// When the user's email was verified (null = unverified). Set by the
   /// tokenized verify link during onboarding (brief_E).
   email_verified        DateTime?
+  /// When the user accepted the Terms of Service (buyer signup, brief_G).
+  tos_accepted_at       DateTime?
   last_login            DateTime?
   created_at            DateTime  @default(now())
   updated_at            DateTime  @updatedAt
@@ -580,6 +582,8 @@ model BuyerProfile {
   id                String            @id @default(uuid()) @db.Uuid
   person_id         String            @unique @db.Uuid
   subscription_tier SubscriptionTier  @default(BASIC)
+  /// Set when the buyer starts a Business Plus trial (brief_G). No billing yet.
+  trial_started_at  DateTime?
   created_at        DateTime          @default(now())
   updated_at        DateTime          @updatedAt
 

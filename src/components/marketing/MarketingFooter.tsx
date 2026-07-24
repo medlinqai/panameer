@@ -5,16 +5,16 @@ const COLS: { title: string; links: { label: string; href: string }[] }[] = [
   {
     title: "Hire",
     links: [
-      { label: "Hire Talent", href: "#" },
-      { label: "Post a Work Request", href: "#" },
+      { label: "Hire Talent", href: "/join/buyer" },
+      { label: "Post a Work Request", href: "/join/buyer" },
       { label: "ERP Punchout", href: "#punchout" },
     ],
   },
   {
     title: "Work",
     links: [
-      { label: "Find Work", href: "#" },
-      { label: "Become a Provider", href: "/join" },
+      { label: "Find Work", href: "/join/provider" },
+      { label: "Become a Provider", href: "/join/provider" },
       { label: "Coordinators", href: "#" },
     ],
   },

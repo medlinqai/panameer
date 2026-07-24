@@ -4,8 +4,8 @@ import type { ReactNode } from "react";
 /** Primary marketing nav links (shared by header + mobile menu). */
 export const MARKETING_NAV: { label: string; href: string }[] = [
   { label: "Learn", href: "#learn" },
-  { label: "Hire Talent", href: "#how" },
-  { label: "Find Work", href: "#how" },
+  { label: "Hire Talent", href: "/join/buyer" },
+  { label: "Find Work", href: "/join/provider" },
   { label: "Why Panameer", href: "#punchout" },
   { label: "Pricing", href: "#pricing" },
   { label: "Enterprise", href: "#punchout" },

@@ -42,7 +42,13 @@ const WORK_TYPES = ["HOURLY", "PACKAGES", "AGENCY", "CONTRACT_TO_HIRE"] as const
 export class OnboardingError extends Error {
   constructor(
     message: string,
-    public code: "EMAIL_TAKEN" | "NOT_A_PROVIDER" | "NOT_VERIFIED" | "INVALID" | "INCOMPLETE"
+    public code:
+      | "EMAIL_TAKEN"
+      | "NOT_A_PROVIDER"
+      | "NOT_A_BUYER"
+      | "NOT_VERIFIED"
+      | "INVALID"
+      | "INCOMPLETE"
   ) {
     super(message);
     this.name = "OnboardingError";
@@ -538,4 +544,139 @@ export async function submitProviderProfile(viewer: Viewer) {
     data: { published: false, approval_status: "PENDING" },
   });
   return { ok: true };
+}
+
+// ===========================================================================
+// Buyer onboarding (brief_G) — the lighter sibling of the provider flow.
+// Buyers are NOT reviewed: no approval_status/PENDING gate; active on verify +
+// tier choice. Reuses the same email-verification machinery (VerificationToken
+// + /verify-email + issue/consume) — nothing new there.
+// ===========================================================================
+
+const SUBSCRIPTION_TIERS = ["BASIC", "BUSINESS_PLUS"] as const;
+
+export type CreateBuyerAccountInput = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  tosAccepted: boolean;
+};
+
+/**
+ * Creates PAccount(BUYER) → Company → User → Person(is_service_buyer) → draft
+ * BuyerProfile, atomically. A buyer is their own company (name defaults to the
+ * full name). Records ToS acceptance timestamp on the User.
+ */
+export async function createBuyerAccount(
+  input: CreateBuyerAccountInput
+): Promise<{ userId: string; email: string }> {
+  const email = input.email.trim().toLowerCase();
+  const firstName = input.firstName.trim();
+  const lastName = input.lastName.trim();
+
+  if (!input.tosAccepted) {
+    throw new OnboardingError("You must accept the Terms of Service", "INVALID");
+  }
+
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing) {
+    throw new OnboardingError("That email is already registered", "EMAIL_TAKEN");
+  }
+
+  const password_hash = await hashPassword(input.password);
+  const companyName = `${firstName} ${lastName}`.trim() || email;
+
+  const userId = await prisma.$transaction(async (tx) => {
+    const pAccount = await tx.pAccount.create({
+      data: { kind: "BUYER", name: companyName, status: "ACTIVE" },
+    });
+    const company = await tx.company.create({
+      data: { p_account_id: pAccount.id, name: companyName },
+    });
+    const user = await tx.user.create({
+      data: {
+        email,
+        password_hash,
+        first_name: firstName,
+        last_name: lastName,
+        role: "MEMBER",
+        tos_accepted_at: new Date(),
+      },
+    });
+    const person = await tx.person.create({
+      data: {
+        company_id: company.id,
+        user_id: user.id,
+        first_name: firstName,
+        last_name: lastName,
+        status: "ACTIVE",
+        is_service_buyer: true,
+      },
+    });
+    await tx.buyerProfile.create({
+      data: {
+        person_id: person.id,
+        // subscription_tier defaults to BASIC; the tier step may upgrade it.
+      },
+    });
+    return user.id;
+  });
+
+  return { userId, email };
+}
+
+/** Resolve the viewer's buyer identity (ownership boundary). */
+async function loadBuyer(viewer: Viewer) {
+  const person = await prisma.person.findUnique({
+    where: { user_id: viewer.userId },
+    include: {
+      user: { select: { email: true, email_verified: true } },
+      buyerProfile: true,
+    },
+  });
+  if (!person || !person.is_service_buyer || !person.buyerProfile) {
+    throw new OnboardingError("No buyer profile for this user", "NOT_A_BUYER");
+  }
+  return person;
+}
+
+/** Buyer wizard state: verify gate + tier. No review/approval (buyers go live). */
+export async function getBuyerState(viewer: Viewer) {
+  const p = await loadBuyer(viewer);
+  const emailVerified = p.user?.email_verified != null;
+  return {
+    email: p.user?.email ?? "",
+    emailVerified,
+    // Short flow: verify first, then tier. Once verified, land on tier.
+    resumeStep: emailVerified ? ("tier" as const) : ("verify" as const),
+    subscriptionTier: p.buyerProfile!.subscription_tier,
+    trialStartedAt: p.buyerProfile!.trial_started_at,
+    firstName: p.first_name,
+  };
+}
+
+/**
+ * Set the buyer's subscription tier. BUSINESS_PLUS records a trial start (no
+ * billing collected — payment is deferred). BASIC clears any trial start.
+ */
+export async function setBuyerTier(
+  viewer: Viewer,
+  tier: (typeof SUBSCRIPTION_TIERS)[number]
+) {
+  const p = await loadBuyer(viewer);
+  if (p.user?.email_verified == null) {
+    throw new OnboardingError("Verify your email first", "NOT_VERIFIED");
+  }
+  if (!SUBSCRIPTION_TIERS.includes(tier)) {
+    throw new OnboardingError("Invalid subscription tier", "INVALID");
+  }
+  await prisma.buyerProfile.update({
+    where: { id: p.buyerProfile!.id },
+    data: {
+      subscription_tier: tier,
+      trial_started_at: tier === "BUSINESS_PLUS" ? new Date() : null,
+    },
+  });
+  return getBuyerState(viewer);
 }
