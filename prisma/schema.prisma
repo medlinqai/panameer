@@ -200,8 +200,13 @@ model Person {
   company         Company          @relation(fields: [company_id], references: [id], onDelete: Cascade)
   site            Site?            @relation(fields: [site_id], references: [id], onDelete: SetNull)
   user            User?            @relation(fields: [user_id], references: [id], onDelete: SetNull)
-  providerProfile ProviderProfile?
+  // The provider profile this Person OWNS (1:1).
+  providerProfile ProviderProfile? @relation("ProfileOwner")
   buyerProfile    BuyerProfile?
+  // As a COORDINATOR: the provider profiles this Person represents, and the
+  // invites they've sent (brief_I).
+  repProviderProfiles ProviderProfile[]   @relation("CoordinatorProviders")
+  coordinatorInvites  CoordinatorInvite[] @relation("CoordinatorInvitesSent")
 
   @@index([company_id])
   @@index([site_id])
@@ -445,10 +450,15 @@ model ProviderProfile {
   // Minimal preferences store (brief_H). Notification opt-ins; expand later.
   notify_email           Boolean @default(true)
   notify_product_updates Boolean @default(false)
+  // The coordinator Person who represents this provider (brief_I). Nullable —
+  // most providers are independent. Set only via the provider's own authenticated
+  // acceptance of a coordinator invite.
+  coordinator_person_id String? @db.Uuid
   created_at       DateTime @default(now())
   updated_at       DateTime @updatedAt
 
-  person          Person           @relation(fields: [person_id], references: [id], onDelete: Cascade)
+  person          Person           @relation("ProfileOwner", fields: [person_id], references: [id], onDelete: Cascade)
+  coordinator     Person?          @relation("CoordinatorProviders", fields: [coordinator_person_id], references: [id], onDelete: SetNull)
   region          Region?          @relation(fields: [region_id], references: [id], onDelete: SetNull)
   skills          ProviderSkill[]
   workExperiences WorkExperience[]
@@ -457,6 +467,7 @@ model ProviderProfile {
   certifications  Certification[]
 
   @@index([region_id])
+  @@index([coordinator_person_id])
   @@map("provider_profiles")
 }
 
@@ -598,4 +609,44 @@ model BuyerProfile {
 enum SubscriptionTier {
   BASIC
   BUSINESS_PLUS
+}
+
+// ---------------------------------------------------------------------------
+// Coordinator → provider invites (brief_I)
+//
+// A Service Coordinator invites a provider by email; a tokenized link (stored
+// HASH-ONLY, like VerificationToken) lets the invitee accept. On acceptance the
+// provider's ProviderProfile.coordinator_person_id is set to the inviter. The
+// coordinator↔provider relationship is a nullable FK (one coordinator per
+// provider for V1, matching the singular selling_agent in the Work Data File).
+// ---------------------------------------------------------------------------
+
+model CoordinatorInvite {
+  id                 String                  @id @default(uuid()) @db.Uuid
+  inviter_person_id  String                  @db.Uuid
+  invitee_email      String
+  invitee_first_name String?
+  invitee_last_name  String?
+  message            String?
+  /// SHA-256 of the raw token; the raw token lives only in the emailed link.
+  token_hash         String                  @unique
+  status             CoordinatorInviteStatus @default(PENDING)
+  expires_at         DateTime
+  /// The ProviderProfile that accepted (record-keeping; not a FK relation).
+  accepted_provider_id String?               @db.Uuid
+  created_at         DateTime                @default(now())
+  updated_at         DateTime                @updatedAt
+
+  inviter Person @relation("CoordinatorInvitesSent", fields: [inviter_person_id], references: [id], onDelete: Cascade)
+
+  @@index([inviter_person_id])
+  @@index([invitee_email])
+  @@map("coordinator_invites")
+}
+
+enum CoordinatorInviteStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
 }

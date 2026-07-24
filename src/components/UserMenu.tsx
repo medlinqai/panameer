@@ -76,6 +76,16 @@ export function UserMenu({ me }: { me: Me }) {
               </Link>
             </>
           )}
+          {me.person.roles.isServiceCoordinator && (
+            <Link
+              href="/coordinator"
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              className="block px-4 py-2.5 text-sm hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+            >
+              Coordinator
+            </Link>
+          )}
           <button
             role="menuitem"
             onClick={() => signOut({ callbackUrl: "/login" })}

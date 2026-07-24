@@ -246,10 +246,55 @@ async function main() {
     },
   });
 
+  // --- Demo Service Coordinator (own PAccount/Company, loginable) ----------
+  // Coordinator onboarding isn't built yet (deferred), so seed one so the
+  // invite tooling (brief_I) has an owner to test with. Idempotent on email.
+  const coordinatorEmail = "coordinator@panameer.com";
+  let coordinatorUser = await prisma.user.findUnique({
+    where: { email: coordinatorEmail },
+  });
+  if (!coordinatorUser) {
+    const coordPassword = await bcrypt.hash(
+      process.env.SEED_COORDINATOR_PASSWORD ?? password,
+      10
+    );
+    coordinatorUser = await prisma.user.create({
+      data: {
+        email: coordinatorEmail,
+        password_hash: coordPassword,
+        first_name: "Ramesh",
+        last_name: "Coordinator",
+        role: "MEMBER",
+        email_verified: new Date(),
+      },
+    });
+    const coordAccount = await prisma.pAccount.create({
+      data: {
+        kind: "PROVIDER",
+        name: "Ramesh Coordinator",
+        status: "ACTIVE",
+        companies: { create: { name: "Ramesh Coordinator" } },
+      },
+      include: { companies: true },
+    });
+    await prisma.person.create({
+      data: {
+        company_id: coordAccount.companies[0].id,
+        user_id: coordinatorUser.id,
+        first_name: "Ramesh",
+        last_name: "Coordinator",
+        title: "Service Coordinator",
+        status: "ACTIVE",
+        is_service_coordinator: true,
+      },
+    });
+  }
+
   console.log(
     `Seeded demo provider (profile ${providerProfile.id}, ` +
-      `${procurementSkills.length} skills) and demo buyer ` +
-      `(${buyerPerson.first_name} ${buyerPerson.last_name}).`
+      `${procurementSkills.length} skills), demo buyer ` +
+      `(${buyerPerson.first_name} ${buyerPerson.last_name}), and coordinator ` +
+      `(${coordinatorEmail}).`
   );
 }
 

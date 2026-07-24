@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/password";
+import { acceptInviteForUser } from "@/lib/coordinator";
 import type { Viewer } from "@/lib/access";
 
 /**
@@ -66,6 +67,9 @@ export type CreateProviderAccountInput = {
   password: string;
   experienceLevel: (typeof EXPERIENCE_LEVELS)[number];
   goal: (typeof PROVIDER_GOALS)[number];
+  /** Optional coordinator invite token (brief_I) — links the new provider to
+   *  the inviting coordinator after account creation, if it matches this email. */
+  inviteToken?: string;
 };
 
 /**
@@ -133,6 +137,18 @@ export async function createProviderAccount(
     });
     return user.id;
   });
+
+  // If this signup came from a coordinator invite, link the new provider to the
+  // inviter (brief_I). Reuses the authoritative acceptInviteForUser, which
+  // enforces the email matches the invite — a mismatch just skips linking and
+  // never fails the signup.
+  if (input.inviteToken) {
+    try {
+      await acceptInviteForUser(userId, input.inviteToken);
+    } catch (e) {
+      console.error("[onboarding] invite link failed (non-fatal):", e);
+    }
+  }
 
   return { userId, email };
 }

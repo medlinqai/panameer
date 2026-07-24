@@ -12,6 +12,7 @@ const schema = z
     confirm: z.string(),
     experienceLevel: z.enum(["BEGINNER", "MID_CAREER", "EXPERT"]),
     goal: z.enum(["SIDE_HUSTLE", "MAIN_HUSTLE", "BUILD_SKILLS", "NONE"]),
+    inviteToken: z.string().optional(),
   })
   .refine((d) => d.password === d.confirm, {
     message: "Passwords do not match",

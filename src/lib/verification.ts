@@ -6,12 +6,13 @@ import { verifyEmailTemplate } from "@/lib/email/templates/verify-email";
 const TOKEN_TTL_MS = 24 * 60 * 60 * 1000; // 24h
 const RESEND_THROTTLE_MS = 60 * 1000; // 1 per minute per user
 
-function hashToken(raw: string): string {
+/** SHA-256 hex of a raw token — we store only the hash (shared, brief_I). */
+export function hashToken(raw: string): string {
   return createHash("sha256").update(raw).digest("hex");
 }
 
-/** Absolute base URL for links in emails (the app host in prod). */
-function appBaseUrl(): string {
+/** Absolute base URL for links in emails (the app host in prod). Shared. */
+export function appBaseUrl(): string {
   return (
     process.env.NEXT_PUBLIC_APP_URL ??
     process.env.NEXTAUTH_URL ??

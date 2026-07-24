@@ -133,6 +133,12 @@ export default function JoinPage() {
   const [email, setEmail] = useState("");
   const [devLink, setDevLink] = useState<string | null>(null);
 
+  // Coordinator invite (brief_I): carried through as ?invite=token.
+  const [inviteToken, setInviteToken] = useState<string | null>(null);
+  const [inviteCtx, setInviteCtx] = useState<{ coordinatorName: string } | null>(
+    null
+  );
+
   // Profile.
   const [profile, setProfile] = useState<ProfileState>(emptyProfile());
   const [roleTypes, setRoleTypes] = useState<RoleType[]>([]);
@@ -170,6 +176,26 @@ export default function JoinPage() {
   // ---- mount: figure out where to land ----------------------------------
   useEffect(() => {
     (async () => {
+      // Coordinator invite carried through the URL — pre-fill + lock the email.
+      const token = new URLSearchParams(window.location.search).get("invite");
+      if (token) {
+        const inv = await fetch(
+          `/api/invite/lookup?token=${encodeURIComponent(token)}`
+        )
+          .then((x) => x.json())
+          .catch(() => null);
+        if (inv?.ok) {
+          setInviteToken(token);
+          setInviteCtx({ coordinatorName: inv.coordinatorName });
+          setAcct((a) => ({
+            ...a,
+            email: inv.inviteeEmail ?? a.email,
+            firstName: inv.inviteeFirstName ?? a.firstName,
+            lastName: inv.inviteeLastName ?? a.lastName,
+          }));
+        }
+      }
+
       const r = await fetch("/api/onboarding/status");
       if (r.status === 401) {
         setScreen("exp_level");
@@ -270,6 +296,7 @@ export default function JoinPage() {
           ...acct,
           experienceLevel: expLevel,
           goal,
+          ...(inviteToken ? { inviteToken } : {}),
         }),
       });
       const body = await r.json().catch(() => ({}));
@@ -414,6 +441,12 @@ export default function JoinPage() {
           })}
         >
           <div className="space-y-4">
+            {inviteCtx && (
+              <Notice tone="info">
+                You were invited by <b>{inviteCtx.coordinatorName}</b>. Complete
+                sign-up to join their team of providers.
+              </Notice>
+            )}
             {error && <Notice>{error}</Notice>}
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="First name">
@@ -431,12 +464,16 @@ export default function JoinPage() {
                 />
               </Field>
             </div>
-            <Field label="Email">
+            <Field
+              label="Email"
+              hint={inviteCtx ? "Set by your invitation" : undefined}
+            >
               <TextInput
                 type="email"
                 value={acct.email}
                 onChange={(e) => setAcct({ ...acct, email: e.target.value })}
                 autoComplete="email"
+                readOnly={!!inviteToken}
               />
             </Field>
             <div className="grid gap-4 sm:grid-cols-2">
