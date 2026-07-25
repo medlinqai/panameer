@@ -26,7 +26,7 @@ export default async function InviteAcceptPage({
     <div className="flex min-h-screen flex-col items-center justify-center bg-bg-soft px-6 text-center font-body text-ink">
       <Link href="/" aria-label="Panameer home">
         <Image
-          src="/brand/panameer-logo.png"
+          src="/brand/panameer-logo-transparent.png"
           alt="Panameer"
           width={786}
           height={111}

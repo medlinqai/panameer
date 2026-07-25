@@ -14,7 +14,7 @@ export function MarketingHeader() {
       <div className="mx-auto flex h-[70px] max-w-[1180px] items-center gap-7 px-6">
         <Link href="/" className="flex items-center" aria-label="Panameer home">
           <Image
-            src="/brand/panameer-logo.png"
+            src="/brand/panameer-logo-transparent.png"
             alt="Panameer"
             width={786}
             height={111}

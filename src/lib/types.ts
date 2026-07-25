@@ -57,7 +57,8 @@ export type PublicProviderProfile = {
   validated: boolean;
   headline: string;
   overview: string | null;
-  experienceLevel: string;
+  /** Null until the provider answers step 1 of the wizard (brief_P / E003). */
+  experienceLevel: string | null;
   workTypes: string[];
   rates: Rates;
   rating: number | null;

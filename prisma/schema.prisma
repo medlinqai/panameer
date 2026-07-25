@@ -187,6 +187,9 @@ model Person {
   last_name  String
   title      String?
   phone      String?
+  /// When the phone number above passed SMS verification (brief_P / E019).
+  /// Cleared whenever `phone` changes, so it always describes the CURRENT number.
+  phone_verified_at DateTime?
   photo_url  String?
   status     PersonStatus @default(ACTIVE)
 
@@ -215,6 +218,8 @@ model Person {
   coordinatorInvites  CoordinatorInvite[] @relation("CoordinatorInvitesSent")
   // As a BUYER: the work requests this Person created (brief_L).
   workRequests        WorkRequest[]
+  // SMS verification challenges for this person's phone (brief_P).
+  phoneVerifications  PhoneVerification[]
 
   @@index([company_id])
   @@index([site_id])
@@ -289,10 +294,15 @@ model Pillar {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
+  /// Display order for the category picker (brief_P / E013). Lower sorts first,
+  /// so ERP is pinned above AI and everything else. Ties break on name.
+  sort_order Int @default(100)
+
   catalog   ServiceCatalog @relation(fields: [catalog_id], references: [id], onDelete: Cascade)
   offerings Offering[]
   skills    Skill[]
   tags      SkillTag[]
+  providerProfiles ProviderProfile[]
 
   @@unique([catalog_id, code])
   @@map("pillars")
@@ -449,12 +459,36 @@ model ProviderProfile {
   region_id        String?  @db.Uuid
   headline         String
   overview         String?
-  experience_level ExperienceLevel  @default(MID_CAREER)
-  goal             ProviderGoal     @default(NONE)
+  /// NULLABLE since brief_P: these are answered at profile steps 1 and 2
+  /// (E003/E004), not at sign-up. With a non-null default there was no way to
+  /// tell "chose Mid-Career" from "hasn't been asked yet", so the resume logic
+  /// skipped straight past both steps for every returning user.
+  experience_level ExperienceLevel?
+  goal             ProviderGoal?
   work_types       WorkType[]
   onsite_rate_cents Int?
   remote_rate_cents Int?
+  /// The single hourly rate the client sees (brief_P / E018). Integer cents.
+  /// `onsite_/remote_rate_cents` predate this (brief_E) and stay for Settings.
+  hourly_rate_cents Int?
+  /// Platform service fee as BASIS POINTS (1000 = 10%). Integer so the fee and
+  /// the "You'll get" figure are computed without ever touching a float.
+  service_fee_bps  Int      @default(1000)
   currency         String   @default("USD")
+  /// The category / field chosen at the catalog step (brief_P / E013). Skills
+  /// at the next step are filtered to this pillar.
+  pillar_id        String?  @db.Uuid
+  /// How the provider sells; RECRUITER forks them to the Coordinator role
+  /// (brief_P / E009).
+  work_method      WorkMethod?
+  /// Which profile-creation path was taken (brief_P / E012).
+  profile_method   ProfileMethod?
+  /// Collected on the finish page (brief_P / E019).
+  date_of_birth    DateTime?
+  /// When the provider pressed "Publish Profile" and finished onboarding
+  /// (brief_P / E019). This is a COMPLETION marker, NOT a visibility flag —
+  /// brief_K's derived completeness gate remains the only visibility rule.
+  onboarding_completed_at DateTime?
   rating           Decimal? @db.Decimal(3, 2)
   id_badge         String?
   // Account lifecycle (brief_K): PENDING on sign-up → ACTIVE on email verify.
@@ -482,14 +516,17 @@ model ProviderProfile {
   person          Person           @relation("ProfileOwner", fields: [person_id], references: [id], onDelete: Cascade)
   coordinator     Person?          @relation("CoordinatorProviders", fields: [coordinator_person_id], references: [id], onDelete: SetNull)
   region          Region?          @relation(fields: [region_id], references: [id], onDelete: SetNull)
+  pillar          Pillar?          @relation(fields: [pillar_id], references: [id], onDelete: SetNull)
   skills          ProviderSkill[]
   workExperiences WorkExperience[]
   education        Education[]
   languages        Language[]
   certifications  Certification[]
+  imports          ProfileImport[]
 
   @@index([region_id])
   @@index([coordinator_person_id])
+  @@index([pillar_id])
   @@map("provider_profiles")
 }
 
@@ -511,6 +548,43 @@ enum WorkType {
   PACKAGES
   AGENCY
   CONTRACT_TO_HIRE
+}
+
+/// How the provider sells — the "How Do You Work?" step (brief_P / E009).
+/// RECRUITER is the user-type fork: a recruiter sells the services of OTHERS
+/// and is the app's Coordinator role (see User Hierarchy deck / brief_I).
+enum WorkMethod {
+  HOURLY
+  PACKAGES
+  RECRUITER
+}
+
+/// Which of the three profile-creation paths the provider used (brief_P / E012).
+enum ProfileMethod {
+  LINKEDIN
+  RESUME
+  MANUAL
+}
+
+/// Source document for an import attempt (brief_P / E012).
+enum ProfileImportSource {
+  RESUME
+  LINKEDIN_PDF
+}
+
+enum ProfileImportStatus {
+  PENDING
+  PARSED
+  FAILED
+}
+
+/// Language proficiency (brief_P / E016). Stored as an enum so the four
+/// canonical levels can't drift into free text.
+enum LanguageProficiency {
+  BASIC
+  CONVERSATIONAL
+  FLUENT
+  NATIVE_OR_BILINGUAL
 }
 
 /// Provider account lifecycle (brief_K).
@@ -582,7 +656,12 @@ model Education {
   institution         String
   degree              String?
   field               String?
+  /// Legacy single year (brief_E). Superseded by start_year/end_year
+  /// (brief_P / E015, "Dates Attended"); kept so existing rows still read.
   year                Int?
+  start_year          Int?
+  end_year            Int?
+  description         String?
   created_at          DateTime @default(now())
 
   providerProfile ProviderProfile @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
@@ -596,7 +675,10 @@ model Language {
   id                  String   @id @default(uuid()) @db.Uuid
   provider_profile_id String   @db.Uuid
   name                String
+  /// Free-text legacy column (brief_E). `level` is the canonical value now
+  /// (brief_P / E016); this stays readable for rows written before the enum.
   proficiency         String?
+  level               LanguageProficiency?
   created_at          DateTime @default(now())
 
   providerProfile ProviderProfile @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
@@ -622,6 +704,58 @@ model Certification {
 
 /// A buyer's marketplace profile (1:1 with a Person that is a service buyer).
 /// Photo/location live on Person/Address; billing is stubbed (out of scope).
+/// SMS phone-verification challenge (brief_P / E019). Mirrors the
+/// VerificationToken pattern from brief_E: we store only a SHA-256 HASH of the
+/// 6-digit code, never the code itself. Issuing a new code invalidates prior
+/// unconsumed ones for the same Person.
+model PhoneVerification {
+  id         String    @id @default(uuid()) @db.Uuid
+  person_id  String    @db.Uuid
+  /// E.164 number the code was sent to. Kept so a code can't be replayed
+  /// against a different number after the user edits the field.
+  phone      String
+  code_hash  String
+  expires_at DateTime
+  consumed_at DateTime?
+  /// Wrong-code submissions; the challenge dies at the cap (anti-brute-force).
+  attempts   Int       @default(0)
+  created_at DateTime  @default(now())
+
+  person Person @relation(fields: [person_id], references: [id], onDelete: Cascade)
+
+  @@index([person_id])
+  @@map("phone_verifications")
+}
+
+/// One résumé / LinkedIn-PDF import attempt (brief_P / E012).
+///
+/// `gaps` is what the review page surfaces (E019): fields we could not decipher
+/// or had to strip. Keeping the attempt (and its extracted text) means a parse
+/// can be re-run or audited without asking the user to upload again.
+model ProfileImport {
+  id                  String              @id @default(uuid()) @db.Uuid
+  provider_profile_id String              @db.Uuid
+  source              ProfileImportSource
+  status              ProfileImportStatus @default(PENDING)
+  file_name           String?
+  mime_type           String?
+  size_bytes          Int?
+  /// Plain text extracted from the document, for re-parsing / debugging.
+  raw_text            String?
+  /// Structured result of the parse: what landed, and what didn't.
+  parsed              Json?
+  /// Human-readable list of import gaps shown on the review page.
+  gaps                Json?
+  error               String?
+  created_at          DateTime            @default(now())
+  updated_at          DateTime            @updatedAt
+
+  providerProfile ProviderProfile @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
+
+  @@index([provider_profile_id])
+  @@map("profile_imports")
+}
+
 model BuyerProfile {
   id                String            @id @default(uuid()) @db.Uuid
   person_id         String            @unique @db.Uuid

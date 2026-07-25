@@ -20,7 +20,7 @@ export default async function AdminLayout({
         <div className="mx-auto flex max-w-6xl items-center gap-4">
           <Link href="/" aria-label="Panameer home" className="flex items-center gap-3">
             <Image
-              src="/brand/panameer-logo.png"
+              src="/brand/panameer-logo-transparent.png"
               alt="Panameer"
               width={786}
               height={111}

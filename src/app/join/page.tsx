@@ -49,7 +49,7 @@ export default function JoinRoleSelect() {
         <div className="mx-auto flex max-w-3xl items-center">
           <Link href="/" aria-label="Panameer home">
             <Image
-              src="/brand/panameer-logo.png"
+              src="/brand/panameer-logo-transparent.png"
               alt="Panameer"
               width={786}
               height={111}
@@ -71,7 +71,8 @@ export default function JoinRoleSelect() {
             selected={role === "buyer"}
             onClick={() => setRole("buyer")}
             title="Service Buyer"
-            description="Post work and hire vetted experts."
+            // "validated", never "vetted" — the term is locked (walk_backlog).
+            description="Post work and hire validated experts."
           />
           <OptionCard
             selected={role === "provider"}

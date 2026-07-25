@@ -63,7 +63,9 @@ export function ProfileView({ profile }: { profile: PublicProviderProfile }) {
               {profile.headline}
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              <Badge tone="blue">{humanizeToken(profile.experienceLevel)}</Badge>
+              {profile.experienceLevel && (
+                <Badge tone="blue">{humanizeToken(profile.experienceLevel)}</Badge>
+              )}
               {profile.region && <Badge>{profile.region.name}</Badge>}
               {profile.workTypes.map((w) => (
                 <Badge key={w}>{humanizeToken(w)}</Badge>

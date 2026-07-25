@@ -46,6 +46,29 @@ export type TaxonomyCounts = {
   nonOracleApplications: number;
 };
 
+/**
+ * PROVISIONAL — pillars that are NOT in Scott's Work Data File but that the
+ * provider category picker needs (brief_P / E013 pins "ERP above AI").
+ *
+ * ⚠ Scott flagged during brief_P that the taxonomy needs another field to
+ * separate the provider role-type axis (Application-/Technology-/Operations-
+ * specific) from the business-domain axis, and will specify it in a follow-up
+ * brief. Treat everything here as a placeholder to be replaced by his real data,
+ * NOT as agreed taxonomy — which is why it lives here and not in
+ * `seed-data/erp-catalog.json` (that file mirrors his source of truth).
+ */
+const PROVISIONAL_PILLARS = [{ code: "AI", name: "Artificial Intelligence" }];
+
+/** Starter AI skills so the AI category isn't an empty step. Provisional. */
+const PROVISIONAL_AI_SKILLS = [
+  "AI Solution Architect",
+  "Machine Learning Engineer",
+  "LLM / Prompt Engineer",
+  "AI Integration Specialist",
+  "Data Engineer (AI)",
+  "AI Governance & Risk Specialist",
+];
+
 export async function seedTaxonomy(
   prisma: PrismaClient
 ): Promise<TaxonomyCounts> {
@@ -82,12 +105,28 @@ export async function seedTaxonomy(
     label ? roleTypeByLabel.get(label.toLowerCase()) ?? null : null;
 
   // --- Pillars -----------------------------------------------------------
+  // Display order for the provider category picker (brief_P / E013): ERP is
+  // pinned at the very top — it's the day-1 core delivery — with AI directly
+  // beneath it. Everything else falls through to the default and sorts by name.
+  // "Not Applicable" is a data-cleaning bucket, not a category a provider picks,
+  // so it is pushed to the bottom and hidden by the picker query.
+  const PILLAR_SORT_ORDER: Record<string, number> = {
+    ERP: 10,
+    AI: 20,
+    NA: 900,
+  };
+
   const pillarByCode = new Map<string, string>();
-  for (const p of data.pillars) {
+  for (const p of [...data.pillars, ...PROVISIONAL_PILLARS]) {
     const row = await prisma.pillar.upsert({
       where: { catalog_id_code: { catalog_id: catalog.id, code: p.code } },
-      update: { name: p.name },
-      create: { catalog_id: catalog.id, code: p.code, name: p.name },
+      update: { name: p.name, sort_order: PILLAR_SORT_ORDER[p.code] ?? 100 },
+      create: {
+        catalog_id: catalog.id,
+        code: p.code,
+        name: p.name,
+        sort_order: PILLAR_SORT_ORDER[p.code] ?? 100,
+      },
     });
     pillarByCode.set(p.code, row.id);
   }
@@ -164,6 +203,23 @@ export async function seedTaxonomy(
         name,
         roleTypeId,
         pillarId: null,
+        applicationId: null,
+      });
+    }
+  }
+
+  // Provisional AI skills (see PROVISIONAL_AI_SKILLS) — typed TECHNOLOGY so the
+  // required role_type_id resolves, and pinned to the AI pillar so the E014
+  // skills step has something to filter to.
+  const aiPillarId = pillarByCode.get("AI") ?? null;
+  const techRoleTypeId = roleTypeByCode.get("TECHNOLOGY");
+  if (aiPillarId && techRoleTypeId) {
+    for (const name of PROVISIONAL_AI_SKILLS) {
+      if (skillByName.has(name)) continue;
+      skillByName.set(name, {
+        name,
+        roleTypeId: techRoleTypeId,
+        pillarId: aiPillarId,
         applicationId: null,
       });
     }

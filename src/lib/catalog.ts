@@ -8,6 +8,57 @@ export async function getRoleTypes() {
   });
 }
 
+/**
+ * The provider category / field picker (brief_P / E013) — the start of the
+ * service catalog.
+ *
+ * Driven by the SEEDED ERP taxonomy, not generic marketplace categories.
+ * Ordering is `sort_order` then name, which pins Enterprise Resource Planning
+ * at the top (it's the day-1 core delivery) with AI directly beneath it.
+ *
+ * "Not Applicable" is a data-cleaning bucket rather than a real field, and a
+ * pillar with no skills would dead-end the next step, so both are filtered out.
+ */
+export async function getProviderFields() {
+  const pillars = await prisma.pillar.findMany({
+    where: { code: { not: "NA" } },
+    orderBy: [{ sort_order: "asc" }, { name: "asc" }],
+    select: {
+      id: true,
+      code: true,
+      name: true,
+      sort_order: true,
+      _count: { select: { skills: true } },
+    },
+  });
+
+  return pillars
+    .filter((p) => p._count.skills > 0)
+    .map((p) => ({
+      id: p.id,
+      code: p.code,
+      name: p.name,
+      skillCount: p._count.skills,
+    }));
+}
+
+/**
+ * Skills within one field (E014) — conditional on the pillar chosen at the
+ * previous step, which is the whole point of that step ordering.
+ */
+export async function getSkillsForPillar(pillarId: string) {
+  return prisma.skill.findMany({
+    where: { pillar_id: pillarId },
+    orderBy: { name: "asc" },
+    select: {
+      id: true,
+      name: true,
+      image_url: true,
+      roleType: { select: { id: true, code: true, display: true } },
+    },
+  });
+}
+
 /** World regions (global lookup). */
 export async function getRegions() {
   return prisma.region.findMany({

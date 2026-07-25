@@ -88,8 +88,8 @@ export default function SettingsProfilePage() {
       setD({
         headline: settings.headline,
         overview: settings.overview,
-        experienceLevel: settings.experienceLevel,
-        goal: settings.goal,
+        experienceLevel: settings.experienceLevel ?? "",
+        goal: settings.goal ?? "",
         workTypes: settings.workTypes,
         roleTypeId: settings.roleTypeId,
         skillIds: settings.skillIds,
@@ -369,8 +369,12 @@ export default function SettingsProfilePage() {
       <Section
         title="Experience & Goal"
         onSave={async () => {
-          await save("experience_level", { experienceLevel: d.experienceLevel });
-          await save("goal", { goal: d.goal });
+          // Both are nullable since brief_P (unanswered until wizard steps 1–2),
+          // and the server rejects an empty value — so only save what's set.
+          if (d.experienceLevel) {
+            await save("experience_level", { experienceLevel: d.experienceLevel });
+          }
+          if (d.goal) await save("goal", { goal: d.goal });
         }}
         {...s("goal")}
       >

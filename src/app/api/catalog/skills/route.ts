@@ -1,15 +1,28 @@
 import { NextResponse } from "next/server";
-import { getSkillsForRoleType } from "@/lib/catalog";
+import { getSkillsForRoleType, getSkillsForPillar } from "@/lib/catalog";
 
 /**
+ * GET /api/catalog/skills?pillarId=…   — skills within one FIELD (brief_P /
+ *                                        E014, the provider wizard)
  * GET /api/catalog/skills?roleTypeId=… — skills within one RoleType (the
- * choices shown after the provider picks their single main category). Public
- * reference data.
+ *                                        pre-brief_P scoping, still used by
+ *                                        Settings and the Work Request wizard)
+ *
+ * Public reference data.
  */
 export async function GET(request: Request) {
-  const roleTypeId = new URL(request.url).searchParams.get("roleTypeId");
-  if (!roleTypeId) {
-    return NextResponse.json({ error: "roleTypeId is required" }, { status: 400 });
+  const params = new URL(request.url).searchParams;
+  const pillarId = params.get("pillarId");
+  const roleTypeId = params.get("roleTypeId");
+
+  if (pillarId) {
+    return NextResponse.json({ skills: await getSkillsForPillar(pillarId) });
   }
-  return NextResponse.json({ skills: await getSkillsForRoleType(roleTypeId) });
+  if (roleTypeId) {
+    return NextResponse.json({ skills: await getSkillsForRoleType(roleTypeId) });
+  }
+  return NextResponse.json(
+    { error: "pillarId or roleTypeId is required" },
+    { status: 400 }
+  );
 }

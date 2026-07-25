@@ -258,6 +258,7 @@ async function main() {
         region_id: full.region_id,
         onsite_rate_cents: full.onsite_rate_cents,
         remote_rate_cents: full.remote_rate_cents,
+        hourly_rate_cents: full.hourly_rate_cents,
         work_types: full.work_types,
         skills: full.skills,
         workExperiences: full.workExperiences,

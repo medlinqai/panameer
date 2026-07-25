@@ -152,10 +152,6 @@ export function VerifyGate({
         </div>
       )}
 
-      {/* TODO(brief_E/G): phone verification is stubbed for V1 — no real SMS. */}
-      <p className="border-t border-line pt-4 text-[13px] text-ink-2">
-        Phone verification: <b>skipped for now</b> (coming later).
-      </p>
     </div>
   );
 }

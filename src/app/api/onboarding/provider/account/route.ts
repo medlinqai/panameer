@@ -3,21 +3,26 @@ import { z } from "zod";
 import { createProviderAccount, OnboardingError } from "@/lib/onboarding";
 import { issueEmailVerification } from "@/lib/verification";
 
-const schema = z
-  .object({
-    firstName: z.string().trim().min(1).max(80),
-    lastName: z.string().trim().min(1).max(80),
-    email: z.string().trim().email().max(200),
-    password: z.string().min(8).max(200),
-    confirm: z.string(),
-    experienceLevel: z.enum(["BEGINNER", "MID_CAREER", "EXPERT"]),
-    goal: z.enum(["SIDE_HUSTLE", "MAIN_HUSTLE", "BUILD_SKILLS", "NONE"]),
-    inviteToken: z.string().optional(),
-  })
-  .refine((d) => d.password === d.confirm, {
-    message: "Passwords do not match",
-    path: ["confirm"],
-  });
+/**
+ * brief_P / E001: the deck's sign-up form has ONE password field (no Confirm),
+ * adds Country + a marketing opt-in, and requires the terms checkbox. Experience
+ * level and goal moved out of sign-up into profile steps 1–2 (E003/E004), so
+ * they are optional here.
+ */
+const schema = z.object({
+  firstName: z.string().trim().min(1).max(80),
+  lastName: z.string().trim().min(1).max(80),
+  email: z.string().trim().email().max(200),
+  password: z.string().min(8).max(200),
+  country: z.string().trim().max(80).optional(),
+  marketingOptIn: z.boolean().optional(),
+  tosAccepted: z.literal(true, {
+    message: "You must accept the Terms of Service to continue",
+  }),
+  experienceLevel: z.enum(["BEGINNER", "MID_CAREER", "EXPERT"]).optional(),
+  goal: z.enum(["SIDE_HUSTLE", "MAIN_HUSTLE", "BUILD_SKILLS", "NONE"]).optional(),
+  inviteToken: z.string().optional(),
+});
 
 /**
  * POST /api/onboarding/provider/account — Step 3. Creates the account backbone

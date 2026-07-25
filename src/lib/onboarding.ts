@@ -15,26 +15,59 @@ import { normalizeEmail } from "@/lib/normalizeEmail";
  * only ever touch their own draft profile.
  */
 
-/** Post-account wizard steps, in order. Also the resume sequence. */
+/**
+ * The post-verification profile build, in order (brief_P / E003–E019).
+ *
+ * TWELVE distinct steps, so the stepper reads `x/12` (E010). The walk showed
+ * 2/12 and 3/12 rendering the SAME "biggest goal" page — that duplicate is gone,
+ * and the finish page ("You're Done!" details: photo, DOB, address, phone) takes
+ * the twelfth slot, since it collects profile data like every other step. Rate
+ * therefore lands at 11/12 rather than the 12/12 the walk observed with the
+ * duplicate still present.
+ */
 export const PROVIDER_STEPS = [
-  "work_type",
-  "skills",
-  "title",
-  "experience",
-  "education_languages",
-  "bio",
-  "rate",
-  "region",
-  "photo",
-  "review",
+  "experience_level", // 1 — E003 (NB: "experience" is work HISTORY, not this)
+  "goal", //         2 — E004
+  "work_method", //  3 — E009 (Provider vs Recruiter fork)
+  "title", //        4 — E011
+  "tell_us", //      5 — E012 (LinkedIn / résumé / manual)
+  "category", //     6 — E013 (ERP pinned above AI)
+  "skills", //       7 — E014 (conditional on category, max 15)
+  "education", //    8 — E015 (optional, skippable)
+  "languages", //    9 — E016 (English by default)
+  "bio", //         10 — E017 (required, min length)
+  "rate", //        11 — E018 (hourly + % fee + "You'll get")
+  "finish", //      12 — E019 (photo, DOB, address, phone + SMS)
 ] as const;
 export type ProviderStep = (typeof PROVIDER_STEPS)[number];
 
-/** Steps the user may pass without entering data. */
-const OPTIONAL_STEPS = new Set<ProviderStep>([
-  "education_languages",
+export const TOTAL_PROVIDER_STEPS = PROVIDER_STEPS.length; // 12
+
+/** 1-based position for the `x/12` counter. */
+export function providerStepNumber(step: ProviderStep): number {
+  return PROVIDER_STEPS.indexOf(step) + 1;
+}
+
+/**
+ * Steps a user may pass without entering data. Education is explicitly
+ * optional-with-a-Skip (E015): not everyone has one, but we still ask.
+ * `tell_us` is a method CHOICE — picking "manual" is a valid way through it.
+ */
+const OPTIONAL_STEPS = new Set<ProviderStep>(["tell_us", "education"]);
+
+/**
+ * Section names that are NOT wizard steps but are still written by the Settings
+ * area (brief_H). `experience` here is work HISTORY (employers/projects) — not
+ * to be confused with the `experience_level` step.
+ */
+export const LEGACY_SECTIONS = [
+  "work_type",
+  "region",
   "photo",
-]);
+  "experience",
+  "education_languages",
+  "certifications",
+] as const;
 
 const EXPERIENCE_LEVELS = ["BEGINNER", "MID_CAREER", "EXPERT"] as const;
 const PROVIDER_GOALS = [
@@ -44,6 +77,22 @@ const PROVIDER_GOALS = [
   "NONE",
 ] as const;
 const WORK_TYPES = ["HOURLY", "PACKAGES", "AGENCY", "CONTRACT_TO_HIRE"] as const;
+const WORK_METHODS = ["HOURLY", "PACKAGES", "RECRUITER"] as const;
+const PROFILE_METHODS = ["LINKEDIN", "RESUME", "MANUAL"] as const;
+const LANGUAGE_LEVELS = [
+  "BASIC",
+  "CONVERSATIONAL",
+  "FLUENT",
+  "NATIVE_OR_BILINGUAL",
+] as const;
+
+/** E014 — a provider may list at most 15 skills. */
+export const MAX_SKILLS = 15;
+/** E017 — a bio must be a real answer, not one word. */
+export const MIN_BIO_CHARS = 100;
+export const MAX_BIO_CHARS = 4500;
+/** E016 — every profile includes English unless the user changes it. */
+export const DEFAULT_LANGUAGE = "English";
 
 export class OnboardingError extends Error {
   constructor(
@@ -70,8 +119,16 @@ export type CreateProviderAccountInput = {
   lastName: string;
   email: string;
   password: string;
-  experienceLevel: (typeof EXPERIENCE_LEVELS)[number];
-  goal: (typeof PROVIDER_GOALS)[number];
+  /**
+   * brief_P moved experience level + goal OUT of sign-up and into profile
+   * steps 1 and 2 (E003/E004), so both are optional here. The schema defaults
+   * (MID_CAREER / NONE) hold until the provider reaches those steps.
+   */
+  experienceLevel?: (typeof EXPERIENCE_LEVELS)[number];
+  goal?: (typeof PROVIDER_GOALS)[number];
+  /** Deck sign-up fields (E001 CHANGE 2). */
+  country?: string;
+  marketingOptIn?: boolean;
   /** Optional coordinator invite token (brief_I) — links the new provider to
    *  the inviting coordinator after account creation, if it matches this email. */
   inviteToken?: string;
@@ -89,11 +146,14 @@ export async function createProviderAccount(
   const firstName = input.firstName.trim();
   const lastName = input.lastName.trim();
 
-  if (!EXPERIENCE_LEVELS.includes(input.experienceLevel)) {
+  if (input.experienceLevel && !EXPERIENCE_LEVELS.includes(input.experienceLevel)) {
     throw new OnboardingError("Invalid experience level", "INVALID");
   }
-  if (!PROVIDER_GOALS.includes(input.goal)) {
+  if (input.goal && !PROVIDER_GOALS.includes(input.goal)) {
     throw new OnboardingError("Invalid goal", "INVALID");
+  }
+  if (input.password.length < 8) {
+    throw new OnboardingError("Password must be at least 8 characters", "INVALID");
   }
 
   const existing = await prisma.user.findUnique({ where: { email } });
@@ -134,12 +194,32 @@ export async function createProviderAccount(
       data: {
         person_id: person.id,
         headline: "", // set at the Title step
-        experience_level: input.experienceLevel,
-        goal: input.goal,
+        // Both default in the schema; brief_P collects them at steps 1–2.
+        ...(input.experienceLevel ? { experience_level: input.experienceLevel } : {}),
+        ...(input.goal ? { goal: input.goal } : {}),
+        // The deck's "send me helpful emails" opt-in (E001) maps onto the
+        // preference store brief_H already created — no new column needed.
+        notify_product_updates: input.marketingOptIn === true,
         // status defaults PENDING → ACTIVE on email verify (brief_K);
         // validation_status defaults NOT_REQUESTED; completeness starts 0.
       },
     });
+
+    // Sign-up country seeds the backbone Site/Address so the finish page
+    // (E019) pre-fills Country instead of asking for it twice.
+    if (input.country?.trim()) {
+      const site = await tx.site.create({
+        data: { company_id: company.id, name: "Primary" },
+      });
+      await tx.address.create({
+        data: { site_id: site.id, line1: "", country: input.country.trim() },
+      });
+      await tx.person.update({
+        where: { id: person.id },
+        data: { site_id: site.id },
+      });
+    }
+
     return user.id;
   });
 
@@ -193,9 +273,18 @@ async function loadDraft(viewer: Viewer) {
     where: { user_id: viewer.userId },
     include: {
       user: { select: { email: true, email_verified: true } },
+      site: { include: { addresses: { orderBy: { created_at: "asc" }, take: 1 } } },
       providerProfile: {
         include: {
-          skills: { include: { skill: { select: { role_type_id: true } } } },
+          pillar: { select: { id: true, code: true, name: true } },
+          imports: { orderBy: { created_at: "desc" } },
+          skills: {
+            include: {
+              skill: {
+                select: { id: true, name: true, role_type_id: true, pillar_id: true },
+              },
+            },
+          },
           workExperiences: {
             orderBy: { created_at: "asc" },
             include: { projects: { orderBy: { created_at: "asc" } } },
@@ -215,30 +304,34 @@ async function loadDraft(viewer: Viewer) {
 
 /**
  * The furthest incomplete step to resume at. Only REQUIRED steps are resume
- * targets — optional steps (education/languages, photo) are encountered walking
- * forward but never send a returning user backward. Because the wizard enforces
- * linear order, the first incomplete required step IS the furthest reached.
+ * targets — optional steps (tell-us, education) are encountered walking forward
+ * but never send a returning user backward. Because the wizard enforces linear
+ * order, the first incomplete required step IS the furthest reached.
+ *
+ * A provider who already pressed Publish resumes on the finish step, so the
+ * wizard hands them straight to the review page rather than re-walking them.
  */
 function computeResumeStep(p: Awaited<ReturnType<typeof loadDraft>>): ProviderStep {
   const pp = p.providerProfile!;
   const done: Record<ProviderStep, boolean> = {
-    work_type: pp.work_types.length > 0,
-    skills: pp.skills.length > 0,
+    experience_level: pp.experience_level != null,
+    goal: pp.goal != null,
+    work_method: pp.work_method != null,
     title: pp.headline.trim() !== "",
-    experience: pp.workExperiences.length > 0,
-    education_languages: true, // optional — never a resume target
-    bio: !!pp.overview && pp.overview.trim() !== "",
-    rate: pp.onsite_rate_cents != null || pp.remote_rate_cents != null,
-    region: pp.region_id != null,
-    photo: true, // optional — never a resume target
-    review: false,
+    tell_us: true, //   optional — a method choice, never a resume target
+    category: pp.pillar_id != null,
+    skills: pp.skills.length > 0,
+    education: true, // optional (E015) — never a resume target
+    languages: pp.languages.length > 0,
+    bio: !!pp.overview && pp.overview.trim().length >= MIN_BIO_CHARS,
+    rate: pp.hourly_rate_cents != null,
+    finish: pp.onboarding_completed_at != null,
   };
   for (const step of PROVIDER_STEPS) {
-    if (step === "review") break;
     if (OPTIONAL_STEPS.has(step)) continue;
     if (!done[step]) return step;
   }
-  return "review";
+  return "finish";
 }
 
 /** The full onboarding snapshot the wizard needs to render + resume. */
@@ -252,23 +345,44 @@ export async function getOnboardingState(viewer: Viewer) {
     pp.completeness >= VISIBILITY_THRESHOLD &&
     pp.paused_at == null;
 
+  const address = p.site?.addresses?.[0] ?? null;
+
   return {
     email: p.user?.email ?? "",
     emailVerified,
     resumeStep: emailVerified ? computeResumeStep(p) : ("verify" as const),
+    totalSteps: TOTAL_PROVIDER_STEPS,
     status: pp.status,
     completeness: pp.completeness,
     visibilityThreshold: VISIBILITY_THRESHOLD,
     visible,
     paused: pp.paused_at != null,
+    published: pp.onboarding_completed_at != null,
+    /** Import gaps for the review page to surface (E019). */
+    imports: pp.imports.map((i) => ({
+      id: i.id,
+      source: i.source,
+      status: i.status,
+      fileName: i.file_name,
+      gaps: (i.gaps as string[] | null) ?? [],
+      error: i.error,
+      createdAt: i.created_at,
+    })),
     profile: {
       experienceLevel: pp.experience_level,
       goal: pp.goal,
+      workMethod: pp.work_method,
+      profileMethod: pp.profile_method,
       workTypes: pp.work_types,
+      pillarId: pp.pillar_id,
+      pillarName: pp.pillar?.name ?? null,
       roleTypeId: pp.skills[0]?.skill.role_type_id ?? null,
       skillIds: pp.skills.map((s) => s.skill_id),
+      skillNames: pp.skills.map((s) => ({ id: s.skill_id, name: s.skill.name })),
       headline: pp.headline,
       overview: pp.overview ?? "",
+      hourlyRateCents: pp.hourly_rate_cents,
+      serviceFeeBps: pp.service_fee_bps,
       onsiteRateCents: pp.onsite_rate_cents,
       remoteRateCents: pp.remote_rate_cents,
       currency: pp.currency,
@@ -276,6 +390,21 @@ export async function getOnboardingState(viewer: Viewer) {
       photoUrl: p.photo_url,
       firstName: p.first_name,
       lastName: p.last_name,
+      dateOfBirth: pp.date_of_birth
+        ? pp.date_of_birth.toISOString().slice(0, 10)
+        : null,
+      phone: p.phone,
+      phoneVerified: p.phone_verified_at != null,
+      address: address
+        ? {
+            line1: address.line1,
+            line2: address.line2,
+            city: address.city,
+            state: address.state,
+            postalCode: address.postal_code,
+            country: address.country,
+          }
+        : null,
       experiences: pp.workExperiences.map((w) => ({
         id: w.id,
         employer: w.employer,
@@ -289,13 +418,20 @@ export async function getOnboardingState(viewer: Viewer) {
         })),
       })),
       education: pp.education.map((e) => ({
+        id: e.id,
         institution: e.institution,
         degree: e.degree,
         field: e.field,
         year: e.year,
+        startYear: e.start_year,
+        endYear: e.end_year,
+        description: e.description,
       })),
       languages: pp.languages.map((l) => ({
+        id: l.id,
         name: l.name,
+        // `level` is canonical (E016); `proficiency` is the pre-brief_P text.
+        level: l.level,
         proficiency: l.proficiency,
       })),
     },
@@ -314,11 +450,7 @@ type StepData = Record<string, any>;
  * the Settings area (brief_H) additionally edits experience_level, goal, and
  * certifications on the same live profile.
  */
-export type ProfileSection =
-  | ProviderStep
-  | "experience_level"
-  | "goal"
-  | "certifications";
+export type ProfileSection = ProviderStep | (typeof LEGACY_SECTIONS)[number];
 
 /**
  * Apply ONE profile section — pure persistence + validation, no gating.
@@ -350,29 +482,95 @@ export async function applyProviderSection(
       break;
     }
 
-    case "skills": {
-      const roleTypeId: string = data.roleTypeId;
-      const skillIds: string[] = Array.isArray(data.skillIds)
-        ? data.skillIds
-        : [];
-      if (!roleTypeId || skillIds.length === 0) {
-        throw new OnboardingError("Pick a category and at least one skill", "INVALID");
+    case "work_method": {
+      // E009 — the Provider vs Recruiter fork. A recruiter sells the services
+      // of OTHERS, which is the app's Coordinator role (brief_I), so choosing
+      // it grants the coordinator actor flag. The provider flag is NOT removed:
+      // a recruiter still has their own provider profile, and dropping it would
+      // strand them outside /join/provider mid-wizard.
+      const method = data.workMethod;
+      if (!WORK_METHODS.includes(method)) {
+        throw new OnboardingError("Pick how you work", "INVALID");
       }
-      // One-main-category enforcement: every chosen skill must belong to the
-      // single selected RoleType.
+      await prisma.providerProfile.update({
+        where: { id: profileId },
+        data: { work_method: method },
+      });
+      await prisma.person.update({
+        where: { id: personId },
+        data: { is_service_coordinator: method === "RECRUITER" },
+      });
+      break;
+    }
+
+    case "category": {
+      // E013 — the field / category, driven by the seeded ERP taxonomy.
+      const pillarId: string = data.pillarId;
+      const pillar = pillarId
+        ? await prisma.pillar.findUnique({ where: { id: pillarId } })
+        : null;
+      if (!pillar) throw new OnboardingError("Pick what work you do", "INVALID");
+      const current = await prisma.providerProfile.findUnique({
+        where: { id: profileId },
+        select: { pillar_id: true },
+      });
+      await prisma.providerProfile.update({
+        where: { id: profileId },
+        data: { pillar_id: pillar.id },
+      });
+      // Changing field invalidates skills picked under the OLD field — they
+      // would no longer be reachable from the step-7 list (E014 filters to the
+      // chosen field), so leaving them would strand un-editable skills.
+      if (current?.pillar_id && current.pillar_id !== pillar.id) {
+        await prisma.providerSkill.deleteMany({
+          where: { provider_profile_id: profileId },
+        });
+      }
+      break;
+    }
+
+    case "skills": {
+      // E014 — skills are CONDITIONAL on the field chosen at step 6 and capped
+      // at 15. Settings (brief_H) still posts a `roleTypeId`, so both scoping
+      // keys are accepted; whichever is supplied is enforced.
+      const skillIds: string[] = Array.isArray(data.skillIds) ? data.skillIds : [];
+      if (skillIds.length === 0) {
+        throw new OnboardingError("Pick at least one skill", "INVALID");
+      }
+      if (skillIds.length > MAX_SKILLS) {
+        throw new OnboardingError(
+          `Pick up to ${MAX_SKILLS} skills`,
+          "INVALID"
+        );
+      }
+
+      const profile = await prisma.providerProfile.findUnique({
+        where: { id: profileId },
+        select: { pillar_id: true },
+      });
+      const scopePillarId: string | null = data.pillarId ?? profile?.pillar_id ?? null;
+      const scopeRoleTypeId: string | null = data.roleTypeId ?? null;
+
       const skills = await prisma.skill.findMany({
         where: { id: { in: skillIds } },
-        select: { id: true, role_type_id: true },
+        select: { id: true, role_type_id: true, pillar_id: true },
       });
-      if (
-        skills.length !== skillIds.length ||
-        skills.some((s) => s.role_type_id !== roleTypeId)
-      ) {
+      if (skills.length !== skillIds.length) {
+        throw new OnboardingError("Unknown skill selected", "INVALID");
+      }
+      if (scopeRoleTypeId && skills.some((s) => s.role_type_id !== scopeRoleTypeId)) {
         throw new OnboardingError(
           "All skills must belong to the selected category",
           "INVALID"
         );
       }
+      if (scopePillarId && skills.some((s) => s.pillar_id !== scopePillarId)) {
+        throw new OnboardingError(
+          "All skills must belong to the field you chose",
+          "INVALID"
+        );
+      }
+
       await prisma.$transaction([
         prisma.providerSkill.deleteMany({
           where: { provider_profile_id: profileId },
@@ -486,9 +684,94 @@ export async function applyProviderSection(
       break;
     }
 
+    case "education": {
+      // E015 — optional, but when entries ARE given each needs a school.
+      // Dates are start/end YEARS ("Dates Attended"), not full dates.
+      const list: StepData[] = Array.isArray(data.education) ? data.education : [];
+      const clean = list
+        .map((e) => ({
+          institution: (e.institution ?? "").trim(),
+          degree: e.degree?.trim() || null,
+          field: e.field?.trim() || null,
+          start_year: toYear(e.startYear),
+          end_year: toYear(e.endYear),
+          description: e.description?.trim() || null,
+        }))
+        .filter((e) => e.institution);
+      for (const e of clean) {
+        if (e.start_year && e.end_year && e.end_year < e.start_year) {
+          throw new OnboardingError(
+            "An education entry ends before it starts",
+            "INVALID"
+          );
+        }
+      }
+      await prisma.$transaction([
+        prisma.education.deleteMany({ where: { provider_profile_id: profileId } }),
+        ...(clean.length
+          ? [
+              prisma.education.createMany({
+                data: clean.map((e) => ({ provider_profile_id: profileId, ...e })),
+              }),
+            ]
+          : []),
+      ]);
+      break;
+    }
+
+    case "languages": {
+      // E016 — at least one language; English is seeded by the client as the
+      // default row, so this only has to enforce the floor.
+      const list: StepData[] = Array.isArray(data.languages) ? data.languages : [];
+      const clean = list
+        .map((l) => ({
+          name: (l.name ?? "").trim(),
+          level: LANGUAGE_LEVELS.includes(l.level) ? l.level : null,
+        }))
+        .filter((l) => l.name);
+      if (clean.length === 0) {
+        throw new OnboardingError("Add at least one language", "INVALID");
+      }
+      const seen = new Set<string>();
+      for (const l of clean) {
+        const key = l.name.toLowerCase();
+        if (seen.has(key)) {
+          throw new OnboardingError(`${l.name} is listed twice`, "INVALID");
+        }
+        seen.add(key);
+      }
+      await prisma.$transaction([
+        prisma.language.deleteMany({ where: { provider_profile_id: profileId } }),
+        prisma.language.createMany({
+          data: clean.map((l) => ({
+            provider_profile_id: profileId,
+            name: l.name,
+            level: l.level,
+            // Mirror into the legacy text column so pre-brief_P readers
+            // (ProfileView, settings) keep rendering a value.
+            proficiency: l.level ? LANGUAGE_LEVEL_LABELS[l.level] : null,
+          })),
+        }),
+      ]);
+      break;
+    }
+
     case "bio": {
+      // E017 — required AND long enough to be a real answer, not one word.
       const overview: string = (data.overview ?? "").trim();
       if (!overview) throw new OnboardingError("Bio is required", "INVALID");
+      if (overview.length < MIN_BIO_CHARS) {
+        throw new OnboardingError(
+          `Tell clients a bit more — at least ${MIN_BIO_CHARS} characters (you have ${overview.length}).`,
+          "INVALID"
+        );
+      }
+      if (overview.length > MAX_BIO_CHARS) {
+        throw new OnboardingError(
+          `Please keep your bio under ${MAX_BIO_CHARS} characters.`,
+          "INVALID"
+        );
+      }
       await prisma.providerProfile.update({
         where: { id: profileId },
         data: { overview },
@@ -505,19 +788,76 @@ export async function applyProviderSection(
         }
         return Math.round(n * 100);
       };
+      const hourly = toCents(data.hourlyDollars);
       const onsite = toCents(data.onsiteDollars);
       const remote = toCents(data.remoteDollars);
-      if (onsite == null && remote == null) {
-        throw new OnboardingError("Enter at least one rate", "INVALID");
+
+      // E018 — the wizard posts a single required hourly rate. Settings
+      // (brief_H) still posts the onsite/remote pair, so accept either shape.
+      if (hourly == null && onsite == null && remote == null) {
+        throw new OnboardingError("Enter your hourly rate", "INVALID");
+      }
+      if (hourly != null && hourly === 0) {
+        throw new OnboardingError("Your hourly rate must be more than $0", "INVALID");
       }
       await prisma.providerProfile.update({
         where: { id: profileId },
         data: {
-          onsite_rate_cents: onsite,
-          remote_rate_cents: remote,
+          ...(hourly != null ? { hourly_rate_cents: hourly } : {}),
+          ...(onsite != null || remote != null
+            ? { onsite_rate_cents: onsite, remote_rate_cents: remote }
+            : {}),
           currency: typeof data.currency === "string" ? data.currency : undefined,
         },
       });
+      break;
+    }
+
+    case "tell_us": {
+      // E012 — records WHICH creation path was taken. The import itself is
+      // handled by the upload/parse endpoint; this just remembers the choice.
+      const method = data.profileMethod;
+      if (!PROFILE_METHODS.includes(method)) {
+        throw new OnboardingError("Pick how you'd like to continue", "INVALID");
+      }
+      await prisma.providerProfile.update({
+        where: { id: profileId },
+        data: { profile_method: method },
+      });
+      break;
+    }
+
+    case "finish": {
+      // E019 — the "You're Done!" details. Photo is uploaded separately
+      // (brief_O endpoint); phone verification is its own challenge/response.
+      // This persists DOB + address and nothing else, so a half-filled finish
+      // page still saves. Publishing is a SEPARATE call (`publishProfile`),
+      // which is where the required-field gate lives.
+      const dob = data.dateOfBirth ? new Date(data.dateOfBirth) : null;
+      if (data.dateOfBirth && Number.isNaN(dob!.getTime())) {
+        throw new OnboardingError("That date of birth isn't valid", "INVALID");
+      }
+      if (dob) {
+        const age = yearsSince(dob);
+        if (age < 18) {
+          throw new OnboardingError(
+            "You must be at least 18 to provide services on Panameer.",
+            "INVALID"
+          );
+        }
+        if (age > 120) {
+          throw new OnboardingError("That date of birth isn't valid", "INVALID");
+        }
+      }
+
+      await prisma.providerProfile.update({
+        where: { id: profileId },
+        data: { date_of_birth: dob },
+      });
+
+      if (data.address && typeof data.address === "object") {
+        await saveProviderAddress(personId, data.address as StepData);
+      }
       break;
     }
 
@@ -604,13 +944,91 @@ export async function applyProviderSection(
       break;
     }
 
-    case "review":
-      break;
   }
 
   // Every save recomputes stored completeness (brief_K) — the marketplace
   // visibility gate reads this column, so it must stay current on every write.
   await recomputeCompleteness(profileId);
+}
+
+// ---------------------------------------------------------------------------
+// Small helpers used by the brief_P steps.
+// ---------------------------------------------------------------------------
+
+/** Display labels for the E016 proficiency levels. */
+export const LANGUAGE_LEVEL_LABELS: Record<string, string> = {
+  BASIC: "Basic",
+  CONVERSATIONAL: "Conversational",
+  FLUENT: "Fluent",
+  NATIVE_OR_BILINGUAL: "Native or Bilingual",
+};
+
+/** Coerce a year-ish value to a plausible 4-digit year, or null. */
+function toYear(v: unknown): number | null {
+  if (v === null || v === undefined || v === "") return null;
+  const n = Number(v);
+  if (!Number.isInteger(n)) return null;
+  const thisYear = new Date().getFullYear();
+  // Allow a decade of future dates for in-progress / expected graduation.
+  if (n < 1900 || n > thisYear + 10) return null;
+  return n;
+}
+
+/** Whole years elapsed since `d`. */
+function yearsSince(d: Date): number {
+  const now = new Date();
+  let age = now.getFullYear() - d.getFullYear();
+  const m = now.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age--;
+  return age;
+}
+
+/**
+ * Persist the provider's address on the BACKBONE (E019) rather than bolting
+ * address columns onto Person: P-Account → Company → Site → Address → Person is
+ * the model (architecture.md), so a provider's address is an Address on their
+ * own company's Site. Creates the Site/Address on first save, updates after.
+ */
+async function saveProviderAddress(personId: string, addr: StepData): Promise<void> {
+  const line1 = (addr.line1 ?? "").trim();
+  if (!line1) return; // nothing to save yet — the finish page saves partially
+
+  const person = await prisma.person.findUnique({
+    where: { id: personId },
+    select: { id: true, company_id: true, site_id: true },
+  });
+  if (!person) return;
+
+  const fields = {
+    line1,
+    line2: addr.line2?.trim() || null,
+    city: addr.city?.trim() || null,
+    state: addr.state?.trim() || null,
+    postal_code: addr.postalCode?.trim() || null,
+    country: addr.country?.trim() || null,
+  };
+
+  let siteId = person.site_id;
+  if (!siteId) {
+    const site = await prisma.site.create({
+      data: { company_id: person.company_id, name: "Primary" },
+    });
+    siteId = site.id;
+    await prisma.person.update({
+      where: { id: person.id },
+      data: { site_id: siteId },
+    });
+  }
+
+  const existing = await prisma.address.findFirst({
+    where: { site_id: siteId },
+    orderBy: { created_at: "asc" },
+  });
+  if (existing) {
+    await prisma.address.update({ where: { id: existing.id }, data: fields });
+  } else {
+    await prisma.address.create({ data: { site_id: siteId, ...fields } });
+  }
 }
 
 /**
@@ -637,6 +1055,7 @@ export async function recomputeCompleteness(profileId: string): Promise<number> 
     region_id: profile.region_id,
     onsite_rate_cents: profile.onsite_rate_cents,
     remote_rate_cents: profile.remote_rate_cents,
+    hourly_rate_cents: profile.hourly_rate_cents,
     work_types: profile.work_types,
     skills: profile.skills,
     workExperiences: profile.workExperiences,
@@ -667,6 +1086,59 @@ export async function saveProviderStep(
   }
   await applyProviderSection(p.providerProfile!.id, p.id, step, data);
   return getOnboardingState(viewer);
+}
+
+/**
+ * "Publish Profile" (E019) — the finish action. Marks onboarding complete and
+ * hands the provider to the review page.
+ *
+ * IMPORTANT: this is NOT a visibility switch. brief_K locked marketplace
+ * visibility as DERIVED (status ACTIVE ∧ completeness ≥ 80 ∧ not paused) and
+ * deliberately deleted the old `published` flag — resurrecting one here would
+ * relitigate that decision. `onboarding_completed_at` records only that the
+ * provider walked the journey to the end.
+ */
+export async function publishProfile(viewer: Viewer) {
+  const p = await loadDraft(viewer);
+  if (p.user?.email_verified == null) {
+    throw new OnboardingError("Verify your email first", "NOT_VERIFIED");
+  }
+  const pp = p.providerProfile!;
+
+  // The finish page's required fields (E019). Reported together so the user
+  // fixes everything in one pass instead of one error at a time.
+  const missing: string[] = [];
+  if (!pp.headline.trim()) missing.push("a professional title");
+  if (!pp.overview || pp.overview.trim().length < MIN_BIO_CHARS) {
+    missing.push("a bio");
+  }
+  if (pp.hourly_rate_cents == null) missing.push("your hourly rate");
+  if (!pp.pillar_id) missing.push("the work you do");
+  if (pp.skills.length === 0) missing.push("at least one skill");
+  if (pp.languages.length === 0) missing.push("at least one language");
+  if (!pp.date_of_birth) missing.push("your date of birth");
+  if (!p.phone) missing.push("your phone number");
+  if (p.phone_verified_at == null) missing.push("phone verification");
+
+  if (missing.length > 0) {
+    throw new OnboardingError(
+      `Before publishing, add ${formatList(missing)}.`,
+      "INCOMPLETE"
+    );
+  }
+
+  await prisma.providerProfile.update({
+    where: { id: pp.id },
+    data: { onboarding_completed_at: pp.onboarding_completed_at ?? new Date() },
+  });
+  await recomputeCompleteness(pp.id);
+  return getOnboardingState(viewer);
+}
+
+/** "a, b and c" — for readable multi-field validation messages. */
+function formatList(items: string[]): string {
+  if (items.length === 1) return items[0];
+  return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
 }
 
 // ===========================================================================

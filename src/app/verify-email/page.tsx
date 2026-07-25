@@ -1,11 +1,15 @@
 import Link from "next/link";
-import Image from "next/image";
 import { consumeEmailVerification } from "@/lib/verification";
+import { Logo } from "@/components/Logo";
 
 /**
- * Landing page for the tokenized verification link. Verifies server-side, then
- * shows a branded result. On success the user clicks back into /join, whose
- * status poll detects the now-verified email and advances past the gate.
+ * Landing page for the tokenized verification link (brief_E), reworked by
+ * brief_P:
+ *   - E007: the logo uses the transparent asset via <Logo>, so it no longer
+ *     sits in a white box on this tinted page.
+ *   - E008: on success the CTA goes to /join/provider/start — the "Get Started
+ *     Now!" page, which is the FIRST page of the profile-building process — not
+ *     back to the role-select at /join.
  *
  * No app/marketing nav — this is part of the focused onboarding flow.
  */
@@ -24,16 +28,7 @@ export default async function VerifyEmailPage({
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-bg-soft px-6 text-center font-body text-ink">
-      <Link href="/" aria-label="Panameer home">
-        <Image
-          src="/brand/panameer-logo.png"
-          alt="Panameer"
-          width={786}
-          height={111}
-          priority
-          className="h-9 w-auto"
-        />
-      </Link>
+      <Logo className="h-9 w-auto" priority />
 
       <div className="mt-10 w-full max-w-md rounded-brand border border-line bg-white p-8 shadow-brand">
         {ok ? (
@@ -45,14 +40,13 @@ export default async function VerifyEmailPage({
               Email Verified
             </h1>
             <p className="mt-2 text-ink-2">
-              You&apos;re all set. Head back to continue building your provider
-              profile.
+              You&apos;re all set. Let&apos;s build your profile.
             </p>
             <Link
-              href="/join"
+              href="/join/provider/start"
               className="mt-6 inline-flex rounded-full bg-magenta px-6 py-3 font-bold text-white transition-colors hover:bg-magenta-dark"
             >
-              Continue Onboarding →
+              Continue Onboarding
             </Link>
           </>
         ) : (

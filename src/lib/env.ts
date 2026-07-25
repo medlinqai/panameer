@@ -25,6 +25,11 @@ const schema = z.object({
   RESEND_API_KEY: z.string().min(1).optional(),
   EMAIL_FROM: z.string().min(1).optional(),
 
+  // SMS (Twilio) — optional; unset falls back to logging the code (brief_P).
+  TWILIO_ACCOUNT_SID: z.string().min(1).optional(),
+  TWILIO_AUTH_TOKEN: z.string().min(1).optional(),
+  TWILIO_FROM_NUMBER: z.string().min(1).optional(),
+
   // App
   NEXT_PUBLIC_APP_URL: z.string().min(1).default("http://localhost:3100"),
 });

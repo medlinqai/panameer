@@ -18,6 +18,8 @@ export type CompletenessInput = {
   region_id: string | null;
   onsite_rate_cents: number | null;
   remote_rate_cents: number | null;
+  /** The single hourly rate collected by the wizard (brief_P / E018). */
+  hourly_rate_cents?: number | null;
   work_types: unknown[];
   skills: unknown[];
   workExperiences: unknown[];
@@ -53,7 +55,17 @@ export function computeProviderCompleteness(p: CompletenessInput): number {
   // so ≥ 3 skills implies a primary role type.
   if (p.skills.length >= 3) score += W.skills;
   if (p.region_id) score += W.region;
-  if (p.onsite_rate_cents != null || p.remote_rate_cents != null) score += W.rate;
+  // Any rate counts. brief_P's wizard collects a single `hourly_rate_cents`;
+  // the onsite/remote pair predates it and is still editable in Settings.
+  // Reading only the old pair meant a provider who finished the new journey
+  // scored 0 here and could never reach the visibility threshold.
+  if (
+    p.hourly_rate_cents != null ||
+    p.onsite_rate_cents != null ||
+    p.remote_rate_cents != null
+  ) {
+    score += W.rate;
+  }
   if (p.work_types.length >= 1) score += W.workTypes;
   if (p.workExperiences.length >= 1) score += W.workExperience;
   if (p.photoUrl) score += W.photo;

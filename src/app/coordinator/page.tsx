@@ -18,7 +18,7 @@ export default async function CoordinatorPage() {
         <div className="mx-auto flex max-w-4xl items-center gap-4">
           <Link href="/" aria-label="Panameer home">
             <Image
-              src="/brand/panameer-logo.png"
+              src="/brand/panameer-logo-transparent.png"
               alt="Panameer"
               width={786}
               height={111}
