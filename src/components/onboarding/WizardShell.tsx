@@ -78,26 +78,36 @@ export function WizardShell({
           <div className="mt-8">{children}</div>
         </div>
 
+        {/*
+          Footer layout (brief_O): Back sits FAR LEFT, the primary Continue FAR
+          RIGHT, and the optional secondary ("Skip for Now") is de-emphasised —
+          a muted underlined link parked in the LEFT cluster, deliberately not
+          adjacent to the primary CTA, so skipping never reads as the intended
+          action. One layout for every wizard that uses this shell.
+        */}
         {!hideFooter && (
-          <div className="mt-10 flex items-center gap-3 border-t border-line pt-6">
-            {canBack && onBack && (
-              <button
-                onClick={onBack}
-                disabled={busy}
-                className="rounded-full border-[1.5px] border-line px-6 py-3 font-bold text-ink transition-colors hover:border-[#d9d4e2] disabled:opacity-50"
-              >
-                Back
-              </button>
-            )}
-            {secondaryLabel && onSecondary && (
-              <button
-                onClick={onSecondary}
-                disabled={busy}
-                className="rounded-full px-4 py-3 font-bold text-ink-2 transition-colors hover:text-magenta disabled:opacity-50"
-              >
-                {secondaryLabel}
-              </button>
-            )}
+          <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-line pt-6">
+            <div className="flex items-center gap-6">
+              {canBack && onBack && (
+                <button
+                  onClick={onBack}
+                  disabled={busy}
+                  className="rounded-full border-[1.5px] border-line px-6 py-3 font-bold text-ink transition-colors hover:border-[#d9d4e2] disabled:opacity-50"
+                >
+                  Back
+                </button>
+              )}
+              {secondaryLabel && onSecondary && (
+                <button
+                  onClick={onSecondary}
+                  disabled={busy}
+                  className="text-[15px] font-semibold text-ink-2 underline underline-offset-4 transition-colors hover:text-magenta disabled:opacity-50"
+                >
+                  {secondaryLabel}
+                </button>
+              )}
+            </div>
+
             {onContinue && (
               <button
                 onClick={onContinue}

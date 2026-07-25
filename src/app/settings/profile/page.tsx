@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Section } from "@/components/settings/Section";
 import { Badge } from "@/components/Badge";
-import { Avatar } from "@/components/Avatar";
+import { PhotoUpload } from "@/components/PhotoUpload";
 import {
   OptionCard,
   Chip,
@@ -51,7 +51,7 @@ type Region = { id: string; name: string; description: string | null };
 const centsToDollars = (c: number | null) => (c == null ? "" : String(c / 100));
 
 export default function SettingsProfilePage() {
-  const { settings, loading, notProvider, setSettings } = useSettings();
+  const { settings, loading, notProvider, setSettings, reload } = useSettings();
   const initialized = useRef(false);
 
   // Editable draft (initialised once so section saves don't wipe other edits).
@@ -596,20 +596,17 @@ export default function SettingsProfilePage() {
         </div>
       </Section>
 
-      {/* Photo (initials placeholder; upload later) */}
+      {/* Photo — real owner-scoped upload (brief_O); initials are the fallback. */}
       <Section title="Photo">
-        <div className="flex items-center gap-4">
-          <Avatar
-            firstName={settings.firstName}
-            lastName={settings.lastName}
-            photoUrl={settings.photoUrl}
-            size={72}
-          />
-          <p className="text-[14px] text-ink-2">
-            {/* TODO(brief_H): real photo upload out of scope; initials only. */}
-            We use your initials until photo upload ships.
-          </p>
-        </div>
+        <PhotoUpload
+          firstName={settings.firstName}
+          lastName={settings.lastName}
+          photoUrl={settings.photoUrl}
+          size={72}
+          // The endpoint persists the photo and recomputes completeness, so
+          // reload rather than patching one field client-side.
+          onChange={() => void reload()}
+        />
       </Section>
     </div>
   );

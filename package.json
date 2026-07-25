@@ -13,11 +13,14 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "db:push": "prisma db push",
+    "db:email-guard": "ts-node --project tsconfig.seed.json prisma/normalize-emails.ts",
+    "storage:setup": "ts-node --project tsconfig.seed.json prisma/setup-storage.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.0",
     "@prisma/client": "^7.9.0",
+    "@supabase/storage-js": "^2.110.8",
     "@supabase/supabase-js": "^2.110.8",
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.4.2",

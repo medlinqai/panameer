@@ -4,6 +4,7 @@ import { sendEmail } from "@/lib/resend";
 import { hashToken, appBaseUrl } from "@/lib/verification";
 import { inviteProviderTemplate } from "@/lib/email/templates/invite-provider";
 import { isMarketplaceVisible, type Viewer } from "@/lib/access";
+import { normalizeEmail, sameEmail } from "@/lib/normalizeEmail";
 
 /**
  * Coordinator → provider invites (brief_I). Reuses the hash-only token pattern
@@ -73,7 +74,7 @@ export async function createInvite(
   input: { email: string; firstName?: string; lastName?: string; message?: string }
 ): Promise<{ ok: true; inviteId: string; sent: boolean; devLink?: string }> {
   const coordinator = await resolveCoordinator(viewer);
-  const email = input.email.trim().toLowerCase();
+  const email = normalizeEmail(input.email);
   if (!email || !email.includes("@")) {
     throw new CoordinatorError("A valid email is required", "INVALID");
   }
@@ -247,8 +248,10 @@ export async function lookupInvite(rawToken: string): Promise<InviteLookup> {
     return { ok: false, reason: "expired" };
   }
 
+  // Normalized even though invites are stored normalized — older rows predate
+  // the guard, and this lookup decides "sign up" vs "log in to accept".
   const account = await prisma.user.findUnique({
-    where: { email: invite.invitee_email },
+    where: { email: normalizeEmail(invite.invitee_email) },
     select: { id: true },
   });
 
@@ -301,7 +304,7 @@ export async function acceptInviteForUser(
   if (!user) return { ok: false, reason: "invalid" };
 
   // The accepting user must BE the invitee — no cross-account reassignment.
-  if (user.email.toLowerCase() !== invite.invitee_email.toLowerCase()) {
+  if (!sameEmail(user.email, invite.invitee_email)) {
     return { ok: false, reason: "email_mismatch" };
   }
   const providerProfile = user.person?.providerProfile;

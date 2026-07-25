@@ -4,6 +4,7 @@ import { lookupInvite } from "@/lib/coordinator";
 import { getSessionViewer } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { AcceptButton } from "@/components/coordinator/AcceptButton";
+import { sameEmail } from "@/lib/normalizeEmail";
 
 /**
  * Coordinator invite accept landing (brief_I). PUBLIC (a new invitee has no
@@ -132,8 +133,7 @@ async function ValidState({
     where: { id: viewer.userId },
     select: { email: true },
   });
-  const isInvitee =
-    me?.email?.toLowerCase() === lookup.inviteeEmail.toLowerCase();
+  const isInvitee = sameEmail(me?.email, lookup.inviteeEmail);
 
   if (!isInvitee) {
     return (

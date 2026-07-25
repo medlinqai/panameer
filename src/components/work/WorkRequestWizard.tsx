@@ -223,7 +223,12 @@ export function WorkRequestWizard() {
               title="I'll Do It Without AI"
               description="Fill in the details yourself, step by step."
             />
-            <button onClick={skip} className="text-[14px] font-bold text-ink-2 hover:text-magenta">
+            {/* This screen hides the shell footer, so the skip is rendered
+                inline — styled to match the shell's de-emphasised secondary. */}
+            <button
+              onClick={skip}
+              className="text-[15px] font-semibold text-ink-2 underline underline-offset-4 transition-colors hover:text-magenta"
+            >
               Skip for Now
             </button>
           </div>

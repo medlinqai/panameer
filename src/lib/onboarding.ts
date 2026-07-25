@@ -6,6 +6,7 @@ import {
   VISIBILITY_THRESHOLD,
 } from "@/lib/completeness";
 import type { Viewer } from "@/lib/access";
+import { normalizeEmail } from "@/lib/normalizeEmail";
 
 /**
  * Provider onboarding — all business logic for the /join wizard (API-first, so
@@ -84,7 +85,7 @@ export type CreateProviderAccountInput = {
 export async function createProviderAccount(
   input: CreateProviderAccountInput
 ): Promise<{ userId: string; email: string }> {
-  const email = input.email.trim().toLowerCase();
+  const email = normalizeEmail(input.email);
   const firstName = input.firstName.trim();
   const lastName = input.lastName.trim();
 
@@ -166,7 +167,7 @@ export async function updateUnverifiedEmail(
   viewer: Viewer,
   newEmailRaw: string
 ): Promise<{ ok: true }> {
-  const newEmail = newEmailRaw.trim().toLowerCase();
+  const newEmail = normalizeEmail(newEmailRaw);
   const user = await prisma.user.findUnique({ where: { id: viewer.userId } });
   if (!user) throw new OnboardingError("Account not found", "NOT_A_PROVIDER");
   if (user.email_verified) {
@@ -534,7 +535,9 @@ export async function applyProviderSection(
     }
 
     case "photo": {
-      // Optional; no real upload in this brief (initials placeholder fallback).
+      // Optional step. The URL is produced by POST /api/profile/photo (a real
+      // owner-scoped Supabase Storage upload, brief_O); null clears it back to
+      // the initials fallback.
       const photoUrl: string | null =
         typeof data.photoUrl === "string" && data.photoUrl.trim()
           ? data.photoUrl.trim()
@@ -691,7 +694,7 @@ export type CreateBuyerAccountInput = {
 export async function createBuyerAccount(
   input: CreateBuyerAccountInput
 ): Promise<{ userId: string; email: string }> {
-  const email = input.email.trim().toLowerCase();
+  const email = normalizeEmail(input.email);
   const firstName = input.firstName.trim();
   const lastName = input.lastName.trim();
 

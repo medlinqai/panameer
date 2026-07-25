@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { deriveAccessFlags } from "@/lib/access";
 import { getActorFlags, NO_ACTOR_FLAGS } from "@/lib/actor-flags";
+import { normalizeEmail } from "@/lib/normalizeEmail";
 
 const MAX_FAILED_LOGINS = 5;
 
@@ -23,8 +24,12 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
+        // Emails are STORED normalized (trim+lowercase), so the free-typed
+        // login value must be normalized too — otherwise "Scott@x.com" finds no
+        // row for an account registered as "scott@x.com" and reads as a bad
+        // password (brief_O).
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
+          where: { email: normalizeEmail(credentials.email) },
         });
         if (!user || !user.password_hash) return null;
 

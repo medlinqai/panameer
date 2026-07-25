@@ -21,6 +21,11 @@ datasource db {
 /// stays focused on authentication.
 model User {
   id                    String    @id @default(uuid()) @db.Uuid
+  /// ALWAYS stored normalized (trim + lowercase) via `normalizeEmail`. Backed
+  /// by an additional UNIQUE INDEX on `lower(email)` that Prisma cannot express
+  /// (functional index) — it is created by `npm run db:email-guard`, and
+  /// `prisma db push` DROPS it, so re-run that script after every push.
+  /// See brief_O / decisions-01.md.
   email                 String    @unique
   password_hash         String?
   first_name            String?

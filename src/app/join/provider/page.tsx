@@ -23,7 +23,7 @@ import {
   type EducationDraft,
   type LanguageDraft,
 } from "@/components/onboarding/EducationLanguagesEditor";
-import { Avatar } from "@/components/Avatar";
+import { PhotoUpload } from "@/components/PhotoUpload";
 
 // Screen order. The profile screens share names with the lib's ProviderStep so
 // each Continue posts { step: <screen> }.
@@ -170,6 +170,14 @@ export default function JoinPage() {
     },
     []
   );
+
+  // Re-read completeness/visibility after a save that happened outside
+  // postStep (the photo upload posts to its own owner-scoped endpoint).
+  const refreshCompleteness = useCallback(async () => {
+    const r = await fetch("/api/onboarding/status");
+    if (!r.ok) return;
+    absorb(await r.json());
+  }, [absorb]);
 
   // ---- hydrate from server state ----------------------------------------
   const hydrateProfile = useCallback((p: Record<string, unknown>) => {
@@ -914,26 +922,26 @@ export default function JoinPage() {
           {...shell({
             title: "Add a Photo",
             subtitle:
-              "Optional. Without one, we'll use your initials. Uploads are coming soon.",
+              "Optional. Without one, we'll use your initials. A real photo helps buyers trust who they're hiring.",
             onContinue: goNext,
             continueLabel: "Continue",
             secondaryLabel: "Skip for Now",
             onSecondary: goNext,
           })}
         >
-          <div className="flex items-center gap-4">
-            <Avatar
-              firstName={profile.firstName}
-              lastName={profile.lastName}
-              photoUrl={profile.photoUrl}
-              size={80}
-            />
-            <p className="text-[14px] text-ink-2">
-              {/* TODO(brief_E): real photo upload (Supabase Storage) is out of
-                  scope; initials placeholder only. */}
-              Your initials placeholder will show until photo upload ships.
-            </p>
-          </div>
+          {/* The upload persists Person.photo_url server-side on its own, so
+              this step's Continue has nothing left to save. */}
+          <PhotoUpload
+            firstName={profile.firstName}
+            lastName={profile.lastName}
+            photoUrl={profile.photoUrl}
+            onChange={(photoUrl) => {
+              setProfile((p) => ({ ...p, photoUrl }));
+              // The photo counts toward completeness, and the upload wrote it
+              // server-side — refresh so the step meter isn't stale.
+              void refreshCompleteness();
+            }}
+          />
         </WizardShell>
       );
 

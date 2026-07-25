@@ -5,6 +5,7 @@ import * as dotenv from "dotenv";
 import path from "path";
 import { seedTaxonomy } from "./seed-taxonomy";
 import { computeProviderCompleteness } from "../src/lib/completeness";
+import { normalizeEmail } from "../src/lib/normalizeEmail";
 
 // Load .env.local so `npm run seed` (bare ts-node, bypassing prisma.config.ts)
 // sees DATABASE_URL. Without this the pg adapter falls back to localhost:5432
@@ -15,7 +16,12 @@ const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  const email = process.env.SEED_ADMIN_EMAIL ?? "admin@panameer.com";
+  // SEED_ADMIN_EMAIL is hand-typed into .env.local — normalize it like every
+  // other email entry point (brief_O), or a capitalized value seeds a row the
+  // login lookup can never find.
+  const email = normalizeEmail(
+    process.env.SEED_ADMIN_EMAIL ?? "admin@panameer.com"
+  );
   const password = process.env.SEED_ADMIN_PASSWORD ?? "change-me-now";
   const password_hash = await bcrypt.hash(password, 10);
 

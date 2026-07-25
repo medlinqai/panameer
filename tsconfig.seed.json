@@ -9,6 +9,9 @@
   "include": [
     "prisma/seed.ts",
     "prisma/seed-taxonomy.ts",
-    "src/lib/completeness.ts"
+    "prisma/normalize-emails.ts",
+    "prisma/setup-storage.ts",
+    "src/lib/completeness.ts",
+    "src/lib/normalizeEmail.ts"
   ]
 }
