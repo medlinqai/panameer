@@ -4,14 +4,24 @@
     "module": "CommonJS",
     "moduleResolution": "node",
     "noEmit": false,
-    "types": ["node"]
+    "types": [
+      "node"
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    }
   },
   "include": [
-    "prisma/seed.ts",
-    "prisma/seed-taxonomy.ts",
     "prisma/normalize-emails.ts",
+    "prisma/seed-taxonomy.ts",
+    "prisma/seed.ts",
     "prisma/setup-storage.ts",
     "src/lib/completeness.ts",
-    "src/lib/normalizeEmail.ts"
+    "src/lib/normalizeEmail.ts",
+    "src/lib/oauth.ts",
+    "src/lib/resume/match.ts"
   ]
 }

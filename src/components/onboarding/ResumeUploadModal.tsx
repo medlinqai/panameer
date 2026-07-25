@@ -27,9 +27,12 @@ export type ImportOutcome = {
   applied: {
     headline: boolean;
     overview: boolean;
+    experienceLevel: string | null;
+    experienceYears: number | null;
     experiences: number;
     education: number;
     skillsMatched: number;
+    skillsMatchedNames: string[];
     skillsUnmatched: string[];
     languages: number;
   };
@@ -134,6 +137,10 @@ export function ResumeUploadModal({
     >
       {isLinkedIn && (
         <ol className="mb-5 space-y-1.5 rounded-brand border border-line bg-bg-soft p-4 text-[14px] text-ink-2">
+          <li className="mb-2 text-ink">
+            LinkedIn doesn&apos;t allow apps to read your profile directly, so
+            export it and upload the file:
+          </li>
           <li>
             <b className="text-ink">1.</b> Open your LinkedIn profile.
           </li>

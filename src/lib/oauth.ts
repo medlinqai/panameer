@@ -1,0 +1,155 @@
+import { prisma } from "@/lib/prisma";
+import { normalizeEmail } from "@/lib/normalizeEmail";
+import { capitalizeName } from "@/lib/display";
+
+/**
+ * OAuth account creation + linking (brief_Q).
+ *
+ * Panameer runs NextAuth with JWT sessions and NO Prisma adapter (locked in
+ * brief_E), so there is no `Account` table doing the linking for us. Identity is
+ * keyed on the NORMALIZED EMAIL (brief_O), which is exactly what the brief asks
+ * for: one click creates the User, or LINKS to the existing one — never a
+ * duplicate row for the same address.
+ *
+ * SECURITY — why the `emailVerified` check below is not optional:
+ * linking a provider identity to a pre-existing password account purely because
+ * the email strings match is the classic "pre-hijack / automatic account
+ * linking" hole. It is only safe when the PROVIDER asserts the address is
+ * verified. Google and LinkedIn both return that claim; Apple returns
+ * `email_verified` too (as a string or boolean). If a provider ever hands us an
+ * unverified address we refuse the sign-in rather than take the risk.
+ */
+
+export type OAuthProfileInput = {
+  provider: string;
+  email: string | null | undefined;
+  /** Provider's assertion that it owns/verified the address. */
+  emailVerified: boolean;
+  name?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  image?: string | null;
+};
+
+export type OAuthLinkResult =
+  | { ok: true; userId: string; created: boolean }
+  | {
+      ok: false;
+      reason: "no_email" | "unverified_email" | "locked" | "inactive";
+    };
+
+/** Split a provider's display name into first/last, best effort. */
+function splitName(name: string | null | undefined): {
+  first: string;
+  last: string;
+} {
+  const parts = (name ?? "").trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return { first: "", last: "" };
+  if (parts.length === 1) return { first: parts[0], last: "" };
+  return { first: parts[0], last: parts.slice(1).join(" ") };
+}
+
+/**
+ * Create or link the User behind an OAuth sign-in.
+ *
+ * Deliberately does NOT create the Person/ProviderProfile backbone: signing in
+ * with Google says nothing about whether someone is a buyer or a provider. The
+ * join flow, which knows that intent, creates the backbone afterwards (see
+ * `ensureProviderBackbone`). OAuth fills identity only.
+ */
+export async function linkOAuthUser(
+  input: OAuthProfileInput
+): Promise<OAuthLinkResult> {
+  const email = normalizeEmail(input.email);
+  if (!email) return { ok: false, reason: "no_email" };
+  if (!input.emailVerified) return { ok: false, reason: "unverified_email" };
+
+  const named = splitName(input.name);
+  const first = capitalizeName(input.firstName || named.first);
+  const last = capitalizeName(input.lastName || named.last);
+
+  const existing = await prisma.user.findUnique({ where: { email } });
+
+  if (existing) {
+    // A locked or deactivated account must not be revivable through a social
+    // button — the credentials path already refuses these.
+    if (existing.locked) return { ok: false, reason: "locked" };
+    if (existing.is_active === false) return { ok: false, reason: "inactive" };
+
+    await prisma.user.update({
+      where: { id: existing.id },
+      data: {
+        // The provider has verified this address, so a pending email
+        // verification is satisfied. Never un-verify an already-verified user.
+        email_verified: existing.email_verified ?? new Date(),
+        // Only FILL gaps — a user who edited their name keeps it.
+        first_name: existing.first_name || first || null,
+        last_name: existing.last_name || last || null,
+        image: existing.image || input.image || null,
+        last_login: new Date(),
+        failed_login_attempts: 0,
+        oauth_providers: existing.oauth_providers.includes(input.provider)
+          ? existing.oauth_providers
+          : [...existing.oauth_providers, input.provider],
+      },
+    });
+
+    // Backfill the photo onto an existing Person that has none, so an OAuth
+    // login gives an avatar without touching a photo the user chose.
+    if (input.image) {
+      await prisma.person.updateMany({
+        where: { user_id: existing.id, photo_url: null },
+        data: { photo_url: input.image },
+      });
+    }
+
+    return { ok: true, userId: existing.id, created: false };
+  }
+
+  const created = await prisma.user.create({
+    data: {
+      email,
+      // No password: this account authenticates through the provider.
+      password_hash: null,
+      first_name: first || null,
+      last_name: last || null,
+      image: input.image ?? null,
+      role: "MEMBER",
+      // OAuth emails are provider-verified, so the email gate is already met.
+      email_verified: new Date(),
+      last_login: new Date(),
+      oauth_providers: [input.provider],
+    },
+  });
+
+  return { ok: true, userId: created.id, created: true };
+}
+
+// ---------------------------------------------------------------------------
+// Provider configuration guards.
+// ---------------------------------------------------------------------------
+
+/**
+ * A provider is only offered when its credentials are actually present.
+ *
+ * Same discipline as the Resend / Twilio clients (pitfalls.md): read env
+ * LAZILY inside a function, never at module load, so a missing key disables a
+ * button instead of breaking `next build`'s page-data collection.
+ */
+export const oauthConfig = {
+  google: () =>
+    Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
+  linkedin: () =>
+    Boolean(
+      process.env.LINKEDIN_CLIENT_ID && process.env.LINKEDIN_CLIENT_SECRET
+    ),
+  apple: () =>
+    Boolean(process.env.APPLE_CLIENT_ID && process.env.APPLE_CLIENT_SECRET),
+};
+
+/** Which social buttons should be live right now. */
+export function configuredOAuthProviders(): string[] {
+  return Object.entries(oauthConfig)
+    .filter(([, isSet]) => isSet())
+    .map(([name]) => name);
+}

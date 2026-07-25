@@ -1,10 +1,10 @@
 /**
  * Idempotent Supabase Storage setup — brief_O.
  *
- * Creates the public `profile-photos` bucket (5 MB cap, image mime types only)
- * if it doesn't already exist. Safe to re-run; documents the bucket config in
- * code so a fresh Supabase project can be brought up without clicking through
- * the dashboard. See deployment.md.
+ * Creates the app's storage buckets if they don't already exist, and reconciles
+ * their config if they do. Safe to re-run; documents the bucket setup in code
+ * so a fresh Supabase project can be brought up without clicking through the
+ * dashboard. See deployment.md.
  *
  * Run with:  npm run storage:setup
  *
@@ -16,9 +16,39 @@ import path from "path";
 
 dotenv.config({ path: path.resolve(process.cwd(), ".env.local") });
 
-const BUCKET = "profile-photos";
 const MAX_BYTES = 5 * 1024 * 1024;
-const MIME = ["image/png", "image/jpeg", "image/webp"];
+
+/**
+ * Buckets the app needs.
+ *
+ * `profile-photos` is PUBLIC — avatars render on public marketplace profiles.
+ * `resumes` is PRIVATE (brief_Q): a résumé carries a home address, phone number
+ * and employment history, so it is readable only via the service-role key on
+ * the server, or a short-lived signed URL.
+ */
+const BUCKETS: {
+  name: string;
+  public: boolean;
+  mime: string[];
+}[] = [
+  {
+    name: "profile-photos",
+    public: true,
+    mime: ["image/png", "image/jpeg", "image/webp"],
+  },
+  {
+    name: "resumes",
+    public: false,
+    mime: [
+      "application/pdf",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/msword",
+      "application/rtf",
+      "text/rtf",
+      "text/plain",
+    ],
+  },
+];
 
 async function main() {
   const url = process.env.SUPABASE_URL;
@@ -41,27 +71,26 @@ async function main() {
   const { data: buckets, error: listErr } = await storage.listBuckets();
   if (listErr) throw listErr;
 
-  const existing = buckets?.find((b) => b.name === BUCKET);
-  if (existing) {
-    console.log(`bucket "${BUCKET}" already exists (public: ${existing.public})`);
-    // Keep the constraints in sync even if the bucket predates this script.
-    const { error } = await storage.updateBucket(BUCKET, {
-      public: true,
+  for (const spec of BUCKETS) {
+    const opts = {
+      public: spec.public,
       fileSizeLimit: MAX_BYTES,
-      allowedMimeTypes: MIME,
-    });
-    if (error) throw error;
-    console.log("bucket config reconciled ✓ (public, 5 MB, png/jpeg/webp)");
-    return;
-  }
+      allowedMimeTypes: spec.mime,
+    };
+    const existing = buckets?.find((b) => b.name === spec.name);
+    const visibility = spec.public ? "public" : "PRIVATE";
 
-  const { error } = await storage.createBucket(BUCKET, {
-    public: true,
-    fileSizeLimit: MAX_BYTES,
-    allowedMimeTypes: MIME,
-  });
-  if (error) throw error;
-  console.log(`created bucket "${BUCKET}" ✓ (public, 5 MB, png/jpeg/webp)`);
+    if (existing) {
+      // Keep the constraints in sync even if the bucket predates this script.
+      const { error } = await storage.updateBucket(spec.name, opts);
+      if (error) throw error;
+      console.log(`bucket "${spec.name}" reconciled ✓ (${visibility}, 5 MB)`);
+    } else {
+      const { error } = await storage.createBucket(spec.name, opts);
+      if (error) throw error;
+      console.log(`created bucket "${spec.name}" ✓ (${visibility}, 5 MB)`);
+    }
+  }
 }
 
 main().catch((e) => {

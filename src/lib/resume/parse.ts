@@ -32,6 +32,10 @@ export type ParsedEducation = {
 export type ParsedResume = {
   headline: string | null;
   overview: string | null;
+  /** Inferred from the career span (E003); null when undeterminable. */
+  experienceLevel: "BEGINNER" | "MID_CAREER" | "EXPERT" | null;
+  /** Years of experience behind that inference, for the review copy. */
+  experienceYears: number | null;
   experiences: ParsedExperience[];
   education: ParsedEducation[];
   skills: string[];
@@ -90,21 +94,85 @@ function parseMonthYear(raw: string): string | null {
   return null;
 }
 
-/** Find a "Jan 2019 – Present" style range anywhere in a line. */
+/**
+ * Find a "Jan 2019 – Present" style range anywhere in a line.
+ *
+ * TRUNCATION-SAFETY (brief_P pitfall, hardened in brief_Q). The matched span is
+ * DELETED from the line so the remainder can be read as title/employer/degree —
+ * which means an over-greedy match silently corrupts neighbouring text. Two
+ * guards, both load-bearing:
+ *   1. the optional month prefix enumerates real month names, so
+ *      "…Information Systems  2007 - 2011" can't capture "Systems 2007";
+ *   2. `\b` boundaries stop a year matching inside a longer token (an employee
+ *      id like "X2019-2021" is not a date range).
+ * `stripRange` then repairs the seam left behind, rather than leaving a
+ * double space or a dangling separator that would look like a missing field.
+ */
 function findDateRange(line: string): { start: string | null; end: string | null; matched: string } | null {
   const re = new RegExp(
-    `((?:${MONTH_RE})?(?:19|20)\\d{2})\\s*(?:[–—\\-]|to)\\s*((?:${MONTH_RE})?(?:19|20)\\d{2}|present|current|now)`,
+    `\\b((?:${MONTH_RE})?(?:19|20)\\d{2})\\s*(?:[–—\\-]{1,2}|to|until|through)\\s*((?:${MONTH_RE})?(?:19|20)\\d{2}|present|current|now|date)\\b`,
     "i"
   );
   const m = line.match(re);
   if (!m) return null;
   const endRaw = m[2].toLowerCase();
-  const isCurrent = /present|current|now/.test(endRaw);
-  return {
-    start: parseMonthYear(m[1]),
-    end: isCurrent ? null : parseMonthYear(m[2]),
-    matched: m[0],
-  };
+  const isCurrent = /present|current|now|date/.test(endRaw);
+  const start = parseMonthYear(m[1]);
+  const end = isCurrent ? null : parseMonthYear(m[2]);
+  // A "range" whose start we can't actually read is not a usable match — better
+  // to leave the text intact than to delete it and lose the words.
+  if (!start && !isCurrent && !end) return null;
+  return { start, end, matched: m[0] };
+}
+
+/**
+ * Remove a matched date range and tidy the seam: collapse doubled spaces and
+ * drop separators/parentheses that only existed to fence the dates off.
+ */
+function stripRange(line: string, matched: string): string {
+  return line
+    .replace(matched, " ")
+    .replace(/\(\s*\)/g, " ")
+    .replace(/\s{2,}/g, " ")
+    .replace(/^[\s|,;•·–—-]+/, "")
+    .replace(/[\s|,;•·–—-]+$/, "")
+    .trim();
+}
+
+/**
+ * Infer the provider's experience level (E003) from the résumé's career span.
+ * Years are counted from the EARLIEST start date to the latest end (or today
+ * for a current role). Returns null when there aren't enough dates to be
+ * confident — a wrong guess is worse than asking.
+ */
+export function inferExperienceLevel(
+  experiences: ParsedExperience[]
+): { level: "BEGINNER" | "MID_CAREER" | "EXPERT"; years: number } | null {
+  const starts = experiences
+    .map((e) => e.startDate)
+    .filter((d): d is string => !!d)
+    .sort();
+  if (starts.length === 0) return null;
+
+  const firstStart = new Date(starts[0]);
+  const ends = experiences.map((e) => e.endDate).filter((d): d is string => !!d);
+  const hasCurrentRole = experiences.some((e) => e.startDate && !e.endDate);
+  const lastEnd = hasCurrentRole
+    ? new Date()
+    : ends.length > 0
+      ? new Date(ends.sort()[ends.length - 1])
+      : new Date();
+
+  const years = Math.max(
+    0,
+    (lastEnd.getTime() - firstStart.getTime()) / (365.25 * 24 * 3600 * 1000)
+  );
+  if (!Number.isFinite(years)) return null;
+
+  const rounded = Math.round(years * 10) / 10;
+  if (years < 3) return { level: "BEGINNER", years: rounded };
+  if (years < 10) return { level: "MID_CAREER", years: rounded };
+  return { level: "EXPERT", years: rounded };
 }
 
 function yearOf(iso: string | null): number | null {
@@ -197,7 +265,7 @@ export function parseResume(text: string): ParsedResume {
       // A dated line starts a new role. Text around the dates is title/employer,
       // commonly "Title — Employer" or "Title at Employer".
       flush();
-      const rest = line.replace(range.matched, "").replace(/[|,–—-]\s*$/, "").trim();
+      const rest = stripRange(line, range.matched);
       const parts = rest.split(/\s+(?:at|@|—|–|\||,)\s+/).map((s) => s.trim()).filter(Boolean);
       pending = {
         roleTitle: parts[0] ?? "",
@@ -265,10 +333,7 @@ export function parseResume(text: string): ParsedResume {
     }
     const range = findDateRange(line);
     const yearMatch = line.match(/(19|20)\d{2}/g);
-    const cleaned = line
-      .replace(range?.matched ?? "", "")
-      .replace(/[|,–—-]\s*$/, "")
-      .trim();
+    const cleaned = range ? stripRange(line, range.matched) : line.trim();
     if (!cleaned) continue;
 
     // "Institution — Degree, Field" / "Degree, Field — Institution"
@@ -314,5 +379,22 @@ export function parseResume(text: string): ParsedResume {
     );
   }
 
-  return { headline, overview, experiences, education, skills, languages, gaps };
+  const inferred = inferExperienceLevel(experiences);
+  if (!inferred && experiences.length > 0) {
+    gaps.push(
+      "We couldn't work out your years of experience from the dates, so pick your experience level yourself."
+    );
+  }
+
+  return {
+    headline,
+    overview,
+    experienceLevel: inferred?.level ?? null,
+    experienceYears: inferred?.years ?? null,
+    experiences,
+    education,
+    skills,
+    languages,
+    gaps,
+  };
 }

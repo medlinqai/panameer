@@ -7,6 +7,7 @@ import {
 } from "@/lib/completeness";
 import type { Viewer } from "@/lib/access";
 import { normalizeEmail } from "@/lib/normalizeEmail";
+import { capitalizeName } from "@/lib/display";
 
 /**
  * Provider onboarding — all business logic for the /join wizard (API-first, so
@@ -236,6 +237,114 @@ export async function createProviderAccount(
   }
 
   return { userId, email };
+}
+
+/**
+ * Give an ALREADY-AUTHENTICATED user the provider backbone (brief_Q).
+ *
+ * OAuth sign-in creates the `User` only — signing in with Google says nothing
+ * about whether someone is a buyer or a provider, so `linkOAuthUser`
+ * deliberately stops at identity. This is the other half: called from the
+ * provider join flow, where the intent IS known, it builds
+ * PAccount(PROVIDER) → Company → Person(is_service_provider) → draft
+ * ProviderProfile for a user who has no Person yet.
+ *
+ * Idempotent — a user who already has a provider profile just gets it back, so
+ * a double-submit or a refresh mid-flow can't create a second company.
+ */
+export async function ensureProviderBackbone(
+  viewer: Viewer,
+  opts: { country?: string; marketingOptIn?: boolean; inviteToken?: string } = {}
+): Promise<{ created: boolean }> {
+  const user = await prisma.user.findUnique({
+    where: { id: viewer.userId },
+    include: { person: { include: { providerProfile: { select: { id: true } } } } },
+  });
+  if (!user) throw new OnboardingError("Account not found", "NOT_A_PROVIDER");
+
+  const person = user.person;
+
+  if (person?.providerProfile) return { created: false };
+
+  // A Person that exists but isn't a provider belongs to the buyer side; the
+  // provider wizard must not silently convert it.
+  if (person && !person.is_service_provider) {
+    throw new OnboardingError(
+      "This account isn't a provider profile",
+      "NOT_A_PROVIDER"
+    );
+  }
+
+  const firstName = capitalizeName(user.first_name ?? "");
+  const lastName = capitalizeName(user.last_name ?? "");
+  const companyName = `${firstName} ${lastName}`.trim() || user.email;
+
+  await prisma.$transaction(async (tx) => {
+    let personId = person?.id;
+
+    if (!personId) {
+      const pAccount = await tx.pAccount.create({
+        data: { kind: "PROVIDER", name: companyName, status: "ACTIVE" },
+      });
+      const company = await tx.company.create({
+        data: { p_account_id: pAccount.id, name: companyName },
+      });
+
+      let siteId: string | undefined;
+      if (opts.country?.trim()) {
+        const site = await tx.site.create({
+          data: { company_id: company.id, name: "Primary" },
+        });
+        await tx.address.create({
+          data: { site_id: site.id, line1: "", country: opts.country.trim() },
+        });
+        siteId = site.id;
+      }
+
+      const created = await tx.person.create({
+        data: {
+          company_id: company.id,
+          site_id: siteId,
+          user_id: user.id,
+          first_name: firstName || user.email.split("@")[0],
+          last_name: lastName,
+          status: "ACTIVE",
+          is_service_provider: true,
+          // The OAuth avatar becomes the starting profile photo (brief_Q).
+          photo_url: user.image ?? null,
+        },
+      });
+      personId = created.id;
+    } else {
+      // Person exists (e.g. from a partial flow) but has no provider profile.
+      await tx.person.update({
+        where: { id: personId },
+        data: {
+          is_service_provider: true,
+          photo_url: person!.photo_url ?? user.image ?? null,
+        },
+      });
+    }
+
+    await tx.providerProfile.create({
+      data: {
+        person_id: personId,
+        headline: "",
+        notify_product_updates: opts.marketingOptIn === true,
+      },
+    });
+  });
+
+  // Same invite-linking courtesy as the password signup path (brief_I).
+  if (opts.inviteToken) {
+    try {
+      await acceptInviteForUser(viewer.userId, opts.inviteToken);
+    } catch (e) {
+      console.error("[onboarding] invite link failed (non-fatal):", e);
+    }
+  }
+
+  return { created: true };
 }
 
 /**
@@ -510,22 +619,23 @@ export async function applyProviderSection(
         ? await prisma.pillar.findUnique({ where: { id: pillarId } })
         : null;
       if (!pillar) throw new OnboardingError("Pick what work you do", "INVALID");
-      const current = await prisma.providerProfile.findUnique({
-        where: { id: profileId },
-        select: { pillar_id: true },
-      });
       await prisma.providerProfile.update({
         where: { id: profileId },
         data: { pillar_id: pillar.id },
       });
-      // Changing field invalidates skills picked under the OLD field — they
-      // would no longer be reachable from the step-7 list (E014 filters to the
-      // chosen field), so leaving them would strand un-editable skills.
-      if (current?.pillar_id && current.pillar_id !== pillar.id) {
-        await prisma.providerSkill.deleteMany({
-          where: { provider_profile_id: profileId },
-        });
-      }
+
+      // Drop any skill that doesn't belong to the chosen field. Two ways to get
+      // one: switching fields after picking skills, or a résumé import (which
+      // runs BEFORE this step and matches across the whole catalog, brief_Q).
+      // Either way the skills step only offers this field's skills, so a
+      // foreign skill is both un-editable AND would fail that step's own
+      // validation on save — stranding the user. Prune on write instead.
+      await prisma.providerSkill.deleteMany({
+        where: {
+          provider_profile_id: profileId,
+          skill: { pillar_id: { not: pillar.id } },
+        },
+      });
       break;
     }
 

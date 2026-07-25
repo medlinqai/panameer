@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Field, TextInput, Notice } from "@/components/onboarding/controls";
+import { SocialSignIn } from "@/components/auth/SocialSignIn";
 
 /**
  * "Sign Up" — pre-verification Page 2, rebuilt to the onboarding deck
@@ -93,13 +94,13 @@ export function SignUpForm({
         </div>
       )}
 
-      {/* Social sign-in. Not wired to a provider yet — see the brief_P report. */}
-      <div className="mt-8 space-y-3">
-        <SocialButton disabled label="Continue With Apple" glyph="" />
-        <SocialButton disabled label="Continue With Google" glyph="G" />
-        <p className="text-center text-[13px] text-ink-2">
-          Social sign-in is coming soon — create an account with your email below.
-        </p>
+      {/*
+        One-click sign-in (brief_Q). Live only for providers whose credentials
+        are configured; the rest render disabled. OAuth fills identity only —
+        name, email and photo — and the profile wizard still runs afterwards.
+      */}
+      <div className="mt-8">
+        <SocialSignIn callbackUrl="/join/provider" />
       </div>
 
       <div className="my-6 flex items-center gap-4">
@@ -254,26 +255,3 @@ export function SignUpForm({
   );
 }
 
-function SocialButton({
-  label,
-  glyph,
-  disabled,
-}: {
-  label: string;
-  glyph: string;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      title={disabled ? "Coming soon" : undefined}
-      className="flex w-full items-center justify-center gap-3 rounded-full border-[1.5px] border-line px-6 py-3 font-bold text-ink transition-colors hover:border-[#d9d4e2] disabled:cursor-not-allowed disabled:opacity-45"
-    >
-      <span aria-hidden className="text-[17px]">
-        {glyph}
-      </span>
-      {label}
-    </button>
-  );
-}

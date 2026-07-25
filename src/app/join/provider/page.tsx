@@ -328,7 +328,24 @@ export default function JoinProviderPage() {
         }
       }
 
-      const r = await fetch("/api/onboarding/status");
+      let r = await fetch("/api/onboarding/status");
+
+      // Signed in with no provider profile — the one-click OAuth path (brief_Q).
+      // `linkOAuthUser` creates the User only, because a Google login carries no
+      // buyer/provider intent; THIS page is where that intent is known, so build
+      // the backbone now and re-read. A 409 means they're a buyer — that really
+      // is "not a provider".
+      if (r.status === 404) {
+        const made = await fetch("/api/onboarding/provider/backbone", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...(token ? { inviteToken: token } : {}) }),
+        });
+        if (made.ok) {
+          r = await fetch("/api/onboarding/status");
+        }
+      }
+
       if (r.status === 401) {
         setScreen("signup");
       } else if (r.status === 404) {
@@ -736,32 +753,28 @@ export default function JoinProviderPage() {
         >
           {error && <Notice>{error}</Notice>}
 
+          {/* Confirm-or-fix summary (brief_Q): show exactly what landed, so the
+              next steps are a review rather than a retype. */}
           {importOutcome && (
-            <div className="mb-5">
-              <Notice tone="info">
-                <b>Imported.</b> {importOutcome.applied.experiences} role
-                {importOutcome.applied.experiences === 1 ? "" : "s"},{" "}
-                {importOutcome.applied.education} education entr
-                {importOutcome.applied.education === 1 ? "y" : "ies"} and{" "}
-                {importOutcome.applied.skillsMatched} skill
-                {importOutcome.applied.skillsMatched === 1 ? "" : "s"} added.
-                {importOutcome.gaps.length > 0 && (
-                  <> We couldn&apos;t read everything — see the review page at the end.</>
-                )}
-              </Notice>
+            <div className="mb-6">
+              <ImportSummary outcome={importOutcome} />
             </div>
           )}
 
           <div className="space-y-3">
-            <MethodCard
-              title="Import From LinkedIn"
-              description="Upload your LinkedIn profile PDF and we'll fill in your experience, education and skills."
-              onClick={() => setUploadModal("LINKEDIN_PDF")}
-            />
+            {/* Résumé upload is the PRIMARY path (brief_Q) — manual entry is
+                where people drop out, so the fastest route leads. */}
             <MethodCard
               title="Upload Your Resume"
-              description="PDF, Word or rich text. We'll read it and populate your profile."
+              description="PDF, Word or rich text, up to 5 MB. We'll read it and fill in your title, experience, education, skills and languages — you just confirm."
               onClick={() => setUploadModal("RESUME")}
+              primary
+              badge="Fastest"
+            />
+            <MethodCard
+              title="Import From LinkedIn"
+              description="LinkedIn doesn't let apps read your profile directly, so export it: open your profile → More → Save to PDF, then upload that file here."
+              onClick={() => setUploadModal("LINKEDIN_PDF")}
             />
             <MethodCard
               title="Fill Out Manually (15 Mins)"
@@ -1362,22 +1375,109 @@ function MethodCard({
   title,
   description,
   onClick,
+  primary = false,
+  badge,
 }: {
   title: string;
   description: string;
   onClick: () => void;
+  primary?: boolean;
+  badge?: string;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="w-full rounded-brand border-2 border-line p-5 text-left transition-all hover:border-magenta hover:shadow-brand"
+      className={
+        "w-full rounded-brand border-2 p-5 text-left transition-all hover:border-magenta hover:shadow-brand " +
+        (primary ? "border-magenta bg-magenta/[0.04] shadow-brand" : "border-line")
+      }
     >
-      <span className="block font-bold">{title}</span>
+      <span className="flex items-center gap-2">
+        <span className="font-bold">{title}</span>
+        {badge && (
+          <span className="rounded-full bg-magenta px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-white">
+            {badge}
+          </span>
+        )}
+      </span>
       <span className="mt-0.5 block text-[14.5px] text-ink-2">{description}</span>
     </button>
   );
 }
+
+/**
+ * "Here's what we captured — confirm or fix" (brief_Q / E012+E019).
+ *
+ * The anti-drop-off lever is that the remaining steps become a REVIEW. Showing
+ * the counts and the gaps immediately after the upload — rather than only on
+ * the final review page — tells the user what they still need to touch.
+ */
+function ImportSummary({ outcome }: { outcome: ImportOutcome }) {
+  const a = outcome.applied;
+  const captured: string[] = [];
+  if (a.headline) captured.push("your title");
+  if (a.overview) captured.push("your bio");
+  if (a.experienceLevel) {
+    captured.push(
+      `experience level (${a.experienceYears ?? "?"} yrs → ${LEVEL_LABELS[a.experienceLevel] ?? a.experienceLevel})`
+    );
+  }
+  if (a.experiences) captured.push(`${a.experiences} role${a.experiences === 1 ? "" : "s"}`);
+  if (a.education)
+    captured.push(`${a.education} education entr${a.education === 1 ? "y" : "ies"}`);
+  if (a.skillsMatched)
+    captured.push(`${a.skillsMatched} skill${a.skillsMatched === 1 ? "" : "s"}`);
+  if (a.languages)
+    captured.push(`${a.languages} language${a.languages === 1 ? "" : "s"}`);
+
+  return (
+    <div className="rounded-brand border border-line p-5">
+      <h2 className="text-[16px] font-bold">Here&apos;s What We Captured</h2>
+      {captured.length > 0 ? (
+        <p className="mt-1.5 text-[14.5px] text-ink-2">
+          We filled in {captured.join(", ")}. Continue through the next steps to
+          confirm or fix anything.
+        </p>
+      ) : (
+        <p className="mt-1.5 text-[14.5px] text-ink-2">
+          We couldn&apos;t pull anything usable out of that file — the steps
+          ahead will let you enter your details directly.
+        </p>
+      )}
+
+      {a.skillsMatchedNames.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {a.skillsMatchedNames.slice(0, 12).map((s) => (
+            <span
+              key={s}
+              className="rounded-full border border-line px-3 py-1 text-[13px] font-semibold text-ink-2"
+            >
+              {s}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {outcome.gaps.length > 0 && (
+        <div className="mt-4 rounded-[10px] border border-amber-500/30 bg-amber-50/60 p-4">
+          <p className="text-[14px] font-bold">Needs your attention</p>
+          <ul className="mt-1.5 list-disc space-y-1 pl-5 text-[13.5px] text-ink-2">
+            {outcome.gaps.map((g, i) => (
+              <li key={i}>{g}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const LEVEL_LABELS: Record<string, string> = {
+  BEGINNER: "Beginner",
+  MID_CAREER: "Mid-Career",
+  EXPERT: "Expert",
+};
 
 function Row({
   label,

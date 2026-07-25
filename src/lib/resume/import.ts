@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { extractText, ExtractError } from "@/lib/resume/extract";
 import { parseResume, type ParsedResume } from "@/lib/resume/parse";
 import { recomputeCompleteness } from "@/lib/onboarding";
+import { uploadResumeFile } from "@/lib/storage";
+import { matchSkills } from "@/lib/resume/match";
 import type { Prisma } from "@prisma/client";
 
 /**
@@ -23,9 +25,12 @@ export type ImportResult = {
   applied: {
     headline: boolean;
     overview: boolean;
+    experienceLevel: string | null;
+    experienceYears: number | null;
     experiences: number;
     education: number;
     skillsMatched: number;
+    skillsMatchedNames: string[];
     skillsUnmatched: string[];
     languages: number;
   };
@@ -96,6 +101,24 @@ export async function importProfileDocument({
     );
   }
 
+  // Keep the source document (private bucket) so a parse can be re-run or
+  // audited without asking the user to upload again. A storage failure must
+  // NOT fail an import whose parse already succeeded — the profile data is the
+  // valuable part, the file is a convenience.
+  let storagePath: string | null = null;
+  try {
+    storagePath = await uploadResumeFile(profileId, {
+      name: fileName,
+      type: mimeType,
+      bytes: bytes.buffer.slice(
+        bytes.byteOffset,
+        bytes.byteOffset + bytes.byteLength
+      ) as ArrayBuffer,
+    });
+  } catch (e) {
+    console.error("[resume] could not store the source file (non-fatal):", e);
+  }
+
   const row = await prisma.profileImport.create({
     data: {
       provider_profile_id: profileId,
@@ -104,6 +127,7 @@ export async function importProfileDocument({
       file_name: fileName,
       mime_type: mimeType,
       size_bytes: bytes.byteLength,
+      storage_path: storagePath,
       raw_text: text.slice(0, 100_000),
       parsed: parsed as unknown as Prisma.InputJsonValue,
       gaps,
@@ -119,9 +143,12 @@ function emptyApplied(): ImportResult["applied"] {
   return {
     headline: false,
     overview: false,
+    experienceLevel: null,
+    experienceYears: null,
     experiences: 0,
     education: 0,
     skillsMatched: 0,
+    skillsMatchedNames: [],
     skillsUnmatched: [],
     languages: 0,
   };
@@ -157,6 +184,14 @@ async function applyParsed(
   }
   if (!profile.profile_method) {
     data.profile_method = source === "LINKEDIN_PDF" ? "LINKEDIN" : "RESUME";
+  }
+  // Experience level inferred from the career span (brief_Q). Only ever fills a
+  // blank — the field is nullable precisely so "not asked yet" is detectable
+  // (brief_P pitfall), and a user's own answer always wins.
+  if (!profile.experience_level && parsed.experienceLevel) {
+    data.experience_level = parsed.experienceLevel;
+    applied.experienceLevel = parsed.experienceLevel;
+    applied.experienceYears = parsed.experienceYears;
   }
   if (Object.keys(data).length > 0) {
     await prisma.providerProfile.update({ where: { id: profileId }, data });
@@ -212,21 +247,16 @@ async function applyParsed(
   // catalog keeps the marketplace searchable; anything unmatched is reported
   // as a gap rather than silently invented as a new Skill row.
   if (parsed.skills.length > 0) {
-    const matches = await prisma.skill.findMany({
-      where: {
-        OR: parsed.skills.map((name) => ({
-          name: { equals: name, mode: "insensitive" as const },
-        })),
-      },
+    const catalog = await prisma.skill.findMany({
       select: { id: true, name: true },
     });
-    const matchedNames = new Set(matches.map((m) => m.name.toLowerCase()));
-    applied.skillsUnmatched = parsed.skills.filter(
-      (s) => !matchedNames.has(s.toLowerCase())
-    );
+    const { matched, unmatched } = matchSkills(parsed.skills, catalog);
+
+    applied.skillsUnmatched = unmatched;
+    applied.skillsMatchedNames = matched.map((m) => m.name);
 
     const have = new Set(profile.skills.map((s) => s.skill_id));
-    const toAdd = matches.filter((m) => !have.has(m.id));
+    const toAdd = matched.filter((m) => !have.has(m.id));
     if (toAdd.length > 0) {
       await prisma.providerSkill.createMany({
         data: toAdd.map((m) => ({

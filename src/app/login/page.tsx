@@ -3,15 +3,30 @@
 import { Suspense, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { SocialSignIn } from "@/components/auth/SocialSignIn";
+
+/** Reasons the OAuth signIn callback can refuse a sign-in (brief_Q). */
+const OAUTH_ERRORS: Record<string, string> = {
+  OAuthno_email:
+    "That provider didn't share an email address, so we can't sign you in. Use your email and password instead.",
+  OAuthunverified_email:
+    "That provider hasn't verified your email address, so we can't link it to a Panameer account.",
+  OAuthlocked:
+    "This account is locked. Contact support to unlock it.",
+  OAuthinactive: "This account is deactivated.",
+};
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";
+  const oauthError = searchParams.get("error");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(
+    oauthError ? OAUTH_ERRORS[oauthError] ?? null : null
+  );
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
@@ -42,6 +57,16 @@ function LoginForm() {
           <p className="text-sm text-black/60 dark:text-white/60">
             Sign in to continue
           </p>
+        </div>
+
+        <SocialSignIn callbackUrl={callbackUrl} />
+
+        <div className="flex items-center gap-4">
+          <span className="h-px flex-1 bg-black/10 dark:bg-white/15" />
+          <span className="text-xs font-semibold text-black/50 dark:text-white/50">
+            or
+          </span>
+          <span className="h-px flex-1 bg-black/10 dark:bg-white/15" />
         </div>
 
         <label className="block text-sm font-medium">

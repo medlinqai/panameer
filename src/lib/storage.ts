@@ -20,6 +20,28 @@ import { randomUUID } from "crypto";
 /** Public bucket holding provider/person profile photos. See deployment.md. */
 export const PROFILE_PHOTO_BUCKET = "profile-photos";
 
+/**
+ * PRIVATE bucket holding uploaded résumés / LinkedIn PDFs (brief_Q).
+ *
+ * Deliberately NOT public, unlike profile photos: a résumé is personal data
+ * (home address, phone, employment history). Objects are reachable only through
+ * the service-role key on the server, and the app hands out short-lived signed
+ * URLs when a file genuinely needs to be re-read.
+ */
+export const RESUME_BUCKET = "resumes";
+
+/** E012 — "PDF / Word / rich text, ≤5MB". */
+export const ALLOWED_RESUME_MIME = [
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/msword",
+  "application/rtf",
+  "text/rtf",
+  "text/plain",
+] as const;
+
+export const MAX_RESUME_BYTES = 5 * 1024 * 1024;
+
 /** Accepted image types. Anything else is rejected with a clear error. */
 export const ALLOWED_PHOTO_MIME = [
   "image/png",
@@ -113,4 +135,55 @@ export async function uploadProfilePhoto(
 
   const { data } = bucket.getPublicUrl(objectPath);
   return data.publicUrl;
+}
+
+/**
+ * Store an uploaded résumé / LinkedIn PDF and return its OBJECT PATH
+ * (brief_Q) — not a URL, because the bucket is private. Keeping the original
+ * file means a parse can be re-run or audited without asking the user to
+ * upload again, and the review page can offer the source document back.
+ *
+ * Storage failures are the CALLER's to tolerate: a lost file must never fail an
+ * import whose parse already succeeded.
+ */
+export async function uploadResumeFile(
+  profileId: string,
+  file: { name: string; type: string; bytes: ArrayBuffer }
+): Promise<string> {
+  // Keep the user's filename (sanitised) so a support conversation can refer to
+  // it, prefixed with a uuid so two "resume.pdf" uploads can't collide.
+  const safeName =
+    file.name.replace(/[^A-Za-z0-9._-]/g, "_").slice(-80) || "resume";
+  const objectPath = `${profileId}/${randomUUID()}-${safeName}`;
+
+  const { error } = await getStorageClient()
+    .from(RESUME_BUCKET)
+    .upload(objectPath, file.bytes, {
+      contentType: file.type || "application/octet-stream",
+      upsert: false,
+    });
+
+  if (error) {
+    console.error("[storage] résumé upload failed:", error);
+    throw new StorageError("Could not store that file.", "UPLOAD_FAILED");
+  }
+  return objectPath;
+}
+
+/**
+ * A short-lived signed URL for a stored résumé. The bucket is private, so this
+ * is the only way to read one back, and the link expires.
+ */
+export async function signedResumeUrl(
+  objectPath: string,
+  expiresInSeconds = 300
+): Promise<string | null> {
+  const { data, error } = await getStorageClient()
+    .from(RESUME_BUCKET)
+    .createSignedUrl(objectPath, expiresInSeconds);
+  if (error) {
+    console.error("[storage] signed résumé URL failed:", error);
+    return null;
+  }
+  return data?.signedUrl ?? null;
 }

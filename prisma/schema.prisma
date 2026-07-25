@@ -27,9 +27,20 @@ model User {
   /// `prisma db push` DROPS it, so re-run that script after every push.
   /// See brief_O / decisions-01.md.
   email                 String    @unique
+  /// NULL for accounts created purely through OAuth (brief_Q) — they have no
+  /// password and authenticate via the provider. `authorize` already refuses to
+  /// compare against a null hash, so such an account cannot be password-guessed.
   password_hash         String?
   first_name            String?
   last_name             String?
+  /// Profile picture URL supplied by an OAuth provider (brief_Q). Held on the
+  /// User because it arrives at sign-in, before the Person backbone exists;
+  /// it is copied onto `Person.photo_url` when that Person is created.
+  image                 String?
+  /// Which OAuth providers this account has signed in with (e.g. ["google"]).
+  /// Record-keeping so support can see how an account authenticates; linking is
+  /// keyed on the normalized email, not on this list.
+  oauth_providers       String[] @default([])
   role                  Role      @default(MEMBER)
   is_active             Boolean   @default(true)
   is_system_admin       Boolean   @default(false)
@@ -740,6 +751,11 @@ model ProfileImport {
   file_name           String?
   mime_type           String?
   size_bytes          Int?
+  /// Object path in the PRIVATE `resumes` bucket (brief_Q). Not a URL — the
+  /// bucket is private because a résumé carries address/phone/employment data;
+  /// reads go through a short-lived signed URL. Null when the upload failed,
+  /// which never blocks an import whose parse succeeded.
+  storage_path        String?
   /// Plain text extracted from the document, for re-parsing / debugging.
   raw_text            String?
   /// Structured result of the parse: what landed, and what didn't.
