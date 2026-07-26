@@ -1,0 +1,211 @@
+import { prisma } from "@/lib/prisma";
+import { isMarketplaceVisible } from "@/lib/access";
+import { VISIBILITY_THRESHOLD } from "@/lib/completeness";
+
+/**
+ * The full provider Profile View (brief_S / E037) — the Upwork-style page that
+ * REPLACES the thin dashboard as the provider's home.
+ *
+ * Owner-first: this is the surface a provider lands on after publishing, so the
+ * OWNER always sees it regardless of the visibility gate, and gets the
+ * completeness / visibility banner. Everyone else sees it only when the profile
+ * is marketplace-visible (brief_K) — the gate is unchanged, just applied here
+ * too so a hidden profile can never leak through the new page.
+ */
+export async function getProviderProfileView(
+  profileId: string,
+  opts: { viewerUserId?: string } = {}
+) {
+  const profile = await prisma.providerProfile.findUnique({
+    where: { id: profileId },
+    include: {
+      person: {
+        select: {
+          user_id: true,
+          first_name: true,
+          last_name: true,
+          title: true,
+          photo_url: true,
+          phone: true,
+          phone_verified_at: true,
+          site: {
+            select: {
+              addresses: {
+                select: { city: true, state: true, country: true },
+                take: 1,
+              },
+            },
+          },
+          user: { select: { email_verified: true } },
+        },
+      },
+      roleType: { select: { name: true, display: true } },
+      pillar: { select: { name: true } },
+      region: { select: { id: true, name: true } },
+      skills: {
+        include: { skill: { select: { id: true, name: true } } },
+      },
+      specializations: {
+        include: { specialization: { select: { id: true, name: true, kind: true } } },
+      },
+      employers: {
+        orderBy: [{ is_current: "desc" }, { start_date: "desc" }],
+        include: {
+          certifications: { select: { id: true, name: true } },
+        },
+      },
+      projects: {
+        orderBy: [{ sort_order: "asc" }, { created_at: "desc" }],
+        include: {
+          solutions: { select: { id: true, name: true, description: true } },
+          employer: { select: { id: true, name: true } },
+        },
+      },
+      workExperiences: {
+        orderBy: { start_date: "desc" },
+        include: { projects: { select: { id: true, name: true, description: true } } },
+      },
+      certifications: {
+        orderBy: { year: "desc" },
+        include: { employer: { select: { id: true, name: true } } },
+      },
+      education: { orderBy: { created_at: "asc" } },
+      languages: { orderBy: { created_at: "asc" } },
+    },
+  });
+
+  if (!profile) return null;
+
+  const isOwner =
+    opts.viewerUserId != null && profile.person.user_id === opts.viewerUserId;
+  if (!isOwner && !isMarketplaceVisible(profile)) return null;
+
+  const addr = profile.person.site?.addresses?.[0] ?? null;
+  const location =
+    [addr?.city, addr?.state, addr?.country].filter(Boolean).join(", ") || null;
+
+  return {
+    id: profile.id,
+    isOwner,
+    validated: profile.validation_status === "VALIDATED",
+    visible: isMarketplaceVisible(profile),
+    completeness: profile.completeness,
+    visibilityThreshold: VISIBILITY_THRESHOLD,
+    paused: profile.paused_at != null,
+    published: profile.onboarding_completed_at != null,
+
+    person: {
+      firstName: profile.person.first_name,
+      lastName: profile.person.last_name,
+      title: profile.person.title,
+      photoUrl: profile.person.photo_url,
+    },
+    location,
+    headline: profile.headline,
+    overview: profile.overview,
+    experienceLevel: profile.experience_level,
+    field:
+      profile.roleType && profile.pillar
+        ? { role: profile.roleType.name, domain: profile.pillar.name }
+        : null,
+    rates: {
+      currency: profile.currency,
+      hourlyCents: profile.hourly_rate_cents,
+      onsiteCents: profile.onsite_rate_cents,
+      remoteCents: profile.remote_rate_cents,
+    },
+    serviceFeeBps: profile.service_fee_bps,
+    rating: profile.rating === null ? null : Number(profile.rating),
+
+    verifications: {
+      emailVerified: profile.person.user?.email_verified != null,
+      // brief_S/E036 stubbed SMS; a number on file shows as "on file", not
+      // "verified", so the badge never overstates what we actually checked.
+      phoneOnFile: Boolean(profile.person.phone?.trim()),
+      phoneVerified: profile.person.phone_verified_at != null,
+    },
+
+    skills: profile.skills.map((s) => ({
+      id: s.skill.id,
+      name: s.skill.name,
+    })),
+    specializations: profile.specializations.map((s) => ({
+      id: s.specialization.id,
+      name: s.specialization.name,
+      kind: s.specialization.kind,
+    })),
+
+    // --- E037 portfolio entities ------------------------------------------
+    projects: profile.projects.map((p) => ({
+      id: p.id,
+      name: p.name,
+      description: p.description,
+      url: p.url,
+      imageUrl: p.image_url,
+      employer: p.employer?.name ?? null,
+      solutions: p.solutions.map((s) => ({
+        id: s.id,
+        name: s.name,
+        description: s.description,
+      })),
+    })),
+    employers: profile.employers.map((e) => ({
+      id: e.id,
+      name: e.name,
+      roleTitle: e.role_title,
+      location: e.location,
+      isCurrent: e.is_current,
+      description: e.description,
+      startDate: e.start_date ? e.start_date.toISOString().slice(0, 10) : null,
+      endDate: e.end_date ? e.end_date.toISOString().slice(0, 10) : null,
+      certifications: e.certifications.map((c) => c.name),
+    })),
+    certifications: profile.certifications.map((c) => ({
+      id: c.id,
+      name: c.name,
+      issuer: c.issuer,
+      year: c.year,
+      credentialId: c.credential_id,
+      url: c.url,
+      employer: c.employer?.name ?? null,
+    })),
+
+    experience: profile.workExperiences.map((w) => ({
+      id: w.id,
+      employer: w.employer,
+      roleTitle: w.role_title,
+      description: w.description,
+      startDate: w.start_date ? w.start_date.toISOString().slice(0, 10) : null,
+      endDate: w.end_date ? w.end_date.toISOString().slice(0, 10) : null,
+      projects: w.projects,
+    })),
+    education: profile.education.map((e) => ({
+      id: e.id,
+      institution: e.institution,
+      degree: e.degree,
+      field: e.field,
+      startYear: e.start_year,
+      endYear: e.end_year ?? e.year,
+    })),
+    languages: profile.languages.map((l) => ({
+      id: l.id,
+      name: l.name,
+      level: l.level,
+      proficiency: l.proficiency,
+    })),
+  };
+}
+
+export type ProviderProfileView = NonNullable<
+  Awaited<ReturnType<typeof getProviderProfileView>>
+>;
+
+/** The signed-in provider's own profile view, or null if they aren't one. */
+export async function getOwnProviderProfileView(userId: string) {
+  const profile = await prisma.providerProfile.findFirst({
+    where: { person: { user_id: userId } },
+    select: { id: true },
+  });
+  if (!profile) return null;
+  return getProviderProfileView(profile.id, { viewerUserId: userId });
+}

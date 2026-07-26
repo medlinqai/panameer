@@ -208,6 +208,135 @@ async function main() {
     });
   }
 
+  // --- Demo portfolio: Employers → Projects → Solutions, Certifications ----
+  // brief_S / E037. Idempotent: keyed on (profile, name) via findFirst-or-create,
+  // since these have no natural unique across providers.
+  const employerSpecs = [
+    {
+      name: "Acme Consulting",
+      role_title: "Procurement Solution Architect",
+      location: "Chicago, IL",
+      start_date: new Date("2019-01-01"),
+      end_date: null,
+      is_current: true,
+      description:
+        "Lead architect on Oracle Cloud Procurement programs for global manufacturers.",
+    },
+    {
+      name: "Globex Corp",
+      role_title: "Senior Functional Consultant",
+      location: "New York, NY",
+      start_date: new Date("2015-03-01"),
+      end_date: new Date("2018-12-01"),
+      is_current: false,
+      description:
+        "Delivered Oracle Fusion Procurement for a $2B manufacturer.",
+    },
+  ];
+
+  const employerIds: Record<string, string> = {};
+  for (const spec of employerSpecs) {
+    const found = await prisma.employer.findFirst({
+      where: { provider_profile_id: providerProfile.id, name: spec.name },
+      select: { id: true },
+    });
+    const row = found
+      ? await prisma.employer.update({ where: { id: found.id }, data: spec })
+      : await prisma.employer.create({
+          data: { provider_profile_id: providerProfile.id, ...spec },
+        });
+    employerIds[spec.name] = row.id;
+  }
+
+  const projectSpecs = [
+    {
+      name: "Global P2P Transformation",
+      employer: "Acme Consulting",
+      description:
+        "End-to-end Procure-to-Pay rollout across 14 countries — requisitions, sourcing, supplier portal and invoice automation.",
+      sort_order: 10,
+      solutions: ["Supplier Portal Rollout", "Invoice Automation", "Sourcing & Negotiations"],
+    },
+    {
+      name: "Supplier Onboarding Automation",
+      employer: "Globex Corp",
+      description:
+        "Cut supplier onboarding cycle time by 40% with Oracle Supplier Qualification Management.",
+      sort_order: 20,
+      solutions: ["Supplier Qualification", "Approval Workflow Design"],
+    },
+  ];
+
+  for (const spec of projectSpecs) {
+    const found = await prisma.project.findFirst({
+      where: { provider_profile_id: providerProfile.id, name: spec.name },
+      select: { id: true },
+    });
+    const project = found
+      ? await prisma.project.update({
+          where: { id: found.id },
+          data: {
+            description: spec.description,
+            sort_order: spec.sort_order,
+            employer_id: employerIds[spec.employer] ?? null,
+          },
+        })
+      : await prisma.project.create({
+          data: {
+            provider_profile_id: providerProfile.id,
+            employer_id: employerIds[spec.employer] ?? null,
+            name: spec.name,
+            description: spec.description,
+            sort_order: spec.sort_order,
+          },
+        });
+
+    for (const solution of spec.solutions) {
+      const existing = await prisma.solution.findFirst({
+        where: { project_id: project.id, name: solution },
+        select: { id: true },
+      });
+      if (!existing) {
+        await prisma.solution.create({
+          data: { project_id: project.id, name: solution },
+        });
+      }
+    }
+  }
+
+  const certSpecs = [
+    {
+      name: "Oracle Cloud Procurement Certified Implementation Professional",
+      issuer: "Oracle",
+      year: 2023,
+      employer: "Acme Consulting",
+    },
+    {
+      name: "Oracle Cloud Payables Certified Implementation Professional",
+      issuer: "Oracle",
+      year: 2021,
+      employer: "Globex Corp",
+    },
+  ];
+  for (const spec of certSpecs) {
+    const found = await prisma.certification.findFirst({
+      where: { provider_profile_id: providerProfile.id, name: spec.name },
+      select: { id: true },
+    });
+    const data = {
+      issuer: spec.issuer,
+      year: spec.year,
+      employer_id: employerIds[spec.employer] ?? null,
+    };
+    if (found) {
+      await prisma.certification.update({ where: { id: found.id }, data });
+    } else {
+      await prisma.certification.create({
+        data: { provider_profile_id: providerProfile.id, name: spec.name, ...data },
+      });
+    }
+  }
+
   // Finish-page fields (brief_P / E019) so the demo scores the identity block.
   await prisma.providerProfile.update({
     where: { id: providerProfile.id },

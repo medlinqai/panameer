@@ -755,6 +755,7 @@ export async function applyProviderSection(
             kind: "PRODUCT",
             // Sorts after the seeded vocabulary.
             sort_order: 900,
+            is_custom: true,
           },
         });
         ids.push(created.id);
@@ -824,6 +825,7 @@ export async function applyProviderSection(
               role_type_id: data.roleTypeId,
               pillar_id: data.pillarId,
               name,
+              is_custom: true,
             },
           });
           if (!skillIds.includes(skill.id)) skillIds.push(skill.id);

@@ -42,7 +42,7 @@ import {
  *   PRE-VERIFY  (no stepper, E001): sign up → "check your email"
  *   then        /verify-email → /join/provider/start ("Get Started Now!", E002)
  *   POST-VERIFY (stepper x/13, E003/E010): the 13 profile steps, ending on the
- *               "You're Done!" finish page → Publish → /join/provider/preview
+ *               one-page review (step 12) → Publish → the live Profile View
  *
  * brief_R added the Specializations step at position 8, taking the count from
  * 12 to 13.
@@ -564,7 +564,9 @@ export default function JoinProviderPage() {
         setError(body.error ?? "Could not publish your profile.");
         return;
       }
-      router.push("/join/provider/preview");
+      // The review IS step 12 now (E035), so publishing lands the provider on
+      // their live Profile View — which is the dashboard (E037).
+      router.push("/dashboard");
     } finally {
       setBusy(false);
     }

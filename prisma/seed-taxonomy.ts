@@ -236,7 +236,12 @@ export async function seedTaxonomy(
   // cascades anyway, but doing it explicitly means the count is reportable
   // rather than silent — a provider losing a skill should be visible.
   const staleSkills = await prisma.skill.findMany({
-    where: { id: { notIn: [...keptSkillIds] } },
+    where: {
+      id: { notIn: [...keptSkillIds] },
+      // Provider-authored skills (brief_S / E031) are NOT stale — they were
+      // never in the JSON and re-seeding must not delete a provider's data.
+      is_custom: false,
+    },
     select: { id: true },
   });
   const staleSkillIds = staleSkills.map((s) => s.id);

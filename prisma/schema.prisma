@@ -377,6 +377,11 @@ model Skill {
   application_id String?  @db.Uuid
   name           String
   image_url      String?
+  /// Added by a provider on the fly (brief_S / E031) rather than coming from
+  /// the authoritative Service Catalog. The seed's retirement pass SKIPS these
+  /// — otherwise re-seeding would silently delete skills providers had entered
+  /// and selected.
+  is_custom      Boolean  @default(false)
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
 
@@ -550,6 +555,8 @@ model ProviderProfile {
   roleType        RoleType?        @relation(fields: [role_type_id], references: [id], onDelete: SetNull)
   skills          ProviderSkill[]
   specializations ProviderProfileSpecialization[]
+  employers       Employer[]
+  projects        Project[]
   workExperiences WorkExperience[]
   education        Education[]
   languages        Language[]
@@ -653,6 +660,8 @@ model Specialization {
   kind       SpecializationKind @default(PRODUCT)
   /// Display order within a kind; ties break on name.
   sort_order Int                @default(100)
+  /// Added by a provider on the fly (brief_S / E031). Never retired by the seed.
+  is_custom  Boolean            @default(false)
   created_at DateTime           @default(now())
   updated_at DateTime           @updatedAt
 
@@ -684,6 +693,87 @@ model ProviderProfileSpecialization {
   @@unique([provider_profile_id, specialization_id])
   @@index([specialization_id])
   @@map("provider_profile_specializations")
+}
+
+// ---------------------------------------------------------------------------
+// Provider portfolio entities (brief_S / E037, per "Service Provider
+// Categorization"): Projects → Solutions, Certifications, Employers.
+//
+// These are the provider's PROOF OF WORK, distinct from the taxonomy axes:
+//   Role → Domain → Skill  = what they can do
+//   Specializations        = which systems/processes/sectors they know
+//   Projects/Certs/Employers = what they have actually done
+// ---------------------------------------------------------------------------
+
+/// A company the provider has worked for. First-class (rather than the free
+/// text on WorkExperience) because the categorization diagram links Employers
+/// to Certifications and Projects, and buyers filter on them.
+model Employer {
+  id                  String   @id @default(uuid()) @db.Uuid
+  provider_profile_id String   @db.Uuid
+  name                String
+  /// Job title held there. The engagement dates live on the linked
+  /// WorkExperience rows when there are any.
+  role_title          String?
+  location            String?
+  start_date          DateTime?
+  end_date            DateTime?
+  /// True while this is the provider's current employer.
+  is_current          Boolean  @default(false)
+  description         String?
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  providerProfile ProviderProfile @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
+  projects        Project[]
+  certifications  Certification[]
+
+  @@index([provider_profile_id])
+  @@map("employers")
+}
+
+/// A delivered piece of work. Optionally attributed to an Employer, and
+/// composed of one or more Solutions (the diagram's Project → Solution edge).
+model Project {
+  id                  String   @id @default(uuid()) @db.Uuid
+  provider_profile_id String   @db.Uuid
+  employer_id         String?  @db.Uuid
+  name                String
+  description         String?
+  /// Public link (case study, repo, published site) when there is one.
+  url                 String?
+  /// Cover image in the portfolio grid.
+  image_url           String?
+  start_date          DateTime?
+  end_date            DateTime?
+  /// Ordering in the portfolio; lower first.
+  sort_order          Int      @default(100)
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  providerProfile ProviderProfile @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
+  employer        Employer?       @relation(fields: [employer_id], references: [id], onDelete: SetNull)
+  solutions       Solution[]
+
+  @@index([provider_profile_id])
+  @@index([employer_id])
+  @@map("projects")
+}
+
+/// A capability delivered within a Project — the "Solution" node hanging off
+/// Project in the categorization diagram (e.g. "Supplier Portal rollout").
+model Solution {
+  id          String   @id @default(uuid()) @db.Uuid
+  project_id  String   @db.Uuid
+  name        String
+  description String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@index([project_id])
+  @@map("solutions")
 }
 
 model ProviderSkill {
@@ -772,17 +862,27 @@ model Language {
 }
 
 /// A professional certification on a provider's profile.
+/// A credential the provider holds. Pre-dates brief_S; E037 promotes it to a
+/// displayed portfolio entity and links it to the Employer it was earned at
+/// (the categorization diagram's Employer → Certification edge).
 model Certification {
   id                  String   @id @default(uuid()) @db.Uuid
   provider_profile_id String   @db.Uuid
+  employer_id         String?  @db.Uuid
   name                String
   issuer              String?
   year                Int?
+  /// Credential number / badge id, and a public verification link.
+  credential_id       String?
+  url                 String?
+  expires_on          DateTime?
   created_at          DateTime @default(now())
 
   providerProfile ProviderProfile @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
+  employer        Employer?       @relation(fields: [employer_id], references: [id], onDelete: SetNull)
 
   @@index([provider_profile_id])
+  @@index([employer_id])
   @@map("certifications")
 }
 
