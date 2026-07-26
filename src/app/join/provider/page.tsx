@@ -33,19 +33,22 @@ import {
 } from "@/lib/display";
 
 /**
- * Provider (Seller) onboarding — journey P1-J1, rebuilt by brief_P.
+ * Provider (Seller) onboarding — journey P1-J1 (brief_P, extended by brief_R).
  *
  * Shape:
  *   PRE-VERIFY  (no stepper, E001): sign up → "check your email"
  *   then        /verify-email → /join/provider/start ("Get Started Now!", E002)
- *   POST-VERIFY (stepper x/12, E003/E010): the 12 profile steps, ending on the
+ *   POST-VERIFY (stepper x/13, E003/E010): the 13 profile steps, ending on the
  *               "You're Done!" finish page → Publish → /join/provider/preview
+ *
+ * brief_R added the Specializations step at position 8, taking the count from
+ * 12 to 13.
  *
  * Every step saves on Continue (save-as-you-go, brief_E) and the server derives
  * the resume point, so there is no progress column to keep in sync.
  */
 
-/** The 12 profile steps, in order. Must mirror PROVIDER_STEPS server-side. */
+/** The 13 profile steps, in order. Must mirror PROVIDER_STEPS server-side. */
 const STEPS = [
   "experience_level",
   "goal",
@@ -54,6 +57,7 @@ const STEPS = [
   "tell_us",
   "category",
   "skills",
+  "specializations",
   "education",
   "languages",
   "bio",
@@ -63,7 +67,7 @@ const STEPS = [
 type Step = (typeof STEPS)[number];
 type Screen = "signup" | "check_email" | Step;
 
-const TOTAL = STEPS.length; // 12
+const TOTAL = STEPS.length; // 13 (brief_R)
 
 const EXPERIENCE_OPTIONS = [
   { value: "BEGINNER", title: "Beginner", description: "New to consulting or early in my journey." },
@@ -104,6 +108,10 @@ type ProfilePayload = {
   profileMethod?: string | null;
   pillarId?: string | null;
   pillarName?: string | null;
+  roleTypeId?: string | null;
+  roleTypeName?: string | null;
+  specializationIds?: string[];
+  specializations?: { id: string; name: string; kind: string }[];
   skillIds?: string[];
   skillNames?: { id: string; name: string }[];
   headline?: string | null;
@@ -144,7 +152,20 @@ type StatusPayload = {
   profile?: ProfilePayload;
 };
 
-type Field_ = { id: string; code: string; name: string; skillCount: number };
+/** The Role → Domain tree behind step 6 (brief_R). */
+type FieldDomain = { id: string; code: string; name: string; skillCount: number };
+type FieldRole = {
+  id: string;
+  code: string;
+  name: string;
+  display: string;
+  domains: FieldDomain[];
+};
+type SpecializationGroup = {
+  kind: string;
+  label: string;
+  items: { id: string; name: string; kind: string }[];
+};
 type SkillOpt = { id: string; name: string; roleType: { display: string } | null };
 type LanguageDraft = { name: string; level: string | null };
 type AddressDraft = {
@@ -163,6 +184,9 @@ type Profile = {
   profileMethod: string | null;
   pillarId: string | null;
   pillarName: string | null;
+  roleTypeId: string | null;
+  roleTypeName: string | null;
+  specializationIds: string[];
   skillIds: string[];
   skillNames: { id: string; name: string }[];
   headline: string;
@@ -187,6 +211,9 @@ const emptyProfile = (): Profile => ({
   profileMethod: null,
   pillarId: null,
   pillarName: null,
+  roleTypeId: null,
+  roleTypeName: null,
+  specializationIds: [],
   skillIds: [],
   skillNames: [],
   headline: "",
@@ -237,7 +264,8 @@ export default function JoinProviderPage() {
   const [inviteCtx, setInviteCtx] = useState<{ coordinatorName: string } | null>(null);
 
   const [profile, setProfile] = useState<Profile>(emptyProfile());
-  const [fields, setFields] = useState<Field_[]>([]);
+  const [fieldRoles, setFieldRoles] = useState<FieldRole[]>([]);
+  const [specGroups, setSpecGroups] = useState<SpecializationGroup[]>([]);
   const [skillOpts, setSkillOpts] = useState<SkillOpt[]>([]);
   const [skillQuery, setSkillQuery] = useState("");
 
@@ -267,6 +295,9 @@ export default function JoinProviderPage() {
       profileMethod: p.profileMethod ?? null,
       pillarId: p.pillarId ?? null,
       pillarName: p.pillarName ?? null,
+      roleTypeId: p.roleTypeId ?? null,
+      roleTypeName: p.roleTypeName ?? null,
+      specializationIds: p.specializationIds ?? [],
       skillIds: p.skillIds ?? [],
       skillNames: p.skillNames ?? [],
       headline: p.headline ?? "",
@@ -372,21 +403,31 @@ export default function JoinProviderPage() {
 
   // ---- reference data ---------------------------------------------------
   useEffect(() => {
-    if (screen === "category" && fields.length === 0) {
+    if (screen === "category" && fieldRoles.length === 0) {
       fetch("/api/catalog/fields")
         .then((r) => r.json())
-        .then((d) => setFields(d.fields ?? []))
+        .then((d) => setFieldRoles(d.roles ?? []))
         .catch(() => setError("We couldn't load the categories. Please refresh."));
     }
-  }, [screen, fields.length]);
+    if (screen === "specializations" && specGroups.length === 0) {
+      fetch("/api/catalog/specializations")
+        .then((r) => r.json())
+        .then((d) => setSpecGroups(d.groups ?? []))
+        .catch(() =>
+          setError("We couldn't load specializations. Please refresh.")
+        );
+    }
+  }, [screen, fieldRoles.length, specGroups.length]);
 
   useEffect(() => {
-    if (screen !== "skills" || !profile.pillarId) return;
-    fetch(`/api/catalog/skills?pillarId=${profile.pillarId}`)
+    if (screen !== "skills" || !profile.pillarId || !profile.roleTypeId) return;
+    fetch(
+      `/api/catalog/skills?roleTypeId=${profile.roleTypeId}&pillarId=${profile.pillarId}`
+    )
       .then((r) => r.json())
       .then((d) => setSkillOpts(d.skills ?? []))
       .catch(() => setError("We couldn't load skills. Please refresh."));
-  }, [screen, profile.pillarId]);
+  }, [screen, profile.pillarId, profile.roleTypeId]);
 
   // ---- navigation -------------------------------------------------------
   const goTo = (s: Screen) => {
@@ -625,7 +666,7 @@ export default function JoinProviderPage() {
   });
 
   switch (screen) {
-    // ---- 1/12 — Experience (E003) --------------------------------------
+    // ---- 1/13 — Experience (E003) --------------------------------------
     case "experience_level":
       return (
         <WizardShell
@@ -652,7 +693,7 @@ export default function JoinProviderPage() {
         </WizardShell>
       );
 
-    // ---- 2/12 — Goal (E004: "Got it!" + "while") ------------------------
+    // ---- 2/13 — Goal (E004: "Got it!" + "while") ------------------------
     case "goal":
       return (
         <WizardShell
@@ -677,7 +718,7 @@ export default function JoinProviderPage() {
         </WizardShell>
       );
 
-    // ---- 3/12 — How Do You Work? (E009) --------------------------------
+    // ---- 3/13 — How Do You Work? (E009) --------------------------------
     case "work_method":
       return (
         <WizardShell
@@ -711,7 +752,7 @@ export default function JoinProviderPage() {
         </WizardShell>
       );
 
-    // ---- 4/12 — Title (E011) -------------------------------------------
+    // ---- 4/13 — Title (E011) -------------------------------------------
     case "title":
       return (
         <WizardShell
@@ -735,7 +776,7 @@ export default function JoinProviderPage() {
         </WizardShell>
       );
 
-    // ---- 5/12 — Tell us about yourself (E012) --------------------------
+    // ---- 5/13 — Tell us about yourself (E012) --------------------------
     case "tell_us":
       return (
         <WizardShell
@@ -795,40 +836,73 @@ export default function JoinProviderPage() {
         </WizardShell>
       );
 
-    // ---- 6/12 — Category / field (E013) --------------------------------
+    // ---- 6/13 — Field: Role → Domain (E013 / brief_R) ------------------
     case "category":
       return (
         <WizardShell
           {...shell({
             title: "Nearly there! What work are you here to do?",
             subtitle:
-              "Your skills show clients what you can offer and help us choose which jobs to recommend to you. Add or remove the ones we've suggested or start typing to pick more. It's up to you.",
-            onContinue: () => saveAnd("category", { pillarId: profile.pillarId }),
-            continueDisabled: !profile.pillarId,
+              "Pick the area you work in. Your skills show clients what you can offer and help us choose which jobs to recommend to you.",
+            onContinue: () =>
+              saveAnd("category", {
+                roleTypeId: profile.roleTypeId,
+                pillarId: profile.pillarId,
+              }),
+            continueDisabled: !profile.pillarId || !profile.roleTypeId,
           })}
         >
           {error && <Notice>{error}</Notice>}
-          {fields.length === 0 ? (
+          {fieldRoles.length === 0 ? (
             <p className="text-ink-2">Loading categories…</p>
           ) : (
-            <div className="space-y-3">
-              {fields.map((f) => (
-                <OptionCard
-                  key={f.id}
-                  selected={profile.pillarId === f.id}
-                  onClick={() =>
-                    setProfile((p) => ({ ...p, pillarId: f.id, pillarName: f.name }))
-                  }
-                  title={f.name}
-                  description={`${f.skillCount} skill${f.skillCount === 1 ? "" : "s"} in this field`}
-                />
+            <div className="space-y-8">
+              {/*
+                The catalog is Role → Domain → Skill, and the SAME domain name
+                appears under more than one role with different skills, so what
+                the provider picks is the (Role, Domain) PAIR — rendered as
+                roles with their domains beneath.
+              */}
+              {fieldRoles.map((role) => (
+                <div key={role.id}>
+                  <h2 className="mb-3 text-[13px] font-bold uppercase tracking-wide text-ink-2">
+                    {role.name}
+                  </h2>
+                  <div className="space-y-3">
+                    {role.domains.map((d) => (
+                      <OptionCard
+                        key={`${role.id}:${d.id}`}
+                        selected={
+                          profile.pillarId === d.id &&
+                          profile.roleTypeId === role.id
+                        }
+                        onClick={() =>
+                          setProfile((p) => ({
+                            ...p,
+                            pillarId: d.id,
+                            pillarName: d.name,
+                            roleTypeId: role.id,
+                            roleTypeName: role.name,
+                            // Switching field invalidates skills chosen under
+                            // the old one; the server prunes on save too.
+                            ...(p.pillarId !== d.id || p.roleTypeId !== role.id
+                              ? { skillIds: [], skillNames: [] }
+                              : {}),
+                          }))
+                        }
+                        title={d.name}
+                        description={`${d.skillCount} skill${d.skillCount === 1 ? "" : "s"} in this area`}
+                      />
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           )}
         </WizardShell>
       );
 
-    // ---- 7/12 — Skills (E014) ------------------------------------------
+    // ---- 7/13 — Skills (E014) ------------------------------------------
     case "skills": {
       const chosen = new Set(profile.skillIds);
       const q = skillQuery.trim().toLowerCase();
@@ -856,9 +930,14 @@ export default function JoinProviderPage() {
         <WizardShell
           {...shell({
             title: "And what skills do you use in that work?",
-            subtitle: `Pick up to ${MAX_SKILLS} from ${profile.pillarName ?? "your field"}.`,
+            subtitle: `Pick up to ${MAX_SKILLS} from ${
+              profile.roleTypeName && profile.pillarName
+                ? `${profile.roleTypeName} · ${profile.pillarName}`
+                : "your field"
+            }.`,
             onContinue: () =>
               saveAnd("skills", {
+                roleTypeId: profile.roleTypeId,
                 pillarId: profile.pillarId,
                 skillIds: profile.skillIds,
               }),
@@ -919,7 +998,64 @@ export default function JoinProviderPage() {
       );
     }
 
-    // ---- 8/12 — Education (E015, optional + Skip) ----------------------
+    // ---- 8/13 — Specializations (brief_R, optional) --------------------
+    case "specializations": {
+      const chosenSpecs = new Set(profile.specializationIds);
+      const toggleSpec = (id: string) =>
+        setProfile((p) => ({
+          ...p,
+          specializationIds: p.specializationIds.includes(id)
+            ? p.specializationIds.filter((x) => x !== id)
+            : [...p.specializationIds, id],
+        }));
+
+      return (
+        <WizardShell
+          {...shell({
+            title: "What are your specializations?",
+            subtitle:
+              "The systems, processes and industries you know. This is separate from your skills — it's how buyers find someone who has done it in their world. Pick as many as apply.",
+            secondaryLabel: "Skip for Now",
+            onSecondary: goNext,
+            onContinue: () =>
+              saveAnd("specializations", {
+                specializationIds: profile.specializationIds,
+              }),
+          })}
+        >
+          {error && <Notice>{error}</Notice>}
+          {specGroups.length === 0 ? (
+            <p className="text-ink-2">Loading specializations…</p>
+          ) : (
+            <div className="space-y-7">
+              {specGroups.map((g) => (
+                <div key={g.kind}>
+                  <h2 className="mb-3 text-[13px] font-bold uppercase tracking-wide text-ink-2">
+                    {g.label}
+                  </h2>
+                  <div className="flex flex-wrap gap-2">
+                    {g.items.map((item) => (
+                      <Chip
+                        key={item.id}
+                        selected={chosenSpecs.has(item.id)}
+                        onClick={() => toggleSpec(item.id)}
+                      >
+                        {item.name}
+                      </Chip>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              <p className="text-[14px] text-ink-2">
+                {profile.specializationIds.length} selected
+              </p>
+            </div>
+          )}
+        </WizardShell>
+      );
+    }
+
+    // ---- 9/13 — Education (E015, optional + Skip) ----------------------
     case "education":
       return (
         <WizardShell
@@ -939,7 +1075,7 @@ export default function JoinProviderPage() {
         </WizardShell>
       );
 
-    // ---- 9/12 — Languages (E016, English default) ----------------------
+    // ---- 10/13 — Languages (E016, English default) ---------------------
     case "languages": {
       const langs =
         profile.languages.length > 0
@@ -1028,7 +1164,7 @@ export default function JoinProviderPage() {
       );
     }
 
-    // ---- 10/12 — Bio (E017, min length) --------------------------------
+    // ---- 11/13 — Bio (E017, min length) --------------------------------
     case "bio": {
       const len = profile.overview.trim().length;
       const left = MAX_BIO - profile.overview.length;
@@ -1062,7 +1198,7 @@ export default function JoinProviderPage() {
       );
     }
 
-    // ---- 11/12 — Rate (E018) -------------------------------------------
+    // ---- 12/13 — Rate (E018) -------------------------------------------
     case "rate": {
       const { rate, fee, youGet } = rateBreakdown(
         profile.hourlyRateCents,
@@ -1150,7 +1286,7 @@ export default function JoinProviderPage() {
       );
     }
 
-    // ---- 12/12 — "You're Done!" finish page (E019) ---------------------
+    // ---- 13/13 — "You're Done!" finish page (E019) ---------------------
     case "finish": {
       const addr = profile.address ?? emptyAddress(acct.country);
       const setAddr = (patch: Partial<AddressDraft>) =>

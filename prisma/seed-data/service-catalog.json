@@ -1,0 +1,185 @@
+{
+  "_source": "4. Project Documents/2. Design/4. Service Catalog/Service Catalog.xlsx (Panameer Service Catalog V1)",
+  "_note": "Authoritative provider taxonomy: Role -> Domain -> Skill, plus a cross-cutting multi-select Specializations vocabulary. Generated from Scott's xlsx.",
+  "roles": [
+    {
+      "name": "Application-Specific",
+      "domains": [
+        {
+          "name": "Finance & Accounting",
+          "skills": [
+            "Procurement",
+            "Requisitions",
+            "Purchasing/Purchase Orders",
+            "My Receipts",
+            "Supplier Qualifications",
+            "Supplier Portal",
+            "Purchase Agreements",
+            "Sourcing/Negotiations",
+            "Procurement Contracts",
+            "Oracle Business Network",
+            "Projects",
+            "Project Financial Management",
+            "Grant Management",
+            "Payables",
+            "General Ledger",
+            "Revenue",
+            "Collections",
+            "Fixed Assets",
+            "Receivables",
+            "Cash Management",
+            "Expense Management",
+            "Acounting Hub"
+          ]
+        },
+        {
+          "name": "Human Resources & Training",
+          "skills": [
+            "Recruiting",
+            "Talent",
+            "Benefits",
+            "Compensation",
+            "Core HR",
+            "Payroll",
+            "Time & Labor",
+            "Absence Mgt",
+            "Learning"
+          ]
+        },
+        {
+          "name": "Supply Chain Management",
+          "skills": [
+            "Inventory Management",
+            "Item Costing",
+            "Warehouse Mgt",
+            "Manufacturing",
+            "Order Management",
+            "Supply Chain Planning"
+          ]
+        },
+        {
+          "name": "Customer Relationship Management",
+          "skills": [
+            "Field Sales",
+            "Customer Service",
+            "Customer Data Management",
+            "Customer Loyalty",
+            "Helpdesk"
+          ]
+        },
+        {
+          "name": "Enterprise Performance Mgt",
+          "skills": [
+            "Financial Consolidation & Close",
+            "Planning & Budgetting",
+            "Accounts Reconciliation & Closing"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Project-Specific",
+      "domains": [
+        {
+          "name": "Project Execution",
+          "skills": [
+            "Program Management",
+            "Project Manager",
+            "Technical Architect",
+            "Technical Lead",
+            "Business Architect",
+            "Testing Specialist",
+            "Support Specialist",
+            "Change Mgt Specialist"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Technology-Specific",
+      "domains": [
+        {
+          "name": "Development & IT",
+          "skills": [
+            "Developer (PaaS)",
+            "Conversion Specialist",
+            "Infrastructure Specialist",
+            "Integration Specialist",
+            "Reporting Specialist",
+            "PL SQL Specialist",
+            "Workflow & Notification Specialist",
+            "Security Specialist",
+            "Java Specialist",
+            "PHP Specialist",
+            "JavaScript Specialist",
+            "iOS Specialist",
+            "SQL Specialist",
+            "Claude-Code Specialist",
+            "Quality Assurance",
+            "Application Administrator"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Operations-Specific",
+      "domains": [
+        {
+          "name": "Finance & Accounting",
+          "skills": [
+            "Buyer",
+            "Sourcing Manager",
+            "Category Manager",
+            "Bookkeeper",
+            "Payables Specialist",
+            "Supplier Management"
+          ]
+        },
+        {
+          "name": "Human Resources & Training",
+          "skills": [
+            "HR Manager"
+          ]
+        },
+        {
+          "name": "Supply Chain Management",
+          "skills": [
+            "Materials Manager",
+            "Receiving Technician"
+          ]
+        },
+        {
+          "name": "Project Portfolio Management",
+          "skills": [
+            "Project Manager"
+          ]
+        }
+      ]
+    }
+  ],
+  "specializations": [
+    "Oracle Cloud",
+    "Oracle Business Network",
+    "Enterprise Business Suite ()EBS)",
+    "PeopleSoft",
+    "Salesforce",
+    "SAP",
+    "JD Edwards",
+    "SciQuest",
+    "Ariba",
+    "Coupa",
+    "Procure-to-Pay",
+    "Record-to-Report",
+    "Order-to-Cash",
+    "Hire-to-Fire",
+    "Source-to-Pay",
+    "Federal Government",
+    "State & Local Government",
+    "Healthcare",
+    "Financial Services",
+    "Energy Services",
+    "Education Services",
+    "Retail",
+    "Information Technology Services"
+  ]
+}

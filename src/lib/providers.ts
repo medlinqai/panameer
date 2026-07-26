@@ -27,6 +27,9 @@ export async function getPublicProviderProfile(
         },
       },
       region: { select: { id: true, name: true } },
+      specializations: {
+        include: { specialization: { select: { id: true, name: true, kind: true } } },
+      },
       skills: {
         include: {
           skill: {
@@ -87,6 +90,12 @@ export async function getPublicProviderProfile(
       id: ps.skill.id,
       name: ps.skill.name,
       roleType: ps.skill.roleType.display,
+    })),
+    // Cross-cutting specializations (brief_R) — systems, processes, industries.
+    specializations: profile.specializations.map((s) => ({
+      id: s.specialization.id,
+      name: s.specialization.name,
+      kind: s.specialization.kind,
     })),
     experience: profile.workExperiences.map((we) => ({
       id: we.id,

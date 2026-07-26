@@ -45,7 +45,7 @@ async function main() {
   // --- ERP service-catalog taxonomy (reference data) ---------------------
   // Seeded before profiles so provider skills can reference the taxonomy.
   const counts = await seedTaxonomy(prisma);
-  console.log("Seeded ERP taxonomy:", JSON.stringify(counts));
+  console.log("Seeded service catalog:", JSON.stringify(counts));
 
   // --- Demo org: PAccount → Company → Site → Address → Person -------------
   // Guarded on the admin Person's user_id (unique) so the whole backbone is
@@ -138,6 +138,16 @@ async function main() {
     where: { name: "Americas" },
   });
 
+  // The demo provider's field = the (Role, Domain) pair its skills live under
+  // (brief_R). Without both, the step-7 prune would strip its skills as
+  // "outside the chosen field".
+  const demoRole = await prisma.roleType.findUnique({
+    where: { code: "APPLICATION_SPECIFIC" },
+  });
+  const demoDomain = await prisma.pillar.findFirst({
+    where: { name: "Finance & Accounting" },
+  });
+
   const providerProfile = await prisma.providerProfile.upsert({
     where: { person_id: adminPerson.id },
     // Re-assert the brief_K demo state on existing rows (the schema rename reset
@@ -146,10 +156,16 @@ async function main() {
       status: "ACTIVE",
       validation_status: "VALIDATED",
       validated_at: new Date(),
+      role_type_id: demoRole?.id ?? null,
+      pillar_id: demoDomain?.id ?? null,
+      hourly_rate_cents: 12500,
     },
     create: {
       person_id: adminPerson.id,
       region_id: americas?.id ?? null,
+      role_type_id: demoRole?.id ?? null,
+      pillar_id: demoDomain?.id ?? null,
+      hourly_rate_cents: 12500,
       headline: "Oracle Cloud P2P / Procurement Cloud Expert",
       overview:
         "15+ years implementing Oracle Cloud Procurement and Payables. " +
@@ -171,6 +187,37 @@ async function main() {
     },
   });
 
+  // Demo specializations (brief_R) — a realistic multi-select for the preview.
+  const demoSpecializations = await prisma.specialization.findMany({
+    where: { name: { in: ["Oracle Cloud", "Procure-to-Pay", "Source-to-Pay"] } },
+    select: { id: true },
+  });
+  for (const sp of demoSpecializations) {
+    await prisma.providerProfileSpecialization.upsert({
+      where: {
+        provider_profile_id_specialization_id: {
+          provider_profile_id: providerProfile.id,
+          specialization_id: sp.id,
+        },
+      },
+      update: {},
+      create: {
+        provider_profile_id: providerProfile.id,
+        specialization_id: sp.id,
+      },
+    });
+  }
+
+  // Finish-page fields (brief_P / E019) so the demo scores the identity block.
+  await prisma.providerProfile.update({
+    where: { id: providerProfile.id },
+    data: { work_method: "HOURLY", date_of_birth: new Date("1985-04-12") },
+  });
+  await prisma.person.update({
+    where: { id: adminPerson.id },
+    data: { phone: "+15550104477", phone_verified_at: new Date() },
+  });
+
   // Tag Procurement skills (idempotent via the unique join key). Match the
   // seeded taxonomy by name.
   const procurementSkillNames = [
@@ -180,7 +227,13 @@ async function main() {
     "Supplier Portal",
   ];
   const procurementSkills = await prisma.skill.findMany({
-    where: { name: { in: procurementSkillNames } },
+    where: {
+      name: { in: procurementSkillNames },
+      // Scope to the demo's (Role, Domain): a skill name can now exist under
+      // more than one pair, so a name-only match is ambiguous (brief_R).
+      role_type_id: demoRole?.id,
+      pillar_id: demoDomain?.id,
+    },
     select: { id: true },
   });
   for (const skill of procurementSkills) {
@@ -243,11 +296,18 @@ async function main() {
       where: { id: providerProfile.id },
       include: {
         skills: true,
+        specializations: true,
         workExperiences: true,
         education: true,
         languages: true,
         certifications: true,
-        person: { select: { photo_url: true } },
+        person: {
+          select: {
+            photo_url: true,
+            phone_verified_at: true,
+            site: { select: { addresses: { select: { line1: true }, take: 1 } } },
+          },
+        },
       },
     });
     if (full) {
@@ -255,17 +315,23 @@ async function main() {
         headline: full.headline,
         overview: full.overview,
         experience_level: full.experience_level,
-        region_id: full.region_id,
+        goal: full.goal,
+        work_method: full.work_method,
+        pillar_id: full.pillar_id,
+        role_type_id: full.role_type_id,
         onsite_rate_cents: full.onsite_rate_cents,
         remote_rate_cents: full.remote_rate_cents,
         hourly_rate_cents: full.hourly_rate_cents,
-        work_types: full.work_types,
         skills: full.skills,
+        languages: full.languages,
         workExperiences: full.workExperiences,
         education: full.education,
-        languages: full.languages,
         certifications: full.certifications,
+        specializations: full.specializations,
         photoUrl: full.person.photo_url,
+        date_of_birth: full.date_of_birth,
+        hasAddress: Boolean(full.person.site?.addresses?.[0]?.line1?.trim()),
+        phoneVerified: full.person.phone_verified_at != null,
       });
       await prisma.providerProfile.update({
         where: { id: providerProfile.id },

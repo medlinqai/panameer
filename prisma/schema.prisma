@@ -271,9 +271,10 @@ model ServiceCatalog {
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 
-  pillars  Pillar[]
-  skills   Skill[]
-  tags     SkillTag[]
+  pillars         Pillar[]
+  skills          Skill[]
+  tags            SkillTag[]
+  specializations Specialization[]
 
   @@map("service_catalogs")
 }
@@ -289,9 +290,14 @@ model RoleType {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  skills       Skill[]
-  tags         SkillTag[]
-  workRequests WorkRequest[]
+  /// Display order for the Role → Domain picker (brief_R). Lower sorts first,
+  /// keeping the ERP-heavy Application-Specific role at the top (E013).
+  sort_order Int @default(100)
+
+  skills           Skill[]
+  tags             SkillTag[]
+  workRequests     WorkRequest[]
+  providerProfiles ProviderProfile[]
 
   @@map("role_types")
 }
@@ -376,7 +382,12 @@ model Skill {
   providerSkills    ProviderSkill[]
   workRequestSkills WorkRequestSkill[]
 
-  @@unique([catalog_id, name])
+  /// A Skill belongs to a (Role, Domain) PAIR — brief_R, from the authoritative
+  /// Service Catalog. The old `(catalog_id, name)` key was wrong for that shape:
+  /// "Project Manager" legitimately exists under BOTH Project-Specific/Project
+  /// Execution and Operations-Specific/Project Portfolio Management, and a
+  /// name-only key silently collapsed them into one row.
+  @@unique([catalog_id, role_type_id, pillar_id, name])
   @@index([role_type_id])
   @@index([pillar_id])
   @@map("skills")
@@ -486,9 +497,12 @@ model ProviderProfile {
   /// the "You'll get" figure are computed without ever touching a float.
   service_fee_bps  Int      @default(1000)
   currency         String   @default("USD")
-  /// The category / field chosen at the catalog step (brief_P / E013). Skills
-  /// at the next step are filtered to this pillar.
+  /// The field chosen at the catalog step: a (Role, Domain) PAIR, since the
+  /// authoritative catalog is Role → Domain → Skill and the same domain name
+  /// appears under more than one role (brief_R). `pillar_id` is the DOMAIN;
+  /// `role_type_id` is the ROLE. Skills at the next step filter on both.
   pillar_id        String?  @db.Uuid
+  role_type_id     String?  @db.Uuid
   /// How the provider sells; RECRUITER forks them to the Coordinator role
   /// (brief_P / E009).
   work_method      WorkMethod?
@@ -528,7 +542,9 @@ model ProviderProfile {
   coordinator     Person?          @relation("CoordinatorProviders", fields: [coordinator_person_id], references: [id], onDelete: SetNull)
   region          Region?          @relation(fields: [region_id], references: [id], onDelete: SetNull)
   pillar          Pillar?          @relation(fields: [pillar_id], references: [id], onDelete: SetNull)
+  roleType        RoleType?        @relation(fields: [role_type_id], references: [id], onDelete: SetNull)
   skills          ProviderSkill[]
+  specializations ProviderProfileSpecialization[]
   workExperiences WorkExperience[]
   education        Education[]
   languages        Language[]
@@ -538,6 +554,7 @@ model ProviderProfile {
   @@index([region_id])
   @@index([coordinator_person_id])
   @@index([pillar_id])
+  @@index([role_type_id])
   @@map("provider_profiles")
 }
 
@@ -613,6 +630,57 @@ enum ValidationStatus {
 }
 
 /// Join: a taxonomy Skill this provider offers.
+/// Cross-cutting Specialization vocabulary (brief_R) — the 23 entries from the
+/// authoritative Service Catalog: products (Oracle Cloud, SAP, Coupa…),
+/// methodologies (Procure-to-Pay, Order-to-Cash…) and industries (Healthcare,
+/// Federal Government…).
+///
+/// A separate axis from Role→Domain→Skill: a provider's specializations say
+/// WHICH systems/processes/sectors they know, independent of the role they play.
+/// Reference data — global, not PAccount-scoped.
+///
+/// The Domain Model shows BUYERS carrying specializations too; brief_R scopes
+/// this to providers, so only the provider join exists for now.
+model Specialization {
+  id         String             @id @default(uuid()) @db.Uuid
+  catalog_id String             @db.Uuid
+  name       String
+  kind       SpecializationKind @default(PRODUCT)
+  /// Display order within a kind; ties break on name.
+  sort_order Int                @default(100)
+  created_at DateTime           @default(now())
+  updated_at DateTime           @updatedAt
+
+  catalog          ServiceCatalog                 @relation(fields: [catalog_id], references: [id], onDelete: Cascade)
+  providerProfiles ProviderProfileSpecialization[]
+
+  @@unique([catalog_id, name])
+  @@map("specializations")
+}
+
+/// Grouping for the picker — the xlsx lists products, then methodologies, then
+/// industries, and the step renders them in those groups.
+enum SpecializationKind {
+  PRODUCT
+  METHODOLOGY
+  INDUSTRY
+}
+
+/// Provider ↔ Specialization multi-select (brief_R).
+model ProviderProfileSpecialization {
+  id                  String   @id @default(uuid()) @db.Uuid
+  provider_profile_id String   @db.Uuid
+  specialization_id   String   @db.Uuid
+  created_at          DateTime @default(now())
+
+  providerProfile ProviderProfile @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
+  specialization  Specialization  @relation(fields: [specialization_id], references: [id], onDelete: Cascade)
+
+  @@unique([provider_profile_id, specialization_id])
+  @@index([specialization_id])
+  @@map("provider_profile_specializations")
+}
+
 model ProviderSkill {
   id                  String   @id @default(uuid()) @db.Uuid
   provider_profile_id String   @db.Uuid

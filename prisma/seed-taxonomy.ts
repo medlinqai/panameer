@@ -3,334 +3,324 @@ import * as fs from "fs";
 import * as path from "path";
 
 /**
- * Seeds the ERP service-catalog taxonomy from prisma/seed-data/erp-catalog.json
- * (parsed from Scott's real Work Data File). Everything here is REFERENCE data —
- * global, not PAccount-scoped. Fully idempotent: every write is an upsert keyed
- * on a natural unique, so re-running changes nothing.
+ * Seeds the provider taxonomy from the AUTHORITATIVE Service Catalog
+ * (`prisma/seed-data/service-catalog.json`, generated from Scott's
+ * "Service Catalog.xlsx") — brief_R.
+ *
+ * Shape is three levels: **Role → Domain → Skill**, plus a cross-cutting
+ * **Specializations** vocabulary. Mapped onto the existing models as:
+ *
+ *   Role   → `RoleType`        (4: Application- / Project- / Technology- /
+ *                               Operations-Specific)
+ *   Domain → `Pillar`          (8 distinct names, shared across roles)
+ *   Skill  → `Skill(role_type_id, pillar_id)` — a skill belongs to the PAIR
+ *
+ * Everything here is REFERENCE data — global, not PAccount-scoped. Fully
+ * idempotent: every write is an upsert keyed on a natural unique, and the
+ * retirement pass below is safe to re-run.
+ *
+ * SUPERSEDES the brief_B/brief_P ERP taxonomy that was seeded from
+ * `erp-catalog.json`. That file is left in place as history; nothing reads it.
  */
 
 type CatalogJson = {
-  catalog: { code: string; name: string; description?: string };
-  roleTypes: { code: string; name: string; display: string }[];
-  pillars: { code: string; name: string }[];
-  applicationHierarchy: {
-    pillar: string;
-    offering: string;
-    application: string;
-    appGroup: string;
-  }[];
-  skillsByRoleType: Record<string, string[]>;
-  nonOracleApplications: string[];
-  regions: { name: string; desc?: string }[];
-  engagementTypes: { code: string; name: string; detail?: string }[];
-  freelancerMapping: {
-    action: string;
-    jobReqSkill: string;
-    roleType: string;
-    pillar: string | null;
-    panameerSkill: string | null;
-    sellingAgent: string | null;
-  }[];
+  _source?: string;
+  _note?: string;
+  roles: { name: string; domains: { name: string; skills: string[] }[] }[];
+  specializations: string[];
 };
 
 export type TaxonomyCounts = {
-  catalog: number;
-  roleTypes: number;
-  pillars: number;
-  offerings: number;
-  applications: number;
+  roles: number;
+  domains: number;
   skills: number;
-  tags: number;
+  specializations: number;
   regions: number;
   engagementTypes: number;
-  nonOracleApplications: number;
+  retiredSkills: number;
+  retiredPillars: number;
+  retiredRoleTypes: number;
+  orphanedProviderSkills: number;
+};
+
+/** The single catalog row everything hangs off. */
+const CATALOG = {
+  code: "PANAMEER_V1",
+  name: "Panameer Service Catalog V1",
+  description:
+    "Authoritative provider taxonomy: Role → Domain → Skill, plus Specializations.",
 };
 
 /**
- * PROVISIONAL — pillars that are NOT in Scott's Work Data File but that the
- * provider category picker needs (brief_P / E013 pins "ERP above AI").
- *
- * ⚠ Scott flagged during brief_P that the taxonomy needs another field to
- * separate the provider role-type axis (Application-/Technology-/Operations-
- * specific) from the business-domain axis, and will specify it in a follow-up
- * brief. Treat everything here as a placeholder to be replaced by his real data,
- * NOT as agreed taxonomy — which is why it lives here and not in
- * `seed-data/erp-catalog.json` (that file mirrors his source of truth).
+ * Typos in the source xlsx (brief_R). Scott is fixing the spreadsheet; until a
+ * regenerated JSON lands, correct them here so the app never shows them.
+ * Keyed on the exact source string.
  */
-const PROVISIONAL_PILLARS = [{ code: "AI", name: "Artificial Intelligence" }];
+const TYPO_FIXES: Record<string, string> = {
+  "Acounting Hub": "Accounting Hub",
+  "Planning & Budgetting": "Planning & Budgeting",
+  "Enterprise Business Suite ()EBS)": "Enterprise Business Suite (EBS)",
+};
 
-/** Starter AI skills so the AI category isn't an empty step. Provisional. */
-const PROVISIONAL_AI_SKILLS = [
-  "AI Solution Architect",
-  "Machine Learning Engineer",
-  "LLM / Prompt Engineer",
-  "AI Integration Specialist",
-  "Data Engineer (AI)",
-  "AI Governance & Risk Specialist",
-];
+const fixTypo = (s: string) => TYPO_FIXES[s] ?? s;
+
+/** Stable code from a display name: "Finance & Accounting" → FINANCE_ACCOUNTING. */
+function toCode(name: string): string {
+  return name
+    .toUpperCase()
+    .replace(/&/g, " ")
+    .replace(/[^A-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+/**
+ * Display order for the Role → Domain picker (E013: keep the ERP-heavy areas
+ * prominent). Anything unlisted falls to the default and sorts by name.
+ */
+const ROLE_SORT: Record<string, number> = {
+  "Application-Specific": 10,
+  "Technology-Specific": 20,
+  "Project-Specific": 30,
+  "Operations-Specific": 40,
+};
+
+const DOMAIN_SORT: Record<string, number> = {
+  "Finance & Accounting": 10, // the ERP core — first, always
+  "Supply Chain Management": 20,
+  "Human Resources & Training": 30,
+  "Enterprise Performance Mgt": 40,
+  "Customer Relationship Management": 50,
+  "Development & IT": 60,
+  "Project Execution": 70,
+  "Project Portfolio Management": 80,
+};
+
+/**
+ * Specialization grouping. The xlsx is a flat list; these buckets drive the
+ * picker's section headings. Anything unlisted defaults to PRODUCT.
+ */
+const METHODOLOGIES = new Set([
+  "Procure-to-Pay",
+  "Record-to-Report",
+  "Order-to-Cash",
+  "Hire-to-Fire",
+  "Source-to-Pay",
+]);
+const INDUSTRIES = new Set([
+  "Federal Government",
+  "State & Local Government",
+  "Healthcare",
+  "Financial Services",
+  "Energy Services",
+  "Education Services",
+  "Retail",
+  "Information Technology Services",
+]);
+
+function specializationKind(name: string): "PRODUCT" | "METHODOLOGY" | "INDUSTRY" {
+  if (METHODOLOGIES.has(name)) return "METHODOLOGY";
+  if (INDUSTRIES.has(name)) return "INDUSTRY";
+  return "PRODUCT";
+}
 
 export async function seedTaxonomy(
   prisma: PrismaClient
 ): Promise<TaxonomyCounts> {
-  const file = path.resolve(__dirname, "seed-data", "erp-catalog.json");
+  const file = path.resolve(__dirname, "seed-data", "service-catalog.json");
   const data = JSON.parse(fs.readFileSync(file, "utf8")) as CatalogJson;
 
-  // --- Catalog -----------------------------------------------------------
+  // --- Catalog -------------------------------------------------------------
   const catalog = await prisma.serviceCatalog.upsert({
-    where: { code: data.catalog.code },
-    update: { name: data.catalog.name, description: data.catalog.description },
-    create: {
-      code: data.catalog.code,
-      name: data.catalog.name,
-      description: data.catalog.description,
-    },
+    where: { code: CATALOG.code },
+    update: { name: CATALOG.name, description: CATALOG.description },
+    create: CATALOG,
   });
 
-  // --- Role types (global) -----------------------------------------------
-  // Looked up two ways: by code (skillsByRoleType keys) and by name-or-display
-  // (the freelancerMapping uses a mix, e.g. "Project-Specific" and "Operational").
-  const roleTypeByCode = new Map<string, string>();
-  const roleTypeByLabel = new Map<string, string>();
-  for (const rt of data.roleTypes) {
+  // --- Roles (RoleType) ----------------------------------------------------
+  const roleIdByName = new Map<string, string>();
+  for (const role of data.roles) {
+    const code = toCode(role.name);
     const row = await prisma.roleType.upsert({
-      where: { code: rt.code },
-      update: { name: rt.name, display: rt.display },
-      create: { code: rt.code, name: rt.name, display: rt.display },
+      where: { code },
+      update: {
+        name: role.name,
+        display: role.name.replace(/-Specific$/, ""),
+        sort_order: ROLE_SORT[role.name] ?? 100,
+      },
+      create: {
+        code,
+        name: role.name,
+        display: role.name.replace(/-Specific$/, ""),
+        sort_order: ROLE_SORT[role.name] ?? 100,
+      },
     });
-    roleTypeByCode.set(rt.code, row.id);
-    roleTypeByLabel.set(rt.name.toLowerCase(), row.id);
-    roleTypeByLabel.set(rt.display.toLowerCase(), row.id);
+    roleIdByName.set(role.name, row.id);
   }
-  const resolveRoleType = (label: string | null | undefined): string | null =>
-    label ? roleTypeByLabel.get(label.toLowerCase()) ?? null : null;
 
-  // --- Pillars -----------------------------------------------------------
-  // Display order for the provider category picker (brief_P / E013): ERP is
-  // pinned at the very top — it's the day-1 core delivery — with AI directly
-  // beneath it. Everything else falls through to the default and sorts by name.
-  // "Not Applicable" is a data-cleaning bucket, not a category a provider picks,
-  // so it is pushed to the bottom and hidden by the picker query.
-  const PILLAR_SORT_ORDER: Record<string, number> = {
-    ERP: 10,
-    AI: 20,
-    NA: 900,
-  };
-
-  const pillarByCode = new Map<string, string>();
-  for (const p of [...data.pillars, ...PROVISIONAL_PILLARS]) {
+  // --- Domains (Pillar) — distinct names, shared across roles ---------------
+  const domainNames = [
+    ...new Set(data.roles.flatMap((r) => r.domains.map((d) => d.name))),
+  ];
+  const domainIdByName = new Map<string, string>();
+  for (const name of domainNames) {
+    const code = toCode(name);
     const row = await prisma.pillar.upsert({
-      where: { catalog_id_code: { catalog_id: catalog.id, code: p.code } },
-      update: { name: p.name, sort_order: PILLAR_SORT_ORDER[p.code] ?? 100 },
+      where: { catalog_id_code: { catalog_id: catalog.id, code } },
+      update: { name, sort_order: DOMAIN_SORT[name] ?? 100 },
       create: {
         catalog_id: catalog.id,
-        code: p.code,
-        name: p.name,
-        sort_order: PILLAR_SORT_ORDER[p.code] ?? 100,
-      },
-    });
-    pillarByCode.set(p.code, row.id);
-  }
-
-  // --- Offerings + Applications (the pillar → offering → application tree) --
-  // applicationId keyed by name only ("first application wins" when a name like
-  // "Projects" appears under two offerings — matches the name-normalized Skill).
-  const offeringKey = (pillarCode: string, name: string) =>
-    `${pillarCode}::${name}`;
-  const offeringByKey = new Map<string, string>();
-  const applicationIdByName = new Map<string, string>();
-
-  for (const row of data.applicationHierarchy) {
-    const pillarId = pillarByCode.get(row.pillar);
-    if (!pillarId) continue; // pillar not in the pillar list — skip defensively
-
-    const oKey = offeringKey(row.pillar, row.offering);
-    let offeringId = offeringByKey.get(oKey);
-    if (!offeringId) {
-      const offering = await prisma.offering.upsert({
-        where: { pillar_id_name: { pillar_id: pillarId, name: row.offering } },
-        update: {},
-        create: { pillar_id: pillarId, name: row.offering },
-      });
-      offeringId = offering.id;
-      offeringByKey.set(oKey, offeringId);
-    }
-
-    const application = await prisma.application.upsert({
-      where: {
-        offering_id_name: { offering_id: offeringId, name: row.application },
-      },
-      update: { app_group: row.appGroup },
-      create: {
-        offering_id: offeringId,
-        name: row.application,
-        app_group: row.appGroup,
-      },
-    });
-    if (!applicationIdByName.has(row.application)) {
-      applicationIdByName.set(row.application, application.id);
-    }
-  }
-
-  // --- Skills (normalized; merged from three sources, deduped by name) ------
-  // Precedence: functional (applicationHierarchy) first — it carries pillar +
-  // application and its APPLICATION role type wins. Then the per-role-type
-  // lists, then freelancerMapping.panameerSkill fills any remaining names.
-  type SkillSpec = {
-    name: string;
-    roleTypeId: string;
-    pillarId: string | null;
-    applicationId: string | null;
-  };
-  const skillByName = new Map<string, SkillSpec>();
-
-  const appRoleTypeId = roleTypeByCode.get("APPLICATION")!;
-  for (const row of data.applicationHierarchy) {
-    if (skillByName.has(row.application)) continue;
-    skillByName.set(row.application, {
-      name: row.application,
-      roleTypeId: appRoleTypeId,
-      pillarId: pillarByCode.get(row.pillar) ?? null,
-      applicationId: applicationIdByName.get(row.application) ?? null,
-    });
-  }
-
-  for (const [code, names] of Object.entries(data.skillsByRoleType)) {
-    const roleTypeId = roleTypeByCode.get(code);
-    if (!roleTypeId) continue;
-    for (const name of names) {
-      if (skillByName.has(name)) continue;
-      skillByName.set(name, {
+        code,
         name,
-        roleTypeId,
-        pillarId: null,
-        applicationId: null,
-      });
-    }
+        sort_order: DOMAIN_SORT[name] ?? 100,
+      },
+    });
+    domainIdByName.set(name, row.id);
   }
 
-  // Provisional AI skills (see PROVISIONAL_AI_SKILLS) — typed TECHNOLOGY so the
-  // required role_type_id resolves, and pinned to the AI pillar so the E014
-  // skills step has something to filter to.
-  const aiPillarId = pillarByCode.get("AI") ?? null;
-  const techRoleTypeId = roleTypeByCode.get("TECHNOLOGY");
-  if (aiPillarId && techRoleTypeId) {
-    for (const name of PROVISIONAL_AI_SKILLS) {
-      if (skillByName.has(name)) continue;
-      skillByName.set(name, {
-        name,
-        roleTypeId: techRoleTypeId,
-        pillarId: aiPillarId,
-        applicationId: null,
-      });
-    }
-  }
+  // --- Skills, keyed on the (Role, Domain, name) triple ---------------------
+  // "Project Manager" exists under two different (role, domain) pairs, so the
+  // name alone is NOT a key — see the note on Skill's @@unique in schema.prisma.
+  const keptSkillIds = new Set<string>();
+  let skillCount = 0;
 
-  for (const m of data.freelancerMapping) {
-    const name = m.panameerSkill;
-    if (!name) continue;
-    const roleTypeId = resolveRoleType(m.roleType);
-    if (skillByName.has(name)) {
-      // Already sourced; only backfill a missing pillar.
-      const spec = skillByName.get(name)!;
-      if (!spec.pillarId && m.pillar) {
-        spec.pillarId = pillarByCode.get(m.pillar) ?? null;
+  for (const role of data.roles) {
+    const roleTypeId = roleIdByName.get(role.name)!;
+    for (const domain of role.domains) {
+      const pillarId = domainIdByName.get(domain.name)!;
+      for (const rawName of domain.skills) {
+        const name = fixTypo(rawName);
+        const row = await prisma.skill.upsert({
+          where: {
+            catalog_id_role_type_id_pillar_id_name: {
+              catalog_id: catalog.id,
+              role_type_id: roleTypeId,
+              pillar_id: pillarId,
+              name,
+            },
+          },
+          update: {},
+          create: {
+            catalog_id: catalog.id,
+            role_type_id: roleTypeId,
+            pillar_id: pillarId,
+            name,
+          },
+        });
+        keptSkillIds.add(row.id);
+        skillCount++;
       }
-      continue;
     }
-    if (!roleTypeId) continue; // no resolvable role type — can't create a Skill
-    skillByName.set(name, {
-      name,
-      roleTypeId,
-      pillarId: m.pillar ? pillarByCode.get(m.pillar) ?? null : null,
-      applicationId: null,
-    });
   }
 
-  for (const spec of skillByName.values()) {
-    await prisma.skill.upsert({
-      where: { catalog_id_name: { catalog_id: catalog.id, name: spec.name } },
-      update: {
-        role_type_id: spec.roleTypeId,
-        pillar_id: spec.pillarId,
-        application_id: spec.applicationId,
-      },
+  // --- Specializations ------------------------------------------------------
+  for (const [i, raw] of data.specializations.entries()) {
+    const name = fixTypo(raw);
+    await prisma.specialization.upsert({
+      where: { catalog_id_name: { catalog_id: catalog.id, name } },
+      update: { kind: specializationKind(name), sort_order: i },
       create: {
         catalog_id: catalog.id,
-        name: spec.name,
-        role_type_id: spec.roleTypeId,
-        pillar_id: spec.pillarId,
-        application_id: spec.applicationId,
+        name,
+        kind: specializationKind(name),
+        sort_order: i,
       },
     });
   }
 
-  // --- Skill tags (freelancerMapping: incoming job-req term → normalized) ----
-  // `selling_agent` is preserved as a raw annotation only. Coordinator-coverage
-  // (linking the agent to a Person) is out of scope until the profiles brief.
-  const seenTag = new Set<string>();
-  for (const m of data.freelancerMapping) {
-    const roleTypeId = resolveRoleType(m.roleType);
-    if (!roleTypeId || !m.jobReqSkill) continue;
-    const dedupe = `${roleTypeId}::${m.jobReqSkill}`;
-    if (seenTag.has(dedupe)) continue; // first mapping row wins on collision
-    seenTag.add(dedupe);
-    await prisma.skillTag.upsert({
-      where: {
-        catalog_id_role_type_id_name: {
-          catalog_id: catalog.id,
-          role_type_id: roleTypeId,
-          name: m.jobReqSkill,
-        },
-      },
-      update: {
-        pillar_id: m.pillar ? pillarByCode.get(m.pillar) ?? null : null,
-        panameer_skill: m.panameerSkill,
-        selling_agent: m.sellingAgent,
-      },
-      create: {
-        catalog_id: catalog.id,
-        role_type_id: roleTypeId,
-        name: m.jobReqSkill,
-        pillar_id: m.pillar ? pillarByCode.get(m.pillar) ?? null : null,
-        panameer_skill: m.panameerSkill,
-        selling_agent: m.sellingAgent,
-      },
+  // --- Retire everything NOT in the authoritative catalog -------------------
+  // brief_R says steps 7–8 must render EXACTLY this catalog, so stale rows from
+  // the previous ERP seed (and the provisional brief_Q "AI" pillar, and the 5th
+  // "Techno-Functional" role that is absent from Scott's xlsx) have to go.
+  //
+  // Provider selections pointing at a retired skill are removed FIRST: the FK
+  // cascades anyway, but doing it explicitly means the count is reportable
+  // rather than silent — a provider losing a skill should be visible.
+  const staleSkills = await prisma.skill.findMany({
+    where: { id: { notIn: [...keptSkillIds] } },
+    select: { id: true },
+  });
+  const staleSkillIds = staleSkills.map((s) => s.id);
+
+  let orphanedProviderSkills = 0;
+  if (staleSkillIds.length > 0) {
+    orphanedProviderSkills = (
+      await prisma.providerSkill.deleteMany({
+        where: { skill_id: { in: staleSkillIds } },
+      })
+    ).count;
+    await prisma.workRequestSkill.deleteMany({
+      where: { skill_id: { in: staleSkillIds } },
     });
   }
+  const retiredSkills = (
+    await prisma.skill.deleteMany({ where: { id: { in: staleSkillIds } } })
+  ).count;
 
-  // --- Flat lookups ------------------------------------------------------
-  for (const r of data.regions) {
+  // SkillTags belonged to the old ERP seed only; nothing reads them now.
+  await prisma.skillTag.deleteMany({});
+
+  const keptPillarIds = [...domainIdByName.values()];
+  // Offerings/Applications hang off pillars and cascade with them.
+  const retiredPillars = (
+    await prisma.pillar.deleteMany({ where: { id: { notIn: keptPillarIds } } })
+  ).count;
+
+  const keptRoleTypeIds = [...roleIdByName.values()];
+  // A RoleType referenced by a WorkRequest can't be deleted; detach nothing and
+  // let the delete skip those. Only unreferenced strays disappear.
+  const strayRoleTypes = await prisma.roleType.findMany({
+    where: {
+      id: { notIn: keptRoleTypeIds },
+      skills: { none: {} },
+      workRequests: { none: {} },
+      providerProfiles: { none: {} },
+    },
+    select: { id: true, name: true },
+  });
+  const retiredRoleTypes = strayRoleTypes.length
+    ? (
+        await prisma.roleType.deleteMany({
+          where: { id: { in: strayRoleTypes.map((r) => r.id) } },
+        })
+      ).count
+    : 0;
+
+  // --- Regions + engagement types (NOT part of the provider taxonomy) -------
+  // These are separate reference lookups still consumed by Settings and the
+  // Work Request wizard, so brief_R's catalog replacement must not take them
+  // out with it. Sourced from the older ERP file, which remains their home.
+  const legacy = JSON.parse(
+    fs.readFileSync(path.resolve(__dirname, "seed-data", "erp-catalog.json"), "utf8")
+  ) as {
+    regions: { name: string; desc?: string }[];
+    engagementTypes: { code: string; name: string; detail?: string }[];
+  };
+
+  for (const r of legacy.regions) {
     await prisma.region.upsert({
       where: { name: r.name },
-      update: { description: r.desc },
-      create: { name: r.name, description: r.desc },
+      update: { description: r.desc ?? null },
+      create: { name: r.name, description: r.desc ?? null },
     });
   }
-  for (const e of data.engagementTypes) {
+  for (const e of legacy.engagementTypes) {
     await prisma.engagementType.upsert({
       where: { code: e.code },
-      update: { name: e.name, detail: e.detail },
-      create: { code: e.code, name: e.name, detail: e.detail },
-    });
-  }
-  for (const name of data.nonOracleApplications) {
-    await prisma.nonOracleApplication.upsert({
-      where: { name },
-      update: {},
-      create: { name },
+      update: { name: e.name, detail: e.detail ?? null },
+      create: { code: e.code, name: e.name, detail: e.detail ?? null },
     });
   }
 
   return {
-    catalog: await prisma.serviceCatalog.count(),
-    roleTypes: await prisma.roleType.count(),
-    pillars: await prisma.pillar.count(),
-    offerings: await prisma.offering.count(),
-    applications: await prisma.application.count(),
-    skills: await prisma.skill.count(),
-    tags: await prisma.skillTag.count(),
-    regions: await prisma.region.count(),
-    engagementTypes: await prisma.engagementType.count(),
-    nonOracleApplications: await prisma.nonOracleApplication.count(),
+    roles: roleIdByName.size,
+    domains: domainIdByName.size,
+    skills: skillCount,
+    specializations: data.specializations.length,
+    regions: legacy.regions.length,
+    engagementTypes: legacy.engagementTypes.length,
+    retiredSkills,
+    retiredPillars,
+    retiredRoleTypes,
+    orphanedProviderSkills,
   };
 }

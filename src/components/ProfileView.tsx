@@ -120,6 +120,19 @@ export function ProfileView({ profile }: { profile: PublicProviderProfile }) {
         </Card>
       )}
 
+      {profile.specializations.length > 0 && (
+        <Card>
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-black/50 dark:text-white/50">
+            Specializations
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            {profile.specializations.map((s) => (
+              <SkillChip key={s.id} label={s.name} />
+            ))}
+          </div>
+        </Card>
+      )}
+
       {profile.experience.length > 0 && (
         <Card>
           <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-black/50 dark:text-white/50">

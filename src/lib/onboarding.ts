@@ -27,22 +27,23 @@ import { capitalizeName } from "@/lib/display";
  * duplicate still present.
  */
 export const PROVIDER_STEPS = [
-  "experience_level", // 1 — E003 (NB: "experience" is work HISTORY, not this)
-  "goal", //         2 — E004
-  "work_method", //  3 — E009 (Provider vs Recruiter fork)
-  "title", //        4 — E011
-  "tell_us", //      5 — E012 (LinkedIn / résumé / manual)
-  "category", //     6 — E013 (ERP pinned above AI)
-  "skills", //       7 — E014 (conditional on category, max 15)
-  "education", //    8 — E015 (optional, skippable)
-  "languages", //    9 — E016 (English by default)
-  "bio", //         10 — E017 (required, min length)
-  "rate", //        11 — E018 (hourly + % fee + "You'll get")
-  "finish", //      12 — E019 (photo, DOB, address, phone + SMS)
+  "experience_level", //  1 — E003 (NB: "experience" is work HISTORY, not this)
+  "goal", //              2 — E004
+  "work_method", //       3 — E009 (Provider vs Recruiter fork)
+  "title", //             4 — E011
+  "tell_us", //           5 — E012 (résumé / LinkedIn PDF / manual)
+  "category", //          6 — E013 (Role → Domain, ERP-heavy areas first)
+  "skills", //            7 — E014 (conditional on the field, max 15)
+  "specializations", //   8 — brief_R (optional multi-select)
+  "education", //         9 — E015 (optional, skippable)
+  "languages", //        10 — E016 (English by default)
+  "bio", //              11 — E017 (required, min length)
+  "rate", //             12 — E018 (hourly + % fee + "You'll get")
+  "finish", //           13 — E019 (photo, DOB, address, phone + SMS)
 ] as const;
 export type ProviderStep = (typeof PROVIDER_STEPS)[number];
 
-export const TOTAL_PROVIDER_STEPS = PROVIDER_STEPS.length; // 12
+export const TOTAL_PROVIDER_STEPS = PROVIDER_STEPS.length; // 13 (brief_R)
 
 /** 1-based position for the `x/12` counter. */
 export function providerStepNumber(step: ProviderStep): number {
@@ -54,7 +55,11 @@ export function providerStepNumber(step: ProviderStep): number {
  * optional-with-a-Skip (E015): not everyone has one, but we still ask.
  * `tell_us` is a method CHOICE — picking "manual" is a valid way through it.
  */
-const OPTIONAL_STEPS = new Set<ProviderStep>(["tell_us", "education"]);
+const OPTIONAL_STEPS = new Set<ProviderStep>([
+  "tell_us",
+  "specializations", // brief_R — a provider may legitimately have none
+  "education",
+]);
 
 /**
  * Section names that are NOT wizard steps but are still written by the Settings
@@ -386,6 +391,10 @@ async function loadDraft(viewer: Viewer) {
       providerProfile: {
         include: {
           pillar: { select: { id: true, code: true, name: true } },
+          roleType: { select: { id: true, code: true, name: true, display: true } },
+          specializations: {
+            include: { specialization: { select: { id: true, name: true, kind: true } } },
+          },
           imports: { orderBy: { created_at: "desc" } },
           skills: {
             include: {
@@ -427,10 +436,12 @@ function computeResumeStep(p: Awaited<ReturnType<typeof loadDraft>>): ProviderSt
     goal: pp.goal != null,
     work_method: pp.work_method != null,
     title: pp.headline.trim() !== "",
-    tell_us: true, //   optional — a method choice, never a resume target
-    category: pp.pillar_id != null,
+    tell_us: true, //        optional — a method choice, never a resume target
+    // The field is a (Role, Domain) PAIR (brief_R) — both must be set.
+    category: pp.pillar_id != null && pp.role_type_id != null,
     skills: pp.skills.length > 0,
-    education: true, // optional (E015) — never a resume target
+    specializations: true, // optional (brief_R) — never a resume target
+    education: true, //      optional (E015) — never a resume target
     languages: pp.languages.length > 0,
     bio: !!pp.overview && pp.overview.trim().length >= MIN_BIO_CHARS,
     rate: pp.hourly_rate_cents != null,
@@ -485,7 +496,15 @@ export async function getOnboardingState(viewer: Viewer) {
       workTypes: pp.work_types,
       pillarId: pp.pillar_id,
       pillarName: pp.pillar?.name ?? null,
-      roleTypeId: pp.skills[0]?.skill.role_type_id ?? null,
+      // The chosen field is the (Role, Domain) pair (brief_R).
+      roleTypeId: pp.role_type_id,
+      roleTypeName: pp.roleType?.name ?? null,
+      specializationIds: pp.specializations.map((s) => s.specialization_id),
+      specializations: pp.specializations.map((s) => ({
+        id: s.specialization.id,
+        name: s.specialization.name,
+        kind: s.specialization.kind,
+      })),
       skillIds: pp.skills.map((s) => s.skill_id),
       skillNames: pp.skills.map((s) => ({ id: s.skill_id, name: s.skill.name })),
       headline: pp.headline,
@@ -613,29 +632,78 @@ export async function applyProviderSection(
     }
 
     case "category": {
-      // E013 — the field / category, driven by the seeded ERP taxonomy.
+      // E013 / brief_R — the field is a (Role, Domain) PAIR from the
+      // authoritative Service Catalog, because the same domain name exists
+      // under more than one role with different skills.
       const pillarId: string = data.pillarId;
-      const pillar = pillarId
-        ? await prisma.pillar.findUnique({ where: { id: pillarId } })
-        : null;
-      if (!pillar) throw new OnboardingError("Pick what work you do", "INVALID");
+      const roleTypeId: string = data.roleTypeId;
+      if (!pillarId || !roleTypeId) {
+        throw new OnboardingError("Pick what work you do", "INVALID");
+      }
+      // Validate the PAIR, not the two ids separately: a mismatched
+      // combination has no skills and would dead-end the next step.
+      const pairExists = await prisma.skill.findFirst({
+        where: { pillar_id: pillarId, role_type_id: roleTypeId },
+        select: { id: true },
+      });
+      if (!pairExists) {
+        throw new OnboardingError("Pick what work you do", "INVALID");
+      }
+
       await prisma.providerProfile.update({
         where: { id: profileId },
-        data: { pillar_id: pillar.id },
+        data: { pillar_id: pillarId, role_type_id: roleTypeId },
       });
 
-      // Drop any skill that doesn't belong to the chosen field. Two ways to get
-      // one: switching fields after picking skills, or a résumé import (which
-      // runs BEFORE this step and matches across the whole catalog, brief_Q).
+      // Drop any skill outside the chosen field. Two ways to acquire one:
+      // switching fields after picking skills, or a résumé import (which runs
+      // BEFORE this step and matches across the whole catalog, brief_Q).
       // Either way the skills step only offers this field's skills, so a
       // foreign skill is both un-editable AND would fail that step's own
       // validation on save — stranding the user. Prune on write instead.
       await prisma.providerSkill.deleteMany({
         where: {
           provider_profile_id: profileId,
-          skill: { pillar_id: { not: pillar.id } },
+          OR: [
+            { skill: { pillar_id: { not: pillarId } } },
+            { skill: { role_type_id: { not: roleTypeId } } },
+          ],
         },
       });
+      break;
+    }
+
+    case "specializations": {
+      // brief_R — cross-cutting multi-select (products / methodologies /
+      // industries). OPTIONAL: an empty list is a valid answer, so this
+      // replaces the whole set rather than requiring one.
+      const ids: string[] = Array.isArray(data.specializationIds)
+        ? data.specializationIds
+        : [];
+      if (ids.length > 0) {
+        const found = await prisma.specialization.count({
+          where: { id: { in: ids } },
+        });
+        if (found !== ids.length) {
+          throw new OnboardingError("Unknown specialization selected", "INVALID");
+        }
+      }
+      await prisma.$transaction([
+        prisma.providerProfileSpecialization.deleteMany({
+          where: { provider_profile_id: profileId },
+        }),
+        ...(ids.length
+          ? [
+              prisma.providerProfileSpecialization.createMany({
+                data: ids.map((specialization_id) => ({
+                  provider_profile_id: profileId,
+                  specialization_id,
+                })),
+                skipDuplicates: true,
+              }),
+            ]
+          : []),
+      ]);
       break;
     }
 
@@ -656,10 +724,11 @@ export async function applyProviderSection(
 
       const profile = await prisma.providerProfile.findUnique({
         where: { id: profileId },
-        select: { pillar_id: true },
+        select: { pillar_id: true, role_type_id: true },
       });
       const scopePillarId: string | null = data.pillarId ?? profile?.pillar_id ?? null;
-      const scopeRoleTypeId: string | null = data.roleTypeId ?? null;
+      const scopeRoleTypeId: string | null =
+        data.roleTypeId ?? profile?.role_type_id ?? null;
 
       const skills = await prisma.skill.findMany({
         where: { id: { in: skillIds } },
@@ -1150,11 +1219,18 @@ export async function recomputeCompleteness(profileId: string): Promise<number> 
     where: { id: profileId },
     include: {
       skills: true,
+      specializations: true,
       workExperiences: true,
       education: true,
       languages: true,
       certifications: true,
-      person: { select: { photo_url: true } },
+      person: {
+        select: {
+          photo_url: true,
+          phone_verified_at: true,
+          site: { select: { addresses: { select: { line1: true }, take: 1 } } },
+        },
+      },
     },
   });
   if (!profile) return 0;
@@ -1162,17 +1238,24 @@ export async function recomputeCompleteness(profileId: string): Promise<number> 
     headline: profile.headline,
     overview: profile.overview,
     experience_level: profile.experience_level,
-    region_id: profile.region_id,
+    goal: profile.goal,
+    work_method: profile.work_method,
+    pillar_id: profile.pillar_id,
+    role_type_id: profile.role_type_id,
     onsite_rate_cents: profile.onsite_rate_cents,
     remote_rate_cents: profile.remote_rate_cents,
     hourly_rate_cents: profile.hourly_rate_cents,
-    work_types: profile.work_types,
     skills: profile.skills,
+    languages: profile.languages,
     workExperiences: profile.workExperiences,
     education: profile.education,
-    languages: profile.languages,
     certifications: profile.certifications,
+    specializations: profile.specializations,
     photoUrl: profile.person.photo_url,
+    date_of_birth: profile.date_of_birth,
+    // An address row exists only once a street line has been entered.
+    hasAddress: Boolean(profile.person.site?.addresses?.[0]?.line1?.trim()),
+    phoneVerified: profile.person.phone_verified_at != null,
   });
   await prisma.providerProfile.update({
     where: { id: profileId },

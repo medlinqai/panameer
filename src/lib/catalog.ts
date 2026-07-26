@@ -9,43 +9,90 @@ export async function getRoleTypes() {
 }
 
 /**
- * The provider category / field picker (brief_P / E013) — the start of the
- * service catalog.
+ * The provider field picker (brief_R / E013) — the start of the service
+ * catalog, driven by the AUTHORITATIVE Service Catalog.
  *
- * Driven by the SEEDED ERP taxonomy, not generic marketplace categories.
- * Ordering is `sort_order` then name, which pins Enterprise Resource Planning
- * at the top (it's the day-1 core delivery) with AI directly beneath it.
+ * The catalog is three levels — **Role → Domain → Skill** — and a Skill belongs
+ * to a (Role, Domain) PAIR, so the picker returns the tree rather than a flat
+ * list. The same domain name appears under more than one role (Finance &
+ * Accounting is both Application-Specific and Operations-Specific) with
+ * completely different skills, which is exactly why the pair, not the domain
+ * alone, is what a provider chooses.
  *
- * "Not Applicable" is a data-cleaning bucket rather than a real field, and a
- * pillar with no skills would dead-end the next step, so both are filtered out.
+ * Ordering is `sort_order` then name, keeping the ERP-heavy areas prominent:
+ * Application-Specific first, Finance & Accounting first within it.
+ *
+ * A (role, domain) pair with no skills would dead-end the next step, so only
+ * pairs that actually have skills are returned.
  */
-export async function getProviderFields() {
-  const pillars = await prisma.pillar.findMany({
-    where: { code: { not: "NA" } },
+export async function getProviderFieldTree() {
+  const roles = await prisma.roleType.findMany({
     orderBy: [{ sort_order: "asc" }, { name: "asc" }],
-    select: {
-      id: true,
-      code: true,
-      name: true,
-      sort_order: true,
-      _count: { select: { skills: true } },
-    },
+    select: { id: true, code: true, name: true, display: true },
   });
 
-  return pillars
-    .filter((p) => p._count.skills > 0)
-    .map((p) => ({
-      id: p.id,
-      code: p.code,
-      name: p.name,
-      skillCount: p._count.skills,
-    }));
+  // One grouped count instead of a query per role.
+  const grouped = await prisma.skill.groupBy({
+    by: ["role_type_id", "pillar_id"],
+    _count: { _all: true },
+  });
+
+  const pillars = await prisma.pillar.findMany({
+    orderBy: [{ sort_order: "asc" }, { name: "asc" }],
+    select: { id: true, code: true, name: true },
+  });
+  const pillarById = new Map(pillars.map((p) => [p.id, p]));
+  // Pillar order drives the domain order inside each role.
+  const pillarRank = new Map(pillars.map((p, i) => [p.id, i]));
+
+  return roles
+    .map((role) => ({
+      id: role.id,
+      code: role.code,
+      name: role.name,
+      display: role.display,
+      domains: grouped
+        .filter(
+          (g) =>
+            g.role_type_id === role.id &&
+            g.pillar_id !== null &&
+            g._count._all > 0
+        )
+        .map((g) => {
+          const pillar = pillarById.get(g.pillar_id!)!;
+          return {
+            id: pillar.id,
+            code: pillar.code,
+            name: pillar.name,
+            skillCount: g._count._all,
+          };
+        })
+        .sort((a, b) => (pillarRank.get(a.id) ?? 0) - (pillarRank.get(b.id) ?? 0)),
+    }))
+    .filter((r) => r.domains.length > 0);
 }
 
 /**
- * Skills within one field (E014) — conditional on the pillar chosen at the
- * previous step, which is the whole point of that step ordering.
+ * Skills within one FIELD (E014) — the (Role, Domain) pair chosen at the
+ * previous step. Both keys are required: filtering on the domain alone would
+ * mix Application-Specific "Payables" with Operations-Specific "Payables
+ * Specialist" under the same Finance & Accounting heading.
  */
+export async function getSkillsForField(roleTypeId: string, pillarId: string) {
+  return prisma.skill.findMany({
+    where: { role_type_id: roleTypeId, pillar_id: pillarId },
+    orderBy: { name: "asc" },
+    select: {
+      id: true,
+      name: true,
+      image_url: true,
+      roleType: { select: { id: true, code: true, display: true } },
+    },
+  });
+}
+
+/** Skills across a whole domain, regardless of role. Kept for Settings, which
+ *  predates the pair model and scopes by RoleType. */
 export async function getSkillsForPillar(pillarId: string) {
   return prisma.skill.findMany({
     where: { pillar_id: pillarId },
@@ -57,6 +104,27 @@ export async function getSkillsForPillar(pillarId: string) {
       roleType: { select: { id: true, code: true, display: true } },
     },
   });
+}
+
+/**
+ * The Specialization vocabulary (brief_R) — a cross-cutting axis, grouped for
+ * the picker into products, methodologies and industries.
+ */
+export async function getSpecializations() {
+  const rows = await prisma.specialization.findMany({
+    orderBy: [{ sort_order: "asc" }, { name: "asc" }],
+    select: { id: true, name: true, kind: true },
+  });
+
+  const groups: { kind: string; label: string; items: typeof rows }[] = [
+    { kind: "PRODUCT", label: "Products & Platforms", items: [] },
+    { kind: "METHODOLOGY", label: "Processes & Methodologies", items: [] },
+    { kind: "INDUSTRY", label: "Industries", items: [] },
+  ];
+  for (const r of rows) {
+    groups.find((g) => g.kind === r.kind)?.items.push(r);
+  }
+  return groups.filter((g) => g.items.length > 0);
 }
 
 /** World regions (global lookup). */

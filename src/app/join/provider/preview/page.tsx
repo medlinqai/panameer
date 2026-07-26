@@ -135,7 +135,12 @@ export default async function ProviderPreviewPage() {
 
           <Section title="Work & Skills" href="/join/provider?step=skills">
             <p className="text-[14px] text-ink-2">
-              {p.pillarName ?? <Missing>No field chosen</Missing>}
+              {/* The field is the (Role, Domain) pair (brief_R). */}
+              {p.roleTypeName && p.pillarName ? (
+                `${p.roleTypeName} · ${p.pillarName}`
+              ) : (
+                <Missing>No field chosen</Missing>
+              )}
             </p>
             {p.skillNames.length > 0 ? (
               <div className="mt-2 flex flex-wrap gap-2">
@@ -152,6 +157,28 @@ export default async function ProviderPreviewPage() {
               <div className="mt-2">
                 <Missing>No skills yet</Missing>
               </div>
+            )}
+          </Section>
+
+          <Section
+            title="Specializations"
+            href="/join/provider?step=specializations"
+          >
+            {p.specializations.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {p.specializations.map((sp) => (
+                  <span
+                    key={sp.id}
+                    className="rounded-full border border-magenta/30 bg-magenta/[0.06] px-3 py-1 text-[13.5px] font-semibold text-magenta-dark"
+                  >
+                    {sp.name}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <span className="text-[14px] text-ink-2">
+                None added (optional)
+              </span>
             )}
           </Section>
 
