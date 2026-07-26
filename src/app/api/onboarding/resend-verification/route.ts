@@ -6,13 +6,16 @@ import { issueEmailVerification } from "@/lib/verification";
  * POST /api/onboarding/resend-verification — re-send the verification email for
  * the signed-in user. Throttled to one per minute (enforced in the lib).
  */
-export async function POST() {
+export async function POST(request: Request) {
   const viewer = await getSessionViewer();
   if (!viewer) {
     return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
   }
 
-  const res = await issueEmailVerification(viewer.userId, { throttle: true });
+  const res = await issueEmailVerification(viewer.userId, {
+    throttle: true,
+    origin: new URL(request.url).origin,
+  });
   if (!res.ok) {
     if (res.reason === "throttled") {
       return NextResponse.json(

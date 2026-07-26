@@ -18,7 +18,9 @@ const geistMono = Geist_Mono({
 const comfortaa = Comfortaa({
   variable: "--font-comfortaa",
   subsets: ["latin"],
-  weight: ["500", "700"],
+  // 600 added for headings (brief_S / E021) — Comfortaa stops at 700, so
+  // `font-extrabold` headings would otherwise be synthesised faux-bold.
+  weight: ["500", "600", "700"],
 });
 
 const montserrat = Montserrat({

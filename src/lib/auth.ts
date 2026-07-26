@@ -10,6 +10,7 @@ import { deriveAccessFlags } from "@/lib/access";
 import { getActorFlags, NO_ACTOR_FLAGS } from "@/lib/actor-flags";
 import { normalizeEmail } from "@/lib/normalizeEmail";
 import { linkOAuthUser, oauthConfig } from "@/lib/oauth";
+import { consumeSignInToken } from "@/lib/verification";
 
 const MAX_FAILED_LOGINS = 5;
 
@@ -94,6 +95,65 @@ function oauthProviders(): Provider[] {
 export const authOptions: NextAuthOptions = {
   providers: [
     ...oauthProviders(),
+
+    /**
+     * Sign-in handoff for the email verification link (brief_S / E022).
+     *
+     * HARD REQUIREMENT: clicking verify must land the provider inside
+     * onboarding already authenticated — never on a login screen. A GET page
+     * can't mint a NextAuth session, so `/verify-email` validates the email
+     * token, issues a single-use SIGNIN token, and posts it here to be
+     * exchanged for a real session.
+     *
+     * This is NOT a password bypass: the token is minted only after a valid
+     * email-verification token, stored as a hash, expires in five minutes, is
+     * consumed on first use, and is refused for locked/inactive accounts.
+     */
+    CredentialsProvider({
+      id: "verify-token",
+      name: "verify-token",
+      credentials: { token: { label: "Token", type: "text" } },
+      async authorize(credentials) {
+        const token = credentials?.token;
+        if (!token) return null;
+
+        const consumed = await consumeSignInToken(token);
+        if (!consumed) return null;
+
+        const user = await prisma.user.findUnique({
+          where: { id: consumed.id },
+        });
+        if (!user || user.locked || user.is_active === false) return null;
+
+        await prisma.user
+          .update({
+            where: { id: user.id },
+            data: { failed_login_attempts: 0, last_login: new Date() },
+          })
+          .catch(() => {
+            /* best-effort */
+          });
+
+        const flags = deriveAccessFlags({
+          role: user.role,
+          isSystemAdmin: user.is_system_admin,
+        });
+        const actor = await getActorFlags(user.id);
+
+        return {
+          id: user.id,
+          email: user.email,
+          name:
+            [user.first_name, user.last_name].filter(Boolean).join(" ") ||
+            user.email,
+          role: user.role,
+          isSystemAdmin: user.is_system_admin,
+          isAdmin: flags.isAdmin,
+          ...actor,
+        };
+      },
+    }),
+
     CredentialsProvider({
       name: "credentials",
       credentials: {
@@ -180,7 +240,14 @@ export const authOptions: NextAuthOptions = {
      * all deny the sign-in.
      */
     async signIn({ user, account, profile }) {
-      if (!account || account.provider === "credentials") return true;
+      // Both credentials-style providers resolve their own Panameer user.
+      if (
+        !account ||
+        account.provider === "credentials" ||
+        account.provider === "verify-token"
+      ) {
+        return true;
+      }
 
       const raw = (profile ?? {}) as Record<string, unknown>;
       // Google and LinkedIn send `email_verified`; Apple sends it as a string.
@@ -217,7 +284,12 @@ export const authOptions: NextAuthOptions = {
     },
 
     async jwt({ token, user, account, trigger }) {
-      if (user && account && account.provider !== "credentials") {
+      if (
+        user &&
+        account &&
+        account.provider !== "credentials" &&
+        account.provider !== "verify-token"
+      ) {
         // OAuth: `user` came from the provider, so the app-specific fields were
         // never populated by `authorize()`. Load them from the linked row.
         token.sub = user.id;

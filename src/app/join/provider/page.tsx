@@ -23,6 +23,7 @@ import {
   ResumeUploadModal,
   type ImportOutcome,
 } from "@/components/onboarding/ResumeUploadModal";
+import { ResumeDropzone } from "@/components/onboarding/ResumeDropzone";
 import { PhotoCropModal } from "@/components/onboarding/PhotoCropModal";
 import { TestimonialCard, DECK_TESTIMONIALS } from "@/components/onboarding/TestimonialCarousel";
 import { Avatar } from "@/components/Avatar";
@@ -30,6 +31,8 @@ import {
   formatCents,
   bpsToPercentLabel,
   rateBreakdown,
+  displayFirstName,
+  displayFullName,
 } from "@/lib/display";
 
 /**
@@ -48,15 +51,14 @@ import {
  * the resume point, so there is no progress column to keep in sync.
  */
 
-/** The 13 profile steps, in order. Must mirror PROVIDER_STEPS server-side. */
+/** The 12 profile steps, in order. Must mirror PROVIDER_STEPS server-side. */
 const STEPS = [
   "experience_level",
   "goal",
   "work_method",
   "title",
   "tell_us",
-  "category",
-  "skills",
+  "catalog",
   "specializations",
   "education",
   "languages",
@@ -67,7 +69,7 @@ const STEPS = [
 type Step = (typeof STEPS)[number];
 type Screen = "signup" | "check_email" | Step;
 
-const TOTAL = STEPS.length; // 13 (brief_R)
+const TOTAL = STEPS.length; // 12 (brief_S / E030)
 
 const EXPERIENCE_OPTIONS = [
   { value: "BEGINNER", title: "Beginner", description: "New to consulting or early in my journey." },
@@ -96,9 +98,30 @@ const LANGUAGE_LEVELS = [
   { value: "NATIVE_OR_BILINGUAL", label: "Native or Bilingual" },
 ];
 
+/**
+ * Stepper heading + forward-button label per step — the exact strings from
+ * brief_S's table. Mirrors PROVIDER_STEP_LABELS in onboarding.ts.
+ */
+const STEP_LABELS: Record<Step, { stepper: string; next: string }> = {
+  experience_level: { stepper: "Your Experience", next: "Next: Your Goal" },
+  goal: { stepper: "Your Goal", next: "Next: What Do You Sell" },
+  work_method: { stepper: "What Do You Sell", next: "Next: Your Title" },
+  title: { stepper: "Your Title", next: "Next: Create Your Profile" },
+  tell_us: { stepper: "Create Your Profile", next: "Next: Role → Domain → Skills" },
+  catalog: { stepper: "Role → Domain → Skills", next: "Next: Your Specializations" },
+  specializations: { stepper: "Your Specializations", next: "Next: Education" },
+  education: { stepper: "Your Education", next: "Next: Languages" },
+  languages: { stepper: "Your Languages", next: "Next: Your Bio" },
+  bio: { stepper: "Your Bio", next: "Next: Your Rate" },
+  rate: { stepper: "Your Rate", next: "Next: Profile Review" },
+  finish: { stepper: "Review Your Profile", next: "Next: Publish Your Profile" },
+};
+
 const MIN_BIO = 100;
 const MAX_BIO = 4500;
 const MAX_SKILLS = 15;
+/** E030 — never show more than ~15 options at once on the cascade page. */
+const MAX_VISIBLE_OPTIONS = 15;
 
 /** The shape `/api/onboarding/status` returns. Only what this page reads. */
 type ProfilePayload = {
@@ -187,8 +210,12 @@ type Profile = {
   roleTypeId: string | null;
   roleTypeName: string | null;
   specializationIds: string[];
+  /** Typed-in specializations not yet in the vocabulary (E031). */
+  customSpecializations: string[];
   skillIds: string[];
   skillNames: { id: string; name: string }[];
+  /** Typed-in skills not yet in the catalog (E031). */
+  customSkills: string[];
   headline: string;
   overview: string;
   hourlyRateCents: number | null;
@@ -214,8 +241,10 @@ const emptyProfile = (): Profile => ({
   roleTypeId: null,
   roleTypeName: null,
   specializationIds: [],
+  customSpecializations: [],
   skillIds: [],
   skillNames: [],
+  customSkills: [],
   headline: "",
   overview: "",
   hourlyRateCents: null,
@@ -268,17 +297,18 @@ export default function JoinProviderPage() {
   const [specGroups, setSpecGroups] = useState<SpecializationGroup[]>([]);
   const [skillOpts, setSkillOpts] = useState<SkillOpt[]>([]);
   const [skillQuery, setSkillQuery] = useState("");
+  const [specQuery, setSpecQuery] = useState("");
 
   const [importOutcome, setImportOutcome] = useState<ImportOutcome | null>(null);
   const [uploadModal, setUploadModal] = useState<null | "RESUME" | "LINKEDIN_PDF">(null);
   const [photoModal, setPhotoModal] = useState(false);
 
-  // Phone verification (E019).
+  /**
+   * Phone number (E019, verification STUBBED by E036). The SMS
+   * challenge/response server-side is intact (`phone-verification.ts`) — only
+   * the client-side code entry is retired while the stub is in place.
+   */
   const [phoneInput, setPhoneInput] = useState("");
-  const [codeInput, setCodeInput] = useState("");
-  const [codeSent, setCodeSent] = useState(false);
-  const [devCode, setDevCode] = useState<string | null>(null);
-  const [phoneMsg, setPhoneMsg] = useState<string | null>(null);
 
   const stepIndex = STEPS.indexOf(screen as Step);
 
@@ -298,6 +328,9 @@ export default function JoinProviderPage() {
       roleTypeId: p.roleTypeId ?? null,
       roleTypeName: p.roleTypeName ?? null,
       specializationIds: p.specializationIds ?? [],
+      // Server-side these have been folded into the real vocabularies.
+      customSpecializations: [],
+      customSkills: [],
       skillIds: p.skillIds ?? [],
       skillNames: p.skillNames ?? [],
       headline: p.headline ?? "",
@@ -334,7 +367,6 @@ export default function JoinProviderPage() {
       })),
     });
     if (p.phone) setPhoneInput(p.phone);
-    if (p.phoneVerified) setCodeSent(false);
   }, []);
 
   // ---- mount ------------------------------------------------------------
@@ -403,7 +435,7 @@ export default function JoinProviderPage() {
 
   // ---- reference data ---------------------------------------------------
   useEffect(() => {
-    if (screen === "category" && fieldRoles.length === 0) {
+    if (screen === "catalog" && fieldRoles.length === 0) {
       fetch("/api/catalog/fields")
         .then((r) => r.json())
         .then((d) => setFieldRoles(d.roles ?? []))
@@ -420,7 +452,8 @@ export default function JoinProviderPage() {
   }, [screen, fieldRoles.length, specGroups.length]);
 
   useEffect(() => {
-    if (screen !== "skills" || !profile.pillarId || !profile.roleTypeId) return;
+    // Skills load as soon as a (Role, Domain) is chosen on the combined page.
+    if (screen !== "catalog" || !profile.pillarId || !profile.roleTypeId) return;
     fetch(
       `/api/catalog/skills?roleTypeId=${profile.roleTypeId}&pillarId=${profile.pillarId}`
     )
@@ -513,58 +546,6 @@ export default function JoinProviderPage() {
     }
   };
 
-  // ---- phone verification (E019) ----------------------------------------
-  const sendCode = async () => {
-    setPhoneMsg(null);
-    setBusy(true);
-    try {
-      const r = await fetch("/api/onboarding/provider/phone", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "send", phone: phoneInput }),
-      });
-      const body = await r.json().catch(() => ({}));
-      if (!r.ok) {
-        setPhoneMsg(body.error ?? "Could not send the code.");
-        return;
-      }
-      setCodeSent(true);
-      setDevCode(body.devCode ?? null);
-      setPhoneMsg(
-        body.sent
-          ? `We texted a 6-digit code to ${body.masked}.`
-          : "SMS isn't configured on this environment — use the code below."
-      );
-      setProfile((p) => ({ ...p, phoneVerified: false }));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const verifyCode = async () => {
-    setPhoneMsg(null);
-    setBusy(true);
-    try {
-      const r = await fetch("/api/onboarding/provider/phone", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "verify", code: codeInput }),
-      });
-      const body = await r.json().catch(() => ({}));
-      if (!r.ok) {
-        setPhoneMsg(body.error ?? "That code isn't right.");
-        return;
-      }
-      if (body.state) hydrate(body.state);
-      setCodeSent(false);
-      setCodeInput("");
-      setDevCode(null);
-      setPhoneMsg("Phone verified.");
-    } finally {
-      setBusy(false);
-    }
-  };
-
   const publish = async () => {
     setError(null);
     setBusy(true);
@@ -573,6 +554,9 @@ export default function JoinProviderPage() {
       await postStep("finish", {
         dateOfBirth: profile.dateOfBirth,
         address: profile.address,
+        // E036 — phone verification is stubbed: the number is saved with the
+        // rest of the details and publishing no longer waits on an SMS code.
+        phone: phoneInput,
       });
       const r = await fetch("/api/onboarding/provider/publish", { method: "POST" });
       const body = await r.json().catch(() => ({}));
@@ -656,9 +640,13 @@ export default function JoinProviderPage() {
 
   // ===== POST-VERIFY: the 12 steps (stepper x/12) =========================
   const stepNumber = stepIndex + 1;
+  // Exact stepper heading + "Next: …" label per brief_S's table (E024–E035).
+  const labels = STEP_LABELS[screen as Step];
   const shell = (props: Partial<React.ComponentProps<typeof WizardShell>> & { title: string }) => ({
     step: stepNumber,
     totalSteps: TOTAL,
+    stepLabel: labels?.stepper,
+    continueLabel: labels?.next,
     busy,
     onBack: stepIndex > 0 ? goBack : undefined,
     canBack: stepIndex > 0,
@@ -666,7 +654,7 @@ export default function JoinProviderPage() {
   });
 
   switch (screen) {
-    // ---- 1/13 — Experience (E003) --------------------------------------
+    // ---- 1/12 — Experience (E003) -------------------------------------
     case "experience_level":
       return (
         <WizardShell
@@ -693,7 +681,7 @@ export default function JoinProviderPage() {
         </WizardShell>
       );
 
-    // ---- 2/13 — Goal (E004: "Got it!" + "while") ------------------------
+    // ---- 2/12 — Goal (E004) -------------------------------------------
     case "goal":
       return (
         <WizardShell
@@ -718,7 +706,7 @@ export default function JoinProviderPage() {
         </WizardShell>
       );
 
-    // ---- 3/13 — How Do You Work? (E009) --------------------------------
+    // ---- 3/12 — How Do You Work? (E009) -------------------------------
     case "work_method":
       return (
         <WizardShell
@@ -752,7 +740,7 @@ export default function JoinProviderPage() {
         </WizardShell>
       );
 
-    // ---- 4/13 — Title (E011) -------------------------------------------
+    // ---- 4/12 — Title (E011) ------------------------------------------
     case "title":
       return (
         <WizardShell
@@ -776,7 +764,7 @@ export default function JoinProviderPage() {
         </WizardShell>
       );
 
-    // ---- 5/13 — Tell us about yourself (E012) --------------------------
+    // ---- 5/12 — Tell us about yourself (E012/E029) --------------------
     case "tell_us":
       return (
         <WizardShell
@@ -802,16 +790,31 @@ export default function JoinProviderPage() {
             </div>
           )}
 
-          <div className="space-y-3">
-            {/* Résumé upload is the PRIMARY path (brief_Q) — manual entry is
-                where people drop out, so the fastest route leads. */}
-            <MethodCard
-              title="Upload Your Resume"
-              description="PDF, Word or rich text, up to 5 MB. We'll read it and fill in your title, experience, education, skills and languages — you just confirm."
-              onClick={() => setUploadModal("RESUME")}
-              primary
-              badge="Fastest"
+          {/*
+            E029 — the upload control is INLINE and visible on arrival. It used
+            to be hidden behind a card that opened a modal, and the Run-2 walk
+            reported no control present at all.
+          */}
+          <section className="mb-6 rounded-brand border-2 border-magenta bg-magenta/[0.04] p-5 shadow-brand">
+            <div className="mb-3 flex items-center gap-2">
+              <h2 className="text-[17px]">Upload Your Resume</h2>
+              <span className="rounded-full bg-magenta px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-white">
+                Fastest
+              </span>
+            </div>
+            <p className="mb-4 text-[14.5px] text-ink-2">
+              We&apos;ll read it and fill in your title, experience, education,
+              skills and languages — you just confirm.
+            </p>
+            <ResumeDropzone
+              onImported={(outcome) => {
+                setImportOutcome(outcome);
+                if (outcome.state) hydrate(outcome.state as StatusPayload);
+              }}
             />
+          </section>
+
+          <div className="space-y-3">
             <MethodCard
               title="Import From LinkedIn"
               description="LinkedIn doesn't let apps read your profile directly, so export it: open your profile → More → Save to PDF, then upload that file here."
@@ -836,87 +839,46 @@ export default function JoinProviderPage() {
         </WizardShell>
       );
 
-    // ---- 6/13 — Field: Role → Domain (E013 / brief_R) ------------------
-    case "category":
-      return (
-        <WizardShell
-          {...shell({
-            title: "Nearly there! What work are you here to do?",
-            subtitle:
-              "Pick the area you work in. Your skills show clients what you can offer and help us choose which jobs to recommend to you.",
-            onContinue: () =>
-              saveAnd("category", {
-                roleTypeId: profile.roleTypeId,
-                pillarId: profile.pillarId,
-              }),
-            continueDisabled: !profile.pillarId || !profile.roleTypeId,
-          })}
-        >
-          {error && <Notice>{error}</Notice>}
-          {fieldRoles.length === 0 ? (
-            <p className="text-ink-2">Loading categories…</p>
-          ) : (
-            <div className="space-y-8">
-              {/*
-                The catalog is Role → Domain → Skill, and the SAME domain name
-                appears under more than one role with different skills, so what
-                the provider picks is the (Role, Domain) PAIR — rendered as
-                roles with their domains beneath.
-              */}
-              {fieldRoles.map((role) => (
-                <div key={role.id}>
-                  <h2 className="mb-3 text-[13px] font-bold uppercase tracking-wide text-ink-2">
-                    {role.name}
-                  </h2>
-                  <div className="space-y-3">
-                    {role.domains.map((d) => (
-                      <OptionCard
-                        key={`${role.id}:${d.id}`}
-                        selected={
-                          profile.pillarId === d.id &&
-                          profile.roleTypeId === role.id
-                        }
-                        onClick={() =>
-                          setProfile((p) => ({
-                            ...p,
-                            pillarId: d.id,
-                            pillarName: d.name,
-                            roleTypeId: role.id,
-                            roleTypeName: role.name,
-                            // Switching field invalidates skills chosen under
-                            // the old one; the server prunes on save too.
-                            ...(p.pillarId !== d.id || p.roleTypeId !== role.id
-                              ? { skillIds: [], skillNames: [] }
-                              : {}),
-                          }))
-                        }
-                        title={d.name}
-                        description={`${d.skillCount} skill${d.skillCount === 1 ? "" : "s"} in this area`}
-                      />
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </WizardShell>
-      );
+    // ---- 6/12 — Role → Domain → Skills, ONE cascading page (E030) ------
+    case "catalog": {
+      const chosenSkills = new Set(profile.skillIds);
+      const atMaxSkills = profile.skillIds.length >= MAX_SKILLS;
+      const activeRole = fieldRoles.find((r) => r.id === profile.roleTypeId);
 
-    // ---- 7/13 — Skills (E014) ------------------------------------------
-    case "skills": {
-      const chosen = new Set(profile.skillIds);
       const q = skillQuery.trim().toLowerCase();
-      const matching = q
+      const matchingSkills = q
         ? skillOpts.filter((s) => s.name.toLowerCase().includes(q))
         : skillOpts;
-      const suggested = matching.filter((s) => !chosen.has(s.id)).slice(0, 24);
-      const atMax = profile.skillIds.length >= MAX_SKILLS;
+      // E030 — never more than ~15 options on screen at once.
+      const shownSkills = matchingSkills.slice(0, MAX_VISIBLE_OPTIONS);
+      const hiddenSkillCount = matchingSkills.length - shownSkills.length;
 
-      const toggle = (id: string) =>
+      const pickRole = (role: FieldRole) =>
+        setProfile((p) => ({
+          ...p,
+          roleTypeId: role.id,
+          roleTypeName: role.name,
+          // Changing role invalidates the domain and everything below it.
+          pillarId: null,
+          pillarName: null,
+          skillIds: [],
+          skillNames: [],
+        }));
+
+      const pickDomain = (d: FieldDomain) =>
+        setProfile((p) => ({
+          ...p,
+          pillarId: d.id,
+          pillarName: d.name,
+          skillIds: [],
+          skillNames: [],
+        }));
+
+      const toggleSkill = (id: string) =>
         setProfile((p) => {
           const has = p.skillIds.includes(id);
           if (!has && p.skillIds.length >= MAX_SKILLS) return p;
-          const name = skillOpts.find((s) => s.id === id)?.name ?? "";
+          const name = skillOpts.find((x) => x.id === id)?.name ?? "";
           return {
             ...p,
             skillIds: has ? p.skillIds.filter((x) => x !== id) : [...p.skillIds, id],
@@ -926,81 +888,232 @@ export default function JoinProviderPage() {
           };
         });
 
+      const addCustomSkill = () => {
+        const name = skillQuery.trim();
+        if (!name || atMaxSkills) return;
+        if (
+          profile.customSkills.some((c) => c.toLowerCase() === name.toLowerCase()) ||
+          profile.skillNames.some((c) => c.name.toLowerCase() === name.toLowerCase())
+        ) {
+          setSkillQuery("");
+          return;
+        }
+        setProfile((p) => ({ ...p, customSkills: [...p.customSkills, name] }));
+        setSkillQuery("");
+      };
+
+      const totalPicked = profile.skillIds.length + profile.customSkills.length;
+
       return (
         <WizardShell
           {...shell({
-            title: "And what skills do you use in that work?",
-            subtitle: `Pick up to ${MAX_SKILLS} from ${
-              profile.roleTypeName && profile.pillarName
-                ? `${profile.roleTypeName} · ${profile.pillarName}`
-                : "your field"
-            }.`,
+            title: "What work are you here to do?",
+            subtitle:
+              "Pick your role, then the area you work in, then the skills you use. We'll use these to match you to the right jobs.",
             onContinue: () =>
-              saveAnd("skills", {
+              saveAnd("catalog", {
                 roleTypeId: profile.roleTypeId,
                 pillarId: profile.pillarId,
                 skillIds: profile.skillIds,
+                customSkills: profile.customSkills,
               }),
-            continueDisabled: profile.skillIds.length === 0,
+            continueDisabled:
+              !profile.roleTypeId || !profile.pillarId || totalPicked === 0,
           })}
         >
           {error && <Notice>{error}</Notice>}
 
-          <div className="mb-5">
-            <p className="mb-2 text-[14px] font-bold">
-              Your Skills{" "}
-              <span className="font-normal text-ink-2">
-                ({profile.skillIds.length}/{MAX_SKILLS})
-              </span>
-            </p>
-            {profile.skillNames.length === 0 ? (
-              <p className="text-[14px] text-ink-2">Nothing picked yet.</p>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {profile.skillNames.map((s) => (
-                  <Chip key={s.id} selected onClick={() => toggle(s.id)}>
-                    {s.name}
-                  </Chip>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <Field label="Search Skills">
-            <TextInput
-              value={skillQuery}
-              onChange={(e) => setSkillQuery(e.target.value)}
-              placeholder="Start typing to filter…"
-            />
-          </Field>
-
-          <div className="mt-5">
-            <p className="mb-2 text-[14px] font-bold">Suggested Skills</p>
-            {atMax && (
-              <div className="mb-3">
-                <Notice tone="info">
-                  That&apos;s {MAX_SKILLS} — remove one to add another.
-                </Notice>
-              </div>
-            )}
-            <div className="flex flex-wrap gap-2">
-              {suggested.map((s) => (
-                <Chip key={s.id} selected={false} onClick={() => toggle(s.id)}>
-                  {s.name}
-                </Chip>
-              ))}
-              {suggested.length === 0 && (
-                <p className="text-[14px] text-ink-2">No matches.</p>
+          {/*
+            E030 — a cascade, not three long lists: Role reveals its Domains,
+            Domain reveals its Skills. Each tier collapses to a summary row once
+            chosen, so the page never shows more than one open list at a time.
+          */}
+          <div className="space-y-6">
+            <CascadeTier
+              index={1}
+              label="Role"
+              chosen={activeRole?.name ?? null}
+              onChange={() =>
+                setProfile((p) => ({
+                  ...p,
+                  roleTypeId: null,
+                  roleTypeName: null,
+                  pillarId: null,
+                  pillarName: null,
+                  skillIds: [],
+                  skillNames: [],
+                }))
+              }
+            >
+              {fieldRoles.length === 0 ? (
+                <p className="text-ink-2">Loading roles…</p>
+              ) : (
+                <div className="space-y-3">
+                  {fieldRoles.map((r) => (
+                    <OptionCard
+                      key={r.id}
+                      selected={profile.roleTypeId === r.id}
+                      onClick={() => pickRole(r)}
+                      title={r.name}
+                      description={`${r.domains.length} area${r.domains.length === 1 ? "" : "s"} of work`}
+                    />
+                  ))}
+                </div>
               )}
-            </div>
+            </CascadeTier>
+
+            {profile.roleTypeId && (
+              <CascadeTier
+                index={2}
+                label="Domain"
+                chosen={profile.pillarName}
+                onChange={() =>
+                  setProfile((p) => ({
+                    ...p,
+                    pillarId: null,
+                    pillarName: null,
+                    skillIds: [],
+                    skillNames: [],
+                  }))
+                }
+              >
+                <div className="space-y-3">
+                  {(activeRole?.domains ?? [])
+                    .slice(0, MAX_VISIBLE_OPTIONS)
+                    .map((d) => (
+                      <OptionCard
+                        key={d.id}
+                        selected={profile.pillarId === d.id}
+                        onClick={() => pickDomain(d)}
+                        title={d.name}
+                        description={`${d.skillCount} skill${d.skillCount === 1 ? "" : "s"}`}
+                      />
+                    ))}
+                </div>
+              </CascadeTier>
+            )}
+
+            {profile.roleTypeId && profile.pillarId && (
+              <CascadeTier index={3} label="Skills" chosen={null}>
+                <p className="mb-3 text-[14px] text-ink-2">
+                  Pick up to {MAX_SKILLS}. Can&apos;t find one? Type it and add it.
+                </p>
+
+                {(profile.skillNames.length > 0 ||
+                  profile.customSkills.length > 0) && (
+                  <div className="mb-4">
+                    <p className="mb-2 text-[13px] font-bold">
+                      Your Skills{" "}
+                      <span className="font-normal text-ink-2">
+                        ({totalPicked}/{MAX_SKILLS})
+                      </span>
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {profile.skillNames.map((sk) => (
+                        <Chip key={sk.id} selected onClick={() => toggleSkill(sk.id)}>
+                          {sk.name}
+                        </Chip>
+                      ))}
+                      {profile.customSkills.map((name) => (
+                        <Chip
+                          key={`custom:${name}`}
+                          selected
+                          onClick={() =>
+                            setProfile((p) => ({
+                              ...p,
+                              customSkills: p.customSkills.filter((c) => c !== name),
+                            }))
+                          }
+                        >
+                          {name}
+                        </Chip>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-end gap-2">
+                  <div className="flex-1">
+                    <Field label="Search or Add a Skill">
+                      <TextInput
+                        value={skillQuery}
+                        onChange={(e) => setSkillQuery(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            addCustomSkill();
+                          }
+                        }}
+                        placeholder="Start typing…"
+                      />
+                    </Field>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={addCustomSkill}
+                    disabled={!skillQuery.trim() || atMaxSkills}
+                    className="mb-[2px] rounded-full border-[1.5px] border-line px-5 py-3 font-bold text-ink transition-colors hover:border-magenta hover:text-magenta disabled:opacity-40"
+                  >
+                    + Add
+                  </button>
+                </div>
+
+                {atMaxSkills && (
+                  <div className="mt-3">
+                    <Notice tone="info">
+                      That&apos;s {MAX_SKILLS} — remove one to add another.
+                    </Notice>
+                  </div>
+                )}
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {shownSkills
+                    .filter((sk) => !chosenSkills.has(sk.id))
+                    .map((sk) => (
+                      <Chip
+                        key={sk.id}
+                        selected={false}
+                        onClick={() => toggleSkill(sk.id)}
+                      >
+                        {sk.name}
+                      </Chip>
+                    ))}
+                  {shownSkills.length === 0 && (
+                    <p className="text-[14px] text-ink-2">
+                      No matches — use “+ Add” to create it.
+                    </p>
+                  )}
+                </div>
+                {hiddenSkillCount > 0 && (
+                  <p className="mt-3 text-[13px] text-ink-2">
+                    +{hiddenSkillCount} more — keep typing to narrow the list.
+                  </p>
+                )}
+              </CascadeTier>
+            )}
           </div>
         </WizardShell>
       );
     }
 
-    // ---- 8/13 — Specializations (brief_R, optional) --------------------
+
+    // ---- 7/12 — Specializations (E031, optional + add-on-the-fly) -----
     case "specializations": {
       const chosenSpecs = new Set(profile.specializationIds);
+      const addCustomSpec = () => {
+        const name = specQuery.trim();
+        if (!name) return;
+        const dup = profile.customSpecializations.some(
+          (c) => c.toLowerCase() === name.toLowerCase()
+        );
+        if (!dup) {
+          setProfile((p) => ({
+            ...p,
+            customSpecializations: [...p.customSpecializations, name],
+          }));
+        }
+        setSpecQuery("");
+      };
       const toggleSpec = (id: string) =>
         setProfile((p) => ({
           ...p,
@@ -1020,6 +1133,7 @@ export default function JoinProviderPage() {
             onContinue: () =>
               saveAnd("specializations", {
                 specializationIds: profile.specializationIds,
+                customSpecializations: profile.customSpecializations,
               }),
           })}
         >
@@ -1046,8 +1160,64 @@ export default function JoinProviderPage() {
                   </div>
                 </div>
               ))}
+              {/* E031 — add-on-the-fly: a provider's real specialization may
+                  simply not be in the vocabulary yet. Custom entries join the
+                  shared list so the next provider can just pick it. */}
+              <div>
+                <h2 className="mb-3 text-[13px] font-bold uppercase tracking-wide text-ink-2">
+                  Something Missing?
+                </h2>
+                {profile.customSpecializations.length > 0 && (
+                  <div className="mb-3 flex flex-wrap gap-2">
+                    {profile.customSpecializations.map((name) => (
+                      <Chip
+                        key={name}
+                        selected
+                        onClick={() =>
+                          setProfile((p) => ({
+                            ...p,
+                            customSpecializations: p.customSpecializations.filter(
+                              (c) => c !== name
+                            ),
+                          }))
+                        }
+                      >
+                        {name}
+                      </Chip>
+                    ))}
+                  </div>
+                )}
+                <div className="flex items-end gap-2">
+                  <div className="max-w-sm flex-1">
+                    <Field label="Add Your Own">
+                      <TextInput
+                        value={specQuery}
+                        onChange={(e) => setSpecQuery(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            addCustomSpec();
+                          }
+                        }}
+                        placeholder="e.g. Workday"
+                      />
+                    </Field>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={addCustomSpec}
+                    disabled={!specQuery.trim()}
+                    className="mb-[2px] rounded-full border-[1.5px] border-line px-5 py-3 font-bold text-ink transition-colors hover:border-magenta hover:text-magenta disabled:opacity-40"
+                  >
+                    + Add
+                  </button>
+                </div>
+              </div>
+
               <p className="text-[14px] text-ink-2">
-                {profile.specializationIds.length} selected
+                {profile.specializationIds.length +
+                  profile.customSpecializations.length}{" "}
+                selected
               </p>
             </div>
           )}
@@ -1055,7 +1225,7 @@ export default function JoinProviderPage() {
       );
     }
 
-    // ---- 9/13 — Education (E015, optional + Skip) ----------------------
+    // ---- 8/12 — Education (E015/E033, optional + Skip) ----------------
     case "education":
       return (
         <WizardShell
@@ -1075,7 +1245,7 @@ export default function JoinProviderPage() {
         </WizardShell>
       );
 
-    // ---- 10/13 — Languages (E016, English default) ---------------------
+    // ---- 9/12 — Languages (E016/E034, both fields required) -----------
     case "languages": {
       const langs =
         profile.languages.length > 0
@@ -1094,7 +1264,10 @@ export default function JoinProviderPage() {
             title: "What languages do you speak?",
             subtitle: "All profiles include English. Add any others you work in.",
             onContinue: () => saveAnd("languages", { languages: langs }),
-            continueDisabled: langs.length === 0,
+            // E034 — BOTH fields required: every row needs a name AND a level.
+            continueDisabled:
+              langs.length === 0 ||
+              langs.some((l) => !l.name.trim() || !l.level),
           })}
         >
           {error && <Notice>{error}</Notice>}
@@ -1105,7 +1278,7 @@ export default function JoinProviderPage() {
                 className="flex flex-wrap items-end gap-3 rounded-brand border border-line p-4"
               >
                 <div className="min-w-[180px] flex-1">
-                  <Field label={i === 0 ? "Language" : "Language"}>
+                  <Field label="Language *">
                     <TextInput
                       value={l.name}
                       readOnly={i === 0}
@@ -1116,7 +1289,7 @@ export default function JoinProviderPage() {
                   </Field>
                 </div>
                 <div className="min-w-[180px] flex-1">
-                  <Field label="Proficiency">
+                  <Field label="Proficiency *">
                     <select
                       value={l.level ?? ""}
                       onChange={(e) => update(i, { level: e.target.value || null })}
@@ -1164,7 +1337,7 @@ export default function JoinProviderPage() {
       );
     }
 
-    // ---- 11/13 — Bio (E017, min length) --------------------------------
+    // ---- 10/12 — Bio (E017, min length) -------------------------------
     case "bio": {
       const len = profile.overview.trim().length;
       const left = MAX_BIO - profile.overview.length;
@@ -1198,7 +1371,7 @@ export default function JoinProviderPage() {
       );
     }
 
-    // ---- 12/13 — Rate (E018) -------------------------------------------
+    // ---- 11/12 — Rate (E018, "You'll Get") -----------------------------
     case "rate": {
       const { rate, fee, youGet } = rateBreakdown(
         profile.hourlyRateCents,
@@ -1267,7 +1440,7 @@ export default function JoinProviderPage() {
               </p>
               <div className="mt-4 border-t border-line pt-4">
                 <Row
-                  label="You'll get"
+                  label="You'll Get"
                   value={youGet != null ? `${formatCents(youGet)}/hr` : "—"}
                   strong
                 />
@@ -1286,78 +1459,198 @@ export default function JoinProviderPage() {
       );
     }
 
-    // ---- 13/13 — "You're Done!" finish page (E019) ---------------------
+    // ---- 12/12 — Review + publish (E035) ------------------------------
     case "finish": {
       const addr = profile.address ?? emptyAddress(acct.country);
       const setAddr = (patch: Partial<AddressDraft>) =>
         setProfile((p) => ({ ...p, address: { ...addr, ...patch } }));
+      const { youGet } = rateBreakdown(
+        profile.hourlyRateCents,
+        profile.serviceFeeBps
+      );
 
       return (
         <WizardShell
           {...shell({
-            title: "You're Done!",
-            subtitle: "Add a few more details and publish your profile.",
+            title: `Looking good, ${displayFirstName(profile.firstName)}!`,
+            subtitle:
+              "Make any edits, then publish. You can change anything after it's live.",
+            wide: true,
             onContinue: publish,
-            continueLabel: "Publish Profile",
             continueDisabled: busy,
           })}
         >
           {error && <Notice>{error}</Notice>}
 
-          <div className="space-y-8">
-            {/* Photo */}
-            <section>
-              <h2 className="mb-3 text-[16px] font-bold">Add Your Photo</h2>
-              <div className="flex items-center gap-5">
-                <Avatar
-                  firstName={profile.firstName}
-                  lastName={profile.lastName}
-                  photoUrl={profile.photoUrl}
-                  size={80}
-                />
-                <div>
+          {/*
+            E035 — the whole review on ONE page without scrolling, per Scott's
+            mockup: profile card + skills + work history on the left, the short
+            columns (languages, verifications, remaining details) on the right.
+            Everything is compact and every block carries an edit pencil back to
+            its own step.
+          */}
+          <div className="grid gap-5 lg:grid-cols-[1fr_300px] lg:items-start">
+            <div className="space-y-4">
+              <ReviewBlock title="Profile" onEdit={() => goTo("title")}>
+                <div className="flex items-start gap-4">
+                  <Avatar
+                    firstName={profile.firstName}
+                    lastName={profile.lastName}
+                    photoUrl={profile.photoUrl}
+                    size={64}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[17px] font-bold">
+                      {displayFullName(profile.firstName, profile.lastName)}
+                    </p>
+                    <p className="mt-0.5 truncate text-[14.5px] text-ink-2">
+                      {profile.headline || "No title yet"}
+                    </p>
+                    <p className="mt-1.5 text-[15px] font-extrabold">
+                      {profile.hourlyRateCents != null
+                        ? `${formatCents(profile.hourlyRateCents)}/hr`
+                        : "No rate set"}
+                      {youGet != null && (
+                        <span className="ml-2 text-[13px] font-semibold text-ink-2">
+                          You&apos;ll Get {formatCents(youGet)}/hr
+                        </span>
+                      )}
+                    </p>
+                  </div>
                   <button
                     type="button"
                     onClick={() => setPhotoModal(true)}
-                    className="rounded-full border-[1.5px] border-line px-5 py-2.5 font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
+                    className="shrink-0 text-[13px] font-bold text-magenta hover:text-magenta-dark"
                   >
-                    {profile.photoUrl ? "Replace Photo" : "Add Your Photo"}
+                    {profile.photoUrl ? "Change Photo" : "Add Photo"}
                   </button>
-                  <p className="mt-2 max-w-sm text-[13px] text-ink-2">
-                    Must be an actual photo of you — no logos, clip-art, group
-                    photos, or altered images.
-                  </p>
                 </div>
-              </div>
-            </section>
+              </ReviewBlock>
 
-            {/* Date of birth */}
-            <section>
-              <h2 className="mb-3 text-[16px] font-bold">Date of Birth *</h2>
-              <div className="max-w-xs">
-                <TextInput
-                  type="date"
-                  value={profile.dateOfBirth ?? ""}
-                  onChange={(e) =>
-                    setProfile((p) => ({ ...p, dateOfBirth: e.target.value || null }))
-                  }
-                />
-              </div>
-            </section>
+              <ReviewBlock title="Skills" onEdit={() => goTo("catalog")}>
+                <p className="mb-2 text-[13px] text-ink-2">
+                  {profile.roleTypeName && profile.pillarName
+                    ? `${profile.roleTypeName} · ${profile.pillarName}`
+                    : "No field chosen"}
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {profile.skillNames.slice(0, 12).map((sk) => (
+                    <span
+                      key={sk.id}
+                      className="rounded-full border border-line px-2.5 py-0.5 text-[12.5px] font-semibold text-ink-2"
+                    >
+                      {sk.name}
+                    </span>
+                  ))}
+                  {profile.skillNames.length > 12 && (
+                    <span className="text-[12.5px] text-ink-2">
+                      +{profile.skillNames.length - 12} more
+                    </span>
+                  )}
+                </div>
+              </ReviewBlock>
 
-            {/* Address */}
-            <section>
-              <h2 className="mb-3 text-[16px] font-bold">Where You&apos;re Based</h2>
-              <div className="grid max-w-2xl gap-4 sm:grid-cols-2">
-                <div className="sm:col-span-2">
-                  <Field label="Country *">
+              <ReviewBlock title="Bio" onEdit={() => goTo("bio")}>
+                <p className="line-clamp-3 whitespace-pre-line text-[14px] leading-relaxed text-ink-2">
+                  {profile.overview || "No bio yet"}
+                </p>
+              </ReviewBlock>
+
+              <ReviewBlock title="Education" onEdit={() => goTo("education")}>
+                {profile.education.length > 0 ? (
+                  <ul className="space-y-1">
+                    {profile.education.slice(0, 3).map((e, i) => (
+                      <li key={i} className="text-[14px]">
+                        <b>{e.institution}</b>
+                        <span className="text-ink-2">
+                          {[e.degree, e.field].filter(Boolean).length > 0 &&
+                            ` — ${[e.degree, e.field].filter(Boolean).join(", ")}`}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-[14px] text-ink-2">None added (optional)</p>
+                )}
+              </ReviewBlock>
+            </div>
+
+            <div className="space-y-4">
+              <ReviewBlock title="Languages" onEdit={() => goTo("languages")}>
+                <ul className="space-y-0.5 text-[14px]">
+                  {profile.languages.map((l, i) => (
+                    <li key={i}>
+                      <b>{l.name}</b>
+                      {l.level && (
+                        <span className="text-ink-2">
+                          {" "}
+                          — {LEVEL_LABELS[l.level] ?? l.level}
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                  {profile.languages.length === 0 && (
+                    <li className="text-ink-2">None yet</li>
+                  )}
+                </ul>
+              </ReviewBlock>
+
+              <ReviewBlock
+                title="Specializations"
+                onEdit={() => goTo("specializations")}
+              >
+                <p className="text-[14px] text-ink-2">
+                  {profile.specializationIds.length > 0
+                    ? `${profile.specializationIds.length} selected`
+                    : "None added (optional)"}
+                </p>
+              </ReviewBlock>
+
+              {/* Remaining details + verifications. Phone verification is
+                  STUBBED (E036): we capture the number, mark it on file, and
+                  don't gate publishing on an SMS round-trip. */}
+              <ReviewBlock title="Details">
+                <div className="space-y-3">
+                  <Field label="Date of Birth *">
                     <TextInput
-                      value={addr.country}
-                      onChange={(e) => setAddr({ country: e.target.value })}
+                      type="date"
+                      value={profile.dateOfBirth ?? ""}
+                      onChange={(e) =>
+                        setProfile((p) => ({
+                          ...p,
+                          dateOfBirth: e.target.value || null,
+                        }))
+                      }
                     />
                   </Field>
-                </div>
-                <div className="sm:col-span-2">
+                  <Field label="Phone *">
+                    <TextInput
+                      type="tel"
+                      value={phoneInput}
+                      onChange={(e) => setPhoneInput(e.target.value)}
+                      placeholder="+1 555 010 4477"
+                    />
+                  </Field>
+                  <Field label="City *">
+                    <TextInput
+                      value={addr.city}
+                      onChange={(e) => setAddr({ city: e.target.value })}
+                    />
+                  </Field>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Field label="State *">
+                      <TextInput
+                        value={addr.state}
+                        onChange={(e) => setAddr({ state: e.target.value })}
+                      />
+                    </Field>
+                    <Field label="ZIP *">
+                      <TextInput
+                        value={addr.postalCode}
+                        onChange={(e) => setAddr({ postalCode: e.target.value })}
+                      />
+                    </Field>
+                  </div>
                   <Field label="Street Address *">
                     <TextInput
                       value={addr.line1}
@@ -1365,117 +1658,16 @@ export default function JoinProviderPage() {
                     />
                   </Field>
                 </div>
-                <div className="sm:col-span-2">
-                  <Field label="Apt / Suite">
-                    <TextInput
-                      value={addr.line2}
-                      onChange={(e) => setAddr({ line2: e.target.value })}
-                    />
-                  </Field>
-                </div>
-                <Field label="City *">
-                  <TextInput
-                    value={addr.city}
-                    onChange={(e) => setAddr({ city: e.target.value })}
-                  />
-                </Field>
-                <Field label="State / Province *">
-                  <TextInput
-                    value={addr.state}
-                    onChange={(e) => setAddr({ state: e.target.value })}
-                  />
-                </Field>
-                <Field label="ZIP / Postal Code *">
-                  <TextInput
-                    value={addr.postalCode}
-                    onChange={(e) => setAddr({ postalCode: e.target.value })}
-                  />
-                </Field>
-              </div>
-            </section>
-
-            {/* Phone + SMS verification */}
-            <section>
-              <h2 className="mb-1 text-[16px] font-bold">Phone *</h2>
-              <p className="mb-3 text-[14px] text-ink-2">
-                Please verify your phone number.
-              </p>
-              <div className="max-w-md space-y-3">
-                <div className="flex flex-wrap items-end gap-3">
-                  <div className="min-w-[220px] flex-1">
-                    <Field label="Phone Number">
-                      <TextInput
-                        type="tel"
-                        value={phoneInput}
-                        onChange={(e) => setPhoneInput(e.target.value)}
-                        placeholder="+1 555 010 4477"
-                        disabled={profile.phoneVerified}
-                        className={profile.phoneVerified ? "bg-bg-soft text-ink-2" : ""}
-                      />
-                    </Field>
-                  </div>
-                  {profile.phoneVerified ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setProfile((p) => ({ ...p, phoneVerified: false }));
-                        setPhoneMsg(null);
-                      }}
-                      className="mb-[2px] rounded-full border-[1.5px] border-line px-5 py-3 font-bold text-ink transition-colors hover:border-[#d9d4e2]"
-                    >
-                      Change
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={sendCode}
-                      disabled={busy || phoneInput.trim() === ""}
-                      className="mb-[2px] rounded-full bg-magenta px-6 py-3 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
-                    >
-                      Send Code
-                    </button>
-                  )}
-                </div>
-
-                {profile.phoneVerified && (
-                  <p className="text-[14px] font-semibold text-emerald-600">
-                    ✓ Phone Verified
-                  </p>
-                )}
-
-                {codeSent && !profile.phoneVerified && (
-                  <div className="flex flex-wrap items-end gap-3">
-                    <div className="min-w-[160px]">
-                      <Field label="6-Digit Code">
-                        <TextInput
-                          inputMode="numeric"
-                          maxLength={6}
-                          value={codeInput}
-                          onChange={(e) => setCodeInput(e.target.value)}
-                          placeholder="000000"
-                        />
-                      </Field>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={verifyCode}
-                      disabled={busy || codeInput.length < 6}
-                      className="mb-[2px] rounded-full bg-magenta px-6 py-3 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
-                    >
-                      Verify
-                    </button>
-                  </div>
-                )}
-
-                {devCode && (
-                  <Notice tone="info">
-                    SMS isn&apos;t configured on this environment. Your code is{" "}
-                    <b>{devCode}</b>.
-                  </Notice>
-                )}
-                {phoneMsg && !devCode && <Notice tone="info">{phoneMsg}</Notice>}
-              </div>
-            </section>
+                <ul className="mt-3 space-y-0.5 border-t border-line pt-3 text-[13px]">
+                  <li className="font-semibold text-emerald-600">
+                    ✓ Email Verified
+                  </li>
+                  <li className="text-ink-2">
+                    Phone verification is coming soon.
+                  </li>
+                </ul>
+              </ReviewBlock>
+            </div>
           </div>
 
           <PhotoCropModal
@@ -1504,6 +1696,92 @@ function PlainShell({ children }: { children: React.ReactNode }) {
         {children}
       </main>
     </div>
+  );
+}
+
+/**
+ * One tier of the Role → Domain → Skills cascade (E030).
+ *
+ * Collapses to a one-line summary with a Change link once a choice is made, so
+ * only the tier the provider is actually working on is expanded — that is what
+ * keeps the page short instead of three stacked lists.
+ */
+function CascadeTier({
+  index,
+  label,
+  chosen,
+  onChange,
+  children,
+}: {
+  index: number;
+  label: string;
+  chosen: string | null;
+  onChange?: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="rounded-brand border border-line p-5">
+      <div className="mb-3 flex items-center justify-between gap-4">
+        <h2 className="flex items-center gap-2.5 text-[13px] font-bold uppercase tracking-wide text-ink-2">
+          <span
+            aria-hidden
+            className={
+              "grid h-6 w-6 place-items-center rounded-full text-[12px] font-black " +
+              (chosen ? "bg-magenta text-white" : "bg-bg-soft text-ink-2")
+            }
+          >
+            {index}
+          </span>
+          {label}
+        </h2>
+        {chosen && onChange && (
+          <button
+            type="button"
+            onClick={onChange}
+            className="text-[14px] font-bold text-magenta hover:text-magenta-dark"
+          >
+            Change
+          </button>
+        )}
+      </div>
+      {chosen ? (
+        <p className="text-[16px] font-bold">{chosen}</p>
+      ) : (
+        children
+      )}
+    </section>
+  );
+}
+
+/** One compact review block with an edit pencil (E035). */
+function ReviewBlock({
+  title,
+  onEdit,
+  children,
+}: {
+  title: string;
+  onEdit?: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="rounded-brand border border-line p-4">
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <h2 className="text-[12px] font-bold uppercase tracking-wide text-ink-2">
+          {title}
+        </h2>
+        {onEdit && (
+          <button
+            type="button"
+            onClick={onEdit}
+            aria-label={`Edit ${title}`}
+            className="text-[13px] font-bold text-magenta hover:text-magenta-dark"
+          >
+            ✏️ Edit
+          </button>
+        )}
+      </div>
+      {children}
+    </section>
   );
 }
 

@@ -45,7 +45,9 @@ export async function POST(request: Request) {
     // the user can hit "Resend" from the gate — so we don't fail the request.
     let devLink: string | undefined;
     try {
-      const res = await issueEmailVerification(userId);
+      const res = await issueEmailVerification(userId, {
+        origin: new URL(request.url).origin,
+      });
       if (res.ok && "devLink" in res) devLink = res.devLink;
     } catch (e) {
       console.error("[onboarding] verification email send failed:", e);

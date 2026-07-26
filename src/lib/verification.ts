@@ -11,8 +11,18 @@ export function hashToken(raw: string): string {
   return createHash("sha256").update(raw).digest("hex");
 }
 
-/** Absolute base URL for links in emails (the app host in prod). Shared. */
-export function appBaseUrl(): string {
+/**
+ * Absolute base URL for links in emails. Shared.
+ *
+ * `origin` — the origin of the request that triggered the send — takes
+ * precedence (brief_S / E022). Without it a walk on `localhost:3100` receives a
+ * link pointing at whatever `NEXT_PUBLIC_APP_URL` happens to hold (the Vercel
+ * URL), and clicking it lands on a DIFFERENT host with no session, which is
+ * exactly the "bounced to /login" symptom Scott hit. Env values remain the
+ * fallback for contexts with no request (cron, scripts).
+ */
+export function appBaseUrl(origin?: string | null): string {
+  if (origin) return origin.replace(/\/+$/, "");
   return (
     process.env.NEXT_PUBLIC_APP_URL ??
     process.env.NEXTAUTH_URL ??
@@ -31,7 +41,7 @@ export function appBaseUrl(): string {
  */
 export async function issueEmailVerification(
   userId: string,
-  opts: { throttle?: boolean } = {}
+  opts: { throttle?: boolean; origin?: string | null } = {}
 ): Promise<
   | { ok: true; sent: boolean; devLink?: string }
   | { ok: false; reason: "throttled" | "not_found" | "already_verified"; retryAfterMs?: number }
@@ -68,12 +78,13 @@ export async function issueEmailVerification(
     },
   });
 
-  const verifyUrl = `${appBaseUrl()}/verify-email?token=${raw}`;
+  const base = appBaseUrl(opts.origin);
+  const verifyUrl = `${base}/verify-email?token=${raw}`;
   const { subject, html, text } = verifyEmailTemplate({
     firstName: user.first_name ?? "",
     verifyUrl,
     // Absolute — email clients can't resolve app-relative paths (E006).
-    logoUrl: `${appBaseUrl()}/brand/panameer-logo-transparent.png`,
+    logoUrl: `${base}/brand/panameer-logo-transparent.png`,
   });
 
   // Real send when configured (prod/Vercel). Dev fallback: log the link so the
@@ -134,4 +145,72 @@ export async function consumeEmailVerification(
   ]);
 
   return { ok: true, userId: record.user_id };
+}
+
+// ---------------------------------------------------------------------------
+// Sign-in handoff (brief_S / E022)
+// ---------------------------------------------------------------------------
+
+/** Short window — this token exists only to bridge one redirect. */
+const SIGNIN_TOKEN_TTL_MS = 5 * 60 * 1000;
+
+/**
+ * Mint a SINGLE-USE token that can establish a session (E022).
+ *
+ * Clicking the emailed verify link has to leave the provider signed in — a GET
+ * page can't create a NextAuth session by itself, so the verified page hands
+ * this token to the `verify-token` credentials provider, which exchanges it for
+ * a real session.
+ *
+ * Safe because it is only ever minted AFTER an email-verification token has
+ * been validated, it is stored as a SHA-256 hash like every other token here,
+ * it expires in five minutes, and it is consumed on first use.
+ */
+export async function issueSignInToken(userId: string): Promise<string> {
+  const raw = randomBytes(32).toString("base64url");
+
+  await prisma.$transaction([
+    // Only the newest handoff token is ever valid.
+    prisma.verificationToken.deleteMany({
+      where: { user_id: userId, type: "SIGNIN", consumed_at: null },
+    }),
+    prisma.verificationToken.create({
+      data: {
+        user_id: userId,
+        token_hash: hashToken(raw),
+        type: "SIGNIN",
+        expires_at: new Date(Date.now() + SIGNIN_TOKEN_TTL_MS),
+      },
+    }),
+  ]);
+
+  return raw;
+}
+
+/**
+ * Exchange a sign-in token for the user it belongs to, consuming it.
+ * Returns null for anything invalid, expired, already used, or belonging to a
+ * locked/deactivated account — the same fail-closed posture as `authorize`.
+ */
+export async function consumeSignInToken(
+  rawToken: string
+): Promise<{ id: string } | null> {
+  if (!rawToken) return null;
+
+  const record = await prisma.verificationToken.findUnique({
+    where: { token_hash: hashToken(rawToken) },
+    include: { user: true },
+  });
+
+  if (!record || record.type !== "SIGNIN") return null;
+  if (record.consumed_at) return null;
+  if (record.expires_at.getTime() < Date.now()) return null;
+  if (record.user.locked || record.user.is_active === false) return null;
+
+  await prisma.verificationToken.update({
+    where: { id: record.id },
+    data: { consumed_at: new Date() },
+  });
+
+  return { id: record.user_id };
 }

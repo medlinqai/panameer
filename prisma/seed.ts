@@ -304,6 +304,7 @@ async function main() {
         person: {
           select: {
             photo_url: true,
+            phone: true,
             phone_verified_at: true,
             site: { select: { addresses: { select: { line1: true }, take: 1 } } },
           },
@@ -331,6 +332,7 @@ async function main() {
         photoUrl: full.person.photo_url,
         date_of_birth: full.date_of_birth,
         hasAddress: Boolean(full.person.site?.addresses?.[0]?.line1?.trim()),
+        hasPhone: Boolean(full.person.phone?.trim()),
         phoneVerified: full.person.phone_verified_at != null,
       });
       await prisma.providerProfile.update({

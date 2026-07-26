@@ -1,15 +1,20 @@
 import Link from "next/link";
-import { consumeEmailVerification } from "@/lib/verification";
+import { consumeEmailVerification, issueSignInToken } from "@/lib/verification";
 import { Logo } from "@/components/Logo";
+import { VerifiedSignIn } from "@/components/onboarding/VerifiedSignIn";
 
 /**
  * Landing page for the tokenized verification link (brief_E), reworked by
- * brief_P:
- *   - E007: the logo uses the transparent asset via <Logo>, so it no longer
- *     sits in a white box on this tinted page.
- *   - E008: on success the CTA goes to /join/provider/start — the "Get Started
- *     Now!" page, which is the FIRST page of the profile-building process — not
- *     back to the role-select at /join.
+ * brief_P and again by brief_S.
+ *
+ *  - E007: the logo uses the transparent asset, so it no longer sits in a white
+ *    box on this tinted page.
+ *  - E008: success continues to "Get Started Now!", the first page of the
+ *    profile build.
+ *  - E022 (HARD REQUIREMENT): verifying now SIGNS THE USER IN. We mint a
+ *    single-use sign-in token here and hand it to <VerifiedSignIn>, which
+ *    exchanges it for a session and redirects. The provider never sees a login
+ *    screen.
  *
  * No app/marketing nav — this is part of the focused onboarding flow.
  */
@@ -26,6 +31,11 @@ export default async function VerifyEmailPage({
   const ok = result.ok;
   const reason = ok ? null : (result as { reason: string }).reason;
 
+  // Only minted on success, and only good for one exchange within 5 minutes.
+  const signInToken = ok
+    ? await issueSignInToken((result as { userId: string }).userId)
+    : null;
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-bg-soft px-6 text-center font-body text-ink">
       <Logo className="h-9 w-auto" priority />
@@ -36,25 +46,18 @@ export default async function VerifyEmailPage({
             <div className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-full bg-magenta text-2xl font-black text-white">
               ✓
             </div>
-            <h1 className="text-2xl font-extrabold tracking-[-0.5px]">
-              Email Verified
-            </h1>
+            <h1 className="text-2xl tracking-[-0.5px]">Email Verified</h1>
             <p className="mt-2 text-ink-2">
               You&apos;re all set. Let&apos;s build your profile.
             </p>
-            <Link
-              href="/join/provider/start"
-              className="mt-6 inline-flex rounded-full bg-magenta px-6 py-3 font-bold text-white transition-colors hover:bg-magenta-dark"
-            >
-              Continue Onboarding
-            </Link>
+            {signInToken && <VerifiedSignIn token={signInToken} />}
           </>
         ) : (
           <>
             <div className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-full bg-line text-2xl font-black text-ink-2">
               !
             </div>
-            <h1 className="text-2xl font-extrabold tracking-[-0.5px]">
+            <h1 className="text-2xl tracking-[-0.5px]">
               {reason === "expired" ? "Link Expired" : "Invalid Link"}
             </h1>
             <p className="mt-2 text-ink-2">

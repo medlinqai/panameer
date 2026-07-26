@@ -61,6 +61,9 @@ export type CompletenessInput = {
   /** Finish-page identity block (E019). */
   date_of_birth: Date | string | null;
   hasAddress: boolean;
+  /** A phone number is on file. */
+  hasPhone: boolean;
+  /** Phone passed SMS verification. STUBBED by brief_S/E036 — see below. */
   phoneVerified: boolean;
 };
 
@@ -77,7 +80,7 @@ export const COMPLETENESS_WEIGHTS = {
   rate: 10, //            step 12
   // --- Collected on the finish page (step 13) ------------------------------
   photo: 10,
-  identity: 10, //        DOB + address + verified phone
+  identity: 10, //        DOB + address + phone (verification stubbed, E036)
   // --- Optional enrichment — any one of four ------------------------------
   enrichment: 5,
 } as const;
@@ -109,9 +112,16 @@ export function computeProviderCompleteness(p: CompletenessInput): number {
 
   if (p.photoUrl) score += W.photo;
 
-  // The finish page's identity block scores as a unit: a DOB with no verified
-  // phone isn't a partially-trustworthy provider, it's an unfinished one.
-  if (p.date_of_birth && p.hasAddress && p.phoneVerified) score += W.identity;
+  // The finish page's identity block scores as a unit: a DOB with no phone
+  // isn't a partially-trustworthy provider, it's an unfinished one.
+  //
+  // brief_S/E036 STUBBED phone verification, so `phoneVerified` can never be
+  // true through the wizard. Requiring it here would silently cap every
+  // finished provider at 95% and quietly break brief_R's guarantee that a
+  // completed journey reaches 100% — the same class of bug brief_R fixed.
+  // While the stub stands, a phone ON FILE satisfies this; restore
+  // `p.phoneVerified` alongside the publish-gate line when SMS is switched on.
+  if (p.date_of_birth && p.hasAddress && p.hasPhone) score += W.identity;
 
   if (
     p.workExperiences.length >= 1 ||

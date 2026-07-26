@@ -47,3 +47,29 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, sans-serif;
 }
+
+/*
+ * TITLES RENDER IN COMFORTAA (brief_S / E021).
+ *
+ * `--font-display` was registered as a theme token from the start but never
+ * actually used, so every heading inherited the body font (Montserrat) and the
+ * brand's display face never appeared anywhere except the logo image. Setting
+ * it on the heading elements themselves is the fix: it applies the brand system
+ * to titles app-wide rather than relying on each surface to remember a class.
+ *
+ * Comfortaa's heaviest weight is 700, so headings cap there — asking for 800
+ * (`font-extrabold`) would make the browser synthesise a faux-bold.
+ */
+@layer base {
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-weight: 700;
+  }
+}

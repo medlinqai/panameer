@@ -42,40 +42,49 @@ export default async function GetStartedPage() {
         </div>
       </header>
 
+      {/*
+        Layout per E023: greeting + blurbs + CTA on the LEFT, a single example
+        card on the RIGHT. The previous version stacked a three-across grid
+        under the copy, which looked nothing like the design.
+      */}
       <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-12 sm:py-16">
-        <h1 className="text-[30px] font-extrabold tracking-[-0.7px] sm:text-[38px]">
-          Hey {firstName}. Ready for your next big opportunity?
-        </h1>
+        <div className="grid gap-12 lg:grid-cols-[1fr_400px] lg:items-start">
+          <div>
+            <h1 className="text-[30px] tracking-[-0.7px] sm:text-[38px]">
+              Hey {firstName}. Ready for your next big opportunity?
+            </h1>
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-2">
-          <p className="rounded-brand border border-line p-5 text-[16px] leading-relaxed text-ink-2">
-            Answer a few questions and start building your profile. It&apos;s how
-            clients find you and understand what you do best.
-          </p>
-          <p className="rounded-brand border border-line p-5 text-[16px] leading-relaxed text-ink-2">
-            Apply for open roles and list services for clients to buy — on your
-            terms, at the rate you set.
-          </p>
-        </div>
+            <div className="mt-7 space-y-4">
+              <p className="text-[16.5px] leading-relaxed text-ink-2">
+                Answer a few questions and start building your profile. It&apos;s
+                how clients find you and understand what you do best.
+              </p>
+              <p className="text-[16.5px] leading-relaxed text-ink-2">
+                Apply for open roles and list services for clients to buy — on
+                your terms, at the rate you set.
+              </p>
+            </div>
 
-        <section className="mt-12">
-          <h2 className="mb-4 text-[15px] font-bold uppercase tracking-wide text-ink-2">
-            Providers on Panameer
-          </h2>
-          <TestimonialCarousel />
-        </section>
+            <div className="mt-9">
+              <Link
+                href="/join/provider"
+                className="inline-flex rounded-full bg-magenta px-8 py-3.5 text-[16px] font-bold text-white transition-colors hover:bg-magenta-dark"
+              >
+                Get Started Now!
+              </Link>
+              <p className="mt-3 text-[14px] text-ink-2">
+                It only takes 5–10 minutes and you can edit it later. We&apos;ll
+                save as you go.
+              </p>
+            </div>
+          </div>
 
-        <div className="mt-12 border-t border-line pt-8">
-          <Link
-            href="/join/provider"
-            className="inline-flex rounded-full bg-magenta px-8 py-3.5 text-[16px] font-bold text-white transition-colors hover:bg-magenta-dark"
-          >
-            Get Started Now!
-          </Link>
-          <p className="mt-3 text-[14px] text-ink-2">
-            It only takes 5–10 minutes and you can edit it later. We&apos;ll save
-            as you go.
-          </p>
+          <section>
+            <h2 className="mb-4 text-[13px] font-bold uppercase tracking-wide text-ink-2">
+              Providers on Panameer
+            </h2>
+            <TestimonialCarousel />
+          </section>
         </div>
       </main>
     </div>

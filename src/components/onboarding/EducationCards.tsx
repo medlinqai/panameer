@@ -32,8 +32,100 @@ export const emptyEducation = (): EducationDraft => ({
 });
 
 const THIS_YEAR = new Date().getFullYear();
-/** Newest first; a decade ahead covers expected graduation dates. */
-const YEARS = Array.from({ length: 70 }, (_, i) => THIS_YEAR + 10 - i);
+/**
+ * E033 — "Dates From" cannot be a future date, so the FROM list stops at the
+ * current year. TO may run ahead for an expected graduation.
+ */
+const FROM_YEARS = Array.from({ length: 60 }, (_, i) => THIS_YEAR - i);
+const TO_YEARS = Array.from({ length: 70 }, (_, i) => THIS_YEAR + 10 - i);
+
+/**
+ * E033 — Degree and Field of Study are dropdowns that ALSO accept new entries
+ * (an `<input list>` datalist: pick a common value or type your own). The
+ * school list is an autocomplete over well-known universities, likewise
+ * open — no list can be exhaustive, and refusing an unlisted school would
+ * simply lose the record.
+ */
+const DEGREES = [
+  "Associate's Degree",
+  "Bachelor of Arts (BA)",
+  "Bachelor of Science (BS)",
+  "Bachelor of Engineering (BEng)",
+  "Bachelor of Commerce (BCom)",
+  "Master of Arts (MA)",
+  "Master of Science (MS)",
+  "Master of Business Administration (MBA)",
+  "Master of Engineering (MEng)",
+  "Doctor of Philosophy (PhD)",
+  "Juris Doctor (JD)",
+  "Diploma",
+  "Certificate",
+];
+
+const FIELDS_OF_STUDY = [
+  "Accounting",
+  "Business Administration",
+  "Computer Science",
+  "Economics",
+  "Electrical Engineering",
+  "Finance",
+  "Human Resources",
+  "Industrial Engineering",
+  "Information Systems",
+  "Information Technology",
+  "Management",
+  "Marketing",
+  "Mathematics",
+  "Mechanical Engineering",
+  "Operations Management",
+  "Software Engineering",
+  "Supply Chain Management",
+];
+
+/**
+ * Autocomplete source for School. A representative list — the field accepts
+ * anything typed, so an unlisted institution is never blocked.
+ */
+const UNIVERSITIES = [
+  "Arizona State University",
+  "Boston University",
+  "Carnegie Mellon University",
+  "Columbia University",
+  "Cornell University",
+  "DePaul University",
+  "Duke University",
+  "Georgia Institute of Technology",
+  "Harvard University",
+  "Indiana University",
+  "Johns Hopkins University",
+  "Massachusetts Institute of Technology",
+  "Michigan State University",
+  "New York University",
+  "Northwestern University",
+  "Ohio State University",
+  "Pennsylvania State University",
+  "Purdue University",
+  "Rutgers University",
+  "Stanford University",
+  "Texas A&M University",
+  "University of California, Berkeley",
+  "University of California, Los Angeles",
+  "University of Chicago",
+  "University of Florida",
+  "University of Illinois Urbana-Champaign",
+  "University of Michigan",
+  "University of Minnesota",
+  "University of North Carolina at Chapel Hill",
+  "University of Notre Dame",
+  "University of Pennsylvania",
+  "University of Southern California",
+  "University of Texas at Austin",
+  "University of Toronto",
+  "University of Washington",
+  "University of Wisconsin–Madison",
+  "Virginia Tech",
+  "Yale University",
+];
 
 function yearRange(e: EducationDraft): string {
   if (!e.startYear && !e.endYear) return "";
@@ -69,8 +161,25 @@ export function EducationCards({
   };
 
   const save = () => {
-    if (!draft.institution.trim()) {
-      setError("School is required.");
+    // E033 — the modal used to save with only a school filled in, which left
+    // entries too thin to be worth showing. School, degree, field and a start
+    // year are all required now; the end year stays optional for study still
+    // in progress.
+    const missing: string[] = [];
+    if (!draft.institution.trim()) missing.push("School");
+    if (!draft.degree?.trim()) missing.push("Degree");
+    if (!draft.field?.trim()) missing.push("Field of Study");
+    if (!draft.startYear) missing.push("Dates Attended (from)");
+    if (missing.length > 0) {
+      setError(
+        missing.length === 1
+          ? `${missing[0]} is required.`
+          : `These are required: ${missing.join(", ")}.`
+      );
+      return;
+    }
+    if (draft.startYear && draft.startYear > THIS_YEAR) {
+      setError("The start year can't be in the future.");
       return;
     }
     if (draft.startYear && draft.endYear && draft.endYear < draft.startYear) {
@@ -143,40 +252,60 @@ export function EducationCards({
         title="Edit Education History"
       >
         <div className="space-y-4">
-          <Field label="School *">
+          <Field label="School *" hint="Start typing — pick a match or enter your own.">
             <TextInput
+              list="edu-universities"
               value={draft.institution}
               onChange={(e) => setDraft({ ...draft, institution: e.target.value })}
               placeholder="Northwestern University"
             />
+            <datalist id="edu-universities">
+              {UNIVERSITIES.map((u) => (
+                <option key={u} value={u} />
+              ))}
+            </datalist>
           </Field>
-          <Field label="Degree">
+          <Field label="Degree *" hint="Choose one or type your own.">
             <TextInput
+              list="edu-degrees"
               value={draft.degree ?? ""}
               onChange={(e) => setDraft({ ...draft, degree: e.target.value || null })}
-              placeholder="Bachelor of Science"
+              placeholder="Bachelor of Science (BS)"
             />
+            <datalist id="edu-degrees">
+              {DEGREES.map((d) => (
+                <option key={d} value={d} />
+              ))}
+            </datalist>
           </Field>
-          <Field label="Field of Study">
+          <Field label="Field of Study *" hint="Choose one or type your own.">
             <TextInput
+              list="edu-fields"
               value={draft.field ?? ""}
               onChange={(e) => setDraft({ ...draft, field: e.target.value || null })}
               placeholder="Information Systems"
             />
+            <datalist id="edu-fields">
+              {FIELDS_OF_STUDY.map((f) => (
+                <option key={f} value={f} />
+              ))}
+            </datalist>
           </Field>
 
           <div>
             <span className="mb-1.5 block text-[14px] font-bold text-ink">
-              Dates Attended
+              Dates Attended *
             </span>
             <div className="grid grid-cols-2 gap-3">
               <YearSelect
                 label="From"
+                years={FROM_YEARS}
                 value={draft.startYear}
                 onChange={(y) => setDraft({ ...draft, startYear: y })}
               />
               <YearSelect
                 label="To"
+                years={TO_YEARS}
                 value={draft.endYear}
                 onChange={(y) => setDraft({ ...draft, endYear: y })}
               />
@@ -233,10 +362,12 @@ export function EducationCards({
 
 function YearSelect({
   label,
+  years,
   value,
   onChange,
 }: {
   label: string;
+  years: number[];
   value: number | null;
   onChange: (y: number | null) => void;
 }) {
@@ -249,7 +380,7 @@ function YearSelect({
         className="w-full rounded-[12px] border border-line bg-white px-4 py-3 text-[15px] text-ink outline-none transition-colors focus:border-magenta"
       >
         <option value="">Year</option>
-        {YEARS.map((y) => (
+        {years.map((y) => (
           <option key={y} value={y}>
             {y}
           </option>

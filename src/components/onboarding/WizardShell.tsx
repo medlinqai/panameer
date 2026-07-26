@@ -22,7 +22,8 @@ import { Logo } from "@/components/Logo";
  */
 export function WizardShell({
   step,
-  totalSteps = 12,
+  totalSteps = 13,
+  stepLabel,
   progress,
   title,
   subtitle,
@@ -43,6 +44,12 @@ export function WizardShell({
   /** 1-based step number. OMIT on pre-verify pages — that hides the stepper. */
   step?: number;
   totalSteps?: number;
+  /**
+   * Per-step stepper heading (brief_S / E024–E028, E033–E035). Replaces the
+   * generic "Build Your Profile" — Scott's walk asked for the step's own name
+   * (e.g. "Your Experience") beside the counter.
+   */
+  stepLabel?: string;
   /**
    * Legacy 0..1 fraction used by the buyer + Work Request wizards, which have
    * their own step counts and are out of scope for brief_P. Renders the same
@@ -90,7 +97,7 @@ export function WizardShell({
             {showCounter && (
               <div className="mb-2 flex items-baseline justify-between">
                 <span className="text-[13px] font-bold uppercase tracking-wide text-ink-2">
-                  Build Your Profile
+                  {stepLabel ?? "Build Your Profile"}
                 </span>
                 <span className="text-[14px] font-extrabold tabular-nums text-magenta">
                   {step}/{totalSteps}
@@ -131,9 +138,15 @@ export function WizardShell({
           </div>
         </div>
 
+        {/*
+          Footer (brief_S / E032, revising brief_O): Back far-left; Skip and
+          Next GROUPED ON THE RIGHT with Skip immediately left of Next — so Skip
+          still sits between the two, but reads as part of the forward action
+          rather than stranded beside Back.
+        */}
         {!hideFooter && (
           <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-line pt-6">
-            <div className="flex items-center gap-6">
+            <div>
               {canBack && onBack && (
                 <button
                   onClick={onBack}
@@ -143,6 +156,9 @@ export function WizardShell({
                   Back
                 </button>
               )}
+            </div>
+
+            <div className="ml-auto flex items-center gap-5">
               {secondaryLabel && onSecondary && (
                 <button
                   onClick={onSecondary}
@@ -152,17 +168,16 @@ export function WizardShell({
                   {secondaryLabel}
                 </button>
               )}
+              {onContinue && (
+                <button
+                  onClick={onContinue}
+                  disabled={continueDisabled || busy}
+                  className="rounded-full bg-magenta px-8 py-3 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
+                >
+                  {busy ? "Saving…" : continueLabel}
+                </button>
+              )}
             </div>
-
-            {onContinue && (
-              <button
-                onClick={onContinue}
-                disabled={continueDisabled || busy}
-                className="ml-auto rounded-full bg-magenta px-8 py-3 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
-              >
-                {busy ? "Saving…" : continueLabel}
-              </button>
-            )}
           </div>
         )}
       </main>

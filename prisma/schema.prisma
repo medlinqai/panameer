@@ -89,6 +89,11 @@ model VerificationToken {
 
 enum VerificationTokenType {
   EMAIL
+  /// A single-use, short-lived token that establishes a SESSION (brief_S /
+  /// E022). Minted only after an email-verification token has been validated,
+  /// so clicking the link in the email signs the provider in and drops them
+  /// straight into onboarding instead of a login screen.
+  SIGNIN
 }
 
 // ---------------------------------------------------------------------------

@@ -17,14 +17,13 @@ import { capitalizeName } from "@/lib/display";
  */
 
 /**
- * The post-verification profile build, in order (brief_P / E003–E019).
+ * The post-verification profile build, in order.
  *
- * TWELVE distinct steps, so the stepper reads `x/12` (E010). The walk showed
- * 2/12 and 3/12 rendering the SAME "biggest goal" page — that duplicate is gone,
- * and the finish page ("You're Done!" details: photo, DOB, address, phone) takes
- * the twelfth slot, since it collects profile data like every other step. Rate
- * therefore lands at 11/12 rather than the 12/12 the walk observed with the
- * duplicate still present.
+ * brief_S (Run 2) settled the shape at TWELVE steps: E030 collapsed the separate
+ * category and skills steps into ONE cascading Role → Domain → Skills page, and
+ * the old skills step became Specializations (E031). The final step is the
+ * one-page review that publishes (E035). Matches the step/label/button table in
+ * brief_S exactly — see `PROVIDER_STEP_LABELS`.
  */
 export const PROVIDER_STEPS = [
   "experience_level", //  1 — E003 (NB: "experience" is work HISTORY, not this)
@@ -32,23 +31,56 @@ export const PROVIDER_STEPS = [
   "work_method", //       3 — E009 (Provider vs Recruiter fork)
   "title", //             4 — E011
   "tell_us", //           5 — E012 (résumé / LinkedIn PDF / manual)
-  "category", //          6 — E013 (Role → Domain, ERP-heavy areas first)
-  "skills", //            7 — E014 (conditional on the field, max 15)
-  "specializations", //   8 — brief_R (optional multi-select)
-  "education", //         9 — E015 (optional, skippable)
-  "languages", //        10 — E016 (English by default)
-  "bio", //              11 — E017 (required, min length)
-  "rate", //             12 — E018 (hourly + % fee + "You'll get")
-  "finish", //           13 — E019 (photo, DOB, address, phone + SMS)
+  "catalog", //           6 — E030 (Role → Domain → Skills, ONE cascading page)
+  "specializations", //   7 — E031 (multi-select + add-on-the-fly)
+  "education", //         8 — E015/E033 (optional, skippable)
+  "languages", //         9 — E016/E034 (both fields required)
+  "bio", //              10 — E017 (required, min length)
+  "rate", //             11 — E018 (hourly + % fee + "You'll Get")
+  "finish", //           12 — E035 review + publish
 ] as const;
 export type ProviderStep = (typeof PROVIDER_STEPS)[number];
 
-export const TOTAL_PROVIDER_STEPS = PROVIDER_STEPS.length; // 13 (brief_R)
+export const TOTAL_PROVIDER_STEPS = PROVIDER_STEPS.length; // 12 (brief_S/E030)
 
 /** 1-based position for the `x/12` counter. */
 export function providerStepNumber(step: ProviderStep): number {
   return PROVIDER_STEPS.indexOf(step) + 1;
 }
+
+/**
+ * Stepper heading + forward-button label for each step — the EXACT strings from
+ * brief_S's table (E024–E028, E030, E031, E033–E035).
+ *
+ * Kept here rather than inline in the page so the wording is in one place and
+ * the "Next: …" label always names the step that actually follows.
+ */
+export const PROVIDER_STEP_LABELS: Record<
+  ProviderStep,
+  { stepper: string; next: string }
+> = {
+  experience_level: { stepper: "Your Experience", next: "Next: Your Goal" },
+  goal: { stepper: "Your Goal", next: "Next: What Do You Sell" },
+  work_method: { stepper: "What Do You Sell", next: "Next: Your Title" },
+  title: { stepper: "Your Title", next: "Next: Create Your Profile" },
+  tell_us: {
+    stepper: "Create Your Profile",
+    next: "Next: Role → Domain → Skills",
+  },
+  catalog: {
+    stepper: "Role → Domain → Skills",
+    next: "Next: Your Specializations",
+  },
+  specializations: { stepper: "Your Specializations", next: "Next: Education" },
+  education: { stepper: "Your Education", next: "Next: Languages" },
+  languages: { stepper: "Your Languages", next: "Next: Your Bio" },
+  bio: { stepper: "Your Bio", next: "Next: Your Rate" },
+  rate: { stepper: "Your Rate", next: "Next: Profile Review" },
+  finish: {
+    stepper: "Review Your Profile",
+    next: "Next: Publish Your Profile",
+  },
+};
 
 /**
  * Steps a user may pass without entering data. Education is explicitly
@@ -73,6 +105,10 @@ export const LEGACY_SECTIONS = [
   "experience",
   "education_languages",
   "certifications",
+  // Split writers that are no longer their own wizard step but are still used
+  // by Settings and by the combined `catalog` step (brief_S / E030).
+  "category",
+  "skills",
 ] as const;
 
 const EXPERIENCE_LEVELS = ["BEGINNER", "MID_CAREER", "EXPERT"] as const;
@@ -437,9 +473,9 @@ function computeResumeStep(p: Awaited<ReturnType<typeof loadDraft>>): ProviderSt
     work_method: pp.work_method != null,
     title: pp.headline.trim() !== "",
     tell_us: true, //        optional — a method choice, never a resume target
-    // The field is a (Role, Domain) PAIR (brief_R) — both must be set.
-    category: pp.pillar_id != null && pp.role_type_id != null,
-    skills: pp.skills.length > 0,
+    // ONE cascading page (E030): the field is a (Role, Domain) PAIR and at
+    // least one skill under it, so the step is only done when both are true.
+    catalog: pp.pillar_id != null && pp.role_type_id != null && pp.skills.length > 0,
     specializations: true, // optional (brief_R) — never a resume target
     education: true, //      optional (E015) — never a resume target
     languages: pp.languages.length > 0,
@@ -673,6 +709,15 @@ export async function applyProviderSection(
       break;
     }
 
+    case "catalog": {
+      // E030 — the combined Role → Domain → Skills page saves as one unit, so
+      // the field and its skills can never be left half-written (which is what
+      // let a cross-pillar skill survive into the old separate skills step).
+      await applyProviderSection(profileId, personId, "category", data);
+      await applyProviderSection(profileId, personId, "skills", data);
+      break;
+    }
+
     case "specializations": {
       // brief_R — cross-cutting multi-select (products / methodologies /
       // industries). OPTIONAL: an empty list is a valid answer, so this
@@ -680,6 +725,41 @@ export async function applyProviderSection(
       const ids: string[] = Array.isArray(data.specializationIds)
         ? data.specializationIds
         : [];
+
+      // E031 — add-on-the-fly. A provider's real specialization may simply not
+      // be in the seeded vocabulary yet; refusing it would cost us the signal.
+      // Custom entries join the SAME vocabulary (deduped case-insensitively) so
+      // the next provider can pick it from the list rather than retyping it.
+      const custom: string[] = Array.isArray(data.customSpecializations)
+        ? data.customSpecializations
+        : [];
+      for (const raw of custom) {
+        const name = String(raw).trim().slice(0, 80);
+        if (!name) continue;
+        const existing = await prisma.specialization.findFirst({
+          where: { name: { equals: name, mode: "insensitive" } },
+          select: { id: true },
+        });
+        if (existing) {
+          if (!ids.includes(existing.id)) ids.push(existing.id);
+          continue;
+        }
+        const catalog = await prisma.serviceCatalog.findFirst({
+          select: { id: true },
+        });
+        if (!catalog) break;
+        const created = await prisma.specialization.create({
+          data: {
+            catalog_id: catalog.id,
+            name,
+            kind: "PRODUCT",
+            // Sorts after the seeded vocabulary.
+            sort_order: 900,
+          },
+        });
+        ids.push(created.id);
+      }
+
       if (ids.length > 0) {
         const found = await prisma.specialization.count({
           where: { id: { in: ids } },
@@ -711,7 +791,45 @@ export async function applyProviderSection(
       // E014 — skills are CONDITIONAL on the field chosen at step 6 and capped
       // at 15. Settings (brief_H) still posts a `roleTypeId`, so both scoping
       // keys are accepted; whichever is supplied is enforced.
-      const skillIds: string[] = Array.isArray(data.skillIds) ? data.skillIds : [];
+      const skillIds: string[] = Array.isArray(data.skillIds)
+        ? [...data.skillIds]
+        : [];
+
+      // E031 — add-on-the-fly skills. Created INSIDE the chosen (Role, Domain)
+      // so they satisfy the same scoping rule as catalog skills and show up on
+      // that field's list for everyone afterwards. The catalog is seed-driven
+      // today; an admin editor is a later brief.
+      const customSkills: string[] = Array.isArray(data.customSkills)
+        ? data.customSkills
+        : [];
+      if (customSkills.length > 0 && data.roleTypeId && data.pillarId) {
+        const catalogRow = await prisma.serviceCatalog.findFirst({
+          select: { id: true },
+        });
+        for (const raw of customSkills) {
+          const name = String(raw).trim().slice(0, 120);
+          if (!name || !catalogRow) continue;
+          const skill = await prisma.skill.upsert({
+            where: {
+              catalog_id_role_type_id_pillar_id_name: {
+                catalog_id: catalogRow.id,
+                role_type_id: data.roleTypeId,
+                pillar_id: data.pillarId,
+                name,
+              },
+            },
+            update: {},
+            create: {
+              catalog_id: catalogRow.id,
+              role_type_id: data.roleTypeId,
+              pillar_id: data.pillarId,
+              name,
+            },
+          });
+          if (!skillIds.includes(skill.id)) skillIds.push(skill.id);
+        }
+      }
+
       if (skillIds.length === 0) {
         throw new OnboardingError("Pick at least one skill", "INVALID");
       }
@@ -911,6 +1029,15 @@ export async function applyProviderSection(
       if (clean.length === 0) {
         throw new OnboardingError("Add at least one language", "INVALID");
       }
+      // E034 — BOTH fields are required; a language with no proficiency tells a
+      // buyer nothing, and the step previously saved happily without one.
+      const missingLevel = clean.find((l) => !l.level);
+      if (missingLevel) {
+        throw new OnboardingError(
+          `Choose a proficiency for ${missingLevel.name}.`,
+          "INVALID"
+        );
+      }
       const seen = new Set<string>();
       for (const l of clean) {
         const key = l.name.toLowerCase();
@@ -1033,6 +1160,18 @@ export async function applyProviderSection(
         where: { id: profileId },
         data: { date_of_birth: dob },
       });
+
+      // E036 — phone verification is STUBBED. We store the number the provider
+      // typed so the profile is complete and publishable; we do NOT mark it
+      // verified, because it hasn't been. The real SMS challenge/response is
+      // built and untouched (`phone-verification.ts`) — flipping it back on is
+      // re-adding the publish-gate line, not rebuilding the flow.
+      if (typeof data.phone === "string" && data.phone.trim()) {
+        await prisma.person.update({
+          where: { id: personId },
+          data: { phone: data.phone.trim() },
+        });
+      }
 
       if (data.address && typeof data.address === "object") {
         await saveProviderAddress(personId, data.address as StepData);
@@ -1227,6 +1366,7 @@ export async function recomputeCompleteness(profileId: string): Promise<number> 
       person: {
         select: {
           photo_url: true,
+          phone: true,
           phone_verified_at: true,
           site: { select: { addresses: { select: { line1: true }, take: 1 } } },
         },
@@ -1255,6 +1395,7 @@ export async function recomputeCompleteness(profileId: string): Promise<number> 
     date_of_birth: profile.date_of_birth,
     // An address row exists only once a street line has been entered.
     hasAddress: Boolean(profile.person.site?.addresses?.[0]?.line1?.trim()),
+    hasPhone: Boolean(profile.person.phone?.trim()),
     phoneVerified: profile.person.phone_verified_at != null,
   });
   await prisma.providerProfile.update({
@@ -1311,7 +1452,10 @@ export async function publishProfile(viewer: Viewer) {
   if (pp.languages.length === 0) missing.push("at least one language");
   if (!pp.date_of_birth) missing.push("your date of birth");
   if (!p.phone) missing.push("your phone number");
-  if (p.phone_verified_at == null) missing.push("phone verification");
+  // E036 — phone VERIFICATION is stubbed for now so a walk can complete without
+  // SMS credentials. The number is still required; only the verified-ness is
+  // waived. Restore this line when SMS is switched on (brief_P machinery is
+  // built and unchanged — see `phone-verification.ts`).
 
   if (missing.length > 0) {
     throw new OnboardingError(

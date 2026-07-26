@@ -26,7 +26,9 @@ export async function POST(request: Request) {
 
   try {
     await updateUnverifiedEmail(viewer, parsed.data.email);
-    const res = await issueEmailVerification(viewer.userId);
+    const res = await issueEmailVerification(viewer.userId, {
+        origin: new URL(request.url).origin,
+      });
     return NextResponse.json({
       ok: true,
       email: parsed.data.email,
