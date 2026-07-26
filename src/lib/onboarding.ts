@@ -445,6 +445,7 @@ async function loadDraft(viewer: Viewer) {
           },
           education: { orderBy: { created_at: "asc" } },
           languages: { orderBy: { created_at: "asc" } },
+          certifications: { orderBy: [{ year: "desc" }, { name: "asc" }] },
         },
       },
     },
@@ -597,6 +598,16 @@ export async function getOnboardingState(viewer: Viewer) {
         // `level` is canonical (E016); `proficiency` is the pre-brief_P text.
         level: l.level,
         proficiency: l.proficiency,
+      })),
+      // brief_T / E040 — rendered + editable on the review page.
+      certifications: pp.certifications.map((c) => ({
+        id: c.id,
+        name: c.name,
+        issuer: c.issuer,
+        year: c.year,
+        credentialId: c.credential_id,
+        url: c.url,
+        expiresOn: c.expires_on ? c.expires_on.toISOString().slice(0, 10) : null,
       })),
     },
   };
@@ -1234,21 +1245,40 @@ export async function applyProviderSection(
     }
 
     case "certifications": {
+      // brief_T / E040 — now carries the credential fields brief_S added to the
+      // model (credential id, verify URL, expiry) alongside name/issuer/year.
       const list: StepData[] = Array.isArray(data.certifications)
         ? data.certifications
         : [];
+      const toYearOrNull = (v: unknown) =>
+        typeof v === "number" ? v : v ? Number(v) || null : null;
+
       const clean = list
         .map((c) => ({
           name: (c.name ?? "").trim(),
           issuer: c.issuer?.trim() || null,
-          year:
-            typeof c.year === "number"
-              ? c.year
-              : c.year
-                ? Number(c.year)
-                : null,
+          year: toYearOrNull(c.year),
+          credential_id: c.credentialId?.trim() || null,
+          url: c.url?.trim() || null,
+          expires_on: c.expiresOn ? new Date(c.expiresOn) : null,
         }))
-        .filter((c) => c.name);
+        .filter((c) => c.name)
+        .filter((c) => !c.expires_on || !Number.isNaN(c.expires_on.getTime()));
+
+      // This writer replaces the whole set, which would drop the Employer link
+      // brief_S added — the client never sees `employer_id`, so it can't send
+      // it back. Carry it forward by name so editing a certification doesn't
+      // silently detach it from the employer it was earned at.
+      const existing = await prisma.certification.findMany({
+        where: { provider_profile_id: profileId },
+        select: { name: true, employer_id: true },
+      });
+      const employerByName = new Map(
+        existing
+          .filter((e) => e.employer_id)
+          .map((e) => [e.name.toLowerCase(), e.employer_id as string])
+      );
+
       await prisma.$transaction([
         prisma.certification.deleteMany({
           where: { provider_profile_id: profileId },
@@ -1256,7 +1286,11 @@ export async function applyProviderSection(
         ...(clean.length
           ? [
               prisma.certification.createMany({
-                data: clean.map((c) => ({ provider_profile_id: profileId, ...c })),
+                data: clean.map((c) => ({
+                  provider_profile_id: profileId,
+                  employer_id: employerByName.get(c.name.toLowerCase()) ?? null,
+                  ...c,
+                })),
               }),
             ]
           : []),

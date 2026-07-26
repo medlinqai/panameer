@@ -5,16 +5,16 @@ import type { ProviderProfileView } from "@/lib/provider-profile-view";
 
 /**
  * The published provider Profile View (brief_S / E037), modelled on the Upwork
- * reference: a narrow left rail (rates, verifications, languages, education)
- * beside the main column (headline, overview, portfolio, skills, work history,
- * certifications, testimonials).
+ * reference: a narrow left rail (verifications, languages, education,
+ * specializations) beside the main column (overview, projects, skills,
+ * employment history, certifications, testimonials).
  *
  * This REPLACES the old thin dashboard as the provider's home, so it carries
  * the owner-only bits too — the completeness banner and per-section edit links
  * back into the wizard. A visitor sees the same page without them.
  *
  * Empty sections render an explicit prompt rather than vanishing: on your own
- * profile a missing portfolio is a to-do, and silently hiding it is how a
+ * profile a missing project list is a to-do, and silently hiding it is how a
  * provider ends up wondering why nobody contacts them.
  */
 
@@ -270,8 +270,9 @@ export function ProviderProfileViewPage({ p }: { p: ProviderProfileView }) {
               )}
             </Section>
 
-            {/* Portfolio — Projects → Solutions (E037) */}
-            <Section title="Portfolio">
+            {/* Projects → Solutions (E037). Renamed from "Portfolio" by
+                brief_T / E041 — "we're not artists". */}
+            <Section title="Projects">
               {p.projects.length > 0 ? (
                 <div className="grid gap-4 sm:grid-cols-2">
                   {p.projects.map((pr) => (
@@ -425,10 +426,12 @@ export function ProviderProfileViewPage({ p }: { p: ProviderProfileView }) {
               )}
             </Section>
 
+            {/* E039 — testimonials are EARNED after delivering work, so this
+                is an honest empty state, not a capture form. */}
             <Section title="Testimonials">
               <Empty>
                 {p.isOwner
-                  ? "Once you complete work through Panameer, client testimonials will appear here."
+                  ? "No testimonials yet — you'll collect these as you deliver work."
                   : "No testimonials yet."}
               </Empty>
             </Section>

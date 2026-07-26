@@ -20,6 +20,10 @@ import {
   type EducationDraft,
 } from "@/components/onboarding/EducationCards";
 import {
+  CertificationsEditor,
+  type CertificationDraft,
+} from "@/components/onboarding/CertificationsEditor";
+import {
   ResumeUploadModal,
   type ImportOutcome,
 } from "@/components/onboarding/ResumeUploadModal";
@@ -135,6 +139,15 @@ type ProfilePayload = {
   roleTypeName?: string | null;
   specializationIds?: string[];
   specializations?: { id: string; name: string; kind: string }[];
+  certifications?: {
+    id: string;
+    name: string;
+    issuer: string | null;
+    year: number | null;
+    credentialId: string | null;
+    url: string | null;
+    expiresOn: string | null;
+  }[];
   skillIds?: string[];
   skillNames?: { id: string; name: string }[];
   headline?: string | null;
@@ -210,8 +223,11 @@ type Profile = {
   roleTypeId: string | null;
   roleTypeName: string | null;
   specializationIds: string[];
+  /** Names of the selected specializations, for chip rendering (E038). */
+  specializationNames: { id: string; name: string }[];
   /** Typed-in specializations not yet in the vocabulary (E031). */
   customSpecializations: string[];
+  certifications: CertificationDraft[];
   skillIds: string[];
   skillNames: { id: string; name: string }[];
   /** Typed-in skills not yet in the catalog (E031). */
@@ -241,7 +257,9 @@ const emptyProfile = (): Profile => ({
   roleTypeId: null,
   roleTypeName: null,
   specializationIds: [],
+  specializationNames: [],
   customSpecializations: [],
+  certifications: [],
   skillIds: [],
   skillNames: [],
   customSkills: [],
@@ -298,6 +316,8 @@ export default function JoinProviderPage() {
   const [skillOpts, setSkillOpts] = useState<SkillOpt[]>([]);
   const [skillQuery, setSkillQuery] = useState("");
   const [specQuery, setSpecQuery] = useState("");
+  /** E040 — inline certification add/edit on the review page. */
+  const [certsOpen, setCertsOpen] = useState(false);
 
   const [importOutcome, setImportOutcome] = useState<ImportOutcome | null>(null);
   const [uploadModal, setUploadModal] = useState<null | "RESUME" | "LINKEDIN_PDF">(null);
@@ -328,9 +348,21 @@ export default function JoinProviderPage() {
       roleTypeId: p.roleTypeId ?? null,
       roleTypeName: p.roleTypeName ?? null,
       specializationIds: p.specializationIds ?? [],
+      specializationNames: (p.specializations ?? []).map((x) => ({
+        id: x.id,
+        name: x.name,
+      })),
       // Server-side these have been folded into the real vocabularies.
       customSpecializations: [],
       customSkills: [],
+      certifications: (p.certifications ?? []).map((c) => ({
+        name: c.name,
+        issuer: c.issuer,
+        year: c.year,
+        credentialId: c.credentialId,
+        url: c.url,
+        expiresOn: c.expiresOn,
+      })),
       skillIds: p.skillIds ?? [],
       skillNames: p.skillNames ?? [],
       headline: p.headline ?? "",
@@ -497,6 +529,38 @@ export default function JoinProviderPage() {
 
   const saveAnd = async (step: Step, data: unknown, then: () => void = goNext) => {
     if (await postStep(step, data)) then();
+  };
+
+  /**
+   * Certifications are a profile SECTION, not one of the 12 wizard steps, so
+   * they save through the owner-scoped section endpoint (the step route
+   * deliberately only accepts PROVIDER_STEPS). Optional — a failure here never
+   * blocks publishing.
+   */
+  const saveCertifications = async (): Promise<boolean> => {
+    setBusy(true);
+    setError(null);
+    try {
+      const r = await fetch("/api/settings/profile/section", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          section: "certifications",
+          data: { certifications: profile.certifications },
+        }),
+      });
+      if (!r.ok) {
+        const body = await r.json().catch(() => ({}));
+        setError(body.error ?? "Could not save certifications.");
+        return false;
+      }
+      // Refresh from the server so the list reflects what was actually stored.
+      const status = await fetch("/api/onboarding/status");
+      if (status.ok) hydrate(await status.json());
+      return true;
+    } finally {
+      setBusy(false);
+    }
   };
 
   // ---- account creation -------------------------------------------------
@@ -1601,10 +1665,97 @@ export default function JoinProviderPage() {
                 title="Specializations"
                 onEdit={() => goTo("specializations")}
               >
+                {/* E038 — the actual values as chips. A bare count ("4
+                    selected") told the provider nothing about WHICH four, so
+                    there was no way to check them on the review page. */}
+                {profile.specializationNames.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {profile.specializationNames.map((sp) => (
+                      <span
+                        key={sp.id}
+                        className="rounded-full border border-magenta/30 bg-magenta/[0.06] px-2.5 py-0.5 text-[12.5px] font-semibold text-magenta-dark"
+                      >
+                        {sp.name}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-[14px] text-ink-2">None added (optional)</p>
+                )}
+              </ReviewBlock>
+
+              {/* E040 — Certifications: renders what's there, and lets the
+                  provider add one inline. Optional, and never gates publish. */}
+              <ReviewBlock title="Certifications">
+                {certsOpen ? (
+                  <>
+                    <CertificationsEditor
+                      value={profile.certifications}
+                      onChange={(certifications) =>
+                        setProfile((pp) => ({ ...pp, certifications }))
+                      }
+                    />
+                    <div className="mt-3 flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (await saveCertifications()) setCertsOpen(false);
+                        }}
+                        disabled={busy}
+                        className="rounded-full bg-magenta px-5 py-2 text-[14px] font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
+                      >
+                        Save Certifications
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCertsOpen(false)}
+                        className="text-[14px] font-semibold text-ink-2 underline underline-offset-4 hover:text-magenta"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {profile.certifications.length > 0 ? (
+                      <ul className="space-y-1 text-[14px]">
+                        {profile.certifications.map((c, i) => (
+                          <li key={i}>
+                            <b>{c.name}</b>
+                            {[c.issuer, c.year].filter(Boolean).length > 0 && (
+                              <span className="text-ink-2">
+                                {" — "}
+                                {[c.issuer, c.year].filter(Boolean).join(" · ")}
+                              </span>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-[14px] text-ink-2">
+                        None added (optional).
+                      </p>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setCertsOpen(true)}
+                      className="mt-2 text-[14px] font-bold text-magenta hover:text-magenta-dark"
+                    >
+                      {profile.certifications.length > 0
+                        ? "Edit Certifications"
+                        : "+ Add a Certification"}
+                    </button>
+                  </>
+                )}
+              </ReviewBlock>
+
+              {/* E039 — Testimonials. Earned after delivering work, so during
+                  onboarding this is an honest empty state rather than a
+                  capture form. */}
+              <ReviewBlock title="Testimonials">
                 <p className="text-[14px] text-ink-2">
-                  {profile.specializationIds.length > 0
-                    ? `${profile.specializationIds.length} selected`
-                    : "None added (optional)"}
+                  No testimonials yet — you&apos;ll collect these as you deliver
+                  work.
                 </p>
               </ReviewBlock>
 
