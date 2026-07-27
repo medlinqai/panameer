@@ -303,6 +303,7 @@ model RoleType {
   tags             SkillTag[]
   workRequests     WorkRequest[]
   providerProfiles ProviderProfile[]
+  packages         Package[]
 
   @@map("role_types")
 }
@@ -391,6 +392,7 @@ model Skill {
   application    Application?    @relation(fields: [application_id], references: [id], onDelete: SetNull)
   providerSkills    ProviderSkill[]
   workRequestSkills WorkRequestSkill[]
+  packageSkills     PackageSkill[]
 
   /// A Skill belongs to a (Role, Domain) PAIR — brief_R, from the authoritative
   /// Service Catalog. The old `(catalog_id, name)` key was wrong for that shape:
@@ -557,6 +559,7 @@ model ProviderProfile {
   specializations ProviderProfileSpecialization[]
   employers       Employer[]
   projects        Project[]
+  packages        Package[]
   education        Education[]
   languages        Language[]
   certifications  Certification[]
@@ -736,8 +739,11 @@ model Employer {
   @@map("employers")
 }
 
-/// A delivered piece of work, done AT an employer and composed of one or more
-/// Solutions (the diagram's Project → Solution edge).
+/// A delivered piece of work, done AT an employer.
+///
+/// The `Solution` child this used to carry is gone (brief_V / E045): what it
+/// was reaching for is a PACKAGE — a productized offering the provider SELLS —
+/// and that is a standalone catalog entity, not a sub-part of past work.
 ///
 /// `employer_id` is retained and is how the capture step nests projects under
 /// the job they belong to (brief_U). It stays nullable so a project imported
@@ -761,27 +767,112 @@ model Project {
 
   providerProfile ProviderProfile @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
   employer        Employer?       @relation(fields: [employer_id], references: [id], onDelete: SetNull)
-  solutions       Solution[]
 
   @@index([provider_profile_id])
   @@index([employer_id])
   @@map("projects")
 }
 
-/// A capability delivered within a Project — the "Solution" node hanging off
-/// Project in the categorization diagram (e.g. "Supplier Portal rollout").
-model Solution {
-  id          String   @id @default(uuid()) @db.Uuid
-  project_id  String   @db.Uuid
-  name        String
-  description String?
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
+/// A productized, a-la-carte offering the provider SELLS (brief_V / E045).
+///
+/// Standalone on the provider — their sellable catalog — deliberately NOT tied
+/// to a past Project. A Project is proof of work already delivered; a Package
+/// is something a buyer can buy today. Example: "Install DocuSign for Oracle
+/// Cloud" — 5 weeks, $40,000, 50% upfront / 50% on completion.
+///
+/// Optional throughout: packages never gate publishing and carry no
+/// completeness weight (brief_R/U invariant untouched).
+model Package {
+  id                  String   @id @default(uuid()) @db.Uuid
+  provider_profile_id String   @db.Uuid
+  title               String
+  /// The scope — what the buyer is actually getting.
+  summary             String?
+  /// Timeline in weeks.
+  duration_weeks      Int?
+  /// V1 is FIXED-price only; the enum leaves room for HOURLY/TM later.
+  pricing_type        PackagePricingType @default(FIXED)
+  /// Integer cents, like every other money value in the app.
+  price_cents         Int?
+  currency            String   @default("USD")
+  /// Optional categorization for the catalog and future Work Request matching.
+  role_type_id        String?  @db.Uuid
+  cover_image_url     String?
+  status              PackageStatus @default(DRAFT)
+  sort_order          Int      @default(100)
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
 
-  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  providerProfile ProviderProfile      @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
+  roleType        RoleType?            @relation(fields: [role_type_id], references: [id], onDelete: SetNull)
+  deliverables    PackageDeliverable[]
+  milestones      PackageMilestone[]
+  skills          PackageSkill[]
 
-  @@index([project_id])
-  @@map("solutions")
+  @@index([provider_profile_id])
+  @@index([role_type_id])
+  @@map("packages")
+}
+
+enum PackagePricingType {
+  FIXED
+  /// Reserved — brief_V is fixed-price only.
+  HOURLY
+  TM
+}
+
+enum PackageStatus {
+  DRAFT
+  PUBLISHED
+}
+
+/// One line of "what you get". A child row rather than String[] so the order is
+/// explicit and each line can grow (e.g. a note) without a migration.
+model PackageDeliverable {
+  id         String   @id @default(uuid()) @db.Uuid
+  package_id String   @db.Uuid
+  text       String
+  sequence   Int      @default(0)
+  created_at DateTime @default(now())
+
+  pkg Package @relation(fields: [package_id], references: [id], onDelete: Cascade)
+
+  @@index([package_id])
+  @@map("package_deliverables")
+}
+
+/// A payment term: "50% Upfront", "50% On completion".
+///
+/// Percent OF THE TOTAL rather than an amount, so editing the price can never
+/// leave the milestones summing to something other than the package price. The
+/// writer validates the percents sum to exactly 100.
+model PackageMilestone {
+  id         String   @id @default(uuid()) @db.Uuid
+  package_id String   @db.Uuid
+  label      String
+  percent    Int
+  sequence   Int      @default(0)
+  created_at DateTime @default(now())
+
+  pkg Package @relation(fields: [package_id], references: [id], onDelete: Cascade)
+
+  @@index([package_id])
+  @@map("package_milestones")
+}
+
+/// Skill tags on a package — categorization for the catalog and future matching.
+model PackageSkill {
+  id         String   @id @default(uuid()) @db.Uuid
+  package_id String   @db.Uuid
+  skill_id   String   @db.Uuid
+  created_at DateTime @default(now())
+
+  pkg   Package @relation(fields: [package_id], references: [id], onDelete: Cascade)
+  skill Skill   @relation(fields: [skill_id], references: [id], onDelete: Cascade)
+
+  @@unique([package_id, skill_id])
+  @@index([skill_id])
+  @@map("package_skills")
 }
 
 model ProviderSkill {

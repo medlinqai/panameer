@@ -208,7 +208,7 @@ async function main() {
     });
   }
 
-  // --- Demo portfolio: Employers → Projects → Solutions, Certifications ----
+  // --- Demo portfolio: Employers → Projects, Certifications, Packages ------
   // brief_S / E037. Idempotent: keyed on (profile, name) via findFirst-or-create,
   // since these have no natural unique across providers.
   const employerSpecs = [
@@ -255,7 +255,6 @@ async function main() {
       description:
         "End-to-end Procure-to-Pay rollout across 14 countries — requisitions, sourcing, supplier portal and invoice automation.",
       sort_order: 10,
-      solutions: ["Supplier Portal Rollout", "Invoice Automation", "Sourcing & Negotiations"],
     },
     {
       name: "Supplier Onboarding Automation",
@@ -263,7 +262,6 @@ async function main() {
       description:
         "Cut supplier onboarding cycle time by 40% with Oracle Supplier Qualification Management.",
       sort_order: 20,
-      solutions: ["Supplier Qualification", "Approval Workflow Design"],
     },
   ];
 
@@ -272,50 +270,40 @@ async function main() {
       where: { provider_profile_id: providerProfile.id, name: spec.name },
       select: { id: true },
     });
-    const project = found
-      ? await prisma.project.update({
-          where: { id: found.id },
-          data: {
-            description: spec.description,
-            sort_order: spec.sort_order,
-            employer_id: employerIds[spec.employer] ?? null,
-          },
-        })
-      : await prisma.project.create({
-          data: {
-            provider_profile_id: providerProfile.id,
-            employer_id: employerIds[spec.employer] ?? null,
-            name: spec.name,
-            description: spec.description,
-            sort_order: spec.sort_order,
-          },
-        });
-
-    for (const solution of spec.solutions) {
-      const existing = await prisma.solution.findFirst({
-        where: { project_id: project.id, name: solution },
-        select: { id: true },
+    if (found) {
+      await prisma.project.update({
+        where: { id: found.id },
+        data: {
+          description: spec.description,
+          sort_order: spec.sort_order,
+          employer_id: employerIds[spec.employer] ?? null,
+        },
       });
-      if (!existing) {
-        await prisma.solution.create({
-          data: { project_id: project.id, name: solution },
-        });
-      }
+    } else {
+      await prisma.project.create({
+        data: {
+          provider_profile_id: providerProfile.id,
+          employer_id: employerIds[spec.employer] ?? null,
+          name: spec.name,
+          description: spec.description,
+          sort_order: spec.sort_order,
+        },
+      });
     }
   }
 
+  // Certifications are standalone since brief_U / E044 — a credential belongs
+  // to the person, not to whoever employed them when they earned it.
   const certSpecs = [
     {
       name: "Oracle Cloud Procurement Certified Implementation Professional",
       issuer: "Oracle",
       year: 2023,
-      employer: "Acme Consulting",
     },
     {
       name: "Oracle Cloud Payables Certified Implementation Professional",
       issuer: "Oracle",
       year: 2021,
-      employer: "Globex Corp",
     },
   ];
   for (const spec of certSpecs) {
@@ -323,11 +311,7 @@ async function main() {
       where: { provider_profile_id: providerProfile.id, name: spec.name },
       select: { id: true },
     });
-    const data = {
-      issuer: spec.issuer,
-      year: spec.year,
-      employer_id: employerIds[spec.employer] ?? null,
-    };
+    const data = { issuer: spec.issuer, year: spec.year };
     if (found) {
       await prisma.certification.update({ where: { id: found.id }, data });
     } else {
@@ -335,6 +319,51 @@ async function main() {
         data: { provider_profile_id: providerProfile.id, name: spec.name, ...data },
       });
     }
+  }
+
+  // One PUBLISHED demo Package (brief_V) so the profile's catalog section has
+  // something to render. Deliberately a single package: it's an illustration of
+  // the shape, not a store. Idempotent on (profile, title).
+  const packageSpec = {
+    title: "Install DocuSign for Oracle Cloud",
+    summary:
+      "Integrate Oracle Cloud with DocuSign end to end: connected app, resource organization, and your contract admins onboarded and trained.",
+    duration_weeks: 5,
+    price_cents: 4_000_000,
+    deliverables: [
+      "Oracle Cloud ↔ DocuSign integration configured and tested",
+      "DocuSign resource organization created",
+      "Up to 5 contract administrators onboarded",
+      "Signature templates for standard contract types",
+      "Runbook and 30 days of post-go-live support",
+    ],
+    milestones: [
+      { label: "Upfront", percent: 50, sequence: 0 },
+      { label: "On completion", percent: 50, sequence: 1 },
+    ],
+  };
+  const existingPackage = await prisma.package.findFirst({
+    where: { provider_profile_id: providerProfile.id, title: packageSpec.title },
+    select: { id: true },
+  });
+  if (!existingPackage) {
+    await prisma.package.create({
+      data: {
+        provider_profile_id: providerProfile.id,
+        title: packageSpec.title,
+        summary: packageSpec.summary,
+        duration_weeks: packageSpec.duration_weeks,
+        price_cents: packageSpec.price_cents,
+        status: "PUBLISHED",
+        deliverables: {
+          create: packageSpec.deliverables.map((text, sequence) => ({
+            text,
+            sequence,
+          })),
+        },
+        milestones: { create: packageSpec.milestones },
+      },
+    });
   }
 
   // Finish-page fields (brief_P / E019) so the demo scores the identity block.

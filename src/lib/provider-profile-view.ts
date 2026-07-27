@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { isMarketplaceVisible } from "@/lib/access";
 import { VISIBILITY_THRESHOLD } from "@/lib/completeness";
+import { listPublishedPackages } from "@/lib/packages";
 
 /**
  * The full provider Profile View (brief_S / E037) — the Upwork-style page that
@@ -51,18 +52,12 @@ export async function getProviderProfileView(
       employers: {
         orderBy: [{ sort_order: "asc" }, { is_current: "desc" }, { start_date: "desc" }],
         include: {
-          projects: {
-            orderBy: [{ sort_order: "asc" }, { created_at: "asc" }],
-            include: { solutions: { select: { id: true, name: true } } },
-          },
+          projects: { orderBy: [{ sort_order: "asc" }, { created_at: "asc" }] },
         },
       },
       projects: {
         orderBy: [{ sort_order: "asc" }, { created_at: "desc" }],
-        include: {
-          solutions: { select: { id: true, name: true, description: true } },
-          employer: { select: { id: true, name: true } },
-        },
+        include: { employer: { select: { id: true, name: true } } },
       },
       certifications: {
         orderBy: [{ issued_on: "desc" }, { year: "desc" }, { name: "asc" }],
@@ -77,6 +72,11 @@ export async function getProviderProfileView(
   const isOwner =
     opts.viewerUserId != null && profile.person.user_id === opts.viewerUserId;
   if (!isOwner && !isMarketplaceVisible(profile)) return null;
+
+  // brief_V — the sellable catalog. PUBLISHED only, for the owner too: what a
+  // provider sees here is exactly what a buyer sees, so a draft can never look
+  // live. Drafts are managed at /settings/packages.
+  const packages = await listPublishedPackages(profile.id);
 
   const addr = profile.person.site?.addresses?.[0] ?? null;
   const location =
@@ -133,6 +133,19 @@ export async function getProviderProfileView(
       kind: s.specialization.kind,
     })),
 
+    // E045 — the offerings a buyer can buy, not past work.
+    packages: packages.map((pk) => ({
+      id: pk.id,
+      title: pk.title,
+      summary: pk.summary,
+      durationWeeks: pk.durationWeeks,
+      priceCents: pk.priceCents,
+      currency: pk.currency,
+      coverImageUrl: pk.coverImageUrl,
+      deliverables: pk.deliverables,
+      milestones: pk.milestones,
+    })),
+
     // --- E037 portfolio entities ------------------------------------------
     projects: profile.projects.map((p) => ({
       id: p.id,
@@ -141,11 +154,6 @@ export async function getProviderProfileView(
       url: p.url,
       imageUrl: p.image_url,
       employer: p.employer?.name ?? null,
-      solutions: p.solutions.map((s) => ({
-        id: s.id,
-        name: s.name,
-        description: s.description,
-      })),
     })),
     // E042 — Employer is the ONE work-history model; the duplicate flat
     // WorkExperience rendering is gone.
@@ -163,7 +171,6 @@ export async function getProviderProfileView(
         id: pr.id,
         name: pr.name,
         description: pr.description,
-        solutions: pr.solutions.map((so) => so.name),
       })),
     })),
     // E044 — standalone; no employer anywhere.

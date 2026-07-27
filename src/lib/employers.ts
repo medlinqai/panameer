@@ -3,7 +3,7 @@ import { ownedProviderProfile, type Viewer } from "@/lib/access";
 import { OnboardingError, recomputeCompleteness } from "@/lib/onboarding";
 
 /**
- * Employers, and the Projects (+ Solutions) nested under them — brief_U.
+ * Employers, and the Projects nested under them — brief_U.
  *
  * `Employer` is the single work-history model (E042). Every function here is
  * OWNER-SCOPED by construction: the profile is resolved from the session via
@@ -33,7 +33,6 @@ export type ProjectInput = {
   imageUrl?: string | null;
   startDate?: string | null;
   endDate?: string | null;
-  solutions?: string[];
 };
 
 /** Resolve the viewer's OWN provider profile id. Fails closed. */
@@ -68,7 +67,6 @@ export async function listEmployers(viewer: Viewer) {
     include: {
       projects: {
         orderBy: [{ sort_order: "asc" }, { created_at: "asc" }],
-        include: { solutions: { orderBy: { created_at: "asc" } } },
       },
     },
   });
@@ -91,7 +89,6 @@ export async function listEmployers(viewer: Viewer) {
       imageUrl: p.image_url,
       startDate: p.start_date ? p.start_date.toISOString().slice(0, 10) : null,
       endDate: p.end_date ? p.end_date.toISOString().slice(0, 10) : null,
-      solutions: p.solutions.map((s) => ({ id: s.id, name: s.name })),
     })),
   }));
 }
@@ -160,8 +157,8 @@ export async function updateEmployer(
 export async function deleteEmployer(viewer: Viewer, employerId: string) {
   const profileId = await ownedProfileId(viewer);
   // Projects cascade with the employer (schema onDelete: Cascade), so deleting
-  // a job takes its projects and their solutions with it — which is what the
-  // user means by removing a job.
+  // a job takes its projects with it — which is what the user means by
+  // removing a job.
   const res = await prisma.employer.deleteMany({
     where: { id: employerId, provider_profile_id: profileId },
   });
@@ -189,12 +186,6 @@ function projectData(input: ProjectInput) {
   };
 }
 
-const solutionNames = (input: ProjectInput) =>
-  (input.solutions ?? [])
-    .map((s) => clean(s, 200))
-    .filter((s): s is string => Boolean(s))
-    .slice(0, 20);
-
 export async function createProject(
   viewer: Viewer,
   employerId: string,
@@ -217,7 +208,6 @@ export async function createProject(
       employer_id: employer.id,
       sort_order: count * 10,
       ...projectData(input),
-      solutions: { create: solutionNames(input).map((name) => ({ name })) },
     },
     select: { id: true },
   });
@@ -237,18 +227,10 @@ export async function updateProject(
   });
   if (!owned) throw new OnboardingError("Project not found", "INVALID");
 
-  // Solutions are a small owned set — replace wholesale, which is what the
-  // editor posts.
-  await prisma.$transaction([
-    prisma.solution.deleteMany({ where: { project_id: owned.id } }),
-    prisma.project.update({
-      where: { id: owned.id },
-      data: {
-        ...projectData(input),
-        solutions: { create: solutionNames(input).map((name) => ({ name })) },
-      },
-    }),
-  ]);
+  await prisma.project.update({
+    where: { id: owned.id },
+    data: projectData(input),
+  });
   await recomputeCompleteness(profileId);
 }
 

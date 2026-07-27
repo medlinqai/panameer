@@ -446,10 +446,7 @@ async function loadDraft(viewer: Viewer) {
           employers: {
             orderBy: [{ sort_order: "asc" }, { start_date: "desc" }],
             include: {
-              projects: {
-                orderBy: [{ sort_order: "asc" }, { created_at: "asc" }],
-                include: { solutions: { orderBy: { created_at: "asc" } } },
-              },
+              projects: { orderBy: [{ sort_order: "asc" }, { created_at: "asc" }] },
             },
           },
           education: { orderBy: { created_at: "asc" } },
@@ -600,11 +597,6 @@ export async function getOnboardingState(viewer: Viewer) {
           imageUrl: pr.image_url,
           startDate: pr.start_date ? pr.start_date.toISOString().slice(0, 10) : null,
           endDate: pr.end_date ? pr.end_date.toISOString().slice(0, 10) : null,
-          solutions: pr.solutions.map((so) => ({
-            id: so.id,
-            name: so.name,
-            description: so.description,
-          })),
         })),
       })),
       education: pp.education.map((e) => ({

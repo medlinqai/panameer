@@ -8,8 +8,8 @@ import { Field, TextInput, TextArea, Notice } from "@/components/onboarding/cont
  * "Your Employers" capture step (brief_U, per `employer-project-step-mockup.png`).
  *
  * Imported employers show as cards with edit/delete pencils; clicking a card
- * opens it to add PROJECTS within that job, and each project carries its
- * Solutions. Manual users get an empty state with "+ Add Employer".
+ * opens it to add PROJECTS within that job. Manual users get an empty state
+ * with "+ Add Employer".
  *
  * Everything writes through the owner-scoped `/api/provider/employers`
  * endpoint, which re-checks each id against the session's own profile — the
@@ -26,7 +26,6 @@ export type EmployerProject = {
   imageUrl: string | null;
   startDate: string | null;
   endDate: string | null;
-  solutions: { id: string; name: string }[];
 };
 
 export type EmployerCard = {
@@ -62,7 +61,6 @@ const emptyProjectForm = () => ({
   url: "",
   startDate: "",
   endDate: "",
-  solutions: "",
 });
 type ProjectForm = ReturnType<typeof emptyProjectForm>;
 
@@ -196,7 +194,6 @@ export function EmployersStep({
             url: project.url ?? "",
             startDate: project.startDate ?? "",
             endDate: project.endDate ?? "",
-            solutions: project.solutions.map((s) => s.name).join(", "),
           }
         : emptyProjectForm()
     );
@@ -210,10 +207,6 @@ export function EmployersStep({
       url: projectForm.url,
       startDate: projectForm.startDate || null,
       endDate: projectForm.endDate || null,
-      solutions: projectForm.solutions
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean),
     };
     const ok = await post(
       projectModal?.project
@@ -349,11 +342,6 @@ export function EmployersStep({
                               </button>
                             </div>
                           </div>
-                          {pr.solutions.length > 0 && (
-                            <p className="mt-1 text-[12px] text-ink-2">
-                              {pr.solutions.map((s) => s.name).join(" · ")}
-                            </p>
-                          )}
                         </div>
                       ))}
                       <button
@@ -572,18 +560,6 @@ export function EmployersStep({
               onChange={(e) =>
                 setProjectForm({ ...projectForm, description: e.target.value })
               }
-            />
-          </Field>
-          <Field
-            label="Solutions"
-            hint="Comma-separated — the capabilities this project delivered."
-          >
-            <TextInput
-              value={projectForm.solutions}
-              onChange={(e) =>
-                setProjectForm({ ...projectForm, solutions: e.target.value })
-              }
-              placeholder="Supplier Portal Rollout, Invoice Automation"
             />
           </Field>
           <Field label="Link">

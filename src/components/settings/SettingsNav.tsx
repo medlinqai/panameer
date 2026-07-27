@@ -8,6 +8,7 @@ import { usePathname } from "next/navigation";
 // top-nav (a separate, later brief).
 const ITEMS: { label: string; href: string; soon?: boolean }[] = [
   { label: "Profile", href: "/settings/profile" },
+  { label: "Packages", href: "/settings/packages" },
   { label: "ID Badge", href: "/settings/id-badge" },
   { label: "Preferences", href: "/settings/preferences" },
   { label: "Tax Information", href: "/settings/tax", soon: true },

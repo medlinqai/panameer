@@ -270,8 +270,93 @@ export function ProviderProfileViewPage({ p }: { p: ProviderProfileView }) {
               )}
             </Section>
 
-            {/* Projects → Solutions (E037). Renamed from "Portfolio" by
-                brief_T / E041 — "we're not artists". */}
+            {/* Packages (brief_V / E045) — the sellable catalog. Sits ABOVE
+                Projects deliberately: a buyer landing here should first see
+                what they can buy today, then the proof it will be delivered.
+                Read-only; purchase is a later stage. */}
+            {(p.packages.length > 0 || p.isOwner) && (
+              <Section
+                title="Packages"
+                editHref={p.isOwner ? "/settings/packages" : undefined}
+              >
+                {p.packages.length > 0 ? (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {p.packages.map((pk) => (
+                      <article
+                        key={pk.id}
+                        className="overflow-hidden rounded-brand border border-line"
+                      >
+                        {pk.coverImageUrl && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={pk.coverImageUrl}
+                            alt=""
+                            className="h-32 w-full object-cover"
+                          />
+                        )}
+                        <div className="p-4">
+                          <h3 className="text-[15px]">{pk.title}</h3>
+                          <p className="mt-1 text-[14px] font-bold text-ink">
+                            {pk.priceCents != null
+                              ? formatCents(pk.priceCents, pk.currency)
+                              : "Price on request"}
+                            {pk.durationWeeks != null && (
+                              <span className="font-semibold text-ink-2">
+                                {" · "}
+                                {pk.durationWeeks} week
+                                {pk.durationWeeks === 1 ? "" : "s"}
+                              </span>
+                            )}
+                          </p>
+                          {pk.summary && (
+                            <p className="mt-2 line-clamp-3 text-[14px] text-ink-2">
+                              {pk.summary}
+                            </p>
+                          )}
+                          {pk.deliverables.length > 0 && (
+                            <ul className="mt-3 space-y-1">
+                              {/* A few, not all — the card is a pitch, not the
+                                  statement of work. */}
+                              {pk.deliverables.slice(0, 4).map((d) => (
+                                <li
+                                  key={d.id}
+                                  className="flex gap-2 text-[13.5px] text-ink-2"
+                                >
+                                  <span className="text-magenta">✓</span>
+                                  <span>{d.text}</span>
+                                </li>
+                              ))}
+                              {pk.deliverables.length > 4 && (
+                                <li className="text-[13px] text-ink-2">
+                                  +{pk.deliverables.length - 4} more
+                                </li>
+                              )}
+                            </ul>
+                          )}
+                          {pk.milestones.length > 0 && (
+                            <p className="mt-3 border-t border-line pt-3 text-[13px] text-ink-2">
+                              {pk.milestones
+                                .map((m) => `${m.percent}% ${m.label}`)
+                                .join(" · ")}
+                            </p>
+                          )}
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <Empty>
+                    No packages published yet. A package is a fixed scope, a
+                    timeline and a price — the simplest thing for a buyer to say
+                    yes to.
+                  </Empty>
+                )}
+              </Section>
+            )}
+
+            {/* Projects (E037; renamed from "Portfolio" by brief_T / E041 —
+                "we're not artists"). The Solution child is gone in brief_V:
+                what it reached for is a PACKAGE, rendered separately below. */}
             <Section title="Projects">
               {p.projects.length > 0 ? (
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -288,18 +373,6 @@ export function ProviderProfileViewPage({ p }: { p: ProviderProfileView }) {
                         <p className="mt-2 line-clamp-3 text-[14px] text-ink-2">
                           {pr.description}
                         </p>
-                      )}
-                      {pr.solutions.length > 0 && (
-                        <div className="mt-3 flex flex-wrap gap-1.5">
-                          {pr.solutions.map((s) => (
-                            <span
-                              key={s.id}
-                              className="rounded-full border border-line px-2.5 py-0.5 text-[12px] font-semibold text-ink-2"
-                            >
-                              {s.name}
-                            </span>
-                          ))}
-                        </div>
                       )}
                       {pr.url && (
                         <a
@@ -391,18 +464,6 @@ export function ProviderProfileViewPage({ p }: { p: ProviderProfileView }) {
                                     <p className="text-[13.5px] text-ink-2">
                                       {pr.description}
                                     </p>
-                                  )}
-                                  {pr.solutions.length > 0 && (
-                                    <div className="mt-1 flex flex-wrap gap-1.5">
-                                      {pr.solutions.map((so) => (
-                                        <span
-                                          key={so}
-                                          className="rounded-full border border-line px-2 py-0.5 text-[12px] font-semibold text-ink-2"
-                                        >
-                                          {so}
-                                        </span>
-                                      ))}
-                                    </div>
                                   )}
                                 </li>
                               ))}
