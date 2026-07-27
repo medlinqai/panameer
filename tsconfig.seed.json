@@ -15,6 +15,7 @@
     }
   },
   "include": [
+    "prisma/migrate-work-history.ts",
     "prisma/normalize-emails.ts",
     "prisma/seed-taxonomy.ts",
     "prisma/seed.ts",

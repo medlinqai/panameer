@@ -340,69 +340,110 @@ export function ProviderProfileViewPage({ p }: { p: ProviderProfileView }) {
               )}
             </Section>
 
-            {/* Employment history — Employers first, falling back to the
-                free-text work history the résumé import produces. */}
-            <Section title="Employment History">
-              {p.employers.length > 0 || p.experience.length > 0 ? (
-                <ul className="space-y-5">
+            {/* E042 — ONE work-history section. The flat WorkExperience
+                rendering that used to sit alongside this is gone; Employer is
+                the single model and projects nest under the job they were done
+                for. */}
+            <Section
+              title="Work History"
+              editHref={p.isOwner ? "/join/provider?step=employers" : undefined}
+            >
+              {p.employers.length > 0 ? (
+                <ul className="space-y-6">
                   {p.employers.map((e) => (
                     <li key={e.id}>
-                      <div className="flex flex-wrap items-baseline justify-between gap-2">
-                        <p className="font-bold">
-                          {e.roleTitle ? `${e.roleTitle} · ` : ""}
-                          {e.name}
-                        </p>
-                        <p className="text-[13px] text-ink-2">
-                          {dateRange(e.startDate, e.endDate)}
-                        </p>
+                      <div className="flex items-start gap-3">
+                        {e.logoUrl && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={e.logoUrl}
+                            alt=""
+                            className="mt-0.5 h-10 w-10 flex-none rounded-[8px] border border-line bg-white object-contain p-1"
+                          />
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-baseline justify-between gap-2">
+                            <p className="font-bold">
+                              {e.roleTitle ? `${e.roleTitle} · ` : ""}
+                              {e.name}
+                            </p>
+                            <p className="text-[13px] text-ink-2">
+                              {dateRange(e.startDate, e.endDate)}
+                            </p>
+                          </div>
+                          {e.location && (
+                            <p className="text-[13px] text-ink-2">{e.location}</p>
+                          )}
+                          {e.description && (
+                            <p className="mt-1.5 whitespace-pre-line text-[14px] text-ink-2">
+                              {e.description}
+                            </p>
+                          )}
+
+                          {e.projects.length > 0 && (
+                            <ul className="mt-3 space-y-2 border-l-2 border-line pl-4">
+                              {e.projects.map((pr) => (
+                                <li key={pr.id}>
+                                  <p className="text-[14px] font-semibold">
+                                    {pr.name}
+                                  </p>
+                                  {pr.description && (
+                                    <p className="text-[13.5px] text-ink-2">
+                                      {pr.description}
+                                    </p>
+                                  )}
+                                  {pr.solutions.length > 0 && (
+                                    <div className="mt-1 flex flex-wrap gap-1.5">
+                                      {pr.solutions.map((so) => (
+                                        <span
+                                          key={so}
+                                          className="rounded-full border border-line px-2 py-0.5 text-[12px] font-semibold text-ink-2"
+                                        >
+                                          {so}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
                       </div>
-                      {e.location && (
-                        <p className="text-[13px] text-ink-2">{e.location}</p>
-                      )}
-                      {e.description && (
-                        <p className="mt-1.5 whitespace-pre-line text-[14px] text-ink-2">
-                          {e.description}
-                        </p>
-                      )}
-                      {e.certifications.length > 0 && (
-                        <p className="mt-1.5 text-[13px] text-ink-2">
-                          Certifications: {e.certifications.join(", ")}
-                        </p>
-                      )}
-                    </li>
-                  ))}
-                  {p.experience.map((w) => (
-                    <li key={w.id}>
-                      <div className="flex flex-wrap items-baseline justify-between gap-2">
-                        <p className="font-bold">
-                          {w.roleTitle} · {w.employer}
-                        </p>
-                        <p className="text-[13px] text-ink-2">
-                          {dateRange(w.startDate, w.endDate)}
-                        </p>
-                      </div>
-                      {w.description && (
-                        <p className="mt-1.5 whitespace-pre-line text-[14px] text-ink-2">
-                          {w.description}
-                        </p>
-                      )}
                     </li>
                   ))}
                 </ul>
               ) : (
-                <Empty>No employment history yet.</Empty>
+                <Empty>
+                  {p.isOwner
+                    ? "No work history yet. Providers who add work experience and projects are twice as likely to win work."
+                    : "No work history yet."}
+                </Empty>
               )}
             </Section>
 
-            <Section title="Certifications">
+            <Section
+              title="Certifications"
+              editHref={p.isOwner ? "/join/provider?step=certifications" : undefined}
+            >
               {p.certifications.length > 0 ? (
                 <ul className="space-y-2">
                   {p.certifications.map((c) => (
                     <li key={c.id} className="text-[14px]">
                       <b>{c.name}</b>
                       <span className="text-ink-2">
-                        {[c.issuer, c.employer, c.year].filter(Boolean).length > 0 &&
-                          ` — ${[c.issuer, c.employer, c.year].filter(Boolean).join(" · ")}`}
+                        {[
+                          c.issuer,
+                          c.issuedOn ? c.issuedOn.slice(0, 4) : c.year,
+                          c.expiresOn ? `expires ${c.expiresOn.slice(0, 4)}` : null,
+                        ].filter(Boolean).length > 0 &&
+                          ` — ${[
+                            c.issuer,
+                            c.issuedOn ? c.issuedOn.slice(0, 4) : c.year,
+                            c.expiresOn ? `expires ${c.expiresOn.slice(0, 4)}` : null,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")}`}
                       </span>
                       {c.url && (
                         <a
@@ -413,6 +454,9 @@ export function ProviderProfileViewPage({ p }: { p: ProviderProfileView }) {
                         >
                           Verify
                         </a>
+                      )}
+                      {c.notes && (
+                        <p className="text-[13px] text-ink-2">{c.notes}</p>
                       )}
                     </li>
                   ))}

@@ -557,7 +557,6 @@ model ProviderProfile {
   specializations ProviderProfileSpecialization[]
   employers       Employer[]
   projects        Project[]
-  workExperiences WorkExperience[]
   education        Education[]
   languages        Language[]
   certifications  Certification[]
@@ -712,8 +711,7 @@ model Employer {
   id                  String   @id @default(uuid()) @db.Uuid
   provider_profile_id String   @db.Uuid
   name                String
-  /// Job title held there. The engagement dates live on the linked
-  /// WorkExperience rows when there are any.
+  /// Job title held there.
   role_title          String?
   location            String?
   start_date          DateTime?
@@ -721,19 +719,29 @@ model Employer {
   /// True while this is the provider's current employer.
   is_current          Boolean  @default(false)
   description         String?
+  /// Company logo (brief_U / E043). Suggested from the company name via a logo
+  /// API, then ACCEPTED by the provider — never auto-applied, because name →
+  /// company matching is fuzzy and a wrong logo on a profile looks worse than
+  /// none. Null when unset or declined.
+  logo_url            String?
+  /// Ordering on the profile / capture step; lower first.
+  sort_order          Int      @default(100)
   created_at          DateTime @default(now())
   updated_at          DateTime @updatedAt
 
   providerProfile ProviderProfile @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
   projects        Project[]
-  certifications  Certification[]
 
   @@index([provider_profile_id])
   @@map("employers")
 }
 
-/// A delivered piece of work. Optionally attributed to an Employer, and
-/// composed of one or more Solutions (the diagram's Project → Solution edge).
+/// A delivered piece of work, done AT an employer and composed of one or more
+/// Solutions (the diagram's Project → Solution edge).
+///
+/// `employer_id` is retained and is how the capture step nests projects under
+/// the job they belong to (brief_U). It stays nullable so a project imported
+/// or entered before its employer exists isn't rejected.
 model Project {
   id                  String   @id @default(uuid()) @db.Uuid
   provider_profile_id String   @db.Uuid
@@ -791,38 +799,7 @@ model ProviderSkill {
 }
 
 /// A past employment on a provider's profile, with its notable projects.
-model WorkExperience {
-  id                  String    @id @default(uuid()) @db.Uuid
-  provider_profile_id String    @db.Uuid
-  employer            String
-  role_title          String
-  description         String?
-  start_date          DateTime? @db.Date
-  end_date            DateTime? @db.Date
-  created_at          DateTime  @default(now())
-  updated_at          DateTime  @updatedAt
-
-  providerProfile ProviderProfile     @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
-  projects        ExperienceProject[]
-
-  @@index([provider_profile_id])
-  @@map("work_experiences")
-}
-
 /// A notable project under a WorkExperience.
-model ExperienceProject {
-  id                 String   @id @default(uuid()) @db.Uuid
-  work_experience_id String   @db.Uuid
-  name               String
-  description        String?
-  created_at         DateTime @default(now())
-
-  workExperience WorkExperience @relation(fields: [work_experience_id], references: [id], onDelete: Cascade)
-
-  @@index([work_experience_id])
-  @@map("experience_projects")
-}
-
 /// An education entry on a provider's profile.
 model Education {
   id                  String   @id @default(uuid()) @db.Uuid
@@ -865,24 +842,36 @@ model Language {
 /// A credential the provider holds. Pre-dates brief_S; E037 promotes it to a
 /// displayed portfolio entity and links it to the Employer it was earned at
 /// (the categorization diagram's Employer → Certification edge).
+/// A credential the provider holds.
+///
+/// STANDALONE (brief_U / E044, correcting brief_S): a certification belongs to
+/// the CERTIFYING AGENCY that issued it, not to an employer the provider
+/// happened to work for when they earned it. The employer link and the
+/// carry-it-forward-by-name logic that came with it are gone.
 model Certification {
   id                  String   @id @default(uuid()) @db.Uuid
   provider_profile_id String   @db.Uuid
-  employer_id         String?  @db.Uuid
   name                String
+  /// The certifying agency / issuing body (e.g. "Oracle", "PMI").
   issuer              String?
+  /// Legacy year-only field; superseded by `issued_on`, kept so pre-brief_U
+  /// rows still read.
   year                Int?
+  issued_on           DateTime?
   /// Credential number / badge id, and a public verification link.
   credential_id       String?
   url                 String?
   expires_on          DateTime?
+  /// Scanned certificate in the private `certifications` bucket — an object
+  /// path, not a URL, since the bucket is private (same rule as résumés).
+  attachment_path     String?
+  attachment_name     String?
+  notes               String?
   created_at          DateTime @default(now())
 
   providerProfile ProviderProfile @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
-  employer        Employer?       @relation(fields: [employer_id], references: [id], onDelete: SetNull)
 
   @@index([provider_profile_id])
-  @@index([employer_id])
   @@map("certifications")
 }
 

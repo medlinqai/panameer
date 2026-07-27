@@ -37,6 +37,16 @@ const BUCKETS: {
     mime: ["image/png", "image/jpeg", "image/webp"],
   },
   {
+    name: "certifications",
+    public: false,
+    mime: [
+      "application/pdf",
+      "image/png",
+      "image/jpeg",
+      "image/webp",
+    ],
+  },
+  {
     name: "resumes",
     public: false,
     mime: [

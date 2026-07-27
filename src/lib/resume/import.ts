@@ -164,7 +164,7 @@ async function applyParsed(
   const profile = await prisma.providerProfile.findUnique({
     where: { id: profileId },
     include: {
-      workExperiences: { select: { employer: true, role_title: true } },
+      employers: { select: { name: true, role_title: true } },
       education: { select: { institution: true } },
       languages: { select: { name: true } },
       skills: { select: { skill_id: true } },
@@ -197,24 +197,27 @@ async function applyParsed(
     await prisma.providerProfile.update({ where: { id: profileId }, data });
   }
 
-  // --- Work experience: append only rows we don't already hold -------------
+  // --- Work history: append EMPLOYERS we don't already hold -----------------
+  // brief_U / E042: Employer is the single work-history model, so the import
+  // populates it directly instead of the retired flat WorkExperience table.
+  // The "Your Employers" step then shows these as cards to confirm and enrich.
   const haveRole = new Set(
-    profile.workExperiences.map((w) =>
-      `${w.employer}|${w.role_title}`.toLowerCase()
-    )
+    profile.employers.map((w) => `${w.name}|${w.role_title ?? ""}`.toLowerCase())
   );
-  for (const e of parsed.experiences) {
+  for (const [i, e] of parsed.experiences.entries()) {
     const key = `${e.employer}|${e.roleTitle}`.toLowerCase();
     if (haveRole.has(key)) continue;
     haveRole.add(key);
-    await prisma.workExperience.create({
+    await prisma.employer.create({
       data: {
         provider_profile_id: profileId,
-        employer: e.employer.slice(0, 200),
+        name: e.employer.slice(0, 200),
         role_title: e.roleTitle.slice(0, 200),
         description: e.description?.slice(0, 4000) ?? null,
         start_date: e.startDate ? new Date(e.startDate) : null,
         end_date: e.endDate ? new Date(e.endDate) : null,
+        is_current: Boolean(e.startDate) && !e.endDate,
+        sort_order: i * 10,
       },
     });
     applied.experiences++;

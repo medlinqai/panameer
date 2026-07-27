@@ -67,8 +67,8 @@ export async function getProviderSettings(viewer: Viewer) {
       skills: {
         include: { skill: { select: { id: true, role_type_id: true, name: true } } },
       },
-      workExperiences: {
-        orderBy: { created_at: "asc" },
+      employers: {
+        orderBy: [{ sort_order: "asc" }, { start_date: "desc" }],
         include: { projects: { orderBy: { created_at: "asc" } } },
       },
       education: { orderBy: { created_at: "asc" } },
@@ -109,9 +109,9 @@ export async function getProviderSettings(viewer: Viewer) {
       notifyEmail: profile.notify_email,
       notifyProductUpdates: profile.notify_product_updates,
     },
-    experiences: profile.workExperiences.map((w) => ({
-      employer: w.employer,
-      roleTitle: w.role_title,
+    experiences: profile.employers.map((w) => ({
+      employer: w.name,
+      roleTitle: w.role_title ?? "",
       description: w.description,
       startDate: w.start_date ? w.start_date.toISOString().slice(0, 10) : null,
       endDate: w.end_date ? w.end_date.toISOString().slice(0, 10) : null,

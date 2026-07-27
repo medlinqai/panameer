@@ -49,9 +49,12 @@ export async function getProviderProfileView(
         include: { specialization: { select: { id: true, name: true, kind: true } } },
       },
       employers: {
-        orderBy: [{ is_current: "desc" }, { start_date: "desc" }],
+        orderBy: [{ sort_order: "asc" }, { is_current: "desc" }, { start_date: "desc" }],
         include: {
-          certifications: { select: { id: true, name: true } },
+          projects: {
+            orderBy: [{ sort_order: "asc" }, { created_at: "asc" }],
+            include: { solutions: { select: { id: true, name: true } } },
+          },
         },
       },
       projects: {
@@ -61,13 +64,8 @@ export async function getProviderProfileView(
           employer: { select: { id: true, name: true } },
         },
       },
-      workExperiences: {
-        orderBy: { start_date: "desc" },
-        include: { projects: { select: { id: true, name: true, description: true } } },
-      },
       certifications: {
-        orderBy: { year: "desc" },
-        include: { employer: { select: { id: true, name: true } } },
+        orderBy: [{ issued_on: "desc" }, { year: "desc" }, { name: "asc" }],
       },
       education: { orderBy: { created_at: "asc" } },
       languages: { orderBy: { created_at: "asc" } },
@@ -149,35 +147,37 @@ export async function getProviderProfileView(
         description: s.description,
       })),
     })),
+    // E042 — Employer is the ONE work-history model; the duplicate flat
+    // WorkExperience rendering is gone.
     employers: profile.employers.map((e) => ({
       id: e.id,
       name: e.name,
       roleTitle: e.role_title,
       location: e.location,
+      logoUrl: e.logo_url,
       isCurrent: e.is_current,
       description: e.description,
       startDate: e.start_date ? e.start_date.toISOString().slice(0, 10) : null,
       endDate: e.end_date ? e.end_date.toISOString().slice(0, 10) : null,
-      certifications: e.certifications.map((c) => c.name),
+      projects: e.projects.map((pr) => ({
+        id: pr.id,
+        name: pr.name,
+        description: pr.description,
+        solutions: pr.solutions.map((so) => so.name),
+      })),
     })),
+    // E044 — standalone; no employer anywhere.
     certifications: profile.certifications.map((c) => ({
       id: c.id,
       name: c.name,
       issuer: c.issuer,
       year: c.year,
+      issuedOn: c.issued_on ? c.issued_on.toISOString().slice(0, 10) : null,
+      expiresOn: c.expires_on ? c.expires_on.toISOString().slice(0, 10) : null,
       credentialId: c.credential_id,
       url: c.url,
-      employer: c.employer?.name ?? null,
-    })),
-
-    experience: profile.workExperiences.map((w) => ({
-      id: w.id,
-      employer: w.employer,
-      roleTitle: w.role_title,
-      description: w.description,
-      startDate: w.start_date ? w.start_date.toISOString().slice(0, 10) : null,
-      endDate: w.end_date ? w.end_date.toISOString().slice(0, 10) : null,
-      projects: w.projects,
+      attachmentName: c.attachment_name,
+      notes: c.notes,
     })),
     education: profile.education.map((e) => ({
       id: e.id,

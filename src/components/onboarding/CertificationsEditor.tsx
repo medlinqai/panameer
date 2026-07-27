@@ -1,15 +1,25 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { Field, TextInput } from "@/components/onboarding/controls";
 
+/**
+ * A certification is STANDALONE (brief_U / E044): it belongs to the certifying
+ * agency that issued it, never to an employer. Final field set below.
+ */
 export type CertificationDraft = {
   name: string;
+  /** The certifying agency / issuing body. */
   issuer: string | null;
+  /** Legacy year-only; `issuedOn` is the real issue date. */
   year: number | null;
-  /** Credential fields (brief_T / E040) — all optional. */
+  issuedOn?: string | null;
+  expiresOn?: string | null;
   credentialId?: string | null;
   url?: string | null;
-  expiresOn?: string | null;
+  attachmentPath?: string | null;
+  attachmentName?: string | null;
+  notes?: string | null;
 };
 
 /** Add / edit / remove certifications. */
@@ -35,20 +45,18 @@ export function CertificationsEditor({
                 placeholder="e.g. Oracle Cloud Procurement Certified"
               />
             </Field>
-            <Field label="Issuer">
+            <Field label="Certifying Agency">
               <TextInput
                 value={c.issuer ?? ""}
                 onChange={(e) => upd(i, { issuer: e.target.value })}
                 placeholder="e.g. Oracle"
               />
             </Field>
-            <Field label="Year">
+            <Field label="Issued">
               <TextInput
-                type="number"
-                value={c.year ?? ""}
-                onChange={(e) =>
-                  upd(i, { year: e.target.value ? Number(e.target.value) : null })
-                }
+                type="date"
+                value={c.issuedOn ?? ""}
+                onChange={(e) => upd(i, { issuedOn: e.target.value || null })}
               />
             </Field>
           </div>
@@ -79,6 +87,25 @@ export function CertificationsEditor({
               />
             </Field>
           </div>
+
+          <div className="mt-3">
+            <Field label="Notes">
+              <TextInput
+                value={c.notes ?? ""}
+                onChange={(e) => upd(i, { notes: e.target.value || null })}
+                placeholder="Optional"
+              />
+            </Field>
+          </div>
+
+          <div className="mt-3">
+            <CertificationAttachment
+              value={{ path: c.attachmentPath ?? null, name: c.attachmentName ?? null }}
+              onChange={(a) =>
+                upd(i, { attachmentPath: a.path, attachmentName: a.name })
+              }
+            />
+          </div>
           <button
             type="button"
             onClick={() => onChange(value.filter((_, idx) => idx !== i))}
@@ -97,9 +124,13 @@ export function CertificationsEditor({
               name: "",
               issuer: "",
               year: null,
+              issuedOn: null,
+              expiresOn: null,
               credentialId: null,
               url: null,
-              expiresOn: null,
+              attachmentPath: null,
+              attachmentName: null,
+              notes: null,
             },
           ])
         }
@@ -107,6 +138,89 @@ export function CertificationsEditor({
       >
         + Add Certification
       </button>
+    </div>
+  );
+}
+
+/**
+ * Upload the certificate itself (brief_U / E044). Stored in the PRIVATE
+ * `certifications` bucket — a certificate carries a full name and credential
+ * number — so what comes back is an object PATH, not a public URL.
+ */
+function CertificationAttachment({
+  value,
+  onChange,
+}: {
+  value: { path: string | null; name: string | null };
+  onChange: (a: { path: string | null; name: string | null }) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const upload = async (file: File) => {
+    setBusy(true);
+    setError(null);
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      const r = await fetch("/api/provider/certification-file", {
+        method: "POST",
+        body,
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        setError(data.error ?? "Could not upload that file.");
+        return;
+      }
+      onChange({ path: data.path, name: data.name });
+    } catch {
+      setError("Could not upload that file.");
+    } finally {
+      setBusy(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  };
+
+  return (
+    <div>
+      <span className="mb-1.5 block text-[14px] font-bold text-ink">
+        Certificate
+      </span>
+      {value.path ? (
+        <div className="flex items-center gap-3 text-[14px]">
+          <span className="truncate font-semibold">{value.name ?? "Attached"}</span>
+          <button
+            type="button"
+            onClick={() => onChange({ path: null, name: null })}
+            className="text-[13px] font-bold text-ink-2 underline underline-offset-4 hover:text-red-600"
+          >
+            Remove
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          disabled={busy}
+          className="rounded-full border-[1.5px] border-line px-4 py-2 text-[13.5px] font-bold text-ink transition-colors hover:border-magenta hover:text-magenta disabled:opacity-50"
+        >
+          {busy ? "Uploading…" : "Attach PDF or Image"}
+        </button>
+      )}
+      <input
+        ref={inputRef}
+        type="file"
+        accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) void upload(f);
+        }}
+      />
+      {error && (
+        <p className="mt-1.5 text-[13px] text-red-700">{error}</p>
+      )}
     </div>
   );
 }

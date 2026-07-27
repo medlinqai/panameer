@@ -34,6 +34,12 @@ const schema = z.object({
   APPLE_CLIENT_ID: z.string().min(1).optional(),
   APPLE_CLIENT_SECRET: z.string().min(1).optional(),
 
+  // Company-logo suggestion (brief_U / E043) — all optional; unset falls back
+  // to the keyless Wikidata lookup.
+  LOGODEV_TOKEN: z.string().min(1).optional(),
+  LOGODEV_SECRET_KEY: z.string().min(1).optional(),
+  BRANDFETCH_API_KEY: z.string().min(1).optional(),
+
   // SMS (Twilio) — optional; unset falls back to logging the code (brief_P).
   TWILIO_ACCOUNT_SID: z.string().min(1).optional(),
   TWILIO_AUTH_TOKEN: z.string().min(1).optional(),

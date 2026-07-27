@@ -31,17 +31,18 @@ export const PROVIDER_STEPS = [
   "work_method", //       3 — E009 (Provider vs Recruiter fork)
   "title", //             4 — E011
   "tell_us", //           5 — E012 (résumé / LinkedIn PDF / manual)
-  "catalog", //           6 — E030 (Role → Domain → Skills, ONE cascading page)
-  "specializations", //   7 — E031 (multi-select + add-on-the-fly)
-  "education", //         8 — E015/E033 (optional, skippable)
-  "languages", //         9 — E016/E034 (both fields required)
-  "bio", //              10 — E017 (required, min length)
-  "rate", //             11 — E018 (hourly + % fee + "You'll Get")
-  "finish", //           12 — E035 review + publish
+  "employers", //         6 — brief_U (capture, right after the upload)
+  "catalog", //           7 — E030 (Role → Domain → Skills, ONE cascading page)
+  "specializations", //   8 — E031 (multi-select + add-on-the-fly)
+  "education", //         9 — E015/E033 (optional, skippable)
+  "languages", //        10 — E016/E034 (both fields required)
+  "bio", //              11 — E017 (required, min length)
+  "rate", //             12 — E018 (hourly + % fee + "You'll Get")
+  "finish", //           13 — E035 review + publish
 ] as const;
 export type ProviderStep = (typeof PROVIDER_STEPS)[number];
 
-export const TOTAL_PROVIDER_STEPS = PROVIDER_STEPS.length; // 12 (brief_S/E030)
+export const TOTAL_PROVIDER_STEPS = PROVIDER_STEPS.length; // 13 (brief_U)
 
 /** 1-based position for the `x/12` counter. */
 export function providerStepNumber(step: ProviderStep): number {
@@ -63,8 +64,9 @@ export const PROVIDER_STEP_LABELS: Record<
   goal: { stepper: "Your Goal", next: "Next: What Do You Sell" },
   work_method: { stepper: "What Do You Sell", next: "Next: Your Title" },
   title: { stepper: "Your Title", next: "Next: Create Your Profile" },
-  tell_us: {
-    stepper: "Create Your Profile",
+  tell_us: { stepper: "Create Your Profile", next: "Next: Your Employers" },
+  employers: {
+    stepper: "Your Employers",
     next: "Next: Role → Domain → Skills",
   },
   catalog: {
@@ -89,6 +91,8 @@ export const PROVIDER_STEP_LABELS: Record<
  */
 const OPTIONAL_STEPS = new Set<ProviderStep>([
   "tell_us",
+  // brief_U — nudged hard, but a provider with no employers can still publish.
+  "employers",
   "specializations", // brief_R — a provider may legitimately have none
   "education",
 ]);
@@ -439,9 +443,14 @@ async function loadDraft(viewer: Viewer) {
               },
             },
           },
-          workExperiences: {
-            orderBy: { created_at: "asc" },
-            include: { projects: { orderBy: { created_at: "asc" } } },
+          employers: {
+            orderBy: [{ sort_order: "asc" }, { start_date: "desc" }],
+            include: {
+              projects: {
+                orderBy: [{ sort_order: "asc" }, { created_at: "asc" }],
+                include: { solutions: { orderBy: { created_at: "asc" } } },
+              },
+            },
           },
           education: { orderBy: { created_at: "asc" } },
           languages: { orderBy: { created_at: "asc" } },
@@ -474,6 +483,7 @@ function computeResumeStep(p: Awaited<ReturnType<typeof loadDraft>>): ProviderSt
     work_method: pp.work_method != null,
     title: pp.headline.trim() !== "",
     tell_us: true, //        optional — a method choice, never a resume target
+    employers: true, //      optional (brief_U) — never a resume target
     // ONE cascading page (E030): the field is a (Role, Domain) PAIR and at
     // least one skill under it, so the step is only done when both are true.
     catalog: pp.pillar_id != null && pp.role_type_id != null && pp.skills.length > 0,
@@ -570,16 +580,31 @@ export async function getOnboardingState(viewer: Viewer) {
             country: address.country,
           }
         : null,
-      experiences: pp.workExperiences.map((w) => ({
-        id: w.id,
-        employer: w.employer,
-        roleTitle: w.role_title,
-        description: w.description,
-        startDate: w.start_date ? w.start_date.toISOString().slice(0, 10) : null,
-        endDate: w.end_date ? w.end_date.toISOString().slice(0, 10) : null,
-        projects: w.projects.map((pr) => ({
+      // brief_U / E042 — Employer is the single work-history model; the
+      // "Your Employers" step and the review page both read this.
+      employers: pp.employers.map((e) => ({
+        id: e.id,
+        name: e.name,
+        roleTitle: e.role_title,
+        location: e.location,
+        description: e.description,
+        logoUrl: e.logo_url,
+        isCurrent: e.is_current,
+        startDate: e.start_date ? e.start_date.toISOString().slice(0, 10) : null,
+        endDate: e.end_date ? e.end_date.toISOString().slice(0, 10) : null,
+        projects: e.projects.map((pr) => ({
+          id: pr.id,
           name: pr.name,
           description: pr.description,
+          url: pr.url,
+          imageUrl: pr.image_url,
+          startDate: pr.start_date ? pr.start_date.toISOString().slice(0, 10) : null,
+          endDate: pr.end_date ? pr.end_date.toISOString().slice(0, 10) : null,
+          solutions: pr.solutions.map((so) => ({
+            id: so.id,
+            name: so.name,
+            description: so.description,
+          })),
         })),
       })),
       education: pp.education.map((e) => ({
@@ -605,9 +630,13 @@ export async function getOnboardingState(viewer: Viewer) {
         name: c.name,
         issuer: c.issuer,
         year: c.year,
+        issuedOn: c.issued_on ? c.issued_on.toISOString().slice(0, 10) : null,
         credentialId: c.credential_id,
         url: c.url,
         expiresOn: c.expires_on ? c.expires_on.toISOString().slice(0, 10) : null,
+        attachmentPath: c.attachment_path,
+        attachmentName: c.attachment_name,
+        notes: c.notes,
       })),
     },
   };
@@ -717,6 +746,15 @@ export async function applyProviderSection(
           ],
         },
       });
+      break;
+    }
+
+    case "employers": {
+      // brief_U — employers are created/edited through the dedicated
+      // owner-scoped endpoint (`/api/provider/employers`), which validates each
+      // id against the viewer's own profile. Continuing past the step has
+      // nothing left to persist; this case exists so the step is a legal POST
+      // target and so completeness is recomputed on the way through.
       break;
     }
 
@@ -924,21 +962,32 @@ export async function applyProviderSection(
             .filter((pr: { name: string }) => pr.name),
         }))
         .filter((e) => e.employer && e.roleTitle);
-      // Replace the whole set (the wizard holds and posts the full list).
+
+      // brief_U / E042 — writes EMPLOYERS now. Settings still posts this
+      // "experience" shape, so the section survives; only its destination
+      // changed, from the retired flat WorkExperience to Employer + Project.
       await prisma.$transaction(async (tx) => {
-        await tx.workExperience.deleteMany({
+        await tx.employer.deleteMany({
           where: { provider_profile_id: profileId },
         });
-        for (const e of clean) {
-          await tx.workExperience.create({
+        for (const [i, e] of clean.entries()) {
+          await tx.employer.create({
             data: {
               provider_profile_id: profileId,
-              employer: e.employer,
+              name: e.employer,
               role_title: e.roleTitle,
               description: e.description,
               start_date: e.startDate,
               end_date: e.endDate,
-              projects: { create: e.projects },
+              is_current: Boolean(e.startDate) && !e.endDate,
+              sort_order: i * 10,
+              projects: {
+                create: e.projects.map((pr: { name: string; description: string | null }) => ({
+                  provider_profile_id: profileId,
+                  name: pr.name,
+                  description: pr.description,
+                })),
+              },
             },
           });
         }
@@ -1253,31 +1302,30 @@ export async function applyProviderSection(
       const toYearOrNull = (v: unknown) =>
         typeof v === "number" ? v : v ? Number(v) || null : null;
 
+      const toDateOrNull = (v: unknown) => {
+        if (!v || typeof v !== "string") return null;
+        const d = new Date(v);
+        return Number.isNaN(d.getTime()) ? null : d;
+      };
+
+      // brief_U / E044 — a certification is STANDALONE: it belongs to the
+      // certifying agency that issued it, not to an employer. The employer
+      // column, relation and the brief_T "carry the link forward by name"
+      // logic are all gone.
       const clean = list
         .map((c) => ({
           name: (c.name ?? "").trim(),
           issuer: c.issuer?.trim() || null,
           year: toYearOrNull(c.year),
+          issued_on: toDateOrNull(c.issuedOn),
           credential_id: c.credentialId?.trim() || null,
           url: c.url?.trim() || null,
-          expires_on: c.expiresOn ? new Date(c.expiresOn) : null,
+          expires_on: toDateOrNull(c.expiresOn),
+          attachment_path: c.attachmentPath?.trim() || null,
+          attachment_name: c.attachmentName?.trim() || null,
+          notes: c.notes?.trim() || null,
         }))
-        .filter((c) => c.name)
-        .filter((c) => !c.expires_on || !Number.isNaN(c.expires_on.getTime()));
-
-      // This writer replaces the whole set, which would drop the Employer link
-      // brief_S added — the client never sees `employer_id`, so it can't send
-      // it back. Carry it forward by name so editing a certification doesn't
-      // silently detach it from the employer it was earned at.
-      const existing = await prisma.certification.findMany({
-        where: { provider_profile_id: profileId },
-        select: { name: true, employer_id: true },
-      });
-      const employerByName = new Map(
-        existing
-          .filter((e) => e.employer_id)
-          .map((e) => [e.name.toLowerCase(), e.employer_id as string])
-      );
+        .filter((c) => c.name);
 
       await prisma.$transaction([
         prisma.certification.deleteMany({
@@ -1286,11 +1334,7 @@ export async function applyProviderSection(
         ...(clean.length
           ? [
               prisma.certification.createMany({
-                data: clean.map((c) => ({
-                  provider_profile_id: profileId,
-                  employer_id: employerByName.get(c.name.toLowerCase()) ?? null,
-                  ...c,
-                })),
+                data: clean.map((c) => ({ provider_profile_id: profileId, ...c })),
               }),
             ]
           : []),
@@ -1395,7 +1439,7 @@ export async function recomputeCompleteness(profileId: string): Promise<number> 
     include: {
       skills: true,
       specializations: true,
-      workExperiences: true,
+      employers: true,
       education: true,
       languages: true,
       certifications: true,
@@ -1423,7 +1467,7 @@ export async function recomputeCompleteness(profileId: string): Promise<number> 
     hourly_rate_cents: profile.hourly_rate_cents,
     skills: profile.skills,
     languages: profile.languages,
-    workExperiences: profile.workExperiences,
+    employers: profile.employers,
     education: profile.education,
     certifications: profile.certifications,
     specializations: profile.specializations,

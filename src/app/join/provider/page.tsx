@@ -24,6 +24,10 @@ import {
   type CertificationDraft,
 } from "@/components/onboarding/CertificationsEditor";
 import {
+  EmployersStep,
+  type EmployerCard,
+} from "@/components/onboarding/EmployersStep";
+import {
   ResumeUploadModal,
   type ImportOutcome,
 } from "@/components/onboarding/ResumeUploadModal";
@@ -55,13 +59,14 @@ import {
  * the resume point, so there is no progress column to keep in sync.
  */
 
-/** The 12 profile steps, in order. Must mirror PROVIDER_STEPS server-side. */
+/** The 13 profile steps, in order. Must mirror PROVIDER_STEPS server-side. */
 const STEPS = [
   "experience_level",
   "goal",
   "work_method",
   "title",
   "tell_us",
+  "employers",
   "catalog",
   "specializations",
   "education",
@@ -73,7 +78,7 @@ const STEPS = [
 type Step = (typeof STEPS)[number];
 type Screen = "signup" | "check_email" | Step;
 
-const TOTAL = STEPS.length; // 12 (brief_S / E030)
+const TOTAL = STEPS.length; // 13 (brief_U — employers step added)
 
 const EXPERIENCE_OPTIONS = [
   { value: "BEGINNER", title: "Beginner", description: "New to consulting or early in my journey." },
@@ -111,7 +116,8 @@ const STEP_LABELS: Record<Step, { stepper: string; next: string }> = {
   goal: { stepper: "Your Goal", next: "Next: What Do You Sell" },
   work_method: { stepper: "What Do You Sell", next: "Next: Your Title" },
   title: { stepper: "Your Title", next: "Next: Create Your Profile" },
-  tell_us: { stepper: "Create Your Profile", next: "Next: Role → Domain → Skills" },
+  tell_us: { stepper: "Create Your Profile", next: "Next: Your Employers" },
+  employers: { stepper: "Your Employers", next: "Next: Role → Domain → Skills" },
   catalog: { stepper: "Role → Domain → Skills", next: "Next: Your Specializations" },
   specializations: { stepper: "Your Specializations", next: "Next: Education" },
   education: { stepper: "Your Education", next: "Next: Languages" },
@@ -139,6 +145,7 @@ type ProfilePayload = {
   roleTypeName?: string | null;
   specializationIds?: string[];
   specializations?: { id: string; name: string; kind: string }[];
+  employers?: EmployerCard[];
   certifications?: {
     id: string;
     name: string;
@@ -228,6 +235,7 @@ type Profile = {
   /** Typed-in specializations not yet in the vocabulary (E031). */
   customSpecializations: string[];
   certifications: CertificationDraft[];
+  employers: EmployerCard[];
   skillIds: string[];
   skillNames: { id: string; name: string }[];
   /** Typed-in skills not yet in the catalog (E031). */
@@ -276,6 +284,7 @@ const emptyProfile = (): Profile => ({
   address: null,
   education: [],
   languages: [],
+  employers: [],
 });
 
 const emptyAddress = (country = "United States"): AddressDraft => ({
@@ -355,6 +364,7 @@ export default function JoinProviderPage() {
       // Server-side these have been folded into the real vocabularies.
       customSpecializations: [],
       customSkills: [],
+      employers: (p.employers ?? []) as EmployerCard[],
       certifications: (p.certifications ?? []).map((c) => ({
         name: c.name,
         issuer: c.issuer,
@@ -905,7 +915,31 @@ export default function JoinProviderPage() {
         </WizardShell>
       );
 
-    // ---- 6/12 — Role → Domain → Skills, ONE cascading page (E030) ------
+    // ---- 6/13 — Your Employers (brief_U capture step) ------------------
+    case "employers":
+      return (
+        <WizardShell
+          {...shell({
+            title:
+              "Here's what you've told us about your employers (click the employer to add projects within the job).",
+            subtitle:
+              "The more you tell us, the better: service providers who add work experience and projects are twice as likely to win work.",
+            wide: true,
+            secondaryLabel: "Skip for Now",
+            onSecondary: goNext,
+            onContinue: () => saveAnd("employers", {}),
+          })}
+        >
+          {error && <Notice>{error}</Notice>}
+          <EmployersStep
+            employers={profile.employers}
+            onChanged={(employers) => setProfile((p) => ({ ...p, employers }))}
+            onError={setError}
+          />
+        </WizardShell>
+      );
+
+    // ---- 7/13 — Role → Domain → Skills, ONE cascading page (E030) ------
     case "catalog": {
       const chosenSkills = new Set(profile.skillIds);
       const atMaxSkills = profile.skillIds.length >= MAX_SKILLS;

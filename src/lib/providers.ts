@@ -41,8 +41,8 @@ export async function getPublicProviderProfile(
           },
         },
       },
-      workExperiences: {
-        orderBy: { start_date: "desc" },
+      employers: {
+        orderBy: [{ sort_order: "asc" }, { start_date: "desc" }],
         include: {
           projects: { select: { id: true, name: true, description: true } },
         },
@@ -97,10 +97,10 @@ export async function getPublicProviderProfile(
       name: s.specialization.name,
       kind: s.specialization.kind,
     })),
-    experience: profile.workExperiences.map((we) => ({
+    experience: profile.employers.map((we) => ({
       id: we.id,
-      employer: we.employer,
-      roleTitle: we.role_title,
+      employer: we.name,
+      roleTitle: we.role_title ?? "",
       description: we.description,
       startDate: we.start_date,
       endDate: we.end_date,

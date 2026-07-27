@@ -30,6 +30,13 @@ export const PROFILE_PHOTO_BUCKET = "profile-photos";
  */
 export const RESUME_BUCKET = "resumes";
 
+/**
+ * PRIVATE bucket for uploaded certificates (brief_U / E044). Private for the
+ * same reason as résumés: a certificate carries a full legal name and a
+ * credential number. Served only through short-lived signed URLs.
+ */
+export const CERTIFICATION_BUCKET = "certifications";
+
 /** E012 — "PDF / Word / rich text, ≤5MB". */
 export const ALLOWED_RESUME_MIME = [
   "application/pdf",
@@ -165,6 +172,29 @@ export async function uploadResumeFile(
 
   if (error) {
     console.error("[storage] résumé upload failed:", error);
+    throw new StorageError("Could not store that file.", "UPLOAD_FAILED");
+  }
+  return objectPath;
+}
+
+/** Store a certificate file; returns its object PATH (the bucket is private). */
+export async function uploadCertificationFile(
+  profileId: string,
+  file: { name: string; type: string; bytes: ArrayBuffer }
+): Promise<string> {
+  const safeName =
+    file.name.replace(/[^A-Za-z0-9._-]/g, "_").slice(-80) || "certificate";
+  const objectPath = `${profileId}/${randomUUID()}-${safeName}`;
+
+  const { error } = await getStorageClient()
+    .from(CERTIFICATION_BUCKET)
+    .upload(objectPath, file.bytes, {
+      contentType: file.type || "application/octet-stream",
+      upsert: false,
+    });
+
+  if (error) {
+    console.error("[storage] certificate upload failed:", error);
     throw new StorageError("Could not store that file.", "UPLOAD_FAILED");
   }
   return objectPath;

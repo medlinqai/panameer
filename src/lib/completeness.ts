@@ -51,8 +51,13 @@ export type CompletenessInput = {
   hourly_rate_cents?: number | null;
   skills: unknown[];
   languages: unknown[];
-  /** Optional enrichments — any ONE of these satisfies the enrichment weight. */
-  workExperiences: unknown[];
+  /**
+   * Optional enrichments — any ONE of these satisfies the enrichment weight.
+   * `employers` replaced the retired flat WorkExperience (brief_U / E042); if
+   * this had kept reading the old table the weight would have become
+   * unreachable, which is precisely the invisible-profile bug brief_R fixed.
+   */
+  employers: unknown[];
   education: unknown[];
   certifications: unknown[];
   specializations: unknown[];
@@ -124,7 +129,7 @@ export function computeProviderCompleteness(p: CompletenessInput): number {
   if (p.date_of_birth && p.hasAddress && p.hasPhone) score += W.identity;
 
   if (
-    p.workExperiences.length >= 1 ||
+    p.employers.length >= 1 ||
     p.education.length >= 1 ||
     p.certifications.length >= 1 ||
     p.specializations.length >= 1

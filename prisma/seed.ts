@@ -381,25 +381,30 @@ async function main() {
     });
   }
 
-  // A couple of work experiences (idempotent guard: only seed if none exist).
-  const existingExperience = await prisma.workExperience.count({
-    where: { provider_profile_id: providerProfile.id },
+  // A couple of employers with nested projects (brief_U / E042 — Employer is
+  // the one work-history model). Idempotent guard: only seed when absent.
+  const ceresExists = await prisma.employer.findFirst({
+    where: { provider_profile_id: providerProfile.id, name: "Ceres Holdings" },
+    select: { id: true },
   });
-  if (existingExperience === 0) {
-    await prisma.workExperience.create({
+  if (!ceresExists) {
+    await prisma.employer.create({
       data: {
         provider_profile_id: providerProfile.id,
-        employer: "Ceres Holdings",
+        name: "Ceres Holdings",
         role_title: "Lead Oracle Cloud Procurement Consultant",
         description:
           "Owned the end-to-end Procurement Cloud implementation and rollout.",
+        sort_order: 20,
         projects: {
           create: [
             {
+              provider_profile_id: providerProfile.id,
               name: "Self-Service Procurement rollout",
               description: "Requisition-to-receipt across 12 sites.",
             },
             {
+              provider_profile_id: providerProfile.id,
               name: "Supplier Portal onboarding",
               description: "Migrated 400+ suppliers to the Supplier Portal.",
             },
@@ -407,12 +412,13 @@ async function main() {
         },
       },
     });
-    await prisma.workExperience.create({
+    await prisma.employer.create({
       data: {
         provider_profile_id: providerProfile.id,
-        employer: "Global Retail Co.",
+        name: "Global Retail Co.",
         role_title: "Oracle Sourcing Specialist",
         description: "Sourcing and negotiations optimization.",
+        sort_order: 30,
       },
     });
   }
@@ -426,7 +432,7 @@ async function main() {
       include: {
         skills: true,
         specializations: true,
-        workExperiences: true,
+        employers: true,
         education: true,
         languages: true,
         certifications: true,
@@ -454,7 +460,7 @@ async function main() {
         hourly_rate_cents: full.hourly_rate_cents,
         skills: full.skills,
         languages: full.languages,
-        workExperiences: full.workExperiences,
+        employers: full.employers,
         education: full.education,
         certifications: full.certifications,
         specializations: full.specializations,
