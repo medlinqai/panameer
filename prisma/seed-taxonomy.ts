@@ -37,6 +37,7 @@ export type TaxonomyCounts = {
   specializations: number;
   regions: number;
   engagementTypes: number;
+  applications: number;
   retiredSkills: number;
   retiredPillars: number;
   retiredRoleTypes: number;
@@ -299,6 +300,8 @@ export async function seedTaxonomy(
   ) as {
     regions: { name: string; desc?: string }[];
     engagementTypes: { code: string; name: string; detail?: string }[];
+    applicationHierarchy: { application: string; appGroup?: string }[];
+    nonOracleApplications: string[];
   };
 
   for (const r of legacy.regions) {
@@ -308,6 +311,55 @@ export async function seedTaxonomy(
       create: { name: r.name, description: r.desc ?? null },
     });
   }
+  /**
+   * Tools / applications vocabulary (brief_project_model_v2).
+   *
+   * These rows already existed in the ERP source file but were never loaded,
+   * so `applications` was empty and the project modal's tools multi-select had
+   * nothing to offer. Seeded OFFERING-LESS on purpose: they are a flat picker
+   * vocabulary, and hanging them off a pillar would put them into the
+   * Role → Domain → Skill tree, which is a different axis.
+   *
+   * NOT an expansion of the taxonomy — every name here comes from the
+   * committed catalog file.
+   */
+  const appNames = new Map<string, string | null>();
+  for (const row of legacy.applicationHierarchy ?? []) {
+    const name = fixTypo((row.application ?? "").trim());
+    if (name) appNames.set(name.toLowerCase(), row.appGroup?.trim() || null);
+  }
+  for (const name of legacy.nonOracleApplications ?? []) {
+    const n = fixTypo((name ?? "").trim());
+    if (n && !appNames.has(n.toLowerCase())) appNames.set(n.toLowerCase(), null);
+  }
+  let applicationCount = 0;
+  for (const [key, appGroup] of appNames) {
+    const display = fixTypo(
+      (legacy.applicationHierarchy ?? []).find(
+        (r) => r.application?.trim().toLowerCase() === key
+      )?.application?.trim() ??
+        (legacy.nonOracleApplications ?? []).find(
+          (n) => n.trim().toLowerCase() === key
+        )?.trim() ??
+        key
+    );
+    const existing = await prisma.application.findFirst({
+      where: { name: { equals: display, mode: "insensitive" } },
+      select: { id: true },
+    });
+    if (existing) {
+      await prisma.application.update({
+        where: { id: existing.id },
+        data: { app_group: appGroup },
+      });
+    } else {
+      await prisma.application.create({
+        data: { name: display, app_group: appGroup, is_custom: false },
+      });
+    }
+    applicationCount++;
+  }
+
   for (const e of legacy.engagementTypes) {
     await prisma.engagementType.upsert({
       where: { code: e.code },
@@ -323,6 +375,7 @@ export async function seedTaxonomy(
     specializations: data.specializations.length,
     regions: legacy.regions.length,
     engagementTypes: legacy.engagementTypes.length,
+    applications: applicationCount,
     retiredSkills,
     retiredPillars,
     retiredRoleTypes,

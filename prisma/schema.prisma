@@ -299,6 +299,9 @@ model RoleType {
   /// keeping the ERP-heavy Application-Specific role at the top (E013).
   sort_order Int @default(100)
 
+  /// Projects classified with this role type (brief_project_model_v2).
+  projects Project[]
+
   skills           Skill[]
   tags             SkillTag[]
   workRequests     WorkRequest[]
@@ -351,17 +354,27 @@ model Offering {
 /// its App Group as a field (the source data pairs one app group per app).
 model Application {
   id          String   @id @default(uuid()) @db.Uuid
-  offering_id String   @db.Uuid
+  /// Null for a PROVIDER-ADDED tool (brief_project_model_v2): a custom entry
+  /// belongs to no ERP offering, and leaving it out of the tree is what keeps
+  /// it from polluting the Role → Domain → Skill pickers, which walk
+  /// offerings. Baseline catalog rows always carry one.
+  offering_id String?  @db.Uuid
   name        String
   app_group   String?
+  /// Added on the fly by a provider, and therefore FLAGGED FOR ADMIN REVIEW so
+  /// recurring entries can be promoted to baseline later (the same contract as
+  /// `Specialization.is_custom`). Never retired by the seed.
+  is_custom   Boolean  @default(false)
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 
-  offering Offering @relation(fields: [offering_id], references: [id], onDelete: Cascade)
+  offering Offering?            @relation(fields: [offering_id], references: [id], onDelete: Cascade)
   skills   Skill[]
+  projects ProjectApplication[]
 
   @@unique([offering_id, name])
   @@index([offering_id])
+  @@index([is_custom])
   @@map("applications")
 }
 
@@ -669,6 +682,9 @@ model Specialization {
 
   catalog          ServiceCatalog                 @relation(fields: [catalog_id], references: [id], onDelete: Cascade)
   providerProfiles ProviderProfileSpecialization[]
+  /// Projects delivered in this sector — only INDUSTRY-kind rows are ever
+  /// linked (brief_project_model_v2).
+  projectIndustries Project[]
 
   @@unique([catalog_id, name])
   @@map("specializations")
@@ -748,6 +764,46 @@ model Employer {
 /// `employer_id` is retained and is how the capture step nests projects under
 /// the job they belong to (brief_U). It stays nullable so a project imported
 /// or entered before its employer exists isn't rejected.
+/// How much of the client's identity a viewer may see (brief_project_model_v2).
+///
+/// Stored NOW, enforced LATER: `PLUS_ONLY` is the membership-gated tier and
+/// behaves exactly like `PUBLIC` until the Plus brief ships, so nothing is
+/// silently hidden by a tier that doesn't exist yet. `CONFIDENTIAL` is the one
+/// that bites today — the client name is replaced by the code name and the
+/// industry everywhere it renders.
+enum ClientVisibility {
+  PUBLIC
+  PLUS_ONLY
+  CONFIDENTIAL
+}
+
+/// Per-project validation state (brief_project_model_v2). "Validated", never
+/// "verified" — the locked terminology (decisions-01, 2026-07-29).
+///
+/// Groundwork only in this brief: the field exists and always reads `NONE`.
+/// The workflow that moves it to PENDING (email sent to `contact_email`) and
+/// VALIDATED (contact confirmed) is the NEXT brief.
+enum ProjectValidationStatus {
+  NONE
+  PENDING
+  VALIDATED
+}
+
+/// A delivered piece of work, done AT an employer.
+///
+/// The `Solution` child this used to carry is gone (brief_V / E045): what it
+/// was reaching for is a PACKAGE — a productized offering the provider SELLS —
+/// and that is a standalone catalog entity, not a sub-part of past work.
+///
+/// `employer_id` is retained and is how the capture step nests projects under
+/// the job they belong to (brief_U). It stays nullable so a project imported
+/// or entered before its employer exists isn't rejected.
+///
+/// V2 (brief_project_model_v2) turns this from a name+blurb into the reporting
+/// grain of the whole product. The classification fields are CATALOG-LINKED
+/// rather than free text — `role_type_id` and the `ProjectApplication` join —
+/// because "show me every Technical project that used Oracle Fusion" has to be
+/// a query, and free text can never be charted.
 model Project {
   id                  String   @id @default(uuid()) @db.Uuid
   provider_profile_id String   @db.Uuid
@@ -760,6 +816,49 @@ model Project {
   image_url           String?
   start_date          DateTime?
   end_date            DateTime?
+  /// True while the provider is still on this project; `end_date` is then null
+  /// by design and the card renders "– Present". Mirrors `Employer.is_current`.
+  is_current          Boolean  @default(false)
+
+  // --- Classification (catalog-linked, for reporting) ----------------------
+  /// What the provider DID here (Application-Specific / Technical / …).
+  /// REQUIRED (brief_project_model_v2): classification is the reporting grain,
+  /// so a project without one would be invisible to every future chart.
+  role_type_id        String   @db.Uuid
+  /// The sector this was delivered in. Reuses the INDUSTRY slice of the
+  /// Specialization vocabulary rather than a free-text column, so a
+  /// confidential project can still say "Oil & Gas" in a chartable way.
+  industry_specialization_id String? @db.Uuid
+
+  // --- Client -------------------------------------------------------------
+  /// REQUIRED. Held even when `client_visibility` hides it — the redaction is
+  /// a RENDER decision, so the name stays available for the validation email
+  /// and for Plus members once that ships.
+  client_name         String
+  client_visibility   ClientVisibility @default(PUBLIC)
+  /// The project alias shown INSTEAD of the client when confidential.
+  code_name           String?
+
+  // --- Validation groundwork (workflow = next brief) ----------------------
+  /// Who at the client can confirm this work happened.
+  contact_email       String?
+  validation_status   ProjectValidationStatus @default(NONE)
+
+  // --- What you did -------------------------------------------------------
+  /// The bullets, as a real list — not one blob to be split on render.
+  highlights          String[]
+
+  // --- Media --------------------------------------------------------------
+  video_url           String?
+  /// Supporting document in the PRIVATE `project-docs` bucket — an object
+  /// path, not a URL, exactly like `Certification.attachment_path`. A statement
+  /// of work carries client names and commercials; it is never public.
+  document_path       String?
+  document_name       String?
+  /// Client/project logo, SUGGESTED from `client_name` and then accepted by the
+  /// provider — never auto-applied (the E043 rule from Employer).
+  logo_url            String?
+
   /// Ordering in the portfolio; lower first.
   sort_order          Int      @default(100)
   created_at          DateTime @default(now())
@@ -767,10 +866,53 @@ model Project {
 
   providerProfile ProviderProfile @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
   employer        Employer?       @relation(fields: [employer_id], references: [id], onDelete: SetNull)
+  roleType        RoleType        @relation(fields: [role_type_id], references: [id], onDelete: Restrict)
+  industry        Specialization? @relation(fields: [industry_specialization_id], references: [id], onDelete: SetNull)
+  applications    ProjectApplication[]
+  outcomes        ProjectOutcome[]
 
   @@index([provider_profile_id])
   @@index([employer_id])
+  @@index([role_type_id])
   @@map("projects")
+}
+
+/// Join: a tool / application / technology used on a project.
+///
+/// Many-to-many against the SAME `Application` catalog the skill taxonomy uses,
+/// so "which projects used this app" and "which skills touch this app" answer
+/// from one vocabulary. Provider-added entries are `Application.is_custom`.
+model ProjectApplication {
+  id             String   @id @default(uuid()) @db.Uuid
+  project_id     String   @db.Uuid
+  application_id String   @db.Uuid
+  created_at     DateTime @default(now())
+
+  project     Project     @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  application Application @relation(fields: [application_id], references: [id], onDelete: Cascade)
+
+  @@unique([project_id, application_id])
+  @@index([application_id])
+  @@map("project_applications")
+}
+
+/// A quantified result of a project — label + value, e.g. "Savings" / "$10M+".
+///
+/// Deliberately a CHILD ROW rather than a JSON blob or a formatted sentence:
+/// the numbers are the part of a profile a buyer actually reads, and they are
+/// the first thing reporting will want to aggregate.
+model ProjectOutcome {
+  id         String   @id @default(uuid()) @db.Uuid
+  project_id String   @db.Uuid
+  label      String
+  value      String
+  sort_order Int      @default(100)
+  created_at DateTime @default(now())
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@index([project_id])
+  @@map("project_outcomes")
 }
 
 /// A productized, a-la-carte offering the provider SELLS (brief_V / E045).

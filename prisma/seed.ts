@@ -248,6 +248,37 @@ async function main() {
     employerIds[spec.name] = row.id;
   }
 
+  // brief_project_model_v2 — the demo projects carry the FULL v2 field set, so
+  // the profile shows what a finished project actually looks like: a role, a
+  // client (one of them confidential), tools, dates and a quantified outcome.
+  const primaryRole =
+    (await prisma.roleType.findFirst({
+      where: { name: "Application-Specific" },
+      select: { id: true },
+    })) ?? (await prisma.roleType.findFirst({ orderBy: { sort_order: "asc" }, select: { id: true } }));
+
+  /** Look up an industry from the INDUSTRY slice of the Specialization list. */
+  const industryId = async (name: string) =>
+    (
+      await prisma.specialization.findFirst({
+        where: { kind: "INDUSTRY", name: { contains: name, mode: "insensitive" } },
+        select: { id: true },
+      })
+    )?.id ?? null;
+
+  /** Resolve tool names to Application ids, skipping any the catalog lacks. */
+  const appIds = async (names: string[]) => {
+    const out: string[] = [];
+    for (const n of names) {
+      const row = await prisma.application.findFirst({
+        where: { name: { equals: n, mode: "insensitive" } },
+        select: { id: true },
+      });
+      if (row) out.push(row.id);
+    }
+    return out;
+  };
+
   const projectSpecs = [
     {
       name: "Global P2P Transformation",
@@ -255,6 +286,24 @@ async function main() {
       description:
         "End-to-end Procure-to-Pay rollout across 14 countries — requisitions, sourcing, supplier portal and invoice automation.",
       sort_order: 10,
+      clientName: "Northwind Industrials",
+      clientVisibility: "PUBLIC" as const,
+      codeName: null as string | null,
+      industry: "Manufactur",
+      startDate: new Date("2021-03-01"),
+      endDate: new Date("2023-06-30"),
+      isCurrent: false,
+      tools: ["Requisitions", "Purchasing/Purchase Orders", "Supplier Portal", "Sourcing/Negotiations"],
+      highlights: [
+        "Rolled out Procure-to-Pay to 14 countries in 27 months.",
+        "Replaced 6 legacy purchasing systems with Oracle Cloud Procurement.",
+        "Trained 400+ requisitioners and 60 buyers across three regions.",
+      ],
+      outcomes: [
+        { label: "Savings", value: "$10M+" },
+        { label: "Countries", value: "14" },
+        { label: "Cycle time", value: "-38%" },
+      ],
     },
     {
       name: "Supplier Onboarding Automation",
@@ -262,34 +311,78 @@ async function main() {
       description:
         "Cut supplier onboarding cycle time by 40% with Oracle Supplier Qualification Management.",
       sort_order: 20,
+      // The CONFIDENTIAL demo row: the card must show the code name and the
+      // industry, never "Helios Energy".
+      clientName: "Helios Energy",
+      clientVisibility: "CONFIDENTIAL" as const,
+      codeName: "Project Falcon",
+      industry: "Energy",
+      startDate: new Date("2023-09-01"),
+      endDate: null as Date | null,
+      isCurrent: true,
+      tools: ["Supplier Portal", "Supplier Qualifications"],
+      highlights: [
+        "Automated supplier qualification across 3 business units.",
+        "Integrated third-party risk screening into onboarding.",
+      ],
+      outcomes: [
+        { label: "Onboarding time", value: "-40%" },
+        { label: "Suppliers", value: "1,200" },
+      ],
     },
   ];
 
   for (const spec of projectSpecs) {
+    const data = {
+      description: spec.description,
+      sort_order: spec.sort_order,
+      employer_id: employerIds[spec.employer] ?? null,
+      role_type_id: primaryRole!.id,
+      industry_specialization_id: await industryId(spec.industry),
+      client_name: spec.clientName,
+      client_visibility: spec.clientVisibility,
+      code_name: spec.codeName,
+      start_date: spec.startDate,
+      end_date: spec.endDate,
+      is_current: spec.isCurrent,
+      highlights: spec.highlights,
+    };
+
     const found = await prisma.project.findFirst({
       where: { provider_profile_id: providerProfile.id, name: spec.name },
       select: { id: true },
     });
-    if (found) {
-      await prisma.project.update({
-        where: { id: found.id },
-        data: {
-          description: spec.description,
-          sort_order: spec.sort_order,
-          employer_id: employerIds[spec.employer] ?? null,
-        },
-      });
-    } else {
-      await prisma.project.create({
-        data: {
-          provider_profile_id: providerProfile.id,
-          employer_id: employerIds[spec.employer] ?? null,
-          name: spec.name,
-          description: spec.description,
-          sort_order: spec.sort_order,
-        },
+    const projectId = found
+      ? (await prisma.project.update({ where: { id: found.id }, data })).id
+      : (
+          await prisma.project.create({
+            data: {
+              provider_profile_id: providerProfile.id,
+              name: spec.name,
+              ...data,
+            },
+          })
+        ).id;
+
+    // Children are REPLACED, not appended — the seed is idempotent and must not
+    // grow a project's tool list every time it runs.
+    const ids = await appIds(spec.tools);
+    await prisma.projectApplication.deleteMany({ where: { project_id: projectId } });
+    if (ids.length) {
+      await prisma.projectApplication.createMany({
+        data: ids.map((application_id) => ({ project_id: projectId, application_id })),
+        skipDuplicates: true,
       });
     }
+    await prisma.projectOutcome.deleteMany({ where: { project_id: projectId } });
+    await prisma.projectOutcome.createMany({
+      data: spec.outcomes.map((o, i) => ({
+        project_id: projectId,
+        label: o.label,
+        value: o.value,
+        sort_order: i * 10,
+      })),
+    });
   }
 
   // Certifications are standalone since brief_U / E044 — a credential belongs
@@ -431,11 +524,19 @@ async function main() {
               provider_profile_id: providerProfile.id,
               name: "Self-Service Procurement rollout",
               description: "Requisition-to-receipt across 12 sites.",
+              role_type_id: primaryRole!.id,
+              client_name: "Ceres Holdings",
+              start_date: new Date("2019-02-01"),
+              end_date: new Date("2020-11-30"),
             },
             {
               provider_profile_id: providerProfile.id,
               name: "Supplier Portal onboarding",
               description: "Migrated 400+ suppliers to the Supplier Portal.",
+              role_type_id: primaryRole!.id,
+              client_name: "Ceres Holdings",
+              start_date: new Date("2020-01-15"),
+              end_date: new Date("2020-12-31"),
             },
           ],
         },

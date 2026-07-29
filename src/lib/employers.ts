@@ -26,6 +26,14 @@ export type EmployerInput = {
   isCurrent?: boolean;
 };
 
+/**
+ * The v2 project field set (brief_project_model_v2).
+ *
+ * `applicationIds` are existing catalog rows; `customApplications` are names
+ * the provider typed that aren't in the catalog yet — those are created as
+ * `Application { is_custom: true }` so the admin catalog editor can promote
+ * recurring ones to baseline.
+ */
 export type ProjectInput = {
   name: string;
   description?: string | null;
@@ -33,7 +41,25 @@ export type ProjectInput = {
   imageUrl?: string | null;
   startDate?: string | null;
   endDate?: string | null;
+  isCurrent?: boolean;
+  roleTypeId?: string | null;
+  industrySpecializationId?: string | null;
+  clientName?: string | null;
+  clientVisibility?: string | null;
+  codeName?: string | null;
+  contactEmail?: string | null;
+  highlights?: string[];
+  videoUrl?: string | null;
+  documentPath?: string | null;
+  documentName?: string | null;
+  logoUrl?: string | null;
+  applicationIds?: string[];
+  customApplications?: string[];
+  outcomes?: { label: string; value: string }[];
 };
+
+const CLIENT_VISIBILITIES = ["PUBLIC", "PLUS_ONLY", "CONFIDENTIAL"] as const;
+type ClientVisibilityValue = (typeof CLIENT_VISIBILITIES)[number];
 
 /** Resolve the viewer's OWN provider profile id. Fails closed. */
 async function ownedProfileId(viewer: Viewer): Promise<string> {
@@ -67,6 +93,14 @@ export async function listEmployers(viewer: Viewer) {
     include: {
       projects: {
         orderBy: [{ sort_order: "asc" }, { created_at: "asc" }],
+        include: {
+          roleType: { select: { id: true, name: true } },
+          industry: { select: { id: true, name: true } },
+          applications: {
+            include: { application: { select: { id: true, name: true } } },
+          },
+          outcomes: { orderBy: [{ sort_order: "asc" }, { created_at: "asc" }] },
+        },
       },
     },
   });
@@ -81,16 +115,59 @@ export async function listEmployers(viewer: Viewer) {
     isCurrent: e.is_current,
     startDate: e.start_date ? e.start_date.toISOString().slice(0, 10) : null,
     endDate: e.end_date ? e.end_date.toISOString().slice(0, 10) : null,
-    projects: e.projects.map((p) => ({
-      id: p.id,
-      name: p.name,
-      description: p.description,
-      url: p.url,
-      imageUrl: p.image_url,
-      startDate: p.start_date ? p.start_date.toISOString().slice(0, 10) : null,
-      endDate: p.end_date ? p.end_date.toISOString().slice(0, 10) : null,
-    })),
+    projects: e.projects.map(projectToCard),
   }));
+}
+
+/** The shape every project surface renders. One mapper, one source of truth. */
+export function projectToCard(p: {
+  id: string;
+  name: string;
+  description: string | null;
+  url: string | null;
+  image_url: string | null;
+  start_date: Date | null;
+  end_date: Date | null;
+  is_current: boolean;
+  client_name: string;
+  client_visibility: string;
+  code_name: string | null;
+  contact_email: string | null;
+  validation_status: string;
+  highlights: string[];
+  video_url: string | null;
+  document_path: string | null;
+  document_name: string | null;
+  logo_url: string | null;
+  roleType: { id: string; name: string } | null;
+  industry: { id: string; name: string } | null;
+  applications: { application: { id: string; name: string } }[];
+  outcomes: { id: string; label: string; value: string }[];
+}) {
+  return {
+    id: p.id,
+    name: p.name,
+    description: p.description,
+    url: p.url,
+    imageUrl: p.image_url,
+    startDate: p.start_date ? p.start_date.toISOString().slice(0, 10) : null,
+    endDate: p.end_date ? p.end_date.toISOString().slice(0, 10) : null,
+    isCurrent: p.is_current,
+    clientName: p.client_name,
+    clientVisibility: p.client_visibility,
+    codeName: p.code_name,
+    contactEmail: p.contact_email,
+    validationStatus: p.validation_status,
+    highlights: p.highlights,
+    videoUrl: p.video_url,
+    documentPath: p.document_path,
+    documentName: p.document_name,
+    logoUrl: p.logo_url,
+    roleType: p.roleType,
+    industry: p.industry,
+    applications: p.applications.map((a) => a.application),
+    outcomes: p.outcomes.map((o) => ({ id: o.id, label: o.label, value: o.value })),
+  };
 }
 
 function employerData(input: EmployerInput) {
@@ -168,22 +245,175 @@ export async function deleteEmployer(viewer: Viewer, employerId: string) {
   await recomputeCompleteness(profileId);
 }
 
+/**
+ * Validate + shape the scalar half of a project write.
+ *
+ * The REQUIRED SET is enforced here, server-side, and not only in the modal:
+ * name, start date, role, client and description, plus an end date unless the
+ * project is current (brief_project_model_v2). The modal disables Save on the
+ * same rules, but the modal is not a security boundary — this is.
+ */
 function projectData(input: ProjectInput) {
   const name = clean(input.name, 200);
   if (!name) throw new OnboardingError("Project name is required", "INVALID");
+
+  const clientName = clean(input.clientName, 200);
+  if (!clientName) throw new OnboardingError("Client name is required", "INVALID");
+
+  const description = clean(input.description, 4000);
+  if (!description) {
+    throw new OnboardingError("A short description is required", "INVALID");
+  }
+
+  const roleTypeId = clean(input.roleTypeId, 64);
+  if (!roleTypeId) throw new OnboardingError("Pick the role you played", "INVALID");
+
+  const isCurrent = Boolean(input.isCurrent);
   const start = toDate(input.startDate);
-  const end = toDate(input.endDate);
-  if (start && end && end < start) {
+  if (!start) throw new OnboardingError("A start date is required", "INVALID");
+
+  // "End unless current" — and a current project must not keep a stale end
+  // date, or the card would render both "Present" and a finish date.
+  const end = isCurrent ? null : toDate(input.endDate);
+  if (!isCurrent && !end) {
+    throw new OnboardingError(
+      "Add an end date, or tick “I currently work on this”",
+      "INVALID"
+    );
+  }
+  if (end && end < start) {
     throw new OnboardingError("That project ends before it starts", "INVALID");
   }
+
+  const visibility = CLIENT_VISIBILITIES.includes(
+    input.clientVisibility as ClientVisibilityValue
+  )
+    ? (input.clientVisibility as ClientVisibilityValue)
+    : "PUBLIC";
+
+  // A confidential project still has to be identifiable on the card, and the
+  // code name is the only thing left to identify it by once the client is
+  // redacted. Fall back rather than render a nameless card.
+  const codeName = clean(input.codeName, 200);
+  if (visibility === "CONFIDENTIAL" && !codeName) {
+    throw new OnboardingError(
+      "A confidential project needs a code name — it's shown instead of the client",
+      "INVALID"
+    );
+  }
+
+  const email = clean(input.contactEmail, 320);
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new OnboardingError("That contact email isn't valid", "INVALID");
+  }
+
+  const highlights = (input.highlights ?? [])
+    .map((h) => clean(h, 300))
+    .filter((h): h is string => Boolean(h))
+    .slice(0, 12);
+
   return {
     name,
-    description: clean(input.description, 4000),
+    description,
     url: clean(input.url, 1000),
     image_url: clean(input.imageUrl, 1000),
     start_date: start,
     end_date: end,
+    is_current: isCurrent,
+    role_type_id: roleTypeId,
+    industry_specialization_id: clean(input.industrySpecializationId, 64),
+    client_name: clientName,
+    client_visibility: visibility,
+    code_name: codeName,
+    contact_email: email,
+    highlights,
+    video_url: clean(input.videoUrl, 1000),
+    document_path: clean(input.documentPath, 1000),
+    document_name: clean(input.documentName, 300),
+    logo_url: clean(input.logoUrl, 1000),
   };
+}
+
+/**
+ * Resolve the tools multi-select to Application ids, creating provider-added
+ * ones as `is_custom` rows.
+ *
+ * Matching is case-insensitive against the WHOLE catalog before creating
+ * anything, so typing "oracle fusion" when "Oracle Fusion" already exists links
+ * the baseline row instead of spawning a near-duplicate custom for an admin to
+ * clean up later.
+ */
+async function resolveApplicationIds(input: ProjectInput): Promise<string[]> {
+  const ids = new Set((input.applicationIds ?? []).filter(Boolean));
+
+  const customNames = (input.customApplications ?? [])
+    .map((n) => clean(n, 120))
+    .filter((n): n is string => Boolean(n));
+
+  for (const name of customNames) {
+    const existing = await prisma.application.findFirst({
+      where: { name: { equals: name, mode: "insensitive" } },
+      select: { id: true },
+    });
+    if (existing) {
+      ids.add(existing.id);
+      continue;
+    }
+    const created = await prisma.application.create({
+      // No offering: a provider-added tool belongs to no ERP offering, which is
+      // what keeps it out of the Role → Domain → Skill tree.
+      data: { name, is_custom: true },
+      select: { id: true },
+    });
+    ids.add(created.id);
+  }
+
+  // Guard against ids the client made up — a foreign or bogus id would blow up
+  // the join insert rather than being quietly ignored.
+  const valid = await prisma.application.findMany({
+    where: { id: { in: [...ids] } },
+    select: { id: true },
+  });
+  return valid.map((v) => v.id);
+}
+
+/** Replace a project's tool links and outcome rows to match the input. */
+async function writeProjectChildren(projectId: string, input: ProjectInput) {
+  const applicationIds = await resolveApplicationIds(input);
+  const outcomes = (input.outcomes ?? [])
+    .map((o) => ({ label: clean(o?.label, 120), value: clean(o?.value, 120) }))
+    // Both halves or neither: "Savings" with no number says nothing, and a
+    // bare "$10M" with no label says less.
+    .filter((o): o is { label: string; value: string } => Boolean(o.label && o.value))
+    .slice(0, 8);
+
+  await prisma.$transaction([
+    prisma.projectApplication.deleteMany({ where: { project_id: projectId } }),
+    ...(applicationIds.length
+      ? [
+          prisma.projectApplication.createMany({
+            data: applicationIds.map((application_id) => ({
+              project_id: projectId,
+              application_id,
+            })),
+            skipDuplicates: true,
+          }),
+        ]
+      : []),
+    prisma.projectOutcome.deleteMany({ where: { project_id: projectId } }),
+    ...(outcomes.length
+      ? [
+          prisma.projectOutcome.createMany({
+            data: outcomes.map((o, i) => ({
+              project_id: projectId,
+              label: o.label,
+              value: o.value,
+              sort_order: i * 10,
+            })),
+          }),
+        ]
+      : []),
+  ]);
 }
 
 export async function createProject(
@@ -211,6 +441,7 @@ export async function createProject(
     },
     select: { id: true },
   });
+  await writeProjectChildren(row.id, input);
   await recomputeCompleteness(profileId);
   return row.id;
 }
@@ -231,6 +462,7 @@ export async function updateProject(
     where: { id: owned.id },
     data: projectData(input),
   });
+  await writeProjectChildren(owned.id, input);
   await recomputeCompleteness(profileId);
 }
 

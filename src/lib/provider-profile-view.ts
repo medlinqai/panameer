@@ -57,7 +57,15 @@ export async function getProviderProfileView(
       },
       projects: {
         orderBy: [{ sort_order: "asc" }, { created_at: "desc" }],
-        include: { employer: { select: { id: true, name: true } } },
+        include: {
+          employer: { select: { id: true, name: true } },
+          roleType: { select: { id: true, name: true } },
+          industry: { select: { id: true, name: true } },
+          applications: {
+            include: { application: { select: { id: true, name: true } } },
+          },
+          outcomes: { orderBy: [{ sort_order: "asc" }, { created_at: "asc" }] },
+        },
       },
       certifications: {
         orderBy: [{ issued_on: "desc" }, { year: "desc" }, { name: "asc" }],
@@ -147,6 +155,10 @@ export async function getProviderProfileView(
     })),
 
     // --- E037 portfolio entities ------------------------------------------
+    // brief_project_model_v2 — the full card payload. `clientName` is sent as
+    // stored; the REDACTION is applied at render (see `ProjectCard`), so the
+    // one rule lives in one place and the future Plus tier can lift it without
+    // touching every query.
     projects: profile.projects.map((p) => ({
       id: p.id,
       name: p.name,
@@ -154,6 +166,21 @@ export async function getProviderProfileView(
       url: p.url,
       imageUrl: p.image_url,
       employer: p.employer?.name ?? null,
+      startDate: p.start_date ? p.start_date.toISOString().slice(0, 10) : null,
+      endDate: p.end_date ? p.end_date.toISOString().slice(0, 10) : null,
+      isCurrent: p.is_current,
+      clientName: p.client_name,
+      clientVisibility: p.client_visibility,
+      codeName: p.code_name,
+      validationStatus: p.validation_status,
+      highlights: p.highlights,
+      videoUrl: p.video_url,
+      documentName: p.document_name,
+      logoUrl: p.logo_url,
+      roleType: p.roleType ? { id: p.roleType.id, name: p.roleType.name } : null,
+      industry: p.industry ? { id: p.industry.id, name: p.industry.name } : null,
+      applications: p.applications.map((a) => a.application),
+      outcomes: p.outcomes.map((o) => ({ id: o.id, label: o.label, value: o.value })),
     })),
     // E042 — Employer is the ONE work-history model; the duplicate flat
     // WorkExperience rendering is gone.

@@ -37,6 +37,17 @@ export const RESUME_BUCKET = "resumes";
  */
 export const CERTIFICATION_BUCKET = "certifications";
 
+/**
+ * PRIVATE bucket for project supporting documents (brief_project_model_v2).
+ *
+ * Private is the whole point: a statement of work or a case study carries the
+ * client's name, scope and commercials — exactly the material a provider may
+ * have marked `CONFIDENTIAL` on the project itself. Storing a public URL here
+ * would leak around that setting, so this follows the certificate rule and
+ * returns an object PATH, read back only through a short-lived signed URL.
+ */
+export const PROJECT_DOC_BUCKET = "project-docs";
+
 /** E012 — "PDF / Word / rich text, ≤5MB". */
 export const ALLOWED_RESUME_MIME = [
   "application/pdf",
@@ -195,6 +206,29 @@ export async function uploadCertificationFile(
 
   if (error) {
     console.error("[storage] certificate upload failed:", error);
+    throw new StorageError("Could not store that file.", "UPLOAD_FAILED");
+  }
+  return objectPath;
+}
+
+/** Store a project document; returns its object PATH (the bucket is private). */
+export async function uploadProjectDocument(
+  profileId: string,
+  file: { name: string; type: string; bytes: ArrayBuffer }
+): Promise<string> {
+  const safeName =
+    file.name.replace(/[^A-Za-z0-9._-]/g, "_").slice(-80) || "document";
+  const objectPath = `${profileId}/${randomUUID()}-${safeName}`;
+
+  const { error } = await getStorageClient()
+    .from(PROJECT_DOC_BUCKET)
+    .upload(objectPath, file.bytes, {
+      contentType: file.type || "application/octet-stream",
+      upsert: false,
+    });
+
+  if (error) {
+    console.error("[storage] project document upload failed:", error);
     throw new StorageError("Could not store that file.", "UPLOAD_FAILED");
   }
   return objectPath;

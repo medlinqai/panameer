@@ -3,6 +3,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { Modal } from "@/components/Modal";
 import { Field, TextInput, TextArea, Notice } from "@/components/onboarding/controls";
+import {
+  ProjectModal,
+  emptyProject,
+  type ProjectDraft,
+} from "@/components/onboarding/ProjectModal";
 
 /**
  * "Your Employers" capture step (brief_U, per `employer-project-step-mockup.png`).
@@ -26,6 +31,22 @@ export type EmployerProject = {
   imageUrl: string | null;
   startDate: string | null;
   endDate: string | null;
+  /** brief_project_model_v2 — the rest of the card + modal payload. */
+  isCurrent?: boolean;
+  clientName?: string;
+  clientVisibility?: string;
+  codeName?: string | null;
+  contactEmail?: string | null;
+  validationStatus?: string;
+  highlights?: string[];
+  videoUrl?: string | null;
+  documentPath?: string | null;
+  documentName?: string | null;
+  logoUrl?: string | null;
+  roleType?: { id: string; name: string } | null;
+  industry?: { id: string; name: string } | null;
+  applications?: { id: string; name: string }[];
+  outcomes?: { id: string; label: string; value: string }[];
 };
 
 export type EmployerCard = {
@@ -55,14 +76,7 @@ const emptyEmployerForm = () => ({
 });
 type EmployerForm = ReturnType<typeof emptyEmployerForm>;
 
-const emptyProjectForm = () => ({
-  name: "",
-  description: "",
-  url: "",
-  startDate: "",
-  endDate: "",
-});
-type ProjectForm = ReturnType<typeof emptyProjectForm>;
+
 
 function dateRange(a: string | null, b: string | null, current: boolean) {
   if (!a && !b) return "";
@@ -90,7 +104,7 @@ export function EmployersStep({
   const [projectModal, setProjectModal] = useState<
     { employerId: string; project?: EmployerProject } | null
   >(null);
-  const [projectForm, setProjectForm] = useState<ProjectForm>(emptyProjectForm());
+  const [projectForm, setProjectForm] = useState<ProjectDraft>(emptyProject());
 
   const [logos, setLogos] = useState<LogoSuggestion[]>([]);
   const [logoLoading, setLogoLoading] = useState(false);
@@ -190,23 +204,47 @@ export function EmployersStep({
       project
         ? {
             name: project.name,
-            description: project.description ?? "",
-            url: project.url ?? "",
+            codeName: project.codeName ?? "",
+            clientName: project.clientName ?? "",
+            clientVisibility:
+              (project.clientVisibility as ProjectDraft["clientVisibility"]) ??
+              "PUBLIC",
+            logoUrl: project.logoUrl ?? null,
             startDate: project.startDate ?? "",
             endDate: project.endDate ?? "",
+            isCurrent: Boolean(project.isCurrent),
+            roleTypeId: project.roleType?.id ?? "",
+            industrySpecializationId: project.industry?.id ?? "",
+            applicationIds: (project.applications ?? []).map((a) => a.id),
+            customApplications: [],
+            description: project.description ?? "",
+            highlights: project.highlights ?? [],
+            outcomes: (project.outcomes ?? []).map((o) => ({
+              label: o.label,
+              value: o.value,
+            })),
+            contactEmail: project.contactEmail ?? "",
+            imageUrl: project.imageUrl ?? "",
+            url: project.url ?? "",
+            videoUrl: project.videoUrl ?? "",
+            documentPath: project.documentPath ?? null,
+            documentName: project.documentName ?? null,
           }
-        : emptyProjectForm()
+        : emptyProject()
     );
     setProjectModal({ employerId, project });
   };
 
   const saveProject = async () => {
     const project = {
-      name: projectForm.name,
-      description: projectForm.description,
-      url: projectForm.url,
+      ...projectForm,
       startDate: projectForm.startDate || null,
       endDate: projectForm.endDate || null,
+      industrySpecializationId: projectForm.industrySpecializationId || null,
+      contactEmail: projectForm.contactEmail || null,
+      url: projectForm.url || null,
+      imageUrl: projectForm.imageUrl || null,
+      videoUrl: projectForm.videoUrl || null,
     };
     const ok = await post(
       projectModal?.project
@@ -538,67 +576,18 @@ export function EmployersStep({
         </div>
       </Modal>
 
-      {/* ---- Project modal -------------------------------------------- */}
-      <Modal
+      {/* ---- Project modal (brief_project_model_v2) ------------------- */}
+      <ProjectModal
         open={projectModal !== null}
+        isEdit={Boolean(projectModal?.project)}
+        draft={projectForm}
+        onChange={(patch) => setProjectForm((f) => ({ ...f, ...patch }))}
         onClose={() => setProjectModal(null)}
-        title={projectModal?.project ? "Edit Project" : "Add Project"}
-      >
-        <div className="space-y-4">
-          <Field label="Project *">
-            <TextInput
-              value={projectForm.name}
-              onChange={(e) =>
-                setProjectForm({ ...projectForm, name: e.target.value })
-              }
-              placeholder="Global P2P Transformation"
-            />
-          </Field>
-          <Field label="What You Delivered">
-            <TextArea
-              value={projectForm.description}
-              onChange={(e) =>
-                setProjectForm({ ...projectForm, description: e.target.value })
-              }
-            />
-          </Field>
-          <Field label="Link">
-            <TextInput
-              type="url"
-              value={projectForm.url}
-              onChange={(e) =>
-                setProjectForm({ ...projectForm, url: e.target.value })
-              }
-              placeholder="https://…"
-            />
-          </Field>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="From">
-              <TextInput
-                type="date"
-                value={projectForm.startDate}
-                onChange={(e) =>
-                  setProjectForm({ ...projectForm, startDate: e.target.value })
-                }
-              />
-            </Field>
-            <Field label="To">
-              <TextInput
-                type="date"
-                value={projectForm.endDate}
-                onChange={(e) =>
-                  setProjectForm({ ...projectForm, endDate: e.target.value })
-                }
-              />
-            </Field>
-          </div>
-        </div>
-
-        <div className="mt-6 flex items-center justify-between gap-3 border-t border-line pt-5">
-          {projectModal?.project ? (
-            <button
-              type="button"
-              onClick={async () => {
+        onSave={saveProject}
+        busy={busy}
+        onDelete={
+          projectModal?.project
+            ? async () => {
                 if (
                   await post({
                     action: "deleteProject",
@@ -607,33 +596,10 @@ export function EmployersStep({
                 ) {
                   setProjectModal(null);
                 }
-              }}
-              className="text-[15px] font-semibold text-red-600 underline underline-offset-4"
-            >
-              Delete
-            </button>
-          ) : (
-            <span />
-          )}
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setProjectModal(null)}
-              className="rounded-full border-[1.5px] border-line px-5 py-2.5 font-bold text-ink hover:border-[#d9d4e2]"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={saveProject}
-              disabled={busy || !projectForm.name.trim()}
-              className="rounded-full bg-magenta px-6 py-2.5 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
-            >
-              {busy ? "Saving…" : "Save Project"}
-            </button>
-          </div>
-        </div>
-      </Modal>
+              }
+            : undefined
+        }
+      />
 
       {busy && employers.length > 0 && (
         <div className="mt-3">

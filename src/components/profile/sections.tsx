@@ -153,7 +153,50 @@ export type ProjectItem = {
   description?: string | null;
   url?: string | null;
   employer?: string | null;
+  // --- brief_project_model_v2 ---------------------------------------------
+  startDate?: string | null;
+  endDate?: string | null;
+  isCurrent?: boolean;
+  clientName?: string | null;
+  clientVisibility?: string | null;
+  codeName?: string | null;
+  validationStatus?: string | null;
+  logoUrl?: string | null;
+  highlights?: string[];
+  roleType?: { id: string; name: string } | null;
+  industry?: { id: string; name: string } | null;
+  applications?: { id: string; name: string }[];
+  outcomes?: { id?: string; label: string; value: string }[];
 };
+
+/**
+ * Who the work was for, as the card is allowed to say it
+ * (brief_project_model_v2).
+ *
+ * ONE place decides this. `CONFIDENTIAL` replaces the client with the code name
+ * and the industry — "Project Falcon · Confidential — Energy" — and the real
+ * name never reaches the markup, so it cannot leak through a stray render.
+ * `PLUS_ONLY` deliberately behaves as PUBLIC until membership ships; when it
+ * does, this function is the only thing that changes.
+ */
+export function clientLabel(p: ProjectItem): {
+  title: string;
+  redacted: boolean;
+} {
+  const industry = p.industry?.name;
+  if (p.clientVisibility === "CONFIDENTIAL") {
+    return {
+      title: [p.codeName || "Confidential project", industry ? `Confidential — ${industry}` : "Confidential"]
+        .filter(Boolean)
+        .join(" · "),
+      redacted: true,
+    };
+  }
+  return {
+    title: p.clientName || p.employer || "",
+    redacted: false,
+  };
+}
 export type CertificationItem = {
   id?: string;
   name: string;
@@ -410,29 +453,138 @@ export function ProjectsBody({
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       {projects.map((pr) => (
-        <article key={pr.id} className="rounded-brand border border-line p-4">
-          <h3 className="text-[15px]">{pr.name}</h3>
-          {pr.employer && (
-            <p className="mt-0.5 text-[13px] text-ink-2">{pr.employer}</p>
-          )}
-          {pr.description && (
-            <p className="mt-2 line-clamp-3 text-[14px] text-ink-2">
-              {pr.description}
-            </p>
-          )}
-          {pr.url && (
-            <a
-              href={pr.url}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-3 inline-block text-[13px] font-bold text-magenta hover:text-magenta-dark"
-            >
-              View project →
-            </a>
-          )}
-        </article>
+        <ProjectCard key={pr.id} p={pr} />
       ))}
     </div>
+  );
+}
+
+/**
+ * The project card (brief_project_model_v2).
+ *
+ * Reads top-down the way a buyer scans: WHO it was for, WHAT the numbers were,
+ * then the detail. The outcome pills sit high on purpose — a quantified result
+ * is the single most persuasive thing on a provider's profile, and burying it
+ * under a paragraph wastes it.
+ */
+export function ProjectCard({ p }: { p: ProjectItem }) {
+  const { title, redacted } = clientLabel(p);
+  const tools = p.applications ?? [];
+  const outcomes = p.outcomes ?? [];
+  const range = dateRange(
+    p.startDate ?? null,
+    p.endDate ?? null,
+    p.isCurrent ?? false
+  );
+
+  return (
+    <article className="flex flex-col rounded-brand border border-line p-4 transition-shadow hover:shadow-brand">
+      <div className="flex items-start gap-3">
+        {p.logoUrl && !redacted ? (
+          // A confidential project never shows the client's logo — it would
+          // identify exactly what the code name is there to hide.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={p.logoUrl}
+            alt=""
+            className="h-10 w-10 flex-none rounded-[8px] border border-line bg-white object-contain p-1"
+          />
+        ) : (
+          <span
+            aria-hidden
+            className="grid h-10 w-10 flex-none place-items-center rounded-[8px] bg-magenta/10 text-[17px]"
+          >
+            {redacted ? "🔒" : "📁"}
+          </span>
+        )}
+
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="text-[15px] leading-snug">{p.name}</h3>
+            {/* Validated badge SLOT — deliberately empty this brief; the
+                validation workflow that fills it is the next one. */}
+            {p.validationStatus === "VALIDATED" && (
+              <span className="flex-none rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-extrabold text-emerald-700">
+                ✓ Validated
+              </span>
+            )}
+          </div>
+          {title && (
+            // Wraps rather than truncates: the confidential form of this line
+            // ("Project Falcon · Confidential — Energy Services") is the whole
+            // substitute for the client name, and clipping it to "Confidential
+            // — E…" throws away the industry it exists to show.
+            <p className="mt-0.5 line-clamp-2 text-[13px] text-ink-2">{title}</p>
+          )}
+          {range && <p className="text-[12.5px] text-ink-2">{range}</p>}
+        </div>
+      </div>
+
+      {outcomes.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {outcomes.map((o, i) => (
+            <span
+              key={o.id ?? `${o.label}-${i}`}
+              className="rounded-[8px] border border-magenta/20 bg-magenta/[0.06] px-2 py-1 text-[12px] leading-tight"
+            >
+              <b className="block text-[13px] font-extrabold text-magenta-dark">
+                {o.value}
+              </b>
+              <span className="text-ink-2">{o.label}</span>
+            </span>
+          ))}
+        </div>
+      )}
+
+      {(p.roleType || tools.length > 0) && (
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {p.roleType && (
+            <span className="rounded-full bg-ink/[0.06] px-2.5 py-0.5 text-[12px] font-bold text-ink">
+              {p.roleType.name}
+            </span>
+          )}
+          {tools.slice(0, 4).map((t) => (
+            <span
+              key={t.id}
+              className="rounded-full border border-line px-2.5 py-0.5 text-[12px] font-semibold text-ink-2"
+            >
+              {t.name}
+            </span>
+          ))}
+          {tools.length > 4 && (
+            <span className="self-center text-[12px] text-ink-2">
+              +{tools.length - 4}
+            </span>
+          )}
+        </div>
+      )}
+
+      {p.description && (
+        <p className="mt-3 line-clamp-3 text-[14px] text-ink-2">{p.description}</p>
+      )}
+
+      {(p.highlights?.length ?? 0) > 0 && (
+        <ul className="mt-2 space-y-1">
+          {p.highlights!.slice(0, 3).map((h, i) => (
+            <li key={i} className="flex gap-2 text-[13.5px] text-ink-2">
+              <span className="text-magenta">•</span>
+              <span className="line-clamp-2">{h}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {p.url && (
+        <a
+          href={p.url}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-3 inline-block text-[13px] font-bold text-magenta hover:text-magenta-dark"
+        >
+          View project →
+        </a>
+      )}
+    </article>
   );
 }
 

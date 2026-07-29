@@ -127,6 +127,39 @@ export async function getSpecializations() {
   return groups.filter((g) => g.items.length > 0);
 }
 
+/**
+ * The tools / applications vocabulary for the project modal
+ * (brief_project_model_v2).
+ *
+ * Flat and deduped BY NAME, unlike `getProviderFieldTree`: the same application
+ * name legitimately appears under several offerings in the ERP hierarchy, and a
+ * provider tagging "which tools did you use" is answering about the tool, not
+ * about where it sits in the taxonomy. Baseline rows sort first; provider-added
+ * customs follow, flagged so the admin catalog editor can promote recurring
+ * ones to baseline later.
+ */
+export async function getApplications() {
+  const rows = await prisma.application.findMany({
+    orderBy: [{ is_custom: "asc" }, { name: "asc" }],
+    select: { id: true, name: true, app_group: true, is_custom: true },
+  });
+
+  const seen = new Set<string>();
+  const items: { id: string; name: string; appGroup: string | null; isCustom: boolean }[] = [];
+  for (const r of rows) {
+    const key = r.name.trim().toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    items.push({
+      id: r.id,
+      name: r.name,
+      appGroup: r.app_group,
+      isCustom: r.is_custom,
+    });
+  }
+  return items;
+}
+
 /** World regions (global lookup). */
 export async function getRegions() {
   return prisma.region.findMany({

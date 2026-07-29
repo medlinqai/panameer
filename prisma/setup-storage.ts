@@ -47,6 +47,19 @@ const BUCKETS: {
     ],
   },
   {
+    // brief_project_model_v2 — SOWs / case studies attached to a project.
+    name: "project-docs",
+    public: false,
+    mime: [
+      "application/pdf",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/msword",
+      "image/png",
+      "image/jpeg",
+      "image/webp",
+    ],
+  },
+  {
     name: "resumes",
     public: false,
     mime: [

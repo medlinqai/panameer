@@ -1813,12 +1813,12 @@ export default function JoinProviderPage() {
       // project is captured under the employer it was delivered for, which is
       // the same `Project` row the published page reads. Flatten them so the
       // review shows the Projects section the live profile shows.
+      // The review renders the SAME ProjectCard the published profile does, so
+      // every v2 field has to survive the flatten — including the visibility
+      // rule, or a confidential client would show here and be redacted there.
       const projects = profile.employers.flatMap((e) =>
         (e.projects ?? []).map((pr) => ({
-          id: pr.id,
-          name: pr.name,
-          description: pr.description,
-          url: pr.url,
+          ...pr,
           employer: e.name,
         }))
       );
