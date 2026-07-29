@@ -9,6 +9,13 @@ import { useEffect, useRef, type ReactNode } from "react";
  * Built on the native <dialog> element so focus trapping, Escape-to-close and
  * inertness of the page behind come from the platform rather than hand-rolled
  * key handlers.
+ *
+ * E058 — `m-auto` is LOAD-BEARING, not cosmetic. The UA stylesheet centres an
+ * open modal dialog with `margin: auto`, and Tailwind's preflight resets
+ * `margin: 0` on every element, so every modal in the app (Education,
+ * photo-crop, résumé upload, employers, certifications) rendered pinned to the
+ * top-left corner. Restoring the margin here fixes all of them at once —
+ * which is the whole reason they share this component.
  */
 export function Modal({
   open,
@@ -40,7 +47,7 @@ export function Modal({
       onClick={(e) => {
         if (e.target === ref.current) onClose();
       }}
-      className={`w-[calc(100vw-2rem)] ${width} rounded-brand border border-line bg-white p-0 font-body text-ink shadow-brand backdrop:bg-black/40 backdrop:backdrop-blur-[2px]`}
+      className={`m-auto max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] ${width} overflow-y-auto rounded-brand border border-line bg-white p-0 font-body text-ink shadow-brand backdrop:bg-black/40 backdrop:backdrop-blur-[2px]`}
     >
       <div className="p-6 sm:p-7">
         <div className="mb-4 flex items-start justify-between gap-4">
