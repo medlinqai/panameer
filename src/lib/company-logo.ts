@@ -141,9 +141,24 @@ async function fromWikidata(name: string): Promise<LogoSuggestion[]> {
       >;
     } | null;
 
-    const claim = entity?.entities?.[hit.id]?.claims?.P154?.[0];
+    const claims = entity?.entities?.[hit.id]?.claims;
+    const claim = claims?.P154?.[0];
     const file = claim?.mainsnak?.datavalue?.value;
     if (!file) continue;
+
+    // P856 = "official website". brief_validation_domain_guard needs a DOMAIN
+    // to check validation contacts against, and this keyless path is the only
+    // one that works without a Logo.dev/Brandfetch key — without it the domain
+    // suggestion would be dead on an unconfigured environment.
+    const site = claims?.P856?.[0]?.mainsnak?.datavalue?.value;
+    const domain =
+      typeof site === "string"
+        ? site
+            .replace(/^[a-z][a-z0-9+.-]*:\/\//, "")
+            .split("/")[0]
+            .replace(/^www\./, "")
+            .toLowerCase() || undefined
+        : undefined;
 
     // Commons "Special:FilePath" resolves a file NAME to the actual image and
     // handles the md5-bucket path, so we don't have to compute it.
@@ -153,6 +168,7 @@ async function fromWikidata(name: string): Promise<LogoSuggestion[]> {
       )}?width=200`,
       source: "wikidata",
       label: hit.label ? `${hit.label}${hit.description ? ` — ${hit.description}` : ""}` : name,
+      domain,
     });
   }
   return out;

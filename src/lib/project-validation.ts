@@ -7,6 +7,7 @@ import { sendEmail } from "@/lib/resend";
 import { projectValidationTemplate } from "@/lib/email/templates/project-validation";
 import { projectValidatedTemplate } from "@/lib/email/templates/project-validated";
 import { displayFullName } from "@/lib/display";
+import { checkContactDomain } from "@/lib/email-domain";
 
 /**
  * Project validation — the trust loop (brief_project_validation).
@@ -84,6 +85,20 @@ export async function requestProjectValidation(
       "Add a client contact email to this project first",
       "INVALID"
     );
+  }
+
+  /**
+   * THE DOMAIN GUARD (brief_validation_domain_guard) — a HARD BLOCK, and it
+   * lives HERE rather than only in the modal because the modal is not a
+   * security boundary. Anything that can POST to this endpoint gets the same
+   * refusal.
+   *
+   * Without it the Validated ✓ badge is decorative: a provider could name their
+   * own personal address as the "client contact" and confirm their own work.
+   */
+  const domainCheck = checkContactDomain(contactEmail, project.client_domain);
+  if (!domainCheck.ok) {
+    throw new OnboardingError(domainCheck.message, "INVALID");
   }
   if (project.validation_status === "VALIDATED") {
     throw new OnboardingError("This project is already validated", "INVALID");

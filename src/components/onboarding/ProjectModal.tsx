@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Modal } from "@/components/Modal";
 import { Field, TextInput, TextArea, Chip, Notice } from "@/components/onboarding/controls";
+import { checkContactDomain } from "@/lib/email-domain";
 
 /**
  * Add / Edit Project — the v2 capture form (brief_project_model_v2).
@@ -23,6 +24,7 @@ export type ProjectDraft = {
   name: string;
   codeName: string;
   clientName: string;
+  clientDomain: string;
   clientVisibility: "PUBLIC" | "PLUS_ONLY" | "CONFIDENTIAL";
   logoUrl: string | null;
   startDate: string;
@@ -47,6 +49,7 @@ export const emptyProject = (): ProjectDraft => ({
   name: "",
   codeName: "",
   clientName: "",
+  clientDomain: "",
   clientVisibility: "PUBLIC",
   logoUrl: null,
   startDate: "",
@@ -70,7 +73,7 @@ export const emptyProject = (): ProjectDraft => ({
 type RoleTypeOpt = { id: string; name: string; display: string };
 type AppOpt = { id: string; name: string; isCustom: boolean };
 type IndustryOpt = { id: string; name: string };
-type LogoSuggestion = { url: string; source: string; label: string };
+type LogoSuggestion = { url: string; source: string; label: string; domain?: string };
 
 /** Cap the tool suggestions, like every other picker (brief_Y / E053). */
 const MAX_APP_SUGGESTIONS = 12;
@@ -212,6 +215,19 @@ export function ProjectModal({
     return () => clearTimeout(t);
   }, [open, clientName, suggestLogos]);
 
+  // Distinct domains the brand lookup turned up for this client name.
+  const domainSuggestions = Array.from(
+    new Set(
+      logos
+        .map((l) => (l.domain ?? "").trim().toLowerCase())
+        .filter((d) => d.includes("."))
+    )
+  ).slice(0, 4);
+
+  // The SAME check the server runs, mirrored so the provider learns before
+  // they click rather than after. The server remains authoritative.
+  const domainVerdict = checkContactDomain(draft.contactEmail, draft.clientDomain);
+
   const q = appQuery.trim().toLowerCase();
   const chosenApps = new Set(draft.applicationIds);
   const matching = apps.filter(
@@ -322,6 +338,40 @@ export function ProjectModal({
               />
             </Field>
           </div>
+
+          {/* brief_validation_domain_guard — the domain a validation contact
+              must belong to. SUGGESTED from the client name via the same brand
+              lookup that suggests the logo (E043), never auto-applied: name →
+              domain is fuzzy, and a wrong domain here silently blocks a real
+              validation. */}
+          <Field
+            label="Client Domain"
+            hint="Used to check who may validate this project. Never shown publicly."
+          >
+            <TextInput
+              value={draft.clientDomain}
+              onChange={(e) => onChange({ clientDomain: e.target.value })}
+              placeholder="nasdaq.com"
+            />
+          </Field>
+
+          {domainSuggestions.length > 0 && (
+            <div className="-mt-1 flex flex-wrap items-center gap-2">
+              <span className="text-[12.5px] text-ink-2">Suggested:</span>
+              {domainSuggestions
+                .filter((d) => d !== draft.clientDomain.trim().toLowerCase())
+                .map((d) => (
+                  <button
+                    key={d}
+                    type="button"
+                    onClick={() => onChange({ clientDomain: d })}
+                    className="rounded-full border border-line px-2.5 py-0.5 text-[12.5px] font-semibold text-ink-2 transition-colors hover:border-magenta hover:text-magenta"
+                  >
+                    {d}
+                  </button>
+                ))}
+            </div>
+          )}
 
           <Field
             label="Who Can See The Client"
@@ -651,15 +701,31 @@ export function ProjectModal({
         <Group title="Proof">
           <Field
             label="Client Contact Email"
-            hint="Someone at the client who can confirm you worked on this."
+            hint={
+              domainVerdict.ok || !domainVerdict.domain
+                ? "Someone at the client who can confirm you worked on this."
+                : `Must be a @${domainVerdict.domain} address (or a subdomain of it).`
+            }
           >
             <TextInput
               type="email"
               value={draft.contactEmail}
               onChange={(e) => onChange({ contactEmail: e.target.value })}
-              placeholder="programme.director@client.com"
+              placeholder={
+                domainVerdict.domain
+                  ? `programme.director@${domainVerdict.domain}`
+                  : "programme.director@client.com"
+              }
             />
           </Field>
+
+          {/* The mirrored verdict — amber, because a not-yet-matching address
+              is an unfinished form, not an error (E059/E061 tone). */}
+          {draft.contactEmail.trim() !== "" && !domainVerdict.ok && (
+            <p className="rounded-[10px] bg-amber-50 px-3 py-2 text-[13px] text-amber-800">
+              {domainVerdict.message}
+            </p>
+          )}
 
           {/* The request itself needs a SAVED project to point at, so this
               appears once the project exists rather than while it's a draft. */}
@@ -689,7 +755,9 @@ export function ProjectModal({
                   <button
                     type="button"
                     onClick={requestValidation}
-                    disabled={vBusy || !draft.contactEmail.trim()}
+                    // Disabled until the contact actually belongs to the client
+                    // (brief §5). The server enforces the same rule regardless.
+                    disabled={vBusy || !domainVerdict.ok}
                     className="mt-2.5 rounded-full border-[1.5px] border-magenta px-5 py-2 text-[14px] font-bold text-magenta transition-colors hover:bg-magenta hover:text-white disabled:opacity-40"
                   >
                     {vBusy
@@ -698,9 +766,11 @@ export function ProjectModal({
                         ? "Resend Request"
                         : "Request Validation"}
                   </button>
-                  {!draft.contactEmail.trim() && (
+                  {!domainVerdict.ok && (
                     <p className="mt-1.5 text-[12.5px] text-ink-2">
-                      Add a contact email above first.
+                      {!draft.contactEmail.trim()
+                        ? "Add a contact email above first."
+                        : domainVerdict.message}
                     </p>
                   )}
                 </>

@@ -21,6 +21,7 @@ export function projectToCard(p: {
   end_date: Date | null;
   is_current: boolean;
   client_name: string;
+  client_domain: string | null;
   client_visibility: string;
   code_name: string | null;
   contact_email: string | null;
@@ -50,6 +51,10 @@ export function projectToCard(p: {
     endDate: p.end_date ? p.end_date.toISOString().slice(0, 10) : null,
     isCurrent: p.is_current,
     clientName: p.client_name,
+    // PROVIDER-FACING ONLY. `provider-profile-view.ts` (the public read) does
+    // NOT select this — a confidential project must not leak its client through
+    // the domain (brief §4).
+    clientDomain: p.client_domain,
     clientVisibility: p.client_visibility,
     codeName: p.code_name,
     contactEmail: p.contact_email,

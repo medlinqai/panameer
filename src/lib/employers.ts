@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { ownedProviderProfile, type Viewer } from "@/lib/access";
 import { OnboardingError, recomputeCompleteness } from "@/lib/onboarding";
+import { normalizeHost } from "@/lib/email-domain";
 import { projectToCard } from "@/lib/project-card";
 
 export { projectToCard };
@@ -48,6 +49,7 @@ export type ProjectInput = {
   roleTypeId?: string | null;
   industrySpecializationId?: string | null;
   clientName?: string | null;
+  clientDomain?: string | null;
   clientVisibility?: string | null;
   codeName?: string | null;
   contactEmail?: string | null;
@@ -279,6 +281,9 @@ function projectData(input: ProjectInput) {
     role_type_id: roleTypeId,
     industry_specialization_id: clean(input.industrySpecializationId, 64),
     client_name: clientName,
+    // Stored NORMALIZED (scheme/path/www stripped, lowercased) so the guard
+    // compares like with like no matter how the provider typed it.
+    client_domain: normalizeHost(input.clientDomain),
     client_visibility: visibility,
     code_name: codeName,
     contact_email: email,

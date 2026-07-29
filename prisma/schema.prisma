@@ -844,6 +844,18 @@ model Project {
   client_visibility   ClientVisibility @default(PUBLIC)
   /// The project alias shown INSTEAD of the client when confidential.
   code_name           String?
+  /// The client's own internet domain (brief_validation_domain_guard).
+  ///
+  /// This is what makes the Validated badge mean anything: a validation request
+  /// may only be sent to an address AT this domain, so a provider cannot
+  /// self-validate from a personal inbox. Suggested from `client_name` via the
+  /// same brand API that suggests the logo (E043) and then CONFIRMED by the
+  /// provider — never auto-applied, because name → domain is fuzzy.
+  ///
+  /// INTERNAL ONLY. Never rendered on a card or returned by a public read: a
+  /// CONFIDENTIAL project hides its client, and leaking the domain would undo
+  /// that. Nullable, and a project without one simply cannot be validated.
+  client_domain       String?
 
   // --- Validation groundwork (workflow = next brief) ----------------------
   /// Who at the client can confirm this work happened.

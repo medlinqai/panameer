@@ -34,6 +34,7 @@ export type EmployerProject = {
   /** brief_project_model_v2 — the rest of the card + modal payload. */
   isCurrent?: boolean;
   clientName?: string;
+  clientDomain?: string | null;
   clientVisibility?: string;
   codeName?: string | null;
   contactEmail?: string | null;
@@ -208,6 +209,7 @@ export function EmployersStep({
             name: project.name,
             codeName: project.codeName ?? "",
             clientName: project.clientName ?? "",
+            clientDomain: project.clientDomain ?? "",
             clientVisibility:
               (project.clientVisibility as ProjectDraft["clientVisibility"]) ??
               "PUBLIC",
