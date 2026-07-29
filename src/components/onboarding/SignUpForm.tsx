@@ -80,13 +80,16 @@ export function SignUpForm({
     values.tosAccepted;
 
   return (
-    <div className="mx-auto w-full max-w-md">
-      <h1 className="text-[28px] font-extrabold tracking-[-0.6px] sm:text-[34px]">
+    // max-w-2xl (672px), not the max-w-md this replaced. brief_W specified
+    // max-w-xl (576px) for this, but 576 measurably does NOT fit three full
+    // "Continue with …" labels in one row: at 576 each button gets 185px and
+    // the LinkedIn label alone is 166px, so its brand mark was being squeezed
+    // to nothing. 672 is the first standard width where all three fit with
+    // their icons at a legible 13.5px — see the note in SocialSignIn.
+    <div className="mx-auto w-full max-w-2xl">
+      <h1 className="text-center text-[28px] font-extrabold tracking-[-0.6px]">
         Sign Up to Find Work
       </h1>
-      <p className="mt-2 text-[17px] text-ink-2">
-        Create your account to build a provider profile.
-      </p>
 
       {error && (
         <div className="mt-6">
@@ -99,17 +102,17 @@ export function SignUpForm({
         are configured; the rest render disabled. OAuth fills identity only —
         name, email and photo — and the profile wizard still runs afterwards.
       */}
-      <div className="mt-8">
+      <div className="mt-5">
         <SocialSignIn callbackUrl="/join/provider" />
       </div>
 
-      <div className="my-6 flex items-center gap-4">
+      <div className="my-4 flex items-center gap-4">
         <span className="h-px flex-1 bg-line" />
         <span className="text-[13px] font-semibold text-ink-2">or</span>
         <span className="h-px flex-1 bg-line" />
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-2.5">
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="First Name">
             <TextInput
@@ -144,29 +147,28 @@ export function SignUpForm({
           />
         </Field>
 
-        <Field
-          label="Password"
-          hint={
-            passwordTooShort
-              ? undefined
-              : "At least 8 characters."
-          }
-        >
+        <Field label="Password">
           <div className="relative">
             <TextInput
               type={showPassword ? "text" : "password"}
               value={values.password}
               onChange={(e) => onChange({ password: e.target.value })}
               autoComplete="new-password"
-              placeholder="8+ characters"
-              className="pr-16"
+              placeholder="Password (8 or more characters)"
+              className="pr-12"
             />
             <button
               type="button"
               onClick={() => setShowPassword((s) => !s)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-[13px] font-bold text-ink-2 hover:text-magenta"
+              // The control is icon-only now, so the accessible name has to
+              // come from aria-label — the eye alone says nothing to a screen
+              // reader, and this is the field people most need told.
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-pressed={showPassword}
+              title={showPassword ? "Hide password" : "Show password"}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-2 transition-colors hover:text-magenta"
             >
-              {showPassword ? "Hide" : "Show"}
+              {showPassword ? <EyeOffIcon /> : <EyeIcon />}
             </button>
           </div>
           {passwordTooShort && (
@@ -228,7 +230,7 @@ export function SignUpForm({
         </label>
       </div>
 
-      <div className="mt-8 flex items-center justify-between gap-4 border-t border-line pt-6">
+      <div className="mt-5 flex items-center justify-between gap-4 border-t border-line pt-4">
         <button
           onClick={onBack}
           disabled={busy}
@@ -245,13 +247,53 @@ export function SignUpForm({
         </button>
       </div>
 
-      <p className="mt-6 text-center text-[14px] text-ink-2">
+      <p className="mt-4 text-center text-[14px] text-ink-2">
         Already have an account?{" "}
         <Link href="/login" className="font-bold text-magenta hover:text-magenta-dark">
           Log In
         </Link>
       </p>
     </div>
+  );
+}
+
+/** Eye / eye-off toggle for the password field (brief_W / E047). */
+function EyeIcon() {
+  return (
+    <svg
+      className="h-[18px] w-[18px]"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+      focusable="false"
+    >
+      <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+function EyeOffIcon() {
+  return (
+    <svg
+      className="h-[18px] w-[18px]"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+      focusable="false"
+    >
+      <path d="M10.6 5.2A8.9 8.9 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.1 4.05M6.2 6.2A17.7 17.7 0 0 0 2 12s3.6 7 10 7a9 9 0 0 0 4.3-1.05" />
+      <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" />
+      <path d="m3 3 18 18" />
+    </svg>
   );
 }
 

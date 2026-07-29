@@ -6,7 +6,7 @@ import { signIn } from "next-auth/react";
 import { WizardShell } from "@/components/onboarding/WizardShell";
 import { VerifyGate } from "@/components/onboarding/VerifyGate";
 import { SignUpForm, type SignUpValues } from "@/components/onboarding/SignUpForm";
-import { Logo } from "@/components/Logo";
+import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 import {
   OptionCard,
   Chip,
@@ -717,10 +717,12 @@ export default function JoinProviderPage() {
 
   // ===== PRE-VERIFY (no stepper, E001) ====================================
   if (screen === "signup") {
+    // compact — the sign-up form is the one pre-verify page long enough to run
+    // off the bottom of a laptop screen (E047).
     return (
-      <PlainShell>
+      <PlainShell compact>
         {inviteCtx && (
-          <div className="mx-auto mb-6 max-w-md">
+          <div className="mx-auto mb-4 max-w-xl">
             <Notice tone="info">
               <b>{inviteCtx.coordinatorName}</b> invited you to join Panameer.
             </Notice>
@@ -742,8 +744,10 @@ export default function JoinProviderPage() {
   if (screen === "check_email") {
     return (
       <PlainShell>
+        {/* E048 — centred title, same 28px as sign-up. All three pre-verify
+            pages (role select, sign up, check email) share one format. */}
         <div className="mx-auto w-full max-w-md">
-          <h1 className="text-[28px] font-extrabold tracking-[-0.6px] sm:text-[34px]">
+          <h1 className="text-center text-[28px] font-extrabold tracking-[-0.6px]">
             Check Your Email
           </h1>
           <div className="mt-6">
@@ -1935,19 +1939,14 @@ export default function JoinProviderPage() {
 }
 
 /** Pre-verification chrome: logo only, deliberately NO stepper (E001). */
-function PlainShell({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex min-h-screen flex-col bg-white font-body text-ink">
-      <header className="border-b border-line px-6 py-4">
-        <div className="mx-auto flex max-w-3xl items-center">
-          <Logo priority />
-        </div>
-      </header>
-      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-6 py-10 sm:py-14">
-        {children}
-      </main>
-    </div>
-  );
+function PlainShell({
+  children,
+  compact = false,
+}: {
+  children: React.ReactNode;
+  compact?: boolean;
+}) {
+  return <OnboardingShell compact={compact}>{children}</OnboardingShell>;
 }
 
 /**
