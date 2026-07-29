@@ -1,3 +1,4 @@
+import { RichText } from "@/components/profile/RichText";
 import { Avatar } from "@/components/Avatar";
 import { Badge } from "@/components/Badge";
 import { Card } from "@/components/Card";
@@ -101,9 +102,11 @@ export function ProfileView({ profile }: { profile: PublicProviderProfile }) {
           <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-black/50 dark:text-white/50">
             Overview
           </h2>
-          <p className="whitespace-pre-line leading-relaxed text-black/80 dark:text-white/80">
-            {profile.overview}
-          </p>
+          <RichText
+            text={profile.overview}
+            clampLines={8}
+            className="leading-relaxed text-black/80 dark:text-white/80"
+          />
         </Card>
       )}
 
@@ -154,9 +157,13 @@ export function ProfileView({ profile }: { profile: PublicProviderProfile }) {
                   {exp.employer}
                 </p>
                 {exp.description && (
-                  <p className="mt-1 text-sm text-black/70 dark:text-white/70">
-                    {exp.description}
-                  </p>
+                  <div className="mt-1 text-sm">
+                    <RichText
+                      text={exp.description}
+                      clampLines={4}
+                      className="leading-relaxed text-black/70 dark:text-white/70"
+                    />
+                  </div>
                 )}
                 {exp.projects.length > 0 && (
                   <ul className="mt-2 space-y-1">

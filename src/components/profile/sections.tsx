@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Avatar } from "@/components/Avatar";
 import { formatCents, displayFullName } from "@/lib/display";
+import { RichText } from "@/components/profile/RichText";
 
 /**
  * The Profile-View section vocabulary (brief_X / E056).
@@ -403,10 +404,14 @@ export function OverviewBody({
   empty?: string;
 }) {
   if (!overview) return <Empty>{empty}</Empty>;
+  // The bio is the longest thing on a profile and the most likely to be
+  // multi-paragraph, so it is the one that most needs both fixes.
   return (
-    <p className="whitespace-pre-line text-[15px] leading-relaxed text-ink-2">
-      {overview}
-    </p>
+    <RichText
+      text={overview}
+      clampLines={8}
+      className="text-[15px] leading-relaxed text-ink-2"
+    />
   );
 }
 
@@ -560,7 +565,13 @@ export function ProjectCard({ p }: { p: ProjectItem }) {
       )}
 
       {p.description && (
-        <p className="mt-3 line-clamp-3 text-[14px] text-ink-2">{p.description}</p>
+        <div className="mt-3">
+          <RichText
+            text={p.description}
+            clampLines={3}
+            className="text-[14px] leading-relaxed text-ink-2"
+          />
+        </div>
       )}
 
       {(p.highlights?.length ?? 0) > 0 && (
@@ -568,7 +579,7 @@ export function ProjectCard({ p }: { p: ProjectItem }) {
           {p.highlights!.slice(0, 3).map((h, i) => (
             <li key={i} className="flex gap-2 text-[13.5px] text-ink-2">
               <span className="text-magenta">•</span>
-              <span className="line-clamp-2">{h}</span>
+              <span className="line-clamp-2 whitespace-pre-line">{h}</span>
             </li>
           ))}
         </ul>
@@ -631,9 +642,13 @@ export function WorkHistoryBody({
                 <p className="text-[13px] text-ink-2">{e.location}</p>
               )}
               {e.description && (
-                <p className="mt-1.5 whitespace-pre-line text-[14px] text-ink-2">
-                  {e.description}
-                </p>
+                <div className="mt-1.5">
+                  <RichText
+                    text={e.description}
+                    clampLines={4}
+                    className="text-[14px] leading-relaxed text-ink-2"
+                  />
+                </div>
               )}
               {(e.projects?.length ?? 0) > 0 && (
                 <ul className="mt-3 space-y-2 border-l-2 border-line pl-4">
@@ -641,7 +656,7 @@ export function WorkHistoryBody({
                     <li key={pr.id}>
                       <p className="text-[14px] font-semibold">{pr.name}</p>
                       {pr.description && (
-                        <p className="text-[13.5px] text-ink-2">
+                        <p className="whitespace-pre-line text-[13.5px] text-ink-2">
                           {pr.description}
                         </p>
                       )}
@@ -694,7 +709,11 @@ export function CertificationsBody({
                 📎 {c.attachmentName}
               </span>
             )}
-            {c.notes && <p className="text-[13px] text-ink-2">{c.notes}</p>}
+            {c.notes && (
+              <p className="whitespace-pre-line text-[13px] text-ink-2">
+                {c.notes}
+              </p>
+            )}
           </li>
         );
       })}
