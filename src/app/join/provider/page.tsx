@@ -1645,10 +1645,19 @@ export default function JoinProviderPage() {
             placeholder="I help organizations implement and optimize…"
           />
           <div className="mt-2 flex justify-between text-[13px]">
-            <span className={len < MIN_BIO ? "text-red-700" : "text-ink-2"}>
+            {/* E061, same principle as E059 — AMBER while under the minimum,
+                not red. Someone mid-sentence has not done anything wrong; they
+                are simply not finished. Red is for genuine errors. Once the
+                minimum is met the counter turns green, so the state change is
+                a small reward rather than the mere absence of an alarm. */}
+            <span
+              className={
+                len < MIN_BIO ? "text-amber-700" : "font-semibold text-emerald-600"
+              }
+            >
               {len < MIN_BIO
                 ? `At least ${MIN_BIO} characters — ${MIN_BIO - len} to go.`
-                : "Looks good."}
+                : "✓ Looks good."}
             </span>
             <span className="text-ink-2">{left} characters left</span>
           </div>
