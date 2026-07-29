@@ -357,7 +357,17 @@ export function EmployersStep({
                           className="rounded-[10px] bg-bg-soft p-2.5 text-[13px]"
                         >
                           <div className="flex items-start justify-between gap-2">
-                            <p className="font-semibold">{pr.name}</p>
+                            <p className="font-semibold">
+                              {pr.name}
+                              {/* The review page nudges "classify your
+                                  projects"; this is where that nudge is acted
+                                  on, so the unclassified ones say so here. */}
+                              {!pr.roleType && (
+                                <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-800">
+                                  Unclassified
+                                </span>
+                              )}
+                            </p>
                             <div className="flex gap-1.5">
                               <button
                                 type="button"

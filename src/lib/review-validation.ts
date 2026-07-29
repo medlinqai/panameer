@@ -79,6 +79,13 @@ export type ReviewInput = {
     postalCode: string;
   } | null;
   employers: { id: string; name: string; startDate: string | null }[];
+  /**
+   * Projects with no `role_type_id` (brief_project_model_v2). The column is
+   * nullable so an IMPORT can leave a project honestly unclassified instead of
+   * being assigned a guessed role; this is where the provider gets told about
+   * it. Soft — an unclassified project still publishes.
+   */
+  unclassifiedProjects?: number;
   education: unknown[];
   certifications: unknown[];
   specializations: unknown[];
@@ -188,6 +195,18 @@ export function reviewItems(p: ReviewInput): ReviewItem[] {
         ? `${undated[0].name} has no start date — it will show as "? – Present".`
         : `${undated.length} roles have no start date — they will show as "? – Present".`,
       "Add dates",
+      { kind: "step", step: "employers" }
+    );
+  }
+
+  const unclassified = p.unclassifiedProjects ?? 0;
+  if (unclassified > 0) {
+    chg(
+      "project-roles",
+      unclassified === 1
+        ? "1 project has no role set — classifying it is how buyers find it."
+        : `${unclassified} projects have no role set — classifying them is how buyers find them.`,
+      "Classify projects",
       { kind: "step", step: "employers" }
     );
   }

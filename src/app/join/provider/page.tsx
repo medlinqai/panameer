@@ -1780,6 +1780,10 @@ export default function JoinProviderPage() {
           photoUrl: profile.photoUrl,
           address: profile.address,
           employers: profile.employers,
+          unclassifiedProjects: profile.employers.reduce(
+            (n, e) => n + (e.projects ?? []).filter((pr) => !pr.roleType).length,
+            0
+          ),
           education: profile.education,
           certifications: profile.certifications,
           specializations: profile.specializationNames,

@@ -31,15 +31,6 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
   console.log("— Work history migration: WorkExperience → Employer —\n");
 
-  // Required on Project since brief_project_model_v2; pre-v2 rows have none.
-  const defaultRole = await prisma.roleType.findFirst({
-    orderBy: { sort_order: "asc" },
-    select: { id: true },
-  });
-  if (!defaultRole) {
-    throw new Error("No RoleType rows — seed the taxonomy before migrating.");
-  }
-  const defaultRoleTypeId = defaultRole.id;
 
   // Read through raw SQL: the Prisma models are removed in the same change that
   // drops the tables, so a typed client can't be relied on to still know them.
@@ -126,17 +117,14 @@ async function main() {
         continue;
       }
 
-      // brief_project_model_v2 made role + client required. This is a one-off
-      // backfill of PRE-v2 rows, which by definition carry neither, so it uses
-      // the same truthful stand-ins as the résumé import: the employer as the
-      // client, and the catalog's primary role for the provider to correct.
+      // brief_project_model_v2 — client comes from the employer (truthful);
+      // the role is left UNCLASSIFIED rather than guessed.
       await prisma.project.create({
         data: {
           provider_profile_id: we.provider_profile_id,
           employer_id: employer.id,
           name: projectName,
           description: cp.description,
-          role_type_id: defaultRoleTypeId,
           client_name: name,
         },
       });

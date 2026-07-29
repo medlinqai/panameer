@@ -955,26 +955,14 @@ export async function applyProviderSection(
         }))
         .filter((e) => e.employer && e.roleTitle);
 
-      // brief_project_model_v2 made `role_type_id` and `client_name` required
-      // on Project, but a résumé parser cannot know either. Rather than drop
-      // the parsed projects, seed them with the most truthful values available
-      // and let the provider correct them in the modal:
-      //   client  = the employer the work was delivered at (true by definition)
-      //   role    = the provider's OWN chosen role type when they have one,
-      //             else the catalog's primary role.
-      // These are drafts, and the modal makes both fields explicit on first
-      // edit — see the note in `employers.ts`.
-      const profileRole = await prisma.providerProfile.findUnique({
-        where: { id: profileId },
-        select: { role_type_id: true },
-      });
-      const fallbackRole =
-        profileRole?.role_type_id ??
-        (await prisma.roleType.findFirst({
-          orderBy: { sort_order: "asc" },
-          select: { id: true },
-        }))?.id;
-
+      // brief_project_model_v2 — imported projects are left UNCLASSIFIED.
+      //
+      // `client_name` is required and the employer is a truthful value for it
+      // (the work was delivered there by definition). `role_type_id` is NOT
+      // guessed: a parser cannot know whether a role was functional or
+      // technical, and writing a default would put a value the provider never
+      // chose into the reporting grain. Null instead, and the review page
+      // nudges them to classify — see `reviewItems`.
       // brief_U / E042 — writes EMPLOYERS now. Settings still posts this
       // "experience" shape, so the section survives; only its destination
       // changed, from the retired flat WorkExperience to Employer + Project.
@@ -993,19 +981,16 @@ export async function applyProviderSection(
               end_date: e.endDate,
               is_current: Boolean(e.startDate) && !e.endDate,
               sort_order: i * 10,
-              projects: fallbackRole
-                ? {
-                    create: e.projects.map(
-                      (pr: { name: string; description: string | null }) => ({
-                        provider_profile_id: profileId,
-                        name: pr.name,
-                        description: pr.description,
-                        role_type_id: fallbackRole,
-                        client_name: e.employer,
-                      })
-                    ),
-                  }
-                : undefined,
+              projects: {
+                create: e.projects.map(
+                  (pr: { name: string; description: string | null }) => ({
+                    provider_profile_id: profileId,
+                    name: pr.name,
+                    description: pr.description,
+                    client_name: e.employer,
+                  })
+                ),
+              },
             },
           });
         }

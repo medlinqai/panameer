@@ -822,9 +822,15 @@ model Project {
 
   // --- Classification (catalog-linked, for reporting) ----------------------
   /// What the provider DID here (Application-Specific / Technical / …).
-  /// REQUIRED (brief_project_model_v2): classification is the reporting grain,
-  /// so a project without one would be invisible to every future chart.
-  role_type_id        String   @db.Uuid
+  ///
+  /// NULLABLE = "unclassified", deliberately. Classification is the reporting
+  /// grain, so it is REQUIRED in the Add/Edit-Project modal and in the write
+  /// path behind it (`projectData`). But a résumé importer cannot know the
+  /// role, and defaulting it would write a value the provider never chose —
+  /// silently poisoning the very charts this field exists to feed. A null is
+  /// honest and queryable ("show me unclassified projects"), and the review
+  /// page nudges the provider to fix it. Same reasoning as `employer_id`.
+  role_type_id        String?  @db.Uuid
   /// The sector this was delivered in. Reuses the INDUSTRY slice of the
   /// Specialization vocabulary rather than a free-text column, so a
   /// confidential project can still say "Oil & Gas" in a chartable way.
@@ -866,7 +872,7 @@ model Project {
 
   providerProfile ProviderProfile @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
   employer        Employer?       @relation(fields: [employer_id], references: [id], onDelete: SetNull)
-  roleType        RoleType        @relation(fields: [role_type_id], references: [id], onDelete: Restrict)
+  roleType        RoleType?       @relation(fields: [role_type_id], references: [id], onDelete: SetNull)
   industry        Specialization? @relation(fields: [industry_specialization_id], references: [id], onDelete: SetNull)
   applications    ProjectApplication[]
   outcomes        ProjectOutcome[]
