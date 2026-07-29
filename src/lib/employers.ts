@@ -1,6 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { ownedProviderProfile, type Viewer } from "@/lib/access";
 import { OnboardingError, recomputeCompleteness } from "@/lib/onboarding";
+import { projectToCard } from "@/lib/project-card";
+
+export { projectToCard };
 
 /**
  * Employers, and the Projects nested under them — brief_U.
@@ -100,6 +103,10 @@ export async function listEmployers(viewer: Viewer) {
             include: { application: { select: { id: true, name: true } } },
           },
           outcomes: { orderBy: [{ sort_order: "asc" }, { created_at: "asc" }] },
+          validations: {
+            orderBy: { sent_at: "desc" },
+            select: { status: true, sent_at: true, responded_at: true },
+          },
         },
       },
     },
@@ -117,57 +124,6 @@ export async function listEmployers(viewer: Viewer) {
     endDate: e.end_date ? e.end_date.toISOString().slice(0, 10) : null,
     projects: e.projects.map(projectToCard),
   }));
-}
-
-/** The shape every project surface renders. One mapper, one source of truth. */
-export function projectToCard(p: {
-  id: string;
-  name: string;
-  description: string | null;
-  url: string | null;
-  image_url: string | null;
-  start_date: Date | null;
-  end_date: Date | null;
-  is_current: boolean;
-  client_name: string;
-  client_visibility: string;
-  code_name: string | null;
-  contact_email: string | null;
-  validation_status: string;
-  highlights: string[];
-  video_url: string | null;
-  document_path: string | null;
-  document_name: string | null;
-  logo_url: string | null;
-  roleType: { id: string; name: string } | null;
-  industry: { id: string; name: string } | null;
-  applications: { application: { id: string; name: string } }[];
-  outcomes: { id: string; label: string; value: string }[];
-}) {
-  return {
-    id: p.id,
-    name: p.name,
-    description: p.description,
-    url: p.url,
-    imageUrl: p.image_url,
-    startDate: p.start_date ? p.start_date.toISOString().slice(0, 10) : null,
-    endDate: p.end_date ? p.end_date.toISOString().slice(0, 10) : null,
-    isCurrent: p.is_current,
-    clientName: p.client_name,
-    clientVisibility: p.client_visibility,
-    codeName: p.code_name,
-    contactEmail: p.contact_email,
-    validationStatus: p.validation_status,
-    highlights: p.highlights,
-    videoUrl: p.video_url,
-    documentPath: p.document_path,
-    documentName: p.document_name,
-    logoUrl: p.logo_url,
-    roleType: p.roleType,
-    industry: p.industry,
-    applications: p.applications.map((a) => a.application),
-    outcomes: p.outcomes.map((o) => ({ id: o.id, label: o.label, value: o.value })),
-  };
 }
 
 function employerData(input: EmployerInput) {

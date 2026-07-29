@@ -65,6 +65,13 @@ export async function getProviderProfileView(
             include: { application: { select: { id: true, name: true } } },
           },
           outcomes: { orderBy: [{ sort_order: "asc" }, { created_at: "asc" }] },
+          // The CONFIRMED response, for the "Confirmed March 2026" note.
+          validations: {
+            where: { status: "CONFIRMED" },
+            orderBy: { responded_at: "desc" },
+            take: 1,
+            select: { responded_at: true },
+          },
         },
       },
       certifications: {
@@ -173,6 +180,7 @@ export async function getProviderProfileView(
       clientVisibility: p.client_visibility,
       codeName: p.code_name,
       validationStatus: p.validation_status,
+      validatedAt: p.validations[0]?.responded_at?.toISOString() ?? null,
       highlights: p.highlights,
       videoUrl: p.video_url,
       documentName: p.document_name,

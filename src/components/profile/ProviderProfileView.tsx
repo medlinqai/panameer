@@ -252,6 +252,7 @@ export function ProviderProfileViewPage({ p }: { p: ProviderProfileView }) {
                 what it reached for is a PACKAGE, rendered separately above. */}
             <ProfileCard title="Projects">
               <ProjectsBody
+                isOwner={p.isOwner}
                 projects={p.projects}
                 empty={
                   p.isOwner

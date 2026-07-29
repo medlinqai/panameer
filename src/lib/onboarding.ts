@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { projectToCard } from "@/lib/project-card";
 import { hashPassword } from "@/lib/password";
 import { acceptInviteForUser } from "@/lib/coordinator";
 import {
@@ -446,7 +447,21 @@ async function loadDraft(viewer: Viewer) {
           employers: {
             orderBy: [{ sort_order: "asc" }, { start_date: "desc" }],
             include: {
-              projects: { orderBy: [{ sort_order: "asc" }, { created_at: "asc" }] },
+              projects: {
+                orderBy: [{ sort_order: "asc" }, { created_at: "asc" }],
+                include: {
+                  roleType: { select: { id: true, name: true } },
+                  industry: { select: { id: true, name: true } },
+                  applications: {
+                    include: { application: { select: { id: true, name: true } } },
+                  },
+                  outcomes: { orderBy: [{ sort_order: "asc" }, { created_at: "asc" }] },
+                  validations: {
+                    orderBy: { sent_at: "desc" },
+                    select: { status: true, sent_at: true, responded_at: true },
+                  },
+                },
+              },
             },
           },
           education: { orderBy: { created_at: "asc" } },
@@ -589,15 +604,13 @@ export async function getOnboardingState(viewer: Viewer) {
         isCurrent: e.is_current,
         startDate: e.start_date ? e.start_date.toISOString().slice(0, 10) : null,
         endDate: e.end_date ? e.end_date.toISOString().slice(0, 10) : null,
-        projects: e.projects.map((pr) => ({
-          id: pr.id,
-          name: pr.name,
-          description: pr.description,
-          url: pr.url,
-          imageUrl: pr.image_url,
-          startDate: pr.start_date ? pr.start_date.toISOString().slice(0, 10) : null,
-          endDate: pr.end_date ? pr.end_date.toISOString().slice(0, 10) : null,
-        })),
+        // brief_project_model_v2 + _validation — the SAME mapper the employers
+        // API uses. This projection used to list a handful of columns by hand,
+        // so the wizard's project modal opened a v2 project with its client,
+        // role, tools, outcomes and contact email all blank — and saving from
+        // there wrote those blanks back. One mapper, one place to forget a
+        // field.
+        projects: e.projects.map(projectToCard),
       })),
       education: pp.education.map((e) => ({
         id: e.id,

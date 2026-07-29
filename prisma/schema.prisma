@@ -876,11 +876,61 @@ model Project {
   industry        Specialization? @relation(fields: [industry_specialization_id], references: [id], onDelete: SetNull)
   applications    ProjectApplication[]
   outcomes        ProjectOutcome[]
+  validations     ProjectValidation[]
 
   @@index([provider_profile_id])
   @@index([employer_id])
   @@index([role_type_id])
   @@map("projects")
+}
+
+/// One validation REQUEST sent to a project's client contact
+/// (brief_project_validation).
+///
+/// The trust loop: a provider names someone at the client who can confirm the
+/// work, Panameer emails them a single-use link, and their answer flips the
+/// project's badge. The contact never needs an account — the token IS the
+/// authorization, which is why it is stored only as a SHA-256 HASH, expires,
+/// and is consumed on first use (the same contract as the email-verify and
+/// SIGNIN tokens; see decisions-01).
+///
+/// Kept as its own row rather than columns on Project because the ANSWER is
+/// evidence: who confirmed, from where, and when. A resend supersedes the live
+/// request instead of overwriting that history.
+model ProjectValidation {
+  id            String                  @id @default(uuid()) @db.Uuid
+  project_id    String                  @db.Uuid
+  /// The address the request was sent to, captured at send time — the project's
+  /// `contact_email` can be edited afterwards, and this must record who was
+  /// actually asked.
+  contact_email String
+  token_hash    String                  @unique
+  status        ProjectValidationRequestStatus @default(SENT)
+  expires_at    DateTime
+  sent_at       DateTime                @default(now())
+  responded_at  DateTime?
+  /// Light provenance on the response. Never shown to the provider — it exists
+  /// so a disputed confirmation can be investigated.
+  responder_ip  String?
+  responder_ua  String?
+  created_at    DateTime                @default(now())
+  updated_at    DateTime                @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@index([project_id])
+  @@index([status])
+  @@map("project_validations")
+}
+
+/// Lifecycle of one validation REQUEST. Deliberately a DIFFERENT enum from
+/// `ProjectValidationStatus` on the project itself: this one tracks the letter
+/// (was it sent, answered, ignored), that one tracks the badge.
+enum ProjectValidationRequestStatus {
+  SENT
+  CONFIRMED
+  DECLINED
+  EXPIRED
 }
 
 /// Join: a tool / application / technology used on a project.

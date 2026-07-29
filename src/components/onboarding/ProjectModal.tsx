@@ -96,6 +96,9 @@ export function ProjectModal({
   busy = false,
   error,
   isEdit,
+  projectId,
+  validationStatus,
+  validationRequestedAt,
 }: {
   open: boolean;
   draft: ProjectDraft;
@@ -106,6 +109,10 @@ export function ProjectModal({
   busy?: boolean;
   error?: string | null;
   isEdit: boolean;
+  /** Present only for a SAVED project — validation needs something to point at. */
+  projectId?: string;
+  validationStatus?: string;
+  validationRequestedAt?: string | null;
 }) {
   const [roleTypes, setRoleTypes] = useState<RoleTypeOpt[]>([]);
   const [apps, setApps] = useState<AppOpt[]>([]);
@@ -115,6 +122,45 @@ export function ProjectModal({
   const [logoLoading, setLogoLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+
+  // --- validation request (brief_project_validation) ----------------------
+  const [vBusy, setVBusy] = useState(false);
+  const [vMsg, setVMsg] = useState<string | null>(null);
+  const [vError, setVError] = useState<string | null>(null);
+  const [vDevLink, setVDevLink] = useState<string | null>(null);
+  const [vSent, setVSent] = useState(false);
+
+  const requestValidation = async () => {
+    if (!projectId) return;
+    setVBusy(true);
+    setVError(null);
+    setVMsg(null);
+    setVDevLink(null);
+    try {
+      const r = await fetch("/api/provider/project-validation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectId }),
+      });
+      const b = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        setVError(b.error ?? "Could not send that request.");
+        return;
+      }
+      setVSent(true);
+      setVMsg(
+        b.sent
+          ? `Sent to ${b.contactEmail}. We'll let you know when they reply.`
+          : `Ready for ${b.contactEmail} — no email key configured, so use the link below.`
+      );
+      // E048 dev affordance: with no RESEND_API_KEY the loop is still walkable.
+      if (b.devLink) setVDevLink(b.devLink);
+    } catch {
+      setVError("Could not send that request.");
+    } finally {
+      setVBusy(false);
+    }
+  };
 
   // Reference data — loaded once the modal is first opened, not on mount, so a
   // provider who never adds a project never pays for these three requests.
@@ -605,7 +651,7 @@ export function ProjectModal({
         <Group title="Proof">
           <Field
             label="Client Contact Email"
-            hint="We'll ask them to validate this project. Nothing is sent yet."
+            hint="Someone at the client who can confirm you worked on this."
           >
             <TextInput
               type="email"
@@ -614,6 +660,73 @@ export function ProjectModal({
               placeholder="programme.director@client.com"
             />
           </Field>
+
+          {/* The request itself needs a SAVED project to point at, so this
+              appears once the project exists rather than while it's a draft. */}
+          {isEdit && projectId && (
+            <div className="rounded-[12px] border border-line bg-bg-soft/50 p-4">
+              {validationStatus === "VALIDATED" ? (
+                <p className="text-[14px] font-bold text-emerald-700">
+                  ✓ Validated — your contact confirmed this project.
+                </p>
+              ) : (
+                <>
+                  <p className="text-[13.5px] text-ink-2">
+                    {validationStatus === "PENDING" || vSent
+                      ? "Requested — awaiting reply."
+                      : "We'll email your contact and ask them to confirm you worked on this. They don't need an account."}
+                  </p>
+                  {validationRequestedAt && !vSent && (
+                    <p className="mt-0.5 text-[12.5px] text-ink-2">
+                      Sent{" "}
+                      {new Date(validationRequestedAt).toLocaleDateString("en-US", {
+                        month: "long",
+                        day: "numeric",
+                      })}
+                      .
+                    </p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={requestValidation}
+                    disabled={vBusy || !draft.contactEmail.trim()}
+                    className="mt-2.5 rounded-full border-[1.5px] border-magenta px-5 py-2 text-[14px] font-bold text-magenta transition-colors hover:bg-magenta hover:text-white disabled:opacity-40"
+                  >
+                    {vBusy
+                      ? "Sending…"
+                      : validationStatus === "PENDING" || vSent
+                        ? "Resend Request"
+                        : "Request Validation"}
+                  </button>
+                  {!draft.contactEmail.trim() && (
+                    <p className="mt-1.5 text-[12.5px] text-ink-2">
+                      Add a contact email above first.
+                    </p>
+                  )}
+                </>
+              )}
+
+              {vMsg && (
+                <p className="mt-2 text-[13px] text-emerald-700">{vMsg}</p>
+              )}
+              {vError && (
+                <p className="mt-2 text-[13px] text-amber-800">{vError}</p>
+              )}
+              {vDevLink && (
+                <p className="mt-2 break-all text-[12.5px] text-ink-2">
+                  Dev link:{" "}
+                  <a
+                    href={vDevLink}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-bold text-magenta underline underline-offset-2"
+                  >
+                    {vDevLink}
+                  </a>
+                </p>
+              )}
+            </div>
+          )}
         </Group>
 
         {/* ---- Media ------------------------------------------------------ */}

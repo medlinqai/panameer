@@ -47,6 +47,8 @@ export type EmployerProject = {
   industry?: { id: string; name: string } | null;
   applications?: { id: string; name: string }[];
   outcomes?: { id: string; label: string; value: string }[];
+  validatedAt?: string | null;
+  validationRequestedAt?: string | null;
 };
 
 export type EmployerCard = {
@@ -367,6 +369,16 @@ export function EmployersStep({
                                   Unclassified
                                 </span>
                               )}
+                              {/* Validation state, provider-side (brief §6). */}
+                              {pr.validationStatus === "VALIDATED" ? (
+                                <span className="ml-2 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-700">
+                                  ✓ Validated
+                                </span>
+                              ) : pr.validationStatus === "PENDING" ? (
+                                <span className="ml-2 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-700">
+                                  Awaiting reply
+                                </span>
+                              ) : null}
                             </p>
                             <div className="flex gap-1.5">
                               <button
@@ -590,6 +602,9 @@ export function EmployersStep({
       <ProjectModal
         open={projectModal !== null}
         isEdit={Boolean(projectModal?.project)}
+        projectId={projectModal?.project?.id}
+        validationStatus={projectModal?.project?.validationStatus}
+        validationRequestedAt={projectModal?.project?.validationRequestedAt}
         draft={projectForm}
         onChange={(patch) => setProjectForm((f) => ({ ...f, ...patch }))}
         onClose={() => setProjectModal(null)}

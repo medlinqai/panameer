@@ -162,6 +162,8 @@ export type ProjectItem = {
   clientVisibility?: string | null;
   codeName?: string | null;
   validationStatus?: string | null;
+  /** ISO timestamp of the CONFIRMED response — drives "Confirmed March 2026". */
+  validatedAt?: string | null;
   logoUrl?: string | null;
   highlights?: string[];
   roleType?: { id: string; name: string } | null;
@@ -450,15 +452,18 @@ export function SkillsBody({
 export function ProjectsBody({
   projects,
   empty,
+  isOwner = false,
 }: {
   projects: ProjectItem[];
   empty: string;
+  /** Owner-only states (a pending validation) render only when true. */
+  isOwner?: boolean;
 }) {
   if (projects.length === 0) return <Empty>{empty}</Empty>;
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       {projects.map((pr) => (
-        <ProjectCard key={pr.id} p={pr} />
+        <ProjectCard key={pr.id} p={pr} isOwner={isOwner} />
       ))}
     </div>
   );
@@ -472,7 +477,13 @@ export function ProjectsBody({
  * is the single most persuasive thing on a provider's profile, and burying it
  * under a paragraph wastes it.
  */
-export function ProjectCard({ p }: { p: ProjectItem }) {
+export function ProjectCard({
+  p,
+  isOwner = false,
+}: {
+  p: ProjectItem;
+  isOwner?: boolean;
+}) {
   const { title, redacted } = clientLabel(p);
   const tools = p.applications ?? [];
   const outcomes = p.outcomes ?? [];
@@ -506,13 +517,20 @@ export function ProjectCard({ p }: { p: ProjectItem }) {
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
             <h3 className="text-[15px] leading-snug">{p.name}</h3>
-            {/* Validated badge SLOT — deliberately empty this brief; the
-                validation workflow that fills it is the next one. */}
-            {p.validationStatus === "VALIDATED" && (
+            {/* The trust signal (brief_project_validation §5). VALIDATED is
+                public — that is the whole point. PENDING is OWNER-ONLY: a buyer
+                seeing "awaiting reply" would learn that a provider asked and
+                hasn't been answered, which is worse than silence and is not
+                theirs to know. Anything else simply shows no badge. */}
+            {p.validationStatus === "VALIDATED" ? (
               <span className="flex-none rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-extrabold text-emerald-700">
                 ✓ Validated
               </span>
-            )}
+            ) : isOwner && p.validationStatus === "PENDING" ? (
+              <span className="flex-none rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-extrabold text-amber-700">
+                Validation requested
+              </span>
+            ) : null}
           </div>
           {title && (
             // Wraps rather than truncates: the confidential form of this line
@@ -522,6 +540,15 @@ export function ProjectCard({ p }: { p: ProjectItem }) {
             <p className="mt-0.5 line-clamp-2 text-[13px] text-ink-2">{title}</p>
           )}
           {range && <p className="text-[12.5px] text-ink-2">{range}</p>}
+          {p.validationStatus === "VALIDATED" && p.validatedAt && (
+            <p className="text-[12px] text-emerald-700">
+              Confirmed{" "}
+              {new Date(p.validatedAt).toLocaleDateString("en-US", {
+                month: "long",
+                year: "numeric",
+              })}
+            </p>
+          )}
         </div>
       </div>
 
