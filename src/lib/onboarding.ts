@@ -464,6 +464,26 @@ async function loadDraft(viewer: Viewer) {
               },
             },
           },
+          // ALL projects, not only the employer-nested ones. A project with a
+          // null `employer_id` is deliberately unattached (delivered between or
+          // outside companies), and reading projects only through employers is
+          // what made those invisible on the Review while the published profile
+          // showed them (brief_profile_layout_v2 §4).
+          projects: {
+            orderBy: [{ sort_order: "asc" }, { created_at: "desc" }],
+            include: {
+              roleType: { select: { id: true, name: true } },
+              industry: { select: { id: true, name: true } },
+              applications: {
+                include: { application: { select: { id: true, name: true } } },
+              },
+              outcomes: { orderBy: [{ sort_order: "asc" }, { created_at: "asc" }] },
+              validations: {
+                orderBy: { sent_at: "desc" },
+                select: { status: true, sent_at: true, responded_at: true },
+              },
+            },
+          },
           education: { orderBy: { created_at: "asc" } },
           languages: { orderBy: { created_at: "asc" } },
           certifications: { orderBy: [{ year: "desc" }, { name: "asc" }] },
@@ -612,6 +632,7 @@ export async function getOnboardingState(viewer: Viewer) {
         // field.
         projects: e.projects.map(projectToCard),
       })),
+      projects: pp.projects.map(projectToCard),
       education: pp.education.map((e) => ({
         id: e.id,
         institution: e.institution,

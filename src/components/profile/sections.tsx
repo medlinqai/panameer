@@ -217,11 +217,113 @@ export type CertificationItem = {
 // ---------------------------------------------------------------------------
 
 /**
- * The profile header — photo, name, headline, location/field/level, rate.
+ * The full-width HERO (brief_profile_layout_v2 §1).
  *
- * `aside` carries whatever each surface hangs off the header: the review page
- * puts "Change Photo" and the identity state there, the published page puts
- * nothing.
+ * Spans the page above the two columns, and leads with the TAGLINE — the one
+ * line that says what this person is. It is deliberately the largest thing on
+ * the profile: a buyer scanning results decides from that sentence, and the old
+ * header gave it the same weight as the location and the rate.
+ *
+ * Name, location, field and level sit UNDER it as attribution; the rate hangs
+ * right so it never competes with the tagline for the first read.
+ */
+export function ProfileHero({
+  firstName,
+  lastName,
+  photoUrl,
+  headline,
+  location,
+  field,
+  experienceLevel,
+  validated = false,
+  hourlyCents,
+  currency = "USD",
+  youGetCents,
+  aside,
+  /**
+   * The tagline is the page's primary heading on the PUBLISHED profile, but on
+   * the step-13 Review the wizard already owns the `<h1>` ("Looking good,
+   * …!"). Two h1s on one page is a semantics/a11y regression, so the review
+   * renders this as an h2 — visually identical, correctly ranked.
+   */
+  headingAs: HeadingTag = "h1",
+}: {
+  firstName: string;
+  lastName: string;
+  photoUrl?: string | null;
+  headline?: string | null;
+  location?: string | null;
+  field?: { role: string; domain: string } | null;
+  experienceLevel?: string | null;
+  validated?: boolean;
+  hourlyCents?: number | null;
+  currency?: string;
+  youGetCents?: number | null;
+  aside?: ReactNode;
+  headingAs?: "h1" | "h2";
+}) {
+  const Heading = HeadingTag;
+  const meta = [
+    location,
+    field ? `${field.role} · ${field.domain}` : null,
+    experienceLevel
+      ? EXPERIENCE_LABELS[experienceLevel] ?? experienceLevel
+      : null,
+  ].filter(Boolean);
+
+  return (
+    <header className="rounded-brand border border-line bg-white p-6 sm:p-8">
+      <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
+        <Avatar
+          firstName={firstName}
+          lastName={lastName}
+          photoUrl={photoUrl}
+          size={104}
+        />
+
+        <div className="min-w-0 flex-1">
+          {/* THE TAGLINE — dominant by design. */}
+          <Heading className="text-[28px] leading-[1.15] tracking-[-0.6px] sm:text-[38px]">
+            {headline || "Add a professional title"}
+          </Heading>
+
+          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+            <p className="text-[17px] font-bold">
+              {displayFullName(firstName, lastName)}
+            </p>
+            {validated && (
+              <span className="rounded-full bg-emerald-50 px-3 py-1 text-[12px] font-extrabold text-emerald-700">
+                ✓ Validated
+              </span>
+            )}
+          </div>
+
+          {meta.length > 0 && (
+            <p className="mt-1.5 text-[14.5px] text-ink-2">{meta.join(" · ")}</p>
+          )}
+          {aside}
+        </div>
+
+        <div className="sm:text-right">
+          <p className="text-[28px] font-extrabold leading-none">
+            {hourlyCents != null ? formatCents(hourlyCents, currency) : "—"}
+            <span className="text-[15px] font-semibold text-ink-2">/hr</span>
+          </p>
+          {youGetCents != null && (
+            <p className="mt-1 text-[13px] text-ink-2">
+              You&apos;ll Get {formatCents(youGetCents, currency)}/hr
+            </p>
+          )}
+        </div>
+      </div>
+    </header>
+  );
+}
+
+/**
+ * The pre-v2 header card. Kept because `components/ProfileView.tsx` (the older
+ * public/`/providers/[id]` surface) still renders it; the two profile surfaces
+ * are converged in a separate pass, not smuggled into a layout brief.
  */
 export function ProfileHeaderCard({
   firstName,
@@ -449,6 +551,42 @@ export function SkillsBody({
   );
 }
 
+/**
+ * Skills + Specializations in ONE band (brief_profile_layout_v2 §3.2).
+ *
+ * Together and high on the page because these are the two axes buyers actually
+ * search on — Role→Domain→Skill (what they can do) and Specializations (which
+ * systems/sectors they know). Split across a column and a rail they read as
+ * trivia; side by side under the bio they read as the answer to "can this person
+ * do my job".
+ */
+export function SkillsSpecializationsBand({
+  skills,
+  specializations,
+  field,
+}: {
+  skills: SkillItem[];
+  specializations: SpecializationItem[];
+  field?: { role: string; domain: string } | null;
+}) {
+  return (
+    <div className="grid gap-5 sm:grid-cols-2">
+      <div>
+        <p className="mb-2 text-[12px] font-bold uppercase tracking-wide text-ink-2">
+          Skills
+        </p>
+        <SkillsBody skills={skills} field={field} />
+      </div>
+      <div>
+        <p className="mb-2 text-[12px] font-bold uppercase tracking-wide text-ink-2">
+          Specializations
+        </p>
+        <SpecializationsBody specializations={specializations} />
+      </div>
+    </div>
+  );
+}
+
 export function ProjectsBody({
   projects,
   empty,
@@ -494,7 +632,13 @@ export function ProjectCard({
   );
 
   return (
-    <article className="flex flex-col rounded-brand border border-line p-4 transition-shadow hover:shadow-brand">
+    <article
+      // Anchor target for the Work-History cross-links (brief §4).
+      // `scroll-mt-24` keeps the card clear of the top of the viewport after a
+      // jump, instead of flush against it.
+      id={`project-${p.id}`}
+      className="flex scroll-mt-24 flex-col rounded-brand border border-line p-4 transition-shadow hover:shadow-brand"
+    >
       <div className="flex items-start gap-3">
         {p.logoUrl && !redacted ? (
           // A confidential project never shows the client's logo — it would
@@ -677,16 +821,22 @@ export function WorkHistoryBody({
                   />
                 </div>
               )}
+              {/* CROSS-LINKED, not duplicated (brief §4): the work history
+                  names what was delivered here and jumps to the full card in
+                  the Projects section, so a project's detail lives in exactly
+                  one place. Projects with no employer are never listed here —
+                  the nullable FK is what models "done outside a company". */}
               {(e.projects?.length ?? 0) > 0 && (
-                <ul className="mt-3 space-y-2 border-l-2 border-line pl-4">
+                <ul className="mt-3 flex flex-wrap gap-1.5 border-l-2 border-line pl-4">
                   {e.projects!.map((pr) => (
                     <li key={pr.id}>
-                      <p className="text-[14px] font-semibold">{pr.name}</p>
-                      {pr.description && (
-                        <p className="whitespace-pre-line text-[13.5px] text-ink-2">
-                          {pr.description}
-                        </p>
-                      )}
+                      <a
+                        href={`#project-${pr.id}`}
+                        className="inline-flex items-center gap-1 rounded-full border border-magenta/30 bg-magenta/[0.05] px-2.5 py-1 text-[12.5px] font-semibold text-magenta-dark transition-colors hover:border-magenta hover:bg-magenta/10"
+                      >
+                        {pr.name}
+                        <span aria-hidden>↓</span>
+                      </a>
                     </li>
                   ))}
                 </ul>

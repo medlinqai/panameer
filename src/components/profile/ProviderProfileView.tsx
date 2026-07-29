@@ -3,7 +3,8 @@ import { formatCents, rateBreakdown } from "@/lib/display";
 import type { ProviderProfileView } from "@/lib/provider-profile-view";
 import {
   ProfileCard,
-  ProfileHeaderCard,
+  ProfileHero,
+  SkillsSpecializationsBand,
   Empty,
   EDIT_CLASS,
   VerificationsBody,
@@ -53,7 +54,10 @@ export function ProviderProfileViewPage({ p }: { p: ProviderProfileView }) {
 
   return (
     <div className="min-h-screen bg-bg-soft font-body text-ink">
-      <div className="mx-auto max-w-5xl px-6 py-8">
+      {/* max-w-6xl, not 5xl (brief §2): with a 300px meta rail the old frame
+          left the main column at ~650px, which is cramped for two-up project
+          cards. This gives it ~800px. */}
+      <div className="mx-auto max-w-6xl px-6 py-8">
         {/* Owner-only status banner — the completeness/visibility story the old
             dashboard card used to carry. */}
         {p.isOwner && (
@@ -101,7 +105,8 @@ export function ProviderProfileViewPage({ p }: { p: ProviderProfileView }) {
           </div>
         )}
 
-        <ProfileHeaderCard
+        {/* ---- Full-width hero (brief_profile_layout_v2 §1) ----------- */}
+        <ProfileHero
           firstName={p.person.firstName}
           lastName={p.person.lastName}
           photoUrl={p.person.photoUrl}
@@ -115,49 +120,60 @@ export function ProviderProfileViewPage({ p }: { p: ProviderProfileView }) {
           youGetCents={p.isOwner ? youGet : null}
         />
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-[260px_1fr] lg:items-start">
-          {/* ---- Left rail --------------------------------------------- */}
-          <aside className="space-y-6">
-            <ProfileCard title="Verifications">
-              <VerificationsBody
-                emailVerified={p.verifications.emailVerified}
-                phoneOnFile={p.verifications.phoneOnFile}
-                phoneVerified={p.verifications.phoneVerified}
-              />
-            </ProfileCard>
-
-            <ProfileCard
-              title="Languages"
-              edit={edit("Languages", "/join/provider?step=languages")}
-            >
-              <LanguagesBody languages={p.languages} />
-            </ProfileCard>
-
-            <ProfileCard
-              title="Education"
-              edit={edit("Education", "/join/provider?step=education")}
-            >
-              <EducationBody education={p.education} />
-            </ProfileCard>
-
-            <ProfileCard
-              title="Specializations"
-              edit={edit(
-                "Specializations",
-                "/join/provider?step=specializations"
-              )}
-            >
-              <SpecializationsBody specializations={p.specializations} />
-            </ProfileCard>
-          </aside>
-
+        {/*
+          MAIN LEFT, META RIGHT (§2). The main column is FIRST in the DOM, which
+          is what makes the mobile stack correct for free: one column, meta
+          AFTER the content it supports, with no order utilities to keep in sync.
+        */}
+        <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
           {/* ---- Main column ------------------------------------------- */}
           <div className="space-y-6">
+            {/* 1. Bio */}
             <ProfileCard
               title="Overview"
               edit={edit("Overview", "/join/provider?step=bio")}
             >
               <OverviewBody overview={p.overview} />
+            </ProfileCard>
+
+            {/* 2. Skills / Specializations — discovery, kept high (§3.2) */}
+            <ProfileCard
+              title="Skills &amp; Specializations"
+              edit={edit("Skills", "/join/provider?step=catalog")}
+            >
+              <SkillsSpecializationsBand
+                skills={p.skills}
+                specializations={p.specializations}
+                field={p.field}
+              />
+            </ProfileCard>
+
+            {/* 3. Work History — each employer links DOWN to its projects */}
+            <ProfileCard
+              title="Work History"
+              edit={edit("Work History", "/join/provider?step=employers")}
+            >
+              <WorkHistoryBody
+                employers={p.employers}
+                empty={
+                  p.isOwner
+                    ? "No work history yet. Providers who add work experience and projects are twice as likely to win work."
+                    : "No work history yet."
+                }
+              />
+            </ProfileCard>
+
+            {/* 4. Projects — the showcase, and the anchor targets above */}
+            <ProfileCard title="Projects">
+              <ProjectsBody
+                isOwner={p.isOwner}
+                projects={p.projects}
+                empty={
+                  p.isOwner
+                    ? "No projects yet. Adding a few is the fastest way to show buyers what you've delivered."
+                    : "No projects published yet."
+                }
+              />
             </ProfileCard>
 
             {/* Packages (brief_V / E045) — the sellable catalog. Sits ABOVE
@@ -247,46 +263,34 @@ export function ProviderProfileViewPage({ p }: { p: ProviderProfileView }) {
               </ProfileCard>
             )}
 
-            {/* Projects (E037; renamed from "Portfolio" by brief_T / E041 —
-                "we're not artists"). The Solution child is gone in brief_V:
-                what it reached for is a PACKAGE, rendered separately above. */}
-            <ProfileCard title="Projects">
-              <ProjectsBody
-                isOwner={p.isOwner}
-                projects={p.projects}
-                empty={
-                  p.isOwner
-                    ? "No projects yet. Adding a few is the fastest way to show buyers what you've delivered."
-                    : "No projects published yet."
-                }
+          </div>
+
+          {/* ---- Right rail: the meta (§2) ----------------------------- */}
+          <aside className="space-y-6">
+            <ProfileCard title="Verifications">
+              <VerificationsBody
+                emailVerified={p.verifications.emailVerified}
+                phoneOnFile={p.verifications.phoneOnFile}
+                phoneVerified={p.verifications.phoneVerified}
               />
             </ProfileCard>
 
             <ProfileCard
-              title="Skills"
-              edit={edit("Skills", "/join/provider?step=catalog")}
+              title="Languages"
+              edit={edit("Languages", "/join/provider?step=languages")}
             >
-              <SkillsBody skills={p.skills} />
+              <LanguagesBody languages={p.languages} />
             </ProfileCard>
 
-            {/* E042 — ONE work-history section. The flat WorkExperience
-                rendering that used to sit alongside this is gone; Employer is
-                the single model and projects nest under the job they were done
-                for. */}
             <ProfileCard
-              title="Work History"
-              edit={edit("Work History", "/join/provider?step=employers")}
+              title="Education"
+              edit={edit("Education", "/join/provider?step=education")}
             >
-              <WorkHistoryBody
-                employers={p.employers}
-                empty={
-                  p.isOwner
-                    ? "No work history yet. Providers who add work experience and projects are twice as likely to win work."
-                    : "No work history yet."
-                }
-              />
+              <EducationBody education={p.education} />
             </ProfileCard>
 
+            {/* Certifications = the "licenses/credentials" meta the brief lists;
+                Panameer has no separate Licenses entity. */}
             <ProfileCard
               title="Certifications"
               edit={edit("Certifications", "/join/provider?step=certifications")}
@@ -301,8 +305,7 @@ export function ProviderProfileViewPage({ p }: { p: ProviderProfileView }) {
               />
             </ProfileCard>
 
-            {/* E039 — testimonials are EARNED after delivering work, so this
-                is an honest empty state, not a capture form. */}
+            {/* E039 — earned after delivering work, so an honest empty state. */}
             <ProfileCard title="Testimonials">
               <Empty>
                 {p.isOwner
@@ -310,7 +313,7 @@ export function ProviderProfileViewPage({ p }: { p: ProviderProfileView }) {
                   : "No testimonials yet."}
               </Empty>
             </ProfileCard>
-          </div>
+          </aside>
         </div>
       </div>
     </div>

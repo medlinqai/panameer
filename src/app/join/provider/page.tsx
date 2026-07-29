@@ -24,6 +24,7 @@ import { CertificationCards } from "@/components/onboarding/CertificationCards";
 import {
   EmployersStep,
   type EmployerCard,
+  type EmployerProject,
 } from "@/components/onboarding/EmployersStep";
 import {
   ResumeUploadModal,
@@ -34,7 +35,8 @@ import { PhotoCropModal } from "@/components/onboarding/PhotoCropModal";
 import { TestimonialCard, DECK_TESTIMONIALS } from "@/components/onboarding/TestimonialCarousel";
 import {
   ProfileCard,
-  ProfileHeaderCard,
+  ProfileHero,
+  SkillsSpecializationsBand,
   EditButton,
   Empty,
   VerificationsBody,
@@ -199,6 +201,8 @@ type ProfilePayload = {
   specializationIds?: string[];
   specializations?: { id: string; name: string; kind: string }[];
   employers?: EmployerCard[];
+  /** ALL projects, including any not attached to an employer. */
+  projects?: EmployerProject[];
   /**
    * The FULL certification row. brief_X / E057 — this used to list only half
    * the columns the server sends, so `hydrate` re-seeded the draft without
@@ -301,6 +305,7 @@ type Profile = {
   customSpecializations: string[];
   certifications: CertificationDraft[];
   employers: EmployerCard[];
+  projects: EmployerProject[];
   skillIds: string[];
   skillNames: { id: string; name: string }[];
   /** Typed-in skills not yet in the catalog (E031). */
@@ -350,6 +355,7 @@ const emptyProfile = (): Profile => ({
   education: [],
   languages: [],
   employers: [],
+  projects: [],
 });
 
 const emptyAddress = (country = "United States"): AddressDraft => ({
@@ -434,6 +440,7 @@ export default function JoinProviderPage() {
       customSpecializations: [],
       customSkills: [],
       employers: (p.employers ?? []) as EmployerCard[],
+      projects: (p.projects ?? []) as EmployerProject[],
       // E057 — carry EVERY column through. See the payload type above: a
       // partial map here is a silent delete on the next save.
       certifications: (p.certifications ?? []).map((c) => ({
@@ -1826,15 +1833,19 @@ export default function JoinProviderPage() {
       // project is captured under the employer it was delivered for, which is
       // the same `Project` row the published page reads. Flatten them so the
       // review shows the Projects section the live profile shows.
-      // The review renders the SAME ProjectCard the published profile does, so
-      // every v2 field has to survive the flatten — including the visibility
-      // rule, or a confidential client would show here and be redacted there.
-      const projects = profile.employers.flatMap((e) =>
-        (e.projects ?? []).map((pr) => ({
-          ...pr,
-          employer: e.name,
-        }))
+      // The review renders the SAME ProjectCard the published profile does.
+      // Read the FULL project list — flattening employers would drop any
+      // project with no `employer_id` (brief_profile_layout_v2 §4), and label
+      // each with its employer for the card subtitle.
+      const employerNameById = new Map(
+        profile.employers.flatMap((e) =>
+          (e.projects ?? []).map((pr) => [pr.id, e.name] as const)
+        )
       );
+      const projects = profile.projects.map((pr) => ({
+        ...pr,
+        employer: employerNameById.get(pr.id) ?? null,
+      }));
 
       const editBtn = (title: string, step: Step) => (
         <EditButton title={title} onClick={() => goTo(step)} />
@@ -1861,7 +1872,9 @@ export default function JoinProviderPage() {
           {/* The soft page background the published profile sits on, so the
               white section cards read the same way here as they do there. */}
           <div className="mt-6 rounded-brand bg-bg-soft p-4 sm:p-5">
-            <ProfileHeaderCard
+            <ProfileHero
+              // The wizard title is the page h1; keep heading ranks sane.
+              headingAs="h2"
               firstName={profile.firstName}
               lastName={profile.lastName}
               photoUrl={profile.photoUrl}
@@ -1902,8 +1915,61 @@ export default function JoinProviderPage() {
               }
             />
 
-            <div className="mt-5 grid gap-5 lg:grid-cols-[260px_1fr] lg:items-start">
-              {/* ---- Left rail ------------------------------------------ */}
+            {/*
+              MAIN LEFT, META RIGHT — the same shape as the published profile
+              (brief_profile_layout_v2 §2), and the main column is first in the
+              DOM so mobile stacks content-then-meta with no order utilities.
+            */}
+            <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
+              {/* ---- Main column: bio → skills → work history → projects -- */}
+              <div className="space-y-5">
+                <ProfileCard title="Overview" edit={editBtn("Overview", "bio")}>
+                  <OverviewBody
+                    overview={profile.overview}
+                    empty="No bio yet — buyers read this first."
+                  />
+                </ProfileCard>
+
+                <ProfileCard
+                  title="Skills &amp; Specializations"
+                  edit={editBtn("Skills", "catalog")}
+                >
+                  <SkillsSpecializationsBand
+                    skills={profile.skillNames}
+                    specializations={profile.specializationNames}
+                    field={
+                      profile.roleTypeName && profile.pillarName
+                        ? {
+                            role: profile.roleTypeName,
+                            domain: profile.pillarName,
+                          }
+                        : null
+                    }
+                  />
+                </ProfileCard>
+
+                <ProfileCard
+                  title="Work History"
+                  edit={editBtn("Work History", "employers")}
+                >
+                  <WorkHistoryBody
+                    employers={profile.employers}
+                    empty="No work history yet. Providers who add work experience and projects are twice as likely to win work."
+                  />
+                </ProfileCard>
+
+                <ProfileCard
+                  title="Projects"
+                  edit={editBtn("Projects", "employers")}
+                >
+                  <ProjectsBody
+                    projects={projects}
+                    empty="No projects yet. Adding a few is the fastest way to show buyers what you've delivered."
+                  />
+                </ProfileCard>
+              </div>
+
+              {/* ---- Right rail: the meta -------------------------------- */}
               <aside className="space-y-5">
                 {/* Verify identity. On the published profile this is a
                     read-only Verifications card; pre-publish it is where the
@@ -1990,58 +2056,9 @@ export default function JoinProviderPage() {
                   <EducationBody education={profile.education} />
                 </ProfileCard>
 
-                <ProfileCard
-                  title="Specializations"
-                  edit={editBtn("Specializations", "specializations")}
-                >
-                  <SpecializationsBody
-                    specializations={profile.specializationNames}
-                  />
-                </ProfileCard>
-              </aside>
-
-              {/* ---- Main column ---------------------------------------- */}
-              <div className="space-y-5">
-                <ProfileCard title="Overview" edit={editBtn("Overview", "bio")}>
-                  <OverviewBody
-                    overview={profile.overview}
-                    empty="No bio yet — buyers read this first."
-                  />
-                </ProfileCard>
-
-                <ProfileCard
-                  title="Projects"
-                  edit={editBtn("Projects", "employers")}
-                >
-                  <ProjectsBody
-                    projects={projects}
-                    empty="No projects yet. Adding a few is the fastest way to show buyers what you've delivered."
-                  />
-                </ProfileCard>
-
-                <ProfileCard title="Skills" edit={editBtn("Skills", "catalog")}>
-                  <SkillsBody
-                    skills={profile.skillNames}
-                    field={
-                      profile.roleTypeName && profile.pillarName
-                        ? {
-                            role: profile.roleTypeName,
-                            domain: profile.pillarName,
-                          }
-                        : null
-                    }
-                  />
-                </ProfileCard>
-
-                <ProfileCard
-                  title="Work History"
-                  edit={editBtn("Work History", "employers")}
-                >
-                  <WorkHistoryBody
-                    employers={profile.employers}
-                    empty="No work history yet. Providers who add work experience and projects are twice as likely to win work."
-                  />
-                </ProfileCard>
+                {/* Specializations moved into the main column's
+                    Skills & Specializations band (brief_profile_layout_v2 §3.2)
+                    — buyers search on them, so they no longer sit in the rail. */}
 
                 {/* E057 — cards + a proper modal. The eight-field form that
                     used to be squeezed into the sidebar column is gone. */}
@@ -2069,7 +2086,7 @@ export default function JoinProviderPage() {
                     deliver work.
                   </Empty>
                 </ProfileCard>
-              </div>
+              </aside>
             </div>
           </div>
 
