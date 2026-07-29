@@ -149,6 +149,43 @@ const MAX_SKILLS = 15;
 /** E030 — never show more than ~15 options at once on the cascade page. */
 const MAX_VISIBLE_OPTIONS = 15;
 
+/**
+ * Bounded pickers (brief_Y / E053+E054).
+ *
+ * THE RULE: a wizard step's height must not depend on how big the catalog is.
+ * The service catalog is meant to grow without limit — Scott's "race without a
+ * finish" — so any step that renders it needs TWO independent bounds:
+ *
+ *   1. a COUNT cap on how many suggestions are rendered, with a
+ *      "+N more — keep typing to narrow" affordance, and
+ *   2. a fixed-height, internally-scrolling region, so even the capped set
+ *      cannot push the footer and its Continue button off-screen.
+ *
+ * Either alone is insufficient: a cap with no height bound still grows when
+ * chips wrap onto more lines, and a height bound with no cap renders hundreds
+ * of nodes the provider will never scroll through.
+ */
+const MAX_SKILL_SUGGESTIONS = 12;
+/** Per GROUP, so every specialization section stays represented (E054). */
+const MAX_SPECS_PER_GROUP = 6;
+
+/**
+ * A fixed-height scroll region. `overscroll-contain` keeps a scroll gesture
+ * that reaches the end of this list from continuing on to scroll the page —
+ * otherwise bounding the height just moves the jumpiness somewhere else.
+ */
+const SCROLL_REGION =
+  "overflow-y-auto overscroll-contain rounded-[12px] border border-line/70 bg-bg-soft/40 p-3";
+
+/**
+ * The PICKED chips wrap (brief_Y keeps them wrapping) — but inside a bound, or
+ * the step just moves its growth problem from the suggestion list to the
+ * selection list: 15 skills wrap to five rows and push the footer off-screen
+ * exactly as the unbounded catalog did. Capped at ~2 rows, unpadded so a single
+ * row costs nothing.
+ */
+const PICKED_REGION = "max-h-[84px] overflow-y-auto overscroll-contain pr-1";
+
 /** The shape `/api/onboarding/status` returns. Only what this page reads. */
 type ProfilePayload = {
   experienceLevel?: string | null;
@@ -996,11 +1033,15 @@ export default function JoinProviderPage() {
       const activeRole = fieldRoles.find((r) => r.id === profile.roleTypeId);
 
       const q = skillQuery.trim().toLowerCase();
-      const matchingSkills = q
-        ? skillOpts.filter((s) => s.name.toLowerCase().includes(q))
-        : skillOpts;
-      // E030 — never more than ~15 options on screen at once.
-      const shownSkills = matchingSkills.slice(0, MAX_VISIBLE_OPTIONS);
+      // Already-picked skills are shown as chips above, so they are not
+      // suggestions any more — filtering them out BEFORE the cap means the
+      // suggestion set stays a full 12 usable options as picks accumulate,
+      // instead of quietly thinning out.
+      const matchingSkills = (
+        q ? skillOpts.filter((s) => s.name.toLowerCase().includes(q)) : skillOpts
+      ).filter((s) => !chosenSkills.has(s.id));
+      // E053 — hard cap; the rest stay behind "keep typing to narrow".
+      const shownSkills = matchingSkills.slice(0, MAX_SKILL_SUGGESTIONS);
       const hiddenSkillCount = matchingSkills.length - shownSkills.length;
 
       const pickRole = (role: FieldRole) =>
@@ -1058,8 +1099,6 @@ export default function JoinProviderPage() {
         <WizardShell
           {...shell({
             title: "What work are you here to do?",
-            subtitle:
-              "Pick your role, then the area you work in, then the skills you use. We'll use these to match you to the right jobs.",
             onContinue: () =>
               saveAnd("catalog", {
                 roleTypeId: profile.roleTypeId,
@@ -1078,7 +1117,7 @@ export default function JoinProviderPage() {
             Domain reveals its Skills. Each tier collapses to a summary row once
             chosen, so the page never shows more than one open list at a time.
           */}
-          <div className="space-y-6">
+          <div className="space-y-2.5">
             <CascadeTier
               index={1}
               label="Role"
@@ -1098,16 +1137,21 @@ export default function JoinProviderPage() {
               {fieldRoles.length === 0 ? (
                 <p className="text-ink-2">Loading roles…</p>
               ) : (
-                <div className="space-y-3">
-                  {fieldRoles.map((r) => (
-                    <OptionCard
-                      key={r.id}
-                      selected={profile.roleTypeId === r.id}
-                      onClick={() => pickRole(r)}
-                      title={r.name}
-                      description={`${r.domains.length} area${r.domains.length === 1 ? "" : "s"} of work`}
-                    />
-                  ))}
+                // Bounded for the same reason as the Skills tier. With today's
+                // four roles nothing scrolls and this is invisible; it is what
+                // keeps the step single-page when the taxonomy grows.
+                <div className={`max-h-[320px] ${SCROLL_REGION}`}>
+                  <div className="space-y-3">
+                    {fieldRoles.map((r) => (
+                      <OptionCard
+                        key={r.id}
+                        selected={profile.roleTypeId === r.id}
+                        onClick={() => pickRole(r)}
+                        title={r.name}
+                        description={`${r.domains.length} area${r.domains.length === 1 ? "" : "s"} of work`}
+                      />
+                    ))}
+                  </div>
                 </div>
               )}
             </CascadeTier>
@@ -1127,38 +1171,36 @@ export default function JoinProviderPage() {
                   }))
                 }
               >
-                <div className="space-y-3">
-                  {(activeRole?.domains ?? [])
-                    .slice(0, MAX_VISIBLE_OPTIONS)
-                    .map((d) => (
-                      <OptionCard
-                        key={d.id}
-                        selected={profile.pillarId === d.id}
-                        onClick={() => pickDomain(d)}
-                        title={d.name}
-                        description={`${d.skillCount} skill${d.skillCount === 1 ? "" : "s"}`}
-                      />
-                    ))}
+                <div className={`max-h-[320px] ${SCROLL_REGION}`}>
+                  <div className="space-y-3">
+                    {(activeRole?.domains ?? [])
+                      .slice(0, MAX_VISIBLE_OPTIONS)
+                      .map((d) => (
+                        <OptionCard
+                          key={d.id}
+                          selected={profile.pillarId === d.id}
+                          onClick={() => pickDomain(d)}
+                          title={d.name}
+                          description={`${d.skillCount} skill${d.skillCount === 1 ? "" : "s"}`}
+                        />
+                      ))}
+                  </div>
                 </div>
               </CascadeTier>
             )}
 
             {profile.roleTypeId && profile.pillarId && (
               <CascadeTier index={3} label="Skills" chosen={null}>
-                <p className="mb-3 text-[14px] text-ink-2">
-                  Pick up to {MAX_SKILLS}. Can&apos;t find one? Type it and add it.
-                </p>
-
                 {(profile.skillNames.length > 0 ||
                   profile.customSkills.length > 0) && (
-                  <div className="mb-4">
-                    <p className="mb-2 text-[13px] font-bold">
+                  <div className="mb-2">
+                    <p className="mb-1.5 text-[13px] font-bold">
                       Your Skills{" "}
                       <span className="font-normal text-ink-2">
                         ({totalPicked}/{MAX_SKILLS})
                       </span>
                     </p>
-                    <div className="flex flex-wrap gap-2">
+                    <div className={`flex flex-wrap gap-2 ${PICKED_REGION}`}>
                       {profile.skillNames.map((sk) => (
                         <Chip key={sk.id} selected onClick={() => toggleSkill(sk.id)}>
                           {sk.name}
@@ -1184,7 +1226,7 @@ export default function JoinProviderPage() {
 
                 <div className="flex items-end gap-2">
                   <div className="flex-1">
-                    <Field label="Search or Add a Skill">
+                    <Field label={`Search or Add a Skill (up to ${MAX_SKILLS})`}>
                       <TextInput
                         value={skillQuery}
                         onChange={(e) => setSkillQuery(e.target.value)}
@@ -1216,10 +1258,13 @@ export default function JoinProviderPage() {
                   </div>
                 )}
 
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {shownSkills
-                    .filter((sk) => !chosenSkills.has(sk.id))
-                    .map((sk) => (
+                {/* E053 — the suggestion set is BOUNDED in both directions:
+                    capped to 12 chips, inside a fixed-height scroll region. An
+                    80-skill domain and an 800-skill one render the same height,
+                    so the Continue button never moves. */}
+                <div className={`mt-3 max-h-[116px] ${SCROLL_REGION}`}>
+                  <div className="flex flex-wrap gap-2">
+                    {shownSkills.map((sk) => (
                       <Chip
                         key={sk.id}
                         selected={false}
@@ -1228,14 +1273,17 @@ export default function JoinProviderPage() {
                         {sk.name}
                       </Chip>
                     ))}
-                  {shownSkills.length === 0 && (
-                    <p className="text-[14px] text-ink-2">
-                      No matches — use “+ Add” to create it.
-                    </p>
-                  )}
+                    {shownSkills.length === 0 && (
+                      <p className="text-[14px] text-ink-2">
+                        {matchingSkills.length === 0 && q
+                          ? "No matches — use “+ Add” to create it."
+                          : "You've picked every skill we list here."}
+                      </p>
+                    )}
+                  </div>
                 </div>
                 {hiddenSkillCount > 0 && (
-                  <p className="mt-3 text-[13px] text-ink-2">
+                  <p className="mt-2 text-[13px] text-ink-2">
                     +{hiddenSkillCount} more — keep typing to narrow the list.
                   </p>
                 )}
@@ -1250,12 +1298,57 @@ export default function JoinProviderPage() {
     // ---- 7/12 — Specializations (E031, optional + add-on-the-fly) -----
     case "specializations": {
       const chosenSpecs = new Set(profile.specializationIds);
+
+      // Every loaded specialization, by id — so a SELECTED chip can be named
+      // even when the search or the per-group cap has hidden its source row.
+      const specById = new Map<string, string>();
+      specGroups.forEach((g) =>
+        g.items.forEach((i) => specById.set(i.id, i.name))
+      );
+      profile.specializationNames.forEach((s) => {
+        if (!specById.has(s.id)) specById.set(s.id, s.name);
+      });
+
+      const sq = specQuery.trim().toLowerCase();
+
+      /**
+       * E054 — search-first and capped PER GROUP rather than overall. A single
+       * overall cap would spend its whole budget on the first section and hide
+       * the later ones completely; the sections are the part Scott singled out
+       * as working, so each one keeps its own window into its list.
+       *
+       * Chosen items are excluded here because they are already rendered as
+       * chips above — the same rule the Skills tier uses, so the suggestion
+       * area stays full of things you can still act on.
+       */
+      const groups = specGroups
+        .map((g) => {
+          const matches = g.items.filter(
+            (i) =>
+              !chosenSpecs.has(i.id) && (!sq || i.name.toLowerCase().includes(sq))
+          );
+          return {
+            ...g,
+            shown: matches.slice(0, MAX_SPECS_PER_GROUP),
+            hidden: Math.max(0, matches.length - MAX_SPECS_PER_GROUP),
+          };
+        })
+        .filter((g) => g.shown.length > 0);
+
+      const hiddenSpecCount = groups.reduce((n, g) => n + g.hidden, 0);
+      const totalSpecs =
+        profile.specializationIds.length + profile.customSpecializations.length;
+
       const addCustomSpec = () => {
         const name = specQuery.trim();
         if (!name) return;
-        const dup = profile.customSpecializations.some(
-          (c) => c.toLowerCase() === name.toLowerCase()
-        );
+        const dup =
+          profile.customSpecializations.some(
+            (c) => c.toLowerCase() === name.toLowerCase()
+          ) ||
+          [...specById.entries()].some(
+            ([id, n]) => n.toLowerCase() === name.toLowerCase() && chosenSpecs.has(id)
+          );
         if (!dup) {
           setProfile((p) => ({
             ...p,
@@ -1264,20 +1357,32 @@ export default function JoinProviderPage() {
         }
         setSpecQuery("");
       };
+
       const toggleSpec = (id: string) =>
-        setProfile((p) => ({
-          ...p,
-          specializationIds: p.specializationIds.includes(id)
-            ? p.specializationIds.filter((x) => x !== id)
-            : [...p.specializationIds, id],
-        }));
+        setProfile((p) => {
+          const has = p.specializationIds.includes(id);
+          const name = specById.get(id) ?? "";
+          return {
+            ...p,
+            specializationIds: has
+              ? p.specializationIds.filter((x) => x !== id)
+              : [...p.specializationIds, id],
+            // Keep the display names in step with the ids. The server resends
+            // both on save, but until then the Review page reads these — and a
+            // name list that lags its id list renders the wrong chips.
+            specializationNames: has
+              ? p.specializationNames.filter((x) => x.id !== id)
+              : [...p.specializationNames, { id, name }],
+          };
+        });
 
       return (
         <WizardShell
           {...shell({
             title: "What are your specializations?",
-            subtitle:
-              "The systems, processes and industries you know. This is separate from your skills — it's how buyers find someone who has done it in their world. Pick as many as apply.",
+            // E054 — one line. The old three-sentence version explained the
+            // feature to someone who had already understood it from the title.
+            subtitle: "The systems, processes and industries you've worked in.",
             secondaryLabel: "Skip for Now",
             onSecondary: goNext,
             onContinue: () =>
@@ -1291,37 +1396,25 @@ export default function JoinProviderPage() {
           {specGroups.length === 0 ? (
             <p className="text-ink-2">Loading specializations…</p>
           ) : (
-            <div className="space-y-7">
-              {specGroups.map((g) => (
-                <div key={g.kind}>
-                  <h2 className="mb-3 text-[13px] font-bold uppercase tracking-wide text-ink-2">
-                    {g.label}
-                  </h2>
-                  <div className="flex flex-wrap gap-2">
-                    {g.items.map((item) => (
-                      <Chip
-                        key={item.id}
-                        selected={chosenSpecs.has(item.id)}
-                        onClick={() => toggleSpec(item.id)}
-                      >
-                        {item.name}
+            <div>
+              {/* Picked, always visible and always removable — it sits OUTSIDE
+                  the scroll region so a selection can never be scrolled or
+                  filtered out of reach. */}
+              {totalSpecs > 0 && (
+                <div className="mb-4">
+                  <p className="mb-2 text-[13px] font-bold">
+                    Your Specializations{" "}
+                    <span className="font-normal text-ink-2">({totalSpecs})</span>
+                  </p>
+                  <div className={`flex flex-wrap gap-2 ${PICKED_REGION}`}>
+                    {profile.specializationIds.map((id) => (
+                      <Chip key={id} selected onClick={() => toggleSpec(id)}>
+                        {specById.get(id) ?? "Specialization"}
                       </Chip>
                     ))}
-                  </div>
-                </div>
-              ))}
-              {/* E031 — add-on-the-fly: a provider's real specialization may
-                  simply not be in the vocabulary yet. Custom entries join the
-                  shared list so the next provider can just pick it. */}
-              <div>
-                <h2 className="mb-3 text-[13px] font-bold uppercase tracking-wide text-ink-2">
-                  Something Missing?
-                </h2>
-                {profile.customSpecializations.length > 0 && (
-                  <div className="mb-3 flex flex-wrap gap-2">
                     {profile.customSpecializations.map((name) => (
                       <Chip
-                        key={name}
+                        key={`custom:${name}`}
                         selected
                         onClick={() =>
                           setProfile((p) => ({
@@ -1336,39 +1429,81 @@ export default function JoinProviderPage() {
                       </Chip>
                     ))}
                   </div>
-                )}
-                <div className="flex items-end gap-2">
-                  <div className="max-w-sm flex-1">
-                    <Field label="Add Your Own">
-                      <TextInput
-                        value={specQuery}
-                        onChange={(e) => setSpecQuery(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            addCustomSpec();
-                          }
-                        }}
-                        placeholder="e.g. Workday"
-                      />
-                    </Field>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={addCustomSpec}
-                    disabled={!specQuery.trim()}
-                    className="mb-[2px] rounded-full border-[1.5px] border-line px-5 py-3 font-bold text-ink transition-colors hover:border-magenta hover:text-magenta disabled:opacity-40"
-                  >
-                    + Add
-                  </button>
                 </div>
+              )}
+
+              {/* One control for both jobs, matching the Skills tier: type to
+                  narrow, or type something we don't have and add it (E031). */}
+              <div className="flex items-end gap-2">
+                <div className="flex-1">
+                  <Field label="Search or Add a Specialization">
+                    <TextInput
+                      value={specQuery}
+                      onChange={(e) => setSpecQuery(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          addCustomSpec();
+                        }
+                      }}
+                      placeholder="Start typing… e.g. Workday"
+                    />
+                  </Field>
+                </div>
+                <button
+                  type="button"
+                  onClick={addCustomSpec}
+                  disabled={!specQuery.trim()}
+                  className="mb-[2px] rounded-full border-[1.5px] border-line px-5 py-3 font-bold text-ink transition-colors hover:border-magenta hover:text-magenta disabled:opacity-40"
+                >
+                  + Add
+                </button>
               </div>
 
-              <p className="text-[14px] text-ink-2">
-                {profile.specializationIds.length +
-                  profile.customSpecializations.length}{" "}
-                selected
-              </p>
+              {/* The sections Scott liked, kept — but inside one fixed-height
+                  scroll region so 24 specializations and 240 are the same
+                  height on screen. */}
+              <div className={`mt-3 max-h-[320px] ${SCROLL_REGION}`}>
+                {groups.length === 0 ? (
+                  <p className="text-[14px] text-ink-2">
+                    {sq
+                      ? "No matches — use “+ Add” to create it."
+                      : "You've picked everything we list here."}
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {groups.map((g) => (
+                      <div key={g.kind}>
+                        <h2 className="mb-2 text-[13px] font-bold uppercase tracking-wide text-ink-2">
+                          {g.label}
+                          {g.hidden > 0 && (
+                            <span className="ml-2 font-normal normal-case tracking-normal">
+                              +{g.hidden} more
+                            </span>
+                          )}
+                        </h2>
+                        <div className="flex flex-wrap gap-2">
+                          {g.shown.map((item) => (
+                            <Chip
+                              key={item.id}
+                              selected={false}
+                              onClick={() => toggleSpec(item.id)}
+                            >
+                              {item.name}
+                            </Chip>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {hiddenSpecCount > 0 && (
+                <p className="mt-2 text-[13px] text-ink-2">
+                  +{hiddenSpecCount} more — keep typing to narrow the list.
+                </p>
+              )}
             </div>
           )}
         </WizardShell>
@@ -1969,36 +2104,53 @@ function CascadeTier({
   onChange?: () => void;
   children: React.ReactNode;
 }) {
+  // brief_Y / E053 — a COLLAPSED tier is genuinely one line now. It used to be
+  // a three-line box (heading row, then the value on its own line) that spent
+  // ~100px to recap a single word; two of those ate a quarter of the viewport
+  // before the step's actual work began, which is most of why the footer sat
+  // below the fold. Expanded tiers are unchanged.
+  if (chosen) {
+    return (
+      <section className="flex items-center gap-3 rounded-brand border border-line px-4 py-2.5">
+        <span
+          aria-hidden
+          className="grid h-6 w-6 flex-none place-items-center rounded-full bg-magenta text-[12px] font-black text-white"
+        >
+          {index}
+        </span>
+        <span className="text-[13px] font-bold uppercase tracking-wide text-ink-2">
+          {label}
+        </span>
+        <span className="min-w-0 flex-1 truncate text-[16px] font-bold">
+          {chosen}
+        </span>
+        {onChange && (
+          <button
+            type="button"
+            onClick={onChange}
+            className="flex-none text-[14px] font-bold text-magenta hover:text-magenta-dark"
+          >
+            Change
+          </button>
+        )}
+      </section>
+    );
+  }
+
   return (
-    <section className="rounded-brand border border-line p-5">
-      <div className="mb-3 flex items-center justify-between gap-4">
+    <section className="rounded-brand border border-line p-4">
+      <div className="mb-2 flex items-center justify-between gap-4">
         <h2 className="flex items-center gap-2.5 text-[13px] font-bold uppercase tracking-wide text-ink-2">
           <span
             aria-hidden
-            className={
-              "grid h-6 w-6 place-items-center rounded-full text-[12px] font-black " +
-              (chosen ? "bg-magenta text-white" : "bg-bg-soft text-ink-2")
-            }
+            className="grid h-6 w-6 place-items-center rounded-full bg-bg-soft text-[12px] font-black text-ink-2"
           >
             {index}
           </span>
           {label}
         </h2>
-        {chosen && onChange && (
-          <button
-            type="button"
-            onClick={onChange}
-            className="text-[14px] font-bold text-magenta hover:text-magenta-dark"
-          >
-            Change
-          </button>
-        )}
       </div>
-      {chosen ? (
-        <p className="text-[16px] font-bold">{chosen}</p>
-      ) : (
-        children
-      )}
+      {children}
     </section>
   );
 }

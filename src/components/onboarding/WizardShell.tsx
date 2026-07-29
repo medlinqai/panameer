@@ -90,10 +90,10 @@ export function WizardShell({
         </div>
       </header>
 
-      <main className={`mx-auto flex w-full ${frame} flex-1 flex-col px-6 py-10 sm:py-14`}>
+      <main className={`mx-auto flex w-full ${frame} flex-1 flex-col px-6 py-6 sm:py-8`}>
         {/* Stepper — inside the frame, so it can never overflow (E003). */}
         {showStepper && (
-          <div className="mb-8">
+          <div className="mb-5">
             {showCounter && (
               <div className="mb-2 flex items-baseline justify-between">
                 <span className="text-[13px] font-bold uppercase tracking-wide text-ink-2">
@@ -125,14 +125,16 @@ export function WizardShell({
         <div className="flex-1">
           <div className={aside ? "grid gap-10 lg:grid-cols-[1fr_320px]" : ""}>
             <div className="min-w-0">
-              <h1 className="text-[28px] font-extrabold tracking-[-0.6px] sm:text-[34px]">
+              {/* 28px flat — the same size the pre-verify pages settled on in
+                  brief_W, and 10px of vertical room back on every step. */}
+              <h1 className="text-[28px] font-extrabold tracking-[-0.6px]">
                 {title}
               </h1>
               {subtitle && (
                 <p className="mt-2 max-w-2xl text-[17px] text-ink-2">{subtitle}</p>
               )}
               {banner && <div className="mt-6">{banner}</div>}
-              <div className="mt-8">{children}</div>
+              <div className="mt-5">{children}</div>
             </div>
             {aside && <div className="lg:pt-2">{aside}</div>}
           </div>
@@ -145,7 +147,7 @@ export function WizardShell({
           rather than stranded beside Back.
         */}
         {!hideFooter && (
-          <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-line pt-6">
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-line pt-4">
             <div>
               {canBack && onBack && (
                 <button
