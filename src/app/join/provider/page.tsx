@@ -2194,12 +2194,17 @@ function ReviewChecklist({
 
   return (
     <div className="space-y-3">
+      {/* E059 — MAGENTA, not red. This box is the last thing a provider sees
+          before publishing, and red framed a normal, expected state (a profile
+          that isn't finished yet) as a failure. Brand magenta reads as "this is
+          the app talking to you"; red is reserved for genuinely destructive
+          states — deleting a record, an action that loses data. */}
       {errors.length > 0 && (
-        <div className="rounded-brand border border-red-600/25 bg-red-600/[0.04] p-4">
-          <p className="text-[15px] font-bold text-red-700">
+        <div className="rounded-brand border border-magenta/30 bg-magenta/[0.05] p-4">
+          <p className="text-[15px] font-bold text-magenta-dark">
             {errors.length === 1
-              ? "1 thing must be fixed before you can publish"
-              : `${errors.length} things must be fixed before you can publish`}
+              ? "Just 1 thing left before you can publish."
+              : `Just ${errors.length} things left before you can publish.`}
           </p>
           <ul className="mt-2.5 space-y-1.5">
             {errors.map((it) => (
@@ -2241,10 +2246,12 @@ function ChecklistRow({
 }) {
   return (
     <li className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-[14px]">
-      <span aria-hidden className={tone === "error" ? "text-red-600" : "text-amber-600"}>
+      <span aria-hidden className={tone === "error" ? "text-magenta" : "text-amber-600"}>
         {tone === "error" ? "●" : "○"}
       </span>
-      <span className={tone === "error" ? "text-red-800" : "text-ink-2"}>
+      {/* Body copy stays ink: the tint and the bullet already carry the
+          signal, and a whole paragraph in brand colour is harder to read. */}
+      <span className={tone === "error" ? "text-ink" : "text-ink-2"}>
         {item.message}
       </span>
       <button
