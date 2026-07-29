@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
+import { createHash } from "crypto";
 import * as dotenv from "dotenv";
 import path from "path";
 import { seedTaxonomy } from "./seed-taxonomy";
@@ -304,6 +305,15 @@ async function main() {
         { label: "Countries", value: "14" },
         { label: "Cycle time", value: "-38%" },
       ],
+      // brief_project_validation — the demo profile ships with ONE validated
+      // project so the badge (and its "Confirmed May 2026" note) is visible
+      // without walking the email loop. The other demo project deliberately
+      // stays NONE so both states are on screen at once.
+      validation: {
+        contactEmail: "programme.director@northwind.example",
+        sentAt: new Date("2026-05-04T09:00:00Z"),
+        respondedAt: new Date("2026-05-12T14:20:00Z"),
+      } as { contactEmail: string; sentAt: Date; respondedAt: Date } | null,
     },
     {
       name: "Supplier Onboarding Automation",
@@ -329,6 +339,7 @@ async function main() {
         { label: "Onboarding time", value: "-40%" },
         { label: "Suppliers", value: "1,200" },
       ],
+      validation: null as { contactEmail: string; sentAt: Date; respondedAt: Date } | null,
     },
   ];
 
@@ -340,6 +351,10 @@ async function main() {
       role_type_id: primaryRole!.id,
       industry_specialization_id: await industryId(spec.industry),
       client_name: spec.clientName,
+      contact_email: spec.validation?.contactEmail ?? null,
+      // The seed is authoritative for demo state, so this is set either way —
+      // otherwise a re-run after someone walked the loop would leave a mix.
+      validation_status: spec.validation ? ("VALIDATED" as const) : ("NONE" as const),
       client_visibility: spec.clientVisibility,
       code_name: spec.codeName,
       start_date: spec.startDate,
@@ -383,6 +398,33 @@ async function main() {
         sort_order: i * 10,
       })),
     });
+
+    // The matching CONFIRMED request row. `responded_at` is what renders
+    // "Confirmed May 2026" on the card, so it is a FIXED date — a `new Date()`
+    // here would make the demo say something different every time it seeds.
+    //
+    // The token hash is derived deterministically so re-seeding updates one row
+    // rather than piling up new ones. It is inert regardless: the request is
+    // already CONFIRMED, so the confirm page reports it as answered and no raw
+    // token for it has ever existed.
+    await prisma.projectValidation.deleteMany({ where: { project_id: projectId } });
+    if (spec.validation) {
+      await prisma.projectValidation.create({
+        data: {
+          project_id: projectId,
+          contact_email: spec.validation.contactEmail,
+          token_hash: createHash("sha256")
+            .update(`seed:project-validation:${projectId}`)
+            .digest("hex"),
+          status: "CONFIRMED",
+          sent_at: spec.validation.sentAt,
+          responded_at: spec.validation.respondedAt,
+          expires_at: new Date(
+            spec.validation.sentAt.getTime() + 30 * 24 * 60 * 60 * 1000
+          ),
+        },
+      });
+    }
   }
 
   // Certifications are standalone since brief_U / E044 — a credential belongs

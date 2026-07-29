@@ -25,6 +25,14 @@ export function inviteProviderTemplate({
 
   const html = `<!doctype html>
 <html>
+  <head>
+    <!-- E062 — declare the charset. Without it an em-dash or a curly quote
+         renders as mojibake wherever the client falls back to Latin-1. This
+         template is all-ASCII today; the meta tag is what keeps the next copy
+         edit from silently breaking it. -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+  </head>
   <body style="margin:0;padding:0;background:#faf8fc;font-family:Arial,Helvetica,sans-serif;color:#171E3E;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#faf8fc;padding:32px 0;">
       <tr><td align="center">
