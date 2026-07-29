@@ -19,10 +19,8 @@ import {
   EducationCards,
   type EducationDraft,
 } from "@/components/onboarding/EducationCards";
-import {
-  CertificationsEditor,
-  type CertificationDraft,
-} from "@/components/onboarding/CertificationsEditor";
+import { type CertificationDraft } from "@/components/onboarding/CertificationsEditor";
+import { CertificationCards } from "@/components/onboarding/CertificationCards";
 import {
   EmployersStep,
   type EmployerCard,
@@ -34,13 +32,31 @@ import {
 import { ResumeDropzone } from "@/components/onboarding/ResumeDropzone";
 import { PhotoCropModal } from "@/components/onboarding/PhotoCropModal";
 import { TestimonialCard, DECK_TESTIMONIALS } from "@/components/onboarding/TestimonialCarousel";
-import { Avatar } from "@/components/Avatar";
+import {
+  ProfileCard,
+  ProfileHeaderCard,
+  EditButton,
+  Empty,
+  VerificationsBody,
+  LanguagesBody,
+  EducationBody,
+  SpecializationsBody,
+  OverviewBody,
+  SkillsBody,
+  ProjectsBody,
+  WorkHistoryBody,
+} from "@/components/profile/sections";
+import {
+  reviewItems,
+  splitReviewItems,
+  type ReviewItem,
+  type ReviewFix,
+} from "@/lib/review-validation";
 import {
   formatCents,
   bpsToPercentLabel,
   rateBreakdown,
   displayFirstName,
-  displayFullName,
 } from "@/lib/display";
 
 /**
@@ -146,14 +162,26 @@ type ProfilePayload = {
   specializationIds?: string[];
   specializations?: { id: string; name: string; kind: string }[];
   employers?: EmployerCard[];
+  /**
+   * The FULL certification row. brief_X / E057 — this used to list only half
+   * the columns the server sends, so `hydrate` re-seeded the draft without
+   * `issuedOn`, `notes` or the attachment. Because certifications save by
+   * replacing the whole collection, the next save then wrote those columns back
+   * as null: attach a certificate, edit anything else, and the attachment was
+   * gone. Every column the server returns is mirrored here.
+   */
   certifications?: {
     id: string;
     name: string;
     issuer: string | null;
     year: number | null;
+    issuedOn: string | null;
     credentialId: string | null;
     url: string | null;
     expiresOn: string | null;
+    attachmentPath: string | null;
+    attachmentName: string | null;
+    notes: string | null;
   }[];
   skillIds?: string[];
   skillNames?: { id: string; name: string }[];
@@ -325,8 +353,12 @@ export default function JoinProviderPage() {
   const [skillOpts, setSkillOpts] = useState<SkillOpt[]>([]);
   const [skillQuery, setSkillQuery] = useState("");
   const [specQuery, setSpecQuery] = useState("");
-  /** E040 — inline certification add/edit on the review page. */
-  const [certsOpen, setCertsOpen] = useState(false);
+  /**
+   * E057 — bumping this asks the review page's certification editor to open its
+   * add-modal. A counter rather than a boolean so the "Add certification"
+   * click-to-fix works the second and third time it's clicked, not just once.
+   */
+  const [certSignal, setCertSignal] = useState(0);
 
   const [importOutcome, setImportOutcome] = useState<ImportOutcome | null>(null);
   const [uploadModal, setUploadModal] = useState<null | "RESUME" | "LINKEDIN_PDF">(null);
@@ -365,13 +397,19 @@ export default function JoinProviderPage() {
       customSpecializations: [],
       customSkills: [],
       employers: (p.employers ?? []) as EmployerCard[],
+      // E057 — carry EVERY column through. See the payload type above: a
+      // partial map here is a silent delete on the next save.
       certifications: (p.certifications ?? []).map((c) => ({
         name: c.name,
         issuer: c.issuer,
         year: c.year,
+        issuedOn: c.issuedOn,
         credentialId: c.credentialId,
         url: c.url,
         expiresOn: c.expiresOn,
+        attachmentPath: c.attachmentPath,
+        attachmentName: c.attachmentName,
+        notes: c.notes,
       })),
       skillIds: p.skillIds ?? [],
       skillNames: p.skillNames ?? [],
@@ -542,12 +580,20 @@ export default function JoinProviderPage() {
   };
 
   /**
-   * Certifications are a profile SECTION, not one of the 12 wizard steps, so
+   * Certifications are a profile SECTION, not one of the 13 wizard steps, so
    * they save through the owner-scoped section endpoint (the step route
    * deliberately only accepts PROVIDER_STEPS). Optional — a failure here never
    * blocks publishing.
+   *
+   * E057 — takes the list to write as an ARGUMENT. It used to read
+   * `profile.certifications` out of the closure, which is only correct while
+   * the save is a separate click from the edit; the modal saves in the same
+   * handler that produces the new list, and a closure read there would persist
+   * the version before the edit.
    */
-  const saveCertifications = async (): Promise<boolean> => {
+  const saveCertifications = async (
+    certifications: CertificationDraft[]
+  ): Promise<boolean> => {
     setBusy(true);
     setError(null);
     try {
@@ -556,7 +602,7 @@ export default function JoinProviderPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           section: "certifications",
-          data: { certifications: profile.certifications },
+          data: { certifications },
         }),
       });
       if (!r.ok) {
@@ -1559,7 +1605,19 @@ export default function JoinProviderPage() {
       );
     }
 
-    // ---- 12/12 — Review + publish (E035) ------------------------------
+    // ---- 13/13 — Review + publish (E035, rebuilt by brief_X / E056) ----
+    //
+    // The review IS the Profile View. E056: the old two-column card grid was a
+    // second, thinner design for the same content, so what the provider
+    // approved at the end of onboarding was not what buyers would see. It now
+    // renders the SAME sections, from `components/profile/sections`, as the
+    // published page — plus the two things only a pre-publish screen has:
+    // per-section edit controls, and the errors/changes checklist that gates
+    // Publish.
+    //
+    // Deliberately WITHOUT the post-publish promo widgets (Promote with ads,
+    // Boost, Buy connects, Availability badge) and without Packages: those sell
+    // a profile that is already live.
     case "finish": {
       const addr = profile.address ?? emptyAddress(acct.country);
       const setAddr = (patch: Partial<AddressDraft>) =>
@@ -1569,291 +1627,297 @@ export default function JoinProviderPage() {
         profile.serviceFeeBps
       );
 
+      const { errors, changes } = splitReviewItems(
+        reviewItems({
+          headline: profile.headline,
+          overview: profile.overview,
+          hourlyRateCents: profile.hourlyRateCents,
+          pillarId: profile.pillarId,
+          roleTypeId: profile.roleTypeId,
+          skillIds: profile.skillIds,
+          languages: profile.languages,
+          dateOfBirth: profile.dateOfBirth,
+          phone: phoneInput,
+          photoUrl: profile.photoUrl,
+          address: profile.address,
+          employers: profile.employers,
+          education: profile.education,
+          certifications: profile.certifications,
+          specializations: profile.specializationNames,
+        })
+      );
+
+      /** Click-to-fix: jump to the step, focus the field, or open the modal. */
+      const applyFix = (fix: ReviewFix) => {
+        switch (fix.kind) {
+          case "step":
+            goTo(fix.step as Step);
+            break;
+          case "photo":
+            setPhotoModal(true);
+            break;
+          case "certifications":
+            setCertSignal((n) => n + 1);
+            break;
+          case "field": {
+            const el = document.getElementById(`review-${fix.field}`);
+            el?.scrollIntoView({ behavior: "smooth", block: "center" });
+            // The scroll is what makes the fix findable; the focus is what
+            // makes it typeable. Delayed so it doesn't fight the smooth scroll.
+            window.setTimeout(() => (el as HTMLInputElement | null)?.focus(), 350);
+            break;
+          }
+        }
+      };
+
+      // The wizard draft has no standalone projects — during onboarding every
+      // project is captured under the employer it was delivered for, which is
+      // the same `Project` row the published page reads. Flatten them so the
+      // review shows the Projects section the live profile shows.
+      const projects = profile.employers.flatMap((e) =>
+        (e.projects ?? []).map((pr) => ({
+          id: pr.id,
+          name: pr.name,
+          description: pr.description,
+          url: pr.url,
+          employer: e.name,
+        }))
+      );
+
+      const editBtn = (title: string, step: Step) => (
+        <EditButton title={title} onClick={() => goTo(step)} />
+      );
+
       return (
         <WizardShell
           {...shell({
             title: `Looking good, ${displayFirstName(profile.firstName)}!`,
             subtitle:
-              "Make any edits, then publish. You can change anything after it's live.",
+              "This is exactly what buyers will see. Fix anything flagged below, then publish.",
             wide: true,
             onContinue: publish,
-            continueDisabled: busy,
+            // The gate itself is unchanged and still enforced server-side by
+            // `publishProfile`; this only stops the provider from submitting a
+            // request the server is certain to refuse.
+            continueDisabled: busy || errors.length > 0,
           })}
         >
           {error && <Notice>{error}</Notice>}
 
-          {/*
-            E035 — the whole review on ONE page without scrolling, per Scott's
-            mockup: profile card + skills + work history on the left, the short
-            columns (languages, verifications, remaining details) on the right.
-            Everything is compact and every block carries an edit pencil back to
-            its own step.
-          */}
-          <div className="grid gap-5 lg:grid-cols-[1fr_300px] lg:items-start">
-            <div className="space-y-4">
-              <ReviewBlock title="Profile" onEdit={() => goTo("title")}>
-                <div className="flex items-start gap-4">
-                  <Avatar
-                    firstName={profile.firstName}
-                    lastName={profile.lastName}
-                    photoUrl={profile.photoUrl}
-                    size={64}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[17px] font-bold">
-                      {displayFullName(profile.firstName, profile.lastName)}
-                    </p>
-                    <p className="mt-0.5 truncate text-[14.5px] text-ink-2">
-                      {profile.headline || "No title yet"}
-                    </p>
-                    <p className="mt-1.5 text-[15px] font-extrabold">
-                      {profile.hourlyRateCents != null
-                        ? `${formatCents(profile.hourlyRateCents)}/hr`
-                        : "No rate set"}
-                      {youGet != null && (
-                        <span className="ml-2 text-[13px] font-semibold text-ink-2">
-                          You&apos;ll Get {formatCents(youGet)}/hr
-                        </span>
-                      )}
-                    </p>
-                  </div>
+          <ReviewChecklist errors={errors} changes={changes} onFix={applyFix} />
+
+          {/* The soft page background the published profile sits on, so the
+              white section cards read the same way here as they do there. */}
+          <div className="mt-6 rounded-brand bg-bg-soft p-4 sm:p-5">
+            <ProfileHeaderCard
+              firstName={profile.firstName}
+              lastName={profile.lastName}
+              photoUrl={profile.photoUrl}
+              headline={profile.headline}
+              location={
+                [addr.city, addr.state, addr.country]
+                  .filter((x) => x && x.trim())
+                  .join(", ") || null
+              }
+              field={
+                profile.roleTypeName && profile.pillarName
+                  ? { role: profile.roleTypeName, domain: profile.pillarName }
+                  : null
+              }
+              experienceLevel={profile.experienceLevel}
+              hourlyCents={profile.hourlyRateCents}
+              youGetCents={youGet}
+              aside={
+                <div className="mt-3 flex flex-wrap items-center gap-4">
                   <button
                     type="button"
                     onClick={() => setPhotoModal(true)}
-                    className="shrink-0 text-[13px] font-bold text-magenta hover:text-magenta-dark"
+                    className="text-[13.5px] font-bold text-magenta hover:text-magenta-dark"
                   >
-                    {profile.photoUrl ? "Change Photo" : "Add Photo"}
+                    {profile.photoUrl ? "Change Photo" : "+ Add Photo"}
                   </button>
+                  <EditButton
+                    title="Title and rate"
+                    onClick={() => goTo("title")}
+                    label="Edit title"
+                  />
+                  <EditButton
+                    title="Rate"
+                    onClick={() => goTo("rate")}
+                    label="Edit rate"
+                  />
                 </div>
-              </ReviewBlock>
+              }
+            />
 
-              <ReviewBlock title="Skills" onEdit={() => goTo("catalog")}>
-                <p className="mb-2 text-[13px] text-ink-2">
-                  {profile.roleTypeName && profile.pillarName
-                    ? `${profile.roleTypeName} · ${profile.pillarName}`
-                    : "No field chosen"}
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {profile.skillNames.slice(0, 12).map((sk) => (
-                    <span
-                      key={sk.id}
-                      className="rounded-full border border-line px-2.5 py-0.5 text-[12.5px] font-semibold text-ink-2"
-                    >
-                      {sk.name}
-                    </span>
-                  ))}
-                  {profile.skillNames.length > 12 && (
-                    <span className="text-[12.5px] text-ink-2">
-                      +{profile.skillNames.length - 12} more
-                    </span>
-                  )}
-                </div>
-              </ReviewBlock>
-
-              <ReviewBlock title="Bio" onEdit={() => goTo("bio")}>
-                <p className="line-clamp-3 whitespace-pre-line text-[14px] leading-relaxed text-ink-2">
-                  {profile.overview || "No bio yet"}
-                </p>
-              </ReviewBlock>
-
-              <ReviewBlock title="Education" onEdit={() => goTo("education")}>
-                {profile.education.length > 0 ? (
-                  <ul className="space-y-1">
-                    {profile.education.slice(0, 3).map((e, i) => (
-                      <li key={i} className="text-[14px]">
-                        <b>{e.institution}</b>
-                        <span className="text-ink-2">
-                          {[e.degree, e.field].filter(Boolean).length > 0 &&
-                            ` — ${[e.degree, e.field].filter(Boolean).join(", ")}`}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-[14px] text-ink-2">None added (optional)</p>
-                )}
-              </ReviewBlock>
-            </div>
-
-            <div className="space-y-4">
-              <ReviewBlock title="Languages" onEdit={() => goTo("languages")}>
-                <ul className="space-y-0.5 text-[14px]">
-                  {profile.languages.map((l, i) => (
-                    <li key={i}>
-                      <b>{l.name}</b>
-                      {l.level && (
-                        <span className="text-ink-2">
-                          {" "}
-                          — {LEVEL_LABELS[l.level] ?? l.level}
-                        </span>
-                      )}
-                    </li>
-                  ))}
-                  {profile.languages.length === 0 && (
-                    <li className="text-ink-2">None yet</li>
-                  )}
-                </ul>
-              </ReviewBlock>
-
-              <ReviewBlock
-                title="Specializations"
-                onEdit={() => goTo("specializations")}
-              >
-                {/* E038 — the actual values as chips. A bare count ("4
-                    selected") told the provider nothing about WHICH four, so
-                    there was no way to check them on the review page. */}
-                {profile.specializationNames.length > 0 ? (
-                  <div className="flex flex-wrap gap-1.5">
-                    {profile.specializationNames.map((sp) => (
-                      <span
-                        key={sp.id}
-                        className="rounded-full border border-magenta/30 bg-magenta/[0.06] px-2.5 py-0.5 text-[12.5px] font-semibold text-magenta-dark"
-                      >
-                        {sp.name}
-                      </span>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-[14px] text-ink-2">None added (optional)</p>
-                )}
-              </ReviewBlock>
-
-              {/* E040 — Certifications: renders what's there, and lets the
-                  provider add one inline. Optional, and never gates publish. */}
-              <ReviewBlock title="Certifications">
-                {certsOpen ? (
-                  <>
-                    <CertificationsEditor
-                      value={profile.certifications}
-                      onChange={(certifications) =>
-                        setProfile((pp) => ({ ...pp, certifications }))
-                      }
-                    />
-                    <div className="mt-3 flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          if (await saveCertifications()) setCertsOpen(false);
-                        }}
-                        disabled={busy}
-                        className="rounded-full bg-magenta px-5 py-2 text-[14px] font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
-                      >
-                        Save Certifications
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setCertsOpen(false)}
-                        className="text-[14px] font-semibold text-ink-2 underline underline-offset-4 hover:text-magenta"
-                      >
-                        Cancel
-                      </button>
+            <div className="mt-5 grid gap-5 lg:grid-cols-[260px_1fr] lg:items-start">
+              {/* ---- Left rail ------------------------------------------ */}
+              <aside className="space-y-5">
+                {/* Verify identity. On the published profile this is a
+                    read-only Verifications card; pre-publish it is where the
+                    required identity fields are actually entered, so the
+                    inputs live here rather than in a separate "Details" box
+                    that has no counterpart on the live page. */}
+                <ProfileCard title="Verify Identity">
+                  <div className="space-y-3">
+                    <Field label="Date of Birth *">
+                      <TextInput
+                        id="review-dateOfBirth"
+                        type="date"
+                        value={profile.dateOfBirth ?? ""}
+                        onChange={(e) =>
+                          setProfile((p) => ({
+                            ...p,
+                            dateOfBirth: e.target.value || null,
+                          }))
+                        }
+                      />
+                    </Field>
+                    <Field label="Phone *">
+                      <TextInput
+                        id="review-phone"
+                        type="tel"
+                        value={phoneInput}
+                        onChange={(e) => setPhoneInput(e.target.value)}
+                        placeholder="+1 555 010 4477"
+                      />
+                    </Field>
+                    <Field label="Street Address">
+                      <TextInput
+                        id="review-line1"
+                        value={addr.line1}
+                        onChange={(e) => setAddr({ line1: e.target.value })}
+                      />
+                    </Field>
+                    <Field label="City">
+                      <TextInput
+                        id="review-city"
+                        value={addr.city}
+                        onChange={(e) => setAddr({ city: e.target.value })}
+                      />
+                    </Field>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Field label="State">
+                        <TextInput
+                          id="review-state"
+                          value={addr.state}
+                          onChange={(e) => setAddr({ state: e.target.value })}
+                        />
+                      </Field>
+                      <Field label="ZIP">
+                        <TextInput
+                          id="review-postalCode"
+                          value={addr.postalCode}
+                          onChange={(e) =>
+                            setAddr({ postalCode: e.target.value })
+                          }
+                        />
+                      </Field>
                     </div>
-                  </>
-                ) : (
-                  <>
-                    {profile.certifications.length > 0 ? (
-                      <ul className="space-y-1 text-[14px]">
-                        {profile.certifications.map((c, i) => (
-                          <li key={i}>
-                            <b>{c.name}</b>
-                            {[c.issuer, c.year].filter(Boolean).length > 0 && (
-                              <span className="text-ink-2">
-                                {" — "}
-                                {[c.issuer, c.year].filter(Boolean).join(" · ")}
-                              </span>
-                            )}
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="text-[14px] text-ink-2">
-                        None added (optional).
-                      </p>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => setCertsOpen(true)}
-                      className="mt-2 text-[14px] font-bold text-magenta hover:text-magenta-dark"
-                    >
-                      {profile.certifications.length > 0
-                        ? "Edit Certifications"
-                        : "+ Add a Certification"}
-                    </button>
-                  </>
-                )}
-              </ReviewBlock>
-
-              {/* E039 — Testimonials. Earned after delivering work, so during
-                  onboarding this is an honest empty state rather than a
-                  capture form. */}
-              <ReviewBlock title="Testimonials">
-                <p className="text-[14px] text-ink-2">
-                  No testimonials yet — you&apos;ll collect these as you deliver
-                  work.
-                </p>
-              </ReviewBlock>
-
-              {/* Remaining details + verifications. Phone verification is
-                  STUBBED (E036): we capture the number, mark it on file, and
-                  don't gate publishing on an SMS round-trip. */}
-              <ReviewBlock title="Details">
-                <div className="space-y-3">
-                  <Field label="Date of Birth *">
-                    <TextInput
-                      type="date"
-                      value={profile.dateOfBirth ?? ""}
-                      onChange={(e) =>
-                        setProfile((p) => ({
-                          ...p,
-                          dateOfBirth: e.target.value || null,
-                        }))
-                      }
-                    />
-                  </Field>
-                  <Field label="Phone *">
-                    <TextInput
-                      type="tel"
-                      value={phoneInput}
-                      onChange={(e) => setPhoneInput(e.target.value)}
-                      placeholder="+1 555 010 4477"
-                    />
-                  </Field>
-                  <Field label="City *">
-                    <TextInput
-                      value={addr.city}
-                      onChange={(e) => setAddr({ city: e.target.value })}
-                    />
-                  </Field>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Field label="State *">
-                      <TextInput
-                        value={addr.state}
-                        onChange={(e) => setAddr({ state: e.target.value })}
-                      />
-                    </Field>
-                    <Field label="ZIP *">
-                      <TextInput
-                        value={addr.postalCode}
-                        onChange={(e) => setAddr({ postalCode: e.target.value })}
-                      />
-                    </Field>
                   </div>
-                  <Field label="Street Address *">
-                    <TextInput
-                      value={addr.line1}
-                      onChange={(e) => setAddr({ line1: e.target.value })}
+                  <div className="mt-4 border-t border-line pt-3">
+                    <VerificationsBody
+                      emailVerified
+                      phoneOnFile={Boolean(phoneInput.trim())}
+                      phoneVerified={profile.phoneVerified}
                     />
-                  </Field>
-                </div>
-                <ul className="mt-3 space-y-0.5 border-t border-line pt-3 text-[13px]">
-                  <li className="font-semibold text-emerald-600">
-                    ✓ Email Verified
-                  </li>
-                  <li className="text-ink-2">
-                    Phone verification is coming soon.
-                  </li>
-                </ul>
-              </ReviewBlock>
+                  </div>
+                </ProfileCard>
+
+                <ProfileCard
+                  title="Languages"
+                  edit={editBtn("Languages", "languages")}
+                >
+                  <LanguagesBody languages={profile.languages} />
+                </ProfileCard>
+
+                <ProfileCard
+                  title="Education"
+                  edit={editBtn("Education", "education")}
+                >
+                  <EducationBody education={profile.education} />
+                </ProfileCard>
+
+                <ProfileCard
+                  title="Specializations"
+                  edit={editBtn("Specializations", "specializations")}
+                >
+                  <SpecializationsBody
+                    specializations={profile.specializationNames}
+                  />
+                </ProfileCard>
+              </aside>
+
+              {/* ---- Main column ---------------------------------------- */}
+              <div className="space-y-5">
+                <ProfileCard title="Overview" edit={editBtn("Overview", "bio")}>
+                  <OverviewBody
+                    overview={profile.overview}
+                    empty="No bio yet — buyers read this first."
+                  />
+                </ProfileCard>
+
+                <ProfileCard
+                  title="Projects"
+                  edit={editBtn("Projects", "employers")}
+                >
+                  <ProjectsBody
+                    projects={projects}
+                    empty="No projects yet. Adding a few is the fastest way to show buyers what you've delivered."
+                  />
+                </ProfileCard>
+
+                <ProfileCard title="Skills" edit={editBtn("Skills", "catalog")}>
+                  <SkillsBody
+                    skills={profile.skillNames}
+                    field={
+                      profile.roleTypeName && profile.pillarName
+                        ? {
+                            role: profile.roleTypeName,
+                            domain: profile.pillarName,
+                          }
+                        : null
+                    }
+                  />
+                </ProfileCard>
+
+                <ProfileCard
+                  title="Work History"
+                  edit={editBtn("Work History", "employers")}
+                >
+                  <WorkHistoryBody
+                    employers={profile.employers}
+                    empty="No work history yet. Providers who add work experience and projects are twice as likely to win work."
+                  />
+                </ProfileCard>
+
+                {/* E057 — cards + a proper modal. The eight-field form that
+                    used to be squeezed into the sidebar column is gone. */}
+                <ProfileCard title="Certifications">
+                  <CertificationCards
+                    items={profile.certifications}
+                    busy={busy}
+                    openSignal={certSignal}
+                    onSave={async (next) => {
+                      // Optimistic locally so the card list updates with the
+                      // modal close; `saveCertifications` re-hydrates from the
+                      // server immediately after, so a rejected write cannot
+                      // leave the page showing something that wasn't stored.
+                      setProfile((pp) => ({ ...pp, certifications: next }));
+                      return saveCertifications(next);
+                    }}
+                  />
+                </ProfileCard>
+
+                {/* E039 — testimonials are EARNED after delivering work, so
+                    this is an honest empty state, not a capture form. */}
+                <ProfileCard title="Testimonials">
+                  <Empty>
+                    No testimonials yet — you&apos;ll collect these as you
+                    deliver work.
+                  </Empty>
+                </ProfileCard>
+              </div>
             </div>
           </div>
 
@@ -1940,35 +2004,102 @@ function CascadeTier({
   );
 }
 
-/** One compact review block with an edit pencil (E035). */
-function ReviewBlock({
-  title,
-  onEdit,
-  children,
+/**
+ * The review page's validation surface (brief_X / E056) — Scott's framing:
+ *
+ *   ERRORS  block Publish. Red, listed first, each with a click-to-fix.
+ *   CHANGES don't. Amber, collapsed under a summary line, same click-to-fix.
+ *
+ * The two are deliberately different colours, different headings and different
+ * weights: the whole point of the split is that a provider can tell at a glance
+ * which list they are *required* to clear and which is advice. A single
+ * undifferentiated "needs attention" list is what the old page had.
+ *
+ * When both are empty this renders the green all-clear — the end of onboarding
+ * should say so plainly rather than showing nothing.
+ */
+function ReviewChecklist({
+  errors,
+  changes,
+  onFix,
 }: {
-  title: string;
-  onEdit?: () => void;
-  children: React.ReactNode;
+  errors: ReviewItem[];
+  changes: ReviewItem[];
+  onFix: (fix: ReviewFix) => void;
+}) {
+  if (errors.length === 0 && changes.length === 0) {
+    return (
+      <div className="rounded-brand border border-emerald-500/30 bg-emerald-50/60 p-4">
+        <p className="text-[15px] font-bold text-emerald-800">
+          ✓ Everything checks out — you&apos;re ready to publish.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {errors.length > 0 && (
+        <div className="rounded-brand border border-red-600/25 bg-red-600/[0.04] p-4">
+          <p className="text-[15px] font-bold text-red-700">
+            {errors.length === 1
+              ? "1 thing must be fixed before you can publish"
+              : `${errors.length} things must be fixed before you can publish`}
+          </p>
+          <ul className="mt-2.5 space-y-1.5">
+            {errors.map((it) => (
+              <ChecklistRow key={it.id} item={it} onFix={onFix} tone="error" />
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {changes.length > 0 && (
+        <div className="rounded-brand border border-amber-500/30 bg-amber-50/60 p-4">
+          <p className="text-[15px] font-bold text-ink">
+            {changes.length === 1
+              ? "1 suggested change"
+              : `${changes.length} suggested changes`}
+            <span className="ml-2 font-semibold text-ink-2">
+              — optional, you can publish without these
+            </span>
+          </p>
+          <ul className="mt-2.5 space-y-1.5">
+            {changes.map((it) => (
+              <ChecklistRow key={it.id} item={it} onFix={onFix} tone="change" />
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ChecklistRow({
+  item,
+  onFix,
+  tone,
+}: {
+  item: ReviewItem;
+  onFix: (fix: ReviewFix) => void;
+  tone: "error" | "change";
 }) {
   return (
-    <section className="rounded-brand border border-line p-4">
-      <div className="mb-2 flex items-center justify-between gap-3">
-        <h2 className="text-[12px] font-bold uppercase tracking-wide text-ink-2">
-          {title}
-        </h2>
-        {onEdit && (
-          <button
-            type="button"
-            onClick={onEdit}
-            aria-label={`Edit ${title}`}
-            className="text-[13px] font-bold text-magenta hover:text-magenta-dark"
-          >
-            ✏️ Edit
-          </button>
-        )}
-      </div>
-      {children}
-    </section>
+    <li className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-[14px]">
+      <span aria-hidden className={tone === "error" ? "text-red-600" : "text-amber-600"}>
+        {tone === "error" ? "●" : "○"}
+      </span>
+      <span className={tone === "error" ? "text-red-800" : "text-ink-2"}>
+        {item.message}
+      </span>
+      <button
+        type="button"
+        onClick={() => onFix(item.fix)}
+        className="font-bold text-magenta underline underline-offset-4 transition-colors hover:text-magenta-dark"
+      >
+        {item.fixLabel} →
+      </button>
+    </li>
   );
 }
 

@@ -146,8 +146,11 @@ export function CertificationsEditor({
  * Upload the certificate itself (brief_U / E044). Stored in the PRIVATE
  * `certifications` bucket — a certificate carries a full name and credential
  * number — so what comes back is an object PATH, not a public URL.
+ *
+ * Exported so the modal editor (`CertificationCards`, brief_X / E057) uses the
+ * same uploader rather than a second copy that could drift from this one.
  */
-function CertificationAttachment({
+export function CertificationAttachment({
   value,
   onChange,
 }: {
