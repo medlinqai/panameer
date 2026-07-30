@@ -715,8 +715,8 @@ type StepData = Record<string, any>;
 
 /**
  * Every editable profile section. The onboarding wizard uses PROVIDER_STEPS;
- * the Settings area (brief_H) additionally edits experience_level, goal, and
- * certifications on the same live profile.
+ * the Settings area (brief_H) additionally edits the LEGACY_SECTIONS — work
+ * method, employers, certifications — on the same live profile.
  */
 export type ProfileSection = ProviderStep | (typeof LEGACY_SECTIONS)[number];
 

@@ -27,8 +27,6 @@ export type ImportOutcome = {
   applied: {
     headline: boolean;
     overview: boolean;
-    experienceLevel: string | null;
-    experienceYears: number | null;
     experiences: number;
     education: number;
     skillsMatched: number;

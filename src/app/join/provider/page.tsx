@@ -191,8 +191,6 @@ const PICKED_REGION = "max-h-[84px] overflow-y-auto overscroll-contain pr-1";
 
 /** The shape `/api/onboarding/status` returns. Only what this page reads. */
 type ProfilePayload = {
-  experienceLevel?: string | null;
-  goal?: string | null;
   workMethod?: string | null;
   profileMethod?: string | null;
   pillarId?: string | null;
@@ -296,8 +294,6 @@ type AddressDraft = {
 };
 
 type Profile = {
-  experienceLevel: string | null;
-  goal: string | null;
   workMethod: string | null;
   profileMethod: string | null;
   pillarId: string | null;
@@ -334,8 +330,6 @@ type Profile = {
 };
 
 const emptyProfile = (): Profile => ({
-  experienceLevel: null,
-  goal: null,
   workMethod: null,
   profileMethod: null,
   pillarId: null,
@@ -442,8 +436,6 @@ export default function JoinProviderPage() {
     const p = s.profile;
     if (!p) return;
     setProfile({
-      experienceLevel: p.experienceLevel ?? null,
-      goal: p.goal ?? null,
       workMethod: p.workMethod ?? null,
       profileMethod: p.profileMethod ?? null,
       pillarId: p.pillarId ?? null,
@@ -2351,11 +2343,6 @@ function ImportSummary({ outcome }: { outcome: ImportOutcome }) {
   const captured: string[] = [];
   if (a.headline) captured.push("your title");
   if (a.overview) captured.push("your bio");
-  if (a.experienceLevel) {
-    captured.push(
-      `experience level (${a.experienceYears ?? "?"} yrs → ${LEVEL_LABELS[a.experienceLevel] ?? a.experienceLevel})`
-    );
-  }
   if (a.experiences) captured.push(`${a.experiences} role${a.experiences === 1 ? "" : "s"}`);
   if (a.education)
     captured.push(`${a.education} education entr${a.education === 1 ? "y" : "ies"}`);
@@ -2405,12 +2392,6 @@ function ImportSummary({ outcome }: { outcome: ImportOutcome }) {
     </div>
   );
 }
-
-const LEVEL_LABELS: Record<string, string> = {
-  BEGINNER: "Beginner",
-  MID_CAREER: "Mid-Career",
-  EXPERT: "Expert",
-};
 
 function Row({
   label,

@@ -26,8 +26,6 @@ export type ImportResult = {
   applied: {
     headline: boolean;
     overview: boolean;
-    experienceLevel: string | null;
-    experienceYears: number | null;
     experiences: number;
     education: number;
     skillsMatched: number;
@@ -144,8 +142,6 @@ function emptyApplied(): ImportResult["applied"] {
   return {
     headline: false,
     overview: false,
-    experienceLevel: null,
-    experienceYears: null,
     experiences: 0,
     education: 0,
     skillsMatched: 0,

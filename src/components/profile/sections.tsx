@@ -33,12 +33,6 @@ export const LEVEL_LABELS: Record<string, string> = {
   NATIVE_OR_BILINGUAL: "Native or Bilingual",
 };
 
-export const EXPERIENCE_LABELS: Record<string, string> = {
-  BEGINNER: "Beginner",
-  MID_CAREER: "Mid-Career",
-  EXPERT: "Expert",
-};
-
 // ---------------------------------------------------------------------------
 // Frame
 // ---------------------------------------------------------------------------
@@ -379,9 +373,13 @@ export function ProfileHero({
 }
 
 /**
- * The pre-v2 header card. Kept because `components/ProfileView.tsx` (the older
- * public/`/providers/[id]` surface) still renders it; the two profile surfaces
- * are converged in a separate pass, not smuggled into a layout brief.
+ * The pre-v2 header card. `ProfileHero` above replaced it on both v2 surfaces in
+ * WS3, so nothing renders this today — it stays only until `/providers/[id]` is
+ * converged, which is its own pass rather than something smuggled into a brief.
+ *
+ * The self-reported experience LEVEL it used to print is gone (WS6/WS7 dropped
+ * the column); years of experience are derived from the work history now, so
+ * there is nothing here to replace it with.
  */
 export function ProfileHeaderCard({
   firstName,
@@ -390,7 +388,6 @@ export function ProfileHeaderCard({
   headline,
   location,
   field,
-  experienceLevel,
   validated = false,
   hourlyCents,
   currency = "USD",
@@ -403,7 +400,6 @@ export function ProfileHeaderCard({
   headline?: string | null;
   location?: string | null;
   field?: { role: string; domain: string } | null;
-  experienceLevel?: string | null;
   validated?: boolean;
   hourlyCents?: number | null;
   currency?: string;
@@ -411,13 +407,9 @@ export function ProfileHeaderCard({
   youGetCents?: number | null;
   aside?: ReactNode;
 }) {
-  const meta = [
-    location,
-    field ? `${field.role} · ${field.domain}` : null,
-    experienceLevel
-      ? EXPERIENCE_LABELS[experienceLevel] ?? experienceLevel
-      : null,
-  ].filter(Boolean);
+  const meta = [location, field ? `${field.role} · ${field.domain}` : null].filter(
+    Boolean
+  );
 
   return (
     <header className="rounded-brand border border-line bg-white p-6">
