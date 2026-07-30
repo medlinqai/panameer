@@ -190,26 +190,43 @@ export function TestimonialCarousel({
   const next = () => setI((n) => (n + 1) % items.length);
 
   const arrow =
-    "z-10 grid h-9 w-9 flex-none place-items-center rounded-full border-[1.5px] border-line bg-white text-[18px] leading-none text-ink shadow-brand transition-colors hover:border-magenta hover:text-magenta";
+    "grid h-10 w-10 flex-none place-items-center rounded-full border-[1.5px] border-line bg-white text-[19px] leading-none text-ink shadow-brand transition-colors hover:border-magenta hover:text-magenta";
 
+  /*
+    WS3/E080 — the arrows FLANK the card from OUTSIDE it, with a real gap, as
+    circular buttons.
+
+    E064(b) asked for flanking and got overlap, for a good reason at the time:
+    in the 300px aside this component then lived in, two flanking columns cost
+    ~80px, which wrapped the headline onto five lines and truncated the name. The
+    honest fix was the column, not the arrows — the carousel now sits in a 460px
+    column (WS2's widened frame paid for it), so the arrows can take their own
+    space and the card still clears the 340px it wants. It is only used here, so
+    this costs the narrow aside nothing.
+
+    Dots removed: the design has none, and with three items the arrows already say
+    everything the dots did.
+  */
   return (
-    <div>
+    <div className="@container">
       {/*
-        E064(b) — the arrows FLANK the card (per the E023 design) instead of
-        sitting in a row underneath it. `min-w-0` on the middle cell is what
-        stops the card pushing the arrows off the edge in a narrow aside.
+        Flanking costs ~104px of horizontal room. That is affordable in the 460px
+        column on Get Started and impossible at 375px, where it would crush the
+        card to 223px and push the rating row back out through the border — the
+        very E064d symptom this pass exists to end. So the arrows flank when the
+        COLUMN can pay for them and wrap to a centred row beneath the card when it
+        can't. A viewport breakpoint would get this wrong; the constraint is the
+        column's width, not the screen's.
       */}
-      <div className="relative">
-        <TestimonialCard t={items[i]} />
-        {/* OVERLAID on the card's edges rather than sitting in the row beside
-            it. Flanking arrows that take their own columns cost ~80px of a
-            300px aside — enough to wrap the headline onto five lines and
-            truncate the name. This reads the same and costs nothing. */}
+      <div className="flex flex-wrap items-center justify-center gap-3 @[440px]:flex-nowrap">
+        <div className="order-1 w-full min-w-0 @[440px]:order-2 @[440px]:w-auto @[440px]:flex-1">
+          <TestimonialCard t={items[i]} />
+        </div>
         <button
           type="button"
           onClick={prev}
           aria-label="Previous example"
-          className={`${arrow} absolute -left-3 top-1/2 -translate-y-1/2`}
+          className={`${arrow} order-2 @[440px]:order-1`}
         >
           ‹
         </button>
@@ -217,23 +234,10 @@ export function TestimonialCarousel({
           type="button"
           onClick={next}
           aria-label="Next example"
-          className={`${arrow} absolute -right-3 top-1/2 -translate-y-1/2`}
+          className={`${arrow} order-3`}
         >
           ›
         </button>
-      </div>
-
-      {/* Position dots stay under the card — they're an indicator, not a control. */}
-      <div className="mt-3 flex items-center justify-center gap-1.5" aria-hidden>
-        {items.map((_, n) => (
-          <span
-            key={n}
-            className={
-              "h-1.5 rounded-full transition-all " +
-              (n === i ? "w-5 bg-magenta" : "w-1.5 bg-line")
-            }
-          />
-        ))}
       </div>
     </div>
   );
