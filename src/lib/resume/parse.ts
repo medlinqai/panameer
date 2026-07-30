@@ -243,6 +243,37 @@ function delinearize(line: string): string[] {
   return parts;
 }
 
+/**
+ * TOKEN SANITY (PJv2 WS2, exported in WS-B).
+ *
+ * Splitting a skills block on commas is right for "Requisitions, Sourcing,
+ * Payables" and catastrophic for a prose paragraph that happens to contain
+ * commas — that is where "252 skills" came from. A skill is a SHORT NOUN PHRASE,
+ * so anything sentence-shaped is rejected.
+ *
+ * Module-level and exported because WS-B's suggest-and-confirm list has to apply
+ * the SAME test: a term the parser would have refused as a skill must not come
+ * back as a suggestion the provider is invited to confirm. One rule, one place.
+ */
+export function isPlausibleSkillTerm(t: string): boolean {
+  if (t.length < 2 || t.length > 60) return false;
+  if (!/[a-z]/i.test(t)) return false; // pure numbers / punctuation
+  // A skill is a few words, not a clause.
+  if (t.split(/\s+/).length > 6) return false;
+  // Sentence punctuation is a strong tell that this is prose.
+  if (/[.!?]$/.test(t) && !/\b[A-Z]\.$/.test(t)) return false;
+  // Dates, durations and bare years are not skills.
+  if (/^(19|20)\d{2}\b/.test(t)) return false;
+  if (/^\d+\s*(years?|yrs?|months?|\+)/i.test(t)) return false;
+  // Contact details leaking out of a header block.
+  if (/@|https?:\/\/|\+?\d[\d\s().-]{7,}/.test(t)) return false;
+  return true;
+}
+
+/** Clause fragments start with a connective; real skills don't. */
+export const STOPWORD_START =
+  /^(and|or|but|with|within|across|for|from|into|onto|to|of|in|on|at|by|as|the|a|an|plus|including|many|several|various|over|about)\b/i;
+
 export function parseResume(text: string): ParsedResume {
   const rawLines = text
     .split("\n")
@@ -418,24 +449,7 @@ export function parseResume(text: string): ParsedResume {
    * that happens to contain commas — that is where "252 skills" came from. A
    * skill is a SHORT NOUN PHRASE, so anything sentence-shaped is rejected.
    */
-  const isPlausibleSkill = (t: string): boolean => {
-    if (t.length < 2 || t.length > 60) return false;
-    if (!/[a-z]/i.test(t)) return false; // pure numbers / punctuation
-    // A skill is a few words, not a clause.
-    if (t.split(/\s+/).length > 6) return false;
-    // Sentence punctuation is a strong tell that this is prose.
-    if (/[.!?]$/.test(t) && !/\b[A-Z]\.$/.test(t)) return false;
-    // Dates, durations and bare years are not skills.
-    if (/^(19|20)\d{2}\b/.test(t)) return false;
-    if (/^\d+\s*(years?|yrs?|months?|\+)/i.test(t)) return false;
-    // Contact details leaking out of a header block.
-    if (/@|https?:\/\/|\+?\d[\d\s().-]{7,}/.test(t)) return false;
-    return true;
-  };
-
-  /** Clause fragments start with a connective; real skills don't. */
-  const STOPWORD_START =
-    /^(and|or|but|with|within|across|for|from|into|onto|to|of|in|on|at|by|as|the|a|an|plus|including|many|several|various|over|about)\b/i;
+  const isPlausibleSkill = isPlausibleSkillTerm;
 
   const splitList = (ls: string[], sane: (t: string) => boolean) =>
     ls

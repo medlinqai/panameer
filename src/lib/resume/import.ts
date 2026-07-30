@@ -3,7 +3,7 @@ import { extractText, ExtractError } from "@/lib/resume/extract";
 import { parseResume, type ParsedResume } from "@/lib/resume/parse";
 import { recomputeCompleteness } from "@/lib/onboarding";
 import { uploadResumeFile } from "@/lib/storage";
-import { matchSkills } from "@/lib/resume/match";
+import { matchSkills, suggestableSkills } from "@/lib/resume/match";
 import type { Prisma } from "@prisma/client";
 
 /**
@@ -31,6 +31,8 @@ export type ImportResult = {
     skillsMatched: number;
     skillsMatchedNames: string[];
     skillsUnmatched: string[];
+    /** WS-B — the unmatched terms worth offering as confirm-to-add. */
+    skillSuggestions: string[];
     languages: number;
   };
   gaps: string[];
@@ -85,13 +87,24 @@ export async function importProfileDocument({
   const applied = await applyParsed(profileId, parsed, source);
 
   const gaps = [...parsed.gaps];
-  if (applied.skillsUnmatched.length > 0) {
+  /*
+    WS-B — the unmatched count is NOT a gap any more, because we can now do
+    something about it. "34 skills aren't in the Panameer catalog and were not
+    added" reported a problem, named no fix, and read as an accusation that the
+    provider's CV was wrong. The review offers those terms as a tick-list
+    (`skillSuggestions`) instead: the same information, as an action.
+
+    A gap IS still emitted for the remainder — the terms the plausibility filter
+    dropped — because silently discarding part of someone's document and saying
+    nothing is the failure mode this whole track exists to end. Phrased as what
+    happened, not as something they must fix.
+  */
+  const discarded = applied.skillsUnmatched.length - applied.skillSuggestions.length;
+  if (discarded > 0) {
     gaps.push(
-      `${applied.skillsUnmatched.length} skill${
-        applied.skillsUnmatched.length === 1 ? "" : "s"
-      } on your document aren't in the Panameer catalog and were not added: ${applied.skillsUnmatched
-        .slice(0, 8)
-        .join(", ")}${applied.skillsUnmatched.length > 8 ? "…" : ""}.`
+      `${discarded} line${discarded === 1 ? "" : "s"} from your skills section didn't look like skills, so ${
+        discarded === 1 ? "it was" : "they were"
+      } left out.`
     );
   }
   if (applied.experiences === 0 && applied.education === 0) {
@@ -147,6 +160,7 @@ function emptyApplied(): ImportResult["applied"] {
     skillsMatched: 0,
     skillsMatchedNames: [],
     skillsUnmatched: [],
+    skillSuggestions: [],
     languages: 0,
   };
 }
@@ -252,6 +266,7 @@ async function applyParsed(
     const { matched, unmatched } = matchSkills(parsed.skills, catalog);
 
     applied.skillsUnmatched = unmatched;
+    applied.skillSuggestions = suggestableSkills(unmatched);
     applied.skillsMatchedNames = matched.map((m) => m.name);
 
     const have = new Set(profile.skills.map((s) => s.skill_id));

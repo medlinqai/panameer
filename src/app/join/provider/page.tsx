@@ -446,6 +446,10 @@ export default function JoinProviderPage() {
   /** WS5/E084 — the post-upload review shows work history the way the profile
    *  does, and swaps to the editor in place when you ask to change it. */
   const [editingWork, setEditingWork] = useState(false);
+  /** WS-B — which imported-but-unmatched terms the provider has ticked. */
+  const [pickedSuggestions, setPickedSuggestions] = useState<string[]>([]);
+  const [suggestBusy, setSuggestBusy] = useState(false);
+  const [suggestDone, setSuggestDone] = useState<string[] | null>(null);
   const [photoModal, setPhotoModal] = useState(false);
 
   /**
@@ -799,6 +803,33 @@ export default function JoinProviderPage() {
     }
   };
 
+  /**
+   * WS-B — add the ticked terms as custom skills. Suggest-and-confirm: nothing
+   * here was added by the import, and nothing unticked is added now.
+   */
+  const confirmSuggestions = async () => {
+    if (pickedSuggestions.length === 0) return;
+    setSuggestBusy(true);
+    setError(null);
+    try {
+      const r = await fetch("/api/onboarding/provider/skill-suggestions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ terms: pickedSuggestions }),
+      });
+      const body = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        setError(body.error ?? "Could not add those skills.");
+        return;
+      }
+      if (body.state) hydrate(body.state as StatusPayload);
+      setSuggestDone(body.added ?? []);
+      setPickedSuggestions([]);
+    } finally {
+      setSuggestBusy(false);
+    }
+  };
+
   const publish = async () => {
     setError(null);
 
@@ -1121,6 +1152,69 @@ export default function JoinProviderPage() {
                   />
                 )}
               </ProfileCard>
+
+              {/*
+                WS-B/E051-5 — SUGGEST AND CONFIRM. The import used to report "34
+                skills aren't in the Panameer catalog and were not added": true,
+                unactionable, and read as a verdict on the provider's CV. The
+                same terms are now a tick-list. Ticking adds them as custom
+                skills on this profile; leaving them unticked discards them, and
+                nothing reaches the catalog that a person didn't affirm.
+
+                Already filtered through the parser's own plausibility rule, so
+                version strings and clause fragments never appear here — a
+                suggestion the provider has to reject is a suggestion that
+                shouldn't have been made.
+              */}
+              {(importOutcome?.applied.skillSuggestions?.length ?? 0) > 0 && (
+                <div className="mt-4">
+                  <ProfileCard title="Skills we couldn't place">
+                    <p className="mb-3 text-[14px] text-ink-2">
+                      These are on your document but aren&apos;t in our catalog
+                      yet. Tick the ones that are really yours — we&apos;ll add
+                      them to your profile. Anything you leave is discarded.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {importOutcome!.applied.skillSuggestions.map((term) => {
+                        const on = pickedSuggestions.includes(term);
+                        return (
+                          <Chip
+                            key={term}
+                            selected={on}
+                            onClick={() =>
+                              setPickedSuggestions((cur) =>
+                                on ? cur.filter((t) => t !== term) : [...cur, term]
+                              )
+                            }
+                          >
+                            {term}
+                          </Chip>
+                        );
+                      })}
+                    </div>
+                    <div className="mt-4 flex flex-wrap items-center gap-4">
+                      <button
+                        type="button"
+                        onClick={confirmSuggestions}
+                        disabled={pickedSuggestions.length === 0 || suggestBusy}
+                        className="rounded-full bg-magenta px-6 py-2.5 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-40"
+                      >
+                        {suggestBusy
+                          ? "Adding…"
+                          : `Add ${pickedSuggestions.length || ""} Selected`.replace(
+                              "  ",
+                              " "
+                            )}
+                      </button>
+                      {suggestDone && suggestDone.length > 0 && (
+                        <span className="text-[13.5px] font-semibold text-emerald-600">
+                          ✓ Added {suggestDone.join(", ")}
+                        </span>
+                      )}
+                    </div>
+                  </ProfileCard>
+                </div>
+              )}
 
               {gapsFor(importOutcome, "other").length > 0 && (
                 <ul className="mt-4 space-y-1.5">

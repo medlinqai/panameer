@@ -32,6 +32,7 @@ export type ImportOutcome = {
     skillsMatched: number;
     skillsMatchedNames: string[];
     skillsUnmatched: string[];
+    skillSuggestions: string[];
     languages: number;
   };
   gaps: string[];
