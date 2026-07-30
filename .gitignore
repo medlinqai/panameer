@@ -42,3 +42,8 @@ next-env.d.ts
 
 # scratch: assets staged for deletion, never part of the app
 _to_delete/
+
+# Résumé parser fixtures — REAL PEOPLE'S CVs. Never committed; the test harness
+# reads whatever is present locally and skips-with-note what isn't.
+src/lib/resume/__fixtures__/
+.harness/
