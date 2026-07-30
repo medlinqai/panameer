@@ -208,11 +208,39 @@ export function isMarketplaceVisible(p: {
   status: string;
   completeness: number;
   paused_at: Date | null;
+  /**
+   * PJv2 WS7 — identity is now an EXPLICIT condition, not merely a weight
+   * inside `completeness`. At 80% a provider could clear the threshold while
+   * still missing their date of birth, phone and address: 12 of 110 points is
+   * not enough to force it. Visibility means completeness + identity + the
+   * status/validation track — and explicitly NOT the old goal self-pick (E067).
+   *
+   * Optional so pre-WS7 callers that only pass the three scalar fields keep
+   * compiling; when it is absent the identity condition is not applied, which
+   * is the previous behaviour rather than a silent new refusal.
+   */
+  hasIdentity?: boolean;
 }): boolean {
   return (
     p.status === "ACTIVE" &&
     p.completeness >= VISIBILITY_THRESHOLD &&
-    p.paused_at == null
+    p.paused_at == null &&
+    (p.hasIdentity ?? true)
+  );
+}
+
+/** Does this profile carry the identity block visibility requires (WS7)? */
+export function hasIdentityBlock(p: {
+  date_of_birth: Date | string | null;
+  person?: {
+    phone?: string | null;
+    site?: { addresses?: unknown[] | null } | null;
+  } | null;
+}): boolean {
+  return Boolean(
+    p.date_of_birth &&
+      p.person?.phone?.trim() &&
+      (p.person?.site?.addresses?.length ?? 0) > 0
   );
 }
 
@@ -225,6 +253,14 @@ export function marketplaceVisibleWhere() {
     status: "ACTIVE" as const,
     completeness: { gte: VISIBILITY_THRESHOLD },
     paused_at: null,
+    // WS7 — kept in lockstep with `isMarketplaceVisible`. If the DB predicate
+    // and the in-memory one disagree, a listing shows a profile whose detail
+    // page then refuses to render it.
+    date_of_birth: { not: null },
+    person: {
+      phone: { not: null },
+      site: { addresses: { some: {} } },
+    },
   };
 }
 

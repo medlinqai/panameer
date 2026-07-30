@@ -159,7 +159,6 @@ export async function getProviderProfileView(
     experience,
     headline: profile.headline,
     overview: profile.overview,
-    experienceLevel: profile.experience_level,
     field:
       profile.roleType && profile.pillar
         ? { role: profile.roleType.name, domain: profile.pillar.name }

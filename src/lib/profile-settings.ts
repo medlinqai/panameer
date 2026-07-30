@@ -32,8 +32,6 @@ const SETTINGS_SECTIONS: ProfileSection[] = [
   "rate",
   "region",
   "photo",
-  "experience_level",
-  "goal",
   "certifications",
 ];
 
@@ -46,7 +44,6 @@ async function loadOwned(viewer: Viewer) {
       person_id: true,
       status: true,
       validation_status: true,
-      experience_level: true,
     },
   });
   if (!profile) {
@@ -86,8 +83,6 @@ export async function getProviderSettings(viewer: Viewer) {
     photoUrl: profile.person.photo_url,
     headline: profile.headline,
     overview: profile.overview ?? "",
-    experienceLevel: profile.experience_level,
-    goal: profile.goal,
     workTypes: profile.work_types,
     roleTypeId: profile.skills[0]?.skill.role_type_id ?? null,
     skillIds: profile.skills.map((s) => s.skill_id),

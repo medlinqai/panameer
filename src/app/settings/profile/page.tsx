@@ -58,8 +58,6 @@ export default function SettingsProfilePage() {
   const [d, setD] = useState<{
     headline: string;
     overview: string;
-    experienceLevel: string;
-    goal: string;
     workTypes: string[];
     roleTypeId: string | null;
     skillIds: string[];
@@ -88,8 +86,6 @@ export default function SettingsProfilePage() {
       setD({
         headline: settings.headline,
         overview: settings.overview,
-        experienceLevel: settings.experienceLevel ?? "",
-        goal: settings.goal ?? "",
         workTypes: settings.workTypes,
         roleTypeId: settings.roleTypeId,
         skillIds: settings.skillIds,
@@ -216,7 +212,6 @@ export default function SettingsProfilePage() {
 
   const pct = settings.completeness;
   const threshold = settings.visibilityThreshold;
-  const isExpert = settings.experienceLevel === "EXPERT";
 
   return (
     <div className="space-y-6">
@@ -316,21 +311,17 @@ export default function SettingsProfilePage() {
             <button
               onClick={requestValidation}
               disabled={savingKey === "validation"}
-              className={
-                "rounded-full px-6 py-2.5 font-bold transition-colors disabled:opacity-50 " +
-                (isExpert
-                  ? "bg-magenta text-white hover:bg-magenta-dark"
-                  : "border-[1.5px] border-line text-ink hover:border-[#d9d4e2]")
-              }
+              // WS7 — this used to be styled and hedged by the self-reported
+              // "Expert" level. Validation is merit-based and decided by our
+              // team (brief_K), so every provider gets the same clear invitation.
+              className="rounded-full bg-magenta px-6 py-2.5 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
             >
               {savingKey === "validation" ? "Requesting…" : "Request Validation"}
             </button>
-            {!isExpert && (
-              <p className="mt-2 text-[13px] text-ink-2">
-                Validation is aimed at Expert-level providers, but you&apos;re
-                welcome to request — our team decides.
-              </p>
-            )}
+            <p className="mt-2 text-[13px] text-ink-2">
+              Anyone can request it — our team reviews the work on your profile
+              and decides.
+            </p>
           </div>
         )}
       </section>
@@ -365,50 +356,9 @@ export default function SettingsProfilePage() {
         </Field>
       </Section>
 
-      {/* Experience level & goal */}
-      <Section
-        title="Experience & Goal"
-        onSave={async () => {
-          // Both are nullable since brief_P (unanswered until wizard steps 1–2),
-          // and the server rejects an empty value — so only save what's set.
-          if (d.experienceLevel) {
-            await save("experience_level", { experienceLevel: d.experienceLevel });
-          }
-          if (d.goal) await save("goal", { goal: d.goal });
-        }}
-        {...s("goal")}
-      >
-        <div className="grid gap-6 sm:grid-cols-2">
-          <div>
-            <p className="mb-2 text-[14px] font-bold">Experience Level</p>
-            <div className="flex flex-wrap gap-2">
-              {EXPERIENCE_OPTIONS.map((o) => (
-                <Chip
-                  key={o.value}
-                  selected={d.experienceLevel === o.value}
-                  onClick={() => setD({ ...d, experienceLevel: o.value })}
-                >
-                  {o.label}
-                </Chip>
-              ))}
-            </div>
-          </div>
-          <div>
-            <p className="mb-2 text-[14px] font-bold">Goal</p>
-            <div className="flex flex-wrap gap-2">
-              {GOAL_OPTIONS.map((o) => (
-                <Chip
-                  key={o.value}
-                  selected={d.goal === o.value}
-                  onClick={() => setD({ ...d, goal: o.value })}
-                >
-                  {o.label}
-                </Chip>
-              ))}
-            </div>
-          </div>
-        </div>
-      </Section>
+      {/* PJv2 WS7 — the Experience & Goal section is gone: experience is
+          DERIVED from work history (E068) and the goal self-pick was removed
+          (E067). Nothing here replaced them; there is nothing left to edit. */}
 
       {/* Work types */}
       <Section

@@ -58,7 +58,6 @@ export type PublicProviderProfile = {
   headline: string;
   overview: string | null;
   /** Null until the provider answers step 1 of the wizard (brief_P / E003). */
-  experienceLevel: string | null;
   /** Cross-cutting specializations (brief_R). */
   specializations: { id: string; name: string; kind: string }[];
   workTypes: string[];

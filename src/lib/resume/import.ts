@@ -191,11 +191,8 @@ async function applyParsed(
   // Experience level inferred from the career span (brief_Q). Only ever fills a
   // blank — the field is nullable precisely so "not asked yet" is detectable
   // (brief_P pitfall), and a user's own answer always wins.
-  if (!profile.experience_level && parsed.experienceLevel) {
-    data.experience_level = parsed.experienceLevel;
-    applied.experienceLevel = parsed.experienceLevel;
-    applied.experienceYears = parsed.experienceYears;
-  }
+  // WS7 — experience_level is gone; years are derived from the imported
+  // work history instead (E068).
   if (Object.keys(data).length > 0) {
     await prisma.providerProfile.update({ where: { id: profileId }, data });
   }

@@ -157,21 +157,10 @@ export const LEGACY_SECTIONS = [
   // PJv2 WS1 — no longer wizard STEPS, but still written:
   //   work_method       by the up-front user-type fork (E066 rehomed)
   //   employers         by the Upload/Review step, which now owns work history
-  //   experience_level  by Settings and the résumé importer, until WS6 derives it
-  //   goal              by Settings, until WS7 drops it
   "work_method",
   "employers",
-  "experience_level",
-  "goal",
 ] as const;
 
-const EXPERIENCE_LEVELS = ["BEGINNER", "MID_CAREER", "EXPERT"] as const;
-const PROVIDER_GOALS = [
-  "SIDE_HUSTLE",
-  "MAIN_HUSTLE",
-  "BUILD_SKILLS",
-  "NONE",
-] as const;
 const WORK_TYPES = ["HOURLY", "PACKAGES", "AGENCY", "CONTRACT_TO_HIRE"] as const;
 const WORK_METHODS = ["HOURLY", "PACKAGES", "RECRUITER"] as const;
 // "LINKEDIN" is retained ONLY so rows imported before PJv2 WS13 still read; no
@@ -222,8 +211,6 @@ export type CreateProviderAccountInput = {
    * steps 1 and 2 (E003/E004), so both are optional here. The schema defaults
    * (MID_CAREER / NONE) hold until the provider reaches those steps.
    */
-  experienceLevel?: (typeof EXPERIENCE_LEVELS)[number];
-  goal?: (typeof PROVIDER_GOALS)[number];
   /** Deck sign-up fields (E001 CHANGE 2). */
   country?: string;
   marketingOptIn?: boolean;
@@ -244,12 +231,6 @@ export async function createProviderAccount(
   const firstName = input.firstName.trim();
   const lastName = input.lastName.trim();
 
-  if (input.experienceLevel && !EXPERIENCE_LEVELS.includes(input.experienceLevel)) {
-    throw new OnboardingError("Invalid experience level", "INVALID");
-  }
-  if (input.goal && !PROVIDER_GOALS.includes(input.goal)) {
-    throw new OnboardingError("Invalid goal", "INVALID");
-  }
   if (input.password.length < 8) {
     throw new OnboardingError("Password must be at least 8 characters", "INVALID");
   }
@@ -293,8 +274,6 @@ export async function createProviderAccount(
         person_id: person.id,
         headline: "", // set at the Title step
         // Both default in the schema; brief_P collects them at steps 1–2.
-        ...(input.experienceLevel ? { experience_level: input.experienceLevel } : {}),
-        ...(input.goal ? { goal: input.goal } : {}),
         // The deck's "send me helpful emails" opt-in (E001) maps onto the
         // preference store brief_H already created — no new column needed.
         notify_product_updates: input.marketingOptIn === true,
@@ -625,8 +604,6 @@ export async function getOnboardingState(viewer: Viewer) {
       createdAt: i.created_at,
     })),
     profile: {
-      experienceLevel: pp.experience_level,
-      goal: pp.goal,
       workMethod: pp.work_method,
       profileMethod: pp.profile_method,
       workTypes: pp.work_types,
@@ -1370,29 +1347,7 @@ export async function applyProviderSection(
       break;
     }
 
-    case "experience_level": {
-      const level = data.experienceLevel;
-      if (!EXPERIENCE_LEVELS.includes(level)) {
-        throw new OnboardingError("Invalid experience level", "INVALID");
-      }
-      await prisma.providerProfile.update({
-        where: { id: profileId },
-        data: { experience_level: level },
-      });
-      break;
-    }
 
-    case "goal": {
-      const goal = data.goal;
-      if (!PROVIDER_GOALS.includes(goal)) {
-        throw new OnboardingError("Invalid goal", "INVALID");
-      }
-      await prisma.providerProfile.update({
-        where: { id: profileId },
-        data: { goal },
-      });
-      break;
-    }
 
     case "certifications": {
       // brief_T / E040 — now carries the credential fields brief_S added to the
@@ -1558,8 +1513,6 @@ export async function recomputeCompleteness(profileId: string): Promise<number> 
   const completeness = computeProviderCompleteness({
     headline: profile.headline,
     overview: profile.overview,
-    experience_level: profile.experience_level,
-    goal: profile.goal,
     work_method: profile.work_method,
     pillar_id: profile.pillar_id,
     role_type_id: profile.role_type_id,

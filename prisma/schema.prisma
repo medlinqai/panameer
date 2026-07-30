@@ -506,12 +506,12 @@ model ProviderProfile {
   region_id        String?  @db.Uuid
   headline         String
   overview         String?
-  /// NULLABLE since brief_P: these are answered at profile steps 1 and 2
-  /// (E003/E004), not at sign-up. With a non-null default there was no way to
-  /// tell "chose Mid-Career" from "hasn't been asked yet", so the resume logic
-  /// skipped straight past both steps for every returning user.
-  experience_level ExperienceLevel?
-  goal             ProviderGoal?
+  // PJv2 WS7 — `experience_level` and `goal` are GONE.
+  //   experience_level: self-graded, and now DERIVED from work-history spans
+  //                     (E068 / lib/experience.ts).
+  //   goal:             asked, stored, and never used for anything. E067 wanted
+  //                     it to gate visibility; the decision was the opposite —
+  //                     visibility is completeness + identity, not intent.
   work_types       WorkType[]
   onsite_rate_cents Int?
   remote_rate_cents Int?
@@ -605,12 +605,6 @@ enum ExperienceLevel {
   EXPERT
 }
 
-enum ProviderGoal {
-  SIDE_HUSTLE
-  MAIN_HUSTLE
-  BUILD_SKILLS
-  NONE
-}
 
 enum WorkType {
   HOURLY

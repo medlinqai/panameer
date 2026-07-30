@@ -172,8 +172,6 @@ async function main() {
         "15+ years implementing Oracle Cloud Procurement and Payables. " +
         "Led P2P transformations across manufacturing and retail — " +
         "requisitions, sourcing, supplier portal, and self-service procurement.",
-      experience_level: "EXPERT",
-      goal: "MAIN_HUSTLE",
       work_types: ["HOURLY", "PACKAGES"],
       onsite_rate_cents: 12500,
       remote_rate_cents: 9000,
@@ -622,8 +620,6 @@ async function main() {
       const completeness = computeProviderCompleteness({
         headline: full.headline,
         overview: full.overview,
-        experience_level: full.experience_level,
-        goal: full.goal,
         work_method: full.work_method,
         pillar_id: full.pillar_id,
         role_type_id: full.role_type_id,

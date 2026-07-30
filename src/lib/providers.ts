@@ -68,7 +68,6 @@ export async function getPublicProviderProfile(
     validated: profile.validation_status === "VALIDATED",
     headline: profile.headline,
     overview: profile.overview,
-    experienceLevel: profile.experience_level,
     workTypes: profile.work_types,
     // Money stays in integer cents; the client formats it.
     rates: {

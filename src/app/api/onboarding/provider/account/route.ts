@@ -19,8 +19,6 @@ const schema = z.object({
   tosAccepted: z.literal(true, {
     message: "You must accept the Terms of Service to continue",
   }),
-  experienceLevel: z.enum(["BEGINNER", "MID_CAREER", "EXPERT"]).optional(),
-  goal: z.enum(["SIDE_HUSTLE", "MAIN_HUSTLE", "BUILD_SKILLS", "NONE"]).optional(),
   inviteToken: z.string().optional(),
 });
 

@@ -8,8 +8,6 @@ export type ProviderSettings = {
   photoUrl: string | null;
   headline: string;
   overview: string;
-  experienceLevel: string | null;
-  goal: string | null;
   workTypes: string[];
   roleTypeId: string | null;
   skillIds: string[];
