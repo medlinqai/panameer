@@ -38,6 +38,8 @@ export type TaxonomyCounts = {
   regions: number;
   engagementTypes: number;
   applications: number;
+  /** Non-role entries filtered out of the source catalog (E072). */
+  excludedRoleTypes: number;
   retiredSkills: number;
   retiredPillars: number;
   retiredRoleTypes: number;
@@ -64,6 +66,30 @@ const TYPO_FIXES: Record<string, string> = {
 };
 
 const fixTypo = (s: string) => TYPO_FIXES[s] ?? s;
+
+/**
+ * RoleTypes present in the source catalog that are NOT roles (PJv2 WS10 / E072).
+ *
+ * A RoleType answers "what does this person DO on an engagement" — Functional,
+ * Technical, Techno-Functional, Operational. **"Project-Specific" is a property
+ * of the PROJECT**, not of the person, and offering it in the Role picker asked
+ * providers to classify themselves along the wrong axis.
+ *
+ * Its one domain ("Project Execution") is worse than merely misplaced: its eight
+ * "skills" are JOB TITLES — Project Manager, Technical Architect, Technical
+ * Lead, Business Architect, Testing Specialist… That is a third axis again
+ * (seniority/title), which the profile already carries as `Employer.role_title`.
+ *
+ * Filtered HERE rather than edited out of `service-catalog.json`, because that
+ * file is generated from Scott's spreadsheet — a hand edit would be silently
+ * reverted the next time it is regenerated. The seed's existing retirement pass
+ * removes the DB row and its skills, and reports any provider tag left orphaned.
+ *
+ * AUDIT (E072): the three survivors — Application-Specific, Technology-Specific,
+ * Operations-Specific — all answer the "what do you do" question and stay. No
+ * other non-role leaks found.
+ */
+const NON_ROLE_TYPES = new Set(["Project-Specific"]);
 
 /** Stable code from a display name: "Finance & Accounting" → FINANCE_ACCOUNTING. */
 function toCode(name: string): string {
@@ -128,7 +154,14 @@ export async function seedTaxonomy(
   prisma: PrismaClient
 ): Promise<TaxonomyCounts> {
   const file = path.resolve(__dirname, "seed-data", "service-catalog.json");
-  const data = JSON.parse(fs.readFileSync(file, "utf8")) as CatalogJson;
+  const raw = JSON.parse(fs.readFileSync(file, "utf8")) as CatalogJson;
+  // E072 — drop non-role "roles" before anything downstream sees them, so the
+  // picker, the skills tree and the retirement pass all agree.
+  const data: CatalogJson = {
+    ...raw,
+    roles: raw.roles.filter((r) => !NON_ROLE_TYPES.has(fixTypo(r.name.trim()))),
+  };
+  const excludedRoleTypes = raw.roles.length - data.roles.length;
 
   // --- Catalog -------------------------------------------------------------
   const catalog = await prisma.serviceCatalog.upsert({
@@ -376,6 +409,7 @@ export async function seedTaxonomy(
     regions: legacy.regions.length,
     engagementTypes: legacy.engagementTypes.length,
     applications: applicationCount,
+    excludedRoleTypes,
     retiredSkills,
     retiredPillars,
     retiredRoleTypes,
