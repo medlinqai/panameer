@@ -10,7 +10,7 @@ import type { ImportOutcome } from "@/components/onboarding/ResumeUploadModal";
  * and Scott's Run-2 walk reported "no upload control present" on the import
  * step. Putting a real, visible drag-and-drop + Choose File control directly on
  * the step removes the indirection: the control is there on arrival, nothing to
- * discover. The modal survives for the LinkedIn path, which needs its own
+ * discover. The modal survives for the drag-and-drop path, which needs its own
  * Save-to-PDF instructions.
  *
  * XMLHttpRequest rather than fetch: fetch still cannot report upload progress,

@@ -1,5 +1,5 @@
 /**
- * Résumé / LinkedIn-PDF → structured profile (brief_P / E012).
+ * Résumé → structured profile (brief_P / E012).
  *
  * Deliberately a HEURISTIC parser, not an AI one: it finds the standard résumé
  * section headings, then reads the lines under each. Real-world documents vary

@@ -2,7 +2,6 @@ import type { NextAuthOptions } from "next-auth";
 import type { Provider } from "next-auth/providers/index";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
-import LinkedInProvider from "next-auth/providers/linkedin";
 import AppleProvider from "next-auth/providers/apple";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
@@ -36,42 +35,6 @@ function oauthProviders(): Provider[] {
     );
   }
 
-  if (oauthConfig.linkedin()) {
-    providers.push(
-      LinkedInProvider({
-        clientId: process.env.LINKEDIN_CLIENT_ID!,
-        clientSecret: process.env.LINKEDIN_CLIENT_SECRET!,
-        // "Sign In with LinkedIn using OpenID Connect" — name, email, picture.
-        // NOTHING more is available self-serve: work history and education sit
-        // behind LinkedIn's approval-gated partner programs, which is why the
-        // profile import is a résumé/PDF parse instead (brief_P/brief_Q).
-        // next-auth v4's built-in LinkedIn provider still targets the retired
-        // v2 /me endpoint, so the OIDC issuer and scopes are set explicitly.
-        issuer: "https://www.linkedin.com/oauth",
-        authorization: {
-          url: "https://www.linkedin.com/oauth/v2/authorization",
-          params: { scope: "openid profile email" },
-        },
-        token: "https://www.linkedin.com/oauth/v2/accessToken",
-        userinfo: "https://api.linkedin.com/v2/userinfo",
-        wellKnown: undefined,
-        idToken: false,
-        profile(profile: Record<string, unknown>) {
-          return {
-            id: String(profile.sub ?? ""),
-            name: (profile.name as string) ?? null,
-            email: (profile.email as string) ?? null,
-            image: (profile.picture as string) ?? null,
-            // Carried through for the signIn callback's verified-email gate.
-            email_verified: profile.email_verified,
-            given_name: profile.given_name,
-            family_name: profile.family_name,
-          } as never;
-        },
-      })
-    );
-  }
-
   if (oauthConfig.apple()) {
     providers.push(
       AppleProvider({
@@ -89,7 +52,7 @@ function oauthProviders(): Provider[] {
 /**
  * NextAuth v4 options — matches Medlinq's pattern: bcrypt password compare,
  * account lockout after repeated failures, JWT sessions, and an `isSystemAdmin`
- * gate carried into the token/session. brief_Q adds Google / LinkedIn (OIDC) /
+ * gate carried into the token/session. brief_Q adds Google /
  * Apple alongside credentials.
  */
 export const authOptions: NextAuthOptions = {
@@ -250,7 +213,7 @@ export const authOptions: NextAuthOptions = {
       }
 
       const raw = (profile ?? {}) as Record<string, unknown>;
-      // Google and LinkedIn send `email_verified`; Apple sends it as a string.
+      // Google sends `email_verified`; Apple sends it as a string.
       // Absent claim ⇒ treat as unverified and refuse to auto-link.
       const verifiedClaim = raw.email_verified;
       const emailVerified =

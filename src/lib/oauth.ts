@@ -15,7 +15,7 @@ import { capitalizeName } from "@/lib/display";
  * linking a provider identity to a pre-existing password account purely because
  * the email strings match is the classic "pre-hijack / automatic account
  * linking" hole. It is only safe when the PROVIDER asserts the address is
- * verified. Google and LinkedIn both return that claim; Apple returns
+ * verified. Google returns that claim; Apple returns
  * `email_verified` too (as a string or boolean). If a provider ever hands us an
  * unverified address we refuse the sign-in rather than take the risk.
  */
@@ -139,10 +139,6 @@ export async function linkOAuthUser(
 export const oauthConfig = {
   google: () =>
     Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
-  linkedin: () =>
-    Boolean(
-      process.env.LINKEDIN_CLIENT_ID && process.env.LINKEDIN_CLIENT_SECRET
-    ),
   apple: () =>
     Boolean(process.env.APPLE_CLIENT_ID && process.env.APPLE_CLIENT_SECRET),
 };

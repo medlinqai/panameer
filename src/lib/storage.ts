@@ -21,7 +21,7 @@ import { randomUUID } from "crypto";
 export const PROFILE_PHOTO_BUCKET = "profile-photos";
 
 /**
- * PRIVATE bucket holding uploaded résumés / LinkedIn PDFs (brief_Q).
+ * PRIVATE bucket holding uploaded résumés (brief_Q).
  *
  * Deliberately NOT public, unlike profile photos: a résumé is personal data
  * (home address, phone, employment history). Objects are reachable only through
@@ -156,7 +156,7 @@ export async function uploadProfilePhoto(
 }
 
 /**
- * Store an uploaded résumé / LinkedIn PDF and return its OBJECT PATH
+ * Store an uploaded résumé and return its OBJECT PATH
  * (brief_Q) — not a URL, because the bucket is private. Keeping the original
  * file means a parse can be re-run or audited without asking the user to
  * upload again, and the review page can offer the source document back.

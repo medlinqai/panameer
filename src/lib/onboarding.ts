@@ -173,6 +173,8 @@ const PROVIDER_GOALS = [
 ] as const;
 const WORK_TYPES = ["HOURLY", "PACKAGES", "AGENCY", "CONTRACT_TO_HIRE"] as const;
 const WORK_METHODS = ["HOURLY", "PACKAGES", "RECRUITER"] as const;
+// "LINKEDIN" is retained ONLY so rows imported before PJv2 WS13 still read; no
+// code path writes it any more (E069).
 const PROFILE_METHODS = ["LINKEDIN", "RESUME", "MANUAL"] as const;
 const LANGUAGE_LEVELS = [
   "BASIC",

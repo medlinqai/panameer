@@ -4,13 +4,17 @@ import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
 
 /**
- * Google / LinkedIn / Apple sign-in buttons (brief_Q, restyled by brief_S/E020,
+ * Google / Apple sign-in buttons (brief_Q, restyled by brief_S/E020,
  * relabelled + made container-responsive by brief_W/E046).
  *
+ * LinkedIn was REMOVED in PJv2 WS13 (E069): with the LinkedIn profile import
+ * gone there is nothing it uniquely offers, and Scott's call is "no sense having
+ * LinkedIn anywhere". Google and Apple stay.
+ *
  * LABELS (E046): the full "Continue with …" wording, matching the `aria-label`
- * and the approved mockup. The short "LinkedIn/Apple/Google" labels existed
- * only so three buttons would squeeze into a narrow column, and on the narrow
- * `/login` card they still truncated to "Linke…/Goog…".
+ * and the approved mockup. The short labels existed only so the buttons would
+ * squeeze into a narrow column, and on the narrow `/login` card they still
+ * truncated.
  *
  * LAYOUT (E046): a CONTAINER query, not a media query. This component has two
  * parents of very different widths — the `max-w-xl` sign-up column and the
@@ -22,7 +26,7 @@ import { signIn } from "next-auth/react";
  * sign-up page gets one row and the login card stacks, with no page-specific
  * props to keep in sync.
  *
- * COLOURS (E020): LinkedIn blue (#0A66C2), Apple black, and Google as the
+ * COLOURS (E020): Apple black, and Google as the
  * standard WHITE button with the OFFICIAL multicolour "G" — Google's brand
  * guidelines don't permit recolouring the mark, and Scott's reference sheet had
  * a solid-blue G, which is why the G below is the real four-colour path.
@@ -32,7 +36,7 @@ import { signIn } from "next-auth/react";
  * registered, so the client never learns anything secret.
  */
 
-type ProviderId = "google" | "linkedin" | "apple";
+type ProviderId = "google" | "apple";
 
 /** Official Google "G" — four-colour, not tinted. */
 function GoogleG({ className = "h-[18px] w-[18px] shrink-0" }: { className?: string }) {
@@ -58,14 +62,6 @@ function GoogleG({ className = "h-[18px] w-[18px] shrink-0" }: { className?: str
   );
 }
 
-function LinkedInIn({ className = "h-[18px] w-[18px] shrink-0" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-      <path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.63-1.85 3.36-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29zM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13zM7.12 20.45H3.55V9h3.57v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.72V1.72C24 .77 23.2 0 22.22 0z" />
-    </svg>
-  );
-}
-
 function AppleMark({ className = "h-[19px] w-[19px] shrink-0" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
@@ -80,12 +76,6 @@ const BUTTONS: {
   className: string;
   icon: React.ReactNode;
 }[] = [
-  {
-    id: "linkedin",
-    label: "LinkedIn",
-    className: "bg-[#0A66C2] text-white hover:bg-[#095196] border-[#0A66C2]",
-    icon: <LinkedInIn />,
-  },
   {
     id: "apple",
     label: "Apple",
@@ -136,12 +126,12 @@ export function SocialSignIn({
       {/* Stacked by default (the narrow login card), three across once the
           CONTAINER — not the window — is wide enough for full labels.
 
-          640px is MEASURED, not guessed: the longest label ("Continue with
-          LinkedIn") is 166px at this size, plus an 18px brand mark, the gap and
-          the padding — ~206px of content per button, so three of them need
-          ~638px. Below that the row would push the mark or the text out of the
-          button, so it stacks instead. */}
-      <div className="grid grid-cols-1 gap-2.5 @[640px]:grid-cols-3">
+          The threshold is MEASURED: the longest remaining label ("Continue with
+          Google") is ~154px at this size, plus an 18px brand mark, the gap and
+          the padding — ~194px per button, so TWO need ~400px. Below that the row
+          would push the mark or the text out of the button, so it stacks
+          instead. (Was 640px when LinkedIn made it three — WS13.) */}
+      <div className="grid grid-cols-1 gap-2.5 @[400px]:grid-cols-2">
         {BUTTONS.map((b) => {
           const live = available?.has(b.id) ?? false;
           return (

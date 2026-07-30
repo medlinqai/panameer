@@ -10,8 +10,8 @@ import { Modal } from "@/components/Modal";
  * upload progress → attached-file row with ✓ and a delete → Continue, which
  * parses the document and populates the profile.
  *
- * Also serves the LinkedIn path: LinkedIn has no public API for work history
- * (that needs Partner approval), so "Import from LinkedIn" asks for the
+ * (The LinkedIn path this also used to serve was removed in PJv2 WS13 / E069.)
+ * Historical note: LinkedIn has no public API for work history
  * profile's own "Save to PDF" export and runs it through this same pipeline.
  *
  * XMLHttpRequest rather than fetch: fetch still can't report upload progress,
@@ -58,7 +58,6 @@ export function ResumeUploadModal({
   const [error, setError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
 
-  const isLinkedIn = false;
 
   const reset = () => {
     setFile(null);
@@ -134,25 +133,6 @@ export function ResumeUploadModal({
       }}
       title="Add Your Resume"
     >
-      {isLinkedIn && (
-        <ol className="mb-5 space-y-1.5 rounded-brand border border-line bg-bg-soft p-4 text-[14px] text-ink-2">
-          <li className="mb-2 text-ink">
-            LinkedIn doesn&apos;t allow apps to read your profile directly, so
-            export it and upload the file:
-          </li>
-          <li>
-            <b className="text-ink">1.</b> Open your LinkedIn profile.
-          </li>
-          <li>
-            <b className="text-ink">2.</b> Click <b className="text-ink">More</b> →{" "}
-            <b className="text-ink">Save to PDF</b>.
-          </li>
-          <li>
-            <b className="text-ink">3.</b> Upload the downloaded file below.
-          </li>
-        </ol>
-      )}
-
       {!file ? (
         <div
           onDragOver={(e) => {

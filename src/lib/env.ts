@@ -29,8 +29,6 @@ const schema = z.object({
   // of its vars are present, so absent creds simply disable it.
   GOOGLE_CLIENT_ID: z.string().min(1).optional(),
   GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
-  LINKEDIN_CLIENT_ID: z.string().min(1).optional(),
-  LINKEDIN_CLIENT_SECRET: z.string().min(1).optional(),
   APPLE_CLIENT_ID: z.string().min(1).optional(),
   APPLE_CLIENT_SECRET: z.string().min(1).optional(),
 

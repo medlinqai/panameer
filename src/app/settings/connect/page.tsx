@@ -4,7 +4,7 @@ export default function ConnectPage() {
   return (
     <ComingSoon
       title="Connect"
-      body="Link accounts like LinkedIn to enrich your profile. Integrations aren't wired up yet — check back soon."
+      body="Connect the tools you work in to enrich your profile. Integrations aren't wired up yet — check back soon."
     />
   );
 }
