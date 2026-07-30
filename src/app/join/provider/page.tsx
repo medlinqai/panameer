@@ -2280,7 +2280,14 @@ export default function JoinProviderPage() {
   return null;
 }
 
-/** Pre-verification chrome: logo only, deliberately NO stepper (E001). */
+/**
+ * Pre-verification chrome: logo only, deliberately NO stepper (E001).
+ *
+ * Held at the NARROW width while the wizard widens to 5xl (WS2/E081). These are
+ * single columns of inputs — a verify prompt, a check-your-email note — and a
+ * wide frame gives a form nothing but longer lines. The widening is for the
+ * two-column steps the design refs actually show.
+ */
 function PlainShell({
   children,
   compact = false,
@@ -2288,7 +2295,11 @@ function PlainShell({
   children: React.ReactNode;
   compact?: boolean;
 }) {
-  return <OnboardingShell compact={compact}>{children}</OnboardingShell>;
+  return (
+    <OnboardingShell width="max-w-3xl" compact={compact}>
+      {children}
+    </OnboardingShell>
+  );
 }
 
 /**

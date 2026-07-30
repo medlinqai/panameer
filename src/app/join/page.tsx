@@ -50,7 +50,9 @@ export default function JoinRoleSelect() {
   return (
     // E048/E049 — the stock shell and the centred pre-verify title, so role
     // select, sign up and check-email are one format rather than three.
-    <OnboardingShell>
+    // Narrow on purpose (WS2/E081): the wizard widened to 5xl, but this is a
+    // centred two-card chooser and widening it would just push the cards apart.
+    <OnboardingShell width="max-w-3xl">
       <div className="text-center">
         <h1 className="text-[28px] font-extrabold tracking-[-0.6px]">
           Welcome to Panameer

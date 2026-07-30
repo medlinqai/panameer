@@ -1,7 +1,10 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Logo } from "@/components/Logo";
+import {
+  OnboardingFrame,
+  FRAME_WIDTH,
+} from "@/components/onboarding/OnboardingFrame";
 
 /**
  * Focused onboarding chrome: logo top-left, an optional step counter + progress
@@ -80,109 +83,104 @@ export function WizardShell({
   const pct = showCounter
     ? Math.max(4, Math.min(100, (step! / totalSteps) * 100))
     : Math.max(4, Math.min(100, (progress ?? 0) * 100));
-  const frame = wide ? "max-w-5xl" : "max-w-3xl";
+  // WS2/E081 — every step now sits in the shared widened frame. `wide` used to
+  // be the only way to get 5xl and is kept as a no-op alias so the two-column
+  // steps that pass it keep working; the difference it named is gone.
+  const width = FRAME_WIDTH;
+  void wide;
+
+  const footer = hideFooter ? undefined : (
+    <>
+      {/*
+        Footer band (WS2): secondary far-left, primary far-right, in a full-bleed
+        band of its own rather than a rule floating under the content.
+
+        Skip stays immediately left of Next rather than moving to the left with
+        Back — that grouping is E032's finding (beside Back it reads as a way
+        BACKWARD, beside Next as a way past this step), and this brief is
+        changing where the band is, not relitigating what is in it.
+      */}
+      <div>
+        {canBack && onBack && (
+          <button
+            onClick={onBack}
+            disabled={busy}
+            className="rounded-full border-[1.5px] border-line px-6 py-3 font-bold text-ink transition-colors hover:border-[#d9d4e2] disabled:opacity-50"
+          >
+            Back
+          </button>
+        )}
+      </div>
+
+      <div className="ml-auto flex items-center gap-5">
+        {secondaryLabel && onSecondary && (
+          <button
+            onClick={onSecondary}
+            disabled={busy}
+            className="text-[15px] font-semibold text-ink-2 underline underline-offset-4 transition-colors hover:text-magenta disabled:opacity-50"
+          >
+            {secondaryLabel}
+          </button>
+        )}
+        {onContinue && (
+          <button
+            onClick={onContinue}
+            disabled={continueDisabled || busy}
+            className="rounded-full bg-magenta px-8 py-3 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
+          >
+            {busy ? "Saving…" : continueLabel}
+          </button>
+        )}
+      </div>
+    </>
+  );
 
   return (
-    <div className="flex min-h-screen flex-col bg-white font-body text-ink">
-      <header className="border-b border-line px-6 py-4">
-        <div className={`mx-auto flex ${frame} items-center`}>
-          <Logo priority />
-        </div>
-      </header>
-
-      <main className={`mx-auto flex w-full ${frame} flex-1 flex-col px-6 py-6 sm:py-8`}>
-        {/* Stepper — inside the frame, so it can never overflow (E003). */}
-        {showStepper && (
-          <div className="mb-5">
-            {showCounter && (
-              <div className="mb-2 flex items-baseline justify-between">
-                <span className="text-[13px] font-bold uppercase tracking-wide text-ink-2">
-                  {stepLabel ?? "Build Your Profile"}
-                </span>
-                <span className="text-[14px] font-extrabold tabular-nums text-magenta">
-                  {step}/{totalSteps}
-                </span>
-              </div>
-            )}
+    <OnboardingFrame width={width} footer={footer}>
+      {/* Stepper — inside the frame, so it can never overflow (E003). */}
+      {showStepper && (
+        <div className="mb-9">
+          {showCounter && (
+            <div className="mb-2.5 flex items-baseline justify-between">
+              <span className="text-[13px] font-bold uppercase tracking-wide text-ink-2">
+                {stepLabel ?? "Build Your Profile"}
+              </span>
+              <span className="text-[14px] font-extrabold tabular-nums text-magenta">
+                {step}/{totalSteps}
+              </span>
+            </div>
+          )}
+          <div
+            className="h-1.5 w-full overflow-hidden rounded-full bg-line"
+            role="progressbar"
+            aria-valuenow={showCounter ? step : Math.round(pct)}
+            aria-valuemin={showCounter ? 1 : 0}
+            aria-valuemax={showCounter ? totalSteps : 100}
+            aria-label={showCounter ? `Step ${step} of ${totalSteps}` : "Progress"}
+          >
             <div
-              className="h-1.5 w-full overflow-hidden rounded-full bg-line"
-              role="progressbar"
-              aria-valuenow={showCounter ? step : Math.round(pct)}
-              aria-valuemin={showCounter ? 1 : 0}
-              aria-valuemax={showCounter ? totalSteps : 100}
-              aria-label={
-                showCounter ? `Step ${step} of ${totalSteps}` : "Progress"
-              }
-            >
-              <div
-                className="h-full rounded-full bg-magenta transition-[width] duration-300"
-                style={{ width: `${pct}%` }}
-              />
-            </div>
-          </div>
-        )}
-
-        <div className="flex-1">
-          <div className={aside ? "grid gap-10 lg:grid-cols-[1fr_320px]" : ""}>
-            <div className="min-w-0">
-              {/* 28px flat — the same size the pre-verify pages settled on in
-                  brief_W, and 10px of vertical room back on every step. */}
-              <h1 className="text-[28px] font-extrabold tracking-[-0.6px]">
-                {title}
-              </h1>
-              {subtitle && (
-                <p className="mt-2 max-w-2xl text-[17px] text-ink-2">{subtitle}</p>
-              )}
-              {banner && <div className="mt-6">{banner}</div>}
-              <div className="mt-5">{children}</div>
-            </div>
-            {aside && <div className="lg:pt-2">{aside}</div>}
+              className="h-full rounded-full bg-magenta transition-[width] duration-300"
+              style={{ width: `${pct}%` }}
+            />
           </div>
         </div>
+      )}
 
-        {/*
-          Footer (brief_S / E032, revising brief_O): Back far-left; Skip and
-          Next GROUPED ON THE RIGHT with Skip immediately left of Next — so Skip
-          still sits between the two, but reads as part of the forward action
-          rather than stranded beside Back.
-        */}
-        {!hideFooter && (
-          <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-line pt-4">
-            <div>
-              {canBack && onBack && (
-                <button
-                  onClick={onBack}
-                  disabled={busy}
-                  className="rounded-full border-[1.5px] border-line px-6 py-3 font-bold text-ink transition-colors hover:border-[#d9d4e2] disabled:opacity-50"
-                >
-                  Back
-                </button>
-              )}
-            </div>
-
-            <div className="ml-auto flex items-center gap-5">
-              {secondaryLabel && onSecondary && (
-                <button
-                  onClick={onSecondary}
-                  disabled={busy}
-                  className="text-[15px] font-semibold text-ink-2 underline underline-offset-4 transition-colors hover:text-magenta disabled:opacity-50"
-                >
-                  {secondaryLabel}
-                </button>
-              )}
-              {onContinue && (
-                <button
-                  onClick={onContinue}
-                  disabled={continueDisabled || busy}
-                  className="rounded-full bg-magenta px-8 py-3 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
-                >
-                  {busy ? "Saving…" : continueLabel}
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-      </main>
-    </div>
+      <div className={aside ? "grid gap-12 lg:grid-cols-[1fr_380px]" : ""}>
+        <div className="min-w-0">
+          <h1 className="text-[30px] font-extrabold tracking-[-0.6px] sm:text-[32px]">
+            {title}
+          </h1>
+          {subtitle && (
+            <p className="mt-3 max-w-3xl text-[17px] leading-relaxed text-ink-2">
+              {subtitle}
+            </p>
+          )}
+          {banner && <div className="mt-8">{banner}</div>}
+          <div className="mt-8">{children}</div>
+        </div>
+        {aside && <div className="lg:pt-1">{aside}</div>}
+      </div>
+    </OnboardingFrame>
   );
 }
