@@ -99,7 +99,13 @@ export function TestimonialCard({ t }: { t: Testimonial }) {
             <Stars rating={t.rating} />
           </div>
           <p className="mt-1 text-[14px] leading-snug text-ink-2">{t.headline}</p>
-          <dl className="mt-2 flex gap-5 text-[13px]">
+          {/*
+            E064(d) — the Remote rate rendered OUTSIDE the card. This row sits in
+            a ~300px aside (Get Started, and the Upload/Review aside per E069);
+            a non-wrapping flex row simply overflowed the figure. `flex-wrap` +
+            `min-w-0` on the parent is what keeps it inside at any width.
+          */}
+          <dl className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-[13px]">
             <div className="flex gap-1.5">
               <dt className="text-ink-2">Onsite</dt>
               <dd className="font-bold">{formatCents(t.onsiteCents)}/hr</dd>
@@ -127,38 +133,51 @@ export function TestimonialCarousel({
   const prev = () => setI((n) => (n - 1 + items.length) % items.length);
   const next = () => setI((n) => (n + 1) % items.length);
 
+  const arrow =
+    "z-10 grid h-9 w-9 flex-none place-items-center rounded-full border-[1.5px] border-line bg-white text-[18px] leading-none text-ink shadow-brand transition-colors hover:border-magenta hover:text-magenta";
+
   return (
     <div>
-      <TestimonialCard t={items[i]} />
-
-      <div className="mt-4 flex items-center justify-center gap-4">
+      {/*
+        E064(b) — the arrows FLANK the card (per the E023 design) instead of
+        sitting in a row underneath it. `min-w-0` on the middle cell is what
+        stops the card pushing the arrows off the edge in a narrow aside.
+      */}
+      <div className="relative">
+        <TestimonialCard t={items[i]} />
+        {/* OVERLAID on the card's edges rather than sitting in the row beside
+            it. Flanking arrows that take their own columns cost ~80px of a
+            300px aside — enough to wrap the headline onto five lines and
+            truncate the name. This reads the same and costs nothing. */}
         <button
           type="button"
           onClick={prev}
           aria-label="Previous example"
-          className="grid h-9 w-9 place-items-center rounded-full border-[1.5px] border-line text-[18px] leading-none text-ink transition-colors hover:border-magenta hover:text-magenta"
+          className={`${arrow} absolute -left-3 top-1/2 -translate-y-1/2`}
         >
           ‹
         </button>
-        <div className="flex items-center gap-1.5" aria-hidden>
-          {items.map((_, n) => (
-            <span
-              key={n}
-              className={
-                "h-1.5 rounded-full transition-all " +
-                (n === i ? "w-5 bg-magenta" : "w-1.5 bg-line")
-              }
-            />
-          ))}
-        </div>
         <button
           type="button"
           onClick={next}
           aria-label="Next example"
-          className="grid h-9 w-9 place-items-center rounded-full border-[1.5px] border-line text-[18px] leading-none text-ink transition-colors hover:border-magenta hover:text-magenta"
+          className={`${arrow} absolute -right-3 top-1/2 -translate-y-1/2`}
         >
           ›
         </button>
+      </div>
+
+      {/* Position dots stay under the card — they're an indicator, not a control. */}
+      <div className="mt-3 flex items-center justify-center gap-1.5" aria-hidden>
+        {items.map((_, n) => (
+          <span
+            key={n}
+            className={
+              "h-1.5 rounded-full transition-all " +
+              (n === i ? "w-5 bg-magenta" : "w-1.5 bg-line")
+            }
+          />
+        ))}
       </div>
     </div>
   );

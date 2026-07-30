@@ -63,24 +63,25 @@ export default async function GetStartedPage() {
             </p>
           </div>
 
+          {/* E064(c) — one unmistakable primary action, full-width on mobile,
+              with the reassurance caption directly beneath it (E023/E049). */}
           <div className="mt-8">
             <Link
               href="/join/provider"
-              className="inline-flex rounded-full bg-magenta px-8 py-3.5 text-[16px] font-bold text-white transition-colors hover:bg-magenta-dark"
+              className="inline-flex w-full justify-center rounded-full bg-magenta px-8 py-4 text-[17px] font-bold text-white shadow-brand transition-colors hover:bg-magenta-dark sm:w-auto"
             >
               Get Started Now!
             </Link>
-            <p className="mt-3 text-[14px] text-ink-2">
+            <p className="mt-3 max-w-md text-[14px] text-ink-2">
               It only takes 5–10 minutes and you can edit it later. We&apos;ll
               save as you go.
             </p>
           </div>
         </div>
 
+        {/* E064(a) — the "Providers on Panameer" label is gone; the card speaks
+            for itself and the label was competing with the greeting. */}
         <section>
-          <h2 className="mb-4 text-[13px] font-bold uppercase tracking-wide text-ink-2">
-            Providers on Panameer
-          </h2>
           <TestimonialCarousel />
         </section>
       </div>
