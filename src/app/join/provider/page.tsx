@@ -170,7 +170,14 @@ const MAX_VISIBLE_OPTIONS = 15;
  */
 const MAX_SKILL_SUGGESTIONS = 12;
 /** Per GROUP, so every specialization section stays represented (E054). */
+/** Per-group cap while SEARCHING — three groups have to share one window. */
 const MAX_SPECS_PER_GROUP = 6;
+/**
+ * Per-tier cap while BROWSING (PJv2 WS9). Higher than the search cap because an
+ * open tier owns the whole window rather than sharing it with two siblings; the
+ * scroll region still bounds the height either way.
+ */
+const MAX_SPECS_PER_TIER = 24;
 
 /**
  * A fixed-height scroll region. `overscroll-contain` keeps a scroll gesture
@@ -401,6 +408,13 @@ export default function JoinProviderPage() {
   const [skillOpts, setSkillOpts] = useState<SkillOpt[]>([]);
   const [skillQuery, setSkillQuery] = useState("");
   const [specQuery, setSpecQuery] = useState("");
+  /**
+   * Which specialization tier is expanded (PJv2 WS9) — null means "whichever is
+   * still empty", resolved at render. Pinned as soon as the provider picks
+   * something, or the tier they are working in would collapse under them the
+   * instant it stopped being the first empty one.
+   */
+  const [openSpecTier, setOpenSpecTier] = useState<string | null>(null);
   /**
    * E057 — bumping this asks the review page's certification editor to open its
    * add-modal. A counter rather than a boolean so the "Add certification"
@@ -1288,16 +1302,31 @@ export default function JoinProviderPage() {
       });
 
       const sq = specQuery.trim().toLowerCase();
+      // TWO MODES, one for each job (PJv2 WS9). Browsing is a cascade — one open
+      // tier at a time. Searching is a flat lookup ACROSS the tiers, because
+      // someone typing "Workday" should not have to know whether we filed it
+      // under a product, a methodology or an industry.
+      const searching = sq.length > 0;
+
+      // Which tier each catalog item belongs to — the cascade needs it to count
+      // and label a collapsed tier, and to pin the open one on a pick.
+      const kindById = new Map<string, string>();
+      specGroups.forEach((g) => g.items.forEach((i) => kindById.set(i.id, g.kind)));
+      const pickedNames = (kind: string) =>
+        profile.specializationIds
+          .filter((id) => kindById.get(id) === kind)
+          .map((id) => specById.get(id) ?? "Specialization");
 
       /**
-       * E054 — search-first and capped PER GROUP rather than overall. A single
-       * overall cap would spend its whole budget on the first section and hide
-       * the later ones completely; the sections are the part Scott singled out
-       * as working, so each one keeps its own window into its list.
+       * E054 — search results stay capped PER GROUP and inside ONE bounded
+       * region. A single overall cap would spend its whole budget on the first
+       * group and hide the later ones; three separate regions would let the page
+       * (and so the Continue button) grow as you type, which is the thing E053
+       * was filed about.
        *
-       * Chosen items are excluded here because they are already rendered as
-       * chips above — the same rule the Skills tier uses, so the suggestion
-       * area stays full of things you can still act on.
+       * Chosen items are excluded because they are already chips above — the same
+       * rule the Skills tier uses, so the suggestion area only ever holds things
+       * you can still act on.
        */
       const groups = specGroups
         .map((g) => {
@@ -1316,6 +1345,18 @@ export default function JoinProviderPage() {
       const hiddenSpecCount = groups.reduce((n, g) => n + g.hidden, 0);
       const totalSpecs =
         profile.specializationIds.length + profile.customSpecializations.length;
+
+      /**
+       * The open tier: the provider's last pick if they have one, else the first
+       * tier still empty, so the step opens on work to be done rather than on a
+       * tier that is already answered. All three collapse once all three have
+       * something — the step is optional, and a wall of open pickers is what WS9
+       * was filed to remove.
+       */
+      const openSpecKind =
+        openSpecTier ??
+        specGroups.find((g) => pickedNames(g.kind).length === 0)?.kind ??
+        null;
 
       const addCustomSpec = () => {
         const name = specQuery.trim();
@@ -1336,7 +1377,12 @@ export default function JoinProviderPage() {
         setSpecQuery("");
       };
 
-      const toggleSpec = (id: string) =>
+      const toggleSpec = (id: string) => {
+        // Pin the tier this item lives in. Without this, picking the first item
+        // in tier 2 makes tier 2 no-longer-the-first-empty-tier, and the cascade
+        // would collapse it and jump to tier 3 mid-selection.
+        const kind = kindById.get(id);
+        if (kind) setOpenSpecTier(kind);
         setProfile((p) => {
           const has = p.specializationIds.includes(id);
           const name = specById.get(id) ?? "";
@@ -1353,6 +1399,7 @@ export default function JoinProviderPage() {
               : [...p.specializationNames, { id, name }],
           };
         });
+      };
 
       return (
         <WizardShell
@@ -1438,49 +1485,119 @@ export default function JoinProviderPage() {
                 </button>
               </div>
 
-              {/* The sections Scott liked, kept — but inside one fixed-height
-                  scroll region so 24 specializations and 240 are the same
-                  height on screen. */}
-              <div className={`mt-3 max-h-[320px] ${SCROLL_REGION}`}>
-                {groups.length === 0 ? (
-                  <p className="text-[14px] text-ink-2">
-                    {sq
-                      ? "No matches — use “+ Add” to create it."
-                      : "You've picked everything we list here."}
-                  </p>
-                ) : (
-                  <div className="space-y-4">
-                    {groups.map((g) => (
-                      <div key={g.kind}>
-                        <h2 className="mb-2 text-[13px] font-bold uppercase tracking-wide text-ink-2">
-                          {g.label}
-                          {g.hidden > 0 && (
-                            <span className="ml-2 font-normal normal-case tracking-normal">
-                              +{g.hidden} more
-                            </span>
-                          )}
-                        </h2>
-                        <div className="flex flex-wrap gap-2">
-                          {g.shown.map((item) => (
-                            <Chip
-                              key={item.id}
-                              selected={false}
-                              onClick={() => toggleSpec(item.id)}
-                            >
-                              {item.name}
-                            </Chip>
-                          ))}
-                        </div>
+              {searching ? (
+                /* SEARCH MODE — flat results across all three tiers, grouped so
+                   you can still see WHICH tier a match came from, inside one
+                   fixed-height region so typing never moves the footer. */
+                <>
+                  <div className={`mt-3 max-h-[320px] ${SCROLL_REGION}`}>
+                    {groups.length === 0 ? (
+                      <p className="text-[14px] text-ink-2">
+                        No matches — use “+ Add” to create it.
+                      </p>
+                    ) : (
+                      <div className="space-y-4">
+                        {groups.map((g) => (
+                          <div key={g.kind}>
+                            <h2 className="mb-2 text-[13px] font-bold uppercase tracking-wide text-ink-2">
+                              {g.label}
+                              {g.hidden > 0 && (
+                                <span className="ml-2 font-normal normal-case tracking-normal">
+                                  +{g.hidden} more
+                                </span>
+                              )}
+                            </h2>
+                            <div className="flex flex-wrap gap-2">
+                              {g.shown.map((item) => (
+                                <Chip
+                                  key={item.id}
+                                  selected={false}
+                                  onClick={() => toggleSpec(item.id)}
+                                >
+                                  {item.name}
+                                </Chip>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    )}
                   </div>
-                )}
-              </div>
+                  {hiddenSpecCount > 0 && (
+                    <p className="mt-2 text-[13px] text-ink-2">
+                      +{hiddenSpecCount} more — keep typing to narrow the list.
+                    </p>
+                  )}
+                </>
+              ) : (
+                /*
+                  BROWSE MODE — the RDS collapsing-cascade (WS9 / E073), now with
+                  INDUSTRIES AS ITS OWN TIER rather than a third heading inside a
+                  shared scroll box. Industry is a different KIND of claim from a
+                  product or a method — "I know Workday" and "I know utilities"
+                  are answers to different buyer questions — and burying it third
+                  in one list made it the section people scrolled past.
 
-              {hiddenSpecCount > 0 && (
-                <p className="mt-2 text-[13px] text-ink-2">
-                  +{hiddenSpecCount} more — keep typing to narrow the list.
-                </p>
+                  Unlike Role → Domain → Skill, these tiers are INDEPENDENT: none
+                  gates the next, because a provider with no product to name still
+                  has an industry. So the cascade here is only the disclosure
+                  shape — one tier open, the others one line each.
+                */
+                <div className="mt-3 space-y-2.5">
+                  {specGroups.map((g, gi) => {
+                    const picked = pickedNames(g.kind);
+                    const summary =
+                      picked.length === 0
+                        ? "None yet"
+                        : picked.slice(0, 2).join(", ") +
+                          (picked.length > 2 ? ` +${picked.length - 2}` : "");
+                    const avail = g.items.filter((i) => !chosenSpecs.has(i.id));
+                    const hidden = Math.max(0, avail.length - MAX_SPECS_PER_TIER);
+
+                    return (
+                      <CascadeTier
+                        key={g.kind}
+                        index={gi + 1}
+                        label={g.label}
+                        // Open tier → null, which is what makes CascadeTier
+                        // render the picker instead of the summary row.
+                        chosen={openSpecKind === g.kind ? null : summary}
+                        changeLabel={picked.length === 0 ? "Add" : "Change"}
+                        onChange={() => setOpenSpecTier(g.kind)}
+                      >
+                        {/* Exactly THREE chip rows (38px chip + 48px pitch +
+                            the region's own 12px padding). A round number like
+                            132px lands mid-chip, and a chip sliced through the
+                            middle reads as a rendering bug rather than as "there
+                            is more below" — the tinted, bordered, scrolling box
+                            already says that. */}
+                        <div className={`max-h-[158px] ${SCROLL_REGION}`}>
+                          <div className="flex flex-wrap gap-2">
+                            {avail.slice(0, MAX_SPECS_PER_TIER).map((item) => (
+                              <Chip
+                                key={item.id}
+                                selected={false}
+                                onClick={() => toggleSpec(item.id)}
+                              >
+                                {item.name}
+                              </Chip>
+                            ))}
+                            {avail.length === 0 && (
+                              <p className="text-[14px] text-ink-2">
+                                You&apos;ve picked everything we list here.
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        {hidden > 0 && (
+                          <p className="mt-2 text-[13px] text-ink-2">
+                            +{hidden} more — search above to find them.
+                          </p>
+                        )}
+                      </CascadeTier>
+                    );
+                  })}
+                </div>
               )}
             </div>
           )}
@@ -2131,12 +2248,19 @@ function CascadeTier({
   label,
   chosen,
   onChange,
+  changeLabel = "Change",
   children,
 }: {
   index: number;
   label: string;
   chosen: string | null;
   onChange?: () => void;
+  /**
+   * The reopen affordance. "Change" is right for a single-pick tier that already
+   * has an answer; a MULTI-pick tier that is empty needs "Add", because there is
+   * nothing there to change (PJv2 WS9).
+   */
+  changeLabel?: string;
   children: React.ReactNode;
 }) {
   // brief_Y / E053 — a COLLAPSED tier is genuinely one line now. It used to be
@@ -2165,7 +2289,7 @@ function CascadeTier({
             onClick={onChange}
             className="flex-none text-[14px] font-bold text-magenta hover:text-magenta-dark"
           >
-            Change
+            {changeLabel}
           </button>
         )}
       </section>
