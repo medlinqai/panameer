@@ -438,6 +438,9 @@ export default function JoinProviderPage() {
 
   const [importOutcome, setImportOutcome] = useState<ImportOutcome | null>(null);
   const [uploadModal, setUploadModal] = useState(false);
+  /** WS5/E084 — the post-upload review shows work history the way the profile
+   *  does, and swaps to the editor in place when you ask to change it. */
+  const [editingWork, setEditingWork] = useState(false);
   const [photoModal, setPhotoModal] = useState(false);
 
   /**
@@ -982,12 +985,18 @@ export default function JoinProviderPage() {
         >
           {error && <Notice>{error}</Notice>}
 
-          {/* Confirm-or-fix summary (brief_Q): show exactly what landed, so the
-              next steps are a review rather than a retype. */}
-          {importOutcome && (
-            <div className="mb-6">
-              <ImportSummary outcome={importOutcome} />
-            </div>
+          {/*
+            WS5/E051 — what landed is now ONE line, not a panel. The prose
+            "Here's What We Captured" box plus its separate "Needs your
+            attention" list said, at length, what the sections below already show
+            by simply being filled in. The gaps that box carried are routed to the
+            sections they belong to instead (see `gapsFor`), where they are next
+            to the field that fixes them.
+          */}
+          {importOutcome && capturedLine(importOutcome) && (
+            <p className="mb-6 text-[14.5px] text-ink-2">
+              {capturedLine(importOutcome)}
+            </p>
           )}
 
           {/*
@@ -1043,19 +1052,68 @@ export default function JoinProviderPage() {
             `hasProfileData`, and the manual path lands straight on this editor.
           */}
           {hasProfileData && (
-            <section className="mt-10 border-t border-line pt-8">
-              <h2 className="text-[17px]">Your Work History</h2>
-              <p className="mb-5 mt-1.5 text-[14.5px] text-ink-2">
-                Providers who add work experience and projects are twice as likely
-                to win work. Click an employer to add the projects you delivered
-                there.
-              </p>
-              <EmployersStep
-                employers={profile.employers}
-                onChanged={(employers) => setProfile((p) => ({ ...p, employers }))}
-                onError={setError}
-              />
-            </section>
+            <div className="mt-8">
+              <ProfileCard
+                title="Work History"
+                edit={
+                  <button
+                    type="button"
+                    onClick={() => setEditingWork((v) => !v)}
+                    className="text-[14px] font-bold text-magenta transition-colors hover:text-magenta-dark"
+                  >
+                    {editingWork ? "Done" : "✏️ Edit"}
+                  </button>
+                }
+              >
+                {/* Import gaps land HERE, beside the thing they are about. */}
+                {gapsFor(importOutcome, "work").map((g) => (
+                  <p
+                    key={g}
+                    className="mb-3 rounded-[10px] border border-amber-500/30 bg-amber-50/60 px-3 py-2 text-[13.5px] text-ink-2"
+                  >
+                    {g}
+                  </p>
+                ))}
+
+                {editingWork ? (
+                  <EmployersStep
+                    employers={profile.employers}
+                    onChanged={(employers) =>
+                      setProfile((p) => ({ ...p, employers }))
+                    }
+                    onError={setError}
+                  />
+                ) : (
+                  /*
+                    E084 — the SAME `WorkHistoryBody` the final Review and the
+                    public profile use, so this surface cannot drift from them
+                    again. It also inherits E085 for free: the entry component
+                    clamps long descriptions behind "Read More", which is what
+                    stops an over-extracted import (the Medlinq.ai description in
+                    the walk) running the length of the page.
+                  */
+                  <WorkHistoryBody
+                    employers={profile.employers}
+                    // Without this the Projects disclosure resolves to nothing
+                    // and greys out on every entry: WorkHistoryBody matches an
+                    // employer's nested project IDS against this flat list, so
+                    // omitting it silently empties the link rather than erroring.
+                    projects={profile.projects}
+                    empty="No work history yet. Providers who add work experience and projects are twice as likely to win work."
+                  />
+                )}
+              </ProfileCard>
+
+              {gapsFor(importOutcome, "other").length > 0 && (
+                <ul className="mt-4 space-y-1.5">
+                  {gapsFor(importOutcome, "other").map((g) => (
+                    <li key={g} className="text-[13.5px] text-ink-2">
+                      • {g}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           )}
 
           <ResumeUploadModal
@@ -2568,59 +2626,47 @@ function MethodCard({
  * the counts and the gaps immediately after the upload — rather than only on
  * the final review page — tells the user what they still need to touch.
  */
-function ImportSummary({ outcome }: { outcome: ImportOutcome }) {
+/**
+ * One sentence naming what the import filled in (WS5/E051).
+ *
+ * Replaces the "Here's What We Captured" panel. That panel listed the counts in
+ * prose ABOVE sections that were already showing the same information by being
+ * populated — the user read it twice, once as a claim and once as a fact.
+ */
+function capturedLine(outcome: ImportOutcome): string | null {
   const a = outcome.applied;
-  const captured: string[] = [];
-  if (a.headline) captured.push("your title");
-  if (a.overview) captured.push("your bio");
-  if (a.experiences) captured.push(`${a.experiences} role${a.experiences === 1 ? "" : "s"}`);
+  const bits: string[] = [];
+  if (a.headline) bits.push("your title");
+  if (a.overview) bits.push("your bio");
+  if (a.experiences) bits.push(`${a.experiences} role${a.experiences === 1 ? "" : "s"}`);
   if (a.education)
-    captured.push(`${a.education} education entr${a.education === 1 ? "y" : "ies"}`);
+    bits.push(`${a.education} education entr${a.education === 1 ? "y" : "ies"}`);
   if (a.skillsMatched)
-    captured.push(`${a.skillsMatched} skill${a.skillsMatched === 1 ? "" : "s"}`);
+    bits.push(`${a.skillsMatched} skill${a.skillsMatched === 1 ? "" : "s"}`);
   if (a.languages)
-    captured.push(`${a.languages} language${a.languages === 1 ? "" : "s"}`);
+    bits.push(`${a.languages} language${a.languages === 1 ? "" : "s"}`);
+  if (bits.length === 0) {
+    return "We couldn't pull anything usable out of that file — add your details below.";
+  }
+  return `We filled in ${bits.join(", ")}. Check it over and fix anything that's wrong.`;
+}
 
-  return (
-    <div className="rounded-brand border border-line p-5">
-      <h2 className="text-[16px] font-bold">Here&apos;s What We Captured</h2>
-      {captured.length > 0 ? (
-        <p className="mt-1.5 text-[14.5px] text-ink-2">
-          We filled in {captured.join(", ")}. Continue through the next steps to
-          confirm or fix anything.
-        </p>
-      ) : (
-        <p className="mt-1.5 text-[14.5px] text-ink-2">
-          We couldn&apos;t pull anything usable out of that file — the steps
-          ahead will let you enter your details directly.
-        </p>
-      )}
-
-      {a.skillsMatchedNames.length > 0 && (
-        <div className="mt-3 flex flex-wrap gap-2">
-          {a.skillsMatchedNames.slice(0, 12).map((s) => (
-            <span
-              key={s}
-              className="rounded-full border border-line px-3 py-1 text-[13px] font-semibold text-ink-2"
-            >
-              {s}
-            </span>
-          ))}
-        </div>
-      )}
-
-      {outcome.gaps.length > 0 && (
-        <div className="mt-4 rounded-[10px] border border-amber-500/30 bg-amber-50/60 p-4">
-          <p className="text-[14px] font-bold">Needs your attention</p>
-          <ul className="mt-1.5 list-disc space-y-1 pl-5 text-[13.5px] text-ink-2">
-            {outcome.gaps.map((g, i) => (
-              <li key={i}>{g}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
-  );
+/**
+ * Route an import gap to the section that can fix it (WS5/E051).
+ *
+ * The gaps used to pile into one "Needs your attention" list sitting apart from
+ * every field it referred to, which made each item a search task. The parser
+ * emits them as sentences, so they are matched on the noun they mention rather
+ * than by a code the parser does not carry — imperfect by construction, so
+ * anything unmatched still surfaces, just at the bottom rather than not at all.
+ */
+function gapsFor(
+  outcome: ImportOutcome | null,
+  where: "work" | "other"
+): string[] {
+  const gaps = outcome?.gaps ?? [];
+  const isWork = (g: string) => /employer|job|role|title|dates?|position|experience/i.test(g);
+  return where === "work" ? gaps.filter(isWork) : gaps.filter((g) => !isWork(g));
 }
 
 function Row({
