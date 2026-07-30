@@ -3,6 +3,7 @@ import { isMarketplaceVisible } from "@/lib/access";
 import { VISIBILITY_THRESHOLD } from "@/lib/completeness";
 import { listPublishedPackages } from "@/lib/packages";
 import { toView as toArtifactView } from "@/lib/artifacts";
+import { viewerIsPlus, contactVisibility } from "@/lib/plus";
 
 /**
  * The full provider Profile View (brief_S / E037) — the Upwork-style page that
@@ -16,7 +17,11 @@ import { toView as toArtifactView } from "@/lib/artifacts";
  */
 export async function getProviderProfileView(
   profileId: string,
-  opts: { viewerUserId?: string } = {}
+  opts: {
+    viewerUserId?: string;
+    /** Full viewer, when available — needed for the WS5 Plus gate. */
+    viewer?: import("@/lib/access").Viewer | null;
+  } = {}
 ) {
   const profile = await prisma.providerProfile.findUnique({
     where: { id: profileId },
@@ -96,6 +101,14 @@ export async function getProviderProfileView(
   // live. Drafts are managed at /settings/packages.
   const packages = await listPublishedPackages(profile.id);
 
+  /**
+   * WS5 — the Plus gate is applied HERE, at the read, so a non-Plus viewer's
+   * payload simply does not contain the contact address. See lib/plus.ts.
+   */
+  const isPlus = await viewerIsPlus(opts.viewer ?? null);
+  const gateContact = (email: string | null | undefined) =>
+    contactVisibility({ isOwner, isPlus, contactEmail: email });
+
   const addr = profile.person.site?.addresses?.[0] ?? null;
   const location =
     [addr?.city, addr?.state, addr?.country].filter(Boolean).join(", ") || null;
@@ -110,6 +123,7 @@ export async function getProviderProfileView(
     isOwner,
     validated: profile.validation_status === "VALIDATED",
     visible: isMarketplaceVisible(profile),
+    viewerIsPlus: isPlus,
     completeness: profile.completeness,
     visibilityThreshold: VISIBILITY_THRESHOLD,
     paused: profile.paused_at != null,
@@ -204,6 +218,7 @@ export async function getProviderProfileView(
       applications: p.applications.map((a) => a.application),
       outcomes: p.outcomes.map((o) => ({ id: o.id, label: o.label, value: o.value })),
       artifacts: p.artifacts.map(toArtifactView),
+      ...gateContact(p.contact_email),
     })),
     // E042 — Employer is the ONE work-history model; the duplicate flat
     // WorkExperience rendering is gone.
@@ -218,6 +233,7 @@ export async function getProviderProfileView(
       startDate: e.start_date ? e.start_date.toISOString().slice(0, 10) : null,
       endDate: e.end_date ? e.end_date.toISOString().slice(0, 10) : null,
       artifacts: e.artifacts.map(toArtifactView),
+      ...gateContact(e.contact_email),
       projects: e.projects.map((pr) => ({
         id: pr.id,
         name: pr.name,
@@ -259,11 +275,14 @@ export type ProviderProfileView = NonNullable<
 >;
 
 /** The signed-in provider's own profile view, or null if they aren't one. */
-export async function getOwnProviderProfileView(userId: string) {
+export async function getOwnProviderProfileView(
+  userId: string,
+  viewer?: import("@/lib/access").Viewer | null
+) {
   const profile = await prisma.providerProfile.findFirst({
     where: { person: { user_id: userId } },
     select: { id: true },
   });
   if (!profile) return null;
-  return getProviderProfileView(profile.id, { viewerUserId: userId });
+  return getProviderProfileView(profile.id, { viewerUserId: userId, viewer });
 }

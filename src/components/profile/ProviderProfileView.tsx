@@ -6,6 +6,7 @@ import {
   ProfileHero,
   SoloProjectsBody,
   ArtifactsBody,
+  ContactBody,
   LocationBody,
   Empty,
   EDIT_CLASS,
@@ -138,6 +139,17 @@ export function ProviderProfileViewPage({ p }: { p: ProviderProfileView }) {
               employers={p.employers}
               projects={p.projects}
               isOwner={p.isOwner}
+              contactFor={(id) => {
+                const e = p.employers.find((x) => x.id === id);
+                if (!e?.hasContact) return null;
+                return (
+                  <ContactBody
+                    contactEmail={e.contactEmail}
+                    locked={e.locked}
+                    label="Employer Contact"
+                  />
+                );
+              }}
               artifactsFor={(id) => {
                 const e = p.employers.find((x) => x.id === id);
                 return e?.artifacts?.length ? (

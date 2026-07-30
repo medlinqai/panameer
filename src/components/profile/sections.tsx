@@ -163,7 +163,10 @@ export type EmployerItem = {
   isCurrent?: boolean;
   projects?: { id: string; name: string; description?: string | null }[];
   artifacts?: ArtifactItem[];
+  /** WS5 — present only when the viewer may see it; see lib/plus.ts. */
   contactEmail?: string | null;
+  hasContact?: boolean;
+  locked?: boolean;
 };
 export type ProjectItem = {
   id: string;
@@ -188,7 +191,10 @@ export type ProjectItem = {
   applications?: { id: string; name: string }[];
   outcomes?: { id?: string; label: string; value: string }[];
   artifacts?: ArtifactItem[];
+  /** WS5 — present only when the viewer may see it; see lib/plus.ts. */
   contactEmail?: string | null;
+  hasContact?: boolean;
+  locked?: boolean;
 };
 
 /**
@@ -799,6 +805,15 @@ export function ProjectCard({
         </ul>
       )}
 
+      {(p.hasContact || p.contactEmail) && (
+        <div className="mt-3">
+          <ContactBody
+            contactEmail={p.contactEmail}
+            locked={p.locked}
+          />
+        </div>
+      )}
+
       {(p.artifacts?.length ?? 0) > 0 && (
         <div className="mt-3 border-t border-line pt-3">
           <p className="mb-1.5 text-[12px] font-bold uppercase tracking-wide text-ink-2">
@@ -943,6 +958,52 @@ export function ArtifactsBody({ artifacts }: { artifacts: ArtifactItem[] }) {
         )
       )}
     </ul>
+  );
+}
+
+/**
+ * The Validation Contact — Plus's first lever (PJv2 WS5 / E078b).
+ *
+ * Free tier sees that a contact EXISTS and is invited to upgrade; Plus sees the
+ * address. The distinction is enforced server-side (lib/plus.ts) — by the time
+ * this renders, a locked contact simply has no address to leak, so this component
+ * cannot accidentally show one.
+ */
+export function ContactBody({
+  contactEmail,
+  locked,
+  label = "Validation Contact",
+}: {
+  contactEmail?: string | null;
+  locked?: boolean;
+  label?: string;
+}) {
+  if (locked) {
+    return (
+      <div className="rounded-[12px] border border-magenta/30 bg-magenta/[0.05] p-3">
+        <p className="text-[13.5px] font-bold text-magenta-dark">
+          🔒 Upgrade to Plus to reveal the validation contact
+        </p>
+        <p className="mt-1 text-[13px] text-ink-2">
+          Plus members see the named person who can vouch for this work — a warm
+          reference, not a cold outreach.
+        </p>
+      </div>
+    );
+  }
+  if (!contactEmail) return null;
+  return (
+    <div className="rounded-[12px] border border-line bg-bg-soft/60 p-3">
+      <p className="text-[12px] font-bold uppercase tracking-wide text-ink-2">
+        {label}
+      </p>
+      <a
+        href={`mailto:${contactEmail}`}
+        className="text-[14px] font-bold text-magenta hover:text-magenta-dark"
+      >
+        {contactEmail}
+      </a>
+    </div>
   );
 }
 

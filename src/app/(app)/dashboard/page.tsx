@@ -34,7 +34,7 @@ export default async function DashboardPage() {
     );
   }
 
-  const profile = await getOwnProviderProfileView(viewer.userId);
+  const profile = await getOwnProviderProfileView(viewer.userId, viewer);
   if (profile) return <ProviderProfileViewPage p={profile} />;
 
   // --- Not a provider: buyer / unfinished account ---------------------------
