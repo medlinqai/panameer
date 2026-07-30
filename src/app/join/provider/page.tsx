@@ -143,7 +143,7 @@ const STEP_LABELS: Record<Step, { stepper: string }> = {
   languages: { stepper: "Your Languages" },
   bio: { stepper: "Your Bio" },
   rate: { stepper: "Your Rate" },
-  picture: { stepper: "Your Picture" },
+  picture: { stepper: "Photo & Details" },
   finish: { stepper: "Review Your Profile" },
 };
 
@@ -671,7 +671,16 @@ export default function JoinProviderPage() {
     if (stepIndex > 0) goTo(steps[stepIndex - 1]);
   };
 
-  /** Scroll + focus one of the review page's identity inputs (`review-<field>`). */
+  /**
+   * The address draft. Hoisted to component scope in WS8 — the Photo & Details
+   * step and the Review both read it now, and a copy per case is how the two
+   * surfaces would start disagreeing about what is stored.
+   */
+  const addr = profile.address ?? emptyAddress(acct.country);
+  const setAddr = (patch: Partial<AddressDraft>) =>
+    setProfile((p) => ({ ...p, address: { ...addr, ...patch } }));
+
+  /** Scroll + focus one of the identity inputs (`review-<field>`). */
   const focusReviewField = (field: string) => {
     const el = document.getElementById(`review-${field}`);
     el?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -2011,17 +2020,55 @@ export default function JoinProviderPage() {
     // worth 10 completeness points and is the single biggest driver of whether
     // a buyer opens a profile, so it gets asked for explicitly — and stays
     // skippable, because nobody should be blocked on finding a headshot.
-    case "picture":
+    // ---- 9/10 — Photo & Details: the WRAPUP step (WS8/E088) -----------
+    case "picture": {
+      const wrapupDobProblem = dobError(profile.dateOfBirth);
+      const wrapupReady =
+        Boolean(profile.photoUrl) &&
+        Boolean(profile.dateOfBirth) &&
+        !wrapupDobProblem &&
+        phoneInput.trim() !== "";
+
+      /**
+       * Saves BOTH halves. The photo is its own step payload; date of birth,
+       * phone and address go through the `finish` handler, which is where those
+       * columns are written. Two calls rather than one because the step handlers
+       * are keyed by step, and inventing a third payload shape to merge them
+       * would put the same three columns behind two different writers.
+       */
+      const saveWrapup = async () => {
+        const dobProblem = dobError(profile.dateOfBirth);
+        if (dobProblem) {
+          setDobMessage(dobProblem);
+          focusReviewField("dateOfBirth");
+          return;
+        }
+        setDobMessage(null);
+        if (!(await postStep("picture", { photoUrl: profile.photoUrl ?? null }))) {
+          return;
+        }
+        // E090's lesson, applied here from the start: check the result and stop,
+        // rather than moving on and reporting a later failure's message.
+        if (
+          !(await postStep("finish", {
+            dateOfBirth: profile.dateOfBirth,
+            address: profile.address,
+            phone: phoneInput,
+          }))
+        ) {
+          return;
+        }
+        goNext();
+      };
+
       return (
         <WizardShell
           {...shell({
-            title: "Add a picture so buyers know who they're hiring",
+            title: "Last thing — your photo and a few details",
             subtitle:
-              "Profiles with a photo get noticeably more responses. You can change it any time.",
-            secondaryLabel: "Skip for Now",
-            onSecondary: goNext,
-            onContinue: () =>
-              saveAnd("picture", { photoUrl: profile.photoUrl ?? null }),
+              "Profiles with a photo get noticeably more responses. We need your date of birth, phone and address too; they stay private and are what make your profile visible to buyers.",
+            onContinue: saveWrapup,
+            continueDisabled: !wrapupReady,
           })}
         >
           {error && <Notice>{error}</Notice>}
@@ -2055,6 +2102,87 @@ export default function JoinProviderPage() {
             </p>
           </div>
 
+          {/*
+            WS8/E088 — the "You're Done!" details, now IN the counted flow. They
+            used to be collected after the last numbered step, so two required
+            things sat outside the 10 the provider was being counted through, and
+            a returning provider was never resumed onto them. Upwork-style: the
+            photo step is the wrapup catch-all.
+          */}
+          <div className="mt-6">
+            <ProfileCard title="Your Details">
+              <div className="space-y-3">
+                <Field label="Date of Birth *">
+                  <TextInput
+                    id="review-dateOfBirth"
+                    type="date"
+                    value={profile.dateOfBirth ?? ""}
+                    aria-invalid={dobMessage ? true : undefined}
+                    aria-describedby={
+                      dobMessage ? "review-dateOfBirth-error" : undefined
+                    }
+                    className={
+                      dobMessage ? "border-red-600 focus:border-red-600" : ""
+                    }
+                    onChange={(e) => {
+                      const v = e.target.value || null;
+                      setProfile((p) => ({ ...p, dateOfBirth: v }));
+                      setDobMessage(dobError(v));
+                    }}
+                  />
+                  {dobMessage && (
+                    <span
+                      id="review-dateOfBirth-error"
+                      role="alert"
+                      className="mt-1.5 block text-[13px] font-semibold text-red-700"
+                    >
+                      {dobMessage}
+                    </span>
+                  )}
+                </Field>
+                <Field label="Phone *">
+                  <TextInput
+                    id="review-phone"
+                    type="tel"
+                    value={phoneInput}
+                    onChange={(e) => setPhoneInput(e.target.value)}
+                    placeholder="+1 555 010 4477"
+                  />
+                </Field>
+                <Field label="Street Address">
+                  <TextInput
+                    id="review-line1"
+                    value={addr.line1}
+                    onChange={(e) => setAddr({ line1: e.target.value })}
+                  />
+                </Field>
+                <Field label="City">
+                  <TextInput
+                    id="review-city"
+                    value={addr.city}
+                    onChange={(e) => setAddr({ city: e.target.value })}
+                  />
+                </Field>
+                <div className="grid grid-cols-2 gap-2">
+                  <Field label="State">
+                    <TextInput
+                      id="review-state"
+                      value={addr.state}
+                      onChange={(e) => setAddr({ state: e.target.value })}
+                    />
+                  </Field>
+                  <Field label="ZIP">
+                    <TextInput
+                      id="review-postalCode"
+                      value={addr.postalCode}
+                      onChange={(e) => setAddr({ postalCode: e.target.value })}
+                    />
+                  </Field>
+                </div>
+              </div>
+            </ProfileCard>
+          </div>
+
           <PhotoCropModal
             open={photoModal}
             onClose={() => setPhotoModal(false)}
@@ -2062,6 +2190,7 @@ export default function JoinProviderPage() {
           />
         </WizardShell>
       );
+    }
 
     // ---- 13/13 — Review + publish (E035, rebuilt by brief_X / E056) ----
     //
@@ -2077,9 +2206,6 @@ export default function JoinProviderPage() {
     // Boost, Buy connects, Availability badge) and without Packages: those sell
     // a profile that is already live.
     case "finish": {
-      const addr = profile.address ?? emptyAddress(acct.country);
-      const setAddr = (patch: Partial<AddressDraft>) =>
-        setProfile((p) => ({ ...p, address: { ...addr, ...patch } }));
       const { youGet } = rateBreakdown(
         profile.hourlyRateCents,
         profile.serviceFeeBps
@@ -2122,6 +2248,9 @@ export default function JoinProviderPage() {
             setCertSignal((n) => n + 1);
             break;
           case "field": {
+            // WS8 — these inputs live on the Photo & Details step now, so the
+            // click-to-fix has to travel there before it can focus anything.
+            goTo("picture");
             const el = document.getElementById(`review-${fix.field}`);
             el?.scrollIntoView({ behavior: "smooth", block: "center" });
             // The scroll is what makes the fix findable; the focus is what
@@ -2297,92 +2426,30 @@ export default function JoinProviderPage() {
               </ProfileCard>
             </div>
 
-            {/* Review-only: the required identity fields have no published
-                counterpart, so they sit after the preview rather than in a rail
-                the mockup no longer has. */}
+            {/*
+              WS8/E088 — the identity FIELDS moved to the Picture step, which is
+              now the wrapup. What stays here is the read-only status: "is my
+              email verified" belongs on the page you publish from.
+            */}
             <div className="mt-5">
-                <ProfileCard title="Verify Identity">
-                  <div className="space-y-3">
-                    <Field label="Date of Birth *">
-                      <TextInput
-                        id="review-dateOfBirth"
-                        type="date"
-                        value={profile.dateOfBirth ?? ""}
-                        aria-invalid={dobMessage ? true : undefined}
-                        aria-describedby={
-                          dobMessage ? "review-dateOfBirth-error" : undefined
-                        }
-                        className={
-                          dobMessage ? "border-red-600 focus:border-red-600" : ""
-                        }
-                        onChange={(e) => {
-                          const v = e.target.value || null;
-                          setProfile((p) => ({ ...p, dateOfBirth: v }));
-                          // Re-check as they type: an error that only clears on
-                          // the next submit trains people to ignore it.
-                          setDobMessage(dobError(v));
-                        }}
-                      />
-                      {dobMessage && (
-                        <span
-                          id="review-dateOfBirth-error"
-                          role="alert"
-                          className="mt-1.5 block text-[13px] font-semibold text-red-700"
-                        >
-                          {dobMessage}
-                        </span>
-                      )}
-                    </Field>
-                    <Field label="Phone *">
-                      <TextInput
-                        id="review-phone"
-                        type="tel"
-                        value={phoneInput}
-                        onChange={(e) => setPhoneInput(e.target.value)}
-                        placeholder="+1 555 010 4477"
-                      />
-                    </Field>
-                    <Field label="Street Address">
-                      <TextInput
-                        id="review-line1"
-                        value={addr.line1}
-                        onChange={(e) => setAddr({ line1: e.target.value })}
-                      />
-                    </Field>
-                    <Field label="City">
-                      <TextInput
-                        id="review-city"
-                        value={addr.city}
-                        onChange={(e) => setAddr({ city: e.target.value })}
-                      />
-                    </Field>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Field label="State">
-                        <TextInput
-                          id="review-state"
-                          value={addr.state}
-                          onChange={(e) => setAddr({ state: e.target.value })}
-                        />
-                      </Field>
-                      <Field label="ZIP">
-                        <TextInput
-                          id="review-postalCode"
-                          value={addr.postalCode}
-                          onChange={(e) =>
-                            setAddr({ postalCode: e.target.value })
-                          }
-                        />
-                      </Field>
-                    </div>
-                  </div>
-                  <div className="mt-4 border-t border-line pt-3">
-                    <VerificationsBody
-                      emailVerified
-                      phoneOnFile={Boolean(phoneInput.trim())}
-                      phoneVerified={profile.phoneVerified}
-                    />
-                  </div>
-                </ProfileCard>
+              <ProfileCard title="Verify Identity">
+                <VerificationsBody
+                  emailVerified
+                  phoneOnFile={Boolean(phoneInput.trim())}
+                  phoneVerified={profile.phoneVerified}
+                />
+                <p className="mt-3 text-[13.5px] text-ink-2">
+                  Date of birth, phone and address are collected on the{" "}
+                  <button
+                    type="button"
+                    onClick={() => goTo("picture")}
+                    className="font-bold text-magenta underline underline-offset-4 hover:text-magenta-dark"
+                  >
+                    Photo &amp; Details
+                  </button>{" "}
+                  step.
+                </p>
+              </ProfileCard>
             </div>
           </div>
 

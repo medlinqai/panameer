@@ -136,7 +136,6 @@ const OPTIONAL_STEPS = new Set<ProviderStep>([
   "tell_us",
   "specializations", // brief_R — a provider may legitimately have none
   "education",
-  "picture", //        nudged on the review, but never blocks progress
 ]);
 
 /**
@@ -568,7 +567,11 @@ function computeResumeStep(p: Awaited<ReturnType<typeof loadDraft>>): ProviderSt
     bio: !!pp.overview && pp.overview.trim().length >= MIN_BIO_CHARS,
     // A range now (E078c); either end being set means the step was answered.
     rate: pp.rate_min_cents != null || pp.hourly_rate_cents != null,
-    picture: true, //        optional
+    // WS8/E088 — the wrapup step, and REQUIRED now: it collects the photo plus
+    // date of birth, phone and address. It was optional, so a returning provider
+    // was never resumed onto it and first met those fields at Review, which is
+    // also why they had drifted onto a page outside the counted ten.
+    picture: p.photo_url != null && pp.date_of_birth != null && p.phone != null,
     finish: pp.onboarding_completed_at != null,
   };
   // Walk the list THIS profile actually has, so a recruiter is never parked on
