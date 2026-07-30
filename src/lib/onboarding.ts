@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { dobError } from "@/lib/dob";
 import { projectToCard } from "@/lib/project-card";
 import { toView as toArtifactView } from "@/lib/artifacts";
 import { hashPassword } from "@/lib/password";
@@ -1276,22 +1277,13 @@ export async function applyProviderSection(
       // This persists DOB + address and nothing else, so a half-filled finish
       // page still saves. Publishing is a SEPARATE call (`publishProfile`),
       // which is where the required-field gate lives.
+      // E090 — the age rule now comes from `lib/dob.ts`, the SAME module the
+      // review field validates with, so the client cannot allow a value the
+      // server will reject. This throw is still authoritative; the client check
+      // only spares the user a round trip.
+      const dobMessage = dobError(data.dateOfBirth as string | null | undefined);
+      if (dobMessage) throw new OnboardingError(dobMessage, "INVALID");
       const dob = data.dateOfBirth ? new Date(data.dateOfBirth) : null;
-      if (data.dateOfBirth && Number.isNaN(dob!.getTime())) {
-        throw new OnboardingError("That date of birth isn't valid", "INVALID");
-      }
-      if (dob) {
-        const age = yearsSince(dob);
-        if (age < 18) {
-          throw new OnboardingError(
-            "You must be at least 18 to provide services on Panameer.",
-            "INVALID"
-          );
-        }
-        if (age > 120) {
-          throw new OnboardingError("That date of birth isn't valid", "INVALID");
-        }
-      }
 
       await prisma.providerProfile.update({
         where: { id: profileId },
@@ -1426,15 +1418,6 @@ function toYear(v: unknown): number | null {
   // Allow a decade of future dates for in-progress / expected graduation.
   if (n < 1900 || n > thisYear + 10) return null;
   return n;
-}
-
-/** Whole years elapsed since `d`. */
-function yearsSince(d: Date): number {
-  const now = new Date();
-  let age = now.getFullYear() - d.getFullYear();
-  const m = now.getMonth() - d.getMonth();
-  if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age--;
-  return age;
 }
 
 /**

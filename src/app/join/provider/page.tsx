@@ -50,6 +50,7 @@ import {
   ProjectsBody,
   WorkHistoryBody,
 } from "@/components/profile/sections";
+import { dobError } from "@/lib/dob";
 import {
   reviewItems,
   splitReviewItems,
@@ -384,6 +385,13 @@ export default function JoinProviderPage() {
   const [screen, setScreen] = useState<Screen>("signup");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /**
+   * E090 — the DOB's own error, shown ON the field. A top-of-page Notice was the
+   * only surface before, and the next error to arrive replaced it, so the one
+   * message that named the actual problem was the one the user never got to
+   * read. Field-level errors survive because nothing else writes to them.
+   */
+  const [dobMessage, setDobMessage] = useState<string | null>(null);
   const [notProvider, setNotProvider] = useState(false);
 
   const [acct, setAcct] = useState<SignUpValues>({
@@ -655,6 +663,13 @@ export default function JoinProviderPage() {
     if (stepIndex > 0) goTo(steps[stepIndex - 1]);
   };
 
+  /** Scroll + focus one of the review page's identity inputs (`review-<field>`). */
+  const focusReviewField = (field: string) => {
+    const el = document.getElementById(`review-${field}`);
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    window.setTimeout(() => (el as HTMLInputElement | null)?.focus(), 350);
+  };
+
   const postStep = async (step: Step, data: unknown): Promise<boolean> => {
     setBusy(true);
     setError(null);
@@ -769,16 +784,39 @@ export default function JoinProviderPage() {
 
   const publish = async () => {
     setError(null);
+
+    // E090 — validate the DOB BEFORE anything is sent. Same module the server
+    // uses, so a value that passes here cannot be refused there.
+    const dobProblem = dobError(profile.dateOfBirth);
+    if (dobProblem) {
+      setDobMessage(dobProblem);
+      focusReviewField("dateOfBirth");
+      return;
+    }
+    setDobMessage(null);
+
     setBusy(true);
     try {
-      // Persist whatever the finish page holds before the required-field gate.
-      await postStep("finish", {
+      /*
+        E090 — the save's RESULT is now checked. This previously ran as a
+        fire-and-forget `await postStep(...)`, so when the finish handler threw
+        (an invalid DOB aborts it before it writes anything — DOB, phone AND
+        address all fail together) the flow carried straight on to /publish. That
+        call then failed for a DIFFERENT reason — "add your date of birth", the
+        gate reporting the value that never got saved — and its message
+        overwrote the real one. The section looked like it "didn't save" and the
+        stated cause was wrong. Stop here and let postStep's error stand.
+      */
+      const saved = await postStep("finish", {
         dateOfBirth: profile.dateOfBirth,
         address: profile.address,
         // E036 — phone verification is stubbed: the number is saved with the
         // rest of the details and publishing no longer waits on an SMS code.
         phone: phoneInput,
       });
+      // postStep has already put the server's message in `error`. Returning
+      // here is what stops it being replaced by the publish call's message.
+      if (!saved) return;
       const r = await fetch("/api/onboarding/provider/publish", { method: "POST" });
       const body = await r.json().catch(() => ({}));
       if (!r.ok) {
@@ -2151,13 +2189,30 @@ export default function JoinProviderPage() {
                         id="review-dateOfBirth"
                         type="date"
                         value={profile.dateOfBirth ?? ""}
-                        onChange={(e) =>
-                          setProfile((p) => ({
-                            ...p,
-                            dateOfBirth: e.target.value || null,
-                          }))
+                        aria-invalid={dobMessage ? true : undefined}
+                        aria-describedby={
+                          dobMessage ? "review-dateOfBirth-error" : undefined
                         }
+                        className={
+                          dobMessage ? "border-red-600 focus:border-red-600" : ""
+                        }
+                        onChange={(e) => {
+                          const v = e.target.value || null;
+                          setProfile((p) => ({ ...p, dateOfBirth: v }));
+                          // Re-check as they type: an error that only clears on
+                          // the next submit trains people to ignore it.
+                          setDobMessage(dobError(v));
+                        }}
                       />
+                      {dobMessage && (
+                        <span
+                          id="review-dateOfBirth-error"
+                          role="alert"
+                          className="mt-1.5 block text-[13px] font-semibold text-red-700"
+                        >
+                          {dobMessage}
+                        </span>
+                      )}
                     </Field>
                     <Field label="Phone *">
                       <TextInput
