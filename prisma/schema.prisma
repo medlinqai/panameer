@@ -517,7 +517,21 @@ model ProviderProfile {
   remote_rate_cents Int?
   /// The single hourly rate the client sees (brief_P / E018). Integer cents.
   /// `onsite_/remote_rate_cents` predate this (brief_E) and stay for Settings.
+  ///
+  /// SUPERSEDED for display by the RANGE below (PJv2 WS0 / E078c) but kept
+  /// written and in sync (= `rate_min_cents`), because the publish gate and the
+  /// completeness score both read it. Removing it is a separate migration, not
+  /// something to smuggle into a layout brief.
   hourly_rate_cents Int?
+  /// The rate RANGE the provider advertises (PJv2 WS0 / E078c). A single number
+  /// forced a consultant to pick one figure for work that genuinely varies by
+  /// engagement; a range is what they actually quote. Integer cents, and the
+  /// "You'll get" service-fee figure is computed on both ends.
+  ///
+  /// Migration set min = max = the old single rate, so nobody's published rate
+  /// changed meaning on deploy.
+  rate_min_cents    Int?
+  rate_max_cents    Int?
   /// Platform service fee as BASIS POINTS (1000 = 10%). Integer so the fee and
   /// the "You'll get" figure are computed without ever touching a float.
   service_fee_bps  Int      @default(1000)
@@ -748,11 +762,52 @@ model Employer {
   created_at          DateTime @default(now())
   updated_at          DateTime @updatedAt
 
+  /// Someone at the employer who can vouch for the work (PJv2 WS0 / E078b).
+  /// Powers the Work-History "Contact" link, which WS5 gates behind Plus.
+  /// Projects carry their own `contact_email` + `client_domain` already; this is
+  /// the employer-level equivalent.
+  contact_email       String?
+
   providerProfile ProviderProfile @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
   projects        Project[]
+  artifacts       Artifact[]
 
   @@index([provider_profile_id])
   @@map("employers")
+}
+
+/// Proof of work attached to an Employer OR a Project (PJv2 WS0/WS4 / E078a).
+///
+/// Two shapes, one model: an UPLOAD (a file in the private `artifacts` bucket —
+/// object path, never a public URL, same rule as certificates and project docs)
+/// or a URL (a published case study, a repo, a talk). Exactly ONE owner FK is
+/// set; that is enforced in the write path rather than by a DB constraint
+/// Prisma can't express.
+model Artifact {
+  id          String       @id @default(uuid()) @db.Uuid
+  employer_id String?      @db.Uuid
+  project_id  String?      @db.Uuid
+  kind        ArtifactKind
+  /// Set when kind = UPLOAD. Object path in the PRIVATE `artifacts` bucket.
+  file_path   String?
+  /// Set when kind = URL.
+  url         String?
+  label       String
+  sort_order  Int          @default(100)
+  created_at  DateTime     @default(now())
+  updated_at  DateTime     @updatedAt
+
+  employer Employer? @relation(fields: [employer_id], references: [id], onDelete: Cascade)
+  project  Project?  @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@index([employer_id])
+  @@index([project_id])
+  @@map("artifacts")
+}
+
+enum ArtifactKind {
+  UPLOAD
+  URL
 }
 
 /// A delivered piece of work, done AT an employer.
@@ -889,6 +944,7 @@ model Project {
   applications    ProjectApplication[]
   outcomes        ProjectOutcome[]
   validations     ProjectValidation[]
+  artifacts       Artifact[]
 
   @@index([provider_profile_id])
   @@index([employer_id])
