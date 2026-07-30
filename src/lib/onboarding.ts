@@ -1586,6 +1586,12 @@ export async function publishProfile(viewer: Viewer) {
   if (pp.languages.length === 0) missing.push("at least one language");
   if (!pp.date_of_birth) missing.push("your date of birth");
   if (!p.phone) missing.push("your phone number");
+  // WS7 addendum — a photo is REQUIRED to publish. It stays a scored
+  // completeness field (10 points, weights untouched), so this is a gate rule
+  // and not a scoring one: a photoless profile can still reach 100% and would
+  // otherwise have gone live faceless, which is the one thing buyers say they
+  // skip past. Mirrored in `review-validation.ts` — keep the two in lockstep.
+  if (!p.photo_url?.trim()) missing.push("a profile photo");
   // E036 — phone VERIFICATION is stubbed for now so a walk can complete without
   // SMS credentials. The number is still required; only the verified-ness is
   // waived. Restore this line when SMS is switched on (brief_P machinery is

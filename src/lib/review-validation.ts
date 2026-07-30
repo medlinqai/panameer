@@ -20,10 +20,16 @@
  * drifting apart shows up as a Publish button that is enabled and then fails,
  * which is worse than either behaviour on its own.
  *
- * Everything else the profile could want — photo, address, work history,
- * education, certifications, specializations, an un-dated role — is a CHANGE.
- * Those feed `completeness` (and so the 80% visibility threshold), but they
- * have never blocked publishing and this layer does not start.
+ * Everything else the profile could want — address, work history, education,
+ * certifications, specializations, an un-dated role — is a CHANGE. Those feed
+ * `completeness` (and so the 80% visibility threshold), but they have never
+ * blocked publishing and this layer does not start.
+ *
+ * The PHOTO is the exception, promoted to an ERROR in the WS7 addendum. It is
+ * still a 10-point scored field in `completeness.ts` and the weights there are
+ * untouched — a profile with no photo still scores 100. The requirement lives in
+ * the publish gate ALONE, which is the honest place for it: completeness answers
+ * "how strong is this profile", the gate answers "may it go live at all".
  * ---------------------------------------------------------------------------
  */
 
@@ -160,17 +166,16 @@ export function reviewItems(p: ReviewInput): ReviewItem[] {
       field: "phone",
     });
   }
-
-  // --- CHANGES — optional, and each one is worth money ---------------------
-  if (!p.photoUrl) {
-    chg(
-      "photo",
-      "Add a profile photo — buyers skip profiles without one.",
-      "Add photo",
-      { kind: "photo" }
-    );
+  // `.trim()` mirrors the server's `!p.photo_url?.trim()` exactly. Without it a
+  // whitespace-only value would enable Publish here and be refused there, which
+  // is the precise drift this file's header warns about.
+  if (!p.photoUrl?.trim()) {
+    err("photo", "Add a profile photo to publish.", "Add photo", {
+      kind: "photo",
+    });
   }
 
+  // --- CHANGES — optional, and each one is worth money ---------------------
   // The address is part of the completeness identity block (DOB + address +
   // phone) that carries 10 points toward the 80% visibility threshold, so a
   // missing one is worth flagging — but it has never blocked publishing.
