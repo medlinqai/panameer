@@ -53,7 +53,37 @@ const SECTION_PATTERNS: { key: Section; re: RegExp }[] = [
   { key: "languages", re: /^languages?\b/i },
   { key: "certifications", re: /^(certifications?|licenses?|licences?|accreditations?)\b/i },
   { key: "ignore", re: /^(interests|hobbies|references|publications|awards|volunteer|projects|contact|recommendations|accomplishments)\b/i },
+  /**
+   * PJv2 WS2 (E055) — SIDEBAR headings from two-column CVs.
+   *
+   * These were the whole 28-education bug: Scott's CV carries a left rail of
+   * "PRIOR ROLE-TYPES / SPECIALIZATIONS / INDUSTRY EXP / APPLICATIONS", none of
+   * which were recognised as headings — so whatever bucket was last active kept
+   * swallowing them, and a résumé with NO education section ended up with 28
+   * education entries. Recognising them is what stops the greedy swallow; they
+   * route to `ignore` because they duplicate axes the wizard captures properly
+   * (specializations, the RDS catalog).
+   */
+  { key: "ignore", re: /^(prior\s+)?role[\s-]?types?\b/i },
+  { key: "ignore", re: /^specializations?\b/i },
+  { key: "ignore", re: /^industr(y|ies)(\s+(exp|experience))?\b/i },
+  { key: "ignore", re: /^applications?\b/i },
+  { key: "ignore", re: /^(tools?|platforms?|systems?)\b/i },
+  { key: "ignore", re: /^(profile\s+)?highlights?\b/i },
 ];
+
+/**
+ * Sane caps (PJv2 WS2). A parser that reports 252 skills or 28 educations has
+ * not found 252 skills — it has lost its place. Truncation is always REPORTED
+ * in `gaps`, never silent, so "we kept the first N" is visible rather than
+ * looking like a complete import.
+ */
+const CAPS = {
+  experiences: 20,
+  education: 12,
+  skills: 40,
+  languages: 12,
+} as const;
 
 type Section =
   | "summary"
@@ -193,8 +223,31 @@ function classify(line: string): Section | null {
  * Parse extracted résumé text into profile data.
  * `text` is the output of `extractText`.
  */
+/**
+ * Split a two-column line back into two logical lines (PJv2 WS2 / E055).
+ *
+ * PDF text extraction reads across the page, so a two-column CV emits
+ * "SPECIALIZATIONS        Led the Oracle Cloud rollout" as ONE line — the
+ * sidebar heading and the body text concatenated, which is why headings stopped
+ * being recognised and content landed in the wrong section. A run of 3+ spaces
+ * is the reliable signature of that column gutter.
+ */
+function delinearize(line: string): string[] {
+  const parts = line.split(/\s{3,}/).map((x) => x.trim()).filter(Boolean);
+  // Only treat it as two columns when BOTH sides carry real content; a single
+  // trailing date ("Acme Consulting        2019 – Present") must stay one line
+  // or the employer loses its dates.
+  if (parts.length < 2) return [line];
+  const looksLikeDateTail = /^[\d(]|^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/i.test(parts[parts.length - 1]);
+  if (parts.length === 2 && looksLikeDateTail) return [line];
+  return parts;
+}
+
 export function parseResume(text: string): ParsedResume {
-  const rawLines = text.split("\n").map((l) => l.replace(/\s+$/, ""));
+  const rawLines = text
+    .split("\n")
+    .map((l) => l.replace(/\s+$/, ""))
+    .flatMap(delinearize);
   const lines = rawLines.filter((l) => l.trim() !== "");
 
   const gaps: string[] = [];
@@ -359,14 +412,79 @@ export function parseResume(text: string): ParsedResume {
   }
 
   // --- Skills / languages --------------------------------------------------
-  const splitList = (ls: string[]) =>
+  /**
+   * TOKEN SANITY (PJv2 WS2). Splitting a skills block on commas is right for
+   * "Requisitions, Sourcing, Payables" and catastrophic for a prose paragraph
+   * that happens to contain commas — that is where "252 skills" came from. A
+   * skill is a SHORT NOUN PHRASE, so anything sentence-shaped is rejected.
+   */
+  const isPlausibleSkill = (t: string): boolean => {
+    if (t.length < 2 || t.length > 60) return false;
+    if (!/[a-z]/i.test(t)) return false; // pure numbers / punctuation
+    // A skill is a few words, not a clause.
+    if (t.split(/\s+/).length > 6) return false;
+    // Sentence punctuation is a strong tell that this is prose.
+    if (/[.!?]$/.test(t) && !/\b[A-Z]\.$/.test(t)) return false;
+    // Dates, durations and bare years are not skills.
+    if (/^(19|20)\d{2}\b/.test(t)) return false;
+    if (/^\d+\s*(years?|yrs?|months?|\+)/i.test(t)) return false;
+    // Contact details leaking out of a header block.
+    if (/@|https?:\/\/|\+?\d[\d\s().-]{7,}/.test(t)) return false;
+    return true;
+  };
+
+  /** Clause fragments start with a connective; real skills don't. */
+  const STOPWORD_START =
+    /^(and|or|but|with|within|across|for|from|into|onto|to|of|in|on|at|by|as|the|a|an|plus|including|many|several|various|over|about)\b/i;
+
+  const splitList = (ls: string[], sane: (t: string) => boolean) =>
     ls
       .flatMap((l) => l.replace(BULLET, "").split(/[,;|•·]/))
-      .map((s) => s.trim())
-      .filter((s) => s.length >= 2 && s.length <= 60);
+      .map((x) => x.trim())
+      .filter((t) => !STOPWORD_START.test(t))
+      .filter(sane);
 
-  const skills = [...new Set(splitList(buckets.skills))];
-  const languages = [...new Set(splitList(buckets.languages))];
+  /**
+   * Is this block a LIST or is it PROSE?
+   *
+   * Both contain commas, so length is no help — a genuine 300-skill list is one
+   * very long line, and a paragraph can be short. What separates them is TOKEN
+   * SHAPE: split a list and you get many short tokens ("Payables", "Sourcing");
+   * split a paragraph and you get few long clause fragments ("programmes across
+   * fourteen countries"). If most tokens aren't short, this is prose, and the
+   * honest result is ZERO skills plus a note — never a page of junk (E051).
+   */
+  const isListLike = (tokens: string[]): boolean => {
+    if (tokens.length === 0) return false;
+    const short = tokens.filter((t) => t.split(/\s+/).length <= 3).length;
+    return short / tokens.length >= 0.6;
+  };
+
+  const skillTokens = splitList(buckets.skills, isPlausibleSkill);
+  let allSkills = [...new Set(skillTokens)];
+  if (allSkills.length > 0 && !isListLike(allSkills)) {
+    gaps.push(
+      "Your skills section reads as prose rather than a list, so we didn't guess at it — add your skills on the Role → Domain → Skills step."
+    );
+    allSkills = [];
+  }
+  const allLanguages = [...new Set(
+    splitList(buckets.languages, (t) => t.length >= 2 && t.length <= 40 && /[a-z]/i.test(t))
+  )];
+
+  // Caps, always REPORTED — a truncated import must never read as a complete one.
+  const skills = allSkills.slice(0, CAPS.skills);
+  if (allSkills.length > skills.length) {
+    gaps.push(
+      `We found ${allSkills.length} possible skills — too many to be right, so we kept the first ${skills.length}. Add any we missed on the skills step.`
+    );
+  }
+  const languages = allLanguages.slice(0, CAPS.languages);
+  if (allLanguages.length > languages.length) {
+    gaps.push(
+      `We kept the first ${languages.length} languages of ${allLanguages.length} found.`
+    );
+  }
 
   if (buckets.certifications.length > 0) {
     gaps.push(
@@ -386,13 +504,26 @@ export function parseResume(text: string): ParsedResume {
     );
   }
 
+  const cappedExperiences = experiences.slice(0, CAPS.experiences);
+  if (experiences.length > cappedExperiences.length) {
+    gaps.push(
+      `We found ${experiences.length} roles — more than a résumé usually lists, so we kept the first ${cappedExperiences.length}.`
+    );
+  }
+  const cappedEducation = education.slice(0, CAPS.education);
+  if (education.length > cappedEducation.length) {
+    gaps.push(
+      `We found ${education.length} education entries — that usually means a section ran together, so we kept the first ${cappedEducation.length}. Check them before publishing.`
+    );
+  }
+
   return {
     headline,
     overview,
     experienceLevel: inferred?.level ?? null,
     experienceYears: inferred?.years ?? null,
-    experiences,
-    education,
+    experiences: cappedExperiences,
+    education: cappedEducation,
     skills,
     languages,
     gaps,

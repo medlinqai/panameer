@@ -7,7 +7,8 @@ import { matchSkills } from "@/lib/resume/match";
 import type { Prisma } from "@prisma/client";
 
 /**
- * Apply a résumé / LinkedIn-PDF import to a provider profile (brief_P / E012).
+ * Apply a résumé import to a provider profile (brief_P / E012; LinkedIn path
+ * removed in PJv2 WS2 / E069).
  *
  * Owner scope is the CALLER's job — this takes an already-resolved profile id,
  * exactly like `applyProviderSection`. Every attempt is recorded as a
@@ -46,7 +47,7 @@ export async function importProfileDocument({
   bytes,
 }: {
   profileId: string;
-  source: "RESUME" | "LINKEDIN_PDF";
+  source: "RESUME";
   fileName: string;
   mimeType: string;
   bytes: Buffer;
@@ -157,7 +158,7 @@ function emptyApplied(): ImportResult["applied"] {
 async function applyParsed(
   profileId: string,
   parsed: ParsedResume,
-  source: "RESUME" | "LINKEDIN_PDF"
+  source: "RESUME"
 ): Promise<ImportResult["applied"]> {
   const applied = emptyApplied();
 
@@ -183,7 +184,9 @@ async function applyParsed(
     applied.overview = true;
   }
   if (!profile.profile_method) {
-    data.profile_method = source === "LINKEDIN_PDF" ? "LINKEDIN" : "RESUME";
+    // PJv2 WS2 (E069) — the LinkedIn import path is gone; RESUME is the only
+    // source. The enum keeps LINKEDIN for rows imported before this.
+    data.profile_method = "RESUME";
   }
   // Experience level inferred from the career span (brief_Q). Only ever fills a
   // blank — the field is nullable precisely so "not asked yet" is detectable

@@ -44,12 +44,11 @@ export type ImportOutcome = {
 export function ResumeUploadModal({
   open,
   onClose,
-  source,
   onImported,
 }: {
   open: boolean;
   onClose: () => void;
-  source: "RESUME" | "LINKEDIN_PDF";
+
   onImported: (outcome: ImportOutcome) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -59,7 +58,7 @@ export function ResumeUploadModal({
   const [error, setError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
 
-  const isLinkedIn = source === "LINKEDIN_PDF";
+  const isLinkedIn = false;
 
   const reset = () => {
     setFile(null);
@@ -87,7 +86,7 @@ export function ResumeUploadModal({
 
     const form = new FormData();
     form.append("file", file);
-    form.append("source", source);
+    form.append("source", "RESUME");
 
     const xhr = new XMLHttpRequest();
     xhr.open("POST", "/api/onboarding/provider/import");
@@ -133,7 +132,7 @@ export function ResumeUploadModal({
           onClose();
         }
       }}
-      title={isLinkedIn ? "Import From LinkedIn" : "Add Your Resume"}
+      title="Add Your Resume"
     >
       {isLinkedIn && (
         <ol className="mb-5 space-y-1.5 rounded-brand border border-line bg-bg-soft p-4 text-[14px] text-ink-2">

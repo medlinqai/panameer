@@ -6,9 +6,9 @@ import { MAX_DOC_BYTES } from "@/lib/resume/extract";
 import { getOnboardingState } from "@/lib/onboarding";
 
 /**
- * POST /api/onboarding/provider/import — résumé / LinkedIn-PDF import
+ * POST /api/onboarding/provider/import — résumé import
  * (brief_P / E012). multipart/form-data: `file`, plus `source` =
- * "RESUME" | "LINKEDIN_PDF".
+ * Always "RESUME" (the LinkedIn path was removed in PJv2 WS2 / E069).
  *
  * OWNER-SCOPED: the profile is resolved from the session, never from client
  * input — the same boundary as every other onboarding write.
@@ -31,12 +31,11 @@ export async function POST(request: Request) {
   }
 
   let file: File | null = null;
-  let source: "RESUME" | "LINKEDIN_PDF" = "RESUME";
+  const source = "RESUME" as const;
   try {
     const form = await request.formData();
     const entry = form.get("file");
     if (entry instanceof File) file = entry;
-    if (form.get("source") === "LINKEDIN_PDF") source = "LINKEDIN_PDF";
   } catch {
     return NextResponse.json({ error: "Could not read the upload" }, { status: 400 });
   }

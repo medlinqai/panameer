@@ -124,7 +124,10 @@ export async function extractText(
     if (e instanceof ExtractError) throw e;
     console.error("[resume] text extraction failed:", e);
     throw new ExtractError(
-      "We couldn't read that file. It may be scanned, password-protected, or corrupted.",
+      // WS2 (E069) — name the fix, not just the failure. A scanned or
+      // password-protected PDF has no text layer at all, and "try the .docx"
+      // is the one instruction that actually resolves it.
+      "We couldn't read this file — try the .docx version. (Scanned or password-protected PDFs have no text we can read.)",
       "FAILED"
     );
   }
@@ -132,7 +135,7 @@ export async function extractText(
   const cleaned = text.replace(/\r\n?/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
   if (cleaned.length < 40) {
     throw new ExtractError(
-      "We couldn't find any readable text in that file — if it's a scanned image, try a text-based export instead.",
+      "We couldn't read this file — try the .docx version. (It looks like a scanned image, so there's no text layer to read.)",
       "EMPTY"
     );
   }

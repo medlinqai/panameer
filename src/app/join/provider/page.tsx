@@ -413,7 +413,7 @@ export default function JoinProviderPage() {
   const [isRecruiter, setIsRecruiter] = useState(false);
 
   const [importOutcome, setImportOutcome] = useState<ImportOutcome | null>(null);
-  const [uploadModal, setUploadModal] = useState<null | "RESUME" | "LINKEDIN_PDF">(null);
+  const [uploadModal, setUploadModal] = useState(false);
   const [photoModal, setPhotoModal] = useState(false);
 
   /**
@@ -896,13 +896,28 @@ export default function JoinProviderPage() {
       );
 
     // ---- 5/12 — Tell us about yourself (E012/E029) --------------------
-    case "tell_us":
+    case "tell_us": {
+      /**
+       * WS2 (E069) — once anything has been imported OR entered, this step stops
+       * asking "how would you like to tell us" and becomes pure review/edit.
+       * Leaving the method cards up after an upload was the single most
+       * confusing thing on the step: the question was already answered.
+       */
+      const hasProfileData =
+        importOutcome != null ||
+        profile.employers.length > 0 ||
+        profile.education.length > 0 ||
+        profile.profileMethod != null;
+
       return (
         <WizardShell
           {...shell({
-            title: "How would you like to tell us about yourself?",
-            subtitle:
-              "We need to get a sense of your education, experience and skills. It's quickest to import your information — you can edit it before your profile goes live.",
+            title: hasProfileData
+              ? "Here's what we have — check it over"
+              : "How would you like to tell us about yourself?",
+            subtitle: hasProfileData
+              ? "Edit anything that's wrong or missing. This is what buyers will see."
+              : "We need to get a sense of your education, experience and skills. It's quickest to import your information — you can edit it before your profile goes live.",
             wide: true,
             aside: <TestimonialCard t={DECK_TESTIMONIALS[0]} />,
             secondaryLabel: "Skip for Now",
@@ -924,8 +939,10 @@ export default function JoinProviderPage() {
           {/*
             E029 — the upload control is INLINE and visible on arrival. It used
             to be hidden behind a card that opened a modal, and the Run-2 walk
-            reported no control present at all.
+            reported no control present at all. WS2 hides the whole invitation
+            once there is data to review.
           */}
+          {!hasProfileData && (
           <section className="mb-6 rounded-brand border-2 border-magenta bg-magenta/[0.04] p-5 shadow-brand">
             <div className="mb-3 flex items-center gap-2">
               <h2 className="text-[17px]">Upload Your Resume</h2>
@@ -945,13 +962,17 @@ export default function JoinProviderPage() {
             />
           </section>
 
-          <div className="space-y-3">
-            <MethodCard
-              title="Fill Out Manually (15 Mins)"
-              description="Type everything yourself, step by step."
-              onClick={() => saveAnd("tell_us", { profileMethod: "MANUAL" })}
-            />
-          </div>
+          )}
+
+          {!hasProfileData && (
+            <div className="space-y-3">
+              <MethodCard
+                title="Fill Out Manually (15 Mins)"
+                description="Type everything yourself, step by step."
+                onClick={() => saveAnd("tell_us", { profileMethod: "MANUAL" })}
+              />
+            </div>
+          )}
 
           {/* WS1/WS2 (E071) — there is no separate Employers step any more.
               Work history is edited HERE, on the step that produced it. */}
@@ -970,9 +991,8 @@ export default function JoinProviderPage() {
           </section>
 
           <ResumeUploadModal
-            open={uploadModal !== null}
-            source={uploadModal ?? "RESUME"}
-            onClose={() => setUploadModal(null)}
+            open={uploadModal}
+            onClose={() => setUploadModal(false)}
             onImported={(outcome) => {
               setImportOutcome(outcome);
               if (outcome.state) hydrate(outcome.state as StatusPayload);
@@ -980,6 +1000,7 @@ export default function JoinProviderPage() {
           />
         </WizardShell>
       );
+    }
 
     // ---- 7/13 — Role → Domain → Skills, ONE cascading page (E030) ------
     case "catalog": {
