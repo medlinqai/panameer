@@ -383,6 +383,7 @@ export default function JoinProviderPage() {
     lastName: "",
     email: "",
     password: "",
+    confirmPassword: "",
     country: "United States",
     marketingOptIn: false,
     tosAccepted: false,

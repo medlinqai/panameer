@@ -25,6 +25,7 @@ export default function JoinBuyerPage() {
     lastName: "",
     email: "",
     password: "",
+    confirmPassword: "",
     confirm: "",
     tos: false,
   });

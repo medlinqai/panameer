@@ -10,8 +10,9 @@ import { SocialSignIn } from "@/components/auth/SocialSignIn";
  * (brief_P / E001 CHANGE 2, E005).
  *
  * Deck shape: Apple/Google continue buttons + an "or" divider; First name, Last
- * name, Email, ONE password field (8+, show/hide — the Confirm Password field
- * is deliberately GONE); Country defaulting to the United States; a marketing
+ * name, Email, password + CONFIRM password (PJv2 WS8 / E065 — reversing E001's
+ * single-field decision: a typo in a password you can't see costs a support
+ * round-trip); Country defaulting to the United States; a marketing
  * opt-in checkbox; a REQUIRED terms checkbox; Back + "Create My Account".
  *
  * This page carries NO stepper (E001 CHANGE 1) — its parent renders it outside
@@ -44,6 +45,7 @@ export type SignUpValues = {
   lastName: string;
   email: string;
   password: string;
+  confirmPassword: string;
   country: string;
   marketingOptIn: boolean;
   tosAccepted: boolean;
@@ -71,12 +73,21 @@ export function SignUpForm({
 
   const passwordTooShort =
     values.password.length > 0 && values.password.length < 8;
+  /**
+   * Only complain once there is something to compare AND the first field is
+   * long enough — otherwise the mismatch error fires on every keystroke while
+   * they are still typing the second copy.
+   */
+  const passwordsMismatch =
+    values.confirmPassword.length > 0 &&
+    values.password !== values.confirmPassword;
 
   const canSubmit =
     values.firstName.trim() !== "" &&
     values.lastName.trim() !== "" &&
     values.email.trim() !== "" &&
     values.password.length >= 8 &&
+    values.password === values.confirmPassword &&
     values.tosAccepted;
 
   return (
@@ -176,6 +187,31 @@ export function SignUpForm({
               Use at least 8 characters.
             </span>
           )}
+        </Field>
+
+        <Field label="Confirm Password">
+          <div className="relative">
+            <TextInput
+              type={showPassword ? "text" : "password"}
+              value={values.confirmPassword}
+              onChange={(e) => onChange({ confirmPassword: e.target.value })}
+              autoComplete="new-password"
+              placeholder="Type it again"
+              className="pr-12"
+            />
+          </div>
+          {passwordsMismatch && (
+            <span className="mt-1 block text-[13px] text-red-700">
+              These don&apos;t match.
+            </span>
+          )}
+          {!passwordsMismatch &&
+            values.confirmPassword.length > 0 &&
+            values.password.length >= 8 && (
+              <span className="mt-1 block text-[13px] font-semibold text-emerald-600">
+                ✓ Passwords match.
+              </span>
+            )}
         </Field>
 
         <Field label="Country">
