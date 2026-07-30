@@ -997,7 +997,7 @@ export default function JoinProviderPage() {
             once there is data to review.
           */}
           {!hasProfileData && (
-          <section className="mb-6 rounded-brand border-2 border-magenta bg-magenta/[0.04] p-5 shadow-brand">
+          <section className="mb-4 rounded-brand border-2 border-magenta bg-magenta/[0.04] p-6 shadow-brand">
             <div className="mb-3 flex items-center gap-2">
               <h2 className="text-[17px]">Upload Your Resume</h2>
               <span className="rounded-full bg-magenta px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-white">
@@ -1028,21 +1028,35 @@ export default function JoinProviderPage() {
             </div>
           )}
 
-          {/* WS1/WS2 (E071) — there is no separate Employers step any more.
-              Work history is edited HERE, on the step that produced it. */}
-          <section className="mt-8 border-t border-line pt-6">
-            <h2 className="text-[17px]">Your Work History</h2>
-            <p className="mb-4 mt-1 text-[14.5px] text-ink-2">
-              Providers who add work experience and projects are twice as likely
-              to win work. Click an employer to add the projects you delivered
-              there.
-            </p>
-            <EmployersStep
-              employers={profile.employers}
-              onChanged={(employers) => setProfile((p) => ({ ...p, employers }))}
-              onError={setError}
-            />
-          </section>
+          {/*
+            WS1/WS2 (E071) — there is no separate Employers step any more, so
+            work history is edited HERE, on the step that produced it.
+
+            E083 — but only AFTER a method is chosen. This block used to render
+            unconditionally, so someone still deciding how to tell us about
+            themselves was shown "Your Work History / No employers yet / + Add
+            Employer" underneath the question. That is review content, and it
+            leaked onto the chooser when the standalone Employers step was
+            collapsed into Upload/Review (E070/E071): an empty state advertising
+            a third way to answer, beneath the two cards that were supposed to be
+            the answer. Relocated, not removed — picking either method sets
+            `hasProfileData`, and the manual path lands straight on this editor.
+          */}
+          {hasProfileData && (
+            <section className="mt-10 border-t border-line pt-8">
+              <h2 className="text-[17px]">Your Work History</h2>
+              <p className="mb-5 mt-1.5 text-[14.5px] text-ink-2">
+                Providers who add work experience and projects are twice as likely
+                to win work. Click an employer to add the projects you delivered
+                there.
+              </p>
+              <EmployersStep
+                employers={profile.employers}
+                onChanged={(employers) => setProfile((p) => ({ ...p, employers }))}
+                onError={setError}
+              />
+            </section>
+          )}
 
           <ResumeUploadModal
             open={uploadModal}
