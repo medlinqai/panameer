@@ -1603,6 +1603,7 @@ export default function JoinProviderPage() {
                         ? "None yet"
                         : picked.slice(0, 2).join(", ") +
                           (picked.length > 2 ? ` +${picked.length - 2}` : "");
+                    const chosenHere = g.items.filter((i) => chosenSpecs.has(i.id));
                     const avail = g.items.filter((i) => !chosenSpecs.has(i.id));
                     const hidden = Math.max(0, avail.length - MAX_SPECS_PER_TIER);
 
@@ -1623,8 +1624,27 @@ export default function JoinProviderPage() {
                             middle reads as a rendering bug rather than as "there
                             is more below" — the tinted, bordered, scrolling box
                             already says that. */}
-                        <div className={`max-h-[158px] ${SCROLL_REGION}`}>
+                        <div className={`max-h-[176px] ${SCROLL_REGION}`}>
                           <div className="flex flex-wrap gap-2">
+                            {/*
+                              E086 — this tier's OWN picks, first and removable.
+                              An expanded section used to show only what you could
+                              still add, so Industries could read "Retail +" while
+                              saying nothing about the two industries you had
+                              already chosen; the only evidence was the aggregate
+                              row at the top and the collapsed summary you had just
+                              opened. The skills tier has always shown its picks
+                              in place, and this is the same rule.
+                            */}
+                            {chosenHere.map((item) => (
+                              <Chip
+                                key={item.id}
+                                selected
+                                onClick={() => toggleSpec(item.id)}
+                              >
+                                {item.name}
+                              </Chip>
+                            ))}
                             {avail.slice(0, MAX_SPECS_PER_TIER).map((item) => (
                               <Chip
                                 key={item.id}
@@ -1634,8 +1654,14 @@ export default function JoinProviderPage() {
                                 {item.name}
                               </Chip>
                             ))}
-                            {avail.length === 0 && (
+                            {avail.length === 0 && chosenHere.length === 0 && (
                               <p className="text-[14px] text-ink-2">
+                                Nothing listed here yet — use the search above to
+                                add one.
+                              </p>
+                            )}
+                            {avail.length === 0 && chosenHere.length > 0 && (
+                              <p className="w-full text-[13px] text-ink-2">
                                 You&apos;ve picked everything we list here.
                               </p>
                             )}
