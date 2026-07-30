@@ -4,6 +4,7 @@ import { VISIBILITY_THRESHOLD } from "@/lib/completeness";
 import { listPublishedPackages } from "@/lib/packages";
 import { toView as toArtifactView } from "@/lib/artifacts";
 import { viewerIsPlus, contactVisibility } from "@/lib/plus";
+import { experienceLabel } from "@/lib/experience";
 
 /**
  * The full provider Profile View (brief_S / E037) — the Upwork-style page that
@@ -106,6 +107,23 @@ export async function getProviderProfileView(
    * payload simply does not contain the contact address. See lib/plus.ts.
    */
   const isPlus = await viewerIsPlus(opts.viewer ?? null);
+
+  /**
+   * WS6 (E068) — years of experience DERIVED from the work history, as the union
+   * of employer and project spans. Replaces the self-reported level entirely.
+   */
+  const experience = experienceLabel([
+    ...profile.employers.map((e) => ({
+      start: e.start_date,
+      end: e.end_date,
+      isCurrent: e.is_current,
+    })),
+    ...profile.projects.map((pr) => ({
+      start: pr.start_date,
+      end: pr.end_date,
+      isCurrent: pr.is_current,
+    })),
+  ]);
   const gateContact = (email: string | null | undefined) =>
     contactVisibility({ isOwner, isPlus, contactEmail: email });
 
@@ -138,6 +156,7 @@ export async function getProviderProfileView(
     location,
     country,
     primaryLanguage,
+    experience,
     headline: profile.headline,
     overview: profile.overview,
     experienceLevel: profile.experience_level,

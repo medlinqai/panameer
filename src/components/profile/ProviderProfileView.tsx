@@ -126,6 +126,7 @@ export function ProviderProfileViewPage({ p }: { p: ProviderProfileView }) {
           currency={p.rates.currency}
           youGetCents={p.isOwner ? youGet : null}
           language={p.primaryLanguage}
+          experience={p.experience}
           country={p.country}
         />
 

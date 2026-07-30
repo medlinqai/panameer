@@ -266,6 +266,7 @@ export function ProfileHero({
   youGetCents,
   language,
   country,
+  experience,
   aside,
   headingAs: HeadingTag = "h1",
 }: {
@@ -281,6 +282,8 @@ export function ProfileHero({
   youGetCents?: number | null;
   language?: string | null;
   country?: string | null;
+  /** WS6 — DERIVED from work-history spans, never self-reported. */
+  experience?: string | null;
   aside?: ReactNode;
   headingAs?: "h1" | "h2";
 }) {
@@ -349,6 +352,12 @@ export function ProfileHero({
                   You&apos;ll Get {formatCents(youGetCents, currency)}/hr
                 </p>
               )}
+            </div>
+          )}
+          {experience && (
+            <div>
+              <dt className="inline font-bold">Experience: </dt>
+              <dd className="inline">{experience}</dd>
             </div>
           )}
           {language && (

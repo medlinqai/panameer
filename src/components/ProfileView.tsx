@@ -64,9 +64,10 @@ export function ProfileView({ profile }: { profile: PublicProviderProfile }) {
               {profile.headline}
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              {profile.experienceLevel && (
-                <Badge tone="blue">{humanizeToken(profile.experienceLevel)}</Badge>
-              )}
+              {/* WS6 (E068) — the self-reported experience LEVEL badge is gone.
+                  Years are DERIVED from the work history and shown in the hero on
+                  the main profile surface; this older public view simply stops
+                  asserting a grade the provider gave themselves. */}
               {profile.region && <Badge>{profile.region.name}</Badge>}
               {profile.workTypes.map((w) => (
                 <Badge key={w}>{humanizeToken(w)}</Badge>
