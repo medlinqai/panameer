@@ -43,12 +43,24 @@ export function OnboardingFrame({
   compact = false,
   /** Centre the content in the available height. Off for long, scrolling steps. */
   centered = true,
+  /**
+   * Cap the CONTENT column inside the (wider) frame — E091.
+   *
+   * The frame is one width everywhere so the header rule, the footer band and
+   * the page's overall proportions match on every onboarding page. A single
+   * column of inputs still shouldn't stretch across all of it: long input lines
+   * and long label-to-field distances read badly, which is the real reason these
+   * pages were narrow before. So the CHROME is shared and the FORM is capped,
+   * centred inside it — rather than narrowing the whole page to protect the form.
+   */
+  contentWidth,
 }: {
   children: ReactNode;
   footer?: ReactNode;
   width?: string;
   compact?: boolean;
   centered?: boolean;
+  contentWidth?: string;
 }) {
   const pad = compact ? "py-8 sm:py-10" : "py-10 sm:py-14";
   return (
@@ -64,7 +76,11 @@ export function OnboardingFrame({
         <div
           className={`mx-auto w-full ${width} px-6 ${pad} ${centered ? "my-auto" : ""}`}
         >
-          {children}
+          {contentWidth ? (
+            <div className={`mx-auto w-full ${contentWidth}`}>{children}</div>
+          ) : (
+            children
+          )}
         </div>
       </main>
 

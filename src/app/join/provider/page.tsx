@@ -875,8 +875,12 @@ export default function JoinProviderPage() {
   if (screen === "signup") {
     // compact — the sign-up form is the one pre-verify page long enough to run
     // off the bottom of a laptop screen (E047).
+    // max-w-2xl, not the brief's ~md/lg: brief_W/E046 MEASURED that the three
+    // social buttons need 672px to fit their full labels with icons, and 576px
+    // does not. Still a capped, centred form column — 672 of 1024 — so the rule
+    // holds; the number comes from that measurement rather than from taste.
     return (
-      <PlainShell compact>
+      <PlainShell compact contentWidth="max-w-2xl">
         {inviteCtx && (
           <div className="mx-auto mb-4 max-w-xl">
             <Notice tone="info">
@@ -899,10 +903,10 @@ export default function JoinProviderPage() {
 
   if (screen === "check_email") {
     return (
-      <PlainShell>
+      <PlainShell contentWidth="max-w-md">
         {/* E048 — centred title, same 28px as sign-up. All three pre-verify
             pages (role select, sign up, check email) share one format. */}
-        <div className="mx-auto w-full max-w-md">
+        <div>
           <h1 className="text-center text-[28px] font-extrabold tracking-[-0.6px]">
             Check Your Email
           </h1>
@@ -2469,20 +2473,23 @@ export default function JoinProviderPage() {
 /**
  * Pre-verification chrome: logo only, deliberately NO stepper (E001).
  *
- * Held at the NARROW width while the wizard widens to 5xl (WS2/E081). These are
- * single columns of inputs — a verify prompt, a check-your-email note — and a
- * wide frame gives a form nothing but longer lines. The widening is for the
- * two-column steps the design refs actually show.
+ * E091 — on the shared frame width like every other onboarding page, with the
+ * form column capped by `contentWidth`. The earlier version narrowed the whole
+ * PAGE to keep the form readable, which fixed the lines and made these pages a
+ * different shape from the steps either side of them. Capping the column gets
+ * both.
  */
 function PlainShell({
   children,
+  contentWidth,
   compact = false,
 }: {
   children: React.ReactNode;
+  contentWidth?: string;
   compact?: boolean;
 }) {
   return (
-    <OnboardingShell width="max-w-3xl" compact={compact}>
+    <OnboardingShell contentWidth={contentWidth} compact={compact}>
       {children}
     </OnboardingShell>
   );

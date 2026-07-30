@@ -50,9 +50,12 @@ export default function JoinRoleSelect() {
   return (
     // E048/E049 — the stock shell and the centred pre-verify title, so role
     // select, sign up and check-email are one format rather than three.
-    // Narrow on purpose (WS2/E081): the wizard widened to 5xl, but this is a
-    // centred two-card chooser and widening it would just push the cards apart.
-    <OnboardingShell width="max-w-3xl">
+    // E091 — the shared frame like every other onboarding page, with the chooser
+    // CAPPED and centred inside it. Widening the cards themselves would just
+    // stretch three short labels across 1024px, which is the thing the narrow
+    // page was protecting against; capping the column protects it without making
+    // this page a different shape from the ones either side of it.
+    <OnboardingShell contentWidth="max-w-lg">
       <div className="text-center">
         <h1 className="text-[28px] font-extrabold tracking-[-0.6px]">
           Welcome to Panameer

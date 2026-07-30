@@ -18,21 +18,28 @@ import { OnboardingFrame, FRAME_WIDTH } from "@/components/onboarding/Onboarding
 export function OnboardingShell({
   children,
   /**
-   * The stock width is the shared frame's. Narrow FORM pages pass `max-w-3xl`
-   * deliberately: a widened frame is right for a two-column page and wrong for a
-   * single column of inputs, which just gets long lines.
+   * Every onboarding page is on the shared frame width now (E091). A page with a
+   * single column of inputs caps the COLUMN via `contentWidth` instead of
+   * narrowing the whole page — same chrome everywhere, readable form inside it.
    */
   width = FRAME_WIDTH,
+  contentWidth,
   compact = false,
   footer,
 }: {
   children: ReactNode;
   width?: string;
+  contentWidth?: string;
   compact?: boolean;
   footer?: ReactNode;
 }) {
   return (
-    <OnboardingFrame width={width} compact={compact} footer={footer}>
+    <OnboardingFrame
+      width={width}
+      contentWidth={contentWidth}
+      compact={compact}
+      footer={footer}
+    >
       {children}
     </OnboardingFrame>
   );

@@ -82,8 +82,14 @@ export function VerifyGate({
     setResendMsg("Verification sent to your new address.");
   };
 
+  // E091 — caps and centres its OWN column. This renders inside two different
+  // shells (the provider check-email screen and the buyer verify step), and now
+  // that both are on the wide shared frame, an uncapped prompt would stretch a
+  // one-sentence instruction across the full width in whichever of the two
+  // nobody remembered to wrap. Owning the constraint here fixes both and cannot
+  // be forgotten at a third call site.
   return (
-    <div className="space-y-5">
+    <div className="mx-auto w-full max-w-md space-y-5">
       <p className="text-[17px] text-ink-2">
         We sent a link to <b className="text-ink">{email}</b>. Click it to
         continue. This page updates automatically once you&apos;re verified.
