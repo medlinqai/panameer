@@ -16,7 +16,8 @@
     "db:email-guard": "ts-node --project tsconfig.seed.json prisma/normalize-emails.ts",
     "storage:setup": "ts-node --project tsconfig.seed.json prisma/setup-storage.ts",
     "postinstall": "prisma generate",
-    "db:migrate-work-history": "ts-node --project tsconfig.seed.json prisma/migrate-work-history.ts"
+    "db:migrate-work-history": "ts-node --project tsconfig.seed.json prisma/migrate-work-history.ts",
+    "check:resume": "npx esbuild src/lib/resume/check-fixtures.ts --bundle --platform=node --format=cjs --packages=external --outfile=.harness/check-resume.cjs --log-level=error && node .harness/check-resume.cjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.0",
