@@ -178,7 +178,21 @@ const LANGUAGE_LEVELS = [
 export const MAX_SKILLS = 15;
 /** E017 — a bio must be a real answer, not one word. */
 export const MIN_BIO_CHARS = 100;
-export const MAX_BIO_CHARS = 4500;
+/**
+ * A few lines, not an essay (Run6 WS7 / E087).
+ *
+ * Was 4500 — roughly forty lines. This field becomes the profile's OVERVIEW, and
+ * the hero it renders into is built for a short paragraph; a long one throws the
+ * whole hero/Overview balance out (E076). The hero also read-more-clamps (E060),
+ * but a clamp is damage control: it hides the overrun from the buyer and leaves
+ * the provider believing the whole thing is being read. The INPUT cap is the real
+ * fix, because it is the only version of this that tells the author the truth
+ * while they are still writing.
+ *
+ * 600 characters is about four to six lines at profile width. The MINIMUM is
+ * unchanged (E017) — the point is a ceiling, not a harder floor.
+ */
+export const MAX_BIO_CHARS = 600;
 /** E016 — every profile includes English unless the user changes it. */
 export const DEFAULT_LANGUAGE = "English";
 
@@ -1212,7 +1226,7 @@ export async function applyProviderSection(
       }
       if (overview.length > MAX_BIO_CHARS) {
         throw new OnboardingError(
-          `Please keep your bio under ${MAX_BIO_CHARS} characters.`,
+          `Keep your overview to about ${MAX_BIO_CHARS} characters — a few lines is what the profile shows best.`,
           "INVALID"
         );
       }

@@ -148,7 +148,12 @@ const STEP_LABELS: Record<Step, { stepper: string }> = {
 };
 
 const MIN_BIO = 100;
-const MAX_BIO = 4500;
+/**
+ * Mirrors `MAX_BIO_CHARS` in onboarding.ts (E087). Kept as a local constant like
+ * MIN_BIO beside it rather than imported, matching how this file already treats
+ * the minimum — but the server is authoritative and rejects anything longer.
+ */
+const MAX_BIO = 600;
 const MAX_SKILLS = 15;
 /** E030 — never show more than ~15 options at once on the cascade page. */
 const MAX_VISIBLE_OPTIONS = 15;
@@ -1862,7 +1867,7 @@ export default function JoinProviderPage() {
           {...shell({
             title: "Tell clients what you do",
             subtitle:
-              "Help people get to know you. What work do you do best? Tell them clearly, using paragraphs or bullet points. You can always edit later; just make sure you proofread now.",
+              "A few lines is all it takes — this becomes the Overview at the top of your profile. What do you do best? You can always edit it later.",
             onContinue: () => saveAnd("bio", { overview: profile.overview }),
             continueDisabled: len < MIN_BIO,
           })}
@@ -1872,7 +1877,10 @@ export default function JoinProviderPage() {
             value={profile.overview}
             onChange={(e) => setProfile((p) => ({ ...p, overview: e.target.value }))}
             maxLength={MAX_BIO}
-            className="min-h-56"
+            // Sized to what it now holds. A 224px box invites an essay and then
+            // stops accepting one at 600 characters, which reads as the field
+            // breaking rather than as a limit.
+            className="min-h-36"
             placeholder="I help organizations implement and optimize…"
           />
           <div className="mt-2 flex justify-between text-[13px]">
@@ -1890,7 +1898,20 @@ export default function JoinProviderPage() {
                 ? `At least ${MIN_BIO} characters — ${MIN_BIO - len} to go.`
                 : "✓ Looks good."}
             </span>
-            <span className="text-ink-2">{left} characters left</span>
+            {/* Amber as the ceiling comes into view, for the same reason the
+                minimum is amber (E059/E061): approaching a limit is not an
+                error. It only turns red once there is genuinely no room left. */}
+            <span
+              className={
+                left === 0
+                  ? "font-semibold text-red-700"
+                  : left <= 80
+                    ? "text-amber-700"
+                    : "text-ink-2"
+              }
+            >
+              {left} characters left
+            </span>
           </div>
         </WizardShell>
       );
