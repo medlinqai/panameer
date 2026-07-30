@@ -40,7 +40,7 @@ model User {
   /// Which OAuth providers this account has signed in with (e.g. ["google"]).
   /// Record-keeping so support can see how an account authenticates; linking is
   /// keyed on the normalized email, not on this list.
-  oauth_providers       String[] @default([])
+  oauth_providers       String[]  @default([])
   role                  Role      @default(MEMBER)
   is_active             Boolean   @default(true)
   is_system_admin       Boolean   @default(false)
@@ -60,6 +60,11 @@ model User {
   person             Person?
   verificationTokens VerificationToken[]
 
+  /// Learn (brief_learn_v1 WS0). Keyed to the USER, not a profile: every role
+  /// learns, and enrolment is the convert-to-account trigger (WS4).
+  learnEnrollments LearnEnrollment[]
+  lessonProgress   LessonProgress[]
+
   @@map("users")
 }
 
@@ -73,13 +78,13 @@ enum Role {
 /// SHA-256 hash of the token — the raw token lives only in the emailed link.
 /// Minimal by design (brief_E allowed addition).
 model VerificationToken {
-  id         String                @id @default(uuid()) @db.Uuid
-  user_id    String                @db.Uuid
-  token_hash String                @unique
-  type       VerificationTokenType @default(EMAIL)
-  expires_at DateTime
+  id          String                @id @default(uuid()) @db.Uuid
+  user_id     String                @db.Uuid
+  token_hash  String                @unique
+  type        VerificationTokenType @default(EMAIL)
+  expires_at  DateTime
   consumed_at DateTime?
-  created_at DateTime              @default(now())
+  created_at  DateTime              @default(now())
 
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
@@ -164,7 +169,7 @@ model Site {
   created_at        DateTime @default(now())
   updated_at        DateTime @updatedAt
 
-  company   Company  @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  company   Company   @relation(fields: [company_id], references: [id], onDelete: Cascade)
   addresses Address[]
   people    Person[]
 
@@ -195,19 +200,19 @@ model Address {
 /// 1:1 to a User login. The actor-role flags describe what this person DOES in
 /// the marketplace (distinct from the skill role-types in Brief B).
 model Person {
-  id         String       @id @default(uuid()) @db.Uuid
-  company_id String       @db.Uuid
-  site_id    String?      @db.Uuid
-  user_id    String?      @unique @db.Uuid
-  first_name String
-  last_name  String
-  title      String?
-  phone      String?
+  id                String       @id @default(uuid()) @db.Uuid
+  company_id        String       @db.Uuid
+  site_id           String?      @db.Uuid
+  user_id           String?      @unique @db.Uuid
+  first_name        String
+  last_name         String
+  title             String?
+  phone             String?
   /// When the phone number above passed SMS verification (brief_P / E019).
   /// Cleared whenever `phone` changes, so it always describes the CURRENT number.
   phone_verified_at DateTime?
-  photo_url  String?
-  status     PersonStatus @default(ACTIVE)
+  photo_url         String?
+  status            PersonStatus @default(ACTIVE)
 
   // Actor-role flags — what this person does (a person can wear several hats).
   // "Service Buyer" is the actor who creates work requests (the ERP Requester)
@@ -222,12 +227,12 @@ model Person {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  company         Company          @relation(fields: [company_id], references: [id], onDelete: Cascade)
-  site            Site?            @relation(fields: [site_id], references: [id], onDelete: SetNull)
-  user            User?            @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  company             Company             @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  site                Site?               @relation(fields: [site_id], references: [id], onDelete: SetNull)
+  user                User?               @relation(fields: [user_id], references: [id], onDelete: SetNull)
   // The provider profile this Person OWNS (1:1).
-  providerProfile ProviderProfile? @relation("ProfileOwner")
-  buyerProfile    BuyerProfile?
+  providerProfile     ProviderProfile?    @relation("ProfileOwner")
+  buyerProfile        BuyerProfile?
   // As a COORDINATOR: the provider profiles this Person represents, and the
   // invites they've sent (brief_I).
   repProviderProfiles ProviderProfile[]   @relation("CoordinatorProviders")
@@ -236,6 +241,11 @@ model Person {
   workRequests        WorkRequest[]
   // SMS verification challenges for this person's phone (brief_P).
   phoneVerifications  PhoneVerification[]
+
+  /// Learn (brief_learn_v1 WS0) — an expert fronts paths and lessons. A Person,
+  /// not a ProviderProfile, so an instructor needn't be a marketplace provider.
+  learnPaths   LearningPath[] @relation("LearnExpertPaths")
+  learnLessons Lesson[]       @relation("LearnExpertLessons")
 
   @@index([company_id])
   @@index([site_id])
@@ -324,10 +334,10 @@ model Pillar {
   /// so ERP is pinned above AI and everything else. Ties break on name.
   sort_order Int @default(100)
 
-  catalog   ServiceCatalog @relation(fields: [catalog_id], references: [id], onDelete: Cascade)
-  offerings Offering[]
-  skills    Skill[]
-  tags      SkillTag[]
+  catalog          ServiceCatalog    @relation(fields: [catalog_id], references: [id], onDelete: Cascade)
+  offerings        Offering[]
+  skills           Skill[]
+  tags             SkillTag[]
   providerProfiles ProviderProfile[]
 
   @@unique([catalog_id, code])
@@ -399,10 +409,10 @@ model Skill {
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
 
-  catalog        ServiceCatalog  @relation(fields: [catalog_id], references: [id], onDelete: Cascade)
-  roleType       RoleType        @relation(fields: [role_type_id], references: [id])
-  pillar         Pillar?         @relation(fields: [pillar_id], references: [id], onDelete: SetNull)
-  application    Application?    @relation(fields: [application_id], references: [id], onDelete: SetNull)
+  catalog           ServiceCatalog     @relation(fields: [catalog_id], references: [id], onDelete: Cascade)
+  roleType          RoleType           @relation(fields: [role_type_id], references: [id])
+  pillar            Pillar?            @relation(fields: [pillar_id], references: [id], onDelete: SetNull)
+  application       Application?       @relation(fields: [application_id], references: [id], onDelete: SetNull)
   providerSkills    ProviderSkill[]
   workRequestSkills WorkRequestSkill[]
   packageSkills     PackageSkill[]
@@ -425,15 +435,15 @@ model Skill {
 /// preserved as an annotation, deliberately NOT yet linked to a Person. The
 /// coordinator-coverage join is wired in the profiles brief.
 model SkillTag {
-  id            String   @id @default(uuid()) @db.Uuid
-  catalog_id    String   @db.Uuid
-  role_type_id  String   @db.Uuid
-  pillar_id     String?  @db.Uuid
-  name          String
+  id             String   @id @default(uuid()) @db.Uuid
+  catalog_id     String   @db.Uuid
+  role_type_id   String   @db.Uuid
+  pillar_id      String?  @db.Uuid
+  name           String
   panameer_skill String?
-  selling_agent String?
-  created_at    DateTime @default(now())
-  updated_at    DateTime @updatedAt
+  selling_agent  String?
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
 
   catalog  ServiceCatalog @relation(fields: [catalog_id], references: [id], onDelete: Cascade)
   roleType RoleType       @relation(fields: [role_type_id], references: [id])
@@ -501,20 +511,20 @@ model NonOracleApplication {
 /// paused_at IS NULL (brief_K). Validation is a separate merit track that does
 /// NOT affect base visibility.
 model ProviderProfile {
-  id               String   @id @default(uuid()) @db.Uuid
-  person_id        String   @unique @db.Uuid
-  region_id        String?  @db.Uuid
-  headline         String
-  overview         String?
+  id                      String           @id @default(uuid()) @db.Uuid
+  person_id               String           @unique @db.Uuid
+  region_id               String?          @db.Uuid
+  headline                String
+  overview                String?
   // PJv2 WS7 — `experience_level` and `goal` are GONE.
   //   experience_level: self-graded, and now DERIVED from work-history spans
   //                     (E068 / lib/experience.ts).
   //   goal:             asked, stored, and never used for anything. E067 wanted
   //                     it to gate visibility; the decision was the opposite —
   //                     visibility is completeness + identity, not intent.
-  work_types       WorkType[]
-  onsite_rate_cents Int?
-  remote_rate_cents Int?
+  work_types              WorkType[]
+  onsite_rate_cents       Int?
+  remote_rate_cents       Int?
   /// The single hourly rate the client sees (brief_P / E018). Integer cents.
   /// `onsite_/remote_rate_cents` predate this (brief_E) and stay for Settings.
   ///
@@ -522,7 +532,7 @@ model ProviderProfile {
   /// written and in sync (= `rate_min_cents`), because the publish gate and the
   /// completeness score both read it. Removing it is a separate migration, not
   /// something to smuggle into a layout brief.
-  hourly_rate_cents Int?
+  hourly_rate_cents       Int?
   /// The rate RANGE the provider advertises (PJv2 WS0 / E078c). A single number
   /// forced a consultant to pick one figure for work that genuinely varies by
   /// engagement; a range is what they actually quote. Integer cents, and the
@@ -530,33 +540,33 @@ model ProviderProfile {
   ///
   /// Migration set min = max = the old single rate, so nobody's published rate
   /// changed meaning on deploy.
-  rate_min_cents    Int?
-  rate_max_cents    Int?
+  rate_min_cents          Int?
+  rate_max_cents          Int?
   /// Platform service fee as BASIS POINTS (1000 = 10%). Integer so the fee and
   /// the "You'll get" figure are computed without ever touching a float.
-  service_fee_bps  Int      @default(1000)
-  currency         String   @default("USD")
+  service_fee_bps         Int              @default(1000)
+  currency                String           @default("USD")
   /// The field chosen at the catalog step: a (Role, Domain) PAIR, since the
   /// authoritative catalog is Role → Domain → Skill and the same domain name
   /// appears under more than one role (brief_R). `pillar_id` is the DOMAIN;
   /// `role_type_id` is the ROLE. Skills at the next step filter on both.
-  pillar_id        String?  @db.Uuid
-  role_type_id     String?  @db.Uuid
+  pillar_id               String?          @db.Uuid
+  role_type_id            String?          @db.Uuid
   /// How the provider sells; RECRUITER forks them to the Coordinator role
   /// (brief_P / E009).
-  work_method      WorkMethod?
+  work_method             WorkMethod?
   /// Which profile-creation path was taken (brief_P / E012).
-  profile_method   ProfileMethod?
+  profile_method          ProfileMethod?
   /// Collected on the finish page (brief_P / E019).
-  date_of_birth    DateTime?
+  date_of_birth           DateTime?
   /// When the provider pressed "Publish Profile" and finished onboarding
   /// (brief_P / E019). This is a COMPLETION marker, NOT a visibility flag —
   /// brief_K's derived completeness gate remains the only visibility rule.
   onboarding_completed_at DateTime?
-  rating           Decimal? @db.Decimal(3, 2)
-  id_badge         String?
+  rating                  Decimal?         @db.Decimal(3, 2)
+  id_badge                String?
   // Account lifecycle (brief_K): PENDING on sign-up → ACTIVE on email verify.
-  status           ProviderStatus @default(PENDING)
+  status                  ProviderStatus   @default(PENDING)
   // Merit-based Validation track (brief_K) — separate from visibility. Provider
   // requests it; an admin grants on merit. Never purchasable.
   validation_status       ValidationStatus @default(NOT_REQUESTED)
@@ -565,32 +575,32 @@ model ProviderProfile {
   // Visibility is COMPLETENESS-gated, not approval-gated (brief_K, supersedes
   // brief_E/H). Marketplace-visible ⇔ status=ACTIVE AND completeness>=80 AND
   // paused_at IS NULL. No publish flag/button — visibility is derived.
-  completeness     Int      @default(0)
-  paused_at        DateTime?
+  completeness            Int              @default(0)
+  paused_at               DateTime?
   // Minimal preferences store (brief_H). Notification opt-ins; expand later.
-  notify_email           Boolean @default(true)
-  notify_product_updates Boolean @default(false)
+  notify_email            Boolean          @default(true)
+  notify_product_updates  Boolean          @default(false)
   // The coordinator Person who represents this provider (brief_I). Nullable —
   // most providers are independent. Set only via the provider's own authenticated
   // acceptance of a coordinator invite.
-  coordinator_person_id String? @db.Uuid
-  created_at       DateTime @default(now())
-  updated_at       DateTime @updatedAt
+  coordinator_person_id   String?          @db.Uuid
+  created_at              DateTime         @default(now())
+  updated_at              DateTime         @updatedAt
 
-  person          Person           @relation("ProfileOwner", fields: [person_id], references: [id], onDelete: Cascade)
-  coordinator     Person?          @relation("CoordinatorProviders", fields: [coordinator_person_id], references: [id], onDelete: SetNull)
-  region          Region?          @relation(fields: [region_id], references: [id], onDelete: SetNull)
-  pillar          Pillar?          @relation(fields: [pillar_id], references: [id], onDelete: SetNull)
-  roleType        RoleType?        @relation(fields: [role_type_id], references: [id], onDelete: SetNull)
+  person          Person                          @relation("ProfileOwner", fields: [person_id], references: [id], onDelete: Cascade)
+  coordinator     Person?                         @relation("CoordinatorProviders", fields: [coordinator_person_id], references: [id], onDelete: SetNull)
+  region          Region?                         @relation(fields: [region_id], references: [id], onDelete: SetNull)
+  pillar          Pillar?                         @relation(fields: [pillar_id], references: [id], onDelete: SetNull)
+  roleType        RoleType?                       @relation(fields: [role_type_id], references: [id], onDelete: SetNull)
   skills          ProviderSkill[]
   specializations ProviderProfileSpecialization[]
   employers       Employer[]
   projects        Project[]
   packages        Package[]
-  education        Education[]
-  languages        Language[]
+  education       Education[]
+  languages       Language[]
   certifications  Certification[]
-  imports          ProfileImport[]
+  imports         ProfileImport[]
 
   @@index([region_id])
   @@index([coordinator_person_id])
@@ -604,7 +614,6 @@ enum ExperienceLevel {
   MID_CAREER
   EXPERT
 }
-
 
 enum WorkType {
   HOURLY
@@ -688,8 +697,8 @@ model Specialization {
   created_at DateTime           @default(now())
   updated_at DateTime           @updatedAt
 
-  catalog          ServiceCatalog                 @relation(fields: [catalog_id], references: [id], onDelete: Cascade)
-  providerProfiles ProviderProfileSpecialization[]
+  catalog           ServiceCatalog                  @relation(fields: [catalog_id], references: [id], onDelete: Cascade)
+  providerProfiles  ProviderProfileSpecialization[]
   /// Projects delivered in this sector — only INDUSTRY-kind rows are ever
   /// linked (brief_project_model_v2).
   projectIndustries Project[]
@@ -735,8 +744,8 @@ model ProviderProfileSpecialization {
 /// text on WorkExperience) because the categorization diagram links Employers
 /// to Certifications and Projects, and buyers filter on them.
 model Employer {
-  id                  String   @id @default(uuid()) @db.Uuid
-  provider_profile_id String   @db.Uuid
+  id                  String    @id @default(uuid()) @db.Uuid
+  provider_profile_id String    @db.Uuid
   name                String
   /// Job title held there.
   role_title          String?
@@ -744,7 +753,7 @@ model Employer {
   start_date          DateTime?
   end_date            DateTime?
   /// True while this is the provider's current employer.
-  is_current          Boolean  @default(false)
+  is_current          Boolean   @default(false)
   description         String?
   /// Company logo (brief_U / E043). Suggested from the company name via a logo
   /// API, then ACCEPTED by the provider — never auto-applied, because name →
@@ -752,15 +761,15 @@ model Employer {
   /// none. Null when unset or declined.
   logo_url            String?
   /// Ordering on the profile / capture step; lower first.
-  sort_order          Int      @default(100)
-  created_at          DateTime @default(now())
-  updated_at          DateTime @updatedAt
+  sort_order          Int       @default(100)
+  created_at          DateTime  @default(now())
+  updated_at          DateTime  @updatedAt
 
   /// Someone at the employer who can vouch for the work (PJv2 WS0 / E078b).
   /// Powers the Work-History "Contact" link, which WS5 gates behind Plus.
   /// Projects carry their own `contact_email` + `client_domain` already; this is
   /// the employer-level equivalent.
-  contact_email       String?
+  contact_email String?
 
   providerProfile ProviderProfile @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
   projects        Project[]
@@ -854,9 +863,9 @@ enum ProjectValidationStatus {
 /// because "show me every Technical project that used Oracle Fusion" has to be
 /// a query, and free text can never be charted.
 model Project {
-  id                  String   @id @default(uuid()) @db.Uuid
-  provider_profile_id String   @db.Uuid
-  employer_id         String?  @db.Uuid
+  id                  String    @id @default(uuid()) @db.Uuid
+  provider_profile_id String    @db.Uuid
+  employer_id         String?   @db.Uuid
   name                String
   description         String?
   /// Public link (case study, repo, published site) when there is one.
@@ -867,7 +876,7 @@ model Project {
   end_date            DateTime?
   /// True while the provider is still on this project; `end_date` is then null
   /// by design and the card renders "– Present". Mirrors `Employer.is_current`.
-  is_current          Boolean  @default(false)
+  is_current          Boolean   @default(false)
 
   // --- Classification (catalog-linked, for reporting) ----------------------
   /// What the provider DID here (Application-Specific / Technical / …).
@@ -879,7 +888,7 @@ model Project {
   /// silently poisoning the very charts this field exists to feed. A null is
   /// honest and queryable ("show me unclassified projects"), and the review
   /// page nudges the provider to fix it. Same reasoning as `employer_id`.
-  role_type_id        String?  @db.Uuid
+  role_type_id               String? @db.Uuid
   /// The sector this was delivered in. Reuses the INDUSTRY slice of the
   /// Specialization vocabulary rather than a free-text column, so a
   /// confidential project can still say "Oil & Gas" in a chartable way.
@@ -889,10 +898,10 @@ model Project {
   /// REQUIRED. Held even when `client_visibility` hides it — the redaction is
   /// a RENDER decision, so the name stays available for the validation email
   /// and for Plus members once that ships.
-  client_name         String
-  client_visibility   ClientVisibility @default(PUBLIC)
+  client_name       String
+  client_visibility ClientVisibility @default(PUBLIC)
   /// The project alias shown INSTEAD of the client when confidential.
-  code_name           String?
+  code_name         String?
   /// The client's own internet domain (brief_validation_domain_guard).
   ///
   /// This is what makes the Validated badge mean anything: a validation request
@@ -904,37 +913,37 @@ model Project {
   /// INTERNAL ONLY. Never rendered on a card or returned by a public read: a
   /// CONFIDENTIAL project hides its client, and leaking the domain would undo
   /// that. Nullable, and a project without one simply cannot be validated.
-  client_domain       String?
+  client_domain     String?
 
   // --- Validation groundwork (workflow = next brief) ----------------------
   /// Who at the client can confirm this work happened.
-  contact_email       String?
-  validation_status   ProjectValidationStatus @default(NONE)
+  contact_email     String?
+  validation_status ProjectValidationStatus @default(NONE)
 
   // --- What you did -------------------------------------------------------
   /// The bullets, as a real list — not one blob to be split on render.
-  highlights          String[]
+  highlights String[]
 
   // --- Media --------------------------------------------------------------
-  video_url           String?
+  video_url     String?
   /// Supporting document in the PRIVATE `project-docs` bucket — an object
   /// path, not a URL, exactly like `Certification.attachment_path`. A statement
   /// of work carries client names and commercials; it is never public.
-  document_path       String?
-  document_name       String?
+  document_path String?
+  document_name String?
   /// Client/project logo, SUGGESTED from `client_name` and then accepted by the
   /// provider — never auto-applied (the E043 rule from Employer).
-  logo_url            String?
+  logo_url      String?
 
   /// Ordering in the portfolio; lower first.
-  sort_order          Int      @default(100)
-  created_at          DateTime @default(now())
-  updated_at          DateTime @updatedAt
+  sort_order Int      @default(100)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
-  providerProfile ProviderProfile @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
-  employer        Employer?       @relation(fields: [employer_id], references: [id], onDelete: SetNull)
-  roleType        RoleType?       @relation(fields: [role_type_id], references: [id], onDelete: SetNull)
-  industry        Specialization? @relation(fields: [industry_specialization_id], references: [id], onDelete: SetNull)
+  providerProfile ProviderProfile      @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
+  employer        Employer?            @relation(fields: [employer_id], references: [id], onDelete: SetNull)
+  roleType        RoleType?            @relation(fields: [role_type_id], references: [id], onDelete: SetNull)
+  industry        Specialization?      @relation(fields: [industry_specialization_id], references: [id], onDelete: SetNull)
   applications    ProjectApplication[]
   outcomes        ProjectOutcome[]
   validations     ProjectValidation[]
@@ -960,23 +969,23 @@ model Project {
 /// evidence: who confirmed, from where, and when. A resend supersedes the live
 /// request instead of overwriting that history.
 model ProjectValidation {
-  id            String                  @id @default(uuid()) @db.Uuid
-  project_id    String                  @db.Uuid
+  id            String                         @id @default(uuid()) @db.Uuid
+  project_id    String                         @db.Uuid
   /// The address the request was sent to, captured at send time — the project's
   /// `contact_email` can be edited afterwards, and this must record who was
   /// actually asked.
   contact_email String
-  token_hash    String                  @unique
+  token_hash    String                         @unique
   status        ProjectValidationRequestStatus @default(SENT)
   expires_at    DateTime
-  sent_at       DateTime                @default(now())
+  sent_at       DateTime                       @default(now())
   responded_at  DateTime?
   /// Light provenance on the response. Never shown to the provider — it exists
   /// so a disputed confirmation can be investigated.
   responder_ip  String?
   responder_ua  String?
-  created_at    DateTime                @default(now())
-  updated_at    DateTime                @updatedAt
+  created_at    DateTime                       @default(now())
+  updated_at    DateTime                       @updatedAt
 
   project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
 
@@ -1043,8 +1052,8 @@ model ProjectOutcome {
 /// Optional throughout: packages never gate publishing and carry no
 /// completeness weight (brief_R/U invariant untouched).
 model Package {
-  id                  String   @id @default(uuid()) @db.Uuid
-  provider_profile_id String   @db.Uuid
+  id                  String             @id @default(uuid()) @db.Uuid
+  provider_profile_id String             @db.Uuid
   title               String
   /// The scope — what the buyer is actually getting.
   summary             String?
@@ -1054,14 +1063,14 @@ model Package {
   pricing_type        PackagePricingType @default(FIXED)
   /// Integer cents, like every other money value in the app.
   price_cents         Int?
-  currency            String   @default("USD")
+  currency            String             @default("USD")
   /// Optional categorization for the catalog and future Work Request matching.
-  role_type_id        String?  @db.Uuid
+  role_type_id        String?            @db.Uuid
   cover_image_url     String?
-  status              PackageStatus @default(DRAFT)
-  sort_order          Int      @default(100)
-  created_at          DateTime @default(now())
-  updated_at          DateTime @updatedAt
+  status              PackageStatus      @default(DRAFT)
+  sort_order          Int                @default(100)
+  created_at          DateTime           @default(now())
+  updated_at          DateTime           @updatedAt
 
   providerProfile ProviderProfile      @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
   roleType        RoleType?            @relation(fields: [role_type_id], references: [id], onDelete: SetNull)
@@ -1174,14 +1183,14 @@ model Education {
 
 /// A language a provider speaks.
 model Language {
-  id                  String   @id @default(uuid()) @db.Uuid
-  provider_profile_id String   @db.Uuid
+  id                  String               @id @default(uuid()) @db.Uuid
+  provider_profile_id String               @db.Uuid
   name                String
   /// Free-text legacy column (brief_E). `level` is the canonical value now
   /// (brief_P / E016); this stays readable for rows written before the enum.
   proficiency         String?
   level               LanguageProficiency?
-  created_at          DateTime @default(now())
+  created_at          DateTime             @default(now())
 
   providerProfile ProviderProfile @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
 
@@ -1200,8 +1209,8 @@ model Language {
 /// happened to work for when they earned it. The employer link and the
 /// carry-it-forward-by-name logic that came with it are gone.
 model Certification {
-  id                  String   @id @default(uuid()) @db.Uuid
-  provider_profile_id String   @db.Uuid
+  id                  String    @id @default(uuid()) @db.Uuid
+  provider_profile_id String    @db.Uuid
   name                String
   /// The certifying agency / issuing body (e.g. "Oracle", "PMI").
   issuer              String?
@@ -1218,11 +1227,29 @@ model Certification {
   attachment_path     String?
   attachment_name     String?
   notes               String?
-  created_at          DateTime @default(now())
+  created_at          DateTime  @default(now())
+
+  /// LEARN CREDENTIALS (brief_learn_v1 WS0/WS5) — extension, not a fork. A
+  /// certificate earned on Learn is a certification; giving it a parallel model
+  /// would mean the provider's profile had two Certifications sections that
+  /// looked identical and behaved differently.
+  ///
+  /// `issued_from` is what tells them apart: SELF_REPORTED is a claim the
+  /// provider typed, LEARN is one Panameer issued and can therefore vouch for.
+  /// Only the second gets a verify URL.
+  issued_from           CredentialSource @default(SELF_REPORTED)
+  /// The path this credential was earned against (LEARN rows only).
+  learning_path_id      String?          @db.Uuid
+  /// The hosted, publicly checkable credential page (`/verify/[id]`), separate
+  /// from `url` above — that one is wherever the provider's own certificate
+  /// lives, this one is ours and we are accountable for it.
+  public_credential_url String?
 
   providerProfile ProviderProfile @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
+  learningPath    LearningPath?   @relation(fields: [learning_path_id], references: [id], onDelete: SetNull)
 
   @@index([provider_profile_id])
+  @@index([learning_path_id])
   @@map("certifications")
 }
 
@@ -1233,17 +1260,17 @@ model Certification {
 /// 6-digit code, never the code itself. Issuing a new code invalidates prior
 /// unconsumed ones for the same Person.
 model PhoneVerification {
-  id         String    @id @default(uuid()) @db.Uuid
-  person_id  String    @db.Uuid
+  id          String    @id @default(uuid()) @db.Uuid
+  person_id   String    @db.Uuid
   /// E.164 number the code was sent to. Kept so a code can't be replayed
   /// against a different number after the user edits the field.
-  phone      String
-  code_hash  String
-  expires_at DateTime
+  phone       String
+  code_hash   String
+  expires_at  DateTime
   consumed_at DateTime?
   /// Wrong-code submissions; the challenge dies at the cap (anti-brute-force).
-  attempts   Int       @default(0)
-  created_at DateTime  @default(now())
+  attempts    Int       @default(0)
+  created_at  DateTime  @default(now())
 
   person Person @relation(fields: [person_id], references: [id], onDelete: Cascade)
 
@@ -1286,13 +1313,13 @@ model ProfileImport {
 }
 
 model BuyerProfile {
-  id                String            @id @default(uuid()) @db.Uuid
-  person_id         String            @unique @db.Uuid
-  subscription_tier SubscriptionTier  @default(BASIC)
+  id                String           @id @default(uuid()) @db.Uuid
+  person_id         String           @unique @db.Uuid
+  subscription_tier SubscriptionTier @default(BASIC)
   /// Set when the buyer starts a Business Plus trial (brief_G). No billing yet.
   trial_started_at  DateTime?
-  created_at        DateTime          @default(now())
-  updated_at        DateTime          @updatedAt
+  created_at        DateTime         @default(now())
+  updated_at        DateTime         @updatedAt
 
   person Person @relation(fields: [person_id], references: [id], onDelete: Cascade)
 
@@ -1315,20 +1342,20 @@ enum SubscriptionTier {
 // ---------------------------------------------------------------------------
 
 model CoordinatorInvite {
-  id                 String                  @id @default(uuid()) @db.Uuid
-  inviter_person_id  String                  @db.Uuid
-  invitee_email      String
-  invitee_first_name String?
-  invitee_last_name  String?
-  message            String?
+  id                   String                  @id @default(uuid()) @db.Uuid
+  inviter_person_id    String                  @db.Uuid
+  invitee_email        String
+  invitee_first_name   String?
+  invitee_last_name    String?
+  message              String?
   /// SHA-256 of the raw token; the raw token lives only in the emailed link.
-  token_hash         String                  @unique
-  status             CoordinatorInviteStatus @default(PENDING)
-  expires_at         DateTime
+  token_hash           String                  @unique
+  status               CoordinatorInviteStatus @default(PENDING)
+  expires_at           DateTime
   /// The ProviderProfile that accepted (record-keeping; not a FK relation).
-  accepted_provider_id String?               @db.Uuid
-  created_at         DateTime                @default(now())
-  updated_at         DateTime                @updatedAt
+  accepted_provider_id String?                 @db.Uuid
+  created_at           DateTime                @default(now())
+  updated_at           DateTime                @updatedAt
 
   inviter Person @relation("CoordinatorInvitesSent", fields: [inviter_person_id], references: [id], onDelete: Cascade)
 
@@ -1360,29 +1387,29 @@ enum CoordinatorInviteStatus {
 // ---------------------------------------------------------------------------
 
 model WorkRequest {
-  id                  String   @id @default(uuid()) @db.Uuid
-  buyer_person_id     String   @db.Uuid
-  p_account_id        String   @db.Uuid
-  role_type_id        String?  @db.Uuid
-  region_id           String?  @db.Uuid
-  title               String   @default("")
+  id                  String               @id @default(uuid()) @db.Uuid
+  buyer_person_id     String               @db.Uuid
+  p_account_id        String               @db.Uuid
+  role_type_id        String?              @db.Uuid
+  region_id           String?              @db.Uuid
+  title               String               @default("")
   description         String?
   experience_level    ExperienceLevel?
   budget_type         BudgetType?
   budget_amount_cents Int?
-  currency            String   @default("USD")
+  currency            String               @default("USD")
   worksite            WorksiteType?
   location_country    String?
   duration            WorkRequestDuration?
-  status              WorkRequestStatus @default(DRAFT)
+  status              WorkRequestStatus    @default(DRAFT)
   posted_at           DateTime?
-  created_at          DateTime @default(now())
-  updated_at          DateTime @updatedAt
+  created_at          DateTime             @default(now())
+  updated_at          DateTime             @updatedAt
 
-  buyer    Person    @relation(fields: [buyer_person_id], references: [id], onDelete: Cascade)
-  pAccount PAccount  @relation(fields: [p_account_id], references: [id], onDelete: Cascade)
-  roleType RoleType? @relation(fields: [role_type_id], references: [id], onDelete: SetNull)
-  region   Region?   @relation(fields: [region_id], references: [id], onDelete: SetNull)
+  buyer    Person             @relation(fields: [buyer_person_id], references: [id], onDelete: Cascade)
+  pAccount PAccount           @relation(fields: [p_account_id], references: [id], onDelete: Cascade)
+  roleType RoleType?          @relation(fields: [role_type_id], references: [id], onDelete: SetNull)
+  region   Region?            @relation(fields: [region_id], references: [id], onDelete: SetNull)
   skills   WorkRequestSkill[]
 
   @@index([p_account_id])
@@ -1428,4 +1455,192 @@ enum WorkRequestDuration {
 enum WorkRequestStatus {
   DRAFT
   POSTED
+}
+
+// ===========================================================================
+// LEARN (P1-J3) — brief_learn_v1 WS0
+//
+// The certifiable spine is LearningPath → Course → Section → Lesson, ordered
+// within each parent by `sort_order`. AUDIENCE, GROUP and STYLE are FACETS on
+// that spine, not extra levels (design doc §3): making "Beginners" a container
+// would force every path to belong to exactly one, and the catalog already has
+// paths that read for two audiences.
+//
+// Videos stay on Vimeo. We store a reference and never the media itself.
+// ===========================================================================
+
+/// The catalog's "Course Type" / menu facet.
+enum LearnAudience {
+  BEGINNERS
+  END_USER
+  IMPLEMENTER
+  CONTENT_CREATOR
+}
+
+/// Course shape, per the catalog's Style/Type column.
+enum CourseStyle {
+  FA_OVERVIEW
+  HOW_TO_USE
+  HOW_TO_DEPLOY
+  DAILY_JOURNAL
+  ASK_THE_EXPERT
+}
+
+/// The catalog's 0→7 production ladder, mirrored VERBATIM so the vocabulary in
+/// the app matches the vocabulary in Scott's spreadsheet — a lesson at "3" means
+/// the same thing in both places, and nobody has to translate.
+///
+/// NEEDS_REFRESH is the spreadsheet's "0b": produced once, now stale. It sorts
+/// with the other pre-production states because that is what it behaves like.
+///
+/// PUBLISHABLE THRESHOLD: a lesson plays iff `production_status` is at least
+/// URL_ADDED_TO_LESSON *and* `vimeo_ref` is set. Both halves are required —
+/// the status says someone believes a URL was added, the column says one is
+/// actually there, and the catalog has rows where those disagree.
+enum LessonProductionStatus {
+  IN_CONCEPT
+  NEEDS_REFRESH
+  DECK_READY
+  RAW_SHOT
+  PRODUCED
+  LOADED_TO_STREAMING
+  URL_ADDED_TO_LESSON
+  BLOG_CREATED
+  BLOG_RELEASED
+}
+
+/// Where a Certification row came from, so a Learn-issued credential is
+/// distinguishable from one the provider typed in themselves.
+enum CredentialSource {
+  SELF_REPORTED
+  LEARN
+}
+
+enum LearnPublishStatus {
+  DRAFT
+  PUBLISHED
+}
+
+/// The CERTIFIABLE unit. A learner enrols in a path and is certified against it.
+model LearningPath {
+  id               String             @id @default(uuid()) @db.Uuid
+  title            String
+  slug             String             @unique
+  summary          String?
+  /// Facets — see the block comment above.
+  audience         LearnAudience
+  /// Free-string domain tag (Procurement, Supply Chain Execution, Core HR, …).
+  /// Deliberately NOT an enum: the catalog adds groups faster than a migration
+  /// can, and WS1 imports whatever the spreadsheet says.
+  group            String?
+  /// The instructor. A Person, so an expert can front paths without needing a
+  /// provider profile.
+  expert_person_id String?            @db.Uuid
+  cover_image      String?
+  status           LearnPublishStatus @default(DRAFT)
+  sort_order       Int                @default(0)
+  created_at       DateTime           @default(now())
+
+  expert      Person?           @relation("LearnExpertPaths", fields: [expert_person_id], references: [id], onDelete: SetNull)
+  courses     Course[]
+  enrollments LearnEnrollment[]
+  credentials Certification[]
+
+  @@index([audience, group])
+  @@index([status])
+  @@map("learning_paths")
+}
+
+/// A path may hold exactly ONE course — the catalog sometimes collapses
+/// "Learning Path = Course", and forcing an artificial second level there would
+/// invent structure the content doesn't have.
+model Course {
+  id               String       @id @default(uuid()) @db.Uuid
+  learning_path_id String       @db.Uuid
+  title            String
+  slug             String
+  summary          String?
+  style            CourseStyle?
+  sort_order       Int          @default(0)
+  created_at       DateTime     @default(now())
+
+  learningPath LearningPath @relation(fields: [learning_path_id], references: [id], onDelete: Cascade)
+  sections     Section[]
+
+  @@unique([learning_path_id, slug])
+  @@index([learning_path_id])
+  @@map("learn_courses")
+}
+
+model Section {
+  id         String   @id @default(uuid()) @db.Uuid
+  course_id  String   @db.Uuid
+  title      String
+  sort_order Int      @default(0)
+  created_at DateTime @default(now())
+
+  course  Course   @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  lessons Lesson[]
+
+  @@index([course_id])
+  @@map("learn_sections")
+}
+
+model Lesson {
+  id                String                 @id @default(uuid()) @db.Uuid
+  section_id        String                 @db.Uuid
+  title             String
+  description       String?
+  /// As written in the catalog ("12:34", "1h 05m") — free text on purpose: it is
+  /// display copy from a spreadsheet, and parsing it to seconds would invent a
+  /// precision the source doesn't have.
+  run_time          String?
+  /// Vimeo video id or embed URL. Null until the video is wired.
+  vimeo_ref         String?
+  production_status LessonProductionStatus @default(IN_CONCEPT)
+  expert_person_id  String?                @db.Uuid
+  sort_order        Int                    @default(0)
+  created_at        DateTime               @default(now())
+
+  section  Section          @relation(fields: [section_id], references: [id], onDelete: Cascade)
+  expert   Person?          @relation("LearnExpertLessons", fields: [expert_person_id], references: [id], onDelete: SetNull)
+  progress LessonProgress[]
+
+  @@index([section_id])
+  @@index([production_status])
+  @@map("learn_lessons")
+}
+
+/// Free enrolment — a join row, not billing. Enrolment is what turns an
+/// anonymous browser into an account (WS4), so it is keyed to the User rather
+/// than to any one profile: a buyer, a provider and a recruiter all learn.
+model LearnEnrollment {
+  id               String   @id @default(uuid()) @db.Uuid
+  user_id          String   @db.Uuid
+  learning_path_id String   @db.Uuid
+  created_at       DateTime @default(now())
+
+  user         User         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  learningPath LearningPath @relation(fields: [learning_path_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, learning_path_id])
+  @@index([user_id])
+  @@map("learn_enrollments")
+}
+
+/// One row per lesson a user has finished. Section / Course / LP percentages are
+/// COMPUTED from these, never stored: a stored rollup goes stale the moment a
+/// lesson is added to a path, and the catalog is still being written.
+model LessonProgress {
+  id           String   @id @default(uuid()) @db.Uuid
+  user_id      String   @db.Uuid
+  lesson_id    String   @db.Uuid
+  completed_at DateTime @default(now())
+
+  user   User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lesson_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, lesson_id])
+  @@index([user_id])
+  @@map("lesson_progress")
 }
