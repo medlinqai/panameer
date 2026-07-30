@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Avatar } from "@/components/Avatar";
 import { formatCents, displayFullName } from "@/lib/display";
 import { RichText } from "@/components/profile/RichText";
+import { WorkHistoryEntry } from "@/components/profile/WorkHistoryEntry";
 
 /**
  * The Profile-View section vocabulary (brief_X / E056).
@@ -48,6 +49,15 @@ export const EXPERIENCE_LABELS: Record<string, string> = {
  * `<button>` (in-page state), and pushing both through one prop is what makes a
  * shared component grow a `isReview` flag.
  */
+/**
+ * The card shell used by every profile section. The mockup draws a noticeably
+ * darker stroke than the app's usual hairline `border-line`, so this sits
+ * between the two — dark enough to read as the mockup, not so dark it fights
+ * the rest of the product.
+ */
+export const CARD =
+  "rounded-[18px] border border-ink/25 bg-white p-5 sm:p-6";
+
 export function ProfileCard({
   title,
   edit,
@@ -61,10 +71,7 @@ export function ProfileCard({
   children: ReactNode;
 }) {
   return (
-    <section
-      id={id}
-      className="scroll-mt-24 rounded-brand border border-line bg-white p-6"
-    >
+    <section id={id} className={`scroll-mt-24 ${CARD}`}>
       <div className="mb-4 flex items-center justify-between gap-4">
         <h2 className="text-[18px]">{title}</h2>
         {edit}
@@ -217,104 +224,128 @@ export type CertificationItem = {
 // ---------------------------------------------------------------------------
 
 /**
- * The full-width HERO (brief_profile_layout_v2 §1).
+ * The full-width HERO — PJv2 WS3, matching "Profile Review Mock up" pg1.
  *
- * Spans the page above the two columns, and leads with the TAGLINE — the one
- * line that says what this person is. It is deliberately the largest thing on
- * the profile: a buyer scanning results decides from that sentence, and the old
- * header gave it the same weight as the location and the rate.
+ * Three columns: photo · (name → tagline → bio) · meta rail.
  *
- * Name, location, field and level sit UNDER it as attribution; the rate hangs
- * right so it never competes with the tagline for the first read.
+ * The BIO lives INSIDE the hero, which is the mockup's real insight: the first
+ * card answers "who is this, what do they charge, can I read them" in one
+ * glance, instead of making a buyer scroll to a separate Overview card. The meta
+ * rail is right-aligned inside the hero rather than being a page-level column,
+ * so there is no left/right rail below and the sections underneath run
+ * full-width.
  */
 export function ProfileHero({
   firstName,
   lastName,
   photoUrl,
   headline,
-  location,
-  field,
-  experienceLevel,
+  overview,
   validated = false,
-  hourlyCents,
+  rateMinCents,
+  rateMaxCents,
   currency = "USD",
   youGetCents,
+  language,
+  country,
   aside,
-  /**
-   * The tagline is the page's primary heading on the PUBLISHED profile, but on
-   * the step-13 Review the wizard already owns the `<h1>` ("Looking good,
-   * …!"). Two h1s on one page is a semantics/a11y regression, so the review
-   * renders this as an h2 — visually identical, correctly ranked.
-   */
   headingAs: HeadingTag = "h1",
 }: {
   firstName: string;
   lastName: string;
   photoUrl?: string | null;
   headline?: string | null;
-  location?: string | null;
-  field?: { role: string; domain: string } | null;
-  experienceLevel?: string | null;
+  overview?: string | null;
   validated?: boolean;
-  hourlyCents?: number | null;
+  rateMinCents?: number | null;
+  rateMaxCents?: number | null;
   currency?: string;
   youGetCents?: number | null;
+  language?: string | null;
+  country?: string | null;
   aside?: ReactNode;
   headingAs?: "h1" | "h2";
 }) {
   const Heading = HeadingTag;
-  const meta = [
-    location,
-    field ? `${field.role} · ${field.domain}` : null,
-    experienceLevel
-      ? EXPERIENCE_LABELS[experienceLevel] ?? experienceLevel
-      : null,
-  ].filter(Boolean);
+
+  /** "$90 – $120" from the range; a single figure when min === max. */
+  const rateLabel = (() => {
+    if (rateMinCents == null && rateMaxCents == null) return null;
+    const lo = rateMinCents ?? rateMaxCents!;
+    const hi = rateMaxCents ?? rateMinCents!;
+    return lo === hi
+      ? formatCents(lo, currency)
+      : `${formatCents(lo, currency)} – ${formatCents(hi, currency)}`;
+  })();
 
   return (
-    <header className="rounded-brand border border-line bg-white p-6 sm:p-8">
-      <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
+    <header className={CARD}>
+      <div className="flex flex-col gap-6 sm:flex-row">
         <Avatar
           firstName={firstName}
           lastName={lastName}
           photoUrl={photoUrl}
-          size={104}
+          size={120}
         />
 
         <div className="min-w-0 flex-1">
-          {/* THE TAGLINE — dominant by design. */}
-          <Heading className="text-[28px] leading-[1.15] tracking-[-0.6px] sm:text-[38px]">
-            {headline || "Add a professional title"}
+          <Heading className="text-[30px] leading-[1.1] tracking-[-0.6px] sm:text-[38px]">
+            {displayFullName(firstName, lastName)}
           </Heading>
-
-          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5">
-            <p className="text-[17px] font-bold">
-              {displayFullName(firstName, lastName)}
-            </p>
-            {validated && (
-              <span className="rounded-full bg-emerald-50 px-3 py-1 text-[12px] font-extrabold text-emerald-700">
-                ✓ Validated
-              </span>
-            )}
-          </div>
-
-          {meta.length > 0 && (
-            <p className="mt-1.5 text-[14.5px] text-ink-2">{meta.join(" · ")}</p>
+          <p className="mt-2 text-[19px] leading-snug text-ink">
+            {headline || "Add a professional title"}
+          </p>
+          {overview ? (
+            <div className="mt-3">
+              <RichText
+                text={overview}
+                clampLines={6}
+                className="text-[15px] leading-relaxed text-ink-2"
+              />
+            </div>
+          ) : (
+            <p className="mt-3 text-[14px] text-ink-2">No overview yet.</p>
           )}
           {aside}
         </div>
 
-        <div className="sm:text-right">
-          <p className="text-[28px] font-extrabold leading-none">
-            {hourlyCents != null ? formatCents(hourlyCents, currency) : "—"}
-            <span className="text-[15px] font-semibold text-ink-2">/hr</span>
-          </p>
-          {youGetCents != null && (
-            <p className="mt-1 text-[13px] text-ink-2">
-              You&apos;ll Get {formatCents(youGetCents, currency)}/hr
-            </p>
+        {/* Meta rail — right side of the hero (mockup pg1). */}
+        <dl className="w-full flex-none space-y-2 text-[14.5px] sm:w-[190px]">
+          <div>
+            <dd
+              className={
+                validated
+                  ? "font-bold text-emerald-600"
+                  : "text-ink-2/60"
+              }
+            >
+              {validated ? "✓ Validated" : "Validated"}
+            </dd>
+          </div>
+          {rateLabel && (
+            <div>
+              <dt className="inline font-bold">Hourly Rate: </dt>
+              <dd className="inline">{rateLabel}</dd>
+              {youGetCents != null && (
+                <p className="text-[12.5px] text-ink-2">
+                  You&apos;ll Get {formatCents(youGetCents, currency)}/hr
+                </p>
+              )}
+            </div>
           )}
-        </div>
+          {language && (
+            <div>
+              <dt className="inline font-bold">Language: </dt>
+              <dd className="inline">{language}</dd>
+            </div>
+          )}
+          {country && (
+            <div>
+              <dt className="inline font-bold">Country: </dt>
+              <dd className="inline">{country}</dd>
+            </div>
+          )}
+        </dl>
       </div>
     </header>
   );
@@ -771,81 +802,108 @@ export function ProjectCard({
 }
 
 /**
- * E042 — Employer is the ONE work-history model, and projects nest under the
- * job they were delivered for.
+ * Work History — PJv2 WS3, mockup pg1.
+ *
+ * Employer is the ONE work-history model (E042). Each entry is a client
+ * component because its four links are disclosures; the list itself stays here
+ * so both profile surfaces share it.
  */
 export function WorkHistoryBody({
   employers,
   empty,
+  projects = [],
+  isOwner = false,
+  artifactsFor,
+  contactFor,
 }: {
   employers: EmployerItem[];
   empty: string;
+  /** All projects; each entry is given the ones belonging to it. */
+  projects?: ProjectItem[];
+  isOwner?: boolean;
+  /** WS4 / WS5 slots, resolved per employer by the caller. */
+  artifactsFor?: (employerId: string) => React.ReactNode;
+  contactFor?: (employerId: string) => React.ReactNode;
 }) {
   if (employers.length === 0) return <Empty>{empty}</Empty>;
   return (
-    <ul className="space-y-6">
-      {employers.map((e) => (
-        <li key={e.id}>
-          <div className="flex items-start gap-3">
-            {e.logoUrl && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={e.logoUrl}
-                alt=""
-                className="mt-0.5 h-10 w-10 flex-none rounded-[8px] border border-line bg-white object-contain p-1"
-              />
-            )}
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <p className="font-bold">
-                  {e.roleTitle ? `${e.roleTitle} · ` : ""}
-                  {e.name}
-                </p>
-                <p className="text-[13px] text-ink-2">
-                  {dateRange(
-                    e.startDate ?? null,
-                    e.endDate ?? null,
-                    e.isCurrent ?? false
-                  )}
-                </p>
-              </div>
-              {e.location && (
-                <p className="text-[13px] text-ink-2">{e.location}</p>
-              )}
-              {e.description && (
-                <div className="mt-1.5">
-                  <RichText
-                    text={e.description}
-                    clampLines={4}
-                    className="text-[14px] leading-relaxed text-ink-2"
-                  />
-                </div>
-              )}
-              {/* CROSS-LINKED, not duplicated (brief §4): the work history
-                  names what was delivered here and jumps to the full card in
-                  the Projects section, so a project's detail lives in exactly
-                  one place. Projects with no employer are never listed here —
-                  the nullable FK is what models "done outside a company". */}
-              {(e.projects?.length ?? 0) > 0 && (
-                <ul className="mt-3 flex flex-wrap gap-1.5 border-l-2 border-line pl-4">
-                  {e.projects!.map((pr) => (
-                    <li key={pr.id}>
-                      <a
-                        href={`#project-${pr.id}`}
-                        className="inline-flex items-center gap-1 rounded-full border border-magenta/30 bg-magenta/[0.05] px-2.5 py-1 text-[12.5px] font-semibold text-magenta-dark transition-colors hover:border-magenta hover:bg-magenta/10"
-                      >
-                        {pr.name}
-                        <span aria-hidden>↓</span>
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
-        </li>
-      ))}
+    <ul className="divide-y divide-line">
+      {employers.map((e, i) => {
+        // Prefer the employer's own nested list; fall back to matching the flat
+        // project list by employer name, which is the only key the wizard's
+        // draft carries.
+        const nested = e.projects ?? [];
+        const mine = nested.length
+          ? projects.filter((p) => nested.some((n) => n.id === p.id))
+          : projects.filter((p) => p.employer === e.name);
+        return (
+          <li key={e.id} className={i === 0 ? "pb-5" : "py-5 last:pb-0"}>
+            <WorkHistoryEntry
+              employer={e}
+              projects={mine}
+              isOwner={isOwner}
+              artifactsSlot={artifactsFor?.(e.id)}
+              contactSlot={contactFor?.(e.id)}
+            />
+          </li>
+        );
+      })}
     </ul>
+  );
+}
+
+/**
+ * Solo Projects — PJv2 WS3 / E074, mockup pg2.
+ *
+ * Full-width, and ONLY projects with no `employer_id`. Work delivered inside a
+ * job lives under its employer in Work History; this section is the work done
+ * between or outside companies. The note says so out loud, because two homes for
+ * "projects" is exactly the ambiguity E074 reported.
+ */
+export function SoloProjectsBody({
+  projects,
+  empty,
+  isOwner = false,
+}: {
+  projects: ProjectItem[];
+  empty: string;
+  isOwner?: boolean;
+}) {
+  return (
+    <>
+      <p className="mb-4 text-[13px] text-ink-2">
+        Employee projects are under their Employer in Work History.
+      </p>
+      {projects.length === 0 ? (
+        <Empty>{empty}</Empty>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2">
+          {projects.map((p) => (
+            <ProjectCard key={p.id} p={p} isOwner={isOwner} />
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
+/** Location card (mockup pg2 grid). */
+export function LocationBody({
+  location,
+  country,
+}: {
+  location?: string | null;
+  country?: string | null;
+}) {
+  const text = location || country;
+  if (!text) return <Empty>No location listed.</Empty>;
+  return (
+    <div className="text-[14.5px]">
+      <p>{location || country}</p>
+      {location && country && !location.includes(country) && (
+        <p className="text-ink-2">{country}</p>
+      )}
+    </div>
   );
 }
 

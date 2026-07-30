@@ -37,7 +37,8 @@ import { TestimonialCard, DECK_TESTIMONIALS } from "@/components/onboarding/Test
 import {
   ProfileCard,
   ProfileHero,
-  SkillsSpecializationsBand,
+  SoloProjectsBody,
+  LocationBody,
   EditButton,
   Empty,
   VerificationsBody,
@@ -229,6 +230,8 @@ type ProfilePayload = {
   headline?: string | null;
   overview?: string | null;
   hourlyRateCents?: number | null;
+  rateMinCents?: number | null;
+  rateMaxCents?: number | null;
   serviceFeeBps?: number | null;
   photoUrl?: string | null;
   firstName?: string | null;
@@ -316,6 +319,8 @@ type Profile = {
   headline: string;
   overview: string;
   hourlyRateCents: number | null;
+  rateMinCents: number | null;
+  rateMaxCents: number | null;
   serviceFeeBps: number;
   photoUrl: string | null;
   firstName: string;
@@ -347,6 +352,8 @@ const emptyProfile = (): Profile => ({
   headline: "",
   overview: "",
   hourlyRateCents: null,
+  rateMinCents: null,
+  rateMaxCents: null,
   serviceFeeBps: 1000,
   photoUrl: null,
   firstName: "",
@@ -472,6 +479,8 @@ export default function JoinProviderPage() {
       headline: p.headline ?? "",
       overview: p.overview ?? "",
       hourlyRateCents: p.hourlyRateCents ?? null,
+      rateMinCents: p.rateMinCents ?? null,
+      rateMaxCents: p.rateMaxCents ?? null,
       serviceFeeBps: p.serviceFeeBps ?? 1000,
       photoUrl: p.photoUrl ?? null,
       firstName: p.firstName ?? "",
@@ -1875,6 +1884,9 @@ export default function JoinProviderPage() {
         employer: employerNameById.get(pr.id) ?? null,
       }));
 
+      // E074 — Solo Projects is null-employer ONLY.
+      const soloProjects = projects.filter((pr) => !employerNameById.has(pr.id));
+
       const editBtn = (title: string, step: Step) => (
         <EditButton title={title} onClick={() => goTo(step)} />
       );
@@ -1907,19 +1919,12 @@ export default function JoinProviderPage() {
               lastName={profile.lastName}
               photoUrl={profile.photoUrl}
               headline={profile.headline}
-              location={
-                [addr.city, addr.state, addr.country]
-                  .filter((x) => x && x.trim())
-                  .join(", ") || null
-              }
-              field={
-                profile.roleTypeName && profile.pillarName
-                  ? { role: profile.roleTypeName, domain: profile.pillarName }
-                  : null
-              }
-              experienceLevel={profile.experienceLevel}
-              hourlyCents={profile.hourlyRateCents}
+              overview={profile.overview}
+              rateMinCents={profile.rateMinCents ?? profile.hourlyRateCents}
+              rateMaxCents={profile.rateMaxCents ?? profile.hourlyRateCents}
               youGetCents={youGet}
+              language={profile.languages[0]?.name ?? null}
+              country={addr.country?.trim() || null}
               aside={
                 <div className="mt-3 flex flex-wrap items-center gap-4">
                   <button
@@ -1929,81 +1934,107 @@ export default function JoinProviderPage() {
                   >
                     {profile.photoUrl ? "Change Photo" : "+ Add Photo"}
                   </button>
-                  <EditButton
-                    title="Title and rate"
-                    onClick={() => goTo("title")}
-                    label="Edit title"
-                  />
-                  <EditButton
-                    title="Rate"
-                    onClick={() => goTo("rate")}
-                    label="Edit rate"
-                  />
+                  <EditButton title="Title" onClick={() => goTo("title")} label="Edit title" />
+                  <EditButton title="Bio" onClick={() => goTo("bio")} label="Edit bio" />
+                  <EditButton title="Rate" onClick={() => goTo("rate")} label="Edit rate" />
                 </div>
               }
             />
 
-            {/*
-              MAIN LEFT, META RIGHT — the same shape as the published profile
-              (brief_profile_layout_v2 §2), and the main column is first in the
-              DOM so mobile stacks content-then-meta with no order utilities.
-            */}
-            <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
-              {/* ---- Main column: bio → skills → work history → projects -- */}
-              <div className="space-y-5">
-                <ProfileCard title="Overview" edit={editBtn("Overview", "bio")}>
-                  <OverviewBody
-                    overview={profile.overview}
-                    empty="No bio yet — buyers read this first."
+            {/* ---- pg1: Work History, full width ------------------------ */}
+            <div className="mt-5">
+              <ProfileCard
+                title="Work History"
+                edit={editBtn("Work History", "tell_us")}
+              >
+                <WorkHistoryBody
+                  employers={profile.employers}
+                  projects={projects}
+                  empty="No work history yet. Providers who add work experience and projects are twice as likely to win work."
+                />
+              </ProfileCard>
+            </div>
+
+            {/* ---- pg2: Solo Projects, full width (E074) ---------------- */}
+            <div className="mt-5">
+              <ProfileCard
+                title="Solo Projects"
+                edit={editBtn("Solo Projects", "tell_us")}
+              >
+                <SoloProjectsBody
+                  projects={soloProjects}
+                  empty="No solo projects yet — work you delivered outside a job goes here."
+                />
+              </ProfileCard>
+            </div>
+
+            {/* ---- pg2: the 2-column grid ------------------------------- */}
+            <div className="mt-5 grid gap-5 lg:grid-cols-2">
+              <ProfileCard title="Skills" edit={editBtn("Skills", "catalog")}>
+                <SkillsBody
+                  skills={profile.skillNames}
+                  field={
+                    profile.roleTypeName && profile.pillarName
+                      ? { role: profile.roleTypeName, domain: profile.pillarName }
+                      : null
+                  }
+                />
+              </ProfileCard>
+
+              <ProfileCard
+                title="Specializations"
+                edit={editBtn("Specializations", "specializations")}
+              >
+                <SpecializationsBody specializations={profile.specializationNames} />
+              </ProfileCard>
+
+              <ProfileCard title="Education" edit={editBtn("Education", "education")}>
+                <EducationBody education={profile.education} />
+              </ProfileCard>
+
+                {/* E057 — cards + a proper modal. The eight-field form that
+                    used to be squeezed into the sidebar column is gone. */}
+                <ProfileCard title="Certifications">
+                  <CertificationCards
+                    items={profile.certifications}
+                    busy={busy}
+                    openSignal={certSignal}
+                    onSave={async (next) => {
+                      // Optimistic locally so the card list updates with the
+                      // modal close; `saveCertifications` re-hydrates from the
+                      // server immediately after, so a rejected write cannot
+                      // leave the page showing something that wasn't stored.
+                      setProfile((pp) => ({ ...pp, certifications: next }));
+                      return saveCertifications(next);
+                    }}
                   />
                 </ProfileCard>
 
-                <ProfileCard
-                  title="Skills &amp; Specializations"
-                  edit={editBtn("Skills", "catalog")}
-                >
-                  <SkillsSpecializationsBand
-                    skills={profile.skillNames}
-                    specializations={profile.specializationNames}
-                    field={
-                      profile.roleTypeName && profile.pillarName
-                        ? {
-                            role: profile.roleTypeName,
-                            domain: profile.pillarName,
-                          }
-                        : null
-                    }
-                  />
-                </ProfileCard>
 
-                <ProfileCard
-                  title="Work History"
-                  edit={editBtn("Work History", "tell_us")}
-                >
-                  <WorkHistoryBody
-                    employers={profile.employers}
-                    empty="No work history yet. Providers who add work experience and projects are twice as likely to win work."
-                  />
-                </ProfileCard>
+              <ProfileCard title="Location">
+                <LocationBody
+                  location={
+                    [addr.city, addr.state, addr.country]
+                      .filter((x) => x && x.trim())
+                      .join(", ") || null
+                  }
+                  country={addr.country?.trim() || null}
+                />
+              </ProfileCard>
 
-                <ProfileCard
-                  title="Projects"
-                  edit={editBtn("Projects", "tell_us")}
-                >
-                  <ProjectsBody
-                    projects={projects}
-                    empty="No projects yet. Adding a few is the fastest way to show buyers what you've delivered."
-                  />
-                </ProfileCard>
-              </div>
+              {/* E039 — testimonials are EARNED after delivering work. */}
+              <ProfileCard title="Testimonials">
+                <Empty>
+                  No testimonials yet — you&apos;ll collect these as you deliver
+                  work.
+                </Empty>
+              </ProfileCard>
+            </div>
 
-              {/* ---- Right rail: the meta -------------------------------- */}
-              <aside className="space-y-5">
-                {/* Verify identity. On the published profile this is a
-                    read-only Verifications card; pre-publish it is where the
-                    required identity fields are actually entered, so the
-                    inputs live here rather than in a separate "Details" box
-                    that has no counterpart on the live page. */}
+            {/* Review-only: the required identity fields have no published
+                counterpart, so they sit after the preview rather than in a rail
+                the mockup no longer has. */}
+            <div className="mt-5">
                 <ProfileCard title="Verify Identity">
                   <div className="space-y-3">
                     <Field label="Date of Birth *">
@@ -2069,52 +2100,6 @@ export default function JoinProviderPage() {
                     />
                   </div>
                 </ProfileCard>
-
-                <ProfileCard
-                  title="Languages"
-                  edit={editBtn("Languages", "languages")}
-                >
-                  <LanguagesBody languages={profile.languages} />
-                </ProfileCard>
-
-                <ProfileCard
-                  title="Education"
-                  edit={editBtn("Education", "education")}
-                >
-                  <EducationBody education={profile.education} />
-                </ProfileCard>
-
-                {/* Specializations moved into the main column's
-                    Skills & Specializations band (brief_profile_layout_v2 §3.2)
-                    — buyers search on them, so they no longer sit in the rail. */}
-
-                {/* E057 — cards + a proper modal. The eight-field form that
-                    used to be squeezed into the sidebar column is gone. */}
-                <ProfileCard title="Certifications">
-                  <CertificationCards
-                    items={profile.certifications}
-                    busy={busy}
-                    openSignal={certSignal}
-                    onSave={async (next) => {
-                      // Optimistic locally so the card list updates with the
-                      // modal close; `saveCertifications` re-hydrates from the
-                      // server immediately after, so a rejected write cannot
-                      // leave the page showing something that wasn't stored.
-                      setProfile((pp) => ({ ...pp, certifications: next }));
-                      return saveCertifications(next);
-                    }}
-                  />
-                </ProfileCard>
-
-                {/* E039 — testimonials are EARNED after delivering work, so
-                    this is an honest empty state, not a capture form. */}
-                <ProfileCard title="Testimonials">
-                  <Empty>
-                    No testimonials yet — you&apos;ll collect these as you
-                    deliver work.
-                  </Empty>
-                </ProfileCard>
-              </aside>
             </div>
           </div>
 

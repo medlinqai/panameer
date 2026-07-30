@@ -643,6 +643,9 @@ export async function getOnboardingState(viewer: Viewer) {
       headline: pp.headline,
       overview: pp.overview ?? "",
       hourlyRateCents: pp.hourly_rate_cents,
+      // WS0/E078c — the advertised range; the hero renders this.
+      rateMinCents: pp.rate_min_cents,
+      rateMaxCents: pp.rate_max_cents,
       serviceFeeBps: pp.service_fee_bps,
       onsiteRateCents: pp.onsite_rate_cents,
       remoteRateCents: pp.remote_rate_cents,

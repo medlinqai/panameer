@@ -96,6 +96,11 @@ export async function getProviderProfileView(
   const addr = profile.person.site?.addresses?.[0] ?? null;
   const location =
     [addr?.city, addr?.state, addr?.country].filter(Boolean).join(", ") || null;
+  // The hero's meta rail (WS3, mockup pg1) shows Country on its own line, and
+  // the primary LANGUAGE — the first one listed, which is the order the
+  // provider entered them in.
+  const country = addr?.country?.trim() || null;
+  const primaryLanguage = profile.languages[0]?.name ?? null;
 
   return {
     id: profile.id,
@@ -114,6 +119,8 @@ export async function getProviderProfileView(
       photoUrl: profile.person.photo_url,
     },
     location,
+    country,
+    primaryLanguage,
     headline: profile.headline,
     overview: profile.overview,
     experienceLevel: profile.experience_level,
@@ -124,6 +131,10 @@ export async function getProviderProfileView(
     rates: {
       currency: profile.currency,
       hourlyCents: profile.hourly_rate_cents,
+      // WS0/E078c — the advertised RANGE. Falls back to the legacy single rate
+      // so a profile saved before the migration still shows something.
+      minCents: profile.rate_min_cents ?? profile.hourly_rate_cents,
+      maxCents: profile.rate_max_cents ?? profile.hourly_rate_cents,
       onsiteCents: profile.onsite_rate_cents,
       remoteCents: profile.remote_rate_cents,
     },

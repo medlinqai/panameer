@@ -4,7 +4,8 @@ import type { ProviderProfileView } from "@/lib/provider-profile-view";
 import {
   ProfileCard,
   ProfileHero,
-  SkillsSpecializationsBand,
+  SoloProjectsBody,
+  LocationBody,
   Empty,
   EDIT_CLASS,
   VerificationsBody,
@@ -49,6 +50,11 @@ function EditLink({ href, title }: { href: string; title: string }) {
 
 export function ProviderProfileViewPage({ p }: { p: ProviderProfileView }) {
   const { youGet } = rateBreakdown(p.rates.hourlyCents, p.serviceFeeBps);
+  // E074 — Solo Projects is null-employer ONLY; everything else belongs to its
+  // employer in Work History.
+  const soloProjects = p.projects.filter(
+    (pr) => !p.employers.some((e) => (e.projects ?? []).some((n) => n.id === pr.id))
+  );
   const edit = (title: string, href: string) =>
     p.isOwner ? <EditLink href={href} title={title} /> : undefined;
 
@@ -105,78 +111,64 @@ export function ProviderProfileViewPage({ p }: { p: ProviderProfileView }) {
           </div>
         )}
 
-        {/* ---- Full-width hero (brief_profile_layout_v2 §1) ----------- */}
+        {/* ---- pg1: full-width hero — photo · name/tagline/bio · meta ---- */}
         <ProfileHero
           firstName={p.person.firstName}
           lastName={p.person.lastName}
           photoUrl={p.person.photoUrl}
           headline={p.headline}
-          location={p.location}
-          field={p.field}
-          experienceLevel={p.experienceLevel}
+          overview={p.overview}
           validated={p.validated}
-          hourlyCents={p.rates.hourlyCents}
+          rateMinCents={p.rates.minCents}
+          rateMaxCents={p.rates.maxCents}
           currency={p.rates.currency}
           youGetCents={p.isOwner ? youGet : null}
+          language={p.primaryLanguage}
+          country={p.country}
         />
 
-        {/*
-          MAIN LEFT, META RIGHT (§2). The main column is FIRST in the DOM, which
-          is what makes the mobile stack correct for free: one column, meta
-          AFTER the content it supports, with no order utilities to keep in sync.
-        */}
-        <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
-          {/* ---- Main column ------------------------------------------- */}
-          <div className="space-y-6">
-            {/* 1. Bio */}
-            <ProfileCard
-              title="Overview"
-              edit={edit("Overview", "/join/provider?step=bio")}
-            >
-              <OverviewBody overview={p.overview} />
-            </ProfileCard>
+        {/* ---- pg1: Work History, full width ---------------------------- */}
+        <div className="mt-5">
+          <ProfileCard
+            title="Work History"
+            edit={edit("Work History", "/join/provider?step=tell_us")}
+          >
+            <WorkHistoryBody
+              employers={p.employers}
+              projects={p.projects}
+              isOwner={p.isOwner}
+              empty={
+                p.isOwner
+                  ? "No work history yet. Providers who add work experience and projects are twice as likely to win work."
+                  : "No work history yet."
+              }
+            />
+          </ProfileCard>
+        </div>
 
-            {/* 2. Skills / Specializations — discovery, kept high (§3.2) */}
-            <ProfileCard
-              title="Skills &amp; Specializations"
-              edit={edit("Skills", "/join/provider?step=catalog")}
-            >
-              <SkillsSpecializationsBand
-                skills={p.skills}
-                specializations={p.specializations}
-                field={p.field}
-              />
-            </ProfileCard>
+        {/* ---- pg2: Solo Projects, full width (E074) -------------------- */}
+        <div className="mt-5">
+          <ProfileCard
+            title="Solo Projects"
+            edit={edit("Solo Projects", "/join/provider?step=tell_us")}
+          >
+            <SoloProjectsBody
+              isOwner={p.isOwner}
+              projects={soloProjects}
+              empty={
+                p.isOwner
+                  ? "No solo projects yet — work you delivered outside a job goes here."
+                  : "No solo projects listed."
+              }
+            />
+          </ProfileCard>
+        </div>
 
-            {/* 3. Work History — each employer links DOWN to its projects */}
-            <ProfileCard
-              title="Work History"
-              edit={edit("Work History", "/join/provider?step=employers")}
-            >
-              <WorkHistoryBody
-                employers={p.employers}
-                empty={
-                  p.isOwner
-                    ? "No work history yet. Providers who add work experience and projects are twice as likely to win work."
-                    : "No work history yet."
-                }
-              />
-            </ProfileCard>
-
-            {/* 4. Projects — the showcase, and the anchor targets above */}
-            <ProfileCard title="Projects">
-              <ProjectsBody
-                isOwner={p.isOwner}
-                projects={p.projects}
-                empty={
-                  p.isOwner
-                    ? "No projects yet. Adding a few is the fastest way to show buyers what you've delivered."
-                    : "No projects published yet."
-                }
-              />
-            </ProfileCard>
-
-            {/* Packages (brief_V / E045) — the sellable catalog. Sits ABOVE
+        {/* Packages (brief_V / E045) — NOT in the pg1/pg2 mockup, kept
+            full-width here so the shipped sellable catalog isn't dropped by a
+            layout change. Published-only, as before. */}
+        <div className="mt-5">
+          {/* Packages (brief_V / E045) — the sellable catalog. Sits ABOVE
                 Projects deliberately: a buyer landing here should first see
                 what they can buy today, then the proof it will be delivered.
                 Read-only; purchase is a later stage.
@@ -263,57 +255,58 @@ export function ProviderProfileViewPage({ p }: { p: ProviderProfileView }) {
               </ProfileCard>
             )}
 
-          </div>
+        </div>
 
-          {/* ---- Right rail: the meta (§2) ----------------------------- */}
-          <aside className="space-y-6">
-            <ProfileCard title="Verifications">
-              <VerificationsBody
-                emailVerified={p.verifications.emailVerified}
-                phoneOnFile={p.verifications.phoneOnFile}
-                phoneVerified={p.verifications.phoneVerified}
-              />
-            </ProfileCard>
 
-            <ProfileCard
-              title="Languages"
-              edit={edit("Languages", "/join/provider?step=languages")}
-            >
-              <LanguagesBody languages={p.languages} />
-            </ProfileCard>
+        {/* ---- pg2: the 2-column grid ----------------------------------- */}
+        <div className="mt-5 grid gap-5 lg:grid-cols-2">
+          <ProfileCard
+            title="Skills"
+            edit={edit("Skills", "/join/provider?step=catalog")}
+          >
+            <SkillsBody skills={p.skills} field={p.field} />
+          </ProfileCard>
 
-            <ProfileCard
-              title="Education"
-              edit={edit("Education", "/join/provider?step=education")}
-            >
-              <EducationBody education={p.education} />
-            </ProfileCard>
+          <ProfileCard
+            title="Specializations"
+            edit={edit("Specializations", "/join/provider?step=specializations")}
+          >
+            <SpecializationsBody specializations={p.specializations} />
+          </ProfileCard>
 
-            {/* Certifications = the "licenses/credentials" meta the brief lists;
-                Panameer has no separate Licenses entity. */}
-            <ProfileCard
-              title="Certifications"
-              edit={edit("Certifications", "/join/provider?step=certifications")}
-            >
-              <CertificationsBody
-                certifications={p.certifications}
-                empty={
-                  p.isOwner
-                    ? "No certifications yet. Adding your credentials increases your chances of getting hired."
-                    : "No certifications listed."
-                }
-              />
-            </ProfileCard>
+          <ProfileCard
+            title="Education"
+            edit={edit("Education", "/join/provider?step=education")}
+          >
+            <EducationBody education={p.education} />
+          </ProfileCard>
 
-            {/* E039 — earned after delivering work, so an honest empty state. */}
-            <ProfileCard title="Testimonials">
-              <Empty>
-                {p.isOwner
-                  ? "No testimonials yet — you'll collect these as you deliver work."
-                  : "No testimonials yet."}
-              </Empty>
-            </ProfileCard>
-          </aside>
+          <ProfileCard
+            title="Certifications"
+            edit={edit("Certifications", "/join/provider?step=certifications")}
+          >
+            <CertificationsBody
+              certifications={p.certifications}
+              empty={
+                p.isOwner
+                  ? "No certifications yet. Adding your credentials increases your chances of getting hired."
+                  : "No certifications listed."
+              }
+            />
+          </ProfileCard>
+
+          <ProfileCard title="Location">
+            <LocationBody location={p.location} country={p.country} />
+          </ProfileCard>
+
+          {/* E039 — earned after delivering work, so an honest empty state. */}
+          <ProfileCard title="Testimonials">
+            <Empty>
+              {p.isOwner
+                ? "No testimonials yet — you'll collect these as you deliver work."
+                : "No testimonials yet."}
+            </Empty>
+          </ProfileCard>
         </div>
       </div>
     </div>
