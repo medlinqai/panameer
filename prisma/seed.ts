@@ -5,6 +5,7 @@ import { createHash } from "crypto";
 import * as dotenv from "dotenv";
 import path from "path";
 import { seedTaxonomy } from "./seed-taxonomy";
+import { seedLearn } from "./seed-learn";
 import { computeProviderCompleteness } from "../src/lib/completeness";
 import { normalizeEmail } from "../src/lib/normalizeEmail";
 
@@ -47,6 +48,23 @@ async function main() {
   // Seeded before profiles so provider skills can reference the taxonomy.
   const counts = await seedTaxonomy(prisma);
   console.log("Seeded service catalog:", JSON.stringify(counts));
+
+  // --- Learn curriculum (reference data) ---------------------------------
+  // After the taxonomy, before profiles: lessons link an expert to a Person, so
+  // the demo people must not exist yet on a first run — they resolve on the
+  // next one, which is what the update-on-re-run behaviour is for. Safe to skip
+  // if the generated catalog isn't present (a fresh clone before the generator
+  // has been run).
+  try {
+    const learn = await seedLearn(prisma);
+    console.log(
+      `Seeded Learn: ${learn.paths.inserted + learn.paths.updated} paths, ` +
+        `${learn.lessons.inserted + learn.lessons.updated} lessons ` +
+        `(${learn.lessonsWithVimeoRef} with a video URL)`
+    );
+  } catch (e) {
+    console.warn("Skipped Learn seed:", (e as Error).message);
+  }
 
   // --- Demo org: PAccount → Company → Site → Address → Person -------------
   // Guarded on the admin Person's user_id (unique) so the whole backbone is

@@ -1540,6 +1540,12 @@ model LearningPath {
   status           LearnPublishStatus @default(DRAFT)
   sort_order       Int                @default(0)
   created_at       DateTime           @default(now())
+  /// XLS-RE-RUN SHIELD (WS1). The catalog is seed-driven, but the admin console
+  /// (brief_learn_admin_authoring) will edit the same rows. A re-import is
+  /// authoritative only for rows it created: anything flagged `is_custom` was
+  /// touched by a human and an XLS re-run leaves it alone. Same rule the service
+  /// taxonomy uses.
+  is_custom        Boolean            @default(false)
 
   expert      Person?           @relation("LearnExpertPaths", fields: [expert_person_id], references: [id], onDelete: SetNull)
   courses     Course[]
@@ -1563,6 +1569,12 @@ model Course {
   style            CourseStyle?
   sort_order       Int          @default(0)
   created_at       DateTime     @default(now())
+  /// XLS-RE-RUN SHIELD (WS1). The catalog is seed-driven, but the admin console
+  /// (brief_learn_admin_authoring) will edit the same rows. A re-import is
+  /// authoritative only for rows it created: anything flagged `is_custom` was
+  /// touched by a human and an XLS re-run leaves it alone. Same rule the service
+  /// taxonomy uses.
+  is_custom        Boolean      @default(false)
 
   learningPath LearningPath @relation(fields: [learning_path_id], references: [id], onDelete: Cascade)
   sections     Section[]
@@ -1578,10 +1590,19 @@ model Section {
   title      String
   sort_order Int      @default(0)
   created_at DateTime @default(now())
+  /// XLS-RE-RUN SHIELD (WS1). The catalog is seed-driven, but the admin console
+  /// (brief_learn_admin_authoring) will edit the same rows. A re-import is
+  /// authoritative only for rows it created: anything flagged `is_custom` was
+  /// touched by a human and an XLS re-run leaves it alone. Same rule the service
+  /// taxonomy uses.
+  is_custom  Boolean  @default(false)
 
   course  Course   @relation(fields: [course_id], references: [id], onDelete: Cascade)
   lessons Lesson[]
 
+  /// The XLS carries no ids, so (course, title) IS a section's identity — it is
+  /// what makes a re-import an UPDATE rather than a duplicate.
+  @@unique([course_id, title])
   @@index([course_id])
   @@map("learn_sections")
 }
@@ -1601,11 +1622,19 @@ model Lesson {
   expert_person_id  String?                @db.Uuid
   sort_order        Int                    @default(0)
   created_at        DateTime               @default(now())
+  /// XLS-RE-RUN SHIELD (WS1). The catalog is seed-driven, but the admin console
+  /// (brief_learn_admin_authoring) will edit the same rows. A re-import is
+  /// authoritative only for rows it created: anything flagged `is_custom` was
+  /// touched by a human and an XLS re-run leaves it alone. Same rule the service
+  /// taxonomy uses.
+  is_custom         Boolean                @default(false)
 
   section  Section          @relation(fields: [section_id], references: [id], onDelete: Cascade)
   expert   Person?          @relation("LearnExpertLessons", fields: [expert_person_id], references: [id], onDelete: SetNull)
   progress LessonProgress[]
 
+  /// Same reasoning as Section: (section, title) is a lesson's natural key.
+  @@unique([section_id, title])
   @@index([section_id])
   @@index([production_status])
   @@map("learn_lessons")
