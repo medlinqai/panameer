@@ -195,7 +195,7 @@ export function reviewItems(p: ReviewInput): ReviewItem[] {
         ? `${undated[0].name} has no start date — it will show as "? – Present".`
         : `${undated.length} roles have no start date — they will show as "? – Present".`,
       "Add dates",
-      { kind: "step", step: "employers" }
+      { kind: "step", step: "tell_us" }
     );
   }
 
@@ -207,7 +207,7 @@ export function reviewItems(p: ReviewInput): ReviewItem[] {
         ? "1 project has no role set — classifying it is how buyers find it."
         : `${unclassified} projects have no role set — classifying them is how buyers find them.`,
       "Classify projects",
-      { kind: "step", step: "employers" }
+      { kind: "step", step: "tell_us" }
     );
   }
 
@@ -216,7 +216,7 @@ export function reviewItems(p: ReviewInput): ReviewItem[] {
       "employers",
       "Add your work history — providers with it are twice as likely to win work.",
       "Add work history",
-      { kind: "step", step: "employers" }
+      { kind: "step", step: "tell_us" }
     );
   }
   if (p.education.length === 0) {

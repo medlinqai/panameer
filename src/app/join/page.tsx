@@ -15,7 +15,7 @@ import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 export default function JoinRoleSelect() {
   const router = useRouter();
   const [ready, setReady] = useState(false);
-  const [role, setRole] = useState<"buyer" | "provider" | null>(null);
+  const [role, setRole] = useState<"buyer" | "provider" | "recruiter" | null>(null);
 
   useEffect(() => {
     // If already signed in with a role, skip role select and resume onboarding.
@@ -40,7 +40,11 @@ export default function JoinRoleSelect() {
 
   const go = () => {
     if (role === "buyer") router.push("/join/buyer");
+    // PJv2 WS1 (E066/E070) — the sell-your-own vs sell-others fork lives HERE
+    // now, at the front of the journey, instead of three screens into the
+    // wizard. Both walk /join/provider; `type` picks the itinerary.
     else if (role === "provider") router.push("/join/provider");
+    else if (role === "recruiter") router.push("/join/provider?type=recruiter");
   };
 
   return (
@@ -66,7 +70,13 @@ export default function JoinRoleSelect() {
           selected={role === "provider"}
           onClick={() => setRole("provider")}
           title="Service Provider"
-          description="Provide services and get paid."
+          description="Sell your own services and get paid."
+        />
+        <OptionCard
+          selected={role === "recruiter"}
+          onClick={() => setRole("recruiter")}
+          title="Recruiter"
+          description="Represent other providers and place them on work."
         />
       </div>
 

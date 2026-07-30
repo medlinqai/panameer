@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { WizardShell } from "@/components/onboarding/WizardShell";
+import { Avatar } from "@/components/Avatar";
 import { VerifyGate } from "@/components/onboarding/VerifyGate";
 import { SignUpForm, type SignUpValues } from "@/components/onboarding/SignUpForm";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
@@ -77,26 +78,28 @@ import {
  * the resume point, so there is no progress column to keep in sync.
  */
 
-/** The 13 profile steps, in order. Must mirror PROVIDER_STEPS server-side. */
-const STEPS = [
-  "experience_level",
-  "goal",
-  "work_method",
+/**
+ * Every step this wizard can render (PJv2 WS1 / E070). The ORDER a given user
+ * walks comes from the server — a recruiter skips Education and Rate — so this
+ * is the union, not the itinerary.
+ */
+const ALL_STEPS = [
   "title",
-  "tell_us",
-  "employers",
   "catalog",
+  "tell_us",
   "specializations",
   "education",
   "languages",
   "bio",
   "rate",
+  "picture",
   "finish",
 ] as const;
-type Step = (typeof STEPS)[number];
+type Step = (typeof ALL_STEPS)[number];
 type Screen = "signup" | "check_email" | Step;
 
-const TOTAL = STEPS.length; // 13 (brief_U — employers step added)
+/** Provider journey (10). The server sends the real list; this is the fallback. */
+const DEFAULT_STEPS: readonly Step[] = ALL_STEPS;
 
 const EXPERIENCE_OPTIONS = [
   { value: "BEGINNER", title: "Beginner", description: "New to consulting or early in my journey." },
@@ -129,20 +132,17 @@ const LANGUAGE_LEVELS = [
  * Stepper heading + forward-button label per step — the exact strings from
  * brief_S's table. Mirrors PROVIDER_STEP_LABELS in onboarding.ts.
  */
-const STEP_LABELS: Record<Step, { stepper: string; next: string }> = {
-  experience_level: { stepper: "Your Experience", next: "Next: Your Goal" },
-  goal: { stepper: "Your Goal", next: "Next: What Do You Sell" },
-  work_method: { stepper: "What Do You Sell", next: "Next: Your Title" },
-  title: { stepper: "Your Title", next: "Next: Create Your Profile" },
-  tell_us: { stepper: "Create Your Profile", next: "Next: Your Employers" },
-  employers: { stepper: "Your Employers", next: "Next: Role → Domain → Skills" },
-  catalog: { stepper: "Role → Domain → Skills", next: "Next: Your Specializations" },
-  specializations: { stepper: "Your Specializations", next: "Next: Education" },
-  education: { stepper: "Your Education", next: "Next: Languages" },
-  languages: { stepper: "Your Languages", next: "Next: Your Bio" },
-  bio: { stepper: "Your Bio", next: "Next: Your Rate" },
-  rate: { stepper: "Your Rate", next: "Next: Profile Review" },
-  finish: { stepper: "Review Your Profile", next: "Next: Publish Your Profile" },
+const STEP_LABELS: Record<Step, { stepper: string }> = {
+  title: { stepper: "Your Title" },
+  catalog: { stepper: "Role → Domain → Skills" },
+  tell_us: { stepper: "Build Your Profile" },
+  specializations: { stepper: "Your Specializations" },
+  education: { stepper: "Your Education" },
+  languages: { stepper: "Your Languages" },
+  bio: { stepper: "Your Bio" },
+  rate: { stepper: "Your Rate" },
+  picture: { stepper: "Your Picture" },
+  finish: { stepper: "Review Your Profile" },
 };
 
 const MIN_BIO = 100;
@@ -260,6 +260,9 @@ type StatusPayload = {
   email: string;
   emailVerified: boolean;
   resumeStep: string;
+  /** The itinerary for THIS user (recruiters get 8, providers 10) — WS1. */
+  steps?: Step[];
+  isRecruiter?: boolean;
   completeness?: number;
   profile?: ProfilePayload;
 };
@@ -402,6 +405,12 @@ export default function JoinProviderPage() {
    * click-to-fix works the second and third time it's clicked, not just once.
    */
   const [certSignal, setCertSignal] = useState(0);
+  /**
+   * WS1 — the step list comes from the server, because it depends on the user
+   * type chosen at the fork. Falls back to the provider journey.
+   */
+  const [steps, setSteps] = useState<readonly Step[]>(DEFAULT_STEPS);
+  const [isRecruiter, setIsRecruiter] = useState(false);
 
   const [importOutcome, setImportOutcome] = useState<ImportOutcome | null>(null);
   const [uploadModal, setUploadModal] = useState<null | "RESUME" | "LINKEDIN_PDF">(null);
@@ -414,12 +423,14 @@ export default function JoinProviderPage() {
    */
   const [phoneInput, setPhoneInput] = useState("");
 
-  const stepIndex = STEPS.indexOf(screen as Step);
+  const stepIndex = steps.indexOf(screen as Step);
 
   // ---- hydration --------------------------------------------------------
   // The server owns profile state; every save returns the fresh snapshot and
   // we re-seed local form state from it rather than guessing what changed.
   const hydrate = useCallback((s: StatusPayload) => {
+    if (s.steps?.length) setSteps(s.steps);
+    if (typeof s.isRecruiter === "boolean") setIsRecruiter(s.isRecruiter);
     const p = s.profile;
     if (!p) return;
     setProfile({
@@ -538,8 +549,38 @@ export default function JoinProviderPage() {
       } else if (r.status === 404) {
         setNotProvider(true);
       } else if (r.ok) {
-        const s = await r.json();
+        let s = await r.json();
         setEmail(s.email);
+
+        /**
+         * PJv2 WS1 — honour the user-type fork from `/join`.
+         *
+         * `?type=recruiter` is the ONLY thing that distinguishes the two
+         * journeys, and it has to be persisted (as `work_method`) before the
+         * step list is read, or a recruiter would be handed the 10-step
+         * provider itinerary and asked for a rate. Only ever sets it when the
+         * profile has no method yet, so re-entering the URL cannot silently
+         * re-type an existing provider.
+         */
+        const wanted = new URLSearchParams(window.location.search).get("type");
+        if (wanted === "recruiter" && !s.profile?.workMethod) {
+          // `work_method` is a SECTION now, not a wizard step, so it goes
+          // through the owner-scoped section endpoint; then re-read the state so
+          // the step list reflects the recruiter itinerary.
+          const saved = await fetch("/api/settings/profile/section", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              section: "work_method",
+              data: { workMethod: "RECRUITER" },
+            }),
+          });
+          if (saved.ok) {
+            const again = await fetch("/api/onboarding/status");
+            if (again.ok) s = await again.json();
+          }
+        }
+
         hydrate(s);
         if (!s.emailVerified) {
           setScreen("check_email");
@@ -547,7 +588,7 @@ export default function JoinProviderPage() {
           // The review page's edit pencils deep-link back to a specific step
           // (?step=bio). Anything unrecognised falls back to the resume point.
           const requested = new URLSearchParams(window.location.search).get("step");
-          const target = STEPS.includes(requested as Step)
+          const target = (s.steps ?? DEFAULT_STEPS).includes(requested as Step)
             ? (requested as Step)
             : (s.resumeStep as Step);
           setScreen(target);
@@ -592,10 +633,10 @@ export default function JoinProviderPage() {
     setScreen(s);
   };
   const goNext = () => {
-    if (stepIndex >= 0 && stepIndex < STEPS.length - 1) goTo(STEPS[stepIndex + 1]);
+    if (stepIndex >= 0 && stepIndex < steps.length - 1) goTo(steps[stepIndex + 1]);
   };
   const goBack = () => {
-    if (stepIndex > 0) goTo(STEPS[stepIndex - 1]);
+    if (stepIndex > 0) goTo(steps[stepIndex - 1]);
   };
 
   const postStep = async (step: Step, data: unknown): Promise<boolean> => {
@@ -812,11 +853,17 @@ export default function JoinProviderPage() {
   const stepNumber = stepIndex + 1;
   // Exact stepper heading + "Next: …" label per brief_S's table (E024–E035).
   const labels = STEP_LABELS[screen as Step];
+  const nextStep = stepIndex >= 0 ? steps[stepIndex + 1] : undefined;
+  const nextLabel = nextStep
+    ? nextStep === "finish"
+      ? "Next: Review Your Profile"
+      : `Next: ${STEP_LABELS[nextStep].stepper}`
+    : "Next: Publish Your Profile";
   const shell = (props: Partial<React.ComponentProps<typeof WizardShell>> & { title: string }) => ({
     step: stepNumber,
-    totalSteps: TOTAL,
+    totalSteps: steps.length,
     stepLabel: labels?.stepper,
-    continueLabel: labels?.next,
+    continueLabel: nextLabel,
     busy,
     onBack: stepIndex > 0 ? goBack : undefined,
     canBack: stepIndex > 0,
@@ -825,92 +872,6 @@ export default function JoinProviderPage() {
 
   switch (screen) {
     // ---- 1/12 — Experience (E003) -------------------------------------
-    case "experience_level":
-      return (
-        <WizardShell
-          {...shell({
-            title: "What's Your Experience Level?",
-            subtitle: "This helps us set expectations with clients. You can change it later.",
-            onContinue: () =>
-              saveAnd("experience_level", { experienceLevel: profile.experienceLevel }),
-            continueDisabled: !profile.experienceLevel,
-          })}
-        >
-          {error && <Notice>{error}</Notice>}
-          <div className="space-y-3">
-            {EXPERIENCE_OPTIONS.map((o) => (
-              <OptionCard
-                key={o.value}
-                selected={profile.experienceLevel === o.value}
-                onClick={() => setProfile((p) => ({ ...p, experienceLevel: o.value }))}
-                title={o.title}
-                description={o.description}
-              />
-            ))}
-          </div>
-        </WizardShell>
-      );
-
-    // ---- 2/12 — Goal (E004) -------------------------------------------
-    case "goal":
-      return (
-        <WizardShell
-          {...shell({
-            title: "Got it! What's your biggest goal while providing services/freelancing?",
-            onContinue: () => saveAnd("goal", { goal: profile.goal }),
-            continueDisabled: !profile.goal,
-          })}
-        >
-          {error && <Notice>{error}</Notice>}
-          <div className="space-y-3">
-            {GOAL_OPTIONS.map((o) => (
-              <OptionCard
-                key={o.value}
-                selected={profile.goal === o.value}
-                onClick={() => setProfile((p) => ({ ...p, goal: o.value }))}
-                title={o.title}
-                description={o.description}
-              />
-            ))}
-          </div>
-        </WizardShell>
-      );
-
-    // ---- 3/12 — How Do You Work? (E009) -------------------------------
-    case "work_method":
-      return (
-        <WizardShell
-          {...shell({
-            title: "How Do You Work?",
-            subtitle: "Tell us how you sell your services so we can match you to the right work.",
-            onContinue: () => saveAnd("work_method", { workMethod: profile.workMethod }),
-            continueDisabled: !profile.workMethod,
-          })}
-        >
-          {error && <Notice>{error}</Notice>}
-          <div className="space-y-3">
-            {WORK_METHOD_OPTIONS.map((o) => (
-              <OptionCard
-                key={o.value}
-                selected={profile.workMethod === o.value}
-                onClick={() => setProfile((p) => ({ ...p, workMethod: o.value }))}
-                title={o.title}
-                description={o.description}
-              />
-            ))}
-          </div>
-          {profile.workMethod === "RECRUITER" && (
-            <div className="mt-5">
-              <Notice tone="info">
-                Recruiters get the coordinator tools for representing other
-                providers, alongside your own profile.
-              </Notice>
-            </div>
-          )}
-        </WizardShell>
-      );
-
-    // ---- 4/12 — Title (E011) ------------------------------------------
     case "title":
       return (
         <WizardShell
@@ -986,16 +947,27 @@ export default function JoinProviderPage() {
 
           <div className="space-y-3">
             <MethodCard
-              title="Import From LinkedIn"
-              description="LinkedIn doesn't let apps read your profile directly, so export it: open your profile → More → Save to PDF, then upload that file here."
-              onClick={() => setUploadModal("LINKEDIN_PDF")}
-            />
-            <MethodCard
               title="Fill Out Manually (15 Mins)"
               description="Type everything yourself, step by step."
               onClick={() => saveAnd("tell_us", { profileMethod: "MANUAL" })}
             />
           </div>
+
+          {/* WS1/WS2 (E071) — there is no separate Employers step any more.
+              Work history is edited HERE, on the step that produced it. */}
+          <section className="mt-8 border-t border-line pt-6">
+            <h2 className="text-[17px]">Your Work History</h2>
+            <p className="mb-4 mt-1 text-[14.5px] text-ink-2">
+              Providers who add work experience and projects are twice as likely
+              to win work. Click an employer to add the projects you delivered
+              there.
+            </p>
+            <EmployersStep
+              employers={profile.employers}
+              onChanged={(employers) => setProfile((p) => ({ ...p, employers }))}
+              onError={setError}
+            />
+          </section>
 
           <ResumeUploadModal
             open={uploadModal !== null}
@@ -1005,30 +977,6 @@ export default function JoinProviderPage() {
               setImportOutcome(outcome);
               if (outcome.state) hydrate(outcome.state as StatusPayload);
             }}
-          />
-        </WizardShell>
-      );
-
-    // ---- 6/13 — Your Employers (brief_U capture step) ------------------
-    case "employers":
-      return (
-        <WizardShell
-          {...shell({
-            title:
-              "Here's what you've told us about your employers (click the employer to add projects within the job).",
-            subtitle:
-              "The more you tell us, the better: service providers who add work experience and projects are twice as likely to win work.",
-            wide: true,
-            secondaryLabel: "Skip for Now",
-            onSecondary: goNext,
-            onContinue: () => saveAnd("employers", {}),
-          })}
-        >
-          {error && <Notice>{error}</Notice>}
-          <EmployersStep
-            employers={profile.employers}
-            onChanged={(employers) => setProfile((p) => ({ ...p, employers }))}
-            onError={setError}
           />
         </WizardShell>
       );
@@ -1760,6 +1708,64 @@ export default function JoinProviderPage() {
       );
     }
 
+    // ---- Picture (PJv2 WS1) --------------------------------------------
+    //
+    // Its own step now rather than a button buried on the review. A photo is
+    // worth 10 completeness points and is the single biggest driver of whether
+    // a buyer opens a profile, so it gets asked for explicitly — and stays
+    // skippable, because nobody should be blocked on finding a headshot.
+    case "picture":
+      return (
+        <WizardShell
+          {...shell({
+            title: "Add a picture so buyers know who they're hiring",
+            subtitle:
+              "Profiles with a photo get noticeably more responses. You can change it any time.",
+            secondaryLabel: "Skip for Now",
+            onSecondary: goNext,
+            onContinue: () =>
+              saveAnd("picture", { photoUrl: profile.photoUrl ?? null }),
+          })}
+        >
+          {error && <Notice>{error}</Notice>}
+          <div className="flex flex-col items-center gap-5 rounded-brand border border-line p-8">
+            <Avatar
+              firstName={profile.firstName}
+              lastName={profile.lastName}
+              photoUrl={profile.photoUrl}
+              size={140}
+            />
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setPhotoModal(true)}
+                className="rounded-full bg-magenta px-6 py-3 font-bold text-white transition-colors hover:bg-magenta-dark"
+              >
+                {profile.photoUrl ? "Change Photo" : "Upload A Photo"}
+              </button>
+              {profile.photoUrl && (
+                <button
+                  type="button"
+                  onClick={() => setProfile((p) => ({ ...p, photoUrl: null }))}
+                  className="text-[14px] font-semibold text-ink-2 underline underline-offset-4 hover:text-magenta"
+                >
+                  Remove
+                </button>
+              )}
+            </div>
+            <p className="text-[13px] text-ink-2">
+              A clear headshot works best — square, and at least 200×200.
+            </p>
+          </div>
+
+          <PhotoCropModal
+            open={photoModal}
+            onClose={() => setPhotoModal(false)}
+            onUploaded={(photoUrl) => setProfile((p) => ({ ...p, photoUrl }))}
+          />
+        </WizardShell>
+      );
+
     // ---- 13/13 — Review + publish (E035, rebuilt by brief_X / E056) ----
     //
     // The review IS the Profile View. E056: the old two-column card grid was a
@@ -1950,7 +1956,7 @@ export default function JoinProviderPage() {
 
                 <ProfileCard
                   title="Work History"
-                  edit={editBtn("Work History", "employers")}
+                  edit={editBtn("Work History", "tell_us")}
                 >
                   <WorkHistoryBody
                     employers={profile.employers}
@@ -1960,7 +1966,7 @@ export default function JoinProviderPage() {
 
                 <ProfileCard
                   title="Projects"
-                  edit={editBtn("Projects", "employers")}
+                  edit={editBtn("Projects", "tell_us")}
                 >
                   <ProjectsBody
                     projects={projects}

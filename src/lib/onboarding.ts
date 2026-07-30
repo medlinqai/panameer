@@ -18,67 +18,105 @@ import { capitalizeName } from "@/lib/display";
  */
 
 /**
- * The post-verification profile build, in order.
+ * The post-verification profile build (PJv2 WS1 / E070) — spec = Scott's
+ * "Overview of Reg Steps by User Type" diagram.
  *
- * brief_S (Run 2) settled the shape at TWELVE steps: E030 collapsed the separate
- * category and skills steps into ONE cascading Role → Domain → Skills page, and
- * the old skills step became Specializations (E031). The final step is the
- * one-page review that publishes (E035). Matches the step/label/button table in
- * brief_S exactly — see `PROVIDER_STEP_LABELS`.
+ * The Upwork-derived opening (Experience Level, Goal, a standalone "How Do You
+ * Work") is GONE: two of those were self-reported guesses we now derive or no
+ * longer need (E068/E067), and the third is a USER-TYPE fork that belongs at the
+ * front of the journey, not three screens deep (E066).
+ *
+ * TITLE FIRST, then the steps mirror the profile's own sections, so the wizard
+ * and the finished profile read in the same order.
+ *
+ *   Provider  (10): Title → RDS → Upload/Review → Specializations → Education
+ *                   → Languages → Bio → Rate → Picture → Review All
+ *   Recruiter  (8): the same, minus Education and Rate — a recruiter sells other
+ *                   people's time, so neither is theirs to state.
+ *
+ * `RECRUITER_STEPS` is a strict subset, which is what lets one `ProviderStep`
+ * type, one label table and one save path serve both.
  */
 export const PROVIDER_STEPS = [
-  "experience_level", //  1 — E003 (NB: "experience" is work HISTORY, not this)
-  "goal", //              2 — E004
-  "work_method", //       3 — E009 (Provider vs Recruiter fork)
-  "title", //             4 — E011
-  "tell_us", //           5 — E012 (résumé / LinkedIn PDF / manual)
-  "employers", //         6 — brief_U (capture, right after the upload)
-  "catalog", //           7 — E030 (Role → Domain → Skills, ONE cascading page)
-  "specializations", //   8 — E031 (multi-select + add-on-the-fly)
-  "education", //         9 — E015/E033 (optional, skippable)
-  "languages", //        10 — E016/E034 (both fields required)
-  "bio", //              11 — E017 (required, min length)
-  "rate", //             12 — E018 (hourly + % fee + "You'll Get")
-  "finish", //           13 — E035 review + publish
+  "title", //            1 — E011 (asked first now)
+  "catalog", //          2 — Primary Role → Domain → Skills (E030)
+  "tell_us", //          3 — Upload/Review; work history is edited HERE (WS2)
+  "specializations", //  4 — E031/E073
+  "education", //        5 — provider only
+  "languages", //        6
+  "bio", //              7
+  "rate", //             8 — provider only (now a RANGE, E078c)
+  "picture", //          9 — its own step rather than buried on the review
+  "finish", //          10 — Review All + publish
 ] as const;
 export type ProviderStep = (typeof PROVIDER_STEPS)[number];
 
-export const TOTAL_PROVIDER_STEPS = PROVIDER_STEPS.length; // 13 (brief_U)
+/** Recruiter journey: no Education, no Rate (E070). */
+export const RECRUITER_STEPS = [
+  "title",
+  "catalog",
+  "tell_us",
+  "specializations",
+  "languages",
+  "bio",
+  "picture",
+  "finish",
+] as const satisfies readonly ProviderStep[];
 
-/** 1-based position for the `x/12` counter. */
-export function providerStepNumber(step: ProviderStep): number {
-  return PROVIDER_STEPS.indexOf(step) + 1;
+/** Steps that only exist on the provider journey. */
+const PROVIDER_ONLY_STEPS = new Set<ProviderStep>(["education", "rate"]);
+
+/**
+ * A RECRUITER is a provider whose `work_method` is RECRUITER — the discriminator
+ * the up-front fork now sets, instead of a mid-wizard question.
+ */
+export function isRecruiterProfile(p: { work_method: string | null }): boolean {
+  return p.work_method === "RECRUITER";
+}
+
+/** The step list this profile actually walks. */
+export function stepsForProfile(p: {
+  work_method: string | null;
+}): readonly ProviderStep[] {
+  return isRecruiterProfile(p) ? RECRUITER_STEPS : PROVIDER_STEPS;
+}
+
+export const TOTAL_PROVIDER_STEPS = PROVIDER_STEPS.length; // 10 (PJv2 WS1)
+
+/** 1-based position within the caller's own step list. */
+export function providerStepNumber(
+  step: ProviderStep,
+  steps: readonly ProviderStep[] = PROVIDER_STEPS
+): number {
+  return steps.indexOf(step) + 1;
 }
 
 /**
- * Stepper heading + forward-button label for each step — the EXACT strings from
- * brief_S's table (E024–E028, E030, E031, E033–E035).
+ * Stepper heading + forward-button label per step.
  *
- * Kept here rather than inline in the page so the wording is in one place and
- * the "Next: …" label always names the step that actually follows.
+ * The "Next: …" labels name the step that follows on the PROVIDER journey; the
+ * wizard overrides the label for a recruiter where the next step differs, so
+ * the button never promises a step that user will not see.
  */
 export const PROVIDER_STEP_LABELS: Record<
   ProviderStep,
   { stepper: string; next: string }
 > = {
-  experience_level: { stepper: "Your Experience", next: "Next: Your Goal" },
-  goal: { stepper: "Your Goal", next: "Next: What Do You Sell" },
-  work_method: { stepper: "What Do You Sell", next: "Next: Your Title" },
-  title: { stepper: "Your Title", next: "Next: Create Your Profile" },
-  tell_us: { stepper: "Create Your Profile", next: "Next: Your Employers" },
-  employers: {
-    stepper: "Your Employers",
-    next: "Next: Role → Domain → Skills",
-  },
+  title: { stepper: "Your Title", next: "Next: Role → Domain → Skills" },
   catalog: {
     stepper: "Role → Domain → Skills",
+    next: "Next: Build Your Profile",
+  },
+  tell_us: {
+    stepper: "Build Your Profile",
     next: "Next: Your Specializations",
   },
   specializations: { stepper: "Your Specializations", next: "Next: Education" },
   education: { stepper: "Your Education", next: "Next: Languages" },
   languages: { stepper: "Your Languages", next: "Next: Your Bio" },
   bio: { stepper: "Your Bio", next: "Next: Your Rate" },
-  rate: { stepper: "Your Rate", next: "Next: Profile Review" },
+  rate: { stepper: "Your Rate", next: "Next: Your Picture" },
+  picture: { stepper: "Your Picture", next: "Next: Review Your Profile" },
   finish: {
     stepper: "Review Your Profile",
     next: "Next: Publish Your Profile",
@@ -91,11 +129,12 @@ export const PROVIDER_STEP_LABELS: Record<
  * `tell_us` is a method CHOICE — picking "manual" is a valid way through it.
  */
 const OPTIONAL_STEPS = new Set<ProviderStep>([
+  // WS2 — the Upload/Review step: uploading is one valid way through it, and
+  // entering everything by hand is the other. Never a resume target.
   "tell_us",
-  // brief_U — nudged hard, but a provider with no employers can still publish.
-  "employers",
   "specializations", // brief_R — a provider may legitimately have none
   "education",
+  "picture", //        nudged on the review, but never blocks progress
 ]);
 
 /**
@@ -114,6 +153,15 @@ export const LEGACY_SECTIONS = [
   // by Settings and by the combined `catalog` step (brief_S / E030).
   "category",
   "skills",
+  // PJv2 WS1 — no longer wizard STEPS, but still written:
+  //   work_method       by the up-front user-type fork (E066 rehomed)
+  //   employers         by the Upload/Review step, which now owns work history
+  //   experience_level  by Settings and the résumé importer, until WS6 derives it
+  //   goal              by Settings, until WS7 drops it
+  "work_method",
+  "employers",
+  "experience_level",
+  "goal",
 ] as const;
 
 const EXPERIENCE_LEVELS = ["BEGINNER", "MID_CAREER", "EXPERT"] as const;
@@ -510,23 +558,23 @@ async function loadDraft(viewer: Viewer) {
 function computeResumeStep(p: Awaited<ReturnType<typeof loadDraft>>): ProviderStep {
   const pp = p.providerProfile!;
   const done: Record<ProviderStep, boolean> = {
-    experience_level: pp.experience_level != null,
-    goal: pp.goal != null,
-    work_method: pp.work_method != null,
     title: pp.headline.trim() !== "",
-    tell_us: true, //        optional — a method choice, never a resume target
-    employers: true, //      optional (brief_U) — never a resume target
     // ONE cascading page (E030): the field is a (Role, Domain) PAIR and at
     // least one skill under it, so the step is only done when both are true.
     catalog: pp.pillar_id != null && pp.role_type_id != null && pp.skills.length > 0,
-    specializations: true, // optional (brief_R) — never a resume target
-    education: true, //      optional (E015) — never a resume target
+    tell_us: true, //        optional — see OPTIONAL_STEPS
+    specializations: true, // optional (brief_R)
+    education: true, //      optional (E015)
     languages: pp.languages.length > 0,
     bio: !!pp.overview && pp.overview.trim().length >= MIN_BIO_CHARS,
-    rate: pp.hourly_rate_cents != null,
+    // A range now (E078c); either end being set means the step was answered.
+    rate: pp.rate_min_cents != null || pp.hourly_rate_cents != null,
+    picture: true, //        optional
     finish: pp.onboarding_completed_at != null,
   };
-  for (const step of PROVIDER_STEPS) {
+  // Walk the list THIS profile actually has, so a recruiter is never parked on
+  // a step (Education, Rate) their journey doesn't include.
+  for (const step of stepsForProfile(pp)) {
     if (OPTIONAL_STEPS.has(step)) continue;
     if (!done[step]) return step;
   }
@@ -550,7 +598,11 @@ export async function getOnboardingState(viewer: Viewer) {
     email: p.user?.email ?? "",
     emailVerified,
     resumeStep: emailVerified ? computeResumeStep(p) : ("verify" as const),
-    totalSteps: TOTAL_PROVIDER_STEPS,
+    // WS1 — the client no longer hard-codes the step list: a recruiter walks a
+    // shorter journey, and the server is the only place that knows which.
+    steps: stepsForProfile(pp),
+    isRecruiter: isRecruiterProfile(pp),
+    totalSteps: stepsForProfile(pp).length,
     status: pp.status,
     completeness: pp.completeness,
     visibilityThreshold: VISIBILITY_THRESHOLD,
@@ -1291,6 +1343,9 @@ export async function applyProviderSection(
       break;
     }
 
+    // `picture` is the WS1 step name; `photo` is the long-standing section name
+    // Settings posts. Same write, both spellings accepted.
+    case "picture":
     case "photo": {
       // Optional step. The URL is produced by POST /api/profile/photo (a real
       // owner-scoped Supabase Storage upload, brief_O); null clears it back to
