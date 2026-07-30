@@ -47,6 +47,21 @@ const BUCKETS: {
     ],
   },
   {
+    // PJv2 WS4 (E078a) — work artifacts attached to a job or a project.
+    name: "artifacts",
+    public: false,
+    mime: [
+      "application/pdf",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "application/msword",
+      "image/png",
+      "image/jpeg",
+      "image/webp",
+    ],
+  },
+  {
     // brief_project_model_v2 — SOWs / case studies attached to a project.
     name: "project-docs",
     public: false,

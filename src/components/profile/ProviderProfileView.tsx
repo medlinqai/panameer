@@ -5,6 +5,7 @@ import {
   ProfileCard,
   ProfileHero,
   SoloProjectsBody,
+  ArtifactsBody,
   LocationBody,
   Empty,
   EDIT_CLASS,
@@ -137,6 +138,12 @@ export function ProviderProfileViewPage({ p }: { p: ProviderProfileView }) {
               employers={p.employers}
               projects={p.projects}
               isOwner={p.isOwner}
+              artifactsFor={(id) => {
+                const e = p.employers.find((x) => x.id === id);
+                return e?.artifacts?.length ? (
+                  <ArtifactsBody artifacts={e.artifacts} />
+                ) : null;
+              }}
               empty={
                 p.isOwner
                   ? "No work history yet. Providers who add work experience and projects are twice as likely to win work."

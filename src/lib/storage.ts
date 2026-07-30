@@ -48,6 +48,17 @@ export const CERTIFICATION_BUCKET = "certifications";
  */
 export const PROJECT_DOC_BUCKET = "project-docs";
 
+/**
+ * PRIVATE bucket for work ARTIFACTS (PJv2 WS4 / E078a) — the deliverables a
+ * provider attaches to a job or a project as proof.
+ *
+ * Private for the same reason as project docs: an artifact is a design doc, a
+ * runbook, a screenshot of a client's system. It is evidence shown deliberately,
+ * not published, so this returns an object PATH read back through a short-lived
+ * signed URL.
+ */
+export const ARTIFACT_BUCKET = "artifacts";
+
 /** E012 — "PDF / Word / rich text, ≤5MB". */
 export const ALLOWED_RESUME_MIME = [
   "application/pdf",
@@ -229,6 +240,29 @@ export async function uploadProjectDocument(
 
   if (error) {
     console.error("[storage] project document upload failed:", error);
+    throw new StorageError("Could not store that file.", "UPLOAD_FAILED");
+  }
+  return objectPath;
+}
+
+/** Store an artifact file; returns its object PATH (the bucket is private). */
+export async function uploadArtifactFile(
+  profileId: string,
+  file: { name: string; type: string; bytes: ArrayBuffer }
+): Promise<string> {
+  const safeName =
+    file.name.replace(/[^A-Za-z0-9._-]/g, "_").slice(-80) || "artifact";
+  const objectPath = `${profileId}/${randomUUID()}-${safeName}`;
+
+  const { error } = await getStorageClient()
+    .from(ARTIFACT_BUCKET)
+    .upload(objectPath, file.bytes, {
+      contentType: file.type || "application/octet-stream",
+      upsert: false,
+    });
+
+  if (error) {
+    console.error("[storage] artifact upload failed:", error);
     throw new StorageError("Could not store that file.", "UPLOAD_FAILED");
   }
   return objectPath;

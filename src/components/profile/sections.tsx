@@ -143,6 +143,14 @@ export type EducationItem = {
   startYear?: number | null;
   endYear?: number | null;
 };
+export type ArtifactItem = {
+  id: string;
+  kind: "UPLOAD" | "URL";
+  label: string;
+  url: string | null;
+  fileName: string | null;
+};
+
 export type EmployerItem = {
   id: string;
   name: string;
@@ -154,6 +162,8 @@ export type EmployerItem = {
   endDate?: string | null;
   isCurrent?: boolean;
   projects?: { id: string; name: string; description?: string | null }[];
+  artifacts?: ArtifactItem[];
+  contactEmail?: string | null;
 };
 export type ProjectItem = {
   id: string;
@@ -177,6 +187,8 @@ export type ProjectItem = {
   industry?: { id: string; name: string } | null;
   applications?: { id: string; name: string }[];
   outcomes?: { id?: string; label: string; value: string }[];
+  artifacts?: ArtifactItem[];
+  contactEmail?: string | null;
 };
 
 /**
@@ -787,6 +799,15 @@ export function ProjectCard({
         </ul>
       )}
 
+      {(p.artifacts?.length ?? 0) > 0 && (
+        <div className="mt-3 border-t border-line pt-3">
+          <p className="mb-1.5 text-[12px] font-bold uppercase tracking-wide text-ink-2">
+            Artifacts
+          </p>
+          <ArtifactsBody artifacts={p.artifacts!} />
+        </div>
+      )}
+
       {p.url && (
         <a
           href={p.url}
@@ -884,6 +905,44 @@ export function SoloProjectsBody({
         </div>
       )}
     </>
+  );
+}
+
+/**
+ * Artifacts, read-only (PJv2 WS4 / E078a).
+ *
+ * UPLOADs show as a file chip and are NOT linked: the bucket is private, so a
+ * public href would either 404 or leak. Reading one back needs a signed URL,
+ * which is a separate (viewer-permissioned) step — showing the name is the
+ * honest amount of information a public profile can give.
+ */
+export function ArtifactsBody({ artifacts }: { artifacts: ArtifactItem[] }) {
+  if (artifacts.length === 0) return <Empty>No artifacts attached.</Empty>;
+  return (
+    <ul className="flex flex-wrap gap-2">
+      {artifacts.map((a) =>
+        a.kind === "URL" && a.url ? (
+          <li key={a.id}>
+            <a
+              href={a.url}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-full border border-magenta/30 bg-magenta/[0.05] px-3 py-1 text-[13px] font-semibold text-magenta-dark transition-colors hover:border-magenta"
+            >
+              🔗 {a.label}
+            </a>
+          </li>
+        ) : (
+          <li
+            key={a.id}
+            className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1 text-[13px] font-semibold text-ink-2"
+            title={a.fileName ?? undefined}
+          >
+            📎 {a.label}
+          </li>
+        )
+      )}
+    </ul>
   );
 }
 

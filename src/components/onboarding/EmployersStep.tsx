@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { Modal } from "@/components/Modal";
 import { Field, TextInput, TextArea, Notice } from "@/components/onboarding/controls";
+import { ArtifactsModal } from "@/components/onboarding/ArtifactsModal";
+import type { ArtifactView } from "@/lib/artifacts";
 import {
   ProjectModal,
   emptyProject,
@@ -50,10 +52,12 @@ export type EmployerProject = {
   outcomes?: { id: string; label: string; value: string }[];
   validatedAt?: string | null;
   validationRequestedAt?: string | null;
+  artifacts?: ArtifactView[];
 };
 
 export type EmployerCard = {
   id: string;
+  artifacts?: ArtifactView[];
   name: string;
   roleTitle: string | null;
   location: string | null;
@@ -108,6 +112,15 @@ export function EmployersStep({
     { employerId: string; project?: EmployerProject } | null
   >(null);
   const [projectForm, setProjectForm] = useState<ProjectDraft>(emptyProject());
+  /**
+   * WS4 — which owner's artifacts are open. One modal serves BOTH an employer
+   * and a project; the owner id decides which, and the server re-checks it.
+   */
+  const [artifactsFor, setArtifactsFor] = useState<
+    | { kind: "employer"; id: string; label: string; items: ArtifactView[] }
+    | { kind: "project"; id: string; label: string; items: ArtifactView[] }
+    | null
+  >(null);
 
   const [logos, setLogos] = useState<LogoSuggestion[]>([]);
   const [logoLoading, setLogoLoading] = useState(false);
@@ -312,6 +325,21 @@ export function EmployersStep({
 
                 <button
                   type="button"
+                  onClick={() =>
+                    setArtifactsFor({
+                      kind: "employer",
+                      id: e.id,
+                      label: e.name,
+                      items: e.artifacts ?? [],
+                    })
+                  }
+                  className="mb-2 text-[13px] font-bold text-magenta hover:text-magenta-dark"
+                >
+                  📎 Artifacts{e.artifacts?.length ? ` (${e.artifacts.length})` : ""}
+                </button>
+
+                <button
+                  type="button"
                   onClick={() => setOpenId(openId === e.id ? null : e.id)}
                   className="w-full text-left"
                 >
@@ -383,6 +411,20 @@ export function EmployersStep({
                               ) : null}
                             </p>
                             <div className="flex gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setArtifactsFor({
+                                    kind: "project",
+                                    id: pr.id,
+                                    label: pr.name,
+                                    items: pr.artifacts ?? [],
+                                  })
+                                }
+                                className="font-bold text-magenta"
+                              >
+                                Artifacts
+                              </button>
                               <button
                                 type="button"
                                 onClick={() => openProject(e.id, pr)}
@@ -626,6 +668,38 @@ export function EmployersStep({
               }
             : undefined
         }
+      />
+
+      <ArtifactsModal
+        open={artifactsFor !== null}
+        onClose={() => setArtifactsFor(null)}
+        ownerLabel={artifactsFor?.label ?? ""}
+        owner={
+          artifactsFor?.kind === "employer"
+            ? { employerId: artifactsFor.id }
+            : { projectId: artifactsFor?.id }
+        }
+        artifacts={artifactsFor?.items ?? []}
+        onChanged={(all) => {
+          // The API hands back EVERY artifact on the profile; keep the open
+          // modal's list in sync and refresh the cards underneath.
+          if (artifactsFor) {
+            const mine = all.filter((a) =>
+              artifactsFor.kind === "employer"
+                ? a.employerId === artifactsFor.id
+                : a.projectId === artifactsFor.id
+            );
+            setArtifactsFor({ ...artifactsFor, items: mine });
+          }
+          // Re-read the employers list so the cards under the modal show the
+          // new counts — the artifacts API doesn't return employers.
+          void fetch("/api/provider/employers")
+            .then((r) => (r.ok ? r.json() : null))
+            .then((d) => {
+              if (d?.employers) onChanged(d.employers as EmployerCard[]);
+            })
+            .catch(() => {});
+        }}
       />
 
       {busy && employers.length > 0 && (

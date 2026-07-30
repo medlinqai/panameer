@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { projectToCard } from "@/lib/project-card";
+import { toView as toArtifactView } from "@/lib/artifacts";
 import { hashPassword } from "@/lib/password";
 import { acceptInviteForUser } from "@/lib/coordinator";
 import {
@@ -497,6 +498,7 @@ async function loadDraft(viewer: Viewer) {
           employers: {
             orderBy: [{ sort_order: "asc" }, { start_date: "desc" }],
             include: {
+              artifacts: { orderBy: [{ sort_order: "asc" }] },
               projects: {
                 orderBy: [{ sort_order: "asc" }, { created_at: "asc" }],
                 include: {
@@ -510,6 +512,7 @@ async function loadDraft(viewer: Viewer) {
                     orderBy: { sent_at: "desc" },
                     select: { status: true, sent_at: true, responded_at: true },
                   },
+                  artifacts: { orderBy: [{ sort_order: "asc" }] },
                 },
               },
             },
@@ -687,6 +690,7 @@ export async function getOnboardingState(viewer: Viewer) {
         // role, tools, outcomes and contact email all blank — and saving from
         // there wrote those blanks back. One mapper, one place to forget a
         // field.
+        artifacts: e.artifacts.map(toArtifactView),
         projects: e.projects.map(projectToCard),
       })),
       projects: pp.projects.map(projectToCard),

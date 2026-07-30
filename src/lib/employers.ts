@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { ownedProviderProfile, type Viewer } from "@/lib/access";
 import { OnboardingError, recomputeCompleteness } from "@/lib/onboarding";
 import { normalizeHost } from "@/lib/email-domain";
+import { toView as toArtifactView } from "@/lib/artifacts";
 import { projectToCard } from "@/lib/project-card";
 
 export { projectToCard };
@@ -96,6 +97,7 @@ export async function listEmployers(viewer: Viewer) {
     where: { provider_profile_id: profileId },
     orderBy: [{ sort_order: "asc" }, { start_date: "desc" }],
     include: {
+      artifacts: { orderBy: [{ sort_order: "asc" }] },
       projects: {
         orderBy: [{ sort_order: "asc" }, { created_at: "asc" }],
         include: {
@@ -109,6 +111,7 @@ export async function listEmployers(viewer: Viewer) {
             orderBy: { sent_at: "desc" },
             select: { status: true, sent_at: true, responded_at: true },
           },
+          artifacts: { orderBy: [{ sort_order: "asc" }] },
         },
       },
     },
@@ -124,6 +127,7 @@ export async function listEmployers(viewer: Viewer) {
     isCurrent: e.is_current,
     startDate: e.start_date ? e.start_date.toISOString().slice(0, 10) : null,
     endDate: e.end_date ? e.end_date.toISOString().slice(0, 10) : null,
+    artifacts: e.artifacts.map(toArtifactView),
     projects: e.projects.map(projectToCard),
   }));
 }

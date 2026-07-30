@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { isMarketplaceVisible } from "@/lib/access";
 import { VISIBILITY_THRESHOLD } from "@/lib/completeness";
 import { listPublishedPackages } from "@/lib/packages";
+import { toView as toArtifactView } from "@/lib/artifacts";
 
 /**
  * The full provider Profile View (brief_S / E037) — the Upwork-style page that
@@ -52,6 +53,7 @@ export async function getProviderProfileView(
       employers: {
         orderBy: [{ sort_order: "asc" }, { is_current: "desc" }, { start_date: "desc" }],
         include: {
+          artifacts: { orderBy: [{ sort_order: "asc" }] },
           projects: { orderBy: [{ sort_order: "asc" }, { created_at: "asc" }] },
         },
       },
@@ -65,6 +67,7 @@ export async function getProviderProfileView(
             include: { application: { select: { id: true, name: true } } },
           },
           outcomes: { orderBy: [{ sort_order: "asc" }, { created_at: "asc" }] },
+          artifacts: { orderBy: [{ sort_order: "asc" }] },
           // The CONFIRMED response, for the "Confirmed March 2026" note.
           validations: {
             where: { status: "CONFIRMED" },
@@ -200,6 +203,7 @@ export async function getProviderProfileView(
       industry: p.industry ? { id: p.industry.id, name: p.industry.name } : null,
       applications: p.applications.map((a) => a.application),
       outcomes: p.outcomes.map((o) => ({ id: o.id, label: o.label, value: o.value })),
+      artifacts: p.artifacts.map(toArtifactView),
     })),
     // E042 — Employer is the ONE work-history model; the duplicate flat
     // WorkExperience rendering is gone.
@@ -213,6 +217,7 @@ export async function getProviderProfileView(
       description: e.description,
       startDate: e.start_date ? e.start_date.toISOString().slice(0, 10) : null,
       endDate: e.end_date ? e.end_date.toISOString().slice(0, 10) : null,
+      artifacts: e.artifacts.map(toArtifactView),
       projects: e.projects.map((pr) => ({
         id: pr.id,
         name: pr.name,

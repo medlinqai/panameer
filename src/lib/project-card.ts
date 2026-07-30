@@ -1,3 +1,5 @@
+import { toView as toArtifactView } from "@/lib/artifacts";
+
 /**
  * The ONE mapper from a prisma Project row to the shape every surface renders
  * (brief_project_model_v2 / _validation).
@@ -35,6 +37,10 @@ export function projectToCard(p: {
   industry: { id: string; name: string } | null;
   applications: { application: { id: string; name: string } }[];
   outcomes: { id: string; label: string; value: string }[];
+  artifacts?: {
+    id: string; kind: string; label: string; url: string | null;
+    file_path: string | null; employer_id: string | null; project_id: string | null;
+  }[];
   validations?: {
     status: string;
     sent_at: Date;
@@ -68,6 +74,8 @@ export function projectToCard(p: {
     industry: p.industry,
     applications: p.applications.map((a) => a.application),
     outcomes: p.outcomes.map((o) => ({ id: o.id, label: o.label, value: o.value })),
+    // WS4 (E078a) — proof attached to this project.
+    artifacts: (p.artifacts ?? []).map(toArtifactView),
     validatedAt:
       p.validations?.find((v) => v.status === "CONFIRMED")?.responded_at?.toISOString() ??
       null,
