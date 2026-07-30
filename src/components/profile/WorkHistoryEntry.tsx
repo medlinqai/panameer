@@ -23,6 +23,15 @@ import { ProjectCard, dateRange, type EmployerItem, type ProjectItem } from "@/c
  * Artifacts (WS4) and Contact (WS5) render only when there is something behind
  * them; a link that opens an empty panel is worse than an absent one.
  */
+/** The separator between the action links (E089). */
+function Dot() {
+  return (
+    <span aria-hidden className="text-[13px] text-ink-2/45">
+      ·
+    </span>
+  );
+}
+
 export function WorkHistoryEntry({
   employer,
   projects,
@@ -71,7 +80,7 @@ export function WorkHistoryEntry({
       {description && (
         <p
           className={
-            "mt-2 whitespace-pre-line text-[14.5px] leading-relaxed text-ink-2 " +
+            "mt-1.5 whitespace-pre-line text-[14.5px] leading-relaxed text-ink-2 " +
             (open === "more" || !isLong ? "" : "line-clamp-2")
           }
         >
@@ -79,8 +88,15 @@ export function WorkHistoryEntry({
         </p>
       )}
 
-      {/* The four-link row, evenly spaced as in the mockup. */}
-      <div className="mt-3 grid grid-cols-2 gap-y-2 sm:grid-cols-4">
+      {/*
+        E089 — a TIGHT left-aligned cluster with middot separators, not a
+        four-column grid justified across the card. Justified, the links stranded
+        apart with dead gaps between them and read as an empty table row; grouped,
+        they read as what they are — a set of disclosures belonging to the entry
+        above them. Disabled ones stay greyed in place rather than disappearing,
+        so the row doesn't reflow between entries.
+      */}
+      <div className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1">
         <button
           type="button"
           onClick={() => toggle("more")}
@@ -91,6 +107,7 @@ export function WorkHistoryEntry({
           {open === "more" ? "Read Less" : "Read More"}
         </button>
 
+        <Dot />
         <button
           type="button"
           onClick={() => toggle("projects")}
@@ -104,6 +121,7 @@ export function WorkHistoryEntry({
           Projects{projects.length > 0 ? ` (${projects.length})` : ""}
         </button>
 
+        <Dot />
         <button
           type="button"
           onClick={() => toggle("artifacts")}
@@ -115,6 +133,7 @@ export function WorkHistoryEntry({
           Artifacts
         </button>
 
+        <Dot />
         <button
           type="button"
           onClick={() => toggle("contact")}

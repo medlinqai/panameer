@@ -863,8 +863,17 @@ export function WorkHistoryBody({
   contactFor?: (employerId: string) => React.ReactNode;
 }) {
   if (employers.length === 0) return <Empty>{empty}</Empty>;
+  /*
+    E089 — NO divider between entries. The full-width rules were the main reason
+    the section read as "an empty table row, not fun to look at" (Scott): a rule
+    spanning the card turns each job into a row in a grid, and the four action
+    links stranded across the same width completed the effect. Entries are
+    separated by SPACE now. The fix here is taking lines away, not adding
+    containment — bordered cards per job would trade one heavy treatment for
+    another.
+  */
   return (
-    <ul className="divide-y divide-line">
+    <ul className="space-y-7">
       {employers.map((e, i) => {
         // Prefer the employer's own nested list; fall back to matching the flat
         // project list by employer name, which is the only key the wizard's
@@ -874,7 +883,7 @@ export function WorkHistoryBody({
           ? projects.filter((p) => nested.some((n) => n.id === p.id))
           : projects.filter((p) => p.employer === e.name);
         return (
-          <li key={e.id} className={i === 0 ? "pb-5" : "py-5 last:pb-0"}>
+          <li key={e.id}>
             <WorkHistoryEntry
               employer={e}
               projects={mine}
