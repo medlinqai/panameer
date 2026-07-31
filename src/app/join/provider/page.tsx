@@ -1181,7 +1181,14 @@ export default function JoinProviderPage() {
                 )}
                 <button
                   type="button"
-                  onClick={() => setUploadModal(true)}
+                  onClick={() => {
+                    void fetch("/api/onboarding/provider/resume-path", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ path: "reupload" }),
+                    });
+                    setUploadModal(true);
+                  }}
                   className="rounded-full border-[1.5px] border-line px-5 py-2.5 font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
                 >
                   Upload a different file
@@ -1189,6 +1196,14 @@ export default function JoinProviderPage() {
                 <button
                   type="button"
                   onClick={() => {
+                    // WS4 — record the choice. Without this the manual path is
+                    // silence, and silence looks the same as nobody seeing the
+                    // panel at all.
+                    void fetch("/api/onboarding/provider/resume-path", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ path: "manual" }),
+                    });
                     setEditingWork(true);
                     setImportOutcome((o) =>
                       o ? { ...o, confidence: { score: "high", reasons: [] } } : o
