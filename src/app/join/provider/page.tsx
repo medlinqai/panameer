@@ -432,6 +432,18 @@ export default function JoinProviderPage() {
    *
    * Null means "no area open" — the domain tier is showing its list.
    */
+  /**
+   * E118 — JUMP AND RETURN. When an edit pencil on the review sends you to a
+   * step, saving that step comes BACK to the review instead of advancing into
+   * the rest of the wizard.
+   *
+   * Without this, fixing one word in your bio at the end of registration lands
+   * you on Bio 7/10 and then walks you forward through Rate, Photo & Details and
+   * Review again — three screens of nothing you asked for. The user asked to
+   * change a field, not to redo the tail of the flow.
+   */
+  const [returnToReview, setReturnToReview] = useState(false);
+
   const [browseArea, setBrowseArea] = useState<{
     roleTypeId: string;
     pillarId: string;
@@ -641,10 +653,17 @@ export default function JoinProviderPage() {
         } else {
           // The review page's edit pencils deep-link back to a specific step
           // (?step=bio). Anything unrecognised falls back to the resume point.
-          const requested = new URLSearchParams(window.location.search).get("step");
+          const params = new URLSearchParams(window.location.search);
+          const requested = params.get("step");
           const target = (s.steps ?? DEFAULT_STEPS).includes(requested as Step)
             ? (requested as Step)
             : (s.resumeStep as Step);
+          // E118 — the profile view's edit links can ask for the same
+          // jump-and-return the review's pencils get, so editing from the live
+          // profile doesn't dump you into the middle of the wizard either.
+          if (params.get("return") === "review" && target !== "finish") {
+            setReturnToReview(true);
+          }
           setScreen(target);
         }
       }
@@ -687,6 +706,13 @@ export default function JoinProviderPage() {
     setScreen(s);
   };
   const goNext = () => {
+    // E118 — an edit that came FROM the review goes back to it, once. The flag
+    // clears on arrival so the next forward move is ordinary again.
+    if (returnToReview) {
+      setReturnToReview(false);
+      goTo("finish");
+      return;
+    }
     if (stepIndex >= 0 && stepIndex < steps.length - 1) goTo(steps[stepIndex + 1]);
   };
   const goBack = () => {
@@ -2450,7 +2476,13 @@ export default function JoinProviderPage() {
       const soloProjects = projects.filter((pr) => !employerNameById.has(pr.id));
 
       const editBtn = (title: string, step: Step) => (
-        <EditButton title={title} onClick={() => goTo(step)} />
+        <EditButton
+          title={title}
+          onClick={() => {
+            setReturnToReview(true);
+            goTo(step);
+          }}
+        />
       );
 
       return (

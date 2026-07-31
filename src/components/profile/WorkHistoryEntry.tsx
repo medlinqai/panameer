@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ProjectCard, dateRange, type EmployerItem, type ProjectItem } from "@/components/profile/sections";
 
 /**
@@ -64,8 +64,38 @@ export function WorkHistoryEntry({
   const linkOff = "text-[14px] font-bold text-ink-2/40 cursor-not-allowed";
 
   const description = employer.description ?? "";
-  // "Read More" only earns its place when there is more to read.
-  const isLong = description.length > 180;
+
+  /*
+    E119 — "Read More" was greyed out on entries that plainly had more to read.
+    The test was `description.length > 180`, a guess at what 180 characters looks
+    like — but the clamp is `line-clamp-2`, and how much fits in two lines depends
+    on the card's width and where the words break. A 150-character description in
+    a narrow column is clamped and got a dead link; a 200-character one in a wide
+    column isn't clamped and got a live link that did nothing visible.
+
+    So ask the DOM instead of guessing: the text is truncated exactly when its
+    scroll height exceeds its client height. Re-measured on resize, because the
+    same entry can be clamped at one width and not at another.
+  */
+  const textRef = useRef<HTMLParagraphElement | null>(null);
+  const [isLong, setIsLong] = useState(false);
+
+  useEffect(() => {
+    const el = textRef.current;
+    if (!el || !description) {
+      setIsLong(false);
+      return;
+    }
+    const measure = () => {
+      // Only meaningful while clamped; once expanded the two heights match.
+      if (open === "more") return;
+      setIsLong(el.scrollHeight > el.clientHeight + 1);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [description, open]);
 
   return (
     <div>
@@ -79,9 +109,10 @@ export function WorkHistoryEntry({
 
       {description && (
         <p
+          ref={textRef}
           className={
             "mt-1.5 whitespace-pre-line text-[14.5px] leading-relaxed text-ink-2 " +
-            (open === "more" || !isLong ? "" : "line-clamp-2")
+            (open === "more" ? "" : "line-clamp-2")
           }
         >
           {description}
