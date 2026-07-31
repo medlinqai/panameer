@@ -63,9 +63,22 @@ export default async function GetStartedPage() {
         still leave it above the 340px it needs for the large-card treatment —
         the widened frame (WS2/E081) is what paid for that.
       */}
-      <div className="grid gap-12 lg:grid-cols-[1fr_460px] lg:items-center">
+      {/*
+        E100 — STACKED, and the copy cut.
+
+        It was two columns wedged into the frame with the greeting, two
+        paragraphs of blurb and a 460px card all competing for width, so the text
+        column ran narrow and the page read cramped ("looks like poop"). Stacking
+        gives the greeting the full column, and the example card sits beneath it
+        with room rather than squeezing the words beside it.
+
+        `lg:items-center` is also gone — E101 top-justifies everything, and this
+        page was the loudest example of content floating in the middle of a band
+        of empty space.
+      */}
+      <div className="mx-auto w-full max-w-3xl">
         <div>
-          <h1 className="text-[32px] tracking-[-0.7px] sm:text-[36px]">
+          <h1 className="text-[34px] tracking-[-0.8px] sm:text-[40px]">
             Hey {firstName}. Ready for your next big opportunity?
           </h1>
 
@@ -73,10 +86,13 @@ export default async function GetStartedPage() {
             E002/E023 — each blurb is its own row with a person glyph and a thin
             separator, rather than two loose paragraphs.
           */}
-          <ul className="mt-9 space-y-1">
+          {/* Trimmed to the two things that are actually true and useful; the
+              longer version explained the product to someone who had already
+              signed up for it. */}
+          <ul className="mt-8 space-y-1">
             {[
-              "Answer a few questions and start building your profile. It's how clients find you and understand what you do best.",
-              "Apply for open roles and list services for clients to buy — on your terms, at the rate you set.",
+              "Answer a few questions to build your profile — it's how clients find you.",
+              "Apply for roles and sell services on your terms, at your rate.",
             ].map((line) => (
               <li
                 key={line}
@@ -90,8 +106,9 @@ export default async function GetStartedPage() {
         </div>
 
         {/* E064(a) — the "Providers on Panameer" label is gone; the card speaks
-            for itself and the label was competing with the greeting. */}
-        <section>
+            for itself and the label was competing with the greeting. Now BELOW
+            the greeting rather than beside it (E100), so neither is squeezed. */}
+        <section className="mt-10">
           <TestimonialCarousel />
         </section>
       </div>

@@ -1068,7 +1068,9 @@ export default function JoinProviderPage() {
               : "How would you like to tell us about yourself?",
             subtitle: hasProfileData
               ? "Edit anything that's wrong or missing. This is what buyers will see."
-              : "We need to get a sense of your education, experience and skills. It's quickest to import your information — you can edit it before your profile goes live.",
+              // E103 — one line. The old three-clause version repeated what the
+              // two cards below it already say.
+              : "Import your résumé, or fill it in yourself.",
             wide: true,
             /*
               E117 — the example provider card is an INVITATION, and it stops
@@ -1116,10 +1118,13 @@ export default function JoinProviderPage() {
                 Fastest
               </span>
             </div>
-            <p className="mb-4 text-[14.5px] text-ink-2">
-              We&apos;ll read it and fill in your title, experience, education,
-              skills and languages — you just confirm.
-            </p>
+            {/*
+              E103 — the "We'll read it and fill in your title, experience,
+              education, skills and languages" line is gone. It explained the
+              feature to someone already standing on it, and the two lines it
+              cost were exactly the vertical room the testimonial card needed.
+              The FASTEST badge and the dropzone already say what this does.
+            */}
             <ResumeDropzone
               onImported={(outcome) => {
                 setImportOutcome(outcome);
@@ -2304,34 +2309,45 @@ export default function JoinProviderPage() {
           })}
         >
           {error && <Notice>{error}</Notice>}
-          <div className="flex flex-col items-center gap-5 rounded-brand border border-line p-8">
+          {/*
+            E107 — photo BESIDE the details on a wide screen, stacked below it on
+            a narrow one. The photo panel was a full-width block with a 140px
+            avatar centred in it, so the page ran tall and the fields underneath
+            were pushed well below the fold on a laptop. Nothing here overflows
+            horizontally (measured 1280 → 320px), which was the other half of
+            E107 — that was resolved when the standalone "You're Done!" page was
+            folded into this step and stopped being a separate, wider layout.
+          */}
+          <div className="flex flex-col items-center gap-5 rounded-brand border border-line p-6 sm:flex-row sm:items-center sm:gap-8 sm:p-7 sm:text-left">
             <Avatar
               firstName={profile.firstName}
               lastName={profile.lastName}
               photoUrl={profile.photoUrl}
               size={140}
             />
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setPhotoModal(true)}
-                className="rounded-full bg-magenta px-6 py-3 font-bold text-white transition-colors hover:bg-magenta-dark"
-              >
-                {profile.photoUrl ? "Change Photo" : "Upload A Photo"}
-              </button>
-              {profile.photoUrl && (
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center justify-center gap-3 sm:justify-start">
                 <button
                   type="button"
-                  onClick={() => setProfile((p) => ({ ...p, photoUrl: null }))}
-                  className="text-[14px] font-semibold text-ink-2 underline underline-offset-4 hover:text-magenta"
+                  onClick={() => setPhotoModal(true)}
+                  className="rounded-full bg-magenta px-6 py-3 font-bold text-white transition-colors hover:bg-magenta-dark"
                 >
-                  Remove
+                  {profile.photoUrl ? "Change Photo" : "Upload A Photo"}
                 </button>
-              )}
+                {profile.photoUrl && (
+                  <button
+                    type="button"
+                    onClick={() => setProfile((p) => ({ ...p, photoUrl: null }))}
+                    className="text-[14px] font-semibold text-ink-2 underline underline-offset-4 hover:text-magenta"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+              <p className="mt-2 text-[13px] text-ink-2">
+                A clear headshot works best — square, and at least 200×200.
+              </p>
             </div>
-            <p className="text-[13px] text-ink-2">
-              A clear headshot works best — square, and at least 200×200.
-            </p>
           </div>
 
           {/*
