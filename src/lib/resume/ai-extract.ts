@@ -26,53 +26,72 @@ import type { ParsedResume } from "./parse";
  * the privacy notice and any DPA are a decision above this code.
  */
 
+/**
+ * An OPTIONAL field: absent, null and present are all acceptable, and all
+ * normalise to null.
+ *
+ * `.nullable()` alone was the bug. It accepts an explicit `null` but NOT a
+ * missing key — and a model with nothing to say about a field omits it rather
+ * than inventing a null, which is the correct behaviour. Eddie's fifth employer
+ * (Morgan Stanley, from his trailing "Additional experience" line) has no
+ * location stated anywhere, so the model left `location` out and a completely
+ * correct extraction of seven employers was thrown away over one absent string.
+ *
+ * Rejecting good data because an optional field is missing is the worst trade
+ * available here: the fallback is the heuristic result, which for Marelise is
+ * nothing at all.
+ */
+const maybe = <T extends z.ZodTypeAny>(schema: T) =>
+  schema.nullable().optional().default(null);
+
 /** What we ask the model for — mirrors what the review step already consumes. */
 const aiEmployer = z.object({
+  // The only genuinely required field: an employer with no name is not an entry.
   name: z.string(),
-  roleTitle: z.string().nullable(),
-  location: z.string().nullable(),
-  startDate: z.string().nullable(),
-  endDate: z.string().nullable(),
-  isCurrent: z.boolean().nullable(),
-  description: z.string().nullable(),
+  roleTitle: maybe(z.string()),
+  location: maybe(z.string()),
+  startDate: maybe(z.string()),
+  endDate: maybe(z.string()),
+  isCurrent: maybe(z.boolean()),
+  description: maybe(z.string()),
 });
 
 const aiProject = z.object({
   name: z.string(),
-  client: z.string().nullable(),
-  roleType: z.string().nullable(),
-  software: z.array(z.string()).default([]),
-  skills: z.array(z.string()).default([]),
-  description: z.string().nullable(),
-  startDate: z.string().nullable(),
-  endDate: z.string().nullable(),
-  employer: z.string().nullable(),
+  client: maybe(z.string()),
+  roleType: maybe(z.string()),
+  software: z.array(z.string()).optional().default([]),
+  skills: z.array(z.string()).optional().default([]),
+  description: maybe(z.string()),
+  startDate: maybe(z.string()),
+  endDate: maybe(z.string()),
+  employer: maybe(z.string()),
 });
 
 const aiEducation = z.object({
   institution: z.string(),
-  degree: z.string().nullable(),
-  field: z.string().nullable(),
-  startYear: z.union([z.number(), z.string()]).nullable(),
-  endYear: z.union([z.number(), z.string()]).nullable(),
+  degree: maybe(z.string()),
+  field: maybe(z.string()),
+  startYear: maybe(z.union([z.number(), z.string()])),
+  endYear: maybe(z.union([z.number(), z.string()])),
 });
 
 const aiCertification = z.object({
   name: z.string(),
-  issuer: z.string().nullable(),
-  issuedOn: z.string().nullable(),
-  expiresOn: z.string().nullable(),
+  issuer: maybe(z.string()),
+  issuedOn: maybe(z.string()),
+  expiresOn: maybe(z.string()),
 });
 
 export const AI_RESUME_SCHEMA = z.object({
-  headline: z.string().nullable(),
-  overview: z.string().nullable(),
-  employers: z.array(aiEmployer).default([]),
-  projects: z.array(aiProject).default([]),
-  education: z.array(aiEducation).default([]),
-  skills: z.array(z.string()).default([]),
-  languages: z.array(z.string()).default([]),
-  certifications: z.array(aiCertification).default([]),
+  headline: maybe(z.string()),
+  overview: maybe(z.string()),
+  employers: z.array(aiEmployer).optional().default([]),
+  projects: z.array(aiProject).optional().default([]),
+  education: z.array(aiEducation).optional().default([]),
+  skills: z.array(z.string()).optional().default([]),
+  languages: z.array(z.string()).optional().default([]),
+  certifications: z.array(aiCertification).optional().default([]),
 });
 
 export type AiResume = z.infer<typeof AI_RESUME_SCHEMA>;
@@ -222,10 +241,14 @@ export async function aiExtractResume(text: string): Promise<AiExtractOutcome> {
     // must not put half-built objects into someone's profile.
     const parsed = AI_RESUME_SCHEMA.safeParse(block.input);
     if (!parsed.success) {
+      // NAME THE FIELD. "expected string, received undefined" without a path
+      // is a dead end — the same lesson E121 learned about unrecognised keys.
+      const issue = parsed.error.issues[0];
+      const where = issue?.path?.length ? ` at "${issue.path.join(".")}"` : "";
       return {
         ok: false,
         reason: "error",
-        message: `The model's output didn't match the expected shape: ${parsed.error.issues[0]?.message ?? "unknown"}`,
+        message: `The model's output didn't match the expected shape${where}: ${issue?.message ?? "unknown"}`,
       };
     }
 

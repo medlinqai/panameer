@@ -69,7 +69,7 @@ export async function POST() {
 
   const parsed = aiToParsedResume(outcome.data);
   const applied = await applyParsedResume(profile.id, parsed, "RESUME");
-  const confidence = assessParse(row.raw_text, parsed);
+  const confidence = assessParse(row.raw_text, parsed, { source: "ai" });
 
   console.info(
     `[resume] path=ai-escalated model=${outcome.model} ms=${outcome.ms} ` +

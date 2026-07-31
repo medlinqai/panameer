@@ -120,7 +120,7 @@ console.log("\n=== the AI result would pass the WS0 gate ===");
   // The point of the tier: what the model returns must score HIGH, or the gate
   // would offer an AI pass on top of an AI pass.
   const parsed = aiToParsedResume(AI_RESUME_SCHEMA.parse(MARELISE_LIKE));
-  const conf = assessParse("x".repeat(6000), parsed);
+  const conf = assessParse("x".repeat(6000), parsed, { source: "ai" });
   check("Marelise-shaped AI output scores high", conf.score === "high", conf.reasons);
 }
 

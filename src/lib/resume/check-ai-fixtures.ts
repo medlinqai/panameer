@@ -125,7 +125,7 @@ async function run() {
     );
     // The AI result must itself clear the gate, or the panel would reappear on
     // top of a successful AI pass.
-    const after = assessParse(text, parsed);
+    const after = assessParse(text, parsed, { source: "ai" });
     assert(after.score === "high", "the AI result clears the confidence gate", after.reasons);
   }
 

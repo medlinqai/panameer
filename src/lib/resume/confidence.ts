@@ -80,8 +80,21 @@ function unplacedRatio(text: string, parsed: ParsedResume): number {
   return Math.max(0, Math.min(1, 1 - placed / total));
 }
 
-export function assessParse(text: string, parsed: ParsedResume): ParseConfidence {
+export type AssessOptions = {
+  /**
+   * Where the parse came from. `"ai"` changes what counts as failure — see
+   * below. Defaults to the heuristic, so every existing caller is unaffected.
+   */
+  source?: "heuristic" | "ai";
+};
+
+export function assessParse(
+  text: string,
+  parsed: ParsedResume,
+  options: AssessOptions = {}
+): ParseConfidence {
   const reasons: string[] = [];
+  const fromAi = options.source === "ai";
 
   const totalEntries = parsed.experiences.length;
   const datedEntries = parsed.experiences.filter((e) => e.startDate).length;
@@ -124,7 +137,20 @@ export function assessParse(text: string, parsed: ParsedResume): ParseConfidence
     hardTell = true;
   }
 
-  if (unplaced > 0.8 && text.length > 1500) {
+  /*
+    UNPLACED CONTENT IS A HEURISTIC TELL ONLY.
+
+    For the rule-based parser, prose that reached no field means it lost its
+    place. For the MODEL it means something different and often correct: Marelise
+    extracts 11 entries with names and dates, and the remaining text is her
+    descriptive bullets, which legitimately have no discrete field to land in.
+    Judging the AI result by the same ratio kept the "we had trouble reading
+    this" panel up after a pass that had just read the document perfectly — which
+    would teach providers the panel is noise.
+
+    So after an AI pass the question is simply: did it extract entries?
+  */
+  if (!fromAi && unplaced > 0.8 && text.length > 1500) {
     reasons.push("Most of the document didn't fit into any profile field.");
     hardTell = true;
   }
@@ -140,7 +166,17 @@ export function assessParse(text: string, parsed: ParsedResume): ParseConfidence
     while the cost of a false "high" is the silent empty section this brief
     exists to end.
   */
-  const score: "high" | "low" = hardTell ? "low" : "high";
+  /*
+    POST-AI SUCCESS = ENTRIES EXTRACTED. One named entry is more than the
+    heuristic managed on the documents that get here, and the provider is about
+    to review every row anyway. The PRE-AI gate is untouched — it is what
+    correctly routed Marelise to escalate in the first place, and weakening it
+    would stop the escalation ever happening.
+  */
+  const aiFoundEntries =
+    fromAi && parsed.experiences.some((e) => e.employer?.trim());
+
+  const score: "high" | "low" = aiFoundEntries ? "high" : hardTell ? "low" : "high";
 
   return {
     score,
