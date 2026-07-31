@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { OwnerAiPass } from "@/components/profile/OwnerAiPass";
 import { formatCents, rateBreakdown } from "@/lib/display";
 import type { ProviderProfileView } from "@/lib/provider-profile-view";
 import {
@@ -136,6 +137,18 @@ export function ProviderProfileViewPage({ p }: { p: ProviderProfileView }) {
             title="Work History"
             edit={edit("Work History", "/join/provider?step=tell_us")}
           >
+            {/*
+              E129 — the live provider's own reachable offer. A provider whose
+              import missed their work history sees an empty section here forever
+              otherwise; the AI pass previously existed only in the moments after
+              an upload. OWNER ONLY — a visitor looking at someone's profile must
+              never see a control that re-reads that person's résumé.
+            */}
+            {p.isOwner && p.employers.length === 0 && (
+              <div className="mb-4">
+                <OwnerAiPass />
+              </div>
+            )}
             <WorkHistoryBody
               employers={p.employers}
               projects={p.projects}

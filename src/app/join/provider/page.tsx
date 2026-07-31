@@ -53,6 +53,7 @@ import {
 import { dobError } from "@/lib/dob";
 import { LANGUAGES } from "@/lib/countries";
 import { LocationFields } from "@/components/onboarding/LocationFields";
+import { AiPassPanel } from "@/components/onboarding/AiPassPanel";
 import {
   reviewItems,
   splitReviewItems,
@@ -480,10 +481,6 @@ export default function JoinProviderPage() {
   const [editingWork, setEditingWork] = useState(false);
   /** WS-B — which imported-but-unmatched terms the provider has ticked. */
   const [pickedSuggestions, setPickedSuggestions] = useState<string[]>([]);
-  /** WS3 — the "let AI take a pass" gate on a low-confidence import. */
-  const [aiBusy, setAiBusy] = useState(false);
-  const [aiDone, setAiDone] = useState<string | null>(null);
-  const [aiAvailable, setAiAvailable] = useState<boolean | null>(null);
   const [suggestBusy, setSuggestBusy] = useState(false);
   const [suggestDone, setSuggestDone] = useState<string[] | null>(null);
   const [photoModal, setPhotoModal] = useState(false);
@@ -695,16 +692,6 @@ export default function JoinProviderPage() {
     }
   }, [screen, fieldRoles.length, specGroups.length]);
 
-  // WS3 — is the AI tier configured on this environment? Drives whether the gate
-  // offers the button at all; a button that can only 503 is worse than no button.
-  useEffect(() => {
-    if (screen !== "tell_us" || aiAvailable !== null) return;
-    fetch("/api/onboarding/provider/resume-ai/available")
-      .then((r) => (r.ok ? r.json() : { available: false }))
-      .then((d) => setAiAvailable(Boolean(d.available)))
-      .catch(() => setAiAvailable(false));
-  }, [screen, aiAvailable]);
-
   useEffect(() => {
     // Skills load as soon as a (Role, Domain) is chosen on the combined page.
     if (screen !== "catalog" || !browseArea) return;
@@ -895,35 +882,13 @@ export default function JoinProviderPage() {
    * repopulate the review. The heuristic result stays if this fails; the panel
    * says so rather than clearing what the provider has.
    */
-  const runAiPass = async () => {
-    setAiBusy(true);
-    setError(null);
-    setAiDone(null);
-    try {
-      const r = await fetch("/api/onboarding/provider/resume-ai", { method: "POST" });
-      const body = await r.json().catch(() => ({}));
-      if (!r.ok) {
-        setError(
-          body.error ??
-            "The AI pass didn't work. What we read so far is still here — you can edit it or upload a different file."
-        );
-        return;
-      }
-      if (body.state) hydrate(body.state as StatusPayload);
-      const n = body.applied?.experiences ?? 0;
-      setAiDone(
-        n > 0
-          ? `Found ${n} role${n === 1 ? "" : "s"} — check them over below.`
-          : "Re-read the document; check the sections below."
-      );
-      // The panel's job is done once the import has been improved.
-      setImportOutcome((o) =>
-        o ? { ...o, confidence: { score: "high", reasons: [] } } : o
-      );
-    } finally {
-      setAiBusy(false);
-    }
-  };
+  /** WS4 instrumentation — which way a low-confidence import was resolved. */
+  const logResumePath = (path: string) =>
+    fetch("/api/onboarding/provider/resume-path", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path }),
+    }).catch(() => {});
 
   const publish = async () => {
     setError(null);
@@ -1149,82 +1114,32 @@ export default function JoinProviderPage() {
             to the field that fixes them.
           */}
           {/*
-            WS3 — THE GATE. When the free parse scored low (WS0), say so and offer
-            a way out, instead of showing an empty Work History section and letting
-            the provider conclude the product is broken. Three real options,
-            because the right one depends on why it failed: the model can often
-            read a layout our rules can't; a different file (the .docx rather than
-            the PDF) sometimes just works; and typing it in is always legitimate.
+            WS3/E129 — THE GATE, now the shared `AiPassPanel`. It used to be
+            inline here, which meant the action existed only in the ninety
+            seconds after an upload; the same panel is on the review now.
           */}
           {importOutcome?.confidence?.score === "low" && (
-            <div className="mb-6 rounded-brand border-2 border-amber-400/60 bg-amber-50/60 p-5">
-              <h2 className="text-[17px]">
-                We had trouble reading your work history from this file.
-              </h2>
-              {importOutcome.confidence.reasons.length > 0 && (
-                <ul className="mt-2 list-disc space-y-1 pl-5 text-[14px] text-ink-2">
-                  {importOutcome.confidence.reasons.map((r) => (
-                    <li key={r}>{r}</li>
-                  ))}
-                </ul>
-              )}
-              <div className="mt-4 flex flex-wrap items-center gap-3">
-                {aiAvailable !== false && (
-                  <button
-                    type="button"
-                    onClick={runAiPass}
-                    disabled={aiBusy || aiAvailable === null}
-                    className="rounded-full bg-magenta px-6 py-2.5 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
-                  >
-                    {aiBusy ? "Reading your document…" : "Let AI take a pass"}
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={() => {
-                    void fetch("/api/onboarding/provider/resume-path", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ path: "reupload" }),
-                    });
-                    setUploadModal(true);
-                  }}
-                  className="rounded-full border-[1.5px] border-line px-5 py-2.5 font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
-                >
-                  Upload a different file
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    // WS4 — record the choice. Without this the manual path is
-                    // silence, and silence looks the same as nobody seeing the
-                    // panel at all.
-                    void fetch("/api/onboarding/provider/resume-path", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ path: "manual" }),
-                    });
-                    setEditingWork(true);
-                    setImportOutcome((o) =>
-                      o ? { ...o, confidence: { score: "high", reasons: [] } } : o
-                    );
-                  }}
-                  className="text-[14px] font-semibold text-ink-2 underline underline-offset-4 hover:text-magenta"
-                >
-                  Fill it in manually
-                </button>
-              </div>
-              {aiDone && (
-                <p className="mt-3 text-[13.5px] font-semibold text-emerald-700">
-                  ✓ {aiDone}
-                </p>
-              )}
-              {aiAvailable === false && (
-                <p className="mt-3 text-[13px] text-ink-2">
-                  The AI reader isn&apos;t switched on here — upload a different
-                  file or fill it in below.
-                </p>
-              )}
+            <div className="mb-6">
+              <AiPassPanel
+                reasons={importOutcome.confidence.reasons}
+                onUpload={() => {
+                  void logResumePath("reupload");
+                  setUploadModal(true);
+                }}
+                onManual={() => {
+                  void logResumePath("manual");
+                  setEditingWork(true);
+                  setImportOutcome((o) =>
+                    o ? { ...o, confidence: { score: "high", reasons: [] } } : o
+                  );
+                }}
+                onApplied={(body) => {
+                  if (body.state) hydrate(body.state as StatusPayload);
+                  setImportOutcome((o) =>
+                    o ? { ...o, confidence: { score: "high", reasons: [] } } : o
+                  );
+                }}
+              />
             </div>
           )}
 
@@ -2732,11 +2647,47 @@ export default function JoinProviderPage() {
                 title="Work History"
                 edit={editBtn("Work History", "tell_us")}
               >
-                <WorkHistoryBody
-                  employers={profile.employers}
-                  projects={projects}
-                  empty="No work history yet. Providers who add work experience and projects are twice as likely to win work."
-                />
+                {/*
+                  E129 — THE REACHABLE OFFER. An empty work history on the review
+                  used to be a dead end: the AI pass only existed on the import
+                  step, so a provider who imported last week — or whose profile
+                  predates the parser, which is Marelise and Eddie — had no way
+                  to ask for another read. Now the offer is where the emptiness
+                  actually is.
+
+                  Shown only when there is nothing to lose (no employers), so a
+                  provider with real work history is never nudged toward a
+                  re-import they didn't ask for.
+                */}
+                {profile.employers.length === 0 ? (
+                  <AiPassPanel
+                    compact
+                    heading="No work history yet — want us to read your résumé again?"
+                    reasons={[
+                      "Your profile has no jobs or projects on it. If you uploaded a résumé, our reader may have missed a layout it couldn't follow.",
+                    ]}
+                    onUpload={() => {
+                      void logResumePath("reupload");
+                      goTo("tell_us");
+                      setUploadModal(true);
+                    }}
+                    onManual={() => {
+                      void logResumePath("manual");
+                      setReturnToReview(true);
+                      goTo("tell_us");
+                      setEditingWork(true);
+                    }}
+                    onApplied={(body) => {
+                      if (body.state) hydrate(body.state as StatusPayload);
+                    }}
+                  />
+                ) : (
+                  <WorkHistoryBody
+                    employers={profile.employers}
+                    projects={projects}
+                    empty="No work history yet. Providers who add work experience and projects are twice as likely to win work."
+                  />
+                )}
               </ProfileCard>
             </div>
 
