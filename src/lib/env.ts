@@ -21,6 +21,19 @@ const schema = z.object({
   SUPABASE_ANON_KEY: z.string().min(1).optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
 
+  /*
+    Anthropic — the résumé AI extractor (brief_resume_parser_ai WS2).
+
+    OPTIONAL, and the whole tier is designed around it being absent: no key means
+    the AI pass simply isn't offered and the heuristic result stands. The model id
+    is configurable so it can be swapped without a deploy of code.
+
+    SERVER ONLY. No `NEXT_PUBLIC_` prefix, so Next will not bundle it into client
+    code — a résumé-extraction key in the browser would be a key anyone can spend.
+  */
+  ANTHROPIC_API_KEY: z.string().min(1).optional(),
+  ANTHROPIC_RESUME_MODEL: z.string().min(1).default("claude-sonnet-5"),
+
   // Email (Resend)
   RESEND_API_KEY: z.string().min(1).optional(),
   EMAIL_FROM: z.string().min(1).optional(),
