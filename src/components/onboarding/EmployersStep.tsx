@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Modal } from "@/components/Modal";
 import { Field, TextInput, TextArea, Notice } from "@/components/onboarding/controls";
-import { COUNTRIES, US_STATES } from "@/lib/countries";
+import { LocationFields } from "@/components/onboarding/LocationFields";
 
 /** Matches `TextInput` so a select doesn't read as a different control. */
 const SELECT =
@@ -210,7 +210,28 @@ export function EmployersStep({
     setEmployerModal({ mode: "edit", id: e.id });
   };
 
+  /**
+   * E127 — a range that ends before it starts (shared by employers and
+   * projects). Certifications already refused expiry-before-issue; work history
+   * and projects accepted it silently and then rendered "2019 – 2015" on the
+   * profile, which reads as broken data rather than as a typo.
+   */
+  const badRange = (start: string, end: string, current: boolean): string | null => {
+    if (current || !start || !end) return null;
+    return end < start ? "The end date can't be before the start date." : null;
+  };
+
   const saveEmployer = async () => {
+    const range = badRange(
+      employerForm.startDate,
+      employerForm.endDate,
+      employerForm.isCurrent
+    );
+    if (range) {
+      onError(range);
+      return;
+    }
+
     const employer = {
       name: employerForm.name,
       roleTitle: employerForm.roleTitle,
@@ -280,6 +301,16 @@ export function EmployersStep({
   };
 
   const saveProject = async () => {
+    const projRange = badRange(
+      projectForm.startDate,
+      projectForm.endDate,
+      Boolean(projectForm.isCurrent)
+    );
+    if (projRange) {
+      onError(projRange);
+      return;
+    }
+
     const project = {
       ...projectForm,
       startDate: projectForm.startDate || null,
@@ -373,7 +404,24 @@ export function EmployersStep({
                       items: e.artifacts ?? [],
                     })
                   }
-                  className="mb-2 text-[13px] font-bold text-magenta hover:text-magenta-dark"
+                  /*
+                    E125 — GREY WHEN EMPTY. Magenta reads as "this opens
+                    something you have", so an empty Artifacts link beside a live
+                    Edit link promised content that wasn't there.
+
+                    Still CLICKABLE, deliberately: in the editor this link is the
+                    only way to attach the first artifact, so disabling it at zero
+                    would remove the feature rather than fix the signal. Colour
+                    carries the state; the action stays available. On the
+                    read-only profile (`WorkHistoryEntry`) there is nothing to
+                    open, and there it is genuinely disabled.
+                  */
+                  className={
+                    "mb-2 text-[13px] font-bold transition-colors " +
+                    (e.artifacts?.length
+                      ? "text-magenta hover:text-magenta-dark"
+                      : "text-ink-2/70 hover:text-magenta")
+                  }
                 >
                   📎 Artifacts{e.artifacts?.length ? ` (${e.artifacts.length})` : ""}
                 </button>
@@ -461,9 +509,17 @@ export function EmployersStep({
                                     items: pr.artifacts ?? [],
                                   })
                                 }
-                                className="font-bold text-magenta"
+                                className={
+                                  "font-bold transition-colors " +
+                                  (pr.artifacts?.length
+                                    ? "text-magenta"
+                                    : "text-ink-2/70 hover:text-magenta")
+                                }
                               >
                                 Artifacts
+                                {pr.artifacts?.length
+                                  ? ` (${pr.artifacts.length})`
+                                  : ""}
                               </button>
                               <button
                                 type="button"
@@ -500,7 +556,18 @@ export function EmployersStep({
                   {openId !== e.id && (
                     <button
                       type="button"
-                      onClick={() => setOpenId(e.id)}
+                      /*
+                        E124 — ONE click. This used to only expand the card, and
+                        the "+ Add Project" button it revealed was what actually
+                        opened the modal — so a link that says "Add projects
+                        within this job" did not add a project, it changed its own
+                        label. Now it expands AND opens, which is what the label
+                        promises.
+                      */
+                      onClick={() => {
+                        setOpenId(e.id);
+                        openProject(e.id);
+                      }}
                       className="mt-1 text-[13px] font-bold text-magenta hover:text-magenta-dark"
                     >
                       Add projects within this job
@@ -603,70 +670,29 @@ export function EmployersStep({
                 placeholder="Procurement Solution Architect"
               />
             </Field>
-            <Field label="City">
-              <TextInput
-                value={employerForm.city ?? ""}
-                onChange={(e) =>
-                  setEmployerForm({ ...employerForm, city: e.target.value })
-                }
-                placeholder="Chicago"
-              />
-            </Field>
+            {/* E123/E126 — the shared country-first block, so this modal and
+                Your Details ask the same question the same way. */}
           </div>
 
-          {/*
-            E111 — location was ONE free-text box, so it collected "Miami, FL"
-            and nothing could be filtered or compared. Split into City / State /
-            Country, with Country from the shared validated list. State is a US
-            dropdown when the country is the United States and free text
-            otherwise — a fixed state list is simply wrong for most countries,
-            and a wrong dropdown is worse than an open field.
-          */}
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="State / Region">
-              {employerForm.country === "United States" ? (
-                <select
-                  value={employerForm.state ?? ""}
-                  onChange={(e) =>
-                    setEmployerForm({ ...employerForm, state: e.target.value })
-                  }
-                  className={SELECT}
-                >
-                  <option value="">Choose a state…</option>
-                  {US_STATES.map((st) => (
-                    <option key={st} value={st}>
-                      {st}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <TextInput
-                  value={employerForm.state ?? ""}
-                  onChange={(e) =>
-                    setEmployerForm({ ...employerForm, state: e.target.value })
-                  }
-                  placeholder="Region"
-                />
-              )}
-            </Field>
-            <Field label="Country">
-              <select
-                value={employerForm.country ?? ""}
-                onChange={(e) =>
-                  setEmployerForm({ ...employerForm, country: e.target.value })
-                }
-                className={SELECT}
-              >
-                <option value="">Choose a country…</option>
-                {COUNTRIES.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </Field>
-          </div>
-
+          <LocationFields
+            value={{
+              city: employerForm.city,
+              state: employerForm.state,
+              country: employerForm.country,
+            }}
+            // The form's fields are non-null strings; the shared block speaks
+            // nullable. Normalise on the way in rather than loosening the form.
+            onChange={(patch) =>
+              setEmployerForm({
+                ...employerForm,
+                ...(patch.city !== undefined ? { city: patch.city ?? "" } : {}),
+                ...(patch.state !== undefined ? { state: patch.state ?? "" } : {}),
+                ...(patch.country !== undefined
+                  ? { country: patch.country ?? "" }
+                  : {}),
+              })
+            }
+          />
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label="From">
               <TextInput
