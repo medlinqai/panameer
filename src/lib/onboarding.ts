@@ -745,6 +745,34 @@ export type ProfileSection = ProviderStep | (typeof LEGACY_SECTIONS)[number];
  * including the one-main-RoleType rule and cents conversion — lives in exactly
  * one place. `personId` is needed for the photo (lives on Person).
  */
+/**
+ * The collection a REPLACE-ALL section is about to overwrite (E121).
+ *
+ * Six sections delete every row for the profile and recreate from the payload.
+ * Each used to read its list as `Array.isArray(data.x) ? data.x : []`, which
+ * makes a missing key mean "clear it" — and that is how a Walk6 POST with the
+ * wrong key name deleted four employers while returning 200.
+ *
+ * The route validates shapes now, but this is the writer's own guard: a caller
+ * reaching `applyProviderSection` directly (a script, a seed, a future endpoint)
+ * gets the same refusal. An ABSENT key throws; an EMPTY ARRAY is honoured,
+ * because deliberately clearing a section is a legitimate thing to do and the
+ * two must stay distinguishable.
+ */
+function replaceList(data: StepData, key: string, section: string): StepData[] {
+  const value = data[key];
+  if (value === undefined || value === null) {
+    throw new OnboardingError(
+      `The "${section}" section replaces its whole list, so "${key}" must be supplied (send [] to clear it).`,
+      "INVALID"
+    );
+  }
+  if (!Array.isArray(value)) {
+    throw new OnboardingError(`"${key}" must be a list`, "INVALID");
+  }
+  return value as StepData[];
+}
+
 export async function applyProviderSection(
   profileId: string,
   personId: string,
@@ -853,9 +881,11 @@ export async function applyProviderSection(
       // brief_R — cross-cutting multi-select (products / methodologies /
       // industries). OPTIONAL: an empty list is a valid answer, so this
       // replaces the whole set rather than requiring one.
-      const ids: string[] = Array.isArray(data.specializationIds)
-        ? data.specializationIds
-        : [];
+      const ids: string[] = replaceList(
+        data,
+        "specializationIds",
+        "specializations"
+      ) as unknown as string[];
 
       // E031 — add-on-the-fly. A provider's real specialization may simply not
       // be in the seeded vocabulary yet; refusing it would cost us the signal.
@@ -1027,9 +1057,7 @@ export async function applyProviderSection(
     }
 
     case "experience": {
-      const list: StepData[] = Array.isArray(data.experiences)
-        ? data.experiences
-        : [];
+      const list: StepData[] = replaceList(data, "experiences", "experience");
       const clean = list
         .map((e) => ({
           employer: (e.employer ?? "").trim(),
@@ -1090,12 +1118,16 @@ export async function applyProviderSection(
     }
 
     case "education_languages": {
-      const education: StepData[] = Array.isArray(data.education)
-        ? data.education
-        : [];
-      const languages: StepData[] = Array.isArray(data.languages)
-        ? data.languages
-        : [];
+      const education: StepData[] = replaceList(
+        data,
+        "education",
+        "education_languages"
+      );
+      const languages: StepData[] = replaceList(
+        data,
+        "languages",
+        "education_languages"
+      );
       const cleanEdu = education
         .map((e) => ({
           institution: (e.institution ?? "").trim(),
@@ -1140,7 +1172,7 @@ export async function applyProviderSection(
     case "education": {
       // E015 — optional, but when entries ARE given each needs a school.
       // Dates are start/end YEARS ("Dates Attended"), not full dates.
-      const list: StepData[] = Array.isArray(data.education) ? data.education : [];
+      const list: StepData[] = replaceList(data, "education", "education");
       const clean = list
         .map((e) => ({
           institution: (e.institution ?? "").trim(),
@@ -1175,7 +1207,7 @@ export async function applyProviderSection(
     case "languages": {
       // E016 — at least one language; English is seeded by the client as the
       // default row, so this only has to enforce the floor.
-      const list: StepData[] = Array.isArray(data.languages) ? data.languages : [];
+      const list: StepData[] = replaceList(data, "languages", "languages");
       const clean = list
         .map((l) => ({
           name: (l.name ?? "").trim(),
@@ -1362,9 +1394,7 @@ export async function applyProviderSection(
     case "certifications": {
       // brief_T / E040 — now carries the credential fields brief_S added to the
       // model (credential id, verify URL, expiry) alongside name/issuer/year.
-      const list: StepData[] = Array.isArray(data.certifications)
-        ? data.certifications
-        : [];
+      const list: StepData[] = replaceList(data, "certifications", "certifications");
       const toYearOrNull = (v: unknown) =>
         typeof v === "number" ? v : v ? Number(v) || null : null;
 
