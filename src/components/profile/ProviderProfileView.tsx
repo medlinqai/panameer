@@ -73,6 +73,13 @@ export function ProviderProfileViewPage({ p }: { p: ProviderProfileView }) {
     a populated one to EDIT. Passing `isEmpty` at each call site keeps the rule
     in one place rather than each section deciding for itself.
   */
+  /*
+    E131 — wizard-step edits carry `&return=review`, so saving lands the provider
+    back on their profile instead of dumping them into the middle of the
+    onboarding train and walking them forward through steps they didn't ask for.
+    `/settings/*` links are left alone: those are real destinations, not a
+    detour, and Certifications opens its own modal.
+  */
   const edit = (title: string, href: string, isEmpty = false) =>
     p.isOwner ? (
       <EditLink
@@ -157,7 +164,7 @@ export function ProviderProfileViewPage({ p }: { p: ProviderProfileView }) {
         <div className="mt-5">
           <ProfileCard
             title="Work History"
-            edit={edit("Work History", "/join/provider?step=tell_us", p.employers.length === 0)}
+            edit={edit("Work History", "/join/provider?step=tell_us&return=review", p.employers.length === 0)}
           >
             {/*
               E129 — the live provider's own reachable offer. A provider whose
@@ -205,7 +212,7 @@ export function ProviderProfileViewPage({ p }: { p: ProviderProfileView }) {
         <div className="mt-5">
           <ProfileCard
             title="Solo Projects"
-            edit={edit("Solo Projects", "/join/provider?step=tell_us")}
+            edit={edit("Solo Projects", "/join/provider?step=tell_us&return=review")}
           >
             <SoloProjectsBody
               isOwner={p.isOwner}
@@ -317,21 +324,21 @@ export function ProviderProfileViewPage({ p }: { p: ProviderProfileView }) {
         <div className="mt-5 grid gap-5 lg:grid-cols-2">
           <ProfileCard
             title="Skills"
-            edit={edit("Skills", "/join/provider?step=catalog")}
+            edit={edit("Skills", "/join/provider?step=catalog&return=review")}
           >
             <SkillsBody skills={p.skills} field={p.field} />
           </ProfileCard>
 
           <ProfileCard
             title="Specializations"
-            edit={edit("Specializations", "/join/provider?step=specializations")}
+            edit={edit("Specializations", "/join/provider?step=specializations&return=review")}
           >
             <SpecializationsBody specializations={p.specializations} />
           </ProfileCard>
 
           <ProfileCard
             title="Education"
-            edit={edit("Education", "/join/provider?step=education")}
+            edit={edit("Education", "/join/provider?step=education&return=review")}
           >
             <EducationBody education={p.education} />
           </ProfileCard>
