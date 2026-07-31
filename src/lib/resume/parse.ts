@@ -47,7 +47,18 @@ export type ParsedResume = {
 /** Section headings we recognise, mapped to a canonical bucket. */
 const SECTION_PATTERNS: { key: Section; re: RegExp }[] = [
   { key: "summary", re: /^(professional\s+)?(summary|profile|about|objective|overview)\b/i },
-  { key: "experience", re: /^(work\s+|professional\s+|employment\s+|relevant\s+)?(experience|history|employment)\b/i },
+  /*
+    E122 — "Career Experience" was not recognised, so Eddie Cairnie's five
+    employers never reached the experience bucket and his résumé imported three
+    education entries and zero jobs. The old pattern only allowed work /
+    professional / employment / relevant as prefixes; "career" and a bare
+    "employment history" both fell through. Headings are the load-bearing part of
+    this parser — miss one and the whole section is invisible.
+  */
+  {
+    key: "experience",
+    re: /^(work|professional|employment|relevant|career|industry|related)?\s*(experience|history|employment|background)\b/i,
+  },
   { key: "education", re: /^education(\s+(and|&)\s+training)?\b/i },
   { key: "skills", re: /^(technical\s+|core\s+|key\s+)?(skills|competenc(y|ies)|expertise|technologies)\b/i },
   { key: "languages", re: /^languages?\b/i },
@@ -341,9 +352,92 @@ export function parseResume(text: string): ParsedResume {
     pending = null;
   };
 
-  for (const line of buckets.experience) {
+  /*
+    E122 — TWO-LINE BLOCKS. Eddie Cairnie's résumé (and this is a common
+    consulting layout) writes each job as
+
+        OraCloud Plus, LLC, Management Consulting, Miami Florida   ← company
+        Director 2018-Present                                       ← role + dates
+        Analyze, design, deploy and support …                       ← summary
+        Key Contributions:                                          ← label
+        • …                                                         ← bullets
+
+    The old loop only ever read the employer out of the SAME line as the dates,
+    so every one of these roles imported as "(Employer not detected)" — the
+    company was one line up, and once a role was pending, the next company line
+    was swallowed as description.
+
+    The fix is a one-line LOOKAHEAD: an undated, unbulleted line whose next
+    meaningful line carries dates is a company header, not prose. That is what
+    distinguishes "Citigroup, Expense Management Group, New York" from a
+    sentence about what someone did there.
+  */
+  const expLines = buckets.experience;
+  /** The next line that is not blank — what the lookahead actually reads. */
+  const nextMeaningful = (from: number): string | null => {
+    for (let j = from; j < expLines.length; j++) {
+      if (expLines[j].trim()) return expLines[j];
+    }
+    return null;
+  };
+
+  /**
+   * "OraCloud Plus, LLC, Management Consulting, Miami Florida" → the company.
+   *
+   * These headers are `Company, [suffix,] descriptor, location`, so the first
+   * comma segment is the name — plus a corporate suffix when the second segment
+   * is one, because "OraCloud Plus, LLC" is the company and "OraCloud Plus" is a
+   * truncation of it.
+   */
+  const companyFromHeader = (line: string): string => {
+    const parts = line.split(",").map((x) => x.trim()).filter(Boolean);
+    if (parts.length === 0) return line.trim();
+    const SUFFIX = /^(llc|l\.l\.c\.|inc|inc\.|ltd|ltd\.|llp|plc|gmbh|corp|corporation|co|pty|ag|sa|bv|nv)$/i;
+    return parts[1] && SUFFIX.test(parts[1]) ? `${parts[0]}, ${parts[1]}` : parts[0];
+  };
+
+  /** "Key Contributions:" and friends label the bullets; they are not content. */
+  const isSectionLabel = (t: string) =>
+    /^(key\s+)?(contributions?|achievements?|accomplishments?|responsibilities|highlights?|selected\s+\w+)\s*:?$/i.test(
+      t
+    );
+
+  /** A company header pending its role line. */
+  let companyHeader: string | null = null;
+
+  for (let i = 0; i < expLines.length; i++) {
+    const line = expLines[i];
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+
     const range = findDateRange(line);
     const isBullet = BULLET.test(line);
+
+    if (!isBullet && isSectionLabel(trimmed)) continue;
+
+    /*
+      E122 — the trailing prose roll-up. Eddie's last line is "Additional
+      experience as an Executive Director at Morgan Stanley, …, Consultant at
+      Cairnie Associates, and Vice President at Salomon Brothers, …" — real
+      employers, named, with no dates. Left alone it became description text
+      hanging off the previous job. Each "<role> at <Company>" pair becomes its
+      own undated entry, which the review page then asks the provider to date.
+    */
+    if (!isBullet && /^additional\s+(experience|roles?|positions?)\b/i.test(trimmed)) {
+      flush();
+      companyHeader = null;
+      const pairs = [...trimmed.matchAll(/\b(?:as\s+)?(?:an?\s+)?([A-Z][\w.\-/&' ]{2,40}?)\s+at\s+([A-Z][\w.\-/&' ]{2,40})/g)];
+      for (const m of pairs) {
+        experiences.push({
+          employer: m[2].trim().replace(/[,.]$/, ""),
+          roleTitle: m[1].trim(),
+          description: null,
+          startDate: null,
+          endDate: null,
+        });
+      }
+      continue;
+    }
 
     if (range && !isBullet) {
       // A dated line starts a new role. Text around the dates is title/employer,
@@ -353,12 +447,56 @@ export function parseResume(text: string): ParsedResume {
       const parts = rest.split(/\s+(?:at|@|—|–|\||,)\s+/).map((s) => s.trim()).filter(Boolean);
       pending = {
         roleTitle: parts[0] ?? "",
-        employer: parts[1] ?? "",
+        // The company header one line up, when this line names no employer of
+        // its own — the two-line layout this fix exists for.
+        employer: parts[1] ?? (companyHeader ? companyFromHeader(companyHeader) : ""),
         description: null,
         startDate: range.start,
         endDate: range.end,
       };
+      companyHeader = null;
       continue;
+    }
+
+    /*
+      An undated, unbulleted line whose NEXT line is dated MAY be a company
+      header — but only if that dated line doesn't already name its own
+      employer. Without that second condition the rule is too greedy: a résumé
+      written as "Role\nEmployer, dates" has an undated role line followed by a
+      dated line, and treating the role as a header threw the role away. Caught
+      by a fixture (fin-rajesh went 4 roles → 3) rather than by reasoning.
+    */
+    if (!isBullet && !range && trimmed.length <= 140) {
+      const ahead = nextMeaningful(i + 1);
+      const aheadRange = ahead && !BULLET.test(ahead) ? findDateRange(ahead) : null;
+      if (ahead && aheadRange) {
+        const aheadRest = stripRange(ahead, aheadRange.matched);
+        const aheadNamesEmployer =
+          aheadRest
+            .split(/\s+(?:at|@|—|–|\||,)\s+/)
+            .map((x) => x.trim())
+            .filter(Boolean).length > 1;
+        /*
+          …and only if the line LOOKS like a company header. These are written
+          "Company, descriptor, location" or end in a corporate suffix, so a
+          comma (or a suffix) is the tell. Without this the rule swallowed a
+          stray role fragment — fin-rajesh's PDF splits "Senior Associate
+          Financial Functional / Consultant 2023" across two lines, and the
+          first half was becoming the employer of the second. A role title in
+          the employer field is more visibly wrong to the provider than an
+          undated extra row, which the review page already prompts them to fix.
+        */
+        const looksLikeCompany =
+          trimmed.includes(",") ||
+          /\b(llc|inc\.?|ltd\.?|llp|plc|gmbh|corp(oration)?|pty|group|technologies|solutions|consulting|systems|services)\b/i.test(
+            trimmed
+          );
+        if (!aheadNamesEmployer && looksLikeCompany) {
+          flush();
+          companyHeader = trimmed;
+          continue;
+        }
+      }
     }
 
     if (!pending) {

@@ -33,6 +33,8 @@ type Check = {
   minExperiences?: number;
   /** The E055 case: a sidebar rail must not be read as education. */
   maxFalseEducation?: number;
+  /** E122 — roles that must carry a real employer name, not the placeholder. */
+  namedEmployers?: number;
 };
 
 /**
@@ -63,6 +65,15 @@ const CHECKS: Check[] = [
     minChars: 5000,
     maxSkills: 40,
     maxEducation: 12,
+  },
+  {
+    file: "eddie.docx",
+    note: "E122 'Career Experience' + two-line company/role blocks",
+    minChars: 6000,
+    minExperiences: 4, //  the four dated blocks, at minimum
+    namedEmployers: 4, // …and every one of them names its company
+    maxEducation: 5,
+    maxSkills: 40,
   },
   // --- 2. Other Providers ----------------------------------------------
   {
@@ -210,6 +221,21 @@ async function run() {
       assert(
         p.experiences.length >= c.minExperiences,
         `${c.file}: ${p.experiences.length} roles < ${c.minExperiences}`
+      );
+    }
+    if (c.namedEmployers) {
+      /*
+        E122 — count roles that actually NAME an employer. Eddie's résumé used to
+        yield roles with "(Employer not detected)" because the company sat one
+        line above the dates; a count alone would not have caught that, since the
+        rows existed. This is the assertion that would have failed.
+      */
+      const named = p.experiences.filter(
+        (e) => e.employer && e.employer !== "(Employer not detected)"
+      ).length;
+      assert(
+        named >= c.namedEmployers,
+        `${c.file}: only ${named} roles name an employer (want ${c.namedEmployers})`
       );
     }
 
