@@ -973,32 +973,33 @@ export async function applyProviderSection(
         );
       }
 
-      const profile = await prisma.providerProfile.findUnique({
-        where: { id: profileId },
-        select: { pillar_id: true, role_type_id: true },
-      });
-      const scopePillarId: string | null = data.pillarId ?? profile?.pillar_id ?? null;
-      const scopeRoleTypeId: string | null =
-        data.roleTypeId ?? profile?.role_type_id ?? null;
+      /*
+        WS1/E102 + E110 — the single-domain lock is GONE.
 
+        These two throws ("All skills must belong to the selected category" /
+        "…to the field you chose") blocked any provider whose skills span more
+        than one domain. Linus spans Supply Chain AND Finance, so his profile
+        could not be saved at all — a hard stop on the flow, not a nicety.
+
+        It was never a data constraint. `ProviderSkill` is a plain join and
+        carries no domain of its own, and the review page's "Skills we couldn't
+        place" path has always written skills across domains without complaint.
+        The rule existed only on this one code path, which is why the product
+        contradicted itself depending on which screen you used.
+
+        The profile's own `role_type_id` / `pillar_id` stay as the PRIMARY field —
+        what the profile leads with and what buyers filter on. They are no longer
+        a fence around which skills may be attached.
+
+        The integrity check that matters is kept: every id must resolve to a real
+        Skill, so a client cannot invent one.
+      */
       const skills = await prisma.skill.findMany({
         where: { id: { in: skillIds } },
-        select: { id: true, role_type_id: true, pillar_id: true },
+        select: { id: true },
       });
       if (skills.length !== skillIds.length) {
         throw new OnboardingError("Unknown skill selected", "INVALID");
-      }
-      if (scopeRoleTypeId && skills.some((s) => s.role_type_id !== scopeRoleTypeId)) {
-        throw new OnboardingError(
-          "All skills must belong to the selected category",
-          "INVALID"
-        );
-      }
-      if (scopePillarId && skills.some((s) => s.pillar_id !== scopePillarId)) {
-        throw new OnboardingError(
-          "All skills must belong to the field you chose",
-          "INVALID"
-        );
       }
 
       await prisma.$transaction([

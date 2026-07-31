@@ -200,7 +200,10 @@ const SCROLL_REGION =
  * exactly as the unbounded catalog did. Capped at ~2 rows, unpadded so a single
  * row costs nothing.
  */
-const PICKED_REGION = "max-h-[84px] overflow-y-auto overscroll-contain pr-1";
+// Raised from 84px for E102: a single-domain basket was two rows, a
+// multi-domain one is three or four, and clipping the thing that proves your
+// earlier picks survived defeats the point of showing it.
+const PICKED_REGION = "max-h-[132px] overflow-y-auto overscroll-contain pr-1";
 
 /** The shape `/api/onboarding/status` returns. Only what this page reads. */
 type ProfilePayload = {
@@ -237,7 +240,7 @@ type ProfilePayload = {
     notes: string | null;
   }[];
   skillIds?: string[];
-  skillNames?: { id: string; name: string }[];
+  skillNames?: { id: string; name: string; area?: string | null }[];
   headline?: string | null;
   overview?: string | null;
   hourlyRateCents?: number | null;
@@ -322,7 +325,7 @@ type Profile = {
   employers: EmployerCard[];
   projects: EmployerProject[];
   skillIds: string[];
-  skillNames: { id: string; name: string }[];
+  skillNames: { id: string; name: string; area?: string | null }[];
   /** Typed-in skills not yet in the catalog (E031). */
   customSkills: string[];
   headline: string;
@@ -419,6 +422,21 @@ export default function JoinProviderPage() {
   const [fieldRoles, setFieldRoles] = useState<FieldRole[]>([]);
   const [specGroups, setSpecGroups] = useState<SpecializationGroup[]>([]);
   const [skillOpts, setSkillOpts] = useState<SkillOpt[]>([]);
+  /**
+   * E102 — which (role, domain) the SKILLS TIER is currently browsing.
+   *
+   * Separate from `profile.roleTypeId` / `pillarId`, which are the PRIMARY field
+   * the profile leads with and which buyers filter on. Conflating the two is
+   * what made the picker single-domain: browsing to a second area had to either
+   * overwrite the primary or be forbidden, and it was forbidden.
+   *
+   * Null means "no area open" — the domain tier is showing its list.
+   */
+  const [browseArea, setBrowseArea] = useState<{
+    roleTypeId: string;
+    pillarId: string;
+    pillarName: string;
+  } | null>(null);
   const [skillQuery, setSkillQuery] = useState("");
   const [specQuery, setSpecQuery] = useState("");
   /**
@@ -654,14 +672,14 @@ export default function JoinProviderPage() {
 
   useEffect(() => {
     // Skills load as soon as a (Role, Domain) is chosen on the combined page.
-    if (screen !== "catalog" || !profile.pillarId || !profile.roleTypeId) return;
+    if (screen !== "catalog" || !browseArea) return;
     fetch(
-      `/api/catalog/skills?roleTypeId=${profile.roleTypeId}&pillarId=${profile.pillarId}`
+      `/api/catalog/skills?roleTypeId=${browseArea.roleTypeId}&pillarId=${browseArea.pillarId}`
     )
       .then((r) => r.json())
       .then((d) => setSkillOpts(d.skills ?? []))
       .catch(() => setError("We couldn't load skills. Please refresh."));
-  }, [screen, profile.pillarId, profile.roleTypeId]);
+  }, [screen, browseArea]);
 
   // ---- navigation -------------------------------------------------------
   const goTo = (s: Screen) => {
@@ -1258,38 +1276,57 @@ export default function JoinProviderPage() {
       const shownSkills = matchingSkills.slice(0, MAX_SKILL_SUGGESTIONS);
       const hiddenSkillCount = matchingSkills.length - shownSkills.length;
 
-      const pickRole = (role: FieldRole) =>
-        setProfile((p) => ({
-          ...p,
-          roleTypeId: role.id,
-          roleTypeName: role.name,
-          // Changing role invalidates the domain and everything below it.
-          pillarId: null,
-          pillarName: null,
-          skillIds: [],
-          skillNames: [],
-        }));
+      /*
+        E102 — picking a different Role or Domain moves the BROWSE CONTEXT; it no
+        longer empties the basket.
 
-      const pickDomain = (d: FieldDomain) =>
-        setProfile((p) => ({
-          ...p,
+        Wiping `skillIds` here was the whole single-domain lock. A provider who
+        works across Supply Chain and Finance had no way to express it: choosing
+        the second domain silently discarded everything they had picked in the
+        first, and if they got as far as saving, the server rejected it anyway.
+        The two halves of that lock are removed together — this one and the
+        cross-domain throw in `onboarding.ts`.
+
+        Role and Domain still record the PRIMARY field (what the profile leads
+        with); they are simply no longer a fence around which skills may be kept.
+      */
+      const pickRole = (role: FieldRole) => {
+        // A new role means a new domain list, so close whatever area is open.
+        // The banked skills are untouched.
+        setBrowseArea(null);
+        setProfile((p) => ({ ...p, roleTypeId: role.id, roleTypeName: role.name }));
+      };
+
+      const pickDomain = (d: FieldDomain) => {
+        setBrowseArea({
+          roleTypeId: profile.roleTypeId!,
           pillarId: d.id,
           pillarName: d.name,
-          skillIds: [],
-          skillNames: [],
-        }));
+        });
+        // The FIRST area a provider picks becomes the profile's primary field.
+        // Later areas add skills without moving it — otherwise the headline
+        // field would drift to whatever they happened to browse last.
+        setProfile((p) =>
+          p.pillarId
+            ? p
+            : { ...p, pillarId: d.id, pillarName: d.name }
+        );
+      };
 
       const toggleSkill = (id: string) =>
         setProfile((p) => {
           const has = p.skillIds.includes(id);
           if (!has && p.skillIds.length >= MAX_SKILLS) return p;
           const name = skillOpts.find((x) => x.id === id)?.name ?? "";
+          // Stamp the area it was picked from, so a basket spanning several
+          // domains can still say which skill came from where.
+          const area = browseArea?.pillarName ?? p.pillarName ?? null;
           return {
             ...p,
             skillIds: has ? p.skillIds.filter((x) => x !== id) : [...p.skillIds, id],
             skillNames: has
               ? p.skillNames.filter((x) => x.id !== id)
-              : [...p.skillNames, { id, name }],
+              : [...p.skillNames, { id, name, area }],
           };
         });
 
@@ -1320,6 +1357,10 @@ export default function JoinProviderPage() {
                 skillIds: profile.skillIds,
                 customSkills: profile.customSkills,
               }),
+            // E102 — a closed browse area no longer blocks Continue. What must
+            // hold is that a PRIMARY field was established and at least one
+            // skill is banked; whether an area happens to be open is a browsing
+            // state, not an answer.
             continueDisabled:
               !profile.roleTypeId || !profile.pillarId || totalPicked === 0,
           })}
@@ -1331,6 +1372,55 @@ export default function JoinProviderPage() {
             Domain reveals its Skills. Each tier collapses to a summary row once
             chosen, so the page never shows more than one open list at a time.
           */}
+          {/*
+            E102 — the basket lives ABOVE the cascade, not inside the skills
+            tier. It used to render inside tier 3, so closing an area to browse
+            another made every skill already picked disappear from the page —
+            which is precisely the "did I just lose that?" moment multi-domain
+            picking exists to avoid. It is always on screen and always removable.
+          */}
+              {(profile.skillNames.length > 0 ||
+                profile.customSkills.length > 0) && (
+                <div className="mb-2">
+                  <p className="mb-1.5 text-[13px] font-bold">
+                    Your Skills{" "}
+                    <span className="font-normal text-ink-2">
+                      ({totalPicked}/{MAX_SKILLS})
+                    </span>
+                  </p>
+                  <div className={`flex flex-wrap gap-2 ${PICKED_REGION}`}>
+                    {profile.skillNames.map((sk) => (
+                      <Chip key={sk.id} selected onClick={() => toggleSkill(sk.id)}>
+                        {sk.name}
+                        {/* E102 — name the area on any chip picked somewhere
+                            other than the area currently open. With one domain
+                            this never shows; the moment the basket spans two it
+                            is the only thing telling them apart. */}
+                        {sk.area && sk.area !== browseArea?.pillarName && (
+                          <span className="ml-1 text-[12px] font-normal opacity-75">
+                            · {sk.area}
+                          </span>
+                        )}
+                      </Chip>
+                    ))}
+                    {profile.customSkills.map((name) => (
+                      <Chip
+                        key={`custom:${name}`}
+                        selected
+                        onClick={() =>
+                          setProfile((p) => ({
+                            ...p,
+                            customSkills: p.customSkills.filter((c) => c !== name),
+                          }))
+                        }
+                      >
+                        {name}
+                      </Chip>
+                    ))}
+                  </div>
+                </div>
+              )}
+
           <div className="space-y-2.5">
             <CascadeTier
               index={1}
@@ -1374,16 +1464,13 @@ export default function JoinProviderPage() {
               <CascadeTier
                 index={2}
                 label="Domain"
-                chosen={profile.pillarName}
-                onChange={() =>
-                  setProfile((p) => ({
-                    ...p,
-                    pillarId: null,
-                    pillarName: null,
-                    skillIds: [],
-                    skillNames: [],
-                  }))
-                }
+                // Collapses to the area currently OPEN, not to the primary — so
+                // "+ Add skills from another area" reopens this list instead of
+                // showing a summary of a domain you have already left. The
+                // Change affordance likewise only closes the area; it no longer
+                // discards the skills picked in it (E102).
+                chosen={browseArea?.pillarName ?? null}
+                onChange={() => setBrowseArea(null)}
               >
                 <div className={`max-h-[320px] ${SCROLL_REGION}`}>
                   <div className="space-y-3">
@@ -1392,7 +1479,7 @@ export default function JoinProviderPage() {
                       .map((d) => (
                         <OptionCard
                           key={d.id}
-                          selected={profile.pillarId === d.id}
+                          selected={browseArea?.pillarId === d.id}
                           onClick={() => pickDomain(d)}
                           title={d.name}
                           description={`${d.skillCount} skill${d.skillCount === 1 ? "" : "s"}`}
@@ -1403,41 +1490,8 @@ export default function JoinProviderPage() {
               </CascadeTier>
             )}
 
-            {profile.roleTypeId && profile.pillarId && (
+            {profile.roleTypeId && browseArea && (
               <CascadeTier index={3} label="Skills" chosen={null}>
-                {(profile.skillNames.length > 0 ||
-                  profile.customSkills.length > 0) && (
-                  <div className="mb-2">
-                    <p className="mb-1.5 text-[13px] font-bold">
-                      Your Skills{" "}
-                      <span className="font-normal text-ink-2">
-                        ({totalPicked}/{MAX_SKILLS})
-                      </span>
-                    </p>
-                    <div className={`flex flex-wrap gap-2 ${PICKED_REGION}`}>
-                      {profile.skillNames.map((sk) => (
-                        <Chip key={sk.id} selected onClick={() => toggleSkill(sk.id)}>
-                          {sk.name}
-                        </Chip>
-                      ))}
-                      {profile.customSkills.map((name) => (
-                        <Chip
-                          key={`custom:${name}`}
-                          selected
-                          onClick={() =>
-                            setProfile((p) => ({
-                              ...p,
-                              customSkills: p.customSkills.filter((c) => c !== name),
-                            }))
-                          }
-                        >
-                          {name}
-                        </Chip>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
                 <div className="flex items-end gap-2">
                   <div className="flex-1">
                     <Field label={`Search or Add a Skill (up to ${MAX_SKILLS})`}>
@@ -1501,6 +1555,21 @@ export default function JoinProviderPage() {
                     +{hiddenSkillCount} more — keep typing to narrow the list.
                   </p>
                 )}
+
+                {/*
+                  E102 — the explicit way OUT of this area and into another.
+                  Without it the multi-domain capability exists but is invisible:
+                  you would have to guess that re-opening tier 1 no longer wipes
+                  what you picked. It clears only the browse context, never the
+                  basket.
+                */}
+                <button
+                  type="button"
+                  onClick={() => setBrowseArea(null)}
+                  className="mt-4 text-[14px] font-bold text-magenta transition-colors hover:text-magenta-dark"
+                >
+                  + Add skills from another area
+                </button>
               </CascadeTier>
             )}
           </div>
