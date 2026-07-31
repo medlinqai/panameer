@@ -87,10 +87,13 @@ export function EditButton({
   title,
   onClick,
   label = "Edit",
+  /** "✏️" to edit, "+" to add — E130's one rule, two states. */
+  icon = "✏️",
 }: {
   title: string;
   onClick: () => void;
   label?: string;
+  icon?: string;
 }) {
   return (
     <button
@@ -99,7 +102,7 @@ export function EditButton({
       aria-label={`Edit ${title}`}
       className={EDIT_CLASS}
     >
-      ✏️ {label}
+      {icon} {label}
     </button>
   );
 }

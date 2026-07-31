@@ -2581,15 +2581,32 @@ export default function JoinProviderPage() {
       // E074 — Solo Projects is null-employer ONLY.
       const soloProjects = projects.filter((pr) => !employerNameById.has(pr.id));
 
-      const editBtn = (title: string, step: Step) => (
+      /*
+        E130 — ONE affordance rule for every section.
+
+        The review offered two patterns: five sections had an "✏️ Edit" pencil
+        and Certifications had a "+ Add Certification" button inside its body, so
+        an empty section either invited you in or didn't depending on which one
+        you were looking at — and a pencil on an empty section reads as "edit
+        what?".
+
+        The rule: EMPTY sections say "+ Add X", populated ones say "✏️ Edit".
+        One verb per state, applied everywhere, so the affordance describes what
+        the click actually does.
+      */
+      const sectionAction = (title: string, step: Step, isEmpty: boolean) => (
         <EditButton
           title={title}
+          label={isEmpty ? `Add ${title}` : "Edit"}
+          icon={isEmpty ? "+" : "✏️"}
           onClick={() => {
             setReturnToReview(true);
             goTo(step);
           }}
         />
       );
+      const editBtn = (title: string, step: Step) =>
+        sectionAction(title, step, false);
 
       return (
         <WizardShell
@@ -2645,7 +2662,7 @@ export default function JoinProviderPage() {
             <div className="mt-5">
               <ProfileCard
                 title="Work History"
-                edit={editBtn("Work History", "tell_us")}
+                edit={sectionAction("Work History", "tell_us", profile.employers.length === 0)}
               >
                 {/*
                   E129 — THE REACHABLE OFFER. An empty work history on the review
@@ -2695,7 +2712,7 @@ export default function JoinProviderPage() {
             <div className="mt-5">
               <ProfileCard
                 title="Solo Projects"
-                edit={editBtn("Solo Projects", "tell_us")}
+                edit={sectionAction("Solo Projects", "tell_us", soloProjects.length === 0)}
               >
                 <SoloProjectsBody
                   projects={soloProjects}
@@ -2706,7 +2723,10 @@ export default function JoinProviderPage() {
 
             {/* ---- pg2: the 2-column grid ------------------------------- */}
             <div className="mt-5 grid gap-5 lg:grid-cols-2">
-              <ProfileCard title="Skills" edit={editBtn("Skills", "catalog")}>
+              <ProfileCard
+                title="Skills"
+                edit={sectionAction("Skills", "catalog", profile.skillNames.length === 0)}
+              >
                 <SkillsBody
                   skills={profile.skillNames}
                   field={
@@ -2719,18 +2739,42 @@ export default function JoinProviderPage() {
 
               <ProfileCard
                 title="Specializations"
-                edit={editBtn("Specializations", "specializations")}
+                edit={sectionAction(
+                  "Specializations",
+                  "specializations",
+                  profile.specializationNames.length === 0
+                )}
               >
                 <SpecializationsBody specializations={profile.specializationNames} />
               </ProfileCard>
 
-              <ProfileCard title="Education" edit={editBtn("Education", "education")}>
+              <ProfileCard
+                title="Education"
+                edit={sectionAction("Education", "education", profile.education.length === 0)}
+              >
                 <EducationBody education={profile.education} />
               </ProfileCard>
 
                 {/* E057 — cards + a proper modal. The eight-field form that
                     used to be squeezed into the sidebar column is gone. */}
-                <ProfileCard title="Certifications">
+                <ProfileCard
+                  title="Certifications"
+                  // Certifications opens a modal rather than a step, so its
+                  // action bumps the modal signal — but it LOOKS and reads
+                  // exactly like every other section's.
+                  edit={
+                    <EditButton
+                      title="Certifications"
+                      label={
+                        profile.certifications.length === 0
+                          ? "Add Certification"
+                          : "Edit"
+                      }
+                      icon={profile.certifications.length === 0 ? "+" : "✏️"}
+                      onClick={() => setCertSignal((n) => n + 1)}
+                    />
+                  }
+                >
                   <CertificationCards
                     items={profile.certifications}
                     busy={busy}

@@ -43,10 +43,20 @@ import {
  */
 
 /** Per-section edit affordance — navigation, straight back into the wizard. */
-function EditLink({ href, title }: { href: string; title: string }) {
+function EditLink({
+  href,
+  title,
+  label = "Edit",
+  icon = "✏️",
+}: {
+  href: string;
+  title: string;
+  label?: string;
+  icon?: string;
+}) {
   return (
-    <Link href={href} aria-label={`Edit ${title}`} className={EDIT_CLASS}>
-      ✏️ Edit
+    <Link href={href} aria-label={`${label} ${title}`} className={EDIT_CLASS}>
+      {icon} {label}
     </Link>
   );
 }
@@ -58,8 +68,20 @@ export function ProviderProfileViewPage({ p }: { p: ProviderProfileView }) {
   const soloProjects = p.projects.filter(
     (pr) => !p.employers.some((e) => (e.projects ?? []).some((n) => n.id === pr.id))
   );
-  const edit = (title: string, href: string) =>
-    p.isOwner ? <EditLink href={href} title={title} /> : undefined;
+  /*
+    E130 — same two states as the review: an empty section invites you to ADD,
+    a populated one to EDIT. Passing `isEmpty` at each call site keeps the rule
+    in one place rather than each section deciding for itself.
+  */
+  const edit = (title: string, href: string, isEmpty = false) =>
+    p.isOwner ? (
+      <EditLink
+        href={href}
+        title={title}
+        label={isEmpty ? `Add ${title}` : "Edit"}
+        icon={isEmpty ? "+" : "✏️"}
+      />
+    ) : undefined;
 
   return (
     <div className="min-h-screen bg-bg-soft font-body text-ink">
@@ -135,7 +157,7 @@ export function ProviderProfileViewPage({ p }: { p: ProviderProfileView }) {
         <div className="mt-5">
           <ProfileCard
             title="Work History"
-            edit={edit("Work History", "/join/provider?step=tell_us")}
+            edit={edit("Work History", "/join/provider?step=tell_us", p.employers.length === 0)}
           >
             {/*
               E129 — the live provider's own reachable offer. A provider whose
