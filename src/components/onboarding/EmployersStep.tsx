@@ -317,7 +317,20 @@ export function EmployersStep({
         </div>
       ) : (
         <>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {/*
+            E112 + E116 — a STACK, not a 3-column grid, and the two errors have
+            one cause.
+
+            At three across, each card got ~310px of a 976px column, so
+            "Lead Oracle Cloud Procurement Consultant" wrapped to three lines and
+            every project title wrapped too — the "squished" cards. And because
+            grid cells share a row, expanding one card to show its projects
+            re-flowed the two beside it: the page visibly jumped before the
+            add-project modal appeared. Full-width rows fix both at once — the
+            text gets the whole column, and expansion pushes content DOWN instead
+            of shoving neighbours sideways.
+          */}
+          <div className="space-y-4">
             {employers.map((e) => (
               <article
                 key={e.id}

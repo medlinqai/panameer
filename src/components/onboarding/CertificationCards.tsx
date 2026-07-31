@@ -153,26 +153,37 @@ export function CertificationCards({
   return (
     <div>
       {items.length > 0 ? (
-        <ul className="space-y-3">
+        /*
+          E109 — a LIST, matching Education, not a stack of boxes.
+
+          Education renders through `EducationBody` on the review while
+          certifications rendered through these bordered, bold cards, so two
+          sections holding the same shape of information looked like different
+          products — and with three or four certifications the page became a
+          column of heavy boxes ("comical", per the walk). Same type scale as
+          Education now: semibold name, meta in ink-2, no per-item border, and
+          the edit affordance kept but quieted.
+        */
+        <ul className="space-y-3 text-[14px]">
           {items.map((c, i) => (
             <li
               key={`${c.name}-${i}`}
-              className="flex items-start justify-between gap-4 rounded-brand border border-line p-4"
+              className="flex items-start justify-between gap-4"
             >
               <div className="min-w-0">
-                <p className="font-bold">{c.name}</p>
+                <p className="font-semibold">{c.name}</p>
                 {certMeta(c) && (
-                  <p className="mt-0.5 text-[14px] text-ink-2">{certMeta(c)}</p>
+                  <p className="text-ink-2">{certMeta(c)}</p>
                 )}
                 {c.credentialId && (
-                  <p className="mt-0.5 text-[13px] text-ink-2">
+                  <p className="text-[13px] text-ink-2">
                     Credential ID {c.credentialId}
                   </p>
                 )}
                 {c.notes && (
-                  <p className="mt-1 text-[13.5px] text-ink-2">{c.notes}</p>
+                  <p className="text-[13px] text-ink-2">{c.notes}</p>
                 )}
-                <div className="mt-1 flex flex-wrap items-center gap-3">
+                <div className="mt-0.5 flex flex-wrap items-center gap-3">
                   {c.url && (
                     <a
                       href={c.url}
@@ -194,9 +205,9 @@ export function CertificationCards({
                 type="button"
                 onClick={() => openEdit(i)}
                 aria-label={`Edit ${c.name}`}
-                className="shrink-0 text-[14px] font-bold text-magenta hover:text-magenta-dark"
+                className="shrink-0 text-[13px] font-bold text-magenta hover:text-magenta-dark"
               >
-                ✏️ Edit
+                Edit
               </button>
             </li>
           ))}
