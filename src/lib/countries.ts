@@ -41,3 +41,21 @@ export const US_STATES = [
   "NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT",
   "VA","WA","WV","WI","WY","DC",
 ] as const;
+
+/**
+ * Languages offered on the Languages step (Walk6 WS5 / E106).
+ *
+ * Was a free-text box, which collected "spanish", "Spanish (fluent)" and
+ * "Espanol" as three different languages and made the field useless for
+ * matching. Ordered by how often they turn up in this marketplace rather than
+ * alphabetically — English is row zero and always present, so it is not here.
+ */
+export const LANGUAGES = [
+  "Spanish", "French", "German", "Portuguese", "Italian", "Dutch", "Polish",
+  "Romanian", "Russian", "Ukrainian", "Arabic", "Hebrew", "Turkish",
+  "Hindi", "Urdu", "Punjabi", "Bengali", "Tamil", "Telugu", "Marathi",
+  "Gujarati", "Malayalam", "Kannada", "Mandarin", "Cantonese", "Japanese",
+  "Korean", "Vietnamese", "Thai", "Tagalog", "Indonesian", "Malay",
+  "Swedish", "Norwegian", "Danish", "Finnish", "Greek", "Czech", "Hungarian",
+  "Afrikaans", "Zulu", "Swahili", "Other",
+] as const;

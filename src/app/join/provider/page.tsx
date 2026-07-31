@@ -51,6 +51,7 @@ import {
   WorkHistoryBody,
 } from "@/components/profile/sections";
 import { dobError } from "@/lib/dob";
+import { LANGUAGES } from "@/lib/countries";
 import {
   reviewItems,
   splitReviewItems,
@@ -1997,18 +1998,47 @@ export default function JoinProviderPage() {
           <div className="space-y-3">
             {langs.map((l, i) => (
               <div
-                key={`${l.name}-${i}`}
+                /*
+                  E106 — keyed by POSITION, not by value.
+
+                  The key was `${l.name}-${i}`, so every keystroke produced a new
+                  key, React threw the row away and mounted a fresh one, and the
+                  input lost focus after each character — the user had to click
+                  back in to type the next letter. The row's identity is its
+                  place in the list; it was never the text inside it.
+                */
+                key={i}
                 className="flex flex-wrap items-end gap-3 rounded-brand border border-line p-4"
               >
                 <div className="min-w-[180px] flex-1">
                   <Field label="Language *">
-                    <TextInput
-                      value={l.name}
-                      readOnly={i === 0}
-                      className={i === 0 ? "bg-bg-soft text-ink-2" : ""}
-                      onChange={(e) => update(i, { name: e.target.value })}
-                      placeholder="Spanish"
-                    />
+                    {i === 0 ? (
+                      // English is always row zero and not editable (E016).
+                      <TextInput
+                        value={l.name}
+                        readOnly
+                        className="bg-bg-soft text-ink-2"
+                      />
+                    ) : (
+                      /*
+                        E106 — a pick-list. Free text collected "spanish",
+                        "Spanish (fluent)" and "Espanol" as three different
+                        languages, which makes the field useless for matching
+                        and is invisible to the person typing it.
+                      */
+                      <select
+                        value={l.name}
+                        onChange={(e) => update(i, { name: e.target.value })}
+                        className="w-full rounded-[12px] border border-line bg-white px-4 py-3 text-[15px] text-ink outline-none transition-colors focus:border-magenta"
+                      >
+                        <option value="">Choose a language…</option>
+                        {LANGUAGES.map((n) => (
+                          <option key={n} value={n}>
+                            {n}
+                          </option>
+                        ))}
+                      </select>
+                    )}
                   </Field>
                 </div>
                 <div className="min-w-[180px] flex-1">
