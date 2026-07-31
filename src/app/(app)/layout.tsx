@@ -1,24 +1,18 @@
 import { MeProvider } from "@/components/MeProvider";
-import { Header } from "@/components/Header";
+import { SideRail } from "@/components/SideRail";
 
 /**
- * Authenticated app shell. These routes sit behind the proxy auth gate
- * (src/proxy.ts), so we can assume a session; MeProvider loads /api/me for the
- * header + pages.
+ * Authenticated app shell — the LEFT RAIL (brief_learn_v1 WS3).
+ *
+ * Replaces the top `Header`: the switch from the public top nav happens at
+ * login, per design doc §6. These routes sit behind the proxy auth gate
+ * (`src/proxy.ts`), so a session can be assumed; MeProvider loads /api/me for
+ * the rail and the pages.
  */
-export default function AppLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <MeProvider>
-      <div className="flex min-h-full flex-col">
-        <Header />
-        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6">
-          {children}
-        </main>
-      </div>
+      <SideRail>{children}</SideRail>
     </MeProvider>
   );
 }
