@@ -52,6 +52,7 @@ import {
 } from "@/components/profile/sections";
 import { dobError } from "@/lib/dob";
 import { LANGUAGES } from "@/lib/countries";
+import { LocationFields } from "@/components/onboarding/LocationFields";
 import {
   reviewItems,
   splitReviewItems,
@@ -2397,36 +2398,42 @@ export default function JoinProviderPage() {
                     placeholder="+1 555 010 4477"
                   />
                 </Field>
-                <Field label="Street Address">
-                  <TextInput
-                    id="review-line1"
-                    value={addr.line1}
-                    onChange={(e) => setAddr({ line1: e.target.value })}
-                  />
-                </Field>
-                <Field label="City">
-                  <TextInput
-                    id="review-city"
-                    value={addr.city}
-                    onChange={(e) => setAddr({ city: e.target.value })}
-                  />
-                </Field>
-                <div className="grid grid-cols-2 gap-2">
-                  <Field label="State">
-                    <TextInput
-                      id="review-state"
-                      value={addr.state}
-                      onChange={(e) => setAddr({ state: e.target.value })}
-                    />
-                  </Field>
-                  <Field label="ZIP">
-                    <TextInput
-                      id="review-postalCode"
-                      value={addr.postalCode}
-                      onChange={(e) => setAddr({ postalCode: e.target.value })}
-                    />
-                  </Field>
-                </div>
+                {/*
+                  E126 — COUNTRY FIRST, above the street line. It decides what
+                  the fields under it even mean ("State" here, "Province" in
+                  Canada, "County" in Ireland), so asking it last meant asking
+                  the rest before knowing what they were. Same shared block as
+                  the employer modal (E123), which is what stops one provider
+                  meeting two different location forms in one sitting.
+                */}
+                <LocationFields
+                  withStreet
+                  countryHint="Also sets how we format your phone number."
+                  value={{
+                    country: addr.country,
+                    line1: addr.line1,
+                    city: addr.city,
+                    state: addr.state,
+                    postalCode: addr.postalCode,
+                  }}
+                  onChange={(patch) =>
+                    setAddr({
+                      ...(patch.country !== undefined
+                        ? { country: patch.country ?? "" }
+                        : {}),
+                      ...(patch.line1 !== undefined
+                        ? { line1: patch.line1 ?? "" }
+                        : {}),
+                      ...(patch.city !== undefined ? { city: patch.city ?? "" } : {}),
+                      ...(patch.state !== undefined
+                        ? { state: patch.state ?? "" }
+                        : {}),
+                      ...(patch.postalCode !== undefined
+                        ? { postalCode: patch.postalCode ?? "" }
+                        : {}),
+                    })
+                  }
+                />
               </div>
             </ProfileCard>
           </div>
