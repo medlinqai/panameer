@@ -57,3 +57,43 @@ export function contactVisibility({
   // and that is the only bit that crosses the wire.
   return { hasContact: true, contactEmail: null, locked: true };
 }
+
+/**
+ * Who may see a project's REAL client name (Walk6 WS3 / E114).
+ *
+ * The name is always STORED — it is required, and the validation email needs it
+ * — so this is purely about who the render may reach. Three settings, and the
+ * one that matters is that CONFIDENTIAL means confidential: not "styled as
+ * hidden", not "hidden unless you read the payload".
+ *
+ *   PUBLIC        everyone
+ *   PLUS_ONLY     the owner, Panameer staff, and paying (Plus) buyers
+ *   CONFIDENTIAL  the owner and Panameer staff only
+ *
+ * Staff always see it because they arbitrate validation disputes and cannot do
+ * that against a redacted record.
+ */
+export function clientNameVisibility({
+  visibility,
+  isOwner,
+  isPlus,
+  isAdmin,
+  clientName,
+}: {
+  visibility: string;
+  isOwner: boolean;
+  isPlus: boolean;
+  isAdmin: boolean;
+  clientName: string | null | undefined;
+}): { clientName: string | null; clientLocked: boolean } {
+  const name = clientName?.trim() || null;
+  if (!name) return { clientName: null, clientLocked: false };
+  if (isOwner || isAdmin) return { clientName: name, clientLocked: false };
+  if (visibility === "PUBLIC") return { clientName: name, clientLocked: false };
+  if (visibility === "PLUS_ONLY" && isPlus) {
+    return { clientName: name, clientLocked: false };
+  }
+  // Withheld. The card already shows the code name and industry; what matters
+  // here is that the real name does not cross the wire.
+  return { clientName: null, clientLocked: true };
+}

@@ -3,6 +3,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { Modal } from "@/components/Modal";
 import { Field, TextInput, TextArea, Notice } from "@/components/onboarding/controls";
+import { COUNTRIES, US_STATES } from "@/lib/countries";
+
+/** Matches `TextInput` so a select doesn't read as a different control. */
+const SELECT =
+  "w-full rounded-[12px] border border-line bg-white px-4 py-3 text-[15px] text-ink outline-none transition-colors focus:border-magenta";
 import { ArtifactsModal } from "@/components/onboarding/ArtifactsModal";
 import type { ArtifactView } from "@/lib/artifacts";
 import {
@@ -61,6 +66,9 @@ export type EmployerCard = {
   name: string;
   roleTitle: string | null;
   location: string | null;
+  city?: string | null;
+  state?: string | null;
+  country?: string | null;
   description: string | null;
   logoUrl: string | null;
   isCurrent: boolean;
@@ -75,6 +83,9 @@ const emptyEmployerForm = () => ({
   name: "",
   roleTitle: "",
   location: "",
+  city: "",
+  state: "",
+  country: "",
   description: "",
   logoUrl: "" as string | null,
   startDate: "",
@@ -186,6 +197,9 @@ export function EmployersStep({
       name: e.name,
       roleTitle: e.roleTitle ?? "",
       location: e.location ?? "",
+      city: e.city ?? "",
+      state: e.state ?? "",
+      country: e.country ?? "",
       description: e.description ?? "",
       logoUrl: e.logoUrl,
       startDate: e.startDate ?? "",
@@ -201,6 +215,9 @@ export function EmployersStep({
       name: employerForm.name,
       roleTitle: employerForm.roleTitle,
       location: employerForm.location,
+      city: employerForm.city,
+      state: employerForm.state,
+      country: employerForm.country,
       description: employerForm.description,
       logoUrl: employerForm.logoUrl,
       startDate: employerForm.startDate || null,
@@ -247,7 +264,17 @@ export function EmployersStep({
             documentPath: project.documentPath ?? null,
             documentName: project.documentName ?? null,
           }
-        : emptyProject()
+        : {
+            ...emptyProject(),
+            /*
+              E113 — a project added from INSIDE a job defaults its client to
+              that job's employer. It is the answer in every case but the
+              exception (a project delivered for someone else), and typing the
+              name of the company you are standing in is pure friction.
+            */
+            clientName:
+              employers.find((e) => e.id === employerId)?.name ?? "",
+          }
     );
     setProjectModal({ employerId, project });
   };
@@ -563,14 +590,67 @@ export function EmployersStep({
                 placeholder="Procurement Solution Architect"
               />
             </Field>
-            <Field label="Location">
+            <Field label="City">
               <TextInput
-                value={employerForm.location}
+                value={employerForm.city ?? ""}
                 onChange={(e) =>
-                  setEmployerForm({ ...employerForm, location: e.target.value })
+                  setEmployerForm({ ...employerForm, city: e.target.value })
                 }
-                placeholder="Chicago, IL"
+                placeholder="Chicago"
               />
+            </Field>
+          </div>
+
+          {/*
+            E111 — location was ONE free-text box, so it collected "Miami, FL"
+            and nothing could be filtered or compared. Split into City / State /
+            Country, with Country from the shared validated list. State is a US
+            dropdown when the country is the United States and free text
+            otherwise — a fixed state list is simply wrong for most countries,
+            and a wrong dropdown is worse than an open field.
+          */}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="State / Region">
+              {employerForm.country === "United States" ? (
+                <select
+                  value={employerForm.state ?? ""}
+                  onChange={(e) =>
+                    setEmployerForm({ ...employerForm, state: e.target.value })
+                  }
+                  className={SELECT}
+                >
+                  <option value="">Choose a state…</option>
+                  {US_STATES.map((st) => (
+                    <option key={st} value={st}>
+                      {st}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <TextInput
+                  value={employerForm.state ?? ""}
+                  onChange={(e) =>
+                    setEmployerForm({ ...employerForm, state: e.target.value })
+                  }
+                  placeholder="Region"
+                />
+              )}
+            </Field>
+            <Field label="Country">
+              <select
+                value={employerForm.country ?? ""}
+                onChange={(e) =>
+                  setEmployerForm({ ...employerForm, country: e.target.value })
+                }
+                className={SELECT}
+              >
+                <option value="">Choose a country…</option>
+                {COUNTRIES.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
             </Field>
           </div>
 
@@ -644,6 +724,8 @@ export function EmployersStep({
 
       {/* ---- Project modal (brief_project_model_v2) ------------------- */}
       <ProjectModal
+        // E113 — the modal offers these as the Client choices, plus "Other".
+        employerNames={employers.map((e) => e.name).filter(Boolean)}
         open={projectModal !== null}
         isEdit={Boolean(projectModal?.project)}
         projectId={projectModal?.project?.id}

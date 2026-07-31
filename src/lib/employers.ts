@@ -24,6 +24,9 @@ export type EmployerInput = {
   name: string;
   roleTitle?: string | null;
   location?: string | null;
+  city?: string | null;
+  state?: string | null;
+  country?: string | null;
   description?: string | null;
   logoUrl?: string | null;
   startDate?: string | null;
@@ -122,6 +125,9 @@ export async function listEmployers(viewer: Viewer) {
     name: e.name,
     roleTitle: e.role_title,
     location: e.location,
+    city: e.city,
+    state: e.state,
+    country: e.country,
     description: e.description,
     logoUrl: e.logo_url,
     isCurrent: e.is_current,
@@ -145,7 +151,20 @@ function employerData(input: EmployerInput) {
   return {
     name,
     role_title: clean(input.roleTitle, 200),
-    location: clean(input.location, 200),
+    // E111 — structured, with `location` kept in sync as the display string so
+    // every existing reader (cards, the profile view, the résumé importer) keeps
+    // working without being touched.
+    city: clean(input.city, 120),
+    state: clean(input.state, 120),
+    country: clean(input.country, 120),
+    location:
+      clean(
+        [input.city, input.state, input.country]
+          .map((x) => (x ?? "").trim())
+          .filter(Boolean)
+          .join(", "),
+        200
+      ) ?? clean(input.location, 200),
     description: clean(input.description, 4000),
     logo_url: clean(input.logoUrl, 1000),
     start_date: start,

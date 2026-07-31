@@ -3,7 +3,7 @@ import { isMarketplaceVisible } from "@/lib/access";
 import { VISIBILITY_THRESHOLD } from "@/lib/completeness";
 import { listPublishedPackages } from "@/lib/packages";
 import { toView as toArtifactView } from "@/lib/artifacts";
-import { viewerIsPlus, contactVisibility } from "@/lib/plus";
+import { viewerIsPlus, contactVisibility, clientNameVisibility } from "@/lib/plus";
 import { experienceLabel } from "@/lib/experience";
 
 /**
@@ -107,6 +107,9 @@ export async function getProviderProfileView(
    * payload simply does not contain the contact address. See lib/plus.ts.
    */
   const isPlus = await viewerIsPlus(opts.viewer ?? null);
+  // Staff see unredacted client names — they arbitrate validation disputes and
+  // cannot do that against a record with the client removed (E114).
+  const isAdmin = Boolean(opts.viewer?.isSystemAdmin);
 
   /**
    * WS6 (E068) — years of experience DERIVED from the work history, as the union
@@ -222,7 +225,24 @@ export async function getProviderProfileView(
       startDate: p.start_date ? p.start_date.toISOString().slice(0, 10) : null,
       endDate: p.end_date ? p.end_date.toISOString().slice(0, 10) : null,
       isCurrent: p.is_current,
-      clientName: p.client_name,
+      /*
+        E114 — the real client name is REDACTED HERE, at the read, not hidden at
+        render. It was emitted unconditionally: `clientLabel()` correctly showed
+        the code name for a CONFIDENTIAL project, but the real one still travelled
+        in the payload, so it was one View-Source away on a public page. A
+        confidentiality setting that survives only as long as nobody looks at the
+        network tab is not a confidentiality setting.
+
+        Same principle as the WS5 validation-contact gate: the name must not leave
+        the server for a viewer who may not see it.
+      */
+      ...clientNameVisibility({
+        visibility: p.client_visibility,
+        isOwner,
+        isPlus,
+        isAdmin,
+        clientName: p.client_name,
+      }),
       clientVisibility: p.client_visibility,
       codeName: p.code_name,
       validationStatus: p.validation_status,

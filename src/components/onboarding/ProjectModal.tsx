@@ -102,7 +102,10 @@ export function ProjectModal({
   projectId,
   validationStatus,
   validationRequestedAt,
+  employerNames = [],
 }: {
+  /** E113 — the provider's own employers, offered as Client choices. */
+  employerNames?: string[];
   open: boolean;
   draft: ProjectDraft;
   onChange: (patch: Partial<ProjectDraft>) => void;
@@ -190,6 +193,18 @@ export function ProjectModal({
 
   // Logo suggestions from the CLIENT name — the E043 flow, one debounce.
   const clientName = draft.clientName;
+  /**
+   * E113 — has the provider chosen "Other…"? Held here rather than derived from
+   * the value, because a typed name that happens to match an employer must not
+   * silently snap the control back to the dropdown mid-edit.
+   */
+  const [otherClient, setOtherClient] = useState(false);
+
+  // Reset between openings — the modal instance is reused for every project, so
+  // an "Other…" left on from the last one would greet the next with a blank box.
+  useEffect(() => {
+    if (open) setOtherClient(false);
+  }, [open]);
   const suggestLogos = useCallback(async (name: string) => {
     if (name.trim().length < 2) {
       setLogos([]);
@@ -316,12 +331,61 @@ export function ProjectModal({
           </Field>
 
           <div className="grid gap-3 sm:grid-cols-2">
+            {/*
+              E113 — "Client" is a pick-list of the provider's own employers plus
+              "Other…", not a free-text box. In the overwhelming majority of
+              cases the client IS one of the companies they already listed, and
+              retyping it by hand is how the same organisation ends up in the
+              database three ways.
+
+              The label stays "Client", not "Employer", deliberately: for a
+              consultant these differ. The employer is who paid them; the client
+              is who the work was for, and a project delivered THROUGH an
+              employer for someone else needs to be able to say so — which is
+              what "Other…" is for.
+            */}
             <Field label="Client *">
-              <TextInput
-                value={draft.clientName}
-                onChange={(e) => onChange({ clientName: e.target.value })}
-                placeholder="Northwind Industrials"
-              />
+              {employerNames.length > 0 && !otherClient ? (
+                <select
+                  value={
+                    employerNames.includes(draft.clientName) ? draft.clientName : ""
+                  }
+                  onChange={(e) => {
+                    if (e.target.value === "__other__") {
+                      setOtherClient(true);
+                      onChange({ clientName: "" });
+                    } else {
+                      onChange({ clientName: e.target.value });
+                    }
+                  }}
+                  className="w-full rounded-[12px] border border-line bg-white px-4 py-3 text-[15px] text-ink outline-none transition-colors focus:border-magenta"
+                >
+                  <option value="">Choose the client…</option>
+                  {employerNames.map((n) => (
+                    <option key={n} value={n}>
+                      {n}
+                    </option>
+                  ))}
+                  <option value="__other__">Other…</option>
+                </select>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <TextInput
+                    value={draft.clientName}
+                    onChange={(e) => onChange({ clientName: e.target.value })}
+                    placeholder="Northwind Industrials"
+                  />
+                  {employerNames.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setOtherClient(false)}
+                      className="shrink-0 text-[13px] font-bold text-magenta hover:text-magenta-dark"
+                    >
+                      Pick
+                    </button>
+                  )}
+                </div>
+              )}
             </Field>
             <Field
               label={

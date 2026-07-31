@@ -749,7 +749,14 @@ model Employer {
   name                String
   /// Job title held there.
   role_title          String?
+  /// Free-text legacy location ("Chicago, IL"). Superseded by the structured
+  /// city/state/country below (Walk6 WS3 / E111) and kept so pre-existing rows
+  /// still render; new writes fill both.
   location            String?
+  city                String?
+  state               String?
+  /// From the shared `COUNTRIES` list — a validated value, not free text.
+  country             String?
   start_date          DateTime?
   end_date            DateTime?
   /// True while this is the provider's current employer.
