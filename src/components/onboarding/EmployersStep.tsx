@@ -423,7 +423,12 @@ export function EmployersStep({
                       : "text-ink-2/70 hover:text-magenta")
                   }
                 >
-                  📎 Artifacts{e.artifacts?.length ? ` (${e.artifacts.length})` : ""}
+                  {/* E129/WS3 — matches the "Projects (N)" convention: a count
+                      when there is something, an explicit invitation when there
+                      isn't. "Artifacts" alone told you neither. */}
+                  {e.artifacts?.length
+                    ? `📎 Artifacts (${e.artifacts.length})`
+                    : "+ Add Artifact"}
                 </button>
 
                 <button
@@ -516,10 +521,9 @@ export function EmployersStep({
                                     : "text-ink-2/70 hover:text-magenta")
                                 }
                               >
-                                Artifacts
                                 {pr.artifacts?.length
-                                  ? ` (${pr.artifacts.length})`
-                                  : ""}
+                                  ? `Artifacts (${pr.artifacts.length})`
+                                  : "+ Add Artifact"}
                               </button>
                               <button
                                 type="button"

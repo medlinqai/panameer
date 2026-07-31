@@ -212,7 +212,16 @@ export async function aiExtractResume(text: string): Promise<AiExtractOutcome> {
 
     const response = await client.messages.create({
       model,
-      max_tokens: 8000,
+      /*
+        A résumé of ten projects with descriptions, software and skills is a LOT
+        of structured output. At 8000 this truncated on Marelise the moment the
+        prompt asked for one more field per project, and a truncated tool call
+        arrives as an EMPTY one — the run silently reported "0 employers, 0
+        projects" for a document the model reads perfectly. Headroom plus the
+        explicit check below, because the failure mode was indistinguishable from
+        an empty résumé.
+      */
+      max_tokens: 16000,
       system: SYSTEM,
       // A tool with a schema, rather than "reply in JSON" — the shape is then
       // the model's obligation instead of something we hope for and re-parse.
@@ -231,6 +240,23 @@ export async function aiExtractResume(text: string): Promise<AiExtractOutcome> {
         },
       ],
     });
+
+    /*
+      TRUNCATION IS NOT AN EMPTY RÉSUMÉ. `stop_reason: "max_tokens"` means the
+      structured output was cut mid-write, and what survives can validate as a
+      perfectly well-formed result with nothing in it. Caught explicitly so it
+      reports as a failure — and so the provider keeps their heuristic result
+      and the offer to retry — rather than as "we read your document and it was
+      blank".
+    */
+    if (response.stop_reason === "max_tokens") {
+      return {
+        ok: false,
+        reason: "error",
+        message:
+          "Your document is long enough that the reader ran out of room. Try again, or add your work history manually.",
+      };
+    }
 
     const block = response.content.find((c) => c.type === "tool_use");
     if (!block || block.type !== "tool_use") {
@@ -307,7 +333,10 @@ export function aiToParsedResume(ai: AiResume): ParsedResume {
     if (alreadyUnderEmployer) continue;
     experiences.push({
       employer: p.client ?? p.employer ?? p.name,
-      roleTitle: p.roleType ?? "",
+      // E129/WS3 — fall back to the project's own name before giving up on a
+      // role. An entry with an empty role renders as a bare company on the
+      // profile, which is worse than saying what the work was.
+      roleTitle: p.roleType ?? p.name ?? "",
       description: [p.description, p.software.length ? `Software: ${p.software.join(", ")}` : null]
         .filter(Boolean)
         .join("\n") || null,
