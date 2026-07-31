@@ -12,8 +12,6 @@
   },
   "_warnings": [
     "Users - HCM: no Learning Path declared — fell back to 'Core HR' (x21)",
-    "unmapped style (left null): Conceptual (x15)",
-    "unmapped style (left null): OC Overiew (x4)",
     "Beginners: no Learning Path declared — fell back to 'Beginners' (x1)",
     "ERP: no Learning Path declared — fell back to 'ERP' (x1)",
     "Implementers: no Learning Path declared — fell back to 'Implementers' (x1)",
@@ -64,7 +62,7 @@
         {
           "title": "1. Background",
           "slug": "1-background",
-          "style": null,
+          "style": "FA_OVERVIEW",
           "sort_order": 0,
           "sections": [
             {
@@ -172,7 +170,7 @@
         {
           "title": "2. Overview",
           "slug": "2-overview",
-          "style": null,
+          "style": "FA_OVERVIEW",
           "sort_order": 0,
           "sections": [
             {
@@ -436,7 +434,7 @@
         {
           "title": "3. Roles & Careers",
           "slug": "3-roles-careers",
-          "style": null,
+          "style": "FA_OVERVIEW",
           "sort_order": 0,
           "sections": [
             {
@@ -613,7 +611,7 @@
         {
           "title": "4. How to Login & Get Started",
           "slug": "4-how-to-login-get-started",
-          "style": null,
+          "style": "FA_OVERVIEW",
           "sort_order": 0,
           "sections": [
             {
@@ -4297,7 +4295,7 @@
         {
           "title": "The Fundamentals of Journals",
           "slug": "the-fundamentals-of-journals",
-          "style": null,
+          "style": "CONCEPTUAL",
           "sort_order": 0,
           "sections": [
             {
@@ -4540,7 +4538,7 @@
         {
           "title": "The Fundamentals of Inventory Cloud",
           "slug": "the-fundamentals-of-inventory-cloud",
-          "style": null,
+          "style": "CONCEPTUAL",
           "sort_order": 0,
           "sections": [
             {
@@ -4682,7 +4680,7 @@
         {
           "title": "How to Perform Movement Requests",
           "slug": "how-to-perform-movement-requests",
-          "style": null,
+          "style": "CONCEPTUAL",
           "sort_order": 2,
           "sections": [
             {
@@ -4753,7 +4751,7 @@
         {
           "title": "Interorganization Transfers",
           "slug": "interorganization-transfers",
-          "style": null,
+          "style": "CONCEPTUAL",
           "sort_order": 3,
           "sections": [
             {
@@ -4818,7 +4816,7 @@
         {
           "title": "Transfer Orders",
           "slug": "transfer-orders",
-          "style": null,
+          "style": "CONCEPTUAL",
           "sort_order": 4,
           "sections": [
             {
@@ -4898,7 +4896,7 @@
         {
           "title": "Min-Max-Planning",
           "slug": "min-max-planning",
-          "style": null,
+          "style": "CONCEPTUAL",
           "sort_order": 5,
           "sections": [
             {
@@ -5017,7 +5015,7 @@
         {
           "title": "Counting",
           "slug": "counting",
-          "style": null,
+          "style": "CONCEPTUAL",
           "sort_order": 6,
           "sections": [
             {
@@ -5118,7 +5116,7 @@
         {
           "title": "Receiving",
           "slug": "receiving",
-          "style": null,
+          "style": "CONCEPTUAL",
           "sort_order": 7,
           "sections": [
             {
@@ -5165,7 +5163,7 @@
         {
           "title": "Outro",
           "slug": "outro",
-          "style": null,
+          "style": "CONCEPTUAL",
           "sort_order": 8,
           "sections": [
             {
@@ -5198,7 +5196,7 @@
         {
           "title": "The Fundamentals of the Cost Accounting Cloud in Oracle Cloud",
           "slug": "the-fundamentals-of-the-cost-accounting-cloud-in-oracle-cloud",
-          "style": null,
+          "style": "CONCEPTUAL",
           "sort_order": 0,
           "sections": [
             {
@@ -5239,7 +5237,7 @@
         {
           "title": "Actual Cost Scenario",
           "slug": "actual-cost-scenario",
-          "style": null,
+          "style": "CONCEPTUAL",
           "sort_order": 1,
           "sections": [
             {
@@ -5367,7 +5365,7 @@
         {
           "title": "Standard Cost Scenario",
           "slug": "standard-cost-scenario",
-          "style": null,
+          "style": "CONCEPTUAL",
           "sort_order": 2,
           "sections": [
             {
@@ -5468,7 +5466,7 @@
         {
           "title": "Rates and Overheads",
           "slug": "rates-and-overheads",
-          "style": null,
+          "style": "CONCEPTUAL",
           "sort_order": 3,
           "sections": [
             {
@@ -5557,7 +5555,7 @@
         {
           "title": "Standard Cost Rollup",
           "slug": "standard-cost-rollup",
-          "style": null,
+          "style": "CONCEPTUAL",
           "sort_order": 4,
           "sections": [
             {
@@ -5646,7 +5644,7 @@
         {
           "title": "Outro",
           "slug": "outro",
-          "style": null,
+          "style": "CONCEPTUAL",
           "sort_order": 5,
           "sections": [
             {

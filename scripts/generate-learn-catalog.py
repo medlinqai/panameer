@@ -75,17 +75,23 @@ AUDIENCE = {
     "content creator": "CONTENT_CREATOR",
 }
 
-# Only the values that genuinely correspond to a CourseStyle member. "OC
-# Overiew" (sic) and "Conceptual" have no equivalent in the WS0 enum and are
-# left null rather than forced into the nearest-looking one — inventing a
-# mapping here would silently mislabel 77 courses. Reported as warnings.
+# WS2.1 — both previously-unmapped values now resolve, on Scott's call:
+#   "Conceptual"  → its own CONCEPTUAL member (15 courses; a real style, not a
+#                   near-miss of an existing one)
+#   "OC Overiew"  → FA_OVERVIEW (4 courses; "OC Overview" is an Oracle Cloud
+#                   overview, which is what FA_OVERVIEW already means — and the
+#                   typo is in the source sheet, so match on the typo too)
+# Anything still unmatched stays NULL and is reported, never guessed.
 STYLE = {
     "fa overview": "FA_OVERVIEW",
+    "oc overiew": "FA_OVERVIEW",   # sic — as spelled in the workbook
+    "oc overview": "FA_OVERVIEW",  # …and the correct spelling, for when it's fixed
     "how to use": "HOW_TO_USE",
     "use": "HOW_TO_USE",
     "how to deploy": "HOW_TO_DEPLOY",
     "daily journal": "DAILY_JOURNAL",
     "ask the expert": "ASK_THE_EXPERT",
+    "conceptual": "CONCEPTUAL",
 }
 
 # The catalog's 0→7 ladder, keyed on the leading number so a reworded label

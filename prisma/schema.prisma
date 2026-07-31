@@ -1491,6 +1491,11 @@ enum CourseStyle {
   HOW_TO_DEPLOY
   DAILY_JOURNAL
   ASK_THE_EXPERT
+  /// WS2.1 — the catalog's "Conceptual" style (Finance / EndUser SCE sheets use
+  /// it for 15 courses). It was left NULL by the WS1 import because no enum
+  /// member existed, so those courses carried no style at all rather than a
+  /// wrong one; this is the member they were waiting for.
+  CONCEPTUAL
 }
 
 /// The catalog's 0→7 production ladder, mirrored VERBATIM so the vocabulary in
