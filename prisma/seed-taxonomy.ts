@@ -132,17 +132,69 @@ const METHODOLOGIES = new Set([
   "Order-to-Cash",
   "Hire-to-Fire",
   "Source-to-Pay",
+  "Putaway-to-Issue", // E104
 ]);
 const INDUSTRIES = new Set([
+  "Public Sector & Government",
+  "Healthcare & Life Sciences",
+  "Financial Services & Fintech",
+  "Energy, Utilities, & Resources",
+  "Education Services",
+  "Consumer Products & Retail",
+  "Technology, Media, & Telecommunications",
+  "Real Estate & Infrastructure",
+  "Transportation, Travel, & Logistics",
+  "Industry Products & Manufacturing",
+  // Superseded names, kept in the set so a row that has not yet been renamed is
+  // still bucketed as an INDUSTRY rather than silently falling through to
+  // PRODUCT while the rename pass runs.
   "Federal Government",
   "State & Local Government",
   "Healthcare",
   "Financial Services",
   "Energy Services",
-  "Education Services",
   "Retail",
   "Information Technology Services",
 ]);
+
+/**
+ * E104/E105 — vocabulary the xlsx doesn't carry yet.
+ *
+ * The catalog JSON is GENERATED from Scott's spreadsheet, so editing it would be
+ * overwritten by the next export. These additions live in the seed source, per
+ * the brief, and are appended after the generated list.
+ */
+const EXTRA_SPECIALIZATIONS = [
+  "Putaway-to-Issue", //                          E104, Processes & Methodologies
+  "Technology, Media, & Telecommunications", //   E105, Industries ↓
+  "Real Estate & Infrastructure",
+  "Transportation, Travel, & Logistics",
+  "Industry Products & Manufacturing",
+  "Energy, Utilities, & Resources",
+  "Consumer Products & Retail",
+];
+
+/**
+ * E105 — renames, applied to the EXISTING rows rather than created alongside
+ * them. A rename must not orphan the providers who already picked the old name,
+ * so the row keeps its id and only its label changes.
+ *
+ * The two Government entries MERGE into one. That is not a rename: two rows
+ * become one, and any provider who picked both must end up with a single link
+ * rather than a duplicate-key error.
+ */
+const SPECIALIZATION_RENAMES: Record<string, string> = {
+  Healthcare: "Healthcare & Life Sciences",
+  "Financial Services": "Financial Services & Fintech",
+  "Energy Services": "Energy, Utilities, & Resources",
+  Retail: "Consumer Products & Retail",
+  "Information Technology Services": "Technology, Media, & Telecommunications",
+  "Federal Government": "Public Sector & Government",
+};
+/** Merged INTO `Public Sector & Government`, then deleted. */
+const SPECIALIZATION_MERGES: Record<string, string> = {
+  "State & Local Government": "Public Sector & Government",
+};
 
 function specializationKind(name: string): "PRODUCT" | "METHODOLOGY" | "INDUSTRY" {
   if (METHODOLOGIES.has(name)) return "METHODOLOGY";
@@ -247,8 +299,85 @@ export async function seedTaxonomy(
   }
 
   // --- Specializations ------------------------------------------------------
-  for (const [i, raw] of data.specializations.entries()) {
-    const name = fixTypo(raw);
+  /*
+    E105 — RENAME BEFORE UPSERT, in that order.
+
+    Renaming an existing row keeps its id, so every provider who already picked
+    "Healthcare" still has it and simply sees the new label. Doing it the other
+    way — upserting the new names first — would create a second row and leave
+    those providers attached to the old one, which then gets retired underneath
+    them.
+  */
+  for (const [from, to] of Object.entries(SPECIALIZATION_RENAMES)) {
+    const existing = await prisma.specialization.findFirst({
+      where: { catalog_id: catalog.id, name: from },
+      select: { id: true },
+    });
+    if (!existing) continue;
+    const clash = await prisma.specialization.findFirst({
+      where: { catalog_id: catalog.id, name: to },
+      select: { id: true },
+    });
+    // Already renamed on a previous run, and a row with the new name exists —
+    // nothing to do rather than a unique-constraint failure.
+    if (clash && clash.id !== existing.id) continue;
+    await prisma.specialization.update({
+      where: { id: existing.id },
+      data: { name: to },
+    });
+  }
+
+  /*
+    The Government MERGE. Two rows become one, so provider links have to be
+    MOVED, not recreated: a provider who picked both Federal and State & Local
+    would otherwise hit the (profile, specialization) unique. Move what can move,
+    drop what would duplicate, then delete the emptied row.
+  */
+  for (const [from, into] of Object.entries(SPECIALIZATION_MERGES)) {
+    const src = await prisma.specialization.findFirst({
+      where: { catalog_id: catalog.id, name: from },
+      select: { id: true },
+    });
+    const dst = await prisma.specialization.findFirst({
+      where: { catalog_id: catalog.id, name: into },
+      select: { id: true },
+    });
+    if (!src || !dst || src.id === dst.id) continue;
+    const links = await prisma.providerProfileSpecialization.findMany({
+      where: { specialization_id: src.id },
+      select: { id: true, provider_profile_id: true },
+    });
+    for (const link of links) {
+      const already = await prisma.providerProfileSpecialization.findFirst({
+        where: {
+          provider_profile_id: link.provider_profile_id,
+          specialization_id: dst.id,
+        },
+        select: { id: true },
+      });
+      if (already) {
+        await prisma.providerProfileSpecialization.delete({ where: { id: link.id } });
+      } else {
+        await prisma.providerProfileSpecialization.update({
+          where: { id: link.id },
+          data: { specialization_id: dst.id },
+        });
+      }
+    }
+    await prisma.specialization.delete({ where: { id: src.id } });
+  }
+
+  const allSpecializations = [
+    ...data.specializations.map(fixTypo),
+    ...EXTRA_SPECIALIZATIONS,
+  ]
+    // The renames above mean the generated list still holds superseded labels;
+    // map them forward so this pass doesn't recreate what it just renamed.
+    .map((n) => SPECIALIZATION_RENAMES[n] ?? SPECIALIZATION_MERGES[n] ?? n)
+    .filter((n, i, arr) => arr.indexOf(n) === i);
+
+  for (const [i, raw] of allSpecializations.entries()) {
+    const name = raw;
     await prisma.specialization.upsert({
       where: { catalog_id_name: { catalog_id: catalog.id, name } },
       update: { kind: specializationKind(name), sort_order: i },

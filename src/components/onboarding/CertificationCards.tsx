@@ -41,6 +41,10 @@ const emptyCertification = (): CertificationDraft => ({
 
 /** A representative list — the field accepts anything typed. */
 const AGENCIES = [
+  // E108 — Panameer issues its own credentials through Learn (brief_learn_v1
+  // WS5), so it belongs in the list a provider picks from. First, because it is
+  // the one this platform can vouch for.
+  "Panameer",
   "Amazon Web Services",
   "APICS / ASCM",
   "Axelos",
@@ -85,6 +89,12 @@ export function CertificationCards({
 }) {
   const [editing, setEditing] = useState<number | null>(null);
   const [draft, setDraft] = useState<CertificationDraft>(emptyCertification());
+  /**
+   * E108 — is the agency being typed rather than picked? Held as state rather
+   * than derived from the value, so an existing certification whose issuer isn't
+   * in the list opens in the free-text box instead of silently losing it.
+   */
+  const [otherAgency, setOtherAgency] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [seenSignal, setSeenSignal] = useState(openSignal);
 
@@ -99,11 +109,15 @@ export function CertificationCards({
   }
 
   const openAdd = () => {
+    setOtherAgency(false);
     setDraft(emptyCertification());
     setEditing(-1); // -1 = adding
     setError(null);
   };
   const openEdit = (i: number) => {
+    // An issuer we don't list is still an issuer — open it in the text box.
+    const issuer = items[i].issuer ?? "";
+    setOtherAgency(Boolean(issuer) && !AGENCIES.includes(issuer));
     setDraft({ ...items[i] });
     setEditing(i);
     setError(null);
@@ -241,23 +255,61 @@ export function CertificationCards({
             />
           </Field>
 
-          <Field
-            label="Certifying Agency"
-            hint="Who issued it — pick a match or enter your own."
-          >
-            <TextInput
-              list="cert-agencies"
-              value={draft.issuer ?? ""}
-              onChange={(e) =>
-                setDraft({ ...draft, issuer: e.target.value || null })
-              }
-              placeholder="Oracle"
-            />
-            <datalist id="cert-agencies">
-              {AGENCIES.map((a) => (
-                <option key={a} value={a} />
-              ))}
-            </datalist>
+          {/*
+            E108 — a real SELECT with an explicit "Other…", not a datalist.
+
+            A datalist looks like a text box, so nobody discovers the list: the
+            walk showed providers typing an agency that was sitting two
+            keystrokes away in the suggestions. Worse, it accepts anything
+            silently, which is how one issuer ends up stored three ways. The
+            select makes the vocabulary visible, and "Other…" makes leaving it a
+            deliberate act that then REQUIRES the free-text field — so an
+            unlisted agency is still captured, just never by accident.
+          */}
+          <Field label="Certifying Agency">
+            {otherAgency ? (
+              <div className="flex items-center gap-2">
+                <TextInput
+                  autoFocus
+                  value={draft.issuer ?? ""}
+                  onChange={(e) =>
+                    setDraft({ ...draft, issuer: e.target.value || null })
+                  }
+                  placeholder="Type the agency"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOtherAgency(false);
+                    setDraft({ ...draft, issuer: null });
+                  }}
+                  className="shrink-0 text-[13px] font-bold text-magenta hover:text-magenta-dark"
+                >
+                  Pick
+                </button>
+              </div>
+            ) : (
+              <select
+                value={AGENCIES.includes(draft.issuer ?? "") ? draft.issuer ?? "" : ""}
+                onChange={(e) => {
+                  if (e.target.value === "__other__") {
+                    setOtherAgency(true);
+                    setDraft({ ...draft, issuer: null });
+                  } else {
+                    setDraft({ ...draft, issuer: e.target.value || null });
+                  }
+                }}
+                className="w-full rounded-[12px] border border-line bg-white px-4 py-3 text-[15px] text-ink outline-none transition-colors focus:border-magenta"
+              >
+                <option value="">Choose an agency…</option>
+                {AGENCIES.map((a) => (
+                  <option key={a} value={a}>
+                    {a}
+                  </option>
+                ))}
+                <option value="__other__">Other…</option>
+              </select>
+            )}
           </Field>
 
           <div className="grid gap-4 sm:grid-cols-2">
