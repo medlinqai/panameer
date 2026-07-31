@@ -1070,7 +1070,16 @@ export default function JoinProviderPage() {
               ? "Edit anything that's wrong or missing. This is what buyers will see."
               : "We need to get a sense of your education, experience and skills. It's quickest to import your information — you can edit it before your profile goes live.",
             wide: true,
-            aside: <TestimonialCard t={DECK_TESTIMONIALS[0]} />,
+            /*
+              E117 — the example provider card is an INVITATION, and it stops
+              being one the moment there is real data to review. Once the
+              provider has uploaded or entered their own work history, showing
+              "Scott W" beside it invites a comparison nobody asked for and eats
+              the width their own content needs.
+            */
+            aside: hasProfileData ? undefined : (
+              <TestimonialCard t={DECK_TESTIMONIALS[0]} />
+            ),
             secondaryLabel: "Skip for Now",
             onSecondary: goNext,
             onContinue: () => saveAnd("tell_us", { profileMethod: "MANUAL" }),

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Logo } from "@/components/Logo";
 import Image from "next/image";
 import { guardPage } from "@/lib/guard";
 import { CoordinatorConsole } from "@/components/coordinator/CoordinatorConsole";
@@ -16,16 +17,7 @@ export default async function CoordinatorPage() {
     <div className="min-h-screen bg-white font-body text-ink">
       <header className="border-b border-line px-6 py-4">
         <div className="mx-auto flex max-w-4xl items-center gap-4">
-          <Link href="/" aria-label="Panameer home">
-            <Image
-              src="/brand/panameer-logo-transparent.png"
-              alt="Panameer"
-              width={786}
-              height={111}
-              priority
-              className="h-8 w-auto"
-            />
-          </Link>
+          <Logo priority />
           <Link
             href="/dashboard"
             className="ml-auto text-[14px] font-bold text-ink-2 hover:text-magenta"

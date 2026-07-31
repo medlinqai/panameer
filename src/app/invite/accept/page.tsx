@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Logo } from "@/components/Logo";
 import Image from "next/image";
 import { lookupInvite } from "@/lib/coordinator";
 import { getSessionViewer } from "@/lib/session";
@@ -24,16 +25,7 @@ export default async function InviteAcceptPage({
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-bg-soft px-6 text-center font-body text-ink">
-      <Link href="/" aria-label="Panameer home">
-        <Image
-          src="/brand/panameer-logo-transparent.png"
-          alt="Panameer"
-          width={786}
-          height={111}
-          priority
-          className="h-9 w-auto"
-        />
-      </Link>
+      <Logo priority className="h-9 w-auto" />
 
       <div className="mt-10 w-full max-w-md rounded-brand border border-line bg-white p-8 text-left shadow-brand">
         {!lookup.ok ? (

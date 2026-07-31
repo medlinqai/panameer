@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
+import { Logo } from "@/components/Logo";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { SocialSignIn } from "@/components/auth/SocialSignIn";
@@ -55,12 +56,9 @@ function LoginForm() {
         className="relative z-10 w-full max-w-sm space-y-4 rounded-brand border border-white/15 bg-white/95 p-8 shadow-[0_24px_60px_-12px_rgba(0,0,0,0.55)] backdrop-blur-sm"
       >
         <div className="space-y-1 text-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/brand/panameer-logo-transparent.png"
-            alt="Panameer"
-            className="mx-auto h-8 w-auto"
-          />
+          <div className="flex justify-center">
+            <Logo priority />
+          </div>
           <p className="pt-1 text-sm text-ink-2">Sign in to continue</p>
         </div>
 

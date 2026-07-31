@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Logo } from "@/components/Logo";
 import Image from "next/image";
 import { SettingsNav } from "@/components/settings/SettingsNav";
 import { guardPage } from "@/lib/guard";
@@ -18,16 +19,10 @@ export default async function SettingsLayout({
     <div className="min-h-screen bg-white font-body text-ink">
       <header className="border-b border-line px-6 py-4">
         <div className="mx-auto flex max-w-5xl items-center gap-4">
-          <Link href="/" aria-label="Panameer home">
-            <Image
-              src="/brand/panameer-logo-transparent.png"
-              alt="Panameer"
-              width={786}
-              height={111}
-              priority
-              className="h-8 w-auto"
-            />
-          </Link>
+          {/* E120 — through `Logo`, not a hand-rolled <img>. The component
+              exists so the asset is chosen in ONE place; every bypass is a
+              chance to reach for the opaque file again. */}
+          <Logo priority />
           <Link
             href="/dashboard"
             className="ml-auto text-[14px] font-bold text-ink-2 hover:text-magenta"

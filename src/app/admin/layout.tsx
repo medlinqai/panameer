@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Logo } from "@/components/Logo";
 import Image from "next/image";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { guardPage } from "@/lib/guard";
@@ -19,14 +20,7 @@ export default async function AdminLayout({
       <header className="border-b border-line px-6 py-4">
         <div className="mx-auto flex max-w-6xl items-center gap-4">
           <Link href="/" aria-label="Panameer home" className="flex items-center gap-3">
-            <Image
-              src="/brand/panameer-logo-transparent.png"
-              alt="Panameer"
-              width={786}
-              height={111}
-              priority
-              className="h-8 w-auto"
-            />
+            <Logo priority href={null} />
             <span className="hidden text-[14px] font-bold text-ink-2 sm:inline">
               Platform Console
             </span>

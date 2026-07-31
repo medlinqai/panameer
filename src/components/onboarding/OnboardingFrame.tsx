@@ -41,8 +41,18 @@ export function OnboardingFrame({
    * falls below the fold — the worst possible thing to hide on a sign-up page.
    */
   compact = false,
-  /** Centre the content in the available height. Off for long, scrolling steps. */
-  centered = true,
+  /**
+   * E101 — DEFAULT IS TOP-JUSTIFIED now, reversing the vertical centring added
+   * in Run 6's presentation pass.
+   *
+   * Centring was meant to fix "content jammed under the header", and on a short
+   * step it looked balanced. On every other step it bought a large empty band
+   * above the content and pushed the real work down the page, which is what the
+   * walk kept hitting. Horizontal centring stays; vertical does not. Kept as an
+   * opt-in rather than deleted, for the one-line pages (a check-your-email note)
+   * where a centred card genuinely reads better.
+   */
+  centered = false,
   /**
    * Cap the CONTENT column inside the (wider) frame — E091.
    *
