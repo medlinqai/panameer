@@ -36,6 +36,7 @@ export type ImportOutcome = {
     languages: number;
   };
   gaps: string[];
+  confidence?: { score: "high" | "low"; reasons: string[] };
   error?: string;
   state?: unknown;
 };

@@ -4,6 +4,7 @@ import { parseResume, type ParsedResume } from "@/lib/resume/parse";
 import { recomputeCompleteness } from "@/lib/onboarding";
 import { uploadResumeFile } from "@/lib/storage";
 import { matchSkills, suggestableSkills } from "@/lib/resume/match";
+import { assessParse } from "@/lib/resume/confidence";
 import type { Prisma } from "@prisma/client";
 
 /**
@@ -36,6 +37,11 @@ export type ImportResult = {
     languages: number;
   };
   gaps: string[];
+  /**
+   * WS0/WS3 — how much to trust this parse, and why. Drives the review's
+   * "we had trouble reading this" panel. Absent on a FAILED import.
+   */
+  confidence?: { score: "high" | "low"; reasons: string[] };
   error?: string;
 };
 
@@ -84,7 +90,7 @@ export async function importProfileDocument({
   const parsed = parseResume(text);
 
   // 3. Structure → profile, non-destructively.
-  const applied = await applyParsed(profileId, parsed, source);
+  const applied = await applyParsedResume(profileId, parsed, source);
 
   const gaps = [...parsed.gaps];
   /*
@@ -148,7 +154,21 @@ export async function importProfileDocument({
 
   await recomputeCompleteness(profileId);
 
-  return { importId: row.id, status: "PARSED", applied, gaps };
+  /*
+    WS0/WS4 — score the parse and LOG WHICH PATH FIRED. The escalation rate is
+    the number that decides whether to flip this tier to AI-primary later, and it
+    cannot be recovered after the fact, so it is recorded at the moment of truth.
+  */
+  const confidence = assessParse(text, parsed);
+  console.info(
+    `[resume] path=heuristic confidence=${confidence.score} ` +
+      `roles=${parsed.experiences.length} dated=${confidence.signals.datedEntries} ` +
+      `ranges=${confidence.signals.dateRangesInText} unplaced=${confidence.signals.unplacedRatio} ` +
+      `import=${row.id}` +
+      (confidence.score === "low" ? ` reasons="${confidence.reasons.join(" | ")}"` : "")
+  );
+
+  return { importId: row.id, status: "PARSED", applied, gaps, confidence };
 }
 
 function emptyApplied(): ImportResult["applied"] {
@@ -165,7 +185,13 @@ function emptyApplied(): ImportResult["applied"] {
   };
 }
 
-async function applyParsed(
+/**
+ * Write a parsed résumé onto a profile. Exported for the AI tier (WS3), which
+ * applies its result through THIS function rather than a parallel writer — one
+ * place decides how a parse becomes profile rows, so the two paths cannot drift
+ * in what they do to someone's data.
+ */
+export async function applyParsedResume(
   profileId: string,
   parsed: ParsedResume,
   source: "RESUME"
