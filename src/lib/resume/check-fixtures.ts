@@ -19,6 +19,7 @@ import path from "node:path";
 import { extractText, mimeFromName, ExtractError, proseRatio } from "./extract";
 import { parseResume } from "./parse";
 import { matchSkills, suggestableSkills } from "./match";
+import { assessParse } from "./confidence";
 
 const DIR = path.join(process.cwd(), "src/lib/resume/__fixtures__");
 
@@ -35,6 +36,16 @@ type Check = {
   maxFalseEducation?: number;
   /** E122 — roles that must carry a real employer name, not the placeholder. */
   namedEmployers?: number;
+  /**
+   * E128/WS1 — strings that MUST survive extraction. For a table-structured
+   * résumé these are the table's own field labels: if extraction ever stops
+   * reading table cells, this is what catches it, and a character count would
+   * not — the document would still extract thousands of characters of the
+   * paragraphs around the tables.
+   */
+  mustContain?: { text: string; atLeast: number }[];
+  /** WS0 — the confidence gate's verdict for this fixture. */
+  expectConfidence?: "high" | "low";
 };
 
 /**
@@ -67,11 +78,30 @@ const CHECKS: Check[] = [
     maxEducation: 12,
   },
   {
+    file: "marelise-eur.docx",
+    note: "E128 — 10 project TABLES; the heuristic reads none of them",
+    minChars: 5000,
+    maxSkills: 40,
+    expectConfidence: "low",
+    // The ten tables' own labels. Their presence proves the cells are extracted;
+    // the confidence score proves the PARSER still can't place them, which is
+    // the whole reason the AI tier exists.
+    mustContain: [
+      { text: "Summary", atLeast: 10 },
+      { text: "Description", atLeast: 10 },
+      { text: "Role-Type", atLeast: 10 },
+      { text: "Software", atLeast: 10 },
+    ],
+  },
+  {
     file: "eddie.docx",
     note: "E122 'Career Experience' + two-line company/role blocks",
     minChars: 6000,
     minExperiences: 4, //  the four dated blocks, at minimum
     namedEmployers: 4, // …and every one of them names its company
+    // WS0 — Walk6b taught the heuristic this layout, so Eddie is a heuristic
+    // WIN and must NOT be escalated to the model.
+    expectConfidence: "high",
     maxEducation: 5,
     maxSkills: 40,
   },
@@ -120,6 +150,7 @@ const CHECKS: Check[] = [
   {
     file: "scott-new-full.docx",
     note: "NEW format — must parse CLEAN",
+    expectConfidence: "high",
     minChars: 9000,
     minExperiences: 4,
     maxEducation: 4,
@@ -192,7 +223,22 @@ async function run() {
     }
 
     const p = parseResume(text);
+    const conf = assessParse(text, p);
     const { unmatched } = matchSkills(p.skills, []);
+
+    for (const need of c.mustContain ?? []) {
+      const n = (text.match(new RegExp(need.text.replace(/[-]/g, "\\-"), "gi")) ?? []).length;
+      assert(
+        n >= need.atLeast,
+        `${c.file}: "${need.text}" appears ${n}× in the extracted text, want ≥${need.atLeast}`
+      );
+    }
+    if (c.expectConfidence) {
+      assert(
+        conf.score === c.expectConfidence,
+        `${c.file}: confidence ${conf.score}, want ${c.expectConfidence} (${conf.reasons.join("; ") || "no reasons"})`
+      );
+    }
     const suggested = suggestableSkills(unmatched);
 
     if (c.minChars) {
@@ -243,7 +289,7 @@ async function run() {
       `ok    ${c.file.padEnd(26)} ${String(text.length).padStart(6)} chars · ` +
         `exp ${String(p.experiences.length).padStart(2)} · edu ${String(p.education.length).padStart(2)} · ` +
         `skills ${String(p.skills.length).padStart(2)} · suggest ${String(suggested.length).padStart(2)} · ` +
-        `gaps ${p.gaps.length}  — ${c.note}`
+        `gaps ${p.gaps.length} · conf ${conf.score}  — ${c.note}`
     );
   }
 
