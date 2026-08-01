@@ -855,6 +855,7 @@ export function WorkHistoryBody({
   isOwner = false,
   artifactsFor,
   contactFor,
+  condensed = false,
 }: {
   employers: EmployerItem[];
   empty: string;
@@ -864,6 +865,8 @@ export function WorkHistoryBody({
   /** WS4 / WS5 slots, resolved per employer by the caller. */
   artifactsFor?: (employerId: string) => React.ReactNode;
   contactFor?: (employerId: string) => React.ReactNode;
+  /** One tight line per role — the "You're live" page (WS1/E146). */
+  condensed?: boolean;
 }) {
   if (employers.length === 0) return <Empty>{empty}</Empty>;
   /*
@@ -893,6 +896,7 @@ export function WorkHistoryBody({
               isOwner={isOwner}
               artifactsSlot={artifactsFor?.(e.id)}
               contactSlot={contactFor?.(e.id)}
+              condensed={condensed}
             />
           </li>
         );

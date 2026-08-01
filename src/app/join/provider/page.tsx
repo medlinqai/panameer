@@ -933,8 +933,11 @@ export default function JoinProviderPage() {
         return;
       }
       // The review IS step 12 now (E035), so publishing lands the provider on
-      // their live Profile View — which is the dashboard (E037).
-      router.push("/dashboard");
+      // Publishing ends onboarding on the "You're live" confirmation, NOT on
+      // Home (brief_provider_home_page_v2 WS1). Home is the hub you go to next,
+      // from that page's CTA — landing straight on it skipped the moment where
+      // the provider gets to see what they just published.
+      router.push("/join/provider/live");
     } finally {
       setBusy(false);
     }

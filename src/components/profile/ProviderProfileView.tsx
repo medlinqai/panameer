@@ -66,10 +66,19 @@ function EditLink({
 export function ProviderProfileViewPage({
   p,
   taughtPaths = [],
+  condensedWorkHistory = false,
+  banner,
+  footer,
 }: {
   p: ProviderProfileView;
   /** Learn paths this person instructs (E137). Empty renders nothing at all. */
   taughtPaths?: TaughtPath[];
+  /** One tight line per role, for the "You're live" page (WS1/E146). */
+  condensedWorkHistory?: boolean;
+  /** Replaces the default owner status banner. */
+  banner?: React.ReactNode;
+  /** Rendered after every section — the "You're live" CTA lives here. */
+  footer?: React.ReactNode;
 }) {
   const { youGet } = rateBreakdown(p.rates.hourlyCents, p.serviceFeeBps);
   // E074 — Solo Projects is null-employer ONLY; everything else belongs to its
@@ -106,8 +115,10 @@ export function ProviderProfileViewPage({
           cards. This gives it ~800px. */}
       <div className="mx-auto max-w-6xl px-6 py-8">
         {/* Owner-only status banner — the completeness/visibility story the old
-            dashboard card used to carry. */}
-        {p.isOwner && (
+            dashboard card used to carry. A caller can replace it (the "You're
+            live" page supplies its own). */}
+        {banner}
+        {!banner && p.isOwner && (
           <div
             className={
               "mb-6 flex flex-wrap items-center justify-between gap-4 rounded-brand border p-5 " +
@@ -208,6 +219,7 @@ export function ProviderProfileViewPage({
               </div>
             )}
             <WorkHistoryBody
+              condensed={condensedWorkHistory}
               employers={p.employers}
               projects={p.projects}
               isOwner={p.isOwner}
@@ -417,6 +429,8 @@ export function ProviderProfileViewPage({
             />
           </div>
         )}
+
+        {footer}
       </div>
     </div>
   );

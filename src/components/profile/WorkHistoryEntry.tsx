@@ -38,6 +38,7 @@ export function WorkHistoryEntry({
   isOwner = false,
   artifactsSlot,
   contactSlot,
+  condensed = false,
 }: {
   employer: EmployerItem;
   /** This employer's projects, already filtered by the caller. */
@@ -47,6 +48,18 @@ export function WorkHistoryEntry({
   artifactsSlot?: React.ReactNode;
   /** WS5 — rendered inside the Contact disclosure when present. */
   contactSlot?: React.ReactNode;
+  /**
+   * CONDENSED — one tight line per role (brief_provider_home_page_v2 WS1/E146).
+   *
+   * The "You're live" page has to fit on ONE screen so it reads as "here's your
+   * live profile" rather than an endless scroll. A provider with seven roles,
+   * each carrying two clamped lines of description, is already three screens
+   * before the sections below it. So the description is withheld entirely here
+   * and Read More becomes the way to get it — the affordance the mockup already
+   * shows, now doing real work instead of expanding text that was half-visible
+   * anyway.
+   */
+  condensed?: boolean;
 }) {
   const [open, setOpen] = useState<null | "more" | "projects" | "artifacts" | "contact">(null);
 
@@ -79,6 +92,10 @@ export function WorkHistoryEntry({
   */
   const textRef = useRef<HTMLParagraphElement | null>(null);
   const [isLong, setIsLong] = useState(false);
+  // Condensed hides the paragraph outright, so the clamp never measures and
+  // isLong stays false — Read More would render dead on every entry. Any
+  // description at all is "more to read" when none of it is on screen.
+  const hasMore = condensed ? Boolean(description) : isLong;
 
   useEffect(() => {
     const el = textRef.current;
@@ -107,7 +124,7 @@ export function WorkHistoryEntry({
         {range && <p className="text-[13.5px] text-ink-2">{range}</p>}
       </div>
 
-      {description && (
+      {description && (!condensed || open === "more") && (
         <p
           ref={textRef}
           className={
@@ -131,8 +148,8 @@ export function WorkHistoryEntry({
         <button
           type="button"
           onClick={() => toggle("more")}
-          className={isLong ? link : linkOff}
-          disabled={!isLong}
+          className={hasMore ? link : linkOff}
+          disabled={!hasMore}
           aria-expanded={open === "more"}
         >
           {open === "more" ? "Read Less" : "Read More"}
