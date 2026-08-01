@@ -933,11 +933,17 @@ export default function JoinProviderPage() {
         return;
       }
       // The review IS step 12 now (E035), so publishing lands the provider on
-      // Publishing ends onboarding on the "You're live" confirmation, NOT on
-      // Home (brief_provider_home_page_v2 WS1). Home is the hub you go to next,
-      // from that page's CTA — landing straight on it skipped the moment where
-      // the provider gets to see what they just published.
-      router.push("/join/provider/live");
+      /*
+        E149 — publish lands on the new Provider Home, with a pop-up.
+
+        home_v2 sent it to a "You're live" confirmation page; the MASTER brief
+        RETIRES that page, and it is right to. The confirmation was a whole
+        screen re-rendering the profile the provider had just spent ten minutes
+        reviewing, to tell them one thing. The one thing is now a dialog on the
+        page they actually want to be on, and the casing's upper-right avatar is
+        what makes its instruction ("click your image in the upper right") true.
+      */
+      router.push("/dashboard?published=1");
     } finally {
       setBusy(false);
     }
