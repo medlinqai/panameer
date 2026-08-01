@@ -220,6 +220,9 @@ export function ProviderProfileViewPage({
             )}
             <WorkHistoryBody
               condensed={condensedWorkHistory}
+              // WS5 — the "You're live" page caps at 5; every other surface
+              // shows the whole history.
+              cap={condensedWorkHistory ? 5 : undefined}
               employers={p.employers}
               projects={p.projects}
               isOwner={p.isOwner}

@@ -3,6 +3,7 @@ import { Avatar } from "@/components/Avatar";
 import { formatCents, displayFullName } from "@/lib/display";
 import { RichText } from "@/components/profile/RichText";
 import { WorkHistoryEntry } from "@/components/profile/WorkHistoryEntry";
+import { CappedList } from "@/components/profile/CappedList";
 
 /**
  * The Profile-View section vocabulary (brief_X / E056).
@@ -856,6 +857,7 @@ export function WorkHistoryBody({
   artifactsFor,
   contactFor,
   condensed = false,
+  cap,
 }: {
   employers: EmployerItem[];
   empty: string;
@@ -867,6 +869,18 @@ export function WorkHistoryBody({
   contactFor?: (employerId: string) => React.ReactNode;
   /** One tight line per role — the "You're live" page (WS1/E146). */
   condensed?: boolean;
+  /**
+   * Show at most this many entries, the rest behind a "N more — pending"
+   * disclosure (walk7 WS5). Used only by the "You're live" page.
+   *
+   * home_v2 condensed each entry to one line so that page would read as "here's
+   * your live profile" rather than a scroll. Measured, that wasn't enough: a
+   * 13-employer history is still 1144px of it. Condensing shrank each row; this
+   * caps how many rows there are. Five covers the recent history most people
+   * have; the rest are the older jobs a buyer skims past, and nothing is hidden —
+   * the group says how many are behind it and opens in place.
+   */
+  cap?: number;
 }) {
   if (employers.length === 0) return <Empty>{empty}</Empty>;
   /*
@@ -879,8 +893,9 @@ export function WorkHistoryBody({
     another.
   */
   return (
-    <ul className="space-y-7">
-      {employers.map((e, i) => {
+    <CappedList
+      cap={cap}
+      items={employers.map((e, i) => {
         // Prefer the employer's own nested list; fall back to matching the flat
         // project list by employer name, which is the only key the wizard's
         // draft carries.
@@ -901,7 +916,7 @@ export function WorkHistoryBody({
           </li>
         );
       })}
-    </ul>
+    />
   );
 }
 
