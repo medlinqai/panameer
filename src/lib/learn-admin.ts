@@ -304,9 +304,28 @@ export async function updatePath(id: string, input: PathInput) {
   });
   if (!existing) throw new LearnAdminError("That learning path no longer exists.", "NOT_FOUND");
 
-  const wanted = input.slug?.trim() || input.title;
+  /*
+    A SLUG ONLY CHANGES WHEN SOMEONE ASKS IT TO.
+
+    This previously fell back to the title when `slug` was absent, and then
+    rewrote the stored slug whenever slugify(title) didn't match it. The catalog
+    importer builds slugs with an audience/group prefix — "1. Background" is
+    stored as "beginners-foundational-learning-paths-1-background" — so that
+    condition was true for EVERY imported path, and any edit that omitted the
+    slug field silently changed a live public URL. Assigning an instructor broke
+    /learn/<path> for everyone holding the old link.
+
+    Found by walking into a 404 in brief_learn_experience after an expert edit,
+    not by reading the code. Now: an omitted slug means "leave it alone", and a
+    supplied one is honoured. New paths still derive theirs from the title,
+    where there is no existing URL to protect.
+  */
   const slug =
-    slugify(wanted) === existing.slug ? existing.slug : await uniquePathSlug(wanted, id);
+    input.slug?.trim()
+      ? slugify(input.slug) === existing.slug
+        ? existing.slug
+        : await uniquePathSlug(input.slug, id)
+      : existing.slug;
 
   return prisma.learningPath.update({
     where: { id },
@@ -548,11 +567,13 @@ export async function updateCourse(id: string, input: CourseInput) {
   });
   if (!existing) throw new LearnAdminError("That course no longer exists.", "NOT_FOUND");
 
-  const wanted = input.slug?.trim() || input.title;
+  // Same rule as updatePath: an omitted slug means leave the URL alone.
   const slug =
-    slugify(wanted) === existing.slug
-      ? existing.slug
-      : await uniqueCourseSlug(existing.learning_path_id, wanted, id);
+    input.slug?.trim()
+      ? slugify(input.slug) === existing.slug
+        ? existing.slug
+        : await uniqueCourseSlug(existing.learning_path_id, input.slug, id)
+      : existing.slug;
 
   return prisma.course.update({
     where: { id },

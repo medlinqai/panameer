@@ -79,6 +79,7 @@ function SectionRows({
   section: LessonTableSection;
   named: boolean;
 }) {
+  const sectionDone = section.lessons.filter((l) => l.completed).length;
   return (
     <>
       {named && (
@@ -88,6 +89,25 @@ function SectionRows({
             {section.description && (
               <span className="ml-2 text-[13px] font-normal text-ink-2">
                 {section.description}
+              </span>
+            )}
+            {/*
+              Section is the one rung of lesson→section→course→path the pages
+              weren't reporting, and it is the rung a learner works in: you
+              finish a section in a sitting, not a course.
+            */}
+            {sectionDone > 0 && (
+              <span
+                className={
+                  "ml-2 text-[12.5px] font-bold " +
+                  (sectionDone === section.lessons.length
+                    ? "text-emerald-700"
+                    : "text-ink-2")
+                }
+              >
+                {sectionDone === section.lessons.length
+                  ? "✓ Section complete"
+                  : `${sectionDone} of ${section.lessons.length} done`}
               </span>
             )}
           </th>

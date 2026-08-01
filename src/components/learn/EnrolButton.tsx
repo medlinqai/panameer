@@ -28,13 +28,33 @@ export function EnrolButton({
   const [error, setError] = useState<string | null>(null);
 
   if (!signedIn) {
+    /*
+      CONVERT TO ACCOUNT, returning to THIS path (WS4).
+
+      Sent to /login rather than /join, deliberately. /join is the marketplace
+      onboarding fork — pick Buyer or Provider, then a ten-step wizard — and a
+      learner who clicked Enrol on a free course has said nothing about wanting
+      to sell or buy consulting. Making them answer that to watch a video is
+      both a conversion killer and a question we have no right to ask yet.
+
+      /login already honours callbackUrl and routes on to sign-up for people
+      without an account, so this returns them here either way. If Learn ever
+      needs its own lightweight sign-up, THIS is the link that should change —
+      one place, not every enrol button.
+    */
+    const back = encodeURIComponent(`/learn/${slug}`);
     return (
-      <a
-        href={`/join?callbackUrl=${encodeURIComponent(`/learn/${slug}`)}`}
-        className="rounded-full bg-magenta px-6 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
-      >
-        Enrol Free
-      </a>
+      <span className="inline-flex flex-col">
+        <a
+          href={`/login?callbackUrl=${back}`}
+          className="rounded-full bg-magenta px-6 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
+        >
+          Enrol Free
+        </a>
+        <span className="mt-1 text-[12.5px] text-ink-2">
+          Free — we&apos;ll bring you straight back here.
+        </span>
+      </span>
     );
   }
 
