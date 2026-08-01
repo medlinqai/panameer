@@ -61,7 +61,8 @@ export function SideRail({ children }: { children: React.ReactNode }) {
           <div className="mt-8 flex-1">{nav}</div>
           {me && (
             <div className="border-t border-line pt-4">
-              <UserMenu me={me} />
+              {/* Bottom-anchored, so the menu has to open upward (WS10/E138). */}
+              <UserMenu me={me} dropUp />
             </div>
           )}
         </div>

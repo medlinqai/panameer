@@ -8,7 +8,7 @@ import type { Me } from "@/lib/types";
 import { membershipBadge } from "@/lib/membership";
 
 /** Header user menu: name + avatar trigger, dropdown with profile + sign out. */
-export function UserMenu({ me }: { me: Me }) {
+export function UserMenu({ me, dropUp = false }: { me: Me; dropUp?: boolean }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   // Admins get a link into the Platform Console (brief_M) — read from the
@@ -65,7 +65,18 @@ export function UserMenu({ me }: { me: Me }) {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 mt-2 w-56 overflow-hidden rounded-xl border border-black/10 bg-white shadow-lg dark:border-white/15 dark:bg-neutral-900"
+          className={
+            "absolute right-0 w-56 overflow-hidden rounded-xl border border-black/10 bg-white shadow-lg dark:border-white/15 dark:bg-neutral-900 " +
+            /*
+              DROP-UP when the chip is pinned to the bottom of the full-height
+              rail (walk7 WS10 / E138). It opened downward from a trigger sitting
+              at the very bottom of the viewport, so Sign Out rendered below the
+              fold and there was NO way to log out of the app at all. The rail
+              passes dropUp; the mobile header, where the chip is at the top,
+              does not.
+            */
+            (dropUp ? "bottom-full mb-2" : "mt-2")
+          }
         >
           <div className="border-b border-black/5 px-4 py-3 dark:border-white/10">
             <p className="truncate text-sm font-medium">
