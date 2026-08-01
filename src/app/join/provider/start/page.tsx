@@ -45,18 +45,13 @@ export default async function GetStartedPage() {
       footer={
         <>
           {/*
-            BACK, per E100-get-started.png — the mockup carries it bottom-left
-            and the page had no way out but the browser. It returns to /join,
-            which is now a two-step chooser (WS1), so someone who picked the
-            wrong side of the fork can correct it.
+            NO BACK BUTTON (E148). walk_run7 added one because the E100 mockup
+            draws it; the MASTER brief removes it. That is the right call for
+            this screen — the account already exists by the time anyone sees it,
+            so "Back" pointed at a fork whose answer had already been acted on.
+            The caption stays, as the brief specifies.
           */}
-          <Link
-            href="/join"
-            className="inline-flex justify-center rounded-full border-[1.5px] border-line px-7 py-3.5 text-[16px] font-bold transition-colors hover:border-magenta hover:text-magenta"
-          >
-            Back
-          </Link>
-          <p className="hidden max-w-xs text-[14.5px] text-ink-2 sm:block">
+          <p className="max-w-md text-[14.5px] text-ink-2">
             It only takes 5–10 minutes and you can edit it later. We&apos;ll save
             as you go.
           </p>
@@ -116,9 +111,10 @@ export default async function GetStartedPage() {
         {/* E064(a) — the "Providers on Panameer" label is gone; the card speaks
             for itself and the label was competing with the greeting. Now BELOW
             the greeting rather than beside it (E100), so neither is squeezed. */}
-        {/* Capped nearer the mockup's card width — full-column it read as a
-            banner rather than an example card. */}
-        <section className="mt-10 max-w-xl">
+        {/* CENTRED and a little larger (E148) — off to the left under a
+            full-width heading it left a column of dead space down the right,
+            and the spacing read as unbalanced rather than deliberate. */}
+        <section className="mx-auto mt-10 w-full max-w-2xl">
           <TestimonialCarousel />
         </section>
       </div>
