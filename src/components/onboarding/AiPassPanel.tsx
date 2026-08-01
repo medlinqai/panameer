@@ -30,6 +30,16 @@ export type AiPassAvailability = {
   documentName: string | null;
 };
 
+/** A small spinning ring — motion is the point, so it must actually animate. */
+function Spinner() {
+  return (
+    <span
+      aria-hidden
+      className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-white/35 border-t-white"
+    />
+  );
+}
+
 export function AiPassPanel({
   reasons = [],
   heading = "We had trouble reading your work history from this file.",
@@ -116,8 +126,10 @@ export function AiPassPanel({
               type="button"
               onClick={run}
               disabled={busy || info === null}
-              className="rounded-full bg-magenta px-6 py-2.5 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
+              aria-busy={busy}
+              className="inline-flex items-center gap-2.5 rounded-full bg-magenta px-6 py-2.5 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-60"
             >
+              {busy && <Spinner />}
               {busy ? "Reading your document…" : "Let AI take a pass"}
             </button>
           ) : (
@@ -153,7 +165,25 @@ export function AiPassPanel({
         )}
       </div>
 
-      {info?.hasDocument && info.documentName && !done && (
+      {/*
+        A REAL in-progress affordance (walk7 WS8 / E142).
+
+        The control sat on the words "Reading your document…" with nothing
+        moving. A live model call takes 15-30 seconds, so a static label for
+        half a minute reads as hung — and the walk reported exactly that, then
+        that it "doesn't clearly resolve". Three things fix it: a spinner that
+        proves the page is alive, an honest duration up front so the wait is
+        expected rather than endured, and a completion line that says what
+        changed.
+      */}
+      {busy && (
+        <p className="mt-3 text-[13px] text-ink-2" role="status">
+          This usually takes 20–30 seconds. We&apos;re reading the whole document,
+          not just the first page — leave this open.
+        </p>
+      )}
+
+      {info?.hasDocument && info.documentName && !done && !busy && (
         <p className="mt-3 text-[13px] text-ink-2">
           We still have <b className="text-ink">{info.documentName}</b> — no need
           to upload it again.
