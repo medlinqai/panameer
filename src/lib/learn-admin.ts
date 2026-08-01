@@ -917,11 +917,26 @@ export async function setLessonUrl(id: string, rawUrl: string | null) {
   if (!lesson) throw new LearnAdminError("That lesson no longer exists.", "NOT_FOUND");
 
   if (!rawUrl || !rawUrl.trim()) {
+    /*
+      Clearing the URL rolls the ladder back off URL_ADDED_TO_LESSON.
+
+      The symmetry matters more than it looks. Without it, clearing a URL leaves
+      the lesson claiming a URL it no longer has — which manufactures a brand new
+      row of exactly the inconsistency this brief exists to remove, from inside
+      the tool built to remove it. Only that one rung is rolled back: BLOG_CREATED
+      and BLOG_RELEASED are further progress and record something real that
+      removing a video doesn't undo.
+    */
+    const rollback = lesson.production_status === "URL_ADDED_TO_LESSON";
     await prisma.lesson.update({
       where: { id },
-      data: { vimeo_ref: null, is_custom: true },
+      data: {
+        vimeo_ref: null,
+        ...(rollback ? { production_status: "LOADED_TO_STREAMING" as never } : {}),
+        is_custom: true,
+      },
     });
-    return { ok: true as const, vimeoRef: null, statusChanged: false };
+    return { ok: true as const, vimeoRef: null, statusChanged: rollback };
   }
 
   const vimeo = normalizeVimeoRef(rawUrl);

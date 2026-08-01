@@ -97,13 +97,16 @@ export function StructureEditor({
   onChanged,
   renderLessonRow,
   sectionExtras,
+  sectionActions,
 }: {
   tree: Tree;
   onChanged: () => void;
   /** WS3 supplies the lesson row (editor + inline URL); WS2 renders a summary. */
   renderLessonRow?: (lesson: TreeLesson, section: TreeSection) => React.ReactNode;
-  /** WS3 supplies the per-section URL table toggle. */
+  /** WS3 supplies the per-section URL table. */
   sectionExtras?: (section: TreeSection) => React.ReactNode;
+  /** WS3 supplies the "Paste URLs" toggle that reveals that table. */
+  sectionActions?: (section: TreeSection) => React.ReactNode;
 }) {
   const [openCourses, setOpenCourses] = useState<Set<string>>(new Set());
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
@@ -111,6 +114,7 @@ export function StructureEditor({
   const [sectionForm, setSectionForm] = useState<
     (Partial<TreeSection> & { courseId?: string }) | null
   >(null);
+  const [lessonForm, setLessonForm] = useState<{ sectionId: string } | null>(null);
   const [confirm, setConfirm] = useState<{
     kind: "course" | "section" | "lesson";
     id: string;
@@ -340,6 +344,16 @@ export function StructureEditor({
 
                           {sOpen && (
                             <div className="border-t border-line p-3">
+                              <div className="mb-2 flex flex-wrap justify-end gap-2">
+                                {sectionActions?.(section)}
+                                <Button
+                                  type="button"
+                                  tone="ghost"
+                                  onClick={() => setLessonForm({ sectionId: section.id })}
+                                >
+                                  + Add Lesson
+                                </Button>
+                              </div>
                               {sectionExtras?.(section)}
                               {section.lessons.length === 0 ? (
                                 <p className="text-[13.5px] text-ink-2">
@@ -415,6 +429,17 @@ export function StructureEditor({
           onClose={() => setSectionForm(null)}
           onSaved={() => {
             setSectionForm(null);
+            onChanged();
+          }}
+        />
+      )}
+
+      {lessonForm && (
+        <NewLessonForm
+          sectionId={lessonForm.sectionId}
+          onClose={() => setLessonForm(null)}
+          onSaved={() => {
+            setLessonForm(null);
             onChanged();
           }}
         />
@@ -696,6 +721,84 @@ function SectionForm({
           </Button>
           <Button type="button" onClick={save} disabled={busy}>
             {busy ? "Saving…" : initial.id ? "Save Changes" : "Add Section"}
+          </Button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+/**
+ * Creating a lesson asks for the title and nothing else.
+ *
+ * Everything else — description, run time, URL, expert, thumbnail — is edited
+ * afterwards in the lesson editor, which is where an admin is looking at one
+ * lesson rather than adding twelve. Front-loading those fields would make
+ * building out a section slower for no benefit, since none of them are required
+ * for the lesson to exist.
+ */
+function NewLessonForm({
+  sectionId,
+  onClose,
+  onSaved,
+}: {
+  sectionId: string;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [title, setTitle] = useState("");
+  const [runTime, setRunTime] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const save = async () => {
+    if (!title.trim()) {
+      setError("A lesson needs a title.");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const r = await fetch("/api/admin/learn/lessons", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sectionId, title, runTime: runTime || null }),
+      });
+      const body = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        setError(body.error ?? "Could not add that lesson.");
+        return;
+      }
+      onSaved();
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Modal title="New Lesson" onClose={onClose}>
+      <div className="space-y-5">
+        <Field label="Title">
+          <TextInput value={title} onChange={(e) => setTitle(e.target.value)} autoFocus />
+        </Field>
+        <Field label="Run Time" hint="Optional — add it later if you don't know it yet.">
+          <TextInput
+            value={runTime}
+            onChange={(e) => setRunTime(e.target.value)}
+            placeholder="12:34"
+          />
+        </Field>
+        {error && (
+          <p className="rounded-[10px] bg-red-500/5 px-4 py-3 text-[14px] text-red-700">
+            {error}
+          </p>
+        )}
+        <div className="flex justify-end gap-3 border-t border-line pt-5">
+          <Button type="button" tone="ghost" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="button" onClick={save} disabled={busy}>
+            {busy ? "Adding…" : "Add Lesson"}
           </Button>
         </div>
       </div>

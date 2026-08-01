@@ -5,7 +5,15 @@ import { use, useState } from "react";
 import { useAdminFetch, AdminState } from "@/components/admin/primitives";
 import { Button, StatusPill } from "@/components/admin/learn/primitives";
 import { PathForm, type PathDraft } from "@/components/admin/learn/PathForm";
-import { StructureEditor, type Tree } from "@/components/admin/learn/StructureEditor";
+import {
+  StructureEditor,
+  isPlayable,
+  urlMissing,
+  type Tree,
+  type TreeLesson,
+  type TreeSection,
+} from "@/components/admin/learn/StructureEditor";
+import { LessonEditor, SectionUrlTable } from "@/components/admin/learn/LessonEditor";
 
 /**
  * One Learning Path — its details and its whole outline (WS2).
@@ -25,6 +33,10 @@ export default function AdminLearnPathPage({
     `/api/admin/learn/paths/${id}/tree`
   );
   const [editing, setEditing] = useState<PathDraft | null>(null);
+  const [lesson, setLesson] = useState<{ lesson: TreeLesson; section: TreeSection } | null>(
+    null
+  );
+  const [urlTables, setUrlTables] = useState<Set<string>>(new Set());
 
   return (
     <div>
@@ -91,8 +103,62 @@ export default function AdminLearnPathPage({
             </div>
           </div>
 
-          <StructureEditor tree={data} onChanged={reload} />
+          <StructureEditor
+            tree={data}
+            onChanged={reload}
+            renderLessonRow={(l, section) => (
+              <button
+                type="button"
+                onClick={() => setLesson({ lesson: l, section })}
+                className="block w-full text-left"
+              >
+                <span className="block truncate text-[14px] hover:text-magenta">
+                  {l.title}
+                </span>
+                <span className="block text-[12.5px] text-ink-2">
+                  {l.runTime ?? "—"}
+                  {isPlayable(l) ? (
+                    <span className="font-semibold text-emerald-700"> · Ready</span>
+                  ) : urlMissing(l) ? (
+                    <span className="font-semibold text-amber-700"> · URL missing</span>
+                  ) : null}
+                </span>
+              </button>
+            )}
+            sectionActions={(section) => (
+              <Button
+                type="button"
+                tone="ghost"
+                onClick={() =>
+                  setUrlTables((prev) => {
+                    const next = new Set(prev);
+                    next.has(section.id) ? next.delete(section.id) : next.add(section.id);
+                    return next;
+                  })
+                }
+              >
+                {urlTables.has(section.id) ? "Hide URL Table" : "Paste URLs"}
+              </Button>
+            )}
+            sectionExtras={(section) =>
+              urlTables.has(section.id) ? (
+                <SectionUrlTable section={section} onChanged={reload} />
+              ) : null
+            }
+          />
         </>
+      )}
+
+      {lesson && (
+        <LessonEditor
+          lesson={lesson.lesson}
+          section={lesson.section}
+          onClose={() => setLesson(null)}
+          onSaved={() => {
+            setLesson(null);
+            reload();
+          }}
+        />
       )}
 
       {editing && (
