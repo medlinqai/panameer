@@ -44,7 +44,19 @@ export default async function GetStartedPage() {
       */
       footer={
         <>
-          <p className="max-w-md text-[14.5px] text-ink-2">
+          {/*
+            BACK, per E100-get-started.png — the mockup carries it bottom-left
+            and the page had no way out but the browser. It returns to /join,
+            which is now a two-step chooser (WS1), so someone who picked the
+            wrong side of the fork can correct it.
+          */}
+          <Link
+            href="/join"
+            className="inline-flex justify-center rounded-full border-[1.5px] border-line px-7 py-3.5 text-[16px] font-bold transition-colors hover:border-magenta hover:text-magenta"
+          >
+            Back
+          </Link>
+          <p className="hidden max-w-xs text-[14.5px] text-ink-2 sm:block">
             It only takes 5–10 minutes and you can edit it later. We&apos;ll save
             as you go.
           </p>
@@ -79,36 +91,34 @@ export default async function GetStartedPage() {
       <div className="mx-auto w-full max-w-3xl">
         <div>
           <h1 className="text-[34px] tracking-[-0.8px] sm:text-[40px]">
-            Hey {firstName}. Ready for your next big opportunity?
+            Hey {firstName}. Are you ready for your next big opportunity?
           </h1>
 
           {/*
             E002/E023 — each blurb is its own row with a person glyph and a thin
             separator, rather than two loose paragraphs.
           */}
-          {/* Trimmed to the two things that are actually true and useful; the
-              longer version explained the product to someone who had already
-              signed up for it. */}
-          <ul className="mt-8 space-y-1">
-            {[
-              "Answer a few questions to build your profile — it's how clients find you.",
-              "Apply for roles and sell services on your terms, at your rate.",
-            ].map((line) => (
-              <li
-                key={line}
-                className="flex items-start gap-4 border-b border-line py-5 last:border-b-0"
-              >
-                <PersonIcon />
-                <p className="text-[16.5px] leading-relaxed text-ink-2">{line}</p>
-              </li>
-            ))}
-          </ul>
+          {/*
+            ONE line, per E100-get-started.png. The page carried two bullet rows
+            with separators; the mockup carries a single sentence beside the
+            glyph, and the brief flags this design as one that has been missed
+            repeatedly. The second line ("Apply for roles…") also used "roles" in
+            the work-history sense, which WS4 is purging anyway.
+          */}
+          <div className="mt-7 flex items-center gap-4">
+            <PersonIcon />
+            <p className="text-[16.5px] leading-relaxed text-ink-2">
+              Let&apos;s build an amazing profile so the work finds you!
+            </p>
+          </div>
         </div>
 
         {/* E064(a) — the "Providers on Panameer" label is gone; the card speaks
             for itself and the label was competing with the greeting. Now BELOW
             the greeting rather than beside it (E100), so neither is squeezed. */}
-        <section className="mt-10">
+        {/* Capped nearer the mockup's card width — full-column it read as a
+            banner rather than an example card. */}
+        <section className="mt-10 max-w-xl">
           <TestimonialCarousel />
         </section>
       </div>

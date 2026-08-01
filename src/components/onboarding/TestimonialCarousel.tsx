@@ -11,9 +11,11 @@ import Image from "next/image";
  * cramped and off-design. Photos are the banked headshots from the design
  * folder; they must actually render (the old version used initials).
  *
- * Mix is 2 Oracle Cloud + 1 AI per E023: Susan P was a Digital Marketer and is
- * recast as a second Oracle Cloud expert. Rates are integer cents like every
- * other money value in the app.
+ * Mix is 2 Oracle Cloud + 1 AI per E023. NAMES MATCH THE FACES (walk7 WS2 /
+ * E140): the middle card was captioned "Thomas A" over a photo of someone who
+ * plainly isn't a Thomas, and the third was "Susan P" over a photo that isn't
+ * Susan either. They are Deepak K and Melanie R now, and the image files were
+ * renamed with them so the mismatch can't quietly return.
  *
  * These are ILLUSTRATIVE marketing cards from the onboarding deck, not real
  * provider records — a new signup has no marketplace to read from yet.
@@ -43,24 +45,24 @@ export const DECK_TESTIMONIALS: Testimonial[] = [
     remoteCents: 9_000,
   },
   {
-    firstName: "Thomas",
-    lastName: "A",
+    firstName: "Deepak",
+    lastName: "K",
     headline: "AI Vibe Coder",
     quote:
       "I ship AI features faster than teams ten times my size. Panameer connects me to the clients who actually need that speed.",
-    photo: "/examples/thomas-a.png",
+    photo: "/examples/deepak-k.png",
     rating: 3.0,
     onsiteCents: 12_500,
     remoteCents: 9_000,
   },
   {
     // E023 recast: was "Digital Marketer" — now the 2nd Oracle Cloud example.
-    firstName: "Susan",
-    lastName: "P",
+    firstName: "Melanie",
+    lastName: "R",
     headline: "Oracle Cloud HCM / Payroll Implementation Expert",
     quote:
       "I've run Oracle Cloud HCM and Payroll go-lives for years. On Panameer the clients already know the work I do, so I spend my time delivering instead of explaining.",
-    photo: "/examples/susan-p.png",
+    photo: "/examples/melanie-r.png",
     rating: 3.0,
     onsiteCents: 12_500,
     remoteCents: 9_000,
@@ -172,7 +174,9 @@ export function TestimonialCard({ t }: { t: Testimonial }) {
           </dl>
         </div>
       </div>
-      <blockquote className="mt-6 text-[15.5px] italic leading-relaxed text-ink @[340px]:mt-7 @[340px]:text-[16.5px]">
+      {/* Bold on EVERY card (WS2/E140) — the quote is the reason the card is
+          on the page; it was the lightest thing on it. */}
+      <blockquote className="mt-6 text-[15.5px] font-bold leading-relaxed text-ink @[340px]:mt-7 @[340px]:text-[16.5px]">
         &ldquo;{t.quote}&rdquo;
       </blockquote>
       </figure>
