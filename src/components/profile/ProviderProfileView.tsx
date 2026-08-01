@@ -133,8 +133,16 @@ export function ProviderProfileViewPage({ p }: { p: ProviderProfileView }) {
                   {p.completeness}%
                 </p>
               </div>
+              {/*
+                E133 — "/join/provider" with no step resolves to the RESUME
+                point, so a published provider clicking Edit Profile was dropped
+                at the start of the onboarding train and walked forward through
+                steps they had finished months ago. `step=finish` is the review —
+                the profile-shaped editor — and being the last step there is no
+                train left to walk.
+              */}
               <Link
-                href="/join/provider"
+                href="/join/provider?step=finish"
                 className="rounded-full bg-magenta px-5 py-2.5 font-bold text-white transition-colors hover:bg-magenta-dark"
               >
                 Edit Profile
@@ -357,7 +365,10 @@ export function ProviderProfileViewPage({ p }: { p: ProviderProfileView }) {
 
           <ProfileCard
             title="Certifications"
-            edit={edit("Certifications", "/join/provider?step=certifications")}
+            // "certifications" is not a wizard STEP, so this resolved to the
+            // resume point and started the train. The review owns the
+            // certifications editor (E057), so that is where it goes (E133).
+            edit={edit("Certifications", "/join/provider?step=finish")}
           >
             <CertificationsBody
               certifications={p.certifications}

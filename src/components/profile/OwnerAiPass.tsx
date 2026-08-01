@@ -25,8 +25,8 @@ export function OwnerAiPass() {
       reasons={[
         "If you uploaded a résumé, our reader may have missed a layout it couldn't follow. We can have another go at it.",
       ]}
-      onUpload={() => router.push("/join/provider?step=tell_us")}
-      onManual={() => router.push("/join/provider?step=tell_us")}
+      onUpload={() => router.push("/join/provider?step=tell_us&return=review")}
+      onManual={() => router.push("/join/provider?step=tell_us&return=review")}
       onApplied={() => router.refresh()}
     />
   );
