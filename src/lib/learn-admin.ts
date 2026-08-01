@@ -252,3 +252,114 @@ export async function listExperts(query?: string): Promise<
     photoUrl: p.photo_url,
   }));
 }
+
+// ---------------------------------------------------------------------------
+// WS1 — Learning Path CRUD
+// ---------------------------------------------------------------------------
+
+export type PathInput = {
+  title: string;
+  slug?: string | null;
+  summary?: string | null;
+  audience: string;
+  group?: string | null;
+  expertPersonId?: string | null;
+  coverImage?: string | null;
+  introVideoRef?: string | null;
+  status?: string;
+};
+
+/**
+ * Every write here sets `is_custom: true`.
+ *
+ * That flag is the XLS re-run shield the WS1 seed established: a re-import is
+ * authoritative only for rows it created, and anything a human touched is left
+ * alone. An admin editing a path in this console IS that human touch, so the
+ * flag has to be set on the way out of every mutation — otherwise the next
+ * catalog import silently overwrites the work this console exists to do.
+ */
+export async function createPath(input: PathInput) {
+  const slug = await uniquePathSlug(input.slug?.trim() || input.title);
+  return prisma.learningPath.create({
+    data: {
+      title: input.title.trim(),
+      slug,
+      summary: input.summary?.trim() || null,
+      audience: input.audience as never,
+      group: input.group?.trim() || null,
+      expert_person_id: input.expertPersonId || null,
+      cover_image: input.coverImage?.trim() || null,
+      intro_video_ref: input.introVideoRef?.trim() || null,
+      status: (input.status ?? "DRAFT") as never,
+      is_custom: true,
+    },
+    select: { id: true, slug: true },
+  });
+}
+
+export async function updatePath(id: string, input: PathInput) {
+  const existing = await prisma.learningPath.findUnique({
+    where: { id },
+    select: { id: true, slug: true },
+  });
+  if (!existing) throw new LearnAdminError("That learning path no longer exists.", "NOT_FOUND");
+
+  const wanted = input.slug?.trim() || input.title;
+  const slug =
+    slugify(wanted) === existing.slug ? existing.slug : await uniquePathSlug(wanted, id);
+
+  return prisma.learningPath.update({
+    where: { id },
+    data: {
+      title: input.title.trim(),
+      slug,
+      summary: input.summary?.trim() || null,
+      audience: input.audience as never,
+      group: input.group?.trim() || null,
+      expert_person_id: input.expertPersonId || null,
+      cover_image: input.coverImage?.trim() || null,
+      intro_video_ref: input.introVideoRef?.trim() || null,
+      ...(input.status ? { status: input.status as never } : {}),
+      is_custom: true,
+    },
+    select: { id: true, slug: true },
+  });
+}
+
+/**
+ * Delete a path — BLOCKED while it still has courses.
+ *
+ * The brief asks for "cascade or block; pick block + explain", and block is
+ * right: the FK is `onDelete: Cascade`, so a single mis-click on a 100-lesson
+ * path would take the whole subtree with it and there is no undo in this
+ * console. Making the admin empty it first turns an irreversible accident into
+ * a deliberate sequence of steps. Enrolments are checked for the same reason,
+ * and matter more — those are learners' records, not ours.
+ */
+export async function deletePath(id: string) {
+  const path = await prisma.learningPath.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      title: true,
+      _count: { select: { courses: true, enrollments: true } },
+    },
+  });
+  if (!path) throw new LearnAdminError("That learning path no longer exists.", "NOT_FOUND");
+
+  if (path._count.enrollments > 0) {
+    throw new LearnAdminError(
+      `${path._count.enrollments} learner${path._count.enrollments === 1 ? " is" : "s are"} enrolled in this path. Unpublish it instead of deleting it — deleting would destroy their progress.`,
+      "BLOCKED"
+    );
+  }
+  if (path._count.courses > 0) {
+    throw new LearnAdminError(
+      `This path still has ${path._count.courses} course${path._count.courses === 1 ? "" : "s"}. Delete those first — deleting the path would take every section and lesson under it with it, and there's no undo.`,
+      "BLOCKED"
+    );
+  }
+
+  await prisma.learningPath.delete({ where: { id } });
+  return { ok: true as const };
+}

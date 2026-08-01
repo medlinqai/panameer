@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { AdminHeading, useAdminFetch, AdminState, StatTile } from "@/components/admin/primitives";
+import { PathList } from "@/components/admin/learn/PathList";
 
 type Stats = {
   paths: number;
@@ -63,8 +64,8 @@ export default function AdminLearnPage() {
           {data.urlMissing > 0 && (
             <div className="mt-6 rounded-brand border border-amber-500/30 bg-amber-500/5 p-5">
               <p className="text-[15px] font-bold">
-                {data.urlMissing} lesson{data.urlMissing === 1 ? "" : "s"} are marked
-                as having a URL but don&apos;t have one.
+                {data.urlMissing} lesson{data.urlMissing === 1 ? " is" : "s are"}{" "}
+                marked as having a URL but don&apos;t have one.
               </p>
               <p className="mt-1 text-[14px] text-ink-2">
                 These show as &ldquo;coming soon&rdquo; to learners. Fill them in one
@@ -86,9 +87,4 @@ export default function AdminLearnPage() {
       )}
     </div>
   );
-}
-
-/** Filled in by WS1 — the Learning Path list, filters and CRUD. */
-function PathList() {
-  return null;
 }
