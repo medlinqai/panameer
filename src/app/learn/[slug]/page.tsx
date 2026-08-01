@@ -95,6 +95,29 @@ export default async function LearningPathPage({
               />
             </div>
           )}
+
+          {/*
+            The payoff, surfaced the moment it is earned (WS5). A certificate
+            nobody is told about is not a reward — this is the one screen where
+            a learner has just finished and is looking for what comes next.
+          */}
+          {path.lessons > 0 && path.completed >= path.lessons && (
+            <div className="mt-5 max-w-md rounded-brand border-2 border-emerald-500/40 bg-emerald-500/[0.06] p-5">
+              <p className="text-[15.5px] font-bold">
+                You&apos;ve finished every lesson in this path.
+              </p>
+              <p className="mt-1 text-[14px] text-ink-2">
+                Pass the test and we&apos;ll issue you a certificate with a public
+                link you can put on LinkedIn.
+              </p>
+              <Link
+                href={`/learn/${path.slug}/test`}
+                className="mt-3 inline-block rounded-full bg-magenta px-6 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
+              >
+                Take the Test
+              </Link>
+            </div>
+          )}
         </div>
 
         {path.coverImage && (

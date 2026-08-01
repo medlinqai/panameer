@@ -1,0 +1,85 @@
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { prisma } from "@/lib/prisma";
+import { getSessionViewer } from "@/lib/session";
+import {
+  getOrCreateAssessment,
+  getTestState,
+  gradeAttempt,
+  readQuestions,
+  toPublicQuestions,
+} from "@/lib/learn-assessment";
+
+/**
+ * GET  /api/learn/test/[pathId] — the question set, WITHOUT the answers.
+ * POST /api/learn/test/[pathId] — submit answers, get graded, maybe get a badge.
+ *
+ * The answer key never leaves the server: GET strips correctIndex, POST takes
+ * only the learner's choices and compares against the stored set here. Anything
+ * else makes the test decorative, and this one issues a credential that goes on
+ * a professional profile.
+ */
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ pathId: string }> }
+) {
+  const viewer = await getSessionViewer();
+  if (!viewer) {
+    return NextResponse.json({ error: "Sign in to take the test." }, { status: 401 });
+  }
+  const { pathId } = await params;
+
+  const path = await prisma.learningPath.findFirst({
+    where: { id: pathId, status: "PUBLISHED" },
+    select: { id: true },
+  });
+  if (!path) {
+    return NextResponse.json({ error: "That path isn't available." }, { status: 404 });
+  }
+
+  try {
+    const assessment = await getOrCreateAssessment(pathId);
+    const state = await getTestState(viewer.userId, pathId);
+    return NextResponse.json({
+      ...state,
+      questions: toPublicQuestions(readQuestions(assessment)),
+    });
+  } catch (e) {
+    console.error("[learn-test] load failed:", e);
+    return NextResponse.json(
+      { error: e instanceof Error ? e.message : "Could not load the test." },
+      { status: 503 }
+    );
+  }
+}
+
+const SUBMIT = z.object({
+  /** questionId → chosen option index. */
+  answers: z.record(z.string(), z.number().int().min(0)),
+});
+
+export async function POST(
+  request: Request,
+  { params }: { params: Promise<{ pathId: string }> }
+) {
+  const viewer = await getSessionViewer();
+  if (!viewer) {
+    return NextResponse.json({ error: "Sign in to take the test." }, { status: 401 });
+  }
+  const { pathId } = await params;
+
+  const parsed = SUBMIT.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) {
+    return NextResponse.json({ error: "That isn't a valid submission." }, { status: 400 });
+  }
+
+  try {
+    return NextResponse.json(await gradeAttempt(viewer.userId, pathId, parsed.data.answers));
+  } catch (e) {
+    console.error("[learn-test] grade failed:", e);
+    return NextResponse.json(
+      { error: e instanceof Error ? e.message : "Could not grade that attempt." },
+      { status: 409 }
+    );
+  }
+}
