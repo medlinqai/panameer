@@ -66,7 +66,7 @@ export function AppHeader() {
 
   return (
     <header className="flex items-center gap-3 border-b border-line bg-white px-5 py-3 sm:px-8">
-      <p className="min-w-0 truncate text-[16px] font-bold">
+      <p className="min-w-0 flex-1 truncate text-[16px] font-bold">
         {greeting ? `${greeting}, ${first || "there"}` : " "}
       </p>
 
@@ -87,15 +87,22 @@ export function AppHeader() {
           AI on
         </span>
 
-        {/* Element 5 — Home. */}
-        <IconLink href="/dashboard" label="Home">
-          <HomeIcon />
-        </IconLink>
-
-        {/* Element 6 — bug report (UI ported; the target is a stub). */}
-        <IconLink href="/support/bug" label="Report a bug">
-          <BugIcon />
-        </IconLink>
+        {/*
+          Home and bug-report drop below sm. At 375 the full cluster — four
+          icons, a gear and an avatar — could not shrink past the viewport and
+          pushed every casing page into a horizontal scroll. Home is one tap
+          away in the rail drawer and the bug report is not a phone-first
+          action; the bell and the avatar (which owns logout) stay at every
+          width.
+        */}
+        <span className="hidden sm:contents">
+          <IconLink href="/dashboard" label="Home">
+            <HomeIcon />
+          </IconLink>
+          <IconLink href="/support/bug" label="Report a bug">
+            <BugIcon />
+          </IconLink>
+        </span>
 
         {/* Element 7 — notifications. The count is deliberately absent rather
             than zero: there is no feed behind this yet, and a "0" badge asserts

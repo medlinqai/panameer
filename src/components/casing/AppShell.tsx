@@ -18,7 +18,17 @@ export function AppShell({ children }: { children: ReactNode }) {
   const year = new Date().getFullYear();
 
   return (
-    <div className="flex min-h-screen bg-canvas font-body text-ink">
+    /*
+      COLUMN below lg, ROW at lg and up.
+
+      AppRail renders two things: the desktop aside (hidden below lg) and the
+      mobile top bar (hidden at lg and up). As a plain flex row, that mobile bar
+      was a SIBLING FLEX ITEM at 375px and took 224px of the viewport, leaving
+      main 151px wide — which is why the profile and Work pages scrolled
+      sideways while the pages whose content could shrink merely looked cramped.
+      Stacking below lg puts the bar above the content where it belongs.
+    */
+    <div className="flex min-h-screen flex-col bg-canvas font-body text-ink lg:flex-row">
       <AppRail />
 
       <div className="flex min-w-0 flex-1 flex-col">

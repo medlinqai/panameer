@@ -25,7 +25,7 @@ export function FindWorkHero({ chips }: { chips: string[] }) {
   };
 
   return (
-    <section>
+    <section className="min-w-0">
       <p className="text-[13px] font-bold uppercase tracking-[0.08em] text-magenta">
         Find Work
       </p>
