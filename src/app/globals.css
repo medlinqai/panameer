@@ -46,6 +46,19 @@
   --color-learn-mid: #6d1e7c;
   --color-learn-hot: #bf1e8b;
 
+  /*
+   * CASING PALETTE — sampled from E151-provider-home-casing.png (MASTER WS9),
+   * the same pixel-reader method the Learn tokens used:
+   *   rail            #140c29   (flat across the whole rail)
+   *   active nav pill #d127d0   (brand magenta within antialiasing)
+   *   page canvas     #f7f7f5   (NOT white — the white cards need an edge)
+   * The rail is deliberately its own token rather than a tint of --color-ink:
+   * ink is body type and this is a surface, and tying them would mean a
+   * type-colour change silently repainted the navigation.
+   */
+  --color-rail: #140c29;
+  --color-canvas: #f7f7f5;
+
   --radius-brand: 14px;
   --shadow-brand: 0 10px 30px rgba(20, 10, 40, 0.08);
 

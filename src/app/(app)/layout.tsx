@@ -1,18 +1,17 @@
 import { MeProvider } from "@/components/MeProvider";
-import { SideRail } from "@/components/SideRail";
+import { AppShell } from "@/components/casing/AppShell";
 
 /**
- * Authenticated app shell — the LEFT RAIL (brief_learn_v1 WS3).
+ * Authenticated app shell — the MEDLINQ-STYLE CASING (MASTER WS9).
  *
- * Replaces the top `Header`: the switch from the public top nav happens at
- * login, per design doc §6. These routes sit behind the proxy auth gate
- * (`src/proxy.ts`), so a session can be assumed; MeProvider loads /api/me for
- * the rail and the pages.
+ * The light SideRail is replaced by AppShell: dark rail + header + footer, one
+ * chrome for every authenticated page. The switch from the public top nav still
+ * happens at login; MeProvider still loads /api/me for the rail and header.
  */
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <MeProvider>
-      <SideRail>{children}</SideRail>
+      <AppShell>{children}</AppShell>
     </MeProvider>
   );
 }

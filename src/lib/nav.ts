@@ -33,17 +33,30 @@ export type NavItem = {
  * the mockup puts first, and Contracts/Finances are universal — both sides of a
  * marketplace have agreements and money.
  */
+/**
+ * HOME sits above the "Applications" group in the casing rail (E151), so it is
+ * its own export rather than the first item of the list — the rail renders it
+ * differently, and putting it in the group would have meant filtering it back
+ * out at the render site.
+ */
+export const HOME_NAV: NavItem = { label: "Opportunities", href: "/dashboard" };
+
+/**
+ * The Applications group, in E151's order. Contracts, Finances, Messages and
+ * Community are open to everyone signed in — both sides of a marketplace have
+ * agreements, money, conversations and a community.
+ */
 const BASE_NAV: NavItem[] = [
-  { label: "Search", href: "/search" },
-  { label: "Home", href: "/dashboard" },
   { label: "Learn", href: "/learn" },
 ];
 
-/** Below the role items in the mockup's order. */
 const TAIL_NAV: NavItem[] = [
+  { label: "Packages", href: "/settings/packages", requires: "canProvideServices" },
+  { label: "Talent", href: "/hire", requires: "canHireTalent" },
   { label: "Contracts", href: "/contracts" },
   { label: "Finances", href: "/finances" },
   { label: "Messages", href: "/messages" },
+  { label: "Community", href: "/community" },
 ];
 
 /**
@@ -55,8 +68,10 @@ const TAIL_NAV: NavItem[] = [
  * buyer, and hiding half their app would be wrong.
  */
 const ROLE_NAV: NavItem[] = [
-  { label: "Find Work", href: "/work", requires: "canProvideServices" },
-  { label: "Hire Talent", href: "/hire", requires: "canHireTalent" },
+  // "Work" in the casing rail (E151). It was "Find Work"; the mockup's label is
+  // the shorter one, and the page it opens now carries the Find-Work hero that
+  // used to be on Home (reconciliation: E134's home is superseded by WS12).
+  { label: "Work", href: "/work", requires: "canProvideServices" },
   { label: "Reports", href: "/reports", requires: "canHireTalent" },
 ];
 

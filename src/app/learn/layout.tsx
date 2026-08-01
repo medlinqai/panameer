@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { PublicTopNav } from "@/components/PublicTopNav";
 import { MeProvider } from "@/components/MeProvider";
-import { SideRail } from "@/components/SideRail";
+import { AppShell } from "@/components/casing/AppShell";
 import { getSessionViewer } from "@/lib/session";
 
 /**
@@ -24,7 +24,7 @@ export default async function LearnLayout({ children }: { children: ReactNode })
   if (viewer) {
     return (
       <MeProvider>
-        <SideRail>{children}</SideRail>
+        <AppShell>{children}</AppShell>
       </MeProvider>
     );
   }
