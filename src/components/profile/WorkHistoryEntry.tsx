@@ -23,6 +23,30 @@ import { ProjectCard, dateRange, type EmployerItem, type ProjectItem } from "@/c
  * Artifacts (WS4) and Contact (WS5) render only when there is something behind
  * them; a link that opens an empty panel is worse than an absent one.
  */
+/*
+  A résumé SECTION HEADING is not a job title (WS4 / E145).
+
+  The heuristic parser splits on headings, and where a heading sat alone above
+  the entries it became the entry itself — the profile then rendered
+  "(Employer not detected) · ROLES", and also "· PRIOR ROLE-TYPES". Those are
+  shouted section labels, not something anyone did for a living.
+
+  Suppressed at RENDER rather than only fixed in the parser, because the bad
+  rows are already in the database: a parser fix helps the next import and does
+  nothing for a profile that was imported last week. Deliberately narrow — an
+  all-caps title of three words or fewer that is one of the known headings —
+  so a real title like "CTO" or "VP SALES" is untouched.
+*/
+const HEADING_WORDS = /^(roles?|prior role[- ]types?|role[- ]types?|experience|employment|work history|career( experience)?|positions?)$/i;
+
+function displayRole(title?: string | null): string | null {
+  const t = title?.trim();
+  if (!t) return null;
+  const isShouted = t === t.toUpperCase() && t.split(/\s+/).length <= 3;
+  if (isShouted && HEADING_WORDS.test(t.replace(/[^a-z\s-]/gi, "").trim())) return null;
+  return t;
+}
+
 /** The separator between the action links (E089). */
 function Dot() {
   return (
@@ -119,7 +143,7 @@ export function WorkHistoryEntry({
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <p className="font-bold">
           {employer.name}
-          {employer.roleTitle ? ` · ${employer.roleTitle}` : ""}
+          {displayRole(employer.roleTitle) ? ` · ${displayRole(employer.roleTitle)}` : ""}
         </p>
         {range && <p className="text-[13.5px] text-ink-2">{range}</p>}
       </div>

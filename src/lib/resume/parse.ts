@@ -527,7 +527,7 @@ export function parseResume(text: string): ParsedResume {
   const undated = experiences.filter((e) => !e.startDate).length;
   if (undated > 0) {
     gaps.push(
-      `${undated} role${undated === 1 ? "" : "s"} imported without dates — we couldn't read a start date. Add the dates so clients see your timeline.`
+      `${undated} employer${undated === 1 ? "" : "s"} imported without dates — we couldn't read a start date. Add the dates so clients see your timeline.`
     );
   }
   const unnamed = experiences.filter(
@@ -535,12 +535,12 @@ export function parseResume(text: string): ParsedResume {
   ).length;
   if (unnamed > 0) {
     gaps.push(
-      `${unnamed} role${unnamed === 1 ? "" : "s"} imported with a missing employer or job title — please fill those in.`
+      `${unnamed} employer${unnamed === 1 ? "" : "s"} imported with a missing employer or job title — please fill those in.`
     );
   }
   if (buckets.experience.length > 0 && experiences.length === 0) {
     gaps.push(
-      "We found an experience section but couldn't split it into individual roles — please add your work history manually."
+      "We found an experience section but couldn't split it into individual employers — please add your work history manually."
     );
   }
 

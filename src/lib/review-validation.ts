@@ -190,15 +190,20 @@ export function reviewItems(p: ReviewInput): ReviewItem[] {
     );
   }
 
-  // "An un-dated role" (Scott's phrasing). A job with no start date renders as
-  // "? – Present" on the live profile, which reads as broken data.
+  // A work-history entry with no start date renders as "? – Present" on the
+  // live profile, which reads as broken data.
+  //
+  // EMPLOYERS, never "roles" (WS4). "Role" is reserved twice over — security
+  // roles, and the catalog's Role -> Domain -> Skill — so using it for a job
+  // someone held makes two different things share one word in a product that
+  // shows both to the same person.
   const undated = p.employers.filter((e) => !e.startDate);
   if (undated.length > 0) {
     chg(
       "employer-dates",
       undated.length === 1
         ? `${undated[0].name} has no start date — it will show as "? – Present".`
-        : `${undated.length} roles have no start date — they will show as "? – Present".`,
+        : `${undated.length} employers have no start date — they will show as "? – Present".`,
       "Add dates",
       { kind: "step", step: "tell_us" }
     );
