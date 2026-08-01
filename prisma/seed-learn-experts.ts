@@ -5,79 +5,58 @@ import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 /**
- * Assign each Learning Path its real instructor (brief_learn_experience WS6).
+ * Reconcile each Learning Path's DECLARED lead with who actually teaches it
+ * (brief_learn_experience WS6, corrected).
  *
  *   npm run seed:learn-experts
  *
- * ONE INSTRUCTOR OWNS A WHOLE PATH — Scott's rule, and the reason the LP card
- * can show a face at all. The previous state was worse than a placeholder: 22
- * of 23 paths had NO expert, so the catalog rendered as a wall of blank purple
- * tiles, and the one thing this platform is actually selling — that a working
- * consultant teaches this — was invisible.
+ * Teaching is recorded PER LESSON — 466 of the 522 lessons carry an
+ * `expert_person_id` — and the app now derives a path's and a course's
+ * instructors from those. `LearningPath.expert_person_id` has one remaining
+ * job: a fallback lead for a path whose lessons name nobody at all.
  *
- * The mapping below is BY EXPERTISE, read off the instructors' own live
- * provider profiles, not spread round-robin to make the grid look populated:
+ * The first version of this script got that wrong. It assigned one instructor
+ * to all 23 paths by subject area, which produced claims the lesson data
+ * contradicts — Advanced Procurement was labelled Marelise's while its 105
+ * lessons are taught by Scott (85) and Linus (18). Those declarations are inert
+ * now that derivation reads lessons, but they are still visible in the admin
+ * console, and a stated fact that disagrees with the data is a trap for whoever
+ * reads it next.
  *
- *   Eddie Cairnie    — "Oracle Cloud Finance Expert"; GL, Payables, Cash
- *                      Management, Fixed Assets, Accounting Hub.
- *   Linus Erley      — "Supply Chain Expert"; Inventory, Item Costing,
- *                      Supplier Registration, Catalogs, Negotiations, PIM.
- *   Marelise Steenkamp — "Oracle Cloud P2P/HCM Techno-Functional Consultant";
- *                      Benefits, Procurement, Contracts, Sourcing, Payments.
+ * So this script:
+ *   1. CLEARS a declared lead that no lesson supports — the contradiction.
+ *   2. LEAVES a declared lead that IS one of the path's real teachers.
+ *   3. SETS a fallback only where no lesson names anyone, so the path still has
+ *      a face to show.
  *
- * Anyone teaching a path they could not actually deliver would be a lie told to
- * a buyer evaluating them, which is the opposite of what WS7's profile↔courses
- * loop is for.
- *
- * IDEMPOTENT and NON-DESTRUCTIVE: it matches paths by title, skips any path
- * that already has an expert (an admin's choice in the console wins over this
- * file), and reports anything it couldn't place.
+ * Idempotent; safe to re-run after a catalog import.
  */
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
 });
 
-/** Path title → the instructor's email, so the mapping is readable at a glance. */
 const EDDIE = "sw_user3@straterp.com";
 const LINUS = "sw_user2@straterp.com";
 const MARELISE = "sw_user4@straterp.com";
 
-const ASSIGNMENT: Record<string, string> = {
-  // Finance and accounting — Eddie.
-  "Basic Payables": EDDIE,
-  Journals: EDDIE,
+/**
+ * Fallback leads, by subject, for paths whose lessons name nobody. Read off the
+ * instructors' own live profiles — Eddie is the Finance expert, Linus Supply
+ * Chain, Marelise P2P/HCM — so a fallback is never someone who couldn't
+ * actually deliver the material.
+ */
+const FALLBACK: Record<string, string> = {
   "Cost Accounting": EDDIE,
-
-  // Supply chain, and the foundational/onboarding paths — Linus.
-  "1. Background": LINUS,
-  "2. Overview": LINUS,
-  "3. Roles & Careers": LINUS,
-  "4. How to Login & Get Started": LINUS,
-  "Inventory Management": LINUS,
-  "Supplier Integration": LINUS,
-  "How to Configure": LINUS,
-  "How to Deploy Procurement": LINUS,
-  "How to Implement": LINUS,
+  "Talent Mgmt": MARELISE,
   Beginners: LINUS,
   Implementers: LINUS,
   ERP: LINUS,
-
-  // P2P and HCM — Marelise.
-  "Basic Procurement": MARELISE,
-  "Advanced Procurement": MARELISE,
-  "Contract Management": MARELISE,
-  "End-to-End Business Processing (Buying Channels)": MARELISE,
-  "Core HR": MARELISE,
-  "Benefits Admin": MARELISE,
-  "Talent Mgmt": MARELISE,
-  "Payroll Mgmt": MARELISE,
 };
 
 async function main() {
-  const emails = [...new Set(Object.values(ASSIGNMENT))];
   const people = await prisma.person.findMany({
-    where: { user: { email: { in: emails } } },
+    where: { user: { email: { in: [EDDIE, LINUS, MARELISE] } } },
     select: {
       id: true,
       first_name: true,
@@ -88,54 +67,94 @@ async function main() {
   });
   const byEmail = new Map(people.map((p) => [p.user!.email, p]));
 
-  for (const email of emails) {
-    const p = byEmail.get(email);
-    if (!p) {
-      console.log(`  ! no Person for ${email} — paths assigned to them will be skipped`);
-    } else if (!p.photo_url) {
-      // Worth saying out loud: the whole point of WS6 is the face, so an
-      // instructor without a photo assigned to a path is a silent regression
-      // back to a blank tile.
-      console.log(`  ! ${p.first_name} ${p.last_name} has NO PHOTO — their cards will show initials`);
-    }
-  }
-
   const paths = await prisma.learningPath.findMany({
-    select: { id: true, title: true, expert_person_id: true },
+    select: {
+      id: true,
+      title: true,
+      expert_person_id: true,
+      courses: {
+        select: {
+          sections: { select: { lessons: { select: { expert_person_id: true } } } },
+        },
+      },
+    },
+    orderBy: { title: "asc" },
   });
 
-  let assigned = 0;
+  let cleared = 0;
   let kept = 0;
-  const unplaced: string[] = [];
+  let set = 0;
+  const noFace: string[] = [];
 
   for (const lp of paths) {
-    const email = ASSIGNMENT[lp.title];
-    if (!email) {
-      unplaced.push(lp.title);
+    const lessonExperts = new Set(
+      lp.courses
+        .flatMap((c) => c.sections.flatMap((s) => s.lessons))
+        .map((l) => l.expert_person_id)
+        .filter((x): x is string => Boolean(x))
+    );
+
+    if (lessonExperts.size > 0) {
+      if (lp.expert_person_id && !lessonExperts.has(lp.expert_person_id)) {
+        await prisma.learningPath.update({
+          where: { id: lp.id },
+          data: { expert_person_id: null },
+        });
+        console.log(
+          `  cleared  ${lp.title.padEnd(46)} (declared lead teaches none of its ${lessonExperts.size > 1 ? "lessons" : "lessons"})`
+        );
+        cleared++;
+      } else if (lp.expert_person_id) {
+        kept++;
+      }
       continue;
     }
-    if (lp.expert_person_id) {
+
+    // No lesson names anybody — this is the one case the declared lead is for.
+    const email = FALLBACK[lp.title];
+    const person = email ? byEmail.get(email) : null;
+    if (!person) {
+      noFace.push(lp.title);
+      continue;
+    }
+    if (lp.expert_person_id === person.id) {
       kept++;
       continue;
     }
-    const person = byEmail.get(email);
-    if (!person) continue;
-
     await prisma.learningPath.update({
       where: { id: lp.id },
       data: { expert_person_id: person.id },
     });
-    console.log(`  ${lp.title.padEnd(48)} → ${person.first_name} ${person.last_name}`);
-    assigned++;
+    console.log(
+      `  fallback ${lp.title.padEnd(46)} → ${person.first_name} ${person.last_name}`
+    );
+    set++;
   }
 
-  console.log(`\nassigned: ${assigned}  already had an expert: ${kept}`);
-  if (unplaced.length > 0) {
-    console.log(`not in the mapping (left alone): ${unplaced.join(", ")}`);
+  console.log(`\ncleared contradictions: ${cleared}  kept: ${kept}  fallbacks set: ${set}`);
+  if (noFace.length > 0) {
+    console.log(`no lesson experts and no fallback (will show no face): ${noFace.join(", ")}`);
   }
 
-  const still = await prisma.learningPath.count({ where: { expert_person_id: null } });
-  console.log(`paths still without an instructor: ${still}`);
+  /*
+    The point of WS6 is the face, so an instructor without a photo is a silent
+    regression to initials. Worth saying out loud rather than discovering it in
+    a screenshot.
+  */
+  const teaching = await prisma.person.findMany({
+    where: { learnLessons: { some: {} }, photo_url: null },
+    select: {
+      first_name: true,
+      last_name: true,
+      _count: { select: { learnLessons: true } },
+    },
+  });
+  for (const t of teaching) {
+    console.log(
+      `  ! ${t.first_name} ${t.last_name} teaches ${t._count.learnLessons} lessons and has NO PHOTO`
+    );
+  }
+
   await prisma.$disconnect();
 }
 

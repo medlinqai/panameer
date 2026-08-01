@@ -37,6 +37,10 @@ export default async function CoursePage({
   const next = path.courses[index + 1] ?? null;
   const percent =
     course.lessons > 0 ? Math.round((course.completed / course.lessons) * 100) : 0;
+  // The face on the course tile: whoever teaches most of THIS course and has a
+  // photo, falling back to the lead so the tile is never blank when a face exists.
+  const courseLead =
+    course.instructors.find((i) => i.photoUrl) ?? course.instructors[0] ?? null;
   const firstUp = course.sections
     .flatMap((s) => s.lessons)
     .find((l) => l.playable && !l.completed);
@@ -61,10 +65,10 @@ export default async function CoursePage({
         {/* The design's purple tile — the instructor's face over the course name. */}
         <div className="w-full shrink-0 overflow-hidden rounded-brand bg-[#2b1147] text-white sm:max-w-[240px]">
           <div className="aspect-square w-full overflow-hidden">
-            {course.thumbnailUrl || path.instructor?.photoUrl ? (
+            {course.thumbnailUrl || courseLead?.photoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={course.thumbnailUrl ?? path.instructor!.photoUrl!}
+                src={course.thumbnailUrl ?? courseLead!.photoUrl!}
                 alt=""
                 className="h-full w-full object-cover object-top"
               />
@@ -89,7 +93,15 @@ export default async function CoursePage({
           on the row was for.
         */}
         <div className="min-w-[260px] flex-1">
-          {path.instructor && <InstructorBadge instructor={path.instructor} />}
+          {/*
+            THIS COURSE's instructors, not the path's. Within one path the
+            courses can be taught by different people, and naming the path's
+            lead here would credit the wrong person on the very screen a buyer
+            clicks through to a profile from.
+          */}
+          {course.instructors.length > 0 && (
+            <InstructorBadge instructors={course.instructors} showLessonCounts />
+          )}
 
           <h2 className="mt-6 font-display text-[22px] font-bold">Course Overview</h2>
           <p className="mt-2 max-w-2xl text-[15.5px] leading-relaxed text-ink-2">

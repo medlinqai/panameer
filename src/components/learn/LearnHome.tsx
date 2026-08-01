@@ -41,7 +41,7 @@ export function LearnHome({
         (!needle ||
           c.title.toLowerCase().includes(needle) ||
           (c.summary ?? "").toLowerCase().includes(needle) ||
-          (c.instructor?.name ?? "").toLowerCase().includes(needle))
+          c.instructors.some((i) => i.name.toLowerCase().includes(needle)))
     );
   }, [cards, tab, group, query]);
 

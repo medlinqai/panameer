@@ -1,21 +1,28 @@
 import Link from "next/link";
 import type { LearnCard } from "@/lib/learn-home";
+import { InstructorStack } from "@/components/learn/InstructorBadge";
 
 /**
- * THE Learning-Path card (brief_learn_experience WS1).
+ * THE Learning-Path card (brief_learn_experience WS1/WS6).
  *
  * This brief owns it and `brief_provider_home_page` WS5's Build-Skills section
  * reuses it — the shared-component note exists so it isn't built twice and then
  * drifts into two cards that look almost the same.
  *
- * The face is the point. One instructor owns a whole path (WS6), so the card
- * shows THAT person, pulled from their live profile photo — not a stock face
- * repeated across the grid. A path taught by someone you can look up and hire is
+ * The face is the point: a path taught by people you can look up and hire is
  * the difference between a course library and a marketplace's course library.
+ *
+ * MULTI-INSTRUCTOR (WS6, corrected). A path is often taught by more than one
+ * person — Advanced Procurement is 85 lessons by one and 18 by another — so the
+ * hero image is the LEAD's, the person who taught the most of it, and the
+ * stacked avatars underneath say how many others there are. A single face only
+ * appears when there genuinely is one. Fronting a two-teacher path with one
+ * portrait would be a quiet misattribution on the most-seen surface in Learn.
  */
 export function PathCard({ card, href }: { card: LearnCard; href?: string }) {
+  const lead = card.instructors[0] ?? null;
   const initials =
-    card.instructor?.name
+    lead?.name
       .split(/\s+/)
       .map((w) => w[0])
       .filter(Boolean)
@@ -29,20 +36,32 @@ export function PathCard({ card, href }: { card: LearnCard; href?: string }) {
       className="group flex flex-col overflow-hidden rounded-brand bg-[#2b1147] text-white shadow-brand transition-transform hover:-translate-y-0.5"
     >
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#2b1147]">
-        {card.instructor?.photoUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={card.instructor.photoUrl}
-            alt={card.instructor.name}
-            className="h-full w-full object-cover object-top"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center">
-            <span className="font-display text-[38px] font-bold text-white/40">
-              {initials}
-            </span>
-          </div>
-        )}
+        {/*
+          The hero is the LEAD's photo. When the lead hasn't uploaded one we
+          fall through to the first instructor who has, rather than showing
+          initials over a path that does have a face available — the point of
+          the card is that a real person teaches this.
+        */}
+        {(() => {
+          const withPhoto = card.instructors.find((i) => i.photoUrl);
+          if (withPhoto) {
+            return (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={withPhoto.photoUrl!}
+                alt={withPhoto.name}
+                className="h-full w-full object-cover object-top"
+              />
+            );
+          }
+          return (
+            <div className="flex h-full w-full items-center justify-center">
+              <span className="font-display text-[38px] font-bold text-white/40">
+                {initials}
+              </span>
+            </div>
+          );
+        })()}
 
         {card.enrolled && (
           <span className="absolute left-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-[11.5px] font-bold text-[#2b1147]">
@@ -54,8 +73,10 @@ export function PathCard({ card, href }: { card: LearnCard; href?: string }) {
       <div className="flex flex-1 flex-col p-4">
         <p className="font-display text-[18px] font-bold leading-snug">{card.title}</p>
 
-        {card.instructor && (
-          <p className="mt-1 text-[13px] text-white/70">{card.instructor.name}</p>
+        {card.instructors.length > 0 && (
+          <div className="mt-2">
+            <InstructorStack instructors={card.instructors} />
+          </div>
         )}
 
         <p className="mt-auto pt-3 text-[12.5px] text-white/60">
@@ -64,9 +85,9 @@ export function PathCard({ card, href }: { card: LearnCard; href?: string }) {
         </p>
 
         {/*
-          The progress bar only exists once you're enrolled. Showing an empty
-          0% bar on every card would read as "you've done nothing here" across a
-          catalog you haven't started, which is discouraging and untrue.
+          The progress bar only exists once you're enrolled. An empty 0% bar on
+          every card would read as "you've done nothing here" across a catalog
+          you haven't started, which is discouraging and untrue.
         */}
         {card.enrolled && card.progress !== null && (
           <div className="mt-2">

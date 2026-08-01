@@ -84,7 +84,7 @@ export default async function LessonPage({
 
           {instructor && (
             <div className="mt-5">
-              <InstructorBadge instructor={instructor} size="sm" />
+              <InstructorBadge instructors={[instructor]} size="sm" />
             </div>
           )}
 

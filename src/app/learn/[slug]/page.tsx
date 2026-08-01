@@ -59,9 +59,14 @@ export default async function LearningPathPage({
             </p>
           )}
 
-          {path.instructor && (
+          {path.instructors.length > 0 && (
             <div className="mt-5">
-              <InstructorBadge instructor={path.instructor} />
+              {/*
+                Lesson counts are shown here because on a multi-teacher path
+                "who taught most of this" is exactly what a learner deciding to
+                enrol, and a buyer deciding to hire, want to know.
+              */}
+              <InstructorBadge instructors={path.instructors} showLessonCounts />
             </div>
           )}
 

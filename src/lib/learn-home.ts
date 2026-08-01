@@ -1,6 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import { isPlayable } from "@/lib/learn";
 import { marketplaceVisibleWhere } from "@/lib/access";
+import {
+  instructorIdsFor,
+  loadInstructors,
+  resolveInstructors,
+  tallyExperts,
+  type Instructor,
+} from "@/lib/learn-instructors";
 
 /**
  * The learner's view of the catalog (brief_learn_experience WS1).
@@ -23,14 +30,12 @@ export type LearnCard = {
   coverImage: string | null;
   lessons: number;
   playable: number;
-  /** The single instructor who owns the whole path (WS6). */
-  instructor: {
-    id: string;
-    name: string;
-    photoUrl: string | null;
-    /** Set when they have a public provider profile to link to. */
-    profileSlug: string | null;
-  } | null;
+  /**
+   * Everyone who teaches a lesson in this path, most-taught first (WS6).
+   * A path can genuinely have several — Advanced Procurement has two, and
+   * "2. Overview" has three — so this is a list, not a person.
+   */
+  instructors: Instructor[];
   enrolled: boolean;
   /** 0–100, of lessons completed. Null when not enrolled. */
   progress: number | null;
@@ -57,20 +62,20 @@ export async function getLearnHome(userId: string | null): Promise<LearnCard[]> 
         group: true,
         audience: true,
         cover_image: true,
-        expert: {
-          select: {
-            id: true,
-            first_name: true,
-            last_name: true,
-            photo_url: true,
-            providerProfile: { select: { id: true } },
-          },
-        },
+        // The declared lead — consulted only when no lesson names anybody.
+        expert_person_id: true,
         courses: {
           select: {
             sections: {
               select: {
-                lessons: { select: { id: true, vimeo_ref: true, production_status: true } },
+                lessons: {
+                  select: {
+                    id: true,
+                    vimeo_ref: true,
+                    production_status: true,
+                    expert_person_id: true,
+                  },
+                },
               },
             },
           },
@@ -92,23 +97,17 @@ export async function getLearnHome(userId: string | null): Promise<LearnCard[]> 
   ]);
 
   /*
-    Which instructors have a profile the marketplace would show? Resolved with
-    the SAME predicate access.ts uses for listings rather than a hand-rolled
-    check, because the two drifting apart is exactly how a listing ends up
-    linking to a page that then refuses to render.
+    ONE directory lookup for the whole catalog. Instructors are derived per
+    path from its lessons, but across 23 paths that resolves to four people —
+    loading them per card would be dozens of round trips for the same rows.
   */
-  const expertProfileIds = paths
-    .map((p) => p.expert?.providerProfile?.id)
-    .filter((x): x is string => Boolean(x));
-  const visibleProfiles = new Set(
-    expertProfileIds.length > 0
-      ? (
-          await prisma.providerProfile.findMany({
-            where: { id: { in: expertProfileIds }, ...marketplaceVisibleWhere() },
-            select: { id: true },
-          })
-        ).map((r) => r.id)
-      : []
+  const directory = await loadInstructors(
+    paths.flatMap((p) =>
+      instructorIdsFor(
+        p.courses.flatMap((c) => c.sections.flatMap((s) => s.lessons)),
+        p.expert_person_id
+      )
+    )
   );
 
   const enrolled = new Set(enrollments.map((e) => e.learning_path_id));
@@ -129,23 +128,11 @@ export async function getLearnHome(userId: string | null): Promise<LearnCard[]> 
       coverImage: p.cover_image,
       lessons: lessons.length,
       playable: lessons.filter(isPlayable).length,
-      instructor: p.expert
-        ? {
-            id: p.expert.id,
-            name:
-              `${p.expert.first_name ?? ""} ${p.expert.last_name ?? ""}`.trim() ||
-              "Panameer",
-            photoUrl: p.expert.photo_url,
-            // Only link to a profile the marketplace would actually show. A
-            // course pointing at a hidden profile is a dead link, which is
-            // worse than no link at all (WS7). Visibility is DERIVED — there is
-            // no publish flag — so the id is present here only when the same
-            // predicate access.ts uses for listings matched it.
-            profileSlug: visibleProfiles.has(p.expert.providerProfile?.id ?? "")
-              ? p.expert.providerProfile!.id
-              : null,
-          }
-        : null,
+      instructors: resolveInstructors(
+        tallyExperts(lessons),
+        directory,
+        p.expert_person_id
+      ),
       enrolled: isEnrolled,
       progress:
         isEnrolled && lessons.length > 0
@@ -200,6 +187,8 @@ export type LearnCourseView = {
   introVideoRef: string | null;
   lessons: number;
   completed: number;
+  /** Derived from THIS course's lessons — a path's courses can differ. */
+  instructors: Instructor[];
   sections: {
     id: string;
     title: string;
@@ -217,7 +206,7 @@ export type LearnPathView = {
   audience: string;
   coverImage: string | null;
   introVideoRef: string | null;
-  instructor: LearnCard["instructor"];
+  instructors: Instructor[];
   enrolled: boolean;
   lessons: number;
   completed: number;
@@ -248,15 +237,8 @@ export async function getLearnPath(
       audience: true,
       cover_image: true,
       intro_video_ref: true,
-      expert: {
-        select: {
-          id: true,
-          first_name: true,
-          last_name: true,
-          photo_url: true,
-          providerProfile: { select: { id: true } },
-        },
-      },
+      // The declared lead — a fallback for a path whose lessons name nobody.
+      expert_person_id: true,
       courses: {
         orderBy: [{ sort_order: "asc" }, { title: "asc" }],
         select: {
@@ -282,6 +264,7 @@ export async function getLearnPath(
                   run_time: true,
                   vimeo_ref: true,
                   production_status: true,
+                  expert_person_id: true,
                 },
               },
             },
@@ -292,7 +275,11 @@ export async function getLearnPath(
   });
   if (!path) return null;
 
-  const [enrollment, progress, visibleProfile] = await Promise.all([
+  const allLessonRows = path.courses.flatMap((c) =>
+    c.sections.flatMap((s) => s.lessons)
+  );
+
+  const [enrollment, progress, directory] = await Promise.all([
     userId
       ? prisma.learnEnrollment.findUnique({
           where: { user_id_learning_path_id: { user_id: userId, learning_path_id: path.id } },
@@ -305,12 +292,7 @@ export async function getLearnPath(
           select: { lesson_id: true },
         })
       : Promise.resolve([]),
-    path.expert?.providerProfile?.id
-      ? prisma.providerProfile.findFirst({
-          where: { id: path.expert.providerProfile.id, ...marketplaceVisibleWhere() },
-          select: { id: true },
-        })
-      : Promise.resolve(null),
+    loadInstructors(instructorIdsFor(allLessonRows, path.expert_person_id)),
   ]);
 
   const done = new Set(progress.map((p) => p.lesson_id));
@@ -330,6 +312,7 @@ export async function getLearnPath(
       })),
     }));
     const flat = sections.flatMap((s) => s.lessons);
+    const courseLessonRows = c.sections.flatMap((s) => s.lessons);
     return {
       id: c.id,
       title: c.title,
@@ -340,6 +323,15 @@ export async function getLearnPath(
       introVideoRef: c.intro_video_ref,
       lessons: flat.length,
       completed: flat.filter((l) => l.completed).length,
+      // A course's instructors come from ITS OWN lessons: within one path the
+      // courses can be taught by different people, and saying otherwise on a
+      // course page would credit the wrong person on the very screen a buyer
+      // clicks through to their profile from.
+      instructors: resolveInstructors(
+        tallyExperts(courseLessonRows),
+        directory,
+        path.expert_person_id
+      ),
       sections,
     };
   });
@@ -356,16 +348,11 @@ export async function getLearnPath(
     audience: path.audience,
     coverImage: path.cover_image,
     introVideoRef: path.intro_video_ref,
-    instructor: path.expert
-      ? {
-          id: path.expert.id,
-          name:
-            `${path.expert.first_name ?? ""} ${path.expert.last_name ?? ""}`.trim() ||
-            "Panameer",
-          photoUrl: path.expert.photo_url,
-          profileSlug: visibleProfile?.id ?? null,
-        }
-      : null,
+    instructors: resolveInstructors(
+      tallyExperts(allLessonRows),
+      directory,
+      path.expert_person_id
+    ),
     enrolled: Boolean(enrollment),
     lessons: allLessons.length,
     completed,
@@ -392,8 +379,12 @@ export type LearnLessonView = {
   path: { id: string; title: string; slug: string; enrolled: boolean };
   course: { id: string; title: string; slug: string };
   section: { id: string; title: string };
-  /** The instructor for this lesson: its own if set, otherwise the path's. */
-  instructor: LearnCard["instructor"];
+  /**
+   * The ONE instructor for this video. A lesson has a single teacher even when
+   * its path has several — this is the level the data was always recorded at,
+   * and the level the picture-in-picture has to be right about.
+   */
+  instructor: Instructor | null;
   /** Flat running order across the whole path, for prev/next and "X of N". */
   position: number;
   total: number;
@@ -428,34 +419,23 @@ export async function getLearnLesson(
     select: {
       vimeo_ref: true,
       thumbnail_url: true,
-      expert: {
-        select: {
-          id: true,
-          first_name: true,
-          last_name: true,
-          photo_url: true,
-          providerProfile: { select: { id: true } },
-        },
-      },
+      expert_person_id: true,
     },
   });
 
-  let instructor = path.instructor;
-  if (own?.expert) {
-    const visible = own.expert.providerProfile
-      ? await prisma.providerProfile.findFirst({
-          where: { id: own.expert.providerProfile.id, ...marketplaceVisibleWhere() },
-          select: { id: true },
-        })
-      : null;
-    instructor = {
-      id: own.expert.id,
-      name:
-        `${own.expert.first_name ?? ""} ${own.expert.last_name ?? ""}`.trim() || "Panameer",
-      photoUrl: own.expert.photo_url,
-      profileSlug: visible?.id ?? null,
-    };
+  /*
+    This lesson's OWN expert wins. Falling back to the path's lead is only for
+    a lesson that names nobody — showing the lead's face over someone else's
+    video would be a straightforward misattribution, and it is the PIP, so it
+    is the most visible claim on the page.
+  */
+  let instructor: Instructor | null = null;
+  if (own?.expert_person_id) {
+    const directory = await loadInstructors([own.expert_person_id]);
+    const person = directory.get(own.expert_person_id);
+    if (person) instructor = { ...person, lessons: 1 };
   }
+  if (!instructor) instructor = path.instructors[0] ?? null;
 
   return {
     lesson: {
@@ -497,6 +477,8 @@ export type TaughtPath = {
   slug: string;
   group: string | null;
   lessons: number;
+  /** How many of those lessons this particular person teaches. */
+  taughtByThem: number;
   playable: number;
   coverImage: string | null;
 };
@@ -516,7 +498,30 @@ export type TaughtPath = {
  */
 export async function getPathsTaughtBy(personId: string): Promise<TaughtPath[]> {
   const paths = await prisma.learningPath.findMany({
-    where: { expert_person_id: personId, status: "PUBLISHED" },
+    /*
+      TEACHING IS PER-LESSON (WS6, corrected), so a path counts as theirs when
+      they teach ANY lesson in it — not only when they are its declared lead.
+      The first version matched on expert_person_id alone and would have shown
+      Linus none of Advanced Procurement despite his 18 lessons in it, on the
+      one surface built to prove he teaches this.
+
+      The declared lead still qualifies, for a path whose lessons name nobody.
+    */
+    where: {
+      status: "PUBLISHED",
+      OR: [
+        { expert_person_id: personId },
+        {
+          courses: {
+            some: {
+              sections: {
+                some: { lessons: { some: { expert_person_id: personId } } },
+              },
+            },
+          },
+        },
+      ],
+    },
     orderBy: [{ group: "asc" }, { sort_order: "asc" }, { title: "asc" }],
     select: {
       id: true,
@@ -528,7 +533,13 @@ export async function getPathsTaughtBy(personId: string): Promise<TaughtPath[]> 
         select: {
           sections: {
             select: {
-              lessons: { select: { vimeo_ref: true, production_status: true } },
+              lessons: {
+                select: {
+                  vimeo_ref: true,
+                  production_status: true,
+                  expert_person_id: true,
+                },
+              },
             },
           },
         },
@@ -538,12 +549,17 @@ export async function getPathsTaughtBy(personId: string): Promise<TaughtPath[]> 
 
   return paths.map((p) => {
     const lessons = p.courses.flatMap((c) => c.sections.flatMap((s) => s.lessons));
+    const mine = lessons.filter((l) => l.expert_person_id === personId).length;
     return {
       id: p.id,
       title: p.title,
       slug: p.slug,
       group: p.group,
       lessons: lessons.length,
+      // How many of them THIS person teaches. On a co-taught path, claiming all
+      // 105 lessons for someone who taught 18 would be the misrepresentation
+      // this whole correction exists to remove.
+      taughtByThem: mine,
       playable: lessons.filter(isPlayable).length,
       coverImage: p.cover_image,
     };

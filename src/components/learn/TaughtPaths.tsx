@@ -27,7 +27,9 @@ export function TaughtPaths({
   if (paths.length === 0) return null;
 
   const firstName = name.split(/\s+/)[0] || name;
-  const totalLessons = paths.reduce((n, p) => n + p.lessons, 0);
+  // Count what THEY teach, not what the paths contain. A co-taught path where
+  // they gave 18 of 105 lessons must not be summed as 105.
+  const totalLessons = paths.reduce((n, p) => n + (p.taughtByThem || p.lessons), 0);
 
   return (
     <section className="rounded-brand border border-line bg-white p-6">
@@ -57,7 +59,14 @@ export function TaughtPaths({
               <p className="font-bold leading-snug">{p.title}</p>
               {p.group && <p className="mt-0.5 text-[13px] text-ink-2">{p.group}</p>}
               <p className="mt-auto pt-2 text-[12.5px] text-ink-2">
-                {p.lessons} lesson{p.lessons === 1 ? "" : "s"}
+                {/*
+                  On a co-taught path, say which share is theirs — "18 of 105
+                  lessons" is both more honest and more useful than either
+                  number alone.
+                */}
+                {p.taughtByThem > 0 && p.taughtByThem < p.lessons
+                  ? `${p.taughtByThem} of ${p.lessons} lessons`
+                  : `${p.lessons} lesson${p.lessons === 1 ? "" : "s"}`}
                 {p.playable > 0 && (
                   <span className="text-emerald-700"> · {p.playable} ready to watch</span>
                 )}
