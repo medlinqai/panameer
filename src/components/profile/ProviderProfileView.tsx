@@ -220,9 +220,14 @@ export function ProviderProfileViewPage({
             )}
             <WorkHistoryBody
               condensed={condensedWorkHistory}
-              // WS5 — the "You're live" page caps at 5; every other surface
-              // shows the whole history.
-              cap={condensedWorkHistory ? 5 : undefined}
+              /*
+                WS4b — the cap moved to MY PROFILE. It used to live on the
+                "You're live" page, which this brief retires (E149), so the
+                decision it embodied — a long history should not bury the rest
+                of the profile — needed a new home. The profile-as-buyers-see-it
+                is the right one: it is the surface that scrolls.
+              */
+              cap={5}
               employers={p.employers}
               projects={p.projects}
               isOwner={p.isOwner}
