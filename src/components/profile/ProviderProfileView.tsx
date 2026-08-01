@@ -2,6 +2,8 @@ import Link from "next/link";
 import { OwnerAiPass, OwnerResumeImport } from "@/components/profile/OwnerAiPass";
 import { formatCents, rateBreakdown } from "@/lib/display";
 import type { ProviderProfileView } from "@/lib/provider-profile-view";
+import type { TaughtPath } from "@/lib/learn-home";
+import { TaughtPaths } from "@/components/learn/TaughtPaths";
 import {
   ProfileCard,
   ProfileHero,
@@ -61,7 +63,14 @@ function EditLink({
   );
 }
 
-export function ProviderProfileViewPage({ p }: { p: ProviderProfileView }) {
+export function ProviderProfileViewPage({
+  p,
+  taughtPaths = [],
+}: {
+  p: ProviderProfileView;
+  /** Learn paths this person instructs (E137). Empty renders nothing at all. */
+  taughtPaths?: TaughtPath[];
+}) {
   const { youGet } = rateBreakdown(p.rates.hourlyCents, p.serviceFeeBps);
   // E074 — Solo Projects is null-employer ONLY; everything else belongs to its
   // employer in Work History.
@@ -393,6 +402,21 @@ export function ProviderProfileViewPage({ p }: { p: ProviderProfileView }) {
             </Empty>
           </ProfileCard>
         </div>
+
+        {/*
+          E137 — the courses half of the profile↔courses loop, on the provider's
+          own profile too so they can see what a buyer sees. Renders nothing
+          when they teach nothing.
+        */}
+        {taughtPaths.length > 0 && (
+          <div className="mt-6">
+            <TaughtPaths
+              paths={taughtPaths}
+              name={`${p.person.firstName ?? ""} ${p.person.lastName ?? ""}`.trim()}
+              isOwner={p.isOwner}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

@@ -486,3 +486,82 @@ export async function getLearnLesson(
     pathProgress: path.progress,
   };
 }
+
+// ---------------------------------------------------------------------------
+// WS7 — profile ↔ courses (E137)
+// ---------------------------------------------------------------------------
+
+export type TaughtPath = {
+  id: string;
+  title: string;
+  slug: string;
+  group: string | null;
+  lessons: number;
+  playable: number;
+  coverImage: string | null;
+};
+
+/**
+ * The published paths a person teaches — the "Learn from <name>" section on
+ * their marketplace profile (E137).
+ *
+ * Takes a PERSON id, not a provider-profile id, because `expert_person_id`
+ * points at a Person: the schema is explicit that an instructor needn't be a
+ * marketplace provider, and going through the profile would silently drop
+ * anyone who teaches without selling.
+ *
+ * PUBLISHED ONLY. A draft path is invisible everywhere else; surfacing it on a
+ * public profile would be a hole in the same gate, and the link would 404 for
+ * whoever clicked it.
+ */
+export async function getPathsTaughtBy(personId: string): Promise<TaughtPath[]> {
+  const paths = await prisma.learningPath.findMany({
+    where: { expert_person_id: personId, status: "PUBLISHED" },
+    orderBy: [{ group: "asc" }, { sort_order: "asc" }, { title: "asc" }],
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      group: true,
+      cover_image: true,
+      courses: {
+        select: {
+          sections: {
+            select: {
+              lessons: { select: { vimeo_ref: true, production_status: true } },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  return paths.map((p) => {
+    const lessons = p.courses.flatMap((c) => c.sections.flatMap((s) => s.lessons));
+    return {
+      id: p.id,
+      title: p.title,
+      slug: p.slug,
+      group: p.group,
+      lessons: lessons.length,
+      playable: lessons.filter(isPlayable).length,
+      coverImage: p.cover_image,
+    };
+  });
+}
+
+/**
+ * Same, addressed by PROVIDER PROFILE id — what the marketplace profile page
+ * has in hand. Resolves the Person itself rather than making every caller do
+ * the join, and returns [] rather than throwing when the profile is gone.
+ */
+export async function getPathsTaughtByProfile(
+  providerProfileId: string
+): Promise<TaughtPath[]> {
+  const profile = await prisma.providerProfile.findUnique({
+    where: { id: providerProfileId },
+    select: { person_id: true },
+  });
+  if (!profile) return [];
+  return getPathsTaughtBy(profile.person_id);
+}

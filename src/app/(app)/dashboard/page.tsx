@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getSessionViewer } from "@/lib/session";
 import { getOwnProviderProfileView } from "@/lib/provider-profile-view";
 import { ProviderProfileViewPage } from "@/components/profile/ProviderProfileView";
+import { getPathsTaughtByProfile } from "@/lib/learn-home";
 import { Card } from "@/components/Card";
 import { prisma } from "@/lib/prisma";
 import { displayFirstName } from "@/lib/display";
@@ -35,7 +36,12 @@ export default async function DashboardPage() {
   }
 
   const profile = await getOwnProviderProfileView(viewer.userId, viewer);
-  if (profile) return <ProviderProfileViewPage p={profile} />;
+  if (profile) return (
+      <ProviderProfileViewPage
+        p={profile}
+        taughtPaths={await getPathsTaughtByProfile(profile.id)}
+      />
+    );
 
   // --- Not a provider: buyer / unfinished account ---------------------------
   const person = await prisma.person.findUnique({

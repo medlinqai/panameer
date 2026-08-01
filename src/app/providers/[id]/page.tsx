@@ -4,6 +4,8 @@ import { ProfileView } from "@/components/ProfileView";
 import { getPublicProviderProfile } from "@/lib/providers";
 import { getSessionViewer } from "@/lib/session";
 import type { PublicProviderProfile } from "@/lib/types";
+import { getPathsTaughtByProfile } from "@/lib/learn-home";
+import { TaughtPaths } from "@/components/learn/TaughtPaths";
 
 /**
  * Public provider profile — a marketplace surface. Not behind the auth gate;
@@ -23,6 +25,7 @@ export default async function PublicProviderPage({
   const raw = await getPublicProviderProfile(id, { viewerUserId: viewer?.userId });
   if (!raw) notFound();
   const profile = raw as unknown as PublicProviderProfile;
+  const taught = await getPathsTaughtByProfile(profile.id);
 
   return (
     <div className="flex min-h-full flex-col">
@@ -41,6 +44,15 @@ export default async function PublicProviderPage({
       </header>
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6">
         <ProfileView profile={profile} />
+        {/* E137 — the courses half of the profile↔courses loop. */}
+        {taught.length > 0 && (
+          <div className="mt-8">
+            <TaughtPaths
+              paths={taught}
+              name={`${profile.person.firstName} ${profile.person.lastName}`.trim()}
+            />
+          </div>
+        )}
       </main>
     </div>
   );
