@@ -4,6 +4,22 @@ dotenv.config({ path: path.resolve(process.cwd(), ".env.local") });
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { writeFileSync } from "fs";
+
+/**
+ * Dump the Learn catalog to JSON for the thumbnail matcher
+ * (brief_learn_thumbnail_import).
+ *
+ *   npm run learn:export-catalog -- <out.json>
+ *
+ * Step 1 of a three-step pipeline that keeps the risky part read-only:
+ *   1. this — the catalog as it stands;
+ *   2. scripts/learn_thumbnails.py — matches local images to it, writes a plan;
+ *   3. prisma/apply-learn-thumbnails.ts — uploads and sets the columns.
+ *
+ * The matcher is Python because the work is filesystem walking and string
+ * comparison, and it must never hold a database handle: it cannot write if it
+ * cannot connect.
+ */
 const p = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) });
 async function main() {
   const paths = await p.learningPath.findMany({
