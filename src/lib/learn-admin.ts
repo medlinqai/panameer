@@ -363,3 +363,586 @@ export async function deletePath(id: string) {
   await prisma.learningPath.delete({ where: { id } });
   return { ok: true as const };
 }
+
+// ---------------------------------------------------------------------------
+// WS2 — the nested structure (Course → Section → Lesson)
+// ---------------------------------------------------------------------------
+
+/**
+ * One path with its whole outline.
+ *
+ * Loaded in ONE query rather than lazily per branch. The largest path in the
+ * catalog is 105 lessons across 6 courses — small enough that a single read is
+ * cheaper than the round-trips, and it means expanding a course is instant
+ * rather than a spinner. The COLLAPSING is a rendering decision (see the
+ * editor), not a loading one.
+ */
+export async function getPathTree(id: string) {
+  const path = await prisma.learningPath.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      summary: true,
+      audience: true,
+      group: true,
+      status: true,
+      cover_image: true,
+      intro_video_ref: true,
+      expert_person_id: true,
+      expert: { select: { first_name: true, last_name: true } },
+      courses: {
+        orderBy: [{ sort_order: "asc" }, { title: "asc" }],
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          summary: true,
+          style: true,
+          sort_order: true,
+          thumbnail_url: true,
+          intro_video_ref: true,
+          sections: {
+            orderBy: [{ sort_order: "asc" }, { title: "asc" }],
+            select: {
+              id: true,
+              title: true,
+              description: true,
+              thumbnail_url: true,
+              sort_order: true,
+              lessons: {
+                orderBy: [{ sort_order: "asc" }, { title: "asc" }],
+                select: {
+                  id: true,
+                  title: true,
+                  description: true,
+                  run_time: true,
+                  vimeo_ref: true,
+                  thumbnail_url: true,
+                  production_status: true,
+                  sort_order: true,
+                  expert_person_id: true,
+                  expert: { select: { first_name: true, last_name: true } },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+  if (!path) throw new LearnAdminError("That learning path no longer exists.", "NOT_FOUND");
+
+  const name = (e: { first_name: string | null; last_name: string | null } | null) =>
+    e ? `${e.first_name ?? ""} ${e.last_name ?? ""}`.trim() || null : null;
+
+  return {
+    id: path.id,
+    title: path.title,
+    slug: path.slug,
+    summary: path.summary,
+    audience: path.audience,
+    group: path.group,
+    status: path.status,
+    coverImage: path.cover_image,
+    introVideoRef: path.intro_video_ref,
+    expertPersonId: path.expert_person_id,
+    expert: name(path.expert),
+    courses: path.courses.map((c) => ({
+      id: c.id,
+      title: c.title,
+      slug: c.slug,
+      summary: c.summary,
+      style: c.style,
+      sortOrder: c.sort_order,
+      thumbnailUrl: c.thumbnail_url,
+      introVideoRef: c.intro_video_ref,
+      sections: c.sections.map((s) => ({
+        id: s.id,
+        title: s.title,
+        description: s.description,
+        thumbnailUrl: s.thumbnail_url,
+        sortOrder: s.sort_order,
+        lessons: s.lessons.map((l) => ({
+          id: l.id,
+          title: l.title,
+          description: l.description,
+          runTime: l.run_time,
+          vimeoRef: l.vimeo_ref,
+          thumbnailUrl: l.thumbnail_url,
+          productionStatus: l.production_status,
+          sortOrder: l.sort_order,
+          expertPersonId: l.expert_person_id,
+          expert: name(l.expert),
+        })),
+      })),
+    })),
+  };
+}
+
+export type PathTree = Awaited<ReturnType<typeof getPathTree>>;
+
+/** Next free ordinal in a list, so a new child lands at the end. */
+async function nextOrder(
+  kind: "course" | "section" | "lesson",
+  parentId: string
+): Promise<number> {
+  const last =
+    kind === "course"
+      ? await prisma.course.findFirst({
+          where: { learning_path_id: parentId },
+          orderBy: { sort_order: "desc" },
+          select: { sort_order: true },
+        })
+      : kind === "section"
+        ? await prisma.section.findFirst({
+            where: { course_id: parentId },
+            orderBy: { sort_order: "desc" },
+            select: { sort_order: true },
+          })
+        : await prisma.lesson.findFirst({
+            where: { section_id: parentId },
+            orderBy: { sort_order: "desc" },
+            select: { sort_order: true },
+          });
+  return (last?.sort_order ?? -1) + 1;
+}
+
+export type CourseInput = {
+  title: string;
+  slug?: string | null;
+  summary?: string | null;
+  style?: string | null;
+  thumbnailUrl?: string | null;
+  introVideoRef?: string | null;
+};
+
+export async function createCourse(learningPathId: string, input: CourseInput) {
+  const path = await prisma.learningPath.findUnique({
+    where: { id: learningPathId },
+    select: { id: true },
+  });
+  if (!path) throw new LearnAdminError("That learning path no longer exists.", "NOT_FOUND");
+
+  return prisma.course.create({
+    data: {
+      learning_path_id: learningPathId,
+      title: input.title.trim(),
+      slug: await uniqueCourseSlug(learningPathId, input.slug?.trim() || input.title),
+      summary: input.summary?.trim() || null,
+      style: (input.style || null) as never,
+      thumbnail_url: input.thumbnailUrl?.trim() || null,
+      intro_video_ref: input.introVideoRef?.trim() || null,
+      sort_order: await nextOrder("course", learningPathId),
+      is_custom: true,
+    },
+    select: { id: true },
+  });
+}
+
+export async function updateCourse(id: string, input: CourseInput) {
+  const existing = await prisma.course.findUnique({
+    where: { id },
+    select: { id: true, slug: true, learning_path_id: true },
+  });
+  if (!existing) throw new LearnAdminError("That course no longer exists.", "NOT_FOUND");
+
+  const wanted = input.slug?.trim() || input.title;
+  const slug =
+    slugify(wanted) === existing.slug
+      ? existing.slug
+      : await uniqueCourseSlug(existing.learning_path_id, wanted, id);
+
+  return prisma.course.update({
+    where: { id },
+    data: {
+      title: input.title.trim(),
+      slug,
+      summary: input.summary?.trim() || null,
+      style: (input.style || null) as never,
+      thumbnail_url: input.thumbnailUrl?.trim() || null,
+      intro_video_ref: input.introVideoRef?.trim() || null,
+      is_custom: true,
+    },
+    select: { id: true },
+  });
+}
+
+export type SectionInput = {
+  title: string;
+  description?: string | null;
+  thumbnailUrl?: string | null;
+};
+
+/**
+ * (course, title) is a Section's natural key — the XLS carries no ids, so that
+ * pair IS its identity and the database enforces it. A duplicate title has to
+ * come back as an explanation, not as a raw unique-constraint error.
+ */
+export async function createSection(courseId: string, input: SectionInput) {
+  const course = await prisma.course.findUnique({
+    where: { id: courseId },
+    select: { id: true },
+  });
+  if (!course) throw new LearnAdminError("That course no longer exists.", "NOT_FOUND");
+
+  const clash = await prisma.section.findFirst({
+    where: { course_id: courseId, title: input.title.trim() },
+    select: { id: true },
+  });
+  if (clash) {
+    throw new LearnAdminError(
+      "This course already has a section with that title. Section titles have to be unique inside a course.",
+      "CONFLICT"
+    );
+  }
+
+  return prisma.section.create({
+    data: {
+      course_id: courseId,
+      title: input.title.trim(),
+      description: input.description?.trim() || null,
+      thumbnail_url: input.thumbnailUrl?.trim() || null,
+      sort_order: await nextOrder("section", courseId),
+      is_custom: true,
+    },
+    select: { id: true },
+  });
+}
+
+export async function updateSection(id: string, input: SectionInput) {
+  const existing = await prisma.section.findUnique({
+    where: { id },
+    select: { id: true, course_id: true },
+  });
+  if (!existing) throw new LearnAdminError("That section no longer exists.", "NOT_FOUND");
+
+  const clash = await prisma.section.findFirst({
+    where: { course_id: existing.course_id, title: input.title.trim(), NOT: { id } },
+    select: { id: true },
+  });
+  if (clash) {
+    throw new LearnAdminError(
+      "Another section in this course already has that title.",
+      "CONFLICT"
+    );
+  }
+
+  return prisma.section.update({
+    where: { id },
+    data: {
+      title: input.title.trim(),
+      description: input.description?.trim() || null,
+      thumbnail_url: input.thumbnailUrl?.trim() || null,
+      is_custom: true,
+    },
+    select: { id: true },
+  });
+}
+
+/**
+ * Deleting a course or a section takes its children with it (the FK cascades),
+ * so both refuse while children exist — same reasoning as deletePath. A lesson
+ * has no children and deletes directly, except that progress rows are checked
+ * first: those belong to learners.
+ */
+export async function deleteCourse(id: string) {
+  const course = await prisma.course.findUnique({
+    where: { id },
+    select: { id: true, _count: { select: { sections: true } } },
+  });
+  if (!course) throw new LearnAdminError("That course no longer exists.", "NOT_FOUND");
+  if (course._count.sections > 0) {
+    throw new LearnAdminError(
+      `This course still has ${course._count.sections} section${course._count.sections === 1 ? "" : "s"}. Delete those first — there's no undo.`,
+      "BLOCKED"
+    );
+  }
+  await prisma.course.delete({ where: { id } });
+  return { ok: true as const };
+}
+
+export async function deleteSection(id: string) {
+  const section = await prisma.section.findUnique({
+    where: { id },
+    select: { id: true, _count: { select: { lessons: true } } },
+  });
+  if (!section) throw new LearnAdminError("That section no longer exists.", "NOT_FOUND");
+  if (section._count.lessons > 0) {
+    throw new LearnAdminError(
+      `This section still has ${section._count.lessons} lesson${section._count.lessons === 1 ? "" : "s"}. Delete those first — there's no undo.`,
+      "BLOCKED"
+    );
+  }
+  await prisma.section.delete({ where: { id } });
+  return { ok: true as const };
+}
+
+export async function deleteLesson(id: string) {
+  const lesson = await prisma.lesson.findUnique({
+    where: { id },
+    select: { id: true, title: true, _count: { select: { progress: true } } },
+  });
+  if (!lesson) throw new LearnAdminError("That lesson no longer exists.", "NOT_FOUND");
+  if (lesson._count.progress > 0) {
+    throw new LearnAdminError(
+      `${lesson._count.progress} learner${lesson._count.progress === 1 ? " has" : "s have"} completed this lesson. Deleting it would erase that from their record.`,
+      "BLOCKED"
+    );
+  }
+  await prisma.lesson.delete({ where: { id } });
+  return { ok: true as const };
+}
+
+/**
+ * Move one child up or down among its siblings.
+ *
+ * Ordinals are NOT assumed to be dense or unique — the XLS import wrote them
+ * from spreadsheet row order, and nothing has enforced them since. So this
+ * reads the actual sibling order, swaps the two neighbours in that list, and
+ * REWRITES every ordinal in one transaction. Swapping the two rows' stored
+ * values instead would be a no-op whenever they happen to be equal, which on
+ * imported data is common.
+ */
+export async function reorder(
+  kind: "course" | "section" | "lesson",
+  id: string,
+  direction: "up" | "down"
+) {
+  const siblings = await siblingsOf(kind, id);
+  const i = siblings.findIndex((s) => s.id === id);
+  if (i < 0) throw new LearnAdminError("That item no longer exists.", "NOT_FOUND");
+
+  const j = direction === "up" ? i - 1 : i + 1;
+  if (j < 0 || j >= siblings.length) return { ok: true as const, moved: false };
+
+  const order = [...siblings];
+  [order[i], order[j]] = [order[j], order[i]];
+
+  const table =
+    kind === "course" ? prisma.course : kind === "section" ? prisma.section : prisma.lesson;
+  await prisma.$transaction(
+    order.map((row, index) =>
+      // @ts-expect-error — the three delegates share this shape but not a type
+      table.update({ where: { id: row.id }, data: { sort_order: index } })
+    )
+  );
+  return { ok: true as const, moved: true };
+}
+
+async function siblingsOf(
+  kind: "course" | "section" | "lesson",
+  id: string
+): Promise<{ id: string }[]> {
+  if (kind === "course") {
+    const row = await prisma.course.findUnique({
+      where: { id },
+      select: { learning_path_id: true },
+    });
+    if (!row) return [];
+    return prisma.course.findMany({
+      where: { learning_path_id: row.learning_path_id },
+      orderBy: [{ sort_order: "asc" }, { title: "asc" }],
+      select: { id: true },
+    });
+  }
+  if (kind === "section") {
+    const row = await prisma.section.findUnique({
+      where: { id },
+      select: { course_id: true },
+    });
+    if (!row) return [];
+    return prisma.section.findMany({
+      where: { course_id: row.course_id },
+      orderBy: [{ sort_order: "asc" }, { title: "asc" }],
+      select: { id: true },
+    });
+  }
+  const row = await prisma.lesson.findUnique({
+    where: { id },
+    select: { section_id: true },
+  });
+  if (!row) return [];
+  return prisma.lesson.findMany({
+    where: { section_id: row.section_id },
+    orderBy: [{ sort_order: "asc" }, { title: "asc" }],
+    select: { id: true },
+  });
+}
+
+// ---------------------------------------------------------------------------
+// WS3 — the Lesson editor and the video URL
+// ---------------------------------------------------------------------------
+
+export type LessonInput = {
+  title: string;
+  description?: string | null;
+  runTime?: string | null;
+  vimeoRef?: string | null;
+  thumbnailUrl?: string | null;
+  productionStatus?: string | null;
+  expertPersonId?: string | null;
+};
+
+/**
+ * Normalise a pasted Vimeo reference on the way IN.
+ *
+ * `vimeoEmbedUrl` already tolerates every shape at render time, so storing the
+ * raw paste would work — but then the column holds four formats for the same
+ * thing and every future consumer has to tolerate all four too. Normalising
+ * once, here, means the database says what it means. Returns null for a value
+ * we can't make sense of, and the caller rejects it rather than storing a
+ * string that will silently never play.
+ */
+export function normalizeVimeoRef(input: string): string | null {
+  const raw = input.trim();
+  if (!raw) return null;
+  if (/^\d+$/.test(raw)) return raw;
+  const m = /vimeo\.com\/(?:channels\/[^/]+\/|video\/)?(\d+)(?:[/?]([0-9a-z]+))?/i.exec(raw);
+  if (!m) return null;
+  // Keep the unlisted-video hash: without it a private video 404s in the player.
+  return m[2] ? `${m[1]}/${m[2]}` : m[1];
+}
+
+export async function updateLesson(id: string, input: LessonInput) {
+  const existing = await prisma.lesson.findUnique({
+    where: { id },
+    select: { id: true, section_id: true },
+  });
+  if (!existing) throw new LearnAdminError("That lesson no longer exists.", "NOT_FOUND");
+
+  const clash = await prisma.lesson.findFirst({
+    where: { section_id: existing.section_id, title: input.title.trim(), NOT: { id } },
+    select: { id: true },
+  });
+  if (clash) {
+    throw new LearnAdminError(
+      "Another lesson in this section already has that title.",
+      "CONFLICT"
+    );
+  }
+
+  let vimeo: string | null = null;
+  if (input.vimeoRef?.trim()) {
+    vimeo = normalizeVimeoRef(input.vimeoRef);
+    if (!vimeo) {
+      throw new LearnAdminError(
+        "That isn't a Vimeo link or id we can play. Paste the video's URL from Vimeo, or its numeric id.",
+        "INVALID"
+      );
+    }
+  }
+
+  return prisma.lesson.update({
+    where: { id },
+    data: {
+      title: input.title.trim(),
+      description: input.description?.trim() || null,
+      run_time: input.runTime?.trim() || null,
+      vimeo_ref: vimeo,
+      thumbnail_url: input.thumbnailUrl?.trim() || null,
+      ...(input.productionStatus
+        ? { production_status: input.productionStatus as never }
+        : {}),
+      expert_person_id: input.expertPersonId || null,
+      is_custom: true,
+    },
+    select: { id: true },
+  });
+}
+
+export async function createLesson(sectionId: string, input: LessonInput) {
+  const section = await prisma.section.findUnique({
+    where: { id: sectionId },
+    select: { id: true },
+  });
+  if (!section) throw new LearnAdminError("That section no longer exists.", "NOT_FOUND");
+
+  const clash = await prisma.lesson.findFirst({
+    where: { section_id: sectionId, title: input.title.trim() },
+    select: { id: true },
+  });
+  if (clash) {
+    throw new LearnAdminError(
+      "This section already has a lesson with that title. Lesson titles have to be unique inside a section.",
+      "CONFLICT"
+    );
+  }
+
+  let vimeo: string | null = null;
+  if (input.vimeoRef?.trim()) {
+    vimeo = normalizeVimeoRef(input.vimeoRef);
+    if (!vimeo) {
+      throw new LearnAdminError(
+        "That isn't a Vimeo link or id we can play.",
+        "INVALID"
+      );
+    }
+  }
+
+  return prisma.lesson.create({
+    data: {
+      section_id: sectionId,
+      title: input.title.trim(),
+      description: input.description?.trim() || null,
+      run_time: input.runTime?.trim() || null,
+      vimeo_ref: vimeo,
+      thumbnail_url: input.thumbnailUrl?.trim() || null,
+      production_status: (input.productionStatus ?? "IN_CONCEPT") as never,
+      expert_person_id: input.expertPersonId || null,
+      sort_order: await nextOrder("lesson", sectionId),
+      is_custom: true,
+    },
+    select: { id: true },
+  });
+}
+
+/**
+ * Set just the URL — the fast path for the per-section table, where an admin
+ * pastes down a column and never opens a lesson.
+ *
+ * Setting a URL also ADVANCES the production status to URL_ADDED_TO_LESSON when
+ * it is behind, because otherwise the lesson still wouldn't play: the gate in
+ * learn.ts needs both halves. Filling in the URL and having nothing happen is
+ * precisely the confusion this brief exists to remove. A status already further
+ * along the ladder (BLOG_CREATED, BLOG_RELEASED) is left alone — that is
+ * forward progress we shouldn't undo.
+ */
+export async function setLessonUrl(id: string, rawUrl: string | null) {
+  const lesson = await prisma.lesson.findUnique({
+    where: { id },
+    select: { id: true, production_status: true },
+  });
+  if (!lesson) throw new LearnAdminError("That lesson no longer exists.", "NOT_FOUND");
+
+  if (!rawUrl || !rawUrl.trim()) {
+    await prisma.lesson.update({
+      where: { id },
+      data: { vimeo_ref: null, is_custom: true },
+    });
+    return { ok: true as const, vimeoRef: null, statusChanged: false };
+  }
+
+  const vimeo = normalizeVimeoRef(rawUrl);
+  if (!vimeo) {
+    throw new LearnAdminError(
+      "That isn't a Vimeo link or id we can play. Paste the video's URL from Vimeo, or its numeric id.",
+      "INVALID"
+    );
+  }
+
+  const alreadyClaims = (
+    ["URL_ADDED_TO_LESSON", "BLOG_CREATED", "BLOG_RELEASED"] as string[]
+  ).includes(lesson.production_status);
+
+  await prisma.lesson.update({
+    where: { id },
+    data: {
+      vimeo_ref: vimeo,
+      ...(alreadyClaims ? {} : { production_status: "URL_ADDED_TO_LESSON" as never }),
+      is_custom: true,
+    },
+  });
+  return { ok: true as const, vimeoRef: vimeo, statusChanged: !alreadyClaims };
+}
