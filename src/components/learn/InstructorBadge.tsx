@@ -113,7 +113,7 @@ export function InstructorStack({ instructors }: { instructors: Instructor[] }) 
           <span key={ins.id} className={i > 0 ? "-ml-2" : ""}>
             <InstructorAvatar
               instructor={ins}
-              className="h-6 w-6 ring-2 ring-[#2b1147]"
+              className="h-6 w-6 ring-2 ring-learn-card"
             />
           </span>
         ))}

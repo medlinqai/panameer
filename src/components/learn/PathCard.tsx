@@ -33,7 +33,7 @@ export function PathCard({ card, href }: { card: LearnCard; href?: string }) {
   return (
     <Link
       href={href ?? `/learn/${card.slug}`}
-      className="group flex flex-col overflow-hidden rounded-brand bg-[#2b1147] text-white shadow-brand transition-transform hover:-translate-y-0.5"
+      className="group flex flex-col overflow-hidden rounded-brand bg-learn-card text-white shadow-brand transition-transform hover:-translate-y-0.5"
     >
       {/*
         16:9 when the card carries authored cover art, 4:3 when it is fronted by
@@ -43,7 +43,7 @@ export function PathCard({ card, href }: { card: LearnCard; href?: string }) {
       */}
       <div
         className={
-          "relative w-full overflow-hidden bg-[#2b1147] " +
+          "relative w-full overflow-hidden bg-learn-card " +
           (card.coverImage ? "aspect-video" : "aspect-[4/3]")
         }
       >
@@ -90,7 +90,7 @@ export function PathCard({ card, href }: { card: LearnCard; href?: string }) {
         })()}
 
         {card.enrolled && (
-          <span className="absolute left-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-[11.5px] font-bold text-[#2b1147]">
+          <span className="absolute left-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-[11.5px] font-bold text-learn-card">
             {card.progress === 100 ? "Complete" : "Enrolled"}
           </span>
         )}

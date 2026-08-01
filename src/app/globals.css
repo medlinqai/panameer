@@ -20,6 +20,32 @@
   --color-line: #ece9f1;
   --color-bg-soft: #faf8fc;
 
+  /*
+   * LEARN / HOME PALETTE — measured out of the design PNG, not eyeballed.
+   *
+   * Sampled from Run6-Design-Refs/E134-provider-home-design.png with a pixel
+   * reader (brief_provider_home_page_v2 WS3, which asks for the mockup's colours
+   * exactly AND for tokens rather than inline hex — so the measurements are
+   * recorded here once and referenced everywhere).
+   *
+   *   hero gradient, top-left     #1b0d36   (x=340,y=210)
+   *   hero gradient, bottom-right #bf1e8b   (x=1320,y=390)
+   *   learning-path card fill     #3d1a5b   (flat across every card)
+   *
+   * The hero runs diagonally: sampling a grid across it gives 291245 → 3d1a5b →
+   * 6d1e7c → 871f87 → a61e89 → bf1e8b left-to-right, and darkens slightly
+   * upward, which is a ~115deg linear ramp between the two corner values.
+   *
+   * These are NOT the same as --color-magenta (#d72cd6). The eyebrow labels
+   * ("FIND WORK", "BUILD SKILLS") sample as #d41ad3, which IS brand magenta
+   * within antialiasing — so the brand token stays right for type, while the
+   * deep purples above belong to this surface and needed naming.
+   */
+  --color-learn-deep: #1b0d36;
+  --color-learn-card: #3d1a5b;
+  --color-learn-mid: #6d1e7c;
+  --color-learn-hot: #bf1e8b;
+
   --radius-brand: 14px;
   --shadow-brand: 0 10px 30px rgba(20, 10, 40, 0.08);
 

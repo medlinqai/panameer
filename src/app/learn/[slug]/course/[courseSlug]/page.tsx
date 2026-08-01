@@ -63,7 +63,7 @@ export default async function CoursePage({
 
       <div className="mt-6 flex flex-wrap gap-7">
         {/* The design's purple tile — the instructor's face over the course name. */}
-        <div className="w-full shrink-0 overflow-hidden rounded-brand bg-[#2b1147] text-white sm:max-w-[240px]">
+        <div className="w-full shrink-0 overflow-hidden rounded-brand bg-learn-card text-white sm:max-w-[240px]">
           <div className="aspect-square w-full overflow-hidden">
             {course.thumbnailUrl || courseLead?.photoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element

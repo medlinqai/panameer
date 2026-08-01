@@ -49,7 +49,7 @@ export function LearnHome({
 
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
-      <section className="overflow-hidden rounded-brand bg-[linear-gradient(115deg,#2b1147_0%,#4a1a63_45%,#b324b2_100%)] px-7 py-8 text-white sm:px-10 sm:py-10">
+      <section className="overflow-hidden rounded-brand bg-[linear-gradient(115deg,var(--color-learn-deep)_0%,var(--color-learn-card)_38%,var(--color-learn-mid)_62%,var(--color-learn-hot)_100%)] px-7 py-8 text-white sm:px-10 sm:py-10">
         <h1 className="max-w-2xl font-display text-[28px] font-bold leading-tight tracking-[-0.5px] sm:text-[34px]">
           Learn Oracle Cloud from the people who implement it
         </h1>
@@ -64,7 +64,7 @@ export function LearnHome({
             onClick={() => setTab("all")}
             className={
               "rounded-full px-5 py-2 text-[14px] font-bold transition-colors " +
-              (tab === "all" ? "bg-white text-[#2b1147]" : "text-white/80 hover:text-white")
+              (tab === "all" ? "bg-white text-learn-card" : "text-white/80 hover:text-white")
             }
           >
             All Learning Paths
@@ -74,7 +74,7 @@ export function LearnHome({
             onClick={() => setTab("mine")}
             className={
               "rounded-full px-5 py-2 text-[14px] font-bold transition-colors " +
-              (tab === "mine" ? "bg-white text-[#2b1147]" : "text-white/80 hover:text-white")
+              (tab === "mine" ? "bg-white text-learn-card" : "text-white/80 hover:text-white")
             }
           >
             My Learning Paths{enrolledCount > 0 ? ` (${enrolledCount})` : ""}
@@ -104,7 +104,7 @@ export function LearnHome({
                   className={
                     "rounded-full border px-4 py-1.5 text-[13.5px] font-semibold transition-colors " +
                     (active
-                      ? "border-white bg-white text-[#2b1147]"
+                      ? "border-white bg-white text-learn-card"
                       : "border-white/35 text-white/90 hover:border-white")
                   }
                 >
