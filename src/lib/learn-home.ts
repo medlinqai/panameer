@@ -1,0 +1,178 @@
+import { prisma } from "@/lib/prisma";
+import { isPlayable } from "@/lib/learn";
+import { marketplaceVisibleWhere } from "@/lib/access";
+
+/**
+ * The learner's view of the catalog (brief_learn_experience WS1).
+ *
+ * Separate from `learn.ts` (the anonymous read) and `learn-admin.ts` (the
+ * authoring read) because this one is the only one that knows who is asking:
+ * enrolment and progress are per-user, and every query here is scoped to a
+ * session-resolved id. That id is NEVER accepted from the client — the caller
+ * passes what the session resolved, so a crafted request can't read another
+ * learner's progress.
+ */
+
+export type LearnCard = {
+  id: string;
+  title: string;
+  slug: string;
+  summary: string | null;
+  group: string | null;
+  audience: string;
+  coverImage: string | null;
+  lessons: number;
+  playable: number;
+  /** The single instructor who owns the whole path (WS6). */
+  instructor: {
+    id: string;
+    name: string;
+    photoUrl: string | null;
+    /** Set when they have a public provider profile to link to. */
+    profileSlug: string | null;
+  } | null;
+  enrolled: boolean;
+  /** 0–100, of lessons completed. Null when not enrolled. */
+  progress: number | null;
+  completedLessons: number;
+};
+
+/**
+ * Every published path, with this learner's enrolment and progress folded in.
+ *
+ * One pass over the catalog rather than a query per card: 23 paths today, but
+ * the counts come from lessons and a per-card round trip would be 23 queries
+ * that all read the same three tables.
+ */
+export async function getLearnHome(userId: string | null): Promise<LearnCard[]> {
+  const [paths, enrollments, progress] = await Promise.all([
+    prisma.learningPath.findMany({
+      where: { status: "PUBLISHED" },
+      orderBy: [{ audience: "asc" }, { group: "asc" }, { sort_order: "asc" }],
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        summary: true,
+        group: true,
+        audience: true,
+        cover_image: true,
+        expert: {
+          select: {
+            id: true,
+            first_name: true,
+            last_name: true,
+            photo_url: true,
+            providerProfile: { select: { id: true } },
+          },
+        },
+        courses: {
+          select: {
+            sections: {
+              select: {
+                lessons: { select: { id: true, vimeo_ref: true, production_status: true } },
+              },
+            },
+          },
+        },
+      },
+    }),
+    userId
+      ? prisma.learnEnrollment.findMany({
+          where: { user_id: userId },
+          select: { learning_path_id: true },
+        })
+      : Promise.resolve([]),
+    userId
+      ? prisma.lessonProgress.findMany({
+          where: { user_id: userId },
+          select: { lesson_id: true },
+        })
+      : Promise.resolve([]),
+  ]);
+
+  /*
+    Which instructors have a profile the marketplace would show? Resolved with
+    the SAME predicate access.ts uses for listings rather than a hand-rolled
+    check, because the two drifting apart is exactly how a listing ends up
+    linking to a page that then refuses to render.
+  */
+  const expertProfileIds = paths
+    .map((p) => p.expert?.providerProfile?.id)
+    .filter((x): x is string => Boolean(x));
+  const visibleProfiles = new Set(
+    expertProfileIds.length > 0
+      ? (
+          await prisma.providerProfile.findMany({
+            where: { id: { in: expertProfileIds }, ...marketplaceVisibleWhere() },
+            select: { id: true },
+          })
+        ).map((r) => r.id)
+      : []
+  );
+
+  const enrolled = new Set(enrollments.map((e) => e.learning_path_id));
+  const done = new Set(progress.map((p) => p.lesson_id));
+
+  return paths.map((p) => {
+    const lessons = p.courses.flatMap((c) => c.sections.flatMap((s) => s.lessons));
+    const completed = lessons.filter((l) => done.has(l.id)).length;
+    const isEnrolled = enrolled.has(p.id);
+
+    return {
+      id: p.id,
+      title: p.title,
+      slug: p.slug,
+      summary: p.summary,
+      group: p.group,
+      audience: p.audience,
+      coverImage: p.cover_image,
+      lessons: lessons.length,
+      playable: lessons.filter(isPlayable).length,
+      instructor: p.expert
+        ? {
+            id: p.expert.id,
+            name:
+              `${p.expert.first_name ?? ""} ${p.expert.last_name ?? ""}`.trim() ||
+              "Panameer",
+            photoUrl: p.expert.photo_url,
+            // Only link to a profile the marketplace would actually show. A
+            // course pointing at a hidden profile is a dead link, which is
+            // worse than no link at all (WS7). Visibility is DERIVED — there is
+            // no publish flag — so the id is present here only when the same
+            // predicate access.ts uses for listings matched it.
+            profileSlug: visibleProfiles.has(p.expert.providerProfile?.id ?? "")
+              ? p.expert.providerProfile!.id
+              : null,
+          }
+        : null,
+      enrolled: isEnrolled,
+      progress:
+        isEnrolled && lessons.length > 0
+          ? Math.round((completed / lessons.length) * 100)
+          : isEnrolled
+            ? 0
+            : null,
+      completedLessons: completed,
+    };
+  });
+}
+
+/**
+ * The domain chips on the hero, driven by the catalog's own `group` values.
+ *
+ * Ordered by how much is behind them, not alphabetically: the chips are a way
+ * in, and a chip leading to two lessons sitting above one leading to a hundred
+ * makes the catalog look thinner than it is. Empty groups never appear.
+ */
+export function groupChips(cards: LearnCard[]): { group: string; paths: number; lessons: number }[] {
+  const map = new Map<string, { group: string; paths: number; lessons: number }>();
+  for (const c of cards) {
+    if (!c.group) continue;
+    const row = map.get(c.group) ?? { group: c.group, paths: 0, lessons: 0 };
+    row.paths += 1;
+    row.lessons += c.lessons;
+    map.set(c.group, row);
+  }
+  return [...map.values()].sort((a, b) => b.lessons - a.lessons || a.group.localeCompare(b.group));
+}
