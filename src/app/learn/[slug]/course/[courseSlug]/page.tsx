@@ -59,7 +59,7 @@ export default async function CoursePage({
 
       <div className="mt-6 flex flex-wrap gap-7">
         {/* The design's purple tile — the instructor's face over the course name. */}
-        <div className="w-full max-w-[240px] shrink-0 overflow-hidden rounded-brand bg-[#2b1147] text-white">
+        <div className="w-full shrink-0 overflow-hidden rounded-brand bg-[#2b1147] text-white sm:max-w-[240px]">
           <div className="aspect-square w-full overflow-hidden">
             {course.thumbnailUrl || path.instructor?.photoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -81,7 +81,14 @@ export default async function CoursePage({
           </p>
         </div>
 
-        <div className="min-w-0 flex-1">
+        {/*
+          min-w-[260px], not min-w-0. With min-w-0 this column can shrink to
+          nothing rather than wrapping: at 375px the 240px tile plus the gap
+          left it 27px wide and the instructor line spilled off the page. A
+          basis says "wrap instead of being crushed", which is what flex-wrap
+          on the row was for.
+        */}
+        <div className="min-w-[260px] flex-1">
           {path.instructor && <InstructorBadge instructor={path.instructor} />}
 
           <h2 className="mt-6 font-display text-[22px] font-bold">Course Overview</h2>

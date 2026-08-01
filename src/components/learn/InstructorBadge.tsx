@@ -31,7 +31,10 @@ export function InstructorBadge({
       .toUpperCase() || "P";
 
   return (
-    <span className="flex items-center gap-3">
+    // flex-wrap + min-w-0: at 375px "Instructor: Marelise Steenkamp" beside the
+    // avatar is wider than the viewport, and without these it pushed the whole
+    // page into a horizontal scroll (caught at 375, not 1440).
+    <span className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
       {instructor.photoUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -46,12 +49,12 @@ export function InstructorBadge({
           {initials}
         </span>
       )}
-      <span className={size === "sm" ? "text-[14px]" : "text-[17px]"}>
+      <span className={"min-w-0 " + (size === "sm" ? "text-[14px]" : "text-[17px]")}>
         <span className="text-ink-2">Instructor: </span>
         {instructor.profileSlug ? (
           <Link
             href={`/providers/${instructor.profileSlug}`}
-            className="font-bold text-magenta underline underline-offset-4 hover:text-magenta-dark"
+            className="font-bold break-words text-magenta underline underline-offset-4 hover:text-magenta-dark"
           >
             {instructor.name}
           </Link>
