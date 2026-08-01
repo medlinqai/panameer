@@ -12,24 +12,54 @@ import type { Me } from "@/lib/types";
  * computed from what the schema actually knows — and when a real provider tier
  * lands, this is the one function that changes.
  *
- * "Freelancer" is the mockup's word for a provider. A person can be both a
- * provider and a buyer; the provider label wins, because the rail they are
- * looking at is the provider's.
+ * WS7 replaces the flat "Freelancer Basic" with {Role} {Plan}: Provider Basic,
+ * Recruiter Basic, Buyer Basic, each escalating to Plus then Pro. "Freelancer"
+ * was the mockup's word, but the product calls them Providers everywhere else
+ * and two words for one actor is the thing WS4 is elsewhere purging.
+ *
+ * A person can be both a provider and a buyer; the provider label wins, because
+ * the rail they are looking at is the provider's.
  */
-export function membershipBadge(me: Me | null): string | null {
-  if (!me) return null;
-  const r = me.person.roles;
+/** The three plan tiers, in order. Only the first two are reachable today. */
+export type Plan = "Basic" | "Plus" | "Pro";
 
-  if (r.isServiceProvider) {
-    // No provider tier exists yet — everyone is Basic until one does.
-    return "Freelancer Basic";
-  }
-  if (r.isServiceBuyer) {
-    return me.buyerProfile?.subscriptionTier === "BUSINESS_PLUS"
-      ? "Business Plus"
-      : "Business Basic";
-  }
-  if (r.isServiceCoordinator) return "Coordinator";
+/**
+ * The plan half of the badge.
+ *
+ * Still derived — there is no tier column on either profile — but the ladder is
+ * named here so the escalation is a data question rather than a code change:
+ * when a real tier lands, this reads it and nothing else moves.
+ */
+function plan(me: Me): Plan {
+  if (me.buyerProfile?.subscriptionTier === "BUSINESS_PLUS") return "Plus";
+  return "Basic";
+}
+
+/**
+ * The role half — Provider, Recruiter or Buyer, per WS7.
+ *
+ * RECRUITER IS THE SERVICE COORDINATOR ACTOR. There is no separate recruiter
+ * flag: the model records someone who represents other providers as
+ * `is_service_coordinator`, and ProviderProfile.coordinator_person_id points
+ * back at them. So the coordinator flag is checked FIRST — a recruiter usually
+ * carries the provider flag too (they walk the provider wizard on the recruiter
+ * itinerary), and testing provider first would label every recruiter a
+ * Provider.
+ */
+function roleWord(me: Me): string | null {
+  const r = me.person.roles;
+  if (r.isServiceCoordinator) return "Recruiter";
+  if (r.isServiceProvider) return "Provider";
+  if (r.isServiceBuyer) return "Buyer";
   if (r.isSupport) return "Support";
   return null;
+}
+
+export function membershipBadge(me: Me | null): string | null {
+  if (!me) return null;
+  const role = roleWord(me);
+  if (!role) return null;
+  // Support isn't a plan anyone buys.
+  if (role === "Support") return role;
+  return `${role} ${plan(me)}`;
 }
