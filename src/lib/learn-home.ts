@@ -581,3 +581,112 @@ export async function getPathsTaughtByProfile(
   if (!profile) return [];
   return getPathsTaughtBy(profile.person_id);
 }
+
+// ---------------------------------------------------------------------------
+// Provider Home — the Build Skills row (brief_provider_home_page_v2 WS1)
+// ---------------------------------------------------------------------------
+
+/**
+ * Three learning paths to put in front of THIS provider.
+ *
+ * Personalised by DOMAIN rather than by anything cleverer: a path's `group`
+ * ("Procurement", "Supply Chain Execution") is the same vocabulary the
+ * provider's own skills and specializations are written in, so matching on it
+ * is a real signal rather than a recommendation engine we haven't built.
+ *
+ * Falls back to the biggest published paths when nothing matches, because an
+ * empty Build Skills row would be worse than a generic one — the section's job
+ * on a hub page is to say "there is free training here", and it can do that for
+ * a provider whose domain we don't yet recognise.
+ */
+export async function getHomeLearningPaths(
+  userId: string | null,
+  limit = 3
+): Promise<LearnCard[]> {
+  const cards = await getLearnHome(userId);
+  if (cards.length === 0) return [];
+
+  const profile = userId
+    ? await prisma.providerProfile.findFirst({
+        where: { person: { user_id: userId } },
+        select: {
+          skills: { select: { skill: { select: { name: true } } } },
+          specializations: { select: { specialization: { select: { name: true } } } },
+        },
+      })
+    : null;
+
+  const vocab = new Set(
+    [
+      ...(profile?.skills ?? []).map((s) => s.skill.name),
+      ...(profile?.specializations ?? []).map((s) => s.specialization.name),
+    ].map((s) => s.toLowerCase())
+  );
+
+  const scored = cards.map((c) => {
+    const group = (c.group ?? "").toLowerCase();
+    let score = 0;
+    if (group) {
+      for (const term of vocab) {
+        if (term === group || group.includes(term) || term.includes(group)) {
+          score += 2;
+          break;
+        }
+      }
+    }
+    // Enrolled paths sink: this row is for discovering something new, and the
+    // provider already has "My Learning Paths" for what they started.
+    if (c.enrolled) score -= 1;
+    return { card: c, score, size: c.lessons };
+  });
+
+  scored.sort((a, b) => b.score - a.score || b.size - a.size);
+
+  // One path per domain, so three cards aren't three slices of one subject.
+  const picked: LearnCard[] = [];
+  const seenGroups = new Set<string>();
+  for (const s of scored) {
+    const key = s.card.group ?? s.card.id;
+    if (seenGroups.has(key)) continue;
+    seenGroups.add(key);
+    picked.push(s.card);
+    if (picked.length === limit) break;
+  }
+  return picked;
+}
+
+/**
+ * The hero's quick-search chips, from the provider's own skills and
+ * specializations (E134 shows Procurement · Procure-to-Pay · OBN · Procurement
+ * Contracts — which are exactly that provider's).
+ */
+export async function getHomeSearchChips(
+  userId: string | null,
+  limit = 4
+): Promise<string[]> {
+  if (!userId) return [];
+  const profile = await prisma.providerProfile.findFirst({
+    where: { person: { user_id: userId } },
+    select: {
+      specializations: { select: { specialization: { select: { name: true } } } },
+      skills: { select: { skill: { select: { name: true } } } },
+    },
+  });
+  if (!profile) return [];
+
+  // Specializations first: they are the broader, more searchable terms, and the
+  // mockup's chips read as domains rather than as individual line-item skills.
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const name of [
+    ...profile.specializations.map((s) => s.specialization.name),
+    ...profile.skills.map((s) => s.skill.name),
+  ]) {
+    const key = name.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(name);
+    if (out.length === limit) break;
+  }
+  return out;
+}

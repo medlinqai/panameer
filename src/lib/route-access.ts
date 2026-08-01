@@ -22,7 +22,12 @@ export const ROUTE_ACCESS: { prefix: string; requires: RouteRequirement }[] = [
   { prefix: "/settings", requires: "canProvideServices" }, // provider profile mgmt
   { prefix: "/profile", requires: "canProvideServices" }, // provider self-profile view
   { prefix: "/hire", requires: "canHireTalent" },
-  { prefix: "/work", requires: "canHireTalent" },
+  // FIND WORK IS A PROVIDER SURFACE — searching open job postings. This said
+  // canHireTalent while nav.ts offered the same route to providers, so the rail
+  // showed a provider "Find Work" and the gate then bounced them to
+  // /dashboard?noaccess=1. Found by wiring the Home search box at it (E134) and
+  // walking into the redirect. The nav was right; the gate was wrong.
+  { prefix: "/work", requires: "canProvideServices" },
   { prefix: "/reports", requires: "canHireTalent" },
   { prefix: "/messages", requires: "authenticated" }, // shared buyer ↔ provider
   { prefix: "/dashboard", requires: "authenticated" }, // role-aware content, not gated

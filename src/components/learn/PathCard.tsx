@@ -19,7 +19,23 @@ import { InstructorStack } from "@/components/learn/InstructorBadge";
  * appears when there genuinely is one. Fronting a two-teacher path with one
  * portrait would be a quiet misattribution on the most-seen surface in Learn.
  */
-export function PathCard({ card, href }: { card: LearnCard; href?: string }) {
+export function PathCard({
+  card,
+  href,
+  variant = "full",
+}: {
+  card: LearnCard;
+  href?: string;
+  /**
+   * "compact" is the provider Home's Build Skills row (E134): the photo inset
+   * on the card's purple with the title centred beneath it, and nothing else.
+   * The Home mockup deliberately shows less than the Learn catalog does —
+   * lesson counts and progress belong where someone is choosing what to study,
+   * not on a hub tile whose job is to get them into Learn at all. Same
+   * component either way, per the brief's build-once note.
+   */
+  variant?: "full" | "compact";
+}) {
   const lead = card.instructors[0] ?? null;
   const initials =
     lead?.name
@@ -29,6 +45,38 @@ export function PathCard({ card, href }: { card: LearnCard; href?: string }) {
       .slice(0, 2)
       .join("")
       .toUpperCase() || "P";
+
+  if (variant === "compact") {
+    /*
+      THE INSTRUCTOR'S FACE, not the path cover — the opposite preference to the
+      full card. E134 shows three portraits, and the brief asks for "LP cards
+      with instructor photos" in as many words. A cover is a 16:9 card design
+      with type on it; dropped into this square inset it crops to an unreadable
+      slice, which is exactly how it first rendered.
+    */
+    const face =
+      card.instructors.find((i) => i.photoUrl)?.photoUrl ?? card.coverImage;
+    return (
+      <Link
+        href={href ?? `/learn/${card.slug}`}
+        className="group flex flex-col rounded-[6px] bg-learn-card p-5 text-white transition-transform hover:-translate-y-0.5"
+      >
+        <div className="mx-auto aspect-square w-full max-w-[190px] overflow-hidden bg-black/20">
+          {face ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={face} alt="" className="h-full w-full object-cover object-top" />
+          ) : (
+            <span className="flex h-full w-full items-center justify-center font-display text-[34px] font-bold text-white/35">
+              {initials}
+            </span>
+          )}
+        </div>
+        <p className="mt-5 text-center font-display text-[20px] font-bold leading-snug">
+          {card.title}
+        </p>
+      </Link>
+    );
+  }
 
   return (
     <Link

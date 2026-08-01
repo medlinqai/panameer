@@ -1,23 +1,24 @@
 import Link from "next/link";
 import { getSessionViewer } from "@/lib/session";
-import { getOwnProviderProfileView } from "@/lib/provider-profile-view";
-import { ProviderProfileViewPage } from "@/components/profile/ProviderProfileView";
-import { getPathsTaughtByProfile } from "@/lib/learn-home";
+import { getHomeLearningPaths, getHomeSearchChips } from "@/lib/learn-home";
+import { ProviderHome } from "@/components/home/ProviderHome";
 import { Card } from "@/components/Card";
 import { prisma } from "@/lib/prisma";
 import { displayFirstName } from "@/lib/display";
 
 /**
- * The provider's home (brief_S / E037).
+ * HOME — the app hub (brief_provider_home_page_v2 WS1, design ref E134).
  *
- * The rich Profile View REPLACES the old thin dashboard — the card that showed
- * a completeness meter plus View/Manage buttons. Landing on the actual profile
- * is both what Scott asked for and more useful: the provider sees what buyers
- * see, and the completeness/visibility story rides along in an owner-only
- * banner at the top of it.
+ * This page used to render the provider's entire profile view, which is why the
+ * post-publish landing was "mixing two pages" (E146): Home and my-profile were
+ * the same endless scroll. They are now separate concerns —
  *
- * A buyer (or an account with no provider profile) still needs a home, so those
- * keep a lightweight surface below.
+ *   Home     = go find work, go learn something          (here)
+ *   Profile  = what buyers see, and Edit Profile         (/profile, /providers/[id])
+ *   You're live = the one-time end-of-onboarding page    (/join/provider/live)
+ *
+ * A buyer, or an account with no provider profile, keeps the lightweight
+ * surface below — Home for them is a different job and out of this brief.
  */
 export default async function DashboardPage() {
   const viewer = await getSessionViewer();
@@ -35,13 +36,18 @@ export default async function DashboardPage() {
     );
   }
 
-  const profile = await getOwnProviderProfileView(viewer.userId, viewer);
-  if (profile) return (
-      <ProviderProfileViewPage
-        p={profile}
-        taughtPaths={await getPathsTaughtByProfile(profile.id)}
-      />
-    );
+  const isProvider = await prisma.providerProfile.findFirst({
+    where: { person: { user_id: viewer.userId } },
+    select: { id: true },
+  });
+
+  if (isProvider) {
+    const [chips, paths] = await Promise.all([
+      getHomeSearchChips(viewer.userId),
+      getHomeLearningPaths(viewer.userId),
+    ]);
+    return <ProviderHome chips={chips} paths={paths} />;
+  }
 
   // --- Not a provider: buyer / unfinished account ---------------------------
   const person = await prisma.person.findUnique({
