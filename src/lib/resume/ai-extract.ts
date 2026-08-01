@@ -263,6 +263,38 @@ export async function aiExtractResume(text: string): Promise<AiExtractOutcome> {
       return { ok: false, reason: "error", message: "The model returned no structured output." };
     }
 
+    /*
+      EMPTY vs ABSENT (WS3, an E121-class bug).
+
+      `.default([])` fills a missing key with an empty array, so a tool call that
+      arrived with EVERY key absent — a truncated or abandoned response —
+      validated cleanly and was reported as "we read your résumé and it was
+      blank". That is indistinguishable from the real thing, and it is the wrong
+      answer in the one case where the provider most needs to be told something
+      went wrong. Observed live: Marelise returned exactly this while the same
+      document extracted 10 projects moments earlier.
+
+      The distinction is available BEFORE defaults are applied: check the raw
+      input for the keys themselves. A model that genuinely found no work history
+      still returns the keys, with empty arrays in them — omitting every key is
+      not an answer, it is the absence of one.
+    */
+    const raw = block.input as Record<string, unknown> | null | undefined;
+    const declared =
+      raw && typeof raw === "object"
+        ? ["employers", "projects", "education", "skills", "headline", "overview"].filter(
+            (k) => k in raw
+          ).length
+        : 0;
+    if (declared === 0) {
+      return {
+        ok: false,
+        reason: "error",
+        message:
+          "The reader didn't return anything usable for this document. Nothing was changed — try again, or add your work history manually.",
+      };
+    }
+
     // Validate rather than trust. A model that returns a slightly different shape
     // must not put half-built objects into someone's profile.
     const parsed = AI_RESUME_SCHEMA.safeParse(block.input);

@@ -139,6 +139,53 @@ console.log("\n=== degenerate responses ===");
   check("a year-only date becomes Jan 1st", partialDate.experiences[0]?.startDate === "2018-01-01", partialDate.experiences[0]?.startDate);
 }
 
+
+console.log("\n=== WS3: absent keys vs a genuinely empty résumé ===");
+{
+  /*
+    The distinction the guard turns on. Both of these validate; only one is a
+    real answer. Zod's `.default([])` makes them identical AFTER parsing, which
+    is why the check has to look at the raw keys before defaults are applied.
+  */
+  const allAbsent: Record<string, unknown> = {};
+  const genuinelyEmpty = {
+    headline: "Recent graduate",
+    overview: null,
+    employers: [],
+    projects: [],
+    education: [{ institution: "A University", degree: "BSc", field: "CS", startYear: 2021, endYear: 2025 }],
+    skills: ["Python"],
+    languages: [],
+    certifications: [],
+  };
+
+  const KEYS = ["employers", "projects", "education", "skills", "headline", "overview"];
+  const declared = (o: Record<string, unknown>) => KEYS.filter((k) => k in o).length;
+
+  check("an all-keys-absent response declares nothing", declared(allAbsent) === 0);
+  check(
+    "a genuinely work-history-free résumé still declares its keys",
+    declared(genuinelyEmpty) === 6,
+    declared(genuinelyEmpty)
+  );
+
+  // …and both parse to the same thing, which is exactly the trap.
+  const a = AI_RESUME_SCHEMA.parse(allAbsent);
+  const b = AI_RESUME_SCHEMA.parse(genuinelyEmpty);
+  check(
+    "after defaults they are indistinguishable by employer count — hence the raw check",
+    a.employers.length === 0 && b.employers.length === 0
+  );
+  check(
+    "the real one still carries its education and skills",
+    aiToParsedResume(b).education.length === 1 && aiToParsedResume(b).skills.length === 1
+  );
+  check(
+    "and converts to zero work history without error",
+    aiToParsedResume(b).experiences.length === 0
+  );
+}
+
 console.log(out.join("\n"));
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exitCode = fail ? 1 : 0;

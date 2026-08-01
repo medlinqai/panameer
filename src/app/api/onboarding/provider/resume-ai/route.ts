@@ -68,8 +68,37 @@ export async function POST() {
   }
 
   const parsed = aiToParsedResume(outcome.data);
+
+  /*
+    WS3, second signal. A well-formed response can still be a failure: zero
+    entries out of a document the heuristic could see date ranges all over means
+    the model returned nothing useful, not that this person has never worked.
+
+    Gated on the DOCUMENT having ≥3 date ranges precisely so a résumé that
+    genuinely has no work history — a new graduate's, say — is not false-flagged.
+    No dates in the source, no complaint: empty is then a truthful answer and is
+    reported as one.
+  */
+  const sourceConfidence = assessParse(row.raw_text, parsed, { source: "ai" });
+  if (
+    parsed.experiences.length === 0 &&
+    sourceConfidence.signals.dateRangesInText >= 3
+  ) {
+    console.info(
+      `[resume] path=ai-empty ranges=${sourceConfidence.signals.dateRangesInText} import=${row.id}`
+    );
+    return NextResponse.json(
+      {
+        error:
+          "The reader came back with no work history, but your document looks like it has dates in it. Nothing was changed — try again, or add it manually.",
+        fellBack: true,
+      },
+      { status: 502 }
+    );
+  }
+
   const applied = await applyParsedResume(profile.id, parsed, "RESUME");
-  const confidence = assessParse(row.raw_text, parsed, { source: "ai" });
+  const confidence = sourceConfidence;
 
   console.info(
     `[resume] path=ai-escalated model=${outcome.model} ms=${outcome.ms} ` +
