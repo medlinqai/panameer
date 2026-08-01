@@ -28,6 +28,18 @@ export const ROUTE_ACCESS: { prefix: string; requires: RouteRequirement }[] = [
   // /dashboard?noaccess=1. Found by wiring the Home search box at it (E134) and
   // walking into the redirect. The nav was right; the gate was wrong.
   { prefix: "/work", requires: "canProvideServices" },
+  /*
+    /work/new is the BUYER's create-work-request, and longest-prefix-wins means
+    it would otherwise inherit /work's provider gate — which the previous brief
+    changed from canHireTalent to canProvideServices to unbreak Find Work.
+    That silently broke the other side: the buyer onboarding flow ends by
+    routing to /work/new, so a buyer who had just finished signing up was sent
+    straight to /dashboard?noaccess=1.
+
+    Two different jobs share the /work prefix: FIND work (provider) and POST
+    work (buyer). This is the more specific of the two and has to say so.
+  */
+  { prefix: "/work/new", requires: "canHireTalent" },
   { prefix: "/reports", requires: "canHireTalent" },
   { prefix: "/search", requires: "authenticated" }, // rail stub (E134)
   { prefix: "/contracts", requires: "authenticated" }, // rail stub (E134)
