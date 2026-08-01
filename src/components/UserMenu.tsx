@@ -5,6 +5,7 @@ import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
 import { Avatar } from "@/components/Avatar";
 import type { Me } from "@/lib/types";
+import { membershipBadge } from "@/lib/membership";
 
 /** Header user menu: name + avatar trigger, dropdown with profile + sign out. */
 export function UserMenu({ me }: { me: Me }) {
@@ -15,6 +16,7 @@ export function UserMenu({ me }: { me: Me }) {
   const { data: session } = useSession();
   const isAdmin = session?.user?.isSystemAdmin === true;
   const { firstName, lastName, photoUrl } = me.person;
+  const badge = membershipBadge(me);
 
   useEffect(() => {
     function onClick(e: MouseEvent) {
@@ -32,7 +34,7 @@ export function UserMenu({ me }: { me: Me }) {
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="flex items-center gap-2 rounded-full py-1 pl-1 pr-2 transition-colors hover:bg-black/[0.05] dark:hover:bg-white/[0.08]"
+        className="flex w-full items-center gap-2.5 rounded-[12px] px-1.5 py-1.5 transition-colors hover:bg-black/[0.04]"
       >
         <Avatar
           firstName={firstName}
@@ -40,8 +42,23 @@ export function UserMenu({ me }: { me: Me }) {
           photoUrl={photoUrl}
           size={32}
         />
-        <span className="hidden max-w-[10rem] truncate text-sm font-medium sm:block">
-          {firstName} {lastName}
+        {/*
+          Name over BADGE, per the mockup — the chip reads "Scott Walls /
+          Freelancer Basic". The badge was missing entirely (E146.2), which left
+          the chip saying who you are but nothing about what you are here as.
+        */}
+        <span className="hidden min-w-0 text-left sm:block">
+          <span className="block max-w-[9.5rem] truncate text-[14px] font-bold leading-tight">
+            {firstName} {lastName}
+          </span>
+          {badge && (
+            <span className="block max-w-[9.5rem] truncate text-[12px] leading-tight text-ink-2">
+              {badge}
+            </span>
+          )}
+        </span>
+        <span aria-hidden className="ml-auto hidden text-ink-2 sm:block">
+          ›
         </span>
       </button>
 

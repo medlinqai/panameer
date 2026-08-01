@@ -29,6 +29,9 @@ export const ROUTE_ACCESS: { prefix: string; requires: RouteRequirement }[] = [
   // walking into the redirect. The nav was right; the gate was wrong.
   { prefix: "/work", requires: "canProvideServices" },
   { prefix: "/reports", requires: "canHireTalent" },
+  { prefix: "/search", requires: "authenticated" }, // rail stub (E134)
+  { prefix: "/contracts", requires: "authenticated" }, // rail stub (E134)
+  { prefix: "/finances", requires: "authenticated" }, // rail stub (E134)
   { prefix: "/messages", requires: "authenticated" }, // shared buyer ↔ provider
   { prefix: "/dashboard", requires: "authenticated" }, // role-aware content, not gated
 ];

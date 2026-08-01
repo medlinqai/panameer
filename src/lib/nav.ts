@@ -25,10 +25,24 @@ export type NavItem = {
  * this replaces: Learn shipped with no route into it from anywhere.
  */
 
-/** Everything a signed-in person sees, whatever their role. */
+/**
+ * Everything a signed-in person sees, whatever their role.
+ *
+ * Order matches E134's rail: Search, Home, Learn, then the role items, then
+ * Contracts, Finances, Messages. Search sits above Home because it is the thing
+ * the mockup puts first, and Contracts/Finances are universal — both sides of a
+ * marketplace have agreements and money.
+ */
 const BASE_NAV: NavItem[] = [
+  { label: "Search", href: "/search" },
   { label: "Home", href: "/dashboard" },
   { label: "Learn", href: "/learn" },
+];
+
+/** Below the role items in the mockup's order. */
+const TAIL_NAV: NavItem[] = [
+  { label: "Contracts", href: "/contracts" },
+  { label: "Finances", href: "/finances" },
   { label: "Messages", href: "/messages" },
 ];
 
@@ -78,7 +92,7 @@ export function navForRoles(me: Me | null): NavItem[] {
   if (!me) return [];
   const items: NavItem[] = [];
   const seen = new Set<string>();
-  for (const item of [...BASE_NAV, ...ROLE_NAV]) {
+  for (const item of [...BASE_NAV, ...ROLE_NAV, ...TAIL_NAV]) {
     if (item.requires && !holds(me, item.requires)) continue;
     if (seen.has(item.href)) continue;
     seen.add(item.href);
