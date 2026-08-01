@@ -9,6 +9,7 @@ import { LocationFields } from "@/components/onboarding/LocationFields";
 const SELECT =
   "w-full rounded-[12px] border border-line bg-white px-4 py-3 text-[15px] text-ink outline-none transition-colors focus:border-magenta";
 import { ArtifactsModal } from "@/components/onboarding/ArtifactsModal";
+import { useBulkSelect, BulkSelectBar, SelectTick } from "@/components/onboarding/BulkSelect";
 import type { ArtifactView } from "@/lib/artifacts";
 import {
   ProjectModal,
@@ -112,6 +113,8 @@ export function EmployersStep({
   onError: (msg: string | null) => void;
 }) {
   const [busy, setBusy] = useState(false);
+  // WS9b — multi-select delete for AI-added employers.
+  const bulk = useBulkSelect(employers.map((e) => e.id));
   const [openId, setOpenId] = useState<string | null>(null);
 
   const [employerModal, setEmployerModal] = useState<
@@ -362,12 +365,40 @@ export function EmployersStep({
             of shoving neighbours sideways.
           */}
           <div className="space-y-4">
+            {/* WS9b/E143 — tick the wrong AI-added employers and remove them in
+                one action instead of a trash icon and a confirm() per card. */}
+            <BulkSelectBar
+              label="employers"
+              count={employers.length}
+              state={bulk}
+              busy={busy}
+              onDelete={async (ids) => {
+                for (const employerId of ids) {
+                  await post({ action: "deleteEmployer", employerId });
+                }
+                bulk.reset();
+              }}
+            />
             {employers.map((e) => (
               <article
                 key={e.id}
-                className="rounded-brand border border-line p-4 transition-shadow hover:shadow-brand"
+                className={
+                  "rounded-brand border p-4 transition-shadow hover:shadow-brand " +
+                  (bulk.active && bulk.picked.has(e.id)
+                    ? "border-magenta bg-magenta/[0.04]"
+                    : "border-line")
+                }
               >
                 <div className="mb-3 flex items-center justify-end gap-2">
+                  {bulk.active && (
+                    <span className="mr-auto">
+                      <SelectTick
+                        checked={bulk.picked.has(e.id)}
+                        onChange={() => bulk.toggle(e.id)}
+                        label={e.name}
+                      />
+                    </span>
+                  )}
                   <button
                     type="button"
                     onClick={() => openEditEmployer(e)}
