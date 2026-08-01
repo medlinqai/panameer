@@ -166,18 +166,34 @@ export function WizardShell({
         </div>
       )}
 
-      <div className={aside ? "grid gap-12 lg:grid-cols-[1fr_380px]" : ""}>
+      {/*
+        TITLE AND SUBTITLE RUN FULL WIDTH, then the body and the aside sit below
+        them (E103-import-page.png / walk7 WS3).
+
+        They used to live INSIDE the left column of the two-column grid, so on
+        any step with an aside the heading was squeezed to ~60% of the frame
+        while the example card had the rest — the method-select page wrapped
+        "How would you like to tell us about yourself?" across two lines beside
+        a card that needed none of that room. The mockup runs both across the
+        top and puts the choices and the card underneath, which is also just
+        the right reading order: what you are being asked, then the ways to
+        answer it.
+      */}
+      <div>
+        <h1 className="text-[30px] font-extrabold tracking-[-0.6px] sm:text-[32px]">
+          {title}
+        </h1>
+        {subtitle && (
+          <p className="mt-3 max-w-4xl text-[17px] leading-relaxed text-ink-2">
+            {subtitle}
+          </p>
+        )}
+      </div>
+
+      <div className={aside ? "mt-8 grid gap-12 lg:grid-cols-[1fr_380px]" : "mt-8"}>
         <div className="min-w-0">
-          <h1 className="text-[30px] font-extrabold tracking-[-0.6px] sm:text-[32px]">
-            {title}
-          </h1>
-          {subtitle && (
-            <p className="mt-3 max-w-3xl text-[17px] leading-relaxed text-ink-2">
-              {subtitle}
-            </p>
-          )}
-          {banner && <div className="mt-8">{banner}</div>}
-          <div className="mt-8">{children}</div>
+          {banner && <div className="mb-8">{banner}</div>}
+          {children}
         </div>
         {aside && <div className="lg:pt-1">{aside}</div>}
       </div>
