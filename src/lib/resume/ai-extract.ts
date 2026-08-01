@@ -336,6 +336,67 @@ export async function aiExtractResume(text: string): Promise<AiExtractOutcome> {
  * employer where one is named, and kept as standalone entries otherwise, which
  * is the same distinction the profile already draws (Solo Projects, E074).
  */
+/*
+  A DEGREE IS NOT A SCHOOL (WS7a, post-processing).
+
+  Live data holds education rows whose institution is "Bachelor of Arts in
+  Accounting" or "Business Administration" — the model put the qualification in
+  the school field and left the school out. The row then renders as if someone
+  attended a university called "Bachelor of Arts in Accounting".
+
+  Fixed HERE rather than in the prompt, deliberately. The brief warns the prompt
+  is fragile and requires a before/after harness run for any change to it; a
+  deterministic post-filter needs no such gamble, is unit-testable without
+  spending a model call, and repairs rows the prompt fix could never reach —
+  everything already imported.
+
+  It only ever MOVES a value it is confident about, and never invents a school:
+  a row left without an institution keeps its degree and field, which is a
+  partial record rather than a wrong one.
+*/
+const DEGREE_LEAD =
+  /^(bachelors?|masters?|associates?|doctor(ate)?|ph\.?d|b\.?s\.?c?|b\.?a|m\.?s\.?c?|m\.?b\.?a|m\.?a|b\.?eng|m\.?eng|b\.?tech|diploma|certificate)\b/i;
+
+export function fixEducationRow(e: {
+  institution: string;
+  degree?: string | null;
+  field?: string | null;
+  startYear?: number | string | null;
+  endYear?: number | string | null;
+}) {
+  let institution: string | null = e.institution?.trim() || null;
+  let degree = e.degree?.trim() || null;
+
+  /*
+    A school whose NAME begins with a degree word — "Bachelor College" — is
+    still a school. Caught by its own unit test: the first version of this rule
+    gutted it. So the degree-lead only counts when the string does NOT also name
+    an institution.
+  */
+  const namesAnInstitution =
+    /\b(university|college|institute|school|academy|polytechnic|seminary)\b/i.test(
+      institution ?? ""
+    );
+
+  if (institution && !namesAnInstitution && DEGREE_LEAD.test(institution)) {
+    // The "school" is really a qualification. Keep it as the degree when that
+    // field is empty or is just a duplicate of the same string.
+    if (!degree || degree.trim().toLowerCase() === institution.toLowerCase()) {
+      degree = institution;
+    }
+    institution = null;
+  }
+
+  return {
+    institution: institution ?? "",
+    degree,
+    field: e.field?.trim() || null,
+    startYear: e.startYear != null ? Number(e.startYear) || null : null,
+    endYear: e.endYear != null ? Number(e.endYear) || null : null,
+    description: null,
+  };
+}
+
 export function aiToParsedResume(ai: AiResume): ParsedResume {
   const iso = (v: string | null): string | null => {
     if (!v) return null;
@@ -385,14 +446,7 @@ export function aiToParsedResume(ai: AiResume): ParsedResume {
     experienceLevel: null,
     experienceYears: null,
     experiences,
-    education: ai.education.map((e) => ({
-      institution: e.institution,
-      degree: e.degree ?? null,
-      field: e.field ?? null,
-      startYear: e.startYear != null ? Number(e.startYear) || null : null,
-      endYear: e.endYear != null ? Number(e.endYear) || null : null,
-      description: null,
-    })),
+    education: ai.education.map(fixEducationRow),
     // Project software and skills are skills too — they are the most specific
     // thing the document says about what this person can actually do.
     skills: [

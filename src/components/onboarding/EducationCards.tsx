@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Modal } from "@/components/Modal";
 import { Field, TextInput, TextArea } from "@/components/onboarding/controls";
+import { useBulkSelect, BulkSelectBar, SelectTick } from "@/components/onboarding/BulkSelect";
 
 /**
  * Education step (brief_P / E015): a card list with add / edit / delete, and an
@@ -202,14 +203,45 @@ export function EducationCards({
     close();
   };
 
+  // WS7b — indices are the id here: education drafts have no stable key, and
+  // the list is re-derived on every change, so an index is the only thing that
+  // identifies a row consistently between render and delete.
+  const bulk = useBulkSelect(items.map((_, i) => String(i)));
+
   return (
     <div>
       <div className="space-y-3">
+        {/* WS7b — same multi-select the employers list uses, so a bad AI import
+            is cleared per section rather than one confirm() at a time. */}
+        <BulkSelectBar
+          label="education entries"
+          count={items.length}
+          state={bulk}
+          onDelete={(ids) => {
+            const drop = new Set(ids);
+            onChange(items.filter((_, i) => !drop.has(String(i))));
+            bulk.reset();
+          }}
+        />
         {items.map((e, i) => (
           <div
             key={`${e.institution}-${i}`}
-            className="flex items-start justify-between gap-4 rounded-brand border border-line p-4"
+            className={
+              "flex items-start justify-between gap-4 rounded-brand border p-4 " +
+              (bulk.active && bulk.picked.has(String(i))
+                ? "border-magenta bg-magenta/[0.04]"
+                : "border-line")
+            }
           >
+            {bulk.active && (
+              <span className="pt-0.5">
+                <SelectTick
+                  checked={bulk.picked.has(String(i))}
+                  onChange={() => bulk.toggle(String(i))}
+                  label={e.institution || "entry"}
+                />
+              </span>
+            )}
             <div className="min-w-0">
               <p className="font-bold">{e.institution}</p>
               {(e.degree || e.field) && (

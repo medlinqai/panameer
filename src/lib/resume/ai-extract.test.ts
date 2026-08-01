@@ -8,7 +8,7 @@
  *
  * The live call itself is exercised in WS5 against the banked fixtures.
  */
-import { AI_RESUME_SCHEMA, aiToParsedResume } from "./ai-extract";
+import { AI_RESUME_SCHEMA, aiToParsedResume, fixEducationRow } from "./ai-extract";
 import { assessParse } from "./confidence";
 
 let pass = 0;
@@ -183,6 +183,56 @@ console.log("\n=== WS3: absent keys vs a genuinely empty résumé ===");
   check(
     "and converts to zero work history without error",
     aiToParsedResume(b).experiences.length === 0
+  );
+}
+
+
+console.log("\n=== WS7a: a degree is not a school ===");
+{
+  // Shapes taken from live rows, not invented.
+  const moved = fixEducationRow({ institution: "Bachelor of Arts in Accounting", degree: null });
+  check(
+    "a degree in the institution field becomes the degree",
+    moved.institution === "" && moved.degree === "Bachelor of Arts in Accounting",
+    moved
+  );
+
+  const dupe = fixEducationRow({
+    institution: "Business Administration",
+    degree: "Bachelor of Science",
+    field: "Business Administration",
+  });
+  check(
+    // The rule fires on a DEGREE-led string. "Business Administration" is a
+    // FIELD sitting in the institution slot — a real live row, and a different
+    // defect that needs a different signal, so it is deliberately left alone
+    // rather than guessed at. Asserted so the boundary is recorded, not assumed.
+    "a field-shaped institution is left alone (needs its own signal)",
+    dupe.institution === "Business Administration" &&
+      dupe.degree === "Bachelor of Science",
+    dupe
+  );
+
+  const real = fixEducationRow({
+    institution: "San Diego State University",
+    degree: "Bachelor of Science",
+    field: "Information & Decision Systems",
+    startYear: 2000,
+    endYear: 2004,
+  });
+  check(
+    "a genuine university is untouched",
+    real.institution === "San Diego State University" &&
+      real.degree === "Bachelor of Science" &&
+      real.startYear === 2000,
+    real
+  );
+
+  const tricky = fixEducationRow({ institution: "Bachelor College", degree: null });
+  check(
+    "a school whose NAME starts with a degree word is not gutted",
+    tricky.institution === "Bachelor College",
+    tricky
   );
 }
 
