@@ -373,3 +373,116 @@ export async function getLearnPath(
     courses,
   };
 }
+
+// ---------------------------------------------------------------------------
+// WS3 — the lesson page
+// ---------------------------------------------------------------------------
+
+export type LearnLessonView = {
+  lesson: {
+    id: string;
+    title: string;
+    description: string | null;
+    runTime: string | null;
+    vimeoRef: string | null;
+    thumbnailUrl: string | null;
+    playable: boolean;
+    completed: boolean;
+  };
+  path: { id: string; title: string; slug: string; enrolled: boolean };
+  course: { id: string; title: string; slug: string };
+  section: { id: string; title: string };
+  /** The instructor for this lesson: its own if set, otherwise the path's. */
+  instructor: LearnCard["instructor"];
+  /** Flat running order across the whole path, for prev/next and "X of N". */
+  position: number;
+  total: number;
+  prev: { id: string; title: string } | null;
+  next: { id: string; title: string } | null;
+  /** The lessons of THIS course, for the in-course nav list. */
+  courseLessons: (LearnLessonRow & { current: boolean })[];
+  pathCompleted: number;
+  pathProgress: number;
+};
+
+export async function getLearnLesson(
+  pathSlug: string,
+  lessonId: string,
+  userId: string | null
+): Promise<LearnLessonView | null> {
+  const path = await getLearnPath(pathSlug, userId);
+  if (!path) return null;
+
+  // The flat order a learner actually moves through: across sections and across
+  // courses, because "next" from the last lesson of a course is the first of
+  // the next one, not a dead end.
+  const flat = path.courses.flatMap((c) =>
+    c.sections.flatMap((s) => s.lessons.map((l) => ({ lesson: l, course: c, section: s })))
+  );
+  const i = flat.findIndex((x) => x.lesson.id === lessonId);
+  if (i < 0) return null;
+  const here = flat[i];
+
+  const own = await prisma.lesson.findUnique({
+    where: { id: lessonId },
+    select: {
+      vimeo_ref: true,
+      thumbnail_url: true,
+      expert: {
+        select: {
+          id: true,
+          first_name: true,
+          last_name: true,
+          photo_url: true,
+          providerProfile: { select: { id: true } },
+        },
+      },
+    },
+  });
+
+  let instructor = path.instructor;
+  if (own?.expert) {
+    const visible = own.expert.providerProfile
+      ? await prisma.providerProfile.findFirst({
+          where: { id: own.expert.providerProfile.id, ...marketplaceVisibleWhere() },
+          select: { id: true },
+        })
+      : null;
+    instructor = {
+      id: own.expert.id,
+      name:
+        `${own.expert.first_name ?? ""} ${own.expert.last_name ?? ""}`.trim() || "Panameer",
+      photoUrl: own.expert.photo_url,
+      profileSlug: visible?.id ?? null,
+    };
+  }
+
+  return {
+    lesson: {
+      id: here.lesson.id,
+      title: here.lesson.title,
+      description: here.lesson.description,
+      runTime: here.lesson.runTime,
+      vimeoRef: own?.vimeo_ref ?? null,
+      thumbnailUrl: own?.thumbnail_url ?? null,
+      playable: here.lesson.playable,
+      completed: here.lesson.completed,
+    },
+    path: { id: path.id, title: path.title, slug: path.slug, enrolled: path.enrolled },
+    course: { id: here.course.id, title: here.course.title, slug: here.course.slug },
+    section: { id: here.section.id, title: here.section.title },
+    instructor,
+    position: i + 1,
+    total: flat.length,
+    prev: i > 0 ? { id: flat[i - 1].lesson.id, title: flat[i - 1].lesson.title } : null,
+    next:
+      i < flat.length - 1
+        ? { id: flat[i + 1].lesson.id, title: flat[i + 1].lesson.title }
+        : null,
+    courseLessons: here.course.sections
+      .flatMap((s) => s.lessons)
+      .map((l) => ({ ...l, current: l.id === lessonId })),
+    pathCompleted: path.completed,
+    pathProgress: path.progress,
+  };
+}
