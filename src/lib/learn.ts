@@ -159,10 +159,18 @@ export async function getBrowseTree(): Promise<
   }));
 }
 
-/** One path with its full outline, for the landing page. */
-export async function getLearningPath(slug: string) {
+/**
+ * One path with its full outline, for the landing page.
+ *
+ * `includeDraft` exists ONLY for the admin preview (WS4) and is never derived
+ * from a query string here — the caller has to have already proved the viewer
+ * is an admin, and passes an explicit boolean. Keeping the decision at the page
+ * boundary rather than inside this function means the default read stays
+ * PUBLISHED-only and a future caller can't opt into draft rows by accident.
+ */
+export async function getLearningPath(slug: string, includeDraft = false) {
   return prisma.learningPath.findFirst({
-    where: { slug, status: "PUBLISHED" },
+    where: { slug, ...(includeDraft ? {} : { status: "PUBLISHED" }) },
     select: {
       id: true,
       title: true,
@@ -170,6 +178,8 @@ export async function getLearningPath(slug: string) {
       summary: true,
       group: true,
       audience: true,
+      // Selected so a preview can tell the admin they're looking at a draft.
+      status: true,
       expert: { select: { first_name: true, last_name: true, photo_url: true } },
       courses: {
         orderBy: { sort_order: "asc" },
@@ -202,11 +212,18 @@ export async function getLearningPath(slug: string) {
 }
 
 /** One lesson plus the sibling list needed to render prev / next. */
-export async function getLesson(pathSlug: string, lessonId: string) {
+export async function getLesson(pathSlug: string, lessonId: string, includeDraft = false) {
   const lesson = await prisma.lesson.findFirst({
     where: {
       id: lessonId,
-      section: { course: { learningPath: { slug: pathSlug, status: "PUBLISHED" } } },
+      section: {
+        course: {
+          learningPath: {
+            slug: pathSlug,
+            ...(includeDraft ? {} : { status: "PUBLISHED" }),
+          },
+        },
+      },
     },
     select: {
       id: true,
@@ -235,7 +252,7 @@ export async function getLesson(pathSlug: string, lessonId: string) {
 
   // Flat running order across the whole path, so prev/next crosses section and
   // course boundaries the way a learner actually moves through it.
-  const path = await getLearningPath(pathSlug);
+  const path = await getLearningPath(pathSlug, includeDraft);
   const order = (path?.courses ?? []).flatMap((c) =>
     c.sections.flatMap((s) => s.lessons.map((l) => ({ ...l, sectionTitle: s.title })))
   );

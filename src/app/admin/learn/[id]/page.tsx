@@ -13,7 +13,11 @@ import {
   type TreeLesson,
   type TreeSection,
 } from "@/components/admin/learn/StructureEditor";
-import { LessonEditor, SectionUrlTable } from "@/components/admin/learn/LessonEditor";
+import {
+  LessonEditor,
+  SectionUrlTable,
+} from "@/components/admin/learn/LessonEditor";
+import { PublishControls } from "@/components/admin/learn/PublishControls";
 
 /**
  * One Learning Path — its details and its whole outline (WS2).
@@ -30,12 +34,13 @@ export default function AdminLearnPathPage({
 }) {
   const { id } = use(params);
   const { data, loading, error, reload } = useAdminFetch<Tree>(
-    `/api/admin/learn/paths/${id}/tree`
+    `/api/admin/learn/paths/${id}/tree`,
   );
   const [editing, setEditing] = useState<PathDraft | null>(null);
-  const [lesson, setLesson] = useState<{ lesson: TreeLesson; section: TreeSection } | null>(
-    null
-  );
+  const [lesson, setLesson] = useState<{
+    lesson: TreeLesson;
+    section: TreeSection;
+  } | null>(null);
   const [urlTables, setUrlTables] = useState<Set<string>>(new Set());
 
   return (
@@ -60,9 +65,13 @@ export default function AdminLearnPathPage({
                   </h1>
                   <StatusPill status={data.status} />
                 </div>
-                <p className="mt-1 font-mono text-[13px] text-ink-2">/learn/{data.slug}</p>
+                <p className="mt-1 font-mono text-[13px] text-ink-2">
+                  /learn/{data.slug}
+                </p>
                 {data.summary && (
-                  <p className="mt-2 max-w-2xl text-[14.5px] text-ink-2">{data.summary}</p>
+                  <p className="mt-2 max-w-2xl text-[14.5px] text-ink-2">
+                    {data.summary}
+                  </p>
                 )}
                 <p className="mt-2 text-[13.5px] text-ink-2">
                   {data.group ?? "No group"}
@@ -79,27 +88,35 @@ export default function AdminLearnPathPage({
                 />
               )}
 
-              <Button
-                type="button"
-                tone="ghost"
-                onClick={() =>
-                  setEditing({
-                    id: data.id,
-                    title: data.title,
-                    slug: data.slug,
-                    summary: data.summary ?? "",
-                    audience: data.audience,
-                    group: data.group ?? "",
-                    expertPersonId: data.expertPersonId,
-                    expertName: data.expert,
-                    coverImage: data.coverImage,
-                    introVideoRef: data.introVideoRef ?? "",
-                    status: data.status,
-                  })
-                }
-              >
-                Edit Details
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                <PublishControls
+                  pathId={data.id}
+                  slug={data.slug}
+                  status={data.status}
+                  onChanged={reload}
+                />
+                <Button
+                  type="button"
+                  tone="ghost"
+                  onClick={() =>
+                    setEditing({
+                      id: data.id,
+                      title: data.title,
+                      slug: data.slug,
+                      summary: data.summary ?? "",
+                      audience: data.audience,
+                      group: data.group ?? "",
+                      expertPersonId: data.expertPersonId,
+                      expertName: data.expert,
+                      coverImage: data.coverImage,
+                      introVideoRef: data.introVideoRef ?? "",
+                      status: data.status,
+                    })
+                  }
+                >
+                  Edit Details
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -118,9 +135,15 @@ export default function AdminLearnPathPage({
                 <span className="block text-[12.5px] text-ink-2">
                   {l.runTime ?? "—"}
                   {isPlayable(l) ? (
-                    <span className="font-semibold text-emerald-700"> · Ready</span>
+                    <span className="font-semibold text-emerald-700">
+                      {" "}
+                      · Ready
+                    </span>
                   ) : urlMissing(l) ? (
-                    <span className="font-semibold text-amber-700"> · URL missing</span>
+                    <span className="font-semibold text-amber-700">
+                      {" "}
+                      · URL missing
+                    </span>
                   ) : null}
                 </span>
               </button>
@@ -132,7 +155,9 @@ export default function AdminLearnPathPage({
                 onClick={() =>
                   setUrlTables((prev) => {
                     const next = new Set(prev);
-                    next.has(section.id) ? next.delete(section.id) : next.add(section.id);
+                    next.has(section.id)
+                      ? next.delete(section.id)
+                      : next.add(section.id);
                     return next;
                   })
                 }

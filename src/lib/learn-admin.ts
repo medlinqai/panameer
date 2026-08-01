@@ -961,3 +961,134 @@ export async function setLessonUrl(id: string, rawUrl: string | null) {
   });
   return { ok: true as const, vimeoRef: vimeo, statusChanged: !alreadyClaims };
 }
+
+// ---------------------------------------------------------------------------
+// WS4 — publish controls
+// ---------------------------------------------------------------------------
+
+export type PublishReadiness = {
+  canPublish: boolean;
+  /** Hard reasons publishing is refused. */
+  blockers: string[];
+  /** Publishing is allowed, but the admin should know these first. */
+  warnings: string[];
+  lessons: number;
+  playable: number;
+  urlMissing: number;
+};
+
+/**
+ * Can this path go live, and what will a learner find if it does?
+ *
+ * The brief draws a sharp line here and it is the right one: structure is a
+ * BLOCKER, empty videos are a WARNING. A path with no lessons is not a page, it
+ * is a dead link — nothing to show and nothing to fix by publishing. A path
+ * whose lessons are all "coming soon" is a real page that says what is coming;
+ * the public catalog already reports "0 ready to watch" honestly, so publishing
+ * it is a legitimate choice and not ours to refuse.
+ */
+export async function getPublishReadiness(id: string): Promise<PublishReadiness> {
+  const path = await prisma.learningPath.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      title: true,
+      courses: {
+        select: {
+          id: true,
+          title: true,
+          sections: {
+            select: {
+              id: true,
+              title: true,
+              lessons: { select: { vimeo_ref: true, production_status: true } },
+            },
+          },
+        },
+      },
+    },
+  });
+  if (!path) throw new LearnAdminError("That learning path no longer exists.", "NOT_FOUND");
+
+  const blockers: string[] = [];
+  const warnings: string[] = [];
+
+  const lessons = path.courses.flatMap((c) => c.sections.flatMap((s) => s.lessons));
+  const playable = lessons.filter(isPlayable).length;
+  const urlMissing = lessons.filter(
+    (l) =>
+      (["URL_ADDED_TO_LESSON", "BLOG_CREATED", "BLOG_RELEASED"] as string[]).includes(
+        l.production_status
+      ) && !l.vimeo_ref?.trim()
+  ).length;
+
+  if (path.courses.length === 0) {
+    blockers.push("This path has no courses. Add at least one course, section and lesson.");
+  } else {
+    const emptyCourses = path.courses.filter((c) => c.sections.length === 0);
+    const emptySections = path.courses
+      .flatMap((c) => c.sections)
+      .filter((s) => s.lessons.length === 0);
+
+    if (lessons.length === 0) {
+      blockers.push(
+        "This path has no lessons. A learner who clicked it would find an empty page."
+      );
+    }
+    if (emptyCourses.length > 0) {
+      warnings.push(
+        `${emptyCourses.length} course${emptyCourses.length === 1 ? "" : "s"} have no sections and will render empty.`
+      );
+    }
+    if (emptySections.length > 0) {
+      warnings.push(
+        `${emptySections.length} section${emptySections.length === 1 ? "" : "s"} have no lessons.`
+      );
+    }
+  }
+
+  if (lessons.length > 0 && playable === 0) {
+    warnings.push(
+      lessons.length === 1
+        ? `The only lesson here has no video yet, so it will show as "coming soon". You can still publish — the catalog says "0 ready to watch" rather than pretending otherwise.`
+        : `None of the ${lessons.length} lessons have a video yet, so every one will show as "coming soon". You can still publish — the catalog says "0 ready to watch" rather than pretending otherwise.`
+    );
+  }
+  if (urlMissing > 0) {
+    warnings.push(
+      `${urlMissing} lesson${urlMissing === 1 ? " is" : "s are"} marked as having a URL but ${urlMissing === 1 ? "doesn't" : "don't"} have one.`
+    );
+  }
+
+  return {
+    canPublish: blockers.length === 0,
+    blockers,
+    warnings,
+    lessons: lessons.length,
+    playable,
+    urlMissing,
+  };
+}
+
+/**
+ * Flip a path's status.
+ *
+ * Publishing re-checks readiness SERVER-SIDE rather than trusting that the UI
+ * disabled the button — the readiness call and the publish are separate
+ * requests, and a path can lose its last lesson in between. Unpublishing has no
+ * gate: pulling something back is always allowed.
+ */
+export async function setPathStatus(id: string, status: "DRAFT" | "PUBLISHED") {
+  if (status === "PUBLISHED") {
+    const readiness = await getPublishReadiness(id);
+    if (!readiness.canPublish) {
+      throw new LearnAdminError(readiness.blockers.join(" "), "BLOCKED");
+    }
+  }
+  const updated = await prisma.learningPath.update({
+    where: { id },
+    data: { status, is_custom: true },
+    select: { id: true, status: true, slug: true },
+  });
+  return updated;
+}

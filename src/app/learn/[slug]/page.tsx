@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getLearningPath, isPlayable, AUDIENCE_LABEL, STYLE_LABEL } from "@/lib/learn";
+import { getSessionViewer } from "@/lib/session";
+import { canAdminister } from "@/lib/access";
 
 /**
  * Learning-path landing page (brief_learn_v1 WS2).
@@ -13,12 +15,30 @@ import { getLearningPath, isPlayable, AUDIENCE_LABEL, STYLE_LABEL } from "@/lib/
  */
 export default async function LearningPathPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ preview?: string }>;
 }) {
   const { slug } = await params;
-  const path = await getLearningPath(slug);
+
+  /*
+    PREVIEW AS PUBLIC (brief_learn_admin_authoring WS4).
+
+    ?preview=1 is a REQUEST, never a grant: the draft row is only read after the
+    session resolves to an admin, so an anonymous visitor appending the param
+    gets exactly the 404 they would have got without it. Previewing reuses this
+    page rather than rendering a copy inside the console, because the point of a
+    preview is to see the real thing — a second implementation would drift and
+    then reassure an admin about a page that doesn't exist.
+  */
+  const wantsPreview = (await searchParams).preview === "1";
+  const viewer = wantsPreview ? await getSessionViewer() : null;
+  const isPreview = Boolean(viewer && canAdminister(viewer));
+
+  const path = await getLearningPath(slug, isPreview);
   if (!path) notFound();
+  const isDraft = path.status !== "PUBLISHED";
 
   const lessons = path.courses.flatMap((c) => c.sections.flatMap((s) => s.lessons));
   const playable = lessons.filter(isPlayable);
@@ -29,6 +49,19 @@ export default async function LearningPathPage({
 
   return (
     <div className="mx-auto w-full max-w-5xl px-6 py-10 sm:py-14">
+      {isPreview && isDraft && (
+        <div className="mb-6 rounded-brand border-2 border-amber-400/60 bg-amber-50/60 px-5 py-3">
+          <p className="text-[14px] font-bold">
+            Preview — this path is a draft and isn&apos;t visible to anyone else.
+          </p>
+          <Link
+            href="/admin/learn"
+            className="text-[13.5px] font-bold text-magenta hover:underline"
+          >
+            ← Back to the Learn console
+          </Link>
+        </div>
+      )}
       <nav className="text-[13.5px] text-ink-2">
         <Link href="/learn" className="font-semibold hover:text-magenta">
           Learn
