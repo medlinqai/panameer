@@ -108,12 +108,6 @@ export function CertificationCards({
     setError(null);
   }
 
-  const openAdd = () => {
-    setOtherAgency(false);
-    setDraft(emptyCertification());
-    setEditing(-1); // -1 = adding
-    setError(null);
-  };
   const openEdit = (i: number) => {
     // An issuer we don't list is still an issuer — open it in the text box.
     const issuer = items[i].issuer ?? "";
@@ -233,13 +227,22 @@ export function CertificationCards({
         </p>
       )}
 
-      <button
-        type="button"
-        onClick={openAdd}
-        className="mt-4 rounded-full border-[1.5px] border-line px-5 py-2.5 font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
-      >
-        + Add Certification
-      </button>
+      {/*
+        NO BODY BUTTON (walk7 WS6 / E144). The review renders this inside a card
+        that already carries a "+ Add Certification" link in its header, so the
+        section offered the same action twice, a few pixels apart.
+
+        The header link is the one that stays — it is where every other section
+        puts its affordance, so Certifications stops being the exception. This
+        reverses the E130 rule for THIS section on Scott's directive, and
+        reconciles with brief_profile_tiers_review WS3, whose empty-state rule
+        pointed the other way; the two were going to fight over one button.
+
+        The header link opens this component's modal through `openSignal`, so
+        the capability is untouched — only the second copy of the button is
+        gone. Its `openAdd` handler went with it: lint showed it had no other
+        caller, and a comment claiming otherwise would have been wrong.
+      */}
 
       <Modal
         open={editing !== null}
