@@ -23,14 +23,49 @@ export function LessonPlayer({
   embedUrl,
   title,
   instructor,
+  thumbnailUrl,
 }: {
   embedUrl: string | null;
   title: string;
   instructor: { name: string; photoUrl: string | null } | null;
+  /** Imported poster art — shown behind the coming-soon state. */
+  thumbnailUrl?: string | null;
 }) {
   const [pip, setPip] = useState(true);
 
   if (!embedUrl) {
+    /*
+      The lesson's own thumbnail, where the import found one, sits behind the
+      coming-soon message. This is precisely where the art earns its keep: a
+      lesson with no video is the emptiest screen in Learn, and the picture the
+      author already drew for it says what the lesson is about far better than
+      a grey box does.
+    */
+    if (thumbnailUrl) {
+      // With real art, the picture carries the page and the status is a badge.
+      // The first build centred the full "coming soon" paragraph over the
+      // image; the artwork already says what the lesson is, and the paragraph
+      // sat across the author's own typography and made both unreadable.
+      return (
+        <div>
+          <div className="relative aspect-video w-full overflow-hidden rounded-brand border border-line bg-[#0d0a1a]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={thumbnailUrl}
+              alt={title}
+              className="h-full w-full object-contain"
+            />
+            <span className="absolute left-3 top-3 rounded-full bg-black/70 px-3 py-1 text-[12px] font-bold text-white backdrop-blur-sm">
+              Coming soon
+            </span>
+          </div>
+          <p className="mt-2 text-[13.5px] text-ink-2">
+            The video isn&apos;t loaded yet — it&apos;ll play here the moment it lands.
+          </p>
+        </div>
+      );
+    }
+
     return (
       <div className="flex aspect-video w-full flex-col items-center justify-center rounded-brand border border-line bg-bg-soft px-6 text-center">
         <p className="font-display text-[20px] font-bold">Coming soon</p>

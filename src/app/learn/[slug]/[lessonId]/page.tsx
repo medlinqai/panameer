@@ -74,6 +74,7 @@ export default async function LessonPage({
             instructor={
               instructor ? { name: instructor.name, photoUrl: instructor.photoUrl } : null
             }
+            thumbnailUrl={lesson.thumbnailUrl}
           />
 
           {lesson.description && (
