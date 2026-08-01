@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { AiPassPanel } from "@/components/onboarding/AiPassPanel";
+import { ResumeImportAction } from "@/components/onboarding/ResumeImportAction";
 
 /**
  * The AI pass on a LIVE provider's own profile (E129).
@@ -25,8 +26,18 @@ export function OwnerAiPass() {
         "If you uploaded a résumé, our reader may have missed a layout it couldn't follow. We can have another go at it.",
       ]}
       onUpload={() => router.push("/join/provider?step=tell_us")}
-      onManual={() => router.push("/join/provider?step=tell_us&return=review")}
+      onManual={() => router.push("/join/provider?step=tell_us")}
       onApplied={() => router.refresh()}
     />
   );
+}
+
+/**
+ * The persistent "Import from résumé" action for the published profile's Work
+ * History header (E132). Refreshes the server component on success, since this
+ * page reads the profile from the database.
+ */
+export function OwnerResumeImport() {
+  const router = useRouter();
+  return <ResumeImportAction onApplied={() => router.refresh()} />;
 }

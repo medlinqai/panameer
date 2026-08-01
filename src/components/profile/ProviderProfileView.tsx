@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { OwnerAiPass } from "@/components/profile/OwnerAiPass";
+import { OwnerAiPass, OwnerResumeImport } from "@/components/profile/OwnerAiPass";
 import { formatCents, rateBreakdown } from "@/lib/display";
 import type { ProviderProfileView } from "@/lib/provider-profile-view";
 import {
@@ -164,7 +164,19 @@ export function ProviderProfileViewPage({ p }: { p: ProviderProfileView }) {
         <div className="mt-5">
           <ProfileCard
             title="Work History"
-            edit={edit("Work History", "/join/provider?step=tell_us&return=review", p.employers.length === 0)}
+            edit={
+              // E132 — always reachable, not only when the section is empty.
+              p.isOwner ? (
+                <span className="flex flex-wrap items-center gap-4">
+                  <OwnerResumeImport />
+                  {edit(
+                    "Work History",
+                    "/join/provider?step=tell_us&return=review",
+                    p.employers.length === 0
+                  )}
+                </span>
+              ) : undefined
+            }
           >
             {/*
               E129 — the live provider's own reachable offer. A provider whose

@@ -54,6 +54,7 @@ import { dobError } from "@/lib/dob";
 import { LANGUAGES } from "@/lib/countries";
 import { LocationFields } from "@/components/onboarding/LocationFields";
 import { AiPassPanel } from "@/components/onboarding/AiPassPanel";
+import { ResumeImportAction } from "@/components/onboarding/ResumeImportAction";
 import {
   reviewItems,
   splitReviewItems,
@@ -2662,7 +2663,25 @@ export default function JoinProviderPage() {
             <div className="mt-5">
               <ProfileCard
                 title="Work History"
-                edit={sectionAction("Work History", "tell_us", profile.employers.length === 0)}
+                edit={
+                  // E132 — the import offer sits BESIDE the edit action, always,
+                  // not only when the section is empty.
+                  <span className="flex flex-wrap items-center gap-4">
+                    <ResumeImportAction
+                      onApplied={async () => {
+                        // Re-read the profile so the section shows what was just
+                        // imported, rather than trusting a local patch.
+                        const r = await fetch("/api/onboarding/status");
+                        if (r.ok) hydrate(await r.json());
+                      }}
+                    />
+                    {sectionAction(
+                      "Work History",
+                      "tell_us",
+                      profile.employers.length === 0
+                    )}
+                  </span>
+                }
               >
                 {/*
                   E129 — THE REACHABLE OFFER. An empty work history on the review
