@@ -1549,6 +1549,10 @@ model LearningPath {
   /// provider profile.
   expert_person_id String?            @db.Uuid
   cover_image      String?
+  /// Optional intro video for the path itself (same loose Vimeo reference the
+  /// Lesson uses — see `vimeoEmbedUrl`). A path can front its curriculum with a
+  /// "what you'll learn" clip without that clip being a lesson in the outline.
+  intro_video_ref  String?
   status           LearnPublishStatus @default(DRAFT)
   sort_order       Int                @default(0)
   created_at       DateTime           @default(now())
@@ -1578,6 +1582,14 @@ model Course {
   title            String
   slug             String
   summary          String?
+  /// Card art for this course. Every level of the hierarchy carries its own
+  /// image (brief_learn_admin_authoring, Core content model): an instructor
+  /// photo, topic art, whatever the admin uploads. Null falls back to the
+  /// level above at render time, so an unset thumbnail degrades to the path's
+  /// cover rather than to a hole in the grid.
+  thumbnail_url    String?
+  /// Optional course intro video — same loose Vimeo reference as Lesson.
+  intro_video_ref  String?
   style            CourseStyle?
   sort_order       Int          @default(0)
   created_at       DateTime     @default(now())
@@ -1597,17 +1609,22 @@ model Course {
 }
 
 model Section {
-  id         String   @id @default(uuid()) @db.Uuid
-  course_id  String   @db.Uuid
-  title      String
-  sort_order Int      @default(0)
-  created_at DateTime @default(now())
+  id            String   @id @default(uuid()) @db.Uuid
+  course_id     String   @db.Uuid
+  title         String
+  /// Section-level copy. The XLS gives sections nothing but a title, so this is
+  /// admin-authored only — it exists because the brief requires text at EVERY
+  /// level, and a section is where "what this group of lessons is for" belongs.
+  description   String?
+  thumbnail_url String?
+  sort_order    Int      @default(0)
+  created_at    DateTime @default(now())
   /// XLS-RE-RUN SHIELD (WS1). The catalog is seed-driven, but the admin console
   /// (brief_learn_admin_authoring) will edit the same rows. A re-import is
   /// authoritative only for rows it created: anything flagged `is_custom` was
   /// touched by a human and an XLS re-run leaves it alone. Same rule the service
   /// taxonomy uses.
-  is_custom  Boolean  @default(false)
+  is_custom     Boolean  @default(false)
 
   course  Course   @relation(fields: [course_id], references: [id], onDelete: Cascade)
   lessons Lesson[]
@@ -1628,6 +1645,9 @@ model Lesson {
   /// display copy from a spreadsheet, and parsing it to seconds would invent a
   /// precision the source doesn't have.
   run_time          String?
+  /// Poster art for the lesson. NOT the Vimeo thumbnail: a lesson can need a
+  /// card image long before it has a video, which is most of the catalog today.
+  thumbnail_url     String?
   /// Vimeo video id or embed URL. Null until the video is wired.
   vimeo_ref         String?
   production_status LessonProductionStatus @default(IN_CONCEPT)
