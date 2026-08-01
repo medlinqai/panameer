@@ -1,0 +1,64 @@
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { prisma } from "@/lib/prisma";
+import { getSessionViewer } from "@/lib/session";
+
+const BODY = z.object({
+  pathId: z.string().uuid(),
+  /** false = un-enrol. */
+  enrol: z.boolean().default(true),
+});
+
+/**
+ * POST /api/learn/enrol — free enrolment in a learning path.
+ *
+ * OWNER-SCOPED BY CONSTRUCTION: the user id comes from the session and is never
+ * read from the body. The client sends which PATH to join and nothing about
+ * WHO is joining, so there is no shape of request that enrols someone else.
+ *
+ * Un-enrolling deletes the LearnEnrollment and deliberately leaves
+ * LessonProgress alone. Those rows are a record of what someone watched, not a
+ * property of the enrolment — deleting them would mean an accidental un-enrol
+ * silently erased months of progress, and re-enrolling restores the picture
+ * exactly.
+ */
+export async function POST(request: Request) {
+  const viewer = await getSessionViewer();
+  if (!viewer) {
+    return NextResponse.json(
+      { error: "Sign in to enrol — it's free and keeps your place." },
+      { status: 401 }
+    );
+  }
+
+  const parsed = BODY.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) {
+    return NextResponse.json({ error: "That isn't a valid request." }, { status: 400 });
+  }
+  const { pathId, enrol } = parsed.data;
+
+  const path = await prisma.learningPath.findFirst({
+    where: { id: pathId, status: "PUBLISHED" },
+    select: { id: true },
+  });
+  if (!path) {
+    return NextResponse.json({ error: "That learning path isn't available." }, { status: 404 });
+  }
+
+  if (!enrol) {
+    await prisma.learnEnrollment.deleteMany({
+      where: { user_id: viewer.userId, learning_path_id: pathId },
+    });
+    return NextResponse.json({ ok: true, enrolled: false });
+  }
+
+  // Idempotent: enrolling twice is a no-op, not a unique-constraint error.
+  await prisma.learnEnrollment.upsert({
+    where: {
+      user_id_learning_path_id: { user_id: viewer.userId, learning_path_id: pathId },
+    },
+    create: { user_id: viewer.userId, learning_path_id: pathId },
+    update: {},
+  });
+  return NextResponse.json({ ok: true, enrolled: true });
+}

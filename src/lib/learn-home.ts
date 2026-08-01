@@ -176,3 +176,200 @@ export function groupChips(cards: LearnCard[]): { group: string; paths: number; 
   }
   return [...map.values()].sort((a, b) => b.lessons - a.lessons || a.group.localeCompare(b.group));
 }
+
+// ---------------------------------------------------------------------------
+// WS2 — the path landing and course pages
+// ---------------------------------------------------------------------------
+
+export type LearnLessonRow = {
+  id: string;
+  title: string;
+  description: string | null;
+  runTime: string | null;
+  playable: boolean;
+  completed: boolean;
+};
+
+export type LearnCourseView = {
+  id: string;
+  title: string;
+  slug: string;
+  summary: string | null;
+  style: string | null;
+  thumbnailUrl: string | null;
+  introVideoRef: string | null;
+  lessons: number;
+  completed: number;
+  sections: {
+    id: string;
+    title: string;
+    description: string | null;
+    lessons: LearnLessonRow[];
+  }[];
+};
+
+export type LearnPathView = {
+  id: string;
+  title: string;
+  slug: string;
+  summary: string | null;
+  group: string | null;
+  audience: string;
+  coverImage: string | null;
+  introVideoRef: string | null;
+  instructor: LearnCard["instructor"];
+  enrolled: boolean;
+  lessons: number;
+  completed: number;
+  progress: number;
+  courses: LearnCourseView[];
+};
+
+/**
+ * One path, its whole outline, and this learner's ticks against it.
+ *
+ * DRAFT paths are invisible here regardless of who is asking. The admin console
+ * has its own preview (brief_learn_admin_authoring WS4) and it goes through the
+ * admin-gated read; this is the learner path and it must not become a second
+ * way to see unpublished work.
+ */
+export async function getLearnPath(
+  slug: string,
+  userId: string | null
+): Promise<LearnPathView | null> {
+  const path = await prisma.learningPath.findFirst({
+    where: { slug, status: "PUBLISHED" },
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      summary: true,
+      group: true,
+      audience: true,
+      cover_image: true,
+      intro_video_ref: true,
+      expert: {
+        select: {
+          id: true,
+          first_name: true,
+          last_name: true,
+          photo_url: true,
+          providerProfile: { select: { id: true } },
+        },
+      },
+      courses: {
+        orderBy: [{ sort_order: "asc" }, { title: "asc" }],
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          summary: true,
+          style: true,
+          thumbnail_url: true,
+          intro_video_ref: true,
+          sections: {
+            orderBy: [{ sort_order: "asc" }, { title: "asc" }],
+            select: {
+              id: true,
+              title: true,
+              description: true,
+              lessons: {
+                orderBy: [{ sort_order: "asc" }, { title: "asc" }],
+                select: {
+                  id: true,
+                  title: true,
+                  description: true,
+                  run_time: true,
+                  vimeo_ref: true,
+                  production_status: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+  if (!path) return null;
+
+  const [enrollment, progress, visibleProfile] = await Promise.all([
+    userId
+      ? prisma.learnEnrollment.findUnique({
+          where: { user_id_learning_path_id: { user_id: userId, learning_path_id: path.id } },
+          select: { id: true },
+        })
+      : Promise.resolve(null),
+    userId
+      ? prisma.lessonProgress.findMany({
+          where: { user_id: userId },
+          select: { lesson_id: true },
+        })
+      : Promise.resolve([]),
+    path.expert?.providerProfile?.id
+      ? prisma.providerProfile.findFirst({
+          where: { id: path.expert.providerProfile.id, ...marketplaceVisibleWhere() },
+          select: { id: true },
+        })
+      : Promise.resolve(null),
+  ]);
+
+  const done = new Set(progress.map((p) => p.lesson_id));
+
+  const courses: LearnCourseView[] = path.courses.map((c) => {
+    const sections = c.sections.map((s) => ({
+      id: s.id,
+      title: s.title,
+      description: s.description,
+      lessons: s.lessons.map((l) => ({
+        id: l.id,
+        title: l.title,
+        description: l.description,
+        runTime: l.run_time,
+        playable: isPlayable(l),
+        completed: done.has(l.id),
+      })),
+    }));
+    const flat = sections.flatMap((s) => s.lessons);
+    return {
+      id: c.id,
+      title: c.title,
+      slug: c.slug,
+      summary: c.summary,
+      style: c.style,
+      thumbnailUrl: c.thumbnail_url,
+      introVideoRef: c.intro_video_ref,
+      lessons: flat.length,
+      completed: flat.filter((l) => l.completed).length,
+      sections,
+    };
+  });
+
+  const allLessons = courses.flatMap((c) => c.sections.flatMap((s) => s.lessons));
+  const completed = allLessons.filter((l) => l.completed).length;
+
+  return {
+    id: path.id,
+    title: path.title,
+    slug: path.slug,
+    summary: path.summary,
+    group: path.group,
+    audience: path.audience,
+    coverImage: path.cover_image,
+    introVideoRef: path.intro_video_ref,
+    instructor: path.expert
+      ? {
+          id: path.expert.id,
+          name:
+            `${path.expert.first_name ?? ""} ${path.expert.last_name ?? ""}`.trim() ||
+            "Panameer",
+          photoUrl: path.expert.photo_url,
+          profileSlug: visibleProfile?.id ?? null,
+        }
+      : null,
+    enrolled: Boolean(enrollment),
+    lessons: allLessons.length,
+    completed,
+    progress: allLessons.length > 0 ? Math.round((completed / allLessons.length) * 100) : 0,
+    courses,
+  };
+}
