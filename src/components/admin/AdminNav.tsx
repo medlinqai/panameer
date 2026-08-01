@@ -5,10 +5,12 @@ import { usePathname } from "next/navigation";
 
 // The Platform Console left rail (brief_M) — the console's OWN nav, not the
 // buyer/provider app shell. Skill Catalog is read-only v1; Support is a stub.
+// Learn is the content-authoring console (brief_learn_admin_authoring).
 const ITEMS: { label: string; href: string; soon?: boolean }[] = [
   { label: "Dashboard", href: "/admin" },
   { label: "Companies", href: "/admin/companies" },
   { label: "Providers", href: "/admin/providers" },
+  { label: "Learn", href: "/admin/learn" },
   { label: "Skill Catalog", href: "/admin/skill-catalog" },
   { label: "Support", href: "/admin/support", soon: true },
 ];
