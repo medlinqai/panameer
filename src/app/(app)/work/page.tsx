@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { guardPage } from "@/lib/guard";
+import { getSessionViewer } from "@/lib/session";
+import { getHomeSearchChips } from "@/lib/learn-home";
+import { FindWorkHero } from "@/components/home/FindWorkHero";
 
 /**
  * FIND WORK — search results (brief_provider_home_page_v2, stub).
@@ -19,15 +22,24 @@ export default async function FindWorkPage({
 }) {
   await guardPage("canProvideServices");
   const q = (await searchParams).q?.trim();
+  const viewer = await getSessionViewer();
+  const chips = await getHomeSearchChips(viewer?.userId ?? null);
 
   return (
-    <div className="mx-auto w-full max-w-3xl py-6">
-      <p className="text-[13px] font-bold uppercase tracking-[0.08em] text-magenta">
-        Find Work
-      </p>
-      <h1 className="mt-1.5 font-display text-[28px] font-bold tracking-[-0.5px]">
-        {q ? <>Results for &ldquo;{q}&rdquo;</> : "Search Open Job Postings"}
-      </h1>
+    <div className="mx-auto w-full max-w-4xl">
+      {/*
+        THE FIND-WORK HERO LIVES HERE NOW (MASTER reconciliation). E134 put it
+        on Home; WS12 makes Home the Opportunities dashboard, so the hero moved
+        to the nav page it was always about rather than being deleted.
+      */}
+      {!q && <FindWorkHero chips={chips} />}
+
+      <div className={q ? "" : "mt-10"}>
+      {q && (
+        <h1 className="font-display text-[28px] font-bold tracking-[-0.5px]">
+          Results for &ldquo;{q}&rdquo;
+        </h1>
+      )}
 
       <div className="mt-6 rounded-brand border border-line p-7">
         <p className="text-[16px] font-bold">Job search is coming soon.</p>
@@ -61,6 +73,7 @@ export default async function FindWorkPage({
             Build Skills on Learn
           </Link>
         </div>
+      </div>
       </div>
     </div>
   );

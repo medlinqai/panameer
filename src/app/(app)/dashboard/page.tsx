@@ -1,13 +1,12 @@
 import Link from "next/link";
 import { getSessionViewer } from "@/lib/session";
-import { getHomeLearningPaths, getHomeSearchChips } from "@/lib/learn-home";
-import { ProviderHome } from "@/components/home/ProviderHome";
+import { Opportunities } from "@/components/home/Opportunities";
 import { Card } from "@/components/Card";
 import { prisma } from "@/lib/prisma";
 import { displayFirstName } from "@/lib/display";
 
 /**
- * HOME — the app hub (brief_provider_home_page_v2 WS1, design ref E134).
+ * HOME — the Opportunities dashboard (MASTER WS12, design ref E151).
  *
  * This page used to render the provider's entire profile view, which is why the
  * post-publish landing was "mixing two pages" (E146): Home and my-profile were
@@ -41,13 +40,10 @@ export default async function DashboardPage() {
     select: { id: true },
   });
 
-  if (isProvider) {
-    const [chips, paths] = await Promise.all([
-      getHomeSearchChips(viewer.userId),
-      getHomeLearningPaths(viewer.userId),
-    ]);
-    return <ProviderHome chips={chips} paths={paths} />;
-  }
+  // WS12 — Home is the Opportunities dashboard. The Find-Work hero and the
+  // Build-Skills row that used to live here moved to /work and /learn per the
+  // brief's reconciliation, so Home is one job rather than three.
+  if (isProvider) return <Opportunities />;
 
   // --- Not a provider: buyer / unfinished account ---------------------------
   const person = await prisma.person.findUnique({
