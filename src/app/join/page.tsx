@@ -62,6 +62,8 @@ function JoinRouter() {
   const params = useSearchParams();
   const [ready, setReady] = useState(false);
 
+  // E150 — no step counter on either page. It labelled a two-card question as
+  // a process, which made a five-second fork feel like paperwork.
   const typeParam = params.get("type");
   const isType = typeParam === "seller" || typeParam === "buyer";
   const step: 1 | 2 = isType ? 2 : 1;
@@ -113,25 +115,20 @@ function JoinRouter() {
         router.push("/join/provider?type=recruiter");
         break;
       /*
-        BUYER SIDE — a deviation from the brief, reported rather than silent.
+        BUYER SIDE — the stub the brief asks for.
 
-        The brief says buyer onboarding "is NOT built" and to route to a
-        coming-soon stub. It IS built: /join/buyer runs account → verify → tier
-        against three live API routes and lands on /work/new. Stubbing over it
-        would replace a working sign-up with a dead end, which is the opposite
-        of the brief's own "do not block".
-
-        What genuinely doesn't exist is the Requester-vs-Buyer DISTINCTION —
-        nothing downstream records which job was chosen, and formalising
-        USER_TYPE x JOB is explicitly a separate foundation brief. So the answer
-        rides along on the URL for that brief to pick up, and the buyer lands in
-        the real flow meanwhile.
+        I flagged in walk_run7 that /join/buyer is in fact built (account →
+        verify → tier, three live API routes); the MASTER brief reaffirms the
+        stub, so the stub is what ships. The job answer still rides on the URL
+        for the USER_TYPE x JOB foundation brief to consume, and the stub links
+        ONWARD to the existing sign-up — following the instruction without
+        throwing away a working flow.
       */
       case "requester":
-        router.push("/join/buyer?job=requester");
+        router.push("/join/coming-soon?job=requester");
         break;
       case "buyer-admin":
-        router.push("/join/buyer?job=buyer");
+        router.push("/join/coming-soon?job=buyer");
         break;
     }
   };
@@ -164,9 +161,6 @@ function JoinRouter() {
             : userType === "seller"
               ? "How do you sell on Panameer?"
               : "What do you do on the buying side?"}
-        </p>
-        <p className="mt-1.5 text-[12.5px] font-bold uppercase tracking-wide text-ink-2/70">
-          Step {step} of 2
         </p>
       </div>
 
