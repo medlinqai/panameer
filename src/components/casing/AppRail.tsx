@@ -6,7 +6,8 @@ import { useState } from "react";
 import { signOut } from "next-auth/react";
 import { Avatar } from "@/components/Avatar";
 import { useMe } from "@/components/MeProvider";
-import { navForRoles, HOME_NAV } from "@/lib/nav";
+import { navForRoles, HOME_NAV, ADMIN_NAV, ADMIN_HOME, ADMIN_SETUP } from "@/lib/nav";
+import { useSession } from "next-auth/react";
 
 /**
  * The dark rail (MASTER WS9/WS11, ref E151 + Medlinq Sidebar).
@@ -32,7 +33,17 @@ export function AppRail() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
+  /*
+    ADMIN vs PROVIDER rail. `isSystemAdmin` lives on the session rather than on
+    /api/me — `Me` carries ACTOR flags (provider/buyer/coordinator) and the
+    admin bit is deliberately not one of them, so it is read from the session
+    the same way the Platform Console link already does.
+  */
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.isSystemAdmin === true;
+
   const items = navForRoles(me);
+  const consoleLabel = isAdmin ? "Platform Console" : "Provider Console";
   const isActive = (href: string) =>
     href === "/dashboard" ? pathname === href : pathname.startsWith(href);
 
@@ -46,33 +57,49 @@ export function AppRail() {
       ? "bg-magenta text-white"
       : "text-white/75 hover:bg-white/10 hover:text-white");
 
-  const nav = (
+  const railLink = (item: { label: string; href: string }, indent = true) => (
+    <Link
+      key={item.href}
+      href={item.href}
+      onClick={() => setOpen(false)}
+      aria-current={isActive(item.href) ? "page" : undefined}
+      className={
+        link(isActive(item.href)) +
+        (indent ? " pl-6 text-[15.5px] font-semibold" : "")
+      }
+    >
+      {item.label}
+    </Link>
+  );
+
+  const nav = isAdmin ? (
+    /* E009 — Setup & Maintenance, the dashboard home, then three groups. */
     <>
       <Link
-        href={HOME_NAV.href}
+        href={ADMIN_SETUP.href}
         onClick={() => setOpen(false)}
-        aria-current={isActive(HOME_NAV.href) ? "page" : undefined}
-        className={link(isActive(HOME_NAV.href))}
+        className="mb-2 block rounded-[10px] border border-white/20 px-4 py-2 text-[15px] font-semibold text-white/85 transition-colors hover:bg-white/10 hover:text-white"
       >
-        {HOME_NAV.label}
+        {ADMIN_SETUP.label}
       </Link>
+      {railLink(ADMIN_HOME, false)}
 
+      {ADMIN_NAV.map((group) => (
+        <div key={group.title ?? "x"} className="mt-6">
+          {group.title && (
+            <p className="px-4 text-[16px] font-bold text-white">{group.title}</p>
+          )}
+          <div className="mt-1 space-y-0.5">
+            {group.items.map((i) => railLink(i))}
+          </div>
+        </div>
+      ))}
+    </>
+  ) : (
+    <>
+      {railLink(HOME_NAV, false)}
       <p className="mt-7 px-4 text-[19px] font-bold text-white">Applications</p>
-      <div className="mt-1.5 space-y-0.5">
-        {items.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            onClick={() => setOpen(false)}
-            aria-current={isActive(item.href) ? "page" : undefined}
-            className={
-              link(isActive(item.href)) + " pl-6 text-[16.5px] font-semibold"
-            }
-          >
-            {item.label}
-          </Link>
-        ))}
-      </div>
+      <div className="mt-1.5 space-y-0.5">{items.map((i) => railLink(i))}</div>
     </>
   );
 
@@ -98,11 +125,27 @@ export function AppRail() {
   );
 
   const brand = (
-    <Link href="/dashboard" aria-label="Panameer home" className="block px-1">
-      {/* The white wordmark — the rail is #140c29, so the light logo is the
-          only one that reads. */}
-      <span className="font-display text-[26px] font-bold tracking-[-0.5px] text-white">
-        panameer
+    <Link
+      href={isAdmin ? ADMIN_HOME.href : "/dashboard"}
+      aria-label="Panameer home"
+      className="block px-1"
+    >
+      {/*
+        E002 — the LOGO ASSET IS STILL THE OLD WORDMARK, and that is a blocked
+        item rather than an oversight. The brief says to use "the on-dark
+        version supplied now"; nothing new is in the repo — public/brand holds
+        only the thin lowercase mark E002 is complaining about. So the existing
+        on-dark asset renders (it is the right one FOR a dark rail) and both the
+        new on-dark and the new on-white assets are reported as pending.
+      */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/brand/panameer-logo-on-dark.png"
+        alt="Panameer"
+        className="h-7 w-auto"
+      />
+      <span className="mt-1.5 block text-[12.5px] font-semibold tracking-wide text-white/55">
+        {consoleLabel}
       </span>
     </Link>
   );

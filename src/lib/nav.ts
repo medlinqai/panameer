@@ -127,3 +127,105 @@ export function roleLabels(me: Me | null): string[] {
   if (r.isSupport) labels.push("Support");
   return labels;
 }
+
+// ---------------------------------------------------------------------------
+// The ADMIN console (brief_console_and_admin_MASTER WS4 / E009)
+// ---------------------------------------------------------------------------
+
+export type NavGroup = { title: string | null; items: NavItem[] };
+
+/**
+ * The Panameer Admin's rail, grouped exactly as Scott's menu mockup has it.
+ *
+ * A separate structure from the app rail rather than a filtered view of it: the
+ * admin console and the provider app share chrome, not navigation. Every entry
+ * here is behind `canAdminister`, which the /admin prefix already enforces at
+ * the proxy, in route-access.ts and in the layout — the capability on each item
+ * is what keeps the MENU honest if any of those ever move.
+ */
+export const ADMIN_HOME: NavItem = {
+  label: "Panameer Dashboard",
+  href: "/admin",
+  requires: "canAdminister",
+};
+
+export const ADMIN_SETUP: NavItem = {
+  label: "Setup & Maintenance",
+  href: "/admin/setup",
+  requires: "canAdminister",
+};
+
+export const ADMIN_NAV: NavGroup[] = [
+  {
+    title: "Transaction Data",
+    items: [
+      { label: "Learn", href: "/admin/learn" },
+      { label: "Work", href: "/admin/work" },
+      { label: "Packages", href: "/admin/packages" },
+      { label: "Talent", href: "/admin/talent" },
+      { label: "Buyers/Sellers", href: "/admin/buyers-sellers" },
+      { label: "Contracts", href: "/admin/contracts" },
+      { label: "Finances", href: "/admin/finances" },
+      { label: "Messages", href: "/admin/messages" },
+      { label: "Community", href: "/admin/community" },
+    ],
+  },
+  {
+    title: "Configuration Data",
+    items: [
+      { label: "Roles > Domains > Skills", href: "/admin/skill-catalog" },
+      { label: "Specializations", href: "/admin/specializations" },
+      { label: "Industries", href: "/admin/industries" },
+    ],
+  },
+  {
+    title: "Support Data",
+    items: [
+      { label: "Support Center", href: "/admin/support" },
+      { label: "Platform Admins", href: "/admin/admins" },
+    ],
+  },
+].map((g) => ({
+  ...g,
+  items: g.items.map((i) => ({ ...i, requires: "canAdminister" as const })),
+}));
+
+/**
+ * The header title for a path (E015).
+ *
+ * THE RULE: home shows the greeting, every other page shows its own name. So
+ * this returns null for a home route and a label otherwise, and the header
+ * decides which to render.
+ *
+ * Derived from the nav definitions rather than declared per page. A `title`
+ * prop on every page would be one more thing to forget on the next one, and it
+ * would let the rail and the header disagree about what a page is called — the
+ * exact drift the single nav definition exists to prevent.
+ */
+export function pageTitleFor(pathname: string): string | null {
+  if (pathname === "/dashboard" || pathname === "/admin") return null;
+
+  const all: NavItem[] = [
+    ADMIN_SETUP,
+    ...ADMIN_NAV.flatMap((g) => g.items),
+    ...BASE_NAV,
+    ...ROLE_NAV,
+    ...TAIL_NAV,
+  ];
+
+  // Longest matching href wins, so /admin/learn beats /admin.
+  let best: NavItem | null = null;
+  for (const item of all) {
+    if (pathname === item.href || pathname.startsWith(item.href + "/")) {
+      if (!best || item.href.length > best.href.length) best = item;
+    }
+  }
+  if (best) return best.label;
+
+  // Not a nav destination — title-case the last meaningful segment.
+  const seg = pathname.split("/").filter(Boolean).pop();
+  if (!seg) return null;
+  return seg
+    .replace(/-/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
