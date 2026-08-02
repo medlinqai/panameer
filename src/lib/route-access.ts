@@ -20,7 +20,20 @@ export const ROUTE_ACCESS: { prefix: string; requires: RouteRequirement }[] = [
   { prefix: "/admin", requires: "canAdminister" },
   { prefix: "/coordinator", requires: "canCoordinate" }, // readied for brief_I
   { prefix: "/settings", requires: "canProvideServices" }, // provider profile mgmt
-  { prefix: "/profile", requires: "canProvideServices" }, // provider self-profile view
+  /*
+    /profile IS "MY OWN PROFILE", so it needs a login and nothing more (WS5).
+
+    It said canProvideServices, which bounced the Panameer Admin to
+    /dashboard?noaccess=1 — the account menu offered My Profile and the gate
+    then refused it, so E004 (My Profile is a read-only dead end) looked fixed
+    while being unreachable for the one person it was filed about. Found by
+    walking the admin's own menu link.
+
+    Safe to widen: the page resolves the record from the session and renders the
+    employee profile when there is no provider profile behind it. Nobody else's
+    profile is reachable through this route.
+  */
+  { prefix: "/profile", requires: "authenticated" },
   { prefix: "/hire", requires: "canHireTalent" },
   // FIND WORK IS A PROVIDER SURFACE — searching open job postings. This said
   // canHireTalent while nav.ts offered the same route to providers, so the rail

@@ -17,10 +17,14 @@ import {
  * write a photo onto someone else's record. Mirrors the onboarding ownership
  * boundary. Validation (mime + ≤5 MB) lives in `storage.ts`.
  *
- * Used by BOTH the onboarding "Add a Photo" step and Settings → Profile.
+ * Used by the onboarding "Add a Photo" step, Settings → Profile, and the
+ * employee profile — hence `authenticated` rather than canProvideServices: a
+ * Panameer employee has a Person and an avatar but no provider profile, and the
+ * write below already branches on that. Owner-scoping, not the capability, is
+ * what makes this safe.
  */
 export async function POST(request: Request) {
-  const gate = await guardApi("canProvideServices");
+  const gate = await guardApi("authenticated");
   if (gate instanceof NextResponse) return gate;
   const viewer = gate;
 
@@ -88,7 +92,7 @@ export async function POST(request: Request) {
 
 /** DELETE /api/profile/photo — clear the photo (back to the initials fallback). */
 export async function DELETE() {
-  const gate = await guardApi("canProvideServices");
+  const gate = await guardApi("authenticated");
   if (gate instanceof NextResponse) return gate;
   const viewer = gate;
 

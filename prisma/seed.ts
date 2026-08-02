@@ -8,6 +8,7 @@ import { seedTaxonomy } from "./seed-taxonomy";
 import { seedLearn } from "./seed-learn";
 import { computeProviderCompleteness } from "../src/lib/completeness";
 import { normalizeEmail } from "../src/lib/normalizeEmail";
+import { makeAdminsEmployees } from "./admin-employee";
 
 // Load .env.local so `npm run seed` (bare ts-node, bypassing prisma.config.ts)
 // sees DATABASE_URL. Without this the pg adapter falls back to localhost:5432
@@ -736,6 +737,21 @@ async function main() {
       },
     });
   }
+
+  /*
+    LAST: put the admin back to being a Panameer EMPLOYEE.
+
+    Everything above deliberately builds the admin Person as the demo Service
+    Provider — that is where the demo cast's employers, package and skills hang
+    from. But the admin is Panameer staff, not a customer (E006/E007), and
+    running the cleanup script by hand didn't stick: the next `npm run seed`
+    re-applied the provider title, flags and Ceres membership.
+
+    So the seed corrects itself. The demo PROFILE row survives (it has content
+    and is not marketplace-visible); the admin's IDENTITY — company, title,
+    actor flags — ends up staff.
+  */
+  await makeAdminsEmployees(prisma as unknown as PrismaClient);
 
   console.log(
     `Seeded demo provider (profile ${providerProfile.id}, ` +
