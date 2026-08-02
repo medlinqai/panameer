@@ -1,130 +1,98 @@
-"use client";
-
 import Link from "next/link";
-import { AdminHeading, useAdminFetch, AdminState, StatTile } from "@/components/admin/primitives";
-import { PathList } from "@/components/admin/learn/PathList";
+import { prisma } from "@/lib/prisma";
+import { TileRow, Listing, VolumeFooter, StubEmpty } from "@/components/console/ConsolePage";
 
-type Stats = {
-  paths: number;
-  publishedPaths: number;
-  courses: number;
-  sections: number;
-  lessons: number;
-  playable: number;
-  urlMissing: number;
-};
+export const dynamic = "force-dynamic";
 
 /**
- * Learn console landing (brief_learn_admin_authoring WS0).
+ * Admin → LEARN, the dense console page (WS2, deck slide 2).
  *
- * NO NEW GATE. `/admin/learn` sits under the `/admin` prefix, which is already
- * covered three times over — the edge proxy matcher, `route-access.ts`, and
- * `guardPage("canAdminister")` in the admin layout. Adding a fourth check here
- * would be a second place to get it wrong, not a second line of defence.
+ * This route used to BE the authoring tool. The role-density model says
+ * /admin/learn is the dense read of the same data the rich /learn shows, and
+ * authoring is a different job — so the CRUD moved to
+ * /admin/setup/learn-authoring rather than being deleted, and this page is the
+ * overview the deck draws.
  *
- * The tiles lead with the number this whole brief exists to move: lessons whose
- * production status claims a URL was added but which have no `vimeo_ref`. That
- * is the gap the spreadsheet left, and it is the difference between a catalog
- * that looks finished and one that plays.
+ * The four tiles are the deck's review queues. Two are REAL — drafts and the
+ * URL gap are readable from the catalog — and two need a review-queue model
+ * that doesn't exist, so they say so rather than showing a number.
  */
-export default function AdminLearnPage() {
-  const { data, loading, error } = useAdminFetch<Stats>("/api/admin/learn/stats");
+export default async function Page() {
+  const [paths, published, courses, lessons, urlMissing] = await Promise.all([
+    prisma.learningPath.count(),
+    prisma.learningPath.count({ where: { status: "PUBLISHED" } }),
+    prisma.course.count(),
+    prisma.lesson.count(),
+    prisma.lesson.count({
+      where: {
+        production_status: { in: ["URL_ADDED_TO_LESSON", "BLOG_CREATED", "BLOG_RELEASED"] },
+        OR: [{ vimeo_ref: null }, { vimeo_ref: "" }],
+      },
+    }),
+  ]);
+
+  const rows = await prisma.learningPath.findMany({
+    orderBy: { created_at: "desc" },
+    take: 12,
+    select: {
+      id: true, title: true, slug: true, status: true, created_at: true,
+      expert: { select: { first_name: true, last_name: true } },
+      courses: { select: { sections: { select: { lessons: { select: { id: true } } } } } },
+    },
+  });
 
   return (
-    <div>
-      <AdminHeading
-        title="Learn"
-        subtitle="Author the curriculum — paths, courses, sections, lessons, and the video URLs that make them playable."
+    <div className="mx-auto w-full max-w-6xl">
+      <TileRow
+        tiles={[
+          { label: "Learning Paths to Review", value: paths - published, hint: "Still in draft" },
+          { label: "Courses to Review", value: courses, hint: "In the catalog" },
+          { label: "Lessons to Review", value: urlMissing, hint: "Marked done, no video" },
+          { label: "New Instructors Awaiting Approval", hint: "Needs an approval queue" },
+        ]}
       />
-      <AdminState loading={loading} error={error} />
 
-      {data && (
-        <>
-          {/*
-            E010 — the T1–T5 row is ACTION ITEMS, not a restatement of the
-            catalog. Scott's template says these tiles should prompt work, and
-            "how many lessons exist" prompts none. What an admin can act on here
-            is the gap: paths still in draft, and lessons whose status claims a
-            URL they don't have.
-          */}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            <StatTile
-              label="Drafts to Publish"
-              value={data.paths - data.publishedPaths}
-              hint="Paths not yet live"
-              tone={data.paths - data.publishedPaths > 0 ? "amber" : "green"}
-            />
-            <StatTile
-              label="URL Missing"
-              value={data.urlMissing}
-              hint="Marked done, no video"
-              tone={data.urlMissing > 0 ? "amber" : "green"}
-            />
-            <StatTile
-              label="Lessons Ready"
-              value={data.playable}
-              hint={`of ${data.lessons}`}
-              tone={data.playable > 0 ? "green" : "default"}
-            />
-            <StatTile label="Instructors to Approve" value="—" hint="Needs a queue" />
-            <StatTile label="Tests to Review" value="—" hint="Needs a review flag" />
-          </div>
+      <Listing
+        title="Learning Paths"
+        columns={["Time", "Requester - Company", "Role", "Status", "Start Date", "Message"]}
+        action={
+          <Link
+            href="/admin/setup/learn-authoring"
+            className="text-[13.5px] font-bold text-magenta hover:underline"
+          >
+            Authoring →
+          </Link>
+        }
+        rows={rows.map((r) => [
+          r.created_at.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }),
+          <Link key={r.id} href={`/admin/setup/learn-authoring/${r.id}`} className="font-semibold text-magenta hover:underline">
+            {r.title}
+          </Link>,
+          r.expert ? `${r.expert.first_name ?? ""} ${r.expert.last_name ?? ""}`.trim() : "—",
+          <span
+            key="s"
+            className={
+              "rounded-full px-2.5 py-0.5 text-[12px] font-bold " +
+              (r.status === "PUBLISHED" ? "bg-emerald-500/10 text-emerald-700" : "bg-black/[0.05] text-ink-2")
+            }
+          >
+            {r.status}
+          </span>,
+          r.created_at.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }),
+          `${r.courses.reduce((n, c) => n + c.sections.reduce((m, s) => m + s.lessons.length, 0), 0)} lessons`,
+        ])}
+        empty={<StubEmpty what="learning paths" why="The catalog is empty." />}
+      />
 
-          {data.urlMissing > 0 && (
-            <div className="mt-6 rounded-brand border border-amber-500/30 bg-amber-500/5 p-5">
-              <p className="text-[15px] font-bold">
-                {data.urlMissing} lesson{data.urlMissing === 1 ? " is" : "s are"}{" "}
-                marked as having a URL but don&apos;t have one.
-              </p>
-              <p className="mt-1 text-[14px] text-ink-2">
-                These show as &ldquo;coming soon&rdquo; to learners. Fill them in one
-                at a time from a path&apos;s lesson table, or load a batch from CSV.
-              </p>
-              <Link
-                href="/admin/learn/bulk-urls"
-                className="mt-3 inline-block text-[14px] font-bold text-magenta hover:underline"
-              >
-                Load URLs From CSV →
-              </Link>
-            </div>
-          )}
-
-          <div className="mt-8">
-            <PathList />
-          </div>
-
-          {/* Volume Over Time — the console footer, per the template. */}
-          <div className="mt-8">
-            <h2 className="mb-2 text-[11.5px] font-bold uppercase tracking-wide text-ink-2">
-              Volume Over Time
-            </h2>
-            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
-              {[
-                { label: "Learning Paths", value: String(data.paths) },
-                { label: "Courses", value: String(data.courses) },
-                { label: "Lessons", value: String(data.lessons) },
-                { label: "Tests", value: "—" },
-                { label: "Certifications", value: "—" },
-              ].map((t) => (
-                <div key={t.label} className="rounded-brand border border-line bg-white p-4">
-                  <p className="text-[12px] font-semibold text-ink-2">{t.label}</p>
-                  <p
-                    className={
-                      "mt-1 font-display text-[20px] font-bold leading-none " +
-                      (t.value === "—" ? "text-ink-2/30" : "text-ink")
-                    }
-                  >
-                    {t.value}
-                  </p>
-                  <p className="mt-1 text-[11px] text-ink-2/70">
-                    {t.value === "—" ? "No series yet" : "Total to date"}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </>
-      )}
+      <VolumeFooter
+        tiles={[
+          { label: "Learning Paths", value: paths },
+          { label: "Courses", value: courses },
+          { label: "Lessons", value: lessons },
+          { label: "Tests" },
+          { label: "Certifications" },
+        ]}
+      />
     </div>
   );
 }

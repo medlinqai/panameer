@@ -46,7 +46,7 @@ export default function AdminLearnPathPage({
   return (
     <div>
       <Link
-        href="/admin/learn"
+        href="/admin/setup/learn-authoring"
         className="text-[13.5px] font-bold text-ink-2 hover:text-magenta"
       >
         ← All Learning Paths

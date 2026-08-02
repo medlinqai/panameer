@@ -91,7 +91,7 @@ export default function BulkUrlsPage() {
   return (
     <div>
       <Link
-        href="/admin/learn"
+        href="/admin/setup/learn-authoring"
         className="text-[13.5px] font-bold text-ink-2 hover:text-magenta"
       >
         ← Learn
@@ -172,7 +172,7 @@ Advanced Procurement › How to Use the Catalogs Application › 1. Course Overv
                 match were left untouched — fix the identifiers and upload again.
               </p>
               <Link
-                href="/admin/learn"
+                href="/admin/setup/learn-authoring"
                 className="mt-2 inline-block text-[14px] font-bold text-magenta hover:underline"
               >
                 Back to the Learn console →

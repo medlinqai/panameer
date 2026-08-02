@@ -1,22 +1,35 @@
-import { AdminHeading } from "@/components/admin/primitives";
+import { TileRow, Listing, StubEmpty } from "@/components/console/ConsolePage";
 
-/** Support center — coming-soon stub (v1). The full tool is a later brief. */
-export default function AdminSupportPage() {
+/**
+ * Admin → Support Center (deck slide 15 / image9): the Open Bugs queue.
+ *
+ * Four tiles — Open / Past Due / Resolved (MTD) / Unassigned — over a bug
+ * table. All stubbed: the bug-report button shipped earlier deliberately files
+ * nothing (there is no ticket model), so a queue of them would be inventing the
+ * very records that button refuses to fake.
+ */
+export default function Page() {
   return (
-    <div>
-      <AdminHeading title="Support" />
-      <div className="rounded-brand border border-line p-6">
-        <div className="flex items-center gap-3">
-          <h2 className="text-[18px] font-bold">Support Center</h2>
-          <span className="rounded-full bg-line px-2.5 py-0.5 text-[12px] font-bold text-ink-2">
-            Coming Soon
-          </span>
-        </div>
-        <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-ink-2">
-          Ticketing, the bug-reporting tool, and buyer/provider support workflows
-          will live here. Building it out is a later brief.
-        </p>
-      </div>
+    <div className="mx-auto w-full max-w-6xl">
+      <TileRow
+        tiles={[
+          { label: "Open", hint: "Awaiting triage" },
+          { label: "Past Due", hint: "Open > 7d" },
+          { label: "Resolved (MTD)", hint: "This month" },
+          { label: "Unassigned", hint: "No assignee" },
+        ]}
+      />
+
+      <Listing
+        title="Open Bugs"
+        columns={["Sender", "Title", "App", "Assignee", "Date Found", "Priority"]}
+        empty={
+          <StubEmpty
+            what="bugs"
+            why="There is no ticket model yet — the in-app bug reporter says plainly that it files nothing, so this queue has nothing to list."
+          />
+        }
+      />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { getSpecializations } from "@/lib/catalog";
 import { TileRow } from "@/components/console/ConsolePage";
+import { SpecPage } from "@/components/console/SpecPage";
 import { CatalogTree, CatalogEditBar, type CatalogNode } from "@/components/console/CatalogTree";
 
 export const dynamic = "force-dynamic";
@@ -37,6 +38,16 @@ export default async function Page() {
         <CatalogTree nodes={nodes} />
         <CatalogEditBar />
       </div>
+
+      {/*
+        The deck's listing + Volume strip sit BELOW the real catalog (slides
+        13/14). Both are stubs — the deck's columns describe a moderation queue
+        that has no model behind it — while the tree above is live data. Keeping
+        them on one page rather than choosing between them is deliberate: the
+        catalog is what an admin edits today, the listing is what the design
+        says this page becomes.
+      */}
+      <SpecPage slug="specializations" />
     </div>
   );
 }

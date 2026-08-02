@@ -30,11 +30,35 @@ export type CatalogNode = {
 export function CatalogTree({
   nodes,
   emptyLabel = "Nothing in this catalog yet.",
+  toolbar = false,
 }: {
   nodes: CatalogNode[];
   emptyLabel?: string;
+  /** Medlinq's catalog-detail toolbar: Search + Expand All (2.5 slide 12). */
+  toolbar?: boolean;
 }) {
   const [open, setOpen] = useState<Set<string>>(new Set());
+  const [q, setQ] = useState("");
+
+  /*
+    SEARCH FILTERS, IT DOESN'T JUST HIGHLIGHT. A match at any depth keeps the
+    whole branch above it — otherwise searching for a skill would return
+    nothing, because the skill's name isn't on the Role that contains it.
+    Matching branches auto-expand while a query is live; collapsing them again
+    would hide the very rows the search found.
+  */
+  const needle = q.trim().toLowerCase();
+  const filter = (n: CatalogNode): CatalogNode | null => {
+    const hit = n.label.toLowerCase().includes(needle);
+    const kids = (n.children ?? []).map(filter).filter(Boolean) as CatalogNode[];
+    if (!hit && kids.length === 0) return null;
+    return { ...n, children: hit && kids.length === 0 ? n.children : kids };
+  };
+  const shown = needle ? (nodes.map(filter).filter(Boolean) as CatalogNode[]) : nodes;
+
+  const allIds = (ns: CatalogNode[]): string[] =>
+    ns.flatMap((n) => [n.id, ...allIds(n.children ?? [])]);
+  const expandedAll = open.size > 0;
 
   if (nodes.length === 0) {
     return (
@@ -52,10 +76,47 @@ export function CatalogTree({
     });
 
   return (
-    <div className="space-y-2">
-      {nodes.map((n) => (
-        <Group key={n.id} node={n} open={open} toggle={toggle} depth={0} />
-      ))}
+    <div>
+      {toolbar && (
+        <div className="mb-3 flex flex-wrap items-center gap-3">
+          <input
+            type="search"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search the catalog"
+            className="w-[260px] rounded-[8px] border border-line bg-white px-3 py-1.5 text-[13.5px] outline-none focus:border-magenta"
+          />
+          <button
+            type="button"
+            onClick={() => setOpen(expandedAll ? new Set() : new Set(allIds(nodes)))}
+            className="rounded-[8px] border-[1.5px] border-line px-3 py-1.5 text-[13px] font-bold text-ink-2 transition-colors hover:border-magenta hover:text-magenta"
+          >
+            {expandedAll ? "Collapse All" : "Expand All"}
+          </button>
+          {needle && (
+            <span className="text-[13px] text-ink-2">
+              {shown.length} of {nodes.length} match
+            </span>
+          )}
+        </div>
+      )}
+
+      <div className="space-y-2">
+        {shown.map((n) => (
+          <Group
+            key={n.id}
+            node={n}
+            open={needle ? new Set(allIds(shown)) : open}
+            toggle={toggle}
+            depth={0}
+          />
+        ))}
+        {shown.length === 0 && (
+          <p className="rounded-brand border border-line bg-white p-6 text-[14.5px] text-ink-2">
+            Nothing matches &ldquo;{q}&rdquo;.
+          </p>
+        )}
+      </div>
     </div>
   );
 }
@@ -127,9 +188,9 @@ function Group({
  * Present because the pattern is what was asked for, disabled because the write
  * path isn't built — and it SAYS so, rather than looking broken.
  */
-export function CatalogEditBar() {
+export function CatalogEditBar({ sticky = false }: { sticky?: boolean }) {
   return (
-    <div className="mt-4 flex flex-wrap items-center gap-3 rounded-[12px] border border-dashed border-line px-4 py-3">
+    <div className={(sticky ? "sticky bottom-3 z-10 bg-bg-soft/95 backdrop-blur " : "") + "mt-4 flex flex-wrap items-center gap-3 rounded-[12px] border border-dashed border-line px-4 py-3"}>
       <span className="text-[13px] text-ink-2">
         Editing this catalog needs write endpoints that aren&apos;t built yet —
         it&apos;s read-only for now.

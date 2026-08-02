@@ -52,21 +52,37 @@ export default async function Page() {
     }
   }
 
+  /*
+    THE DECK'S THREE TILES ARE MEDLINQ'S LABELS — "Service Types · Reviews ·
+    Procedures" — because slide 12 is a screenshot of Medlinq's catalog-detail
+    screen. Panameer's catalog has no Reviews or Procedures; its three levels
+    are Role > Domain > Skill. So the three slots keep the deck's SHAPE (a
+    Catalog Details card with three stats over an expandable tree) with the
+    labels of the data that is actually here. Reported to Scott as a
+    substitution rather than made silently.
+  */
   return (
     <div className="mx-auto w-full max-w-5xl">
-      <TileRow
-        tiles={[
-          { label: "Roles", value: roles.length, hint: "Top of the catalog" },
-          { label: "Domains", value: pillarCount, hint: "ERP pillars" },
-          { label: "Skills", value: skillCount, hint: "Leaf vocabulary" },
-          { label: "Custom Skills", hint: "Needs a provenance flag" },
-          { label: "Unmapped", hint: "Needs a mapping report" },
-        ]}
-      />
+      <section className="rounded-brand border border-line bg-white p-5">
+        <h2 className="font-display text-[17px] font-bold">Catalog Details</h2>
+        <p className="mt-0.5 text-[13.5px] text-ink-2">
+          The service vocabulary every provider profile, package and work
+          request is built from.
+        </p>
+        <div className="mt-4">
+          <TileRow
+            tiles={[
+              { label: "Roles", value: roles.length, hint: "Top of the catalog" },
+              { label: "Domains", value: pillarCount, hint: "ERP pillars" },
+              { label: "Skills", value: skillCount, hint: "Leaf vocabulary" },
+            ]}
+          />
+        </div>
+      </section>
 
       <div className="mt-6">
-        <CatalogTree nodes={nodes} emptyLabel="The service catalog is empty." />
-        <CatalogEditBar />
+        <CatalogTree nodes={nodes} emptyLabel="The service catalog is empty." toolbar />
+        <CatalogEditBar sticky />
       </div>
     </div>
   );
