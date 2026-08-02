@@ -1,73 +1,73 @@
-"use client";
+import { prisma } from "@/lib/prisma";
+import { getProviderFieldTree } from "@/lib/catalog";
+import { TileRow } from "@/components/console/ConsolePage";
+import { CatalogTree, CatalogEditBar, type CatalogNode } from "@/components/console/CatalogTree";
 
-import { AdminHeading, useAdminFetch, AdminState } from "@/components/admin/primitives";
-import { Badge } from "@/components/Badge";
+export const dynamic = "force-dynamic";
 
-type Tree = {
-  catalog: { code: string; name: string };
-  pillars: {
-    id: string;
-    code: string;
-    name: string;
-    offerings: { id: string; name: string; applications: { id: string; name: string }[] }[];
-  }[];
-  roleTypes: { id: string; display: string }[];
-};
+/**
+ * Roles > Domains > Skills (WS6 / E016) on the Medlinq catalog UX.
+ *
+ * REAL DATA — this is one of the few admin surfaces with a full dataset behind
+ * it. The previous version was a flat read-only dump of pillars and offerings;
+ * the hierarchy is what makes 400-odd skills navigable, which is exactly why
+ * Medlinq's service catalog is shaped this way.
+ */
+export default async function Page() {
+  const [roles, skillCount, pillarCount] = await Promise.all([
+    getProviderFieldTree(),
+    prisma.skill.count(),
+    prisma.pillar.count(),
+  ]);
 
-export default function AdminSkillCatalogPage() {
-  // Reuses the public catalog read (brief_B); read-only in v1 — no editing.
-  const { data, loading, error } = useAdminFetch<Tree>("/api/catalog/erp");
+  const nodes: CatalogNode[] = await Promise.all(
+    roles.map(async (r) => ({
+      id: r.id,
+      label: r.display || r.name,
+      meta: `${r.domains.length} domains`,
+      children: r.domains.map((d) => ({
+        id: `${r.id}-${d.id}`,
+        label: d.name,
+        meta: `${d.skillCount} skills`,
+        // Skills load with the page: the whole catalog is a few hundred rows,
+        // and a fetch-on-expand would add a spinner to every click for no gain.
+        children: [] as CatalogNode[],
+      })),
+    }))
+  );
+
+  // Fill the leaf level in one query rather than per-domain.
+  const skills = await prisma.skill.findMany({
+    orderBy: { name: "asc" },
+    select: { id: true, name: true, role_type_id: true, pillar_id: true },
+  });
+  for (const role of nodes) {
+    for (const domain of role.children ?? []) {
+      const [roleId, pillarId] = domain.id.split("-").length > 1
+        ? [role.id, domain.id.slice(role.id.length + 1)]
+        : [role.id, ""];
+      domain.children = skills
+        .filter((s) => s.role_type_id === roleId && s.pillar_id === pillarId)
+        .map((s) => ({ id: s.id, label: s.name }));
+    }
+  }
 
   return (
-    <div>
-      <AdminHeading
-        title="Skill Catalog"
-        subtitle="The ERP service taxonomy (read-only in v1 — editing is a later brief)."
+    <div className="mx-auto w-full max-w-5xl">
+      <TileRow
+        tiles={[
+          { label: "Roles", value: roles.length, hint: "Top of the catalog" },
+          { label: "Domains", value: pillarCount, hint: "ERP pillars" },
+          { label: "Skills", value: skillCount, hint: "Leaf vocabulary" },
+          { label: "Custom Skills", hint: "Needs a provenance flag" },
+          { label: "Unmapped", hint: "Needs a mapping report" },
+        ]}
       />
-      <AdminState loading={loading} error={error} />
 
-      {data && (
-        <div className="space-y-6">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[14px] font-bold">Role Types:</span>
-            {data.roleTypes.map((rt) => (
-              <Badge key={rt.id}>{rt.display}</Badge>
-            ))}
-          </div>
-
-          {data.pillars.map((pillar) => (
-            <div key={pillar.id} className="rounded-brand border border-line p-5">
-              <h3 className="text-[16px] font-bold">
-                {pillar.name}{" "}
-                <span className="font-mono text-[13px] font-normal text-ink-2">
-                  ({pillar.code})
-                </span>
-              </h3>
-              {pillar.offerings.length === 0 ? (
-                <p className="mt-2 text-[14px] text-ink-2">No offerings.</p>
-              ) : (
-                <div className="mt-3 space-y-3">
-                  {pillar.offerings.map((o) => (
-                    <div key={o.id}>
-                      <p className="text-[14px] font-semibold">{o.name}</p>
-                      <div className="mt-1 flex flex-wrap gap-1">
-                        {o.applications.map((a) => (
-                          <span
-                            key={a.id}
-                            className="rounded-full border border-line px-2.5 py-0.5 text-[13px] text-ink-2"
-                          >
-                            {a.name}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+      <div className="mt-6">
+        <CatalogTree nodes={nodes} emptyLabel="The service catalog is empty." />
+        <CatalogEditBar />
+      </div>
     </div>
   );
 }

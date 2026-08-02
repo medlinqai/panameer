@@ -40,25 +40,34 @@ export default function AdminLearnPage() {
 
       {data && (
         <>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {/*
+            E010 — the T1–T5 row is ACTION ITEMS, not a restatement of the
+            catalog. Scott's template says these tiles should prompt work, and
+            "how many lessons exist" prompts none. What an admin can act on here
+            is the gap: paths still in draft, and lessons whose status claims a
+            URL they don't have.
+          */}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             <StatTile
-              label="Learning Paths"
-              value={data.paths}
-              hint={`${data.publishedPaths} published · ${data.paths - data.publishedPaths} draft`}
-            />
-            <StatTile label="Courses" value={data.courses} hint={`${data.sections} sections`} />
-            <StatTile
-              label="Lessons"
-              value={data.lessons}
-              hint={`${data.playable} playable`}
-              tone={data.playable > 0 ? "green" : "default"}
+              label="Drafts to Publish"
+              value={data.paths - data.publishedPaths}
+              hint="Paths not yet live"
+              tone={data.paths - data.publishedPaths > 0 ? "amber" : "green"}
             />
             <StatTile
               label="URL Missing"
               value={data.urlMissing}
-              hint="Marked done, no video attached"
+              hint="Marked done, no video"
               tone={data.urlMissing > 0 ? "amber" : "green"}
             />
+            <StatTile
+              label="Lessons Ready"
+              value={data.playable}
+              hint={`of ${data.lessons}`}
+              tone={data.playable > 0 ? "green" : "default"}
+            />
+            <StatTile label="Instructors to Approve" value="—" hint="Needs a queue" />
+            <StatTile label="Tests to Review" value="—" hint="Needs a review flag" />
           </div>
 
           {data.urlMissing > 0 && (
@@ -82,6 +91,37 @@ export default function AdminLearnPage() {
 
           <div className="mt-8">
             <PathList />
+          </div>
+
+          {/* Volume Over Time — the console footer, per the template. */}
+          <div className="mt-8">
+            <h2 className="mb-2 text-[11.5px] font-bold uppercase tracking-wide text-ink-2">
+              Volume Over Time
+            </h2>
+            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
+              {[
+                { label: "Learning Paths", value: String(data.paths) },
+                { label: "Courses", value: String(data.courses) },
+                { label: "Lessons", value: String(data.lessons) },
+                { label: "Tests", value: "—" },
+                { label: "Certifications", value: "—" },
+              ].map((t) => (
+                <div key={t.label} className="rounded-brand border border-line bg-white p-4">
+                  <p className="text-[12px] font-semibold text-ink-2">{t.label}</p>
+                  <p
+                    className={
+                      "mt-1 font-display text-[20px] font-bold leading-none " +
+                      (t.value === "—" ? "text-ink-2/30" : "text-ink")
+                    }
+                  >
+                    {t.value}
+                  </p>
+                  <p className="mt-1 text-[11px] text-ink-2/70">
+                    {t.value === "—" ? "No series yet" : "Total to date"}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
         </>
       )}
