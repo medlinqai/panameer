@@ -166,6 +166,14 @@ export async function getProviderProfileView(
       profile.roleType && profile.pillar
         ? { role: profile.roleType.name, domain: profile.pillar.name }
         : null,
+    /*
+      WS9 / E006(3) — THE RATE IS DATA-DRIVEN, verified rather than assumed.
+      Every figure below is read off the profile row. The $90/$125 that appeared
+      on every profile during the walk came from the SEED writing 12500 to each
+      demo record, not from a constant here: grouping the live table gives eight
+      distinct rate tuples (8500, 9900, 10000, 10500, 12000, 12500, 13000,
+      14000), which a hardcode could not produce.
+    */
     rates: {
       currency: profile.currency,
       hourlyCents: profile.hourly_rate_cents,

@@ -1,77 +1,47 @@
-"use client";
+import { redirect } from "next/navigation";
+import { getSessionViewer } from "@/lib/session";
+import { getOwnProviderProfileView } from "@/lib/provider-profile-view";
+import { getPathsTaughtByProfile } from "@/lib/learn-home";
+import { ProviderProfileViewPage } from "@/components/profile/ProviderProfileView";
+import { EmployeeProfile } from "@/components/profile/EmployeeProfile";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { Card } from "@/components/Card";
-import { ProfileView } from "@/components/ProfileView";
-import { useMe } from "@/components/MeProvider";
-import type { PublicProviderProfile } from "@/lib/types";
+/**
+ * MY PROFILE (WS7 / WS8, E004 / E006 / E155).
+ *
+ * TWO PROFILE TYPES, chosen by who is asking:
+ *
+ *   Panameer employee  → EmployeeProfile: name, title, contact, company. No
+ *                        résumé, rates, skills or work history, because an
+ *                        admin performing setup has none of those in the
+ *                        marketplace sense. Patterned after Medlinq's
+ *                        MEDLINQ_ADMIN.
+ *   Provider           → the BRANDED ProviderProfileView.
+ *
+ * E155 is fixed by that second line. This page used to render
+ * `@/components/ProfileView` — the older greyscale component whose text is
+ * white on white in the app shell, so the content was present but invisible.
+ * ProviderProfileView is the branded one every other surface already uses, so
+ * "my profile" and "what buyers see" stop being two different renderings of
+ * the same record.
+ *
+ * Server-rendered now rather than fetching client-side: it already knows who is
+ * asking, and the old version's loading skeleton existed only because it didn't.
+ */
+export default async function MyProfilePage() {
+  const viewer = await getSessionViewer();
+  if (!viewer) redirect("/login?callbackUrl=%2Fprofile");
 
-function Skeleton() {
+  // A Panameer employee gets the employee profile even if a seeded provider row
+  // still exists behind them — the row is demo noise, not their identity.
+  if (viewer.isSystemAdmin) return <EmployeeProfile userId={viewer.userId} />;
+
+  const profile = await getOwnProviderProfileView(viewer.userId, viewer);
+  if (!profile) return <EmployeeProfile userId={viewer.userId} />;
+
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
-      <div className="h-40 animate-pulse rounded-2xl bg-black/[0.06] dark:bg-white/[0.06]" />
-      <div className="h-32 animate-pulse rounded-2xl bg-black/[0.06] dark:bg-white/[0.06]" />
-    </div>
+    <ProviderProfileViewPage
+      p={profile}
+      taughtPaths={await getPathsTaughtByProfile(profile.id)}
+    />
   );
-}
-
-export default function MyProfilePage() {
-  const { me, loading: meLoading } = useMe();
-  const providerId = me?.providerProfile?.id ?? null;
-
-  const [profile, setProfile] = useState<PublicProviderProfile | null>(null);
-  const [state, setState] = useState<"idle" | "loading" | "done" | "error">(
-    "idle"
-  );
-
-  useEffect(() => {
-    if (!providerId) return;
-    setState("loading");
-    let alive = true;
-    fetch(`/api/providers/${providerId}`)
-      .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
-      .then((p: PublicProviderProfile) => {
-        if (alive) {
-          setProfile(p);
-          setState("done");
-        }
-      })
-      .catch(() => alive && setState("error"));
-    return () => {
-      alive = false;
-    };
-  }, [providerId]);
-
-  if (meLoading || state === "loading") return <Skeleton />;
-
-  if (me && !providerId) {
-    return (
-      <div className="mx-auto max-w-2xl">
-        <Card className="text-center">
-          <h1 className="text-xl font-semibold">No provider profile yet</h1>
-          <p className="mt-2 text-black/60 dark:text-white/60">
-            You don&apos;t have a provider profile. Onboarding is coming soon.
-          </p>
-          <Link href="/dashboard" className="mt-4 inline-block underline">
-            Back to dashboard
-          </Link>
-        </Card>
-      </div>
-    );
-  }
-
-  if (state === "error" || !profile) {
-    return (
-      <div className="mx-auto max-w-2xl">
-        <Card className="text-center">
-          <p className="text-black/70 dark:text-white/70">
-            We couldn&apos;t load your profile. Please refresh.
-          </p>
-        </Card>
-      </div>
-    );
-  }
-
-  return <ProfileView profile={profile} />;
 }
