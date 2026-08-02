@@ -84,7 +84,7 @@ export async function issueEmailVerification(
     firstName: user.first_name ?? "",
     verifyUrl,
     // Absolute — email clients can't resolve app-relative paths (E006).
-    logoUrl: `${base}/brand/panameer-logo-transparent.png`,
+    logoUrl: `${base}/brand/panameer-new-on-light.png`,
   });
 
   // Real send when configured (prod/Vercel). Dev fallback: log the link so the

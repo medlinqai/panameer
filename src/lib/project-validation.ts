@@ -155,7 +155,7 @@ export async function requestProjectValidation(
     projectName: project.name,
     clientName: project.client_name,
     confirmUrl,
-    logoUrl: `${base}/brand/panameer-logo-transparent.png`,
+    logoUrl: `${base}/brand/panameer-new-on-light.png`,
   });
 
   if (process.env.RESEND_API_KEY) {
@@ -323,7 +323,7 @@ async function notifyProviderValidated(projectId: string) {
     projectName: project.name,
     clientName: project.client_name,
     profileUrl: `${base}/dashboard`,
-    logoUrl: `${base}/brand/panameer-logo-transparent.png`,
+    logoUrl: `${base}/brand/panameer-new-on-light.png`,
   });
 
   if (process.env.RESEND_API_KEY) {

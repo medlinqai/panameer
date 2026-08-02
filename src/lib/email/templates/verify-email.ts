@@ -19,7 +19,7 @@ export function verifyEmailTemplate({
   verifyUrl: string;
   /**
    * Absolute URL of the logo. Email clients cannot resolve relative paths, so
-   * the caller passes `${appBaseUrl()}/brand/panameer-logo-transparent.png`.
+   * the caller passes `${appBaseUrl()}/brand/panameer-new-on-light.png`.
    * Falls back to the wordmark when absent so the email is never broken.
    */
   logoUrl?: string;

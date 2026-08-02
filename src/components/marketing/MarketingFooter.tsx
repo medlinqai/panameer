@@ -43,10 +43,10 @@ export function MarketingFooter() {
         <div className="flex flex-wrap gap-x-[60px] gap-y-10">
           <div className="min-w-[200px]">
             <Image
-              src="/brand/panameer-logo-on-dark.png"
+              src="/brand/panameer-new-on-dark.png"
               alt="Panameer"
-              width={796}
-              height={122}
+              width={529}
+              height={134}
               className="h-8 w-auto"
             />
             <p className="mt-4 max-w-[240px] text-[14px] text-[#a89fb8]">

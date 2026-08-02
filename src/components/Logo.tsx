@@ -2,17 +2,18 @@ import Link from "next/link";
 import Image from "next/image";
 
 /**
- * The Panameer wordmark (brief_P / E007).
+ * The Panameer wordmark, ON-LIGHT (WS4 / E002).
  *
- * Uses `panameer-logo-transparent.png`, NOT `panameer-logo.png`. The original
- * asset has an alpha channel but its background pixels are opaque WHITE, so on
- * any tinted surface (the light-purple verify page, the bg-soft cards) it
- * rendered as a white box around the logo. The transparent variant was produced
- * by flood-filling the background from the edges, which clears the surround
- * while preserving the white counters inside the letterforms.
+ * The new looped-P wordmark in navy, for white and tinted surfaces. The rail's
+ * on-dark (white-letter) variant lives in AppRail.
  *
- * Always route logo rendering through this component so the wrong asset can't
- * creep back in on a tinted background.
+ * Both new assets are genuinely transparent, which the old `panameer-logo.png`
+ * was not — its background pixels were opaque white and boxed the mark on any
+ * tinted surface. That is why the old file had a hand-repaired `-transparent`
+ * twin; the new artwork needs no such repair.
+ *
+ * Always route logo rendering through this component so a stray asset path
+ * can't creep back in.
  */
 export function Logo({
   className = "h-8 w-auto",
@@ -26,10 +27,10 @@ export function Logo({
 }) {
   const img = (
     <Image
-      src="/brand/panameer-logo-transparent.png"
+      src="/brand/panameer-new-on-light.png"
       alt="Panameer"
-      width={786}
-      height={111}
+      width={524}
+      height={132}
       priority={priority}
       className={className}
     />

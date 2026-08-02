@@ -34,9 +34,12 @@ export const metadata: Metadata = {
   description:
     "Hire vetted enterprise-application experts, or connect your ERP and search, request, order, and settle services without leaving your system of record.",
   icons: {
-    icon: "/brand/panameer-mark.png",
-    shortcut: "/brand/panameer-mark.png",
-    apple: "/brand/panameer-mark.png",
+    // WS4 — the new looped-P mark. `apple` gets the 180px padded variant: iOS
+    // composites a transparent touch icon onto black, and the supplied mark is
+    // 44px, so it is upscaled onto white rather than shipped bare.
+    icon: "/brand/panameer-new-mark.png",
+    shortcut: "/brand/panameer-new-mark.png",
+    apple: "/brand/panameer-new-mark-180.png",
   },
 };
 
