@@ -3,6 +3,7 @@ import { getSessionViewer } from "@/lib/session";
 import { getAdminCompanies } from "@/lib/admin";
 import { prisma } from "@/lib/prisma";
 import { TileRow, Listing, VolumeFooter, StubEmpty } from "@/components/console/ConsolePage";
+import { linkVolume } from "@/lib/admin-reports";
 
 export const dynamic = "force-dynamic";
 
@@ -64,13 +65,13 @@ export default async function AdminDashboardPage() {
       />
 
       <VolumeFooter
-        tiles={[
+        tiles={linkVolume([
           { label: "Work Requests" },
           { label: "Work Orders" },
           { label: "Contracts" },
           { label: "Settlement Requests" },
           { label: "Payments" },
-        ]}
+        ])}
       />
 
       {/*

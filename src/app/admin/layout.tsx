@@ -1,6 +1,7 @@
 import { MeProvider } from "@/components/MeProvider";
 import { AppShell } from "@/components/casing/AppShell";
 import { guardPage } from "@/lib/guard";
+import { TaskPanel } from "@/components/console/TaskPanel";
 
 /**
  * The Platform Console now wears THE SAME CASING as the rest of the app
@@ -20,7 +21,15 @@ export default async function AdminLayout({
   await guardPage("canAdminister");
   return (
     <MeProvider>
-      <AppShell>{children}</AppShell>
+      <AppShell>
+        {/*
+          The task panel is fixed to the right edge, so it sits OUTSIDE the
+          content flow — and the content reserves the strip's width at lg so a
+          wide table never runs underneath it.
+        */}
+        <div className="lg:pr-[68px]">{children}</div>
+        <TaskPanel />
+      </AppShell>
     </MeProvider>
   );
 }

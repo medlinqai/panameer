@@ -1,5 +1,6 @@
 import { TileRow, Listing, VolumeFooter, StubEmpty } from "@/components/console/ConsolePage";
 import { ADMIN_PAGES } from "@/lib/admin-pages";
+import { linkVolume } from "@/lib/admin-reports";
 
 /**
  * Renders one admin page from its spec (WS2). Fourteen slides, one renderer.
@@ -22,7 +23,7 @@ export function SpecPage({ slug }: { slug: keyof typeof ADMIN_PAGES }) {
           />
         }
       />
-      {s.volume && <VolumeFooter tiles={s.volume} title={s.volumeTitle} />}
+      {s.volume && <VolumeFooter tiles={linkVolume(s.volume)} title={s.volumeTitle} />}
     </div>
   );
 }

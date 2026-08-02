@@ -178,8 +178,16 @@ export function VolumeFooter({
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {tiles.map((t, ti) => {
           const known = t.value !== undefined && t.value !== null;
-          return (
-            <div key={`${t.label}-${ti}`} className="rounded-brand border border-line bg-white p-4">
+          /*
+            WS3 — a volume tile with an href IS the entry to that metric's
+            report, and the same report the task panel lists. Tiles without one
+            (TBD slots) stay inert: there is no report for an undefined metric.
+          */
+          const cls =
+            "block rounded-brand border border-line bg-white p-4 " +
+            (t.href ? "transition-colors hover:border-magenta" : "");
+          const inner = (
+            <>
               <p className="text-[12px] font-semibold text-ink-2">
                 {t.tbd ? "TBD" : t.label}
               </p>
@@ -192,8 +200,23 @@ export function VolumeFooter({
                 {known ? t.value : "—"}
               </p>
               <p className="mt-1 text-[11px] text-ink-2/70">
-                {t.tbd ? "metric to be defined" : known ? "Total to date" : "No series yet"}
+                {t.tbd
+                  ? "metric to be defined"
+                  : t.href
+                    ? "Open report →"
+                    : known
+                      ? "Total to date"
+                      : "No series yet"}
               </p>
+            </>
+          );
+          return t.href ? (
+            <Link key={`${t.label}-${ti}`} href={t.href} className={cls}>
+              {inner}
+            </Link>
+          ) : (
+            <div key={`${t.label}-${ti}`} className={cls}>
+              {inner}
             </div>
           );
         })}

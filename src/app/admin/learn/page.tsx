@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { TileRow, Listing, VolumeFooter, StubEmpty } from "@/components/console/ConsolePage";
+import { linkVolume } from "@/lib/admin-reports";
 
 export const dynamic = "force-dynamic";
 
@@ -85,13 +86,13 @@ export default async function Page() {
       />
 
       <VolumeFooter
-        tiles={[
+        tiles={linkVolume([
           { label: "Learning Paths", value: paths },
           { label: "Courses", value: courses },
           { label: "Lessons", value: lessons },
           { label: "Tests" },
           { label: "Certifications" },
-        ]}
+        ])}
       />
     </div>
   );
