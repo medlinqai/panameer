@@ -7,6 +7,7 @@ import { signOut } from "next-auth/react";
 import { Avatar } from "@/components/Avatar";
 import { useMe } from "@/components/MeProvider";
 import { navForRoles, HOME_NAV, ADMIN_NAV, ADMIN_HOME, ADMIN_SETUP } from "@/lib/nav";
+import { RailIcon } from "@/components/casing/RailIcon";
 import { useSession } from "next-auth/react";
 
 /**
@@ -44,83 +45,126 @@ export function AppRail() {
 
   const items = navForRoles(me);
   const consoleLabel = isAdmin ? "Platform Console" : "Provider Console";
+  /*
+    HOME ROUTES MATCH EXACTLY. "/admin" is a prefix of every admin page, so a
+    startsWith test lit up Panameer Dashboard on all fifteen of them — two
+    magenta pills at once, which the reference explicitly has only one of.
+    Caught by querying for aria-current and getting two matches.
+  */
+  const EXACT = new Set(["/dashboard", "/admin"]);
   const isActive = (href: string) =>
-    href === "/dashboard" ? pathname === href : pathname.startsWith(href);
+    EXACT.has(href) ? pathname === href : pathname.startsWith(href);
 
   const first = me?.person.firstName ?? "";
   const last = me?.person.lastName ?? "";
   const company = me?.company?.name;
 
+  /*
+    HARD REQUIREMENT (WS1): labels never wrap.
+
+    `whitespace-nowrap` alone isn't enough — a flex child defaults to
+    min-width:auto and will happily overflow its container instead of forcing
+    it wider, so "Roles>Domains>Skills" would clip rather than wrap. The rail is
+    sized to the longest label at this font size (see the aside width) and the
+    icon gutter is tightened before the text, which is the order the brief asks
+    for.
+
+    All 15 items + 2 buttons + 3 group headers fit a 768px viewport without
+    scrolling at these metrics, so the collapsible-group fallback is not needed.
+  */
   const link = (active: boolean) =>
-    "block rounded-[10px] px-4 py-2 text-[17px] font-semibold transition-colors " +
+    "flex items-center gap-2 whitespace-nowrap rounded-[8px] px-2.5 py-[3px] " +
+    "text-[15px] font-medium leading-[22px] transition-colors " +
     (active
       ? "bg-magenta text-white"
-      : "text-white/75 hover:bg-white/10 hover:text-white");
+      : "text-white/80 hover:bg-white/10 hover:text-white");
 
-  const railLink = (item: { label: string; href: string }, indent = true) => (
+  const railLink = (item: { label: string; href: string; icon?: string }) => (
+    <Link
+      key={item.href}
+      href={item.href}
+      onClick={() => setOpen(false)}
+      aria-current={isActive(item.href) ? "page" : undefined}
+      className={link(isActive(item.href))}
+    >
+      <RailIcon name={item.icon} />
+      <span className="truncate">{item.label}</span>
+    </Link>
+  );
+
+  /*
+    The two top buttons are OUTLINED with a faint fill, not solid — the
+    reference shows them as affordances that sit above the navigation rather
+    than as a third and fourth nav item competing with it. Only the active page
+    gets solid magenta, so exactly one thing in the rail is ever filled.
+  */
+  const adminButton = (item: { label: string; href: string; icon?: string }) => (
     <Link
       key={item.href}
       href={item.href}
       onClick={() => setOpen(false)}
       aria-current={isActive(item.href) ? "page" : undefined}
       className={
-        link(isActive(item.href)) +
-        (indent ? " pl-6 text-[15.5px] font-semibold" : "")
+        "flex items-center gap-2 whitespace-nowrap rounded-[8px] border px-2.5 py-[5px] " +
+        "text-[15px] font-medium leading-[22px] transition-colors " +
+        (isActive(item.href)
+          ? "border-magenta bg-magenta text-white"
+          : "border-white/15 bg-white/[0.06] text-white/90 hover:bg-white/[0.12] hover:text-white")
       }
     >
-      {item.label}
+      <RailIcon name={item.icon} />
+      <span className="truncate">{item.label}</span>
     </Link>
   );
 
   const nav = isAdmin ? (
-    /* E009 — Setup & Maintenance, the dashboard home, then three groups. */
     <>
-      <Link
-        href={ADMIN_SETUP.href}
-        onClick={() => setOpen(false)}
-        className="mb-2 block rounded-[10px] border border-white/20 px-4 py-2 text-[15px] font-semibold text-white/85 transition-colors hover:bg-white/10 hover:text-white"
-      >
-        {ADMIN_SETUP.label}
-      </Link>
-      {railLink(ADMIN_HOME, false)}
+      <div className="space-y-1.5">
+        {adminButton(ADMIN_SETUP)}
+        {adminButton(ADMIN_HOME)}
+      </div>
 
       {ADMIN_NAV.map((group) => (
-        <div key={group.title ?? "x"} className="mt-6">
+        <div key={group.title ?? "x"} className="mt-2">
           {group.title && (
-            <p className="px-4 text-[16px] font-bold text-white">{group.title}</p>
+            <p className="px-2.5 pb-0.5 text-[10.5px] font-semibold uppercase tracking-[0.09em] text-white/40">
+              {group.title}
+            </p>
           )}
-          <div className="mt-1 space-y-0.5">
-            {group.items.map((i) => railLink(i))}
-          </div>
+          <div className="space-y-px">{group.items.map((i) => railLink(i))}</div>
         </div>
       ))}
     </>
   ) : (
     <>
-      {railLink(HOME_NAV, false)}
-      <p className="mt-7 px-4 text-[19px] font-bold text-white">Applications</p>
-      <div className="mt-1.5 space-y-0.5">{items.map((i) => railLink(i))}</div>
+      {railLink(HOME_NAV)}
+      <p className="mt-6 px-3 pb-1 text-[11px] font-semibold uppercase tracking-[0.09em] text-white/40">
+        Applications
+      </p>
+      <div className="space-y-px">{items.map((i) => railLink(i))}</div>
     </>
   );
 
+  /*
+    COMPACT (WS1). The three-line card cost 99px, and the admin rail is the one
+    place that budget decides whether "Platform Admins" is on screen at 768px.
+    Name and Sign Out sit on one row; the "Signed in As" caption goes, because
+    an avatar beside a name in the bottom-left of a rail is not ambiguous. The
+    header avatar menu still carries the full identity.
+  */
   const signedInCard = me && (
-    <div className="rounded-[12px] border border-white/10 bg-white/[0.07] p-3">
-      <div className="flex items-center gap-3">
-        <Avatar firstName={first} lastName={last} photoUrl={me.person.photoUrl} size={32} />
-        <div className="min-w-0 flex-1">
-          <p className="text-[11px] text-white/45">Signed in As</p>
-          <p className="truncate text-[13.5px] font-bold text-white">
-            {`${first} ${last}`.trim() || "Signed in"}
-          </p>
-          <button
-            type="button"
-            onClick={() => signOut({ callbackUrl: "/login" })}
-            className="mt-0.5 text-[11px] text-white/45 hover:text-white hover:underline"
-          >
-            Sign Out
-          </button>
-        </div>
-      </div>
+    <div className="flex items-center gap-2 rounded-[10px] border border-white/10 bg-white/[0.07] px-2.5 py-1.5">
+      <Avatar firstName={first} lastName={last} photoUrl={me.person.photoUrl} size={26} />
+      <p className="min-w-0 flex-1 truncate text-[12.5px] font-semibold text-white">
+        {`${first} ${last}`.trim() || "Signed in"}
+      </p>
+      <button
+        type="button"
+        onClick={() => signOut({ callbackUrl: "/login" })}
+        className="shrink-0 text-[11px] text-white/45 hover:text-white hover:underline"
+      >
+        Sign Out
+      </button>
     </div>
   );
 
@@ -131,20 +175,16 @@ export function AppRail() {
       className="block px-1"
     >
       {/*
-        E002 — the LOGO ASSET IS STILL THE OLD WORDMARK, and that is a blocked
-        item rather than an oversight. The brief says to use "the on-dark
-        version supplied now"; nothing new is in the repo — public/brand holds
-        only the thin lowercase mark E002 is complaining about. So the existing
-        on-dark asset renders (it is the right one FOR a dark rail) and both the
-        new on-dark and the new on-white assets are reported as pending.
+        E002 CLOSED — the new looped-P wordmark, on-dark variant (white
+        letters), from 4. Logo. The old thin lowercase mark is gone.
       */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/brand/panameer-logo-on-dark.png"
+        src="/brand/panameer-new-on-dark.png"
         alt="Panameer"
         className="h-7 w-auto"
       />
-      <span className="mt-1.5 block text-[12.5px] font-semibold tracking-wide text-white/55">
+      <span className="mt-1 block text-[11.5px] font-medium tracking-wide text-white/45">
         {consoleLabel}
       </span>
     </Link>
@@ -153,32 +193,32 @@ export function AppRail() {
   return (
     <>
       {/* Desktop rail */}
-      <aside className="hidden w-[224px] shrink-0 bg-rail lg:block">
-        <div className="sticky top-0 flex h-screen flex-col p-4">
+      <aside className="hidden w-[248px] shrink-0 bg-rail lg:block">
+        <div className="sticky top-0 flex h-screen flex-col px-3 py-4">
           {brand}
 
           {company && (
-            <div className="mt-6 flex items-center gap-3 px-1">
+            <div className="mt-3 flex items-center gap-2.5 px-1">
               {me?.company?.logoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={me.company.logoUrl}
                   alt=""
-                  className="h-10 w-10 rounded-[8px] object-cover"
+                  className="h-8 w-8 rounded-[7px] object-cover"
                 />
               ) : (
-                <span className="grid h-10 w-10 place-items-center rounded-[8px] bg-white/10 text-[13px] font-bold text-white/70">
+                <span className="grid h-8 w-8 place-items-center rounded-[7px] bg-white/10 text-[12px] font-bold text-white/70">
                   {company.slice(0, 2).toUpperCase()}
                 </span>
               )}
-              <p className="min-w-0 truncate text-[18px] font-bold text-white">
+              <p className="min-w-0 truncate text-[15px] font-bold text-white">
                 {company}
               </p>
             </div>
           )}
 
-          <nav className="mt-7 flex-1 overflow-y-auto">{nav}</nav>
-          <div className="pt-3">{signedInCard}</div>
+          <nav className="mt-3 flex-1 overflow-y-auto">{nav}</nav>
+          <div className="pt-2">{signedInCard}</div>
         </div>
       </aside>
 

@@ -14,6 +14,12 @@ export type NavItem = {
    * coincidence rather than by construction, and coincidence is what drifts.
    */
   requires?: Capability;
+  /**
+   * A lucide-react icon NAME rather than a component, so this module stays a
+   * plain data file — importing React components here would drag the icon set
+   * into every server module that reads the nav.
+   */
+  icon?: string;
 };
 
 /**
@@ -147,48 +153,75 @@ export const ADMIN_HOME: NavItem = {
   label: "Panameer Dashboard",
   href: "/admin",
   requires: "canAdminister",
+  icon: "LayoutDashboard",
 };
 
 export const ADMIN_SETUP: NavItem = {
   label: "Setup & Maintenance",
   href: "/admin/setup",
   requires: "canAdminister",
+  icon: "SlidersHorizontal",
 };
 
+/**
+ * The admin rail, rebuilt to the 2.5 deck + admin_rail_icons_reference.png.
+ *
+ * WHAT MOVED, and why it matters more than a rename: the MASTER's rail had one
+ * "Work" and one "Packages" entry. The revised model splits the transaction
+ * lifecycle into its real stages — Work Requests, Work Orders, Work Packages,
+ * Contracts, Settlements, Payments — because those are separate records with
+ * separate states, and a single "Work" page could only ever have shown one of
+ * them. Buyers/Sellers moves to Configuration Data: it is a directory of who
+ * exists, not a stream of what happened.
+ */
 export const ADMIN_NAV: NavGroup[] = [
   {
     title: "Transaction Data",
     items: [
-      { label: "Learn", href: "/admin/learn" },
-      { label: "Work", href: "/admin/work" },
-      { label: "Packages", href: "/admin/packages" },
-      { label: "Talent", href: "/admin/talent" },
-      { label: "Buyers/Sellers", href: "/admin/buyers-sellers" },
-      { label: "Contracts", href: "/admin/contracts" },
-      { label: "Finances", href: "/admin/finances" },
-      { label: "Messages", href: "/admin/messages" },
-      { label: "Community", href: "/admin/community" },
+      { label: "Learn", href: "/admin/learn", icon: "GraduationCap" },
+      { label: "Work Requests", href: "/admin/work-requests", icon: "ClipboardList" },
+      { label: "Work Orders", href: "/admin/work-orders", icon: "ClipboardCheck" },
+      { label: "Work Packages", href: "/admin/work-packages", icon: "Package" },
+      { label: "Contracts", href: "/admin/contracts", icon: "FileSignature" },
+      { label: "Settlements", href: "/admin/settlements", icon: "Scale" },
+      { label: "Payments", href: "/admin/payments", icon: "CreditCard" },
+      { label: "Messages", href: "/admin/messages", icon: "MessageSquare" },
+      { label: "Community", href: "/admin/community", icon: "Users" },
     ],
   },
   {
     title: "Configuration Data",
     items: [
-      { label: "Roles > Domains > Skills", href: "/admin/skill-catalog" },
-      { label: "Specializations", href: "/admin/specializations" },
-      { label: "Industries", href: "/admin/industries" },
+      { label: "Buyers/Sellers", href: "/admin/buyers-sellers", icon: "ArrowLeftRight" },
+      { label: "Roles>Domains>Skills", href: "/admin/skill-catalog", icon: "FolderTree" },
+      { label: "Specializations", href: "/admin/specializations", icon: "Award" },
+      { label: "Industries", href: "/admin/industries", icon: "Building2" },
     ],
   },
   {
     title: "Support Data",
     items: [
-      { label: "Support Center", href: "/admin/support" },
-      { label: "Platform Admins", href: "/admin/admins" },
+      { label: "Support Center", href: "/admin/support", icon: "LifeBuoy" },
+      { label: "Platform Admins", href: "/admin/admins", icon: "ShieldCheck" },
     ],
   },
 ].map((g) => ({
   ...g,
   items: g.items.map((i) => ({ ...i, requires: "canAdminister" as const })),
 }));
+
+/**
+ * Routes the revised rail retired. Kept as redirects rather than deleted: the
+ * old paths are in browser history, in the previous walk's notes and in the
+ * MASTER brief, and a 404 on a route that worked yesterday reads as a
+ * regression rather than a restructure.
+ */
+export const RETIRED_ADMIN_ROUTES: Record<string, string> = {
+  "/admin/work": "/admin/work-requests",
+  "/admin/packages": "/admin/work-packages",
+  "/admin/talent": "/admin/buyers-sellers",
+  "/admin/finances": "/admin/payments",
+};
 
 /**
  * The header title for a path (E015).
