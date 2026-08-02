@@ -20,7 +20,9 @@ const OAUTH_ERRORS: Record<string, string> = {
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";
+  // No default here — where "home" is depends on WHO signed in, and that isn't
+  // known until the credentials round-trip finishes (WS2/E003).
+  const callbackUrl = searchParams.get("callbackUrl");
   const oauthError = searchParams.get("error");
 
   const [email, setEmail] = useState("");
@@ -44,7 +46,20 @@ function LoginForm() {
       setError("Invalid email or password.");
       return;
     }
-    router.push(callbackUrl);
+    /*
+      An explicit callbackUrl always wins — someone who was bounced off a page
+      should land back on it. Otherwise ask the server where this viewer's home
+      is: a Panameer Admin goes to the console, not to a provider's job board.
+    */
+    if (callbackUrl) {
+      router.push(callbackUrl);
+    } else {
+      const home = await fetch("/api/home")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => d?.home ?? "/dashboard")
+        .catch(() => "/dashboard");
+      router.push(home);
+    }
   }
 
   return (
@@ -62,7 +77,7 @@ function LoginForm() {
           <p className="pt-1 text-sm text-ink-2">Sign in to continue</p>
         </div>
 
-        <SocialSignIn callbackUrl={callbackUrl} />
+        <SocialSignIn callbackUrl={callbackUrl ?? "/dashboard"} />
 
         <div className="flex items-center gap-4">
           <span className="h-px flex-1 bg-line" />

@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { Avatar } from "@/components/Avatar";
+import { usePathname } from "next/navigation";
 import { useMe } from "@/components/MeProvider";
+import { pageTitleFor } from "@/lib/nav";
 import { greetingFor } from "@/lib/greeting";
 import { membershipBadge } from "@/lib/membership";
 
@@ -60,14 +62,37 @@ export function AppHeader() {
     };
   }, []);
 
+  /*
+    THE HEADER RULE (E015): home shows the greeting, every other page shows
+    its own name. Scott's correction to the earlier mockups, which greeted
+    you again on every sub-page — a greeting is an arrival, and repeating it
+    on Packages tells you nothing about where you are.
+
+    DERIVED from the nav definitions rather than passed per page: a title
+    prop is one more thing to forget on the next page, and it would let the
+    rail and the header disagree about what a page is called.
+  */
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.isSystemAdmin === true;
+  const pathname = usePathname();
+  const pageTitle = pageTitleFor(pathname);
+
   const first = me?.person.firstName ?? "";
   const last = me?.person.lastName ?? "";
-  const badge = membershipBadge(me);
+  /*
+    E003 — the account menu read "RECRUITER BASIC" for the Panameer Admin,
+    because membershipBadge derives from actor flags and the seed had set the
+    coordinator flag on staff. WS7 clears those flags, but the badge still needs
+    a word for someone who is none of the marketplace actors: an admin is
+    Panameer staff, not a tier of customer, so they are labelled as such rather
+    than falling through to nothing.
+  */
+  const badge = isAdmin ? "Panameer Admin" : membershipBadge(me);
 
   return (
     <header className="flex items-center gap-3 border-b border-line bg-white px-5 py-3 sm:px-8">
       <p className="min-w-0 flex-1 truncate text-[16px] font-bold">
-        {greeting ? `${greeting}, ${first || "there"}` : " "}
+        {pageTitle ?? (greeting ? `${greeting}, ${first || "there"}` : " ")}
       </p>
 
       <div className="ml-auto flex shrink-0 items-center gap-2">
@@ -96,7 +121,7 @@ export function AppHeader() {
           width.
         */}
         <span className="hidden sm:contents">
-          <IconLink href="/dashboard" label="Home">
+          <IconLink href={isAdmin ? "/admin" : "/dashboard"} label="Home">
             <HomeIcon />
           </IconLink>
           <IconLink href="/support/bug" label="Report a bug">
