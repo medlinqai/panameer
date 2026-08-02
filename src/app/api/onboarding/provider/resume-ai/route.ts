@@ -22,6 +22,13 @@ import { assessParse } from "@/lib/resume/confidence";
  * can only ever act on the caller's own résumé — the text being sent to a
  * third-party API makes that boundary matter more here than almost anywhere.
  */
+/*
+ * NODE RUNTIME, not edge: pdf-parse/pdfjs and mammoth are Node libraries — they
+ * want Buffer and real module resolution, neither of which the edge runtime
+ * provides (E154).
+ */
+export const runtime = "nodejs";
+
 export async function POST() {
   const viewer = await getSessionViewer();
   if (!viewer) {

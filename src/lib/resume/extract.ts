@@ -105,7 +105,17 @@ export async function extractText(
       const parser = new PDFParse({ data: new Uint8Array(bytes) });
       try {
         const result = await parser.getText();
-        text = result.text ?? "";
+        /*
+          STRIP pdf-parse's PAGE SEPARATORS (E154). v2 writes "-- 1 of 3 --"
+          between pages — its own marker, not text from the document. Measured
+          on the three PDF fixtures: 3, 3 and 4 of them.
+
+          They matter because the parser reads structurally. A line of that
+          shape lands mid-employer as often as not, splitting one role's bullets
+          into two blocks, and "1 of 3" is exactly the kind of token a date or
+          duration heuristic can misread.
+        */
+        text = (result.text ?? "").replace(/^[ \t]*--\s*\d+\s*of\s*\d+\s*--[ \t]*$/gim, "");
       } finally {
         await parser.destroy?.();
       }

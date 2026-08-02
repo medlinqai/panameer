@@ -13,6 +13,13 @@ import { getOnboardingState } from "@/lib/onboarding";
  * OWNER-SCOPED: the profile is resolved from the session, never from client
  * input — the same boundary as every other onboarding write.
  */
+/*
+ * NODE RUNTIME, not edge: pdf-parse/pdfjs and mammoth are Node libraries — they
+ * want Buffer and real module resolution, neither of which the edge runtime
+ * provides (E154).
+ */
+export const runtime = "nodejs";
+
 export async function POST(request: Request) {
   const gate = await guardApi("canProvideServices");
   if (gate instanceof NextResponse) return gate;
