@@ -1,103 +1,108 @@
-"use client";
+import Link from "next/link";
+import { getSessionViewer } from "@/lib/session";
+import { getAdminCompanies } from "@/lib/admin";
+import { prisma } from "@/lib/prisma";
+import { TileRow, Listing, VolumeFooter, StubEmpty } from "@/components/console/ConsolePage";
 
-import { useMemo, useState } from "react";
-import {
-  StatTile,
-  AdminHeading,
-  SearchBox,
-  useAdminFetch,
-  AdminState,
-} from "@/components/admin/primitives";
+export const dynamic = "force-dynamic";
 
-type Dashboard = {
-  stats: {
-    companies: number;
-    providers: number;
-    buyers: number;
-    coordinators: number;
-    workRequests: number;
-    skills: number;
-  };
-  usage: {
-    id: string;
-    name: string;
-    kind: string;
-    userCount: number;
-    providerSummary: string;
-    joinedAt: string;
-  }[];
-};
-
-export default function AdminDashboardPage() {
-  const { data, loading, error } = useAdminFetch<Dashboard>("/api/admin/dashboard");
-  const [q, setQ] = useState("");
-
-  const rows = useMemo(() => {
-    if (!data) return [];
-    const needle = q.trim().toLowerCase();
-    if (!needle) return data.usage;
-    return data.usage.filter(
-      (r) => r.name.toLowerCase().includes(needle) || r.kind.toLowerCase().includes(needle)
-    );
-  }, [data, q]);
+/**
+ * ADMIN HOME — the Panameer Dashboard (WS3, ported from Medlinq's /medlinq).
+ *
+ * COMPANIES FIRST: M1 is the paying clients, because that is what a platform
+ * operator opens the console to look at. Medlinq's dashboard makes the same
+ * choice with its Usage & Adoption table, and the reason carries over — the
+ * company is the billing relationship, and everything else on the platform
+ * hangs off one.
+ *
+ * WHAT IS REAL vs STUBBED, precisely:
+ *   real     Companies, People, Learning Paths, Lessons, Providers — these have
+ *            tables and are counted.
+ *   stubbed  Work Requests, Orders, Packages, Contracts, Revenue — the
+ *            transaction layer does not exist, so these render "—" rather than
+ *            a zero. A zero is a claim that we looked and found none; a dash
+ *            says we cannot look yet, which is the truth.
+ */
+export default async function AdminDashboardPage() {
+  const viewer = await getSessionViewer();
+  const [companies, people, paths, lessons, providers] = await Promise.all([
+    getAdminCompanies(viewer!),
+    prisma.person.count(),
+    prisma.learningPath.count({ where: { status: "PUBLISHED" } }),
+    prisma.lesson.count(),
+    prisma.providerProfile.count(),
+  ]);
 
   return (
-    <div>
-      <AdminHeading title="Dashboard" subtitle="Platform usage & adoption at a glance." />
-      <AdminState loading={loading} error={error} />
+    <div className="mx-auto w-full max-w-6xl">
+      <TileRow
+        tiles={[
+          { label: "Companies", value: companies.length, hint: "On platform", href: "/admin/companies" },
+          { label: "People", value: people, hint: "All actors" },
+          { label: "Providers", value: providers, hint: "Provider profiles", href: "/admin/buyers-sellers" },
+          { label: "Learning Paths", value: paths, hint: "Published", href: "/admin/learn" },
+          { label: "Revenue (MTD)", hint: "Awaits billing" },
+        ]}
+      />
 
-      {data && (
-        <>
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
-            <StatTile label="Companies" value={data.stats.companies} />
-            <StatTile label="Providers" value={data.stats.providers} tone="magenta" />
-            <StatTile label="Buyers" value={data.stats.buyers} />
-            <StatTile label="Coordinators" value={data.stats.coordinators} />
-            <StatTile label="Work Requests" value={data.stats.workRequests} />
-            <StatTile label="Skills" value={data.stats.skills} hint="catalog" />
-          </div>
+      <Listing
+        title="Companies"
+        columns={["Company", "Account Type", "Status", "People", "Joined"]}
+        action={
+          <Link
+            href="/admin/companies"
+            className="text-[13.5px] font-bold text-magenta hover:underline"
+          >
+            All companies →
+          </Link>
+        }
+        rows={companies.slice(0, 12).map((c) => [
+          <Link
+            key={c.id}
+            href={`/admin/companies/${c.id}`}
+            className="font-semibold text-magenta hover:underline"
+          >
+            {c.company}
+          </Link>,
+          c.kind,
+          <span
+            key="s"
+            className={
+              "rounded-full px-2.5 py-0.5 text-[12px] font-bold " +
+              (c.status === "ACTIVE"
+                ? "bg-emerald-500/10 text-emerald-700"
+                : "bg-black/[0.05] text-ink-2")
+            }
+          >
+            {c.status}
+          </span>,
+          c.users.total,
+          new Date(c.joinedAt).toLocaleDateString("en-GB", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          }),
+        ])}
+        empty={
+          <StubEmpty
+            what="companies"
+            why="No P-Accounts have been created yet. Companies appear here as buyers and providers sign up."
+          />
+        }
+      />
 
-          <div className="mt-10">
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-              <h2 className="text-[18px] font-bold">Usage &amp; Adoption</h2>
-              <SearchBox value={q} onChange={setQ} placeholder="Search companies…" />
-            </div>
-            <div className="overflow-x-auto rounded-brand border border-line">
-              <table className="w-full min-w-[640px] text-[14px]">
-                <thead className="bg-black/[0.02] text-left text-[12px] font-bold uppercase tracking-wide text-ink-2">
-                  <tr>
-                    <th className="px-4 py-3">Company</th>
-                    <th className="px-4 py-3">Kind</th>
-                    <th className="px-4 py-3">Users</th>
-                    <th className="px-4 py-3">Providers</th>
-                    <th className="px-4 py-3">Joined</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((r) => (
-                    <tr key={r.id} className="border-t border-line">
-                      <td className="px-4 py-3 font-medium">{r.name}</td>
-                      <td className="px-4 py-3 text-ink-2">{r.kind}</td>
-                      <td className="px-4 py-3 text-ink-2">{r.userCount}</td>
-                      <td className="px-4 py-3 text-ink-2">{r.providerSummary}</td>
-                      <td className="px-4 py-3 text-ink-2">
-                        {new Date(r.joinedAt).toLocaleDateString()}
-                      </td>
-                    </tr>
-                  ))}
-                  {rows.length === 0 && (
-                    <tr>
-                      <td colSpan={5} className="px-4 py-6 text-center text-ink-2">
-                        No companies match your search.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </>
-      )}
+      <VolumeFooter
+        tiles={[
+          { label: "Companies", value: companies.length },
+          { label: "Providers", value: providers },
+          { label: "Learning Paths", value: paths },
+          { label: "Lessons", value: lessons },
+          { label: "Work Requests" },
+          { label: "Orders" },
+          { label: "Contracts" },
+          { label: "Revenue" },
+        ]}
+      />
     </div>
   );
 }

@@ -1,13 +1,16 @@
-import Link from "next/link";
-import { Logo } from "@/components/Logo";
-import Image from "next/image";
-import { AdminNav } from "@/components/admin/AdminNav";
+import { MeProvider } from "@/components/MeProvider";
+import { AppShell } from "@/components/casing/AppShell";
 import { guardPage } from "@/lib/guard";
 
 /**
- * Platform Console shell (brief_M) — a focused admin two-pane area with its OWN
- * left rail, NOT the buyer/provider app nav. AUTHORITATIVE server gate:
- * canAdminister (brief_J), the edge proxy being the fast first line. Fail closed.
+ * The Platform Console now wears THE SAME CASING as the rest of the app
+ * (WS1/WS4). It used to have its own two-pane chrome with a light rail and a
+ * hand-rolled nav — which is why the admin's console looked like a different
+ * product from the one they administer, and why the E009 mockup reads as a
+ * correction rather than an addition.
+ *
+ * The server gate is unchanged and still authoritative: canAdminister here, the
+ * edge proxy as the fast first line. Fail closed.
  */
 export default async function AdminLayout({
   children,
@@ -16,32 +19,8 @@ export default async function AdminLayout({
 }) {
   await guardPage("canAdminister");
   return (
-    <div className="min-h-screen bg-white font-body text-ink">
-      <header className="border-b border-line px-6 py-4">
-        <div className="mx-auto flex max-w-6xl items-center gap-4">
-          <Link href="/" aria-label="Panameer home" className="flex items-center gap-3">
-            <Logo priority href={null} />
-            <span className="hidden text-[14px] font-bold text-ink-2 sm:inline">
-              Platform Console
-            </span>
-          </Link>
-          <Link
-            href="/dashboard"
-            className="ml-auto text-[14px] font-bold text-ink-2 hover:text-magenta"
-          >
-            ← Back to App
-          </Link>
-        </div>
-      </header>
-
-      <div className="mx-auto max-w-6xl px-6 py-8">
-        <div className="grid gap-8 md:grid-cols-[220px_1fr]">
-          <aside className="md:sticky md:top-8 md:self-start">
-            <AdminNav />
-          </aside>
-          <div className="min-w-0">{children}</div>
-        </div>
-      </div>
-    </div>
+    <MeProvider>
+      <AppShell>{children}</AppShell>
+    </MeProvider>
   );
 }
