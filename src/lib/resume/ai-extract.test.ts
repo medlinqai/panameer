@@ -8,7 +8,12 @@
  *
  * The live call itself is exercised in WS5 against the banked fixtures.
  */
-import { AI_RESUME_SCHEMA, aiToParsedResume, fixEducationRow } from "./ai-extract";
+import {
+  AI_RESUME_SCHEMA,
+  aiToParsedResume,
+  fixEducationRow,
+  isPlausibleEducationRow,
+} from "./ai-extract";
 import { assessParse } from "./confidence";
 
 let pass = 0;
@@ -236,6 +241,61 @@ console.log("\n=== WS7a: a degree is not a school ===");
   );
 }
 
+/* ---- E164: accomplishment bullets are not schools ----------------------- */
+console.log("\n=== E164: an accomplishment bullet is not a school ===");
+{
+  const keep: { institution: string; degree?: string | null; startYear?: number | null; endYear?: number | null }[] = [
+    { institution: "Purdue University", degree: "BSc" },
+    { institution: "IIM Bangalore" },
+    { institution: "ENSAE" },
+    // fixEducationRow's own output shape: a qualification, no school, dated.
+    { institution: "", degree: "Bachelor of Arts in Accounting", startYear: 1994, endYear: 1997 },
+  ];
+  for (const e of keep) {
+    check(
+      `keeps "${e.institution || e.degree}"`,
+      isPlausibleEducationRow({
+        institution: e.institution,
+        degree: e.degree ?? null,
+        field: null,
+        startYear: e.startYear ?? null,
+        endYear: e.endYear ?? null,
+      })
+    );
+  }
+
+  const drop = [
+    "Led the P2P transformation across three business units",
+    "Managed a team of 12 consultants",
+    "Implemented Oracle Cloud Procurement for a global manufacturer",
+    "",
+  ];
+  for (const institution of drop) {
+    check(
+      `drops "${institution.slice(0, 38) || "(empty)"}"`,
+      !isPlausibleEducationRow({ institution, degree: null, field: null, startYear: null, endYear: null })
+    );
+  }
+
+  const converted = aiToParsedResume(
+    AI_RESUME_SCHEMA.parse({
+      employers: [],
+      projects: [],
+      education: [
+        { institution: "Purdue University", degree: "BSc", field: "Engineering", startYear: 2001, endYear: 2005 },
+        { institution: "Led the P2P transformation across three business units" },
+      ],
+      skills: [],
+    })
+  );
+  check("converter keeps 1 of 2 rows", converted.education.length === 1, converted.education);
+  check(
+    "the survivor is the school",
+    converted.education[0]?.institution === "Purdue University",
+    converted.education[0]
+  );
+}
+
 console.log(out.join("\n"));
 console.log(`\n${pass} passed, ${fail} failed`);
-process.exitCode = fail ? 1 : 0;
+if (fail > 0) process.exit(1);

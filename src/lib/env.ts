@@ -34,6 +34,32 @@ const schema = z.object({
   ANTHROPIC_API_KEY: z.string().min(1).optional(),
   ANTHROPIC_RESUME_MODEL: z.string().min(1).default("claude-sonnet-5"),
 
+  /*
+    THE RÉSUMÉ PARSER, vendor-neutral (brief_j14 WS-A).
+
+    Parsing is commodity extraction and was running on a frontier model. These
+    vars move the model, the key and its PRICES out of the code so an economy
+    tier can be swapped in — and A/B'd — without a deploy.
+
+    RESUME_PARSER_PROVIDER  "openai" (any OpenAI-compatible endpoint, incl.
+                            Gemini's compat layer) or "anthropic".
+    RESUME_PARSER_MODEL     the model id. No default: guessing one produces a
+                            confident 404 at the worst moment.
+    RESUME_PARSER_BASE_URL  for OpenAI-compatible providers that aren't OpenAI.
+    RESUME_PARSER_PRICE_*   USD per MILLION tokens, so $/parse is computed from
+                            real usage rather than a number hardcoded here that
+                            silently goes stale when a vendor reprices.
+
+    Absent → the parser falls back to the Anthropic path, which is what runs
+    today. No key anywhere → no AI tier at all, as before.
+  */
+  RESUME_PARSER_PROVIDER: z.enum(["openai", "anthropic"]).optional(),
+  RESUME_PARSER_API_KEY: z.string().min(1).optional(),
+  RESUME_PARSER_MODEL: z.string().min(1).optional(),
+  RESUME_PARSER_BASE_URL: z.string().min(1).optional(),
+  RESUME_PARSER_PRICE_IN_PER_M: z.coerce.number().nonnegative().optional(),
+  RESUME_PARSER_PRICE_OUT_PER_M: z.coerce.number().nonnegative().optional(),
+
   // Email (Resend)
   RESEND_API_KEY: z.string().min(1).optional(),
   EMAIL_FROM: z.string().min(1).optional(),

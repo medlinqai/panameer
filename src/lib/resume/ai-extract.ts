@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { env } from "@/lib/env";
+import {
+  callExtractionModel,
+  resolveProvider,
+  type ModelUsage,
+  type ProviderName,
+} from "./ai-provider";
 import type { ParsedResume } from "./parse";
 
 /**
@@ -169,6 +174,27 @@ const TOOL_SCHEMA = {
   required: ["employers", "projects", "education", "skills"],
 };
 
+/*
+  THE SYSTEM PROMPT IS THE CACHED PREFIX (WS-A).
+
+  It is byte-identical on every call — résumé text is the only thing that varies
+  — which is the shape both vendors' prompt caches reward.
+
+  ⚠ THE RDS TAXONOMY IS DELIBERATELY NOT IN HERE, and that is a deviation from
+  the brief worth stating plainly. The brief says to prompt-cache the
+  Role→Domain→Skill taxonomy "so only résumé text is fresh input". The taxonomy
+  was never in this prompt: skills come back as free text and are matched against
+  the seeded catalog afterwards, deterministically, by `match.ts`. Injecting
+  ~400 skill names would ADD input tokens to every call — cache reads are cheaper
+  than fresh input, not free — to replace a matcher that costs nothing and is
+  unit-tested. That trades against the goal of this workstream. Flagged rather
+  than done; if the intent was better skill recall, that is a measurable
+  experiment on its own.
+
+  THE BUCKETING RULES ARE E164. Accomplishment bullets were landing in
+  `education`, so the separation between buckets is now stated explicitly rather
+  than left to inference.
+*/
 const SYSTEM = `You extract structured data from résumés for a services marketplace.
 
 Rules:
@@ -177,15 +203,50 @@ Rules:
 - A project belongs to the employer or client it sits under, when the document makes that clear.
 - Dates: return YYYY-MM-DD. When only a month and year are given use the first of the month; when only a year is given use January 1st. "Present"/"Current" means endDate null and isCurrent true.
 - Trailing summary lines like "Additional experience as an X at Y and Z at W" name real employers. Return each as its own entry with null dates.
-- Keep descriptions close to the author's wording; do not embellish.`;
+- Keep descriptions close to the author's wording; do not embellish.
+
+The four buckets are distinct. Put each item in exactly one:
+- employers: paid positions at an organisation.
+- education: FORMAL STUDY ONLY — a school, college or university the person attended for a qualification. \`institution\` must be the name of that school. An achievement, a responsibility, a project, a training course, a certification or a bullet point describing work is NEVER an education entry. If a line has no named school, it does not belong in education.
+- certifications: named credentials awarded by a body (e.g. "Oracle Cloud Procurement Certified Implementation Professional"), with the issuer when stated.
+- skills: short capability terms only — tools, modules, methods. Not sentences, not achievements.
+Descriptions: at most 2 short sentences each. Prefer omitting a description to padding one.`;
+
+/*
+  MEASURED, NOT ASSUMED (WS-A).
+
+  A harder terseness pass — ≤200-character descriptions, no skill repeated
+  inside a project, a 40-skill cap — was written and REVERTED on the evidence.
+  Across three runs of the same four résumés, average OUTPUT was 3342 / 3312 /
+  3554 tokens with and without it: the instruction changed cost by less than the
+  run-to-run noise. The output on these documents is structural (many entries ×
+  their fields), not padded prose, so squeezing prose buys nothing.
+
+  Quality moved too — role titles scored 96%, 50% and 62% across those same
+  runs — but that metric is exact-string overlap on free-text titles and swings
+  by that much between IDENTICAL prompts, so it is noise, not a verdict. The
+  revert stands on the cost measurement alone.
+
+  `npm run eval:parser -- --only=eddie,marelise-eur,scott-new-full.docx,hcm-ram`
+  reproduces it.
+*/
 
 export type AiExtractOutcome =
-  | { ok: true; data: AiResume; model: string; inputChars: number; ms: number }
+  | {
+      ok: true;
+      data: AiResume;
+      model: string;
+      provider: ProviderName;
+      inputChars: number;
+      ms: number;
+      /** Real token counts + $/parse when prices are configured (WS-A). */
+      usage: ModelUsage;
+    }
   | { ok: false; reason: "no_key" | "error"; message: string };
 
 /** Is the AI tier available at all? Drives whether WS3 offers the button. */
 export function aiExtractionAvailable(): boolean {
-  return Boolean(env.ANTHROPIC_API_KEY);
+  return resolveProvider() !== null;
 }
 
 /**
@@ -197,134 +258,74 @@ export function aiExtractionAvailable(): boolean {
  * optional enrichment failed would be strictly worse than not offering it.
  */
 export async function aiExtractResume(text: string): Promise<AiExtractOutcome> {
-  const key = env.ANTHROPIC_API_KEY;
-  if (!key) {
-    return { ok: false, reason: "no_key", message: "AI extraction is not configured." };
+  const call = await callExtractionModel({
+    system: SYSTEM,
+    schema: TOOL_SCHEMA as unknown as Record<string, unknown>,
+    schemaName: "record_resume",
+    text,
+  });
+
+  if (!call.ok) {
+    return {
+      ok: false,
+      reason: call.reason === "no_key" ? "no_key" : "error",
+      message: call.message,
+    };
   }
 
-  const model = env.ANTHROPIC_RESUME_MODEL;
-  const started = Date.now();
-  try {
-    // Imported lazily so the SDK never loads for a request that doesn't use it,
-    // and so a missing/incompatible package can't break `next build`.
-    const { default: Anthropic } = await import("@anthropic-ai/sdk");
-    const client = new Anthropic({ apiKey: key });
+  /*
+    EMPTY vs ABSENT (WS3, an E121-class bug), kept exactly as it was.
 
-    const response = await client.messages.create({
-      model,
-      /*
-        A résumé of ten projects with descriptions, software and skills is a LOT
-        of structured output. At 8000 this truncated on Marelise the moment the
-        prompt asked for one more field per project, and a truncated tool call
-        arrives as an EMPTY one — the run silently reported "0 employers, 0
-        projects" for a document the model reads perfectly. Headroom plus the
-        explicit check below, because the failure mode was indistinguishable from
-        an empty résumé.
-      */
-      max_tokens: 16000,
-      system: SYSTEM,
-      // A tool with a schema, rather than "reply in JSON" — the shape is then
-      // the model's obligation instead of something we hope for and re-parse.
-      tools: [
-        {
-          name: "record_resume",
-          description: "Record the structured contents of this résumé.",
-          input_schema: TOOL_SCHEMA as never,
-        },
-      ],
-      tool_choice: { type: "tool", name: "record_resume" },
-      messages: [
-        {
-          role: "user",
-          content: `Extract this résumé.\n\n<resume>\n${text.slice(0, 120_000)}\n</resume>`,
-        },
-      ],
-    });
+    `.default([])` fills a missing key with an empty array, so a response that
+    arrived with EVERY key absent — truncated or abandoned — validated cleanly
+    and was reported as "we read your résumé and it was blank". That is
+    indistinguishable from the real thing and is the wrong answer in the one
+    case where the user most needs to be told something went wrong.
 
-    /*
-      TRUNCATION IS NOT AN EMPTY RÉSUMÉ. `stop_reason: "max_tokens"` means the
-      structured output was cut mid-write, and what survives can validate as a
-      perfectly well-formed result with nothing in it. Caught explicitly so it
-      reports as a failure — and so the provider keeps their heuristic result
-      and the offer to retry — rather than as "we read your document and it was
-      blank".
-    */
-    if (response.stop_reason === "max_tokens") {
-      return {
-        ok: false,
-        reason: "error",
-        message:
-          "Your document is long enough that the reader ran out of room. Try again, or add your work history manually.",
-      };
-    }
-
-    const block = response.content.find((c) => c.type === "tool_use");
-    if (!block || block.type !== "tool_use") {
-      return { ok: false, reason: "error", message: "The model returned no structured output." };
-    }
-
-    /*
-      EMPTY vs ABSENT (WS3, an E121-class bug).
-
-      `.default([])` fills a missing key with an empty array, so a tool call that
-      arrived with EVERY key absent — a truncated or abandoned response —
-      validated cleanly and was reported as "we read your résumé and it was
-      blank". That is indistinguishable from the real thing, and it is the wrong
-      answer in the one case where the provider most needs to be told something
-      went wrong. Observed live: Marelise returned exactly this while the same
-      document extracted 10 projects moments earlier.
-
-      The distinction is available BEFORE defaults are applied: check the raw
-      input for the keys themselves. A model that genuinely found no work history
-      still returns the keys, with empty arrays in them — omitting every key is
-      not an answer, it is the absence of one.
-    */
-    const raw = block.input as Record<string, unknown> | null | undefined;
-    const declared =
-      raw && typeof raw === "object"
-        ? ["employers", "projects", "education", "skills", "headline", "overview"].filter(
-            (k) => k in raw
-          ).length
-        : 0;
-    if (declared === 0) {
-      return {
-        ok: false,
-        reason: "error",
-        message:
-          "The reader didn't return anything usable for this document. Nothing was changed — try again, or add your work history manually.",
-      };
-    }
-
-    // Validate rather than trust. A model that returns a slightly different shape
-    // must not put half-built objects into someone's profile.
-    const parsed = AI_RESUME_SCHEMA.safeParse(block.input);
-    if (!parsed.success) {
-      // NAME THE FIELD. "expected string, received undefined" without a path
-      // is a dead end — the same lesson E121 learned about unrecognised keys.
-      const issue = parsed.error.issues[0];
-      const where = issue?.path?.length ? ` at "${issue.path.join(".")}"` : "";
-      return {
-        ok: false,
-        reason: "error",
-        message: `The model's output didn't match the expected shape${where}: ${issue?.message ?? "unknown"}`,
-      };
-    }
-
-    return {
-      ok: true,
-      data: parsed.data,
-      model,
-      inputChars: text.length,
-      ms: Date.now() - started,
-    };
-  } catch (e) {
-    console.error("[resume] AI extraction failed:", e);
+    The distinction is available BEFORE defaults are applied: a model that
+    genuinely found no work history still returns the keys with empty arrays in
+    them. Omitting every key is not an answer, it is the absence of one.
+  */
+  const raw = call.value as Record<string, unknown> | null | undefined;
+  const declared =
+    raw && typeof raw === "object"
+      ? ["employers", "projects", "education", "skills", "headline", "overview"].filter(
+          (k) => k in raw
+        ).length
+      : 0;
+  if (declared === 0) {
     return {
       ok: false,
       reason: "error",
-      message: e instanceof Error ? e.message : "AI extraction failed.",
+      message:
+        "The reader didn't return anything usable for this document. Nothing was changed — try again, or add your work history manually.",
     };
   }
+
+  // Validate rather than trust. A model that returns a slightly different shape
+  // must not put half-built objects into someone's profile.
+  const parsed = AI_RESUME_SCHEMA.safeParse(call.value);
+  if (!parsed.success) {
+    // NAME THE FIELD. "expected string, received undefined" without a path is a
+    // dead end — the same lesson E121 learned about unrecognised keys.
+    const issue = parsed.error.issues[0];
+    const where = issue?.path?.length ? ` at "${issue.path.join(".")}"` : "";
+    return {
+      ok: false,
+      reason: "error",
+      message: `The model's output didn't match the expected shape${where}: ${issue?.message ?? "unknown"}`,
+    };
+  }
+
+  return {
+    ok: true,
+    data: parsed.data,
+    model: call.model,
+    provider: call.provider,
+    inputChars: text.length,
+    ms: call.ms,
+    usage: call.usage,
+  };
 }
 
 /**
@@ -397,6 +398,50 @@ export function fixEducationRow(e: {
   };
 }
 
+/**
+ * IS THIS ROW ACTUALLY A SCHOOL? (E164, deterministic half.)
+ *
+ * The walk found accomplishment bullets — "Led the P2P transformation across
+ * three business units" — sitting in the education list, where they render as
+ * institutions somebody attended. The prompt now separates the buckets
+ * explicitly, but a prompt rule is a request and this is a guarantee: the same
+ * argument `fixEducationRow` already makes for repairing degree-as-institution
+ * rows, and it also repairs documents parsed before either change.
+ *
+ * DELIBERATELY CONSERVATIVE — it only rejects rows that are BOTH un-school-like
+ * AND sentence-shaped. A short unrecognised institution ("IIM Bangalore",
+ * "ENSAE") passes, because a dropped real school is a worse error than a stray
+ * bullet the user can delete on the review page.
+ */
+export function isPlausibleEducationRow(e: {
+  institution: string;
+  degree?: string | null;
+  field?: string | null;
+  startYear?: number | null;
+  endYear?: number | null;
+}): boolean {
+  const inst = (e.institution ?? "").trim();
+  const text = inst || (e.degree ?? "").trim();
+  if (!text) return false;
+
+  const SCHOOL =
+    /\b(university|universit(y|é|à|ät)|college|institute|instituto|school|academy|polytechnic|seminary|gymnasium|hochschule|iit|iim|nit)\b/i;
+  if (SCHOOL.test(text)) return true;
+
+  // A qualification with a year is a real record even when the school is absent
+  // — fixEducationRow produces exactly that shape.
+  if ((e.startYear ?? e.endYear) != null) return true;
+
+  // Sentence-shaped: long, or carrying the verbs a bullet has and a school name
+  // does not.
+  const words = text.split(/\s+/).length;
+  const BULLET_VERB =
+    /\b(led|managed|implemented|designed|delivered|responsible|supported|developed|built|improved|reduced|increased|coordinated|migrated|configured|trained)\b/i;
+  if (words > 8 || BULLET_VERB.test(text)) return false;
+
+  return true;
+}
+
 export function aiToParsedResume(ai: AiResume): ParsedResume {
   const iso = (v: string | null): string | null => {
     if (!v) return null;
@@ -446,7 +491,8 @@ export function aiToParsedResume(ai: AiResume): ParsedResume {
     experienceLevel: null,
     experienceYears: null,
     experiences,
-    education: ai.education.map(fixEducationRow),
+    // E164 — repair the row, then keep it only if it is plausibly a school.
+    education: ai.education.map(fixEducationRow).filter(isPlausibleEducationRow),
     // Project software and skills are skills too — they are the most specific
     // thing the document says about what this person can actually do.
     skills: [
