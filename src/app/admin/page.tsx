@@ -4,6 +4,7 @@ import { getAdminCompanies } from "@/lib/admin";
 import { prisma } from "@/lib/prisma";
 import { TileRow, Listing, VolumeFooter, StubEmpty } from "@/components/console/ConsolePage";
 import { linkVolume } from "@/lib/admin-reports";
+import { ParserHealth } from "@/components/console/ParserHealth";
 
 export const dynamic = "force-dynamic";
 
@@ -26,8 +27,18 @@ export const dynamic = "force-dynamic";
  */
 export default async function AdminDashboardPage() {
   const viewer = await getSessionViewer();
-  // "Last 30 days" is a real window over real tables for the two metrics that
-  // have one; the other two tiles have no model to count.
+  /*
+    "Last 30 days" is a real window over real tables for the two metrics that
+    have one; the other two tiles have no model to count.
+
+    react-hooks/purity flags Date.now() in a render body because on the CLIENT
+    an impure call makes a component non-idempotent across re-renders. This is a
+    server component with `dynamic = "force-dynamic"`: it runs once per request,
+    on the server, and "now" is exactly what a 30-day window should be measured
+    from. Suppressed with the reason rather than worked around, because every
+    workaround here makes the code worse to read for no behavioural gain.
+  */
+  // eslint-disable-next-line react-hooks/purity
   const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const [companies, newPeople, newLessons] = await Promise.all([
     getAdminCompanies(viewer!),
@@ -63,6 +74,16 @@ export default async function AdminDashboardPage() {
           />
         }
       />
+
+      {/*
+        WS-H — the parser health gauge. It sits on the ADMIN dashboard and
+        nowhere else: /admin is already gated on canAdminister by its layout
+        (guardPage) and the edge proxy, so a non-admin cannot reach this page,
+        and the card is not rendered anywhere they can.
+      */}
+      <div className="mt-6">
+        <ParserHealth />
+      </div>
 
       <VolumeFooter
         tiles={linkVolume([
