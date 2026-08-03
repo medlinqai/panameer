@@ -17,15 +17,14 @@ import type { Viewer } from "@/lib/access";
  * field, so there is no request shape that edits someone else's record.
  */
 
-/** The wizard's steps, in order. The review step is the last one. */
-export const REQUESTER_STEPS = [
-  "company",
-  "requester_info",
-  "buyer_approver",
-  "work_location",
-  "review",
-] as const;
-export type RequesterStep = (typeof REQUESTER_STEPS)[number];
+/**
+ * The step list lives in `requester-steps.ts` (no server imports) and is
+ * re-exported here so server callers have one import. The client wizard must
+ * import it from there — pulling it through this module drags Prisma, and
+ * therefore `pg`, into the browser bundle.
+ */
+export { REQUESTER_STEPS, type RequesterStep } from "@/lib/requester-steps";
+import { REQUESTER_STEPS, type RequesterStep } from "@/lib/requester-steps";
 
 export type AddressInput = {
   line1?: string | null;
