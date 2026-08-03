@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { WizardShell } from "@/components/onboarding/WizardShell";
@@ -53,6 +53,7 @@ import {
 import { dobError } from "@/lib/dob";
 import { LANGUAGES } from "@/lib/countries";
 import { LocationFields } from "@/components/onboarding/LocationFields";
+import { CompanyStep } from "@/components/company/CompanyStep";
 import { AiPassPanel } from "@/components/onboarding/AiPassPanel";
 import { ResumeImportAction } from "@/components/onboarding/ResumeImportAction";
 import {
@@ -99,6 +100,8 @@ const ALL_STEPS = [
   "bio",
   "rate",
   "picture",
+  // WS5 — the shared company building block, immediately before the review.
+  "company",
   "finish",
 ] as const;
 type Step = (typeof ALL_STEPS)[number];
@@ -148,6 +151,7 @@ const STEP_LABELS: Record<Step, { stepper: string }> = {
   bio: { stepper: "Your Bio" },
   rate: { stepper: "Your Rate" },
   picture: { stepper: "Photo & Details" },
+  company: { stepper: "Your Company" },
   finish: { stepper: "Review Your Profile" },
 };
 
@@ -709,6 +713,12 @@ export default function JoinProviderPage() {
     setError(null);
     setScreen(s);
   };
+  /* WS5 — the shared company step's handles (see the `company` case below). */
+  const companySubmit = useRef<null | (() => void)>(null);
+  const [companyValid, setCompanyValid] = useState(false);
+  const [companyBusy, setCompanyBusy] = useState(false);
+  const [companyPending, setCompanyPending] = useState<string | null>(null);
+
   const goNext = () => {
     // E118 — an edit that came FROM the review goes back to it, once. The flag
     // clears on arrival so the next forward move is ordinary again.
@@ -2511,6 +2521,74 @@ export default function JoinProviderPage() {
     // per-section edit controls, and the errors/changes checklist that gates
     // Publish.
     //
+    // ---- YOUR COMPANY (WS5) ------------------------------------------
+    //
+    // THE SAME COMPONENT THE BUYER SIDE USES. Every provider is a company: a
+    // sole proprietor picks "Sole Proprietor / Individual" as the business type
+    // and is a company of one. There is deliberately no separate individual
+    // branch, because the tax type is what the payout gate reads later for
+    // SSN-vs-EIN and 1099-reportability — a second path would have to answer
+    // the same question anyway, in a place nobody would think to look.
+    case "company": {
+      if (companyPending) {
+        return (
+          <WizardShell
+            {...shell({
+              title: `Waiting on ${companyPending}.`,
+              subtitle:
+                "Your request went to that company's admin. You can finish your profile as soon as they approve it — nothing you've entered is lost.",
+              onContinue: undefined,
+            })}
+          >
+            <div className="mx-auto w-full max-w-xl space-y-4">
+              <Notice tone="info">
+                We couldn&apos;t confirm you automatically because your work
+                email isn&apos;t on that company&apos;s domain. That&apos;s
+                normal — it just needs a person to say yes.
+              </Notice>
+              <button
+                type="button"
+                onClick={() => setCompanyPending(null)}
+                className="text-[14.5px] font-bold text-magenta hover:underline"
+              >
+                Pick a different company instead
+              </button>
+            </div>
+          </WizardShell>
+        );
+      }
+      return (
+        <WizardShell
+          {...shell({
+            title: "Who are you working as?",
+            subtitle:
+              "Work orders and payments are between companies. Working for yourself? That's a company of one — pick Sole Proprietor as the business type.",
+          })}
+          /* The handlers are JSX props, not members of the `shell()` object:
+             reading `submitRef.current` inside a plain object literal reads to
+             the react-hooks rule as accessing a ref during render. */
+          onContinue={() => companySubmit.current?.()}
+          continueDisabled={!companyValid}
+          busy={busy || companyBusy}
+        >
+          <div className="mx-auto w-full max-w-xl">
+            <CompanyStep
+              submitRef={companySubmit}
+              onValidityChange={setCompanyValid}
+              onBusyChange={setCompanyBusy}
+              onDone={async (outcome) => {
+                if (outcome.status === "PENDING") {
+                  setCompanyPending(outcome.name);
+                  return;
+                }
+                if (await postStep("company", {})) goNext();
+              }}
+            />
+          </div>
+        </WizardShell>
+      );
+    }
+
     // Deliberately WITHOUT the post-publish promo widgets (Promote with ads,
     // Boost, Buy connects, Availability badge) and without Packages: those sell
     // a profile that is already live.

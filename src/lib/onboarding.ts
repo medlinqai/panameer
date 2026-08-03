@@ -49,7 +49,21 @@ export const PROVIDER_STEPS = [
   "bio", //              7
   "rate", //             8 — provider only (now a RANGE, E078c)
   "picture", //          9 — its own step rather than buried on the review
-  "finish", //          10 — Review All + publish
+  /*
+    10 — YOUR COMPANY (brief_company_model WS5).
+
+    Every provider IS a company; a sole proprietor is a company of one. The step
+    is the SAME shared building block the buyer side uses.
+
+    WHY HERE AND NOT FIRST. The buyer track asks it first because a requester
+    exists to buy on a company's behalf. A seller's company matters at the point
+    they can be contracted and paid — and "title-first wizard" is a locked
+    decision from the PJv2 re-architecture, so putting Company at position 1
+    would quietly overturn it. It sits immediately before the review instead,
+    which is also where the money-gate questions will land.
+  */
+  "company", //         10
+  "finish", //          11 — Review All + publish
 ] as const;
 export type ProviderStep = (typeof PROVIDER_STEPS)[number];
 
@@ -62,6 +76,8 @@ export const RECRUITER_STEPS = [
   "languages",
   "bio",
   "picture",
+  // A recruiter is a company too — more obviously so than a solo provider.
+  "company",
   "finish",
 ] as const satisfies readonly ProviderStep[];
 
@@ -104,6 +120,7 @@ export const PROVIDER_STEP_LABELS: Record<
   ProviderStep,
   { stepper: string; next: string }
 > = {
+  company: { stepper: "Your Company", next: "Next: Review Your Profile" },
   title: { stepper: "Your Title", next: "Next: Role → Domain → Skills" },
   catalog: {
     stepper: "Role → Domain → Skills",
@@ -473,6 +490,8 @@ async function loadDraft(viewer: Viewer) {
     where: { user_id: viewer.userId },
     include: {
       user: { select: { email: true, email_verified: true } },
+      // WS5 — the company step's done-ness is a membership read.
+      companyMemberships: { select: { status: true, role: true, company_id: true } },
       site: { include: { addresses: { orderBy: { created_at: "asc" }, take: 1 } } },
       providerProfile: {
         include: {
@@ -573,6 +592,10 @@ function computeResumeStep(p: Awaited<ReturnType<typeof loadDraft>>): ProviderSt
     // was never resumed onto it and first met those fields at Review, which is
     // also why they had drifted onto a page outside the counted ten.
     picture: p.photo_url != null && pp.date_of_birth != null && p.phone != null,
+    // Done when a company binding EXISTS AND IS APPROVED. A pending join is not
+    // done — the provider is waiting on somebody, and resuming them past it
+    // would let them publish with no entity behind the profile.
+    company: p.companyMemberships.some((m) => m.status === "APPROVED"),
     finish: pp.onboarding_completed_at != null,
   };
   // Walk the list THIS profile actually has, so a recruiter is never parked on
@@ -1369,6 +1392,29 @@ export async function applyProviderSection(
         where: { id: profileId },
         data: { region_id: region.id },
       });
+      break;
+    }
+
+    /*
+      The COMPANY step writes NOTHING here (WS5).
+
+      The binding is created by /api/company/define or /api/company/join, which
+      own the attestation, the company ToS and the approval decision. This case
+      exists so the wizard's save-as-you-go call for the step is a no-op rather
+      than an "Unknown step" error — and it re-checks the membership, so a
+      client that skipped the company screen can't advance past it.
+    */
+    case "company": {
+      const bound = await prisma.companyMembership.findFirst({
+        where: { person_id: personId, status: "APPROVED" },
+        select: { id: true },
+      });
+      if (!bound) {
+        throw new OnboardingError(
+          "Add or join your company before continuing",
+          "INVALID"
+        );
+      }
       break;
     }
 
