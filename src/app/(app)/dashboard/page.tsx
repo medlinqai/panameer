@@ -52,10 +52,25 @@ export default async function DashboardPage() {
       first_name: true,
       company: { select: { name: true } },
       buyerProfile: { select: { subscription_tier: true } },
+      requesterProfile: {
+        select: {
+          completed_at: true,
+          approver_name: true,
+          workSite: {
+            select: { addresses: { take: 1, orderBy: { created_at: "asc" } } },
+          },
+        },
+      },
     },
   });
 
   const firstName = displayFirstName(person?.first_name ?? "");
+  const requesterAddress = person?.requesterProfile?.workSite?.addresses[0];
+  const requesterWhere = requesterAddress
+    ? [requesterAddress.city, requesterAddress.state, requesterAddress.country]
+        .filter(Boolean)
+        .join(", ")
+    : null;
 
   return (
     <div className="space-y-8">
@@ -70,7 +85,64 @@ export default async function DashboardPage() {
         )}
       </header>
 
-      {person?.buyerProfile ? (
+      {/*
+        THE REQUESTER'S HOME (P1-J1.2 WS5).
+
+        Without this branch a requester who just finished onboarding and clicked
+        "Go to my dashboard" was told "Your profile isn't set up yet. Build a
+        provider profile" — the wrong side of the marketplace, one click after
+        finishing the right one. A Requester has no BuyerProfile, so they fell
+        through to the unfinished-account case.
+
+        Post-a-work-request is the ONLY live action. Everything else the
+        fulfillment thread will hang here — proposals, work orders, settlement —
+        is named and marked as not built, rather than shown as an empty list
+        that reads like nothing is happening.
+      */}
+      {person?.requesterProfile?.completed_at ? (
+        <>
+          <Card>
+            <h2 className="text-lg">Post Work</h2>
+            <p className="mt-2 text-black/70 dark:text-white/70">
+              Describe what you need and match with validated experts across the
+              enterprise-application catalog.
+              {requesterWhere ? (
+                <>
+                  {" "}
+                  Work is delivered to <b>{requesterWhere}</b>
+                  {person.requesterProfile.approver_name ? (
+                    <>
+                      {" "}
+                      and approved by{" "}
+                      <b>{person.requesterProfile.approver_name}</b>
+                    </>
+                  ) : null}
+                  .
+                </>
+              ) : null}
+            </p>
+            <Link
+              href="/work/new"
+              className="mt-5 inline-flex rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90"
+            >
+              Create Work Request
+            </Link>
+          </Card>
+
+          <Card>
+            <h2 className="text-lg">What comes next</h2>
+            <p className="mt-2 text-black/70 dark:text-white/70">
+              These arrive with the fulfillment thread — none of them are built
+              yet, so there is nothing here to miss.
+            </p>
+            <ul className="mt-4 grid gap-2 text-sm text-black/70 dark:text-white/70">
+              <li>· Proposals from providers on your requests</li>
+              <li>· Work orders, once your company&apos;s payment method is set up</li>
+              <li>· Milestones and settlement</li>
+            </ul>
+          </Card>
+        </>
+      ) : person?.buyerProfile ? (
         <Card>
           <h2 className="text-lg">Hire Talent</h2>
           <p className="mt-2 text-black/70 dark:text-white/70">
