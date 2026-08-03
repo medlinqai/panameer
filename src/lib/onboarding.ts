@@ -43,44 +43,75 @@ import { capitalizeName } from "@/lib/display";
  * `RECRUITER_STEPS` is a strict subset, which is what lets one `ProviderStep`
  * type, one label table and one save path serve both.
  */
+/**
+ * THE COUNTED ITINERARY — six stops (brief_onboarding_slimdown WS1 / E169).
+ *
+ * The wizard was ELEVEN trainstops. The thesis behind this cut: capture only
+ * what makes a provider MATCHABLE (skills, rate) and CONTACTABLE (photo,
+ * company, address, phone), AI-prefill everything else onto the review page
+ * unprompted, and nudge the deliberate gaps by email later.
+ *
+ * Bio, Education and Specializations are NOT deleted — they stay in the model,
+ * stay AI-prefilled from the résumé, and stay editable on the review page. They
+ * simply stop being stops, and they no longer gate publish (WS6).
+ *
+ * ⚠ LANGUAGES IS AN INFERENCE, FLAGGED. The brief names Bio / Education /
+ * Specializations / DOB as removed and lists the six steps exhaustively —
+ * Languages appears in neither list. It is treated like the other three (kept,
+ * AI-prefilled, editable on review, not a stop, not a gate) because that is
+ * what the brief's own principle implies for anything outside the required set.
+ * If Languages was meant to stay a stop, this is the one line to change.
+ *
+ * `tell_us` — the résumé upload / AI entry — is deliberately NOT in this list.
+ * The brief keeps it "up-front… preceding the steps", so it renders before step
+ * 1 without a number. It was already excluded from resume targets, so nothing
+ * downstream treated it as a milestone anyway.
+ */
 export const PROVIDER_STEPS = [
-  "title", //            1 — E011 (asked first now)
-  "catalog", //          2 — Primary Role → Domain → Skills (E030)
-  "tell_us", //          3 — Upload/Review; work history is edited HERE (WS2)
-  "specializations", //  4 — E031/E073
-  "education", //        5 — provider only
-  "languages", //        6
-  "bio", //              7
-  "rate", //             8 — provider only (now a RANGE, E078c)
-  "picture", //          9 — its own step rather than buried on the review
-  /*
-    10 — YOUR COMPANY (brief_company_model WS5).
-
-    Every provider IS a company; a sole proprietor is a company of one. The step
-    is the SAME shared building block the buyer side uses.
-
-    WHY HERE AND NOT FIRST. The buyer track asks it first because a requester
-    exists to buy on a company's behalf. A seller's company matters at the point
-    they can be contracted and paid — and "title-first wizard" is a locked
-    decision from the PJv2 re-architecture, so putting Company at position 1
-    would quietly overturn it. It sits immediately before the review instead,
-    which is also where the money-gate questions will land.
-  */
-  "company", //         10
-  "finish", //          11 — Review All + publish
+  "title", //     1 — what you do
+  "catalog", //   2 — Role(s) → Skills (split into two pages by WS3)
+  "rate", //      3 — provider only; the match needs a price
+  "picture", //   4 — required to publish (WS7 addendum, unchanged)
+  "company", //   5 — the entity a work order is with (brief_company_model)
+  "finish", //    6 — Review + publish
 ] as const;
-export type ProviderStep = (typeof PROVIDER_STEPS)[number];
+export type ProviderStep =
+  | (typeof PROVIDER_STEPS)[number]
+  /*
+    STILL RENDERABLE, JUST NOT COUNTED. These screens exist — `tell_us` as the
+    pre-step, the other four as review-page sections and Settings targets — so
+    they stay in the type and in the save switch. Dropping them from the union
+    would delete the ability to WRITE the data, which is not what the brief
+    asks: it asks for them to stop being prompted.
+  */
+  | "tell_us"
+  | "specializations"
+  | "education"
+  | "languages"
+  | "bio";
 
-/** Recruiter journey: no Education, no Rate (E070). */
+/** The uncounted screens that precede the numbered steps. */
+export const PRE_STEPS = ["tell_us"] as const;
+
+/**
+ * Every step name the save endpoint accepts — the counted itinerary PLUS the
+ * screens that still write data without being stops. The API validates against
+ * this; validating against the itinerary would refuse a review-page bio edit.
+ */
+export const SAVEABLE_STEPS: readonly ProviderStep[] = [
+  ...PROVIDER_STEPS,
+  "tell_us",
+  "specializations",
+  "education",
+  "languages",
+  "bio",
+];
+
+/** Recruiter journey: no Rate — a recruiter sells other people's time (E070). */
 export const RECRUITER_STEPS = [
   "title",
   "catalog",
-  "tell_us",
-  "specializations",
-  "languages",
-  "bio",
   "picture",
-  // A recruiter is a company too — more obviously so than a solo provider.
   "company",
   "finish",
 ] as const satisfies readonly ProviderStep[];
@@ -124,27 +155,42 @@ export const PROVIDER_STEP_LABELS: Record<
   ProviderStep,
   { stepper: string; next: string }
 > = {
+  title: { stepper: "Your Title", next: "Next: Your Role" },
+  catalog: { stepper: "Your Role & Skills", next: "Next: Your Rate" },
+  rate: { stepper: "Your Rate", next: "Next: Your Photo" },
+  picture: { stepper: "Your Photo", next: "Next: Your Company" },
   company: { stepper: "Your Company", next: "Next: Review Your Profile" },
-  title: { stepper: "Your Title", next: "Next: Role → Domain → Skills" },
-  catalog: {
-    stepper: "Role → Domain → Skills",
-    next: "Next: Build Your Profile",
-  },
-  tell_us: {
-    stepper: "Build Your Profile",
-    next: "Next: Your Specializations",
-  },
-  specializations: { stepper: "Your Specializations", next: "Next: Education" },
-  education: { stepper: "Your Education", next: "Next: Languages" },
-  languages: { stepper: "Your Languages", next: "Next: Your Bio" },
-  bio: { stepper: "Your Bio", next: "Next: Your Rate" },
-  rate: { stepper: "Your Rate", next: "Next: Your Picture" },
-  picture: { stepper: "Your Picture", next: "Next: Review Your Profile" },
   finish: {
     stepper: "Review Your Profile",
     next: "Next: Publish Your Profile",
   },
+  // Uncounted screens. `next` is unused for these — nothing forwards to them.
+  tell_us: { stepper: "Build Your Profile", next: "Next: Your Title" },
+  specializations: { stepper: "Your Specializations", next: "" },
+  education: { stepper: "Your Education", next: "" },
+  languages: { stepper: "Your Languages", next: "" },
+  bio: { stepper: "Your Bio", next: "" },
 };
+
+/*
+  THE "NEXT:" LABELS ARE DERIVED, NOT TYPED (pitfalls.md — a label must never
+  promise a step that no longer exists).
+
+  The recruiter journey skips Rate, so a hardcoded "Next: Your Rate" on the
+  Role step lies to half the users of that step. `nextLabelFor` reads the
+  ACTUAL itinerary the caller is walking; the table above is the fallback for
+  the provider path and the source of the stepper headings.
+*/
+export function nextLabelFor(
+  step: ProviderStep,
+  steps: readonly ProviderStep[]
+): string {
+  const i = steps.indexOf(step);
+  const next = i >= 0 ? steps[i + 1] : undefined;
+  if (!next) return "Next: Publish Your Profile";
+  if (next === "finish") return "Next: Review Your Profile";
+  return `Next: ${PROVIDER_STEP_LABELS[next].stepper}`;
+}
 
 /**
  * Steps a user may pass without entering data. Education is explicitly
@@ -152,11 +198,15 @@ export const PROVIDER_STEP_LABELS: Record<
  * `tell_us` is a method CHOICE — picking "manual" is a valid way through it.
  */
 const OPTIONAL_STEPS = new Set<ProviderStep>([
-  // WS2 — the Upload/Review step: uploading is one valid way through it, and
+  // The Upload/Review pre-step: uploading is one valid way through it, and
   // entering everything by hand is the other. Never a resume target.
   "tell_us",
-  "specializations", // brief_R — a provider may legitimately have none
+  // WS1 — these left the itinerary entirely. Listed so that if one is ever put
+  // back, it comes back optional rather than silently becoming a blocker.
+  "specializations",
   "education",
+  "languages",
+  "bio",
 ]);
 
 /**
@@ -600,11 +650,16 @@ function computeResumeStep(p: Awaited<ReturnType<typeof loadDraft>>): ProviderSt
     bio: !!pp.overview && pp.overview.trim().length >= MIN_BIO_CHARS,
     // A range now (E078c); either end being set means the step was answered.
     rate: pp.rate_min_cents != null || pp.hourly_rate_cents != null,
-    // WS8/E088 — the wrapup step, and REQUIRED now: it collects the photo plus
-    // date of birth, phone and address. It was optional, so a returning provider
-    // was never resumed onto it and first met those fields at Review, which is
-    // also why they had drifted onto a page outside the counted ten.
-    picture: p.photo_url != null && pp.date_of_birth != null && p.phone != null,
+    /*
+      The photo step also collects the CONTACT block — phone and address.
+
+      DATE OF BIRTH IS GONE from this condition (WS1, completed by WS7). It was
+      part of "done" here, so with DOB no longer asked anywhere a returning
+      provider would have been parked on this step forever, unable to finish.
+      That is the removal half of the invisible-profile bug class: a condition
+      that outlives the question it was checking.
+    */
+    picture: p.photo_url != null && p.phone != null,
     // Done when a company binding EXISTS AND IS APPROVED. A pending join is not
     // done — the provider is waiting on somebody, and resuming them past it
     // would let them publish with no entity behind the profile.

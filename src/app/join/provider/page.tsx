@@ -90,6 +90,15 @@ import {
  * walks comes from the server — a recruiter skips Education and Rate — so this
  * is the union, not the itinerary.
  */
+/*
+  Every screen this wizard can RENDER. The counted itinerary is a subset and
+  comes from the server (`status.steps`), which is what lets the provider and
+  recruiter journeys differ without this file knowing how.
+
+  WS1 — Bio, Education, Specializations and Languages left the itinerary but not
+  this list: they still render as review-page sections and Settings targets. The
+  slimdown removes them as PROMPTS, not as data.
+*/
 const ALL_STEPS = [
   "title",
   "catalog",
@@ -100,7 +109,6 @@ const ALL_STEPS = [
   "bio",
   "rate",
   "picture",
-  // WS5 — the shared company building block, immediately before the review.
   "company",
   "finish",
 ] as const;
@@ -143,14 +151,14 @@ const LANGUAGE_LEVELS = [
  */
 const STEP_LABELS: Record<Step, { stepper: string }> = {
   title: { stepper: "Your Title" },
-  catalog: { stepper: "Role → Domain → Skills" },
+  catalog: { stepper: "Your Role & Skills" },
   tell_us: { stepper: "Build Your Profile" },
   specializations: { stepper: "Your Specializations" },
   education: { stepper: "Your Education" },
   languages: { stepper: "Your Languages" },
   bio: { stepper: "Your Bio" },
   rate: { stepper: "Your Rate" },
-  picture: { stepper: "Photo & Details" },
+  picture: { stepper: "Your Photo" },
   company: { stepper: "Your Company" },
   finish: { stepper: "Review Your Profile" },
 };
@@ -672,7 +680,22 @@ export default function JoinProviderPage() {
           if (params.get("return") === "review" && target !== "finish") {
             setReturnToReview(true);
           }
-          setScreen(target);
+          /*
+            WS1 — THE UPLOAD IS A PRE-STEP, not stop 1.
+
+            The brief keeps the résumé / AI entry "up-front, preceding the
+            steps", so it renders before the counter starts and carries no
+            number. Shown only on a genuinely fresh profile: nothing imported
+            and no work history typed. A returning provider goes straight to
+            wherever the server resumed them, because being asked to upload a
+            CV again on every visit is exactly the friction this brief cuts.
+          */
+          const fresh =
+            target === "title" &&
+            (s.imports?.length ?? 0) === 0 &&
+            (s.profile?.employers?.length ?? 0) === 0 &&
+            !requested;
+          setScreen(fresh ? "tell_us" : target);
         }
       }
       setReady(true);
@@ -727,7 +750,16 @@ export default function JoinProviderPage() {
       goTo("finish");
       return;
     }
-    if (stepIndex >= 0 && stepIndex < steps.length - 1) goTo(steps[stepIndex + 1]);
+    /*
+      From an UNCOUNTED screen (the upload pre-step) "next" means the first
+      counted step — there is no index to add one to. Without this the pre-step's
+      Continue did nothing at all, which is how a pre-step becomes a dead end.
+    */
+    if (stepIndex < 0) {
+      goTo(steps[0] ?? "title");
+      return;
+    }
+    if (stepIndex < steps.length - 1) goTo(steps[stepIndex + 1]);
   };
   const goBack = () => {
     if (stepIndex > 0) goTo(steps[stepIndex - 1]);
@@ -1035,8 +1067,14 @@ export default function JoinProviderPage() {
     );
   }
 
-  // ===== POST-VERIFY: the 12 steps (stepper x/12) =========================
-  const stepNumber = stepIndex + 1;
+  // ===== POST-VERIFY: the counted steps (stepper x/N) =====================
+  /*
+    An UNCOUNTED screen (the upload pre-step, or a review-page section opened
+    for editing) is not in the itinerary, so `stepIndex` is -1. Passing 0/6 to
+    the shell would render a counter for a step that does not exist — the exact
+    thing pitfalls.md warns about, one level down. Undefined hides it.
+  */
+  const stepNumber = stepIndex >= 0 ? stepIndex + 1 : undefined;
   // Exact stepper heading + "Next: …" label per brief_S's table (E024–E035).
   const labels = STEP_LABELS[screen as Step];
   const nextStep = stepIndex >= 0 ? steps[stepIndex + 1] : undefined;
