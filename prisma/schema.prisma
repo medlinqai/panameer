@@ -143,22 +143,115 @@ enum PAccountStatus {
 }
 
 /// A company within a P-Account. Carries name, vertical, and branding.
+/// Legal form of the entity (brief_company_model WS1).
+///
+/// LOAD-BEARING, not descriptive: it decides the TIN format collected at the
+/// payout gate (SSN/ITIN for a sole proprietor, EIN for everyone else) and
+/// whether Panameer must 1099-report the payments — sole prop, partnership and
+/// LLC are reportable; C-Corp and S-Corp generally are not. Neither the TIN nor
+/// the tax form is collected here: both belong to the money gate.
+enum TaxType {
+  C_CORP
+  S_CORP
+  LLC
+  PARTNERSHIP
+  /// A sole proprietor is a COMPANY OF ONE, not a separate kind of user. There
+  /// is deliberately no "individual" path anywhere in the product.
+  SOLE_PROP_INDIVIDUAL
+  NONPROFIT
+}
+
+/// Company Admin is the DEFINER — the person who created the company and the
+/// only one who approves joiners at v1. Additive: the same person can be admin
+/// of one company and a plain member of another.
+enum MembershipRole {
+  MEMBER
+  ADMIN
+}
+
+enum MembershipStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model Company {
   id           String   @id @default(uuid()) @db.Uuid
   p_account_id String   @db.Uuid
+  /// Display name. At v1 this and `legal_name` are the same string — the define
+  /// step writes both — but they are kept apart because they diverge the moment
+  /// a company trades under a name that isn't on its tax filing, and the
+  /// contract has to carry the legal one.
   name         String
+  legal_name   String?
+  tax_type     TaxType?
+  /// Tax registration id (EIN · VAT/company number · SSN/ITIN). DEFERRED to the
+  /// money gate on purpose — it lives on the W-9/W-8 and is only needed when
+  /// funds move, so asking for it at signup buys nothing but drop-off. The
+  /// trade-off is that dedup leans on name + domain + admin approval rather
+  /// than a hard tax key (the Upwork pattern).
+  tin          String?
+  /// Bare domain ("acme.com"), set from the definer's work email. A joiner
+  /// whose own email domain matches it is auto-approved (v1 = exact,
+  /// case-insensitive string match; free-mail domains never match).
+  email_domain String?
   vertical     String?
   website      String?
   logo_url     String?
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
 
-  pAccount PAccount @relation(fields: [p_account_id], references: [id], onDelete: Cascade)
-  sites    Site[]
-  people   Person[]
+  /// COMPANY ToS — the entity's agreement to do business with Panameer,
+  /// accepted by its admin on the company's behalf. Distinct from the User ToS
+  /// each person accepts at signup, and it gates the company's ability to
+  /// transact. Re-accepted when the version bumps.
+  company_tos_accepted_by String?   @db.Uuid
+  company_tos_accepted_at DateTime?
+  company_tos_version     String?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  pAccount    PAccount            @relation(fields: [p_account_id], references: [id], onDelete: Cascade)
+  sites       Site[]
+  people      Person[]
+  memberships CompanyMembership[]
 
   @@index([p_account_id])
+  @@index([email_domain])
   @@map("companies")
+}
+
+/// A person's binding to a company — THE IDENTITY PRIMITIVE.
+///
+/// `Person.company_id` says where a person currently sits; this says whether
+/// that binding is APPROVED and what it lets them do. No approved membership on
+/// a company with an accepted company ToS → the person cannot transact
+/// (Panameer staff excepted). One row per person per company, so re-requesting
+/// updates the existing decision rather than stacking requests.
+model CompanyMembership {
+  id                      String           @id @default(uuid()) @db.Uuid
+  person_id               String           @db.Uuid
+  company_id              String           @db.Uuid
+  role                    MembershipRole   @default(MEMBER)
+  status                  MembershipStatus @default(PENDING)
+  /// "I am authorized to represent this entity." Recorded per membership
+  /// because it is a statement by the PERSON about a specific company.
+  attestation_accepted_at DateTime?
+  /// Set when an admin approves or rejects; null while pending.
+  decided_at              DateTime?
+  decided_by_person_id    String?          @db.Uuid
+  /// How the approval happened — an audited domain auto-approval reads very
+  /// differently from a human decision when someone asks later.
+  auto_approved           Boolean          @default(false)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  person  Person  @relation(fields: [person_id], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [company_id], references: [id], onDelete: Cascade)
+
+  @@unique([person_id, company_id])
+  @@index([company_id, status])
+  @@map("company_memberships")
 }
 
 /// A physical/operational location of a Company.
@@ -237,6 +330,7 @@ model Person {
   providerProfile     ProviderProfile?    @relation("ProfileOwner")
   buyerProfile        BuyerProfile?
   requesterProfile    RequesterProfile?
+  companyMemberships  CompanyMembership[]
   // As a COORDINATOR: the provider profiles this Person represents, and the
   // invites they've sent (brief_I).
   repProviderProfiles ProviderProfile[]   @relation("CoordinatorProviders")
