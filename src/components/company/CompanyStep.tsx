@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { LegalLink } from "@/components/legal/LegalLink";
 import { Field, TextInput, Notice, OptionCard } from "@/components/onboarding/controls";
 
@@ -90,9 +90,43 @@ export function CompanyStep({
   const [taxType, setTaxType] = useState<TaxTypeValue | "">("");
   const [website, setWebsite] = useState("");
   const [companyTos, setCompanyTos] = useState(false);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [logoBusy, setLogoBusy] = useState(false);
+  const logoInput = useRef<HTMLInputElement>(null);
+
+  /** What the signup email suggests the company might be (E167 nudge). */
+  const [suggestion, setSuggestion] = useState<string | null>(null);
 
   // both
   const [attestation, setAttestation] = useState(false);
+
+  /*
+    THE DOMAIN NUDGE (E167 enhancement).
+
+    Someone whose work email is @straterp.com almost certainly works at
+    StratERP, so the search starts with that word rather than an empty box.
+
+    IT IS A SUGGESTION AND NOTHING MORE. It pre-fills a text field; it does not
+    select a company, does not grant a membership, and does not influence
+    approval — auto-approval stays keyed to the company's OWN recorded
+    email_domain, decided server-side. A pre-filled search box that quietly
+    conferred access would be the same hole this whole model closed.
+  */
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const r = await fetch("/api/company/suggest");
+      if (!r.ok || cancelled) return;
+      const body = (await r.json()) as { suggestion?: string | null };
+      if (!body.suggestion || cancelled) return;
+      setSuggestion(body.suggestion);
+      // Only ever fills an untouched box.
+      setQ((cur) => (cur ? cur : body.suggestion!));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const t = setTimeout(async () => {
@@ -136,6 +170,7 @@ export function CompanyStep({
                   name: name.trim(),
                   taxType,
                   website: website.trim() || null,
+                  logoUrl,
                   attestation,
                   companyTos,
                 }
@@ -184,7 +219,14 @@ export function CompanyStep({
 
       {mode === "join" ? (
         <>
-          <Field label="Company Name *">
+          <Field
+            label="Company Name *"
+            hint={
+              suggestion
+                ? `Suggested from your work email. Change it if that's not where you work.`
+                : undefined
+            }
+          >
             <TextInput
               value={q}
               onChange={(e) => {
@@ -217,20 +259,32 @@ export function CompanyStep({
           )}
 
           {q.trim().length >= 2 && hits.length === 0 && (
-            <p className="text-[14.5px] text-ink-2">
-              Nothing matches &ldquo;{q.trim()}&rdquo;.{" "}
+            /*
+              E167 — this was one grey sentence with a link in it, and the walk
+              read it as a dead end: search returns nothing, Next stays disabled,
+              no way forward. It is now a card that says WHY there is no match
+              (only companies somebody has already added are listed) and carries
+              the way out as a button.
+            */
+            <div className="rounded-brand border-[1.5px] border-dashed border-line p-5">
+              <p className="text-[15.5px] font-bold">
+                No company here matches &ldquo;{q.trim()}&rdquo;.
+              </p>
+              <p className="mt-1.5 text-[14.5px] leading-relaxed text-ink-2">
+                Only companies someone has already added to Panameer show up in
+                this list — yours may simply be the first.
+              </p>
               <button
                 type="button"
                 onClick={() => {
                   setMode("define");
                   setName(q.trim());
                 }}
-                className="font-bold text-magenta hover:underline"
+                className="mt-4 rounded-full bg-magenta px-6 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
               >
-                Add it instead
+                Add &ldquo;{q.trim()}&rdquo; as my company
               </button>
-              .
-            </p>
+            </div>
           )}
 
           {picked && (
@@ -287,6 +341,67 @@ export function CompanyStep({
               autoComplete="url"
             />
           </Field>
+
+          {/*
+            COMPANY LOGO (E168). Optional, and it uploads immediately so the
+            person sees what they picked before committing — the same pattern as
+            the profile photo. Storing it under the person's folder until the
+            company exists is what lets it be uploaded BEFORE define.
+          */}
+          <div>
+            <span className="mb-1.5 block text-[14px] font-bold text-ink">
+              Company Logo
+            </span>
+            <div className="flex items-center gap-4">
+              <span className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-[12px] border border-line bg-bg-soft">
+                {logoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={logoUrl} alt="" className="h-full w-full object-contain" />
+                ) : (
+                  <span className="text-[11px] font-semibold text-ink-2">Logo</span>
+                )}
+              </span>
+              <span>
+                <button
+                  type="button"
+                  disabled={logoBusy}
+                  onClick={() => logoInput.current?.click()}
+                  className="rounded-full border-[1.5px] border-line px-5 py-2 text-[14px] font-bold transition-colors hover:border-magenta hover:text-magenta disabled:opacity-50"
+                >
+                  {logoBusy ? "Uploading…" : logoUrl ? "Change logo" : "Upload a logo"}
+                </button>
+                <span className="mt-1 block text-[13px] text-ink-2">
+                  Optional. PNG, JPG or WebP, up to 5 MB.
+                </span>
+              </span>
+            </div>
+            <input
+              ref={logoInput}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              className="hidden"
+              onChange={async (e) => {
+                const f = e.target.files?.[0];
+                if (!f) return;
+                setLogoBusy(true);
+                setError(null);
+                try {
+                  const fd = new FormData();
+                  fd.append("file", f);
+                  const r = await fetch("/api/company/logo", { method: "POST", body: fd });
+                  const b = await r.json().catch(() => ({}));
+                  if (!r.ok) {
+                    setError(b.error ?? "Could not upload that image.");
+                    return;
+                  }
+                  setLogoUrl(b.logoUrl);
+                } finally {
+                  setLogoBusy(false);
+                  if (logoInput.current) logoInput.current.value = "";
+                }
+              }}
+            />
+          </div>
 
           <label className="flex cursor-pointer items-start gap-3 rounded-brand border border-line p-4">
             <input

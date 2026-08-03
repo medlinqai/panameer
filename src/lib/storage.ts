@@ -21,6 +21,16 @@ import { randomUUID } from "crypto";
 export const PROFILE_PHOTO_BUCKET = "profile-photos";
 
 /**
+ * PUBLIC bucket holding COMPANY LOGOS (brief_j14 WS-D / E168).
+ *
+ * Public for the same reason profile photos are: a logo is rendered on pages
+ * anyone can see — a work request, a provider card — and signing every one of
+ * them would add a round trip per image for a mark the company publishes
+ * everywhere anyway.
+ */
+export const COMPANY_LOGO_BUCKET = "company-logos";
+
+/**
  * PRIVATE bucket holding uploaded résumés (brief_Q).
  *
  * Deliberately NOT public, unlike profile photos: a résumé is personal data
@@ -164,6 +174,47 @@ export async function uploadProfilePhoto(
 
   const { data } = bucket.getPublicUrl(objectPath);
   return data.publicUrl;
+}
+
+/**
+ * Validate + upload one company logo, returning its public URL.
+ *
+ * `companyId` is resolved server-side from the caller's ADMIN membership, never
+ * from client input — the same ownership boundary as the profile photo, applied
+ * to an entity rather than a person.
+ */
+export async function uploadCompanyLogo(
+  companyId: string,
+  file: { type: string; size: number; bytes: ArrayBuffer }
+): Promise<string> {
+  if (!ALLOWED_PHOTO_MIME.includes(file.type as (typeof ALLOWED_PHOTO_MIME)[number])) {
+    throw new StorageError(
+      `That file type isn't supported. Upload a ${allowedList} image.`,
+      "INVALID_TYPE"
+    );
+  }
+  if (file.size > MAX_PHOTO_BYTES) {
+    throw new StorageError(
+      "That image is larger than 5 MB. Choose a smaller file.",
+      "TOO_LARGE"
+    );
+  }
+  if (file.size === 0) {
+    throw new StorageError("That file is empty.", "INVALID_TYPE");
+  }
+
+  const objectPath = `${companyId}/${randomUUID()}.${EXTENSION[file.type]}`;
+  const bucket = getStorageClient().from(COMPANY_LOGO_BUCKET);
+  const { error } = await bucket.upload(objectPath, file.bytes, {
+    contentType: file.type,
+    upsert: false,
+    cacheControl: "3600",
+  });
+  if (error) {
+    console.error("[storage] company logo upload failed:", error);
+    throw new StorageError("Could not upload that image.", "UPLOAD_FAILED");
+  }
+  return bucket.getPublicUrl(objectPath).data.publicUrl;
 }
 
 /**

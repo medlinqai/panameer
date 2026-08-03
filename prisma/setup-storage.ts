@@ -37,6 +37,13 @@ const BUCKETS: {
     mime: ["image/png", "image/jpeg", "image/webp"],
   },
   {
+    // Company logos (brief_j14 WS-D / E168). Public for the same reason photos
+    // are — they render on pages anyone can see.
+    name: "company-logos",
+    public: true,
+    mime: ["image/png", "image/jpeg", "image/webp"],
+  },
+  {
     name: "certifications",
     public: false,
     mime: [

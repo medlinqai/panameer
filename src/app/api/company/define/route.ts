@@ -15,6 +15,7 @@ const schema = z.object({
     "NONPROFIT",
   ]),
   website: z.string().trim().max(300).nullish(),
+  logoUrl: z.string().trim().max(600).nullish(),
   attestation: z.boolean(),
   companyTos: z.boolean(),
 });

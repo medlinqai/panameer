@@ -26,6 +26,8 @@ export type DefineInput = {
   name: string;
   taxType: TaxType;
   website?: string | null;
+  /** Public URL from /api/company/logo, uploaded before define (E168). */
+  logoUrl?: string | null;
   /** "I'm authorized to represent this entity." Required. */
   attestation: boolean;
   /** Company ToS, accepted by the definer on the company's behalf. Required. */
@@ -125,6 +127,7 @@ export async function defineCompany(viewer: Viewer, input: DefineInput) {
       legal_name: name,
       tax_type: input.taxType,
       website,
+      ...(input.logoUrl ? { logo_url: input.logoUrl } : {}),
       // Only a WORK domain is stored. Recording gmail.com here would auto-
       // approve every Gmail user in the world into this company.
       email_domain: isWorkDomain(domain) ? domain : null,
@@ -298,13 +301,30 @@ export async function cleanUpPlaceholder(companyId: string) {
   }
 }
 
-/** Companies a person can join. Names + headcount only. */
+/**
+ * Companies a person can join. Names, domain and headcount only.
+ *
+ * E167 — "typing straterp returns nothing" turned out NOT to be a broken query.
+ * The match was already case-insensitive `contains`; what was missing was the
+ * company. Of 40 rows in the dev database, 39 were signup placeholders named
+ * after a person and exactly one had ever been defined, and placeholders are
+ * deliberately not joinable — joining "Robin Crosby" is not joining a company.
+ * So the search was right and the empty state was the whole story; it now says
+ * so, and offers the way out.
+ *
+ * Two real improvements while here: LEGAL NAME is searched too (a company can
+ * trade as one name and file as another, and the joiner may know either), and
+ * matching is on either field rather than the display name alone.
+ */
 export async function searchCompanies(q: string) {
   const term = q.trim();
   if (term.length < 2) return [];
   const rows = await prisma.company.findMany({
     where: {
-      name: { contains: term, mode: "insensitive" },
+      OR: [
+        { name: { contains: term, mode: "insensitive" } },
+        { legal_name: { contains: term, mode: "insensitive" } },
+      ],
       // Only DEFINED companies are joinable. Signup placeholders are named
       // after a person and are not entities anyone should be joining.
       tax_type: { not: null },
@@ -356,6 +376,7 @@ export async function getCompanyBinding(viewer: Viewer) {
               legal_name: true,
               tax_type: true,
               website: true,
+              logo_url: true,
               email_domain: true,
               company_tos_accepted_at: true,
               company_tos_version: true,

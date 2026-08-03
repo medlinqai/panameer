@@ -123,13 +123,24 @@ export default async function CompanyPage({
         </Card>
       )}
 
-      <header>
+      <header className="flex flex-wrap items-center gap-4">
+        {/* E168 — the logo the definer uploaded, where the company is named. */}
+        {c.logo_url && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={c.logo_url}
+            alt=""
+            className="h-14 w-14 shrink-0 rounded-[12px] border border-black/10 bg-white object-contain p-1 dark:border-white/15"
+          />
+        )}
+        <span className="min-w-0">
         <h1 className="text-3xl tracking-tight">{c.name}</h1>
         <p className="mt-1 text-black/60 dark:text-white/60">
           {c.tax_type ? TAX_LABELS[c.tax_type] : "Business type not set"}
           {c.email_domain ? ` · ${c.email_domain}` : ""}
           {binding.isAdmin ? " · You're an admin" : ""}
         </p>
+        </span>
       </header>
 
       {binding.status === "PENDING" && (
