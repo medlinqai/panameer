@@ -1,7 +1,14 @@
 import { NextResponse } from "next/server";
 import { redirect } from "next/navigation";
 import { getSessionViewer } from "@/lib/session";
-import { hasCapability, type Capability, type Viewer } from "@/lib/access";
+import {
+  hasCapability,
+  verifyTransactAbility,
+  type Capability,
+  type TransactVerdict,
+  type Viewer,
+} from "@/lib/access";
+import { getCompanyBinding } from "@/lib/company";
 import type { RouteRequirement } from "@/lib/route-access";
 
 /**
@@ -48,4 +55,24 @@ export async function guardApi(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   return viewer;
+}
+
+/**
+ * THE COMPANY GATE for pages (brief_company_model WS4).
+ *
+ * Runs after the capability guard: a buyer with no approved company is still a
+ * buyer, they just have no entity to contract as. Denials redirect to /company
+ * carrying the reason, so the page can say "your company hasn't accepted the
+ * terms" rather than a blank refusal — a gate nobody can act on reads as a bug.
+ */
+export async function guardTransact(viewer: Viewer): Promise<void> {
+  const verdict = await checkTransact(viewer);
+  if (!verdict.ok) redirect(`/company?blocked=${verdict.reason.toLowerCase()}`);
+}
+
+/** The same check, for API routes and for pages that want to render a reason. */
+export async function checkTransact(viewer: Viewer): Promise<TransactVerdict> {
+  // Staff never need the binding read at all.
+  if (viewer.isSystemAdmin) return { ok: true };
+  return verifyTransactAbility(viewer, await getCompanyBinding(viewer));
 }

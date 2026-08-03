@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { guardApi } from "@/lib/guard";
+import { TRANSACT_MESSAGE } from "@/lib/transact-message";
+import { checkTransact, guardApi } from "@/lib/guard";
 import {
   getWorkRequest,
   saveSection,
@@ -21,6 +22,18 @@ export async function GET(
 ) {
   const gate = await guardApi("canHireTalent");
   if (gate instanceof NextResponse) return gate;
+  /*
+    The company gate, server-side (WS4). The page redirects, but the API is the
+    authoritative boundary — a work request commits a company, so the caller
+    needs an approved membership on one that has accepted the company terms.
+  */
+  const transact = await checkTransact(gate);
+  if (!transact.ok) {
+    return NextResponse.json(
+      { error: TRANSACT_MESSAGE[transact.reason], code: transact.reason },
+      { status: 403 }
+    );
+  }
   const { id } = await params;
   try {
     return NextResponse.json(await getWorkRequest(gate, id));
@@ -43,6 +56,18 @@ export async function PATCH(
 ) {
   const gate = await guardApi("canHireTalent");
   if (gate instanceof NextResponse) return gate;
+  /*
+    The company gate, server-side (WS4). The page redirects, but the API is the
+    authoritative boundary — a work request commits a company, so the caller
+    needs an approved membership on one that has accepted the company terms.
+  */
+  const transact = await checkTransact(gate);
+  if (!transact.ok) {
+    return NextResponse.json(
+      { error: TRANSACT_MESSAGE[transact.reason], code: transact.reason },
+      { status: 403 }
+    );
+  }
   const { id } = await params;
   const body = await request.json().catch(() => null);
   const section = body?.section as WorkRequestSection | undefined;

@@ -1,4 +1,4 @@
-import { guardPage } from "@/lib/guard";
+import { guardPage, guardTransact } from "@/lib/guard";
 import { WorkRequestWizard } from "@/components/work/WorkRequestWizard";
 
 /**
@@ -8,6 +8,15 @@ import { WorkRequestWizard } from "@/components/work/WorkRequestWizard";
  * server gate: canHireTalent (brief_J). Business logic is in the API/lib.
  */
 export default async function WorkNewPage() {
-  await guardPage("canHireTalent");
+  const viewer = await guardPage("canHireTalent");
+  /*
+    THE COMPANY GATE (brief_company_model WS4). Two different questions, asked
+    in order: canHireTalent is "is this a buyer", and the company gate is "do
+    they have an entity to contract as". A work request commits a COMPANY, so a
+    buyer with no approved membership — or whose company hasn't accepted the
+    company terms — has nothing to commit. Denials land on /company with the
+    reason rather than a blank refusal.
+  */
+  await guardTransact(viewer);
   return <WorkRequestWizard />;
 }

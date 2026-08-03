@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getSessionViewer } from "@/lib/session";
 import { getCompanyBinding, getPendingRequests } from "@/lib/company";
 import { COMPANY_TOS_VERSION } from "@/lib/tos";
+import { TRANSACT_MESSAGE } from "@/lib/transact-message";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/Card";
 import { CompanyRequests } from "@/components/company/CompanyRequests";
@@ -30,14 +31,33 @@ const TAX_LABELS: Record<string, string> = {
  * The queue lives here rather than in the Panameer admin console on purpose:
  * the approver is the COMPANY's admin — a customer — not Panameer staff.
  */
-export default async function CompanyPage() {
+export default async function CompanyPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ blocked?: string }>;
+}) {
   const viewer = await getSessionViewer();
   if (!viewer) redirect("/login?callbackUrl=%2Fcompany");
+  /*
+    `?blocked=` arrives from the WS4 gate. A refusal that just dumps you on a
+    page with no explanation reads as a bug; this says which door closed and
+    what clears it — and the fix (accept the terms) is on this same page.
+  */
+  const { blocked } = await searchParams;
+  const blockedMessage = blocked
+    ? TRANSACT_MESSAGE[blocked.toUpperCase() as keyof typeof TRANSACT_MESSAGE]
+    : null;
 
   const binding = await getCompanyBinding(viewer);
   if (!binding) {
     return (
-      <div className="mx-auto w-full max-w-3xl">
+      <div className="mx-auto w-full max-w-3xl space-y-6">
+        {blockedMessage && (
+          <Card>
+            <h2 className="text-lg">One step first</h2>
+            <p className="mt-2 text-black/70 dark:text-white/70">{blockedMessage}</p>
+          </Card>
+        )}
         <Card>
           <h1 className="text-2xl tracking-tight">No company yet</h1>
           <p className="mt-2 text-black/70 dark:text-white/70">
@@ -85,6 +105,13 @@ export default async function CompanyPage() {
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-6">
+      {blockedMessage && (
+        <Card>
+          <h2 className="text-lg">One step first</h2>
+          <p className="mt-2 text-black/70 dark:text-white/70">{blockedMessage}</p>
+        </Card>
+      )}
+
       <header>
         <h1 className="text-3xl tracking-tight">{c.name}</h1>
         <p className="mt-1 text-black/60 dark:text-white/60">

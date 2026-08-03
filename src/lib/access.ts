@@ -124,6 +124,62 @@ export function hasCapability(viewer: Viewer, cap: Capability): boolean {
   }
 }
 
+// ---------------------------------------------------------------------------
+// THE COMPANY GATE (brief_company_model WS4)
+//
+// Company membership is the identity primitive: no APPROVED membership on a
+// company that has accepted the company ToS → the viewer cannot TRANSACT.
+//
+// WHY THIS ISN'T A `Capability`. That union is resolved synchronously from the
+// JWT by both the guards AND the edge proxy, which has no database. Company
+// state is a database read and can change between logins — an admin approving
+// you must take effect without you signing out — so it is a separate, async
+// check that pages and API routes call explicitly.
+//
+// PANAMEER STAFF ARE EXEMPT. They are employees performing setup, not a party
+// to any contract, and gating them on a customer company would lock the
+// operator out of their own console.
+// ---------------------------------------------------------------------------
+
+export type TransactDenial =
+  | "NO_COMPANY"
+  | "PENDING_APPROVAL"
+  | "REJECTED"
+  | "COMPANY_TOS";
+
+export type TransactVerdict =
+  | { ok: true }
+  | { ok: false; reason: TransactDenial; companyName?: string };
+
+/**
+ * Can this viewer enter a transaction — post a Work Request, propose on work?
+ *
+ * Reads memberships through the injected loader so `access.ts` stays free of a
+ * Prisma import (the edge proxy imports this module's types). `lib/guard.ts`
+ * supplies the real loader.
+ */
+export function verifyTransactAbility(
+  viewer: Viewer,
+  binding: {
+    status: "PENDING" | "APPROVED" | "REJECTED";
+    tosCurrent: boolean;
+    company: { name: string };
+  } | null
+): TransactVerdict {
+  if (viewer.isSystemAdmin) return { ok: true };
+  if (!binding) return { ok: false, reason: "NO_COMPANY" };
+  if (binding.status === "PENDING") {
+    return { ok: false, reason: "PENDING_APPROVAL", companyName: binding.company.name };
+  }
+  if (binding.status === "REJECTED") {
+    return { ok: false, reason: "REJECTED", companyName: binding.company.name };
+  }
+  if (!binding.tosCurrent) {
+    return { ok: false, reason: "COMPANY_TOS", companyName: binding.company.name };
+  }
+  return { ok: true };
+}
+
 /** Thrown by `requireCapability` when a viewer lacks the required capability. */
 export class AccessDeniedError extends Error {
   constructor(public capability: Capability) {
