@@ -29,6 +29,15 @@ import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 type UserType = "seller" | "buyer";
 type Job = "provider" | "recruiter" | "requester" | "buyer-admin";
 
+/**
+ * THE TAGLINE (E160), in one constant.
+ *
+ * It belongs under the page title, not on the logo — the mark stays clean, and
+ * a wordmark that carries a sentence can't be used anywhere else. One constant
+ * because a tagline repeated in three files becomes three different taglines.
+ */
+export const PANAMEER_TAGLINE = "The AI-native ERP services marketplace.";
+
 /** Page-2 options per page-1 choice. Seller copy is Scott's, verbatim. */
 const JOBS: Record<UserType, { id: Job; title: string; description: string }[]> = {
   seller: [
@@ -142,7 +151,12 @@ function JoinRouter() {
           {
             id: "buyer" as const,
             title: "Service Buyer",
-            description: "I offer work on Panameer",
+            /*
+              E157 — this read "I offer work on Panameer", which is what a
+              SELLER does with their time. Two cards that both start "I offer"
+              is the one thing this fork exists to disambiguate.
+            */
+            description: "I post work and hire validated experts",
           },
           {
             id: "seller" as const,
@@ -155,16 +169,33 @@ function JoinRouter() {
   return (
     <OnboardingShell contentWidth="max-w-lg">
       <div className="text-center">
+        {/*
+          E161 — the H1 names the QUESTION on the page. Both steps said "Welcome
+          to Panameer", so the sub-fork read as the same screen rendered twice
+          and the choice you were being asked to make had no heading at all.
+        */}
         <h1 className="text-[28px] font-extrabold tracking-[-0.6px]">
-          Welcome to Panameer
-        </h1>
-        <p className="mt-2 text-[17px] text-ink-2">
           {step === 1
-            ? "Which describes you best?"
+            ? "Welcome to Panameer"
             : userType === "seller"
-              ? "How do you sell on Panameer?"
-              : "What do you do on the buying side?"}
-        </p>
+              ? "Whose Services Do You Sell?"
+              : "What Do You Do on the Buying Side?"}
+        </h1>
+        {step === 1 ? (
+          // E160 — the tagline is the page subtitle, under the title.
+          <>
+            <p className="mt-2 text-[17px] font-semibold text-magenta">
+              {PANAMEER_TAGLINE}
+            </p>
+            <p className="mt-2 text-[17px] text-ink-2">Which describes you best?</p>
+          </>
+        ) : (
+          <p className="mt-2 text-[17px] text-ink-2">
+            {userType === "seller"
+              ? "This decides the profile you build."
+              : "This decides what you can do on your company's account."}
+          </p>
+        )}
       </div>
 
       <div className="mt-8 space-y-3">
