@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSessionViewer } from "@/lib/session";
+import { guardApi } from "@/lib/guard";
 import { OnboardingError } from "@/lib/onboarding";
 import { completeRequester } from "@/lib/requester-onboarding";
 
@@ -10,11 +10,20 @@ import { completeRequester } from "@/lib/requester-onboarding";
  * Continue: "ready to post work" is a claim that this person can be put on a
  * work request, and a requester with no deliver-to cannot.
  */
+/*
+ * ACCESS GOES THROUGH `guardApi` (→ src/lib/access.ts), not a hand-rolled
+ * session check — the brief's rule, and the reason is this file would
+ * otherwise be a fourth place that decides what "signed in" means.
+ *
+ * The requirement is `authenticated`, not canHireTalent: a requester mid-
+ * onboarding already carries is_service_buyer, but the real boundary here is
+ * OWNERSHIP, and that is enforced below by resolving the requester from the
+ * session. A capability check would be a weaker statement of the same thing.
+ */
 export async function POST() {
-  const viewer = await getSessionViewer();
-  if (!viewer) {
-    return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
-  }
+  const gate = await guardApi("authenticated");
+  if (gate instanceof NextResponse) return gate;
+  const viewer = gate;
   try {
     return NextResponse.json({ ok: true, state: await completeRequester(viewer) });
   } catch (e) {

@@ -151,13 +151,20 @@ export default function RequesterStepsPage() {
     })();
   }, [router, hydrate]);
 
-  // Company typeahead. Two characters minimum, matching the server.
+  /*
+    Company typeahead. Two characters minimum, matching the server.
+
+    The "too short / not searching" case CLEARS inside the debounce rather than
+    synchronously in the effect body: a bare setHits([]) there is a cascading
+    render (react-hooks/set-state-in-effect), and the cleanup already cancels
+    any in-flight timer, so the stale list can never outlive the keystroke.
+  */
   useEffect(() => {
-    if (mode !== "join" || q.trim().length < 2) {
-      setHits([]);
-      return;
-    }
     const t = setTimeout(async () => {
+      if (mode !== "join" || q.trim().length < 2) {
+        setHits([]);
+        return;
+      }
       const r = await fetch(
         `/api/onboarding/requester/companies?q=${encodeURIComponent(q.trim())}`
       );
