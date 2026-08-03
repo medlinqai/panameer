@@ -202,6 +202,7 @@ export class OnboardingError extends Error {
       | "EMAIL_TAKEN"
       | "NOT_A_PROVIDER"
       | "NOT_A_BUYER"
+      | "NOT_A_REQUESTER"
       | "NOT_VERIFIED"
       | "INVALID"
       | "INCOMPLETE"

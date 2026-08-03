@@ -10,13 +10,23 @@ import { capitalizeName } from "@/lib/display";
  *   2. the recipient's first name CAPITALIZED ("…, Scott", not "…, scott");
  *   3. every button label in Title Case ("Verify My Email").
  */
+/**
+ * WHO the email is for. It changes one sentence and the subject line, and it
+ * matters: a Requester who is told to "start building your provider profile"
+ * has been told they signed up for the wrong thing at the first email we send
+ * them (brief_requester_onboarding WS3).
+ */
+export type VerifyAudience = "seller" | "buyer";
+
 export function verifyEmailTemplate({
   firstName,
   verifyUrl,
   logoUrl,
+  audience = "seller",
 }: {
   firstName: string;
   verifyUrl: string;
+  audience?: VerifyAudience;
   /**
    * Absolute URL of the logo. Email clients cannot resolve relative paths, so
    * the caller passes `${appBaseUrl()}/brand/panameer-new-on-light.png`.
@@ -24,7 +34,13 @@ export function verifyEmailTemplate({
    */
   logoUrl?: string;
 }): { subject: string; html: string; text: string } {
-  const subject = "Verify your email to continue on Panameer";
+  const buyer = audience === "buyer";
+  const subject = buyer
+    ? "New Service Buyer — verify your email to continue on Panameer"
+    : "New Service Provider — verify your email to continue on Panameer";
+  const nextLine = buyer
+    ? "start finding the talent you need."
+    : "start building your provider profile.";
   const name = capitalizeName(firstName);
 
   const logoBlock = logoUrl
@@ -55,7 +71,7 @@ export function verifyEmailTemplate({
             }</h1>
             <p style="font-size:15px;line-height:1.6;color:#4a4658;margin:0 0 24px;">
               You're almost there. Click the button below to verify your email and
-              start building your provider profile.
+              ${nextLine}
             </p>
             <a href="${verifyUrl}"
                style="display:inline-block;background:#D72CD6;color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:13px 26px;border-radius:999px;">
@@ -81,7 +97,7 @@ export function verifyEmailTemplate({
 
   const text = `Confirm your email${name ? `, ${name}` : ""}
 
-Verify your email to start building your Panameer provider profile:
+Verify your email to ${buyer ? "start finding the talent you need" : "start building your Panameer provider profile"}:
 ${verifyUrl}
 
 This link expires in 24 hours. If you didn't create a Panameer account, ignore this email.`;

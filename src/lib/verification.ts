@@ -41,7 +41,16 @@ export function appBaseUrl(origin?: string | null): string {
  */
 export async function issueEmailVerification(
   userId: string,
-  opts: { throttle?: boolean; origin?: string | null } = {}
+  opts: {
+    throttle?: boolean;
+    origin?: string | null;
+    /**
+     * Which side of the marketplace signed up. Defaults to seller because the
+     * provider journey is every existing caller; the requester path passes
+     * "buyer" so the email doesn't greet them as a provider.
+     */
+    audience?: "seller" | "buyer";
+  } = {}
 ): Promise<
   | { ok: true; sent: boolean; devLink?: string }
   | { ok: false; reason: "throttled" | "not_found" | "already_verified"; retryAfterMs?: number }
@@ -83,6 +92,7 @@ export async function issueEmailVerification(
   const { subject, html, text } = verifyEmailTemplate({
     firstName: user.first_name ?? "",
     verifyUrl,
+    audience: opts.audience ?? "seller",
     // Absolute — email clients can't resolve app-relative paths (E006).
     logoUrl: `${base}/brand/panameer-new-on-light.png`,
   });

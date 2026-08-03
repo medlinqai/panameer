@@ -12,9 +12,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
   }
 
+  /*
+    The RESEND has to greet the same audience the first email did, or a
+    requester who clicks "Resend" is suddenly told to build a provider profile.
+    Read from the viewer's own flags rather than a query param — the client
+    shouldn't get to choose which product it is signing up for.
+  */
   const res = await issueEmailVerification(viewer.userId, {
     throttle: true,
     origin: new URL(request.url).origin,
+    audience: viewer.isServiceBuyer && !viewer.isServiceProvider ? "buyer" : "seller",
   });
   if (!res.ok) {
     if (res.reason === "throttled") {

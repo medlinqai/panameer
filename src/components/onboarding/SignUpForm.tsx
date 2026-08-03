@@ -59,6 +59,9 @@ export function SignUpForm({
   busy,
   error,
   emailLocked = false,
+  title = "Sign Up to Find Work",
+  callbackUrl = "/join/provider",
+  altPrompt,
 }: {
   values: SignUpValues;
   onChange: (patch: Partial<SignUpValues>) => void;
@@ -68,6 +71,21 @@ export function SignUpForm({
   error: string | null;
   /** True when a coordinator invite fixed the email (brief_I). */
   emailLocked?: boolean;
+  /**
+   * WS3 — the three role-specific strings, parameterised rather than copied
+   * into a second form. The defaults are the provider path's existing copy, so
+   * this is additive for every caller that already had it right.
+   *
+   * A second sign-up component was the alternative and would have been a
+   * mistake: this one carries the OAuth block, the show/hide password control,
+   * the confirm-password comparison and the measured 672px width, and a copy
+   * of it would drift from all four.
+   */
+  title?: string;
+  /** Where OAuth returns to — the seller and buyer paths differ. */
+  callbackUrl?: string;
+  /** The "wrong side of the marketplace?" link under the form. */
+  altPrompt?: { label: string; href: string; cta: string };
 }) {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -99,7 +117,7 @@ export function SignUpForm({
     // their icons at a legible 13.5px — see the note in SocialSignIn.
     <div className="mx-auto w-full max-w-2xl">
       <h1 className="text-center text-[28px] font-extrabold tracking-[-0.6px]">
-        Sign Up to Find Work
+        {title}
       </h1>
 
       {error && (
@@ -114,7 +132,7 @@ export function SignUpForm({
         name, email and photo — and the profile wizard still runs afterwards.
       */}
       <div className="mt-5">
-        <SocialSignIn callbackUrl="/join/provider" />
+        <SocialSignIn callbackUrl={callbackUrl} />
       </div>
 
       <div className="my-4 flex items-center gap-4">
@@ -282,6 +300,18 @@ export function SignUpForm({
           {busy ? "Creating…" : "Create My Account"}
         </button>
       </div>
+
+      {altPrompt && (
+        <p className="mt-4 text-center text-[14px] text-ink-2">
+          {altPrompt.label}{" "}
+          <Link
+            href={altPrompt.href}
+            className="font-bold text-magenta hover:text-magenta-dark"
+          >
+            {altPrompt.cta}
+          </Link>
+        </p>
+      )}
 
       <p className="mt-4 text-center text-[14px] text-ink-2">
         Already have an account?{" "}

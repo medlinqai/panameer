@@ -170,9 +170,11 @@ model Site {
   created_at        DateTime @default(now())
   updated_at        DateTime @updatedAt
 
-  company   Company   @relation(fields: [company_id], references: [id], onDelete: Cascade)
-  addresses Address[]
-  people    Person[]
+  company            Company            @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  addresses          Address[]
+  people             Person[]
+  /// Requesters whose engagement DELIVER-TO is this site (brief_requester_onboarding).
+  requesterWorkSites RequesterProfile[] @relation("RequesterWorkSite")
 
   @@index([company_id])
   @@map("sites")
@@ -234,6 +236,7 @@ model Person {
   // The provider profile this Person OWNS (1:1).
   providerProfile     ProviderProfile?    @relation("ProfileOwner")
   buyerProfile        BuyerProfile?
+  requesterProfile    RequesterProfile?
   // As a COORDINATOR: the provider profiles this Person represents, and the
   // invites they've sent (brief_I).
   repProviderProfiles ProviderProfile[]   @relation("CoordinatorProviders")
@@ -1318,6 +1321,52 @@ model ProfileImport {
 
   @@index([provider_profile_id])
   @@map("profile_imports")
+}
+
+/// The REQUESTER — the buyer-side actor who asks for work (P1-J1.2).
+///
+/// A sibling of BuyerProfile rather than columns on it: the two are different
+/// jobs on the same side of the marketplace (Requester asks, Buyer supports the
+/// buying), and the requester carries fields — employee id, the buyer they work
+/// under, a named approver, a deliver-to — that mean nothing for the other.
+///
+/// The columns mirror the cXML PunchOutSetupRequest baseline (see
+/// `requester_onboarding.md`): `employee_id` is the POSR `User`/`UserId`
+/// extrinsic, the ERP-linkage key, and `work_site_id` is its ShipTo. Direct
+/// (web) requesters key the same fields here that a punch would carry per
+/// transaction, so one model serves both paths.
+model RequesterProfile {
+  id             String  @id @default(uuid()) @db.Uuid
+  person_id      String  @unique @db.Uuid
+  /// ERP user id — the POSR `User`/`UserId` extrinsic. Optional: a direct
+  /// requester whose company hasn't connected an ERP has no such id yet.
+  employee_id    String?
+  /// The buyer this requester works under. A NAME + EMAIL at v1, not a
+  /// relation: the buyer may not have a Panameer login yet, and a foreign key
+  /// would make onboarding wait on somebody else signing up.
+  buyer_name     String?
+  buyer_email    String?
+  /// The lightweight approval: ONE named approver, no chain (spec, v1).
+  approver_name  String?
+  approver_email String?
+  /// Deliver-to for engagements. Defaults from the requester's own address and
+  /// is editable, so it is its own Site rather than a reuse of Person.site.
+  work_site_id   String? @db.Uuid
+
+  /// Resume point for the wizard — same save-as-you-go contract the provider
+  /// wizard uses, so a half-finished requester lands back where they stopped.
+  onboarding_step String    @default("company")
+  /// Set when the wizard finishes — the "Ready to Post Work Request" state.
+  completed_at    DateTime?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  person   Person @relation(fields: [person_id], references: [id], onDelete: Cascade)
+  workSite Site?  @relation("RequesterWorkSite", fields: [work_site_id], references: [id], onDelete: SetNull)
+
+  @@index([work_site_id])
+  @@map("requester_profiles")
 }
 
 model BuyerProfile {

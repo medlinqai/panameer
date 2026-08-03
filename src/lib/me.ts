@@ -41,6 +41,10 @@ export async function getMe(viewer: Viewer) {
         },
       },
       buyerProfile: { select: { id: true, subscription_tier: true } },
+      // P1-J1.2 — Requester and Buyer are BOTH is_service_buyer, so the flag
+      // alone can't route a signed-in buyer-side user back to their own
+      // onboarding. Owning a requester profile is what distinguishes the job.
+      requesterProfile: { select: { id: true, completed_at: true } },
     },
   });
 
@@ -69,6 +73,8 @@ export async function getMe(viewer: Viewer) {
       status: person.status,
       roles: {
         isServiceBuyer: person.is_service_buyer,
+        /** USER_JOB Requester, expressed as "owns a RequesterProfile". */
+        isRequester: !!person.requesterProfile,
         isServiceProvider: person.is_service_provider,
         isServiceCoordinator: person.is_service_coordinator,
         isSupport: person.is_support,

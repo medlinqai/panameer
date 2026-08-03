@@ -84,6 +84,12 @@ function JoinRouter() {
       .then((me) => {
         const roles = me?.person?.roles;
         if (roles?.isServiceProvider) router.replace("/join/provider");
+        /*
+          A signed-in buyer-side user resumes THEIR OWN flow. Requester and
+          Buyer are both is_service_buyer, so the flag alone can't tell them
+          apart — owning a requester profile can, and /api/me now says so.
+        */
+        else if (roles?.isRequester) router.replace("/join/requester");
         else if (roles?.isServiceBuyer) router.replace("/join/buyer");
         else setReady(true);
       })
@@ -115,18 +121,15 @@ function JoinRouter() {
         router.push("/join/provider?type=recruiter");
         break;
       /*
-        BUYER SIDE — the stub the brief asks for.
-
-        I flagged in walk_run7 that /join/buyer is in fact built (account →
-        verify → tier, three live API routes); the MASTER brief reaffirms the
-        stub, so the stub is what ships. The job answer still rides on the URL
-        for the USER_TYPE x JOB foundation brief to consume, and the stub links
-        ONWARD to the existing sign-up — following the instruction without
-        throwing away a working flow.
+        REQUESTER — a real flow now (P1-J1.2), not the coming-soon stub. It is
+        the first actor the Simple/Web fulfillment thread needs, and until this
+        landed the buying side of the fork dead-ended on both branches.
       */
       case "requester":
-        router.push("/join/coming-soon?job=requester");
+        router.push("/join/requester");
         break;
+      /* Buyer (the one who SUPPORTS the buying) is still the stub — its own
+         journey, deliberately not in this brief. */
       case "buyer-admin":
         router.push("/join/coming-soon?job=buyer");
         break;
