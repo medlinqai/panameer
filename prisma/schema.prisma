@@ -51,6 +51,11 @@ model User {
   email_verified        DateTime?
   /// When the user accepted the Terms of Service (buyer signup, brief_G).
   tos_accepted_at       DateTime?
+  /// WHICH user terms they accepted (brief_company_model WS6). We recorded the
+  /// timestamp and not the version, so "did this person agree to the current
+  /// terms?" was unanswerable — which is the whole question a ToS record has to
+  /// answer when the document changes.
+  tos_version           String?
   last_login            DateTime?
   created_at            DateTime  @default(now())
   updated_at            DateTime  @updatedAt

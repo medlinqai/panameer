@@ -10,6 +10,7 @@ import {
 } from "@/lib/completeness";
 import type { Viewer } from "@/lib/access";
 import { normalizeEmail } from "@/lib/normalizeEmail";
+import { USER_TOS_VERSION } from "@/lib/tos";
 import { capitalizeName } from "@/lib/display";
 
 /**
@@ -289,6 +290,15 @@ export async function createProviderAccount(
         first_name: firstName,
         last_name: lastName,
         role: "MEMBER",
+        /*
+          WS6 — THE PROVIDER PATH RECORDED NOTHING. The API has required
+          `tosAccepted: literal(true)` since brief_P, the form has a required
+          checkbox, and neither wrote a row: every provider who ticked it has no
+          acceptance on file. The buyer path did write the timestamp. Found by
+          reading the three signup paths side by side for this brief.
+        */
+        tos_accepted_at: new Date(),
+        tos_version: USER_TOS_VERSION,
       },
     });
     const person = await tx.person.create({
@@ -1752,6 +1762,7 @@ export async function createBuyerAccount(
         last_name: lastName,
         role: "MEMBER",
         tos_accepted_at: new Date(),
+        tos_version: USER_TOS_VERSION,
       },
     });
     const person = await tx.person.create({

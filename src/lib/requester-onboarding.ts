@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/password";
 import { normalizeEmail } from "@/lib/normalizeEmail";
 import { OnboardingError } from "@/lib/onboarding";
+import { USER_TOS_VERSION } from "@/lib/tos";
 import type { Viewer } from "@/lib/access";
 
 /**
@@ -92,6 +93,7 @@ export async function createRequesterAccount(
         last_name: lastName,
         role: "MEMBER",
         tos_accepted_at: new Date(),
+        tos_version: USER_TOS_VERSION,
       },
     });
     const person = await tx.person.create({

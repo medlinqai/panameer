@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSessionViewer } from "@/lib/session";
 import { getCompanyBinding, getPendingRequests } from "@/lib/company";
-import { COMPANY_TOS_VERSION } from "@/lib/tos";
+import { COMPANY_TOS_VERSION, USER_TOS_VERSION } from "@/lib/tos";
 import { TRANSACT_MESSAGE } from "@/lib/transact-message";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/Card";
@@ -76,7 +76,7 @@ export default async function CompanyPage({
   }
 
   const c = binding.company;
-  const [requests, members, acceptedBy] = await Promise.all([
+  const [requests, members, acceptedBy, me] = await Promise.all([
     getPendingRequests(viewer),
     prisma.companyMembership.findMany({
       where: { company_id: c.id, status: "APPROVED" },
@@ -101,7 +101,17 @@ export default async function CompanyPage({
           select: { first_name: true, last_name: true },
         })
       : null,
+    prisma.user.findUnique({
+      where: { id: viewer.userId },
+      select: { tos_accepted_at: true, tos_version: true },
+    }),
   ]);
+
+  // TWO TIERS, shown together (WS6). The company terms bind the entity; these
+  // bind the person, and they are different agreements accepted at different
+  // moments — so a page that showed only one would answer half the question.
+  const userTosCurrent =
+    !!me?.tos_accepted_at && me.tos_version === USER_TOS_VERSION;
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-6">
@@ -187,6 +197,42 @@ export default async function CompanyPage({
               </p>
             )}
           </>
+        )}
+      </Card>
+
+      <Card>
+        <h2 className="text-lg">Your Terms of Service</h2>
+        {me?.tos_accepted_at ? (
+          <p className="mt-2 text-black/70 dark:text-white/70">
+            You accepted the user terms on{" "}
+            {me.tos_accepted_at.toLocaleDateString("en-GB", {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })}
+            {me.tos_version ? `, version ${me.tos_version}` : ""}.
+            {!userTosCurrent && (
+              <>
+                {" "}
+                The current version is {USER_TOS_VERSION} — we&apos;ll ask you to
+                accept it next time you sign in.
+              </>
+            )}{" "}
+            <Link href="/terms" className="underline">
+              Read them
+            </Link>
+            .
+          </p>
+        ) : (
+          <p className="mt-2 text-black/70 dark:text-white/70">
+            We don&apos;t have a record of you accepting the user terms. Accounts
+            created before we started recording the version are in this state —
+            you&apos;ll be asked at your next sign-in.{" "}
+            <Link href="/terms" className="underline">
+              Read them
+            </Link>
+            .
+          </p>
         )}
       </Card>
 
