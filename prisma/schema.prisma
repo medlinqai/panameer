@@ -690,20 +690,21 @@ model ProviderProfile {
   created_at              DateTime         @default(now())
   updated_at              DateTime         @updatedAt
 
-  person          Person                          @relation("ProfileOwner", fields: [person_id], references: [id], onDelete: Cascade)
-  coordinator     Person?                         @relation("CoordinatorProviders", fields: [coordinator_person_id], references: [id], onDelete: SetNull)
-  region          Region?                         @relation(fields: [region_id], references: [id], onDelete: SetNull)
-  pillar          Pillar?                         @relation(fields: [pillar_id], references: [id], onDelete: SetNull)
-  roleType        RoleType?                       @relation(fields: [role_type_id], references: [id], onDelete: SetNull)
-  skills          ProviderSkill[]
-  specializations ProviderProfileSpecialization[]
-  employers       Employer[]
-  projects        Project[]
-  packages        Package[]
-  education       Education[]
-  languages       Language[]
-  certifications  Certification[]
-  imports         ProfileImport[]
+  person            Person                          @relation("ProfileOwner", fields: [person_id], references: [id], onDelete: Cascade)
+  coordinator       Person?                         @relation("CoordinatorProviders", fields: [coordinator_person_id], references: [id], onDelete: SetNull)
+  region            Region?                         @relation(fields: [region_id], references: [id], onDelete: SetNull)
+  pillar            Pillar?                         @relation(fields: [pillar_id], references: [id], onDelete: SetNull)
+  roleType          RoleType?                       @relation(fields: [role_type_id], references: [id], onDelete: SetNull)
+  skills            ProviderSkill[]
+  specializations   ProviderProfileSpecialization[]
+  employers         Employer[]
+  projects          Project[]
+  packages          Package[]
+  education         Education[]
+  languages         Language[]
+  certifications    Certification[]
+  imports           ProfileImport[]
+  resumeParseAudits ResumeParseAudit[]
 
   @@index([region_id])
   @@index([coordinator_person_id])
@@ -1412,6 +1413,17 @@ model ProfileImport {
   parsed              Json?
   /// Human-readable list of import gaps shown on the review page.
   gaps                Json?
+  /**
+   * WS-G — WHAT PRODUCED THIS PARSE. Recorded at parse time because the audit is
+   * written later, at review-save, and by then the call is long gone. Null for
+   * heuristic parses, which cost nothing and have no model.
+   */
+  ai_model            String?
+  ai_provider         String?
+  ai_input_tokens     Int?
+  ai_output_tokens    Int?
+  ai_cost_usd         Decimal?            @db.Decimal(10, 6)
+  ai_latency_ms       Int?
   error               String?
   created_at          DateTime            @default(now())
   updated_at          DateTime            @updatedAt
@@ -1466,6 +1478,47 @@ model RequesterProfile {
 
   @@index([work_site_id])
   @@map("requester_profiles")
+}
+
+/// What the parser produced vs what the person actually kept (brief_j14 WS-G).
+///
+/// One row per review-save. It exists to answer two questions with evidence:
+/// how good is the parser, and what does a cheaper model cost us in accuracy —
+/// which is otherwise a matter of opinion. The corrections are the signal; this
+/// brief deliberately stops at CAPTURING them (no fine-tuning, no few-shot
+/// injection, no online learning).
+///
+/// NO NEW PII. `parsed` and `final` hold the same résumé-derived fields already
+/// stored on the profile, and the document itself is referenced by a hash, not
+/// copied in again.
+model ResumeParseAudit {
+  id                  String   @id @default(uuid()) @db.Uuid
+  provider_profile_id String   @db.Uuid
+  /// SHA-256 of the extracted text — lets two runs over the same document be
+  /// compared without storing the document twice.
+  resume_hash         String
+  model               String
+  provider            String
+  input_tokens        Int?
+  output_tokens       Int?
+  cost_usd            Decimal? @db.Decimal(10, 6)
+  latency_ms          Int?
+  /// The model's output, as the review step received it.
+  parsed              Json
+  /// What the person saved after editing it.
+  final               Json
+  /// Field-level tally: { employers: {kept, changed}, education: {...}, ... }
+  changed             Json
+  /// Share of compared fields kept exactly as parsed, 0–1. Denormalised so the
+  /// health card doesn't recompute every row on every render.
+  accuracy            Float?
+  created_at          DateTime @default(now())
+
+  providerProfile ProviderProfile @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
+
+  @@index([provider_profile_id])
+  @@index([created_at])
+  @@map("resume_parse_audits")
 }
 
 model BuyerProfile {

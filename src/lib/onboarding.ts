@@ -10,6 +10,9 @@ import {
 } from "@/lib/completeness";
 import type { Viewer } from "@/lib/access";
 import { normalizeEmail } from "@/lib/normalizeEmail";
+import { createHash } from "node:crypto";
+import { recordParseAudit } from "@/lib/resume/audit";
+import type { ParsedResume } from "@/lib/resume/parse";
 import { USER_TOS_VERSION } from "@/lib/tos";
 import { capitalizeName } from "@/lib/display";
 
@@ -1726,7 +1729,125 @@ export async function publishProfile(viewer: Viewer) {
     data: { onboarding_completed_at: pp.onboarding_completed_at ?? new Date() },
   });
   await recomputeCompleteness(pp.id);
+
+  /*
+    WS-G — THE CORRECTION SIGNAL, captured at review-save.
+
+    Publish is the moment the person has finished editing what the parser gave
+    them, so it is the only point where "what the model said" and "what a human
+    actually kept" both exist. Awaited but never fatal — the audit writer
+    swallows its own errors, because losing a publish over telemetry would be
+    an absurd trade.
+  */
+  await recordPublishAudit(pp.id);
   return getOnboardingState(viewer);
+}
+
+/**
+ * Compare the most recent AI parse against the profile as it now stands.
+ *
+ * Only AI parses are audited: a heuristic parse has no model and no cost, so
+ * there is nothing to attribute an accuracy number to. One audit per import,
+ * enforced by the resume-hash check, so republishing doesn't inflate the counts.
+ */
+async function recordPublishAudit(profileId: string): Promise<void> {
+  try {
+    const imp = await prisma.profileImport.findFirst({
+      where: { provider_profile_id: profileId, ai_model: { not: null } },
+      orderBy: { created_at: "desc" },
+      select: {
+        raw_text: true,
+        parsed: true,
+        ai_model: true,
+        ai_provider: true,
+        ai_input_tokens: true,
+        ai_output_tokens: true,
+        ai_cost_usd: true,
+        ai_latency_ms: true,
+      },
+    });
+    if (!imp?.parsed || !imp.raw_text) return;
+
+    const hash = createHash("sha256").update(imp.raw_text).digest("hex");
+    const already = await prisma.resumeParseAudit.findFirst({
+      where: { provider_profile_id: profileId, resume_hash: hash },
+      select: { id: true },
+    });
+    if (already) return;
+
+    const final = await currentProfileAsParsed(profileId);
+    await recordParseAudit({
+      providerProfileId: profileId,
+      resumeText: imp.raw_text,
+      model: imp.ai_model!,
+      provider: imp.ai_provider ?? "unknown",
+      inputTokens: imp.ai_input_tokens,
+      outputTokens: imp.ai_output_tokens,
+      costUsd: imp.ai_cost_usd ? Number(imp.ai_cost_usd) : null,
+      latencyMs: imp.ai_latency_ms,
+      parsed: imp.parsed as unknown as ParsedResume,
+      final,
+    });
+  } catch (e) {
+    console.error("[resume] publish audit failed (non-fatal):", e);
+  }
+}
+
+/** The saved profile, in the same shape a parse produces, so the two compare. */
+async function currentProfileAsParsed(profileId: string): Promise<ParsedResume> {
+  const pp = await prisma.providerProfile.findUnique({
+    where: { id: profileId },
+    select: {
+      headline: true,
+      overview: true,
+      employers: {
+        select: {
+          name: true,
+          role_title: true,
+          description: true,
+          start_date: true,
+          end_date: true,
+        },
+      },
+      education: {
+        select: {
+          institution: true,
+          degree: true,
+          field: true,
+          start_year: true,
+          end_year: true,
+          description: true,
+        },
+      },
+      skills: { select: { skill: { select: { name: true } } } },
+      languages: { select: { name: true } },
+    },
+  });
+  const iso = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : null);
+  return {
+    headline: pp?.headline ?? null,
+    overview: pp?.overview ?? null,
+    experienceLevel: null,
+    experienceYears: null,
+    experiences: (pp?.employers ?? []).map((e) => ({
+      employer: e.name,
+      roleTitle: e.role_title ?? "",
+      description: e.description ?? null,
+      startDate: iso(e.start_date),
+      endDate: iso(e.end_date),
+    })),
+    education: (pp?.education ?? []).map((e) => ({
+      institution: e.institution,
+      degree: e.degree,
+      field: e.field,
+      startYear: e.start_year,
+      endYear: e.end_year,
+      description: e.description,
+    })),
+    skills: (pp?.skills ?? []).map((s) => s.skill.name),
+    languages: (pp?.languages ?? []).map((l) => l.name),
+    gaps: [],
+  };
 }
 
 /** "a, b and c" — for readable multi-field validation messages. */

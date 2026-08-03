@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@prisma/client";
 import { getSessionViewer } from "@/lib/session";
 import { ownedProviderProfile } from "@/lib/access";
 import { aiExtractResume, aiToParsedResume, aiExtractionAvailable } from "@/lib/resume/ai-extract";
@@ -106,6 +107,27 @@ export async function POST() {
 
   const applied = await applyParsedResume(profile.id, parsed, "RESUME");
   const confidence = sourceConfidence;
+
+  /*
+    WS-G — bank WHAT the model produced and WHAT IT COST, on the import row.
+
+    The audit that compares this against the user's final edits is written much
+    later, at publish; by then the call is long gone, so its provenance has to
+    be persisted now. `parsed` is overwritten with the AI result because the
+    heuristic pass it replaces is no longer what the review is showing.
+  */
+  await prisma.profileImport.update({
+    where: { id: row.id },
+    data: {
+      parsed: parsed as unknown as Prisma.InputJsonValue,
+      ai_model: outcome.model,
+      ai_provider: outcome.provider,
+      ai_input_tokens: outcome.usage.inputTokens,
+      ai_output_tokens: outcome.usage.outputTokens,
+      ai_cost_usd: outcome.usage.costUsd,
+      ai_latency_ms: outcome.ms,
+    },
+  }).catch((e) => console.error("[resume] could not record parse provenance:", e));
 
   console.info(
     `[resume] path=ai-escalated model=${outcome.model} ms=${outcome.ms} ` +
