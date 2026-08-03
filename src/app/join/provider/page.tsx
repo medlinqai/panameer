@@ -229,6 +229,8 @@ type ProfilePayload = {
   pillarName?: string | null;
   roleTypeId?: string | null;
   roleTypeName?: string | null;
+  roleTypeIds?: string[];
+  roleTypes?: { id: string; name: string; display: string }[];
   specializationIds?: string[];
   specializations?: { id: string; name: string; kind: string }[];
   employers?: EmployerCard[];
@@ -331,6 +333,8 @@ type Profile = {
   pillarId: string | null;
   pillarName: string | null;
   roleTypeId: string | null;
+  /** WS2 — every role claimed; `roleTypeId` is the first of these (primary). */
+  roleTypeIds: string[];
   roleTypeName: string | null;
   specializationIds: string[];
   /** Names of the selected specializations, for chip rendering (E038). */
@@ -367,6 +371,7 @@ const emptyProfile = (): Profile => ({
   pillarId: null,
   pillarName: null,
   roleTypeId: null,
+  roleTypeIds: [],
   roleTypeName: null,
   specializationIds: [],
   specializationNames: [],
@@ -521,6 +526,7 @@ export default function JoinProviderPage() {
       pillarId: p.pillarId ?? null,
       pillarName: p.pillarName ?? null,
       roleTypeId: p.roleTypeId ?? null,
+      roleTypeIds: p.roleTypeIds ?? (p.roleTypeId ? [p.roleTypeId] : []),
       roleTypeName: p.roleTypeName ?? null,
       specializationIds: p.specializationIds ?? [],
       specializationNames: (p.specializations ?? []).map((x) => ({
@@ -1434,11 +1440,38 @@ export default function JoinProviderPage() {
         Role and Domain still record the PRIMARY field (what the profile leads
         with); they are simply no longer a fence around which skills may be kept.
       */
-      const pickRole = (role: FieldRole) => {
-        // A new role means a new domain list, so close whatever area is open.
-        // The banked skills are untouched.
+      /*
+        WS2 / E172-E173 — ROLES ARE MULTI-SELECT, defaulting to one.
+
+        This supersedes the locked "one main RoleType" rule. Techno-functional
+        consultants are the canonical case: genuinely Application-Specific AND
+        Technology-Specific, and under one role the skills step could only ever
+        offer half their catalog.
+
+        The FIRST role chosen stays the primary — it is what `roleTypeId`
+        continues to mean, what the profile leads with and what every existing
+        derivation reads. De-selecting the primary promotes the next one rather
+        than leaving the profile with a role set and no primary.
+      */
+      const toggleRole = (role: FieldRole) => {
         setBrowseArea(null);
-        setProfile((p) => ({ ...p, roleTypeId: role.id, roleTypeName: role.name }));
+        setProfile((p) => {
+          const has = p.roleTypeIds.includes(role.id);
+          const next = has
+            ? p.roleTypeIds.filter((id) => id !== role.id)
+            : [...p.roleTypeIds, role.id];
+          const primary = next[0] ?? null;
+          const primaryRole = fieldRoles.find((r) => r.id === primary);
+          return {
+            ...p,
+            roleTypeIds: next,
+            roleTypeId: primary,
+            roleTypeName: primaryRole?.name ?? null,
+            // The primary domain is derived server-side from the primary role;
+            // clearing it here stops a stale pairing surviving a role change.
+            ...(primary === p.roleTypeId ? {} : { pillarId: null, pillarName: null }),
+          };
+        });
       };
 
       const pickDomain = (d: FieldDomain) => {
@@ -1496,17 +1529,27 @@ export default function JoinProviderPage() {
             title: "What work are you here to do?",
             onContinue: () =>
               saveAnd("catalog", {
+                // WS2 — the whole role SET. `roleTypeId` rides along as the
+                // primary for the settings path, which still posts one.
+                roleTypeIds: profile.roleTypeIds,
                 roleTypeId: profile.roleTypeId,
                 pillarId: profile.pillarId,
                 skillIds: profile.skillIds,
                 customSkills: profile.customSkills,
+                // Which claimed role a new add-on-the-fly skill belongs to.
+                customSkillRoleId: browseArea?.roleTypeId ?? profile.roleTypeId,
               }),
             // E102 — a closed browse area no longer blocks Continue. What must
             // hold is that a PRIMARY field was established and at least one
             // skill is banked; whether an area happens to be open is a browsing
             // state, not an answer.
-            continueDisabled:
-              !profile.roleTypeId || !profile.pillarId || totalPicked === 0,
+            /*
+              WS2 — the gate is "a role is claimed AND a skill is banked".
+              `pillarId` dropped out of it: the primary domain is DERIVED
+              server-side from the primary role now, so requiring it here would
+              block Continue on an answer the provider is no longer asked for.
+            */
+            continueDisabled: profile.roleTypeIds.length === 0 || totalPicked === 0,
           })}
         >
           {error && <Notice>{error}</Notice>}
@@ -1569,11 +1612,19 @@ export default function JoinProviderPage() {
             <CascadeTier
               index={1}
               label="Role"
-              chosen={activeRole?.name ?? null}
+              chosen={
+                profile.roleTypeIds.length === 0
+                  ? null
+                  : profile.roleTypeIds
+                      .map((id) => fieldRoles.find((r) => r.id === id)?.name ?? "")
+                      .filter(Boolean)
+                      .join(" · ")
+              }
               onChange={() =>
                 setProfile((p) => ({
                   ...p,
                   roleTypeId: null,
+                  roleTypeIds: [],
                   roleTypeName: null,
                   pillarId: null,
                   pillarName: null,
@@ -1590,15 +1641,19 @@ export default function JoinProviderPage() {
                 // keeps the step single-page when the taxonomy grows.
                 <div className={`max-h-[320px] ${SCROLL_REGION}`}>
                   <div className="space-y-3">
-                    {fieldRoles.map((r) => (
-                      <OptionCard
-                        key={r.id}
-                        selected={profile.roleTypeId === r.id}
-                        onClick={() => pickRole(r)}
-                        title={r.name}
-                        description={`${r.domains.length} area${r.domains.length === 1 ? "" : "s"} of work`}
-                      />
-                    ))}
+                    {fieldRoles.map((r) => {
+                      const picked = profile.roleTypeIds.includes(r.id);
+                      const isPrimary = profile.roleTypeIds[0] === r.id;
+                      return (
+                        <OptionCard
+                          key={r.id}
+                          selected={picked}
+                          onClick={() => toggleRole(r)}
+                          title={r.name + (isPrimary && profile.roleTypeIds.length > 1 ? "  ·  primary" : "")}
+                          description={`${r.domains.length} area${r.domains.length === 1 ? "" : "s"} of work`}
+                        />
+                      );
+                    })}
                   </div>
                 </div>
               )}

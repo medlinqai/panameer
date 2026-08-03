@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { LEGACY_SECTIONS, PROVIDER_STEPS, type ProfileSection } from "@/lib/onboarding";
+import { LEGACY_SECTIONS, SAVEABLE_STEPS, type ProfileSection } from "@/lib/onboarding";
 
 /**
  * Payload shapes for `/api/settings/profile/section` (E121).
@@ -148,6 +148,9 @@ export const SECTION_SCHEMAS = {
     .object({
       skillIds: replaces(z.string()),
       customSkills: z.array(z.string()).optional(),
+      // WS2 — which DECLARED role a new add-on-the-fly skill belongs to.
+      customSkillRoleId: z.string().nullable().optional(),
+      roleTypeIds: z.array(z.string()).optional(),
       roleTypeId: z.string().nullable().optional(),
       pillarId: z.string().nullable().optional(),
     })
@@ -156,6 +159,9 @@ export const SECTION_SCHEMAS = {
     .object({
       skillIds: replaces(z.string()),
       customSkills: z.array(z.string()).optional(),
+      customSkillRoleId: z.string().nullable().optional(),
+      // WS2 — the combined step posts the whole role set.
+      roleTypeIds: z.array(z.string()).optional(),
       roleTypeId: z.string().nullable().optional(),
       pillarId: z.string().nullable().optional(),
     })
@@ -171,6 +177,10 @@ export const SECTION_SCHEMAS = {
   tell_us: z.object({ profileMethod: z.string() }).strict(),
   category: z
     .object({
+      // WS2 — the full role set. `roleTypeId` stays accepted: Settings still
+      // posts a single role, and a strict schema that dropped it would 400 a
+      // surface this brief doesn't touch.
+      roleTypeIds: z.array(z.string()).optional(),
       roleTypeId: z.string().nullable().optional(),
       pillarId: z.string().nullable().optional(),
     })
@@ -206,8 +216,16 @@ export const SECTION_SCHEMAS = {
 
 export type ValidatedSection = keyof typeof SECTION_SCHEMAS;
 
-/** Every section name the app knows about, for the "is this even a section" check. */
-const ALL_SECTIONS = new Set<string>([...PROVIDER_STEPS, ...LEGACY_SECTIONS]);
+/**
+ * Every section name the app knows about, for the "is this even a section" check.
+ *
+ * BUILT FROM `SAVEABLE_STEPS`, NOT the counted itinerary. WS1 shrank
+ * PROVIDER_STEPS from eleven to six, and this set was derived from it — so bio,
+ * education, languages and specializations instantly became "Unknown section"
+ * and every Settings save for them 400'd. Caught by check:sections, which is
+ * exactly why that harness exists: the removal was silent everywhere else.
+ */
+const ALL_SECTIONS = new Set<string>([...SAVEABLE_STEPS, ...LEGACY_SECTIONS]);
 
 export type SectionParseResult =
   | { ok: true; section: ValidatedSection; data: Record<string, unknown> }

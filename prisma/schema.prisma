@@ -419,6 +419,8 @@ model RoleType {
   tags             SkillTag[]
   workRequests     WorkRequest[]
   providerProfiles ProviderProfile[]
+  /// WS2 — providers who work in this role, including as a secondary one.
+  profileRoles     ProviderProfileRole[]
   packages         Package[]
 
   @@map("role_types")
@@ -696,6 +698,8 @@ model ProviderProfile {
   pillar            Pillar?                         @relation(fields: [pillar_id], references: [id], onDelete: SetNull)
   roleType          RoleType?                       @relation(fields: [role_type_id], references: [id], onDelete: SetNull)
   skills            ProviderSkill[]
+  /// WS2 — the full role set. `role_type_id` above stays the primary.
+  roles             ProviderProfileRole[]
   specializations   ProviderProfileSpecialization[]
   employers         Employer[]
   projects          Project[]
@@ -1253,6 +1257,30 @@ model PackageSkill {
   @@unique([package_id, skill_id])
   @@index([skill_id])
   @@map("package_skills")
+}
+
+/// A role this provider works in (brief_onboarding_slimdown WS2 / E172, E173).
+///
+/// SUPERSEDES the locked "one main RoleType" rule. A techno-functional
+/// consultant is genuinely Application-Specific AND Technology-Specific, and
+/// forcing one meant the skills step could only offer half their catalog.
+///
+/// `ProviderProfile.role_type_id` SURVIVES as the PRIMARY role — what the
+/// profile leads with, what derivations read, and what a single-role provider
+/// (most of them) has. This table is the full set including that primary, so a
+/// reader never has to union two sources.
+model ProviderProfileRole {
+  id                  String   @id @default(uuid()) @db.Uuid
+  provider_profile_id String   @db.Uuid
+  role_type_id        String   @db.Uuid
+  created_at          DateTime @default(now())
+
+  providerProfile ProviderProfile @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
+  roleType        RoleType        @relation(fields: [role_type_id], references: [id], onDelete: Cascade)
+
+  @@unique([provider_profile_id, role_type_id])
+  @@index([role_type_id])
+  @@map("provider_profile_roles")
 }
 
 model ProviderSkill {

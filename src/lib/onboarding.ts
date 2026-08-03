@@ -560,6 +560,12 @@ async function loadDraft(viewer: Viewer) {
         include: {
           pillar: { select: { id: true, code: true, name: true } },
           roleType: { select: { id: true, code: true, name: true, display: true } },
+          // WS2 — the full role set, primary included.
+          roles: {
+            select: {
+              roleType: { select: { id: true, code: true, name: true, display: true } },
+            },
+          },
           specializations: {
             include: { specialization: { select: { id: true, name: true, kind: true } } },
           },
@@ -721,6 +727,32 @@ export async function getOnboardingState(viewer: Viewer) {
       pillarName: pp.pillar?.name ?? null,
       // The chosen field is the (Role, Domain) pair (brief_R).
       roleTypeId: pp.role_type_id,
+      /*
+        WS2 — the full role set. `roleTypeId` above stays the PRIMARY so every
+        existing reader keeps working; this is additive. Falls back to the
+        primary for profiles written before the join table existed, so an
+        older profile reads as a one-role provider rather than a role-less one.
+      */
+      roleTypeIds: pp.roles.length
+        ? pp.roles.map((r) => r.roleType.id)
+        : pp.role_type_id
+          ? [pp.role_type_id]
+          : [],
+      roleTypes: pp.roles.length
+        ? pp.roles.map((r) => ({
+            id: r.roleType.id,
+            name: r.roleType.name,
+            display: r.roleType.display,
+          }))
+        : pp.roleType
+          ? [
+              {
+                id: pp.roleType.id,
+                name: pp.roleType.name,
+                display: pp.roleType.display,
+              },
+            ]
+          : [],
       roleTypeName: pp.roleType?.name ?? null,
       specializationIds: pp.specializations.map((s) => s.specialization_id),
       specializations: pp.specializations.map((s) => ({
@@ -910,42 +942,105 @@ export async function applyProviderSection(
     }
 
     case "category": {
-      // E013 / brief_R — the field is a (Role, Domain) PAIR from the
-      // authoritative Service Catalog, because the same domain name exists
-      // under more than one role with different skills.
-      const pillarId: string = data.pillarId;
-      const roleTypeId: string = data.roleTypeId;
-      if (!pillarId || !roleTypeId) {
-        throw new OnboardingError("Pick what work you do", "INVALID");
+      /*
+        MULTIPLE ROLES (WS2 / E172, E173) — this supersedes the locked "one main
+        RoleType" rule. A techno-functional consultant genuinely works as both
+        Application-Specific and Technology-Specific, and forcing one meant the
+        skills step could only ever offer half their catalog.
+
+        `role_type_id` on the profile SURVIVES as the primary — what the profile
+        leads with and what every existing derivation reads. The join table
+        carries the full set including that primary, so nothing has to union two
+        sources to answer "which roles?".
+
+        DOMAIN IS STILL WRITTEN. It left the UI (WS3), not the data: a Skill's
+        identity is its (role, domain) pair, and `pillar_id` remains the
+        profile's primary domain. It is now DERIVED from the first chosen
+        role's skills rather than picked, so the pair stays coherent without
+        asking a question the brief removed.
+      */
+      const roleTypeIds: string[] = Array.isArray(data.roleTypeIds)
+        ? [...new Set(data.roleTypeIds.map(String))]
+        : data.roleTypeId
+          ? [String(data.roleTypeId)]
+          : [];
+      if (roleTypeIds.length === 0) {
+        throw new OnboardingError("Pick at least one role", "INVALID");
       }
-      // Validate the PAIR, not the two ids separately: a mismatched
-      // combination has no skills and would dead-end the next step.
-      const pairExists = await prisma.skill.findFirst({
-        where: { pillar_id: pillarId, role_type_id: roleTypeId },
+
+      const realRoles = await prisma.roleType.findMany({
+        where: { id: { in: roleTypeIds } },
         select: { id: true },
       });
-      if (!pairExists) {
-        throw new OnboardingError("Pick what work you do", "INVALID");
+      if (realRoles.length !== roleTypeIds.length) {
+        throw new OnboardingError("Unknown role selected", "INVALID");
       }
 
-      await prisma.providerProfile.update({
-        where: { id: profileId },
-        data: { pillar_id: pillarId, role_type_id: roleTypeId },
-      });
+      // The primary is the first one sent — the UI marks it, and a single-role
+      // provider has exactly one, which is the common case.
+      const primaryRoleId = roleTypeIds[0];
 
-      // Drop any skill outside the chosen field. Two ways to acquire one:
-      // switching fields after picking skills, or a résumé import (which runs
-      // BEFORE this step and matches across the whole catalog, brief_Q).
-      // Either way the skills step only offers this field's skills, so a
-      // foreign skill is both un-editable AND would fail that step's own
-      // validation on save — stranding the user. Prune on write instead.
+      /*
+        The primary DOMAIN, derived rather than asked. A supplied pillarId is
+        honoured when it belongs to the primary role (Settings still posts one);
+        otherwise take the primary role's first domain by skill count so the
+        (role, domain) pair on the profile is always a real pair.
+      */
+      let pillarId: string | null =
+        typeof data.pillarId === "string" && data.pillarId ? data.pillarId : null;
+      if (pillarId) {
+        const ok = await prisma.skill.findFirst({
+          where: { pillar_id: pillarId, role_type_id: primaryRoleId },
+          select: { id: true },
+        });
+        if (!ok) pillarId = null;
+      }
+      if (!pillarId) {
+        const grouped = await prisma.skill.groupBy({
+          by: ["pillar_id"],
+          where: { role_type_id: primaryRoleId, pillar_id: { not: null } },
+          _count: { _all: true },
+          orderBy: { _count: { id: "desc" } },
+          take: 1,
+        });
+        pillarId = grouped[0]?.pillar_id ?? null;
+      }
+
+      await prisma.$transaction([
+        prisma.providerProfile.update({
+          where: { id: profileId },
+          data: { role_type_id: primaryRoleId, pillar_id: pillarId },
+        }),
+        prisma.providerProfileRole.deleteMany({
+          where: { provider_profile_id: profileId },
+        }),
+        prisma.providerProfileRole.createMany({
+          data: roleTypeIds.map((role_type_id) => ({
+            provider_profile_id: profileId,
+            role_type_id,
+          })),
+        }),
+      ]);
+
+      /*
+        PRUNE BY ROLE, NOT BY THE (role, domain) PAIR.
+
+        This used to delete every skill whose role OR domain differed from the
+        single chosen pair. Under multi-role that is data loss by construction:
+        choosing a second role would wipe the skills you picked under the first,
+        and with domain gone from the UI the domain half of the test now
+        matches skills the provider can legitimately see and pick.
+
+        The prune still earns its place — a résumé import matches across the
+        whole catalog, so a skill can arrive from a role the provider never
+        claimed, and the skills step would neither show it nor accept it on
+        save. Scoped to the ROLES they actually chose, it removes exactly those
+        strandable rows and nothing else.
+      */
       await prisma.providerSkill.deleteMany({
         where: {
           provider_profile_id: profileId,
-          OR: [
-            { skill: { pillar_id: { not: pillarId } } },
-            { skill: { role_type_id: { not: roleTypeId } } },
-          ],
+          skill: { role_type_id: { notIn: roleTypeIds } },
         },
       });
       break;
@@ -1056,7 +1151,44 @@ export async function applyProviderSection(
       const customSkills: string[] = Array.isArray(data.customSkills)
         ? data.customSkills
         : [];
-      if (customSkills.length > 0 && data.roleTypeId && data.pillarId) {
+      /*
+        WS2 — an add-on-the-fly skill is filed under a DECLARED role.
+
+        `customSkillRoleId` is what the UI sends when a provider has more than
+        one role and picks which the new skill belongs to; it defaults to the
+        primary. The role must be one they actually claimed — otherwise a client
+        could seed the catalog under any role at all, and the skill would then
+        be invisible to its own author on the next visit.
+
+        The domain still comes from the profile's primary pillar, because a
+        Skill's uniqueness key is the full (catalog, role, domain, name) path —
+        `pitfalls.md`: a name is not a key once the taxonomy gains a level.
+      */
+      const declaredRoles = await prisma.providerProfileRole.findMany({
+        where: { provider_profile_id: profileId },
+        select: { role_type_id: true },
+      });
+      const claimed = new Set(declaredRoles.map((r) => r.role_type_id));
+      const profileRow = await prisma.providerProfile.findUnique({
+        where: { id: profileId },
+        select: { role_type_id: true, pillar_id: true },
+      });
+      if (profileRow?.role_type_id) claimed.add(profileRow.role_type_id);
+
+      const requestedRole =
+        typeof data.customSkillRoleId === "string" && data.customSkillRoleId
+          ? data.customSkillRoleId
+          : (data.roleTypeId as string | undefined) ?? profileRow?.role_type_id ?? null;
+      const customRoleId =
+        requestedRole && claimed.has(requestedRole)
+          ? requestedRole
+          : profileRow?.role_type_id ?? null;
+      const customPillarId =
+        (typeof data.pillarId === "string" && data.pillarId
+          ? data.pillarId
+          : profileRow?.pillar_id) ?? null;
+
+      if (customSkills.length > 0 && customRoleId && customPillarId) {
         const catalogRow = await prisma.serviceCatalog.findFirst({
           select: { id: true },
         });
@@ -1067,17 +1199,20 @@ export async function applyProviderSection(
             where: {
               catalog_id_role_type_id_pillar_id_name: {
                 catalog_id: catalogRow.id,
-                role_type_id: data.roleTypeId,
-                pillar_id: data.pillarId,
+                role_type_id: customRoleId,
+                pillar_id: customPillarId,
                 name,
               },
             },
             update: {},
             create: {
               catalog_id: catalogRow.id,
-              role_type_id: data.roleTypeId,
-              pillar_id: data.pillarId,
+              role_type_id: customRoleId,
+              pillar_id: customPillarId,
               name,
+              // Preserved deliberately — `is_custom` is the seed-retirement
+              // shield: the taxonomy reseed removes catalog rows it no longer
+              // ships, and a provider-authored skill must survive that.
               is_custom: true,
             },
           });
