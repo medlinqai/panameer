@@ -4,7 +4,8 @@ import {
   LayoutDashboard, SlidersHorizontal, GraduationCap, ClipboardList,
   ClipboardCheck, Package, FileSignature, Scale, CreditCard, MessageSquare,
   Users, ArrowLeftRight, FolderTree, Award, Building2, LifeBuoy, ShieldCheck,
-  Home, Briefcase, BookOpen, Wallet, type LucideIcon,
+  Home, Briefcase, BookOpen, Wallet, BarChart3, MessagesSquare,
+  type LucideIcon,
 } from "lucide-react";
 
 /**
@@ -21,7 +22,7 @@ const ICONS: Record<string, LucideIcon> = {
   LayoutDashboard, SlidersHorizontal, GraduationCap, ClipboardList,
   ClipboardCheck, Package, FileSignature, Scale, CreditCard, MessageSquare,
   Users, ArrowLeftRight, FolderTree, Award, Building2, LifeBuoy, ShieldCheck,
-  Home, Briefcase, BookOpen, Wallet,
+  Home, Briefcase, BookOpen, Wallet, BarChart3, MessagesSquare,
 };
 
 export function RailIcon({ name, className = "h-[18px] w-[18px]" }: { name?: string; className?: string }) {

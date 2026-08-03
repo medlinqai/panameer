@@ -45,7 +45,20 @@ export type NavItem = {
  * differently, and putting it in the group would have meant filtering it back
  * out at the render site.
  */
-export const HOME_NAV: NavItem = { label: "Opportunities", href: "/dashboard" };
+/*
+  ICONS ON THE NON-ADMIN RAILS TOO (E165).
+
+  The admin rail got lucide icons; Provider, Requester and Buyer kept a column
+  of bare text, so the same product had two visual languages depending on who
+  signed in. Items that exist on both rails REUSE the admin's icon — Learn is
+  GraduationCap in both places, Contracts is FileSignature in both — because two
+  glyphs for one destination is the drift the shared nav.ts exists to prevent.
+*/
+export const HOME_NAV: NavItem = {
+  label: "Opportunities",
+  href: "/dashboard",
+  icon: "Home",
+};
 
 /**
  * The Applications group, in E151's order. Contracts, Finances, Messages and
@@ -53,23 +66,23 @@ export const HOME_NAV: NavItem = { label: "Opportunities", href: "/dashboard" };
  * agreements, money, conversations and a community.
  */
 const BASE_NAV: NavItem[] = [
-  { label: "Learn", href: "/learn" },
+  { label: "Learn", href: "/learn", icon: "GraduationCap" },
 ];
 
 const TAIL_NAV: NavItem[] = [
-  { label: "Packages", href: "/settings/packages", requires: "canProvideServices" },
-  { label: "Talent", href: "/hire", requires: "canHireTalent" },
-  { label: "Contracts", href: "/contracts" },
-  { label: "Finances", href: "/finances" },
-  { label: "Messages", href: "/messages" },
-  { label: "Community", href: "/community" },
+  { label: "Packages", href: "/settings/packages", requires: "canProvideServices", icon: "Package" },
+  { label: "Talent", href: "/hire", requires: "canHireTalent", icon: "Users" },
+  { label: "Contracts", href: "/contracts", icon: "FileSignature" },
+  { label: "Finances", href: "/finances", icon: "Wallet" },
+  { label: "Messages", href: "/messages", icon: "MessageSquare" },
+  { label: "Community", href: "/community", icon: "MessagesSquare" },
   /*
     COMPANY is universal and deliberately last: everyone signed in belongs to
     one, it is where a company admin finds their join requests, and it is where
     the company terms are accepted. Not capability-gated — a member sees their
     company, an admin additionally sees the queue.
   */
-  { label: "Company", href: "/company" },
+  { label: "Company", href: "/company", icon: "Building2" },
 ];
 
 /**
@@ -84,8 +97,8 @@ const ROLE_NAV: NavItem[] = [
   // "Work" in the casing rail (E151). It was "Find Work"; the mockup's label is
   // the shorter one, and the page it opens now carries the Find-Work hero that
   // used to be on Home (reconciliation: E134's home is superseded by WS12).
-  { label: "Work", href: "/work", requires: "canProvideServices" },
-  { label: "Reports", href: "/reports", requires: "canHireTalent" },
+  { label: "Work", href: "/work", requires: "canProvideServices", icon: "Briefcase" },
+  { label: "Reports", href: "/reports", requires: "canHireTalent", icon: "BarChart3" },
 ];
 
 /** The public front door. Learn is the one app surface open to everyone. */
