@@ -18,8 +18,9 @@ const address = z
 const schema = z.object({
   step: z.enum(REQUESTER_STEPS),
   payload: z.object({
-    companyId: z.string().uuid().nullish(),
-    companyName: z.string().trim().max(200).nullish(),
+    // The company binding is written by /api/company/* (define or join), not
+    // here — this step only confirms it exists.
+    companyBound: z.boolean().optional(),
     firstName: z.string().trim().max(80).optional(),
     lastName: z.string().trim().max(80).optional(),
     phone: z.string().trim().max(40).nullish(),

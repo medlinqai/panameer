@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { WizardShell } from "@/components/onboarding/WizardShell";
 import { LocationFields, type LocationValue } from "@/components/onboarding/LocationFields";
-import { Field, TextInput, Notice, OptionCard } from "@/components/onboarding/controls";
+import { Field, TextInput, Notice } from "@/components/onboarding/controls";
+import { CompanyStep, type CompanyOutcome } from "@/components/company/CompanyStep";
 import { REQUESTER_STEPS, type RequesterStep } from "@/lib/requester-steps";
 
 /**
@@ -27,8 +28,6 @@ const LABELS: Record<RequesterStep, string> = {
   work_location: "Work Location",
   review: "Review",
 };
-
-type CompanyHit = { id: string; name: string; people: number };
 
 type Draft = {
   companyId: string | null;
@@ -71,10 +70,19 @@ export default function RequesterStepsPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  /** Company picker state — lives outside the draft, it isn't saved. */
-  const [q, setQ] = useState("");
-  const [hits, setHits] = useState<CompanyHit[]>([]);
-  const [mode, setMode] = useState<"join" | "create">("join");
+  /*
+    THE COMPANY STEP IS NOW THE SHARED BUILDING BLOCK (brief_company_model WS2).
+
+    It owns its own define-or-join state and posts to /api/company/*, so this
+    wizard no longer carries a picker, a typeahead or a companyName field. What
+    it keeps is the Continue button — the step reports validity and hands back a
+    submit function, because two primary actions on one screen is the confusion
+    the shared footer band exists to prevent.
+  */
+  const companySubmit = useRef<null | (() => void)>(null);
+  const [companyValid, setCompanyValid] = useState(false);
+  const [companyBusy, setCompanyBusy] = useState(false);
+  const [pendingCompany, setPendingCompany] = useState<CompanyOutcome | null>(null);
 
   const hydrate = useCallback((s: {
     emailVerified: boolean;
@@ -121,7 +129,6 @@ export default function RequesterStepsPage() {
       workLocation: p.workLocation ?? {},
       workLocationSet: !!p.workLocation?.country,
     });
-    setQ(companyName);
     return s;
   }, []);
 
@@ -150,28 +157,6 @@ export default function RequesterStepsPage() {
       setReady(true);
     })();
   }, [router, hydrate]);
-
-  /*
-    Company typeahead. Two characters minimum, matching the server.
-
-    The "too short / not searching" case CLEARS inside the debounce rather than
-    synchronously in the effect body: a bare setHits([]) there is a cascading
-    render (react-hooks/set-state-in-effect), and the cleanup already cancels
-    any in-flight timer, so the stale list can never outlive the keystroke.
-  */
-  useEffect(() => {
-    const t = setTimeout(async () => {
-      if (mode !== "join" || q.trim().length < 2) {
-        setHits([]);
-        return;
-      }
-      const r = await fetch(
-        `/api/onboarding/requester/companies?q=${encodeURIComponent(q.trim())}`
-      );
-      if (r.ok) setHits((await r.json()).companies ?? []);
-    }, 250);
-    return () => clearTimeout(t);
-  }, [q, mode]);
 
   const idx = REQUESTER_STEPS.indexOf(step);
 
@@ -233,102 +218,70 @@ export default function RequesterStepsPage() {
 
   // ---- 1/5 — Company ----------------------------------------------------
   if (step === "company") {
-    const canGo =
-      mode === "join" ? !!draft.companyId : draft.companyName.trim().length > 1;
+    /*
+      A PENDING join is a STOP, not a step you continue past. The requester has
+      asked to join a company and nobody has approved it, so there is no company
+      to attach an address or a deliver-to to yet — carrying on would collect
+      four screens of answers against a binding that may be rejected.
+    */
+    if (pendingCompany?.status === "PENDING") {
+      return (
+        <WizardShell
+          {...shell}
+          title={`Waiting on ${pendingCompany.name}.`}
+          subtitle="Your request went to that company's admin. You'll be able to finish setting up as soon as they approve it."
+          hideFooter
+        >
+          <div className="mx-auto w-full max-w-xl space-y-4">
+            <Notice tone="info">
+              We couldn&apos;t confirm you automatically because your work email
+              isn&apos;t on that company&apos;s domain. That&apos;s normal — it
+              just needs a person to say yes.
+            </Notice>
+            <button
+              type="button"
+              onClick={() => setPendingCompany(null)}
+              className="text-[14.5px] font-bold text-magenta hover:underline"
+            >
+              Pick a different company instead
+            </button>
+          </div>
+        </WizardShell>
+      );
+    }
+
     return (
       <WizardShell
         {...shell}
         title="Which company do you buy for?"
-        subtitle="Your company owns the accounts, approvals and settlement behind every request you post. Join it if it's already on Panameer."
+        subtitle="Your company is the legal entity every work order and settlement is between. Join it if it's already here, or add it and become its admin."
         continueLabel={nextLabel}
-        continueDisabled={!canGo}
-        onContinue={() =>
-          save(
-            mode === "join"
-              ? { companyId: draft.companyId }
-              : { companyName: draft.companyName }
-          )
-        }
+        continueDisabled={!companyValid}
+        busy={busy || companyBusy}
+        onContinue={() => companySubmit.current?.()}
       >
-        <div className="space-y-4">
-          {error && <Notice>{error}</Notice>}
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            <OptionCard
-              selected={mode === "join"}
-              onClick={() => setMode("join")}
-              title="Join a company already here"
-              description="Search for it by name."
-            />
-            <OptionCard
-              selected={mode === "create"}
-              onClick={() => setMode("create")}
-              title="Add my company"
-              description="We'll create it — the rest of the setup comes later."
-            />
-          </div>
-
-          {mode === "join" ? (
-            <>
-              <Field label="Company Name">
-                <TextInput
-                  value={q}
-                  onChange={(e) => {
-                    setQ(e.target.value);
-                    setDraft((d) => ({ ...d, companyId: null }));
-                  }}
-                  placeholder="Start typing…"
-                  autoComplete="organization"
-                />
-              </Field>
-
-              {hits.length > 0 && (
-                <div className="space-y-2">
-                  {hits.map((c) => (
-                    <OptionCard
-                      key={c.id}
-                      selected={draft.companyId === c.id}
-                      onClick={() => {
-                        setDraft((d) => ({ ...d, companyId: c.id, companyName: c.name }));
-                        setQ(c.name);
-                      }}
-                      title={c.name}
-                      description={`${c.people} ${c.people === 1 ? "person" : "people"} on Panameer`}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {q.trim().length >= 2 && hits.length === 0 && (
-                <p className="text-[14.5px] text-ink-2">
-                  Nothing matches &ldquo;{q.trim()}&rdquo;.{" "}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMode("create");
-                      setDraft((d) => ({ ...d, companyName: q.trim() }));
-                    }}
-                    className="font-bold text-magenta hover:underline"
-                  >
-                    Add it instead
-                  </button>
-                  .
-                </p>
-              )}
-            </>
-          ) : (
-            <Field
-              label="Company Name"
-              hint="Accounts, approvals and payment terms are set up on the company later — not here."
-            >
-              <TextInput
-                value={draft.companyName}
-                onChange={(e) => setDraft((d) => ({ ...d, companyName: e.target.value }))}
-                placeholder="Acme Manufacturing"
-                autoComplete="organization"
-              />
-            </Field>
+        <div className="mx-auto w-full max-w-xl">
+          {error && (
+            <div className="mb-4">
+              <Notice>{error}</Notice>
+            </div>
           )}
+          <CompanyStep
+            submitRef={companySubmit}
+            onValidityChange={setCompanyValid}
+            onBusyChange={setCompanyBusy}
+            onDone={(outcome) => {
+              if (outcome.status === "PENDING") {
+                setPendingCompany(outcome);
+                return;
+              }
+              // Approved (defined, or joined on a domain match) — record it on
+              // the wizard and move on. The company itself is already written;
+              // this only advances the resume point.
+              setDraft((d) => ({ ...d, companyName: outcome.name }));
+              void save({ companyBound: true });
+            }}
+          />
         </div>
       </WizardShell>
     );

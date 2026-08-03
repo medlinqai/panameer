@@ -227,19 +227,6 @@ export async function getRequesterState(viewer: Viewer) {
   };
 }
 
-/** Companies a requester can join, for the Company step's picker. */
-export async function searchCompanies(q: string) {
-  const term = q.trim();
-  if (term.length < 2) return [];
-  const rows = await prisma.company.findMany({
-    where: { name: { contains: term, mode: "insensitive" } },
-    orderBy: { name: "asc" },
-    take: 8,
-    select: { id: true, name: true, _count: { select: { people: true } } },
-  });
-  return rows.map((c) => ({ id: c.id, name: c.name, people: c._count.people }));
-}
-
 /**
  * Write one Site + its Address, reusing the row if it already exists.
  *
@@ -285,9 +272,8 @@ async function upsertSiteAddress(
 }
 
 export type StepPayload = {
-  /** company */
-  companyId?: string | null;
-  companyName?: string | null;
+  /** company — confirmation only; the binding itself is written by company.ts. */
+  companyBound?: boolean;
   /** requester_info */
   firstName?: string;
   lastName?: string;
@@ -318,7 +304,26 @@ export async function saveRequesterStep(
   const rp = p.requesterProfile!;
 
   if (step === "company") {
-    await applyCompany(p.id, p.company_id, payload);
+    /*
+      THE COMPANY IS WRITTEN BY src/lib/company.ts, not here
+      (brief_company_model WS2).
+
+      This step used to rename the placeholder or re-point the person straight
+      from wizard input — an unverified attach with no attestation, no company
+      ToS and no admin approval. Define/join now goes through the shared company
+      building block, which records a real membership decision; all this step
+      does is confirm the binding exists and advance the resume point.
+    */
+    const bound = await prisma.companyMembership.findFirst({
+      where: { person_id: p.id, status: "APPROVED" },
+      select: { id: true },
+    });
+    if (!bound) {
+      throw new OnboardingError(
+        "Choose or add your company before continuing",
+        "INVALID"
+      );
+    }
   }
 
   if (step === "requester_info") {
@@ -396,85 +401,6 @@ export async function saveRequesterStep(
   });
 
   return getRequesterState(viewer);
-}
-
-/**
- * The Company step: JOIN an existing company or RENAME the placeholder.
- *
- * ⚠ JOINING IS UNVERIFIED AT v1, and that is a real gap rather than an
- * oversight. Anyone who can sign up can attach themselves to any company by
- * picking it from the list. Nothing is company-scoped yet, so it grants no
- * access today — but it will the moment layer 3 of the access model
- * (Company/Team, see `security_architecture.md`) starts gating data. The
- * obvious v2 is a domain match on the work email or a confirmation from the
- * company's admin. Flagged in the brief's report rather than silently shipped
- * as if it were finished.
- */
-async function applyCompany(
-  personId: string,
-  currentCompanyId: string,
-  payload: StepPayload
-) {
-  if (payload.companyId) {
-    const target = await prisma.company.findUnique({
-      where: { id: payload.companyId },
-      select: { id: true },
-    });
-    if (!target) throw new OnboardingError("That company no longer exists", "INVALID");
-    if (target.id === currentCompanyId) return;
-
-    await prisma.person.update({
-      where: { id: personId },
-      // The old site belonged to the old company; clearing it makes step 2 ask
-      // for the address again under the right company rather than leaving a
-      // cross-company reference behind.
-      data: { company_id: target.id, site_id: null },
-    });
-    await cleanUpPlaceholder(currentCompanyId);
-    return;
-  }
-
-  const name = payload.companyName?.trim();
-  if (!name) throw new OnboardingError("A company name is required", "INVALID");
-  await prisma.company.update({
-    where: { id: currentCompanyId },
-    data: { name },
-  });
-  const company = await prisma.company.findUnique({
-    where: { id: currentCompanyId },
-    select: { p_account_id: true },
-  });
-  if (company) {
-    await prisma.pAccount.update({
-      where: { id: company.p_account_id },
-      data: { name },
-    });
-  }
-}
-
-/**
- * Delete the signup placeholder company once its last person leaves it.
- *
- * Without this, every requester who joins an existing company leaves behind an
- * empty one-person-shaped company and P-Account, and the admin console's
- * company list fills with them. Guarded on being genuinely empty.
- */
-async function cleanUpPlaceholder(companyId: string) {
-  const company = await prisma.company.findUnique({
-    where: { id: companyId },
-    select: {
-      id: true,
-      p_account_id: true,
-      _count: { select: { people: true } },
-      pAccount: { select: { _count: { select: { companies: true } } } },
-    },
-  });
-  if (!company || company._count.people > 0) return;
-
-  await prisma.company.delete({ where: { id: company.id } });
-  if (company.pAccount._count.companies <= 1) {
-    await prisma.pAccount.delete({ where: { id: company.p_account_id } });
-  }
 }
 
 /** What's still missing before the requester can finish. */
