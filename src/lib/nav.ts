@@ -63,6 +63,13 @@ const TAIL_NAV: NavItem[] = [
   { label: "Finances", href: "/finances" },
   { label: "Messages", href: "/messages" },
   { label: "Community", href: "/community" },
+  /*
+    COMPANY is universal and deliberately last: everyone signed in belongs to
+    one, it is where a company admin finds their join requests, and it is where
+    the company terms are accepted. Not capability-gated — a member sees their
+    company, an admin additionally sees the queue.
+  */
+  { label: "Company", href: "/company" },
 ];
 
 /**
