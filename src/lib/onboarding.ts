@@ -1162,18 +1162,47 @@ export async function applyProviderSection(
         "languages",
         "education_languages"
       );
+      /*
+        E164 — THIS WRITER WAS LOSING HALF THE ROW.
+
+        Education has two writers: the wizard's `education` step, which stores
+        start_year, end_year and description, and this section, which stored
+        only institution / degree / field / the LEGACY single `year`. Both
+        delete-and-recreate the whole list — so the moment anything saved
+        through this path, every date and description the wizard had collected
+        was gone, and the review then rendered a row with no dates. That is
+        "education edits don't show on Review": the edit saved, and a different
+        writer erased the other half of it.
+
+        The two now write the SAME columns. `year` is still accepted for rows
+        that predate start/end, and start_year falls back to it rather than
+        being dropped.
+
+        Languages had the identical bug one field over: this wrote the legacy
+        free-text `proficiency` while `level` is canonical (E016), so a level
+        set in the wizard disappeared on the next settings save.
+      */
       const cleanEdu = education
-        .map((e) => ({
-          institution: (e.institution ?? "").trim(),
-          degree: e.degree?.trim() || null,
-          field: e.field?.trim() || null,
-          year: typeof e.year === "number" ? e.year : null,
-        }))
+        .map((e) => {
+          const legacyYear = typeof e.year === "number" ? e.year : null;
+          return {
+            institution: (e.institution ?? "").trim(),
+            degree: e.degree?.trim() || null,
+            field: e.field?.trim() || null,
+            year: legacyYear,
+            start_year: toYear(e.startYear) ?? legacyYear,
+            end_year: toYear(e.endYear),
+            description: e.description?.trim() || null,
+          };
+        })
         .filter((e) => e.institution);
       const cleanLang = languages
         .map((l) => ({
           name: (l.name ?? "").trim(),
           proficiency: l.proficiency?.trim() || null,
+          level: (LANGUAGE_LEVELS as readonly string[]).includes(String(l.level))
+            ? (String(l.level) as (typeof LANGUAGE_LEVELS)[number])
+            : null,
         }))
         .filter((l) => l.name);
       await prisma.$transaction([

@@ -112,15 +112,26 @@ export async function getProviderSettings(viewer: Viewer) {
       endDate: w.end_date ? w.end_date.toISOString().slice(0, 10) : null,
       projects: w.projects.map((pr) => ({ name: pr.name, description: pr.description })),
     })),
+    /*
+      E164 — the READ half. This returned four of education's seven columns, so
+      the settings form loaded a row with no dates and no description and saved
+      that truncated row straight back over the full one. Every mapper on this
+      path — read, schema, writer, editor — has to agree on the shape, and all
+      four disagreed in different directions.
+    */
     education: profile.education.map((e) => ({
       institution: e.institution,
       degree: e.degree,
       field: e.field,
       year: e.year,
+      startYear: e.start_year,
+      endYear: e.end_year,
+      description: e.description,
     })),
     languages: profile.languages.map((l) => ({
       name: l.name,
       proficiency: l.proficiency,
+      level: l.level,
     })),
     certifications: profile.certifications.map((c) => ({
       name: c.name,

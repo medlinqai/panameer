@@ -2,13 +2,35 @@
 
 import { Field, TextInput } from "@/components/onboarding/controls";
 
+/*
+  E164 — THIS EDITOR COULD NOT EXPRESS HALF THE RECORD.
+
+  The wizard collects Dates Attended (from/to) and a description; this settings
+  editor offered a single legacy "Year" and nothing else. Because the section
+  save replaces the whole list, editing anything here rewrote every row without
+  the fields it cannot see — so dates entered in the wizard vanished the first
+  time a provider touched Education in settings, and the review then showed a
+  row with no dates. That is the "edits don't show on Review" report, from the
+  other end: the edit saved, and the fields it couldn't carry were dropped.
+
+  It now carries the same shape the wizard does. `year` stays for rows written
+  before start/end existed.
+*/
 export type EducationDraft = {
   institution: string;
   degree: string | null;
   field: string | null;
   year: number | null;
+  startYear?: number | null;
+  endYear?: number | null;
+  description?: string | null;
 };
-export type LanguageDraft = { name: string; proficiency: string | null };
+export type LanguageDraft = {
+  name: string;
+  proficiency: string | null;
+  /** Canonical since E016; `proficiency` is the pre-brief_P free text. */
+  level?: string | null;
+};
 
 /** Optional education + languages, each an add/remove list. */
 export function EducationLanguagesEditor({
@@ -53,17 +75,40 @@ export function EducationLanguagesEditor({
                     onChange={(ev) => updEdu(i, { field: ev.target.value })}
                   />
                 </Field>
-                <Field label="Year">
+                <Field label="From *" hint="Year you started.">
                   <TextInput
                     type="number"
-                    value={e.year ?? ""}
+                    inputMode="numeric"
+                    placeholder="2000"
+                    value={e.startYear ?? e.year ?? ""}
                     onChange={(ev) =>
                       updEdu(i, {
-                        year: ev.target.value ? Number(ev.target.value) : null,
+                        startYear: ev.target.value ? Number(ev.target.value) : null,
                       })
                     }
                   />
                 </Field>
+                <Field label="To" hint="Leave blank if you're still studying.">
+                  <TextInput
+                    type="number"
+                    inputMode="numeric"
+                    placeholder="2004"
+                    value={e.endYear ?? ""}
+                    onChange={(ev) =>
+                      updEdu(i, {
+                        endYear: ev.target.value ? Number(ev.target.value) : null,
+                      })
+                    }
+                  />
+                </Field>
+                <div className="sm:col-span-2">
+                  <Field label="Description">
+                    <TextInput
+                      value={e.description ?? ""}
+                      onChange={(ev) => updEdu(i, { description: ev.target.value })}
+                    />
+                  </Field>
+                </div>
               </div>
               <button
                 type="button"

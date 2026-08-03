@@ -170,7 +170,8 @@ export function EducationCards({
     if (!draft.institution.trim()) missing.push("School");
     if (!draft.degree?.trim()) missing.push("Degree");
     if (!draft.field?.trim()) missing.push("Field of Study");
-    if (!draft.startYear) missing.push("Dates Attended (from)");
+    // Names the control the user can see (E166), not an internal label.
+    if (!draft.startYear) missing.push("Dates Attended — From");
     if (missing.length > 0) {
       setError(
         missing.length === 1
@@ -324,13 +325,25 @@ export function EducationCards({
             </datalist>
           </Field>
 
+          {/*
+            E166 — THE ASTERISK WAS ON THE WRONG THING.
+
+            The group said "Dates Attended *" while its two controls carried no
+            marker, and only FROM is actually required — To is deliberately
+            optional for study still in progress. So the one field that blocks
+            Save looked identical to the one that doesn't, and the validation
+            error named a field ("Dates Attended (from)") that appeared nowhere
+            on screen. The marker now sits on the required control, exactly like
+            School *, Degree * and Field of Study * above it, and the optional
+            one says it is optional.
+          */}
           <div>
             <span className="mb-1.5 block text-[14px] font-bold text-ink">
-              Dates Attended *
+              Dates Attended
             </span>
             <div className="grid grid-cols-2 gap-3">
               <YearSelect
-                label="From"
+                label="From *"
                 years={FROM_YEARS}
                 value={draft.startYear}
                 onChange={(y) => setDraft({ ...draft, startYear: y })}
@@ -342,6 +355,9 @@ export function EducationCards({
                 onChange={(y) => setDraft({ ...draft, endYear: y })}
               />
             </div>
+            <span className="mt-1 block text-[13px] text-ink-2">
+              Leave <b>To</b> blank if you&apos;re still studying.
+            </span>
           </div>
 
           <Field label="Description">

@@ -68,28 +68,26 @@ const TYPO_FIXES: Record<string, string> = {
 const fixTypo = (s: string) => TYPO_FIXES[s] ?? s;
 
 /**
- * RoleTypes present in the source catalog that are NOT roles (PJv2 WS10 / E072).
+ * Role types in the source file that are NOT roles.
  *
- * A RoleType answers "what does this person DO on an engagement" — Functional,
- * Technical, Techno-Functional, Operational. **"Project-Specific" is a property
- * of the PROJECT**, not of the person, and offering it in the Role picker asked
- * providers to classify themselves along the wrong axis.
+ * ⚠ NOW EMPTY — "Project-Specific" was REINSTATED as a fourth Role at Scott's
+ * instruction (E163). It had been excluded under E072 on the grounds that its
+ * one domain, "Project Execution", carries eight entries that are JOB TITLES
+ * rather than capabilities — Project Manager, Technical Architect, Technical
+ * Lead, Business Architect, Testing Specialist, Support Specialist, Change Mgt
+ * Specialist, Program Management — and the profile already records a title as
+ * `Employer.role_title`.
  *
- * Its one domain ("Project Execution") is worse than merely misplaced: its eight
- * "skills" are JOB TITLES — Project Manager, Technical Architect, Technical
- * Lead, Business Architect, Testing Specialist… That is a third axis again
- * (seniority/title), which the profile already carries as `Employer.role_title`.
+ * That reasoning still describes the DATA, so reinstating the role also
+ * reinstates eight titles into the skills axis. Flagged, not silently
+ * swallowed: if the intent is a Project-Specific role without title-shaped
+ * skills, the fix is in the source spreadsheet that generates
+ * service-catalog.json, not here.
  *
- * Filtered HERE rather than edited out of `service-catalog.json`, because that
- * file is generated from Scott's spreadsheet — a hand edit would be silently
- * reverted the next time it is regenerated. The seed's existing retirement pass
- * removes the DB row and its skills, and reports any provider tag left orphaned.
- *
- * AUDIT (E072): the three survivors — Application-Specific, Technology-Specific,
- * Operations-Specific — all answer the "what do you do" question and stay. No
- * other non-role leaks found.
+ * The mechanism stays so the next non-role can be excluded without rebuilding
+ * it — the seed's retirement pass reads this set on every run.
  */
-const NON_ROLE_TYPES = new Set(["Project-Specific"]);
+const NON_ROLE_TYPES = new Set<string>([]);
 
 /** Stable code from a display name: "Finance & Accounting" → FINANCE_ACCOUNTING. */
 function toCode(name: string): string {

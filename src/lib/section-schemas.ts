@@ -71,6 +71,16 @@ const educationItem = z
     field: z.string().nullable().optional(),
     startYear: z.union([z.number(), z.string(), z.null()]).optional(),
     endYear: z.union([z.number(), z.string(), z.null()]).optional(),
+    /*
+      E164 — `description` and the legacy `year` were MISSING from this strict
+      schema, so a client that echoed back a row the server had just sent was
+      rejected 400 ("unrecognized key"), and no description could ever reach the
+      section writer. The schema and the writer have to agree on the shape of a
+      row; they didn't, in opposite directions — the writer dropped these
+      columns and the schema refused them.
+    */
+    description: z.string().nullable().optional(),
+    year: z.union([z.number(), z.string(), z.null()]).optional(),
   })
   .strict();
 
