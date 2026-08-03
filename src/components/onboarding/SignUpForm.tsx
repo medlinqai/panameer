@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Field, TextInput, Notice } from "@/components/onboarding/controls";
+import { LegalLink } from "@/components/legal/LegalLink";
 import { SocialSignIn } from "@/components/auth/SocialSignIn";
 
 /**
@@ -268,17 +269,14 @@ export function SignUpForm({
           />
           <span className="text-[14px] text-ink-2">
             Yes, I agree to the Panameer{" "}
-            <Link href="/terms" className="font-semibold text-magenta hover:underline">
-              Terms of Service
-            </Link>
-            ,{" "}
-            <Link href="/terms" className="font-semibold text-magenta hover:underline">
-              User Agreement
-            </Link>{" "}
-            and{" "}
-            <Link href="/privacy" className="font-semibold text-magenta hover:underline">
-              Privacy Policy
-            </Link>
+            {/*
+              E162 — these OPEN IN A NEW TAB. As ordinary links they navigated
+              away mid-signup and browser-back came back to an empty form, so
+              reading the terms cost you everything you had typed.
+            */}
+            <LegalLink href="/terms">Terms of Service</LegalLink>,{" "}
+            <LegalLink href="/terms">User Agreement</LegalLink> and{" "}
+            <LegalLink href="/privacy">Privacy Policy</LegalLink>
             .
           </span>
         </label>

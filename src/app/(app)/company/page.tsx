@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/Card";
 import { CompanyRequests } from "@/components/company/CompanyRequests";
 import { AcceptCompanyTos } from "@/components/company/AcceptCompanyTos";
+import { LegalLink } from "@/components/legal/LegalLink";
 
 export const dynamic = "force-dynamic";
 
@@ -173,9 +174,9 @@ export default async function CompanyPage({
               year: "numeric",
             })}
             , version {c.company_tos_version}.{" "}
-            <Link href="/company-terms" className="underline">
+            <LegalLink href="/company-terms" className="underline">
               Read them
-            </Link>
+            </LegalLink>
             .
           </p>
         ) : (
@@ -184,9 +185,9 @@ export default async function CompanyPage({
               {c.company_tos_accepted_at
                 ? `This company accepted version ${c.company_tos_version}. The current version is ${COMPANY_TOS_VERSION}, so it needs accepting again.`
                 : "This company hasn't accepted the company terms yet. Until it does, it can't transact on Panameer."}{" "}
-              <Link href="/company-terms" className="underline">
+              <LegalLink href="/company-terms" className="underline">
                 Read them
-              </Link>
+              </LegalLink>
               .
             </p>
             {binding.isAdmin ? (
@@ -218,9 +219,9 @@ export default async function CompanyPage({
                 accept it next time you sign in.
               </>
             )}{" "}
-            <Link href="/terms" className="underline">
+            <LegalLink href="/terms" className="underline">
               Read them
-            </Link>
+            </LegalLink>
             .
           </p>
         ) : (
@@ -228,9 +229,9 @@ export default async function CompanyPage({
             We don&apos;t have a record of you accepting the user terms. Accounts
             created before we started recording the version are in this state —
             you&apos;ll be asked at your next sign-in.{" "}
-            <Link href="/terms" className="underline">
+            <LegalLink href="/terms" className="underline">
               Read them
-            </Link>
+            </LegalLink>
             .
           </p>
         )}

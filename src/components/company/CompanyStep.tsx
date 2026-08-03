@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import { LegalLink } from "@/components/legal/LegalLink";
 import { Field, TextInput, Notice, OptionCard } from "@/components/onboarding/controls";
 
 /**
@@ -297,13 +297,9 @@ export function CompanyStep({
             />
             <span className="text-[14px] text-ink-2">
               On behalf of this company, I accept the Panameer{" "}
-              <Link
-                href="/company-terms"
-                target="_blank"
-                className="font-semibold text-magenta hover:underline"
-              >
+              <LegalLink href="/company-terms">
                 Company Terms of Service
-              </Link>
+              </LegalLink>
               . We&apos;ll record who accepted it and when.
             </span>
           </label>
