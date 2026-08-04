@@ -100,6 +100,8 @@ import {
 */
 const ALL_STEPS = [
   "title",
+  "roles",
+  "skills",
   "catalog",
   "tell_us",
   "specializations",
@@ -150,6 +152,8 @@ const LANGUAGE_LEVELS = [
  */
 const STEP_LABELS: Record<Step, { stepper: string }> = {
   title: { stepper: "Your Title" },
+  roles: { stepper: "Your Role" },
+  skills: { stepper: "Your Skills" },
   catalog: { stepper: "Your Role & Skills" },
   tell_us: { stepper: "Build Your Profile" },
   specializations: { stepper: "Your Specializations" },
@@ -314,7 +318,14 @@ type SpecializationGroup = {
   label: string;
   items: { id: string; name: string; kind: string }[];
 };
-type SkillOpt = { id: string; name: string; roleType: { display: string } | null };
+type SkillOpt = {
+  id: string;
+  name: string;
+  roleType: { display: string } | null;
+  /** The DOMAIN. Still on every row — it disambiguates two skills that share
+   *  a label under different domains — even though it left the UI as a tier. */
+  pillar?: { id: string; name: string } | null;
+};
 type LanguageDraft = { name: string; level: string | null };
 type AddressDraft = {
   line1: string;
@@ -704,7 +715,17 @@ export default function JoinProviderPage() {
 
   // ---- reference data ---------------------------------------------------
   useEffect(() => {
-    if (screen === "catalog" && fieldRoles.length === 0) {
+    /*
+      WS3 — the roles list is needed on THREE screens now: the Roles step, the
+      Skills step (which names the roles in its subtitle and labels chips) and
+      the retired combined page. Gating this on "catalog" alone left the new
+      Roles step rendering an empty list with no error — the fetch simply never
+      ran. Found by walking it; nothing failed, there was just nothing there.
+    */
+    if (
+      (screen === "roles" || screen === "skills" || screen === "catalog") &&
+      fieldRoles.length === 0
+    ) {
       fetch("/api/catalog/fields")
         .then((r) => r.json())
         .then((d) => setFieldRoles(d.roles ?? []))
@@ -720,8 +741,25 @@ export default function JoinProviderPage() {
     }
   }, [screen, fieldRoles.length, specGroups.length]);
 
+  /*
+    WS3 — the skills page shows the UNION across every claimed role.
+
+    One request for all of them rather than one per role: the picker searches
+    across the whole set, so assembling it client-side from N responses would
+    only add N-1 chances for a partial list to look like a complete one.
+  */
+  const roleKey = profile.roleTypeIds.join(",");
   useEffect(() => {
-    // Skills load as soon as a (Role, Domain) is chosen on the combined page.
+    if (screen !== "skills" || !roleKey) return;
+    fetch(`/api/catalog/skills?roleTypeIds=${encodeURIComponent(roleKey)}`)
+      .then((r) => r.json())
+      .then((d) => setSkillOpts(d.skills ?? []))
+      .catch(() => setError("We couldn't load skills. Please refresh."));
+  }, [screen, roleKey]);
+
+  // The retired combined page is still reachable from Settings, and it loads
+  // per (role, domain) as it always did.
+  useEffect(() => {
     if (screen !== "catalog" || !browseArea) return;
     fetch(
       `/api/catalog/skills?roleTypeId=${browseArea.roleTypeId}&pillarId=${browseArea.pillarId}`
@@ -741,6 +779,35 @@ export default function JoinProviderPage() {
   const [companyValid, setCompanyValid] = useState(false);
   const [companyBusy, setCompanyBusy] = useState(false);
   const [companyPending, setCompanyPending] = useState<string | null>(null);
+
+  /*
+    WS2/WS3 — ROLES ARE MULTI-SELECT, defaulting to one.
+
+    The first role chosen is the PRIMARY: what `roleTypeId` means, what the
+    profile leads with, and what every existing derivation reads. De-selecting
+    the primary promotes the next one rather than leaving a role set with no
+    primary. Hoisted to component scope because the Roles screen and the Skills
+    screen are two steps now.
+  */
+  const toggleRole = (role: FieldRole) => {
+    setProfile((p) => {
+      const has = p.roleTypeIds.includes(role.id);
+      const next = has
+        ? p.roleTypeIds.filter((id) => id !== role.id)
+        : [...p.roleTypeIds, role.id];
+      const primary = next[0] ?? null;
+      const primaryRole = fieldRoles.find((r) => r.id === primary);
+      return {
+        ...p,
+        roleTypeIds: next,
+        roleTypeId: primary,
+        roleTypeName: primaryRole?.name ?? null,
+        // The primary domain is derived server-side from the primary role;
+        // clearing it stops a stale pairing surviving a role change.
+        ...(primary === p.roleTypeId ? {} : { pillarId: null, pillarName: null }),
+      };
+    });
+  };
 
   const goNext = () => {
     // E118 — an edit that came FROM the review goes back to it, once. The flag
@@ -1392,101 +1459,105 @@ export default function JoinProviderPage() {
     }
 
     // ---- 7/13 — Role → Domain → Skills, ONE cascading page (E030) ------
-    case "catalog": {
+    // ---- ROLE(S) — WS3 step 2, its own page ---------------------------
+    //
+    // The Domain tier is GONE FROM THE UI. A skill still belongs to its
+    // (role, domain) pair — that pair is the catalog's uniqueness key and the
+    // FK is untouched — but asking a provider to navigate a taxonomy level
+    // before they can name a skill was the slowest part of the old cascade.
+    // The domain is derived from the role server-side (WS2).
+    case "roles": {
+      return (
+        <WizardShell
+          {...shell({
+            title: "What kind of work do you do?",
+            subtitle:
+              "Pick the role that fits. Most people pick one — choose more if you genuinely work across them, like a techno-functional consultant.",
+            onContinue: () =>
+              saveAnd("roles", {
+                roleTypeIds: profile.roleTypeIds,
+                roleTypeId: profile.roleTypeId,
+              }),
+            continueDisabled: profile.roleTypeIds.length === 0,
+          })}
+        >
+          {error && <Notice>{error}</Notice>}
+
+          {fieldRoles.length === 0 ? (
+            <p className="text-ink-2">Loading roles…</p>
+          ) : (
+            <>
+              {/* Bounded for the same reason the skills list is: the page's
+                  height must not depend on how big the taxonomy gets. */}
+              <div className={`max-h-[420px] ${SCROLL_REGION}`}>
+                <div className="space-y-3">
+                  {fieldRoles.map((r) => {
+                    const picked = profile.roleTypeIds.includes(r.id);
+                    const isPrimary = profile.roleTypeIds[0] === r.id;
+                    return (
+                      <OptionCard
+                        key={r.id}
+                        selected={picked}
+                        onClick={() => toggleRole(r)}
+                        title={
+                          r.name +
+                          (isPrimary && profile.roleTypeIds.length > 1
+                            ? "  ·  primary"
+                            : "")
+                        }
+                        description={`${r.domains.length} area${r.domains.length === 1 ? "" : "s"} of work`}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+              {profile.roleTypeIds.length > 1 && (
+                <p className="mt-3 text-[14px] text-ink-2">
+                  You&apos;ll pick skills from all{" "}
+                  {profile.roleTypeIds.length} on the next step. The first one
+                  is what your profile leads with.
+                </p>
+              )}
+            </>
+          )}
+        </WizardShell>
+      );
+    }
+
+    // ---- SKILLS — WS3 step 3, filtered by the chosen role(s) -----------
+    case "skills": {
       const chosenSkills = new Set(profile.skillIds);
       const atMaxSkills = profile.skillIds.length >= MAX_SKILLS;
-      const activeRole = fieldRoles.find((r) => r.id === profile.roleTypeId);
+      const totalPicked = profile.skillIds.length + profile.customSkills.length;
 
       const q = skillQuery.trim().toLowerCase();
-      // Already-picked skills are shown as chips above, so they are not
-      // suggestions any more — filtering them out BEFORE the cap means the
-      // suggestion set stays a full 12 usable options as picks accumulate,
-      // instead of quietly thinning out.
+      // Already-picked skills are chips above, so they stop being suggestions —
+      // filtering them out BEFORE the cap keeps a full set of usable options as
+      // picks accumulate rather than quietly thinning it (E053).
       const matchingSkills = (
-        q ? skillOpts.filter((s) => s.name.toLowerCase().includes(q)) : skillOpts
-      ).filter((s) => !chosenSkills.has(s.id));
-      // E053 — hard cap; the rest stay behind "keep typing to narrow".
+        q ? skillOpts.filter((sk) => sk.name.toLowerCase().includes(q)) : skillOpts
+      ).filter((sk) => !chosenSkills.has(sk.id));
       const shownSkills = matchingSkills.slice(0, MAX_SKILL_SUGGESTIONS);
       const hiddenSkillCount = matchingSkills.length - shownSkills.length;
-
-      /*
-        E102 — picking a different Role or Domain moves the BROWSE CONTEXT; it no
-        longer empties the basket.
-
-        Wiping `skillIds` here was the whole single-domain lock. A provider who
-        works across Supply Chain and Finance had no way to express it: choosing
-        the second domain silently discarded everything they had picked in the
-        first, and if they got as far as saving, the server rejected it anyway.
-        The two halves of that lock are removed together — this one and the
-        cross-domain throw in `onboarding.ts`.
-
-        Role and Domain still record the PRIMARY field (what the profile leads
-        with); they are simply no longer a fence around which skills may be kept.
-      */
-      /*
-        WS2 / E172-E173 — ROLES ARE MULTI-SELECT, defaulting to one.
-
-        This supersedes the locked "one main RoleType" rule. Techno-functional
-        consultants are the canonical case: genuinely Application-Specific AND
-        Technology-Specific, and under one role the skills step could only ever
-        offer half their catalog.
-
-        The FIRST role chosen stays the primary — it is what `roleTypeId`
-        continues to mean, what the profile leads with and what every existing
-        derivation reads. De-selecting the primary promotes the next one rather
-        than leaving the profile with a role set and no primary.
-      */
-      const toggleRole = (role: FieldRole) => {
-        setBrowseArea(null);
-        setProfile((p) => {
-          const has = p.roleTypeIds.includes(role.id);
-          const next = has
-            ? p.roleTypeIds.filter((id) => id !== role.id)
-            : [...p.roleTypeIds, role.id];
-          const primary = next[0] ?? null;
-          const primaryRole = fieldRoles.find((r) => r.id === primary);
-          return {
-            ...p,
-            roleTypeIds: next,
-            roleTypeId: primary,
-            roleTypeName: primaryRole?.name ?? null,
-            // The primary domain is derived server-side from the primary role;
-            // clearing it here stops a stale pairing surviving a role change.
-            ...(primary === p.roleTypeId ? {} : { pillarId: null, pillarName: null }),
-          };
-        });
-      };
-
-      const pickDomain = (d: FieldDomain) => {
-        setBrowseArea({
-          roleTypeId: profile.roleTypeId!,
-          pillarId: d.id,
-          pillarName: d.name,
-        });
-        // The FIRST area a provider picks becomes the profile's primary field.
-        // Later areas add skills without moving it — otherwise the headline
-        // field would drift to whatever they happened to browse last.
-        setProfile((p) =>
-          p.pillarId
-            ? p
-            : { ...p, pillarId: d.id, pillarName: d.name }
-        );
-      };
 
       const toggleSkill = (id: string) =>
         setProfile((p) => {
           const has = p.skillIds.includes(id);
           if (!has && p.skillIds.length >= MAX_SKILLS) return p;
-          const name = skillOpts.find((x) => x.id === id)?.name ?? "";
-          // Stamp the area it was picked from, so a basket spanning several
-          // domains can still say which skill came from where.
-          const area = browseArea?.pillarName ?? p.pillarName ?? null;
+          const opt = skillOpts.find((x) => x.id === id);
           return {
             ...p,
             skillIds: has ? p.skillIds.filter((x) => x !== id) : [...p.skillIds, id],
             skillNames: has
               ? p.skillNames.filter((x) => x.id !== id)
-              : [...p.skillNames, { id, name, area }],
+              : [
+                  ...p.skillNames,
+                  // The DOMAIN still rides along on every chip — it is what
+                  // tells two identically-named skills apart ("Project Manager"
+                  // exists under two domains), which is exactly why the FK
+                  // stays even though the tier is gone.
+                  { id, name: opt?.name ?? "", area: opt?.pillar?.name ?? null },
+                ],
           };
         });
 
@@ -1504,263 +1575,128 @@ export default function JoinProviderPage() {
         setSkillQuery("");
       };
 
-      const totalPicked = profile.skillIds.length + profile.customSkills.length;
+      const roleNames = profile.roleTypeIds
+        .map((id) => fieldRoles.find((r) => r.id === id)?.name)
+        .filter(Boolean);
 
       return (
         <WizardShell
           {...shell({
-            title: "What work are you here to do?",
+            title: "Which skills do you want to be found for?",
+            subtitle:
+              roleNames.length > 0
+                ? `Skills across ${roleNames.join(" and ")}. Search, or add your own — buyers match on these.`
+                : "Search, or add your own — buyers match on these.",
             onContinue: () =>
-              saveAnd("catalog", {
-                // WS2 — the whole role SET. `roleTypeId` rides along as the
-                // primary for the settings path, which still posts one.
-                roleTypeIds: profile.roleTypeIds,
-                roleTypeId: profile.roleTypeId,
-                pillarId: profile.pillarId,
+              saveAnd("skills", {
                 skillIds: profile.skillIds,
                 customSkills: profile.customSkills,
-                // Which claimed role a new add-on-the-fly skill belongs to.
-                customSkillRoleId: browseArea?.roleTypeId ?? profile.roleTypeId,
+                customSkillRoleId: profile.roleTypeId,
+                roleTypeIds: profile.roleTypeIds,
+                roleTypeId: profile.roleTypeId,
               }),
-            // E102 — a closed browse area no longer blocks Continue. What must
-            // hold is that a PRIMARY field was established and at least one
-            // skill is banked; whether an area happens to be open is a browsing
-            // state, not an answer.
-            /*
-              WS2 — the gate is "a role is claimed AND a skill is banked".
-              `pillarId` dropped out of it: the primary domain is DERIVED
-              server-side from the primary role now, so requiring it here would
-              block Continue on an answer the provider is no longer asked for.
-            */
-            continueDisabled: profile.roleTypeIds.length === 0 || totalPicked === 0,
+            continueDisabled: totalPicked === 0,
           })}
         >
           {error && <Notice>{error}</Notice>}
 
-          {/*
-            E030 — a cascade, not three long lists: Role reveals its Domains,
-            Domain reveals its Skills. Each tier collapses to a summary row once
-            chosen, so the page never shows more than one open list at a time.
-          */}
-          {/*
-            E102 — the basket lives ABOVE the cascade, not inside the skills
-            tier. It used to render inside tier 3, so closing an area to browse
-            another made every skill already picked disappear from the page —
-            which is precisely the "did I just lose that?" moment multi-domain
-            picking exists to avoid. It is always on screen and always removable.
-          */}
-              {(profile.skillNames.length > 0 ||
-                profile.customSkills.length > 0) && (
-                <div className="mb-2">
-                  <p className="mb-1.5 text-[13px] font-bold">
-                    Your Skills{" "}
-                    <span className="font-normal text-ink-2">
-                      ({totalPicked}/{MAX_SKILLS})
-                    </span>
-                  </p>
-                  <div className={`flex flex-wrap gap-2 ${PICKED_REGION}`}>
-                    {profile.skillNames.map((sk) => (
-                      <Chip key={sk.id} selected onClick={() => toggleSkill(sk.id)}>
-                        {sk.name}
-                        {/* E102 — name the area on any chip picked somewhere
-                            other than the area currently open. With one domain
-                            this never shows; the moment the basket spans two it
-                            is the only thing telling them apart. */}
-                        {sk.area && sk.area !== browseArea?.pillarName && (
-                          <span className="ml-1 text-[12px] font-normal opacity-75">
-                            · {sk.area}
-                          </span>
-                        )}
-                      </Chip>
-                    ))}
-                    {profile.customSkills.map((name) => (
-                      <Chip
-                        key={`custom:${name}`}
-                        selected
-                        onClick={() =>
-                          setProfile((p) => ({
-                            ...p,
-                            customSkills: p.customSkills.filter((c) => c !== name),
-                          }))
-                        }
-                      >
-                        {name}
-                      </Chip>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-          <div className="space-y-2.5">
-            <CascadeTier
-              index={1}
-              label="Role"
-              chosen={
-                profile.roleTypeIds.length === 0
-                  ? null
-                  : profile.roleTypeIds
-                      .map((id) => fieldRoles.find((r) => r.id === id)?.name ?? "")
-                      .filter(Boolean)
-                      .join(" · ")
-              }
-              onChange={() =>
-                setProfile((p) => ({
-                  ...p,
-                  roleTypeId: null,
-                  roleTypeIds: [],
-                  roleTypeName: null,
-                  pillarId: null,
-                  pillarName: null,
-                  skillIds: [],
-                  skillNames: [],
-                }))
-              }
-            >
-              {fieldRoles.length === 0 ? (
-                <p className="text-ink-2">Loading roles…</p>
-              ) : (
-                // Bounded for the same reason as the Skills tier. With today's
-                // four roles nothing scrolls and this is invisible; it is what
-                // keeps the step single-page when the taxonomy grows.
-                <div className={`max-h-[320px] ${SCROLL_REGION}`}>
-                  <div className="space-y-3">
-                    {fieldRoles.map((r) => {
-                      const picked = profile.roleTypeIds.includes(r.id);
-                      const isPrimary = profile.roleTypeIds[0] === r.id;
-                      return (
-                        <OptionCard
-                          key={r.id}
-                          selected={picked}
-                          onClick={() => toggleRole(r)}
-                          title={r.name + (isPrimary && profile.roleTypeIds.length > 1 ? "  ·  primary" : "")}
-                          description={`${r.domains.length} area${r.domains.length === 1 ? "" : "s"} of work`}
-                        />
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </CascadeTier>
-
-            {profile.roleTypeId && (
-              <CascadeTier
-                index={2}
-                label="Domain"
-                // Collapses to the area currently OPEN, not to the primary — so
-                // "+ Add skills from another area" reopens this list instead of
-                // showing a summary of a domain you have already left. The
-                // Change affordance likewise only closes the area; it no longer
-                // discards the skills picked in it (E102).
-                chosen={browseArea?.pillarName ?? null}
-                onChange={() => setBrowseArea(null)}
-              >
-                <div className={`max-h-[320px] ${SCROLL_REGION}`}>
-                  <div className="space-y-3">
-                    {(activeRole?.domains ?? [])
-                      .slice(0, MAX_VISIBLE_OPTIONS)
-                      .map((d) => (
-                        <OptionCard
-                          key={d.id}
-                          selected={browseArea?.pillarId === d.id}
-                          onClick={() => pickDomain(d)}
-                          title={d.name}
-                          description={`${d.skillCount} skill${d.skillCount === 1 ? "" : "s"}`}
-                        />
-                      ))}
-                  </div>
-                </div>
-              </CascadeTier>
-            )}
-
-            {profile.roleTypeId && browseArea && (
-              <CascadeTier index={3} label="Skills" chosen={null}>
-                <div className="flex items-end gap-2">
-                  <div className="flex-1">
-                    <Field label={`Search or Add a Skill (up to ${MAX_SKILLS})`}>
-                      <TextInput
-                        value={skillQuery}
-                        onChange={(e) => setSkillQuery(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            addCustomSkill();
-                          }
-                        }}
-                        placeholder="Start typing…"
-                      />
-                    </Field>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={addCustomSkill}
-                    disabled={!skillQuery.trim() || atMaxSkills}
-                    className="mb-[2px] rounded-full border-[1.5px] border-line px-5 py-3 font-bold text-ink transition-colors hover:border-magenta hover:text-magenta disabled:opacity-40"
-                  >
-                    + Add
-                  </button>
-                </div>
-
-                {atMaxSkills && (
-                  <div className="mt-3">
-                    <Notice tone="info">
-                      That&apos;s {MAX_SKILLS} — remove one to add another.
-                    </Notice>
-                  </div>
-                )}
-
-                {/* E053 — the suggestion set is BOUNDED in both directions:
-                    capped to 12 chips, inside a fixed-height scroll region. An
-                    80-skill domain and an 800-skill one render the same height,
-                    so the Continue button never moves. */}
-                <div className={`mt-3 max-h-[116px] ${SCROLL_REGION}`}>
-                  <div className="flex flex-wrap gap-2">
-                    {shownSkills.map((sk) => (
-                      <Chip
-                        key={sk.id}
-                        selected={false}
-                        onClick={() => toggleSkill(sk.id)}
-                      >
-                        {sk.name}
-                      </Chip>
-                    ))}
-                    {shownSkills.length === 0 && (
-                      <p className="text-[14px] text-ink-2">
-                        {matchingSkills.length === 0 && q
-                          ? "No matches — use “+ Add” to create it."
-                          : "You've picked every skill we list here."}
-                      </p>
+          {/* The basket is always on screen and always removable. */}
+          {(profile.skillNames.length > 0 || profile.customSkills.length > 0) && (
+            <div className="mb-4">
+              <p className="mb-1.5 text-[13px] font-bold">
+                Your Skills{" "}
+                <span className="font-normal text-ink-2">
+                  ({totalPicked}/{MAX_SKILLS})
+                </span>
+              </p>
+              <div className={`flex flex-wrap gap-2 ${PICKED_REGION}`}>
+                {profile.skillNames.map((sk) => (
+                  <Chip key={sk.id} selected onClick={() => toggleSkill(sk.id)}>
+                    {sk.name}
+                    {sk.area && roleNames.length > 1 && (
+                      <span className="ml-1 text-[12px] font-normal opacity-75">
+                        · {sk.area}
+                      </span>
                     )}
-                  </div>
-                </div>
-                {hiddenSkillCount > 0 && (
-                  <p className="mt-2 text-[13px] text-ink-2">
-                    +{hiddenSkillCount} more — keep typing to narrow the list.
-                  </p>
-                )}
+                  </Chip>
+                ))}
+                {profile.customSkills.map((name) => (
+                  <Chip
+                    key={`custom:${name}`}
+                    selected
+                    onClick={() =>
+                      setProfile((p) => ({
+                        ...p,
+                        customSkills: p.customSkills.filter((c) => c !== name),
+                      }))
+                    }
+                  >
+                    {name}
+                  </Chip>
+                ))}
+              </div>
+            </div>
+          )}
 
-                {/*
-                  E102 — the explicit way OUT of this area and into another.
-                  Without it the multi-domain capability exists but is invisible:
-                  you would have to guess that re-opening tier 1 no longer wipes
-                  what you picked. It clears only the browse context, never the
-                  basket.
-                */}
-                <button
-                  type="button"
-                  onClick={() => setBrowseArea(null)}
-                  className="mt-4 text-[14px] font-bold text-magenta transition-colors hover:text-magenta-dark"
-                >
-                  + Add skills from another area
-                </button>
-              </CascadeTier>
-            )}
+          {/* SEARCH-FIRST. The catalog is meant to grow without limit, so the
+              page must never grow with it: a capped suggestion set inside a
+              fixed-height scroll region (E053/E054). */}
+          <div className="flex flex-wrap items-center gap-2">
+            <TextInput
+              value={skillQuery}
+              onChange={(e) => setSkillQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  addCustomSkill();
+                }
+              }}
+              placeholder="Search skills — or type your own and press Add"
+              className="max-w-md"
+            />
+            <button
+              type="button"
+              onClick={addCustomSkill}
+              disabled={!skillQuery.trim() || atMaxSkills}
+              className="rounded-full border-[1.5px] border-line px-5 py-2.5 font-bold transition-colors hover:border-magenta hover:text-magenta disabled:opacity-40"
+            >
+              + Add
+            </button>
           </div>
+
+          {atMaxSkills && (
+            <div className="mt-3">
+              <Notice tone="info">
+                That&apos;s {MAX_SKILLS} — remove one to add another.
+              </Notice>
+            </div>
+          )}
+
+          <div className={`mt-3 max-h-[220px] ${SCROLL_REGION}`}>
+            <div className="flex flex-wrap gap-2">
+              {shownSkills.map((sk) => (
+                <Chip key={sk.id} selected={false} onClick={() => toggleSkill(sk.id)}>
+                  {sk.name}
+                </Chip>
+              ))}
+              {shownSkills.length === 0 && (
+                <p className="text-[14px] text-ink-2">
+                  {matchingSkills.length === 0 && q
+                    ? "No matches — use “+ Add” to create it."
+                    : "You've picked every skill we list here."}
+                </p>
+              )}
+            </div>
+          </div>
+          {hiddenSkillCount > 0 && (
+            <p className="mt-2 text-[13px] text-ink-2">
+              +{hiddenSkillCount} more — keep typing to narrow the list.
+            </p>
+          )}
         </WizardShell>
       );
     }
 
-
-    // ---- 7/12 — Specializations (E031, optional + add-on-the-fly) -----
     case "specializations": {
       const chosenSpecs = new Set(profile.specializationIds);
 
@@ -2973,7 +2909,7 @@ export default function JoinProviderPage() {
                   phoneVerified={profile.phoneVerified}
                 />
                 <p className="mt-3 text-[13.5px] text-ink-2">
-                  Date of birth, phone and address are collected on the{" "}
+                  Phone and address are collected on the{" "}
                   <button
                     type="button"
                     onClick={() => goTo("picture")}

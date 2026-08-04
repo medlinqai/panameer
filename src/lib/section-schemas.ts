@@ -175,6 +175,18 @@ export const SECTION_SCHEMAS = {
   work_type: z.object({ workTypes: z.array(z.string()) }).strict(),
   work_method: z.object({ workMethod: z.string() }).strict(),
   tell_us: z.object({ profileMethod: z.string() }).strict(),
+  /*
+    WS3 — the "roles" STEP and the "category" SECTION are the same write under
+    two names: the step is what the wizard posts, the section is what Settings
+    posts. Same shape, so the same schema.
+  */
+  roles: z
+    .object({
+      roleTypeIds: z.array(z.string()).optional(),
+      roleTypeId: z.string().nullable().optional(),
+      pillarId: z.string().nullable().optional(),
+    })
+    .strict(),
   category: z
     .object({
       // WS2 — the full role set. `roleTypeId` stays accepted: Settings still

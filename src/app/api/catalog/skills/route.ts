@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   getSkillsForRoleType,
+  getSkillsForRoleTypes,
   getSkillsForPillar,
   getSkillsForField,
 } from "@/lib/catalog";
@@ -11,6 +12,7 @@ import {
  *                               (brief_R — the provider wizard, step 8)
  *   ?pillarId=…               → skills across a domain, any role
  *   ?roleTypeId=…             → skills in one RoleType (Settings, Work Request)
+ *   ?roleTypeIds=a,b          → the UNION across several roles (WS3 skills page)
  *
  * Public reference data.
  */
@@ -18,6 +20,16 @@ export async function GET(request: Request) {
   const params = new URL(request.url).searchParams;
   const pillarId = params.get("pillarId");
   const roleTypeId = params.get("roleTypeId");
+  const roleTypeIds = (params.get("roleTypeIds") ?? "")
+    .split(",")
+    .map((x) => x.trim())
+    .filter(Boolean);
+
+  // The union comes first: a multi-role provider asking for several roles must
+  // not be answered with just the first one.
+  if (roleTypeIds.length > 0) {
+    return NextResponse.json({ skills: await getSkillsForRoleTypes(roleTypeIds) });
+  }
 
   if (roleTypeId && pillarId) {
     return NextResponse.json({

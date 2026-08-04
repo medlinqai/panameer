@@ -172,6 +172,32 @@ export async function getRegions() {
  * Skills within a single RoleType — the choices shown after the provider picks
  * their one main category. Includes the pillar name + image where seeded.
  */
+/**
+ * Skills across SEVERAL roles — the union a multi-role provider picks from
+ * (brief_onboarding_slimdown WS3).
+ *
+ * Domain left the UI, so this is deliberately not scoped to one: a provider who
+ * claims Application-Specific sees every skill under all of that role's
+ * domains, searchable. The DOMAIN IS STILL CARRIED on each row — a skill's
+ * identity is its (role, domain) pair, and the picker uses it to group and to
+ * disambiguate the same label appearing under two domains.
+ */
+export async function getSkillsForRoleTypes(roleTypeIds: string[]) {
+  if (roleTypeIds.length === 0) return [];
+  return prisma.skill.findMany({
+    where: { role_type_id: { in: roleTypeIds } },
+    orderBy: [{ name: "asc" }],
+    select: {
+      id: true,
+      name: true,
+      image_url: true,
+      role_type_id: true,
+      pillar: { select: { id: true, code: true, name: true } },
+      roleType: { select: { id: true, name: true, display: true } },
+    },
+  });
+}
+
 export async function getSkillsForRoleType(roleTypeId: string) {
   return prisma.skill.findMany({
     where: { role_type_id: roleTypeId },

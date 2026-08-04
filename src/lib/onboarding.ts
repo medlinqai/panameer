@@ -69,11 +69,12 @@ import { capitalizeName } from "@/lib/display";
  */
 export const PROVIDER_STEPS = [
   "title", //     1 — what you do
-  "catalog", //   2 — Role(s) → Skills (split into two pages by WS3)
-  "rate", //      3 — provider only; the match needs a price
-  "picture", //   4 — required to publish (WS7 addendum, unchanged)
-  "company", //   5 — the entity a work order is with (brief_company_model)
-  "finish", //    6 — Review + publish
+  "roles", //     2 — WS3: role(s), multi-select
+  "skills", //    3 — WS3: its own page, filtered by the chosen roles
+  "rate", //      4 — provider only; the match needs a price
+  "picture", //   5 — required to publish (WS7 addendum, unchanged)
+  "company", //   6 — the entity a work order is with (brief_company_model)
+  "finish", //    7 — Review + publish
 ] as const;
 export type ProviderStep =
   | (typeof PROVIDER_STEPS)[number]
@@ -88,7 +89,14 @@ export type ProviderStep =
   | "specializations"
   | "education"
   | "languages"
-  | "bio";
+  | "bio"
+  /*
+    The combined Role→Domain→Skills page WS3 replaced. Kept in the union and in
+    the save switch because Settings still posts it and an older client tab
+    mid-flow will too — refusing it would 400 a surface this brief doesn't
+    touch. It is simply no longer in the itinerary.
+  */
+  | "catalog";
 
 /** The uncounted screens that precede the numbered steps. */
 export const PRE_STEPS = ["tell_us"] as const;
@@ -100,6 +108,7 @@ export const PRE_STEPS = ["tell_us"] as const;
  */
 export const SAVEABLE_STEPS: readonly ProviderStep[] = [
   ...PROVIDER_STEPS,
+  "catalog",
   "tell_us",
   "specializations",
   "education",
@@ -110,7 +119,8 @@ export const SAVEABLE_STEPS: readonly ProviderStep[] = [
 /** Recruiter journey: no Rate — a recruiter sells other people's time (E070). */
 export const RECRUITER_STEPS = [
   "title",
-  "catalog",
+  "roles",
+  "skills",
   "picture",
   "company",
   "finish",
@@ -156,6 +166,8 @@ export const PROVIDER_STEP_LABELS: Record<
   { stepper: string; next: string }
 > = {
   title: { stepper: "Your Title", next: "Next: Your Role" },
+  roles: { stepper: "Your Role", next: "Next: Your Skills" },
+  skills: { stepper: "Your Skills", next: "Next: Your Rate" },
   catalog: { stepper: "Your Role & Skills", next: "Next: Your Rate" },
   rate: { stepper: "Your Rate", next: "Next: Your Photo" },
   picture: { stepper: "Your Photo", next: "Next: Your Company" },
@@ -646,9 +658,16 @@ function computeResumeStep(p: Awaited<ReturnType<typeof loadDraft>>): ProviderSt
   const pp = p.providerProfile!;
   const done: Record<ProviderStep, boolean> = {
     title: pp.headline.trim() !== "",
-    // ONE cascading page (E030): the field is a (Role, Domain) PAIR and at
-    // least one skill under it, so the step is only done when both are true.
-    catalog: pp.pillar_id != null && pp.role_type_id != null && pp.skills.length > 0,
+    /*
+      WS3 — two steps, two conditions. A provider who claimed a role and then
+      closed the tab resumes onto SKILLS, not back onto the role they already
+      answered. The domain is derived, so it is not part of either condition.
+    */
+    roles: pp.role_type_id != null,
+    skills: pp.skills.length > 0,
+    // The combined page these replaced. Not in any itinerary; satisfied so a
+    // stray value can never park anyone on a step that is not offered.
+    catalog: true,
     tell_us: true, //        optional — see OPTIONAL_STEPS
     specializations: true, // optional (brief_R)
     education: true, //      optional (E015)
@@ -1058,10 +1077,27 @@ export async function applyProviderSection(
       break;
     }
 
+    /*
+      WS3 — the combined page became two steps, each saving its own half.
+
+      They can now be left half-written by design: claiming a role and stopping
+      is a legitimate place to pause, and the resume logic sends that provider
+      to Skills rather than back to a question they answered. The old "save as
+      one unit" argument was about a cross-domain skill surviving into the next
+      step, and that is handled where it belongs — the role writer prunes skills
+      outside the claimed ROLES (WS2).
+    */
+    case "roles": {
+      await applyProviderSection(profileId, personId, "category", data);
+      break;
+    }
+    case "skills": {
+      await applyProviderSection(profileId, personId, "skills", data);
+      break;
+    }
     case "catalog": {
-      // E030 — the combined Role → Domain → Skills page saves as one unit, so
-      // the field and its skills can never be left half-written (which is what
-      // let a cross-pillar skill survive into the old separate skills step).
+      // The retired combined page. Still reachable from Settings and from an
+      // older client tab, so it keeps saving both halves.
       await applyProviderSection(profileId, personId, "category", data);
       await applyProviderSection(profileId, personId, "skills", data);
       break;
