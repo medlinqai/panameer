@@ -29,6 +29,8 @@ export type ImportResult = {
     overview: boolean;
     experiences: number;
     education: number;
+    /** WS4 — matched against the seeded vocabulary, not asked of the model. */
+    specializations: number;
     skillsMatched: number;
     skillsMatchedNames: string[];
     skillsUnmatched: string[];
@@ -177,6 +179,7 @@ function emptyApplied(): ImportResult["applied"] {
     overview: false,
     experiences: 0,
     education: 0,
+    specializations: 0,
     skillsMatched: 0,
     skillsMatchedNames: [],
     skillsUnmatched: [],
@@ -306,6 +309,54 @@ export async function applyParsedResume(
         skipDuplicates: true,
       });
       applied.skillsMatched = toAdd.length;
+    }
+  }
+
+  /* --- Specializations (WS4) ---------------------------------------------
+     AI-PREFILLED WITHOUT TOUCHING THE PROMPT, and that is a deliberate choice.
+
+     The brief asks AI to prefill Specializations onto the review page. The
+     obvious route — a new field on the extraction schema — is a change to a
+     prompt the guardrails call fragile, and it would ask the model to guess at
+     a closed vocabulary it has never seen. The résumé's own skill and software
+     terms are already extracted, and specializations ARE those terms (Oracle
+     Cloud, SAP, Agile, Manufacturing). So they are matched deterministically
+     against the seeded vocabulary — the same pattern `matchSkills` uses, free,
+     testable, and with no prompt risk.
+
+     NON-DESTRUCTIVE: only ever adds, and only what the profile doesn't have.
+     What it can't match stays BLANK ON PURPOSE — those blanks are the hooks
+     WS5 records for the re-engagement engine.
+  */
+  if (parsed.skills.length > 0) {
+    const vocabulary = await prisma.specialization.findMany({
+      select: { id: true, name: true },
+    });
+    const key = (x: string) => x.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const byKey = new Map(vocabulary.map((v) => [key(v.name), v]));
+    const existing = new Set(
+      (
+        await prisma.providerProfileSpecialization.findMany({
+          where: { provider_profile_id: profileId },
+          select: { specialization_id: true },
+        })
+      ).map((r) => r.specialization_id)
+    );
+
+    const hits = new Map<string, string>();
+    for (const term of parsed.skills) {
+      const v = byKey.get(key(term));
+      if (v && !existing.has(v.id)) hits.set(v.id, v.name);
+    }
+    if (hits.size > 0) {
+      await prisma.providerProfileSpecialization.createMany({
+        data: [...hits.keys()].map((specialization_id) => ({
+          provider_profile_id: profileId,
+          specialization_id,
+        })),
+        skipDuplicates: true,
+      });
+      applied.specializations = hits.size;
     }
   }
 

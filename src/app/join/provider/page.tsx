@@ -295,6 +295,8 @@ type ProfilePayload = {
 
 type StatusPayload = {
   email: string;
+  /** WS4 — an import on the server outlives the client's upload state. */
+  imports?: { id: string; status: string }[];
   emailVerified: boolean;
   resumeStep: string;
   /** The itinerary for THIS user (recruiters get 8, providers 10) — WS1. */
@@ -499,6 +501,8 @@ export default function JoinProviderPage() {
   const [isRecruiter, setIsRecruiter] = useState(false);
 
   const [importOutcome, setImportOutcome] = useState<ImportOutcome | null>(null);
+  /** Server-side: does this profile already carry a résumé import? (WS4.) */
+  const [hasImport, setHasImport] = useState(false);
   const [uploadModal, setUploadModal] = useState(false);
   /** WS5/E084 — the post-upload review shows work history the way the profile
    *  does, and swaps to the editor in place when you ask to change it. */
@@ -523,6 +527,7 @@ export default function JoinProviderPage() {
   // we re-seed local form state from it rather than guessing what changed.
   const hydrate = useCallback((s: StatusPayload) => {
     if (s.steps?.length) setSteps(s.steps);
+    if (s.imports) setHasImport(s.imports.length > 0);
     if (typeof s.isRecruiter === "boolean") setIsRecruiter(s.isRecruiter);
     const p = s.profile;
     if (!p) return;
@@ -1386,11 +1391,12 @@ export default function JoinProviderPage() {
               */}
               {(importOutcome?.applied.skillSuggestions?.length ?? 0) > 0 && (
                 <div className="mt-4">
-                  <ProfileCard title="Skills we couldn't place">
+                  <ProfileCard title="AI found these — they're not in our catalog yet">
                     <p className="mb-3 text-[14px] text-ink-2">
-                      These are on your document but aren&apos;t in our catalog
-                      yet. Tick the ones that are really yours — we&apos;ll add
-                      them to your profile. Anything you leave is discarded.
+                      AI read these off your document but couldn&apos;t match
+                      them to the ERP Service Catalog. Tick the ones that are
+                      really yours — we&apos;ll add them to your profile.
+                      Anything you leave is discarded.
                     </p>
                     <div className="flex flex-wrap gap-2">
                       {importOutcome!.applied.skillSuggestions.map((term) => {
@@ -1575,6 +1581,28 @@ export default function JoinProviderPage() {
         setSkillQuery("");
       };
 
+      /*
+        How many picked skills came from the AI pass rather than a human click.
+
+        `importOutcome` is CLIENT state from the upload that just happened, so
+        it is gone after a reload — and the banner vanished with it, which is
+        how a returning provider saw pre-ticked skills with nothing saying where
+        they came from. The SERVER-side signal (an import exists on this
+        profile) is the fallback: the banner still appears, just without a
+        number it can no longer prove.
+      */
+      const aiMatched = new Set(
+        (importOutcome?.applied.skillsMatchedNames ?? []).map((n) =>
+          n.toLowerCase()
+        )
+      );
+      const aiMatchedCount = profile.skillNames.filter((sk) =>
+        aiMatched.has(sk.name.toLowerCase())
+      ).length;
+      const cameFromResume =
+        aiMatchedCount > 0 ||
+        (hasImport && profile.skillNames.length > 0);
+
       const roleNames = profile.roleTypeIds
         .map((id) => fieldRoles.find((r) => r.id === id)?.name)
         .filter(Boolean);
@@ -1599,6 +1627,42 @@ export default function JoinProviderPage() {
           })}
         >
           {error && <Notice>{error}</Notice>}
+
+          {/*
+            WS4 / E174 — NAME THE AI.
+
+            The résumé→skills hunt is one of the few places the product does
+            something visibly clever, and the copy didn't mention it at all: the
+            skills simply appeared, pre-ticked, as if they had always been
+            there. AI-native is a stated selling point; a feature nobody
+            attributes is a selling point nobody hears.
+
+            Shown only when an import actually produced matches, so it never
+            claims credit for skills the provider typed themselves.
+          */}
+          {cameFromResume && (
+            <div className="mb-4 rounded-brand border border-magenta/25 bg-magenta/[0.04] p-4">
+              <p className="flex flex-wrap items-center gap-2 text-[15px] font-bold">
+                <SparkIcon />
+                AI scanned your résumé against the ERP Service Catalog
+              </p>
+              <p className="mt-1.5 text-[14.5px] leading-relaxed text-ink-2">
+                {aiMatchedCount > 0 ? (
+                  <>
+                    It pulled{" "}
+                    <b className="text-ink">
+                      {aiMatchedCount} skill{aiMatchedCount === 1 ? "" : "s"}
+                    </b>{" "}
+                    and pre-selected them below.
+                  </>
+                ) : (
+                  <>It pre-selected the skills it found below.</>
+                )}{" "}
+                Remove anything that isn&apos;t yours, and add what it missed —
+                buyers match on these.
+              </p>
+            </div>
+          )}
 
           {/* The basket is always on screen and always removable. */}
           {(profile.skillNames.length > 0 || profile.customSkills.length > 0) && (
@@ -3246,5 +3310,20 @@ function Row({
         {value}
       </span>
     </div>
+  );
+}
+
+/** The AI mark used wherever the product attributes work to AI (WS4/E174). */
+function SparkIcon() {
+  return (
+    <span
+      aria-hidden
+      className="grid h-6 w-6 flex-none place-items-center rounded-full bg-magenta/15 text-magenta"
+    >
+      <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor">
+        <path d="M12 2l1.8 5.2L19 9l-5.2 1.8L12 16l-1.8-5.2L5 9l5.2-1.8L12 2z" />
+        <path d="M18.5 14l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9.9-2.6z" />
+      </svg>
+    </span>
   );
 }
