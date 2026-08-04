@@ -2617,6 +2617,7 @@ export default function JoinProviderPage() {
         >
           <div className="mx-auto w-full max-w-xl">
             <CompanyStep
+              bounded
               submitRef={companySubmit}
               onValidityChange={setCompanyValid}
               onBusyChange={setCompanyBusy}

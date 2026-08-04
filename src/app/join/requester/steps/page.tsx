@@ -267,6 +267,7 @@ export default function RequesterStepsPage() {
             </div>
           )}
           <CompanyStep
+            bounded
             submitRef={companySubmit}
             onValidityChange={setCompanyValid}
             onBusyChange={setCompanyBusy}

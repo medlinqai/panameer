@@ -64,6 +64,7 @@ export function CompanyStep({
   onBusyChange,
   submitRef,
   onValidityChange,
+  bounded = false,
 }: {
   onDone: (outcome: CompanyOutcome) => void;
   onBusyChange?: (busy: boolean) => void;
@@ -75,6 +76,16 @@ export function CompanyStep({
    */
   submitRef?: { current: null | (() => void) };
   onValidityChange?: (valid: boolean) => void;
+  /**
+   * WS8 / E179 — bound the body's height so the step is ONE PAGE.
+   *
+   * Measured before the change: 1010px in join mode and 1222px in define mode
+   * against a 900px viewport, with the Continue button off-screen in both. A
+   * provider filled the form and could not see the way forward — the "leaks
+   * down the bottom" report. The wizard passes this; the standalone /company
+   * page doesn't, because there the page IS the content and scrolling is fine.
+   */
+  bounded?: boolean;
 }) {
   const [mode, setMode] = useState<"join" | "define">("join");
   const [busy, setBusy] = useState(false);
@@ -199,24 +210,47 @@ export function CompanyStep({
   });
 
   return (
-    <div className="space-y-4">
+    <div className={bounded ? "space-y-3" : "space-y-4"}>
       {error && <Notice>{error}</Notice>}
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        <OptionCard
-          selected={mode === "join"}
-          onClick={() => setMode("join")}
-          title="Join a company already here"
-          description="Search for it by name."
-        />
-        <OptionCard
-          selected={mode === "define"}
-          onClick={() => setMode("define")}
-          title="Add my company"
-          description="You'll be its admin. Working for yourself? That's a company of one."
-        />
+      {/*
+        WS8 / E180 — a SEGMENTED CONTROL, not two large cards.
+
+        The cards were the tallest thing on the step and they asked a question
+        the provider can answer in a word. This is the same choice in one row,
+        which is most of what buys the page back its footer.
+      */}
+      <div className="inline-flex rounded-full border border-line p-1 text-[14px] font-semibold">
+        {(
+          [
+            ["join", "Find my company"],
+            ["define", "Add my company"],
+          ] as const
+        ).map(([m, label]) => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => setMode(m)}
+            aria-pressed={mode === m}
+            className={
+              "rounded-full px-4 py-1.5 transition-colors " +
+              (mode === m
+                ? "bg-magenta text-white"
+                : "text-ink-2 hover:text-ink")
+            }
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
+      <div
+        className={
+          bounded
+            ? "max-h-[31vh] space-y-3 overflow-y-auto overscroll-contain pr-1"
+            : "space-y-4"
+        }
+      >
       {mode === "join" ? (
         <>
           <Field
@@ -288,17 +322,23 @@ export function CompanyStep({
           )}
 
           {picked && (
+            /*
+              WS8 / E180 — "You work here? Attach." The step should feel
+              behind-the-scenes: recognise the company, say what happens next in
+              one line, and get out of the way. Verification is deferred to the
+              pay gate — nobody self-associates to a company that will pay them,
+              so the pre-payout fraud risk is low and the friction here is real.
+            */
             <Notice tone="info">
+              <b>You work at {picked.name}?</b>{" "}
               {picked.domain ? (
                 <>
                   If your work email is <b>@{picked.domain}</b>{" "}
-                  you&apos;ll be approved straight away. Otherwise{" "}
-                  <b>{picked.name}</b>&apos;s admin gets your request.
+                  we&apos;ll attach you straight away — otherwise their admin
+                  approves it.
                 </>
               ) : (
-                <>
-                  <b>{picked.name}</b>&apos;s admin will be asked to approve you.
-                </>
+                <>We&apos;ll ask their admin to approve it.</>
               )}
             </Notice>
           )}
@@ -349,11 +389,11 @@ export function CompanyStep({
             company exists is what lets it be uploaded BEFORE define.
           */}
           <div>
-            <span className="mb-1.5 block text-[14px] font-bold text-ink">
+            <span className="mb-1 block text-[14px] font-bold text-ink">
               Company Logo
             </span>
-            <div className="flex items-center gap-4">
-              <span className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-[12px] border border-line bg-bg-soft">
+            <div className="flex items-center gap-3">
+              <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-[10px] border border-line bg-bg-soft">
                 {logoUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={logoUrl} alt="" className="h-full w-full object-contain" />
@@ -370,8 +410,8 @@ export function CompanyStep({
                 >
                   {logoBusy ? "Uploading…" : logoUrl ? "Change logo" : "Upload a logo"}
                 </button>
-                <span className="mt-1 block text-[13px] text-ink-2">
-                  Optional. PNG, JPG or WebP, up to 5 MB.
+                <span className="ml-3 text-[13px] text-ink-2">
+                  Optional — PNG, JPG or WebP.
                 </span>
               </span>
             </div>
@@ -403,7 +443,7 @@ export function CompanyStep({
             />
           </div>
 
-          <label className="flex cursor-pointer items-start gap-3 rounded-brand border border-line p-4">
+          <label className="flex cursor-pointer items-start gap-3 rounded-brand border border-line p-3">
             <input
               type="checkbox"
               checked={companyTos}
@@ -421,7 +461,9 @@ export function CompanyStep({
         </>
       )}
 
-      <label className="flex cursor-pointer items-start gap-3 rounded-brand border border-line p-4">
+      </div>
+
+      <label className="flex cursor-pointer items-start gap-3 rounded-brand border border-line p-3">
         <input
           type="checkbox"
           checked={attestation}
