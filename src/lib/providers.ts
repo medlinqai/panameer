@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { isMarketplaceVisible } from "@/lib/access";
+import { isMarketplaceVisible, providerMeetsRequired } from "@/lib/access";
 
 /**
  * A provider's PUBLIC marketplace profile by profile id. Public surface — no
@@ -24,6 +24,12 @@ export async function getPublicProviderProfile(
           last_name: true,
           title: true,
           photo_url: true,
+          // WS6 — the required-set gate reads these. Loaded explicitly so a
+          // missing relation is a compile error rather than a provider quietly
+          // hidden from the marketplace.
+          phone: true,
+          companyMemberships: { select: { status: true } },
+          site: { select: { addresses: { select: { id: true } } } },
         },
       },
       region: { select: { id: true, name: true } },
@@ -59,7 +65,15 @@ export async function getPublicProviderProfile(
   // be marketplace-visible.
   const isOwner =
     opts.viewerUserId != null && profile.person.user_id === opts.viewerUserId;
-  if (!isOwner && !isMarketplaceVisible(profile)) return null;
+  if (
+    !isOwner &&
+    !isMarketplaceVisible({
+      ...profile,
+      meetsRequired: providerMeetsRequired(profile),
+    })
+  ) {
+    return null;
+  }
 
   return {
     id: profile.id,

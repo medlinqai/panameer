@@ -265,57 +265,127 @@ export function isMarketplaceVisible(p: {
   completeness: number;
   paused_at: Date | null;
   /**
-   * PJv2 WS7 — identity is now an EXPLICIT condition, not merely a weight
-   * inside `completeness`. At 80% a provider could clear the threshold while
-   * still missing their date of birth, phone and address: 12 of 110 points is
-   * not enough to force it. Visibility means completeness + identity + the
-   * status/validation track — and explicitly NOT the old goal self-pick (E067).
+   * WS6 — THE REQUIRED SET, met. This replaced the completeness threshold as
+   * the driver of visibility.
    *
-   * Optional so pre-WS7 callers that only pass the three scalar fields keep
-   * compiling; when it is absent the identity condition is not applied, which
-   * is the previous behaviour rather than a silent new refusal.
+   * A percentage was a reasonable proxy while the wizard asked eleven
+   * questions. With six it is an indirect way of stating something the product
+   * can now state directly, and an indirect gate is how "I answered everything
+   * and I'm still invisible" happens — the arithmetic is silent. The set is
+   * Title · Role · Skill · Rate · Photo · Company · address · phone; bio,
+   * education, specializations, languages and date of birth are not in it.
+   *
+   * Optional so a caller that only has the three scalar columns still compiles
+   * and behaves as before rather than silently refusing everyone.
    */
-  hasIdentity?: boolean;
+  meetsRequired?: boolean;
 }): boolean {
   return (
     p.status === "ACTIVE" &&
-    p.completeness >= VISIBILITY_THRESHOLD &&
     p.paused_at == null &&
-    (p.hasIdentity ?? true)
+    (p.meetsRequired ?? p.completeness >= VISIBILITY_THRESHOLD)
   );
 }
 
-/** Does this profile carry the identity block visibility requires (WS7)? */
+/**
+ * Does this profile carry the CONTACT block visibility requires?
+ *
+ * DATE OF BIRTH IS GONE (WS7). It was in here, and it is the single line that
+ * would have kept every provider who walked the new six-step flow invisible:
+ * the wizard stopped asking for it, this kept demanding it, and nothing would
+ * have said so. Identity for marketplace purposes is now what a buyer actually
+ * needs to reach someone — an address and a phone number.
+ */
 export function hasIdentityBlock(p: {
-  date_of_birth: Date | string | null;
+  date_of_birth?: Date | string | null;
   person?: {
     phone?: string | null;
     site?: { addresses?: unknown[] | null } | null;
   } | null;
 }): boolean {
   return Boolean(
-    p.date_of_birth &&
-      p.person?.phone?.trim() &&
-      (p.person?.site?.addresses?.length ?? 0) > 0
+    p.person?.phone?.trim() && (p.person?.site?.addresses?.length ?? 0) > 0
+  );
+}
+
+/**
+ * The required set, computed from a LOADED profile.
+ *
+ * The in-memory gate and `marketplaceVisibleWhere` have to agree, and the
+ * completeness score alone cannot carry that agreement: optional points can
+ * compensate for a missing required item. A profile with every enrichment but
+ * no company scores 96 — comfortably over any threshold — while the DB
+ * predicate correctly excludes it. That disagreement is the listing-shows-what-
+ * the-detail-page-refuses inversion, so the callers compute this instead.
+ *
+ * DELIBERATELY DEMANDING ABOUT ITS INPUT: every field is required, because a
+ * caller that simply didn't load `companyMemberships` would otherwise get
+ * "no company" and hide a perfectly valid provider. Missing data must be a
+ * compile error, not a silent refusal.
+ */
+export function providerMeetsRequired(p: {
+  headline: string | null;
+  role_type_id: string | null;
+  skills: unknown[];
+  hourly_rate_cents: number | null;
+  rate_min_cents: number | null;
+  rate_max_cents: number | null;
+  onsite_rate_cents: number | null;
+  remote_rate_cents: number | null;
+  person: {
+    photo_url: string | null;
+    phone: string | null;
+    site?: { addresses?: unknown[] | null } | null;
+    companyMemberships: { status: string }[];
+  };
+}): boolean {
+  return Boolean(
+    p.headline?.trim() &&
+      p.role_type_id &&
+      p.skills.length > 0 &&
+      (p.hourly_rate_cents != null ||
+        p.rate_min_cents != null ||
+        p.rate_max_cents != null ||
+        p.onsite_rate_cents != null ||
+        p.remote_rate_cents != null) &&
+      p.person.photo_url &&
+      p.person.phone?.trim() &&
+      (p.person.site?.addresses?.length ?? 0) > 0 &&
+      p.person.companyMemberships.some((m) => m.status === "APPROVED")
   );
 }
 
 /**
  * Prisma `where`-fragment for marketplace-visible providers — use for listings
  * and the public detail read so the DB never returns a hidden profile.
+ *
+ * KEPT IN LOCKSTEP with `isMarketplaceVisible` and `missingRequired`. If the DB
+ * predicate and the in-memory one disagree, a listing shows a profile whose
+ * detail page then refuses to render it — which is worse than either being
+ * wrong on its own, because it looks like a broken page rather than a hidden
+ * profile. Every clause below is one item of the required set.
  */
 export function marketplaceVisibleWhere() {
   return {
     status: "ACTIVE" as const,
-    completeness: { gte: VISIBILITY_THRESHOLD },
     paused_at: null,
-    // WS7 — kept in lockstep with `isMarketplaceVisible`. If the DB predicate
-    // and the in-memory one disagree, a listing shows a profile whose detail
-    // page then refuses to render it.
-    date_of_birth: { not: null },
+    // Title · Role · Skill · Rate
+    headline: { not: "" },
+    role_type_id: { not: null },
+    skills: { some: {} },
+    OR: [
+      { hourly_rate_cents: { not: null } },
+      { rate_min_cents: { not: null } },
+      { rate_max_cents: { not: null } },
+      { onsite_rate_cents: { not: null } },
+      { remote_rate_cents: { not: null } },
+    ],
+    // Photo · Company · address · phone all live on the Person.
     person: {
+      photo_url: { not: null },
       phone: { not: null },
       site: { addresses: { some: {} } },
+      companyMemberships: { some: { status: "APPROVED" as const } },
     },
   };
 }

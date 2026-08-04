@@ -652,6 +652,8 @@ async function main() {
         certifications: full.certifications,
         specializations: full.specializations,
         photoUrl: full.person.photo_url,
+        // WS6 — the demo provider is bound to the seeded company.
+        hasCompany: true,
         date_of_birth: full.date_of_birth,
         hasAddress: Boolean(full.person.site?.addresses?.[0]?.line1?.trim()),
         hasPhone: Boolean(full.person.phone?.trim()),

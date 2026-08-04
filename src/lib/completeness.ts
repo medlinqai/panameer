@@ -64,8 +64,18 @@ export type CompletenessInput = {
   specializations: unknown[];
   /** Person.photo_url (lives on the Person, not the profile). */
   photoUrl: string | null;
-  /** Finish-page identity block (E019). */
-  date_of_birth: Date | string | null;
+  /**
+   * An APPROVED company membership (brief_company_model). Part of the required
+   * set: a work order is between COMPANIES, so a provider without one cannot be
+   * contracted, which makes showing them to buyers a promise we can't keep.
+   */
+  hasCompany: boolean;
+  /**
+   * ⚠ NO LONGER SCORED (WS7). Kept on the type — and nullable in the schema —
+   * because the column still exists and old rows still carry a value; nothing
+   * reads it for the meter or the gate any more.
+   */
+  date_of_birth?: Date | string | null;
   hasAddress: boolean;
   /** A phone number is on file. */
   hasPhone: boolean;
@@ -94,20 +104,86 @@ export type CompletenessInput = {
  * described things really are absent.
  */
 export const COMPLETENESS_WEIGHTS = {
-  // --- Collected by a REQUIRED wizard step ---------------------------------
-  workMethod: 5, //       set by the up-front user-type fork (WS1)
-  headline: 12, //        step 1  (Title)
-  field: 12, //           step 2  (Role + Domain)
-  skills: 18, //          step 2  (≥ 1, matching the step's own rule)
-  overview: 18, //        step 7  (≥ BIO_MIN_CHARS)
-  rate: 12, //            step 8  (a RANGE since WS0/E078c)
-  languages: 5, //        step 6  (≥ 1) — bonus by design; see invariant (2)
-  // --- Collected on the finish page ----------------------------------------
-  photo: 10, //           step 9
-  identity: 12, //        DOB + address + phone (verification stubbed, E036)
-  // --- Optional enrichment — any one of four ------------------------------
-  enrichment: 6,
+  // --- THE REQUIRED SET — every one of these is a prompted step ------------
+  headline: 12, //   1  Title
+  field: 12, //      2  Role(s)
+  skills: 16, //     3  Skills   (>= 1, the step's own rule)
+  rate: 12, //       4  Rate
+  photo: 10, //      5  Photo
+  company: 10, //    6  Company  (an APPROVED membership)
+  identity: 12, //      address + phone — collected on the photo step
+  // Required subtotal: 84. Above the 80 threshold with four points of margin,
+  // and deliberately NOT 100 — a provider who did the minimum is Visible, not
+  // Complete, and the meter has to have somewhere left to go.
+
+  // --- ENRICHMENT — no longer prompted, still worth points ----------------
+  overview: 8, //    a bio (>= BIO_MIN_CHARS)
+  languages: 4,
+  enrichment: 6, //  any one of work history / education / certs / specs
+  workMethod: 4, //  set by the up-front provider-vs-recruiter fork
+  // Total 106, capped at 100: a full profile reaches 100 with headroom, so no
+  // single optional section can hold anyone under it.
 } as const;
+
+/**
+ * THE REQUIRED SET, as a predicate.
+ *
+ * This — not the percentage — is what the marketplace gate reads now
+ * (brief_onboarding_slimdown, decision 1). The 80% number was the visibility
+ * driver for as long as the wizard asked eleven questions; with six, a
+ * threshold is an indirect way of saying something the product can now say
+ * directly. Keeping the score as the gate is how "I answered everything and
+ * I'm still invisible" happens, because the arithmetic is invisible.
+ *
+ * Bio, Education, Specializations, Languages and DOB are deliberately absent.
+ */
+export type RequiredSetInput = Pick<
+  CompletenessInput,
+  "headline" | "role_type_id" | "skills" | "photoUrl" | "hasAddress" | "hasPhone"
+> & {
+  hourly_rate_cents?: number | null;
+  rate_min_cents?: number | null;
+  rate_max_cents?: number | null;
+  onsite_rate_cents?: number | null;
+  remote_rate_cents?: number | null;
+  /** An APPROVED company membership exists (brief_company_model). */
+  hasCompany: boolean;
+};
+
+/** Which required items are still missing. Empty means publishable + Visible. */
+export function missingRequired(p: RequiredSetInput): string[] {
+  const missing: string[] = [];
+  if (!p.headline?.trim()) missing.push("a title");
+  if (!p.role_type_id) missing.push("a role");
+  if (p.skills.length < 1) missing.push("at least one skill");
+  if (!hasAnyRate(p)) missing.push("your rate");
+  if (!p.photoUrl) missing.push("a photo");
+  if (!p.hasCompany) missing.push("your company");
+  if (!p.hasAddress) missing.push("your address");
+  if (!p.hasPhone) missing.push("your phone number");
+  return missing;
+}
+
+export function meetsRequiredSet(p: RequiredSetInput): boolean {
+  return missingRequired(p).length === 0;
+}
+
+/** Any rate at all. The wizard writes a range; Settings still writes the pair. */
+function hasAnyRate(p: {
+  hourly_rate_cents?: number | null;
+  rate_min_cents?: number | null;
+  rate_max_cents?: number | null;
+  onsite_rate_cents?: number | null;
+  remote_rate_cents?: number | null;
+}): boolean {
+  return (
+    p.rate_min_cents != null ||
+    p.rate_max_cents != null ||
+    p.hourly_rate_cents != null ||
+    p.onsite_rate_cents != null ||
+    p.remote_rate_cents != null
+  );
+}
 
 /** Compute a provider's completeness score (0–100). */
 export function computeProviderCompleteness(p: CompletenessInput): number {
@@ -115,38 +191,26 @@ export function computeProviderCompleteness(p: CompletenessInput): number {
   const W = COMPLETENESS_WEIGHTS;
 
   if (p.headline && p.headline.trim() !== "") score += W.headline;
-  if (p.overview && p.overview.trim().length >= BIO_MIN_CHARS) score += W.overview;
-  if (p.work_method) score += W.workMethod;
-  // The field is the PAIR — half of it isn't a usable answer.
-  if (p.pillar_id && p.role_type_id) score += W.field;
+  // The ROLE is the answer now. `pillar_id` (the domain) is derived server-side
+  // from it and is no longer asked, so requiring the pair here would score zero
+  // for a step the provider completed — the invisible-profile bug, again.
+  if (p.role_type_id) score += W.field;
   if (p.skills.length >= 1) score += W.skills;
-  if (p.languages.length >= 1) score += W.languages;
-
-  // Any rate counts. The wizard writes `hourly_rate_cents`; the onsite/remote
-  // pair predates it and is still editable in Settings.
-  if (
-    p.rate_min_cents != null ||
-    p.rate_max_cents != null ||
-    p.hourly_rate_cents != null ||
-    p.onsite_rate_cents != null ||
-    p.remote_rate_cents != null
-  ) {
-    score += W.rate;
-  }
-
+  if (hasAnyRate(p)) score += W.rate;
   if (p.photoUrl) score += W.photo;
+  if (p.hasCompany) score += W.company;
 
-  // The finish page's identity block scores as a unit: a DOB with no phone
-  // isn't a partially-trustworthy provider, it's an unfinished one.
-  //
-  // brief_S/E036 STUBBED phone verification, so `phoneVerified` can never be
-  // true through the wizard. Requiring it here would silently cap every
-  // finished provider at 95% and quietly break brief_R's guarantee that a
-  // completed journey reaches 100% — the same class of bug brief_R fixed.
-  // While the stub stands, a phone ON FILE satisfies this; restore
-  // `p.phoneVerified` alongside the publish-gate line when SMS is switched on.
-  if (p.date_of_birth && p.hasAddress && p.hasPhone) score += W.identity;
+  /*
+    IDENTITY IS ADDRESS + PHONE. Date of birth left the wizard entirely (WS7),
+    so scoring it here would cap every provider who walked the new flow at 88
+    and — under the old gate — hold them below 80 outright. If age or legal
+    capacity is ever needed it rides the tax/payout gate, never the profile.
+  */
+  if (p.hasAddress && p.hasPhone) score += W.identity;
 
+  if (p.work_method) score += W.workMethod;
+  if (p.overview && p.overview.trim().length >= BIO_MIN_CHARS) score += W.overview;
+  if (p.languages.length >= 1) score += W.languages;
   if (
     p.employers.length >= 1 ||
     p.education.length >= 1 ||

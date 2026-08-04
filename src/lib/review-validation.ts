@@ -48,7 +48,6 @@ export type ReviewFix =
   | { kind: "photo" };
 
 export type ReviewField =
-  | "dateOfBirth"
   | "phone"
   | "line1"
   | "city"
@@ -75,7 +74,6 @@ export type ReviewInput = {
   roleTypeId: string | null;
   skillIds: string[];
   languages: unknown[];
-  dateOfBirth: string | null;
   phone: string;
   photoUrl: string | null;
   address: {
@@ -119,24 +117,27 @@ export function reviewItems(p: ReviewInput): ReviewItem[] {
       step: "title",
     });
   }
-  if (p.overview.trim().length < MIN_BIO_CHARS) {
-    err(
-      "overview",
-      p.overview.trim().length === 0
-        ? "Write a bio — at least 100 characters."
-        : `Your bio is ${p.overview.trim().length} characters; it needs at least ${MIN_BIO_CHARS}.`,
-      "Write bio",
-      { kind: "step", step: "bio" }
-    );
-  }
+  /*
+    THE BIO IS NO LONGER AN ERROR (WS6/WS7). It stopped being a prompted step,
+    so blocking publish on it would refuse a provider who completed every step
+    they were shown. It stays below as a `chg` — worth having, never a gate.
+
+    The one bio condition that IS still hard is the opposite end: an
+    AI-generated bio over the maximum, which the provider must trim here
+    because no step will offer to. That check belongs to WS5.
+  */
   if (p.hourlyRateCents == null) {
     err("rate", "Set your hourly rate.", "Set rate", {
       kind: "step",
       step: "rate",
     });
   }
-  // Server checks `pillar_id` — the Domain half of the Role → Domain pair.
-  if (!p.pillarId) {
+  /*
+    THE ROLE is the answer now, not the (Role, Domain) pair: the domain left the
+    UI and is derived server-side, so checking `pillarId` here would flash an
+    error for a question nobody was asked.
+  */
+  if (!p.roleTypeId) {
     err("field", "Choose the work you do.", "Choose work", {
       kind: "step",
       step: "catalog",
@@ -148,18 +149,9 @@ export function reviewItems(p: ReviewInput): ReviewItem[] {
       step: "catalog",
     });
   }
-  if (p.languages.length === 0) {
-    err("languages", "Add at least one language.", "Add language", {
-      kind: "step",
-      step: "languages",
-    });
-  }
-  if (!p.dateOfBirth) {
-    err("dateOfBirth", "Add your date of birth.", "Add date of birth", {
-      kind: "field",
-      field: "dateOfBirth",
-    });
-  }
+  // Languages and date of birth are NOT errors any more — neither is prompted
+  // and neither gates publish. Languages remains a suggestion below; DOB is
+  // gone from the product entirely (WS7).
   if (!p.phone.trim()) {
     err("phone", "Add your phone number.", "Add phone", {
       kind: "field",
@@ -176,15 +168,14 @@ export function reviewItems(p: ReviewInput): ReviewItem[] {
   }
 
   // --- CHANGES — optional, and each one is worth money ---------------------
-  // The address is part of the completeness identity block (DOB + address +
-  // phone) that carries 10 points toward the 80% visibility threshold, so a
-  // missing one is worth flagging — but it has never blocked publishing.
+  // The address is part of the REQUIRED set now (contact), so it is an error
+  // rather than a suggestion — see below.
   const a = p.address;
   const addressMissing = !a || !a.line1.trim() || !a.city.trim() || !a.state.trim() || !a.postalCode.trim();
   if (addressMissing) {
-    chg(
+    err(
       "address",
-      "Complete your address — it counts toward becoming visible to buyers.",
+      "Complete your address — buyers need somewhere to reach you.",
       "Add address",
       { kind: "field", field: !a?.line1.trim() ? "line1" : "city" }
     );

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { Viewer } from "@/lib/access";
+import { recomputeCompleteness } from "@/lib/onboarding";
 import { OnboardingError } from "@/lib/onboarding";
 import {
   COMPANY_TOS_VERSION,
@@ -166,6 +167,7 @@ export async function defineCompany(viewer: Viewer, input: DefineInput) {
   });
 
   if (!reuse) await moveInto(person.id, company.id, person.company_id);
+  await refreshProviderScore(person.id);
 
   return { companyId: company.id, name: company.name, status: "APPROVED" as const };
 }
@@ -224,6 +226,7 @@ export async function joinCompany(viewer: Viewer, input: JoinInput) {
   });
 
   if (auto) await moveInto(person.id, target.id, person.company_id);
+  if (auto) await refreshProviderScore(person.id);
 
   return {
     companyId: target.id,
@@ -497,6 +500,7 @@ export async function decideRequest(
       select: { company_id: true },
     });
     if (joiner) await moveInto(target.person_id, target.company_id, joiner.company_id);
+    await refreshProviderScore(target.person_id);
   }
 
   return { ok: true as const, status: decision };
@@ -535,4 +539,25 @@ export async function acceptCompanyTos(viewer: Viewer, companyId: string) {
     },
   });
   return { ok: true as const };
+}
+
+/**
+ * A company binding is part of the provider REQUIRED SET (WS6), so gaining one
+ * changes the completeness score — and the score is stored, not computed on
+ * read. Without this the review page shows a stale number straight after the
+ * company step, which reads as "I did that and nothing happened".
+ *
+ * Silent when the person has no provider profile: buyers and requesters go
+ * through the same company code and have no score to recompute.
+ */
+async function refreshProviderScore(personId: string): Promise<void> {
+  try {
+    const profile = await prisma.providerProfile.findFirst({
+      where: { person_id: personId },
+      select: { id: true },
+    });
+    if (profile) await recomputeCompleteness(profile.id);
+  } catch (e) {
+    console.error("[company] completeness refresh failed (non-fatal):", e);
+  }
 }

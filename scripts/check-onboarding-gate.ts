@@ -4,6 +4,7 @@ import {
   type CompletenessInput,
 } from "../src/lib/completeness";
 import { isMarketplaceVisible, hasIdentityBlock } from "../src/lib/access";
+import { meetsRequiredSet, missingRequired } from "../src/lib/completeness";
 
 /**
  * THE GATE HARNESS (brief_onboarding_slimdown WS0).
@@ -48,6 +49,7 @@ function requiredOnly(over: Partial<CompletenessInput> = {}): CompletenessInput 
     skills: ["skill-1"], //                     3 Skills   (>= 1)
     hourly_rate_cents: 12500, //                4 Rate
     photoUrl: "https://example.test/p.png", //  5 Photo
+    hasCompany: true, //                        6 Company (approved membership)
     hasAddress: true, //                        contact
     hasPhone: true, //                          contact
     // --- everything the slimdown REMOVED as a prompted step ---------------
@@ -80,12 +82,13 @@ console.log("=== the REQUIRED-ONLY path must publish AND be visible ===");
   );
 
   const identity = hasIdentityBlock({
-    date_of_birth: p.date_of_birth,
     person: { phone: "+15550104477", site: { addresses: [{}] } },
   });
   check("identity = address + phone, WITHOUT a date of birth", identity, {
     identity,
   });
+
+  check("the required set is met", meetsRequiredSet(p), missingRequired(p));
 
   check(
     "isMarketplaceVisible() is true for the required-only profile",
@@ -93,7 +96,7 @@ console.log("=== the REQUIRED-ONLY path must publish AND be visible ===");
       status: "ACTIVE",
       completeness: score,
       paused_at: null,
-      hasIdentity: identity,
+      meetsRequired: meetsRequiredSet(p),
     })
   );
 }
@@ -122,28 +125,26 @@ for (const [label, over] of [
   ["no skills", { skills: [] }],
   ["no rate", { hourly_rate_cents: null }],
   ["no photo", { photoUrl: null }],
+  ["no company", { hasCompany: false }],
   ["no address", { hasAddress: false }],
   ["no phone", { hasPhone: false }],
 ] as [string, Partial<CompletenessInput>][]) {
   const p = requiredOnly(over);
   const score = computeProviderCompleteness(p);
-  const identity = hasIdentityBlock({
-    date_of_birth: p.date_of_birth,
-    person: {
-      phone: p.hasPhone ? "+15550104477" : null,
-      site: { addresses: p.hasAddress ? [{}] : [] },
-    },
-  });
   const visible = isMarketplaceVisible({
     status: "ACTIVE",
     completeness: score,
     paused_at: null,
-    hasIdentity: identity,
+    meetsRequired: meetsRequiredSet(p),
   });
   // A missing REQUIRED field must stop visibility — by score, by identity, or
   // by the publish gate. Each is checked where it belongs; here we assert the
   // provider does not slip through as visible.
-  check(`${label} → NOT visible`, !visible, { score, identity, visible });
+  check(`${label} → NOT visible`, !visible, {
+    score,
+    visible,
+    missing: missingRequired(p),
+  });
 }
 
 console.log("=== a full profile still reaches 100 ===");

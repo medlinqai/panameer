@@ -6,6 +6,7 @@ import { hashPassword } from "@/lib/password";
 import { acceptInviteForUser } from "@/lib/coordinator";
 import {
   computeProviderCompleteness,
+  missingRequired,
   VISIBILITY_THRESHOLD,
 } from "@/lib/completeness";
 import type { Viewer } from "@/lib/access";
@@ -1815,6 +1816,14 @@ export async function recomputeCompleteness(profileId: string): Promise<number> 
           phone: true,
           phone_verified_at: true,
           site: { select: { addresses: { select: { line1: true }, take: 1 } } },
+          // WS6 — company is part of the required set now, so the meter has to
+          // be able to see it. pitfalls.md: add the field to CompletenessInput
+          // AND to every caller that builds one, or the weight is unreachable.
+          companyMemberships: {
+            where: { status: "APPROVED" as const },
+            select: { id: true },
+            take: 1,
+          },
         },
       },
     },
@@ -1836,7 +1845,7 @@ export async function recomputeCompleteness(profileId: string): Promise<number> 
     certifications: profile.certifications,
     specializations: profile.specializations,
     photoUrl: profile.person.photo_url,
-    date_of_birth: profile.date_of_birth,
+    hasCompany: profile.person.companyMemberships.length > 0,
     // An address row exists only once a street line has been entered.
     hasAddress: Boolean(profile.person.site?.addresses?.[0]?.line1?.trim()),
     hasPhone: Boolean(profile.person.phone?.trim()),
@@ -1883,29 +1892,45 @@ export async function publishProfile(viewer: Viewer) {
   }
   const pp = p.providerProfile!;
 
-  // The finish page's required fields (E019). Reported together so the user
-  // fixes everything in one pass instead of one error at a time.
-  const missing: string[] = [];
-  if (!pp.headline.trim()) missing.push("a professional title");
-  if (!pp.overview || pp.overview.trim().length < MIN_BIO_CHARS) {
-    missing.push("a bio");
-  }
-  if (pp.hourly_rate_cents == null) missing.push("your hourly rate");
-  if (!pp.pillar_id) missing.push("the work you do");
-  if (pp.skills.length === 0) missing.push("at least one skill");
-  if (pp.languages.length === 0) missing.push("at least one language");
-  if (!pp.date_of_birth) missing.push("your date of birth");
-  if (!p.phone) missing.push("your phone number");
-  // WS7 addendum — a photo is REQUIRED to publish. It stays a scored
-  // completeness field (10 points, weights untouched), so this is a gate rule
-  // and not a scoring one: a photoless profile can still reach 100% and would
-  // otherwise have gone live faceless, which is the one thing buyers say they
-  // skip past. Mirrored in `review-validation.ts` — keep the two in lockstep.
-  if (!p.photo_url?.trim()) missing.push("a profile photo");
-  // E036 — phone VERIFICATION is stubbed for now so a walk can complete without
-  // SMS credentials. The number is still required; only the verified-ness is
-  // waived. Restore this line when SMS is switched on (brief_P machinery is
-  // built and unchanged — see `phone-verification.ts`).
+  /*
+    THE PUBLISH GATE IS THE REQUIRED SET (WS6) — and it is the same set the
+    marketplace gate reads, deliberately. Publishing into invisibility is the
+    worst outcome this flow can produce: the provider is told they are live and
+    no buyer can see them.
+
+    Bio, languages and date of birth are GONE from this list. They were here
+    while the wizard asked for them; with the slimdown it no longer does, so
+    keeping them would refuse to publish a provider who completed every step
+    they were shown — a dead end with no way out from inside the product.
+
+    Company is new here: a work order is between companies, so a provider
+    without an approved membership cannot be contracted.
+  */
+  const person = await prisma.person.findUnique({
+    where: { id: p.id },
+    select: {
+      companyMemberships: {
+        where: { status: "APPROVED" as const },
+        select: { id: true },
+        take: 1,
+      },
+    },
+  });
+
+  const missing = missingRequired({
+    headline: pp.headline,
+    role_type_id: pp.role_type_id,
+    skills: pp.skills,
+    photoUrl: p.photo_url,
+    hourly_rate_cents: pp.hourly_rate_cents,
+    rate_min_cents: pp.rate_min_cents,
+    rate_max_cents: pp.rate_max_cents,
+    onsite_rate_cents: pp.onsite_rate_cents,
+    remote_rate_cents: pp.remote_rate_cents,
+    hasCompany: (person?.companyMemberships.length ?? 0) > 0,
+    hasAddress: Boolean(p.site?.addresses?.[0]?.line1?.trim()),
+    hasPhone: Boolean(p.phone?.trim()),
+  });
 
   if (missing.length > 0) {
     throw new OnboardingError(

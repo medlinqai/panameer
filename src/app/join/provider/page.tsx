@@ -942,14 +942,7 @@ export default function JoinProviderPage() {
   const publish = async () => {
     setError(null);
 
-    // E090 — validate the DOB BEFORE anything is sent. Same module the server
     // uses, so a value that passes here cannot be refused there.
-    const dobProblem = dobError(profile.dateOfBirth);
-    if (dobProblem) {
-      setDobMessage(dobProblem);
-      focusReviewField("dateOfBirth");
-      return;
-    }
     setDobMessage(null);
 
     setBusy(true);
@@ -965,7 +958,6 @@ export default function JoinProviderPage() {
         stated cause was wrong. Stop here and let postStep's error stand.
       */
       const saved = await postStep("finish", {
-        dateOfBirth: profile.dateOfBirth,
         address: profile.address,
         // E036 — phone verification is stubbed: the number is saved with the
         // rest of the details and publishing no longer waits on an SMS code.
@@ -2417,12 +2409,8 @@ export default function JoinProviderPage() {
     // skippable, because nobody should be blocked on finding a headshot.
     // ---- 9/10 — Photo & Details: the WRAPUP step (WS8/E088) -----------
     case "picture": {
-      const wrapupDobProblem = dobError(profile.dateOfBirth);
       const wrapupReady =
-        Boolean(profile.photoUrl) &&
-        Boolean(profile.dateOfBirth) &&
-        !wrapupDobProblem &&
-        phoneInput.trim() !== "";
+        Boolean(profile.photoUrl) && phoneInput.trim() !== "";
 
       /**
        * Saves BOTH halves. The photo is its own step payload; date of birth,
@@ -2432,13 +2420,6 @@ export default function JoinProviderPage() {
        * would put the same three columns behind two different writers.
        */
       const saveWrapup = async () => {
-        const dobProblem = dobError(profile.dateOfBirth);
-        if (dobProblem) {
-          setDobMessage(dobProblem);
-          focusReviewField("dateOfBirth");
-          return;
-        }
-        setDobMessage(null);
         if (!(await postStep("picture", { photoUrl: profile.photoUrl ?? null }))) {
           return;
         }
@@ -2446,7 +2427,6 @@ export default function JoinProviderPage() {
         // rather than moving on and reporting a later failure's message.
         if (
           !(await postStep("finish", {
-            dateOfBirth: profile.dateOfBirth,
             address: profile.address,
             phone: phoneInput,
           }))
@@ -2518,34 +2498,14 @@ export default function JoinProviderPage() {
           <div className="mt-6">
             <ProfileCard title="Your Details">
               <div className="space-y-3">
-                <Field label="Date of Birth *">
-                  <TextInput
-                    id="review-dateOfBirth"
-                    type="date"
-                    value={profile.dateOfBirth ?? ""}
-                    aria-invalid={dobMessage ? true : undefined}
-                    aria-describedby={
-                      dobMessage ? "review-dateOfBirth-error" : undefined
-                    }
-                    className={
-                      dobMessage ? "border-red-600 focus:border-red-600" : ""
-                    }
-                    onChange={(e) => {
-                      const v = e.target.value || null;
-                      setProfile((p) => ({ ...p, dateOfBirth: v }));
-                      setDobMessage(dobError(v));
-                    }}
-                  />
-                  {dobMessage && (
-                    <span
-                      id="review-dateOfBirth-error"
-                      role="alert"
-                      className="mt-1.5 block text-[13px] font-semibold text-red-700"
-                    >
-                      {dobMessage}
-                    </span>
-                  )}
-                </Field>
+                {/*
+                  DATE OF BIRTH IS GONE (WS7). It was required here and gated
+                  both publish and marketplace visibility, and nothing in the
+                  marketplace ever used it: a buyer needs to reach a provider,
+                  not know their age. If age or legal capacity is ever needed it
+                  rides the tax/payout gate, where there is a reason to ask.
+                  The column stays nullable — no destructive drop.
+                */}
                 <Field label="Phone *">
                   <TextInput
                     id="review-phone"
@@ -2700,8 +2660,7 @@ export default function JoinProviderPage() {
           roleTypeId: profile.roleTypeId,
           skillIds: profile.skillIds,
           languages: profile.languages,
-          dateOfBirth: profile.dateOfBirth,
-          phone: phoneInput,
+            phone: phoneInput,
           photoUrl: profile.photoUrl,
           address: profile.address,
           employers: profile.employers,
