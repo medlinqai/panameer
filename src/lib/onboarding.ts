@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import { dobError } from "@/lib/dob";
 import { projectToCard } from "@/lib/project-card";
 import { toView as toArtifactView } from "@/lib/artifacts";
 import { hashPassword } from "@/lib/password";
@@ -777,6 +776,9 @@ export async function getOnboardingState(viewer: Viewer) {
       photoUrl: p.photo_url,
       firstName: p.first_name,
       lastName: p.last_name,
+      // WS7 — READ-ONLY REMNANT. Nothing captures or gates on this any more;
+      // it is still projected so an already-stored value stays visible in
+      // Settings rather than appearing to have been deleted.
       dateOfBirth: pp.date_of_birth
         ? pp.date_of_birth.toISOString().slice(0, 10)
         : null,
@@ -1584,19 +1586,19 @@ export async function applyProviderSection(
       // This persists DOB + address and nothing else, so a half-filled finish
       // page still saves. Publishing is a SEPARATE call (`publishProfile`),
       // which is where the required-field gate lives.
-      // E090 — the age rule now comes from `lib/dob.ts`, the SAME module the
-      // review field validates with, so the client cannot allow a value the
-      // server will reject. This throw is still authoritative; the client check
-      // only spares the user a round trip.
-      const dobMessage = dobError(data.dateOfBirth as string | null | undefined);
-      if (dobMessage) throw new OnboardingError(dobMessage, "INVALID");
-      const dob = data.dateOfBirth ? new Date(data.dateOfBirth) : null;
+      /*
+        DATE OF BIRTH IS NO LONGER CAPTURED (WS7 / E178).
 
-      await prisma.providerProfile.update({
-        where: { id: profileId },
-        data: { date_of_birth: dob },
-      });
+        It gated publish and marketplace visibility and nothing in the
+        marketplace ever read it — a buyer needs to reach a provider, not know
+        their age. If age or legal capacity is ever required it belongs to the
+        tax/payout gate, where there is a reason to ask and a form that already
+        asks it.
 
+        The COLUMN stays, nullable, and existing values are left alone: no
+        destructive drop, per the brief. `lib/dob.ts` also stays — it is the
+        validator that gate will want.
+      */
       // E036 — phone verification is STUBBED. We store the number the provider
       // typed so the profile is complete and publishable; we do NOT mark it
       // verified, because it hasn't been. The real SMS challenge/response is

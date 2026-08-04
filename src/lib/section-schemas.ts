@@ -197,6 +197,9 @@ export const SECTION_SCHEMAS = {
     .strict(),
   finish: z
     .object({
+      // WS7 — accepted-and-ignored rather than refused: an older client tab
+      // mid-flow would otherwise 400 on a field the server simply stopped
+      // caring about. Nothing reads it.
       dateOfBirth: z.string().nullable().optional(),
       phone: z.string().nullable().optional(),
       address: addressShape.nullable().optional(),

@@ -50,7 +50,6 @@ import {
   ProjectsBody,
   WorkHistoryBody,
 } from "@/components/profile/sections";
-import { dobError } from "@/lib/dob";
 import { LANGUAGES } from "@/lib/countries";
 import { LocationFields } from "@/components/onboarding/LocationFields";
 import { CompanyStep } from "@/components/company/CompanyStep";
@@ -268,7 +267,6 @@ type ProfilePayload = {
   photoUrl?: string | null;
   firstName?: string | null;
   lastName?: string | null;
-  dateOfBirth?: string | null;
   phone?: string | null;
   phoneVerified?: boolean;
   address?: {
@@ -357,7 +355,6 @@ type Profile = {
   photoUrl: string | null;
   firstName: string;
   lastName: string;
-  dateOfBirth: string | null;
   phone: string | null;
   phoneVerified: boolean;
   address: AddressDraft | null;
@@ -389,7 +386,6 @@ const emptyProfile = (): Profile => ({
   photoUrl: null,
   firstName: "",
   lastName: "",
-  dateOfBirth: null,
   phone: null,
   phoneVerified: false,
   address: null,
@@ -420,7 +416,6 @@ export default function JoinProviderPage() {
    * message that named the actual problem was the one the user never got to
    * read. Field-level errors survive because nothing else writes to them.
    */
-  const [dobMessage, setDobMessage] = useState<string | null>(null);
   const [notProvider, setNotProvider] = useState(false);
 
   const [acct, setAcct] = useState<SignUpValues>({
@@ -563,7 +558,6 @@ export default function JoinProviderPage() {
       photoUrl: p.photoUrl ?? null,
       firstName: p.firstName ?? "",
       lastName: p.lastName ?? "",
-      dateOfBirth: p.dateOfBirth ?? null,
       phone: p.phone ?? null,
       phoneVerified: !!p.phoneVerified,
       address: p.address
@@ -941,9 +935,6 @@ export default function JoinProviderPage() {
 
   const publish = async () => {
     setError(null);
-
-    // uses, so a value that passes here cannot be refused there.
-    setDobMessage(null);
 
     setBusy(true);
     try {
@@ -2413,9 +2404,9 @@ export default function JoinProviderPage() {
         Boolean(profile.photoUrl) && phoneInput.trim() !== "";
 
       /**
-       * Saves BOTH halves. The photo is its own step payload; date of birth,
-       * phone and address go through the `finish` handler, which is where those
-       * columns are written. Two calls rather than one because the step handlers
+       * Saves BOTH halves. The photo is its own step payload; phone and
+       * address go through the `finish` handler, which is where those columns
+       * are written. Two calls rather than one because the step handlers
        * are keyed by step, and inventing a third payload shape to merge them
        * would put the same three columns behind two different writers.
        */
@@ -2441,7 +2432,7 @@ export default function JoinProviderPage() {
           {...shell({
             title: "Last thing — your photo and a few details",
             subtitle:
-              "Profiles with a photo get noticeably more responses. We need your date of birth, phone and address too; they stay private and are what make your profile visible to buyers.",
+              "Profiles with a photo get noticeably more responses. We need your phone and address too — they stay private, and they're how a buyer reaches you.",
             onContinue: saveWrapup,
             continueDisabled: !wrapupReady,
           })}
