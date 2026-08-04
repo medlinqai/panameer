@@ -1087,17 +1087,22 @@ export async function applyProviderSection(
       step, and that is handled where it belongs — the role writer prunes skills
       outside the claimed ROLES (WS2).
     */
-    case "roles": {
-      await applyProviderSection(profileId, personId, "category", data);
-      break;
-    }
-    case "skills": {
-      await applyProviderSection(profileId, personId, "skills", data);
-      break;
-    }
+    /*
+      ⚠ THE STEP NAMES AND THE SECTION NAMES ARE DIFFERENT NAMESPACES, and this
+      switch is the SECTION one.
+
+      WS3 first put `case "roles"` and `case "skills"` here. `applyProviderSection`
+      already has a "skills" section further down, so the new case shadowed it
+      and delegated to "skills" — itself — and every skills save died with
+      "Maximum call stack size exceeded", surfacing as a 500 and "Add at least
+      one skill" on a profile that had picked three. The build was clean and the
+      UI walk passed, because nothing had tried to SAVE.
+
+      The step→section mapping belongs in `saveProviderStep`, which is where it
+      is now. This case stays as it always was: the combined page's section,
+      still reachable from Settings.
+    */
     case "catalog": {
-      // The retired combined page. Still reachable from Settings and from an
-      // older client tab, so it keeps saving both halves.
       await applyProviderSection(profileId, personId, "category", data);
       await applyProviderSection(profileId, personId, "skills", data);
       break;
@@ -1909,7 +1914,14 @@ export async function saveProviderStep(
   if (p.user?.email_verified == null) {
     throw new OnboardingError("Verify your email first", "NOT_VERIFIED");
   }
-  await applyProviderSection(p.providerProfile!.id, p.id, step, data);
+  /*
+    WS3 — the STEP "roles" writes the SECTION "category". Every other step name
+    happens to equal its section name, which is exactly why this mapping has to
+    be explicit: an implicit identity that holds for nine of ten cases is the
+    kind that gets assumed for the tenth.
+  */
+  const section: ProfileSection = step === "roles" ? "category" : (step as ProfileSection);
+  await applyProviderSection(p.providerProfile!.id, p.id, section, data);
   return getOnboardingState(viewer);
 }
 
@@ -1993,7 +2005,55 @@ export async function publishProfile(viewer: Viewer) {
     an absurd trade.
   */
   await recordPublishAudit(pp.id);
+  await recordGapFlags(pp.id);
   return getOnboardingState(viewer);
+}
+
+/**
+ * WS5 — record which optional sections this profile left empty.
+ *
+ * Written at publish, when "what did they choose not to fill in" is finally a
+ * settled question. RECORDED, NOT SENT: the re-engagement engine is its own
+ * feature and out of scope, but it cannot be built retrospectively against
+ * history nobody kept.
+ *
+ * Never fatal — a telemetry write must not cost somebody their publish.
+ */
+async function recordGapFlags(profileId: string): Promise<void> {
+  try {
+    const pp = await prisma.providerProfile.findUnique({
+      where: { id: profileId },
+      select: {
+        overview: true,
+        _count: {
+          select: {
+            education: true,
+            specializations: true,
+            languages: true,
+            employers: true,
+            certifications: true,
+          },
+        },
+      },
+    });
+    if (!pp) return;
+    const data = {
+      no_bio: !pp.overview?.trim(),
+      no_education: pp._count.education === 0,
+      no_specializations: pp._count.specializations === 0,
+      no_languages: pp._count.languages === 0,
+      no_work_history: pp._count.employers === 0,
+      no_certifications: pp._count.certifications === 0,
+      computed_at: new Date(),
+    };
+    await prisma.profileGapFlags.upsert({
+      where: { provider_profile_id: profileId },
+      update: data,
+      create: { provider_profile_id: profileId, ...data },
+    });
+  } catch (e) {
+    console.error("[onboarding] gap flags write failed (non-fatal):", e);
+  }
 }
 
 /**

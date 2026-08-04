@@ -2665,6 +2665,23 @@ export default function JoinProviderPage() {
         })
       );
 
+      /*
+        WS5 — a section's own quiet note, rendered inside it.
+
+        Non-blocking by construction: it takes its text from the `changes` list
+        that used to be a panel, so the two can never disagree about what is
+        suggested, and it renders as a sentence rather than a warning row.
+      */
+      const noteFor = (id: string) => {
+        const item = changes.find((c) => c.id === id);
+        if (!item) return null;
+        return (
+          <p className="mt-3 text-[13.5px] leading-relaxed text-ink-2">
+            {item.message}
+          </p>
+        );
+      };
+
       /** Click-to-fix: jump to the step, focus the field, or open the modal. */
       const applyFix = (fix: ReviewFix) => {
         switch (fix.kind) {
@@ -2678,6 +2695,21 @@ export default function JoinProviderPage() {
             setCertSignal((n) => n + 1);
             break;
           case "field": {
+            /*
+              WS5 — the BIO is edited on THIS page. It has no step to travel to
+              any more, so sending the fix to the photo step would scroll past
+              the very field it is about. Everything else still lives on the
+              photo step.
+            */
+            if (fix.field === "overview") {
+              const bio = document.getElementById("review-overview");
+              bio?.scrollIntoView({ behavior: "smooth", block: "center" });
+              window.setTimeout(
+                () => (bio as HTMLTextAreaElement | null)?.focus(),
+                350
+              );
+              break;
+            }
             // WS8 — these inputs live on the Photo & Details step now, so the
             // click-to-fix has to travel there before it can focus anything.
             goTo("picture");
@@ -2755,7 +2787,22 @@ export default function JoinProviderPage() {
         >
           {error && <Notice>{error}</Notice>}
 
-          <ReviewChecklist errors={errors} changes={changes} onFix={applyFix} />
+          {/*
+            WS5 / E181 — THE BIG SUGGESTIONS PANEL IS GONE.
+
+            A wall of amber "needs attention" rows at the top of the last screen
+            reads as "here is all this work, and it is still not right" — the
+            opposite of a page whose whole claim is that you are two minutes
+            from published. `profile_tiers.md` makes the same point: with a lot
+            missing, keep the top light and let the SECTIONS carry their own
+            fixes.
+
+            So only ERRORS appear up here — and after WS6 there is usually
+            exactly one candidate, an AI-written bio over the limit. The
+            suggestions moved into the sections they are about, as one quiet
+            line each.
+          */}
+          <ReviewChecklist errors={errors} changes={[]} onFix={applyFix} />
 
           {/* The soft page background the published profile sits on, so the
               white section cards read the same way here as they do there. */}
@@ -2783,11 +2830,79 @@ export default function JoinProviderPage() {
                     {profile.photoUrl ? "Change Photo" : "+ Add Photo"}
                   </button>
                   <EditButton title="Title" onClick={() => goTo("title")} label="Edit title" />
-                  <EditButton title="Bio" onClick={() => goTo("bio")} label="Edit bio" />
+                  {/* WS5 — the bio is edited on THIS page; there is no bio
+                      step to travel to any more. */}
+                  <EditButton
+                    title="Bio"
+                    onClick={() => {
+                      const el = document.getElementById("review-overview");
+                      el?.scrollIntoView({ behavior: "smooth", block: "center" });
+                      window.setTimeout(
+                        () => (el as HTMLTextAreaElement | null)?.focus(),
+                        350
+                      );
+                    }}
+                    label="Edit bio"
+                  />
                   <EditButton title="Rate" onClick={() => goTo("rate")} label="Edit rate" />
                 </div>
               }
             />
+
+            {/*
+              ---- Bio, EDITED IN PLACE (WS5) -------------------------------
+
+              The bio stopped being a step, and nothing else on the app could
+              edit it: `OverviewBody` was imported here and never rendered, so
+              with the step gone an AI-written bio would have been unreachable —
+              including one over the 600-character limit, which is the one hard
+              error this page can still raise. The fix has to live where the
+              problem is.
+
+              Saves on blur rather than on a button: this is a review page, not
+              a form, and a section that silently keeps your edit is the pattern
+              every other section here already uses.
+            */}
+            <div className="mt-5">
+              <ProfileCard
+                title="Bio"
+                edit={
+                  <span className="text-[13px] text-ink-2">
+                    {profile.overview.trim().length}/{MAX_BIO}
+                  </span>
+                }
+              >
+                <TextArea
+                  id="review-overview"
+                  value={profile.overview}
+                  onChange={(e) =>
+                    setProfile((pp) => ({ ...pp, overview: e.target.value }))
+                  }
+                  onBlur={() => {
+                    if (profile.overview.trim().length <= MAX_BIO) {
+                      void postStep("bio", { overview: profile.overview });
+                    }
+                  }}
+                  placeholder="A few lines about what you do best. AI drafts this from your résumé — edit it to sound like you."
+                  className={
+                    profile.overview.trim().length > MAX_BIO
+                      ? "border-red-600 focus:border-red-600"
+                      : ""
+                  }
+                />
+                {noteFor("overview-empty")}
+                {profile.overview.trim().length > MAX_BIO ? (
+                  <p role="alert" className="mt-2 text-[13.5px] font-semibold text-red-700">
+                    {profile.overview.trim().length - MAX_BIO} characters over —
+                    trim it to publish.
+                  </p>
+                ) : (
+                  <p className="mt-2 text-[13px] text-ink-2">
+                    Optional, and you can add it later — buyers do read it.
+                  </p>
+                )}
+              </ProfileCard>
+            </div>
 
             {/* ---- pg1: Work History, full width ------------------------ */}
             <div className="mt-5">
@@ -2895,6 +3010,7 @@ export default function JoinProviderPage() {
                 )}
               >
                 <SpecializationsBody specializations={profile.specializationNames} />
+                {noteFor("specializations")}
               </ProfileCard>
 
               <ProfileCard
@@ -2902,6 +3018,7 @@ export default function JoinProviderPage() {
                 edit={sectionAction("Education", "education", profile.education.length === 0)}
               >
                 <EducationBody education={profile.education} />
+                {noteFor("education")}
               </ProfileCard>
 
                 {/* E057 — cards + a proper modal. The eight-field form that

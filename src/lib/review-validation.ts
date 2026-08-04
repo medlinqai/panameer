@@ -35,6 +35,12 @@
 
 /** Minimum bio length — mirrors MIN_BIO_CHARS in onboarding.ts (E017). */
 export const MIN_BIO_CHARS = 100;
+/**
+ * Maximum bio length — mirrors MAX_BIO_CHARS in onboarding.ts (E087) and the
+ * wizard's own MAX_BIO. The server rejects anything longer, so this page has to
+ * agree with it or Publish is enabled and then refused.
+ */
+export const MAX_BIO_CHARS = 600;
 
 /** Where a click-to-fix sends the provider. */
 export type ReviewFix =
@@ -48,6 +54,9 @@ export type ReviewFix =
   | { kind: "photo" };
 
 export type ReviewField =
+  /** WS5 — the bio is edited IN PLACE on the review page now; there is no
+   *  step to send anyone to. */
+  | "overview"
   | "phone"
   | "line1"
   | "city"
@@ -118,14 +127,25 @@ export function reviewItems(p: ReviewInput): ReviewItem[] {
     });
   }
   /*
-    THE BIO IS NO LONGER AN ERROR (WS6/WS7). It stopped being a prompted step,
-    so blocking publish on it would refuse a provider who completed every step
-    they were shown. It stays below as a `chg` — worth having, never a gate.
+    THE BIO IS NO LONGER AN ERROR FOR BEING SHORT (WS6). It stopped being a
+    prompted step, so blocking publish on a missing one would refuse a provider
+    who completed every step they were shown. It is a suggestion below.
 
-    The one bio condition that IS still hard is the opposite end: an
-    AI-generated bio over the maximum, which the provider must trim here
-    because no step will offer to. That check belongs to WS5.
+    IT IS STILL AN ERROR FOR BEING TOO LONG (WS5 / E181), and this is likely the
+    only error the review page ever flashes. The AI writes the bio now and can
+    overrun the limit the column and the server both enforce; with the bio step
+    gone there is no other screen that would ever offer to trim it. So the fix
+    happens here, in place, or the save fails with a message about a field the
+    provider never typed.
   */
+  if (p.overview.trim().length > MAX_BIO_CHARS) {
+    err(
+      "overview",
+      `Your bio is ${p.overview.trim().length} characters — trim it to ${MAX_BIO_CHARS} or fewer.`,
+      "Trim bio",
+      { kind: "field", field: "overview" }
+    );
+  }
   if (p.hourlyRateCents == null) {
     err("rate", "Set your hourly rate.", "Set rate", {
       kind: "step",
@@ -168,6 +188,15 @@ export function reviewItems(p: ReviewInput): ReviewItem[] {
   }
 
   // --- CHANGES — optional, and each one is worth money ---------------------
+  // WS5 — a missing bio is a NOTE now, not a gate. The AI usually writes one;
+  // when the résumé gave it nothing to work with, the section is blank on
+  // purpose and this is the line that says so.
+  if (p.overview.trim().length === 0) {
+    chg("overview-empty", "Add a bio later — clients like to see one.", "Write bio", {
+      kind: "field",
+      field: "overview",
+    });
+  }
   // The address is part of the REQUIRED set now (contact), so it is an error
   // rather than a suggestion — see below.
   const a = p.address;
@@ -215,13 +244,13 @@ export function reviewItems(p: ReviewInput): ReviewItem[] {
   if (p.employers.length === 0) {
     chg(
       "employers",
-      "Add your work history — providers with it are twice as likely to win work.",
+      "Add your work history later — providers with it are twice as likely to win work.",
       "Add work history",
       { kind: "step", step: "tell_us" }
     );
   }
   if (p.education.length === 0) {
-    chg("education", "Add your education.", "Add education", {
+    chg("education", "Add your education later — clients like to see it.", "Add education", {
       kind: "step",
       step: "education",
     });
@@ -229,7 +258,7 @@ export function reviewItems(p: ReviewInput): ReviewItem[] {
   if (p.specializations.length === 0) {
     chg(
       "specializations",
-      "Add specializations so buyers can find you by what you focus on.",
+      "Add specializations later — it's how buyers find you by what you focus on.",
       "Add specializations",
       { kind: "step", step: "specializations" }
     );
@@ -237,7 +266,7 @@ export function reviewItems(p: ReviewInput): ReviewItem[] {
   if (p.certifications.length === 0) {
     chg(
       "certifications",
-      "Add a certification — credentials increase your chances of getting hired.",
+      "Add a certification later — credentials increase your chances of getting hired.",
       "Add certification",
       { kind: "certifications" }
     );

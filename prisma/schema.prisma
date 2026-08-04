@@ -709,6 +709,7 @@ model ProviderProfile {
   certifications    Certification[]
   imports           ProfileImport[]
   resumeParseAudits ResumeParseAudit[]
+  profileGapFlags   ProfileGapFlags?
 
   @@index([region_id])
   @@index([coordinator_person_id])
@@ -1281,6 +1282,35 @@ model ProviderProfileRole {
   @@unique([provider_profile_id, role_type_id])
   @@index([role_type_id])
   @@map("provider_profile_roles")
+}
+
+/// Which optional sections a provider left empty at publish
+/// (brief_onboarding_slimdown WS5).
+///
+/// RECORDED, NOT SENT. The re-engagement engine — "these specializations are
+/// hot and yours are empty", "a client asked for a bio" — is its own feature
+/// and explicitly out of scope here. This brief only makes sure the evidence
+/// it will need exists from the first published profile, because a nudge
+/// engine built later against no history has nothing to nudge about.
+///
+/// One row per profile, rewritten on each publish: the question is always
+/// "what is missing NOW", never a history of what once was.
+model ProfileGapFlags {
+  id                  String   @id @default(uuid()) @db.Uuid
+  provider_profile_id String   @unique @db.Uuid
+  no_bio              Boolean  @default(false)
+  no_education        Boolean  @default(false)
+  no_specializations  Boolean  @default(false)
+  no_languages        Boolean  @default(false)
+  no_work_history     Boolean  @default(false)
+  no_certifications   Boolean  @default(false)
+  /// When the flags were last recomputed — the engine will want to know how
+  /// stale a gap is before it emails anyone about it.
+  computed_at         DateTime @default(now())
+
+  providerProfile ProviderProfile @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
+
+  @@map("profile_gap_flags")
 }
 
 model ProviderSkill {
