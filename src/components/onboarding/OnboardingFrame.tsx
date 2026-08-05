@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Logo } from "@/components/Logo";
-import { PANAMEER_TAGLINE } from "@/lib/brand";
+import { BRAND_DESCRIPTOR } from "@/lib/brand";
 
 /**
  * The onboarding page chrome — ONE definition for every onboarding surface
@@ -85,6 +85,12 @@ export function OnboardingFrame({
         nothing here is baked into the image, so the wordmark stays reusable and
         the words stay editable in one constant.
 
+        THE WORDS CHANGED (brief_brand_tagline_rollout WS-B). E182 put "The
+        Oracle Cloud Talent, Training & Services Marketplace" here: narrower
+        than the positioning now is, and using the one word the brand system
+        deliberately keeps out of display copy. The descriptor replaces it —
+        same slot, same lockup, no layout change.
+
         Hidden below `sm`: at 375px the mark plus a nine-word sentence either
         wraps to three lines or squeezes the mark, and a header that tall costs
         the form the top of the screen on the one device that can least spare it.
@@ -97,7 +103,7 @@ export function OnboardingFrame({
             className="hidden h-6 w-px shrink-0 bg-line sm:block"
           />
           <p className="hidden text-[13.5px] font-semibold leading-tight text-ink-2 sm:block">
-            {PANAMEER_TAGLINE}
+            {BRAND_DESCRIPTOR}
           </p>
         </div>
       </header>
