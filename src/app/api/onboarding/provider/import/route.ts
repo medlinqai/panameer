@@ -19,6 +19,13 @@ import { getOnboardingState } from "@/lib/onboarding";
  * provides (E154).
  */
 export const runtime = "nodejs";
+/*
+ * E184 — this route now makes a model call, so it is no longer a sub-second
+ * request. A full-length résumé takes 20–30s to read; the platform default cuts
+ * off well before that and the symptom would be an upload that "just fails" on
+ * exactly the long documents the AI is there for.
+ */
+export const maxDuration = 60;
 
 export async function POST(request: Request) {
   const gate = await guardApi("canProvideServices");

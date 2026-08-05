@@ -3,6 +3,7 @@ import {
   callExtractionModel,
   resolveProvider,
   type ModelUsage,
+  type ParserTier,
   type ProviderName,
 } from "./ai-provider";
 import type { ParsedResume } from "./parse";
@@ -18,17 +19,20 @@ import type { ParsedResume } from "./parse";
  * ten projects in tables of label/value rows. Both extract to clean text and both
  * defeated the rules. A model reads the layout instead of pattern-matching it.
  *
- * IT IS THE SECOND TIER, not the default. WS0 scores the free parse first and
- * this only runs when that score is low and the provider asks for it — so a
- * résumé the heuristic handles costs nothing, and nobody's document is sent
- * anywhere without them choosing it.
+ * IT IS NOW THE PRIMARY READER (E184), which is a reversal worth stating.
+ * It used to be a second tier: the heuristic scored first and this ran only when
+ * that score was low AND the provider clicked "Let AI take a pass". The result
+ * was that the only caller was a button no screen in the journey rendered any
+ * more, so every real upload was read by the heuristic while the UI credited the
+ * work to AI. `importProfileDocument` calls this on upload now; the heuristic is
+ * what catches a failed or unconfigured call, not the other way round.
  *
  * ⚠ DATA FLOW, flagged for Scott per the brief: running this sends the résumé's
  * TEXT — a named individual's employment history, education and contact details —
- * to the Anthropic API. That is a real disclosure of personal data to a
- * third-party processor. It is gated on an explicit user action (WS3) rather
- * than happening on upload, which is the mitigation available at this layer, but
- * the privacy notice and any DPA are a decision above this code.
+ * to the model provider. That is a real disclosure of personal data to a
+ * third-party processor. The gate is now the UPLOAD itself rather than a second
+ * click, so the dropzone says plainly that AI reads the document; the privacy
+ * notice and any DPA are still a decision above this code.
  */
 
 /**
@@ -237,6 +241,8 @@ export type AiExtractOutcome =
       data: AiResume;
       model: string;
       provider: ProviderName;
+      /** economy vs incumbent — E184's whole point is that this is visible. */
+      tier: ParserTier;
       inputChars: number;
       ms: number;
       /** Real token counts + $/parse when prices are configured (WS-A). */
@@ -322,6 +328,7 @@ export async function aiExtractResume(text: string): Promise<AiExtractOutcome> {
     data: parsed.data,
     model: call.model,
     provider: call.provider,
+    tier: call.tier,
     inputChars: text.length,
     ms: call.ms,
     usage: call.usage,

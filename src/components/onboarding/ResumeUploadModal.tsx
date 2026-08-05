@@ -37,6 +37,19 @@ export type ImportOutcome = {
   };
   gaps: string[];
   confidence?: { score: "high" | "low"; reasons: string[] };
+  /**
+   * E184 — WHICH READER PRODUCED THIS. Mirrors `ImportPath` on the server; kept
+   * as a structural type rather than imported so this client component doesn't
+   * drag a server module (and its prisma import) into the browser bundle.
+   */
+  path?: {
+    reader: "ai" | "heuristic";
+    tier?: "economy" | "incumbent";
+    provider?: string;
+    model?: string;
+    reason?: string;
+    configProblem?: string | null;
+  };
   error?: string;
   state?: unknown;
 };

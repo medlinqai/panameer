@@ -129,10 +129,15 @@ export function ResumeDropzone({
                 />
               </div>
             )}
+            {/*
+              E184 — the wait is now a MODEL call, so the label has to survive
+              20–30 seconds without reading as hung. The same fix AiPassPanel
+              needed (E142): an honest duration up front beats a static label.
+            */}
             <p className="mt-2 text-[13px] text-ink-2">
               {busy
                 ? progress === 100
-                  ? "Reading your document…"
+                  ? "Panameer AI is reading your document… this takes 20–30 seconds."
                   : `Uploading… ${progress}%`
                 : "Imported. Review the details as you continue."}
             </p>
@@ -149,6 +154,14 @@ export function ResumeDropzone({
             <p className="font-bold">Drag and drop your résumé here</p>
             <p className="mt-1 text-[14px] text-ink-2">
               PDF, Word, or rich text · up to 5 MB
+            </p>
+            {/*
+              E184 — the upload IS the consent now. The AI pass used to be a
+              second, explicit click; it happens on upload, so the screen has to
+              say so at the point the file is handed over rather than afterwards.
+            */}
+            <p className="mt-1 text-[13px] text-ink-2">
+              Panameer AI reads it to fill in your profile.
             </p>
             <button
               type="button"

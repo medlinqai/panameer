@@ -1263,10 +1263,21 @@ export default function JoinProviderPage() {
           )}
 
           {importOutcome && capturedLine(importOutcome) && (
-            <p className="mb-6 text-[14.5px] text-ink-2">
+            <p className="mb-2 text-[14.5px] text-ink-2">
               {capturedLine(importOutcome)}
             </p>
           )}
+
+          {/*
+            E184 — NAME THE READER THAT RAN.
+
+            The product claims an AI read the document in four separate places.
+            For the whole of run 7 no model ran at all, and nothing on any screen
+            could have told you: an AI parse and a heuristic parse rendered
+            identically, differing only in being right. One line, always present
+            after an import, ends that.
+          */}
+          {importOutcome?.path && <ReaderLine path={importOutcome.path} />}
 
           {/*
             E029 — the upload control is INLINE and visible on arrival. It used
@@ -3392,6 +3403,39 @@ function capturedLine(outcome: ImportOutcome): string | null {
     return "We couldn't pull anything usable out of that file — add your details below.";
   }
   return `We filled in ${bits.join(", ")}. Check it over and fix anything that's wrong.`;
+}
+
+/**
+ * WHICH READER RAN, said out loud (E184).
+ *
+ * Named model, not "AI" — "we read it with AI" is exactly the claim that was
+ * being made while nothing ran, so the version that replaces it carries
+ * something checkable. A heuristic fallback says so plainly and says why; it
+ * does not apologise, because for a document the rules handle it is a perfectly
+ * good answer, just not the one the rest of the page is promising.
+ */
+function ReaderLine({
+  path,
+}: {
+  path: NonNullable<ImportOutcome["path"]>;
+}) {
+  if (path.reader === "ai") {
+    return (
+      <p className="mb-6 flex flex-wrap items-center gap-2 text-[13.5px] text-ink-2">
+        <SparkIcon />
+        Read by Panameer AI — {path.tier} model (<code>{path.model}</code>).
+      </p>
+    );
+  }
+  return (
+    <p className="mb-6 rounded-[10px] border border-dashed border-line px-3 py-2 text-[13.5px] text-ink-2">
+      <b className="text-ink">AI didn&apos;t read this one</b> — {path.reason}.
+      What&apos;s below came from pattern-matching, so check it closely.
+      {path.configProblem && (
+        <span className="mt-1 block text-[12.5px]">{path.configProblem}</span>
+      )}
+    </p>
+  );
 }
 
 /**

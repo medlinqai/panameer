@@ -5,6 +5,9 @@ import { recomputeCompleteness } from "@/lib/onboarding";
 import { uploadResumeFile } from "@/lib/storage";
 import { matchSkills, suggestableSkills } from "@/lib/resume/match";
 import { assessParse } from "@/lib/resume/confidence";
+import { aiExtractResume, aiToParsedResume } from "@/lib/resume/ai-extract";
+import { parserConfigProblem, resolveProvider } from "@/lib/resume/ai-provider";
+import type { ParserTier, ProviderName } from "@/lib/resume/ai-provider";
 import type { Prisma } from "@prisma/client";
 
 /**
@@ -20,6 +23,26 @@ import type { Prisma } from "@prisma/client";
  * the user doesn't already have. A user who imports after typing a bio keeps
  * their bio.
  */
+
+/**
+ * WHICH READER ACTUALLY RAN (E184).
+ *
+ * Returned to the client and written to the server log on every import. A
+ * heuristic fallback carries the REASON it fell back: "the AI is off today" and
+ * "the AI errored on this document" produce identical output and want completely
+ * different responses, and telling them apart used to mean reading the server's
+ * stdout — if anyone thought to look, which for a whole walk nobody did.
+ */
+export type ImportPath = {
+  reader: "ai" | "heuristic";
+  tier?: ParserTier;
+  provider?: ProviderName;
+  model?: string;
+  /** Present only on `heuristic`: why the model didn't produce this parse. */
+  reason?: string;
+  /** A half-set or absent RESUME_PARSER_* config, in one sentence. */
+  configProblem?: string | null;
+};
 
 export type ImportResult = {
   importId: string;
@@ -44,6 +67,8 @@ export type ImportResult = {
    * "we had trouble reading this" panel. Absent on a FAILED import.
    */
   confidence?: { score: "high" | "low"; reasons: string[] };
+  /** E184 — the reader that produced this parse, named. */
+  path?: ImportPath;
   error?: string;
 };
 
@@ -88,8 +113,9 @@ export async function importProfileDocument({
     };
   }
 
-  // 2. Text → structure.
-  const parsed = parseResume(text);
+  // 2. Text → structure. The model reads it when one is configured (E184).
+  const read = await readDocument(text);
+  const parsed = read.parsed;
 
   // 3. Structure → profile, non-destructively.
   const applied = await applyParsedResume(profileId, parsed, source);
@@ -151,26 +177,136 @@ export async function importProfileDocument({
       raw_text: text.slice(0, 100_000),
       parsed: parsed as unknown as Prisma.InputJsonValue,
       gaps,
+      // WS-G provenance, now written on the FIRST parse rather than only when
+      // somebody pressed the re-read button. Null on a heuristic parse, which
+      // is what "no model produced this" has always meant on these columns.
+      ai_model: read.usage?.model ?? null,
+      ai_provider: read.usage?.provider ?? null,
+      ai_input_tokens: read.usage?.inputTokens ?? null,
+      ai_output_tokens: read.usage?.outputTokens ?? null,
+      ai_cost_usd: read.usage?.costUsd ?? null,
+      ai_latency_ms: read.usage?.ms ?? null,
     },
   });
 
   await recomputeCompleteness(profileId);
 
   /*
-    WS0/WS4 — score the parse and LOG WHICH PATH FIRED. The escalation rate is
-    the number that decides whether to flip this tier to AI-primary later, and it
-    cannot be recovered after the fact, so it is recorded at the moment of truth.
+    WS0/WS4 — score the parse and LOG WHICH READER FIRED.
+
+    E184: the log line used to be hardcoded to `path=heuristic`, which was
+    accurate and, precisely because it never varied, unreadable as a signal. It
+    now names the reader, the tier and the model, so grepping the dev server for
+    `[resume] path=` answers "did the AI run?" in one line.
   */
-  const confidence = assessParse(text, parsed);
+  const confidence = assessParse(text, parsed, {
+    source: read.path.reader === "ai" ? "ai" : "heuristic",
+  });
   console.info(
-    `[resume] path=heuristic confidence=${confidence.score} ` +
-      `roles=${parsed.experiences.length} dated=${confidence.signals.datedEntries} ` +
+    `[resume] path=${describePath(read.path)} confidence=${confidence.score} ` +
+      `employers=${parsed.experiences.length} dated=${confidence.signals.datedEntries} ` +
       `ranges=${confidence.signals.dateRangesInText} unplaced=${confidence.signals.unplacedRatio} ` +
       `import=${row.id}` +
       (confidence.score === "low" ? ` reasons="${confidence.reasons.join(" | ")}"` : "")
   );
 
-  return { importId: row.id, status: "PARSED", applied, gaps, confidence };
+  return {
+    importId: row.id,
+    status: "PARSED",
+    applied,
+    gaps,
+    confidence,
+    path: read.path,
+  };
+}
+
+/** The path as one grep-able token for the server log. */
+function describePath(p: ImportPath): string {
+  if (p.reader === "ai") return `${p.tier}:${p.model}`;
+  return `heuristic(${p.reason ?? "unknown"})`;
+}
+
+/**
+ * Read the document with the model, falling back to the rules (E184).
+ *
+ * ORDER OF PREFERENCE, and the reasoning behind it. The heuristic runs first
+ * regardless — it is free, synchronous, and it is the thing the fallback needs
+ * to already have in hand. The model then gets its turn, and its result wins
+ * unless it is worse by a test we can actually apply.
+ *
+ * TWO WAYS THE MODEL LOSES:
+ *   1. the call failed (no key, network, malformed output) — `ok:false`;
+ *   2. it came back with NO work history from a document the rules can see date
+ *      ranges all over. That is the E121-class failure the `/resume-ai` route
+ *      already guards, reused here rather than reinvented: an empty answer from
+ *      a document full of dates is not a person with no career.
+ *
+ * A model result that is merely THINNER than the heuristic's is still preferred.
+ * The heuristic's extra entries are as often mis-split fragments as real jobs —
+ * "1 role / Employer not detected" is exactly that failure — so entry count is
+ * not a quality measure and is deliberately not used as one.
+ */
+async function readDocument(text: string): Promise<{
+  parsed: ParsedResume;
+  path: ImportPath;
+  usage?: {
+    provider: ProviderName;
+    model: string;
+    inputTokens: number;
+    outputTokens: number;
+    costUsd: number | null;
+    ms: number;
+  };
+}> {
+  const heuristic = parseResume(text);
+  const configProblem = parserConfigProblem();
+
+  if (!resolveProvider()) {
+    return {
+      parsed: heuristic,
+      path: { reader: "heuristic", reason: "no model configured", configProblem },
+    };
+  }
+
+  const outcome = await aiExtractResume(text);
+  if (!outcome.ok) {
+    console.error(`[resume] the model call failed (${outcome.reason}): ${outcome.message}`);
+    return {
+      parsed: heuristic,
+      path: { reader: "heuristic", reason: outcome.reason, configProblem },
+    };
+  }
+
+  const parsed = aiToParsedResume(outcome.data);
+  const signals = assessParse(text, parsed, { source: "ai" }).signals;
+  if (parsed.experiences.length === 0 && signals.dateRangesInText >= 3) {
+    console.error(
+      `[resume] the model returned no work history from a document with ${signals.dateRangesInText} date ranges — keeping the heuristic parse`
+    );
+    return {
+      parsed: heuristic,
+      path: { reader: "heuristic", reason: "the model returned no work history", configProblem },
+    };
+  }
+
+  return {
+    parsed,
+    path: {
+      reader: "ai",
+      tier: outcome.tier,
+      provider: outcome.provider,
+      model: outcome.model,
+      configProblem,
+    },
+    usage: {
+      provider: outcome.provider,
+      model: outcome.model,
+      inputTokens: outcome.usage.inputTokens,
+      outputTokens: outcome.usage.outputTokens,
+      costUsd: outcome.usage.costUsd,
+      ms: outcome.ms,
+    },
+  };
 }
 
 function emptyApplied(): ImportResult["applied"] {

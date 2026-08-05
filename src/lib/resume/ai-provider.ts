@@ -26,6 +26,17 @@ import { env } from "@/lib/env";
 
 export type ProviderName = "openai" | "anthropic";
 
+/**
+ * WHICH TIER IS RUNNING — the thing E184 is about.
+ *
+ * `economy` is the configured `RESUME_PARSER_*` trio; `incumbent` is the
+ * Anthropic key that has always been there. The distinction was previously
+ * derivable only by reading this file and the environment side by side, which is
+ * how a silent fall-through to the expensive path — or to no path at all —
+ * stayed invisible for a whole walk.
+ */
+export type ParserTier = "economy" | "incumbent";
+
 export type ModelUsage = {
   inputTokens: number;
   outputTokens: number;
@@ -41,6 +52,8 @@ export type ModelCall =
       /** The parsed JSON object the model produced. Validation is the caller's. */
       value: unknown;
       provider: ProviderName;
+      /** Which tier answered — carried out with the result so callers can say so. */
+      tier: ParserTier;
       model: string;
       usage: ModelUsage;
       ms: number;
@@ -49,6 +62,7 @@ export type ModelCall =
 
 /** Which provider will actually run, given what's configured. */
 export function resolveProvider(): {
+  tier: ParserTier;
   provider: ProviderName;
   model: string;
   apiKey: string;
@@ -63,6 +77,7 @@ export function resolveProvider(): {
   if (env.RESUME_PARSER_API_KEY && env.RESUME_PARSER_MODEL) {
     const provider: ProviderName = explicit ?? "openai";
     return {
+      tier: "economy",
       provider,
       model: env.RESUME_PARSER_MODEL,
       apiKey: env.RESUME_PARSER_API_KEY,
@@ -73,6 +88,7 @@ export function resolveProvider(): {
 
   if (env.ANTHROPIC_API_KEY) {
     return {
+      tier: "incumbent",
       provider: "anthropic",
       /*
         The literal fallback is not redundant. `env.ts` degrades to raw
@@ -80,6 +96,13 @@ export function resolveProvider(): {
         every schema DEFAULT — including this model id. The symptom is a 400
         "model: Field required" from a call that looks perfectly configured,
         which cost a debugging round the first time it happened.
+
+        E184 — THIS MODEL ID WAS VERIFIED, not assumed. The brief's hypothesis
+        was that `claude-sonnet-5` 404s and that the 404 is why imports read as
+        "non-AI AI". It does not: probed against the live `ANTHROPIC_API_KEY`
+        with this exact request shape (cached system block, forced tool_choice,
+        16k max_tokens) it returns a `tool_use` block. The real cause was that
+        `importProfileDocument` never called this module at all — see `import.ts`.
       */
       model: env.ANTHROPIC_RESUME_MODEL || "claude-sonnet-5",
       apiKey: env.ANTHROPIC_API_KEY,
@@ -102,7 +125,32 @@ export function parserConfigProblem(): string | null {
   if (key && model && env.RESUME_PARSER_PRICE_IN_PER_M == null) {
     return "The parser is configured but its prices aren't — $/parse can't be computed until RESUME_PARSER_PRICE_IN_PER_M and _OUT_PER_M are set.";
   }
+  /*
+    E184 — NEITHER SET IS ALSO WORTH SAYING. It is not a misconfiguration, so
+    it was silent; but "silently running the expensive incumbent" is precisely
+    the state this whole workstream exists to make visible, and the difference
+    between it and a deliberate choice is a sentence on the admin card.
+  */
+  if (!key && !model && env.ANTHROPIC_API_KEY) {
+    return "No economy tier is configured — every parse runs on the incumbent model. Set RESUME_PARSER_MODEL + RESUME_PARSER_API_KEY to switch it.";
+  }
+  if (!key && !model && !env.ANTHROPIC_API_KEY) {
+    return "No parser is configured at all — uploads fall back to the non-AI heuristic reader.";
+  }
   return null;
+}
+
+/**
+ * The active path in one line, for logs and for the import UI (E184).
+ *
+ * Deliberately names the MODEL, not just "AI". "We read your résumé with AI" is
+ * the claim that was being made while no model ran; a claim carrying the model
+ * id is one that can be checked at a glance during a walk.
+ */
+export function describeParser(): string {
+  const cfg = resolveProvider();
+  if (!cfg) return "heuristic reader (no model configured)";
+  return `${cfg.tier} model (${cfg.model})`;
 }
 
 function priceFor(inTok: number, outTok: number): number | null {
@@ -191,6 +239,7 @@ export async function callExtractionModel({
         ok: true,
         value: block.input,
         provider: "anthropic",
+        tier: cfg.tier,
         model: cfg.model,
         usage: {
           inputTokens: inTok,
@@ -280,6 +329,7 @@ export async function callExtractionModel({
       ok: true,
       value,
       provider: "openai",
+      tier: cfg.tier,
       model: cfg.model,
       usage: {
         inputTokens: inTok,
