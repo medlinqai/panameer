@@ -1211,9 +1211,11 @@ export default function JoinProviderPage() {
               : "How would you like to tell us about yourself?",
             subtitle: hasProfileData
               ? "Edit anything that's wrong or missing. This is what buyers will see."
-              // E103 — one line. The old three-clause version repeated what the
-              // two cards below it already say.
-              : "Import your résumé, or fill it in yourself.",
+              // E183 — AI-forward. E103 cut this to one line because the old
+              // three-clause version repeated the cards below it; this says the
+              // one thing the cards DON'T, which is that the fast path is a
+              // model reading the document rather than a form filling itself.
+              : "Just upload your resume and let our AI model do the rest.",
             wide: true,
             /*
               E117 — the example provider card is an INVITATION, and it stops
