@@ -36,7 +36,22 @@ import {
  * empty page you can never fill is worse than an absent one.
  */
 
-export function AccountMenu({ isAdmin }: { isAdmin: boolean }) {
+export function AccountMenu({
+  isAdmin,
+  variant = "header",
+}: {
+  isAdmin: boolean;
+  /**
+   * WHERE THE TRIGGER LIVES (WS1-A).
+   *
+   * `header` is the original round avatar in the top-right cluster. `rail` is
+   * the deck's identity block: avatar + name + membership badge + a chevron,
+   * sitting in the dark rail under the utility row. Same menu, same code —
+   * only the button that opens it and which way the panel drops differ, so the
+   * two positions cannot drift into two different account menus.
+   */
+  variant?: "header" | "rail";
+}) {
   const { me, refresh } = useMe();
   const [open, setOpen] = useState(false);
   const [themeOpen, setThemeOpen] = useState(false);
@@ -120,26 +135,65 @@ export function AccountMenu({ isAdmin }: { isAdmin: boolean }) {
 
   return (
     <div className="relative" ref={ref}>
-      <button
-        type="button"
-        onClick={() => (open ? close() : setOpen(true))}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        aria-label="Account menu"
-        className="flex items-center gap-1.5 rounded-full p-0.5 transition-colors hover:bg-black/[0.04]"
-      >
-        <Avatar
-          firstName={first}
-          lastName={last}
-          photoUrl={me?.person.photoUrl}
-          size={32}
-        />
-      </button>
+      {variant === "rail" ? (
+        <button
+          type="button"
+          onClick={() => (open ? close() : setOpen(true))}
+          aria-haspopup="menu"
+          aria-expanded={open}
+          aria-label="Account menu"
+          className="flex w-full items-center gap-2.5 rounded-[10px] px-2 py-2 text-left transition-colors hover:bg-white/10"
+        >
+          <Avatar
+            firstName={first}
+            lastName={last}
+            photoUrl={me?.person.photoUrl}
+            size={34}
+          />
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-[14.5px] font-bold text-white">
+              {`${first} ${last}`.trim() || "Signed in"}
+            </span>
+            {badge && (
+              <span className="block truncate text-[12.5px] text-white/55">
+                {badge}
+              </span>
+            )}
+          </span>
+          <span aria-hidden className="pl-1 text-white/45">
+            ›
+          </span>
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => (open ? close() : setOpen(true))}
+          aria-haspopup="menu"
+          aria-expanded={open}
+          aria-label="Account menu"
+          className="flex items-center gap-1.5 rounded-full p-0.5 transition-colors hover:bg-black/[0.04]"
+        >
+          <Avatar
+            firstName={first}
+            lastName={last}
+            photoUrl={me?.person.photoUrl}
+            size={32}
+          />
+        </button>
+      )}
 
       {open && (
         <div
           role="menu"
-          className="absolute right-0 z-50 mt-2 w-[19rem] overflow-hidden rounded-[14px] border border-line bg-white shadow-brand"
+          className={
+            "absolute z-50 w-[19rem] overflow-hidden rounded-[14px] border border-line bg-white shadow-brand " +
+            /*
+              From the rail the panel opens to the RIGHT of the block; from the
+              header it drops beneath the avatar. Right-aligning the rail's copy
+              under a 248px column would push it half off the left edge.
+            */
+            (variant === "rail" ? "left-0 top-full mt-2" : "right-0 mt-2")
+          }
         >
           {/* ---- Section 1: who you are ---------------------------------- */}
           <div className="border-b border-line px-4 py-3.5">

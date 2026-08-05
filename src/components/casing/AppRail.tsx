@@ -3,18 +3,19 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { signOut } from "next-auth/react";
-import { Avatar } from "@/components/Avatar";
 import { useMe } from "@/components/MeProvider";
 import {
   navForRoles,
   HOME_NAV,
   APP_NAV_GROUP_TITLE,
+  UTILITY_NAV,
   ADMIN_NAV,
   ADMIN_HOME,
   ADMIN_SETUP,
 } from "@/lib/nav";
+import { AccountMenu } from "@/components/casing/AccountMenu";
 import { RailIcon } from "@/components/casing/RailIcon";
+import type { NavItem } from "@/lib/nav";
 import { useSession } from "next-auth/react";
 
 /**
@@ -62,8 +63,6 @@ export function AppRail() {
   const isActive = (href: string) =>
     EXACT.has(href) ? pathname === href : pathname.startsWith(href);
 
-  const first = me?.person.firstName ?? "";
-  const last = me?.person.lastName ?? "";
   const company = me?.company?.name;
 
   /*
@@ -141,9 +140,22 @@ export function AppRail() {
     </Link>
   );
 
+  /*
+    ONE IDENTITY BLOCK, BOTH RAILS (WS1-A). The persona menu left the header, so
+    the admin needs it here too or a Panameer employee loses their only route to
+    My Profile and Sign Out. Same component, same menu; the admin's item list is
+    the shorter one `ADMIN_PERSONA_NAV` already defines.
+  */
+  const identityBlock = (
+    <div className="mt-3">
+      <AccountMenu isAdmin={isAdmin} variant="rail" />
+    </div>
+  );
+
   const nav = isAdmin ? (
     <>
-      <div className="space-y-1.5">
+      {identityBlock}
+      <div className="mt-4 space-y-1.5">
         {adminButton(ADMIN_SETUP)}
         {adminButton(ADMIN_HOME)}
       </div>
@@ -161,35 +173,36 @@ export function AppRail() {
     </>
   ) : (
     <>
-      {railLink(HOME_NAV, false)}
+      {/*
+        UTILITY ROW, above everything (WS1-A). Search, Home and Notifications
+        are not "transactions" — they are the three things you reach for from
+        anywhere, and the deck puts them above the identity block for that
+        reason. Icon-only would have been tighter and wrong: this rail is roomy
+        on purpose and an unlabelled glyph is a guess.
+      */}
+      <div className="space-y-1">
+        {UTILITY_NAV.map((i) => railLink(i, false))}
+      </div>
+
+      {/*
+        THE IDENTITY BLOCK opens the persona menu (WS1-A/WS1-C). It moved here
+        from the header, where it was an avatar in a row of icons: the deck puts
+        who-you-are in the rail, under the utility row, and the header's
+        top-right slot goes to Community Credits.
+      */}
+      {identityBlock}
+
+      <div className="mt-5">{railLink(HOME_NAV, false)}</div>
+
       <p className="mt-6 px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-[0.09em] text-white/40">
         {APP_NAV_GROUP_TITLE}
       </p>
-      <div className="space-y-1">{items.map((i) => railLink(i, false))}</div>
+      <div className="space-y-1">
+        {items.map((i) => (
+          <RailGroupItem key={i.href} item={i} isActive={isActive} onNavigate={() => setOpen(false)} />
+        ))}
+      </div>
     </>
-  );
-
-  /*
-    COMPACT (WS1). The three-line card cost 99px, and the admin rail is the one
-    place that budget decides whether "Platform Admins" is on screen at 768px.
-    Name and Sign Out sit on one row; the "Signed in As" caption goes, because
-    an avatar beside a name in the bottom-left of a rail is not ambiguous. The
-    header avatar menu still carries the full identity.
-  */
-  const signedInCard = me && (
-    <div className="flex items-center gap-2 rounded-[10px] border border-white/10 bg-white/[0.07] px-2.5 py-1.5">
-      <Avatar firstName={first} lastName={last} photoUrl={me.person.photoUrl} size={26} />
-      <p className="min-w-0 flex-1 truncate text-[12.5px] font-semibold text-white">
-        {`${first} ${last}`.trim() || "Signed in"}
-      </p>
-      <button
-        type="button"
-        onClick={() => signOut({ callbackUrl: "/login" })}
-        className="shrink-0 text-[11px] text-white/45 hover:text-white hover:underline"
-      >
-        Sign Out
-      </button>
-    </div>
   );
 
   const brand = (
@@ -242,7 +255,9 @@ export function AppRail() {
           )}
 
           <nav className="mt-3 flex-1 overflow-y-auto">{nav}</nav>
-          <div className="pt-2">{signedInCard}</div>
+          {/* The admin rail keeps its bottom card; the provider rail's identity
+              block is at the top now, so a second one would be two answers to
+              "who am I signed in as". */}
         </div>
       </aside>
 
@@ -265,10 +280,52 @@ export function AppRail() {
         {open && (
           <div className="bg-rail px-4 pb-4">
             <nav>{nav}</nav>
-            <div className="pt-4">{signedInCard}</div>
           </div>
         )}
       </div>
     </>
+  );
+}
+
+/**
+ * One primary rail item (WS1-A).
+ *
+ * A LINK PLUS A CHEVRON. The row navigates to the item's own page and the
+ * chevron marks that a submenu hangs off it — WS1-B makes the chevron open a
+ * flyout. Splitting the two is what lets "Find Work" be both a place you can go
+ * and a set of ways to look at work: a rail where the parent is only a menu
+ * toggle costs a click to reach the obvious destination.
+ */
+function RailGroupItem({
+  item,
+  isActive,
+  onNavigate,
+}: {
+  item: NavItem;
+  isActive: (href: string) => boolean;
+  onNavigate: () => void;
+}) {
+  const active = isActive(item.href);
+  return (
+    <Link
+      href={item.href}
+      onClick={onNavigate}
+      aria-current={active ? "page" : undefined}
+      className={
+        "flex items-center gap-2 whitespace-nowrap rounded-[8px] px-2.5 py-[7px] " +
+        "text-[15px] font-medium leading-[22px] transition-colors " +
+        (active
+          ? "bg-magenta text-white"
+          : "text-white/80 hover:bg-white/10 hover:text-white")
+      }
+    >
+      <RailIcon name={item.icon} />
+      <span className="truncate">{item.label}</span>
+      {item.children?.length ? (
+        <span aria-hidden className="ml-auto pl-2 text-white/45">
+          ›
+        </span>
+      ) : null}
+    </Link>
   );
 }

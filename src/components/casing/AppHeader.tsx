@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { useMe } from "@/components/MeProvider";
-import { AccountMenu } from "@/components/casing/AccountMenu";
 import { pageTitleFor } from "@/lib/nav";
 import { greetingFor } from "@/lib/greeting";
 
@@ -111,12 +110,11 @@ export function AppHeader() {
         </IconLink>
 
         {/*
-          Element 8 — the persona menu (J2.4 WS-B / E008). The gear glyph goes
-          with the two-item dropdown it used to sit beside: Settings is now a
-          named row inside the menu, and a gear that opens the same menu as the
-          avatar was two triggers for one thing.
+          The persona menu MOVED TO THE RAIL's identity block (WS1-A). The deck
+          puts who-you-are in the rail and gives the header's top-right slot to
+          Community Credits; leaving an avatar here as well would be two doors
+          to one menu.
         */}
-        <AccountMenu isAdmin={isAdmin} />
       </div>
     </header>
   );

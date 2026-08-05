@@ -20,6 +20,18 @@ export type NavItem = {
    * into every server module that reads the nav.
    */
   icon?: string;
+  /**
+   * A flyout submenu (brief_MASTER_rails_and_community WS1-A/WS1-B).
+   *
+   * The provider rail is six destinations that each open a set of views, not
+   * six leaf links. Declaring the children HERE rather than in the rail
+   * component keeps the whole menu — labels, routes, capabilities and now
+   * structure — in the one file `pageTitleFor` also reads, so a submenu entry
+   * and the header of the page it opens cannot drift into different names.
+   */
+  children?: NavItem[];
+  /** Shown on hover. Used where the deck gives a label an explanatory line. */
+  tooltip?: string;
 };
 
 /**
@@ -60,70 +72,129 @@ export const HOME_NAV: NavItem = {
   icon: "LayoutDashboard",
 };
 
-/** The group heading above the app items. E191 renames it from "Applications". */
+/**
+ * THE UTILITY ROW, above the identity block (WS1-A).
+ *
+ * Not part of the Transactions group and deliberately not capability-gated:
+ * these are the three things you reach for from anywhere, whoever you are.
+ * Search leads the deck's rail, Home is the same destination the Dashboard
+ * button owns (kept because the deck shows both and they read differently in
+ * the two positions), Notifications is the bell that used to live in the header.
+ */
+export const UTILITY_NAV: NavItem[] = [
+  { label: "Search", href: "/search", icon: "Search" },
+  { label: "Home", href: "/dashboard", icon: "Home" },
+  { label: "Notifications", href: "/notifications", icon: "Bell" },
+];
+
+/** The group heading above the six primary items. */
 export const APP_NAV_GROUP_TITLE = "Transactions";
 
 /*
-  THE APP RAIL, REBUILT TO SCOTT'S IMAGE-1 MENU (E191 — supersedes the E007
-  rail and E151's "Applications" grouping).
+  THE PROVIDER RAIL — GROUPED, WITH SUBMENUS
+  (brief_MASTER_rails_and_community WS1-A/WS1-B; supersedes E191's flat list,
+  which itself superseded E007).
 
-  THE SHAPE DIDN'T CHANGE, THE VOCABULARY DID. These were labelled after the
-  PAGE each one opens — Learn, Work, Packages, Talent, Contracts, Finances —
-  which reads as a site map. The revised set is labelled after the THING THE
-  USER IS DOING, which is what a transactions menu is for: Start Learning, Find
-  Work, Sell Services, Find Talent, Manage Work Orders, Timesheets & Milestones,
-  Payments, Messages.
+  WHAT CHANGED, and why it is a shape change rather than a rename. E191's rail
+  was eight leaf links: one click, one page. The deck's rail is six DESTINATIONS
+  that each open a set of views — "Find Work" is not a page, it is five ways of
+  looking at work requests. A flat list can only express that by promoting every
+  view to a top-level row, which is how a nine-item rail becomes a twenty-item
+  one and stops being navigable.
 
-  Two entries point at surfaces whose page name still differs from the label,
-  and that is deliberate rather than pending: "Manage Work Orders" opens
-  /contracts because a work order IS the contract in this model (Work Request →
-  Package match → contract → milestone settlement), and "Timesheets &
-  Milestones" opens /deliver-work, the delivery-side stub. `pageTitleFor` reads
-  these labels, so each page's header now says what the rail said to get there.
+  Declared here rather than in the rail component because `pageTitleFor` reads
+  this file: a submenu entry and the header of the page it opens are the same
+  string, and cannot drift.
 
-  DROPPED FROM THE RAIL, and worth stating because it is a real consequence:
-  Community (/community), Company (/company) and Reports (/reports) are not in
-  the designed menu and now have no rail entry. /company in particular is where
-  a company admin approves join requests and where company terms are accepted,
-  and nothing else links to it — see the report on this brief. The routes still
-  work; only the way in is gone.
+  THREE LOCKED DECISIONS ARE VISIBLE IN THIS LIST:
+
+    NO TIMESHEETS. E191 had "Timesheets & Milestones" pointing at /deliver-work.
+    Timesheet and fixed-firm-price billing both surface as Payment Requests
+    generated from a Work Order, under Get Paid; milestones live inside a Work
+    Order's detail. A rail item for a thing that is a tab inside another thing
+    taught the wrong model of how work gets billed.
+
+    NO FIND TALENT. It is a hiring surface and belongs to the buyer/requester
+    rail, which is a separate brief. It was capability-gated here, so a pure
+    provider never saw it — but leaving it in the PROVIDER definition made the
+    provider rail responsible for a menu it does not own.
+
+    COMMUNITY IS BACK. E191 dropped it; it is the heart of the earning story
+    (Credits, forums, mentoring) and is the sixth primary item.
 */
-const BASE_NAV: NavItem[] = [
-  { label: "Start Learning", href: "/learn", icon: "GraduationCap" },
-];
-
-const TAIL_NAV: NavItem[] = [
+export const PROVIDER_NAV: NavItem[] = [
   {
-    label: "Sell Services",
-    href: "/settings/packages",
+    label: "Start Learning",
+    href: "/learn",
+    icon: "GraduationCap",
+    children: [
+      { label: "All Learning Paths", href: "/learn?tab=all" },
+      { label: "All Courses", href: "/learn/courses" },
+      { label: "My Learning Paths", href: "/learn?tab=mine" },
+      { label: "My Courses", href: "/learn/my-courses" },
+    ],
+  },
+  {
+    label: "Find Work",
+    href: "/work",
+    icon: "Briefcase",
     requires: "canProvideServices",
-    icon: "Package",
+    children: [
+      { label: "All Work Requests", href: "/work" },
+      { label: "Work Requests for My Skills", href: "/work/for-my-skills" },
+      { label: "My Work Requests (Saved)", href: "/work/saved" },
+      { label: "Invitations to Propose My Rate", href: "/work/invitations" },
+      { label: "My Proposals", href: "/work/proposals" },
+    ],
   },
-  { label: "Find Talent", href: "/hire", requires: "canHireTalent", icon: "Users" },
-  // Reusing the admin rail's Work Orders and Payments glyphs, per E165: two
-  // icons for one destination is the drift the shared nav.ts exists to prevent.
-  { label: "Manage Work Orders", href: "/contracts", icon: "ClipboardCheck" },
   {
-    label: "Timesheets & Milestones",
-    href: "/deliver-work",
-    icon: "CalendarClock",
+    label: "Sell My Services",
+    href: "/settings/packages",
+    icon: "Tag",
+    requires: "canProvideServices",
+    children: [
+      {
+        label: "My Services",
+        href: "/settings/packages",
+        tooltip: "Sell your services as a package",
+      },
+      { label: "Offers for My Services", href: "/services/offers" },
+    ],
   },
-  { label: "Payments", href: "/finances", icon: "CreditCard" },
-  { label: "Messages", href: "/messages", icon: "MessageSquare" },
-];
-
-/**
- * Role-specific items. The buyer labels are LOCKED in `navigation_map.md`
- * (deck 1.1 slide 5) — do not reword them here.
- *
- * A provider sees Find Work and not Find Talent; a buyer the reverse. Someone
- * who is both sees both, because a Person genuinely can be a provider and a
- * buyer, and hiding half their app would be wrong.
- */
-const ROLE_NAV: NavItem[] = [
-  // E191 restores the longer label. E151 shortened it to "Work" to match a
-  // mockup; image 1 is the newer design and it reads as an action.
-  { label: "Find Work", href: "/work", requires: "canProvideServices", icon: "Briefcase" },
+  {
+    label: "Manage Work",
+    href: "/contracts",
+    icon: "ClipboardCheck",
+    children: [
+      /*
+        ONE CHILD, DELIBERATELY. Timesheets and milestones are views inside a
+        Work Order, not siblings of it — see the note above. A submenu of one
+        still earns its chevron: it says out loud that this is where work orders
+        live, and it is where the second child goes when there is one.
+      */
+      { label: "My Work Orders", href: "/contracts" },
+    ],
+  },
+  {
+    label: "Get Paid",
+    href: "/finances",
+    icon: "Wallet",
+    children: [
+      { label: "Payment Requests", href: "/finances/payment-requests" },
+      { label: "Payments", href: "/finances" },
+    ],
+  },
+  {
+    label: "Community",
+    href: "/community",
+    icon: "MessagesSquare",
+    children: [
+      { label: "Messages", href: "/messages" },
+      { label: "Forums", href: "/community/forums" },
+      { label: "My Teams", href: "/community/teams" },
+      { label: "Find a Mentor", href: "/community/mentors" },
+    ],
+  },
 ];
 
 /**
@@ -184,11 +255,20 @@ export function navForRoles(me: Me | null): NavItem[] {
   if (!me) return [];
   const items: NavItem[] = [];
   const seen = new Set<string>();
-  for (const item of [...BASE_NAV, ...ROLE_NAV, ...TAIL_NAV]) {
+  for (const item of PROVIDER_NAV) {
     if (item.requires && !holds(me, item.requires)) continue;
     if (seen.has(item.href)) continue;
     seen.add(item.href);
-    items.push(item);
+    /*
+      Children inherit the parent's gate and are filtered on their own too. A
+      submenu entry that outlives the item it hangs under is unreachable rather
+      than harmful, but it would still be a lie in the one file the header reads
+      its titles from.
+    */
+    const children = item.children?.filter(
+      (c) => !c.requires || holds(me, c.requires)
+    );
+    items.push(children?.length ? { ...item, children } : { ...item, children: undefined });
   }
   return items;
 }
@@ -312,17 +392,24 @@ export function pageTitleFor(pathname: string): string | null {
   const all: NavItem[] = [
     ADMIN_SETUP,
     ...ADMIN_NAV.flatMap((g) => g.items),
-    ...BASE_NAV,
-    ...ROLE_NAV,
-    ...TAIL_NAV,
-    // The persona-menu pages are real destinations with real headers, even
-    // though they are reached from the avatar rather than the rail.
+    /*
+      Parents AND children. A submenu entry is a real destination with a real
+      header; without flattening them, "My Proposals" would open a page titled
+      "Proposals" from the URL segment.
+    */
+    ...PROVIDER_NAV,
+    ...PROVIDER_NAV.flatMap((i) => i.children ?? []),
+    // The persona-menu pages are real destinations too, reached from the avatar
+    // rather than the rail.
     ...PERSONA_NAV,
   ];
 
-  // Longest matching href wins, so /admin/learn beats /admin.
+  // Longest matching href wins, so /admin/learn beats /admin. Query strings are
+  // stripped first: two submenu entries can point at one page with different
+  // filters ("/learn?tab=mine"), and a `?` in the comparison would match neither.
   let best: NavItem | null = null;
-  for (const item of all) {
+  for (const raw of all) {
+    const item = { ...raw, href: raw.href.split("?")[0] };
     if (pathname === item.href || pathname.startsWith(item.href + "/")) {
       if (!best || item.href.length > best.href.length) best = item;
     }

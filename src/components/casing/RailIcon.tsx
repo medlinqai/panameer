@@ -5,6 +5,7 @@ import {
   ClipboardCheck, Package, FileSignature, Scale, CreditCard, MessageSquare,
   Users, ArrowLeftRight, FolderTree, Award, Building2, LifeBuoy, ShieldCheck,
   Home, Briefcase, BookOpen, Wallet, BarChart3, MessagesSquare, CalendarClock,
+  Tag, Search, Bell,
   type LucideIcon,
 } from "lucide-react";
 
@@ -23,6 +24,7 @@ const ICONS: Record<string, LucideIcon> = {
   ClipboardCheck, Package, FileSignature, Scale, CreditCard, MessageSquare,
   Users, ArrowLeftRight, FolderTree, Award, Building2, LifeBuoy, ShieldCheck,
   Home, Briefcase, BookOpen, Wallet, BarChart3, MessagesSquare, CalendarClock,
+  Tag, Search, Bell,
 };
 
 export function RailIcon({ name, className = "h-[18px] w-[18px]" }: { name?: string; className?: string }) {
