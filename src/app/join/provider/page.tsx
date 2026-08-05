@@ -262,6 +262,8 @@ type ProfilePayload = {
   }[];
   skillIds?: string[];
   skillNames?: { id: string; name: string; area?: string | null }[];
+  /** E187 — the subset of `skillIds` the résumé produced. Server-derived. */
+  resumeSkillIds?: string[];
   headline?: string | null;
   overview?: string | null;
   hourlyRateCents?: number | null;
@@ -357,6 +359,8 @@ type Profile = {
   projects: EmployerProject[];
   skillIds: string[];
   skillNames: { id: string; name: string; area?: string | null }[];
+  /** E187 — which of `skillIds` the résumé produced, straight from the server. */
+  resumeSkillIds: string[];
   /** Typed-in skills not yet in the catalog (E031). */
   customSkills: string[];
   headline: string;
@@ -389,6 +393,7 @@ const emptyProfile = (): Profile => ({
   certifications: [],
   skillIds: [],
   skillNames: [],
+  resumeSkillIds: [],
   customSkills: [],
   headline: "",
   overview: "",
@@ -501,8 +506,12 @@ export default function JoinProviderPage() {
   const [isRecruiter, setIsRecruiter] = useState(false);
 
   const [importOutcome, setImportOutcome] = useState<ImportOutcome | null>(null);
-  /** Server-side: does this profile already carry a résumé import? (WS4.) */
-  const [hasImport, setHasImport] = useState(false);
+  /*
+    E187 — "an import exists on this profile" is gone. It was only ever a proxy
+    for "some of these skills came off a résumé", and it answered that question
+    wrongly the moment the provider ticked one by hand. `profile.resumeSkillIds`
+    answers it directly, so the proxy has no remaining caller.
+  */
   const [uploadModal, setUploadModal] = useState(false);
   /** WS5/E084 — the post-upload review shows work history the way the profile
    *  does, and swaps to the editor in place when you ask to change it. */
@@ -527,7 +536,6 @@ export default function JoinProviderPage() {
   // we re-seed local form state from it rather than guessing what changed.
   const hydrate = useCallback((s: StatusPayload) => {
     if (s.steps?.length) setSteps(s.steps);
-    if (s.imports) setHasImport(s.imports.length > 0);
     if (typeof s.isRecruiter === "boolean") setIsRecruiter(s.isRecruiter);
     const p = s.profile;
     if (!p) return;
@@ -565,6 +573,7 @@ export default function JoinProviderPage() {
       })),
       skillIds: p.skillIds ?? [],
       skillNames: p.skillNames ?? [],
+      resumeSkillIds: p.resumeSkillIds ?? [],
       headline: p.headline ?? "",
       overview: p.overview ?? "",
       hourlyRateCents: p.hourlyRateCents ?? null,
@@ -1593,26 +1602,30 @@ export default function JoinProviderPage() {
       };
 
       /*
-        How many picked skills came from the AI pass rather than a human click.
+        WHICH PICKED SKILLS CAME OFF THE RÉSUMÉ (E187).
 
-        `importOutcome` is CLIENT state from the upload that just happened, so
-        it is gone after a reload — and the banner vanished with it, which is
-        how a returning provider saw pre-ticked skills with nothing saying where
-        they came from. The SERVER-side signal (an import exists on this
-        profile) is the fallback: the banner still appears, just without a
-        number it can no longer prove.
+        This used to be computed from `importOutcome` — client state from the
+        upload that just happened — with `hasImport && skillNames.length > 0` as
+        the fallback when that state was gone. Both were wrong, in opposite
+        directions and at the same time. On ARRIVAL at a freshly-hydrated Skills
+        step there is no `importOutcome`, and if the import matched nothing the
+        fallback is false too: no card, nothing pre-ticked, exactly what the walk
+        saw. Then the provider clicks any skill by hand, `skillNames.length`
+        becomes 1, and the fallback flips true — so the card finally appears,
+        crediting AI for the skill they just typed.
+
+        `resumeSkillIds` is the server's answer to the actual question, present
+        on the first render and after any reload, and it never counts a manual
+        pick. The pre-selection itself was always server-side (the import writes
+        ProviderSkill rows); what was missing was skills worth selecting, which
+        is WS-A's job, and an honest way to say where they came from, which is
+        this.
       */
-      const aiMatched = new Set(
-        (importOutcome?.applied.skillsMatchedNames ?? []).map((n) =>
-          n.toLowerCase()
-        )
-      );
-      const aiMatchedCount = profile.skillNames.filter((sk) =>
-        aiMatched.has(sk.name.toLowerCase())
+      const fromResume = new Set(profile.resumeSkillIds);
+      const aiMatchedCount = profile.skillIds.filter((id) =>
+        fromResume.has(id)
       ).length;
-      const cameFromResume =
-        aiMatchedCount > 0 ||
-        (hasImport && profile.skillNames.length > 0);
+      const cameFromResume = aiMatchedCount > 0;
 
       const roleNames = profile.roleTypeIds
         .map((id) => fieldRoles.find((r) => r.id === id)?.name)
@@ -1649,7 +1662,8 @@ export default function JoinProviderPage() {
             attributes is a selling point nobody hears.
 
             Shown only when an import actually produced matches, so it never
-            claims credit for skills the provider typed themselves.
+            claims credit for skills the provider typed themselves — and, since
+            E187, shown on ARRIVAL rather than after the first manual click.
           */}
           {cameFromResume && (
             <div className="mb-4 rounded-brand border border-magenta/25 bg-magenta/[0.04] p-4">
@@ -1658,19 +1672,12 @@ export default function JoinProviderPage() {
                 AI scanned your résumé against the ERP Service Catalog
               </p>
               <p className="mt-1.5 text-[14.5px] leading-relaxed text-ink-2">
-                {aiMatchedCount > 0 ? (
-                  <>
-                    It pulled{" "}
-                    <b className="text-ink">
-                      {aiMatchedCount} skill{aiMatchedCount === 1 ? "" : "s"}
-                    </b>{" "}
-                    and pre-selected them below.
-                  </>
-                ) : (
-                  <>It pre-selected the skills it found below.</>
-                )}{" "}
-                Remove anything that isn&apos;t yours, and add what it missed —
-                buyers match on these.
+                It pulled{" "}
+                <b className="text-ink">
+                  {aiMatchedCount} skill{aiMatchedCount === 1 ? "" : "s"}
+                </b>{" "}
+                and pre-selected them below. Remove anything that isn&apos;t
+                yours, and add what it missed — buyers match on these.
               </p>
             </div>
           )}

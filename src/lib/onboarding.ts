@@ -12,6 +12,7 @@ import type { Viewer } from "@/lib/access";
 import { normalizeEmail } from "@/lib/normalizeEmail";
 import { createHash } from "node:crypto";
 import { recordParseAudit } from "@/lib/resume/audit";
+import { matchSkills } from "@/lib/resume/match";
 import type { ParsedResume } from "@/lib/resume/parse";
 import { USER_TOS_VERSION } from "@/lib/tos";
 import { capitalizeName } from "@/lib/display";
@@ -535,6 +536,37 @@ export async function ensureProviderBackbone(
  * unverified. Updates the User's email + name-derived Company/Person nothing
  * else; the caller re-issues verification to the new address.
  */
+/**
+ * The profile skills traceable to the most recent parsed import (E187).
+ *
+ * DERIVED, NOT STORED, and deliberately so. The alternative was a column
+ * recording which skills the import added, which means a migration and a second
+ * source of truth that can disagree with the join table. The import row already
+ * holds the free-text terms it read off the document, and `matchSkills` is the
+ * same pure function the import used to turn those into catalog rows — so
+ * running it again, with the PROFILE'S OWN skills as the catalog, answers
+ * exactly "which of these did the résumé produce?" without storing anything.
+ *
+ * Scoped to the profile's skills rather than the full catalog on purpose: a term
+ * that would match a catalog skill the provider never took is not a skill they
+ * have, and it must not appear in a count claiming otherwise.
+ */
+function resumeSkillIds(
+  imports: { status: string; parsed: unknown }[],
+  skills: { skill_id: string; skill: { name: string } }[]
+): string[] {
+  if (skills.length === 0) return [];
+  const latest = imports.find((i) => i.status === "PARSED" && i.parsed);
+  const terms = (latest?.parsed as { skills?: unknown } | null | undefined)?.skills;
+  if (!Array.isArray(terms)) return [];
+
+  const { matched } = matchSkills(
+    terms.filter((t): t is string => typeof t === "string"),
+    skills.map((s) => ({ id: s.skill_id, name: s.skill.name }))
+  );
+  return matched.map((m) => m.id);
+}
+
 export async function updateUnverifiedEmail(
   viewer: Viewer,
   newEmailRaw: string
@@ -781,6 +813,17 @@ export async function getOnboardingState(viewer: Viewer) {
       })),
       skillIds: pp.skills.map((s) => s.skill_id),
       skillNames: pp.skills.map((s) => ({ id: s.skill_id, name: s.skill.name })),
+      /*
+        WHICH OF THOSE SKILLS CAME OFF THE RÉSUMÉ (E187).
+
+        The Skills step credits AI for the pre-selection, and its only evidence
+        was `importOutcome` — client state from the upload that just happened.
+        Gone on reload, and gone by the time the provider walks back to the
+        step, so the banner either vanished or fell back to "an import exists
+        and some skill is ticked", which credits AI for skills the provider
+        typed themselves. This is the server-side answer, and it survives both.
+      */
+      resumeSkillIds: resumeSkillIds(pp.imports, pp.skills),
       headline: pp.headline,
       overview: pp.overview ?? "",
       hourlyRateCents: pp.hourly_rate_cents,
