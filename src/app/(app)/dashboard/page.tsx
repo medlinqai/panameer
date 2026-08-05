@@ -1,25 +1,39 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { getSessionViewer } from "@/lib/session";
-import { Opportunities } from "@/components/home/Opportunities";
+import { PublishedDialog } from "@/components/home/PublishedDialog";
+import { AttentionStrip } from "@/components/home/AttentionStrip";
+import { WorkFeed } from "@/components/home/WorkFeed";
+import { getAttentionCards } from "@/lib/attention";
+import { getCreditsSummary } from "@/lib/credits";
+import { getWorkFeed, WORK_FEED_TABS, type WorkFeedTab } from "@/lib/work-feed";
 import { Card } from "@/components/Card";
 import { prisma } from "@/lib/prisma";
 import { displayFirstName } from "@/lib/display";
 
 /**
- * HOME — the Opportunities dashboard (MASTER WS12, design ref E151).
+ * HOME — the PROVIDER dashboard (brief_sp_dashboard; supersedes MASTER WS12).
  *
  * This page used to render the provider's entire profile view, which is why the
  * post-publish landing was "mixing two pages" (E146): Home and my-profile were
  * the same endless scroll. They are now separate concerns —
  *
- *   Home     = go find work, go learn something          (here)
- *   Profile  = what buyers see, and Edit Profile         (/profile, /providers/[id])
- *   You're live = the one-time end-of-onboarding page    (/join/provider/live)
+ *   Home     = what needs you, then go find work          (here)
+ *   Profile  = what buyers see, and Edit Profile          (/profile, /providers/[id])
+ *
+ * THE WORK FEED IS THE BODY and the attention strip sits above it. That order is
+ * the brief's central claim: work is what brings a provider back, so it gets the
+ * page, and the cross-cutting things that would otherwise hide in submenus get
+ * one compact line above it.
  *
  * A buyer, or an account with no provider profile, keeps the lightweight
  * surface below — Home for them is a different job and out of this brief.
  */
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string; q?: string }>;
+}) {
   const viewer = await getSessionViewer();
   if (!viewer) {
     return (
@@ -35,15 +49,56 @@ export default async function DashboardPage() {
     );
   }
 
-  const isProvider = await prisma.providerProfile.findFirst({
+  const providerProfile = await prisma.providerProfile.findFirst({
     where: { person: { user_id: viewer.userId } },
-    select: { id: true },
+    select: { id: true, person_id: true, completeness: true },
   });
 
-  // WS12 — Home is the Opportunities dashboard. The Find-Work hero and the
-  // Build-Skills row that used to live here moved to /work and /learn per the
-  // brief's reconciliation, so Home is one job rather than three.
-  if (isProvider) return <Opportunities />;
+  if (providerProfile) {
+    const sp = await searchParams;
+    const tab: WorkFeedTab = WORK_FEED_TABS.some((t) => t.id === sp.tab)
+      ? (sp.tab as WorkFeedTab)
+      : "best";
+    const query = (sp.q ?? "").trim();
+
+    /*
+      COUNT BEFORE STAMPING. "New Matches" means "since your last visit", so the
+      read has to happen against the OLD `dashboard_seen_at`; stamping first
+      would zero the card on the very render that is supposed to show it. The
+      stamp is deliberately after the await for that reason and not by accident
+      of ordering.
+    */
+    const [attention, credits, cards] = await Promise.all([
+      getAttentionCards({
+        personId: providerProfile.person_id,
+        profileId: providerProfile.id,
+        userId: viewer.userId,
+      }),
+      getCreditsSummary(providerProfile.person_id),
+      getWorkFeed({ tab, profileId: providerProfile.id, query: query || undefined }),
+    ]);
+
+    await prisma.providerProfile.update({
+      where: { id: providerProfile.id },
+      data: { dashboard_seen_at: new Date() },
+    });
+
+    return (
+      <div className="mx-auto w-full max-w-6xl">
+        <Suspense fallback={null}>
+          <PublishedDialog />
+        </Suspense>
+
+        <AttentionStrip
+          cards={attention.cards}
+          credits={credits}
+          completeness={providerProfile.completeness}
+        />
+
+        <WorkFeed tab={tab} query={query} cards={cards} />
+      </div>
+    );
+  }
 
   // --- Not a provider: buyer / unfinished account ---------------------------
   const person = await prisma.person.findUnique({
