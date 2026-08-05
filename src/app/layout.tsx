@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Comfortaa, Montserrat } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
+import { THEME_BOOT_SCRIPT } from "@/lib/theme";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -52,7 +53,21 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${comfortaa.variable} ${montserrat.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
+      <head>
+        {/*
+          J2.4 WS-B (E021) — resolve the theme BEFORE first paint.
+
+          The attribute this writes is what every dark rule keys off, and it has
+          to be on the element before the browser paints or the user sees the
+          light theme flash to dark on every navigation. That rules out doing it
+          in an effect, which is why this is a raw script tag rather than a
+          component. `suppressHydrationWarning` on <html> is the price: the
+          server renders no attribute and the client has already added one.
+        */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
+      </head>
       <body className="min-h-full flex flex-col">
         <Providers>{children}</Providers>
       </body>

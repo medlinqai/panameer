@@ -685,6 +685,16 @@ model ProviderProfile {
   // Minimal preferences store (brief_H). Notification opt-ins; expand later.
   notify_email            Boolean          @default(true)
   notify_product_updates  Boolean          @default(false)
+  /// J2.4 WS-B (E008) — the persona menu's "Online for messages" toggle.
+  ///
+  /// A REAL COLUMN, not local state, because it is a claim made to other
+  /// people: a buyer deciding whether to open a conversation is the audience,
+  /// so it has to survive the tab that set it. Deliberately NOT `paused_at` —
+  /// that is the marketplace-visibility pause and this brief must leave the
+  /// completeness/visibility gate alone. Someone can be listed and not
+  /// currently at their desk; conflating the two would hide a profile because
+  /// its owner went to lunch.
+  available_for_messages  Boolean          @default(true)
   // The coordinator Person who represents this provider (brief_I). Nullable —
   // most providers are independent. Set only via the provider's own authenticated
   // acceptance of a coordinator invite.

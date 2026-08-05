@@ -1,14 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import { signOut, useSession } from "next-auth/react";
-import { Avatar } from "@/components/Avatar";
+import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { useMe } from "@/components/MeProvider";
+import { AccountMenu } from "@/components/casing/AccountMenu";
 import { pageTitleFor } from "@/lib/nav";
 import { greetingFor } from "@/lib/greeting";
-import { membershipBadge } from "@/lib/membership";
 
 /**
  * The header — all eight elements from E151 (MASTER WS10).
@@ -26,10 +25,8 @@ import { membershipBadge } from "@/lib/membership";
  */
 export function AppHeader() {
   const { me } = useMe();
-  const [open, setOpen] = useState(false);
   const [greeting, setGreeting] = useState<string | null>(null);
   const [dateLabel, setDateLabel] = useState<string | null>(null);
-  const ref = useRef<HTMLDivElement>(null);
 
   /*
     Greeting and date are computed AFTER mount, from the viewer's clock. Doing
@@ -49,19 +46,6 @@ export function AppHeader() {
     );
   }, []);
 
-  useEffect(() => {
-    const onClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
-    document.addEventListener("mousedown", onClick);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onClick);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, []);
-
   /*
     THE HEADER RULE (E015): home shows the greeting, every other page shows
     its own name. Scott's correction to the earlier mockups, which greeted
@@ -78,16 +62,6 @@ export function AppHeader() {
   const pageTitle = pageTitleFor(pathname);
 
   const first = me?.person.firstName ?? "";
-  const last = me?.person.lastName ?? "";
-  /*
-    E003 — the account menu read "RECRUITER BASIC" for the Panameer Admin,
-    because membershipBadge derives from actor flags and the seed had set the
-    coordinator flag on staff. WS7 clears those flags, but the badge still needs
-    a word for someone who is none of the marketplace actors: an admin is
-    Panameer staff, not a tier of customer, so they are labelled as such rather
-    than falling through to nothing.
-  */
-  const badge = isAdmin ? "Panameer Admin" : membershipBadge(me);
 
   return (
     <header className="flex items-center gap-3 border-b border-line bg-white px-5 py-3 sm:px-8">
@@ -136,58 +110,13 @@ export function AppHeader() {
           <BellIcon />
         </IconLink>
 
-        {/* Element 8 — settings + avatar = the account menu. */}
-        <div className="relative" ref={ref}>
-          <button
-            type="button"
-            onClick={() => setOpen((v) => !v)}
-            aria-haspopup="menu"
-            aria-expanded={open}
-            aria-label="Account menu"
-            className="flex items-center gap-1.5 rounded-full p-0.5 transition-colors hover:bg-black/[0.04]"
-          >
-            <GearIcon />
-            <Avatar
-              firstName={first}
-              lastName={last}
-              photoUrl={me?.person.photoUrl}
-              size={32}
-            />
-          </button>
-
-          {open && (
-            <div
-              role="menu"
-              className="absolute right-0 z-50 mt-2 w-64 overflow-hidden rounded-[14px] border border-line bg-white shadow-brand"
-            >
-              <div className="border-b border-line px-4 py-3">
-                <p className="text-[12px] font-bold uppercase tracking-wide text-ink-2">
-                  {badge ?? "Account"}
-                </p>
-                <p className="truncate text-[15px] font-bold">
-                  {`${first} ${last}`.trim() || "Signed in"}
-                </p>
-              </div>
-
-              <Link
-                href="/profile"
-                role="menuitem"
-                onClick={() => setOpen(false)}
-                className="block px-4 py-2.5 text-[14.5px] hover:bg-black/[0.04]"
-              >
-                My Profile
-              </Link>
-
-              <button
-                role="menuitem"
-                onClick={() => signOut({ callbackUrl: "/login" })}
-                className="block w-full px-4 py-2.5 text-left text-[14.5px] font-semibold text-red-600 hover:bg-black/[0.04]"
-              >
-                Sign Out
-              </button>
-            </div>
-          )}
-        </div>
+        {/*
+          Element 8 — the persona menu (J2.4 WS-B / E008). The gear glyph goes
+          with the two-item dropdown it used to sit beside: Settings is now a
+          named row inside the menu, and a gear that opens the same menu as the
+          avatar was two triggers for one thing.
+        */}
+        <AccountMenu isAdmin={isAdmin} />
       </div>
     </header>
   );
@@ -214,7 +143,7 @@ function IconLink({
   );
 }
 
-/* Inline SVGs rather than an icon dependency — six glyphs don't justify one. */
+/* Inline SVGs rather than an icon dependency — four glyphs don't justify one. */
 const S = { width: 18, height: 18, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
 
 function CalendarIcon() {
@@ -247,15 +176,5 @@ function BellIcon() {
       <path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8" />
       <path d="M13.7 21a2 2 0 0 1-3.4 0" />
     </svg>
-  );
-}
-function GearIcon() {
-  return (
-    <span className="hidden text-ink-2 sm:block">
-      <svg {...S}>
-        <circle cx="12" cy="12" r="3" />
-        <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" />
-      </svg>
-    </span>
   );
 }

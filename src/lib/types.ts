@@ -41,6 +41,8 @@ export type Me = {
     validationStatus: "NOT_REQUESTED" | "REQUESTED" | "VALIDATED" | "REJECTED";
     completeness: number;
     paused: boolean;
+    /** J2.4 WS-B — the persona menu's "Online for messages" state. */
+    availableForMessages: boolean;
     visible: boolean;
     rating: number | null;
     rates: Rates;

@@ -34,6 +34,7 @@ export async function getMe(viewer: Viewer) {
           validation_status: true,
           completeness: true,
           paused_at: true,
+          available_for_messages: true,
           rating: true,
           currency: true,
           onsite_rate_cents: true,
@@ -96,6 +97,7 @@ export async function getMe(viewer: Viewer) {
           validationStatus: provider.validation_status,
           completeness: provider.completeness,
           paused: provider.paused_at != null,
+          availableForMessages: provider.available_for_messages,
           visible: isMarketplaceVisible(provider),
           rating: provider.rating === null ? null : Number(provider.rating),
           rates: {
