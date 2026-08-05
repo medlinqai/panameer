@@ -34,6 +34,20 @@ export const ROUTE_ACCESS: { prefix: string; requires: RouteRequirement }[] = [
     profile is reachable through this route.
   */
   { prefix: "/profile", requires: "authenticated" },
+  /*
+    THE PERSONA-MENU PAGES (J2.4 WS-D/E/F). Provider surfaces, mapped here as
+    well as guarded in the pages themselves — `guardPage` is the authoritative
+    gate, this is the edge doing the cheap first pass, and a route the map does
+    not know about is one the edge silently skips.
+
+    NOT widened to "authenticated" the way /profile was: /profile has a genuine
+    second rendering for a Panameer employee, whereas these three are about
+    seller standing and have nothing to show someone who isn't one — which is
+    also why the admin's persona menu omits them.
+  */
+  { prefix: "/stats", requires: "canProvideServices" },
+  { prefix: "/account-health", requires: "canProvideServices" },
+  { prefix: "/recommendations", requires: "canProvideServices" },
   { prefix: "/hire", requires: "canHireTalent" },
   // FIND WORK IS A PROVIDER SURFACE — searching open job postings. This said
   // canHireTalent while nav.ts offered the same route to providers, so the rail
