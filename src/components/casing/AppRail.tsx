@@ -6,7 +6,14 @@ import { useState } from "react";
 import { signOut } from "next-auth/react";
 import { Avatar } from "@/components/Avatar";
 import { useMe } from "@/components/MeProvider";
-import { navForRoles, HOME_NAV, ADMIN_NAV, ADMIN_HOME, ADMIN_SETUP } from "@/lib/nav";
+import {
+  navForRoles,
+  HOME_NAV,
+  APP_NAV_GROUP_TITLE,
+  ADMIN_NAV,
+  ADMIN_HOME,
+  ADMIN_SETUP,
+} from "@/lib/nav";
 import { RailIcon } from "@/components/casing/RailIcon";
 import { useSession } from "next-auth/react";
 
@@ -72,20 +79,37 @@ export function AppRail() {
     All 15 items + 2 buttons + 3 group headers fit a 768px viewport without
     scrolling at these metrics, so the collapsible-group fallback is not needed.
   */
-  const link = (active: boolean) =>
-    "flex items-center gap-2 whitespace-nowrap rounded-[8px] px-2.5 py-[3px] " +
+  /*
+    TWO DENSITIES, ONE RAIL (E191).
+
+    The app rail carries nine items and Scott's image-1 spacing; the admin rail
+    carries fifteen plus two buttons and three group headers, and the comment
+    above is the reason it must stay tight — that budget is what keeps "Platform
+    Admins" on screen at 768px without scrolling. Giving both the roomier metrics
+    would have bought the provider the design and cost the admin the property the
+    density was measured for, so density is a parameter rather than a re-tune.
+
+    At 9 items × 36px + 8px gaps the app rail comes to ~316px of nav, which
+    clears 768px with the brand, company chip and signed-in card in place.
+  */
+  const link = (active: boolean, dense: boolean) =>
+    "flex items-center gap-2 whitespace-nowrap rounded-[8px] px-2.5 " +
+    (dense ? "py-[3px] " : "py-[7px] ") +
     "text-[15px] font-medium leading-[22px] transition-colors " +
     (active
       ? "bg-magenta text-white"
       : "text-white/80 hover:bg-white/10 hover:text-white");
 
-  const railLink = (item: { label: string; href: string; icon?: string }) => (
+  const railLink = (
+    item: { label: string; href: string; icon?: string },
+    dense = true
+  ) => (
     <Link
       key={item.href}
       href={item.href}
       onClick={() => setOpen(false)}
       aria-current={isActive(item.href) ? "page" : undefined}
-      className={link(isActive(item.href))}
+      className={link(isActive(item.href), dense)}
     >
       <RailIcon name={item.icon} />
       <span className="truncate">{item.label}</span>
@@ -137,11 +161,11 @@ export function AppRail() {
     </>
   ) : (
     <>
-      {railLink(HOME_NAV)}
-      <p className="mt-6 px-3 pb-1 text-[11px] font-semibold uppercase tracking-[0.09em] text-white/40">
-        Applications
+      {railLink(HOME_NAV, false)}
+      <p className="mt-6 px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-[0.09em] text-white/40">
+        {APP_NAV_GROUP_TITLE}
       </p>
-      <div className="space-y-px">{items.map((i) => railLink(i))}</div>
+      <div className="space-y-1">{items.map((i) => railLink(i, false))}</div>
     </>
   );
 

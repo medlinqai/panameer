@@ -55,50 +55,75 @@ export type NavItem = {
   glyphs for one destination is the drift the shared nav.ts exists to prevent.
 */
 export const HOME_NAV: NavItem = {
-  label: "Opportunities",
+  label: "Provider Dashboard",
   href: "/dashboard",
-  icon: "Home",
+  icon: "LayoutDashboard",
 };
 
-/**
- * The Applications group, in E151's order. Contracts, Finances, Messages and
- * Community are open to everyone signed in — both sides of a marketplace have
- * agreements, money, conversations and a community.
- */
+/** The group heading above the app items. E191 renames it from "Applications". */
+export const APP_NAV_GROUP_TITLE = "Transactions";
+
+/*
+  THE APP RAIL, REBUILT TO SCOTT'S IMAGE-1 MENU (E191 — supersedes the E007
+  rail and E151's "Applications" grouping).
+
+  THE SHAPE DIDN'T CHANGE, THE VOCABULARY DID. These were labelled after the
+  PAGE each one opens — Learn, Work, Packages, Talent, Contracts, Finances —
+  which reads as a site map. The revised set is labelled after the THING THE
+  USER IS DOING, which is what a transactions menu is for: Start Learning, Find
+  Work, Sell Services, Find Talent, Manage Work Orders, Timesheets & Milestones,
+  Payments, Messages.
+
+  Two entries point at surfaces whose page name still differs from the label,
+  and that is deliberate rather than pending: "Manage Work Orders" opens
+  /contracts because a work order IS the contract in this model (Work Request →
+  Package match → contract → milestone settlement), and "Timesheets &
+  Milestones" opens /deliver-work, the delivery-side stub. `pageTitleFor` reads
+  these labels, so each page's header now says what the rail said to get there.
+
+  DROPPED FROM THE RAIL, and worth stating because it is a real consequence:
+  Community (/community), Company (/company) and Reports (/reports) are not in
+  the designed menu and now have no rail entry. /company in particular is where
+  a company admin approves join requests and where company terms are accepted,
+  and nothing else links to it — see the report on this brief. The routes still
+  work; only the way in is gone.
+*/
 const BASE_NAV: NavItem[] = [
-  { label: "Learn", href: "/learn", icon: "GraduationCap" },
+  { label: "Start Learning", href: "/learn", icon: "GraduationCap" },
 ];
 
 const TAIL_NAV: NavItem[] = [
-  { label: "Packages", href: "/settings/packages", requires: "canProvideServices", icon: "Package" },
-  { label: "Talent", href: "/hire", requires: "canHireTalent", icon: "Users" },
-  { label: "Contracts", href: "/contracts", icon: "FileSignature" },
-  { label: "Finances", href: "/finances", icon: "Wallet" },
+  {
+    label: "Sell Services",
+    href: "/settings/packages",
+    requires: "canProvideServices",
+    icon: "Package",
+  },
+  { label: "Find Talent", href: "/hire", requires: "canHireTalent", icon: "Users" },
+  // Reusing the admin rail's Work Orders and Payments glyphs, per E165: two
+  // icons for one destination is the drift the shared nav.ts exists to prevent.
+  { label: "Manage Work Orders", href: "/contracts", icon: "ClipboardCheck" },
+  {
+    label: "Timesheets & Milestones",
+    href: "/deliver-work",
+    icon: "CalendarClock",
+  },
+  { label: "Payments", href: "/finances", icon: "CreditCard" },
   { label: "Messages", href: "/messages", icon: "MessageSquare" },
-  { label: "Community", href: "/community", icon: "MessagesSquare" },
-  /*
-    COMPANY is universal and deliberately last: everyone signed in belongs to
-    one, it is where a company admin finds their join requests, and it is where
-    the company terms are accepted. Not capability-gated — a member sees their
-    company, an admin additionally sees the queue.
-  */
-  { label: "Company", href: "/company", icon: "Building2" },
 ];
 
 /**
  * Role-specific items. The buyer labels are LOCKED in `navigation_map.md`
  * (deck 1.1 slide 5) — do not reword them here.
  *
- * A provider sees Find Work and not Hire Talent; a buyer the reverse. Someone
+ * A provider sees Find Work and not Find Talent; a buyer the reverse. Someone
  * who is both sees both, because a Person genuinely can be a provider and a
  * buyer, and hiding half their app would be wrong.
  */
 const ROLE_NAV: NavItem[] = [
-  // "Work" in the casing rail (E151). It was "Find Work"; the mockup's label is
-  // the shorter one, and the page it opens now carries the Find-Work hero that
-  // used to be on Home (reconciliation: E134's home is superseded by WS12).
-  { label: "Work", href: "/work", requires: "canProvideServices", icon: "Briefcase" },
-  { label: "Reports", href: "/reports", requires: "canHireTalent", icon: "BarChart3" },
+  // E191 restores the longer label. E151 shortened it to "Work" to match a
+  // mockup; image 1 is the newer design and it reads as an action.
+  { label: "Find Work", href: "/work", requires: "canProvideServices", icon: "Briefcase" },
 ];
 
 /** The public front door. Learn is the one app surface open to everyone. */
