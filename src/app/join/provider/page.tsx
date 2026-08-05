@@ -3399,7 +3399,10 @@ function capturedLine(outcome: ImportOutcome): string | null {
   const bits: string[] = [];
   if (a.headline) bits.push("your title");
   if (a.overview) bits.push("your bio");
-  if (a.experiences) bits.push(`${a.experiences} role${a.experiences === 1 ? "" : "s"}`);
+  // E145 — "employer", never "role". "1 role" was the phrasing the walk
+  // reported, sitting directly above a section headed Work History.
+  if (a.experiences)
+    bits.push(`${a.experiences} employer${a.experiences === 1 ? "" : "s"}`);
   if (a.education)
     bits.push(`${a.education} education entr${a.education === 1 ? "y" : "ies"}`);
   if (a.skillsMatched)

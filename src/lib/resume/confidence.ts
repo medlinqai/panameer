@@ -118,7 +118,8 @@ export function assessParse(
     reasons.push("We couldn't find any work history in this file.");
     hardTell = true;
   } else if (datedEntries === 0) {
-    reasons.push("We found roles but couldn't read any dates for them.");
+    // E145 — "employer", never "role".
+    reasons.push("We found employers but couldn't read any dates for them.");
     // Only decisive when the document plainly HAS dates — otherwise a genuinely
     // undated CV would be escalated for telling the truth about itself.
     if (dateRangesInText >= 3) hardTell = true;

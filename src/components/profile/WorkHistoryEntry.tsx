@@ -187,7 +187,10 @@ export function WorkHistoryEntry({
           disabled={projects.length === 0}
           aria-expanded={open === "projects"}
           title={
-            projects.length === 0 ? "No projects recorded for this role" : undefined
+            // E145 — "employer", never "role"; Role is the catalog tier.
+            projects.length === 0
+              ? "No projects recorded for this employer"
+              : undefined
           }
         >
           Projects{projects.length > 0 ? ` (${projects.length})` : ""}

@@ -649,17 +649,26 @@ export function parseResume(text: string): ParsedResume {
     );
   }
 
+  /*
+    E185 — the gap this used to emit is GONE, not reworded.
+
+    It said "we couldn't work out your years of experience from the dates, so
+    pick your experience level yourself", and it survived the reshape that
+    deleted the thing it points at: `experience_level` was dropped from
+    provider_profiles in WS7 (E068) and years are DERIVED from the work history
+    (E178). There is no experience-level step and no field to pick one in, so
+    the note was instructing the provider to go and do something impossible.
+
+    The inference itself stays — `experienceYears` is still read downstream.
+    It just no longer nags when it comes back empty.
+  */
   const inferred = inferExperienceLevel(experiences);
-  if (!inferred && experiences.length > 0) {
-    gaps.push(
-      "We couldn't work out your years of experience from the dates, so pick your experience level yourself."
-    );
-  }
 
   const cappedExperiences = experiences.slice(0, CAPS.experiences);
   if (experiences.length > cappedExperiences.length) {
+    // E145 — "employer", never "role". One word for one thing, everywhere.
     gaps.push(
-      `We found ${experiences.length} roles — more than a résumé usually lists, so we kept the first ${cappedExperiences.length}.`
+      `We found ${experiences.length} employers — more than a résumé usually lists, so we kept the first ${cappedExperiences.length}.`
     );
   }
   const cappedEducation = education.slice(0, CAPS.education);
