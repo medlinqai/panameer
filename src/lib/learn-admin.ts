@@ -820,6 +820,20 @@ export function normalizeVimeoRef(input: string): string | null {
   const raw = input.trim();
   if (!raw) return null;
   if (/^\d+$/.test(raw)) return raw;
+  /*
+    IT MUST ACCEPT ITS OWN OUTPUT, and it did not.
+
+    The stored form of an unlisted video is `123456/abcdef` — id plus hash, no
+    host. That matched neither the bare-numeric branch nor the vimeo.com regex,
+    so `normalizeVimeoRef(normalizeVimeoRef(url))` returned null for every
+    unlisted video. Harmless while the only caller was an admin pasting a full
+    URL; it surfaced the moment the bulk loader passed an already-normalised ref
+    back through `setLessonUrl`, which rejected 243 of 304 rows with "that isn't
+    a Vimeo link". A function whose output its own input refuses is a trap, and
+    the fix belongs here rather than in each caller remembering to pass raw.
+  */
+  const bare = /^(\d+)\/([0-9a-z]+)$/i.exec(raw);
+  if (bare) return `${bare[1]}/${bare[2]}`;
   const m = /vimeo\.com\/(?:channels\/[^/]+\/|video\/)?(\d+)(?:[/?]([0-9a-z]+))?/i.exec(raw);
   if (!m) return null;
   // Keep the unlisted-video hash: without it a private video 404s in the player.
