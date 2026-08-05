@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { BRAND_DESCRIPTOR } from "@/lib/brand";
 
 const COLS: { title: string; links: { label: string; href: string }[] }[] = [
   {
@@ -50,7 +51,7 @@ export function MarketingFooter() {
               className="h-8 w-auto"
             />
             <p className="mt-4 max-w-[240px] text-[14px] text-[#a89fb8]">
-              The services-procurement marketplace with ERP integration.
+              {BRAND_DESCRIPTOR}
             </p>
           </div>
           {COLS.map((col) => (
@@ -69,8 +70,7 @@ export function MarketingFooter() {
           ))}
         </div>
         <div className="mt-[26px] text-[13px] text-[#8a8199]">
-          © 2026 Panameer · The services-procurement marketplace with ERP
-          integration.
+          © 2026 Panameer · {BRAND_DESCRIPTOR}
         </div>
       </div>
     </footer>

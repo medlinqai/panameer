@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Comfortaa, Montserrat } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { THEME_BOOT_SCRIPT } from "@/lib/theme";
+import { SEO_DESCRIPTION, SEO_TITLE } from "@/lib/brand";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,10 +31,21 @@ const montserrat = Montserrat({
   weight: ["400", "600", "700", "800"],
 });
 
+/*
+  METADATA IS THE ONE PLACE "MARKETPLACE" BELONGS (WS-D).
+
+  It is the word people TYPE INTO A SEARCH BOX, not the word the product says
+  about itself — display copy positions Panameer as "Enterprise Systems + AI".
+  Keeping the two apart is the whole distinction, and keeping both strings in
+  lib/brand.ts beside the display copy is what stops a future edit quietly
+  promoting the keyword into a headline.
+
+  The old title said "services-procurement marketplace with ERP integration",
+  which is the mechanism rather than the category anybody searches for.
+*/
 export const metadata: Metadata = {
-  title: "Panameer — The services-procurement marketplace with ERP integration",
-  description:
-    "Hire vetted enterprise-application experts, or connect your ERP and search, request, order, and settle services without leaving your system of record.",
+  title: SEO_TITLE,
+  description: SEO_DESCRIPTION,
   icons: {
     // WS4 — the new looped-P mark. `apple` gets the 180px padded variant: iOS
     // composites a transparent touch icon onto black, and the supplied mark is
