@@ -29,7 +29,8 @@
     "check:ai-extract": "npx esbuild src/lib/resume/ai-extract.test.ts --bundle --platform=node --format=cjs --packages=external --outfile=.harness/ai.cjs --log-level=error && node .harness/ai.cjs",
     "eval:parser": "npx esbuild scripts/eval-resume-parser.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/eval-parser.cjs --log-level=error && node -r dotenv/config .harness/eval-parser.cjs dotenv_config_path=.env.local",
     "check:ai-fixtures": "npx esbuild src/lib/resume/check-ai-fixtures.ts --bundle --platform=node --format=cjs --packages=external --outfile=.harness/aifix.cjs --log-level=error && node -r dotenv/config .harness/aifix.cjs dotenv_config_path=.env.local",
-    "learn:video-urls": "npx esbuild prisma/load-learn-video-urls.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/learn-video-urls.cjs --log-level=error && node -r dotenv/config .harness/learn-video-urls.cjs dotenv_config_path=.env.local"
+    "learn:video-urls": "npx esbuild prisma/load-learn-video-urls.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/learn-video-urls.cjs --log-level=error && node -r dotenv/config .harness/learn-video-urls.cjs dotenv_config_path=.env.local",
+    "check:host": "npx esbuild src/lib/host.test.ts --bundle --platform=node --format=cjs --packages=external --outfile=.harness/host.cjs --log-level=error && node .harness/host.cjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",

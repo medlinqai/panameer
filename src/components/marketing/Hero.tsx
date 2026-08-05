@@ -1,14 +1,39 @@
 "use client";
 
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-/** Hero with a working hire/work toggle + search box (visual for now). */
+/**
+ * The hero — hire/work toggle, search box, and three role shortcuts.
+ *
+ * THE CTAs LEAD SOMEWHERE NOW (brief_marketing_home_localhost). The search
+ * button was `onSubmit={e => e.preventDefault()}` over a readOnly input, and
+ * the three role chips were `<span>`s styled with `cursor-pointer` and a "→".
+ * They looked like the primary action on the page and did nothing, which is the
+ * dead end that stopped the front-door → onboarding walk at its first click.
+ *
+ * They route to `/join`, and the toggle decides which side of the fork: `?type`
+ * is a parameter /join ALREADY reads to skip straight to page 2, so "I want to
+ * hire" lands on the buyer jobs and "I want to work" on the seller ones. No new
+ * contract invented for the sake of a link.
+ *
+ * The typed query is deliberately NOT carried across. Nothing downstream reads
+ * it yet, and a search term that visibly survives into a URL and then changes
+ * nothing is a worse promise than not appearing to search at all — there is no
+ * public provider index to search against until sign-up.
+ */
 export function Hero() {
+  const router = useRouter();
   const [mode, setMode] = useState<"hire" | "work">("hire");
+  const [query, setQuery] = useState("");
   const placeholder =
     mode === "hire"
       ? "Describe what you need to hire for…"
       : "Describe the work you want to find…";
+
+  /** Both sides of the toggle start the same funnel, on their own branch. */
+  const joinHref = mode === "hire" ? "/join?type=buyer" : "/join?type=seller";
 
   return (
     <div className="mx-auto max-w-[1180px] px-6">
@@ -64,11 +89,14 @@ export function Hero() {
 
           <form
             className="flex max-w-[640px] rounded-[14px] bg-white p-[7px] shadow-brand"
-            onSubmit={(e) => e.preventDefault()}
+            onSubmit={(e) => {
+              e.preventDefault();
+              router.push(joinHref);
+            }}
           >
             <input
-              value=""
-              readOnly
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
               placeholder={placeholder}
               aria-label={placeholder}
               className="min-w-0 flex-1 bg-transparent px-4 py-3.5 text-[16px] text-ink outline-none"
@@ -81,15 +109,21 @@ export function Hero() {
             </button>
           </form>
 
+          {/*
+            Real links, not styled spans. These carried `cursor-pointer` and an
+            arrow while being inert — the clearest kind of dead end, because the
+            page actively invited the click.
+          */}
           <div className="mt-5 flex flex-wrap gap-3">
             {["Order-to-Cash SME", "Procure-to-Pay SME", "Record-to-Report SME"].map(
               (label) => (
-                <span
+                <Link
                   key={label}
-                  className="inline-flex cursor-pointer items-center gap-2 rounded-[10px] border border-white/30 bg-white/10 px-4 py-2.5 text-[14.5px] font-semibold text-white transition-colors hover:bg-white/20"
+                  href={joinHref}
+                  className="inline-flex items-center gap-2 rounded-[10px] border border-white/30 bg-white/10 px-4 py-2.5 text-[14.5px] font-semibold text-white transition-colors hover:bg-white/20"
                 >
                   {label} →
-                </span>
+                </Link>
               )
             )}
           </div>
