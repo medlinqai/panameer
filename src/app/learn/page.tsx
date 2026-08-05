@@ -22,9 +22,27 @@ export const metadata = {
  * cards fronted by the instructor's face are right now that the instructor IS
  * the proposition.
  */
-export default async function LearnPage() {
+export default async function LearnPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
   const viewer = await getSessionViewer();
   const cards = await getLearnHome(viewer?.userId ?? null);
+  /*
+    WS1-B — `?tab=mine` opens on My Learning Paths. The rail lists the two as
+    separate submenu entries; they are one page with the filter flipped, which
+    is what the tabs already were. Anything else falls back to "all" rather
+    than erroring — a bad query in a URL should not be a broken page.
+  */
+  const { tab } = await searchParams;
 
-  return <LearnHome cards={cards} chips={groupChips(cards)} signedIn={Boolean(viewer)} />;
+  return (
+    <LearnHome
+      cards={cards}
+      chips={groupChips(cards)}
+      signedIn={Boolean(viewer)}
+      initialTab={tab === "mine" ? "mine" : "all"}
+    />
+  );
 }

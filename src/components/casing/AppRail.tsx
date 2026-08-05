@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMe } from "@/components/MeProvider";
 import {
   navForRoles,
@@ -288,13 +288,18 @@ export function AppRail() {
 }
 
 /**
- * One primary rail item (WS1-A).
+ * One primary rail item, with its flyout (WS1-A/WS1-B).
  *
- * A LINK PLUS A CHEVRON. The row navigates to the item's own page and the
- * chevron marks that a submenu hangs off it — WS1-B makes the chevron open a
- * flyout. Splitting the two is what lets "Find Work" be both a place you can go
- * and a set of ways to look at work: a rail where the parent is only a menu
- * toggle costs a click to reach the obvious destination.
+ * TWO TARGETS IN ONE ROW. The label navigates to the item's own page; the
+ * chevron opens the submenu. Splitting them is what lets "Find Work" be both a
+ * place you can go and a set of ways to look at work — a rail whose parent is
+ * only a menu toggle costs a click to reach the obvious destination, and one
+ * with no toggle hides five views behind a page nobody knows to open.
+ *
+ * A FLYOUT, NOT AN IN-RAIL EXPAND. Six items each holding up to five children
+ * would push the rail past a laptop viewport the moment two were open; the
+ * flyout costs no vertical space and matches the deck. It opens on hover AND on
+ * click, because hover alone is unreachable by keyboard and on touch.
  */
 function RailGroupItem({
   item,
@@ -305,27 +310,106 @@ function RailGroupItem({
   isActive: (href: string) => boolean;
   onNavigate: () => void;
 }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
   const active = isActive(item.href);
+  const children = item.children ?? [];
+
+  /*
+    Escape closes, and a click outside closes. The flyout sits over page
+    content, so leaving it open after the pointer has gone elsewhere would put a
+    dark panel on top of whatever the person navigated to.
+  */
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    const onClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("mousedown", onClick);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("mousedown", onClick);
+    };
+  }, []);
+
   return (
-    <Link
-      href={item.href}
-      onClick={onNavigate}
-      aria-current={active ? "page" : undefined}
-      className={
-        "flex items-center gap-2 whitespace-nowrap rounded-[8px] px-2.5 py-[7px] " +
-        "text-[15px] font-medium leading-[22px] transition-colors " +
-        (active
-          ? "bg-magenta text-white"
-          : "text-white/80 hover:bg-white/10 hover:text-white")
-      }
+    <div
+      ref={ref}
+      className="relative"
+      onMouseEnter={() => children.length && setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
     >
-      <RailIcon name={item.icon} />
-      <span className="truncate">{item.label}</span>
-      {item.children?.length ? (
-        <span aria-hidden className="ml-auto pl-2 text-white/45">
-          ›
-        </span>
-      ) : null}
-    </Link>
+      <div
+        className={
+          "flex items-center gap-2 whitespace-nowrap rounded-[8px] pl-2.5 pr-1 " +
+          "text-[15px] font-medium leading-[22px] transition-colors " +
+          (active
+            ? "bg-magenta text-white"
+            : "text-white/80 hover:bg-white/10 hover:text-white")
+        }
+      >
+        <Link
+          href={item.href}
+          onClick={() => {
+            setOpen(false);
+            onNavigate();
+          }}
+          aria-current={active ? "page" : undefined}
+          className="flex min-w-0 flex-1 items-center gap-2 py-[7px]"
+        >
+          <RailIcon name={item.icon} />
+          <span className="truncate">{item.label}</span>
+        </Link>
+
+        {children.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            aria-haspopup="menu"
+            aria-expanded={open}
+            aria-label={`${item.label} submenu`}
+            className="shrink-0 rounded-[6px] px-1.5 py-1 text-white/45 transition-colors hover:bg-white/10 hover:text-white"
+          >
+            <span aria-hidden className={open ? "inline-block rotate-90" : "inline-block"}>
+              ›
+            </span>
+          </button>
+        )}
+      </div>
+
+      {open && children.length > 0 && (
+        <div
+          role="menu"
+          aria-label={item.label}
+          /*
+            `left-full` rather than a dropdown: the rail is 248px of a laptop's
+            width and a panel below the row would cover the items under it.
+            -ml-1 tucks it against the rail so the pointer can cross without
+            passing over page content and triggering mouseleave.
+          */
+          className="absolute left-full top-0 z-50 -ml-1 w-[19rem] overflow-hidden rounded-[12px] border border-line bg-white py-1.5 shadow-brand"
+        >
+          <p className="px-3.5 pb-1 pt-0.5 text-[11px] font-bold uppercase tracking-[0.08em] text-ink-2">
+            {item.label}
+          </p>
+          {children.map((child) => (
+            <Link
+              key={child.href}
+              href={child.href}
+              title={child.tooltip}
+              role="menuitem"
+              onClick={() => {
+                setOpen(false);
+                onNavigate();
+              }}
+              className="block whitespace-nowrap px-3.5 py-2 text-[14.5px] text-ink hover:bg-black/[0.04]"
+            >
+              {child.label}
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

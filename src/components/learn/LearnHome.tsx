@@ -21,12 +21,23 @@ export function LearnHome({
   cards,
   chips,
   signedIn,
+  initialTab = "all",
 }: {
   cards: LearnCard[];
   chips: { group: string; paths: number; lessons: number }[];
   signedIn: boolean;
+  /**
+   * Which tab to open on (WS1-B).
+   *
+   * The rail's Start Learning submenu has "All Learning Paths" and "My Learning
+   * Paths" as separate entries, and they are the same page with this filter
+   * flipped — the tabs were already a filter over one catalog rather than two
+   * pages, which is why this is an initial value and not a second route. Read
+   * from `?tab=` by the server component so a link can land on either.
+   */
+  initialTab?: "all" | "mine";
 }) {
-  const [tab, setTab] = useState<"all" | "mine">("all");
+  const [tab, setTab] = useState<"all" | "mine">(initialTab);
   const [query, setQuery] = useState("");
   const [group, setGroup] = useState<string | null>(null);
 

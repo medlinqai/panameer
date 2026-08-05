@@ -72,6 +72,15 @@ export const ROUTE_ACCESS: { prefix: string; requires: RouteRequirement }[] = [
   { prefix: "/contracts", requires: "authenticated" }, // rail stub (E134)
   { prefix: "/finances", requires: "authenticated" }, // rail stub (E134)
   { prefix: "/messages", requires: "authenticated" }, // shared buyer ↔ provider
+  /*
+    WS1-B — the rail's Community and Sell-My-Services submenus land here.
+    `/community` had no map entry at all, so the edge skipped it entirely and
+    the pages were relying on their own `guardPage`. That is the authoritative
+    gate either way, but a route the map doesn't know about is one the fast
+    first line silently doesn't run on.
+  */
+  { prefix: "/community", requires: "authenticated" },
+  { prefix: "/services", requires: "canProvideServices" },
   { prefix: "/dashboard", requires: "authenticated" }, // role-aware content, not gated
 ];
 
