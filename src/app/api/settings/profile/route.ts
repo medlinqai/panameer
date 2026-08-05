@@ -1,24 +1,19 @@
-import { NextResponse } from "next/server";
-import { guardApi } from "@/lib/guard";
-import { getProviderSettings } from "@/lib/profile-settings";
-import { OnboardingError } from "@/lib/onboarding";
+import { z } from "zod";
+import { settingsWrite } from "@/lib/settings-api";
+import { updateProfileSettings } from "@/lib/settings";
 
-/**
- * GET /api/settings/profile — the owner's editable profile snapshot. Gated to
- * canProvideServices (server-authoritative), then owner-scoped: resolves the
- * profile from the session, never a client id. Fails closed.
- */
-export async function GET() {
-  const gate = await guardApi("canProvideServices");
-  if (gate instanceof NextResponse) return gate;
-  const viewer = gate;
-  try {
-    return NextResponse.json(await getProviderSettings(viewer));
-  } catch (e) {
-    if (e instanceof OnboardingError && e.code === "NOT_A_PROVIDER") {
-      return NextResponse.json({ error: e.message, code: e.code }, { status: 404 });
-    }
-    console.error("[settings] profile load failed:", e);
-    return NextResponse.json({ error: "Could not load profile" }, { status: 500 });
-  }
-}
+/** POST /api/settings/profile — visibility and preferences (WS-H / E015). */
+const Body = z.object({
+  paused: z.boolean().optional(),
+  projectPreference: z
+    .enum(["ANY", "SHORT_TERM", "LONG_TERM", "CONTRACT_TO_HIRE"])
+    .nullable()
+    .optional(),
+  earningsPrivate: z.boolean().optional(),
+  aiTrainingOptIn: z.boolean().optional(),
+  linkedGithub: z.string().trim().max(200).nullable().optional(),
+  linkedStackoverflow: z.string().trim().max(200).nullable().optional(),
+});
+
+export const POST = (request: Request) =>
+  settingsWrite(request, Body, (viewer, input) => updateProfileSettings(viewer, input));

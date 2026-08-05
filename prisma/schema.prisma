@@ -71,6 +71,11 @@ model User {
   lessonProgress    LessonProgress[]
   learnTestAttempts LearnTestAttempt[]
 
+  /// J2.4 WS-H (E018) — two-step verification, keyed to the LOGIN rather than
+  /// to a profile: it protects the account, and one login can hold several
+  /// memberships.
+  twoFactor TwoFactorSetting?
+
   @@map("users")
 }
 
@@ -312,6 +317,10 @@ model Person {
   /// When the phone number above passed SMS verification (brief_P / E019).
   /// Cleared whenever `phone` changes, so it always describes the CURRENT number.
   phone_verified_at DateTime?
+  /// J2.4 WS-H (E014) — the person's own IANA zone, for the Location section
+  /// and for scheduling later. Null means "use the browser's", which is what
+  /// every surface did before there was anywhere to record a preference.
+  time_zone         String?
   photo_url         String?
   status            PersonStatus @default(ACTIVE)
 
@@ -349,6 +358,15 @@ model Person {
   /// not a ProviderProfile, so an instructor needn't be a marketplace provider.
   learnPaths   LearningPath[] @relation("LearnExpertPaths")
   learnLessons Lesson[]       @relation("LearnExpertLessons")
+
+  // J2.4 WS-H — the payee-side records. On Person, not ProviderProfile: one
+  // login can hold several memberships, and a bank account or a tax form
+  // belongs to the human being paid, not to one of the hats they wear.
+  billingMethods       BillingMethod[]
+  payoutMethods        PayoutMethod[]
+  taxProfile           TaxProfile?
+  identityVerification IdentityVerification?
+  notificationPrefs    NotificationPreference[]
 
   @@index([company_id])
   @@index([site_id])
@@ -695,6 +713,22 @@ model ProviderProfile {
   /// currently at their desk; conflating the two would hide a profile because
   /// its owner went to lunch.
   available_for_messages  Boolean          @default(true)
+  /// ---- J2.4 WS-H Profile Settings (E015) ----------------------------------
+  /// What KIND of work this provider wants. A preference shown to buyers and
+  /// used for matching later; not a filter on what they may bid for.
+  project_preference      ProjectPreference?
+  /// Plus-gated: hide earned-amount history from buyers browsing the profile.
+  /// Stored for everyone — a provider who lapses from Plus should not silently
+  /// have their privacy choice discarded and their history re-exposed.
+  earnings_private        Boolean          @default(false)
+  /// Explicit OPT-IN (never a default) to Panameer using this profile's content
+  /// to improve its models. Off unless the person turned it on.
+  ai_training_opt_in      Boolean          @default(false)
+  /// Linked developer accounts (E015). Usernames, not OAuth — these are shown
+  /// on the profile as evidence, and asking for repo scopes to display a
+  /// handle would be a wildly disproportionate permission grab.
+  linked_github           String?
+  linked_stackoverflow    String?
   // The coordinator Person who represents this provider (brief_I). Nullable —
   // most providers are independent. Set only via the provider's own authenticated
   // acceptance of a coordinator invite.
@@ -2089,4 +2123,199 @@ enum RecommendationStatus {
   SUBMITTED
   DECLINED
   EXPIRED
+}
+
+enum ProjectPreference {
+  ANY
+  SHORT_TERM
+  LONG_TERM
+  CONTRACT_TO_HIRE
+}
+
+/// ---------------------------------------------------------------------------
+/// J2.4 WS-H — the money and identity surfaces (E016–E019).
+///
+/// ALL FIVE MODELS HANG OFF `Person`, not off ProviderProfile, and that is the
+/// "payee entity" decision made concrete. One login can hold several
+/// memberships — provider today, recruiter tomorrow — and a bank account or a
+/// tax form belongs to the human being paid, not to one of the hats they wear.
+/// Attaching them to the profile would mean a recruiter who also sells their own
+/// time filing two W-9s for one taxpayer.
+///
+/// (The brief notes the payee may be a recruiter's COMPANY. That case needs a
+/// company-level payee record and is deliberately not modelled here — see the
+/// report; what is here is correct for the individual, which is every provider
+/// on the platform today.)
+///
+/// NO PROCESSOR INTEGRATION. Every one of these captures what the person told
+/// us and nothing else: no card numbers, no account numbers, no live money. The
+/// last four digits and a label are what a UI needs to say "this one"; storing
+/// the rest without a PCI-compliant vault would be a liability, not a feature.
+/// ---------------------------------------------------------------------------
+
+model BillingMethod {
+  id         String            @id @default(uuid()) @db.Uuid
+  person_id  String            @db.Uuid
+  kind       BillingMethodKind
+  /// What the person calls it — "Amex, personal".
+  label      String
+  /// Display only. The full number never reaches Panameer.
+  last4      String?
+  exp_month  Int?
+  exp_year   Int?
+  is_default Boolean           @default(false)
+  created_at DateTime          @default(now())
+  updated_at DateTime          @updatedAt
+
+  person Person @relation(fields: [person_id], references: [id], onDelete: Cascade)
+
+  @@index([person_id])
+  @@map("billing_methods")
+}
+
+enum BillingMethodKind {
+  CARD
+  PAYPAL
+  BANK_DEBIT
+}
+
+model PayoutMethod {
+  id            String           @id @default(uuid()) @db.Uuid
+  person_id     String           @db.Uuid
+  kind          PayoutMethodKind
+  label         String
+  /// Display only, as above.
+  last4         String?
+  /// Where the money lands — drives which tax form is required.
+  country       String
+  is_default    Boolean          @default(false)
+  created_at    DateTime         @default(now())
+  updated_at    DateTime         @updatedAt
+
+  person Person @relation(fields: [person_id], references: [id], onDelete: Cascade)
+
+  @@index([person_id])
+  @@map("payout_methods")
+}
+
+enum PayoutMethodKind {
+  BANK_ACCOUNT
+  PAYPAL
+  WIRE
+}
+
+/// The seller money-gate (E017). A withdrawal method cannot be added until this
+/// exists, because paying someone without a tax form on file is the one thing in
+/// this area that creates a real obligation for Panameer.
+model TaxProfile {
+  id          String   @id @default(uuid()) @db.Uuid
+  person_id   String   @unique @db.Uuid
+  /// W-9 for a US person, W-8BEN / W-8BEN-E for everyone else. Which one is
+  /// determined by `country`, not chosen freely — see lib/tax.ts.
+  form        TaxForm
+  legal_name  String
+  country     String
+  /// Display only. The TIN itself is not stored: we have no lawful need to hold
+  /// it before there is a payment processor that requires it.
+  tin_last4   String?
+  /// The person's own attestation, with a timestamp. This is a signature.
+  signed_name String
+  signed_at   DateTime @default(now())
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  person Person @relation(fields: [person_id], references: [id], onDelete: Cascade)
+
+  @@map("tax_profiles")
+}
+
+enum TaxForm {
+  W9
+  W8BEN
+  W8BENE
+}
+
+/// Identity verification (E019) — the IDV badge, distinct from the "Validated"
+/// merit badge. FREE: the Connects cost is stripped, and the KYC partner that
+/// would make it cost anything is deferred.
+model IdentityVerification {
+  id          String     @id @default(uuid()) @db.Uuid
+  person_id   String     @unique @db.Uuid
+  status      IdvStatus  @default(NOT_STARTED)
+  /// What the person said they would present. No document is stored — that
+  /// waits for a KYC partner with somewhere lawful to put it.
+  document    String?
+  submitted_at DateTime?
+  reviewed_at DateTime?
+  /// Three years from approval, per the brief.
+  expires_at  DateTime?
+  /// Why a review failed, shown to the person so they can fix it.
+  note        String?
+  created_at  DateTime   @default(now())
+  updated_at  DateTime   @updatedAt
+
+  person Person @relation(fields: [person_id], references: [id], onDelete: Cascade)
+
+  @@map("identity_verifications")
+}
+
+enum IdvStatus {
+  NOT_STARTED
+  SUBMITTED
+  VERIFIED
+  REJECTED
+  EXPIRED
+}
+
+/// Per-category notification channels (E020).
+///
+/// A ROW PER (person, category) rather than a wall of booleans on Person: the
+/// category list is Panameer's event model and it will grow, and every new
+/// event would otherwise be a migration. Absent row = the category's documented
+/// default, so a new category ships with sensible behaviour and no backfill.
+model NotificationPreference {
+  id        String   @id @default(uuid()) @db.Uuid
+  person_id String   @db.Uuid
+  /// Matches a key in lib/notification-categories.ts.
+  category  String
+  in_app    Boolean  @default(true)
+  email     Boolean  @default(true)
+  /// SMS is wired to the STUBBED Twilio path — the toggle is real, the send is
+  /// not, and the UI says so.
+  sms       Boolean  @default(false)
+  updated_at DateTime @updatedAt
+  created_at DateTime @default(now())
+
+  person Person @relation(fields: [person_id], references: [id], onDelete: Cascade)
+
+  @@unique([person_id, category])
+  @@index([person_id])
+  @@map("notification_preferences")
+}
+
+/// Two-step verification (E018).
+///
+/// REAL TOTP, not a placeholder: a 20-byte base32 secret, RFC-6238 codes
+/// verified server-side with a one-step window. Half-built 2FA is worse than
+/// none — it teaches people they are protected when they are not — so this is
+/// either genuine or absent, and it is genuine.
+///
+/// Mobile-push 2FA is deferred with the mobile app that would receive it.
+model TwoFactorSetting {
+  id           String   @id @default(uuid()) @db.Uuid
+  user_id      String   @unique @db.Uuid
+  /// Base32. Present as soon as enrolment STARTS; `confirmed_at` is what makes
+  /// it live, so an abandoned enrolment never locks anyone out.
+  totp_secret  String?
+  confirmed_at DateTime?
+  /// The security question, with the answer hashed like a password — it is a
+  /// credential, and storing it in the clear would make it a worse one.
+  question     String?
+  answer_hash  String?
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("two_factor_settings")
 }
