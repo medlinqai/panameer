@@ -3,6 +3,7 @@ import { guardPage } from "@/lib/guard";
 import { getSessionViewer } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { getCreditsSummary, formatCredits } from "@/lib/credits";
+import { BRAND_MONEY_LINE } from "@/lib/brand";
 import {
   CREDIT_EARN_ACTIONS,
   CREDIT_SPEND_ACTIONS,
@@ -56,6 +57,16 @@ export default async function CommunityPage() {
         <h1 className="font-display text-[26px] font-bold tracking-[-0.5px]">
           The Panameer Community
         </h1>
+        {/*
+          THE MONEY LINE IS THE HUB'S INTRO (brief_brand_tagline_rollout WS-C).
+          This is the crossover surface from content into the marketplace, and
+          the four verbs ARE what the community is for — learn, join, connect,
+          get paid — so the brand line does the job the hand-written sentence
+          was approximating. From lib/brand.ts, same string the hero uses.
+        */}
+        <p className="mt-1.5 max-w-2xl text-[16px] font-semibold leading-relaxed">
+          {BRAND_MONEY_LINE}
+        </p>
         <p className="mt-1.5 max-w-2xl text-[15px] leading-relaxed text-ink-2">
           Where practitioners answer each other&apos;s questions, teams find each
           other, and the people who have done the work make time for the people
