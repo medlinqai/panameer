@@ -6,6 +6,7 @@ import { signOut } from "next-auth/react";
 import { Avatar } from "@/components/Avatar";
 import { useMe } from "@/components/MeProvider";
 import { membershipBadge } from "@/lib/membership";
+import { ADMIN_PERSONA_NAV, PERSONA_NAV } from "@/lib/nav";
 import {
   applyThemeChoice,
   subscribeThemeChoice,
@@ -34,19 +35,6 @@ import {
  * for a recommendation. They are omitted rather than shown empty, because an
  * empty page you can never fill is worse than an absent one.
  */
-
-type Item = { label: string; href: string };
-
-/** Section 2 — the provider's own surfaces. */
-const PROVIDER_ITEMS: Item[] = [
-  { label: "My Profile", href: "/profile" },
-  { label: "My Stats", href: "/stats" },
-  { label: "Account Health Checklist", href: "/account-health" },
-  { label: "Request Recommendations", href: "/recommendations" },
-];
-
-/** What an admin keeps of that list. */
-const ADMIN_ITEMS: Item[] = [{ label: "My Profile", href: "/profile" }];
 
 export function AccountMenu({ isAdmin }: { isAdmin: boolean }) {
   const { me, refresh } = useMe();
@@ -100,7 +88,7 @@ export function AccountMenu({ isAdmin }: { isAdmin: boolean }) {
   const first = me?.person.firstName ?? "";
   const last = me?.person.lastName ?? "";
   const badge = isAdmin ? "Panameer Admin" : membershipBadge(me);
-  const items = isAdmin ? ADMIN_ITEMS : PROVIDER_ITEMS;
+  const items = isAdmin ? ADMIN_PERSONA_NAV : PERSONA_NAV;
 
   /*
     OPTIMISTIC, WITH A REVERT. The toggle is a two-state switch on a fast write;

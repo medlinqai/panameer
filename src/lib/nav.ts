@@ -126,6 +126,32 @@ const ROLE_NAV: NavItem[] = [
   { label: "Find Work", href: "/work", requires: "canProvideServices", icon: "Briefcase" },
 ];
 
+/**
+ * THE PERSONA MENU'S DESTINATIONS (J2.4 WS-B/WS-D — E008).
+ *
+ * Here rather than in `AccountMenu` for the reason the rest of this file
+ * exists: the header derives every page's title from the nav definitions, so a
+ * menu that declared its own labels would produce pages whose heading and whose
+ * menu entry disagreed — "My Stats" in the dropdown, "Stats" in the header,
+ * from the same click. Declared once, read by both.
+ *
+ * Not capability-gated: these are the signed-in person's own surfaces, and the
+ * ADMIN variant below is a different LIST rather than a filter, because an
+ * admin is missing these for a reason (no seller standing, no job success
+ * score, nobody to ask for a recommendation) rather than by permission.
+ */
+export const PERSONA_NAV: NavItem[] = [
+  { label: "My Profile", href: "/profile" },
+  { label: "My Stats", href: "/stats" },
+  { label: "Account Health Checklist", href: "/account-health" },
+  { label: "Request Recommendations", href: "/recommendations" },
+];
+
+/** What a Panameer employee keeps of that list. */
+export const ADMIN_PERSONA_NAV: NavItem[] = [
+  { label: "My Profile", href: "/profile" },
+];
+
 /** The public front door. Learn is the one app surface open to everyone. */
 export const PUBLIC_NAV: NavItem[] = [{ label: "Learn", href: "/learn" }];
 
@@ -289,6 +315,9 @@ export function pageTitleFor(pathname: string): string | null {
     ...BASE_NAV,
     ...ROLE_NAV,
     ...TAIL_NAV,
+    // The persona-menu pages are real destinations with real headers, even
+    // though they are reached from the avatar rather than the rail.
+    ...PERSONA_NAV,
   ];
 
   // Longest matching href wins, so /admin/learn beats /admin.
