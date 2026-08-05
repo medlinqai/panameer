@@ -732,6 +732,16 @@ model ProviderProfile {
   /// handle would be a wildly disproportionate permission grab.
   linked_github           String?
   linked_stackoverflow    String?
+  /// brief_sp_dashboard WS-C — when this provider last opened their dashboard.
+  ///
+  /// Drives the "New Matches" freshness card: work posted after this timestamp
+  /// is new to them. Stamped on dashboard render rather than on login, because
+  /// the question the card answers is "what has appeared since I last LOOKED",
+  /// and a login that lands somewhere else has not looked.
+  ///
+  /// Null means never visited, and everything posted counts as new — which is
+  /// correct: it is all new to them.
+  dashboard_seen_at       DateTime?
   // The coordinator Person who represents this provider (brief_I). Nullable —
   // most providers are independent. Set only via the provider's own authenticated
   // acceptance of a coordinator invite.
