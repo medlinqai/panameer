@@ -29,14 +29,16 @@ import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 type UserType = "seller" | "buyer";
 type Job = "provider" | "recruiter" | "requester" | "buyer-admin";
 
-/**
- * THE TAGLINE (E160), in one constant.
- *
- * It belongs under the page title, not on the logo — the mark stays clean, and
- * a wordmark that carries a sentence can't be used anywhere else. One constant
- * because a tagline repeated in three files becomes three different taglines.
- */
-export const PANAMEER_TAGLINE = "The AI-native ERP services marketplace.";
+/*
+  THE TAGLINE MOVED (E182). It lived here as a constant under E160, where it was
+  rendered as this page's subtitle. It is now in the onboarding HEADER on every
+  page of the shell, so it lives in `lib/brand.ts` — `OnboardingFrame` renders
+  it, and this page renders `OnboardingFrame`, which would have made importing
+  it back out of here a cycle.
+
+  The page-1 subtitle that used to carry it is gone with it. Leaving both would
+  have printed the same sentence twice on the same screen, six lines apart.
+*/
 
 /** Page-2 options per page-1 choice. Seller copy is Scott's, verbatim. */
 const JOBS: Record<UserType, { id: Job; title: string; description: string }[]> = {
@@ -182,13 +184,7 @@ function JoinRouter() {
               : "What Do You Do on the Buying Side?"}
         </h1>
         {step === 1 ? (
-          // E160 — the tagline is the page subtitle, under the title.
-          <>
-            <p className="mt-2 text-[17px] font-semibold text-magenta">
-              {PANAMEER_TAGLINE}
-            </p>
-            <p className="mt-2 text-[17px] text-ink-2">Which describes you best?</p>
-          </>
+          <p className="mt-2 text-[17px] text-ink-2">Which describes you best?</p>
         ) : (
           <p className="mt-2 text-[17px] text-ink-2">
             {userType === "seller"

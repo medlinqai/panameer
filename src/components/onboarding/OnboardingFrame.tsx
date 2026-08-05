@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Logo } from "@/components/Logo";
+import { PANAMEER_TAGLINE } from "@/lib/brand";
 
 /**
  * The onboarding page chrome — ONE definition for every onboarding surface
@@ -75,10 +76,29 @@ export function OnboardingFrame({
   const pad = compact ? "py-8 sm:py-10" : "py-10 sm:py-14";
   return (
     <div className="flex min-h-screen flex-col bg-white font-body text-ink">
-      {/* Header rule spans the viewport; the logo lines up with the column. */}
+      {/*
+        Header rule spans the viewport; the logo lines up with the column.
+
+        E182 — THE TAGLINE SITS BESIDE THE MARK, AS TEXT. It is one flex row so
+        the two read as a lockup rather than as a logo with a caption under it,
+        and the divider between them is what keeps the mark itself clean —
+        nothing here is baked into the image, so the wordmark stays reusable and
+        the words stay editable in one constant.
+
+        Hidden below `sm`: at 375px the mark plus a nine-word sentence either
+        wraps to three lines or squeezes the mark, and a header that tall costs
+        the form the top of the screen on the one device that can least spare it.
+      */}
       <header className="border-b border-line">
-        <div className={`mx-auto flex w-full ${width} items-center px-6 py-5`}>
+        <div className={`mx-auto flex w-full ${width} items-center gap-3 px-6 py-5`}>
           <Logo priority />
+          <span
+            aria-hidden
+            className="hidden h-6 w-px shrink-0 bg-line sm:block"
+          />
+          <p className="hidden text-[13.5px] font-semibold leading-tight text-ink-2 sm:block">
+            {PANAMEER_TAGLINE}
+          </p>
         </div>
       </header>
 
