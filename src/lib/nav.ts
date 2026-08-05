@@ -211,11 +211,39 @@ export const PROVIDER_NAV: NavItem[] = [
  * admin is missing these for a reason (no seller standing, no job success
  * score, nobody to ask for a recommendation) rather than by permission.
  */
-export const PERSONA_NAV: NavItem[] = [
+/*
+  SPLIT AROUND THE THEME ROW (WS1-C).
+
+  The deck's order is My Profile · My Stats · Account Health Checklist ·
+  Theme › · Request Recommendations · My Company · Settings · Sign Out, and
+  Theme is not a destination — it is an inline submenu. Rather than have the
+  component match on a label to know where to inject it, the two halves say so
+  themselves: everything in PRIMARY renders above the theme row, everything in
+  SECONDARY below it.
+*/
+export const PERSONA_NAV_PRIMARY: NavItem[] = [
   { label: "My Profile", href: "/profile" },
   { label: "My Stats", href: "/stats" },
   { label: "Account Health Checklist", href: "/account-health" },
+];
+
+export const PERSONA_NAV_SECONDARY: NavItem[] = [
   { label: "Request Recommendations", href: "/recommendations" },
+  /*
+    MY COMPANY (WS1-C) — read-only unless you are the company admin, which is
+    what `/company` already does: it renders the company record for everyone in
+    it and adds the join-request queue and the terms acceptance for an APPROVED
+    ADMIN membership. The menu entry did not exist, so that page had no route
+    into it from anywhere after E191 dropped Company from the rail.
+  */
+  { label: "My Company", href: "/company" },
+  { label: "Settings", href: "/settings" },
+];
+
+/** The whole persona list, for `pageTitleFor` and anything that wants it flat. */
+export const PERSONA_NAV: NavItem[] = [
+  ...PERSONA_NAV_PRIMARY,
+  ...PERSONA_NAV_SECONDARY,
 ];
 
 /** What a Panameer employee keeps of that list. */

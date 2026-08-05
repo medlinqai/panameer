@@ -6,7 +6,11 @@ import { signOut } from "next-auth/react";
 import { Avatar } from "@/components/Avatar";
 import { useMe } from "@/components/MeProvider";
 import { membershipBadge } from "@/lib/membership";
-import { ADMIN_PERSONA_NAV, PERSONA_NAV } from "@/lib/nav";
+import {
+  ADMIN_PERSONA_NAV,
+  PERSONA_NAV_PRIMARY,
+  PERSONA_NAV_SECONDARY,
+} from "@/lib/nav";
 import {
   applyThemeChoice,
   subscribeThemeChoice,
@@ -23,11 +27,12 @@ import {
  * shape now — enough logic that leaving it inside the header would have made
  * the header a component about menus rather than about the header.
  *
- * GROUPED WITH SECTION BARS, which is the middle-path decision from the brief.
- * The alternatives were a flat list of six (no way to tell a destination from a
- * preference) and a full mega-menu (a page's worth of chrome hanging off an
- * avatar). Bars cost one line each and make the three kinds of thing —
- * who you are, what you can look at, how the app behaves — legible at a glance.
+ * THE SECTION BARS ARE GONE (WS1-C). J2.4 grouped the list under "You" and
+ * "Preferences" bars; the deck interleaves Theme INTO the list — My Profile ·
+ * My Stats · Account Health Checklist · Theme › · Request Recommendations · My
+ * Company · Settings — so a bar would have had to sit mid-sentence. The
+ * identity header still separates who-you-are from what-you-can-do, which was
+ * the distinction the bars were carrying.
  *
  * THE ADMIN SEES A SHORTER MENU. My Stats, Account Health and Request
  * Recommendations are all marketplace-provider surfaces: a Panameer employee
@@ -103,7 +108,19 @@ export function AccountMenu({
   const first = me?.person.firstName ?? "";
   const last = me?.person.lastName ?? "";
   const badge = isAdmin ? "Panameer Admin" : membershipBadge(me);
-  const items = isAdmin ? ADMIN_PERSONA_NAV : PERSONA_NAV;
+  /*
+    THE DECK'S ORDER (WS1-C): My Profile · My Stats · Account Health Checklist ·
+    Theme › · Request Recommendations · My Company · Settings · Sign Out. The
+    two halves come from nav.ts already split around the theme row, so this
+    component never has to match on a label to know where the submenu goes.
+
+    THE ADMIN KEEPS THE SHORT LIST. `ADMIN_PERSONA_NAV` is My Profile only —
+    stats, account health and recommendations are seller surfaces. Settings goes
+    too: /settings requires canProvideServices, so offering it to an employee is
+    offering them a redirect to /dashboard?noaccess=1.
+  */
+  const primary = isAdmin ? ADMIN_PERSONA_NAV : PERSONA_NAV_PRIMARY;
+  const secondary = isAdmin ? [] : PERSONA_NAV_SECONDARY;
 
   /*
     OPTIMISTIC, WITH A REVERT. The toggle is a two-state switch on a fast write;
@@ -258,9 +275,8 @@ export function AccountMenu({
             )}
           </div>
 
-          {/* ---- Section 2: your surfaces -------------------------------- */}
-          <SectionBar>You</SectionBar>
-          {items.map((item) => (
+          {/* ---- Your surfaces, then Theme, then the rest ---------------- */}
+          {primary.map((item) => (
             <Link
               key={item.href}
               href={item.href}
@@ -271,9 +287,6 @@ export function AccountMenu({
               {item.label}
             </Link>
           ))}
-
-          {/* ---- Section 3: how the app behaves -------------------------- */}
-          <SectionBar>Preferences</SectionBar>
 
           {/*
             THEME IS A SUBMENU, NOT A PAGE (E021). Three mutually exclusive
@@ -287,12 +300,20 @@ export function AccountMenu({
             onClick={() => setThemeOpen((v) => !v)}
             className={`${rowClass} flex items-center justify-between`}
           >
-            <span>Theme</span>
-            <span className="flex items-center gap-1.5 text-[13px] text-ink-2">
-              {THEME_OPTIONS.find((t) => t.value === theme)?.label}
-              <span aria-hidden className={themeOpen ? "rotate-90" : ""}>
-                ›
-              </span>
+            {/*
+              THE LABEL CARRIES THE VALUE — "Theme: Light ›", per the deck. A
+              row reading just "Theme" makes you open the submenu to find out
+              what you are already on, which is the one question the row is
+              there to answer at a glance.
+            */}
+            <span>
+              Theme: {THEME_OPTIONS.find((t) => t.value === theme)?.label}
+            </span>
+            <span
+              aria-hidden
+              className={"text-ink-2 " + (themeOpen ? "inline-block rotate-90" : "")}
+            >
+              ›
             </span>
           </button>
           {themeOpen && (
@@ -324,9 +345,17 @@ export function AccountMenu({
             </div>
           )}
 
-          <Link href="/settings" role="menuitem" onClick={close} className={rowClass}>
-            Settings
-          </Link>
+          {secondary.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              role="menuitem"
+              onClick={close}
+              className={rowClass}
+            >
+              {item.label}
+            </Link>
+          ))}
 
           {/* ---- Sign out ----------------------------------------------- */}
           <div className="border-t border-line">
@@ -349,12 +378,3 @@ const THEME_OPTIONS: { value: ThemeChoice; label: string; hint?: string }[] = [
   { value: "light", label: "Light" },
   { value: "dark", label: "Dark" },
 ];
-
-/** The grouping device — a label bar, not a bare divider. */
-function SectionBar({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="border-y border-line bg-black/[0.02] px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-ink-2">
-      {children}
-    </p>
-  );
-}
