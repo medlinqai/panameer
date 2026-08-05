@@ -3,6 +3,11 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import {
+  BRAND_BADGE,
+  BRAND_DESCRIPTOR,
+  BRAND_MONEY_LINE,
+} from "@/lib/brand";
 
 /**
  * The hero — hire/work toggle, search box, and three role shortcuts.
@@ -58,12 +63,22 @@ export function Hero() {
         />
 
         <div className="relative z-[2] max-w-[760px] px-[26px] py-11 sm:px-14 sm:py-16">
+          {/*
+            THE BADGE IS THE HEADLINE and the descriptor is the subhead
+            (brief_brand_tagline_rollout WS-A). What was here — "Work at the
+            speed of opportunity" over a line about deploying best practices —
+            described a benefit without ever saying what Panameer IS, which is
+            the job of the first two lines on a page nobody has visited before.
+
+            Both strings come from lib/brand.ts. Neither is typed here, because
+            a hero that carries its own copy is the file people re-word without
+            touching the onboarding shell that says the same thing.
+          */}
           <h1 className="mb-[18px] text-[40px] font-extrabold leading-[1.02] tracking-[-1.5px] text-white sm:text-[60px]">
-            Work at the speed of opportunity
+            {BRAND_BADGE}
           </h1>
           <p className="mb-[30px] max-w-[560px] text-[19px] text-[#f3e9f6]">
-            Hire experts with years of experience deploying the best practices
-            that improve business outcomes.
+            {BRAND_DESCRIPTOR}
           </p>
 
           <div className="mb-[18px] inline-flex rounded-full border border-white/30 bg-white/10 p-[5px]">
@@ -110,11 +125,21 @@ export function Hero() {
           </form>
 
           {/*
+            THE MONEY LINE sits directly above the chips (WS-A): this is the
+            point on the page where somebody is about to act, and it is the one
+            place the four-verb sequence is worth spelling out rather than
+            gesturing at.
+          */}
+          <p className="mt-6 max-w-[560px] text-[16px] font-semibold text-white">
+            {BRAND_MONEY_LINE}
+          </p>
+
+          {/*
             Real links, not styled spans. These carried `cursor-pointer` and an
             arrow while being inert — the clearest kind of dead end, because the
             page actively invited the click.
           */}
-          <div className="mt-5 flex flex-wrap gap-3">
+          <div className="mt-4 flex flex-wrap gap-3">
             {["Order-to-Cash SME", "Procure-to-Pay SME", "Record-to-Report SME"].map(
               (label) => (
                 <Link

@@ -1,4 +1,5 @@
 import { Btn } from "@/components/marketing/brand";
+import { BRAND_MANIFESTO } from "@/lib/brand";
 
 const POINTS = [
   "Post work in minutes — directly or through your ERP",
@@ -24,6 +25,16 @@ export function Punchout() {
               ERP can do — for free. Search, request, order, and settle services
               without ever leaving your system of record.
             </p>
+            {/*
+              THE MANIFESTO (WS-A) — the why, under the what. This section is
+              what the nav calls "Why Panameer", and it argued the mechanism
+              (punchout, bidding, settlement) without ever saying why any of it
+              should exist. One line does that.
+            */}
+            <p className="mt-5 border-l-2 border-magenta/60 pl-4 text-[17px] font-semibold italic text-[#f3e9f6]">
+              {BRAND_MANIFESTO}
+            </p>
+
             <ul className="mt-[22px] grid gap-3">
               {POINTS.map((p) => (
                 <li key={p} className="flex items-start gap-3 text-[#f3e9f6]">
