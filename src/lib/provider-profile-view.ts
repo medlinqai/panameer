@@ -164,6 +164,22 @@ export async function getProviderProfileView(
     visibilityThreshold: VISIBILITY_THRESHOLD,
     paused: profile.paused_at != null,
     published: profile.onboarding_completed_at != null,
+    /*
+      J2.4 WS-C (E009) — how long since this profile changed, for the owner's
+      freshness nudge.
+
+      DAYS, computed here, rather than the timestamp rendered client-side: a
+      date formatted in the browser from a server-rendered page is the
+      hydration mismatch this codebase has already been bitten by twice (the
+      header greeting, the date chip). A number of days is stable in both
+      places. Null for a visitor — a buyer has no business being told a
+      provider's profile is stale.
+    */
+    daysSinceUpdate: isOwner
+      ? Math.floor(
+          (Date.now() - profile.updated_at.getTime()) / (1000 * 60 * 60 * 24)
+        )
+      : null,
 
     person: {
       firstName: profile.person.first_name,

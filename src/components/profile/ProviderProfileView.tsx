@@ -45,6 +45,18 @@ import {
  */
 
 /** Per-section edit affordance — navigation, straight back into the wizard. */
+/**
+ * When a live profile starts reading as stale (J2.4 WS-C / E009).
+ *
+ * Thirty days, and the number is a judgement rather than a measurement — there
+ * is no ranking signal behind it yet to tune against. It is set where it is
+ * because a shorter window nags a provider whose profile is simply finished,
+ * and a longer one lets a genuinely abandoned profile sit unremarked for a
+ * quarter. When search ranking is real, this becomes whatever that ranking
+ * actually decays on.
+ */
+const STALE_AFTER_DAYS = 30;
+
 function EditLink({
   href,
   title,
@@ -135,10 +147,22 @@ export function ProviderProfileViewPage({
                     ? "🎉 You're live — buyers can find you"
                     : `You're at ${p.completeness}% — reach ${p.visibilityThreshold}% to go live`}
               </p>
+              {/*
+                THE FRESHNESS NUDGE (J2.4 WS-C / E009).
+
+                The line here used to be the same sentence every day — "keep
+                your profile fresh" — which is advice, not a nudge: it never
+                changed, so it never prompted anything. It now says how long it
+                has actually been, and only asks for an update once that number
+                is worth acting on. Under the threshold the profile is fine and
+                the banner says so rather than manufacturing a chore.
+              */}
               <p className="mt-1 text-[14px] text-ink-2">
-                {p.visible && !p.paused
-                  ? "Keep your profile fresh to stay near the top of buyer searches."
-                  : "Complete the remaining details to become visible to service buyers."}
+                {!p.visible || p.paused
+                  ? "Complete the remaining details to become visible to service buyers."
+                  : p.daysSinceUpdate !== null && p.daysSinceUpdate >= STALE_AFTER_DAYS
+                    ? `Last updated ${p.daysSinceUpdate} days ago — buyers see recently-updated profiles first, so a quick pass through pays.`
+                    : "Your profile is up to date. Buyers see recently-updated profiles first."}
               </p>
             </div>
             <div className="flex items-center gap-3">
