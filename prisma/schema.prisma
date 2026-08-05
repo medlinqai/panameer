@@ -720,6 +720,7 @@ model ProviderProfile {
   imports           ProfileImport[]
   resumeParseAudits ResumeParseAudit[]
   profileGapFlags   ProfileGapFlags?
+  recommendations   RecommendationRequest[]
 
   @@index([region_id])
   @@index([coordinator_person_id])
@@ -2032,4 +2033,60 @@ model LessonProgress {
   @@unique([user_id, lesson_id])
   @@index([user_id])
   @@map("lesson_progress")
+}
+
+/// J2.4 WS-F (E012) — a provider asking a contact for a recommendation.
+///
+/// SAME TOKEN CONTRACT AS PROJECT VALIDATION, deliberately: the recipient has
+/// no account, so the emailed link is the entire authorization. 32 bytes of
+/// randomness, stored only as a SHA-256 hash, with an expiry. A leaked database
+/// yields hashes, not usable links.
+///
+/// The response lives on the SAME ROW as the request rather than in a separate
+/// Testimonial table. A recommendation only exists because somebody was asked
+/// for it, and splitting the two would mean a testimonial whose provenance —
+/// who asked, when, at what address — sits somewhere else and can drift away
+/// from it. The profile's Testimonials section is a query for the SUBMITTED
+/// ones, not a different entity.
+model RecommendationRequest {
+  id                  String               @id @default(uuid()) @db.Uuid
+  provider_profile_id String               @db.Uuid
+  /// Captured at send time. The person may later be invited properly, and this
+  /// must record who was actually asked.
+  contact_name        String
+  contact_email       String
+  /// Whether that address already belongs to a Panameer account, resolved when
+  /// the request is sent. Drives the "create your own profile" invite — an
+  /// existing member does not need recruiting.
+  contact_off_platform Boolean             @default(true)
+  /// The provider's covering note, template or edited.
+  message             String
+  token_hash          String               @unique
+  status              RecommendationStatus @default(SENT)
+  expires_at          DateTime
+  sent_at             DateTime             @default(now())
+  responded_at        DateTime?
+  /// ---- the recommendation itself, once given ----
+  body                String?
+  recommender_title   String?
+  recommender_company String?
+  /// Light provenance on the response. Never shown to the provider — it exists
+  /// so a disputed testimonial can be investigated.
+  responder_ip        String?
+  responder_ua        String?
+  created_at          DateTime             @default(now())
+  updated_at          DateTime             @updatedAt
+
+  providerProfile ProviderProfile @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
+
+  @@index([provider_profile_id])
+  @@index([status])
+  @@map("recommendation_requests")
+}
+
+enum RecommendationStatus {
+  SENT
+  SUBMITTED
+  DECLINED
+  EXPIRED
 }

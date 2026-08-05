@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSessionViewer } from "@/lib/session";
 import { getOwnProviderProfileView } from "@/lib/provider-profile-view";
 import { getPathsTaughtByProfile } from "@/lib/learn-home";
+import { publicTestimonials } from "@/lib/recommendations";
 import { ProviderProfileViewPage } from "@/components/profile/ProviderProfileView";
 import { EmployeeProfile } from "@/components/profile/EmployeeProfile";
 
@@ -42,6 +43,7 @@ export default async function MyProfilePage() {
     <ProviderProfileViewPage
       p={profile}
       taughtPaths={await getPathsTaughtByProfile(profile.id)}
+      testimonials={await publicTestimonials(profile.id)}
     />
   );
 }

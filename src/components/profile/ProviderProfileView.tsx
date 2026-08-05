@@ -3,6 +3,7 @@ import { OwnerAiPass, OwnerResumeImport } from "@/components/profile/OwnerAiPass
 import { formatCents, rateBreakdown } from "@/lib/display";
 import type { ProviderProfileView } from "@/lib/provider-profile-view";
 import type { TaughtPath } from "@/lib/learn-home";
+import type { Testimonial } from "@/lib/recommendations";
 import { TaughtPaths } from "@/components/learn/TaughtPaths";
 import {
   ProfileCard,
@@ -78,6 +79,7 @@ function EditLink({
 export function ProviderProfileViewPage({
   p,
   taughtPaths = [],
+  testimonials = [],
   condensedWorkHistory = false,
   banner,
   footer,
@@ -85,6 +87,16 @@ export function ProviderProfileViewPage({
   p: ProviderProfileView;
   /** Learn paths this person instructs (E137). Empty renders nothing at all. */
   taughtPaths?: TaughtPath[];
+  /**
+   * Recommendations this provider has actually been given (J2.4 WS-F / E012).
+   *
+   * Passed in rather than fetched here: this component renders on the public
+   * profile, the owner's profile and the onboarding review, and a query inside
+   * it would run three times for three different reasons. The callers that have
+   * a profile id supply them; the ones that don't get the honest empty state
+   * that was always here.
+   */
+  testimonials?: Testimonial[];
   /** One tight line per role, for the "You're live" page (WS1/E146). */
   condensedWorkHistory?: boolean;
   /** Replaces the default owner status banner. */
@@ -437,13 +449,52 @@ export function ProviderProfileViewPage({
             <LocationBody location={p.location} country={p.country} />
           </ProfileCard>
 
-          {/* E039 — earned after delivering work, so an honest empty state. */}
+          {/*
+            E039's honest empty state, now with a way OUT of it (J2.4 WS-F).
+
+            It used to say "you'll collect these as you deliver work", which was
+            true and useless: the provider could do nothing about it today. They
+            can now — asking a past client is a page away — so the empty state
+            points at the action instead of at the future.
+          */}
           <ProfileCard title="Testimonials">
-            <Empty>
-              {p.isOwner
-                ? "No testimonials yet — you'll collect these as you deliver work."
-                : "No testimonials yet."}
-            </Empty>
+            {testimonials.length === 0 ? (
+              <Empty>
+                {p.isOwner ? (
+                  <>
+                    No testimonials yet.{" "}
+                    <Link
+                      href="/recommendations"
+                      className="font-semibold text-magenta hover:underline"
+                    >
+                      Ask someone you&apos;ve worked with
+                    </Link>{" "}
+                    — it takes a minute and buyers read them.
+                  </>
+                ) : (
+                  "No testimonials yet."
+                )}
+              </Empty>
+            ) : (
+              <ul className="space-y-4">
+                {testimonials.map((t) => (
+                  <li key={t.id}>
+                    <blockquote className="border-l-[3px] border-magenta/40 pl-3.5 text-[14.5px] leading-relaxed text-ink-2">
+                      {t.body}
+                    </blockquote>
+                    <p className="mt-1.5 pl-3.5 text-[13px] font-semibold">
+                      {t.author}
+                      {(t.title || t.company) && (
+                        <span className="font-normal text-ink-2">
+                          {" · "}
+                          {[t.title, t.company].filter(Boolean).join(", ")}
+                        </span>
+                      )}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
           </ProfileCard>
         </div>
 
