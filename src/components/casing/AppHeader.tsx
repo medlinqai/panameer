@@ -1,74 +1,88 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { useSession } from "next-auth/react";
-import { usePathname } from "next/navigation";
 import { useMe } from "@/components/MeProvider";
-import { pageTitleFor } from "@/lib/nav";
 import { greetingFor } from "@/lib/greeting";
+import { getCreditsSummary, type CreditsSummary } from "@/lib/credits";
+import { CreditsPill, HeaderSearch } from "@/components/casing/CreditsPill";
 
 /**
- * The header — all eight elements from E151 (MASTER WS10).
+ * The header (WS1-D) — greeting · search · Community Credits.
  *
- *   left   greeting ("Good morning, {name}")
- *   right  date chip · AI on · Home · bug report · notifications · avatar menu
+ *   left    greeting ("Good Morning, {first}")
+ *   centre  search box → /search
+ *   right   the Community Credits pill
  *
- * (The Panameer logo, element 1, lives at the top of the dark rail, which is
- * where the mockup puts it.)
+ * THE PAGE NAME IS GONE, and that is the locked decision rather than an
+ * omission. E015 had the header show the greeting on home and the page name
+ * everywhere else — one or the other, never both. The Credits pill now owns the
+ * top-right slot, so keeping the page name as well would put three competing
+ * labels across one row. What tells you where you are is the rail's active
+ * highlight, which is more precise than a title anyway: it shows the page AND
+ * the group it belongs to.
  *
- * THE AVATAR MENU IS THE ONLY LOGOUT (E152, resolving E138). The old rail
- * drop-up is gone with the old rail. Putting it upper-right is also where every
- * other product on earth puts it, which is worth more than any argument for a
- * bespoke position.
+ * THE AVATAR MOVED TO THE RAIL (WS1-A). Logout still has exactly one home; it
+ * is the identity block now rather than a round avatar in a row of icons.
  */
 export function AppHeader() {
   const { me } = useMe();
-  const [greeting, setGreeting] = useState<string | null>(null);
-  const [dateLabel, setDateLabel] = useState<string | null>(null);
 
   /*
-    Greeting and date are computed AFTER mount, from the viewer's clock. Doing
-    it during render would hydrate-mismatch whenever the server and the browser
-    disagree about the hour — which, for a product with providers in Sydney and
-    buyers in Chicago, is most of the day.
+    THE CLOCK IS AN EXTERNAL STORE, read through `useSyncExternalStore` rather
+    than copied into state by an effect. The greeting and the date depend on the
+    viewer's wall clock, which the server does not share — for a product with
+    providers in Sydney and buyers in Chicago the two disagree most of the day —
+    so the server snapshot is null and the client snapshot is the real time.
+    Same answer the effect gave, without setting state during mount.
   */
-  useEffect(() => {
-    const now = new Date();
-    setGreeting(greetingFor(now));
-    setDateLabel(
-      new Intl.DateTimeFormat(undefined, {
+  const now = useSyncExternalStore(subscribeNothing, clientNow, serverNow);
+  const greeting = now ? greetingFor(now) : null;
+  const dateLabel = now
+    ? new Intl.DateTimeFormat(undefined, {
         weekday: "long",
         month: "long",
         day: "numeric",
       }).format(now)
-    );
-  }, []);
+    : null;
 
-  /*
-    THE HEADER RULE (E015): home shows the greeting, every other page shows
-    its own name. Scott's correction to the earlier mockups, which greeted
-    you again on every sub-page — a greeting is an arrival, and repeating it
-    on Packages tells you nothing about where you are.
-
-    DERIVED from the nav definitions rather than passed per page: a title
-    prop is one more thing to forget on the next page, and it would let the
-    rail and the header disagree about what a page is called.
-  */
   const { data: session } = useSession();
   const isAdmin = session?.user?.isSystemAdmin === true;
-  const pathname = usePathname();
-  const pageTitle = pageTitleFor(pathname);
 
   const first = me?.person.firstName ?? "";
 
+  /*
+    THE PILL READS ONE SEAM (`getCreditsSummary`). In PHASE 1 that returns
+    zeroes and `pending: true`; PHASE 3 puts the real ledger behind the same
+    function and nothing in this component changes. Fetched here rather than
+    passed from a server layout because the header is already a client component
+    and the shell has no other reason to become async.
+  */
+  const [credits, setCredits] = useState<CreditsSummary | null>(null);
+  useEffect(() => {
+    let alive = true;
+    getCreditsSummary(me?.person.id ?? null).then((c) => alive && setCredits(c));
+    return () => {
+      alive = false;
+    };
+  }, [me?.person.id]);
+
   return (
     <header className="flex items-center gap-3 border-b border-line bg-white px-5 py-3 sm:px-8">
-      <p className="min-w-0 flex-1 truncate text-[16px] font-bold">
-        {pageTitle ?? (greeting ? `${greeting}, ${first || "there"}` : " ")}
+      {/*
+        GREETING ONLY. No page name — see the note above; the rail's active
+        highlight carries location, and the top-right slot is Credits now.
+      */}
+      <p className="min-w-0 shrink-0 truncate text-[16px] font-bold">
+        {greeting ? `${greeting}, ${first || "there"}` : "\u00a0"}
       </p>
 
+      <HeaderSearch />
+
       <div className="ml-auto flex shrink-0 items-center gap-2">
+        {credits && <CreditsPill summary={credits} />}
+
         {/* Element 3 — the day/date chip, ported from Medlinq HeaderDateChip. */}
         {dateLabel && (
           <span className="hidden items-center gap-1.5 rounded-full bg-[#f1faff] px-3 py-1.5 text-[13px] font-semibold text-[#1f7ab8] md:inline-flex">
@@ -175,4 +189,27 @@ function BellIcon() {
       <path d="M13.7 21a2 2 0 0 1-3.4 0" />
     </svg>
   );
+}
+
+/*
+  The clock, as an external store.
+
+  Nothing to subscribe to — the header does not tick — so `subscribe` returns a
+  no-op unsubscribe. The value that matters is the pair of snapshots: null on
+  the server (which renders no greeting) and a real Date on the client. That is
+  what keeps the greeting out of the server's markup without an effect writing
+  state on mount.
+*/
+function subscribeNothing() {
+  return () => {};
+}
+let cachedNow: Date | null = null;
+function clientNow(): Date {
+  // Cached so the snapshot is referentially stable — returning a fresh Date on
+  // every call makes React think the store changed and re-render forever.
+  if (!cachedNow) cachedNow = new Date();
+  return cachedNow;
+}
+function serverNow(): null {
+  return null;
 }
