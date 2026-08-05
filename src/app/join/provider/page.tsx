@@ -166,6 +166,30 @@ const STEP_LABELS: Record<Step, { stepper: string }> = {
   finish: { stepper: "Review Your Profile" },
 };
 
+/**
+ * ROLE CARD COPY (E186) — the designed content, keyed by RoleType.code.
+ *
+ * The cards used to be titled with the bare taxonomy name and subtitled
+ * "5 areas of work" — a count of the DOMAIN tier, which is a level the UI
+ * deliberately stopped showing (E030 collapsed the cascade). So the one line
+ * meant to help someone choose was describing a thing they would never see,
+ * and it said the same thing about every card except the number.
+ *
+ * Keyed on `code` rather than `name`: the codes are stable identifiers written
+ * by the taxonomy seed, the names are display strings. A role with no entry here
+ * falls back to the old count line rather than rendering an empty subtitle — the
+ * catalog is meant to grow, and a new role type must not arrive blank.
+ */
+const ROLE_CARD_COPY: Record<string, string> = {
+  APPLICATION_SPECIFIC:
+    "Mgt Consultant, P2P, O2C, R2R, Functional Analyst, Business Process Specialist",
+  TECHNOLOGY_SPECIFIC:
+    "Coder, Report Writer, Integration Specialist, PaaS Developer",
+  PROJECT_SPECIFIC: "Project Manager, Program Manager, Tester, Trainer",
+  OPERATIONS_SPECIFIC:
+    "Buyer, HR Manager, Bookkeeper, Customer Service, Contract Administrator",
+};
+
 const MIN_BIO = 100;
 /**
  * Mirrors `MAX_BIO_CHARS` in onboarding.ts (E087). Kept as a local constant like
@@ -1527,13 +1551,23 @@ export default function JoinProviderPage() {
                         key={r.id}
                         selected={picked}
                         onClick={() => toggleRole(r)}
+                        /*
+                          E186 — "{X}-Specific Roles". `r.name` is already
+                          "Application-Specific" (the taxonomy's own string), so
+                          the title is that plus the noun; deriving it from
+                          `display` and re-adding the suffix would have been a
+                          second place for the two to disagree.
+                        */
                         title={
-                          r.name +
+                          `${r.name} Roles` +
                           (isPrimary && profile.roleTypeIds.length > 1
                             ? "  ·  primary"
                             : "")
                         }
-                        description={`${r.domains.length} area${r.domains.length === 1 ? "" : "s"} of work`}
+                        description={
+                          ROLE_CARD_COPY[r.code] ??
+                          `${r.domains.length} area${r.domains.length === 1 ? "" : "s"} of work`
+                        }
                       />
                     );
                   })}
