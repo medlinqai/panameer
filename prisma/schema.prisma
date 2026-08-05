@@ -364,6 +364,9 @@ model Person {
   // belongs to the human being paid, not to one of the hats they wear.
   billingMethods       BillingMethod[]
   payoutMethods        PayoutMethod[]
+  // WS2-C — forum authorship. On Person, like every other social surface here.
+  forumThreads         ForumThread[]           @relation("ForumThreadAuthor")
+  forumPosts           ForumPost[]             @relation("ForumPostAuthor")
   taxProfile           TaxProfile?
   identityVerification IdentityVerification?
   notificationPrefs    NotificationPreference[]
@@ -2318,4 +2321,78 @@ model TwoFactorSetting {
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@map("two_factor_settings")
+}
+
+/// ---------------------------------------------------------------------------
+/// FORUMS (brief_MASTER_rails_and_community PHASE 2 / WS2-C).
+///
+/// Board → Thread → Post, all hanging off `Person` rather than `User`: a forum
+/// post is made by a human being in the marketplace, and Person is the identity
+/// every other social surface here (recommendations, coordinator rosters,
+/// validations) already uses. Keying to the login would put forum authorship on
+/// a different axis from everything it sits beside.
+///
+/// FORUM PARTICIPATION IS A CREDIT-EARNING EVENT. PHASE 3 posts a `FORUM_POST`
+/// ledger entry when a post lands; the hook point is `awardForumPost` in
+/// lib/forums.ts, called on every successful create and currently a documented
+/// no-op. The models carry no credit columns of their own — the ledger is the
+/// record, and a denormalised "credits earned" here would be a second truth to
+/// reconcile.
+/// ---------------------------------------------------------------------------
+
+model ForumBoard {
+  id          String   @id @default(uuid()) @db.Uuid
+  slug        String   @unique
+  title       String
+  description String?
+  sort_order  Int      @default(0)
+  /// Boards are seeded, not user-created — a forum whose sections anyone can
+  /// add fragments before it has enough people to fill the first four.
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  threads ForumThread[]
+
+  @@map("forum_boards")
+}
+
+model ForumThread {
+  id         String   @id @default(uuid()) @db.Uuid
+  board_id   String   @db.Uuid
+  author_id  String   @db.Uuid
+  title      String
+  /// The opening post's text. Kept on the thread rather than as a first Post
+  /// row so "a thread with no replies" is one row, not two, and so deleting a
+  /// reply can never orphan the question.
+  body       String
+  /// Denormalised for the board list, which would otherwise N+1 across every
+  /// thread to render a count and a date. Maintained by lib/forums.ts on reply.
+  reply_count Int     @default(0)
+  last_post_at DateTime @default(now())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  board  ForumBoard  @relation(fields: [board_id], references: [id], onDelete: Cascade)
+  author Person      @relation("ForumThreadAuthor", fields: [author_id], references: [id], onDelete: Cascade)
+  posts  ForumPost[]
+
+  @@index([board_id, last_post_at])
+  @@index([author_id])
+  @@map("forum_threads")
+}
+
+model ForumPost {
+  id         String   @id @default(uuid()) @db.Uuid
+  thread_id  String   @db.Uuid
+  author_id  String   @db.Uuid
+  body       String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  thread ForumThread @relation(fields: [thread_id], references: [id], onDelete: Cascade)
+  author Person      @relation("ForumPostAuthor", fields: [author_id], references: [id], onDelete: Cascade)
+
+  @@index([thread_id, created_at])
+  @@index([author_id])
+  @@map("forum_posts")
 }
