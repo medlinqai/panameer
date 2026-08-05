@@ -43,6 +43,7 @@ export function WizardShell({
   banner,
   aside,
   wide = false,
+  tightBody = false,
 }: {
   /** 1-based step number. OMIT on pre-verify pages — that hides the stepper. */
   step?: number;
@@ -77,6 +78,18 @@ export function WizardShell({
   aside?: ReactNode;
   /** Widen the frame for two-column steps. */
   wide?: boolean;
+  /**
+   * Close the gap between the title block and the step content (E188).
+   *
+   * OPT-IN, not a new default. The 32px gap is right on a step whose body is a
+   * form or a list — it separates the question from the answer. It is wrong on
+   * the wrap-up, whose body opens with a 140px avatar panel: the panel supplies
+   * its own visual break, so the standard gap stacked on top of it pushed the
+   * Country field and the photo down the page for no reason. One step's problem
+   * gets one step's fix rather than a global re-tune that would have to be
+   * re-checked on all thirteen.
+   */
+  tightBody?: boolean;
 }) {
   const showCounter = typeof step === "number";
   const showStepper = showCounter || typeof progress === "number";
@@ -190,7 +203,12 @@ export function WizardShell({
         )}
       </div>
 
-      <div className={aside ? "mt-8 grid gap-12 lg:grid-cols-[1fr_380px]" : "mt-8"}>
+      <div
+        className={
+          (tightBody ? "mt-4" : "mt-8") +
+          (aside ? " grid gap-12 lg:grid-cols-[1fr_380px]" : "")
+        }
+      >
         <div className="min-w-0">
           {banner && <div className="mb-8">{banner}</div>}
           {children}

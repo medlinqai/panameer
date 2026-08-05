@@ -2487,6 +2487,11 @@ export default function JoinProviderPage() {
             title: "Last thing — your photo and a few details",
             subtitle:
               "Profiles with a photo get noticeably more responses. We need your phone and address too — they stay private, and they're how a buyer reaches you.",
+            // E188 — the ONLY change to this step's layout. Its body opens with
+            // the 140px avatar panel, which is already a visual break; the
+            // standard 32px title gap on top of that pushed the photo and the
+            // Country field down the page for nothing.
+            tightBody: true,
             onContinue: saveWrapup,
             continueDisabled: !wrapupReady,
           })}
