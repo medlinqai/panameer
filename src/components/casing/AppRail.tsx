@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useMe } from "@/components/MeProvider";
 import {
   navForRoles,
@@ -14,6 +14,7 @@ import {
   ADMIN_SETUP,
 } from "@/lib/nav";
 import { AccountMenu } from "@/components/casing/AccountMenu";
+import { Popover, PopoverHeading } from "@/components/casing/Popover";
 import { RailIcon } from "@/components/casing/RailIcon";
 import type { NavItem } from "@/lib/nav";
 import { useSession } from "next-auth/react";
@@ -288,7 +289,7 @@ export function AppRail() {
 }
 
 /**
- * One primary rail item, with its flyout (WS1-A/WS1-B).
+ * One primary rail item, with its flyout (WS1-A/WS1-B; stacking fixed in E213).
  *
  * TWO TARGETS IN ONE ROW. The label navigates to the item's own page; the
  * chevron opens the submenu. Splitting them is what lets "Find Work" be both a
@@ -296,10 +297,19 @@ export function AppRail() {
  * only a menu toggle costs a click to reach the obvious destination, and one
  * with no toggle hides five views behind a page nobody knows to open.
  *
- * A FLYOUT, NOT AN IN-RAIL EXPAND. Six items each holding up to five children
- * would push the rail past a laptop viewport the moment two were open; the
- * flyout costs no vertical space and matches the deck. It opens on hover AND on
- * click, because hover alone is unreachable by keyboard and on touch.
+ * E213 — THE FLYOUT WAS BEING CLIPPED, NOT COVERED. It was `absolute left-full`
+ * inside the rail's `<nav class="overflow-y-auto">`, and a box that overflows
+ * horizontally out of a vertically-scrolling column gets cut at the edge: CSS
+ * computes `overflow-x: visible` to `auto` as soon as `overflow-y` isn't
+ * visible. It had z-50 the whole time and z-index was never going to help. It
+ * renders through a body portal now, so no submenu can be trapped by the rail
+ * again.
+ *
+ * OPEN ON CLICK, NOT ON HOVER. Hover-open was also part of what made this feel
+ * broken: the panel is in a portal now, so the pointer crosses real page
+ * content on the way to it, and a mouseleave-close would snatch it away
+ * mid-reach. Click is also the only one of the two that works on touch and
+ * from a keyboard, which is why the chevron already had a click handler.
  */
 function RailGroupItem({
   item,
@@ -311,36 +321,16 @@ function RailGroupItem({
   onNavigate: () => void;
 }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const rowRef = useRef<HTMLDivElement>(null);
   const active = isActive(item.href);
   const children = item.children ?? [];
 
-  /*
-    Escape closes, and a click outside closes. The flyout sits over page
-    content, so leaving it open after the pointer has gone elsewhere would put a
-    dark panel on top of whatever the person navigated to.
-  */
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
-    const onClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("keydown", onKey);
-    document.addEventListener("mousedown", onClick);
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.removeEventListener("mousedown", onClick);
-    };
-  }, []);
+  const close = useCallback(() => setOpen(false), []);
 
   return (
-    <div
-      ref={ref}
-      className="relative"
-      onMouseEnter={() => children.length && setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
-    >
+    <div className="relative">
       <div
+        ref={rowRef}
         className={
           "flex items-center gap-2 whitespace-nowrap rounded-[8px] pl-2.5 pr-1 " +
           "text-[15px] font-medium leading-[22px] transition-colors " +
@@ -378,38 +368,31 @@ function RailGroupItem({
         )}
       </div>
 
-      {open && children.length > 0 && (
-        <div
-          role="menu"
-          aria-label={item.label}
-          /*
-            `left-full` rather than a dropdown: the rail is 248px of a laptop's
-            width and a panel below the row would cover the items under it.
-            -ml-1 tucks it against the rail so the pointer can cross without
-            passing over page content and triggering mouseleave.
-          */
-          className="absolute left-full top-0 z-50 -ml-1 w-[19rem] overflow-hidden rounded-[12px] border border-line bg-white py-1.5 shadow-brand"
-        >
-          <p className="px-3.5 pb-1 pt-0.5 text-[11px] font-bold uppercase tracking-[0.08em] text-ink-2">
-            {item.label}
-          </p>
-          {children.map((child) => (
-            <Link
-              key={child.href}
-              href={child.href}
-              title={child.tooltip}
-              role="menuitem"
-              onClick={() => {
-                setOpen(false);
-                onNavigate();
-              }}
-              className="block whitespace-nowrap px-3.5 py-2 text-[14.5px] text-ink hover:bg-black/[0.04]"
-            >
-              {child.label}
-            </Link>
-          ))}
-        </div>
-      )}
+      <Popover
+        open={open && children.length > 0}
+        onClose={close}
+        anchorRef={rowRef}
+        placement="right-start"
+        width={304}
+        label={item.label}
+      >
+        <PopoverHeading>{item.label}</PopoverHeading>
+        {children.map((child) => (
+          <Link
+            key={child.href}
+            href={child.href}
+            title={child.tooltip}
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
+              onNavigate();
+            }}
+            className="block whitespace-nowrap px-4 py-2 text-[14.5px] text-ink hover:bg-black/[0.04]"
+          >
+            {child.label}
+          </Link>
+        ))}
+      </Popover>
     </div>
   );
 }
