@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { linkifyLegal, type LegalDoc } from "@/components/legal/crossrefs";
@@ -30,6 +31,9 @@ export function LegalPage({
   updated,
   doc,
   self = null,
+  notice,
+  backHref = "/",
+  backLabel = "← Back to Panameer",
 }: {
   title: string;
   version: string;
@@ -38,8 +42,29 @@ export function LegalPage({
   doc: LegalNode[];
   /** Which document this is, so its own name isn't linked to itself. */
   self?: LegalDoc;
+  /** A document-specific warning, above the text. See the supplements. */
+  notice?: ReactNode;
+  backHref?: string;
+  backLabel?: string;
 }) {
-  const contents = doc.filter((n): n is LegalHeading => n.t === "h2");
+  /*
+    ANCHORS ARE ASSIGNED IN ONE PASS so the contents list and the headings
+    cannot disagree, and so a repeated section number gets a distinct anchor
+    rather than a duplicate id. The API Terms number their definitions 1, 2, 3
+    inside section 2, which collides with sections 1, 2, 3 — legitimately, in
+    the source — and an id that appears twice sends every link to the first one.
+  */
+  const seen = new Map<string, number>();
+  const ids = doc.map((n) => {
+    if (n.t === "gap" || n.t === "p") return "";
+    const base = headingId(n.text);
+    const nth = (seen.get(base) ?? 0) + 1;
+    seen.set(base, nth);
+    return nth === 1 ? base : `${base}-${nth}`;
+  });
+  const contents = doc
+    .map((n, i) => (n.t === "h2" ? { node: n as LegalHeading, id: ids[i] } : null))
+    .filter((c): c is { node: LegalHeading; id: string } => c !== null);
 
   return (
     <div className="flex min-h-screen flex-col bg-white font-body text-ink">
@@ -79,19 +104,21 @@ export function LegalPage({
           </p>
         </div>
 
+        {notice}
+
         {contents.length > 1 && (
           <nav aria-label="Contents" className="mt-8">
             <p className="text-[12.5px] font-bold uppercase tracking-wide text-ink-2">
               Contents
             </p>
             <ol className="mt-2 space-y-1">
-              {contents.map((n) => (
-                <li key={n.text}>
+              {contents.map((c) => (
+                <li key={c.id}>
                   <a
-                    href={`#${headingId(n.text)}`}
+                    href={`#${c.id}`}
                     className="text-[14.5px] text-magenta hover:underline"
                   >
-                    {n.text}
+                    {c.node.text}
                   </a>
                 </li>
               ))}
@@ -101,15 +128,15 @@ export function LegalPage({
 
         <article className="mt-10">
           {doc.map((node, i) => (
-            <LegalBlock key={i} node={node} self={self} />
+            <LegalBlock key={i} node={node} id={ids[i]} self={self} />
           ))}
         </article>
 
         <Link
-          href="/"
+          href={backHref}
           className="mt-10 inline-flex text-[14.5px] font-bold text-magenta hover:underline"
         >
-          ← Back to Panameer
+          {backLabel}
         </Link>
       </main>
     </div>
@@ -139,12 +166,20 @@ function slug(text: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-function LegalBlock({ node, self }: { node: LegalNode; self: LegalDoc }) {
+function LegalBlock({
+  node,
+  id,
+  self,
+}: {
+  node: LegalNode;
+  id: string;
+  self: LegalDoc;
+}) {
   switch (node.t) {
     case "h2":
       return (
         <h2
-          id={headingId(node.text)}
+          id={id}
           className="mt-10 scroll-mt-6 border-t border-line pt-8 font-display text-[22px] font-bold tracking-[-0.3px] first:mt-0 first:border-0 first:pt-0"
         >
           {node.text}
@@ -152,13 +187,13 @@ function LegalBlock({ node, self }: { node: LegalNode; self: LegalDoc }) {
       );
     case "h3":
       return (
-        <h3 id={headingId(node.text)} className="mt-7 scroll-mt-6 font-display text-[17.5px] font-bold">
+        <h3 id={id} className="mt-7 scroll-mt-6 font-display text-[17.5px] font-bold">
           {node.text}
         </h3>
       );
     case "h4":
       return (
-        <h4 id={headingId(node.text)} className="mt-5 scroll-mt-6 text-[15.5px] font-bold">
+        <h4 id={id} className="mt-5 scroll-mt-6 text-[15.5px] font-bold">
           {node.text}
         </h4>
       );
