@@ -152,3 +152,35 @@ body {
     font-weight: 700;
   }
 }
+
+/*
+ * The indeterminate sweep behind ParseHeartbeat (E200).
+ *
+ * A LOOPING SWEEP, NOT A FILLING BAR. The model call reports no progress, so a
+ * bar that filled toward 100% would be inventing a measurement — and the one
+ * that sits at 90% is exactly what made the old state read as hung. This claims
+ * only "still working", which is all we actually know.
+ *
+ * `prefers-reduced-motion` stops the animation rather than hiding the bar: the
+ * copy above it already changes as the wait grows, so the state stays legible
+ * without anything moving.
+ */
+@keyframes parse-sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(300%);
+  }
+}
+
+.animate-parse-sweep {
+  animation: parse-sweep 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-parse-sweep {
+    animation: none;
+    width: 100%;
+  }
+}

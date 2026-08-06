@@ -90,7 +90,7 @@ export function ResumeImportAction({
               className="h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-white/35 border-t-white"
             />
           )}
-          {busy ? "Reading… (20–30s)" : "Yes, import"}
+          {busy ? "Reading…" : "Yes, import"}
         </button>
         {/* Cancel disappears mid-run: it never aborted the request, and offering
             an out that does nothing during the one wait that needs patience is

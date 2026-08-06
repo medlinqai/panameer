@@ -257,8 +257,16 @@ const LANGUAGE_LEVELS = [
   "NATIVE_OR_BILINGUAL",
 ] as const;
 
-/** E014 — a provider may list at most 15 skills. */
-export const MAX_SKILLS = 15;
+/*
+  E202 — THERE IS NO SKILL CEILING ANY MORE.
+
+  E014 capped a provider at 15. The importer never honoured it — the parser's
+  own cap is 40 and matched skills are written straight to the profile — so a
+  résumé that produced 18 matches landed the provider on a step reading "18/15"
+  with an error about a limit they never chose to exceed and could only clear by
+  deleting real skills. The cap also made no sense on its own terms: buyers match
+  on skills, so a ceiling on them is a ceiling on being found.
+*/
 /** E017 — a bio must be a real answer, not one word. */
 export const MIN_BIO_CHARS = 100;
 /**
@@ -1310,13 +1318,6 @@ export async function applyProviderSection(
       if (skillIds.length === 0) {
         throw new OnboardingError("Pick at least one skill", "INVALID");
       }
-      if (skillIds.length > MAX_SKILLS) {
-        throw new OnboardingError(
-          `Pick up to ${MAX_SKILLS} skills`,
-          "INVALID"
-        );
-      }
-
       /*
         WS1/E102 + E110 — the single-domain lock is GONE.
 

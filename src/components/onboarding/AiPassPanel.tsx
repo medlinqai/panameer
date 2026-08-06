@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ParseHeartbeat } from "@/components/onboarding/ParseHeartbeat";
 
 /**
  * "Let AI take a pass" — ONE panel, wherever the parse fell short (E129).
@@ -166,22 +167,21 @@ export function AiPassPanel({
       </div>
 
       {/*
-        A REAL in-progress affordance (walk7 WS8 / E142).
+        A REAL in-progress affordance (walk7 WS8 / E142, revised by E200).
 
         The control sat on the words "Reading your document…" with nothing
-        moving. A live model call takes 15-30 seconds, so a static label for
-        half a minute reads as hung — and the walk reported exactly that, then
-        that it "doesn't clearly resolve". Three things fix it: a spinner that
-        proves the page is alive, an honest duration up front so the wait is
-        expected rather than endured, and a completion line that says what
-        changed.
+        moving, which read as hung. E142 answered that with a promised duration;
+        E200 replaced the promise with a heartbeat, because the wait sometimes
+        exceeds any number worth printing.
       */}
-      {busy && (
-        <p className="mt-3 text-[13px] text-ink-2" role="status">
-          This usually takes 20–30 seconds. We&apos;re reading the whole document,
-          not just the first page — leave this open.
-        </p>
-      )}
+      {/*
+        E200 — the promised "20–30 seconds" is gone. It was accurate at the
+        median and a liability at the tail: once the page has broken its own
+        promise, a static line is more alarming than no number at all. The
+        heartbeat keeps changing what it says instead, which is what
+        distinguishes slow from hung.
+      */}
+      {busy && <ParseHeartbeat className="mt-3" />}
 
       {info?.hasDocument && info.documentName && !done && !busy && (
         <p className="mt-3 text-[13px] text-ink-2">

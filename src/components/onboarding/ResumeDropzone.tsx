@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import type { ImportOutcome } from "@/components/onboarding/ResumeUploadModal";
+import { ParseHeartbeat } from "@/components/onboarding/ParseHeartbeat";
 
 /**
  * INLINE résumé/PDF upload control (brief_S / E029).
@@ -23,8 +24,16 @@ const MAX_BYTES = 5 * 1024 * 1024;
 
 export function ResumeDropzone({
   onImported,
+  onBusyChange,
 }: {
   onImported: (outcome: ImportOutcome) => void;
+  /**
+   * Reports upload+parse in flight, so the STEP can disable its own Continue
+   * while the model is reading (E200). Without it the page-level footer stayed
+   * live during the parse and a click threw away the answer that was about to
+   * arrive.
+   */
+  onBusyChange?: (busy: boolean) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -33,11 +42,18 @@ export function ResumeDropzone({
   const [error, setError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
 
+  // Every busy transition goes through here, so the step's footer and this
+  // control can never disagree about whether a parse is running.
+  const setBusyBoth = (v: boolean) => {
+    setBusy(v);
+    onBusyChange?.(v);
+  };
+
   const reset = () => {
     setFile(null);
     setProgress(null);
     setError(null);
-    setBusy(false);
+    setBusyBoth(false);
     if (inputRef.current) inputRef.current.value = "";
   };
 
@@ -54,7 +70,7 @@ export function ResumeDropzone({
   };
 
   const upload = (f: File) => {
-    setBusy(true);
+    setBusyBoth(true);
     setError(null);
     setProgress(0);
 
@@ -68,7 +84,7 @@ export function ResumeDropzone({
       if (e.lengthComputable) setProgress(Math.round((e.loaded / e.total) * 100));
     };
     xhr.onload = () => {
-      setBusy(false);
+      setBusyBoth(false);
       let data: ImportOutcome & { error?: string };
       try {
         data = JSON.parse(xhr.responseText);
@@ -90,7 +106,7 @@ export function ResumeDropzone({
       setProgress(100);
     };
     xhr.onerror = () => {
-      setBusy(false);
+      setBusyBoth(false);
       setError("The upload failed. Please try again.");
     };
     xhr.send(form);
@@ -121,26 +137,30 @@ export function ResumeDropzone({
             <p className="mt-0.5 text-[13px] text-ink-2">
               {(file.size / 1024).toFixed(0)} KB
             </p>
-            {progress !== null && (
-              <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-line">
-                <div
-                  className="h-full rounded-full bg-magenta transition-[width] duration-200"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-            )}
             {/*
-              E184 — the wait is now a MODEL call, so the label has to survive
-              20–30 seconds without reading as hung. The same fix AiPassPanel
-              needed (E142): an honest duration up front beats a static label.
+              TWO DIFFERENT WAITS, SHOWN DIFFERENTLY (E200). The upload reports
+              real bytes, so it gets a real percentage. The model call that
+              follows reports nothing, so it gets the heartbeat — which promises
+              no duration and keeps changing what it says. Showing a percentage
+              for the second one is what made it look frozen at 100%.
             */}
-            <p className="mt-2 text-[13px] text-ink-2">
-              {busy
-                ? progress === 100
-                  ? "Panameer AI is reading your document… this takes 20–30 seconds."
-                  : `Uploading… ${progress}%`
-                : "Imported. Review the details as you continue."}
-            </p>
+            {busy && progress !== null && progress < 100 && (
+              <>
+                <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-line">
+                  <div
+                    className="h-full rounded-full bg-magenta transition-[width] duration-200"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+                <p className="mt-2 text-[13px] text-ink-2">Uploading… {progress}%</p>
+              </>
+            )}
+            {busy && progress === 100 && <ParseHeartbeat className="mt-3" />}
+            {!busy && (
+              <p className="mt-2 text-[13px] text-ink-2">
+                Imported. Review the details as you continue.
+              </p>
+            )}
             <button
               type="button"
               onClick={reset}

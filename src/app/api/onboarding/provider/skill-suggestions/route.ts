@@ -12,13 +12,10 @@ import { getOnboardingState } from "@/lib/onboarding";
  * skills on their own profile. Junk is left unticked and discarded — nothing
  * reaches the catalog that a human didn't affirm.
  *
- * WHY NOT REUSE THE `catalog` STEP. That handler enforces the wizard's
- * `MAX_SKILLS` = 15 ceiling, which is right for a person picking skills by hand
- * and wrong here: the importer writes matched skills without that cap (the
- * parser's own cap is 40), so a résumé that produced 20 matches would make every
- * confirmation fail with "Pick up to 15 skills" — an error about a limit the
- * provider never chose to exceed. Same upsert semantics, same `is_custom` flag,
- * without a ceiling that belongs to a different surface.
+ * WHY NOT REUSE THE `catalog` STEP. It used to be the 15-skill ceiling, which
+ * the importer never honoured and which E202 has now removed everywhere. What
+ * remains is the `is_custom` flag: these terms are NOT in the catalog, and the
+ * catalog step has no way to express that.
  *
  * `is_custom` IS the queue for the future admin catalog editor: the terms real
  * providers confirmed are exactly the candidates worth promoting into the

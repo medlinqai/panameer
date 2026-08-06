@@ -67,6 +67,8 @@ import {
   rateBreakdown,
   displayFirstName,
 } from "@/lib/display";
+import { PhoneField } from "@/components/onboarding/PhoneField";
+import { formatPhone, isPhoneComplete } from "@/lib/phone";
 
 /**
  * Provider (Seller) onboarding — journey P1-J1 (brief_P, extended by brief_R).
@@ -197,7 +199,6 @@ const MIN_BIO = 100;
  * the minimum — but the server is authoritative and rejects anything longer.
  */
 const MAX_BIO = 600;
-const MAX_SKILLS = 15;
 /** E030 — never show more than ~15 options at once on the cascade page. */
 const MAX_VISIBLE_OPTIONS = 15;
 
@@ -537,6 +538,12 @@ export default function JoinProviderPage() {
     answers it directly, so the proxy has no remaining caller.
   */
   const [uploadModal, setUploadModal] = useState(false);
+  /**
+   * A résumé is uploading/parsing right now (E200). Held on the WIZARD, not in
+   * the dropzone, because the control that has to react to it is the step's own
+   * footer Continue — which sits in `shell()`, one level up from the dropzone.
+   */
+  const [parsingResume, setParsingResume] = useState(false);
   /** WS5/E084 — the post-upload review shows work history the way the profile
    *  does, and swaps to the editor in place when you ask to change it. */
   const [editingWork, setEditingWork] = useState(false);
@@ -632,7 +639,9 @@ export default function JoinProviderPage() {
         level: l.level ?? null,
       })),
     });
-    if (p.phone) setPhoneInput(p.phone);
+    // Masked on load as well, so a number stored before E203 displays the same
+    // way a freshly typed one does.
+    if (p.phone) setPhoneInput(formatPhone(p.phone, p.address?.country ?? null));
   }, []);
 
   // ---- mount ------------------------------------------------------------
@@ -1251,10 +1260,24 @@ export default function JoinProviderPage() {
             aside: hasProfileData ? undefined : (
               <TestimonialCard t={DECK_TESTIMONIALS[0]} />
             ),
-            secondaryLabel: "Skip for Now",
-            onSecondary: goNext,
+            /*
+              E201 — NO PAGE-LEVEL SKIP ONCE A RÉSUMÉ HAS BEEN READ. "Skip for
+              Now" here advanced past the step without saving, which on the
+              upload path means walking away from everything the parse just
+              extracted — the one place on this wizard where skipping destroys
+              work rather than deferring it. It stays on the empty/manual path,
+              where there is nothing to lose.
+
+              E200 — CONTINUE IS THE VISIBLE COMPLETION SIGNAL. It is disabled
+              while the model reads and says so, then enables the moment the
+              parse lands. Leaving it live during the parse let a click discard
+              the answer that was seconds away.
+            */
+            secondaryLabel: importOutcome ? undefined : "Skip for Now",
+            onSecondary: importOutcome ? undefined : goNext,
             onContinue: () => saveAnd("tell_us", { profileMethod: "MANUAL" }),
-            continueLabel: "Continue",
+            continueLabel: parsingResume ? "Reading your résumé…" : "Continue",
+            continueDisabled: parsingResume,
           })}
         >
           {error && <Notice>{error}</Notice>}
@@ -1336,6 +1359,7 @@ export default function JoinProviderPage() {
               The FASTEST badge and the dropzone already say what this does.
             */}
             <ResumeDropzone
+              onBusyChange={setParsingResume}
               onImported={(outcome) => {
                 setImportOutcome(outcome);
                 if (outcome.state) hydrate(outcome.state as StatusPayload);
@@ -1589,7 +1613,6 @@ export default function JoinProviderPage() {
     // ---- SKILLS — WS3 step 3, filtered by the chosen role(s) -----------
     case "skills": {
       const chosenSkills = new Set(profile.skillIds);
-      const atMaxSkills = profile.skillIds.length >= MAX_SKILLS;
       const totalPicked = profile.skillIds.length + profile.customSkills.length;
 
       const q = skillQuery.trim().toLowerCase();
@@ -1605,7 +1628,6 @@ export default function JoinProviderPage() {
       const toggleSkill = (id: string) =>
         setProfile((p) => {
           const has = p.skillIds.includes(id);
-          if (!has && p.skillIds.length >= MAX_SKILLS) return p;
           const opt = skillOpts.find((x) => x.id === id);
           return {
             ...p,
@@ -1625,7 +1647,7 @@ export default function JoinProviderPage() {
 
       const addCustomSkill = () => {
         const name = skillQuery.trim();
-        if (!name || atMaxSkills) return;
+        if (!name) return;
         if (
           profile.customSkills.some((c) => c.toLowerCase() === name.toLowerCase()) ||
           profile.skillNames.some((c) => c.name.toLowerCase() === name.toLowerCase())
@@ -1670,11 +1692,20 @@ export default function JoinProviderPage() {
       return (
         <WizardShell
           {...shell({
+            /*
+              E202 — THE ASK IS EXPLICIT ON ARRIVAL. The old subtitle described
+              the controls ("Search, or add your own") and left the actual
+              instruction implicit, so the step read as a search box with no
+              stated goal — and with the cap gone there is no longer a number in
+              the UI implying one. Say the two things that decide what a
+              provider does here: add everything true of you, and more of them
+              means more ways to be found.
+            */
             title: "Which skills do you want to be found for?",
             subtitle:
               roleNames.length > 0
-                ? `Skills across ${roleNames.join(" and ")}. Search, or add your own — buyers match on these.`
-                : "Search, or add your own — buyers match on these.",
+                ? `Add every skill you have across ${roleNames.join(" and ")} — there's no limit, and each one is another search a buyer can find you in. Search the catalog or add your own.`
+                : "Add every skill you have — there's no limit, and each one is another search a buyer can find you in. Search the catalog or add your own.",
             onContinue: () =>
               saveAnd("skills", {
                 skillIds: profile.skillIds,
@@ -1722,10 +1753,10 @@ export default function JoinProviderPage() {
           {(profile.skillNames.length > 0 || profile.customSkills.length > 0) && (
             <div className="mb-4">
               <p className="mb-1.5 text-[13px] font-bold">
+                {/* E202 — a count, not a quota. "12/15" turned a list of what
+                    you can do into a budget you were spending. */}
                 Your Skills{" "}
-                <span className="font-normal text-ink-2">
-                  ({totalPicked}/{MAX_SKILLS})
-                </span>
+                <span className="font-normal text-ink-2">({totalPicked})</span>
               </p>
               <div className={`flex flex-wrap gap-2 ${PICKED_REGION}`}>
                 {profile.skillNames.map((sk) => (
@@ -1775,20 +1806,12 @@ export default function JoinProviderPage() {
             <button
               type="button"
               onClick={addCustomSkill}
-              disabled={!skillQuery.trim() || atMaxSkills}
+              disabled={!skillQuery.trim()}
               className="rounded-full border-[1.5px] border-line px-5 py-2.5 font-bold transition-colors hover:border-magenta hover:text-magenta disabled:opacity-40"
             >
               + Add
             </button>
           </div>
-
-          {atMaxSkills && (
-            <div className="mt-3">
-              <Notice tone="info">
-                That&apos;s {MAX_SKILLS} — remove one to add another.
-              </Notice>
-            </div>
-          )}
 
           <div className={`mt-3 max-h-[220px] ${SCROLL_REGION}`}>
             <div className="flex flex-wrap gap-2">
@@ -2454,8 +2477,12 @@ export default function JoinProviderPage() {
     // skippable, because nobody should be blocked on finding a headshot.
     // ---- 9/10 — Photo & Details: the WRAPUP step (WS8/E088) -----------
     case "picture": {
+      /*
+        E203 — "has some characters in it" was the old test, and it passed for
+        "abc". Continue now needs a phone that could actually be dialled.
+      */
       const wrapupReady =
-        Boolean(profile.photoUrl) && phoneInput.trim() !== "";
+        Boolean(profile.photoUrl) && isPhoneComplete(phoneInput, addr.country);
 
       /**
        * Saves BOTH halves. The photo is its own step payload; phone and
@@ -2556,15 +2583,18 @@ export default function JoinProviderPage() {
                   rides the tax/payout gate, where there is a reason to ask.
                   The column stays nullable — no destructive drop.
                 */}
-                <Field label="Phone *">
-                  <TextInput
-                    id="review-phone"
-                    type="tel"
-                    value={phoneInput}
-                    onChange={(e) => setPhoneInput(e.target.value)}
-                    placeholder="+1 555 010 4477"
-                  />
-                </Field>
+                {/*
+                  E203 — masked, digits-only, validated on blur. The country
+                  comes from the address block below, whose hint has always
+                  promised it "sets how we format your phone number"; this is
+                  the first version where that is true.
+                */}
+                <PhoneField
+                  id="review-phone"
+                  value={phoneInput}
+                  onChange={setPhoneInput}
+                  country={addr.country}
+                />
                 {/*
                   E126 — COUNTRY FIRST, above the street line. It decides what
                   the fields under it even mean ("State" here, "Province" in
@@ -2874,7 +2904,16 @@ export default function JoinProviderPage() {
               lastName={profile.lastName}
               photoUrl={profile.photoUrl}
               headline={profile.headline}
-              overview={profile.overview}
+              /*
+                E205 — NO BIO IN THE HERO ON THIS PAGE. The published profile
+                shows it here; the review page also has to EDIT it, and a
+                600-character paragraph rendered twice — once read-only in the
+                hero and again in the textarea below — was the single largest
+                block of duplicated height on the page. The editable copy is the
+                one that survives, because it is the one that does something,
+                and the hero's "Edit bio" button already scrolls to it.
+              */
+              overview={null}
               rateMinCents={profile.rateMinCents ?? profile.hourlyRateCents}
               rateMaxCents={profile.rateMaxCents ?? profile.hourlyRateCents}
               youGetCents={youGet}
@@ -2943,7 +2982,7 @@ export default function JoinProviderPage() {
                       void postStep("bio", { overview: profile.overview });
                     }
                   }}
-                  placeholder="A few lines about what you do best. AI drafts this from your résumé — edit it to sound like you."
+                  placeholder="A few lines about what you do best."
                   className={
                     profile.overview.trim().length > MAX_BIO
                       ? "border-red-600 focus:border-red-600"
@@ -3032,8 +3071,16 @@ export default function JoinProviderPage() {
               </ProfileCard>
             </div>
 
-            {/* ---- pg2: Solo Projects, full width (E074) ---------------- */}
-            <div className="mt-5">
+            {/*
+              ---- pg2: the 2-column grid -------------------------------
+
+              E205 — SOLO PROJECTS JOINED THE GRID. It was full-width below Work
+              History, and for most providers it is empty or two lines — a whole
+              screen-width band carrying one sentence, directly above a grid of
+              cards the same size as its content. Bio and Work History stay full
+              width because they genuinely fill it.
+            */}
+            <div className="mt-5 grid gap-5 lg:grid-cols-2">
               <ProfileCard
                 title="Solo Projects"
                 edit={sectionAction("Solo Projects", "tell_us", soloProjects.length === 0)}
@@ -3043,10 +3090,6 @@ export default function JoinProviderPage() {
                   empty="No solo projects yet — work you delivered outside a job goes here."
                 />
               </ProfileCard>
-            </div>
-
-            {/* ---- pg2: the 2-column grid ------------------------------- */}
-            <div className="mt-5 grid gap-5 lg:grid-cols-2">
               <ProfileCard
                 title="Skills"
                 edit={sectionAction("Skills", "catalog", profile.skillNames.length === 0)}

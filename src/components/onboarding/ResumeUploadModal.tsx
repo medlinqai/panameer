@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Modal } from "@/components/Modal";
+import { ParseHeartbeat } from "@/components/onboarding/ParseHeartbeat";
 
 /**
  * "Add your resume" modal (brief_P / E012).
@@ -202,7 +203,8 @@ export function ResumeUploadModal({
             </button>
           </div>
 
-          {progress !== null && (
+          {busy && progress === 100 && <ParseHeartbeat className="mt-3" />}
+          {(!busy || progress !== 100) && progress !== null && (
             <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-line">
               <div
                 className="h-full rounded-full bg-magenta transition-[width] duration-200"
@@ -210,9 +212,9 @@ export function ResumeUploadModal({
               />
             </div>
           )}
-          {busy && (
+          {busy && progress !== 100 && (
             <p className="mt-2 text-[13px] text-ink-2">
-              {progress === 100 ? "Reading your document…" : `Uploading… ${progress}%`}
+              {`Uploading… ${progress}%`}
             </p>
           )}
         </div>
