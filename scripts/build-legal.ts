@@ -133,6 +133,15 @@ function parse(raw: string, label: string): Node[] {
     // multi-line comment as body paragraphs — the note about what was adapted
     // ended up inside the Terms of Use.
     .replace(/<!--[\s\S]*?-->/g, "")
+    /*
+      HEADINGS GLUED TO THE PARAGRAPH ABOVE THEM. The extractor lost the line
+      break before two section titles in the User Agreement — "…platform prior
+      to termination.3. CONTRACTUAL RELATIONSHIP BETWEEN SERVICE BUYER AND
+      PROVIDER" is a sentence and a section heading in one line, and it renders
+      as neither. A full stop pressed straight against a section number and an
+      all-caps title is not something prose does.
+    */
+    .replace(/([a-z)”"])\.(\d+(?:\.\d+)*)(\.?)\s+([A-Z][A-Z])/g, "$1.\n$2$3 $4")
     .split("\n")
     .filter((l) => !/^#\s/.test(l)); // the H1 — the page renders its own
 
@@ -255,6 +264,54 @@ function parse(raw: string, label: string): Node[] {
   }
 
   /*
+    THE TABLE OF CONTENTS, CAUGHT BY DUPLICATION.
+
+    The line-run rule above handles a contents list that sits in one block, but
+    the User Agreement's spans several — it has blank lines inside it — so most
+    of its entries survived as headings and the document appeared to contain
+    sections 1 to 16 twice, once in title case and once in caps.
+
+    A contents entry is a heading that names a section appearing LATER in the
+    document, so the earlier of any such pair is dropped.
+
+    MATCHED ON THE SECTION NUMBER, not the title. Titles are only mostly equal
+    between a contents list and the body it points at — this document's contents
+    say "14.3 Informal Dispute Resolution" for a section headed "14.3
+    PRE-ARBITRATION INFORMAL DISPUTE RESOLUTION REQUIREMENT", and "14.4 …Jury
+    Trial Waiver" for one that stops at "JURY TRIAL". Neither is a prefix of the
+    other, so three contents entries survived a text comparison and left the
+    page with duplicate `#section-14-3` anchors. The number is the identity.
+
+    Unnumbered headings fall back to comparing text, ignoring case and
+    punctuation so a stray space inside a title ("PAYMENT TERM S") still matches
+    its own entry.
+  */
+  const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const key = (s: string) => {
+    const numbered = /^(\d+(?:\.\d+)*)\.?\s/.exec(s);
+    return numbered ? `#${numbered[1]}` : norm(s);
+  };
+  const heads = nodes
+    .map((n, i) => (n.t !== "gap" && n.t !== "p" ? { i, key: key(n.text) } : null))
+    .filter((h): h is { i: number; key: string } => h !== null && h.key.length >= 2);
+  const tocIdx = new Set<number>();
+  for (let a = 0; a < heads.length; a++) {
+    for (let b = a + 1; b < heads.length; b++) {
+      const same = heads[a].key.startsWith("#")
+        ? heads[b].key === heads[a].key
+        : heads[b].key.startsWith(heads[a].key) && heads[a].key.length >= 6;
+      if (same) {
+        tocIdx.add(heads[a].i);
+        break;
+      }
+    }
+  }
+  if (tocIdx.size) {
+    if (REPORT) console.log("  contents entries dropped as duplicates:", tocIdx.size);
+    for (const i of [...tocIdx].sort((x, y) => y - x)) nodes.splice(i, 1);
+  }
+
+  /*
     TABLE-CELL REMNANTS. A few cells end in a period and are long enough to look
     like prose once `reflow` joins them, so they survive the shard test and sit
     BETWEEN two gaps — "Analytics, Security, Legal, Compliance and Regulatory
@@ -295,6 +352,12 @@ mkdirSync(OUT, { recursive: true });
 const DOCS = [
   { file: "tos_panameer.md", out: "terms.ts", constName: "TERMS_DOC", label: "Terms of Use" },
   { file: "privacy_panameer.md", out: "privacy.ts", constName: "PRIVACY_DOC", label: "Privacy Policy" },
+  {
+    file: "user_agreement_panameer.md",
+    out: "user-agreement.ts",
+    constName: "USER_AGREEMENT_DOC",
+    label: "User Agreement",
+  },
 ];
 
 for (const doc of DOCS) {

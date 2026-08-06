@@ -12,6 +12,7 @@ export default function Page() {
       version={USER_TOS_VERSION}
       updated={LEGAL_UPDATED}
       doc={PRIVACY_DOC}
+      self="privacy"
     />
   );
 }

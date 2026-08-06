@@ -48,7 +48,10 @@ export default async function PolicyPage({
           </p>
           <div className="mt-4 flex flex-wrap gap-4 text-[14px] font-semibold">
             <Link href="/terms" className="text-magenta hover:underline">
-              Terms of Service
+              Terms of Use
+            </Link>
+            <Link href="/user-agreement" className="text-magenta hover:underline">
+              User Agreement
             </Link>
             <Link href="/privacy" className="text-magenta hover:underline">
               Privacy Policy

@@ -7,6 +7,7 @@ import { signIn } from "next-auth/react";
 import { WizardShell } from "@/components/onboarding/WizardShell";
 import { VerifyGate } from "@/components/onboarding/VerifyGate";
 import { OptionCard, Field, TextInput, Notice } from "@/components/onboarding/controls";
+import { LegalLink } from "@/components/legal/LegalLink";
 
 // Buyer flow is short: create account (+ToS) → verify email → pick tier → done.
 const SCREENS = ["account", "verify", "tier"] as const;
@@ -65,7 +66,7 @@ export default function JoinBuyerPage() {
       return;
     }
     if (!acct.tos) {
-      setError("Please accept the Terms of Service.");
+      setError("Please accept the Terms of Use.");
       return;
     }
     setBusy(true);
@@ -219,13 +220,17 @@ export default function JoinBuyerPage() {
               className="mt-1 h-4 w-4 accent-magenta"
             />
             <span className="text-[14.5px] text-ink-2">
-              Yes, I understand and agree to the{" "}
-              <span className="font-semibold text-ink">
-                Panameer Terms of Service
-              </span>
-              , including the{" "}
-              <span className="font-semibold text-ink">User Agreement</span> and{" "}
-              <span className="font-semibold text-ink">Privacy Policy</span>.
+              {/*
+                WS-C — these were BOLD TEXT, not links: the buyer was asked to
+                agree to three documents with no way to open any of them. They
+                are links now, they open in a new tab so a half-filled signup
+                survives the click (E162), and "Terms of Service" is "Terms of
+                Use" — the name the document actually carries.
+              */}
+              Yes, I understand and agree to the Panameer{" "}
+              <LegalLink href="/terms">Terms of Use</LegalLink>, including the{" "}
+              <LegalLink href="/user-agreement">User Agreement</LegalLink> and{" "}
+              <LegalLink href="/privacy">Privacy Policy</LegalLink>.
             </span>
           </label>
 

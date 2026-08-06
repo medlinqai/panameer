@@ -22,6 +22,7 @@ export default function Page() {
       version={USER_TOS_VERSION}
       updated={LEGAL_UPDATED}
       doc={TERMS_DOC}
+      self="terms"
     />
   );
 }

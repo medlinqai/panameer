@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
+import { linkifyLegal, type LegalDoc } from "@/components/legal/crossrefs";
 import type { LegalHeading, LegalNode } from "@/content/legal/types";
 
 /**
@@ -28,12 +29,15 @@ export function LegalPage({
   version,
   updated,
   doc,
+  self = null,
 }: {
   title: string;
   version: string;
   /** The date the text was loaded — not a legal "effective date". */
   updated: string;
   doc: LegalNode[];
+  /** Which document this is, so its own name isn't linked to itself. */
+  self?: LegalDoc;
 }) {
   const contents = doc.filter((n): n is LegalHeading => n.t === "h2");
 
@@ -84,7 +88,7 @@ export function LegalPage({
               {contents.map((n) => (
                 <li key={n.text}>
                   <a
-                    href={`#${slug(n.text)}`}
+                    href={`#${headingId(n.text)}`}
                     className="text-[14.5px] text-magenta hover:underline"
                   >
                     {n.text}
@@ -97,7 +101,7 @@ export function LegalPage({
 
         <article className="mt-10">
           {doc.map((node, i) => (
-            <LegalBlock key={i} node={node} />
+            <LegalBlock key={i} node={node} self={self} />
           ))}
         </article>
 
@@ -112,7 +116,22 @@ export function LegalPage({
   );
 }
 
-/** "4. INFORMATION SHARING AND DISCLOSURE" → "4-information-sharing-and-disclosure" */
+/**
+ * The anchor for a heading.
+ *
+ * A NUMBERED SECTION ANCHORS ON ITS NUMBER — `#section-7`, not
+ * `#7-non-circumvention`. The cross-references in the Terms of Use and Privacy
+ * Policy cite "Section 7 of our User Agreement", and a title-derived anchor
+ * would break the moment counsel reworded a heading, which is exactly the sort
+ * of edit a legal review makes. The number is the stable part.
+ */
+export function headingId(text: string): string {
+  const numbered = /^(\d+(?:\.\d+)*)\.?\s/.exec(text);
+  if (numbered) return `section-${numbered[1].replace(/\./g, "-")}`;
+  return slug(text);
+}
+
+/** "TABLE OF CONTENTS" → "table-of-contents" */
 function slug(text: string): string {
   return text
     .toLowerCase()
@@ -120,21 +139,29 @@ function slug(text: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-function LegalBlock({ node }: { node: LegalNode }) {
+function LegalBlock({ node, self }: { node: LegalNode; self: LegalDoc }) {
   switch (node.t) {
     case "h2":
       return (
         <h2
-          id={slug(node.text)}
+          id={headingId(node.text)}
           className="mt-10 scroll-mt-6 border-t border-line pt-8 font-display text-[22px] font-bold tracking-[-0.3px] first:mt-0 first:border-0 first:pt-0"
         >
           {node.text}
         </h2>
       );
     case "h3":
-      return <h3 className="mt-7 font-display text-[17.5px] font-bold">{node.text}</h3>;
+      return (
+        <h3 id={headingId(node.text)} className="mt-7 scroll-mt-6 font-display text-[17.5px] font-bold">
+          {node.text}
+        </h3>
+      );
     case "h4":
-      return <h4 className="mt-5 text-[15.5px] font-bold">{node.text}</h4>;
+      return (
+        <h4 id={headingId(node.text)} className="mt-5 scroll-mt-6 text-[15.5px] font-bold">
+          {node.text}
+        </h4>
+      );
     case "gap":
       /*
         A LABELLED HOLE. The source PDF's tables were extracted cell-by-cell in
@@ -161,7 +188,9 @@ function LegalBlock({ node }: { node: LegalNode }) {
       );
     default:
       return (
-        <p className="mt-4 text-[15.5px] leading-relaxed text-ink-2">{node.text}</p>
+        <p className="mt-4 text-[15.5px] leading-relaxed text-ink-2">
+          {linkifyLegal(node.text, self)}
+        </p>
       );
   }
 }

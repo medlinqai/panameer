@@ -274,8 +274,16 @@ export function SignUpForm({
               away mid-signup and browser-back came back to an empty form, so
               reading the terms cost you everything you had typed.
             */}
-            <LegalLink href="/terms">Terms of Service</LegalLink>,{" "}
-            <LegalLink href="/terms">User Agreement</LegalLink> and{" "}
+            {/*
+              THE NAMES NOW MATCH THE DOCUMENTS THAT EXIST (brief_user_agreement
+              WS-C). This said "Terms of Service", which is not the name of any
+              page — the document is called Terms of Use — and it pointed BOTH
+              that label and "User Agreement" at /terms, so two of the three
+              things being accepted led to the same page and the User Agreement
+              was unreadable. Three names, three routes.
+            */}
+            <LegalLink href="/terms">Terms of Use</LegalLink>,{" "}
+            <LegalLink href="/user-agreement">User Agreement</LegalLink> and{" "}
             <LegalLink href="/privacy">Privacy Policy</LegalLink>
             .
           </span>
