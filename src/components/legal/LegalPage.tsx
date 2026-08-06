@@ -56,7 +56,7 @@ export function LegalPage({
   */
   const seen = new Map<string, number>();
   const ids = doc.map((n) => {
-    if (n.t === "gap" || n.t === "p") return "";
+    if (n.t === "gap" || n.t === "p" || n.t === "table") return "";
     const base = headingId(n.text);
     const nth = (seen.get(base) ?? 0) + 1;
     seen.set(base, nth);
@@ -158,6 +158,15 @@ export function headingId(text: string): string {
   return slug(text);
 }
 
+/**
+ * The transcribed tables mark their label column with markdown bold. The first
+ * column is already styled as the label, so the asterisks would render as
+ * literal asterisks in a legal document.
+ */
+function stripBold(cell: string): string {
+  return cell.replace(/\*\*/g, "");
+}
+
 /** "TABLE OF CONTENTS" → "table-of-contents" */
 function slug(text: string): string {
   return text
@@ -196,6 +205,56 @@ function LegalBlock({
         <h4 id={id} className="mt-5 scroll-mt-6 text-[15.5px] font-bold">
           {node.text}
         </h4>
+      );
+    case "table":
+      /*
+        THE THREE PRIVACY TABLES, transcribed by hand from the source after
+        pdf-to-text shredded them cell-by-cell.
+
+        MOBILE IS THE HARD PART. A four-column table of long prose cells cannot
+        shrink to 375px, so it SCROLLS INSIDE ITS OWN BOX rather than pushing
+        the page sideways — a legal page whose body scrolls horizontally is
+        unreadable on a phone in a way that a scrollable table is not. The
+        min-width keeps the columns legible instead of collapsing to one word
+        per line, and the header repeats on scroll via a sticky row.
+      */
+      return (
+        <div className="my-6 overflow-x-auto rounded-brand border border-line">
+          <table className="w-full min-w-[720px] border-collapse text-left text-[13.5px]">
+            {node.headers.length > 0 && (
+              <thead>
+                <tr className="bg-bg-soft">
+                  {node.headers.map((h, i) => (
+                    <th
+                      key={i}
+                      scope="col"
+                      className="border-b border-line px-4 py-3 align-top font-bold"
+                    >
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+            )}
+            <tbody>
+              {node.rows.map((row, r) => (
+                <tr key={r} className="border-b border-line last:border-0">
+                  {row.map((cell, c) => (
+                    <td
+                      key={c}
+                      className={
+                        "px-4 py-3 align-top leading-relaxed " +
+                        (c === 0 ? "font-semibold text-ink" : "text-ink-2")
+                      }
+                    >
+                      {stripBold(cell)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       );
     case "gap":
       /*

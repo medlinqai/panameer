@@ -29,6 +29,7 @@ import { join } from "node:path";
 
 type Node =
   | { t: "h2" | "h3" | "h4"; text: string }
+  | { t: "table"; headers: string[]; rows: string[][] }
   | { t: "p"; text: string }
   /** A region of the source that arrived unreadable — see `isShredded`. */
   | { t: "gap"; lines: number };
@@ -117,6 +118,7 @@ const isHeading = (line: string, opts: ParseOpts = {}): 2 | 3 | 4 | null => {
  * below means a stray short line still has to have neighbours to be dropped.
  */
 const isShard = (lines: string[], opts: ParseOpts = {}): boolean => {
+  if (lines[0].trim().startsWith("|")) return false; // a table row, not a shard
   if (lines.length > 2) return false;
   if (isHeading(lines[0], opts)) return false;
   const text = lines.join(" ");
@@ -185,6 +187,7 @@ function parse(raw: string, label: string, opts: ParseOpts = {}): Node[] {
     */
     .replace(/([a-z)”"])\.(\d+(?:\.\d+)*)(\.?)\s+([A-Z][A-Z])/g, "$1.\n$2$3 $4")
     .split("\n")
+    .map((l) => l.replace(/^###?\s+/, "")) // "## Table 1 — …" is a heading, not a hash
     .filter((l) => !/^#\s/.test(l)); // the H1 — the page renders its own
 
   const wrapWidth = Math.max(...all.map((l) => l.length));
@@ -222,6 +225,27 @@ function parse(raw: string, label: string, opts: ParseOpts = {}): Node[] {
     while (end < block.length && isHeading(block[end], opts)) end++;
     return [...block.slice(0, start), ...block.slice(end)];
   }).filter((b) => b.length > 0);
+
+  /**
+   * A GitHub-style pipe table.
+   *
+   * The only markdown in any of these sources, and it is here because the
+   * Privacy Policy's tables did not survive PDF extraction and had to be
+   * transcribed by hand — a pipe table is the one format that is both readable
+   * in the source file and unambiguous to parse.
+   */
+  const asTable = (block: string[]): Node | null => {
+    if (block.length < 3) return null;
+    if (!block.every((l) => l.trim().startsWith("|"))) return null;
+    if (!/^\|[\s:|-]+\|$/.test(block[1].trim())) return null;
+    const cells = (l: string) =>
+      l.trim().replace(/^\||\|$/g, "").split("|").map((c) => c.trim());
+    return {
+      t: "table",
+      headers: cells(block[0]),
+      rows: block.slice(2).map(cells),
+    };
+  };
 
   const nodes: Node[] = [];
   let droppedLines = 0;
@@ -304,6 +328,12 @@ function parse(raw: string, label: string, opts: ParseOpts = {}): Node[] {
       continue;
     }
 
+    const asPipeTable = asTable(kept[i]);
+    if (asPipeTable) {
+      nodes.push(asPipeTable);
+      continue;
+    }
+
     emitBlock(kept[i]);
   }
 
@@ -344,7 +374,7 @@ function parse(raw: string, label: string, opts: ParseOpts = {}): Node[] {
     return numbered ? `#${numbered[1]}` : norm(s);
   };
   const heads = nodes
-    .map((n, i) => (n.t !== "gap" && n.t !== "p" ? { i, key: key(n.text) } : null))
+    .map((n, i) => (n.t !== "gap" && n.t !== "p" && n.t !== "table" ? { i, key: key(n.text) } : null))
     .filter((h): h is { i: number; key: string } => h !== null && h.key.length >= 2);
   const tocIdx = new Set<number>();
   for (let a = 0; hasContentsList && a < heads.length; a++) {
