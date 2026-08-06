@@ -1,17 +1,28 @@
-import { ComingSoon } from "@/components/ComingSoon";
+import { redirect } from "next/navigation";
 import { guardPage } from "@/lib/guard";
+import { getSessionViewer } from "@/lib/session";
+import { checkTransact } from "@/lib/guard";
+import { CreateWorkRequest } from "@/components/work/CreateWorkRequest";
 
 /**
- * Create Work — a titled placeholder the requester rail can land on (WS-A).
+ * Create a Work Request (brief_create_work_request_v1).
  *
- * The rail names this destination, so it has to exist: a 404 out of your own
- * navigation reads as a broken product, where a titled empty state reads as one
- * that has not got there yet — which is the truth. The route, its title and its
- * capability gate are real; only the content is pending.
+ * Replaces the ComingSoon stub the requester rail was landing on.
+ *
+ * THE COMPANY GATE IS CHECKED HERE AND AGAIN IN THE API. A work request commits
+ * a company, so the caller needs an approved membership on one that has
+ * accepted the company terms. Redirecting from the page is the courtesy;
+ * `checkTransact` inside every route is the boundary.
  */
-export const metadata = { title: "Create Work · Panameer" };
+export const metadata = { title: "Create a Work Request · Panameer" };
 
 export default async function Page() {
   await guardPage("canHireTalent");
-  return <ComingSoon title="Create Work" />;
+  const viewer = await getSessionViewer();
+  if (!viewer) redirect("/login?callbackUrl=%2Fcreate-work");
+
+  const transact = await checkTransact(viewer);
+  if (!transact.ok) redirect(`/company?blocked=${transact.reason}`);
+
+  return <CreateWorkRequest />;
 }
