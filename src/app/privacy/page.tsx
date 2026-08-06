@@ -1,5 +1,7 @@
 import { LegalPage } from "@/components/legal/LegalPage";
 import { USER_TOS_VERSION } from "@/lib/tos";
+import { PRIVACY_DOC } from "@/content/legal/privacy";
+import { LEGAL_UPDATED } from "@/content/legal/meta";
 
 export const metadata = { title: "Privacy Policy — Panameer" };
 
@@ -8,7 +10,8 @@ export default function Page() {
     <LegalPage
       title="Privacy Policy"
       version={USER_TOS_VERSION}
-      audience="details of what Panameer collects and why"
+      updated={LEGAL_UPDATED}
+      doc={PRIVACY_DOC}
     />
   );
 }
