@@ -209,6 +209,16 @@ model Company {
   website      String?
   logo_url     String?
 
+  /// TENANT THEME (E204) — a brand HUE and a recipe id, never a set of hexes.
+  ///
+  /// Storing the recipe rather than the resolved colours is what keeps the
+  /// quality bar in code: every surface is derived from these two values by
+  /// `resolveTheme`, so a design change to a recipe reaches every tenant that
+  /// picked it, and no tenant can persist a combination that fails contrast.
+  /// Null on both = the Panameer default; un-themed companies are unchanged.
+  brand_hue    String?
+  theme_recipe String?
+
   /// COMPANY ToS — the entity's agreement to do business with Panameer,
   /// accepted by its admin on the company's behalf. Distinct from the User ToS
   /// each person accepts at signup, and it gates the company's ability to

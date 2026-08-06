@@ -1,6 +1,9 @@
 import type { ReactNode } from "react";
 import { AppRail } from "@/components/casing/AppRail";
 import { AppHeader } from "@/components/casing/AppHeader";
+import { getSessionViewer } from "@/lib/session";
+import { prisma } from "@/lib/prisma";
+import { resolveTheme } from "@/lib/themeRecipes";
 
 /**
  * THE CASING — dark rail + header + footer, every authenticated page
@@ -14,8 +17,38 @@ import { AppHeader } from "@/components/casing/AppHeader";
  * The footer is one line of copyright and it is part of the SHELL, not of any
  * page — it was the only element in the mockup with nowhere else to live.
  */
-export function AppShell({ children }: { children: ReactNode }) {
+export async function AppShell({ children }: { children: ReactNode }) {
   const year = new Date().getFullYear();
+
+  /*
+    THE TENANT THEME, APPLIED AS CSS VARIABLES (E204 WS-C).
+
+    Resolved once at the shell and written as inline custom properties, which is
+    what lets every surface below inherit it without a single component knowing
+    a company theme exists — `bg-rail` and `bg-canvas` already read these vars.
+
+    AN UNTHEMED COMPANY IS BIT-FOR-BIT UNCHANGED. `resolveTheme(null, null)`
+    returns the Panameer default, and the override is only emitted when the
+    company actually chose something — so no existing tenant's console shifts by
+    a pixel because this feature shipped.
+  */
+  const viewer = await getSessionViewer();
+  const company = viewer
+    ? await prisma.company.findFirst({
+        where: { people: { some: { user_id: viewer.userId } } },
+        select: { brand_hue: true, theme_recipe: true },
+      })
+    : null;
+  const themed = Boolean(company?.brand_hue || company?.theme_recipe);
+  const t = resolveTheme(company?.brand_hue, company?.theme_recipe);
+  const themeVars = themed
+    ? ({
+        "--color-rail": t.surfaceDark,
+        "--color-canvas": t.surfaceLight,
+        "--color-rail-active": t.brandPrimary,
+        "--color-magenta": t.brandPrimary,
+      } as React.CSSProperties)
+    : undefined;
 
   return (
     /*
@@ -28,7 +61,10 @@ export function AppShell({ children }: { children: ReactNode }) {
       sideways while the pages whose content could shrink merely looked cramped.
       Stacking below lg puts the bar above the content where it belongs.
     */
-    <div className="flex min-h-screen flex-col bg-canvas font-body text-ink lg:flex-row">
+    <div
+      style={themeVars}
+      className="flex min-h-screen flex-col bg-canvas font-body text-ink lg:flex-row"
+    >
       <AppRail />
 
       <div className="flex min-w-0 flex-1 flex-col">
