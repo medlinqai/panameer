@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 import { formatCredits, type CreditsSummary } from "@/lib/credits";
 
 /**
@@ -49,65 +48,11 @@ export function CreditsPill({ summary }: { summary: CreditsSummary }) {
   );
 }
 
-/**
- * The header's search box (WS1-D).
- *
- * The deck puts a search bar in the centre of the header. It submits to
- * /search, which already exists as the rail's search destination — so this is
- * wiring, not a new surface, and a query typed here arrives somewhere that
- * knows it received it.
- */
-export function HeaderSearch() {
-  /*
-    A controlled input seeded with "" — identical on the server and after
-    hydration, so no mount dance is needed. (An earlier draft deferred the
-    render until mounted; that was defending against a mismatch that a
-    controlled empty field cannot produce.)
-  */
-  const [q, setQ] = useState("");
-
-  return (
-    <form
-      action="/search"
-      className="hidden min-w-0 flex-1 justify-center lg:flex"
-      role="search"
-    >
-      <div className="flex w-full max-w-[420px] items-center gap-2 rounded-full border border-line bg-canvas px-3.5 py-1.5">
-        <SearchIcon />
-        <input
-          name="q"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Search Panameer…"
-          aria-label="Search Panameer"
-          className="min-w-0 flex-1 bg-transparent py-1 text-[14px] outline-none placeholder:text-ink-2/70"
-        />
-      </div>
-    </form>
-  );
-}
 
 function SparkIcon() {
   return (
     <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor" aria-hidden>
       <path d="M12 2l1.8 5.2L19 9l-5.2 1.8L12 16l-1.8-5.2L5 9l5.2-1.8L12 2z" />
-    </svg>
-  );
-}
-
-function SearchIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="h-4 w-4 shrink-0 text-ink-2"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.8}
-      strokeLinecap="round"
-      aria-hidden
-    >
-      <circle cx="11" cy="11" r="7" />
-      <path d="m20 20-3.2-3.2" />
     </svg>
   );
 }

@@ -2,29 +2,37 @@
 
 import Link from "next/link";
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { useSession } from "next-auth/react";
 import { useMe } from "@/components/MeProvider";
 import { greetingFor } from "@/lib/greeting";
 import { getCreditsSummary, type CreditsSummary } from "@/lib/credits";
-import { CreditsPill, HeaderSearch } from "@/components/casing/CreditsPill";
+import { CreditsPill } from "@/components/casing/CreditsPill";
 
 /**
- * The header (WS1-D) — greeting · search · Community Credits.
+ * The header (WS1-D, decluttered by E207-E210).
  *
- *   left    greeting ("Good Morning, {first}")
- *   centre  search box → /search
- *   right   the Community Credits pill
+ *   left    greeting ("Good Morning, {first}"), then the date and AI-on chips
+ *   right   the Community Credits pill (and the bug report)
+ *
+ * THREE THINGS LEFT THIS HEADER IN E207-E209, and they all left for the same
+ * reason: the rail already had them. A bell beside a rail "Notifications", a
+ * house beside a rail "Home", and a search pill beside a rail "Search" are not
+ * shortcuts — they are a second set of answers to "where do I click", and the
+ * walk hit every one of them. The rail keeps all three; the work-request search
+ * in the middle of the dashboard keeps its own box, which is a different search
+ * over a different thing.
+ *
+ * E210 — STATUS LEFT, CURRENCY RIGHT. The date and "AI on" are ambient facts
+ * that belong with the greeting, and the Credits pill is the one thing here
+ * that will become a number people watch, so it gets the corner on its own.
+ * That order also means the header no longer ends in a run of grey glyphs.
  *
  * THE PAGE NAME IS GONE, and that is the locked decision rather than an
- * omission. E015 had the header show the greeting on home and the page name
- * everywhere else — one or the other, never both. The Credits pill now owns the
- * top-right slot, so keeping the page name as well would put three competing
- * labels across one row. What tells you where you are is the rail's active
- * highlight, which is more precise than a title anyway: it shows the page AND
- * the group it belongs to.
+ * omission. What tells you where you are is the rail's active highlight, which
+ * is more precise than a title anyway: it shows the page AND the group it
+ * belongs to.
  *
- * THE AVATAR MOVED TO THE RAIL (WS1-A). Logout still has exactly one home; it
- * is the identity block now rather than a round avatar in a row of icons.
+ * THE AVATAR IS IN THE RAIL (WS1-A / E214), bottom-left. Logout has exactly one
+ * home and it is not here.
  */
 export function AppHeader() {
   const { me } = useMe();
@@ -46,9 +54,6 @@ export function AppHeader() {
         day: "numeric",
       }).format(now)
     : null;
-
-  const { data: session } = useSession();
-  const isAdmin = session?.user?.isSystemAdmin === true;
 
   const first = me?.person.firstName ?? "";
 
@@ -78,57 +83,34 @@ export function AppHeader() {
         {greeting ? `${greeting}, ${first || "there"}` : "\u00a0"}
       </p>
 
-      <HeaderSearch />
-
-      <div className="ml-auto flex shrink-0 items-center gap-2">
-        {credits && <CreditsPill summary={credits} />}
-
-        {/* Element 3 — the day/date chip, ported from Medlinq HeaderDateChip. */}
-        {dateLabel && (
-          <span className="hidden items-center gap-1.5 rounded-full bg-[#f1faff] px-3 py-1.5 text-[13px] font-semibold text-[#1f7ab8] md:inline-flex">
-            <CalendarIcon />
-            {dateLabel}
-          </span>
-        )}
-
-        {/* Element 4 — AI on. A STATUS, not a switch: the résumé reader and the
-            Learn test generator are live, and this says so. It is not a toggle
-            because nothing here can currently be turned off. */}
-        <span className="hidden items-center gap-1.5 rounded-full bg-black/[0.05] px-3 py-1.5 text-[12.5px] font-semibold text-ink-2 sm:inline-flex">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-          AI on
+      {/* ---- LEFT: ambient status, beside the greeting (E210) -------------- */}
+      {dateLabel && (
+        <span className="hidden items-center gap-1.5 rounded-full bg-[#f1faff] px-3 py-1.5 text-[13px] font-semibold text-[#1f7ab8] md:inline-flex">
+          <CalendarIcon />
+          {dateLabel}
         </span>
+      )}
 
-        {/*
-          Home and bug-report drop below sm. At 375 the full cluster — four
-          icons, a gear and an avatar — could not shrink past the viewport and
-          pushed every casing page into a horizontal scroll. Home is one tap
-          away in the rail drawer and the bug report is not a phone-first
-          action; the bell and the avatar (which owns logout) stay at every
-          width.
-        */}
+      {/* AI on — a STATUS, not a switch: the résumé reader and the Learn test
+          generator are live, and this says so. Not a toggle, because nothing
+          here can currently be turned off. */}
+      <span className="hidden items-center gap-1.5 rounded-full bg-black/[0.05] px-3 py-1.5 text-[12.5px] font-semibold text-ink-2 sm:inline-flex">
+        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+        AI on
+      </span>
+
+      {/* ---- RIGHT: the currency (E210) ------------------------------------ */}
+      <div className="ml-auto flex shrink-0 items-center gap-2">
+        {/* The bug report stays: nothing in the rail duplicates it. It drops
+            below sm, where the row has no space for a glyph nobody taps on a
+            phone. */}
         <span className="hidden sm:contents">
-          <IconLink href={isAdmin ? "/admin" : "/dashboard"} label="Home">
-            <HomeIcon />
-          </IconLink>
           <IconLink href="/support/bug" label="Report a bug">
             <BugIcon />
           </IconLink>
         </span>
 
-        {/* Element 7 — notifications. The count is deliberately absent rather
-            than zero: there is no feed behind this yet, and a "0" badge asserts
-            something we haven't checked. */}
-        <IconLink href="/notifications" label="Notifications">
-          <BellIcon />
-        </IconLink>
-
-        {/*
-          The persona menu MOVED TO THE RAIL's identity block (WS1-A). The deck
-          puts who-you-are in the rail and gives the header's top-right slot to
-          Community Credits; leaving an avatar here as well would be two doors
-          to one menu.
-        */}
+        {credits && <CreditsPill summary={credits} />}
       </div>
     </header>
   );
@@ -155,7 +137,7 @@ function IconLink({
   );
 }
 
-/* Inline SVGs rather than an icon dependency — four glyphs don't justify one. */
+/* Inline SVGs rather than an icon dependency — two glyphs don't justify one. */
 const S = { width: 18, height: 18, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
 
 function CalendarIcon() {
@@ -166,27 +148,11 @@ function CalendarIcon() {
     </svg>
   );
 }
-function HomeIcon() {
-  return (
-    <svg {...S}>
-      <path d="M3 10.5 12 3l9 7.5" />
-      <path d="M5 9.5V21h14V9.5" />
-    </svg>
-  );
-}
 function BugIcon() {
   return (
     <svg {...S}>
       <rect x="8" y="6" width="8" height="14" rx="4" />
       <path d="M3 12h5M16 12h5M5 6l3 2M19 6l-3 2M5 18l3-2M19 18l-3-2M9 3l1.5 2M15 3l-1.5 2" />
-    </svg>
-  );
-}
-function BellIcon() {
-  return (
-    <svg {...S}>
-      <path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8" />
-      <path d="M13.7 21a2 2 0 0 1-3.4 0" />
     </svg>
   );
 }
