@@ -8,13 +8,24 @@ import { Eyebrow, H2, Lead } from "@/components/marketing/section";
  * behind them. That is the same dead-end the hero's role chips were, on the one
  * section whose whole claim is "this is free, come and use it".
  *
- * AND THREE OF THE NINE NAMED PATHS THAT DO NOT EXIST. "Oracle Cloud
- * Foundations", "Oracle Business Network" and "Project Portfolio Mgmt." have no
- * learning path behind them in the catalog, so wiring them anywhere would have
- * been a link to a 404 or a bait-and-switch into a list that does not contain
- * what was clicked. They are replaced by real published paths rather than
- * pointed at something adjacent — a front door should not advertise a course
- * nobody can take.
+ * TWO OF SCOTT'S ORIGINAL NINE ARE BACK, with the mapping he confirmed (E219).
+ * I had replaced all three unmatched names on the evidence available then —
+ * that the catalog had no path by those titles. Two of them did have a path,
+ * under a different title:
+ *
+ *   "Oracle Cloud Foundations"  IS  `end-user-beginners`. The path is literally
+ *                                   the Oracle Cloud Foundations LP; only its
+ *                                   catalog title says "Beginners". The chip
+ *                                   carries the name buyers search for and the
+ *                                   slug stays exactly as it was.
+ *   "Oracle Business Network"   IS  content inside `…supplier-integration`.
+ *
+ * "Project Portfolio Mgmt." stays off: it has no dedicated path, Foundations
+ * covers it, and a chip is not the place to explain that.
+ *
+ * The lesson worth keeping: a missing TITLE is not a missing PATH. Matching on
+ * catalog titles found nothing for two paths that were there all along, and only
+ * someone who knows the content could say so.
  *
  * HARDCODED, NOT QUERIED, and that is deliberate: this page is statically
  * rendered and a Prisma read here would make the marketing home dynamic on
@@ -23,7 +34,7 @@ import { Eyebrow, H2, Lead } from "@/components/marketing/section";
  * learning path" link is for, since that page is always current.
  */
 const PATHS: { label: string; slug: string }[] = [
-  { label: "Beginners", slug: "end-user-beginners" },
+  { label: "Oracle Cloud Foundations", slug: "end-user-beginners" },
   { label: "Basic Procurement", slug: "end-user-procurement-basic-procurement" },
   { label: "Advanced Procurement", slug: "end-user-procurement-advanced-procurement" },
   { label: "Contract Management", slug: "end-user-procurement-contract-management" },
@@ -32,6 +43,10 @@ const PATHS: { label: string; slug: string }[] = [
   {
     label: "Inventory Management",
     slug: "end-user-supply-chain-execution-inventory-management",
+  },
+  {
+    label: "Oracle Business Network",
+    slug: "end-user-procurement-supplier-integration",
   },
   { label: "Core HR", slug: "end-user-core-hr-core-hr" },
   { label: "Talent Mgmt", slug: "end-user-talent-mgmt-talent-mgmt" },
