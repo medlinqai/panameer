@@ -26,7 +26,7 @@ export function LearnFree() {
           {PATHS.map((p) => (
             <span
               key={p}
-              className="rounded-full border border-line bg-white px-[18px] py-2.5 font-bold text-ink-2"
+              className="rounded-full border border-line bg-white px-[18px] py-2.5 font-bold text-ink"
             >
               {p}
             </span>

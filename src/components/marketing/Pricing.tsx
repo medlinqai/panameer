@@ -39,8 +39,15 @@ export function Pricing() {
         <Lead>Post for free. Choose the engagement model that fits the work.</Lead>
 
         <div className="grid max-w-[820px] gap-[22px] md:grid-cols-2">
-          <div className="rounded-[18px] border border-line bg-white p-[30px]">
-            <h3 className="mb-1 text-[22px] font-bold">Basic</h3>
+          {/*
+            E011 — the plan cards read as one grey field: a hairline border on
+            white beside a magenta-bordered card with a shadow, and body copy in
+            ink-2 on both. Basic keeps the quiet treatment but gets a background
+            that separates it from the page, and both headings take an explicit
+            ink so neither depends on an inherited token.
+          */}
+          <div className="rounded-[18px] border border-line bg-bg-soft p-[30px]">
+            <h3 className="mb-1 text-[22px] font-bold text-ink">Basic</h3>
             <p className="mb-[18px] text-ink-2">
               Everything you need to post work and hire your first experts.
             </p>
@@ -55,7 +62,7 @@ export function Pricing() {
           </div>
 
           <div className="rounded-[18px] border-2 border-magenta bg-white p-[30px] shadow-brand">
-            <h3 className="mb-1 text-[22px] font-bold">Business Plus</h3>
+            <h3 className="mb-1 text-[22px] font-bold text-ink">Business Plus</h3>
             {/*
               E004 — "the top 1% of talent" is gone from here too. It is the
               colosseum framing this brand is explicitly not: the voice is
@@ -80,7 +87,7 @@ export function Pricing() {
           {MODELS.map((m) => (
             <span
               key={m}
-              className="rounded-full border border-line px-[18px] py-2.5 font-bold text-ink-2"
+              className="rounded-full border border-line bg-white px-[18px] py-2.5 font-bold text-ink"
             >
               {m}
             </span>
