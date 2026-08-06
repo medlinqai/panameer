@@ -6,7 +6,6 @@ import { useCallback, useRef, useState } from "react";
 import { useMe } from "@/components/MeProvider";
 import {
   navForRoles,
-  HOME_NAV,
   APP_NAV_GROUP_TITLE,
   UTILITY_NAV,
   ADMIN_NAV,
@@ -193,8 +192,12 @@ export function AppRail() {
       */}
       {identityBlock}
 
-      <div className="mt-5">{railLink(HOME_NAV, false)}</div>
-
+      {/*
+        E206/E211 — the separate "Provider Dashboard" button used to sit here.
+        It pointed at /dashboard, which the utility row's "Home" already does,
+        so the rail lit two magenta pills at once for one destination. Home in
+        the utility row is the single landing entry now.
+      */}
       <p className="mt-6 px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-[0.09em] text-white/40">
         {APP_NAV_GROUP_TITLE}
       </p>

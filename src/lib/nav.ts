@@ -66,11 +66,18 @@ export type NavItem = {
   GraduationCap in both places, Contracts is FileSignature in both — because two
   glyphs for one destination is the drift the shared nav.ts exists to prevent.
 */
-export const HOME_NAV: NavItem = {
-  label: "Provider Dashboard",
-  href: "/dashboard",
-  icon: "LayoutDashboard",
-};
+/*
+  E206/E211 — THERE IS NO SEPARATE "PROVIDER DASHBOARD" ENTRY ANY MORE.
+
+  The rail carried both a utility "Home" and a "Provider Dashboard" button, and
+  both pointed at /dashboard — so both matched the active test and the rail lit
+  up magenta in two places at once, which the design has exactly one of. The
+  landing is "Home" in UTILITY_NAV, and it is the only entry for it.
+
+  THIS AMENDS THE PHASE-1 GROUPED-RAIL DECISION, which named the rail's landing
+  anchor "Provider Dashboard". The route is unchanged; only the label and the
+  duplication are gone.
+*/
 
 /**
  * THE UTILITY ROW, above the identity block (WS1-A).
