@@ -95,6 +95,56 @@ export const UTILITY_NAV: NavItem[] = [
 ];
 
 /**
+ * THE TAB ROWS the flattened rail items' children became (E216).
+ *
+ * Keyed by the base route, so a page asks for its own set by the path it lives
+ * at. Declared HERE, beside the rail, for the reason this file exists: these
+ * used to be `children` on the nav items, `pageTitleFor` read them to title the
+ * pages they point at, and moving them into six separate page components would
+ * have split one list across seven files.
+ *
+ * DE-DUPLICATED AGAINST WHAT THE PAGE ALREADY HAD, which mattered most for Find
+ * Work. Its five flyout children and the work feed's five tabs described the
+ * same views under different names — "Work Requests for My Skills" IS "Best
+ * Matches" (the feed ranks by skill overlap), and "All Work Requests" IS "Most
+ * Recent". Folding them in added exactly one genuinely new view, My Proposals,
+ * rather than stacking a second row of near-synonyms.
+ */
+export const PAGE_TABS: Record<string, NavItem[]> = {
+  /*
+    LEARN IS THE EXCEPTION, and deliberately. Its hero already carries an
+    All / My Learning Paths pill row — a live client-side filter over one
+    catalog, not two routes — so a `PageTabs` row above it would be the exact
+    double-row the brief forbids. The two genuinely new destinations (All
+    Courses, My Courses) were folded into that existing row as links instead;
+    see LearnHome. This entry exists so `pageTitleFor` still knows their names.
+  */
+  "/learn": [
+    { label: "All Courses", href: "/learn/courses" },
+    { label: "My Courses", href: "/learn/my-courses" },
+  ],
+  "/settings/packages": [
+    { label: "My Services", href: "/settings/packages" },
+    { label: "Offers for My Services", href: "/services/offers" },
+  ],
+  "/finances": [
+    { label: "Payments", href: "/finances" },
+    { label: "Payment Requests", href: "/finances/payment-requests" },
+  ],
+  "/community": [
+    { label: "Community", href: "/community" },
+    { label: "Messages", href: "/messages" },
+    { label: "Forums", href: "/community/forums" },
+    { label: "My Teams", href: "/community/teams" },
+    { label: "Find a Mentor", href: "/community/mentors" },
+  ],
+  /*
+    Manage Work had ONE child pointing at the page it already opened, so it has
+    no tab row at all — a single tab is a label wearing a control's clothes.
+  */
+};
+
+/**
  * THE COMPANY MENU (E214) — the top-left chip's popover, company-admins only.
  *
  * Declared here with the rest of the navigation rather than inside the chip,
@@ -107,6 +157,19 @@ export const UTILITY_NAV: NavItem[] = [
  * unfinished. Members is an anchor into the section the company page already
  * renders, not a fourth stub, because that list genuinely exists today.
  */
+/**
+ * Find Work's tabs live in `work-feed.ts` with the query that backs them, so
+ * only their TITLES are needed here — `pageTitleFor` has to know that
+ * /work/proposals is "My Proposals" even though the tab row is built elsewhere.
+ */
+export const WORK_FEED_EXTRA_TITLES: NavItem[] = [
+  { label: "Find Work", href: "/work" },
+  { label: "Work Requests for My Skills", href: "/work/for-my-skills" },
+  { label: "My Work Requests (Saved)", href: "/work/saved" },
+  { label: "Invitations to Propose My Rate", href: "/work/invitations" },
+  { label: "My Proposals", href: "/work/proposals" },
+];
+
 export const COMPANY_NAV: NavItem[] = [
   { label: "Company", href: "/company" },
   { label: "Teams", href: "/company/teams" },
@@ -119,7 +182,22 @@ export const COMPANY_NAV: NavItem[] = [
 export const APP_NAV_GROUP_TITLE = "Transactions";
 
 /*
-  THE PROVIDER RAIL — GROUPED, WITH SUBMENUS
+  THE PROVIDER RAIL — SIX FLAT ITEMS (E216; supersedes the grouped-with-submenus
+  version below).
+
+  THE CHILDREN MOVED ONTO THEIR PAGES. Each of these six carried a hover flyout,
+  and Find Work's was the tell: its five entries were the Find Work page's own
+  tab row, listed a second time in a menu. Two controls for one set of views,
+  one of which you had to hover to discover — and, until they were portalled
+  out, one that the rail's own scroll container clipped.
+
+  A tab row on the destination is visible on arrival, says where you are as well
+  as where you can go, and survives a bookmark. So the rail is six plain links
+  now, no chevrons, and `PageTabs` carries what the flyouts did. The two
+  IDENTITY menus are untouched — the company chip and the persona popover keep
+  their popovers, because those are not navigation between views of one page.
+
+  Historical note on the previous shape:
   (brief_MASTER_rails_and_community WS1-A/WS1-B; supersedes E191's flat list,
   which itself superseded E007).
 
@@ -151,79 +229,24 @@ export const APP_NAV_GROUP_TITLE = "Transactions";
     (Credits, forums, mentoring) and is the sixth primary item.
 */
 export const PROVIDER_NAV: NavItem[] = [
-  {
-    label: "Start Learning",
-    href: "/learn",
-    icon: "GraduationCap",
-    children: [
-      { label: "All Learning Paths", href: "/learn?tab=all" },
-      { label: "All Courses", href: "/learn/courses" },
-      { label: "My Learning Paths", href: "/learn?tab=mine" },
-      { label: "My Courses", href: "/learn/my-courses" },
-    ],
-  },
+  { label: "Start Learning", href: "/learn", icon: "GraduationCap" },
   {
     label: "Find Work",
     href: "/work",
     icon: "Briefcase",
     requires: "canProvideServices",
-    children: [
-      { label: "All Work Requests", href: "/work" },
-      { label: "Work Requests for My Skills", href: "/work/for-my-skills" },
-      { label: "My Work Requests (Saved)", href: "/work/saved" },
-      { label: "Invitations to Propose My Rate", href: "/work/invitations" },
-      { label: "My Proposals", href: "/work/proposals" },
-    ],
   },
   {
     label: "Sell My Services",
     href: "/settings/packages",
     icon: "Tag",
     requires: "canProvideServices",
-    children: [
-      {
-        label: "My Services",
-        href: "/settings/packages",
-        tooltip: "Sell your services as a package",
-      },
-      { label: "Offers for My Services", href: "/services/offers" },
-    ],
   },
-  {
-    label: "Manage Work",
-    href: "/contracts",
-    icon: "ClipboardCheck",
-    children: [
-      /*
-        ONE CHILD, DELIBERATELY. Timesheets and milestones are views inside a
-        Work Order, not siblings of it — see the note above. A submenu of one
-        still earns its chevron: it says out loud that this is where work orders
-        live, and it is where the second child goes when there is one.
-      */
-      { label: "My Work Orders", href: "/contracts" },
-    ],
-  },
-  {
-    label: "Get Paid",
-    href: "/finances",
-    icon: "Wallet",
-    children: [
-      { label: "Payment Requests", href: "/finances/payment-requests" },
-      { label: "Payments", href: "/finances" },
-    ],
-  },
-  {
-    label: "Community",
-    href: "/community",
-    icon: "MessagesSquare",
-    children: [
-      { label: "Messages", href: "/messages" },
-      { label: "Forums", href: "/community/forums" },
-      { label: "My Teams", href: "/community/teams" },
-      { label: "Find a Mentor", href: "/community/mentors" },
-    ],
-  },
+  { label: "Manage Work", href: "/contracts", icon: "ClipboardCheck" },
+  { label: "Get Paid", href: "/finances", icon: "Wallet" },
+  { label: "Community", href: "/community", icon: "MessagesSquare" },
 ];
+
 
 /**
  * THE PERSONA MENU'S DESTINATIONS (J2.4 WS-B/WS-D — E008).
@@ -449,12 +472,14 @@ export function pageTitleFor(pathname: string): string | null {
     ADMIN_SETUP,
     ...ADMIN_NAV.flatMap((g) => g.items),
     /*
-      Parents AND children. A submenu entry is a real destination with a real
-      header; without flattening them, "My Proposals" would open a page titled
-      "Proposals" from the URL segment.
+      Rail items AND every tab destination. A tab is a real page with a real
+      header; without these, "My Proposals" would open a page titled "Proposals"
+      from the URL segment. This is what the flattened `children` used to
+      supply — same list, now read from PAGE_TABS.
     */
     ...PROVIDER_NAV,
-    ...PROVIDER_NAV.flatMap((i) => i.children ?? []),
+    ...Object.values(PAGE_TABS).flat(),
+    ...WORK_FEED_EXTRA_TITLES,
     // The persona-menu pages are real destinations too, reached from the avatar
     // rather than the rail.
     ...PERSONA_NAV,

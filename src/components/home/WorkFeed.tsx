@@ -27,13 +27,23 @@ export function WorkFeed({
   tab,
   query,
   cards,
+  /**
+   * Which route the tabs link back to. The dashboard renders this as its body
+   * and /work renders it as the page (E216); parameterising the base is what
+   * lets one component serve both without the tabs sending a Find Work visitor
+   * to the dashboard.
+   */
+  basePath = "/dashboard",
 }: {
   tab: WorkFeedTab;
   query: string;
   cards: WorkCard[];
+  basePath?: string;
 }) {
+  const onDashboard = basePath === "/dashboard";
   const href = (t: WorkFeedTab) =>
-    `/dashboard?tab=${t}${query ? `&q=${encodeURIComponent(query)}` : ""}#work-feed`;
+    `${basePath}?tab=${t}${query ? `&q=${encodeURIComponent(query)}` : ""}` +
+    (onDashboard ? "#work-feed" : "");
 
   return (
     <section id="work-feed" className="scroll-mt-6">
@@ -65,7 +75,7 @@ export function WorkFeed({
 
       {/* ---- Search + filters ---------------------------------------------- */}
       <form
-        action="/dashboard"
+        action={basePath}
         className="mb-4 flex flex-wrap items-center gap-2"
       >
         <input type="hidden" name="tab" value={tab} />

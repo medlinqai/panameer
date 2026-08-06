@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useCallback, useRef, useState } from "react";
+import { useState } from "react";
 import { useMe } from "@/components/MeProvider";
 import {
   navForRoles,
@@ -14,9 +14,7 @@ import {
 } from "@/lib/nav";
 import { AccountMenu } from "@/components/casing/AccountMenu";
 import { CompanyMenu } from "@/components/casing/CompanyMenu";
-import { Popover, PopoverHeading } from "@/components/casing/Popover";
 import { RailIcon } from "@/components/casing/RailIcon";
-import type { NavItem } from "@/lib/nav";
 import { useSession } from "next-auth/react";
 
 /**
@@ -196,11 +194,13 @@ export function AppRail() {
       <p className="mt-6 px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-[0.09em] text-white/40">
         {APP_NAV_GROUP_TITLE}
       </p>
-      <div className="space-y-1">
-        {items.map((i) => (
-          <RailGroupItem key={i.href} item={i} isActive={isActive} onNavigate={() => setOpen(false)} />
-        ))}
-      </div>
+      {/*
+        E216 — PLAIN LINKS, NO FLYOUTS, NO CHEVRONS. The six Transaction items
+        each had a hover submenu; those children are their destination pages'
+        tab rows now (`PAGE_TABS` in nav.ts). Nothing flies out of the rail, so
+        nothing here needs a disclosure affordance.
+      */}
+      <div className="space-y-1">{items.map((i) => railLink(i, false))}</div>
     </>
   );
 
@@ -271,114 +271,5 @@ export function AppRail() {
         )}
       </div>
     </>
-  );
-}
-
-/**
- * One primary rail item, with its flyout (WS1-A/WS1-B; stacking fixed in E213).
- *
- * TWO TARGETS IN ONE ROW. The label navigates to the item's own page; the
- * chevron opens the submenu. Splitting them is what lets "Find Work" be both a
- * place you can go and a set of ways to look at work — a rail whose parent is
- * only a menu toggle costs a click to reach the obvious destination, and one
- * with no toggle hides five views behind a page nobody knows to open.
- *
- * E213 — THE FLYOUT WAS BEING CLIPPED, NOT COVERED. It was `absolute left-full`
- * inside the rail's `<nav class="overflow-y-auto">`, and a box that overflows
- * horizontally out of a vertically-scrolling column gets cut at the edge: CSS
- * computes `overflow-x: visible` to `auto` as soon as `overflow-y` isn't
- * visible. It had z-50 the whole time and z-index was never going to help. It
- * renders through a body portal now, so no submenu can be trapped by the rail
- * again.
- *
- * OPEN ON CLICK, NOT ON HOVER. Hover-open was also part of what made this feel
- * broken: the panel is in a portal now, so the pointer crosses real page
- * content on the way to it, and a mouseleave-close would snatch it away
- * mid-reach. Click is also the only one of the two that works on touch and
- * from a keyboard, which is why the chevron already had a click handler.
- */
-function RailGroupItem({
-  item,
-  isActive,
-  onNavigate,
-}: {
-  item: NavItem;
-  isActive: (href: string) => boolean;
-  onNavigate: () => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const rowRef = useRef<HTMLDivElement>(null);
-  const active = isActive(item.href);
-  const children = item.children ?? [];
-
-  const close = useCallback(() => setOpen(false), []);
-
-  return (
-    <div className="relative">
-      <div
-        ref={rowRef}
-        className={
-          "flex items-center gap-2 whitespace-nowrap rounded-[8px] pl-2.5 pr-1 " +
-          "text-[15px] font-medium leading-[22px] transition-colors " +
-          (active
-            ? "bg-magenta text-white"
-            : "text-white/80 hover:bg-white/10 hover:text-white")
-        }
-      >
-        <Link
-          href={item.href}
-          onClick={() => {
-            setOpen(false);
-            onNavigate();
-          }}
-          aria-current={active ? "page" : undefined}
-          className="flex min-w-0 flex-1 items-center gap-2 py-[7px]"
-        >
-          <RailIcon name={item.icon} />
-          <span className="truncate">{item.label}</span>
-        </Link>
-
-        {children.length > 0 && (
-          <button
-            type="button"
-            onClick={() => setOpen((v) => !v)}
-            aria-haspopup="menu"
-            aria-expanded={open}
-            aria-label={`${item.label} submenu`}
-            className="shrink-0 rounded-[6px] px-1.5 py-1 text-white/45 transition-colors hover:bg-white/10 hover:text-white"
-          >
-            <span aria-hidden className={open ? "inline-block rotate-90" : "inline-block"}>
-              ›
-            </span>
-          </button>
-        )}
-      </div>
-
-      <Popover
-        open={open && children.length > 0}
-        onClose={close}
-        anchorRef={rowRef}
-        placement="right-start"
-        width={304}
-        label={item.label}
-      >
-        <PopoverHeading>{item.label}</PopoverHeading>
-        {children.map((child) => (
-          <Link
-            key={child.href}
-            href={child.href}
-            title={child.tooltip}
-            role="menuitem"
-            onClick={() => {
-              setOpen(false);
-              onNavigate();
-            }}
-            className="block whitespace-nowrap px-4 py-2 text-[14.5px] text-ink hover:bg-black/[0.04]"
-          >
-            {child.label}
-          </Link>
-        ))}
-      </Popover>
-    </div>
   );
 }

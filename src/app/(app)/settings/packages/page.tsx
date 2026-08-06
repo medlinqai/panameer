@@ -1,4 +1,6 @@
 import { PackagesManager } from "@/components/packages/PackagesManager";
+import { PageTabs } from "@/components/casing/PageTabs";
+import { PAGE_TABS } from "@/lib/nav";
 
 /**
  * Packages — the provider's sellable catalog (brief_V / E045).
@@ -13,6 +15,13 @@ import { PackagesManager } from "@/components/packages/PackagesManager";
 export default function SettingsPackagesPage() {
   return (
     <div className="space-y-6">
+      {/* E216 — "Sell My Services" flattened; its two children are this row. */}
+      <PageTabs
+        tabs={PAGE_TABS["/settings/packages"]}
+        current="/settings/packages"
+        className="mb-0"
+      />
+
       <section className="rounded-brand border border-line p-6">
         <h2 className="text-[18px] font-bold">Packages</h2>
         <p className="mt-1 max-w-2xl text-[14.5px] leading-relaxed text-ink-2">

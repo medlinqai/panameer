@@ -9,6 +9,8 @@ import {
   CREDIT_SPEND_ACTIONS,
   communitySections,
 } from "@/lib/community";
+import { PageTabs } from "@/components/casing/PageTabs";
+import { PAGE_TABS } from "@/lib/nav";
 
 /**
  * THE COMMUNITY HUB (PHASE 2 / WS2-A).
@@ -52,7 +54,10 @@ export default async function CommunityPage() {
   const sections = communitySections();
 
   return (
-    <div className="mx-auto max-w-5xl space-y-5">
+    <>
+      {/* E216 — the Community rail flyout's children are this section's tab row now. */}
+      <PageTabs tabs={PAGE_TABS["/community"]} current="/community" />
+      <div className="mx-auto max-w-5xl space-y-5">
       <header>
         <h1 className="font-display text-[26px] font-bold tracking-[-0.5px]">
           The Panameer Community
@@ -190,5 +195,6 @@ export default async function CommunityPage() {
         </div>
       </section>
     </div>
+    </>
   );
 }

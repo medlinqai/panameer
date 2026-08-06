@@ -19,14 +19,33 @@ import { prisma } from "@/lib/prisma";
  * nothing was ever saveable.
  */
 
-export type WorkFeedTab = "best" | "recent" | "us" | "saved" | "invitations";
+export type WorkFeedTab =
+  | "best"
+  | "recent"
+  | "us"
+  | "saved"
+  | "invitations"
+  | "proposals";
 
+/*
+  E216 — THE RAIL'S FIND WORK CHILDREN FOLDED IN HERE, de-duplicated.
+
+  The flyout listed five children and this row already had five tabs, and they
+  were largely the same views under different names: "Work Requests for My
+  Skills" IS Best Matches (this feed ranks by skill overlap), "All Work
+  Requests" IS Most Recent, "My Work Requests (Saved)" IS Saved Work, and
+  "Invitations to Propose My Rate" IS Invitations. Stacking both would have put
+  two rows of near-synonyms on one page.
+
+  Exactly one child described a view this row did not have: My Proposals.
+*/
 export const WORK_FEED_TABS: { id: WorkFeedTab; label: string }[] = [
   { id: "best", label: "Best Matches" },
   { id: "recent", label: "Most Recent" },
   { id: "us", label: "US Only" },
   { id: "saved", label: "Saved Work" },
   { id: "invitations", label: "Invitations" },
+  { id: "proposals", label: "My Proposals" },
 ];
 
 /** Tabs whose data has no model yet — rendered, but honest about being empty. */
@@ -34,6 +53,8 @@ export const UNBACKED_TABS: Record<string, string> = {
   saved: "Saving a work request isn't built yet — nothing records a save.",
   invitations:
     "Buyers can't invite you to propose yet. That needs a work-invitation model, which doesn't exist.",
+  proposals:
+    "You haven't sent any proposals, and you can't yet — proposing needs a Proposal model, which doesn't exist. Nothing is being hidden here.",
 };
 
 export type WorkCard = {
@@ -89,7 +110,13 @@ export async function getWorkFeed(input: {
   profileId: string | null;
   query?: string;
 }): Promise<WorkCard[]> {
-  if (input.tab === "saved" || input.tab === "invitations") return [];
+  if (
+    input.tab === "saved" ||
+    input.tab === "invitations" ||
+    input.tab === "proposals"
+  ) {
+    return [];
+  }
 
   const skillIds = input.profileId
     ? (

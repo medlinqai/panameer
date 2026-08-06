@@ -4,6 +4,8 @@ import { getSessionViewer } from "@/lib/session";
 import { getMyTeams } from "@/lib/teams";
 import { Avatar } from "@/components/Avatar";
 import { relativeDay } from "@/lib/relative-day";
+import { PageTabs } from "@/components/casing/PageTabs";
+import { PAGE_TABS } from "@/lib/nav";
 
 /**
  * MY TEAMS (PHASE 2 / WS2-D) — REAL, reading data that already existed.
@@ -33,7 +35,10 @@ export default async function MyTeamsPage() {
     !teams.representedBy;
 
   return (
-    <div className="mx-auto max-w-4xl space-y-4">
+    <>
+      {/* E216 — the Community rail flyout's children are this section's tab row now. */}
+      <PageTabs tabs={PAGE_TABS["/community"]} current="/community/teams" />
+      <div className="mx-auto max-w-4xl space-y-4">
       <header>
         <h1 className="font-display text-[26px] font-bold tracking-[-0.5px]">
           My Teams
@@ -167,5 +172,6 @@ export default async function MyTeamsPage() {
         </section>
       )}
     </div>
+    </>
   );
 }

@@ -3,6 +3,8 @@ import { guardPage } from "@/lib/guard";
 import { listMentors, MICRO_SESSION_MINUTES, MICRO_SESSION_PRICE } from "@/lib/mentors";
 import { Avatar } from "@/components/Avatar";
 import { formatCents } from "@/lib/display";
+import { PageTabs } from "@/components/casing/PageTabs";
+import { PAGE_TABS } from "@/lib/nav";
 
 /**
  * FIND A MENTOR — the directory shell (PHASE 2 / WS2-E).
@@ -36,7 +38,10 @@ export default async function MentorsPage({
   const mentors = await listMentors({ skill: skill?.trim() || undefined });
 
   return (
-    <div className="mx-auto max-w-5xl space-y-5">
+    <>
+      {/* E216 — the Community rail flyout's children are this section's tab row now. */}
+      <PageTabs tabs={PAGE_TABS["/community"]} current="/community/mentors" />
+      <div className="mx-auto max-w-5xl space-y-5">
       <header>
         <h1 className="font-display text-[26px] font-bold tracking-[-0.5px]">
           Find a Mentor
@@ -179,5 +184,6 @@ export default async function MentorsPage({
         </div>
       )}
     </div>
+    </>
   );
 }

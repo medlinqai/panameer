@@ -90,6 +90,31 @@ export function LearnHome({
           >
             My Learning Paths{enrolledCount > 0 ? ` (${enrolledCount})` : ""}
           </button>
+
+          {/*
+            E216 — THE COURSE VIEWS JOIN THIS ROW rather than getting a second
+            one. The rail's Start Learning flyout listed four children: these
+            two filters, which this row already was, and two course routes. The
+            brief's rule is fold in, don't stack — so the two genuinely new
+            destinations become links in the row that already exists.
+
+            Links, not `setTab`, because they ARE other pages: /learn/courses
+            lists courses, this page lists paths. Same pill styling so the row
+            reads as one control, never both active — a link is never the
+            current tab while you are standing on /learn.
+          */}
+          <Link
+            href="/learn/courses"
+            className="rounded-full px-5 py-2 text-[14px] font-bold text-white/80 transition-colors hover:text-white"
+          >
+            All Courses
+          </Link>
+          <Link
+            href="/learn/my-courses"
+            className="rounded-full px-5 py-2 text-[14px] font-bold text-white/80 transition-colors hover:text-white"
+          >
+            My Courses
+          </Link>
         </div>
 
         <div className="mt-4 max-w-md">
