@@ -69,6 +69,21 @@
    * magenta active pill still separates cleanly.
    */
   --color-rail: #272334;
+
+  /*
+   * E217 — THE ACTIVE NAV FILL, desaturated for the lifted rail.
+   *
+   * Brand magenta (#d72cd6) was sampled against the old near-black #140c29 and
+   * needed that much punch to read on it. On the lighter #272334 the same value
+   * is neon: it vibrates against the surface and drags the eye off whatever the
+   * page is actually showing. This is the same hue a step down in saturation and
+   * lightness — unmistakably the brand's magenta, no longer shouting.
+   *
+   * The BRAND magenta is unchanged. This token is the rail's active pill only;
+   * buttons, links and eyebrows all keep #d72cd6, because they sit on white
+   * where it was measured.
+   */
+  --color-rail-active: #b02aae;
   --color-canvas: #f7f7f5;
 
   --radius-brand: 14px;

@@ -71,7 +71,15 @@ export function LessonActions({
             type="button"
             disabled
             title="Messages isn't built yet — it's a Medlinq port on the backlog."
-            className="cursor-not-allowed rounded-full bg-magenta/35 px-7 py-2.5 text-[14.5px] font-bold text-white"
+            /*
+              E217 — A DISABLED GHOST, not a faded primary. This sat beside
+              "Next Lesson" as a second solid magenta button at 35% — two
+              primaries in one row, one of which does nothing. The live action
+              on this row is Next Lesson; a control that is both unavailable AND
+              the loudest thing next to it is the anti-pattern the button
+              standard exists to stop.
+            */
+            className="cursor-not-allowed rounded-full border-[1.5px] border-line px-7 py-2.5 text-[14.5px] font-bold text-ink-2 opacity-60"
           >
             Message {instructorName ? "the Instructor" : "the Instructor"}
           </button>

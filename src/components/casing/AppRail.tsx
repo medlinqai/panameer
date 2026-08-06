@@ -92,8 +92,15 @@ export function AppRail() {
     "flex items-center gap-2 whitespace-nowrap rounded-[8px] px-2.5 " +
     (dense ? "py-[3px] " : "py-[7px] ") +
     "text-[15px] font-medium leading-[22px] transition-colors " +
+    /*
+      E217 — ONE RULE. Active is a SOLID fill; the translucent wash is reserved
+      for hover and nothing else. Before this, hover and active were both
+      "magenta-ish areas" and the only difference was opacity, so a hovered item
+      read as half-selected. Now: solid = you are here, translucent = your
+      pointer is here.
+    */
     (active
-      ? "bg-magenta text-white"
+      ? "bg-rail-active text-white"
       : "text-white/80 hover:bg-white/10 hover:text-white");
 
   const railLink = (
@@ -128,7 +135,7 @@ export function AppRail() {
         "flex items-center gap-2 whitespace-nowrap rounded-[8px] border px-2.5 py-[5px] " +
         "text-[15px] font-medium leading-[22px] transition-colors " +
         (isActive(item.href)
-          ? "border-magenta bg-magenta text-white"
+          ? "border-rail-active bg-rail-active text-white"
           : "border-white/15 bg-white/[0.06] text-white/90 hover:bg-white/[0.12] hover:text-white")
       }
     >
