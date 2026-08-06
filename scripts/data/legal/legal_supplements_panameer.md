@@ -1,0 +1,3528 @@
+# Panameer Legal Supplements — adapted bundle (DRAFT, pending legal review)
+
+> Global swaps applied: Upwork→Panameer, Provider→Provider, Service Buyer→Service Buyer, source entity→Panameer Inc.
+> CC: split on the '===== DOC:' delimiters into pages; do the contextual pass per the master brief (contract→Work Order, Recruiter→Recruiter, scrub residual Provider/source-company, flag escrow-entity name).
+> SKIPPED (Panameer doesn't have): upwork-payroll-agreement, upwork-team-software-license (Work-Diary surveillance app), upwork-virtual-patent-marking.
+
+
+
+===== DOC: referral-program-terms | CLEAN(ties Community Credits) =====
+
+From time to time, Panameer may offer users the opportunity to participate in a Referral Program.
+In these Referral Program Terms and Conditions (“Terms”), the words “you,” “your,” and “Participant” mean any person
+who uses, accesses, or interacts in any way with any Referral Program. “Referral Program” means any program
+administered by Panameer that facilitates the ability of Referrers to refer Referees to one or more products or services
+offered by Panameer. The words “we,” “us,” and “our” mean Panameer and its affiliates, successors and assigns, and
+designated third-party service providers acting on their behalf.
+Each Referral Program involves a referral process that uses digital technology to facilitate, track, and appropriately
+attribute referrals. Referral Programs may allow Referrers, Referees, or both, to obtain a reward if certain conditions are
+satisfied. By using, accessing, or interacting in any way with a Referral Program, including by accessing the website
+located at any related subdomain or responding to any communication related to a Referral Program, you acknowledge,
+accept, and agree to be bound by these Terms, the Panameer Terms of Use, and the Panameer Privacy Policy. If you do not
+wish to be bound by these Terms, the Terms of Use, or the Privacy Policy, do not use, access, or interact in any way with a
+Referral Program.
+We may make changes to these Terms, the Terms of Use, and the Privacy Policy from time to time in our sole discretion.
+You understand and agree that your continued use of, access to, or interaction with, a Referral Program constitutes your
+acceptance of the Terms, Terms of Use, and Privacy Policy then in effect.
+
+Eligibility
+To qualify as a Participant, you must be a natural person, a U.S citizen or resident, and at least 18 years old.
+
+Referrer: You must be a registered user with an active account on Panameer (www.panameer.com) and be invited by Panameer
+to participate in the Referral Program.
+
+Referee: To be an eligible referee, you must not have ever had a Panameer Account, and you must be referred by a qualified referrer via their unique referral link
+or code. To qualify as a Referee, you must be a friend, family member, or colleague of the Participant who referred you.
+Participants are prohibited from referring (1) themselves; (2) any persons who are not friends, family members, or
+colleagues of the corresponding Referrer; (3) any fictitious person; and (4) any person that is not a natural person.Panameer
+employees are not eligible to participate in any Referral Program. Participants shall not create or use any fictitious or
+dummy accounts with Panameer, or use any Referral Program to violate any law, infringe or violate the rights of any third
+party, or otherwise act in a manner that is deemed harassing, harmful, illegal, hateful, obscene or outside the spirit and
+intent of the Referral Program. In addition, Participants shall not (1) tamper with any Referral Program, (2) act in an unfair
+or disruptive manner, or (3) use any system, bot or other device or artifice to participate or receive any benefit through any
+Referral Program.
+
+Qualified Referrals
+For a referral to be considered a Qualified Referral, all of the following must occur:
+
+1. As an eligible referrer, you share your unique referral link or code with an eligible referee;
+2. The eligible referee registers for a Panameer Account using your unique referral link or code;
+3. The eligible referee enters into a Service Work Order within the time frame designated in the referral invitation;
+and
+4. Any other requirements as detailed in your specific Referral Program offer are met. Check your Referral
+Program offer for eligibility details such as required minimum spend by the Referee or time limits.
+
+Earn Rewards
+Participants will be eligible to earn Referral Rewards in the form specified in the Referral Program offer (e.g. account
+credit or a prepaid gift card reward) once the conditions are met.
+
+Referrers: As a qualified referrer, you will earn Referral Rewards for each Qualified Referral you make under the Referral
+Program.
+
+Referees: As an eligible referee, you will earn Referral Rewards if you meet the conditions of a Qualified Referral. Check
+the referral offer you received for applicable terms such as required minimum spend or earn or time limits.
+Referral Rewards will ordinarily be made available within thirty (30) calendar days of the Qualified Referral being met.
+Make sure you follow all instructions in your Referral Program offer and any confirmatory communications to ensure you
+receive your Referral Reward.
+
+Redemption: Gift card rewards can be spent where the cards are accepted. You can spend account credit on your next
+Panameer purchase, unless there are restrictions listed on your specific referral offer. Referral Rewards cannot be
+
+transferred or exchanged for cash.
+
+Restrictions
+There is no limit to the number of Participants that a Referrer may refer under a Referral Program (unless otherwise
+specified in the specific offer). However, there is a limit to the Referral Reward amount. A Referrer (and, if applicable, the
+Referee) may earn a maximum of $500 in Referral Rewards per calendar year.
+This offer is not valid if any of the reward eligibility conditions is not satisfied, as determined by Panameer in its sole
+discretion.
+
+Taxes
+You are responsible for independently assessing and complying with all relevant tax and legal requirements. We do not
+and will not provide you with tax or legal advice. In the event that, during any single calendar year, the aggregate rewards
+from Panameer would result in payment to you of $600 or more, we may require you to provide us with a completed IRS
+form W-9 and we may thereafter issue a Form 1099 for that calendar year. We may utilize a third-party service provider to
+perform this function. If we require a completed form W-9 from you and you fail to provide one, we reserve the right to
+
+void any rewards.
+
+Important Disclaimers
+Panameer reserves the right to cancel, modify or terminate any Referral Program at any time for any reason in its sole
+discretion. Panameer reserves the right to disqualify any Participant at any time from participation in any Referral Program,
+and to suspend your account and remove or cancel any Referral Rewards should we notice any activity by a Participant
+that is determined to be a violation of these Terms or Panameer’s Terms of Service. We reserve the right to amend, suspend
+or terminate a Referral Program at any time without notice.
+
+
+===== DOC: payment-escrow-entity | PAYMENTS-ENTITY(shell/counsel) =====
+
+Payment Escrow Inc. provides escrow services solely to Users of Panameer. We provide these escrow services solely to deliver, hold, or receive payment for jobs for
+services engaged through, and to pay fees including service, membership and payment processing and
+administration fees to, Panameer. These escrow services are intended for business use, and the Users agree
+to use these escrow services only for business purposes and not for consumer, personal, family, or
+household purposes.
+PAYMENT ESCROW INC. DOES NOT PROVIDE ESCROW SERVICES TO THE GENERAL PUBLIC.
+This escrow company holds California Department of Financial Protection and Innovation License No.
+963 5086.
+
+
+===== DOC: any-hire-escrow-instructions | ESCROW(counsel) =====
+
+If a Service Buyer and a Provider enter into an Any Hire Work Order, whether fixed-price or hourly, these Any Hire
+Work Order Escrow Instructions (“Escrow Instructions”) apply. These Escrow Instructions govern Escrow
+Accounts for Any Hire Work Orders. Service Work Orders are governed by the applicable escrow instructions.
+To the extent permitted by applicable law, we may modify these Escrow Instructions without prior notice
+to you, and any revisions to these Escrow Instructions will take effect when posted on the Site unless
+otherwise stated. Please check the Site often for updates.
+These Escrow Instructions hereby incorporate by reference the Terms of Service (“Terms of Service”).
+Capitalized terms not defined in these Escrow Instructions are defined in the User Agreement, elsewhere
+in the Terms of Service, or have the meanings given such terms on the Site. These Escrow Instructions
+only apply to Any Hire Work Orders.
+Escrow services are provided by Payment Escrow Inc. (“Payment Escrow”) pursuant to Internet Escrow
+Agent license no. 9635086, issued by the California Department of Financial Protection and Innovation.
+1. DIGITAL SIGNATURE
+By clicking to accept an Any Hire Work Order, whether fixed-price or hourly, Service Buyer and Provider are
+deemed to have executed these Escrow Instructions electronically, effective on the date Service Buyer clicks to
+accept the Any Hire Work Order, pursuant to California Civil Code section 1633.8 and the federal Electronic
+Signatures in Global and National Commerce Act, 15 U.S.C. Sec. 7001, et seq., as may be amended from
+time to time (the "E-Sign Act"). Doing so constitutes an acknowledgement that Service Buyer and Provider
+agree to conduct the transaction electronically, and are able to electronically receive, download, and
+print these Escrow Instructions.
+2. ESCROW
+2.1 Any Hire Fixed-Price Work Orders
+Service Buyer agrees to deposit funds to the Any Hire Work Order Escrow Account on a biweekly basis the amount
+of any milestone(s) or the full amount of the Any Hire Work Order if there is only one milestone for each
+active fixed-price Any Hire Work Order during the biweekly billing cycle. Any funds deposited by Service Buyers
+remain in the Any Hire Work Order Escrow Account until they are released to the Provider Escrow
+Account or released to the Service Buyer. Payment Escrow will not release funds held in escrow except as
+described in these Escrow Instructions.
+2.2 Any Hire Hourly Work Orders and Invoices
+Service Buyer agrees to fund through the Any Hire Work Order Escrow Account payments to Provider on a
+biweekly basis for the amount of Provider’s applicable hours logged during the billing period (“Any
+Hire Hourly Work Order Funds”). The biweekly billing cycle starts Monday at 00:00 midnight UTC and ends
+13 days later on Sunday at 23:59 UTC. Invoices for hours recorded by the Provider on Panameer within
+the biweekly billing cycle will be generated each other Monday, on the Monday that follows the end of
+the biweekly billing cycle (such invoice, the "Any Hire Hourly Invoice").
+Provider is required to submit their hours by 23:59 UTC on the Sunday of each week the Any Hire
+Hourly Work Order is active (the “Any Hire Hourly Invoice Deadline”). Provider irrevocably authorizes
+
+and instructs Panameer, as its agent, to (i) create an invoice on behalf of Provider for payment due
+based upon the hours that the provider recorded before the Any Hire Hourly Invoice Deadline; and (ii)
+submit the Any Hire Hourly Invoices on behalf of Provider to Provider's Service Buyer on a biweekly basis for
+payment.
+It is the responsibility of Service Buyer to review the Any Hire Hourly Invoices. If Service Buyer takes no action during
+the four business days following the close of the biweekly invoice period, Service Buyer will be deemed to have
+accepted the Provider Services and all hours invoiced by Provider during the biweekly billing period.
+If Service Buyer approves the submitted Any Hire Hourly Invoices or takes no action during the four days
+following the close of the weekly invoice period, and the Service Buyer has deposited sufficient funds to the Any
+Hire Work Order Escrow Account, Payment Escrow will release the Any Hire Hourly Work Order Funds to
+Provider. Payment Escrow will not release funds held in escrow except as described in these Escrow
+Instructions.
+3. RELEASE AND DELIVERY OF AMOUNTS IN ESCROW
+Service Buyer and Provider irrevocably authorize and instruct Payment Escrow to release applicable portions
+of the Any Hire Work Order Escrow Account (each portion, a “Release”) to their Provider Escrow Account
+or Service Buyer Escrow Account, as applicable, upon the occurrence of and in accordance with one or more
+Release Conditions provided below or as otherwise required by applicable law or the Terms of Service. If
+the funds are released to the Service Buyer Escrow Account, they will be automatically returned to the Service Buyer’s
+Payment Method that was charged to fund escrow. The amount of the Release will be delivered to the
+applicable Escrow Account in accordance with Provider’s or Service Buyer’s instructions, as applicable, these
+Escrow Instructions, and the other Terms of Service.
+3.1 RELEASE CONDITIONS
+As used in these Escrow Instructions, “Release Condition” means any of the following:
+1. For fixed-price Any Hire Work Orders, Service Buyer affirmatively clicks to accept the milestone(s) or
+fixed-price Any Hire Work Order work submitted by Provider for approval.
+2. For fixed-price Any Hire Work Orders, Service Buyer affirmatively clicks to accept the milestone(s) or
+fixed-price Any Hire Work Order work performed, but not yet submitted by Provider for
+approval.
+3. For fixed-price Any Hire Work Orders, Service Buyer does not take any action for 14 days from the date
+Provider submits the milestone or Fixed-Price Work Order work for approval, in which case
+Provider and Service Buyer agree that Payment Escrow is authorized and irrevocably instructed to
+immediately release to Provider the amount associated with the applicable milestone(s) in
+connection with such Release request.
+4. For fixed-price Any Hire Work Orders, Provider cancels the Work Order before a payment has
+been released to Provider, in which case the funds are to be returned to the Service Buyer.
+5. For fixed-price Any Hire Work Orders, Service Buyer cancels the Work Order before a payment has been
+released to Provider and Provider approves the request or takes no action within 7 days,
+in which case the funds are to be released to the Service Buyer.
+6. For hourly Any Hire Work Orders, Service Buyer has approved all or a portion of the Provider's Hourly
+Invoice, or has taken no action during the four days following the close of the weekly invoice
+
+period, which is deemed approval of all hours invoiced for purposes of this Release Condition.
+7. Service Buyer and Provider have submitted joint written instructions for a Release.
+8. Issuance of the final order of a court or arbitrator of competent jurisdiction from which appeal
+is not taken, in which case the funds will be released in accordance with such order.
+9. We believe, in our sole discretion, that fraud, an illegal act, or a violation of Panameer's Terms of
+Service has been committed or is being committed or attempted, in which case Service Buyer and
+Provider irrevocably authorize and instruct Payment Escrow to take such actions as we
+deem appropriate in our sole discretion and in accordance with applicable law, in order to
+prevent or remedy such acts, including without limitation to return the funds associated with
+such acts to their source of payment.
+
+4. INSTRUCTIONS IRREVOCABLE
+On the occurrence of a Release Condition, Service Buyer and Provider are deemed to and hereby agree that
+the instruction to Payment Escrow and its wholly owned subsidiaries to release funds is irrevocable.
+Without limiting the foregoing, Service Buyer’s instruction to Payment Escrow and its wholly owned subsidiaries
+to pay a Provider is irrevocable. Such instruction is Service Buyer’s authorization to transfer funds to
+Provider from the Service Buyer Escrow Account or authorization to charge Service Buyer’s Payment Method. Such
+instruction is also Service Buyer’s representation that Service Buyer has received, inspected and accepted the subject
+work or expense. Service Buyer acknowledges and agrees that upon receipt of Service Buyer’s instruction to pay
+Provider, Payment Escrow will transfer funds to the Provider and that Panameer, Payment Escrow, and
+other Affiliates have no responsibility to and may not be able to recover such funds. Therefore, and in
+consideration of services described in this Agreement, Service Buyer agrees that once Payment Escrow or its
+subsidiary has charged Service Buyer’s Payment Method, the charge is non-refundable.
+5. MAKING OR RECEIVING A BONUS OR EXPENSE PAYMENT
+Service Buyer may also make a bonus, tip, expense, or other miscellaneous payment to Provider using the Site.
+To make such a payment to a Provider, Service Buyer must follow the instructions and links on the Site and
+provide the information requested. If Service Buyer clicks to pay such a payment to Provider, Service Buyer irrevocably
+instructs Payment Escrow to and Payment Escrow will release escrow funds to Provider.
+6. REFUNDS AND CANCELLATIONS
+Service Buyer and Provider are encouraged to come to a mutual agreement if refunds or cancellations are
+necessary. Panameer will hold funds in the Any Hire Work Order Escrow Account until a Release Condition, as
+defined in Section 3.1 is fulfilled. If there are no funds in escrow, Provider may issue a refund via the
+Panameer platform up to the full amount paid on the Any Hire Hourly or Any Hire Fixed-Price Work Order.
+7. EXCLUSIONS
+Panameer’s Dispute Assistance Program and Payment Protection Programs do not apply to Any Hire
+Work Orders. Panameer, Payment Escrow, and Affiliates do not guarantee that Provider will be paid by
+Service Buyer. Upon occurrence of a Release Condition, as defined in Section 3.1, Payment Escrow can release
+only the amount of funds that have been deposited by Service Buyer to the Any Hire Work Order Escrow Account.
+Panameer, Payment Escrow, and Affiliates are under no circumstances liable to Provider for payment for
+
+Service Buyer’s failure to deposit funds to the Any Hire Work Order Escrow Account to cover payment to
+Provider.
+8. NOTICES
+All notices to a User required by these Escrow Instructions will be made via email sent by Panameer to the
+User’s registered email address. Users are solely responsible for maintaining a current, active email
+address registered with Panameer, for checking their email and for responding to notices sent by Panameer
+to the User’s registered email address.
+9. ABUSE
+Panameer, in its sole discretion, reserves the right to suspend or terminate your Account immediately upon
+giving notice to you if Panameer believes you are in violation of the Terms of Service.
+10. APPOINTMENT OF PAYMENT ESCROW AS PAYMENTS AGENT OF THE PROVIDER
+Each Provider hereby appoints Payment Escrow as its payment collection agent for the limited
+purpose of receiving, holding, and settling payments from Service Buyers pursuant to this Agreement. Each
+Provider further agrees and understands that a payment received by Payment Escrow from a Service Buyer, on
+Provider’s behalf, shall be considered the same as payment made directly to the Provider. Such
+payment shall be deemed to satisfy the Service Buyer’s obligation to pay Provider, and the Provider will
+provide its services to the Service Buyer in the agreed-upon manner as if the Provider had received the
+payment directly from the Service Buyer. Each Provider understands that Payment Escrow’s obligation to pay
+the Provider is subject to, and conditional upon, successful receipt of the associated payments from
+the Service Buyer. Provider further agrees that Payment Escrow is not required to settle such payment to
+Provider in the event that Service Buyer initiates a chargeback, ACH return, or otherwise disputes the
+payment. In the event that Payment Escrow does not make a payment to Provider as required by this
+Agreement, Provider will have recourse against only Payment Escrow and not against Service Buyer. In
+accepting appointment as the limited payment collection agent of the Provider, Payment Escrow
+assumes no liability for any acts or omissions of the Provider.
+Each Service Buyer acknowledges and agrees that, notwithstanding the fact that Payment Escrow is not a party
+to the agreement between the Service Buyer and the Provider, Payment Escrow acts as each Provider’s
+payment collection agent for the limited purpose of accepting payments from the Service Buyer on behalf of the
+Provider. Upon a Service Buyer’s payment of the funds to Payment Escrow, the Service Buyer’s payment obligation to
+the Provider for the agreed upon amount is extinguished, and Payment Escrow is responsible for
+remitting the funds successfully received by Payment Escrow to the Provider in the manner described
+in this Agreement. In the event that Payment Escrow does not remit any such amounts, the Provider
+will have recourse only against Payment Escrow and not the Service Buyer directly.
+11. NO RESPONSIBILITY FOR SERVICES OR PAYMENTS
+Panameer and Affiliates merely provide a platform for Internet payment services. Panameer and Affiliates do
+not have any responsibility or control over the Provider Services that Service Buyer purchases, except as
+explicitly provided in Section 10. Nothing in this Agreement deems or will be interpreted to deem
+Panameer or any Affiliate as Service Buyer’s or Provider’s agent with respect to any Provider Services, or
+expand or modify any warranty, liability or indemnity stated in the Terms of Service. For example,
+Panameer does not guarantee the performance, functionality, quality, or timeliness of Provider Services
+or that a Service Buyer can or will make payments.
+
+
+===== DOC: data-processing-agreement | COUNSEL-SHELL =====
+
+Panameer Global Data Processing Agreement
+The Service Buyer agreeing to these terms (“Customer”), and Panameer Global LLC or any other entity that directly or indirectly
+controls, is controlled by, or is under common control with Panameer Global LLC (as applicable, “Panameer”) (each, a
+“party” and collectively, the “parties”), have entered into an agreement under which Panameer has agreed to provide a
+marketplace where Service Buyers and Providers can identify each other and advertise, buy, and sell Provider Services
+online, with such other services, if any, described in the agreement (the “Service”) to Customer (as amended from
+time to time, the “Agreement”).
+Unless otherwise agreed to in writing by you and Panameer, to the extent Panameer processes any EU personal data for
+you as a controller (as defined by the General Data Protection Regulation (EU) 2016/679) in your role as a Customer
+as defined in this Global Data Processing Agreement (the “DPA”), this DPA applies. This DPA, including its
+appendices, supplements the Agreement. To the extent of any conflict or inconsistency between this DPA and the
+remaining terms of the Agreement, this DPA will govern.
+
+1.​ Introduction
+This DPA reflects the parties’ agreement with respect to the processing and security of Customer Data under the
+Agreement.
+
+2.​ Definitions
+2.1​
+
+The terms “personal data”, “data subject”, “processing”, “controller”, “processor” and “supervisory
+authority” have the meanings given in the GDPR, and the terms “data importer” and “data exporter”
+have the meanings given in the Standard Contractual Clauses, in each case irrespective of whether the
+European Data Protection Legislation or Non-European Data Protection Legislation applies.
+
+2.2​
+
+Unless stated otherwise:
+●​ “Affiliate” means any entity that controls or is under common control with a specified entity.
+●​ “Agreed Liability Cap” means the maximum monetary or payment-based amount at which a party’s
+liability is capped under the Agreement.
+●​ “Confidential Information” means any information or materials (regardless of form or manner of
+disclosure) that are disclosed by or on behalf of one party to the other party that (i) are marked or
+communicated as being confidential at or within a reasonable time following such disclosure; or (ii)
+should be reasonably known to be confidential due to their nature or the circumstances of their
+disclosure. The term “Confidential Information” does not include any information or materials that: (a) are
+or become generally known or available to the public through no breach of this Agreement or other
+wrongful act or omission by the receiving party; (b) were already known by the receiving party without
+any restriction; (c) are acquired by the receiving party without restriction from a third party who has the
+right to make such disclosure; or (d) are independently developed by or on behalf of the receiving party
+without reference to any Confidential Information.
+●​ “Customer Account Data” means personal data that relates to Customer’s relationship with Panameer,
+including the names and/or contact information of individuals authorized by Customer to access
+Customer’s Panameer account and billing information of individuals that Customer has associated with its
+Panameer account.
+●​ “Customer Personal Data” means the personal data contained within the Customer Data.
+●​ “Customer Data” means the data entered into the Service by or on behalf of any End User, but excludes
+Customer Account Data.
+●​ “End User” means an authorized user of the Service under Customer’s account.
+●​ “Data Incident” means a breach of Panameer’s security leading to the accidental or unlawful destruction,
+loss, alteration, unauthorized disclosure of, or access to, Customer Data on systems managed by or
+otherwise controlled by Panameer. “Data Incidents” will not include unsuccessful attempts or activities that
+do not compromise the security of Customer Data, including unsuccessful log-in attempts, pings, port
+scans, denial of service attacks, and other network attacks on firewalls or networked systems.
+●​ “EEA” means the European Economic Area, Switzerland, and/or the United Kingdom.
+
+●​ “European Data Protection Legislation” means, as applicable: (a) the GDPR and its respective
+national implementing legislations; and/or (b) the GDPR as it forms part of the law of England and Wales,
+Scotland and Northern Ireland by virtue of section 3 of the European Union (Withdrawal) Act 2018 (the
+“UK GDPR”).
+●​ “GDPR” means Regulation (EU) 2016/679 of the European Parliament and of the Council of 27 April
+2016 on the protection of natural persons with regard to the processing of personal data and on the free
+movement of such data, and repealing Directive 95/46/EC.
+●​ “EU SCCs” means the EU Standard Contractual Clauses approved by the European Commission in
+decision 2021/914 located at https://eur-lex.europa.eu/eli/dec_impl/2021/914/oj.
+●​ “Non-European Data Protection Legislation” means, as applicable, the data protection or privacy
+laws, regulations, and other legal requirements other than the European Data Protection Legislation.
+●​ “Notification Email Address” means the contact email address that you provided to Panameer for the
+purpose of receiving notices from Panameer.
+●​ “Security Measures” has the meaning given in Section 7.1.1 (Panameer’s Security Measures).
+●​ “Subprocessors” means third parties authorized under this DPA to have logical access to and process
+Customer Data in order to provide parts of the Service. For clarity, providers that Service Buyers engage via
+Panameer are not Subprocessors under this DPA.
+●​ “Term” means the period from the DPA’s effective date until the end of Panameer’s provision of the Service,
+including, if applicable, any period during which provision of the Service may be suspended and any
+post-termination period during which Panameer may continue providing the Service for transitional
+purposes.
+●​ “United Kingdom International Data Transfer Agreement or Addendum” (“UK IDTA”) means either,
+as applicable, (a) the International Data Transfer Agreement when used under the UK GDPR, or (b) the
+International Data Transfer Addendum to the EU SCCs issued by the Commissioner under s119A(1) of
+the Data Protection Act 2018, version A1.0, in force from March 21, 2022.
+
+3.​ Duration of this DPA
+This DPA will remain in effect until, and automatically expire upon, deletion of all Customer Data by Panameer as
+described in this DPA.
+
+4.​ Data Protection Legislation
+4.1​ Application of European Legislation. The parties acknowledge that the European Data Protection
+Legislation will apply to the processing of Customer Personal Data to the extent provided under the
+European Data Protection Legislation.
+
+4.2​ Application of Non-European Legislation. The parties acknowledge that Non-European Data Protection
+Legislation may also apply to the processing of Customer Personal Data.
+
+5.​ Processing of Data
+5.1​
+
+Roles and Regulatory Compliance; Authorization.
+
+5.1.1​
+
+Processor and Controller Responsibilities. If the European Data Protection Legislation applies to the
+processing of Customer Personal Data, the parties acknowledge and agree that:
+
+5.1.1.1​
+
+Customer is a controller (or processor, as applicable), of the Customer Personal Data under
+European Data Protection Legislation;
+
+5.1.1.2​
+
+Panameer is a processor (or subprocessor, as applicable) of the Customer Personal Data under the
+European Data Protection Legislation; and
+
+5.1.1.3​
+
+each party will comply with the obligations applicable to it under the European Data Protection
+Legislation with respect to the processing of that Customer Personal Data.
+
+5.1.2​
+
+Responsibilities under Non-European Legislation. If Non-European Data Protection Legislation applies to
+either party’s processing of Customer Personal Data, the parties acknowledge and agree that the
+relevant party will comply with any obligations applicable to it under that legislation with respect to the
+processing of that Customer Personal Data.
+
+5.1.3​
+
+Authorization by Third Party Controller. If Customer is a processor, Customer warrants to Panameer that
+Customer’s instructions (defined below) and actions with respect to that Customer Personal Data,
+including its appointment of Panameer as another processor, have been authorized by the relevant
+controller to the extent required by applicable law.
+
+5.2​
+
+Scope of Processing.
+
+5.2.1​
+
+The subject matter and details of the processing are described in Appendix 1.
+
+5.2.2​
+
+Customer’s Instructions. By entering into this DPA, Customer instructs Panameer to process Customer
+Personal Data only in accordance with applicable law: (a) to provide the Service; (b) as further specified
+through Customer’s use of the Service; (c) as documented in the Agreement, including this DPA; and (d)
+as further documented in any other written instructions given by Customer and acknowledged by Panameer
+as constituting instructions for purposes of this DPA (each and collectively, “Customer’s Instructions”)
+and only for the foregoing purposes and not for the benefit of any other third party. Panameer may condition
+the acknowledgement described in (d) on the payment of additional fees or the acceptance of additional
+terms.
+
+5.2.3​
+
+Panameer’s Compliance with Instructions. With respect to Customer Personal Data subject to European
+Data Protection Legislation, Panameer will comply with the instructions described in Section 5.2.2
+(Customer’s Instructions) (including with regard to data transfers) unless EU or EU Member State law to
+which Panameer is subject requires other processing of Customer Personal Data by Panameer, in which case
+Panameer will inform Customer (unless that law prohibits Panameer from doing so on important grounds of
+public interest) via the Notification Email Address.
+
+6.​ Data Deletion
+6.1​
+
+Deletion by Customer. Panameer will enable Customer to delete Customer Data during the Term in a
+manner consistent with the functionality of the Service. If Customer uses the Service to delete any
+Customer Data during the Term and that Customer Data cannot be recovered by Customer, this use will
+constitute an instruction to Panameer to delete the relevant Customer Data from Panameer’s systems in
+accordance with applicable law. Panameer will comply with this instruction as soon as reasonably practicable,
+unless applicable law requires storage. Nothing herein requires Panameer to delete Customer Data from files
+created for security, backup, and business continuity purposes sooner than required by Panameer’s existing
+data retention processes.
+
+6.2​
+
+Deletion on Termination. On expiry of the Term, Customer instructs Panameer to delete all Customer Data
+(including existing copies) from Panameer’s systems in accordance with applicable law. Panameer will comply
+with this instruction as soon as reasonably practicable, unless applicable law requires storage. Without
+prejudice to Section 9.1 (Access; Rectification; Restricted Processing; Portability), Customer acknowledges
+and agrees that Customer will be responsible for exporting, before the Term expires, any Customer Data it
+wishes to retain afterwards. If the EU or the UK SCCs are applicable to Panameer’s processing of Customer
+Personal Data, the parties agree that the certification of deletion referenced in Clauses 8.5 and 16(d) of the
+EU and the UK SCCs shall be provided only upon Customer’s written request. Nothing herein requires
+Panameer to delete Customer Data from files created for security, backup, and business continuity purposes
+sooner than required by Panameer’s existing data retention processes.
+
+7.​ Data Security
+7.1​
+7.1.1​
+
+Panameer’s Security Measures, Controls and Assistance.
+Panameer’s Security Measures. Panameer will implement and maintain technical and organizational
+measures designed to protect Customer Data against accidental or unlawful destruction, loss, alteration,
+unauthorized disclosure or access as described in Appendix 2 (the “Security Measures”). As described in
+Appendix 2, the Security Measures include measures to encrypt personal data; to help ensure ongoing
+confidentiality, integrity, availability and resilience of Panameer’s systems and services; to help restore
+
+timely access to personal data following an incident; and for regular testing of effectiveness. Panameer may
+update or modify the Security Measures from time to time provided that such updates and modifications
+do not degrade the overall security of the Service.
+7.1.2​
+
+Security Compliance by Panameer Staff. Panameer will take appropriate steps to ensure compliance with the
+Security Measures by its staff to the extent applicable to their scope of performance, including ensuring
+that all such persons it authorizes to process Customer Personal Data have committed themselves to
+confidentiality or are under an appropriate statutory obligation of confidentiality.
+
+7.1.3​
+
+Panameer’s Security Assistance. Customer agrees that Panameer will (taking into account the nature of the
+processing of Customer Personal Data and the information available to Panameer) assist Customer in
+ensuring compliance with any of Customer’s obligations in respect of security of personal data and
+personal data breaches, including if applicable Customer’s obligations pursuant to Articles 32 to 34
+(inclusive) of the GDPR, by:
+
+7.1.3.1​
+
+implementing and maintaining the Security Measures in accordance with Section 7.1.1 (Panameer’s
+Security Measures);
+
+7.1.3.2​
+
+complying with the terms of Section 7.2 (Data Incidents); and
+
+7.1.3.3​
+
+providing Customer with the information contained in the Agreement including this DPA.
+
+7.2​
+
+Data Incidents.
+
+7.2.1​
+
+Incident Notification. If Panameer becomes aware of a Data Incident, Panameer will: (a) notify Customer of the
+Data Incident promptly and without undue delay after becoming aware of the Data Incident; and (b)
+promptly take reasonable steps to minimize harm and secure Customer Data.
+
+7.2.2​
+
+Details of Data Incident. Notifications made pursuant to this section will describe, to the extent
+practicable, details of the Data Incident, including steps taken to mitigate the potential risks and any
+steps Panameer recommends Customer take to address the Data Incident.
+
+7.2.3​
+
+Delivery of Notification. Notification(s) of any Data Incident(s) will be delivered to the Notification Email
+Address or, at Panameer’s discretion, by direct communication (for example, by phone call or an in-person
+meeting). Customer is solely responsible for ensuring that the Notification Email Address is current and
+valid.
+
+7.2.4​
+
+No Assessment of Customer Data by Panameer. Panameer will not assess the contents of Customer Data in
+order to identify information subject to any specific legal requirements. Customer is solely responsible for
+complying with legal requirements for incident notification applicable to Customer and fulfilling any third
+party notification obligations related to any Data Incident(s).
+
+7.2.5​
+
+No Acknowledgement of Fault by Panameer. Panameer’s notification of or response to a Data Incident under
+this Section 7.2 (Data Incidents) is not an acknowledgement by Panameer of any fault or liability with
+respect to the Data Incident.
+
+7.3​
+
+Customer’s Security Responsibilities and Assessment.
+
+7.3.1​
+
+Customer’s Security Responsibilities. Customer agrees that, without prejudice to Panameer’s obligations
+under Section 7.1 (Panameer’s Security Measures, Controls and Assistance) and Section 7.2 (Data
+Incidents):
+
+7.3.1.1​
+
+Customer is solely responsible for its use of the Service, including:
+
+7.3.1.1.1​
+
+making appropriate use of the Service to ensure a level of security appropriate to the risk in
+respect of the Customer Data;
+
+7.3.1.1.2​
+
+securing the account authentication credentials, systems and devices Customer uses to access
+the Service;
+
+7.3.1.1.3​
+
+backing up its Customer Data; and
+
+7.3.1.2​
+7.3.2​
+
+Panameer has no obligation to protect Customer Data that Customer elects to store or transfer outside
+of the Service.
+Customer’s Security Assessment.
+
+7.3.2.1​
+
+Customer is solely responsible for reviewing Panameer’s security processes and evaluating for itself
+whether the Service, the Security Measures, and Panameer’s commitments under this Section 7 (Data
+Security) will meet Customer’s needs, including with respect to any security obligations of Customer
+under the European Data Protection Legislation or Non-European Data Protection Legislation, as
+applicable.
+
+7.3.2.2​
+
+Customer acknowledges and agrees that (taking into account the state of the art, the costs of
+implementation and the nature, scope, context and purposes of the processing of Customer
+Personal Data as well as the risks to individuals) the Security Measures implemented and
+maintained by Panameer as set out in Section 7.1.1 (Panameer’s Security Measures) provide a level of
+security appropriate to the risk in respect of the Customer Data.
+
+7.4​
+
+Reviews and Audits of Compliance.
+
+7.4.1​
+
+Customer’s Audit Rights.
+
+7.4.1.1​
+
+If the European Data Protection Legislation applies to the processing of Customer Personal Data,
+Panameer will allow Customer or an independent auditor appointed by Customer to conduct audits
+(including inspections) to verify Panameer’s compliance with its obligations under this DPA in
+accordance with Section 7.4.2 (Additional Business Terms for Reviews and Audits). Panameer will
+contribute to such audits as described in this Section 7.4 (Reviews and Audits of Compliance).
+
+7.4.1.2​
+
+If the Standard Contractual Clauses as described in Section 10 (International Data Transfers) are
+applicable to Panameer’s processing of Customer Personal Data, without prejudice to any audit rights
+of a supervisory authority under such Standard Contract Clauses, the parties agree that Customer or
+an independent auditor appointed by Customer may conduct audits as described in Clauses 8.9(c)
+and (d) of the EU and the UK SCCs in accordance with Section 7.4.2 (Additional Business Terms for
+Reviews and Audits).
+
+7.4.2​
+
+Additional Business Terms for Reviews and Audits.
+
+7.4.2.1​
+
+If the European Data Protection Legislation applies to the processing of Customer Personal Data,
+Customer may exercise its right to audit Panameer under Sections 7.4.1(a) or 7.4.1(b): (1) where there
+has been a Data Incident within the previous six (6) months or there is reasonable suspicion of a
+Data Incident within the previous six (6) months or (2) where Customer will pay all reasonable costs
+and expenses incurred by Panameer in making itself available for an audit. Any third party who will be
+involved with or have access to the audit information must be mutually agreed to by Customer and
+Panameer and must execute a written confidentiality agreement acceptable to Panameer before
+conducting the audit.
+
+7.4.2.2​
+
+To request an audit under Section 7.4.1(a) or 7.4.1(b), Customer must submit a detailed audit plan to
+Panameer’s Privacy Contact as described in Section 12 (Privacy Contact; Processing Records) at least
+thirty (30) days in advance of the proposed audit date, describing the proposed scope, duration, and
+start time of the audit. The scope may not exceed a review of Panameer’s compliance with the
+Standard Contractual Clauses or its compliance with the European Data Protection Legislation, in
+each case with respect to the Customer Data. The audit must be conducted during regular business
+hours at the applicable facility, subject to Panameer policies, and may not interfere with Panameer
+business activities.
+
+7.4.2.3​
+
+Following receipt by Panameer of a request for an audit under Section 7.4.1(a) or 7.4.1(b), Panameer and
+Customer will discuss and agree in advance on: (i) the reasonable date(s) of and security and
+confidentiality controls applicable to any review of documentation; and (ii) the reasonable start date,
+scope and duration of and security and confidentiality controls applicable to any audit under Section
+7.4.1(a) or 7.4.1(b).
+
+7.4.2.4​
+
+Customer will be responsible for any fees it incurs, including any fees charged by any auditor
+appointed by Customer to execute any such audit.
+
+7.4.2.5​
+
+Customer will provide Panameer any audit reports generated in connection with any audit under this
+section, unless prohibited by law. Customer may use the audit reports only to meet its regulatory
+audit requirements and to confirm compliance with the requirements of the Standard Contractual
+Clauses or European Data Protection Legislation. The audit reports, and all information and records
+observed or otherwise collected in the course of the audit, are Confidential Information of Panameer
+under the terms of the Agreement.
+
+7.4.2.6​
+
+Panameer may object in writing to an auditor appointed by Customer if the auditor is, in Panameer’s
+reasonable opinion, not suitably qualified or independent, a competitor of Panameer, or otherwise
+unsuitable. Any such objection by Panameer will require Customer to appoint another auditor or
+conduct the audit itself.
+
+7.4.2.7​
+
+Nothing in this DPA will require Panameer either to disclose to Customer or its auditor, or to allow
+Customer or its auditor to access:
+
+7.4.2.7.1​
+
+any data of any other customer of Panameer;
+
+7.4.2.7.2​
+
+Panameer’s internal accounting or financial information;
+
+7.4.2.7.3​
+
+any trade secret of Panameer;
+
+7.4.2.7.4​
+
+any information that, in Panameer's reasonable opinion, could: (A) compromise the security of
+Panameer systems or premises; or (B) cause Panameer to breach its obligations under applicable law
+or its security and/or privacy obligations to Customer or any third party; or
+
+7.4.2.7.5​
+
+any information that Customer or its third party auditor seeks to access for any reason other than
+the good faith fulfilment of Customer’s obligations under the Standard Contractual Clauses or
+European Data Protection Legislation.
+
+7.4.3​
+
+No Modification of Standard Contractual Clauses. Nothing in this Section 7.4 (Reviews and Audits of
+Compliance) varies or modifies any rights or obligations of Customer or Panameer under any Standard
+Contractual Clauses entered into as described in Section 10 (International Data Transfers).
+
+8.​ Impact Assessments and Consultations
+Customer agrees that Panameer will (taking into account the nature of the processing and the information available to
+Panameer) assist Customer in ensuring compliance with any obligations of Customer in respect of data protection
+impact assessments and prior consultation, including if applicable Customer’s obligations pursuant to Articles 35 and
+36 of the GDPR, by providing the information contained in the Agreement including this DPA.
+
+9.​ Data Subject Rights; Data Export
+9.1​ Access; Rectification; Restricted Processing; Portability. During the Term, Panameer will, in a manner
+consistent with the functionality of the Service, enable Customer to access, rectify and restrict processing
+of Customer Data, including via the deletion functionality provided by Panameer as described in Section 6.1
+(Deletion by Customer), and to export Customer Data.
+9.2​
+
+Data Subject Requests.
+
+9.2.1​
+
+Customer’s Responsibility for Requests. During the Term, if Panameer receives any request from a data
+subject under European Data Protection Legislation in relation to Customer Personal Data, Panameer will
+advise the data subject to submit their request to Customer, and Customer will be responsible for
+responding to any such request including, where necessary, by using the functionality of the Service.
+
+9.2.2​
+
+Panameer’s Data Subject Request Assistance. Customer agrees that Panameer will (taking into account the
+nature of the processing of Customer Personal Data) reasonably assist Customer in fulfilling an
+obligation to respond to requests by data subjects described in Section 9.2.1 (Customer’s Responsibility
+for Requests), including, if applicable, Customer’s obligation to respond to requests for exercising the
+data subject’s rights laid down in Chapter III of the GDPR, by complying with the commitments set out in
+Section 9.1 (Access; Rectification; Restricted Processing; Portability) and Section 9.2.1 (Customer’s
+Responsibility for Requests).
+
+10.​International Data Transfers
+10.1​ Data Storage and Processing Facilities. Panameer may, subject to this Section 10 (International Data
+Transfers), store and process the relevant Customer Data anywhere Panameer or its Subprocessors maintain
+facilities.
+
+10.2​ Data Transfers under the EU SCCs. The EU SCCs are incorporated into this DPA and apply where the
+application of the EU SCCs, as between the parties, is required under applicable European Data
+
+Protection Legislation for the transfer of personal data. The EU SCCs shall be deemed completed as
+follows:
+10.2.1​ Where Customer acts as a controller and Panameer acts as Customer’s processor with respect to
+Customer Personal Data subject to the EU SCCs, Module 2 applies.
+10.2.2​ Where Customer acts as a processor and Panameer acts as Customer’s Subprocessor with respect to
+Customer Personal Data subject to the EU SCCs, Module 3 applies.
+10.2.3​ Clause 7 (the optional docking clause) is not included.
+10.2.4​ Under Clause 9 (Use of sub-processors), the parties select Option 2 (General written authorization).
+10.2.5​ Under Clause 11 (Redress), the optional language will not apply.
+10.2.6​ Under Clause 17 (Governing law), the parties choose Option 1 and select the law of Ireland.
+10.2.7​ Under Clause 18 (Choice of forum and jurisdiction), the parties select the courts of Ireland.
+10.2.8​ Annexes I, II, and III of the EU SCCs are set forth in Appendix 1 below.
+10.3​ Data Transfers under the IDTA. When used as an addendum to the EU SCCs and the UK IDTA is
+otherwise required under applicable European Data Protection Law for the transfer of Customer Personal
+Data, the UK IDTA addendum shall incorporate the selections above and be deemed further completed as
+follows:
+10.3.1​ Table 1: the parties’ details shall be the parties and their affiliates to the extent any of them is involved in
+such transfer, including those set forth in Appendix 1, and the Key Contact shall be the contacts set forth
+in Appendix 1.
+10.3.2​ Table 2: The referenced Approved EU SCCs shall be the EU SCCs incorporated into this DPA.
+10.3.3​ Table 3: Annex 1A, 1B, and II shall be set forth in Appendix 1.
+10.3.4​ Table 4: Either party may end the EU SCCs as set out in Section 19 of the EU SCCs.
+
+10.4​ Data Transfers from Switzerland. Where the EU SCCs are required under Swiss data protection law
+applicable to the transfer of Customer Personal Data, the following additional provisions will apply:
+10.4.1​ References to the GDPR in the EU SCCs are to be understood as references to the Swiss Federal Act
+on Data Protection (“FADP”) insofar as the data transfers are subject exclusively to the FADP and not to
+the GDPR.
+10.4.2​ The term “member state” in the EU SCCs shall not be interpreted in such a way as to exclude data
+subjects in Switzerland from the possibility of suing for their rights in their place of habitual residence
+(Switzerland) in accordance with Clause 18(c) of the EU SCCs.
+10.4.3​ References to personal data in the EU SCCs also refer to data about identifiable legal entities until the
+entry into force of revisions to the FADP that eliminate this broader scope.
+10.4.4​ Under Annex I(C) of the EU SCCs: where the transfer is subject exclusively to the FADP and not the
+GDPR, the supervisory authority is the Swiss Federal Data Protection and Information Commissioner,
+and where the transfer is subject to both the FADP and the GDPR, the supervisory authority is the Swiss
+Federal Data Protection and Information Commissioner insofar as the transfer is governed by the FADP,
+and the supervisory authority is as set forth in the EU SCCs insofar as the transfer is governed by the
+GDPR.
+
+11.​Subprocessors
+11.1​ Consent to Subprocessor Engagement. Customer specifically authorizes the engagement of Panameer’s
+Affiliates as Subprocessors. In addition, Customer generally authorizes the engagement of any other third
+parties as Subprocessors (“Third Party Subprocessors”). If the Standard Contractual Clauses as
+described in Section 10 (International Data Transfers) are applicable to Panameer’s processing of Customer
+Personal Data, the above authorizations will constitute Customer’s prior written consent to the
+subcontracting by Panameer of the processing of Customer Personal Data if such consent is required under
+the Standard Contractual Clauses.
+11.2​ Information about Subprocessors.
+
+11.2.1​ Information about Subprocessors is available upon request by emailing privacyrequests@panameer.com
+(as may be updated by Panameer from time to time in accordance with this DPA). Subprocessor
+information will be provided only upon request and is the Confidential Information of Panameer under this
+Agreement and must be treated with the level of confidentiality afforded to Confidential Information
+hereunder.
+11.3​ Requirements for Subprocessor Engagement. When engaging any Subprocessor, Panameer will:
+a.​
+
+ensure via a written contract that:
+
+i) ​
+
+the Subprocessor only accesses and uses Customer Data to perform the obligations subcontracted to
+it, and does so in accordance with the Agreement (including this DPA) and any Standard Contractual
+Clauses entered into or Alternative Transfer Solution adopted by Panameer as described in Section 10
+(International Data Transfers); and
+
+ii)​
+
+if the GDPR applies to the processing of Customer Personal Data, the data protection obligations set
+out in Article 28(3) of the GDPR, as described in this DPA, are imposed on the Subprocessor; and
+
+b.​
+
+remain liable for all obligations subcontracted to, and all related acts and omissions of, the Subprocessor.
+
+11.4​ Opportunity to Object to Subprocessor Changes.
+11.4.1​ Panameer may add or remove Subprocessors from time to time. Panameer will inform Customer of new
+Subprocessors via a subscription mechanism described in the list of Subprocessors as described above.
+If Customer objects to a change, it will provide Panameer with notice of its objection to
+gdpr-dsar@panameer.com including reasonable detail supporting Customer’s concerns within sixty days of
+receiving notice of a change from Panameer or, if Customer has not subscribed to receive such notice,
+within sixty days of Panameer publishing the change. Panameer will then use commercially reasonable efforts
+to review and respond to Customer’s objection within thirty days of receipt of Customer’s objection. If
+Panameer does not respond to a Customer objection as described above, or cannot reasonably
+accommodate Customer’s objection, Customer may terminate the Agreement by providing written notice
+to Panameer. This termination right is Customer’s sole and exclusive remedy if Customer objects to any
+new Subprocessor.
+
+12.​Privacy Contact; Processing Records
+12.1​ Panameer’s
+
+Privacy Contact. Privacy inquiries related to this DPA can be submitted to
+privacyrequests@panameer.com (and/or via such other means as Panameer may provide from time to time).
+
+12.2​ Panameer’s Processing Records. Customer acknowledges that Panameer is required under the GDPR to: (a)
+collect and maintain records of certain information, including the name and contact details of each
+processor and/or controller on behalf of which Panameer is acting and, where applicable, of such processor’s
+or controller's local representative and data protection officer; and (b) make such information available to
+the supervisory authorities. Accordingly, if the GDPR applies to the processing of Customer Personal Data,
+Customer will, where requested, provide such information to Panameer via the Service or other means
+provided by Panameer, and will use the Service or such other means to ensure that all information provided is
+kept accurate and up-to-date.
+
+13.​Liability
+13.1​ Liability Cap. For clarity, the total combined liability of either party and its Affiliates towards the other party
+and its Affiliates under or in connection with the Agreement (such as under the DPA or the Standard
+Contractual Clauses) will be limited to the Agreed Liability Cap for the relevant party, subject to Section
+13.2 (Liability Cap Exclusions).
+
+13.2​ Liability Cap Exclusions. Nothing in Section 13.1 (Liability Cap) will affect the remaining terms of the
+Agreement relating to liability (including any specific exclusions from any limitation of liability).
+
+14.​Miscellaneous
+Notwithstanding anything to the contrary in the Agreement, where Panameer Global LLC is not a party to the
+Agreement, Panameer Global LLC will be a third-party beneficiary of Section 7.4 (Reviews and Audits of Compliance),
+
+Section 11.1 (Consent to Subprocessor Engagement) and Section 13 (Liability) of this DPA.
+
+Appendix 1:
+Subject Matter and Details of the Data Processing
+Subject Matter
+Panameer’s provision of the Service to Customer.
+Duration of the Processing
+The Term plus the period from the expiry of the Term until deletion of all Customer Data by Panameer in accordance
+with the DPA.
+Nature and Purpose of the Processing
+Panameer will process Customer Personal Data for the purposes of providing the Service to Customer in accordance
+with the DPA.
+Categories of Data
+Data relating to End Users or other individuals provided to Panameer via the Service, by (or at the direction of)
+Customer or by End Users. The open nature of the Service does not impose a technical restriction on the categories
+of data Customer may provide. The personal data transferred may include: name, username, password, email
+address, telephone and fax number, title and other business information, general information about interest in and
+use of Panameer services; and demographic information.
+Data Subjects
+Data subjects include End Users and the individuals about whom data is provided to Panameer via the Service by (or at
+the direction of) Customer or by End Users.
+
+Appendix 2:
+Security Measures
+Panameer will implement and maintain the Security Measures set out in this Appendix 2. Panameer may update or modify
+such Security Measures from time to time provided that such updates and modifications do not result in the
+degradation of the overall security of the Service. Panameer will:
+●​ Conduct information security risk assessments at least annually and whenever there is a material
+change in the organization’s business or technology practices that may impact the privacy, confidentiality,
+security, integrity or availability of Customer Personal Data.
+●​ Regularly and periodically train personnel who have access to Customer Personal Data or relevant
+Panameer Systems.
+●​ Maintain secure user authentication protocols, secure access control methods, and firewall protection for
+Panameer Systems that Process Customer Personal Data.
+●​ Maintain policies and procedures to detect, monitor, document and respond to actual or reasonably
+suspected Information Security Incidents.
+●​ Implement and maintain tools that detect, prevent, remove and remedy malicious code designed to
+perform an unauthorized function on or permit unauthorized access to Panameer Systems.
+●​ Implement and maintain up-to-date firewalls.
+●​ Implement and use cryptographic modules to protect Customer Personal Data in transit and, when
+commercially reasonable, at rest.
+●​ Maintain reasonable restrictions on physical access to Customer Personal Data and relevant Panameer
+Systems.
+
+Appendix 3
+Annex I of the EU SCCs
+A.​
+
+LIST OF PARTIES
+
+Data exporter(s):
+Name: Customer
+Activities relevant to the data transferred under these Clauses: Obtaining the Services from Data Importer
+Role (controller/processor): Controller or Processor, as applicable
+
+Data importer(s):
+Name: Panameer Global LLC
+Address: 655 Montgomery St., STE 490, DPT 17022, San Francisco, CA 94111-2676
+Contact person’s name, position and contact details: Privacy Counsel, legalnotices@panameer.com
+Activities relevant to the data transferred under these Clauses: Providing the Services to Data Exporter.
+Role (controller/processor): Processor
+
+В.​
+
+DESCRIPTION OF TRANSFER
+
+Categories of data subjects whose personal data is transferred
+Data subjects include End Users and the individuals about whom data is provided to Panameer via the Service by (or at
+the direction of) Customer or by End Users.
+Categories of personal data transferred
+Data relating to End Users or other individuals provided to Panameer via the Service, by (or at the direction of)
+Customer or by End Users. The open nature of the Service does not impose a technical restriction on the categories
+of data Customer may provide. The personal data transferred may include: name, username, password, email
+address, telephone and fax number, title and other business information, general information about interest in and
+use of Panameer services; and demographic information.
+Sensitive data transferred (if applicable) and applied restrictions or safeguards that fully take into
+consideration the nature of the data and the risks involved, such as for instance strict purpose limitation,
+access restrictions (including access only for staff having followed specialised training), keeping a record of
+access to the data, restrictions for onward transfers or additional security measures.
+None anticipated.
+The frequency of the transfer (e.g. whether the data is transferred on a one-off or continuous basis).
+Continuously, for the length of the Agreement between the parties.
+Nature of the processing
+Panameer will process Customer Personal Data to provide the Service to Customer in accordance with the DPA.
+
+Purpose(s) of the data transfer and further processing
+Panameer will process Customer Personal Data for the purposes of providing the Service to Customer in accordance
+with the DPA.
+The period for which the personal data will be retained, or, if that is not possible, the criteria used to
+determine that period
+The Term plus the period from the expiry of the Term until deletion of all Customer Data by Panameer in accordance
+with the DPA.
+For transfers to (sub-) processors, also specify subject matter, nature and duration of the processing
+Panameer’s subprocessors will process personal data to assist Panameer in providing the Services pursuant to the
+Agreement, for as long as needed for Panameer to provide the Services.
+C. COMPETENT SUPERVISORY AUTHORITY
+The Irish Data Protection Commission.
+
+Annex II of the EU SCCs
+TECHNICAL AND ORGANIZATIONAL MEASURES
+INCLUDING TECHNICAL AND ORGANIZATIONAL MEASURES TO ENSURE THE SECURITY OF THE DATA
+See Appendix 2 to the DPA.
+
+
+===== DOC: any-hire-terms | DIRECT-CONTRACTS =====
+
+This Panameer Any Hire Terms (“Any Hire Terms”) defines the agreement between you (the “Service Buyer” or the “Provider”, as
+applicable) and Panameer Global LLC (“Panameer”) regarding Any Hire services offered through the Site at
+www.panameer.com/anyhire as described in these Any Hire Terms (“Any Hire Services”), and are part of and incorporate by
+reference the Panameer User Agreement and other Terms of Service (collectively, the “Agreement”). The Any Hire Terms is in
+addition to and, except where explicitly stated, does not supersede, replace, or limit other similar terms in the Terms of
+Service. Capitalized terms not defined herein are defined in the User Agreement or elsewhere in the Terms of Service.
+In order to use Any Hire Services, you agree to be bound by the Any Hire Work Order terms and the Dispute Process and
+Arbitration and Class Action Waiver in the User Agreement. If you do not accept these terms, including the arbitration and
+class action waiver, you may not use or access any Any Hire Services.
+1. ESCROW SERVICES
+Service Buyer and Provider acknowledge and agree that the Any Hire Work Order Escrow Instructions apply to any engagements via
+the Any Hire Services (each such engagement, an “Any Hire Work Order”). Payment Escrow provides escrow services, but
+does not guarantee that Provider will be paid except and only to the extent that all of the following are true: (a) Panameer has
+received funds from Service Buyer on behalf of the Provider, (b) Service Buyer has directed such funds to be released to Provider, and
+(c) any hold or security period has passed. Panameer otherwise does not guarantee that Service Buyer is able to or will pay Provider.
+Service Buyer and Provider acknowledge that these escrow services are intended for business use, and agree to use these
+escrow services only for business purposes and not for consumer, personal, family, or household purposes.
+2. ROLE OF PANAMEER
+Service Buyer and Provider understand and agree that Panameer is not involved in or responsible for any work performed by
+Provider(s), is not involved in or responsible for any payment made under a Any Hire Work Order except as provided in
+Section 1 (Escrow Services), and has no control over any Provider or Service Buyer. Panameer does not guarantee that Service Buyer or
+Provider will perform on the Any Hire Work Order. Panameer does not have any power or authority to, and does not, determine
+any eligibility standards for any Any Hire Work Order, select or contract any Provider to provide services to Service Buyer, determine
+or control any term or condition of the Any Hire Work Order or Project, or cause any Provider to accept any Any Hire Work Order
+or perform any Provider Services. The Parties agree that Service Buyer will select the provider, that the scope of work will be set
+exclusively by agreement between Service Buyer and Provider, and that Service Buyer and Provider will take up any issues with the
+work and/or its scope between each other.
+3. ANY HIRE COMPLIANCE SERVICES
+3.1 WORKER CLASSIFICATION
+Panameer will determine the appropriate worker classification (e.g., independent contractor or employee) for each Engagement
+based on the information that Service Buyer and Provider provide about the applicable Any Hire Work Order. Determining the proper
+classification for a Provider depends on many factors, including information in Service Buyer’s control. Service Buyer and Provider agree
+to provide Panameer with all information requested that is related to the Any Hire Work Order and the classification of a Provider
+in a timely, accurate, and complete manner and notify Panameer immediately if any such information changes.
+3.2 PROVIDER ENGAGEMENT
+If Service Buyer accepts Panameer’s worker classification, Panameer will, based on its worker classification, either: (i) engage the
+Provider as an independent contractor for up to a six-month term, with Panameer Talent Group Inc. acting as agent of record
+for Service Buyer for such purpose, or (ii) cause the Provider to be hired as an employee through Panameer Payroll Services (as
+
+defined in the Panameer Payroll Agreement). Panameer may delegate the engagement of Providers (and other obligations
+regarding Providers under this Agreement) to one or more third parties. Panameer and Staffing Provider reserve the right not
+to engage or hire a Provider in their sole discretion. Panameer will cause each Provider classified under Panameer’s
+classification services and engaged as an independent contractor to execute an Independent Contractor Agreement. Panameer
+(through Staffing Provider) will cause each Provider classified and hired as an employee to execute an employment
+agreement containing confidentiality and intellectual property assignment provisions consistent with this Agreement.
+At the end of any six-month independent contractor agreement term, Service Buyer may seek to re-enage the Provider via Any
+Hire, and the engagement and worker classification process will begin again.
+3.3 OPTION TO REJECT CLASSIFICATION SERVICES
+A Service Buyer may choose to decline the worker classification services described in Section 3.1. If Service Buyer does not accept Panameer’s
+worker classification, the Service Buyer may engage the Provider as the Service Buyer so chooses, but Panameer shall not be responsible
+for the classification of the worker or the engagement of the worker. Service Buyer shall have sole responsibility of engaging the
+Provider (including preparing any independent contractor agreement or using the Optional Service Work Order Terms). In
+addition, if Service Buyer declines the worker classification services and still engages the Provider, Section 8.2 shall not apply;
+Service Buyer shall have no right to indemnity or any other remedy against Panameer, except as provided in the User Agreement
+Section 10, Section 11, and Section 12, all three of which shall be deemed to control any conflict with these Panameer Any Hire
+Terms.
+3.4 LEGAL COMPLIANCE
+Panameer, Staffing Provider, or any third party acting to engage a Provider, as applicable, shall comply with applicable laws
+and regulations governing the engagement and payment of Providers; except that Panameer or Employment Provider shall
+not be liable for any non-compliance associated with any information provided by Service Buyer.
+3.5 OWNERSHIP OF PROVIDER WORK PRODUCT
+Ownership of all Provider Work Product will be governed by the independent contractor agreement or employee
+agreement with the Provider, as applicable, both of which will contain a provision that requires a Provider to assign all
+ownership rights in Provider Work Product to Service Buyer. Panameer will not own any Provider Work Product. In the event that
+ownership rights in Provider Work Product arising from an Any Hire Work Order accrue to the benefit of Panameer, Panameer
+hereby assigns such rights to Service Buyer.
+4. SERVICE BUYER RESPONSIBILITIES
+4.1 ANY HIRE Work Orders
+Service Buyer further agrees to immediately inform Panameer of any complaint or request made by Provider concerning any
+employment-related matter, such as a request for a leave of absence or disability accommodation or a complaint about
+harassment or discrimination. Service Buyer further acknowledges and agrees that Service Buyer will not dispute and is responsible for
+payment for all hours worked on an engagement that uses Panameer Payroll Services.
+4.2 PANAMEER PAYROLL AGREEMENTS
+Service Buyer will inform Panameer 72 hours in advance, if possible, or as soon as possible thereafter, of the termination of any Any
+Hire Work Order that uses Panameer Payroll Services. For hourly work performed by Providers classified as employees, (i)
+Service Buyer will be deemed to have automatically approved all hours worked at the time Service Buyer is invoiced for the work, including
+overtime and (ii) Service Buyer authorizes and instructs Panameer to make payment to Provider for time reflected on any weekly time
+sheet, including overtime payments. For Providers engaged by Panameer or Staffing Provider as employees, Service Buyer agrees
+
+to comply with all applicable laws (e.g., not requiring or encouraging any Provider to work without recording time, not
+discouraging or prohibiting Providers from taking any meal or rest periods authorized by law) and acknowledges and
+agrees it is responsible to pay that overtime wages.
+4.3 NONDISCRIMINATION; COMPLIANCE WITH LAWS
+Service Buyer to comply with, and to require any person who may interact with Provider on behalf of Service Buyer to comply with,
+Panameer’s Nondiscrimination Statement, and with all applicable laws in connection with the engagement of Providers,
+including without limitation, as applicable, worker safety laws, nondiscrimination laws, accommodation and leave laws, and
+privacy laws.
+4.4 PROVIDER ELIGIBILITY LIMITATIONS
+Any Hire Work Orders may only be offered to Providers that do not have a pre-existing relationship with Panameer (e.g., a
+previously established Provider Account). If a Provider has a pre-existing relationship with Panameer, the Provider can
+be engaged through one of our other offerings, subject to the fees and other terms and conditions of such offerings.
+4.5 SERVICE BUYER ACKNOWLEDGEMENTS
+Other than as stated in these Any Hire Terms, Service Buyer expressly acknowledges, agrees, and understands that: (i) except for
+the agent of record services, Panameer is not a party to the dealings between Service Buyer and Provider, including the substantive
+terms of posts, the selection of a Provider, the decision to contract with a Provider, and the performance or receipt of
+Provider Services or provisioning of Provider Work Product; (ii) Panameer does not, in any way, supervise, direct, or
+control the Provider or Provider Services; (iii) Panameer makes no representations as to the quality, security, or legality of
+any Provider Services or Provider Work Product, and Panameer disclaims any and all liability relating thereto; (iv) Panameer
+does not set Provider’s work hours, work schedules, or location of work; (vi) Panameer will not provide Provider with
+training or any equipment, tools, labor, or materials needed to complete their work; (vii) Panameer does not provide the
+premises at which the Provider will perform the work; (viii) if there is a dispute between Service Buyer and Provider, that dispute
+is solely between Service Buyer and the Provider and Panameer will not be responsible or liable with respect to such dispute; (ix)
+neither Panameer nor its Affiliates is an employer of or joint employer or integrated or single enterprise with any Provider or
+Service Buyer; and (x) unless otherwise agreed as part of the relevant Any Hire Work Order, independent contractor Provider(s) may
+hire employees or engage contractors or subcontractors (at his or her sole expense) to assist with providing the Provider
+Services. Panameer makes no representations about and does not guarantee the truth or accuracy of Provider’s listings on
+the Site; the ability of Providers to deliver the Provider Services; or that Service Buyer or Provider can or will actually complete
+a transaction.
+5. PROVIDER ACKNOWLEDGEMENTS
+Other than as stated in these Any Hire Terms, Provider expressly acknowledges, agrees, and understands that: (i) except
+for the agent of record services, Panameer is not a party to the dealings between Service Buyer and Provider, including the
+substantive terms of posts, the selection of a Provider, the decision to contract with a Provider, and the performance or
+receipt of Provider Services or provisioning of Provider Work Product; (ii) Panameer does not, in any way, supervise,
+direct, or control the Provider or Provider Services; (iii) Panameer makes no representations as to the quality, security, or
+legality of any Provider Services or Provider Work Product, and Panameer disclaims any and all liability relating thereto;
+(iv) Panameer does not set Provider’s work hours, work schedules, or location of work; (vi) Panameer will not provide
+Provider with training or any equipment, tools, labor, or materials needed to complete their work; (vii) Panameer does not
+provide the premises at which the Provider will perform the work; (viii) if there is a dispute between Service Buyer and Provider,
+that dispute is solely between Service Buyer and the Provider and Panameer will not be responsible or liable with respect to such
+dispute; (ix) neither Panameer nor its Affiliates is an employer of or joint employer or integrated or single enterprise with any
+
+Provider or Service Buyer; and (x) unless otherwise agreed as part of the relevant Any Hire Work Order, independent contractor
+Provider(s) may hire employees or engage contractors or subcontractors (at his or her sole expense) to assist with
+providing the Provider Services. Panameer makes no representations about and does not guarantee the truth or accuracy of
+Service Buyer’s listings on the Site; the ability of Service Buyers to pay for the Provider Services; or that Service Buyer or Provider can or will
+actually complete a transaction.
+6. FEES
+6.1 SERVICE BUYER FEES
+Service Buyer agrees to pay a flat fee per Any Hire Work Order (“Any Hire Fee”) per two-week billing period (“Billing Period”) or any
+portion of a Billing Period as follows:
+Provider engaged as an independent contractor: $49USD per month, billed each two-week billing period at $22.62USD
+Provider engaged through Panameer Payroll (International): $49USD per month, billed each two-week billing period at
+$22.62USD
+Provider engaged through Panameer Payroll (Domestic): $199USD per month, billed each two-week period at
+$91.60USD
+Service Buyer also acknowledges and agrees that Service Buyer is responsible for applicable taxes and any Staffing Provider costs or
+applicable Payroll Services Fees (to be communicated at the start of the Any Hire Work Order), as well as any payment
+processing fee. Information on Panameer’s Payroll offering and applicable fees can be found in the Panameer Payroll Agreement.
+All fees are invoiced on the Monday after the end of the Billing Period. Service Buyer acknowledges and understands that payment is
+due in full the day the invoice is sent. Service Buyer agrees and authorizes Panameer to charge Service Buyer’s Payment Method the full
+amount invoiced during a Billing Period on the same day the invoice is issued.
+6.2 PROVIDER FEES
+Providers engaged on an Any Hire Work Order are not charged Provider Service Fees (see Sections 2.1, 2.2, and 2.3 of
+the Fee and ACH Agreement) for such Any Hire Work Order. However, Providers will pay any other applicable fees (see
+Section 2.4 of the Fee and ACH Agreement). If such Provider enters into a Service Work Order other than an Any Hire
+Work Order, such Service Work Order will be subject to Service Fees as applicable.
+7. SERVICE BUYER AND PROVIDER AUTHORIZATION
+Service Buyer and Provider represent and warrant that it has the authority to agree to these Any Hire Terms on behalf of
+themselves and the business entity they represent. Any actions performed by Panameer personnel on the Site at Service Buyer’s
+direction, express or implied, will be considered to be actions by and at the direction of Service Buyer.
+8. INDEMNIFICATION FOR SERVICE BUYER
+8.1 INTERACTION WITH OTHER TERMS OF SERVICE
+These Any Hire Terms controls for any express conflicts between the User Agreement or the Panameer Payroll Agreement and
+these Any Hire Terms concerning indemnification obligations and limitation of liability of Panameer or Service Buyer with respect to Any
+Hire Services only, except as provided in Section 3.3.
+8.2 INDEMNIFICATION BY PANAMEER
+Panameer will indemnify, defend, and hold harmless Service Buyer and its directors, officers, agents and employees from and against
+any and all losses, damages, liabilities, judgments, or settlements awarded for Claims, up to a maximum of $50,000USD per
+
+Provider engaged under an Any Hire Work Order, to the extent caused by: (i) Panameer’s misclassification of a Provider
+under the Fair Labor Standards Act, the Internal Revenue Code, state wage and hour law or any other law; (ii) the failure of
+Panameer or Employment Provider to make, when due, a payment to a Provider related to these Any Hire Terms; (iii)
+Employment Provider’s failure to comply with applicable wage and hour laws or regulations; or (iv) Employment Provider’s
+violation of any law or regulation related to workplace safety or conduct, including laws related to illegal discrimination or
+harassment.
+8.3 INDEMNIFICATION BY SERVICE BUYER
+Service Buyer will indemnify, defend and hold harmless Panameer and its Affiliates and their directors, officers, agents and employees
+from and against any and all Claims, and/or any and all losses, costs, damages, liabilities, judgments, or settlements
+awarded for such Claims to the extent arising out of, resulting from or in connection with Service Buyer’s or any director, officer,
+agent, employee of Service Buyer, or any other person with apparent or actual authority to act on behalf of Service Buyer: (i) in excess of
+$50,000USD per Provider engaged under an Any Hire Work Order; (ii) violation of any law or regulation, including laws
+related to illegal discrimination or harassment; (iii) misuse or unauthorized use of the Site; (iv) content posted by or on behalf
+of Service Buyer or at Service Buyer’s direction; (v) failure to comply with applicable wage and hour laws or regulations or any such failure by
+Panameer or the Employment Provider based on inaccurate or incomplete information provided by Service Buyer or which Service Buyer failed
+to update or was caused by Service Buyer; (vi) direction, participation or involvement with the Provider or Provider Services; or
+(vii) breach of Service Buyer’s obligations in Section 5 (Service Buyer Responsibilities).
+8.4 INDEMNIFICATION REQUIREMENTS
+The indemnification obligations of each party (the “Indemnifying Party”) are contingent upon the other party (the
+“Indemnified Party”) providing the Indemnifying Party with: (i) prompt written notice of any Claim for which indemnification
+may be sought under these Any Hire Terms; and (ii) proper and full information and assistance, at the Indemnifying Party’s
+expense and request, to settle or defend any such Claim. Each Indemnified Party will be entitled to participate in, through its
+own counsel at its own cost and expense, but not to determine or conduct, any defense or settlement of an indemnified
+Claim.
+9. NO INDEMNIFICATION FOR PROVIDER
+For the avoidance of doubt, Provider shall have no right to indemnity or any other remedy against Panameer, except as
+provided in the User Agreement Section 10, Section 11, and Section 12, all three of which shall be deemed to control any
+conflict with these Panameer Any Hire Terms.
+10. LIMITATION OF LIABILITY
+THIS SECTION 10 (LIMITATION OF LIABILITY) ONLY APPLIES TO AN ANY HIRE Work Order AND IS NOT CUMULATIVE
+TO ANY OTHER LIMITATION OF LIABILITY. IN NO EVENT WILL EITHER PARTY BE LIABLE FOR LOST PROFITS OR
+CONSEQUENTIAL, INCIDENTAL, SPECIAL, INDIRECT, PUNITIVE, OR EXEMPLARY DAMAGES OF ANY KIND ARISING
+OUT OF OR RELATED TO THIS AGREEMENT, HOWEVER CAUSED AND REGARDLESS OF THE THEORY OF
+LIABILITY (INCLUDING NEGLIGENCE), EVEN IF THAT PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH
+DAMAGES. EXCEPT FOR (I) AMOUNTS DUE PANAMEER FROM SERVICE BUYER UNDER THIS AGREEMENT, AND (II) AMOUNTS
+PAYABLE TO THIRD PARTIES PURSUANT TO INDEMNIFICATION OBLIGATIONS HEREIN. EXCEPT AS PROVIDED IN
+SECTION 8 WITH RESPECT TO SERVICE BUYERS, IN NO EVENT WILL PANAMEER BE LIABLE FOR AN AMOUNT GREATER
+THAN $50,000. SERVICE BUYER ACKNOWLEDGES THAT THE AMOUNTS PAYABLE UNDER THIS AGREEMENT ARE BASED IN
+PART ON THESE LIMITATIONS, AND FURTHER AGREES THAT THESE LIMITATIONS WILL APPLY NOTWITHSTANDING
+ANY FAILURE OF ESSENTIAL PURPOSE OF ANY LIMITED REMEDY.
+11. OTHER TERMS
+
+This Agreement, including these Any Hire Terms along with the Panameer User Agreement and other Terms of Service,
+represents the entire agreement with Panameer and supersedes all prior agreements and understandings with respect to Any
+Hire Services. To the extent of an express conflict between these Any Hire Terms and the other Terms of Service, these Any
+Hire Terms shall govern any matters involving Any Hire Services. Provisions of the User Agreement and other Terms of
+Service that do not expressly conflict with any provision of the Any Hire Terms or are being applied to any products or
+services other than the Any Hire Services apply in full force and effect. Without voiding or affecting the applicability of any
+other provision of the User Agreement to the Any Hire Terms, Service Buyer specifically reiterates its agreement to comply with the
+DISPUTE PROCESS AND ARBITRATION AND CLASS ACTION WAIVER contained in Panameer’s User Agreement, and
+agrees that this provision applies with full force and effect to the Any Hire Terms.
+You agree that you did not accept the Any Hire Terms based on any representations, whether written or oral, other than
+those contained in these Any Hire Terms along with the Panameer User Agreement and other Terms of Service. No modification
+of or amendment to the Any Hire Terms, nor any waiver of any rights, will be effective unless in writing signed by you and
+Panameer.
+
+
+===== DOC: cookie-policy | CLEAN =====
+
+This cookie policy (“Cookie Policy”) describes how Panameer, our service providers, and other third parties
+uses cookies and other related technologies such as web beacons (pixels), log files, and SDKs
+(collectively referred to as “tracking technologies”) when you interact with us through the Site. When we
+say “Site”, we mean http://www.panameer.com.
+You can update certain tracking technology preferences by changing the settings in your browser (more
+information on how to do this is provided below) or adjusting the settings by clicking the link labeled
+“Your Privacy Choices” at the bottom of the homepage.
+We may modify this Cookie Policy from time to time, so please check back often for updates.
+
+What are tracking technologies?
+Below we describe the different types of tracking technologies we may use. Each of these tracking
+technologies could be a first-party or third-party technology. A tracking technology that is created by
+Panameer or from our website domain is a first-party tracking technology. The data a first-party tracking
+technology collects/stores is directly accessible to Panameer and vendors acting on its behalf. Third-party
+tracking technologies may also be created by domains (i.e. website) separate from Panameer. The data a
+third-party tracking technology collects/stores is accessible by a third-party.
+Cookies
+Cookies are text files, containing small amounts of information, which are downloaded to your browsing
+device (such as a computer or smartphone) when you visit a website. Cookies can be recognized by the
+website that downloaded them, or by other websites that use the same cookies.
+Web Beacons
+Web beacons, tags, and tracking pixels are small pieces of code (such as JavaScript in a tag manager) or
+tiny 1x1 transparent images embedded in a website. They are used to enable certain Service functionality
+—like design elements—or to monitor user behavior across different websites and devices. These tools
+are often linked to social media features, such as a “like” button.
+SDKs
+A Software Development Kit or “SDK” represents a consolidated package of pre-existing code,
+enhancement tools, and guidance documents that can be installed and used to develop applications for
+a particular website.
+Log Files
+Log files are software-generated files containing data about the operations, activities, and usage
+patterns of an application, server, or IT system, such as what was done and at what time.
+
+What are tracking technologies used for?
+Our Service uses first-party and third-party tracking technologies for several purposes including helping
+us understand how the Service is being used, improving user experience such as letting you navigate
+
+between pages efficiently and remembering your preferences, keeping our Service secure, providing
+advertisements that are relevant to you, enhancing our marketing efforts, and generally improving your
+browsing experience.
+
+What types of cookies does Panameer use?
+Panameer categorizes its tracking technologies based on the use case. The categories are as follows:
+Strictly Necessary, Performance, Functional, and Targeting.
+
+Strictly Necessary
+These tracking technologies are essential, as they enable you to move around the Site and use its
+features, such as accessing secure areas. For example. without these tracking technologies, some
+components of the services you have asked for such as payment submission may not operate correctly.
+These tracking technologies are enabled by default, because they are important for functionality. While
+you can set your browser to block or alert you about these tracking technologies, if you block them,
+some or all parts of the Site may not function.
+
+Performance
+These tracking technologies collect information about how you use the Site, for example which pages
+you go to most often and if you get error messages from certain pages.
+
+Functionality
+These cookies allow the Site to remember choices you make (such as your username or the region you’re
+in). For instance, the Site uses functional cookies to remember your language preference. These cookies
+can also be used to remember changes you’ve made to text size, font and other parts of pages that you
+can customize. They may also be used to provide services you’ve asked for such as watching a video or
+commenting on a blog. They may be set by us or by third party providers whose services we have added
+to our pages. If you do not allow these cookies then some or all of these services may not function
+properly.
+
+Targeting
+These tracking technologies are used to deliver advertisements that are more relevant to you and your
+interests. They are also used to limit the number of times you see an advertisement as well as help
+measure the effectiveness of an advertising campaign. They remember that you have visited a website
+and this information may be shared with other organizations such as advertisers. This means after you
+have accessed our Service Site you may see some advertisements about our services elsewhere on the
+Internet.
+
+How long will tracking technologies stay on my
+browsing device?
+
+If a tracking technology is stored on your device (e.g. a cookie), the length of time a tracking technology
+will stay on your browsing device depends on whether it is a “persistent” or “session” tracking
+technology. Tracking technologies with a “session” duration will only stay on your device until you stop
+browsing. Tracking technologies with a “persistent” duration will stay on your browsing device until they
+expire or are deleted.
+How to control and delete certain tracking technologies through your browser
+The browser you are using to view the Site may have the functionality to enable, disable or delete certain
+tracking technologies such as a cookie. To do this, follow the instructions provided by your browser
+(usually located within the “Help,” “Tools'' or “Edit” functions). Please note that if you set your browser
+to disable these tracking technologies, you may not be able to access certain parts of the Site ( e.g. to
+apply for a job or post a job. Other parts of the Site may also not work properly. You can find out more
+information about how to change your browser cookie settings at www.allaboutcookies.org.
+
+Managing Tracking Technology Preferences
+Removing Tracking Technologies From Your Device
+If a tracking technology (e.g. a cookie) is stored on your device, you may be able to delete it by clearing
+cookies within your browser. This will remove from your device the cookies for the websites you have
+visited from that browser. Be aware though that you may also lose some saved data (e.g. saved login
+details, website preferences).
+Generally Blocking Tracking Technologies
+Most modern browsers provide settings which allow you to prevent tracking technologies from being
+placed on your device. If you decide to use these settings, please be aware that you may have to
+manually adjust some preferences every time you visit a website and our Service, and some services and
+functionalities of a website may not work properly at all such as login pages.
+In addition, listed below are the links to the support documents on how to manage and delete cookies
+from the major web browsers. To note, we do not control these third-party cookies preferences and are
+not responsible for any choices you make using these programs or links or their continued availability or
+accuracy. If you are using any other web browser, please visit your browser’s official support documents.
+Chrome: https://support.google.com/accounts/answer/32050
+Safari: https://support.apple.com/en-in/guide/safari/sfri11471/mac
+Firefox: https://support.mozilla.org/en-US/kb/clear-cookies-and-site-data-firefox?redirectslug=deletecookies-remove-info-websites-stored&redirectlocale=en-US
+Internet Explorer: https://support.microsoft.com/en-us/topic/how-to-delete-cookie-files-in-internetexplorer-bca9446f-d873-78de-77ba-d42645fa52fc
+Microsoft Edge: https://support.microsoft.com/en-us/windows/manage-cookies-in-microsoft-edgeview-allow-block-delete-and-use-168dab11-0753-043d-7c16-ede5947fc64d
+Managing Service-Specific Tracking Technologies
+
+You may update your tracking technology preferences on Panameer by clicking the “Your Privacy Choices”
+button at the bottom of the Site’s homepage. Note, if you use a cookie blocker such as Ghostery, it may
+block visibility of this tool..
+
+Contacting Us
+If you have any questions about this Cookie Policy, please contact us at
+
+https://support.panameer.com/home or by mail addressed to Attn: Legal, 3490 S 4400 W #70008
+West Valley City, UT 84120-9998, USA.
+
+
+===== DOC: api-terms-of-use | API =====
+
+These API Terms of Use (the “API Terms”) are made and entered into by and between Panameer Global LLC
+and its affiliates (“Panameer” or “we”), and the organization integrating its procurement system with
+Panameer (“Integrator” or “you”). Panameer and Integrator are sometimes referred to in the API Terms
+individually as a “Party” and collectively as the “Parties”. Panameer and Integrator hereby agree as
+follows:
+
+What This Interface Is
+The Panameer API is a cXML data-exchange interface for enterprise procurement systems. It exists so that
+an ERP — Oracle Cloud, SAP, or any other major ERP — can exchange procurement documents with Panameer
+without a buyer leaving their system of record: punch-out session setup and return, purchase orders,
+order confirmations, and invoices, in the standard cXML formats those systems already speak.
+
+This is a system-to-system integration interface, not an open developer platform. Panameer does not
+operate an app marketplace, does not invite the public to build products on Panameer data, and does not
+license this interface for building applications that redistribute it. Access is granted to an
+organization integrating its own procurement system, or to the systems integrator acting on that
+organization's behalf, for that purpose and no other. Where the sections below refer to a “Developer
+Application”, they mean the Integrator's procurement system and the connector that speaks to Panameer on
+its behalf.
+
+1. Agreement to the API Terms.
+By registering a software application, website, or product you create or service that you offer (a
+“Developer Application”), you agree to be bound by the API Terms. You must read, agree to, and accept
+all of the terms and conditions contained in the API Terms in order to use the Panameer API. Additionally,
+you agree to and accept the Panameer Terms of Service, available at https://www.panameer.com/legal/. If
+you disagree with any of the terms of the API Terms or the Panameer Terms of Service, Panameer does not
+grant you a license to use the Panameer API. If you are using the Panameer API on behalf of a company or
+any other entity, you represent and warrant that you have full legal authority to register a Developer
+Application on behalf of that entity and bind it to the API Terms and the Panameer Terms of Service. If you
+are not authorized, you may not accept the API Terms or register a Developer Application for someone
+else.
+
+2. Definitions.
+Capitalized terms not defined in the API Terms have the meanings given to them in the Panameer Terms of
+Service.
+1. Panameer API. A set of web-based services providing programmatic access to Panameer systems and
+data, together with all updates, revisions, and copies thereof. This also includes any associated
+tools and documentation that Panameer makes available under the API Terms.
+2. Panameer Content. Any data, content, or executables of or associated with the Panameer API or Site
+Services (as defined in the Panameer Terms of Service). This includes all Panameer User Data.
+3. Panameer User Data. Any content, information, and other data about persons who use the Panameer
+services received or collected by Developer through any instance of the Developer Application,
+the Panameer API, or otherwise in connection with the API Terms.
+
+3. Developer’s Use of the Panameer API.
+Developer wishes to use and access the Panameer API in connection with the development and
+distribution of a Developer Application and agrees to the additional requirements herein. Developer and
+Panameer hereby agree as follows:
+Developer Registration. Before using the Panameer API, Developer must provide accurate
+information identifying its organization and the individual representative who will serve as a point
+of contact for Panameer. The registration may be completed and accepted by Panameer on the Site.
+Upon successful registration, Panameer shall make Access Credentials available to Developer.
+“Access Credentials” means the necessary security keys, secrets, tokens, and other credentials to
+
+access the Panameer API. All activities that occur using your Access Credentials are your
+responsibility. Access Credentials are specific to you and are confidential information. Keep them
+secret. You must not sell, transfer, or sublicense the Access Credentials. Do not try to circumvent
+them and do not require your users, employees, contractors, or agents to obtain their own Access
+Credentials to build, maintain, or use the Developer Application. Developer itself must request any
+Access Credentials to be used by any employee, contractor, or agent of Developer.
+Development of the Developer Application. Subject to the terms of these Terms of Use,
+Developer will develop one or more Developer Applications. Developer will ensure that all
+Developer Applications are and remain in compliance with the API Terms and the Panameer Terms of
+Service.
+Permitted Uses of the Panameer API. Your use of the Panameer API is limited to the purpose of
+facilitating your own or your Users’ use of the Panameer Site and Site Services. Some
+examples of permitted uses of the Panameer API would be to create Applications that:
+Allow Panameer Users to search for and browse Panameer job postings with a customized
+interface;
+Allow Panameer Users to manage active Work Orders;
+Allow Panameer Users to apply to jobs on Panameer; or
+Allow Panameer Users to manage invoices, billing, and communications on Panameer.
+
+Prohibited Uses of the Panameer API. Developer must never do any of the following:
+Use the Panameer API in any Developer Application that includes adult content,
+promotes gambling, involves the sale of tobacco or alcohol to persons under 21 years
+of age, promotes or offers malicious code, or violates any applicable law or
+regulation.
+Use the Panameer API to retrieve Panameer Content that is then aggregated with thirdparty search results in such a way that a user cannot attribute the Panameer Content to
+Panameer (such as aggregated search results).
+Distribute or allow access to the Panameer API to anyone other than the entity on
+whose behalf Developer agreed to these Terms, or create an application
+programming interface that enables access to Panameer Content
+
+Prohibited Uses/Functions of Developer Application. Developer and the Developer
+Application must not do the following:
+Implement features or business practices that unlawfully harm the professional
+reputation or relationships of Panameer or Panameer users.
+Use Panameer Content received from the Panameer API in any manner that facilitates
+bias, discrimination, or data “redlining,” whether intentional or inadvertent, based on
+sensitive or protected categories or characteristics.
+Impersonate Panameer or a Panameer user or intentionally misrepresent Panameer or any
+Panameer user or other third party when requesting or publishing information.
+
+Obfuscate or hide any Panameer buttons, sign-in functionality, or consent or
+authorization flows from your users.
+Proxy, request, or use Panameer account user names or passwords in any fashion for
+any reason.
+Request from the Panameer API more than the minimum data fields and application
+permissions the Developer Application needs.
+Try to exceed or circumvent limitations on calls and use. This includes creating
+multiple Developer Applications for identical, or largely similar, purposes.
+Download, scrape, post, or transmit, in any form or by any means, any part of the Site
+or Site Services, including data retrieved by web browser plugins.
+Copy, reformat, reverse-engineer, or otherwise modify the Panameer API, Access
+Credentials, the Site, the Site Services, or any Panameer Content.
+Promote or operate any product or service that competes with the Panameer Site
+Services.
+Interfere with or disrupt Panameer services, Panameer servers or networks connected to
+Panameer services, or disobey any requirements, procedures, policies or regulations of
+networks connected to the Panameer Site or Site Services.
+Engage in any conduct that fails to comply with, or is otherwise inconsistent with, any
+agreement between Developer and Panameer or any written instructions provided by
+Panameer.
+
+4. API License.
+Using the Panameer API. As part of the API Terms, Panameer grants you a non-exclusive, nontransferable, and non-sublicensable (except as expressly permitted herein) license to use the
+Panameer API solely to do the following and subject to the restrictions set forth in the API Terms:
+Enable your Application to interact with Panameer’s databases to retrieve information
+necessary to facilitate your own or Your Users’ use of the Site and Site Services through
+your Application;
+Make limited intermediate copies of Panameer Content only as necessary to perform activity
+permitted under the API Terms. You must delete all intermediate copies when they are no
+longer required for the purpose for which they were created;
+Rearrange or reorganize Panameer Content within your Application; and
+Display in your Application Panameer Content consistent with this Agreement.
+
+Access Credentials. Panameer will provide you with Access Credentials that permit you to access
+the Panameer API. The Access Credentials are the property of Panameer and may be revoked if you
+share them with any third party (other than as allowed in the API Terms), if they are compromised,
+
+if you violate the API Terms or the Panameer Terms of Service, or if Panameer terminates the API
+Terms.
+API Call Limitations. The number of API calls you will permitted to make during any given time
+period may be limited. Panameer will determine call limits based on various factors, including the
+ways your Application may be used or the anticipated volume of use associated with your
+Application. Panameer may, in its sole discretion, charge you for API calls that exceed the call limits
+or terminate your access to the Panameer API in accordance with Section 17 (Suspension and
+Termination). Unused calls will not roll over to the next day or month, as applicable.
+
+5. Certification.
+At its discretion, Panameer may require or offer Certification for certain Applications. Certification will
+consist of confirmation by Panameer or a third party it designates that your Application’s technology
+complies with the API Terms and the Panameer Terms of Service. You will be responsible for all costs
+associated with certification and any modifications necessary to meet the certification requirements and
+you may not be permitted to access the Panameer API in certain cases until certification is complete. At
+Panameer’s discretion, future modifications of your Application or use or display of Panameer Content may
+be subject to re-certification. If Panameer requires certification, your failure to maintain certification is
+cause for immediate termination of the API Terms.
+
+6. Data Use.
+Obligations to Panameer. Developer may only use, disclose, and otherwise process Panameer User
+Data in accordance with the written instructions of Panameer and applicable laws, rules and
+regulations.
+Prohibited Uses. Developer will not:
+Use Panameer Content for any purpose except to the extent necessary for (1) the purpose of
+processing and supporting a specific transaction for the applicable Panameer user or (2) the
+purpose of providing services to Panameer.
+Use Panameer Content for any research or publication purpose without prior written consent
+and a license from Panameer to research or publish, as applicable, Panameer Content.
+Use Panameer Content for any other purpose (e.g., for Developer’s own benefit or for the
+benefit of any other entity or person).
+Use Panameer Content for user profiling purposes or for advertising purposes.
+Sell, lease, sublicense, or otherwise transfer, directly or indirectly, Panameer Content to any
+third party.
+Augment, commingle, or supplement Panameer Content with personally identifiable or
+confidential information (including any mobile device identifier or other unique identifier
+that identifies any particular user, browser, computer or device) from any third-party source.
+Use the user identification or authentication codes connected to any Panameer user to
+disclose information related to that user to any third party.
+
+7. Data Storage.
+Except as provided in the API Terms, Developer may not copy or store any Panameer Content, or any
+information expressed by or representing Panameer Content (such as hashed or otherwise transformed
+data).
+Authentication Tokens. Developer may store any Developer Application-specific alphanumeric
+user identification codes that Panameer provides to Developer for identifying individual users of the
+Developer Application or any tokens that Panameer provides to Developer when a Panameer user
+authenticates the Developer Application for the Panameer user’s account.
+
+Cached Content. Solely for the purpose of improving user experience, Developer may cache
+Panameer Content for no more than twenty-four (24) hours.
+Deletion. Developer must promptly and securely delete all Panameer User Data collected from
+Panameer users upon request of the Panameer user, when the Panameer user deactivates or uninstalls
+the Developer Application, when the Panameer user closes their account with Developer, and before,
+when possible, or promptly upon termination of the API Terms. Developer will promptly and
+securely delete all Panameer Content after completion of all activities reasonably necessary to
+operate or maintain the Developer Application and upon termination of the API Terms.
+
+8. User Consent and Agreement.
+User Agreement and Privacy Policy. The Developer Application must include your own user
+agreement and privacy policy. Your user agreement and privacy policy must be prominently
+identified or located where members download or access the Development Application. Your
+privacy policy must meet applicable legal standards and accurately describe the collection, use,
+storage and sharing of data. You must promptly notify us of any breaches of your user agreement
+or privacy policy that impact or may impact Panameer users.
+User Consent. Before obtaining information from Panameer users, you must obtain their informed
+consent by telling them what information you collect and how it will be used, stored or shared,
+and by taking any additional steps required by law or regulation.
+
+9. Data Safeguards.
+Developer will protect Panameer User Data in accordance with all applicable laws. Your network, operating
+system, and software of your web servers, databases, and computer systems (collectively “Systems”)
+must be properly configured to securely operate the Developer Application and Panameer User Data. The
+Developer Application must use reasonable security measures to protect any Panameer User Data and any
+elements or components of the Panameer API. You shall not architect, design, or select Systems in a
+manner to avoid these obligations. You must promptly report to Panameer at
+legalnotices@panameer.comany security deficiencies in, or intrusions into, your Systems that you discover
+to Panameer. You will work with Panameer to correct any security deficiency and disconnect any intrusions
+or intruders as soon as practicable upon discovery of any such deficiency or intrusion. In the event of
+
+any security deficiency or intrusion involving the Developer Application or Panameer User Data, you will
+make no public statements without prior written and express permission from Panameer in each instance,
+unless otherwise required by law.
+
+10. Access to the Panameer API.
+Subject to the API Terms, Panameer may, in its sole discretion, make specific instances or versions of the
+Panameer API available to Developer for use in connection with Developer Applications. Panameer may
+terminate such access to the Panameer API, in whole or certain features, functions, or services thereof, for
+convenience, at any time. The Panameer API will be deemed to be a part of the Site Services as set forth in
+the Panameer Terms of Service.
+
+11. Panameer API Support and Changes.
+Panameer may provide technical support, upgrades, or modifications of the Panameer API in Panameer’s sole
+discretion. Panameer may cease providing technical support, upgrades, or modifications of the Panameer API
+at any time and for any reason without notice or liability to Developer. Panameer may release new versions
+of the Panameer API and require Developer to use the new version of the Panameer API. Developer’s use of
+new releases or versions of the Panameer API will be acceptance of all modifications of the Panameer API.
+
+12. Intellectual Property.
+Panameer Materials. Panameer owns all rights, title, and interest, including all intellectual property
+rights, in and to, the Panameer API; all elements, components, and executables of the Panameer API;
+and all elements, components, and executables of the Site Services (collectively, the “Panameer
+Materials”). The only exception to this is any information or Content which you as a Panameer user
+have licensed to Panameer under the Panameer Terms of Service. Except for the express licenses
+granted in the API Terms, Panameer does not grant you any right, title, or interest in the Panameer
+Materials. Developer agrees to take such actions as Panameer may reasonably request to perfect
+Panameer’s rights to the Panameer Materials.
+Developer Property. Except to the extent the Developer Application contains Panameer Materials,
+Panameer claims no ownership or control over your Developer Application. During the term of the
+API Terms you hereby grant Panameer a paid-up, royalty-free, non-exclusive, worldwide, irrevocable
+right and license, under all of your intellectual property rights, to: (1) use, perform, and display the
+Developer Application and its content for purposes of marketing, demonstrating, and making the
+Developer Application available to Panameer users; (2) link to and direct Panameer users to the
+Developer Application; and (3) sublicense the foregoing rights to our affiliates.
+Feedback. Developer may, but is not required to, provide suggestions, comments, ideas, or know‐
+how, in any form, to Panameer related to Panameer products, services or technology (“Feedback”). To
+the extent Developer provides Feedback to Panameer, Developer grants Panameer the right to use
+such Feedback without any right to compensation from Panameer.
+
+13. Independent Development by Panameer.
+
+Developer understands and acknowledges that Panameer may be independently creating applications,
+content, and other products or services that may be similar to or competitive with the Developer
+Application. Nothing in the API Terms will be construed as restricting or preventing Panameer from
+creating and fully exploiting any applications, content, and other products or services, without any
+obligation to Developer. This paragraph will survive the termination or expiration of the API Terms.
+
+14. Confidential Information.
+Developer agrees that the content of the Panameer API, and any Panameer Content that by its nature should
+reasonably be known to be confidential, is deemed to be confidential information of Panameer and
+Developer will maintain the same in strict confidence and not disclose the same to any third party (other
+than employees, agents and contractors of Developer for the sole purpose of providing services to
+Developer to complete work permitted hereunder) or use the same for any purpose other than its
+performance under the Agreement. To the extent that you retain any Panameer Content after the
+termination or expiration of the API Terms, this paragraph will survive the termination or expiration of
+the API Terms.
+
+15. Effect.
+The provisions of the API Terms will control over any inconsistent provisions of the Panameer Terms of
+Service, and the Panameer Terms of Service, as modified and supplemented by the API Terms, will remain
+in full force and effect. Any “shrink wrap” or “click wrap” license agreement or any other terms and
+conditions associated with Developer’s Application is null and void, is not applicable hereunder, and is
+expressly excluded.
+
+16. Fees.
+Panameer currently provides the Panameer API without charge. However, Panameer reserves the right, at
+Panameer’s sole discretion, to charge fees for future use of or access to the Panameer API. Developer may
+not charge any fee to Panameer users for the Developer’s Application without the express written
+permission or agreement of Panameer.
+
+17. Term and Termination.
+Term. The term of the API Terms will commence on the date upon which you agree to the API
+Terms and will continue until terminated as set forth below.
+
+Developer’s Termination Rights. Developer may terminate the API Terms by discontinuing use of
+the Panameer API and returning all Panameer Content, including Panameer User Data.
+Suspension and Termination. Panameer may suspend or terminate Developer’s use of the Panameer
+API at any time if we believe you have violated the API Terms or Panameer Terms of Service, or if we
+believe the availability of the Panameer API in the Developer Application is not in our or our users’
+best interests. Immediately upon termination of the API Terms, all licenses granted to Developer
+will cease and all data retrieved from the Panameer API or Site Services must be deleted.
+
+Effect of Termination. Upon termination of these Terms:
+all rights and licenses granted to Developer will terminate immediately;
+Developer will promptly and securely destroy Panameer Content in your possession or control;
+neither party is liable to the other party solely because the API Terms have been terminated;
+unless we agree otherwise in writing or as stated explicitly in the API Terms, Developer must
+permanently delete all Panameer Content and Panameer User Data or other data which you
+stored pursuant to your use of the Panameer API. Panameer may require that you certify in
+writing your compliance with this section; and
+Panameer will make commercially reasonable efforts to remove all references and links to the
+Developer Application from the Site (Panameer has no other obligation to delete copies of,
+references to, or links to the Developer Application).
+
+18. Warranties and Liabilities.
+Disclaimer of Warranties. PANAMEER PROVIDES THE PANAMEER API, PANAMEER CONTENT, AND ALL
+OTHER INFORMATION AND SERVICES ON AN “AS IS” AND “AS AVAILABLE” BASIS WITH NO
+WARRANTIES, EITHER EXPRESS OR IMPLIED, OF ANY KIND. TO THE FULLEST EXTENT
+PERMISSIBLE UNDER APPLICABLE LAW, PANAMEER DISCLAIMS ANY AND ALL WARRANTIES AND
+REPRESENTATIONS, INCLUDING, WITHOUT LIMITATION, ANY IMPLIED WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, ACCURACY OF DATA, AND
+NONINFRINGEMENT. PANAMEER DOES NOT GUARANTEE THAT THE PANAMEER API WILL
+FUNCTION WITHOUT INTERRUPTION OR ERRORS IN FUNCTIONING. IN PARTICULAR, THE
+OPERATION OF THE PANAMEER API MAY BE INTERRUPTED DUE TO MAINTENANCE, UPDATES,
+OR SYSTEM OR NETWORK FAILURES. PANAMEER DISCLAIMS ALL LIABILITY FOR DAMAGES
+CAUSED BY ANY SUCH INTERRUPTION OR ERRORS IN FUNCTIONING. FURTHERMORE,
+PANAMEER DISCLAIMS ALL LIABILITY FOR ANY MALFUNCTIONING, IMPOSSIBILITY OF ACCESS,
+OR POOR USE CONDITIONS OF THE PANAMEER API DUE TO INAPPROPRIATE EQUIPMENT,
+DISTURBANCES RELATED TO INTERNET SERVICE PROVIDERS, TO THE SATURATION OF THE
+INTERNET NETWORK, AND FOR ANY OTHER REASON.
+Limitations of Liability. PANAMEER AND OUR EMPLOYEES, AGENTS, SHAREHOLDERS, OR
+DIRECTORS, SHALL NOT BE LIABLE FOR ANY SPECIAL, INCIDENTAL, INDIRECT, PUNITIVE, OR
+CONSEQUENTIAL DAMAGES OR LOSS OF USE, PROFIT, REVENUE OR DATA TO YOU OR ANY
+THIRD PERSON ARISING FROM YOUR USE OF THE PANAMEER API. THIS LIMITATION OF LIABILITY
+SHALL APPLY REGARDLESS OF WHETHER (i) YOU BASE YOUR CLAIM ON CONTRACT, TORT,
+STATUTE, OR ANY OTHER LEGAL THEORY, (ii) WE KNEW OR SHOULD HAVE KNOWN ABOUT
+THE POSSIBILITY OF SUCH DAMAGES, OR (iii) THE LIMITED REMEDIES PROVIDED IN THIS
+SECTION FAIL OF THEIR ESSENTIAL PURPOSE. THIS LIMITATION OF LIABILITY SHALL NOT
+APPLY TO ANY DAMAGE THAT PANAMEER MAY CAUSE YOU INTENTIONALLY OR KNOWINGLY IN
+VIOLATION OF THE API TERMS OR APPLICABLE LAW.
+Indemnification. You will defend, hold harmless, and indemnify Panameer (and our and their
+respective employees, agents, shareholders, and directors) from any claim or action brought by a
+third party, including all damages, liabilities, costs and expenses, including reasonable attorneys’
+
+fees, to the extent resulting from, alleged to have resulted from, or in connection with: (i) your
+breach of your obligations herein; or (ii) the violation of any copyright, trademark, service mark,
+trade secret or United States patent by the Developer Application.
+
+19. General.
+Relationship of the Parties. The parties are agreeing to the API Terms as independent contractors,
+and the API Terms will not be construed to create a partnership, joint venture or employment
+relationship between them. Neither party is authorized to or will represent itself to be an
+employee or agent of the other or enter into any agreement on the other’s behalf of or in the
+other’s name.
+Assignability. You may not assign the API Terms, nor any of your rights or obligations hereunder,
+without Panameer’s prior written consent. Panameer may freely assign the API Terms without your
+consent. Any attempted assignment or transfer in violation of this section will be null and void.
+Subject to the foregoing restrictions, the API Terms will inure to the benefit of successors and
+permitted assigns of the parties.
+Severability. If and to the extent any provision of the API Terms is held illegal, invalid, or
+unenforceable in whole or in part under applicable law, such provision or such portion thereof
+shall be ineffective as to the jurisdiction in which it is illegal, invalid, or unenforceable to the extent
+of its illegality, invalidity, or unenforceability, and shall be deemed modified to the extent
+necessary to conform to applicable law so as to give the maximum effect to the intent of the
+parties. The illegality, invalidity, or enforceability of such provision in that jurisdiction shall not in
+any way affect the legality, validity, or enforceability of such provision in any other jurisdiction or
+of any other provision in any jurisdiction.
+Choice of Law and Venue. The API Terms and any controversy, dispute or claim arising out of or
+relating to the API Terms shall be governed by and construed in accordance with the laws of the
+State of California without regard to its conflict of law provisions and excluding the United Nations
+Convention on Contracts for the International Sale of Goods (CISG). With respect to any User
+located outside the United States, the User agrees that the California state courts of Santa Clara
+County (or, if there is federal jurisdiction, the United States District Court for the Northern District
+of California) will have jurisdiction and venue with respect to any claim arising out of or relating to
+the API Terms and consents to the personal jurisdiction and venue of those courts.
+No Waiver. The failure or delay of either party to exercise or enforce any right or claim does not
+constitute a waiver of such right or claim and shall in no way affect that party’s right to later
+enforce or exercise it, unless such party issues an express written waiver, signed by a duly
+authorized representative of each party.
+Miscellaneous. The API Terms set forth the entire agreement and understanding of the parties
+relating to their subject matter and cancel and supersede any prior or contemporaneous
+discussions, agreements, representations, warranties, and other communications between them.
+No modification or amendment to the API Terms shall be binding upon Panameer unless in a written
+instrument signed by a duly authorized representative of Panameer.
+
+
+===== DOC: ip-infringement-reporting | CLEAN(fill agent) =====
+
+Panameer Global LLC (“Panameer,” “our,” “us,” or “we”) respects the intellectual property rights of others
+and seeks to offer a platform which contains no content that violates those rights. To promote these
+objectives, we provide a process for submission of complaints concerning content posted by our users.
+Our policy and procedures are described and referenced below.
+Copyright Infringement Claims
+Pursuant to the Digital Millennium Copyright Act (17 U.S.C. § 512) (“DMCA”), Panameer has procedures for
+receiving written notification of claimed copyright infringement. Panameer has also designated an agent to
+receive notices of claimed copyright infringement. If you believe in good faith that your copyright has
+been infringed, you may submit a written communication that contains all of the following:
+1. An electronic or physical signature of the person authorized to act on behalf of the owner of
+the copyright interest.
+2. A description of the copyrighted work that you claim has been infringed. Provide a URL or
+link to where the material is located, if possible.
+3. A description specifying the location on our website(s) of the material that you claim is
+infringing, including a URL or link to where the material is located. Provide information
+reasonably sufficient to enable us to locate it.
+4. Your email address and your mailing address and/or telephone number.
+5. A statement by you that you have a good-faith belief that the disputed use is not authorized
+by the copyright owner, its agent, or the law.
+6. A statement by you, made under penalty of perjury, that the information in your notice is
+accurate and that you are the copyright owner or authorized to act on the copyright owner’s
+behalf.
+
+Panameer’s Legal Department is its designated agent under the DMCA. Please submit your notice to
+Panameer’s Legal Department by submission of this online form or by email to legalnotices@panameer.com.
+In response to a notice, Panameer may remove or disable access to the allegedly infringing material, and
+take such other actions Panameer deems appropriate in its sole discretion. Please bear in mind that you
+may be liable for damages (including costs and attorneys’ fees) if you materially misrepresent that
+material is infringing. If we remove or disable access, we will attempt to contact the poster of the
+allegedly infringing material so that the poster may provide a counter notification (the “CounterNotice”) as described below.
+If you believe that a notice of copyright infringement has been improperly submitted against you, you
+may submit a Counter-Notice, pursuant to Sections 512(g)(2) and (g)(3) of the DMCA. You may provide
+a written communication that contains all of the following:
+1. Your physical or electronic signature.
+2. Identification of the material removed or to which access has been disabled, including the
+specific URL or link.
+
+3. A statement under penalty of perjury that you have a good-faith belief that removal or
+disablement of the material was a mistake or that the material was misidentified.
+4. Your full name, your email address, your mailing address, and a statement that you consent to
+the jurisdiction of the Federal District court (i) in the judicial district where your address is
+located if the address is in the United States, or (ii) located in the Northern District of
+California (Santa Clara County), if your address is located outside the United States, and that
+you will accept service of process from the complainant submitting the notice or his/her
+authorized agent.
+
+Please submit your Counter-Notice to Panameer’s Copyright Agent by submission of this online form or by
+email to legalnotices@panameer.com.
+Trademark and Other Intellectual Property Right Infringement Notices
+For claims of trademark infringement or other claims of intellectual property infringement, you must
+similarly provide us with clear information about the location of the allegedly infringing work, including
+the URL or link where the work is located; complete information about your trademark or other
+intellectual property rights, including identifying the trademarked word(s) or symbol(s), trademark
+registration number(s), and a direct link to the trademark record(s), if available; and your contact
+information (name, physical address, email address and telephone number). Please also indicate your
+relationship to the trademark holder, including whether you are the trademark holder or whether you are
+an authorized representative for the holder.
+Please submit your notice to Panameer’s Legal Department by submission of this online form or by email
+to legalnotices@panameer.com.
+
+
+===== DOC: fixed-price-escrow-instructions | ESCROW(counsel) =====
+
+If a Service Buyer and a Provider (defined below) enter into a Fixed-Price Work Order on the Panameer site, these
+Fixed Price Service Work Order Escrow Instructions (“Escrow Instructions”) apply. These Escrow
+Instructions govern Fixed-Price Escrow Accounts. If you have a Fixed-Price Work Order and wish to make or
+receive a miscellaneous or bonus payment, those activities are governed by the Hourly, Bonus, and
+Expense Payment Agreement with Escrow Instructions.
+To the extent permitted by applicable law, we may modify these Escrow Instructions without prior notice
+to you, and any revisions to these Escrow Instructions will take effect when posted on the Site unless
+otherwise stated. The version of these Escrow Instructions in effect on the date any Fixed-Price Work Order
+is entered into apply to that Work Order. Please check the Site often for updates.
+These Escrow Instructions hereby incorporate by reference the Terms of Service (“Terms of Service”).
+Capitalized terms not defined in these Escrow Instructions are defined in the User Agreement or
+elsewhere in the Terms of Service, or have the meanings given such terms on the Site. For purposes of
+these Escrow Instructions, the term “Provider” means a User with a Provider and/or Recruiter account.
+Escrow services are provided by Payment Escrow Inc. (“Payment Escrow”) pursuant to Internet Escrow
+Agent license no. 9635086, issued by the California Department of Financial Protection and Innovation.
+
+1. DIGITAL SIGNATURE AND COMMUNICATIONS
+By clicking to fund Escrow (a “Funding Approval”) or to accept a Fixed-Price Work Order, Service Buyer and
+Provider are deemed to have executed these Escrow Instructions electronically, effective on the date
+Provider clicks to accept the engagement, pursuant to California Civil Code Section 1633.8 and the
+federal Electronic Signatures in Global and National Commerce Act, 15 U.S.C. Sec. 7001, et seq., as may
+be amended from time to time (the "E-Sign Act"). Doing so constitutes an acknowledgement that Service Buyer
+and Provider agree to conduct the transaction electronically, and are able to electronically receive,
+download, and print these Escrow Instructions. All references to the Escrow in these Escrow Instructions
+will include the initial Funding Approval and any additional Funding Approval for a Fixed-Price Work Order.
+Service Buyer and Provider agree that any written communications required herein may be provided
+electronically, including by email or support ticket, if applicable. Any communication sent to Panameer via
+U.S. mail or similar service will be deemed timely if received by Panameer by the applicable deadline.
+
+2. ACCEPTANCE OF ESCROW INSTRUCTIONS
+Once a Service Buyer and Provider have agreed to a Service Work Order, and the Service Buyer and Provider have
+selected “Agree” on the send offer, accept offer, or pages relating to the Service Work Order to accept the
+Terms of Service (including these Escrow Instructions), these Escrow Instructions constitute a binding
+agreement between Service Buyer, Provider, and Payment Escrow (collectively, the “Parties”). Service Buyer and
+Provider must execute (by digital signature or by a method mutually agreed upon by both parties),
+and Payment Escrow must agree to, any supplemental instruction or addition, deletion or alteration
+thereto in writing (collectively the “Supplemental Escrow Instruction”). Payment Escrow reserves the
+right to reject any Supplemental Escrow Instruction.
+
+3. DEPOSIT OF FUNDS INTO ESCROW
+By sending a Work Order offer to Provider or accepting a Work Order offer from Provider, Service Buyer agrees to deposit project
+funds for the amount of the first Milestone (as defined on the Site), or, if there are no Milestones, the full amount of the
+Service Work Order. Additional Milestones may be funded on the same Work Order by Service Buyer by selecting the button to add an
+additional Milestone or to activate the next Milestone on the Site. Project funds deposited by Service Buyer remain in the Service Buyer
+Escrow Account until they are released to the Provider Escrow Account or released to Service Buyer Escrow Account. Payment
+Escrow will release project funds held in escrow pursuant to Section 4 of these Escrow Instructions (Release and Delivery of
+Amounts in Escrow).
+
+3.1 BULK MILESTONE FUNDING
+Service Buyer may fund multiple Milestones in a single transaction session ("Bulk Funding"). Each Milestone funded through a Bulk
+Funding action constitutes an independent Escrow deposit and will be assigned a unique Escrow Transaction Identifier. Bulk
+Funding does not constitute a Release Instruction. Each funded Milestone remains subject to the Release Conditions set
+forth in Section 4 and may only be released pursuant to an explicit Release Instruction by Service Buyer.
+
+4. RELEASE AND DELIVERY OF AMOUNTS IN
+ESCROW
+Service Buyer and Provider irrevocably authorize and instruct Payment Escrow to release applicable portions
+of project funds held in the Fixed-Price Escrow Account (each portion, a “Release”) to the Provider
+Escrow Account or Service Buyer Escrow Account, as applicable, based on the instructions described in this
+Section 4 (each such instruction, a “Release Condition”), or as otherwise required by applicable law or
+expressly permitted by the Terms of Service. The amount of each Release will be delivered to the
+applicable Escrow Account in accordance with Provider’s or Service Buyer’s instructions, these Escrow
+Instructions, and the other Terms of Service. All project funds released pursuant to these Escrow
+Instructions are subject to applicable fees as described in the Fee and ACH Authorization Agreement.
+
+4.1 RELEASE OF FUNDS TO PROVIDER
+Provider and Service Buyer authorize and instruct Payment Escrow to immediately release project funds to the Provider Escrow
+Account on the occurrence of any of the following Release Conditions, such authorization and instruction to be irrevocable
+except as expressly provided in these Escrow Instructions:
+1. Service Buyer affirmatively selects the option to release project funds for a Milestone or Service Work Order to Provider.
+2. Service Buyer does not take any action for 14 calendar days from the date of Provider’s Release request, in which
+case Provider and Service Buyer agree that Payment Escrow is authorized and instructed to immediately release to
+Provider the amount associated with the applicable Milestone in connection with such Release request.
+3. Service Buyer and Provider have jointly submitted Supplemental Escrow Instructions in writing and signed by both
+Service Buyer and Provider to Payment Escrow at legalnotices@panameer.com requesting a Release to Provider
+Escrow Account, and Payment Escrow has agreed to the Supplemental Escrow Instructions.
+4. Service Buyer has declined Arbitration or failed to make its Arbitration Payment (defined below) pursuant to the Dispute
+Assistance Program, and Provider has agreed to Arbitration and submitted its Arbitration Payment.
+
+5. Service Buyer has failed timely to respond to a Notice of Dispute (defined below) or otherwise failed to comply with the
+Dispute Assistance Program, as required by the Escrow Disputes Team.
+6. Submittal of a final award of an arbitrator appointed pursuant to the Dispute Assistance Program in favor of
+Provider or to the extent the award is in favor of Provider.
+7. Issuance of an order by a court, arbitrator, or other judicial body of apparent competent jurisdiction in favor of
+Provider, in whole or in part, to the extent required by the order.
+8. A condition to release funds to Provider described elsewhere in these Escrow Instructions applies.
+
+4.1.1 BULK RELEASE INSTRUCTIONS
+Where Service Buyer issues a Release Instruction for multiple Milestones simultaneously ("Bulk Release"), each such Release
+Instruction shall be deemed a separate, independent, and irrevocable authorization with respect to each individual Milestone.
+Service Buyer acknowledges that a Bulk Release constitutes individual Release Instructions for each Milestone listed and that the
+Dispute Assistance rights described in Section 6 apply separately to each such Milestone. Payment Escrow shall process
+each Milestone Release as a distinct transaction. A new Transaction Identifier is not generated at release; Milestone Release
+events reference the original Escrow Transaction Identifier assigned at funding.
+
+4.2 RELEASE OF FUNDS TO SERVICE BUYER
+Provider and Service Buyer authorize and instruct Payment Escrow to immediately release project funds to the Service Buyer Escrow
+Account on the occurrence of any of the following Release Conditions, such authorization and instruction to be irrevocable
+except as expressly provided in these Escrow Instructions:
+1. Provider cancels the Service Work Order or accepts Service Buyer’s request to cancel the Service Work Order (as described
+in Section 4.4), and project funds for a Milestone or the Service Work Order are held in Escrow.
+2. Service Buyer and Provider have jointly submitted Supplemental Escrow Instructions in writing and signed by both
+Service Buyer and Provider to Payment Escrow at legalnotices@panameer.com requesting a Release to the Service Buyer
+Escrow Account, and Payment Escrow has agreed to the Supplemental Escrow Instructions.
+3. Service Buyer and Provider agree to close the Service Work Order without release of funds to the Provider Escrow
+Account.
+4. Provider has declined Arbitration or failed to make its Arbitration Payment pursuant to the Dispute Assistance
+Program.
+5. Provider has failed to timely respond to a request for a refund submitted through the platform, Notice of
+Dispute, or otherwise failed to comply with the Dispute Assistance Program, as required by the Escrow Disputes
+Team.
+6. Service Buyer shows that Provider has failed to render services in a professional and workmanlike manner in
+accordance with the professional experience represented by Provider to Service Buyer.
+7. Service Buyer shows that Provider has taken more than 7 days to respond to Service Buyer communications relevant to the
+Work Product.
+
+8. Provider failed to deliver Work Product to Service Buyer within the timeframe agreed upon with Service Buyer and did not
+provide a minimum of 24 hours' advance notice to Service Buyer in the event Provider was unable to meet the
+deadline.
+9. Submittal of a final award of an arbitrator appointed pursuant to the Dispute Assistance Program in favor of
+Service Buyer or to the extent the award is in favor of Service Buyer.
+10. Issuance of an order of a court, arbitrator, or other judicial body of apparent competent jurisdiction in favor of
+Service Buyer, in whole or in part, to the extent required by the order.
+11. A condition to release funds to Service Buyer described elsewhere in these Escrow Instructions applies.
+12. For Service Work Orders entered through Project Catalog, Service Buyer has failed to respond to a request for project
+requirements within 48 hours, at which point any funds in escrow will be released to Service Buyer and the Work Order will
+be closed.
+
+4.3 DORMANT ENGAGEMENTS
+To be fair to Service Buyers and Providers, Panameer has a procedure for Fixed-Price Work Orders that appear to be Dormant
+Engagements (as defined below). For purposes of determining dormant status, “activity” means a change to the Service
+Work Order, including Milestone updates or requests, Fixed-Price Escrow Funding, Fixed-Price Escrow Release, Fixed-Price
+Escrow Refunds, Funding requests, Release requests, requests to close the Fixed-Price Work Order, or actions under the
+Dispute Assistance Program.
+A “Dormant Engagement” is a Fixed-Price Work Order that has a Fixed-Price Escrow Account with a balance but has had no
+activity for 90 consecutive calendar days after the last Milestone date contained in the Service Work Order terms (“Dormant
+Date”). Dormant Engagements are subject to the following rules:
+1. Panameer will notify Service Buyer when the Fixed-Price Work Order becomes Dormant.
+2. If the Service Buyer does not take any action within 7 calendar days after the Dormant Date and notification, Panameer will
+notify Provider that the Fixed-Price Work Order is Dormant (“Provider Notice of Dormant Engagement”).
+3. If Provider submits a Release request within 7 calendar days after the Provider Notice of Dormant
+Engagement and Service Buyer does not take any action for 14 calendar days from the date of the Release request,
+Provider and Service Buyer authorize and irrevocably instruct Payment Escrow to immediately release to Provider
+the amount related to the Milestone with the Release request.
+4. If neither Provider nor Service Buyer take any action for 7 calendar days after the Provider Notice of Dormant
+Engagement, Provider and Service Buyer authorize and irrevocably instruct Payment Escrow to immediately release
+escrow funds to the Service Buyer Escrow Account.
+
+4.4 REFUNDS AND CANCELLATIONS
+Service Buyer and Provider are encouraged to come to a mutual agreement if refunds or cancellations are necessary. If there are
+no project funds in Escrow, Service Buyer and Provider have the ability to cancel the Service Work Order by clicking to close the
+Service Work Order. If project funds are held in Escrow, refunds and cancellations must be initiated by Service Buyer or Provider by
+following the steps in this Section.
+
+4.4.1 REFUNDS AND CANCELLATIONS BY PROVIDER
+If Provider wants to cancel a Service Work Order with funds held in Escrow, Provider must select “End
+Work Order” on the Panameer platform. When Provider ends the Service Work Order on the Panameer platform,
+Provider and Service Buyer agree that Payment Escrow is authorized and irrevocably instructed to
+immediately release to the Service Buyer Escrow Account all funds held in Escrow on the Service Work Order at
+that time.
+Provider may issue a refund to Service Buyer up to the amount paid on a Service Work Order in the past 180 days
+by selecting “Give a Refund” on the Panameer platform. Provider may not issue a refund in an amount
+greater than the combined amount of funds held in Provider Escrow Account, funds for transactions
+pending to be placed in the Provider Escrow Account, and funds for submitted Milestones. By
+selecting the option to give a refund, Provider agrees that Payment Escrow is authorized and
+irrevocably instructed to immediately release to the Service Buyer Escrow Account all Escrow funds currently
+held in the Provider Escrow Account and such funds as may be placed into the Provider Escrow
+Account once the funds are available, until the entire refund is provided to Service Buyer.
+
+4.4.2 CANCELLATIONS BY SERVICE BUYER
+If Service Buyer wants to cancel a Service Work Order with funds held in Escrow, Service Buyer must select “End Work Order”
+on the Panameer platform. Provider must select the option to either approve or dispute Service Buyer’s
+cancellation within 7 calendar days. If Provider approves the cancellation, Provider and Service Buyer agree
+that Payment Escrow is authorized and irrevocably instructed to immediately release to the Service Buyer
+Escrow Account all funds held in Escrow on the Service Work Order at that time. If Provider is using the
+Site on a mobile device and does not have the ability to select the option to approve or dispute the
+cancellation on the mobile website or application, Provider must dispute Service Buyer’s cancellation via
+support ticket within 7 calendar days. If Provider takes no action within 7 calendar days from the date
+notification of the cancellation is sent to Provider by Panameer, Provider and Service Buyer agree that
+Payment Escrow is authorized and irrevocably instructed to immediately release to the Service Buyer Escrow
+Account all funds held in Escrow on the Service Work Order at that time. If Provider disputes the
+cancellation, Provider and Service Buyer will be offered Panameer Dispute Assistance (as described in Section
+6).
+
+4.5 VIOLATION OF PANAMEER TERMS OF SERVICE OR LAW
+Provider and Service Buyer acknowledge and agree that if, in Payment Escrow’s sole discretion, Payment
+Escrow believes that fraud, illegal activity, or a violation of the Terms of Service has been committed or
+is being committed or attempted, then Service Buyer and Provider irrevocably authorize and instruct Payment
+Escrow to take such actions as deemed appropriate, in Payment Escrow’s sole discretion and in
+accordance with applicable law, in order to prevent or remedy such acts, including without limitation, to
+return the funds associated with such acts to their source of payment, as further described in Section 6.3
+of the User Agreement. This Section 4.5 allows Payment Escrow—as permitted by law but otherwise in
+its sole discretion—to return funds to Service Buyer’s Payment Method, continue to hold funds in Escrow, release
+funds to the Provider Escrow Account, or to turn funds over to third parties such as law enforcement.
+
+5. INSTRUCTIONS IRREVOCABLE
+
+Service Buyer and Provider are deemed to and hereby agree that the instruction to Payment Escrow and its
+wholly owned subsidiaries to release funds is irrevocable, except as explicitly provided in these Escrow
+Instructions. Without limiting the foregoing, Service Buyer’s instruction to Payment Escrow and its wholly owned
+subsidiaries to release payment to Provider is irrevocable. Such instruction is Service Buyer’s authorization to
+transfer funds to the Provider Escrow Account from the Service Buyer Escrow Account or authorization to
+charge Service Buyer’s Payment Method. Such instruction is also Service Buyer’s representation that Service Buyer has received,
+inspected, and accepted the subject work or expense. Service Buyer acknowledges and agrees that upon receipt
+of Service Buyer’s instruction to release payment to the Provider Escrow Account, Payment Escrow will
+transfer funds to the Provider Escrow Account and that Panameer, Payment Escrow, and other Affiliates
+have no responsibility to and may not be able to recover such funds. Therefore, and in consideration of
+the services described in these Escrow Instructions and the Terms of Service, Service Buyer agrees that once
+Payment Escrow or its subsidiaries or Affiliates have charged Service Buyer’s Payment Method, the charge is
+non-refundable. Service Buyer and Provider further agree that the only manner in which an instruction to
+Payment Escrow is revocable is if Service Buyer and Provider have jointly submitted Supplemental Escrow
+Instructions in writing and signed by both Service Buyer and Provider to Payment Escrow at
+legalnotices@panameer.com requesting that Payment Escrow take specific action with respect to the
+funds in its possession, and Payment Escrow has agreed to the Supplemental Escrow Instructions.
+
+6. DISPUTE ASSISTANCE PROGRAM
+If Service Buyer and Provider fail to come to a mutual resolution by way of the Refund and Cancellation
+process as stated in Section 4.4, Panameer provides the dispute assistance program administered by
+Panameer and described in this Section 6 (the “Dispute Assistance Program”) as a mechanism to resolve
+the dispute. If the funds in dispute are held in Escrow, the Dispute Assistance Program will proceed as
+described in Section 6.1. If the funds in dispute have been released, the Dispute Assistance Program will
+proceed as described in Section 6.2. The Dispute Assistance Program is not available for disputes filed or
+initiated past the Dispute Assistance deadlines, as set forth in Sections 6.1 and 6.2, as applicable. The
+Dispute Assistance Program is offered as a form of non-binding assistance to facilitate communication
+and potential resolution of disputes between Service Buyers and providers. The Dispute Assistance Program as
+administered by Panameer in this Section 6 does not evaluate the quality or functionality of work and
+cannot render binding judgment or determination as to the parties’ respective rights to the disputed
+funds. Fixed-Price Work Orders with Enterprise Service Buyers or Panameer Business Service Buyers (defined in the Fee and
+ACH Authorization Agreement) are not subject to Sections 6 and 7, regarding Panameer’s Dispute
+Assistance Program and Arbitration, respectively.
+
+6.1 DISPUTE OF FUNDS IN ESCROW
+This Section applies to disputes over funds that are held in Escrow as of the date the dispute is filed
+(“Escrow Dispute”). The scope of the Escrow Dispute may cover the entirety of the Fixed-Price Work Order
+and all Milestones previously funded, approved, and released. In the event of an Escrow Dispute, funds in
+Escrow will remain in Escrow while the Dispute Assistance Program or Arbitration, as applicable, is being
+administered. The Dispute Assistance Program for an Escrow Dispute will be administered as set forth
+below:
+1. Escrow Dispute Assistance Deadline: Escrow Disputes must be initiated before the funds in
+Escrow have been released in order to be eligible for the Dispute Assistance Program under
+
+this Section. Disputes over funds that have been released from Escrow may be eligible for the
+Dispute Assistance Program described in Section 6.2.
+2. Initiating A Dispute: Service Buyers have the option to release partial milestone payments or request
+an Escrow refund. In turn, Providers and Recruiters may initiate an Escrow Dispute when a
+Service Buyer fails to release a Milestone payment, releases a partial milestone payment, request an
+escrow refund, or ends the project with an escrow balance, despite any purported delivery of
+work. More information on how to file a dispute on active or ended Work Orders can be found
+
+here
+
+3. Notice of Escrow Dispute: Once a dispute has been filed, Service Buyer will be notified of the Escrow
+Dispute on the platform ("Notice of Escrow Dispute"). The Notice of Escrow Dispute will
+request information and supporting documentation from Service Buyer.
+4. Lack of Participation: Service Buyer must respond to the Notice of Escrow Dispute within 5 calendar
+days. If Service Buyer does not timely respond to the Notice of Escrow Dispute, Service Buyer and Provider
+agree that the lack of timely response acts as an irrevocable authorization and instruction to
+Payment Escrow to release the funds in Escrow from Service Buyer to Provider.
+5. Non-Binding Assistance: After Service Buyer responds to the Notice of Escrow Dispute, the Escrow
+Disputes Team will review the documentation submitted and known information available on
+the Site that pertains to the dispute. The Escrow Disputes Team will facilitate communication
+between the parties and help assess whether mutual resolution is possible. The Escrow
+Disputes Team does not evaluate the quality or functionality of work and cannot render
+binding judgment or determination as to the parties’ respective rights to the disputed funds.
+6. Resolution of Escrow Dispute: If the Escrow Disputes Team is able to facilitate a resolution
+between Service Buyer and Provider that both Service Buyer and Provider agree to in writing, Service Buyer and
+Provider agree that Payment Escrow is authorized and irrevocably instructed to
+immediately release Escrow funds in accordance with the agreed-upon resolution. This will
+result in a closure of the Escrow dispute ticket.
+7. No Resolution: If no resolution of the Escrow dispute has been reached within 14 calendar
+days of the Notice of Escrow Dispute, or if the Escrow Disputes Team determines in its sole
+discretion that no resolution between the parties is possible through the Dispute Assistance
+Program, the Escrow Disputes Team will issue a “Notice of Non-Resolution” and the Escrow
+dispute will be referred to Arbitration, as set forth in Section 7 below.
+
+6.2 DISPUTE OF FUNDS RELEASED
+This Section applies to disputes filed by Service Buyers or Providers over funds that have been released from
+Escrow as of the date the dispute is filed (“Dispute Mediation”). The scope of the Dispute Mediation may
+cover any portion of or the entirety of the Fixed Price Work Order and any Milestone previously funded,
+approved, and released. The Dispute Assistance Program for Dispute Mediation will be administered as
+set forth below:
+
+1. Dispute Mediation Deadline: Dispute Mediation must be initiated within 30 calendar days of
+the date that funds in Escrow have been released to the Provider in order to be eligible for
+the Dispute Assistance Program under this Section 6.2. Any dispute over funds that have been
+released from Escrow more than 30 days prior to the date the dispute is filed is no longer
+eligible for submission to the Dispute Assistance Program.
+2. Initiating Dispute Mediation:
+a. Requesting a Refund: Service Buyers may initiate Dispute Mediation for disputes over
+funds that have been released from Escrow by requesting a refund on the platform.
+If the Provider rejects the request for a refund, grants a partial refund that is
+subsequently rejected by the Service Buyer, or takes no action, the dispute will be referred
+to the Dispute Assistance Program. More information on how to file a dispute on
+active or ended Work Orders can be found here.
+b. Contacting Support: In addition to the above method, any User may contact
+Panameer Support for assistance initiating Dispute Mediation.
+
+3. Notice of Dispute Mediation: Once a dispute has been initiated, the Panameer Dispute Mediation
+team (“Dispute Mediation Team”) will notify Service Buyer and Provider of the Dispute Mediation in
+writing and request information and supporting documentation from the parties (“Notice of
+Dispute Mediation”). Service Buyer and Provider must respond to the Notice of Dispute Mediation
+within 5 calendar days.
+4. Non-Binding Assistance: Once both Service Buyer and Provider respond to the Notice of Dispute
+Mediation, the Dispute Mediation Team will review the documentation submitted and any
+information available on the Site that pertains to the dispute. The Dispute Mediation Team will
+facilitate communication between the parties and help assess whether mutual resolution is
+possible. The Dispute Mediation Team does not evaluate the quality or functionality of work
+and cannot render binding judgment or determination as to the parties’ respective rights to
+the disputed funds.
+5. Resolution of Dispute Mediation: If the Dispute Mediation Team is able to facilitate a
+resolution between Service Buyer and Provider, and if Service Buyer and Provider agree in writing to the
+resolution, the Dispute Mediation Team will send the applicable party instructions on
+transferring payment, if any, to an Escrow Account. By agreeing in writing to the resolution,
+Service Buyer and Provider agree that Payment Escrow is authorized and irrevocably instructed to
+immediately release Escrow funds in accordance with the agreed-upon resolution. This will
+result in the closure of the Dispute Mediation ticket.
+6. No Resolution: If no resolution of the dispute has been reached within 14 calendar days of the
+Notice of Dispute Mediation, or if the Dispute Mediation Team determines in its sole discretion
+that no resolution between the parties is possible through the Dispute Assistance Program,
+the Dispute Mediation Team will issue a “Notice of Non-Resolution,” and the dispute will be
+referred to Arbitration, as set forth in Section 7 below.
+
+7. ARBITRATION
+
+After a “Notice of Non-Resolution” is issued from the Panameer Dispute Assistance Program, Provider
+and Service Buyer each has the right to demand Arbitration of a Fixed-Price Work Order if the Fixed-Price Escrow
+associated with the Fixed-Price Work Order has been funded at least once. The demand for Arbitration
+must be communicated to the Escrow Disputes Team or Dispute Mediation Team, as applicable, within 7
+calendar days of the date of the Notice of Non-Resolution. In any Arbitration, each of you and the other
+User is a “Dispute Party,” and collectively you are the “Dispute Parties.”
+Any Arbitration under this Section 7 will be conducted by a neutral third-party Arbitration service (the
+"Arbitration Service Provider"), Ejudicate, Inc. d/b/a BRIEF, unless Panameer chooses another Arbitration
+service. The Arbitration rules and fees are set out in Appendix A to these Escrow Instructions.
+
+7.1 ARBITRATION INITIATION PROCEDURE
+1. Notice of Arbitration Demand: Service Buyer and Provider have 7 calendar days after receiving the
+Notice of Non-Resolution to notify Panameer via a dispute ticket of their intent to initiate
+Arbitration and to submit payment. The Panameer Dispute Team will then provide a “Notice of
+Arbitration Demand” to both Service Buyer and Provider and provide the Dispute Parties with
+information on how to submit Service Buyer’s or Provider’s applicable portion of the costs of
+Arbitration (the “Arbitration Payment”).
+2. Payment Escrow Disputes:
+a. Rejection of Arbitration or non-participation by both parties: If both Dispute
+Parties decline to take the matter to Arbitration or do not make the Arbitration
+Payment within 7 calendar days of the Notice of Non-Resolution, Service Buyer and
+Provider agree that Payment Escrow is authorized and irrevocably instructed to
+immediately release the funds in Escrow, if any, to the Service Buyer’s primary payment
+method on file. This will close the Escrow Dispute ticket. To the extent the parties
+wish to take legal action to enforce their contractual rights, Panameer may provide
+contact information on file for Service Buyer or Provider, consistent with Panameer’s
+Privacy Policy.
+b. Rejection of Arbitration or non-participation by one party: If one party elects to
+take the matter to Arbitration and has submitted the Arbitration Payment
+(“Participating Party”), and the other party rejects Arbitration, fails to submit the
+Arbitration Payment or does not respond within 7 calendar days of the Notice of
+Non-Resolution (“Non-Participating Party”), Provider and Service Buyer agree that
+Payment Escrow is authorized and irrevocably instructed to immediately release
+the funds in Escrow, if any, to the Participating Party. This will close the Escrow
+Dispute ticket. To the extent the parties wish to take legal action to enforce their
+contractual rights, Panameer may provide contact information on file for Service Buyer or
+Provider, consistent with Panameer’s Privacy Policy.
+
+3. Panameer Dispute Mediation
+
+1. Rejection of Arbitration or non-participation by both parties: If both Dispute Parties decline
+to take the matter to Arbitration or do not respond to Panameer’s Notice of Non-Resolution
+
+within 7 calendar days, the Dispute Mediation ticket will be closed. To the extent the parties
+wish to take legal action to enforce their contractual rights, Panameer may provide contact
+information on file of Service Buyer or Provider, consistent with Panameer’s Privacy Policy.
+2. Rejection of Arbitration or non-participation by one party: If one party elects to take the
+matter to Arbitration and has submitted the Arbitration Payment, and the other party rejects
+Arbitration, fails to submit the Arbitration Payment or does not respond within 7 calendar
+days of the Notice of Non-Resolution, the participating party may pay the full Arbitration fee
+for both parties to proceed to Arbitration. In the event that the participating party pays the
+full Arbitration fee for both parties, Provider and Service Buyer agree to proceed to binding
+Arbitration pursuant to the process listed below and further agree that the non-prevailing
+party will be responsible for paying any costs and fees incurred by the prevailing party in the
+Arbitration, as determined by the Arbitrator and included in the Arbitration award. If the
+participating party does not wish to pay the full Arbitration fee for both parties, the Escrow
+Dispute ticket will be closed. To the extent the parties wish to take legal action to enforce
+their contractual rights, Panameer may provide contact information on file for Service Buyer or
+Provider, consistent with Panameer’s Privacy Policy.
+
+4. Arbitration Instructions: If both parties timely submit the Arbitration Payment, or if one party
+elects to pay the full Arbitration fee for both parties, Panameer will instruct the parties on the
+process for initiating the Arbitration with the Arbitration Service Provider. After the parties
+have initiated the Arbitration, Panameer will provide the Arbitration Service Provider with
+relevant documentation, including information collected in the Escrow Dispute or Dispute
+Mediation process and contents of the Contract Room. The scope of Arbitration may cover
+the entirety of the Fixed-Price Work Order and all Milestones previously funded, approved, and
+released.
+
+7.2 AUTHORIZATION TO COLLECT ARBITRATION FEES
+When you electronically authorize payment of the invoice for the Arbitration Payment as emailed to you
+by Panameer, you irrevocably authorize and instruct (i) Payment Escrow or its Affiliates, as your agent, to
+charge your Payment Method for the amount of the payment for credit to your Escrow Account; and (ii)
+Payment Escrow, as escrow agent, to immediately release that amount from your Escrow Account and
+pay it to Panameer. If Payment Escrow or its Affiliates cannot collect sufficient funds to fulfill the Escrow
+release instructions for any reason, Payment Escrow has no obligation with respect to making the
+payment to Panameer on your behalf, and you will be considered as not having paid the Arbitration
+Payment as required by this Section 7.2.
+7.3 LIMITATIONS PERIOD FOR ARBITRATIONS
+If both Service Buyer and Provider fail to demand Arbitration or fail to timely submit the Arbitration payments
+within 7 calendar days of the Notice of Non-Resolution, then the dispute is no longer eligible for
+Arbitration under this process, and Service Buyer and Provider will be deemed to have irrevocably authorized
+and instructed Payment Escrow to, and Payment Escrow will, release all funds in the Fixed-Price Escrow
+Account to the Service Buyer’s Escrow Account.
+
+7.4 ARBITRATION AWARD
+Service Buyer and Provider agree that the arbitrator of the Arbitration Service Provider is authorized to decide
+the Escrow Dispute or Dispute Mediation within its sole discretion. You agree that the arbitrator’s award
+is final and binding, that it may be entered in and enforced by any court of competent jurisdiction, and
+that if the arbitrator delivers notice of any award to Panameer, then Panameer and Payment Escrow have the
+right to treat such notice as conclusive and act in reliance thereon. If Service Buyer or Provider refuses to comply with
+the Arbitrator’s award, Panameer will suspend the non-complying Party’s User account, as defined in Section 1.4 of the User
+Agreement, which may impact the non-complying Party’s ability to withdraw funds.
+
+8. SERVICE FEES FOR ESCROW FUNDS RELEASED
+FOLLOWING DISPUTE ASSISTANCE
+All Escrow funds released under the Dispute Assistance Program are subject to the normal Service Fees
+associated with Escrow Accounts, as detailed in the User Agreement and these Escrow Instructions.
+
+9. NOTICES
+All notices to a User required by these Escrow Instructions will be made via email sent by Panameer to the
+User’s registered email address. Users are solely responsible for maintaining a current, active email
+address registered with Panameer, for checking their registered email address and for responding to
+notices sent by Panameer to the User’s registered email address.
+
+10. COOPERATION WITH THE DISPUTE
+ASSISTANCE PROGRAM
+All claims, disputes or other disagreements between you and another User that are covered by the
+Dispute Assistance Program must be resolved in accordance with the terms in the Dispute Assistance
+Program. All claims filed or brought contrary to the Dispute Assistance Program will be considered
+improperly filed, unless otherwise required by law, and Panameer will have the right to take any other
+action, including suspension or termination of your User Account, as defined in Section 1.4 of the User
+Agreement, which may impact your ability to withdraw funds, and any other legal action as Panameer
+deems appropriate in its sole discretion.
+
+11. ABUSE
+Panameer, in its sole discretion, reserves the right to suspend or terminate your User Account, as defined
+in Section 1.4 of the User Agreement, immediately upon giving notice to you if Panameer believes you may
+be abusing the Dispute Assistance Program or as otherwise permitted by the Terms of Service, which
+may impact your ability to withdraw funds. However, any disputes for any Fixed-Price Work Orders that
+existed prior to termination will be subject to the Terms of Service.
+
+12. NO RESPONSIBILITY FOR SERVICES OR
+PAYMENTS
+
+Panameer and Affiliates merely provide a platform for Internet payment services. Panameer and Affiliates do
+not have any responsibility or control over the Provider Services that Service Buyer purchases. Nothing in this
+Agreement deems or will be interpreted to deem Panameer or any Affiliate as Service Buyer’s or Provider’s
+agent with respect to any Provider Services, or expand or modify any warranty, liability or indemnity
+stated in the Terms of Service. For example, Panameer does not guarantee the performance, functionality,
+quality, or timeliness of Provider Services or that a Service Buyer can or will make payments.
+APPENDIX A
+RULES AND FEES FOR ARBITRATIONS CONDUCTED BY THE ARBITRATION SERVICE PROVIDER,
+BRIEF
+This Appendix A summarizes certain pertinent contractual terms that BRIEF has agreed to in providing
+arbitration services to Service Buyers and Providers who choose BRIEF as their arbitrator under the FixedPrice Escrow Instructions. BRIEF is solely a third-party arbitration service provider. Panameer and its
+Affiliates have no direct or indirect affiliate, partnership, joint venture, ownership or control relationship
+with or interest in BRIEF, and therefore Panameer and its Affiliates assume no responsibility or liability for
+the services of BRIEF.
+
+ARBITRATOR SELECTION
+All Arbitrations by Brief are conducted by a single arbitrator. The arbitrator is selected by Brief based on
+jurisdiction of the matter, skillset, experience, impartiality and neutrality, amongst other factors. The
+arbitrator is required to render a ruling fairly, independently, impartially and without any conflict of
+interest. The arbitrator will provide a ruling over the matter, but cannot provide independent legal advice
+to any party.
+RULES OF THE PROCEEDINGS
+1. The amount at issue in any claims or counterclaims relating to a Fixed-Price Work Order will be
+limited to the sum still held in Escrow and the sum previously released from Escrow for the
+Fixed-Price Work Order.
+2. The language of the Arbitration will be English.
+3. All proceedings will be “on documents,” unless the parties opt for and fund payment for the
+additional cost of a live hearing (see fees below). The evidence admissible will consist solely
+and exclusively of documents and communications between the parties and related to the
+Work Order, and testimony if a live hearing is conducted. The arbitrator's award will be based on
+the supporting, relevant, admissible documents and statements. Once arbitration is initiated,
+the failure of one party or the other to respond to an arbitrator request or otherwise continue
+to participate in the Arbitration will not prevent the arbitrator from making an award.
+4. Each party is given an opportunity to submit, in writing or through digital representations, the
+party’s testimony and supporting evidence through the BRIEF process and platform. Each
+party is also given an opportunity to rebut the other party’s testimony or supporting
+evidence. All testimony submitted to BRIEF is submitted under penalty of perjury. Failure to
+respond to a claim will lead to a waiver of any defenses and may result in an entry of default.
+
+5. All properly submitted testimony and evidence will be reviewed by the arbitrator after the
+parties complete their submissions.
+6. The Arbitration generally will conclude within 30 calendar days from the date of submission
+to the Arbitration Service Provider, with reasonable extensions provided only as necessary.
+7. All awards will be final and non-appealable, and will be enforceable by any court of
+competent jurisdiction.
+
+COMMUNICATIONS, DOCUMENTS, AND TESTIMONY
+1. All communications between the parties and the arbitrator shall occur over the BRIEF
+platform. The arbitrator will not engage in ex-parte communications; rather, communications
+by either party to the arbitrator will be shared with all parties.
+2. Any and all submissions of testimony must be submitted through the BRIEF platform, which
+can support the following document types: .png, .jpg, .jpeg, .pdf.
+3. The parties do not engage in direct discovery, including interrogatories, requests for
+admissions or production, or depositions. At the arbitrator’s sole discretion, the arbitrator may
+permit or require the submission of additional written statements from the parties
+(“Additional Arguments”). The arbitrator is not required to permit Additional Arguments. If
+the arbitrator permits Additional Arguments, the arbitrator will establish the schedule and
+rules for the submission of such Additional Arguments, including any limits on the length of
+such Additional Arguments.
+
+THE AWARD
+BRIEF will provide Panameer and the parties with a written award promptly upon the conclusion of the
+Arbitration, and in no event later than 14 calendar days after conclusion of the Arbitration. At the
+arbitrator’s sole discretion, the arbitrator may provide written reasons for the Award to the parties. The
+arbitrator may also issue orders to protect the confidentiality of proprietary information. Once rendered,
+an arbitrator’s award is final, and cannot be appealed. The award will only be modified or edited after it
+is issued if such change is due to the arbitrator’s error or otherwise at the arbitrator’s discretion.
+
+FEES
+The fee for Arbitrations by BRIEF is $675 for claims with less than $20,000 in dispute. An additional fee
+is assessed for claims that exceed $20,000, which will be calculated as a percentage of the claim
+amount. The Service Buyer and Provider may also choose to pay a $450 fee to have a live hearing with the
+arbitrator as part of the Arbitration; this additional service and cost is completely optional.
+All fees will be collected at the start of the arbitration. For all claims, Service Buyer and Provider will each be
+responsible for paying $337.50. One party may, as described above, pay the full $675 for both parties to
+proceed to arbitration. They will also share the cost of the live hearing if they choose that option.
+Panameer will cover the additional initial costs of each arbitration.
+
+
+===== DOC: accessibility-statement | CLEAN(fill specifics) =====
+
+Panameer is committed to providing an accessible experience to our customers and the public, regardless of background,
+nationality, race, ethnicity, gender, gender identity, sexual orientation, disability status, veteran status, or other similarly
+protected characteristics. This Panameer Digital Accessibility Statement concerns our commitment to providing access to
+persons with disabilities. Please also see our Nondiscrimination Statement.
+Please contact our Accessibility Coordinator at accessibilitycoordinator@panameer.com or send a letter addressed to:
+Attn: Accessibility Coordinator, 3490 S 4400 W #70008 West Valley City, UT 84120-9998, USA, to learn more about
+accessibility support services at Panameer.
+
+Reasonable Accommodations
+Individuals who need a reasonable accommodation to access Panameer’s services and information should send an email to
+accessibilitycoordinator@panameer.com or send a letter addressed to: Attn: Accessibility Coordinator, 3490 S 4400 W
+#70008 West Valley City, UT 84120-9998, USA to provide information about the nature of the requested accommodation.
+Requesters must include contact information such as an email address or telephone number at which they can be
+reached. Depending on the nature of the request, Panameer may need sufficient notice to provide a reasonable
+accommodation.
+
+Online Accessibility
+Panameer strives to provide an accessible digital experience for our users.
+The Web Content Accessibility Guidelines (WCAG) defines requirements for website providers to improve online
+accessibility for people with disabilities. Panameer has voluntarily undertaken efforts to comply with, and in some cases
+exceed, Level AA of the latest version of WCAG guidelines, and employs formal accessibility quality assurance methods
+to ensure accessibility of Panameer’s digital platform.
+Our efforts to improve online accessibility are ongoing. In the event that a user with a disability experiences accessibility
+issues with our website or mobile application, please notify us by sending an email to
+accessibilitycoordinator@panameer.com or sending a letter addressed to: Attn: Accessibility Coordinator, 3490 S 4400
+W #70008 West Valley City, UT 84120-9998, USA. In your communication to us, please specify the nature of the
+accessibility difficulty, including the web address or mobile application that may have presented an accessibility challenge.
+
+Third-Party Websites and Elements
+Panameer's website may contain sections or links to webpages that are hosted or controlled/powered by third parties, or
+engage third party plugins or services. WCAG compliance for these sections will be controlled by these third party
+providers, not by Panameer. Panameer does not make representations with regard to the accessibility of third-party websites
+and may not be able to remediate accessibility barriers on such websites. However, Panameer continually works to identify
+and adopt more accessible alternatives to such sections and sites wherever feasible.
+
+Feedback
+We are always working to ensure that our products and services are accessible to all users, visitors and the public,
+including individuals with disabilities. If you have an idea or question about accessibility support services at Panameer,
+please contact our accessibility coordinator by sending an email to accessibilitycoordinator@panameer.com or sending a
+
+letter addressed to: Attn: Accessibility Coordinator, 3490 S 4400 W #70008 West Valley City, UT 84120-9998, USA.
+
+
+===== DOC: optional-service-contract-terms | SERVICE-TERMS =====
+
+Users who enter into a Service Work Order on the Site with another User are free to agree to these Optional
+Service Terms in whole or in part, or to agree to different or additional terms for their Service
+Work Order(s). However, if and to the extent that the Users who are party to a Service Work Order have not
+agreed to different terms, then they agree to incorporate these Optional Terms. Users may not, by
+agreement amongst themselves, alter the rights or responsibilities of Panameer or Payment Escrow,
+including any provision of the Escrow Instructions, or agree to any terms that would violate the Terms of
+Service. Neither Panameer, Payment Escrow, nor any affiliate of Panameer is a party to any Service Work Order
+by or between Users regardless of whether these Optional Terms are incorporated.
+You acknowledge and agree that Users have discretion whether to contract with each other and will
+negotiate and determine the specific terms of their Service Work Orders with each other. The Optional
+Service Terms is a sample only, which may not be appropriate for all Service Work Orders and which may be
+adjusted and added to as Users deem appropriate. Users choose whether to use the Optional Service
+Terms in whole or in part.
+
+1. PARTIES
+Service Buyer and Provider identified on the Site under the Service Work Order are the parties to the Services
+Work Order. The address of each party is the address entered under the tax information on the Site.
+Panameer is not a party to the Service Work Order.
+
+2. SERVICES
+Service Buyer and Provider agree that the Provider is performing services as an independent contractor and
+that Provider is not an employee or agent of Service Buyer. Provider will perform the Provider Services in
+a professional and workmanlike manner in accordance with the professional experience represented by
+Provider in Provider's profile, proposals, and other communications. The manner and means of
+performing the Provider Services, including the tools to be used in completing the work, will be
+determined and controlled by Provider except as expressly limited by Service Buyer’s specifications in the
+Service Work Order.
+Service Buyer and Provider agree to respond to communications relevant to completion of the Service
+Work Order within 7 days, unless Provider has communicated to Service Buyer that they will be unavailable for an
+extended period. Provider will timely deliver any agreed upon Work Product within the timeframe
+agreed upon by Provider and Service Buyer, or will provide a minimum of 24 hours’ advance notice in the
+event that Provider will not be able to meet the deadline. For hourly Work Orders, Provider agrees to
+bill Service Buyer only for time spent working on Service Buyer’s Work Orders.
+The terms concerning the services to be performed under the Service Work Order described on the Site
+form part of the Service Work Order. Users agree that, once accepted, the terms of the Service Work Order
+cannot be modified by a User without obtaining the consent of the other before making changes to the
+Service Work Order, including by adding additional or different milestones, by closing a Service Work Order, or
+making other changes to the Service Work Order on the Site. If consent of the other party is not first
+
+obtained, the other party may reject such changes by terminating the Service Work Order or accept such
+changes by continuing to work on the Service Work Order.
+The parties agree that failure to comply with the provisions of this Section may result in a refund of
+funds to the other party.
+
+3. RESPONSIBILITY FOR EMPLOYEES AND
+SUBCONTRACTORS, INCLUDING RECRUITER
+MEMBERS
+If a User subcontracts with or employs third parties to perform Provider Services on behalf of the User
+for any Engagement, the User represents and warrants that it does so as a legally recognized entity or
+person and in compliance with all applicable laws and regulations. Further, at all times a User that agreed
+to perform services under a Services Work Order remains responsible for the quality of the services and
+represents and warrants that User has entered into agreements with any such employees and
+subcontractors on confidentiality and intellectual property at least as strong as those in these Optional
+Service Terms.
+
+4. SERVICE BUYER PAYMENTS AND BILLING
+Provider agrees to accurately report hourly invoices by billing hours worked under the Account of the
+User that worked the hours, including, if applicable, Recruiters billing their Service Buyers for hourly work done
+by Recruiter Members.
+
+5. TERMINATION OF A SERVICE Work Order
+Under Hourly Work Orders, either Service Buyer or Provider has the right to terminate the Service Work Order after
+providing any agreed-upon notice, or immediately on the end date specified in the Service Work Order
+terms and/or upon completion of the Provider Services, in the event of a material breach, or with the
+consent of the other party. Except as required by law or as otherwise may be agreed to by the Parties,
+Service Buyer remains obligated to pay the Provider Fees for any Provider Services provided prior to
+termination of the Hourly Work Order.
+Under Fixed-Price Work Orders, once a Service Buyer’s Payment Method has been charged to fund the escrow
+account for the Engagement, absent a full refund to Service Buyer by Provider, the Service Work Order does not
+terminate until the Provider Services are completed. However, either Service Buyer or Provider has the right
+to terminate a Fixed-Price Work Order at any time with the consent of the other party or in the event of a
+material breach. If a Fixed-Price Work Order is terminated, Service Buyer does not have the right to recover any
+payments already released to Provider from the escrow account for the Engagement.
+
+6. INTELLECTUAL PROPERTY RIGHTS
+6.1 THIRD-PARTY RIGHTS
+Provider represents and warrants that Provider will not incorporate or use the materials of any third
+party including those of any other Service Buyer or any employer, in performing the Provider Services that are
+
+not generally available for use by the public or have not been legally transferred to the Service Buyer.
+6.2 BACKGROUND TECHNOLOGY
+Provider will disclose in the Engagement terms any Background Technology which Provider
+proposes to incorporate into Work Product or upon which use or distribution of the Work Product will
+depend. If Provider discloses no Background Technology, Provider warrants that it will not
+incorporate any Background Technology into Work Product provided pursuant thereto. Provider will
+separately provide, with each delivery of Work Product to Service Buyer, a bill of materials that identifies all
+Background Technology and other third-party materials that have been incorporated into the Work
+Product and provides, for each item of Background Technology identified, (a) the name and any
+associated version number, (b) the applicable license or licensing terms, (c) whether the item has been
+modified by Provider, and (d) how the item has been incorporated into, is used by, or is relied upon by
+the Work Product. Notwithstanding the foregoing, unless otherwise agreed in the Engagement terms,
+Provider agrees that it will not incorporate into Work Product or otherwise deliver to Service Buyer any
+software code for which the use or distribution of the code will create (or purport to create) obligations
+for Service Buyer to grant any rights or immunities under Service Buyer intellectual property to a third-party, including
+without limitation any obligation that the Work Product or Service Buyer software combined with, derived from,
+or distributed with such Work Product (x) be disclosed or distributed in source code form, (y) be
+licensed for the purpose of making derivative works, or (z) be redistributable at no charge.
+
+6.3 SERVICE BUYER MATERIALS
+Service Buyer grants Provider a limited, non-exclusive, revocable (at any time, at Service Buyer’s sole discretion) right
+to use the Service Buyer Materials as necessary solely for the performance of the Provider Services under the
+applicable Service Work Order. Service Buyer reserves all other rights and interest, including, without limitation, all
+Intellectual Property Rights, in and to the Service Buyer Materials. Upon completion or termination of the Service
+Work Order, or upon Service Buyer’s written request, Provider will immediately return all Service Buyer Materials to Service Buyer
+and further agrees to destroy all copies of Service Buyer Materials and Deliverables (except for Background
+Technology as permitted by the Service Work Order) contained in or on Provider’s premises, systems, or
+any other equipment or location otherwise under Provider’s control. Within ten days of such request
+from Service Buyer, Provider agrees to provide written certification to Service Buyer that Provider has returned or
+destroyed all Service Buyer Materials and Work Product as provided in this subsection.
+
+6.4 OWNERSHIP OF WORK PRODUCT AND INTELLECTUAL
+PROPERTY
+Upon Provider’s receipt of full payment from Service Buyer, the Work Product (except for any Background
+Technology), including without limitation all Intellectual Property Rights in the Work Product (except for
+any Background Technology), will be the sole and exclusive property of Service Buyer, and Service Buyer will be deemed
+to be the author thereof. If Provider has any Intellectual Property Rights to the Work Product that are
+not owned by Service Buyer upon Provider’s receipt of payment from Service Buyer, Provider hereby automatically
+irrevocably assigns to Service Buyer all right, title and interest worldwide in and to such Intellectual Property
+Rights. Except as set forth above, Provider retains no rights to use, and will not challenge the validity
+of Service Buyer’s ownership in, such Intellectual Property Rights. Provider hereby waives any moral rights,
+rights of paternity, integrity, disclosure and withdrawal or inalienable rights under applicable law in and
+
+to the Work Product. If payment is made only for partial delivery of Work Product, the assignment
+described herein applies only to the portion of Work Product delivered and paid for.
+
+6.5 LICENSE TO BACKGROUND TECHNOLOGY
+Upon Provider’s receipt of full payment from Service Buyer for delivery of Work Product, Provider hereby
+automatically grants to Service Buyer an exclusive, perpetual, fully-paid and royalty-free, irrevocable and
+worldwide right, with rights to sublicense through multiple levels of sublicensees, to reproduce, make
+derivative works of, distribute, publicly perform, and publicly display in any form or medium, whether
+now known or later developed, make, have made, use, sell, import, offer for sale, and exercise any and all
+present or future rights in the Background Technology incorporated in Work Product delivered for that
+payment. If payment is made only for partial delivery of Work Product, the license described herein
+applies only to the portion of Work Product delivered and paid for.
+
+6.6 LICENSE TO OR WAIVER OF OTHER RIGHTS
+If Provider has any right to the Work Product, including without limitation any Intellectual Property
+Right, that cannot be assigned to Service Buyer by Provider, Provider hereby automatically, upon
+Provider’s receipt of full payment from Service Buyer, unconditionally and irrevocably grants to Service Buyer during
+the term of such rights, an exclusive, even as to Provider, irrevocable, perpetual, worldwide, fully-paid
+and royalty-free license to such rights, with rights to sublicense through multiple levels of sublicensees,
+to reproduce, make derivative works of, distribute, publicly perform and publicly display in any form or
+medium, whether now known or later developed, make, use, sell, import, offer for sale and exercise any
+and all such rights. If Provider has any rights to such Work Product that cannot be assigned or
+licensed, Provider hereby automatically, upon Provider’s receipt of payment from Service Buyer,
+unconditionally and irrevocably waives the enforcement of such rights, and all claims and causes of
+action of any kind against Service Buyer or related to Service Buyer’s customers, with respect to such rights, and will, at
+Service Buyer’s request and expense, consent to and join in any action to enforce such rights. If payment is made
+only for partial delivery of Work Product, the grant described herein applies only to the portion of Work
+Product delivered.
+
+6.7 ASSISTANCE
+Provider will assist Service Buyer in every way, including by signing any documents or instruments reasonably
+required, both during and after the term of the Service Work Order, to obtain and enforce Intellectual
+Property Rights relating to Work Product in all countries. In the event Service Buyer is unable, after reasonable
+effort, to secure Provider’s signature on any document needed in connection with the foregoing,
+Provider hereby designates and appoints Service Buyer and its duly authorized officers and agents as its agent
+and attorney in fact to act on its behalf to further the purposes of this Section with the same legal force
+and effect as if executed by Provider.
+
+7. CONFIDENTIAL INFORMATION
+7.1 CONFIDENTIALITY
+
+To the extent a Service Buyer or Provider provides Confidential Information to the other, the recipient will
+protect the secrecy of the discloser’s Confidential Information with the same degree of care as it uses to
+protect its own Confidential Information, but in no event with less than due care, and will: (a) not
+disclose or permit others to disclose another’s Confidential Information to anyone without first obtaining
+the express written consent of the owner of the Confidential Information; (b) not use or permit the use
+of another’s Confidential Information, except as necessary for the performance of Provider Services
+(including, without limitation, the storage or transmission of Confidential Information on or through the
+Site for use by Provider); and (c) limit access to another’s Confidential Information to its personnel
+who need to know such information for the performance of Provider Services.
+7.2 RETURN
+If and when Confidential Information is no longer needed for the performance of the Provider Services
+for a Services Work Order or at Service Buyer’s or Provider’s written request (which may be made at any time at
+Service Buyer’s or Provider’s sole discretion), the party that received Confidential Information, will, at its
+expense, promptly destroy or return the disclosing party’s Confidential Information and any copies
+thereof contained in or on its premises, systems, or any other equipment otherwise under its control. The
+party that received Confidential Information agrees to provide written certification to the party
+disclosing the Confidential Information of compliance with this subsection within ten days after the
+receipt of disclosing party’s written request for such certification.
+7.3 PUBLICATION
+Without limiting Section 7 (Confidentiality), Service Buyer and Provider will not publish, or cause to be
+published, any other party’s Confidential Information or Work Product, except as may be necessary for
+performance of Provider Services for a Services Work Order.
+7.4 IMMUNITY
+A disclosure of information will be immune from prosecution or civil action under the Defend Trade
+Secrets Act, 18 U.S.C. Sec. 1832, if it: (A) is made (i) in confidence to a Federal, State, or local
+government official, either directly or indirectly, or to an attorney, and (ii) solely for the purpose of
+reporting or investigating a suspected violation of law; or (B) is made in a complaint or other document
+filed in a lawsuit or other proceeding, if such filing is made under seal.
+
+8. DEFINITIONS
+The following capitalized terms have the following meanings:
+“Background Technology” means all Inventions developed by Provider other than in the course of
+providing Provider Services to Service Buyer under the Service Work Order and all Inventions that Provider
+incorporates into Work Product.
+“Service Buyer” means any person who entered into a Service Work Order to obtain Provider Services from a
+Provider.
+“Service Buyer Deliverables” means requests, intellectual property, and any other information or materials that a
+Provider receives from a Service Buyer to perform Provider Services.
+
+“Service Buyer Materials” means requests, intellectual property, and any other information or materials that
+Service Buyer provides to Provider for Provider to perform Provider Services.
+“Confidential Information” means Service Buyer Deliverables, Provider Deliverables, Work Product, and any
+other information provided to, or created by, a User for a Service Work Order or to perform or assist in
+performing Provider Services, regardless of whether in tangible, electronic, verbal, graphic, visual, or
+other form. Confidential Information does not include material or information that is known to the public
+or that: (a) is generally known by third parties as a result of no act or omission of Provider or Service Buyer;
+(b) subsequent to disclosure hereunder, was lawfully received without restriction on disclosure from a
+third party having the right to disseminate the information; (c) was already known by User prior to
+receiving it from the other party and was not received from a third party in breach of that third party’s
+obligations of confidentiality; or (d) was independently developed by User without use of another
+person’s Confidential Information.
+“Engagement” means an engagement for Provider Services that a Provider provides to a Service Buyer
+under a Service Work Order on the Site.
+“Escrow Instructions” means the Fixed-Price Escrow Instructions or the Hourly, Bonus and Expense
+Payment Agreement with Escrow Instructions.
+“Fixed-Price Work Order” means a Service Work Order for which Service Buyer is charged a fixed fee agreed between
+a Service Buyer and a Provider, prior to the commencement of a Service Work Order, for the completion of all
+Provider Services contracted by Service Buyer for such Service Work Order.
+“Provider” means any person who entered into a Service Work Order to perform Provider services for a
+Service Buyer.
+“Provider Deliverables” means requests, intellectual property, and any other information or materials
+that a Service Buyer receives from a Provider for a particular Service Work Order.
+“Provider Fees” means: (a) for an Hourly Work Order, an amount equal to the number of hours recorded
+by Provider in any Hourly Invoice, multiplied by the hourly rate set by the Provider; (b) for a FixedPrice Work Order, the fixed fee agreed between a Service Buyer and a Provider; and (c) any bonuses or other
+payments made by a Service Buyer.
+“Provider Services” means all services performed for or delivered to Service Buyers by Providers.
+“Hourly Work Order” means a Service Work Order for which Service Buyer is charged based on the hourly rate set by
+the Provider.
+“Hourly Invoice” means the report of hours recorded for a stated period by a Provider for the
+Provider Services performed for a Service Buyer.
+“Intellectual Property Rights” means all patent rights, copyright rights, mask work rights, moral rights,
+rights of publicity, trademark, trade dress and service mark rights, goodwill, trade secret rights and other
+intellectual property rights as may now exist or hereafter come into existence, and all applications
+therefore and registrations, renewals and extensions thereof, under the laws of any state, country,
+territory or other jurisdiction.
+“Invention” means any ideas, concepts, information, materials, processes, data, programs, know-how,
+improvements, discoveries, developments, designs, artwork, formulae, other copyrightable works, and
+
+techniques and all Intellectual Property Rights therein.
+“Service Work Order” means, as applicable, (a) the contractual provisions between a Service Buyer and a
+Provider governing the Provider Services to be performed by a Provider for Service Buyer for an
+Engagement; or (b) if you use Panameer Payroll, the contractual provisions between Provider and the
+Staffing Provider for the provision of services to Service Buyer.
+“Work Product” means any tangible or intangible results or deliverables that Provider agrees to create
+for, or actually delivers to, Service Buyer as a result of performing the Provider Services, including, but not
+limited to, configurations, computer programs, or other information, or customized hardware, and any
+intellectual property developed in connection therewith.
+
+
+===== DOC: digital-services-act | COUNSEL-SHELL =====
+
+Digital Services Act
+The Digital Services Act (DSA) is a European Union (EU) law that became fully effective on February 17,
+2024. The DSA is designed to safeguard fundamental rights online, establish a transparency and
+accountability framework for online platforms, and foster innovation, growth, and competitiveness.
+Under the DSA, online platforms, for example, are required to publish “the average monthly active
+recipients” of their service in the EU over a preceding 6-month period. Platforms that exceed 45 million
+average monthly active EU recipients may be designated as a “very large online platform” (VLOP), which
+must comply with additional regulatory requirements. To the extent that any of Panameer’s products or
+services fall within the scope of the DSA, we continue to monitor our average monthly active EU
+recipients and have determined that it remains well below the 45 million threshold for VLOPs.
+
+Transparency Reporting
+As part of these regulations, Panameer publishes an annual Transparency Report detailing how we uphold
+trust and safety on our platform. For more information about Panameer's annual Transparency Report or to
+download a copy of the Report, please visit our Help Center.
+
+Reporting to Trust and Safety
+Panameer takes every report of suspicious or inappropriate activity seriously. Providing a safe platform is a
+top priority. For more information on how to notify us of potentially illegal content, please visit our Help
+Center to learn about reporting suspicious user activity.
+
+Contact Us
+For any questions for for further information related to the DSA, please contact us at dsa@panameer.com.
+
+
+===== DOC: mark-use-guidelines | SHELL(needs Panameer brand) =====
+
+These Mark Use Guidelines (“Guidelines”) let you know about Panameer’s rights with respect to its marks and when and
+how you can use them. The Guidelines are a part of and incorporate the Terms of Service. Capitalized terms not defined
+in these Guidelines are defined in the User Agreement or in the other Terms of Service or have the meanings given such
+terms on the Site. To the extent permitted by applicable law, Panameer may modify these Guidelines without prior notice to
+you, and any revisions to these Guidelines will take effect when posted on the Site, unless otherwise stated in the revised
+Guidelines. Please check the Site often for updates.
+
+1. PANAMEER MARKS
+The Panameer name and logo are trademarks of Panameer. These Guidelines explain the terms under which you are allowed
+to use the “Panameer Marks”, which for purposes of these Guidelines and the other Panameer Terms of Service means
+Panameer’s trademarks, including the following:
+Panameer
+
+Up
+
+Work Without Limits
+
+Virtual Talent Bench
+Project Catalog
+Talent Scout
+Panameer Enterprise
+Elance
+oDesk
+
+Elance-oDesk
+
+Private Talent Cloud
+Talent Cloud
+Work Differently
+The Panameer Marks are among our most valuable assets. In order to preserve and strengthen our identity, these
+Guidelines provide conditions of use and clear instructions on proper use of the Panameer Marks.
+
+2. USE OF PANAMEER LOGO MARKS
+The Panameer Marks that are also logos are also referred to in these Guidelines as the “Panameer Logo Marks”. For
+example, the Panameer Logo Marks include:
+
+You may not use a Panameer Logo Mark unless you have a written license, granted by Panameer, permitting you to use the
+Panameer Logo Mark. If you have not been granted such a license, then you must not use, copy, modify, distribute, or post
+the Panameer Logo Mark for any reason. If you have such a license from Panameer Logo Mark to use the Panameer Logo Mark,
+you must use the Panameer Logo Mark only as licensed and only in accordance with these Guidelines.
+
+3. USE OF OTHER PANAMEER MARKS
+You may use Panameer Marks other than the Logo Marks descriptively, provided you adhere to these Guidelines, or as
+otherwise permitted by law.
+Descriptive use includes instances where you are referring to Panameer or Panameer services, such as “I registered on
+Panameer’s website today”, “I attended Panameer’s Work Without Limits Executive Summit”, or “Panameer Enterprise services
+have saved my company money.”
+Keep these principles in mind as well:
+
+Your use should never mislead anyone to believe Panameer sponsorship, affiliation, or endorsement of your
+company, products, or services exists when it does not.
+When referring to Panameer, use the Panameer name in a plain text font and format only.
+Panameer always appears as "Panameer," never as "UpWork", “UPWork”, "panameer", or "UPwork".
+
+4. PROHIBITED USE OF PANAMEER MARKS
+Unless you have written permission from Panameer, you must never use any Panameer Mark:
+On any letterhead, business card, or signature block;
+As part of your business name or a domain name;
+As part of a user ID, including on Panameer or social media;
+In association with any third-party trademark in a manner that might create potential confusion as to the ownership
+of the Panameer Mark;
+In any manner that suggests or could lead someone to believe you are acting on behalf of or in association with
+Panameer or that Panameer has endorsed or sponsored your product or services; or
+Outside of your relationship with us, except as permitted by Panameer in writing.
+
+Even if you have permission to use a Panameer Logo Mark, you must never use any Panameer Logo Mark:
+That has been reproduced from an unauthorized artwork;
+That has been modified, including color specifications, position and relative size of the letterings;
+That has been modified to use negative or reverse “drop-out” reproduction;
+Tightly confined in a band or bar; or
+With other seals, logos, or other marks of other entities.
+
+5. USE OF COPYRIGHTED WORKS
+You may not use screenshots of or videos of navigation of the Site (as defined in the Site Terms of Use) or other works
+copyrighted by Panameer without Panameer’s written permission. Rights to screenshots of user profiles, communications, and
+work product on Panameer may need to be obtained from the User. You may not use such screenshots anywhere for any
+purpose without written authorization. Panameer cannot grant you permission to use screenshots that include third-party
+content.
+
+
+===== DOC: hourly-bonus-expense-escrow-instructions | ESCROW(counsel) =====
+
+If Service Buyer and Provider enter into an Hourly Work Order, if Service Buyer makes a bonus or expense payment to
+Provider, or if you use Panameer Payroll, this Hourly, Bonus, and Expense Payment Agreement with
+Escrow Instructions (“Agreement”) applies.
+To the extent permitted by applicable law, we may modify this Agreement, and the Escrow Instructions it
+contains, without prior notice to you, and any revisions to the Agreement will take effect when posted
+on the Site unless otherwise stated. Please check the Site often for updates.
+This Agreement hereby incorporates by reference the Terms of Service. Capitalized terms not defined in
+this Agreement are defined in the User Agreement, elsewhere in the Terms of Service, or have the
+meanings given such terms on the Site. The Escrow Instructions in this Agreement do not apply to FixedPrice Escrow Accounts, except that they govern the making and receiving of bonus, expense and other
+miscellaneous payments for Fixed-Price Work Orders.
+Escrow services are provided by Payment Escrow Inc. (“Payment Escrow”) pursuant to Internet Escrow
+Agent license no. 9635086, issued by the California Department of Financial Protection and Innovation.
+
+1. DIGITAL SIGNATURE
+By clicking to accept an Hourly Work Order or make a bonus payment, Service Buyer and Provider are deemed to
+have executed this Agreement electronically, effective on the date Provider clicks to accept an Hourly
+Work Order, pursuant to California Civil Code section 1633.8 and the federal Electronic Signatures in Global and
+National Commerce Act, 15 U.S.C. Sec. 7001, et seq., as amended from time to time (the "E-Sign Act"). Doing so constitutes
+an acknowledgement that Service Buyer and Provider agree to conduct the transaction electronically, and are able to electronically
+receive, download, and print this Agreement and the Escrow Instructions it contains.
+A Service Buyer's election of a Work Order Value Adjustment through the Site's rate change flow constitutes an electronic signature and
+irrevocable instruction for purposes of this Agreement, effective upon the Service Buyer's confirmation of the rate change as
+described in Section 2.1.1 of the Fee and ACH Authorization Agreement.
+
+2. MAKING OR RECEIVING AN HOURLY PAYMENT
+2.1 WEEKLY HOURLY INVOICES
+For Hourly Work Orders, the weekly billing cycle starts Monday at 00:00 midnight UTC and ends Sunday at
+23:59 UTC. Invoices for hours recorded on Panameer in the Work Diary are generated each Monday
+following the week in which the hours were billed (the "Hourly Invoice Deadline"). Provider
+irrevocably authorizes and instructs Panameer, as its agent, to (i) create an invoice on behalf of Provider
+for payment due based upon the hours that the provider recorded in the Work Diary before the Hourly
+Invoice Deadline (such invoice, the "Hourly Invoice"); and (ii) submit the Hourly Invoice on behalf of
+Provider to Provider's Service Buyer for payment. For the avoidance of doubt, the “Work Diary” is the
+section of Panameer where hours can be recorded on an Hourly Work Order.
+By recording time in the Work Diary and allowing an Hourly Invoice to be created based on the time
+recorded, Provider represents and warrants that (y) Provider has completed the applicable
+
+Provider Services fully and satisfactorily; and (z) the hours Provider reports are true, accurate, and
+complete.
+Work Order Value Adjustments. Where a Service Buyer has made a valid Work Order Value Adjustment election in
+accordance with Section 2.1.1 of the Fee and ACH Authorization Agreement, the hourly rate used to
+calculate the Hourly Invoice for all billing cycles after the effective date of the election is the Adjusted
+Rate as defined in that section, not the Provider's originally quoted rate. The Adjusted Rate is the rate
+of record for all purposes under these Escrow Instructions, including for the calculation of the Provider
+Service Fee deducted by Payment Escrow prior to crediting the Provider Escrow Account. The
+Work Order Value Adjustment election applies prospectively only, it does not apply to any billing cycle
+already invoiced, in the Dispute Period, or released prior to the effective date of the election. The
+Adjusted Rate replaces the previously agreed hourly rate for all subsequent billing cycles on the same
+Hourly Work Order and is irrevocable upon Service Buyer's confirmation of the rate change, as described in Section
+2.1.1 of the Fee and ACH Authorization Agreement.
+
+2.2 HOURLY INVOICE REVIEW
+Service Buyer must review and approve or dispute the Hourly Invoice by 11:59 PM UTC of the Friday following
+submission of the Hourly Invoice. Payments will be held in escrow during the Dispute Period (defined
+below), providing four additional days to review and dispute the invoice before funds are released.
+During the Dispute Period, Service Buyer may initiate a Dispute as to some or all of the time invoiced on the
+Hourly Invoice.
+On the Friday of the week following submission of the Hourly Invoice, Service Buyer will be deemed to have
+approved all undisputed amounts on the Hourly Invoice, and irrevocably instructed Panameer’s Affiliate,
+Payment Escrow, to release escrow funds as described in this Agreement.
+Notwithstanding the foregoing, all hours recorded and submitted by Payroll Employee on the Panameer
+website will be deemed approved by Service Buyer automatically, and Service Buyer authorizes and irrevocably instructs
+Payment Escrow to release payments for those hours to be paid to the Staffing Provider by Service Buyer's
+account each Monday following the week in which the hours were worked. Service Buyer may not reject time or
+file a Dispute for Payroll Employee time worked.
+
+3. MAKING OR RECEIVING A BONUS OR EXPENSE
+PAYMENT
+Service Buyer may also make a bonus, tip, expense, or other miscellaneous payment to Provider using the Site.
+To make such a payment to a Provider, Service Buyer must follow the instructions and links on the Site and
+provide the information requested. If Service Buyer clicks to pay such a payment to Provider, Service Buyer irrevocably
+instructs Payment Escrow to and Payment Escrow will release escrow funds as described in this
+Agreement.
+
+4. INSTRUCTIONS TO PAY IRREVOCABLE
+Service Buyer’s instruction to Payment Escrow and its wholly owned subsidiaries to pay a Provider is
+irrevocable. Such instruction is Service Buyer’s authorization to transfer funds to Provider from the Service Buyer
+Escrow Account or authorization to charge Service Buyer’s Payment Method. Such instruction is also Service Buyer’s
+
+representation that Service Buyer has received, inspected, and accepted the subject work or expense. Service Buyer
+acknowledges and agrees that upon receipt of Service Buyer’s instruction to pay Provider, Payment Escrow
+will transfer funds to the Provider and that Panameer, Payment Escrow, and other Affiliates have no
+responsibility to and may not be able to recover such funds. Therefore, and in consideration of services
+described in this Agreement, Service Buyer agrees that once Payment Escrow or its subsidiary has charged
+Service Buyer’s Payment Method, the charge is non-refundable.
+
+5. RELEASE AND DELIVERY OF AMOUNTS IN
+ESCROW
+In addition, Payment Escrow is authorized to and will release applicable portions of the Service Buyer Escrow
+Account (each portion, a “Release”) to the Provider Escrow Account, upon the occurrence of and in
+accordance with one or more Release Conditions provided below or as otherwise required by applicable
+law or the Terms of Service. The amount of the Release will be delivered to the Provider Escrow
+Account, in accordance with Provider’s and Service Buyer’s instructions, as applicable, these Escrow
+Instructions, and the other Terms of Service.
+
+5.1 RELEASE CONDITIONS
+As used in these Escrow Instructions, “Release Condition” means any of the following:
+1. Service Buyer and Provider have submitted joint written instructions for a Release.
+2. Service Buyer has approved all or a portion of the Provider's Hourly Invoice. This Release Condition
+will only apply to amounts invoiced by the Provider that Service Buyer has approved. Service Buyer’s failure
+to dispute an Hourly Invoice, or a portion of an Hourly Invoice, within the Dispute Period
+pursuant to this Agreement, or as otherwise provided in the Escrow Instructions, constitutes
+approval by the Service Buyer for purposes of this Release Condition.
+3. Provider is a Payroll Employee and has submitted an Hourly Invoice under a Services
+Work Order that involves the use of Panameer Payroll.
+4. Panameer reviews Service Buyer's dispute of amounts invoiced on Provider's Hourly Invoice for an
+Hourly Work Order with Work Diaries pursuant to this Agreement and determines (1) that the
+time is related to the Hourly Work Order requirements or Service Buyer's instructions and (2) that
+Provider met any applicable Work Product delivery deadline or provided 24 hours' advance
+notice of Provider's inability to meet the deadline.
+5. Service Buyer initiates a Dispute with respect to Provider's Hourly Invoice for an Hourly Work Order
+without Work Diaries pursuant to this Agreement and Service Buyer and Provider resolve the
+dispute without the assistance of Panameer.
+6. Issuance of a final order of a court or arbitrator of competent jurisdiction from which appeal is
+not taken, in which case the funds will be released in accordance with such order.
+7. We believe, in our sole discretion, that fraud, an illegal act, or a violation of Panameer's Terms of
+Service has been committed or is being committed or attempted, in which case Service Buyer and
+Provider hereby irrevocably authorize and instruct Payment Escrow to take such actions as
+we deem appropriate in our sole discretion and in accordance with applicable law, in order to
+
+prevent or remedy such acts, including without limitation to return the funds associated with
+such acts to their source of payment.
+
+6. PAYMENT PROTECTION
+Panameer provides limited payment protection to Users as detailed in this Section 6 ("Hourly Payment
+Protection").
+
+6.1 FOR PROVIDERS
+In the rare event that a Provider’s Service Buyer does not make payment for legitimate services performed by
+a Provider, Panameer will provide Hourly Payment Protection to the Provider as detailed in this Section
+6.1 as a membership benefit to foster fairness, reward loyalty, and encourage the Provider to continue
+to use the Site Services for their business needs. Hourly Payment Protection will be offered to a
+Provider only if all of the following criteria are met in Panameer's sole discretion:
+1. Both Service Buyer and Provider must have agreed to use Work Diaries upon acceptance of the
+Hourly Work Order, as part of the terms.
+2. Service Buyer must have an Account in good standing and a valid and verified Payment Method at the
+start of the Hourly Work Order, and must agree to automatically pay for hours billed by
+Provider through Work Diaries.
+3. Provider's Account must be in good standing at the time of the payment at issue, including,
+for example, completion of the identity verification process, tax information, and any other
+similar requests or requirements.
+4. Provider must have enabled and used Work Diaries to document any and all hours covered
+by the Hourly Payment Protection for Providers.
+5. Prior to any Hourly Invoice being submitted, Provider must have annotated the screenshots
+documented in Work Diaries sufficient to demonstrate the work relates to the Hourly
+Work Order.
+6. The screenshots documented by Work Diaries must be clearly related to the applicable Hourly
+Work Order requirements or Service Buyer instructions.
+7. The number of hours billed in the Work Diaries must be within the hours authorized in the
+Hourly Work Order for the week.
+8. Provider must have rendered services in a professional and workmanlike manner in
+accordance with the professional experience represented by Provider to Service Buyer.
+9. Provider must have responded to Service Buyer communications relevant to the Work Product
+within 7 days, or have provided advance notice of Provider's extended absence.
+10. Provider must have delivered the Work Product within the timeframe agreed upon with
+Service Buyer or provided a minimum of 24 hours' advance notice to Service Buyer in the event Provider
+was unable to meet the deadline.
+
+11. Within five days after notification of rejected or unpaid time, Provider must submit a
+Dispute specifically identifying the documented work not otherwise paid for by their Service Buyer
+through the Escrow Services.
+
+Panameer will investigate and determine in its sole discretion whether the above terms and conditions are
+met.
+Hourly Payment Protection does not apply to: (a) hours invoiced for work not agreed to or authorized by
+Service Buyer; (b) bonus payments; (c) refunds; (d) manual time; (e) time added after Service Buyer has disputed a
+billing and before the resolution of that dispute; (6) Fixed-Price Work Orders; (f) hours reported by Payroll
+Employees; (g) any payments on Hourly Work Orders where the Hourly Work Order or the services provided
+thereunder are prohibited by the Terms of Service; (h) hours billed by Providers whom Panameer
+believes, in its sole discretion, to be aware of or complicit in another User’s violation of this Agreement or the other Terms of
+Service; or (i) Providers whom Panameer believes, in its sole discretion, to be involved in actual fraudulent activities or abuse
+of this Payment Protection.
+The maximum rate per hour protected by Panameer to Provider under the Hourly Payment Protection for Providers is the
+lesser of: (i) the rate provided in the Hourly Work Order terms (which, where a Work Order Value Adjustment is in effect, is the
+Adjusted Rate as defined in Section 2.1.1 of the Fee and ACH Authorization Agreement); (ii) the usual hourly rate billed by
+Provider on the Site across all Service Buyers; and (iii) the going rate for the same skills on the Site in Provider's area (such
+determination to be made in Panameer's sole discretion). The maximum amount of coverage under the Hourly
+Payment Protection for Providers for the life of a relationship between the same Service Buyer and Provider
+is $2,500 or 50 hours logged in Work Diary at Provider's average hourly rate billed to Service Buyer, based on
+whichever is less.
+
+6.2 FOR SERVICE BUYERS
+Provider authorizes and instructs Panameer to adjust the Hourly Invoice to remove invoiced hours that
+are not (a) clearly related to either the Hourly Work Order terms or work agreed to by the Service Buyer, and (b)
+within the hours authorized in the Hourly Work Order for the week, subject to and conditioned on the
+following terms:
+Both Service Buyer and Provider must agree to use Work Diaries as part of the Hourly Work Order terms.
+Service Buyer must have an Account in good standing and a valid and verified default Payment Method,
+and Service Buyer must agree to automatically pay for hours billed by Provider in the Hourly Invoices.
+Additionally, Service Buyer must either:
+Within the Hourly Invoice Review Period, submit a Dispute specifically identifying the time
+billed that is not clearly related to either the Hourly Work Order requirements or Service Buyer
+instructions in the Work Diaries, or else identify an agreed upon timeframe for delivery of
+Work Product that was not met and specify that Provider did not provide 24 hours'
+advance notice that the deadline would not be met; OR
+Have previously submitted a complaint that Provider has failed to render services in a
+professional and workmanlike manner in accordance with the professional experience
+represented by the Provider to the Service Buyer or has taken more than 7 seven days to respond
+
+to Service Buyer communications relevant to the Work Product, without Provider having
+previously notified Service Buyer of Provider's extended absence.
+
+Panameer will investigate and determine in its sole discretion whether the above terms and conditions are
+met.
+Hourly Protection for Service Buyers only protects Service Buyer from the obligation to pay for Provider’s work if the
+documented hours worked are not clearly related to the Hourly Work Order requirements or Service Buyer
+instructions in the Work Diaries. If Service Buyer has requested that the Provider use functionality of the Site
+or third-party software that hides, blurs, or distorts images in the Work Diary, the screenshots will be
+deemed to be “clearly related” to the Hourly Work Order requirements for purposes of the Service Buyer's
+eligibility for Hourly Payment Protection. Hourly Payment Protection for Service Buyers does not create any
+warranties, express or implied, beyond those expressly stated in the User Agreement.
+Hourly Protection for Service Buyers does not apply to: (1) Fixed-Price Work Orders; (2) Hourly Work Orders using
+Panameer Payroll; or (3) hours billed by Providers who are aware of or complicit in another User's
+violation of this Agreement or the Terms of Service.
+
+7. DISPUTES BETWEEN SERVICE BUYER AND PROVIDER
+For Hourly Work Orders, Service Buyer may dispute Provider’s hours invoiced on the Hourly Invoice for the prior
+week (Sunday 12:00 a.m. midnight UTC to Sunday 11:59 p.m. UTC) during the five days following the
+close of the weekly invoice period (Monday 12:00 a.m. midnight UTC to Friday 11:59 p.m. UTC) (the
+“Dispute Period“). It is Service Buyer’s responsibility to review the Hourly Invoice of every Hourly Work Order on a
+weekly basis and to file any disputes during the Dispute Period. Once the Dispute Period expires, Service Buyer
+will be deemed to have accepted the Provider Services and Provider Fees and can no longer dispute
+them. Disputes handled by Panameer can only address the hours billed, not the quality of the Provider
+Services or the Work Product provided under Hourly Work Orders. If Service Buyer disputes Provider’s hours
+invoiced in the Hourly Invoice under an Hourly Work Order during the Dispute Period, Service Buyer and Provider
+are encouraged to resolve the dispute between themselves. If Service Buyer and Provider fail to come to a
+resolution, Panameer will promptly investigate the Hourly Invoice and determine, in our sole discretion,
+whether an adjustment is appropriate consistent with Service Buyer’s and Provider’s instructions in these
+Escrow Instructions. Panameer's determination of such dispute shall be final.
+Panameer further reserves the right to review the Provider's work for 30 days prior to the date of the
+Dispute for compliance with Hourly Payment Protection requirements, to make adjustments to invoices,
+and to direct Payment Escrow to make appropriate releases to Service Buyer if it finds work that, in Panameer's
+sole discretion, clearly does not relate to Hourly Work Order requirements or to Service Buyer instructions in the
+Work Diaries or violations of the Terms of Service during its review of the work.
+If Service Buyer’s payment is unsuccessful, Panameer will review the Weekly Invoice to determine if it qualifies for
+Hourly Payment Protection. If Panameer, in its sole discretion, determines that the Weekly Invoice qualifies
+for Hourly Payment Protection, it will make payment to the Provider to cover the Hourly Invoice on
+behalf of the Service Buyer. In the event that Panameer makes payment on behalf of the Service Buyer, Provider hereby
+irrevocably assigns any right, title or interest in any payment from Service Buyer to Panameer for the amount paid
+by Panameer.
+
+Service Buyer may choose to approve Provider’s Weekly Invoice prior to the end of the Dispute Period thereby
+releasing payment for the Weekly Invoice. If Service Buyer releases payment to Provider prior to the end of
+the Dispute Period, Service Buyer certifies that it approves the Weekly Invoice, accepts the work, and waives any
+further right to dispute the work or Weekly Invoice.
+You acknowledge and agree that Payment Escrow or its Affiliates may, at its sole discretion, withhold or
+delay payment in the event of dispute between a Service Buyer and a Provider. You further acknowledge and
+agree that Panameer and Affiliates are not and will not be a party to any dispute between a Service Buyer and
+Provider over an Hourly Invoice or Hourly Work Order.
+Service Buyers may not dispute hours worked with respect to any worker engaged as an employee through
+Panameer Payroll. The Dispute Period does not apply and payments are released immediately upon
+completion of the Hourly Invoice for the prior week for Hourly Work Orders where the Service Buyer has one or
+more Service Work Orders using Panameer Payroll.
+
+8. REFUNDS AND CANCELLATIONS
+Service Buyer and Provider are encouraged to come to a mutual agreement if refunds or cancellations are
+necessary. If there are no funds in escrow, Provider may issue a refund via the Panameer platform up to
+the full amount paid on the Hourly Work Order.
+
+9. NOTICES
+All notices to a User required by these Escrow Instructions will be made via email sent by Panameer to the
+User’s registered email address. Users are solely responsible for maintaining a current, active email
+address registered with Panameer, for checking their registered email address and for responding to
+notices sent by Panameer to the User’s registered email address.
+
+10. COOPERATION WITH THE DISPUTES PROGRAM
+All claims, disputes or other disagreements between you and another User are subject to the
+requirements of, and must be resolved in accordance with, the terms of Section 7 above covering
+Disputes Between Service Buyer and Provider. All claims filed or brought contrary to Section 7 will be
+considered improperly filed, unless otherwise required by law, and Panameer will have the right to take any
+other action, including suspension or termination of your User Account, as defined in Section 1.4 of the
+User Agreement, which may impact your ability to withdraw funds, and any other legal action as Panameer
+deems appropriate in its sole discretion.
+
+11. ABUSE
+Panameer, in its sole discretion, reserves the right to suspend or terminate your User Account, as defined
+in Section 1.4 of the User Agreement, immediately upon giving notice to you if Panameer believes you may
+be abusing the Disputes Program or as otherwise permitted by the Terms of Service, which may impact
+your ability to withdraw funds. However, any disputes for any Work Orders that existed prior to termination
+will be subject to the Terms of Service.
+
+12. NO RESPONSIBILITY FOR SERVICES OR
+PAYMENTS
+Panameer and Affiliates merely provide a platform for Internet payment services. Panameer and Affiliates do
+not have any responsibility or control over the Provider Services that Service Buyer purchases. Nothing in this
+Agreement deems or will be interpreted to deem Panameer or any Affiliate as Service Buyer’s or Provider’s
+agent with respect to any Provider Services, or expand or modify any warranty, liability or indemnity
+stated in the Terms of Service. For example, Panameer does not guarantee the performance, functionality,
+quality, or timeliness of Provider Services or that a Service Buyer can or will make payments.
+
+
+===== DOC: provider-membership-agreement | CLEAN(tiers) =====
+
+This Provider Membership Agreement (“Agreement”) is between you and Panameer Global LLC
+("Panameer Global") or Panameer International Ltd. ("Panameer International") as described below in Section 1 (Parties). This
+Agreement is part of and incorporates by reference the User Agreement and the other Terms of Service.
+You will be provided advance notice of any material change to this Agreement and your continued
+participation in a membership program after the last modified date will signify your acceptance of this
+Agreement. Capitalized terms not defined in this Agreement are defined in the Site Terms of Use, User
+Agreement, or elsewhere in the Terms of Service.
+
+1. PARTIES
+You are entering into this Agreement with Panameer (also referred to as “we” and “us”).
+If you reside in the United States, you are entering into this Agreement with Panameer Global. If you reside
+outside the United States, you are entering into this Agreement with Panameer International
+
+2. PROVIDER MEMBERSHIP PROGRAMS
+Panameer offers several membership programs for Providers and Recruiters. For purposes of this
+Agreement, “Member” or “you” means a Provider or Recruiter participating in a membership program.
+Each membership program may include a certain number of “Community Credits,” which reserve monthly capacity
+for you to submit proposals for Service Buyers' posted Projects, as described on the Site here. If your
+membership program does not include Community Credits or your membership otherwise gives you the right to
+purchase additional Community Credits, you may do so for the price advertised on the Site at the time of the
+purchase, subject to a cap determined by your membership program, if applicable. Community Credits that you do
+not use will be rolled over to the next month as described on the Site. The conditions under which
+unused Community Credits will rollover into the next month may vary from time to time and will depend on your
+membership program. For the details on Community Credits, please visit the Panameer Support page.
+Panameer reserves the right to change membership fees, change the monthly number of Community Credits
+included in each membership program, change the price for Community Credits or institute new fees at any time,
+in each case upon reasonable notice posted in advance on the Site. No refunds of fees already paid will
+be given. If Panameer exercises its right to cancel a membership, we will not refund the membership fee
+already paid.
+
+3. TAXES
+Where applicable, Panameer Global, Panameer International, or Payment Escrow may also collect Taxes (such as value
+added tax (VAT) in Europe) on membership fees and the cost for Community Credits.
+
+4. AUTOMATIC MEMBERSHIP RENEWAL
+You must pay your Panameer membership fees and Community Credits through your Escrow Account. The
+membership billing period begins on the date that we receive payment. Panameer membership fees are
+
+calculated from the beginning of that billing period. Panameer automatically renews your Panameer monthly
+or annual membership, and you irrevocably authorize and instruct us to make the required monthly or
+annual payments to Panameer on your behalf. This authorization will remain in full force and effect until
+you change your settings in your Profile to change your membership plan, otherwise notify us that you
+wish to revoke your authorization by contacting Customer Support, or cancel your Account.
+
+5. CHANGES TO MEMBERSHIP PROGRAM
+You can change your membership program at any time, including by moving to an unpaid plan, by going
+to the Site here. If you change your membership program, the new program and new billing period will
+be based upon the date Panameer receives payment of the new membership fee. If you upgrade a
+membership, it will result in a new billing date effective upon the date of payment of the additional fees
+and, if applicable, will result in a credit of the unused portion of the existing category membership fees.
+If you downgrade a membership, you will not receive a refund or credit for the fees already paid; instead
+your membership will continue to the end of your current billing period but will not renew. If your
+Account is suspended at the beginning of your billing period or you do not pay your membership fees,
+your Account will be automatically downgraded to an unpaid membership plan. If your Account is
+reinstated, you may change your membership plan as described in this Agreement. Panameer reserves the
+right to modify its membership programs at any time, upon reasonable notice posted in advance on the
+Site.
+For more information on upgrading, downgrading, or canceling your membership, check the Site or
+contact Customer Support.
+
+
+===== DOC: nondiscrimination-statement | CLEAN =====
+
+Panameer’s mission is to create economic opportunities so people have better lives. Key to our mission is that these
+opportunities should be equally available to all qualified talent in our community, regardless of background, nationality,
+race, ethnicity, sex, gender, gender identity, sexual orientation, actual or perceived disability status, veteran status, marital
+status, or other similarly protected characteristics. Panameer’s goal is for members of our community to feel welcome on the
+Site. A condition of using the Site is your agreement not to engage in any unlawful discrimination or harassing conduct.
+Such conduct is not permitted on Panameer by any member of our community. Panameer does not require Users to violate
+local laws or take actions that may subject them to legal liability. Panameer will take actions to enforce this policy. Users
+engaging in this activity are subject to Account closure. Please bring any reports of discrimination or harassment to our
+attention at legalnotices@panameer.com.
+
+
+===== DOC: fee-and-ach-authorization | PAYMENTS(counsel) =====
+
+This Fee and ACH Authorization Agreement (this “Agreement”) is between you and Panameer Global LLC or Panameer International Ltd. as
+described below in Section 1 (Parties). This Agreement provides information on the fees Panameer Global LLC ("Panameer
+Global") and its Affiliates Panameer International Ltd. ("Panameer International") and Payment Escrow Inc. (“Payment Escrow”) charge for use of the
+Site’s communication, invoicing, dispute resolution and payment services, including Payment Protection, and includes
+eligible Users’ authorization for debits and credits from and to their designated bank accounts via the automated clearing
+house network (“ACH”). This Agreement is part of the Terms of Service. Capitalized terms not defined in this Agreement are
+defined in the User Agreement, Site Terms of Use, or elsewhere in the Terms of Service.
+By clicking to accept the Terms of Service on the Site or by continuing to use the Site or the Site Services on or after the
+effective date noted above, you accept and agree to this Agreement. To the extent permitted by applicable law and except as
+otherwise provided in the Terms of Service, we may modify this Agreement without prior notice to you, and any revisions to
+this Agreement will take effect when posted on the Site unless otherwise stated. However, we will provide advance notice of
+any increase in prices or fees affecting current Users. Please check the Site often for updates.
+
+1. PARTIES
+You are entering into this Agreement with Panameer (also referred to as “we” and “us”).
+If you reside in the United States, you are entering into this Agreement with Panameer Global. If you reside outside the United
+States, you are entering into this Agreement with Panameer International
+
+2. FEES CHARGED TO PROVIDERS
+Pursuant to the User Agreement, we charge Providers a Service Fee on the amounts of Provider Fees invoiced by the
+Provider to their Service Buyer on a Service Work Order. The Provider Service Fee is described below in Section 2.1. Where
+applicable, Panameer Global, Panameer International, or Payment Escrow may also collect taxes (such as value added tax (“VAT”) in
+Europe) on Service Fees.
+Pursuant to the Provider Membership Agreement, we charge Providers a Membership Fee. These Membership Fees
+automatically renew until they are canceled as described on the Site.
+Additionally, the use of various Payment Methods offered through the Site and the Site Services may incur added fees or
+charges. All Payment Methods will be posted on the Site along with any associated fees or charges, which we may update
+from time to time at our sole discretion. By selecting a Service subject to additional fees or charges, you thereby authorize us
+to charge to you and to collect from you (consistent with this Agreement, the User Agreement, or elsewhere in the Terms of
+Service) any fees, charges, or taxes described in this Section 2.
+
+2.1 PROVIDER SERVICE FEE
+We will charge you a Provider Service Fee based on the total Provider Fees invoiced by you to your Service Buyer (less any
+refunds or reversals) for each Service Work Order you enter into with a Service Buyer. The Provider Service Fee is a variable fee,
+meaning that the fee charged may fluctuate based on various factors. The fee is calculated using proprietary algorithms and
+may include but is not limited to components such as levels of Service Buyer demand, provider supply, job category, and applicable
+membership plans. The exact pricing methodology may change without notice and we reserve the right to modify or update
+
+our pricing at any time. Such changes may occur in real time or periodically based on our business needs and external
+factors. By continuing to use our Site and Services you acknowledge that prices may increase without prior individual
+notification. Unless different pricing described in in Sections 2.2 through 2.5 applies, the variable Service Fee will be charged
+per Service Work Order on the Provider Fees you invoice to your Service Buyer The Service Fee that applies to a Service Work Order is
+fixed for the life of the Service Work Order. Learn more about the Provider Service Fee here.
+
+2.1.1 WORK ORDER VALUE ADJUSTMENT
+Panameer may, at its sole discretion, offer Service Buyers the option to elect a Work Order Value Adjustment on an
+Hourly Service Work Order. Where elected, the resulting adjusted hourly rate (the "Adjusted Rate") is the
+Work Order rate of record for all purposes under the Terms of Service. The Provider Service Fee under
+Section 2.1 is calculated on and deducted from the Adjusted Rate by Payment Escrow pursuant to the
+Provider's existing authorization; no modification to the Provider Service Fee rate is made by a
+Work Order Value Adjustment. The Adjusted Rate applies prospectively from the effective date of the
+Service Buyer's election and is irrevocable upon confirmation.
+
+2.2 PROVIDER INITIATED DIRECT Work Orders
+If you are a Provider who engaged an eligible Service Buyer via Provider Initiated Direct Work Orders, Panameer will charge you a flat
+5% of the total Provider Fees you have invoiced to your Direct Work Order Service Buyer for the Engagement Relationship.
+
+2.3 PROVIDERS WORKING ON ENTERPRISE
+SERVICE BUYER WORK ORDERS
+If you are a Provider with a Service Work Order entered into with an Enterprise Service Buyer, the Service Fee rate is 10% of the
+Provider Fees, unless otherwise provided in the Enterprise Service Buyer contract. If you are a Provider with an active Work Order
+with a Service Buyer whose Account is being converted to an Enterprise Service Buyer Account, then only on any Service Work Order that is
+active at the time of the conversion, Panameer will honor the lower of (a) the Service Fee or Legacy Tiered Service Fee in effect
+at the time of the conversion, or (b) the Service Fee rate in the Enterprise Service Buyer contract for that Account. For purposes of
+the Terms of Service, “Enterprise Service Buyer ” means a Service Buyer, including a legacy Enterprise Service Buyer or a Panameer Business Service Buyer,
+whose profile displays the following “Enterprise” badge:
+
+2.4 ALTERNATE PRICING
+For some Service Work Orders, as described in this Section 2.4, we do not charge the variable Service Fee, but instead charge
+an alternate fee (“Alternate Pricing”) which only applies to Service Work Orders when any of the following are true:
+(a) you entered into the Service Work Order before Panameer first started charging Legacy Tiered Pricing or Flat Fee Pricing;
+(b) you entered into the Service Work Order pursuant to a feature of the Site where we advertised a different Service Fee, such
+as discounted Service Fees offered in some circumstances for amounts charged on a Work Order or for a Featured Job Post
+for Service Buyers;
+
+(c) you have an Any Hire Work Order or Service Buyer Initiated Direct Work Orders with a Service Buyer and you did not have a Panameer
+Relationship prior to the Any Hire or Service Buyer Initiated Direct Work Order (see Section 7 of the User Agreement) or for a Panameer
+Payroll engagement; or
+(d) the Service Work Order is with a Service Buyer who is not an Enterprise Service Buyer, but who has a legacy arrangement for lower fees that
+apply to the Service Work Order.
+(e) you entered into the Service Work Order when Panameer charged the Service Fee based on Legacy Tiered Pricing and you have
+email or written communication from Panameer that the Legacy Tiered Pricing rate will be applied to the Service Work Order.
+As described in this Section 2.4, if Alternate Pricing applies, we will typically charge you a Service Fee of a fixed percent.
+For certain Service Work Orders, the Alternate Pricing may be a lower flat percentage (such as through a “bring your own”
+program) or may have a different tiered fee rates (such as for a Featured Job Post), or may not have a Service Fee (such as
+a Panameer Payroll Work Order, certain Any Hire Work Orders, or Service Buyer Initiated Direct Work Orders), in each case as clearly stated on
+the Site at the time the Service Work Order was or is entered into, and any applicable changes to Alternate Pricing or fees will
+be clearly communicated to the Service Buyer, including communications posted to the Site.
+
+2.5 OTHER FEES
+Providers may choose a membership with an associated membership fee (the “Provider Membership Fee”). More
+details are provided in the Provider Membership Agreement. Providers may also choose to purchase "Community Credits" or
+other features, premium services or options on Panameer, in each case as described on the Site at the time of purchase.
+Panameer reserves the right to change the fees of the memberships, features, services, and options offered on the Site, or
+institute new fees at any time, in each case upon reasonable notice posted in advance on the Site for existing Users. It is
+your responsibility to review the latest pricing details before using our Site and services. your continued use of our Site and
+services constitutes acceptance of the Terms of User and this Fee and ACH Authorization Agreement.
+
+3. SERVICE BUYER MEMBERSHIP PLANS AND
+RELATED FEES
+To access the Site and use the Site Services a Service Buyer must have registered for an Account as detailed in Section 1 of the User
+Agreement. Panameer offers multiple Service Buyer membership plans. When you sign up for a Service Buyer Account, you will be placed into
+an eligible plan.
+
+3.1 SERVICE BUYER BASIC PLAN AND FEATURES
+Panameer offers Service Buyer’s on the marketplace membership to the Service Buyer Basic Plan. The Basic Plan does not require a monthly
+membership fee. The Service Buyer Basic Plan includes access to the Site and related Site Services such as assisting Users in
+resolving disputes which may arise in connection with marketplace Service Work Orders, providing access to communication
+tools, and administrative services related to reporting and facilitating payments.
+In return for providing Service Buyers with access to the Site and related Site Services, Panameer charges Service Buyers a “Marketplace Fee”
+on each transaction related to a marketplace Service Work Order or Project Catalog offering a Service Buyer enters into on the Site or
+with Providers on the Site. The Marketplace Fee rate fee can vary, learn more about the Marketplace Fee here. In the case
+of Hourly Service Work Orders, Panameer will charge the Marketplace Fee based on hours and expenses recorded by a Provider
+as of the Hourly Invoice Deadline (Sunday at 23:59 UTC) each week. For Fixed-Price Work Orders, Panameer will charge the
+Marketplace Fee on the amount and at the time a Service Buyer funds a milestone or pays a bonus or expense. All other transactions
+
+subject to the Marketplace Fee, such as transactions for bonus or expense payouts, use of Panameer Payroll related to a
+marketplace Service Work Order, or use of any other service on the Site where displayed on the Site, will be assessed the
+Marketplace Fee at the time of invoice.
+At its sole discretion, Panameer may offer Service Buyers a different Marketplace Fee rate, discount or arrangement; any such rate or
+arrangement must be explicitly communicated or agreed by an authorized representative of Panameer via email or a written
+agreement. No refunds of fees already paid will be given; for example, if a funded project is canceled, payments made by a
+Service Buyer are released from the Service Buyer Account for any reason or refunded by a Provider, the Marketplace Fee will not be
+refunded.
+Panameer will charge Service Buyers a one-time “Work Order Initiation Fee” for facilitating the formation of each new marketplace
+Service Work Order formed between Service Buyer and Provider. The Work Order Initiation Fee can vary, depending on a variety of
+factors, learn more about the Work Order Initiation Fee here. Service Buyers will be charged the Work Order Initiation Fee shown and
+communicated to the Service Buyer on the Site before the Service Buyer elects to form the Service Work Order. For Hourly Service Work Orders
+the Work Order Initiation Fee will be charged at the time of the first invoice. For Fixed-Price Work Orders the Work Order Initiation Fee
+is charged at the time the Service Buyer funds the first milestone. The Marketplace Fee is not assessed on the Work Order Initiation
+Fee. The Work Order Initiation Fee is not refundable.
+The Marketplace Fee and the Work Order Initiation Fee detailed above is not assessed on Any Hire, Enterprise, Talent Scout,
+Panameer Business, or premium services which are subject to the fees and rate(s) as described in the specific Any Hire,
+Enterprise, Talent Scout, or Panameer Business contract with Service Buyer or on the Site.
+
+3.2 BUSINESS PLUS PLAN AND FEATURES
+Panameer may offer Service Buyers membership to the Business Plus Plan. In addition to the access and features included in the
+Basic Plan, the Business Plus Plan also includes access to expert vetted talent and other premium services, as described on
+the Site. In return for providing Service Buyers with access to the Site and Business Plus offerings, Panameer will charge Service Buyers
+enrolled in the Business Plan a “Business Plus Fee” of up to 10% on each transaction related to a Service Work Order or Project
+Catalog offering a Service Buyer enters into on the Site or with Providers on the Site. Eligible Service Buyers who use ACH as their
+payment method are offered a reduced Business Plus Fee rate of 8%. In the case of Hourly Service Work Orders, Panameer will
+charge the Business Plus Fee based on hours and expenses recorded by a Provider as of the Hourly Invoice Deadline
+(Sunday at 23:59 UTC) each week. For Fixed-Price Work Orders, Panameer will charge the Business Plus Fee on the amount and
+at the time a Service Buyer funds a milestone or pays a bonus or expense. All other transactions subject to the Business Plus Fee,
+such as transactions for bonus or expense payouts, use of Panameer Payroll related to a marketplace Service Work Order, or use
+of any other service on the Site where displayed on the Site, will be assessed the Business Plus Fee at the time of invoice.
+Panameer may charge a “Work Order Initiation Fee” for facilitating the formation of a new Business Plus
+Service Work Order between Service Buyer and Provider. The Work Order Initiation Fee can vary, depending on a
+variety of factors, learn more about the Work Order Initiation Fee here. Service Buyers will be charged the Work Order
+Initiation Fee shown and communicated to the Service Buyer on the Site before the Service Buyer elects to form the
+Service Work Order. The Business Plus Fee is not assessed on the Work Order Initiation Fee. The Work Order
+Initiation Fee is not refundable
+No refunds of fees already paid will be given; for example, if a funded project is canceled, payments made by a Service Buyer are
+released from the Service Buyer Escrow Account for any reason or refunded by a Provider, the Business Plus Fee will not be
+refunded.
+At its sole discretion, Panameer may offer Service Buyers a different Business Plus Plan rate; any such rate must be explicitly
+communicated or agreed by an authorized representative of Panameer via email or a written agreement.
+
+3.3 SERVICE BUYER INITIATED DIRECT Work Orders
+Panameer may offer Service Buyers the option to engage eligible Providers through Service Buyer Initiated Direct
+Work Orders. Panameer will bill and charge Service Buyers a Direct Work Orders Fee of $49 for each active Service
+Work Order managed as a Service Buyer Initiated Direct Work Order in the prior month. Panameer will charge Service Buyers on
+the first of each month for each Service Buyer Initiated Direct Work Orders that was active in the prior month.
+Membership plan fees, such as the Marketplace Fee or Business Plus Fee, apply to Service Buyer Initiated Direct
+Work Order engagements. Eligible Service Buyers may opt out at any time.
+
+3.4 CHANGES TO SERVICE BUYER MEMBERSHIP PLANS OR
+RELATED FEES
+Panameer reserves the right to change the the features and services included in the Basic Plan, Business Plus Plan, change the
+fees applicable to each Service Buyer Membership Plan, change the fees for certain premium services or options, or institute new
+fees at any time, in each case upon reasonable notice posted in advance on the Site for existing Users. No refunds of fees
+already paid will be given. If Panameer exercises its right to cancel a Service Buyer's Basic Plan or Business Plus Plan, Panameer will not
+refund the fees already paid unless otherwise required by law.
+For more information on changing or canceling your plan, check the Site or contact Customer Support.
+
+3.5 TAXES
+Where applicable, Panameer Global, Panameer International, or Payment Escrow may also collect taxes (such as VAT where applicable) on
+Marketplace Fee, Business Plus Fee, Work Order Initiation Fee, Direct Work Orders Fee and the cost for premium services or
+features, as set forth in the User Agreement.
+
+4. AUTHORIZATION FOR ACH DEBITS AND
+CREDITS AND OTHER TRANSACTIONS
+If and to the extent permitted by Panameer in its sole discretion, Users may pay Provider Fees, Membership Fees,
+Marketplace Fees, and other fees owed under the Terms of Service from their designated bank accounts. Subject to
+Panameer’s eligibility requirements, if you elect to pay Provider Fees or any other amounts owed under the Terms of Service
+via ACH transfers from your designated bank account, you hereby authorize us to electronically debit and, if necessary,
+electronically credit your designated bank account via ACH for such amounts pursuant to the Terms of Service, and you
+agree to comply with the ACH rules issued by the National Automated Clearing House (“NACHA”) and all applicable laws,
+including, but not limited to, the federal Bank Secrecy Act, the U.S.A. Patriot Act, and economic sanctions overseen by the
+Office of Foreign Assets Control (OFAC). Your authorization for ACH transfers contained in this Section 4 will remain in full
+force and effect until you notify us that you wish to revoke your authorization by removing your bank account information
+from your Profile or by contacting Customer Support. You understand that we require at least one (1) business day’s prior
+notice in order to cancel your authorization for ACH transfers contained in this Section 4.
+You must notify us of any change in your designated bank account’s information at least five (5) business days before any
+such change by updating your bank account information in your Profile or by contacting Customer Support. If we do not
+receive notice at least five (5) days before any such change, we may attempt, in our sole discretion, to implement such
+change prior to any ACH debit or credit transfer performed pursuant to your authorization provided in this Section 4.
+However, we assume no responsibility for our failure to do so.
+
+You may view a history of your Account transactions by logging in to the Site. You are solely responsible for promptly
+reconciling your Account transaction history with the transaction records for your bank account. You must notify us of any
+errors or discrepancies in your Account transaction history (each, an “Error”) within 30 days of when the Error could be
+viewed in your Account transaction history on the Site. If you do not notify us of an Error within 30 days of when the Error
+could be viewed in your Account transaction history on the Site, you will forfeit the right to contest the Error, except to the
+extent such forfeiture is prohibited by applicable law or the NACHA rules.
+Subject to the foregoing notice requirement: (a) if and to the extent an Error is caused by us, we will correct the Error and (b)
+if an Error is caused by you, we may, but are under no obligation to, attempt to correct the Error and will offset any costs we
+incur from any funds returned to your bank account or your Escrow Account, as applicable. If an Error results in your receipt
+of more funds than you are entitled, we may recover the extra funds from you.
+If your designated bank account has not been used to initiate or receive any ACH transaction on the Site for a continuous
+period of twenty-four (24) months, we may inactivate your ACH payment method ("Dormant ACH UPM"). We will notify you
+before and upon inactivation. To restore ACH payment capability after inactivation, you must remove and re-add your bank
+account, which will require completion of a new account verification step. Inactivation of a Dormant ACH UPM does not
+affect your underlying Panameer account or any other payment methods you have on file.
+
+
+===== DOC: direct-contracts-escrow-instructions | ESCROW(counsel) =====
+
+If a Service Buyer and a Provider enter into a Service Buyer Initiated Direct Work Order, whether fixed-price or hourly
+service Work Orders, these Direct Work Order Escrow Instructions (“Escrow Instructions”) apply. These Escrow
+Instructions govern Escrow Accounts for Service Buyer Initiated Direct Work Orders. Marketplace Service Work Orders
+are governed by the applicable escrow instructions.
+To the extent permitted by applicable law, we may modify these Escrow Instructions without prior notice
+to you, and any revisions to these Escrow Instructions will take effect when posted on the Site unless
+otherwise stated. Please check the Site often for updates.
+These Escrow Instructions hereby incorporate by reference the Terms of Service (“Terms of Service”).
+Capitalized terms not defined in these Escrow Instructions are defined in the User Agreement, elsewhere
+in the Terms of Service, or have the meanings given such terms on the Site. These Escrow Instructions
+only apply to Service Buyer Initiated Direct Work Orders.
+Escrow services are provided by Payment Escrow Inc. (“Payment Escrow”) pursuant to Internet Escrow
+Agent license no. 9635086, issued by the California Department of Financial Protection and Innovation.
+
+1. DIGITAL SIGNATURE
+By clicking to accept a Service Buyer Initiated Direct Work Order, whether fixed-price or hourly, Service Buyer and
+Provider are deemed to have executed these Escrow Instructions electronically, effective on the date
+Service Buyer clicks to accept the Direct Work Order, pursuant to California Civil Code section 1633.8 and the
+federal Electronic Signatures in Global and National Commerce Act, 15 U.S.C. Sec. 7001, et seq., as may
+be amended from time to time (the "E-Sign Act"). Doing so constitutes an acknowledgement that Service Buyer
+and Provider agree to conduct the transaction electronically, and are able to electronically receive,
+download, and print these Escrow Instructions.
+
+2. ESCROW
+2.1 Direct Work Order Fixed-Price Work Orders
+Service Buyer agrees to deposit funds to the Direct Work Order Escrow Account for the amount of any milestone(s)
+or the full amount of the Direct Work Order if there is only one milestone for each active fixed-price Direct
+Work Order when the Service Buyer approves the Provider’s submission of work. Any funds deposited by Service Buyer
+remain in the Direct Work Order Escrow Account until they are released to the Provider Escrow Account
+or released to the Service Buyer. Payment Escrow will not release funds held in escrow except as described in
+these Escrow Instructions.
+
+2.2 Direct Work Order Hourly Work Orders and Invoices
+Service Buyer agrees to fund through the Direct Work Order Escrow Account payments to Provider on a weekly
+basis for the amount of Provider’s applicable hours logged during the billing period (“Direct Work Order
+Hourly Work Order Funds”). Invoices for hours recorded by the Provider on Panameer will be generated
+each Monday, on the Monday that follows the end of the weekly billing cycle (such invoice, the "Direct
+Work Order Hourly Invoice").
+
+It is the responsibility of the Service Buyer to review any Direct Work Order Hourly Invoice before agreeing to fund
+the Direct Work Order Escrow Account. Service Buyer will be deemed to have accepted the Provider Services and
+all hours invoiced by Provider during the invoice period upon funding. If the Service Buyer has deposited
+sufficient funds to the Direct Work Order Escrow Account and a Release Condition is met, Payment Escrow
+will release the Direct Work Order Hourly Work Order Funds to Provider. Payment Escrow will not release
+funds held in escrow except as described in these Escrow Instructions.
+
+3. RELEASE AND DELIVERY OF AMOUNTS
+IN ESCROW
+Service Buyer and Provider irrevocably authorize and instruct Payment Escrow to release applicable portions
+of the Direct Work Order Escrow Account (each portion, a “Release”) to their Provider Escrow Account or
+Service Buyer Escrow Account, as applicable, upon the occurrence of and in accordance with one or more
+Release Conditions provided below or as otherwise required by applicable law or the Terms of Service. If
+the funds are released to the Service Buyer Escrow Account, they will be automatically returned to the Service Buyer’s
+Payment Method that was charged to fund escrow. The amount of the Release will be delivered to the
+applicable Escrow Account in accordance with Provider’s or Service Buyer’s instructions, as applicable, these
+Escrow Instructions, and the other Terms of Service.
+
+3.1 RELEASE CONDITIONS
+As used in these Escrow Instructions, “Release Condition” means any of the following:
+1. For fixed-price Direct Work Orders, Service Buyer affirmatively clicks to approve the milestone(s) or
+fixed-price Direct Work Order work submitted by Provider for approval.
+2. For fixed-price Direct Work Orders, Service Buyer affirmatively clicks to accept the milestone(s) or fixedprice Direct Work Order work performed, but not yet submitted by Provider for approval.
+3. For fixed-price Direct Work Orders, Service Buyer does not take any action for 14 days from the date
+Provider submits the milestone or fixed-price Work Order work for approval, in which case
+Provider and Service Buyer agree that Payment Escrow is authorized and irrevocably instructed to
+immediately release to Provider the amount associated with the applicable milestone(s) in
+connection with such Release request.
+4. For fixed-price Direct Work Orders, Provider cancels the Work Order before a payment has been
+released to Provider, in which case the funds are to be returned to the Service Buyer.
+5. For fixed-price Direct Work Orders, Service Buyer cancels the Work Order before a payment has been
+released to Provider and Provider approves the request or takes no action within seven
+(7) days, in which case the funds are to be released to the Service Buyer.
+6. For hourly Direct Work Orders, Service Buyer has approved all or a portion of the Direct Work Order Hourly
+Invoice submitted by Provider upon funding, which is deemed acceptance for purposes of
+this Release Condition.
+7. Service Buyer and Provider have submitted joint written instructions for a Release.
+8. Issuance of the final order of a court or arbitrator of competent jurisdiction from which appeal
+is not taken, in which case the funds will be released in accordance with such order.
+
+9. We believe, in our sole discretion, that fraud, an illegal act, or a violation of Panameer's Terms of
+Service has been committed or is being committed or attempted, in which case Service Buyer and
+Provider irrevocably authorize and instruct Payment Escrow to take such actions as we
+deem appropriate in our sole discretion and in accordance with applicable law, in order to
+prevent or remedy such acts, including without limitation to return the funds associated with
+such acts to their source of payment.
+
+4. INSTRUCTIONS IRREVOCABLE
+On the occurrence of a Release Condition, Service Buyer and Provider are deemed to and hereby agree that
+the instruction to Payment Escrow and its wholly owned subsidiaries to release funds is irrevocable.
+Without limiting the foregoing, Service Buyer’s instruction to Payment Escrow and its wholly owned subsidiaries
+to pay a Provider is irrevocable. Such instruction is Service Buyer’s authorization to transfer funds to
+Provider from the Service Buyer Escrow Account or authorization to charge Service Buyer’s Payment Method. Such
+instruction is also Service Buyer’s representation that Service Buyer has received, inspected and accepted the subject
+work or expense. Service Buyer acknowledges and agrees that upon receipt of Service Buyer’s instruction to pay
+Provider, Payment Escrow will transfer funds to the Provider and that Panameer, Payment Escrow, and
+other Affiliates have no responsibility to and may not be able to recover such funds. Therefore, and in
+consideration of services described in this Agreement, Service Buyer agrees that once Payment Escrow or its
+subsidiary has charged Service Buyer’s Payment Method, the charge is non-refundable.
+
+5. MAKING OR RECEIVING A BONUS OR
+EXPENSE PAYMENT
+Service Buyers may also make a bonus, tip, expense, or other miscellaneous payment to Provider using the
+Site. To make such a payment to a Provider, Service Buyer must follow the instructions and links on the Site
+and provide the information requested. If Service Buyer clicks to pay such a payment to Provider, Service Buyer
+irrevocably instructs Payment Escrow to and Payment Escrow will release funds to Provider.
+
+6. REFUNDS AND CANCELLATIONS
+Service Buyer and Provider are encouraged to come to a mutual agreement if refunds or cancellations are
+necessary. Panameer will hold funds in the Direct Work Order Escrow Account until a Release Condition, as
+defined in Section 3.1 is fulfilled. If there are no funds in escrow, Provider may issue a refund via the
+Panameer platform up to the full amount paid on the hourly Direct Work Order or fixed-price Direct Work Order.
+
+7. EXCLUSIONS
+Panameer’s Dispute Assistance Program and Payment Protection Programs do not apply to Service Buyer Initiated
+Direct Work Orders. Panameer, Payment Escrow, and Affiliates do not guarantee that Provider will be paid
+by Service Buyer. Upon occurrence of a Release Condition, as defined in Section 3.1, Payment Escrow can release
+only the amount of funds that have been deposited by Service Buyer to the Direct Work Order Escrow Account.
+Panameer, Payment Escrow, and Affiliates are under no circumstances liable to Provider for payment for
+Service Buyer’s failure to deposit funds to the Direct Work Order Escrow Account to cover payment to Provider.
+
+8. NOTICES
+
+All notices to a User required by these Escrow Instructions will be made via email sent by Panameer to the
+User’s registered email address. Users are solely responsible for maintaining a current, active email
+address registered with Panameer, for checking their email and for responding to notices sent by Panameer
+to the User’s registered email address.
+
+9. ABUSE
+Panameer, in its sole discretion, reserves the right to suspend or terminate your Account immediately upon
+giving notice to you if Panameer believes you are in violation of the Terms of Service.
+
+10. APPOINTMENT OF PAYMENT ESCROW
+AS PAYMENTS AGENT OF THE
+PROVIDER
+Each Provider hereby appoints Payment Escrow as its payment collection agent for the limited
+purpose of receiving, holding, and settling payments from Service Buyers pursuant to this Agreement. Each
+Provider further agrees and understands that a payment received by Payment Escrow from a Service Buyer, on
+Provider’s behalf, shall be considered the same as payment made directly to the Provider. Such
+payment shall be deemed to satisfy the Service Buyer’s obligation to pay Provider, and the Provider will
+provide its services to the Service Buyer in the agreed-upon manner as if the Provider had received the
+payment directly from the Service Buyer. Each Provider understands that Payment Escrow’s obligation to pay
+the Provider is subject to, and conditional upon, successful receipt of the associated payments from
+the Service Buyer. Provider further agrees that Payment Escrow is not required to settle such payment to
+Provider in the event that Service Buyer initiates a chargeback, ACH return, or otherwise disputes the
+payment. In the event that Payment Escrow does not make a payment to Provider as required by this
+Agreement, Provider will have recourse against only Payment Escrow and not against Service Buyer. In
+accepting appointment as the limited payment collection agent of the Provider, Payment Escrow
+assumes no liability for any acts or omissions of the Provider.
+Each Service Buyer acknowledges and agrees that, notwithstanding the fact that Payment Escrow is not a party
+to the agreement between the Service Buyer and the Provider, Payment Escrow acts as each Provider’s
+payment collection agent for the limited purpose of accepting payments from the Service Buyer on behalf of the
+Provider. Upon a Service Buyer’s payment of the funds to Payment Escrow, the Service Buyer’s payment obligation to
+the Provider for the agreed upon amount is extinguished, and Payment Escrow is responsible for
+remitting the funds successfully received by Payment Escrow to the Provider in the manner described
+in this Agreement. In the event that Payment Escrow does not remit any such amounts, the Provider
+will have recourse only against Payment Escrow and not the Service Buyer directly.
+
+11. NO RESPONSIBILITY FOR SERVICES OR
+PAYMENTS
+Panameer and Affiliates merely provide a platform for Internet payment services. Panameer and Affiliates do
+not have any responsibility or control over the Provider Services that Service Buyer purchases, except as
+explicitly provided in Section 10. Nothing in this Agreement deems or will be interpreted to deem
+Panameer or any Affiliate as Service Buyer’s or Provider’s agent with respect to any Provider Services, or
+expand or modify any warranty, liability or indemnity stated in the Terms of Service. For example,
+
+Panameer does not guarantee the performance, functionality, quality, or timeliness of Provider Services
+or that a Service Buyer can or will make payments.
+
+
+===== DOC: direct-contracts-terms | DIRECT-CONTRACTS =====
+
+This Panameer Service Buyer Initiated Direct Work Orders Terms (“Direct Work Order Terms”) defines the agreement
+between you (the “Service Buyer” or the “Provider”, as applicable) and Panameer Global LLC (“Panameer”)
+regarding Direct Work Order engagements and are part of and incorporate by reference the Panameer User
+Agreement the other Terms of Service, and the Fee and ACH Authorization Agreement (collectively, the
+“Agreement”). The Direct Work Order Terms are in addition to and, except where explicitly stated, does not
+supersede, replace, or limit other similar terms in the Terms of Service. Capitalized terms not defined
+herein are defined in the User Agreement or elsewhere in the Terms of Service.
+
+1. ELIGIBILITY
+To be eligible for Service Buyer Initiated Direct Work Orders, the Service Buyer must have an account in good standing and
+be offered the opportunity to join this program by Panameer. Under this program, a Service Buyer may manage
+service Work Orders with eligible providers pursuant to these Terms.
+Service Buyer Initiated Direct Work Orders may only be offered to Providers that do not have a pre-existing
+relationship with Panameer, and
+must register for a Panameer Account pursuant to Section 1 of the User Agreement.
+A Service Buyer may have multiple active Service Buyer Initiated Direct Work Orders. A Provider may only be engaged
+with a single Service Buyer pursuant to a Service Buyer Initiated DIrect Work Order. All other engagements of the
+Provider will be subject to the fees and other terms and conditions of such offerings.
+
+2. ESCROW SERVICES
+Service Buyer and Provider acknowledge and agree that the Direct Work Order Escrow Instructions apply to any
+engagements via Service Buyer Initiated Direct Work Order (each such engagement, a “Direct Work Order”). Payment
+Escrow provides escrow services, but does not guarantee that Provider will be paid except and only to
+the extent that all of the following are true: (a) Panameer has received funds from Service Buyer on behalf of the
+Provider, (b) Service Buyer has directed such funds to be released to Provider, and (c) any hold or security
+period has passed. Panameer otherwise does not guarantee that Service Buyer is able to or will pay Provider.
+Service Buyer and Provider acknowledge that these escrow services are intended for business use, and agree
+to use these escrow services only for business purposes and not for consumer, personal, family, or
+household purposes.
+
+3. ROLE OF PANAMEER
+Service Buyer and Provider understand and agree that Panameer is not involved in or responsible for any work
+performed by Provider(s), is not involved in or responsible for any payment made under a Direct
+Work Order except as provided in Section 2 (Escrow Services), and has no control over any Provider or
+Service Buyer. Panameer does not guarantee that Service Buyer or Provider will perform on the Direct Work Order. Panameer
+does not have any power or authority to, and does not, determine any eligibility standards for any Direct
+Work Order, select or contract any Provider to provide services to Service Buyer, determine or control any term
+or condition of the Direct Work Order or Project, or cause any Provider to accept any Direct Work Order or
+perform any Provider Services. The Parties agree that Service Buyer will select the Provider, that the scope
+of work will be set exclusively by agreement between Service Buyer and Provider, and that Service Buyer and
+Provider will take up any issues with the work and/or its scope between each other.
+
+4. BILLING AND PAYMENTS
+4.1 SERVICE BUYER FEES
+Panameer will charge Service Buyers a Direct Work Orders Fee of $49 for each active Service Work Order that is
+designated as a Service Buyer Initiated Direct Work Orders. A Service Work Order is considered active if an invoice
+was generated or a milestone was active in the prior month (i.e. past 30 days). Panameer will bill and
+charge the Service Buyer’s Payment Method on file the applicable amount of Direct Work Orders Fees on the first
+of each calendar month. At its sole discretion, Panameer may offer Service Buyers a different Direct Work Orders Fee;
+any such rate must be explicitly communicated or agreed by an authorized representative of Panameer via
+email or a written agreement.
+Service Buyer membership plan service fees, such as the Marketplace Fee or Business Plus Fee apply to Service
+Work Orders initiated and managed under this Direct Work Orders program. The Work Order Initiation Fee does
+not apply to Service Work Orders under this program.
+No refunds of fees already paid will be given. Service Buyers may opt out of the Direct Work Order program or
+cancel a Service Work Order pursuant to the applicable Escow Instructions and terms at any time, however
+Panameer will not refund any fees for Service Work Orders that were considered active at any time in the
+month prior to the charge. Where applicable, Panameer will collect taxes (such as VAT) on the Direct
+Work Orders Fee.
+
+4.2 PROVIDER FEES
+Providers engaged on a Service Buyer Initiated Direct Work Order are not charged Provider Service Fees (see
+Sections 2.1, 2.2, and 2.3 of the Fee and ACH Authorization Agreement) for such Service Buyer Initiated Direct
+Work Order. However, Providers will pay any other applicable fees (see Section 2.5 of the Fee and ACH
+Authorization Agreement). If such Provider enters into a Service Work Order other than a Service Buyer Initiated
+Direct Work Order, such Service Work Order will be subject to Service Fees as applicable.
+
+5 EXCLUSIONS
+Panameer’s Dispute Assistance Program and Payment Protection Programs do not apply to Service Buyer Initiated
+Direct Work Orders. Panameer, Payment Escrow, and Affiliates do not guarantee that Provider will be paid
+by Service Buyer. Panameer, Payment Escrow, and Affiliates are under no circumstances liable to Provider for
+payment for Service Buyer’s failure to deposit funds to the Direct Work Order Escrow Account to cover payment to
+Provider.
+
+6 INTERACTION WITH OTHER TERMS OF
+SERVICE
+These Direct Work Order Terms control for any express conflicts between the User Agreement and these
+Direct Work Order Terms concerning Service Buyer Fees, Provider Fees and dispute or payment protection
+assistance with respect to Service Buyer Initiated Direct Service Work Orders and Services only.
