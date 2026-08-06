@@ -9,7 +9,7 @@ const BASIC = [
 ];
 const PLUS = [
   "Everything in Basic",
-  "Top-1% vetted talent",
+  "Validated experts",
   "One-click ERP punchout",
   "Priority matching & support",
 ];
@@ -56,8 +56,16 @@ export function Pricing() {
 
           <div className="rounded-[18px] border-2 border-magenta bg-white p-[30px] shadow-brand">
             <h3 className="mb-1 text-[22px] font-bold">Business Plus</h3>
+            {/*
+              E004 — "the top 1% of talent" is gone from here too. It is the
+              colosseum framing this brand is explicitly not: the voice is
+              "Together", and a ranked pile with ninety-nine percent of people
+              underneath it is the opposite of a community. What replaces it
+              claims only what the bullets below already list — no new tier
+              promise was invented, because the tier concept itself is E013.
+            */}
             <p className="mb-[18px] text-ink-2">
-              Instant access to the top 1% of talent, plus ERP integration.
+              ERP integration, priority matching, and support.
             </p>
             <ul className="mb-[22px] grid gap-2.5">
               {PLUS.map((f) => (

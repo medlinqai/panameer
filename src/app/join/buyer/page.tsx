@@ -286,12 +286,15 @@ export default function JoinBuyerPage() {
           }
         >
           <h3 className="text-[20px] font-bold">Business Plus</h3>
+          {/* E004 — the "top 1% of talent" claim is off-brand and is gone;
+              see the note in the marketing Pricing card. The tier itself is
+              E013 and untouched. */}
           <p className="mt-1 text-[14.5px] text-ink-2">
-            Instant access to the top 1% of talent, plus ERP integration. Start a
-            free trial — no card required.
+            ERP integration and priority matching. Start a free trial — no card
+            required.
           </p>
           <ul className="mt-4 grid gap-2 text-[14.5px]">
-            <li>✓ Top-1% vetted talent</li>
+            <li>✓ Validated experts</li>
             <li>✓ One-click ERP punchout</li>
             <li>✓ Priority matching &amp; support</li>
           </ul>
