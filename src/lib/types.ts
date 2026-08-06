@@ -21,6 +21,13 @@ export type Me = {
     status: string;
     roles: {
       isServiceBuyer: boolean;
+      /**
+       * USER_JOB Requester — owns a RequesterProfile. `getMe` has always sent
+       * this and the type never declared it, so every client reading `roles`
+       * was blind to the one flag that separates the person who asks for work
+       * from the one who administers the company's buying.
+       */
+      isRequester: boolean;
       isServiceProvider: boolean;
       isServiceCoordinator: boolean;
       isSupport: boolean;
