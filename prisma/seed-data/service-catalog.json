@@ -1,6 +1,6 @@
 {
   "_source": "4. Project Documents/2. Design/4. Service Catalog/Service Catalog.xlsx (Panameer Service Catalog V1)",
-  "_note": "Authoritative provider taxonomy: Role -> Domain -> Skill, plus a cross-cutting multi-select Specializations vocabulary. Generated from Scott's xlsx.",
+  "_note": "Authoritative provider taxonomy: Role -> Domain -> Skill, plus a cross-cutting multi-select Specializations vocabulary. Generated from Scott's xlsx. AI vertical added from Service Catalog V4 'The AI Services Catalog' sheet (brief_seed_ai_catalog).",
   "roles": [
     {
       "name": "Application-Specific",
@@ -152,6 +152,36 @@
           "name": "Project Portfolio Management",
           "skills": [
             "Project Manager"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "AI-Specialist",
+      "display": "AI-Specialist Roles",
+      "domains": [
+        {
+          "name": "Core Technical & Development",
+          "skills": [
+            "AI Integration & Automation",
+            "Chatbot & Agent Development",
+            "Model Engineering",
+            "Specialized Model Work"
+          ]
+        },
+        {
+          "name": "Creative & Content Generation",
+          "skills": [
+            "Generative AI Art & Video",
+            "Generative AI Writing"
+          ]
+        },
+        {
+          "name": "Data Support & Services",
+          "skills": [
+            "Data Annotation & Labeling",
+            "Prompt Engineering",
+            "AI Research & Strategy"
           ]
         }
       ]

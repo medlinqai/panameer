@@ -26,7 +26,18 @@ import * as path from "path";
 type CatalogJson = {
   _source?: string;
   _note?: string;
-  roles: { name: string; domains: { name: string; skills: string[] }[] }[];
+  roles: {
+    name: string;
+    /**
+     * OPTIONAL, and only set where the derivation below is wrong (E-brief
+     * seed_ai_catalog). Four enterprise roles are named "X-Specific" and
+     * display as "X"; "AI-Specialist" does not end in "-Specific", so stripping
+     * that suffix leaves it unchanged and the catalog needs to say what it
+     * should read as.
+     */
+    display?: string;
+    domains: { name: string; skills: string[] }[];
+  }[];
   specializations: string[];
 };
 
@@ -103,6 +114,13 @@ function toCode(name: string): string {
  * prominent). Anything unlisted falls to the default and sorts by name.
  */
 const ROLE_SORT: Record<string, number> = {
+  /*
+    AI FIRST, per the Create Work Request deck's role step.
+    ⚠ This sorts the AI vertical ABOVE the ERP core, which E013 pinned first for
+    the provider category picker. Both pickers read this one order, so they move
+    together — flipping AI back below Application is one number here.
+  */
+  "AI-Specialist": 5,
   "Application-Specific": 10,
   "Technology-Specific": 20,
   "Project-Specific": 30,
@@ -118,6 +136,15 @@ const DOMAIN_SORT: Record<string, number> = {
   "Development & IT": 60,
   "Project Execution": 70,
   "Project Portfolio Management": 80,
+  /*
+    The AI vertical's three domains, kept together and after the ERP ones. The
+    ROLE order puts AI first; within a role only its own domains show, so these
+    numbers order the AI branch internally rather than competing with the ERP
+    domains above.
+  */
+  "Core Technical & Development": 90,
+  "Creative & Content Generation": 91,
+  "Data Support & Services": 92,
 };
 
 /**
@@ -224,17 +251,19 @@ export async function seedTaxonomy(
   const roleIdByName = new Map<string, string>();
   for (const role of data.roles) {
     const code = toCode(role.name);
+    // An explicit display wins; otherwise strip the "-Specific" suffix as before.
+    const display = role.display ?? role.name.replace(/-Specific$/, "");
     const row = await prisma.roleType.upsert({
       where: { code },
       update: {
         name: role.name,
-        display: role.name.replace(/-Specific$/, ""),
+        display,
         sort_order: ROLE_SORT[role.name] ?? 100,
       },
       create: {
         code,
         name: role.name,
-        display: role.name.replace(/-Specific$/, ""),
+        display,
         sort_order: ROLE_SORT[role.name] ?? 100,
       },
     });

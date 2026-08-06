@@ -33,7 +33,8 @@
     "check:host": "npx esbuild src/lib/host.test.ts --bundle --platform=node --format=cjs --packages=external --outfile=.harness/host.cjs --log-level=error && node .harness/host.cjs",
     "legal:build": "npx esbuild scripts/build-legal.ts --bundle --platform=node --format=cjs --packages=external --outfile=.harness/legal.cjs --log-level=error && node .harness/legal.cjs",
     "check:phone": "npx esbuild src/lib/phone.test.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/phone.cjs --log-level=error && node .harness/phone.cjs",
-    "check:theme": "npx esbuild src/lib/themeRecipes.test.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/theme.cjs --log-level=error && node .harness/theme.cjs"
+    "check:theme": "npx esbuild src/lib/themeRecipes.test.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/theme.cjs --log-level=error && node .harness/theme.cjs",
+    "seed:catalog": "ts-node --project tsconfig.seed.json prisma/seed-catalog.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
