@@ -21,10 +21,20 @@
  */
 
 /**
- * THE BADGE — the headline. Four verbs, in the order they happen to a person:
- * they learn something, they meet people, they get hired, they get paid.
+ * THE BADGE — the headline. Five verbs now, in the order they happen to a
+ * person: they learn something, they meet people, they MAKE something, they get
+ * paid — together.
+ *
+ * "Create" is the addition (E006, Scott's pick #3). It names the part of the
+ * arc the four-verb version skipped: between meeting people and being paid,
+ * the work itself happens, and a badge that goes straight from Connect to Get
+ * Paid reads like a referral fee rather than a craft.
+ *
+ * PROVISIONAL — Scott's "start there". It may shorten again, which is exactly
+ * why nothing types this string: it renders in the marketing hero and the
+ * header lockup from here, so a re-word is one edit and cannot half-land.
  */
-export const BRAND_BADGE = "Learn. Connect. Get Paid. Together.";
+export const BRAND_BADGE = "Learn. Connect. Create. Get Paid. Together.";
 
 /**
  * THE MONEY LINE — the badge, unpacked. Used where somebody is about to act
