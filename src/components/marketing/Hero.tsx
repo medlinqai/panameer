@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
@@ -28,14 +27,23 @@ import {
  * nothing is a worse promise than not appearing to search at all — there is no
  * public provider index to search against until sign-up.
  */
+/** The three delivery scopes the hero search can narrow to. */
+const SCOPES = ["Order-to-Cash SME", "Procure-to-Pay SME", "Record-to-Report SME"];
+
 export function Hero() {
   const router = useRouter();
   const [mode, setMode] = useState<"hire" | "work">("hire");
   const [query, setQuery] = useState("");
-  const placeholder =
+  /** The chip currently narrowing the search, or null for everything. */
+  const [scope, setScope] = useState<string | null>(null);
+
+  const base =
     mode === "hire"
-      ? "Describe what you need to hire for…"
-      : "Describe the work you want to find…";
+      ? "Describe what you need to hire for"
+      : "Describe the work you want to find";
+  // The scope is shown IN the field, so the chip's effect is visible where the
+  // search is rather than only on the chip itself.
+  const placeholder = scope ? `${base} in ${scope}…` : `${base}…`;
 
   /** Both sides of the toggle start the same funnel, on their own branch. */
   const joinHref = mode === "hire" ? "/join?type=buyer" : "/join?type=seller";
@@ -101,8 +109,24 @@ export function Hero() {
           <h1 className="mb-[18px] text-[40px] font-extrabold leading-[1.02] tracking-[-1.5px] text-white sm:text-[60px]">
             {BRAND_BADGE}
           </h1>
-          <p className="mb-[30px] max-w-[560px] text-[19px] leading-relaxed text-white/85">
+          <p className="mb-4 max-w-[560px] text-[19px] leading-relaxed text-white/85">
             {BRAND_DESCRIPTOR}
+          </p>
+
+          {/*
+            E008 — THE MONEY LINE MOVED UP HERE, out from between the search box
+            and the chips under it. In that slot it broke the one thing the
+            search block has to read as: a control and the scopes that narrow
+            it. A sentence wedged between them made the chips look like a
+            separate offer rather than part of the search.
+
+            Its home is with the brand statement it unpacks — the badge is the
+            headline, the descriptor says what Panameer is, and this says what
+            you do here, in that order — leaving the action block below
+            uninterrupted.
+          */}
+          <p className="mb-[30px] max-w-[560px] text-[16px] font-semibold text-white/70">
+            {BRAND_MONEY_LINE}
           </p>
 
           <div className="mb-[18px] inline-flex rounded-full border border-white/30 bg-white/10 p-[5px]">
@@ -149,32 +173,43 @@ export function Hero() {
           </form>
 
           {/*
-            THE MONEY LINE sits directly above the chips (WS-A): this is the
-            point on the page where somebody is about to act, and it is the one
-            place the four-verb sequence is worth spelling out rather than
-            gesturing at.
-          */}
-          <p className="mt-6 max-w-[560px] text-[16px] font-semibold text-white">
-            {BRAND_MONEY_LINE}
-          </p>
+            E007/E008 — SCOPING CHIPS, and they genuinely scope.
 
-          {/*
-            Real links, not styled spans. These carried `cursor-pointer` and an
-            arrow while being inert — the clearest kind of dead end, because the
-            page actively invited the click.
+            They used to be three links straight to /join, sitting under a
+            sentence, reading as a separate row of offers. They are toggles now:
+            picking one narrows the search above — the label appears in the
+            input as the thing being searched — and picking it again clears it.
+            The visible state change is what makes the click real.
+
+            WHY THE TYPED QUERY STILL ISN'T CARRIED INTO THE URL. There is no
+            public index to search: /search is inside the authed app, and the
+            provider directory needs a session. A query string that survives
+            into a URL and then changes nothing downstream is a worse promise
+            than an honest funnel, so Search sends you to the right branch of
+            sign-up and the scope is what you carry in your head. The moment a
+            public results route exists, this is one `router.push`.
           */}
           <div className="mt-4 flex flex-wrap gap-3">
-            {["Order-to-Cash SME", "Procure-to-Pay SME", "Record-to-Report SME"].map(
-              (label) => (
-                <Link
+            {SCOPES.map((label) => {
+              const on = scope === label;
+              return (
+                <button
                   key={label}
-                  href={joinHref}
-                  className="inline-flex items-center gap-2 rounded-[10px] border border-white/30 bg-white/10 px-4 py-2.5 text-[14.5px] font-semibold text-white transition-colors hover:bg-white/20"
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => setScope(on ? null : label)}
+                  className={
+                    "inline-flex items-center gap-2 rounded-[10px] border px-4 py-2.5 text-[14.5px] font-semibold transition-colors " +
+                    (on
+                      ? "border-white bg-white text-magenta"
+                      : "border-white/30 bg-white/10 text-white hover:bg-white/20")
+                  }
                 >
-                  {label} →
-                </Link>
-              )
-            )}
+                  {label}
+                  {on && <span aria-hidden>×</span>}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
