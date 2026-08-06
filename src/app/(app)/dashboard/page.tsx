@@ -10,6 +10,8 @@ import { getWorkFeed, WORK_FEED_TABS, type WorkFeedTab } from "@/lib/work-feed";
 import { Card } from "@/components/Card";
 import { prisma } from "@/lib/prisma";
 import { displayFirstName } from "@/lib/display";
+import { RequesterHome } from "@/components/home/RequesterHome";
+import { listMentors } from "@/lib/mentors";
 
 /**
  * HOME — the PROVIDER dashboard (brief_sp_dashboard; supersedes MASTER WS12).
@@ -97,6 +99,52 @@ export default async function DashboardPage({
 
         <WorkFeed tab={tab} query={query} cards={cards} />
       </div>
+    );
+  }
+
+  /*
+    THE REQUESTER LANDS ON THEIR OWN HOME (brief_requester_home_v1 WS-C).
+
+    Mirrors the provider pattern: /dashboard branches by who you are rather than
+    each role owning a different URL, so "go to my dashboard" means one thing
+    everywhere in the product — at the end of onboarding, from the rail's Home,
+    and after every login.
+
+    Checked BEFORE the generic buyer surface below, because a requester carries
+    `is_service_buyer` too and would otherwise fall through to a card that
+    offers them one link.
+  */
+  const requester = await prisma.requesterProfile.findFirst({
+    where: { person: { user_id: viewer.userId }, completed_at: { not: null } },
+    select: { id: true, person: { select: { first_name: true } } },
+  });
+
+  if (requester) {
+    /*
+      A REAL COUNT, and today it is genuinely zero for everyone: WorkRequest
+      exists and nobody has posted one. That is why the empty state is honest
+      rather than fabricated — it is a measurement, not a placeholder.
+    */
+    const [openWorkCount, experts] = await Promise.all([
+      /*
+        `buyer` is the Person directly, and POSTED is the only live status the
+        enum has — there is no IN_PROGRESS, because nothing can progress yet.
+        Counting a status that does not exist would have been a silent zero
+        rather than an error, which is exactly the kind of "empty state" that
+        looks correct and isn't.
+      */
+      prisma.workRequest.count({
+        where: { buyer: { user_id: viewer.userId }, status: "POSTED" },
+      }),
+      listMentors(),
+    ]);
+
+    return (
+      <RequesterHome
+        firstName={displayFirstName(requester.person.first_name ?? "")}
+        openWorkCount={openWorkCount}
+        experts={experts.slice(0, 8)}
+      />
     );
   }
 
