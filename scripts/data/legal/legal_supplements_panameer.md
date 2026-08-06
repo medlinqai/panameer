@@ -2715,14 +2715,14 @@ described in Section 2.1.1 of the Fee and ACH Authorization Agreement.
 2. MAKING OR RECEIVING AN HOURLY PAYMENT
 2.1 WEEKLY HOURLY INVOICES
 For Hourly Work Orders, the weekly billing cycle starts Monday at 00:00 midnight UTC and ends Sunday at
-23:59 UTC. Invoices for hours recorded on Panameer in the Work Diary are generated each Monday
+23:59 UTC. Invoices for hours recorded on Panameer in the Timesheet are generated each Monday
 following the week in which the hours were billed (the "Hourly Invoice Deadline"). Provider
 irrevocably authorizes and instructs Panameer, as its agent, to (i) create an invoice on behalf of Provider
-for payment due based upon the hours that the provider recorded in the Work Diary before the Hourly
+for payment due based upon the hours that the provider recorded in the Timesheet before the Hourly
 Invoice Deadline (such invoice, the "Hourly Invoice"); and (ii) submit the Hourly Invoice on behalf of
-Provider to Provider's Service Buyer for payment. For the avoidance of doubt, the “Work Diary” is the
+Provider to Provider's Service Buyer for payment. For the avoidance of doubt, the “Timesheet” is the
 section of Panameer where hours can be recorded on an Hourly Work Order.
-By recording time in the Work Diary and allowing an Hourly Invoice to be created based on the time
+By recording time in the Timesheet and allowing an Hourly Invoice to be created based on the time
 recorded, Provider represents and warrants that (y) Provider has completed the applicable
 
 Provider Services fully and satisfactorily; and (z) the hours Provider reports are true, accurate, and
@@ -2794,12 +2794,12 @@ approval by the Service Buyer for purposes of this Release Condition.
 3. Provider is a Payroll Employee and has submitted an Hourly Invoice under a Services
 Work Order that involves the use of Panameer Payroll.
 4. Panameer reviews Service Buyer's dispute of amounts invoiced on Provider's Hourly Invoice for an
-Hourly Work Order with Work Diaries pursuant to this Agreement and determines (1) that the
+Hourly Work Order with Timesheets pursuant to this Agreement and determines (1) that the
 time is related to the Hourly Work Order requirements or Service Buyer's instructions and (2) that
 Provider met any applicable Work Product delivery deadline or provided 24 hours' advance
 notice of Provider's inability to meet the deadline.
 5. Service Buyer initiates a Dispute with respect to Provider's Hourly Invoice for an Hourly Work Order
-without Work Diaries pursuant to this Agreement and Service Buyer and Provider resolve the
+without Timesheets pursuant to this Agreement and Service Buyer and Provider resolve the
 dispute without the assistance of Panameer.
 6. Issuance of a final order of a court or arbitrator of competent jurisdiction from which appeal is
 not taken, in which case the funds will be released in accordance with such order.
@@ -2821,22 +2821,22 @@ a Provider, Panameer will provide Hourly Payment Protection to the Provider as d
 6.1 as a membership benefit to foster fairness, reward loyalty, and encourage the Provider to continue
 to use the Site Services for their business needs. Hourly Payment Protection will be offered to a
 Provider only if all of the following criteria are met in Panameer's sole discretion:
-1. Both Service Buyer and Provider must have agreed to use Work Diaries upon acceptance of the
+1. Both Service Buyer and Provider must have agreed to use Timesheets upon acceptance of the
 Hourly Work Order, as part of the terms.
 2. Service Buyer must have an Account in good standing and a valid and verified Payment Method at the
 start of the Hourly Work Order, and must agree to automatically pay for hours billed by
-Provider through Work Diaries.
+Provider through Timesheets.
 3. Provider's Account must be in good standing at the time of the payment at issue, including,
 for example, completion of the identity verification process, tax information, and any other
 similar requests or requirements.
-4. Provider must have enabled and used Work Diaries to document any and all hours covered
+4. Provider must have enabled and used Timesheets to document any and all hours covered
 by the Hourly Payment Protection for Providers.
 5. Prior to any Hourly Invoice being submitted, Provider must have annotated the screenshots
-documented in Work Diaries sufficient to demonstrate the work relates to the Hourly
+documented in Timesheets sufficient to demonstrate the work relates to the Hourly
 Work Order.
-6. The screenshots documented by Work Diaries must be clearly related to the applicable Hourly
+6. The screenshots documented by Timesheets must be clearly related to the applicable Hourly
 Work Order requirements or Service Buyer instructions.
-7. The number of hours billed in the Work Diaries must be within the hours authorized in the
+7. The number of hours billed in the Timesheets must be within the hours authorized in the
 Hourly Work Order for the week.
 8. Provider must have rendered services in a professional and workmanlike manner in
 accordance with the professional experience represented by Provider to Service Buyer.
@@ -2866,7 +2866,7 @@ Adjusted Rate as defined in Section 2.1.1 of the Fee and ACH Authorization Agree
 Provider on the Site across all Service Buyers; and (iii) the going rate for the same skills on the Site in Provider's area (such
 determination to be made in Panameer's sole discretion). The maximum amount of coverage under the Hourly
 Payment Protection for Providers for the life of a relationship between the same Service Buyer and Provider
-is $2,500 or 50 hours logged in Work Diary at Provider's average hourly rate billed to Service Buyer, based on
+is $2,500 or 50 hours logged in Timesheet at Provider's average hourly rate billed to Service Buyer, based on
 whichever is less.
 
 6.2 FOR SERVICE BUYERS
@@ -2874,13 +2874,13 @@ Provider authorizes and instructs Panameer to adjust the Hourly Invoice to remov
 are not (a) clearly related to either the Hourly Work Order terms or work agreed to by the Service Buyer, and (b)
 within the hours authorized in the Hourly Work Order for the week, subject to and conditioned on the
 following terms:
-Both Service Buyer and Provider must agree to use Work Diaries as part of the Hourly Work Order terms.
+Both Service Buyer and Provider must agree to use Timesheets as part of the Hourly Work Order terms.
 Service Buyer must have an Account in good standing and a valid and verified default Payment Method,
 and Service Buyer must agree to automatically pay for hours billed by Provider in the Hourly Invoices.
 Additionally, Service Buyer must either:
 Within the Hourly Invoice Review Period, submit a Dispute specifically identifying the time
 billed that is not clearly related to either the Hourly Work Order requirements or Service Buyer
-instructions in the Work Diaries, or else identify an agreed upon timeframe for delivery of
+instructions in the Timesheets, or else identify an agreed upon timeframe for delivery of
 Work Product that was not met and specify that Provider did not provide 24 hours'
 advance notice that the deadline would not be met; OR
 Have previously submitted a complaint that Provider has failed to render services in a
@@ -2894,8 +2894,8 @@ Panameer will investigate and determine in its sole discretion whether the above
 met.
 Hourly Protection for Service Buyers only protects Service Buyer from the obligation to pay for Provider’s work if the
 documented hours worked are not clearly related to the Hourly Work Order requirements or Service Buyer
-instructions in the Work Diaries. If Service Buyer has requested that the Provider use functionality of the Site
-or third-party software that hides, blurs, or distorts images in the Work Diary, the screenshots will be
+instructions in the Timesheets. If Service Buyer has requested that the Provider use functionality of the Site
+or third-party software that hides, blurs, or distorts images in the Timesheet, the screenshots will be
 deemed to be “clearly related” to the Hourly Work Order requirements for purposes of the Service Buyer's
 eligibility for Hourly Payment Protection. Hourly Payment Protection for Service Buyers does not create any
 warranties, express or implied, beyond those expressly stated in the User Agreement.
@@ -2921,7 +2921,7 @@ Panameer further reserves the right to review the Provider's work for 30 days pr
 Dispute for compliance with Hourly Payment Protection requirements, to make adjustments to invoices,
 and to direct Payment Escrow to make appropriate releases to Service Buyer if it finds work that, in Panameer's
 sole discretion, clearly does not relate to Hourly Work Order requirements or to Service Buyer instructions in the
-Work Diaries or violations of the Terms of Service during its review of the work.
+Timesheets or violations of the Terms of Service during its review of the work.
 If Service Buyer’s payment is unsuccessful, Panameer will review the Weekly Invoice to determine if it qualifies for
 Hourly Payment Protection. If Panameer, in its sole discretion, determines that the Weekly Invoice qualifies
 for Hourly Payment Protection, it will make payment to the Provider to cover the Hourly Invoice on
