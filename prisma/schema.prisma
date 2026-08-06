@@ -475,6 +475,7 @@ model Pillar {
   skills           Skill[]
   tags             SkillTag[]
   providerProfiles ProviderProfile[]
+  workRequests     WorkRequest[]
 
   @@unique([catalog_id, code])
   @@map("pillars")
@@ -1726,16 +1727,45 @@ model WorkRequest {
   buyer_person_id     String               @db.Uuid
   p_account_id        String               @db.Uuid
   role_type_id        String?              @db.Uuid
+  /// THE DOMAIN of the Role → Domain → Skill cascade
+  /// (brief_create_work_request_v1 WS-A).
+  ///
+  /// Named `pillar_id`, not `domain_id`, deliberately: the catalog's Domain
+  /// entity IS `Pillar` in this schema, and `Skill.pillar_id` already points at
+  /// it. One relation under two names is how the next person writes a join
+  /// against a column that does not exist.
+  ///
+  /// Persisted rather than inferred from the chosen skills. A request whose
+  /// skills are later edited would otherwise silently change domain, and the
+  /// requester's actual answer to "what service domain are you requesting" is
+  /// worth keeping.
+  pillar_id           String?              @db.Uuid
   region_id           String?              @db.Uuid
   title               String               @default("")
   description         String?
   experience_level    ExperienceLevel?
   budget_type         BudgetType?
+  /// The single figure the first wizard wrote. Kept for back-compat; the range
+  /// below is what the current flow writes.
   budget_amount_cents Int?
+  /// BUDGET AS A RANGE (deck's From / To). Nullable on purpose — the budget
+  /// step has a "not ready to set one" escape, and a request with no budget is
+  /// a real state rather than an incomplete one.
+  budget_min_cents    Int?
+  budget_max_cents    Int?
   currency            String               @default("USD")
   worksite            WorksiteType?
   location_country    String?
   duration            WorkRequestDuration?
+  /// When the work runs. `duration` (the coarse enum) stays: a requester who
+  /// knows "3-6 months" but not the dates can still answer.
+  start_date          DateTime?
+  end_date            DateTime?
+  /// RESERVED FOR THE ERP BRIDGE. UNSPSC is the classification punch-out and
+  /// cXML carry, and it will be derived from the catalog selection rather than
+  /// typed. Null for now — reserving the column keeps the web-created request
+  /// shaped like the one an ERP will send.
+  unspsc_code         String?
   status              WorkRequestStatus    @default(DRAFT)
   posted_at           DateTime?
   created_at          DateTime             @default(now())
@@ -1744,6 +1774,7 @@ model WorkRequest {
   buyer    Person             @relation(fields: [buyer_person_id], references: [id], onDelete: Cascade)
   pAccount PAccount           @relation(fields: [p_account_id], references: [id], onDelete: Cascade)
   roleType RoleType?          @relation(fields: [role_type_id], references: [id], onDelete: SetNull)
+  pillar   Pillar?            @relation(fields: [pillar_id], references: [id], onDelete: SetNull)
   region   Region?            @relation(fields: [region_id], references: [id], onDelete: SetNull)
   skills   WorkRequestSkill[]
 
