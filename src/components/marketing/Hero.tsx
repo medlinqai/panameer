@@ -42,11 +42,35 @@ export function Hero() {
 
   return (
     <div className="mx-auto max-w-[1180px] px-6">
-      <div className="relative mt-[26px] min-h-[520px] overflow-hidden rounded-[22px] bg-[linear-gradient(115deg,#171E3E_0%,#3a1f5c_45%,#8a1f88_100%)]">
-        {/* Decorative glow wash (matches mockup ::after). */}
+      {/*
+        E005 — THE HERO WAS PURPLE ON PURPLE. A #3a1f5c→#8a1f88 panel with a
+        magenta radial wash laid over it: three values within a few steps of
+        each other, so nothing had an edge and the whole block read as one muddy
+        field. The white search card was the only thing that separated from it.
+
+        The /login aurora is the target feel, and what makes that work is RANGE
+        — it starts at near-black ink and travels to magenta, so there is a real
+        dark end to read light type against and a real bright end to give the
+        panel depth. This does the same: a deep ink base, two well-separated
+        aurora blooms placed off opposite corners, and a vignette that pulls the
+        edges down so the middle lifts.
+
+        The blooms are positioned AWAY from the copy column (top-right, bottom-
+        right) rather than washing the whole surface. Contrast for the headline
+        comes from the dark base being left alone where the text sits, which is
+        the same reason the login backdrop puts its vignette over the card.
+      */}
+      <div className="relative mt-[26px] min-h-[520px] overflow-hidden rounded-[22px] bg-[#0f1330]">
+        {/* Aurora blooms — separated in hue and position, not stacked. */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(1200px_500px_at_80%_-10%,rgba(215,44,214,.35),transparent_60%),radial-gradient(800px_500px_at_10%_110%,rgba(90,31,90,.5),transparent_60%)]"
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(900px_600px_at_88%_-15%,rgba(215,44,214,0.55),transparent_62%),radial-gradient(700px_520px_at_72%_115%,rgba(88,44,190,0.5),transparent_60%),radial-gradient(600px_400px_at_-5%_20%,rgba(23,30,62,0.9),transparent_70%)]"
+        />
+        {/* Vignette: darkens the edges so the panel has depth rather than
+            being one flat wash, and guarantees the copy column stays dark. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_30%_50%,rgba(9,11,28,0.72)_0%,rgba(9,11,28,0.35)_45%,transparent_75%)]"
         />
 
         {/*
@@ -77,7 +101,7 @@ export function Hero() {
           <h1 className="mb-[18px] text-[40px] font-extrabold leading-[1.02] tracking-[-1.5px] text-white sm:text-[60px]">
             {BRAND_BADGE}
           </h1>
-          <p className="mb-[30px] max-w-[560px] text-[19px] text-[#f3e9f6]">
+          <p className="mb-[30px] max-w-[560px] text-[19px] leading-relaxed text-white/85">
             {BRAND_DESCRIPTOR}
           </p>
 
