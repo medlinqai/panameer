@@ -33,6 +33,8 @@ export type Me = {
     vertical: string | null;
     website: string | null;
     logoUrl: string | null;
+    /** True when this person administers the company (E214). */
+    isAdmin: boolean;
   };
   pAccount: { id: string; name: string; kind: string };
   providerProfile: {

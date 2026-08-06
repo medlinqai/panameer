@@ -94,6 +94,27 @@ export const UTILITY_NAV: NavItem[] = [
   { label: "Notifications", href: "/notifications", icon: "Bell" },
 ];
 
+/**
+ * THE COMPANY MENU (E214) — the top-left chip's popover, company-admins only.
+ *
+ * Declared here with the rest of the navigation rather than inside the chip,
+ * for the reason this file exists at all: a destination named in one place and
+ * routed in another is how a menu item outlives its page.
+ *
+ * Company is the built page. Teams, Branding and Company Settings are titled
+ * placeholders — the menu names them, so they have to LAND somewhere, and a 404
+ * out of your own menu reads as broken where an honest "coming soon" reads as
+ * unfinished. Members is an anchor into the section the company page already
+ * renders, not a fourth stub, because that list genuinely exists today.
+ */
+export const COMPANY_NAV: NavItem[] = [
+  { label: "Company", href: "/company" },
+  { label: "Teams", href: "/company/teams" },
+  { label: "Branding", href: "/company/branding" },
+  { label: "Members", href: "/company#members" },
+  { label: "Company Settings", href: "/company/settings" },
+];
+
 /** The group heading above the six primary items. */
 export const APP_NAV_GROUP_TITLE = "Transactions";
 

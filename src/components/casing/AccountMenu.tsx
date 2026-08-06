@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useRef, useState, useSyncExternalStore } from "react";
 import { signOut } from "next-auth/react";
 import { Avatar } from "@/components/Avatar";
+import { Popover } from "@/components/casing/Popover";
 import { useMe } from "@/components/MeProvider";
 import { membershipBadge } from "@/lib/membership";
 import {
@@ -34,6 +35,14 @@ import {
  * identity header still separates who-you-are from what-you-can-do, which was
  * the distinction the bars were carrying.
  *
+ * E212/E214 — A FLOATING POPOVER, ANCHORED BOTTOM-LEFT. It used to be an
+ * absolutely-positioned panel inside the rail, which put it inside the rail's
+ * scrolling column: it could be clipped exactly like the submenu flyouts were,
+ * and it pushed against the rail's own edge. It is a portalled popover now, the
+ * same primitive the flyouts use, opening UPWARDS from the identity block at
+ * the bottom of the rail — the third of the three zones (org top-left, work in
+ * the middle, you at the bottom).
+ *
  * THE ADMIN SEES A SHORTER MENU. My Stats, Account Health and Request
  * Recommendations are all marketplace-provider surfaces: a Panameer employee
  * has no job success score, no account standing as a seller, and nobody to ask
@@ -60,7 +69,7 @@ export function AccountMenu({
   const { me, refresh } = useMe();
   const [open, setOpen] = useState(false);
   const [themeOpen, setThemeOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   /*
     The theme choice is read from localStorage through `useSyncExternalStore`
@@ -91,19 +100,6 @@ export function AccountMenu({
     // open shows Theme mid-interaction, which reads as a stuck control.
     setThemeOpen(false);
   }, []);
-
-  useEffect(() => {
-    const onClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) close();
-    };
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && close();
-    document.addEventListener("mousedown", onClick);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onClick);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [close]);
 
   const first = me?.person.firstName ?? "";
   const last = me?.person.lastName ?? "";
@@ -151,9 +147,10 @@ export function AccountMenu({
     "block w-full px-4 py-2.5 text-left text-[14.5px] hover:bg-black/[0.04]";
 
   return (
-    <div className="relative" ref={ref}>
+    <>
       {variant === "rail" ? (
         <button
+          ref={triggerRef}
           type="button"
           onClick={() => (open ? close() : setOpen(true))}
           aria-haspopup="menu"
@@ -183,6 +180,7 @@ export function AccountMenu({
         </button>
       ) : (
         <button
+          ref={triggerRef}
           type="button"
           onClick={() => (open ? close() : setOpen(true))}
           aria-haspopup="menu"
@@ -199,19 +197,20 @@ export function AccountMenu({
         </button>
       )}
 
-      {open && (
-        <div
-          role="menu"
-          className={
-            "absolute z-50 w-[19rem] overflow-hidden rounded-[14px] border border-line bg-white shadow-brand " +
-            /*
-              From the rail the panel opens to the RIGHT of the block; from the
-              header it drops beneath the avatar. Right-aligning the rail's copy
-              under a 248px column would push it half off the left edge.
-            */
-            (variant === "rail" ? "left-0 top-full mt-2" : "right-0 mt-2")
-          }
-        >
+      <Popover
+        open={open}
+        onClose={close}
+        anchorRef={triggerRef}
+        /*
+          From the rail the block sits at the BOTTOM, so the panel opens upward;
+          from the header it drops beneath the avatar and right-aligns. The
+          popover flips either of those when the viewport is short.
+        */
+        placement={variant === "rail" ? "top-start" : "bottom-end"}
+        width={304}
+        label="Account menu"
+      >
+        <div className="-my-1.5">
           {/* ---- Section 1: who you are ---------------------------------- */}
           <div className="border-b border-line px-4 py-3.5">
             <div className="flex items-center gap-3">
@@ -368,8 +367,8 @@ export function AccountMenu({
             </button>
           </div>
         </div>
-      )}
-    </div>
+      </Popover>
+    </>
   );
 }
 

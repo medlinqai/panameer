@@ -13,6 +13,7 @@ import {
   ADMIN_SETUP,
 } from "@/lib/nav";
 import { AccountMenu } from "@/components/casing/AccountMenu";
+import { CompanyMenu } from "@/components/casing/CompanyMenu";
 import { Popover, PopoverHeading } from "@/components/casing/Popover";
 import { RailIcon } from "@/components/casing/RailIcon";
 import type { NavItem } from "@/lib/nav";
@@ -62,8 +63,6 @@ export function AppRail() {
   const EXACT = new Set(["/dashboard", "/admin"]);
   const isActive = (href: string) =>
     EXACT.has(href) ? pathname === href : pathname.startsWith(href);
-
-  const company = me?.company?.name;
 
   /*
     HARD REQUIREMENT (WS1): labels never wrap.
@@ -145,17 +144,21 @@ export function AppRail() {
     the admin needs it here too or a Panameer employee loses their only route to
     My Profile and Sign Out. Same component, same menu; the admin's item list is
     the shorter one `ADMIN_PERSONA_NAV` already defines.
+
+    E214 — IT IS PINNED TO THE BOTTOM now, not stacked in with the navigation.
+    Three zones: the org up top, the work in the middle, and you at the bottom
+    left. Sitting in the scroll flow it was a fourth nav item competing with the
+    utility row directly under it.
   */
   const identityBlock = (
-    <div className="mt-3">
+    <div className="mt-3 border-t border-white/10 pt-3">
       <AccountMenu isAdmin={isAdmin} variant="rail" />
     </div>
   );
 
   const nav = isAdmin ? (
     <>
-      {identityBlock}
-      <div className="mt-4 space-y-1.5">
+      <div className="mt-1 space-y-1.5">
         {adminButton(ADMIN_SETUP)}
         {adminButton(ADMIN_HOME)}
       </div>
@@ -183,14 +186,6 @@ export function AppRail() {
       <div className="space-y-1">
         {UTILITY_NAV.map((i) => railLink(i, false))}
       </div>
-
-      {/*
-        THE IDENTITY BLOCK opens the persona menu (WS1-A/WS1-C). It moved here
-        from the header, where it was an avatar in a row of icons: the deck puts
-        who-you-are in the rail, under the utility row, and the header's
-        top-right slot goes to Community Credits.
-      */}
-      {identityBlock}
 
       {/*
         E206/E211 — the separate "Provider Dashboard" button used to sit here.
@@ -238,30 +233,16 @@ export function AppRail() {
         <div className="sticky top-0 flex h-screen flex-col px-3 py-4">
           {brand}
 
-          {company && (
-            <div className="mt-3 flex items-center gap-2.5 px-1">
-              {me?.company?.logoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={me.company.logoUrl}
-                  alt=""
-                  className="h-8 w-8 rounded-[7px] object-cover"
-                />
-              ) : (
-                <span className="grid h-8 w-8 place-items-center rounded-[7px] bg-white/10 text-[12px] font-bold text-white/70">
-                  {company.slice(0, 2).toUpperCase()}
-                </span>
-              )}
-              <p className="min-w-0 truncate text-[15px] font-bold text-white">
-                {company}
-              </p>
-            </div>
-          )}
+          {/* ZONE 1 — org context (E214). A popover for company admins, the
+              same static chip as before for everyone else. */}
+          <CompanyMenu />
 
-          <nav className="mt-3 flex-1 overflow-y-auto">{nav}</nav>
-          {/* The admin rail keeps its bottom card; the provider rail's identity
-              block is at the top now, so a second one would be two answers to
-              "who am I signed in as". */}
+          {/* ZONE 2 — the work. Scrolls; the two zones around it do not. */}
+          <nav className="mt-3 min-h-0 flex-1 overflow-y-auto">{nav}</nav>
+
+          {/* ZONE 3 — you (E214). Outside the scroll container, so it is always
+              reachable however long the navigation gets. */}
+          {identityBlock}
         </div>
       </aside>
 
@@ -283,7 +264,9 @@ export function AppRail() {
         </div>
         {open && (
           <div className="bg-rail px-4 pb-4">
+            <CompanyMenu />
             <nav>{nav}</nav>
+            {identityBlock}
           </div>
         )}
       </div>

@@ -49,14 +49,26 @@
   /*
    * CASING PALETTE — sampled from E151-provider-home-casing.png (MASTER WS9),
    * the same pixel-reader method the Learn tokens used:
-   *   rail            #140c29   (flat across the whole rail)
+   *   rail            #272334   (see the E212 note below)
    *   active nav pill #d127d0   (brand magenta within antialiasing)
    *   page canvas     #f7f7f5   (NOT white — the white cards need an edge)
    * The rail is deliberately its own token rather than a tint of --color-ink:
    * ink is body type and this is a surface, and tying them would mean a
    * type-colour change silently repainted the navigation.
    */
-  --color-rail: #140c29;
+  /*
+   * E212 — LIFTED ONE STEP, AND DESATURATED. The sampled #140c29 was very dark
+   * (10% lightness) and quite saturated (55%), which on a large flat surface
+   * reads as a void with a purple cast rather than as a dark UI. #272334 is
+   * ~17% lightness at ~20% saturation: still unmistakably dark, still in the
+   * brand's purple family rather than neutral grey, but it now behaves like a
+   * surface — the white/10 hover states and the white/10 dividers on it are
+   * visible, which at 10% lightness they barely were.
+   *
+   * Contrast is unaffected where it matters: white text clears 12:1 and the
+   * magenta active pill still separates cleanly.
+   */
+  --color-rail: #272334;
   --color-canvas: #f7f7f5;
 
   --radius-brand: 14px;

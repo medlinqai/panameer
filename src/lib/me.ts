@@ -25,6 +25,21 @@ export async function getMe(viewer: Viewer) {
         include: { pAccount: { select: { id: true, name: true, kind: true } } },
       },
       site: { select: { id: true, name: true } },
+      /*
+        IS THIS PERSON THEIR COMPANY'S ADMIN? (E214)
+
+        The rail's company chip opens an admin-only popover, and the rail is a
+        client component — so the answer has to travel on /api/me rather than be
+        re-derived in the browser. Same predicate `getCompanyBinding` uses
+        server-side: an APPROVED membership with the ADMIN role. Selected as a
+        bounded existence check, not a full membership list, because the shell
+        only needs the boolean.
+      */
+      companyMemberships: {
+        where: { role: "ADMIN", status: "APPROVED" },
+        select: { id: true },
+        take: 1,
+      },
       // Profile summaries so the dashboard/self-profile can resolve them from
       // /api/me without a second round trip.
       providerProfile: {
@@ -88,6 +103,8 @@ export async function getMe(viewer: Viewer) {
       vertical: person.company.vertical,
       website: person.company.website,
       logoUrl: person.company.logo_url,
+      /** True when this person administers the company (E214). */
+      isAdmin: person.companyMemberships.length > 0,
     },
     pAccount: person.company.pAccount,
     providerProfile: provider
