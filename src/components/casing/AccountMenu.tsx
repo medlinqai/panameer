@@ -30,8 +30,8 @@ import {
  *
  * THE SECTION BARS ARE GONE (WS1-C). J2.4 grouped the list under "You" and
  * "Preferences" bars; the deck interleaves Theme INTO the list — My Profile ·
- * My Stats · Account Health Checklist · Theme › · Request Recommendations · My
- * Company · Settings — so a bar would have had to sit mid-sentence. The
+ * My Stats · Account Health Checklist · Theme › · Request Recommendations ·
+ * Settings — so a bar would have had to sit mid-sentence. The
  * identity header still separates who-you-are from what-you-can-do, which was
  * the distinction the bars were carrying.
  *
@@ -106,7 +106,7 @@ export function AccountMenu({
   const badge = isAdmin ? "Panameer Admin" : membershipBadge(me);
   /*
     THE DECK'S ORDER (WS1-C): My Profile · My Stats · Account Health Checklist ·
-    Theme › · Request Recommendations · My Company · Settings · Sign Out. The
+    Theme › · Request Recommendations · Settings · Sign Out (E225 took My
     two halves come from nav.ts already split around the theme row, so this
     component never has to match on a label to know where the submenu goes.
 

@@ -230,9 +230,6 @@ export const COMPANY_NAV: NavItem[] = [
   { label: "Company Settings", href: "/company/settings" },
 ];
 
-/** The group heading above the six primary items. */
-export const APP_NAV_GROUP_TITLE = "Transactions";
-
 /*
   THE PROVIDER RAIL — SIX FLAT ITEMS (E216; supersedes the grouped-with-submenus
   version below).
@@ -318,7 +315,7 @@ export const PROVIDER_NAV: NavItem[] = [
   SPLIT AROUND THE THEME ROW (WS1-C).
 
   The deck's order is My Profile · My Stats · Account Health Checklist ·
-  Theme › · Request Recommendations · My Company · Settings · Sign Out, and
+  Theme › · Request Recommendations · Settings · Sign Out (E225 removed My
   Theme is not a destination — it is an inline submenu. Rather than have the
   component match on a label to know where to inject it, the two halves say so
   themselves: everything in PRIMARY renders above the theme row, everything in

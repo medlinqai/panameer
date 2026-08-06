@@ -6,7 +6,6 @@ import { useState } from "react";
 import { useMe } from "@/components/MeProvider";
 import {
   navForRoles,
-  APP_NAV_GROUP_TITLE,
   UTILITY_NAV,
   ADMIN_NAV,
   ADMIN_HOME,
@@ -198,16 +197,19 @@ export function AppRail() {
         so the rail lit two magenta pills at once for one destination. Home in
         the utility row is the single landing entry now.
       */}
-      <p className="mt-6 px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-[0.09em] text-white/40">
-        {APP_NAV_GROUP_TITLE}
-      </p>
       {/*
         E216 — PLAIN LINKS, NO FLYOUTS, NO CHEVRONS. The six Transaction items
         each had a hover submenu; those children are their destination pages'
         tab rows now (`PAGE_TABS` in nav.ts). Nothing flies out of the rail, so
         nothing here needs a disclosure affordance.
+
+        E224 — AND NO "TRANSACTIONS" HEADING above them. It earned its place
+        when these were expandable groups and the label said what kind of thing
+        they were. Flattened, they are just the six things you do here, under
+        the three you reach from anywhere — and a section label over the only
+        section is a caption on a one-picture album.
       */}
-      <div className="space-y-1">{items.map((i) => railLink(i, false))}</div>
+      <div className="mt-6 space-y-1">{items.map((i) => railLink(i, false))}</div>
     </>
   );
 
