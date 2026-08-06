@@ -8,23 +8,26 @@ import { getCreditsSummary, type CreditsSummary } from "@/lib/credits";
 import { CreditsPill } from "@/components/casing/CreditsPill";
 
 /**
- * The header (WS1-D, decluttered by E207-E210).
+ * The header (E210, revised) — greeting, and Community Credits. That is all.
  *
- *   left    greeting ("Good Morning, {first}"), then the date and AI-on chips
- *   right   the Community Credits pill (and the bug report)
+ *   left    greeting ("Good Morning, {first}")
+ *   right   the Community Credits pill, then the bug report
  *
- * THREE THINGS LEFT THIS HEADER IN E207-E209, and they all left for the same
- * reason: the rail already had them. A bell beside a rail "Notifications", a
- * house beside a rail "Home", and a search pill beside a rail "Search" are not
- * shortcuts — they are a second set of answers to "where do I click", and the
- * walk hit every one of them. The rail keeps all three; the work-request search
- * in the middle of the dashboard keeps its own box, which is a different search
- * over a different thing.
+ * FIVE THINGS HAVE LEFT THIS HEADER over two passes, and the same argument
+ * removed all of them: nothing belongs here that another surface already owns
+ * or that nobody acts on. E207-E209 took the bell, the house and the search
+ * pill, because the rail has Notifications, Home and Search — a second set of
+ * answers to "where do I click" is not a shortcut.
  *
- * E210 — STATUS LEFT, CURRENCY RIGHT. The date and "AI on" are ambient facts
- * that belong with the greeting, and the Credits pill is the one thing here
- * that will become a number people watch, so it gets the corner on its own.
- * That order also means the header no longer ends in a run of grey glyphs.
+ * E210 REVISED takes the date and the "AI on" chip. The first pass moved them
+ * left beside the greeting; the decks say the middle is empty, and they are
+ * right. Neither was actionable: the date is on every clock the person owns,
+ * and "AI on" is a status nobody can change and nothing depends on. Two chips
+ * of ambient decoration in the one strip that spans every page.
+ *
+ * What is left is the greeting and the one number people will watch week to
+ * week. The bug report sits to the RIGHT of the pill — last, because it is the
+ * rarest thing here and the pill is what the eye should land on.
  *
  * THE PAGE NAME IS GONE, and that is the locked decision rather than an
  * omission. What tells you where you are is the rail's active highlight, which
@@ -47,13 +50,6 @@ export function AppHeader() {
   */
   const now = useSyncExternalStore(subscribeNothing, clientNow, serverNow);
   const greeting = now ? greetingFor(now) : null;
-  const dateLabel = now
-    ? new Intl.DateTimeFormat(undefined, {
-        weekday: "long",
-        month: "long",
-        day: "numeric",
-      }).format(now)
-    : null;
 
   const first = me?.person.firstName ?? "";
 
@@ -83,34 +79,18 @@ export function AppHeader() {
         {greeting ? `${greeting}, ${first || "there"}` : "\u00a0"}
       </p>
 
-      {/* ---- LEFT: ambient status, beside the greeting (E210) -------------- */}
-      {dateLabel && (
-        <span className="hidden items-center gap-1.5 rounded-full bg-[#f1faff] px-3 py-1.5 text-[13px] font-semibold text-[#1f7ab8] md:inline-flex">
-          <CalendarIcon />
-          {dateLabel}
-        </span>
-      )}
-
-      {/* AI on — a STATUS, not a switch: the résumé reader and the Learn test
-          generator are live, and this says so. Not a toggle, because nothing
-          here can currently be turned off. */}
-      <span className="hidden items-center gap-1.5 rounded-full bg-black/[0.05] px-3 py-1.5 text-[12.5px] font-semibold text-ink-2 sm:inline-flex">
-        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-        AI on
-      </span>
-
-      {/* ---- RIGHT: the currency (E210) ------------------------------------ */}
+      {/* ---- RIGHT: the currency, then the bug report (E210 revised) ------- */}
       <div className="ml-auto flex shrink-0 items-center gap-2">
-        {/* The bug report stays: nothing in the rail duplicates it. It drops
-            below sm, where the row has no space for a glyph nobody taps on a
-            phone. */}
+        {credits && <CreditsPill summary={credits} />}
+
+        {/* Last, and the only icon left. Nothing in the rail duplicates it, and
+            it drops below sm where the row has no room for a glyph nobody taps
+            on a phone. */}
         <span className="hidden sm:contents">
           <IconLink href="/support/bug" label="Report a bug">
             <BugIcon />
           </IconLink>
         </span>
-
-        {credits && <CreditsPill summary={credits} />}
       </div>
     </header>
   );
@@ -137,17 +117,9 @@ function IconLink({
   );
 }
 
-/* Inline SVGs rather than an icon dependency — two glyphs don't justify one. */
+/* One inline SVG rather than an icon dependency. */
 const S = { width: 18, height: 18, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
 
-function CalendarIcon() {
-  return (
-    <svg {...S} width={14} height={14}>
-      <rect x="3" y="4" width="18" height="18" rx="2" />
-      <path d="M16 2v4M8 2v4M3 10h18" />
-    </svg>
-  );
-}
 function BugIcon() {
   return (
     <svg {...S}>
