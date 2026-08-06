@@ -196,20 +196,28 @@ export function AppRail() {
         It pointed at /dashboard, which the utility row's "Home" already does,
         so the rail lit two magenta pills at once for one destination. Home in
         the utility row is the single landing entry now.
-      */}
-      {/*
+
         E216 — PLAIN LINKS, NO FLYOUTS, NO CHEVRONS. The six Transaction items
         each had a hover submenu; those children are their destination pages'
         tab rows now (`PAGE_TABS` in nav.ts). Nothing flies out of the rail, so
         nothing here needs a disclosure affordance.
 
-        E224 — AND NO "TRANSACTIONS" HEADING above them. It earned its place
-        when these were expandable groups and the label said what kind of thing
-        they were. Flattened, they are just the six things you do here, under
-        the three you reach from anywhere — and a section label over the only
-        section is a caption on a one-picture album.
+        E224 — AND NO "TRANSACTIONS" HEADING above them, which is what this
+        spacing is about. The `mt-6` that used to sit here was measured to clear
+        a heading; with the heading gone it was 24px of nothing, and the six
+        items read as a detached second list rather than the continuation of the
+        first.
+
+        A HAIRLINE INSTEAD OF A GAP. The two groups genuinely are different —
+        three things you reach for from anywhere, then the six things you do —
+        so the break is worth marking; it just is not worth a heading or an
+        empty block. Same `border-white/10` the identity block already uses, with
+        symmetric 8px either side, so the rail has one rhythm from top to bottom:
+        4px between items, 8px across a divider.
       */}
-      <div className="mt-6 space-y-1">{items.map((i) => railLink(i, false))}</div>
+      <div className="mt-2 space-y-1 border-t border-white/10 pt-2">
+        {items.map((i) => railLink(i, false))}
+      </div>
     </>
   );
 
