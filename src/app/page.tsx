@@ -14,7 +14,12 @@ import { MarketingFooter } from "@/components/marketing/MarketingFooter";
  */
 export default function Home() {
   return (
-    <div className="min-h-screen bg-white font-body text-ink">
+    /*
+      `marketing-surface` locks the light palette here regardless of the app's
+      theme choice — see the note in globals.css. Without it the dark theme
+      turned this page's text near-white while its white panels stayed white.
+    */
+    <div className="marketing-surface min-h-screen bg-white font-body text-ink">
       <MarketingHeader />
       <Announcement />
       <Hero />

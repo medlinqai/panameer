@@ -184,3 +184,36 @@ body {
     width: 100%;
   }
 }
+
+/*
+ * THE MARKETING SURFACE IS THEME-INDEPENDENT (E003, E011).
+ *
+ * This is the fix for "Log In is invisible at rest", and the cause is worth
+ * writing down because it will otherwise be re-introduced. The dark theme
+ * repoints `--color-ink` to near-white and repaints `.bg-white` dark — but the
+ * marketing header is `bg-white/90`, which Tailwind emits as a SEPARATE class
+ * (`.bg-white\/90`) that the override never matched. So on a dark-theme browser
+ * the header stayed white while its text turned white: "Log In" vanished, and
+ * only reappeared when you dragged a selection over it. Several of the
+ * below-the-fold contrast complaints are the same half-flipped-token story.
+ *
+ * Rather than chase every partially-overridden utility, the pre-auth marketing
+ * pages re-declare the LIGHT tokens locally. A signed-out visitor has expressed
+ * no theme preference — the toggle lives inside the app's account menu, behind
+ * a login — so there is nothing here to honour, and a brand front door with a
+ * fixed palette is the normal thing anyway. The app itself is untouched and
+ * still themes.
+ */
+.marketing-surface {
+  --color-ink: #171e3e;
+  --color-ink-2: #4a4658;
+  --color-line: #ece9f1;
+  --color-bg-soft: #faf8fc;
+  --color-canvas: #f7f7f5;
+  color: var(--color-ink);
+}
+
+/* Undo the dark theme's white-card repaint inside the marketing surface. */
+:root[data-theme="dark"] .marketing-surface .bg-white {
+  background-color: #fff;
+}
