@@ -95,6 +95,53 @@ export const UTILITY_NAV: NavItem[] = [
 ];
 
 /**
+ * THE REQUESTER RAIL (brief_requester_home_v1 WS-A).
+ *
+ * Same six-slot shape as the provider's, pointed at the buying side: you learn,
+ * you create work, you shop packages, you manage what you bought, you pay for
+ * it, and you talk to people. Flat from birth — E216 applies to this rail as it
+ * does to the provider's, so there are no `children` here to remove later.
+ *
+ * `canHireTalent` is the gate. Requester and Buyer are both `is_service_buyer`
+ * (they differ by owning a RequesterProfile), and the rail is the same for
+ * both: the distinction decides what they can APPROVE, not where they can
+ * navigate. A capability, never an inline role check.
+ *
+ * Start Learning and Community are shared with the provider rail by design —
+ * the same free training and the same community, from the other side of the
+ * marketplace. They are declared again rather than imported, because a shared
+ * array would make "change it for buyers" mean "change it for everybody".
+ */
+export const REQUESTER_NAV: NavItem[] = [
+  { label: "Start Learning", href: "/learn", icon: "GraduationCap" },
+  {
+    label: "Create Work",
+    href: "/create-work",
+    icon: "ClipboardList",
+    requires: "canHireTalent",
+  },
+  {
+    label: "Search Packages",
+    href: "/packages",
+    icon: "Package",
+    requires: "canHireTalent",
+  },
+  {
+    label: "Manage Work",
+    href: "/contracts",
+    icon: "ClipboardCheck",
+    requires: "canHireTalent",
+  },
+  {
+    label: "Pay Providers",
+    href: "/pay",
+    icon: "CreditCard",
+    requires: "canHireTalent",
+  },
+  { label: "Community", href: "/community", icon: "MessagesSquare" },
+];
+
+/**
  * THE TAB ROWS the flattened rail items' children became (E216).
  *
  * Keyed by the base route, so a page asks for its own set by the path it lives
@@ -334,7 +381,17 @@ export function navForRoles(me: Me | null): NavItem[] {
   if (!me) return [];
   const items: NavItem[] = [];
   const seen = new Set<string>();
-  for (const item of PROVIDER_NAV) {
+  /*
+    WHICH RAIL. A provider gets the provider rail; anyone else who can hire gets
+    the requester rail. Someone who is BOTH sees the provider one — they are
+    standing in the provider console, and a rail that merged twelve items across
+    two jobs would answer neither. Switching consoles is the persona menu's job.
+
+    `seen` still de-dupes, because the two rails share Start Learning, Manage
+    Work and Community by design.
+  */
+  const source = me.person.roles.isServiceProvider ? PROVIDER_NAV : REQUESTER_NAV;
+  for (const item of source) {
     if (item.requires && !holds(me, item.requires)) continue;
     if (seen.has(item.href)) continue;
     seen.add(item.href);

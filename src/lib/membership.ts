@@ -50,6 +50,14 @@ function roleWord(me: Me): string | null {
   const r = me.person.roles;
   if (r.isServiceCoordinator) return "Recruiter";
   if (r.isServiceProvider) return "Provider";
+  /*
+    REQUESTER BEFORE BUYER (brief_requester_home_v1 WS-A). Both carry
+    `is_service_buyer`; owning a RequesterProfile is what separates the person
+    who ASKS for work from the one who administers the company's buying. The
+    requester rail says "Requester Basic", and labelling them "Buyer" would name
+    a job they do not have.
+  */
+  if (r.isRequester) return "Requester";
   if (r.isServiceBuyer) return "Buyer";
   if (r.isSupport) return "Support";
   return null;
