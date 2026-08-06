@@ -21,10 +21,26 @@ const DURATIONS = [
   "GT_6_MONTHS",
 ] as const;
 
+/*
+  THE WIZARD'S SECTIONS (brief_create_work_request_v1).
+
+  Seven steps, but not seven sections: `role` and `domain` are one save each
+  because each is a single answer that narrows the next, while `dates`,
+  `location`, `budget` and `description` map one-to-one onto the deck's steps.
+  `skills` keeps its name and its guard from the first wizard.
+
+  `scope` is retained and still writes title/experience/duration — the first
+  wizard's flow and any DRAFT it left behind still resolve through it.
+*/
 export const WORK_REQUEST_SECTIONS = [
+  "role",
+  "domain",
   "skills",
-  "scope",
+  "dates",
   "location",
+  "budget",
+  "description",
+  "scope",
   "review",
 ] as const;
 export type WorkRequestSection = (typeof WORK_REQUEST_SECTIONS)[number];
@@ -72,12 +88,17 @@ function serialize(wr: Awaited<ReturnType<typeof loadOwned>>) {
     title: wr.title,
     description: wr.description ?? "",
     roleTypeId: wr.role_type_id,
+    pillarId: wr.pillar_id,
     skillIds: wr.skills.map((s) => s.skill_id),
     skillNames: wr.skills.map((s) => ({ id: s.skill_id, name: s.skill.name })),
     experienceLevel: wr.experience_level,
     budgetType: wr.budget_type,
     budgetAmountCents: wr.budget_amount_cents,
+    budgetMinCents: wr.budget_min_cents,
+    budgetMaxCents: wr.budget_max_cents,
     currency: wr.currency,
+    startDate: wr.start_date ? wr.start_date.toISOString().slice(0, 10) : null,
+    endDate: wr.end_date ? wr.end_date.toISOString().slice(0, 10) : null,
     worksite: wr.worksite,
     locationCountry: wr.location_country,
     regionId: wr.region_id,
@@ -148,6 +169,144 @@ export async function saveSection(
   }
 
   switch (section) {
+    /*
+      STEP 1 — THE ROLE, and it CLEARS what it narrows. Changing the role makes
+      the previously chosen domain and skills wrong by definition (a skill
+      belongs to exactly one role), and silently keeping them is how a request
+      gets posted with a domain from the answer before last. Back preserves
+      picks; CHANGING an answer does not.
+    */
+    case "role": {
+      const roleTypeId: string | null = data.roleTypeId ?? null;
+      if (!roleTypeId) throw new WorkRequestError("Pick a role", "INVALID");
+      const role = await prisma.roleType.findUnique({ where: { id: roleTypeId } });
+      if (!role) throw new WorkRequestError("Unknown role", "INVALID");
+
+      const changed = wr.role_type_id !== roleTypeId;
+      await prisma.$transaction([
+        prisma.workRequest.update({
+          where: { id: wr.id },
+          data: {
+            role_type_id: roleTypeId,
+            ...(changed ? { pillar_id: null } : {}),
+          },
+        }),
+        ...(changed
+          ? [prisma.workRequestSkill.deleteMany({ where: { work_request_id: wr.id } })]
+          : []),
+      ]);
+      break;
+    }
+
+    /* STEP 2 — the domain, within the chosen role. Same clearing rule. */
+    case "domain": {
+      const pillarId: string | null = data.pillarId ?? null;
+      if (!pillarId) throw new WorkRequestError("Pick a domain", "INVALID");
+      if (!wr.role_type_id) {
+        throw new WorkRequestError("Pick a role first", "INVALID");
+      }
+      /*
+        VALIDATED AGAINST THE CASCADE, not merely against the Pillar table. A
+        domain that exists but holds no skills for this role is not a valid
+        answer to "what domain, given that role" — and it is exactly what a
+        stale client would post after the role changed under it.
+      */
+      const inRole = await prisma.skill.findFirst({
+        where: { role_type_id: wr.role_type_id, pillar_id: pillarId },
+        select: { id: true },
+      });
+      if (!inRole) {
+        throw new WorkRequestError("That domain isn't in the chosen role", "INVALID");
+      }
+
+      const changed = wr.pillar_id !== pillarId;
+      await prisma.$transaction([
+        prisma.workRequest.update({ where: { id: wr.id }, data: { pillar_id: pillarId } }),
+        ...(changed
+          ? [prisma.workRequestSkill.deleteMany({ where: { work_request_id: wr.id } })]
+          : []),
+      ]);
+      break;
+    }
+
+    /* STEP 4 — when the work runs. */
+    case "dates": {
+      const parse = (v: unknown): Date | null => {
+        if (!v || typeof v !== "string") return null;
+        const d = new Date(`${v}T00:00:00.000Z`);
+        return Number.isNaN(d.getTime()) ? null : d;
+      };
+      const start = parse(data.startDate);
+      const end = parse(data.endDate);
+      if (start && end && end < start) {
+        throw new WorkRequestError("The end date is before the start date", "INVALID");
+      }
+      await prisma.workRequest.update({
+        where: { id: wr.id },
+        data: { start_date: start, end_date: end },
+      });
+      break;
+    }
+
+    /*
+      STEP 6 — the budget, as a RANGE, and "no budget" is a real answer.
+
+      An empty range clears both columns rather than failing validation: the
+      deck has a "not ready to set a budget?" escape, and a requester who takes
+      it has answered the question.
+    */
+    case "budget": {
+      const budgetType = data.budgetType ?? null;
+      if (budgetType && !BUDGET_TYPES.includes(budgetType)) {
+        throw new WorkRequestError("Invalid budget type", "INVALID");
+      }
+      const cents = (v: unknown): number | null => {
+        if (v === undefined || v === null || v === "") return null;
+        const n = Number(v);
+        if (!Number.isFinite(n) || n < 0) {
+          throw new WorkRequestError("Invalid budget amount", "INVALID");
+        }
+        return Math.round(n * 100);
+      };
+      const min = cents(data.budgetMinDollars);
+      const max = cents(data.budgetMaxDollars);
+      if (min !== null && max !== null && max < min) {
+        throw new WorkRequestError("The maximum is below the minimum", "INVALID");
+      }
+      await prisma.workRequest.update({
+        where: { id: wr.id },
+        data: {
+          budget_type: budgetType,
+          budget_min_cents: min,
+          budget_max_cents: max,
+        },
+      });
+      break;
+    }
+
+    /* STEP 7 — the description, and the title derived from it. */
+    case "description": {
+      const description: string = (data.description ?? "").trim();
+      if (!description) {
+        throw new WorkRequestError("Describe what you need", "INVALID");
+      }
+      /*
+        THE TITLE IS DERIVED when the requester has not set one. The deck's flow
+        never asks for a title, but `title` gates posting and is what a provider
+        sees in the feed — so the first line of the description becomes it,
+        rather than posting a request called "".
+      */
+      const title =
+        (data.title ?? "").trim() ||
+        wr.title.trim() ||
+        description.split("\n")[0].slice(0, 120).trim();
+      await prisma.workRequest.update({
+        where: { id: wr.id },
+        data: { description, title },
+      });
+      break;
+    }
+
     case "skills": {
       const roleTypeId: string | null = data.roleTypeId ?? null;
       const skillIds: string[] = Array.isArray(data.skillIds) ? data.skillIds : [];
@@ -157,18 +316,24 @@ export async function saveSection(
           "INVALID"
         );
       }
-      // One-main-RoleType: every chosen skill must belong to the selected type
-      // (same guard the provider skills step uses).
+      /*
+        EVERY SKILL MUST BE INSIDE THE CASCADE the requester walked: the chosen
+        role, and — once a domain has been picked — the chosen domain too. The
+        first wizard only checked the role, which was right when there was no
+        domain step; now a skill from a sibling domain would contradict the
+        answer given one screen earlier.
+      */
       const skills = await prisma.skill.findMany({
         where: { id: { in: skillIds } },
-        select: { id: true, role_type_id: true },
+        select: { id: true, role_type_id: true, pillar_id: true },
       });
       if (
         skills.length !== skillIds.length ||
-        skills.some((s) => s.role_type_id !== roleTypeId)
+        skills.some((s) => s.role_type_id !== roleTypeId) ||
+        (wr.pillar_id && skills.some((s) => s.pillar_id !== wr.pillar_id))
       ) {
         throw new WorkRequestError(
-          "All skills must belong to the selected category",
+          "All skills must belong to the selected role and domain",
           "INVALID"
         );
       }
