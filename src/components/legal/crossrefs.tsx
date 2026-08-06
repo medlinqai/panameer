@@ -26,9 +26,28 @@ const REFS: { phrase: string; href: string; doc: LegalDoc }[] = [
   { phrase: "User Agreement", href: "/user-agreement", doc: "user-agreement" },
   { phrase: "Privacy Policy", href: "/privacy", doc: "privacy" },
   { phrase: "Terms of Use", href: "/terms", doc: "terms" },
+  /*
+    Supplements the core documents cite by name. The Privacy Policy points at
+    the Cookie Policy in prose ("please visit our Cookie Policy at …"), and the
+    DPA is named from both directions; both now resolve.
+  */
+  { phrase: "Cookie Policy", href: "/legal/cookie-policy", doc: "cookie-policy" },
+  {
+    phrase: "Data Processing Agreement",
+    href: "/legal/data-processing-agreement",
+    doc: "data-processing-agreement",
+  },
 ];
 
-export type LegalDoc = "terms" | "privacy" | "user-agreement" | null;
+/**
+ * Which document is being rendered, so it never links to itself.
+ *
+ * The core pages pass their own name; a supplement passes its SLUG, which is
+ * why this is a plain string rather than a union of the three core documents —
+ * the Cookie Policy page must not turn its own title into a link back to
+ * itself, and there are nineteen supplements that could grow the same problem.
+ */
+export type LegalDoc = string | null;
 
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 

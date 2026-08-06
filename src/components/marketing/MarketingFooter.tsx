@@ -35,6 +35,22 @@ const COLS: { title: string; links: { label: string; href: string }[] }[] = [
       { label: "Pricing", href: "#pricing" },
     ],
   },
+  /*
+    LEGAL IS A FOOTER COLUMN NOW (brief_legal_supplements WS-D). The corpus is
+    23 documents and the footer named none of them, so the only way to reach a
+    policy was to be already reading a document that happened to cite it. The
+    four a person actually accepts are listed; /legal is the door to the rest.
+  */
+  {
+    title: "Legal",
+    links: [
+      { label: "Terms of Use", href: "/terms" },
+      { label: "User Agreement", href: "/user-agreement" },
+      { label: "Privacy Policy", href: "/privacy" },
+      { label: "Cookie Policy", href: "/legal/cookie-policy" },
+      { label: "All legal documents", href: "/legal" },
+    ],
+  },
 ];
 
 export function MarketingFooter() {
