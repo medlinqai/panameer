@@ -37,26 +37,68 @@ const REPORT = process.argv.includes("--report");
 
 /* ---------------------------------------------------------------- helpers -- */
 
-const isHeading = (line: string): 2 | 3 | 4 | null => {
+/**
+ * Options that vary between the four-document corpus and the supplement bundle.
+ *
+ * `titleCase` is OFF for the Terms of Use, Privacy Policy and User Agreement.
+ * Those three number or capitalise their headings, and turning the title-case
+ * rule on for them would promote wrapped prose. The supplements need it because
+ * several — the Cookie Policy, the referral terms, the DPA annexes — have no
+ * numbered sections at all and would otherwise render as one unbroken wall.
+ */
+type ParseOpts = { titleCase?: boolean };
+
+const isHeading = (line: string, opts: ParseOpts = {}): 2 | 3 | 4 | null => {
   /*
-    A NUMBERED LINE THAT ENDS IN A FULL STOP IS A LIST ITEM, NOT A HEADING.
-    Section 5 of the Privacy Policy enumerates the rights a user can exercise —
-    "1. The categories of personal information we have collected about you." —
-    and without this test each one was promoted to an h2, restarting the
-    document's numbering in the middle of a section. No heading in either
-    document ends in a full stop.
+    A NUMBERED LINE ENDING IN A FULL STOP IS USUALLY A LIST ITEM — but not
+    always, and the length settles it.
+
+    Section 5 of the Privacy Policy enumerates the rights a user can exercise
+    ("1. The categories of personal information we have collected about you.")
+    and each one was being promoted to a heading, restarting the document's
+    numbering mid-section. The API Terms go the other way: every one of its
+    section headings ends in a full stop ("3. Developer's Use of the Panameer
+    API."), so rejecting them all left that document with 92 paragraphs and no
+    structure at all.
+
+    Measured across the corpus the two sets do not overlap: the API's longest
+    heading is 41 characters, the Privacy Policy's shortest list item is 70. A
+    sentence-shaped line is a list item; a title-shaped one is a heading.
   */
-  if (/[.!?]$/.test(line)) return null;
-  // "1. INFORMATION COLLECTION" / "3.5 Other uses that aren't allowed"
-  const numbered = /^(\d+(?:\.\d+)*)\.?\s+\S/.exec(line);
-  if (numbered && line.length < 90) {
-    const depth = numbered[1].split(".").length;
-    return depth === 1 ? 2 : depth === 2 ? 3 : 4;
+  const HEADING_MAX = 60;
+  const sentenceShaped =
+    /[.!?]$/.test(line) && !(/^\d+(?:\.\d+)*\.\s/.test(line) && line.length <= HEADING_MAX);
+
+  if (!sentenceShaped) {
+    // "1. INFORMATION COLLECTION" / "3.5 Other uses that aren't allowed"
+    const numbered = /^(\d+(?:\.\d+)*)\.?\s+\S/.exec(line);
+    if (numbered && line.length < 90) {
+      const depth = numbered[1].split(".").length;
+      return depth === 1 ? 2 : depth === 2 ? 3 : 4;
+    }
+    // "a. Information You Provide to Us"
+    if (/^[a-z]\.\s+\S/.test(line) && line.length < 90) return 3;
+    // "TABLE OF CONTENTS" — all-caps standalone
+    if (/^[A-Z][A-Z\s,'&/-]{3,60}$/.test(line.trim())) return 2;
   }
-  // "a. Information You Provide to Us"
-  if (/^[a-z]\.\s+\S/.test(line) && line.length < 90) return 3;
-  // "TABLE OF CONTENTS" — all-caps standalone
-  if (/^[A-Z][A-Z\s,'&/-]{3,60}$/.test(line.trim())) return 2;
+  /*
+    "Eligibility", "What are tracking technologies?" — a short standalone line
+    in title case.
+
+    SAFE ONLY BECAUSE OF THE LENGTH TEST. Body text in these documents wraps at
+    a median of 98 characters, so a line under 60 is not a wrapped fragment; and
+    a paragraph's last line, the other thing that comes up short, ends in
+    punctuation. Measured across the whole bundle this matches 86 lines and every
+    one is a heading.
+
+    Reached even for a line ending in "?" or "!", which is why the checks above
+    sit inside a guard rather than returning early: the Cookie Policy asks its
+    questions as headings ("What are tracking technologies?"), and a blanket
+    reject-if-it-ends-in-sentence-punctuation rule silently demoted every one of
+    them to a paragraph. The trailing character class below still refuses a
+    full stop, so an actual sentence cannot get in this way.
+  */
+  if (opts.titleCase && /^[A-Z][A-Za-z0-9 ,&()'’‘/?-]{3,58}[^.:;,]$/.test(line.trim())) return 3;
   return null;
 };
 
@@ -74,9 +116,9 @@ const isHeading = (line: string): 2 | 3 | 4 | null => {
  * conservative: prose is long, so real text cannot trip it, and the RUN rule
  * below means a stray short line still has to have neighbours to be dropped.
  */
-const isShard = (lines: string[]): boolean => {
+const isShard = (lines: string[], opts: ParseOpts = {}): boolean => {
   if (lines.length > 2) return false;
-  if (isHeading(lines[0])) return false;
+  if (isHeading(lines[0], opts)) return false;
   const text = lines.join(" ");
   if (text.length >= 60) return false;
   return !/[.!?]$/.test(text) || text.length < 30;
@@ -126,7 +168,7 @@ function reflow(lines: string[], wrapWidth: number): string[] {
 
 /* ------------------------------------------------------------------ parse -- */
 
-function parse(raw: string, label: string): Node[] {
+function parse(raw: string, label: string, opts: ParseOpts = {}): Node[] {
   const all = raw
     // The provenance header, stripped as a BLOCK. Matching only lines that
     // start with "<!--" silently published the continuation lines of a
@@ -171,11 +213,13 @@ function parse(raw: string, label: string): Node[] {
     the list is not a block of its own. It starts at the "Contents" line and
     runs while the lines keep looking like entries.
   */
+  let hasContentsList = false;
   const kept = blocks.map((block) => {
     const start = block.findIndex((l) => /^(contents|table of contents)$/i.test(l));
+    if (start !== -1) hasContentsList = true;
     if (start === -1) return block;
     let end = start + 1;
-    while (end < block.length && isHeading(block[end])) end++;
+    while (end < block.length && isHeading(block[end], opts)) end++;
     return [...block.slice(0, start), ...block.slice(end)];
   }).filter((b) => b.length > 0);
 
@@ -205,7 +249,7 @@ function parse(raw: string, label: string): Node[] {
       body = [];
     };
     for (let k = 0; k < block.length; k++) {
-      const level = isHeading(block[k]);
+      const level = isHeading(block[k], opts);
       if (!level) {
         body.push(block[k]);
         continue;
@@ -221,7 +265,7 @@ function parse(raw: string, label: string): Node[] {
       // adjacent numbered headings from being fused into a single title.
       const capsRun =
         /^[0-9.\s]*[A-Z][A-Z\s,'&/-]*$/.test(text) && /^[A-Z][A-Z\s,'&/-]+$/.test(next ?? "");
-      if (!/[.!?:]$/.test(text) && next && next.length < 45 && (!isHeading(next) || capsRun)) {
+      if (!/[.!?:]$/.test(text) && next && next.length < 45 && (!isHeading(next, opts) || capsRun)) {
         text = `${text} ${next}`;
         k++;
       }
@@ -237,7 +281,7 @@ function parse(raw: string, label: string): Node[] {
     the description cell you are looking at is prose-shaped, and only the label
     three blocks later reveals it was a column.
   */
-  const shardIdx = kept.map((b, i) => (isShard(b) ? i : -1)).filter((i) => i >= 0);
+  const shardIdx = kept.map((b, i) => (isShard(b, opts) ? i : -1)).filter((i) => i >= 0);
   const tables: { from: number; to: number }[] = [];
   for (let k = 0; k < shardIdx.length; ) {
     let end = k;
@@ -286,6 +330,14 @@ function parse(raw: string, label: string): Node[] {
     punctuation so a stray space inside a title ("PAYMENT TERM S") still matches
     its own entry.
   */
+  /*
+    ONLY RUN THIS WHERE THERE IS A CONTENTS LIST TO REMOVE. Matching headings by
+    section number is right for a document that repeats its numbering because
+    it printed a contents list, and wrong for one that repeats numbering because
+    it nests lists — the API Terms number their definitions 1, 2, 3 inside
+    section 2, and deduplicating those would have deleted the real sections 1
+    and 2 that came before them.
+  */
   const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
   const key = (s: string) => {
     const numbered = /^(\d+(?:\.\d+)*)\.?\s/.exec(s);
@@ -295,7 +347,7 @@ function parse(raw: string, label: string): Node[] {
     .map((n, i) => (n.t !== "gap" && n.t !== "p" ? { i, key: key(n.text) } : null))
     .filter((h): h is { i: number; key: string } => h !== null && h.key.length >= 2);
   const tocIdx = new Set<number>();
-  for (let a = 0; a < heads.length; a++) {
+  for (let a = 0; hasContentsList && a < heads.length; a++) {
     for (let b = a + 1; b < heads.length; b++) {
       const same = heads[a].key.startsWith("#")
         ? heads[b].key === heads[a].key
@@ -329,6 +381,17 @@ function parse(raw: string, label: string): Node[] {
     i -= 1;
   }
 
+  /*
+    A DOCUMENT WITH NO TOP-LEVEL HEADING GETS ONE LEVEL PROMOTION. Several
+    supplements only have title-case headings, which the rule above assigns h3 —
+    correct where they sit under numbered sections (the DPA's annexes), wrong
+    where they are the document's only structure, because the contents nav is
+    built from h2s and those pages would get no nav at all.
+  */
+  if (!nodes.some((n) => n.t === "h2")) {
+    for (const n of nodes) if (n.t === "h3") n.t = "h2";
+  }
+
   if (REPORT) {
     const counts = nodes.reduce<Record<string, number>>((a, n) => {
       a[n.t] = (a[n.t] ?? 0) + 1;
@@ -359,6 +422,50 @@ const DOCS = [
     label: "User Agreement",
   },
 ];
+
+/* ------------------------------------------------- the supplement bundle -- */
+
+/**
+ * The 19 supplements arrive as ONE file split on
+ * `===== DOC: <slug> | <DISPOSITION> =====`.
+ *
+ * The disposition tag rides along into the generated data because it decides
+ * what the page puts ABOVE the text — a payments notice, a counsel-shell
+ * warning, or nothing. Reading it from the delimiter rather than re-listing 19
+ * slugs by hand means the source and the rendering cannot disagree about which
+ * document is which.
+ *
+ * Three documents in the source corpus are deliberately absent from this bundle
+ * and must not be created: the payroll agreement (Panameer has no EOR), the
+ * team-software licence (the desktop work-diary surveillance app, dropped), and
+ * virtual patent marking (no patents).
+ */
+const BUNDLE = "legal_supplements_panameer.md";
+const bundle = readFileSync(join(SRC, BUNDLE), "utf8");
+const parts = bundle.split(/^===== DOC: (\S+) \| ([^=]+?) =====$/m);
+
+// split() with two capture groups yields [preamble, slug, disp, body, slug, …].
+// The preamble is the bundle's own header and is discarded — it still names the
+// source platform in its "global swaps applied" note.
+const supplements: { slug: string; disposition: string; nodes: Node[] }[] = [];
+for (let i = 1; i + 2 < parts.length + 1; i += 3) {
+  const slug = parts[i];
+  const disposition = parts[i + 1].trim();
+  const nodes = parse(parts[i + 2], `supplement: ${slug}`, { titleCase: true });
+  supplements.push({ slug, disposition, nodes });
+}
+
+writeFileSync(
+  join(OUT, "supplements.ts"),
+  `// GENERATED by scripts/build-legal.ts from scripts/data/legal/${BUNDLE}.\n` +
+    `// Do not edit by hand — edit the source text and re-run \`npm run legal:build\`.\n` +
+    `// DRAFT CONTENT, PENDING LEGAL REVIEW. See brief_legal_supplements.\n` +
+    `import type { LegalNode } from "@/content/legal/types";\n\n` +
+    `export type Supplement = { slug: string; disposition: string; nodes: LegalNode[] };\n\n` +
+    `export const SUPPLEMENTS: Supplement[] = ${JSON.stringify(supplements, null, 2)};\n`,
+  "utf8"
+);
+console.log(`wrote src/content/legal/supplements.ts — ${supplements.length} documents`);
 
 for (const doc of DOCS) {
   const nodes = parse(readFileSync(join(SRC, doc.file), "utf8"), doc.label);
