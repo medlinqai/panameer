@@ -221,7 +221,12 @@ export const COMPANY_NAV: NavItem[] = [
   { label: "Company", href: "/company" },
   { label: "Teams", href: "/company/teams" },
   { label: "Branding", href: "/company/branding" },
-  { label: "Members", href: "/company#members" },
+  /*
+    E225 — MEMBERS IS NOT A MENU ITEM. It is a section of the Company page, and
+    a menu entry that scrolls you down the page you would already be on is a
+    destination pretending to be one. The `#members` anchor stays on that page
+    for anything that wants to deep-link it.
+  */
   { label: "Company Settings", href: "/company/settings" },
 ];
 
@@ -328,13 +333,16 @@ export const PERSONA_NAV_PRIMARY: NavItem[] = [
 export const PERSONA_NAV_SECONDARY: NavItem[] = [
   { label: "Request Recommendations", href: "/recommendations" },
   /*
-    MY COMPANY (WS1-C) — read-only unless you are the company admin, which is
-    what `/company` already does: it renders the company record for everyone in
-    it and adds the join-request queue and the terms acceptance for an APPROVED
-    ADMIN membership. The menu entry did not exist, so that page had no route
-    into it from anywhere after E191 dropped Company from the rail.
+    E225 — "MY COMPANY" IS GONE FROM HERE. The three-zone rule is that the
+    top-left chip owns the company and this menu owns the person; an entry that
+    opened /company from the personal popover was the last thing crossing that
+    line.
+
+    The route did not simply vanish for non-admins, which it would have: the
+    chip only renders a MENU for admins, so removing this would have left an
+    ordinary member with no way to reach their own company page. The chip is a
+    plain link for them now — same zone, same destination, read-only.
   */
-  { label: "My Company", href: "/company" },
   { label: "Settings", href: "/settings" },
 ];
 

@@ -277,7 +277,11 @@ export default async function CompanyPage({
       )}
 
       <Card>
-        <h2 className="text-lg">Members ({members.length})</h2>
+        {/* The `#members` anchor E225 keeps on the page after removing the
+            menu entry that used to point at it. */}
+        <h2 id="members" className="scroll-mt-6 text-lg">
+          Members ({members.length})
+        </h2>
         <ul className="mt-3 divide-y divide-black/10 dark:divide-white/10">
           {members.map((m) => (
             <li key={m.id} className="flex flex-wrap items-baseline gap-3 py-3">

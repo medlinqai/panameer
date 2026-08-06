@@ -43,12 +43,29 @@ export function CompanyMenu() {
     </span>
   );
 
+  /*
+    A NON-ADMIN GETS A LINK, NOT A MENU (E225).
+
+    It was a static block, which was fine while the personal popover carried
+    "My Company". E225 removed that entry — correctly, it was the last item
+    crossing the company/personal line — and a static chip would have left an
+    ordinary member with no route to their own company page at all.
+
+    So the chip is the route for everyone: a menu of admin surfaces if you
+    administer the company, a plain link to the read-only company page if you
+    do not. `/company` already renders for any member and adds the join queue
+    and terms acceptance only for an admin, so the destination was always safe;
+    what was missing was a door.
+  */
   if (!company.isAdmin) {
     return (
-      <div className="mt-3 flex items-center gap-2.5 px-1">
+      <Link
+        href="/company"
+        className="mt-3 flex items-center gap-2.5 rounded-[10px] px-1 py-1 transition-colors hover:bg-white/10"
+      >
         {mark}
         <p className="min-w-0 truncate text-[15px] font-bold text-white">{company.name}</p>
-      </div>
+      </Link>
     );
   }
 
