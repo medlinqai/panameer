@@ -1,22 +1,18 @@
-import { guardPage, guardTransact } from "@/lib/guard";
-import { WorkRequestWizard } from "@/components/work/WorkRequestWizard";
+import { redirect } from "next/navigation";
 
 /**
- * /work/new — the buyer's Work Request builder (brief_L). A focused full-screen
- * wizard (its own WizardShell, no app nav), reached standalone or as the
- * skippable first-request step at the end of buyer onboarding. AUTHORITATIVE
- * server gate: canHireTalent (brief_J). Business logic is in the API/lib.
+ * /work/new — retired in favour of /create-work
+ * (brief_create_work_request_v1 WS-D).
+ *
+ * The four-screen wizard that lived here asked for a category and a flat skill
+ * list; the deck's flow is the Role → Domain → Skill cascade, and running two
+ * create flows against one `WorkRequest` model is how they drift.
+ *
+ * A REDIRECT RATHER THAN A DELETE. Five places still point here — the buyer
+ * dashboard, the requester "ready" page, the buyer signup's completion push —
+ * and rewriting all of them to remove a URL that people may also have
+ * bookmarked buys nothing. One redirect keeps every one of them working.
  */
-export default async function WorkNewPage() {
-  const viewer = await guardPage("canHireTalent");
-  /*
-    THE COMPANY GATE (brief_company_model WS4). Two different questions, asked
-    in order: canHireTalent is "is this a buyer", and the company gate is "do
-    they have an entity to contract as". A work request commits a COMPANY, so a
-    buyer with no approved membership — or whose company hasn't accepted the
-    company terms — has nothing to commit. Denials land on /company with the
-    reason rather than a blank refusal.
-  */
-  await guardTransact(viewer);
-  return <WorkRequestWizard />;
+export default function Page() {
+  redirect("/create-work");
 }
