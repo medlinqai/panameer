@@ -12,6 +12,9 @@ export default function Page() {
       version={USER_TOS_VERSION}
       updated={LEGAL_UPDATED}
       doc={PRIVACY_DOC}
+      summary={
+        "What Panameer collects about you, where it comes from, what we use it for, who we share it with, and the choices you have."
+      }
       self="privacy"
     />
   );

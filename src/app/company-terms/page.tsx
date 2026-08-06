@@ -14,6 +14,7 @@ export default function Page() {
       title="Company Terms of Service"
       version={COMPANY_TOS_VERSION}
       audience="terms a company's admin accepts on the entity's behalf"
+      self="company-terms"
     />
   );
 }

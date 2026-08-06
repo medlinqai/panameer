@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { linkifyLegal, type LegalDoc } from "@/components/legal/crossrefs";
+import { LegalDocNav } from "@/components/legal/LegalDocNav";
 import type { LegalHeading, LegalNode } from "@/content/legal/types";
 
 /**
@@ -32,6 +33,7 @@ export function LegalPage({
   doc,
   self = null,
   notice,
+  summary,
   backHref = "/",
   backLabel = "← Back to Panameer",
 }: {
@@ -44,6 +46,8 @@ export function LegalPage({
   self?: LegalDoc;
   /** A document-specific warning, above the text. See the supplements. */
   notice?: ReactNode;
+  /** Plain-English gist, shown as the Simple Summary callout. */
+  summary?: string;
   backHref?: string;
   backLabel?: string;
 }) {
@@ -69,14 +73,32 @@ export function LegalPage({
   return (
     <div className="flex min-h-screen flex-col bg-white font-body text-ink">
       <header className="border-b border-line">
-        <div className="mx-auto flex w-full max-w-3xl items-center px-6 py-5">
+        <div className="mx-auto flex w-full max-w-[1180px] items-center px-6 py-5">
           <Logo priority />
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-12">
+      {/*
+        TWO COLUMNS ABOVE lg, ONE BELOW. The document list is genuinely useful
+        on a desktop reading session and pure noise above the text on a phone,
+        so on narrow screens it moves to the END of the page — present for
+        someone who reaches the bottom and wants the next document, absent for
+        everyone scrolling to read this one.
+      */}
+      <div className="mx-auto flex w-full max-w-[1180px] flex-1 flex-col gap-10 px-6 py-12 lg:flex-row lg:gap-12">
+        <aside className="order-2 w-full shrink-0 border-t border-line pt-8 lg:order-1 lg:w-[248px] lg:border-0 lg:pt-0">
+          <LegalDocNav current={self ?? undefined} />
+        </aside>
+
+        <main className="order-1 min-w-0 max-w-3xl flex-1 lg:order-2">
+        {/*
+          VERSION AND EFFECTIVE DATE TOGETHER. A legal document is identified by
+          both, and the effective date is the one a reader actually needs — so
+          it says outright that there isn't one yet rather than quietly printing
+          only the version and letting the page look settled.
+        */}
         <p className="text-[12.5px] font-bold uppercase tracking-wide text-ink-2">
-          Version {version}
+          Version {version} · Effective date: none yet (draft)
         </p>
         <h1 className="mt-1 font-display text-[32px] font-bold tracking-[-0.6px]">
           {title}
@@ -103,6 +125,26 @@ export function LegalPage({
             .
           </p>
         </div>
+
+        {/*
+          THE SIMPLE SUMMARY (legal_center design reference). Plain English, one
+          sentence, and explicitly NOT part of the agreement — a summary that
+          could be mistaken for the terms would be worse than no summary, since
+          a reader would stop at it. The text is the same line the index uses,
+          so the two can never describe a document differently.
+        */}
+        {summary && (
+          <div className="mt-6 rounded-brand border-l-[3px] border-magenta bg-magenta/[0.04] px-5 py-4">
+            <p className="text-[12px] font-bold uppercase tracking-[0.07em] text-magenta">
+              Simple summary
+            </p>
+            <p className="mt-1 text-[15px] leading-relaxed text-ink">{summary}</p>
+            <p className="mt-2 text-[13px] text-ink-2">
+              A plain-English gist, not part of the agreement. The text below is
+              what governs.
+            </p>
+          </div>
+        )}
 
         {notice}
 
@@ -138,7 +180,8 @@ export function LegalPage({
         >
           {backLabel}
         </Link>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }

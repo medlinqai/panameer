@@ -22,6 +22,9 @@ export default function Page() {
       version={USER_TOS_VERSION}
       updated={LEGAL_UPDATED}
       doc={TERMS_DOC}
+      summary={
+        "The rules for using panameer.com — what you may post, what you may not do here, and when we can take your access away."
+      }
       self="terms"
     />
   );

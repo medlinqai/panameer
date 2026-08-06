@@ -50,6 +50,7 @@ export default async function Page({
       updated={LEGAL_UPDATED}
       doc={isStub ? [] : doc.nodes}
       self={slug}
+      summary={meta.summary}
       notice={meta.notice ? <SupplementNotice notice={meta.notice} /> : undefined}
       backHref="/legal"
       backLabel="← All legal documents"
