@@ -1,5 +1,7 @@
+import Image from "next/image";
 import Link from "next/link";
 import { relativeDay } from "@/lib/relative-day";
+import { WORK_CARD_IMAGE_ALT, workCardImage } from "@/lib/work-images";
 import {
   UNBACKED_TABS,
   WORK_FEED_TABS,
@@ -149,70 +151,97 @@ function WorkRequestCard({ card }: { card: WorkCard }) {
   ].filter(Boolean) as string[];
 
   return (
-    <article className="rounded-brand border border-line bg-white p-5 transition-colors hover:border-magenta/40">
-      <div className="flex items-start gap-4">
-        <div className="min-w-0 flex-1">
-          {/*
-            `/work/[id]` DOES NOT EXIST YET — there is no work-request detail
-            page, and building one is beyond this brief. The link is written to
-            where that page belongs rather than to a stand-in, and it is
-            unreachable today because no buyer has posted a work request, so no
-            card renders. It becomes live the moment the detail route lands.
-          */}
-          <h3 className="text-[16.5px] font-bold">
-            <Link href={`/work/${card.id}`} className="hover:text-magenta">
-              {card.title}
-            </Link>
-          </h3>
+    <article className="overflow-hidden rounded-brand border border-line bg-white transition-colors hover:border-magenta/40">
+      {/*
+        THE PHOTO IS DECORATIVE AND DETERMINISTIC (brief_work_card_images).
+        Chosen from the id so the same job keeps the same picture across
+        reloads — a card whose image changes on refresh reads as broken.
 
-          {meta.length > 0 && (
-            <p className="mt-1 text-[13px] text-ink-2">{meta.join(" · ")}</p>
-          )}
-
-          {card.description && (
-            <p className="mt-2 line-clamp-3 text-[14px] leading-relaxed text-ink-2">
-              {card.description}
-            </p>
-          )}
-
-          {card.skills.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              {card.skills.slice(0, 8).map((s) => (
-                <span
-                  key={s}
-                  className="rounded-full border border-line px-2.5 py-0.5 text-[12px] text-ink-2"
-                >
-                  {s}
-                </span>
-              ))}
-            </div>
-          )}
+        A BANNER ON MOBILE, A THUMBNAIL ABOVE sm. Stacking full-width under 640px
+        is what keeps the text column readable on a phone; side-by-side, a fixed
+        176px rail keeps every card's text starting at the same x, which is what
+        makes a list of them scannable. `sizes` matches those two cases so the
+        browser never fetches the 800px file to paint a 176px box.
+      */}
+      <div className="flex flex-col sm:flex-row">
+        <div className="relative h-40 w-full shrink-0 bg-bg-soft sm:h-auto sm:w-44 sm:self-stretch">
+          <Image
+            src={workCardImage(card.id)}
+            alt={WORK_CARD_IMAGE_ALT}
+            fill
+            sizes="(max-width: 640px) 100vw, 176px"
+            className="object-cover"
+          />
         </div>
 
-        {/* The buyer's mark, when they have one. Absent rather than a grey
-            placeholder square — an empty logo slot on every card is noise. */}
-        {card.companyLogoUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={card.companyLogoUrl}
-            alt={card.companyName ?? ""}
-            className="h-10 w-10 shrink-0 rounded-[8px] object-cover"
-          />
-        )}
-      </div>
+        <div className="min-w-0 flex-1 p-5">
+          <div className="flex items-start gap-4">
+            <div className="min-w-0 flex-1">
+              {/*
+                `/work/[id]` DOES NOT EXIST YET — there is no work-request detail
+                page, and building one is beyond this brief. The link is written to
+                where that page belongs rather than to a stand-in, and it is
+                unreachable today because no buyer has posted a work request, so no
+                card renders. It becomes live the moment the detail route lands.
+              */}
+              <h3 className="text-[16.5px] font-bold">
+                <Link href={`/work/${card.id}`} className="hover:text-magenta">
+                  {card.title}
+                </Link>
+              </h3>
 
-      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-ink-2">
-        {card.companyName && <span className="font-semibold">{card.companyName}</span>}
-        {card.postedAt && <span>Posted {relativeDay(card.postedAt)}</span>}
-        {/*
-          THE EARN HOOK. Stated as the rule rather than a number, because
-          CREDIT_RULES lands with the ledger in the master brief's PHASE 3 and a
-          hardcoded "100" here would be a second source that drifts the moment
-          Scott tunes the first.
-        */}
-        <span className="ml-auto font-semibold text-magenta">
-          Responding earns Community Credits
-        </span>
+              {meta.length > 0 && (
+                <p className="mt-1 text-[13px] text-ink-2">{meta.join(" · ")}</p>
+              )}
+
+              {card.description && (
+                <p className="mt-2 line-clamp-3 text-[14px] leading-relaxed text-ink-2">
+                  {card.description}
+                </p>
+              )}
+
+              {card.skills.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {card.skills.slice(0, 8).map((s) => (
+                    <span
+                      key={s}
+                      className="rounded-full border border-line px-2.5 py-0.5 text-[12px] text-ink-2"
+                    >
+                      {s}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* The buyer's mark, when they have one. Absent rather than a grey
+                placeholder square — an empty logo slot on every card is noise. */}
+            {card.companyLogoUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={card.companyLogoUrl}
+                alt={card.companyName ?? ""}
+                className="h-10 w-10 shrink-0 rounded-[8px] object-cover"
+              />
+            )}
+          </div>
+
+          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-ink-2">
+            {card.companyName && (
+              <span className="font-semibold">{card.companyName}</span>
+            )}
+            {card.postedAt && <span>Posted {relativeDay(card.postedAt)}</span>}
+            {/*
+              THE EARN HOOK. Stated as the rule rather than a number, because
+              CREDIT_RULES lands with the ledger in the master brief's PHASE 3
+              and a hardcoded "100" here would be a second source that drifts
+              the moment Scott tunes the first.
+            */}
+            <span className="ml-auto font-semibold text-magenta">
+              Responding earns Community Credits
+            </span>
+          </div>
+        </div>
       </div>
     </article>
   );
