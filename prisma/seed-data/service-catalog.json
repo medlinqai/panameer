@@ -157,82 +157,43 @@
       ]
     },
     {
-      "name": "Core Technical & Developer",
+      "name": "AI-Specialist",
+      "display": "AI-Specialist Roles",
       "domains": [
         {
-          "name": "AI Integration & Automation",
+          "name": "Core Technical & Development",
           "skills": [
             "Connect APIs to Enterprise Apps",
             "N8N Workflows",
-            "Zapier Workflows"
-          ]
-        },
-        {
-          "name": "Chatbot & Agent Development",
-          "skills": [
+            "Zapier Workflows",
             "AI Chatbot Development",
             "AI Agent Developer",
-            "AI Automation Developer"
-          ]
-        },
-        {
-          "name": "Model Engineering",
-          "skills": [
+            "AI Automation Developer",
             "Machine Learning Engineers",
             "Deep Learning Engineers",
-            "Computer Vision Engineers"
-          ]
-        },
-        {
-          "name": "Specialized Model Work",
-          "skills": [
+            "Computer Vision Engineers",
             "GPT-3/4 Specialists",
             "OpenAI Codex Specialists",
             "LLM Developers"
           ]
-        }
-      ]
-    },
-    {
-      "name": "Creative & Content Generation",
-      "domains": [
+        },
         {
-          "name": "Generative AI Art & Video",
+          "name": "Creative & Content Generation",
           "skills": [
             "AI Art Creator",
             "AI Video Generation and Editing",
-            "Midjourney Artists"
-          ]
-        },
-        {
-          "name": "Generative AI Writing",
-          "skills": [
+            "Midjourney Artists",
             "Generative AI Writing",
             "AI Writers",
             "Prompt Engineers"
           ]
-        }
-      ]
-    },
-    {
-      "name": "Data & Support Services",
-      "domains": [
+        },
         {
-          "name": "Data Annotation & Labeling",
+          "name": "Data Support & Services",
           "skills": [
             "AI Data Annotation & Labeling",
-            "Data Annotators"
-          ]
-        },
-        {
-          "name": "Prompt Engineering",
-          "skills": [
-            "Prompt Engineer"
-          ]
-        },
-        {
-          "name": "AI Research & Strategy",
-          "skills": [
+            "Data Annotators",
+            "Prompt Engineer",
             "AI Research Scientist",
             "AI Product Manager",
             "AI Consultants"

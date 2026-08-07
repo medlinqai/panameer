@@ -267,7 +267,22 @@ export function CreateWorkRequest() {
                   )
                 }
                 title={r.display}
-                description={`${(domainsByRole[r.id] ?? []).length} service domains`}
+                /*
+                  THE DECK DESCRIBES EACH ROLE BY WHAT IS INSIDE IT, not by a
+                  count — "Core Technical Developers, Creative & Content
+                  Generation, Data & Support Services" under AI-Specialist. "5
+                  service domains" told the requester how much was behind the
+                  card without telling them whether it was the right card.
+
+                  Derived from the role's own domains rather than hand-written,
+                  so it cannot drift from the catalog. The deck writes the
+                  enterprise ones as example job titles instead ("Coder, Report
+                  Writer, Integration Specialist"); that is copy Scott owns, and
+                  a per-role line here would override this the day it exists.
+                */
+                description={(domainsByRole[r.id] ?? [])
+                  .map((d) => d.name)
+                  .join(", ")}
               />
             ))}
             {roles.length === 0 && (
@@ -286,7 +301,8 @@ export function CreateWorkRequest() {
         <WizardShell
           {...shell({
             title: "What service domain are you requesting?",
-            subtitle: roleName ? `Within ${roleName}.` : undefined,
+            // The deck's step 2 carries the role name alone as the subtitle.
+            subtitle: roleName || undefined,
             continueDisabled: !draft?.pillarId,
             onContinue: () => saveAnd("domain", { pillarId: draft?.pillarId }),
           })}

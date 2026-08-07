@@ -115,25 +115,21 @@ function toCode(name: string): string {
  * prominent). Anything unlisted falls to the default and sorts by name.
  */
 /*
-  TWO CATALOGS, ONE ORDER. The source workbook has two tabs — the
-  enterprise-systems catalog and the AI-automation catalog — and each carries
-  its own roles at the SAME level. "Core Technical & Developer" is a role in
-  exactly the sense "Technology-Specific" is; neither is a domain of the other.
+  FIVE ROLES, AI FIRST — the CWR deck's step 1, which is the spec for this list.
 
-  ENTERPRISE FIRST, AI AFTER. E013 pinned the ERP-heavy areas at the top and
-  that decision stands: with three AI roles, leading with them would push all
-  four enterprise roles below the fold of a seven-item list. The CWR deck showed
-  AI leading when it was ONE entry, which is a different picture. Flipping is
-  three numbers.
+  The workbook's AI tab carries three roles of its own; the deck does not use
+  them as roles. Its step 2 shows them as the three DOMAINS under a single
+  "AI-Specialist Roles" entry, and each of those domain cards is described by
+  the workbook's own domains ("AI Integration & Automation, Chatbot & Agent
+  Dev, …"). So the workbook's middle level is display copy in this product, not
+  a level of the taxonomy — and the AI vertical is one role, as the deck shows.
 */
 const ROLE_SORT: Record<string, number> = {
+  "AI-Specialist": 5,
   "Application-Specific": 10,
   "Technology-Specific": 20,
   "Project-Specific": 30,
   "Operations-Specific": 40,
-  "Core Technical & Developer": 50,
-  "Creative & Content Generation": 60,
-  "Data & Support Services": 70,
 };
 
 const DOMAIN_SORT: Record<string, number> = {
@@ -146,19 +142,13 @@ const DOMAIN_SORT: Record<string, number> = {
   "Project Execution": 70,
   "Project Portfolio Management": 80,
   /*
-    The AI catalog's nine domains, in the workbook's own order. Only a role's
-    own domains ever render, so these order each AI branch internally rather
-    than competing with the ERP domains above.
+    The AI role's three domains, in the deck's order. Only a role's own domains
+    ever render, so these order the AI branch internally rather than competing
+    with the ERP domains above.
   */
-  "AI Integration & Automation": 90,
-  "Chatbot & Agent Development": 91,
-  "Model Engineering": 92,
-  "Specialized Model Work": 93,
-  "Generative AI Art & Video": 94,
-  "Generative AI Writing": 95,
-  "Data Annotation & Labeling": 96,
-  "Prompt Engineering": 97,
-  "AI Research & Strategy": 98,
+  "Core Technical & Development": 90,
+  "Creative & Content Generation": 91,
+  "Data Support & Services": 92,
 };
 
 /**
@@ -265,8 +255,14 @@ export async function seedTaxonomy(
   const roleIdByName = new Map<string, string>();
   for (const role of data.roles) {
     const code = toCode(role.name);
-    // An explicit display wins; otherwise strip the "-Specific" suffix as before.
-    const display = role.display ?? role.name.replace(/-Specific$/, "");
+    /*
+      THE DECK PUTS "ROLES" ON EVERY CARD — "Application-Specific Roles",
+      "AI-Specialist Roles". The old derivation did the opposite: it STRIPPED
+      "-Specific" and rendered a bare "Application", so the role step read as
+      four nouns where the design reads as four roles. An explicit display in
+      the catalog still wins; otherwise the suffix is added, not removed.
+    */
+    const display = role.display ?? `${role.name} Roles`;
     const row = await prisma.roleType.upsert({
       where: { code },
       update: {
