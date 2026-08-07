@@ -119,6 +119,18 @@ async function loadOwned(viewer: Viewer, id: string, pAccountId: string) {
   return wr;
 }
 
+/*
+  TODO(scheduler): the draft reminder has no trigger.
+
+  `workRequestDraftReminderTemplate` is built and unit-tested, and the query it
+  needs is the one below with a date filter — DRAFTs whose `updated_at` is older
+  than N hours, whose buyer has an email, and which have not been reminded yet
+  (that last part needs a `reminded_at` column, which is why this is a TODO and
+  not a five-line function). What is missing is something to run it: there is no
+  cron, queue or scheduled task anywhere in this repo. Adding one is
+  infrastructure, not a template.
+*/
+
 /** The buyer's most recent DRAFT (for resume), or null. */
 export async function getCurrentDraft(viewer: Viewer) {
   const { pAccountId } = await resolveBuyer(viewer);
