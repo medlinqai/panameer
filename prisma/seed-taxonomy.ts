@@ -241,28 +241,45 @@ const DOMAIN_RENAMES: Record<string, string> = {
 };
 
 /**
- * SKILLS THAT WERE RESPELLED, NOT REPLACED.
+ * SKILLS THAT WERE RENAMED, NOT REPLACED.
  *
- * Strictly spelling: spacing, punctuation, an expanded abbreviation, a plural.
- * Same words, same meaning, same role — so the row is renamed and every provider
- * who picked it keeps it, rather than losing a selection to a typographic edit.
+ * Renaming the row keeps its id, so every provider who picked the skill keeps
+ * it. The alternative — let the old name retire and the new one appear — reads
+ * identically in the catalog and silently takes the selection away.
  *
- * DELIBERATELY NOT HERE: anything where the new catalog changed the *words*.
- * "Supplier Qualifications" → "Supplier Qualification Management", "Prompt
- * Engineer" → "Prompt Engineering", "AI Data Annotation & Labeling" → "Data
- * Annotation & Labeling" and "Project Manager" → "Project Manager (PPM)" all
- * look like the same skill and probably are, but each is a judgement about what
- * the catalog MEANS, and that is Scott's call to add here — not the seeder's to
- * assume. They retire, and the report names them.
+ * Two kinds live here, and the difference is worth keeping straight:
+ *
+ *   SPELLING — spacing, punctuation, an expanded abbreviation, a plural. Same
+ *   words. Safe to apply without asking; the first six were added with the
+ *   expanded catalog itself.
+ *
+ *   MEANING — the catalog changed the WORDS: "Supplier Qualifications" →
+ *   "Supplier Qualification Management", the job title "Prompt Engineer" → the
+ *   capability "Prompt Engineering". Each is a claim about what the catalog
+ *   means, so these were reported rather than assumed, and added on Scott's
+ *   instruction (brief_catalog_renames_and_dev_banner WS-A).
+ *
+ * `role` SCOPES A RENAME TO ONE ROLE, and "Project Manager" is why it exists.
+ * The name sits under Project-Specific / Delivery Leadership, where it survives
+ * untouched, AND under Operations-Specific, where the expanded catalog calls it
+ * "Project Manager (PPM)". An unscoped rename would catch both, leaving
+ * Project-Specific holding a PPM title it never had — and, because that name is
+ * not in its branch of the catalog, retiring it on the same run.
  */
-const SKILL_RENAMES: Record<string, string> = {
-  "Purchasing/Purchase Orders": "Purchasing / Purchase Orders",
-  "Sourcing/Negotiations": "Sourcing / Negotiations",
-  "Absence Mgt": "Absence Management",
-  "Warehouse Mgt": "Warehouse Management",
-  "PL SQL Specialist": "PL/SQL Specialist",
-  "Grant Management": "Grants Management",
-};
+const SKILL_RENAMES: { from: string; to: string; role?: string }[] = [
+  /* --- spelling ---------------------------------------------------------- */
+  { from: "Purchasing/Purchase Orders", to: "Purchasing / Purchase Orders" },
+  { from: "Sourcing/Negotiations", to: "Sourcing / Negotiations" },
+  { from: "Absence Mgt", to: "Absence Management" },
+  { from: "Warehouse Mgt", to: "Warehouse Management" },
+  { from: "PL SQL Specialist", to: "PL/SQL Specialist" },
+  { from: "Grant Management", to: "Grants Management" },
+  /* --- meaning (WS-A) ---------------------------------------------------- */
+  { from: "Supplier Qualifications", to: "Supplier Qualification Management" },
+  { from: "Prompt Engineer", to: "Prompt Engineering" },
+  { from: "AI Data Annotation & Labeling", to: "Data Annotation & Labeling" },
+  { from: "Project Manager", to: "Project Manager (PPM)", role: "Operations-Specific" },
+];
 
 /**
  * How many provider/Work-Request selections may be dropped before the reseed
@@ -470,9 +487,31 @@ export async function seedTaxonomy(
   // the rehome pass below then treats it as an existing skill that moved domain
   // rather than as one name retiring and a near-identical one appearing.
   const renamedSkills: string[] = [];
-  for (const [from, to] of Object.entries(SKILL_RENAMES)) {
+  for (const { from, to, role } of SKILL_RENAMES) {
+    /*
+      A `role` that names nothing THROWS rather than quietly matching every row.
+      Getting the role wrong turns a scoped rename into a blanket one, which is
+      the exact failure the scope was added to prevent — a silent no-op would
+      hide it until a provider noticed a missing skill.
+    */
+    let scopedRoleId: string | undefined;
+    if (role) {
+      scopedRoleId = roleIdByName.get(role);
+      if (!scopedRoleId) {
+        throw new Error(
+          `SKILL_RENAMES: "${from}" → "${to}" is scoped to role "${role}", which is ` +
+            `not in the catalog. Fix the role name or drop the scope.`
+        );
+      }
+    }
+
     const rows = await prisma.skill.findMany({
-      where: { catalog_id: catalog.id, name: from, is_custom: false },
+      where: {
+        catalog_id: catalog.id,
+        name: from,
+        is_custom: false,
+        ...(scopedRoleId ? { role_type_id: scopedRoleId } : {}),
+      },
       select: { id: true, role_type_id: true, pillar_id: true },
     });
     for (const row of rows) {
