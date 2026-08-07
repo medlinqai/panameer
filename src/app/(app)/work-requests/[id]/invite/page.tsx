@@ -4,6 +4,11 @@ import { guardPage } from "@/lib/guard";
 /**
  * Invite a provider to propose — a titled placeholder (WS-E).
  *
+ * TODO(work-invitation): when the model lands, this page becomes the invite
+ * form and its submit handler sends `workRequestInviteTemplate` from
+ * `@/lib/email/templates/work-request-invite` — the template is built and
+ * unit-tested (`npm run check:email`), and this is its single call site.
+ *
  * THERE IS NO WORK-INVITATION MODEL. `CoordinatorInvite` is a recruiter asking
  * to REPRESENT a provider — a different relationship — and wiring this button
  * to it would be fabrication by mislabelling, which is worse than an honest
