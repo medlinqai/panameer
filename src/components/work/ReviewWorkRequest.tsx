@@ -19,6 +19,7 @@ export function ReviewStep({
   draft,
   roleName,
   domainName,
+  specializationNames,
   onEdit,
   onBack,
   onPost,
@@ -28,6 +29,8 @@ export function ReviewStep({
   draft: Draft | null;
   roleName: string;
   domainName: string;
+  /** Resolved names for the ids on the draft — the review shows words. */
+  specializationNames: string[];
   onEdit: (s: Step) => void;
   onBack: () => void;
   onPost: () => void;
@@ -82,6 +85,9 @@ export function ReviewStep({
           {draft?.skillNames.length
             ? draft.skillNames.map((s) => s.name).join(", ")
             : "None yet"}
+        </ReviewCard>
+        <ReviewCard title="Specializations" onEdit={() => onEdit("specializations")}>
+          {specializationNames.length > 0 ? specializationNames.join(", ") : "None"}
         </ReviewCard>
         <ReviewCard title="Dates" onEdit={() => onEdit("dates")}>
           {dates ?? "Not set"}

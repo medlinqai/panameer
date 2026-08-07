@@ -40,6 +40,14 @@ const STEPS = [
   "role",
   "domain",
   "skills",
+  /*
+    SPECIALIZATIONS SITS AFTER SKILLS because it refines the same question.
+    Skills say what the work IS; specializations say which products, processes
+    and industries it touches. Asked before skills it would be abstract; asked
+    after dates or budget it would drag the requester back into scoping after
+    they had moved on to logistics.
+  */
+  "specializations",
   "dates",
   "location",
   "budget",
@@ -54,6 +62,7 @@ const NUMBERED: Step[] = STEPS.filter((s) => s !== "review") as Step[];
 type RoleType = { id: string; display: string; name: string };
 type Domain = { id: string; name: string; skillCount?: number };
 type SkillOpt = { id: string; name: string };
+type SpecGroup = { kind: string; label: string; items: { id: string; name: string }[] };
 
 export type Draft = {
   id: string;
@@ -64,6 +73,7 @@ export type Draft = {
   pillarId: string | null;
   skillIds: string[];
   skillNames: { id: string; name: string }[];
+  specializationIds: string[];
   budgetType: string | null;
   budgetMinCents: number | null;
   budgetMaxCents: number | null;
@@ -92,6 +102,7 @@ export function CreateWorkRequest() {
     skills: [],
   });
   const [skillQuery, setSkillQuery] = useState("");
+  const [specGroups, setSpecGroups] = useState<SpecGroup[]>([]);
 
   // ---- local edits, flushed to the server on Continue ---------------------
   const [startDate, setStartDate] = useState("");
@@ -119,11 +130,13 @@ export function CreateWorkRequest() {
   useEffect(() => {
     let alive = true;
     (async () => {
-      const [cur, fields] = await Promise.all([
+      const [cur, fields, specs] = await Promise.all([
         fetch("/api/work-requests/current").then((r) => (r.ok ? r.json() : null)),
         fetch("/api/catalog/fields").then((r) => (r.ok ? r.json() : null)),
+        fetch("/api/catalog/specializations").then((r) => (r.ok ? r.json() : null)),
       ]);
       if (!alive) return;
+      if (specs?.groups) setSpecGroups(specs.groups);
       if (fields?.roles) {
         setRoles(fields.roles);
         setDomainsByRole(
@@ -173,6 +186,10 @@ export function CreateWorkRequest() {
   const domains = draft?.roleTypeId ? domainsByRole[draft.roleTypeId] ?? [] : [];
   const roleName = roles.find((r) => r.id === draft?.roleTypeId)?.display ?? "";
   const domainName = domains.find((d) => d.id === draft?.pillarId)?.name ?? "";
+  // The draft carries ids; the review shows words.
+  const specializationNames = (draft?.specializationIds ?? [])
+    .map((id) => specGroups.flatMap((g) => g.items).find((i) => i.id === id)?.name)
+    .filter((n): n is string => Boolean(n));
 
   /** Save one section, creating the DRAFT on the first call. */
   const save = async (section: string, data: Record<string, unknown>) => {
@@ -419,6 +436,81 @@ export function CreateWorkRequest() {
       );
     }
 
+    // ---- SPECIALIZATIONS — optional ---------------------------------------
+    case "specializations": {
+      const chosen = new Set(draft?.specializationIds ?? []);
+      const toggle = (id: string) =>
+        setDraft((d) =>
+          d
+            ? {
+                ...d,
+                specializationIds: d.specializationIds.includes(id)
+                  ? d.specializationIds.filter((x) => x !== id)
+                  : [...d.specializationIds, id],
+              }
+            : d
+        );
+
+      return (
+        <WizardShell
+          {...shell({
+            title: "Anything specific this work touches?",
+            subtitle:
+              "Products, processes or industries. Optional — pick what applies, or skip.",
+            wide: true,
+            onContinue: () =>
+              saveAnd("specializations", {
+                specializationIds: draft?.specializationIds ?? [],
+              }),
+            /*
+              SKIP SAVES AN EMPTY SET rather than jumping the step. A requester
+              who looked and decided none applied has answered the question, and
+              the answer should survive a Back — which it cannot if the step is
+              simply stepped over.
+            */
+            secondaryLabel: "None apply",
+            onSecondary: () =>
+              void saveAnd("specializations", { specializationIds: [] }),
+          })}
+        >
+          {error && <Notice>{error}</Notice>}
+
+          {/*
+            TWO LEVELS, THREE SECTIONS, ONE PAGE. The vocabulary is already
+            grouped by `kind` server-side, so the section headers are the
+            catalog's own — Products & Platforms, Processes & Methodologies,
+            Industries — rather than three labels typed here that could drift
+            from what the endpoint returns.
+          */}
+          {specGroups.map((g) => (
+            <section key={g.kind} className="mb-6">
+              <h2 className="mb-2 text-[13px] font-bold uppercase tracking-[0.07em] text-ink-2">
+                {g.label}
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                {g.items.map((it) => (
+                  <Chip
+                    key={it.id}
+                    selected={chosen.has(it.id)}
+                    onClick={() => toggle(it.id)}
+                  >
+                    {it.name}
+                  </Chip>
+                ))}
+              </div>
+            </section>
+          ))}
+
+          {specGroups.length === 0 && (
+            <Notice tone="info">
+              The specialization vocabulary hasn&apos;t been seeded yet, so
+              there is nothing to choose from. Skipping is fine.
+            </Notice>
+          )}
+        </WizardShell>
+      );
+    }
+
     // ---- 4 — DATES ------------------------------------------------------
     case "dates":
       return (
@@ -634,6 +726,7 @@ export function CreateWorkRequest() {
           draft={draft}
           roleName={roleName}
           domainName={domainName}
+          specializationNames={specializationNames}
           onEdit={goTo}
           onBack={back}
           busy={busy}

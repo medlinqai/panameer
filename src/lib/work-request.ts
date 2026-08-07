@@ -39,6 +39,7 @@ export const WORK_REQUEST_SECTIONS = [
   "role",
   "domain",
   "skills",
+  "specializations",
   "dates",
   "location",
   "budget",
@@ -93,6 +94,7 @@ function serialize(wr: Awaited<ReturnType<typeof loadOwned>>) {
     roleTypeId: wr.role_type_id,
     pillarId: wr.pillar_id,
     skillIds: wr.skills.map((s) => s.skill_id),
+    specializationIds: wr.specializations.map((s) => s.specialization_id),
     skillNames: wr.skills.map((s) => ({ id: s.skill_id, name: s.skill.name })),
     experienceLevel: wr.experience_level,
     budgetType: wr.budget_type,
@@ -113,7 +115,10 @@ function serialize(wr: Awaited<ReturnType<typeof loadOwned>>) {
 async function loadOwned(viewer: Viewer, id: string, pAccountId: string) {
   const wr = await prisma.workRequest.findFirst({
     where: scopedToPAccount(scopedViewer(viewer, pAccountId), { id }),
-    include: { skills: { include: { skill: { select: { name: true } } } } },
+    include: {
+      skills: { include: { skill: { select: { name: true } } } },
+      specializations: true,
+    },
   });
   if (!wr) throw new WorkRequestError("Work request not found", "NOT_FOUND");
   return wr;
@@ -139,7 +144,10 @@ export async function getCurrentDraft(viewer: Viewer) {
       status: "DRAFT" as const,
     }),
     orderBy: { updated_at: "desc" },
-    include: { skills: { include: { skill: { select: { name: true } } } } },
+    include: {
+      skills: { include: { skill: { select: { name: true } } } },
+      specializations: true,
+    },
   });
   return draft ? serialize(draft) : null;
 }
@@ -239,6 +247,44 @@ export async function saveSection(
         prisma.workRequest.update({ where: { id: wr.id }, data: { pillar_id: pillarId } }),
         ...(changed
           ? [prisma.workRequestSkill.deleteMany({ where: { work_request_id: wr.id } })]
+          : []),
+      ]);
+      break;
+    }
+
+    /*
+      SPECIALIZATIONS — optional, and "none" is a real answer.
+
+      An empty list CLEARS the set rather than failing validation: the step is
+      skippable by design, and a requester who looked and decided none applied
+      has answered. Distinguishing that from "never visited" is not worth a
+      column here — the wizard's own progress does it.
+    */
+    case "specializations": {
+      const ids: string[] = Array.isArray(data.specializationIds)
+        ? data.specializationIds
+        : [];
+      if (ids.length > 0) {
+        // Validated against the vocabulary, so a stale or hand-rolled client
+        // cannot attach an id that is not a Specialization.
+        const found = await prisma.specialization.count({ where: { id: { in: ids } } });
+        if (found !== ids.length) {
+          throw new WorkRequestError("Unknown specialization", "INVALID");
+        }
+      }
+      await prisma.$transaction([
+        prisma.workRequestSpecialization.deleteMany({
+          where: { work_request_id: wr.id },
+        }),
+        ...(ids.length
+          ? [
+              prisma.workRequestSpecialization.createMany({
+                data: ids.map((specialization_id) => ({
+                  work_request_id: wr.id,
+                  specialization_id,
+                })),
+              }),
+            ]
           : []),
       ]);
       break;

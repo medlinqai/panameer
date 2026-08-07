@@ -877,6 +877,7 @@ model Specialization {
 
   catalog           ServiceCatalog                  @relation(fields: [catalog_id], references: [id], onDelete: Cascade)
   providerProfiles  ProviderProfileSpecialization[]
+  workRequests      WorkRequestSpecialization[]
   /// Projects delivered in this sector — only INDUSTRY-kind rows are ever
   /// linked (brief_project_model_v2).
   projectIndustries Project[]
@@ -894,6 +895,28 @@ enum SpecializationKind {
 }
 
 /// Provider ↔ Specialization multi-select (brief_R).
+/**
+ * A Work Request's specializations (brief_cwr_specializations_and_import WS-A).
+ *
+ * Mirrors `ProviderProfileSpecialization` exactly, and deliberately: the
+ * requester is answering the same question from the other side ("which
+ * products, processes and industries does this touch"), so matching the two is
+ * a join on `specialization_id` rather than a translation between two shapes.
+ */
+model WorkRequestSpecialization {
+  id                String   @id @default(uuid()) @db.Uuid
+  work_request_id   String   @db.Uuid
+  specialization_id String   @db.Uuid
+  created_at        DateTime @default(now())
+
+  workRequest    WorkRequest    @relation(fields: [work_request_id], references: [id], onDelete: Cascade)
+  specialization Specialization @relation(fields: [specialization_id], references: [id], onDelete: Cascade)
+
+  @@unique([work_request_id, specialization_id])
+  @@index([specialization_id])
+  @@map("work_request_specializations")
+}
+
 model ProviderProfileSpecialization {
   id                  String   @id @default(uuid()) @db.Uuid
   provider_profile_id String   @db.Uuid
@@ -1777,6 +1800,7 @@ model WorkRequest {
   pillar   Pillar?            @relation(fields: [pillar_id], references: [id], onDelete: SetNull)
   region   Region?            @relation(fields: [region_id], references: [id], onDelete: SetNull)
   skills   WorkRequestSkill[]
+  specializations WorkRequestSpecialization[]
 
   @@index([p_account_id])
   @@index([buyer_person_id])
