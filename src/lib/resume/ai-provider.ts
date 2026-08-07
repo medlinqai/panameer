@@ -173,12 +173,29 @@ export async function callExtractionModel({
   schemaName,
   text,
   maxOutputTokens = 16_000,
+  /*
+    THE USER-MESSAGE WRAPPER, parameterised for the job-posting importer
+    (brief_cwr_specializations_and_import WS-B). It was hardcoded to "Extract
+    this résumé" inside `<resume>` tags, which is right for the one caller that
+    existed and actively misleading for a caller handing the model a job post.
+
+    THE DEFAULTS REPRODUCE THE OLD STRING EXACTLY, byte for byte. The résumé
+    prompt is documented as fragile — change only with a before/after harness
+    run — so the résumé path must not be able to tell this refactor happened.
+    `check:resume` and `check:ai-extract` are the proof.
+  */
+  instruction = "Extract this résumé.",
+  tag = "resume",
+  toolDescription = "Record the structured contents of this résumé.",
 }: {
   system: string;
   schema: Record<string, unknown>;
   schemaName: string;
   text: string;
   maxOutputTokens?: number;
+  instruction?: string;
+  tag?: string;
+  toolDescription?: string;
 }): Promise<ModelCall> {
   const cfg = resolveProvider();
   if (!cfg) {
@@ -186,7 +203,7 @@ export async function callExtractionModel({
   }
 
   const started = Date.now();
-  const userContent = `Extract this résumé.\n\n<resume>\n${text.slice(0, 120_000)}\n</resume>`;
+  const userContent = `${instruction}\n\n<${tag}>\n${text.slice(0, 120_000)}\n</${tag}>`;
 
   try {
     if (cfg.provider === "anthropic") {
@@ -207,7 +224,7 @@ export async function callExtractionModel({
         tools: [
           {
             name: schemaName,
-            description: "Record the structured contents of this résumé.",
+            description: toolDescription,
             input_schema: schema as never,
           },
         ],

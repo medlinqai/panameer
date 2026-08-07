@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { WizardShell } from "@/components/onboarding/WizardShell";
+import { ParseHeartbeat } from "@/components/onboarding/ParseHeartbeat";
 import { ReviewStep } from "@/components/work/ReviewWorkRequest";
 import {
   OptionCard,
@@ -103,6 +104,17 @@ export function CreateWorkRequest() {
   });
   const [skillQuery, setSkillQuery] = useState("");
   const [specGroups, setSpecGroups] = useState<SpecGroup[]>([]);
+
+  /*
+    THE IMPORT (WS-B). Held on the wizard rather than in the panel because its
+    RESULT outlives the panel: the extracted skills cannot be saved until a role
+    and domain exist, so they wait here until the requester reaches step 3.
+  */
+  const [importOpen, setImportOpen] = useState(false);
+  const [importText, setImportText] = useState("");
+  const [importing, setImporting] = useState(false);
+  const [pendingSkills, setPendingSkills] = useState<{ id: string; name: string }[]>([]);
+  const [offCatalogSkills, setOffCatalogSkills] = useState<string[]>([]);
 
   // ---- local edits, flushed to the server on Continue ---------------------
   const [startDate, setStartDate] = useState("");
@@ -215,6 +227,40 @@ export function CreateWorkRequest() {
     }
   };
 
+  const runImport = async () => {
+    setImporting(true);
+    setError(null);
+    try {
+      const r = await fetch("/api/work-requests/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: importText }),
+      });
+      const body = await r.json();
+      if (!r.ok) throw new Error(body?.error ?? "Could not import that posting");
+
+      // Load the DRAFT the import just created and carry its skills forward.
+      const fresh = await fetch(`/api/work-requests/${body.workRequestId}`).then((x) =>
+        x.ok ? x.json() : null
+      );
+      if (fresh) hydrate(fresh);
+      setPendingSkills(body.matchedSkills ?? []);
+      setOffCatalogSkills(body.unmatchedSkills ?? []);
+      setImportOpen(false);
+      setImportText("");
+      /*
+        STILL STEP 1. The import fills everything downstream of the cascade, but
+        role and domain are the requester's call — inferring them from a paste
+        would have them confirm a taxonomy decision they never made.
+      */
+      setStep("role");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not import that posting");
+    } finally {
+      setImporting(false);
+    }
+  };
+
   const goTo = (s: Step) => {
     setError(null);
     setStep(s);
@@ -271,6 +317,71 @@ export function CreateWorkRequest() {
           })}
         >
           {error && <Notice>{error}</Notice>}
+
+          {/*
+            THE PORT (WS-B). On step 1 because it is only a shortcut if it is
+            offered before the requester starts typing — halfway through the
+            wizard it is a reason to start over.
+          */}
+          {!importOpen ? (
+            <button
+              type="button"
+              onClick={() => setImportOpen(true)}
+              className="mb-5 w-full rounded-brand border-[1.5px] border-dashed border-line px-5 py-3.5 text-left transition-colors hover:border-magenta"
+            >
+              <span className="text-[14.5px] font-bold">
+                Import a job you posted elsewhere
+              </span>
+              <span className="mt-0.5 block text-[13.5px] text-ink-2">
+                Paste it from Upwork, LinkedIn or Indeed and we&apos;ll draft this
+                for you.
+              </span>
+            </button>
+          ) : (
+            <div className="mb-5 rounded-brand border border-line bg-bg-soft p-5">
+              <p className="text-[14.5px] font-bold">Paste your job posting here</p>
+              <p className="mt-0.5 text-[13.5px] leading-relaxed text-ink-2">
+                We&apos;ll fill in what the posting actually says and leave the rest
+                blank for you. Nothing is posted — you&apos;ll review it first.
+              </p>
+              <TextArea
+                value={importText}
+                onChange={(e) => setImportText(e.target.value)}
+                placeholder="Paste the full posting…"
+                className="mt-3 min-h-[160px] bg-white"
+                disabled={importing}
+              />
+              {importing ? (
+                <ParseHeartbeat className="mt-3" />
+              ) : (
+                <div className="mt-3 flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => void runImport()}
+                    disabled={importText.trim().length < 40}
+                    className="rounded-full bg-magenta px-5 py-2.5 text-[14px] font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-40"
+                  >
+                    Draft My Work Request
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setImportOpen(false);
+                      setImportText("");
+                    }}
+                    className="text-[14px] font-semibold text-ink-2 underline underline-offset-4 hover:text-magenta"
+                  >
+                    Cancel
+                  </button>
+                  {/* v2, and named so nobody wonders why pasting is the only way. */}
+                  <span className="text-[12.5px] text-ink-2">
+                    Pasting only for now — those sites need a login to read a posting.
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="space-y-3">
             {roles.map((r) => (
               <OptionCard
@@ -358,6 +469,24 @@ export function CreateWorkRequest() {
     case "skills": {
       const chosen = new Set(draft?.skillIds ?? []);
       const q = skillQuery.trim().toLowerCase();
+
+      /*
+        WHAT THE IMPORT FOUND, offered here rather than saved earlier.
+
+        Imported skills cannot be written until a role and domain exist to
+        validate them against, so they waited. Only the ones that belong to the
+        pair the requester actually chose are offered — an import from a Java
+        posting must not put Java in front of someone who picked Payables.
+
+        SUGGESTED, NOT APPLIED. Every one is a tick. The requester is the one
+        who knows whether the posting they pasted still describes what they
+        want, and pre-selecting on their behalf is how a wrong skill gets posted
+        unnoticed.
+      */
+      const inThisPair = new Set(skills.map((s) => s.id));
+      const suggested = pendingSkills.filter(
+        (s) => inThisPair.has(s.id) && !chosen.has(s.id)
+      );
       const shown = skills
         .filter((s) => !chosen.has(s.id))
         .filter((s) => !q || s.name.toLowerCase().includes(q))
@@ -409,6 +538,41 @@ export function CreateWorkRequest() {
                   </Chip>
                 ))}
               </div>
+            </div>
+          )}
+
+          {suggested.length > 0 && (
+            <div className="mb-4 rounded-brand border border-magenta/25 bg-magenta/[0.04] p-4">
+              <p className="text-[14px] font-bold">
+                AI found these in your posting — tick the ones that fit
+              </p>
+              <div className="mt-2.5 flex flex-wrap gap-2">
+                {suggested.map((s) => (
+                  <Chip key={s.id} selected={false} onClick={() => toggle(s.id)}>
+                    + {s.name}
+                  </Chip>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {offCatalogSkills.length > 0 && (
+            <div className="mb-4 rounded-brand border border-line bg-bg-soft p-4">
+              <p className="text-[14px] font-bold">
+                Also mentioned, but not in our catalog
+              </p>
+              {/*
+                SHOWN, NOT SELECTABLE. These are terms the posting used that the
+                catalog does not have. A Work Request can only carry catalog
+                skills — matching depends on it — so offering them as ticks
+                would promise a match that cannot happen. Naming them is still
+                worth it: it tells the requester what we did NOT capture, which
+                is the difference between an honest import and a lossy one.
+              */}
+              <p className="mt-1 text-[13.5px] leading-relaxed text-ink-2">
+                {offCatalogSkills.join(", ")} — add the closest catalog skill
+                below, or mention them in the description.
+              </p>
             </div>
           )}
 
