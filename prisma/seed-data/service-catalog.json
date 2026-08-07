@@ -1,6 +1,6 @@
 {
   "_source": "4. Project Documents/2. Design/4. Service Catalog/Service Catalog.xlsx (Panameer Service Catalog V1)",
-  "_note": "Authoritative provider taxonomy: Role -> Domain -> Skill, plus a cross-cutting multi-select Specializations vocabulary. Generated from Scott's xlsx. AI vertical added from Service Catalog V4 'The AI Services Catalog' sheet (brief_seed_ai_catalog).",
+  "_note": "Authoritative provider taxonomy: Role -> Domain -> Skill, plus a cross-cutting multi-select Specializations vocabulary. Two source tabs: the enterprise-systems catalog and the AI-automation catalog (Service Catalog V4.xlsx -> 'The AI Services Catalog'), each carrying its own roles at the same level.",
   "roles": [
     {
       "name": "Application-Specific",
@@ -157,31 +157,85 @@
       ]
     },
     {
-      "name": "AI-Specialist",
-      "display": "AI-Specialist Roles",
+      "name": "Core Technical & Developer",
       "domains": [
         {
-          "name": "Core Technical & Development",
+          "name": "AI Integration & Automation",
           "skills": [
-            "AI Integration & Automation",
-            "Chatbot & Agent Development",
-            "Model Engineering",
-            "Specialized Model Work"
+            "Connect APIs to Enterprise Apps",
+            "N8N Workflows",
+            "Zapier Workflows"
           ]
         },
         {
-          "name": "Creative & Content Generation",
+          "name": "Chatbot & Agent Development",
           "skills": [
-            "Generative AI Art & Video",
-            "Generative AI Writing"
+            "AI Chatbot Development",
+            "AI Agent Developer",
+            "AI Automation Developer"
           ]
         },
         {
-          "name": "Data Support & Services",
+          "name": "Model Engineering",
           "skills": [
-            "Data Annotation & Labeling",
-            "Prompt Engineering",
-            "AI Research & Strategy"
+            "Machine Learning Engineers",
+            "Deep Learning Engineers",
+            "Computer Vision Engineers"
+          ]
+        },
+        {
+          "name": "Specialized Model Work",
+          "skills": [
+            "GPT-3/4 Specialists",
+            "OpenAI Codex Specialists",
+            "LLM Developers"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Creative & Content Generation",
+      "domains": [
+        {
+          "name": "Generative AI Art & Video",
+          "skills": [
+            "AI Art Creator",
+            "AI Video Generation and Editing",
+            "Midjourney Artists"
+          ]
+        },
+        {
+          "name": "Generative AI Writing",
+          "skills": [
+            "Generative AI Writing",
+            "AI Writers",
+            "Prompt Engineers"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Data & Support Services",
+      "domains": [
+        {
+          "name": "Data Annotation & Labeling",
+          "skills": [
+            "AI Data Annotation & Labeling",
+            "Data Annotators"
+          ]
+        },
+        {
+          "name": "Prompt Engineering",
+          "skills": [
+            "Prompt Engineer"
+          ]
+        },
+        {
+          "name": "AI Research & Strategy",
+          "skills": [
+            "AI Research Scientist",
+            "AI Product Manager",
+            "AI Consultants"
           ]
         }
       ]

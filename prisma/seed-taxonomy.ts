@@ -72,6 +72,7 @@ const CATALOG = {
  */
 const TYPO_FIXES: Record<string, string> = {
   "Acounting Hub": "Accounting Hub",
+  "Accouting Hub": "Accounting Hub",
   "Planning & Budgetting": "Planning & Budgeting",
   "Enterprise Business Suite ()EBS)": "Enterprise Business Suite (EBS)",
 };
@@ -113,18 +114,26 @@ function toCode(name: string): string {
  * Display order for the Role → Domain picker (E013: keep the ERP-heavy areas
  * prominent). Anything unlisted falls to the default and sorts by name.
  */
+/*
+  TWO CATALOGS, ONE ORDER. The source workbook has two tabs — the
+  enterprise-systems catalog and the AI-automation catalog — and each carries
+  its own roles at the SAME level. "Core Technical & Developer" is a role in
+  exactly the sense "Technology-Specific" is; neither is a domain of the other.
+
+  ENTERPRISE FIRST, AI AFTER. E013 pinned the ERP-heavy areas at the top and
+  that decision stands: with three AI roles, leading with them would push all
+  four enterprise roles below the fold of a seven-item list. The CWR deck showed
+  AI leading when it was ONE entry, which is a different picture. Flipping is
+  three numbers.
+*/
 const ROLE_SORT: Record<string, number> = {
-  /*
-    AI FIRST, per the Create Work Request deck's role step.
-    ⚠ This sorts the AI vertical ABOVE the ERP core, which E013 pinned first for
-    the provider category picker. Both pickers read this one order, so they move
-    together — flipping AI back below Application is one number here.
-  */
-  "AI-Specialist": 5,
   "Application-Specific": 10,
   "Technology-Specific": 20,
   "Project-Specific": 30,
   "Operations-Specific": 40,
+  "Core Technical & Developer": 50,
+  "Creative & Content Generation": 60,
+  "Data & Support Services": 70,
 };
 
 const DOMAIN_SORT: Record<string, number> = {
@@ -137,14 +146,19 @@ const DOMAIN_SORT: Record<string, number> = {
   "Project Execution": 70,
   "Project Portfolio Management": 80,
   /*
-    The AI vertical's three domains, kept together and after the ERP ones. The
-    ROLE order puts AI first; within a role only its own domains show, so these
-    numbers order the AI branch internally rather than competing with the ERP
-    domains above.
+    The AI catalog's nine domains, in the workbook's own order. Only a role's
+    own domains ever render, so these order each AI branch internally rather
+    than competing with the ERP domains above.
   */
-  "Core Technical & Development": 90,
-  "Creative & Content Generation": 91,
-  "Data Support & Services": 92,
+  "AI Integration & Automation": 90,
+  "Chatbot & Agent Development": 91,
+  "Model Engineering": 92,
+  "Specialized Model Work": 93,
+  "Generative AI Art & Video": 94,
+  "Generative AI Writing": 95,
+  "Data Annotation & Labeling": 96,
+  "Prompt Engineering": 97,
+  "AI Research & Strategy": 98,
 };
 
 /**
