@@ -110,7 +110,15 @@ export function CreateWorkRequest() {
     RESULT outlives the panel: the extracted skills cannot be saved until a role
     and domain exist, so they wait here until the requester reaches step 3.
   */
-  const [importOpen, setImportOpen] = useState(false);
+  /*
+    WHICH DOOR IS OPEN, or null while the three are being offered. "manual" has
+    no panel of its own — choosing it simply dismisses the doors and leaves the
+    requester on the role step, which IS the manual path. It is a distinct state
+    rather than the same `null` so that picking it is a decision the UI records,
+    not an absence of one: the doors stay dismissed for the rest of the session
+    instead of reappearing every time step 1 re-renders.
+  */
+  const [doorsOpen, setDoorsOpen] = useState<"paste" | "manual" | null>(null);
   const [importText, setImportText] = useState("");
   const [importing, setImporting] = useState(false);
   const [pendingSkills, setPendingSkills] = useState<{ id: string; name: string }[]>([]);
@@ -246,7 +254,7 @@ export function CreateWorkRequest() {
       if (fresh) hydrate(fresh);
       setPendingSkills(body.matchedSkills ?? []);
       setOffCatalogSkills(body.unmatchedSkills ?? []);
-      setImportOpen(false);
+      setDoorsOpen("manual");
       setImportText("");
       /*
         STILL STEP 1. The import fills everything downstream of the cascade, but
@@ -319,35 +327,63 @@ export function CreateWorkRequest() {
           {error && <Notice>{error}</Notice>}
 
           {/*
-            THE PORT (WS-B). On step 1 because it is only a shortcut if it is
-            offered before the requester starts typing — halfway through the
-            wizard it is a reason to start over.
+            BRING YOUR JD — three doors, mirroring the provider résumé step.
+
+            The port already worked; what it lacked was a frame. A single dashed
+            "Import a job you posted elsewhere" button above the role list read
+            as an aside, which left "fill it in yourself" as the thing that
+            happens when you ignore the aside. Manual is a legitimate choice and
+            should be stated as one.
+
+            Offered on step 1 only. A shortcut presented halfway through the
+            wizard is not a shortcut, it is a reason to start over.
           */}
-          {!importOpen ? (
-            <button
-              type="button"
-              onClick={() => setImportOpen(true)}
-              className="mb-5 w-full rounded-brand border-[1.5px] border-dashed border-line px-5 py-3.5 text-left transition-colors hover:border-magenta"
-            >
-              <span className="text-[14.5px] font-bold">
-                Import a job you posted elsewhere
-              </span>
-              <span className="mt-0.5 block text-[13.5px] text-ink-2">
-                Paste it from Upwork, LinkedIn or Indeed and we&apos;ll draft this
-                for you.
-              </span>
-            </button>
-          ) : (
+          {doorsOpen === null ? (
+            <div className="mb-6">
+              <p className="mb-1 text-[15px] font-bold">Bring your JD</p>
+              <p className="mb-3 text-[13.5px] leading-relaxed text-ink-2">
+                Already have a job description? Start from it. Otherwise, build
+                the Work Request here.
+              </p>
+              <div className="space-y-3">
+                <JdDoor
+                  title="Paste your JD"
+                  badge="Fastest"
+                  primary
+                  description="Paste it in and we'll draft the Work Request from what it says."
+                  onClick={() => setDoorsOpen("paste")}
+                />
+                <JdDoor
+                  title="Fill it out manually"
+                  description="Answer seven short questions. Takes a few minutes."
+                  onClick={() => setDoorsOpen("manual")}
+                />
+                {/*
+                  ⚠ NOT BUILT, AND NOT CLICKABLE. Inbound email needs a
+                  tokenized intake address and sender verification — its own
+                  brief. A door that opened onto nothing would be worse than one
+                  that says it is not ready, so this one is disabled rather than
+                  wired to a placeholder page.
+                */}
+                <JdDoor
+                  title="Email your JD"
+                  badge="Coming soon"
+                  disabled
+                  description="Forward a JD to Panameer and we'll draft it for you."
+                />
+              </div>
+            </div>
+          ) : doorsOpen === "paste" ? (
             <div className="mb-5 rounded-brand border border-line bg-bg-soft p-5">
-              <p className="text-[14.5px] font-bold">Paste your job posting here</p>
+              <p className="text-[14.5px] font-bold">Paste your JD</p>
               <p className="mt-0.5 text-[13.5px] leading-relaxed text-ink-2">
-                We&apos;ll fill in what the posting actually says and leave the rest
+                We&apos;ll fill in what the JD actually says and leave the rest
                 blank for you. Nothing is posted — you&apos;ll review it first.
               </p>
               <TextArea
                 value={importText}
                 onChange={(e) => setImportText(e.target.value)}
-                placeholder="Paste the full posting…"
+                placeholder="Paste the full job description…"
                 className="mt-3 min-h-[160px] bg-white"
                 disabled={importing}
               />
@@ -366,21 +402,22 @@ export function CreateWorkRequest() {
                   <button
                     type="button"
                     onClick={() => {
-                      setImportOpen(false);
+                      setDoorsOpen(null);
                       setImportText("");
                     }}
                     className="text-[14px] font-semibold text-ink-2 underline underline-offset-4 hover:text-magenta"
                   >
-                    Cancel
+                    Back to the three ways in
                   </button>
-                  {/* v2, and named so nobody wonders why pasting is the only way. */}
+                  {/* v2, named so nobody wonders why pasting is the only way. */}
                   <span className="text-[12.5px] text-ink-2">
-                    Pasting only for now — those sites need a login to read a posting.
+                    Pasting only for now — Upwork, LinkedIn and Indeed all need a
+                    login to read a JD from a link.
                   </span>
                 </div>
               )}
             </div>
-          )}
+          ) : null}
 
           <div className="space-y-3">
             {roles.map((r) => (
@@ -914,4 +951,78 @@ export function CreateWorkRequest() {
         />
       );
   }
+}
+
+/**
+ * One of the three ways in.
+ *
+ * Same shape as the provider journey's method cards, deliberately: a requester
+ * who has already onboarded as a provider has seen this exact chooser, and two
+ * different-looking answers to "how do you want to start?" is two things to
+ * learn instead of one.
+ *
+ * `disabled` renders the door as a static div rather than a dead <button>. A
+ * disabled button still draws a pointer on some platforms and still reads as
+ * "control" to a screen reader; a card that is plainly not a control is a
+ * clearer statement that this one is not ready yet.
+ */
+function JdDoor({
+  title,
+  description,
+  onClick,
+  primary = false,
+  badge,
+  disabled = false,
+}: {
+  title: string;
+  description: string;
+  onClick?: () => void;
+  primary?: boolean;
+  badge?: string;
+  disabled?: boolean;
+}) {
+  const inner = (
+    <>
+      <span className="flex items-center gap-2">
+        <span className="text-[15px] font-bold">{title}</span>
+        {badge && (
+          <span
+            className={
+              "rounded-full px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wide " +
+              (disabled ? "bg-bg-soft text-ink-2" : "bg-magenta text-white")
+            }
+          >
+            {badge}
+          </span>
+        )}
+      </span>
+      <span className="mt-0.5 block text-[13.5px] leading-relaxed text-ink-2">
+        {description}
+      </span>
+    </>
+  );
+
+  if (disabled) {
+    return (
+      <div
+        aria-disabled="true"
+        className="w-full cursor-default rounded-brand border-2 border-dashed border-line p-5 text-left opacity-60"
+      >
+        {inner}
+      </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={
+        "w-full rounded-brand border-2 p-5 text-left transition-all hover:border-magenta hover:shadow-brand " +
+        (primary ? "border-magenta bg-magenta/[0.04] shadow-brand" : "border-line")
+      }
+    >
+      {inner}
+    </button>
+  );
 }
