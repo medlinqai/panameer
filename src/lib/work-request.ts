@@ -1,5 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { scopedToPAccount, withPAccount, type Viewer } from "@/lib/access";
+import { sendEmail } from "@/lib/resend";
+import { appBaseUrl } from "@/lib/verification";
+import { workRequestPostedTemplate } from "@/lib/email/templates/work-request-posted";
 
 /**
  * Work Requests (brief_L) — a Service Buyer creates, saves-as-you-go, and posts.
@@ -447,5 +450,54 @@ export async function postWorkRequest(viewer: Viewer, id: string) {
     where: { id: wr.id },
     data: { status: "POSTED", posted_at: new Date() },
   });
+
+  await sendPostedConfirmation(wr.id, wr.buyer_person_id, wr.title);
+
   return getWorkRequest(viewer, id);
+}
+
+/**
+ * The "your Work Request is live" confirmation
+ * (brief_transactional_email_suite WS-B).
+ *
+ * NEVER THROWS. The request IS posted by the time this runs — the write above
+ * already committed — so a Resend outage must not surface as "could not post"
+ * and send the requester back to a wizard for work that is already done. It
+ * logs and returns.
+ *
+ * Skipped entirely when RESEND_API_KEY is unset, which is every local
+ * environment: `sendEmail` constructs its client lazily and throws without a
+ * key, and posting a Work Request on a dev machine should not depend on having
+ * one.
+ */
+async function sendPostedConfirmation(
+  workRequestId: string,
+  buyerPersonId: string,
+  title: string
+): Promise<void> {
+  if (!process.env.RESEND_API_KEY) return;
+  try {
+    const person = await prisma.person.findUnique({
+      where: { id: buyerPersonId },
+      select: {
+        first_name: true,
+        company: { select: { name: true } },
+        user: { select: { email: true } },
+      },
+    });
+    const to = person?.user?.email;
+    if (!to) return;
+
+    const base = appBaseUrl();
+    const { subject, html, text } = workRequestPostedTemplate({
+      firstName: person.first_name,
+      workRequestTitle: title,
+      requesterCompany: person.company?.name ?? "your company",
+      viewUrl: `${base}/work-requests/${workRequestId}/share`,
+      logoUrl: `${base}/brand/panameer-new-on-light.png`,
+    });
+    await sendEmail({ to, subject, html, text });
+  } catch (e) {
+    console.error("[work-request] posted confirmation failed to send:", e);
+  }
 }
