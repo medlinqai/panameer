@@ -163,18 +163,18 @@
         {
           "name": "Core Technical & Development",
           "skills": [
-            "Connect APIs to Enterprise Apps",
-            "N8N Workflows",
-            "Zapier Workflows",
+            "Connect to Enterprise Apps",
+            "N8N Workflow",
+            "Zapier Workflow",
             "AI Chatbot Development",
             "AI Agent Developer",
             "AI Automation Developer",
-            "Machine Learning Engineers",
-            "Deep Learning Engineers",
-            "Computer Vision Engineers",
-            "GPT-3/4 Specialists",
-            "OpenAI Codex Specialists",
-            "LLM Developers"
+            "Machine Learning Engineer",
+            "Deep Learning Engineer",
+            "Computer Vision Engineer",
+            "GPT-3/4 Specialist",
+            "OpenAI Codex Specialist",
+            "LLM Developer"
           ]
         },
         {
@@ -182,21 +182,21 @@
           "skills": [
             "AI Art Creator",
             "AI Video Generation and Editing",
-            "Midjourney Artists",
-            "Generative AI Writing",
-            "AI Writers",
-            "Prompt Engineers"
+            "Midjourney Artist",
+            "Generative AI Writer",
+            "AI Writer",
+            "Prompt Engineer"
           ]
         },
         {
           "name": "Data Support & Services",
           "skills": [
             "AI Data Annotation & Labeling",
-            "Data Annotators",
+            "Data Annotator",
             "Prompt Engineer",
             "AI Research Scientist",
             "AI Product Manager",
-            "AI Consultants"
+            "AI Consultant"
           ]
         }
       ]
