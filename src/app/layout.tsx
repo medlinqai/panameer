@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Comfortaa, Montserrat } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
+import { DevBanner } from "@/components/DevBanner";
 import { THEME_BOOT_SCRIPT } from "@/lib/theme";
 import { SEO_DESCRIPTION, SEO_TITLE } from "@/lib/brand";
 
@@ -81,6 +82,17 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
       </head>
       <body className="min-h-full flex flex-col">
+        {/*
+          ABOVE THE PROVIDERS, AND ABOVE BOTH SHELLS.
+
+          The root layout is the only mount point that covers pre-auth AND
+          authenticated pages, which is what "sitewide" has to mean here — the
+          marketing surface and the console have separate chrome and no other
+          common ancestor. Outside <Providers> because the banner needs neither
+          a session nor a theme context, and a component that renders before
+          them cannot be broken by them.
+        */}
+        <DevBanner />
         <Providers>{children}</Providers>
       </body>
     </html>
