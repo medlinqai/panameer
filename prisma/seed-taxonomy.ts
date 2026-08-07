@@ -10,14 +10,28 @@ import * as path from "path";
  * Shape is three levels: **Role → Domain → Skill**, plus a cross-cutting
  * **Specializations** vocabulary. Mapped onto the existing models as:
  *
- *   Role   → `RoleType`        (4: Application- / Project- / Technology- /
- *                               Operations-Specific)
- *   Domain → `Pillar`          (8 distinct names, shared across roles)
+ *   Role   → `RoleType`        (5: Application- / Technology- / Project- /
+ *                               Operations-Specific, then AI-Specialist)
+ *   Domain → `Pillar`          (28, unique names)
  *   Skill  → `Skill(role_type_id, pillar_id)` — a skill belongs to the PAIR
  *
  * Everything here is REFERENCE data — global, not PAccount-scoped. Fully
  * idempotent: every write is an upsert keyed on a natural unique, and the
  * retirement pass below is safe to re-run.
+ *
+ * ⚠ THIS SEED CAN TAKE THINGS AWAY (brief_reseed_expanded_catalog, 2026-08-07).
+ * The expanded catalog restructures the enterprise side rather than adding to
+ * it, so the retirement pass is no longer a formality that cleans up strays from
+ * an older seed — it is the mechanism by which a provider loses a skill. Four
+ * passes stand between a catalog edit and that outcome, in this order:
+ *
+ *   1. RENAME    — a row respelled in place keeps its id and its providers.
+ *   2. REHOME    — same role, same name, new domain: move the row, don't recreate it.
+ *   3. MERGE     — two old rows collapsing into one: re-point the links.
+ *   4. GUARD     — count what is still going to be lost, and refuse past a limit.
+ *
+ * Whatever survives all four is genuinely gone from the catalog, and the counts
+ * returned below say exactly what it cost.
  *
  * SUPERSEDES the brief_B/brief_P ERP taxonomy that was seeded from
  * `erp-catalog.json`. That file is left in place as history; nothing reads it.
@@ -29,11 +43,13 @@ type CatalogJson = {
   roles: {
     name: string;
     /**
-     * OPTIONAL, and only set where the derivation below is wrong (E-brief
-     * seed_ai_catalog). Four enterprise roles are named "X-Specific" and
-     * display as "X"; "AI-Specialist" does not end in "-Specific", so stripping
-     * that suffix leaves it unchanged and the catalog needs to say what it
-     * should read as.
+     * The picker label (E229). Now carried by EVERY role in the expanded
+     * catalog — "Application-Specific Roles", "AI-Specialist Roles" — so the
+     * five read as one convention instead of four bare nouns and one outlier.
+     *
+     * Still optional, and the fallback below still appends " Roles", so a role
+     * added to the JSON without one is labelled sensibly rather than silently
+     * differently. An explicit `display` always wins.
      */
     display?: string;
     domains: { name: string; skills: string[] }[];
@@ -51,10 +67,35 @@ export type TaxonomyCounts = {
   applications: number;
   /** Non-role entries filtered out of the source catalog (E072). */
   excludedRoleTypes: number;
+
+  /* --- what the reseed found already there ------------------------------- */
+  before: { roles: number; domains: number; skills: number; customSkills: number };
+
+  /* --- what it MOVED rather than replaced -------------------------------- */
+  /** Domain rows relabelled in place, keeping their id and their providers. */
+  renamedDomains: string[];
+  /** Skill rows relabelled in place — spelling only. */
+  renamedSkills: string[];
+  /** Skills that kept their name and role but changed domain. Links preserved. */
+  rehomedSkills: number;
+  /** Links re-pointed off a retiring row onto a surviving one of the same name. */
+  mergedSkillLinks: number;
+
+  /* --- what it retired --------------------------------------------------- */
   retiredSkills: number;
+  retiredSkillNames: string[];
   retiredPillars: number;
+  retiredPillarNames: string[];
   retiredRoleTypes: number;
+
+  /* --- what that cost ---------------------------------------------------- */
   orphanedProviderSkills: number;
+  orphanedWorkRequestSkills: number;
+  /** "Role :: Skill — n link(s)", so a loss is readable and not just counted. */
+  orphanedSkillDetail: string[];
+  /** Providers whose chosen DOMAIN split and no longer exists (pillar_id → null). */
+  providersDetachedFromDomain: number;
+  workRequestsDetachedFromDomain: number;
 };
 
 /** The single catalog row everything hangs off. */
@@ -115,41 +156,126 @@ function toCode(name: string): string {
  * prominent). Anything unlisted falls to the default and sorts by name.
  */
 /*
-  FIVE ROLES, AI FIRST — the CWR deck's step 1, which is the spec for this list.
+  FIVE ROLES, ERP FIRST — E228 resolved (brief_reseed_expanded_catalog).
 
-  The workbook's AI tab carries three roles of its own; the deck does not use
-  them as roles. Its step 2 shows them as the three DOMAINS under a single
-  "AI-Specialist Roles" entry, and each of those domain cards is described by
-  the workbook's own domains ("AI Integration & Automation, Chatbot & Agent
-  Dev, …"). So the workbook's middle level is display copy in this product, not
-  a level of the taxonomy — and the AI vertical is one role, as the deck shows.
+  This list was briefly AI-first, on the reading that the CWR deck's step 1 leads
+  with AI. That contradicted E013, which pinned the ERP core first, and BOTH
+  pickers — provider onboarding and Create Work Request — read this one order, so
+  the two moved together and one of them was always wrong. Application-Specific
+  leads; AI-Specialist, which is the newest and narrowest of the five, is last.
+
+  The order matches the JSON's own role order, so the file reads the way the
+  picker renders.
 */
 const ROLE_SORT: Record<string, number> = {
-  "AI-Specialist": 5,
   "Application-Specific": 10,
   "Technology-Specific": 20,
   "Project-Specific": 30,
   "Operations-Specific": 40,
+  "AI-Specialist": 50,
 };
 
+/*
+  THE 28 DOMAINS OF THE EXPANDED CATALOG, in the delivered file's order.
+
+  Domain names are now unique across roles — the old catalog reused "Finance &
+  Accounting" and "Supply Chain Management" under two roles apiece — so one flat
+  table orders every branch without the roles competing. Only a role's own
+  domains ever render, so the numbering is contiguous rather than banded.
+*/
 const DOMAIN_SORT: Record<string, number> = {
-  "Finance & Accounting": 10, // the ERP core — first, always
-  "Supply Chain Management": 20,
-  "Human Resources & Training": 30,
-  "Enterprise Performance Mgt": 40,
-  "Customer Relationship Management": 50,
-  "Development & IT": 60,
-  "Project Execution": 70,
-  "Project Portfolio Management": 80,
-  /*
-    The AI role's three domains, in the deck's order. Only a role's own domains
-    ever render, so these order the AI branch internally rather than competing
-    with the ERP domains above.
-  */
-  "Core Technical & Development": 90,
-  "Creative & Content Generation": 91,
-  "Data Support & Services": 92,
+  // Application-Specific — the ERP core leads, in process order.
+  "Financials (Record-to-Report)": 10,
+  "Procurement (Source-to-Pay)": 11,
+  "Project Management": 12,
+  "Supply Chain Management": 13,
+  "Human Capital Management": 14,
+  "Customer Experience": 15,
+  "Enterprise Performance Management": 16,
+  "Risk & Compliance": 17,
+  // Technology-Specific
+  "Extensions & Development": 20,
+  Integrations: 21,
+  "Data & Conversion": 22,
+  "Reporting & Analytics": 23,
+  "Security & Administration": 24,
+  "Quality & Testing": 25,
+  // Project-Specific
+  "Delivery Leadership": 30,
+  "Architecture & Design": 31,
+  "Testing & Support": 32,
+  "Change & Enablement": 33,
+  // Operations-Specific
+  "Finance Operations": 40,
+  "Procurement Operations": 41,
+  "Supply Chain Operations": 42,
+  "HR Operations": 43,
+  "Project Operations": 44,
+  // AI-Specialist
+  "Core Technical & Development": 50,
+  "Creative & Content Generation": 51,
+  "Data Support & Services": 52,
+  "AI Governance & Trust": 53,
+  "AI Consulting & Enablement": 54,
 };
+
+/**
+ * DOMAINS THAT WERE RENAMED, NOT REPLACED (brief_reseed_expanded_catalog).
+ *
+ * The expanded catalog restructures the enterprise side, and most of that is
+ * genuine structural change: "Finance & Accounting" SPLITS into Financials /
+ * Procurement / Project Management, "Development & IT" splits into six. A split
+ * cannot be migrated — there is no single successor to point a provider at — so
+ * those domains retire and the providers who picked them re-pick.
+ *
+ * These three are different: same domain, new label. Renaming the row keeps its
+ * id, so a provider who chose "Human Resources & Training" is still in Human
+ * Capital Management afterwards. Upserting the new name instead would create a
+ * second row and retire the first out from under them — the same trap the
+ * specialization renames below already document.
+ */
+const DOMAIN_RENAMES: Record<string, string> = {
+  "Human Resources & Training": "Human Capital Management",
+  "Customer Relationship Management": "Customer Experience",
+  "Enterprise Performance Mgt": "Enterprise Performance Management",
+};
+
+/**
+ * SKILLS THAT WERE RESPELLED, NOT REPLACED.
+ *
+ * Strictly spelling: spacing, punctuation, an expanded abbreviation, a plural.
+ * Same words, same meaning, same role — so the row is renamed and every provider
+ * who picked it keeps it, rather than losing a selection to a typographic edit.
+ *
+ * DELIBERATELY NOT HERE: anything where the new catalog changed the *words*.
+ * "Supplier Qualifications" → "Supplier Qualification Management", "Prompt
+ * Engineer" → "Prompt Engineering", "AI Data Annotation & Labeling" → "Data
+ * Annotation & Labeling" and "Project Manager" → "Project Manager (PPM)" all
+ * look like the same skill and probably are, but each is a judgement about what
+ * the catalog MEANS, and that is Scott's call to add here — not the seeder's to
+ * assume. They retire, and the report names them.
+ */
+const SKILL_RENAMES: Record<string, string> = {
+  "Purchasing/Purchase Orders": "Purchasing / Purchase Orders",
+  "Sourcing/Negotiations": "Sourcing / Negotiations",
+  "Absence Mgt": "Absence Management",
+  "Warehouse Mgt": "Warehouse Management",
+  "PL SQL Specialist": "PL/SQL Specialist",
+  "Grant Management": "Grants Management",
+};
+
+/**
+ * How many provider/Work-Request selections may be dropped before the reseed
+ * refuses to run (brief_reseed_expanded_catalog).
+ *
+ * A structural reseed is allowed to retire rows — that is what it is for — but
+ * "retire a domain" and "silently delete two hundred people's skills" look
+ * identical from inside this function. The guard runs AFTER the rehome and merge
+ * passes have saved everything that can be saved, so the number it tests is the
+ * true, irreducible loss. Raise it deliberately with CATALOG_ORPHAN_LIMIT once
+ * the report has been read.
+ */
+const ORPHAN_LIMIT = Number(process.env.CATALOG_ORPHAN_LIMIT ?? 50);
 
 /**
  * Specialization grouping. The xlsx is a flat list; these buckets drive the
@@ -244,6 +370,16 @@ export async function seedTaxonomy(
   };
   const excludedRoleTypes = raw.roles.length - data.roles.length;
 
+  // Read BEFORE anything is written, so the report can state before→after rather
+  // than after→after. A structural reseed is exactly the case where "it ran" is
+  // not the same information as "here is what it changed".
+  const before = {
+    roles: await prisma.roleType.count(),
+    domains: await prisma.pillar.count(),
+    skills: await prisma.skill.count({ where: { is_custom: false } }),
+    customSkills: await prisma.skill.count({ where: { is_custom: true } }),
+  };
+
   // --- Catalog -------------------------------------------------------------
   const catalog = await prisma.serviceCatalog.upsert({
     where: { code: CATALOG.code },
@@ -280,6 +416,35 @@ export async function seedTaxonomy(
     roleIdByName.set(role.name, row.id);
   }
 
+  // --- Domain renames, BEFORE the upsert -----------------------------------
+  /*
+    Same ordering rule as the specializations further down, for the same reason:
+    rename first and the row keeps its id and its providers; upsert first and you
+    get two rows, one of which is then retired with people attached to it.
+
+    The `code` moves with the name — it is derived from it, and leaving
+    HUMAN_RESOURCES_TRAINING on a row labelled "Human Capital Management" would
+    make the next reseed create a second row for the new code.
+  */
+  const renamedDomains: string[] = [];
+  for (const [from, to] of Object.entries(DOMAIN_RENAMES)) {
+    const existing = await prisma.pillar.findFirst({
+      where: { catalog_id: catalog.id, name: from },
+      select: { id: true },
+    });
+    if (!existing) continue; // already renamed on an earlier run
+    const clash = await prisma.pillar.findFirst({
+      where: { catalog_id: catalog.id, code: toCode(to) },
+      select: { id: true },
+    });
+    if (clash && clash.id !== existing.id) continue;
+    await prisma.pillar.update({
+      where: { id: existing.id },
+      data: { name: to, code: toCode(to) },
+    });
+    renamedDomains.push(`${from} → ${to}`);
+  }
+
   // --- Domains (Pillar) — distinct names, shared across roles ---------------
   const domainNames = [
     ...new Set(data.roles.flatMap((r) => r.domains.map((d) => d.name))),
@@ -300,11 +465,43 @@ export async function seedTaxonomy(
     domainIdByName.set(name, row.id);
   }
 
+  // --- Skill renames, BEFORE the upsert ------------------------------------
+  // Spelling only (see SKILL_RENAMES). Renaming in place keeps the row id, so
+  // the rehome pass below then treats it as an existing skill that moved domain
+  // rather than as one name retiring and a near-identical one appearing.
+  const renamedSkills: string[] = [];
+  for (const [from, to] of Object.entries(SKILL_RENAMES)) {
+    const rows = await prisma.skill.findMany({
+      where: { catalog_id: catalog.id, name: from, is_custom: false },
+      select: { id: true, role_type_id: true, pillar_id: true },
+    });
+    for (const row of rows) {
+      const clash = await prisma.skill.findFirst({
+        where: {
+          catalog_id: catalog.id,
+          role_type_id: row.role_type_id,
+          pillar_id: row.pillar_id,
+          name: to,
+        },
+        select: { id: true },
+      });
+      // The new name is already sitting in this exact slot — renaming would hit
+      // the (catalog, role, domain, name) unique. Leave it; the merge pass will
+      // fold this row's links into that one.
+      if (clash && clash.id !== row.id) continue;
+      await prisma.skill.update({ where: { id: row.id }, data: { name: to } });
+      renamedSkills.push(`${from} → ${to}`);
+    }
+  }
+
   // --- Skills, keyed on the (Role, Domain, name) triple ---------------------
   // "Project Manager" exists under two different (role, domain) pairs, so the
   // name alone is NOT a key — see the note on Skill's @@unique in schema.prisma.
   const keptSkillIds = new Set<string>();
+  /** roleTypeId||name → the surviving skill id, for the merge pass below. */
+  const keptByRoleAndName = new Map<string, string>();
   let skillCount = 0;
+  let rehomedSkills = 0;
 
   for (const role of data.roles) {
     const roleTypeId = roleIdByName.get(role.name)!;
@@ -312,7 +509,9 @@ export async function seedTaxonomy(
       const pillarId = domainIdByName.get(domain.name)!;
       for (const rawName of domain.skills) {
         const name = fixTypo(rawName);
-        const row = await prisma.skill.upsert({
+
+        let id: string | null = null;
+        const exact = await prisma.skill.findUnique({
           where: {
             catalog_id_role_type_id_pillar_id_name: {
               catalog_id: catalog.id,
@@ -321,15 +520,63 @@ export async function seedTaxonomy(
               name,
             },
           },
-          update: {},
-          create: {
-            catalog_id: catalog.id,
-            role_type_id: roleTypeId,
-            pillar_id: pillarId,
-            name,
-          },
+          select: { id: true },
         });
-        keptSkillIds.add(row.id);
+
+        if (exact) {
+          id = exact.id;
+        } else {
+          /*
+            REHOME BEFORE CREATE — the whole point of this reseed's migration
+            note. The expanded catalog moves 57 skills to a different domain
+            under the SAME role: "Payables" leaves "Finance & Accounting" for
+            "Financials (Record-to-Report)", "Requisitions" for "Procurement
+            (Source-to-Pay)". A plain upsert on the triple treats each of those
+            as a brand-new skill, and the retirement pass then deletes the old
+            row — taking every provider who had picked it.
+
+            Matching on (role, name) and MOVING the row keeps the id, so the
+            selection survives a change that, from the provider's side, is
+            nothing more than the catalog reorganising its own headings.
+
+            Same ROLE only. "Project Manager" retires from Operations-Specific
+            and exists under Project-Specific; moving the row across would leave
+            an Operations provider holding a skill that no longer renders inside
+            their own role, which is a worse outcome than losing it cleanly.
+          */
+          const moved = await prisma.skill.findFirst({
+            where: {
+              catalog_id: catalog.id,
+              role_type_id: roleTypeId,
+              name,
+              is_custom: false,
+              NOT: { pillar_id: pillarId },
+            },
+            select: { id: true },
+          });
+          if (moved) {
+            await prisma.skill.update({
+              where: { id: moved.id },
+              data: { pillar_id: pillarId },
+            });
+            id = moved.id;
+            rehomedSkills++;
+          } else {
+            const created = await prisma.skill.create({
+              data: {
+                catalog_id: catalog.id,
+                role_type_id: roleTypeId,
+                pillar_id: pillarId,
+                name,
+              },
+              select: { id: true },
+            });
+            id = created.id;
+          }
+        }
+
+        keptSkillIds.add(id);
+        keptByRoleAndName.set(`${roleTypeId}||${name}`, id);
         skillCount++;
       }
     }
@@ -442,21 +689,138 @@ export async function seedTaxonomy(
       // never in the JSON and re-seeding must not delete a provider's data.
       is_custom: false,
     },
-    select: { id: true },
+    select: { id: true, name: true, role_type_id: true },
   });
   const staleSkillIds = staleSkills.map((s) => s.id);
 
-  let orphanedProviderSkills = 0;
-  if (staleSkillIds.length > 0) {
-    orphanedProviderSkills = (
-      await prisma.providerSkill.deleteMany({
+  /*
+    MERGE WHAT CAN BE MERGED, before counting anything as lost.
+
+    A stale row whose (role, name) is ALSO the name of a surviving row is a
+    duplicate, not a retirement — the old catalog listed "Prompt Engineer" under
+    two AI domains, so the rehome pass could only move one of them and the other
+    is left over. Re-point its links at the survivor instead of deleting them.
+    The (profile, skill) and (request, skill) uniques mean a provider who held
+    both copies has to end up with one link, not two.
+  */
+  let mergedSkillLinks = 0;
+  for (const stale of staleSkills) {
+    const target = keptByRoleAndName.get(`${stale.role_type_id}||${stale.name}`);
+    if (!target) continue;
+
+    const psLinks = await prisma.providerSkill.findMany({
+      where: { skill_id: stale.id },
+      select: { id: true, provider_profile_id: true },
+    });
+    for (const link of psLinks) {
+      const already = await prisma.providerSkill.findFirst({
+        where: { provider_profile_id: link.provider_profile_id, skill_id: target },
+        select: { id: true },
+      });
+      if (already) {
+        await prisma.providerSkill.delete({ where: { id: link.id } });
+      } else {
+        await prisma.providerSkill.update({
+          where: { id: link.id },
+          data: { skill_id: target },
+        });
+        mergedSkillLinks++;
+      }
+    }
+
+    const wrLinks = await prisma.workRequestSkill.findMany({
+      where: { skill_id: stale.id },
+      select: { id: true, work_request_id: true },
+    });
+    for (const link of wrLinks) {
+      const already = await prisma.workRequestSkill.findFirst({
+        where: { work_request_id: link.work_request_id, skill_id: target },
+        select: { id: true },
+      });
+      if (already) {
+        await prisma.workRequestSkill.delete({ where: { id: link.id } });
+      } else {
+        await prisma.workRequestSkill.update({
+          where: { id: link.id },
+          data: { skill_id: target },
+        });
+        mergedSkillLinks++;
+      }
+    }
+  }
+
+  /*
+    COUNT THE LOSS, THEN DECIDE WHETHER TO TAKE IT.
+
+    Everything salvageable has now been salvaged — renamed, rehomed or merged —
+    so whatever links remain on a stale row are genuinely losing their skill. The
+    guard runs here, before the first delete: a reseed that would wipe more than
+    ORPHAN_LIMIT selections stops and says what it was about to do rather than
+    doing it and reporting the number afterwards.
+  */
+  const doomedProviderLinks = staleSkillIds.length
+    ? await prisma.providerSkill.findMany({
         where: { skill_id: { in: staleSkillIds } },
+        select: {
+          skill: { select: { name: true, roleType: { select: { name: true } } } },
+          providerProfile: {
+            select: { person: { select: { user: { select: { email: true } } } } },
+          },
+        },
       })
-    ).count;
+    : [];
+  const orphanedWorkRequestSkills = staleSkillIds.length
+    ? await prisma.workRequestSkill.count({ where: { skill_id: { in: staleSkillIds } } })
+    : 0;
+  const orphanedProviderSkills = doomedProviderLinks.length;
+
+  const byLostSkill = new Map<string, number>();
+  for (const l of doomedProviderLinks) {
+    const key = `${l.skill.roleType?.name ?? "(no role)"} :: ${l.skill.name}`;
+    byLostSkill.set(key, (byLostSkill.get(key) ?? 0) + 1);
+  }
+  const orphanedSkillDetail = [...byLostSkill.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([k, n]) => `${k} — ${n} provider link(s)`);
+
+  const totalOrphans = orphanedProviderSkills + orphanedWorkRequestSkills;
+  if (totalOrphans > ORPHAN_LIMIT) {
+    const owners = [
+      ...new Set(
+        doomedProviderLinks.map((l) => l.providerProfile.person.user?.email ?? "(no login)")
+      ),
+    ].sort();
+    throw new Error(
+      [
+        `Catalog reseed STOPPED — it would drop ${totalOrphans} selection(s), over the ` +
+          `limit of ${ORPHAN_LIMIT}.`,
+        "",
+        `  provider-skill links:      ${orphanedProviderSkills}`,
+        `  work-request-skill links:  ${orphanedWorkRequestSkills}`,
+        "",
+        "Skills about to lose their links:",
+        ...orphanedSkillDetail.map((d) => `  ${d}`),
+        "",
+        `Accounts affected (${owners.length}):`,
+        ...owners.map((o) => `  ${o}`),
+        "",
+        "Nothing has been deleted. The renames and domain moves above ARE applied and",
+        "are safe to leave — re-running is idempotent. Either add the missing entries to",
+        "SKILL_RENAMES / DOMAIN_RENAMES so the selections survive, or accept the loss by",
+        `re-running with CATALOG_ORPHAN_LIMIT=${totalOrphans}.`,
+      ].join("\n")
+    );
+  }
+
+  if (staleSkillIds.length > 0) {
+    await prisma.providerSkill.deleteMany({
+      where: { skill_id: { in: staleSkillIds } },
+    });
     await prisma.workRequestSkill.deleteMany({
       where: { skill_id: { in: staleSkillIds } },
     });
   }
+  const retiredSkillNames = staleSkills.map((s) => s.name).sort();
   const retiredSkills = (
     await prisma.skill.deleteMany({ where: { id: { in: staleSkillIds } } })
   ).count;
@@ -465,6 +829,31 @@ export async function seedTaxonomy(
   await prisma.skillTag.deleteMany({});
 
   const keptPillarIds = [...domainIdByName.values()];
+  /*
+    A retiring DOMAIN detaches more than its skills. ProviderProfile.pillar_id and
+    WorkRequest.pillar_id are both onDelete: SetNull, so the delete below silently
+    blanks "the domain I work in" on everyone who picked one of the split domains.
+    Counted here, while the rows still point somewhere, because after the delete
+    there is nothing left to count — a null is indistinguishable from never having
+    chosen.
+
+    NOT guarded by ORPHAN_LIMIT, and deliberately: a split domain has no successor
+    to migrate to, so this loss is the reseed's whole purpose rather than an
+    accident it should refuse. It is reported loudly instead.
+  */
+  const doomedPillars = await prisma.pillar.findMany({
+    where: { id: { notIn: keptPillarIds } },
+    select: { id: true, name: true },
+  });
+  const doomedPillarIds = doomedPillars.map((p) => p.id);
+  const retiredPillarNames = doomedPillars.map((p) => p.name).sort();
+  const providersDetachedFromDomain = doomedPillarIds.length
+    ? await prisma.providerProfile.count({ where: { pillar_id: { in: doomedPillarIds } } })
+    : 0;
+  const workRequestsDetachedFromDomain = doomedPillarIds.length
+    ? await prisma.workRequest.count({ where: { pillar_id: { in: doomedPillarIds } } })
+    : 0;
+
   // Offerings/Applications hang off pillars and cascade with them.
   const retiredPillars = (
     await prisma.pillar.deleteMany({ where: { id: { notIn: keptPillarIds } } })
@@ -576,9 +965,20 @@ export async function seedTaxonomy(
     engagementTypes: legacy.engagementTypes.length,
     applications: applicationCount,
     excludedRoleTypes,
+    before,
+    renamedDomains,
+    renamedSkills,
+    rehomedSkills,
+    mergedSkillLinks,
     retiredSkills,
+    retiredSkillNames,
     retiredPillars,
+    retiredPillarNames,
     retiredRoleTypes,
     orphanedProviderSkills,
+    orphanedWorkRequestSkills,
+    orphanedSkillDetail,
+    providersDetachedFromDomain,
+    workRequestsDetachedFromDomain,
   };
 }

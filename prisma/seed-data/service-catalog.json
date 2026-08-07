@@ -1,157 +1,279 @@
 {
-  "_source": "4. Project Documents/2. Design/4. Service Catalog/Service Catalog.xlsx (Panameer Service Catalog V1)",
-  "_note": "Authoritative provider taxonomy: Role -> Domain -> Skill, plus a cross-cutting multi-select Specializations vocabulary. Two source tabs: the enterprise-systems catalog and the AI-automation catalog (Service Catalog V4.xlsx -> 'The AI Services Catalog'), each carrying its own roles at the same level.",
+  "_source": "4. Project Documents/2. Design/04. Service Catalog/service-catalog-roles-expanded.json (roles) + Service Catalog.xlsx (specializations) — Panameer Service Catalog V1",
+  "_note": "Authoritative provider taxonomy: Role -> Domain -> Skill, plus a cross-cutting multi-select Specializations vocabulary. The roles[] below are the EXPANDED catalog (brief_reseed_expanded_catalog, 2026-08-07): 5 roles / 28 domains / 157 skills, copied byte-for-byte from the delivered design file. Every role carries an explicit `display` (E229) so the picker reads the full 'X-Specific Roles' name. Roles are in the order the picker shows them: Application-Specific first (ERP leads, E013/E228), AI-Specialist last. specializations[] is unchanged and still comes from the xlsx.",
   "roles": [
     {
       "name": "Application-Specific",
+      "display": "Application-Specific Roles",
       "domains": [
         {
-          "name": "Finance & Accounting",
+          "name": "Financials (Record-to-Report)",
           "skills": [
-            "Procurement",
-            "Requisitions",
-            "Purchasing/Purchase Orders",
-            "My Receipts",
-            "Supplier Qualifications",
-            "Supplier Portal",
-            "Purchase Agreements",
-            "Sourcing/Negotiations",
-            "Procurement Contracts",
-            "Oracle Business Network",
-            "Projects",
-            "Project Financial Management",
-            "Grant Management",
-            "Payables",
             "General Ledger",
-            "Revenue",
-            "Collections",
-            "Fixed Assets",
+            "Payables",
             "Receivables",
             "Cash Management",
+            "Fixed Assets",
             "Expense Management",
-            "Acounting Hub"
+            "Revenue Management",
+            "Collections",
+            "Accounting Hub",
+            "Subledger Accounting",
+            "Intercompany",
+            "Lease Accounting",
+            "Joint Venture Management"
           ]
         },
         {
-          "name": "Human Resources & Training",
+          "name": "Procurement (Source-to-Pay)",
           "skills": [
-            "Recruiting",
-            "Talent",
-            "Benefits",
-            "Compensation",
-            "Core HR",
-            "Payroll",
-            "Time & Labor",
-            "Absence Mgt",
-            "Learning"
+            "Self-Service Procurement",
+            "Requisitions",
+            "Purchasing / Purchase Orders",
+            "Purchase Agreements",
+            "My Receipts",
+            "Supplier Portal",
+            "Supplier Qualification Management",
+            "Sourcing / Negotiations",
+            "Procurement Contracts",
+            "Oracle Business Network",
+            "Supplier Management",
+            "Spend Classification"
+          ]
+        },
+        {
+          "name": "Project Management",
+          "skills": [
+            "Project Foundation",
+            "Projects",
+            "Project Financial Management",
+            "Project Costing",
+            "Project Billing",
+            "Grants Management",
+            "Project Resource Management",
+            "Project Portfolio Management"
           ]
         },
         {
           "name": "Supply Chain Management",
           "skills": [
             "Inventory Management",
-            "Item Costing",
-            "Warehouse Mgt",
+            "Cost Management",
+            "Warehouse Management",
             "Manufacturing",
             "Order Management",
-            "Supply Chain Planning"
+            "Supply Chain Planning",
+            "Logistics & Transportation",
+            "Maintenance",
+            "Product Lifecycle Management",
+            "Product / Item Management"
           ]
         },
         {
-          "name": "Customer Relationship Management",
+          "name": "Human Capital Management",
           "skills": [
-            "Field Sales",
+            "Core HR",
+            "Payroll",
+            "Benefits",
+            "Compensation",
+            "Talent Management",
+            "Recruiting",
+            "Time & Labor",
+            "Absence Management",
+            "Learning",
+            "Performance & Goals",
+            "Workforce Health & Safety",
+            "HR Helpdesk"
+          ]
+        },
+        {
+          "name": "Customer Experience",
+          "skills": [
+            "Sales",
             "Customer Service",
             "Customer Data Management",
             "Customer Loyalty",
-            "Helpdesk"
+            "Helpdesk",
+            "Marketing",
+            "Configure-Price-Quote (CPQ)",
+            "Subscription Management",
+            "Field Service"
           ]
         },
         {
-          "name": "Enterprise Performance Mgt",
+          "name": "Enterprise Performance Management",
           "skills": [
             "Financial Consolidation & Close",
-            "Planning & Budgetting",
-            "Accounts Reconciliation & Closing"
+            "Planning & Budgeting",
+            "Account Reconciliation",
+            "Profitability & Cost Management",
+            "Tax Reporting",
+            "Enterprise Data Management",
+            "Narrative Reporting"
           ]
-        }
-      ]
-    },
-    {
-      "name": "Project-Specific",
-      "domains": [
+        },
         {
-          "name": "Project Execution",
+          "name": "Risk & Compliance",
           "skills": [
-            "Program Management",
-            "Project Manager",
-            "Technical Architect",
-            "Technical Lead",
-            "Business Architect",
-            "Testing Specialist",
-            "Support Specialist",
-            "Change Mgt Specialist"
+            "Advanced Access Controls",
+            "Advanced Financial Controls",
+            "Financial Reporting Compliance",
+            "SOX / Internal Controls",
+            "Segregation of Duties",
+            "Risk Management",
+            "Regulatory Compliance"
           ]
         }
       ]
     },
     {
       "name": "Technology-Specific",
+      "display": "Technology-Specific Roles",
       "domains": [
         {
-          "name": "Development & IT",
+          "name": "Extensions & Development",
           "skills": [
             "Developer (PaaS)",
-            "Conversion Specialist",
-            "Infrastructure Specialist",
-            "Integration Specialist",
-            "Reporting Specialist",
-            "PL SQL Specialist",
-            "Workflow & Notification Specialist",
-            "Security Specialist",
             "Java Specialist",
-            "PHP Specialist",
             "JavaScript Specialist",
-            "iOS Specialist",
+            "PHP Specialist",
+            "PL/SQL Specialist",
             "SQL Specialist",
+            "Mobile / iOS Specialist",
             "Claude-Code Specialist",
+            "VBCS / APEX Developer"
+          ]
+        },
+        {
+          "name": "Integrations",
+          "skills": [
+            "Integration Specialist",
+            "Workflow & Notification Specialist",
+            "API & Web Services",
+            "OIC Specialist"
+          ]
+        },
+        {
+          "name": "Data & Conversion",
+          "skills": [
+            "Conversion Specialist",
+            "Data Migration",
+            "FBDI / ADFdi Specialist"
+          ]
+        },
+        {
+          "name": "Reporting & Analytics",
+          "skills": [
+            "Reporting Specialist",
+            "OTBI Specialist",
+            "BI Publisher Specialist",
+            "Oracle Analytics Cloud"
+          ]
+        },
+        {
+          "name": "Security & Administration",
+          "skills": [
+            "Security Specialist",
+            "Application Administrator",
+            "Infrastructure Specialist"
+          ]
+        },
+        {
+          "name": "Quality & Testing",
+          "skills": [
             "Quality Assurance",
-            "Application Administrator"
+            "Test Automation Specialist"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Project-Specific",
+      "display": "Project-Specific Roles",
+      "domains": [
+        {
+          "name": "Delivery Leadership",
+          "skills": [
+            "Program Management",
+            "Project Manager",
+            "PMO Lead",
+            "Cutover / Deployment Lead"
+          ]
+        },
+        {
+          "name": "Architecture & Design",
+          "skills": [
+            "Technical Architect",
+            "Technical Lead",
+            "Business Architect",
+            "Solution Architect",
+            "Functional Lead"
+          ]
+        },
+        {
+          "name": "Testing & Support",
+          "skills": [
+            "Testing Specialist",
+            "Support Specialist",
+            "Test Lead"
+          ]
+        },
+        {
+          "name": "Change & Enablement",
+          "skills": [
+            "Change Mgt Specialist",
+            "Organizational Change Mgt",
+            "Training Lead"
           ]
         }
       ]
     },
     {
       "name": "Operations-Specific",
+      "display": "Operations-Specific Roles",
       "domains": [
         {
-          "name": "Finance & Accounting",
+          "name": "Finance Operations",
+          "skills": [
+            "Bookkeeper",
+            "Payables Specialist",
+            "AR / Collections Specialist",
+            "GL Accountant",
+            "Controller"
+          ]
+        },
+        {
+          "name": "Procurement Operations",
           "skills": [
             "Buyer",
             "Sourcing Manager",
             "Category Manager",
-            "Bookkeeper",
-            "Payables Specialist",
-            "Supplier Management"
+            "Supplier Manager"
           ]
         },
         {
-          "name": "Human Resources & Training",
-          "skills": [
-            "HR Manager"
-          ]
-        },
-        {
-          "name": "Supply Chain Management",
+          "name": "Supply Chain Operations",
           "skills": [
             "Materials Manager",
-            "Receiving Technician"
+            "Receiving Technician",
+            "Inventory Analyst",
+            "Order Management Specialist"
           ]
         },
         {
-          "name": "Project Portfolio Management",
+          "name": "HR Operations",
           "skills": [
-            "Project Manager"
+            "HR Manager",
+            "Payroll Administrator",
+            "Benefits Administrator",
+            "Recruiter"
+          ]
+        },
+        {
+          "name": "Project Operations",
+          "skills": [
+            "Project Manager (PPM)",
+            "Project Coordinator"
           ]
         }
       ]
@@ -163,40 +285,46 @@
         {
           "name": "Core Technical & Development",
           "skills": [
-            "Connect to Enterprise Apps",
-            "N8N Workflow",
-            "Zapier Workflow",
-            "AI Chatbot Development",
-            "AI Agent Developer",
-            "AI Automation Developer",
-            "Machine Learning Engineer",
-            "Deep Learning Engineer",
-            "Computer Vision Engineer",
-            "GPT-3/4 Specialist",
-            "OpenAI Codex Specialist",
-            "LLM Developer"
+            "AI Integration & Automation",
+            "Agent & Chatbot Development",
+            "Model Engineering",
+            "Foundation / LLM Model Work",
+            "AI Infrastructure & MLOps",
+            "Applied AI Research"
           ]
         },
         {
           "name": "Creative & Content Generation",
           "skills": [
-            "AI Art Creator",
-            "AI Video Generation and Editing",
-            "Midjourney Artist",
-            "Generative AI Writer",
-            "AI Writer",
-            "Prompt Engineer"
+            "Generative Art & Video",
+            "Generative Writing & Copy",
+            "Multimodal & Audio",
+            "AI Marketing & SEO"
           ]
         },
         {
           "name": "Data Support & Services",
           "skills": [
-            "AI Data Annotation & Labeling",
-            "Data Annotator",
-            "Prompt Engineer",
-            "AI Research Scientist",
-            "AI Product Manager",
-            "AI Consultant"
+            "Data Annotation & Labeling",
+            "Synthetic & Training Data",
+            "Prompt Engineering",
+            "AI Explainability & Analytics"
+          ]
+        },
+        {
+          "name": "AI Governance & Trust",
+          "skills": [
+            "Responsible AI & Ethics",
+            "AI Compliance & Policy",
+            "AI Security & Assurance"
+          ]
+        },
+        {
+          "name": "AI Consulting & Enablement",
+          "skills": [
+            "AI Strategy & Transformation",
+            "AI Product & Program",
+            "AI Training & Enablement"
           ]
         }
       ]

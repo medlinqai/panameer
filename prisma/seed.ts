@@ -164,8 +164,13 @@ async function main() {
   const demoRole = await prisma.roleType.findUnique({
     where: { code: "APPLICATION_SPECIFIC" },
   });
+  // "Finance & Accounting" until the expanded catalog split it three ways
+  // (brief_reseed_expanded_catalog). The demo provider is a P2P/Procurement
+  // expert and its four skills below all landed in the Procurement domain, so
+  // that is the pair to follow — pointing at Financials would leave the flagship
+  // demo profile with a domain none of its own skills belong to.
   const demoDomain = await prisma.pillar.findFirst({
-    where: { name: "Finance & Accounting" },
+    where: { name: "Procurement (Source-to-Pay)" },
   });
 
   const providerProfile = await prisma.providerProfile.upsert({
@@ -530,10 +535,12 @@ async function main() {
 
   // Tag Procurement skills (idempotent via the unique join key). Match the
   // seeded taxonomy by name.
+  // Spellings follow the expanded catalog — two of these gained spaces around
+  // the slash, and a name-match seed silently tags nothing when it misses.
   const procurementSkillNames = [
     "Requisitions",
-    "Purchasing/Purchase Orders",
-    "Sourcing/Negotiations",
+    "Purchasing / Purchase Orders",
+    "Sourcing / Negotiations",
     "Supplier Portal",
   ];
   const procurementSkills = await prisma.skill.findMany({

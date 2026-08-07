@@ -1,9 +1,18 @@
 import { prisma } from "@/lib/prisma";
 
-/** Role types (global lookup) — the "one main category" a provider picks. */
+/**
+ * Role types (global lookup) — the "one main category" a provider picks.
+ *
+ * ORDERED BY `sort_order`, NOT ALPHABETICALLY. This ordered by `display` until
+ * E229 gave every role the "X-Specific Roles" label, at which point alphabetical
+ * put "AI-Specialist Roles" first here while `getProviderFieldTree` — which has
+ * always used sort_order — put it last. Two role pickers, two different orders,
+ * one catalog. Both read the seeded order now: Application-Specific first (E013,
+ * ERP leads), AI-Specialist last.
+ */
 export async function getRoleTypes() {
   return prisma.roleType.findMany({
-    orderBy: { display: "asc" },
+    orderBy: [{ sort_order: "asc" }, { name: "asc" }],
     select: { id: true, code: true, name: true, display: true },
   });
 }
