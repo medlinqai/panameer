@@ -3,9 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { usePrefersReducedMotion } from "@/lib/use-reduced-motion";
+import type { Audience } from "@/lib/audience";
 import {
   BRAND_BADGE_SHORT,
   BRAND_HERO_SUBHEAD_HIRE,
+  BRAND_HERO_SUBHEAD_NEUTRAL,
   BRAND_HERO_SUBHEAD_WORK,
 } from "@/lib/brand";
 
@@ -55,12 +57,29 @@ const SEARCH_TAGS = [
   "Human Capital Mgt",
   "Finance & Accounting",
   "Enterprise AI",
+  /*
+    E053 — the sixth, and Scott's most important. "Enterprise AI" above is the
+    AI-Specialist role as a category; this is the specific thing the platform is
+    betting on — a consultant who already knows Payables using AI to do more of
+    it. Different search, different reader, so it is its own tag rather than a
+    rewording of the one before it.
+  */
+  "Extend Your ERP with AI",
 ];
 
 
-export function Hero() {
+export function Hero({ audience = "neutral" }: { audience?: Audience }) {
   const router = useRouter();
-  const [mode, setMode] = useState<"hire" | "work">("hire");
+  /*
+    THE PAGE'S AUDIENCE SEEDS THE TOGGLE, it does not replace it. On
+    /for-providers the search should start on the work side, because that is
+    what the reader came for — but a provider is still allowed to look for an
+    expert, and removing the control on an audience page would make the fork a
+    trap rather than a shortcut.
+  */
+  const [mode, setMode] = useState<"hire" | "work">(
+    audience === "provider" ? "work" : "hire"
+  );
   const [query, setQuery] = useState("");
   const reducedMotion = usePrefersReducedMotion();
 
@@ -171,30 +190,47 @@ export function Hero() {
             {BRAND_BADGE_SHORT}
           </h1>
           {/*
-            E031 — THE SUBHEAD ANSWERS THE TOGGLE.
+            E031 — THE SUBHEAD ANSWERS THE TOGGLE. It was BRAND_DESCRIPTOR: one
+            sentence naming both sides of the marketplace, which is right for
+            the footer and About and wrong three elements above a control on
+            which the visitor states which side they are on.
 
-            It was BRAND_DESCRIPTOR: one sentence naming both sides of the
-            marketplace. That is the right line for the footer and for About,
-            where nobody has said who they are — and the wrong one here, three
-            elements above a control on which the visitor states exactly that.
-            Being told what the other half of the market gets, immediately after
-            saying which half you are in, is the hero ignoring its own toggle.
-
-            The money line stays gone (E016.3): it restated the badge directly
-            above it in smaller type.
+            E051 — AND NOW THE PAGE HAS AN OPINION TOO. On an audience page the
+            subhead is that audience's line and stays put; the toggle below
+            still re-aims the SEARCH, but it no longer rewrites the page's
+            headline, because the reader already chose the page. Only the
+            combined landing lets the toggle drive it, and there it starts from
+            a neutral line that commits to neither.
           */}
           <p
             /*
-              `key` swaps the element rather than mutating it, so the browser
-              re-runs the fade on every toggle press. Without it React reuses
-              the node, the text changes silently, and the swap reads as a
-              glitch instead of a response.
+              `key` swaps the element rather than mutating it so the fade
+              re-runs. On an audience page the key never changes, which is
+              correct — nothing about the subhead is changing there.
             */
-            key={mode}
+            key={audience === "neutral" ? mode : audience}
             className="mt-3 max-w-[820px] animate-[fadeIn_220ms_ease-out] text-[17px] leading-relaxed text-white/90 motion-reduce:animate-none sm:text-[19px]"
           >
-            {mode === "hire" ? BRAND_HERO_SUBHEAD_HIRE : BRAND_HERO_SUBHEAD_WORK}
+            {audience === "buyer"
+              ? BRAND_HERO_SUBHEAD_HIRE
+              : audience === "provider"
+                ? BRAND_HERO_SUBHEAD_WORK
+                : mode === "hire"
+                  ? BRAND_HERO_SUBHEAD_NEUTRAL
+                  : BRAND_HERO_SUBHEAD_WORK}
           </p>
+
+          {/*
+            THE BIONIC HOOK (WS-E) — provider page only. It is the answer to the
+            question every consultant in this market is actually asking, and it
+            has no business on a buyer page, where "AI won't replace you" is
+            reassurance aimed at somebody who is not reading.
+          */}
+          {audience === "provider" && (
+            <p className="mt-3 max-w-[680px] text-[16px] font-semibold text-white sm:text-[17px]">
+              AI doesn&apos;t make you obsolete — it makes you better.
+            </p>
+          )}
 
           <div className="mt-6 inline-flex rounded-full border border-white/30 bg-white/10 p-[5px]">
             <button

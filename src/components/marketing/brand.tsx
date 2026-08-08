@@ -1,14 +1,29 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-/** Primary marketing nav links (shared by header + mobile menu). */
+/**
+ * Primary marketing nav links (shared by header + mobile menu).
+ *
+ * E051 — ABSOLUTE PATHS, NOT BARE HASHES. Every one of these was `#learn`,
+ * `#punchout` or `#pricing`, which worked while one page held every section.
+ * The fork moved those sections onto /for-buyers and /for-providers, and a bare
+ * hash is resolved against the CURRENT page — so on `/` these silently scrolled
+ * nowhere, and the header is on every page, so the breakage was sitewide.
+ *
+ * Pointing them at `/path#anchor` fixes it in both directions: from `/` it
+ * navigates to the right page and then to the section, and from an audience
+ * page it still lands on the section it names.
+ *
+ * "Why Panameer" is the exception and stays a bare hash — that section renders
+ * on all three pages, so the nearest one is always the right one.
+ */
 export const MARKETING_NAV: { label: string; href: string }[] = [
-  { label: "Learn", href: "#learn" },
-  { label: "Hire Talent", href: "/join/buyer" },
-  { label: "Find Work", href: "/join/provider" },
-  { label: "Why Panameer", href: "#punchout" },
-  { label: "Pricing", href: "#pricing" },
-  { label: "Enterprise", href: "#punchout" },
+  { label: "Learn", href: "/for-providers#learn" },
+  { label: "Hire Talent", href: "/for-buyers" },
+  { label: "Find Work", href: "/for-providers" },
+  { label: "Why Panameer", href: "#why" },
+  { label: "Pricing", href: "/for-buyers#pricing" },
+  { label: "Enterprise", href: "/for-buyers#punchout" },
 ];
 
 const BASE =

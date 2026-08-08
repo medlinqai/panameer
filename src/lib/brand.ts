@@ -113,6 +113,17 @@ export const BRAND_MONEY_LINE =
  * descriptor's "+": these are sentences someone reads, and "+" is a logo
  * treatment.
  */
+/**
+ * The combined landing's opening line (E051).
+ *
+ * `/` forks rather than sells, so its subhead has to be true of both sides
+ * without being about neither. It names the market and the two things people
+ * come to do in it, and hands off to the chooser below.
+ */
+export const BRAND_HERO_SUBHEAD_NEUTRAL =
+  "The home for Enterprise Systems and AI work — hire the experts who do it, " +
+  "or get hired for what you do best.";
+
 export const BRAND_HERO_SUBHEAD_HIRE =
   "Hire the world's best Enterprise Systems and AI talent to improve the " +
   "performance of your business today.";

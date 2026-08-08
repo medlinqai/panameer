@@ -5,8 +5,14 @@ import { Eyebrow, H2, Lead } from "@/components/marketing/section";
 import { usePrefersReducedMotion } from "@/lib/use-reduced-motion";
 
 /**
- * "How It Works" — the four beats of the badge, as four media tiles
- * (E025, E026, E027).
+ * "Why Panameer" — the four beats of the badge, as four media tiles
+ * (E025, E026, E027, E051).
+ *
+ * RENAMED FROM HowItWorks, because the fork changed what it is. As one section
+ * on one page it explained a process. As the differentiator section on all
+ * THREE pages — the one thing every audience sees — it is the answer to "why
+ * here rather than anywhere else", told as the arc a person actually travels.
+ * Same four tiles, same footage; the captions now depend on who is reading.
  *
  * E027 — THE AUDIENCE TOGGLE IS GONE. Walk 1 built a "For Requesters / For
  * Providers" segmented control that reframed all four captions. It worked, and
@@ -25,13 +31,20 @@ import { usePrefersReducedMotion } from "@/lib/use-reduced-motion";
  * the entire point of "how it works".
  */
 
+import type { Audience } from "@/lib/audience";
+
+type Copy = { caption: string; clarifier: string };
+
 type Beat = {
   n: number;
-  /** The badge word. */
+  /** The badge word. Never varies — the four beats ARE the brand. */
   word: string;
-  /** Neutral, both-audience (E027). Title Case per conventions.md. */
-  caption: string;
-  clarifier: string;
+  /**
+   * What the beat means to whoever is reading. Only the meaning changes per
+   * audience; a page that renamed the beats would be a different product to
+   * each side rather than one product seen from two ends.
+   */
+  copy: Record<Audience, Copy>;
   video: string;
 };
 
@@ -54,36 +67,92 @@ const BEATS: Beat[] = [
   {
     n: 1,
     word: "Learn",
-    caption: "Learn the Applications",
-    clarifier:
-      "Free paths on the systems that run real businesses — watch without an account.",
     video: "/learn.mp4",
+    copy: {
+      neutral: {
+        caption: "Learn the Applications",
+        clarifier:
+          "Free paths on the systems that run real businesses — watch without an account.",
+      },
+      buyer: {
+        caption: "Learn About Apps & Tech",
+        clarifier:
+          "Know what you are buying before you buy it. The same free paths your providers trained on.",
+      },
+      provider: {
+        caption: "Build In-Demand Skills, Free",
+        clarifier:
+          "Guided paths on the applications enterprises actually run, each ending in a certification.",
+      },
+    },
   },
   {
     n: 2,
     word: "Connect",
-    caption: "Meet the Experts",
-    clarifier: "Browse validated providers, or invite the ones you already trust.",
     video: "/connect.mp4",
+    copy: {
+      neutral: {
+        caption: "Meet the Experts",
+        clarifier:
+          "Browse validated providers, or invite the ones you already trust.",
+      },
+      buyer: {
+        caption: "Connect at Every Stage",
+        clarifier:
+          "Scope with an expert before you commit, then keep the same people through delivery.",
+      },
+      provider: {
+        caption: "Connect With Buyers & Mentors",
+        clarifier:
+          "Be found by the companies asking for your skills, and by the people who have done it longer.",
+      },
+    },
   },
   {
     n: 3,
     word: "Build",
-    caption: "Get the Work Done",
-    clarifier:
-      "Scope it, agree it, and track it in one place — or straight from your ERP.",
     video: "/panameer-office.mp4",
+    copy: {
+      neutral: {
+        caption: "Get the Work Done",
+        clarifier:
+          "Scope it, agree it, and track it in one place — or straight from your ERP.",
+      },
+      buyer: {
+        caption: "Build With Your Experts",
+        clarifier:
+          "Agreed scope, tracked in one place — or ordered straight from your ERP.",
+      },
+      provider: {
+        caption: "Do the Work, Never Alone",
+        clarifier:
+          "Deliver against a scope agreed before you started, with the community behind you.",
+      },
+    },
   },
   {
     n: 4,
     word: "Get Paid",
-    caption: "Settle With Confidence",
-    clarifier:
-      "By the hour, by milestone, or by draw-down — settled through Panameer.",
     video: "/get-paid.mp4",
+    copy: {
+      neutral: {
+        caption: "Settle With Confidence",
+        clarifier:
+          "By the hour, by milestone, or by draw-down — settled through Panameer.",
+      },
+      buyer: {
+        caption: "Pay in One Payment",
+        clarifier:
+          "One settlement through Panameer — no contractor paperwork, no compliance or legal exposure.",
+      },
+      provider: {
+        caption: "Get Paid On-Platform",
+        clarifier:
+          "By the hour, by milestone, or by draw-down — settled through Panameer, not chased.",
+      },
+    },
   },
 ];
-
 
 /**
  * Has this element been scrolled into view yet?
@@ -130,15 +199,18 @@ function useInView<T extends HTMLElement>() {
 
 function Tile({
   beat,
+  audience,
   seen,
   playMedia,
   isLast,
 }: {
   beat: Beat;
+  audience: Audience;
   seen: boolean;
   playMedia: boolean;
   isLast: boolean;
 }) {
+  const { caption, clarifier } = beat.copy[audience];
   return (
     <div
       className={
@@ -191,10 +263,10 @@ function Tile({
             {beat.word}
           </p>
           <h3 className="mt-2.5 text-[16px] font-bold leading-snug text-white">
-            {beat.caption}
+            {caption}
           </h3>
           <p className="mt-1.5 text-[13.5px] leading-relaxed text-white/80">
-            {beat.clarifier}
+            {clarifier}
           </p>
         </div>
       </div>
@@ -217,7 +289,7 @@ function Tile({
   );
 }
 
-export function HowItWorks() {
+export function WhyPanameer({ audience = "neutral" }: { audience?: Audience }) {
   const { ref, seen } = useInView<HTMLDivElement>();
   const reducedMotion = usePrefersReducedMotion();
 
@@ -243,7 +315,7 @@ export function HowItWorks() {
       keeps the alternation honest now that the order changed — see page.tsx for
       the full sequence.
     */
-    <section id="how" className="bg-bg-soft py-[76px]">
+    <section id="why" className="bg-bg-soft py-[76px]">
       <div className="mx-auto max-w-[1180px] px-6">
         {/*
           E028(ii) — THE EYEBROW LIVES HERE NOW. It used to label the
@@ -251,11 +323,20 @@ export function HowItWorks() {
           the grid is its own section (ProvidersBrowse) and this is the only
           thing on the page that is actually a sequence.
         */}
-        <Eyebrow>How It Works</Eyebrow>
-        <H2>Four Steps, Start to Settled</H2>
+        <Eyebrow>Why Panameer</Eyebrow>
+        <H2>
+          {audience === "buyer"
+            ? "Everything Between Needing the Work and Paying for It"
+            : audience === "provider"
+              ? "Everything Between Learning the Work and Being Paid for It"
+              : "Four Steps, Start to Settled"}
+        </H2>
         <Lead>
-          Learn the systems, meet the people who know them, get the work done,
-          and settle it — without leaving Panameer.
+          {audience === "buyer"
+            ? "One place for the whole engagement — the training your team needs, the expert who does the work, and a single settlement at the end."
+            : audience === "provider"
+              ? "One place for the whole arc — the skills, the buyers, the work itself, and getting paid for it without chasing anybody."
+              : "Learn the systems, meet the people who know them, get the work done, and settle it — without leaving Panameer."}
         </Lead>
 
         <div
@@ -266,6 +347,7 @@ export function HowItWorks() {
             <Tile
               key={beat.word}
               beat={beat}
+              audience={audience}
               seen={seen}
               playMedia={playMedia}
               isLast={i === BEATS.length - 1}

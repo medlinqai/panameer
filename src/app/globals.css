@@ -245,6 +245,39 @@ body {
  * fixed palette is the normal thing anyway. The app itself is untouched and
  * still themes.
  */
+/*
+ * E052 — LINE BREAKS, ONCE, FOR EVERY MARKETING SURFACE.
+ *
+ * The walk keeps finding the same defect in different sections: a heading or a
+ * subhead breaking one or two words early and leaving an orphan on the last
+ * line ("…the performance of / your business today"). It has been fixed three
+ * times by widening a max-width, which fixes the instance and not the class —
+ * the next section written at a comfortable prose measure has it again.
+ *
+ * `balance` on headings: the browser evens the lines out, so a three-word
+ * second line becomes two lines of similar length. Capped by browsers at a
+ * handful of lines, which is why it is scoped to headings rather than applied
+ * to everything.
+ *
+ * `pretty` on body copy: does not rebalance, just refuses to leave a single
+ * word alone on the final line. That is the right treatment for a paragraph,
+ * where balancing would fight the reading rhythm.
+ *
+ * BOTH ARE PROGRESSIVE. A browser without them wraps exactly as it does today,
+ * so this can only improve the result.
+ *
+ * SCOPED TO .marketing-surface deliberately. The app side has tables, dense
+ * rails and truncating cells where re-flowing text would be a change nobody
+ * asked for.
+ */
+.marketing-surface :is(h1, h2, h3, h4) {
+  text-wrap: balance;
+}
+
+.marketing-surface :is(p, li) {
+  text-wrap: pretty;
+}
+
 .marketing-surface {
   --color-ink: #171e3e;
   --color-ink-2: #4a4658;

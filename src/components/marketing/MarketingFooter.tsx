@@ -2,19 +2,27 @@ import Link from "next/link";
 import Image from "next/image";
 import { BRAND_DESCRIPTOR } from "@/lib/brand";
 
+/*
+  E051 — the footer's hashes had the same fault as the header's: `#learn`,
+  `#punchout` and `#pricing` resolved against whatever page you were on, and
+  after the fork that is usually not the page holding the section. Absolute
+  now. "Learning Paths" and "Courses" go to the real /learn routes rather than
+  to a marketing anchor about them — the footer is where someone goes when they
+  know what they want.
+*/
 const COLS: { title: string; links: { label: string; href: string }[] }[] = [
   {
     title: "Hire",
     links: [
-      { label: "Hire Talent", href: "/join/buyer" },
+      { label: "Hire Talent", href: "/for-buyers" },
       { label: "Post a Work Request", href: "/join/buyer" },
-      { label: "ERP Punchout", href: "#punchout" },
+      { label: "ERP Punchout", href: "/for-buyers#punchout" },
     ],
   },
   {
     title: "Work",
     links: [
-      { label: "Find Work", href: "/join/provider" },
+      { label: "Find Work", href: "/for-providers" },
       { label: "Become a Provider", href: "/join/provider" },
       { label: "Coordinators", href: "#" },
     ],
@@ -22,17 +30,17 @@ const COLS: { title: string; links: { label: string; href: string }[] }[] = [
   {
     title: "Learn",
     links: [
-      { label: "Learning Paths", href: "#learn" },
-      { label: "Courses", href: "#learn" },
-      { label: "Categories", href: "#learn" },
+      { label: "Learning Paths", href: "/learn" },
+      { label: "Courses", href: "/learn/courses" },
+      { label: "Categories", href: "/for-providers#learn" },
     ],
   },
   {
     title: "Company",
     links: [
-      { label: "Why Panameer", href: "#punchout" },
-      { label: "Enterprise", href: "#punchout" },
-      { label: "Pricing", href: "#pricing" },
+      { label: "Why Panameer", href: "/#why" },
+      { label: "Enterprise", href: "/for-buyers#punchout" },
+      { label: "Pricing", href: "/for-buyers#pricing" },
     ],
   },
   /*
