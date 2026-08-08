@@ -30,8 +30,8 @@ export const metadata: Metadata = {
 export default function ForProvidersPage() {
   return (
     <MarketingShell audience="provider">
-      <Announcement />
       <Hero audience="provider" />
+      <Announcement />
       <WhyPanameer audience="provider" />
       <LearnFree />
       <CreatorBand />

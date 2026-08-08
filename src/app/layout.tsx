@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 import { DevBanner } from "@/components/DevBanner";
 import { THEME_BOOT_SCRIPT } from "@/lib/theme";
+import { FOCUS_BOOT_SCRIPT } from "@/lib/focus-strip";
 import { SEO_DESCRIPTION, SEO_TITLE } from "@/lib/brand";
 
 const geistSans = Geist({
@@ -80,6 +81,14 @@ export default function RootLayout({
           server renders no attribute and the client has already added one.
         */}
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
+        {/*
+          E061 — the Focus strip's dismissed/remembered state, same pattern and
+          same reason as the theme script above it: the answer has to be on the
+          element before paint, which rules out an effect, and reading the
+          cookie server-side would opt every marketing page out of static
+          rendering. See lib/focus-strip.ts.
+        */}
+        <script dangerouslySetInnerHTML={{ __html: FOCUS_BOOT_SCRIPT }} />
       </head>
       <body className="min-h-full flex flex-col">
         {/*

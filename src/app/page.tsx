@@ -31,13 +31,21 @@ import { MarketingShell } from "@/components/marketing/MarketingShell";
 export default function Home() {
   return (
     <MarketingShell audience="neutral">
-      <Announcement />
       {/*
         No `audience` — the combined landing is the one page where the hero's
         own hire/work toggle still drives the subhead, because it is the one
         page where the reader has not chosen.
       */}
       <Hero />
+      {/*
+        E069 — THE RIBBON SITS BELOW THE HERO NOW. Above it, the page opened on
+        three stacked full-width strips — dev banner, Focus strip, magenta
+        ribbon — before a visitor reached a single word of the actual page.
+        Three notices in a row is not emphasis, it is a queue. Below the hero it
+        is the first thing after the pitch, which is where a claim about the
+        community economy actually lands.
+      */}
+      <Announcement />
       <WhyPanameer />
       <ForkChooser />
     </MarketingShell>
