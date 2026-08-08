@@ -4,6 +4,7 @@ import { Announcement } from "@/components/marketing/Announcement";
 import { WhyPanameer } from "@/components/marketing/WhyPanameer";
 import { LearnFree } from "@/components/marketing/LearnFree";
 import { CreatorBand } from "@/components/marketing/CreatorBand";
+import { AudienceCta } from "@/components/marketing/AudienceCta";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
 
 /**
@@ -34,6 +35,7 @@ export default function ForProvidersPage() {
       <WhyPanameer audience="provider" />
       <LearnFree />
       <CreatorBand />
+      <AudienceCta audience="provider" />
     </MarketingShell>
   );
 }

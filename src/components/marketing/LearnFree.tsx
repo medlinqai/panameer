@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Eyebrow, H2, Lead } from "@/components/marketing/section";
+import { Eyebrow, H2 } from "@/components/marketing/section";
 
 /**
  * The free-learning showcase (E012).
@@ -60,18 +60,26 @@ export function LearnFree() {
         <Eyebrow>Learn</Eyebrow>
         <H2>Learn to Use Applications — Free</H2>
         {/*
-          E022 — SCOTT'S COPY, VERBATIM. What was here ("Guided learning paths
-          and courses across the enterprise stack, open to everyone.") described
-          the tone and never the mechanism: it did not say what a learning path
-          IS, and it did not mention the certification, which is the reason to
-          finish one. Left in body case on purpose — the convention title-cases
-          labels, not subheads.
+          E041/E042 — SCOTT'S COPY, AND FULL WIDTH.
+
+          The previous line ("Guided learning paths and courses across the
+          enterprise stack, open to everyone.") set a tone and explained
+          nothing: it never said what a learning path IS, and never mentioned
+          the certification, which is the reason to finish one.
+
+          NOT the shared <Lead>, which caps at 780px. That measure is right for
+          a one-line subhead and wrong for this: two sentences of definition
+          broke to four short lines in an 1180px section and read as a
+          paragraph someone forgot to widen. Full width takes it to two, which
+          is what "full-width subhead" is asking for. Left in body case —
+          subheads are not labels.
         */}
-        <Lead>
-          Learning paths group functionally oriented courses into guided
-          sessions based on business applications. Each pathway completes with a
-          test and a certification for those who pass it.
-        </Lead>
+        <p className="mb-[34px] text-[18px] leading-relaxed text-ink-2">
+          Learning paths group related courses — by business function or
+          technology — into a guided sequence, each ending with an optional test
+          and certification.
+        </p>
+
         <div className="flex flex-wrap gap-3">
           {PATHS.map((p) => (
             <Link
