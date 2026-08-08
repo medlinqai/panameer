@@ -52,26 +52,32 @@ export const BRAND_BADGE = "Learn. Connect. Create. Get Paid. Together.";
 export const BRAND_BADGE_SHORT = "Learn. Connect. Create. Get Paid.";
 
 /**
- * THE COMMUNITY LINE — the ribbon across the top of the marketing home
- * (E016.3).
+ * THE RIBBON — the strip across the top of the marketing home (E016.3 → E039).
  *
- * Replaces the manifesto in that slot. The manifesto ("The world's gotten
- * adversarial…") says why Panameer exists, which is an About-page thought; the
- * strip above the fold is better spent on what the visitor gets, and this is
- * the one sentence that names all four beats and lands on "together" — the word
- * the hero badge just gave up.
+ * It has held three things. First a borrowed promo ("the top 1% of talent on
+ * Business Plus"), then the manifesto, then the "anyone can" community line.
+ * This one names the mechanism the other two only gestured at: Community
+ * Credits, what earns them and what spends them.
  *
- * BRAND_MANIFESTO is unchanged and still renders in Punchout.
+ * ⚠ SHIPPED AS PRE-LAUNCH VISION, KNOWINGLY. Credits are not functional —
+ * `getCreditsSummary` returns a hard zero with `pending: true` and no surface
+ * awards any. Nothing on this page can earn or spend one today.
  *
- * E016.3 (walk 2) — "ANYONE", NOT "EVERYONE". They look interchangeable and are
- * not. "Everyone can" is a claim about the whole population and invites the
- * reader to test it; "anyone can" is an open door, addressed to the one person
- * reading. The sentence is about permission, so it takes the word that grants
- * it.
+ * That is a deliberate call rather than an oversight, and it rests on the
+ * "Panameer is in active development" banner sitting directly ABOVE this strip:
+ * a visitor reads "you're early, accounts and data may be reset" and then reads
+ * this. In that order it is a roadmap. Without the banner it would be a false
+ * promise, so the two are coupled — if SITE_STATUS ever flips to "live" while
+ * credits are still inert, this line has to change in the same commit.
+ *
+ * See also AccountPitch, which makes the opposite call for the same feature:
+ * there the claim sits alone at the moment someone hands over an email, so
+ * Credits are future-tense there and certifications lead.
  */
 export const BRAND_COMMUNITY_LINE =
-  "The only community where anyone can build skills, connect with experts, " +
-  "do great work, and get paid — together.";
+  "Earn Community Credits for building your profile, selling services, and " +
+  "answering work — spend them learning, connecting, proposing, and " +
+  "collaborating.";
 
 /**
  * THE MONEY LINE — the badge, unpacked. Used where somebody is about to act
