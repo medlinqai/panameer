@@ -91,7 +91,14 @@ export function Hero() {
   };
 
   return (
-    <div className="mx-auto max-w-[1180px] px-6">
+    /*
+      E019 — `pb-[26px]` MATCHES THE TOP MARGIN, and it is load-bearing rather
+      than symmetry for its own sake. Learn is the soft band and now sits
+      directly below: without this the soft fill butts against the bottom edge
+      of the dark hero panel, the panel loses its rounded corners into it, and
+      the two read as one shape. The white gutter is what keeps the hero a card.
+    */
+    <div className="mx-auto max-w-[1180px] px-6 pb-[26px]">
       <div className="relative mt-[26px] overflow-hidden rounded-[22px] bg-[#0f1330]">
         {/*
           THE GRADIENT IS UNDER THE VIDEO, NOT INSTEAD OF IT. It paints

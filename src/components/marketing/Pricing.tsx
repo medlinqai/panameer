@@ -13,13 +13,6 @@ const PLUS = [
   "One-click ERP punchout",
   "Priority matching & support",
 ];
-const MODELS = [
-  "Hourly Contractor",
-  "Monthly Contractor",
-  "Offshore Outsourcing",
-  "Employer of Record",
-  "Staff Augmentation",
-];
 
 function Check({ children }: { children: string }) {
   return (
@@ -30,28 +23,40 @@ function Check({ children }: { children: string }) {
   );
 }
 
+/*
+  E030 — THE ENGAGEMENT-MODEL PILLS ARE GONE, not restyled again.
+
+  Walk 1 made them honest: they had been <span>s dressed as buttons, and they
+  became a labelled read-only list. Walk 2 says the problem was never the
+  styling — it is that five engagement models under a two-card pricing section
+  describe a THIRD offer the page does not otherwise make, so the reader is left
+  working out whether Hourly Contractor is a plan, a filter, or a footnote.
+  Nothing was gained by keeping them and the confusion went with them.
+
+  The five names (Hourly Contractor, Monthly Contractor, Offshore Outsourcing,
+  Employer of Record, Staff Augmentation) are not lost — they are Scott's
+  engagement vocabulary and belong wherever engagement models get real content.
+  They are not on the home page.
+*/
 export function Pricing() {
   return (
     /*
-      E016.11 — CHECKED, AND LEFT WHITE. Counting page backgrounds after the D3
-      move suggests three whites in a row (HowItWorks, Punchout, Pricing) and a
-      flip somewhere. Counting what is actually SEEN says otherwise: Punchout's
-      background is white but it renders a full dark gradient panel edge to
-      edge, so the sequence reads
-
-        magenta ribbon · dark hero · soft Learn · white How · dark Punchout ·
-        white Pricing · ink footer
-
-      — which alternates on every boundary. Flipping this section to soft would
-      also collide with the Basic card, which is bg-soft precisely so it
-      separates from a white section (E011); the card would vanish into the band
-      and the fix for one walk error would reopen another.
+      E016.11 / E019 — WHITE, and the reason is the Basic card rather than the
+      rhythm. Basic is bg-soft precisely so it lifts off a white section (E011);
+      on a soft band it disappears. page.tsx holds the full section sequence —
+      one place to read it, so this comment cannot go stale the next time the
+      order moves.
     */
     <section id="pricing" className="py-[76px]">
       <div className="mx-auto max-w-[1180px] px-6">
         <Eyebrow>Pricing</Eyebrow>
         <H2>Flexible pricing that scales with your business</H2>
-        <Lead>Post for free. Choose the engagement model that fits the work.</Lead>
+        {/*
+          The old lead ended "Choose the engagement model that fits the work" —
+          a pointer at the five pills directly beneath it. E030 removed those,
+          which would have left the sentence pointing at nothing.
+        */}
+        <Lead>Post for free. Pay only for the work you agree to.</Lead>
 
         <div className="grid max-w-[820px] gap-[22px] md:grid-cols-2">
           {/*
@@ -98,40 +103,6 @@ export function Pricing() {
           </div>
         </div>
 
-        {/*
-          E016.10 — THESE ARE LABELS, AND NOW LOOK LIKE IT.
-
-          They were already `<span>`s, so nothing was ever clickable — the
-          problem was purely that they were dressed as controls: pill radius,
-          white fill on a white section, a border, bold text. Beside two cards
-          whose buttons look almost exactly the same, that reads as a filter row
-          that ignores you.
-
-          Made honest rather than made live. A real filter would need pricing
-          content per model to filter TO, and there is one Basic card and one
-          Plus card — filtering two cards by five engagement models is a control
-          with nothing behind it either. So: a stated list, introduced by the
-          label that says what it is, in the flat chip treatment used for
-          read-only vocabulary elsewhere. Not bold, no pill, no hover.
-
-          When engagement models get their own content, this becomes anchors —
-          the array is already the list.
-        */}
-        <div className="mt-[34px]">
-          <p className="mb-2.5 text-[13px] font-extrabold uppercase tracking-[0.06em] text-ink-2">
-            Engagement models supported
-          </p>
-          <ul className="flex flex-wrap gap-2.5">
-            {MODELS.map((m) => (
-              <li
-                key={m}
-                className="rounded-[8px] border border-line bg-white/70 px-3.5 py-2 text-[14.5px] text-ink-2"
-              >
-                {m}
-              </li>
-            ))}
-          </ul>
-        </div>
       </div>
     </section>
   );

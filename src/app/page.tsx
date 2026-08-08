@@ -2,6 +2,8 @@ import { MarketingHeader } from "@/components/marketing/MarketingHeader";
 import { Announcement } from "@/components/marketing/Announcement";
 import { Hero } from "@/components/marketing/Hero";
 import { HowItWorks } from "@/components/marketing/HowItWorks";
+import { ProvidersBrowse } from "@/components/marketing/ProvidersBrowse";
+import { Packages } from "@/components/marketing/Packages";
 import { Punchout } from "@/components/marketing/Punchout";
 import { LearnFree } from "@/components/marketing/LearnFree";
 import { Pricing } from "@/components/marketing/Pricing";
@@ -21,28 +23,43 @@ export default function Home() {
     */
     <div className="marketing-surface min-h-screen bg-white font-body text-ink">
       {/*
-        E016.6 / D3 — LEARN MOVES TO SECOND. It was fifth, below the punchout
-        pitch, which put the one thing on this page that is free, finished and
-        usable today underneath two sections describing what the marketplace
-        will do. The hero now ends on "Start learning — free" and hands
-        straight to it.
+        E028 — THE ORDER, AND WHY PACKAGES SITS WHERE IT DOES.
 
-        E016.11 — THE SHADING SURVIVED THE MOVE, and no flip was needed. By
-        page background the new run looks wrong — soft, white, white, white —
-        but two of those sections render full-bleed dark panels, so what is
-        actually seen alternates on every boundary:
+        Hero → Learn → Packages → Providers → How It Works → Punchout →
+        Pricing. Learn stays second (it is the one thing here that is free and
+        finished). Packages is third because it is Scott's third priority and
+        because it is a BUYING MODEL — it belongs beside "browse providers", not
+        beside a process explainer. Putting it next to How It Works would read
+        as step five.
 
-          magenta ribbon · DARK hero · soft Learn · white How · DARK Punchout ·
-          white Pricing · ink footer
+        E019 — THE SHADING, over the new order. Counting page backgrounds
+        misleads here, because the hero and Punchout both render full-bleed dark
+        panels regardless of the section behind them. What is actually seen:
 
-        Flipping Pricing to soft was tried and reverted: its Basic card is
-        bg-soft specifically so it lifts off a white section (E011), and it
-        disappears into a soft one.
+          magenta ribbon
+          DARK    hero
+          soft    Learn
+          white   Packages
+          white   Providers  ← reads as one white run with Packages
+          soft    How It Works
+          DARK    Punchout
+          white   Pricing
+          ink     footer
+
+        Three notes. The hero carries a white bottom gutter so Learn's soft
+        band does not butt against the dark panel and swallow its corners.
+        Packages and Providers are both white and adjacent —
+        deliberate, because they are the two "what can I buy" sections and a
+        band between them would imply a bigger break than exists. And Pricing
+        stays white because its Basic card is bg-soft precisely so it lifts off
+        a white section (E011); flipping it hides the card.
       */}
       <MarketingHeader />
       <Announcement />
       <Hero />
       <LearnFree />
+      <Packages />
+      <ProvidersBrowse />
       <HowItWorks />
       <Punchout />
       <Pricing />

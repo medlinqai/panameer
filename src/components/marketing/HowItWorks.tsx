@@ -84,17 +84,6 @@ const BEATS: Beat[] = [
   },
 ];
 
-/** The application coverage claim. Moves to its own section in WS-C (E028). */
-const APPS = [
-  "Inventory Mgmt.",
-  "Procurement",
-  "Financials Mgmt.",
-  "Project Portfolio Mgmt.",
-  "Core Human Resources",
-  "Manufacturing",
-  "Supply Chain Planning",
-  "Financial Close",
-];
 
 /**
  * Has this element been scrolled into view yet?
@@ -247,36 +236,31 @@ export function HowItWorks() {
   );
 
   return (
-    <section id="how" className="py-[76px]">
+    /*
+      E019 — THE STEPS GET A BAND OF THEIR OWN. As four dark tiles on white they
+      floated between two other white sections and read as a row of pictures;
+      the shade is what makes them a block with a beginning and an end. It also
+      keeps the alternation honest now that the order changed — see page.tsx for
+      the full sequence.
+    */
+    <section id="how" className="bg-bg-soft py-[76px]">
       <div className="mx-auto max-w-[1180px] px-6">
-        <Eyebrow>How it works</Eyebrow>
-        <H2>Find service providers for every application</H2>
-        <Lead>
-          Experts across the full enterprise stack — matched to exactly what you
-          need done.
-        </Lead>
-
         {/*
-          ⚠ STILL CONFLATED, AND SPLIT IN WS-C. This grid is a COVERAGE claim
-          ("we cover every application"), the four tiles below are a PROCESS,
-          and one heading currently covers both. E028 separates them into their
-          own sections; kept here for now so this commit leaves the page whole
-          rather than dropping a section for the length of one work-stream.
+          E028(ii) — THE EYEBROW LIVES HERE NOW. It used to label the
+          application grid, which is a coverage claim rather than a process;
+          the grid is its own section (ProvidersBrowse) and this is the only
+          thing on the page that is actually a sequence.
         */}
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {APPS.map((app) => (
-            <div
-              key={app}
-              className="rounded-brand border border-line bg-white px-[18px] py-4 text-[15px] font-bold transition-all hover:-translate-y-0.5 hover:border-magenta hover:shadow-brand"
-            >
-              {app}
-            </div>
-          ))}
-        </div>
+        <Eyebrow>How It Works</Eyebrow>
+        <H2>Four Steps, Start to Settled</H2>
+        <Lead>
+          Learn the systems, meet the people who know them, get the work done,
+          and settle it — without leaving Panameer.
+        </Lead>
 
         <div
           ref={trackRef}
-          className="mt-14 grid gap-7 sm:grid-cols-2 lg:grid-cols-4 lg:gap-11"
+          className="grid gap-7 sm:grid-cols-2 lg:grid-cols-4 lg:gap-11"
         >
           {BEATS.map((beat, i) => (
             <Tile
