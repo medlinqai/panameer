@@ -36,11 +36,15 @@ export function DevBanner() {
     <div
       data-dev-banner
       /*
-        `bg-magenta/8`, NOT `bg-magenta/[0.07]`. The arbitrary-decimal form
-        compiles to no rule at all under Tailwind v4 here — the class lands in
-        the markup, the CSS never appears, and the banner renders as untinted
-        text on the page background. Verified in the built stylesheet; the
-        slash-integer form is what generates.
+        ⚠ CORRECTION (E017). An earlier version of this comment claimed
+        `bg-magenta/[0.07]` compiles to no rule under Tailwind v4. THAT WAS
+        WRONG. It compiles fine — the "evidence" was a grep whose pattern could
+        not match the escaped selector Tailwind emits (`.bg-magenta\/\[0\.07\]`,
+        where the decimal point is backslash-escaped too), so a present rule
+        read as an absent one.
+
+        `/8` is kept only because it is the shorter way to write the same thing.
+        Nothing here was broken and nothing needed fixing.
       */
       className="border-b border-magenta/20 bg-magenta/8 px-4 py-2 text-ink sm:px-6"
     >
