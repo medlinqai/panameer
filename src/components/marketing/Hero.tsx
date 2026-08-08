@@ -209,7 +209,7 @@ export function Hero({ audience = "neutral" }: { audience?: Audience }) {
               correct — nothing about the subhead is changing there.
             */
             key={audience === "neutral" ? mode : audience}
-            className="mt-3 max-w-[820px] animate-[fadeIn_220ms_ease-out] text-[17px] leading-relaxed text-white/90 motion-reduce:animate-none sm:text-[19px]"
+            className="mt-3 max-w-[820px] animate-[fadeIn_220ms_ease-out] text-balance text-[17px] leading-relaxed text-white/90 motion-reduce:animate-none sm:text-[19px]"
           >
             {audience === "buyer"
               ? BRAND_HERO_SUBHEAD_HIRE

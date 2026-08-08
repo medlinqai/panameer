@@ -20,15 +20,26 @@ export function H2({ children }: { children: ReactNode }) {
 /**
  * The section sub-head.
  *
- * E016.2 — WIDENED FROM 640px. The same premature-wrap complaint the hero got
- * applies here, and the HowItWorks descriptor is the one Scott named: "Experts
- * across the full enterprise stack — matched to exactly what you need done."
- * broke after "you" at 640px, turning one sentence into three lines with two
- * words on the last. 780px is still a readable measure (~85 characters) and
- * takes every current Lead on this page to two lines or fewer.
+ * E052 (walk 2) — NO WIDTH CAP, AND BALANCED.
+ *
+ * Two separate bugs were making these wrap early and only one of them was the
+ * one being fixed. The cap was 640px, then 780px, and each widening moved the
+ * break rather than removing it: a two-line subhead in an 1180px section is a
+ * measure decision the section already made, and re-making it here just
+ * guarantees the text is narrower than the heading above it.
+ *
+ * The second bug is subtler. These inherit `text-wrap: pretty` from the
+ * marketing default, which only refuses to strand a word on the LAST line — it
+ * does nothing about line one ending on "of". `balance` is the one that evens
+ * the lines, which is what moves a break off a preposition.
+ *
+ * `text-balance` on the element rather than in globals.css because the default
+ * for body copy is still `pretty`: balancing every paragraph on the site would
+ * fight the reading rhythm of anything longer than two lines. This is a subhead
+ * — short, and read as a unit.
  */
 export function Lead({ children }: { children: ReactNode }) {
   return (
-    <p className="mb-[34px] max-w-[780px] text-[18px] text-ink-2">{children}</p>
+    <p className="mb-[34px] text-balance text-[18px] text-ink-2">{children}</p>
   );
 }

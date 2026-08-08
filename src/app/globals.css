@@ -269,13 +269,23 @@ body {
  * SCOPED TO .marketing-surface deliberately. The app side has tables, dense
  * rails and truncating cells where re-flowing text would be a change nobody
  * asked for.
+ *
+ * ⚠ AND WRAPPED IN @layer base, WHICH IS LOAD-BEARING (E052 walk 2). Unlayered
+ * CSS beats every layer, so as plain rules these outranked Tailwind's own
+ * `text-balance` / `text-pretty` utilities no matter what a component asked
+ * for — adding `text-balance` to a <p> in here compiled, shipped, and silently
+ * lost the cascade. In `base` they are what they were always meant to be: a
+ * DEFAULT that a utility can override. Verified against the built stylesheet,
+ * not assumed.
  */
-.marketing-surface :is(h1, h2, h3, h4) {
-  text-wrap: balance;
-}
+@layer base {
+  .marketing-surface :is(h1, h2, h3, h4) {
+    text-wrap: balance;
+  }
 
-.marketing-surface :is(p, li) {
-  text-wrap: pretty;
+  .marketing-surface :is(p, li) {
+    text-wrap: pretty;
+  }
 }
 
 .marketing-surface {
