@@ -48,7 +48,7 @@ const COLS: { title: string; links: { label: string; href: string }[] }[] = [
       { label: "User Agreement", href: "/user-agreement" },
       { label: "Privacy Policy", href: "/privacy" },
       { label: "Cookie Policy", href: "/legal/cookie-policy" },
-      { label: "All legal documents", href: "/legal" },
+      { label: "All Legal Documents", href: "/legal" },
     ],
   },
 ];

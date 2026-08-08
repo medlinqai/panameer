@@ -50,7 +50,7 @@ export function Pricing() {
     <section id="pricing" className="py-[76px]">
       <div className="mx-auto max-w-[1180px] px-6">
         <Eyebrow>Pricing</Eyebrow>
-        <H2>Flexible pricing that scales with your business</H2>
+        <H2>Flexible Pricing That Scales With Your Business</H2>
         {/*
           The old lead ended "Choose the engagement model that fits the work" —
           a pointer at the five pills directly beneath it. E030 removed those,
@@ -77,7 +77,7 @@ export function Pricing() {
               ))}
             </ul>
             <Btn href="/join" variant="ghost">
-              Get started for free
+              Get Started for Free
             </Btn>
           </div>
 
@@ -99,7 +99,7 @@ export function Pricing() {
                 <Check key={f}>{f}</Check>
               ))}
             </ul>
-            <Btn href="/join">Get started for free</Btn>
+            <Btn href="/join">Get Started for Free</Btn>
           </div>
         </div>
 

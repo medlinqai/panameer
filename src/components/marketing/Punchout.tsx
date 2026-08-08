@@ -31,7 +31,7 @@ export function Punchout() {
               rather than the pitch.
             */}
             <h2 className="mb-3 text-[30px] font-extrabold tracking-[-0.8px] text-white sm:text-[38px]">
-              The only zero-to-hero platform for Enterprise Systems + AI.
+              The Only Zero-to-Hero Platform for Enterprise Systems + AI.
             </h2>
             <p className="text-[18px] leading-relaxed text-white/85">
               Start with free training, build a validated profile, meet the
@@ -41,7 +41,7 @@ export function Punchout() {
             </p>
 
             <h3 className="mb-2 mt-7 text-[21px] font-bold text-white">
-              And the first pure services “Punchout.”
+              And the First Pure Services “Punchout.”
             </h3>
             <p className="text-[17px] leading-relaxed text-white/85">
               Connect your ERP to Panameer with one click and expand what your
@@ -77,15 +77,15 @@ export function Punchout() {
           */}
           <div className="rounded-2xl border border-white/25 bg-white/[0.12] p-7 text-center">
             <div className="text-[26px] font-extrabold leading-[1.15] text-white">
-              Connect your ERP
+              Connect Your ERP
               <br />
-              in under a minute
+              in Under a Minute
             </div>
             <div className="mt-2 text-white/80">
               Oracle Cloud, SAP, and more — one click.
             </div>
             <Btn href="/join" className="mt-5">
-              See how it works →
+              See How It Works →
             </Btn>
           </div>
         </div>

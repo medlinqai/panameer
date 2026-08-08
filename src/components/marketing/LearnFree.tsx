@@ -58,10 +58,19 @@ export function LearnFree() {
     <section id="learn" className="bg-bg-soft py-[76px]">
       <div className="mx-auto max-w-[1180px] px-6">
         <Eyebrow>Learn</Eyebrow>
-        <H2>Learn to use applications — free</H2>
+        <H2>Learn to Use Applications — Free</H2>
+        {/*
+          E022 — SCOTT'S COPY, VERBATIM. What was here ("Guided learning paths
+          and courses across the enterprise stack, open to everyone.") described
+          the tone and never the mechanism: it did not say what a learning path
+          IS, and it did not mention the certification, which is the reason to
+          finish one. Left in body case on purpose — the convention title-cases
+          labels, not subheads.
+        */}
         <Lead>
-          Guided learning paths and courses across the enterprise stack, open to
-          everyone.
+          Learning paths group functionally oriented courses into guided
+          sessions based on business applications. Each pathway completes with a
+          test and a certification for those who pass it.
         </Lead>
         <div className="flex flex-wrap gap-3">
           {PATHS.map((p) => (
@@ -84,7 +93,7 @@ export function LearnFree() {
             href="/learn"
             className="rounded-full border border-magenta bg-magenta/6 px-[18px] py-2.5 font-bold text-magenta transition-colors hover:bg-magenta/12"
           >
-            See every learning path →
+            See Every Learning Path →
           </Link>
         </div>
       </div>

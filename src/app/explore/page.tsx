@@ -86,16 +86,16 @@ export default async function ExplorePage({
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Btn href={hiring ? "/join?type=buyer" : "/join?type=seller"}>
-              {hiring ? "Post a Work Request" : "Create your provider profile"}
+              {hiring ? "Post a Work Request" : "Create Your Provider Profile"}
             </Btn>
             <Btn href="/learn" variant="ghost">
-              Browse free learning paths
+              Browse Free Learning Paths
             </Btn>
           </div>
 
           <p className="mt-10 text-[14px] text-ink-2">
             <Link href="/" className="font-semibold underline underline-offset-4 hover:text-magenta">
-              Back to the home page
+              Back to the Home Page
             </Link>
           </p>
         </div>

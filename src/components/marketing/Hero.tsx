@@ -189,7 +189,7 @@ export function Hero() {
                 (mode === "hire" ? "bg-white text-magenta" : "text-white")
               }
             >
-              I want to hire
+              I Want to Hire
             </button>
             <button
               type="button"
@@ -200,7 +200,7 @@ export function Hero() {
                 (mode === "work" ? "bg-white text-magenta" : "text-white")
               }
             >
-              I want to work
+              I Want to Work
             </button>
           </div>
 
