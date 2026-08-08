@@ -1,4 +1,5 @@
 import { Hero } from "@/components/marketing/Hero";
+import { WhyPanameerPrimer } from "@/components/marketing/WhyPanameerPrimer";
 import { Announcement } from "@/components/marketing/Announcement";
 import { ForkChooser } from "@/components/marketing/ForkChooser";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
@@ -42,6 +43,7 @@ export default function Home() {
         page where the reader has not chosen.
       */}
       <Hero />
+      <WhyPanameerPrimer />
       <ForkChooser />
       {/*
         E069 — THE RIBBON PARKS ABOVE THE FOOTER. It has now been at the top of
