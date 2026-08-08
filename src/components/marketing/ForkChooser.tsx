@@ -15,12 +15,25 @@ import { AUDIENCE_CHOICES, AUDIENCE_PATH } from "@/lib/audience";
  * rather than to explain anything. This is the same fork given room to argue:
  * it can afford a sentence per side, which the toggle cannot. Both point at
  * the same two routes, from one map, so they cannot drift apart.
+ *
+ * E077 — AND AT THE BOTTOM IT IS THE PAGE'S CTA, not its navigation. That is a
+ * claim about the whole page: `/` sells the model — the badge, then the four
+ * primers — and then asks for exactly one thing, which is that you say which
+ * side you are on. So the copy here changed register. It used to introduce a
+ * choice ("Panameer has two sides…"); it now closes an argument, because by
+ * the time anyone reaches it they have read the argument.
+ *
+ * ⚠ AND IT IS THE ONLY ASK. No "create your profile", no "get started free",
+ * no email capture anywhere on `/` — the header's Sign Up button is the sole
+ * signup on the page, and it was already there. Conversion happens on the
+ * audience pages, after the audience-specific value; asking here would be
+ * asking before the reader knows which product they are being sold.
  */
 export function ForkChooser() {
   return (
     <section id="fork" className="bg-bg-soft py-[76px]">
       <div className="mx-auto max-w-[1180px] px-6">
-        <Eyebrow>Two Ways In</Eyebrow>
+        <Eyebrow>Pick Your Side</Eyebrow>
         {/*
           E068 — "WHAT'S IN IT FOR YOU?" rather than "Which One Are You
           Today?". The old headline asked the reader to classify themselves
@@ -30,8 +43,9 @@ export function ForkChooser() {
         */}
         <H2>What&apos;s in It for You?</H2>
         <Lead>
-          That depends on your role. Pick the path that fits — we&apos;ll show
-          you the value built for your side.
+          That depends on which side of it you are on. You have seen how the
+          platform works — now pick your side, and we&apos;ll show you the value
+          built for it.
         </Lead>
 
         <div className="grid gap-5 md:grid-cols-2">
