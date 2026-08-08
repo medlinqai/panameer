@@ -279,22 +279,22 @@ body {
  * not assumed.
  */
 /*
- * THE FOCUS STRIP'S REMEMBERED STATE (E061), applied before first paint.
+ * THE FOCUS STRIP'S REMEMBERED SIDE (E061), applied before first paint.
  *
- * Driven by attributes FOCUS_BOOT_SCRIPT writes on <html> in <head>, so both
- * rules are already true when the page paints. The alternative — deciding in
- * React — either flashes the strip at everyone who dismissed it or makes every
- * marketing page dynamic to read a cookie. Neither is worth it for a notice.
+ * Driven by the attribute FOCUS_BOOT_SCRIPT writes on <html> in <head>, so the
+ * ring is already there when the page paints. Deciding it in React would either
+ * make every marketing page dynamic to read a cookie, or paint the ring a frame
+ * late — a visible twitch on a highlight.
  *
- * NOT in @layer base: these must beat the strip's own utility classes, and a
+ * The dismiss rule that used to sit here is gone with the Dismiss button: the
+ * strip is permanent now.
+ *
+ * NOT in @layer base: this must beat the strip's own utility classes, and a
  * base-layer rule loses to every utility by definition.
+ *
+ * A ring, not a fill — the fill means "this is the page you are on", and the
+ * cookie is not a claim about that.
  */
-:root[data-focus-dismissed="1"] [data-focus-strip] {
-  display: none;
-}
-
-/* Pre-highlight the remembered side. A ring, not a fill — the fill means "this
-   is the page you are on", and the cookie is not a claim about that. */
 :root[data-focus="buyer"] [data-focus-strip] [data-opt="buyer"]:not([aria-current]),
 :root[data-focus="provider"] [data-focus-strip] [data-opt="provider"]:not([aria-current]) {
   box-shadow: inset 0 0 0 1.5px var(--color-magenta);

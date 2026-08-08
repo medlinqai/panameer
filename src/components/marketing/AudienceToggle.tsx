@@ -1,12 +1,9 @@
 import Link from "next/link";
 import { AUDIENCE_CHOICES, AUDIENCE_PATH, type Audience } from "@/lib/audience";
-import {
-  FocusRemember,
-  FocusStripControls,
-} from "@/components/marketing/FocusStripControls";
+import { FocusRemember } from "@/components/marketing/FocusRemember";
 
 /**
- * "Focus this Page" — the fork strip (E060, E061).
+ * "What Do You Do?" — the fork strip (E060, E061).
  *
  * RESTYLED TO MATCH THE DEV BANNER, which is the point of E061: two full-width
  * strips stacked at the top of every page, one a pale magenta band and one a
@@ -21,6 +18,16 @@ import {
  * destinations, and middle-click behaves. Only the dismiss button needs a
  * client, and it is its own tiny component so this one stays static.
  *
+ * PERMANENT — THERE IS NO DISMISS (E061). It had one, and the reasoning against
+ * it is simple: the strip exists to get a side picked, and the only thing
+ * Dismiss did was let the question be closed unanswered. A visitor who has
+ * chosen no longer needs the strip because they are on their page and the
+ * option is filled in; a visitor who has not is precisely who it is for.
+ *
+ * The label carries the change. "Focus this Page:" described what the control
+ * did to the page — a mechanism. "What Do You Do?" asks the reader something,
+ * and a question is harder to scroll past than an instruction.
+ *
  * REMEMBER-ONLY, NEVER REDIRECT. The cookie pre-highlights the last choice with
  * a ring; it does not move anybody. See lib/focus-strip.ts.
  *
@@ -30,17 +37,23 @@ import {
 export function AudienceToggle({ audience }: { audience: Audience }) {
   return (
     /*
-      `data-focus-strip` is what the pre-paint script's CSS rule hides. The
-      element is still rendered server-side and still in the HTML — hiding it
-      in CSS before first paint is what avoids both a layout flash and a
-      dynamic page.
+      `data-focus-strip` scopes the pre-highlight rule in globals.css, so the
+      ring can be applied from a <html> attribute without this staying a client
+      component.
     */
     <div
       data-focus-strip
       className="sticky top-[70px] z-40 border-b border-magenta/20 bg-magenta/8 px-4 py-2.5 backdrop-blur-[10px] sm:px-6"
     >
-      <div className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-center gap-x-3 gap-y-2">
-        <span className="text-[14px] font-bold text-ink">Focus this Page:</span>
+      {/*
+        `justify-center` with a plain gap, and nothing pushed to either edge.
+        Dismiss used to float right, which meant the question and its two
+        answers sat off-centre with a dead span of strip beside them. With it
+        gone the three parts are one centred group — which is what they always
+        were.
+      */}
+      <div className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-center gap-x-3.5 gap-y-2">
+        <span className="text-[15px] font-bold text-ink">What Do You Do?</span>
 
         <div className="inline-flex rounded-full border border-line bg-white p-1">
           {AUDIENCE_CHOICES.map((c) => {
@@ -70,7 +83,6 @@ export function AudienceToggle({ audience }: { audience: Audience }) {
         </div>
 
         <FocusRemember audience={audience} />
-        <FocusStripControls />
       </div>
     </div>
   );

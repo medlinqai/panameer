@@ -1,9 +1,14 @@
 /**
  * THE FOCUS STRIP'S MEMORY (E061).
  *
- * Two things get remembered: whether the strip was dismissed, and which
- * audience was last chosen. Both live in cookies, both are read BEFORE FIRST
- * PAINT by the boot script below, and neither ever changes where you land.
+ * One thing gets remembered: which audience was last chosen. It lives in a
+ * cookie, it is read BEFORE FIRST PAINT by the boot script below, and it never
+ * changes where you land.
+ *
+ * THE STRIP IS PERMANENT NOW (E061). It used to be dismissible, with a second
+ * cookie and a CSS rule that hid it. Both are gone: the strip's job is to get
+ * a side picked, and a control whose only function is to make that question go
+ * away unanswered was working against it. It stays until the visitor chooses.
  *
  * ⚠ REMEMBER-ONLY. THE COOKIE MUST NOT REDIRECT `/`. Scott's constraint, and
  * the right one: a returning visitor who types panameer.com and is silently
@@ -11,21 +16,17 @@
  * cookie pre-highlights the option they picked last time. That is the whole
  * behaviour.
  *
- * WHY A PRE-PAINT SCRIPT AND NOT A SERVER READ. Reading cookies in the page
+ * WHY A PRE-PAINT SCRIPT AND NOT A SERVER READ. Reading the cookie in the page
  * would opt `/` out of static prerendering — it is one of 200-odd statically
- * generated routes and the brief's own gate requires it stay that way. Reading
- * them in an effect instead would flash the strip at every returning visitor
- * who had already dismissed it, which is precisely what dismissing was for.
- * Writing an attribute on <html> before paint costs neither: same pattern, same
- * file position and same reasoning as THEME_BOOT_SCRIPT, which solves the
- * identical problem for dark mode.
+ * generated routes and the gate requires it stay that way. Reading it in an
+ * effect would paint the ring a frame late, which on a highlight is a visible
+ * twitch. Writing an attribute on <html> before paint costs neither: same
+ * pattern, same file position and same reasoning as THEME_BOOT_SCRIPT.
  *
- * SESSION COOKIES, deliberately — no max-age. "I dismissed this" is a statement
- * about this visit, not a year-long preference, and a strip that never comes
- * back cannot be found again by someone who wants it.
+ * A SESSION COOKIE, deliberately — no max-age. Which side someone is browsing
+ * as is a statement about this visit, not a year-long preference.
  */
 
-export const FOCUS_DISMISSED_COOKIE = "pnmr_focus_dismissed";
 export const FOCUS_AUDIENCE_COOKIE = "pnmr_focus";
 
 /**
@@ -36,8 +37,6 @@ export const FOCUS_AUDIENCE_COOKIE = "pnmr_focus";
  */
 export const FOCUS_BOOT_SCRIPT = `
 try {
-  var m = document.cookie.match(/(?:^|; )${FOCUS_DISMISSED_COOKIE}=1/);
-  if (m) document.documentElement.setAttribute("data-focus-dismissed", "1");
   var a = document.cookie.match(/(?:^|; )${FOCUS_AUDIENCE_COOKIE}=(buyer|provider)/);
   if (a) document.documentElement.setAttribute("data-focus", a[1]);
 } catch (e) {}
