@@ -73,9 +73,16 @@ export function LearnFree() {
               {p.label}
             </Link>
           ))}
+          {/*
+            `bg-magenta/6`, not `bg-magenta/[0.06]`. The arbitrary-decimal form
+            compiles to NO RULE under Tailwind v4 — the class reaches the
+            markup, the stylesheet never gets it, and this pill has been
+            rendering with no fill and no hover state since it was written.
+            Verified in the built CSS. The slash-integer form generates.
+          */}
           <Link
             href="/learn"
-            className="rounded-full border border-magenta bg-magenta/[0.06] px-[18px] py-2.5 font-bold text-magenta transition-colors hover:bg-magenta/[0.12]"
+            className="rounded-full border border-magenta bg-magenta/6 px-[18px] py-2.5 font-bold text-magenta transition-colors hover:bg-magenta/12"
           >
             See every learning path →
           </Link>

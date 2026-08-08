@@ -20,12 +20,31 @@ export default function Home() {
       turned this page's text near-white while its white panels stayed white.
     */
     <div className="marketing-surface min-h-screen bg-white font-body text-ink">
+      {/*
+        E016.6 / D3 — LEARN MOVES TO SECOND. It was fifth, below the punchout
+        pitch, which put the one thing on this page that is free, finished and
+        usable today underneath two sections describing what the marketplace
+        will do. The hero now ends on "Start learning — free" and hands
+        straight to it.
+
+        E016.11 — THE SHADING SURVIVED THE MOVE, and no flip was needed. By
+        page background the new run looks wrong — soft, white, white, white —
+        but two of those sections render full-bleed dark panels, so what is
+        actually seen alternates on every boundary:
+
+          magenta ribbon · DARK hero · soft Learn · white How · DARK Punchout ·
+          white Pricing · ink footer
+
+        Flipping Pricing to soft was tried and reverted: its Basic card is
+        bg-soft specifically so it lifts off a white section (E011), and it
+        disappears into a soft one.
+      */}
       <MarketingHeader />
       <Announcement />
       <Hero />
+      <LearnFree />
       <HowItWorks />
       <Punchout />
-      <LearnFree />
       <Pricing />
       <MarketingFooter />
     </div>

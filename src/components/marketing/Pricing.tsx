@@ -32,6 +32,21 @@ function Check({ children }: { children: string }) {
 
 export function Pricing() {
   return (
+    /*
+      E016.11 — CHECKED, AND LEFT WHITE. Counting page backgrounds after the D3
+      move suggests three whites in a row (HowItWorks, Punchout, Pricing) and a
+      flip somewhere. Counting what is actually SEEN says otherwise: Punchout's
+      background is white but it renders a full dark gradient panel edge to
+      edge, so the sequence reads
+
+        magenta ribbon · dark hero · soft Learn · white How · dark Punchout ·
+        white Pricing · ink footer
+
+      — which alternates on every boundary. Flipping this section to soft would
+      also collide with the Basic card, which is bg-soft precisely so it
+      separates from a white section (E011); the card would vanish into the band
+      and the fix for one walk error would reopen another.
+    */
     <section id="pricing" className="py-[76px]">
       <div className="mx-auto max-w-[1180px] px-6">
         <Eyebrow>Pricing</Eyebrow>
@@ -83,15 +98,39 @@ export function Pricing() {
           </div>
         </div>
 
-        <div className="mt-[34px] flex flex-wrap gap-3">
-          {MODELS.map((m) => (
-            <span
-              key={m}
-              className="rounded-full border border-line bg-white px-[18px] py-2.5 font-bold text-ink"
-            >
-              {m}
-            </span>
-          ))}
+        {/*
+          E016.10 — THESE ARE LABELS, AND NOW LOOK LIKE IT.
+
+          They were already `<span>`s, so nothing was ever clickable — the
+          problem was purely that they were dressed as controls: pill radius,
+          white fill on a white section, a border, bold text. Beside two cards
+          whose buttons look almost exactly the same, that reads as a filter row
+          that ignores you.
+
+          Made honest rather than made live. A real filter would need pricing
+          content per model to filter TO, and there is one Basic card and one
+          Plus card — filtering two cards by five engagement models is a control
+          with nothing behind it either. So: a stated list, introduced by the
+          label that says what it is, in the flat chip treatment used for
+          read-only vocabulary elsewhere. Not bold, no pill, no hover.
+
+          When engagement models get their own content, this becomes anchors —
+          the array is already the list.
+        */}
+        <div className="mt-[34px]">
+          <p className="mb-2.5 text-[13px] font-extrabold uppercase tracking-[0.06em] text-ink-2">
+            Engagement models supported
+          </p>
+          <ul className="flex flex-wrap gap-2.5">
+            {MODELS.map((m) => (
+              <li
+                key={m}
+                className="rounded-[8px] border border-line bg-white/70 px-3.5 py-2 text-[14.5px] text-ink-2"
+              >
+                {m}
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
     </section>
