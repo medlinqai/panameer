@@ -62,9 +62,15 @@ export const BRAND_BADGE_SHORT = "Learn. Connect. Create. Get Paid.";
  * the hero badge just gave up.
  *
  * BRAND_MANIFESTO is unchanged and still renders in Punchout.
+ *
+ * E016.3 (walk 2) — "ANYONE", NOT "EVERYONE". They look interchangeable and are
+ * not. "Everyone can" is a claim about the whole population and invites the
+ * reader to test it; "anyone can" is an open door, addressed to the one person
+ * reading. The sentence is about permission, so it takes the word that grants
+ * it.
  */
 export const BRAND_COMMUNITY_LINE =
-  "The only community where everyone can build skills, connect with experts, " +
+  "The only community where anyone can build skills, connect with experts, " +
   "do great work, and get paid — together.";
 
 /**

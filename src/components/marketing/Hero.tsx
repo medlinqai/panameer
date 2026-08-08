@@ -1,12 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useState, useSyncExternalStore } from "react";
 import { BRAND_BADGE_SHORT, BRAND_DESCRIPTOR } from "@/lib/brand";
 
 /**
- * The hero — video backdrop, hire/work toggle, search, and Learn quick-tags.
+ * The hero — video backdrop, hire/work toggle, search, and search quick-tags.
  *
  * E016.1 — THE VIDEO IS THE BACKGROUND, not a picture beside the words. The
  * previous build reserved a right-hand 38% slot for a photo that was never
@@ -25,29 +24,32 @@ import { BRAND_BADGE_SHORT, BRAND_DESCRIPTOR } from "@/lib/brand";
  */
 
 /**
- * E016.5 — QUICK-TAGS, EVERY ONE BACKED BY A REAL LEARNING PATH.
+ * E020 — THE QUICK-TAGS ARE SEARCH TERMS, NOT LEARN LINKS.
  *
- * What was here was three invented scopes — "Order-to-Cash SME",
- * "Procure-to-Pay SME", "Record-to-Report SME" — that matched nothing in the
- * catalog and only toggled a word into the search placeholder. These navigate,
- * and every `slug` below was read off the live catalog (E219: a path's title is
- * not its slug — "Core HR" is `end-user-core-hr-core-hr`, "Journals" is
- * `end-user-finance-accounting-journals`).
+ * Walk 1 turned three invented scopes into four links to real learning paths,
+ * on the reading that "must resolve to a real catalog slug" meant they had to
+ * navigate somewhere real. Wrong destination: they sit directly under a search
+ * box, between a hire/work toggle and nothing else, so what they look like is
+ * what people expect them to be — one-tap searches. Sending them to a course
+ * page instead was a category error dressed as a fix.
  *
- * ⚠ NO AI CHIP. The brief asks for one or two, and the AI-Specialist role is
- * real — five domains, twenty skills, seeded. What does not exist is a single
- * AI LEARNING PATH: all 23 published paths are Oracle Cloud. A chip pointing at
- * an invented slug would 404, and one pointing at a "coming soon" would promise
- * free training that has not been written. It is left out and reported instead.
+ * They now run the SAME submit as the field above, with the tag as the query
+ * and the toggle deciding the side. The "Start learning — free:" label that
+ * explained the old behaviour is gone with it — chips under a search box need
+ * no explanation, and the Learn section is directly below anyway.
+ *
+ * THE AI CHIP IS BACK. It was left out of walk 1 for one reason — there is no
+ * AI learning path to link to — and that reason evaporates the moment these
+ * are search terms. "Enterprise AI" is the skill Scott means: building and
+ * extending enterprise applications with AI, which is exactly what the
+ * AI-Specialist role in the catalog covers.
  */
-const LEARN_TAGS: { label: string; slug: string }[] = [
-  { label: "Procurement", slug: "end-user-procurement-basic-procurement" },
-  {
-    label: "Supply Chain",
-    slug: "end-user-supply-chain-execution-inventory-management",
-  },
-  { label: "Human Capital Mgt", slug: "end-user-core-hr-core-hr" },
-  { label: "Finance & Accounting", slug: "end-user-finance-accounting-journals" },
+const SEARCH_TAGS = [
+  "Procurement",
+  "Supply Chain",
+  "Human Capital Mgt",
+  "Finance & Accounting",
+  "Enterprise AI",
 ];
 
 /**
@@ -97,11 +99,15 @@ export function Hero() {
     mode picks which side of the funnel it points at, so "hire" and "work" land
     somewhere different, as E016.4 asks.
   */
+  const searchFor = (term: string) => {
+    const params = new URLSearchParams({ mode });
+    if (term.trim()) params.set("q", term.trim());
+    router.push(`/explore?${params}`);
+  };
+
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    const params = new URLSearchParams({ mode });
-    if (query.trim()) params.set("q", query.trim());
-    router.push(`/explore?${params}`);
+    searchFor(query);
   };
 
   return (
@@ -231,23 +237,21 @@ export function Hero() {
           </form>
 
           {/*
-            THE TAGS ARE LABELLED, because a row of chips under a search box
-            reads as filters and these are not — they leave the page. The
-            lead-in is what makes the click predictable, and "free" is the claim
-            the section below spends a whole panel making.
+            No lead-in label. These are chips under a search field with a
+            hire/work toggle on top of it — the only thing they can plausibly
+            be is a search, and a row of buttons that has to introduce itself
+            is a row of buttons in the wrong place.
           */}
           <div className="mt-4 flex flex-wrap items-center gap-2.5">
-            <span className="text-[13.5px] font-semibold text-white/70">
-              Start learning — free:
-            </span>
-            {LEARN_TAGS.map((tag) => (
-              <Link
-                key={tag.slug}
-                href={`/learn/${tag.slug}`}
+            {SEARCH_TAGS.map((tag) => (
+              <button
+                key={tag}
+                type="button"
+                onClick={() => searchFor(tag)}
                 className="inline-flex items-center rounded-full border border-white/30 bg-white/10 px-[15px] py-2 text-[14px] font-semibold text-white transition-colors hover:border-white hover:bg-white hover:text-magenta"
               >
-                {tag.label}
-              </Link>
+                {tag}
+              </button>
             ))}
           </div>
         </div>

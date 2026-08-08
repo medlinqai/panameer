@@ -37,8 +37,30 @@ export function MarketingHeader() {
           `flex items-center` on the wrapper rather than the old `relative`:
           nothing is pinned to it now, and the mark centres on the row itself.
         */}
+        {/*
+          E018 — THE WORDMARK IS OPTICALLY CENTRED, NOT BOX-CENTRED.
+
+          `items-center` already centred the logo's BOX, which is why this
+          looked like it should be right and wasn't. The artwork is the problem:
+          in the 524×132 asset the looped P spans rows 9–114, but "anameer" —
+          all lowercase, no ascenders, no descenders — sits at rows 60–109. So
+          the word the eye actually reads occupies the BOTTOM HALF of the box,
+          and centring the box hangs the word low against nav text.
+
+          Measured on the asset, converted to the 32px render:
+            alpha-weighted ink centroid   1.75px below box centre
+            x-height band ("anameer")     4.48px below box centre
+
+          The truth is between them — the P reads as a genuine ascender, so it
+          should pull the centre up somewhat, but not by its full height. 3px
+          is that middle, and it is one number to change if Scott wants more or
+          less on the walk.
+
+          On the <Image>, not the <Link>: the click target stays where the
+          layout put it.
+        */}
         <div className="flex shrink-0 items-center">
-          <Logo className="h-8 w-auto" priority />
+          <Logo className="h-8 w-auto -translate-y-[3px]" priority />
         </div>
 
         {/*
