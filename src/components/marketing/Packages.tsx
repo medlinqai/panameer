@@ -1,4 +1,4 @@
-import { Eyebrow, H2, Lead } from "@/components/marketing/section";
+import { Eyebrow, Lead } from "@/components/marketing/section";
 
 /**
  * "By Packages" — the third way to buy (E028(iii)).
@@ -69,11 +69,22 @@ export function Packages() {
     */
     <section id="packages" className="py-[76px]">
       <div className="mx-auto max-w-[1180px] px-6">
-        <Eyebrow>Packages</Eyebrow>
-        <H2>By Packages — All-Inclusive: Manage Risk &amp; Contain Costs</H2>
+        <Eyebrow>Manage Deployment Cost &amp; Risk</Eyebrow>
+        {/*
+          E046 — THE BIGGEST HEADING ON THE BUYER PAGE, and not by accident.
+          Packages are the thing a buyer cannot get anywhere else in this
+          market: everywhere else you buy hours and hope. Shared <H2> tops out
+          at 36px, which puts this level with Pricing and below the hero; this
+          one is set larger so the page has an obvious centre of gravity. It is
+          the only place on the site that overrides the shared heading scale,
+          which is why it says so here rather than quietly diverging.
+        */}
+        <h2 className="mb-3 text-[34px] font-extrabold leading-[1.06] tracking-[-1.1px] sm:text-[46px]">
+          Buy Pre-Packaged Deployments — In a Box
+        </h2>
         <Lead>
-          A package is a fixed scope at a fixed price, delivered by a provider
-          who has done it before. You know the cost before you start.
+          Everything scoped, priced, and agreed up front — no cost overruns,
+          delivered by an expert who&apos;s done this exact job before.
         </Lead>
 
         {/*

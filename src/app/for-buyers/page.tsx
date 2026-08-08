@@ -4,6 +4,7 @@ import { WhyPanameer } from "@/components/marketing/WhyPanameer";
 import { Packages } from "@/components/marketing/Packages";
 import { Punchout } from "@/components/marketing/Punchout";
 import { Pricing } from "@/components/marketing/Pricing";
+import { AudienceCta } from "@/components/marketing/AudienceCta";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
 
 /**
@@ -37,6 +38,7 @@ export default function ForBuyersPage() {
       <Packages />
       <Punchout />
       <Pricing />
+      <AudienceCta audience="buyer" />
     </MarketingShell>
   );
 }
