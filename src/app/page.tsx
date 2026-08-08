@@ -42,16 +42,17 @@ export default function Home() {
         page where the reader has not chosen.
       */}
       <Hero />
+      <ForkChooser />
       {/*
-        E069 — THE RIBBON SITS BELOW THE HERO NOW. Above it, the page opened on
-        three stacked full-width strips — dev banner, Focus strip, magenta
-        ribbon — before a visitor reached a single word of the actual page.
-        Three notices in a row is not emphasis, it is a queue. Below the hero it
-        is the first thing after the pitch, which is where a claim about the
-        community economy actually lands.
+        E069 — THE RIBBON PARKS ABOVE THE FOOTER. It has now been at the top of
+        the stack, then directly under the hero, and neither worked: at the top
+        it was the third full-width strip before any content, and under the hero
+        a solid magenta band immediately after the pitch read as heavier than
+        the pitch. Down here it is a closing note rather than an interruption,
+        which is the right weight for a claim about an economy that does not run
+        yet. Explicitly temporary — final placement is a later call.
       */}
       <Announcement />
-      <ForkChooser />
     </MarketingShell>
   );
 }

@@ -31,11 +31,20 @@ export default function ForProvidersPage() {
   return (
     <MarketingShell audience="provider">
       <Hero audience="provider" />
-      <Announcement />
       <WhyPanameer audience="provider" />
       <LearnFree />
       <CreatorBand />
       <AudienceCta audience="provider" />
+      {/*
+        E069 — THE RIBBON PARKS ABOVE THE FOOTER. It has now been at the top of
+        the stack, then directly under the hero, and neither worked: at the top
+        it was the third full-width strip before any content, and under the hero
+        a solid magenta band immediately after the pitch read as heavier than
+        the pitch. Down here it is a closing note rather than an interruption,
+        which is the right weight for a claim about an economy that does not run
+        yet. Explicitly temporary — final placement is a later call.
+      */}
+      <Announcement />
     </MarketingShell>
   );
 }
