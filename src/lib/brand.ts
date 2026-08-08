@@ -25,16 +25,23 @@
  * person: they learn something, they meet people, they MAKE something, they get
  * paid — together.
  *
- * "Create" is the addition (E006, Scott's pick #3). It names the part of the
- * arc the four-verb version skipped: between meeting people and being paid,
- * the work itself happens, and a badge that goes straight from Connect to Get
- * Paid reads like a referral fee rather than a craft.
+ * The third beat names the part of the arc the four-verb version skipped:
+ * between meeting people and being paid, the work itself happens, and a badge
+ * that goes straight from Connect to Get Paid reads like a referral fee rather
+ * than a craft.
+ *
+ * E050 — IT IS "BUILD", NOT "CREATE". Both name that gap; they do not name it
+ * the same way. "Create" is the word for making something that did not exist —
+ * art, content, a company — and this platform's third beat is someone
+ * implementing Payables for a manufacturer. "Build" is what the people doing
+ * that work call it, it is the verb the enterprise-systems world already uses,
+ * and it sits with Learn and Connect without changing register.
  *
  * PROVISIONAL — Scott's "start there". It may shorten again, which is exactly
  * why nothing types this string: it renders in the marketing hero and the
  * header lockup from here, so a re-word is one edit and cannot half-land.
  */
-export const BRAND_BADGE = "Learn. Connect. Create. Get Paid. Together.";
+export const BRAND_BADGE = "Learn. Connect. Build. Get Paid. Together.";
 
 /**
  * THE BADGE, HERO LENGTH — four beats, no "Together" (D1, E016.2a).
@@ -49,7 +56,7 @@ export const BRAND_BADGE = "Learn. Connect. Create. Get Paid. Together.";
  * now ends on it (BRAND_COMMUNITY_LINE), and BRAND_BADGE below keeps the full
  * five beats for every other surface.
  */
-export const BRAND_BADGE_SHORT = "Learn. Connect. Create. Get Paid.";
+export const BRAND_BADGE_SHORT = "Learn. Connect. Build. Get Paid.";
 
 /**
  * THE RIBBON — the strip across the top of the marketing home (E016.3 → E039).
