@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ProviderProfileViewPage } from "@/components/profile/ProviderProfileView";
 import { getProviderProfileView } from "@/lib/provider-profile-view";
 import { getSessionViewer } from "@/lib/session";
@@ -7,8 +7,23 @@ import { getPathsTaughtByProfile } from "@/lib/learn-home";
 import { publicTestimonials } from "@/lib/recommendations";
 
 /**
- * Public provider profile — a marketplace surface. Not behind the auth gate;
- * renders server-side straight from the lib (still API-first: logic lives in
+ * Provider profile — a marketplace surface, BEHIND LOGIN as of E049.
+ *
+ * IT USED TO BE PUBLIC, and that quietly undid the masking everywhere else.
+ * /explore had just been built to show first names only, with every card CTA
+ * routed through /login precisely so nobody could walk from a teaser to a
+ * surname — and this page rendered the full profile, surname included, to
+ * anyone with the URL. A mask that one guessable route removes is not a mask;
+ * it is a convention. The route is the boundary now.
+ *
+ * WHAT SIGNING IN BUYS, AND WHAT IT DOES NOT. An account gets the profile —
+ * headline, skills, work history, packages, testimonials, rate. It does NOT get
+ * the surname or the contact details: those are transaction-tier, gated in the
+ * lib by `identityVisibility`. So there are three levels now, each a real step:
+ * anonymous sees the teaser, an account sees the expertise, an engagement sees
+ * the person.
+ *
+ * Renders server-side straight from the lib (still API-first: logic lives in
  * src/lib/provider-profile-view). The lib enforces the visibility gate
  * (brief_K), so a hidden profile 404s — but the owner always sees their own.
  *
@@ -41,6 +56,20 @@ export default async function PublicProviderPage({
   const viewer = await getSessionViewer();
 
   /*
+    E049 — THE GATE, before the read.
+
+    Ahead of the DB call on purpose: an anonymous request should not spend a
+    query on a record it is not going to be shown, and doing it here means the
+    profile payload is never even assembled for a viewer who cannot have it.
+
+    A callback so signing in lands back on the profile they were trying to open
+    — the gate is meant to cost an account, not the click.
+  */
+  if (!viewer) {
+    redirect(`/login?callbackUrl=${encodeURIComponent(`/providers/${id}`)}`);
+  }
+
+  /*
     THE SAME GATE, IN THE SAME PLACE. The lib returns null for a profile that
     isn't marketplace-visible unless the viewer owns it, and null is a 404 —
     unchanged from the previous implementation, which applied the identical
@@ -67,16 +96,32 @@ export default async function PublicProviderPage({
         its own thin header rather than the app shell — a buyer arriving from a
         search result is not a signed-in user and should not meet a console.
       */}
+      {/*
+        E049 — SAY WHY THE NAME IS SHORT. A profile showing one name with no
+        explanation reads as missing data, and the reader's next thought is
+        that the record is incomplete rather than that it is protected.
+      */}
+      {profile.identityMasked && (
+        <div className="border-b border-line bg-bg-soft px-4 py-2.5 text-center text-[13.5px] text-ink-2 sm:px-6">
+          Showing <span className="font-semibold text-ink">first name only</span>.
+          Full name and contact details are shared once you engage this provider.
+        </div>
+      )}
+
       <header className="sticky top-0 z-40 border-b border-line bg-white/85 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center px-4 sm:px-6">
           <Link href="/" className="font-display text-lg font-bold tracking-tight">
             Panameer
           </Link>
+          {/*
+            Was "Sign in". Nobody unauthenticated reaches this page any more, so
+            that link could only ever have told a signed-in reader to sign in.
+          */}
           <Link
-            href="/login"
+            href="/explore?mode=hire"
             className="ml-auto text-sm font-semibold text-ink-2 hover:text-magenta"
           >
-            Sign in
+            Browse Experts
           </Link>
         </div>
       </header>

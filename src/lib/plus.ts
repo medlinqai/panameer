@@ -59,6 +59,37 @@ export function contactVisibility({
 }
 
 /**
+ * WHO MAY SEE A PROVIDER'S SURNAME (E049).
+ *
+ * The identity-masking decision: before a transaction, a buyer gets the
+ * expertise, not the person. First name, photo, headline, skills, rate and
+ * location are enough to decide whether an expert is worth talking to; the
+ * surname is what turns a profile into a lead someone can take off-platform.
+ *
+ * ⚠ THE TRANSACTION TIER IS A STUB, and honestly so. `hasTransacted` is the
+ * parameter that will eventually unmask — a buyer who has engaged this provider
+ * has obviously earned their full name — but there are no engagements in the
+ * system yet, so every caller passes `false` today. It is a named argument
+ * rather than a TODO because the shape of the rule is knowable now and the
+ * caller list is not something to go rediscover later.
+ *
+ * Owner and admin are unmasked for the same reasons they are everywhere else:
+ * you cannot edit a profile you cannot see, and staff arbitrate disputes
+ * against whole records.
+ */
+export function identityVisibility({
+  isOwner,
+  isAdmin,
+  hasTransacted = false,
+}: {
+  isOwner: boolean;
+  isAdmin: boolean;
+  hasTransacted?: boolean;
+}): { showSurname: boolean } {
+  return { showSurname: isOwner || isAdmin || hasTransacted };
+}
+
+/**
  * Who may see a project's REAL client name (Walk6 WS3 / E114).
  *
  * The name is always STORED — it is required, and the validation email needs it

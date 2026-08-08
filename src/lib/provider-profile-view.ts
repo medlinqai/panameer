@@ -3,7 +3,12 @@ import { isMarketplaceVisible, providerMeetsRequired } from "@/lib/access";
 import { VISIBILITY_THRESHOLD } from "@/lib/completeness";
 import { listPublishedPackages } from "@/lib/packages";
 import { toView as toArtifactView } from "@/lib/artifacts";
-import { viewerIsPlus, contactVisibility, clientNameVisibility } from "@/lib/plus";
+import {
+  viewerIsPlus,
+  contactVisibility,
+  clientNameVisibility,
+  identityVisibility,
+} from "@/lib/plus";
 import { experienceLabel } from "@/lib/experience";
 
 /**
@@ -123,6 +128,19 @@ export async function getProviderProfileView(
   // cannot do that against a record with the client removed (E114).
   const isAdmin = Boolean(opts.viewer?.isSystemAdmin);
 
+  /*
+    E049 — THE SURNAME IS MASKED AT THE READ, not in the template.
+
+    Same reasoning as the WS5 contact gate directly above and as the /explore
+    teaser: a masked field that is still in the payload is one `{p.person
+    .lastName}` away from being on screen, and it is already in the RSC stream
+    for anyone who looks. Blanking it here means the browser never receives it.
+
+    `hasTransacted` is hard-false — there are no engagements yet. When there
+    are, this is the one line that changes.
+  */
+  const { showSurname } = identityVisibility({ isOwner, isAdmin });
+
   /**
    * WS6 (E068) — years of experience DERIVED from the work history, as the union
    * of employer and project spans. Replaces the self-reported level entirely.
@@ -181,9 +199,20 @@ export async function getProviderProfileView(
         )
       : null,
 
+    /**
+     * `identityMasked` tells the UI to EXPLAIN rather than to hide — a profile
+     * showing one name with no reason given reads as missing data.
+     */
+    identityMasked: !showSurname,
     person: {
       firstName: profile.person.first_name,
-      lastName: profile.person.last_name,
+      /*
+        Empty string, not null: `displayFullName` and <Avatar> both filter
+        falsy parts, so every existing consumer degrades to the first name with
+        no component change. A null would have needed a type widening in four
+        places to achieve exactly the same render.
+      */
+      lastName: showSurname ? profile.person.last_name : "",
       title: profile.person.title,
       photoUrl: profile.person.photo_url,
     },
