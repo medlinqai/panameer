@@ -70,8 +70,17 @@ export function MarketingHeader() {
           breakpoint, where six links still have to fit beside two buttons) and
           the left offset goes, so the nav starts where the wordmark ends
           instead of a step further in.
+
+          E038 — AND NOW IT IS ITS OWN ZONE. Widening the gap fixed the density
+          and left the position wrong: the nav was still the second item in a
+          left-packed row, so it sat against the wordmark with all the slack
+          dumped between it and the buttons. `flex-1 justify-center` makes the
+          middle zone take every remaining pixel and centre its contents in
+          them, which is what "equidistant from logo and actions" actually
+          requires — the two outer zones are different widths, so centring the
+          nav in the ROW would not centre it between them.
         */}
-        <nav className="hidden gap-7 text-[15px] font-semibold text-ink-2 md:flex lg:gap-[34px]">
+        <nav className="hidden flex-1 justify-center gap-7 text-[15px] font-semibold text-ink-2 md:flex lg:gap-[34px]">
           {MARKETING_NAV.map((item, i) => (
             <Link
               key={`${item.label}-${i}`}
@@ -83,7 +92,12 @@ export function MarketingHeader() {
           ))}
         </nav>
 
-        <div className="ml-auto hidden shrink-0 items-center gap-3 md:flex">
+        {/*
+          `ml-auto` is gone: the nav's `flex-1` now owns the slack, and leaving
+          an auto margin here would fight it for the same space and pull the
+          nav back off centre.
+        */}
+        <div className="hidden shrink-0 items-center gap-3 md:flex">
           {/*
             E003 — LOG IN IS A CONTROL NOW, not bold body text. It was
             `font-bold` with no colour of its own, inheriting `--color-ink`,
