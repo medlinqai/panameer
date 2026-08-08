@@ -19,20 +19,18 @@ import type { ReactNode } from "react";
  */
 export const MARKETING_NAV: { label: string; href: string }[] = [
   /*
-    E062 — THESE TWO ARE THE AUDIENCE SWITCH, and they are named for it now.
-    They already pointed at the fork pages under the labels "Hire Talent" and
-    "Find Work", which are action framings: useful, and no help at all to the
-    person the entry is for — someone who arrived as a provider and now wants
-    to hire. That visitor is looking for a way to change WHO THE PAGE IS FOR,
-    and "For Buyers" is that in two words.
-
-    Renamed rather than added. Six nav items plus a logo and two buttons
-    already fills 1180px; eight would wrap or shrink, and the two new entries
-    would have pointed at the same routes as the two they sat beside.
+    E062, REVERTED. These two briefly read "For Buyers" / "For Providers", on
+    the reasoning that the visitor who needs them is switching audience and
+    should see the audience named. Scott's call is the other way, and it holds
+    up: "Hire Talent" and "Find Work" say what you came to DO, which is what a
+    nav label is for, while "For Buyers" describes a page rather than an
+    intention. The audience switch is in the routing either way — these still
+    go to /for-buyers and /for-providers — so nothing was lost by naming them
+    after the action.
   */
   { label: "Learn", href: "/for-providers#learn" },
-  { label: "For Buyers", href: "/for-buyers" },
-  { label: "For Providers", href: "/for-providers" },
+  { label: "Hire Talent", href: "/for-buyers" },
+  { label: "Find Work", href: "/for-providers" },
   { label: "Why Panameer", href: "#why" },
   { label: "Pricing", href: "/for-buyers#pricing" },
   { label: "Enterprise", href: "/for-buyers#punchout" },
