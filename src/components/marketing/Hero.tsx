@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useState, useSyncExternalStore } from "react";
+import { useState } from "react";
+import { usePrefersReducedMotion } from "@/lib/use-reduced-motion";
 import { BRAND_BADGE_SHORT, BRAND_DESCRIPTOR } from "@/lib/brand";
 
 /**
@@ -52,27 +53,6 @@ const SEARCH_TAGS = [
   "Enterprise AI",
 ];
 
-/**
- * Does this visitor want less motion?
- *
- * `useSyncExternalStore` rather than an effect: setState-in-effect is an eslint
- * error in this repo, and subscribing to the media query is the honest shape
- * anyway — the answer can change while the page is open. The server snapshot is
- * `false` so the markup matches, and a reduced-motion visitor gets the gradient
- * on the first client render instead of a 14-second loop they did not ask for.
- */
-function usePrefersReducedMotion() {
-  const subscribe = useCallback((onChange: () => void) => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, []);
-  return useSyncExternalStore(
-    subscribe,
-    () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-    () => false
-  );
-}
 
 export function Hero() {
   const router = useRouter();

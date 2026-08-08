@@ -2,109 +2,89 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Eyebrow, H2, Lead } from "@/components/marketing/section";
+import { usePrefersReducedMotion } from "@/lib/use-reduced-motion";
 
 /**
- * "How it works" — four media tiles, one per beat of the badge (E016.9).
+ * "How It Works" — the four beats of the badge, as four media tiles
+ * (E025, E026, E027).
  *
- * WHAT WAS HERE: three numbered cards, and above them an eight-item grid whose
- * icons were `▦ ◇ $ ◈ ☺ ⚙ ⇄ ▣` — Geometric Shapes codepoints standing in for
- * artwork, which is what a deck looks like the week before the designer joins.
- * The glyphs are gone. The application list stays, because "we cover every
- * application" is a real claim and the list is the evidence, but it is set as
- * plain labelled chips instead of pretending each one has an icon.
+ * E027 — THE AUDIENCE TOGGLE IS GONE. Walk 1 built a "For Requesters / For
+ * Providers" segmented control that reframed all four captions. It worked, and
+ * it was still wrong: a visitor who has not yet decided which side they are on
+ * — which is most of them, on a home page — was being asked to pick before
+ * being told what the thing does. One neutral caption set says it once.
  *
- * THE TREATMENT IS THE REFERENCE'S, NOT ITS CONTENT: large rounded media tiles
- * in a row, bold caption BENEATH each rather than inside, generous gaps, no
- * card borders, the first tile a muted autoplaying loop with a play/pause
- * control. Ours is four beats rather than three, brand-tinted magenta/navy, and
- * says "Create" where the badge says Create — E016.9(d).
+ * E025 — EVERYTHING IS ON THE CARD NOW. The captions used to sit underneath
+ * the tiles, in the reference's arrangement, which left the media doing nothing
+ * but decorate: tile 1 was a video with no word on it at all. Beat word, caption
+ * and clarifier are all overlaid on the media, over a scrim heavy enough to
+ * carry them, and every tile carries its word.
  *
- * ⚠ ONLY ONE REAL PIECE OF FOOTAGE EXISTS. `panameer-office.mp4` is the whole
- * media library today, so tile 1 gets it and tiles 2–4 get designed brand
- * panels. Those panels are deliberately not stock photos and not empty grey
- * boxes: a gradient with the beat set into it reads as intentional, where a
- * placeholder rectangle reads as broken. Each tile's `media` is one field —
- * dropping in real photography later is a one-line change per tile.
+ * The sequence is numbered 1–4 with a connective arrow between tiles, because
+ * four captioned squares in a row do not read as an order — and the order is
+ * the entire point of "how it works".
  */
 
 type Beat = {
-  key: string;
-  /** The badge word. Never reframed — these four ARE the brand. */
+  n: number;
+  /** The badge word. */
   word: string;
-  /** What the beat means to whoever is reading. Reframed by the toggle. */
-  caption: { requester: string; provider: string };
-  clarifier: { requester: string; provider: string };
-  /** The tile's backdrop. `video` is the one real asset; the rest are panels. */
-  media: { kind: "video"; src: string } | { kind: "panel"; className: string };
+  /** Neutral, both-audience (E027). Title Case per conventions.md. */
+  caption: string;
+  clarifier: string;
+  video: string;
 };
 
+/*
+  E026 — WHICH CLIP GOES WHERE.
+
+  The filenames could not be trusted, so the assignment came from viewing the
+  frames: hands typing on Learn, people in conversation on Connect, the office
+  team on Create (Scott's steer — it was the hero clip and it reads as work
+  happening), the analytics dashboard on Get Paid.
+
+  This resolves E016.13: walk 1 shipped one real clip and three gradient panels
+  because one clip was all that existed. All four are real footage now.
+
+  ⚠ I could not independently re-verify the frames — there is no ffmpeg on this
+  machine to extract one — so this is the brief's viewed-and-corrected mapping
+  taken as given, not re-checked.
+*/
 const BEATS: Beat[] = [
   {
-    key: "learn",
+    n: 1,
     word: "Learn",
-    caption: {
-      requester: "Know what you're buying",
-      provider: "Build the skill",
-    },
-    clarifier: {
-      requester:
-        "Free paths on the applications your team runs, so a Work Request describes the work instead of guessing at it.",
-      provider:
-        "Free paths and certifications on the applications enterprises actually run.",
-    },
-    media: { kind: "video", src: "/panameer-office.mp4" },
+    caption: "Learn the Applications",
+    clarifier:
+      "Free paths on the systems that run real businesses — watch without an account.",
+    video: "/learn.mp4",
   },
   {
-    key: "connect",
+    n: 2,
     word: "Connect",
-    caption: { requester: "Meet the experts", provider: "Meet the buyers" },
-    clarifier: {
-      requester:
-        "Browse validated providers, or invite the ones you already trust.",
-      provider:
-        "Be matched to Work Requests that ask for the skills you've claimed.",
-    },
-    media: {
-      kind: "panel",
-      className:
-        "bg-[radial-gradient(120%_120%_at_15%_10%,#3b1f6b_0%,#241541_45%,#171e3e_100%)]",
-    },
+    caption: "Meet the Experts",
+    clarifier: "Browse validated providers, or invite the ones you already trust.",
+    video: "/connect.mp4",
   },
   {
-    key: "create",
+    n: 3,
     word: "Create",
-    caption: { requester: "Get the work done", provider: "Do the work" },
-    clarifier: {
-      requester:
-        "Scope it, agree it and track it in one place — or straight from your ERP.",
-      provider:
-        "Deliver against milestones that were agreed before you started.",
-    },
-    media: {
-      kind: "panel",
-      className:
-        "bg-[radial-gradient(120%_120%_at_85%_15%,#8a1f88_0%,#4a1c58_50%,#20153a_100%)]",
-    },
+    caption: "Get the Work Done",
+    clarifier:
+      "Scope it, agree it, and track it in one place — or straight from your ERP.",
+    video: "/panameer-office.mp4",
   },
   {
-    key: "paid",
+    n: 4,
     word: "Get Paid",
-    caption: { requester: "Pay when it's done", provider: "Get paid for it" },
-    clarifier: {
-      requester:
-        "By the hour, by milestone, or by draw-down — settled through Panameer.",
-      provider:
-        "By the hour, by milestone, or by draw-down — settled through Panameer.",
-    },
-    media: {
-      kind: "panel",
-      className:
-        "bg-[radial-gradient(120%_120%_at_50%_100%,#d72cd6_0%,#7a1f78_45%,#1b1436_100%)]",
-    },
+    caption: "Settle With Confidence",
+    clarifier:
+      "By the hour, by milestone, or by draw-down — settled through Panameer.",
+    video: "/get-paid.mp4",
   },
 ];
 
-/** The application coverage claim. Labels only — the glyphs are gone (E016.9). */
+/** The application coverage claim. Moves to its own section in WS-C (E028). */
 const APPS = [
   "Inventory Mgmt.",
   "Procurement",
@@ -119,13 +99,13 @@ const APPS = [
 /**
  * Has this element been scrolled into view yet?
  *
- * ONE-SHOT, on purpose: the tiles animate in the first time they are reached
- * and then stay put. Re-running on every scroll past would turn a piece of
- * polish into a flicker, so the observer disconnects itself on first hit.
+ * ONE-SHOT: the tiles animate in the first time they are reached and then stay
+ * put. Re-running on every scroll past would turn polish into a flicker, so the
+ * observer disconnects itself on first hit.
  *
- * The setState happens inside the observer CALLBACK, not in the effect body —
- * `react-hooks/set-state-in-effect` is an error in this repo and it is right
- * to be: a synchronous set here would render twice before paint.
+ * It now does a second job. Four autoplaying clips is roughly 6MB of video in a
+ * section most visitors have not scrolled to yet, so the <video> elements are
+ * not mounted until this fires — the row costs nothing until it is on screen.
  */
 function useInView<T extends HTMLElement>() {
   const ref = useRef<T | null>(null);
@@ -135,13 +115,9 @@ function useInView<T extends HTMLElement>() {
     const el = ref.current;
     if (!el) return;
     /*
-      No IntersectionObserver must not mean no content — fail open to visible
-      rather than leaving the row blank forever.
-
-      Deferred to the next frame rather than set here: a synchronous setState in
-      an effect body is a cascading render, and the lint rule that says so is
-      right. One frame later the tiles appear without their entrance, which is
-      exactly the intended degradation.
+      No IntersectionObserver must not mean no content. Deferred to the next
+      frame rather than set here: a synchronous setState in an effect body is a
+      cascading render, and the lint rule that says so is right.
     */
     if (typeof IntersectionObserver === "undefined") {
       const id = requestAnimationFrame(() => setSeen(true));
@@ -154,7 +130,7 @@ function useInView<T extends HTMLElement>() {
           io.disconnect();
         }
       },
-      { rootMargin: "0px 0px -12% 0px" }
+      { rootMargin: "200px 0px -8% 0px" }
     );
     io.observe(el);
     return () => io.disconnect();
@@ -163,161 +139,130 @@ function useInView<T extends HTMLElement>() {
   return { ref, seen };
 }
 
-/** The one tile with real footage, and the only one with a control. */
-function VideoTile({ src }: { src: string }) {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const [playing, setPlaying] = useState(true);
-
-  const toggle = useCallback(() => {
-    const v = videoRef.current;
-    if (!v) return;
-    if (v.paused) {
-      void v.play();
-      setPlaying(true);
-    } else {
-      v.pause();
-      setPlaying(false);
-    }
-  }, []);
-
-  return (
-    <>
-      <video
-        ref={videoRef}
-        aria-hidden
-        tabIndex={-1}
-        className="absolute inset-0 h-full w-full object-cover"
-        src={src}
-        autoPlay
-        muted
-        loop
-        playsInline
-      />
-      {/* Brand tint over the footage, so tile 1 belongs to the same set as the
-          three panels beside it rather than looking like a different section. */}
-      <div
-        aria-hidden
-        className="absolute inset-0 bg-[linear-gradient(140deg,rgba(23,30,62,0.55)_0%,rgba(90,31,90,0.45)_60%,rgba(215,44,214,0.35)_100%)]"
-      />
-      <button
-        type="button"
-        onClick={toggle}
-        aria-label={playing ? "Pause video" : "Play video"}
-        className="absolute bottom-3 right-3 z-[2] grid h-9 w-9 place-items-center rounded-full border border-white/40 bg-black/35 text-[13px] text-white backdrop-blur-sm transition-colors hover:bg-black/55"
-      >
-        <span aria-hidden>{playing ? "❙❙" : "▶"}</span>
-      </button>
-    </>
-  );
-}
-
 function Tile({
   beat,
-  side,
-  index,
   seen,
+  playMedia,
+  isLast,
 }: {
   beat: Beat;
-  side: "requester" | "provider";
-  index: number;
   seen: boolean;
+  playMedia: boolean;
+  isLast: boolean;
 }) {
   return (
     <div
       className={
-        "group transition-[opacity,transform] duration-700 ease-out motion-reduce:transition-none " +
+        "group relative transition-[opacity,transform] duration-700 ease-out motion-reduce:transition-none " +
         (seen ? "translate-y-0 opacity-100" : "translate-y-5 opacity-0")
       }
-      // Staggered per tile. Inline because the delay is derived from the index
-      // and Tailwind would need four hard-coded delay classes to say the same.
-      style={{ transitionDelay: `${index * 110}ms` }}
+      // Staggered per tile. Inline because the delay comes from the index, and
+      // Tailwind would need four hard-coded delay classes to say the same.
+      style={{ transitionDelay: `${(beat.n - 1) * 110}ms` }}
     >
-      <div
-        className={
-          "relative aspect-[4/3] overflow-hidden rounded-[20px] transition-transform duration-300 group-hover:-translate-y-1.5 motion-reduce:group-hover:translate-y-0 " +
-          (beat.media.kind === "panel" ? beat.media.className : "bg-[#171e3e]")
-        }
-      >
-        {beat.media.kind === "video" ? (
-          <VideoTile src={beat.media.src} />
-        ) : (
-          /*
-            The beat is set INTO the panel, large and low-contrast. It is what
-            makes a gradient read as a designed tile rather than as an image
-            that failed to load — and it disappears behind real photography the
-            moment there is any, without the caption below changing.
-          */
-          <span
+      <div className="relative aspect-[4/5] overflow-hidden rounded-[20px] bg-[#171e3e] transition-transform duration-300 group-hover:-translate-y-1.5 motion-reduce:group-hover:translate-y-0">
+        {playMedia && (
+          <video
             aria-hidden
-            className="absolute bottom-4 left-5 font-display text-[38px] font-bold leading-none tracking-[-1px] text-white/25"
-          >
-            {beat.word}
-          </span>
+            tabIndex={-1}
+            className="absolute inset-0 h-full w-full object-cover"
+            src={beat.video}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="none"
+            style={{ pointerEvents: "none" }}
+          />
         )}
+
+        {/*
+          TWO OVERLAYS, TWO JOBS. The brand wash is the vibe and is nowhere near
+          enough contrast on its own; the bottom-weighted scrim is what makes
+          three lines of white type legible over footage nobody graded. Text
+          contrast must not depend on which frame is showing.
+        */}
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-[linear-gradient(150deg,rgba(23,30,62,0.45)_0%,rgba(90,31,90,0.40)_55%,rgba(215,44,214,0.30)_100%)]"
+        />
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-[linear-gradient(180deg,rgba(9,11,28,0.30)_0%,rgba(9,11,28,0.55)_45%,rgba(9,11,28,0.90)_100%)]"
+        />
+
+        {/* The step number — half of what makes four tiles read as a sequence. */}
+        <span className="absolute left-4 top-4 z-[2] grid h-8 w-8 place-items-center rounded-full bg-white/15 text-[14px] font-extrabold text-white ring-1 ring-inset ring-white/35 backdrop-blur-sm">
+          {beat.n}
+        </span>
+
+        <div className="absolute inset-x-0 bottom-0 z-[2] p-5">
+          {/* E025(a) — the beat word, on EVERY tile including the video ones. */}
+          <p className="font-display text-[26px] font-bold leading-none tracking-[-0.6px] text-white/95">
+            {beat.word}
+          </p>
+          <h3 className="mt-2.5 text-[16px] font-bold leading-snug text-white">
+            {beat.caption}
+          </h3>
+          <p className="mt-1.5 text-[13.5px] leading-relaxed text-white/80">
+            {beat.clarifier}
+          </p>
+        </div>
       </div>
 
-      <h3 className="mt-4 text-[18px] font-bold text-ink">
-        {beat.caption[side]}
-      </h3>
-      <p className="mt-1 text-[14.5px] leading-relaxed text-ink-2">
-        {beat.clarifier[side]}
-      </p>
+      {/*
+        The connective arrow — the other half of the sequence read. Only between
+        tiles, and only where they are actually side by side: at sm the grid is
+        2×2 and at base it is a single column, so an arrow pointing right would
+        be pointing at nothing.
+      */}
+      {!isLast && (
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -right-[22px] top-[38%] hidden text-[20px] font-bold text-magenta/70 lg:block"
+        >
+          →
+        </span>
+      )}
     </div>
   );
 }
 
 export function HowItWorks() {
-  const [side, setSide] = useState<"requester" | "provider">("requester");
   const { ref, seen } = useInView<HTMLDivElement>();
+  const reducedMotion = usePrefersReducedMotion();
+
+  /*
+    Mount the clips only once the row is on screen AND motion is welcome. Both
+    conditions matter: the first saves the bandwidth, the second respects the
+    setting, and neither should silently cover for the other.
+  */
+  const playMedia = seen && !reducedMotion;
+
+  const trackRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      ref.current = node;
+    },
+    [ref]
+  );
 
   return (
     <section id="how" className="py-[76px]">
       <div className="mx-auto max-w-[1180px] px-6">
         <Eyebrow>How it works</Eyebrow>
-
-        <div className="mb-3 flex flex-wrap items-start justify-between gap-4">
-          <H2>Find service providers for every application</H2>
-
-          {/*
-            THE SEGMENTED TOGGLE mirrors the hero's "I want to hire / I want to
-            work", and reframes the four captions rather than swapping the four
-            words. The beats are the brand and do not change per audience; what
-            each one MEANS to you does.
-          */}
-          <div
-            role="group"
-            aria-label="Show how it works for"
-            className="inline-flex shrink-0 rounded-full border border-line bg-white p-1"
-          >
-            {(
-              [
-                ["requester", "For requesters"],
-                ["provider", "For providers"],
-              ] as const
-            ).map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setSide(value)}
-                aria-pressed={side === value}
-                className={
-                  "cursor-pointer rounded-full px-[18px] py-2 text-[14px] font-bold transition-colors " +
-                  (side === value
-                    ? "bg-magenta text-white"
-                    : "text-ink-2 hover:text-magenta")
-                }
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-
+        <H2>Find service providers for every application</H2>
         <Lead>
           Experts across the full enterprise stack — matched to exactly what you
           need done.
         </Lead>
 
+        {/*
+          ⚠ STILL CONFLATED, AND SPLIT IN WS-C. This grid is a COVERAGE claim
+          ("we cover every application"), the four tiles below are a PROCESS,
+          and one heading currently covers both. E028 separates them into their
+          own sections; kept here for now so this commit leaves the page whole
+          rather than dropping a section for the length of one work-stream.
+        */}
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {APPS.map((app) => (
             <div
@@ -329,9 +274,18 @@ export function HowItWorks() {
           ))}
         </div>
 
-        <div ref={ref} className="mt-14 grid gap-7 sm:grid-cols-2 lg:grid-cols-4">
+        <div
+          ref={trackRef}
+          className="mt-14 grid gap-7 sm:grid-cols-2 lg:grid-cols-4 lg:gap-11"
+        >
           {BEATS.map((beat, i) => (
-            <Tile key={beat.key} beat={beat} side={side} index={i} seen={seen} />
+            <Tile
+              key={beat.word}
+              beat={beat}
+              seen={seen}
+              playMedia={playMedia}
+              isLast={i === BEATS.length - 1}
+            />
           ))}
         </div>
       </div>
