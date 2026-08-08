@@ -21,10 +21,17 @@ export function ForkChooser() {
     <section id="fork" className="bg-bg-soft py-[76px]">
       <div className="mx-auto max-w-[1180px] px-6">
         <Eyebrow>Two Ways In</Eyebrow>
-        <H2>Which One Are You Today?</H2>
+        {/*
+          E068 — "WHAT'S IN IT FOR YOU?" rather than "Which One Are You
+          Today?". The old headline asked the reader to classify themselves
+          before it had given them a reason to; this one leads with what they
+          get and lets the role fall out of the answer. Same fork, opposite
+          direction — the question is about value, not identity.
+        */}
+        <H2>What&apos;s in It for You?</H2>
         <Lead>
-          Panameer has two sides and they want different things from it. Pick
-          the one you came for — you can switch at any time.
+          That depends on your role. Pick the path that fits — we&apos;ll show
+          you the value built for your side.
         </Lead>
 
         <div className="grid gap-5 md:grid-cols-2">

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { BRAND_COMMUNITY_LINE } from "@/lib/brand";
 
 /**
@@ -34,7 +35,22 @@ export function Announcement() {
         1040px because the credits line is longer than the one it replaced and
         was breaking to three lines at 900.
       */}
-      <p className="mx-auto max-w-[1040px] text-balance">{BRAND_COMMUNITY_LINE}</p>
+      <p className="mx-auto max-w-[1040px] text-balance">
+        {BRAND_COMMUNITY_LINE}{" "}
+        {/*
+          ENGAGEMENT AUDIT (WS-E) — the ribbon was the other read-only section
+          on `/`: a full-width claim about an economy with no way to find out
+          more. It points at the Creator band, which is the one place that
+          explains what earns a Credit and what spends it. A real destination,
+          not a link added to satisfy the rule.
+        */}
+        <Link
+          href="/for-providers#creator"
+          className="whitespace-nowrap font-bold underline underline-offset-4 hover:text-white/80"
+        >
+          How Credits Work →
+        </Link>
+      </p>
     </div>
   );
 }
