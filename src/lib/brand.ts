@@ -130,10 +130,18 @@ export const BRAND_MONEY_LINE =
  * `/` forks rather than sells, so its subhead has to be true of both sides
  * without being about neither. It names the market and the two things people
  * come to do in it, and hands off to the chooser below.
+ *
+ * E072 — SHORTENED TO FIX A BREAK, not to say anything different. The previous
+ * wording ("hire the experts who do it, or get hired…") balanced onto two lines
+ * that split after "hire", stranding the verb at the end of line one where it
+ * read as the start of a phrase that never arrived. `text-balance` was working
+ * correctly — the sentence simply had no good split at that length. "Hire an
+ * expert" is four characters shorter and moves the break to the comma, which is
+ * where the sentence already pauses.
  */
 export const BRAND_HERO_SUBHEAD_NEUTRAL =
-  "The home for Enterprise Systems and AI work — hire the experts who do it, " +
-  "or get hired for what you do best.";
+  "The home for Enterprise Systems and AI work — hire an expert, or get hired " +
+  "for what you do best.";
 
 export const BRAND_HERO_SUBHEAD_HIRE =
   "Hire the world's best Enterprise Systems and AI talent to improve the " +
