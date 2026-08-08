@@ -37,6 +37,37 @@
 export const BRAND_BADGE = "Learn. Connect. Create. Get Paid. Together.";
 
 /**
+ * THE BADGE, HERO LENGTH — four beats, no "Together" (D1, E016.2a).
+ *
+ * At 60px the five-beat badge is the entire hero: it wraps to three lines, and
+ * "Together." lands alone on the third, which is how a rallying word turns into
+ * a widow. The hero already has to carry a descriptor, a search control and a
+ * row of tags underneath, and E016.2c wants the whole block MUCH shorter.
+ *
+ * "Together" is not dropped from the brand — it moved to where it can be read
+ * as a sentence rather than skimmed as a headline: the ribbon above the hero
+ * now ends on it (BRAND_COMMUNITY_LINE), and BRAND_BADGE below keeps the full
+ * five beats for every other surface.
+ */
+export const BRAND_BADGE_SHORT = "Learn. Connect. Create. Get Paid.";
+
+/**
+ * THE COMMUNITY LINE — the ribbon across the top of the marketing home
+ * (E016.3).
+ *
+ * Replaces the manifesto in that slot. The manifesto ("The world's gotten
+ * adversarial…") says why Panameer exists, which is an About-page thought; the
+ * strip above the fold is better spent on what the visitor gets, and this is
+ * the one sentence that names all four beats and lands on "together" — the word
+ * the hero badge just gave up.
+ *
+ * BRAND_MANIFESTO is unchanged and still renders in Punchout.
+ */
+export const BRAND_COMMUNITY_LINE =
+  "The only community where everyone can build skills, connect with experts, " +
+  "do great work, and get paid — together.";
+
+/**
  * THE MONEY LINE — the badge, unpacked. Used where somebody is about to act
  * (above the sign-up chips) and where the community story starts, because those
  * are the two places the sequence needs spelling out rather than gesturing at.

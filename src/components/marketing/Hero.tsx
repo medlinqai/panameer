@@ -1,148 +1,209 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import {
-  BRAND_BADGE,
-  BRAND_DESCRIPTOR,
-  BRAND_MONEY_LINE,
-} from "@/lib/brand";
+import { useCallback, useState, useSyncExternalStore } from "react";
+import { BRAND_BADGE_SHORT, BRAND_DESCRIPTOR } from "@/lib/brand";
 
 /**
- * The hero — hire/work toggle, search box, and three role shortcuts.
+ * The hero — video backdrop, hire/work toggle, search, and Learn quick-tags.
  *
- * THE CTAs LEAD SOMEWHERE NOW (brief_marketing_home_localhost). The search
- * button was `onSubmit={e => e.preventDefault()}` over a readOnly input, and
- * the three role chips were `<span>`s styled with `cursor-pointer` and a "→".
- * They looked like the primary action on the page and did nothing, which is the
- * dead end that stopped the front-door → onboarding walk at its first click.
+ * E016.1 — THE VIDEO IS THE BACKGROUND, not a picture beside the words. The
+ * previous build reserved a right-hand 38% slot for a photo that was never
+ * dropped in, which meant the copy column was squeezed to 760px of a 1180px
+ * panel to leave room for nothing. Making the footage the backdrop gives the
+ * words the whole width back — which is most of E016.2's wrap fix on its own —
+ * and it is the treatment the reference actually uses.
  *
- * They route to `/join`, and the toggle decides which side of the fork: `?type`
- * is a parameter /join ALREADY reads to skip straight to page 2, so "I want to
- * hire" lands on the buyer jobs and "I want to work" on the seller ones. No new
- * contract invented for the sake of a link.
- *
- * The typed query is deliberately NOT carried across. Nothing downstream reads
- * it yet, and a search term that visibly survives into a URL and then changes
- * nothing is a worse promise than not appearing to search at all — there is no
- * public provider index to search against until sign-up.
+ * E016.2 — THE WRAP WAS A CONTAINER, NOT A LINE BREAK. Nothing here ever forced
+ * one: the headline wrapped early because it lived in a 760px column, and the
+ * two paragraphs under it wrapped earlier still at max-w-[560px]. At those
+ * widths a four-beat badge takes three lines and the hero has to be 520px tall
+ * to hold them. Widened, "Learn. Connect. Create. Get Paid." sets on one line
+ * and the whole block collapses to roughly two-thirds the height — which is
+ * E016.2c ("MUCH thinner") arriving as a consequence rather than as a squeeze.
  */
-/** The three delivery scopes the hero search can narrow to. */
-const SCOPES = ["Order-to-Cash SME", "Procure-to-Pay SME", "Record-to-Report SME"];
+
+/**
+ * E016.5 — QUICK-TAGS, EVERY ONE BACKED BY A REAL LEARNING PATH.
+ *
+ * What was here was three invented scopes — "Order-to-Cash SME",
+ * "Procure-to-Pay SME", "Record-to-Report SME" — that matched nothing in the
+ * catalog and only toggled a word into the search placeholder. These navigate,
+ * and every `slug` below was read off the live catalog (E219: a path's title is
+ * not its slug — "Core HR" is `end-user-core-hr-core-hr`, "Journals" is
+ * `end-user-finance-accounting-journals`).
+ *
+ * ⚠ NO AI CHIP. The brief asks for one or two, and the AI-Specialist role is
+ * real — five domains, twenty skills, seeded. What does not exist is a single
+ * AI LEARNING PATH: all 23 published paths are Oracle Cloud. A chip pointing at
+ * an invented slug would 404, and one pointing at a "coming soon" would promise
+ * free training that has not been written. It is left out and reported instead.
+ */
+const LEARN_TAGS: { label: string; slug: string }[] = [
+  { label: "Procurement", slug: "end-user-procurement-basic-procurement" },
+  {
+    label: "Supply Chain",
+    slug: "end-user-supply-chain-execution-inventory-management",
+  },
+  { label: "Human Capital Mgt", slug: "end-user-core-hr-core-hr" },
+  { label: "Finance & Accounting", slug: "end-user-finance-accounting-journals" },
+];
+
+/**
+ * Does this visitor want less motion?
+ *
+ * `useSyncExternalStore` rather than an effect: setState-in-effect is an eslint
+ * error in this repo, and subscribing to the media query is the honest shape
+ * anyway — the answer can change while the page is open. The server snapshot is
+ * `false` so the markup matches, and a reduced-motion visitor gets the gradient
+ * on the first client render instead of a 14-second loop they did not ask for.
+ */
+function usePrefersReducedMotion() {
+  const subscribe = useCallback((onChange: () => void) => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+  return useSyncExternalStore(
+    subscribe,
+    () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+    () => false
+  );
+}
 
 export function Hero() {
   const router = useRouter();
   const [mode, setMode] = useState<"hire" | "work">("hire");
   const [query, setQuery] = useState("");
-  /** The chip currently narrowing the search, or null for everything. */
-  const [scope, setScope] = useState<string | null>(null);
+  const reducedMotion = usePrefersReducedMotion();
 
-  const base =
+  const placeholder =
     mode === "hire"
-      ? "Describe what you need to hire for"
-      : "Describe the work you want to find";
-  // The scope is shown IN the field, so the chip's effect is visible where the
-  // search is rather than only on the chip itself.
-  const placeholder = scope ? `${base} in ${scope}…` : `${base}…`;
+      ? "Describe what you need done…"
+      : "Describe the work you want to find…";
 
-  /** Both sides of the toggle start the same funnel, on their own branch. */
-  const joinHref = mode === "hire" ? "/join?type=buyer" : "/join?type=seller";
+  /*
+    E016.4 — SEARCH NAVIGATES, AND CARRIES WHAT WAS TYPED.
+
+    It used to swallow the query and push everyone to /join, on the reasoning
+    that a term surviving into a URL and changing nothing is a worse promise
+    than not appearing to search. That reasoning was right about the promise and
+    wrong about the fix: the answer is a destination that tells the truth, not a
+    search box that forgets.
+
+    /explore is that destination — a real public page that shows the query back,
+    says results are not live yet, and offers the two things that ARE live. The
+    mode picks which side of the funnel it points at, so "hire" and "work" land
+    somewhere different, as E016.4 asks.
+  */
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const params = new URLSearchParams({ mode });
+    if (query.trim()) params.set("q", query.trim());
+    router.push(`/explore?${params}`);
+  };
 
   return (
     <div className="mx-auto max-w-[1180px] px-6">
-      {/*
-        E005 — THE HERO WAS PURPLE ON PURPLE. A #3a1f5c→#8a1f88 panel with a
-        magenta radial wash laid over it: three values within a few steps of
-        each other, so nothing had an edge and the whole block read as one muddy
-        field. The white search card was the only thing that separated from it.
-
-        The /login aurora is the target feel, and what makes that work is RANGE
-        — it starts at near-black ink and travels to magenta, so there is a real
-        dark end to read light type against and a real bright end to give the
-        panel depth. This does the same: a deep ink base, two well-separated
-        aurora blooms placed off opposite corners, and a vignette that pulls the
-        edges down so the middle lifts.
-
-        The blooms are positioned AWAY from the copy column (top-right, bottom-
-        right) rather than washing the whole surface. Contrast for the headline
-        comes from the dark base being left alone where the text sits, which is
-        the same reason the login backdrop puts its vignette over the card.
-      */}
-      <div className="relative mt-[26px] min-h-[520px] overflow-hidden rounded-[22px] bg-[#0f1330]">
-        {/* Aurora blooms — separated in hue and position, not stacked. */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(900px_600px_at_88%_-15%,rgba(215,44,214,0.55),transparent_62%),radial-gradient(700px_520px_at_72%_115%,rgba(88,44,190,0.5),transparent_60%),radial-gradient(600px_400px_at_-5%_20%,rgba(23,30,62,0.9),transparent_70%)]"
-        />
-        {/* Vignette: darkens the edges so the panel has depth rather than
-            being one flat wash, and guarantees the copy column stays dark. */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_30%_50%,rgba(9,11,28,0.72)_0%,rgba(9,11,28,0.35)_45%,transparent_75%)]"
-        />
-
+      <div className="relative mt-[26px] overflow-hidden rounded-[22px] bg-[#0f1330]">
         {/*
-          HERO PHOTO SLOT — replace this gradient with a real hero image later.
-          Drop the photo in public/brand (or /public), render it here as an
-          absolutely-positioned right-side <Image>, and keep the dark overlay so
-          the headline stays legible. Left content column below is max-w-[760px],
-          leaving the right side open for the shot.
+          THE GRADIENT IS UNDER THE VIDEO, NOT INSTEAD OF IT. It paints
+          instantly, so the panel is branded during the seconds the 9.7MB file
+          is still arriving, on a slow connection, and for anyone who has asked
+          for reduced motion. Without it the hero's first state is a black
+          rectangle with white text on it.
         */}
         <div
           aria-hidden
-          data-hero-photo-slot
-          className="pointer-events-none absolute inset-y-0 right-0 hidden w-[38%] lg:block"
+          className="absolute inset-0 bg-[radial-gradient(900px_600px_at_85%_-10%,rgba(215,44,214,0.55),transparent_62%),radial-gradient(700px_520px_at_70%_115%,rgba(88,44,190,0.5),transparent_60%)]"
         />
 
-        <div className="relative z-[2] max-w-[760px] px-[26px] py-11 sm:px-14 sm:py-16">
-          {/*
-            THE BADGE IS THE HEADLINE and the descriptor is the subhead
-            (brief_brand_tagline_rollout WS-A). What was here — "Work at the
-            speed of opportunity" over a line about deploying best practices —
-            described a benefit without ever saying what Panameer IS, which is
-            the job of the first two lines on a page nobody has visited before.
+        {!reducedMotion && (
+          <video
+            aria-hidden
+            className="absolute inset-0 h-full w-full object-cover"
+            src="/panameer-office.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
+            /*
+              DECORATIVE, so it must never be the reason a control is missed:
+              no `controls`, aria-hidden, and pointer-events off so a click
+              anywhere in the hero reaches whatever is actually there.
+            */
+            tabIndex={-1}
+            style={{ pointerEvents: "none" }}
+          />
+        )}
 
-            Both strings come from lib/brand.ts. Neither is typed here, because
-            a hero that carries its own copy is the file people re-word without
-            touching the onboarding shell that says the same thing.
+        {/*
+          THE PURPLE SHADE (Scott: "shade it purple to keep the vibe right") —
+          and the thing that makes the white type legible over footage nobody
+          has colour-graded. Two layers with different jobs:
+
+            1. A magenta → navy wash across the whole frame. This is the brand
+               vibe, and on its own it is nowhere near enough contrast.
+            2. A left-weighted ink scrim. The copy sits left, so the darkest
+               part of the overlay sits left. Text contrast cannot depend on
+               what the footage happens to be doing behind it — this panel is
+               dark on the left whatever frame is showing.
+        */}
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-[linear-gradient(115deg,rgba(23,30,62,0.92)_0%,rgba(40,20,80,0.78)_45%,rgba(215,44,214,0.42)_100%)]"
+        />
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-[linear-gradient(90deg,rgba(9,11,28,0.88)_0%,rgba(9,11,28,0.62)_45%,rgba(9,11,28,0.25)_100%)]"
+        />
+
+        {/*
+          E016.2c — MUCH THINNER. py-16 and a 520px floor became py-10/py-12
+          with no minimum: the block is now as tall as its content, and its
+          content is one line of headline instead of three.
+        */}
+        <div className="relative z-[2] px-[26px] py-10 sm:px-12 sm:py-12">
+          {/*
+            No max-width on the headline — that was the wrap. At 1130px of
+            usable width the four beats set on one line from `sm` up, and the
+            phone breakpoint wraps where it genuinely has to.
           */}
-          <h1 className="mb-[18px] text-[40px] font-extrabold leading-[1.02] tracking-[-1.5px] text-white sm:text-[60px]">
-            {BRAND_BADGE}
+          <h1 className="text-[34px] font-extrabold leading-[1.05] tracking-[-1.4px] text-white sm:text-[54px] lg:text-[60px]">
+            {BRAND_BADGE_SHORT}
           </h1>
-          <p className="mb-4 max-w-[560px] text-[19px] leading-relaxed text-white/85">
+          {/*
+            E016.3 — the money line is gone from here. It restated the badge
+            immediately above it in smaller type, which is the definition of a
+            line that costs height and adds nothing.
+
+            The descriptor keeps a measure, but 820px rather than 560px: prose
+            still needs a readable line length, and this is one sentence that
+            now fits on one line at desktop widths.
+          */}
+          <p className="mt-3 max-w-[820px] text-[17px] leading-relaxed text-white/90 sm:text-[19px]">
             {BRAND_DESCRIPTOR}
           </p>
 
-          {/*
-            E008 — THE MONEY LINE MOVED UP HERE, out from between the search box
-            and the chips under it. In that slot it broke the one thing the
-            search block has to read as: a control and the scopes that narrow
-            it. A sentence wedged between them made the chips look like a
-            separate offer rather than part of the search.
-
-            Its home is with the brand statement it unpacks — the badge is the
-            headline, the descriptor says what Panameer is, and this says what
-            you do here, in that order — leaving the action block below
-            uninterrupted.
-          */}
-          <p className="mb-[30px] max-w-[560px] text-[16px] font-semibold text-white/70">
-            {BRAND_MONEY_LINE}
-          </p>
-
-          <div className="mb-[18px] inline-flex rounded-full border border-white/30 bg-white/10 p-[5px]">
+          <div className="mt-6 inline-flex rounded-full border border-white/30 bg-white/10 p-[5px]">
             <button
+              type="button"
               onClick={() => setMode("hire")}
+              aria-pressed={mode === "hire"}
               className={
-                "cursor-pointer rounded-full px-[30px] py-[11px] text-[15px] font-bold transition-colors " +
+                "cursor-pointer rounded-full px-[26px] py-2.5 text-[14.5px] font-bold transition-colors " +
                 (mode === "hire" ? "bg-white text-magenta" : "text-white")
               }
             >
               I want to hire
             </button>
             <button
+              type="button"
               onClick={() => setMode("work")}
+              aria-pressed={mode === "work"}
               className={
-                "cursor-pointer rounded-full px-[30px] py-[11px] text-[15px] font-bold transition-colors " +
+                "cursor-pointer rounded-full px-[26px] py-2.5 text-[14.5px] font-bold transition-colors " +
                 (mode === "work" ? "bg-white text-magenta" : "text-white")
               }
             >
@@ -151,65 +212,43 @@ export function Hero() {
           </div>
 
           <form
-            className="flex max-w-[640px] rounded-[14px] bg-white p-[7px] shadow-brand"
-            onSubmit={(e) => {
-              e.preventDefault();
-              router.push(joinHref);
-            }}
+            className="mt-3.5 flex max-w-[680px] rounded-[14px] bg-white p-[7px] shadow-brand"
+            onSubmit={submit}
           >
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={placeholder}
               aria-label={placeholder}
-              className="min-w-0 flex-1 bg-transparent px-4 py-3.5 text-[16px] text-ink outline-none"
+              className="min-w-0 flex-1 bg-transparent px-4 py-3 text-[16px] text-ink outline-none"
             />
             <button
               type="submit"
-              className="inline-flex shrink-0 items-center gap-2 rounded-full bg-magenta px-[22px] py-3 text-[15px] font-bold text-white transition-colors hover:bg-magenta-dark"
+              className="inline-flex shrink-0 items-center gap-2 rounded-full bg-magenta px-[22px] py-2.5 text-[15px] font-bold text-white transition-colors hover:bg-magenta-dark"
             >
               Search →
             </button>
           </form>
 
           {/*
-            E007/E008 — SCOPING CHIPS, and they genuinely scope.
-
-            They used to be three links straight to /join, sitting under a
-            sentence, reading as a separate row of offers. They are toggles now:
-            picking one narrows the search above — the label appears in the
-            input as the thing being searched — and picking it again clears it.
-            The visible state change is what makes the click real.
-
-            WHY THE TYPED QUERY STILL ISN'T CARRIED INTO THE URL. There is no
-            public index to search: /search is inside the authed app, and the
-            provider directory needs a session. A query string that survives
-            into a URL and then changes nothing downstream is a worse promise
-            than an honest funnel, so Search sends you to the right branch of
-            sign-up and the scope is what you carry in your head. The moment a
-            public results route exists, this is one `router.push`.
+            THE TAGS ARE LABELLED, because a row of chips under a search box
+            reads as filters and these are not — they leave the page. The
+            lead-in is what makes the click predictable, and "free" is the claim
+            the section below spends a whole panel making.
           */}
-          <div className="mt-4 flex flex-wrap gap-3">
-            {SCOPES.map((label) => {
-              const on = scope === label;
-              return (
-                <button
-                  key={label}
-                  type="button"
-                  aria-pressed={on}
-                  onClick={() => setScope(on ? null : label)}
-                  className={
-                    "inline-flex items-center gap-2 rounded-[10px] border px-4 py-2.5 text-[14.5px] font-semibold transition-colors " +
-                    (on
-                      ? "border-white bg-white text-magenta"
-                      : "border-white/30 bg-white/10 text-white hover:bg-white/20")
-                  }
-                >
-                  {label}
-                  {on && <span aria-hidden>×</span>}
-                </button>
-              );
-            })}
+          <div className="mt-4 flex flex-wrap items-center gap-2.5">
+            <span className="text-[13.5px] font-semibold text-white/70">
+              Start learning — free:
+            </span>
+            {LEARN_TAGS.map((tag) => (
+              <Link
+                key={tag.slug}
+                href={`/learn/${tag.slug}`}
+                className="inline-flex items-center rounded-full border border-white/30 bg-white/10 px-[15px] py-2 text-[14px] font-semibold text-white transition-colors hover:border-white hover:bg-white hover:text-magenta"
+              >
+                {tag.label}
+              </Link>
+            ))}
           </div>
         </div>
       </div>

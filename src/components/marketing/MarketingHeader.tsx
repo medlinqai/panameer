@@ -4,45 +4,57 @@ import { useState } from "react";
 import Link from "next/link";
 import { MARKETING_NAV, Btn } from "@/components/marketing/brand";
 import { Logo } from "@/components/Logo";
-import { BRAND_BADGE } from "@/lib/brand";
 
 /**
- * Sticky marketing header: logo lockup, nav, Log In / Sign Up, mobile menu.
+ * Sticky marketing header: wordmark, nav, Log In / Sign Up, mobile menu.
  *
- * E001 — THE BADGE IS PART OF THE LOCKUP. The wordmark alone says a name; the
- * badge says what the name is for, and this is the first thing on the page.
+ * E014 — THE HEADER IS THE WORDMARK ONLY. E001 put the badge under it as part
+ * of a lockup, on the reasoning that a wordmark alone says a name while the
+ * badge says what the name is for. True, but it was saying it twice: the hero
+ * begins with the same four beats 200px below, in 60px type, and the header
+ * copy was 10.5px uppercase — the version nobody reads, competing with the
+ * version everybody does.
  *
- * E002 — THE NAV ALIGNS TO THE WORDMARK, NOT THE LOCKUP. The tagline is
- * absolutely positioned beneath the wordmark rather than stacked in flow, so it
- * adds no height: the row keeps centring on the wordmark and the nav sits on
- * its centre line. Stacking it in flow would have pushed the wordmark up and
- * left the nav floating against the middle of a two-line block, which is the
- * misalignment E002 is about.
+ * Removing it also removes the reason for the absolute positioning E002 needed.
+ * The tagline was pinned under the wordmark so it added no height and the nav
+ * could stay centred on the wordmark rather than on a two-line block. With the
+ * tagline gone the row is what it looks like — one line of items, all vertically
+ * centred on the same baseline, no compensation required.
+ *
+ * The badge still renders in the hero, from BRAND_BADGE_SHORT (D1).
  */
 export function MarketingHeader() {
   const [open, setOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-50 border-b border-line bg-white/90 backdrop-blur-[10px] backdrop-saturate-150">
-      <div className="mx-auto flex h-[70px] max-w-[1180px] items-center gap-7 px-6">
+      <div className="mx-auto flex h-[70px] max-w-[1180px] items-center gap-8 px-6">
         {/*
           Through <Logo>, not a second copy of the asset path — this header was
           how the old wordmark survived the last logo change (one file still
           pointed at the retired mark).
+
+          `flex items-center` on the wrapper rather than the old `relative`:
+          nothing is pinned to it now, and the mark centres on the row itself.
         */}
-        <div className="relative shrink-0">
+        <div className="flex shrink-0 items-center">
           <Logo className="h-8 w-auto" priority />
-          <span className="pointer-events-none absolute left-0 top-full hidden whitespace-nowrap pt-0.5 text-[10.5px] font-bold uppercase tracking-[0.1em] text-ink-2 sm:block">
-            {BRAND_BADGE}
-          </span>
         </div>
 
-        <nav className="ml-3.5 hidden gap-[26px] text-[15px] font-semibold text-ink-2 md:flex">
+        {/*
+          E014(iii) — ROOM TO BREATHE. Six links at a 26px gap, pushed right by
+          the tagline's old `ml-3.5`, clustered into the middle-right of the row
+          and read as one dense block. The gap opens to 34px (28px at the md
+          breakpoint, where six links still have to fit beside two buttons) and
+          the left offset goes, so the nav starts where the wordmark ends
+          instead of a step further in.
+        */}
+        <nav className="hidden gap-7 text-[15px] font-semibold text-ink-2 md:flex lg:gap-[34px]">
           {MARKETING_NAV.map((item, i) => (
             <Link
               key={`${item.label}-${i}`}
               href={item.href}
-              className="hover:text-magenta"
+              className="whitespace-nowrap hover:text-magenta"
             >
               {item.label}
             </Link>
