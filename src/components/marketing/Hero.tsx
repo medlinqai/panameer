@@ -115,11 +115,16 @@ export function Hero({ audience = "neutral" }: { audience?: Audience }) {
 
   return (
     /*
-      E019 — `pb-[26px]` MATCHES THE TOP MARGIN, and it is load-bearing rather
-      than symmetry for its own sake. Learn is the soft band and now sits
-      directly below: without this the soft fill butts against the bottom edge
-      of the dark hero panel, the panel loses its rounded corners into it, and
-      the two read as one shape. The white gutter is what keeps the hero a card.
+      E019 — `pb-[26px]` MATCHES THE TOP MARGIN. It was added when Learn's soft
+      band sat directly below and butted against the dark panel, swallowing its
+      rounded corners. That neighbour has since moved on both pages — `/` now
+      has the white primer here and /for-providers has the white Why Panameer —
+      so the gutter is no longer preventing a specific collision.
+
+      Kept anyway, and not out of inertia: the hero is a rounded card floating
+      on the page, and a card whose bottom edge touches the next section stops
+      reading as one. The 26px is what makes the top and bottom margins agree.
+      It also means the next section to go soft cannot reintroduce the bug.
     */
     <div className="mx-auto max-w-[1180px] px-6 pb-[26px]">
       <div className="relative mt-[26px] overflow-hidden rounded-[22px] bg-[#0f1330]">
