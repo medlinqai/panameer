@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { AccountPitch } from "@/components/learn/AccountPitch";
 
 /**
  * The free-enrolment CTA (WS2 design ref; the convert-to-account path is WS4).
@@ -29,7 +30,7 @@ export function EnrolButton({
 
   if (!signedIn) {
     /*
-      CONVERT TO ACCOUNT, returning to THIS path (WS4).
+      CONVERT TO ACCOUNT, returning to THIS path (WS4 → D2 / E016.7).
 
       Sent to /login rather than /join, deliberately. /join is the marketplace
       onboarding fork — pick Buyer or Provider, then a ten-step wizard — and a
@@ -38,24 +39,17 @@ export function EnrolButton({
       both a conversion killer and a question we have no right to ask yet.
 
       /login already honours callbackUrl and routes on to sign-up for people
-      without an account, so this returns them here either way. If Learn ever
-      needs its own lightweight sign-up, THIS is the link that should change —
-      one place, not every enrol button.
+      without an account, so this returns them here either way.
+
+      D2 — IT SELLS THE ACCOUNT, IT DOESN'T JUST BLOCK. What was here was a
+      magenta "Enrol Free" and the words "we'll bring you straight back here",
+      which answers "will this cost me my place" and never answers "why do you
+      need me at all". <AccountPitch> is the answer: certifications are awarded
+      against a profile, so an account is the thing that makes the free course
+      leave a mark. Same component on the lesson page, so the promise is made
+      once.
     */
-    const back = encodeURIComponent(`/learn/${slug}`);
-    return (
-      <span className="inline-flex flex-col">
-        <a
-          href={`/login?callbackUrl=${back}`}
-          className="rounded-full bg-magenta px-6 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
-        >
-          Enrol Free
-        </a>
-        <span className="mt-1 text-[12.5px] text-ink-2">
-          Free — we&apos;ll bring you straight back here.
-        </span>
-      </span>
-    );
+    return <AccountPitch callbackUrl={`/learn/${slug}`} cta="Enrol Free" />;
   }
 
   const toggle = async () => {

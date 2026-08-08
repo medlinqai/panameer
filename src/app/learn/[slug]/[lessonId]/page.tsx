@@ -96,6 +96,11 @@ export default async function LessonPage({
             completed={lesson.completed}
             next={view.next}
             instructorName={instructor?.name ?? null}
+            /*
+              D2 — the lesson itself stays open to everyone. Only recording that
+              you finished it needs somewhere to record it.
+            */
+            signedIn={Boolean(viewer)}
           />
         </div>
 
