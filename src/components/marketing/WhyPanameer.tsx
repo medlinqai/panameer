@@ -54,7 +54,7 @@ type Beat = {
   The filenames could not be trusted, so the assignment came from viewing the
   frames: hands typing on Learn, people in conversation on Connect, the office
   team on Build (Scott's steer — it was the hero clip and it reads as work
-  happening), the analytics dashboard on Get Paid.
+  happening), the analytics dashboard on Settle.
 
   This resolves E016.13: walk 1 shipped one real clip and three gradient panels
   because one clip was all that existed. All four are real footage now.
@@ -132,7 +132,7 @@ const BEATS: Beat[] = [
   },
   {
     n: 4,
-    word: "Get Paid",
+    word: "Settle",
     video: "/get-paid.mp4",
     copy: {
       neutral: {
@@ -329,7 +329,7 @@ export function WhyPanameer({ audience = "neutral" }: { audience?: Audience }) {
             ? "Everything Between Needing the Work and Paying for It"
             : audience === "provider"
               ? "Everything Between Learning the Work and Being Paid for It"
-              : "Four Steps, Start to Settled"}
+              : "Four Steps, Start to Settle"}
         </H2>
         <Lead>
           {audience === "buyer"
