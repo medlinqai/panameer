@@ -1,7 +1,6 @@
 import { Hero } from "@/components/marketing/Hero";
 import { Announcement } from "@/components/marketing/Announcement";
 import { ForkChooser } from "@/components/marketing/ForkChooser";
-import { WhyPanameer } from "@/components/marketing/WhyPanameer";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
 
 /**
@@ -18,9 +17,15 @@ import { MarketingShell } from "@/components/marketing/MarketingShell";
  * Creator recruit to reach it. Those sections did not get worse — they moved to
  * the page where their reader is (/for-buyers, /for-providers).
  *
- * WHAT IS LEFT is the sequence a stranger needs: what this is (hero), why here
- * (Why Panameer), and which door is yours (the chooser). The ribbon rides above
- * all three.
+ * E073 — AND WHY PANAMEER LEFT TOO. It was the last section here that tried to
+ * argue rather than route, and the argument cannot be made neutrally: a buyer's
+ * reason to be here is not a provider's, and the version that serves both is
+ * the version that lands with neither. It still renders on both fork pages,
+ * where it can pick a side.
+ *
+ * WHAT IS LEFT is the shortest honest version of this page: what this is
+ * (hero), and which door is yours (the chooser). Two sections. Everything else
+ * on the site is downstream of that choice, so making it is the whole job.
  *
  * E047 — THE PROVIDERS DOMAIN GRID IS CUT ENTIRELY, not moved. Eight
  * application names in boxes was a coverage claim with nothing behind it: the
@@ -46,7 +51,6 @@ export default function Home() {
         community economy actually lands.
       */}
       <Announcement />
-      <WhyPanameer />
       <ForkChooser />
     </MarketingShell>
   );
