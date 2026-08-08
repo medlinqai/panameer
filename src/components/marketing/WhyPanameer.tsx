@@ -62,7 +62,7 @@ type Beat = {
 
   The filenames could not be trusted, so the assignment came from viewing the
   frames: hands typing on Learn, people in conversation on Connect, the office
-  team on Build (Scott's steer — it was the hero clip and it reads as work
+  team on Create (Scott's steer — it was the hero clip and it reads as work
   happening), the analytics dashboard on Settle.
 
   This resolves E016.13: walk 1 shipped one real clip and three gradient panels
@@ -121,7 +121,7 @@ const BEATS: Beat[] = [
   },
   {
     n: 3,
-    word: "Build",
+    word: "Create",
     href: "/for-buyers#packages",
     video: "/panameer-office.mp4",
     copy: {
@@ -131,7 +131,7 @@ const BEATS: Beat[] = [
           "Scope it, agree it, and track it in one place — or straight from your ERP.",
       },
       buyer: {
-        caption: "Build With Your Experts",
+        caption: "Create With Your Experts",
         clarifier:
           "Agreed scope, tracked in one place — or ordered straight from your ERP.",
       },

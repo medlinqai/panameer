@@ -41,18 +41,24 @@
  * unpacked still says get paid, or pay, in plain words. The beat is the label;
  * the caption underneath is where the money is named.
  *
- * E050 — AND THE THIRD IS "BUILD", NOT "CREATE". Both name that gap; they do not name it
- * the same way. "Create" is the word for making something that did not exist —
- * art, content, a company — and this platform's third beat is someone
- * implementing Payables for a manufacturer. "Build" is what the people doing
- * that work call it, it is the verb the enterprise-systems world already uses,
- * and it sits with Learn and Connect without changing register.
+ * E075 — AND THE THIRD IS "CREATE". FINAL.
+ *
+ * This beat went Create → Build (E050) → Create, so the reasoning is corrected
+ * in place rather than layered. The case for "Build" was register: the work is
+ * implementing Payables for a manufacturer, and "build" is what the people who
+ * do that call it. True, and too narrow.
+ *
+ * What decides it is everything the beat has to cover. The third beat is not
+ * just delivery — it is the whole of what a seller makes here, which by the
+ * Create primer's own diagram includes courses, forums, mentoring and packages
+ * alongside implementations. "Build" describes one of those and strains on the
+ * rest. "Create" holds all of them.
  *
  * PROVISIONAL — Scott's "start there". It may shorten again, which is exactly
  * why nothing types this string: it renders in the marketing hero and the
  * header lockup from here, so a re-word is one edit and cannot half-land.
  */
-export const BRAND_BADGE = "Learn. Connect. Build. Settle. Together.";
+export const BRAND_BADGE = "Learn. Connect. Create. Settle. Together.";
 
 /**
  * THE BADGE, HERO LENGTH — four beats, no "Together" (D1, E016.2a).
@@ -67,7 +73,7 @@ export const BRAND_BADGE = "Learn. Connect. Build. Settle. Together.";
  * now ends on it (BRAND_COMMUNITY_LINE), and BRAND_BADGE below keeps the full
  * five beats for every other surface.
  */
-export const BRAND_BADGE_SHORT = "Learn. Connect. Build. Settle.";
+export const BRAND_BADGE_SHORT = "Learn. Connect. Create. Settle.";
 
 /**
  * THE RIBBON — the strip across the top of the marketing home (E016.3 → E039).

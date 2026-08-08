@@ -25,7 +25,7 @@ import {
  * one: the headline wrapped early because it lived in a 760px column, and the
  * two paragraphs under it wrapped earlier still at max-w-[560px]. At those
  * widths a four-beat badge takes three lines and the hero has to be 520px tall
- * to hold them. Widened, "Learn. Connect. Build. Settle." sets on one line
+ * to hold them. Widened, "Learn. Connect. Create. Settle." sets on one line
  * and the whole block collapses to roughly two-thirds the height — which is
  * E016.2c ("MUCH thinner") arriving as a consequence rather than as a squeeze.
  */
