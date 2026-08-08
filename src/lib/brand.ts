@@ -82,6 +82,32 @@ export const BRAND_MONEY_LINE =
   "Learn new skills. Join the community. Connect with the expert. Get paid.";
 
 /**
+ * THE HERO SUBHEAD — one line per side of the toggle (E031).
+ *
+ * SEPARATE FROM BRAND_DESCRIPTOR, and that is the point. The descriptor names
+ * both sides of the marketplace in one sentence ("…experts — and the businesses
+ * that need them"), which is right where nobody has told us who they are: the
+ * footer, About, the onboarding shell. The hero is the one place the visitor
+ * HAS told us — they just pressed "I Want to Hire" or "I Want to Work" — and
+ * answering a stated intent with a both-sides sentence throws that away.
+ *
+ * So the descriptor stays exactly as it is and keeps its four callers. These
+ * two are hero-only.
+ *
+ * "ENTERPRISE SYSTEMS AND AI" IS CAPITALIZED in both, because it is the
+ * category this product claims, not a description of it — the same reason
+ * BRAND_DESCRIPTOR and SEO_TITLE capitalize it. Spelled "and" rather than the
+ * descriptor's "+": these are sentences someone reads, and "+" is a logo
+ * treatment.
+ */
+export const BRAND_HERO_SUBHEAD_HIRE =
+  "Hire the world's best Enterprise Systems and AI talent to improve the " +
+  "performance of your business today.";
+
+export const BRAND_HERO_SUBHEAD_WORK =
+  "Get hired for the Enterprise Systems and AI work you do best — and get paid.";
+
+/**
  * THE DESCRIPTOR — what Panameer is, for someone who has never heard of it.
  * Carries both sides of the marketplace deliberately: a page that only names
  * the experts reads as a directory, and one that only names the businesses

@@ -180,6 +180,32 @@ body {
  * copy above it already changes as the wait grows, so the state stays legible
  * without anything moving.
  */
+/*
+ * E031 — the hero subhead swaps with the hire/work toggle, and a swap that
+ * happens instantly reads as a glitch rather than a response. A 220ms fade is
+ * enough to say "this changed because you did that".
+ *
+ * DEFINED HERE BECAUSE IT HAS TO BE. `animate-[fadeIn_220ms_ease-out]` names an
+ * animation; Tailwind emits the shorthand but cannot invent the keyframes, so
+ * without this block the class compiles to a rule referencing an animation that
+ * does not exist and nothing moves — silently.
+ *
+ * REDUCED MOTION IS HANDLED AT THE ELEMENT, with `motion-reduce:animate-none`,
+ * not by the media query further down: that block names `.animate-parse-sweep`
+ * specifically and does not zero animations in general. Worth knowing before
+ * adding the next keyframe here and assuming it is covered.
+ */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes parse-sweep {
   0% {
     transform: translateX(-100%);

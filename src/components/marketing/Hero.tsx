@@ -3,7 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { usePrefersReducedMotion } from "@/lib/use-reduced-motion";
-import { BRAND_BADGE_SHORT, BRAND_DESCRIPTOR } from "@/lib/brand";
+import {
+  BRAND_BADGE_SHORT,
+  BRAND_HERO_SUBHEAD_HIRE,
+  BRAND_HERO_SUBHEAD_WORK,
+} from "@/lib/brand";
 
 /**
  * The hero — video backdrop, hire/work toggle, search, and search quick-tags.
@@ -167,16 +171,29 @@ export function Hero() {
             {BRAND_BADGE_SHORT}
           </h1>
           {/*
-            E016.3 — the money line is gone from here. It restated the badge
-            immediately above it in smaller type, which is the definition of a
-            line that costs height and adds nothing.
+            E031 — THE SUBHEAD ANSWERS THE TOGGLE.
 
-            The descriptor keeps a measure, but 820px rather than 560px: prose
-            still needs a readable line length, and this is one sentence that
-            now fits on one line at desktop widths.
+            It was BRAND_DESCRIPTOR: one sentence naming both sides of the
+            marketplace. That is the right line for the footer and for About,
+            where nobody has said who they are — and the wrong one here, three
+            elements above a control on which the visitor states exactly that.
+            Being told what the other half of the market gets, immediately after
+            saying which half you are in, is the hero ignoring its own toggle.
+
+            The money line stays gone (E016.3): it restated the badge directly
+            above it in smaller type.
           */}
-          <p className="mt-3 max-w-[820px] text-[17px] leading-relaxed text-white/90 sm:text-[19px]">
-            {BRAND_DESCRIPTOR}
+          <p
+            /*
+              `key` swaps the element rather than mutating it, so the browser
+              re-runs the fade on every toggle press. Without it React reuses
+              the node, the text changes silently, and the swap reads as a
+              glitch instead of a response.
+            */
+            key={mode}
+            className="mt-3 max-w-[820px] animate-[fadeIn_220ms_ease-out] text-[17px] leading-relaxed text-white/90 motion-reduce:animate-none sm:text-[19px]"
+          >
+            {mode === "hire" ? BRAND_HERO_SUBHEAD_HIRE : BRAND_HERO_SUBHEAD_WORK}
           </p>
 
           <div className="mt-6 inline-flex rounded-full border border-white/30 bg-white/10 p-[5px]">
