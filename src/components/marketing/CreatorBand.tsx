@@ -27,7 +27,12 @@ import { Btn } from "@/components/marketing/brand";
  */
 export function CreatorBand() {
   return (
-    <section id="creator" className="bg-bg-soft py-[76px]">
+    /*
+      WHITE, because Learn directly above it is soft. Two soft sections touching
+      is not a band, it is one long section with a heading in the middle — the
+      same call Packages made under LearnFree on the old combined page.
+    */
+    <section id="creator" className="py-[76px]">
       <div className="mx-auto max-w-[1180px] px-6">
         <Eyebrow>Community Credits</Eyebrow>
         <H2>Know This Cold? Teach It. Earn From It.</H2>

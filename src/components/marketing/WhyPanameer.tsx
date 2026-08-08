@@ -31,6 +31,7 @@ import { usePrefersReducedMotion } from "@/lib/use-reduced-motion";
  * the entire point of "how it works".
  */
 
+import Link from "next/link";
 import type { Audience } from "@/lib/audience";
 
 type Copy = { caption: string; clarifier: string };
@@ -46,6 +47,14 @@ type Beat = {
    */
   copy: Record<Audience, Copy>;
   video: string;
+  /**
+   * Where this beat is actually elaborated (engagement audit, WS-E).
+   *
+   * Every one is a real section that exists today — no invented anchors. Used
+   * only on `/`: on an audience page the beat's own elaboration is already the
+   * next thing down the page, so a link would send the reader away from it.
+   */
+  href: string;
 };
 
 /*
@@ -67,6 +76,7 @@ const BEATS: Beat[] = [
   {
     n: 1,
     word: "Learn",
+    href: "/for-providers#learn",
     video: "/learn.mp4",
     copy: {
       neutral: {
@@ -89,6 +99,7 @@ const BEATS: Beat[] = [
   {
     n: 2,
     word: "Connect",
+    href: "/explore?mode=hire",
     video: "/connect.mp4",
     copy: {
       neutral: {
@@ -111,6 +122,7 @@ const BEATS: Beat[] = [
   {
     n: 3,
     word: "Build",
+    href: "/for-buyers#packages",
     video: "/panameer-office.mp4",
     copy: {
       neutral: {
@@ -133,6 +145,7 @@ const BEATS: Beat[] = [
   {
     n: 4,
     word: "Settle",
+    href: "/for-buyers#pricing",
     video: "/get-paid.mp4",
     copy: {
       neutral: {
@@ -197,6 +210,24 @@ function useInView<T extends HTMLElement>() {
   return { ref, seen };
 }
 
+function Card({
+  linked,
+  href,
+  children,
+}: {
+  linked: boolean;
+  href: string;
+  children: React.ReactNode;
+}) {
+  return linked ? (
+    <Link href={href} className="block">
+      {children}
+    </Link>
+  ) : (
+    <>{children}</>
+  );
+}
+
 function Tile({
   beat,
   audience,
@@ -211,6 +242,14 @@ function Tile({
   isLast: boolean;
 }) {
   const { caption, clarifier } = beat.copy[audience];
+  /*
+    ENGAGEMENT AUDIT (WS-E) — on `/` this section was READ-ONLY: four videos
+    and twelve lines of copy with nothing to click. Each tile now leads to the
+    page where that beat is actually elaborated. Only on `/`: on an audience
+    page the elaboration is the next section down, and a link would carry the
+    reader away from the thing they were about to reach anyway.
+  */
+  const linked = audience === "neutral";
   return (
     <div
       className={
@@ -221,6 +260,13 @@ function Tile({
       // Tailwind would need four hard-coded delay classes to say the same.
       style={{ transitionDelay: `${(beat.n - 1) * 110}ms` }}
     >
+      {/*
+        A conditional wrapper rather than a polymorphic `as` component: two
+        plain branches type themselves, where `Shell = linked ? Link : "div"`
+        needs a cast to reconcile Link's href with div's props — a cast that
+        would then hide a real mistake in either branch.
+      */}
+      <Card linked={linked} href={beat.href}>
       <div className="relative aspect-[4/5] overflow-hidden rounded-[20px] bg-[#171e3e] transition-transform duration-300 group-hover:-translate-y-1.5 motion-reduce:group-hover:translate-y-0">
         {playMedia && (
           <video
@@ -252,9 +298,22 @@ function Tile({
           className="absolute inset-0 bg-[linear-gradient(180deg,rgba(9,11,28,0.30)_0%,rgba(9,11,28,0.55)_45%,rgba(9,11,28,0.90)_100%)]"
         />
 
-        {/* The step number — half of what makes four tiles read as a sequence. */}
-        <span className="absolute left-4 top-4 z-[2] grid h-8 w-8 place-items-center rounded-full bg-white/15 text-[14px] font-extrabold text-white ring-1 ring-inset ring-white/35 backdrop-blur-sm">
-          {beat.n}
+        {/*
+          E064 — A GHOSTED EDITORIAL NUMERAL, not a badge. The 32px pill in the
+          corner was a UI chip: it read as a control and it was small enough to
+          scan past, which left four near-identical dark rectangles with no
+          visible order. Set at 96px in the artwork itself, "01" is part of the
+          image and reads as sequence from across the room.
+
+          Low contrast on purpose. It has to lose to the caption underneath —
+          it is orientation, not content — so it sits at 22% white with the
+          scrim already darkening that corner.
+        */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute left-4 top-1 z-[1] font-display text-[96px] font-bold leading-none tracking-[-4px] text-white/[0.22]"
+        >
+          {String(beat.n).padStart(2, "0")}
         </span>
 
         <div className="absolute inset-x-0 bottom-0 z-[2] p-5">
@@ -268,8 +327,17 @@ function Tile({
           <p className="mt-1.5 text-[13.5px] leading-relaxed text-white/80">
             {clarifier}
           </p>
+          {linked && (
+            <span className="mt-2.5 inline-flex items-center gap-1 text-[13px] font-bold text-white">
+              See How
+              <span aria-hidden className="transition-transform group-hover:translate-x-0.5">
+                →
+              </span>
+            </span>
+          )}
         </div>
       </div>
+      </Card>
 
       {/*
         The connective arrow — the other half of the sequence read. Only between
@@ -277,10 +345,17 @@ function Tile({
         2×2 and at base it is a single column, so an arrow pointing right would
         be pointing at nothing.
       */}
+      {/*
+        E064 — BIGGER, AND ACTUALLY VISIBLE. A 20px glyph at 70% opacity in a
+        28px gutter was doing nothing the numerals could not do better. This is
+        a filled magenta disc with a white chevron: it survives being scrolled
+        past, and it sits ON the seam between two cards so it reads as "then",
+        not as decoration belonging to either one.
+      */}
       {!isLast && (
         <span
           aria-hidden
-          className="pointer-events-none absolute -right-[22px] top-[38%] hidden text-[20px] font-bold text-magenta/70 lg:block"
+          className="pointer-events-none absolute -right-[30px] top-[36%] z-[3] hidden h-9 w-9 place-items-center rounded-full bg-magenta text-[16px] font-black text-white shadow-[0_2px_10px_rgba(215,44,214,0.45)] lg:grid"
         >
           →
         </span>
@@ -315,7 +390,23 @@ export function WhyPanameer({ audience = "neutral" }: { audience?: Audience }) {
       keeps the alternation honest now that the order changed — see page.tsx for
       the full sequence.
     */
-    <section id="why" className="bg-bg-soft py-[76px]">
+    /*
+      E067 — THE BAND DEPENDS ON WHAT FOLLOWS IT, which differs per page:
+
+        /               white  · the fork chooser below is soft
+        /for-buyers     soft   · Packages below is white
+        /for-providers  white  · Learn below is soft
+
+      Derived rather than passed as a prop. A `tone` prop would let a page set
+      a shade that collides with its own neighbour, and the neighbour is a fact
+      about the page, which this component already knows via `audience`.
+    */
+    <section
+      id="why"
+      className={
+        "py-[76px] " + (audience === "buyer" ? "bg-bg-soft" : "bg-white")
+      }
+    >
       <div className="mx-auto max-w-[1180px] px-6">
         {/*
           E028(ii) — THE EYEBROW LIVES HERE NOW. It used to label the
@@ -324,20 +415,43 @@ export function WhyPanameer({ audience = "neutral" }: { audience?: Audience }) {
           thing on the page that is actually a sequence.
         */}
         <Eyebrow>Why Panameer</Eyebrow>
-        <H2>
-          {audience === "buyer"
-            ? "Everything Between Needing the Work and Paying for It"
-            : audience === "provider"
-              ? "Everything Between Learning the Work and Being Paid for It"
-              : "Four Steps, Start to Settle"}
-        </H2>
+        {/*
+          E071 — ONE HEADLINE FOR ALL THREE PAGES, and it is a claim rather
+          than a description. "Four Steps, Start to Settle" told you the shape
+          of the graphic underneath it, which the graphic already does; this
+          says what the shape is FOR. "Outcomes and incomes" is the two-sided
+          version in three words — the buyer's outcome, the provider's income —
+          and it is the only line on the page that names both without picking.
+        */}
+        <H2>We Improve Outcomes and Incomes… Together.</H2>
+
+        {/*
+          E063/E066 — the old subhead restated the four steps in a sentence,
+          directly above four tiles that are the four steps. Removed. What
+          replaces it on `/` is positioning: the same two-sidedness as the
+          headline, said once more in plain terms.
+
+          The buyer and provider lines are kept as they are. The brief expects
+          neutral copy here and audience variants "when we go down a level" —
+          these already ARE those variants, written in the fork brief, and
+          replacing working per-audience positioning with the neutral line
+          would be a regression on both fork pages to satisfy an ordering.
+        */}
         <Lead>
           {audience === "buyer"
             ? "One place for the whole engagement — the training your team needs, the expert who does the work, and a single settlement at the end."
             : audience === "provider"
               ? "One place for the whole arc — the skills, the buyers, the work itself, and getting paid for it without chasing anybody."
-              : "Learn the systems, meet the people who know them, get the work done, and settle it — without leaving Panameer."}
+              : "Learn, connect, build, and settle — so the right talent and the right work find each other."}
         </Lead>
+
+        {/*
+          E059/E064 — "Four Steps, Start to Settle" survives as the small label
+          ON the graphic, which is where a description of the graphic belongs.
+        */}
+        <p className="mb-5 text-[12.5px] font-extrabold uppercase tracking-[0.09em] text-ink-2">
+          Four Steps, Start to Settle
+        </p>
 
         <div
           ref={trackRef}
