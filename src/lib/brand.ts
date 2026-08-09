@@ -155,9 +155,17 @@ export const HERO_COPY = {
   },
   provider: {
     kicker: "Go Direct",
+    /*
+      WS-5 — "Be your\u00A0own brand" is bound with a non-breaking space.
+      `text-balance` evens the LINE LENGTHS; it has no opinion about where in a
+      phrase the break lands, and at every sensible measure this sentence split
+      between "Be your" and "own brand". Widening the container just moves
+      which phrase gets cut. A non-breaking space is the only fix that holds at
+      every width, including the ones a phone picks.
+    */
     subhead:
-      "Find consistent work. Break the hourly ceiling. Be your own brand — we " +
-      "handle everything that isn't the work.",
+      "Find consistent work. Break the hourly ceiling. Be your\u00A0own brand " +
+      "— we handle everything that isn't the work.",
     searchPlaceholder: "Describe your expertise…",
     searchCta: "Find Work →",
     aiHint:
