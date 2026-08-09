@@ -40,7 +40,7 @@ export const metadata: Metadata = {
 
 export default function BuyerHome() {
   return (
-    <MarketingShell>
+    <MarketingShell audience="buyer">
       <MarketingHero audience="buyer" />
       <ThreeWays />
       <VideoSequence audience="buyer" />

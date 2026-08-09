@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { MarketingHeader } from "@/components/marketing/MarketingHeader";
 import { MarketingFooter } from "@/components/marketing/MarketingFooter";
+import { AudienceStrip } from "@/components/marketing/AudienceStrip";
+import type { Audience } from "@/lib/audience";
 
 /**
  * The chrome every marketing page shares (E051).
@@ -19,9 +21,17 @@ import { MarketingFooter } from "@/components/marketing/MarketingFooter";
  * from each page is one line per page and keeps the fork legible at the top of
  * every file.
  */
-export function MarketingShell({ children }: { children: ReactNode }) {
+export function MarketingShell({
+  audience,
+  children,
+}: {
+  /** Which side this page serves — drives the strip's active state. */
+  audience: Audience;
+  children: ReactNode;
+}) {
   return (
     <div className="marketing-surface min-h-screen bg-white font-body text-ink">
+      <AudienceStrip audience={audience} />
       <MarketingHeader />
       {children}
       <MarketingFooter />

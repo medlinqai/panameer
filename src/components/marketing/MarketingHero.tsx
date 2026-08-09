@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { AUDIENCE_TOGGLE, HERO_COPY } from "@/lib/brand";
+import { HERO_COPY } from "@/lib/brand";
 import { BRAND_BADGE_SHORT } from "@/lib/brand";
-import { AUDIENCE_PATH } from "@/lib/audience";
 
 /**
  * The shared marketing hero (brief_home_rebuild_08_09 WS-A).
@@ -16,10 +15,6 @@ import { AUDIENCE_PATH } from "@/lib/audience";
  * every interactive thing in it needed JavaScript. None of that survives, and
  * nothing was lost:
  *
- *  · THE TOGGLE IS TWO <Link>s. The audience is the route, so which side is
- *    active is a fact about the URL, not a piece of state. Links are indexable,
- *    prefetched, back-button-safe and middle-clickable; a button calling
- *    router.push is none of those.
  *  · THE SEARCH IS A PLAIN GET FORM. `action="/explore" method="get"` submits
  *    `?q=…&mode=…` with no JavaScript whatsoever — the browser has done this
  *    since 1995 — and lands on the same destination the old client handler
@@ -68,39 +63,28 @@ export function MarketingHero({ audience }: { audience: "buyer" | "provider" }) 
           {copy.subhead}
         </p>
 
-        {/* ── The audience toggle: two Links, never state ── */}
         {/*
-          STACKS BELOW sm. The two labels are deliberately long and literal —
-          "I Hire Experts & Buy Services" — and as an inline-flex pill pair they
-          need roughly 700px. At 390px that does not overflow the toggle, it
-          overflows the PAGE: the widest child sets the scroll width, so the
-          hero, the subhead and every chip get dragged off-screen with it.
-          Two stacked full-width pills on a phone, the pill pair from sm up.
+          WS-2b — THE AUDIENCE PILL IS GONE FROM HERE. It sat directly on top of
+          the search box and read as a filter on it, while actually navigating
+          to a different page. The switch moved to the top strip
+          (AudienceStrip), where changing pages is what the whole zone is for.
+
+          No "Find Talent / Find Work" scope toggle replaces it. The brief makes
+          that optional, and the search is already scoped by the page: `/` posts
+          mode=hire and /for-providers posts mode=work. A second control that
+          re-states what the page already decided would put an ambiguous pill
+          back in the exact spot the ambiguous pill was just removed from.
         */}
-        <div
-          className="mb-[18px] mt-[30px] flex w-full flex-col gap-1 rounded-[22px] border border-white/[0.16] bg-white/[0.08] p-[5px] sm:inline-flex sm:w-auto sm:flex-row sm:rounded-full"
-          role="group"
-          aria-label="Choose which side of Panameer you are on"
-        >
-          {(["buyer", "provider"] as const).map((side) => {
-            const on = side === audience;
-            return (
-              <Link
-                key={side}
-                href={AUDIENCE_PATH[side]}
-                aria-current={on ? "page" : undefined}
-                className={
-                  "rounded-full px-5 py-[11px] text-center text-[14.5px] font-semibold transition-colors " +
-                  (on
-                    ? "bg-white text-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)]"
-                    : "text-[#cdc9e6] hover:text-white")
-                }
-              >
-                {AUDIENCE_TOGGLE[side]}
-              </Link>
-            );
-          })}
-        </div>
+
+        {/*
+          WS-3 — the action cue. Deliberately small and uppercase: it frames the
+          search without competing with the H1 above it, which is what a page
+          needs when the headline is a brand statement rather than an
+          instruction.
+        */}
+        <p className="mb-2 mt-8 font-display text-[12px] font-semibold uppercase tracking-[0.16em] text-[#f0a6ef]">
+          Get Started Now
+        </p>
 
         {/* ── Search: a real GET form, no JavaScript ── */}
         <form
