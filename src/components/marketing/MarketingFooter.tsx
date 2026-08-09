@@ -3,20 +3,23 @@ import Image from "next/image";
 import { BRAND_DESCRIPTOR } from "@/lib/brand";
 
 /*
-  E051 — the footer's hashes had the same fault as the header's: `#learn`,
-  `#punchout` and `#pricing` resolved against whatever page you were on, and
-  after the fork that is usually not the page holding the section. Absolute
-  now. "Learning Paths" and "Courses" go to the real /learn routes rather than
-  to a marketing anchor about them — the footer is where someone goes when they
-  know what they want.
+  Absolute paths, never bare hashes: a `#pricing` resolves against whatever
+  page you are on, which after the rebuild is usually not the page holding the
+  section.
+
+  Re-pointed for the rebuild (brief_home_rebuild_08_09): /for-buyers is gone —
+  the buyer page is `/` — so Hire Talent, ERP Punchout, Enterprise and Pricing
+  now land on the root's own sections. Pricing goes to #value because there is
+  no pricing page and the value stack is the section that honestly answers it;
+  Why Panameer goes to #three-ways for the same reason.
 */
 const COLS: { title: string; links: { label: string; href: string }[] }[] = [
   {
     title: "Hire",
     links: [
-      { label: "Hire Talent", href: "/for-buyers" },
+      { label: "Hire Talent", href: "/" },
       { label: "Post a Work Request", href: "/join/buyer" },
-      { label: "ERP Punchout", href: "/for-buyers#punchout" },
+      { label: "ERP Punchout", href: "/#punchout" },
     ],
   },
   {
@@ -38,9 +41,9 @@ const COLS: { title: string; links: { label: string; href: string }[] }[] = [
   {
     title: "Company",
     links: [
-      { label: "Why Panameer", href: "/#why" },
-      { label: "Enterprise", href: "/for-buyers#punchout" },
-      { label: "Pricing", href: "/for-buyers#pricing" },
+      { label: "Why Panameer", href: "/#three-ways" },
+      { label: "Enterprise", href: "/#punchout" },
+      { label: "Pricing", href: "/#value" },
     ],
   },
   /*

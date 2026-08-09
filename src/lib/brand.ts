@@ -60,6 +60,15 @@
  */
 export const BRAND_BADGE = "Learn. Connect. Create. Settle. Together.";
 
+/*
+  RETIRED WITH THE PAGES THAT RENDERED THEM (brief_home_rebuild_08_09):
+  BRAND_COMMUNITY_LINE (the Credits ribbon), BRAND_MANIFESTO (the old Punchout
+  section), and the three BRAND_HERO_SUBHEAD_* strings, which HERO_COPY below
+  replaces. All five are one `git show` away if a surface wants them back —
+  keeping exported strings nothing renders is how a copy module turns into an
+  archive nobody trusts.
+*/
+
 /**
  * THE BADGE, HERO LENGTH — four beats, no "Together" (D1, E016.2a).
  *
@@ -76,85 +85,12 @@ export const BRAND_BADGE = "Learn. Connect. Create. Settle. Together.";
 export const BRAND_BADGE_SHORT = "Learn. Connect. Create. Settle.";
 
 /**
- * THE RIBBON — the strip across the top of the marketing home (E016.3 → E039).
- *
- * It has held three things. First a borrowed promo ("the top 1% of talent on
- * Business Plus"), then the manifesto, then the "anyone can" community line.
- * This one names the mechanism the other two only gestured at: Community
- * Credits, what earns them and what spends them.
- *
- * ⚠ SHIPPED AS PRE-LAUNCH VISION, KNOWINGLY. Credits are not functional —
- * `getCreditsSummary` returns a hard zero with `pending: true` and no surface
- * awards any. Nothing on this page can earn or spend one today.
- *
- * That is a deliberate call rather than an oversight, and it rests on the
- * "Panameer is in active development" banner sitting directly ABOVE this strip:
- * a visitor reads "you're early, accounts and data may be reset" and then reads
- * this. In that order it is a roadmap. Without the banner it would be a false
- * promise, so the two are coupled — if SITE_STATUS ever flips to "live" while
- * credits are still inert, this line has to change in the same commit.
- *
- * See also AccountPitch, which makes the opposite call for the same feature:
- * there the claim sits alone at the moment someone hands over an email, so
- * Credits are future-tense there and certifications lead.
- */
-export const BRAND_COMMUNITY_LINE =
-  "Earn Community Credits for building your profile, selling services, and " +
-  "answering work — spend them learning, connecting, proposing, and " +
-  "collaborating.";
-
-/**
  * THE MONEY LINE — the badge, unpacked. Used where somebody is about to act
  * (above the sign-up chips) and where the community story starts, because those
  * are the two places the sequence needs spelling out rather than gesturing at.
  */
 export const BRAND_MONEY_LINE =
   "Learn new skills. Join the community. Connect with the expert. Get paid.";
-
-/**
- * THE HERO SUBHEAD — one line per side of the toggle (E031).
- *
- * SEPARATE FROM BRAND_DESCRIPTOR, and that is the point. The descriptor names
- * both sides of the marketplace in one sentence ("…experts — and the businesses
- * that need them"), which is right where nobody has told us who they are: the
- * footer, About, the onboarding shell. The hero is the one place the visitor
- * HAS told us — they just pressed "I Want to Hire" or "I Want to Work" — and
- * answering a stated intent with a both-sides sentence throws that away.
- *
- * So the descriptor stays exactly as it is and keeps its four callers. These
- * two are hero-only.
- *
- * "ENTERPRISE SYSTEMS AND AI" IS CAPITALIZED in both, because it is the
- * category this product claims, not a description of it — the same reason
- * BRAND_DESCRIPTOR and SEO_TITLE capitalize it. Spelled "and" rather than the
- * descriptor's "+": these are sentences someone reads, and "+" is a logo
- * treatment.
- */
-/**
- * The combined landing's opening line (E051).
- *
- * `/` forks rather than sells, so its subhead has to be true of both sides
- * without being about neither. It names the market and the two things people
- * come to do in it, and hands off to the chooser below.
- *
- * E072 — SHORTENED TO FIX A BREAK, not to say anything different. The previous
- * wording ("hire the experts who do it, or get hired…") balanced onto two lines
- * that split after "hire", stranding the verb at the end of line one where it
- * read as the start of a phrase that never arrived. `text-balance` was working
- * correctly — the sentence simply had no good split at that length. "Hire an
- * expert" is four characters shorter and moves the break to the comma, which is
- * where the sentence already pauses.
- */
-export const BRAND_HERO_SUBHEAD_NEUTRAL =
-  "The home for Enterprise Systems and AI work — hire an expert, or get hired " +
-  "for what you do best.";
-
-export const BRAND_HERO_SUBHEAD_HIRE =
-  "Hire the world's best Enterprise Systems and AI talent to improve the " +
-  "performance of your business today.";
-
-export const BRAND_HERO_SUBHEAD_WORK =
-  "Get hired for the Enterprise Systems and AI work you do best — and get paid.";
 
 /**
  * THE DESCRIPTOR — what Panameer is, for someone who has never heard of it.
@@ -164,10 +100,6 @@ export const BRAND_HERO_SUBHEAD_WORK =
  */
 export const BRAND_DESCRIPTOR =
   "The home for Enterprise Systems + AI experts — and the businesses that need them.";
-
-/** THE MANIFESTO — the why, not the what. Sits with the differentiator pitch. */
-export const BRAND_MANIFESTO =
-  "The world's gotten adversarial. Let's build something together.";
 
 /**
  * SEO ONLY — the single place "marketplace" is allowed.

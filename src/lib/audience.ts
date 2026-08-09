@@ -11,10 +11,8 @@
  * can be sent a link that stays a buyer page, the back button works, and no
  * section has to know how to be two things at once.
  *
- * WHAT IS ITERABLE AND WHAT IS NOT. Scott's invariant is the fork. The toggle's
- * visual treatment is a starting point and expected to change — which is
- * exactly why the mapping between audience and route lives here rather than
- * inside the toggle component. Redesigning the control does not touch routing.
+ * THE MAPPING LIVES HERE, not in the toggle, so redesigning the control cannot
+ * break routing. The labels moved to brand.ts with the rest of the copy.
  */
 
 export type Audience = "neutral" | "buyer" | "provider";
@@ -34,30 +32,3 @@ export const AUDIENCE_PATH: Record<Audience, string> = {
   buyer: "/",
   provider: "/for-providers",
 };
-
-/**
- * The toggle's two options, in the order they render.
- *
- * Buyer first: the combined landing's own hero leads with hiring, and a control
- * whose first option contradicts the page above it is a control people read
- * twice.
- */
-export const AUDIENCE_CHOICES: {
-  audience: Exclude<Audience, "neutral">;
-  label: string;
-  /** The one-line reason to pick this side, used by the fork chooser. */
-  blurb: string;
-}[] = [
-  {
-    audience: "buyer",
-    label: "Hire an Expert",
-    blurb:
-      "Find vetted Enterprise Systems and AI experts, buy work in a fixed-price package, or connect your ERP and order services without leaving it.",
-  },
-  {
-    audience: "provider",
-    label: "Work & Earn",
-    blurb:
-      "Learn the applications free, build a profile buyers can find, and get paid for the work you already do best.",
-  },
-];
