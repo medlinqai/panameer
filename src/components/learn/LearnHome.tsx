@@ -30,7 +30,7 @@ export function LearnHome({
   /**
    * Which tab to open on (WS1-B).
    *
-   * The rail's Start Learning submenu has "All Learning Paths" and "My Learning
+   * The rail's Start Learning submenu has "All learning paths" and "My Learning
    * Paths" as separate entries, and they are the same page with this filter
    * flipped — the tabs were already a filter over one catalog rather than two
    * pages, which is why this is an initial value and not a second route. Read
@@ -111,7 +111,7 @@ export function LearnHome({
               (tab === "all" ? "bg-white text-learn-card" : "text-white/80 hover:text-white")
             }
           >
-            All Learning Paths
+            All learning paths
           </button>
           <button
             type="button"
@@ -121,7 +121,7 @@ export function LearnHome({
               (tab === "mine" ? "bg-white text-learn-card" : "text-white/80 hover:text-white")
             }
           >
-            My Learning Paths{enrolledCount > 0 ? ` (${enrolledCount})` : ""}
+            My learning paths{enrolledCount > 0 ? ` (${enrolledCount})` : ""}
           </button>
 
           {/*
@@ -140,13 +140,13 @@ export function LearnHome({
             href="/learn/courses"
             className="rounded-full px-5 py-2 text-[14px] font-bold text-white/80 transition-colors hover:text-white"
           >
-            All Courses
+            All courses
           </Link>
           <Link
             href="/learn/my-courses"
             className="rounded-full px-5 py-2 text-[14px] font-bold text-white/80 transition-colors hover:text-white"
           >
-            My Courses
+            My courses
           </Link>
         </div>
 
@@ -154,7 +154,7 @@ export function LearnHome({
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search Learning Paths"
+            placeholder="Search learning paths"
             aria-label="Search learning paths"
             className="w-full rounded-full border border-white/30 bg-white/10 px-5 py-2.5 text-[14.5px] text-white outline-none placeholder:text-white/60 focus:border-white/70"
           />

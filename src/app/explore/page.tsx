@@ -83,17 +83,17 @@ export default async function ExplorePage({
         <div className="mx-auto max-w-[1180px] px-6 py-12 sm:py-16">
           {/* E034 — the eyebrow follows the toggle the visitor came in on. */}
           <p className="mb-2.5 text-[13px] font-extrabold uppercase tracking-[0.06em] text-magenta">
-            {hiring ? "Finding Experts" : "Finding Work"}
+            {hiring ? "Finding experts" : "Finding work"}
           </p>
 
-          <h1 className="text-[30px] font-extrabold leading-[1.1] tracking-[-0.9px] sm:text-[40px]">
+          <h1 className="text-balance text-[30px] font-extrabold leading-[1.1] tracking-[-0.9px] sm:text-[40px]">
             {cards.length > 0
               ? hiring
-                ? "These Experts Match What You Need"
-                : "This Work Matches What You Do"
+                ? "These experts match what you need"
+                : "This work matches what you do"
               : hiring
-                ? "No Experts Match That Yet"
-                : "No Open Work Matches That Yet"}
+                ? "No experts match that yet"
+                : "No open work matches that yet"}
           </h1>
 
           {query && (
@@ -142,14 +142,14 @@ export default async function ExplorePage({
                   {/* E037 — the gate IS the primary action now. */}
                   <Btn href={loginHref}>
                     {remaining > 0
-                      ? `Create a Free Account to See All ${total}`
-                      : "Create a Free Account"}
+                      ? `Create a free account to see all ${total}`
+                      : "Create a free account"}
                   </Btn>
                   <Btn
                     href={hiring ? "/join?type=buyer" : "/join?type=seller"}
                     variant="ghost"
                   >
-                    {hiring ? "Post a Work Request" : "Create Your Provider Profile"}
+                    {hiring ? "Post a Work Request" : "Create your provider profile"}
                   </Btn>
                 </div>
               </div>
@@ -168,10 +168,10 @@ export default async function ExplorePage({
               </p>
               <div className="mt-7 flex flex-wrap items-center gap-3">
                 <Btn href={hiring ? "/join?type=buyer" : "/join?type=seller"}>
-                  {hiring ? "Post a Work Request" : "Create Your Provider Profile"}
+                  {hiring ? "Post a Work Request" : "Create your provider profile"}
                 </Btn>
                 <Btn href="/" variant="ghost">
-                  Back to the Home Page
+                  Back to the home page
                 </Btn>
               </div>
             </div>
@@ -183,7 +183,7 @@ export default async function ExplorePage({
                 href="/"
                 className="font-semibold underline underline-offset-4 hover:text-magenta"
               >
-                Back to the Home Page
+                Back to the home page
               </Link>
             </p>
           )}
@@ -266,7 +266,7 @@ function ProviderCard({ p, loginHref }: { p: TeaserProvider; loginHref: string }
           href={loginHref}
           className="mt-2.5 block rounded-full border-[1.5px] border-line px-4 py-2 text-center text-[13.5px] font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
         >
-          Book a Consultation
+          Book a consultation
         </Link>
       </div>
     </article>
@@ -302,7 +302,7 @@ function WorkCard({ w, loginHref }: { w: TeaserWork; loginHref: string }) {
           href={loginHref}
           className="mt-2.5 block rounded-full border-[1.5px] border-line px-4 py-2 text-center text-[13.5px] font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
         >
-          View Request
+          View request
         </Link>
       </div>
     </article>

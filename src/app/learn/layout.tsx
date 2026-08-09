@@ -30,7 +30,18 @@ export default async function LearnLayout({ children }: { children: ReactNode })
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-white font-body text-ink">
+    /*
+      WS-5 — `marketing-surface` on the PUBLIC branch. Two things come with it
+      and both are wanted: the `text-wrap` defaults (balance on headings, pretty
+      on prose) that the rest of the public site uses, and the pinned light
+      palette. Scott's call is that /learn stays visible and reads as one
+      product with the home; sharing the surface class is most of what makes
+      that true without theming anything twice.
+
+      The SIGNED-IN branch above keeps AppShell and the app's own theme — a
+      logged-in learner is inside the product, not on the marketing site.
+    */
+    <div className="marketing-surface flex min-h-screen flex-col bg-white font-body text-ink">
       <PublicTopNav />
       <main className="flex-1">{children}</main>
       <footer className="border-t border-line">

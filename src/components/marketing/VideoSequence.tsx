@@ -52,12 +52,12 @@ export function VideoSequence({
     >
       <div className="mx-auto max-w-[1120px] px-7">
         <p className="mb-3 font-display text-[12px] font-semibold uppercase tracking-[0.16em] text-magenta">
-          {SEQUENCE_COPY.eyebrow}
+          {SEQUENCE_COPY.eyebrow[audience]}
         </p>
         <h2 className="text-[30px] font-semibold leading-[1.1] sm:text-[36px]">
           {SEQUENCE_COPY.headline}
         </h2>
-        <p className="mt-3.5 max-w-[640px] text-[18px] text-[#3a4266]">
+        <p className="mt-3.5 max-w-[640px] text-balance text-[18px] text-[#3a4266]">
           {SEQUENCE_COPY.lead[audience]}
         </p>
 

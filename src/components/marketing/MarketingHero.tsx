@@ -59,7 +59,7 @@ export function MarketingHero({ audience }: { audience: "buyer" | "provider" }) 
           {BRAND_BADGE_SHORT.split(". ").slice(2).join(". ")}
         </h1>
 
-        <p className="mt-5 max-w-[560px] text-[17px] text-[#e9e6f5] sm:text-[19px]">
+        <p className="mt-5 max-w-[600px] text-balance text-[17px] text-[#e9e6f5] sm:text-[19px]">
           {copy.subhead}
         </p>
 

@@ -43,7 +43,7 @@ function Panel({ area }: { area: ProcessArea }) {
     <div className="mt-9 grid items-start gap-10 lg:grid-cols-[1fr_1.12fr]">
       {/* Left: the capability-domain checklist. */}
       <div>
-        <h3 className="mb-4 text-[23px]">{area.name} Capability Domains</h3>
+        <h3 className="mb-4 text-[23px]">{area.name} capability domains</h3>
         <ul>
           {area.domains.map((d) => (
             <li

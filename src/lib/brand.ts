@@ -156,8 +156,8 @@ export const HERO_COPY = {
   provider: {
     kicker: "Go Direct",
     subhead:
-      "Find consistent work and break the hourly ceiling. Be your own brand — " +
-      "we carry everything that isn't the work.",
+      "Find consistent work. Break the hourly ceiling. Be your own brand — we " +
+      "handle everything that isn't the work.",
     searchPlaceholder: "Describe your expertise…",
     searchCta: "Find Work →",
     aiHint:
@@ -188,12 +188,12 @@ export const AUDIENCE_TOGGLE = {
 /** Buyer §2 — the honest comparison. Names the PATTERN, never a firm. */
 export const THREE_WAYS = {
   eyebrow: "Why Panameer",
-  headline: "Three Ways to Get the Work Done.",
+  headline: "Three ways to get the work done.",
   lead: "You have options. Here's the honest comparison — and where Panameer fits.",
   ways: [
     {
       tag: "Go it alone",
-      title: "Hire an Independent",
+      title: "Hire an independent",
       blurb: "Cheaper, but you carry the load.",
       points: [
         { ok: false, text: "Unvetted, no shared ratings" },
@@ -203,7 +203,7 @@ export const THREE_WAYS = {
     },
     {
       tag: "The big firm",
-      title: "Call a Large Consultancy",
+      title: "Call a large consultancy",
       blurb: "Safe, but you pay for the pyramid.",
       points: [
         { ok: false, text: "2–3× markup on the same expert" },
@@ -213,7 +213,7 @@ export const THREE_WAYS = {
     },
     {
       tag: "Panameer",
-      title: "Go Direct — With a Safety Net",
+      title: "Go direct — with a safety net",
       blurb: "The same senior expert, direct. None of the markup.",
       badge: "The third way",
       points: [
@@ -227,8 +227,16 @@ export const THREE_WAYS = {
 
 /** The four-beat video sequence, framed per audience. */
 export const SEQUENCE_COPY = {
-  eyebrow: "Four Steps, Start to Settle",
-  headline: "Together, We Improve Outcomes and Incomes.",
+  /*
+    WS-4 — the eyebrow names the VALUE, per audience, where it used to count
+    the steps. "Four Steps, Start to Settle" described the graphic underneath
+    it, which the graphic already does; this says who the four steps are for.
+  */
+  eyebrow: {
+    buyer: "How Panameer Creates Value for Service Buyers",
+    provider: "How Panameer Creates Value for Service Providers",
+  },
+  headline: "Together, we improve outcomes and incomes.",
   lead: {
     buyer:
       "Learn, connect, create, and settle — all in one place, on one fully integrated platform.",
@@ -285,7 +293,7 @@ export const SEQUENCE_COPY = {
 /** Buyer §4 — the ERP punchout loop. */
 export const PUNCHOUT_COPY = {
   eyebrow: "Extend Your ERP",
-  headline: "Punch Out for Talent — Not Just Parts.",
+  headline: "Punch out for talent — not just parts.",
   lead:
     "Your ERP already knows how to buy goods. Panameer extends it to services — " +
     "so hiring an expert runs through the same requisition, PO, and receipt your " +
@@ -300,7 +308,7 @@ export const PUNCHOUT_COPY = {
     {
       where: "Panameer",
       side: "pan",
-      title: "Find & Hire",
+      title: "Find & hire",
       body: "Search, interview, and select your expert.",
     },
     {
@@ -328,42 +336,42 @@ export const PUNCHOUT_COPY = {
 export const VALUE_STACK = {
   eyebrow: "What Procurement Gets",
   headline:
-    "The Wrapper That Made the Big Firm Feel Safe — Without the Firm, or the Expense.",
+    "The wrapper that made the big firm feel safe — without the firm, or the expense.",
   cells: [
     {
       mark: "◆",
       money: true,
-      title: "Direct Pricing",
+      title: "Direct pricing",
       body: "Pay the expert's rate — not a 2–3× firm markup.",
     },
     {
       mark: "◆",
       money: true,
-      title: "Zero Risk to Connect",
+      title: "Zero risk to connect",
       body: "Connecting to Panameer is free. Don't use it, don't pay.",
     },
     {
       mark: "01",
       money: false,
-      title: "One Contract",
+      title: "One contract",
       body: "Sign once with Panameer, not with every provider.",
     },
     {
       mark: "02",
       money: false,
-      title: "Cross-Customer Ratings",
+      title: "Cross-customer ratings",
       body: "Every expert vetted by the whole community.",
     },
     {
       mark: "03",
       money: false,
-      title: "One Monthly Payment",
+      title: "One monthly payment",
       body: "A single settlement for all your providers.",
     },
     {
       mark: "04",
       money: false,
-      title: "No Employment Risk",
+      title: "No employment risk",
       body: "Less comp and liability exposure — the model carries it, not your payroll.",
     },
   ],
@@ -401,30 +409,36 @@ export const AI_STRIP = {
 /** Seller §2 — the two pains, led with. */
 export const TWO_PAINS = {
   eyebrow: "Why Panameer",
-  headline: "The Two Hardest Parts of Going Independent — Solved.",
+  headline: "The two hardest parts of going independent — solved.",
   pains: [
     {
       title: "Find consistent work.",
-      body: "End the feast-or-famine. Buyers connect to the platform — and connect to you. A pipeline that comes to you, instead of the endless hunt for the next gig.",
+      body: "End the feast-or-famine. Buyers connect to the platform — and to you. The pipeline comes to you.",
     },
     {
       title: "Break the hourly ceiling.",
-      body: "Stop trading hours for dollars. Sell courses, packages, and consultations alongside your engagements — earn even when you're not on the clock.",
+      body: "Stop trading hours for dollars. Sell courses, packages, and consults alongside your work — and earn off the clock.",
     },
   ],
 } as const;
 
-/** Seller §3 — every way to sell expertise. */
+/*
+  Seller §3 — every way to sell expertise.
+
+  WS-6 — CUT TO FRAGMENTS. Scott's note is that /for-providers reads as
+  run-ons. These card bodies were full sentences with a subordinate clause
+  each; in a five-across grid at 12.5px that is four lines per card and the row
+  becomes a wall. A fragment per card is the right density for a scan, and the
+  detail belongs on the page that sells each one.
+*/
 export const OMNI_CHANNEL = {
   eyebrow: "Omni-Channel Monetization",
-  headline: "Sell Your Expertise Every Way There Is.",
-  lead:
-    "One profile, many revenue streams. Productize once, sell many — and let " +
-    "clients engage you however suits them.",
+  headline: "Sell your expertise every way there is.",
+  lead: "One profile, many revenue streams. Productize once, sell many.",
   cards: [
-    { icon: "$", title: "Consultations", body: "Bite-size, on-demand advice — from 15 minutes up." },
-    { icon: "▤", title: "Courses", body: "Build guided paths that end in a certification." },
-    { icon: "◫", title: "Packages", body: "Pre-scoped services, bought off the shelf." },
+    { icon: "$", title: "Consultations", body: "Bite-size, on-demand advice." },
+    { icon: "▤", title: "Courses", body: "Guided paths that end in a certification." },
+    { icon: "◫", title: "Packages", body: "Pre-scoped services, off the shelf." },
     { icon: "⚙", title: "Engagements", body: "Full deployments, days to months." },
     { icon: "✦", title: "Mentoring", body: "Coach teams before and during the work." },
   ],
@@ -440,10 +454,10 @@ export const OMNI_CHANNEL = {
  */
 export const GO_DIRECT = {
   eyebrow: "Go Direct",
-  headline: "Stop Being the Marked-Up Resource.",
+  headline: "Stop being the marked-up resource.",
   main: {
-    title: "Be Your Own Brand.",
-    body: "The big firm hires people like you, marks you up, and sells you to the same clients — anonymously. Go direct instead.",
+    title: "Be your own brand.",
+    body: "The big firm hires people like you, marks you up, and resells you — anonymously. Go direct.",
     points: [
       "Your name, your rating, your rate — portable and yours",
       "Keep the value the middleman used to skim",
@@ -453,35 +467,35 @@ export const GO_DIRECT = {
   },
   bionic: {
     tag: "The Bionic Consultant",
-    title: "Bring Your AI to the Table.",
-    body: "You bring the AI that makes you faster and better — and Panameer helps you package and sell your existing services under AI labeling, so clients see the edge you already have.",
+    title: "Bring your AI to the table.",
+    body: "Bring the AI that makes you faster. Panameer helps you package and sell it — so clients see the edge you already have.",
   },
 } as const;
 
 /** The closing band, per audience. */
 export const CLOSING_CTA = {
   buyer: {
-    headline: "Go Direct. Keep Transforming.",
+    headline: "Go direct. Keep transforming.",
     body: "Free to connect, pay only when you engage. Describe what you need and meet the expert who's already done it.",
-    primary: "Describe What You Need →",
+    primary: "Describe what you need →",
     secondary: "Talk to Us",
   },
   provider: {
-    headline: "Build Your Profile in Minutes.",
-    body: "Drop in your background — AI drafts your portfolio from it. List your first service and start getting found.",
-    primary: "Build Your Profile",
-    secondary: "See How Earning Works →",
+    headline: "Build your profile in minutes.",
+    body: "Drop in your background — AI drafts your portfolio. List your first service and get found.",
+    primary: "Build your profile",
+    secondary: "See how earning works →",
   },
 } as const;
 
 /** Buyer §7 — the assessment framework. Presentational; the CTA is the funnel. */
 export const ASSESSMENT_COPY = {
   eyebrow: "See Where You Stand on AI Adoption",
-  headline: "Assess Your Adoption by Capability Domain",
+  headline: "Assess your adoption by capability domain",
   leadStrong:
     "Transformation isn't slowing down — it's accelerating. The only question " +
     "is whether your organization is.",
   lead: "See where you stand across the processes you run — your maturity read is instant.",
-  cta: "See Where You Stand →",
-  ctaSub: "Sign in to run your assessment",
+  cta: "See where you stand →",
+  ctaSub: "Sign in to be first in line.",
 } as const;

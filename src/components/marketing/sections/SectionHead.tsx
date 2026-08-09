@@ -43,7 +43,13 @@ export function SectionHead({
       {lead && (
         <p
           className={
-            "mt-3.5 max-w-[660px] text-[18px] " +
+            /*
+            WS-5 — `text-balance`, overriding the marketing default of
+            `pretty` for paragraphs. Pretty only refuses to strand a word on
+            the LAST line; a two-line subhead needs the lines evened, which is
+            what stops "…and where / Panameer fits." coming out lopsided.
+          */
+          "mt-3.5 max-w-[660px] text-balance text-[18px] " +
             (tone === "dark" ? "text-[#c7c4de]" : "text-[#3a4266]")
           }
         >
