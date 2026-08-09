@@ -59,7 +59,7 @@ const COLS: { title: string; links: { label: string; href: string }[] }[] = [
       { label: "User Agreement", href: "/user-agreement" },
       { label: "Privacy Policy", href: "/privacy" },
       { label: "Cookie Policy", href: "/legal/cookie-policy" },
-      { label: "All Legal Documents", href: "/legal" },
+      { label: "All legal documents", href: "/legal" },
     ],
   },
 ];
@@ -68,19 +68,28 @@ export function MarketingFooter() {
   return (
     <footer className="mt-10 bg-ink py-12 text-[#cfc7da]">
       <div className="mx-auto max-w-[1180px] px-6">
-        <div className="flex flex-wrap gap-x-[60px] gap-y-10">
-          <div className="min-w-[200px]">
-            <Image
-              src="/brand/panameer-new-on-dark.png"
-              alt="Panameer"
-              width={529}
-              height={134}
-              className="h-8 w-auto"
-            />
-            <p className="mt-4 max-w-[240px] text-[14px] text-[#a89fb8]">
-              {BRAND_DESCRIPTOR}
-            </p>
-          </div>
+        {/*
+          WS-7 — THE TAGLINE UNDER THE WORDMARK IS GONE. It was
+          BRAND_DESCRIPTOR, and the copyright row eleven lines below prints the
+          same sentence — the footer said the same thing twice, forty pixels
+          apart. The copyright row keeps it; that is the line people actually
+          read last.
+
+          AND THE GRID IS EVEN NOW. The wordmark sat in a 200px column of its
+          own with the tagline under it, and once the tagline went it was a
+          32px-tall logo over a large gap while five link columns crowded the
+          right. The mark moves to its own row above them, so the five columns
+          — Legal included, rather than orphaned — share the width equally.
+        */}
+        <Image
+          src="/brand/panameer-new-on-dark.png"
+          alt="Panameer"
+          width={529}
+          height={134}
+          className="mb-9 h-8 w-auto"
+        />
+
+        <div className="grid grid-cols-2 gap-x-8 gap-y-10 sm:grid-cols-3 lg:grid-cols-5">
           {COLS.map((col) => (
             <div key={col.title}>
               <b className="mb-2.5 block text-white">{col.title}</b>

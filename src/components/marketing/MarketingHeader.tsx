@@ -2,11 +2,20 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { MARKETING_NAV, Btn } from "@/components/marketing/brand";
 import { Logo } from "@/components/Logo";
 
 /**
- * Sticky marketing header: wordmark, nav, Log In / Sign Up, mobile menu.
+ * THE PUBLIC HEADER — one row on every public page (WS-6b).
+ *
+ * It used to be the marketing pages' header while /learn and /verify rendered
+ * PublicTopNav: a bigger logo, a two-item nav, a "Get Started" button. Two
+ * headers on one product, and the difference was visible the moment anyone
+ * followed the nav's own "Learn" link. This is the survivor; PublicTopNav is
+ * retired.
+ *
+ * Sticky: wordmark, nav, Log In / Sign Up, mobile menu.
  *
  * E014 — THE HEADER IS THE WORDMARK ONLY. E001 put the badge under it as part
  * of a lockup, on the reasoning that a wordmark alone says a name while the
@@ -25,6 +34,30 @@ import { Logo } from "@/components/Logo";
  */
 export function MarketingHeader() {
   const [open, setOpen] = useState(false);
+  /*
+    WS-6b — THE ACTIVE NAV ITEM COMES FROM THE PATH, not from a prop.
+
+    This header now renders on every public page (home, /for-providers, /learn,
+    /explore, /verify), and threading an `active` prop through five layouts is
+    five chances to pass the wrong one. usePathname is already available — this
+    component is a client component for the mobile menu — so the header answers
+    the question itself.
+
+    Prefix match, not equality, so /learn/<path>/<lesson> still lights "Learn".
+
+    ⚠ AN ANCHOR IS NEVER "THE CURRENT PAGE". Pricing and Enterprise are
+    `/#value` and `/#punchout` — sections of the buyer page, not pages. Stripping
+    the hash and comparing paths marked all three of Hire Talent, Pricing and
+    Enterprise active on `/` at once, which is three answers to a question that
+    has one. Hash hrefs are excluded outright; `aria-current="page"` is a claim
+    about the document, and a jump link inside it is not a different document.
+  */
+  const pathname = usePathname();
+  const isActive = (href: string) => {
+    if (href.includes("#")) return false;
+    if (href === "/") return pathname === "/";
+    return pathname === href || pathname.startsWith(href + "/");
+  };
 
   return (
     <header className="sticky top-0 z-50 border-b border-line bg-white/90 backdrop-blur-[10px] backdrop-saturate-150">
@@ -81,15 +114,22 @@ export function MarketingHeader() {
           nav in the ROW would not centre it between them.
         */}
         <nav className="hidden flex-1 justify-center gap-7 text-[15px] font-semibold text-ink-2 md:flex lg:gap-[34px]">
-          {MARKETING_NAV.map((item, i) => (
-            <Link
-              key={`${item.label}-${i}`}
-              href={item.href}
-              className="whitespace-nowrap hover:text-magenta"
-            >
-              {item.label}
-            </Link>
-          ))}
+          {MARKETING_NAV.map((item, i) => {
+            const on = isActive(item.href);
+            return (
+              <Link
+                key={`${item.label}-${i}`}
+                href={item.href}
+                aria-current={on ? "page" : undefined}
+                className={
+                  "whitespace-nowrap transition-colors hover:text-magenta " +
+                  (on ? "font-bold text-magenta" : "")
+                }
+              >
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
 
         {/*
@@ -127,16 +167,23 @@ export function MarketingHeader() {
       {open && (
         <div className="border-t border-line bg-white px-6 py-4 md:hidden">
           <nav className="flex flex-col gap-1 text-[15px] font-semibold text-ink-2">
-            {MARKETING_NAV.map((item, i) => (
-              <Link
-                key={`${item.label}-${i}`}
-                href={item.href}
-                onClick={() => setOpen(false)}
-                className="rounded-lg px-2 py-2 hover:bg-bg-soft hover:text-magenta"
-              >
-                {item.label}
-              </Link>
-            ))}
+            {MARKETING_NAV.map((item, i) => {
+              const on = isActive(item.href);
+              return (
+                <Link
+                  key={`${item.label}-${i}`}
+                  href={item.href}
+                  onClick={() => setOpen(false)}
+                  aria-current={on ? "page" : undefined}
+                  className={
+                    "rounded-lg px-2 py-2 hover:bg-bg-soft hover:text-magenta " +
+                    (on ? "font-bold text-magenta" : "")
+                  }
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
             <div className="mt-2 flex items-center gap-3 border-t border-line pt-3">
               <Btn href="/login" variant="ghost">
                 Log In

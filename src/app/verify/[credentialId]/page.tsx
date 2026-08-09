@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { PublicTopNav } from "@/components/PublicTopNav";
+import { MarketingHeader } from "@/components/marketing/MarketingHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -50,7 +50,7 @@ export default async function VerifyPage({
 
   return (
     <div className="flex min-h-screen flex-col bg-white font-body text-ink">
-      <PublicTopNav />
+      <MarketingHeader />
       <main className="flex-1">
         <div className="mx-auto w-full max-w-xl px-6 py-14">
           <div className="rounded-brand border-2 border-emerald-500/40 bg-emerald-500/[0.05] p-8 text-center">

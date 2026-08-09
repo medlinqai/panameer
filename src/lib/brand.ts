@@ -478,7 +478,7 @@ export const CLOSING_CTA = {
     headline: "Go direct. Keep transforming.",
     body: "Free to connect, pay only when you engage. Describe what you need and meet the expert who's already done it.",
     primary: "Describe what you need →",
-    secondary: "Talk to Us",
+    secondary: "Talk to us",
   },
   provider: {
     headline: "Build your profile in minutes.",

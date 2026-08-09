@@ -354,8 +354,12 @@ export const ADMIN_PERSONA_NAV: NavItem[] = [
   { label: "My Profile", href: "/profile" },
 ];
 
-/** The public front door. Learn is the one app surface open to everyone. */
-export const PUBLIC_NAV: NavItem[] = [{ label: "Learn", href: "/learn" }];
+/*
+  PUBLIC_NAV is gone (WS-6b). It held the one-item nav that PublicTopNav
+  rendered on /learn and /verify; both now use the shared MarketingHeader, and
+  the public nav is MARKETING_NAV in components/marketing/brand.tsx — one list
+  for one header.
+*/
 
 /** Does this viewer hold the capability an item asks for? */
 function holds(me: Me, capability: Capability): boolean {

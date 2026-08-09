@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { PublicTopNav } from "@/components/PublicTopNav";
+import { MarketingHeader } from "@/components/marketing/MarketingHeader";
 import { MeProvider } from "@/components/MeProvider";
 import { AppShell } from "@/components/casing/AppShell";
 import { getSessionViewer } from "@/lib/session";
@@ -42,7 +42,7 @@ export default async function LearnLayout({ children }: { children: ReactNode })
       logged-in learner is inside the product, not on the marketing site.
     */
     <div className="marketing-surface flex min-h-screen flex-col bg-white font-body text-ink">
-      <PublicTopNav />
+      <MarketingHeader />
       <main className="flex-1">{children}</main>
       <footer className="border-t border-line">
         <div className="mx-auto w-full max-w-6xl px-6 py-6 text-[13.5px] text-ink-2">
