@@ -303,26 +303,6 @@ body {
 
 
 @layer base {
-  /*
-    THE MARKETING PAGES SET HEADINGS IN FREDOKA
-    (brief_home_rebuild_08_09), where the app sets them in Comfortaa.
-
-    Deliberately two systems, not an oversight. The mockups are Fredoka and the
-    app's design system is Comfortaa; re-pointing --font-display would restyle
-    every heading in the console on the strength of two marketing pages. Scoped
-    here, the marketing surface can match its mockups without touching anything
-    behind the login.
-
-    Inside @layer base and more specific than the bare `h1,h2,h3` rule above, so
-    it wins within the layer while still losing to any utility that asks for
-    something else.
-  */
-  .marketing-surface :is(h1, h2, h3, h4) {
-    font-family: var(--font-fredoka), var(--font-display);
-  }
-}
-
-@layer base {
   .marketing-surface :is(h1, h2, h3, h4) {
     text-wrap: balance;
   }

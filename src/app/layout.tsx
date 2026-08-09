@@ -1,11 +1,5 @@
 import type { Metadata } from "next";
-import {
-  Geist,
-  Geist_Mono,
-  Comfortaa,
-  Fredoka,
-  Montserrat,
-} from "next/font/google";
+import { Geist, Geist_Mono, Comfortaa, Montserrat } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { DevBanner } from "@/components/DevBanner";
@@ -30,23 +24,6 @@ const comfortaa = Comfortaa({
   // 600 added for headings (brief_S / E021) — Comfortaa stops at 700, so
   // `font-extrabold` headings would otherwise be synthesised faux-bold.
   weight: ["500", "600", "700"],
-});
-
-/*
-  FREDOKA — the marketing pages' heading face (brief_home_rebuild_08_09).
-
-  SCOPED TO .marketing-surface, NOT SWAPPED IN GLOBALLY. Comfortaa is the app's
-  display font and sets the type of every heading in the console, the rail and
-  the onboarding wizard; the mockups specify Fredoka, and re-pointing
-  --font-display would restyle all of that on the strength of two marketing
-  pages. The variable is registered here and applied in globals.css inside
-  .marketing-surface only, so the two type systems can differ deliberately
-  until somebody decides they should not.
-*/
-const fredoka = Fredoka({
-  variable: "--font-fredoka",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
 });
 
 const montserrat = Montserrat({
@@ -88,7 +65,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${comfortaa.variable} ${fredoka.variable} ${montserrat.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${comfortaa.variable} ${montserrat.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>
