@@ -279,6 +279,29 @@ body {
  * not assumed.
  */
 /*
+ * REDUCED MOTION STOPS THE MARKETING VIDEOS — IN CSS, NOT IN REACT.
+ *
+ * The four beat cards paint their poster as a background-image and lay the
+ * <video> over it. Hiding the video here reveals the poster that was already
+ * underneath, which means:
+ *
+ *   · the components stay SERVER components — no media-query hook, no island,
+ *     and both marketing routes stay statically prerendered;
+ *   · the fallback is correct on the very first paint, where a JS check only
+ *     corrects itself after hydration;
+ *   · and it degrades the right way — no JS at all still honours the setting.
+ *
+ * `display:none` rather than pausing: a paused <video> still downloads, and
+ * someone who has asked for less motion has usually also asked for less of
+ * everything else.
+ */
+@media (prefers-reduced-motion: reduce) {
+  [data-autoplay-video] {
+    display: none;
+  }
+}
+
+/*
  * THE FOCUS STRIP'S REMEMBERED SIDE (E061), applied before first paint.
  *
  * Driven by the attribute FOCUS_BOOT_SCRIPT writes on <html> in <head>, so the
