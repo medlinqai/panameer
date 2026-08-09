@@ -77,20 +77,18 @@ export function MarketingHero({ audience }: { audience: "buyer" | "provider" }) 
         */}
 
         {/*
-          WS-3 — the action cue. Deliberately small and uppercase: it frames the
-          search without competing with the H1 above it, which is what a page
-          needs when the headline is a brand statement rather than an
-          instruction.
+          WS-2 — "GET STARTED NOW" LEFT THIS SPOT. It framed the search, which
+          was the right instinct in the wrong place: the hero is where somebody
+          decides whether to keep reading, and an eyebrow telling them to start
+          arrives before they have a reason to. It is the closing CTA's eyebrow
+          now, where the page has already made its case.
         */}
-        <p className="mb-2 mt-8 font-display text-[12px] font-semibold uppercase tracking-[0.16em] text-[#f0a6ef]">
-          Get Started Now
-        </p>
 
         {/* ── Search: a real GET form, no JavaScript ── */}
         <form
           action="/explore"
           method="get"
-          className="flex w-full max-w-[620px] rounded-full bg-white py-[7px] pl-5 pr-[7px] shadow-[0_18px_40px_rgba(0,0,0,0.28)] sm:pl-[22px]"
+          className="mt-8 flex w-full max-w-[620px] rounded-full bg-white py-[7px] pl-5 pr-[7px] shadow-[0_18px_40px_rgba(0,0,0,0.28)] sm:pl-[22px]"
         >
           <input type="hidden" name="mode" value={mode} />
           <input

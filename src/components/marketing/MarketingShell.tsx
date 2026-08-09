@@ -31,8 +31,21 @@ export function MarketingShell({
 }) {
   return (
     <div className="marketing-surface min-h-screen bg-white font-body text-ink">
-      <AudienceStrip audience={audience} />
-      <MarketingHeader />
+      {/*
+        ONE STICKY UNIT (WS-1). The strip and the header pin together rather
+        than each carrying its own `top` offset. The alternative — strip at
+        top-0, header at top-[whatever the strip measures] — hard-codes one
+        element's height into another element's CSS, and the first copy change
+        that reflows the strip on a phone breaks it silently.
+
+        The header keeps its own `sticky top-0` for the pages that render it
+        WITHOUT the strip (/learn, /verify, /explore). Nested inside this
+        wrapper it simply travels with the parent.
+      */}
+      <div className="sticky top-0 z-50">
+        <AudienceStrip audience={audience} />
+        <MarketingHeader />
+      </div>
       {children}
       <MarketingFooter />
     </div>

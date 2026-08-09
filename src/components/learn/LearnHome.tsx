@@ -102,7 +102,13 @@ export function LearnHome({
           free, and taught by working consultants.
         </p>
 
-        <div className="mt-6 inline-flex rounded-full border border-white/30 p-1">
+        {/*
+          WRAPS AT NARROW WIDTHS (WS-5 audit). Four pills in an `inline-flex`
+          pill group need ~470px; at 390 the fourth ran off the right edge of
+          the hero. `flex-wrap` lets them fall onto a second row instead, and
+          `justify-start` keeps them left-aligned with everything above.
+        */}
+        <div className="mt-6 inline-flex flex-wrap justify-start rounded-[26px] border border-white/30 p-1 sm:rounded-full">
           <button
             type="button"
             onClick={() => setTab("all")}

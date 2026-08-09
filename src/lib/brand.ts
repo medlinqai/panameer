@@ -143,7 +143,7 @@ export const HERO_COPY = {
     searchPlaceholder: "Describe what you need done…",
     searchCta: "Search →",
     aiHint:
-      "Describe it in a sentence or drop a document — AI drafts your scoped work request.",
+      "Describe it in a sentence or drop a document — AI drafts your scoped Work Request.",
     chips: [
       "Procurement",
       "Supply Chain",
@@ -156,7 +156,12 @@ export const HERO_COPY = {
   provider: {
     kicker: "Go Direct",
     /*
-      WS-5 — "Be your\u00A0own brand" is bound with a non-breaking space.
+      WS-5 — "Be your own brand" is bound WHOLE.
+
+      Round 1 bound only "your\u00A0own", which held that pair and moved the
+      break to "own / brand" — a bind relocates a break, it does not remove
+      one, so binding half a phrase just picks a different place to cut it.
+      All four words are bound now.
       `text-balance` evens the LINE LENGTHS; it has no opinion about where in a
       phrase the break lands, and at every sensible measure this sentence split
       between "Be your" and "own brand". Widening the container just moves
@@ -164,8 +169,8 @@ export const HERO_COPY = {
       every width, including the ones a phone picks.
     */
     subhead:
-      "Find consistent work. Break the hourly ceiling. Be your\u00A0own brand " +
-      "— we handle everything that isn't the work.",
+      "Find consistent work. Break the hourly ceiling. " +
+      "Be\u00A0your\u00A0own\u00A0brand — we handle everything that isn't the work.",
     searchPlaceholder: "Describe your expertise…",
     searchCta: "Find Work →",
     aiHint:
@@ -197,7 +202,19 @@ export const AUDIENCE_TOGGLE = {
 export const THREE_WAYS = {
   eyebrow: "Why Panameer",
   headline: "Three ways to get the work done.",
-  lead: "You have options. Here's the honest comparison — and where Panameer fits.",
+  /*
+    WS-5 — "honest\u00A0comparison" is bound, and the em dash deliberately is
+    NOT. `text-balance` evens line LENGTHS and has no opinion about where
+    inside a phrase the break falls, so this split between "honest" and
+    "comparison"; binding the pair fixes that.
+
+    ⚠ BINDING THE DASH TOO MADE IT WORSE, which is worth recording because the
+    instinct is to bind more. "honest comparison —" as one unit no longer fit
+    beside "You have options. Here's the", so the whole unit wrapped and line
+    one ended on the article. A bind can only ever move a break; it cannot
+    create room.
+  */
+  lead: "You have options. Here's the honest\u00A0comparison — and where Panameer fits.",
   ways: [
     {
       tag: "Go it alone",
@@ -221,7 +238,12 @@ export const THREE_WAYS = {
     },
     {
       tag: "Panameer",
-      title: "Go direct — with a safety net",
+      /*
+        Bound on both sides of the break: "direct —" so the dash cannot start a
+        line, and "with a safety net" so the tail stays whole. The only break
+        left is between them, which is the one place this title should break.
+      */
+      title: "Go direct\u00A0— with\u00A0a\u00A0safety\u00A0net",
       blurb: "The same senior expert, direct. None of the markup.",
       badge: "The third way",
       points: [
@@ -247,7 +269,7 @@ export const SEQUENCE_COPY = {
   headline: "Together, we improve outcomes and incomes.",
   lead: {
     buyer:
-      "Learn, connect, create, and settle — all in one place, on one fully integrated platform.",
+      "Learn, connect, create, and settle — all\u00A0in\u00A0one\u00A0place, on one fully integrated platform.",
     provider: "The same platform your buyers use — seen from your side of the table.",
   },
   beats: {
@@ -298,7 +320,25 @@ export const SEQUENCE_COPY = {
   },
 } as const;
 
-/** Buyer §4 — the ERP punchout loop. */
+/*
+  Buyer §4 — the ERP punchout loop.
+
+  WS-3 — THE VOCABULARY RULE, and this section is where it bites hardest
+  because both kinds of noun appear in the same five cards.
+
+    Panameer transactions are NAMED OBJECTS and take capitals: Work Order,
+    Work Request. They are things this platform creates and the user will see
+    under those names in the product.
+
+    Generic ERP transactions are COMMON NOUNS and stay lowercase: purchase
+    order, requisition, service receipt. They belong to the customer's ERP,
+    not to us, and capitalising them would quietly claim them.
+
+  "PO" keeps its capitals as an acronym. The step TITLES are sentence case, so
+  "Service receipt" and "Requisition" are capitalised as the first word of a
+  title rather than as proper nouns — which is why "Work Order" mid-title is
+  the one that stays fully capitalised.
+*/
 export const PUNCHOUT_COPY = {
   eyebrow: "Extend Your ERP",
   headline: "Punch out for talent — not just parts.",
@@ -323,7 +363,7 @@ export const PUNCHOUT_COPY = {
       where: "Your ERP",
       side: "erp",
       title: "Approve & PO",
-      body: "Back in your ERP for approval and a Purchase Order.",
+      body: "Back in your ERP for approval and a purchase order.",
     },
     {
       where: "Panameer",
@@ -334,7 +374,7 @@ export const PUNCHOUT_COPY = {
     {
       where: "Your ERP",
       side: "erp",
-      title: "Service Receipt",
+      title: "Service receipt",
       body: "Billing returns as a service receipt — ready to match and pay.",
     },
   ],
@@ -398,7 +438,7 @@ export const AI_STRIP = {
   lead: "Panameer is AI-native",
   tags: {
     buyer: [
-      { text: "AI-drafted work requests", soon: false },
+      { text: "AI-drafted Work Requests", soon: false },
       { text: "AI-built profiles", soon: false },
       { text: "Extend your ERP with AI", soon: false },
       { text: "Price alerts", soon: true },

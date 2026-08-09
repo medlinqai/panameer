@@ -38,11 +38,27 @@ import { AUDIENCE_PATH, type Audience } from "@/lib/audience";
  */
 export function AudienceStrip({ audience }: { audience: Audience }) {
   return (
-    <div className="border-b border-magenta/20 bg-magenta/8 px-4 py-2.5 text-ink sm:px-6">
-      <div className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-center gap-x-3 gap-y-2">
-        <span className="text-[14px] font-bold">I&apos;m here to:</span>
+    /*
+      GLASS, NOT A SOLID BAND (WS-1). The strip is pinned — MarketingShell
+      wraps it and the header in one sticky container — so the whole page
+      scrolls beneath it. An opaque fill would make that a hard edge sliding
+      over the content; an 8% magenta wash with a 10px backdrop blur lets the
+      content ghost through instead, which is the treatment the header already
+      uses and what makes the two read as one pinned unit.
 
-        <div className="inline-flex flex-wrap justify-center gap-1 rounded-full border border-line bg-white p-1">
+      `backdrop-saturate-150` alongside the blur for the same reason the header
+      has it: blurring alone desaturates what shows through, and the brand is
+      mostly magenta.
+    */
+    <div className="border-b border-magenta/20 bg-magenta/8 px-4 py-2.5 text-ink backdrop-blur-[10px] backdrop-saturate-150 sm:px-6">
+      <div className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-center gap-x-3 gap-y-2">
+        {/*
+          NO "I'm here to:" LEAD (WS-1). Two options that say "I Hire…" and
+          "I Sell…" already start with the pronoun; the label was reading the
+          first two words of both buttons back to the visitor before they got
+          to them.
+        */}
+        <div className="inline-flex flex-wrap justify-center gap-1 rounded-full border border-line bg-white/70 p-1">
           {(["buyer", "provider"] as const).map((side) => {
             const on = side === audience;
             return (
