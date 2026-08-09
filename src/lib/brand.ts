@@ -186,3 +186,370 @@ export const SEO_DESCRIPTION =
   "Panameer is the Enterprise Systems + AI services marketplace — hire vetted " +
   "experts, or connect your ERP and search, request, order and settle services " +
   "without leaving your system of record.";
+
+// ---------------------------------------------------------------------------
+// THE MARKETING PAGES (brief_home_rebuild_08_09).
+//
+// Every string the buyer `/` and seller `/for-providers` pages render lives
+// here, lifted verbatim from the approved mockups. The brief is explicit that
+// new copy belongs in this module rather than inline in components, and the
+// reason is the one this file has always had: copy typed into a component is
+// copy that gets re-worded in one place and not the other.
+//
+// Grouped by section, in page order, so a section's words can be read without
+// opening the component that renders them.
+// ---------------------------------------------------------------------------
+
+/** The hero, per audience. Buyer is `/`; seller is `/for-providers`. */
+export const HERO_COPY = {
+  buyer: {
+    kicker: "Continuous Transformation",
+    subhead:
+      "Keep your Oracle investment evolving — on-demand access to pre-vetted " +
+      "experts with 20+ years in your applications. Without the million-dollar " +
+      "implementation.",
+    searchPlaceholder: "Describe what you need done…",
+    searchCta: "Search →",
+    aiHint:
+      "Describe it in a sentence or drop a document — AI drafts your scoped work request.",
+    chips: [
+      "Procurement",
+      "Supply Chain",
+      "Human Capital Mgmt",
+      "Finance & Accounting",
+      "Enterprise AI",
+      "Extend Your ERP with AI",
+    ],
+  },
+  provider: {
+    kicker: "Go Direct",
+    subhead:
+      "Find consistent work and break the hourly ceiling. Be your own brand — " +
+      "we carry everything that isn't the work.",
+    searchPlaceholder: "Describe your expertise…",
+    searchCta: "Find Work →",
+    aiHint:
+      "Drop your résumé or LinkedIn — AI builds your profile and labels your services.",
+    chips: [
+      "Oracle Cloud",
+      "Financials",
+      "Procurement",
+      "HCM",
+      "Supply Chain",
+      "Enterprise AI",
+    ],
+  },
+} as const;
+
+/**
+ * The audience toggle's labels.
+ *
+ * Longer and more literal than the "Hire an Expert / Work & Earn" they replace,
+ * because they have to be self-describing in a hero with no surrounding
+ * explanation: a first-time visitor reads one line and knows which is them.
+ */
+export const AUDIENCE_TOGGLE = {
+  buyer: "I Hire Experts & Buy Services",
+  provider: "I Sell Hourly & Packaged Services",
+} as const;
+
+/** Buyer §2 — the honest comparison. Names the PATTERN, never a firm. */
+export const THREE_WAYS = {
+  eyebrow: "Why Panameer",
+  headline: "Three Ways to Get the Work Done.",
+  lead: "You have options. Here's the honest comparison — and where Panameer fits.",
+  ways: [
+    {
+      tag: "Go it alone",
+      title: "Hire an Independent",
+      blurb: "Cheaper, but you carry the load.",
+      points: [
+        { ok: false, text: "Unvetted, no shared ratings" },
+        { ok: false, text: "You paper every contract" },
+        { ok: false, text: "Employment & compliance risk on you" },
+      ],
+    },
+    {
+      tag: "The big firm",
+      title: "Call a Large Consultancy",
+      blurb: "Safe, but you pay for the pyramid.",
+      points: [
+        { ok: false, text: "2–3× markup on the same expert" },
+        { ok: false, text: "Senior in the pitch, analyst on delivery" },
+        { ok: true, text: "Risk transfer & one contract" },
+      ],
+    },
+    {
+      tag: "Panameer",
+      title: "Go Direct — With a Safety Net",
+      blurb: "The same senior expert, direct. None of the markup.",
+      badge: "The third way",
+      points: [
+        { ok: true, text: "Pre-vetted, cross-customer rated" },
+        { ok: true, text: "One contract, one monthly payment" },
+        { ok: true, text: "Employment-risk layer built in" },
+      ],
+    },
+  ],
+} as const;
+
+/** The four-beat video sequence, framed per audience. */
+export const SEQUENCE_COPY = {
+  eyebrow: "Four Steps, Start to Settle",
+  headline: "Together, We Improve Outcomes and Incomes.",
+  lead: {
+    buyer:
+      "Learn, connect, create, and settle — all in one place, on one fully integrated platform.",
+    provider: "The same platform your buyers use — seen from your side of the table.",
+  },
+  beats: {
+    buyer: [
+      {
+        word: "Learn",
+        cap: "Learn About Apps & Tech",
+        body: "Know what you're buying before you buy it — the same free paths your providers trained on.",
+      },
+      {
+        word: "Connect",
+        cap: "Connect at Every Stage",
+        body: "Scope with an expert before you commit, then keep the same people through delivery.",
+      },
+      {
+        word: "Create",
+        cap: "Create With Your Experts",
+        body: "Agreed scope, tracked in one place — or ordered straight from your ERP.",
+      },
+      {
+        word: "Settle",
+        cap: "Pay in One Payment",
+        body: "One settlement through Panameer — no contractor paperwork, no compliance or legal exposure.",
+      },
+    ],
+    provider: [
+      {
+        word: "Learn",
+        cap: "Sharpen & Certify",
+        body: "Build skills and earn credentials that make you easier to find and trust.",
+      },
+      {
+        word: "Connect",
+        cap: "Get Found",
+        body: "Buyers connect to the rail — and connect to you. Get matched to work that fits.",
+      },
+      {
+        word: "Create",
+        cap: "Do the Work",
+        body: "Deliver with your experts, augmented by your own AI. We handle the paperwork.",
+      },
+      {
+        word: "Settle",
+        cap: "Get Paid",
+        body: "One settlement, on time. No chasing invoices, no back-office.",
+      },
+    ],
+  },
+} as const;
+
+/** Buyer §4 — the ERP punchout loop. */
+export const PUNCHOUT_COPY = {
+  eyebrow: "Extend Your ERP",
+  headline: "Punch Out for Talent — Not Just Parts.",
+  lead:
+    "Your ERP already knows how to buy goods. Panameer extends it to services — " +
+    "so hiring an expert runs through the same requisition, PO, and receipt your " +
+    "procurement team already trusts. No new system of record.",
+  steps: [
+    {
+      where: "Your ERP",
+      side: "erp",
+      title: "Requisition",
+      body: "Raise a service request — AI drafts the scope — and punch out to Panameer.",
+    },
+    {
+      where: "Panameer",
+      side: "pan",
+      title: "Find & Hire",
+      body: "Search, interview, and select your expert.",
+    },
+    {
+      where: "Your ERP",
+      side: "erp",
+      title: "Approve & PO",
+      body: "Back in your ERP for approval and a Purchase Order.",
+    },
+    {
+      where: "Panameer",
+      side: "pan",
+      title: "Work Order",
+      body: "The PO issues your expert a Work Order to bill against.",
+    },
+    {
+      where: "Your ERP",
+      side: "erp",
+      title: "Service Receipt",
+      body: "Billing returns as a service receipt — ready to match and pay.",
+    },
+  ],
+} as const;
+
+/** Buyer §5 — what procurement gets. The two "money" cells lead. */
+export const VALUE_STACK = {
+  eyebrow: "What Procurement Gets",
+  headline:
+    "The Wrapper That Made the Big Firm Feel Safe — Without the Firm, or the Expense.",
+  cells: [
+    {
+      mark: "◆",
+      money: true,
+      title: "Direct Pricing",
+      body: "Pay the expert's rate — not a 2–3× firm markup.",
+    },
+    {
+      mark: "◆",
+      money: true,
+      title: "Zero Risk to Connect",
+      body: "Connecting to Panameer is free. Don't use it, don't pay.",
+    },
+    {
+      mark: "01",
+      money: false,
+      title: "One Contract",
+      body: "Sign once with Panameer, not with every provider.",
+    },
+    {
+      mark: "02",
+      money: false,
+      title: "Cross-Customer Ratings",
+      body: "Every expert vetted by the whole community.",
+    },
+    {
+      mark: "03",
+      money: false,
+      title: "One Monthly Payment",
+      body: "A single settlement for all your providers.",
+    },
+    {
+      mark: "04",
+      money: false,
+      title: "No Employment Risk",
+      body: "Less comp and liability exposure — the model carries it, not your payroll.",
+    },
+  ],
+  reconcile:
+    "Free to connect, pay only when you engage — then sign once and every " +
+    "engagement after spins up with zero contracting friction.",
+} as const;
+
+/**
+ * The AI strip, per audience.
+ *
+ * ⚠ `soon` IS A LABEL AND NOTHING ELSE. Those two items are not built; the tag
+ * is the whole honesty mechanism, so it must never become a link.
+ */
+export const AI_STRIP = {
+  lead: "Panameer is AI-native",
+  tags: {
+    buyer: [
+      { text: "AI-drafted work requests", soon: false },
+      { text: "AI-built profiles", soon: false },
+      { text: "Extend your ERP with AI", soon: false },
+      { text: "Price alerts", soon: true },
+      { text: "Auto-maturity", soon: true },
+    ],
+    provider: [
+      { text: "AI-built profiles", soon: false },
+      { text: "AI-labeled services", soon: false },
+      { text: "AI-drafted proposals", soon: false },
+      { text: "Price alerts", soon: true },
+      { text: "Smart matching", soon: true },
+    ],
+  },
+} as const;
+
+/** Seller §2 — the two pains, led with. */
+export const TWO_PAINS = {
+  eyebrow: "Why Panameer",
+  headline: "The Two Hardest Parts of Going Independent — Solved.",
+  pains: [
+    {
+      title: "Find consistent work.",
+      body: "End the feast-or-famine. Buyers connect to the platform — and connect to you. A pipeline that comes to you, instead of the endless hunt for the next gig.",
+    },
+    {
+      title: "Break the hourly ceiling.",
+      body: "Stop trading hours for dollars. Sell courses, packages, and consultations alongside your engagements — earn even when you're not on the clock.",
+    },
+  ],
+} as const;
+
+/** Seller §3 — every way to sell expertise. */
+export const OMNI_CHANNEL = {
+  eyebrow: "Omni-Channel Monetization",
+  headline: "Sell Your Expertise Every Way There Is.",
+  lead:
+    "One profile, many revenue streams. Productize once, sell many — and let " +
+    "clients engage you however suits them.",
+  cards: [
+    { icon: "$", title: "Consultations", body: "Bite-size, on-demand advice — from 15 minutes up." },
+    { icon: "▤", title: "Courses", body: "Build guided paths that end in a certification." },
+    { icon: "◫", title: "Packages", body: "Pre-scoped services, bought off the shelf." },
+    { icon: "⚙", title: "Engagements", body: "Full deployments, days to months." },
+    { icon: "✦", title: "Mentoring", body: "Coach teams before and during the work." },
+  ],
+} as const;
+
+/**
+ * Seller §5 — Go Direct, and the Bionic Consultant.
+ *
+ * ⚠ THE BIONIC PANEL SAYS "BRING YOUR AI", NOT "WE GIVE YOU AI". Panameer does
+ * not supply the consultant with a model; it helps them package and label what
+ * they already use. The distinction is the difference between a positioning
+ * line and a product claim we cannot honour.
+ */
+export const GO_DIRECT = {
+  eyebrow: "Go Direct",
+  headline: "Stop Being the Marked-Up Resource.",
+  main: {
+    title: "Be Your Own Brand.",
+    body: "The big firm hires people like you, marks you up, and sells you to the same clients — anonymously. Go direct instead.",
+    points: [
+      "Your name, your rating, your rate — portable and yours",
+      "Keep the value the middleman used to skim",
+      "Contracts, compliance, and employment risk carried by the platform",
+      "Become a vetted, certified Panameer expert — a lead magnet",
+    ],
+  },
+  bionic: {
+    tag: "The Bionic Consultant",
+    title: "Bring Your AI to the Table.",
+    body: "You bring the AI that makes you faster and better — and Panameer helps you package and sell your existing services under AI labeling, so clients see the edge you already have.",
+  },
+} as const;
+
+/** The closing band, per audience. */
+export const CLOSING_CTA = {
+  buyer: {
+    headline: "Go Direct. Keep Transforming.",
+    body: "Free to connect, pay only when you engage. Describe what you need and meet the expert who's already done it.",
+    primary: "Describe What You Need →",
+    secondary: "Talk to Us",
+  },
+  provider: {
+    headline: "Build Your Profile in Minutes.",
+    body: "Drop in your background — AI drafts your portfolio from it. List your first service and start getting found.",
+    primary: "Build Your Profile",
+    secondary: "See How Earning Works →",
+  },
+} as const;
+
+/** Buyer §7 — the assessment framework. Presentational; the CTA is the funnel. */
+export const ASSESSMENT_COPY = {
+  eyebrow: "See Where You Stand on AI Adoption",
+  headline: "Assess Your Adoption by Capability Domain",
+  leadStrong:
+    "Transformation isn't slowing down — it's accelerating. The only question " +
+    "is whether your organization is.",
+  lead: "See where you stand across the processes you run — your maturity read is instant.",
+  cta: "See Where You Stand →",
+  ctaSub: "Sign in to run your assessment",
+} as const;

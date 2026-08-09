@@ -1,41 +1,26 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-/**
- * Primary marketing nav links (shared by header + mobile menu).
- *
- * E051 — ABSOLUTE PATHS, NOT BARE HASHES. Every one of these was `#learn`,
- * `#punchout` or `#pricing`, which worked while one page held every section.
- * The fork moved those sections onto /for-buyers and /for-providers, and a bare
- * hash is resolved against the CURRENT page — so on `/` these silently scrolled
- * nowhere, and the header is on every page, so the breakage was sitewide.
- *
- * Pointing them at `/path#anchor` fixes it in both directions: from `/` it
- * navigates to the right page and then to the section, and from an audience
- * page it still lands on the section it names.
- *
- * "Why Panameer" is the exception and stays a bare hash — that section renders
- * on all three pages, so the nearest one is always the right one.
- */
-export const MARKETING_NAV: { label: string; href: string }[] = [
-  /*
-    E062, REVERTED. These two briefly read "For Buyers" / "For Providers", on
-    the reasoning that the visitor who needs them is switching audience and
-    should see the audience named. Scott's call is the other way, and it holds
-    up: "Hire Talent" and "Find Work" say what you came to DO, which is what a
-    nav label is for, while "For Buyers" describes a page rather than an
-    intention. The audience switch is in the routing either way — these still
-    go to /for-buyers and /for-providers — so nothing was lost by naming them
-    after the action.
-  */
-  { label: "Learn", href: "/for-providers#learn" },
-  { label: "Hire Talent", href: "/for-buyers" },
-  { label: "Find Work", href: "/for-providers" },
-  { label: "Why Panameer", href: "#why" },
-  { label: "Pricing", href: "/for-buyers#pricing" },
-  { label: "Enterprise", href: "/for-buyers#punchout" },
-];
+/*
+  THE MARKETING NAV (brief_home_rebuild_08_09).
 
+  Five items, matching both mockups. "Why Panameer" is gone with the section it
+  pointed at — the rebuild has no Why-Panameer block, and a nav entry whose
+  destination no longer exists is the dead link the walk keeps finding.
+
+  EVERY HREF RESOLVES TO SOMETHING THAT EXISTS. Buyer is `/` now, so Hire Talent
+  goes to the root; Pricing and Enterprise point at the two buyer sections that
+  actually answer them — the value stack and the ERP punchout — rather than at
+  pages nobody has built. An anchor into a real section is an honest
+  destination; a route that 404s or a page that says "coming soon" is not.
+*/
+export const MARKETING_NAV: { label: string; href: string }[] = [
+  { label: "Learn", href: "/learn" },
+  { label: "Hire Talent", href: "/" },
+  { label: "Find Work", href: "/for-providers" },
+  { label: "Pricing", href: "/#value" },
+  { label: "Enterprise", href: "/#punchout" },
+];
 const BASE =
   "inline-flex items-center justify-center gap-2 rounded-full px-[22px] py-3 " +
   "text-[15px] font-bold transition-colors cursor-pointer";

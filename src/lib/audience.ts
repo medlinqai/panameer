@@ -1,10 +1,8 @@
 /**
  * WHICH SIDE OF THE MARKETPLACE A PAGE IS TALKING TO (E051).
  *
- * Scott's move: the audience toggle is not a copy swap inside one page, it
- * FORKS the site into three. A short combined landing whose job is to orient
- * and hand off, and two focused pages that get to be short because each only
- * has one reader.
+ * Two pages, one per side: the buyer page at `/` and the seller page at
+ * `/for-providers`. The toggle in each hero moves between them.
  *
  * THE AUDIENCE IS THE ROUTE, NOT A PIECE OF STATE. That is the whole design and
  * it is worth saying plainly, because the obvious implementation — one page, a
@@ -21,10 +19,19 @@
 
 export type Audience = "neutral" | "buyer" | "provider";
 
-/** The two audience pages, plus the combined landing they fork from. */
+/*
+  ⚠ BUYER IS `/` NOW (brief_home_rebuild_08_09). It was /for-buyers, with `/`
+  as a third, neutral landing that forked between the two. The rebuild removes
+  the fork: the buyer page IS the root, because buyers are the default audience
+  and a marketplace that greets everyone with "which are you?" spends its best
+  screen asking instead of selling.
+
+  `neutral` is kept in the type but now resolves to the buyer page, since that
+  is what the root serves. Nothing should be passing it after WS-E.
+*/
 export const AUDIENCE_PATH: Record<Audience, string> = {
   neutral: "/",
-  buyer: "/for-buyers",
+  buyer: "/",
   provider: "/for-providers",
 };
 

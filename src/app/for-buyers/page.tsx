@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Hero } from "@/components/marketing/Hero";
+import { MarketingHero } from "@/components/marketing/MarketingHero";
 import { WhyPanameer } from "@/components/marketing/WhyPanameer";
 import { Packages } from "@/components/marketing/Packages";
 import { Punchout } from "@/components/marketing/Punchout";
@@ -32,8 +32,8 @@ export const metadata: Metadata = {
 
 export default function ForBuyersPage() {
   return (
-    <MarketingShell audience="buyer">
-      <Hero audience="buyer" />
+    <MarketingShell>
+      <MarketingHero audience="buyer" />
       <WhyPanameer audience="buyer" />
       <Packages />
       <Punchout />

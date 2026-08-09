@@ -1,4 +1,4 @@
-import { Hero } from "@/components/marketing/Hero";
+import { MarketingHero } from "@/components/marketing/MarketingHero";
 import { WhyPanameerPrimer } from "@/components/marketing/WhyPanameerPrimer";
 import { Announcement } from "@/components/marketing/Announcement";
 import { ForkChooser } from "@/components/marketing/ForkChooser";
@@ -36,13 +36,13 @@ import { MarketingShell } from "@/components/marketing/MarketingShell";
  */
 export default function Home() {
   return (
-    <MarketingShell audience="neutral">
+    <MarketingShell>
       {/*
         No `audience` — the combined landing is the one page where the hero's
         own hire/work toggle still drives the subhead, because it is the one
         page where the reader has not chosen.
       */}
-      <Hero />
+      <MarketingHero audience="buyer" />
       <WhyPanameerPrimer />
       <ForkChooser />
       {/*

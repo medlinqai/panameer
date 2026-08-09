@@ -1,8 +1,6 @@
 import type { ReactNode } from "react";
 import { MarketingHeader } from "@/components/marketing/MarketingHeader";
 import { MarketingFooter } from "@/components/marketing/MarketingFooter";
-import { AudienceToggle } from "@/components/marketing/AudienceToggle";
-import type { Audience } from "@/lib/audience";
 
 /**
  * The chrome every marketing page shares (E051).
@@ -21,17 +19,10 @@ import type { Audience } from "@/lib/audience";
  * from each page is one line per page and keeps the fork legible at the top of
  * every file.
  */
-export function MarketingShell({
-  audience,
-  children,
-}: {
-  audience: Audience;
-  children: ReactNode;
-}) {
+export function MarketingShell({ children }: { children: ReactNode }) {
   return (
     <div className="marketing-surface min-h-screen bg-white font-body text-ink">
       <MarketingHeader />
-      <AudienceToggle audience={audience} />
       {children}
       <MarketingFooter />
     </div>
