@@ -6,12 +6,25 @@ import * as path from "path";
 dotenv.config({ path: path.resolve(process.cwd(), ".env.local") });
 
 /**
- * INSTRUCTOR AVATARS ON LEARN (brief_learn_thumbnails_08_10 WS-4).
+ * INSTRUCTOR CENSUS FOR LEARN — who teaches what, and do they have a face.
  *
- *   npm run learn:instructors            report only
- *   npm run learn:instructors -- --apply write Person.photo_url
+ *   npm run learn:instructors            the census
+ *   npm run learn:instructors -- --apply write the (currently empty) patch list
  *
- * ── WHAT THE BRIEF EXPECTED, AND WHAT IS ACTUALLY WRONG ──────────────────────
+ * ── THIS SCRIPT'S PATCH LIST IS NOW EMPTY, ON PURPOSE ────────────────────────
+ *
+ * It shipped with one row: put Scott's headshot on the walk-test Person that
+ * taught 338 lessons. That was a stopgap — it made the right face appear by
+ * writing it onto the wrong record — and `consolidate-scott-learn.ts` (WS-2)
+ * replaced it with the real fix: the lessons now belong to Scott's actual
+ * provider Person, so the photo flows from the record he edits.
+ *
+ * The list is emptied rather than the script deleted, because the census below
+ * is the thing that found the bug in the first place and is worth one command
+ * next time. Leaving the row in would be worse than useless: it would re-photo
+ * a Person that WS-2 retired and un-clear what WS-2 cleared.
+ *
+ * ── WHAT THE ORIGINAL BRIEF EXPECTED, AND WHAT WAS ACTUALLY WRONG ────────────
  *
  * The brief asks for photos on Linus (sw_user2), Eddie (sw_user3) and Marelise
  * (sw_user4), on the theory that the "SW" initials come from those Person rows
@@ -45,28 +58,16 @@ dotenv.config({ path: path.resolve(process.cwd(), ".env.local") });
  * So this is a pure data patch, and the ONLY row that needs it is the one the
  * brief did not know about.
  *
- * ── WHY A LOCAL FILE, NOT THE EXISTING SUPABASE URL ──────────────────────────
- *
- * Scott's headshot already exists at a Supabase URL — but under the storage
- * prefix of a DIFFERENT Person (`profile-photos/<other-person-id>/…`). Pointing
- * this row at it would couple two records: the day that other profile replaces
- * or clears its photo, two thirds of Learn loses its instructor face for
- * reasons nobody would connect. The image is committed to the repo instead and
- * served from /learn/instructors/, which is stable and versioned.
- *
  * IDEMPOTENT: writes only rows whose photo_url differs, and reports 0 changed
  * on a second run.
  */
 
-/** Person id → photo. Keyed by id because several rows share the name. */
-const PHOTOS: { id: string; label: string; photo: string }[] = [
-  {
-    // walk.1785011538@example.com — 338 lessons, the "SW" source.
-    id: "997420d8-d096-46ac-aa73-ee00c0cfe916",
-    label: "scott walls <walk.1785011538@example.com>",
-    photo: "/learn/instructors/scott-walls.jpg",
-  },
-];
+/**
+ * Person id → photo. Empty by design — see the note above. Add a row here only
+ * for an instructor who has no account of their own to upload from; anyone with
+ * a login should get their face the normal way, through their own profile.
+ */
+const PHOTOS: { id: string; label: string; photo: string }[] = [];
 
 async function main() {
   const apply = process.argv.includes("--apply");
