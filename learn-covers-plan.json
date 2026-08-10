@@ -2,8 +2,8 @@
   "generated": "run `npm run learn:covers` to regenerate",
   "covers": 19,
   "paths": 23,
-  "assigned": 19,
-  "keptExisting": 4,
+  "assigned": 0,
+  "keptExisting": 23,
   "plan": [
     {
       "slug": "beginners-foundational-learning-paths-1-background",
@@ -42,133 +42,152 @@
       "title": "Basic Payables",
       "audience": "END_USER",
       "group": "Accounting",
-      "cover": "/learn/covers/ahmad-the-tech.jpg"
+      "cover": "/learn/covers/ahmad-the-tech.jpg",
+      "keptExisting": "/learn/covers/ahmad-the-tech.jpg"
     },
     {
       "slug": "end-user-beginners",
       "title": "Beginners",
       "audience": "END_USER",
       "group": null,
-      "cover": "/learn/covers/can-sit-still.jpg"
+      "cover": "/learn/covers/can-sit-still.jpg",
+      "keptExisting": "/learn/covers/can-sit-still.jpg"
     },
     {
       "slug": "end-user-core-hr-benefits-admin",
       "title": "Benefits Admin",
       "audience": "END_USER",
       "group": "Core HR",
-      "cover": "/learn/covers/coffee-face.jpg"
+      "cover": "/learn/covers/coffee-face.jpg",
+      "keptExisting": "/learn/covers/coffee-face.jpg"
     },
     {
       "slug": "end-user-core-hr-core-hr",
       "title": "Core HR",
       "audience": "END_USER",
       "group": "Core HR",
-      "cover": "/learn/covers/coffee-hands.jpg"
+      "cover": "/learn/covers/coffee-hands.jpg",
+      "keptExisting": "/learn/covers/coffee-hands.jpg"
     },
     {
       "slug": "end-user-erp",
       "title": "ERP",
       "audience": "END_USER",
       "group": null,
-      "cover": "/learn/covers/cute-sec.jpg"
+      "cover": "/learn/covers/cute-sec.jpg",
+      "keptExisting": "/learn/covers/cute-sec.jpg"
     },
     {
       "slug": "end-user-finance-accounting-journals",
       "title": "Journals",
       "audience": "END_USER",
       "group": "Finance & Accounting",
-      "cover": "/learn/covers/dude-iun-sweater.jpg"
+      "cover": "/learn/covers/dude-iun-sweater.jpg",
+      "keptExisting": "/learn/covers/dude-iun-sweater.jpg"
     },
     {
       "slug": "end-user-implementers",
       "title": "Implementers",
       "audience": "END_USER",
       "group": null,
-      "cover": "/learn/covers/finger-dancing.jpg"
+      "cover": "/learn/covers/finger-dancing.jpg",
+      "keptExisting": "/learn/covers/finger-dancing.jpg"
     },
     {
       "slug": "end-user-payroll-payroll-mgmt",
       "title": "Payroll Mgmt",
       "audience": "END_USER",
       "group": "Payroll",
-      "cover": "/learn/covers/first-day.jpg"
+      "cover": "/learn/covers/first-day.jpg",
+      "keptExisting": "/learn/covers/first-day.jpg"
     },
     {
       "slug": "end-user-procurement-advanced-procurement",
       "title": "Advanced Procurement",
       "audience": "END_USER",
       "group": "Procurement",
-      "cover": "/learn/covers/girl-on-bench.jpg"
+      "cover": "/learn/covers/girl-on-bench.jpg",
+      "keptExisting": "/learn/covers/girl-on-bench.jpg"
     },
     {
       "slug": "end-user-procurement-basic-procurement",
       "title": "Basic Procurement",
       "audience": "END_USER",
       "group": "Procurement",
-      "cover": "/learn/covers/girl-on-couch.jpg"
+      "cover": "/learn/covers/girl-on-couch.jpg",
+      "keptExisting": "/learn/covers/girl-on-couch.jpg"
     },
     {
       "slug": "end-user-procurement-contract-management",
       "title": "Contract Management",
       "audience": "END_USER",
       "group": "Procurement",
-      "cover": "/learn/covers/guy-on-couch.jpg"
+      "cover": "/learn/covers/guy-on-couch.jpg",
+      "keptExisting": "/learn/covers/guy-on-couch.jpg"
     },
     {
       "slug": "end-user-procurement-how-to-configure",
       "title": "How to Configure",
       "audience": "END_USER",
       "group": "Procurement",
-      "cover": "/learn/covers/hairy-laptop.jpg"
+      "cover": "/learn/covers/hairy-laptop.jpg",
+      "keptExisting": "/learn/covers/hairy-laptop.jpg"
     },
     {
       "slug": "end-user-procurement-supplier-integration",
       "title": "Supplier Integration",
       "audience": "END_USER",
       "group": "Procurement",
-      "cover": "/learn/covers/intern.jpg"
+      "cover": "/learn/covers/intern.jpg",
+      "keptExisting": "/learn/covers/intern.jpg"
     },
     {
       "slug": "end-user-supply-chain-execution-cost-accounting",
       "title": "Cost Accounting",
       "audience": "END_USER",
       "group": "Supply Chain Execution",
-      "cover": "/learn/covers/linus-pen-app.jpg"
+      "cover": "/learn/covers/linus-pen-app.jpg",
+      "keptExisting": "/learn/covers/linus-pen-app.jpg"
     },
     {
       "slug": "end-user-supply-chain-execution-inventory-management",
       "title": "Inventory Management",
       "audience": "END_USER",
       "group": "Supply Chain Execution",
-      "cover": "/learn/covers/old-euro.jpg"
+      "cover": "/learn/covers/old-euro.jpg",
+      "keptExisting": "/learn/covers/old-euro.jpg"
     },
     {
       "slug": "end-user-talent-mgmt-talent-mgmt",
       "title": "Talent Mgmt",
       "audience": "END_USER",
       "group": "Talent Mgmt",
-      "cover": "/learn/covers/startup.jpg"
+      "cover": "/learn/covers/startup.jpg",
+      "keptExisting": "/learn/covers/startup.jpg"
     },
     {
       "slug": "implementer-implementer-s-journal-how-to-implement",
       "title": "How to Implement",
       "audience": "IMPLEMENTER",
       "group": "Implementer's Journal",
-      "cover": "/learn/covers/student-at-laptop.jpg"
+      "cover": "/learn/covers/student-at-laptop.jpg",
+      "keptExisting": "/learn/covers/student-at-laptop.jpg"
     },
     {
       "slug": "implementer-procurement-end-to-end-business-processing-buying-channels",
       "title": "End-to-End Business Processing (Buying Channels)",
       "audience": "IMPLEMENTER",
       "group": "Procurement",
-      "cover": "/learn/covers/wfa-but-home.jpg"
+      "cover": "/learn/covers/wfa-but-home.jpg",
+      "keptExisting": "/learn/covers/wfa-but-home.jpg"
     },
     {
       "slug": "implementer-procurement-how-to-deploy-procurement",
       "title": "How to Deploy Procurement",
       "audience": "IMPLEMENTER",
       "group": "Procurement",
-      "cover": "/learn/covers/woman-at-whiteboard.jpg"
+      "cover": "/learn/covers/woman-at-whiteboard.jpg",
+      "keptExisting": "/learn/covers/woman-at-whiteboard.jpg"
     }
   ]
 }
