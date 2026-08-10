@@ -48,7 +48,11 @@ export function MeProvider({ children }: { children: React.ReactNode }) {
   const alive = useRef(true);
 
   const load = useCallback(() => {
-    fetch("/api/me")
+    // `no-store` on both ends (WS-3): the route sets the header, this refuses
+    // the browser's HTTP cache outright. `refresh()` exists to pick up a change
+    // that just happened — a cached response is the one thing that would make
+    // it a no-op, and silently.
+    fetch("/api/me", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
       .then((me: Me) => {
         if (alive.current) setState({ me, loading: false, error: false });
