@@ -27,6 +27,31 @@ import { env } from "@/lib/env";
 export type ProviderName = "openai" | "anthropic";
 
 /**
+ * How long any single model call may take before it is abandoned (WS-4).
+ *
+ * 55s, under the 60s `maxDuration` both résumé routes declare. The ordering is
+ * the point: whichever limit fires first decides what the provider sees, and a
+ * platform timeout produces a 504 with no body — no message for the UI, nothing
+ * in the logs. Losing the race to our own deadline produces a sentence instead.
+ */
+const MODEL_TIMEOUT_MS = 55_000;
+
+/**
+ * Does this model treat `max_completion_tokens` as a budget it can spend
+ * THINKING, and accept `reasoning_effort` to bound that?
+ *
+ * A name test, because there is no capability endpoint to ask and this module
+ * deliberately talks to any OpenAI-compatible vendor. Wrong-negative is safe —
+ * the parameter is simply not sent, which is today's behaviour. Wrong-positive
+ * is a 400 on an unknown parameter, so the patterns stay narrow and explicit
+ * rather than clever.
+ */
+function isReasoningModel(model: string): boolean {
+  const m = model.toLowerCase();
+  return /^(gpt-5|o1|o3|o4)/.test(m);
+}
+
+/**
  * WHICH TIER IS RUNNING — the thing E184 is about.
  *
  * `economy` is the configured `RESUME_PARSER_*` trio; `incumbent` is the
@@ -283,6 +308,43 @@ export async function callExtractionModel({
       body: JSON.stringify({
         model: cfg.model,
         max_completion_tokens: maxOutputTokens,
+        /*
+          REASONING EFFORT — the fix for the AI pass "failing" (WS-4).
+
+          `max_completion_tokens` on a reasoning model is a budget for REASONING
+          PLUS the answer, not for the answer. gpt-5-nano at the vendor default
+          (medium) spent 6,656 of its tokens thinking about Scott's résumé and
+          54.8s doing it; on a longer document the thinking consumed the whole
+          16k, the model emitted nothing, `finish_reason` came back "length" —
+          and the branch below told him HIS DOCUMENT was too long. It was not.
+          The reader had talked itself out of room.
+
+          Measured on Scott's résumé, same request otherwise:
+
+              default (medium)   54.8s   6,656 reasoning tokens   2,276 chars out
+              low                16.0s   1,472 reasoning tokens   2,109 chars out
+              minimal             1.3s       0 reasoning tokens      81 chars out
+
+          `low` is 3.4x faster for the same answer. `minimal` is not a candidate
+          at any speed — 81 characters is the model declining to do the job.
+
+          SENT ONLY TO MODELS THAT UNDERSTAND IT. This endpoint shape is spoken
+          by several vendors and older chat models 400 on an unknown parameter,
+          so a name test gates it rather than sending it blindly.
+        */
+        ...(isReasoningModel(cfg.model)
+          ? {
+              /*
+                The literal fallback is not redundant — same reason the model id
+                two blocks up carries one. `env.ts` degrades to raw process.env
+                if ANY variable fails validation, and that throws away every
+                schema default including this one. Without the `||`, one
+                unrelated bad env var silently restores the slow behaviour this
+                whole block exists to fix.
+              */
+              reasoning_effort: env.RESUME_PARSER_REASONING_EFFORT || "low",
+            }
+          : {}),
         messages: [
           { role: "system", content: system },
           { role: "user", content: userContent },
@@ -296,6 +358,13 @@ export async function callExtractionModel({
           },
         },
       }),
+      /*
+        A DEADLINE, so a slow call fails as a sentence rather than as a dead
+        request. Without it the only thing that ever stopped this call was the
+        hosting platform's function timeout, which arrives as a 504 with no body
+        — nothing for the UI to show and nothing in the logs to read.
+      */
+      signal: AbortSignal.timeout(MODEL_TIMEOUT_MS),
     });
 
     if (!res.ok) {
@@ -313,15 +382,36 @@ export async function callExtractionModel({
         prompt_tokens?: number;
         completion_tokens?: number;
         prompt_tokens_details?: { cached_tokens?: number };
+        completion_tokens_details?: { reasoning_tokens?: number };
       };
     };
     const choice = body.choices?.[0];
     if (choice?.finish_reason === "length") {
+      /*
+        WHOSE FAULT WAS THE TRUNCATION (WS-4).
+
+        This branch had one message and it blamed the document. On a reasoning
+        model that is usually wrong: the budget is shared with the model's own
+        thinking, so a 12-page résumé and a 2-page one truncate for completely
+        different reasons and the 2-page case reads as an insult. Scott got
+        exactly that — "your document is long enough that the reader ran out of
+        room" on an eleven-thousand-character CV.
+
+        The usage block says which happened, so it is asked rather than assumed.
+      */
+      const reasoningTokens =
+        body.usage?.completion_tokens_details?.reasoning_tokens ?? 0;
+      const spentThinking = reasoningTokens > maxOutputTokens / 2;
+      console.error(
+        `[resume] truncated: completion=${body.usage?.completion_tokens} ` +
+          `reasoning=${reasoningTokens} budget=${maxOutputTokens} model=${cfg.model}`
+      );
       return {
         ok: false,
         reason: "truncated",
-        message:
-          "Your document is long enough that the reader ran out of room. Try again, or add your work history manually.",
+        message: spentThinking
+          ? "The reader used up its budget working through your document and didn't get to an answer. Try again — nothing was changed."
+          : "Your document is long enough that the reader ran out of room. Try again, or add your work history manually.",
       };
     }
     const content = choice?.message?.content;
@@ -358,6 +448,19 @@ export async function callExtractionModel({
     };
   } catch (e) {
     console.error("[resume] model call failed:", e);
+    /*
+      `AbortSignal.timeout` rejects with a TimeoutError DOMException whose own
+      message is "The operation was aborted due to timeout" — accurate, and
+      meaningless to a provider watching a spinner. Named explicitly so the
+      deadline explains itself.
+    */
+    if (e instanceof Error && e.name === "TimeoutError") {
+      return {
+        ok: false,
+        reason: "error",
+        message: `The reader took longer than ${Math.round(MODEL_TIMEOUT_MS / 1000)}s and was stopped. Nothing was changed — try again, or add your work history manually.`,
+      };
+    }
     return {
       ok: false,
       reason: "error",

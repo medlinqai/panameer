@@ -29,6 +29,14 @@ import { assessParse } from "@/lib/resume/confidence";
  * provides (E154).
  */
 export const runtime = "nodejs";
+/*
+ * E184's sibling route got `maxDuration = 60` when it started making a model
+ * call. THIS route — the one whose entire job is a model call — never got one,
+ * so it ran on the platform default while doing the slowest work in the app.
+ * The pair now agree, and `MODEL_TIMEOUT_MS` in ai-provider.ts sits just under
+ * this so our own deadline wins the race and produces a message.
+ */
+export const maxDuration = 60;
 
 export async function POST() {
   const viewer = await getSessionViewer();
