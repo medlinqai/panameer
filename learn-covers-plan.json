@@ -1,41 +1,40 @@
 {
   "generated": "run `npm run learn:covers` to regenerate",
-  "covers": 19,
+  "covers": 21,
   "paths": 23,
-  "assigned": 0,
-  "keptExisting": 23,
+  "assigned": 4,
+  "keptExisting": 19,
+  "sharedImages": 2,
   "plan": [
     {
       "slug": "beginners-foundational-learning-paths-1-background",
       "title": "1. Background",
       "audience": "BEGINNERS",
       "group": "Foundational Learning Paths",
-      "cover": "https://ofkctqkhclnaihnmbyfx.supabase.co/storage/v1/object/public/profile-photos/learn/540a5900-789b-466e-be54-707ba29d4ec6.jpg",
-      "keptExisting": "https://ofkctqkhclnaihnmbyfx.supabase.co/storage/v1/object/public/profile-photos/learn/540a5900-789b-466e-be54-707ba29d4ec6.jpg"
+      "cover": "/learn/covers/girl-at-desk-in-cr.jpg"
     },
     {
       "slug": "beginners-foundational-learning-paths-2-overview",
       "title": "2. Overview",
       "audience": "BEGINNERS",
       "group": "Foundational Learning Paths",
-      "cover": "https://ofkctqkhclnaihnmbyfx.supabase.co/storage/v1/object/public/profile-photos/learn/bc808ea5-b471-40bf-a7ba-a597f80dd343.jpg",
-      "keptExisting": "https://ofkctqkhclnaihnmbyfx.supabase.co/storage/v1/object/public/profile-photos/learn/bc808ea5-b471-40bf-a7ba-a597f80dd343.jpg"
+      "cover": "/learn/covers/girl-w-coffee.jpg"
     },
     {
       "slug": "beginners-foundational-learning-paths-3-roles-careers",
       "title": "3. Roles & Careers",
       "audience": "BEGINNERS",
       "group": "Foundational Learning Paths",
-      "cover": "https://ofkctqkhclnaihnmbyfx.supabase.co/storage/v1/object/public/profile-photos/learn/c9be6108-7918-4071-970d-d3e15750a633.jpg",
-      "keptExisting": "https://ofkctqkhclnaihnmbyfx.supabase.co/storage/v1/object/public/profile-photos/learn/c9be6108-7918-4071-970d-d3e15750a633.jpg"
+      "cover": "/learn/covers/woman-at-whiteboard.jpg",
+      "reusedFrom": "How to Deploy Procurement"
     },
     {
       "slug": "beginners-oracle-cloud-4-how-to-login-get-started",
       "title": "4. How to Login & Get Started",
       "audience": "BEGINNERS",
       "group": "Oracle Cloud",
-      "cover": "https://ofkctqkhclnaihnmbyfx.supabase.co/storage/v1/object/public/profile-photos/learn/26c90d6b-befc-4356-bed5-1554b026eeb1.jpg",
-      "keptExisting": "https://ofkctqkhclnaihnmbyfx.supabase.co/storage/v1/object/public/profile-photos/learn/26c90d6b-befc-4356-bed5-1554b026eeb1.jpg"
+      "cover": "/learn/covers/wfa-but-home.jpg",
+      "reusedFrom": "End-to-End Business Processing (Buying Channels)"
     },
     {
       "slug": "end-user-accounting-basic-payables",
