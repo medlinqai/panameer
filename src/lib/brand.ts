@@ -136,10 +136,15 @@ export const SEO_DESCRIPTION =
 export const HERO_COPY = {
   buyer: {
     kicker: "Continuous Transformation",
+    /*
+      brief_public_pages_ia — this hero now only ever renders on /hire-talent,
+      so the subhead speaks to somebody who has already decided to hire rather
+      than to a cold visitor who has not.
+    */
     subhead:
-      "Keep your Oracle investment evolving — on-demand access to pre-vetted " +
-      "experts with 20+ years in your applications. Without the million-dollar " +
-      "implementation.",
+      "Search real, rated experts by the system they actually run. Engage them " +
+      "for two hours or six months — one contract, one payment, no employment " +
+      "risk.",
     searchPlaceholder: "Describe what you need done…",
     searchCta: "Search →",
     aiHint:
@@ -690,7 +695,13 @@ export const HOME_TEASER = {
 
 /** HIRE TALENT hero. */
 export const HIRE_HERO = {
-  kicker: "Hire pre-vetted experts, direct",
+  /*
+    The eyebrow must not restate the headline. First pass set both to "Hire
+    pre-vetted experts, direct" and the hero read the same sentence twice in
+    two type sizes — the eyebrow's job is to say who this page is for, so it
+    does that instead.
+  */
+  kicker: "For teams ready to hire",
   headline: "Hire pre-vetted experts, direct.",
   subhead:
     "Search real, rated experts by the system they actually run. Engage them for two hours or six months — one contract, one payment.",
