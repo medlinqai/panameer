@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { recomputeProviderRollup } from "@/lib/provider-rollup";
 import { projectToCard } from "@/lib/project-card";
 import { toView as toArtifactView } from "@/lib/artifacts";
 import { hashPassword } from "@/lib/password";
@@ -1810,7 +1811,35 @@ export async function applyProviderSection(
   // Every save recomputes stored completeness (brief_K) — the marketplace
   // visibility gate reads this column, so it must stay current on every write.
   await recomputeCompleteness(profileId);
+
+  /*
+    …and the weighted skill rollup (WS-2), for the sections that touch jobs.
+
+    Narrow on purpose. `recomputeCompleteness` runs after every section because
+    every section can move the percentage; the rollup only changes when a job,
+    its dates, its suite or its skills change, and rebuilding a provider's whole
+    vector because they edited their bio would be work with no possible effect.
+
+    The list is the sections that write Employer/Project/JobSkill rows. Adding a
+    new one means adding it here — which is why it is a named constant rather
+    than an inline check, so it reads as a thing to maintain.
+    */
+  if (SECTIONS_AFFECTING_ROLLUP.has(section)) {
+    await recomputeProviderRollup(profileId);
+  }
 }
+
+/**
+ * The sections whose writes change what the weighted rollup would compute.
+ *
+ * `experience` rewrites the whole work history; `work_history_review` is the
+ * WS-4 surface where suites and per-job skills are corrected. Everything else
+ * — bio, languages, rate, photo — cannot move a single weight.
+ */
+const SECTIONS_AFFECTING_ROLLUP = new Set<string>([
+  "experience",
+  "work_history_review",
+]);
 
 // ---------------------------------------------------------------------------
 // Small helpers used by the brief_P steps.

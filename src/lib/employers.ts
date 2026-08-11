@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { ownedProviderProfile, type Viewer } from "@/lib/access";
 import { OnboardingError, recomputeCompleteness } from "@/lib/onboarding";
+import { recomputeProviderRollup } from "@/lib/provider-rollup";
 import { normalizeHost } from "@/lib/email-domain";
 import { toView as toArtifactView } from "@/lib/artifacts";
 import { projectToCard } from "@/lib/project-card";
@@ -174,6 +175,27 @@ function employerData(input: EmployerInput) {
   };
 }
 
+/**
+ * The two things that must both happen after any job write (WS-2).
+ *
+ * Completeness was already recomputed here, because the enrichment weight reads
+ * Employer. The weighted skill rollup now has to be too, and for a stronger
+ * reason: a stale completeness score misreports a percentage, while a stale
+ * rollup misreports WHAT SOMEBODY CAN DO. Change a job's end date and every
+ * skill on it should decay differently; change its suite and the provider's
+ * whole centre of gravity moves. Neither is visible as a bug — the profile just
+ * quietly describes the wrong person, and matching ranks them accordingly.
+ *
+ * Paired in one function so a future mutation cannot pick up one and forget the
+ * other. That is not hypothetical: the six existing call sites here were each
+ * written separately, and every one of them would have needed the same second
+ * line added by hand.
+ */
+async function afterJobChange(profileId: string): Promise<void> {
+  await recomputeCompleteness(profileId);
+  await recomputeProviderRollup(profileId);
+}
+
 export async function createEmployer(viewer: Viewer, input: EmployerInput) {
   const profileId = await ownedProfileId(viewer);
   const count = await prisma.employer.count({
@@ -187,7 +209,7 @@ export async function createEmployer(viewer: Viewer, input: EmployerInput) {
     },
     select: { id: true },
   });
-  await recomputeCompleteness(profileId);
+  await afterJobChange(profileId);
   return row.id;
 }
 
@@ -209,7 +231,7 @@ export async function updateEmployer(
     where: { id: owned.id },
     data: employerData(input),
   });
-  await recomputeCompleteness(profileId);
+  await afterJobChange(profileId);
 }
 
 export async function deleteEmployer(viewer: Viewer, employerId: string) {
@@ -223,7 +245,7 @@ export async function deleteEmployer(viewer: Viewer, employerId: string) {
   if (res.count === 0) {
     throw new OnboardingError("Employer not found", "INVALID");
   }
-  await recomputeCompleteness(profileId);
+  await afterJobChange(profileId);
 }
 
 /**
@@ -426,7 +448,7 @@ export async function createProject(
     select: { id: true },
   });
   await writeProjectChildren(row.id, input);
-  await recomputeCompleteness(profileId);
+  await afterJobChange(profileId);
   return row.id;
 }
 
@@ -447,7 +469,7 @@ export async function updateProject(
     data: projectData(input),
   });
   await writeProjectChildren(owned.id, input);
-  await recomputeCompleteness(profileId);
+  await afterJobChange(profileId);
 }
 
 export async function deleteProject(viewer: Viewer, projectId: string) {
@@ -456,5 +478,5 @@ export async function deleteProject(viewer: Viewer, projectId: string) {
     where: { id: projectId, provider_profile_id: profileId },
   });
   if (res.count === 0) throw new OnboardingError("Project not found", "INVALID");
-  await recomputeCompleteness(profileId);
+  await afterJobChange(profileId);
 }
