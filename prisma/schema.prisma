@@ -543,6 +543,19 @@ model Skill {
   /// — otherwise re-seeding would silently delete skills providers had entered
   /// and selected.
   is_custom      Boolean  @default(false)
+  /// THE PARSER'S CONTROLLED VOCABULARY for this skill (v5 catalog): legacy
+  /// names, acronyms and product renames — "GL", "iProcurement (POR)", "Fixed
+  /// Assets". A résumé says "AP", the catalog says "Payables"; this is the join.
+  ///
+  /// VENDOR ROLES ONLY, and that is load-bearing rather than an oversight.
+  /// Operations/Project skills are capability domains — analytical vocabulary
+  /// nobody writes on a CV — so they carry none, which is exactly what keeps
+  /// role derivation deterministic in the six places where an App module and an
+  /// Ops capability share a name ("Project Costing", "Grants Management").
+  aliases        String[]
+  /// Tech Category for Technology-Specific tools ("Development & Extensibility",
+  /// "Integration & APIs"). Null for application modules and agnostic roles.
+  category       String?
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
 
@@ -553,6 +566,7 @@ model Skill {
   providerSkills    ProviderSkill[]
   workRequestSkills WorkRequestSkill[]
   packageSkills     PackageSkill[]
+  bridges           CapabilityModuleBridge[]
 
   /// A Skill belongs to a (Role, Domain) PAIR — brief_R, from the authoritative
   /// Service Catalog. The old `(catalog_id, name)` key was wrong for that shape:
@@ -563,6 +577,66 @@ model Skill {
   @@index([role_type_id])
   @@index([pillar_id])
   @@map("skills")
+}
+
+/// A CAPABILITY DOMAIN — the buyer's vocabulary (brief_per_job_skill_model WS-0).
+///
+/// Nine business processes decompose into ~85 capability domains
+/// ("Requisitioning & Demand Management"). This is what a buyer who does not
+/// know or care which system they are on selects, and it is the vocabulary the
+/// buyer assessment will speak later.
+///
+/// A LOOKUP TABLE, not part of the provider taxonomy. Deliberately NOT a Skill:
+/// providers claim vendor modules, buyers ask for capabilities, and
+/// `CapabilityModuleBridge` is the translation. Collapsing the two vocabularies
+/// into one table is what forces a buyer to learn Oracle's product names.
+model CapabilityDomain {
+  id         String   @id @default(uuid()) @db.Uuid
+  /// The business process this belongs to — "Procure-to-Pay", "Hire-to-Retire".
+  process    String
+  name       String
+  sort_order Int      @default(100)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  bridges CapabilityModuleBridge[]
+
+  @@unique([process, name])
+  @@index([process])
+  @@map("capability_domains")
+}
+
+/// CAPABILITY <-> MODULE BRIDGE — "who delivers this capability on that suite".
+///
+/// One row per (capability, suite): Requisitioning is `Self-Service Procurement`
+/// on Oracle Fusion, `iProcurement (POR)` on EBS, `eProcurement` on PeopleSoft.
+///
+/// This is what lets a capability-only Work Request match a provider who has
+/// only ever listed vendor modules (WS-5). Without it the buyer side and the
+/// provider side share no vocabulary at all and "Any suite" cannot be answered.
+///
+/// `skill_id` is resolved at seed time where the named module exists in the
+/// catalog and left null where it does not — the bridge is a starter sheet and
+/// names drift, and a dangling FK would fail the whole seed over one rename.
+/// `module_name` always holds what the sheet said, so an unresolved row is
+/// visible and fixable rather than silently absent.
+model CapabilityModuleBridge {
+  id            String   @id @default(uuid()) @db.Uuid
+  capability_id String   @db.Uuid
+  /// Suite as named in the catalog — matches `Pillar.name` for a vendor role.
+  suite         String
+  module_name   String
+  skill_id      String?  @db.Uuid
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  capability CapabilityDomain @relation(fields: [capability_id], references: [id], onDelete: Cascade)
+  skill      Skill?           @relation(fields: [skill_id], references: [id], onDelete: SetNull)
+
+  @@unique([capability_id, suite, module_name])
+  @@index([skill_id])
+  @@index([suite])
+  @@map("capability_module_bridge")
 }
 
 /// An incoming job-requisition skill term ("tag"), grouped by role type, that

@@ -1,0 +1,1206 @@
+{
+  "_source": "Service Catalog v5.xlsx — sheet 'Capability ↔ Module Bridge'",
+  "_note": "capability domain -> the module that delivers it, per suite. Powers capability-only Work Requests (WS-5) and the buyer assessment later.",
+  "bridge": [
+    {
+      "process": "Procure-to-Pay",
+      "capability": "Requisitioning & Demand Management",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Self-Service Procurement",
+      "raw": "Self-Service Procurement",
+      "resolved": true
+    },
+    {
+      "process": "Procure-to-Pay",
+      "capability": "Requisitioning & Demand Management",
+      "suite": "Oracle E-Business Suite",
+      "module": "iProcurement",
+      "raw": "iProcurement (POR)",
+      "resolved": true
+    },
+    {
+      "process": "Procure-to-Pay",
+      "capability": "Requisitioning & Demand Management",
+      "suite": "PeopleSoft",
+      "module": "eProcurement",
+      "raw": "eProcurement",
+      "resolved": true
+    },
+    {
+      "process": "Procure-to-Pay",
+      "capability": "Requisitioning & Demand Management",
+      "suite": "Workday",
+      "module": "Procurement",
+      "raw": "Procurement",
+      "resolved": true
+    },
+    {
+      "process": "Procure-to-Pay",
+      "capability": "Sourcing & Supplier Selection",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Sourcing",
+      "raw": "Sourcing",
+      "resolved": true
+    },
+    {
+      "process": "Procure-to-Pay",
+      "capability": "Sourcing & Supplier Selection",
+      "suite": "Oracle E-Business Suite",
+      "module": "Sourcing",
+      "raw": "Sourcing (PON)",
+      "resolved": true
+    },
+    {
+      "process": "Procure-to-Pay",
+      "capability": "Sourcing & Supplier Selection",
+      "suite": "PeopleSoft",
+      "module": "Strategic Sourcing",
+      "raw": "Strategic Sourcing",
+      "resolved": true
+    },
+    {
+      "process": "Procure-to-Pay",
+      "capability": "Sourcing & Supplier Selection",
+      "suite": "Workday",
+      "module": "Strategic Sourcing",
+      "raw": "Strategic Sourcing",
+      "resolved": true
+    },
+    {
+      "process": "Procure-to-Pay",
+      "capability": "Contract Management",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Procurement Contracts",
+      "raw": "Procurement Contracts",
+      "resolved": true
+    },
+    {
+      "process": "Procure-to-Pay",
+      "capability": "Contract Management",
+      "suite": "Oracle E-Business Suite",
+      "module": "Procurement Contracts",
+      "raw": "Procurement Contracts",
+      "resolved": true
+    },
+    {
+      "process": "Procure-to-Pay",
+      "capability": "Contract Management",
+      "suite": "PeopleSoft",
+      "module": "Supplier Contract Management",
+      "raw": "Supplier Contract Mgmt",
+      "resolved": true
+    },
+    {
+      "process": "Procure-to-Pay",
+      "capability": "Purchase Order Management",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Purchasing",
+      "raw": "Purchasing",
+      "resolved": true
+    },
+    {
+      "process": "Procure-to-Pay",
+      "capability": "Purchase Order Management",
+      "suite": "Oracle E-Business Suite",
+      "module": "Purchasing",
+      "raw": "Purchasing (PO)",
+      "resolved": true
+    },
+    {
+      "process": "Procure-to-Pay",
+      "capability": "Purchase Order Management",
+      "suite": "PeopleSoft",
+      "module": "Purchasing",
+      "raw": "Purchasing",
+      "resolved": true
+    },
+    {
+      "process": "Procure-to-Pay",
+      "capability": "Purchase Order Management",
+      "suite": "Workday",
+      "module": "Procurement",
+      "raw": "Procurement",
+      "resolved": true
+    },
+    {
+      "process": "Procure-to-Pay",
+      "capability": "Goods & Services Receipt",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Inventory Management",
+      "raw": "Inventory / Self-Service Procurement",
+      "resolved": true
+    },
+    {
+      "process": "Procure-to-Pay",
+      "capability": "Goods & Services Receipt",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Self-Service Procurement",
+      "raw": "Inventory / Self-Service Procurement",
+      "resolved": true
+    },
+    {
+      "process": "Procure-to-Pay",
+      "capability": "Goods & Services Receipt",
+      "suite": "Oracle E-Business Suite",
+      "module": "Purchasing",
+      "raw": "Purchasing/Inventory (INV)",
+      "resolved": true
+    },
+    {
+      "process": "Procure-to-Pay",
+      "capability": "Goods & Services Receipt",
+      "suite": "Oracle E-Business Suite",
+      "module": "Inventory",
+      "raw": "Purchasing/Inventory (INV)",
+      "resolved": true
+    },
+    {
+      "process": "Procure-to-Pay",
+      "capability": "Goods & Services Receipt",
+      "suite": "PeopleSoft",
+      "module": "Purchasing",
+      "raw": "Purchasing/Inventory",
+      "resolved": true
+    },
+    {
+      "process": "Procure-to-Pay",
+      "capability": "Goods & Services Receipt",
+      "suite": "PeopleSoft",
+      "module": "Inventory",
+      "raw": "Purchasing/Inventory",
+      "resolved": true
+    },
+    {
+      "process": "Procure-to-Pay",
+      "capability": "Goods & Services Receipt",
+      "suite": "Workday",
+      "module": "Inventory",
+      "raw": "Inventory",
+      "resolved": true
+    },
+    {
+      "process": "Procure-to-Pay",
+      "capability": "Invoice Processing & Matching",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Payables",
+      "raw": "Payables",
+      "resolved": true
+    },
+    {
+      "process": "Procure-to-Pay",
+      "capability": "Invoice Processing & Matching",
+      "suite": "Oracle E-Business Suite",
+      "module": "Payables",
+      "raw": "Payables (AP)",
+      "resolved": true
+    },
+    {
+      "process": "Procure-to-Pay",
+      "capability": "Invoice Processing & Matching",
+      "suite": "PeopleSoft",
+      "module": "Payables",
+      "raw": "Payables",
+      "resolved": true
+    },
+    {
+      "process": "Procure-to-Pay",
+      "capability": "Payments & Cash Management",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Cash Management",
+      "raw": "Payments / Cash Management",
+      "resolved": true
+    },
+    {
+      "process": "Procure-to-Pay",
+      "capability": "Payments & Cash Management",
+      "suite": "Oracle E-Business Suite",
+      "module": "Payments",
+      "raw": "Payments (IBY)/Cash (CE)",
+      "resolved": true
+    },
+    {
+      "process": "Procure-to-Pay",
+      "capability": "Payments & Cash Management",
+      "suite": "Oracle E-Business Suite",
+      "module": "Cash Management",
+      "raw": "Payments (IBY)/Cash (CE)",
+      "resolved": true
+    },
+    {
+      "process": "Procure-to-Pay",
+      "capability": "Payments & Cash Management",
+      "suite": "PeopleSoft",
+      "module": "Cash Management",
+      "raw": "Cash Management",
+      "resolved": true
+    },
+    {
+      "process": "Procure-to-Pay",
+      "capability": "Supplier Risk & Compliance",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Supplier Qualification Management",
+      "raw": "Supplier Qualification Management",
+      "resolved": true
+    },
+    {
+      "process": "Procure-to-Pay",
+      "capability": "Supplier Risk & Compliance",
+      "suite": "Oracle E-Business Suite",
+      "module": "iSupplier Portal",
+      "raw": "iSupplier (POS)",
+      "resolved": true
+    },
+    {
+      "process": "Procure-to-Pay",
+      "capability": "Supplier Risk & Compliance",
+      "suite": "PeopleSoft",
+      "module": "Supplier Contract Management",
+      "raw": "Supplier Contract Mgmt",
+      "resolved": true
+    },
+    {
+      "process": "Procure-to-Pay",
+      "capability": "Supplier Risk & Compliance",
+      "suite": "Workday",
+      "module": "Supplier Management",
+      "raw": "Supplier Management",
+      "resolved": true
+    },
+    {
+      "process": "Order-to-Cash",
+      "capability": "Customer & Credit Management",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Advanced Collections",
+      "raw": "Advanced Collections",
+      "resolved": true
+    },
+    {
+      "process": "Order-to-Cash",
+      "capability": "Customer & Credit Management",
+      "suite": "Oracle E-Business Suite",
+      "module": "Receivables",
+      "raw": "Receivables (AR)/Collections (IEX)",
+      "resolved": true
+    },
+    {
+      "process": "Order-to-Cash",
+      "capability": "Customer & Credit Management",
+      "suite": "PeopleSoft",
+      "module": "Receivables",
+      "raw": "Receivables",
+      "resolved": true
+    },
+    {
+      "process": "Order-to-Cash",
+      "capability": "Pricing, Quoting & Proposal Management",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Configure Price Quote",
+      "raw": "CPQ",
+      "resolved": true
+    },
+    {
+      "process": "Order-to-Cash",
+      "capability": "Pricing, Quoting & Proposal Management",
+      "suite": "Oracle E-Business Suite",
+      "module": "Advanced Pricing",
+      "raw": "Advanced Pricing (QP)/Quoting (ASO)",
+      "resolved": true
+    },
+    {
+      "process": "Order-to-Cash",
+      "capability": "Pricing, Quoting & Proposal Management",
+      "suite": "Oracle E-Business Suite",
+      "module": "Quoting",
+      "raw": "Advanced Pricing (QP)/Quoting (ASO)",
+      "resolved": true
+    },
+    {
+      "process": "Order-to-Cash",
+      "capability": "Pricing, Quoting & Proposal Management",
+      "suite": "PeopleSoft",
+      "module": "Enterprise Pricer",
+      "raw": "Enterprise Pricer",
+      "resolved": true
+    },
+    {
+      "process": "Order-to-Cash",
+      "capability": "Pricing, Quoting & Proposal Management",
+      "suite": "Workday",
+      "module": "Services CPQ",
+      "raw": "Services CPQ",
+      "resolved": true
+    },
+    {
+      "process": "Order-to-Cash",
+      "capability": "Pricing, Quoting & Proposal Management",
+      "suite": "Salesforce",
+      "module": "Revenue Cloud",
+      "raw": "Revenue Cloud (CPQ)",
+      "resolved": true
+    },
+    {
+      "process": "Order-to-Cash",
+      "capability": "Order & Contract Execution Management",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Order Management",
+      "raw": "Order Management",
+      "resolved": true
+    },
+    {
+      "process": "Order-to-Cash",
+      "capability": "Order & Contract Execution Management",
+      "suite": "Oracle E-Business Suite",
+      "module": "Order Management",
+      "raw": "Order Management (OM)",
+      "resolved": true
+    },
+    {
+      "process": "Order-to-Cash",
+      "capability": "Order & Contract Execution Management",
+      "suite": "PeopleSoft",
+      "module": "Order Management",
+      "raw": "Order Management",
+      "resolved": true
+    },
+    {
+      "process": "Order-to-Cash",
+      "capability": "Billing & Invoicing",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Receivables",
+      "raw": "Receivables",
+      "resolved": true
+    },
+    {
+      "process": "Order-to-Cash",
+      "capability": "Billing & Invoicing",
+      "suite": "Oracle E-Business Suite",
+      "module": "Receivables",
+      "raw": "Receivables (AR)",
+      "resolved": true
+    },
+    {
+      "process": "Order-to-Cash",
+      "capability": "Billing & Invoicing",
+      "suite": "PeopleSoft",
+      "module": "Billing",
+      "raw": "Billing",
+      "resolved": true
+    },
+    {
+      "process": "Order-to-Cash",
+      "capability": "Billing & Invoicing",
+      "suite": "Workday",
+      "module": "Revenue Management",
+      "raw": "Revenue Management",
+      "resolved": true
+    },
+    {
+      "process": "Order-to-Cash",
+      "capability": "Billing & Invoicing",
+      "suite": "Salesforce",
+      "module": "Billing",
+      "raw": "Billing",
+      "resolved": true
+    },
+    {
+      "process": "Order-to-Cash",
+      "capability": "Revenue Recognition & Reporting",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Revenue Management",
+      "raw": "Revenue Management",
+      "resolved": true
+    },
+    {
+      "process": "Order-to-Cash",
+      "capability": "Revenue Recognition & Reporting",
+      "suite": "Oracle E-Business Suite",
+      "module": "Revenue Mgmt (via AR)",
+      "raw": "Revenue Mgmt (via AR)",
+      "resolved": false
+    },
+    {
+      "process": "Order-to-Cash",
+      "capability": "Revenue Recognition & Reporting",
+      "suite": "PeopleSoft",
+      "module": "Contracts",
+      "raw": "Contracts",
+      "resolved": true
+    },
+    {
+      "process": "Order-to-Cash",
+      "capability": "Revenue Recognition & Reporting",
+      "suite": "Workday",
+      "module": "Revenue Management",
+      "raw": "Revenue Management",
+      "resolved": true
+    },
+    {
+      "process": "Order-to-Cash",
+      "capability": "Revenue Recognition & Reporting",
+      "suite": "Salesforce",
+      "module": "Revenue Cloud",
+      "raw": "Revenue Cloud",
+      "resolved": true
+    },
+    {
+      "process": "Order-to-Cash",
+      "capability": "Collections & Receivables Management",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Advanced Collections",
+      "raw": "Advanced Collections",
+      "resolved": true
+    },
+    {
+      "process": "Order-to-Cash",
+      "capability": "Collections & Receivables Management",
+      "suite": "Oracle E-Business Suite",
+      "module": "Advanced Collections",
+      "raw": "Advanced Collections (IEX)",
+      "resolved": true
+    },
+    {
+      "process": "Order-to-Cash",
+      "capability": "Collections & Receivables Management",
+      "suite": "PeopleSoft",
+      "module": "Receivables",
+      "raw": "Receivables",
+      "resolved": true
+    },
+    {
+      "process": "Order-to-Cash",
+      "capability": "Customer Experience & Self-Service",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Fusion Service",
+      "raw": "Fusion Service",
+      "resolved": true
+    },
+    {
+      "process": "Order-to-Cash",
+      "capability": "Customer Experience & Self-Service",
+      "suite": "Oracle E-Business Suite",
+      "module": "TeleService",
+      "raw": "TeleService (CS)",
+      "resolved": true
+    },
+    {
+      "process": "Order-to-Cash",
+      "capability": "Customer Experience & Self-Service",
+      "suite": "PeopleSoft",
+      "module": "CRM Support",
+      "raw": "CRM Support",
+      "resolved": false
+    },
+    {
+      "process": "Order-to-Cash",
+      "capability": "Customer Experience & Self-Service",
+      "suite": "Salesforce",
+      "module": "Service Cloud",
+      "raw": "Service Cloud",
+      "resolved": true
+    },
+    {
+      "process": "Record-to-Report",
+      "capability": "Transaction Processing & Journal Entry Management",
+      "suite": "Oracle Fusion Cloud",
+      "module": "General Ledger",
+      "raw": "General Ledger",
+      "resolved": true
+    },
+    {
+      "process": "Record-to-Report",
+      "capability": "Transaction Processing & Journal Entry Management",
+      "suite": "Oracle E-Business Suite",
+      "module": "General Ledger",
+      "raw": "General Ledger (GL)",
+      "resolved": true
+    },
+    {
+      "process": "Record-to-Report",
+      "capability": "Transaction Processing & Journal Entry Management",
+      "suite": "PeopleSoft",
+      "module": "General Ledger",
+      "raw": "General Ledger",
+      "resolved": true
+    },
+    {
+      "process": "Record-to-Report",
+      "capability": "Transaction Processing & Journal Entry Management",
+      "suite": "Workday",
+      "module": "Accounting / General Ledger",
+      "raw": "Accounting / GL",
+      "resolved": true
+    },
+    {
+      "process": "Record-to-Report",
+      "capability": "Account Reconciliation",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Account Reconciliation",
+      "raw": "Account Reconciliation (ARCS)",
+      "resolved": true
+    },
+    {
+      "process": "Record-to-Report",
+      "capability": "Account Reconciliation",
+      "suite": "Oracle E-Business Suite",
+      "module": "General Ledger",
+      "raw": "GL/SLA (XLA)",
+      "resolved": true
+    },
+    {
+      "process": "Record-to-Report",
+      "capability": "Account Reconciliation",
+      "suite": "Oracle E-Business Suite",
+      "module": "Subledger Accounting",
+      "raw": "GL/SLA (XLA)",
+      "resolved": true
+    },
+    {
+      "process": "Record-to-Report",
+      "capability": "Account Reconciliation",
+      "suite": "PeopleSoft",
+      "module": "General Ledger",
+      "raw": "General Ledger",
+      "resolved": true
+    },
+    {
+      "process": "Record-to-Report",
+      "capability": "Account Reconciliation",
+      "suite": "Workday",
+      "module": "Accounting Center",
+      "raw": "Accounting Center",
+      "resolved": true
+    },
+    {
+      "process": "Record-to-Report",
+      "capability": "Intercompany Accounting",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Intercompany",
+      "raw": "Intercompany",
+      "resolved": true
+    },
+    {
+      "process": "Record-to-Report",
+      "capability": "Intercompany Accounting",
+      "suite": "Oracle E-Business Suite",
+      "module": "GL Intercompany",
+      "raw": "GL Intercompany",
+      "resolved": false
+    },
+    {
+      "process": "Record-to-Report",
+      "capability": "Intercompany Accounting",
+      "suite": "PeopleSoft",
+      "module": "General Ledger",
+      "raw": "General Ledger",
+      "resolved": true
+    },
+    {
+      "process": "Record-to-Report",
+      "capability": "Intercompany Accounting",
+      "suite": "Workday",
+      "module": "Accounting / General Ledger",
+      "raw": "Accounting / GL",
+      "resolved": true
+    },
+    {
+      "process": "Record-to-Report",
+      "capability": "Fixed Assets & Lease Accounting",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Assets",
+      "raw": "Assets / Lease Accounting",
+      "resolved": true
+    },
+    {
+      "process": "Record-to-Report",
+      "capability": "Fixed Assets & Lease Accounting",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Lease Accounting",
+      "raw": "Assets / Lease Accounting",
+      "resolved": true
+    },
+    {
+      "process": "Record-to-Report",
+      "capability": "Fixed Assets & Lease Accounting",
+      "suite": "Oracle E-Business Suite",
+      "module": "Assets",
+      "raw": "Assets (FA)",
+      "resolved": true
+    },
+    {
+      "process": "Record-to-Report",
+      "capability": "Fixed Assets & Lease Accounting",
+      "suite": "PeopleSoft",
+      "module": "Asset Management",
+      "raw": "Asset Management",
+      "resolved": true
+    },
+    {
+      "process": "Record-to-Report",
+      "capability": "Close Management & Orchestration",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Financial Consolidation and Close",
+      "raw": "Financial Consolidation and Close (FCCS)",
+      "resolved": true
+    },
+    {
+      "process": "Record-to-Report",
+      "capability": "Close Management & Orchestration",
+      "suite": "Oracle E-Business Suite",
+      "module": "GL close",
+      "raw": "GL close",
+      "resolved": false
+    },
+    {
+      "process": "Record-to-Report",
+      "capability": "Close Management & Orchestration",
+      "suite": "PeopleSoft",
+      "module": "General Ledger",
+      "raw": "General Ledger",
+      "resolved": true
+    },
+    {
+      "process": "Record-to-Report",
+      "capability": "Close Management & Orchestration",
+      "suite": "Workday",
+      "module": "Close & Consolidation",
+      "raw": "Close & Consolidation",
+      "resolved": true
+    },
+    {
+      "process": "Record-to-Report",
+      "capability": "Financial Consolidation",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Financial Consolidation and Close",
+      "raw": "Financial Consolidation and Close (FCCS)",
+      "resolved": true
+    },
+    {
+      "process": "Record-to-Report",
+      "capability": "Financial Consolidation",
+      "suite": "Workday",
+      "module": "Close & Consolidation",
+      "raw": "Close & Consolidation",
+      "resolved": true
+    },
+    {
+      "process": "Record-to-Report",
+      "capability": "Management Reporting & FP&A",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Narrative Reporting",
+      "raw": "Narrative Reporting / Planning",
+      "resolved": true
+    },
+    {
+      "process": "Record-to-Report",
+      "capability": "Management Reporting & FP&A",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Planning",
+      "raw": "Narrative Reporting / Planning",
+      "resolved": true
+    },
+    {
+      "process": "Record-to-Report",
+      "capability": "Management Reporting & FP&A",
+      "suite": "Oracle E-Business Suite",
+      "module": "Daily Business Intelligence",
+      "raw": "DBI",
+      "resolved": true
+    },
+    {
+      "process": "Record-to-Report",
+      "capability": "Management Reporting & FP&A",
+      "suite": "PeopleSoft",
+      "module": "nVision",
+      "raw": "nVision",
+      "resolved": true
+    },
+    {
+      "process": "Record-to-Report",
+      "capability": "Management Reporting & FP&A",
+      "suite": "Workday",
+      "module": "Adaptive Planning",
+      "raw": "Adaptive Planning",
+      "resolved": true
+    },
+    {
+      "process": "Record-to-Report",
+      "capability": "Tax Provision & Compliance",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Tax",
+      "raw": "Tax / Tax Reporting (TRCS)",
+      "resolved": true
+    },
+    {
+      "process": "Record-to-Report",
+      "capability": "Tax Provision & Compliance",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Tax Reporting",
+      "raw": "Tax / Tax Reporting (TRCS)",
+      "resolved": true
+    },
+    {
+      "process": "Record-to-Report",
+      "capability": "Tax Provision & Compliance",
+      "suite": "Oracle E-Business Suite",
+      "module": "E-Business Tax",
+      "raw": "E-Business Tax (ZX)",
+      "resolved": true
+    },
+    {
+      "process": "Record-to-Report",
+      "capability": "Internal Controls & Continuous Auditing",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Advanced Financial Controls",
+      "raw": "Advanced Financial Controls (AFC)",
+      "resolved": true
+    },
+    {
+      "process": "Record-to-Report",
+      "capability": "Internal Controls & Continuous Auditing",
+      "suite": "Oracle E-Business Suite",
+      "module": "Governance, Risk & Compliance",
+      "raw": "GRC (GRCC)",
+      "resolved": true
+    },
+    {
+      "process": "Record-to-Report",
+      "capability": "Internal Controls & Continuous Auditing",
+      "suite": "Salesforce",
+      "module": "Shield",
+      "raw": "Shield",
+      "resolved": true
+    },
+    {
+      "process": "Hire-to-Retire",
+      "capability": "Workforce Planning & Headcount Management",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Strategic Workforce Planning",
+      "raw": "Strategic Workforce Planning",
+      "resolved": true
+    },
+    {
+      "process": "Hire-to-Retire",
+      "capability": "Workforce Planning & Headcount Management",
+      "suite": "Oracle E-Business Suite",
+      "module": "Core HR",
+      "raw": "Core HR (PER)",
+      "resolved": true
+    },
+    {
+      "process": "Hire-to-Retire",
+      "capability": "Workforce Planning & Headcount Management",
+      "suite": "PeopleSoft",
+      "module": "Core HR",
+      "raw": "Core HR",
+      "resolved": true
+    },
+    {
+      "process": "Hire-to-Retire",
+      "capability": "Workforce Planning & Headcount Management",
+      "suite": "Workday",
+      "module": "Core HCM",
+      "raw": "Core HCM",
+      "resolved": true
+    },
+    {
+      "process": "Hire-to-Retire",
+      "capability": "Talent Acquisition & Recruitment",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Recruiting",
+      "raw": "Recruiting",
+      "resolved": true
+    },
+    {
+      "process": "Hire-to-Retire",
+      "capability": "Talent Acquisition & Recruitment",
+      "suite": "Oracle E-Business Suite",
+      "module": "iRecruitment",
+      "raw": "iRecruitment (IRC)",
+      "resolved": true
+    },
+    {
+      "process": "Hire-to-Retire",
+      "capability": "Talent Acquisition & Recruitment",
+      "suite": "PeopleSoft",
+      "module": "Talent Acquisition Manager",
+      "raw": "Talent Acquisition Mgr (TAM)",
+      "resolved": true
+    },
+    {
+      "process": "Hire-to-Retire",
+      "capability": "Talent Acquisition & Recruitment",
+      "suite": "Workday",
+      "module": "Recruiting",
+      "raw": "Recruiting",
+      "resolved": true
+    },
+    {
+      "process": "Hire-to-Retire",
+      "capability": "Onboarding & New Hire Experience",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Onboarding",
+      "raw": "Onboarding",
+      "resolved": true
+    },
+    {
+      "process": "Hire-to-Retire",
+      "capability": "Onboarding & New Hire Experience",
+      "suite": "Workday",
+      "module": "Core HCM",
+      "raw": "Core HCM (Onboarding)",
+      "resolved": true
+    },
+    {
+      "process": "Hire-to-Retire",
+      "capability": "Performance Management & Goal Setting",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Performance Management",
+      "raw": "Performance Management",
+      "resolved": true
+    },
+    {
+      "process": "Hire-to-Retire",
+      "capability": "Performance Management & Goal Setting",
+      "suite": "PeopleSoft",
+      "module": "ePerformance",
+      "raw": "ePerformance",
+      "resolved": true
+    },
+    {
+      "process": "Hire-to-Retire",
+      "capability": "Performance Management & Goal Setting",
+      "suite": "Workday",
+      "module": "Talent & Performance",
+      "raw": "Talent & Performance",
+      "resolved": true
+    },
+    {
+      "process": "Hire-to-Retire",
+      "capability": "Learning, Development & Skills Management",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Learning",
+      "raw": "Learning / Dynamic Skills",
+      "resolved": true
+    },
+    {
+      "process": "Hire-to-Retire",
+      "capability": "Learning, Development & Skills Management",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Dynamic Skills",
+      "raw": "Learning / Dynamic Skills",
+      "resolved": true
+    },
+    {
+      "process": "Hire-to-Retire",
+      "capability": "Learning, Development & Skills Management",
+      "suite": "Oracle E-Business Suite",
+      "module": "Learning Management",
+      "raw": "Learning Mgmt (OLM)",
+      "resolved": true
+    },
+    {
+      "process": "Hire-to-Retire",
+      "capability": "Learning, Development & Skills Management",
+      "suite": "PeopleSoft",
+      "module": "Enterprise Learning Management",
+      "raw": "Enterprise Learning Mgmt (ELM)",
+      "resolved": true
+    },
+    {
+      "process": "Hire-to-Retire",
+      "capability": "Learning, Development & Skills Management",
+      "suite": "Workday",
+      "module": "Learning",
+      "raw": "Learning / Skills Cloud",
+      "resolved": true
+    },
+    {
+      "process": "Hire-to-Retire",
+      "capability": "Learning, Development & Skills Management",
+      "suite": "Workday",
+      "module": "Skills Cloud",
+      "raw": "Learning / Skills Cloud",
+      "resolved": true
+    },
+    {
+      "process": "Hire-to-Retire",
+      "capability": "Compensation, Benefits & Total Rewards",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Compensation",
+      "raw": "Compensation / Benefits",
+      "resolved": true
+    },
+    {
+      "process": "Hire-to-Retire",
+      "capability": "Compensation, Benefits & Total Rewards",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Benefits",
+      "raw": "Compensation / Benefits",
+      "resolved": true
+    },
+    {
+      "process": "Hire-to-Retire",
+      "capability": "Compensation, Benefits & Total Rewards",
+      "suite": "Oracle E-Business Suite",
+      "module": "Compensation Workbench",
+      "raw": "Comp Workbench / Adv Benefits (BEN)",
+      "resolved": true
+    },
+    {
+      "process": "Hire-to-Retire",
+      "capability": "Compensation, Benefits & Total Rewards",
+      "suite": "Oracle E-Business Suite",
+      "module": "Advanced Benefits",
+      "raw": "Comp Workbench / Adv Benefits (BEN)",
+      "resolved": true
+    },
+    {
+      "process": "Hire-to-Retire",
+      "capability": "Compensation, Benefits & Total Rewards",
+      "suite": "PeopleSoft",
+      "module": "Compensation",
+      "raw": "Compensation / Benefits Admin",
+      "resolved": true
+    },
+    {
+      "process": "Hire-to-Retire",
+      "capability": "Compensation, Benefits & Total Rewards",
+      "suite": "Workday",
+      "module": "Compensation",
+      "raw": "Compensation / Benefits",
+      "resolved": true
+    },
+    {
+      "process": "Hire-to-Retire",
+      "capability": "Compensation, Benefits & Total Rewards",
+      "suite": "Workday",
+      "module": "Benefits",
+      "raw": "Compensation / Benefits",
+      "resolved": true
+    },
+    {
+      "process": "Hire-to-Retire",
+      "capability": "Payroll & Time Management",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Payroll",
+      "raw": "Payroll / Time & Labor",
+      "resolved": true
+    },
+    {
+      "process": "Hire-to-Retire",
+      "capability": "Payroll & Time Management",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Time & Labor",
+      "raw": "Payroll / Time & Labor",
+      "resolved": true
+    },
+    {
+      "process": "Hire-to-Retire",
+      "capability": "Payroll & Time Management",
+      "suite": "Oracle E-Business Suite",
+      "module": "Payroll",
+      "raw": "Payroll (PAY)/OTL",
+      "resolved": true
+    },
+    {
+      "process": "Hire-to-Retire",
+      "capability": "Payroll & Time Management",
+      "suite": "Oracle E-Business Suite",
+      "module": "Time & Labor",
+      "raw": "Payroll (PAY)/OTL",
+      "resolved": true
+    },
+    {
+      "process": "Hire-to-Retire",
+      "capability": "Payroll & Time Management",
+      "suite": "PeopleSoft",
+      "module": "Payroll for North America",
+      "raw": "Payroll NA / Time & Labor",
+      "resolved": true
+    },
+    {
+      "process": "Hire-to-Retire",
+      "capability": "Payroll & Time Management",
+      "suite": "PeopleSoft",
+      "module": "Time & Labor",
+      "raw": "Payroll NA / Time & Labor",
+      "resolved": true
+    },
+    {
+      "process": "Hire-to-Retire",
+      "capability": "Payroll & Time Management",
+      "suite": "Workday",
+      "module": "Payroll",
+      "raw": "Payroll / Time Tracking",
+      "resolved": true
+    },
+    {
+      "process": "Hire-to-Retire",
+      "capability": "Payroll & Time Management",
+      "suite": "Workday",
+      "module": "Time Tracking",
+      "raw": "Payroll / Time Tracking",
+      "resolved": true
+    },
+    {
+      "process": "Customer Experience (CX)",
+      "capability": "Sales Force Automation",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Sales",
+      "raw": "Sales",
+      "resolved": true
+    },
+    {
+      "process": "Customer Experience (CX)",
+      "capability": "Sales Force Automation",
+      "suite": "Oracle E-Business Suite",
+      "module": "Sales",
+      "raw": "Sales (ASN)",
+      "resolved": true
+    },
+    {
+      "process": "Customer Experience (CX)",
+      "capability": "Sales Force Automation",
+      "suite": "PeopleSoft",
+      "module": "CRM Sales",
+      "raw": "CRM Sales",
+      "resolved": false
+    },
+    {
+      "process": "Customer Experience (CX)",
+      "capability": "Sales Force Automation",
+      "suite": "Salesforce",
+      "module": "Sales Cloud",
+      "raw": "Sales Cloud",
+      "resolved": true
+    },
+    {
+      "process": "Customer Experience (CX)",
+      "capability": "Marketing & Campaign Management",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Eloqua",
+      "raw": "Eloqua / Responsys",
+      "resolved": true
+    },
+    {
+      "process": "Customer Experience (CX)",
+      "capability": "Marketing & Campaign Management",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Responsys",
+      "raw": "Eloqua / Responsys",
+      "resolved": true
+    },
+    {
+      "process": "Customer Experience (CX)",
+      "capability": "Marketing & Campaign Management",
+      "suite": "Oracle E-Business Suite",
+      "module": "Marketing",
+      "raw": "Marketing (AMS)",
+      "resolved": true
+    },
+    {
+      "process": "Customer Experience (CX)",
+      "capability": "Marketing & Campaign Management",
+      "suite": "PeopleSoft",
+      "module": "CRM Marketing",
+      "raw": "CRM Marketing",
+      "resolved": false
+    },
+    {
+      "process": "Customer Experience (CX)",
+      "capability": "Marketing & Campaign Management",
+      "suite": "Salesforce",
+      "module": "Marketing Cloud",
+      "raw": "Marketing Cloud",
+      "resolved": true
+    },
+    {
+      "process": "Customer Experience (CX)",
+      "capability": "Field Service Management",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Field Service",
+      "raw": "Field Service",
+      "resolved": true
+    },
+    {
+      "process": "Customer Experience (CX)",
+      "capability": "Field Service Management",
+      "suite": "Oracle E-Business Suite",
+      "module": "Field Service",
+      "raw": "Field Service (CSF)",
+      "resolved": true
+    },
+    {
+      "process": "Customer Experience (CX)",
+      "capability": "Field Service Management",
+      "suite": "PeopleSoft",
+      "module": "CRM FieldService",
+      "raw": "CRM FieldService",
+      "resolved": false
+    },
+    {
+      "process": "Customer Experience (CX)",
+      "capability": "Field Service Management",
+      "suite": "Salesforce",
+      "module": "Field Service",
+      "raw": "Field Service (FSL)",
+      "resolved": true
+    },
+    {
+      "process": "Enterprise Performance Mgmt (EPM)",
+      "capability": "Planning, Budgeting & Forecasting",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Planning",
+      "raw": "Planning (EPBCS)",
+      "resolved": true
+    },
+    {
+      "process": "Enterprise Performance Mgmt (EPM)",
+      "capability": "Planning, Budgeting & Forecasting",
+      "suite": "Workday",
+      "module": "Adaptive Planning",
+      "raw": "Adaptive Planning",
+      "resolved": true
+    },
+    {
+      "process": "Enterprise Performance Mgmt (EPM)",
+      "capability": "Profitability & Cost Management",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Profitability and Cost Management",
+      "raw": "Profitability & Cost Mgmt (PCMCS)",
+      "resolved": true
+    },
+    {
+      "process": "Governance, Risk & Compliance (GRC)",
+      "capability": "Access Controls & Segregation of Duties",
+      "suite": "Oracle Fusion Cloud",
+      "module": "Advanced Access Controls",
+      "raw": "Advanced Access Controls (AAC)",
+      "resolved": true
+    },
+    {
+      "process": "Governance, Risk & Compliance (GRC)",
+      "capability": "Access Controls & Segregation of Duties",
+      "suite": "Oracle E-Business Suite",
+      "module": "Governance, Risk & Compliance",
+      "raw": "GRC (GRCC)",
+      "resolved": true
+    },
+    {
+      "process": "Governance, Risk & Compliance (GRC)",
+      "capability": "Access Controls & Segregation of Duties",
+      "suite": "Salesforce",
+      "module": "Shield",
+      "raw": "Shield / Identity",
+      "resolved": true
+    },
+    {
+      "process": "Governance, Risk & Compliance (GRC)",
+      "capability": "Access Controls & Segregation of Duties",
+      "suite": "Salesforce",
+      "module": "Identity",
+      "raw": "Shield / Identity",
+      "resolved": true
+    }
+  ]
+}
