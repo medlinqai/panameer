@@ -46,11 +46,16 @@ export function MarketingHeader() {
     Prefix match, not equality, so /learn/<path>/<lesson> still lights "Learn".
 
     ⚠ AN ANCHOR IS NEVER "THE CURRENT PAGE". Pricing and Enterprise are
-    `/#value` and `/#punchout` — sections of the buyer page, not pages. Stripping
-    the hash and comparing paths marked all three of Hire Talent, Pricing and
-    Enterprise active on `/` at once, which is three answers to a question that
-    has one. Hash hrefs are excluded outright; `aria-current="page"` is a claim
-    about the document, and a jump link inside it is not a different document.
+    `/hire-talent#value` and `/hire-talent#punchout` — sections of a page, not
+    pages. Stripping the hash and comparing paths marked all three of Hire
+    Talent, Pricing and Enterprise active at once, which is three answers to a
+    question that has one. Hash hrefs are excluded outright; `aria-current` is
+    a claim about the document, and a jump link inside it is not a different
+    document.
+
+    (Those two hrefs pointed at `/#…` until brief_public_pages_ia moved the
+    sections to /hire-talent. The exclusion below is what kept the bad state
+    from ALSO lighting up the home while they were stale.)
   */
   const pathname = usePathname();
   const isActive = (href: string) => {
