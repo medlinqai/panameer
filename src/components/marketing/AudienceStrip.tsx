@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { AUDIENCE_TOGGLE } from "@/lib/brand";
-import { AUDIENCE_PATH, type Audience } from "@/lib/audience";
+import { PUBLIC_PAGES, type PublicPage } from "@/lib/audience";
 
 /**
  * "I'm here to:" — the audience switch, back in the top zone (WS-2a).
@@ -36,7 +35,7 @@ import { AUDIENCE_PATH, type Audience } from "@/lib/audience";
  * active development" banner, and matching its tint, border and weight makes
  * the two read as one stack of page-level notices rather than two systems.
  */
-export function AudienceStrip({ audience }: { audience: Audience }) {
+export function AudienceStrip({ page }: { page: PublicPage }) {
   return (
     /*
       GLASS, NOT A SOLID BAND (WS-1). The strip is pinned — MarketingShell
@@ -59,12 +58,19 @@ export function AudienceStrip({ audience }: { audience: Audience }) {
           to them.
         */}
         <div className="inline-flex flex-wrap justify-center gap-1 rounded-full border border-line bg-white/70 p-1">
-          {(["buyer", "provider"] as const).map((side) => {
-            const on = side === audience;
+          {/*
+            THREE OPTIONS NOW (brief_public_pages_ia WS-4), labelled by the
+            visitor's JOB rather than by what we call them. "I want to hire"
+            beats "I Hire Experts & Buy Services" for the same reason the rest
+            of this rebuild is in second person: the reader is picking what they
+            came to do, not identifying with a segment name.
+          */}
+          {PUBLIC_PAGES.map((p) => {
+            const on = p.key === page;
             return (
               <Link
-                key={side}
-                href={AUDIENCE_PATH[side]}
+                key={p.key}
+                href={p.href}
                 aria-current={on ? "page" : undefined}
                 className={
                   "rounded-full px-4 py-1.5 text-center text-[13.5px] font-bold transition-colors " +
@@ -73,7 +79,7 @@ export function AudienceStrip({ audience }: { audience: Audience }) {
                     : "text-ink-2 hover:text-magenta")
                 }
               >
-                {AUDIENCE_TOGGLE[side]}
+                {p.label}
               </Link>
             );
           })}

@@ -547,3 +547,187 @@ export const ASSESSMENT_COPY = {
   cta: "See where you stand →",
   ctaSub: "Sign in to be first in line.",
 } as const;
+
+// ---------------------------------------------------------------------------
+// THREE PAGES, ONE AUDIENCE EACH (brief_public_pages_ia).
+//
+// The home used to do all three jobs at once — talent search, buyer value and
+// the assessment — so every visitor met two thirds of a page written for
+// somebody else. Each page now has one audience and one job, and the content
+// below is the same content re-allocated, not new claims.
+//
+// VOICE: second person, active, what YOU get. "You learn where you stand",
+// never "we teach you". The distinction is not stylistic — "we teach" describes
+// our activity and leaves the reader working out what it buys them.
+// ---------------------------------------------------------------------------
+
+/**
+ * THE FOUR BEATS, per page.
+ *
+ * Learn · Connect · Create · Settle is the through-line on all three pages, but
+ * it means something different to each audience, so each page states its own
+ * version rather than repeating one generic set. On the HOME the "Learn" beat
+ * IS the assessment — that is the page's whole job.
+ */
+export const PAGE_BEATS = {
+  home: {
+    eyebrow: "Learn. Connect. Create. Settle.",
+    headline: "What you get, end to end.",
+    beats: [
+      {
+        beat: "Learn",
+        body: "Where your operations really rank, paper to AI-driven, in minutes. Free.",
+      },
+      {
+        beat: "Connect",
+        body: "To the vetted experts who close the gaps you just found.",
+      },
+      {
+        beat: "Create",
+        body: "Your improvement roadmap — and manage the work with the tools the big firms charge you for.",
+      },
+      {
+        beat: "Settle",
+        body: "Simply. One contract, one payment, on delivery.",
+      },
+    ],
+  },
+  hire: {
+    eyebrow: "Learn. Connect. Create. Settle.",
+    headline: "How hiring works here.",
+    beats: [
+      {
+        beat: "Learn",
+        body: "Who's available — and see their real, rated past work before you commit.",
+      },
+      {
+        beat: "Connect",
+        body: "Plan, collaborate and consult with them directly. No firm in the middle.",
+      },
+      {
+        beat: "Create",
+        body: "Hire them to build it — a two-hour consult or a six-month deployment, same low friction.",
+      },
+      {
+        beat: "Settle",
+        body: "From inside your ERP — requisition, PO, Work Order, service receipt — or direct on the web. One contract, one payment.",
+      },
+    ],
+  },
+  work: {
+    eyebrow: "Learn. Connect. Create. Settle.",
+    headline: "How you earn here.",
+    beats: [
+      {
+        beat: "Learn",
+        body: "Stay current with free training that keeps your skills sharp and your profile ranked.",
+      },
+      {
+        beat: "Connect",
+        body: "Directly to buyers. Be found, be your own brand — no anonymous markup.",
+      },
+      {
+        beat: "Create",
+        body: "Every way there is: consultations, courses, packages, engagements, retainers. Productize once, sell many.",
+      },
+      {
+        beat: "Settle",
+        body: "Get paid on delivery. One settlement, no back office, no employment risk on you.",
+      },
+    ],
+  },
+} as const;
+
+/** HOME hero — the assessment front door. */
+export const HOME_HERO = {
+  kicker: "See where you stand on AI adoption",
+  headline: "See where your business really stands — paper to AI-driven.",
+  subhead:
+    "A free operating-maturity assessment, in minutes. All it costs is your email.",
+  cta: "Start the free assessment",
+  ctaSub: "Sign in to be first in line.",
+  /*
+    ⚠ HONEST FRAMING, and it is load-bearing. There is no scoring engine behind
+    this yet, so the hero says what the assessment IS — a framework read across
+    the processes you run — rather than implying a live measurement. The
+    dashboard beside it is labelled "Sample Read" for the same reason.
+  */
+  frameworkNote:
+    "The framework below is what you'll be scored against — the read shown is a sample, not your data.",
+} as const;
+
+/** HOME — the roadmap preview that follows the assessment. */
+export const ROADMAP_COPY = {
+  eyebrow: "Then here's the plan",
+  headline: "Your assessment becomes a roadmap.",
+  lead: "Every gap you score becomes a sequenced piece of work — with the expertise it needs attached to it.",
+  /*
+    ⚠ ILLUSTRATIVE. The AIM roadmap tool is a later brief; this is a preview of
+    the shape, not a live plan, and the caption says so on the page.
+  */
+  note: "Illustrative — an example sequence, not a plan for your organization.",
+  steps: [
+    { phase: "Weeks 1–2", title: "Score and prioritise", body: "Your maturity read across each process, worst gaps first." },
+    { phase: "Weeks 3–8", title: "Close the quick wins", body: "The changes that need days of the right expert, not a programme." },
+    { phase: "Quarter 2", title: "Rebuild the weak process", body: "Scoped as a package with a fixed price and a named expert." },
+    { phase: "Ongoing", title: "Re-score and hold the gain", body: "Re-run the assessment; watch the number move." },
+  ],
+} as const;
+
+/**
+ * HOME — the condensed comparison, which must CLOSE ON TALENT.
+ *
+ * Every value block on the home ends by pointing at the experts, because the
+ * home's job is to hand a warmed-up buyer to Hire Talent. A value section that
+ * ends on its own argument is a dead end on a funnel page.
+ */
+export const HOME_TEASER = {
+  eyebrow: "The third way",
+  headline: "You have options. Here's the honest comparison.",
+  close: "…and here are the vetted experts who close your gaps.",
+  closeCta: "Meet the experts",
+} as const;
+
+/** HIRE TALENT hero. */
+export const HIRE_HERO = {
+  kicker: "Hire pre-vetted experts, direct",
+  headline: "Hire pre-vetted experts, direct.",
+  subhead:
+    "Search real, rated experts by the system they actually run. Engage them for two hours or six months — one contract, one payment.",
+} as const;
+
+/** HIRE TALENT — the matching engine, described honestly. */
+export const AI_MATCH_COPY = {
+  eyebrow: "AI matching",
+  headline: "Post what you need. Get ranked, vetted experts.",
+  lead: "Your Work Request is matched against every expert's actual work history — the systems they ran, how deep, how recently — and comes back ranked.",
+  steps: [
+    { label: "Your Work Request", body: "Say what you need, in your own words." },
+    { label: "Matched on real history", body: "Against dated engagements, not a self-scored checklist." },
+    { label: "Ranked by depth and recency", body: "Deep and current beats touched-it-once." },
+  ],
+  note: "Ranking runs on each expert's dated work history — see how a profile is built on Find Work.",
+} as const;
+
+/** FIND WORK — build your profile, and what it becomes. */
+export const PROFILE_VIZ_COPY = {
+  eyebrow: "Bring your résumé alive",
+  headline: "Your profile builds itself from your work history.",
+  lead: "Drop in your résumé. Each job is read for the system it ran on and the modules you used — and your profile becomes a weighted picture of what you actually do.",
+  centerOfGravity: "Where your experience actually sits",
+  note: "Example profile — yours is built from your own résumé.",
+} as const;
+
+/** Shared caption for the product-screenshot bands. */
+export const APP_SHOTS_COPY = {
+  hire: {
+    eyebrow: "Inside the product",
+    headline: "See the tools you'd be using.",
+    lead: "Work Requests, matched experts, contracts and settlement — the buyer side, end to end.",
+  },
+  work: {
+    eyebrow: "Inside the product",
+    headline: "See what you'd be working in.",
+    lead: "Your profile, incoming work, packages and payouts — the provider side, end to end.",
+  },
+} as const;

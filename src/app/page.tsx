@@ -1,53 +1,70 @@
 import type { Metadata } from "next";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
-import { MarketingHero } from "@/components/marketing/MarketingHero";
-import { ThreeWays } from "@/components/marketing/sections/ThreeWays";
-import { VideoSequence } from "@/components/marketing/VideoSequence";
-import { ErpPunchout } from "@/components/marketing/sections/ErpPunchout";
-import { ValueStack } from "@/components/marketing/sections/ValueStack";
-import { AiStrip } from "@/components/marketing/sections/AiStrip";
+import { AssessmentHero } from "@/components/marketing/AssessmentHero";
 import { Assessment } from "@/components/marketing/sections/Assessment";
+import { RoadmapPreview } from "@/components/marketing/sections/RoadmapPreview";
+import { ThreeWays } from "@/components/marketing/sections/ThreeWays";
+import { FourBeats } from "@/components/marketing/sections/FourBeats";
 import { ClosingCta } from "@/components/marketing/sections/ClosingCta";
 
 /**
- * THE BUYER PAGE — and `/` is it (brief_home_rebuild_08_09 WS-B).
+ * THE HOME — the assessment front door (brief_public_pages_ia WS-1).
  *
- * Only reachable on the marketing hosts (panameer.com / www); every other host
- * redirects `/` into the app. See `src/proxy.ts`.
+ * ── ONE AUDIENCE, ONE JOB ────────────────────────────────────────────────────
  *
- * THE NEUTRAL LANDING IS GONE. `/` spent three briefs as an agnostic page whose
- * job was to ask which side you were on and hand you off — a hero, a primer
- * carousel, and a fork. The rebuild makes a different bet: buyers are the
- * default audience, so the root sells to them directly and the seller page is
- * one click away in the hero toggle. A marketplace that opens by asking a
- * question spends its best screen not answering one.
+ * `/` used to do three jobs at once: talent search, buyer value and the
+ * assessment. Every visitor met two thirds of a page written for somebody else,
+ * and the one asset that could start a conversation with a cold decision-maker
+ * — the maturity assessment — was buried at the bottom under six sections about
+ * hiring.
  *
- * Section order is the mockup's, and the order is an argument: what you have
- * today (three ways) → how this works (the four beats) → how it reaches your
- * ERP (punchout) → what procurement gets (value stack) → what is AI (strip) →
- * where you stand (assessment) → go (closing).
+ * The home now serves the service buyer / decision-maker, and its job is:
+ * learn where you stand → give us your email. Nothing else competes with that.
  *
- * EVERY SECTION IS A SERVER COMPONENT except the assessment's tab switcher,
- * which is why this route still prerenders static.
+ * ── WHAT MOVED OUT, AND WHERE IT WENT ────────────────────────────────────────
+ *
+ *   talent search + chips  → /hire-talent (its hero)
+ *   ErpPunchout            → /hire-talent  (enterprise-buyer content)
+ *   ValueStack             → /hire-talent  (procurement's objections)
+ *   VideoSequence, AiStrip → /hire-talent
+ *
+ * Nothing was deleted; six sections changed address.
+ *
+ * ── FUNNEL ORDER, AND EVERY BLOCK POINTS AT TALENT ───────────────────────────
+ *
+ *   hero        the offer + what its output looks like
+ *   assessment  the framework you'd be scored against
+ *   roadmap     what the score turns into — closes on "meet the experts"
+ *   three ways  the honest comparison, condensed — closes on "meet the experts"
+ *   four beats  Learn · Connect · Create · Settle, in this audience's words
+ *   closing     take the assessment
+ *
+ * The two value blocks in the middle both end by handing off to Hire Talent.
+ * That is the whole reason they are still on this page: a home that sells the
+ * problem and never names who fixes it has warmed somebody up for nobody.
+ *
+ * ── STATIC ───────────────────────────────────────────────────────────────────
+ *
+ * Every section is a server component except the assessment's tab switcher, so
+ * this route still prerenders. The hero shows the dashboard without a tab
+ * control precisely to keep it that way.
  */
 export const metadata: Metadata = {
-  title: "Hire Enterprise Systems and AI Experts — Panameer",
+  title: "See Where Your Business Really Stands — Panameer",
   description:
-    "On-demand access to pre-vetted Oracle and Enterprise Systems experts. " +
-    "Go direct — one contract, one monthly payment, no employment risk — and " +
-    "punch out for services straight from your ERP.",
+    "A free operating-maturity assessment, in minutes. See where your " +
+    "operations rank from paper to AI-driven — then connect with the vetted " +
+    "experts who close the gaps.",
 };
 
-export default function BuyerHome() {
+export default function Home() {
   return (
-    <MarketingShell audience="buyer">
-      <MarketingHero audience="buyer" />
-      <ThreeWays />
-      <VideoSequence audience="buyer" />
-      <ErpPunchout />
-      <ValueStack />
-      <AiStrip audience="buyer" />
+    <MarketingShell page="home">
+      <AssessmentHero />
       <Assessment />
+      <RoadmapPreview />
+      <ThreeWays condensed />
+      <FourBeats page="home" />
       <ClosingCta audience="buyer" />
     </MarketingShell>
   );

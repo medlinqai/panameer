@@ -38,7 +38,7 @@ export const metadata: Metadata = {
 
 export default function SellerPage() {
   return (
-    <MarketingShell audience="provider">
+    <MarketingShell page="work">
       <MarketingHero audience="provider" />
       <TwoPains />
       <OmniChannel />
