@@ -34,6 +34,7 @@
     "legal:build": "npx esbuild scripts/build-legal.ts --bundle --platform=node --format=cjs --packages=external --outfile=.harness/legal.cjs --log-level=error && node .harness/legal.cjs",
     "check:phone": "npx esbuild src/lib/phone.test.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/phone.cjs --log-level=error && node .harness/phone.cjs",
     "check:theme": "npx esbuild src/lib/themeRecipes.test.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/theme.cjs --log-level=error && node .harness/theme.cjs",
+    "check:jobskills": "npx esbuild src/lib/resume/job-skills.test.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/jobskills.cjs --log-level=error && node .harness/jobskills.cjs",
     "check:rollup": "npx esbuild src/lib/provider-rollup.test.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/rollup.cjs --log-level=error && node .harness/rollup.cjs",
     "check:suite": "npx esbuild src/lib/suite.test.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/suite.cjs --log-level=error && node .harness/suite.cjs",
     "check:catalog": "ts-node --project tsconfig.seed.json prisma/check-catalog-v5.ts",

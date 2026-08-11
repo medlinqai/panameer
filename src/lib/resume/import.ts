@@ -2,7 +2,9 @@ import { prisma } from "@/lib/prisma";
 import { extractText, ExtractError } from "@/lib/resume/extract";
 import { parseResume, type ParsedResume } from "@/lib/resume/parse";
 import { recomputeCompleteness } from "@/lib/onboarding";
+import { recomputeProviderRollup } from "@/lib/provider-rollup";
 import { uploadResumeFile } from "@/lib/storage";
+import { buildVocabulary, extractJobSkills } from "./job-skills";
 import { matchSkills, suggestableSkills } from "@/lib/resume/match";
 import { assessParse } from "@/lib/resume/confidence";
 import { aiExtractResume, aiToParsedResume } from "@/lib/resume/ai-extract";
@@ -60,6 +62,10 @@ export type ImportResult = {
     /** WS-B — the unmatched terms worth offering as confirm-to-add. */
     skillSuggestions: string[];
     languages: number;
+    /** WS-3 — catalog skills attached to individual jobs, not to the profile. */
+    jobSkills: number;
+    /** WS-3 — jobs that named shared modules with no suite anchor (WS-4 asks). */
+    needsSuite: number;
   };
   gaps: string[];
   /**
@@ -190,6 +196,12 @@ export async function importProfileDocument({
   });
 
   await recomputeCompleteness(profileId);
+  /*
+    The import just created every job and its skills, so the weighted rollup is
+    empty until this runs (WS-2/WS-3). Without it a freshly imported provider
+    matches nothing at all — the jobs are there, the derived index is not.
+  */
+  await recomputeProviderRollup(profileId);
 
   /*
     WS0/WS4 — score the parse and LOG WHICH READER FIRED.
@@ -321,6 +333,8 @@ function emptyApplied(): ImportResult["applied"] {
     skillsUnmatched: [],
     skillSuggestions: [],
     languages: 0,
+    jobSkills: 0,
+    needsSuite: 0,
   };
 }
 
@@ -379,11 +393,58 @@ export async function applyParsedResume(
   const haveRole = new Set(
     profile.employers.map((w) => `${w.name}|${w.role_title ?? ""}`.toLowerCase())
   );
+
+  /*
+    PER-JOB DERIVATION (WS-3), computed HERE rather than asked of the model.
+
+    The prompt is documented as fragile — change only with a before/after
+    harness run — and it did not need changing: the model already returns each
+    employer with its title and description, and deciding which catalog rows
+    that text names is a lookup against a controlled vocabulary, not a judgement
+    call. Doing it deterministically means the same block always yields the same
+    suite, the guards in job-skills.ts are testable without a live model, and
+    the LOCKED prompt is untouched, so the parser harness measures exactly what
+    it measured before.
+
+    The vocabulary is loaded once for the whole résumé rather than per job — 566
+    vendor rows, one query.
+  */
+  const vocabRows = await prisma.skill.findMany({
+    where: {
+      is_custom: false,
+      roleType: { name: { in: ["Application-Specific", "Technology-Specific"] } },
+    },
+    select: {
+      id: true,
+      name: true,
+      aliases: true,
+      roleType: { select: { name: true } },
+      pillar: { select: { name: true } },
+    },
+  });
+  const vocab = buildVocabulary(vocabRows);
+  const roleIdByName = new Map(
+    (await prisma.roleType.findMany({ select: { id: true, name: true } })).map((r) => [
+      r.name,
+      r.id,
+    ])
+  );
+
   for (const [i, e] of parsed.experiences.entries()) {
     const key = `${e.employer}|${e.roleTitle}`.toLowerCase();
     if (haveRole.has(key)) continue;
     haveRole.add(key);
-    await prisma.employer.create({
+
+    /*
+      The block is the title plus the description. The employer NAME is
+      deliberately excluded: "Oracle Corporation" as an employer says who paid,
+      not which product the work was on, and including it would anchor every
+      job at Oracle to Fusion regardless of what it actually says.
+    */
+    const block = [e.roleTitle, e.description].filter(Boolean).join("\n");
+    const found = extractJobSkills(block, vocab);
+
+    const employer = await prisma.employer.create({
       data: {
         provider_profile_id: profileId,
         name: e.employer.slice(0, 200),
@@ -393,9 +454,18 @@ export async function applyParsedResume(
         end_date: e.endDate ? new Date(e.endDate) : null,
         is_current: Boolean(e.startDate) && !e.endDate,
         sort_order: i * 10,
+        software_suite: found.suite,
+        job_role_type_id: found.role ? roleIdByName.get(found.role) ?? null : null,
+        skills: {
+          create: found.skillIds.map((skill_id) => ({ skill_id })),
+        },
       },
+      select: { id: true },
     });
+    void employer;
     applied.experiences++;
+    applied.jobSkills += found.skillIds.length;
+    if (found.needsSuite) applied.needsSuite++;
   }
 
   // --- Education -----------------------------------------------------------
