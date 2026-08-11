@@ -80,19 +80,32 @@ export type NavItem = {
 */
 
 /**
- * THE UTILITY ROW, above the identity block (WS1-A).
+ * THE UNIVERSAL CONTROLS — Search, Home, Notifications.
  *
  * Not part of the Transactions group and deliberately not capability-gated:
  * these are the three things you reach for from anywhere, whoever you are.
- * Search leads the deck's rail, Home is the same destination the Dashboard
- * button owns (kept because the deck shows both and they read differently in
- * the two positions), Notifications is the bell that used to live in the header.
+ *
+ * ⚠ THEY LIVE IN THE TOP BAR (brief_topbar_utilities), which REVERSES
+ * E207/E208/E209 — those moved them into the rail, and the call now is that the
+ * rail is the six role transactions and these are not transactions.
+ *
+ * NAMED INDIVIDUALLY, not just as a list, because the header renders each in a
+ * different shape: Search is a wide pill in the centre, the other two are icon
+ * buttons on the right, and the account menu beside them is a popover. A
+ * `.map()` over three items that each need bespoke markup is a loop with a
+ * switch inside it. The array survives for anything that does want to iterate
+ * them, and — the point of keeping this here at all — the href and label are
+ * still declared exactly once.
  */
-export const UTILITY_NAV: NavItem[] = [
-  { label: "Search", href: "/search", icon: "Search" },
-  { label: "Home", href: "/dashboard", icon: "Home" },
-  { label: "Notifications", href: "/notifications", icon: "Bell" },
-];
+export const SEARCH_NAV: NavItem = { label: "Search", href: "/search", icon: "Search" };
+export const HOME_NAV: NavItem = { label: "Home", href: "/dashboard", icon: "Home" };
+export const NOTIFICATIONS_NAV: NavItem = {
+  label: "Notifications",
+  href: "/notifications",
+  icon: "Bell",
+};
+
+export const UTILITY_NAV: NavItem[] = [SEARCH_NAV, HOME_NAV, NOTIFICATIONS_NAV];
 
 /**
  * THE REQUESTER RAIL (brief_requester_home_v1 WS-A).
