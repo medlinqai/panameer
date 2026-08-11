@@ -115,7 +115,10 @@ export type RollupResult = {
  */
 export async function recomputeProviderRollup(
   providerProfileId: string,
-  tx: Pick<PrismaClient, "employer" | "project" | "providerSkill" | "providerSuiteProfile"> = defaultPrisma,
+  tx: Pick<
+    PrismaClient,
+    "employer" | "project" | "providerSkill" | "providerSuiteProfile" | "providerProfile"
+  > = defaultPrisma,
   now: Date = new Date()
 ): Promise<RollupResult> {
   const employers = await tx.employer.findMany({
@@ -125,6 +128,7 @@ export async function recomputeProviderRollup(
       start_date: true,
       end_date: true,
       software_suite: true,
+      job_role_type_id: true,
       skills: { select: { skill_id: true } },
     },
   });
@@ -256,6 +260,43 @@ export async function recomputeProviderRollup(
         weight_pct: total > 0 ? (s.weight / total) * 100 : 0,
         last_used: s.last,
       },
+    });
+  }
+
+  /*
+    THE PROVIDER'S PRIMARY ROLE, derived (WS-4).
+
+    Nothing sets `ProviderProfile.role_type_id` any more — the standalone Role
+    step is gone, because role is a consequence of the work, not a separate
+    question. But `marketplaceVisibleWhere()` still requires the column, so
+    without this every provider who walks the new flow completes it and stays
+    permanently invisible, with no error and nothing to point at. That is
+    exactly the failure class the wizard's own comments call out: a condition
+    that outlives the question it was checking.
+
+    The primary role is the one carrying the most weighted time, not the most
+    jobs — a decade of functional work and two short technical contracts makes
+    somebody Application-Specific, and counting jobs would say otherwise.
+
+    Only ever SET, never cleared: a provider who has classified themselves and
+    then deletes their last dated job should not silently lose their role and
+    drop out of the marketplace.
+  */
+  const roleWeight = new Map<string, number>();
+  for (const e of employers) {
+    if (!e.job_role_type_id) continue;
+    const months = monthsBetween(e.start_date, e.end_date, now);
+    if (!months) continue;
+    roleWeight.set(
+      e.job_role_type_id,
+      (roleWeight.get(e.job_role_type_id) ?? 0) + months * recency(e.end_date, now)
+    );
+  }
+  const primaryRole = [...roleWeight.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+  if (primaryRole) {
+    await tx.providerProfile.update({
+      where: { id: providerProfileId },
+      data: { role_type_id: primaryRole },
     });
   }
 

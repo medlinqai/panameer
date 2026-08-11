@@ -14,6 +14,7 @@ import { normalizeEmail } from "@/lib/normalizeEmail";
 import { createHash } from "node:crypto";
 import { recordParseAudit } from "@/lib/resume/audit";
 import { matchSkills } from "@/lib/resume/match";
+import { suggestedCompany } from "@/lib/resume/job-skills";
 import type { ParsedResume } from "@/lib/resume/parse";
 import { USER_TOS_VERSION } from "@/lib/tos";
 import { capitalizeName } from "@/lib/display";
@@ -69,14 +70,32 @@ import { capitalizeName } from "@/lib/display";
  * 1 without a number. It was already excluded from resume targets, so nothing
  * downstream treated it as a milestone anyway.
  */
+/*
+  THE ITINERARY (brief_per_job_skill_model WS-4).
+
+  `roles` and `skills` are GONE as stops. Role is derived from each job's
+  skills, and skills are facts of a job — so asking for them at profile level
+  was asking the provider to answer, in the abstract, a question their own work
+  history already answers concretely. It also produced the ambiguity the whole
+  model exists to remove: a profile-level "General Ledger" belongs to no system.
+
+  `work_history` takes their place. The résumé lands there pre-tagged — each job
+  showing its suite, its derived role and its module chips — and the provider
+  scans and corrects. Same information, one screen instead of two, and every
+  answer attached to the engagement that evidences it.
+
+  Both names survive in `ProviderStep` and in `SAVEABLE_STEPS` below: Settings
+  still posts them, and a client tab left open mid-flow will too. Removing the
+  ability to WRITE would 400 a surface this brief does not touch. They are no
+  longer stops on the tour.
+*/
 export const PROVIDER_STEPS = [
-  "title", //     1 — what you do
-  "roles", //     2 — WS3: role(s), multi-select
-  "skills", //    3 — WS3: its own page, filtered by the chosen roles
-  "rate", //      4 — provider only; the match needs a price
-  "picture", //   5 — required to publish (WS7 addendum, unchanged)
-  "company", //   6 — the entity a work order is with (brief_company_model)
-  "finish", //    7 — Review + publish
+  "title", //         1 — what you do
+  "work_history", //  2 — WS-4: the jobs, each with suite + role + skills
+  "rate", //          3 — provider only; the match needs a price
+  "picture", //       4 — required to publish (WS7 addendum, unchanged)
+  "company", //       5 — the entity a work order is with (brief_company_model)
+  "finish", //        6 — Review + publish
 ] as const;
 export type ProviderStep =
   | (typeof PROVIDER_STEPS)[number]
@@ -88,6 +107,13 @@ export type ProviderStep =
     asks: it asks for them to stop being prompted.
   */
   | "tell_us"
+  /*
+    WS-4 — no longer STOPS, still writable. Settings posts them and so does a
+    client tab left open mid-flow; refusing the write would 400 a surface this
+    brief does not touch. They are simply no longer on the itinerary.
+  */
+  | "roles"
+  | "skills"
   | "specializations"
   | "education"
   | "languages"
@@ -110,6 +136,8 @@ export const PRE_STEPS = ["tell_us"] as const;
  */
 export const SAVEABLE_STEPS: readonly ProviderStep[] = [
   ...PROVIDER_STEPS,
+  "roles",
+  "skills",
   "catalog",
   "tell_us",
   "specializations",
@@ -121,8 +149,7 @@ export const SAVEABLE_STEPS: readonly ProviderStep[] = [
 /** Recruiter journey: no Rate — a recruiter sells other people's time (E070). */
 export const RECRUITER_STEPS = [
   "title",
-  "roles",
-  "skills",
+  "work_history",
   "picture",
   "company",
   "finish",
@@ -167,7 +194,11 @@ export const PROVIDER_STEP_LABELS: Record<
   ProviderStep,
   { stepper: string; next: string }
 > = {
-  title: { stepper: "Your Title", next: "Next: Your Role" },
+  title: { stepper: "Your Title", next: "Next: Your Work History" },
+  work_history: {
+    stepper: "Your Work History",
+    next: "Next: Your Rate",
+  },
   roles: { stepper: "Your Role", next: "Next: Your Skills" },
   skills: { stepper: "Your Skills", next: "Next: Your Rate" },
   catalog: { stepper: "Your Role & Skills", next: "Next: Your Rate" },
@@ -244,6 +275,8 @@ export const LEGACY_SECTIONS = [
   //   employers         by the Upload/Review step, which now owns work history
   "work_method",
   "employers",
+  // WS-4 — the work-history review: per-job suite, role and skill corrections.
+  "work_history",
 ] as const;
 
 const WORK_TYPES = ["HOURLY", "PACKAGES", "AGENCY", "CONTRACT_TO_HIRE"] as const;
@@ -623,6 +656,8 @@ async function loadDraft(viewer: Viewer) {
             include: { specialization: { select: { id: true, name: true, kind: true } } },
           },
           imports: { orderBy: { created_at: "desc" } },
+          // WS-4 — the derived centre of gravity, for the review screen.
+          suiteProfiles: true,
           skills: {
             include: {
               skill: {
@@ -634,6 +669,10 @@ async function loadDraft(viewer: Viewer) {
             orderBy: [{ sort_order: "asc" }, { start_date: "desc" }],
             include: {
               artifacts: { orderBy: [{ sort_order: "asc" }] },
+              // WS-4 — the module chips on each job card.
+              skills: {
+                select: { skill_id: true, skill: { select: { name: true } } },
+              },
               projects: {
                 orderBy: [{ sort_order: "asc" }, { created_at: "asc" }],
                 include: {
@@ -706,6 +745,20 @@ function computeResumeStep(p: Awaited<ReturnType<typeof loadDraft>>): ProviderSt
     */
     roles: pp.role_type_id != null,
     skills: pp.skills.length > 0,
+    /*
+      WS-4 — done when there is at least one job to review.
+
+      DELIBERATELY NOT "every job has a suite". A provider whose one unanchored
+      job is waiting on the needs-suite prompt has still answered this step, and
+      parking them here until the AI's uncertainty is resolved would make an
+      optional correction into a blocker. The review surface nudges; it does not
+      hold the door.
+
+      Note this reads `employers`, not `skills`: the old skills condition
+      counted profile-level picks, which nothing writes any more, so leaving it
+      as the gate would strand every new provider on a step they cannot pass.
+    */
+    work_history: pp.employers.length > 0,
     // The combined page these replaced. Not in any itinerary; satisfied so a
     // stray value can never park anyone on a step that is not offered.
     catalog: true,
@@ -885,8 +938,72 @@ export async function getOnboardingState(viewer: Viewer) {
         // field.
         artifacts: e.artifacts.map(toArtifactView),
         projects: e.projects.map(projectToCard),
+        /*
+          WS-4 — what the review step renders on each job card: the suite badge,
+          the derived role and the module chips, all inline-editable.
+        */
+        suite: e.software_suite,
+        roleTypeId: e.job_role_type_id,
+        skills: e.skills.map((s) => ({ id: s.skill_id, name: s.skill.name })),
+        /*
+          THE PROMPT FIRES ON THIS AND NOTHING ELSE.
+
+          A job needs the "which system?" question when it has skills but no
+          suite — the parser found modules and could not anchor them. A job with
+          no skills at all is not unanchored, it is unread, and asking which
+          system it ran on would be asking about nothing. Most jobs answer
+          false and never see the prompt, which is the point.
+        */
+        needsSuite: e.software_suite == null && e.skills.length > 0,
       })),
       projects: pp.projects.map(projectToCard),
+      /*
+        WS-4 — THE WEIGHTED ROLLUP, for the review/publish screen.
+
+        Read from the derived tables rather than recomputed here: they are
+        already current (every job write recomputes them), and a second
+        implementation of the weighting on the read path is how two answers to
+        one question appear.
+
+        Top skills only. The point of the screen is "here is what your history
+        says you are", and a provider with forty modules scrolling past forty
+        chips learns nothing from the tail.
+      */
+      rollup: {
+        skills: pp.skills
+          .filter((s) => s.weight > 0 || s.source === "SELF_ADDED")
+          .sort((a, b) => b.weight - a.weight)
+          .slice(0, 12)
+          .map((s) => ({
+            id: s.skill_id,
+            name: s.skill.name,
+            monthsTotal: s.months_total,
+            lastUsed: s.last_used ? s.last_used.toISOString().slice(0, 10) : null,
+            /** Flagged in the UI: claimed, but with no job behind it. */
+            selfAdded: s.source === "SELF_ADDED",
+          })),
+        /** The centre of gravity — "Oracle Cloud 85% · PeopleSoft 15%". */
+        suites: pp.suiteProfiles
+          .slice()
+          .sort((a, b) => b.weight_pct - a.weight_pct)
+          .map((s) => ({ suite: s.suite, pct: Math.round(s.weight_pct) })),
+      },
+      /*
+        WS-4 — the company step's prefill: the résumé's current or most-recent
+        employer, offered as a SUGGESTION to confirm or replace.
+
+        Not auto-applied, and this is the reason: for an independent consultant
+        it is usually their own entity and correct, but for a W-2 employee it is
+        their employer, which is not the Panameer billing entity a work order is
+        written against. The same string is also already a work-history row, so
+        creating a Company from it silently would give one name two meanings.
+      */
+      suggestedCompanyName: suggestedCompany(
+        pp.employers.map((e) => ({
+          employer: e.name,
+          endDate: e.end_date ? e.end_date.toISOString().slice(0, 10) : null,
+        }))
+      ),
       education: pp.education.map((e) => ({
         id: e.id,
         institution: e.institution,
@@ -1126,6 +1243,78 @@ export async function applyProviderSection(
       // id against the viewer's own profile. Continuing past the step has
       // nothing left to persist; this case exists so the step is a legal POST
       // target and so completeness is recomputed on the way through.
+      break;
+    }
+
+    /*
+      WS-4 — THE WORK-HISTORY REVIEW: per-job suite, role and skill corrections.
+
+      The payload is a sparse list of jobs the provider actually touched, not
+      the whole history. Sending everything back would make an untouched job
+      indistinguishable from one deliberately cleared, and the review's own
+      "leave what's right alone" promise depends on being able to tell.
+
+          jobs: [{ employerId, suite?, roleTypeId?, skillIds? }]
+
+      Each field is applied only when PRESENT. `suite: null` is a real value —
+      "I don't know either" — and must survive; `suite` absent means untouched.
+    */
+    case "work_history": {
+      const jobs = Array.isArray(data.jobs) ? (data.jobs as StepData[]) : [];
+      if (jobs.length === 0) break;
+
+      /*
+        OWNERSHIP IS RE-CHECKED HERE, not assumed from the session.
+
+        Every employerId arrives from the client. `applyProviderSection` is
+        called with a profileId the caller already resolved from the session, so
+        the fence is: only touch jobs whose provider_profile_id IS that profile.
+        A foreign id then matches nothing and is skipped, which is the same
+        answer as a job that does not exist.
+      */
+      const owned = await prisma.employer.findMany({
+        where: {
+          provider_profile_id: profileId,
+          id: { in: jobs.map((j) => String(j.employerId ?? "")).filter(Boolean) },
+        },
+        select: { id: true },
+      });
+      const ownedIds = new Set(owned.map((e) => e.id));
+
+      for (const job of jobs) {
+        const employerId = String(job.employerId ?? "");
+        if (!ownedIds.has(employerId)) continue;
+
+        const patch: Record<string, unknown> = {};
+        if ("suite" in job) patch.software_suite = job.suite ?? null;
+        if ("roleTypeId" in job) patch.job_role_type_id = job.roleTypeId ?? null;
+        if (Object.keys(patch).length > 0) {
+          await prisma.employer.update({ where: { id: employerId }, data: patch });
+        }
+
+        if (Array.isArray(job.skillIds)) {
+          const wanted = [...new Set((job.skillIds as unknown[]).map(String))];
+          /*
+            REPLACE, not merge. The chips on that one job are the complete
+            answer for that job — a provider removing a wrongly-tagged module
+            must see it stay removed, and a merge would silently put it back.
+            Scoped to the single employer, so the rest of the history is
+            untouched.
+          */
+          await prisma.jobSkill.deleteMany({ where: { employer_id: employerId } });
+          if (wanted.length > 0) {
+            // Only real catalog rows — a client-supplied id is not a skill.
+            const real = await prisma.skill.findMany({
+              where: { id: { in: wanted } },
+              select: { id: true },
+            });
+            await prisma.jobSkill.createMany({
+              data: real.map((s) => ({ employer_id: employerId, skill_id: s.id })),
+              skipDuplicates: true,
+            });
+          }
+        }
+      }
       break;
     }
 
