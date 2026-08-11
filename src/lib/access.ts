@@ -247,6 +247,78 @@ export function ownedProviderProfile(viewer: Viewer): {
   return { person: { user_id: viewer.userId } };
 }
 
+/**
+ * Owner scope for an EMPLOYER (a work-history job) — brief_per_job_skill_model
+ * WS-1.
+ *
+ * Jobs stopped being decoration when skills moved onto them. An Employer now
+ * carries the suite, the role and the skill list that the provider's entire
+ * weighted profile is computed from, so "edit this job" is a write against the
+ * thing matching ranks on. The id arrives from the client, as it must; what
+ * must not is the OWNERSHIP, so it is joined back to the session here rather
+ * than trusted.
+ *
+ *     prisma.employer.update({ where: ownedEmployer(viewer, id), ... })
+ *
+ * A non-owner gets a not-found, not a forbidden — the same shape as a job that
+ * does not exist, which is the correct answer to "does this id belong to
+ * someone else".
+ */
+export function ownedEmployer(viewer: Viewer, employerId: string) {
+  return {
+    id: employerId,
+    providerProfile: ownedProviderProfile(viewer),
+  };
+}
+
+/** Owner scope for a PROJECT — the finer grain under an Employer. */
+export function ownedProject(viewer: Viewer, projectId: string) {
+  return {
+    id: projectId,
+    providerProfile: ownedProviderProfile(viewer),
+  };
+}
+
+/**
+ * Owner scope for a JOB SKILL, reached through whichever parent holds it.
+ *
+ * `JobSkill` hangs off an Employer OR a Project, so there is no single join to
+ * the provider — the OR is the whole reason this is a function and not an
+ * inline `where`. Written once here so the two-parent shape cannot be
+ * half-remembered at a call site and leave one branch unscoped.
+ */
+export function ownedJobSkill(viewer: Viewer, jobSkillId: string) {
+  const owner = ownedProviderProfile(viewer);
+  return {
+    id: jobSkillId,
+    OR: [
+      { employer: { providerProfile: owner } },
+      { project: { providerProfile: owner } },
+    ],
+  };
+}
+
+/**
+ * A JobSkill must hang off exactly one parent.
+ *
+ * Prisma cannot express an XOR, and a row attached to both an Employer and a
+ * Project would be double-counted by the rollup — the skill would inherit two
+ * job durations and read as twice the depth it is. Checked at the write, where
+ * a readable error beats a constraint violation, and stated here so both the
+ * API and the parser import path check the same thing.
+ */
+export function assertOneJobParent(link: {
+  employerId?: string | null;
+  projectId?: string | null;
+}): void {
+  const parents = [link.employerId, link.projectId].filter(Boolean).length;
+  if (parents !== 1) {
+    throw new Error(
+      `A job skill must attach to exactly one of employer or project (got ${parents}).`
+    );
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Marketplace visibility (brief_K — supersedes brief_E/H approval gating).
 //

@@ -34,6 +34,7 @@
     "legal:build": "npx esbuild scripts/build-legal.ts --bundle --platform=node --format=cjs --packages=external --outfile=.harness/legal.cjs --log-level=error && node .harness/legal.cjs",
     "check:phone": "npx esbuild src/lib/phone.test.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/phone.cjs --log-level=error && node .harness/phone.cjs",
     "check:theme": "npx esbuild src/lib/themeRecipes.test.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/theme.cjs --log-level=error && node .harness/theme.cjs",
+    "check:suite": "npx esbuild src/lib/suite.test.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/suite.cjs --log-level=error && node .harness/suite.cjs",
     "check:catalog": "ts-node --project tsconfig.seed.json prisma/check-catalog-v5.ts",
     "learn:owner": "ts-node --project tsconfig.seed.json prisma/consolidate-scott-learn.ts",
     "learn:instructors": "ts-node --project tsconfig.seed.json prisma/apply-instructor-photos.ts",

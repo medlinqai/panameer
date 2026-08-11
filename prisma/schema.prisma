@@ -375,8 +375,8 @@ model Person {
   billingMethods       BillingMethod[]
   payoutMethods        PayoutMethod[]
   // WS2-C — forum authorship. On Person, like every other social surface here.
-  forumThreads         ForumThread[]           @relation("ForumThreadAuthor")
-  forumPosts           ForumPost[]             @relation("ForumPostAuthor")
+  forumThreads         ForumThread[]            @relation("ForumThreadAuthor")
+  forumPosts           ForumPost[]              @relation("ForumPostAuthor")
   taxProfile           TaxProfile?
   identityVerification IdentityVerification?
   notificationPrefs    NotificationPreference[]
@@ -444,7 +444,10 @@ model RoleType {
   sort_order Int @default(100)
 
   /// Projects classified with this role type (brief_project_model_v2).
-  projects Project[]
+  projects     Project[]
+  /// Jobs whose DERIVED role is this one (WS-1) — distinct from `projects`,
+  /// which is a provider's classification of a single engagement.
+  employerJobs Employer[] @relation("EmployerJobRole")
 
   skills           Skill[]
   tags             SkillTag[]
@@ -559,14 +562,15 @@ model Skill {
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
 
-  catalog           ServiceCatalog     @relation(fields: [catalog_id], references: [id], onDelete: Cascade)
-  roleType          RoleType           @relation(fields: [role_type_id], references: [id])
-  pillar            Pillar?            @relation(fields: [pillar_id], references: [id], onDelete: SetNull)
-  application       Application?       @relation(fields: [application_id], references: [id], onDelete: SetNull)
+  catalog           ServiceCatalog           @relation(fields: [catalog_id], references: [id], onDelete: Cascade)
+  roleType          RoleType                 @relation(fields: [role_type_id], references: [id])
+  pillar            Pillar?                  @relation(fields: [pillar_id], references: [id], onDelete: SetNull)
+  application       Application?             @relation(fields: [application_id], references: [id], onDelete: SetNull)
   providerSkills    ProviderSkill[]
   workRequestSkills WorkRequestSkill[]
   packageSkills     PackageSkill[]
   bridges           CapabilityModuleBridge[]
+  jobSkills         JobSkill[]
 
   /// A Skill belongs to a (Role, Domain) PAIR — brief_R, from the authoritative
   /// Service Catalog. The old `(catalog_id, name)` key was wrong for that shape:
@@ -577,6 +581,42 @@ model Skill {
   @@index([role_type_id])
   @@index([pillar_id])
   @@map("skills")
+}
+
+/// WHICH SOFTWARE SUITE a job was worked on (brief_per_job_skill_model WS-1).
+///
+/// An enum rather than a free string because it is the axis attribution turns
+/// on: "Oracle Cloud", "Oracle Fusion", "Fusion" and "OCloud" typed into a text
+/// box are four suites to a database and one to a human, and a weighted rollup
+/// grouped by that column would be quietly wrong.
+///
+/// The values mirror the v5 catalog's vendor Pillar names one-for-one —
+/// `src/lib/suite.ts` holds the single mapping between the two and the labels
+/// the UI shows. Adding a suite means: a value here, a row in that map, and a
+/// column in the catalog spreadsheet.
+///
+/// CROSS_VENDOR is the Technology-Specific "Cross-Vendor (Platform-Neutral)"
+/// pillar — SQL, REST, Git: real skills that belong to no suite. It is NOT the
+/// same as null, which means "we do not know yet" and is what drives the
+/// needs-suite prompt.
+enum SoftwareSuite {
+  ORACLE_FUSION_CLOUD
+  ORACLE_EBS
+  PEOPLESOFT
+  WORKDAY
+  SALESFORCE
+  CROSS_VENDOR
+}
+
+/// Where a row in the derived rollup came from (WS-2).
+enum ProviderSkillSource {
+  /// Computed from JobSkill rows. The default and the only trustworthy path.
+  DERIVED
+  /// The escape hatch: claimed on the profile with no job behind it. Carries a
+  /// deliberately low weight and is flagged in the UI — a fresh consultant's
+  /// honest claim and a padded profile look identical from here, so neither is
+  /// allowed to read as depth.
+  SELF_ADDED
 }
 
 /// A CAPABILITY DOMAIN — the buyer's vocabulary (brief_per_job_skill_model WS-0).
@@ -722,9 +762,9 @@ model NonOracleApplication {
 /// paused_at IS NULL (brief_K). Validation is a separate merit track that does
 /// NOT affect base visibility.
 model ProviderProfile {
-  id                      String           @id @default(uuid()) @db.Uuid
-  person_id               String           @unique @db.Uuid
-  region_id               String?          @db.Uuid
+  id                      String             @id @default(uuid()) @db.Uuid
+  person_id               String             @unique @db.Uuid
+  region_id               String?            @db.Uuid
   headline                String
   overview                String?
   // PJv2 WS7 — `experience_level` and `goal` are GONE.
@@ -755,14 +795,14 @@ model ProviderProfile {
   rate_max_cents          Int?
   /// Platform service fee as BASIS POINTS (1000 = 10%). Integer so the fee and
   /// the "You'll get" figure are computed without ever touching a float.
-  service_fee_bps         Int              @default(1000)
-  currency                String           @default("USD")
+  service_fee_bps         Int                @default(1000)
+  currency                String             @default("USD")
   /// The field chosen at the catalog step: a (Role, Domain) PAIR, since the
   /// authoritative catalog is Role → Domain → Skill and the same domain name
   /// appears under more than one role (brief_R). `pillar_id` is the DOMAIN;
   /// `role_type_id` is the ROLE. Skills at the next step filter on both.
-  pillar_id               String?          @db.Uuid
-  role_type_id            String?          @db.Uuid
+  pillar_id               String?            @db.Uuid
+  role_type_id            String?            @db.Uuid
   /// How the provider sells; RECRUITER forks them to the Coordinator role
   /// (brief_P / E009).
   work_method             WorkMethod?
@@ -774,23 +814,23 @@ model ProviderProfile {
   /// (brief_P / E019). This is a COMPLETION marker, NOT a visibility flag —
   /// brief_K's derived completeness gate remains the only visibility rule.
   onboarding_completed_at DateTime?
-  rating                  Decimal?         @db.Decimal(3, 2)
+  rating                  Decimal?           @db.Decimal(3, 2)
   id_badge                String?
   // Account lifecycle (brief_K): PENDING on sign-up → ACTIVE on email verify.
-  status                  ProviderStatus   @default(PENDING)
+  status                  ProviderStatus     @default(PENDING)
   // Merit-based Validation track (brief_K) — separate from visibility. Provider
   // requests it; an admin grants on merit. Never purchasable.
-  validation_status       ValidationStatus @default(NOT_REQUESTED)
+  validation_status       ValidationStatus   @default(NOT_REQUESTED)
   validation_requested_at DateTime?
   validated_at            DateTime?
   // Visibility is COMPLETENESS-gated, not approval-gated (brief_K, supersedes
   // brief_E/H). Marketplace-visible ⇔ status=ACTIVE AND completeness>=80 AND
   // paused_at IS NULL. No publish flag/button — visibility is derived.
-  completeness            Int              @default(0)
+  completeness            Int                @default(0)
   paused_at               DateTime?
   // Minimal preferences store (brief_H). Notification opt-ins; expand later.
-  notify_email            Boolean          @default(true)
-  notify_product_updates  Boolean          @default(false)
+  notify_email            Boolean            @default(true)
+  notify_product_updates  Boolean            @default(false)
   /// J2.4 WS-B (E008) — the persona menu's "Online for messages" toggle.
   ///
   /// A REAL COLUMN, not local state, because it is a claim made to other
@@ -800,7 +840,7 @@ model ProviderProfile {
   /// completeness/visibility gate alone. Someone can be listed and not
   /// currently at their desk; conflating the two would hide a profile because
   /// its owner went to lunch.
-  available_for_messages  Boolean          @default(true)
+  available_for_messages  Boolean            @default(true)
   /// ---- J2.4 WS-H Profile Settings (E015) ----------------------------------
   /// What KIND of work this provider wants. A preference shown to buyers and
   /// used for matching later; not a filter on what they may bid for.
@@ -808,10 +848,10 @@ model ProviderProfile {
   /// Plus-gated: hide earned-amount history from buyers browsing the profile.
   /// Stored for everyone — a provider who lapses from Plus should not silently
   /// have their privacy choice discarded and their history re-exposed.
-  earnings_private        Boolean          @default(false)
+  earnings_private        Boolean            @default(false)
   /// Explicit OPT-IN (never a default) to Panameer using this profile's content
   /// to improve its models. Off unless the person turned it on.
-  ai_training_opt_in      Boolean          @default(false)
+  ai_training_opt_in      Boolean            @default(false)
   /// Linked developer accounts (E015). Usernames, not OAuth — these are shown
   /// on the profile as evidence, and asking for repo scopes to display a
   /// handle would be a wildly disproportionate permission grab.
@@ -830,9 +870,9 @@ model ProviderProfile {
   // The coordinator Person who represents this provider (brief_I). Nullable —
   // most providers are independent. Set only via the provider's own authenticated
   // acceptance of a coordinator invite.
-  coordinator_person_id   String?          @db.Uuid
-  created_at              DateTime         @default(now())
-  updated_at              DateTime         @updatedAt
+  coordinator_person_id   String?            @db.Uuid
+  created_at              DateTime           @default(now())
+  updated_at              DateTime           @updatedAt
 
   person            Person                          @relation("ProfileOwner", fields: [person_id], references: [id], onDelete: Cascade)
   coordinator       Person?                         @relation("CoordinatorProviders", fields: [coordinator_person_id], references: [id], onDelete: SetNull)
@@ -840,6 +880,9 @@ model ProviderProfile {
   pillar            Pillar?                         @relation(fields: [pillar_id], references: [id], onDelete: SetNull)
   roleType          RoleType?                       @relation(fields: [role_type_id], references: [id], onDelete: SetNull)
   skills            ProviderSkill[]
+  /// The derived per-suite centre of gravity (WS-1). Written only by the
+  /// rollup recompute, same as `skills`.
+  suiteProfiles     ProviderSuiteProfile[]
   /// WS2 — the full role set. `role_type_id` above stays the primary.
   roles             ProviderProfileRole[]
   specializations   ProviderProfileSpecialization[]
@@ -971,7 +1014,6 @@ enum SpecializationKind {
 /// Provider ↔ Specialization multi-select (brief_R).
 /**
  * A Work Request's specializations (brief_cwr_specializations_and_import WS-A).
- *
  * Mirrors `ProviderProfileSpecialization` exactly, and deliberately: the
  * requester is answering the same question from the other side ("which
  * products, processes and industries does this touch"), so matching the two is
@@ -1053,12 +1095,66 @@ model Employer {
   /// the employer-level equivalent.
   contact_email String?
 
+  /// THE SUITE THIS JOB WAS WORKED ON (brief_per_job_skill_model WS-1).
+  ///
+  /// Derived by the parser from the job block's own unambiguous skills, then
+  /// shown to the provider to confirm or fix. Null means genuinely unknown —
+  /// the block listed shared modules with no anchor — and is what raises the
+  /// "which system?" prompt on that one job. Null is not "agnostic";
+  /// CROSS_VENDOR is.
+  ///
+  /// This is the column that makes "General Ledger" mean something. A skill
+  /// name is ambiguous across vendors; the same name inside a job that carries
+  /// its suite is not.
+  software_suite   SoftwareSuite?
+  /// The Role this job represents, derived from its skills (a Skill belongs to
+  /// exactly one Role). Stored rather than recomputed on read because a
+  /// provider may override it, and an override has to survive.
+  job_role_type_id String?        @db.Uuid
+
   providerProfile ProviderProfile @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
+  jobRoleType     RoleType?       @relation("EmployerJobRole", fields: [job_role_type_id], references: [id], onDelete: SetNull)
   projects        Project[]
   artifacts       Artifact[]
+  skills          JobSkill[]
 
   @@index([provider_profile_id])
+  @@index([job_role_type_id])
   @@map("employers")
+}
+
+/// A SKILL USED ON ONE JOB — the source of truth for everything downstream
+/// (brief_per_job_skill_model WS-1).
+///
+/// Attaches to an Employer or, more finely, to a Project under one. Exactly one
+/// of the two is set; the check is in `access.ts` rather than the schema
+/// because Prisma cannot express an XOR and a half-attached row is a bug worth
+/// a readable error rather than a constraint violation.
+///
+/// THIS REPLACES PROFILE-LEVEL SKILL PICKING. The provider no longer says "I
+/// know Payables"; a job of theirs says "Payables was used here, on this suite,
+/// for these dates", and `ProviderSkill` is the arithmetic on top. Every claim
+/// therefore arrives with an employer, a date range and a suite attached, which
+/// is what makes it checkable and expensive to fake.
+model JobSkill {
+  id          String   @id @default(uuid()) @db.Uuid
+  employer_id String?  @db.Uuid
+  project_id  String?  @db.Uuid
+  skill_id    String   @db.Uuid
+  /// Led this workstream rather than contributed to it. Recorded now, unused
+  /// in the v1 weighting — the seniority multiplier is explicitly deferred, and
+  /// the flag is cheap to collect and impossible to backfill later.
+  lead        Boolean?
+  created_at  DateTime @default(now())
+
+  employer Employer? @relation(fields: [employer_id], references: [id], onDelete: Cascade)
+  project  Project?  @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  skill    Skill     @relation(fields: [skill_id], references: [id], onDelete: Cascade)
+
+  @@unique([employer_id, skill_id])
+  @@unique([project_id, skill_id])
+  @@index([skill_id])
+  @@map("job_skills")
 }
 
 /// Proof of work attached to an Employer OR a Project (PJv2 WS0/WS4 / E078a).
@@ -1170,11 +1266,17 @@ model Project {
   /// silently poisoning the very charts this field exists to feed. A null is
   /// honest and queryable ("show me unclassified projects"), and the review
   /// page nudges the provider to fix it. Same reasoning as `employer_id`.
-  role_type_id               String? @db.Uuid
+  role_type_id               String?        @db.Uuid
   /// The sector this was delivered in. Reuses the INDUSTRY slice of the
   /// Specialization vocabulary rather than a free-text column, so a
   /// confidential project can still say "Oil & Gas" in a chartable way.
-  industry_specialization_id String? @db.Uuid
+  industry_specialization_id String?        @db.Uuid
+  /// The suite THIS engagement ran on, which may differ from the parent
+  /// Employer's (WS-1) — a permanent Oracle shop with one PeopleSoft migration
+  /// project is the ordinary case, not an edge one. Null INHERITS the
+  /// employer's suite at rollup time; it does not mean "unknown" here, because
+  /// a project without its own suite is the normal shape.
+  software_suite             SoftwareSuite?
 
   // --- Client -------------------------------------------------------------
   /// REQUIRED. Held even when `client_visibility` hides it — the redaction is
@@ -1230,6 +1332,7 @@ model Project {
   outcomes        ProjectOutcome[]
   validations     ProjectValidation[]
   artifacts       Artifact[]
+  skills          JobSkill[]
 
   @@index([provider_profile_id])
   @@index([employer_id])
@@ -1479,18 +1582,77 @@ model ProfileGapFlags {
   @@map("profile_gap_flags")
 }
 
+/// THE DERIVED SKILL ROLLUP — what search and matching actually query
+/// (brief_per_job_skill_model WS-1/WS-2).
+///
+/// ⚠ THIS TABLE IS AN INDEX, NOT AN INPUT. It used to be the provider's own
+/// checklist, written straight from a wizard step. It is now recomputed in full
+/// from `JobSkill` whenever any job changes, and `recomputeProviderRollup()` in
+/// `src/lib/provider-rollup.ts` is the ONLY thing that may write it. A feature
+/// that writes a row here directly is a feature whose data the next job edit
+/// silently deletes.
+///
+/// WHY MATERIALIZE IT AT ALL, given it is pure arithmetic over jobs: matching
+/// ranks thousands of providers by weight per query, and recomputing a decayed
+/// sum over every job of every candidate at request time is the difference
+/// between an index scan and a table scan. It is a cache with exactly one
+/// writer and a well-defined invalidation point.
 model ProviderSkill {
-  id                  String   @id @default(uuid()) @db.Uuid
-  provider_profile_id String   @db.Uuid
-  skill_id            String   @db.Uuid
-  created_at          DateTime @default(now())
+  id                  String              @id @default(uuid()) @db.Uuid
+  provider_profile_id String              @db.Uuid
+  skill_id            String              @db.Uuid
+  /// Σ over jobs listing this skill of months(job) × recency(end_date).
+  /// Depth and currency in one number — see `src/lib/provider-rollup.ts` for
+  /// the decay constant, which lives in exactly one place on purpose.
+  weight              Float               @default(0)
+  /// Cumulative months across those jobs, undecayed — the honest "how long",
+  /// for display, where a decayed float would be unexplainable to a human.
+  months_total        Int                 @default(0)
+  first_used          DateTime?
+  last_used           DateTime?
+  /// The suite(s) this skill was used under; usually one. An array rather than
+  /// a scalar because a genuine multi-suite consultant is exactly the provider
+  /// this model exists to describe properly.
+  suites              SoftwareSuite[]
+  source              ProviderSkillSource @default(DERIVED)
+  created_at          DateTime            @default(now())
+  updated_at          DateTime            @default(now()) @updatedAt
 
   providerProfile ProviderProfile @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
   skill           Skill           @relation(fields: [skill_id], references: [id], onDelete: Cascade)
 
   @@unique([provider_profile_id, skill_id])
   @@index([skill_id])
+  /// Matching's hot path: "who has this skill, best first".
+  @@index([skill_id, weight])
   @@map("provider_skills")
+}
+
+/// A PROVIDER'S CENTRE OF GRAVITY across suites (WS-1/WS-2).
+///
+/// The same weighted sum as `ProviderSkill`, grouped by suite and normalised to
+/// a percentage: "Oracle Cloud 85%, PeopleSoft 15%". Derived and disposable,
+/// same single writer.
+///
+/// Its job is tie-breaking and display, NOT filtering. A buyer naming a suite
+/// gets providers of that suite boosted, never providers of other suites
+/// excluded — a 15%-PeopleSoft consultant with deep recent PeopleSoft GL is
+/// still the right answer to a PeopleSoft GL question.
+model ProviderSuiteProfile {
+  id                  String        @id @default(uuid()) @db.Uuid
+  provider_profile_id String        @db.Uuid
+  suite               SoftwareSuite
+  /// 0–100, normalised across this provider's suites. Rounded for display but
+  /// stored as a float so several small suites cannot round to zero and vanish.
+  weight_pct          Float         @default(0)
+  last_used           DateTime?
+  updated_at          DateTime      @default(now()) @updatedAt
+
+  providerProfile ProviderProfile @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
+
+  @@unique([provider_profile_id, suite])
+  @@index([suite])
+  @@map("provider_suite_profiles")
 }
 
 /// A past employment on a provider's profile, with its notable projects.
@@ -1868,12 +2030,12 @@ model WorkRequest {
   created_at          DateTime             @default(now())
   updated_at          DateTime             @updatedAt
 
-  buyer    Person             @relation(fields: [buyer_person_id], references: [id], onDelete: Cascade)
-  pAccount PAccount           @relation(fields: [p_account_id], references: [id], onDelete: Cascade)
-  roleType RoleType?          @relation(fields: [role_type_id], references: [id], onDelete: SetNull)
-  pillar   Pillar?            @relation(fields: [pillar_id], references: [id], onDelete: SetNull)
-  region   Region?            @relation(fields: [region_id], references: [id], onDelete: SetNull)
-  skills   WorkRequestSkill[]
+  buyer           Person                      @relation(fields: [buyer_person_id], references: [id], onDelete: Cascade)
+  pAccount        PAccount                    @relation(fields: [p_account_id], references: [id], onDelete: Cascade)
+  roleType        RoleType?                   @relation(fields: [role_type_id], references: [id], onDelete: SetNull)
+  pillar          Pillar?                     @relation(fields: [pillar_id], references: [id], onDelete: SetNull)
+  region          Region?                     @relation(fields: [region_id], references: [id], onDelete: SetNull)
+  skills          WorkRequestSkill[]
   specializations WorkRequestSpecialization[]
 
   @@index([p_account_id])
@@ -2235,33 +2397,33 @@ model LessonProgress {
 /// from it. The profile's Testimonials section is a query for the SUBMITTED
 /// ones, not a different entity.
 model RecommendationRequest {
-  id                  String               @id @default(uuid()) @db.Uuid
-  provider_profile_id String               @db.Uuid
+  id                   String               @id @default(uuid()) @db.Uuid
+  provider_profile_id  String               @db.Uuid
   /// Captured at send time. The person may later be invited properly, and this
   /// must record who was actually asked.
-  contact_name        String
-  contact_email       String
+  contact_name         String
+  contact_email        String
   /// Whether that address already belongs to a Panameer account, resolved when
   /// the request is sent. Drives the "create your own profile" invite — an
   /// existing member does not need recruiting.
-  contact_off_platform Boolean             @default(true)
+  contact_off_platform Boolean              @default(true)
   /// The provider's covering note, template or edited.
-  message             String
-  token_hash          String               @unique
-  status              RecommendationStatus @default(SENT)
-  expires_at          DateTime
-  sent_at             DateTime             @default(now())
-  responded_at        DateTime?
+  message              String
+  token_hash           String               @unique
+  status               RecommendationStatus @default(SENT)
+  expires_at           DateTime
+  sent_at              DateTime             @default(now())
+  responded_at         DateTime?
   /// ---- the recommendation itself, once given ----
-  body                String?
-  recommender_title   String?
-  recommender_company String?
+  body                 String?
+  recommender_title    String?
+  recommender_company  String?
   /// Light provenance on the response. Never shown to the provider — it exists
   /// so a disputed testimonial can be investigated.
-  responder_ip        String?
-  responder_ua        String?
-  created_at          DateTime             @default(now())
-  updated_at          DateTime             @updatedAt
+  responder_ip         String?
+  responder_ua         String?
+  created_at           DateTime             @default(now())
+  updated_at           DateTime             @updatedAt
 
   providerProfile ProviderProfile @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
 
@@ -2332,17 +2494,17 @@ enum BillingMethodKind {
 }
 
 model PayoutMethod {
-  id            String           @id @default(uuid()) @db.Uuid
-  person_id     String           @db.Uuid
-  kind          PayoutMethodKind
-  label         String
+  id         String           @id @default(uuid()) @db.Uuid
+  person_id  String           @db.Uuid
+  kind       PayoutMethodKind
+  label      String
   /// Display only, as above.
-  last4         String?
+  last4      String?
   /// Where the money lands — drives which tax form is required.
-  country       String
-  is_default    Boolean          @default(false)
-  created_at    DateTime         @default(now())
-  updated_at    DateTime         @updatedAt
+  country    String
+  is_default Boolean          @default(false)
+  created_at DateTime         @default(now())
+  updated_at DateTime         @updatedAt
 
   person Person @relation(fields: [person_id], references: [id], onDelete: Cascade)
 
@@ -2391,20 +2553,20 @@ enum TaxForm {
 /// merit badge. FREE: the Connects cost is stripped, and the KYC partner that
 /// would make it cost anything is deferred.
 model IdentityVerification {
-  id          String     @id @default(uuid()) @db.Uuid
-  person_id   String     @unique @db.Uuid
-  status      IdvStatus  @default(NOT_STARTED)
+  id           String    @id @default(uuid()) @db.Uuid
+  person_id    String    @unique @db.Uuid
+  status       IdvStatus @default(NOT_STARTED)
   /// What the person said they would present. No document is stored — that
   /// waits for a KYC partner with somewhere lawful to put it.
-  document    String?
+  document     String?
   submitted_at DateTime?
-  reviewed_at DateTime?
+  reviewed_at  DateTime?
   /// Three years from approval, per the brief.
-  expires_at  DateTime?
+  expires_at   DateTime?
   /// Why a review failed, shown to the person so they can fix it.
-  note        String?
-  created_at  DateTime   @default(now())
-  updated_at  DateTime   @updatedAt
+  note         String?
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
 
   person Person @relation(fields: [person_id], references: [id], onDelete: Cascade)
 
@@ -2426,15 +2588,15 @@ enum IdvStatus {
 /// event would otherwise be a migration. Absent row = the category's documented
 /// default, so a new category ships with sensible behaviour and no backfill.
 model NotificationPreference {
-  id        String   @id @default(uuid()) @db.Uuid
-  person_id String   @db.Uuid
+  id         String   @id @default(uuid()) @db.Uuid
+  person_id  String   @db.Uuid
   /// Matches a key in lib/notification-categories.ts.
-  category  String
-  in_app    Boolean  @default(true)
-  email     Boolean  @default(true)
+  category   String
+  in_app     Boolean  @default(true)
+  email      Boolean  @default(true)
   /// SMS is wired to the STUBBED Twilio path — the toggle is real, the send is
   /// not, and the UI says so.
-  sms       Boolean  @default(false)
+  sms        Boolean  @default(false)
   updated_at DateTime @updatedAt
   created_at DateTime @default(now())
 
@@ -2454,8 +2616,8 @@ model NotificationPreference {
 ///
 /// Mobile-push 2FA is deferred with the mobile app that would receive it.
 model TwoFactorSetting {
-  id           String   @id @default(uuid()) @db.Uuid
-  user_id      String   @unique @db.Uuid
+  id           String    @id @default(uuid()) @db.Uuid
+  user_id      String    @unique @db.Uuid
   /// Base32. Present as soon as enrolment STARTS; `confirmed_at` is what makes
   /// it live, so an abandoned enrolment never locks anyone out.
   totp_secret  String?
@@ -2464,8 +2626,8 @@ model TwoFactorSetting {
   /// credential, and storing it in the clear would make it a worse one.
   question     String?
   answer_hash  String?
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
 
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
@@ -2506,20 +2668,20 @@ model ForumBoard {
 }
 
 model ForumThread {
-  id         String   @id @default(uuid()) @db.Uuid
-  board_id   String   @db.Uuid
-  author_id  String   @db.Uuid
-  title      String
+  id           String   @id @default(uuid()) @db.Uuid
+  board_id     String   @db.Uuid
+  author_id    String   @db.Uuid
+  title        String
   /// The opening post's text. Kept on the thread rather than as a first Post
   /// row so "a thread with no replies" is one row, not two, and so deleting a
   /// reply can never orphan the question.
-  body       String
+  body         String
   /// Denormalised for the board list, which would otherwise N+1 across every
   /// thread to render a count and a date. Maintained by lib/forums.ts on reply.
-  reply_count Int     @default(0)
+  reply_count  Int      @default(0)
   last_post_at DateTime @default(now())
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
 
   board  ForumBoard  @relation(fields: [board_id], references: [id], onDelete: Cascade)
   author Person      @relation("ForumThreadAuthor", fields: [author_id], references: [id], onDelete: Cascade)
