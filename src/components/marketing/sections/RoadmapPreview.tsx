@@ -1,27 +1,48 @@
-import Link from "next/link";
 import { ROADMAP_COPY, HOME_TEASER } from "@/lib/brand";
+import { SectionCta } from "@/components/marketing/SectionCta";
 
 /**
- * "…and then here's the plan" — the roadmap preview (WS-1).
+ * OUR METHOD — the section that proves this is a firm
+ * (brief_home_polish_method WS-1).
  *
- * Sits directly after the assessment, because a maturity score on its own is a
- * diagnosis without a treatment: the reader's very next thought is "so what do
- * I do about it", and a page that does not answer it there loses them.
+ * ── WHAT CHANGED, AND WHY IT MATTERS MORE THAN IT LOOKS ──────────────────────
  *
- * ⚠ ILLUSTRATIVE, AND IT SAYS SO ON THE PAGE. The AIM roadmap tool is a later
- * brief. This is the SHAPE of what an assessment turns into — four phases with
- * example work in them — not a plan anybody's data produced. The caption under
- * the timeline states that plainly rather than hiding it in a tooltip, because
- * a reader who assumes this is generated and later finds out it is not has been
- * misled by us, not by their own optimism.
+ * This was a roadmap PREVIEW: four phases, each naming an activity — "score and
+ * prioritise", "close the quick wins". Read closely, that is a marketplace
+ * describing what a buyer will end up doing. A firm's method produces
+ * DELIVERABLES, so every card now names the thing the client receives: a
+ * maturity read and a gap list, fixed-price packages with a named expert on
+ * each, a scoped rebuild.
  *
- * IT CLOSES ON TALENT, like every value block on this page. The home's job is
- * to hand a warmed-up buyer to Hire Talent; a section that ends on its own
- * argument is a dead end on a funnel page.
+ * The distinction is the positioning (`panameer_virtual_firm_identity.md`): a
+ * marketplace has no point of view and leaves you to it; a firm has a method,
+ * hands you outputs, and puts a human at the point of accountability. This is
+ * the section where that claim is made or lost.
+ *
+ * ── THE LOOP IS THE PRODUCT ──────────────────────────────────────────────────
+ *
+ * The last card ties re-scoring to an alert when a new solution lands for one
+ * of your gaps. A four-step plan that ENDS is a project, and a project is a
+ * one-off; the alert is what makes "continuous transformation" a mechanism
+ * rather than a tagline. It is also the honest description of the business — a
+ * gap you cannot close today is a reason to come back, not a lost sale.
+ *
+ * ── THE COORDINATOR IS THE POINT ─────────────────────────────────────────────
+ *
+ * Everything above the coordinator line could plausibly be software. A named
+ * senior person, assigned the moment the assessment completes, who translates
+ * the read and stands behind the quality of the experts on the work, is what
+ * makes this a firm rather than something that sold you a report. It is given
+ * its own panel rather than a footnote for exactly that reason.
+ *
+ * ⚠ THE PAGE PROMISES THE COORDINATOR; assignment logic is a later build. That
+ * is a promise about service, not a claim about shipped software — but it is
+ * still a promise, and it needs to be true on the first assessment that
+ * completes.
  */
 export function RoadmapPreview() {
   return (
-    <section className="border-t border-line bg-white py-16">
+    <section id="method" className="border-t border-line bg-white py-16">
       <div className="mx-auto max-w-[1120px] px-7">
         <p className="mb-3 font-display text-[12px] font-semibold uppercase tracking-[0.16em] text-magenta">
           {ROADMAP_COPY.eyebrow}
@@ -29,7 +50,7 @@ export function RoadmapPreview() {
         <h2 className="max-w-[620px] text-balance text-[30px] font-semibold leading-[1.1] sm:text-[36px]">
           {ROADMAP_COPY.headline}
         </h2>
-        <p className="mt-4 max-w-[640px] text-[16.5px] leading-relaxed text-[#3a4266]">
+        <p className="mt-4 max-w-[600px] text-[16.5px] leading-relaxed text-[#3a4266]">
           {ROADMAP_COPY.lead}
         </p>
 
@@ -49,6 +70,12 @@ export function RoadmapPreview() {
               <p className="font-display text-[11.5px] font-semibold uppercase tracking-[0.14em] text-magenta">
                 {s.phase}
               </p>
+              {/*
+                THE OUTPUT IS THE HEADING. `title` names the deliverable and the
+                body says what is in it — so a reader skimming only the bold
+                lines still reads a list of things they receive, which is the
+                whole point of the rework.
+              */}
               <h3 className="mt-2 text-[17px] font-bold">{s.title}</h3>
               <p className="mt-1.5 text-[14.5px] leading-relaxed text-[#3a4266]">
                 {s.body}
@@ -59,15 +86,23 @@ export function RoadmapPreview() {
 
         <p className="mt-4 text-[13px] text-[#6b7191]">{ROADMAP_COPY.note}</p>
 
-        <p className="mt-8 text-[17px] font-semibold text-ink">
-          {HOME_TEASER.close}{" "}
-          <Link
-            href="/hire-talent"
-            className="text-magenta underline underline-offset-4 hover:text-magenta-dark"
-          >
-            {HOME_TEASER.closeCta} →
-          </Link>
-        </p>
+        {/*
+          THE HUMAN ANCHOR. Its own panel, magenta-washed, directly under the
+          method — because the method is the moat and the coordinator is the
+          reason the method cannot be disintermediated. A line of body copy here
+          would have read as a service detail; it is the argument.
+        */}
+        <div className="mt-8 rounded-[16px] border border-magenta/20 bg-magenta/[0.06] p-6">
+          <p className="font-display text-[11.5px] font-semibold uppercase tracking-[0.14em] text-magenta">
+            A person, not a bot
+          </p>
+          <p className="mt-2 max-w-[760px] text-[16px] leading-relaxed text-ink">
+            {ROADMAP_COPY.coordinator}
+          </p>
+        </div>
+
+        {/* Exit: the resourcing close. See SectionCta on why there are two. */}
+        <SectionCta variant="experts" lead={HOME_TEASER.close} />
       </div>
     </section>
   );

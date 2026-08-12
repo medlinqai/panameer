@@ -661,21 +661,72 @@ export const HOME_HERO = {
     "The framework below is what you'll be scored against — the read shown is a sample, not your data.",
 } as const;
 
-/** HOME — the roadmap preview that follows the assessment. */
+/**
+ * HOME — OUR METHOD, the section that proves this is a firm.
+ *
+ * ── WHY IT IS "METHOD" AND NOT "ROADMAP" ─────────────────────────────────────
+ *
+ * Panameer's positioning is a VIRTUAL FIRM, not a marketplace
+ * (`panameer_virtual_firm_identity.md`): a marketplace has no point of view —
+ * it lists people and leaves you to it. A firm has a method, produces
+ * deliverables, and puts a human at the point of accountability. This section
+ * is where that claim is made or lost, so it is written as the method rather
+ * than as a timeline of activity.
+ *
+ * EVERY CARD NAMES AN OUTPUT. "Score and prioritise" is us describing our
+ * activity; "your maturity read + a prioritized gap list" is a thing the client
+ * receives. Firms are bought on deliverables, and an activity list is what a
+ * marketplace would show.
+ *
+ * TIME LABELS STAY. "Weeks 1–2" sells to an owner who wants to know when;
+ * "Analyze / Design / Deploy" is the AIM method's own vocabulary and belongs
+ * back-office. The method is the moat — it does not need to be recited to be
+ * felt.
+ *
+ * THE LAST CARD CLOSES THE LOOP. Re-score plus an alert when a new solution
+ * lands for one of your gaps is what makes "continuous transformation" literal
+ * instead of a tagline; a four-step plan that ends is a project, and a project
+ * is a one-off.
+ */
 export const ROADMAP_COPY = {
-  eyebrow: "Then here's the plan",
-  headline: "Your assessment becomes a roadmap.",
-  lead: "Every gap you score becomes a sequenced piece of work — with the expertise it needs attached to it.",
+  eyebrow: "Our method",
+  headline: "The assessment is the first step of a method.",
+  lead: "Every gap you score becomes a deliverable, with the expertise attached to it.",
   /*
-    ⚠ ILLUSTRATIVE. The AIM roadmap tool is a later brief; this is a preview of
-    the shape, not a live plan, and the caption says so on the page.
+    ⚠ ILLUSTRATIVE. The AIM tool is a later brief; this is the shape of what an
+    assessment produces, not a plan from anybody's data. Said on the page.
   */
   note: "Illustrative — an example sequence, not a plan for your organization.",
+  /*
+    THE HUMAN ANCHOR, and it is the most important line in the section.
+    Everything above it could be automated; a named senior person who translates
+    the read and stands behind the quality of the consultants is what makes this
+    a firm rather than software that sold you something. The page PROMISES the
+    coordinator — assignment logic is a later build.
+  */
+  coordinator:
+    "When your assessment completes, a coordinator is assigned to walk you through it — a senior person who translates the read, scopes the work, and stands behind the quality of the experts on it.",
   steps: [
-    { phase: "Weeks 1–2", title: "Score and prioritise", body: "Your maturity read across each process, worst gaps first." },
-    { phase: "Weeks 3–8", title: "Close the quick wins", body: "The changes that need days of the right expert, not a programme." },
-    { phase: "Quarter 2", title: "Rebuild the weak process", body: "Scoped as a package with a fixed price and a named expert." },
-    { phase: "Ongoing", title: "Re-score and hold the gain", body: "Re-run the assessment; watch the number move." },
+    {
+      phase: "Weeks 1–2",
+      title: "Your maturity read",
+      body: "A scored read of every process you run, and a prioritized gap list.",
+    },
+    {
+      phase: "Weeks 3–8",
+      title: "Quick-win packages",
+      body: "The gaps that close in days — fixed price, a named expert on each.",
+    },
+    {
+      phase: "Quarter 2",
+      title: "A scoped rebuild",
+      body: "Your weakest process, rebuilt to a written scope with a named expert.",
+    },
+    {
+      phase: "Ongoing",
+      title: "Re-score, and stay ahead",
+      body: "Watch the number move — and get an alert when a new solution lands for one of your gaps.",
+    },
   ],
 } as const;
 
