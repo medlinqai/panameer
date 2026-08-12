@@ -224,7 +224,15 @@ export const THREE_WAYS = {
     {
       tag: "Go it alone",
       title: "Hire an independent",
-      blurb: "Cheaper, but you carry the load.",
+      /*
+        ⚠ NEVER "cheaper" — not even about the alternative
+        (`panameer_virtual_firm_identity.md`). The moment price framing appears
+        anywhere on the page, the page is competing on price, and the comparison
+        the reader then runs is Panameer against offshore. The DIY card's real
+        argument was never the invoice anyway: it is that the invoice is the
+        only thing that is smaller.
+      */
+      blurb: "The smallest invoice — and you carry everything else.",
       points: [
         { ok: false, text: "Unvetted, no shared ratings" },
         { ok: false, text: "You paper every contract" },
@@ -291,7 +299,9 @@ export const SEQUENCE_COPY = {
       },
       {
         word: "Create",
-        cap: "Create With Your Experts",
+        // "our", never "your" — the resources come THROUGH Panameer, QA'd and
+        // managed by the coordinator. See the identity doc.
+        cap: "Create With Our Experts",
         body: "Agreed scope, tracked in one place — or ordered straight from your ERP.",
       },
       {
@@ -314,7 +324,14 @@ export const SEQUENCE_COPY = {
       {
         word: "Create",
         cap: "Do the Work",
-        body: "Deliver with your experts, augmented by your own AI. We handle the paperwork.",
+        /*
+          NOT "our experts" here, and that is the point of reading the rule
+          rather than running find-and-replace: this is the PROVIDER page, where
+          the provider IS the expert. "Deliver with our experts" would tell a
+          consultant that somebody else does their work. The banned phrase is
+          removed by rewriting the sentence, not by flipping the pronoun.
+        */
+        body: "Deliver your way, augmented by your own AI. We handle the paperwork.",
       },
       {
         word: "Settle",
@@ -560,10 +577,14 @@ export const CLOSING_CTA = {
 export const ASSESSMENT_COPY = {
   eyebrow: "See Where You Stand on AI Adoption",
   headline: "Assess your adoption by capability domain",
-  leadStrong:
-    "Transformation isn't slowing down — it's accelerating. The only question " +
-    "is whether your organization is.",
-  lead: "See where you stand across the processes you run — your maturity read is instant.",
+  /*
+    WS-3 — StratERP density. The lead ran to two sentences of throat-clearing
+    ("Transformation isn't slowing down — it's accelerating") before reaching
+    the offer. A firm presenting its method states the method; the reader did
+    not come for a trend observation.
+  */
+  leadStrong: "Every process you run, scored.",
+  lead: "Where you sit today, paper to AI-driven — and the gaps worth closing first.",
   cta: "See where you stand →",
   ctaSub: "Sign in to be first in line.",
 } as const;
@@ -596,19 +617,19 @@ export const PAGE_BEATS = {
     beats: [
       {
         beat: "Learn",
-        body: "Where your operations really rank, paper to AI-driven, in minutes. Free.",
+        body: "Where your operations rank, paper to AI-driven. Free.",
       },
       {
         beat: "Connect",
-        body: "To the vetted experts who close the gaps you just found.",
+        body: "To our vetted experts, matched to the gaps you found.",
       },
       {
         beat: "Create",
-        body: "Your improvement roadmap — and manage the work with the tools the big firms charge you for.",
+        body: "Your roadmap, managed with the tools big firms charge for.",
       },
       {
         beat: "Settle",
-        body: "Simply. One contract, one payment, on delivery.",
+        body: "One contract, one payment, on delivery.",
       },
     ],
   },
@@ -672,8 +693,13 @@ export const HOME_HERO = {
     the processes you run — rather than implying a live measurement. The
     dashboard beside it is labelled "Sample Read" for the same reason.
   */
-  frameworkNote:
-    "The framework below is what you'll be scored against — the read shown is a sample, not your data.",
+  /*
+    WS-3 — halved. It said the same thing twice ("what you'll be scored
+    against" / "not your data") and the dashboard beside it already carries a
+    "Sample Read" chip and its own caption. Honesty does not get more honest by
+    being repeated; it gets skipped.
+  */
+  frameworkNote: "Sample read — the framework below is what you're scored against.",
 } as const;
 
 /**
@@ -706,12 +732,12 @@ export const HOME_HERO = {
 export const ROADMAP_COPY = {
   eyebrow: "Our method",
   headline: "The assessment is the first step of a method.",
-  lead: "Every gap you score becomes a deliverable, with the expertise attached to it.",
+  lead: "Every gap becomes a deliverable, with the expertise attached.",
   /*
     ⚠ ILLUSTRATIVE. The AIM tool is a later brief; this is the shape of what an
     assessment produces, not a plan from anybody's data. Said on the page.
   */
-  note: "Illustrative — an example sequence, not a plan for your organization.",
+  note: "Illustrative — an example sequence.",
   /*
     THE HUMAN ANCHOR, and it is the most important line in the section.
     Everything above it could be automated; a named senior person who translates
@@ -720,7 +746,7 @@ export const ROADMAP_COPY = {
     coordinator — assignment logic is a later build.
   */
   coordinator:
-    "When your assessment completes, a coordinator is assigned to walk you through it — a senior person who translates the read, scopes the work, and stands behind the quality of the experts on it.",
+    "When your assessment completes, a coordinator is assigned — a senior person who translates the read, scopes the work, and stands behind the experts on it.",
   steps: [
     {
       phase: "Weeks 1–2",
