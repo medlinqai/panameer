@@ -64,8 +64,8 @@ export default function Home() {
       <Assessment />
       <RoadmapPreview />
       <ThreeWays condensed />
-      <FourBeats page="home" />
-      <ClosingCta audience="buyer" />
+      <FourBeats page="home" cta="assessment" />
+      <ClosingCta audience="home" />
     </MarketingShell>
   );
 }

@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { THREE_WAYS, HOME_TEASER } from "@/lib/brand";
 import { SectionHead } from "@/components/marketing/sections/SectionHead";
+import { SectionCta } from "@/components/marketing/SectionCta";
 
 /**
  * "Three Ways to Get the Work Done" — the honest comparison (buyer §2).
@@ -93,22 +93,20 @@ export function ThreeWays({ condensed = false }: { condensed?: boolean } = {}) {
         </div>
 
         {/*
-          THE TEASER CLOSES ON TALENT. Every value block on the home ends by
-          pointing at the experts who do the work — that is the home's job, and
-          a comparison that ends on its own cleverness is a dead end on a funnel
-          page. The full version on Hire Talent needs no such line: the reader
-          is already there.
+          THE TEASER EXITS TO THE ASSESSMENT (WS-2), not to the experts.
+
+          It closed on "meet the experts" in the first cut, which put two
+          identical hand-offs back to back — the method section directly above
+          already ends there. Two sections in a row making the same ask is one
+          ask the reader learns to skip. This section's argument is "here is why
+          the third way is different", and the honest next step from a
+          comparison is the free thing that shows you where YOU sit.
+
+          The full version on Hire Talent carries no CTA: the reader is already
+          on the page it would send them to.
         */}
         {condensed && (
-          <p className="mt-8 text-[17px] font-semibold text-ink">
-            {HOME_TEASER.close}{" "}
-            <Link
-              href="/hire-talent"
-              className="text-magenta underline underline-offset-4 hover:text-magenta-dark"
-            >
-              {HOME_TEASER.closeCta} →
-            </Link>
-          </p>
+          <SectionCta variant="assessment" lead={HOME_TEASER.close} />
         )}
       </div>
     </section>

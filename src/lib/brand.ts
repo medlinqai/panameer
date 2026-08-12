@@ -525,8 +525,23 @@ export const GO_DIRECT = {
   },
 } as const;
 
-/** The closing band, per audience. */
+/**
+ * The closing band, per audience.
+ *
+ * ⚠ THE HOME HAS ITS OWN (brief_home_polish_method WS-2). The buyer band ends
+ * on "Describe what you need" + "Talk to us" — two asks, neither of which is
+ * one of the home's two exits. On Hire Talent that is exactly right, because
+ * the reader arrived intending to hire. On the home it is a third and fourth
+ * competing action at the very bottom of a funnel whose entire job is the
+ * assessment.
+ */
 export const CLOSING_CTA = {
+  home: {
+    headline: "See where you stand. Free.",
+    body: "A maturity read across the processes you run, in minutes — then a coordinator who walks you through it.",
+    primary: "Start the free assessment →",
+    secondary: "Meet our experts",
+  },
   buyer: {
     headline: "Go direct. Keep transforming.",
     body: "Free to connect, pay only when you engage. Describe what you need and meet the expert who's already done it.",

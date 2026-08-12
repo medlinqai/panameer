@@ -1,4 +1,5 @@
 import { PAGE_BEATS } from "@/lib/brand";
+import { SectionCta, type CtaVariant } from "@/components/marketing/SectionCta";
 
 /**
  * LEARN · CONNECT · CREATE · SETTLE — the through-line, per page
@@ -19,7 +20,22 @@ import { PAGE_BEATS } from "@/lib/brand";
  * learn where you stand", never "we assess your maturity" — the second
  * describes our activity and leaves the reader to work out the benefit.
  */
-export function FourBeats({ page }: { page: keyof typeof PAGE_BEATS }) {
+export function FourBeats({
+  page,
+  cta,
+}: {
+  page: keyof typeof PAGE_BEATS;
+  /**
+   * WS-2 — the section's exit, on the home.
+   *
+   * Optional because the two-exits rule is a HOME rule: `/` is a funnel whose
+   * only job is to move somebody to the assessment or to the experts, so a
+   * section that ends without an ask is a leak. Hire Talent and Find Work have
+   * their own closing bands and a CTA under every section there would be four
+   * asks stacked on one page.
+   */
+  cta?: CtaVariant;
+}) {
   const copy = PAGE_BEATS[page];
 
   return (
@@ -53,6 +69,8 @@ export function FourBeats({ page }: { page: keyof typeof PAGE_BEATS }) {
             </li>
           ))}
         </ol>
+
+        {cta && <SectionCta variant={cta} />}
       </div>
     </section>
   );
