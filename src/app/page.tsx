@@ -85,11 +85,11 @@ export default function Home() {
         <HomeHero />
         <DashboardShot />
         {/*
-          WS-4 — THE FRAMEWORK MOVED UP, directly under the product-shot. The
-          shot IS an AI Maturity Dashboard and this section explains the
-          maturity assessment that fills it, so the two now tell "here is the
-          dashboard / here is how the assessment behind it works" in one place
-          instead of with four sections between them.
+          THE FRAMEWORK STILL FOLLOWS THE PRODUCT-SHOT, with only the client
+          ribbon between them now (WS-2). The shot IS an AI Maturity Dashboard
+          and this section explains the assessment that fills it, so they stay
+          adjacent — a slim dark band between them does not break that reading,
+          it paces it.
 
           They do NOT read as duplicates, which was the thing to watch: the
           product-shot is one worked example (Ingrao Dental, with figures), and
@@ -97,8 +97,15 @@ export default function Home() {
           P2P/O2C/R2R/H2R lenses, no client. Different objects, adjacent on
           purpose. Reorder only; neither section is restyled or reworded.
         */}
-        <CapabilityFramework />
+        {/*
+          WS-2 — THE RIBBON SITS RIGHT UNDER THE PRODUCT SHOT. It was below the
+          framework. Moving it up puts the client wordmarks immediately after
+          the first real proof on the page, which is where a visitor is asking
+          "who else uses this"; it also breaks up two long light sections that
+          previously ran together. Stays dark.
+        */}
         <LogoRibbon />
+        <CapabilityFramework />
         <MethodologyRing />
         {/*
           WS-3 sits after the method and before the talent (Scott's slot): the

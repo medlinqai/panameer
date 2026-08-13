@@ -460,6 +460,13 @@ const emptyAddress = (country = "United States"): AddressDraft => ({
   country,
 });
 
+/**
+ * The provider title cap (WS-4). Matches the talent card's one-line soft cap in
+ * `lib/explore.ts` — the two must agree, or the field promises a length the
+ * card will not honour.
+ */
+const HEADLINE_MAX = 42;
+
 export default function JoinProviderPage() {
   const router = useRouter();
   const [ready, setReady] = useState(false);
@@ -1293,14 +1300,44 @@ export default function JoinProviderPage() {
           })}
         >
           {error && <Notice>{error}</Notice>}
-          <Field label="Your Title">
+          {/*
+            WS-4 — CAPPED AT 42 WITH A LIVE COUNTER, fixed at the source.
+
+            This field IS the talent card's title, and the card renders it on
+            ONE line with a 42-character soft cap (lib/assessment aside, see
+            `cardTitle` in lib/explore.ts). It allowed 200, so a provider could
+            write a title that the card would silently cut — the truncation
+            being the first time anyone found out, on a page the provider never
+            looks at.
+
+            Capping the INPUT rather than widening the card is the right end:
+            the constraint is real (one line, in a 380px card) and the person
+            best placed to choose what survives it is the one writing it.
+
+            The counter turns magenta over 36 so it warns before it blocks —
+            a field that just stops accepting keystrokes reads as broken.
+          */}
+          <Field
+            label="Your Title"
+            hint="This is the title buyers see on your card — one line, so keep it tight."
+          >
             <TextInput
               value={profile.headline}
-              onChange={(e) => setProfile((p) => ({ ...p, headline: e.target.value }))}
+              onChange={(e) =>
+                setProfile((p) => ({ ...p, headline: e.target.value.slice(0, HEADLINE_MAX) }))
+              }
               placeholder="e.g. Oracle Cloud P2P / Procurement Expert"
-              maxLength={200}
+              maxLength={HEADLINE_MAX}
             />
           </Field>
+          <p
+            className={
+              "mt-1.5 text-right text-[13px] font-semibold tabular-nums " +
+              (profile.headline.length > HEADLINE_MAX - 6 ? "text-magenta" : "text-ink-2")
+            }
+          >
+            {profile.headline.length} / {HEADLINE_MAX}
+          </p>
         </WizardShell>
       );
 

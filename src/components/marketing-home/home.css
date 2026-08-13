@@ -127,7 +127,13 @@
     radial-gradient(130% 120% at 88% 92%,rgba(215,44,214,.46) 0%,transparent 52%),
     radial-gradient(120% 120% at 92% 88%,rgba(130,74,224,.24) 0%,transparent 55%)}
 .pm-home .hero-grain{position:absolute;inset:0;z-index:2;opacity:.14;pointer-events:none;border-radius:inherit;background-image:linear-gradient(#ffffff12 1px,transparent 1px),linear-gradient(90deg,#ffffff12 1px,transparent 1px);background-size:118px 118px}
-.pm-home .hero-dash{background:#eef1f4;padding:20px 0 22px}
+/*
+  WS-1 — SOLID WHITE behind the product shot. It was #eef1f4, a grey wash that
+  read as a seam between the dark hero card above and the white framework
+  section below: three different backgrounds in three consecutive bands. White
+  lets the shot's own drop shadow do the separating.
+*/
+.pm-home .hero-dash{background:#fff;padding:20px 0 22px}
 /*
   Still `.wrap`, so the hero text stays on the same 1200/32 measure as every
   section below it. The card's own padding is 12px horizontally for that
