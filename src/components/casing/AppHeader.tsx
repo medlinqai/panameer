@@ -59,6 +59,32 @@ export function AppHeader() {
   */
   const now = useSyncExternalStore(subscribeNothing, clientNow, serverNow);
   const greeting = now ? greetingFor(now) : null;
+  /*
+    DAY/DATE, RESTORED (CASING_SPEC_LOCKED 2026-08-13). E210-revised removed it
+    as ambient decoration; Scott wants it back, in the right cluster this time
+    rather than beside the greeting. Same `Intl.DateTimeFormat` as 4b7e0ef, and
+    still derived from the same client-side clock store — the server does not
+    share the viewer's timezone, so a server-rendered date would be wrong for
+    half the users half the time.
+  */
+  /*
+    SHORT FORM ("Wed, Aug 12"), not 4b7e0ef's "Wednesday, August 12".
+
+    Measured: the long form is 195px, and the right cluster with the Credits
+    pill already runs to 855px of an 1177px header at 1440. With the long date
+    the centre Search collapsed to 62px — an icon and a sliver, which reads as
+    broken rather than as a field. The short form gives ~75px back and Search
+    gets a usable width at every size the spec cares about.
+
+    Still day AND date, which is what the spec asks for.
+  */
+  const dateLabel = now
+    ? new Intl.DateTimeFormat(undefined, {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+      }).format(now)
+    : null;
 
   const first = me?.person.firstName ?? "";
 
@@ -110,13 +136,14 @@ export function AppHeader() {
       */}
       <Link
         href={SEARCH_NAV.href}
-        className="mx-auto hidden h-9 min-w-0 max-w-[420px] flex-1 items-center gap-2 rounded-full border border-line bg-canvas px-3.5 text-[14px] text-ink-2 transition-colors hover:border-[#d9d4e2] hover:text-ink sm:flex"
+        className="mx-auto hidden h-9 min-w-[170px] max-w-[420px] flex-1 items-center gap-2 rounded-full border border-line bg-canvas px-3.5 text-[14px] text-ink-2 transition-colors hover:border-[#d9d4e2] hover:text-ink sm:flex"
       >
         <SearchIcon />
         <span className="truncate">{SEARCH_NAV.label}</span>
       </Link>
 
-      {/* ---- RIGHT: currency · Home · Notifications · Profile · bug -------- */}
+      {/* ---- RIGHT (spec order): Credits · date · AI on · Home · Bug ·
+              Notifications · Profile ------------------------------------- */}
       <div className="ml-auto flex shrink-0 items-center gap-1.5">
         {/*
           THE PILL DROPS BELOW sm, and it is the right thing to drop. Something
@@ -130,6 +157,29 @@ export function AppHeader() {
             <CreditsPill summary={credits} />
           </span>
         )}
+
+        {/*
+          DAY/DATE — ambient, so it is the first thing to go as the row narrows
+          (md and up only). Restored from 4b7e0ef per the locked spec.
+        */}
+        {dateLabel && (
+          <span className="hidden items-center gap-1.5 rounded-full bg-[#f1faff] px-3 py-1.5 text-[13px] font-semibold text-[#1f7ab8] md:inline-flex">
+            <CalendarIcon />
+            {dateLabel}
+          </span>
+        )}
+
+        {/*
+          ⚠ "AI on" IS DECORATION. A static marketing chip: no toggle, no
+          backend, nothing reads it (Scott, 2026-08-13 — locked spec). It is
+          styled as a status rather than a control precisely so nobody tries to
+          click it, and it carries no aria-live or role — announcing a state
+          that never changes would be noise to a screen reader.
+        */}
+        <span className="hidden items-center gap-1.5 rounded-full bg-black/[0.05] px-3 py-1.5 text-[12.5px] font-semibold text-ink-2 sm:inline-flex">
+          <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+          AI on
+        </span>
 
         {/*
           Search as an ICON below sm, where the centre pill has no room. All
@@ -160,12 +210,19 @@ export function AppHeader() {
           <HomeIcon />
         </IconLink>
 
+        {/* Bug sits before Notifications per the locked spec's order. Still
+            drops below sm — a glyph nobody taps on a phone. */}
+        <span className="hidden sm:contents">
+          <IconLink href="/support/bug" label="Report a bug">
+            <BugIcon />
+          </IconLink>
+        </span>
+
         {/*
-          NO COUNT ON THE BELL, deliberately — the brief asks for one and there
-          is nothing to count. The notifications backend is not built; the page
-          renders an empty state and its own comment says the bell carries no
-          badge "because a '0' badge asserts something we haven't checked and a
-          fake number is worse than none". That still holds. The badge goes in
+          NO COUNT ON THE BELL, deliberately. The notifications backend is not
+          built; the page renders an empty state and its own comment says the
+          bell carries no badge "because a '0' badge asserts something we
+          haven't checked and a fake number is worse than none". The badge ships
           with the feed, in one change, when there is a number behind it.
         */}
         <IconLink
@@ -176,16 +233,8 @@ export function AppHeader() {
           <BellIcon />
         </IconLink>
 
-        {/* E214 reversed — the account menu and logout live here again. */}
+        {/* The account menu — the ONE home for Sign Out (locked spec). */}
         <AccountMenu isAdmin={isAdmin} />
-
-        {/* Last, because it is the rarest thing here. Drops below sm where the
-            row has no room for a glyph nobody taps on a phone. */}
-        <span className="hidden sm:contents">
-          <IconLink href="/support/bug" label="Report a bug">
-            <BugIcon />
-          </IconLink>
-        </span>
       </div>
     </header>
   );
@@ -230,6 +279,15 @@ function SearchIcon() {
     <svg {...S} className="shrink-0">
       <circle cx="11" cy="11" r="7" />
       <path d="m20 20-3.2-3.2" />
+    </svg>
+  );
+}
+
+function CalendarIcon() {
+  return (
+    <svg {...S} width={15} height={15}>
+      <rect x="3" y="4.5" width="18" height="16" rx="2" />
+      <path d="M3 9.5h18M8 2.5v4M16 2.5v4" />
     </svg>
   );
 }
