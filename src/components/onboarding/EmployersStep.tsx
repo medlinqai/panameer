@@ -76,6 +76,15 @@ export type EmployerCard = {
   startDate: string | null;
   endDate: string | null;
   projects: EmployerProject[];
+  /*
+    WS-4 — the per-job attribution the review step reads and writes. Optional
+    because this card type is also built by surfaces that predate the per-job
+    model (Settings, the project modal) and have no business inventing a suite.
+  */
+  suite?: string | null;
+  roleTypeId?: string | null;
+  skills?: { id: string; name: string }[];
+  needsSuite?: boolean;
 };
 
 type LogoSuggestion = { url: string; source: string; label: string };

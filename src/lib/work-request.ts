@@ -224,9 +224,47 @@ export async function saveSection(
     /* STEP 2 — the domain, within the chosen role. Same clearing rule. */
     case "domain": {
       const pillarId: string | null = data.pillarId ?? null;
-      if (!pillarId) throw new WorkRequestError("Pick a domain", "INVALID");
       if (!wr.role_type_id) {
         throw new WorkRequestError("Pick a role first", "INVALID");
+      }
+
+      /*
+        "ANY / NOT SURE" IS A REAL ANSWER on the two vendor roles (WS-5).
+
+        For an Application- or Technology-Specific request the domain IS the
+        software suite, and a buyer is frequently the wrong person to know it:
+        they want a payables specialist and their own finance team runs
+        whatever it runs. Forcing a pick there produces a made-up answer that
+        then silently FILTERS the results — the worst of both, because the buyer
+        cannot see what the wrong guess excluded.
+
+        A null pillar means "any suite". The skills step then offers capability
+        domains instead of one suite's modules, and matching resolves those to
+        modules through the Bridge. Suite becomes a booster rather than a gate.
+
+        The agnostic roles keep the requirement: Operations- and
+        Project-Specific domains are processes, not vendors, and "any process"
+        is not a coherent request.
+      */
+      const isVendorRole = await prisma.roleType.findFirst({
+        where: {
+          id: wr.role_type_id,
+          name: { in: ["Application-Specific", "Technology-Specific"] },
+        },
+        select: { id: true },
+      });
+      if (!pillarId && !isVendorRole) {
+        throw new WorkRequestError("Pick a domain", "INVALID");
+      }
+      if (!pillarId) {
+        const changedToAny = wr.pillar_id !== null;
+        await prisma.$transaction([
+          prisma.workRequest.update({ where: { id: wr.id }, data: { pillar_id: null } }),
+          ...(changedToAny
+            ? [prisma.workRequestSkill.deleteMany({ where: { work_request_id: wr.id } })]
+            : []),
+        ]);
+        break;
       }
       /*
         VALIDATED AGAINST THE CASCADE, not merely against the Pillar table. A

@@ -33,6 +33,12 @@ import {
 } from "@/components/onboarding/ResumeUploadModal";
 import { ResumeDropzone } from "@/components/onboarding/ResumeDropzone";
 import { PhotoCropModal } from "@/components/onboarding/PhotoCropModal";
+import {
+  WorkHistoryReview,
+  type JobPatch,
+} from "@/components/onboarding/WorkHistoryReview";
+import { SUITES, SUITE_ORDER } from "@/lib/suite";
+import type { SoftwareSuite } from "@prisma/client";
 import { TestimonialCard, DECK_TESTIMONIALS } from "@/components/onboarding/TestimonialCarousel";
 import {
   ProfileCard,
@@ -102,6 +108,8 @@ import { formatPhone, isPhoneComplete } from "@/lib/phone";
 */
 const ALL_STEPS = [
   "title",
+  // WS-4 — the review that replaced the Role and Skills prompts.
+  "work_history",
   "roles",
   "skills",
   "catalog",
@@ -154,6 +162,7 @@ const LANGUAGE_LEVELS = [
  */
 const STEP_LABELS: Record<Step, { stepper: string }> = {
   title: { stepper: "Your Title" },
+  work_history: { stepper: "Your Work History" },
   roles: { stepper: "Your Role" },
   skills: { stepper: "Your Skills" },
   catalog: { stepper: "Your Role & Skills" },
@@ -262,6 +271,8 @@ type ProfilePayload = {
   specializationIds?: string[];
   specializations?: { id: string; name: string; kind: string }[];
   employers?: EmployerCard[];
+  /** WS-4 — the résumé's most-recent employer, to seed the company search. */
+  suggestedCompanyName?: string | null;
   /** ALL projects, including any not attached to an employer. */
   projects?: EmployerProject[];
   /**
@@ -381,6 +392,7 @@ type Profile = {
   customSpecializations: string[];
   certifications: CertificationDraft[];
   employers: EmployerCard[];
+  suggestedCompanyName: string | null;
   projects: EmployerProject[];
   skillIds: string[];
   skillNames: { id: string; name: string; area?: string | null }[];
@@ -435,6 +447,7 @@ const emptyProfile = (): Profile => ({
   education: [],
   languages: [],
   employers: [],
+  suggestedCompanyName: null,
   projects: [],
 });
 
@@ -509,6 +522,21 @@ export default function JoinProviderPage() {
     pillarName: string;
   } | null>(null);
   const [skillQuery, setSkillQuery] = useState("");
+  /*
+    WS-4 — the work-history review's pending corrections, and the module lists
+    it offers.
+
+    `jobPatches` is SPARSE: only jobs the provider actually touched. Sending the
+    whole history back would make an untouched job indistinguishable from one
+    deliberately cleared, and the review's promise to leave the right answers
+    alone depends on telling those apart.
+
+    `suiteSkills` is loaded once per suite when the step opens rather than per
+    job — six requests instead of one per card, and the card's picker has to be
+    synchronous because it renders inside the list.
+  */
+  const [jobPatches, setJobPatches] = useState<JobPatch[]>([]);
+  const [suiteSkills, setSuiteSkills] = useState<Record<string, { id: string; name: string }[]>>({});
   const [specQuery, setSpecQuery] = useState("");
   /**
    * Which specialization tier is expanded (PJv2 WS9) — null means "whichever is
@@ -587,6 +615,7 @@ export default function JoinProviderPage() {
       customSpecializations: [],
       customSkills: [],
       employers: (p.employers ?? []) as EmployerCard[],
+      suggestedCompanyName: p.suggestedCompanyName ?? null,
       projects: (p.projects ?? []) as EmployerProject[],
       // E057 — carry EVERY column through. See the payload type above: a
       // partial map here is a silent delete on the next save.
@@ -815,6 +844,59 @@ export default function JoinProviderPage() {
       .then((d) => setSkillOpts(d.skills ?? []))
       .catch(() => setError("We couldn't load skills. Please refresh."));
   }, [screen, browseArea]);
+
+  /*
+    WS-4 — load each suite's module list when the review step opens.
+
+    Keyed off the DOMAIN rows the field-role fetch already returns: for the two
+    vendor roles a domain IS a software suite, so the pillar id is already in
+    hand and there is nothing new to resolve. Runs once per suite, not once per
+    job card, and only on this step — a provider who never reaches the review
+    never pays for it.
+  */
+  useEffect(() => {
+    if (screen !== "work_history" || fieldRoles.length === 0) return;
+    const vendorRoles = fieldRoles.filter(
+      (r) => r.name === "Application-Specific" || r.name === "Technology-Specific"
+    );
+    let live = true;
+    for (const suite of SUITE_ORDER) {
+      const pillarName = SUITES[suite].pillar;
+      const domain = vendorRoles
+        .flatMap((r) => r.domains)
+        .find((d) => d.name === pillarName);
+      if (!domain) continue;
+      fetch(`/api/catalog/skills?pillarId=${domain.id}`)
+        .then((r) => r.json())
+        .then((d) => {
+          if (!live) return;
+          setSuiteSkills((prev) => ({
+            ...prev,
+            [suite]: (d.skills ?? []).map((sk: { id: string; name: string }) => ({
+              id: sk.id,
+              name: sk.name,
+            })),
+          }));
+        })
+        .catch(() => {
+          /*
+            Silent. A suite whose modules fail to load leaves that picker empty,
+            which is recoverable by reloading; surfacing six possible errors on
+            a review screen would bury the one thing the provider came here to
+            do.
+          */
+        });
+    }
+    return () => {
+      live = false;
+    };
+  }, [screen, fieldRoles]);
+
+  /** The modules offered for a job, given the suite it is tagged with. */
+  const skillOptionsForSuite = useCallback(
+    (suite: SoftwareSuite | null) => (suite ? suiteSkills[suite] ?? [] : []),
+    [suiteSkills]
+  );
 
   // ---- navigation -------------------------------------------------------
   const goTo = (s: Screen) => {
@@ -1838,6 +1920,51 @@ export default function JoinProviderPage() {
       );
     }
 
+    /*
+      WS-4 — THE WORK-HISTORY REVIEW, which replaces the Role and Skills steps.
+
+      The résumé has already tagged each job with its suite, role and modules
+      (WS-3); this is where the provider scans and corrects. Two steps became
+      one, and every answer is now attached to the engagement that evidences it
+      rather than asserted at profile level.
+    */
+    case "work_history": {
+      const reviewJobs = profile.employers.map((e) => ({
+        id: e.id,
+        name: e.name,
+        roleTitle: e.roleTitle,
+        startDate: e.startDate,
+        endDate: e.endDate,
+        suite: (e.suite ?? null) as SoftwareSuite | null,
+        roleTypeId: e.roleTypeId ?? null,
+        skills: e.skills ?? [],
+        needsSuite: Boolean(e.needsSuite),
+      }));
+
+      return (
+        <WizardShell
+          {...shell({
+            title: "Here's what we read from your r\u00e9sum\u00e9",
+            subtitle:
+              "Each job shows the system it ran on and the modules you used. Fix anything we got wrong \u2014 it only changes that job.",
+            onContinue: () => saveAnd("work_history", { jobs: jobPatches }),
+            // Never blocked on the AI's uncertainty: an unanswered "which
+            // system?" is a nudge, not a gate. Only an empty history stops you,
+            // and that is the step's own subject.
+            continueDisabled: reviewJobs.length === 0,
+          })}
+        >
+          {error && <Notice>{error}</Notice>}
+          <WorkHistoryReview
+            jobs={reviewJobs}
+            roleOptions={fieldRoles.map((r) => ({ id: r.id, name: r.display }))}
+            skillOptionsForSuite={skillOptionsForSuite}
+            onChange={setJobPatches}
+          />
+        </WizardShell>
+      );
+    }
+
     case "specializations": {
       const chosenSpecs = new Set(profile.specializationIds);
 
@@ -2707,6 +2834,7 @@ export default function JoinProviderPage() {
           <div className="mx-auto w-full max-w-xl">
             <CompanyStep
               bounded
+              suggestedName={profile.suggestedCompanyName ?? null}
               submitRef={companySubmit}
               onValidityChange={setCompanyValid}
               onBusyChange={setCompanyBusy}

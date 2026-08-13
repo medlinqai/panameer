@@ -52,10 +52,26 @@ type CatalogJson = {
      * differently. An explicit `display` always wins.
      */
     display?: string;
-    domains: { name: string; skills: string[] }[];
+    domains: { name: string; skills: SkillJson[] }[];
   }[];
   specializations: string[];
 };
+
+/**
+ * A skill in the JSON — either a bare name or the v5 object.
+ *
+ * BOTH SHAPES, deliberately. v5 re-cut the two vendor roles into Suite → module
+ * rows carrying parser aliases and a tech category; AI-Specialist was not in
+ * that brief's scope and is carried through in the original string form. A
+ * reader that accepted only the new shape would force an unrequested re-cut of
+ * a role nobody asked about, and one that accepted only the old shape would
+ * throw the aliases away.
+ */
+type SkillJson = string | { name: string; aliases?: string[]; category?: string | null };
+
+const skillName = (s: SkillJson) => (typeof s === "string" ? s : s.name);
+const skillAliases = (s: SkillJson) => (typeof s === "string" ? [] : s.aliases ?? []);
+const skillCategory = (s: SkillJson) => (typeof s === "string" ? null : s.category ?? null);
 
 export type TaxonomyCounts = {
   roles: number;
@@ -67,6 +83,15 @@ export type TaxonomyCounts = {
   applications: number;
   /** Non-role entries filtered out of the source catalog (E072). */
   excludedRoleTypes: number;
+
+  /* --- the buyer-side vocabulary (v5, WS-0) ------------------------------ */
+  capabilityDomains: number;
+  bridgeRows: number;
+  /** Stale rows removed — the sheet no longer produces them. */
+  bridgeRetired: number;
+  /** Bridge rows whose module name matched no Skill — reported, not fatal. */
+  bridgeUnresolved: number;
+  bridgeUnresolvedNames: string[];
 
   /* --- what the reseed found already there ------------------------------- */
   before: { roles: number; domains: number; skills: number; customSkills: number };
@@ -542,12 +567,52 @@ export async function seedTaxonomy(
   let skillCount = 0;
   let rehomedSkills = 0;
 
+  /*
+    NAMES WHOSE DOMAIN IS PART OF THEIR IDENTITY (v5) — the rehome pass must
+    not touch these.
+
+    The rehome below matches a skill on (role, name) IGNORING the domain and
+    MOVES it, so a provider's pick survives the catalog reorganising its own
+    headings. That was right when a name lived under exactly one domain per
+    role. v5 breaks the assumption on purpose: "Payables" is an Oracle Fusion
+    module AND an E-Business Suite module AND a PeopleSoft module, three
+    distinct rows, and that separation is the entire basis for clean
+    attribution ("Oracle GL ≠ EBS GL").
+
+    Left unguarded the seed processed the three in turn and MOVED one row
+    through all three suites — the catalog came out with 241 App modules
+    instead of 302, one "Payables" filed under whichever suite happened to be
+    seeded last, and no error anywhere. The count was wrong in the report too,
+    because the counter counts JSON entries rather than surviving rows.
+
+    Computed from the source rather than hardcoded to the vendor roles: the
+    rule is "this name appears under more than one domain of this role", which
+    is exactly when moving is the wrong verb. It also correctly protects
+    "Account Reconciliation", an Ops capability under both Record-to-Report and
+    EPM.
+  */
+  const multiDomainNames = new Set<string>();
+  for (const role of data.roles) {
+    const seen = new Map<string, number>();
+    for (const domain of role.domains) {
+      for (const s of domain.skills) {
+        const n = fixTypo(skillName(s));
+        seen.set(n, (seen.get(n) ?? 0) + 1);
+      }
+    }
+    for (const [n, times] of seen) {
+      if (times > 1) multiDomainNames.add(`${role.name}||${n}`);
+    }
+  }
+
   for (const role of data.roles) {
     const roleTypeId = roleIdByName.get(role.name)!;
     for (const domain of role.domains) {
       const pillarId = domainIdByName.get(domain.name)!;
-      for (const rawName of domain.skills) {
-        const name = fixTypo(rawName);
+      for (const rawSkill of domain.skills) {
+        const name = fixTypo(skillName(rawSkill));
+        const aliases = skillAliases(rawSkill);
+        const category = skillCategory(rawSkill);
 
         let id: string | null = null;
         const exact = await prisma.skill.findUnique({
@@ -583,16 +648,18 @@ export async function seedTaxonomy(
             an Operations provider holding a skill that no longer renders inside
             their own role, which is a worse outcome than losing it cleanly.
           */
-          const moved = await prisma.skill.findFirst({
-            where: {
-              catalog_id: catalog.id,
-              role_type_id: roleTypeId,
-              name,
-              is_custom: false,
-              NOT: { pillar_id: pillarId },
-            },
-            select: { id: true },
-          });
+          const moved = multiDomainNames.has(`${role.name}||${name}`)
+            ? null // domain is part of this name's identity — see the note above
+            : await prisma.skill.findFirst({
+                where: {
+                  catalog_id: catalog.id,
+                  role_type_id: roleTypeId,
+                  name,
+                  is_custom: false,
+                  NOT: { pillar_id: pillarId },
+                },
+                select: { id: true },
+              });
           if (moved) {
             await prisma.skill.update({
               where: { id: moved.id },
@@ -607,12 +674,29 @@ export async function seedTaxonomy(
                 role_type_id: roleTypeId,
                 pillar_id: pillarId,
                 name,
+                aliases,
+                category,
               },
               select: { id: true },
             });
             id = created.id;
           }
         }
+
+        /*
+          ALIASES AND CATEGORY ARE WRITTEN ON EVERY PASS, not only on create.
+
+          They are the parser's vocabulary (v5, WS-0), and the rows that need
+          them most are the ones that ALREADY EXIST — "Payables" has been in the
+          catalog since V1 and is exactly the row that has to learn it answers
+          to "AP". Setting them only on the create branch would leave the
+          incumbent catalog aliasless and the parser would match nothing it
+          could not already match by exact name.
+        */
+        await prisma.skill.update({
+          where: { id },
+          data: { aliases, category },
+        });
 
         keptSkillIds.add(id);
         keptByRoleAndName.set(`${roleTypeId}||${name}`, id);
@@ -995,7 +1079,109 @@ export async function seedTaxonomy(
     });
   }
 
+  // --- Capability domains + the capability↔module bridge (v5, WS-0) --------
+  /*
+    THE BUYER'S HALF OF THE VOCABULARY.
+
+    Runs last, and after the skills, because the bridge resolves each module
+    name to a real Skill row — it needs the catalog to already be in its final
+    shape or every lookup misses.
+
+    Unresolved modules are counted, not fatal. This is a starter sheet against a
+    600-row catalog and a name will drift; failing the entire reseed over one
+    stale module name would make the catalog hostage to the bridge, when the
+    bridge is the thing that is meant to be provisional.
+  */
+  const capabilities: {
+    _source?: string;
+    domains: { process: string; name: string }[];
+  } = require("./seed-data/capability-domains.json");
+  const bridgeData: {
+    _source?: string;
+    bridge: { process: string; capability: string; suite: string; module: string }[];
+  } = require("./seed-data/capability-bridge.json");
+
+  const capabilityIdByKey = new Map<string, string>();
+  let capabilityCount = 0;
+  for (const [i, c] of capabilities.domains.entries()) {
+    const row = await prisma.capabilityDomain.upsert({
+      where: { process_name: { process: c.process, name: c.name } },
+      update: { sort_order: i },
+      create: { process: c.process, name: c.name, sort_order: i },
+      select: { id: true },
+    });
+    capabilityIdByKey.set(`${c.process}||${c.name}`, row.id);
+    capabilityCount++;
+  }
+
+  let bridgeCount = 0;
+  let bridgeUnresolved = 0;
+  const bridgeUnresolvedNames: string[] = [];
+  const keptBridgeIds = new Set<string>();
+  for (const b of bridgeData.bridge) {
+    const capabilityId = capabilityIdByKey.get(`${b.process}||${b.capability}`);
+    if (!capabilityId) {
+      bridgeUnresolved++;
+      bridgeUnresolvedNames.push(`${b.capability} (no such capability domain)`);
+      continue;
+    }
+    // The module must be a real Skill under a vendor role on that suite.
+    const skill = await prisma.skill.findFirst({
+      where: {
+        catalog_id: catalog.id,
+        name: b.module,
+        pillar: { name: b.suite },
+      },
+      select: { id: true },
+    });
+    if (!skill) {
+      bridgeUnresolved++;
+      bridgeUnresolvedNames.push(`${b.suite} / ${b.module}`);
+    }
+    const row = await prisma.capabilityModuleBridge.upsert({
+      where: {
+        capability_id_suite_module_name: {
+          capability_id: capabilityId,
+          suite: b.suite,
+          module_name: b.module,
+        },
+      },
+      update: { skill_id: skill?.id ?? null },
+      create: {
+        capability_id: capabilityId,
+        suite: b.suite,
+        module_name: b.module,
+        skill_id: skill?.id ?? null,
+      },
+      select: { id: true },
+    });
+    keptBridgeIds.add(row.id);
+    bridgeCount++;
+  }
+
+  /*
+    RETIRE BRIDGE ROWS THE SHEET NO LONGER PRODUCES.
+
+    Upsert-only left the table accumulating: the first pass wrote the sheet's
+    raw shorthand ("iProcurement (POR)"), a later pass resolved the same cell to
+    the real module name, and BOTH rows survived — 211 rows from a 150-row
+    source, half of them pointing nowhere. A lookup table that only ever grows
+    stops being a lookup table.
+
+    Safe to delete outright, unlike a Skill: nothing references a bridge row,
+    it holds no user data, and it is rebuilt from the sheet on every run.
+  */
+  const staleBridge = await prisma.capabilityModuleBridge.deleteMany({
+    where: { id: { notIn: [...keptBridgeIds] } },
+  });
+  const bridgeRetired = staleBridge.count;
+
   return {
+    capabilityDomains: capabilityCount,
+    bridgeRows: bridgeCount,
+    bridgeRetired,
+    bridgeUnresolved,
+    bridgeUnresolvedNames,
     roles: roleIdByName.size,
     domains: domainIdByName.size,
     skills: skillCount,

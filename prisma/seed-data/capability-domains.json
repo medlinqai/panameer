@@ -1,0 +1,345 @@
+{
+  "_source": "Service Catalog v5.xlsx — sheet 'Capability Domains'",
+  "domains": [
+    {
+      "process": "Procure-to-Pay",
+      "name": "Requisitioning & Demand Management"
+    },
+    {
+      "process": "Procure-to-Pay",
+      "name": "Sourcing & Supplier Selection"
+    },
+    {
+      "process": "Procure-to-Pay",
+      "name": "Contract Management"
+    },
+    {
+      "process": "Procure-to-Pay",
+      "name": "Purchase Order Management"
+    },
+    {
+      "process": "Procure-to-Pay",
+      "name": "Goods & Services Receipt"
+    },
+    {
+      "process": "Procure-to-Pay",
+      "name": "Invoice Processing & Matching"
+    },
+    {
+      "process": "Procure-to-Pay",
+      "name": "Payments & Cash Management"
+    },
+    {
+      "process": "Procure-to-Pay",
+      "name": "Supplier Risk & Compliance"
+    },
+    {
+      "process": "Order-to-Cash",
+      "name": "Customer & Credit Management"
+    },
+    {
+      "process": "Order-to-Cash",
+      "name": "Pricing, Quoting & Proposal Management"
+    },
+    {
+      "process": "Order-to-Cash",
+      "name": "Order & Contract Execution Management"
+    },
+    {
+      "process": "Order-to-Cash",
+      "name": "Project & Resource Management"
+    },
+    {
+      "process": "Order-to-Cash",
+      "name": "Service Delivery & Milestone Management"
+    },
+    {
+      "process": "Order-to-Cash",
+      "name": "Billing & Invoicing"
+    },
+    {
+      "process": "Order-to-Cash",
+      "name": "Revenue Recognition & Reporting"
+    },
+    {
+      "process": "Order-to-Cash",
+      "name": "Collections & Receivables Management"
+    },
+    {
+      "process": "Order-to-Cash",
+      "name": "Cash Application & Reconciliation"
+    },
+    {
+      "process": "Order-to-Cash",
+      "name": "Dispute & Deduction Management"
+    },
+    {
+      "process": "Order-to-Cash",
+      "name": "Customer Experience & Self-Service"
+    },
+    {
+      "process": "Record-to-Report",
+      "name": "Transaction Processing & Journal Entry Management"
+    },
+    {
+      "process": "Record-to-Report",
+      "name": "Account Reconciliation"
+    },
+    {
+      "process": "Record-to-Report",
+      "name": "Intercompany Accounting"
+    },
+    {
+      "process": "Record-to-Report",
+      "name": "Fixed Assets & Lease Accounting"
+    },
+    {
+      "process": "Record-to-Report",
+      "name": "Close Management & Orchestration"
+    },
+    {
+      "process": "Record-to-Report",
+      "name": "Financial Consolidation"
+    },
+    {
+      "process": "Record-to-Report",
+      "name": "Management Reporting & FP&A"
+    },
+    {
+      "process": "Record-to-Report",
+      "name": "Statutory & Regulatory Reporting"
+    },
+    {
+      "process": "Record-to-Report",
+      "name": "Tax Provision & Compliance"
+    },
+    {
+      "process": "Record-to-Report",
+      "name": "Internal Controls & Continuous Auditing"
+    },
+    {
+      "process": "Record-to-Report",
+      "name": "Data Quality & Chart of Accounts Governance"
+    },
+    {
+      "process": "Record-to-Report",
+      "name": "Finance Technology & AI Governance"
+    },
+    {
+      "process": "Hire-to-Retire",
+      "name": "Workforce Planning & Headcount Management"
+    },
+    {
+      "process": "Hire-to-Retire",
+      "name": "Talent Acquisition & Recruitment"
+    },
+    {
+      "process": "Hire-to-Retire",
+      "name": "Onboarding & New Hire Experience"
+    },
+    {
+      "process": "Hire-to-Retire",
+      "name": "Performance Management & Goal Setting"
+    },
+    {
+      "process": "Hire-to-Retire",
+      "name": "Learning, Development & Skills Management"
+    },
+    {
+      "process": "Hire-to-Retire",
+      "name": "Compensation, Benefits & Total Rewards"
+    },
+    {
+      "process": "Hire-to-Retire",
+      "name": "Employee Engagement & Retention"
+    },
+    {
+      "process": "Hire-to-Retire",
+      "name": "HR Operations & Employee Self-Service"
+    },
+    {
+      "process": "Hire-to-Retire",
+      "name": "Payroll & Time Management"
+    },
+    {
+      "process": "Hire-to-Retire",
+      "name": "Workforce Analytics & People Intelligence"
+    },
+    {
+      "process": "Hire-to-Retire",
+      "name": "Compliance, Policy & Employee Relations"
+    },
+    {
+      "process": "Hire-to-Retire",
+      "name": "Offboarding & Alumni Management"
+    },
+    {
+      "process": "Plan-to-Produce",
+      "name": "Demand Planning & Forecasting"
+    },
+    {
+      "process": "Plan-to-Produce",
+      "name": "Supply & Inventory Planning"
+    },
+    {
+      "process": "Plan-to-Produce",
+      "name": "Manufacturing & Production Management"
+    },
+    {
+      "process": "Plan-to-Produce",
+      "name": "Inventory & Warehouse Management"
+    },
+    {
+      "process": "Plan-to-Produce",
+      "name": "Logistics & Transportation Management"
+    },
+    {
+      "process": "Plan-to-Produce",
+      "name": "Order Fulfillment & Distribution"
+    },
+    {
+      "process": "Plan-to-Produce",
+      "name": "Product Lifecycle & Item Management"
+    },
+    {
+      "process": "Plan-to-Produce",
+      "name": "Quality Management & Compliance"
+    },
+    {
+      "process": "Plan-to-Produce",
+      "name": "Maintenance & Asset Management (EAM)"
+    },
+    {
+      "process": "Customer Experience (CX)",
+      "name": "Marketing & Campaign Management"
+    },
+    {
+      "process": "Customer Experience (CX)",
+      "name": "Sales Force Automation"
+    },
+    {
+      "process": "Customer Experience (CX)",
+      "name": "Customer Service & Contact Center"
+    },
+    {
+      "process": "Customer Experience (CX)",
+      "name": "Customer Data & Master Data Management"
+    },
+    {
+      "process": "Customer Experience (CX)",
+      "name": "Loyalty & Retention Management"
+    },
+    {
+      "process": "Customer Experience (CX)",
+      "name": "Subscription & Renewals Management"
+    },
+    {
+      "process": "Customer Experience (CX)",
+      "name": "Field Service Management"
+    },
+    {
+      "process": "Customer Experience (CX)",
+      "name": "Partner & Channel Management"
+    },
+    {
+      "process": "Customer Experience (CX)",
+      "name": "Digital Commerce & Self-Service"
+    },
+    {
+      "process": "Enterprise Performance Mgmt (EPM)",
+      "name": "Planning, Budgeting & Forecasting"
+    },
+    {
+      "process": "Enterprise Performance Mgmt (EPM)",
+      "name": "Financial Consolidation & Close"
+    },
+    {
+      "process": "Enterprise Performance Mgmt (EPM)",
+      "name": "Account Reconciliation"
+    },
+    {
+      "process": "Enterprise Performance Mgmt (EPM)",
+      "name": "Profitability & Cost Management"
+    },
+    {
+      "process": "Enterprise Performance Mgmt (EPM)",
+      "name": "Tax Reporting & Provision"
+    },
+    {
+      "process": "Enterprise Performance Mgmt (EPM)",
+      "name": "Narrative & Management Reporting"
+    },
+    {
+      "process": "Enterprise Performance Mgmt (EPM)",
+      "name": "Enterprise Data Management (Master Data)"
+    },
+    {
+      "process": "Enterprise Performance Mgmt (EPM)",
+      "name": "Strategic & Scenario Modeling"
+    },
+    {
+      "process": "Project Portfolio Mgmt (PPM)",
+      "name": "Project Foundation & Setup"
+    },
+    {
+      "process": "Project Portfolio Mgmt (PPM)",
+      "name": "Project Costing"
+    },
+    {
+      "process": "Project Portfolio Mgmt (PPM)",
+      "name": "Project Billing & Revenue Recognition"
+    },
+    {
+      "process": "Project Portfolio Mgmt (PPM)",
+      "name": "Project Financial Management"
+    },
+    {
+      "process": "Project Portfolio Mgmt (PPM)",
+      "name": "Grants Management"
+    },
+    {
+      "process": "Project Portfolio Mgmt (PPM)",
+      "name": "Project Resource Management"
+    },
+    {
+      "process": "Project Portfolio Mgmt (PPM)",
+      "name": "Portfolio & Program Management"
+    },
+    {
+      "process": "Project Portfolio Mgmt (PPM)",
+      "name": "Capital Project Planning"
+    },
+    {
+      "process": "Governance, Risk & Compliance (GRC)",
+      "name": "Access Controls & Segregation of Duties"
+    },
+    {
+      "process": "Governance, Risk & Compliance (GRC)",
+      "name": "Financial Controls & Transaction Monitoring"
+    },
+    {
+      "process": "Governance, Risk & Compliance (GRC)",
+      "name": "SOX & Internal Controls Management"
+    },
+    {
+      "process": "Governance, Risk & Compliance (GRC)",
+      "name": "Financial Reporting Compliance"
+    },
+    {
+      "process": "Governance, Risk & Compliance (GRC)",
+      "name": "Enterprise Risk Management"
+    },
+    {
+      "process": "Governance, Risk & Compliance (GRC)",
+      "name": "Regulatory & Policy Compliance"
+    },
+    {
+      "process": "Governance, Risk & Compliance (GRC)",
+      "name": "Audit Management"
+    },
+    {
+      "process": "Governance, Risk & Compliance (GRC)",
+      "name": "Continuous Controls Monitoring"
+    }
+  ]
+}

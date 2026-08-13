@@ -65,6 +65,7 @@ export function CompanyStep({
   submitRef,
   onValidityChange,
   bounded = false,
+  suggestedName = null,
 }: {
   onDone: (outcome: CompanyOutcome) => void;
   onBusyChange?: (busy: boolean) => void;
@@ -86,13 +87,25 @@ export function CompanyStep({
    * page doesn't, because there the page IS the content and scrolling is fine.
    */
   bounded?: boolean;
+  /**
+   * WS-4 — the résumé's current or most-recent employer, offered as a starting
+   * point for the search box.
+   *
+   * A SUGGESTION, never an application. For an independent consultant it is
+   * usually their own entity and exactly right; for a W-2 employee it is the
+   * company that pays them, which is emphatically not the Panameer billing
+   * entity a work order is written against. So it seeds the query — the
+   * provider still has to pick or define — and nothing is created until they
+   * pass the step.
+   */
+  suggestedName?: string | null;
 }) {
   const [mode, setMode] = useState<"join" | "define">("join");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // join
-  const [q, setQ] = useState("");
+  const [q, setQ] = useState(suggestedName ?? "");
   const [hits, setHits] = useState<CompanyHit[]>([]);
   const [picked, setPicked] = useState<CompanyHit | null>(null);
 

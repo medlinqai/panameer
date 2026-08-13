@@ -49,6 +49,12 @@ const schema = z.object({
     RESUME_PARSER_PRICE_*   USD per MILLION tokens, so $/parse is computed from
                             real usage rather than a number hardcoded here that
                             silently goes stale when a vendor reprices.
+    RESUME_PARSER_REASONING_EFFORT
+                            "minimal" | "low" | "medium" | "high", default LOW.
+                            Only sent to reasoning models. See ai-provider.ts —
+                            leaving this at the vendor default is what broke the
+                            AI pass, so the default here is deliberate, not a
+                            convenience.
 
     Absent → the parser falls back to the Anthropic path, which is what runs
     today. No key anywhere → no AI tier at all, as before.
@@ -57,6 +63,18 @@ const schema = z.object({
   RESUME_PARSER_API_KEY: z.string().min(1).optional(),
   RESUME_PARSER_MODEL: z.string().min(1).optional(),
   RESUME_PARSER_BASE_URL: z.string().min(1).optional(),
+  /*
+    PREPROCESSED so an empty string means "unset" rather than "invalid".
+
+    `.env.example` ships every key with `=""`, and one failing key takes the
+    WHOLE schema down to raw process.env below — which silently discards every
+    default in this file, including this one. A var whose only job is to hold a
+    default must not be the var that destroys them all.
+  */
+  RESUME_PARSER_REASONING_EFFORT: z.preprocess(
+    (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
+    z.enum(["minimal", "low", "medium", "high"]).default("low")
+  ),
   RESUME_PARSER_PRICE_IN_PER_M: z.coerce.number().nonnegative().optional(),
   RESUME_PARSER_PRICE_OUT_PER_M: z.coerce.number().nonnegative().optional(),
 

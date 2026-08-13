@@ -17,11 +17,26 @@ import {
  * write a photo onto someone else's record. Mirrors the onboarding ownership
  * boundary. Validation (mime + ≤5 MB) lives in `storage.ts`.
  *
- * Used by the onboarding "Add a Photo" step, Settings → Profile, and the
- * employee profile — hence `authenticated` rather than canProvideServices: a
- * Panameer employee has a Person and an avatar but no provider profile, and the
- * write below already branches on that. Owner-scoping, not the capability, is
- * what makes this safe.
+ * Used by the provider wizard's photo step (via PhotoCropModal) and the employee
+ * profile — hence `authenticated` rather than canProvideServices: a Panameer
+ * employee has a Person and an avatar but no provider profile, and the write
+ * below already branches on that. Owner-scoping, not the capability, is what
+ * makes this safe.
+ *
+ * NOT Settings → Profile, which this comment used to claim (WS-3). That page
+ * has no photo control, and the claim cost real time in the photo
+ * investigation: it reads as "there are two upload paths, one of them might be
+ * the broken one" when in fact a published provider has NO way to change their
+ * photo outside re-entering the join wizard. That gap is real and unfixed —
+ * flagged, not built here.
+ *
+ * THE WRITE IS VERIFIED, not assumed (WS-3). Two consecutive uploads on a live
+ * throwaway account produced two distinct object keys, and `/api/me` returned
+ * the new URL immediately after each. `uploadProfilePhoto` uses
+ * `personId/randomUUID()` with `upsert: false`, so a replacement can never
+ * collide with the object it replaces and there is no same-key staleness to
+ * bust. What was actually stale was the ATTRIBUTION, not the image — see
+ * prisma/consolidate-scott-learn.ts.
  */
 export async function POST(request: Request) {
   const gate = await guardApi("authenticated");

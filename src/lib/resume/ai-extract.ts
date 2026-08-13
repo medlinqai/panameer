@@ -53,6 +53,45 @@ import type { ParsedResume } from "./parse";
 const maybe = <T extends z.ZodTypeAny>(schema: T) =>
   schema.nullable().optional().default(null);
 
+/**
+ * A list of short terms — accepting the shapes a model actually returns.
+ *
+ * SAME LESSON AS `maybe`, one field over. The schema asks for `["Payables",
+ * "Sourcing"]`; gpt-5-nano periodically answers `[{"name": "Payables"}, …]`,
+ * which is a defensible reading of "list of skills" and completely unusable to
+ * a `z.array(z.string())`. One such element rejected the ENTIRE extraction:
+ * Scott's résumé came back with eight employers, two degrees and forty skills,
+ * and the whole thing was thrown away over the shape of `skills[0]`.
+ *
+ * `strict: false` is what makes this possible — the json_schema is a request,
+ * not a contract, and every OpenAI-compatible vendor honours it a little
+ * differently. Given a choice between arguing shape with the model and reading
+ * what it sent, read what it sent: an object with an obvious label field IS the
+ * skill, and dropping the extraction over its wrapper serves nobody.
+ *
+ * Anything genuinely unreadable is dropped from the list rather than failing the
+ * parse, for the same reason.
+ */
+const looseStringArray = z
+  .array(z.unknown())
+  .optional()
+  .default([])
+  .transform((items) =>
+    items
+      .map((item) => {
+        if (typeof item === "string") return item;
+        if (item && typeof item === "object") {
+          const o = item as Record<string, unknown>;
+          for (const k of ["name", "skill", "label", "title", "value", "text"]) {
+            if (typeof o[k] === "string") return o[k] as string;
+          }
+        }
+        return null;
+      })
+      .filter((s): s is string => Boolean(s?.trim()))
+      .map((s) => s.trim())
+  );
+
 /** What we ask the model for — mirrors what the review step already consumes. */
 const aiEmployer = z.object({
   // The only genuinely required field: an employer with no name is not an entry.
@@ -69,8 +108,8 @@ const aiProject = z.object({
   name: z.string(),
   client: maybe(z.string()),
   roleType: maybe(z.string()),
-  software: z.array(z.string()).optional().default([]),
-  skills: z.array(z.string()).optional().default([]),
+  software: looseStringArray,
+  skills: looseStringArray,
   description: maybe(z.string()),
   startDate: maybe(z.string()),
   endDate: maybe(z.string()),
@@ -98,8 +137,8 @@ export const AI_RESUME_SCHEMA = z.object({
   employers: z.array(aiEmployer).optional().default([]),
   projects: z.array(aiProject).optional().default([]),
   education: z.array(aiEducation).optional().default([]),
-  skills: z.array(z.string()).optional().default([]),
-  languages: z.array(z.string()).optional().default([]),
+  skills: looseStringArray,
+  languages: looseStringArray,
   certifications: z.array(aiCertification).optional().default([]),
 });
 
@@ -256,6 +295,22 @@ export function aiExtractionAvailable(): boolean {
 }
 
 /**
+ * How many of the schema's own top-level keys the response actually declared.
+ *
+ * Zero means the model did not answer the question — see the EMPTY vs ABSENT
+ * note at the call site. Lifted out of that check so the retry above can ask
+ * the same question with the same definition; two copies of this rule drifting
+ * apart is how "we read your résumé and it was blank" comes back.
+ */
+function declaredKeyCount(value: unknown): number {
+  if (!value || typeof value !== "object") return 0;
+  const raw = value as Record<string, unknown>;
+  return ["employers", "projects", "education", "skills", "headline", "overview"].filter(
+    (k) => k in raw
+  ).length;
+}
+
+/**
  * Send document text to the model and return validated, structured data.
  *
  * NEVER THROWS. A missing key, a network failure, a refusal or a malformed
@@ -264,12 +319,43 @@ export function aiExtractionAvailable(): boolean {
  * optional enrichment failed would be strictly worse than not offering it.
  */
 export async function aiExtractResume(text: string): Promise<AiExtractOutcome> {
-  const call = await callExtractionModel({
-    system: SYSTEM,
-    schema: TOOL_SCHEMA as unknown as Record<string, unknown>,
-    schemaName: "record_resume",
-    text,
-  });
+  const ask = () =>
+    callExtractionModel({
+      system: SYSTEM,
+      schema: TOOL_SCHEMA as unknown as Record<string, unknown>,
+      schemaName: "record_resume",
+      text,
+    });
+
+  let call = await ask();
+
+  /*
+    ONE RETRY, for the answer that isn't one (WS-4).
+
+    `response_format` is sent with `strict: false`, which makes the schema a
+    request rather than a contract — so the same document, sent twice, can come
+    back parsed once and as a bare object with none of the expected keys the
+    next time. Observed directly: Scott's résumé failed the route with "didn't
+    return anything usable", and the identical text through the identical code
+    path seconds later returned 1 employer, 14 projects and 34 skills.
+
+    Retried ONLY for a response carrying no answer at all — not for a model that
+    read the document and found nothing (that is a real answer, and the branch
+    below is careful to tell the two apart), and not for a refusal or a network
+    error, which repeating would not fix. One extra call at ~12s sits well
+    inside the 55s deadline; a loop would not.
+
+    The durable fix is `strict: true`, which would make the vendor enforce the
+    shape instead of us hoping for it. That is a schema rewrite — strict mode
+    requires every property listed in `required` and additionalProperties false
+    throughout — on a schema shared with the Anthropic path and the job-posting
+    importer, and this prompt is documented as change-only-with-a-harness-run.
+    Out of scope for a bug fix; flagged in the report.
+  */
+  if (call.ok && declaredKeyCount(call.value) === 0) {
+    console.warn("[resume] model returned no schema keys — retrying once");
+    call = await ask();
+  }
 
   if (!call.ok) {
     return {
@@ -292,14 +378,7 @@ export async function aiExtractResume(text: string): Promise<AiExtractOutcome> {
     genuinely found no work history still returns the keys with empty arrays in
     them. Omitting every key is not an answer, it is the absence of one.
   */
-  const raw = call.value as Record<string, unknown> | null | undefined;
-  const declared =
-    raw && typeof raw === "object"
-      ? ["employers", "projects", "education", "skills", "headline", "overview"].filter(
-          (k) => k in raw
-        ).length
-      : 0;
-  if (declared === 0) {
+  if (declaredKeyCount(call.value) === 0) {
     return {
       ok: false,
       reason: "error",
