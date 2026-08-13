@@ -12,6 +12,7 @@ import {
   AI_RESUME_SCHEMA,
   aiToParsedResume,
   fixEducationRow,
+  scrubInstitution,
   isPlausibleEducationRow,
 } from "./ai-extract";
 import { assessParse } from "./confidence";
@@ -208,13 +209,25 @@ console.log("\n=== WS7a: a degree is not a school ===");
     field: "Business Administration",
   });
   check(
-    // The rule fires on a DEGREE-led string. "Business Administration" is a
-    // FIELD sitting in the institution slot — a real live row, and a different
-    // defect that needs a different signal, so it is deliberately left alone
-    // rather than guessed at. Asserted so the boundary is recorded, not assumed.
-    "a field-shaped institution is left alone (needs its own signal)",
-    dupe.institution === "Business Administration" &&
-      dupe.degree === "Bachelor of Science",
+    /*
+      ⚠ THIS ASSERTION IS REVERSED FROM ITS FIRST VERSION, on purpose.
+
+      It used to assert that "Business Administration" was LEFT in the
+      institution slot, on the reasoning that a field-shaped string is a
+      different defect needing its own signal. WS-3 (2026-08-13) settles the
+      question the other way: the institution field's job is to name a school,
+      and anything that does not name one is blank rather than kept. Nine live
+      rows look exactly like this.
+
+      Nothing is lost here — the string duplicates `field`, so it is dropped
+      rather than refiled. That is what makes blanking safe, and it is asserted
+      below so a future change that starts destroying data fails this test.
+    */
+    "a field-shaped institution is blanked, and its duplicate text dropped",
+    dupe.institution === "" &&
+      dupe.degree === "Bachelor of Science" &&
+      dupe.field === "Business Administration" &&
+      dupe.description === null,
     dupe
   );
 
@@ -239,6 +252,105 @@ console.log("\n=== WS7a: a degree is not a school ===");
     tricky.institution === "Bachelor College",
     tricky
   );
+}
+
+console.log("\n=== WS-3: the institution scrub (2026-08-13) ===");
+{
+  /* Every input below is a VERBATIM live row from the 23 marketplace providers. */
+
+  const gpa = scrubInstitution("San Diego State University  •  3.72 GPA");
+  check(
+    "a bullet-separated GPA is stripped, the school survives",
+    gpa.institution === "San Diego State University" && gpa.salvage === null,
+    gpa
+  );
+
+  const gpaTight = scrubInstitution("San Diego State University • 3.72 GPA");
+  check(
+    "…with single spacing too (both spellings are in the data)",
+    gpaTight.institution === "San Diego State University",
+    gpaTight
+  );
+
+  const attended = scrubInstitution("Attended University of South Florida - Tampa");
+  check(
+    "a leading 'Attended' is the résumé's verb, not part of the name",
+    attended.institution === "University of South Florida - Tampa",
+    attended
+  );
+
+  const atSchool = scrubInstitution(
+    "Dual Enrollment During High School at Polk State College (then Polk Community College)"
+  );
+  check(
+    "'… at <school>' keeps the school, drops the preamble",
+    atSchool.institution === "Polk State College (then Polk Community College)",
+    atSchool
+  );
+
+  /*
+    THE COUNTER-CASE that keeps the 'at' rule from being a wrecking ball. The
+    tail "Buffalo" names nothing, so the split is rejected and the real name
+    stands. Without this the rule would rename a university after a city.
+  */
+  const atBuffalo = scrubInstitution("University at Buffalo");
+  check(
+    "'University at Buffalo' is not split into 'Buffalo'",
+    atBuffalo.institution === "University at Buffalo",
+    atBuffalo
+  );
+
+  const campus = scrubInstitution("Universidad Nacional • Bogotá");
+  check(
+    "a bullet-separated CAMPUS is not a grade, and is kept",
+    campus.institution === "Universidad Nacional • Bogotá",
+    campus
+  );
+
+  const bullet = scrubInstitution(
+    "Configure operating systems and administer cloud-based (SaaS) software"
+  );
+  check(
+    "a résumé bullet names no school, so the institution is blank",
+    bullet.institution === "" && bullet.salvage !== null,
+    bullet
+  );
+
+  const refiled = fixEducationRow({
+    institution: "Configure operating systems and administer cloud-based (SaaS) software",
+    degree: null,
+    field: null,
+  });
+  check(
+    "…and the text is preserved in description rather than binned",
+    refiled.institution === "" &&
+      refiled.description ===
+        "Configure operating systems and administer cloud-based (SaaS) software",
+    refiled
+  );
+
+  const pgp = fixEducationRow({ institution: "Post Graduate Program", degree: null });
+  check(
+    "a qualification in the institution slot becomes the degree",
+    pgp.institution === "" && pgp.degree === "Post Graduate Program",
+    pgp
+  );
+
+  const clean = fixEducationRow({
+    institution: "San Diego State University  •  3.72 GPA",
+    degree: null,
+    field: null,
+  });
+  check(
+    "end to end: the dirtiest live row lands clean, with nothing invented",
+    clean.institution === "San Diego State University" &&
+      clean.degree === null &&
+      clean.description === null,
+    clean
+  );
+
+  const empty = scrubInstitution("   ");
+  check("blank in, blank out", empty.institution === "" && empty.salvage === null, empty);
 }
 
 /* ---- E164: accomplishment bullets are not schools ----------------------- */

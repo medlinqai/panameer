@@ -74,7 +74,16 @@ export function DashboardShot() {
                   <div className="kpi">
                     <div className="kpi-top">
                       <div className="kpi-ic" style={{ background: '#4b7bef' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12l4-4 4 4 6-6" /><path d="M17 6h4v4" /></svg></div>
-                      <div><span className="val">301,873</span></div>
+                      {/*
+                        WS-1 — `$` ADDED. The mockup had this KPI bare while
+                        the two beside it carried a symbol, so the same card
+                        showed "$32,605.23", "$24,240.00" and "301,873" —
+                        which reads as a count of something, not money, under a
+                        label that says Savings. Presentational only; the
+                        number is the mockup's and is unchanged. All three KPIs
+                        on the card now agree.
+                      */}
+                      <div><span className="val">$301,873</span></div>
                       <span className="kpi-info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9" /><path d="M12 11v5" /><circle cx="12" cy="8" r=".6" fill="currentColor" /></svg></span>
                     </div>
                     <div className="lab">Targeted Total Savings</div>

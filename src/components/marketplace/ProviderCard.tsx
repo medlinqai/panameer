@@ -8,17 +8,18 @@ import type { TeaserProvider } from "@/lib/explore";
  * ── IT IS A TEASER. THE PROFILE IS THE ACTION HUB ────────────────────────────
  *
  * Every field here is chosen to earn a click, not to substitute for the
- * profile: photo, first name, location, one derived title, three quantified
+ * profile: photo, first name, location, the provider's own one-line title
+ * (their onboarding headline, soft-capped in lib/explore.ts), three quantified
  * proofs, three tags, rate. Full bio, every skill, every employer, degrees and
  * packages live on the profile, and the name is the door to it.
  *
  * ── THE SCHEMA IS FIXED SO CARDS CANNOT BE GAMED ─────────────────────────────
  *
- * Same fields for everyone, and the ones that matter are computed rather than
- * typed. The title comes from the catalog specialty, not free text; the
- * employer and project counts are `_count`s; "Validated" is a status. The only
- * provider-chosen inputs are which specialty, which school, and which skills —
- * so a card cannot be made louder by writing more.
+ * Same fields for everyone, and the numbers are computed rather than typed:
+ * the employer and project counts are `_count`s and "Validated" is a status,
+ * so no card can be made louder by claiming more. The title IS the provider's
+ * own words (Scott, 2026-08-13) — but capped at one line and 42 characters,
+ * which is the same constraint for everybody.
  *
  * ── WHAT THE SCHEMA CANNOT DO YET, STATED PLAINLY ────────────────────────────
  *
@@ -75,23 +76,54 @@ export function ProviderCard({
   return (
     <article className="flex flex-col rounded-brand border border-line bg-white p-5 transition-all hover:-translate-y-0.5 hover:border-magenta hover:shadow-brand">
       <div className="flex items-center gap-3">
-        {p.photoUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={p.photoUrl}
-            alt={`${p.firstName}, Panameer provider`}
-            width={52}
-            height={52}
-            className="h-[52px] w-[52px] shrink-0 rounded-full object-cover"
-          />
-        ) : (
-          <span
-            aria-hidden
-            className="grid h-[52px] w-[52px] shrink-0 place-items-center rounded-full bg-bg-soft text-[18px] font-bold text-ink-2"
-          >
-            {p.firstName.charAt(0)}
-          </span>
-        )}
+        {/*
+          WS-4 — THE INITIAL IS ALWAYS UNDERNEATH, and the photo is a layer over
+          it rather than an `else`.
+
+          Provider "Rev" has a photo_url pointing at a host that does not
+          resolve, and the card drew Chrome's broken-image glyph — on a public
+          marketplace card, beside a person's name. The old code only handled a
+          MISSING url; a url that is present and dead is the case that actually
+          happens, because storage objects get deleted while the row keeps
+          pointing at them.
+
+          ⚠ THE PHOTO IS A BACKGROUND, NOT AN <img>, AND THAT IS THE FIX.
+          The first attempt kept the <img> and set `alt=""`, on the widely
+          repeated claim that a broken image with an empty alt renders nothing.
+          It does not — verified in Chrome 151 against Rev's actual card, which
+          still drew the torn-page glyph in the corner of the avatar. A
+          background-image that fails to load paints NOTHING, with no glyph and
+          no reserved box, so the initial underneath is simply what remains.
+
+          NO onError HANDLER, deliberately: that needs a client island, and `/`
+          is a static, island-free page (see app/page.tsx). CSS decides here
+          before any JavaScript loads, and still decides with JS switched off.
+
+          Accessibility does not depend on the <img> either — a background is
+          invisible to the accessibility tree, so the wrapper carries
+          `role="img"` and the label, which it did already.
+        */}
+        <span
+          role="img"
+          aria-label={`${p.firstName}, Panameer provider`}
+          className="relative grid h-[52px] w-[52px] shrink-0 place-items-center overflow-hidden rounded-full bg-bg-soft text-[18px] font-bold text-ink-2"
+        >
+          {p.firstName.charAt(0).toUpperCase()}
+          {p.photoUrl && (
+            <span
+              aria-hidden
+              className="absolute inset-0 bg-cover bg-center"
+              /*
+                `encodeURI` + escaped quotes: the url is stored data, and a
+                stray `"` or `)` in it would otherwise close the CSS function
+                early and let the rest of the string be parsed as style.
+              */
+              style={{
+                backgroundImage: `url("${encodeURI(p.photoUrl).replace(/"/g, "%22")}")`,
+              }}
+            />
+          )}
+        </span>
         <div className="min-w-0">
           {/*
             THE NAME IS THE DOOR. It is the element people click on a card, and
@@ -122,8 +154,13 @@ export function ProviderCard({
         two-line clamping the pedigree strip below started at a different
         height on every card.
       */}
+      {/*
+        `title` is the UNCAPPED headline: `p.title` may already end in an
+        ellipsis from the soft cap, and hovering a truncated line to be shown
+        the same truncation is a tooltip that does nothing.
+      */}
       <p
-        title={p.title}
+        title={p.headline}
         className="mt-3.5 truncate text-[14.5px] font-semibold leading-snug text-ink"
       >
         {p.title}

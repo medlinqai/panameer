@@ -41,12 +41,12 @@ const SAMPLE: TeaserProvider = {
   id: "sample",
   firstName: "Alexandra",
   /*
-    WS-2: the title is what a specialty of "Oracle Cloud & AI Transformation"
-    derives to on a real card. `headline` keeps the mockup's free-text line so
-    the fallback path is represented too.
+    The title IS the headline now (Scott, 2026-08-13), so the two agree here.
+    39 characters — inside the 42 soft cap, so the sample shows a whole title
+    rather than demonstrating the ellipsis.
   */
   title: "Oracle Cloud & AI Transformation Expert",
-  headline: "AI-Enabled Oracle Cloud & Enterprise Systems Expert",
+  headline: "Oracle Cloud & AI Transformation Expert",
   location: "New York, United States",
   university: "Wharton School",
   employerCount: 4,
