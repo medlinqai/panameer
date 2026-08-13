@@ -43,6 +43,7 @@
     "learn:owner": "ts-node --project tsconfig.seed.json prisma/consolidate-scott-learn.ts",
     "learn:instructors": "ts-node --project tsconfig.seed.json prisma/apply-instructor-photos.ts",
     "learn:covers": "ts-node --project tsconfig.seed.json prisma/apply-learn-covers.ts",
+    "seed:test-data": "npx esbuild prisma/seed-test-data.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/seed-test-data.cjs --log-level=error && node -r dotenv/config .harness/seed-test-data.cjs dotenv_config_path=.env.local",
     "seed:catalog": "ts-node --project tsconfig.seed.json prisma/seed-catalog.ts",
     "check:email": "npx esbuild src/lib/email/templates.test.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/email.cjs --log-level=error && node .harness/email.cjs"
   },
