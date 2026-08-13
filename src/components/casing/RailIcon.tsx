@@ -5,7 +5,7 @@ import {
   ClipboardCheck, Package, FileSignature, Scale, CreditCard, MessageSquare,
   Users, ArrowLeftRight, FolderTree, Award, Building2, LifeBuoy, ShieldCheck,
   Home, Briefcase, BookOpen, Wallet, BarChart3, MessagesSquare, CalendarClock,
-  Tag, Search, Bell,
+  Tag, Search, Bell, Percent,
   type LucideIcon,
 } from "lucide-react";
 
@@ -14,7 +14,7 @@ import {
  *
  * An explicit map rather than a dynamic `lucide-react/icons/${name}` import:
  * the dynamic form defeats tree-shaking and pulls the whole ~1,500-icon set
- * into the bundle. Listing the seventeen we use keeps the cost to seventeen.
+ * into the bundle. Listing the ones we use keeps the cost to those.
  *
  * nav.ts stores the NAME, not the component, so that module stays plain data
  * and server code can read the nav without importing React components.
@@ -24,7 +24,7 @@ const ICONS: Record<string, LucideIcon> = {
   ClipboardCheck, Package, FileSignature, Scale, CreditCard, MessageSquare,
   Users, ArrowLeftRight, FolderTree, Award, Building2, LifeBuoy, ShieldCheck,
   Home, Briefcase, BookOpen, Wallet, BarChart3, MessagesSquare, CalendarClock,
-  Tag, Search, Bell,
+  Tag, Search, Bell, Percent,
 };
 
 export function RailIcon({ name, className = "h-[18px] w-[18px]" }: { name?: string; className?: string }) {

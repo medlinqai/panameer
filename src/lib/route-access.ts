@@ -16,6 +16,19 @@ import type { Capability } from "@/lib/access";
 export type RouteRequirement = Capability | "authenticated";
 
 /** Ordered list; the LONGEST matching prefix wins (most specific). */
+/*
+  ⚠ NOT LISTED HERE = PUBLIC. Two prefixes are public ON PURPOSE and are called
+  out so a future auth audit reads them as decisions rather than holes — the
+  same confusion that let /deliver-work sit unguarded behind a "not the real IA"
+  comment:
+
+    /assess      the free assessment. Asking for an account before giving the
+                 reason to want one is the one thing this funnel cannot do.
+    /assess/r/*  the report and deck. The share TOKEN is the access control —
+                 a uuid mailed to the address the person typed — and it is also
+                 what they forward. Same class as /verify/[credentialId] and
+                 /validate/[token], which are public for the same reason.
+*/
 export const ROUTE_ACCESS: { prefix: string; requires: RouteRequirement }[] = [
   { prefix: "/admin", requires: "canAdminister" },
   { prefix: "/coordinator", requires: "canCoordinate" }, // readied for brief_I

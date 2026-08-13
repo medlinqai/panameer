@@ -62,6 +62,7 @@ model User {
 
   /// The person this login belongs to (nullable: a User need not have a Person
   /// yet, e.g. the system admin before onboarding). The FK lives on Person.
+  assessments        Assessment[]
   person             Person?
   verificationTokens VerificationToken[]
 
@@ -2706,4 +2707,117 @@ model ForumPost {
   @@index([thread_id, created_at])
   @@index([author_id])
   @@map("forum_posts")
+}
+
+// ---------------------------------------------------------------------------
+// ASSESSMENT ENGINE — Phase 1, P2P (brief_assessment_p2p_phase1_2026-08-13)
+//
+// One assessment = one process, by design: the splitter asks people to answer
+// for the area they actually own, and the other processes get forwarded to
+// colleagues (AssessmentInvite) rather than guessed at by one person.
+// ---------------------------------------------------------------------------
+
+/// Which process an assessment covers. Only P2P has a question bank in Phase 1;
+/// the other three are on the splitter as "send to a colleague".
+enum AssessmentProcess {
+  P2P
+  O2C
+  R2R
+  H2R
+}
+
+model Assessment {
+  id         String   @id @default(uuid()) @db.Uuid
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  /// G1 — the gate. Captured in-flow; the report is delivered here.
+  email        String
+  company_name String
+  industry     String?
+  /// State + entity together set the tax picture — see the copy prototype.
+  state        String?
+  entity_type  String?
+  revenue_band String?
+  /// Optional by design: a band is fine and skipping is allowed, so funding
+  /// falls back to a revenue-derived estimate rather than blocking the flow.
+  ebitda_band  String?
+  /// QuickBooks/spreadsheets · legacy ERP · cloud ERP · not sure. "legacy"
+  /// flags the leapfrog message.
+  platform     String?
+
+  process AssessmentProcess @default(P2P)
+
+  /**
+   * Every answer, verbatim, as given.
+   * JSON RATHER THAN COLUMNS, deliberately. The question bank is expected to
+   * grow to ~60 capability domains across four processes, and a column per
+   * question would be a migration per copy edit. Scores are computed from this
+   * on the way in and STORED below, so a later change to the scoring code
+   * cannot silently rewrite a report somebody has already been shown.
+   */
+  answers Json
+
+  /// P2P maturity, normalized 0-100 for display. Computed at submit.
+  score_pct Int @default(0)
+
+  /**
+   * The report/deck URL secret. This IS the access control for the report: it
+   * is emailed to the person who filled the form and is what a share link
+   * carries, so it is a uuid rather than anything guessable or sequential.
+   */
+  share_token String @unique @default(uuid()) @db.Uuid
+
+  /// Set when the magic link is used to make an account (one-click).
+  user_id String? @db.Uuid
+  user    User?   @relation(fields: [user_id], references: [id], onDelete: SetNull)
+
+  invites AssessmentInvite[]
+
+  @@index([email])
+  @@index([user_id])
+  @@map("assessments")
+}
+
+/// "Send the other assessments to colleagues" — the referral engine (WS-E).
+/// Each invite re-enters the flow at the questions step for that process.
+model AssessmentInvite {
+  id            String            @id @default(uuid()) @db.Uuid
+  assessment_id String            @db.Uuid
+  process       AssessmentProcess
+  name          String
+  email         String
+  sent_at       DateTime          @default(now())
+
+  assessment Assessment @relation(fields: [assessment_id], references: [id], onDelete: Cascade)
+
+  @@unique([assessment_id, process, email])
+  @@index([assessment_id])
+  @@map("assessment_invites")
+}
+
+/**
+ * The funding rate — Phase 1's ONLY tax logic (WS-C).
+ * Funding = EBITDA x rate. One global default (18%) plus optional per-geography
+ * overrides, both editable by a Panameer Admin from day one, because Scott
+ * refines the rate and the geography table later and a hard-coded constant
+ * would make that a code change.
+ * Basis points, not a float: 18% is 1800, exact, and money math that starts
+ * with 0.18 in binary floating point starts with a rounding error.
+ */
+model TaxRate {
+  id         String   @id @default(uuid()) @db.Uuid
+  /**
+   * NULL = the global default. Otherwise a state/region code ("CA", "NY").
+   * A single nullable column rather than a separate defaults table: there is
+   * exactly one row that applies when no override matches, and modelling that
+   * as "the row with no geography" keeps the lookup one query.
+   */
+  geography  String?  @unique
+  rate_bps   Int
+  note       String?
+  updated_at DateTime @updatedAt
+  updated_by String?  @db.Uuid
+
+  @@map("tax_rates")
 }

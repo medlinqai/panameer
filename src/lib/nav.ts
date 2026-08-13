@@ -530,6 +530,13 @@ export const ADMIN_NAV: NavGroup[] = [
       { label: "Roles>Domains>Skills", href: "/admin/skill-catalog", icon: "FolderTree" },
       { label: "Specializations", href: "/admin/specializations", icon: "Award" },
       { label: "Industries", href: "/admin/industries", icon: "Building2" },
+      /*
+        THE ASSESSMENT'S FUNDING RATE (brief_assessment_p2p_phase1). Configuration
+        Data, not Support Data: it is a value the platform computes with, like the
+        catalog above it, rather than an operational tool. Additive — the four-nav
+        model and every other menu are untouched.
+      */
+      { label: "Funding Rate", href: "/admin/tax-rates", icon: "Percent" },
     ],
   },
   {

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { HeroVideoBackdrop } from "@/components/media/HeroVideoBackdrop";
 import { SHOW_TAX_SAVINGS_STAT } from "@/lib/home-flags";
 
@@ -59,7 +60,12 @@ export function HomeHero() {
           <div className="wrap hero-row">
             <div className="hero-left">
               <h1>Optimize Your<br />Business with AI</h1>
-              <a href="#" className="hero-cta">Where Can AI Help My Business? <span>›</span></a>
+              {/*
+                THE BUTTON NOW GOES SOMEWHERE. It was `#` — an honest stub while
+                the assessment did not exist — and this brief is scoped "FROM
+                the button TO the dashboard", so /assess is that destination.
+              */}
+              <Link href="/assess" className="hero-cta">Where Can AI Help My Business? <span>›</span></Link>
             </div>
             <div className="hero-right">
               <p>Discover exactly where AI can move the needle in your business — our free maturity assessment benchmarks your current capabilities and shows you where to focus first.</p>

@@ -1,0 +1,139 @@
+/*
+  THE DECK'S OWN STYLESHEET — six slides on screen, six pages in a PDF.
+
+  Scoped to `.deck-page` so nothing here can leak into the app. It is a
+  stylesheet rather than utilities because the print rules (@page size, page
+  breaks, colour-adjust) have no Tailwind equivalent and the slide is a fixed
+  aspect-ratio surface, which is exactly the case utilities are worst at.
+*/
+.deck-page {
+  background: #f4f2f8;
+  min-height: 100vh;
+}
+.deck-page .deck {
+  margin: 0 auto;
+  max-width: 1120px;
+  padding: 28px 20px 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.deck-page .slide {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  border-radius: 20px;
+  background: #fff;
+  border: 1px solid #e6e9ef;
+  box-shadow: 0 24px 60px -34px rgba(23, 30, 62, 0.45);
+  padding: 6% 7%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+}
+/* Same dark ramp as the home hero card, so the deck reads as the same brand. */
+.deck-page .slide-dark {
+  background:
+    radial-gradient(130% 120% at 88% 92%, rgba(215, 44, 214, 0.4) 0%, transparent 52%),
+    radial-gradient(120% 120% at 92% 88%, rgba(130, 74, 224, 0.22) 0%, transparent 55%),
+    linear-gradient(133deg, #120a24 0%, #201338 55%, #2b1a48 100%);
+  border-color: transparent;
+  color: #fff;
+}
+.deck-page .eyebrow {
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: #d72cd6;
+  margin: 0 0 14px;
+}
+.deck-page .slide-dark .eyebrow { color: #f0a6ef; }
+.deck-page h1 {
+  font-family: var(--font-display), sans-serif;
+  font-size: clamp(30px, 4.4vw, 54px);
+  line-height: 1.06;
+  letter-spacing: -0.5px;
+  font-weight: 700;
+  margin: 0;
+}
+.deck-page h2 {
+  font-family: var(--font-display), sans-serif;
+  font-size: clamp(24px, 3.4vw, 42px);
+  line-height: 1.1;
+  letter-spacing: -0.4px;
+  font-weight: 700;
+  margin: 0 0 16px;
+  color: #171e3e;
+}
+.deck-page .slide-dark h2 { color: #fff; }
+.deck-page .big {
+  font-family: var(--font-display), sans-serif;
+  font-size: clamp(44px, 7vw, 92px);
+  font-weight: 700;
+  letter-spacing: -2px;
+  line-height: 1;
+  margin: 8px 0 14px;
+}
+.deck-page .lede {
+  font-size: clamp(15px, 1.5vw, 19px);
+  line-height: 1.55;
+  color: #4a5569;
+  max-width: 44ch;
+  margin: 10px 0 0;
+}
+.deck-page .slide-dark .lede { color: #cec7db; }
+.deck-page .footnote {
+  margin-top: 18px;
+  font-size: 14px;
+  color: #7b8496;
+  font-style: italic;
+}
+.deck-page .moves { list-style: none; margin: 6px 0 0; padding: 0; }
+.deck-page .moves li {
+  padding: 14px 0;
+  border-top: 1px solid #e6e9ef;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.deck-page .move-title {
+  font-size: clamp(17px, 2vw, 24px);
+  font-weight: 700;
+  color: #171e3e;
+}
+.deck-page .move-detail { font-size: 14.5px; color: #7b8496; }
+.deck-page .deck-cta {
+  margin-top: 22px;
+  align-self: flex-start;
+  background: #d72cd6;
+  color: #fff;
+  border-radius: 999px;
+  padding: 13px 26px;
+  font-size: 16px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+/*
+  PRINT = THE EXPORT. One slide per landscape page, backgrounds preserved
+  (print-color-adjust, or the dark slides come out white with white text), and
+  every screen-only control removed.
+*/
+@media print {
+  @page { size: 279mm 157mm; margin: 0; }
+  .no-print { display: none !important; }
+  .deck-page { background: #fff; }
+  .deck-page .deck { max-width: none; padding: 0; gap: 0; }
+  .deck-page .slide {
+    border-radius: 0;
+    border: 0;
+    box-shadow: none;
+    break-after: page;
+    page-break-after: always;
+    height: 157mm;
+    aspect-ratio: auto;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .deck-page .slide:last-child { break-after: auto; page-break-after: auto; }
+}
