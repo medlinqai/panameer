@@ -136,10 +136,15 @@ export const SEO_DESCRIPTION =
 export const HERO_COPY = {
   buyer: {
     kicker: "Continuous Transformation",
+    /*
+      brief_public_pages_ia — this hero now only ever renders on /hire-talent,
+      so the subhead speaks to somebody who has already decided to hire rather
+      than to a cold visitor who has not.
+    */
     subhead:
-      "Keep your Oracle investment evolving — on-demand access to pre-vetted " +
-      "experts with 20+ years in your applications. Without the million-dollar " +
-      "implementation.",
+      "Search real, rated experts by the system they actually run. Engage them " +
+      "for two hours or six months — one contract, one payment, no employment " +
+      "risk.",
     searchPlaceholder: "Describe what you need done…",
     searchCta: "Search →",
     aiHint:
@@ -219,7 +224,15 @@ export const THREE_WAYS = {
     {
       tag: "Go it alone",
       title: "Hire an independent",
-      blurb: "Cheaper, but you carry the load.",
+      /*
+        ⚠ NEVER "cheaper" — not even about the alternative
+        (`panameer_virtual_firm_identity.md`). The moment price framing appears
+        anywhere on the page, the page is competing on price, and the comparison
+        the reader then runs is Panameer against offshore. The DIY card's real
+        argument was never the invoice anyway: it is that the invoice is the
+        only thing that is smaller.
+      */
+      blurb: "The smallest invoice — and you carry everything else.",
       points: [
         { ok: false, text: "Unvetted, no shared ratings" },
         { ok: false, text: "You paper every contract" },
@@ -286,7 +299,9 @@ export const SEQUENCE_COPY = {
       },
       {
         word: "Create",
-        cap: "Create With Your Experts",
+        // "our", never "your" — the resources come THROUGH Panameer, QA'd and
+        // managed by the coordinator. See the identity doc.
+        cap: "Create With Our Experts",
         body: "Agreed scope, tracked in one place — or ordered straight from your ERP.",
       },
       {
@@ -309,7 +324,14 @@ export const SEQUENCE_COPY = {
       {
         word: "Create",
         cap: "Do the Work",
-        body: "Deliver with your experts, augmented by your own AI. We handle the paperwork.",
+        /*
+          NOT "our experts" here, and that is the point of reading the rule
+          rather than running find-and-replace: this is the PROVIDER page, where
+          the provider IS the expert. "Deliver with our experts" would tell a
+          consultant that somebody else does their work. The banned phrase is
+          removed by rewriting the sentence, not by flipping the pronoun.
+        */
+        body: "Deliver your way, augmented by your own AI. We handle the paperwork.",
       },
       {
         word: "Settle",
@@ -520,8 +542,23 @@ export const GO_DIRECT = {
   },
 } as const;
 
-/** The closing band, per audience. */
+/**
+ * The closing band, per audience.
+ *
+ * ⚠ THE HOME HAS ITS OWN (brief_home_polish_method WS-2). The buyer band ends
+ * on "Describe what you need" + "Talk to us" — two asks, neither of which is
+ * one of the home's two exits. On Hire Talent that is exactly right, because
+ * the reader arrived intending to hire. On the home it is a third and fourth
+ * competing action at the very bottom of a funnel whose entire job is the
+ * assessment.
+ */
 export const CLOSING_CTA = {
+  home: {
+    headline: "See where you stand. Free.",
+    body: "A maturity read across the processes you run, in minutes — then a coordinator who walks you through it.",
+    primary: "Start the free assessment →",
+    secondary: "Meet our experts",
+  },
   buyer: {
     headline: "Go direct. Keep transforming.",
     body: "Free to connect, pay only when you engage. Describe what you need and meet the expert who's already done it.",
@@ -540,10 +577,260 @@ export const CLOSING_CTA = {
 export const ASSESSMENT_COPY = {
   eyebrow: "See Where You Stand on AI Adoption",
   headline: "Assess your adoption by capability domain",
-  leadStrong:
-    "Transformation isn't slowing down — it's accelerating. The only question " +
-    "is whether your organization is.",
-  lead: "See where you stand across the processes you run — your maturity read is instant.",
+  /*
+    WS-3 — StratERP density. The lead ran to two sentences of throat-clearing
+    ("Transformation isn't slowing down — it's accelerating") before reaching
+    the offer. A firm presenting its method states the method; the reader did
+    not come for a trend observation.
+  */
+  leadStrong: "Every process you run, scored.",
+  lead: "Where you sit today, paper to AI-driven — and the gaps worth closing first.",
   cta: "See where you stand →",
   ctaSub: "Sign in to be first in line.",
+} as const;
+
+// ---------------------------------------------------------------------------
+// THREE PAGES, ONE AUDIENCE EACH (brief_public_pages_ia).
+//
+// The home used to do all three jobs at once — talent search, buyer value and
+// the assessment — so every visitor met two thirds of a page written for
+// somebody else. Each page now has one audience and one job, and the content
+// below is the same content re-allocated, not new claims.
+//
+// VOICE: second person, active, what YOU get. "You learn where you stand",
+// never "we teach you". The distinction is not stylistic — "we teach" describes
+// our activity and leaves the reader working out what it buys them.
+// ---------------------------------------------------------------------------
+
+/**
+ * THE FOUR BEATS, per page.
+ *
+ * Learn · Connect · Create · Settle is the through-line on all three pages, but
+ * it means something different to each audience, so each page states its own
+ * version rather than repeating one generic set. On the HOME the "Learn" beat
+ * IS the assessment — that is the page's whole job.
+ */
+export const PAGE_BEATS = {
+  home: {
+    eyebrow: "Learn. Connect. Create. Settle.",
+    headline: "What you get, end to end.",
+    beats: [
+      {
+        beat: "Learn",
+        body: "Where your operations rank, paper to AI-driven. Free.",
+      },
+      {
+        beat: "Connect",
+        body: "To our vetted experts, matched to the gaps you found.",
+      },
+      {
+        beat: "Create",
+        body: "Your roadmap, managed with the tools big firms charge for.",
+      },
+      {
+        beat: "Settle",
+        body: "One contract, one payment, on delivery.",
+      },
+    ],
+  },
+  hire: {
+    eyebrow: "Learn. Connect. Create. Settle.",
+    headline: "How hiring works here.",
+    beats: [
+      {
+        beat: "Learn",
+        body: "Who's available — and see their real, rated past work before you commit.",
+      },
+      {
+        beat: "Connect",
+        body: "Plan, collaborate and consult with them directly. No firm in the middle.",
+      },
+      {
+        beat: "Create",
+        body: "Hire them to build it — a two-hour consult or a six-month deployment, same low friction.",
+      },
+      {
+        beat: "Settle",
+        body: "From inside your ERP — requisition, PO, Work Order, service receipt — or direct on the web. One contract, one payment.",
+      },
+    ],
+  },
+  work: {
+    eyebrow: "Learn. Connect. Create. Settle.",
+    headline: "How you earn here.",
+    beats: [
+      {
+        beat: "Learn",
+        body: "Stay current with free training that keeps your skills sharp and your profile ranked.",
+      },
+      {
+        beat: "Connect",
+        body: "Directly to buyers. Be found, be your own brand — no anonymous markup.",
+      },
+      {
+        beat: "Create",
+        body: "Every way there is: consultations, courses, packages, engagements, retainers. Productize once, sell many.",
+      },
+      {
+        beat: "Settle",
+        body: "Get paid on delivery. One settlement, no back office, no employment risk on you.",
+      },
+    ],
+  },
+} as const;
+
+/** HOME hero — the assessment front door. */
+export const HOME_HERO = {
+  kicker: "See where you stand on AI adoption",
+  headline: "See where your business really stands — paper to AI-driven.",
+  subhead:
+    "A free operating-maturity assessment, in minutes. All it costs is your email.",
+  cta: "Start the free assessment",
+  ctaSub: "Sign in to be first in line.",
+  /*
+    ⚠ HONEST FRAMING, and it is load-bearing. There is no scoring engine behind
+    this yet, so the hero says what the assessment IS — a framework read across
+    the processes you run — rather than implying a live measurement. The
+    dashboard beside it is labelled "Sample Read" for the same reason.
+  */
+  /*
+    WS-3 — halved. It said the same thing twice ("what you'll be scored
+    against" / "not your data") and the dashboard beside it already carries a
+    "Sample Read" chip and its own caption. Honesty does not get more honest by
+    being repeated; it gets skipped.
+  */
+  frameworkNote: "Sample read — the framework below is what you're scored against.",
+} as const;
+
+/**
+ * HOME — OUR METHOD, the section that proves this is a firm.
+ *
+ * ── WHY IT IS "METHOD" AND NOT "ROADMAP" ─────────────────────────────────────
+ *
+ * Panameer's positioning is a VIRTUAL FIRM, not a marketplace
+ * (`panameer_virtual_firm_identity.md`): a marketplace has no point of view —
+ * it lists people and leaves you to it. A firm has a method, produces
+ * deliverables, and puts a human at the point of accountability. This section
+ * is where that claim is made or lost, so it is written as the method rather
+ * than as a timeline of activity.
+ *
+ * EVERY CARD NAMES AN OUTPUT. "Score and prioritise" is us describing our
+ * activity; "your maturity read + a prioritized gap list" is a thing the client
+ * receives. Firms are bought on deliverables, and an activity list is what a
+ * marketplace would show.
+ *
+ * TIME LABELS STAY. "Weeks 1–2" sells to an owner who wants to know when;
+ * "Analyze / Design / Deploy" is the AIM method's own vocabulary and belongs
+ * back-office. The method is the moat — it does not need to be recited to be
+ * felt.
+ *
+ * THE LAST CARD CLOSES THE LOOP. Re-score plus an alert when a new solution
+ * lands for one of your gaps is what makes "continuous transformation" literal
+ * instead of a tagline; a four-step plan that ends is a project, and a project
+ * is a one-off.
+ */
+export const ROADMAP_COPY = {
+  eyebrow: "Our method",
+  headline: "The assessment is the first step of a method.",
+  lead: "Every gap becomes a deliverable, with the expertise attached.",
+  /*
+    ⚠ ILLUSTRATIVE. The AIM tool is a later brief; this is the shape of what an
+    assessment produces, not a plan from anybody's data. Said on the page.
+  */
+  note: "Illustrative — an example sequence.",
+  /*
+    THE HUMAN ANCHOR, and it is the most important line in the section.
+    Everything above it could be automated; a named senior person who translates
+    the read and stands behind the quality of the consultants is what makes this
+    a firm rather than software that sold you something. The page PROMISES the
+    coordinator — assignment logic is a later build.
+  */
+  coordinator:
+    "When your assessment completes, a coordinator is assigned — a senior person who translates the read, scopes the work, and stands behind the experts on it.",
+  steps: [
+    {
+      phase: "Weeks 1–2",
+      title: "Your maturity read",
+      body: "A scored read of every process you run, and a prioritized gap list.",
+    },
+    {
+      phase: "Weeks 3–8",
+      title: "Quick-win packages",
+      body: "The gaps that close in days — fixed price, a named expert on each.",
+    },
+    {
+      phase: "Quarter 2",
+      title: "A scoped rebuild",
+      body: "Your weakest process, rebuilt to a written scope with a named expert.",
+    },
+    {
+      phase: "Ongoing",
+      title: "Re-score, and stay ahead",
+      body: "Watch the number move — and get an alert when a new solution lands for one of your gaps.",
+    },
+  ],
+} as const;
+
+/**
+ * HOME — the condensed comparison, which must CLOSE ON TALENT.
+ *
+ * Every value block on the home ends by pointing at the experts, because the
+ * home's job is to hand a warmed-up buyer to Hire Talent. A value section that
+ * ends on its own argument is a dead end on a funnel page.
+ */
+export const HOME_TEASER = {
+  eyebrow: "The third way",
+  headline: "You have options. Here's the honest comparison.",
+  close: "…and here are the vetted experts who close your gaps.",
+  closeCta: "Meet the experts",
+} as const;
+
+/** HIRE TALENT hero. */
+export const HIRE_HERO = {
+  /*
+    The eyebrow must not restate the headline. First pass set both to "Hire
+    pre-vetted experts, direct" and the hero read the same sentence twice in
+    two type sizes — the eyebrow's job is to say who this page is for, so it
+    does that instead.
+  */
+  kicker: "For teams ready to hire",
+  headline: "Hire pre-vetted experts, direct.",
+  subhead:
+    "Search real, rated experts by the system they actually run. Engage them for two hours or six months — one contract, one payment.",
+} as const;
+
+/** HIRE TALENT — the matching engine, described honestly. */
+export const AI_MATCH_COPY = {
+  eyebrow: "AI matching",
+  headline: "Post what you need. Get ranked, vetted experts.",
+  lead: "Your Work Request is matched against every expert's actual work history — the systems they ran, how deep, how recently — and comes back ranked.",
+  steps: [
+    { label: "Your Work Request", body: "Say what you need, in your own words." },
+    { label: "Matched on real history", body: "Against dated engagements, not a self-scored checklist." },
+    { label: "Ranked by depth and recency", body: "Deep and current beats touched-it-once." },
+  ],
+  note: "Ranking runs on each expert's dated work history — see how a profile is built on Find Work.",
+} as const;
+
+/** FIND WORK — build your profile, and what it becomes. */
+export const PROFILE_VIZ_COPY = {
+  eyebrow: "Bring your résumé alive",
+  headline: "Your profile builds itself from your work history.",
+  lead: "Drop in your résumé. Each job is read for the system it ran on and the modules you used — and your profile becomes a weighted picture of what you actually do.",
+  centerOfGravity: "Where your experience actually sits",
+  note: "Example profile — yours is built from your own résumé.",
+} as const;
+
+/** Shared caption for the product-screenshot bands. */
+export const APP_SHOTS_COPY = {
+  hire: {
+    eyebrow: "Inside the product",
+    headline: "See the tools you'd be using.",
+    lead: "Work Requests, matched experts, contracts and settlement — the buyer side, end to end.",
+  },
+  work: {
+    eyebrow: "Inside the product",
+    headline: "See what you'd be working in.",
+    lead: "Your profile, incoming work, packages and payouts — the provider side, end to end.",
+  },
 } as const;

@@ -1,5 +1,6 @@
-import { THREE_WAYS } from "@/lib/brand";
+import { THREE_WAYS, HOME_TEASER } from "@/lib/brand";
 import { SectionHead } from "@/components/marketing/sections/SectionHead";
+import { SectionCta } from "@/components/marketing/SectionCta";
 
 /**
  * "Three Ways to Get the Work Done" — the honest comparison (buyer §2).
@@ -11,17 +12,29 @@ import { SectionHead } from "@/components/marketing/sections/SectionHead";
  * transfer, one contract), because a comparison where the alternative has no
  * upside reads as a sales sheet and gets discounted on sight.
  *
- * Presentational: no links. It is an argument, and the page's CTAs are the
- * hero above it and the closing band below.
+ * Presentational on Hire Talent: no links, because it is an argument and that
+ * page's CTAs are the hero above it and the closing band below.
+ *
+ * ── TWO LENGTHS, ONE COMPONENT (brief_public_pages_ia WS-1) ──────────────────
+ *
+ * `condensed` is the home's teaser: the three cards without their tick lists,
+ * and a closing line that hands off to Hire Talent. The full version stays on
+ * Hire Talent, where a reader who has come to hire will actually read eighteen
+ * comparison bullets.
+ *
+ * A PROP RATHER THAN A SECOND COMPONENT, because the argument has to be the
+ * same argument in both places. Two hand-written versions of "here is how we
+ * compare" drift, and the version nobody is looking at is the one that goes
+ * stale — which is the one a prospect quotes back at you.
  */
-export function ThreeWays() {
+export function ThreeWays({ condensed = false }: { condensed?: boolean } = {}) {
   return (
     <section id="three-ways" className="bg-[#f6f4fb] py-16">
       <div className="mx-auto max-w-[1120px] px-7">
         <SectionHead
-          eyebrow={THREE_WAYS.eyebrow}
-          headline={THREE_WAYS.headline}
-          lead={THREE_WAYS.lead}
+          eyebrow={condensed ? HOME_TEASER.eyebrow : THREE_WAYS.eyebrow}
+          headline={condensed ? HOME_TEASER.headline : THREE_WAYS.headline}
+          lead={condensed ? undefined : THREE_WAYS.lead}
         />
 
         <div className="mt-[34px] grid gap-4 md:grid-cols-3">
@@ -52,7 +65,8 @@ export function ThreeWays() {
                 </p>
                 <h3 className="mb-3 mt-2 text-[20px] text-ink">{way.title}</h3>
                 <p className="mb-3 text-[14.5px] text-[#3a4266]">{way.blurb}</p>
-                <ul>
+                {/* The tick lists are the long half — dropped in the teaser. */}
+                <ul className={condensed ? "hidden" : undefined}>
                   {way.points.map((pt) => (
                     <li
                       key={pt.text}
@@ -77,6 +91,23 @@ export function ThreeWays() {
             );
           })}
         </div>
+
+        {/*
+          THE TEASER EXITS TO THE ASSESSMENT (WS-2), not to the experts.
+
+          It closed on "meet the experts" in the first cut, which put two
+          identical hand-offs back to back — the method section directly above
+          already ends there. Two sections in a row making the same ask is one
+          ask the reader learns to skip. This section's argument is "here is why
+          the third way is different", and the honest next step from a
+          comparison is the free thing that shows you where YOU sit.
+
+          The full version on Hire Talent carries no CTA: the reader is already
+          on the page it would send them to.
+        */}
+        {condensed && (
+          <SectionCta variant="assessment" lead={HOME_TEASER.close} />
+        )}
       </div>
     </section>
   );

@@ -365,6 +365,109 @@ export async function aiExtractResume(text: string): Promise<AiExtractOutcome> {
 const DEGREE_LEAD =
   /^(bachelors?|masters?|associates?|doctor(ate)?|ph\.?d|b\.?s\.?c?|b\.?a|m\.?s\.?c?|m\.?b\.?a|m\.?a|b\.?eng|m\.?eng|b\.?tech|diploma|certificate)\b/i;
 
+/** Does this string NAME a school? The one test the institution field exists for. */
+const NAMES_A_SCHOOL =
+  /\b(universi\w*|college|institute|instituto|school|academy|polytechnic|seminary|hochschule|iit|iim|nit)\b/i;
+
+/** Qualification words that are not degree-LEADS — "Post Graduate Program". */
+const QUALIFICATION = /\b(degree|diploma|certificat\w*|program(me)?|course)\b/i;
+
+/**
+ * SCRUB THE INSTITUTION STRING, then decide whether what is left is a school.
+ *
+ * WS-3 (2026-08-13). `fixEducationRow` already moved a degree out of the
+ * institution slot, but it only fired when the string did NOT name a school —
+ * so "San Diego State University  •  3.72 GPA" sailed through untouched and
+ * printed, GPA and all, on a public card. Nine live rows look like that. The
+ * scrub runs FIRST, so a school with debris attached becomes a clean school
+ * instead of being waved past as "already fine".
+ *
+ * Every rule here is subtractive. Nothing is inferred, completed or guessed:
+ * a school name only ever comes out of the string that went in.
+ *
+ * Returns the school when one survives, and otherwise returns the scrubbed text
+ * as `salvage` with an EMPTY institution — the caller re-files it. Blank beats
+ * wrong: a card with two pedigree items is missing a fact, a card that calls
+ * "Bachelor of Arts in Accounting" a university states one.
+ */
+export function scrubInstitution(raw: string): {
+  institution: string;
+  salvage: string | null;
+} {
+  let t = (raw ?? "").replace(/\s+/g, " ").trim();
+  if (!t) return { institution: "", salvage: null };
+
+  // "Attended University of South Florida - Tampa" -> the university. Two live
+  // rows; the verb is the résumé's, not part of anyone's name.
+  t = t.replace(/^(attended|studied at|graduated from|graduate of)\s+/i, "").trim();
+
+  /*
+    Drop a trailing bullet-separated fragment when it is a GRADE, not a campus.
+    "San Diego State University  •  3.72 GPA" -> the university, but
+    "Universidad Nacional • Bogotá" keeps its tail. The test is the fragment
+    itself: a number-with-decimal, or the word GPA/CGPA/honours.
+  */
+  const parts = t.split(/\s*[•·|]\s*/);
+  if (parts.length > 1) {
+    const kept = parts.filter(
+      (seg, i) => i === 0 || !/\b(gpa|cgpa|grade|honou?rs)\b|\d+\.\d+/i.test(seg)
+    );
+    t = kept.join(" • ").trim();
+  }
+  // The same debris without a bullet: "…University, 3.72 GPA" / "…(3.9 GPA)".
+  t = t
+    .replace(/[,(\-–]\s*\d+(\.\d+)?\s*(\/\s*\d+(\.\d+)?)?\s*(gpa|cgpa)\s*\)?\s*$/i, "")
+    .replace(/\s*[,(\-–]?\s*(gpa|cgpa)[:\s]*\d+(\.\d+)?\s*\)?\s*$/i, "")
+    .trim();
+
+  /*
+    "Dual Enrollment During High School at Polk State College" -> the college.
+    Only when the TAIL names a school, which is the whole guard: "University at
+    Buffalo" splits to a tail of "Buffalo", which names nothing, so the split is
+    rejected and the real name stands. (An earlier version ALSO required the
+    head not to name a school — which rejected the Polk row, since "High School"
+    names one. The tail test alone is both sufficient and correct.)
+  */
+  const at = t.split(/\s+\bat\b\s+/i);
+  if (at.length > 1) {
+    const tail = at[at.length - 1].trim();
+    if (NAMES_A_SCHOOL.test(tail)) t = tail;
+  }
+
+  t = t.replace(/^[\s,;:•·|\-–]+|[\s,;:•·|\-–]+$/g, "").trim();
+  if (!t) return { institution: "", salvage: null };
+
+  return NAMES_A_SCHOOL.test(t)
+    ? { institution: t, salvage: null }
+    : { institution: "", salvage: t };
+}
+
+/**
+ * Where does text evicted from the institution slot go?
+ *
+ * NOTHING IS DELETED THAT IS NOT ALREADY RECORDED. A qualification becomes the
+ * degree; anything that merely repeats the degree or field is dropped, because
+ * it is a duplicate rather than a loss; everything else lands in `description`,
+ * the row's free-text field, verbatim. That last branch is the honest place for
+ * "Configure operating systems and administer cloud-based (SaaS) software" — a
+ * résumé bullet that was never an education row and should not be silently
+ * binned either.
+ */
+function refileSalvage(
+  salvage: string,
+  row: { degree: string | null; field: string | null; description: string | null }
+): { degree: string | null; field: string | null; description: string | null } {
+  const same = (v: string | null) =>
+    !!v && v.trim().toLowerCase() === salvage.toLowerCase();
+  if (same(row.degree) || same(row.field)) return row;
+
+  if ((DEGREE_LEAD.test(salvage) || QUALIFICATION.test(salvage)) && !row.degree) {
+    return { ...row, degree: salvage };
+  }
+  if (!row.description) return { ...row, description: salvage };
+  return row;
+}
+
 export function fixEducationRow(e: {
   institution: string;
   degree?: string | null;
@@ -372,36 +475,28 @@ export function fixEducationRow(e: {
   startYear?: number | string | null;
   endYear?: number | string | null;
 }) {
-  let institution: string | null = e.institution?.trim() || null;
-  let degree = e.degree?.trim() || null;
-
   /*
-    A school whose NAME begins with a degree word — "Bachelor College" — is
-    still a school. Caught by its own unit test: the first version of this rule
-    gutted it. So the degree-lead only counts when the string does NOT also name
-    an institution.
+    The scrub decides. A school whose NAME begins with a degree word —
+    "Bachelor College" — is still a school, and `scrubInstitution` keeps it for
+    the same reason the old inline rule did: it tests whether the string names
+    an institution, not whether it starts with a degree word. That case has its
+    own unit test; the first version of this rule gutted it.
   */
-  const namesAnInstitution =
-    /\b(university|college|institute|school|academy|polytechnic|seminary)\b/i.test(
-      institution ?? ""
-    );
+  const { institution, salvage } = scrubInstitution(e.institution ?? "");
 
-  if (institution && !namesAnInstitution && DEGREE_LEAD.test(institution)) {
-    // The "school" is really a qualification. Keep it as the degree when that
-    // field is empty or is just a duplicate of the same string.
-    if (!degree || degree.trim().toLowerCase() === institution.toLowerCase()) {
-      degree = institution;
-    }
-    institution = null;
-  }
+  const refiled = refileSalvage(salvage ?? "", {
+    degree: e.degree?.trim() || null,
+    field: e.field?.trim() || null,
+    description: null,
+  });
 
   return {
-    institution: institution ?? "",
-    degree,
-    field: e.field?.trim() || null,
+    institution,
+    degree: salvage ? refiled.degree : e.degree?.trim() || null,
+    field: salvage ? refiled.field : e.field?.trim() || null,
     startYear: e.startYear != null ? Number(e.startYear) || null : null,
     endYear: e.endYear != null ? Number(e.endYear) || null : null,
-    description: null,
+    description: salvage ? refiled.description : null,
   };
 }
 

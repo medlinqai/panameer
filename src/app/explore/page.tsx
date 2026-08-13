@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ProviderCard } from "@/components/marketplace/ProviderCard";
 import type { Metadata } from "next";
 import { MarketingHeader } from "@/components/marketing/MarketingHeader";
 import { MarketingFooter } from "@/components/marketing/MarketingFooter";
@@ -114,7 +115,21 @@ export default async function ExplorePage({
               <div className="mt-9 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
                 {hiring
                   ? (cards as TeaserProvider[]).map((p) => (
-                      <ProviderCard key={p.id} p={p} loginHref={loginHref} />
+                      <ProviderCard
+                        key={p.id}
+                        p={p}
+                        loginHref={loginHref}
+                        /*
+                          WS-2 — the name goes to the PROFILE, through the gate.
+                          /providers/[id] is authed now (307 -> /login), so
+                          linking a logged-out visitor straight at it would
+                          bounce them and lose the destination. Naming it as the
+                          callback means the gate costs a sign-in, not the click.
+                        */
+                        profileHref={`/login?callbackUrl=${encodeURIComponent(
+                          `/providers/${p.id}`
+                        )}`}
+                      />
                     ))
                   : (cards as TeaserWork[]).map((w) => (
                       <WorkCard key={w.id} w={w} loginHref={loginHref} />
@@ -204,75 +219,6 @@ export default async function ExplorePage({
  * is to display it, on the one page built not to display it, is how a mask
  * leaks through an accessibility attribute.
  */
-function ProviderCard({ p, loginHref }: { p: TeaserProvider; loginHref: string }) {
-  return (
-    <article className="flex flex-col rounded-brand border border-line bg-white p-5 transition-all hover:-translate-y-0.5 hover:border-magenta hover:shadow-brand">
-      <div className="flex items-center gap-3">
-        {p.photoUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={p.photoUrl}
-            alt={`${p.firstName}, Panameer provider`}
-            width={52}
-            height={52}
-            className="h-[52px] w-[52px] shrink-0 rounded-full object-cover"
-          />
-        ) : (
-          <span
-            aria-hidden
-            className="grid h-[52px] w-[52px] shrink-0 place-items-center rounded-full bg-bg-soft text-[18px] font-bold text-ink-2"
-          >
-            {p.firstName.charAt(0)}
-          </span>
-        )}
-        <div className="min-w-0">
-          <p className="truncate text-[16px] font-bold text-ink">{p.firstName}</p>
-          {p.location && (
-            <p className="truncate text-[13px] text-ink-2">{p.location}</p>
-          )}
-        </div>
-      </div>
-
-      <p className="mt-3.5 line-clamp-2 text-[14.5px] font-semibold leading-snug text-ink">
-        {p.headline}
-      </p>
-
-      {p.validated && (
-        <p className="mt-2 text-[12.5px] font-bold text-magenta">✓ Validated</p>
-      )}
-
-      {p.skills.length > 0 && (
-        <ul className="mt-3 flex flex-wrap gap-1.5">
-          {p.skills.slice(0, 3).map((s) => (
-            <li
-              key={s}
-              className="rounded-full bg-bg-soft px-2.5 py-1 text-[12px] text-ink-2"
-            >
-              {s}
-            </li>
-          ))}
-        </ul>
-      )}
-
-      {/* `mt-auto` so the rate and CTA sit on one line across a ragged row. */}
-      <div className="mt-auto pt-4">
-        {p.rate && <p className="text-[15px] font-bold text-ink">{p.rate}</p>}
-        {/*
-          E032 — GOES TO THE GATE, NOT TO THE PROFILE. /providers/[id] is a
-          public route that renders the surname, so linking straight there
-          would hand over the very thing the card masks.
-        */}
-        <Link
-          href={loginHref}
-          className="mt-2.5 block rounded-full border-[1.5px] border-line px-4 py-2 text-center text-[13.5px] font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
-        >
-          Book a consultation
-        </Link>
-      </div>
-    </article>
-  );
-}
-
 /** The provider-side twin. Nothing renders it today — there is no posted work. */
 function WorkCard({ w, loginHref }: { w: TeaserWork; loginHref: string }) {
   return (

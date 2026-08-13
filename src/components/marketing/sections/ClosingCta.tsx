@@ -29,11 +29,24 @@ import { CLOSING_CTA } from "@/lib/brand";
  * primary asks in the last two sections is the page arguing with itself.
  */
 const LINKS = {
+  /*
+    THE HOME'S TWO LINKS ARE THE TWO EXITS, and nothing else (WS-2). Every
+    other band on this site can close however its page needs to; the home
+    closes on the assessment, with the experts as the only alternative.
+  */
+  home: {
+    primary: `/login?callbackUrl=${encodeURIComponent("/#assessment")}`,
+    secondary: "/hire-talent",
+  },
   buyer: { primary: "/explore?mode=hire", secondary: "/support/bug" },
   provider: { primary: "/join?type=seller", secondary: "#sequence" },
 } as const;
 
-export function ClosingCta({ audience }: { audience: "buyer" | "provider" }) {
+export function ClosingCta({
+  audience,
+}: {
+  audience: "home" | "buyer" | "provider";
+}) {
   const copy = CLOSING_CTA[audience];
   const href = LINKS[audience];
 

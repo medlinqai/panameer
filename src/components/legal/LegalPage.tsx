@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { Logo } from "@/components/Logo";
+import { MarketingHeader } from "@/components/marketing/MarketingHeader";
 import { linkifyLegal, type LegalDoc } from "@/components/legal/crossrefs";
 import { LegalDocNav } from "@/components/legal/LegalDocNav";
 import type { LegalHeading, LegalNode } from "@/content/legal/types";
@@ -72,11 +72,15 @@ export function LegalPage({
 
   return (
     <div className="flex min-h-screen flex-col bg-white font-body text-ink">
-      <header className="border-b border-line">
-        <div className="mx-auto flex w-full max-w-[1180px] items-center px-6 py-5">
-          <Logo priority />
-        </div>
-      </header>
+      {/*
+        THE PUBLIC HEADER, not a bare logo (brief_nav_casing_consistency WS-B).
+
+        These pages rendered a one-off strip with just the wordmark, so a reader
+        who landed on the Privacy Policy from a footer link had no way back into
+        the site — the logo went home and that was the whole nav. Legal pages
+        are public content, and the model says public means MARKETING_NAV.
+      */}
+      <MarketingHeader />
 
       {/*
         TWO COLUMNS ABOVE lg, ONE BELOW. The document list is genuinely useful

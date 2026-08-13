@@ -87,7 +87,9 @@ export const config = {
     "/finances/:path*",
     "/messages/:path*",
     "/community/:path*",
-    "/services/:path*",
+    // /services itself is the PUBLIC Packages page; only the seller
+    // sub-route is guarded. See the note in route-access.ts.
+    "/services/offers/:path*",
     "/dashboard/:path*",
   ],
 };

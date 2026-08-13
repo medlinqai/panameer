@@ -6,12 +6,10 @@ import { useState } from "react";
 import { useMe } from "@/components/MeProvider";
 import {
   navForRoles,
-  UTILITY_NAV,
   ADMIN_NAV,
   ADMIN_HOME,
   ADMIN_SETUP,
 } from "@/lib/nav";
-import { AccountMenu } from "@/components/casing/AccountMenu";
 import { CompanyMenu } from "@/components/casing/CompanyMenu";
 import { RailIcon } from "@/components/casing/RailIcon";
 import { useSession } from "next-auth/react";
@@ -144,22 +142,20 @@ export function AppRail() {
   );
 
   /*
-    ONE IDENTITY BLOCK, BOTH RAILS (WS1-A). The persona menu left the header, so
-    the admin needs it here too or a Panameer employee loses their only route to
-    My Profile and Sign Out. Same component, same menu; the admin's item list is
-    the shorter one `ADMIN_PERSONA_NAV` already defines.
+    ⚠ THE IDENTITY BLOCK IS GONE FROM THE RAIL — E214 REVERSED, deliberately.
 
-    E214 — IT IS PINNED TO THE BOTTOM now, not stacked in with the navigation.
-    Three zones: the org up top, the work in the middle, and you at the bottom
-    left. Sitting in the scroll flow it was a fourth nav item competing with the
-    utility row directly under it.
+    It was pinned bottom-left here on the "three zones" argument: the org up
+    top, the work in the middle, you at the bottom. That reasoning still reads
+    well; the call is simply that the account menu is a UNIVERSAL control and
+    the universal controls now live in the top bar together.
+
+    ADMINS ARE COVERED, which was E214's actual worry — the note here said a
+    Panameer employee would lose their only route to My Profile and Sign Out if
+    the menu were not in the rail. That was true when the admin console had its
+    own chrome. It does not: `src/app/admin/layout.tsx` renders the same
+    `AppShell`, so admin and provider get the same header and the same menu.
+    Checked before removing this, not assumed.
   */
-  const identityBlock = (
-    <div className="mt-3 border-t border-white/10 pt-3">
-      <AccountMenu isAdmin={isAdmin} variant="rail" />
-    </div>
-  );
-
   const nav = isAdmin ? (
     <>
       <div className="mt-1 space-y-1.5">
@@ -181,16 +177,19 @@ export function AppRail() {
   ) : (
     <>
       {/*
-        UTILITY ROW, above everything (WS1-A). Search, Home and Notifications
-        are not "transactions" — they are the three things you reach for from
-        anywhere, and the deck puts them above the identity block for that
-        reason. Icon-only would have been tighter and wrong: this rail is roomy
-        on purpose and an unlabelled glyph is a guess.
-      */}
-      <div className="space-y-1">
-        {UTILITY_NAV.map((i) => railLink(i, false))}
-      </div>
+        ⚠ THE UTILITY ROW IS GONE — E207/E208/E209 REVERSED. Search, Home and
+        Notifications are in the top bar again; the rail is the six role
+        transactions and nothing else.
 
+        E216 still holds — PLAIN LINKS, NO FLYOUTS, NO CHEVRONS. The six items
+        each had a hover submenu once; those children are their destination
+        pages' tab rows now (`PAGE_TABS` in nav.ts).
+
+        E224 still holds too — no "TRANSACTIONS" heading above them. With the
+        utility row removed there is no longer a second group to divide from, so
+        the hairline that used to separate the two goes with it: a divider above
+        the only list on the rail separates it from nothing.
+      */}
       {/*
         E206/E211 — the separate "Provider Dashboard" button used to sit here.
         It pointed at /dashboard, which the utility row's "Home" already does,
@@ -215,7 +214,7 @@ export function AppRail() {
         symmetric 8px either side, so the rail has one rhythm from top to bottom:
         4px between items, 8px across a divider.
       */}
-      <div className="mt-2 space-y-1 border-t border-white/10 pt-2">
+      <div className="space-y-1">
         {items.map((i) => railLink(i, false))}
       </div>
     </>
@@ -254,12 +253,9 @@ export function AppRail() {
               same static chip as before for everyone else. */}
           <CompanyMenu />
 
-          {/* ZONE 2 — the work. Scrolls; the two zones around it do not. */}
+          {/* ZONE 2 — the work. The only zone that scrolls. "You" left for the
+              top bar (E214 reversed), so the rail is org context + the work. */}
           <nav className="mt-3 min-h-0 flex-1 overflow-y-auto">{nav}</nav>
-
-          {/* ZONE 3 — you (E214). Outside the scroll container, so it is always
-              reachable however long the navigation gets. */}
-          {identityBlock}
         </div>
       </aside>
 
@@ -283,7 +279,6 @@ export function AppRail() {
           <div className="bg-rail px-4 pb-4">
             <CompanyMenu />
             <nav>{nav}</nav>
-            {identityBlock}
           </div>
         )}
       </div>

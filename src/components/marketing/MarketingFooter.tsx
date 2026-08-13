@@ -17,9 +17,9 @@ const COLS: { title: string; links: { label: string; href: string }[] }[] = [
   {
     title: "Hire",
     links: [
-      { label: "Hire Talent", href: "/" },
+      { label: "Hire Talent", href: "/hire-talent" },
       { label: "Post a Work Request", href: "/join/buyer" },
-      { label: "ERP Punchout", href: "/#punchout" },
+      { label: "ERP Punchout", href: "/hire-talent#punchout" },
     ],
   },
   {
@@ -41,9 +41,16 @@ const COLS: { title: string; links: { label: string; href: string }[] }[] = [
   {
     title: "Company",
     links: [
-      { label: "Why Panameer", href: "/#three-ways" },
-      { label: "Enterprise", href: "/#punchout" },
-      { label: "Pricing", href: "/#value" },
+      /*
+        REPOINTED (brief_public_pages_ia WS-4). These three anchors named
+        sections that moved to /hire-talent; left as "/#…" they would have
+        returned 200, scrolled nowhere and read as a dead page. "Assessment"
+        is added because the home is now the assessment.
+      */
+      { label: "Assessment", href: "/" },
+      { label: "Why Panameer", href: "/hire-talent#three-ways" },
+      { label: "Enterprise", href: "/hire-talent#punchout" },
+      { label: "Pricing", href: "/hire-talent#value" },
     ],
   },
   /*

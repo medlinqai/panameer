@@ -14,18 +14,85 @@ import type { ReactNode } from "react";
   pages nobody has built. An anchor into a real section is an honest
   destination; a route that 404s or a page that says "coming soon" is not.
 */
-export const MARKETING_NAV: { label: string; href: string }[] = [
+/*
+  THE PUBLIC NAV — FINAL MODEL (Scott, 2026-08-12).
+
+  Supersedes the labels in briefs #1 and #2.
+
+      Assess · Talent · Projects · Packages · Learn · Enterprise   + For Experts
+
+  ASSESS IS A PRIMARY CTA, not a nav link. The home IS the assessment front
+  door, so the one thing a cold visitor can do for free — and the thing the
+  whole funnel is built around — should not be a grey word sitting between five
+  other grey words. It renders as the magenta button; see `MarketingHeader`.
+
+  RENAMES, and they are more than cosmetic. "Hire Talent" -> Talent and "Find
+  Work" -> Work, because the old pair split the nav by AUDIENCE (buyers
+  here, sellers there) while the new set splits it by WHAT YOU GET: people
+  (Talent), custom scoped work (Work), productized scope (Packages).
+
+  ⚠ "Work" IS A LABEL, NOT A DOMAIN RENAME. It points at /work-marketplace;
+  `/work` stays the authed provider page, and Work Request / Work Order / Work
+  Package keep their names everywhere. A
+  visitor picks a shape of engagement rather than declaring which side they are
+  on.
+
+  "FIND WORK" WAS THE PROVIDER DOOR, and losing it would have made the public
+  site buyer-only — so /for-providers keeps an explicit link ("For Experts",
+  rendered apart from the six). The audience toggle on the marketing pages is
+  the other route to it.
+
+  PRICING IS NOT IN THE NAV. Price surfaces contextually, when a selection needs
+  a plan, plus a passive link in the footer — which the footer already carries.
+  Removed here rather than left as a seventh item: a nav "Pricing" invites a
+  comparison before there is anything to compare.
+
+  TWO DESTINATIONS ARE HONEST STUBS. /work-marketplace and /services render ComingSoon
+  behind the public header. Both are real routes that say they are not built;
+  neither fakes a listing, and neither doubles up on /hire-talent.
+*/
+export type MarketingNavItem = {
+  label: string;
+  href: string;
+  /** Rendered as the magenta button rather than a text link. */
+  primary?: boolean;
+};
+
+export const MARKETING_NAV: MarketingNavItem[] = [
+  { label: "Assess", href: "/", primary: true },
+  { label: "Talent", href: "/hire-talent" },
+  { label: "Work", href: "/work-marketplace" },
+  { label: "Packages", href: "/services" },
   { label: "Learn", href: "/learn" },
-  { label: "Hire Talent", href: "/" },
-  { label: "Find Work", href: "/for-providers" },
-  { label: "Pricing", href: "/#value" },
-  { label: "Enterprise", href: "/#punchout" },
+  { label: "Enterprise", href: "/hire-talent#punchout" },
 ];
+
+/**
+ * The seller front door, kept out of the six and rendered separately.
+ *
+ * It is a different KIND of link: the six are things to buy or learn, this is
+ * "I am on the other side of the marketplace". Mixing it in made the nav read
+ * as five buyer items and one odd one out, which is how "Find Work" came to
+ * look like a buyer feature.
+ */
+export const MARKETING_PROVIDER_DOOR = {
+  label: "For Experts",
+  href: "/for-providers",
+};
 const BASE =
   "inline-flex items-center justify-center gap-2 rounded-full px-[22px] py-3 " +
   "text-[15px] font-bold transition-colors cursor-pointer";
 
-/** Brand button. `magenta` = primary CTA, `ghost` = secondary outline. */
+/**
+ * Brand button. `magenta` = primary CTA, `ghost` = secondary outline,
+ * `white` = a filled white control on a light surface.
+ *
+ * `white` exists for the public header's Log In (WS-0, 2026-08-13). It is NOT
+ * `ghost` with a background bolted on via className: `ghost` sets
+ * `bg-transparent`, and `bg-white` passed through className would tie with it
+ * on specificity and be decided by whichever utility Tailwind happens to emit
+ * later — a coin flip written as CSS. A variant settles it in one place.
+ */
 export function Btn({
   children,
   href,
@@ -35,14 +102,16 @@ export function Btn({
 }: {
   children: ReactNode;
   href?: string;
-  variant?: "magenta" | "ghost";
+  variant?: "magenta" | "ghost" | "white";
   className?: string;
   type?: "button" | "submit";
 }) {
   const tone =
     variant === "magenta"
       ? "bg-magenta text-white hover:bg-magenta-dark"
-      : "border-[1.5px] border-line text-ink hover:border-[#d9d4e2] bg-transparent";
+      : variant === "white"
+        ? "border-[1.5px] border-line bg-white text-ink hover:border-[#d9d4e2] hover:bg-bg-soft"
+        : "border-[1.5px] border-line text-ink hover:border-[#d9d4e2] bg-transparent";
   const cls = `${BASE} ${tone} ${className}`;
 
   if (href) {

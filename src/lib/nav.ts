@@ -80,19 +80,32 @@ export type NavItem = {
 */
 
 /**
- * THE UTILITY ROW, above the identity block (WS1-A).
+ * THE UNIVERSAL CONTROLS — Search, Home, Notifications.
  *
  * Not part of the Transactions group and deliberately not capability-gated:
  * these are the three things you reach for from anywhere, whoever you are.
- * Search leads the deck's rail, Home is the same destination the Dashboard
- * button owns (kept because the deck shows both and they read differently in
- * the two positions), Notifications is the bell that used to live in the header.
+ *
+ * ⚠ THEY LIVE IN THE TOP BAR (brief_topbar_utilities), which REVERSES
+ * E207/E208/E209 — those moved them into the rail, and the call now is that the
+ * rail is the six role transactions and these are not transactions.
+ *
+ * NAMED INDIVIDUALLY, not just as a list, because the header renders each in a
+ * different shape: Search is a wide pill in the centre, the other two are icon
+ * buttons on the right, and the account menu beside them is a popover. A
+ * `.map()` over three items that each need bespoke markup is a loop with a
+ * switch inside it. The array survives for anything that does want to iterate
+ * them, and — the point of keeping this here at all — the href and label are
+ * still declared exactly once.
  */
-export const UTILITY_NAV: NavItem[] = [
-  { label: "Search", href: "/search", icon: "Search" },
-  { label: "Home", href: "/dashboard", icon: "Home" },
-  { label: "Notifications", href: "/notifications", icon: "Bell" },
-];
+export const SEARCH_NAV: NavItem = { label: "Search", href: "/search", icon: "Search" };
+export const HOME_NAV: NavItem = { label: "Home", href: "/dashboard", icon: "Home" };
+export const NOTIFICATIONS_NAV: NavItem = {
+  label: "Notifications",
+  href: "/notifications",
+  icon: "Bell",
+};
+
+export const UTILITY_NAV: NavItem[] = [SEARCH_NAV, HOME_NAV, NOTIFICATIONS_NAV];
 
 /**
  * THE REQUESTER RAIL (brief_requester_home_v1 WS-A).
@@ -286,7 +299,7 @@ export const PROVIDER_NAV: NavItem[] = [
     requires: "canProvideServices",
   },
   {
-    label: "Sell My Services",
+    label: "Create Packages",
     href: "/settings/packages",
     icon: "Tag",
     requires: "canProvideServices",
@@ -383,6 +396,31 @@ function holds(me: Me, capability: Capability): boolean {
 }
 
 /**
+ * USER CLASS -> MENU. The ONE place this mapping is made.
+ *
+ *   Service Seller (provider) -> PROVIDER_NAV
+ *   Service Buyer  (requester) -> REQUESTER_NAV
+ *
+ * Centralized per brief_nav_casing_consistency WS-C so no component re-derives
+ * it. There is exactly one caller today (`navForRoles`), and that is the point:
+ * the moment a second surface needs "which menu does this person get", it calls
+ * this instead of writing the ternary again — which is how two surfaces end up
+ * disagreeing about who is a seller.
+ *
+ * SOMEBODY WHO IS BOTH SEES THE PROVIDER MENU. They are standing in the
+ * provider console, and a merged rail of twelve items across two jobs would
+ * answer neither question. Switching consoles is the persona menu's job.
+ *
+ * ⚠ STILL ROLE-FLAG BASED, deliberately. The brief maps this to USER_CLASS, and
+ * `USER_CLASS`/`USER_JOB` are not in the schema yet (see the note further up
+ * this file). Until they land, `isServiceProvider` IS the class signal — and
+ * when they do land, this function is the only thing that changes.
+ */
+export function menuForUserClass(me: Me): NavItem[] {
+  return me.person.roles.isServiceProvider ? PROVIDER_NAV : REQUESTER_NAV;
+}
+
+/**
  * The signed-in nav: base items, then whatever the viewer's capabilities add.
  * Deduped by href — a rail listing the same route twice looks broken.
  */
@@ -399,7 +437,7 @@ export function navForRoles(me: Me | null): NavItem[] {
     `seen` still de-dupes, because the two rails share Start Learning, Manage
     Work and Community by design.
   */
-  const source = me.person.roles.isServiceProvider ? PROVIDER_NAV : REQUESTER_NAV;
+  const source = menuForUserClass(me);
   for (const item of source) {
     if (item.requires && !holds(me, item.requires)) continue;
     if (seen.has(item.href)) continue;

@@ -25,7 +25,23 @@ import { BRAND_BADGE_SHORT } from "@/lib/brand";
  * statically prerenderable, which is what leaves the assessment tabs as the
  * page's only island.
  */
-export function MarketingHero({ audience }: { audience: "buyer" | "provider" }) {
+export function MarketingHero({
+  audience,
+  headline,
+  kicker,
+}: {
+  audience: "buyer" | "provider";
+  /**
+   * Overrides the brand lockup as the H1 (brief_public_pages_ia).
+   *
+   * The lockup was the H1 on every page. It is a good line and it says nothing
+   * about the reader, so each page now leads with its own value proposition and
+   * keeps the lockup as a through-line lower down. Optional rather than
+   * required so a page that genuinely wants the lockup still gets it.
+   */
+  headline?: string;
+  kicker?: string;
+}) {
   const copy = HERO_COPY[audience];
   // /explore reads `mode`, and treats anything that is not "work" as hiring.
   const mode = audience === "buyer" ? "hire" : "work";
@@ -44,7 +60,7 @@ export function MarketingHero({ audience }: { audience: "buyer" | "provider" }) 
 
       <div className="relative mx-auto max-w-[1120px] px-7 pb-[62px] pt-14">
         <span className="mb-[22px] inline-block rounded-full bg-magenta px-3.5 py-1.5 font-display text-[12.5px] font-semibold uppercase tracking-[0.18em] text-white">
-          {copy.kicker}
+          {kicker ?? copy.kicker}
         </span>
 
         {/*
@@ -53,11 +69,17 @@ export function MarketingHero({ audience }: { audience: "buyer" | "provider" }) 
           about rhythm — two beats per line — not a consequence of the container.
           Hidden below sm, where 40px type wraps on its own anyway.
         */}
-        <h1 className="text-[40px] font-semibold leading-[1.02] tracking-[-0.01em] sm:text-[60px]">
-          {BRAND_BADGE_SHORT.split(". ").slice(0, 2).join(". ") + "."}
-          <br className="hidden sm:block" />{" "}
-          {BRAND_BADGE_SHORT.split(". ").slice(2).join(". ")}
-        </h1>
+        {headline ? (
+          <h1 className="max-w-[720px] text-balance text-[38px] font-semibold leading-[1.05] tracking-[-0.01em] sm:text-[52px]">
+            {headline}
+          </h1>
+        ) : (
+          <h1 className="text-[40px] font-semibold leading-[1.02] tracking-[-0.01em] sm:text-[60px]">
+            {BRAND_BADGE_SHORT.split(". ").slice(0, 2).join(". ") + "."}
+            <br className="hidden sm:block" />{" "}
+            {BRAND_BADGE_SHORT.split(". ").slice(2).join(". ")}
+          </h1>
+        )}
 
         <p className="mt-5 max-w-[600px] text-balance text-[17px] text-[#e9e6f5] sm:text-[19px]">
           {copy.subhead}
@@ -136,6 +158,13 @@ export function MarketingHero({ audience }: { audience: "buyer" | "provider" }) 
           </span>
           {copy.aiHint}
         </p>
+
+        {/* The lockup, kept as the through-line when a page leads with value. */}
+        {headline && (
+          <p className="mt-7 font-display text-[13px] font-semibold uppercase tracking-[0.2em] text-[#a7a3c6]">
+            {BRAND_BADGE_SHORT}
+          </p>
+        )}
       </div>
     </div>
   );

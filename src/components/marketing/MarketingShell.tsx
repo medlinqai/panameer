@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { MarketingHeader } from "@/components/marketing/MarketingHeader";
 import { MarketingFooter } from "@/components/marketing/MarketingFooter";
 import { AudienceStrip } from "@/components/marketing/AudienceStrip";
-import type { Audience } from "@/lib/audience";
+import type { PublicPage } from "@/lib/audience";
 
 /**
  * The chrome every marketing page shares (E051).
@@ -22,11 +22,19 @@ import type { Audience } from "@/lib/audience";
  * every file.
  */
 export function MarketingShell({
-  audience,
+  page,
   children,
 }: {
-  /** Which side this page serves — drives the strip's active state. */
-  audience: Audience;
+  /**
+   * WHICH OF THE THREE PUBLIC PAGES this is — drives the switch's active state
+   * (brief_public_pages_ia WS-4).
+   *
+   * Was `audience`, which stopped being enough the moment there were two
+   * buyer-voiced pages: the home and Hire Talent both speak to a buyer and are
+   * different destinations, so "which audience" could no longer answer "which
+   * one is highlighted".
+   */
+  page: PublicPage;
   children: ReactNode;
 }) {
   return (
@@ -43,7 +51,7 @@ export function MarketingShell({
         wrapper it simply travels with the parent.
       */}
       <div className="sticky top-0 z-50">
-        <AudienceStrip audience={audience} />
+        <AudienceStrip page={page} />
         <MarketingHeader />
       </div>
       {children}

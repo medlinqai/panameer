@@ -1,44 +1,53 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { useMe } from "@/components/MeProvider";
+import { AccountMenu } from "@/components/casing/AccountMenu";
+import { HOME_NAV, NOTIFICATIONS_NAV, SEARCH_NAV } from "@/lib/nav";
 import { greetingFor } from "@/lib/greeting";
 import { getCreditsSummary, type CreditsSummary } from "@/lib/credits";
 import { CreditsPill } from "@/components/casing/CreditsPill";
 
 /**
- * The header (E210, revised) — greeting, and Community Credits. That is all.
+ * The header — greeting, Search, and the universal controls.
  *
  *   left    greeting ("Good Morning, {first}")
- *   right   the Community Credits pill, then the bug report
+ *   centre  Search
+ *   right   Credits · Home · Notifications · Profile · bug report
  *
- * FIVE THINGS HAVE LEFT THIS HEADER over two passes, and the same argument
- * removed all of them: nothing belongs here that another surface already owns
- * or that nobody acts on. E207-E209 took the bell, the house and the search
- * pill, because the rail has Notifications, Home and Search — a second set of
- * answers to "where do I click" is not a shortcut.
+ * ⚠ THIS REVERSES E207, E208, E209 AND E214, deliberately and at Scott's
+ * instruction. It is not a bug fix and it is not a regression: those four
+ * decisions moved the search pill, Home, the bell and the account menu into the
+ * rail on the argument that "the rail already answers where-do-I-click", and
+ * the call now is that the rail is for the six role TRANSACTIONS and the four
+ * universal controls belong up here. Both layouts are defensible; this is the
+ * one chosen. The error log should be annotated rather than the entries deleted
+ * — the reasoning in them is still sound, it just lost.
  *
- * E210 REVISED takes the date and the "AI on" chip. The first pass moved them
- * left beside the greeting; the decks say the middle is empty, and they are
- * right. Neither was actionable: the date is on every clock the person owns,
- * and "AI on" is a status nobody can change and nothing depends on. Two chips
- * of ambient decoration in the one strip that spans every page.
+ * E210 IS NOT REVERSED. The date and the "AI on" chip stay gone, and the
+ * distinction matters: E207-E209 moved things that were ACTIONABLE to a
+ * different home, while E210 removed two chips nobody could act on — the date
+ * is on every clock the person owns, and "AI on" is a status nobody can change.
+ * Restoring the four does not restore those.
  *
- * What is left is the greeting and the one number people will watch week to
- * week. The bug report sits to the RIGHT of the pill — last, because it is the
- * rarest thing here and the pill is what the eye should land on.
- *
- * THE PAGE NAME IS GONE, and that is the locked decision rather than an
- * omission. What tells you where you are is the rail's active highlight, which
- * is more precise than a title anyway: it shows the page AND the group it
- * belongs to.
- *
- * THE AVATAR IS IN THE RAIL (WS1-A / E214), bottom-left. Logout has exactly one
- * home and it is not here.
+ * THE PAGE NAME IS STILL GONE, also unchanged. Location is shown by the rail's
+ * active highlight, which is more precise than a title: it names the page and
+ * the group it belongs to.
  */
 export function AppHeader() {
   const { me } = useMe();
+  const pathname = usePathname();
+
+  /*
+    ADMIN vs PROVIDER for the account menu's own item list. Read from the
+    session rather than /api/me for the same reason AppRail reads it there:
+    `Me` carries ACTOR flags and the admin bit is deliberately not one of them.
+  */
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.isSystemAdmin === true;
 
   /*
     THE CLOCK IS AN EXTERNAL STORE, read through `useSyncExternalStore` rather
@@ -50,6 +59,32 @@ export function AppHeader() {
   */
   const now = useSyncExternalStore(subscribeNothing, clientNow, serverNow);
   const greeting = now ? greetingFor(now) : null;
+  /*
+    DAY/DATE, RESTORED (CASING_SPEC_LOCKED 2026-08-13). E210-revised removed it
+    as ambient decoration; Scott wants it back, in the right cluster this time
+    rather than beside the greeting. Same `Intl.DateTimeFormat` as 4b7e0ef, and
+    still derived from the same client-side clock store — the server does not
+    share the viewer's timezone, so a server-rendered date would be wrong for
+    half the users half the time.
+  */
+  /*
+    SHORT FORM ("Wed, Aug 12"), not 4b7e0ef's "Wednesday, August 12".
+
+    Measured: the long form is 195px, and the right cluster with the Credits
+    pill already runs to 855px of an 1177px header at 1440. With the long date
+    the centre Search collapsed to 62px — an icon and a sliver, which reads as
+    broken rather than as a field. The short form gives ~75px back and Search
+    gets a usable width at every size the spec cares about.
+
+    Still day AND date, which is what the spec asks for.
+  */
+  const dateLabel = now
+    ? new Intl.DateTimeFormat(undefined, {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+      }).format(now)
+    : null;
 
   const first = me?.person.firstName ?? "";
 
@@ -75,22 +110,131 @@ export function AppHeader() {
         GREETING ONLY. No page name — see the note above; the rail's active
         highlight carries location, and the top-right slot is Credits now.
       */}
-      <p className="min-w-0 shrink-0 truncate text-[16px] font-bold">
+      {/*
+        THE GREETING SHRINKS FIRST. It was `shrink-0`, which at 375px pushed the
+        four controls off the right edge — the row measured 482px against a
+        360px viewport and Home, Notifications and the avatar were simply not
+        reachable. It is the one thing here that is decoration rather than a
+        control, so it is the one thing allowed to truncate.
+      */}
+      <p className="min-w-0 flex-1 truncate text-[16px] font-bold sm:flex-none sm:shrink">
         {greeting ? `${greeting}, ${first || "there"}` : "\u00a0"}
       </p>
 
-      {/* ---- RIGHT: the currency, then the bug report (E210 revised) ------- */}
-      <div className="ml-auto flex shrink-0 items-center gap-2">
-        {credits && <CreditsPill summary={credits} />}
+      {/*
+        ---- CENTRE: Search -------------------------------------------------
 
-        {/* Last, and the only icon left. Nothing in the rail duplicates it, and
-            it drops below sm where the row has no room for a glyph nobody taps
-            on a phone. */}
+        A LINK SHAPED LIKE A SEARCH FIELD, not a search field. `/search` is
+        still a Coming-Soon stub, so a real input here would take a query and
+        throw it away — the reference's centre affordance without the lie. When
+        the page gains a backend this becomes an input and nothing else moves.
+
+        Below sm it becomes an icon on the right (see below) — the pill needs
+        width this row does not have at 375px, but Search is one of the four
+        controls this brief exists to make reachable, so it does not simply
+        vanish.
+      */}
+      <Link
+        href={SEARCH_NAV.href}
+        className="mx-auto hidden h-9 min-w-[170px] max-w-[420px] flex-1 items-center gap-2 rounded-full border border-line bg-canvas px-3.5 text-[14px] text-ink-2 transition-colors hover:border-[#d9d4e2] hover:text-ink sm:flex"
+      >
+        <SearchIcon />
+        <span className="truncate">{SEARCH_NAV.label}</span>
+      </Link>
+
+      {/* ---- RIGHT (spec order): Credits · date · AI on · Home · Bug ·
+              Notifications · Profile ------------------------------------- */}
+      <div className="ml-auto flex shrink-0 items-center gap-1.5">
+        {/*
+          THE PILL DROPS BELOW sm, and it is the right thing to drop. Something
+          had to — at 375px the greeting, a 150px pill and four controls
+          measured 482px against a 360px viewport, and the three controls on the
+          right were pushed clean off the screen. Everything else in this row is
+          a way to GO somewhere; the pill is a number you read. It returns at sm.
+        */}
+        {credits && (
+          <span className="hidden sm:contents">
+            <CreditsPill summary={credits} />
+          </span>
+        )}
+
+        {/*
+          DAY/DATE — ambient, so it is the first thing to go as the row narrows
+          (md and up only). Restored from 4b7e0ef per the locked spec.
+        */}
+        {dateLabel && (
+          <span className="hidden items-center gap-1.5 rounded-full bg-[#f1faff] px-3 py-1.5 text-[13px] font-semibold text-[#1f7ab8] md:inline-flex">
+            <CalendarIcon />
+            {dateLabel}
+          </span>
+        )}
+
+        {/*
+          ⚠ "AI on" IS DECORATION. A static marketing chip: no toggle, no
+          backend, nothing reads it (Scott, 2026-08-13 — locked spec). It is
+          styled as a status rather than a control precisely so nobody tries to
+          click it, and it carries no aria-live or role — announcing a state
+          that never changes would be noise to a screen reader.
+        */}
+        <span className="hidden items-center gap-1.5 rounded-full bg-black/[0.05] px-3 py-1.5 text-[12.5px] font-semibold text-ink-2 sm:inline-flex">
+          <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+          AI on
+        </span>
+
+        {/*
+          Search as an ICON below sm, where the centre pill has no room. All
+          four universal controls stay reachable at 375px — hiding one of them
+          would undo the point of moving them here.
+        */}
+        <span className="sm:hidden">
+          <IconLink
+            href={SEARCH_NAV.href}
+            label={SEARCH_NAV.label}
+            active={pathname.startsWith(SEARCH_NAV.href)}
+          >
+            <SearchIcon />
+          </IconLink>
+        </span>
+
+        <IconLink
+          href={HOME_NAV.href}
+          label={HOME_NAV.label}
+          /*
+            EXACT match, not startsWith. "/dashboard" is a prefix of nothing
+            today, but the rail learned this the hard way with "/admin" lighting
+            fifteen pages at once, and the cheap version of that lesson is to
+            write the exact test the first time.
+          */
+          active={pathname === HOME_NAV.href}
+        >
+          <HomeIcon />
+        </IconLink>
+
+        {/* Bug sits before Notifications per the locked spec's order. Still
+            drops below sm — a glyph nobody taps on a phone. */}
         <span className="hidden sm:contents">
           <IconLink href="/support/bug" label="Report a bug">
             <BugIcon />
           </IconLink>
         </span>
+
+        {/*
+          NO COUNT ON THE BELL, deliberately. The notifications backend is not
+          built; the page renders an empty state and its own comment says the
+          bell carries no badge "because a '0' badge asserts something we
+          haven't checked and a fake number is worse than none". The badge ships
+          with the feed, in one change, when there is a number behind it.
+        */}
+        <IconLink
+          href={NOTIFICATIONS_NAV.href}
+          label={NOTIFICATIONS_NAV.label}
+          active={pathname.startsWith(NOTIFICATIONS_NAV.href)}
+        >
+          <BellIcon />
+        </IconLink>
+
+        {/* The account menu — the ONE home for Sign Out (locked spec). */}
+        <AccountMenu isAdmin={isAdmin} />
       </div>
     </header>
   );
@@ -100,17 +244,27 @@ function IconLink({
   href,
   label,
   children,
+  active = false,
 }: {
   href: string;
   label: string;
   children: React.ReactNode;
+  /** Current page. Marks `aria-current` as well as tinting — the highlight has
+   *  to survive for someone who cannot see the tint. */
+  active?: boolean;
 }) {
   return (
     <Link
       href={href}
       aria-label={label}
       title={label}
-      className="grid h-9 w-9 place-items-center rounded-full text-ink-2 transition-colors hover:bg-black/[0.04] hover:text-ink"
+      aria-current={active ? "page" : undefined}
+      className={
+        "grid h-9 w-9 place-items-center rounded-full transition-colors " +
+        (active
+          ? "bg-magenta/10 text-magenta"
+          : "text-ink-2 hover:bg-black/[0.04] hover:text-ink")
+      }
     >
       {children}
     </Link>
@@ -119,6 +273,42 @@ function IconLink({
 
 /* One inline SVG rather than an icon dependency. */
 const S = { width: 18, height: 18, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+
+function SearchIcon() {
+  return (
+    <svg {...S} className="shrink-0">
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-3.2-3.2" />
+    </svg>
+  );
+}
+
+function CalendarIcon() {
+  return (
+    <svg {...S} width={15} height={15}>
+      <rect x="3" y="4.5" width="18" height="16" rx="2" />
+      <path d="M3 9.5h18M8 2.5v4M16 2.5v4" />
+    </svg>
+  );
+}
+
+function HomeIcon() {
+  return (
+    <svg {...S}>
+      <path d="M3 10.5 12 3l9 7.5" />
+      <path d="M5.5 9.5V20h13V9.5" />
+    </svg>
+  );
+}
+
+function BellIcon() {
+  return (
+    <svg {...S}>
+      <path d="M18 9a6 6 0 1 0-12 0c0 5-2 6-2 6h16s-2-1-2-6" />
+      <path d="M13.7 20a2 2 0 0 1-3.4 0" />
+    </svg>
+  );
+}
 
 function BugIcon() {
   return (

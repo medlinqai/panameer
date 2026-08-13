@@ -3,7 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MARKETING_NAV, Btn } from "@/components/marketing/brand";
+import {
+  MARKETING_NAV,
+  MARKETING_PROVIDER_DOOR,
+  Btn,
+} from "@/components/marketing/brand";
 import { Logo } from "@/components/Logo";
 
 /**
@@ -46,11 +50,16 @@ export function MarketingHeader() {
     Prefix match, not equality, so /learn/<path>/<lesson> still lights "Learn".
 
     ⚠ AN ANCHOR IS NEVER "THE CURRENT PAGE". Pricing and Enterprise are
-    `/#value` and `/#punchout` — sections of the buyer page, not pages. Stripping
-    the hash and comparing paths marked all three of Hire Talent, Pricing and
-    Enterprise active on `/` at once, which is three answers to a question that
-    has one. Hash hrefs are excluded outright; `aria-current="page"` is a claim
-    about the document, and a jump link inside it is not a different document.
+    `/hire-talent#value` and `/hire-talent#punchout` — sections of a page, not
+    pages. Stripping the hash and comparing paths marked all three of Hire
+    Talent, Pricing and Enterprise active at once, which is three answers to a
+    question that has one. Hash hrefs are excluded outright; `aria-current` is
+    a claim about the document, and a jump link inside it is not a different
+    document.
+
+    (Those two hrefs pointed at `/#…` until brief_public_pages_ia moved the
+    sections to /hire-talent. The exclusion below is what kept the bad state
+    from ALSO lighting up the home while they were stale.)
   */
   const pathname = usePathname();
   const isActive = (href: string) => {
@@ -116,6 +125,29 @@ export function MarketingHeader() {
         <nav className="hidden flex-1 justify-center gap-7 text-[15px] font-semibold text-ink-2 md:flex lg:gap-[34px]">
           {MARKETING_NAV.map((item, i) => {
             const on = isActive(item.href);
+            /*
+              ASSESS IS THE PRIMARY NAV ITEM — a MAGENTA WORD, not a filled pill
+              (WS-0, Scott 2026-08-13). It shipped as a solid magenta button and
+              was over-emphasised: pink is reserved for small accents, and a
+              filled pill inside a row of six plain words is a large fill by any
+              reading. Same shape and size as its neighbours now; the colour and
+              the weight carry the emphasis.
+
+              It still carries `aria-current` when it is the current page — a
+              screen reader should hear location, not just a call to action.
+            */
+            if (item.primary) {
+              return (
+                <Link
+                  key={`${item.label}-${i}`}
+                  href={item.href}
+                  aria-current={on ? "page" : undefined}
+                  className="whitespace-nowrap font-bold text-magenta transition-colors hover:text-magenta-dark"
+                >
+                  {item.label}
+                </Link>
+              );
+            }
             return (
               <Link
                 key={`${item.label}-${i}`}
@@ -130,6 +162,22 @@ export function MarketingHeader() {
               </Link>
             );
           })}
+
+          {/*
+            The seller door, set apart from the six. Kept visible so the public
+            site is not buyer-only — losing "Find Work" from the nav would
+            otherwise have hidden the provider side entirely.
+          */}
+          <Link
+            href={MARKETING_PROVIDER_DOOR.href}
+            aria-current={isActive(MARKETING_PROVIDER_DOOR.href) ? "page" : undefined}
+            className={
+              "whitespace-nowrap border-l border-line pl-7 transition-colors hover:text-magenta lg:pl-[34px] " +
+              (isActive(MARKETING_PROVIDER_DOOR.href) ? "font-bold text-magenta" : "")
+            }
+          >
+            {MARKETING_PROVIDER_DOOR.label}
+          </Link>
         </nav>
 
         {/*
@@ -148,7 +196,7 @@ export function MarketingHeader() {
             colour, a border, and the secondary half of the button standard
             beside Sign Up's solid primary.
           */}
-          <Btn href="/login" variant="ghost">
+          <Btn href="/login" variant="white">
             Log In
           </Btn>
           <Btn href="/join">Sign Up</Btn>
@@ -176,16 +224,37 @@ export function MarketingHeader() {
                   onClick={() => setOpen(false)}
                   aria-current={on ? "page" : undefined}
                   className={
-                    "rounded-lg px-2 py-2 hover:bg-bg-soft hover:text-magenta " +
-                    (on ? "font-bold text-magenta" : "")
+                    // Assess is the magenta WORD in the drawer too. It was a
+                    // filled magenta block here; the same "no large fills"
+                    // rule applies, and a phone-width block is the largest
+                    // fill on the page.
+                    item.primary
+                      ? "rounded-lg px-2 py-2 font-bold text-magenta hover:bg-bg-soft"
+                      : "rounded-lg px-2 py-2 hover:bg-bg-soft hover:text-magenta " +
+                        (on ? "font-bold text-magenta" : "")
                   }
                 >
                   {item.label}
                 </Link>
               );
             })}
+            <Link
+              href={MARKETING_PROVIDER_DOOR.href}
+              onClick={() => setOpen(false)}
+              aria-current={
+                isActive(MARKETING_PROVIDER_DOOR.href) ? "page" : undefined
+              }
+              className={
+                "mt-1 rounded-lg border-t border-line px-2 pb-2 pt-3 hover:text-magenta " +
+                (isActive(MARKETING_PROVIDER_DOOR.href)
+                  ? "font-bold text-magenta"
+                  : "")
+              }
+            >
+              {MARKETING_PROVIDER_DOOR.label}
+            </Link>
             <div className="mt-2 flex items-center gap-3 border-t border-line pt-3">
-              <Btn href="/login" variant="ghost">
+              <Btn href="/login" variant="white">
                 Log In
               </Btn>
               <Btn href="/join" className="ml-auto">
