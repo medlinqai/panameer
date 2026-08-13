@@ -1,3 +1,4 @@
+import { MarketingHeader } from "@/components/marketing/MarketingHeader";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { POLICIES, findPolicy } from "@/lib/policies";
@@ -29,6 +30,10 @@ export default async function PolicyPage({
   if (!policy) notFound();
 
   return (
+    <>
+      {/* Public content -> the public nav (WS-B). This route rendered no
+          chrome at all, so a policy opened from a footer link was a dead end. */}
+      <MarketingHeader />
     <main className="min-h-screen bg-white px-6 py-12 font-body text-ink">
       <div className="mx-auto max-w-2xl">
         <h1 className="font-display text-[32px] font-bold tracking-[-0.6px]">
@@ -63,5 +68,6 @@ export default async function PolicyPage({
         </div>
       </div>
     </main>
+    </>
   );
 }

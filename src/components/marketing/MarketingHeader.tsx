@@ -3,7 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MARKETING_NAV, Btn } from "@/components/marketing/brand";
+import {
+  MARKETING_NAV,
+  MARKETING_PROVIDER_DOOR,
+  Btn,
+} from "@/components/marketing/brand";
 import { Logo } from "@/components/Logo";
 
 /**
@@ -121,6 +125,28 @@ export function MarketingHeader() {
         <nav className="hidden flex-1 justify-center gap-7 text-[15px] font-semibold text-ink-2 md:flex lg:gap-[34px]">
           {MARKETING_NAV.map((item, i) => {
             const on = isActive(item.href);
+            /*
+              ASSESS IS THE PRIMARY CTA (nav model 2026-08-12) — a magenta
+              button, not a grey link. The home IS the assessment front door, so
+              the one free thing a cold visitor can do should not be the third
+              indistinguishable word in a row of six.
+
+              It still carries `aria-current` when it is the current page: it is
+              a nav item that happens to be styled as a button, and a screen
+              reader should hear location, not just a call to action.
+            */
+            if (item.primary) {
+              return (
+                <Link
+                  key={`${item.label}-${i}`}
+                  href={item.href}
+                  aria-current={on ? "page" : undefined}
+                  className="-my-1.5 whitespace-nowrap rounded-full bg-magenta px-5 py-2 font-bold text-white transition-colors hover:bg-magenta-dark"
+                >
+                  {item.label}
+                </Link>
+              );
+            }
             return (
               <Link
                 key={`${item.label}-${i}`}
@@ -135,6 +161,22 @@ export function MarketingHeader() {
               </Link>
             );
           })}
+
+          {/*
+            The seller door, set apart from the six. Kept visible so the public
+            site is not buyer-only — losing "Find Work" from the nav would
+            otherwise have hidden the provider side entirely.
+          */}
+          <Link
+            href={MARKETING_PROVIDER_DOOR.href}
+            aria-current={isActive(MARKETING_PROVIDER_DOOR.href) ? "page" : undefined}
+            className={
+              "whitespace-nowrap border-l border-line pl-7 transition-colors hover:text-magenta lg:pl-[34px] " +
+              (isActive(MARKETING_PROVIDER_DOOR.href) ? "font-bold text-magenta" : "")
+            }
+          >
+            {MARKETING_PROVIDER_DOOR.label}
+          </Link>
         </nav>
 
         {/*
@@ -181,14 +223,33 @@ export function MarketingHeader() {
                   onClick={() => setOpen(false)}
                   aria-current={on ? "page" : undefined}
                   className={
-                    "rounded-lg px-2 py-2 hover:bg-bg-soft hover:text-magenta " +
-                    (on ? "font-bold text-magenta" : "")
+                    // Assess keeps its primary treatment in the drawer too —
+                    // a CTA that demotes itself on a phone is not the CTA.
+                    item.primary
+                      ? "rounded-lg bg-magenta px-3 py-2.5 text-center font-bold text-white"
+                      : "rounded-lg px-2 py-2 hover:bg-bg-soft hover:text-magenta " +
+                        (on ? "font-bold text-magenta" : "")
                   }
                 >
                   {item.label}
                 </Link>
               );
             })}
+            <Link
+              href={MARKETING_PROVIDER_DOOR.href}
+              onClick={() => setOpen(false)}
+              aria-current={
+                isActive(MARKETING_PROVIDER_DOOR.href) ? "page" : undefined
+              }
+              className={
+                "mt-1 rounded-lg border-t border-line px-2 pb-2 pt-3 hover:text-magenta " +
+                (isActive(MARKETING_PROVIDER_DOOR.href)
+                  ? "font-bold text-magenta"
+                  : "")
+              }
+            >
+              {MARKETING_PROVIDER_DOOR.label}
+            </Link>
             <div className="mt-2 flex items-center gap-3 border-t border-line pt-3">
               <Btn href="/login" variant="ghost">
                 Log In

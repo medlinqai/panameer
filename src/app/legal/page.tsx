@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Logo } from "@/components/Logo";
+import { MarketingHeader } from "@/components/marketing/MarketingHeader";
 import { LEGAL_UPDATED } from "@/content/legal/meta";
 import { SUPPLEMENTS } from "@/content/legal/supplements";
 import { GROUPS, SUPPLEMENT_META, type SupplementGroup } from "@/content/legal/supplement-meta";
@@ -59,11 +59,8 @@ export default function LegalIndexPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-white font-body text-ink">
-      <header className="border-b border-line">
-        <div className="mx-auto flex w-full max-w-[1180px] items-center px-6 py-5">
-          <Logo priority />
-        </div>
-      </header>
+      {/* Public content -> the public nav (WS-B), not a bare wordmark. */}
+      <MarketingHeader />
 
       <div className="mx-auto flex w-full max-w-[1180px] flex-1 flex-col gap-10 px-6 py-12 lg:flex-row lg:gap-12">
         <aside className="order-2 w-full shrink-0 border-t border-line pt-8 lg:order-1 lg:w-[248px] lg:border-0 lg:pt-0">

@@ -286,7 +286,7 @@ export const PROVIDER_NAV: NavItem[] = [
     requires: "canProvideServices",
   },
   {
-    label: "Sell My Services",
+    label: "Create Packages",
     href: "/settings/packages",
     icon: "Tag",
     requires: "canProvideServices",
@@ -383,6 +383,31 @@ function holds(me: Me, capability: Capability): boolean {
 }
 
 /**
+ * USER CLASS -> MENU. The ONE place this mapping is made.
+ *
+ *   Service Seller (provider) -> PROVIDER_NAV
+ *   Service Buyer  (requester) -> REQUESTER_NAV
+ *
+ * Centralized per brief_nav_casing_consistency WS-C so no component re-derives
+ * it. There is exactly one caller today (`navForRoles`), and that is the point:
+ * the moment a second surface needs "which menu does this person get", it calls
+ * this instead of writing the ternary again — which is how two surfaces end up
+ * disagreeing about who is a seller.
+ *
+ * SOMEBODY WHO IS BOTH SEES THE PROVIDER MENU. They are standing in the
+ * provider console, and a merged rail of twelve items across two jobs would
+ * answer neither question. Switching consoles is the persona menu's job.
+ *
+ * ⚠ STILL ROLE-FLAG BASED, deliberately. The brief maps this to USER_CLASS, and
+ * `USER_CLASS`/`USER_JOB` are not in the schema yet (see the note further up
+ * this file). Until they land, `isServiceProvider` IS the class signal — and
+ * when they do land, this function is the only thing that changes.
+ */
+export function menuForUserClass(me: Me): NavItem[] {
+  return me.person.roles.isServiceProvider ? PROVIDER_NAV : REQUESTER_NAV;
+}
+
+/**
  * The signed-in nav: base items, then whatever the viewer's capabilities add.
  * Deduped by href — a rail listing the same route twice looks broken.
  */
@@ -399,7 +424,7 @@ export function navForRoles(me: Me | null): NavItem[] {
     `seen` still de-dupes, because the two rails share Start Learning, Manage
     Work and Community by design.
   */
-  const source = me.person.roles.isServiceProvider ? PROVIDER_NAV : REQUESTER_NAV;
+  const source = menuForUserClass(me);
   for (const item of source) {
     if (item.requires && !holds(me, item.requires)) continue;
     if (seen.has(item.href)) continue;

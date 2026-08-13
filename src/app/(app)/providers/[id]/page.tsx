@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ProviderProfileViewPage } from "@/components/profile/ProviderProfileView";
 import { getProviderProfileView } from "@/lib/provider-profile-view";
@@ -108,23 +107,22 @@ export default async function PublicProviderPage({
         </div>
       )}
 
-      <header className="sticky top-0 z-40 border-b border-line bg-white/85 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-6xl items-center px-4 sm:px-6">
-          <Link href="/" className="font-display text-lg font-bold tracking-tight">
-            Panameer
-          </Link>
-          {/*
-            Was "Sign in". Nobody unauthenticated reaches this page any more, so
-            that link could only ever have told a signed-in reader to sign in.
-          */}
-          <Link
-            href="/explore?mode=hire"
-            className="ml-auto text-sm font-semibold text-ink-2 hover:text-magenta"
-          >
-            Browse Experts
-          </Link>
-        </div>
-      </header>
+      {/*
+        THE BESPOKE HEADER IS GONE (brief_nav_casing_consistency WS-B).
+
+        This page carried its own sticky bar — a "Panameer" wordmark linking
+        home and a "Browse Experts" link. That was a third menu: not the
+        marketing header, not the casing, just for this route. The page now
+        lives inside the (app) route group, so AppShell supplies the rail,
+        header and footer like every other authenticated page.
+
+        THE URL IS UNCHANGED. `(app)` is a route group and adds no segment, so
+        /providers/[id] still resolves here — no redirect, no broken links.
+
+        AUTHED, per Scott: it stays behind login, which is what keeps E049
+        closed. /explore masks to first names precisely so nobody can walk from
+        a teaser to a surname, and this page renders the full profile.
+      */}
 
       {/*
         No wrapper container: `ProviderProfileViewPage` brings its own max-w-6xl
