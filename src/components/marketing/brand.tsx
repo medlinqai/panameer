@@ -83,7 +83,16 @@ const BASE =
   "inline-flex items-center justify-center gap-2 rounded-full px-[22px] py-3 " +
   "text-[15px] font-bold transition-colors cursor-pointer";
 
-/** Brand button. `magenta` = primary CTA, `ghost` = secondary outline. */
+/**
+ * Brand button. `magenta` = primary CTA, `ghost` = secondary outline,
+ * `white` = a filled white control on a light surface.
+ *
+ * `white` exists for the public header's Log In (WS-0, 2026-08-13). It is NOT
+ * `ghost` with a background bolted on via className: `ghost` sets
+ * `bg-transparent`, and `bg-white` passed through className would tie with it
+ * on specificity and be decided by whichever utility Tailwind happens to emit
+ * later — a coin flip written as CSS. A variant settles it in one place.
+ */
 export function Btn({
   children,
   href,
@@ -93,14 +102,16 @@ export function Btn({
 }: {
   children: ReactNode;
   href?: string;
-  variant?: "magenta" | "ghost";
+  variant?: "magenta" | "ghost" | "white";
   className?: string;
   type?: "button" | "submit";
 }) {
   const tone =
     variant === "magenta"
       ? "bg-magenta text-white hover:bg-magenta-dark"
-      : "border-[1.5px] border-line text-ink hover:border-[#d9d4e2] bg-transparent";
+      : variant === "white"
+        ? "border-[1.5px] border-line bg-white text-ink hover:border-[#d9d4e2] hover:bg-bg-soft"
+        : "border-[1.5px] border-line text-ink hover:border-[#d9d4e2] bg-transparent";
   const cls = `${BASE} ${tone} ${className}`;
 
   if (href) {

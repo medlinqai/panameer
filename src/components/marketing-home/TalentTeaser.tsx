@@ -13,10 +13,11 @@ import type { TeaserProvider } from "@/lib/explore";
  * so both surfaces render one component.
  *
  * That is worth more than consistency. The card enforces a privacy rule:
- * `TeaserProvider` has no surname field at all, and the CTA routes to a login
- * gate rather than to /providers/[id], because that route renders the full
- * profile (E032). A lookalike built to match the mockup's markup would have
- * inherited the LOOK and none of the rule.
+ * `TeaserProvider` has no surname field at all, and every route out of the card
+ * goes through the login gate rather than straight at /providers/[id], which
+ * renders the full profile (E032; the route is itself gated now). A lookalike
+ * built to match the mockup's markup would have inherited the LOOK and none of
+ * the rule.
  *
  * ⚠ THE PERSON IS FICTIONAL. "Alexandra Chen" is the mockup's sample persona
  * and the photo is a stock headshot from the design folder. No such provider
@@ -39,8 +40,17 @@ import type { TeaserProvider } from "@/lib/explore";
 const SAMPLE: TeaserProvider = {
   id: "sample",
   firstName: "Alexandra",
+  /*
+    WS-2: the title is what a specialty of "Oracle Cloud & AI Transformation"
+    derives to on a real card. `headline` keeps the mockup's free-text line so
+    the fallback path is represented too.
+  */
+  title: "Oracle Cloud & AI Transformation Expert",
   headline: "AI-Enabled Oracle Cloud & Enterprise Systems Expert",
   location: "New York, United States",
+  university: "Wharton School",
+  employerCount: 4,
+  projectCount: 12,
   skills: ["Oracle Cloud", "AI Strategy", "Procure-to-Pay"],
   rate: "$225/hr",
   validated: true,
@@ -77,7 +87,18 @@ export function TalentTeaser() {
           it sits on this section the same way it sits on /explore.
         */}
         <div className="rcard-slot">
-          <ProviderCard p={SAMPLE} loginHref="/hire-talent" />
+          {/*
+            `profileHref` is /hire-talent, NOT /providers/sample. Alexandra is
+            fictional and has no profile; pointing her name at a profile URL
+            would be the one dishonest link on the page. Browsing the real
+            roster is the truthful next step from a sample card, and it is
+            where the section's own CTA goes.
+          */}
+          <ProviderCard
+            p={SAMPLE}
+            loginHref="/hire-talent"
+            profileHref="/hire-talent"
+          />
         </div>
       </div>
     </section>

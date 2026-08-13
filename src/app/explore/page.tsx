@@ -115,7 +115,21 @@ export default async function ExplorePage({
               <div className="mt-9 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
                 {hiring
                   ? (cards as TeaserProvider[]).map((p) => (
-                      <ProviderCard key={p.id} p={p} loginHref={loginHref} />
+                      <ProviderCard
+                        key={p.id}
+                        p={p}
+                        loginHref={loginHref}
+                        /*
+                          WS-2 — the name goes to the PROFILE, through the gate.
+                          /providers/[id] is authed now (307 -> /login), so
+                          linking a logged-out visitor straight at it would
+                          bounce them and lose the destination. Naming it as the
+                          callback means the gate costs a sign-in, not the click.
+                        */
+                        profileHref={`/login?callbackUrl=${encodeURIComponent(
+                          `/providers/${p.id}`
+                        )}`}
+                      />
                     ))
                   : (cards as TeaserWork[]).map((w) => (
                       <WorkCard key={w.id} w={w} loginHref={loginHref} />

@@ -4,6 +4,7 @@ import { HomeHero } from "@/components/marketing-home/HomeHero";
 import { DashboardShot } from "@/components/marketing-home/DashboardShot";
 import { LogoRibbon } from "@/components/marketing-home/LogoRibbon";
 import { MethodologyRing } from "@/components/marketing-home/MethodologyRing";
+import { ErpPackages } from "@/components/marketing-home/ErpPackages";
 import { CapabilityFramework } from "@/components/marketing-home/CapabilityFramework";
 import { TalentTeaser } from "@/components/marketing-home/TalentTeaser";
 import { Testimonials } from "@/components/marketing-home/Testimonials";
@@ -83,9 +84,29 @@ export default function Home() {
       <div className="pm-home">
         <HomeHero />
         <DashboardShot />
+        {/*
+          WS-4 — THE FRAMEWORK MOVED UP, directly under the product-shot. The
+          shot IS an AI Maturity Dashboard and this section explains the
+          maturity assessment that fills it, so the two now tell "here is the
+          dashboard / here is how the assessment behind it works" in one place
+          instead of with four sections between them.
+
+          They do NOT read as duplicates, which was the thing to watch: the
+          product-shot is one worked example (Ingrao Dental, with figures), and
+          the framework is the process — capability domains and the four
+          P2P/O2C/R2R/H2R lenses, no client. Different objects, adjacent on
+          purpose. Reorder only; neither section is restyled or reworded.
+        */}
+        <CapabilityFramework />
         <LogoRibbon />
         <MethodologyRing />
-        <CapabilityFramework />
+        {/*
+          WS-3 sits after the method and before the talent (Scott's slot): the
+          page has just explained HOW Panameer works, so packaged ERP solutions
+          are the first concrete thing you can buy, and the people who build
+          them follow.
+        */}
+        <ErpPackages />
         <TalentTeaser />
         <Testimonials />
         <HomeFooter />

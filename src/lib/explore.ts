@@ -21,12 +21,13 @@ import { formatRate } from "@/lib/types";
  * the surname and how to reach them are what the account, and eventually the
  * engagement, unlock.
  *
- * ⚠ MASKING HERE IS ONLY AS STRONG AS THE PAGES AROUND IT. `/providers/[id]`
- * is a public route today and renders the full profile — surname included — to
- * anyone. So the teaser cards deliberately do NOT deep-link to it: their CTA
- * goes through /login. Until that page is gated too, the masking is a
- * convention this file keeps rather than a boundary the system enforces, and
- * the walk report says so.
+ * ✅ MASKING IS NOW ENFORCED EITHER SIDE. This used to read "as strong as the
+ * pages around it": `/providers/[id]` was a public route rendering the full
+ * profile, so the teaser cards could not deep-link to it and the masking was a
+ * convention rather than a boundary. `brief_fix_pages_four_navs` gated that
+ * route (verified: 307 -> /login logged out), so a teaser card CAN now point a
+ * name at a profile — the gate is the system's, not this file's. Public callers
+ * still route through /login with a callback so the click is not lost.
  *
  * VISIBILITY IS `marketplaceVisibleWhere()`, the same predicate the authed
  * directory and the public profile use. One definition of "discoverable", so a
@@ -38,7 +39,20 @@ export type TeaserProvider = {
   id: string;
   /** MASKED: first name only, capitalized (E006). */
   firstName: string;
+  /**
+   * The card's one-line title, DERIVED from the primary Specialty (WS-2) —
+   * "Oracle Cloud Expert", not whatever the provider typed. `headline` is
+   * free text and free text is unregulated; the specialty comes from the
+   * catalog, so every card makes a claim of the same size.
+   */
+  title: string;
+  /** Free text. Still carried for the fallback when there is no specialty. */
   headline: string;
+  /** Headline school, cleaned. Null when no education row names one. */
+  university: string | null;
+  /** Real counts. Both zero => the card shows "New to Panameer" instead. */
+  employerCount: number;
+  projectCount: number;
   /** "Chicago, United States", or null when the seeded address has no city. */
   location: string | null;
   skills: string[];
@@ -113,6 +127,21 @@ export async function searchProvidersTeaser(
         rate_max_cents: true,
         currency: true,
         validation_status: true,
+        /*
+          WS-2 pedigree. `_count` rather than fetching the rows: the card shows
+          "8 Employers", so the number IS the payload — pulling eight employer
+          records to call `.length` on them would ship the provider's work
+          history to an anonymous visitor to render one digit.
+        */
+        _count: { select: { employers: true, projects: true } },
+        specializations: {
+          select: {
+            specialization: {
+              select: { name: true, kind: true, sort_order: true },
+            },
+          },
+        },
+        education: { select: { institution: true } },
         // NOTE the absence of `last_name`. See the header comment.
         person: {
           select: {
@@ -144,7 +173,14 @@ export async function searchProvidersTeaser(
       return {
         id: p.id,
         firstName: capitalizeName(p.person.first_name),
+        title: specialtyTitle(
+          p.specializations.map((s) => s.specialization),
+          p.headline
+        ),
         headline: p.headline,
+        university: headlineSchool(p.education.map((e) => e.institution)),
+        employerCount: p._count.employers,
+        projectCount: p._count.projects,
         location: formatLocation(addr?.city, addr?.country),
         skills: p.skills.map((s) => s.skill.name),
         rate: rateLabel(
@@ -256,4 +292,73 @@ function rateLabel(
     return lo && hi ? `${lo}–${hi}` : null;
   }
   return formatRate(min ?? max ?? single, currency);
+}
+
+
+/**
+ * The card title, from the provider's primary Specialty (WS-2).
+ *
+ * "PRIMARY" IS THE LOWEST-SORTED PRODUCT, and that is a stand-in. Providers
+ * multi-select specializations and nothing marks one as primary, so there is no
+ * stored answer to read. PRODUCT-kind is the right family (the thing they work
+ * ON — Oracle Cloud, PeopleSoft — rather than a methodology or a sector), and
+ * `sort_order` is the catalog's own priority: the xlsx pins ERP above AI above
+ * the rest, so the lowest number is the most load-bearing system they claim.
+ * Deterministic, and it stops being a guess the moment a `primary` flag exists.
+ *
+ * Measured on the 23 marketplace-visible profiles: 17 have a PRODUCT
+ * specialization, 6 do not. Those 6 fall back to the free-text headline rather
+ * than rendering an empty title — a blank line is worse than unregulated text.
+ *
+ * "Expert" is not appended when the specialty already ends in a role noun.
+ * "Oracle Cloud" -> "Oracle Cloud Expert"; a specialty someone named
+ * "…Consultant" is not turned into "…Consultant Expert".
+ */
+const ROLE_NOUN = /\b(expert|consultant|specialist|architect|engineer|advisor|analyst|lead|manager|director)$/i;
+
+function specialtyTitle(
+  specs: { name: string; kind: string; sort_order: number }[],
+  headline: string
+): string {
+  const primary = specs
+    .filter((s) => s.kind === "PRODUCT")
+    .sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name))[0];
+  if (!primary) return headline;
+  const name = primary.name.trim();
+  return ROLE_NOUN.test(name) ? name : `${name} Expert`;
+}
+
+/**
+ * The headline school — and mostly, a filter for what is NOT one.
+ *
+ * ⚠ `Education.institution` IS DIRTY, and this is the honest response to it
+ * rather than a workaround worth hiding. The AI résumé parser has been writing
+ * degrees into the institution column: across the 23 visible profiles the
+ * column holds "Bachelor of Arts in Accounting", "Business Administration",
+ * "Chartered Institute of Management Accountants", "Attended University of
+ * South Florida - Tampa", and "San Diego State University  •  3.72 GPA".
+ * Taking `education[0].institution` would have printed "Bachelor of Arts in
+ * Accounting" on a public card under a graduation-cap icon.
+ *
+ * So: only rows that NAME a school qualify, the "Attended " prefix and any
+ * trailing "• 3.72 GPA" fragment are stripped, and a profile with nothing
+ * school-shaped simply omits the item. 16 of 23 match; the other 7 show two
+ * pedigree items instead of three, which is the truth about their data.
+ *
+ * The real fix is upstream in the parser, not here. Flagged, not silently
+ * papered over — this function is the paper.
+ */
+const SCHOOL_NAME = /universit|college|\bschool\b|academy|polytechnic|institute of technology/i;
+
+function headlineSchool(institutions: string[]): string | null {
+  const hit = institutions.find((i) => i && SCHOOL_NAME.test(i));
+  if (!hit) return null;
+  return (
+    hit
+      .replace(/^\s*attended\s+/i, "")
+      // "San Diego State University  •  3.72 GPA" -> the school
+      .split(/\s*[•|]\s*/)[0]
+      .replace(/\s*[-–]\s*$/, "")
+      .trim() || null
+  );
 }

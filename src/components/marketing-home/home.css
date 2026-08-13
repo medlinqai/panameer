@@ -217,12 +217,20 @@
 .pm-home .donut-legend .lg b{color:var(--ink);font-size:13px}
 .pm-home .swatch{width:9px;height:9px;border-radius:50%;display:inline-block}
 .pm-home /* LOGO STRIP */
-  .logos{background:var(--mag)}
+  /*
+  DARK BAND, NOT A MAGENTA ONE (WS-1, 2026-08-13). A full-bleed magenta fill is
+  the largest block of pink on the page and the rule is now "pink = small
+  accents only". Same 133deg dark-top-left direction as the hero card, so the
+  two dark surfaces read as the same material rather than two unrelated dark
+  sections.
+*/
+  .logos{background:linear-gradient(133deg,#150c28 0%,#241540 100%)}
 .pm-home .logos .wrap{padding:15px 32px}
 .pm-home .logos .eyebrow-c{text-align:center;color:rgba(255,255,255,.85);font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:600;margin-bottom:24px}
 .pm-home .logos .row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:26px}
 .pm-home .logos .co{display:flex;align-items:center;gap:10px;color:#fff;font-family:var(--font-display);font-weight:700;font-size:21px;letter-spacing:-.3px}
-.pm-home .logos .co svg{width:26px;height:26px;flex-shrink:0}
+/* The glyph is the accent — 26px of magenta each, which is what "small" means. */
+.pm-home .logos .co svg{width:26px;height:26px;flex-shrink:0;color:var(--mag)}
 .pm-home /* PROCESS / CIRCLE */
   section.block{padding:96px 0}
 .pm-home .center{text-align:center;max-width:720px;margin:0 auto}
@@ -373,6 +381,39 @@
 .pm-home .hero-card .wrap{padding:0 20px}
 .pm-home .stats{justify-content:flex-start}
   }
+.pm-home /* ===== EXTEND YOUR ERP — example packages (WS-3, 2026-08-13) ===== */
+  /*
+    A LIGHT section, deliberately, and it sits between two dark-ish surfaces
+    (the ring's white and the talent teaser's ink band). Pink appears only as
+    the icon stroke and its 10% tint square; the one filled magenta element is
+    the CTA, which is what the accent rule reserves the fill for.
+  */
+  .erp{background:linear-gradient(180deg,#fbfaff 0%,#fff 70%);padding:74px 0 80px;border-top:1px solid var(--line)}
+/*
+  900, not 760. The headline's own line break is after "…Your ERP", and at 760
+  the measured line ran ~796px — so it wrapped a second time and left "ERP"
+  alone on a line, turning a two-line heading into three with an orphan. The
+  paragraph keeps a real reading measure of its own rather than inheriting the
+  wider one.
+*/
+.pm-home .erp-head{max-width:900px}
+.pm-home .erp-head h2{font-size:40px;color:var(--ink);font-weight:700;letter-spacing:-.5px;margin:12px 0 16px;line-height:1.12}
+.pm-home .erp-head p{color:var(--muted);font-size:17px;line-height:1.6;max-width:760px}
+.pm-home .erp-head strong{color:var(--text);font-weight:600}
+.pm-home .erp-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;margin-top:38px}
+.pm-home .erp-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px 22px 26px;box-shadow:0 18px 40px -32px rgba(23,30,62,.4);transition:border-color .18s,transform .18s}
+.pm-home .erp-card:hover{border-color:var(--mag);transform:translateY(-2px)}
+.pm-home .erp-ico{display:flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:11px;background:rgba(215,44,214,.1);color:var(--mag);margin-bottom:16px}
+.pm-home .erp-ico svg{width:21px;height:21px}
+.pm-home .erp-card h3{font-size:17.5px;color:var(--ink);font-weight:700;letter-spacing:-.2px;margin-bottom:8px}
+.pm-home .erp-card p{color:var(--muted);font-size:14.5px;line-height:1.55}
+.pm-home .erp-foot{display:flex;align-items:center;gap:22px;flex-wrap:wrap;margin-top:34px}
+.pm-home .erp-foot p{color:var(--muted);font-size:15px;font-style:italic;margin:0}
+.pm-home .erp-foot .btn{margin-left:auto}
+@media(max-width:1000px){.pm-home .erp-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:620px){.pm-home .erp-grid{grid-template-columns:1fr}
+.pm-home .erp-head h2{font-size:30px}
+.pm-home .erp-foot .btn{margin-left:0}}
 .pm-home /* ===== PROJECT TRACKER ===== */
   .trk-sec{background:linear-gradient(180deg,#fbfaff 0%,#fff 62%);padding:74px 0 82px;border-top:1px solid var(--line)}
 .pm-home .trk-head{display:flex;align-items:flex-end;justify-content:space-between;gap:28px;flex-wrap:wrap;margin-bottom:30px}

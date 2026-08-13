@@ -126,14 +126,15 @@ export function MarketingHeader() {
           {MARKETING_NAV.map((item, i) => {
             const on = isActive(item.href);
             /*
-              ASSESS IS THE PRIMARY CTA (nav model 2026-08-12) — a magenta
-              button, not a grey link. The home IS the assessment front door, so
-              the one free thing a cold visitor can do should not be the third
-              indistinguishable word in a row of six.
+              ASSESS IS THE PRIMARY NAV ITEM — a MAGENTA WORD, not a filled pill
+              (WS-0, Scott 2026-08-13). It shipped as a solid magenta button and
+              was over-emphasised: pink is reserved for small accents, and a
+              filled pill inside a row of six plain words is a large fill by any
+              reading. Same shape and size as its neighbours now; the colour and
+              the weight carry the emphasis.
 
-              It still carries `aria-current` when it is the current page: it is
-              a nav item that happens to be styled as a button, and a screen
-              reader should hear location, not just a call to action.
+              It still carries `aria-current` when it is the current page — a
+              screen reader should hear location, not just a call to action.
             */
             if (item.primary) {
               return (
@@ -141,7 +142,7 @@ export function MarketingHeader() {
                   key={`${item.label}-${i}`}
                   href={item.href}
                   aria-current={on ? "page" : undefined}
-                  className="-my-1.5 whitespace-nowrap rounded-full bg-magenta px-5 py-2 font-bold text-white transition-colors hover:bg-magenta-dark"
+                  className="whitespace-nowrap font-bold text-magenta transition-colors hover:text-magenta-dark"
                 >
                   {item.label}
                 </Link>
@@ -195,7 +196,7 @@ export function MarketingHeader() {
             colour, a border, and the secondary half of the button standard
             beside Sign Up's solid primary.
           */}
-          <Btn href="/login" variant="ghost">
+          <Btn href="/login" variant="white">
             Log In
           </Btn>
           <Btn href="/join">Sign Up</Btn>
@@ -223,10 +224,12 @@ export function MarketingHeader() {
                   onClick={() => setOpen(false)}
                   aria-current={on ? "page" : undefined}
                   className={
-                    // Assess keeps its primary treatment in the drawer too —
-                    // a CTA that demotes itself on a phone is not the CTA.
+                    // Assess is the magenta WORD in the drawer too. It was a
+                    // filled magenta block here; the same "no large fills"
+                    // rule applies, and a phone-width block is the largest
+                    // fill on the page.
                     item.primary
-                      ? "rounded-lg bg-magenta px-3 py-2.5 text-center font-bold text-white"
+                      ? "rounded-lg px-2 py-2 font-bold text-magenta hover:bg-bg-soft"
                       : "rounded-lg px-2 py-2 hover:bg-bg-soft hover:text-magenta " +
                         (on ? "font-bold text-magenta" : "")
                   }
@@ -251,7 +254,7 @@ export function MarketingHeader() {
               {MARKETING_PROVIDER_DOOR.label}
             </Link>
             <div className="mt-2 flex items-center gap-3 border-t border-line pt-3">
-              <Btn href="/login" variant="ghost">
+              <Btn href="/login" variant="white">
                 Log In
               </Btn>
               <Btn href="/join" className="ml-auto">
