@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { HeroVideoBackdrop } from "@/components/media/HeroVideoBackdrop";
 import { PathCard } from "@/components/learn/PathCard";
-import { usePrefersReducedMotion } from "@/lib/use-reduced-motion";
 import type { LearnCard } from "@/lib/learn-home";
 
 /**
@@ -41,7 +41,6 @@ export function LearnHome({
   const [tab, setTab] = useState<"all" | "mine">(initialTab);
   const [query, setQuery] = useState("");
   const [group, setGroup] = useState<string | null>(null);
-  const reducedMotion = usePrefersReducedMotion();
 
   const enrolledCount = cards.filter((c) => c.enrolled).length;
 
@@ -74,23 +73,18 @@ export function LearnHome({
         a real dark ramp, where footage is whatever the camera saw.
       */}
       <section className="relative overflow-hidden rounded-brand bg-[linear-gradient(115deg,var(--color-learn-deep)_0%,var(--color-learn-card)_38%,var(--color-learn-mid)_62%,var(--color-learn-hot)_100%)] px-7 py-8 text-white sm:px-10 sm:py-10">
-        {!reducedMotion && (
-          <video
-            aria-hidden
-            tabIndex={-1}
-            className="absolute inset-0 h-full w-full object-cover opacity-40"
-            src="/learn.mp4"
-            autoPlay
-            muted
-            loop
-            playsInline
-            style={{ pointerEvents: "none" }}
-          />
-        )}
-        {/* Re-lay the ramp over the footage so contrast does not depend on it. */}
-        <div
-          aria-hidden
-          className="absolute inset-0 bg-[linear-gradient(115deg,rgba(15,11,28,0.82)_0%,rgba(40,20,80,0.62)_45%,rgba(215,44,214,0.30)_100%)]"
+        {/*
+          The clip + the re-laid ramp now live in HeroVideoBackdrop, because the
+          marketing home's dark hero card renders the same treatment and a
+          second hand-written <video> would drift from this one. Same footage,
+          same opacity, same scrim — only the reduced-motion switch changed,
+          from the `usePrefersReducedMotion` hook to the CSS rule already in
+          globals.css, so a static caller doesn't need an island to use it.
+        */}
+        <HeroVideoBackdrop
+          src="/learn.mp4"
+          videoClassName="absolute inset-0 h-full w-full object-cover opacity-40"
+          scrimClassName="absolute inset-0 bg-[linear-gradient(115deg,rgba(15,11,28,0.82)_0%,rgba(40,20,80,0.62)_45%,rgba(215,44,214,0.30)_100%)]"
         />
 
         <div className="relative z-[2]">

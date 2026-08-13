@@ -81,22 +81,75 @@
 .pm-home .btn-ghost{background:#fff;border:1.5px solid var(--mag);color:var(--mag);padding:9px 24px}
 .pm-home .btn-solid{background:var(--mag);color:#fff;padding:11px 26px}
 .pm-home .btn-solid:hover{background:var(--mag-d)}
-.pm-home /* HERO */
-  .hero{position:relative;overflow:hidden}
-.pm-home .hero-top{position:relative;background:#fbfcfd;padding:70px 0 74px}
-.pm-home .grid-bg{position:absolute;inset:0;background-image:linear-gradient(180deg,rgba(215,44,214,.30) 0,rgba(215,44,214,.10) 90px,rgba(215,44,214,0) 240px),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='236' height='170'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23ffffff'/%3E%3Cstop offset='1' stop-color='%23eaeef4'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='6' y='6' width='224' height='158' rx='16' fill='url(%23g)' stroke='%23e4e8ef' stroke-width='1.1'/%3E%3C/svg%3E");background-position:center top,center -6px;background-repeat:no-repeat,repeat}
-.pm-home .hero-top .wrap{position:relative;z-index:1}
+.pm-home /* ===== HERO — dark video CARD (brief_home_hero_dark_card_2026-08-13) ===== */
+  /*
+    Replaces the light `.hero-top` panel and its `.grid-bg` overlay (a paper
+    grid under a pink top-tint). Both rules are DELETED, not overridden — a
+    disabled-but-present grid is the thing someone re-enables by accident.
+
+    Values are the approved exploration's `.hero.dark`, read out of
+    `05. Home Assets/home_hero_dark_card_exploration.html` rather than
+    eyeballed from a screenshot. Its --glow slider defaults to 50, and its
+    setGlow() maps that to `50/100 * 0.8 = 0.40` — so "~50% glow" is alpha
+    0.40 on the magenta bloom, not 0.50. Off-by-a-fifth if you trust the label.
+  */
+  .hero{position:relative}
+/* The margin the card is inset by. Not full-bleed any more — that is the point. */
+.pm-home .hero-stage{padding:6px 44px 0}
+/*
+  GRADIENT DIRECTION IS LOAD-BEARING (locked in the brief): darkest TOP-LEFT,
+  magenta bloom BOTTOM-RIGHT, with a cooler violet bloom behind it. 133deg in
+  CSS points down-and-right, so the 0% stop (#120a24, the near-black) lands in
+  the top-left corner and the ramp lightens toward the blooms. On /learn the
+  dark corner is what meets the left rail; Home has no rail, but the direction
+  is kept so the two cards read as the same object.
+*/
+.pm-home .hero-card{position:relative;overflow:hidden;border-radius:26px;padding:64px 12px 72px;
+  background:
+    radial-gradient(130% 120% at 88% 92%,rgba(215,44,214,.40) 0%,transparent 52%),
+    radial-gradient(120% 120% at 92% 88%,rgba(130,74,224,.22) 0%,transparent 55%),
+    linear-gradient(133deg,#120a24 0%,#201338 55%,#2b1a48 100%);
+  box-shadow:0 30px 70px -34px rgba(30,10,50,.7)}
+/*
+  The clip and its scrim (HeroVideoBackdrop). Both sit at z-index auto so they
+  paint under the grain (2) and the content (3) by document order alone.
+*/
+.pm-home .hero-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.42;border-radius:inherit}
+/*
+  The ramp re-laid OVER the footage. Heaviest top-left (.88) and lightest
+  bottom-right (.34) so the headline sits on near-black while the clip and the
+  bloom stay visible in the corner the eye finishes on. Contrast is owned here,
+  not by whatever the camera happened to be pointing at.
+*/
+.pm-home .hero-scrim{position:absolute;inset:0;border-radius:inherit;
+  background:
+    linear-gradient(133deg,rgba(18,10,36,.88) 0%,rgba(32,19,56,.66) 55%,rgba(43,26,72,.24) 100%),
+    radial-gradient(130% 120% at 88% 92%,rgba(215,44,214,.46) 0%,transparent 52%),
+    radial-gradient(120% 120% at 92% 88%,rgba(130,74,224,.24) 0%,transparent 55%)}
+.pm-home .hero-grain{position:absolute;inset:0;z-index:2;opacity:.14;pointer-events:none;border-radius:inherit;background-image:linear-gradient(#ffffff12 1px,transparent 1px),linear-gradient(90deg,#ffffff12 1px,transparent 1px);background-size:118px 118px}
 .pm-home .hero-dash{background:#eef1f4;padding:20px 0 22px}
-.pm-home .hero-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px;align-items:center}
-.pm-home .hero h1{font-size:52px;line-height:1.08;color:var(--ink);font-weight:700;letter-spacing:-1px}
+/*
+  Still `.wrap`, so the hero text stays on the same 1200/32 measure as every
+  section below it. The card's own padding is 12px horizontally for that
+  reason — the wrap supplies the gutter, and doubling it would push the hero
+  copy inboard of the dashboard shot underneath and break the vertical edge.
+*/
+.pm-home .hero-row{position:relative;z-index:3;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px;align-items:center}
+.pm-home .hero h1{font-size:52px;line-height:1.08;color:#fff;font-weight:700;letter-spacing:-1px}
+/* CTA unchanged — same magenta, same 12px radius as the light hero shipped with. */
 .pm-home .hero-cta{margin-top:34px;display:inline-flex;align-items:center;gap:10px;background:var(--mag);color:#fff;padding:16px 30px;border-radius:12px;font-weight:600;font-size:17px}
 .pm-home .hero-cta:hover{background:var(--mag-d)}
-.pm-home .hero-right p{color:#4a5569;font-size:19px;line-height:1.6;max-width:none}
-.pm-home .stats{display:flex;flex-wrap:wrap;align-items:center;gap:20px 20px;margin-top:48px}
-.pm-home .stat{display:flex;align-items:center;gap:8px}
-.pm-home .stat + .stat{border-left:1px solid var(--line);padding-left:20px}
-.pm-home .stat .big{font-family:var(--font-display);font-size:32px;font-weight:700;color:var(--ink)}
-.pm-home .stat .lbl{color:var(--muted);font-size:12px;line-height:1.25;max-width:88px}
+.pm-home .hero-right p{color:#cec7db;font-size:19px;line-height:1.6;max-width:none}
+/*
+  The stats become glass tiles: same three numbers, same labels, restyled for
+  dark. The light hero ran them inline separated by 1px rules — a hairline
+  divider disappears on this background, so the exploration boxes each one
+  instead.
+*/
+.pm-home .stats{display:flex;flex-wrap:wrap;gap:14px;justify-content:flex-end;margin-top:26px}
+.pm-home .stat{display:block;padding:20px 18px;border-radius:14px;min-width:148px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.13);backdrop-filter:blur(4px)}
+.pm-home .stat .big{display:block;font-family:var(--font-display);font-size:38px;font-weight:700;line-height:1;color:#fff}
+.pm-home .stat .lbl{display:block;font-size:12.5px;line-height:1.3;margin-top:8px;color:#cec7db;max-width:none}
 .pm-home /* DASHBOARD SHOT */
   .dash-shot{position:relative;z-index:2;margin:0 auto;max-width:1120px;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 40px 80px -30px rgba(23,30,62,.28);overflow:hidden}
 .pm-home .win-bar{height:44px;background:#f4f6f8;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 16px;gap:8px}
@@ -296,7 +349,29 @@
 .pm-home .hero-row, .pm-home .fw-top, .pm-home .fw-body, .pm-home .cta-dark .wrap, .pm-home .tgrid, .pm-home .kpis, .pm-home .lower, .pm-home .foot{grid-template-columns:1fr}
 .pm-home .hero h1{font-size:44px}
 .pm-home .center h2, .pm-home .fw-top h2, .pm-home .cta-dark h2{font-size:32px}
-.pm-home .menu, .pm-home .stats{display:none}
+/*
+  THE HERO STATS NO LONGER HIDE ON MOBILE. They did when they were an inline
+  row of three numbers behind 1px rules, which could not wrap. As glass tiles
+  they can: left-aligned under the subhead, wrapping to as many rows as they
+  need. The exploration's own <=880 rule does the same thing, and the brief
+  gates the 390px shot on the stats being legible — not absent.
+*/
+.pm-home .menu{display:none}
+/*
+  MOBILE GUTTERS ARE CUT SO THE CARD DOESN'T COST THE HEADLINE A LINE.
+
+  An inset card is narrower than the full-bleed panel it replaces, and the H1
+  is the thing that notices. Measured at 390: "Optimize Your" is 326px and
+  "Business with AI" is 367px at the mobile 44px Comfortaa. The old hero gave
+  them 326px of measure and already wrapped to three lines; the card's first
+  pass gave 302 and made it four. 10px of stage + 20px of wrap restores 330 —
+  a hair MORE than before — so the break is where it always was. The headline
+  itself is not shrunk; the brief holds the content fixed.
+*/
+.pm-home .hero-stage{padding:6px 10px 0}
+.pm-home .hero-card{padding:44px 0 48px;border-radius:20px}
+.pm-home .hero-card .wrap{padding:0 20px}
+.pm-home .stats{justify-content:flex-start}
   }
 .pm-home /* ===== PROJECT TRACKER ===== */
   .trk-sec{background:linear-gradient(180deg,#fbfaff 0%,#fff 62%);padding:74px 0 82px;border-top:1px solid var(--line)}
