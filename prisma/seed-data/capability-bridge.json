@@ -1,5 +1,5 @@
 {
-  "_source": "Service Catalog v5.xlsx — sheet 'Capability ↔ Module Bridge'",
+  "_source": "Service Catalog.xlsx — sheet 'Capability ↔ Module Bridge'",
   "_note": "capability domain -> the module that delivers it, per suite. Powers capability-only Work Requests (WS-5) and the buyer assessment later.",
   "bridge": [
     {
