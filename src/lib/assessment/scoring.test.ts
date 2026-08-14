@@ -20,6 +20,7 @@ import { REVENUE_BANDS, EBITDA_BANDS, SPEND_BANDS } from "@/lib/assessment/bands
 import { P2P_MOVES } from "@/lib/assessment/solutions";
 import { fundingFromEbitda, DEFAULT_TAX_RATE_BPS } from "@/lib/assessment/tax-rate";
 import { formatRange } from "@/lib/assessment/report";
+import { readFileSync } from "fs";
 
 let pass = 0;
 let fail = 0;
@@ -235,6 +236,46 @@ console.log("\n=== band labels agree with their cent values ===");
       }
     }
   }
+}
+
+/*
+  WS-4 — THE CLIENT GATE AND THE SERVER SCHEMA ARE ONE RULE STATED TWICE.
+
+  A client that gates on more than the server enforces is a client one fetch
+  call walks around; a server that requires more than the client asks for is a
+  form that fails on submit. Neither file can import the other's list without
+  dragging React into a route handler or Zod into a component, so this reads
+  BOTH SOURCES AS TEXT and asserts they name the same fields.
+
+  Text-matching is the honest tool here: the thing that drifts is the source, and
+  a test that re-declares the list would just be a third copy to forget.
+*/
+console.log("\n=== the required set: client gate === z schema ===");
+{
+  const wizard = readFileSync("src/components/assessment/AssessmentWizard.tsx", "utf8");
+  const route = readFileSync("src/app/api/assessment/route.ts", "utf8");
+
+  const block = wizard.slice(
+    wizard.indexOf("const REQUIRED_BASICS"),
+    wizard.indexOf("];", wizard.indexOf("const REQUIRED_BASICS"))
+  );
+  const clientRequired = [...block.matchAll(/key: "(\w+)"/g)].map((m) => m[1]).sort();
+
+  const BASICS = ["companyName","email","industry","state","entityType","revenueBand","ebitdaBand","platform"];
+  const schemaRequired = BASICS.filter((f) => {
+    const line = route.split("\n").find((l) => l.trim().startsWith(`${f}:`)) ?? "";
+    return !line.includes(".optional()");
+  }).sort();
+
+  check("client gate names 7 required fields", clientRequired.length === 7, clientRequired);
+  check(
+    "client gate and z schema require EXACTLY the same fields",
+    JSON.stringify(clientRequired) === JSON.stringify(schemaRequired),
+    { client: clientRequired, schema: schemaRequired }
+  );
+  check("industry is the only optional field", !clientRequired.includes("industry") && !schemaRequired.includes("industry"));
+  for (const f of ["state", "entityType", "ebitdaBand"])
+    check(`${f} is now required on both sides`, clientRequired.includes(f) && schemaRequired.includes(f));
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

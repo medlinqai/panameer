@@ -59,7 +59,7 @@ export type MarketingNavItem = {
 };
 
 export const MARKETING_NAV: MarketingNavItem[] = [
-  { label: "Assess", href: "/", primary: true },
+  { label: "AI Assessment", href: "/", primary: true },
   { label: "Talent", href: "/hire-talent" },
   { label: "Work", href: "/work-marketplace" },
   { label: "Packages", href: "/services" },

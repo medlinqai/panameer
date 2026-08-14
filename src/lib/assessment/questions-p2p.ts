@@ -183,25 +183,29 @@ export const PROCESSES = [
   {
     key: "P2P",
     name: "Procure-to-Pay",
-    blurb: "Buying, suppliers, invoices, payments.",
+    blurb:
+      "From the request to the payment — suppliers, purchase orders, receipts, invoices, cash out.",
     active: true,
   },
   {
     key: "O2C",
     name: "Order-to-Cash",
-    blurb: "Quotes, orders, billing, collections.",
+    blurb:
+      "From the customer's order to the cash in the bank — quotes, orders, fulfillment, invoices, collections.",
     active: false,
   },
   {
     key: "R2R",
     name: "Record-to-Report",
-    blurb: "The close, reporting, compliance.",
+    blurb:
+      "From the first posting to the signed-off numbers — the ledger, the close, reporting, compliance.",
     active: false,
   },
   {
     key: "H2R",
     name: "Hire-to-Retire",
-    blurb: "Hiring, payroll, people ops.",
+    blurb:
+      "From the job req to the last day — recruiting, onboarding, time, payroll, benefits.",
     active: false,
   },
 ] as const;

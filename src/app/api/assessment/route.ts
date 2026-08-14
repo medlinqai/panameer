@@ -35,15 +35,32 @@ import { assessmentReadyTemplate } from "@/lib/email/templates/assessment-ready"
  * asset. A resend can always be triggered later; a discarded submission cannot.
  */
 
+/**
+ * ⚠ THIS MUST AGREE WITH `REQUIRED_BASICS` IN AssessmentWizard.tsx.
+ *
+ * The client gate and this schema are two statements of the same rule, and a
+ * client that gates on more than the server enforces is a client one fetch call
+ * can bypass. Required here = `.min(1)`; optional = `.optional().default("")`.
+ * `check:assessment` asserts the two lists match, so they cannot drift apart
+ * silently.
+ *
+ * Required: companyName · email · state · entityType · revenueBand ·
+ *           ebitdaBand · platform
+ * Optional: industry
+ */
 const Body = z.object({
   companyName: z.string().trim().min(1).max(200),
   email: z.string().trim().email().max(320),
+  /* The ONLY optional field on step 0. */
   industry: z.string().trim().max(120).optional().default(""),
-  state: z.string().trim().max(2).optional().default(""),
-  entityType: z.string().trim().max(40).optional().default(""),
-  revenueBand: z.string().trim().max(40),
-  ebitdaBand: z.string().trim().max(40).optional().default(""),
-  platform: z.string().trim().max(40),
+  /* Required (WS-4): the funding rate is resolved per-geography. */
+  state: z.string().trim().min(2).max(2),
+  entityType: z.string().trim().min(1).max(40),
+  revenueBand: z.string().trim().min(1).max(40),
+  /* Required (WS-4): funding = EBITDA x TAX_RATE. Without it the report has a
+     savings figure and no funding figure — half the argument. */
+  ebitdaBand: z.string().trim().min(1).max(40),
+  platform: z.string().trim().min(1).max(40),
   process: z.enum(["P2P", "O2C", "R2R", "H2R"]),
   answers: z.object({
     maturity: z.record(z.string(), z.number().nullable()),

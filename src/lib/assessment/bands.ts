@@ -114,10 +114,27 @@ export const ENTITY_TYPES = [
   { id: "soleprop", label: "Sole prop" },
 ] as const;
 
+/**
+ * ⚠ THE `id` SLUGS ARE PERSISTED DATA — labels change, ids never do.
+ *
+ * Every assessment row already captured stores one of these four strings in
+ * `assessments.platform`, and `LEAPFROG_PLATFORM` keys the "faster, cheaper
+ * path" message off `id`, not label. Renaming a slug would silently reclassify
+ * every historical row and break that message.
+ */
 export const PLATFORMS = [
-  { id: "quickbooks", label: "QuickBooks / spreadsheets" },
-  { id: "legacy", label: "Legacy ERP (PeopleSoft, JDE, EBS…)" },
-  { id: "cloud", label: "Cloud ERP" },
+  {
+    id: "quickbooks",
+    /*
+      ⚠ THE SLUG IS NARROWER THAN THE CATEGORY. It is named after QuickBooks
+      but now covers NetSuite and anything else in the small-business tier —
+      do not narrow the LABEL back to match the slug, and do not rename the
+      slug to match the label (see the note above).
+    */
+    label: "Small Business Software (QuickBooks, NetSuite, etc.)",
+  },
+  { id: "legacy", label: "Enterprise-Grade ERP — Legacy (PeopleSoft, JDE, EBS…)" },
+  { id: "cloud", label: "Enterprise-Grade ERP — Modern (Oracle Cloud, Salesforce, Workday…)" },
   { id: "unsure", label: "Not sure" },
 ] as const;
 

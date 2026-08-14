@@ -1,6 +1,6 @@
 import Link from "next/link";
+import { ProofStats } from "@/components/marketing/ProofStats";
 import { HeroVideoBackdrop } from "@/components/media/HeroVideoBackdrop";
-import { SHOW_TAX_SAVINGS_STAT } from "@/lib/home-flags";
 
 /**
  * HERO — the dark video CARD (brief_home_hero_dark_card_2026-08-13).
@@ -69,20 +69,8 @@ export function HomeHero() {
             </div>
             <div className="hero-right">
               <p>Discover exactly where AI can move the needle in your business — our free maturity assessment benchmarks your current capabilities and shows you where to focus first.</p>
-              <div className="stats">
-                <div className="stat"><span className="big">942</span><span className="lbl">Assessments<br />Completed</span></div>
-                <div className="stat"><span className="big">10M+</span><span className="lbl">Total<br />Savings</span></div>
-                {/*
-                  ⚠ COUNSEL-GATED (brief §2, approach_to_market.md). A guaranteed
-                  tax-savings claim needs CPA + lawyer sign-off before it faces the
-                  public. It is behind a single flag rather than commented out so the
-                  mockup renders as specified in dev, and turning it off in production
-                  is one env var — not a code change under time pressure.
-                */}
-                {SHOW_TAX_SAVINGS_STAT && (
-                  <div className="stat"><span className="big">$6M+</span><span className="lbl">Tax Savings Used<br />to Fund Deployment</span></div>
-                )}
-              </div>
+              {/* WS-9 — one shared component; /assess step 0 renders the same source. */}
+              <ProofStats />
             </div>
           </div>
         </div>

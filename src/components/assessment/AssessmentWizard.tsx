@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { WizardShell } from "@/components/onboarding/WizardShell";
+import { ProofStats } from "@/components/marketing/ProofStats";
 import {
   OptionCard,
   Chip,
@@ -64,14 +65,54 @@ import {
 const STEPS = ["basics", "process", "money", "maturity", "aimode"] as const;
 type Step = (typeof STEPS)[number];
 
-/** The step's own name beside the counter — the pattern brief_S/E024 set. */
+/**
+ * The step's own name beside the counter — the pattern brief_S/E024 set.
+ *
+ * TITLE CASE AT THE SOURCE, not just via CSS. The stepper uppercases these, so
+ * the casing is invisible there — but WS-5 reuses the SAME strings inside the
+ * Continue label ("Next: Pick a Process"), where it very much shows.
+ */
 const STEP_LABELS: Record<Step, string> = {
-  basics: "Your business",
-  process: "Pick a process",
-  money: "Your numbers",
-  maturity: "How you work today",
-  aimode: "AI mode",
+  basics: "Company Details",
+  process: "Pick a Process",
+  money: "Your Numbers",
+  maturity: "How You Work Today",
+  aimode: "AI Mode",
 };
+
+/**
+ * WS-4 — the required set, in ONE place, so the client gate cannot drift from
+ * the field list. It is mirrored by the `z` schema in
+ * `src/app/api/assessment/route.ts`; the two are asserted against each other in
+ * `check:assessment`.
+ *
+ * Only `industry` is optional now. State and entity type feed the per-geography
+ * tax rate, and EBITDA is the multiplicand in `funding = EBITDA x TAX_RATE` —
+ * skipping it produces a savings number with no funding number, which removes
+ * the half of the report that makes the engagement affordable.
+ */
+/*
+  ⚠ `aria-required` IS ON THE THREE REAL FORM CONTROLS ONLY — the two text
+  inputs and the state <select>. The other four required fields are groups of
+  toggle buttons, and per ARIA 1.2 `aria-required` is not supported on
+  `role="group"`; putting it there would be markup that validates as noise and
+  that assistive tech is free to ignore. Making them `role="radiogroup"` would
+  be valid but means changing the SHARED `Chip` from `aria-pressed` toggle
+  semantics to `role="radio"`, which would alter every multi-select that uses it.
+
+  So the requirement is carried the way a sighted user gets it too: only the one
+  optional field is marked "(optional)", and the gate names the missing field on
+  click and moves focus to it. Flagged in the report rather than papered over.
+*/
+const REQUIRED_BASICS: { key: keyof Basics; label: string }[] = [
+  { key: "companyName", label: "Company name" },
+  { key: "email", label: "Your email" },
+  { key: "state", label: "State of filing" },
+  { key: "entityType", label: "Entity type" },
+  { key: "revenueBand", label: "Last year's revenue" },
+  { key: "ebitdaBand", label: "Roughly, your profit (EBITDA) last year" },
+  { key: "platform", label: "What runs your business today" },
+];
 
 type Basics = {
   companyName: string;
@@ -143,7 +184,22 @@ export function AssessmentWizard() {
     continueLabel?: string;
     continueDisabled?: boolean;
     wide?: boolean;
+    aside?: React.ReactNode;
   }) => ({
+    /*
+      WS-5 — CONTINUE NAMES THE NEXT STEP, the way /join/provider already does
+      (page.tsx:1276). Both wizards use this shell; only that one used the
+      affordance, so /assess fell back to a bare "Continue". Derived from
+      STEP_LABELS so a renamed step renames the button with it.
+
+      The last step says "Get My Report" instead of "Next: …" — there is no
+      next step, and naming what the visitor GETS beats naming a step number.
+    */
+    continueLabel:
+      opts.continueLabel ??
+      (STEPS.indexOf(step) === STEPS.length - 1
+        ? "Get My Report"
+        : `Next: ${STEP_LABELS[STEPS[STEPS.indexOf(step) + 1]]}`),
     ...opts,
     step: STEPS.indexOf(step) + 1,
     totalSteps: STEPS.length,
@@ -154,6 +210,31 @@ export function AssessmentWizard() {
   });
 
   const answeredDomains = P2P_DOMAINS.filter((d) => d.key in maturity).length;
+
+  /**
+   * WS-4 — CONTINUE IS NEVER SILENTLY DISABLED.
+   *
+   * It used to grey out with nothing on screen saying which of eight fields was
+   * missing, which is exactly what made Scott stop and ask. Now the button is
+   * always live: clicking with something outstanding names the FIRST missing
+   * field and moves focus to it, so the answer is one glance away instead of a
+   * hunt.
+   */
+  const firstMissing = () =>
+    REQUIRED_BASICS.find((f) => !String(basics[f.key] ?? "").trim()) ?? null;
+
+  function continueBasics() {
+    const missing = firstMissing();
+    if (!missing) {
+      setError(null);
+      next();
+      return;
+    }
+    setError(`${missing.label} is needed before we can size your opportunity.`);
+    const el = document.querySelector<HTMLElement>(`[data-field="${missing.key}"]`);
+    el?.scrollIntoView({ block: "center", behavior: "smooth" });
+    (el?.querySelector("input,select,button") as HTMLElement | null)?.focus();
+  }
 
   async function submit() {
     setBusy(true);
@@ -183,38 +264,48 @@ export function AssessmentWizard() {
       return (
         <WizardShell
           {...shell({
-            title: "Start your AI maturity discussion",
+            title: "Company Details",
             subtitle:
               "First, a few basics about your business. Ninety seconds. This is what lets us size the opportunity in real dollars — and figure out how much of it the tax code can fund.",
-            continueDisabled:
-              !basics.companyName.trim() ||
-              !basics.email.trim() ||
-              !basics.revenueBand ||
-              !basics.platform,
-            onContinue: next,
+            /* Never disabled — see `continueBasics`. */
+            onContinue: continueBasics,
+            /* WS-9 — the same three-stat strip the home hero renders. */
+            aside: <ProofStats variant="wizard" />,
           })}
         >
           {error && <Notice>{error}</Notice>}
 
           <div className="space-y-5">
-            <Field label="Company name">
-              <TextInput
-                value={basics.companyName}
-                onChange={(e) => set("companyName", e.target.value)}
-                placeholder="Meridian Dental Group"
-              />
-            </Field>
+            <div data-field="companyName">
+              <Field label="Company name">
+                <TextInput
+                  aria-required="true"
+                  value={basics.companyName}
+                  onChange={(e) => set("companyName", e.target.value)}
+                  placeholder="Meridian Dental Group"
+                />
+              </Field>
+            </div>
 
-            <Field label="Your email" hint="Your report link is delivered here.">
-              <TextInput
-                type="email"
-                value={basics.email}
-                onChange={(e) => set("email", e.target.value)}
-                placeholder="you@company.com"
-              />
-            </Field>
+            <div data-field="email">
+              <Field label="Your email" hint="Your report link is delivered here.">
+                <TextInput
+                  aria-required="true"
+                  type="email"
+                  value={basics.email}
+                  onChange={(e) => set("email", e.target.value)}
+                  placeholder="you@company.com"
+                />
+              </Field>
+            </div>
 
-            <Field label="Industry">
+            {/*
+              WS-4 — MARK THE ONE OPTIONAL FIELD, NOT THE SEVEN REQUIRED ONES.
+              After this brief Industry is the only skippable field; starring
+              seven and leaving one bare reads as a form that wants everything,
+              which is the wrong tone on a free diagnostic.
+            */}
+            <Field label="Industry (optional)">
               <TextInput
                 value={basics.industry}
                 onChange={(e) => set("industry", e.target.value)}
@@ -223,43 +314,61 @@ export function AssessmentWizard() {
             </Field>
 
             {/*
-              STATE AND ENTITY TOGETHER, in one field group and with one hint —
-              the prototype is explicit that the two set the tax picture jointly
-              and that neither alone answers the question. Splitting them across
-              the form would invite someone to answer one and skip the other.
+              WS-3 — TWO FACTS, TWO LABELS. One label ("Where do you file?")
+              asked a single question while the control captured two, so a
+              visitor who picked a state reasonably believed they had answered
+              it. Kept adjacent, and the helper below still ties them together
+              as one tax question.
             */}
-            <Field
-              label="Where do you file?"
-              hint="State + entity set the tax picture — the two together, not just the state."
-            >
-              <div className="flex flex-wrap items-center gap-2">
-                <select
-                  value={basics.state}
-                  onChange={(e) => set("state", e.target.value)}
-                  aria-label="State"
-                  className="rounded-[12px] border border-line bg-white px-4 py-3 text-[15px] text-ink outline-none focus:border-magenta"
-                >
-                  <option value="">State…</option>
-                  {STATES.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-                {ENTITY_TYPES.map((e) => (
-                  <Chip
-                    key={e.id}
-                    selected={basics.entityType === e.id}
-                    onClick={() => set("entityType", basics.entityType === e.id ? "" : e.id)}
+            <div className="grid gap-5 sm:grid-cols-2">
+              <div data-field="state">
+                <Field label="State of filing">
+                  <select
+                    aria-required="true"
+                    value={basics.state}
+                    onChange={(e) => set("state", e.target.value)}
+                    aria-label="State of filing"
+                    className="w-full rounded-[12px] border border-line bg-white px-4 py-3 text-[15px] text-ink outline-none focus:border-magenta"
                   >
-                    {e.label}
-                  </Chip>
-                ))}
+                    {/*
+                      ⚠ THE EMPTY PLACEHOLDER IS LOAD-BEARING. `state` starts as
+                      "", and a <select> with no empty option renders its first
+                      real option as though it were chosen — so someone would see
+                      "AL" and submit a state they never picked. Verified present.
+                    */}
+                    <option value="">Select a state…</option>
+                    {STATES.map((st) => (
+                      <option key={st} value={st}>
+                        {st}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
               </div>
-            </Field>
 
+              <div data-field="entityType">
+                <Field label="Entity type">
+                  <div className="flex flex-wrap gap-2" role="group" aria-label="Entity type">
+                    {ENTITY_TYPES.map((e) => (
+                      <Chip
+                        key={e.id}
+                        selected={basics.entityType === e.id}
+                        onClick={() => set("entityType", basics.entityType === e.id ? "" : e.id)}
+                      >
+                        {e.label}
+                      </Chip>
+                    ))}
+                  </div>
+                </Field>
+              </div>
+            </div>
+            <p className="-mt-2 text-[13px] text-ink-2">
+              State and entity type together set the tax picture — not the state alone.
+            </p>
+
+            <div data-field="revenueBand">
             <Field label="Last year's revenue">
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2" role="group" aria-label="Last year's revenue">
                 {REVENUE_BANDS.map((b) => (
                   <Chip
                     key={b.id}
@@ -271,12 +380,20 @@ export function AssessmentWizard() {
                 ))}
               </div>
             </Field>
+            </div>
 
+            {/*
+              WS-4 — EBITDA IS REQUIRED NOW, and the helper names the payoff
+              instead of the escape hatch. funding = EBITDA x TAX_RATE, so
+              skipping it produced a savings figure with no funding figure —
+              half a report. It is a band, so the ask stays small.
+            */}
+            <div data-field="ebitdaBand">
             <Field
               label="Roughly, your profit (EBITDA) last year"
-              hint="Optional — a band is fine. It's how we estimate the funding, and you can skip it."
+              hint="A band is fine. This is what lets us estimate how much of the work the tax code can fund."
             >
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2" role="group" aria-label="Roughly, your profit (EBITDA) last year">
                 {EBITDA_BANDS.map((b) => (
                   <Chip
                     key={b.id}
@@ -288,9 +405,11 @@ export function AssessmentWizard() {
                 ))}
               </div>
             </Field>
+            </div>
 
+            <div data-field="platform">
             <Field label="What runs your business today?">
-              <div className="space-y-3">
+              <div className="space-y-3" role="group" aria-label="What runs your business today?">
                 {PLATFORMS.map((p) => (
                   <OptionCard
                     key={p.id}
@@ -301,6 +420,7 @@ export function AssessmentWizard() {
                 ))}
               </div>
             </Field>
+            </div>
 
             {/*
               THE LEAPFROG MESSAGE, and it only appears for the people it is
@@ -323,7 +443,7 @@ export function AssessmentWizard() {
       return (
         <WizardShell
           {...shell({
-            title: "Where do you want to find value first?",
+            title: "What Process Do You Want to Assess First?",
             subtitle:
               "Start with one process — about 8 minutes. You'll answer for the area you know best; you can send the others to the people who own them.",
             continueDisabled: process !== "P2P",
@@ -353,11 +473,29 @@ export function AssessmentWizard() {
               />
             ))}
           </div>
-          <p className="mt-5 text-[14.5px] text-ink-2">
-            Not sure? Start where the money moves — usually{" "}
-            <span className="font-bold text-ink">Procurement</span> or{" "}
-            <span className="font-bold text-ink">Billing</span>.
-          </p>
+          {/*
+            WS-8 — DERIVED FROM `active`, not written by hand.
+
+            The old hint named "Procurement" and "Billing" — neither word is on
+            this page, and "Billing" is Order-to-Cash, which renders as a
+            disabled "coming soon" card. The one line whose job is to help an
+            undecided visitor was pointing at an option they cannot choose.
+            Reading the flags means a second suggestion returns by itself when a
+            second process goes live.
+          */}
+          {(() => {
+            const live = PROCESSES.filter((p) => p.active);
+            if (live.length === 0) return null;
+            return (
+              <p className="mt-5 text-[14.5px] text-ink-2">
+                Not sure? Start with{" "}
+                <span className="font-bold text-ink">
+                  {live.map((p) => p.name).join(" or ")}
+                </span>{" "}
+                — for most businesses it&rsquo;s where the money moves first.
+              </p>
+            );
+          })()}
         </WizardShell>
       );
 
@@ -366,7 +504,7 @@ export function AssessmentWizard() {
       return (
         <WizardShell
           {...shell({
-            title: "A few numbers first",
+            title: "A Few Numbers First",
             subtitle: "Bands are fine — this is what turns a generic list into your dollars.",
             continueDisabled: !spendBand || !costLeverBand || !headcountBand,
             onContinue: next,
@@ -421,7 +559,7 @@ export function AssessmentWizard() {
       return (
         <WizardShell
           {...shell({
-            title: "Now, how you do it today",
+            title: "Now, How You Do It Today",
             subtitle:
               "One tap each. “Not sure” is a real answer — it usually means nobody owns it, which is worth knowing.",
             continueDisabled: answeredDomains === 0,
@@ -480,7 +618,7 @@ export function AssessmentWizard() {
       return (
         <WizardShell
           {...shell({
-            title: "One last question",
+            title: "One Last Question",
             subtitle: AI_MODE_QUESTION,
             continueDisabled: !aiMode,
             continueLabel: "See my results",
