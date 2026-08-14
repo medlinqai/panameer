@@ -390,12 +390,20 @@
 .pm-home .get .btn-solid{margin-top:34px;padding:16px 34px;font-size:17px}
 .pm-home /* FOOTER */
   footer{background:var(--ink);color:#aeb4cf;padding:64px 0 34px}
-.pm-home .foot{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr 1fr;gap:32px}
+/*
+  THREE TRACKS, NOT FIVE. The footer went from a brand block plus four link
+  columns to a brand block plus two, so the old 1.4fr+4x1fr left two empty
+  tracks and stranded both columns against the left edge. The brand block keeps
+  more room; the columns sit at the right where the eye expects them.
+*/
+.pm-home .foot{display:grid;grid-template-columns:2fr 1fr 1fr;gap:32px}
 .pm-home .foot .brand{color:#fff;font-size:24px;margin-bottom:14px}
 .pm-home .foot .brand b{color:var(--mag)}
 .pm-home .foot-desc{font-size:14px;line-height:1.6;max-width:230px}
 .pm-home .socials{display:flex;gap:10px;margin-top:18px}
 .pm-home .socials a{width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,.07);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#c7cbe0}
+.pm-home .socials a:hover{background:rgba(255,255,255,.14);color:#fff}
+.pm-home .socials a svg{width:16px;height:16px}
 .pm-home .fcol h5{color:#8b93ad;font-size:12px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:18px;font-weight:600;font-family:var(--font-body)}
 .pm-home .fcol a{display:block;font-size:14.5px;color:#c1c6dc;padding:7px 0}
 .pm-home .fcol a:hover{color:var(--mag)}
