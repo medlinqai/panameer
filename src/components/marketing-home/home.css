@@ -206,21 +206,63 @@
 .pm-home .panel-head h4{font-size:15px;color:var(--ink);font-weight:600}
 .pm-home .panel-head .tools{display:flex;gap:8px}
 .pm-home .panel-head .tools .pill{padding:5px 10px;font-size:11px}
-.pm-home .chart{display:flex;gap:10px;height:180px;margin-top:6px}
-.pm-home .yaxis{display:flex;flex-direction:column;justify-content:space-between;font-size:10px;color:#b6bcc6;padding-bottom:20px;text-align:right;min-width:34px}
-.pm-home .plot{flex:1;position:relative}
-.pm-home .glines{position:absolute;left:0;right:0;top:0;bottom:20px;display:flex;flex-direction:column;justify-content:space-between}
-.pm-home .glines i{border-top:1px dashed #edeff2}
-.pm-home .bars{position:absolute;inset:0;display:flex;align-items:flex-end;gap:12px}
-.pm-home .bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
-.pm-home .bar-col .b{width:58%;background:#ecdcf4;border-radius:4px 4px 0 0}
-.pm-home .bar-col.hl .b{background:var(--mag)}
-.pm-home .bar-col small{font-size:10px;color:var(--muted)}
-.pm-home .donut-wrap{display:flex;flex-direction:column;align-items:center}
-.pm-home .donut-legend{margin-top:18px;width:100%;display:flex;justify-content:center;gap:26px;font-size:11px;color:var(--muted)}
-.pm-home .donut-legend .lg{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
-.pm-home .donut-legend .lg .top{display:flex;align-items:center;gap:6px}
-.pm-home .donut-legend .lg b{color:var(--ink);font-size:13px}
+/* ===== OPTIMIZATION FINDINGS TABLE (E082) ==================================
+   Replaces the bar chart and the progress donut. One full-width panel.
+   ------------------------------------------------------------------------ */
+.pm-home .findings{margin-top:20px}
+.pm-home .findings .panel-head .note{border:1px solid var(--line);border-radius:9px;padding:5px 10px;font-size:11px;color:var(--muted);background:#fff;white-space:nowrap}
+.pm-home .ftable{width:100%;border-collapse:collapse}
+.pm-home .ftable th{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;text-align:left;padding:0 12px 9px;border-bottom:1px solid var(--line)}
+.pm-home .ftable th.num,.pm-home .ftable td.num{text-align:right}
+.pm-home .ftable td{font-size:13px;color:var(--text);padding:12px;border-bottom:1px solid #f1f3f6;vertical-align:middle}
+.pm-home .ftable tr:last-child td{border-bottom:0}
+.pm-home .ftable td.act{color:var(--ink);font-weight:600}
+/*
+  THE OWNER CHIP is a label, not a control — no pointer, no hover, no focus
+  ring. The panel is inert by construction and a chip that lights up on hover
+  is the one element that would suggest otherwise.
+*/
+.pm-home .ftable .owner{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:11.5px;color:var(--muted);background:#fff}
+.pm-home .ftable .owner.se{border-color:#cfd9f5;color:#3a5bbf;background:#f5f8ff}
+/*
+  Tabular figures so the savings column's digits line up vertically. Without
+  `tabular-nums` a proportional font makes $980,000 and $215,000 different
+  widths and the decimal alignment the `text-align:right` buys is undone.
+*/
+.pm-home .ftable td.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum";color:var(--ink);font-weight:700;white-space:nowrap}
+/*
+  PER-ROW FADE — DECORATIVE ONLY (brief: "not a truncation effect and not a
+  paywall tease").
+
+  It is painted on a ::before UNDER the text, never on the text itself, so no
+  character ever drops below full opacity. The wash runs from a 6% magenta tint
+  at the left to transparent at the right, which leads the eye toward the
+  savings figure without touching legibility: the row text sits on white-to-
+  near-white throughout, and var(--text) #2a3345 on the darkest point of that
+  wash measures ~11.6:1 — far above the 4.5:1 AA floor.
+
+  `position:relative` on the row and `z-index` on the cells keeps the wash
+  behind. `pointer-events:none` because it is decoration in the hit area.
+*/
+/*
+  ⚠ THE WASH IS A ROW BACKGROUND, NOT A ::before — and that is a correctness
+  fix, not a style preference.
+
+  The first version painted it on `tr::before{position:absolute;inset:0}`.
+  Inside a table, a row's non-cell child gets wrapped in an ANONYMOUS TABLE
+  CELL before `position:absolute` is ever considered, so the pseudo-element
+  became a phantom first column and shifted every real cell one place right.
+  Measured: headers began at x=[263,351,843,978] and the body cells at
+  x=[351,843,978,1112] — the Action text sat under the Owner heading.
+
+  `background-image` on the <tr> needs no box, so there is nothing to become a
+  cell. It also cannot cover the text, which is what made the ::before worth
+  trying: the gradient paints behind cell content by definition.
+*/
+.pm-home .ftable tbody tr{background-image:linear-gradient(90deg,rgba(215,44,214,.06) 0%,rgba(215,44,214,.02) 45%,rgba(215,44,214,0) 100%)}
+@media(max-width:760px){
+  .pm-home .ftable th.tf,.pm-home .ftable td.tf{display:none}
+}
 .pm-home .swatch{width:9px;height:9px;border-radius:50%;display:inline-block}
 .pm-home /* LOGO STRIP */
   /*
@@ -360,7 +402,7 @@
 .pm-home .foot-bot{border-top:1px solid rgba(255,255,255,.08);margin-top:48px;padding-top:26px;display:flex;justify-content:space-between;font-size:13.5px;color:#8b93ad}
 .pm-home .foot-bot .lg{display:flex;gap:26px}
 @media(max-width:900px){
-.pm-home .hero-row, .pm-home .fw-top, .pm-home .fw-body, .pm-home .cta-dark .wrap, .pm-home .tgrid, .pm-home .kpis, .pm-home .lower, .pm-home .foot{grid-template-columns:1fr}
+.pm-home .hero-row, .pm-home .fw-top, .pm-home .fw-body, .pm-home .cta-dark .wrap, .pm-home .tgrid, .pm-home .kpis, .pm-home .foot{grid-template-columns:1fr}
 .pm-home .hero h1{font-size:44px}
 .pm-home .center h2, .pm-home .fw-top h2, .pm-home .cta-dark h2{font-size:32px}
 /*

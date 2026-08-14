@@ -1,16 +1,50 @@
 /**
- * THE PRODUCT-SHOT DASHBOARD — "AI Maturity Dashboard – Ingrao Dental
- * Services LLC" (brief §3), ported exactly as the mockup has it.
+ * THE PRODUCT SHOT — a Procure-to-Pay AI Maturity Assessment.
  *
- * ⚠ PRESENTATIONAL. Nothing here is wired to data and nothing here is real:
- * the client name, the KPI figures, the chart and the donut are the mockup's
- * sample values. The brief is explicit that sections 3, 7, 8 and 9 still carry
- * StratERP-era placeholder copy and must be built AS-IS — Scott replaces the
- * wording in a later pass. Do not substitute invented Panameer content here.
+ * This is the replacement the original port promised. It used to be the
+ * mockup's generic savings dashboard for a dental practice, carried as-is with
+ * a note that Scott would rewrite the copy later; brief_home_dashboard_shot
+ * (2026-08-14) is that rewrite. The shot now shows the same ARTIFACT a real
+ * prospect gets from /assess — process-scoped, not client-scoped.
  *
- * It is inert by construction: no links, no buttons, no inputs. A visitor
- * cannot click something that pretends to work.
+ * ⚠ STILL PRESENTATIONAL, AND STILL INERT BY CONSTRUCTION. Nothing here is
+ * wired to data. There are no links, no buttons, no inputs and no click
+ * handlers anywhere in this file — a visitor cannot click something that
+ * pretends to work, and the findings panel in particular has no sort controls
+ * and no hover states, because a table that looks sortable and is not is worse
+ * than a table that plainly is not.
+ *
+ * ⚠ IT IS NOT THE REAL REPORT. `/assess/r/[token]` renders the actual
+ * assessment from real answers. Aligning the two is a separate decision the
+ * brief explicitly defers — do not edit one to match the other.
+ *
+ * The figures are Scott's, agreed 2026-08-14. See FINDINGS below for the one
+ * arithmetic invariant this component has to keep.
  */
+
+/**
+ * The five findings, descending by value.
+ *
+ * ⚠ THESE SUM TO EXACTLY $2,590,000, WHICH IS THE "Estimated Savings" KPI.
+ * 980,000 + 610,000 + 520,000 + 265,000 + 215,000 = 2,590,000.
+ *
+ * The tile and the table are two renderings of one number, so changing a row
+ * without changing the tile — or the reverse — puts a dashboard on the
+ * marketing home whose total does not equal its line items. That is the exact
+ * detail a CFO stops on, and it is why the total is DERIVED below rather than
+ * typed a second time: the tile reads `TOTAL_SAVINGS`, which is computed from
+ * this array, so the two cannot drift.
+ */
+const FINDINGS = [
+  { action: "TDWCA — Tax Deferred Working Capital Account", owner: "StratERP", tf: "4 weeks", savings: 980_000 },
+  { action: "P2P Rogue-Spend Alert", owner: "Panameer", tf: "2 weeks", savings: 610_000 },
+  { action: "P2P PO Price Alerts", owner: "Panameer", tf: "2 weeks", savings: 520_000 },
+  { action: "Negotiation Alert", owner: "Panameer", tf: "4 weeks", savings: 265_000 },
+  { action: "P2P Supplier Registration Document Validation Agent", owner: "Panameer", tf: "2 weeks", savings: 215_000 },
+] as const;
+
+const TOTAL_SAVINGS = FINDINGS.reduce((n, f) => n + f.savings, 0);
+const usd = (n: number) => `$${n.toLocaleString("en-US")}`;
 export function DashboardShot() {
   return (
     <>
@@ -38,13 +72,13 @@ export function DashboardShot() {
                 <div className="tb-icons">
                   <span className="bell"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.7 21a2 2 0 0 1-3.4 0" /></svg></span>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
-                  <span className="avatar"><span className="av-c">PI</span><span className="av-t"><b>Paul Ingrao</b><span>Admin</span></span></span>
+                  <span className="avatar"><span className="av-c">PI</span><span className="av-t"><b>Paul Ingrao</b><span>Ingrao Dental Services</span></span></span>
                 </div>
               </div>
               <div className="dbody">
                 <div className="dbody-head">
                   <div>
-                    <h3>AI Maturity Dashboard - Ingrao Dental Services LLC</h3>
+                    <h3>AI Maturity Assessment - Procure-to-Pay</h3>
                     <div className="date">Thursday, 30 September 2022</div>
                   </div>
                   <div className="dh-right">
@@ -56,83 +90,93 @@ export function DashboardShot() {
                   <div className="kpi">
                     <div className="kpi-top">
                       <div className="kpi-ic" style={{ background: 'var(--mag)' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg></div>
-                      <div><span className="val">$32,605.23</span><span className="chg">+83%</span></div>
+                      {/*
+                        WS-3 — NO `.chg` PILL. A gap against a peer benchmark
+                        has no period-over-period delta to report; "+83%" beside
+                        a −31 point gap is a number that cannot mean anything.
+                        U+2212 MINUS, not a hyphen — a hyphen next to a figure
+                        reads as a dash and sets the wrong column width.
+                      */}
+                      <div><span className="val">&#8722;31 pts</span></div>
                       <span className="kpi-info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9" /><path d="M12 11v5" /><circle cx="12" cy="8" r=".6" fill="currentColor" /></svg></span>
                     </div>
-                    <div className="lab">Tax Deferred Working Capital</div>
+                    <div className="lab">Your Org Versus Peers</div>
+                    <div className="sub">42 vs. 73 — best-practice ERP peer median</div>
                     <svg className="spark" viewBox="0 0 300 64" preserveAspectRatio="none"><defs><linearGradient id="g1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#D72CD6" stopOpacity=".28" /><stop offset="1" stopColor="#D72CD6" stopOpacity="0" /></linearGradient></defs><path d="M0,54 L30,48 L60,50 L90,40 L120,44 L150,34 L180,36 L210,24 L240,28 L270,16 L300,10 L300,64 L0,64 Z" fill="url(#g1)" /><path d="M0,54 L30,48 L60,50 L90,40 L120,44 L150,34 L180,36 L210,24 L240,28 L270,16 L300,10" fill="none" stroke="#D72CD6" strokeWidth="2.5" /></svg>
                   </div>
                   <div className="kpi">
                     <div className="kpi-top">
                       <div className="kpi-ic" style={{ background: '#8a2be2' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 12V8H6a2 2 0 0 1 0-4h12v4" /><path d="M4 6v12a2 2 0 0 0 2 2h14v-4" /><path d="M18 12a2 2 0 0 0 0 4h4v-4z" /></svg></div>
-                      <div><span className="val">$24,240.00</span><span className="chg">+12%</span></div>
+                      {/*
+                        WS-4 — a COUNT, so no currency symbol and no `.chg`.
+                        23 findings across all ten capability domains; the list
+                        itself is deliberately not here, because the list is the
+                        sales conversation.
+                      */}
+                      <div><span className="val">23</span></div>
                       <span className="kpi-info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9" /><path d="M12 11v5" /><circle cx="12" cy="8" r=".6" fill="currentColor" /></svg></span>
                     </div>
-                    <div className="lab">AI Adoption Project Spend</div>
+                    <div className="lab">Optimization Opportunities</div>
                     <svg className="spark" viewBox="0 0 300 64" preserveAspectRatio="none"><defs><linearGradient id="g2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#8a2be2" stopOpacity=".28" /><stop offset="1" stopColor="#8a2be2" stopOpacity="0" /></linearGradient></defs><path d="M0,44 L30,38 L60,46 L90,34 L120,42 L150,30 L180,38 L210,26 L240,34 L270,22 L300,26 L300,64 L0,64 Z" fill="url(#g2)" /><path d="M0,44 L30,38 L60,46 L90,34 L120,42 L150,30 L180,38 L210,26 L240,34 L270,22 L300,26" fill="none" stroke="#8a2be2" strokeWidth="2.5" /></svg>
                   </div>
                   <div className="kpi">
                     <div className="kpi-top">
                       <div className="kpi-ic" style={{ background: '#4b7bef' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12l4-4 4 4 6-6" /><path d="M17 6h4v4" /></svg></div>
                       {/*
-                        WS-1 — `$` ADDED. The mockup had this KPI bare while
-                        the two beside it carried a symbol, so the same card
-                        showed "$32,605.23", "$24,240.00" and "301,873" —
-                        which reads as a count of something, not money, under a
-                        label that says Savings. Presentational only; the
-                        number is the mockup's and is unchanged. All three KPIs
-                        on the card now agree.
+                        WS-5 — DERIVED FROM THE TABLE, never typed. This is the
+                        sum of the five findings below; see the FINDINGS
+                        comment. The basis is addressable P2P SPEND, not
+                        revenue (decided 2026-08-14).
                       */}
-                      <div><span className="val">$301,873</span></div>
+                      <div><span className="val">{usd(TOTAL_SAVINGS)}</span></div>
                       <span className="kpi-info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9" /><path d="M12 11v5" /><circle cx="12" cy="8" r=".6" fill="currentColor" /></svg></span>
                     </div>
-                    <div className="lab">Targeted Total Savings</div>
+                    <div className="lab">Estimated Savings Based on Rev/Heads</div>
+                    <div className="sub">14% of $18.5M addressable P2P spend</div>
                     <svg className="spark" viewBox="0 0 300 64" preserveAspectRatio="none"><defs><linearGradient id="g3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#4b7bef" stopOpacity=".28" /><stop offset="1" stopColor="#4b7bef" stopOpacity="0" /></linearGradient></defs><path d="M0,56 L40,52 L80,46 L120,44 L160,34 L200,30 L240,20 L300,8 L300,64 L0,64 Z" fill="url(#g3)" /><path d="M0,56 L40,52 L80,46 L120,44 L160,34 L200,30 L240,20 L300,8" fill="none" stroke="#4b7bef" strokeWidth="2.5" /></svg>
                   </div>
                 </div>
-                <div className="lower">
-                  <div className="panel">
-                    <div className="panel-head">
-                      <h4>Net Monthly Savings</h4>
-                      <div className="tools"><span className="pill">⛃ Filter</span><span className="pill">Last Year ▾</span></div>
-                    </div>
-                    <div className="chart">
-                      <div className="yaxis"><span>$50K</span><span>$40K</span><span>$30K</span><span>$20K</span><span>$10K</span><span>$0</span></div>
-                      <div className="plot">
-                        <div className="glines"><i></i><i></i><i></i><i></i><i></i><i></i></div>
-                        <div className="bars">
-                          <div className="bar-col"><div className="b" style={{ height: '42%' }}></div><small>Jan</small></div>
-                          <div className="bar-col"><div className="b" style={{ height: '30%' }}></div><small>Feb</small></div>
-                          <div className="bar-col"><div className="b" style={{ height: '48%' }}></div><small>Mar</small></div>
-                          <div className="bar-col"><div className="b" style={{ height: '38%' }}></div><small>Apr</small></div>
-                          <div className="bar-col hl"><div className="b" style={{ height: '80%' }}></div><small>May</small></div>
-                          <div className="bar-col"><div className="b" style={{ height: '44%' }}></div><small>Jun</small></div>
-                          <div className="bar-col"><div className="b" style={{ height: '66%' }}></div><small>Jul</small></div>
-                          <div className="bar-col"><div className="b" style={{ height: '34%' }}></div><small>Aug</small></div>
-                          <div className="bar-col"><div className="b" style={{ height: '28%' }}></div><small>Sep</small></div>
-                          <div className="bar-col"><div className="b" style={{ height: '72%' }}></div><small>Oct</small></div>
-                          <div className="bar-col"><div className="b" style={{ height: '46%' }}></div><small>Nov</small></div>
-                          <div className="bar-col"><div className="b" style={{ height: '36%' }}></div><small>Dec</small></div>
-                        </div>
-                      </div>
-                    </div>
+                {/*
+                  WS-6 — ONE findings panel replaces BOTH old panels (the Net
+                  Monthly Savings bar chart and the Savings-vs-Plan donut). Both
+                  were deleted rather than hidden: they showed realised progress
+                  against a plan, which is a story an assessment has not earned
+                  yet — the assessment produces the plan.
+
+                  A real <table> because this is tabular data. `.ftable` gets
+                  the per-row decorative wash; see home.css for why it is on a
+                  ::before rather than on the text.
+                */}
+                <div className="panel findings">
+                  <div className="panel-head">
+                    <h4>Optimization Findings</h4>
+                    {/* A NOTE, not a control — no pill.exp, no pointer, no tools row. */}
+                    <span className="note">Top 5 by value</span>
                   </div>
-                  <div className="panel donut-wrap">
-                    <div className="panel-head" style={{ width: '100%' }}><h4>Savings Progress vs. Plan</h4></div>
-                    <svg width="230" height="150" viewBox="0 0 220 140" style={{ marginTop: '10px' }}>
-                      <path d="M 22 118 A 88 88 0 0 1 198 118" fill="none" stroke="#eef0f3" strokeWidth="26" pathLength="100" />
-                      <path d="M 22 118 A 88 88 0 0 1 198 118" fill="none" stroke="#D72CD6" strokeWidth="26" pathLength="100" strokeDasharray="68 100" strokeDashoffset="0" />
-                      <path d="M 22 118 A 88 88 0 0 1 198 118" fill="none" stroke="#8a2be2" strokeWidth="26" pathLength="100" strokeDasharray="20 100" strokeDashoffset="-68" />
-                      <path d="M 22 118 A 88 88 0 0 1 198 118" fill="none" stroke="#d7b4ec" strokeWidth="26" pathLength="100" strokeDasharray="12 100" strokeDashoffset="-88" />
-                      <text x="110" y="104" textAnchor="middle" fontSize="30" fontWeight="700" fill="#171E3E" fontFamily="Comfortaa">68%</text>
-                      <text x="110" y="122" textAnchor="middle" fontSize="11" fill="#7b8496">of Plan Realized</text>
-                    </svg>
-                    <div className="donut-legend">
-                      <div className="lg"><span className="top"><span className="swatch" style={{ background: '#D72CD6' }}></span>Realized</span><b>68%</b></div>
-                      <div className="lg"><span className="top"><span className="swatch" style={{ background: '#8a2be2' }}></span>In Progress</span><b>20%</b></div>
-                      <div className="lg"><span className="top"><span className="swatch" style={{ background: '#d7b4ec' }}></span>Remaining</span><b>12%</b></div>
-                    </div>
-                  </div>
+                  <table className="ftable">
+                    <thead>
+                      <tr>
+                        <th>Action</th>
+                        <th>Owner</th>
+                        <th className="tf">Timeframe</th>
+                        <th className="num">Est. Savings</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {FINDINGS.map((f) => (
+                        <tr key={f.action}>
+                          <td className="act">{f.action}</td>
+                          <td>
+                            <span className={"owner" + (f.owner === "StratERP" ? " se" : "")}>
+                              {f.owner}
+                            </span>
+                          </td>
+                          <td className="tf">{f.tf}</td>
+                          <td className="num">{usd(f.savings)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
