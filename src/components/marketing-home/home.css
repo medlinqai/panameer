@@ -313,7 +313,21 @@
 .pm-home .fw-body{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
 .pm-home .fw-body h3{font-size:27px;color:var(--ink);font-weight:700;margin-bottom:22px}
 .pm-home .caps{list-style:none}
-.pm-home .caps li{display:flex;align-items:center;gap:12px;padding:9px 0;color:var(--text);font-size:15.5px}
+.pm-home .caps li{display:block}
+/*
+  THE DOMAIN ROWS ARE REAL BUTTONS NOW (WS-1). Styled to look like the old
+  checklist rows at rest so the section reads the same, but they carry a hover,
+  a selected state and a visible focus ring — a control that looks identical
+  whether or not it is selected is not a single-select group, it is a list.
+*/
+.pm-home .cap-btn{display:flex;align-items:center;gap:12px;width:100%;padding:9px 10px;margin-left:-10px;border:0;background:transparent;text-align:left;color:var(--text);font-size:15.5px;font-family:inherit;border-radius:10px;cursor:pointer;transition:background .15s,color .15s}
+.pm-home .cap-btn:hover{background:rgba(215,44,214,.06)}
+.pm-home .cap-btn.on{background:rgba(215,44,214,.09);color:var(--ink);font-weight:600}
+.pm-home .cap-btn:focus-visible{outline:2px solid var(--mag);outline-offset:2px}
+/* Unselected rows carry a hollow mark so the filled one reads as the choice. */
+.pm-home .cap-btn .chk{background:#e3e0ea}
+.pm-home .cap-btn .chk svg{stroke:#fff}
+.pm-home .cap-btn.on .chk{background:var(--mag)}
 .pm-home .chk{width:22px;height:22px;border-radius:50%;background:var(--mag);flex-shrink:0;display:flex;align-items:center;justify-content:center}
 .pm-home .chk svg{width:12px;height:12px;stroke:#fff}
 .pm-home .mat-card{background:var(--ink);border-radius:18px;padding:26px;color:#fff}
@@ -329,13 +343,25 @@
 .pm-home .mk .t{font-size:11.5px;font-weight:600}
 .pm-home .mk .t.up{color:#59d99b}
 .pm-home .mk .t.dn{color:#59d99b}
+/* The process total, moved off the card's h4 so the card score is the DOMAIN's. */
+.pm-home .mat-proc{font-size:12px;color:#aeb4cf;margin-top:6px}
+/* WS-4 — a neutral chip. No status dot: a dot beside "Sample" still reads live. */
+.pm-home .live.sample{background:rgba(255,255,255,.10);color:#c7cbe0;font-weight:600;letter-spacing:.04em}
+/* The suggestion is inset and magenta-led so it does not read as a fifth KPI. */
+.pm-home .mat-sugg{margin-top:14px;padding:14px 16px;border-radius:12px;background:rgba(215,44,214,.10);border:1px solid rgba(215,44,214,.22)}
+.pm-home .mat-sugg .lead{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#f0a6ef;margin-bottom:6px}
+.pm-home .mat-sugg p{font-size:13.5px;line-height:1.5;color:#e6e2ee;margin:0}
+/* Disabled process tabs (WS-5). */
+.pm-home .tab.off{opacity:.45;cursor:default}
+.pm-home .tab.off .soon{font-size:10px;font-weight:600;letter-spacing:.04em;border:1px solid var(--line);border-radius:999px;padding:2px 7px;color:var(--muted)}
 .pm-home .score{background:rgba(255,255,255,.05);border-radius:12px;padding:18px;margin-top:14px}
 .pm-home .score-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .pm-home .score-top .s{font-size:14px;color:#c7cbe0}
 .pm-home .score-top .n{font-size:15px;font-weight:700}
 .pm-home .score-top .n b{color:var(--mag)}
 .pm-home .track{height:7px;border-radius:5px;background:rgba(255,255,255,.12);position:relative;overflow:hidden}
-.pm-home .track .fill{position:absolute;inset:0;width:72%;background:linear-gradient(90deg,var(--mag),#8a2be2);border-radius:5px}
+/* `width` is set inline from the domain score — do not re-add it here. */
+.pm-home .track .fill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,var(--mag),#8a2be2);border-radius:5px;transition:width .25s}
 .pm-home .scale{display:flex;justify-content:space-between;margin-top:10px;font-size:10.5px;color:#7f87a8}
 .pm-home .scale .cur{color:var(--mag);font-weight:700}
 .pm-home /* TESTIMONIALS */
