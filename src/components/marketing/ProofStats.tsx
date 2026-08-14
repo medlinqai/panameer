@@ -7,48 +7,44 @@
  * three numbers is how they end up disagreeing.
  *
  * ⚠ EVERY FIGURE HERE IS INVENTED. 942 and 10M+ already run on panameer.com and
- * are a known pre-launch item — out of scope for this brief, deliberately not
- * "fixed" here. See WORKING_CAPITAL_DEFERRED for the third.
+ * are a known pre-launch item — deliberately not "fixed" here. See
+ * TAX_SAVINGS_USED for the third.
  *
  * `variant` only changes the skin. The home renders inside the ported
  * `.pm-home` stylesheet and reuses its `.stats`/`.stat` classes; the wizard
  * sits outside that scope, so it gets a Tailwind equivalent. Same numbers, same
  * order, same labels — the SOURCE is shared even though the paint is not.
  */
-import { SHOW_TAX_SAVINGS_STAT } from "@/lib/home-flags";
-
 /**
- * ⚠ PLACEHOLDER — SCOTT HAS NOT CONFIRMED THIS FIGURE (brief WS-9).
+ * ⚠ PLACEHOLDER — SCOTT HAS NOT CONFIRMED THIS FIGURE.
  *
  * One named constant so swapping it is a single edit rather than a hunt across
  * two surfaces. It is the same claim family as the product shot's "TDWCA — Tax
  * Deferred Working Capital Account" finding.
  */
-export const WORKING_CAPITAL_DEFERRED = "$6M+";
+export const TAX_SAVINGS_USED = "$6M+";
 
-type Stat = { value: string; label: string; gated?: boolean };
+type Stat = { value: string; label: string };
 
 const STATS: Stat[] = [
   { value: "942", label: "Assessments Completed" },
   { value: "10M+", label: "Total Savings" },
   /*
-    ⚠ STILL BEHIND THE COUNSEL GATE, and that is a deliberate hold.
+    ⚠ RENDERS IN EVERY ENVIRONMENT, INCLUDING PRODUCTION — Scott, 2026-08-14.
 
-    This slot used to read "Tax Savings Used to Fund Deployment", flagged
-    because a guaranteed tax-savings claim needs CPA and lawyer sign-off before
-    it faces the public. "Working Capital Deferred" is a materially weaker
-    claim — deferred, not saved — so the gate may well be droppable, but that
-    is a legal call and not one to make silently while relabelling a tile.
-    Renders in dev (where the walk happens), stays off in production until
-    Scott says otherwise. Dropping it is deleting `gated: true`.
+    This tile was previously behind an environment-flagged counsel gate that
+    kept it out of production, because a tax-savings claim was held to need CPA
+    and lawyer sign-off. Scott removed the gate and restored the original
+    wording on 2026-08-14, so the claim is now public on `/` and on `/assess`
+    step 0. The flag and the module that held it were DELETED rather than left
+    switched on — a flag still sitting in the tree would imply the decision is
+    open when it has been made.
   */
-  { value: WORKING_CAPITAL_DEFERRED, label: "Working Capital Deferred", gated: true },
+  { value: TAX_SAVINGS_USED, label: "Tax Savings Used to Fund Deployment" },
 ];
 
-const visible = () => STATS.filter((s) => !s.gated || SHOW_TAX_SAVINGS_STAT);
-
 export function ProofStats({ variant = "home" }: { variant?: "home" | "wizard" }) {
-  const stats = visible();
+  const stats = STATS;
 
   if (variant === "home") {
     return (
