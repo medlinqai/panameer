@@ -994,6 +994,8 @@ model Specialization {
   updated_at DateTime           @updatedAt
 
   catalog           ServiceCatalog                  @relation(fields: [catalog_id], references: [id], onDelete: Cascade)
+  /// Assessments that named this industry (INDUSTRY-kind rows only, in practice).
+  assessments       Assessment[]
   providerProfiles  ProviderProfileSpecialization[]
   workRequests      WorkRequestSpecialization[]
   /// Projects delivered in this sector — only INDUSTRY-kind rows are ever
@@ -2732,19 +2734,35 @@ model Assessment {
   updated_at DateTime @updatedAt
 
   /// G1 — the gate. Captured in-flow; the report is delivered here.
-  email        String
-  company_name String
-  industry     String?
+  email                      String
+  company_name               String
+  /**
+   * ⚠ LEGACY FREE TEXT — RETAINED ON PURPOSE, NOT DEAD WEIGHT.
+   * Industry was a free-text input until 2026-08-14 and rows captured before
+   * then hold strings ("Den", "Dental services") with no Specialization to map
+   * to. Dropping the column to tidy the model would throw away real
+   * submissions, so it stays and is simply not written going forward —
+   * `industry_specialization_id` below is the field the dropdown fills.
+   * Backfilling these strings to ids is a separate decision, deliberately not
+   * taken here. Do not read this column's emptiness on new rows as a bug.
+   */
+  industry                   String?
+  /**
+   * The catalog answer. Nullable because Industry is the one OPTIONAL field on
+   * step 0 — a visitor who skips it must still get a report.
+   */
+  industry_specialization_id String?         @db.Uuid
+  industrySpecialization     Specialization? @relation(fields: [industry_specialization_id], references: [id], onDelete: SetNull)
   /// State + entity together set the tax picture — see the copy prototype.
-  state        String?
-  entity_type  String?
-  revenue_band String?
+  state                      String?
+  entity_type                String?
+  revenue_band               String?
   /// Optional by design: a band is fine and skipping is allowed, so funding
   /// falls back to a revenue-derived estimate rather than blocking the flow.
-  ebitda_band  String?
+  ebitda_band                String?
   /// QuickBooks/spreadsheets · legacy ERP · cloud ERP · not sure. "legacy"
   /// flags the leapfrog message.
-  platform     String?
+  platform                   String?
 
   process AssessmentProcess @default(P2P)
 
@@ -2776,6 +2794,7 @@ model Assessment {
 
   @@index([email])
   @@index([user_id])
+  @@index([industry_specialization_id])
   @@map("assessments")
 }
 

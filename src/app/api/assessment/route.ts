@@ -51,8 +51,16 @@ import { assessmentReadyTemplate } from "@/lib/email/templates/assessment-ready"
 const Body = z.object({
   companyName: z.string().trim().min(1).max(200),
   email: z.string().trim().email().max(320),
-  /* The ONLY optional field on step 0. */
+  /*
+    THE ONLY OPTIONAL FIELD ON STEP 0 — and it is now TWO fields, both optional.
+
+    `industrySpecializationId` is what the dropdown sends. `industry` is kept in
+    the schema because rows captured before 2026-08-14 hold free text with no id
+    to map to; it is still ACCEPTED here so an older client (a stale tab mid-form
+    when this deployed) does not get a 400 on submit.
+  */
   industry: z.string().trim().max(120).optional().default(""),
+  industrySpecializationId: z.string().uuid().optional().or(z.literal("")),
   /* Required (WS-4): the funding rate is resolved per-geography. */
   state: z.string().trim().min(2).max(2),
   entityType: z.string().trim().min(1).max(40),
@@ -91,6 +99,7 @@ export async function POST(req: Request) {
       email,
       company_name: b.companyName,
       industry: b.industry || null,
+      industry_specialization_id: b.industrySpecializationId || null,
       state: b.state || null,
       entity_type: b.entityType || null,
       revenue_band: b.revenueBand,

@@ -116,7 +116,8 @@ const REQUIRED_BASICS: { key: keyof Basics; label: string }[] = [
 
 type Basics = {
   companyName: string;
-  industry: string;
+  /** The catalog id. Empty string = not answered. */
+  industrySpecializationId: string;
   state: string;
   entityType: string;
   revenueBand: string;
@@ -125,7 +126,18 @@ type Basics = {
   email: string;
 };
 
-export function AssessmentWizard() {
+export type IndustryOption = { id: string; name: string };
+
+export function AssessmentWizard({
+  industries = [],
+}: {
+  /**
+   * From the catalog, via the server component. NEVER a hardcoded list — an
+   * admin edit at /admin/industries has to reach this dropdown, and a local
+   * copy of the ten names is exactly how the two silently diverge.
+   */
+  industries?: IndustryOption[];
+}) {
   const router = useRouter();
   const [step, setStep] = useState<Step>("basics");
   const [busy, setBusy] = useState(false);
@@ -133,7 +145,7 @@ export function AssessmentWizard() {
 
   const [basics, setBasics] = useState<Basics>({
     companyName: "",
-    industry: "",
+    industrySpecializationId: "",
     state: "",
     entityType: "",
     revenueBand: "",
@@ -300,17 +312,31 @@ export function AssessmentWizard() {
             </div>
 
             {/*
-              WS-4 — MARK THE ONE OPTIONAL FIELD, NOT THE SEVEN REQUIRED ONES.
-              After this brief Industry is the only skippable field; starring
-              seven and leaving one bare reads as a form that wants everything,
-              which is the wrong tone on a free diagnostic.
+              MARK THE ONE OPTIONAL FIELD, NOT THE SEVEN REQUIRED ONES. Industry
+              is the only skippable field on this step; starring seven and
+              leaving one bare reads as a form that wants everything, which is
+              the wrong tone on a free diagnostic.
+
+              A SELECT, NOT FREE TEXT (E007). Scott typed "Den" and stopped —
+              nothing guided the answer and nothing downstream could use it. The
+              options are the catalog's INDUSTRY specializations, passed from the
+              server component.
             */}
             <Field label="Industry (optional)">
-              <TextInput
-                value={basics.industry}
-                onChange={(e) => set("industry", e.target.value)}
-                placeholder="Dental services"
-              />
+              <select
+                value={basics.industrySpecializationId}
+                onChange={(e) => set("industrySpecializationId", e.target.value)}
+                aria-label="Industry"
+                className="w-full rounded-[12px] border border-line bg-white px-4 py-3 text-[15px] text-ink outline-none focus:border-magenta"
+              >
+                {/* Placeholder first, so an unanswered field cannot look answered. */}
+                <option value="">Select an industry…</option>
+                {industries.map((i) => (
+                  <option key={i.id} value={i.id}>
+                    {i.name}
+                  </option>
+                ))}
+              </select>
             </Field>
 
             {/*
