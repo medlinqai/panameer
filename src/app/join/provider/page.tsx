@@ -2610,7 +2610,7 @@ export default function JoinProviderPage() {
                 This helps us run the platform and provide services like payment
                 protection and customer support. Fees vary and are shown before
                 contract acceptance.{" "}
-                <span className="font-semibold text-magenta">Learn more</span>
+                <span className="font-semibold text-magenta">Learn More</span>
               </p>
               <div className="mt-4 border-t border-line pt-4">
                 <Row

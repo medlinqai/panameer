@@ -84,7 +84,7 @@ export default async function Page() {
       </section>
 
       <section className="rounded-brand border border-line bg-white p-6">
-        <h2 className="font-display text-[17px] font-bold">Invite a new admin</h2>
+        <h2 className="font-display text-[17px] font-bold">Invite a New Admin</h2>
         <p className="mt-1 text-[13.5px] text-ink-2">
           Creates a passwordless platform user and emails a set-password link (no
           secret is set here). They activate via the standard flow.

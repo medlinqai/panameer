@@ -22,7 +22,7 @@ import {
  *          photos, headlines, skills and published rate ranges.
  *   REAL   the work-status empty state, which is a genuine count of zero: the
  *          WorkRequest model exists and this requester has none.
- *   STUB   "Book a consultation" — 1:1 booking is master Phase 4. It links to a
+ *   STUB   "Book a Consultation" — 1:1 booking is master Phase 4. It links to a
  *          titled placeholder rather than opening a scheduler that isn't there.
  *   STUB   the package search — package BROWSE does not exist (providers can
  *          publish packages; nobody can shop them yet), so the box submits to a
@@ -124,7 +124,7 @@ export function RequesterHome({
               budget, timeline and scope one-on-one.
             </p>
             <Button href="/consultations" variant="ghost" className="mt-4 w-full">
-              Book a consultation
+              Book a Consultation
             </Button>
           </article>
 
@@ -234,7 +234,7 @@ function ExpertCard({ expert }: { expert: MentorCard }) {
           {MICRO_SESSION_PRICE} per {MICRO_SESSION_MINUTES}-minute call
         </p>
         <Button href="/consultations" variant="ghost" className="mt-3 w-full">
-          Book a consultation
+          Book a Consultation
         </Button>
       </div>
     </article>

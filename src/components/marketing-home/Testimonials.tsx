@@ -18,7 +18,7 @@ export function Testimonials() {
         <div className="wrap">
           <div className="center">
             <div className="eyebrow">Testimonials</div>
-            <h2>Don&rsquo;t take our word for it,<br />listen to our customers</h2>
+            <h2>Don&rsquo;t Take Our Word for It,<br />Listen to Our Customers</h2>
           </div>
           <div className="tgrid">
             <div className="tcard">

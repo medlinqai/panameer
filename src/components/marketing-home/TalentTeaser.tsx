@@ -64,9 +64,9 @@ export function TalentTeaser() {
         <div>
           <div className="cta-kicker">Our Talent</div>
           <h2>
-            The talent you could
+            The Talent You Could
             <br />
-            never hire &mdash; until now.
+            Never Hire &mdash; Until Now.
           </h2>
           <div className="sub">
             Ivy League minds. Big-4 pedigree. Decades inside the systems that run
@@ -78,7 +78,7 @@ export function TalentTeaser() {
             stub — it is the shipped buyer marketplace page.
           */}
           <Link className="btn btn-solid" href="/hire-talent">
-            Browse the talent &rsaquo;
+            Browse the Talent &rsaquo;
           </Link>
         </div>
 

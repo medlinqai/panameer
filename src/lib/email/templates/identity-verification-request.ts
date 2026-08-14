@@ -42,7 +42,7 @@ export function identityVerificationRequestTemplate({
 
   const learnMore = learnMoreUrl
     ? `<p style="font-size:13px;line-height:1.6;color:${EMAIL_COLORS.muted};margin:20px 0 0;">
-         <a href="${learnMoreUrl}" style="color:${EMAIL_COLORS.magentaDark};">Learn more about identity verification</a>
+         <a href="${learnMoreUrl}" style="color:${EMAIL_COLORS.magentaDark};">Learn More About Identity Verification</a>
        </p>`
     : "";
 
@@ -50,7 +50,7 @@ export function identityVerificationRequestTemplate({
     subject: "Verify your identity to keep working on Panameer",
     html: emailShell({
       logoUrl,
-      bodyHtml: `<h1 style="font-size:22px;margin:0 0 16px;color:${EMAIL_COLORS.ink};">Verify your identity</h1>
+      bodyHtml: `<h1 style="font-size:22px;margin:0 0 16px;color:${EMAIL_COLORS.ink};">Verify Your Identity</h1>
 ${greeting(name)}
 ${paragraph(
   `We keep Panameer a place people can trust by confirming who's who. Please take a few minutes to verify ` +
@@ -64,7 +64,7 @@ ${learnMore}
 </p>
 ${signOff("Panameer Trust & Safety")}`,
     }),
-    text: `Verify your identity
+    text: `Verify Your Identity
 
 Hi ${name},
 
@@ -73,7 +73,7 @@ We keep Panameer a place people can trust by confirming who's who. Please take a
 Please start within seven days; until then a few account features are limited.
 
 Get Started: ${startUrl}
-${learnMoreUrl ? `\nLearn more about identity verification: ${learnMoreUrl}\n` : ""}
+${learnMoreUrl ? `\nLearn More About Identity Verification: ${learnMoreUrl}\n` : ""}
 Thanks for helping us keep Panameer a trusted place.
 
 — Panameer Trust & Safety

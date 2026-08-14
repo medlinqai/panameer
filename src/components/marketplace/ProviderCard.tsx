@@ -54,7 +54,7 @@ export function ProviderCard({
   profileHref,
 }: {
   p: TeaserProvider;
-  /** Where "Book a consultation" goes — the direct-book shortcut. */
+  /** Where "Book a Consultation" goes — the direct-book shortcut. */
   loginHref: string;
   /**
    * Where the NAME goes. Caller-supplied because only the caller knows whether
@@ -229,7 +229,7 @@ export function ProviderCard({
           href={loginHref}
           className="mt-2.5 block rounded-full border-[1.5px] border-line px-4 py-2 text-center text-[13.5px] font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
         >
-          Book a consultation
+          Book a Consultation
         </Link>
       </div>
     </article>

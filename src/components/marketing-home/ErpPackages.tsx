@@ -3,18 +3,22 @@ import Link from "next/link";
 /**
  * "Use AI to Extend the Value of Your ERP" (WS-3, brief_home_polish_v2).
  *
- * ── THESE ARE EXAMPLES AND THE PAGE SAYS SO ──────────────────────────────────
+ * ── THE INTENT IS NARROWED, NOT REVOKED (WS-1, 2026-08-14) ───────────────────
  *
- * The locked SURFACE INTENT is that the public surface shows EXAMPLES, never
- * fake-live listings. So there is no provider name on a card, no price, no
- * rating, no "3 available" count — nothing that would make an invented package
- * look like a real one somebody could buy. The eyebrow reads "Example
- * packages" and the line under the heading says it again in a sentence, because
- * an eyebrow is the part people skip.
+ * This used to be a teaser of sample LISTINGS, and it carried a sentence saying
+ * so. The tiles are now AGENT CATEGORIES — "Price Alerts", "Document
+ * Validation" — which is a claim about what Panameer providers build, not a
+ * pretend inventory, so the "these are examples, not live listings" sentence is
+ * gone with it.
  *
- * That constraint is what shapes the card: an icon, a name, and one line of
- * what it does. When real provider packages exist they replace this array and
- * the card grows the fields a real listing needs.
+ * ⚠ WHAT DID NOT CHANGE: no card carries a provider name, a price, a rating or
+ * an availability count. That is still the line, and it is the reason a
+ * category tile cannot be mistaken for something purchasable. When real
+ * provider packages exist they replace this array and the card grows the fields
+ * a real listing needs.
+ *
+ * Naming Oracle in the headline is deliberate — the locked Oracle-as-wedge
+ * positioning. Do not genericise it to "your ERP".
  *
  * The four methods are Scott's, verbatim from the brief — deploy reports,
  * check prices, validate documents, add full application functionality — with
@@ -38,7 +42,7 @@ type Example = {
 /* 20px stroke icons, matching the mockup's `.tab` / `.side` glyph weight. */
 const EXAMPLES: Example[] = [
   {
-    name: "Deploy reports",
+    name: "Reports & Dashboards",
     desc: "Ship the operational reports your ERP never came with — built against your own data model, live in days.",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -48,7 +52,7 @@ const EXAMPLES: Example[] = [
     ),
   },
   {
-    name: "Check prices",
+    name: "Price Alerts",
     desc: "Catch price and contract variances on the purchase order before it is approved, not in the quarterly review.",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -58,7 +62,7 @@ const EXAMPLES: Example[] = [
     ),
   },
   {
-    name: "Validate documents",
+    name: "Document Validation",
     desc: "Read invoices, contracts and statements as they arrive, match them to the record, and flag what does not agree.",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -69,7 +73,7 @@ const EXAMPLES: Example[] = [
     ),
   },
   {
-    name: "Add application functionality",
+    name: "Extend Your Apps",
     desc: "Whole capabilities the standard product does not have, added alongside it — without a re-implementation.",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -87,17 +91,16 @@ export function ErpPackages() {
     <section className="erp">
       <div className="wrap">
         <div className="erp-head">
-          <div className="eyebrow">Example packages</div>
+          <div className="eyebrow">Pre-Defined Services</div>
+          {/* Break after "Manage Risk" so the two lines balance (WS-1). */}
           <h2>
-            Use AI to Extend the Value of Your ERP
+            Speed Deployment and Manage Risk
             <br />
-            &mdash; immediately, and for less.
+            with Pre-Built AI Agents for Oracle Applications
           </h2>
           <p>
             Panameer providers sell packaged AI solutions that plug into the ERP
-            you already run &mdash; so value arrives in days, not quarters. The
-            four below are <strong>examples of the kind of work providers
-            package</strong>, not live listings.
+            you already run &mdash; so value arrives in days, not quarters.
           </p>
         </div>
 
@@ -117,7 +120,7 @@ export function ErpPackages() {
           {/* Scott's own framing, kept: a four-item list is not the catalogue. */}
           <p>&mdash; to name just a few.</p>
           <Link className="btn btn-solid" href="/services">
-            Explore packages &rsaquo;
+            Explore Packages &rsaquo;
           </Link>
         </div>
       </div>

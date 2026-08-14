@@ -452,7 +452,14 @@
   paragraph keeps a real reading measure of its own rather than inheriting the
   wider one.
 */
-.pm-home .erp-head{max-width:900px}
+/*
+  1020, not 900. The new headline (WS-1, 2026-08-14) breaks after "Manage Risk",
+  and its SECOND line measures 984px at the 40px display size — so at a 900px
+  measure it wrapped again and the specified two-line treatment rendered as
+  three, with a two-word orphan. The paragraph keeps its own narrower reading
+  measure below.
+*/
+.pm-home .erp-head{max-width:1020px}
 .pm-home .erp-head h2{font-size:40px;color:var(--ink);font-weight:700;letter-spacing:-.5px;margin:12px 0 16px;line-height:1.12}
 .pm-home .erp-head p{color:var(--muted);font-size:17px;line-height:1.6;max-width:760px}
 .pm-home .erp-head strong{color:var(--text);font-weight:600}
