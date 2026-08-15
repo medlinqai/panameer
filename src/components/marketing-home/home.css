@@ -528,7 +528,20 @@
     the icon stroke and its 10% tint square; the one filled magenta element is
     the CTA, which is what the accent rule reserves the fill for.
   */
-  .erp{background:linear-gradient(180deg,#fbfaff 0%,#fff 70%);padding:74px 0 80px;border-top:1px solid var(--line)}
+/*
+  ⚠ FLAT `--paper-2`, THE SAME SHADE AS `.fw` — the page has to alternate (E115).
+
+  This was `linear-gradient(180deg,#fbfaff 0%,#fff 70%)`. #fbfaff is one step off
+  white, so this section, the white `.block` above it and the `.erpx-band` below
+  all read as white — three near-white sections in a row. Worse, this gradient
+  and `.erpx-band`'s were MIRROR IMAGES, which fused the two ERP sections into
+  one long pale band instead of two.
+
+  Matching `.fw` exactly rather than approximately is the point: two shaded
+  sections at slightly different values look like a mistake, two at the same
+  value look like a system.
+*/
+  .erp{background:var(--paper-2);padding:74px 0 80px;border-top:1px solid var(--line)}
 /*
   900, not 760. The headline's own line break is after "…Your ERP", and at 760
   the measured line ran ~796px — so it wrapped a second time and left "ERP"
@@ -861,7 +874,15 @@
    `.erpx-band` is the HOME PAGE'S chrome, passed in by page.tsx as className;
    a second surface passes its own instead.
    ------------------------------------------------------------------------- */
-.pm-home .erpx-band{background:linear-gradient(180deg,#fff 0%,#fbfaff 100%);padding:74px 0 80px;border-top:1px solid var(--line)}
+/*
+  ⚠ FLAT WHITE, AND THE GRADIENT IS NOT COMING BACK (E115).
+
+  `#fff -> #fbfaff` existed only to blend into the near-white section above it.
+  With `.erp` now shaded, a blend at that seam is a smudge exactly where the
+  alternation needs a clean edge. It also laid a faint lavender under the ERP
+  overview diagram, which is drawn on white cards.
+*/
+.pm-home .erpx-band{background:#fff;padding:74px 0 80px;border-top:1px solid var(--line)}
 
 .pm-home .erpx-h2{font-size:40px;line-height:1.14;letter-spacing:-.5px;color:var(--ink);font-weight:700;margin:12px 0 12px;max-width:900px}
 .pm-home .erpx-tagline{font-size:21px;line-height:1.4;color:var(--mag-d);font-weight:700;letter-spacing:-.4px;margin:0 0 14px;max-width:780px}
