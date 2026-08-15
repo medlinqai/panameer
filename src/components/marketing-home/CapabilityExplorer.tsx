@@ -92,7 +92,17 @@ export function CapabilityExplorer() {
       <div className="mat-card" aria-live="polite">
         <div className="mat-head">
           <div>
-            <div className="ey">AI MATURITY ASSESSMENT</div>
+            {/*
+              E106 — THE COLON IS LOAD-BEARING. The eyebrow sits directly above
+              the selected domain's name and reads into it: "CAPABILITY DOMAIN
+              SCORECARD FOR: Invoice Processing & Matching". Without it the line
+              is a label; with it, it is a sentence that names the thing beneath.
+
+              This is the card-side half of E104's fix on the list side. "AI
+              MATURITY ASSESSMENT" claimed the card was the whole assessment when
+              it is one domain out of ten.
+            */}
+            <div className="ey">CAPABILITY DOMAIN SCORECARD FOR:</div>
             {/* The card belongs to the DOMAIN now; the process score moved out. */}
             <h4>{domain.name}</h4>
             <div className="mat-proc">

@@ -895,26 +895,35 @@
 .pm-home .erpx-crow b{color:var(--ink);font-weight:700}
 .pm-home .erpx-free{color:#1f8f5f;font-weight:800}
 
-/* ---- the swimlane scene (Fulfillment / Settlement) --------------------- */
+/* ---- the flow-diagram scene (Fulfillment / Settlement) ----------------- */
 /*
   `.scene` supplies the white card and the radius, as it does for the W-9 and
-  work-request scenes. Width is the mockup's 960px: these render at true scale
-  in the lightbox and clipped in the card crop.
+  work-request scenes.
+
+  ⚠ THE SVG IS FIXED AT 1080px AND MUST NOT BE MADE FLUID.
+
+  The card crop is a true-scale WINDOW onto this diagram — same pixels, just
+  translated and clipped — so the moment the SVG scales with its container the
+  crop and the dialog stop showing the same thing. Narrow viewports scroll the
+  dialog instead (`.lb-box{overflow:auto}`), which is what the 1180px Spend
+  Overview scene already does.
+
+  1136 = the 1080 canvas plus the shell's 26px gutters, rounded up so the
+  heading and the note have the same measure as the drawing.
 */
-.pm-home .flw{width:960px;max-width:100%;padding:22px 26px 24px}
+.pm-home .flw{width:1136px;max-width:100%;padding:22px 26px 24px}
 .pm-home .flw-h2{font-size:19px;margin:0 0 3px;color:var(--ink);letter-spacing:-.4px;font-weight:700}
-.pm-home .flw-sub{font-size:12.5px;color:var(--muted);margin-bottom:18px}
-.pm-home .flw-lane{display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:center;padding:11px 0;border-top:1px solid var(--line)}
-.pm-home .flw-lane:first-of-type{border-top:0}
-.pm-home .flw-who{font-size:11.5px;font-weight:800;color:var(--muted);text-align:right;text-transform:uppercase;letter-spacing:.5px}
-.pm-home .flw-chain{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
-.pm-home .flw-node{font-size:11.5px;font-weight:700;border-radius:8px;padding:7px 11px;line-height:1.25}
-.pm-home .flw-node.erp{background:#3c4668;color:#fff}
-.pm-home .flw-node.pan{background:var(--mag-soft);color:var(--mag-d);border:1px solid var(--mag)}
-.pm-home .flw-node.per{background:#fff;border:1px dashed #b9c2d4;color:#5b6478}
-.pm-home .flw-arw{color:#b9c2d4;font-size:13px;font-weight:800}
-.pm-home .flw-note{margin:16px 0 0;border-top:1px solid var(--line);padding-top:13px;font-size:12.5px;color:var(--muted);line-height:1.6}
+.pm-home .flw-sub{font-size:12.5px;color:var(--muted);margin-bottom:10px}
+.pm-home .flw-svg{display:block;width:1080px;height:578px;font-family:var(--font-body),system-ui,sans-serif}
+.pm-home .flw-note{margin:10px 0 0;border-top:1px solid var(--line);padding-top:13px;font-size:12.5px;color:var(--muted);line-height:1.6}
 .pm-home .flw-note b{color:var(--text);font-weight:700}
+/*
+  THE DOORWAY CROPS ARE TALLER HERE THAN IN ErpPackages. 168px, because these
+  crops are true-scale onto a 1080x578 drawing and 148px cut the arrow off
+  between the document chip and the step it points at — which is the one thing
+  the card exists to show.
+*/
+.pm-home .erpx-doors .erp-card .crop{height:168px}
 
 /* ---- responsive -------------------------------------------------------- */
 @media(max-width:1000px){

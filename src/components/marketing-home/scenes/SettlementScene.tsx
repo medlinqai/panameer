@@ -1,22 +1,25 @@
-import { SETTLEMENT_LANES } from "@/lib/marketing-scenes";
-import { SwimlaneFlow } from "@/components/marketing-home/scenes/SwimlaneFlow";
+import { SETTLEMENT_FLOW } from "@/lib/marketing-scenes";
+import { FlowScene } from "@/components/marketing-home/scenes/FlowDiagram";
 
 /**
  * SCENE 6 — Service Procurement, Settlement.
  *
- * ⚠ "NO INVOICE TO CHASE" IS THE WHOLE POINT. The five lanes are only
- * interesting because of what is missing from them: the provider never submits
- * an invoice. Approved settlement writes the receipt, the receipt triggers
+ * ⚠ "NO INVOICE TO CHASE" IS THE WHOLE POINT, and what makes it readable is what
+ * the diagram LEAVES OUT: there is no provider invoice chip, because the provider
+ * never sends one. Approved settlement writes the receipt, the receipt triggers
  * evaluated-receipt settlement, and the payment lands. Anyone who has run
- * accounts payable reads that immediately; without the closing note it looks
- * like an ordinary three-way match.
+ * accounts payable sees that immediately; without the closing note it looks like
+ * an ordinary three-way match.
+ *
+ * Content and topology are unchanged from the swimlane version this replaces —
+ * only the form. The paragraph below is verbatim from that version.
  */
 export function SettlementScene() {
   return (
-    <SwimlaneFlow
+    <FlowScene
       title="Service Procurement — Settlement"
       sub="Requester to provider. From work delivered to money moved."
-      lanes={SETTLEMENT_LANES}
+      spec={SETTLEMENT_FLOW}
       note={
         <>
           <b>No invoice to chase.</b> Approved settlement creates the receipt,

@@ -298,4 +298,77 @@ test.describe("the page as a whole", () => {
       await expect(page.getByRole("dialog")).toHaveCount(0);
     }
   });
+
+  /**
+   * §13 — the SVG id collision the flow diagrams would otherwise have.
+   *
+   * `marker-end="url(#am)"` resolves against the WHOLE DOCUMENT and takes the
+   * first match. Both flow scenes render their crop on page load, and opening a
+   * dialog renders one of them a SECOND time — three `<defs>` blocks live at
+   * once. With fixed ids every arrowhead on the page would resolve to whichever
+   * parsed first, and closing that dialog would delete the node the survivors
+   * point at.
+   *
+   * Two assertions, and the second is the one that matters: it is not enough
+   * that ids are unique, each reference must land inside its OWN `<svg>`.
+   */
+  test("§13 flow-diagram SVG ids are unique and every marker resolves in its own svg", async ({ page }) => {
+    const audit = () =>
+      page.evaluate(() => {
+        const svgs = Array.from(document.querySelectorAll("svg.flw-svg"));
+        const ids: string[] = [];
+        const stolen: string[] = [];
+        for (const svg of svgs) {
+          for (const el of svg.querySelectorAll("[id]")) ids.push(el.id);
+          for (const el of svg.querySelectorAll("[marker-end],[fill^='url('],[marker-start]")) {
+            for (const attr of ["marker-end", "marker-start", "fill"]) {
+              const v = el.getAttribute(attr) ?? "";
+              const m = v.match(/^url\(#(.+)\)$/);
+              if (!m) continue;
+              // The reference must be satisfiable from inside this same <svg>.
+              if (!svg.querySelector(`#${CSS.escape(m[1])}`)) {
+                stolen.push(`${el.tagName}@${attr} -> #${m[1]} is not in its own svg`);
+              }
+            }
+          }
+        }
+        const dupes = ids.filter((id, i) => ids.indexOf(id) !== i);
+        return { svgCount: svgs.length, dupes: [...new Set(dupes)], stolen };
+      });
+
+    // At rest: one crop per card, so both scenes are already in the DOM together.
+    const rest = await audit();
+    expect(rest.svgCount, "both card crops render a flow diagram").toBe(2);
+    expect(rest.dupes, "duplicate ids at rest").toEqual([]);
+    expect(rest.stolen, "cross-svg marker references at rest").toEqual([]);
+
+    /*
+      With a dialog open there are THREE instances — both crops plus the dialog,
+      one scene duplicated. That is strictly harder than "two dialogs open",
+      which the single-dialog Lightbox cannot produce, and it is the case that
+      actually occurs.
+    */
+    for (const c of CARDS.filter((x) => x.grid === ".erpx-doors")) {
+      await openByClick(page, cardFor(page, c));
+      await expect(page.getByRole("dialog", { name: c.dialog })).toBeVisible();
+      const open = await audit();
+      expect(open.svgCount, `${c.name}: two crops + the dialog`).toBe(3);
+      expect(open.dupes, `duplicate ids with "${c.dialog}" open`).toEqual([]);
+      expect(open.stolen, `cross-svg marker references with "${c.dialog}" open`).toEqual([]);
+      await page.keyboard.press("Escape");
+      await expect(page.getByRole("dialog")).toHaveCount(0);
+    }
+  });
+
+  /** §14 — the crops are true-scale windows. A `scale()` would break that. */
+  test("§14 neither ERP doorway crop applies a scale()", async ({ page }) => {
+    const transforms = await page.locator(".erpx-doors .crop-inner").evaluateAll((els) =>
+      els.map((el) => (el as HTMLElement).style.transform)
+    );
+    expect(transforms).toHaveLength(2);
+    for (const t of transforms) {
+      expect(t, "crop transform").toMatch(/^translate\(/);
+      expect(t, "crop must not scale").not.toContain("scale");
+    }
+  });
 });

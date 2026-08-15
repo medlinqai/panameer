@@ -124,17 +124,19 @@ type Door = {
   /** Dialog accessible name. */
   label: string;
   /**
-   * ⚠ RETUNED FROM THE MOCKUP'S `scale(.34)`, and this is the one deviation.
+   * ⚠ TRANSLATE ONLY — NO `scale()`, AND THAT IS THE RULE NOT A PREFERENCE.
    *
-   * At .34 the flow's 11.5px node text renders at 3.9px — unreadable mush, and
-   * `brief_home_tiles_and_lightboxes` made "a crop at true scale, never a
-   * shrunk screenshot of the whole thing" the rule for exactly this reason. The
-   * four cards two sections up run .42–.62 on 660–1180px scenes; these are
-   * 960px scenes in a card roughly twice as wide, so .58 puts them in the same
-   * family and keeps the lane labels legible. Same precedent as the W-9 card,
-   * which was retuned during its own port.
+   * The scenes are 1080px diagrams now, and the crop is a WINDOW ONTO THEM AT
+   * TRUE SCALE: the pixels in the card are the same pixels the dialog shows.
+   * `brief_home_tiles_and_lightboxes` settled this — a shrunk screenshot of the
+   * whole thing is unreadable mush, and the earlier `scale(.34)`/`scale(.58)`
+   * framings on these two cards died with the swimlane version.
    *
-   * Reverting to the mockup is this one number.
+   * Both offsets were chosen to frame A DOCUMENT AND A STEP WITH AN ARROW
+   * BETWEEN THEM, because the card has to say "two systems talking" before
+   * anyone clicks: Fulfillment lands on the Purchase Requisition chip and the
+   * crossing into Create Work Request; Settlement on Purchase Receipt, the ERS
+   * arrow and the settlement-approval crossing.
    */
   tf: string;
   scene: React.ReactNode;
@@ -143,16 +145,21 @@ type Door = {
 const DOORS: readonly Door[] = [
   {
     name: "Fulfillment",
-    desc: "From requisition to released work order — eight hand-offs across Oracle, Panameer, the requester and the provider.",
+    /*
+      "Eight hand-offs" went with the swimlanes — it counted lanes, and there are
+      no lanes any more. The four-column diagram is about WHO holds the document,
+      so the description names the four parties instead.
+    */
+    desc: "Requisition to released work order — every hand-off between the requester, Oracle, Panameer and the provider.",
     label: "Service procurement fulfillment flow",
-    tf: "scale(.58) translate(-8px,-14px)",
+    tf: "translate(-190px,-80px)",
     scene: <FulfillmentScene />,
   },
   {
     name: "Settlement",
     desc: "From work delivered to money moved — approved settlement writes the receipt, the ERS invoice and the payment.",
     label: "Service procurement settlement flow",
-    tf: "scale(.58) translate(-8px,-14px)",
+    tf: "translate(-190px,-190px)",
     scene: <SettlementScene />,
   },
 ];
