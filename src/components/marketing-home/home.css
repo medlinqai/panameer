@@ -503,6 +503,214 @@
 @media(max-width:620px){.pm-home .erp-grid{grid-template-columns:1fr}
 .pm-home .erp-head h2{font-size:30px}
 .pm-home .erp-foot .btn{margin-left:0}}
+.pm-home /* ===== DOORWAY CARDS + LIGHTBOX (WS-3) ===================================
+   Ported from 2. Claude Sub-Files/mockups/agent_cards_lightboxes.html and
+   spend_overview_dashboard.html — same values, scoped under .pm-home instead of
+   a <style> block. The retired punch-out rules from that file are NOT ported.
+   ------------------------------------------------------------------------- */
+  .erp-card.door{border:0;text-align:left;font:inherit;cursor:zoom-in;padding:0;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 0 0 1px var(--line);border-radius:14px;background:#fff;transition:box-shadow .18s,transform .18s}
+.pm-home .erp-card.door:hover,.pm-home .erp-card.door:focus-visible{box-shadow:0 0 0 1.5px var(--mag),0 14px 32px rgba(23,30,62,.14);transform:translateY(-3px);outline:none}
+/*
+  THE CROP. Fixed height, hidden overflow, and the scene rendered INSIDE at true
+  scale then transformed — never a scaled-down screenshot of the whole thing.
+*/
+.pm-home .erp-card .crop{position:relative;display:block;height:148px;overflow:hidden;background:#f4f5f8;border-bottom:1px solid var(--line);flex:none}
+/*
+  ⚠ THE CROP IS INERT. It renders the REAL scene — which means a live chart with
+  its own hover handlers — inside a <button>. Without this, hovering the card
+  could raise the scene's tooltip inside a 148px crop, and the scene's own
+  controls would become nested interactive elements inside a button. The card is
+  one click target; the crop is a picture of what is behind the door.
+*/
+.pm-home .erp-card .crop-inner{position:absolute;top:0;left:0;transform-origin:top left;transition:transform .28s ease;display:block;pointer-events:none}
+.pm-home .erp-card:hover .crop-inner,.pm-home .erp-card:focus-visible .crop-inner{transform:var(--tf) translateY(-10px)}
+.pm-home .erp-card .crop::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 78%,rgba(255,255,255,.82));pointer-events:none}
+.pm-home .erp-card .db{padding:15px 17px 17px;display:flex;flex-direction:column;gap:8px;flex:1}
+.pm-home .erp-card .db-h3{font-size:15.5px;color:var(--ink);font-weight:700;letter-spacing:-.2px;font-family:var(--font-display),sans-serif}
+.pm-home .erp-card .db-p{font-size:12.7px;line-height:1.55;color:#5b6478;flex:1}
+.pm-home .erp-card .db-open{font-size:12.5px;font-weight:700;color:var(--mag)}
+
+/* ---- lightbox ---------------------------------------------------------- */
+.pm-home .lb-dim{position:fixed;inset:0;background:rgba(12,16,34,.64);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:60;padding:44px 26px 34px}
+.pm-home .lb-box{max-width:100%;max-height:100%;overflow:auto;border-radius:16px;position:relative}
+/* OUTSIDE the scene's top-right corner, so it cannot collide with scene chrome. */
+.pm-home .lb-close{position:absolute;top:-38px;right:0;z-index:5;width:32px;height:32px;border-radius:9px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.pm-home .lb-close:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.pm-home .lb-close svg{width:15px;height:15px;stroke:#fff;stroke-width:2.2;fill:none}
+.pm-home .lb-hint{position:sticky;bottom:0;text-align:center;color:#cfd4e4;font-size:12px;padding-top:10px;margin:0}
+
+/* ---- shared scene chrome ------------------------------------------------ */
+.pm-home .scene{background:#fff;border-radius:14px;overflow:hidden}
+.pm-home .scene .sh{padding:13px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;background:#fbfbfd}
+.pm-home .scene .sh .lg{display:flex;align-items:center;color:var(--ink);font-weight:700;font-size:15px}
+.pm-home .scene .sh .lg i,.pm-home .mailhdr .lg i{display:inline-flex;align-items:center;justify-content:center;width:19px;height:19px;border-radius:50%;border:2.2px solid var(--mag);color:var(--mag);font-size:11px;font-weight:700;margin-right:6px;font-style:normal}
+.pm-home .scene .sh .t{font-size:12.5px;color:var(--muted);font-weight:600}
+.pm-home .scene .sh-sp{flex:1}
+.pm-home .scene .pill{font-size:11px;font-weight:700;padding:4px 9px;border-radius:999px;background:var(--mag-soft);color:var(--mag-d);border:0}
+.pm-home .mbtn{border-radius:9px;padding:11px 17px;font-size:13px;font-weight:700;border:1px solid var(--line);background:#fff;color:var(--text);display:inline-block}
+.pm-home .mbtn.p{background:var(--mag);border-color:var(--mag);color:#fff}
+.pm-home .btns{display:flex;gap:9px;margin-bottom:16px;flex-wrap:wrap}
+
+/* ---- scene 2 · email ---------------------------------------------------- */
+.pm-home .mail{width:660px;max-width:100%;background:#eef0f5;padding:22px;border-radius:14px}
+.pm-home .mailhdr{background:var(--ink);border-radius:12px 12px 0 0;padding:16px 22px;display:flex;align-items:center;justify-content:space-between}
+.pm-home .mailhdr .lg{color:#fff;font-weight:700;font-size:16px;display:flex;align-items:center}
+.pm-home .mailhdr .tag{font-size:10.5px;font-weight:700;letter-spacing:.7px;color:#fff;background:var(--mag);padding:4px 9px;border-radius:999px}
+.pm-home .mailbody{background:#fff;padding:24px 26px 26px;border-radius:0 0 12px 12px}
+.pm-home .mailbody h2{font-size:20px;margin:0 0 4px;color:var(--ink);letter-spacing:-.4px}
+.pm-home .mailbody .meta{font-size:12px;color:var(--muted);margin-bottom:18px}
+.pm-home .mailbody p{font-size:13.5px;line-height:1.6;margin:0 0 16px;color:var(--text)}
+.pm-home .reqbox{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:16px}
+.pm-home .reqbox .rh{background:#f7f8fb;padding:9px 14px;font-size:11.5px;font-weight:600;color:var(--muted);display:flex;justify-content:space-between;gap:10px}
+.pm-home .reqbox .rl{padding:12px 14px;font-size:13px}
+.pm-home .reqbox .rl b{color:var(--ink)}
+.pm-home .reqbox .dim{color:#7b8496}
+.pm-home .cmp{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.pm-home .cmp>div{border:1px solid var(--line);border-radius:10px;padding:13px 15px}
+.pm-home .cmp .gpo{border-color:var(--mag);background:var(--mag-soft)}
+.pm-home .cmp .lab{font-size:10.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+.pm-home .cmp .gpo .lab{color:var(--mag-d)}
+.pm-home .cmp .sup{font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:3px}
+.pm-home .cmp .px{font-size:21px;font-weight:700;color:var(--ink);letter-spacing:-.4px}
+.pm-home .cmp .px span{font-size:12px;font-weight:600;color:#7b8496}
+.pm-home .cmp .ex{font-size:11.5px;color:var(--muted);margin-top:3px}
+.pm-home .save{background:#eafaf2;border:1px solid #bfe8d4;border-radius:10px;padding:12px 15px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+.pm-home .save .s1{font-size:12.5px;font-weight:700;color:#14603f}
+.pm-home .save .s2{font-size:19px;font-weight:700;color:#14603f;letter-spacing:-.3px}
+.pm-home .save .s3{font-size:11px;color:#2c7a57;margin-top:2px}
+.pm-home .whyb{font-size:11.5px;color:var(--muted);line-height:1.55;border-top:1px solid var(--line);padding-top:13px}
+.pm-home .whyb b{color:var(--text)}
+.pm-home .whyb .faint{color:#9aa2b3}
+
+/* ---- scene 3 · W-9 ------------------------------------------------------ */
+.pm-home .w9{width:900px;max-width:100%}
+.pm-home .w9body{display:grid;grid-template-columns:300px 1fr}
+.pm-home .docpane{background:#f7f8fb;border-right:1px solid var(--line);padding:16px}
+.pm-home .doc{background:#fff;border:1px solid var(--line);border-radius:6px;padding:13px 14px;font-size:8.5px;line-height:1.5;color:#4a5266;position:relative;height:326px;overflow:hidden}
+.pm-home .doc h5{font-size:11px;margin:0 0 2px;color:var(--ink)}
+.pm-home .doc .frm{font-size:7.5px;color:var(--muted);margin-bottom:9px}
+.pm-home .doc .fld{border-bottom:1px solid #dfe3ec;padding:4px 0;display:flex;justify-content:space-between;gap:8px}
+.pm-home .doc .fld span:first-child{color:#8891a5}
+.pm-home .doc .fld b{color:var(--ink);font-size:9px;text-align:right}
+/* The flagged field — W-9 line 2 — outlined on the document itself. */
+.pm-home .doc .hl{position:absolute;border:1.5px solid var(--mag);border-radius:4px;background:rgba(215,44,214,.09);left:10px;right:10px;top:83px;height:26px}
+.pm-home .docmeta{margin-top:11px;font-size:11px;color:var(--muted)}
+/*
+  ⚠ RENAMED FROM `.chk` — IT COLLIDED. `.pm-home .chk` is the 22px magenta
+  check-circle in the capability-domain list, so this pane inherited
+  width:22px and collapsed to a 40px column with every check row wrapping
+  one character wide. The generic class names in this ported stylesheet are
+  exactly the hazard its own header comment warns about; scene-local classes
+  get a scene prefix.
+*/
+.pm-home .w9chk{padding:18px 20px;min-width:0}
+.pm-home .w9chk h4{margin:0 0 3px;font-size:16px;color:var(--ink);letter-spacing:-.3px}
+.pm-home .w9chk .csub{font-size:12px;color:var(--muted);margin-bottom:14px}
+.pm-home .res{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:14px}
+.pm-home .res .r{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);font-size:12.5px}
+.pm-home .res .r:last-child{border-bottom:0}
+.pm-home .res .r b{color:var(--ink)}
+.pm-home .res .r .d{color:var(--muted);font-size:11.5px;display:block;margin-top:2px}
+.pm-home .ic{width:17px;height:17px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;margin-top:1px}
+.pm-home .ic.ok{background:#1f8f5f}
+.pm-home .ic.wn{background:#b8791a}
+.pm-home .status{display:flex;align-items:center;gap:12px;background:#fff8ec;border:1px solid #f0dcb8;border-radius:10px;padding:12px 15px;margin-bottom:14px}
+.pm-home .status .n{font-size:20px;font-weight:700;color:#b8791a;letter-spacing:-.3px;white-space:nowrap}
+.pm-home .status .x{font-size:12.5px;color:#7a5a15;line-height:1.5}
+
+/* ---- scene 4 · work request → talent ------------------------------------ */
+.pm-home .wr{width:920px;max-width:100%}
+.pm-home .wrbody{display:grid;grid-template-columns:330px 1fr}
+.pm-home .wrleft{background:#f7f8fb;border-right:1px solid var(--line);padding:17px 18px}
+.pm-home .wrbadge{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.6px;color:#14603f;background:#e7f7ef;border:1px solid #bfe8d4;padding:4px 8px;border-radius:6px;margin-bottom:11px}
+.pm-home .wrleft h4{margin:0 0 4px;font-size:15.5px;color:var(--ink);letter-spacing:-.3px;line-height:1.3}
+.pm-home .wrmeta{font-size:11.5px;color:var(--muted);margin-bottom:13px}
+.pm-home .wrsec{font-size:10px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);margin:13px 0 6px}
+.pm-home .wrleft ul{margin:0;padding-left:15px;font-size:12px;line-height:1.65;color:var(--text)}
+.pm-home .chips{display:flex;flex-wrap:wrap;gap:5px}
+.pm-home .chip2{font-size:10.5px;font-weight:600;background:#fff;border:1px solid var(--line);border-radius:999px;padding:4px 9px;color:#4a5468}
+.pm-home .wrkv{display:flex;justify-content:space-between;gap:10px;font-size:12px;padding:5px 0;border-bottom:1px solid var(--line)}
+.pm-home .wrkv:last-child{border-bottom:0}
+.pm-home .wrkv b{color:var(--ink)}
+.pm-home .wrright{padding:17px 19px}
+.pm-home .wrright h4{margin:0 0 3px;font-size:16px;color:var(--ink);letter-spacing:-.3px}
+.pm-home .wrright .rsub{font-size:12px;color:var(--muted);margin-bottom:13px}
+.pm-home .prov{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:11px;padding:11px 13px;margin-bottom:9px}
+.pm-home .prov.top{border-color:var(--mag);background:var(--mag-soft)}
+.pm-home .av{width:38px;height:38px;border-radius:10px;flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px}
+.pm-home .pv{flex:1;min-width:0}
+.pm-home .pv .nm{font-size:13.5px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:6px}
+.pm-home .vb{font-size:9.5px;font-weight:700;color:var(--mag-d);background:#fff;border:1px solid var(--mag);border-radius:999px;padding:1px 6px}
+.pm-home .pv .ttl{font-size:11.5px;color:var(--muted);margin:1px 0 5px}
+.pm-home .pv .tg{display:flex;gap:4px;flex-wrap:wrap}
+.pm-home .pv .tg span{font-size:9.5px;font-weight:600;background:#fff;border:1px solid var(--line);border-radius:5px;padding:2px 6px;color:#5b6478}
+.pm-home .rt2{text-align:right;flex:none}
+.pm-home .rt2 .r{font-size:14px;font-weight:700;color:var(--ink)}
+.pm-home .rt2 .s{font-size:10.5px;color:var(--muted);margin-bottom:6px}
+.pm-home .inv{background:var(--mag);color:#fff;border:0;border-radius:8px;padding:7px 14px;font-size:11.5px;font-weight:700;display:inline-block}
+.pm-home .inv.g{background:#fff;color:var(--mag-d);border:1px solid var(--mag)}
+.pm-home .wrfoot{margin-top:12px;border-top:1px solid var(--line);padding-top:11px;font-size:11.5px;color:var(--muted);line-height:1.6}
+.pm-home .wrfoot b{color:var(--text)}
+
+/* ---- scene 1 · spend overview ------------------------------------------- */
+.pm-home .sv{width:1180px;max-width:100%;background:#f4f5f8;display:grid;grid-template-columns:186px 1fr;position:relative}
+.pm-home .sv-rail{background:var(--ink);padding:22px 0 28px;min-height:640px}
+.pm-home .sv-wordmark{display:flex;align-items:center;padding:0 20px 26px;color:#fff;font-size:21px;font-weight:700;letter-spacing:-.4px}
+.pm-home .sv-wordmark .p{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;border:2.5px solid var(--mag);color:var(--mag);font-size:13px;font-weight:700;margin-right:5px}
+.pm-home .sv-grp{padding:0 12px}
+.pm-home .sv-cap{font-size:9.5px;letter-spacing:1.4px;color:#69739a;padding:0 8px 8px;font-weight:700}
+.pm-home .sv-cap2{padding-top:16px}
+.pm-home .sv-rl{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:8px;color:#b8c0d9;font-size:12.5px;font-weight:600;margin-bottom:2px}
+.pm-home .sv-rl.on{background:var(--mag);color:#fff}
+.pm-home .sv-main{padding:20px 22px 26px;min-width:0}
+.pm-home .sv-top{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.pm-home .sv-top h1{font-size:25px;margin:0;letter-spacing:-.5px;color:var(--ink);font-weight:700}
+.pm-home .sv-chip{border:1px solid var(--line);background:#fff;border-radius:7px;padding:6px 11px;font-size:12px;font-weight:600;color:var(--text)}
+.pm-home .sv-spacer{flex:1}
+/* Two elements wear this class: the real <button> in the lightbox and an inert
+   <span> in the decorative card crop (a <button> cannot descend from the card
+   <button>). font-family + line-height are pinned because a <button> otherwise
+   takes the UA font and a <span> inherits the page's — the crop has to be the
+   same pixels as what opening the card reveals. */
+.pm-home .sv-viewbtn{border:1px solid var(--line);background:#fff;border-radius:7px;padding:6px 12px;font-family:inherit;font-size:12px;line-height:1.35;font-weight:700;color:var(--mag);cursor:pointer}
+.pm-home button.sv-viewbtn:hover{background:var(--mag-soft)}
+.pm-home .sv-viewbtn:focus-visible{outline:2px solid var(--mag);outline-offset:2px}
+.pm-home .sv-kpis{background:#fff;border:1px solid var(--line);border-radius:12px;display:grid;grid-template-columns:repeat(4,1fr);margin-bottom:14px}
+.pm-home .sv-kpi{padding:14px 18px;border-right:1px solid var(--line)}
+.pm-home .sv-kpi:last-child{border-right:0}
+.pm-home .sv-kpi .k{font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:5px}
+.pm-home .sv-kpi .v{font-size:22px;font-weight:700;letter-spacing:-.5px;color:var(--ink);display:flex;align-items:baseline;gap:6px}
+.pm-home .sv-kpi .d{font-size:11.5px;font-weight:700}
+.pm-home .sv-kpi .d.up{color:#1f8f5f}
+.pm-home .sv-kpi .d.dn{color:var(--mag-d)}
+.pm-home .sv-legend{display:flex;gap:14px;margin:0 0 12px;font-size:11px;color:var(--muted);font-weight:600}
+.pm-home .sv-legend i{display:inline-block;width:9px;height:9px;border-radius:2.5px;margin-right:5px;vertical-align:-1px}
+.pm-home .sv-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.pm-home .sv-panel{background:#fff;border:1px solid var(--line);border-radius:12px;padding:15px 17px 13px;min-width:0}
+.pm-home .sv-panel h2{font-size:14.5px;margin:0 0 2px;color:var(--ink);font-weight:700;letter-spacing:-.2px}
+.pm-home .sv-panel .sub{font-size:11px;color:var(--muted);margin-bottom:12px}
+.pm-home .sv-chart{display:block;width:100%;overflow:visible}
+.pm-home .sv-chart .ax{font-size:10px;fill:var(--muted);font-weight:600}
+.pm-home .sv-chart .vl{font-size:10px;fill:var(--ink);font-weight:700}
+.pm-home .sv-chart .gl{stroke:var(--line);stroke-width:1}
+.pm-home .sv-chart .seg:hover{opacity:.82}
+.pm-home .sv-tip{position:absolute;pointer-events:none;background:var(--ink);color:#fff;font-size:11.5px;font-weight:600;padding:7px 10px;border-radius:7px;z-index:5;white-space:nowrap;box-shadow:0 6px 18px rgba(0,0,0,.25);display:flex;flex-direction:column;gap:2px}
+.pm-home .sv-tip i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px}
+.pm-home .sv-tables{margin-top:14px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+.pm-home .sv-tables h3{font-size:13px;margin:14px 0 6px;color:var(--ink)}
+.pm-home .sv-tables h3:first-child{margin-top:0}
+.pm-home .sv-tables table{border-collapse:collapse;width:100%;font-size:12px}
+.pm-home .sv-tables th,.pm-home .sv-tables td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--line)}
+.pm-home .sv-tables th{color:var(--muted);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+.pm-home .sv-tables td.n{text-align:right;font-variant-numeric:tabular-nums}
+
+@media(max-width:900px){
+  .pm-home .lb-dim{padding:44px 12px 20px}
+  .pm-home .w9body,.pm-home .wrbody,.pm-home .sv{grid-template-columns:1fr}
+  .pm-home .sv-rail{min-height:0;padding-bottom:14px}
+  .pm-home .sv-grid,.pm-home .cmp{grid-template-columns:1fr}
+  .pm-home .sv-kpis{grid-template-columns:1fr 1fr}
+}
 .pm-home /* ===== PROJECT TRACKER ===== */
   .trk-sec{background:linear-gradient(180deg,#fbfaff 0%,#fff 62%);padding:74px 0 82px;border-top:1px solid var(--line)}
 .pm-home .trk-head{display:flex;align-items:flex-end;justify-content:space-between;gap:28px;flex-wrap:wrap;margin-bottom:30px}

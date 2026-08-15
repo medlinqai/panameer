@@ -222,6 +222,22 @@ export function bandFor(score: number): Band {
   return "Leading";
 }
 
+/**
+ * How many optimization opportunities sit in each domain — the T2 tile graphic
+ * on the product shot (one column per domain, in THIS array's order).
+ *
+ * ⚠ TWO INVARIANTS, both asserted in capability-domains.test.ts:
+ *   · the length equals P2P_DOMAINS.length, so column N is domain N;
+ *   · the SUM is 23, which is the number printed on the tile.
+ *
+ * It lives here rather than in DashboardShot because the order is this file's
+ * order — a column chart whose bars silently stop lining up with the list they
+ * claim to describe is the failure worth preventing.
+ */
+export const OPPORTUNITIES_BY_DOMAIN = [4, 3, 3, 1, 2, 2, 2, 3, 2, 1] as const;
+
+export const TOTAL_OPPORTUNITIES = OPPORTUNITIES_BY_DOMAIN.reduce((n, v) => n + v, 0);
+
 /** The other three processes — listed, never fabricated. See WS-5. */
 export const OTHER_PROCESSES = [
   "Order-to-Cash",
