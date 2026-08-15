@@ -921,7 +921,13 @@
 .pm-home .flw{width:1136px;max-width:100%;padding:22px 26px 24px}
 .pm-home .flw-h2{font-size:19px;margin:0 0 3px;color:var(--ink);letter-spacing:-.4px;font-weight:700}
 .pm-home .flw-sub{font-size:12.5px;color:var(--muted);margin-bottom:10px}
-.pm-home .flw-svg{display:block;width:1080px;height:578px;font-family:var(--font-body),system-ui,sans-serif}
+/*
+  ⚠ `height:auto`, NOT A FIXED HEIGHT. The two scenes are no longer the same
+  size — Fulfillment is 1080x578, Settlement 1080x510 (E110) — so a pinned
+  height would letterbox one of them. Width stays fixed at the true 1080 because
+  the card crop is a true-scale window onto it; see `.flw` above.
+*/
+.pm-home .flw-svg{display:block;width:1080px;height:auto;font-family:var(--font-body),system-ui,sans-serif}
 .pm-home .flw-note{margin:10px 0 0;border-top:1px solid var(--line);padding-top:13px;font-size:12.5px;color:var(--muted);line-height:1.6}
 .pm-home .flw-note b{color:var(--text);font-weight:700}
 /*

@@ -6,32 +6,48 @@ import type { FlowSpec } from "@/lib/marketing-scenes";
 /**
  * THE FOUR-COLUMN FLOW DIAGRAM — one primitive, both ERP scenes.
  *
- * Ported from 2. Claude Sub-Files/mockups/erp_integration_section.html, which is
- * the spec for geometry, colour and content. Replaces the swimlane form shipped
- * in e99b98c: swimlanes flattened a diagram whose whole point is WHICH OF FOUR
- * PARTIES holds the document at each moment, and dropped the two containers that
- * make "two systems, talking" legible before you read a word.
+ * Geometry is `2. Claude Sub-Files/mockups/erp_flows_v2.html`, approved. This is
+ * v2; it replaces the v1 geometry shipped in `1b18c51`, which was right in
+ * structure and wrong in two ways that mattered.
+ *
+ * ── ⚠ THE ACTORS ARE COLUMNS. THIS IS THE FIX, NOT A RESTYLE (E109) ──────────
+ *
+ * v1 drew each actor as a circle at `r=20` and aimed four provider connectors at
+ * a fixed `x=981`. Two of them arrived 28px above and 32px below the glyph and
+ * terminated in blank canvas. A CIRCLE HAS NO STRAIGHT EDGE, so there is no
+ * honest x to aim at — the bug was not a wrong number, it was a shape that
+ * cannot be targeted, and nudging coordinates is what produced it.
+ *
+ * A column has an edge at every height. `x=24 w=120` and `x=936 w=120`, same
+ * vertical span as the Oracle box and the Panameer panel, so a connector lands
+ * wherever it arrives. The mid-air arrowhead is now structurally impossible.
+ * It also makes the scene read as FOUR containers rather than two boxes with
+ * icons floating beside them.
+ *
+ * ── ⚠ NO VERTICAL LANES IN THE GUTTERS ──────────────────────────────────────
+ *
+ * Every hand-off is a straight horizontal line, because each document is placed
+ * at the height of the step it partners with (see `marketing-scenes.ts`). If a
+ * future edit needs a lane to connect two things, the two ends have drifted out
+ * of alignment — MOVE THE CHIP. Routing around it is what tangled v1.
+ *
+ * The single exception is `Requester Accepts Rate → Req Line`, one elbow,
+ * documented at its definition.
  *
  * ── ONE PRIMITIVE, NOT TWO COPIES ────────────────────────────────────────────
  *
- * Fulfillment and Settlement differ only in chips, steps and arrows. The frame —
- * the Oracle box, the Panameer panel, both actors, the gradient, the markers —
- * is identical, and identical-by-copy is how two diagrams drift until a reader
- * can no longer compare them. Everything below the FRAME section is layout only:
- * the content lives in `marketing-scenes.ts`.
+ * The frame — both containers, both actor columns, the gradient, the markers —
+ * is identical in the two scenes and drawn once here. Everything that differs is
+ * data. This file holds no content: no label, no document name, no step.
  *
  * ── ⚠ MARKER IDS ARE NAMESPACED PER INSTANCE, AND THEY HAVE TO BE ────────────
  *
- * SVG `marker-end="url(#am)"` resolves against the WHOLE DOCUMENT and takes the
- * first match. This page renders these scenes three times at once — a crop
- * inside each of the two cards, plus the open dialog — so with a fixed id every
- * arrowhead on the page would point at whichever `<defs>` happened to parse
- * first. Close that dialog and the referenced node is gone.
- *
- * `useId()` gives each React instance its own suffix, so a scene can only ever
- * reference its own markers. It is sanitised because React's raw value contains
- * delimiter characters (`:` in React 18, `«»` in 19) that have no business in a
- * FuncIRI. Asserted in `check:ui` §13.
+ * `marker-end="url(#…)"` resolves against the WHOLE DOCUMENT and takes the first
+ * match. This page renders these scenes three times at once — a crop inside each
+ * of the two cards, plus the open dialog — so a fixed id would point every
+ * arrowhead on the page at whichever `<defs>` parsed first, and closing that
+ * dialog would delete the node the survivors reference. `useId()` gives each
+ * React instance its own suffix. Asserted in `check:ui` §13.
  *
  * ── ⚠ PURE SVG, AND KEEP IT THAT WAY ─────────────────────────────────────────
  *
@@ -39,39 +55,81 @@ import type { FlowSpec } from "@/lib/marketing-scenes";
  * <button>, and an interactive descendant of a button is E097 all over again.
  */
 
-/* ── THE FRAME — shared by both scenes, identical coordinates ─────────────── */
+/* ── THE FRAME — identical coordinates in both scenes ──────────────────────── */
 
-const VB = { w: 1080, h: 578 };
-const ORACLE = { x: 150, y: 40, w: 290, h: 505, r: 18 };
-const PANEL = { x: 545, y: 40, w: 330, h: 505, r: 18 };
-/** Document chips: x and width fixed, so every chip lines up in both scenes. */
-const DOC = { x: 205, w: 180, r: 10, cx: 295 };
-/** Step chips: height is fixed too — the panel reads as a stack, not a ladder. */
-const STEP = { x: 560, w: 300, h: 30, r: 7, cx: 710 };
-/** The gutter between two CONSECUTIVE steps. Wider than this is a group break. */
-const STEP_GUTTER = 8;
-const ACTOR_CY = 284;
+const CANVAS_W = 1080;
+const TOP = 40;
+
+/** The two actor columns. Full height, so every connector has an edge to land on. */
+const ACTOR_L = { x: 24, w: 120 };
+const ACTOR_R = { x: 936, w: 120 };
+const COL_R = 16;
+
+const ORACLE = { x: 196, w: 272, r: 18 };
+const PANEL = { x: 560, w: 336, r: 18 };
+/** Document chips. x and width fixed, so every chip lines up across both scenes. */
+const DOC = { x: 226, w: 212, r: 10, cx: 332 };
+/** Step chips. Height fixed too — the panel reads as a stack, not a ladder. */
+const STEP = { x: 576, w: 304, h: 30, r: 7, cx: 728 };
 
 const NAVY = "#2f3a5c";
 const NAVY_CHIP = "#3c4668";
 const MAGENTA = "#D72CD6";
 const CHIP_TEXT = "#1d2440";
+const COL_FILL = "#f7f9fc";
+const COL_STROKE = "#c9d1e0";
 
-/** Head plus shoulders. Decorative — the label underneath carries the meaning. */
-function Actor({ cx, label }: { cx: number; label: string }) {
+/**
+ * An actor column: the container, a head-and-shoulders glyph, and a two-line
+ * uppercase label. The glyph is decorative; the label carries the meaning.
+ */
+function ActorColumn({
+  x,
+  w,
+  h,
+  cy,
+  lines,
+}: {
+  x: number;
+  w: number;
+  h: number;
+  cy: number;
+  lines: readonly [string, string];
+}) {
+  const cx = x + w / 2;
   return (
     <g>
-      <circle cx={cx} cy={ACTOR_CY} r="20" fill="none" stroke={NAVY} strokeWidth="2.4" />
+      <rect
+        x={x}
+        y={TOP}
+        width={w}
+        height={h}
+        rx={COL_R}
+        fill={COL_FILL}
+        stroke={COL_STROKE}
+        strokeWidth="1.5"
+      />
+      <circle cx={cx} cy={cy} r="17" fill="none" stroke={NAVY} strokeWidth="2.2" />
       <path
-        d={`M${cx - 32} 352 a32 32 0 0 1 64 0`}
+        d={`M${cx - 21} ${cy + 32}a21 21 0 0 1 42 0`}
         fill="none"
         stroke={NAVY}
-        strokeWidth="2.4"
-        strokeLinecap="round"
+        strokeWidth="2.2"
       />
-      <text x={cx} y="380" textAnchor="middle" fontSize="13" fontWeight="600" fill={CHIP_TEXT}>
-        {label}
-      </text>
+      {lines.map((line, i) => (
+        <text
+          key={line}
+          x={cx}
+          y={cy + 62 + i * 15}
+          textAnchor="middle"
+          fontSize="10"
+          fontWeight="700"
+          letterSpacing=".7"
+          fill={NAVY}
+        >
+          {line}
+        </text>
+      ))}
     </g>
   );
 }
@@ -85,107 +143,115 @@ export function FlowDiagram({ title, spec }: { title: string; spec: FlowSpec }) 
   const uid = `fd${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   const gradId = `${uid}-panel`;
   const titleId = `${uid}-title`;
-  /** Arrowheads: magenta crossing, navy internal, small white between steps. */
-  const mk = { mag: `${uid}-mag`, navy: `${uid}-navy`, white: `${uid}-white` };
+  /** Two arrowheads now: v2's inter-step connectors are plain hairlines. */
+  const mk = { mag: `${uid}-mag`, navy: `${uid}-navy` };
   const headFor: Record<string, string> = { mag: mk.mag, navy: mk.navy, note: mk.navy };
+
+  const h = spec.containerH;
 
   return (
     <svg
       className="flw-svg"
-      viewBox={`0 0 ${VB.w} ${VB.h}`}
-      width={VB.w}
-      height={VB.h}
+      viewBox={`0 0 ${CANVAS_W} ${spec.canvasH}`}
+      width={CANVAS_W}
+      height={spec.canvasH}
       role="img"
       aria-labelledby={titleId}
     >
       <title id={titleId}>{title}</title>
 
       <defs>
-        <linearGradient id={gradId} x1="0" y1="0" x2="0.6" y2="1">
+        <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#241640" />
           <stop offset="0.55" stopColor="#6d1b6b" />
           <stop offset="1" stopColor={MAGENTA} />
         </linearGradient>
         {(
           [
-            [mk.mag, MAGENTA, 7],
-            [mk.navy, NAVY, 7],
-            [mk.white, "#ffffff", 6],
+            [mk.mag, MAGENTA],
+            [mk.navy, NAVY],
           ] as const
-        ).map(([id, fill, size]) => (
+        ).map(([id, fill]) => (
           <marker
             key={id}
             id={id}
             viewBox="0 0 10 10"
             refX="9"
             refY="5"
-            markerWidth={size}
-            markerHeight={size}
+            markerWidth="7"
+            markerHeight="7"
             orient="auto-start-reverse"
           >
-            <path d="M0 1 L9 5 L0 9 z" fill={fill} />
+            <path d="M0 0 10 5 0 10z" fill={fill} />
           </marker>
         ))}
       </defs>
 
-      {/*
-        ── the two containers ─────────────────────────────────────────────────
-        ⚠ SPELL OUT width/height/rx. These were first written as `{...ORACLE}`
-        with the shorthand `w`/`h`/`r` keys, and SVG has no such attributes: the
-        rects rendered at zero size, so the Oracle outline and the whole magenta
-        panel silently vanished and the white step chips went white-on-white.
-        Nothing errored — it just drew an empty diagram.
-      */}
+      {/* ── the four columns ──────────────────────────────────────────────── */}
+      <ActorColumn
+        x={ACTOR_L.x}
+        w={ACTOR_L.w}
+        h={h}
+        cy={spec.actorCy}
+        lines={["SERVICE", "REQUESTER"]}
+      />
+      <ActorColumn
+        x={ACTOR_R.x}
+        w={ACTOR_R.w}
+        h={h}
+        cy={spec.actorCy}
+        lines={["SERVICE", "PROVIDER"]}
+      />
+
       <rect
         x={ORACLE.x}
-        y={ORACLE.y}
+        y={TOP}
         width={ORACLE.w}
-        height={ORACLE.h}
+        height={h}
         rx={ORACLE.r}
         fill="#ffffff"
         stroke={NAVY}
         strokeWidth="2"
       />
-      <rect x="170" y="56" width="152" height="26" rx="7" fill="#f2f5fb" stroke="#c9d1e0" />
-      <text
-        x="246"
-        y="74"
-        textAnchor="middle"
-        fontSize="10.5"
-        fontWeight="800"
-        letterSpacing="1.1"
-        fill={NAVY}
-      >
-        {/* ⚠ TEXT, NOT ORACLE'S LOGO. Trademark is uncleared — see ErpIntegration. */}
+      <rect x="214" y="56" width="152" height="26" rx="7" fill="#f2f5fb" stroke={COL_STROKE} />
+      {/* ⚠ TEXT, NOT ORACLE'S LOGO. Trademark uncleared — see ErpIntegration. */}
+      <text x="227" y="74" fontSize="10" fontWeight="800" letterSpacing="1" fill={NAVY}>
         ORACLE CLOUD ERP
       </text>
+
       <rect
         x={PANEL.x}
-        y={PANEL.y}
+        y={TOP}
         width={PANEL.w}
-        height={PANEL.h}
+        height={h}
         rx={PANEL.r}
         fill={`url(#${gradId})`}
       />
-      <text x="567" y="76" fontSize="16.5" fontWeight="700" fill="#ffffff" letterSpacing="-.2">
+      <text x="578" y="76" fontSize="15" fontWeight="700" fill="#ffffff">
         Panameer
       </text>
-
-      <Actor cx={70} label="Service Requester" />
-      <Actor cx={1005} label="Service Provider" />
 
       {/* ── Oracle document chips ─────────────────────────────────────────── */}
       {spec.docs.map((doc) => {
         const mid = doc.y + doc.h / 2;
-        // One line sits just below centre; two straddle it.
-        const rows = doc.lines.length === 1 ? [mid + 5] : [mid - 5, mid + 15];
+        /*
+          A RULED CHIP IS TWO DOCUMENTS IN ONE BOX, so each row centres in its own
+          half rather than straddling the chip's centre. That is why the two
+          two-line cases use different offsets — it is not an inconsistency.
+        */
+        const rows =
+          doc.lines.length === 1
+            ? [mid + 5]
+            : doc.rule
+              ? [mid - 11, mid + 26]
+              : [mid - 4, mid + 13];
         return (
           <g key={doc.lines.join(" ")}>
             <rect x={DOC.x} y={doc.y} width={DOC.w} height={doc.h} rx={DOC.r} fill={NAVY_CHIP} />
             {doc.rule && (
               <path
                 d={`M${DOC.x + 16} ${mid} H${DOC.x + DOC.w - 16}`}
-                stroke="rgba(255,255,255,.28)"
+                stroke="#69718c"
                 strokeWidth="1"
               />
             )}
@@ -206,13 +272,8 @@ export function FlowDiagram({ title, spec }: { title: string; spec: FlowSpec }) 
         );
       })}
 
-      {/*
-        The lineage inside the ERP — requisition became agreement became order.
-        Dashed and HEADLESS on purpose: it states provenance, it is not a
-        hand-off, and giving it an arrowhead would make it read as one.
-      */}
       {spec.spine && (
-        <path d={spec.spine} stroke={NAVY} strokeWidth="1.8" strokeDasharray="5 5" fill="none" />
+        <path d={spec.spine} stroke={NAVY} strokeWidth="1.6" strokeDasharray="5 5" fill="none" />
       )}
 
       {/* ── Panameer step chips ───────────────────────────────────────────── */}
@@ -221,7 +282,7 @@ export function FlowDiagram({ title, spec }: { title: string; spec: FlowSpec }) 
           <rect x={STEP.x} y={step.y} width={STEP.w} height={STEP.h} rx={STEP.r} fill="#ffffff" />
           <text
             x={STEP.cx}
-            y={step.y + 19.5}
+            y={step.y + 20}
             textAnchor="middle"
             fontSize="12.5"
             fontWeight="600"
@@ -233,22 +294,21 @@ export function FlowDiagram({ title, spec }: { title: string; spec: FlowSpec }) 
       ))}
 
       {/*
-        ⚠ DERIVED, NOT LISTED. A little white arrow appears only where the next
-        chip is exactly one gutter below — which IS the definition of
-        "consecutive". The wider gaps are the group breaks (bid / work order /
-        release), and a break is a pause, not a hand-off. Deriving it means
-        re-spacing a group cannot leave a stale arrow pointing across a gap.
+        ⚠ HAIRLINES, NOT ARROWS, and only where the data says one step FOLLOWS
+        another. v1 derived these from chip adjacency; v2 spaces every chip 15px
+        apart, so adjacency can no longer tell a sequence from a stack — see the
+        note on `FlowStep`. Drawn after the chips so they tuck under nothing.
       */}
       {spec.steps.map((step, i) => {
-        const next = spec.steps[i + 1];
-        if (!next || next.y - (step.y + STEP.h) !== STEP_GUTTER) return null;
+        const prev = spec.steps[i - 1];
+        if (!step.follows || !prev) return null;
         return (
           <path
-            key={`${step.label}-arrow`}
-            d={`M${STEP.cx} ${step.y + STEP.h} V${next.y - 1}`}
+            key={`${step.label}-follows`}
+            d={`M${STEP.cx} ${prev.y + STEP.h} V${step.y}`}
             stroke="#ffffff"
-            strokeWidth="2"
-            markerEnd={`url(#${mk.white})`}
+            strokeWidth="1.6"
+            fill="none"
           />
         );
       })}
@@ -274,7 +334,7 @@ export function FlowDiagram({ title, spec }: { title: string; spec: FlowSpec }) 
 /**
  * The scene shell both flows share: heading, sub, the diagram, the closing note.
  *
- * The note is the argument in both cases — eight hand-offs look like a lot of
+ * The note is the argument in both cases — a dozen arrows look like a lot of
  * process until the note points out the buyer only acts twice — so it is part of
  * the scene rather than something the card carries.
  */

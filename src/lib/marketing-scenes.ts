@@ -153,162 +153,210 @@ export const WR_TERMS: readonly (readonly [string, string])[] = [
 /* ── 5 + 6 · The two ERP-integration flow diagrams ────────────────────────── */
 
 /**
- * SCOTT'S FOUR-COLUMN DECK DIAGRAM, as data.
+ * SCOTT'S FOUR-COLUMN DECK DIAGRAM, v2 — as data.
  *
- * ── WHY THE GEOMETRY LIVES HERE AND NOT IN THE SVG ───────────────────────────
+ * Geometry is `2. Claude Sub-Files/mockups/erp_flows_v2.html`, approved.
  *
- * The brief offered a choice: drop these strings with the swimlanes they used to
- * feed, or keep them here as data driving the SVG. Kept, and the coordinates
- * came with them — because a label and the box it has to fit inside are one
- * decision, not two. "Invitation to Accept Work Order" fits a 300px chip and
- * would not fit a 200px one; splitting the two across two files is how a copy
- * edit silently overflows a box nobody re-measured.
+ * ── ⚠ THE THREE RULES THAT MAKE IT CONNECT. DO NOT BREAK THEM ────────────────
  *
- * So: this file is WHAT the diagram says and WHERE each piece sits.
- * `FlowDiagram.tsx` is the renderer and holds no content at all — it draws the
- * frame (Oracle box, Panameer panel, the two actors, the arrow markers) that
- * both scenes share and then lays out whatever it is handed.
+ * 1. THE ACTORS ARE FULL-HEIGHT COLUMNS, not floating glyphs. v1 drew them as a
+ *    circle at `cx=1005 r=20`, and four provider connectors ended at a fixed
+ *    `x=981` at four different heights — two of them 28px and 32px clear of the
+ *    circle, pointing at blank canvas (E109). A circle has no straight edge, so
+ *    there is no honest x to aim at; nudging coordinates is what produced the
+ *    bug. A column has one, at every height, so the mid-air arrowhead is now
+ *    structurally impossible rather than merely corrected.
  *
- * ── ⚠ THE COORDINATE SYSTEM IS SHARED AND FIXED ──────────────────────────────
+ * 2. EACH DOCUMENT SITS AT THE HEIGHT OF THE STEP IT PARTNERS WITH. Purchase
+ *    Order level with Auto-Create Work Order, Acknowledge level with Release
+ *    Work Order, Receipt level with Settlement Approval, Payment level with
+ *    Auto-Create Payment. Once both ends of a hand-off are at the same height
+ *    the connector is a straight line and there is nothing to route.
  *
- * Both scenes are `viewBox="0 0 1080 578"`, and the frame is drawn at identical
- * coordinates in both. That is what lets a reader open one dialog, close it,
- * open the other, and compare — the Oracle box and the Panameer panel do not
- * move between them. Change a frame constant in `FlowDiagram.tsx` and it moves
- * in both, which is the point; change a chip's `y` here and it moves in one.
+ * 3. ZERO VERTICAL LANES IN THE GUTTERS. Every earlier attempt hand-placed them
+ *    and that is exactly what tangled. If you find yourself adding one, rule 2
+ *    has been broken somewhere — MOVE THE CHIP, do not route around it.
  *
- * ── THE THREE ARROW LANGUAGES, AND THEY MEAN DIFFERENT THINGS ────────────────
+ * ⚠ ONE DELIBERATE EXCEPTION, and it is the only elbow in either scene:
+ * `Requester Accepts Rate → Req Line`. Req Line is the lower half of the
+ * requisition chip and cannot also be 100px further down without splitting one
+ * document into two chips. Scott has not asked for that and the two-row chip is
+ * true to the document. Leave it.
  *
- * Do not collapse them into one colour:
+ * ── THE TWO SCENES ARE NO LONGER THE SAME HEIGHT ─────────────────────────────
+ *
+ * Fulfillment is 578 tall, Settlement 510 (E110). Settlement holds three
+ * documents and five steps against Fulfillment's four and eight, and at a shared
+ * 505px the bottom 40% of its magenta panel was empty gradient. Frame-to-frame
+ * alignment between the two dialogs was argued for in the previous brief and was
+ * not worth what it cost.
+ *
+ * ── THE THREE ARROW LANGUAGES, UNCHANGED, AND THEY MEAN DIFFERENT THINGS ─────
+ *
  *   `mag`  — crosses between Panameer and something else. This is the integration.
  *   `navy` — the requester acting inside Oracle, or Oracle's own doc-to-doc step.
  *   `note` — navy DASHED: a notification, not a transaction. Used once, in
  *            Settlement, where the purchase receipt tells the requester it exists.
  */
 
-/** A navy document chip in the Oracle column. `x` and width are fixed by the frame. */
+/** A navy document chip in the Oracle column. x and width are fixed by the frame. */
 export type FlowDoc = {
   y: number;
   h: number;
   /** One or two rows of text, centred in the chip. */
   lines: readonly [string] | readonly [string, string];
-  /** Hairline across the chip's middle — separates two documents sharing one box. */
+  /**
+   * Hairline across the middle — TWO DOCUMENTS SHARING ONE BOX, not a decorative
+   * divider. It changes the text layout: each row centres in its own half rather
+   * than straddling the chip's centre.
+   */
   rule?: boolean;
 };
 
-/** A white step chip in the Panameer panel. Height is fixed by the frame. */
-export type FlowStep = { y: number; label: string };
+/**
+ * A white step chip in the Panameer panel. Height is fixed by the frame.
+ *
+ * ⚠ `follows` IS EXPLICIT NOW, AND HAS TO BE. v1 derived the little white
+ * connector from adjacency — "next chip exactly one gutter below" — which worked
+ * only because its group breaks were 80px+ and its gutters 8px. v2 spaces every
+ * chip 15px apart, so in Settlement `Manage Work Order`, `Manage Timeline` and
+ * `Create Settlement` are 15px apart and are NOT a sequence: they are three
+ * separate things the requester and provider each reach into. Adjacency can no
+ * longer tell a sequence from a stack, so the data says which it is.
+ */
+export type FlowStep = { y: number; label: string; follows?: boolean };
 
 /** See "the three arrow languages" above. */
 export type FlowLineKind = "mag" | "navy" | "note";
 
-/** One connector. `d` is an SVG path in the shared 1080x578 coordinate system. */
+/** One connector. `d` is an SVG path in the scene's own coordinate system. */
 export type FlowConnector = { kind: FlowLineKind; d: string };
 
 export type FlowSpec = {
+  /** Canvas height. Fulfillment 578, Settlement 510. Width is always 1080. */
+  canvasH: number;
+  /** Height of all four columns. They start at y=40 and share this. */
+  containerH: number;
+  /**
+   * Vertical centre of the actor head in both columns. Not derived from the
+   * container: the deck sits the Settlement actors above centre, and matching
+   * the deck beats a formula that would move them.
+   */
+  actorCy: number;
   docs: readonly FlowDoc[];
   steps: readonly FlowStep[];
   /**
-   * Optional dashed lineage running down the Oracle chips — "this requisition
-   * became this agreement became this order", inside the ERP. Not an arrow: it
-   * is a statement about provenance, so it has no head.
+   * Dashed lineage down the Oracle chips — "this requisition became this
+   * agreement became this order". HEADLESS on purpose: it states provenance, it
+   * is not a hand-off, and an arrowhead would make it read as one.
    */
   spine?: string;
   connectors: readonly FlowConnector[];
 };
 
 /**
- * FULFILLMENT — requisition to released work order.
+ * FULFILLMENT — requisition to released work order. Canvas 1080x578.
  *
  * ⚠ THE ALTERNATION IS THE CLAIM. Requisition lands in Oracle, the bid happens
  * in Panameer, the accepted rate returns to Oracle as a req line, the PO goes
  * back out, the acknowledgement comes home. Group the Oracle chips together and
- * the diagram stops saying the one thing it exists to say: the documents keep
- * landing in the system of record while the marketplace does the work between.
- *
- * The step chips fall in THREE GROUPS — bid, work order, release — and the gaps
- * between groups are why `FlowDiagram` only draws a little white arrow where two
- * chips are one 8px gutter apart. A group break is a pause, not a hand-off.
+ * the diagram stops saying the one thing it exists to say.
  */
 export const FULFILLMENT_FLOW: FlowSpec = {
+  canvasH: 578,
+  containerH: 505,
+  actorCy: 262,
   docs: [
     // One box, two documents, hairline between: the req and the line it carries.
     { y: 88, h: 76, lines: ["Purchase Requisition", "Req Line"], rule: true },
-    { y: 240, h: 48, lines: ["Purchase Agreement"] },
-    { y: 330, h: 44, lines: ["Purchase Order"] },
-    { y: 460, h: 52, lines: ["Purchase Order", "Acknowledge"] },
+    { y: 210, h: 44, lines: ["Purchase Agreement"] },
+    // Level with Auto-Create Work Order (rule 2).
+    { y: 303, h: 44, lines: ["Purchase Order"] },
+    // Level with Release Work Order (rule 2).
+    { y: 472, h: 46, lines: ["Purchase Order", "Acknowledge"] },
   ],
   steps: [
     { y: 95, label: "Create Work Request" },
-    { y: 133, label: "Invitation Providers to Bid" },
-    { y: 171, label: "Providers Propose Rate" },
-    { y: 209, label: "Requester Accepts Rate" },
-    { y: 290, label: "Auto-Create Work Order" },
-    { y: 328, label: "Invitation to Accept Work Order" },
-    { y: 420, label: "Accept Work Order" },
-    { y: 458, label: "Release Work Order" },
+    { y: 140, label: "Invitation Providers to Bid", follows: true },
+    { y: 185, label: "Providers Propose Rate", follows: true },
+    { y: 230, label: "Requester Accepts Rate", follows: true },
+    { y: 310, label: "Auto-Create Work Order" },
+    { y: 355, label: "Invitation to Accept Work Order", follows: true },
+    { y: 435, label: "Accept Work Order" },
+    { y: 480, label: "Release Work Order", follows: true },
   ],
-  spine: "M295 164 V240 M295 288 V330",
+  spine: "M332 164 V210 M332 254 V303",
   connectors: [
-    // The requester, acting inside Oracle.
-    { kind: "navy", d: "M102 276 H124 V126 H201" },
-    { kind: "navy", d: "M102 292 H140 V352 H201" },
-    { kind: "navy", d: "M203 486 H118 V318" },
-    // Oracle <-> Panameer: the integration.
-    { kind: "mag", d: "M385 110 H556" },
-    { kind: "mag", d: "M558 224 H470 V148 H389" },
-    { kind: "mag", d: "M385 352 H500 V305 H556" },
-    { kind: "mag", d: "M558 473 H480 V486 H389" },
-    // Panameer <-> the provider.
-    { kind: "mag", d: "M860 148 H900 V236 H981" },
-    { kind: "mag", d: "M981 258 H916 V186 H864" },
-    { kind: "mag", d: "M860 343 H932 V316 H981" },
-    { kind: "mag", d: "M981 336 H948 V435 H864" },
+    /* The requester acting inside Oracle. Lands on a chip edge each time. */
+    { kind: "navy", d: "M144 110 H226" },
+    { kind: "navy", d: "M144 325 H226" },
+    { kind: "navy", d: "M226 495 H144" },
+    /* Oracle <-> Panameer. Straight, except the one that cannot be. */
+    { kind: "mag", d: "M438 110 H576" },
+    // ⚠ THE ONE DELIBERATE ELBOW — see the header. Do not "fix" by splitting the chip.
+    { kind: "mag", d: "M576 245 H508 V143 H438" },
+    { kind: "mag", d: "M438 325 H576" },
+    { kind: "mag", d: "M576 495 H438" },
+    /* Panameer <-> the provider. All four land on the column's straight edge. */
+    { kind: "mag", d: "M880 155 H936" },
+    { kind: "mag", d: "M936 205 H880" },
+    { kind: "mag", d: "M880 375 H936" },
+    { kind: "mag", d: "M936 455 H880" },
   ],
 };
 
 /**
- * SETTLEMENT — work delivered to money moved.
+ * SETTLEMENT — work delivered to money moved. Canvas 1080x510.
  *
  * ⚠ WHAT IS MISSING IS THE POINT. There is no provider invoice chip, because the
- * provider never sends one: the approved settlement writes the receipt, the
- * receipt triggers the ERS invoice, and the payment follows. Anyone who has run
- * accounts payable reads that off the diagram immediately.
+ * provider never sends one: approved settlement writes the receipt, the receipt
+ * triggers the ERS invoice, and the payment follows.
  *
- * The one DASHED connector is the receipt telling the requester it exists —
- * a notification, not a transaction, and the only place the two are distinguished.
+ * ⚠ THE TWO REQUESTER LINES CROSS THE ORACLE COLUMN, STRAIGHT, at y=110 and
+ * y=155 where that column is empty. This is what the source deck does on slide
+ * 4. Routing them over the top of the containers was tried and rejected — do not
+ * reinstate it.
  */
 export const SETTLEMENT_FLOW: FlowSpec = {
+  canvasH: 510,
+  containerH: 430,
+  actorCy: 252,
   docs: [
-    { y: 210, h: 52, lines: ["Purchase", "Receipt"] },
-    { y: 330, h: 46, lines: ["ERS Invoice"] },
-    { y: 468, h: 48, lines: ["Payment"] },
+    // Level with Settlement Approval (rule 2).
+    { y: 222, h: 46, lines: ["Purchase", "Receipt"] },
+    { y: 298, h: 44, lines: ["ERS Invoice"] },
+    // Level with Auto-Create Payment (rule 2).
+    { y: 372, h: 46, lines: ["Payment"] },
   ],
   steps: [
+    /*
+      ⚠ THE FIRST THREE ARE NOT A SEQUENCE. Requester and provider each reach
+      into all three; only Create Settlement -> Settlement Approval flows. Hence
+      `follows` on the fourth alone. See the note on FlowStep.
+    */
     { y: 95, label: "Manage Work Order" },
-    { y: 150, label: "Manage Timeline via Tracker" },
-    { y: 205, label: "Create Settlement (Hrs/Pay Rqst)" },
-    { y: 243, label: "Settlement Approval" },
-    { y: 468, label: "Auto-Create Payment" },
+    { y: 140, label: "Manage Timeline via Tracker" },
+    { y: 185, label: "Create Settlement (Hrs/Pay Rqst)" },
+    { y: 230, label: "Settlement Approval", follows: true },
+    { y: 380, label: "Auto-Create Payment" },
   ],
   connectors: [
-    // Oracle's own step: the receipt becomes the evaluated-receipt invoice.
-    { kind: "navy", d: "M295 262 V326" },
-    // The receipt NOTIFIES the requester. Dashed: nothing is being transacted.
-    { kind: "note", d: "M203 236 H70 V258" },
-    // The requester, acting inside Oracle.
-    { kind: "navy", d: "M102 300 H140 V492 H201" },
-    // Requester -> Panameer: one trunk, two branches.
-    { kind: "mag", d: "M102 284 H124 V110 H556" },
-    { kind: "mag", d: "M124 165 H556" },
-    // Panameer <-> Oracle.
-    { kind: "mag", d: "M558 258 H495 V236 H389" },
-    { kind: "mag", d: "M385 492 H500 V483 H556" },
-    // Provider -> Panameer: one trunk, three branches.
-    { kind: "mag", d: "M981 284 H910 V110 H864" },
-    { kind: "mag", d: "M910 165 H864" },
-    { kind: "mag", d: "M910 220 H864" },
-    // ...and the payment back out to them.
-    { kind: "mag", d: "M860 483 H981 V330" },
+    /* Oracle's own step: the receipt becomes the evaluated-receipt invoice. */
+    { kind: "navy", d: "M332 268 V298" },
+    /* Requester -> Panameer, straight across the empty top of the Oracle column. */
+    { kind: "mag", d: "M144 110 H576" },
+    { kind: "mag", d: "M144 155 H576" },
+    /* The receipt NOTIFIES the requester. Dashed: nothing is being transacted. */
+    { kind: "note", d: "M226 245 H144" },
+    /* The requester acting inside Oracle. */
+    { kind: "navy", d: "M144 395 H226" },
+    /* Panameer <-> Oracle. */
+    { kind: "mag", d: "M576 245 H438" },
+    { kind: "mag", d: "M438 395 H576" },
+    /* The provider reaching into the three management steps, and paid at the end. */
+    { kind: "mag", d: "M936 110 H880" },
+    { kind: "mag", d: "M936 155 H880" },
+    { kind: "mag", d: "M936 205 H880" },
+    { kind: "mag", d: "M880 400 H936" },
   ],
 };
