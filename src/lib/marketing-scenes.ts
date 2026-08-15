@@ -214,23 +214,65 @@ export type FlowDoc = {
 };
 
 /**
+ * WHO ACTS. A closed union, not a free string, and not a prefix parsed off the
+ * front of the label (E112).
+ *
+ * "Requester Creates Work Request" split on the first space is fine until
+ * somebody writes "Panameer Admin Approves…" and the label silently becomes
+ * actor "Panameer" + verb "Admin Approves…". A union also means adding a fourth
+ * actor is a type error at every call site rather than a string that renders
+ * bold and nobody notices is wrong.
+ */
+export type FlowActor = "Requester" | "Provider" | "Panameer";
+
+/**
  * A white step chip in the Panameer panel. Height is fixed by the frame.
  *
- * ⚠ `follows` IS EXPLICIT NOW, AND HAS TO BE. v1 derived the little white
- * connector from adjacency — "next chip exactly one gutter below" — which worked
- * only because its group breaks were 80px+ and its gutters 8px. v2 spaces every
- * chip 15px apart, so in Settlement `Manage Work Order`, `Manage Timeline` and
- * `Create Settlement` are 15px apart and are NOT a sequence: they are three
- * separate things the requester and provider each reach into. Adjacency can no
- * longer tell a sequence from a stack, so the data says which it is.
+ * `actor` renders bold and `label` regular, in ONE centred <text> with two
+ * <tspan>s — so the pair reads as a sentence and still centres as a unit. The
+ * deck right-aligned provider actions and left-aligned requester ones; naming
+ * the actor supersedes that, and the labels stay centred.
+ *
+ * ⚠ `follows` IS EXPLICIT, AND HAS TO BE. v1 derived the little white connector
+ * from adjacency — "next chip exactly one gutter below". v2 spaces every chip
+ * 15px apart, so in Settlement `Manages Work Order`, `Manages Timeline` and
+ * `Creates Settlement Trans.` are 15px apart and are NOT a sequence: they are
+ * three separate things the requester, Panameer and provider each own. Adjacency
+ * can no longer tell a sequence from a stack, so the data says which it is.
  */
-export type FlowStep = { y: number; label: string; follows?: boolean };
+export type FlowStep = {
+  y: number;
+  actor: FlowActor;
+  /** The verb phrase. Rendered after the actor, with a leading space. */
+  label: string;
+  follows?: boolean;
+};
 
 /** See "the three arrow languages" above. */
 export type FlowLineKind = "mag" | "navy" | "note";
 
-/** One connector. `d` is an SVG path in the scene's own coordinate system. */
-export type FlowConnector = { kind: FlowLineKind; d: string };
+/**
+ * A STRAIGHT HORIZONTAL CONNECTOR — the shape almost every hand-off has, now
+ * that each document sits level with its partner.
+ *
+ * ⚠ MODELLED AS `{y, from, to}` RATHER THAN A PATH STRING, and that is what
+ * makes E111's fix safe. A magenta crossing stops at the panel edge and a white
+ * stub carries the last 16px onto the chip; authoring those as two `d` strings
+ * means two copies of one y, and the v3 spec file already drifted that way (a
+ * magenta at y=205 with its stub at y=200). Here the renderer derives the stub
+ * from the same number, so the two cannot disagree.
+ */
+export type FlowRun = { kind: FlowLineKind; y: number; from: number; to: number };
+
+/** Anything not a straight horizontal: the Oracle-internal steps and the one elbow. */
+export type FlowPath = { kind: FlowLineKind; d: string };
+
+export type FlowConnector = FlowRun | FlowPath;
+
+/** Narrowing helper — a run carries a y, a freeform path carries a d. */
+export function isRun(c: FlowConnector): c is FlowRun {
+  return (c as FlowRun).y !== undefined;
+}
 
 export type FlowSpec = {
   /** Canvas height. Fulfillment 578, Settlement 510. Width is always 1080. */
@@ -270,38 +312,47 @@ export const FULFILLMENT_FLOW: FlowSpec = {
     // One box, two documents, hairline between: the req and the line it carries.
     { y: 88, h: 76, lines: ["Purchase Requisition", "Req Line"], rule: true },
     { y: 210, h: 44, lines: ["Purchase Agreement"] },
-    // Level with Auto-Create Work Order (rule 2).
+    // Level with "Panameer Creates Work Order" (rule 2).
     { y: 303, h: 44, lines: ["Purchase Order"] },
-    // Level with Release Work Order (rule 2).
+    // Level with "Panameer Releases Work Order" (rule 2).
     { y: 472, h: 46, lines: ["Purchase Order", "Acknowledge"] },
   ],
   steps: [
-    { y: 95, label: "Create Work Request" },
-    { y: 140, label: "Invitation Providers to Bid", follows: true },
-    { y: 185, label: "Providers Propose Rate", follows: true },
-    { y: 230, label: "Requester Accepts Rate", follows: true },
-    { y: 310, label: "Auto-Create Work Order" },
-    { y: 355, label: "Invitation to Accept Work Order", follows: true },
-    { y: 435, label: "Accept Work Order" },
-    { y: 480, label: "Release Work Order", follows: true },
+    { y: 95, actor: "Requester", label: "Creates Work Request" },
+    { y: 140, actor: "Requester", label: "Invites Providers to Bid", follows: true },
+    { y: 185, actor: "Provider", label: "Proposes Rate", follows: true },
+    { y: 230, actor: "Requester", label: "Accepts Rate", follows: true },
+    { y: 310, actor: "Panameer", label: "Creates Work Order" },
+    { y: 355, actor: "Panameer", label: "Invites Provider to Accept WO", follows: true },
+    { y: 435, actor: "Provider", label: "Accepts Work Order" },
+    { y: 480, actor: "Panameer", label: "Releases Work Order", follows: true },
   ],
   spine: "M332 164 V210 M332 254 V303",
   connectors: [
     /* The requester acting inside Oracle. Lands on a chip edge each time. */
-    { kind: "navy", d: "M144 110 H226" },
-    { kind: "navy", d: "M144 325 H226" },
-    { kind: "navy", d: "M226 495 H144" },
-    /* Oracle <-> Panameer. Straight, except the one that cannot be. */
-    { kind: "mag", d: "M438 110 H576" },
-    // ⚠ THE ONE DELIBERATE ELBOW — see the header. Do not "fix" by splitting the chip.
-    { kind: "mag", d: "M576 245 H508 V143 H438" },
-    { kind: "mag", d: "M438 325 H576" },
-    { kind: "mag", d: "M576 495 H438" },
-    /* Panameer <-> the provider. All four land on the column's straight edge. */
-    { kind: "mag", d: "M880 155 H936" },
-    { kind: "mag", d: "M936 205 H880" },
-    { kind: "mag", d: "M880 375 H936" },
-    { kind: "mag", d: "M936 455 H880" },
+    { kind: "navy", y: 110, from: 144, to: 226 },
+    { kind: "navy", y: 325, from: 144, to: 226 },
+    { kind: "navy", y: 495, from: 226, to: 144 },
+    /*
+      Oracle <-> Panameer. ⚠ THESE STOP AT THE PANEL EDGE (560), NOT THE CHIP
+      EDGE (576) — E111. The panel gradient's bottom stop is exactly the
+      connector colour, so the last 16px and the arrowhead were magenta on
+      magenta. The renderer adds the white stub; do NOT author one here.
+    */
+    { kind: "mag", y: 110, from: 438, to: 560 },
+    /*
+      ⚠ THE ONE DELIBERATE ELBOW. Req Line is the lower half of the requisition
+      chip and cannot also be 100px further down. Do not "fix" it by splitting
+      the chip. Freeform, and it leaves the panel edge, so it gets a stub too.
+    */
+    { kind: "mag", d: "M560 245 H508 V143 H438" },
+    { kind: "mag", y: 325, from: 438, to: 560 },
+    { kind: "mag", y: 495, from: 560, to: 438 },
+    /* Panameer <-> the provider. Panel edge (896) for the same reason. */
+    { kind: "mag", y: 155, from: 896, to: 936 },
+    { kind: "mag", y: 205, from: 936, to: 896 },
+    { kind: "mag", y: 375, from: 896, to: 936 },
+    { kind: "mag", y: 455, from: 936, to: 896 },
   ],
 };
 
@@ -314,49 +365,48 @@ export const FULFILLMENT_FLOW: FlowSpec = {
  *
  * ⚠ THE TWO REQUESTER LINES CROSS THE ORACLE COLUMN, STRAIGHT, at y=110 and
  * y=155 where that column is empty. This is what the source deck does on slide
- * 4. Routing them over the top of the containers was tried and rejected — do not
- * reinstate it.
+ * 4. Routing them over the top of the containers was tried and rejected.
  */
 export const SETTLEMENT_FLOW: FlowSpec = {
   canvasH: 510,
   containerH: 430,
   actorCy: 252,
   docs: [
-    // Level with Settlement Approval (rule 2).
+    // Level with "Requester Approves Settlement Trans." (rule 2).
     { y: 222, h: 46, lines: ["Purchase", "Receipt"] },
     { y: 298, h: 44, lines: ["ERS Invoice"] },
-    // Level with Auto-Create Payment (rule 2).
+    // Level with "Panameer Auto-Creates Payment" (rule 2).
     { y: 372, h: 46, lines: ["Payment"] },
   ],
   steps: [
     /*
-      ⚠ THE FIRST THREE ARE NOT A SEQUENCE. Requester and provider each reach
-      into all three; only Create Settlement -> Settlement Approval flows. Hence
-      `follows` on the fourth alone. See the note on FlowStep.
+      ⚠ THE FIRST THREE ARE NOT A SEQUENCE — three different actors, each
+      reaching in. Only Creates -> Approves flows, hence `follows` on the fourth
+      alone. Naming the actor is what finally makes that legible on the page.
     */
-    { y: 95, label: "Manage Work Order" },
-    { y: 140, label: "Manage Timeline via Tracker" },
-    { y: 185, label: "Create Settlement (Hrs/Pay Rqst)" },
-    { y: 230, label: "Settlement Approval", follows: true },
-    { y: 380, label: "Auto-Create Payment" },
+    { y: 95, actor: "Requester", label: "Manages Work Order" },
+    { y: 140, actor: "Panameer", label: "Manages Timeline via Tracker" },
+    { y: 185, actor: "Provider", label: "Creates Settlement Trans." },
+    { y: 230, actor: "Requester", label: "Approves Settlement Trans.", follows: true },
+    { y: 380, actor: "Panameer", label: "Auto-Creates Payment" },
   ],
   connectors: [
     /* Oracle's own step: the receipt becomes the evaluated-receipt invoice. */
     { kind: "navy", d: "M332 268 V298" },
     /* Requester -> Panameer, straight across the empty top of the Oracle column. */
-    { kind: "mag", d: "M144 110 H576" },
-    { kind: "mag", d: "M144 155 H576" },
+    { kind: "mag", y: 110, from: 144, to: 560 },
+    { kind: "mag", y: 155, from: 144, to: 560 },
     /* The receipt NOTIFIES the requester. Dashed: nothing is being transacted. */
-    { kind: "note", d: "M226 245 H144" },
+    { kind: "note", y: 245, from: 226, to: 144 },
     /* The requester acting inside Oracle. */
-    { kind: "navy", d: "M144 395 H226" },
-    /* Panameer <-> Oracle. */
-    { kind: "mag", d: "M576 245 H438" },
-    { kind: "mag", d: "M438 395 H576" },
+    { kind: "navy", y: 395, from: 144, to: 226 },
+    /* Panameer <-> Oracle. Panel edge, not chip edge — E111. */
+    { kind: "mag", y: 245, from: 560, to: 438 },
+    { kind: "mag", y: 395, from: 438, to: 560 },
     /* The provider reaching into the three management steps, and paid at the end. */
-    { kind: "mag", d: "M936 110 H880" },
-    { kind: "mag", d: "M936 155 H880" },
-    { kind: "mag", d: "M936 205 H880" },
-    { kind: "mag", d: "M880 400 H936" },
+    { kind: "mag", y: 110, from: 936, to: 896 },
+    { kind: "mag", y: 155, from: 936, to: 896 },
+    { kind: "mag", y: 205, from: 936, to: 896 },
+    { kind: "mag", y: 400, from: 896, to: 936 },
   ],
 };

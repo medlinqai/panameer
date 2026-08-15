@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, type ReactNode } from "react";
-import type { FlowSpec } from "@/lib/marketing-scenes";
+import { isRun, type FlowConnector, type FlowSpec } from "@/lib/marketing-scenes";
 
 /**
  * THE FOUR-COLUMN FLOW DIAGRAM — one primitive, both ERP scenes.
@@ -71,6 +71,14 @@ const PANEL = { x: 560, w: 336, r: 18 };
 const DOC = { x: 226, w: 212, r: 10, cx: 332 };
 /** Step chips. Height fixed too — the panel reads as a stack, not a ladder. */
 const STEP = { x: 576, w: 304, h: 30, r: 7, cx: 728 };
+/**
+ * ⚠ THE 16px THAT CAUSED E111. The panel runs 560..896 and the chips 576..880,
+ * so every crossing used to travel this far INSIDE the panel before reaching a
+ * card — and the gradient's bottom stop is exactly the connector magenta, so the
+ * line and its arrowhead vanished. Magenta now stops at the panel edge; a plain
+ * white line covers the gap.
+ */
+const PANEL_EDGE = { left: PANEL.x, right: PANEL.x + PANEL.w };
 
 const NAVY = "#2f3a5c";
 const NAVY_CHIP = "#3c4668";
@@ -78,6 +86,41 @@ const MAGENTA = "#D72CD6";
 const CHIP_TEXT = "#1d2440";
 const COL_FILL = "#f7f9fc";
 const COL_STROKE = "#c9d1e0";
+
+/**
+ * THE WHITE STUB THAT FINISHES A CROSSING — derived, never authored (E111).
+ *
+ * A magenta run that ENDS on a panel edge is arriving, so the stub carries on
+ * inward to the chip; one that STARTS on a panel edge is leaving, so the stub
+ * runs outward from the chip to meet it. Either way the y comes from the SAME
+ * object as the magenta, which is the whole point: the v3 spec file hand-wrote
+ * these as separate paths and immediately drifted, putting a magenta at y=205
+ * against its stub at y=200.
+ *
+ * ⚠ NO `marker-end`, EVER. Scott: "White lines, no arrow heads." The magenta
+ * already carries the arrowhead, out on the light background where it reads.
+ */
+function stubFor(c: FlowConnector): { y: number; from: number; to: number } | null {
+  if (isRun(c)) {
+    if (c.kind !== "mag") return null;
+    if (c.to === PANEL_EDGE.left) return { y: c.y, from: PANEL_EDGE.left, to: STEP.x };
+    if (c.to === PANEL_EDGE.right) return { y: c.y, from: PANEL_EDGE.right, to: STEP.x + STEP.w };
+    if (c.from === PANEL_EDGE.left) return { y: c.y, from: STEP.x, to: PANEL_EDGE.left };
+    if (c.from === PANEL_EDGE.right) return { y: c.y, from: STEP.x + STEP.w, to: PANEL_EDGE.right };
+    return null;
+  }
+  /*
+    Freeform paths only ever LEAVE a panel edge here (the one elbow). Read the
+    leading absolute move — every path in this data starts with one — so the
+    elbow gets its stub from the same string that positions it.
+  */
+  const m = /^M\s*(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)/.exec(c.d);
+  if (!m || c.kind !== "mag") return null;
+  const [x, y] = [Number(m[1]), Number(m[2])];
+  if (x === PANEL_EDGE.left) return { y, from: STEP.x, to: PANEL_EDGE.left };
+  if (x === PANEL_EDGE.right) return { y, from: STEP.x + STEP.w, to: PANEL_EDGE.right };
+  return null;
+}
 
 /**
  * An actor column: the container, a head-and-shoulders glyph, and a two-line
@@ -278,17 +321,27 @@ export function FlowDiagram({ title, spec }: { title: string; spec: FlowSpec }) 
 
       {/* ── Panameer step chips ───────────────────────────────────────────── */}
       {spec.steps.map((step) => (
-        <g key={step.label}>
+        <g key={`${step.actor} ${step.label}`}>
           <rect x={STEP.x} y={step.y} width={STEP.w} height={STEP.h} rx={STEP.r} fill="#ffffff" />
+          {/*
+            ⚠ ONE <text>, TWO <tspan>s, STILL CENTRED (E112). Actor bold, verb
+            regular. They share one text element so the pair centres AS A UNIT —
+            two elements would each centre on their own and the sentence would
+            come apart.
+
+            The deck right-aligned provider actions and left-aligned requester
+            ones, so alignment was carrying the actor. Naming it replaces that
+            idea entirely: the labels stay centred, and no legend is needed.
+          */}
           <text
             x={STEP.cx}
             y={step.y + 20}
             textAnchor="middle"
             fontSize="12.5"
-            fontWeight="600"
             fill={CHIP_TEXT}
           >
-            {step.label}
+            <tspan fontWeight="800">{step.actor}</tspan>
+            <tspan fontWeight="500"> {step.label}</tspan>
           </text>
         </g>
       ))}
@@ -314,19 +367,42 @@ export function FlowDiagram({ title, spec }: { title: string; spec: FlowSpec }) 
       })}
 
       {/* ── the connectors ────────────────────────────────────────────────── */}
-      {spec.connectors.map((c) => (
-        <path
-          key={c.d}
-          d={c.d}
-          fill="none"
-          stroke={c.kind === "mag" ? MAGENTA : NAVY}
-          strokeWidth="2"
-          strokeLinejoin="round"
-          // `note` is a notification, not a transaction. Only Settlement has one.
-          strokeDasharray={c.kind === "note" ? "6 5" : undefined}
-          markerEnd={`url(#${headFor[c.kind]})`}
-        />
-      ))}
+      {spec.connectors.map((c) => {
+        const d = isRun(c) ? `M${c.from} ${c.y} H${c.to}` : c.d;
+        return (
+          <path
+            key={d}
+            d={d}
+            fill="none"
+            stroke={c.kind === "mag" ? MAGENTA : NAVY}
+            strokeWidth="2"
+            strokeLinejoin="round"
+            // `note` is a notification, not a transaction. Only Settlement has one.
+            strokeDasharray={c.kind === "note" ? "6 5" : undefined}
+            markerEnd={`url(#${headFor[c.kind]})`}
+          />
+        );
+      })}
+
+      {/*
+        ⚠ THE LAST 16px, IN WHITE, WITH NO ARROWHEAD (E111).
+        Derived from the magenta it finishes — see `stubFor`. Drawn last so it
+        sits over the panel edge rather than under it, and white because it is
+        the one colour that reads against every stop of the gradient.
+      */}
+      {spec.connectors.map((c) => {
+        const s = stubFor(c);
+        if (!s) return null;
+        return (
+          <path
+            key={`stub-${s.from}-${s.to}-${s.y}`}
+            d={`M${s.from} ${s.y} H${s.to}`}
+            stroke="#ffffff"
+            strokeWidth="2"
+            fill="none"
+          />
+        );
+      })}
     </svg>
   );
 }
