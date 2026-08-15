@@ -186,8 +186,11 @@ export function FlowDiagram({ title, spec }: { title: string; spec: FlowSpec }) 
   const uid = `fd${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   const gradId = `${uid}-panel`;
   const titleId = `${uid}-title`;
-  /** Two arrowheads now: v2's inter-step connectors are plain hairlines. */
-  const mk = { mag: `${uid}-mag`, navy: `${uid}-navy` };
+  /*
+    THREE ARROWHEADS, ALL NAMESPACED PER INSTANCE (§13). `white` is for the
+    VERTICAL step-to-step connectors only — see the note where they are drawn.
+  */
+  const mk = { mag: `${uid}-mag`, navy: `${uid}-navy`, white: `${uid}-white` };
   const headFor: Record<string, string> = { mag: mk.mag, navy: mk.navy, note: mk.navy };
 
   const h = spec.containerH;
@@ -213,6 +216,7 @@ export function FlowDiagram({ title, spec }: { title: string; spec: FlowSpec }) 
           [
             [mk.mag, MAGENTA],
             [mk.navy, NAVY],
+            [mk.white, "#ffffff"],
           ] as const
         ).map(([id, fill]) => (
           <marker
@@ -347,10 +351,22 @@ export function FlowDiagram({ title, spec }: { title: string; spec: FlowSpec }) 
       ))}
 
       {/*
-        ⚠ HAIRLINES, NOT ARROWS, and only where the data says one step FOLLOWS
-        another. v1 derived these from chip adjacency; v2 spaces every chip 15px
-        apart, so adjacency can no longer tell a sequence from a stack — see the
-        note on `FlowStep`. Drawn after the chips so they tuck under nothing.
+        ⚠ VERTICAL WHITE CONNECTORS CARRY A HEAD. HORIZONTAL STUBS DO NOT.
+
+        This is not a contradiction of "white lines, no arrow heads" — it is the
+        distinction that rule was about:
+
+          vertical, step -> step   HEAD. It is the only thing asserting sequence
+                                   inside the panel; it means "then this".
+          horizontal, edge -> chip NO HEAD. It is the last 16px of a magenta
+                                   crossing that already placed its arrowhead at
+                                   the panel edge. Two heads on one journey.
+
+        Stroke 2, not 1.6: against the near-black top of the gradient a 1.6px
+        white line is nearly invisible.
+
+        Drawn only where `follows` is set — see the rule on `FlowStep`, which is
+        about where the input CAME FROM, not about spacing.
       */}
       {spec.steps.map((step, i) => {
         const prev = spec.steps[i - 1];
@@ -360,8 +376,9 @@ export function FlowDiagram({ title, spec }: { title: string; spec: FlowSpec }) 
             key={`${step.label}-follows`}
             d={`M${STEP.cx} ${prev.y + STEP.h} V${step.y}`}
             stroke="#ffffff"
-            strokeWidth="1.6"
+            strokeWidth="2"
             fill="none"
+            markerEnd={`url(#${mk.white})`}
           />
         );
       })}

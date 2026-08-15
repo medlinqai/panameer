@@ -233,12 +233,24 @@ export type FlowActor = "Requester" | "Provider" | "Panameer";
  * deck right-aligned provider actions and left-aligned requester ones; naming
  * the actor supersedes that, and the labels stay centred.
  *
- * ⚠ `follows` IS EXPLICIT, AND HAS TO BE. v1 derived the little white connector
- * from adjacency — "next chip exactly one gutter below". v2 spaces every chip
- * 15px apart, so in Settlement `Manages Work Order`, `Manages Timeline` and
- * `Creates Settlement Trans.` are 15px apart and are NOT a sequence: they are
- * three separate things the requester, Panameer and provider each own. Adjacency
- * can no longer tell a sequence from a stack, so the data says which it is.
+ * ── ⚠ WHEN TO SET `follows` — THE RULE, NOT JUST "IT IS EXPLICIT" ────────────
+ *
+ * A white connector runs between two chips **only where the lower step follows
+ * from the one above it INSIDE PANAMEER**. Where a step's input arrives from
+ * OUTSIDE — a person, or Oracle — there is no connector, because the magenta
+ * crossing is what brings it in. Two arrows into one chip would claim the work
+ * came from both places.
+ *
+ * That is why "Provider Proposes Rate" has none: the rate arrives from the
+ * provider column, not from the invitation above it. Scott, on a zoom of that
+ * exact pair: "There is no arrow connecting those two." It is also why
+ * Settlement has exactly one — its first three steps are each fed from outside
+ * by a different actor, and only Creates -> Approves is an internal hand-off.
+ *
+ * ⚠ AND IT IS EXPLICIT RATHER THAN DERIVED. v1 inferred it from adjacency —
+ * "next chip exactly one gutter below" — which v2 broke by spacing every chip
+ * 15px apart. But adjacency was always the wrong signal: the question is where
+ * the input CAME FROM, and no amount of geometry can answer that.
  */
 export type FlowStep = {
   y: number;
@@ -320,7 +332,12 @@ export const FULFILLMENT_FLOW: FlowSpec = {
   steps: [
     { y: 95, actor: "Requester", label: "Creates Work Request" },
     { y: 140, actor: "Requester", label: "Invites Providers to Bid", follows: true },
-    { y: 185, actor: "Provider", label: "Proposes Rate", follows: true },
+    /*
+      ⚠ NO `follows`. The rate arrives from the PROVIDER COLUMN — see the magenta
+      at y=205 — not from the invitation above it. Scott, on a zoom of this pair:
+      "There is no arrow connecting those two."
+    */
+    { y: 185, actor: "Provider", label: "Proposes Rate" },
     { y: 230, actor: "Requester", label: "Accepts Rate", follows: true },
     { y: 310, actor: "Panameer", label: "Creates Work Order" },
     { y: 355, actor: "Panameer", label: "Invites Provider to Accept WO", follows: true },
