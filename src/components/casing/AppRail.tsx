@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useMe } from "@/components/MeProvider";
 import {
   navForRoles,
+  railPersona,
   ADMIN_NAV,
   ADMIN_HOME,
   ADMIN_SETUP,
@@ -49,6 +50,19 @@ export function AppRail() {
 
   const items = navForRoles(me);
   const consoleLabel = isAdmin ? "Platform Console" : "Provider Console";
+  /*
+    E098 — WHICH SIDE OF THE MARKETPLACE THIS RAIL IS SHOWING.
+
+    Derived in `nav.ts` from the same inputs that pick the menu, so the caption
+    and the items under it cannot disagree. Not a prop and not a per-page
+    string: a caption a page could pass in is a caption a page could get wrong.
+
+    ⚠ THIS IS NOT THE CONSOLE LABEL. `consoleLabel` above says which PORTAL you
+    are in and reads "Provider Console" for buyers and sellers alike; this says
+    which SIDE you are on. They answer different questions — see the WS-2 note
+    in the brief and the rail section of casing_spec_LOCKED.md.
+  */
+  const persona = railPersona(me, isAdmin);
   /*
     HOME ROUTES MATCH EXACTLY. "/admin" is a prefix of every admin page, so a
     startsWith test lit up Panameer Dashboard on all fifteen of them — two
@@ -156,8 +170,22 @@ export function AppRail() {
     `AppShell`, so admin and provider get the same header and the same menu.
     Checked before removing this, not assumed.
   */
+  /*
+    Same metrics as the admin rail's existing group headers, so the caption
+    joins a typographic family the rail already has rather than introducing a
+    fourth label size. The mockup's `.railcap` is 9.5px/1.4px tracking; this is
+    10.5px/0.09em, which is the app's own equivalent and already on screen two
+    inches below on every admin page.
+  */
+  const personaCaption = persona && (
+    <p className="px-2.5 pb-1 text-[10.5px] font-semibold uppercase tracking-[0.09em] text-white/40">
+      {persona}
+    </p>
+  );
+
   const nav = isAdmin ? (
     <>
+      {personaCaption}
       <div className="mt-1 space-y-1.5">
         {adminButton(ADMIN_SETUP)}
         {adminButton(ADMIN_HOME)}
@@ -214,6 +242,7 @@ export function AppRail() {
         symmetric 8px either side, so the rail has one rhythm from top to bottom:
         4px between items, 8px across a divider.
       */}
+      {personaCaption}
       <div className="space-y-1">
         {items.map((i) => railLink(i, false))}
       </div>
