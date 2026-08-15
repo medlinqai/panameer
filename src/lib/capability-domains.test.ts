@@ -9,6 +9,8 @@
  * agreement is asserted here instead.
  */
 import {
+  OPPORTUNITIES_BY_DOMAIN,
+  TOTAL_OPPORTUNITIES,
   LADDER,
   P2P_DOMAINS,
   P2P_OVERALL_SCORE,
@@ -29,6 +31,17 @@ console.log("\n=== the 42 invariant ===");
   check("scores sum to 420", sum === 420, sum);
   check("mean is EXACTLY 42 (integer, no rounding)", sum / P2P_DOMAINS.length === 42, sum / P2P_DOMAINS.length);
   check("P2P_OVERALL_SCORE is 42 — the DashboardShot tile-1 org score", P2P_OVERALL_SCORE === 42, P2P_OVERALL_SCORE);
+}
+
+console.log("\n=== T2 tile: one column per domain, summing to the tile value ===");
+{
+  check("one opportunity count per capability domain",
+    OPPORTUNITIES_BY_DOMAIN.length === P2P_DOMAINS.length,
+    { counts: OPPORTUNITIES_BY_DOMAIN.length, domains: P2P_DOMAINS.length });
+  check("they sum to 23 — the number printed on the tile",
+    TOTAL_OPPORTUNITIES === 23, TOTAL_OPPORTUNITIES);
+  check("every count is a positive integer",
+    OPPORTUNITIES_BY_DOMAIN.every((v) => Number.isInteger(v) && v > 0), OPPORTUNITIES_BY_DOMAIN);
 }
 
 console.log("\n=== shape ===");

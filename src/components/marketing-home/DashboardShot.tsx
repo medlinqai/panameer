@@ -1,3 +1,5 @@
+import { OPPORTUNITIES_BY_DOMAIN } from "@/lib/capability-domains";
+
 /**
  * THE PRODUCT SHOT — a Procure-to-Pay AI Maturity Assessment.
  *
@@ -36,15 +38,113 @@
  * this array, so the two cannot drift.
  */
 const FINDINGS = [
-  { action: "TDWCA — Tax Deferred Working Capital Account", owner: "StratERP", tf: "4 weeks", savings: 980_000 },
-  { action: "P2P Rogue-Spend Alert", owner: "Panameer", tf: "2 weeks", savings: 610_000 },
-  { action: "P2P PO Price Alerts", owner: "Panameer", tf: "2 weeks", savings: 520_000 },
-  { action: "Negotiation Alert", owner: "Panameer", tf: "4 weeks", savings: 265_000 },
-  { action: "P2P Supplier Registration Document Validation Agent", owner: "Panameer", tf: "2 weeks", savings: 215_000 },
+  { action: "TDWCA — Tax Deferred Working Capital Account", short: "TDWCA", owner: "StratERP", tf: "4 weeks", savings: 980_000 },
+  { action: "P2P Rogue-Spend Alert", short: "Rogue spend", owner: "Panameer", tf: "2 weeks", savings: 610_000 },
+  { action: "P2P PO Price Alerts", short: "PO price", owner: "Panameer", tf: "2 weeks", savings: 520_000 },
+  { action: "Negotiation Alert", short: "Negotiation", owner: "Panameer", tf: "4 weeks", savings: 265_000 },
+  { action: "P2P Supplier Registration Document Validation Agent", short: "Supplier reg", owner: "Panameer", tf: "2 weeks", savings: 215_000 },
 ] as const;
 
 const TOTAL_SAVINGS = FINDINGS.reduce((n, f) => n + f.savings, 0);
 const usd = (n: number) => `$${n.toLocaleString("en-US")}`;
+
+/**
+ * ⚠ ALL THREE SPARKLINES ARE GONE, and that is the point of this change.
+ *
+ * Each tile carried a rising area chart implying a trend on a number with no
+ * history — this is one assessment at one moment. The worst was tile 1, where a
+ * RISING line sat under a −31 point deficit and read as "improving".
+ *
+ * Each tile now gets a graphic that means what the tile says:
+ *   T1  a benchmark track — the gap is a distance you can see
+ *   T2  one column per capability domain — where the findings are, not just how many
+ *   T3  the five findings drawn to scale — a preview of the table below it
+ */
+
+/** T1 — 0→100 rail, filled to `you`, dark marker at `peers`. */
+function BenchmarkTrack({ you, peers }: { you: number; peers: number }) {
+  const w = 300;
+  return (
+    <svg className="viz" viewBox="0 0 300 60" role="img"
+      aria-label={`Your score ${you} of 100 against a peer median of ${peers}`}>
+      <rect x="0" y="20" width={w} height="10" rx="5" fill="#eef0f5" />
+      <rect x="0" y="20" width={(w * you) / 100} height="10" rx="5" fill="#D72CD6" />
+      <line x1={(w * peers) / 100} y1="12" x2={(w * peers) / 100} y2="38"
+        stroke="#171E3E" strokeWidth="2.5" strokeLinecap="round" />
+      <text x="0" y="12" fontSize="10.5" fontWeight="700" fill="#171E3E">You {you}</text>
+      <text x={(w * peers) / 100} y="52" fontSize="10.5" fontWeight="700" fill="#171E3E"
+        textAnchor="middle">Peers {peers}</text>
+      <text x={w} y="12" fontSize="10" fill="#9aa2b3" textAnchor="end">100</text>
+    </svg>
+  );
+}
+
+/**
+ * T2 — one column per capability domain, in `capability-domains.ts` order.
+ * Columns of 3+ take the full purple; the rest a lighter step, so "where the
+ * concentration is" is legible before you read a single number.
+ */
+function DomainColumns({ counts }: { counts: readonly number[] }) {
+  const W = 300, gap = 6, bw = (W - gap * (counts.length - 1)) / counts.length;
+  const max = Math.max(...counts);
+  return (
+    <svg className="viz" viewBox="0 0 300 60" role="img"
+      aria-label={`Opportunities per capability domain: ${counts.join(", ")}`}>
+      {counts.map((v, i) => {
+        const h = 8 + (34 * v) / max;
+        const x = i * (bw + gap);
+        return (
+          <g key={i}>
+            <rect x={x} y={44 - h} width={bw} height={h} rx="3" fill={v >= 3 ? "#8a2be2" : "#c7a4ee"} />
+            <text x={x + bw / 2} y="57" textAnchor="middle" fontSize="9" fill="#9aa2b3">{v}</text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+/**
+ * T3 — the five findings to scale, DERIVED FROM `FINDINGS`.
+ *
+ * Same array the table below renders and the same array TOTAL_SAVINGS reduces,
+ * so the tile total is visibly the sum of its parts and the three cannot
+ * disagree. Darkest blue on the largest segment.
+ */
+const FINDING_BLUES = ["#4b7bef", "#6a8ff3", "#89a4f6", "#a7b9f9", "#c5cefc"];
+
+function FindingsBar() {
+  /*
+    Offsets computed UP FRONT rather than accumulated inside the map. A `let x`
+    mutated during render is a reassignment after render completes as far as the
+    compiler is concerned, and it is also the shape that breaks if React ever
+    re-orders or re-runs the callback. A scan is the same arithmetic, stated
+    once.
+  */
+  const segments = FINDINGS.reduce<{ f: (typeof FINDINGS)[number]; x: number; w: number }[]>(
+    (acc, f) => {
+      const w = ((300 - 8) * f.savings) / TOTAL_SAVINGS;
+      const prev = acc[acc.length - 1];
+      const x = prev ? prev.x + prev.w + 2 : 0;
+      return [...acc, { f, x, w }];
+    },
+    []
+  );
+
+  return (
+    <svg className="viz" viewBox="0 0 300 60" role="img"
+      aria-label={`Five findings totalling ${usd(TOTAL_SAVINGS)}, drawn to scale`}>
+      {segments.map(({ f, x, w }, i) => (
+        <g key={f.action}>
+          <rect x={x} y="18" width={w} height="14" rx="3" fill={FINDING_BLUES[i]} />
+          {/* Only the two largest get a label — the rest have no room. */}
+          {i < 2 && <text x={x + 2} y="46" fontSize="9.5" fill="#7b8496">{f.short}</text>}
+        </g>
+      ))}
+      <text x="300" y="12" fontSize="10" fill="#9aa2b3" textAnchor="end">5 findings</text>
+    </svg>
+  );
+}
 export function DashboardShot() {
   return (
     <>
@@ -89,7 +189,7 @@ export function DashboardShot() {
                 <div className="kpis">
                   <div className="kpi">
                     <div className="kpi-top">
-                      <div className="kpi-ic" style={{ background: 'var(--mag)' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg></div>
+                      <div className="kpi-ic" style={{ background: 'var(--mag)' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 20V10M18 20V4M6 20v-4" /></svg></div>
                       {/*
                         WS-3 — NO `.chg` PILL. A gap against a peer benchmark
                         has no period-over-period delta to report; "+83%" beside
@@ -102,11 +202,11 @@ export function DashboardShot() {
                     </div>
                     <div className="lab">Your Org Versus Peers</div>
                     <div className="sub">42 vs. 73 — best-practice ERP peer median</div>
-                    <svg className="spark" viewBox="0 0 300 64" preserveAspectRatio="none"><defs><linearGradient id="g1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#D72CD6" stopOpacity=".28" /><stop offset="1" stopColor="#D72CD6" stopOpacity="0" /></linearGradient></defs><path d="M0,54 L30,48 L60,50 L90,40 L120,44 L150,34 L180,36 L210,24 L240,28 L270,16 L300,10 L300,64 L0,64 Z" fill="url(#g1)" /><path d="M0,54 L30,48 L60,50 L90,40 L120,44 L150,34 L180,36 L210,24 L240,28 L270,16 L300,10" fill="none" stroke="#D72CD6" strokeWidth="2.5" /></svg>
+                    <BenchmarkTrack you={42} peers={73} />
                   </div>
                   <div className="kpi">
                     <div className="kpi-top">
-                      <div className="kpi-ic" style={{ background: '#8a2be2' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 12V8H6a2 2 0 0 1 0-4h12v4" /><path d="M4 6v12a2 2 0 0 0 2 2h14v-4" /><path d="M18 12a2 2 0 0 0 0 4h4v-4z" /></svg></div>
+                      <div className="kpi-ic" style={{ background: '#8a2be2' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="4" width="14" height="17" rx="2" /><path d="M9 4h6v3H9z" /><path d="m9 13 2 2 4-4" /></svg></div>
                       {/*
                         WS-4 — a COUNT, so no currency symbol and no `.chg`.
                         23 findings across all ten capability domains; the list
@@ -117,11 +217,12 @@ export function DashboardShot() {
                       <span className="kpi-info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9" /><path d="M12 11v5" /><circle cx="12" cy="8" r=".6" fill="currentColor" /></svg></span>
                     </div>
                     <div className="lab">Optimization Opportunities</div>
-                    <svg className="spark" viewBox="0 0 300 64" preserveAspectRatio="none"><defs><linearGradient id="g2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#8a2be2" stopOpacity=".28" /><stop offset="1" stopColor="#8a2be2" stopOpacity="0" /></linearGradient></defs><path d="M0,44 L30,38 L60,46 L90,34 L120,42 L150,30 L180,38 L210,26 L240,34 L270,22 L300,26 L300,64 L0,64 Z" fill="url(#g2)" /><path d="M0,44 L30,38 L60,46 L90,34 L120,42 L150,30 L180,38 L210,26 L240,34 L270,22 L300,26" fill="none" stroke="#8a2be2" strokeWidth="2.5" /></svg>
+                    <div className="sub">Across 10 capability domains</div>
+                    <DomainColumns counts={OPPORTUNITIES_BY_DOMAIN} />
                   </div>
                   <div className="kpi">
                     <div className="kpi-top">
-                      <div className="kpi-ic" style={{ background: '#4b7bef' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12l4-4 4 4 6-6" /><path d="M17 6h4v4" /></svg></div>
+                      <div className="kpi-ic" style={{ background: '#4b7bef' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 1v22M17 5.5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg></div>
                       {/*
                         WS-5 — DERIVED FROM THE TABLE, never typed. This is the
                         sum of the five findings below; see the FINDINGS
@@ -133,7 +234,7 @@ export function DashboardShot() {
                     </div>
                     <div className="lab">Estimated Savings Based on Rev/Heads</div>
                     <div className="sub">14% of $18.5M addressable P2P spend</div>
-                    <svg className="spark" viewBox="0 0 300 64" preserveAspectRatio="none"><defs><linearGradient id="g3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#4b7bef" stopOpacity=".28" /><stop offset="1" stopColor="#4b7bef" stopOpacity="0" /></linearGradient></defs><path d="M0,56 L40,52 L80,46 L120,44 L160,34 L200,30 L240,20 L300,8 L300,64 L0,64 Z" fill="url(#g3)" /><path d="M0,56 L40,52 L80,46 L120,44 L160,34 L200,30 L240,20 L300,8" fill="none" stroke="#4b7bef" strokeWidth="2.5" /></svg>
+                    <FindingsBar />
                   </div>
                 </div>
                 {/*
