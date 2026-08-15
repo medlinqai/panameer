@@ -102,6 +102,21 @@ export const BRAND_DESCRIPTOR =
   "The home for Enterprise Systems + AI experts — and the businesses that need them.";
 
 /**
+ * THE ERP POSITIONING LINE.
+ *
+ * A positioning line, not section copy — the same class as `BRAND_BADGE` and
+ * `BRAND_DESCRIPTOR`, and it lives here for the same reason: it renders on the
+ * home page's ERP Integration section today and becomes the mainstay of the
+ * Enterprise page next, so a re-wording has to be one edit that cannot
+ * half-land.
+ *
+ * "The modern ERPs" is plural on purpose. Oracle is the wedge and the diagram
+ * names Oracle Cloud, but the claim being made is about the SPACE BETWEEN
+ * systems of record — which is only interesting if there is more than one.
+ */
+export const BRAND_ERP_TAGLINE = "Automating the space between the modern ERPs.";
+
+/**
  * SEO ONLY — the single place "marketplace" is allowed.
  *
  * It is the word people TYPE INTO A SEARCH BOX and not the word the product

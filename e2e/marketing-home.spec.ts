@@ -28,15 +28,25 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 type Card = {
   /** Heading on the card, which is also how a human would point at it. */
   name: string;
-  /** The dialog's accessible name, from `EXAMPLES[].label` in ErpPackages. */
+  /** The dialog's accessible name — `EXAMPLES[].label` / `DOORS[].label`. */
   dialog: string;
+  /**
+   * The grid the card lives in. Two sections now use the same doorway
+   * mechanism, and the contract is identical for both — so the grid is a field
+   * rather than a second copy of the whole describe block.
+   */
+  grid: string;
 };
 
 const CARDS: Card[] = [
-  { name: "Reports & Dashboards", dialog: "Spend Overview dashboard" },
-  { name: "Price Alerts", dialog: "Price alert email" },
-  { name: "Document Validation", dialog: "W-9 document validation" },
-  { name: "Extend Your Apps", dialog: "Work request with matched experts" },
+  // ErpPackages — the four agent categories.
+  { grid: ".erp-grid", name: "Reports & Dashboards", dialog: "Spend Overview dashboard" },
+  { grid: ".erp-grid", name: "Price Alerts", dialog: "Price alert email" },
+  { grid: ".erp-grid", name: "Document Validation", dialog: "W-9 document validation" },
+  { grid: ".erp-grid", name: "Extend Your Apps", dialog: "Work request with matched experts" },
+  // ErpIntegration — the two flow doorways (brief_home_erp_integration WS-4).
+  { grid: ".erpx-doors", name: "Fulfillment", dialog: "Service procurement fulfillment flow" },
+  { grid: ".erpx-doors", name: "Settlement", dialog: "Service procurement settlement flow" },
 ];
 
 /** Everything the browser will hand focus to. Mirrors the app's own trap query. */
@@ -51,8 +61,8 @@ const FOCUSABLE =
  * heading text is how a person finds the card, and it still finds it if someone
  * regresses it to a <div>, which is the case worth catching.
  */
-function cardFor(page: Page, name: string): Locator {
-  return page.locator(".erp-grid > *").filter({ hasText: name });
+function cardFor(page: Page, c: Card): Locator {
+  return page.locator(`${c.grid} > *`).filter({ hasText: c.name });
 }
 
 /** Is the real, live focus inside the open dialog? Asked of the DOM, not inferred. */
@@ -137,32 +147,32 @@ test.beforeEach(async ({ page }) => {
 for (const [i, c] of CARDS.entries()) {
   test.describe(`card ${i + 1} — ${c.name}`, () => {
     test("§1 the card is a <button> that advertises the dialog", async ({ page }) => {
-      const card = cardFor(page, c.name);
+      const card = cardFor(page, c);
       await expect(card).toHaveCount(1);
       await expect(card).toHaveJSProperty("tagName", "BUTTON");
       await expect(card).toHaveAttribute("aria-haspopup", "dialog");
     });
 
     test("§2 click opens a modal dialog with an accessible name", async ({ page }) => {
-      await openByClick(page, cardFor(page, c.name));
+      await openByClick(page, cardFor(page, c));
       const dialog = page.getByRole("dialog", { name: c.dialog });
       await expect(dialog).toBeVisible();
       await expect(dialog).toHaveAttribute("aria-modal", "true");
     });
 
     test("§3 Enter opens it from keyboard focus — a nested button eats Enter", async ({ page }) => {
-      await openByEnter(page, cardFor(page, c.name));
+      await openByEnter(page, cardFor(page, c));
       await expect(page.getByRole("dialog", { name: c.dialog })).toBeVisible();
     });
 
     test("§4 focus moves into the dialog on open", async ({ page }) => {
-      await openByClick(page, cardFor(page, c.name));
+      await openByClick(page, cardFor(page, c));
       await expect(page.getByRole("dialog")).toBeVisible();
       expect(await focusIsInDialog(page)).toBe(true);
     });
 
     test("§5 focus is trapped — Tab and Shift+Tab cycle, nothing behind is reachable", async ({ page }) => {
-      await openByClick(page, cardFor(page, c.name));
+      await openByClick(page, cardFor(page, c));
       const dialog = page.getByRole("dialog");
       const stops = dialog.locator(FOCUSABLE);
       const n = await stops.count();
@@ -190,7 +200,7 @@ for (const [i, c] of CARDS.entries()) {
     });
 
     test("§6 Esc closes it and focus returns to the card that opened it", async ({ page }) => {
-      const card = cardFor(page, c.name);
+      const card = cardFor(page, c);
       await openByClick(page, card);
       await page.keyboard.press("Escape");
       await expect(page.getByRole("dialog")).toHaveCount(0);
@@ -198,7 +208,7 @@ for (const [i, c] of CARDS.entries()) {
     });
 
     test("§7 the backdrop closes it; a click inside the scene does not", async ({ page }) => {
-      await openByClick(page, cardFor(page, c.name));
+      await openByClick(page, cardFor(page, c));
       const dialog = page.getByRole("dialog");
 
       /*
@@ -221,7 +231,7 @@ for (const [i, c] of CARDS.entries()) {
     });
 
     test("§8 no dialog remains in the DOM once closed", async ({ page }) => {
-      await openByClick(page, cardFor(page, c.name));
+      await openByClick(page, cardFor(page, c));
       await page.keyboard.press("Escape");
       await expect(page.locator('[role="dialog"]')).toHaveCount(0);
       await expect(page.locator(".lb-dim")).toHaveCount(0);
@@ -231,7 +241,7 @@ for (const [i, c] of CARDS.entries()) {
 
 test.describe("card 1 scene — the dashboard stays live inside the dialog", () => {
   test("§9 Table view is a real <button> and reveals the table", async ({ page }) => {
-    await openByClick(page, cardFor(page, CARDS[0].name));
+    await openByClick(page, cardFor(page, CARDS[0]));
     const dialog = page.getByRole("dialog");
 
     const toggle = dialog.getByRole("button", { name: "Table view" });
@@ -250,7 +260,7 @@ test.describe("card 1 scene — the dashboard stays live inside the dialog", () 
   });
 
   test("§10 hovering a chart bar shows the tooltip", async ({ page }) => {
-    await openByClick(page, cardFor(page, CARDS[0].name));
+    await openByClick(page, cardFor(page, CARDS[0]));
     const dialog = page.getByRole("dialog");
     /*
       Hover the painted <rect>, not the <g> that carries the handler: pointer
@@ -265,7 +275,7 @@ test.describe("card 1 scene — the dashboard stays live inside the dialog", () 
 test.describe("the page as a whole", () => {
   test("§11 zero console errors on load and across every open/close", async ({ page }) => {
     for (const c of CARDS) {
-      await openByClick(page, cardFor(page, c.name));
+      await openByClick(page, cardFor(page, c));
       await expect(page.getByRole("dialog", { name: c.dialog })).toBeVisible();
       await page.keyboard.press("Escape");
       await expect(page.getByRole("dialog")).toHaveCount(0);
@@ -281,7 +291,7 @@ test.describe("the page as a whole", () => {
     expect(await nestedInteractive(page), "at rest").toEqual([]);
 
     for (const c of CARDS) {
-      await openByClick(page, cardFor(page, c.name));
+      await openByClick(page, cardFor(page, c));
       await expect(page.getByRole("dialog", { name: c.dialog })).toBeVisible();
       expect(await nestedInteractive(page), `with "${c.dialog}" open`).toEqual([]);
       await page.keyboard.press("Escape");

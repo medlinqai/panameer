@@ -70,7 +70,7 @@ export function PriceAlertScene() {
 
         <div className="whyb">
           <b>Why you got this.</b> Line 2 priced <b>18.7% above</b> the contracted benchmark for
-          this item, over your organization&rsquo;s 10% alert threshold. Switching writes the new
+          this item, over your organization’s 10% alert threshold. Switching writes the new
           supplier, price and contract reference back to the requisition in Oracle Cloud — no
           re-keying, and the approval chain is unchanged.
           <br />

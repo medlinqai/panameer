@@ -149,3 +149,47 @@ export const WR_TERMS: readonly (readonly [string, string])[] = [
   ["Location", "Remote, US hours"],
   ["Budget guide", "$140–$190 / hr"],
 ];
+
+/* ── 5 + 6 · The two ERP-integration swimlanes ────────────────────────────── */
+
+/**
+ * WHERE A STEP HAPPENS, which is the entire argument of both flows.
+ *
+ * `erp` is dark, `pan` is a magenta outline, `per` is a dashed outline for a
+ * human decision. A reader scanning the chain should be able to see, without
+ * reading a word, that the dark nodes are things their own ERP already does and
+ * the dashed ones are the only two places a person is asked to act.
+ */
+export type LaneKind = "erp" | "pan" | "per";
+
+/** One actor's row: who is acting, and the chain of steps they own. */
+export type Lane = { who: string; kind: LaneKind; steps: readonly string[] };
+
+/**
+ * FULFILLMENT — requisition to released work order.
+ *
+ * ⚠ THE ORDER IS THE CLAIM AND IT ALTERNATES ON PURPOSE. Oracle → Panameer →
+ * person → Oracle → Panameer → person → Oracle → Panameer. Flattening it into
+ * one list, or grouping all the Oracle steps together, would destroy the only
+ * thing this diagram says: that the documents keep landing back in the system
+ * of record while the marketplace does the work between them.
+ */
+export const FULFILLMENT_LANES: readonly Lane[] = [
+  { who: "Oracle", kind: "erp", steps: ["Purchase Requisition", "Req Line"] },
+  { who: "Panameer", kind: "pan", steps: ["Create Work Request", "Invite Providers to Bid", "Providers Propose Rate"] },
+  { who: "Requester", kind: "per", steps: ["Requester Accepts Rate"] },
+  { who: "Oracle", kind: "erp", steps: ["Purchase Agreement", "Purchase Order"] },
+  { who: "Panameer", kind: "pan", steps: ["Auto-Create Work Order", "Invitation to Accept Work Order"] },
+  { who: "Provider", kind: "per", steps: ["Accept Work Order"] },
+  { who: "Oracle", kind: "erp", steps: ["Purchase Order Acknowledge"] },
+  { who: "Panameer", kind: "pan", steps: ["Release Work Order"] },
+];
+
+/** SETTLEMENT — work delivered to money moved. */
+export const SETTLEMENT_LANES: readonly Lane[] = [
+  { who: "Panameer", kind: "pan", steps: ["Manage Work Order", "Manage Timeline via Tracker"] },
+  { who: "Provider", kind: "per", steps: ["Create Settlement — hours or payment request"] },
+  { who: "Requester", kind: "per", steps: ["Settlement Approval"] },
+  { who: "Oracle", kind: "erp", steps: ["Purchase Receipt", "ERS Invoice", "Payment"] },
+  { who: "Panameer", kind: "pan", steps: ["Auto-Create Payment"] },
+];

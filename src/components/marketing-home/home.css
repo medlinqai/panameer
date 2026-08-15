@@ -798,3 +798,124 @@
 .pm-home .tabs{overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
 .pm-home .tabs::-webkit-scrollbar{display:none}
 .pm-home .tab{flex:0 0 auto}
+
+/* ===== ERP INTEGRATION SECTION (brief_home_erp_integration) ==================
+   Ported from 2. Claude Sub-Files/mockups/erp_integration_section.html — same
+   values, scoped under .pm-home instead of a <style> block.
+
+   ⚠ EVERY CLASS IS `erpx-` PREFIXED, and that is not decoration. The mockup's
+   own names — .side, .doc, .note, .tag, .who — ALL already exist in this file
+   under other sections. Porting them unprefixed would have silently restyled
+   the product shot and the W-9 scene.
+
+   ⚠ THE COMPONENT OWNS NO SECTION CHROME. `.erpx` sets no background, no
+   padding and no margin, because this section also becomes the mainstay of the
+   Enterprise page and must not arrive carrying the home page's spacing.
+   `.erpx-band` is the HOME PAGE'S chrome, passed in by page.tsx as className;
+   a second surface passes its own instead.
+   ------------------------------------------------------------------------- */
+.pm-home .erpx-band{background:linear-gradient(180deg,#fff 0%,#fbfaff 100%);padding:74px 0 80px;border-top:1px solid var(--line)}
+
+.pm-home .erpx-h2{font-size:40px;line-height:1.14;letter-spacing:-.5px;color:var(--ink);font-weight:700;margin:12px 0 12px;max-width:900px}
+.pm-home .erpx-tagline{font-size:21px;line-height:1.4;color:var(--mag-d);font-weight:700;letter-spacing:-.4px;margin:0 0 14px;max-width:780px}
+.pm-home .erpx-lead{font-size:16.5px;line-height:1.65;color:var(--muted);max-width:760px;margin:0}
+.pm-home .erpx-lead b{color:var(--text);font-weight:600}
+
+/* the claim strip */
+.pm-home .erpx-claim{display:flex;gap:30px;margin:28px 0 32px;flex-wrap:wrap}
+.pm-home .erpx-cl{display:flex;gap:12px;align-items:flex-start;max-width:330px}
+.pm-home .erpx-n{font-size:28px;font-weight:800;color:var(--mag);line-height:1;letter-spacing:-.6px;flex:none;font-family:var(--font-display),sans-serif}
+.pm-home .erpx-t{font-size:13.2px;line-height:1.5;color:var(--muted)}
+.pm-home .erpx-t b{color:var(--ink);display:block;font-size:13.6px;font-weight:700;margin-bottom:2px}
+
+/* ---- the overview diagram ---------------------------------------------- */
+.pm-home .erpx-diag{background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px 26px 22px;box-shadow:0 10px 30px rgba(23,30,62,.06)}
+.pm-home .erpx-dhead{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.pm-home .erpx-dhead h3{font-size:17px;margin:0;color:var(--ink);letter-spacing:-.3px;font-weight:700}
+.pm-home .erpx-tag{margin-left:auto;font-size:10.5px;font-weight:800;letter-spacing:.6px;background:var(--mag-soft);color:var(--mag-d);padding:4px 10px;border-radius:999px;white-space:nowrap}
+.pm-home .erpx-rows{display:grid;grid-template-columns:230px 1fr 268px;align-items:stretch}
+
+.pm-home .erpx-side{border:1.5px solid #cfd6e4;border-radius:14px;padding:15px 14px}
+.pm-home .erpx-sh{font-size:9.5px;font-weight:800;letter-spacing:1.1px;color:var(--muted);text-transform:uppercase;margin-bottom:3px}
+.pm-home .erpx-sn{font-size:14px;font-weight:800;color:var(--ink);margin-bottom:13px}
+.pm-home .erpx-doc{background:#3c4668;color:#fff;border-radius:8px;padding:9px 10px;font-size:11.5px;font-weight:700;text-align:center;margin-bottom:9px;line-height:1.3}
+.pm-home .erpx-doc:last-child{margin-bottom:0}
+
+.pm-home .erpx-pan{border-radius:14px;padding:15px 14px;background:linear-gradient(150deg,#241436 0%,#4a1a5e 45%,#c0219c 100%);color:#fff}
+.pm-home .erpx-pan .erpx-sh{color:#e4c8f2}
+.pm-home .erpx-pan-name{display:flex;align-items:center;color:#fff}
+.pm-home .erpx-pan-name i{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;border:2px solid var(--mag);color:var(--mag);font-size:10px;font-weight:800;margin-right:6px;font-style:normal;background:#fff;flex:none}
+.pm-home .erpx-stp{background:#fff;color:var(--ink);border-radius:8px;padding:8px 11px;font-size:11.5px;font-weight:700;margin-bottom:7px;line-height:1.3}
+/* The three groups are the content — bid, work order, release. */
+.pm-home .erpx-grp+.erpx-grp{margin-top:11px}
+.pm-home .erpx-grp:last-child .erpx-stp:last-child{margin-bottom:0}
+
+/* the five named rails */
+.pm-home .erpx-rails{display:flex;flex-direction:column;justify-content:space-around;padding:22px 14px}
+.pm-home .erpx-rail{position:relative;text-align:center}
+.pm-home .erpx-lb{font-size:12.5px;font-weight:800;color:var(--ink);margin-bottom:5px;letter-spacing:-.2px}
+/*
+  DIRECTION IS DRAWN, NOT WRITTEN. The gradient runs toward the arrowhead and
+  the arrowhead sits at the end the document is travelling to, so `out`
+  (ERP → Panameer) points right and `back` points left. The rail is aria-hidden;
+  the caption underneath states the direction in words.
+*/
+.pm-home .erpx-ln{position:relative;height:2px;background:linear-gradient(90deg,#cfd6e4,#e6a8e6)}
+.pm-home .erpx-rail.back .erpx-ln{background:linear-gradient(90deg,#e6a8e6,#cfd6e4)}
+.pm-home .erpx-rail.out .erpx-ln::after,.pm-home .erpx-rail.back .erpx-ln::before{content:"";position:absolute;top:-4px;border-style:solid}
+.pm-home .erpx-rail.out .erpx-ln::after{right:-1px;border-width:5px 0 5px 8px;border-color:transparent transparent transparent var(--mag)}
+.pm-home .erpx-rail.back .erpx-ln::before{left:-1px;border-width:5px 8px 5px 0;border-color:transparent var(--mag) transparent transparent}
+.pm-home .erpx-dir{font-size:10.5px;color:var(--muted);margin-top:5px;font-weight:600;line-height:1.4}
+
+/* ---- the two doorways -------------------------------------------------- */
+/*
+  Reuses `.erp-card.door` wholesale — crop, hover lift, magenta ring, `.db`
+  block. Only the grid differs: two columns here, four in ErpPackages.
+*/
+.pm-home .erpx-doors{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:20px}
+
+/* ---- what it costs ----------------------------------------------------- */
+.pm-home .erpx-cost{margin-top:26px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px 24px}
+.pm-home .erpx-cost h3{margin:0 0 12px;font-size:17px;color:var(--ink);letter-spacing:-.3px;font-weight:700}
+.pm-home .erpx-crow{display:grid;grid-template-columns:180px 1fr;gap:14px;padding:11px 0;border-top:1px solid var(--line);font-size:13.5px;line-height:1.6;color:var(--muted)}
+.pm-home .erpx-crow:first-of-type{border-top:0}
+.pm-home .erpx-crow b{color:var(--ink);font-weight:700}
+.pm-home .erpx-free{color:#1f8f5f;font-weight:800}
+
+/* ---- the swimlane scene (Fulfillment / Settlement) --------------------- */
+/*
+  `.scene` supplies the white card and the radius, as it does for the W-9 and
+  work-request scenes. Width is the mockup's 960px: these render at true scale
+  in the lightbox and clipped in the card crop.
+*/
+.pm-home .flw{width:960px;max-width:100%;padding:22px 26px 24px}
+.pm-home .flw-h2{font-size:19px;margin:0 0 3px;color:var(--ink);letter-spacing:-.4px;font-weight:700}
+.pm-home .flw-sub{font-size:12.5px;color:var(--muted);margin-bottom:18px}
+.pm-home .flw-lane{display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:center;padding:11px 0;border-top:1px solid var(--line)}
+.pm-home .flw-lane:first-of-type{border-top:0}
+.pm-home .flw-who{font-size:11.5px;font-weight:800;color:var(--muted);text-align:right;text-transform:uppercase;letter-spacing:.5px}
+.pm-home .flw-chain{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.pm-home .flw-node{font-size:11.5px;font-weight:700;border-radius:8px;padding:7px 11px;line-height:1.25}
+.pm-home .flw-node.erp{background:#3c4668;color:#fff}
+.pm-home .flw-node.pan{background:var(--mag-soft);color:var(--mag-d);border:1px solid var(--mag)}
+.pm-home .flw-node.per{background:#fff;border:1px dashed #b9c2d4;color:#5b6478}
+.pm-home .flw-arw{color:#b9c2d4;font-size:13px;font-weight:800}
+.pm-home .flw-note{margin:16px 0 0;border-top:1px solid var(--line);padding-top:13px;font-size:12.5px;color:var(--muted);line-height:1.6}
+.pm-home .flw-note b{color:var(--text);font-weight:700}
+
+/* ---- responsive -------------------------------------------------------- */
+@media(max-width:1000px){
+  /*
+    THE RAILS STOP BEING A MIDDLE COLUMN. Below three columns the arrows have
+    nothing to point between, so the diagram stacks and the rails become a plain
+    list of the five named channels — which is still the useful half.
+  */
+  .pm-home .erpx-rows{grid-template-columns:1fr;gap:16px}
+  .pm-home .erpx-rails{padding:0;gap:14px}
+  .pm-home .erpx-doors{grid-template-columns:1fr}
+}
+@media(max-width:620px){
+  .pm-home .erpx-h2{font-size:29px}
+  .pm-home .erpx-tagline{font-size:18px}
+  .pm-home .erpx-crow{grid-template-columns:1fr;gap:2px}
+}
