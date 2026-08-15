@@ -199,7 +199,18 @@
 .pm-home .kpi .val{font-size:22px;font-weight:700;color:var(--ink);font-family:var(--font-display)}
 .pm-home .kpi .chg{font-size:12px;font-weight:600;color:var(--green);margin-left:6px}
 .pm-home .kpi .lab{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:12px 0 6px}
-.pm-home .spark{display:block;width:100%;height:64px}
+/* THE THREE TILE GRAPHICS — benchmark track, domain columns, findings to scale.
+   Replaces `.spark`, which is deleted along with the sparklines it styled: they
+   implied a trend on a number with no history. The class is gone rather than
+   left dead, so nobody reaches for it and puts one back.
+
+   ⚠ ASPECT IS PRESERVED, unlike `.spark`, which stretched on
+   preserveAspectRatio="none". These carry text labels and a non-uniform scale
+   would smear them. `display:block` because an inline <svg> sits on the text
+   baseline and leaves a descender gap; the bottom margin is here because `.kpi`
+   has no bottom padding — the old sparkline was designed to bleed off the edge
+   and these have labels near y=57 that must not be clipped. */
+.pm-home .viz{display:block;width:100%;height:auto;margin:10px 0 18px}
 .pm-home .lower{display:grid;grid-template-columns:1.6fr 1fr;gap:18px;margin-top:20px}
 .pm-home .panel{border:1px solid var(--line);border-radius:14px;padding:18px}
 .pm-home .panel-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
