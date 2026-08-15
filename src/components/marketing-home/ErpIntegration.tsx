@@ -51,33 +51,21 @@ import { SettlementScene } from "@/components/marketing-home/scenes/SettlementSc
  * existence today, and a CTA would say otherwise.
  */
 
-/* ── the head ─────────────────────────────────────────────────────────────── */
-
-/**
- * The three claims. `n` is a bare figure on purpose — no "+" and no "x", so
- * nothing reads as a growth stat. "0" is the strongest of the three and leads.
- */
-const CLAIMS: readonly { n: string; head: string; body: string }[] = [
-  {
-    n: "0",
-    head: "integrations most buyers have today",
-    body: "Services procurement is the last unautomated corner of the ERP.",
-  },
-  {
-    n: "6",
-    head: "documents move automatically",
-    body: "Requisition, agreement, PO, acknowledgement, invoice, payment.",
-  },
-  {
-    n: "1",
-    head: "click to connect",
-    body: "No middleware project, no integration team, no re-keying.",
-  },
-];
-
 /* ── the overview diagram ─────────────────────────────────────────────────── */
 
-/** Left column. Six documents — the same six the "6" claim counts. */
+/*
+  ⚠ NO STAT ROW BETWEEN THE LEAD AND THE DIAGRAM. A 0 / 6 / 1 figure strip lived
+  here; Scott cut it on 2026-08-15 and cut it again when it shipped anyway.
+  Nothing replaces it — the lead runs straight into the diagram. Do not
+  reinstate it, and do not put a different set of figures in its place.
+*/
+
+/**
+ * Left column — the six documents that move automatically, in the order the ERP
+ * produces them. This IS the claim the section makes about scope: six documents,
+ * both directions, no re-keying. It is made by showing them, not by counting
+ * them in a headline figure.
+ */
 const ERP_DOCS: readonly string[] = [
   "Purchase Agreement",
   "Purchase Requisition",
@@ -229,18 +217,6 @@ export function ErpIntegration({ className }: { className?: string }) {
           real thing. <b>Panameer moves the native data.</b> If you run Oracle,
           think OBN — only easy.
         </p>
-
-        <div className="erpx-claim">
-          {CLAIMS.map((c) => (
-            <div className="erpx-cl" key={c.head}>
-              <span className="erpx-n">{c.n}</span>
-              <span className="erpx-t">
-                <b>{c.head}</b>
-                {c.body}
-              </span>
-            </div>
-          ))}
-        </div>
 
         {/* ── overview diagram ───────────────────────────────────────────── */}
         <div className="erpx-diag">

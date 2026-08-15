@@ -831,15 +831,22 @@
 
 .pm-home .erpx-h2{font-size:40px;line-height:1.14;letter-spacing:-.5px;color:var(--ink);font-weight:700;margin:12px 0 12px;max-width:900px}
 .pm-home .erpx-tagline{font-size:21px;line-height:1.4;color:var(--mag-d);font-weight:700;letter-spacing:-.4px;margin:0 0 14px;max-width:780px}
-.pm-home .erpx-lead{font-size:16.5px;line-height:1.65;color:var(--muted);max-width:760px;margin:0}
-.pm-home .erpx-lead b{color:var(--text);font-weight:600}
+/*
+  ⚠ THE 30px IS THE GAP THE CUT STRIP USED TO CARRY, and it has to live here now.
 
-/* the claim strip */
-.pm-home .erpx-claim{display:flex;gap:30px;margin:28px 0 32px;flex-wrap:wrap}
-.pm-home .erpx-cl{display:flex;gap:12px;align-items:flex-start;max-width:330px}
-.pm-home .erpx-n{font-size:28px;font-weight:800;color:var(--mag);line-height:1;letter-spacing:-.6px;flex:none;font-family:var(--font-display),sans-serif}
-.pm-home .erpx-t{font-size:13.2px;line-height:1.5;color:var(--muted)}
-.pm-home .erpx-t b{color:var(--ink);display:block;font-size:13.6px;font-weight:700;margin-bottom:2px}
+  A 0 / 6 / 1 figure strip sat between this paragraph and the diagram with
+  `margin:28px 0 32px`. Scott cut it, so the lead was left at `margin:0` against
+  a `.erpx-diag` that has no top margin of its own — the diagram butted straight
+  onto the last line of text. 30px is the rebuilt mockup's own answer for the
+  strip-less layout (`.lead{margin:0 0 30px}`), and it sits correctly against the
+  section's other steps: 20px diagram→doorways, 26px doorways→cost, and a wider
+  one here because this is the break from prose into the first card.
+
+  A margin, not a spacer div: an empty element would be a second thing to delete
+  next time somebody moves this section onto the Enterprise page.
+*/
+.pm-home .erpx-lead{font-size:16.5px;line-height:1.65;color:var(--muted);max-width:760px;margin:0 0 30px}
+.pm-home .erpx-lead b{color:var(--text);font-weight:600}
 
 /* ---- the overview diagram ---------------------------------------------- */
 .pm-home .erpx-diag{background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px 26px 22px;box-shadow:0 10px 30px rgba(23,30,62,.06)}
