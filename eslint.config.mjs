@@ -20,6 +20,17 @@ const eslintConfig = defineConfig([
       nobody can act on. A gate that loud is a gate people stop reading.
     */
     ".harness/**",
+    /*
+      TEST HARNESS, NOT APP CODE. `e2e/` is Playwright's, and it is linted by
+      nothing here on purpose: the 44-problem baseline is a number Scott reads
+      to mean "the app got no worse," and a new folder quietly adding to it is
+      how a lint gate stops meaning anything. Playwright's own run is the gate
+      on this folder.
+    */
+    "e2e/**",
+    /* Playwright's output, and gitignored — never source. */
+    "test-results/**",
+    "playwright-report/**",
   ]),
 ]);
 
