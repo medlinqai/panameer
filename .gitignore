@@ -55,3 +55,11 @@ scripts/data/*.xlsx
 
 # Derived from the real (gitignored) résumé fixtures — same reason they are.
 src/lib/resume/__fixtures__/expected-parses.json
+
+# Playwright output. Screenshots and traces are FAILURE EVIDENCE, written only
+# when `check:ui` goes red — useful for the next ten minutes, never a record.
+# Committing them would turn a behaviour gate into a screenshot library, which
+# WS-3 of brief_check_ui_harness explicitly rules out.
+test-results/
+playwright-report/
+e2e/.artifacts/

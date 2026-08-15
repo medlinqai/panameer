@@ -46,7 +46,8 @@
     "learn:covers": "ts-node --project tsconfig.seed.json prisma/apply-learn-covers.ts",
     "seed:test-data": "npx esbuild prisma/seed-test-data.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/seed-test-data.cjs --log-level=error && node -r dotenv/config .harness/seed-test-data.cjs dotenv_config_path=.env.local",
     "seed:catalog": "ts-node --project tsconfig.seed.json prisma/seed-catalog.ts",
-    "check:email": "npx esbuild src/lib/email/templates.test.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/email.cjs --log-level=error && node .harness/email.cjs"
+    "check:email": "npx esbuild src/lib/email/templates.test.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/email.cjs --log-level=error && node .harness/email.cjs",
+    "check:ui": "playwright test"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
@@ -68,6 +69,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
