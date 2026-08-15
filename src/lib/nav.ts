@@ -416,8 +416,60 @@ function holds(me: Me, capability: Capability): boolean {
  * this file). Until they land, `isServiceProvider` IS the class signal — and
  * when they do land, this function is the only thing that changes.
  */
+/**
+ * THE ONE PREDICATE behind both the menu and its caption.
+ *
+ * Extracted so `menuForUserClass` and `railPersona` cannot answer "which side
+ * of the marketplace is this?" differently — a rail captioned SELLER over the
+ * requester menu is worse than no caption, because it is confidently wrong.
+ * When `USER_CLASS` lands, this one line is what changes.
+ */
+function isSellerSide(me: Me): boolean {
+  return me.person.roles.isServiceProvider;
+}
+
 export function menuForUserClass(me: Me): NavItem[] {
-  return me.person.roles.isServiceProvider ? PROVIDER_NAV : REQUESTER_NAV;
+  return isSellerSide(me) ? PROVIDER_NAV : REQUESTER_NAV;
+}
+
+/** The rail's persona caption. Uppercase by convention, not by CSS accident. */
+export type RailPersona = "BUYER" | "SELLER" | "PANAMEER";
+
+/**
+ * WHICH PERSONA THE RAIL IS CURRENTLY SHOWING (E098).
+ *
+ * The rail had no persona caption at all, so somebody with more than one
+ * membership could not tell which side of the marketplace they were looking at.
+ * This is the derivation, in one place, and it reads the SAME inputs the rail
+ * already uses to decide what to render — `isSellerSide` for the menu and the
+ * `isSystemAdmin` session bit for the admin branch.
+ *
+ * ⚠ IT LABELS THE RAIL, NOT THE PERSON. That is what decides both awkward cases:
+ *
+ *   · SOMEBODY WITH BOTH ACTOR FLAGS GETS `SELLER`, because `menuForUserClass`
+ *     gives them PROVIDER_NAV. The caption's job is to name the menu underneath
+ *     it; naming the person instead would caption a provider rail `BUYER` for
+ *     anyone who happens to hold both, which is the exact confusion E098 is
+ *     about. Switching side is the persona menu's job, not the caption's.
+ *   · AN ADMIN WHO IS ALSO A PROVIDER GETS `PANAMEER`, for the same reason —
+ *     the rail is rendering ADMIN_NAV.
+ *
+ * ⚠ NOT `USER_CLASS`, AND DELIBERATELY NOT. `USER_CLASS`/`USER_JOB` are not in
+ * the schema (see the note above `menuForUserClass` and the one further up this
+ * file). Faking the enum here to look forward-compatible would put a second,
+ * lying source of truth next to the real one. This is the single call site to
+ * change when they land.
+ *
+ * Returns null when there is no viewer — `navForRoles` returns [] in that case,
+ * and captioning an empty rail would be a claim about nobody.
+ */
+export function railPersona(
+  me: Me | null,
+  isSystemAdmin: boolean
+): RailPersona | null {
+  if (isSystemAdmin) return "PANAMEER";
+  if (!me) return null;
+  return isSellerSide(me) ? "SELLER" : "BUYER";
 }
 
 /**
