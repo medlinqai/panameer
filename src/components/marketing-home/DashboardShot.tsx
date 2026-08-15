@@ -232,7 +232,17 @@ export function DashboardShot() {
                       <div><span className="val">{usd(TOTAL_SAVINGS)}</span></div>
                       <span className="kpi-info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9" /><path d="M12 11v5" /><circle cx="12" cy="8" r=".6" fill="currentColor" /></svg></span>
                     </div>
-                    <div className="lab">Estimated Savings Based on Rev/Heads</div>
+                    {/*
+                      E105 — "Est.", not "Estimated". The tile is 267px wide and
+                      `.lab` is 12px uppercase at .05em tracking; the full word
+                      pushed the label onto a second line, which set this tile's
+                      label block one line taller than T1's and T2's and knocked
+                      the three sub-lines and graphics out of alignment. Shortened
+                      rather than restyled — dropping the tracking or the size
+                      here would make one tile's label differ from the other two,
+                      which is the same misalignment by another route.
+                    */}
+                    <div className="lab">Est. Savings Based on Rev/Heads</div>
                     <div className="sub">14% of $18.5M addressable P2P spend</div>
                     <FindingsBar />
                   </div>
