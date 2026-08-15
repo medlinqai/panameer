@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Lightbox } from "@/components/marketing-home/Lightbox";
+import { DecorativeSceneProvider } from "@/components/marketing-home/scenes/decorative";
 import { SpendOverviewScene } from "@/components/marketing-home/scenes/SpendOverviewScene";
 import { PriceAlertScene } from "@/components/marketing-home/scenes/PriceAlertScene";
 import { W9Scene } from "@/components/marketing-home/scenes/W9Scene";
@@ -142,10 +143,19 @@ export function ErpPackages() {
               style={{ ["--tf" as string]: e.tf }}
               onClick={() => setOpenIdx(i)}
             >
+              {/*
+                ⚠ NOTHING INSIDE THE CROP IS INTERACTIVE. The card is a real
+                <button>, and HTML forbids an interactive descendant of one —
+                React refuses to hydrate a nested <button>, and the nested
+                control would eat the Enter/Space that opens this card. The
+                provider tells the scene it is the crop; see `scenes/decorative`.
+              */}
               <span className="crop" aria-hidden>
-                <span className="crop-inner" style={{ transform: e.tf }}>
-                  {e.scene}
-                </span>
+                <DecorativeSceneProvider value={true}>
+                  <span className="crop-inner" style={{ transform: e.tf }}>
+                    {e.scene}
+                  </span>
+                </DecorativeSceneProvider>
               </span>
               <span className="db">
                 <span className="db-h3">{e.name}</span>

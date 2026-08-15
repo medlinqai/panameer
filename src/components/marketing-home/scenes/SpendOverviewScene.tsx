@@ -5,6 +5,7 @@ import {
   SPEND_BY_BUYER, SPEND_BY_CATEGORY, SPEND_BY_SUPPLIER, SPEND_KPIS,
   SPEND_OFF, SPEND_ON, SPEND_RAIL, SUPPLIER_COUNT, type SpendRow,
 } from "@/lib/marketing-scenes";
+import { useDecorativeScene } from "@/components/marketing-home/scenes/decorative";
 
 /**
  * SCENE 1 — the Spend Overview dashboard.
@@ -23,6 +24,13 @@ type Tip = { x: number; y: number; label: string; rows: [string, string, string]
 export function SpendOverviewScene() {
   const [tip, setTip] = useState<Tip>(null);
   const [tables, setTables] = useState(false);
+  /*
+    ⚠ THE CARD CROP IS DECORATIVE — see `./decorative`. This is the only control
+    in any of the four scenes, and inside the card it must not be a <button>:
+    HTML forbids a button descending from a button, React refuses to hydrate it,
+    and the nested control would swallow the Enter/Space that opens the card.
+  */
+  const decorative = useDecorativeScene();
 
   return (
     <div className="scene sv" onMouseLeave={() => setTip(null)}>
@@ -44,10 +52,16 @@ export function SpendOverviewScene() {
           <span className="sv-chip">2026/01 – 2026/08</span>
           <span className="sv-chip">USD</span>
           <span className="sv-spacer" />
-          <button type="button" className="sv-viewbtn" aria-expanded={tables}
-            onClick={() => setTables((v) => !v)}>
-            {tables ? "Hide table" : "Table view"}
-          </button>
+          {/* Same class and same box either way, so the crop shows exactly what
+              opening the card reveals — only one of them is a control. */}
+          {decorative ? (
+            <span className="sv-viewbtn">Table view</span>
+          ) : (
+            <button type="button" className="sv-viewbtn" aria-expanded={tables}
+              onClick={() => setTables((v) => !v)}>
+              {tables ? "Hide table" : "Table view"}
+            </button>
+          )}
         </div>
 
         <div className="sv-kpis">

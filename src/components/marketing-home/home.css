@@ -667,8 +667,13 @@
 .pm-home .sv-top h1{font-size:25px;margin:0;letter-spacing:-.5px;color:var(--ink);font-weight:700}
 .pm-home .sv-chip{border:1px solid var(--line);background:#fff;border-radius:7px;padding:6px 11px;font-size:12px;font-weight:600;color:var(--text)}
 .pm-home .sv-spacer{flex:1}
-.pm-home .sv-viewbtn{border:1px solid var(--line);background:#fff;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:700;color:var(--mag);cursor:pointer}
-.pm-home .sv-viewbtn:hover{background:var(--mag-soft)}
+/* Two elements wear this class: the real <button> in the lightbox and an inert
+   <span> in the decorative card crop (a <button> cannot descend from the card
+   <button>). font-family + line-height are pinned because a <button> otherwise
+   takes the UA font and a <span> inherits the page's — the crop has to be the
+   same pixels as what opening the card reveals. */
+.pm-home .sv-viewbtn{border:1px solid var(--line);background:#fff;border-radius:7px;padding:6px 12px;font-family:inherit;font-size:12px;line-height:1.35;font-weight:700;color:var(--mag);cursor:pointer}
+.pm-home button.sv-viewbtn:hover{background:var(--mag-soft)}
 .pm-home .sv-viewbtn:focus-visible{outline:2px solid var(--mag);outline-offset:2px}
 .pm-home .sv-kpis{background:#fff;border:1px solid var(--line);border-radius:12px;display:grid;grid-template-columns:repeat(4,1fr);margin-bottom:14px}
 .pm-home .sv-kpi{padding:14px 18px;border-right:1px solid var(--line)}
