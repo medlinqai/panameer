@@ -114,17 +114,26 @@ type Door = {
   /**
    * ⚠ TRANSLATE ONLY — NO `scale()`, AND THAT IS THE RULE NOT A PREFERENCE.
    *
-   * The scenes are 1080px diagrams now, and the crop is a WINDOW ONTO THEM AT
-   * TRUE SCALE: the pixels in the card are the same pixels the dialog shows.
-   * `brief_home_tiles_and_lightboxes` settled this — a shrunk screenshot of the
-   * whole thing is unreadable mush, and the earlier `scale(.34)`/`scale(.58)`
-   * framings on these two cards died with the swimlane version.
+   * The crop is a WINDOW ONTO THE SCENE AT TRUE SCALE: the pixels in the card
+   * are the same pixels the dialog shows. `brief_home_tiles_and_lightboxes`
+   * settled it — a shrunk screenshot of the whole thing is unreadable mush.
+   * `check:ui` §14 asserts no `scale()` survives here.
    *
-   * Both offsets were chosen to frame A DOCUMENT AND A STEP WITH AN ARROW
-   * BETWEEN THEM, because the card has to say "two systems talking" before
-   * anyone clicks: Fulfillment lands on the Purchase Requisition chip and the
-   * crossing into Create Work Request; Settlement on Purchase Receipt, the ERS
-   * arrow and the settlement-approval crossing.
+   * ⚠ RE-CHOSEN FOR v2, NOT CARRIED OVER. The geometry underneath moved when the
+   * actors became full-height columns and every document slid to its partner's
+   * height, so the old `-190/-80` and `-190/-190` framed something else entirely.
+   *
+   * ⚠ THE OFFSET IS NOT IN SVG COORDINATES. It translates the whole SCENE, and
+   * the scene puts its heading and sub-line above the drawing: the SVG's origin
+   * sits at (26, 82) inside it. So framing SVG point (X, Y) means translating by
+   * -(X+26), -(Y+82). Measured in the browser, not derived from the stylesheet —
+   * the first pass at these offsets was 82px out vertically for exactly this
+   * reason, and the card looked plausible while framing the wrong thing.
+   *
+   * Both share x = -286, which is SVG x=260: the point where the Oracle chip's
+   * text and the step chip's text both fit inside the 559px card. The card has
+   * to say "two systems talking" before anyone clicks, and it cannot say that
+   * with half a label showing.
    */
   tf: string;
   scene: React.ReactNode;
@@ -140,14 +149,26 @@ const DOORS: readonly Door[] = [
     */
     desc: "Requisition to released work order — every hand-off between the requester, Oracle, Panameer and the provider.",
     label: "Service procurement fulfillment flow",
-    tf: "translate(-190px,-80px)",
+    /*
+      SVG x 260..819, y 84..252 — the Purchase Requisition / Req Line chip, the
+      magenta POSR crossing at y=110, and Create Work Request. A document, an
+      arrow, and the step it lands in. Opens just below the ORACLE CLOUD ERP pill
+      (which ends at y=82) so the card starts on content, not on chrome.
+    */
+    tf: "translate(-286px,-166px)",
     scene: <FulfillmentScene />,
   },
   {
     name: "Settlement",
     desc: "From work delivered to money moved — approved settlement writes the receipt, the ERS invoice and the payment.",
     label: "Service procurement settlement flow",
-    tf: "translate(-190px,-190px)",
+    /*
+      SVG x 260..819, y 180..348 — the Purchase Receipt chip, the magenta
+      crossing at y=245 from Settlement Approval, and the navy step down into ERS
+      Invoice. Two documents, two steps, two arrows: the densest honest window
+      this scene has.
+    */
+    tf: "translate(-286px,-262px)",
     scene: <SettlementScene />,
   },
 ];
