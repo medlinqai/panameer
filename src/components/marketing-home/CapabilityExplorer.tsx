@@ -43,6 +43,23 @@ export function CapabilityExplorer() {
     <div className="fw-body">
       <div>
         <h3>Procure-to-Pay Capability Domains</h3>
+        {/*
+          E104 — TELLS YOU WHAT THE LIST IS AND THAT IT DOES SOMETHING.
+
+          Two jobs in one line. First, scale: the card on the right is one
+          domain's scorecard, and without this the visitor reads it as the whole
+          assessment rather than a tenth of it. Second, affordance: the ten rows
+          are real buttons, but at rest they read as a checklist, so the second
+          sentence says plainly that selecting one changes the card.
+
+          COPY ONLY. The list, the buttons, `aria-pressed` and the E083
+          selection behaviour below are untouched — the sentence describes what
+          they already do rather than adding a hint that has to be kept in sync.
+        */}
+        <p className="fw-sub">
+          This is one of ten capability domain scorecards in your assessment
+          dashboard. Select a domain to see its scores and the suggested fix.
+        </p>
         <ul className="caps">
           {P2P_DOMAINS.map((d) => {
             const on = d.id === domain.id;
