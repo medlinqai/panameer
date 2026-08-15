@@ -76,13 +76,39 @@ const ERP_DOCS: readonly string[] = [
 ];
 
 /**
- * Right column. Nine steps in three groups, and the GROUPING is content: bid,
- * then work order, then release. A flat list of nine would read as a queue.
+ * Right column — WHAT PANAMEER HOLDS. The true counterpart to Oracle's six
+ * documents on the left (E114).
+ *
+ * ⚠ THESE ARE OBJECTS, NOT VERBS, AND THAT IS THE WHOLE POINT. This column used
+ * to list eight actions — "Create Work Request", "Providers Propose Rate" — in
+ * three groups meaning "bid, then work order, then release". Two problems. It
+ * answered a different question from the column opposite it: the left side is
+ * nouns and the right side was a process. And the Fulfillment scene below
+ * already narrates those exact verbs, row by row, better.
+ *
+ * ⚠ FLAT, AND NO GROUP GAPS. The old comment here argued that "a flat list of
+ * nine would read as a queue". That was true of verbs and is false of nouns —
+ * a list of things you hold has no order to imply, and grouping them would
+ * invent a sequence that does not exist. Deleted rather than softened.
+ *
+ * ⚠ NOT RENAMED TO `..._STEPS` EVER AGAIN. A constant called STEPS holding
+ * objects is how the grouping gets quietly re-added.
+ *
+ * `qualifier` renders on a second line at a smaller size. It exists for exactly
+ * one entry: "Settlement (Hours/Amount/Milestone)" does not fit the column on
+ * one line (measured — see the note in home.css), and it is a real object name,
+ * so it wraps rather than being abbreviated.
  */
-const PANAMEER_STEPS: readonly (readonly string[])[] = [
-  ["Create Work Request", "Invite Providers to Bid", "Providers Propose Rate", "Requester Accepts Rate"],
-  ["Auto-Create Work Order", "Invitation to Accept Work Order"],
-  ["Accept Work Order", "Release Work Order"],
+const PANAMEER_OBJECTS: readonly { name: string; qualifier?: string }[] = [
+  { name: "AI Maturity Assessment" },
+  { name: "Project Timeline Tracker" },
+  { name: "Work Request" },
+  { name: "Invitation to Propose" },
+  { name: "Service Package" },
+  { name: "Offer for Service Package" },
+  { name: "Work Order" },
+  { name: "Settlement", qualifier: "(Hours/Amount/Milestone)" },
+  { name: "Payment" },
 ];
 
 /**
@@ -251,11 +277,20 @@ export function ErpIntegration({ className }: { className?: string }) {
               <div className="erpx-sh">Your system of record</div>
               {/* ⚠ TEXT, NOT A LOGO. Trademark — see the file header. */}
               <div className="erpx-sn">Oracle Cloud ERP</div>
-              {ERP_DOCS.map((d) => (
-                <div className="erpx-doc" key={d}>
-                  {d}
-                </div>
-              ))}
+              {/*
+                ⚠ THE STACK IS ITS OWN FLEX CHILD so it can distribute. Six
+                documents against nine objects left this card visibly empty at
+                the bottom; `space-between` on the stack spreads them down the
+                full height, which is what slide 2 does. Without this wrapper
+                there is nothing to give `flex:1` to.
+              */}
+              <div className="erpx-docs">
+                {ERP_DOCS.map((d) => (
+                  <div className="erpx-doc" key={d}>
+                    {d}
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div className="erpx-rails">
@@ -280,13 +315,11 @@ export function ErpIntegration({ className }: { className?: string }) {
               <div className="erpx-sn erpx-pan-name">
                 <i aria-hidden>P</i>Panameer
               </div>
-              {PANAMEER_STEPS.map((group, g) => (
-                <div className="erpx-grp" key={g}>
-                  {group.map((s) => (
-                    <div className="erpx-stp" key={s}>
-                      {s}
-                    </div>
-                  ))}
+              {PANAMEER_OBJECTS.map((o) => (
+                <div className="erpx-obj" key={o.name}>
+                  {o.name}
+                  {/* Second line, smaller — see PANAMEER_OBJECTS. One entry uses it. */}
+                  {o.qualifier && <span className="erpx-obj-q">{o.qualifier}</span>}
                 </div>
               ))}
             </div>
