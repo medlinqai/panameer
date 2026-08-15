@@ -152,10 +152,45 @@
   divider disappears on this background, so the exploration boxes each one
   instead.
 */
-.pm-home .stats{display:flex;flex-wrap:wrap;gap:14px;justify-content:flex-end;margin-top:26px}
-.pm-home .stat{display:block;padding:20px 18px;border-radius:14px;min-width:148px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.13);backdrop-filter:blur(4px)}
-.pm-home .stat .big{display:block;font-family:var(--font-display);font-size:38px;font-weight:700;line-height:1;color:#fff}
-.pm-home .stat .lbl{display:block;font-size:12.5px;line-height:1.3;margin-top:8px;color:#cec7db;max-width:none}
+/*
+  ⚠ THREE FIXED TRACKS, NOT A WRAPPING FLEX ROW (E108, and the E105 residual).
+
+  This was `flex-wrap` with `min-width:148px` on the tile and `max-width:none`
+  on the label, which meant THE LONGEST LABEL SET ITS TILE'S WIDTH: "Tax Savings
+  Used to Fund Deployment" is 35 characters on one line and blew far past 148px.
+  `.stats` lives in `.hero-row`'s HALF-WIDTH right column, so three over-wide
+  tiles could not fit and the third wrapped to a second row — the 2 + 1 Scott
+  asked twice to be rid of.
+
+  `flex-wrap:nowrap` would only have moved the failure: the row would overflow
+  the hero card instead. The fix is to CONSTRAIN THE TILES, NOT THE ROW. Three
+  `minmax(0,1fr)` tracks each take exactly a third of whatever the column is,
+  `min-width:0` lets a track go narrower than its content, and the label wraps
+  INSIDE its tile — which was always the honest answer.
+
+  That also retires E105's residual band (~920-1075px, where the third label
+  wrapped and pushed its tile taller). With fixed tracks, label length can no
+  longer change any tile's width, so wrapping stops being a failure mode and
+  becomes ordinary text flow. The grid's default `align-items:stretch` keeps all
+  three the same height however many lines each one takes.
+*/
+.pm-home .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:26px}
+.pm-home .stat{display:flex;flex-direction:column;min-width:0;padding:18px 16px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.13);backdrop-filter:blur(4px)}
+/*
+  ⚠ THE TYPE SCALES WITH THE TRACK, AND IT HAS TO — MEASURED, NOT ASSUMED.
+
+  34px is the ceiling, reached at ~1215px and above. Below that the tracks get
+  genuinely small: the hero-row is two columns down to 900px, so between 901 and
+  ~1130 a third of the right column is only 110-143px. At a flat 34px "$6M+"
+  rendered 93px into a 78px content box and its "+" was clipped by the tile
+  border; at a flat 12.5px the labels broke mid-word ("Assessment / s").
+
+  So both clamp. The upper bounds are the approved values and are what render at
+  1280 and 1920; the lower bounds were chosen by measuring the widest number and
+  the longest single word against the narrowest track the layout produces.
+*/
+.pm-home .stat .big{display:block;font-family:var(--font-display);font-size:clamp(24px,2.8vw,34px);font-weight:700;line-height:1;color:#fff}
+.pm-home .stat .lbl{display:block;font-size:clamp(11px,1.15vw,12.5px);line-height:1.3;margin-top:8px;color:#cec7db;max-width:none;overflow-wrap:break-word}
 .pm-home /* DASHBOARD SHOT */
   .dash-shot{position:relative;z-index:2;margin:0 auto;max-width:1120px;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 40px 80px -30px rgba(23,30,62,.28);overflow:hidden}
 .pm-home .win-bar{height:44px;background:#f4f6f8;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 16px;gap:8px}
@@ -485,7 +520,6 @@
 .pm-home .hero-stage{padding:6px 10px 0}
 .pm-home .hero-card{padding:44px 0 48px;border-radius:20px}
 .pm-home .hero-card .wrap{padding:0 20px}
-.pm-home .stats{justify-content:flex-start}
   }
 .pm-home /* ===== EXTEND YOUR ERP — example packages (WS-3, 2026-08-13) ===== */
   /*
