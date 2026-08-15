@@ -5,6 +5,7 @@ import { DashboardShot } from "@/components/marketing-home/DashboardShot";
 import { LogoRibbon } from "@/components/marketing-home/LogoRibbon";
 import { MethodologyRing } from "@/components/marketing-home/MethodologyRing";
 import { ErpPackages } from "@/components/marketing-home/ErpPackages";
+import { ErpIntegration } from "@/components/marketing-home/ErpIntegration";
 import { CapabilityFramework } from "@/components/marketing-home/CapabilityFramework";
 import { TalentTeaser } from "@/components/marketing-home/TalentTeaser";
 import { Testimonials } from "@/components/marketing-home/Testimonials";
@@ -45,11 +46,18 @@ import "@/components/marketing-home/home.css";
  * design. Brief #2 requires the public header on a logged-out page — this is
  * that header, and nothing else.
  *
- * ── STATIC ───────────────────────────────────────────────────────────────────
+ * ── STATIC, WHICH IS NOT THE SAME AS SERVER-ONLY ─────────────────────────────
  *
- * Every section is a server component: no state, no islands, not even a tab
- * switcher. `/` prerendering is a build gate, so nothing here may become
- * interactive without re-checking it.
+ * This once said every section was a server component. That stopped being true
+ * with the capability explorer and the two lightbox sections, and the corrected
+ * rule is the one that actually matters: **`/` must still prerender as ○**, and
+ * the build output is the gate.
+ *
+ * A Client Component does not make a route dynamic — only reading request-time
+ * data does (cookies, headers, searchParams, an uncached fetch). The
+ * interactive sections here are client islands with local state and no data
+ * access, so `/` is still prerendered whole. Anything added must keep it that
+ * way; check the build's route table, do not assume.
  */
 export const metadata: Metadata = {
   title: "Optimize Your Business with AI — Panameer",
@@ -114,6 +122,20 @@ export default function Home() {
           them follow.
         */}
         <ErpPackages />
+        {/*
+          THE ORDER IS THE ARGUMENT (brief_home_erp_integration WS-2). The
+          agents section above says WHAT plugs into your ERP; this says HOW it
+          connects; the talent section below says who builds it. Integration
+          before talent, because "we move the native data both ways" is what
+          makes the people worth hiring — the reverse order reads as a staffing
+          pitch with an integration footnote.
+
+          ⚠ `erpx-band` IS THE CHROME, AND IT IS PASSED IN ON PURPOSE. The
+          component owns no background or padding of its own so it can be
+          dropped onto the Enterprise page — its second home, per Scott
+          2026-08-15 — without arriving wearing this page's spacing.
+        */}
+        <ErpIntegration className="erpx-band" />
         <TalentTeaser />
         <Testimonials />
         <HomeFooter />
