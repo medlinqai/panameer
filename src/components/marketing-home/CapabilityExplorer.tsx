@@ -85,71 +85,104 @@ export function CapabilityExplorer() {
       </div>
 
       {/*
-        `aria-live="polite"` and not `assertive`: the swap is a response to the
-        visitor's own click, so it should be announced at the next pause rather
-        than interrupt whatever is being read.
-      */}
-      <div className="mat-card" aria-live="polite">
-        <div className="mat-head">
-          <div>
-            {/*
-              E106 — THE COLON IS LOAD-BEARING. The eyebrow sits directly above
-              the selected domain's name and reads into it: "CAPABILITY DOMAIN
-              SCORECARD FOR: Invoice Processing & Matching". Without it the line
-              is a label; with it, it is a sentence that names the thing beneath.
+        ⚠ A WRAPPER, BECAUSE THE CARD USED TO BE THE GRID CHILD ITSELF.
 
-              This is the card-side half of E104's fix on the list side. "AI
-              MATURITY ASSESSMENT" claimed the card was the whole assessment when
-              it is one domain out of ten.
+        `.fw-body` is `1fr 1fr`; the left column has always been a div holding a
+        heading, a sub-line and the list, and the right column was the bare
+        card. It needed a sibling to sit under, so it got one. Checked first
+        that nothing selected the card positionally — `.mat-card` has exactly
+        one rule and it is a plain class selector, and `.fw-body h3` is a
+        DESCENDANT selector, so the heading below still matches inside here.
+      */}
+      <div>
+        {/*
+          THE SAME `.fw-body h3` AS THE LEFT COLUMN, deliberately — same element,
+          same class, no new heading style and no hand-tuned size. Two column
+          headings that merely look alike drift the first time one is touched.
+
+          It has no `.fw-sub` after it, so `h3:has(+ .fw-sub)` does not apply and
+          it keeps the standard 22px. That is right: the left heading explains
+          its list and needs the tighter gap to its sub-line; this one sits
+          straight on the card.
+        */}
+        <h3>Capability Domain Scorecard</h3>
+
+        {/*
+          `aria-live="polite"` and not `assertive`: the swap is a response to the
+          visitor's own click, so it should be announced at the next pause rather
+          than interrupt whatever is being read.
+        */}
+        <div className="mat-card" aria-live="polite">
+          <div className="mat-head">
+            <div>
+              {/*
+              ⚠ E106 IS REVERSED HERE, KNOWINGLY (E117). It shipped the same day.
+
+              E106 made this "CAPABILITY DOMAIN SCORECARD FOR:" and argued the
+              trailing colon was load-bearing, because the eyebrow read as a
+              sentence into the domain name beneath it. That argument was sound
+              and it is SUPERSEDED rather than wrong: the word "Scorecard" has
+              moved up to the column heading above the card, so the eyebrow no
+              longer has to carry the whole sentence — it just labels the name
+              under it.
+
+              What forced it is mobile. At 11px with .14em tracking, 31
+              characters of caps do not fit a card that is half a column wide,
+              and it wrapped. Shortening beat shrinking the type.
+
+              The point E106 and E104 were both making still holds: this card is
+              ONE domain out of ten, not the whole assessment. The heading above
+              now says so, which is a better place for it than an eyebrow.
             */}
-            <div className="ey">CAPABILITY DOMAIN SCORECARD FOR:</div>
-            {/* The card belongs to the DOMAIN now; the process score moved out. */}
-            <h4>{domain.name}</h4>
-            <div className="mat-proc">
-              Procure-to-Pay &middot; {P2P_OVERALL_SCORE} / 100 overall
+              <div className="ey">CAPABILITY DOMAIN</div>
+              {/* The card belongs to the DOMAIN now; the process score moved out. */}
+              <h4>{domain.name}</h4>
+              <div className="mat-proc">
+                Procure-to-Pay &middot; {P2P_OVERALL_SCORE} / 100 overall
+              </div>
             </div>
-          </div>
-          {/*
+            {/*
             E083 — "Sample", and no status dot. It said "● Live" over invented
             numbers. A green dot beside the word "Sample" would still read as a
             live-system indicator, so the dot is gone rather than recoloured.
           */}
-          <div className="live sample">Sample</div>
-        </div>
-
-        <div className="mat-kpis">
-          {domain.kpis.map((kpi) => (
-            <div className="mk" key={kpi.label}>
-              <div className="v">{kpi.value}</div>
-              <div className="l">{kpi.label}</div>
-              <div className={"t " + kpi.dir}>{kpi.delta}</div>
-            </div>
-          ))}
-        </div>
-
-        <div className="mat-sugg">
-          <div className="lead">Suggested optimization</div>
-          <p>{domain.suggestion}</p>
-        </div>
-
-        <div className="score">
-          <div className="score-top">
-            <span className="s">AI Maturity Score</span>
-            <span className="n">
-              <b>{domain.score}</b> / 100
-            </span>
+            <div className="live sample">Sample</div>
           </div>
-          <div className="track">
-            {/* Width from the score, not a hardcoded 72%. */}
-            <div className="fill" style={{ width: `${domain.score}%` }} />
-          </div>
-          <div className="scale">
-            {LADDER.map((step) => (
-              <span key={step} className={step === band ? "cur" : undefined}>
-                {step}
-                {step === band ? " ▲" : ""}
-              </span>
+
+          <div className="mat-kpis">
+            {domain.kpis.map((kpi) => (
+              <div className="mk" key={kpi.label}>
+                <div className="v">{kpi.value}</div>
+                <div className="l">{kpi.label}</div>
+                <div className={"t " + kpi.dir}>{kpi.delta}</div>
+              </div>
             ))}
+          </div>
+
+          <div className="mat-sugg">
+            <div className="lead">Suggested optimization</div>
+            <p>{domain.suggestion}</p>
+          </div>
+
+          <div className="score">
+            <div className="score-top">
+              <span className="s">AI Maturity Score</span>
+              <span className="n">
+                <b>{domain.score}</b> / 100
+              </span>
+            </div>
+            <div className="track">
+              {/* Width from the score, not a hardcoded 72%. */}
+              <div className="fill" style={{ width: `${domain.score}%` }} />
+            </div>
+            <div className="scale">
+              {LADDER.map((step) => (
+                <span key={step} className={step === band ? "cur" : undefined}>
+                  {step}
+                  {step === band ? " ▲" : ""}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
       </div>
