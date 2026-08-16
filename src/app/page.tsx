@@ -10,6 +10,15 @@ import { CapabilityFramework } from "@/components/marketing-home/CapabilityFrame
 import { TalentTeaser } from "@/components/marketing-home/TalentTeaser";
 import { Testimonials } from "@/components/marketing-home/Testimonials";
 import { HomeFooter } from "@/components/marketing-home/HomeFooter";
+import { HowItWorks } from "@/components/marketing-home/HowItWorks";
+import { StepDetail } from "@/components/marketing-home/StepDetail";
+import { QuestionShot } from "@/components/marketing-home/steps/QuestionShot";
+import { LadderShot } from "@/components/marketing-home/steps/LadderShot";
+import { HandoffShot } from "@/components/marketing-home/steps/HandoffShot";
+import { ReviewShot } from "@/components/marketing-home/steps/ReviewShot";
+import { ConsultShot } from "@/components/marketing-home/steps/ConsultShot";
+import { GetTheTalent } from "@/components/marketing-home/GetTheTalent";
+import { ProjectTracker } from "@/components/marketing-home/ProjectTracker";
 import "@/components/marketing-home/home.css";
 
 /**
@@ -92,6 +101,114 @@ export default function Home() {
       <div className="pm-home">
         <HomeHero />
         <DashboardShot />
+
+        {/*
+          ── THE ASSESSMENT SPINE (brief_home_assessment_spine, 2026-08-16) ────
+
+          Home stops being a marketplace brochure. It pitches the
+          process-specific assessment, explains it in five cards, expands each
+          card into its own section with a graphic, then hands the visitor the
+          talent and the tracker.
+
+          ⚠ ADDITIVE AND REORDER ONLY. Every section that used to sit here is
+          still on the page, in its original relative order, below the tracker.
+          Several of them cost multiple briefs to build — the capability
+          explorer, the two lightbox sections, the flow diagrams — and retiring
+          or relocating any of them is a separate owner decision, not a
+          consequence of this one. Nothing was deleted.
+        */}
+        <HowItWorks />
+
+        <StepDetail
+          n={1}
+          title="Take the assessment"
+          lead={
+            <>
+              Pick the process you care about and answer for it &mdash; one question a
+              screen, no forms, no preparation. Most people are done in about eight
+              minutes, and you can stop and send the rest to whoever owns it.
+            </>
+          }
+        >
+          <QuestionShot />
+        </StepDetail>
+
+        <StepDetail
+          n={2}
+          shade
+          title="AI scores every domain"
+          lead={
+            <>
+              Every capability domain inside that process is placed on the same
+              maturity ladder, so the gaps are comparable to each other and not
+              just to a benchmark. <strong>Nothing is guessed</strong>{" "}
+              &mdash; a domain
+              you skip is excluded from the score rather than counted as the worst
+              rung.
+            </>
+          }
+        >
+          <LadderShot />
+        </StepDetail>
+
+        <StepDetail
+          n={3}
+          title="We build your dashboard"
+          lead={
+            <>
+              The scores become an analytics dashboard sized in your own dollars:
+              what the opportunity is worth, what it costs, and how much of it the
+              tax code can fund. Then we send you the link.
+            </>
+          }
+        >
+          <HandoffShot />
+        </StepDetail>
+
+        <StepDetail
+          n={4}
+          shade
+          wide
+          title="You log in and review"
+          lead={
+            <>
+              <strong>The link signs you in</strong>{" "}
+              &mdash; no password to set, nothing
+              to install. Your scores and your opportunities, ranked by the dollars
+              running through each area rather than by how far behind it is. It is
+              yours to keep and yours to forward.
+            </>
+          }
+        >
+          <ReviewShot />
+        </StepDetail>
+
+        <StepDetail
+          n={5}
+          title="Free consultation — optional"
+          lead={
+            <>
+              A coordinator who has already read your scorecard walks you through how
+              to deploy each opportunity and what the net effect on the business
+              would be.{" "}
+              <strong>
+                It is not a pitch, it is not a discovery call, and it is not a
+                prerequisite for anything
+              </strong>{" "}
+              &mdash; the dashboard is yours whether you book it or not.
+            </>
+          }
+        >
+          <ConsultShot />
+        </StepDetail>
+
+        <GetTheTalent />
+        <ProjectTracker />
+
+        {/*
+          ── EVERYTHING BELOW THIS LINE IS THE PRE-SPINE PAGE, UNCHANGED ──────
+          Displaced, not deleted. Relative order preserved exactly.
+        */}
         {/*
           THE FRAMEWORK STILL FOLLOWS THE PRODUCT-SHOT, with only the client
           ribbon between them now (WS-2). The shot IS an AI Maturity Dashboard
@@ -104,6 +221,11 @@ export default function Home() {
           the framework is the process — capability domains and the four
           P2P/O2C/R2R/H2R lenses, no client. Different objects, adjacent on
           purpose. Reorder only; neither section is restyled or reworded.
+
+          ⚠ THE SPINE NOW SITS BETWEEN THEM. The adjacency above was a 2026-08-14
+          decision and it is superseded rather than forgotten: the product shot
+          is still the first proof, but what follows it is now the explanation of
+          how you get one, which is a stronger read than the framework was.
         */}
         {/*
           WS-2 — THE RIBBON SITS RIGHT UNDER THE PRODUCT SHOT. It was below the

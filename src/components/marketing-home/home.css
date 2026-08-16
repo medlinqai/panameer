@@ -1045,3 +1045,270 @@
   .pm-home .erpx-tagline{font-size:18px}
   .pm-home .erpx-crow{grid-template-columns:1fr;gap:2px}
 }
+
+/* =========================================================================
+   THE ASSESSMENT SPINE — HowItWorks, StepDetail x5, GetTheTalent, ProjectTracker
+   (brief_home_assessment_spine, 2026-08-16)
+
+   ⚠ AUTHORED HERE, NOT PORTED. Everything above this line came from
+   panameer_home_final_mockup.html and the file header's "change the mockup,
+   re-run the port" rule applies to it. This block has no mockup behind it —
+   the brief specifies copy and behaviour, not pixels — so it is edited here
+   directly, the same way .erpx-* above it was.
+
+   ⚠ EVERY CLASS IS PREFIXED — hiw- / sd- / qs- / lad- / hos- / rvs- / cos- /
+   gtt- / ptr-. The generic names this design wants (.card, .step, .row, .tile,
+   .slot, .track) ALL already exist in this file under other sections, and
+   porting them unprefixed would silently restyle the product shot, the ERP
+   cards and the flow diagrams. The one exception is `.wrap`, `.eyebrow` and
+   `.btn`, which are deliberately shared page furniture.
+
+   BACKGROUNDS FOLLOW E115's RHYTHM RULE: shaded sections use var(--paper-2),
+   the same value as .fw and .erp, so shaded sections match exactly rather than
+   nearly. No sixth background value is introduced.
+   ------------------------------------------------------------------------- */
+
+/* ---- HowItWorks --------------------------------------------------------- */
+.pm-home .hiw{background:#fff;padding:74px 0 80px;border-top:1px solid var(--line)}
+/*
+  ONE ROW OF FIVE, WITH THE CHEVRONS IN THE FLOW.
+  `auto` columns for the chevrons rather than a gap pseudo-element: a chevron
+  drawn with ::after on the card would be inside the anchor's box and would
+  grow its hit area past its own border.
+*/
+.pm-home .hiw-grid{list-style:none;margin:34px 0 0;padding:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0}
+.pm-home .hiw-cell{display:flex;align-items:stretch;min-width:0}
+.pm-home .hiw-chev{flex:0 0 auto;align-self:center;padding:0 7px;color:var(--mag);opacity:.72;font-size:19px;line-height:1}
+.pm-home .hiw-card{position:relative;display:flex;flex-direction:column;flex:1;min-width:0;background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px 20px 24px;transition:border-color .18s,transform .18s,box-shadow .18s}
+.pm-home .hiw-card:hover{border-color:var(--mag);transform:translateY(-2px);box-shadow:0 18px 40px -32px rgba(23,30,62,.4)}
+.pm-home .hiw-card:focus-visible{outline:2px solid var(--mag);outline-offset:3px}
+/* THE NUMERAL LANDS FIRST. Large, magenta, and the top-most thing in the card. */
+.pm-home .hiw-n{font-family:var(--font-display),sans-serif;font-size:40px;font-weight:700;line-height:1;color:var(--mag);letter-spacing:-1px;margin-bottom:12px}
+.pm-home .hiw-l{font-family:var(--font-display),sans-serif;font-size:13px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--ink);line-height:1.3;margin-bottom:8px}
+.pm-home .hiw-s{font-size:14px;line-height:1.55;color:var(--muted)}
+/*
+  ⚠ CARD 5 MUST READ AS OPTIONAL BEFORE IT IS READ.
+  Dashed border, no fill, muted numeral. This is the most persuasive element on
+  the page — it is what removes the fear of a sales call — so it has to be
+  legible as a CHOICE at a glance rather than as a fifth thing you must do.
+*/
+.pm-home .hiw-card.is-opt{background:transparent;border-style:dashed;border-color:#cfd5e2}
+.pm-home .hiw-card.is-opt:hover{border-color:var(--mag);background:transparent}
+.pm-home .hiw-card.is-opt .hiw-n{color:#b3bacb}
+.pm-home .hiw-card.is-opt .hiw-l{color:var(--text)}
+.pm-home .hiw-tag{position:absolute;top:-9px;left:20px;background:#fff;border:1px solid #cfd5e2;border-radius:999px;padding:2px 10px;font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+
+/* ---- StepDetail --------------------------------------------------------- */
+/* scroll-margin keeps the anchored heading clear of the sticky header (76px). */
+.pm-home .sd{background:#fff;padding:72px 0 76px;border-top:1px solid var(--line);scroll-margin-top:96px}
+.pm-home .sd-shade{background:var(--paper-2)}
+.pm-home .sd-head{display:flex;align-items:flex-start;gap:20px;max-width:900px}
+.pm-home .sd-n{font-family:var(--font-display),sans-serif;font-size:64px;font-weight:700;line-height:.9;color:var(--mag);letter-spacing:-2px;flex:0 0 auto}
+.pm-home .sd-headtext{min-width:0}
+.pm-home .sd h2{font-size:34px;color:var(--ink);font-weight:700;letter-spacing:-.5px;line-height:1.14;margin:0 0 12px}
+.pm-home .sd-lead{color:var(--muted);font-size:16.5px;line-height:1.62;max-width:720px}
+.pm-home .sd-lead strong{color:var(--text);font-weight:600}
+.pm-home .sd-art{margin-top:34px}
+/* Step 4 gets the most room: the graphic leaves the prose measure. */
+.pm-home .sd-wide .sd-art{max-width:none}
+/*
+  SCREEN-READER-ONLY, and it exists because the big numeral is aria-hidden.
+  Same technique as Tailwind's sr-only, written out because this stylesheet
+  cannot reach a utility class.
+*/
+.pm-home .sr-step{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* ---- step 1 · the question ---------------------------------------------- */
+.pm-home .qs{background:#fff;border:1px solid var(--line);border-radius:18px;padding:30px 32px 34px;max-width:760px;box-shadow:0 24px 60px -44px rgba(23,30,62,.5)}
+.pm-home .qs-bar{display:flex;align-items:center;gap:14px;margin-bottom:26px}
+.pm-home .qs-count{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mag);flex:0 0 auto}
+.pm-home .qs-track{flex:1;height:4px;border-radius:999px;background:var(--line);overflow:hidden}
+.pm-home .qs-fill{display:block;height:100%;background:var(--mag);border-radius:999px}
+.pm-home .qs-eyebrow{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.pm-home .qs-title{font-family:var(--font-display),sans-serif;font-size:23px;font-weight:700;color:var(--ink);letter-spacing:-.3px}
+.pm-home .qs-q{color:var(--text);font-size:16px;line-height:1.55;margin:10px 0 22px}
+.pm-home .qs-opts{display:flex;flex-direction:column;gap:10px}
+.pm-home .qs-opt{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:#fff}
+.pm-home .qs-opt.is-on{border-color:var(--mag);background:var(--mag-soft)}
+.pm-home .qs-dot{flex:0 0 auto;width:17px;height:17px;border-radius:50%;border:1.5px solid #cfd5e2;background:#fff}
+.pm-home .qs-opt.is-on .qs-dot{border-color:var(--mag);border-width:5px}
+.pm-home .qs-opt-t{font-size:14.5px;color:var(--text);font-weight:600;line-height:1.4}
+.pm-home .qs-opt.is-on .qs-opt-t{color:var(--ink)}
+
+/* ---- step 2 · the ladder ------------------------------------------------ */
+.pm-home .lad{background:#fff;border:1px solid var(--line);border-radius:18px;padding:26px 28px 22px;max-width:900px;box-shadow:0 24px 60px -44px rgba(23,30,62,.5)}
+/* Four rung columns + the score. The count follows MATURITY_RUNGS. */
+.pm-home .lad-grid{display:block}
+.pm-home .lad-corner,.pm-home .lad-head{font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.pm-home .lad-corner,.pm-home .lad-row,.pm-home .lad-grid>.lad-head{display:none}
+/* The header and each row share one grid template so columns line up. */
+.pm-home .lad-grid{display:grid;grid-template-columns:minmax(0,1.5fr) repeat(4,minmax(0,1fr)) 46px;gap:0 6px;align-items:center}
+.pm-home .lad-grid>.lad-corner,.pm-home .lad-grid>.lad-head{display:block;padding-bottom:12px}
+.pm-home .lad-head{text-align:center}
+.pm-home .lad-row{display:grid;grid-column:1 / -1;grid-template-columns:subgrid;align-items:center;padding:7px 0;border-top:1px solid var(--line)}
+.pm-home .lad-name{font-size:13px;color:var(--text);font-weight:600;line-height:1.3;padding-right:10px}
+.pm-home .lad-cell{position:relative;height:22px;display:flex;align-items:center;justify-content:center}
+.pm-home .lad-rail{position:absolute;left:0;right:0;height:2px;background:var(--line)}
+.pm-home .lad-dot{position:relative;width:9px;height:9px;border-radius:50%;background:#dfe4ee}
+.pm-home .lad-dot.is-on{width:15px;height:15px;background:var(--mag);box-shadow:0 0 0 4px rgba(215,44,214,.14)}
+.pm-home .lad-score{text-align:right;font-size:13px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+.pm-home .lad-foot{margin-top:16px;font-size:13.5px;line-height:1.55;color:var(--muted)}
+
+/* ---- step 3 · the handoff ----------------------------------------------- */
+.pm-home .hos{position:relative;max-width:820px;padding:0 0 40px 0}
+.pm-home .hos-back{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 24px 60px -46px rgba(23,30,62,.5);max-width:660px;margin-left:auto}
+.pm-home .hos-win{height:26px;background:#f6f8fa;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:5px;padding:0 11px}
+.pm-home .hos-dot{width:8px;height:8px;border-radius:50%;background:#dfe4ee}
+.pm-home .hos-dot.r{background:#ff5f57}.pm-home .hos-dot.y{background:#febc2e}.pm-home .hos-dot.g{background:#28c840}
+.pm-home .hos-body{padding:18px}
+.pm-home .hos-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.pm-home .hos-tile{border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:3px}
+.pm-home .hos-tl{font-size:9.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.pm-home .hos-tv{font-family:var(--font-display),sans-serif;font-size:17px;font-weight:700;color:var(--ink)}
+.pm-home .hos-rows{display:flex;flex-direction:column;gap:9px;margin-top:16px}
+.pm-home .hos-row{height:9px;border-radius:999px;background:var(--line)}
+.pm-home .hos-row.w1{width:82%}.pm-home .hos-row.w2{width:64%}.pm-home .hos-row.w3{width:73%}
+/* The email overlaps the dashboard: the report is already built behind it. */
+.pm-home .hos-mail{position:relative;margin-top:-64px;max-width:430px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px 22px 22px;box-shadow:0 30px 70px -40px rgba(23,30,62,.55)}
+.pm-home .hos-mhead{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.pm-home .hos-avatar{width:32px;height:32px;border-radius:50%;background:var(--mag);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-display),sans-serif;font-weight:700;font-size:14px;flex:0 0 auto}
+.pm-home .hos-mfrom{display:flex;flex-direction:column;line-height:1.3;min-width:0}
+.pm-home .hos-mfrom b{font-size:13.5px;color:var(--ink)}
+.pm-home .hos-mfrom span{font-size:11.5px;color:var(--muted)}
+.pm-home .hos-subj{font-family:var(--font-display),sans-serif;font-size:16px;font-weight:700;color:var(--ink);letter-spacing:-.2px;margin-bottom:8px}
+.pm-home .hos-mbody{font-size:13.5px;line-height:1.55;color:var(--text);margin-bottom:12px}
+.pm-home .hos-link{display:block;font-size:13px;color:var(--mag);font-weight:600;word-break:break-all;background:var(--mag-soft);border-radius:8px;padding:9px 11px}
+.pm-home .hos-note{font-size:12px;color:var(--muted);margin-top:10px}
+
+/* ---- step 4 · the logged-in report -------------------------------------- */
+.pm-home .rvs{background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 30px 70px -46px rgba(23,30,62,.55)}
+.pm-home .rvs-win{height:32px;background:#f6f8fa;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:6px;padding:0 14px}
+.pm-home .rvs-dot{width:9px;height:9px;border-radius:50%}
+.pm-home .rvs-dot.r{background:#ff5f57}.pm-home .rvs-dot.y{background:#febc2e}.pm-home .rvs-dot.g{background:#28c840}
+.pm-home .rvs-url{margin-left:14px;font-size:11px;color:var(--muted)}
+.pm-home .rvs-body{padding:26px 30px 30px}
+.pm-home .rvs-eyebrow{font-size:11.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--mag)}
+.pm-home .rvs-h1{font-family:var(--font-display),sans-serif;font-size:30px;font-weight:700;color:var(--ink);letter-spacing:-.6px;margin:8px 0 20px}
+.pm-home .rvs-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.pm-home .rvs-tile{border:1px solid var(--line);border-radius:12px;padding:14px 16px 16px;display:flex;flex-direction:column;gap:6px}
+.pm-home .rvs-tile.is-accent{background:var(--mag-soft);border-color:#f0cdef}
+.pm-home .rvs-tl{font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.pm-home .rvs-tv{font-family:var(--font-display),sans-serif;font-size:24px;font-weight:700;color:var(--ink);letter-spacing:-.5px}
+.pm-home .rvs-cols{display:grid;grid-template-columns:minmax(0,1.75fr) minmax(0,1fr);gap:22px;margin-top:26px;align-items:start}
+.pm-home .rvs-h2{font-family:var(--font-display),sans-serif;font-size:19px;font-weight:700;color:var(--ink);letter-spacing:-.3px}
+.pm-home .rvs-sub{font-size:13px;color:var(--muted);margin:5px 0 14px;line-height:1.5}
+.pm-home .rvs-move{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:9px}
+.pm-home .rvs-rank{flex:0 0 auto;width:23px;height:23px;border-radius:50%;background:var(--mag-soft);color:var(--mag);font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center}
+.pm-home .rvs-mtext{display:flex;flex-direction:column;min-width:0;flex:1}
+.pm-home .rvs-mt{font-size:14px;font-weight:700;color:var(--ink);line-height:1.35}
+.pm-home .rvs-md{font-size:11.5px;color:var(--muted);margin-top:2px}
+.pm-home .rvs-mv{flex:0 0 auto;font-size:13.5px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+.pm-home .rvs-prog{border:1px solid var(--line);border-radius:12px;padding:18px;text-align:center}
+.pm-home .rvs-h3{font-family:var(--font-display),sans-serif;font-size:14.5px;font-weight:700;color:var(--ink)}
+.pm-home .rvs-donut{width:112px;height:112px;margin:12px auto 0;display:block}
+.pm-home .rvs-pct{font-family:var(--font-display),sans-serif;font-size:26px;font-weight:700;color:var(--ink);margin-top:-70px}
+.pm-home .rvs-pnote{font-size:11.5px;color:var(--muted);margin-top:44px}
+
+/* ---- step 5 · the consultation ------------------------------------------ */
+.pm-home .cos{background:#fff;border:1px solid var(--line);border-radius:18px;padding:24px 26px 26px;max-width:560px;box-shadow:0 24px 60px -44px rgba(23,30,62,.5)}
+.pm-home .cos-who{display:flex;align-items:center;gap:13px}
+.pm-home .cos-av{width:46px;height:46px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-display),sans-serif;font-weight:700;font-size:16px;flex:0 0 auto;letter-spacing:.5px}
+.pm-home .cos-wt{display:flex;flex-direction:column;line-height:1.35;flex:1;min-width:0}
+.pm-home .cos-wt b{font-family:var(--font-display),sans-serif;font-size:16.5px;color:var(--ink)}
+.pm-home .cos-wt span{font-size:13px;color:var(--muted)}
+.pm-home .cos-badge{flex:0 0 auto;border:1px solid var(--line);border-radius:999px;padding:4px 12px;font-size:11.5px;font-weight:700;color:var(--muted)}
+.pm-home .cos-has{display:flex;gap:10px;align-items:flex-start;margin-top:18px;background:var(--mag-soft);border-radius:12px;padding:13px 15px;font-size:13.5px;line-height:1.5;color:var(--text)}
+.pm-home .cos-check{color:var(--mag);font-weight:700;flex:0 0 auto}
+.pm-home .cos-slots{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px}
+.pm-home .cos-slot{display:flex;flex-direction:column;align-items:center;gap:2px;border:1px solid var(--line);border-radius:12px;padding:11px 8px}
+.pm-home .cos-slot.is-taken{opacity:.45}
+.pm-home .cos-day{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.pm-home .cos-date{font-family:var(--font-display),sans-serif;font-size:21px;font-weight:700;color:var(--ink);line-height:1.1}
+.pm-home .cos-time{font-size:12px;color:var(--mag);font-weight:600}
+.pm-home .cos-slot.is-taken .cos-time{color:var(--muted)}
+
+/* ---- GetTheTalent ------------------------------------------------------- */
+.pm-home .gtt{background:#fff;padding:74px 0 80px;border-top:1px solid var(--line)}
+.pm-home .gtt-h2{font-size:38px;color:var(--ink);font-weight:700;letter-spacing:-.5px;line-height:1.14;margin:12px 0 16px;max-width:900px}
+.pm-home .gtt-lead{color:var(--muted);font-size:17px;line-height:1.6;max-width:760px}
+.pm-home .gtt-needs{list-style:none;margin:22px 0 0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.pm-home .gtt-need{display:flex;flex-direction:column;gap:7px;border-left:2px solid var(--mag);padding-left:15px}
+.pm-home .gtt-what{font-family:var(--font-display),sans-serif;font-size:18px;font-weight:700;color:var(--ink);letter-spacing:-.2px}
+.pm-home .gtt-when{font-size:14px;line-height:1.55;color:var(--muted)}
+.pm-home .gtt-quote{margin:34px 0 0;border-left:3px solid var(--line);padding:2px 0 2px 20px;max-width:760px}
+.pm-home .gtt-quote p{font-size:18.5px;line-height:1.55;color:var(--text);font-weight:600}
+.pm-home .gtt-quote p+p{margin-top:12px;color:var(--muted);font-weight:500}
+.pm-home .gtt-wink{font-size:17px}
+.pm-home .gtt-cta{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:30px}
+.pm-home .gtt-cta .btn-solid{padding:14px 30px;font-size:16px}
+.pm-home .gtt-cta .btn-ghost{padding:12.5px 26px;font-size:16px}
+/* QUIET, AND AT THE FOOT. One link, not a section — see the component. */
+.pm-home .gtt-supply{margin-top:26px;font-size:14px}
+.pm-home .gtt-supply a{color:var(--muted);text-decoration:underline;text-underline-offset:3px}
+.pm-home .gtt-supply a:hover{color:var(--mag)}
+
+/* ---- ProjectTracker ----------------------------------------------------- */
+.pm-home .ptr{background:var(--paper-2);padding:74px 0 80px;border-top:1px solid var(--line)}
+.pm-home .ptr-h2{font-size:38px;color:var(--ink);font-weight:700;letter-spacing:-.5px;line-height:1.14;margin:12px 0 16px;max-width:900px}
+.pm-home .ptr-lead{color:var(--muted);font-size:17px;line-height:1.6;max-width:820px}
+.pm-home .ptr-shot{margin-top:32px;background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 30px 70px -46px rgba(23,30,62,.55)}
+.pm-home .ptr-win{height:30px;background:#f6f8fa;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:6px;padding:0 13px}
+.pm-home .ptr-dot{width:9px;height:9px;border-radius:50%}
+.pm-home .ptr-dot.r{background:#ff5f57}.pm-home .ptr-dot.y{background:#febc2e}.pm-home .ptr-dot.g{background:#28c840}
+.pm-home .ptr-body{padding:24px 26px 26px}
+.pm-home .ptr-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.pm-home .ptr-stat{border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.pm-home .ptr-sl{font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.pm-home .ptr-sv{font-family:var(--font-display),sans-serif;font-size:24px;font-weight:700;color:var(--ink);letter-spacing:-.5px}
+.pm-home .ptr-arrow{color:var(--mag)}
+.pm-home .ptr-sn{font-size:12px;color:var(--muted)}
+.pm-home .ptr-rows{margin-top:20px;display:flex;flex-direction:column;gap:11px}
+.pm-home .ptr-row{display:grid;grid-template-columns:10px minmax(0,1.4fr) minmax(0,1fr);align-items:center;gap:13px}
+.pm-home .ptr-chip{width:10px;height:10px;border-radius:50%;background:#dfe4ee}
+.pm-home .ptr-chip.is-done{background:var(--green)}
+.pm-home .ptr-chip.is-run{background:var(--mag)}
+.pm-home .ptr-name{display:flex;flex-direction:column;min-width:0}
+.pm-home .ptr-nt{font-size:14px;font-weight:600;color:var(--ink);line-height:1.35}
+.pm-home .ptr-nw{font-size:11.5px;color:var(--muted);margin-top:2px}
+.pm-home .ptr-track{height:6px;border-radius:999px;background:var(--line);overflow:hidden}
+.pm-home .ptr-fill{display:block;height:100%;border-radius:999px;background:#dfe4ee}
+.pm-home .ptr-fill.is-done{background:var(--green)}
+.pm-home .ptr-fill.is-run{background:var(--mag)}
+.pm-home .ptr-cta{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-top:30px}
+.pm-home .ptr-cta .btn-solid{padding:15px 32px;font-size:16.5px}
+.pm-home .ptr-ctan{font-size:14px;color:var(--muted)}
+
+/* ---- responsive --------------------------------------------------------- */
+@media(max-width:1080px){
+  /*
+    FIVE CARDS BECOME A GRID AND THE CHEVRONS GO. Below one row the arrows point
+    at whatever wrapped underneath, which is worse than no connector — the
+    ordered list still carries the sequence, and the numerals still read 1-5.
+  */
+  .pm-home .hiw-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+  .pm-home .hiw-chev{display:none}
+  .pm-home .rvs-cols{grid-template-columns:1fr}
+  .pm-home .rvs-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:820px){
+  .pm-home .sd h2{font-size:28px}
+  .pm-home .sd-n{font-size:48px}
+  .pm-home .gtt-h2,.pm-home .ptr-h2{font-size:29px}
+  .pm-home .gtt-needs{grid-template-columns:1fr;gap:14px}
+  .pm-home .ptr-stats{grid-template-columns:1fr}
+  .pm-home .ptr-row{grid-template-columns:10px minmax(0,1fr);gap:10px}
+  .pm-home .ptr-track{grid-column:2}
+  /* The ladder's rung columns cannot survive a phone; it becomes name + score. */
+  .pm-home .lad-grid{grid-template-columns:minmax(0,1fr) 46px}
+  .pm-home .lad-grid>.lad-head{display:none}
+  .pm-home .lad-cell{display:none}
+  .pm-home .hos-mail{margin-top:-40px;max-width:none}
+  .pm-home .hos-back{max-width:none}
+}
+@media(max-width:620px){
+  .pm-home .hiw-grid{grid-template-columns:1fr}
+  .pm-home .rvs-tiles{grid-template-columns:1fr}
+  .pm-home .cos-slots{grid-template-columns:1fr}
+  .pm-home .qs{padding:22px 20px 26px}
+  .pm-home .rvs-body{padding:20px}
+}
