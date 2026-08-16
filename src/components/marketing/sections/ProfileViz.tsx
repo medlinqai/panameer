@@ -22,7 +22,7 @@ import { PROFILE_VIZ_COPY } from "@/lib/brand";
  * place the numbers are, for the same reason the maturity dashboard does.
  *
  * Static markup — the bars are divs with a width, no chart library and no
- * client JS, so /for-providers stays prerendered.
+ * client JS, so /find-work stays prerendered.
  */
 
 /** An example rollup, in the shape the real one produces. */
