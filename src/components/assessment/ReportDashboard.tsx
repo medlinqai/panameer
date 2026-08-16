@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { formatRange, type ReportModel } from "@/lib/assessment/report";
 import { SendToColleagues } from "@/components/assessment/SendToColleagues";
+import { EmailedNotice } from "@/components/assessment/EmailedNotice";
 import { MaturityDashboard } from "@/components/marketing/MaturityDashboard";
 
 /**
@@ -32,11 +33,23 @@ import { MaturityDashboard } from "@/components/marketing/MaturityDashboard";
  * is the point: this is the plan, and the tracker fills it in as work lands
  * (Phase 2). Showing a seeded 12% would be the exact fake-live the rails forbid.
  */
-export function ReportDashboard({ model }: { model: ReportModel }) {
+export function ReportDashboard({
+  model,
+  /**
+   * Set only on the redirect straight off submit, and only when the API
+   * confirmed the send. Absent on every later visit and on a forwarded link —
+   * see `EmailedNotice`.
+   */
+  emailedTo = null,
+}: {
+  model: ReportModel;
+  emailedTo?: string | null;
+}) {
   const net = model.netLow > 0;
 
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
+      {emailedTo && <EmailedNotice to={emailedTo} />}
       <p className="text-[13px] font-extrabold uppercase tracking-[0.08em] text-magenta">
         {model.companyName} · {model.processName}
       </p>

@@ -39,9 +39,23 @@ export const metadata: Metadata = {
 export default async function AssessPage() {
   /*
     THE SAME SOURCE `/admin/industries` READS. Fetched here in the Server
-    Component and passed down, because AssessmentWizard is a Client Component
-    and /assess is public — there is no session to authorise an API call, and
-    the list is public catalog data anyway.
+    Component and passed down because the list is public catalog data and
+    AssessmentWizard is a Client Component.
+
+    ⚠ THIS USED TO SAY "there is no session to authorise an API call". That was
+    wrong, and it was the load-bearing kind of wrong: PUBLIC IS NOT ANONYMOUS. A
+    signed-in buyer can take the assessment, and reading them as a stranger is
+    what had the wizard asking for an email the app already knew.
+
+    The session is now read — but by the WIZARD, on the client, and not here.
+    `revalidate` above keeps this route ○; a server-side session read is a
+    cookie read, which bails the route out of static generation and turns it ƒ.
+    Measured: it takes the build's static count from 22 to 21.
+
+    Nothing security-bearing rides on the client read. It decides only what the
+    visitor is shown; `api/assessment/route.ts` resolves `user_id` and the
+    stored email from its own session, per CLAUDE.md rule 3, and ignores
+    whatever the browser posted. See the long comment in AssessmentWizard.
   */
   const groups = await getSpecializations();
   const industries = (groups.find((g) => g.kind === "INDUSTRY")?.items ?? [])

@@ -3,7 +3,8 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { normalizeEmail } from "@/lib/normalizeEmail";
 import { appBaseUrl } from "@/lib/verification";
-import { sendEmail } from "@/lib/resend";
+import { mailConfigured, sendEmail } from "@/lib/resend";
+import { getSessionViewer } from "@/lib/session";
 import { scoreAssessment } from "@/lib/assessment/scoring";
 import { assessmentReadyTemplate } from "@/lib/email/templates/assessment-ready";
 
@@ -33,6 +34,20 @@ import { assessmentReadyTemplate } from "@/lib/email/templates/assessment-ready"
  * dev the send is a no-op, and a 500 there would make the whole flow
  * untestable locally — but more importantly, in production the answers are the
  * asset. A resend can always be triggered later; a discarded submission cannot.
+ *
+ * ⚠ SWALLOWED IS NOT THE SAME AS SILENT (E031). The catch stays, but the
+ * response now carries `emailSent` so the CLIENT knows what actually happened
+ * instead of assuming, and the two failure modes log differently — see
+ * `mailConfigured()` below. Before this, a missing key produced a visitor told
+ * "check your email in a minute" and a report nobody could reach.
+ *
+ * ── PUBLIC IS NOT THE SAME AS ANONYMOUS ──────────────────────────────────────
+ *
+ * A signed-in buyer can take the assessment, and used to be treated as a
+ * stranger: asked for an email the app already knew and then mailed a magic
+ * link to sign in as themselves. When there IS a session, the assessment is
+ * stamped with `user_id` and the SESSION'S email is what gets stored — see
+ * "THE OWNER IS RESOLVED FROM THE SESSION" in POST.
  */
 
 /**
@@ -85,7 +100,35 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Those answers didn't look right." }, { status: 400 });
   }
   const b = parsed.data;
-  const email = normalizeEmail(b.email);
+
+  /*
+    ── THE OWNER IS RESOLVED FROM THE SESSION, NEVER FROM THE BODY ────────────
+
+    CLAUDE.md rule 3: "API writes are owner-scoped: the target profile/id is
+    resolved from the session, never accepted from client input." So there is
+    deliberately NO `userId` in the Zod schema above — the only way to attach an
+    assessment to an account is to be signed in as that account when you submit.
+
+    ⚠ AND THE SESSION'S EMAIL WINS. `b.email` is whatever the browser posted,
+    and a signed-in visitor who edits the field (or replays the request) must
+    not be able to file an assessment under somebody else's address — that
+    address is what /assess/claim turns into an account, so accepting it would
+    let a signed-in user mint a claim link for an inbox they do not control.
+    The submitted value is used ONLY when there is no session.
+
+    The user row is re-read rather than trusted from the JWT: the token can
+    outlive the row it names, and `user_id` is a foreign key. No row, no stamp —
+    the submission still lands as an anonymous one rather than failing.
+  */
+  const viewer = await getSessionViewer();
+  const owner = viewer
+    ? await prisma.user.findUnique({
+        where: { id: viewer.userId },
+        select: { id: true, email: true },
+      })
+    : null;
+
+  const email = normalizeEmail(owner?.email ?? b.email);
 
   const scored = scoreAssessment(b.answers, {
     revenueBand: b.revenueBand,
@@ -108,6 +151,8 @@ export async function POST(req: Request) {
       process: b.process,
       answers: b.answers,
       score_pct: scored.maturityPct,
+      /* Null for a logged-out visitor — /assess/claim fills it in later. */
+      user_id: owner?.id ?? null,
     },
     select: { id: true, share_token: true, company_name: true },
   });
@@ -121,18 +166,50 @@ export async function POST(req: Request) {
     what turns it into an account. The token is a uuid, single-purpose, and the
     report it opens contains no one else's data.
   */
-  const url = `${appBaseUrl()}/assess/claim/${a.share_token}`;
-  try {
-    const tpl = assessmentReadyTemplate({
-      companyName: a.company_name,
-      processName: b.process === "P2P" ? "Procurement" : b.process,
-      reportUrl: url,
-      logoUrl: `${appBaseUrl()}/brand/panameer-new-on-light.png`,
-    });
-    await sendEmail({ to: email, subject: tpl.subject, html: tpl.html, text: tpl.text });
-  } catch (e) {
-    console.error("[assessment] report email failed", e);
+  /*
+    ⚠ A SIGNED-IN SUBMITTER GETS THE REPORT LINK, NOT A CLAIM LINK. /assess/claim
+    exists to turn an inbox into an account; someone who already has one has
+    nothing to claim, and sending them through it would sign them in again as
+    themselves for no reason.
+  */
+  const url = owner
+    ? `${appBaseUrl()}/assess/r/${a.share_token}`
+    : `${appBaseUrl()}/assess/claim/${a.share_token}`;
+
+  /*
+    ── THE EMAIL IS A RECEIPT NOW, NOT THE DOOR ───────────────────────────────
+
+    The client no longer waits on this to show the report — it redirects
+    straight to /assess/r/<shareToken> — so everything below is best-effort. But
+    `emailSent` goes back in the response, because the report renders "we've
+    also emailed this link to you" and that sentence must not be printed on a
+    send that did not happen.
+  */
+  let emailSent = false;
+  if (!mailConfigured()) {
+    /*
+      NOT AN ERROR, AND DELIBERATELY NOT LOGGED AS ONE. RESEND_API_KEY is simply
+      absent — the normal state of a dev machine. The report URL goes in the
+      line so a local walk has the link the email would have carried.
+    */
+    console.warn(
+      `[assessment] report email SKIPPED — RESEND_API_KEY is not configured (configuration, not an outage). Assessment ${a.id} saved; report link: ${url}`
+    );
+  } else {
+    try {
+      const tpl = assessmentReadyTemplate({
+        companyName: a.company_name,
+        processName: b.process === "P2P" ? "Procurement" : b.process,
+        reportUrl: url,
+        logoUrl: `${appBaseUrl()}/brand/panameer-new-on-light.png`,
+      });
+      await sendEmail({ to: email, subject: tpl.subject, html: tpl.html, text: tpl.text });
+      emailSent = true;
+    } catch (e) {
+      /* A REAL FAILURE: the key is present and the provider refused. */
+      console.error(`[assessment] report email FAILED to send for assessment ${a.id}`, e);
+    }
   }
 
-  return NextResponse.json({ ok: true, shareToken: a.share_token });
+  return NextResponse.json({ ok: true, shareToken: a.share_token, emailSent });
 }
