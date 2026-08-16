@@ -68,8 +68,10 @@ export const config = {
   // "/" is the host split; the rest MIRROR the prefixes in
   // `src/lib/route-access.ts` (ROUTE_ACCESS). Keep in sync — the map is the
   // source of truth for WHAT each requires; this list is only WHERE the edge
-  // runs. Upwork-holdover routes (/find-work, /deliver-work, /manage-money)
-  // were removed — they are not the real IA.
+  // runs. The Upwork-holdover routes /deliver-work and /manage-money were
+  // removed from this matcher — they are not the real IA. Their sibling
+  // /find-work is a PUBLIC page now (E029), so it is in the allowlist rather
+  // than here; the orphaned authed stub that used to hold that path is gone.
   matcher: [
     "/",
     "/admin/:path*",

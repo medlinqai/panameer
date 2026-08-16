@@ -5,7 +5,7 @@ import { BRAND_BADGE_SHORT } from "@/lib/brand";
 /**
  * The shared marketing hero (brief_home_rebuild_08_09 WS-A).
  *
- * One component, two routes: `/` renders the buyer copy, `/for-providers` the
+ * One component, two routes: `/` renders the buyer copy, `/find-work` the
  * seller copy. Everything that differs is a lookup in HERO_COPY, so the two
  * pages cannot drift into two heroes.
  *
@@ -93,7 +93,7 @@ export function MarketingHero({
 
           No "Find Talent / Find Work" scope toggle replaces it. The brief makes
           that optional, and the search is already scoped by the page: `/` posts
-          mode=hire and /for-providers posts mode=work. A second control that
+          mode=hire and /find-work posts mode=work. A second control that
           re-states what the page already decided would put an ambiguous pill
           back in the exact spot the ambiguous pill was just removed from.
         */}

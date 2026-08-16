@@ -40,7 +40,7 @@ export function MarketingHeader() {
   /*
     WS-6b — THE ACTIVE NAV ITEM COMES FROM THE PATH, not from a prop.
 
-    This header now renders on every public page (home, /for-providers, /learn,
+    This header now renders on every public page (home, /find-work, /learn,
     /explore, /verify), and threading an `active` prop through five layouts is
     five chances to pass the wrong one. usePathname is already available — this
     component is a client component for the mobile menu — so the header answers
@@ -125,28 +125,22 @@ export function MarketingHeader() {
           {MARKETING_NAV.map((item, i) => {
             const on = isActive(item.href);
             /*
-              ASSESS IS THE PRIMARY NAV ITEM — a MAGENTA WORD, not a filled pill
-              (WS-0, Scott 2026-08-13). It shipped as a solid magenta button and
-              was over-emphasised: pink is reserved for small accents, and a
-              filled pill inside a row of six plain words is a large fill by any
-              reading. Same shape and size as its neighbours now; the colour and
-              the weight carry the emphasis.
+              ⚠ THE `item.primary` BRANCH IS GONE (E028), AND HERE IS WHY IT WAS
+              A BUG RATHER THAN A STYLE.
 
-              It still carries `aria-current` when it is the current page — a
-              screen reader should hear location, not just a call to action.
+              It rendered a promoted item with `font-bold text-magenta`
+              UNCONDITIONALLY — the same treatment `isActive` gives the current
+              page. So the one promoted item ("AI Assessment") read as active on
+              every page, and every page showed TWO items looking selected. It
+              also pointed at `/`, so on the home page it was doubly wrong: the
+              genuinely-active item and the always-magenta item were different
+              links.
+
+              ⚠ IF ANYTHING IS EVER PROMOTED AGAIN: PROMOTION USES WEIGHT,
+              ACTIVE KEEPS COLOUR. They must be different signals. Reusing
+              magenta for "important" and for "you are here" is what collided,
+              and it will collide again the moment both are true at once.
             */
-            if (item.primary) {
-              return (
-                <Link
-                  key={`${item.label}-${i}`}
-                  href={item.href}
-                  aria-current={on ? "page" : undefined}
-                  className="whitespace-nowrap font-bold text-magenta transition-colors hover:text-magenta-dark"
-                >
-                  {item.label}
-                </Link>
-              );
-            }
             return (
               <Link
                 key={`${item.label}-${i}`}
@@ -166,7 +160,7 @@ export function MarketingHeader() {
             ⚠ THE SELLER DOOR IS GONE FROM HERE (P1-J0.4-E002). "For Experts"
             rendered as a seventh item, set apart by a left border; Scott removed
             it on 2026-08-15 for header crowding. The six above are the whole
-            nav. `/for-providers` stays reachable from the footer — see the note
+            nav. `/find-work` is a header item again (E029) — see the note
             on MARKETING_PROVIDER_DOOR, which is kept for the paper trail.
           */}
         </nav>
@@ -215,14 +209,17 @@ export function MarketingHeader() {
                   onClick={() => setOpen(false)}
                   aria-current={on ? "page" : undefined}
                   className={
-                    // Assess is the magenta WORD in the drawer too. It was a
-                    // filled magenta block here; the same "no large fills"
-                    // rule applies, and a phone-width block is the largest
-                    // fill on the page.
-                    item.primary
-                      ? "rounded-lg px-2 py-2 font-bold text-magenta hover:bg-bg-soft"
-                      : "rounded-lg px-2 py-2 hover:bg-bg-soft hover:text-magenta " +
-                        (on ? "font-bold text-magenta" : "")
+                    /*
+                      ⚠ THE `item.primary` BRANCH IS GONE HERE TOO (E028). The
+                      drawer carried the SAME unconditional `text-magenta` as the
+                      desktop nav did, so the bug was in both renderings — the
+                      brief only named the desktop one. Leaving it would have
+                      left a second copy of the defect waiting for the next
+                      promoted item, and contradicted the weight-vs-colour rule
+                      recorded above.
+                    */
+                    "rounded-lg px-2 py-2 hover:bg-bg-soft hover:text-magenta " +
+                    (on ? "font-bold text-magenta" : "")
                   }
                 >
                   {item.label}

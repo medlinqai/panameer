@@ -97,8 +97,8 @@ export const ROUTE_ACCESS: { prefix: string; requires: RouteRequirement }[] = [
     ⚠ "/services/offers", NOT "/services".
 
     The prefix used to be bare "/services", which was correct while the only
-    thing under it was the provider's own offers page. The public "Packages"
-    nav item now lives at /services (nav model 2026-08-12) — and a
+    thing under it was the provider's own offers page. The public nav item then
+    took /services (nav model 2026-08-12) — and a
     canProvideServices gate on the bare prefix bounced every logged-out visitor
     who clicked Packages straight to /login.
 

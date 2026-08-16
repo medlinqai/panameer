@@ -2,7 +2,8 @@
  * WHICH SIDE OF THE MARKETPLACE A PAGE IS TALKING TO (E051).
  *
  * Two pages, one per side: the buyer page at `/` and the seller page at
- * `/for-providers`. The toggle in each hero moves between them.
+ * `/find-work` (renamed from `/for-providers`, E029). The toggle in each hero
+ * moves between them.
  *
  * THE AUDIENCE IS THE ROUTE, NOT A PIECE OF STATE. That is the whole design and
  * it is worth saying plainly, because the obvious implementation — one page, a
@@ -30,7 +31,7 @@ export type Audience = "neutral" | "buyer" | "provider";
 export const AUDIENCE_PATH: Record<Audience, string> = {
   neutral: "/",
   buyer: "/",
-  provider: "/for-providers",
+  provider: "/find-work",
 };
 
 // ---------------------------------------------------------------------------
@@ -56,7 +57,7 @@ export const PUBLIC_PAGES: {
 }[] = [
   { key: "home", href: "/", label: "See where I stand", audience: "buyer" },
   { key: "hire", href: "/hire-talent", label: "I want to hire", audience: "buyer" },
-  { key: "work", href: "/for-providers", label: "I want to work", audience: "provider" },
+  { key: "work", href: "/find-work", label: "I want to work", audience: "provider" },
 ];
 
 export const publicPageHref = (key: PublicPage) =>

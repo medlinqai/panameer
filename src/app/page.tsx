@@ -29,7 +29,7 @@ import "@/components/marketing-home/home.css";
  *
  * `/` was the assessment front door (AssessmentHero + Assessment + method +
  * three-ways + beats + closing) from the 2026-08-11/12 briefs. Per this brief
- * the mockup becomes `/`. `/hire-talent` and `/for-providers` are untouched and
+ * the mockup becomes `/`. `/hire-talent` and `/find-work` are untouched and
  * still shipped, and this page's talent CTAs point at `/hire-talent`.
  *
  * The components that page used are all still in the tree and still rendered by

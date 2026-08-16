@@ -29,8 +29,30 @@ const nextConfig: NextConfig = {
     fact, it costs no render, and it leaves no file for someone to mistake for
     a page.
   */
+  /*
+    ⚠ MENU LABEL == PAGE ROUTE (E029), WHICH MEANT TWO RENAMES.
+
+    Same reasoning as /for-buyers above: the old paths are linked from the
+    footer, the Learn categories anchor and several walks' worth of notes, and
+    they may be indexed — so they redirect rather than 404, permanently (308),
+    which also tells a crawler the new path has absorbed the old one instead of
+    leaving two URLs competing for the same page.
+
+    ⚠ EXACT PATHS, NOT `/:path*`. "/services" is deliberately not a wildcard:
+    `/services/offers` is a DIFFERENT, authenticated route living under
+    `src/app/(app)/services/offers/`, and a wildcard here would have swallowed it
+    and redirected a provider's own offers page to the public marketing stub.
+
+    The hash survives on its own — a fragment is never sent to the server, so the
+    browser re-applies it to the redirect target. `/for-providers#learn` lands on
+    `/find-work#learn`. Verified in a browser, not assumed.
+  */
   async redirects() {
-    return [{ source: "/for-buyers", destination: "/", permanent: true }];
+    return [
+      { source: "/for-buyers", destination: "/", permanent: true },
+      { source: "/for-providers", destination: "/find-work", permanent: true },
+      { source: "/services", destination: "/buy-services", permanent: true },
+    ];
   },
 };
 

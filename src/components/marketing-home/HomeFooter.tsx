@@ -1,5 +1,11 @@
 import Link from "next/link";
 import { BRAND_BADGE } from "@/lib/brand";
+import {
+  FOOTER_ASSESSMENT,
+  FOOTER_GROUPS,
+  FOOTER_LEGAL,
+  type FooterEntry,
+} from "@/components/marketing/brand";
 
 /**
  * THE MARKETING HOME FOOTER.
@@ -64,54 +70,49 @@ const SOCIALS = [
 ] as const;
 
 /**
- * TWO COLUMNS, NOT SCOTT'S FOUR — flagged deliberately, revert on his word.
+ * ⚠ THE LINK TABLE IS SHARED WITH `MarketingFooter` NOW (E118).
  *
- * His IA was Platform / Solutions / Features / Company, eleven links. Applying
- * his OWN omit-until-it-exists rule removes five of them: Project Task Tracker
- * (unbuilt), Enterprise Connectivity (no page), Messages (`/messages` is
- * auth-gated, so an anonymous visitor lands on /login — a footer link that
- * demands a password is a dead end, not a destination), and About / Careers /
- * Contact (no pages; deferred to their own brief with E096).
+ * This footer and that one held two separate tables, and they disagreed: "Find
+ * Work" pointed at /work-marketplace here and /for-providers there, and the same
+ * destinations had different names on each. Both now read `FOOTER_GROUPS` from
+ * `components/marketing/brand.tsx`, beside `MARKETING_NAV`, so the header and
+ * both footers share one vocabulary.
  *
- * It also removes "Assess Current State", which resolves to the same `/assess`
- * as Platform's "AI Maturity Assessment". A footer carrying one destination
- * twice teaches people the footer is decorative.
+ * ── WHY THIS SHELL SURVIVED RATHER THAN COLLAPSING INTO ONE COMPONENT ────────
  *
- * That leaves Platform and Features with ONE link each under a column heading,
- * which reads as a rendering bug rather than as an IA. Moving Training up into
- * Platform gives two balanced columns. They grow back as the pages land.
+ * The treatments genuinely differ. This one is the ported `.pm-home` stylesheet
+ * — `.foot`, `.fcol`, the socials block, `BRAND_BADGE`, a bottom legal strip;
+ * the other is Tailwind on `bg-ink` with legal as a column. Collapsing them
+ * meant restyling the home page, which this brief puts out of scope. The DATA is
+ * what was drifting, so the data is what is shared.
+ *
+ * ── WHAT REPLACED THE "OMIT UNTIL IT EXISTS" RULE ────────────────────────────
+ *
+ * This footer used to carry two columns because Scott's own rule was to omit
+ * anything unbuilt, and applying it removed five of his eleven links. He has now
+ * asked for the opposite: the FULL listing, so he can see and manage what is
+ * missing. The honesty requirement did not go away — it moved into the rendering.
+ * An entry with no `href` is plain text with a TBD marker, never an anchor.
  */
-const COLUMNS = [
-  {
-    title: "Platform",
-    links: [
-      { label: "AI Maturity Assessment", href: "/assess" },
-      { label: "Training", href: "/learn" },
-    ],
-  },
-  {
-    title: "Solutions",
-    links: [
-      { label: "Find Talent", href: "/hire-talent" },
-      { label: "Buy Pre-Built Services", href: "/services" },
-      { label: "Find Work", href: "/work-marketplace" },
-    ],
-  },
-] as const;
 
 /**
- * The bottom strip stays the conventional trio.
- *
- * `/user-agreement` and `/company-terms` are deliberately NOT here — see the
- * report. `/legal` is already the hub that lists all four documents, so they
- * are one hop away, and putting two of the four beside a link called "Legal"
- * duplicates destinations inside a five-item strip.
+ * ⚠ NO `href` MEANS NO ANCHOR. Matches `MarketingFooter`'s row exactly in
+ * behaviour, in this footer's own type scale.
  */
-const LEGAL = [
-  { label: "Privacy", href: "/privacy" },
-  { label: "Terms", href: "/terms" },
-  { label: "Legal", href: "/legal" },
-] as const;
+function FooterRow({ entry }: { entry: FooterEntry }) {
+  if (!entry.href) {
+    return (
+      <span className="foot-tbd">
+        {entry.label}
+        <span className="foot-tbd-tag">TBD</span>
+      </span>
+    );
+  }
+  return <Link href={entry.href}>{entry.label}</Link>;
+}
+
+/* Six index groups, then Legal — which this shell renders as its bottom strip. */
+const COLUMNS = FOOTER_GROUPS;
 
 export function HomeFooter() {
   return (
@@ -147,23 +148,25 @@ export function HomeFooter() {
               </div>
             </div>
 
-            {COLUMNS.map((col) => (
+            <div className="foot-groups">
+              {COLUMNS.map((col) => (
               <div className="fcol" key={col.title}>
                 <h5>{col.title}</h5>
-                {col.links.map((l) => (
-                  <Link key={l.href} href={l.href}>
-                    {l.label}
-                  </Link>
+                {col.entries.map((e) => (
+                  <FooterRow key={e.label} entry={e} />
                 ))}
-              </div>
-            ))}
+                {/* The assessment hangs under Learn — the free front door. */}
+                {col.title === "Learn" && <FooterRow entry={FOOTER_ASSESSMENT} />}
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="foot-bot">
             <span>© 2026 Panameer Inc. All rights reserved.</span>
             <span className="lg">
-              {LEGAL.map((l) => (
-                <Link key={l.href} href={l.href}>
+              {FOOTER_LEGAL.map((l) => (
+                <Link key={l.label} href={l.href!}>
                   {l.label}
                 </Link>
               ))}

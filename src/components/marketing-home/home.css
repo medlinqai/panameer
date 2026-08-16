@@ -481,7 +481,22 @@
   tracks and stranded both columns against the left edge. The brand block keeps
   more room; the columns sit at the right where the eye expects them.
 */
-.pm-home .foot{display:grid;grid-template-columns:2fr 1fr 1fr;gap:32px}
+/*
+  ⚠ THE FOOTER CARRIES SIX INDEX GROUPS NOW, NOT TWO (E118). It was
+  `2fr 1fr 1fr` — the brand block plus two columns — because the old rule was to
+  omit anything unbuilt. Scott asked for the full listing instead, so the brand
+  block keeps its wider track and the groups wrap in an auto-fit grid rather than
+  being counted into the template: six named columns hard-coded here is a number
+  that goes stale the next time a group is added.
+*/
+.pm-home .foot{display:grid;grid-template-columns:1.4fr 3fr;gap:32px 40px}
+.pm-home .foot-groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:28px 24px}
+/*
+  A TBD ENTRY IS NOT A LINK. Same padding and size as `.fcol a` so the column
+  reads as one list, but muted and with no hover — nothing here says "click me".
+*/
+.pm-home .foot-tbd{display:block;font-size:14.5px;color:#6f7794;padding:7px 0}
+.pm-home .foot-tbd-tag{margin-left:6px;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5d6480}
 .pm-home .foot .brand{color:#fff;font-size:24px;margin-bottom:14px}
 .pm-home .foot .brand b{color:var(--mag)}
 .pm-home .foot-desc{font-size:14px;line-height:1.6;max-width:230px}
@@ -496,6 +511,7 @@
 .pm-home .foot-bot .lg{display:flex;gap:26px}
 @media(max-width:900px){
 .pm-home .hero-row, .pm-home .fw-top, .pm-home .fw-body, .pm-home .cta-dark .wrap, .pm-home .tgrid, .pm-home .kpis, .pm-home .foot{grid-template-columns:1fr}
+  .pm-home .foot-groups{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}
 .pm-home .hero h1{font-size:44px}
 .pm-home .center h2, .pm-home .fw-top h2, .pm-home .cta-dark h2{font-size:32px}
 /*

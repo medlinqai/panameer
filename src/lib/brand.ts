@@ -137,7 +137,7 @@ export const SEO_DESCRIPTION =
 // ---------------------------------------------------------------------------
 // THE MARKETING PAGES (brief_home_rebuild_08_09).
 //
-// Every string the buyer `/` and seller `/for-providers` pages render lives
+// Every string the buyer `/` and seller `/find-work` pages render lives
 // here, lifted verbatim from the approved mockups. The brief is explicit that
 // new copy belongs in this module rather than inline in components, and the
 // reason is the one this file has always had: copy typed into a component is
@@ -147,7 +147,7 @@ export const SEO_DESCRIPTION =
 // opening the component that renders them.
 // ---------------------------------------------------------------------------
 
-/** The hero, per audience. Buyer is `/`; seller is `/for-providers`. */
+/** The hero, per audience. Buyer is `/`; seller is `/find-work`. */
 export const HERO_COPY = {
   buyer: {
     kicker: "Continuous Transformation",
@@ -510,7 +510,7 @@ export const TWO_PAINS = {
 /*
   Seller §3 — every way to sell expertise.
 
-  WS-6 — CUT TO FRAGMENTS. Scott's note is that /for-providers reads as
+  WS-6 — CUT TO FRAGMENTS. Scott's note is that /find-work reads as
   run-ons. These card bodies were full sentences with a subordinate clause
   each; in a five-across grid at 12.5px that is four lines per card and the row
   becomes a wall. A fragment per card is the right density for a scan, and the

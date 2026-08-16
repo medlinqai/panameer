@@ -37,34 +37,190 @@ import type { ReactNode } from "react";
   visitor picks a shape of engagement rather than declaring which side they are
   on.
 
-  "FIND WORK" WAS THE PROVIDER DOOR, and losing it would have made the public
-  site buyer-only — so /for-providers keeps an explicit link ("For Experts",
-  rendered apart from the six). The audience toggle on the marketing pages is
-  the other route to it.
+  "FIND WORK" IS ITS OWN ITEM AGAIN, and its own page: /find-work, renamed from
+  /for-providers so the label and the route say the same word. It was briefly a
+  separate "For Experts" door rendered apart from the six (E002 removed that);
+  it is now simply one of the four.
 
   PRICING IS NOT IN THE NAV. Price surfaces contextually, when a selection needs
   a plan, plus a passive link in the footer — which the footer already carries.
   Removed here rather than left as a seventh item: a nav "Pricing" invites a
   comparison before there is anything to compare.
 
-  TWO DESTINATIONS ARE HONEST STUBS. /work-marketplace and /services render ComingSoon
-  behind the public header. Both are real routes that say they are not built;
-  neither fakes a listing, and neither doubles up on /hire-talent.
+  ONE DESTINATION IN THE NAV IS AN HONEST STUB. /buy-services (renamed from
+  /services) renders ComingSoon behind the public header: a real route that says
+  it is not built rather than faking a listing. /work-marketplace is the same
+  kind of stub but is no longer in the nav — footer only, as TBD.
 */
 export type MarketingNavItem = {
   label: string;
   href: string;
-  /** Rendered as the magenta button rather than a text link. */
+  /**
+   * ⚠ UNUSED SINCE E028, AND READ THIS BEFORE SETTING IT AGAIN.
+   *
+   * "AI Assessment" was the only item that ever carried it, and the branch that
+   * rendered it applied `font-bold text-magenta` UNCONDITIONALLY — the same
+   * treatment `isActive` uses. So a promoted item read as active on every page,
+   * and two items looked selected at once. The branch is deleted.
+   *
+   * If anything is ever promoted again: PROMOTION USES WEIGHT, ACTIVE KEEPS
+   * COLOUR. They have to be different signals or they collide exactly like this.
+   */
   primary?: boolean;
 };
 
+/*
+  ⚠ FOUR ITEMS, IN SCOTT'S ORDER (E029/E030). "I think we need clarity and less
+  menu options." Learn leads deliberately: it is the free door, the widest
+  audience, and the only page that serves both sides without making a visitor
+  pick one.
+
+  THREE WERE REMOVED, and none of them lost a route:
+
+    "AI Assessment"  pointed at `/`. A home link wearing the assessment's name,
+                     while the wordmark already goes home and `/assess` is the
+                     actual assessment. It was also the ONLY `primary: true`
+                     item — see the note on that field.
+    "Enterprise"     was `/hire-talent#punchout`, an anchor, never a page. It
+                     keeps its footer entry as "Services Punch-Out".
+    "Work"           was `/work-marketplace`. THE ROUTE STAYS and is neither
+                     deleted nor redirected: it is a real future destination for
+                     custom scoped work, distinct from the seller marketing page
+                     that has now taken its "Find Work" label. It appears in the
+                     footer as TBD.
+
+  ⚠ MENU LABEL == PAGE ROUTE, and that is why two routes were renamed. A menu
+  called "Find Work" landing on /for-providers is a name the visitor never sees
+  matching the one they clicked. See `next.config.ts` for the redirects.
+*/
 export const MARKETING_NAV: MarketingNavItem[] = [
-  { label: "AI Assessment", href: "/", primary: true },
-  { label: "Talent", href: "/hire-talent" },
-  { label: "Work", href: "/work-marketplace" },
-  { label: "Packages", href: "/services" },
   { label: "Learn", href: "/learn" },
-  { label: "Enterprise", href: "/hire-talent#punchout" },
+  { label: "Find Work", href: "/find-work" },
+  { label: "Hire Talent", href: "/hire-talent" },
+  { label: "Buy Services", href: "/buy-services" },
+];
+
+/**
+ * THE FOOTER INDEX — ONE TABLE, BOTH FOOTERS (E118).
+ *
+ * There were two footers and they disagreed. `/` renders `HomeFooter` (the
+ * ported `.pm-home` stylesheet, with socials and a legal strip); every other
+ * public page renders `MarketingFooter` (Tailwind, dark, five columns). Their
+ * "Find Work" entries pointed at DIFFERENT pages — /for-providers and
+ * /work-marketplace — and they used different words for the same destinations.
+ *
+ * The two SHELLS are kept, because their visual treatments genuinely differ and
+ * collapsing them would restyle the home page, which is out of scope. The DATA
+ * is shared, which is the part that was drifting: the same label can no longer
+ * resolve to two places.
+ *
+ * ⚠ THE LABELS MATCH THE HEADER ON PURPOSE. Hire Talent · Find Work · Buy
+ * Services · Learn. This table sits beside `MARKETING_NAV` so a re-word has to
+ * pass both at once — the footer used to say "Buy Pre-Built Services" and
+ * "Find Talent" for things the header called something else.
+ *
+ * ── ⚠ AN ENTRY WITH NO `href` IS NOT A LINK ──────────────────────────────────
+ *
+ * It renders as plain text with a muted TBD marker: no anchor, no href, not
+ * focusable. Scott asked for the full listing INCLUDING what is not built, so he
+ * can see and manage it — but the footer today LINKS About, Careers and Contact
+ * to /about, /careers and /contact, none of which exist, and "Coordinators" to
+ * `href="#"`. TBD REPLACES those broken promises; it does not join them. A
+ * visitor has to be able to tell a door from a plan at a glance, and a 404 is
+ * the worst possible way to learn the difference.
+ */
+export type FooterEntry = {
+  label: string;
+  /** Absent = not built. Renders as text + TBD, never as an anchor. */
+  href?: string;
+};
+
+export const FOOTER_GROUPS: { title: string; entries: FooterEntry[] }[] = [
+  {
+    title: "Hire",
+    entries: [
+      { label: "Hire Talent", href: "/hire-talent" },
+      { label: "Post a Work Request", href: "/join/buyer" },
+    ],
+  },
+  {
+    title: "Work",
+    entries: [
+      { label: "Find Work", href: "/find-work" },
+      { label: "Become a Provider", href: "/join/provider" },
+      /* The route exists and renders ComingSoon; the DESTINATION does not. */
+      { label: "Work Marketplace" },
+      /* Was `href="#"` — a link that went nowhere is worse than an honest TBD. */
+      { label: "Coordinators" },
+    ],
+  },
+  {
+    title: "Learn",
+    entries: [
+      { label: "Learning Paths", href: "/learn" },
+      { label: "Courses", href: "/learn/courses" },
+      { label: "Categories", href: "/find-work#learn" },
+    ],
+  },
+  {
+    title: "Solutions",
+    entries: [
+      { label: "AI Agents" },
+      /*
+        ⚠ THE ONLY PUNCH-OUT ENTRY. "Enterprise" and "ERP Punchout" both pointed
+        at this same anchor from two different columns; one destination with two
+        names in one footer is how a reader concludes they are two things.
+      */
+      { label: "Services Punch-Out", href: "/hire-talent#punchout" },
+      { label: "OTS Goods Contracts" },
+      { label: "Analytics" },
+    ],
+  },
+  {
+    title: "Why & Commercial",
+    entries: [
+      { label: "Why Panameer", href: "/hire-talent#three-ways" },
+      /*
+        An ANCHOR, not a page. There is no approved per-transaction figure, and a
+        page headed "Pricing" with no price is a worse promise than a section.
+      */
+      { label: "Pricing", href: "/hire-talent#value" },
+      { label: "Enterprise Integration" },
+    ],
+  },
+  {
+    title: "Company",
+    entries: [
+      { label: "Contact Us" },
+      { label: "About Us" },
+      { label: "Careers" },
+    ],
+  },
+];
+
+/**
+ * ⚠ `/assess`, NOT `/`. Two links on the site were labelled for the assessment
+ * and neither reached it: the nav item "AI Assessment" and this one both went
+ * to the home page. The nav item is gone, so this is the only one left — it had
+ * better work (E119).
+ */
+export const FOOTER_ASSESSMENT: FooterEntry = {
+  label: "AI Maturity Assessment",
+  href: "/assess",
+};
+
+/**
+ * LEGAL, SHARED TOO. The corpus is 23 documents; these are the four a person
+ * actually accepts, plus the hub for the rest. `MarketingFooter` renders them as
+ * a sixth column and `HomeFooter` as its bottom strip — same destinations, two
+ * placements.
+ */
+export const FOOTER_LEGAL: FooterEntry[] = [
+  { label: "Terms of Use", href: "/terms" },
+  { label: "User Agreement", href: "/user-agreement" },
+  { label: "Privacy Policy", href: "/privacy" },
+  { label: "Cookie Policy", href: "/legal/cookie-policy" },
+  { label: "All legal documents", href: "/legal" },
 ];
 
 /**
@@ -85,9 +241,9 @@ export const MARKETING_NAV: MarketingNavItem[] = [
  *
  * ── THE ROUTE IS STILL REACHABLE, AND THAT IS THE THING TO PROTECT ───────────
  *
- * `/for-providers` keeps two inbound links from `MarketingFooter` — "Find Work"
- * and "Categories". A route with no inbound link is the real failure mode here,
- * so if either footer entry ever goes, this door has to come back somewhere.
+ * `/find-work` (renamed from `/for-providers`) is a HEADER ITEM again as of
+ * E029, so the door's original worry — a seller page with no inbound link — no
+ * longer applies. It also keeps its footer entries.
  *
  * KEPT AS AN EXPORT deliberately. The label and href are the paper trail for a
  * decision that has now been made twice in opposite directions; deleting them
@@ -95,7 +251,7 @@ export const MARKETING_NAV: MarketingNavItem[] = [
  */
 export const MARKETING_PROVIDER_DOOR = {
   label: "For Experts",
-  href: "/for-providers",
+  href: "/find-work",
 };
 const BASE =
   "inline-flex items-center justify-center gap-2 rounded-full px-[22px] py-3 " +
