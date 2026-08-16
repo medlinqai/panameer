@@ -9,6 +9,7 @@ import { useMe } from "@/components/MeProvider";
 import { membershipBadge } from "@/lib/membership";
 import {
   ADMIN_PERSONA_NAV,
+  COMPANY_NAV,
   PERSONA_NAV_PRIMARY,
   PERSONA_NAV_SECONDARY,
 } from "@/lib/nav";
@@ -69,6 +70,7 @@ export function AccountMenu({
   const { me, refresh } = useMe();
   const [open, setOpen] = useState(false);
   const [themeOpen, setThemeOpen] = useState(false);
+  const [companyOpen, setCompanyOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   /*
@@ -96,14 +98,17 @@ export function AccountMenu({
 
   const close = useCallback(() => {
     setOpen(false);
-    // The submenu collapses with the menu. Leaving it expanded means the next
-    // open shows Theme mid-interaction, which reads as a stuck control.
+    // The submenus collapse with the menu. Leaving one expanded means the next
+    // open shows it mid-interaction, which reads as a stuck control.
     setThemeOpen(false);
+    setCompanyOpen(false);
   }, []);
 
   const first = me?.person.firstName ?? "";
   const last = me?.person.lastName ?? "";
   const badge = isAdmin ? "Panameer Admin" : membershipBadge(me);
+  /* The company the rail chip used to name. See the My Company block below. */
+  const company = me?.company;
   /*
     THE DECK'S ORDER (WS1-C): My Profile · My Stats · Account Health Checklist ·
     Theme › · Request Recommendations · Settings · Sign Out (E225 took My
@@ -286,6 +291,74 @@ export function AccountMenu({
               {item.label}
             </Link>
           ))}
+
+          {/*
+            ── MY COMPANY (E099, and it REVERSES E225) ────────────────────────
+
+            E225 took "My Company" OUT of this menu, on the reasoning that it
+            was the last item crossing the company/personal line, and the rail
+            grew a company chip as its replacement. Scott reversed that on
+            2026-08-15, knowingly and on the record: "move 'My Company' under
+            the My Profile menus for the user", and — asked directly whether the
+            rail chip should stay as a second door — one door, not two. The chip
+            is gone from `AppRail`; this is the route now.
+
+            ⚠ THE ADMIN / MEMBER DISTINCTION SURVIVED THE MOVE, which is the part
+            that could easily have been dropped. The chip was two different
+            controls wearing one name:
+
+              company admin -> a MENU of company-administration surfaces
+              everyone else -> a PLAIN LINK to the read-only company page
+
+            Both are preserved here, the admin's as a submenu on the same
+            pattern as Theme. Flattening it to one link for everybody would have
+            silently cost admins four destinations; showing the menu to everyone
+            would offer a member four pages that all bounce them. The predicate
+            is the server's — `me.company.isAdmin` comes from `getMe`, set by the
+            same APPROVED + ADMIN membership test the page gates use, so this
+            menu and the pages behind it cannot disagree about who is an admin.
+          */}
+          {company?.name &&
+            (company.isAdmin ? (
+              <>
+                <button
+                  type="button"
+                  aria-expanded={companyOpen}
+                  onClick={() => setCompanyOpen((v) => !v)}
+                  className={`${rowClass} flex items-center justify-between`}
+                >
+                  <span className="min-w-0 truncate pr-2">My Company</span>
+                  <span
+                    aria-hidden
+                    className={"text-ink-2 " + (companyOpen ? "inline-block rotate-90" : "")}
+                  >
+                    ›
+                  </span>
+                </button>
+                {companyOpen && (
+                  <div className="bg-black/[0.02] py-1">
+                    <p className="truncate px-7 pb-1 pt-1 text-[11px] font-bold uppercase tracking-[0.08em] text-ink-2">
+                      {company.name}
+                    </p>
+                    {COMPANY_NAV.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        role="menuitem"
+                        onClick={close}
+                        className="block w-full px-4 py-2 pl-7 text-left text-[14px] hover:bg-black/[0.04]"
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </>
+            ) : (
+              <Link href="/company" role="menuitem" onClick={close} className={rowClass}>
+                My Company
+              </Link>
+            ))}
 
           {/*
             THEME IS A SUBMENU, NOT A PAGE (E021). Three mutually exclusive

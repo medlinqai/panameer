@@ -233,16 +233,27 @@ export function DashboardShot() {
                       <span className="kpi-info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9" /><path d="M12 11v5" /><circle cx="12" cy="8" r=".6" fill="currentColor" /></svg></span>
                     </div>
                     {/*
-                      E105 — "Est.", not "Estimated". The tile is 267px wide and
-                      `.lab` is 12px uppercase at .05em tracking; the full word
-                      pushed the label onto a second line, which set this tile's
-                      label block one line taller than T1's and T2's and knocked
-                      the three sub-lines and graphics out of alignment. Shortened
-                      rather than restyled — dropping the tracking or the size
-                      here would make one tile's label differ from the other two,
-                      which is the same misalignment by another route.
+                      E105 — SHORTENED TWICE, AND THIS IS THE ONE THAT CLOSES IT.
+
+                      "Estimated Savings Based on Rev/Heads" needed a 332px tile
+                      and the tile maxes at 322px, so it wrapped at every width.
+                      "Est. Savings Based on Rev/Heads" needed 245px against a
+                      196-229px label box between 920 and 1075, so it still
+                      wrapped in that band. This reads 187px and fits from 920 up
+                      — measured, with the table in the brief's report.
+
+                      The extra line mattered because it made this tile's label
+                      block taller than T1's and T2's and knocked the three
+                      sub-lines and graphics out of alignment. Shortened rather
+                      than restyled: dropping the tracking or the size here would
+                      make one tile's label differ from the other two, which is
+                      the same misalignment by another route. `white-space:nowrap`
+                      was the other candidate and is worse — it trades wrapping
+                      for overflow at any width narrower than the label.
+
+                      ⚠ The em dash is spaced and is a real em dash, not a hyphen.
                     */}
-                    <div className="lab">Est. Savings Based on Rev/Heads</div>
+                    <div className="lab">Est. Savings — Rev/Heads</div>
                     <div className="sub">14% of $18.5M addressable P2P spend</div>
                     <FindingsBar />
                   </div>

@@ -68,12 +68,30 @@ export const MARKETING_NAV: MarketingNavItem[] = [
 ];
 
 /**
- * The seller front door, kept out of the six and rendered separately.
+ * ⚠ NO LONGER IN THE HEADER. Removed by Scott, 2026-08-15 (P1-J0.4-E002):
+ * "I think we remove it and let people troll based on options. It is getting
+ * too crowded in the main menu." A Buyer/Seller view toggle was considered as
+ * an alternative and REJECTED — the answer is removal, not a smaller version of
+ * the same thing. Do not restore it to the header as an oversight.
  *
- * It is a different KIND of link: the six are things to buy or learn, this is
- * "I am on the other side of the marketplace". Mixing it in made the nav read
- * as five buyer items and one odd one out, which is how "Find Work" came to
- * look like a buyer feature.
+ * ── WHY IT EXISTED, WHICH IS STILL WORTH KNOWING ─────────────────────────────
+ *
+ * It was the seller front door, kept out of the six and rendered apart from
+ * them because it is a different KIND of link: the six are things to buy or
+ * learn, this is "I am on the other side of the marketplace". Mixing it in made
+ * the nav read as five buyer items and one odd one out, which is how "Find
+ * Work" came to look like a buyer feature. The comment above `MARKETING_NAV`
+ * still records that reasoning; it is history now, not a live rule.
+ *
+ * ── THE ROUTE IS STILL REACHABLE, AND THAT IS THE THING TO PROTECT ───────────
+ *
+ * `/for-providers` keeps two inbound links from `MarketingFooter` — "Find Work"
+ * and "Categories". A route with no inbound link is the real failure mode here,
+ * so if either footer entry ever goes, this door has to come back somewhere.
+ *
+ * KEPT AS AN EXPORT deliberately. The label and href are the paper trail for a
+ * decision that has now been made twice in opposite directions; deleting them
+ * would leave nothing to read.
  */
 export const MARKETING_PROVIDER_DOOR = {
   label: "For Experts",
