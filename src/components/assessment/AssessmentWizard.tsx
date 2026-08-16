@@ -29,6 +29,12 @@ import {
   P2P_DOMAINS,
   PROCESSES,
 } from "@/lib/assessment/questions-p2p";
+import {
+  domainForStep,
+  domainStepId,
+  stepsFor,
+  type Step,
+} from "@/lib/assessment/steps";
 
 /**
  * THE ASSESSMENT QUESTIONNAIRE (WS-A).
@@ -63,56 +69,17 @@ import {
  */
 
 /**
- * THIRTEEN STEPS, AND EIGHT OF THEM ARE GENERATED.
+ * ⚠ THE STEP LIST MOVED TO `lib/assessment/steps.ts` — it is not gone.
  *
- * Scott walked the old five-step version and filed ten errors, nine with one
- * cause: all eight capability domains were asked on ONE screen — 48 chips, no
- * hierarchy, a ladder drawn as an unordered cloud. The deck
- * (`4. Project Documents/AI Maturity Assessment.pptx`) answers it with one
- * screen per domain, and that is what this is.
+ * `/`'s step-1 graphic shows the same counter this wizard shows, and a
+ * hand-typed number on a marketing page is a claim about the product that
+ * drifts. It could not simply be exported from here: this is a `"use client"`
+ * module, and every export of one becomes an opaque client reference when a
+ * Server Component imports it, so `stepsFor` would have thrown on the server.
  *
- * ⚠ THE DOMAIN STEPS ARE DERIVED FROM `P2P_DOMAINS`, NOT LISTED. Adding a ninth
- * domain to the bank adds a ninth step, renumbers the counter and renames the
- * "Next: …" button with no edit here. Listing them twice is how a bank and a
- * wizard come to disagree about how many questions there are.
+ * Nothing about the wizard's behaviour changed — same list, same ordering, same
+ * thirteen-signed-out / twelve-signed-in rule. See that file for the reasoning.
  */
-const domainStepId = (key: string) => `cd_${key}` as const;
-
-/**
- * ⚠ THIRTEEN STEPS SIGNED OUT, TWELVE SIGNED IN — see `stepsFor` below.
- *
- * This is the full list. The step list the component actually walks is derived
- * per-viewer, because a signed-in visitor is never asked for an email they have
- * already given us.
- */
-const ALL_STEPS = [
-  "basics",
-  "money",
-  "process",
-  ...P2P_DOMAINS.map((d) => domainStepId(d.key)),
-  "aimode",
-  "contact",
-] as const;
-type Step = (typeof ALL_STEPS)[number];
-
-/**
- * ── PUBLIC IS NOT THE SAME AS ANONYMOUS ──────────────────────────────────────
- *
- * The email step asks "where do we send the link?". For someone already signed
- * in the app knows, so the step is DROPPED rather than prefilled-and-shown: a
- * form field holding an answer the visitor cannot usefully change is a question
- * pretending to be a confirmation. The address is confirmed on the last
- * remaining step instead, where it costs a line rather than a screen.
- *
- * The counter follows the list ("12 / 12", not "13 / 13" with a step that never
- * appears), because `shell()` reads both from here.
- */
-const stepsFor = (signedInEmail: string | null): readonly Step[] =>
-  signedInEmail ? ALL_STEPS.filter((s) => s !== "contact") : ALL_STEPS;
-
-/** The domain a `cd_*` step is asking about, or null for the other five. */
-const domainForStep = (step: Step) =>
-  P2P_DOMAINS.find((d) => domainStepId(d.key) === step) ?? null;
 
 /**
  * The step's own name beside the counter — the pattern brief_S/E024 set.
