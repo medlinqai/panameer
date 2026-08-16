@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   MARKETING_NAV,
-  MARKETING_PROVIDER_DOOR,
   Btn,
 } from "@/components/marketing/brand";
 import { Logo } from "@/components/Logo";
@@ -164,20 +163,12 @@ export function MarketingHeader() {
           })}
 
           {/*
-            The seller door, set apart from the six. Kept visible so the public
-            site is not buyer-only — losing "Find Work" from the nav would
-            otherwise have hidden the provider side entirely.
+            ⚠ THE SELLER DOOR IS GONE FROM HERE (P1-J0.4-E002). "For Experts"
+            rendered as a seventh item, set apart by a left border; Scott removed
+            it on 2026-08-15 for header crowding. The six above are the whole
+            nav. `/for-providers` stays reachable from the footer — see the note
+            on MARKETING_PROVIDER_DOOR, which is kept for the paper trail.
           */}
-          <Link
-            href={MARKETING_PROVIDER_DOOR.href}
-            aria-current={isActive(MARKETING_PROVIDER_DOOR.href) ? "page" : undefined}
-            className={
-              "whitespace-nowrap border-l border-line pl-7 transition-colors hover:text-magenta lg:pl-[34px] " +
-              (isActive(MARKETING_PROVIDER_DOOR.href) ? "font-bold text-magenta" : "")
-            }
-          >
-            {MARKETING_PROVIDER_DOOR.label}
-          </Link>
         </nav>
 
         {/*
@@ -238,21 +229,6 @@ export function MarketingHeader() {
                 </Link>
               );
             })}
-            <Link
-              href={MARKETING_PROVIDER_DOOR.href}
-              onClick={() => setOpen(false)}
-              aria-current={
-                isActive(MARKETING_PROVIDER_DOOR.href) ? "page" : undefined
-              }
-              className={
-                "mt-1 rounded-lg border-t border-line px-2 pb-2 pt-3 hover:text-magenta " +
-                (isActive(MARKETING_PROVIDER_DOOR.href)
-                  ? "font-bold text-magenta"
-                  : "")
-              }
-            >
-              {MARKETING_PROVIDER_DOOR.label}
-            </Link>
             <div className="mt-2 flex items-center gap-3 border-t border-line pt-3">
               <Btn href="/login" variant="white">
                 Log In

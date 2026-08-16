@@ -11,7 +11,6 @@ import {
   ADMIN_HOME,
   ADMIN_SETUP,
 } from "@/lib/nav";
-import { CompanyMenu } from "@/components/casing/CompanyMenu";
 import { RailIcon } from "@/components/casing/RailIcon";
 import { useSession } from "next-auth/react";
 
@@ -278,12 +277,20 @@ export function AppRail() {
         <div className="sticky top-0 flex h-screen flex-col px-3 py-4">
           {brand}
 
-          {/* ZONE 1 — org context (E214). A popover for company admins, the
-              same static chip as before for everyone else. */}
-          <CompanyMenu />
+          {/*
+            ⚠ THE COMPANY CHIP IS GONE (E099), AND THAT REVERSES E225.
 
-          {/* ZONE 2 — the work. The only zone that scrolls. "You" left for the
-              top bar (E214 reversed), so the rail is org context + the work. */}
+            Zone 1 was org context: a popover of company surfaces for admins, a
+            plain link for everyone else. E225 had removed "My Company" from the
+            personal menu and this chip was built as its replacement; Scott
+            reversed that on 2026-08-15 and chose ONE door, in the account menu.
+            Both behaviours moved intact — see the My Company block in
+            `AccountMenu.tsx`. `CompanyMenu.tsx` is deleted; the rail was its
+            only caller.
+
+            The rail is now the persona caption and the work, which is also why
+            the caption reads better than it did with a chip above it.
+          */}
           <nav className="mt-3 min-h-0 flex-1 overflow-y-auto">{nav}</nav>
         </div>
       </aside>
@@ -306,7 +313,6 @@ export function AppRail() {
         </div>
         {open && (
           <div className="bg-rail px-4 pb-4">
-            <CompanyMenu />
             <nav>{nav}</nav>
           </div>
         )}
