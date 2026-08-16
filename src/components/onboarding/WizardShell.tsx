@@ -44,6 +44,7 @@ export function WizardShell({
   aside,
   wide = false,
   tightBody = false,
+  frameClassName = "",
 }: {
   /** 1-based step number. OMIT on pre-verify pages — that hides the stepper. */
   step?: number;
@@ -90,6 +91,8 @@ export function WizardShell({
    * re-checked on all thirteen.
    */
   tightBody?: boolean;
+  /** Passed to OnboardingFrame — see its `className`. */
+  frameClassName?: string;
 }) {
   const showCounter = typeof step === "number";
   const showStepper = showCounter || typeof progress === "number";
@@ -149,7 +152,7 @@ export function WizardShell({
   );
 
   return (
-    <OnboardingFrame width={width} footer={footer}>
+    <OnboardingFrame width={width} footer={footer} className={frameClassName}>
       {/* Stepper — inside the frame, so it can never overflow (E003). */}
       {showStepper && (
         <div className="mb-9">

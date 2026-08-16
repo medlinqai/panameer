@@ -23,7 +23,7 @@ export default async function SubmittedPage({
 }) {
   const { to } = await searchParams;
   return (
-    <OnboardingFrame>
+    <OnboardingFrame className="marketing-surface">
       <div className="mx-auto max-w-2xl py-4">
         <h1 className="font-display text-[30px] font-bold leading-tight tracking-[-0.5px] sm:text-[36px]">
           Thanks — that&rsquo;s everything we need

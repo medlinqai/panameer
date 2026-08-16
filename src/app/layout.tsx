@@ -81,7 +81,8 @@ export default function RootLayout({
         */}
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
       </head>
-      <body className="min-h-full flex flex-col">
+      {/* `min-h-dvh` so a `flex-1` frame fills what is left under DevBanner (E020). */}
+      <body className="min-h-dvh flex flex-col">
         {/*
           ABOVE THE PROVIDERS, AND ABOVE BOTH SHELLS.
 

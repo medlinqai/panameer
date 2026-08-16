@@ -14,6 +14,13 @@
  * `.pm-home` stylesheet and reuses its `.stats`/`.stat` classes; the wizard
  * sits outside that scope, so it gets a Tailwind equivalent. Same numbers, same
  * order, same labels — the SOURCE is shared even though the paint is not.
+ *
+ * ⚠ THE "wizard" VARIANT CURRENTLY HAS NO CALLER, and that is deliberate, not
+ * an oversight. It rendered as the aside on `/assess` step 1; E018 removed that
+ * aside because `WizardShell` only applies its `1fr_380px` grid when an aside
+ * exists, and the step needed the full width. The variant is LEFT IN PLACE —
+ * deleting the prop is Scott'''s call, not a tidy-up — so if the strip returns to
+ * any wizard surface it returns as the same three numbers, not a new copy.
  */
 /**
  * ⚠ PLACEHOLDER — SCOTT HAS NOT CONFIRMED THIS FIGURE.

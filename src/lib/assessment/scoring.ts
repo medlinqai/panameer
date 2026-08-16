@@ -81,10 +81,30 @@ const LOADED_LABOR_CENTS = 75_000_00;
  * and low. 6% of addressable spend for a fully manual domain is a fraction of
  * what a vendor deck would claim, which is the point.
  */
+/*
+  ⚠ 23 AND 37 ARE INTERPOLATED FROM THE EXISTING CURVE, NOT INVENTED.
+
+  The ladder went from five rungs (10/20/30/40/50) to four (10/23/37/50). The
+  endpoints did not move, so `maturityPercent` and the `rung >= 50` zero-gap
+  ceiling are untouched; only two new keys were needed, and they are read off
+  the curve that was already here rather than picked:
+
+    23 sits between 20 and 30.  slope = (0.025 - 0.045) / 10 = -0.0020 / point
+                                0.045 + 3 x (-0.0020) = 0.039
+    37 sits between 30 and 40.  slope = (0.010 - 0.025) / 10 = -0.0015 / point
+                                0.025 + 7 x (-0.0015) = 0.0145
+
+  ⚠ THE FIVE ORIGINAL KEYS STAY. Assessments already stored answer 20, 30 and 40,
+  and a report re-scored after this change has to produce the number it produced
+  before — `GAP_BY_RUNG[20]` returning undefined would silently zero a stored
+  respondent's opportunity via the `?? 0` below.
+*/
 const GAP_BY_RUNG: Record<number, number> = {
   10: 0.06,
   20: 0.045,
+  23: 0.039,
   30: 0.025,
+  37: 0.0145,
   40: 0.01,
   50: 0,
 };
