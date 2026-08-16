@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { WizardShell } from "@/components/onboarding/WizardShell";
-import { ProofStats } from "@/components/marketing/ProofStats";
 import {
   OptionCard,
   Chip,
@@ -62,8 +61,35 @@ import {
  * answers crammed into one field). Both live in `lib/assessment/bands.ts`.
  */
 
-const STEPS = ["basics", "process", "money", "maturity", "aimode"] as const;
+/**
+ * THIRTEEN STEPS, AND EIGHT OF THEM ARE GENERATED.
+ *
+ * Scott walked the old five-step version and filed ten errors, nine with one
+ * cause: all eight capability domains were asked on ONE screen — 48 chips, no
+ * hierarchy, a ladder drawn as an unordered cloud. The deck
+ * (`4. Project Documents/AI Maturity Assessment.pptx`) answers it with one
+ * screen per domain, and that is what this is.
+ *
+ * ⚠ THE DOMAIN STEPS ARE DERIVED FROM `P2P_DOMAINS`, NOT LISTED. Adding a ninth
+ * domain to the bank adds a ninth step, renumbers the counter and renames the
+ * "Next: …" button with no edit here. Listing them twice is how a bank and a
+ * wizard come to disagree about how many questions there are.
+ */
+const domainStepId = (key: string) => `cd_${key}` as const;
+
+const STEPS = [
+  "basics",
+  "money",
+  "process",
+  ...P2P_DOMAINS.map((d) => domainStepId(d.key)),
+  "aimode",
+  "contact",
+] as const;
 type Step = (typeof STEPS)[number];
+
+/** The domain a `cd_*` step is asking about, or null for the other five. */
+const domainForStep = (step: Step) =>
+  P2P_DOMAINS.find((d) => domainStepId(d.key) === step) ?? null;
 
 /**
  * The step's own name beside the counter — the pattern brief_S/E024 set.
@@ -74,11 +100,19 @@ type Step = (typeof STEPS)[number];
  */
 const STEP_LABELS: Record<Step, string> = {
   basics: "Company Details",
+  money: "Financial Details",
   process: "Pick a Process",
-  money: "Your Numbers",
-  maturity: "How You Work Today",
-  aimode: "AI Mode",
-};
+  /*
+    Built from the bank so the label, the counter and the "Next: …" button all
+    read the same name. The deck titles these "Capability Domain: <Name>"; the
+    stepper shows the bare name because the counter beside it already says what
+    kind of thing it is, and "Next: Capability Domain: Contract Management"
+    reads as a stutter.
+  */
+  ...Object.fromEntries(P2P_DOMAINS.map((d) => [domainStepId(d.key), d.name])),
+  aimode: "One Last Question",
+  contact: "Where Do We Send It?",
+} as Record<Step, string>;
 
 /**
  * WS-4 — the required set, in ONE place, so the client gate cannot drift from
@@ -104,14 +138,26 @@ const STEP_LABELS: Record<Step, string> = {
   optional field is marked "(optional)", and the gate names the missing field on
   click and moves focus to it. Flagged in the report rather than papered over.
 */
-const REQUIRED_BASICS: { key: keyof Basics; label: string }[] = [
-  { key: "companyName", label: "Company name" },
-  { key: "email", label: "Your email" },
-  { key: "state", label: "State of filing" },
-  { key: "entityType", label: "Entity type" },
-  { key: "revenueBand", label: "Last year's revenue" },
-  { key: "ebitdaBand", label: "Roughly, your profit (EBITDA) last year" },
-  { key: "platform", label: "What runs your business today" },
+/**
+ * ⚠ THIS LIST IS THE CLIENT MIRROR OF THE `z` SCHEMA in
+ * `src/app/api/assessment/route.ts`, and `check:assessment` asserts the two name
+ * EXACTLY the same fields. It stays whole even though the fields are now spread
+ * across two steps — a shorter list here would mean the client happily submits
+ * something the API rejects, which is the drift the test exists to catch.
+ *
+ * `on` says WHICH STEP asks for the field, so each step can gate its own subset.
+ * Email moved to the last step (deck slide 13, "where do we send the link?") —
+ * a funnel change, not a validation change. It is still required and the API
+ * contract is untouched.
+ */
+const REQUIRED_BASICS: { key: keyof Basics; label: string; on: Step }[] = [
+  { key: "companyName", label: "Company name", on: "basics" },
+  { key: "state", label: "State of filing", on: "basics" },
+  { key: "entityType", label: "Entity type", on: "basics" },
+  { key: "platform", label: "What runs your business today", on: "basics" },
+  { key: "revenueBand", label: "Last year's revenue", on: "money" },
+  { key: "ebitdaBand", label: "Roughly, your profit (EBITDA) last year", on: "money" },
+  { key: "email", label: "Your email", on: "contact" },
 ];
 
 type Basics = {
@@ -213,6 +259,14 @@ export function AssessmentWizard({
         ? "Get My Report"
         : `Next: ${STEP_LABELS[STEPS[STEPS.indexOf(step) + 1]]}`),
     ...opts,
+    /*
+      ⚠ E017 — `.marketing-surface` on every step. `/assess` was the only public
+      pre-account page without it (`/learn`, `/explore`, `/assess/r/[token]` and
+      `/assess/scope` all have it), which is why dark mode painted `text-ink`
+      figures onto a dark card. It goes on the frame rather than on a wrapper so
+      the `body > flex-1` chain that E020 depends on stays intact.
+    */
+    frameClassName: "marketing-surface",
     step: STEPS.indexOf(step) + 1,
     totalSteps: STEPS.length,
     stepLabel: STEP_LABELS[step],
@@ -221,7 +275,11 @@ export function AssessmentWizard({
     busy,
   });
 
-  const answeredDomains = P2P_DOMAINS.filter((d) => d.key in maturity).length;
+  /*
+    The old single-screen maturity step counted answers to decide between
+    "Continue" and "Continue anyway". With one domain per step there is nothing
+    to count — each step is individually skippable — so the counter went with it.
+  */
 
   /**
    * WS-4 — CONTINUE IS NEVER SILENTLY DISABLED.
@@ -232,14 +290,17 @@ export function AssessmentWizard({
    * field and moves focus to it, so the answer is one glance away instead of a
    * hunt.
    */
-  const firstMissing = () =>
-    REQUIRED_BASICS.find((f) => !String(basics[f.key] ?? "").trim()) ?? null;
+  /** The first unanswered required field ON THIS STEP. */
+  const firstMissing = (onStep: Step) =>
+    REQUIRED_BASICS.find(
+      (f) => f.on === onStep && !String(basics[f.key] ?? "").trim()
+    ) ?? null;
 
-  function continueBasics() {
-    const missing = firstMissing();
+  function continueStep(onStep: Step, then: () => void) {
+    const missing = firstMissing(onStep);
     if (!missing) {
       setError(null);
-      next();
+      then();
       return;
     }
     setError(`${missing.label} is needed before we can size your opportunity.`);
@@ -271,7 +332,7 @@ export function AssessmentWizard({
   }
 
   switch (step) {
-    // ---- 0 — COMPANY BASICS -------------------------------------------------
+    // ---- 1 — COMPANY DETAILS ------------------------------------------------
     case "basics":
       return (
         <WizardShell
@@ -280,14 +341,25 @@ export function AssessmentWizard({
             subtitle:
               "First, a few basics about your business. Ninety seconds. This is what lets us size the opportunity in real dollars — and figure out how much of it the tax code can fund.",
             /* Never disabled — see `continueBasics`. */
-            onContinue: continueBasics,
-            /* WS-9 — the same three-stat strip the home hero renders. */
-            aside: <ProofStats variant="wizard" />,
+            onContinue: () => continueStep("basics", next),
+            /*
+              ⚠ NO ASIDE. `<ProofStats variant="wizard" />` used to sit here and
+              it cost this step a third of its width: `WizardShell` only applies
+              the `1fr_380px` grid when an aside exists, so removing it widens
+              the step by itself and eight fields stop being a single tall
+              column. E018.
+            */
           })}
         >
           {error && <Notice>{error}</Notice>}
 
-          <div className="space-y-5">
+          {/*
+            TWO COLUMNS AT `lg:` — the step is full width now the aside is gone,
+            and seven fields stacked in one column is what put the Continue
+            button off the bottom of the screen. `items-start` so a field that
+            grows a hint does not stretch its neighbour.
+          */}
+          <div className="grid gap-x-8 gap-y-5 lg:grid-cols-2 lg:items-start">
             <div data-field="companyName">
               <Field label="Company name">
                 <TextInput
@@ -295,18 +367,6 @@ export function AssessmentWizard({
                   value={basics.companyName}
                   onChange={(e) => set("companyName", e.target.value)}
                   placeholder="Meridian Dental Group"
-                />
-              </Field>
-            </div>
-
-            <div data-field="email">
-              <Field label="Your email" hint="Your report link is delivered here.">
-                <TextInput
-                  aria-required="true"
-                  type="email"
-                  value={basics.email}
-                  onChange={(e) => set("email", e.target.value)}
-                  placeholder="you@company.com"
                 />
               </Field>
             </div>
@@ -391,47 +451,6 @@ export function AssessmentWizard({
             <p className="-mt-2 text-[13px] text-ink-2">
               State and entity type together set the tax picture — not the state alone.
             </p>
-
-            <div data-field="revenueBand">
-            <Field label="Last year's revenue">
-              <div className="flex flex-wrap gap-2" role="group" aria-label="Last year's revenue">
-                {REVENUE_BANDS.map((b) => (
-                  <Chip
-                    key={b.id}
-                    selected={basics.revenueBand === b.id}
-                    onClick={() => set("revenueBand", b.id)}
-                  >
-                    {b.label}
-                  </Chip>
-                ))}
-              </div>
-            </Field>
-            </div>
-
-            {/*
-              WS-4 — EBITDA IS REQUIRED NOW, and the helper names the payoff
-              instead of the escape hatch. funding = EBITDA x TAX_RATE, so
-              skipping it produced a savings figure with no funding figure —
-              half a report. It is a band, so the ask stays small.
-            */}
-            <div data-field="ebitdaBand">
-            <Field
-              label="Roughly, your profit (EBITDA) last year"
-              hint="A band is fine. This is what lets us estimate how much of the work the tax code can fund."
-            >
-              <div className="flex flex-wrap gap-2" role="group" aria-label="Roughly, your profit (EBITDA) last year">
-                {EBITDA_BANDS.map((b) => (
-                  <Chip
-                    key={b.id}
-                    selected={basics.ebitdaBand === b.id}
-                    onClick={() => set("ebitdaBand", basics.ebitdaBand === b.id ? "" : b.id)}
-                  >
-                    {b.label}
-                  </Chip>
-                ))}
-              </div>
-            </Field>
-            </div>
 
             <div data-field="platform">
             <Field label="What runs your business today?">
@@ -530,13 +549,56 @@ export function AssessmentWizard({
       return (
         <WizardShell
           {...shell({
-            title: "A Few Numbers First",
+            /* Deck slide 2's own title. */
+            title: "Financial Details",
             subtitle: "Bands are fine — this is what turns a generic list into your dollars.",
             continueDisabled: !spendBand || !costLeverBand || !headcountBand,
-            onContinue: next,
+            onContinue: () => continueStep("money", next),
           })}
         >
-          <div className="space-y-6">
+          {/* Two columns at `lg:`, same reasoning as Company Details. */}
+          <div className="grid gap-x-8 gap-y-6 lg:grid-cols-2 lg:items-start">
+            <div data-field="revenueBand">
+            <Field label="Last year's revenue">
+              <div className="flex flex-wrap gap-2" role="group" aria-label="Last year's revenue">
+                {REVENUE_BANDS.map((b) => (
+                  <Chip
+                    key={b.id}
+                    selected={basics.revenueBand === b.id}
+                    onClick={() => set("revenueBand", b.id)}
+                  >
+                    {b.label}
+                  </Chip>
+                ))}
+              </div>
+            </Field>
+            </div>
+
+            {/*
+              WS-4 — EBITDA IS REQUIRED NOW, and the helper names the payoff
+              instead of the escape hatch. funding = EBITDA x TAX_RATE, so
+              skipping it produced a savings figure with no funding figure —
+              half a report. It is a band, so the ask stays small.
+            */}
+            <div data-field="ebitdaBand">
+            <Field
+              label="Roughly, your profit (EBITDA) last year"
+              hint="A band is fine. This is what lets us estimate how much of the work the tax code can fund."
+            >
+              <div className="flex flex-wrap gap-2" role="group" aria-label="Roughly, your profit (EBITDA) last year">
+                {EBITDA_BANDS.map((b) => (
+                  <Chip
+                    key={b.id}
+                    selected={basics.ebitdaBand === b.id}
+                    onClick={() => set("ebitdaBand", basics.ebitdaBand === b.id ? "" : b.id)}
+                  >
+                    {b.label}
+                  </Chip>
+                ))}
+              </div>
+            </Field>
+            </div>
+
             <Field label="About how much did you spend with outside suppliers last year?">
               <div className="flex flex-wrap gap-2">
                 {SPEND_BANDS.map((b) => (
@@ -581,65 +643,81 @@ export function AssessmentWizard({
       );
 
     // ---- 2b — THE MATURITY TAPS --------------------------------------------
-    case "maturity":
-      return (
-        <WizardShell
-          {...shell({
-            title: "Now, How You Do It Today",
-            subtitle:
-              "One tap each. “Not sure” is a real answer — it usually means nobody owns it, which is worth knowing.",
-            continueDisabled: answeredDomains === 0,
-            continueLabel:
-              answeredDomains < P2P_DOMAINS.length ? "Continue anyway" : "Continue",
-            onContinue: next,
-            wide: true,
-          })}
-        >
-          <div className="space-y-7">
-            {P2P_DOMAINS.map((d) => (
-              <div key={d.key}>
-                <p className="text-[15.5px] font-bold text-ink">
-                  {d.question}{" "}
-                  <span className="font-semibold text-ink-2">({d.formal})</span>
-                  {d.costLever && (
-                    <span
-                      className="ml-2 rounded-full bg-magenta/10 px-2 py-0.5 text-[11.5px] font-bold text-magenta"
-                      title="A cost lever — what you answer here moves the price you pay, not just the effort."
-                    >
-                      ★ cost lever
-                    </span>
-                  )}
-                </p>
-                <div className="mt-2.5 flex flex-wrap gap-2">
-                  {d.rungs.map((label, i) => (
-                    <Chip
-                      key={label}
-                      selected={maturity[d.key] === MATURITY_RUNGS[i]}
-                      onClick={() =>
-                        setMaturity((m) => ({ ...m, [d.key]: MATURITY_RUNGS[i] }))
-                      }
-                    >
-                      {label}
-                    </Chip>
-                  ))}
-                  {/*
-                    "Not sure" stores null, NOT the bottom rung. Scoring treats
-                    the two completely differently — see scoring.ts.
-                  */}
-                  <Chip
-                    selected={d.key in maturity && maturity[d.key] === null}
-                    onClick={() => setMaturity((m) => ({ ...m, [d.key]: null }))}
-                  >
-                    Not sure
-                  </Chip>
-                </div>
-              </div>
-            ))}
-          </div>
-        </WizardShell>
-      );
+  }
 
-    // ---- 2c — AI MODE, ASKED ONCE ------------------------------------------
+  /*
+    ── ONE STEP PER CAPABILITY DOMAIN (WS-3) ────────────────────────────────────
+
+    Handled before the switch because `cd_*` is a family, not five literals. The
+    deck gives each domain a title, one plain question and four option rows; the
+    rows are the ONBOARDING TRAINSTOP pattern — `OptionCard` from
+    `onboarding/controls`, the same component `/join/requester`, `/join/provider`
+    and `/join/buyer` use — rather than the chips this step used to render.
+  */
+  const domain = domainForStep(step);
+  if (domain) {
+    const chosen = maturity[domain.key];
+    return (
+      <WizardShell
+        {...shell({
+          /* The deck's own title, verbatim. */
+          title: `Capability Domain: ${domain.name}`,
+          subtitle: domain.question,
+          /*
+            NEVER BLOCKING. Every domain is skippable — `next()` with nothing
+            chosen simply leaves the key absent, which scores exactly like "Not
+            sure": excluded from the average rather than counted as the worst
+            rung. Gating eight steps would turn a free diagnostic into an exam.
+          */
+          onContinue: next,
+        })}
+      >
+        <div className="space-y-3">
+          {domain.rungs.map((r, i) => (
+            <OptionCard
+              key={r.title}
+              selected={chosen === MATURITY_RUNGS[i]}
+              onClick={() =>
+                setMaturity((m) => ({ ...m, [domain.key]: MATURITY_RUNGS[i] }))
+              }
+              title={r.title}
+              description={r.examples}
+            />
+          ))}
+        </div>
+
+        {/*
+          ⚠ "NOT SURE" IS SUBORDINATE, NOT A FIFTH CARD — and it is kept against
+          the deck, which drops it.
+
+          `scoring.ts` depends on `null` to EXCLUDE a domain from the maturity
+          average. Without this row all eight become mandatory and an honest "I
+          don't know" has to be entered as a false answer — which then scores,
+          and ranks, and ends up on the report as a recommendation. A domain
+          nobody can describe is a real finding (usually "no owner"), and it is
+          surfaced separately.
+
+          Rendered as a plain text row so it reads as an escape hatch rather
+          than as a fifth rung competing with the four.
+        */}
+        <button
+          type="button"
+          onClick={() => setMaturity((m) => ({ ...m, [domain.key]: null }))}
+          aria-pressed={domain.key in maturity && chosen === null}
+          className={
+            "mt-4 text-[14.5px] underline underline-offset-4 transition-colors " +
+            (domain.key in maturity && chosen === null
+              ? "font-bold text-magenta"
+              : "text-ink-2 hover:text-ink")
+          }
+        >
+          I&rsquo;m not sure
+        </button>
+      </WizardShell>
+    );
+  }
+
+  switch (step) {
     case "aimode":
       return (
         <WizardShell
@@ -647,8 +725,12 @@ export function AssessmentWizard({
             title: "One Last Question",
             subtitle: AI_MODE_QUESTION,
             continueDisabled: !aiMode,
-            continueLabel: "See my results",
-            onContinue: submit,
+            /*
+              This no longer submits — the email step follows it now (deck slide
+              13). The label comes from STEP_LABELS via `shell()` like every
+              other step, so it reads "Next: Where Do We Send It?".
+            */
+            onContinue: next,
           })}
         >
           {error && <Notice>{error}</Notice>}
@@ -662,6 +744,49 @@ export function AssessmentWizard({
               />
             ))}
           </div>
+        </WizardShell>
+      );
+
+    // ---- 13 — WHERE DO WE SEND IT? -----------------------------------------
+    case "contact":
+      return (
+        <WizardShell
+          {...shell({
+            title: "We\u2019re Working on Your Dashboard",
+            subtitle: "Where do we send the link?",
+            /*
+              ⚠ STILL REQUIRED. Moving email to the end is a FUNNEL change, not
+              a validation change: it is the delivery address for the magic
+              link, and `/api/assessment` rejects a submit without it. The API
+              contract is untouched.
+            */
+            continueLabel: "See My Results",
+            onContinue: () => continueStep("contact", submit),
+          })}
+        >
+          {error && <Notice>{error}</Notice>}
+          <div className="max-w-xl" data-field="email">
+            <Field
+              label="Your email"
+              hint="Your report link is delivered here. We don\u2019t sell it or add you to a list."
+            >
+              <TextInput
+                aria-required="true"
+                type="email"
+                autoFocus
+                value={basics.email}
+                onChange={(e) => set("email", e.target.value)}
+                placeholder="you@company.com"
+              />
+            </Field>
+          </div>
+          {/*
+            ⚠ NO PHOTO CONTROL, DELIBERATELY. Slide 13 offers an optional "Add
+            Your Photo". There is no `Assessment` column to put it in, and the
+            brief is explicit that adding one is out of scope — so wiring it
+            would be more than a no-op and a control that discards its input is
+            worse than an absent one. Flagged in the report; not built.
+          */}
         </WizardShell>
       );
   }

@@ -34,6 +34,7 @@ export const FRAME_WIDTH = "max-w-5xl";
 export function OnboardingFrame({
   children,
   footer,
+  className = "",
   width = FRAME_WIDTH,
   /**
    * Tighter vertical rhythm for the ONE pre-verify page carrying a full form
@@ -72,10 +73,24 @@ export function OnboardingFrame({
   compact?: boolean;
   centered?: boolean;
   contentWidth?: string;
+  /**
+   * Extra classes for the frame root. Used by `/assess` and `/assess/submitted`
+   * to add `marketing-surface`, which every sibling public page already has and
+   * without which dark mode paints `text-ink` on a dark card (E017).
+   */
+  className?: string;
 }) {
   const pad = compact ? "py-8 sm:py-10" : "py-10 sm:py-14";
   return (
-    <div className="flex min-h-screen flex-col bg-white font-body text-ink">
+    /*
+      ⚠ `flex-1`, NOT `min-h-screen` (E020). `min-h-screen` demanded a full
+      viewport for this box while `<DevBanner />` sits ~41px ABOVE it in the root
+      layout — so the frame was always taller than the space it had, and the
+      footer band started below the fold on every page of every wizard. `body`
+      carries `flex flex-col min-h-dvh`, so growing to fill instead of demanding
+      a viewport gets the same result and leaves room for whatever is above.
+    */
+    <div className={`flex flex-1 flex-col bg-white font-body text-ink ${className}`}>
       {/*
         Header rule spans the viewport; the logo lines up with the column.
 
@@ -121,7 +136,13 @@ export function OnboardingFrame({
       </main>
 
       {footer && (
-        <div className="border-t border-line">
+        /*
+          ⚠ STICKY (E024). On a step taller than the viewport there was no way to
+          know you could proceed without scrolling to the very end. It keeps the
+          frame's own background so content scrolls UNDER it rather than showing
+          through, and its existing `border-t` becomes the edge that says so.
+        */
+        <div className="sticky bottom-0 z-10 border-t border-line bg-white">
           <div
             className={`mx-auto flex w-full ${width} flex-wrap items-center justify-between gap-4 px-6 py-5`}
           >

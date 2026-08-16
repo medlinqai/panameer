@@ -325,3 +325,14 @@ body {
 :root[data-theme="dark"] .marketing-surface .bg-white {
   background-color: #fff;
 }
+/*
+  ⚠ AND THE SAME-ELEMENT CASE, which the descendant rule above cannot reach.
+  `OnboardingFrame` puts `marketing-surface` and `bg-white` on ONE element, so
+  in dark mode it fell through to `:root[data-theme="dark"] .bg-white` and
+  painted itself #171128 while the surface forced the LIGHT ink palette on
+  everything inside it — `text-ink` #171E3E on a #171128 card, contrast 1.13.
+  That is E017, and adding the class alone did not fix it.
+*/
+:root[data-theme="dark"] .marketing-surface.bg-white {
+  background-color: #fff;
+}

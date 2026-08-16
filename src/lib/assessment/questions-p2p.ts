@@ -7,12 +7,12 @@
  * question. Where the two differ, the prototype wins — it is the copy Scott
  * iterated on, and the bank is the structure underneath it.
  *
- * ── THE LADDER IS THE SAME FIVE RUNGS EVERYWHERE ─────────────────────────────
+ * ── THE LADDER IS THE SAME FOUR RUNGS EVERYWHERE ─────────────────────────────
  *
- * Manual → Spreadsheet → System → Integrated → AI-driven, scored 10/20/30/40/50
- * and phrased per domain in the respondent's own words ("they just ask, by
- * email"), never in ERP jargon. The consistency is not decoration: it is the
- * only reason one score can roll up across eight domains and, later, across
+ * Manual tools → purpose-built software → integrated ERP on best practices →
+ * AI agents, scored 10/23/37/50, with the EXAMPLES phrased per domain so a
+ * reader recognises their own desk. The consistency is not decoration: it is
+ * the only reason one score can roll up across eight domains and, later, across
  * four processes.
  *
  * ── "NOT SURE" IS AN ANSWER, NOT A SKIP ──────────────────────────────────────
@@ -23,9 +23,32 @@
  * an admission of ignorance. It is excluded from the maturity average and
  * surfaced separately. See `scoring.ts`.
  */
-
-export const MATURITY_RUNGS = [10, 20, 30, 40, 50] as const;
+/**
+ * ── THE LADDER IS FOUR RUNGS, 10 / 23 / 37 / 50 ──────────────────────────────
+ *
+ * Manual tools → purpose-built software → integrated ERP on best practices →
+ * AI agents. From Scott's deck, `4. Project Documents/AI Maturity Assessment.pptx`.
+ *
+ * ⚠ THE ENDPOINTS ARE 10 AND 50 AND THAT IS DELIBERATE. `maturityPercent` is
+ * `((avg - 10) / 40) x 100` and `domainOpportunity` returns a zero gap at
+ * `rung >= 50`. Renumbering to 10/20/30/40 would have needed a new divisor AND
+ * would have left the top rung with opportunity still on the table. Keeping the
+ * floor and the ceiling means the formula does not move at all — only the
+ * values a step can emit, plus two new `GAP_BY_RUNG` keys.
+ */
+export const MATURITY_RUNGS = [10, 23, 37, 50] as const;
 export type Rung = (typeof MATURITY_RUNGS)[number];
+
+/**
+ * One rung of the ladder: the title is the same in all eight domains, the
+ * examples are not.
+ *
+ * ⚠ THE EXAMPLES ARE THE POINT. Four abstract tiers read as a taxonomy nobody
+ * can place themselves in; "Excel/XLS, Sharepoint, SmartSheets, Word, Email"
+ * is a sentence a procurement manager recognises as their own desk. Every
+ * string is verbatim from the deck.
+ */
+export type RungOption = { title: string; examples: string };
 
 export type CapabilityDomain = {
   /** Stable key — stored in the answers JSON. Renaming breaks stored reports. */
@@ -36,8 +59,8 @@ export type CapabilityDomain = {
   formal: string;
   /** The maturity question, in the owner's language. */
   question: string;
-  /** Five rungs, 10→50, in order. */
-  rungs: string[];
+  /** Four rungs, 10 -> 50, in order. */
+  rungs: RungOption[];
   /**
    * ⭐ in the prototype — the domain where the cost lever bites hardest, so a
    * low score here is worth more than a low score elsewhere at equal spend.
@@ -46,117 +69,139 @@ export type CapabilityDomain = {
   costLever?: boolean;
 };
 
+/* The two upper rungs are identical in all eight domains — the deck repeats them
+   verbatim, so they are named once rather than pasted eight times. */
+const INTEGRATED: RungOption = {
+  title: "Integrated ERP Applications using Best Practices",
+  examples:
+    "Manage by Exceptions, Self-Service, Custom Connector or APIs, Per App Rptng",
+};
+const AI_NATIVE: RungOption = {
+  title: "AI Native or Enabled Agents",
+  examples: "ERP Software Agents, External 3rd Party Agents, MCP Agent Suites",
+};
+const manual = (examples: string): RungOption => ({
+  title: "Manual or Offline Computing Tools",
+  examples,
+});
+const purposeBuilt = (examples: string): RungOption => ({
+  title: "Purpose-Built Software Applications",
+  examples,
+});
+
+/*
+  ⚠ EIGHT DOMAINS HERE, TEN ON THE HOME PAGE. `lib/capability-domains.ts`
+  advertises ten P2P capability domains on `/`; this bank measures eight. The
+  two that have never been assessed are "Data, Analytics & AI Governance" and
+  "Change Management & AI Adoption". Authoring them is a separate brief — do not
+  paper over the gap by inventing ladders for them here.
+*/
 export const P2P_DOMAINS: CapabilityDomain[] = [
   {
     key: "requisitioning",
-    name: "Requesting what you need to buy",
+    name: "Request and Demand Management",
     formal: "Requisitioning",
-    question: "How do people request something to buy?",
+    question: "How do employees request goods and services?",
     rungs: [
-      "Manual — ask by email, text, in person",
-      "A spreadsheet or form",
-      "A system that routes for approval",
-      "Self-service with catalogs & policy",
-      "AI-driven — drafts, routes, flags off-policy",
+      manual("Excel/XLS, Sharepoint, SmartSheets, Word, Email, etc."),
+      purposeBuilt(
+        "Enterprise Resource Planning or ERP Applications (HCM, F&A, SCM, etc.)"
+      ),
+      INTEGRATED,
+      AI_NATIVE,
     ],
   },
   {
     key: "sourcing",
-    name: "Finding and choosing suppliers",
+    name: "Sourcing and Supplier Selection",
     formal: "Sourcing",
-    question: "How do you decide who to buy from, and at what price?",
+    question: "How do buyers select suppliers and item prices?",
     costLever: true,
     rungs: [
-      "Whoever we always use",
-      "Collect a few quotes by hand",
-      "A sourcing / RFQ tool",
-      "Tied to approved suppliers & spend data",
-      "AI recommends & scores options",
+      manual("Excel/XLS, Sharepoint, SmartSheets, etc."),
+      purposeBuilt("Scout, Vinimaya, Coupa, SciQuest, Ketera, Ariba, etc."),
+      INTEGRATED,
+      AI_NATIVE,
     ],
   },
   {
     key: "contracts",
-    name: "Managing supplier contracts",
+    name: "Contract Management",
     formal: "Contract Management",
-    question: "Where do your supplier contracts live, and how do you track them?",
+    question: "How does your organization contract with suppliers?",
     costLever: true,
     rungs: [
-      "Paper / PDFs in a drawer or inbox",
-      "A tracker with dates someone maintains",
-      "A contract repository with reminders",
-      "Linked to spend and compliance, auto-alerts",
-      "AI reads contracts, flags terms and risks",
+      manual("Excel/XLS, Sharepoint, Word, PDFs, etc."),
+      purposeBuilt("Deltek Costpoint, Focus Softnet, etc."),
+      INTEGRATED,
+      AI_NATIVE,
     ],
   },
   {
     key: "purchase_orders",
-    name: "Issuing and tracking purchase orders",
+    name: "Purchase Order Management",
     formal: "Purchase Order Management",
-    question: "How do you place and track orders with suppliers?",
+    question: "How does your organization place and manage orders with suppliers?",
     rungs: [
-      "Email / phone; no formal PO",
-      "POs typed and logged by hand",
-      "POs created and tracked in a tool",
-      "POs flow to receiving and invoicing automatically",
-      "AI creates, routes and monitors POs",
+      manual("Excel/XLS, Sharepoint, Word, PDFs, etc."),
+      purposeBuilt("Coupa, SciQuest, Ketera, Ariba, etc."),
+      INTEGRATED,
+      AI_NATIVE,
     ],
   },
   {
     key: "receiving",
-    name: "Confirming what you received",
+    name: "Goods & Services Receipts",
     formal: "Goods & Services Receipt",
-    question: "How do you confirm you actually got what you ordered?",
+    question: "How do buyers confirm requesters received what they ordered?",
     rungs: [
-      "Someone eyeballs it; often not recorded",
-      "Receipts noted in a log",
-      "Receipts recorded against the order",
-      "Receiving auto-matches order → invoice",
-      "AI reconciles receipts, flags shortages",
+      manual("Excel/XLS, Sharepoint, Word, PDFs, email, etc."),
+      purposeBuilt("Coupa, SciQuest, Ketera, Ariba, etc."),
+      INTEGRATED,
+      AI_NATIVE,
     ],
   },
   {
     key: "invoices",
-    name: "Processing supplier invoices",
+    name: "Invoice Management",
     formal: "Invoice matching",
     question: "How do supplier invoices get processed?",
     rungs: [
-      "Manual / keyed in",
-      "A spreadsheet",
-      "In a system, matched by hand",
-      "Auto-matched to PO & receipt",
-      "AI reads, matches, codes and flags issues",
+      manual("Excel/XLS, Sharepoint, Word, PDFs, email, etc."),
+      purposeBuilt("Coupa, SciQuest, Ketera, Ariba, etc."),
+      INTEGRATED,
+      AI_NATIVE,
     ],
   },
   {
     key: "payments",
-    name: "Paying suppliers",
+    name: "Invoice Settlement/Payment",
     formal: "Payments & Cash",
-    question: "How do you pay suppliers?",
+    question: "How does your organization pay suppliers?",
     costLever: true,
     rungs: [
-      "Checks / manual transfers, one at a time",
-      "A payment run tracked by hand",
-      "Payments run from accounting or the ERP",
-      "Scheduled runs tied to approvals and cash",
-      "AI optimises timing and discounts, detects fraud",
+      manual("Excel/XLS, Sharepoint, Word, PDFs, email, etc."),
+      purposeBuilt("Coupa, SciQuest, Ketera, Ariba, etc."),
+      INTEGRATED,
+      AI_NATIVE,
     ],
   },
   {
     key: "supplier_risk",
-    name: "Vetting and monitoring suppliers",
+    name: "Supplier Risk & Compliance",
     formal: "Supplier Risk & Compliance",
-    question: "How do you vet and keep tabs on suppliers?",
+    question: "How does your organization vet and manage suppliers?",
     rungs: [
-      "We don't really; trust and history",
-      "A checklist of docs by hand",
-      "An onboarding portal that stores documents",
-      "Ongoing monitoring tied to spend and contracts",
-      "AI monitors risk, expirations and compliance",
+      manual("Excel/XLS, Sharepoint, Word, PDFs, email, etc."),
+      purposeBuilt("Coupa, SciQuest, Ketera, Ariba, etc."),
+      INTEGRATED,
+      AI_NATIVE,
     ],
   },
 ];
 
-/** The rung index (0-4) → the stored score. `null` = "Not sure". */
+
+/** The rung index (0-3) → the stored score. `null` = "Not sure". */
 export function rungScore(index: number): Rung {
   return MATURITY_RUNGS[index];
 }
