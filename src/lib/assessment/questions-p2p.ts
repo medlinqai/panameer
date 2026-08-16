@@ -76,31 +76,10 @@ const INTEGRATED: RungOption = {
   examples:
     "Manage by Exceptions, Self-Service, Custom Connector or APIs, Per App Rptng",
 };
-/**
- * ⚠ RUNG 4 NAMES PANAMEER'S OWN AGENTS, AND SOME DO NOT EXIST YET (E027).
- *
- * Rungs 1-3 name other people's software — Excel, Sharepoint, Coupa, Ariba,
- * Deltek. Rung 4 named nothing: the same generic "ERP Software Agents, External
- * 3rd Party Agents, MCP Agent Suites" in all eight domains. So the one rung
- * describing where Panameer wants the reader to GO was the one rung they could
- * not picture, which is the asymmetry this fixes.
- *
- * ⚠ THESE ARE PRODUCT CLAIMS ON A PUBLIC, PRE-ACCOUNT PAGE. A few exist as
- * mockups on `/` — Price Alert Agent is the Price Alerts lightbox — and most do
- * not exist at all. Scott is doing that deliberately ("looking to sell ideas
- * while they are taking the maturity assessment"), so this is not a defect to
- * soften. It IS the same class of unverified public claim as the tax-savings
- * copy and the uncleared Oracle mark, and belongs behind the same gate.
- *
- * ⚠ DO NOT ADD, INVENT OR "IMPROVE" A NAME, and do not attach availability
- * language, a badge or "coming soon". The strings are verbatim from
- * `4. Project Documents/2. Design/01. Journeys/0.4 AI Maturity Assessment/AI
- * Maturity Assessment.pptx` (md5 589e08e3…), including Scott's trailing "etc.".
- */
-const aiNative = (examples: string): RungOption => ({
-  title: "AI Native and Programmable 3rd Party Agents",
-  examples,
-});
+const AI_NATIVE: RungOption = {
+  title: "AI Native or Enabled Agents",
+  examples: "ERP Software Agents, External 3rd Party Agents, MCP Agent Suites",
+};
 const manual = (examples: string): RungOption => ({
   title: "Manual or Offline Computing Tools",
   examples,
@@ -129,9 +108,7 @@ export const P2P_DOMAINS: CapabilityDomain[] = [
         "Enterprise Resource Planning or ERP Applications (HCM, F&A, SCM, etc.)"
       ),
       INTEGRATED,
-      aiNative(
-        "Voice-Request Agent, Price Alert Agent, Services Procurement Fulfillment, etc."
-      ),
+      AI_NATIVE,
     ],
   },
   {
@@ -144,9 +121,7 @@ export const P2P_DOMAINS: CapabilityDomain[] = [
       manual("Excel/XLS, Sharepoint, SmartSheets, etc."),
       purposeBuilt("Scout, Vinimaya, Coupa, SciQuest, Ketera, Ariba, etc."),
       INTEGRATED,
-      aiNative(
-        "Contract Price Alert Agent, Quick Quote Agent, etc."
-      ),
+      AI_NATIVE,
     ],
   },
   {
@@ -159,9 +134,7 @@ export const P2P_DOMAINS: CapabilityDomain[] = [
       manual("Excel/XLS, Sharepoint, Word, PDFs, etc."),
       purposeBuilt("Deltek Costpoint, Focus Softnet, etc."),
       INTEGRATED,
-      aiNative(
-        "Adaptive PO Terms Agent, Off-Contract Spend Alert, Auto-Renewal & Extension Agent, etc."
-      ),
+      AI_NATIVE,
     ],
   },
   {
@@ -173,9 +146,7 @@ export const P2P_DOMAINS: CapabilityDomain[] = [
       manual("Excel/XLS, Sharepoint, Word, PDFs, etc."),
       purposeBuilt("Coupa, SciQuest, Ketera, Ariba, etc."),
       INTEGRATED,
-      aiNative(
-        "eHub Agent, Services Procurement Work Order Agent, Buyer Agent, etc."
-      ),
+      AI_NATIVE,
     ],
   },
   {
@@ -187,9 +158,7 @@ export const P2P_DOMAINS: CapabilityDomain[] = [
       manual("Excel/XLS, Sharepoint, Word, PDFs, email, etc."),
       purposeBuilt("Coupa, SciQuest, Ketera, Ariba, etc."),
       INTEGRATED,
-      aiNative(
-        "Services Procurement Settlement Agent, ERS Agent, Buyer Agent, etc."
-      ),
+      AI_NATIVE,
     ],
   },
   {
@@ -201,9 +170,7 @@ export const P2P_DOMAINS: CapabilityDomain[] = [
       manual("Excel/XLS, Sharepoint, Word, PDFs, email, etc."),
       purposeBuilt("Coupa, SciQuest, Ketera, Ariba, etc."),
       INTEGRATED,
-      aiNative(
-        "Match Exception Agent, Non-PO Commodity-based Auto-Coding, etc."
-      ),
+      AI_NATIVE,
     ],
   },
   {
@@ -216,9 +183,7 @@ export const P2P_DOMAINS: CapabilityDomain[] = [
       manual("Excel/XLS, Sharepoint, Word, PDFs, email, etc."),
       purposeBuilt("Coupa, SciQuest, Ketera, Ariba, etc."),
       INTEGRATED,
-      aiNative(
-        "Credit-Match Agent, Volume-Audit Agent, Credit-Card Payment Agent, etc."
-      ),
+      AI_NATIVE,
     ],
   },
   {
@@ -230,9 +195,7 @@ export const P2P_DOMAINS: CapabilityDomain[] = [
       manual("Excel/XLS, Sharepoint, Word, PDFs, email, etc."),
       purposeBuilt("Coupa, SciQuest, Ketera, Ariba, etc."),
       INTEGRATED,
-      aiNative(
-        "Government Compliance Agent, News Monitoring Agent, Credit Rating Agent, etc."
-      ),
+      AI_NATIVE,
     ],
   },
 ];
