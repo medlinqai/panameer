@@ -41,10 +41,19 @@ export async function generateMetadata({
  */
 export default async function ReportPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ token: string }>;
+  /**
+   * `?emailed=1` — set by the submit redirect, and ONLY when
+   * `/api/assessment` confirmed the send. It is a flag, not the address: the
+   * report already knows the address, and an email in a URL ends up in browser
+   * history, server logs and referrers.
+   */
+  searchParams: Promise<{ emailed?: string }>;
 }) {
   const { token } = await params;
+  const { emailed } = await searchParams;
   const model = await buildReport(token);
   if (!model) notFound();
 
@@ -52,7 +61,7 @@ export default async function ReportPage({
     <div className="marketing-surface flex min-h-screen flex-col bg-white font-body text-ink">
       <MarketingHeader />
       <main className="flex-1">
-        <ReportDashboard model={model} />
+        <ReportDashboard model={model} emailedTo={emailed === "1" ? model.email : null} />
       </main>
     </div>
   );

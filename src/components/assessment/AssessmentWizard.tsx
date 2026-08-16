@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { WizardShell } from "@/components/onboarding/WizardShell";
 import {
   OptionCard,
@@ -77,7 +78,14 @@ import {
  */
 const domainStepId = (key: string) => `cd_${key}` as const;
 
-const STEPS = [
+/**
+ * ⚠ THIRTEEN STEPS SIGNED OUT, TWELVE SIGNED IN — see `stepsFor` below.
+ *
+ * This is the full list. The step list the component actually walks is derived
+ * per-viewer, because a signed-in visitor is never asked for an email they have
+ * already given us.
+ */
+const ALL_STEPS = [
   "basics",
   "money",
   "process",
@@ -85,7 +93,22 @@ const STEPS = [
   "aimode",
   "contact",
 ] as const;
-type Step = (typeof STEPS)[number];
+type Step = (typeof ALL_STEPS)[number];
+
+/**
+ * ── PUBLIC IS NOT THE SAME AS ANONYMOUS ──────────────────────────────────────
+ *
+ * The email step asks "where do we send the link?". For someone already signed
+ * in the app knows, so the step is DROPPED rather than prefilled-and-shown: a
+ * form field holding an answer the visitor cannot usefully change is a question
+ * pretending to be a confirmation. The address is confirmed on the last
+ * remaining step instead, where it costs a line rather than a screen.
+ *
+ * The counter follows the list ("12 / 12", not "13 / 13" with a step that never
+ * appears), because `shell()` reads both from here.
+ */
+const stepsFor = (signedInEmail: string | null): readonly Step[] =>
+  signedInEmail ? ALL_STEPS.filter((s) => s !== "contact") : ALL_STEPS;
 
 /** The domain a `cd_*` step is asking about, or null for the other five. */
 const domainForStep = (step: Step) =>
@@ -149,6 +172,13 @@ const STEP_LABELS: Record<Step, string> = {
  * Email moved to the last step (deck slide 13, "where do we send the link?") —
  * a funnel change, not a validation change. It is still required and the API
  * contract is untouched.
+ *
+ * ⚠ EMAIL STAYS IN THIS LIST EVEN THOUGH A SIGNED-IN VISITOR NEVER SEES THAT
+ * STEP. The list mirrors the SCHEMA, and the schema still requires an email on
+ * every submit — the signed-in path satisfies it from the session rather than
+ * from a field. `firstMissing("contact")` is simply never called when the
+ * contact step is not in the walk. Trimming the entry would make the two
+ * statements of the rule disagree and `check:assessment` would say so.
  */
 const REQUIRED_BASICS: { key: keyof Basics; label: string; on: Step }[] = [
   { key: "companyName", label: "Company name", on: "basics" },
@@ -185,7 +215,45 @@ export function AssessmentWizard({
   industries?: IndustryOption[];
 }) {
   const router = useRouter();
-  const [step, setStep] = useState<Step>("basics");
+
+  /*
+    ── WHY THE SESSION IS READ HERE AND NOT IN THE SERVER COMPONENT ───────────
+
+    The brief asked for `/assess/page.tsx` to read it and pass a viewer down.
+    It cannot: that page carries `export const revalidate = 3600` and is ○ in
+    the build, and ANY server-side session read is a cookie read, which bails
+    the route out of static generation and turns it ƒ. Measured — it drops the
+    build's static count from 22 to 21, which is the brief's own stop condition.
+
+    So the split is: this session read decides only what the visitor is SHOWN,
+    and `api/assessment/route.ts` independently resolves `user_id` and the
+    stored email from the session on the server. That is not a weaker
+    arrangement — it is the one CLAUDE.md rule 3 requires either way. Nothing
+    below can grant itself anything: a browser that fakes a session here still
+    submits an assessment the API stamps from its own session, or from none.
+
+    `useSession()` is available because <SessionProvider> wraps the whole app in
+    `app/providers.tsx`; no new route or fetch is added for this.
+  */
+  const { data: session } = useSession();
+  const signedInEmail = session?.user?.email?.trim() || null;
+  const STEPS = useMemo(() => stepsFor(signedInEmail), [signedInEmail]);
+
+  const [rawStep, setRawStep] = useState<Step>("basics");
+  /*
+    THE STEP LIST CAN CHANGE UNDER THE VISITOR — once, and only ever by one
+    step. `useSession()` starts undefined and resolves a moment later, so a
+    signed-in visitor is briefly walking the 13-step list. Reaching "contact"
+    before that resolves takes twelve deliberate clicks against a resolve
+    measured in milliseconds, so this never fires in practice — but if it did,
+    every `STEPS.indexOf(step)` below would return -1 and the stepper would
+    render "0 / 12" with Back disabled, which is a dead end.
+
+    Corrected DURING RENDER rather than in an effect: the fix is a pure function
+    of the two values, and an effect that calls setState to repair derived state
+    is both a cascading render and a frame of the broken UI on screen first.
+  */
+  const step: Step = STEPS.includes(rawStep) ? rawStep : STEPS[STEPS.length - 1];
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -212,7 +280,7 @@ export function AssessmentWizard({
 
   const goTo = (s: Step) => {
     setError(null);
-    setStep(s);
+    setRawStep(s);
     if (typeof window !== "undefined") window.scrollTo({ top: 0 });
   };
   const next = () => {
@@ -312,19 +380,50 @@ export function AssessmentWizard({
   async function submit() {
     setBusy(true);
     setError(null);
+    /*
+      THE SESSION ADDRESS IS SENT WHEN THERE IS ONE, so the schema's required
+      `email` is satisfied without a step asking for it. It is NOT the authority
+      — the API re-resolves the address from its own session and overrides this
+      — but posting a blank email would just earn a 400 from a rule the visitor
+      cannot see.
+    */
+    const email = signedInEmail ?? basics.email;
     try {
       const r = await fetch("/api/assessment", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           ...basics,
+          email,
           process,
           answers: { maturity, spendBand, costLeverBand, headcountBand, aiMode },
         }),
       });
       const body = await r.json().catch(() => null);
       if (!r.ok) throw new Error(body?.error ?? "Could not submit your answers");
-      router.push(`/assess/submitted?to=${encodeURIComponent(basics.email)}`);
+
+      /*
+        ── THE REPORT IS THE LANDING, NOT THE EMAIL ────────────────────────────
+
+        This used to push to /assess/submitted, which told the visitor to check
+        an inbox — and with no RESEND_API_KEY configured, nothing ever arrived.
+        The assessment was write-only: eight minutes of answers, no report. The
+        API has always returned the share token; now it is used.
+
+        `?emailed=1` is set only when the API says the send actually happened,
+        so the report's "we've also emailed this to you" bar cannot claim a mail
+        that was skipped or refused. It is a flag, not the address — the report
+        already knows the address, and putting an email in a URL puts it in
+        history, logs and referrers.
+      */
+      const token: string | undefined = body?.shareToken;
+      if (token) {
+        router.push(`/assess/r/${token}${body?.emailSent ? "?emailed=1" : ""}`);
+        return;
+      }
+      /* No token in a 200 body should not happen — but losing the visitor is
+         worse than a plain page, so /assess/submitted stays as the floor. */
+      router.push(`/assess/submitted?to=${encodeURIComponent(email)}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not submit your answers");
       setBusy(false);
@@ -726,11 +825,15 @@ export function AssessmentWizard({
             subtitle: AI_MODE_QUESTION,
             continueDisabled: !aiMode,
             /*
-              This no longer submits — the email step follows it now (deck slide
-              13). The label comes from STEP_LABELS via `shell()` like every
-              other step, so it reads "Next: Where Do We Send It?".
+              ⚠ THE LAST STEP FOR A SIGNED-IN VISITOR. Signed out, the email
+              step follows (deck slide 13) and the label comes from STEP_LABELS
+              via `shell()` — "Next: Where Do We Send It?". Signed in there is
+              no step 13, so this submits, and it borrows the wording that step
+              used rather than inventing a second final-button label.
             */
-            onContinue: next,
+            ...(signedInEmail
+              ? { continueLabel: "See My Results", onContinue: submit }
+              : { onContinue: next }),
           })}
         >
           {error && <Notice>{error}</Notice>}
@@ -744,6 +847,22 @@ export function AssessmentWizard({
               />
             ))}
           </div>
+
+          {/*
+            THE ADDRESS IS CONFIRMED, NOT REQUESTED. This is what replaces step
+            13 for someone who is signed in — one line stating where the receipt
+            goes, instead of a screen asking for an address the app already
+            holds. It is not editable on purpose: the API stores the session's
+            address regardless of what the browser posts, so an input here could
+            only ever be a field that quietly ignores what you type.
+          */}
+          {signedInEmail && (
+            <p className="mt-6 rounded-brand border border-line bg-bg-soft p-4 text-[14.5px] text-ink-2">
+              Your report opens as soon as you submit, and it is saved to your
+              account. We&rsquo;ll email the link to{" "}
+              <span className="font-bold text-ink">{signedInEmail}</span> as well.
+            </p>
+          )}
         </WizardShell>
       );
 
@@ -755,10 +874,16 @@ export function AssessmentWizard({
             title: "We\u2019re Working on Your Dashboard",
             subtitle: "Where do we send the link?",
             /*
-              ⚠ STILL REQUIRED. Moving email to the end is a FUNNEL change, not
-              a validation change: it is the delivery address for the magic
-              link, and `/api/assessment` rejects a submit without it. The API
-              contract is untouched.
+              ⚠ STILL REQUIRED, AND SIGNED-OUT ONLY. Moving email to the end is
+              a FUNNEL change, not a validation change: it is the delivery
+              address for the magic link, and `/api/assessment` rejects a submit
+              without it. The API contract is untouched.
+
+              It is still the CAPTURE — the lead — which is why it was not
+              removed when the report stopped being delivered by email. What
+              changed is what it is FOR: a receipt and a bookmark sent after the
+              fact, rather than the door the report sits behind. A signed-in
+              visitor never reaches this step; see `stepsFor`.
             */
             continueLabel: "See My Results",
             onContinue: () => continueStep("contact", submit),
@@ -768,7 +893,15 @@ export function AssessmentWizard({
           <div className="max-w-xl" data-field="email">
             <Field
               label="Your email"
-              hint="Your report link is delivered here. We don\u2019t sell it or add you to a list."
+              /*
+                BRACES, NOT A BARE ATTRIBUTE STRING -- and that is the fix, not
+                a style choice. This shipped as hint="...We don\\u2019t sell it..."
+                and the page rendered those six characters literally: a JSX
+                attribute string is NOT a JS string literal, so \\uXXXX is never
+                interpreted there. Inside {} it is an ordinary string literal and
+                the escape resolves to the apostrophe. Wording is unchanged.
+              */
+              hint={"Your report link is delivered here. We don\u2019t sell it or add you to a list."}
             >
               <TextInput
                 aria-required="true"
