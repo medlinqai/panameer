@@ -1068,35 +1068,121 @@
    nearly. No sixth background value is introduced.
    ------------------------------------------------------------------------- */
 
-/* ---- HowItWorks --------------------------------------------------------- */
-.pm-home .hiw{background:#fff;padding:74px 0 80px;border-top:1px solid var(--line)}
+/* ---- HowItWorks — the VideoSequence treatment, ported ------------------- */
 /*
-  ONE ROW OF FIVE, WITH THE CHEVRONS IN THE FLOW.
-  `auto` columns for the chevrons rather than a gap pseudo-element: a chevron
-  drawn with ::after on the card would be inside the anchor's box and would
-  grow its hit area past its own border.
+  ⚠ THE VALUES COME FROM `components/marketing/VideoSequence.tsx`, THE MARKUP
+  DOES NOT. That component is the Learn/Connect/Create/Settle strip on
+  /find-work and it is Tailwind; this stays in home.css with the rest of the
+  home page. Ported so the two strips read as one system: gradient card, the
+  same 180deg navy scrim, ghosted 58px numeral, 22px label, #f0d6f4 kicker,
+  #d9d6ec body, 16px radius, and the 34px magenta seam circles.
+
+  NO photography, NO video, NO poster files. VideoSequence's backgrounds are
+  generated SVG gradients with an optional clip on top; these are plain CSS
+  gradients and nothing was added to /public.
 */
-.pm-home .hiw-grid{list-style:none;margin:34px 0 0;padding:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0}
+/*
+  THE BAND GOES DARK, and it has to. Cards this saturated on the old white
+  ground read as five stickers laid on a page. `--ink-2` is the existing token
+  (#0f1530) — the same family `.side` already uses — rather than a new hex.
+*/
+.pm-home .hiw{background:var(--ink-2);padding:70px 0 78px}
+.pm-home .hiw-h2{font-size:34px;color:#fff;font-weight:700;letter-spacing:-.5px;line-height:1.14;margin:12px 0 0;max-width:760px}
+
+/*
+  ── THE STRIP: ONE POSITIONING CONTEXT FOR THE RAIL, THE CARDS AND THE DOTS ──
+
+  `--g` is the grid gap and it is read by the rail and the circles, because the
+  seam of a gapped grid is NOT at a round percentage. For 5 columns of gap g:
+
+      card k centre = (2k-1)/10 * W  +  (0.2k - 0.6) * g
+      seam  k       =  k/5     * W  +  (0.2k - 0.5) * g
+
+  Both are derived below rather than eyeballed, so changing `--g` moves the
+  rail and the four circles with the cards instead of leaving them behind.
+*/
+/*
+  ⚠ 54px, NOT VideoSequence's 34px, AND THE RAIL IS WHY.
+
+  VideoSequence has no rail, so its 34px circle exactly filling its 34px gap
+  costs it nothing. Here it hid the entire feature: the rail is occluded by the
+  cards, so the ONLY place it can show is the gutters — and a 34px circle in a
+  34px gutter covers every visible pixel of it. Measured: 0px of rail on screen.
+
+  54 leaves 10px of rule entering and leaving each circle, which is what makes
+  them read as stations rather than as dots. The cost is 8px per card
+  (200 -> 184) and two labels going from two lines to three, which the
+  bottom-aligned 260px card absorbs. Reported rather than traded silently.
+*/
+.pm-home .hiw-strip{--g:54px;position:relative;margin-top:34px}
+.pm-home .hiw-grid{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:var(--g)}
 .pm-home .hiw-cell{display:flex;align-items:stretch;min-width:0}
-.pm-home .hiw-chev{flex:0 0 auto;align-self:center;padding:0 7px;color:var(--mag);opacity:.72;font-size:19px;line-height:1}
-.pm-home .hiw-card{position:relative;display:flex;flex-direction:column;flex:1;min-width:0;background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px 20px 24px;transition:border-color .18s,transform .18s,box-shadow .18s}
-.pm-home .hiw-card:hover{border-color:var(--mag);transform:translateY(-2px);box-shadow:0 18px 40px -32px rgba(23,30,62,.4)}
-.pm-home .hiw-card:focus-visible{outline:2px solid var(--mag);outline-offset:3px}
-/* THE NUMERAL LANDS FIRST. Large, magenta, and the top-most thing in the card. */
-.pm-home .hiw-n{font-family:var(--font-display),sans-serif;font-size:40px;font-weight:700;line-height:1;color:var(--mag);letter-spacing:-1px;margin-bottom:12px}
-.pm-home .hiw-l{font-family:var(--font-display),sans-serif;font-size:13px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--ink);line-height:1.3;margin-bottom:8px}
-.pm-home .hiw-s{font-size:14px;line-height:1.55;color:var(--muted)}
+
 /*
-  ⚠ CARD 5 MUST READ AS OPTIONAL BEFORE IT IS READ.
-  Dashed border, no fill, muted numeral. This is the most persuasive element on
-  the page — it is what removes the fear of a sales call — so it has to be
-  legible as a CHOICE at a glance rather than as a fifth thing you must do.
+  ⚠ THE RAIL IS THE FIX, NOT THE ARROWS.
+
+  Four circles sitting in four gutters read as four loose dots. The same four
+  on a 1px rule read as stations on a route — which is what the section is
+  describing. It runs centre-of-card-1 to centre-of-card-5 and sits BEHIND the
+  cards (z-index 0 against the card's 1), so it emerges from under one card and
+  vanishes under the next instead of ruling across them.
 */
-.pm-home .hiw-card.is-opt{background:transparent;border-style:dashed;border-color:#cfd5e2}
-.pm-home .hiw-card.is-opt:hover{border-color:var(--mag);background:transparent}
-.pm-home .hiw-card.is-opt .hiw-n{color:#b3bacb}
-.pm-home .hiw-card.is-opt .hiw-l{color:var(--text)}
-.pm-home .hiw-tag{position:absolute;top:-9px;left:20px;background:#fff;border:1px solid #cfd5e2;border-radius:999px;padding:2px 10px;font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.pm-home .hiw-rail{position:absolute;top:50%;height:0;border-top:1px solid rgba(255,255,255,.38);z-index:0;
+  left:calc(10% - .4 * var(--g));right:calc(30% - .2 * var(--g))}
+/*
+  THE LAST SEGMENT IS DASHED — card 4's centre to card 5's centre. The sequence
+  becomes visibly optional one card before the reader reaches the word.
+*/
+/*
+  ⚠ IT STOPS AT CARD 5'S LEFT EDGE, NOT ITS CENTRE — because card 5 is the one
+  card with no fill. "Behind the cards" occludes nothing there, so a rail run to
+  its centre printed a dashed line straight through "Free Consultation" and read
+  as a strikethrough. Card 5 left edge = 80% + 0.8g.
+*/
+.pm-home .hiw-rail.is-dashed{border-top-style:dashed;border-top-color:rgba(255,255,255,.42);
+  left:calc(70% + .2 * var(--g));right:calc(20% - .8 * var(--g))}
+
+.pm-home .hiw-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:2;
+  left:calc(var(--k) * 20% + (var(--k) * .2 - .5) * var(--g) - 17px);
+  display:grid;place-items:center;width:34px;height:34px;border-radius:50%;
+  background:var(--mag);color:#fff;font-size:15px;line-height:1;
+  box-shadow:0 6px 14px rgba(215,44,214,.4)}
+
+/* ---- the card ----------------------------------------------------------- */
+.pm-home .hiw-card{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:flex-end;flex:1;min-width:0;min-height:260px;overflow:hidden;border-radius:16px;padding:22px 20px;color:#fff;box-shadow:0 14px 34px rgba(23,30,62,.22);transition:transform .18s,box-shadow .18s}
+.pm-home .hiw-card:hover{transform:translateY(-3px);box-shadow:0 20px 44px rgba(23,30,62,.34)}
+.pm-home .hiw-card:focus-visible{outline:2px solid var(--mag);outline-offset:3px}
+/* VideoSequence's palette, in its order, so the strips share a family. */
+.pm-home .hiw-card.is-g1{background:linear-gradient(to bottom right,#3b2a63,#6d3b8e)}
+.pm-home .hiw-card.is-g2{background:linear-gradient(to bottom right,#28306b,#4a5db0)}
+.pm-home .hiw-card.is-g3{background:linear-gradient(to bottom right,#5a2a63,#a13c8e)}
+.pm-home .hiw-card.is-g4{background:linear-gradient(to bottom right,#1f2a58,#3a4c92)}
+/* The scrim: over the fill, under the words. It is what lets 13px body copy
+   sit on a saturated gradient without a hand-tuned colour per card. */
+.pm-home .hiw-scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(13,18,48,.15) 0%,rgba(13,18,48,.85) 100%)}
+.pm-home .hiw-n{position:absolute;left:16px;top:12px;font-family:var(--font-display),sans-serif;font-size:58px;font-weight:700;line-height:1;color:rgba(255,255,255,.16)}
+.pm-home .hiw-text{position:relative}
+.pm-home .hiw-l{display:block;font-family:var(--font-display),sans-serif;font-size:22px;font-weight:600;color:#fff;line-height:1.18;letter-spacing:-.2px}
+.pm-home .hiw-k{display:block;font-family:var(--font-display),sans-serif;font-size:14px;font-weight:500;color:#f0d6f4;margin:2px 0 8px}
+.pm-home .hiw-s{display:block;font-size:13px;line-height:1.45;color:#d9d6ec}
+
+/*
+  ⚠ CARD 5 KEEPS ITS OPTIONAL IDENTITY IN THE DARK TREATMENT.
+
+  The old dashed light card could not survive the port, so the same meaning is
+  carried differently: no fill at all, a dashed white outline, a dimmer numeral,
+  and the chip in the corner where VideoSequence puts its play badge. The card
+  is a hole in the strip rather than a fifth panel, which is exactly the read —
+  four things happen, and then this one is yours to decline.
+
+  No scrim: there is nothing behind it to scrim, and a navy ramp over the band
+  would print a faint rectangle where the "transparent" is supposed to be.
+*/
+.pm-home .hiw-card.is-opt{background:transparent;border:1px dashed rgba(255,255,255,.34);box-shadow:none}
+.pm-home .hiw-card.is-opt:hover{border-color:rgba(255,255,255,.55);box-shadow:none}
+.pm-home .hiw-card.is-opt .hiw-scrim{display:none}
+.pm-home .hiw-card.is-opt .hiw-n{color:rgba(255,255,255,.10)}
+.pm-home .hiw-tag{position:absolute;right:14px;top:14px;z-index:1;background:rgba(255,255,255,.18);border-radius:999px;padding:3px 10px;font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#fff}
 
 /* ---- StepDetail --------------------------------------------------------- */
 /* scroll-margin keeps the anchored heading clear of the sticky header (76px). */
@@ -1281,12 +1367,26 @@
 /* ---- responsive --------------------------------------------------------- */
 @media(max-width:1080px){
   /*
-    FIVE CARDS BECOME A GRID AND THE CHEVRONS GO. Below one row the arrows point
-    at whatever wrapped underneath, which is worse than no connector — the
-    ordered list still carries the sequence, and the numerals still read 1-5.
+    ⚠ FIVE CARDS BECOME A GRID AND THE RAIL GOES WITH THE CIRCLES.
+
+    Below one row a horizontal rule joins nothing and an arrow pointing right
+    points at whatever happened to wrap underneath. VideoSequence hides its
+    circles below `lg` for the same reason; the rail has to go with them,
+    because a rail with no stations is just a line through the artwork.
+
+    ⚠ 1080px, NOT TAILWIND'S 1024px `lg`. The brief asks for them GONE at 1024,
+    and Tailwind's lg would still be showing them at exactly that width. Tying
+    the connectors to the same breakpoint the grid collapses at is also the only
+    self-consistent rule: they exist if and only if the five cards are one row.
+
+    The ordered list still carries the sequence, and the ghosted numerals still
+    read 1-5.
   */
   .pm-home .hiw-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
-  .pm-home .hiw-chev{display:none}
+  .pm-home .hiw-rail,.pm-home .hiw-arrow{display:none}
+  /* The strip's own gap var follows the collapsed grid so nothing reads stale. */
+  .pm-home .hiw-strip{--g:16px}
+  .pm-home .hiw-h2{font-size:29px}
   .pm-home .rvs-cols{grid-template-columns:1fr}
   .pm-home .rvs-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
 }

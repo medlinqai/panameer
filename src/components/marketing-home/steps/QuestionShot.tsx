@@ -1,4 +1,5 @@
 import { P2P_DOMAINS } from "@/lib/assessment/questions-p2p";
+import { stepsFor } from "@/lib/assessment/steps";
 
 /**
  * STEP 1 GRAPHIC — one question on screen, and that is the whole argument.
@@ -26,16 +27,20 @@ import { P2P_DOMAINS } from "@/lib/assessment/questions-p2p";
 const DOMAIN = P2P_DOMAINS[2];
 
 /**
- * ⚠ "3 of 12" IS THE BRIEF'S STRING AND IT IS NOT WHAT A VISITOR TO THIS PAGE
- * WILL SEE.
+ * ⚠ THE TOTAL IS DERIVED, NEVER TYPED.
  *
- * The wizard walks THIRTEEN steps logged out and twelve signed in
- * (`stepsFor()` in AssessmentWizard — a signed-in visitor is not asked for an
- * email). Someone reading a marketing page is logged out, so their counter will
- * read "3 / 13". Shipped as briefed rather than silently corrected to 13;
- * flagged in the report as Scott's call.
+ * This shipped as a literal "3 of 12" and was wrong by one: the wizard walks
+ * THIRTEEN steps logged out and twelve signed in, and a visitor reading a
+ * marketing page is by definition logged out. `stepsFor(null)` is the same
+ * function `/assess` walks, so the picture and the product cannot disagree —
+ * and adding a ninth capability domain moves this number by itself, the way
+ * `MATURITY_RUNGS` already moves the ladder in `LadderShot`.
+ *
+ * `at` stays a literal because it is a composition choice, not a fact: the
+ * screenshot shows someone part-way in, and DOMAIN below is the third domain so
+ * the counter and the question on screen agree with each other.
  */
-const COUNTER = { at: 3, of: 12 };
+const COUNTER = { at: 3, of: stepsFor(null).length };
 
 export function QuestionShot() {
   return (

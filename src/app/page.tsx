@@ -69,7 +69,7 @@ import "@/components/marketing-home/home.css";
  * way; check the build's route table, do not assume.
  */
 export const metadata: Metadata = {
-  title: "Optimize Your Business with AI — Panameer",
+  title: "Where can AI actually help your business? — Panameer",
   description:
     "Discover exactly where AI can move the needle in your business — our free " +
     "maturity assessment benchmarks your current capabilities and shows you " +
@@ -100,6 +100,17 @@ export default function Home() {
       <MarketingHeader />
       <div className="pm-home">
         <HomeHero />
+
+        {/*
+          ⚠ THE STRIP COMES BEFORE THE PRODUCT SHOT (brief_hiw_video_treatment §1).
+
+          The hero CTA says "take the free assessment", so the next thing on the
+          page is what happens when you do. It used to show the dashboard first
+          — the artefact, before any explanation of how to get one. It also puts
+          card 4, "You Log In and Review", directly above the dashboard it is
+          talking about. Do not revert this to put the shot back on top.
+        */}
+        <HowItWorks />
         <DashboardShot />
 
         {/*
@@ -117,11 +128,9 @@ export default function Home() {
           or relocating any of them is a separate owner decision, not a
           consequence of this one. Nothing was deleted.
         */}
-        <HowItWorks />
-
         <StepDetail
           n={1}
-          title="Take the assessment"
+          title="Step 1 · Take the Assessment"
           lead={
             <>
               Pick the process you care about and answer for it &mdash; one question a
@@ -136,7 +145,7 @@ export default function Home() {
         <StepDetail
           n={2}
           shade
-          title="AI scores every domain"
+          title="Step 2 · AI Scores Every Domain"
           lead={
             <>
               Every capability domain inside that process is placed on the same
@@ -153,7 +162,7 @@ export default function Home() {
 
         <StepDetail
           n={3}
-          title="We build your dashboard"
+          title="Step 3 · We Build Your Dashboard"
           lead={
             <>
               The scores become an analytics dashboard sized in your own dollars:
@@ -169,7 +178,7 @@ export default function Home() {
           n={4}
           shade
           wide
-          title="You log in and review"
+          title="Step 4 · You Log In and Review"
           lead={
             <>
               <strong>The link signs you in</strong>{" "}
@@ -185,7 +194,7 @@ export default function Home() {
 
         <StepDetail
           n={5}
-          title="Free consultation — optional"
+          title="Step 5 · Free Consultation"
           lead={
             <>
               A coordinator who has already read your scorecard walks you through how
