@@ -1082,12 +1082,36 @@
   gradients and nothing was added to /public.
 */
 /*
-  THE BAND GOES DARK, and it has to. Cards this saturated on the old white
-  ground read as five stickers laid on a page. `--ink-2` is the existing token
-  (#0f1530) — the same family `.side` already uses — rather than a new hex.
+  ⚠ THE BAND IS LIGHT, AND THE DARK VERSION IS NOT COMING BACK.
+
+  This shipped on `--ink-2` navy on the reasoning that saturated cards on white
+  read as stickers. Wrong: the reference is /find-work, which renders
+  VideoSequence at `tone="soft"` — #f6f4fb, a pale lilac — and DARK CARDS ON A
+  LIGHT BAND IS THE DESIGN BEING COPIED. The dark band also made the strip
+  impossible to judge, which is the whole reason it went back.
+
+  #f6f4fb is VideoSequence's own `soft` value, not a new hex.
 */
-.pm-home .hiw{background:var(--ink-2);padding:70px 0 78px}
-.pm-home .hiw-h2{font-size:34px;color:#fff;font-weight:700;letter-spacing:-.5px;line-height:1.14;margin:12px 0 0;max-width:760px}
+.pm-home .hiw{background:#f6f4fb;padding:70px 0 78px}
+/*
+  ⚠ DARK ON LIGHT. This was hard-coded `color:#fff` for the navy band and would
+  have rendered white-on-lilac — an invisible heading — the moment the band
+  changed. Same size, same weight, same wording; colour only.
+*/
+.pm-home .hiw-h2{font-size:34px;color:var(--ink);font-weight:700;letter-spacing:-.5px;line-height:1.14;margin:12px 0 0;max-width:760px}
+/*
+  ── §3a THE KICKER, SCOPED TO THIS SECTION ONLY ──────────────────────────────
+
+  ⚠ DO NOT MOVE THIS TO `.pm-home .eyebrow`. That rule is shared by every
+  kicker on the page — the framework, the method, the ERP sections, the
+  testimonials — and growing it there would resize all of them to fix one.
+
+  13px sat too small above a 34px heading and a row of five cards. 15.5px is
+  0.46 of the heading, which reads as a label belonging to it rather than as a
+  second heading competing with it. Caps, .14em tracking and the magenta are
+  inherited from `.eyebrow` unchanged — size is the only thing that moves.
+*/
+.pm-home .hiw .eyebrow{font-size:15.5px}
 
 /*
   ── THE STRIP: ONE POSITIONING CONTEXT FOR THE RAIL, THE CARDS AND THE DOTS ──
@@ -1127,7 +1151,7 @@
   cards (z-index 0 against the card's 1), so it emerges from under one card and
   vanishes under the next instead of ruling across them.
 */
-.pm-home .hiw-rail{position:absolute;top:50%;height:0;border-top:1px solid rgba(255,255,255,.38);z-index:0;
+.pm-home .hiw-rail{position:absolute;top:50%;height:0;border-top:1px solid rgba(23,30,62,.22);z-index:0;
   left:calc(10% - .4 * var(--g));right:calc(30% - .2 * var(--g))}
 /*
   THE LAST SEGMENT IS DASHED — card 4's centre to card 5's centre. The sequence
@@ -1139,7 +1163,7 @@
   its centre printed a dashed line straight through "Free Consultation" and read
   as a strikethrough. Card 5 left edge = 80% + 0.8g.
 */
-.pm-home .hiw-rail.is-dashed{border-top-style:dashed;border-top-color:rgba(255,255,255,.42);
+.pm-home .hiw-rail.is-dashed{border-top-style:dashed;border-top-color:rgba(23,30,62,.32);
   left:calc(70% + .2 * var(--g));right:calc(20% - .8 * var(--g))}
 
 .pm-home .hiw-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:2;
@@ -1178,11 +1202,34 @@
   No scrim: there is nothing behind it to scrim, and a navy ramp over the band
   would print a faint rectangle where the "transparent" is supposed to be.
 */
-.pm-home .hiw-card.is-opt{background:transparent;border:1px dashed rgba(255,255,255,.34);box-shadow:none}
-.pm-home .hiw-card.is-opt:hover{border-color:rgba(255,255,255,.55);box-shadow:none}
+/*
+  ⚠ WHITE FILL, NOT TRANSPARENT. On the navy band card 5 was an unfilled hole
+  and that read correctly. On #f6f4fb a transparent card beside four saturated
+  dark ones reads as a MISSING card rather than an optional one — the eye
+  finishes the row at four. A white fill on the lilac band keeps it present and
+  still visibly lighter than its neighbours; the dashed border and the absent
+  shadow carry "optional" instead.
+*/
+.pm-home .hiw-card.is-opt{background:#fff;border:1px dashed #c9cede;box-shadow:none;color:var(--text)}
+.pm-home .hiw-card.is-opt:hover{border-color:var(--mag);box-shadow:none}
+/* No scrim: the navy ramp exists to hold white text on a gradient, and there
+   is neither here. Left on, it would grey the card to mud. */
 .pm-home .hiw-card.is-opt .hiw-scrim{display:none}
-.pm-home .hiw-card.is-opt .hiw-n{color:rgba(255,255,255,.10)}
-.pm-home .hiw-tag{position:absolute;right:14px;top:14px;z-index:1;background:rgba(255,255,255,.18);border-radius:999px;padding:3px 10px;font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#fff}
+.pm-home .hiw-card.is-opt .hiw-n{color:#dde1eb}
+.pm-home .hiw-card.is-opt .hiw-l{color:var(--ink)}
+.pm-home .hiw-card.is-opt .hiw-k{color:var(--mag-d)}
+/*
+  `--text`, NOT `--muted`. The page's convention for light card body copy is
+  --muted, and it measures 3.76:1 on white — fine next to other muted cards,
+  but card 5's four neighbours run their body at 11.15:1 against the scrim.
+  At --muted this card read as the faded one in the row rather than the
+  optional one, which is a different claim. --text lands it at 12.6:1, matching
+  the four for legibility while the dashed border and missing shadow carry
+  "optional" on their own.
+*/
+.pm-home .hiw-card.is-opt .hiw-s{color:var(--text)}
+/* The chip is grey-on-light now; white-on-translucent was for the dark card. */
+.pm-home .hiw-tag{position:absolute;right:14px;top:14px;z-index:1;background:#eef0f6;border:1px solid #dfe3ec;border-radius:999px;padding:3px 10px;font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 
 /* ---- StepDetail --------------------------------------------------------- */
 /* scroll-margin keeps the anchored heading clear of the sticky header (76px). */
