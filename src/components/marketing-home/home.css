@@ -383,9 +383,40 @@
   }
 .pm-home /* FRAMEWORK */
   .fw{background:var(--paper-2)}
+/*
+  ── SECTION 4 / STEP 2 GETS SECTIONS 2 AND 3's HEADING TREATMENT ─────────────
+
+  Same `--sec-step` scale defined on `.pm-home`, so all three section heads share
+  one rhythm: 48px above the eyebrow, 24px from eyebrow to title. `section.block`
+  supplies this section's 96px padding, so the 48px is set here rather than
+  inherited.
+
+  ⚠ 19px EYEBROW, SCOPED TO `.fw`. Never the shared base rule — it feeds every
+  section on the page. This mirrors `.hiw .eyebrow` and `.pp .eyebrow` exactly;
+  before this, section 4's label was the 13px base while 2 and 3 were 19px.
+
+  ⚠ AND THE 1040px CAP IS HERE BUT IT CANNOT DO ITS JOB — READ THIS BEFORE
+  "FIXING" IT. Sections 2 and 3 put the heading in a full-width block, so a cap
+  is what lets the line run the measure. `.fw-top` is a TWO-COLUMN grid
+  (`1fr 1fr`) with a paragraph beside the heading, so the heading's column is
+  ~548px inside a 1136px container — narrower than the cap, which therefore never
+  binds. The cap is declared for the day the layout changes; the binding
+  constraint today is the column, not the cap. Measured numbers are in the
+  brief report. Making the heading full width is a LAYOUT change and was not
+  asked for.
+*/
+/*
+  ⚠ `section.fw`, NOT `.fw` — SPECIFICITY. This section's padding comes from
+  `.pm-home section.block{padding:96px 0}` (two classes + an element). A plain
+  `.pm-home .fw` is two classes and LOSES, so the 48px silently did nothing and
+  measured as 96px. Matching the element selector ties the specificity and wins
+  on source order, since this rule comes later in the file.
+*/
+.pm-home section.fw{padding-top:calc(var(--sec-step) * 6)}
+.pm-home .fw .eyebrow{font-size:19px}
 .pm-home .fw-head{max-width:1200px}
 .pm-home .fw-top{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:end}
-.pm-home .fw-top h2{font-size:44px;color:var(--ink);font-weight:700;letter-spacing:-.5px;margin-top:12px}
+.pm-home .fw-top h2{font-size:44px;color:var(--ink);font-weight:700;letter-spacing:-.5px;line-height:1.14;margin-top:calc(var(--sec-step) * 3);max-width:1040px}
 .pm-home .fw-top p{color:var(--muted);font-size:17px}
 .pm-home .tabs{display:flex;gap:36px;border-bottom:1px solid var(--line);margin:44px 0 44px}
 .pm-home .tab{display:flex;align-items:center;gap:9px;padding-bottom:16px;color:var(--muted);font-weight:500;font-size:15.5px;cursor:pointer;border-bottom:2.5px solid transparent;margin-bottom:-1px}

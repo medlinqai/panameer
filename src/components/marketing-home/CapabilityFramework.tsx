@@ -28,8 +28,22 @@ export function CapabilityFramework() {
         <div className="wrap fw-head">
           <div className="fw-top">
             <div>
-              <div className="eyebrow">The Framework</div>
-              <h2>Optimize by Capability Domain</h2>
+              {/*
+                ⚠ SECTION 4 / STEP 2 — both strings verbatim, 2026-08-17.
+
+                The section stops being a standalone framework explainer and
+                becomes step 2 of the spine, so the eyebrow numbers itself the
+                way sections 2 and 3 do and the title says what the visitor
+                DOES here rather than naming the framework.
+
+                No `text-wrap:balance` — the standing rule in home.css. It never
+                had it, and it does not get it.
+              */}
+              <div className="eyebrow">Step 2 - Provide Capability Domain Details</div>
+              <h2>
+                Provide the processing methods for each capability domain within
+                your business process.
+              </h2>
             </div>
             <p>We optimize using a capability domain framework for the business processes your organization uses.</p>
           </div>
