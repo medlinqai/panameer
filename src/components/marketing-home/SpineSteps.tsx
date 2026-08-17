@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { SPINE_STEPS } from "@/lib/spine-steps";
 import { SubmitToAI } from "@/components/marketing-home/SubmitToAI";
+import { OptimizationDashboardShot } from "@/components/marketing-home/OptimizationDashboardShot";
 
 /**
  * STEPS 2–5 OF THE SPINE — rendered from `lib/spine-steps.ts`.
@@ -22,9 +23,9 @@ import { SubmitToAI } from "@/components/marketing-home/SubmitToAI";
  * cannot produce two shaded bands in a row — the E115 rhythm failure this page
  * has already had once.
  *
- * ⚠ NO PLACEHOLDERS. `graphic` is a KEY, resolved by `GRAPHICS` below. Step 3
- * names a built component; steps 2, 4 and 5 are empty and render NOTHING — not an
- * empty frame, which would read as a broken image. Scott is sourcing those three
+ * ⚠ NO PLACEHOLDERS. `graphic` is a KEY, resolved by `GRAPHICS` below. Steps 3
+ * and 4 name built components; steps 2 and 5 are empty and render NOTHING — not
+ * an empty frame, which would read as a broken image. Scott is sourcing those two
  * from his deck.
  */
 
@@ -35,6 +36,7 @@ import { SubmitToAI } from "@/components/marketing-home/SubmitToAI";
  */
 const GRAPHICS: Record<string, () => React.JSX.Element> = {
   "submit-to-ai": SubmitToAI,
+  "optimization-dashboard": OptimizationDashboardShot,
 };
 export function SpineSteps() {
   return (

@@ -13,14 +13,17 @@
  * Step 1 is NOT in this list — it is `ProcessPicker`, which carries the four
  * process cards and has a different shape. It is the exception, not the pattern.
  *
- * ── ⚠ `graphic` SHIPS EMPTY ON ALL FOUR, ON PURPOSE ──────────────────────────
+ * ── ⚠ AN EMPTY `graphic` RENDERS NOTHING, AND THAT IS THE POINT ───────────────
  *
- * Images are out of scope for this brief. Scott is capturing real product
- * screenshots — the wizard for steps 1–3, the report dashboard for step 4 — and
- * they land later. An empty string renders NO graphic and NO placeholder: a
- * drawn stand-in would be a picture of a product that does not look like that,
- * and it would have to be un-drawn later. The field is the seam that makes the
- * real capture a one-line data edit.
+ * Steps 2 and 5 still ship empty; Scott is capturing those from the wizard. An
+ * empty string renders NO graphic and NO placeholder: a drawn stand-in would be a
+ * picture of a product that does not look like that, and it would have to be
+ * un-drawn later. The field is the seam that makes the real capture a one-line
+ * data edit.
+ *
+ * Steps 3 and 4 name BUILT COMPONENTS instead of screenshots — approved drawings
+ * of a funnel and of the report dashboard. That is not a placeholder: an approved
+ * drawing is honestly a drawing, where a stale screenshot claims to be the thing.
  */
 
 export type SpineStep = {
@@ -84,7 +87,13 @@ export const SPINE_STEPS: SpineStep[] = [
      */
     title:
       "See the AI automation options possible and where your adoption stands in relation to your industry.",
-    graphic: "",
+    /*
+     * Built as a component, not an image — see `SpineSteps`' registry. It DRAWS
+     * the report dashboard rather than importing it: every figure in it is
+     * marketing art on the counsel-gate list, and the real surface is still
+     * moving.
+     */
+    graphic: "optimization-dashboard",
   },
   {
     n: 5,
