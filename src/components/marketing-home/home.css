@@ -93,7 +93,27 @@
     setGlow() maps that to `50/100 * 0.8 = 0.40` — so "~50% glow" is alpha
     0.40 on the magenta bloom, not 0.50. Off-by-a-fifth if you trust the label.
   */
-  .hero{position:relative}
+/*
+  ── E123: THE SECTION-1 SURROUND TAKES A SHADE ───────────────────────────────
+
+  The hero CARD is dark, but the section around it was transparent — so the page
+  opened white header on white surround, and the first shaded band was the strip
+  below it. Scott, 2026-08-17: "Need shading on section 1 of HOME."
+
+  `var(--paper-2)`, the token `.fw`, `.erp` and `.ptr` already share — never a
+  new hex, per the E115 rhythm rule. The hero card and its gradient are
+  untouched; only the surround it floats on changes.
+
+  ⚠ AND THIS CREATES ONE ADJACENCY WORTH SCOTT'S EYE, reported rather than
+  resolved: `.hero` is now #f2f6f7 and `.hiw` immediately below it is #f6f4fb
+  (VideoSequence's `soft`). Two shaded bands, four points apart, touching. The
+  `.erp` comment three hundred lines down says exactly why that is a risk —
+  "two shaded sections at slightly different values look like a mistake, two at
+  the same value look like a system". Fixing it means either moving `.hiw` onto
+  `--paper-2` or tokenising #f6f4fb, and both change a band Scott has signed
+  off twice. Not mine to pick.
+*/
+  .hero{position:relative;background:var(--paper-2)}
 /* The margin the card is inset by. Not full-bleed any more — that is the point. */
 .pm-home .hero-stage{padding:6px 44px 0}
 /*
