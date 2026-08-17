@@ -79,7 +79,7 @@ type Step = {
  *
  * ⚠ E121 SHORTENS THE STRING BUT DOES NOT RETIRE THE CLAIM. "vs Industry" still
  * implies a pooled benchmark and there is no pool — the same objection
- * `HANDOFF_2026-08-16.md` §6 files against "vs Industry Peers". It belongs on
+ * `HANDOFF_2026-08-16.md` §6 files against the surveyed-pool wording. It is on
  * the pre-launch copy-swap list either way; Scott chose to ship it.
  */
 const STEPS: Step[] = [
@@ -148,8 +148,11 @@ export function HowItWorks() {
         {/*
           ⚠ E136 rev2 — SHIPPED AS THE EXACT LITERAL, WITH NO BINDINGS.
 
-          Title Case on "Process Improvement Roadmap" is deliberate: it names a
-          deliverable, not a description of one.
+          ⚠ "AI Roadmap" IS THE NAME OF THIS OBJECT, EVERYWHERE. The longer
+          "Process-Improvement-..." form and its three-letter initialism are both
+          retired; one object, one name. This heading shipped with the long form,
+          so the rename is a naming decision rather than a copy tweak, and the
+          1040px cap was re-measured after it (see home.css).
 
           ⚠ THE NOWRAP SPANS ARE GONE, AND SO IS `text-wrap:balance`. I asked
           for both in the previous brief, to stop lines ending on small words.
@@ -160,8 +163,8 @@ export function HowItWorks() {
           home.css — neither comes back.
         */}
         <h2 className="hiw-h2">
-          From process questions to reviewing your Process Improvement Roadmap
-          with an expert in about an hour.
+          From process questions to reviewing your AI Roadmap with an expert in
+          about an hour.
         </h2>
 
         {/*

@@ -39,7 +39,13 @@ export function ProjectTracker() {
   return (
     <section className="ptr">
       <div className="wrap">
-        <div className="eyebrow">Project Tracker</div>
+        {/*
+          ⚠ THE EYEBROW ANSWERS A QUESTION INSTEAD OF NAMING A FEATURE.
+          "Project Tracker" labelled the tool; this labels the moment in the
+          narrative — assess, dashboard, AI Roadmap, and then what? Only the
+          eyebrow changes; the heading below it was already right.
+        */}
+        <div className="eyebrow">What Comes After the Roadmap</div>
         <h2 className="ptr-h2">And this is where you watch the score move.</h2>
         <p className="ptr-lead">
           Milestones, timeline, spend and deliverables across however many

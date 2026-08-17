@@ -29,21 +29,20 @@ export function CapabilityFramework() {
           <div className="fw-top">
             <div>
               {/*
-                ⚠ SECTION 4 / STEP 2 — both strings verbatim, 2026-08-17.
+                ⚠ THE STEP-2 LABEL MOVED OUT OF HERE, DELIBERATELY.
 
-                The section stops being a standalone framework explainer and
-                becomes step 2 of the spine, so the eyebrow numbers itself the
-                way sections 2 and 3 do and the title says what the visitor
-                DOES here rather than naming the framework.
+                `f6a1282` put "Step 2 - Provide Capability Domain Details" on this
+                section. `brief_home_spine_copy` Part C supersedes that: Step 2 is
+                its own text section up in the spine, so keeping the label here
+                would put two identical STEP 2 eyebrows on one page.
 
-                No `text-wrap:balance` — the standing rule in home.css. It never
-                had it, and it does not get it.
+                These are the strings this section carried before f6a1282. It goes
+                back to being the framework explainer it was — supporting detail
+                below the spine, not a numbered step. Do not re-add a step number
+                here without moving it off the spine section first.
               */}
-              <div className="eyebrow">Step 2 - Provide Capability Domain Details</div>
-              <h2>
-                Provide the processing methods for each capability domain within
-                your business process.
-              </h2>
+              <div className="eyebrow">The Framework</div>
+              <h2>Optimize by Capability Domain</h2>
             </div>
             <p>We optimize using a capability domain framework for the business processes your organization uses.</p>
           </div>

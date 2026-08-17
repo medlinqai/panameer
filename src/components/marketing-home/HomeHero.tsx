@@ -77,7 +77,25 @@ export function HomeHero() {
               <Link href="/assess" className="hero-cta">Take Our Free Assessment</Link>
             </div>
             <div className="hero-right">
-              <p>Discover exactly where AI can move the needle in your business — our free maturity assessment benchmarks your current capabilities and shows you where to focus first.</p>
+              {/*
+                ⚠ IT NAMES BOTH OUTPUTS NOW, AND THE SPLIT IS THE POINT.
+
+                It used to promise one vague thing — "benchmarks your current
+                capabilities and shows you where to focus first". The product
+                produces TWO artefacts and the difference between them is why the
+                expert call exists rather than being a sales pretext: AI can list
+                every option, but only the client can say which ones they require
+                and in what order.
+
+                ⚠ "REQUIREMENTS", NOT "SEQUENCE THEM". Scott: "They never want
+                every option in the world of possible. So we select what they
+                REQUIRE — everyone knows and uses requirements terminology — and
+                then prioritize." The roadmap is not the option list re-ordered;
+                it is the SUBSET the client requires, prioritized. That matches
+                the Step 5 title and `assessment_engine_spec.md`, which already
+                calls the output a scoped requirements list.
+              */}
+              <p>You get two things: a dashboard of every AI option open to you, and an AI Roadmap built with an expert &mdash; the ones you actually require, in priority order.</p>
               {/* WS-9 — one shared component; /assess step 0 renders the same source. */}
               <ProofStats />
             </div>

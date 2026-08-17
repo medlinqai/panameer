@@ -1729,10 +1729,21 @@
 /*
   ⚠ E135: `balance` OFF AND THE 36ch CAP WIDENED. 36ch computed to 707px inside a
   1136px container — the same defect as section 2's heading and worse, because a
-  ch cap shrinks with the font rather than tracking the page. Now 1040px, matching
-  `.hiw-h2`. Re-measure the cap if the copy changes, same as section 2.
+  ch cap shrinks with the font rather than tracking the page.
+
+  ⚠ 1050px, NOT 1040 — AND THE COPY CHANGE IS EXACTLY WHY THE COMMENT SAID TO
+  RE-MEASURE. The brief asserted the new title sets as 2 lines / 87px at the
+  shipped 1040 cap and needed no CSS change. Measured at 1562 / 1400 / 1282 /
+  1200 it is 3 lines / 130.5px, orphaning "amounts." — and it breaks after
+  "questions", not after "about". Smallest cap that holds two lines:
+
+      1040px -> 3 lines · 130.5px      1050px -> 2 lines · 87px
+      1060 / 1080 / 1100 / 1136 -> also 2 lines, with a longer max line
+
+  So 1050 it is: 43.5px of height recovered for 10px of cap. Same rule as
+  section 2 — the smallest cap that does not cost a line.
 */
-.pm-home .pp-h2{font-size:34px;color:var(--ink);font-weight:700;letter-spacing:-.5px;line-height:1.28;margin:calc(var(--sec-step) * 3) 0 0;max-width:1040px}
+.pm-home .pp-h2{font-size:34px;color:var(--ink);font-weight:700;letter-spacing:-.5px;line-height:1.28;margin:calc(var(--sec-step) * 3) 0 0;max-width:1050px}
 
 /* auto-fit is what makes a fifth process a data edit. */
 .pm-home .pp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(248px,1fr));gap:20px;margin-top:calc(var(--sec-step) * 6)}
@@ -1778,4 +1789,32 @@
 @media(max-width:620px){
   .pm-home .pp-h2{font-size:27px}
   .pm-home .pp-blurb{min-height:0}
+}
+
+/* =========================================================================
+   SPINE STEPS 2–5  (brief_home_spine_copy, parts C–F)
+
+   ⚠ SAME HEADING TREATMENT AS `.hiw` AND `.pp`, NO EXCEPTIONS. No
+   `text-wrap:balance` — see the STANDING RULE earlier in this file. 1040px cap,
+   19px eyebrow SCOPED here (never the shared base rule), and the shared
+   `--sec-step` rhythm: 48px above the eyebrow, 24px eyebrow -> title.
+
+   ⚠ ONE RULE SET FOR ALL FOUR SECTIONS, and no per-step selector. `.spn-2`,
+   `.spn-3` etc. would make a sixth step a stylesheet edit, which is exactly what
+   the data-driven pattern exists to avoid. The only thing that varies is the
+   band, and that is a single modifier the component derives from the step number.
+   ------------------------------------------------------------------------- */
+.pm-home .spn{background:#fff;padding:calc(var(--sec-step) * 6) 0 calc(var(--sec-step) * 10);border-top:1px solid var(--line)}
+.pm-home .spn.is-shade{background:var(--paper-2)}
+.pm-home .spn .eyebrow{font-size:19px}
+.pm-home .spn-h2{font-size:34px;color:var(--ink);font-weight:700;letter-spacing:-.5px;line-height:1.28;margin:calc(var(--sec-step) * 3) 0 0;max-width:1040px}
+/* The graphic slot, for when real screenshots land. Nothing renders while
+   `graphic` is empty, so this rule is inert today by design. */
+.pm-home .spn-art{margin-top:calc(var(--sec-step) * 6)}
+.pm-home .spn-art img{display:block;width:100%;height:auto;border-radius:14px;border:1px solid var(--line);box-shadow:0 26px 60px -26px rgba(23,30,62,.45)}
+@media(max-width:1080px){
+  .pm-home .spn-h2{font-size:29px}
+}
+@media(max-width:620px){
+  .pm-home .spn-h2{font-size:27px}
 }
