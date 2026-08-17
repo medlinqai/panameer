@@ -101,7 +101,30 @@ export function MarketingHeader() {
           layout put it.
         */}
         <div className="flex shrink-0 items-center">
-          <Logo className="h-8 w-auto -translate-y-[3px]" priority />
+          {/*
+            ⚠ h-10, RAISED FROM h-8, AND THE SIZE WAS MEASURED NOT CHOSEN.
+
+            Four nav items and two buttons were outweighing the brand: 32px of
+            mark in a 71px header, 127px wide. Measured on the real header at
+            1562 / 1200 / 390 — identical at all three, since the header height
+            does not respond:
+
+                h-8   127.0 x 32   45% of header height  (was)
+                h-9   142.9 x 36   51%
+                h-10  158.8 x 40   56%                   (shipped)
+                h-11  174.7 x 44   62%
+
+            h-10 leaves 15.5px of clearance above and below inside the 71px row;
+            h-11 leaves 13.5px and starts crowding the button line. Header height
+            and nav alignment are untouched — only the mark grows.
+
+            ⚠ THE -3px OPTICAL LIFT IS LEFT AS IT WAS. It exists because the P
+            reads as a true ascender and pulls the optical centre up; at 40px the
+            same 3px is proportionally a smaller lift than it was at 32px. Whether
+            it wants to grow with the mark is an eyeball call for the walk, not a
+            number to derive — flagged, not changed.
+          */}
+          <Logo className="h-10 w-auto -translate-y-[3px]" priority />
         </div>
 
         {/*

@@ -89,7 +89,7 @@ export function ProcessPicker() {
   return (
     <section className="pp" id="step-process">
       <div className="wrap">
-        <div className="eyebrow">Step 1 - Choose the Business Process</div>
+        <div className="eyebrow">Step 1 - Select a Business Process</div>
         {/*
           ⚠ E139 — SHIPPED AS THE EXACT LITERAL, INCLUDING NO TERMINAL PERIOD.
 
@@ -106,8 +106,8 @@ export function ProcessPicker() {
           gone from home.css too.
         */}
         <h2 className="pp-h2">
-          Choose the business process you understand and can answer questions
-          about processing methods, volumes, and dollar amounts
+          Choose the process you own to answer detailed questions about its
+          processing methods, volumes, and dollar amounts.
         </h2>
 
         <div className="pp-grid">

@@ -12,6 +12,7 @@ import { Testimonials } from "@/components/marketing-home/Testimonials";
 import { HomeFooter } from "@/components/marketing-home/HomeFooter";
 import { HowItWorks } from "@/components/marketing-home/HowItWorks";
 import { ProcessPicker } from "@/components/marketing-home/ProcessPicker";
+import { SpineSteps } from "@/components/marketing-home/SpineSteps";
 import { StepDetail } from "@/components/marketing-home/StepDetail";
 import { QuestionShot } from "@/components/marketing-home/steps/QuestionShot";
 import { LadderShot } from "@/components/marketing-home/steps/LadderShot";
@@ -126,6 +127,21 @@ export default function Home() {
           is an entry in that array and nothing here changes.
         */}
         <ProcessPicker />
+        {/*
+          ── SPINE STEPS 2-5 (brief_home_spine_copy parts C-F) ─────────────────
+
+          Directly after Step 1, so the five steps read 1-2-3-4-5 in one run
+          before anything else. Rendered from `lib/spine-steps.ts`; a sixth step
+          is a data edit.
+
+          ⚠ NOTE FOR WHOEVER READS THIS NEXT: `DashboardShot` and the five
+          `#step-1..5` StepDetail sections below still carry their own "Step N"
+          headings, so the page now numbers steps twice. The brief's stated page
+          order omits both, but removing sections from Home was not asked for and
+          "nothing comes off Home" is the standing rule — so they stay and the
+          collision is reported rather than resolved by guess. It is Scott's call.
+        */}
+        <SpineSteps />
         <DashboardShot />
 
         {/*
