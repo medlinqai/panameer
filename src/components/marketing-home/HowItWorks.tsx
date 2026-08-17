@@ -165,39 +165,6 @@ export function HowItWorks() {
           <span className="hiw-nb">process improvement roadmap</span> with an
           expert in about an hour.
         </h2>
-        {/*
-          ⚠ E125 — A NEW ELEMENT, NOT THE KICKER COMING BACK.
-
-          The magenta kicker slot was DELETED at 19050e5, not emptied. This is a
-          description between the heading and the cards, and it is `.hiw-desc`
-          rather than a revived `.hiw-k` precisely so nobody reads it as that
-          slot returning.
-
-          It must not shift the card grid: the reserved-row baselines inside the
-          cards are measured from the grid top, so the gap this adds has to come
-          out of `.hiw-strip`'s own top margin rather than being stacked on top
-          of it. Measured before and after at all three widths.
-        */}
-        {/*
-          ⚠ E133 — U+2011 NON-BREAKING HYPHEN IN "process‑based".
-
-          It was breaking as "process-" / "based". `hyphens:none` does NOT
-          prevent a break at a LITERAL hyphen-minus — that is why earlier
-          attempts at this failed — so the character itself has to change:
-          U+2011 renders identically to U+002D and simply carries no break
-          opportunity.
-
-          Same rule as the heading: one braced string literal with \u escapes,
-          so neither the entity-whitespace bug nor a stray line break in the JSX
-          source can alter the rendered text. `\u2019` is the curly apostrophe
-          that was `&rsquo;`.
-
-          `text-wrap:pretty` is already on `.hiw-desc` and is not sufficient
-          alone either.
-        */}
-        <p className="hiw-desc">
-          {"Get the guidance you need to understand the AI options that will optimize your processing. Then meet with the world\u2019s top experts to prioritize solutions and create your own process\u2011based AI Optimization Roadmap."}
-        </p>
 
         {/*
           ── THE STRIP WRAPS THE LIST BECAUSE THE RAIL IS NOT A LIST ITEM ──────
