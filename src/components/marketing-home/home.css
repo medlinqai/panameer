@@ -93,7 +93,27 @@
     setGlow() maps that to `50/100 * 0.8 = 0.40` — so "~50% glow" is alpha
     0.40 on the magenta bloom, not 0.50. Off-by-a-fifth if you trust the label.
   */
-  .hero{position:relative}
+/*
+  ── E123: THE SECTION-1 SURROUND TAKES A SHADE ───────────────────────────────
+
+  The hero CARD is dark, but the section around it was transparent — so the page
+  opened white header on white surround, and the first shaded band was the strip
+  below it. Scott, 2026-08-17: "Need shading on section 1 of HOME."
+
+  `var(--paper-2)`, the token `.fw`, `.erp` and `.ptr` already share — never a
+  new hex, per the E115 rhythm rule. The hero card and its gradient are
+  untouched; only the surround it floats on changes.
+
+  ⚠ AND THIS CREATES ONE ADJACENCY WORTH SCOTT'S EYE, reported rather than
+  resolved: `.hero` is now #f2f6f7 and `.hiw` immediately below it is #f6f4fb
+  (VideoSequence's `soft`). Two shaded bands, four points apart, touching. The
+  `.erp` comment three hundred lines down says exactly why that is a risk —
+  "two shaded sections at slightly different values look like a mistake, two at
+  the same value look like a system". Fixing it means either moving `.hiw` onto
+  `--paper-2` or tokenising #f6f4fb, and both change a band Scott has signed
+  off twice. Not mine to pick.
+*/
+  .hero{position:relative;background:var(--paper-2)}
 /* The margin the card is inset by. Not full-bleed any more — that is the point. */
 .pm-home .hero-stage{padding:6px 44px 0}
 /*
@@ -1131,6 +1151,32 @@
 */
 .pm-home .hiw-h2{font-size:34px;color:var(--ink);font-weight:700;letter-spacing:-.5px;line-height:1.14;margin:12px 0 0;max-width:960px;text-wrap:balance}
 /*
+  ── E125: THE DESCRIPTION BETWEEN THE HEADING AND THE CARDS ──────────────────
+
+  ⚠ NOT THE DELETED KICKER. That slot was removed at 19050e5 and this is a
+  different element in a different place — below the heading, above the grid.
+
+  ⚠ THE GRID MUST NOT MOVE. `.hiw-strip` carries `margin-top:34px`, so a
+  paragraph added above it would push the cards down by its full height and
+  every reserved-row baseline with them. The 34px is therefore taken OUT of the
+  strip and given to this paragraph's bottom margin, leaving the distance from
+  heading to grid unchanged apart from the text itself. Measured at 1562 / 1200
+  / 390 and reported.
+
+  ⚠ `--text`, NOT `--ink-2`, AND THE MOCKUP IS WHY THAT NEEDS SAYING.
+
+  The mockup styles this as `.sec-lede{color:var(--ink-2)}` where ITS `--ink-2`
+  is #3a4266 — a mid slate for body copy. In THIS stylesheet `--ink-2` is
+  #0f1530, a near-black used for the dark rail and the dark band. Same token
+  name, two different jobs. Copying the mockup's declaration literally would
+  have printed near-black body copy and looked like a bug.
+
+  `--text` (#2a3345) is this file's body-copy token and the nearest equivalent;
+  it measures 12.67:1 on white. Size and 72ch measure do follow the mockup.
+*/
+.pm-home .hiw-desc{margin:16px 0 34px;font-size:16.5px;line-height:1.62;color:var(--text);max-width:72ch;text-wrap:pretty}
+.pm-home .hiw-desc + .hiw-strip{margin-top:0}
+/*
   ── THE KICKER, SCOPED TO THIS SECTION ONLY ──────────────────────────────────
 
   ⚠ DO NOT MOVE THIS TO `.pm-home .eyebrow`. That rule is shared by every
@@ -1203,11 +1249,28 @@
 .pm-home .hiw-rail.is-dashed{border-top-style:dashed;border-top-color:rgba(23,30,62,.32);
   left:calc(70% + .2 * var(--g));right:calc(20% - .8 * var(--g))}
 
-.pm-home .hiw-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:2;
-  left:calc(var(--k) * 20% + (var(--k) * .2 - .5) * var(--g) - 17px);
-  display:grid;place-items:center;width:34px;height:34px;border-radius:50%;
-  background:var(--mag);color:#fff;font-size:15px;line-height:1;
-  box-shadow:0 6px 14px rgba(215,44,214,.4)}
+/*
+  ── E122: THE CONNECTORS WERE READING AS PUNCTUATION ─────────────────────────
+
+  34px circle / 15px glyph, ported from VideoSequence, which has no rail and no
+  five-card row to carry. They are the ONLY thing on the strip carrying
+  left-to-right sequence, and at that size they read as a bullet between cards
+  rather than as flow. Scott, 2026-08-17.
+
+  ⚠ THE DIAMETER IS NOW A VARIABLE, AND IT HAS TO BE. The seam offset must
+  subtract exactly half the circle to stay centred on the gutter; that was a
+  hard-coded `- 17px` next to a hard-coded `34px`, which is two places to edit
+  and one of them silently wrong. `--ac` drives both.
+
+  ⚠ AND IT TRADES AGAINST THE RAIL. The gutter is `--g` (54px), so the visible
+  rail either side of each circle is `(--g - --ac) / 2`. Bigger circle, shorter
+  stubs. Measured at several sizes before settling; reported in the brief note.
+*/
+.pm-home .hiw-arrow{--ac:42px;position:absolute;top:50%;transform:translateY(-50%);z-index:2;
+  left:calc(var(--k) * 20% + (var(--k) * .2 - .5) * var(--g) - var(--ac) / 2);
+  display:grid;place-items:center;width:var(--ac);height:var(--ac);border-radius:50%;
+  background:var(--mag);color:#fff;font-size:20px;line-height:1;
+  box-shadow:0 8px 18px rgba(215,44,214,.42)}
 
 /* ---- the card ----------------------------------------------------------- */
 .pm-home .hiw-card{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:flex-end;flex:1;min-width:0;min-height:260px;overflow:hidden;border-radius:16px;padding:22px 18px;color:#fff;box-shadow:0 14px 34px rgba(23,30,62,.22);transition:transform .18s,box-shadow .18s}
