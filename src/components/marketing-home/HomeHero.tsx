@@ -60,36 +60,21 @@ export function HomeHero() {
           <div className="wrap hero-row">
             <div className="hero-left">
               {/*
-                ⚠ THE HEADLINE ASKS, THE BUTTON ANSWERS (brief_hiw_video_treatment §6a).
+                ⚠ BOTH STRINGS ARE THE OWNER'S AND THEY ARE SETTLED.
 
-                It used to be the other way round — the headline stated a claim
-                ("Optimize Your Business with AI") and the button asked the
-                question ("Where Can AI Help My Business?"). Backwards: the
-                question is the one already in the reader's head, so it belongs
-                at the top; the button should name the action.
+                This pair has now been round the houses: it was a claim + a
+                question, then a question + a verb, and it is back to the claim
+                + the verb. I argued twice that "optimize your business" is the
+                phrase every ERP vendor uses and therefore slides off; the owner
+                overruled it both times, which is his call to make.
 
-                "Optimize" leaves on purpose. Every ERP vendor says "optimize
-                your business", so it slides straight off. The question does not.
-                Do not improve this pair further — it is the owner's wording.
+                DO NOT soften, lengthen or "improve" either string. If they
+                change again it will be because he says so.
               */}
-              {/*
-                NO HARD <br />. The old headline carried one, and inheriting it
-                put a one-word line in the middle: "Where can AI / actually /
-                help your business?". The h1 measures 548px at 1562 and the
-                headline is three lines however it breaks, so a hand-placed
-                break buys nothing and costs a line at 1024 (4 instead of 3).
-                Measured at 1562 / 1024 / 390 before removing it.
-              */}
-              <h1>Where can AI actually help your business?</h1>
-              {/*
-                THE BUTTON GOES TO /assess. It was `#` — an honest stub while the
-                assessment did not exist.
-
-                No `›` and no question mark: a button that asks a question makes
-                the visitor answer it, a button that names the action makes them
-                do it.
-              */}
-              <Link href="/assess" className="hero-cta">Take the free assessment</Link>
+              <h1>Optimize Your Business with AI</h1>
+              {/* THE BUTTON GOES TO /assess. It was `#` — an honest stub while
+                  the assessment did not exist. No `›` affectation. */}
+              <Link href="/assess" className="hero-cta">Take Our Free Assessment</Link>
             </div>
             <div className="hero-right">
               <p>Discover exactly where AI can move the needle in your business — our free maturity assessment benchmarks your current capabilities and shows you where to focus first.</p>

@@ -69,7 +69,7 @@ import "@/components/marketing-home/home.css";
  * way; check the build's route table, do not assume.
  */
 export const metadata: Metadata = {
-  title: "Where can AI actually help your business? — Panameer",
+  title: "Optimize Your Business with AI — Panameer",
   description:
     "Discover exactly where AI can move the needle in your business — our free " +
     "maturity assessment benchmarks your current capabilities and shows you " +
