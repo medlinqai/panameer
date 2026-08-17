@@ -30,8 +30,14 @@ export type SpineStep = {
   eyebrow: string;
   title: string;
   /**
-   * Path to a real screenshot. Empty = render nothing at all.
-   * ⚠ Do NOT put a placeholder here. See the note above.
+   * WHICH GRAPHIC THIS STEP RENDERS, as a key. Empty = render nothing at all.
+   *
+   * `SpineSteps` resolves the key against a registry, so a built COMPONENT and a
+   * future screenshot are referenced identically from here: a key that the
+   * registry knows renders that component; a value starting with `/` renders the
+   * image at that path.
+   *
+   * ⚠ Do NOT put a placeholder here. See the note at the top of the file.
    */
   graphic: string;
 };
@@ -61,7 +67,8 @@ export const SPINE_STEPS: SpineStep[] = [
     eyebrow: "Step 3 - Complete Assessment & Submit to AI",
     title:
       "Answer all of the questions on the assessment and submit it to the Panameer AIP (AI Platform).",
-    graphic: "",
+    /* Built as a component, not an image — see `SpineSteps`' registry. */
+    graphic: "submit-to-ai",
   },
   {
     n: 4,

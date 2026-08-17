@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { SPINE_STEPS } from "@/lib/spine-steps";
+import { SubmitToAI } from "@/components/marketing-home/SubmitToAI";
 
 /**
  * STEPS 2–5 OF THE SPINE — rendered from `lib/spine-steps.ts`.
@@ -21,10 +22,20 @@ import { SPINE_STEPS } from "@/lib/spine-steps";
  * cannot produce two shaded bands in a row — the E115 rhythm failure this page
  * has already had once.
  *
- * ⚠ NO GRAPHIC AND NO PLACEHOLDER. `graphic` is empty on all four and the slot
- * renders nothing at all. Real screenshots land in a later brief; a drawn
- * stand-in would be a picture of a product that does not look like that.
+ * ⚠ NO PLACEHOLDERS. `graphic` is a KEY, resolved by `GRAPHICS` below. Step 3
+ * names a built component; steps 2, 4 and 5 are empty and render NOTHING — not an
+ * empty frame, which would read as a broken image. Scott is sourcing those three
+ * from his deck.
  */
+
+/**
+ * Key -> component. A step whose `graphic` matches a key here renders that
+ * component; a `graphic` starting with `/` is treated as an image path instead,
+ * so a screenshot drops in without touching this file's structure.
+ */
+const GRAPHICS: Record<string, () => React.JSX.Element> = {
+  "submit-to-ai": SubmitToAI,
+};
 export function SpineSteps() {
   return (
     <>
@@ -42,17 +53,23 @@ export function SpineSteps() {
               The slot. Empty string = nothing rendered, not an empty box — a
               framed blank would read as a broken image.
             */}
-            {s.graphic && (
-              <div className="spn-art">
-                <Image
-                  src={s.graphic}
-                  alt=""
-                  width={1200}
-                  height={720}
-                  sizes="(max-width: 1200px) 100vw, 1136px"
-                />
-              </div>
-            )}
+            {(() => {
+              if (!s.graphic) return null;
+              const G = GRAPHICS[s.graphic];
+              if (G) return <G />;
+              /* Not a registered component, so it is an image path. */
+              return (
+                <div className="spn-art">
+                  <Image
+                    src={s.graphic}
+                    alt=""
+                    width={1200}
+                    height={720}
+                    sizes="(max-width: 1200px) 100vw, 1136px"
+                  />
+                </div>
+              );
+            })()}
           </div>
         </section>
       ))}
