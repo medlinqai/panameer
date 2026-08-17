@@ -91,8 +91,13 @@ export const PROCESSES: BusinessProcess[] = [
     key: "p2p",
     abbr: "P2P",
     name: "Procure-to-Pay",
+    /*
+      ⚠ E141, Scott's wording. He typed "receipts, invoices, adn payments" —
+      `adn` is an unambiguous transposition and ships as `and`. Flagged in the
+      report rather than corrected silently. The other three blurbs are untouched.
+    */
     blurb:
-      "Requisition, sourcing, purchase orders, receipt, invoice and payment.",
+      "Requisitions, sourcing, procurement contracts, purchase orders, receipts, invoices, and payments.",
     /* DERIVED, never typed — see the field comment. */
     domainCount: P2P_DOMAINS.length,
     status: "live",
