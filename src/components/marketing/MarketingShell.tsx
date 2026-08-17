@@ -33,8 +33,24 @@ export function MarketingShell({
    * buyer-voiced pages: the home and Hire Talent both speak to a buyer and are
    * different destinations, so "which audience" could no longer answer "which
    * one is highlighted".
+   *
+   * ── OPTIONAL SINCE brief_public_ia_block2 WS-1 ──────────────────────────────
+   *
+   * OMIT IT AND THE SWITCH DOES NOT RENDER. `AudienceStrip` maps over every
+   * entry of `PUBLIC_PAGES`, so the only way to give a fourth page this chrome
+   * without putting a fourth item into a three-way intent switch — on Home,
+   * Hire Talent and Find Work, all three already walked and signed off — is to
+   * let a page opt out of the strip entirely.
+   *
+   * ⚠ THE ALTERNATIVE IS THE TRAP: adding `enterprise`/`why` to `PublicPage`
+   * would silently grow the switch on those three pages. `PublicPage` and
+   * `PUBLIC_PAGES` are deliberately UNCHANGED.
+   *
+   * `marketing-surface` is NOT optional and is applied either way — it pins the
+   * light palette so the dark theme cannot turn a page's ink near-white while
+   * its white panels stay white (E003/E009).
    */
-  page: PublicPage;
+  page?: PublicPage;
   children: ReactNode;
 }) {
   return (
@@ -51,7 +67,12 @@ export function MarketingShell({
         wrapper it simply travels with the parent.
       */}
       <div className="sticky top-0 z-50">
-        <AudienceStrip page={page} />
+        {/*
+          NO STRIP WHEN THERE IS NO `page`. The header keeps its own
+          `sticky top-0` for exactly this case, so a shell without the strip
+          still pins correctly rather than depending on the strip's height.
+        */}
+        {page && <AudienceStrip page={page} />}
         <MarketingHeader />
       </div>
       {children}
