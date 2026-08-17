@@ -814,6 +814,38 @@ export const HIRE_HERO = {
     "Search real, rated experts by the system they actually run. Engage them for two hours or six months — one contract, one payment.",
 } as const;
 
+/**
+ * ── THE THREE BLOCK-2 DESTINATION PAGES: PLACEHOLDER HERO COPY ───────────────
+ *
+ * ⚠ EVERY STRING BELOW IS A PLACEHOLDER AND SAYS SO IN THE STRING ITSELF.
+ *
+ * `brief_public_ia_block2` WS-5: Scott writes the real copy after he walks the
+ * three pages, so these exist to give each page a hero of realistic SHAPE
+ * without putting words in his mouth. The `PLACEHOLDER — ` prefix is not a
+ * comment — it renders on screen — precisely so it cannot survive a walk or a
+ * screenshot unnoticed the way an unmarked draft would.
+ *
+ * They are deliberately descriptive rather than persuasive: a placeholder that
+ * reads like finished marketing is the one that ships by accident.
+ *
+ * ⚠ REPLACING THESE IS A COPY EDIT IN ONE PLACE. Do not scatter hero strings
+ * into the page files — that is why HIRE_HERO above lives here too.
+ */
+export const ENTERPRISE_HERO = {
+  kicker: "PLACEHOLDER — Enterprise",
+  headline: "PLACEHOLDER — headline about ERP integration goes here.",
+} as const;
+
+export const WHY_HERO = {
+  kicker: "PLACEHOLDER — Why Panameer",
+  headline: "PLACEHOLDER — headline about the method and the firm goes here.",
+} as const;
+
+export const BUY_SERVICES_HERO = {
+  kicker: "PLACEHOLDER — Buy Services",
+  headline: "PLACEHOLDER — headline about packaged services goes here.",
+} as const;
+
 /** HIRE TALENT — the matching engine, described honestly. */
 export const AI_MATCH_COPY = {
   eyebrow: "AI matching",
