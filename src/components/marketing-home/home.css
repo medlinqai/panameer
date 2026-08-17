@@ -1135,15 +1135,19 @@
   spaced evenly." He is right, and the cause is that none of the three numbers
   was derived from either of the others.
 
-  `--hiw-step:8px` is the scale, and every gap in the block is a multiple:
+  `--hiw-step:8px` is the scale and every gap in the block is a multiple of it.
 
-      eyebrow -> title        2 steps = 16px   \
-      title   -> description  2 steps = 16px    > equal, so the three read as
-      description -> strip    5 steps = 40px   /  one block, then a clear break
+  ⚠ RE-DERIVED WHEN THE DESCRIPTION WAS DELETED (WS-3a). The block was three
+  elements and is now two, so the scale had to be restated rather than left with
+  a 40px gap dangling off a removed paragraph's margin-bottom:
 
-  The two intra-block gaps are deliberately EQUAL — that is the literal reading
-  of "spaced evenly" — and the step to the cards is 2.5x either of them so the
-  heading block ends rather than merging into the grid.
+      eyebrow -> title   2 steps = 16px   the label and the thing it labels
+      title   -> strip   6 steps = 48px   the block break, 3x the internal gap
+
+  A 3:1 ratio between the internal gap and the break is what makes the two
+  elements read as ONE block followed by the grid, rather than as three evenly
+  spaced things — which is what 12/16/34 did wrong. The gap the deleted
+  paragraph left is spacing, not a hole waiting for filler copy.
 
   ⚠ NOTHING HERE TOUCHES `.pm-home .eyebrow` AT :65. That rule is the shared
   base for every kicker on the page; this section's 19px override is already
@@ -1173,32 +1177,7 @@
   lines rather than leaving "steps." on its own again.
 */
 .pm-home .hiw-h2{font-size:34px;color:var(--ink);font-weight:700;letter-spacing:-.5px;line-height:1.14;margin:calc(var(--hiw-step) * 2) 0 0;max-width:960px;text-wrap:balance}
-/*
-  ── E125: THE DESCRIPTION BETWEEN THE HEADING AND THE CARDS ──────────────────
 
-  ⚠ NOT THE DELETED KICKER. That slot was removed at 19050e5 and this is a
-  different element in a different place — below the heading, above the grid.
-
-  ⚠ THE GRID MUST NOT MOVE. `.hiw-strip` carries `margin-top:34px`, so a
-  paragraph added above it would push the cards down by its full height and
-  every reserved-row baseline with them. The 34px is therefore taken OUT of the
-  strip and given to this paragraph's bottom margin, leaving the distance from
-  heading to grid unchanged apart from the text itself. Measured at 1562 / 1200
-  / 390 and reported.
-
-  ⚠ `--text`, NOT `--ink-2`, AND THE MOCKUP IS WHY THAT NEEDS SAYING.
-
-  The mockup styles this as `.sec-lede{color:var(--ink-2)}` where ITS `--ink-2`
-  is #3a4266 — a mid slate for body copy. In THIS stylesheet `--ink-2` is
-  #0f1530, a near-black used for the dark rail and the dark band. Same token
-  name, two different jobs. Copying the mockup's declaration literally would
-  have printed near-black body copy and looked like a bug.
-
-  `--text` (#2a3345) is this file's body-copy token and the nearest equivalent;
-  it measures 12.67:1 on white. Size and 72ch measure do follow the mockup.
-*/
-.pm-home .hiw-desc{margin:calc(var(--hiw-step) * 2) 0 calc(var(--hiw-step) * 5);font-size:16.5px;line-height:1.62;color:var(--text);max-width:72ch;text-wrap:pretty}
-.pm-home .hiw-desc + .hiw-strip{margin-top:0}
 /*
   ── E136: THE NOUN PHRASE IS BOUND BY A WRAPPER, NOT BY CHARACTERS ───────────
 
@@ -1270,7 +1249,7 @@
   (200 -> 184) and two labels going from two lines to three, which the
   bottom-aligned 260px card absorbs. Reported rather than traded silently.
 */
-.pm-home .hiw-strip{--g:54px;position:relative;margin-top:34px}
+.pm-home .hiw-strip{--g:54px;position:relative;margin-top:calc(var(--hiw-step) * 6)}
 .pm-home .hiw-grid{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:var(--g)}
 .pm-home .hiw-cell{display:flex;align-items:stretch;min-width:0}
 
