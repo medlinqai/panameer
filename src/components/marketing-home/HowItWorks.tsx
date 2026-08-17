@@ -146,24 +146,22 @@ export function HowItWorks() {
       <div className="wrap">
         <div className="eyebrow">Here&rsquo;s How It Works</div>
         {/*
-          ⚠ E136 REVISED — THIS SUPERSEDES THE E124 STRING.
+          ⚠ E136 rev2 — SHIPPED AS THE EXACT LITERAL, WITH NO BINDINGS.
 
-          Scott's latest, 2026-08-17, shipped as the exact literal he wrote:
-          "From process questions to discussing your new process improvement
-          roadmap with an expert in about an hour."
+          Title Case on "Process Improvement Roadmap" is deliberate: it names a
+          deliverable, not a description of one.
 
-          ⚠ NOT ONE CHARACTER IS ALTERED — no non-breaking spaces this time.
-          Unbound, the line broke mid-noun-phrase ("...your new process /
-          improvement roadmap"), the same defect the previous heading had. The
-          binding is a WRAPPER, not a character substitution, and that is the
-          point: `white-space:nowrap` can be RELEASED by a media query, whereas a
-          U+00A0 is permanent and would force a 27-character unbreakable unit
-          onto a 326px phone measure. See `.hiw-nb` in home.css.
+          ⚠ THE NOWRAP SPANS ARE GONE, AND SO IS `text-wrap:balance`. I asked
+          for both in the previous brief, to stop lines ending on small words.
+          That was the wrong trade and Scott called it: balance deliberately
+          SHORTENS every line in order to equalise them, so this heading was
+          using 743px of a 1200px container and paying 38px of extra height for
+          the symmetry. See the STANDING RULE at the top of the section block in
+          home.css — neither comes back.
         */}
         <h2 className="hiw-h2">
-          From process questions to discussing your new{" "}
-          <span className="hiw-nb">process improvement roadmap</span> with an
-          expert in about an hour.
+          From process questions to reviewing your Process Improvement Roadmap
+          with an expert in about an hour.
         </h2>
 
         {/*

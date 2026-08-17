@@ -90,21 +90,25 @@ export function ProcessPicker() {
     <section className="pp" id="step-process">
       <div className="wrap">
         <div className="eyebrow">Step 1 - Choose the Business Process</div>
-        <h2 className="pp-h2">
-          Choose the business process you own and understand.
-        </h2>
         {/*
-          ⚠ "a series questions" IS SCOTT'S WORDING AND SHIPS VERBATIM.
+          ⚠ E139 — SHIPPED AS THE EXACT LITERAL, INCLUDING NO TERMINAL PERIOD.
 
-          There is no "of" and one is not inserted. Flagged in the report as a
-          suspected typo for him to rule on; it is not mine to correct, and a
-          silent fix would mean the page and his brief disagree with nobody
-          knowing which is intended.
+          Scott's string ends without a full stop. Flagged in the report; not
+          added, because a silent period would mean the page and the brief
+          disagree with nobody knowing which was intended.
+
+          ⚠ NO `text-wrap:balance` HERE EITHER — see the standing rule in
+          home.css. This heading had it plus a 36ch cap, the same defect as
+          section 2's but worse: 36ch held it to 707px of a 1136px container.
+
+          E140: the lede paragraph ("You will be asked a series questions...")
+          is DELETED, not emptied — this longer title absorbs it. Its CSS rule is
+          gone from home.css too.
         */}
-        <p className="pp-lede">
-          You will be asked a series questions, including transaction dollars and
-          volumes.
-        </p>
+        <h2 className="pp-h2">
+          Choose the business process you understand and can answer questions
+          about processing methods, volumes, and dollar amounts
+        </h2>
 
         <div className="pp-grid">
           {PROCESSES.map((p) =>

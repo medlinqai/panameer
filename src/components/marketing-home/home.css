@@ -1127,83 +1127,68 @@
 
   #f6f4fb is VideoSequence's own `soft` value, not a new hex.
 */
-/*
-  ── E137: ONE VERTICAL SCALE FOR THE HEADING BLOCK ───────────────────────────
+/* =========================================================================
+   ⚠⚠ STANDING RULE — MARKETING SECTION HEADINGS RUN THE MEASURE.
 
-  The rhythm ran 12 / 16 / 34px, from three unrelated rules that had each been
-  set on its own at a different time. Scott: "the section header text is not
-  spaced evenly." He is right, and the cause is that none of the three numbers
-  was derived from either of the others.
+   DO NOT ADD `text-wrap: balance` TO A SECTION HEADING, and do not re-add
+   nowrap bindings to hold a phrase together. Balance equalises line lengths,
+   which means it deliberately SHORTENS every line — it trades page real estate
+   for line symmetry, and that is the wrong trade on a page whose job is to get
+   the visitor down to the cards.
 
-  `--hiw-step:8px` is the scale and every gap in the block is a multiple of it.
+   Measured on `.hiw-h2` at 1562 / 1400 / 1282 / 1200 / 1100, identical at all
+   five: WITH balance + bindings, 3 lines / 116px tall / 743px widest inside a
+   1200px container. WITHOUT them, 2 lines / 78px. Scott, 2026-08-17: "we are
+   wasting space by wrapping text that could go across the screen... the user
+   does not see enough of the page."
 
-  ⚠ RE-DERIVED WHEN THE DESCRIPTION WAS DELETED (WS-3a). The block was three
-  elements and is now two, so the scale had to be restated rather than left with
-  a 40px gap dangling off a removed paragraph's margin-bottom:
+   Vertical space and above-the-fold content beat line tidiness. This REVERSES
+   what the previous brief asked for, deliberately.
 
-      eyebrow -> title   2 steps = 16px   the label and the thing it labels
-      title   -> strip   6 steps = 48px   the block break, 3x the internal gap
+   ── ONE VERTICAL SCALE FOR EVERY SECTION HEADING BLOCK ────────────────────
+   `--sec-step` is defined on `.pm-home` so `.hiw` and `.pp` cannot drift:
 
-  A 3:1 ratio between the internal gap and the break is what makes the two
-  elements read as ONE block followed by the grid, rather than as three evenly
-  spaced things — which is what 12/16/34 did wrong. The gap the deleted
-  paragraph left is spacing, not a hole waiting for filler copy.
+       above eyebrow (section padding-top)   6 steps = 48px
+       eyebrow -> title                      3 steps = 24px
+       title   -> next block                 6 steps = 48px
+       section padding-bottom               10 steps = 80px
 
-  ⚠ NOTHING HERE TOUCHES `.pm-home .eyebrow` AT :65. That rule is the shared
-  base for every kicker on the page; this section's 19px override is already
-  scoped `.hiw .eyebrow`, and the spacing below is set on the SIBLINGS, never on
-  the eyebrow itself.
-*/
-.pm-home .hiw{--hiw-step:8px;background:#f6f4fb;padding:70px 0 78px}
+   The eyebrow now sits nearer the section TOP than the title (48 above, 24
+   below) so it reads as a label ON the section rather than as the heading's
+   first line — E137 rev. Both sections use the same numbers; that is the point.
+   ------------------------------------------------------------------------- */
+.pm-home{--sec-step:8px}
+.pm-home .hiw{background:#f6f4fb;padding:calc(var(--sec-step) * 6) 0 calc(var(--sec-step) * 10)}
 /*
   ⚠ DARK ON LIGHT. This was hard-coded `color:#fff` for the navy band and would
   have rendered white-on-lilac — an invisible heading — the moment the band
   changed. Same size, same weight, same wording; colour only.
 */
 /*
-  ⚠ 960px, NOT 760 — THE CAP WAS BREAKING A LINE THAT HAD ROOM (§3a).
+  ⚠ 1040px, AND IT IS THE SMALLEST CAP THAT KEEPS THIS HEADING ON TWO LINES.
 
-  Measured before changing it: at 760 the first line set to 736px and pushed
-  "steps." alone onto a second line. The whole sentence needs ~837px at 34px,
-  and the grid immediately below it is 1136px wide — so the heading was being
-  wrapped by its own cap, not by the page.
+  The cap has moved twice for the same reason: it was breaking a line that had
+  room. At 760 it orphaned "steps."; at 960 it orphaned "hour." off the E136-rev2
+  string. Measured at 1562 / 1400 / 1282 / 1200 / 1100 — identical at all five:
 
-  960 clears the 837 it needs with headroom for a font-metric difference, and
-  still keeps a sane reading measure if the wording ever grows. NOT
-  `white-space:nowrap`, which would shove it out of the viewport on a phone,
-  and not `max-width:none`, which would hand a 34px heading the full 1136.
+      max-width  960px  ->  3 lines · 116.3px · widest 867px
+      max-width 1040px  ->  2 lines ·  77.5px · widest 964px
+      max-width   none  ->  2 lines ·  77.5px · widest 1100px
 
-  `text-wrap:balance` is for the phone, where it must still wrap: it evens the
-  lines rather than leaving "steps." on its own again.
+  1040 and uncapped save the same 38.8px of height, so the cap is free — and it
+  buys a 964px maximum line instead of 1100px. That is why a cap stays at all:
+  not to shorten lines for symmetry (see the standing rule, which forbids that)
+  but because past the point where it costs nothing, a shorter maximum line is
+  simply easier to read.
+
+  ⚠ RE-MEASURE THIS IF THE COPY CHANGES. The number is a function of the string,
+  not a house style — it has been wrong twice by being left behind after a
+  rewrite. Find the smallest cap that holds two lines and use it.
+
+  NOT `white-space:nowrap`, which would shove it out of a phone viewport, and NOT
+  `text-wrap:balance`, which is what the standing rule above exists to prevent.
 */
-.pm-home .hiw-h2{font-size:34px;color:var(--ink);font-weight:700;letter-spacing:-.5px;line-height:1.14;margin:calc(var(--hiw-step) * 2) 0 0;max-width:960px;text-wrap:balance}
-
-/*
-  ── E136: THE NOUN PHRASE IS BOUND BY A WRAPPER, NOT BY CHARACTERS ───────────
-
-  "process improvement roadmap" split across lines unbound. Binding it with
-  U+00A0 would have been permanent — and at 29px on a 326px phone measure a
-  27-character unbreakable unit overflows the viewport, which is worse than the
-  split it fixes. A `nowrap` span can be RELEASED, so it is.
-
-  ⚠ 524px IS DERIVED, NOT PICKED. Measured on the real page, not a mockup: the
-  phrase sets 460.9px at the 29px mobile size, and `.hiw-h2`'s measure is
-  `viewport - 64` — `.wrap` is 32px each side at EVERY width; the real page never
-  drops to the mockup's 22px. 460.9 + 64 = 524.9, so 525px is the last viewport
-  where the bound phrase fits and 524px is the first where it cannot.
-
-  Releasing any HIGHER would split the phrase at a width where it still fits,
-  which the acceptance criterion forbids. Releasing any LOWER would let it
-  overflow. If the display font changes, re-derive: measure the phrase at 29px
-  and add 64.
-*/
-.pm-home .hiw-nb{white-space:nowrap}
-@media(max-width:524px){
-  /* Below the crossover it cannot fit at any acceptable size, so it wraps
-     normally. The type does NOT shrink — that was the explicit instruction, and
-     a longer heading on a phone is fine. */
-  .pm-home .hiw-nb{white-space:normal}
-}
+.pm-home .hiw-h2{font-size:34px;color:var(--ink);font-weight:700;letter-spacing:-.5px;line-height:1.14;margin:calc(var(--sec-step) * 3) 0 0;max-width:1040px}
 /*
   ── THE KICKER, SCOPED TO THIS SECTION ONLY ──────────────────────────────────
 
@@ -1249,7 +1234,7 @@
   (200 -> 184) and two labels going from two lines to three, which the
   bottom-aligned 260px card absorbs. Reported rather than traded silently.
 */
-.pm-home .hiw-strip{--g:54px;position:relative;margin-top:calc(var(--hiw-step) * 6)}
+.pm-home .hiw-strip{--g:54px;position:relative;margin-top:calc(var(--sec-step) * 6)}
 .pm-home .hiw-grid{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:var(--g)}
 .pm-home .hiw-cell{display:flex;align-items:stretch;min-width:0}
 
@@ -1696,12 +1681,30 @@
    shaded bands in a row and break the E115 alternation the page is locked to.
    Reported rather than assumed.
    ------------------------------------------------------------------------- */
-.pm-home .pp{background:#fff;padding:74px 0 80px;border-top:1px solid var(--line)}
-.pm-home .pp-h2{font-size:34px;color:var(--ink);font-weight:700;letter-spacing:-.5px;line-height:1.28;margin:12px 0 14px;max-width:36ch;text-wrap:balance}
-.pm-home .pp-lede{font-size:16.5px;line-height:1.62;color:var(--text);margin:0;max-width:72ch;text-wrap:pretty}
+/*
+  ── B1/B4: SECTION 3 IS ON THE SAME SCALE AS SECTION 2 ───────────────────────
+  Same `--sec-step` from `.pm-home`, same 48 / 24 / 48 / 80 rhythm, so the two
+  section heads cannot drift apart. Was 74px top / 80px bottom with a 12px
+  eyebrow gap — none of it on a scale.
+*/
+.pm-home .pp{background:#fff;padding:calc(var(--sec-step) * 6) 0 calc(var(--sec-step) * 10);border-top:1px solid var(--line)}
+/*
+  ⚠ E134: 19px, SCOPED TO `.pp` — NEVER the shared base rule near the top of this
+  file, which feeds every section on the page. The eyebrow was inheriting that
+  13px base while section 2's was 19px via its own scoped override, so the two
+  section labels did not match. This mirrors `.hiw .eyebrow` exactly.
+*/
+.pm-home .pp .eyebrow{font-size:19px}
+/*
+  ⚠ E135: `balance` OFF AND THE 36ch CAP WIDENED. 36ch computed to 707px inside a
+  1136px container — the same defect as section 2's heading and worse, because a
+  ch cap shrinks with the font rather than tracking the page. Now 1040px, matching
+  `.hiw-h2`. Re-measure the cap if the copy changes, same as section 2.
+*/
+.pm-home .pp-h2{font-size:34px;color:var(--ink);font-weight:700;letter-spacing:-.5px;line-height:1.28;margin:calc(var(--sec-step) * 3) 0 0;max-width:1040px}
 
 /* auto-fit is what makes a fifth process a data edit. */
-.pm-home .pp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(248px,1fr));gap:20px;margin-top:42px}
+.pm-home .pp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(248px,1fr));gap:20px;margin-top:calc(var(--sec-step) * 6)}
 
 .pm-home .pp-card{position:relative;display:flex;flex-direction:column;isolation:isolate;overflow:hidden;border-radius:16px;padding:24px 22px 22px;color:#fff;text-decoration:none;box-shadow:0 14px 34px -18px rgba(23,30,62,.55);transition:transform .18s ease,box-shadow .18s ease}
 .pm-home a.pp-card:hover{transform:translateY(-3px);box-shadow:0 22px 44px -18px rgba(23,30,62,.6)}
@@ -1742,6 +1745,6 @@
 .pm-home .pp-card.is-soon .pp-scrim{background:linear-gradient(168deg,rgba(22,22,44,.86) 0%,rgba(18,18,38,.92) 100%)}
 
 @media(max-width:620px){
-  .pm-home .pp-h2{font-size:27px;max-width:none}
+  .pm-home .pp-h2{font-size:27px}
   .pm-home .pp-blurb{min-height:0}
 }
