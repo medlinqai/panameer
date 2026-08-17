@@ -141,7 +141,22 @@
   copy inboard of the dashboard shot underneath and break the vertical edge.
 */
 .pm-home .hero-row{position:relative;z-index:3;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px;align-items:center}
-.pm-home .hero h1{font-size:52px;line-height:1.08;color:#fff;font-weight:700;letter-spacing:-1px}
+/*
+  ⚠ `text-wrap:balance`, NOT A HARD <br /> (brief_hero_strings §3).
+
+  Measured on the real page: the h1 box is 492px at both 1562 and 1200 (it is
+  the left half of a two-column hero, so it does NOT get wider with the
+  viewport), and "Optimize Your Business with AI" already sets there as
+  "Optimize Your / Business with AI" — two lines, 2 words then 3. A hard break
+  after "Your" would produce the identical result and then go stale the moment
+  the wording changes.
+
+  At 390 it is a different story and this rule is why it is here: the natural
+  wrap was "Optimize Your / Business with / AI", orphaning "AI" on a line of
+  its own. `balance` evens the lines instead, which is the property the brief
+  asks for rather than a hand-placed break that only fixes one width.
+*/
+.pm-home .hero h1{font-size:52px;line-height:1.08;color:#fff;font-weight:700;letter-spacing:-1px;text-wrap:balance}
 /* CTA unchanged — same magenta, same 12px radius as the light hero shipped with. */
 .pm-home .hero-cta{margin-top:34px;display:inline-flex;align-items:center;gap:10px;background:var(--mag);color:#fff;padding:16px 30px;border-radius:12px;font-weight:600;font-size:17px}
 .pm-home .hero-cta:hover{background:var(--mag-d)}
@@ -1098,20 +1113,42 @@
   have rendered white-on-lilac — an invisible heading — the moment the band
   changed. Same size, same weight, same wording; colour only.
 */
-.pm-home .hiw-h2{font-size:34px;color:var(--ink);font-weight:700;letter-spacing:-.5px;line-height:1.14;margin:12px 0 0;max-width:760px}
 /*
-  ── §3a THE KICKER, SCOPED TO THIS SECTION ONLY ──────────────────────────────
+  ⚠ 960px, NOT 760 — THE CAP WAS BREAKING A LINE THAT HAD ROOM (§3a).
+
+  Measured before changing it: at 760 the first line set to 736px and pushed
+  "steps." alone onto a second line. The whole sentence needs ~837px at 34px,
+  and the grid immediately below it is 1136px wide — so the heading was being
+  wrapped by its own cap, not by the page.
+
+  960 clears the 837 it needs with headroom for a font-metric difference, and
+  still keeps a sane reading measure if the wording ever grows. NOT
+  `white-space:nowrap`, which would shove it out of the viewport on a phone,
+  and not `max-width:none`, which would hand a 34px heading the full 1136.
+
+  `text-wrap:balance` is for the phone, where it must still wrap: it evens the
+  lines rather than leaving "steps." on its own again.
+*/
+.pm-home .hiw-h2{font-size:34px;color:var(--ink);font-weight:700;letter-spacing:-.5px;line-height:1.14;margin:12px 0 0;max-width:960px;text-wrap:balance}
+/*
+  ── THE KICKER, SCOPED TO THIS SECTION ONLY ──────────────────────────────────
 
   ⚠ DO NOT MOVE THIS TO `.pm-home .eyebrow`. That rule is shared by every
   kicker on the page — the framework, the method, the ERP sections, the
   testimonials — and growing it there would resize all of them to fix one.
 
-  13px sat too small above a 34px heading and a row of five cards. 15.5px is
-  0.46 of the heading, which reads as a label belonging to it rather than as a
-  second heading competing with it. Caps, .14em tracking and the magenta are
-  inherited from `.eyebrow` unchanged — size is the only thing that moves.
+  ⚠ 19px, AND THE HISTORY MATTERS. Base is 13px from the shared rule. The owner
+  called this too small, it went to 15.5px, and he called it too small again —
+  so a third small nudge is not the answer. 19px is a visible jump, which is
+  the point of it.
+
+  It is 0.56 of the 34px heading, which is high for an eyebrow, and it holds as
+  a label rather than a rival only because three other things separate them:
+  it is magenta against ink, it is uppercase against sentence case, and it
+  carries .14em tracking against the heading's -.5px. Caps, tracking and colour
+  are inherited from `.eyebrow` — size is still the only property that moves.
 */
-.pm-home .hiw .eyebrow{font-size:15.5px}
+.pm-home .hiw .eyebrow{font-size:19px}
 
 /*
   ── THE STRIP: ONE POSITIONING CONTEXT FOR THE RAIL, THE CARDS AND THE DOTS ──
