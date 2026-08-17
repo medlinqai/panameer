@@ -179,13 +179,23 @@ export const FOOTER_GROUPS: { title: string; entries: FooterEntry[] }[] = [
   {
     title: "Why & Commercial",
     entries: [
-      { label: "Why Panameer", href: "/hire-talent#three-ways" },
+      /*
+        ⚠ A PAGE NOW, NOT AN ANCHOR (brief_public_ia_block2 WS-7). It pointed at
+        `/hire-talent#three-ways`, which sent a reader asking "why Panameer" to a
+        hiring page and dropped them mid-way down it.
+
+        `ThreeWays` STAYS on /hire-talent and #three-ways is still a valid
+        anchor — this changes where the footer link points, it does not move a
+        section.
+      */
+      { label: "Why Panameer", href: "/why-panameer" },
       /*
         An ANCHOR, not a page. There is no approved per-transaction figure, and a
         page headed "Pricing" with no price is a worse promise than a section.
       */
       { label: "Pricing", href: "/hire-talent#value" },
-      { label: "Enterprise Integration" },
+      /* Was a TBD with no href until /enterprise existed (WS-7). */
+      { label: "Enterprise Integration", href: "/enterprise" },
     ],
   },
   {
