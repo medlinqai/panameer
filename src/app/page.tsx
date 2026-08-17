@@ -11,6 +11,7 @@ import { TalentTeaser } from "@/components/marketing-home/TalentTeaser";
 import { Testimonials } from "@/components/marketing-home/Testimonials";
 import { HomeFooter } from "@/components/marketing-home/HomeFooter";
 import { HowItWorks } from "@/components/marketing-home/HowItWorks";
+import { ProcessPicker } from "@/components/marketing-home/ProcessPicker";
 import { StepDetail } from "@/components/marketing-home/StepDetail";
 import { QuestionShot } from "@/components/marketing-home/steps/QuestionShot";
 import { LadderShot } from "@/components/marketing-home/steps/LadderShot";
@@ -111,6 +112,20 @@ export default function Home() {
           talking about. Do not revert this to put the shot back on top.
         */}
         <HowItWorks />
+        {/*
+          ── SECTION 3: THE PROCESS PICKER (E126) ──────────────────────────────
+
+          Placed directly after the strip because the walk matrix numbers it
+          "Home section 3" against Scott's own numbering — 1 hero, 2 the strip,
+          3 this. The brief says "between HowItWorks and the existing #step-1",
+          and DashboardShot sits in that gap; section 3 puts it here, ahead of
+          the shot, so the reader picks a process before being shown the
+          artefact a process produces.
+
+          Data-driven: every card comes from `lib/processes.ts`. A fifth process
+          is an entry in that array and nothing here changes.
+        */}
+        <ProcessPicker />
         <DashboardShot />
 
         {/*

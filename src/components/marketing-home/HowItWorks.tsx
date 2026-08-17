@@ -158,8 +158,29 @@ export function HowItWorks() {
           the optional 30-minute expert session is counted — but the page must
           not state two durations without distinguishing them. Scott decides.
         */}
+        {/*
+          ⚠ E133 — THE BREAKS ARE BOUND WITH U+00A0, AND THE COPY IS UNCHANGED.
+
+          On the shipped build this broke as "From process questions to an" /
+          "AI roadmap...", orphaning the article on the end of line 1. Three
+          regular spaces are now NO-BREAK spaces: an·AI·roadmap and with·AI.
+
+          NOT ONE VISIBLE CHARACTER CHANGES. A no-break space renders as a
+          space, copies as a space and reads as a space — what changes is only
+          whether the line may break there. Scott's string is byte-for-byte the
+          same word sequence shipped at E124.
+
+          ⚠ WRITTEN AS A BRACED JS STRING WITH \u ESCAPES, NOT `&nbsp;`. In this
+          toolchain a JSX TEXT node containing an HTML entity loses its leading
+          whitespace — it has produced "millions on" and "Free. Integrating"
+          defects twice. Inside {} it is an ordinary string literal, the escape
+          resolves, and there is no whitespace ambiguity to get wrong.
+
+          `text-wrap:balance` is already on `.hiw-h2` and is NOT sufficient
+          alone — it evens line lengths, it does not forbid a break after "an".
+        */}
         <h2 className="hiw-h2">
-          From process questions to an AI roadmap in an hour...with AI
+          {"From process questions to an\u00A0AI\u00A0roadmap in an hour...with\u00A0AI"}
         </h2>
         {/*
           ⚠ E125 — A NEW ELEMENT, NOT THE KICKER COMING BACK.
@@ -174,11 +195,25 @@ export function HowItWorks() {
           out of `.hiw-strip`'s own top margin rather than being stacked on top
           of it. Measured before and after at all three widths.
         */}
+        {/*
+          ⚠ E133 — U+2011 NON-BREAKING HYPHEN IN "process‑based".
+
+          It was breaking as "process-" / "based". `hyphens:none` does NOT
+          prevent a break at a LITERAL hyphen-minus — that is why earlier
+          attempts at this failed — so the character itself has to change:
+          U+2011 renders identically to U+002D and simply carries no break
+          opportunity.
+
+          Same rule as the heading: one braced string literal with \u escapes,
+          so neither the entity-whitespace bug nor a stray line break in the JSX
+          source can alter the rendered text. `\u2019` is the curly apostrophe
+          that was `&rsquo;`.
+
+          `text-wrap:pretty` is already on `.hiw-desc` and is not sufficient
+          alone either.
+        */}
         <p className="hiw-desc">
-          Get the guidance you need to understand the AI options that will
-          optimize your processing. Then meet with the world&rsquo;s top experts to
-          prioritize solutions and create your own process-based AI Optimization
-          Roadmap.
+          {"Get the guidance you need to understand the AI options that will optimize your processing. Then meet with the world\u2019s top experts to prioritize solutions and create your own process\u2011based AI Optimization Roadmap."}
         </p>
 
         {/*
