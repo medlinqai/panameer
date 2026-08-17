@@ -1127,7 +1127,30 @@
 
   #f6f4fb is VideoSequence's own `soft` value, not a new hex.
 */
-.pm-home .hiw{background:#f6f4fb;padding:70px 0 78px}
+/*
+  ── E137: ONE VERTICAL SCALE FOR THE HEADING BLOCK ───────────────────────────
+
+  The rhythm ran 12 / 16 / 34px, from three unrelated rules that had each been
+  set on its own at a different time. Scott: "the section header text is not
+  spaced evenly." He is right, and the cause is that none of the three numbers
+  was derived from either of the others.
+
+  `--hiw-step:8px` is the scale, and every gap in the block is a multiple:
+
+      eyebrow -> title        2 steps = 16px   \
+      title   -> description  2 steps = 16px    > equal, so the three read as
+      description -> strip    5 steps = 40px   /  one block, then a clear break
+
+  The two intra-block gaps are deliberately EQUAL — that is the literal reading
+  of "spaced evenly" — and the step to the cards is 2.5x either of them so the
+  heading block ends rather than merging into the grid.
+
+  ⚠ NOTHING HERE TOUCHES `.pm-home .eyebrow` AT :65. That rule is the shared
+  base for every kicker on the page; this section's 19px override is already
+  scoped `.hiw .eyebrow`, and the spacing below is set on the SIBLINGS, never on
+  the eyebrow itself.
+*/
+.pm-home .hiw{--hiw-step:8px;background:#f6f4fb;padding:70px 0 78px}
 /*
   ⚠ DARK ON LIGHT. This was hard-coded `color:#fff` for the navy band and would
   have rendered white-on-lilac — an invisible heading — the moment the band
@@ -1149,7 +1172,7 @@
   `text-wrap:balance` is for the phone, where it must still wrap: it evens the
   lines rather than leaving "steps." on its own again.
 */
-.pm-home .hiw-h2{font-size:34px;color:var(--ink);font-weight:700;letter-spacing:-.5px;line-height:1.14;margin:12px 0 0;max-width:960px;text-wrap:balance}
+.pm-home .hiw-h2{font-size:34px;color:var(--ink);font-weight:700;letter-spacing:-.5px;line-height:1.14;margin:calc(var(--hiw-step) * 2) 0 0;max-width:960px;text-wrap:balance}
 /*
   ── E125: THE DESCRIPTION BETWEEN THE HEADING AND THE CARDS ──────────────────
 
@@ -1174,8 +1197,34 @@
   `--text` (#2a3345) is this file's body-copy token and the nearest equivalent;
   it measures 12.67:1 on white. Size and 72ch measure do follow the mockup.
 */
-.pm-home .hiw-desc{margin:16px 0 34px;font-size:16.5px;line-height:1.62;color:var(--text);max-width:72ch;text-wrap:pretty}
+.pm-home .hiw-desc{margin:calc(var(--hiw-step) * 2) 0 calc(var(--hiw-step) * 5);font-size:16.5px;line-height:1.62;color:var(--text);max-width:72ch;text-wrap:pretty}
 .pm-home .hiw-desc + .hiw-strip{margin-top:0}
+/*
+  ── E136: THE NOUN PHRASE IS BOUND BY A WRAPPER, NOT BY CHARACTERS ───────────
+
+  "process improvement roadmap" split across lines unbound. Binding it with
+  U+00A0 would have been permanent — and at 29px on a 326px phone measure a
+  27-character unbreakable unit overflows the viewport, which is worse than the
+  split it fixes. A `nowrap` span can be RELEASED, so it is.
+
+  ⚠ 524px IS DERIVED, NOT PICKED. Measured on the real page, not a mockup: the
+  phrase sets 460.9px at the 29px mobile size, and `.hiw-h2`'s measure is
+  `viewport - 64` — `.wrap` is 32px each side at EVERY width; the real page never
+  drops to the mockup's 22px. 460.9 + 64 = 524.9, so 525px is the last viewport
+  where the bound phrase fits and 524px is the first where it cannot.
+
+  Releasing any HIGHER would split the phrase at a width where it still fits,
+  which the acceptance criterion forbids. Releasing any LOWER would let it
+  overflow. If the display font changes, re-derive: measure the phrase at 29px
+  and add 64.
+*/
+.pm-home .hiw-nb{white-space:nowrap}
+@media(max-width:524px){
+  /* Below the crossover it cannot fit at any acceptable size, so it wraps
+     normally. The type does NOT shrink — that was the explicit instruction, and
+     a longer heading on a phone is fine. */
+  .pm-home .hiw-nb{white-space:normal}
+}
 /*
   ── THE KICKER, SCOPED TO THIS SECTION ONLY ──────────────────────────────────
 
@@ -1250,27 +1299,33 @@
   left:calc(70% + .2 * var(--g));right:calc(20% - .8 * var(--g))}
 
 /*
-  ── E122: THE CONNECTORS WERE READING AS PUNCTUATION ─────────────────────────
+  ── E122 REVISED: FROM A FILLED DISC TO AN OPEN CHEVRON ──────────────────────
 
-  34px circle / 15px glyph, ported from VideoSequence, which has no rail and no
-  five-card row to carry. They are the ONLY thing on the strip carrying
-  left-to-right sequence, and at that size they read as a bullet between cards
-  rather than as flow. Scott, 2026-08-17.
+  Was a 42px saturated magenta circle, 20px white glyph, `box-shadow:0 8px 18px
+  rgba(215,44,214,.42)` — five of them across the row. Scott: "These arrows are
+  childish. Can you make them bigger? Better?"
 
-  ⚠ THE DIAMETER IS NOW A VARIABLE, AND IT HAS TO BE. The seam offset must
-  subtract exactly half the circle to stay centred on the gutter; that was a
-  hard-coded `- 17px` next to a hard-coded `34px`, which is two places to edit
-  and one of them silently wrong. `--ac` drives both.
+  Size was only half of it. Five filled magenta discs with drop shadows read as
+  five identical buttons, and PINK = SMALL ACCENTS ONLY is a standing brand rule
+  (decisions-01.md, 2026-08-13). A saturated fill repeated four times across one
+  row is the opposite of a small accent.
 
-  ⚠ AND IT TRADES AGAINST THE RAIL. The gutter is `--g` (54px), so the visible
-  rail either side of each circle is `(--g - --ac) / 2`. Bigger circle, shorter
-  stubs. Measured at several sizes before settling; reported in the brief note.
+  ⚠ THE FIX IS TO CHANGE THE KIND OF MARK, NOT ITS RADIUS. An open stroke grows
+  without gaining weight: this is 48px TALL against the disc's 42px, so it reads
+  larger, while being 30px WIDE against 42px, so it takes LESS of the gutter.
+  No fill, no shadow, magenta as the stroke.
+
+  ⚠ AND IT GIVES THE RAIL BACK. Visible rail either side of a connector is
+  (--g - --ac)/2, so narrowing the mark takes the stub from 6px to 12px — the
+  line joining the stations reads again, which is what the rail was added for.
+
+  `--ac` still drives the seam offset (it must subtract exactly half the mark),
+  so width and position cannot desync.
 */
-.pm-home .hiw-arrow{--ac:42px;position:absolute;top:50%;transform:translateY(-50%);z-index:2;
+.pm-home .hiw-arrow{--ac:30px;position:absolute;top:50%;transform:translateY(-50%);z-index:2;
   left:calc(var(--k) * 20% + (var(--k) * .2 - .5) * var(--g) - var(--ac) / 2);
-  display:grid;place-items:center;width:var(--ac);height:var(--ac);border-radius:50%;
-  background:var(--mag);color:#fff;font-size:20px;line-height:1;
-  box-shadow:0 8px 18px rgba(215,44,214,.42)}
+  display:grid;place-items:center;width:var(--ac);height:48px;color:var(--mag)}
+.pm-home .hiw-arrow svg{display:block;width:100%;height:100%}
 
 /* ---- the card ----------------------------------------------------------- */
 .pm-home .hiw-card{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:flex-end;flex:1;min-width:0;min-height:260px;overflow:hidden;border-radius:16px;padding:22px 18px;color:#fff;box-shadow:0 14px 34px rgba(23,30,62,.22);transition:transform .18s,box-shadow .18s}
