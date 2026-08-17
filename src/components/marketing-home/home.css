@@ -1127,7 +1127,30 @@
 
   #f6f4fb is VideoSequence's own `soft` value, not a new hex.
 */
-.pm-home .hiw{background:#f6f4fb;padding:70px 0 78px}
+/*
+  ── E137: ONE VERTICAL SCALE FOR THE HEADING BLOCK ───────────────────────────
+
+  The rhythm ran 12 / 16 / 34px, from three unrelated rules that had each been
+  set on its own at a different time. Scott: "the section header text is not
+  spaced evenly." He is right, and the cause is that none of the three numbers
+  was derived from either of the others.
+
+  `--hiw-step:8px` is the scale, and every gap in the block is a multiple:
+
+      eyebrow -> title        2 steps = 16px   \
+      title   -> description  2 steps = 16px    > equal, so the three read as
+      description -> strip    5 steps = 40px   /  one block, then a clear break
+
+  The two intra-block gaps are deliberately EQUAL — that is the literal reading
+  of "spaced evenly" — and the step to the cards is 2.5x either of them so the
+  heading block ends rather than merging into the grid.
+
+  ⚠ NOTHING HERE TOUCHES `.pm-home .eyebrow` AT :65. That rule is the shared
+  base for every kicker on the page; this section's 19px override is already
+  scoped `.hiw .eyebrow`, and the spacing below is set on the SIBLINGS, never on
+  the eyebrow itself.
+*/
+.pm-home .hiw{--hiw-step:8px;background:#f6f4fb;padding:70px 0 78px}
 /*
   ⚠ DARK ON LIGHT. This was hard-coded `color:#fff` for the navy band and would
   have rendered white-on-lilac — an invisible heading — the moment the band
@@ -1149,7 +1172,7 @@
   `text-wrap:balance` is for the phone, where it must still wrap: it evens the
   lines rather than leaving "steps." on its own again.
 */
-.pm-home .hiw-h2{font-size:34px;color:var(--ink);font-weight:700;letter-spacing:-.5px;line-height:1.14;margin:12px 0 0;max-width:960px;text-wrap:balance}
+.pm-home .hiw-h2{font-size:34px;color:var(--ink);font-weight:700;letter-spacing:-.5px;line-height:1.14;margin:calc(var(--hiw-step) * 2) 0 0;max-width:960px;text-wrap:balance}
 /*
   ── E125: THE DESCRIPTION BETWEEN THE HEADING AND THE CARDS ──────────────────
 
@@ -1174,7 +1197,7 @@
   `--text` (#2a3345) is this file's body-copy token and the nearest equivalent;
   it measures 12.67:1 on white. Size and 72ch measure do follow the mockup.
 */
-.pm-home .hiw-desc{margin:16px 0 34px;font-size:16.5px;line-height:1.62;color:var(--text);max-width:72ch;text-wrap:pretty}
+.pm-home .hiw-desc{margin:calc(var(--hiw-step) * 2) 0 calc(var(--hiw-step) * 5);font-size:16.5px;line-height:1.62;color:var(--text);max-width:72ch;text-wrap:pretty}
 .pm-home .hiw-desc + .hiw-strip{margin-top:0}
 /*
   ── THE KICKER, SCOPED TO THIS SECTION ONLY ──────────────────────────────────
