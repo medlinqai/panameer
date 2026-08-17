@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import Link from "next/link";
 
 /**
@@ -38,11 +39,12 @@ type Step = {
   n: number;
   label: string;
   /**
-   * The short form of the step, in the magenta slot. It exists because the
-   * numeral became a watermark: without it the card is a title and a paragraph
-   * with a hole where the emphasis used to be.
+   * ⚠ THERE IS NO KICKER ANY MORE. The card is numeral · title · one line, and
+   * the magenta kicker slot ("10 minutes", "Automatically", …) is deleted
+   * rather than emptied — the owner's copy replaced it with a fuller title and
+   * a single supporting line, and a third text slot left in the markup would
+   * just invite someone to refill it.
    */
-  kicker: string;
   body: string;
   /**
    * Card 5 is the consultation, and it has to READ as optional before it is
@@ -55,47 +57,75 @@ type Step = {
 };
 
 /**
- * ⚠ COPY IS EXACT, from the brief's table.
+ * ⚠ THE OWNER'S OWN COPY, VERBATIM.
  *
- * Labels are TITLE CASE at 22px. They were 13px uppercase with .09em tracking,
- * which wrapped as "TAKE THE / ASSESSMENT" in a fifth of the row.
+ * He drafted these five lines himself and asked for them as written; the only
+ * edit made anywhere was a `COMPAIR` -> `Compare` typo fix. Titles stay in
+ * TITLE CASE at 22px — do not switch them to uppercase, the uppercase labels
+ * this replaced wrapped worse.
  *
- * Card 5's label carries no "— OPTIONAL" any more: the chip says it, and saying
- * it twice on one card is how a design starts shouting.
+ * Three things flagged in the report and deliberately NOT changed here:
+ * the slash in "Score/Dashboard", "Detail processing" colliding with the word
+ * "process" two cards earlier, and card 5 no longer containing the word
+ * "free" anywhere. All three are his call, not mine.
  */
 const STEPS: Step[] = [
   {
     n: 1,
-    label: "Take the Assessment",
-    kicker: "10 minutes",
-    body: "Process-specific. Pick the process you care about.",
+    label: "Process-Specific Assessments",
+    body: "Select the process you want to evaluate",
   },
   {
     n: 2,
-    label: "AI Scores Every Domain",
-    kicker: "Automatically",
-    body: "Each capability domain inside that process, evaluated and scored.",
+    label: "Capability Domain Level Scoring",
+    body: "Detail processing per capability domain",
   },
   {
     n: 3,
-    label: "We Build Your Dashboard",
-    kicker: "Link by email",
-    body: "Panameer creates your analytics dashboard and sends you the link.",
+    label: "AI Builds Your Score/Dashboard",
+    body: "Score each domain & suggest solutions",
   },
   {
     n: 4,
-    label: "You Log In and Review",
-    kicker: "Ranked by opportunity",
-    body: "Your scores and your opportunities, ranked.",
+    label: "Review & Compare vs Industry Peers",
+    body: "See ranking and review solutions",
   },
   {
     n: 5,
-    label: "Free Consultation",
-    kicker: "Optional, always",
-    body: "How to deploy each opportunity, and what the net effect on your business will be.",
+    label: "Discuss Solutions With an Expert",
+    body: "Select & prioritize based on requirements",
     optional: true,
   },
 ];
+
+/**
+ * A BREAK OPPORTUNITY AFTER A SLASH — presentation, not a copy change.
+ *
+ * "AI Builds Your Score/Dashboard" contains a 15-character token with no break
+ * opportunity in it, and at the 184px five-up card it measured wider than its
+ * column: `scrollWidth > clientWidth`, i.e. the title spilling out of a card
+ * that clips its own overflow. The owner asked for the copy as written, so the
+ * text is untouched and the browser is given somewhere to break instead.
+ *
+ * `<wbr>` rather than `overflow-wrap` alone: left to break anywhere the word
+ * splits as "Score/Dashboar|d". After the slash it splits as "Score/" +
+ * "Dashboard", which is where a reader would break it too. Nothing is added to
+ * the rendered text — copy, select and screen-reader output are unchanged.
+ *
+ * Generic rather than hard-coded to card 3, so a second slash in the owner's
+ * copy cannot reintroduce the overflow.
+ */
+function breakAtSlash(label: string) {
+  const parts = label.split("/");
+  if (parts.length === 1) return label;
+  return parts.map((part, i) => (
+    <Fragment key={i}>
+      {i > 0 && <wbr />}
+      {part}
+      {i < parts.length - 1 ? "/" : null}
+    </Fragment>
+  ));
+}
 
 export function HowItWorks() {
   return (
@@ -160,8 +190,7 @@ export function HowItWorks() {
                   {s.optional && <span className="hiw-tag">Optional</span>}
 
                   <span className="hiw-text">
-                    <span className="hiw-l">{s.label}</span>
-                    <span className="hiw-k">{s.kicker}</span>
+                    <span className="hiw-l">{breakAtSlash(s.label)}</span>
                     <span className="hiw-s">{s.body}</span>
                   </span>
                 </Link>

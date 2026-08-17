@@ -1210,7 +1210,7 @@
   box-shadow:0 6px 14px rgba(215,44,214,.4)}
 
 /* ---- the card ----------------------------------------------------------- */
-.pm-home .hiw-card{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:flex-end;flex:1;min-width:0;min-height:260px;overflow:hidden;border-radius:16px;padding:22px 20px;color:#fff;box-shadow:0 14px 34px rgba(23,30,62,.22);transition:transform .18s,box-shadow .18s}
+.pm-home .hiw-card{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:flex-end;flex:1;min-width:0;min-height:260px;overflow:hidden;border-radius:16px;padding:22px 18px;color:#fff;box-shadow:0 14px 34px rgba(23,30,62,.22);transition:transform .18s,box-shadow .18s}
 .pm-home .hiw-card:hover{transform:translateY(-3px);box-shadow:0 20px 44px rgba(23,30,62,.34)}
 .pm-home .hiw-card:focus-visible{outline:2px solid var(--mag);outline-offset:3px}
 /* VideoSequence's palette, in its order, so the strips share a family. */
@@ -1223,9 +1223,41 @@
 .pm-home .hiw-scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(13,18,48,.15) 0%,rgba(13,18,48,.85) 100%)}
 .pm-home .hiw-n{position:absolute;left:16px;top:12px;font-family:var(--font-display),sans-serif;font-size:58px;font-weight:700;line-height:1;color:rgba(255,255,255,.16)}
 .pm-home .hiw-text{position:relative}
-.pm-home .hiw-l{display:block;font-family:var(--font-display),sans-serif;font-size:22px;font-weight:600;color:#fff;line-height:1.18;letter-spacing:-.2px}
-.pm-home .hiw-k{display:block;font-family:var(--font-display),sans-serif;font-size:14px;font-weight:500;color:#f0d6f4;margin:2px 0 8px}
-.pm-home .hiw-s{display:block;font-size:13px;line-height:1.45;color:#d9d6ec}
+/*
+  ── §3 THE TITLE AND BODY ROWS ARE RESERVED, WHICH IS WHAT ALIGNS THEM ───────
+
+  The card is bottom-anchored (`justify-content:flex-end`), so a title that
+  wraps to three lines starts 26px lower than one that wraps to four. Measured
+  on the owner's copy at the 184px card: titles run 3-4 lines and bodies 2-3,
+  which put the five title tops at 122.5 / 96.5 / 122.5 / 96.5 / 76.7 — 45.8px
+  of spread — and the bodies 19.8px apart.
+
+  Reserving the TALLEST of each (4 title lines, 3 body lines) makes every text
+  block identically tall, so bottom-anchoring lands all five titles on one
+  baseline and all five bodies on another. Both spreads measure 0px.
+
+  `em` here IS one line: line-height is 1.18 on the title and 1.45 on the body,
+  so `4 * 1.18em` is exactly four lines and follows the font-size if it changes.
+  Released below 1080px, where the cards are 2-up/1-up, every title fits on one
+  line and a four-line reservation would just be a hole.
+
+  ⚠ IF THE COPY GETS LONGER THAN FOUR TITLE LINES OR THREE BODY LINES, RAISE
+  THESE. A fifth line would overflow the reservation and the row would step
+  again — the numbers are measured, not guessed, so re-measure when copy moves.
+
+  `overflow-wrap:break-word` is the safety net, not the mechanism: it only acts
+  on a token too long for the column. The clean break in "Score/Dashboard"
+  comes from the <wbr> in the component, not from here.
+
+  ⚠ AND THE 18px SIDE PADDING IS PART OF THIS. At 20px the column measured
+  144px and the word "Assessments" measures 144.5px at this size — half a pixel
+  over. That was enough to make card 1 either spill out of a card that clips its
+  own overflow, or, with the safety net on, break as "Assessment|s". 18px gives
+  a 148px column and 3.5px of headroom. The brief holds the title size fixed, so
+  the space had to come from somewhere that costs nothing to look at.
+*/
+.pm-home .hiw-l{display:block;font-family:var(--font-display),sans-serif;font-size:22px;font-weight:600;color:#fff;line-height:1.18;letter-spacing:-.2px;min-height:calc(4 * 1.18em);overflow-wrap:break-word}
+.pm-home .hiw-s{display:block;font-size:13px;line-height:1.45;color:#d9d6ec;margin-top:8px;min-height:calc(3 * 1.45em)}
 
 /*
   ⚠ CARD 5 KEEPS ITS OPTIONAL IDENTITY IN THE DARK TREATMENT.
@@ -1247,14 +1279,54 @@
   still visibly lighter than its neighbours; the dashed border and the absent
   shadow carry "optional" instead.
 */
-.pm-home .hiw-card.is-opt{background:#fff;border:1px dashed #c9cede;box-shadow:none;color:var(--text)}
-.pm-home .hiw-card.is-opt:hover{border-color:var(--mag);box-shadow:none}
+/*
+  ── §2 CARD 5 WAS WASHING OUT, AND IT IS THE FREE OFFER ──────────────────────
+
+  Measured on the shipped build: white fill against the #f6f4fb band is 1.09:1,
+  the grey dashed border 1.44:1, the numeral 1.31:1 against its own fill and the
+  chip 1.14:1. Three values within a couple of percent of each other — the
+  owner's "too close to the background colour", quantified.
+
+  It stays LIGHT, because being the one card that is not dark is what marks it
+  optional; going dark like its neighbours would lose that. What changes is
+  everything that was doing the marking:
+
+  · a real shadow, so a white card on a near-white band lifts off it rather
+    than dissolving into it — this does most of the work;
+  · the dashed border goes MAGENTA. Grey reads "not available yet"; magenta is
+    the brand's action colour and this is the free consultation. Dashed still
+    says optional, the colour now says wanted.
+
+  Deliberately NOT a solid magenta border or a magenta fill: either would make
+  it look like the page's primary CTA, and it is a card, not a button.
+*/
+/*
+  ⚠ AN INSET OUTLINE, NOT A BORDER — AND THE REASON IS §3's 0px TOLERANCE.
+
+  A 1.5px dashed BORDER shrinks this card's content box by 3px in both axes
+  (box-sizing:border-box). Vertically that lifted the bottom-anchored text 1.5px
+  above its neighbours — a 1px measured spread. Matching it with a transparent
+  border on all five fixed the alignment and then cost 3px of WIDTH, which was
+  enough to push "Assessments" past the column and break it as "Assessment|s".
+
+  `outline` participates in no layout at all, so the content box here is
+  identical to the four gradient cards: same 144px measure, same baselines,
+  0px spread. `outline-offset:-1.5px` draws it just inside the rounded edge,
+  and outlines follow `border-radius` in every browser this app targets.
+*/
+.pm-home .hiw-card.is-opt{background:#fff;outline:1.5px dashed var(--mag);outline-offset:-1.5px;box-shadow:0 16px 38px -16px rgba(23,30,62,.30);color:var(--text)}
+.pm-home .hiw-card.is-opt:hover{outline-color:var(--mag-d);box-shadow:0 22px 46px -16px rgba(23,30,62,.38)}
 /* No scrim: the navy ramp exists to hold white text on a gradient, and there
    is neither here. Left on, it would grey the card to mud. */
 .pm-home .hiw-card.is-opt .hiw-scrim{display:none}
-.pm-home .hiw-card.is-opt .hiw-n{color:#dde1eb}
+/*
+  A MAGENTA GHOST, NOT A GREY ONE. #dde1eb made the 5 the palest mark in the
+  row — measured 1.31:1 against its own fill while the four dark cards' numerals
+  sit near 1.5:1 against theirs. A magenta tint reads at a glance, keeps the
+  watermark relationship the other four have, and ties the numeral to the border.
+*/
+.pm-home .hiw-card.is-opt .hiw-n{color:rgba(215,44,214,.30)}
 .pm-home .hiw-card.is-opt .hiw-l{color:var(--ink)}
-.pm-home .hiw-card.is-opt .hiw-k{color:var(--mag-d)}
 /*
   `--text`, NOT `--muted`. The page's convention for light card body copy is
   --muted, and it measures 3.76:1 on white — fine next to other muted cards,
@@ -1266,7 +1338,15 @@
 */
 .pm-home .hiw-card.is-opt .hiw-s{color:var(--text)}
 /* The chip is grey-on-light now; white-on-translucent was for the dark card. */
-.pm-home .hiw-tag{position:absolute;right:14px;top:14px;z-index:1;background:#eef0f6;border:1px solid #dfe3ec;border-radius:999px;padding:3px 10px;font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+/*
+  THE CHIP GOES MAGENTA-ON-TINT. Grey-on-near-white measured 1.14:1 against the
+  card it sits on — invisible until you looked for it. A `--mag-soft` fill with
+  `--mag-d` text reads at a glance and matches the border.
+
+  NOT solid magenta with white text: that measures 3.9:1 at 10.5px, below AA,
+  and a filled magenta pill in a card corner reads as a button.
+*/
+.pm-home .hiw-tag{position:absolute;right:14px;top:14px;z-index:1;background:var(--mag-soft);border:1px solid rgba(215,44,214,.35);border-radius:999px;padding:3px 10px;font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mag-d)}
 
 /* ---- StepDetail --------------------------------------------------------- */
 /* scroll-margin keeps the anchored heading clear of the sticky header (76px). */
@@ -1467,6 +1547,12 @@
     read 1-5.
   */
   .pm-home .hiw-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+  /*
+    THE RESERVED TITLE/BODY ROWS ARE RELEASED HERE. They exist to align five
+    cards across one row; at 2-up and 1-up the cards are 2.5x wider, every
+    title fits on one line, and holding four lines open would just be a gap.
+  */
+  .pm-home .hiw-l,.pm-home .hiw-s{min-height:0}
   .pm-home .hiw-rail,.pm-home .hiw-arrow{display:none}
   /* The strip's own gap var follows the collapsed grid so nothing reads stale. */
   .pm-home .hiw-strip{--g:16px}
