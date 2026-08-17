@@ -1200,6 +1200,32 @@
 .pm-home .hiw-desc{margin:calc(var(--hiw-step) * 2) 0 calc(var(--hiw-step) * 5);font-size:16.5px;line-height:1.62;color:var(--text);max-width:72ch;text-wrap:pretty}
 .pm-home .hiw-desc + .hiw-strip{margin-top:0}
 /*
+  ── E136: THE NOUN PHRASE IS BOUND BY A WRAPPER, NOT BY CHARACTERS ───────────
+
+  "process improvement roadmap" split across lines unbound. Binding it with
+  U+00A0 would have been permanent — and at 29px on a 326px phone measure a
+  27-character unbreakable unit overflows the viewport, which is worse than the
+  split it fixes. A `nowrap` span can be RELEASED, so it is.
+
+  ⚠ 524px IS DERIVED, NOT PICKED. Measured on the real page, not a mockup: the
+  phrase sets 460.9px at the 29px mobile size, and `.hiw-h2`'s measure is
+  `viewport - 64` — `.wrap` is 32px each side at EVERY width; the real page never
+  drops to the mockup's 22px. 460.9 + 64 = 524.9, so 525px is the last viewport
+  where the bound phrase fits and 524px is the first where it cannot.
+
+  Releasing any HIGHER would split the phrase at a width where it still fits,
+  which the acceptance criterion forbids. Releasing any LOWER would let it
+  overflow. If the display font changes, re-derive: measure the phrase at 29px
+  and add 64.
+*/
+.pm-home .hiw-nb{white-space:nowrap}
+@media(max-width:524px){
+  /* Below the crossover it cannot fit at any acceptable size, so it wraps
+     normally. The type does NOT shrink — that was the explicit instruction, and
+     a longer heading on a phone is fine. */
+  .pm-home .hiw-nb{white-space:normal}
+}
+/*
   ── THE KICKER, SCOPED TO THIS SECTION ONLY ──────────────────────────────────
 
   ⚠ DO NOT MOVE THIS TO `.pm-home .eyebrow`. That rule is shared by every

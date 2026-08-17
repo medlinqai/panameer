@@ -146,41 +146,24 @@ export function HowItWorks() {
       <div className="wrap">
         <div className="eyebrow">Here&rsquo;s How It Works</div>
         {/*
-          ⚠ E124 — VERBATIM, AND THE PUNCTUATION IS DELIBERATE.
+          ⚠ E136 REVISED — THIS SUPERSEDES THE E124 STRING.
 
-          Scott's string, 2026-08-17. The three-dot ellipsis with no space and
-          the lower-case `with AI` tail are his; do not re-punctuate, re-case or
-          title-case it. It reads oddly on purpose.
+          Scott's latest, 2026-08-17, shipped as the exact literal he wrote:
+          "From process questions to discussing your new process improvement
+          roadmap with an expert in about an hour."
 
-          ⚠ FLAGGED, NOT RESOLVED: this says "in an hour". The strip's banked
-          times line says "eleven minutes to your dashboard". Both are true of
-          different things — eleven minutes to the dashboard, about an hour once
-          the optional 30-minute expert session is counted — but the page must
-          not state two durations without distinguishing them. Scott decides.
-        */}
-        {/*
-          ⚠ E133 — THE BREAKS ARE BOUND WITH U+00A0, AND THE COPY IS UNCHANGED.
-
-          On the shipped build this broke as "From process questions to an" /
-          "AI roadmap...", orphaning the article on the end of line 1. Three
-          regular spaces are now NO-BREAK spaces: an·AI·roadmap and with·AI.
-
-          NOT ONE VISIBLE CHARACTER CHANGES. A no-break space renders as a
-          space, copies as a space and reads as a space — what changes is only
-          whether the line may break there. Scott's string is byte-for-byte the
-          same word sequence shipped at E124.
-
-          ⚠ WRITTEN AS A BRACED JS STRING WITH \u ESCAPES, NOT `&nbsp;`. In this
-          toolchain a JSX TEXT node containing an HTML entity loses its leading
-          whitespace — it has produced "millions on" and "Free. Integrating"
-          defects twice. Inside {} it is an ordinary string literal, the escape
-          resolves, and there is no whitespace ambiguity to get wrong.
-
-          `text-wrap:balance` is already on `.hiw-h2` and is NOT sufficient
-          alone — it evens line lengths, it does not forbid a break after "an".
+          ⚠ NOT ONE CHARACTER IS ALTERED — no non-breaking spaces this time.
+          Unbound, the line broke mid-noun-phrase ("...your new process /
+          improvement roadmap"), the same defect the previous heading had. The
+          binding is a WRAPPER, not a character substitution, and that is the
+          point: `white-space:nowrap` can be RELEASED by a media query, whereas a
+          U+00A0 is permanent and would force a 27-character unbreakable unit
+          onto a 326px phone measure. See `.hiw-nb` in home.css.
         */}
         <h2 className="hiw-h2">
-          {"From process questions to an\u00A0AI\u00A0roadmap in an hour...with\u00A0AI"}
+          From process questions to discussing your new{" "}
+          <span className="hiw-nb">process improvement roadmap</span> with an
+          expert in about an hour.
         </h2>
         {/*
           ⚠ E125 — A NEW ELEMENT, NOT THE KICKER COMING BACK.
