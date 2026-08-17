@@ -145,9 +145,41 @@ export function HowItWorks() {
     <section className="hiw">
       <div className="wrap">
         <div className="eyebrow">Here&rsquo;s How It Works</div>
+        {/*
+          ⚠ E124 — VERBATIM, AND THE PUNCTUATION IS DELIBERATE.
+
+          Scott's string, 2026-08-17. The three-dot ellipsis with no space and
+          the lower-case `with AI` tail are his; do not re-punctuate, re-case or
+          title-case it. It reads oddly on purpose.
+
+          ⚠ FLAGGED, NOT RESOLVED: this says "in an hour". The strip's banked
+          times line says "eleven minutes to your dashboard". Both are true of
+          different things — eleven minutes to the dashboard, about an hour once
+          the optional 30-minute expert session is counted — but the page must
+          not state two durations without distinguishing them. Scott decides.
+        */}
         <h2 className="hiw-h2">
-          From one question to a costed plan, in five steps.
+          From process questions to an AI roadmap in an hour...with AI
         </h2>
+        {/*
+          ⚠ E125 — A NEW ELEMENT, NOT THE KICKER COMING BACK.
+
+          The magenta kicker slot was DELETED at 19050e5, not emptied. This is a
+          description between the heading and the cards, and it is `.hiw-desc`
+          rather than a revived `.hiw-k` precisely so nobody reads it as that
+          slot returning.
+
+          It must not shift the card grid: the reserved-row baselines inside the
+          cards are measured from the grid top, so the gap this adds has to come
+          out of `.hiw-strip`'s own top margin rather than being stacked on top
+          of it. Measured before and after at all three widths.
+        */}
+        <p className="hiw-desc">
+          Get the guidance you need to understand the AI options that will
+          optimize your processing. Then meet with the world&rsquo;s top experts to
+          prioritize solutions and create your own process-based AI Optimization
+          Roadmap.
+        </p>
 
         {/*
           ── THE STRIP WRAPS THE LIST BECAUSE THE RAIL IS NOT A LIST ITEM ──────

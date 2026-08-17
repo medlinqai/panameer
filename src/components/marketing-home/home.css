@@ -1151,6 +1151,32 @@
 */
 .pm-home .hiw-h2{font-size:34px;color:var(--ink);font-weight:700;letter-spacing:-.5px;line-height:1.14;margin:12px 0 0;max-width:960px;text-wrap:balance}
 /*
+  ── E125: THE DESCRIPTION BETWEEN THE HEADING AND THE CARDS ──────────────────
+
+  ⚠ NOT THE DELETED KICKER. That slot was removed at 19050e5 and this is a
+  different element in a different place — below the heading, above the grid.
+
+  ⚠ THE GRID MUST NOT MOVE. `.hiw-strip` carries `margin-top:34px`, so a
+  paragraph added above it would push the cards down by its full height and
+  every reserved-row baseline with them. The 34px is therefore taken OUT of the
+  strip and given to this paragraph's bottom margin, leaving the distance from
+  heading to grid unchanged apart from the text itself. Measured at 1562 / 1200
+  / 390 and reported.
+
+  ⚠ `--text`, NOT `--ink-2`, AND THE MOCKUP IS WHY THAT NEEDS SAYING.
+
+  The mockup styles this as `.sec-lede{color:var(--ink-2)}` where ITS `--ink-2`
+  is #3a4266 — a mid slate for body copy. In THIS stylesheet `--ink-2` is
+  #0f1530, a near-black used for the dark rail and the dark band. Same token
+  name, two different jobs. Copying the mockup's declaration literally would
+  have printed near-black body copy and looked like a bug.
+
+  `--text` (#2a3345) is this file's body-copy token and the nearest equivalent;
+  it measures 12.67:1 on white. Size and 72ch measure do follow the mockup.
+*/
+.pm-home .hiw-desc{margin:16px 0 34px;font-size:16.5px;line-height:1.62;color:var(--text);max-width:72ch;text-wrap:pretty}
+.pm-home .hiw-desc + .hiw-strip{margin-top:0}
+/*
   ── THE KICKER, SCOPED TO THIS SECTION ONLY ──────────────────────────────────
 
   ⚠ DO NOT MOVE THIS TO `.pm-home .eyebrow`. That rule is shared by every
