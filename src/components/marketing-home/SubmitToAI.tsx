@@ -1,4 +1,4 @@
-import { PROCESSES } from "@/lib/processes";
+import { P2P_DOMAINS as CAPABILITY_DOMAINS } from "@/lib/capability-domains";
 
 /**
  * STEP 3's GRAPHIC — four processes converge on the AIP, two outputs diverge.
@@ -7,12 +7,21 @@ import { PROCESSES } from "@/lib/processes";
  * would not scale, would not theme, and would freeze the four process names into
  * a bitmap when they are supposed to come from data.
  *
- * ── THE PROCESS BUTTONS COME FROM `PROCESSES` ────────────────────────────────
+ * ── ⚠ THE LEFT COLUMN IS CAPABILITY DOMAINS, NOT PROCESSES (E143) ────────────
  *
- * Same list the Step 1 cards use, in the data's order — not the mockup's, which
- * was Scott sketching. A fifth process appears here automatically, which is the
- * entire reason that list exists. Verified behaviourally: a temporary fifth entry
- * showed up in this graphic with zero JSX and zero CSS changes.
+ * It drew from `PROCESSES` when this shipped at 03b4db7, which contradicted the
+ * funnel the spine had just walked the reader through: by Step 3 they have
+ * ALREADY picked one process back in Step 1. What converges on the AIP is the
+ * capability domains INSIDE that process — that is what the assessment asks about
+ * and what the AIP scores.
+ *
+ * ⚠ THE TEN COME FROM `lib/capability-domains.ts`, NOT the question bank.
+ * `P2P_DOMAINS` is exported from two files: this one has ten with `name`/`id` and
+ * is the list already advertised on `/`; `lib/assessment/questions-p2p.ts` has the
+ * EIGHT that are actually assessed, with different wording. This is marketing art,
+ * so it takes the ten — aliased on import because the two share a name.
+ *
+ * Mapped, never hard-coded: an eleventh domain appears here with no edit.
  *
  * ── ⚠ THE CONNECTOR GEOMETRY IS THE HARD PART. READ THIS BEFORE CHANGING IT ──
  *
@@ -47,9 +56,18 @@ import { PROCESSES } from "@/lib/processes";
  */
 
 /* ── the geometry constants, shared with home.css ─────────────────────────── */
-/** Process button height. Fixed so the connector y-positions are derivable. */
-const PROC_H = 48;
-const PROC_GAP = 14;
+/**
+ * ⚠ EVERY ROW HEIGHT HERE IS EXPLICIT, AND THAT IS WHAT MAKES THE CURVES
+ * DERIVABLE. The chip stack is rendered with an explicit `grid-template-rows`
+ * built from these numbers, so a two-line domain name cannot silently make one
+ * chip taller than its neighbours and push every connector off its target. If a
+ * name needs more room, raise `CHIP_H` here — the rows, the stack height and all
+ * ten curves move together.
+ */
+const CHIP_H = 34;
+const CHIP_GAP = 7;
+/** The muted "…capability domains" label above the stack, as its own row. */
+const LABEL_H = 14;
 /** Output card height, likewise fixed. */
 const OUT_H = 96;
 const OUT_GAP = 16;
@@ -86,14 +104,15 @@ function Arrow({ top }: { top: number }) {
 }
 
 export function SubmitToAI() {
-  const n = PROCESSES.length;
-  const procsH = n * PROC_H + (n - 1) * PROC_GAP;
-  /* The funnel is as tall as its tallest column, and the AIP is shorter than
-     both stacks at every count from four up — verified by measurement. */
+  const n = CAPABILITY_DOMAINS.length;
+  /* label row + its gap + n chip rows + (n-1) gaps between them */
+  const procsH = LABEL_H + CHIP_GAP + n * CHIP_H + (n - 1) * CHIP_GAP;
   const FUNNEL_H = Math.max(procsH, OUTS_H);
+  /* Where the chip stack starts inside the row, once centred. */
+  const stackTop = (FUNNEL_H - procsH) / 2 + LABEL_H + CHIP_GAP;
 
-  const procY = PROCESSES.map((_, i) =>
-    centreOf(i, n, PROC_H, PROC_GAP, FUNNEL_H)
+  const chipY = CAPABILITY_DOMAINS.map(
+    (_, i) => stackTop + i * (CHIP_H + CHIP_GAP) + CHIP_H / 2
   );
   const aipY = FUNNEL_H / 2;
   const outY = [0, 1].map((i) => centreOf(i, 2, OUT_H, OUT_GAP, FUNNEL_H));
@@ -104,18 +123,28 @@ export function SubmitToAI() {
       /* One number drives the grid height and both viewBoxes. */
       style={{ ["--fnl-h" as string]: `${FUNNEL_H}px` }}
     >
-      <div className="fnl-procs">
-        {PROCESSES.map((p) => (
-          <div className="fnl-proc" key={p.key}>
-            {p.name}
+      <div
+        className="fnl-procs"
+        /* Explicit rows, so no chip can be a different height from its siblings. */
+        style={{
+          gridTemplateRows: `${LABEL_H}px repeat(${n}, ${CHIP_H}px)`,
+        }}
+      >
+        <span className="fnl-domk">Procure-to-Pay capability domains</span>
+        {CAPABILITY_DOMAINS.map((d) => (
+          <div className="fnl-proc" key={d.id}>
+            {d.name}
           </div>
         ))}
       </div>
 
-      {/* ---- gap 1: the four converging curves ------------------------- */}
-      <div className="fnl-link">
+      {/* ---- gap 1: the ten converging curves -------------------------- */}
+      {/* `is-in` thins these only: ten lines at the diverging pair's weight
+          read as noise, so the funnel-in strokes drop to 1.4/.6 while the
+          two outputs and all three arrowheads keep their weight. */}
+      <div className="fnl-link is-in">
         <svg viewBox={`0 0 100 ${FUNNEL_H}`} preserveAspectRatio="none" aria-hidden>
-          {procY.map((y, i) => (
+          {chipY.map((y, i) => (
             <path key={i} d={s(y, aipY)} />
           ))}
         </svg>
@@ -145,7 +174,7 @@ export function SubmitToAI() {
         </div>
       </div>
 
-      {/* ---- gap 2: the two diverging curves --------------------------- */}
+      {/* ---- gap 2: the two diverging curves, weight unchanged -------- */}
       <div className="fnl-link">
         <svg viewBox={`0 0 100 ${FUNNEL_H}`} preserveAspectRatio="none" aria-hidden>
           {outY.map((y, i) => (
