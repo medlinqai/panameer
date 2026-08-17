@@ -68,6 +68,19 @@ type Step = {
  * the slash in "Score/Dashboard", "Detail processing" colliding with the word
  * "process" two cards earlier, and card 5 no longer containing the word
  * "free" anywhere. All three are his call, not mine.
+ *
+ * ── 2026-08-17: TWO TITLES SHORTENED ─────────────────────────────────────────
+ *
+ * E120 dropped "Level" from card 2, E121 dropped "Peers" from card 4, both
+ * Scott's calls, for symmetry across the five. The reserved-row mechanism means
+ * a shorter title CANNOT move the shared baselines — it only reduces the slack
+ * under that card. Measured both ways at 1562 and 1200: 0px spread before and
+ * after.
+ *
+ * ⚠ E121 SHORTENS THE STRING BUT DOES NOT RETIRE THE CLAIM. "vs Industry" still
+ * implies a pooled benchmark and there is no pool — the same objection
+ * `HANDOFF_2026-08-16.md` §6 files against "vs Industry Peers". It belongs on
+ * the pre-launch copy-swap list either way; Scott chose to ship it.
  */
 const STEPS: Step[] = [
   {
@@ -77,7 +90,7 @@ const STEPS: Step[] = [
   },
   {
     n: 2,
-    label: "Capability Domain Level Scoring",
+    label: "Capability Domain Scoring",
     body: "Detail processing per capability domain",
   },
   {
@@ -87,7 +100,7 @@ const STEPS: Step[] = [
   },
   {
     n: 4,
-    label: "Review & Compare vs Industry Peers",
+    label: "Review & Compare vs Industry",
     body: "See ranking and review solutions",
   },
   {

@@ -1203,11 +1203,28 @@
 .pm-home .hiw-rail.is-dashed{border-top-style:dashed;border-top-color:rgba(23,30,62,.32);
   left:calc(70% + .2 * var(--g));right:calc(20% - .8 * var(--g))}
 
-.pm-home .hiw-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:2;
-  left:calc(var(--k) * 20% + (var(--k) * .2 - .5) * var(--g) - 17px);
-  display:grid;place-items:center;width:34px;height:34px;border-radius:50%;
-  background:var(--mag);color:#fff;font-size:15px;line-height:1;
-  box-shadow:0 6px 14px rgba(215,44,214,.4)}
+/*
+  ── E122: THE CONNECTORS WERE READING AS PUNCTUATION ─────────────────────────
+
+  34px circle / 15px glyph, ported from VideoSequence, which has no rail and no
+  five-card row to carry. They are the ONLY thing on the strip carrying
+  left-to-right sequence, and at that size they read as a bullet between cards
+  rather than as flow. Scott, 2026-08-17.
+
+  ⚠ THE DIAMETER IS NOW A VARIABLE, AND IT HAS TO BE. The seam offset must
+  subtract exactly half the circle to stay centred on the gutter; that was a
+  hard-coded `- 17px` next to a hard-coded `34px`, which is two places to edit
+  and one of them silently wrong. `--ac` drives both.
+
+  ⚠ AND IT TRADES AGAINST THE RAIL. The gutter is `--g` (54px), so the visible
+  rail either side of each circle is `(--g - --ac) / 2`. Bigger circle, shorter
+  stubs. Measured at several sizes before settling; reported in the brief note.
+*/
+.pm-home .hiw-arrow{--ac:42px;position:absolute;top:50%;transform:translateY(-50%);z-index:2;
+  left:calc(var(--k) * 20% + (var(--k) * .2 - .5) * var(--g) - var(--ac) / 2);
+  display:grid;place-items:center;width:var(--ac);height:var(--ac);border-radius:50%;
+  background:var(--mag);color:#fff;font-size:20px;line-height:1;
+  box-shadow:0 8px 18px rgba(215,44,214,.42)}
 
 /* ---- the card ----------------------------------------------------------- */
 .pm-home .hiw-card{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:flex-end;flex:1;min-width:0;min-height:260px;overflow:hidden;border-radius:16px;padding:22px 18px;color:#fff;box-shadow:0 14px 34px rgba(23,30,62,.22);transition:transform .18s,box-shadow .18s}
