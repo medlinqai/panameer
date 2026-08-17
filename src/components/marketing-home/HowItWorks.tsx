@@ -290,7 +290,34 @@ export function HowItWorks() {
               key={k}
               aria-hidden
             >
-              &rarr;
+              {/*
+                ⚠ AN OPEN CHEVRON, NOT A FILLED DISC (E122 revised).
+
+                Scott: "These arrows are childish. Can you make them bigger?
+                Better?" It was a 42px saturated magenta circle with a drop
+                shadow, five of them across the row — which read as five
+                identical buttons and broke the standing PINK = SMALL ACCENTS
+                ONLY rule (decisions-01.md, 2026-08-13).
+
+                An open stroke can grow without gaining weight, which is the
+                whole trick: this is TALLER than the disc it replaces and
+                narrower, so it reads bigger while taking less of the gutter and
+                giving the rail more room to show. Magenta is the STROKE now;
+                there is no fill and no shadow.
+
+                Drawn as SVG rather than a text glyph so stroke weight and cap
+                shape are controllable rather than whatever the font ships.
+                No `id` anywhere — nothing for check:ui §13 to collide with.
+              */}
+              <svg viewBox="0 0 14 28" fill="none" aria-hidden focusable="false">
+                <path
+                  d="M3.5 3.5 L11 14 L3.5 24.5"
+                  stroke="currentColor"
+                  strokeWidth="2.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
             </span>
           ))}
         </div>
