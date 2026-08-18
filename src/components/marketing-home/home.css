@@ -36,23 +36,6 @@
     --ink-2:#0f1530;
     --paper:#ffffff;
     --paper-2:#f2f6f7;
-    /*
-      ⚠ THE PAGE'S ONE BAND COLOUR (E158). Every top-level section band on `/`
-      renders this. Scott, 2026-08-18, with a screenshot of the "Here's how it
-      works" band: "i want all the backgrounds to be the same as this."
-
-      It is `.hiw`'s value, which was hardcoded at one site and signed off twice —
-      so tokenising it changed no rendered colour there, and every other band moved
-      onto it. `--paper-2` survives as a token but has no band consumers left; it
-      is still used by objects that want a tint against the field.
-
-      ⚠ THIS SUPERSEDES THE ALTERNATION DECISION. decisions-01.md, 2026-08-15:
-      "Section backgrounds on `/` alternate. `.erp` takes var(--paper-2),
-      `.erpx-band` goes flat white." Today's instruction is later, explicit and
-      page-wide, so it wins — and it retires E115's rhythm rule with it. The
-      `is-shade` / `sd-shade` modifiers are kept but inert; see their comments.
-    */
-    --paper-3:#f6f4fb;
     --line:#e6e9ef;
     --muted:#7b8496;
     --text:#2a3345;
@@ -117,17 +100,20 @@
   opened white header on white surround, and the first shaded band was the strip
   below it. Scott, 2026-08-17: "Need shading on section 1 of HOME."
 
-  The hero card and its gradient are untouched; only the surround it floats on
-  changes.
+  `var(--paper-2)`, the token `.fw`, `.erp` and `.ptr` already share — never a
+  new hex, per the E115 rhythm rule. The hero card and its gradient are
+  untouched; only the surround it floats on changes.
 
-  ⚠ RESOLVED AT E158, and the way it resolved is worth keeping. This comment used
-  to end "Not mine to pick": `.hero` was #f2f6f7 and `.hiw` directly below it
-  #f6f4fb — two shaded bands four points apart, touching, which the `.erp` comment
-  below calls out as reading like a mistake rather than a system. Scott picked, and
-  he picked the wider option than either one on the table: every band takes `.hiw`'s
-  value. `.hero` is now `var(--paper-3)` like the rest.
+  ⚠ AND THIS CREATES ONE ADJACENCY WORTH SCOTT'S EYE, reported rather than
+  resolved: `.hero` is now #f2f6f7 and `.hiw` immediately below it is #f6f4fb
+  (VideoSequence's `soft`). Two shaded bands, four points apart, touching. The
+  `.erp` comment three hundred lines down says exactly why that is a risk —
+  "two shaded sections at slightly different values look like a mistake, two at
+  the same value look like a system". Fixing it means either moving `.hiw` onto
+  `--paper-2` or tokenising #f6f4fb, and both change a band Scott has signed
+  off twice. Not mine to pick.
 */
-  .hero{position:relative;background:var(--paper-3)}
+  .hero{position:relative;background:var(--paper-2)}
 /* The margin the card is inset by. Not full-bleed any more — that is the point. */
 .pm-home .hero-stage{padding:6px 44px 0}
 /*
@@ -167,9 +153,7 @@
   section below: three different backgrounds in three consecutive bands. White
   lets the shot's own drop shadow do the separating.
 */
-/* a band, not an object — the shot INSIDE it keeps its white. Seam added at
-   E158: it and `.spn` above it were both white, so nothing ever separated them. */
-.pm-home .hero-dash{background:var(--paper-3);padding:20px 0 22px;border-top:1px solid var(--line)}
+.pm-home .hero-dash{background:#fff;padding:20px 0 22px}
 /*
   Still `.wrap`, so the hero text stays on the same 1200/32 measure as every
   section below it. The card's own padding is 12px horizontally for that
@@ -377,21 +361,7 @@
 /* The glyph is the accent — 26px of magenta each, which is what "small" means. */
 .pm-home .logos .co svg{width:26px;height:26px;flex-shrink:0;color:var(--mag)}
 .pm-home /* PROCESS / CIRCLE */
-  /*
-    ⚠ THESE TWO BANDS HAD NO BACKGROUND AT ALL and inherited `.pm-home`'s white —
-    "Our Method" and "Testimonials" measured `rgba(0,0,0,0)` before E158. They are
-    set explicitly rather than by leaving the page background to do it, so the band
-    is the thing that carries the colour and `.pm-home` stays untouched.
-
-    The seam is added here too: these bands never had one, because being white
-    against a shaded neighbour was the separation.
-
-    ⚠ `section.block` is TWO CLASSES + AN ELEMENT, so it outranks `.pm-home .fw`
-    (two classes) and wins on `<section class="block fw">`. Harmless while both
-    resolve to the same token — but if the two ever need to differ, `.fw` needs the
-    higher specificity, not a later position. This has bitten before.
-  */
-  section.block{padding:96px 0;background:var(--paper-3);border-top:1px solid var(--line)}
+  section.block{padding:96px 0}
 .pm-home .center{text-align:center;max-width:720px;margin:0 auto}
 .pm-home .center h2{font-size:44px;color:var(--ink);font-weight:700;margin:12px 0 16px;letter-spacing:-.5px}
 .pm-home .center p{color:var(--muted);font-size:17px}
@@ -412,7 +382,7 @@
 .pm-home .wnode{position:static!important;transform:none!important;width:100%!important}
   }
 .pm-home /* FRAMEWORK */
-  .fw{background:var(--paper-3)}
+  .fw{background:var(--paper-2)}
 /*
   ── SECTION 4 / STEP 2 GETS SECTIONS 2 AND 3's HEADING TREATMENT ─────────────
 
@@ -566,13 +536,6 @@
 .pm-home .rc-book{margin-top:10px;display:block;width:100%;text-align:center;border:1.5px solid #e6e9f0;border-radius:24px;padding:11px;font-size:13.5px;font-weight:700;color:var(--ink);cursor:pointer}
 .pm-home .rc-book:hover{border-color:var(--mag);color:var(--mag)}
 .pm-home /* GET STARTED */
-  /*
-    ⚠ THE LAST `--paper-2` CONSUMER, AND IT IS DEAD CODE — no component emits a
-    `get` class any more (grepped across src/ at E158). Left alone rather than
-    swept onto `--paper-3`: recolouring a band nothing renders would be noise, and
-    deleting an unused rule is a different change from a colour sweep. It is the
-    reason `--paper-2` still has one consumer in the verify output.
-  */
   .get{background:var(--paper-2);text-align:center;padding:96px 0}
 .pm-home .get .center h2{font-size:44px}
 .pm-home .get .btn-solid{margin-top:34px;padding:16px 34px;font-size:17px}
@@ -648,11 +611,7 @@
     the CTA, which is what the accent rule reserves the fill for.
   */
 /*
-  ⚠ WAS FLAT `--paper-2` TO MATCH `.fw` UNDER E115's ALTERNATION RULE, and is now
-  `--paper-3` like every other band (E158). The paragraph below is kept because its
-  REASONING outlived the rule it was written for: matching exactly rather than
-  approximately is still the whole point, and the page now applies it to all 20
-  light bands instead of to a pair.
+  ⚠ FLAT `--paper-2`, THE SAME SHADE AS `.fw` — the page has to alternate (E115).
 
   This was `linear-gradient(180deg,#fbfaff 0%,#fff 70%)`. #fbfaff is one step off
   white, so this section, the white `.block` above it and the `.erpx-band` below
@@ -664,7 +623,7 @@
   sections at slightly different values look like a mistake, two at the same
   value look like a system.
 */
-  .erp{background:var(--paper-3);padding:74px 0 80px;border-top:1px solid var(--line)}
+  .erp{background:var(--paper-2);padding:74px 0 80px;border-top:1px solid var(--line)}
 /*
   900, not 760. The headline's own line break is after "…Your ERP", and at 760
   the measured line ran ~796px — so it wrapped a second time and left "ERP"
@@ -1005,7 +964,7 @@
   alternation needs a clean edge. It also laid a faint lavender under the ERP
   overview diagram, which is drawn on white cards.
 */
-.pm-home .erpx-band{background:var(--paper-3);padding:74px 0 80px;border-top:1px solid var(--line)}
+.pm-home .erpx-band{background:#fff;padding:74px 0 80px;border-top:1px solid var(--line)}
 
 .pm-home .erpx-h2{font-size:40px;line-height:1.14;letter-spacing:-.5px;color:var(--ink);font-weight:700;margin:12px 0 12px;max-width:900px}
 .pm-home .erpx-tagline{font-size:21px;line-height:1.4;color:var(--mag-d);font-weight:700;letter-spacing:-.4px;margin:0 0 14px;max-width:780px}
@@ -1170,11 +1129,9 @@
    cards and the flow diagrams. The one exception is `.wrap`, `.eyebrow` and
    `.btn`, which are deliberately shared page furniture.
 
-   ⚠ BACKGROUNDS NO LONGER ALTERNATE (E158). This block used to say shaded sections
-   take var(--paper-2) to match .fw and .erp under E115's rhythm rule. Every light
-   band on the page is now var(--paper-3) — one flat field — so there is no rhythm
-   to keep and no shaded/unshaded distinction to honour. The seam borders are what
-   separates sections now, which is why they are no longer optional.
+   BACKGROUNDS FOLLOW E115's RHYTHM RULE: shaded sections use var(--paper-2),
+   the same value as .fw and .erp, so shaded sections match exactly rather than
+   nearly. No sixth background value is introduced.
    ------------------------------------------------------------------------- */
 
 /* ---- HowItWorks — the VideoSequence treatment, ported ------------------- */
@@ -1232,9 +1189,7 @@
    first line — E137 rev. Both sections use the same numbers; that is the point.
    ------------------------------------------------------------------------- */
 .pm-home{--sec-step:8px}
-/* the band whose colour became the page's. Seam added at E158 — `.hero` above
-   it was a different shade, and that difference used to do the separating. */
-.pm-home .hiw{background:var(--paper-3);padding:calc(var(--sec-step) * 6) 0 calc(var(--sec-step) * 10);border-top:1px solid var(--line)}
+.pm-home .hiw{background:#f6f4fb;padding:calc(var(--sec-step) * 6) 0 calc(var(--sec-step) * 10)}
 /*
   ⚠ DARK ON LIGHT. This was hard-coded `color:#fff` for the navy band and would
   have rendered white-on-lilac — an invisible heading — the moment the band
@@ -1508,11 +1463,8 @@
 
 /* ---- StepDetail --------------------------------------------------------- */
 /* scroll-margin keeps the anchored heading clear of the sticky header (76px). */
-.pm-home .sd{background:var(--paper-3);padding:72px 0 76px;border-top:1px solid var(--line);scroll-margin-top:96px}
-/* ⚠ INTENTIONALLY INERT (E158) — identical to `.sd` now that the page is one
-   field. KEPT, NOT DELETED: Scott may want alternation back, and a live-but-inert
-   modifier is cheaper to revive than a deleted one is to rediscover. */
-.pm-home .sd-shade{background:var(--paper-3)}
+.pm-home .sd{background:#fff;padding:72px 0 76px;border-top:1px solid var(--line);scroll-margin-top:96px}
+.pm-home .sd-shade{background:var(--paper-2)}
 .pm-home .sd-head{display:flex;align-items:flex-start;gap:20px;max-width:900px}
 .pm-home .sd-n{font-family:var(--font-display),sans-serif;font-size:64px;font-weight:700;line-height:.9;color:var(--mag);letter-spacing:-2px;flex:0 0 auto}
 .pm-home .sd-headtext{min-width:0}
@@ -1639,7 +1591,7 @@
 .pm-home .cos-slot.is-taken .cos-time{color:var(--muted)}
 
 /* ---- GetTheTalent ------------------------------------------------------- */
-.pm-home .gtt{background:var(--paper-3);padding:74px 0 80px;border-top:1px solid var(--line)}
+.pm-home .gtt{background:#fff;padding:74px 0 80px;border-top:1px solid var(--line)}
 .pm-home .gtt-h2{font-size:38px;color:var(--ink);font-weight:700;letter-spacing:-.5px;line-height:1.14;margin:12px 0 16px;max-width:900px}
 .pm-home .gtt-lead{color:var(--muted);font-size:17px;line-height:1.6;max-width:760px}
 .pm-home .gtt-needs{list-style:none;margin:22px 0 0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
@@ -1659,7 +1611,7 @@
 .pm-home .gtt-supply a:hover{color:var(--mag)}
 
 /* ---- ProjectTracker ----------------------------------------------------- */
-.pm-home .ptr{background:var(--paper-3);padding:74px 0 80px;border-top:1px solid var(--line)}
+.pm-home .ptr{background:var(--paper-2);padding:74px 0 80px;border-top:1px solid var(--line)}
 .pm-home .ptr-h2{font-size:38px;color:var(--ink);font-weight:700;letter-spacing:-.5px;line-height:1.14;margin:12px 0 16px;max-width:900px}
 .pm-home .ptr-lead{color:var(--muted);font-size:17px;line-height:1.6;max-width:820px}
 .pm-home .ptr-shot{margin-top:32px;background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 30px 70px -46px rgba(23,30,62,.55)}
@@ -1753,12 +1705,12 @@
    `lib/processes.ts`. A `.pp-card--p2p` class would make a fifth process a
    stylesheet edit, which is the exact thing this section exists to avoid.
 
-   ⚠ SHADED SINCE E158 — THIS USED TO BE A DELIBERATE WHITE BAND, and the reason it
-   changed is worth keeping. The mockup drew it shaded; it shipped white because at
-   the time shading it would have put three shaded bands in a row and broken the
-   E115 alternation the page was locked to. That lock is gone: every light band on
-   `/` is now `var(--paper-3)`, so "three in a row" is the intended state and the
-   mockup's shade is what ships. The seam border is what separates it now.
+   ⚠ WHITE BAND, NOT THE MOCKUP'S SHADE — A DELIBERATE DEPARTURE.
+   The mockup draws this section as `band--shade` because it draws it alone. On
+   the real page it lands directly under `.hiw` (#f6f4fb), which itself now sits
+   under a shaded `.hero` (#f2f6f7) since E123. Shading it would put THREE
+   shaded bands in a row and break the E115 alternation the page is locked to.
+   Reported rather than assumed.
    ------------------------------------------------------------------------- */
 /*
   ── B1/B4: SECTION 3 IS ON THE SAME SCALE AS SECTION 2 ───────────────────────
@@ -1766,7 +1718,7 @@
   section heads cannot drift apart. Was 74px top / 80px bottom with a 12px
   eyebrow gap — none of it on a scale.
 */
-.pm-home .pp{background:var(--paper-3);padding:calc(var(--sec-step) * 6) 0 calc(var(--sec-step) * 10);border-top:1px solid var(--line)}
+.pm-home .pp{background:#fff;padding:calc(var(--sec-step) * 6) 0 calc(var(--sec-step) * 10);border-top:1px solid var(--line)}
 /*
   ⚠ E134: 19px, SCOPED TO `.pp` — NEVER the shared base rule near the top of this
   file, which feeds every section on the page. The eyebrow was inheriting that
@@ -1852,10 +1804,8 @@
    the data-driven pattern exists to avoid. The only thing that varies is the
    band, and that is a single modifier the component derives from the step number.
    ------------------------------------------------------------------------- */
-.pm-home .spn{background:var(--paper-3);padding:calc(var(--sec-step) * 6) 0 calc(var(--sec-step) * 10);border-top:1px solid var(--line)}
-/* ⚠ INTENTIONALLY INERT (E158) — see `.sd-shade`. `SpineSteps.tsx` still
-   computes `s.n % 2 === 0` and still emits this class; both are kept on purpose. */
-.pm-home .spn.is-shade{background:var(--paper-3)}
+.pm-home .spn{background:#fff;padding:calc(var(--sec-step) * 6) 0 calc(var(--sec-step) * 10);border-top:1px solid var(--line)}
+.pm-home .spn.is-shade{background:var(--paper-2)}
 .pm-home .spn .eyebrow{font-size:19px}
 .pm-home .spn-h2{font-size:34px;color:var(--ink);font-weight:700;letter-spacing:-.5px;line-height:1.28;margin:calc(var(--sec-step) * 3) 0 0;max-width:1040px}
 /* The graphic slot, for when real screenshots land. Nothing renders while
