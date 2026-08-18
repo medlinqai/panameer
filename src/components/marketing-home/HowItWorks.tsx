@@ -197,7 +197,24 @@ export function HowItWorks() {
             {STEPS.map((s) => (
               <li className="hiw-cell" key={s.n}>
                 <Link
-                  href={`#step-${s.n}`}
+                  /*
+                    ⚠ THESE POINT AT THE SPINE NOW, NOT AT THE OLD StepDetail SECTIONS
+                    (E164). Scott: "each of those cards should now link to the related
+                    section... meaning these new sections we have been working on. That
+                    makes those cards disposable, no?" `#step-1`…`#step-5` were the
+                    StepDetail anchors and those sections are gone, so leaving these as
+                    they were would have made all five cards dead links — that is the
+                    breakage this brief leads with, and it is why the repoint had to
+                    land in the same commit as the deletion.
+
+                    ⚠ STEP 1 IS A GENUINE SPECIAL CASE, DO NOT PATTERN-MATCH IT AWAY.
+                    Step 1 is not in `SPINE_STEPS` — it is `ProcessPicker`, which
+                    carries `id="step-process"`. Steps 2–5 are `SpineSteps`, which emits
+                    `id="spine-step-{n}"`. Renaming `step-process` to fit the pattern
+                    would touch an unrelated component to save one conditional here; a
+                    special case in one place is the cheaper trade.
+                  */
+                  href={s.n === 1 ? "#step-process" : `#spine-step-${s.n}`}
                   className={
                     "hiw-card" + (s.optional ? " is-opt" : ` is-g${s.n}`)
                   }
@@ -260,7 +277,12 @@ export function HowItWorks() {
                 shape are controllable rather than whatever the font ships.
                 No `id` anywhere — nothing for check:ui §13 to collide with.
               */}
-              <svg viewBox="0 0 14 28" fill="none" aria-hidden focusable="false">
+              <svg
+                viewBox="0 0 14 28"
+                fill="none"
+                aria-hidden
+                focusable="false"
+              >
                 <path
                   d="M3.5 3.5 L11 14 L3.5 24.5"
                   stroke="currentColor"

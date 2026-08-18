@@ -1763,7 +1763,18 @@
   section heads cannot drift apart. Was 74px top / 80px bottom with a 12px
   eyebrow gap — none of it on a scale.
 */
-.pm-home .pp{background:#fff;padding:calc(var(--sec-step) * 6) 0 calc(var(--sec-step) * 10);border-top:1px solid var(--line)}
+/*
+  ⚠ `scroll-margin-top` IS PART OF REPOINTING THE CARDS (E164), NOT TIDYING. The
+  HowItWorks cards used to target the `.sd` StepDetail sections, which carried
+  `scroll-margin-top:96px` — that is the only reason the anchor jump ever cleared the
+  sticky header. `.pp` and `.spn` never needed it because nothing linked to them.
+
+  Measured before adding it: all five anchors landed their section at y=0 with its
+  eyebrow at y=49, behind a 71px sticky header — so every card appeared to jump to the
+  wrong place, because the first thing you were meant to read was the thing being
+  covered. 96px is the value the retired sections used; kept rather than re-derived.
+*/
+.pm-home .pp{background:#fff;padding:calc(var(--sec-step) * 6) 0 calc(var(--sec-step) * 10);border-top:1px solid var(--line);scroll-margin-top:96px}
 /*
   ⚠ E134: 19px, SCOPED TO `.pp` — NEVER the shared base rule near the top of this
   file, which feeds every section on the page. The eyebrow was inheriting that
@@ -1849,7 +1860,8 @@
    the data-driven pattern exists to avoid. The only thing that varies is the
    band, and that is a single modifier the component derives from the step number.
    ------------------------------------------------------------------------- */
-.pm-home .spn{background:#fff;padding:calc(var(--sec-step) * 6) 0 calc(var(--sec-step) * 10);border-top:1px solid var(--line)}
+/* the same anchor offset as `.pp` — see the note there. Steps 2-5 all land here. */
+.pm-home .spn{background:#fff;padding:calc(var(--sec-step) * 6) 0 calc(var(--sec-step) * 10);border-top:1px solid var(--line);scroll-margin-top:96px}
 .pm-home .spn.is-shade{background:var(--paper-3)}
 .pm-home .spn .eyebrow{font-size:19px}
 .pm-home .spn-h2{font-size:34px;color:var(--ink);font-weight:700;letter-spacing:-.5px;line-height:1.28;margin:calc(var(--sec-step) * 3) 0 0;max-width:1040px}
