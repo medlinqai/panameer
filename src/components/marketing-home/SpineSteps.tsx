@@ -2,6 +2,8 @@ import Image from "next/image";
 import { SPINE_STEPS } from "@/lib/spine-steps";
 import { SubmitToAI } from "@/components/marketing-home/SubmitToAI";
 import { OptimizationDashboardShot } from "@/components/marketing-home/OptimizationDashboardShot";
+import { AssessmentWizardShot } from "@/components/marketing-home/AssessmentWizardShot";
+import { AiRoadmapShot } from "@/components/marketing-home/AiRoadmapShot";
 
 /**
  * STEPS 2–5 OF THE SPINE — rendered from `lib/spine-steps.ts`.
@@ -23,10 +25,11 @@ import { OptimizationDashboardShot } from "@/components/marketing-home/Optimizat
  * cannot produce two shaded bands in a row — the E115 rhythm failure this page
  * has already had once.
  *
- * ⚠ NO PLACEHOLDERS. `graphic` is a KEY, resolved by `GRAPHICS` below. Steps 3
- * and 4 name built components; steps 2 and 5 are empty and render NOTHING — not
- * an empty frame, which would read as a broken image. Scott is sourcing those two
- * from his deck.
+ * ⚠ `graphic` IS A KEY, resolved by `GRAPHICS` below. All four steps now name a
+ * built component; a `graphic` starting with `/` is still treated as an image path,
+ * so a real screenshot drops in without touching this file. An EMPTY string still
+ * renders nothing at all rather than an empty frame, which would read as a broken
+ * image — that remains the behaviour for any future step added without art.
  */
 
 /**
@@ -35,8 +38,10 @@ import { OptimizationDashboardShot } from "@/components/marketing-home/Optimizat
  * so a screenshot drops in without touching this file's structure.
  */
 const GRAPHICS: Record<string, () => React.JSX.Element> = {
+  "assessment-wizard": AssessmentWizardShot,
   "submit-to-ai": SubmitToAI,
   "optimization-dashboard": OptimizationDashboardShot,
+  "ai-roadmap": AiRoadmapShot,
 };
 export function SpineSteps() {
   return (
