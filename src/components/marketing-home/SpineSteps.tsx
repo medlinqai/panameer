@@ -18,12 +18,17 @@ import { AiRoadmapShot } from "@/components/marketing-home/AiRoadmapShot";
  * rule in home.css), a 1040px cap, a 19px eyebrow scoped to this section, and the
  * shared `--sec-step` rhythm — 48px above the eyebrow, 24px to the title.
  *
- * ── BANDS ALTERNATE, AND THEY ARE DERIVED ────────────────────────────────────
+ * ── ⚠ THE ALTERNATION IS INTENTIONALLY INERT (E158) ──────────────────────────
  *
- * Step 1 (`.pp`) is white, so step 2 shades, step 3 is white, and so on. Derived
- * from the step number rather than hard-coded per section, so inserting a step
- * cannot produce two shaded bands in a row — the E115 rhythm failure this page
- * has already had once.
+ * Every band on `/` is now one colour, so `.spn.is-shade` resolves to exactly what
+ * `.spn` does and the `s.n % 2 === 0` branch below changes nothing on screen.
+ *
+ * BOTH ARE KEPT ON PURPOSE — do not delete either. Scott is slimming these sections
+ * and may want alternation back, and a live-but-inert branch with a comment is far
+ * cheaper to revive than a deleted one is to rediscover. The derivation is also
+ * still the correct shape if it does come back: computed from the step number, so
+ * inserting a step cannot produce two shaded bands in a row, which is the E115
+ * rhythm failure this page has had once already.
  *
  * ⚠ `graphic` IS A KEY, resolved by `GRAPHICS` below. All four steps now name a
  * built component; a `graphic` starting with `/` is still treated as an image path,
@@ -50,7 +55,8 @@ export function SpineSteps() {
         <section
           key={s.n}
           id={`spine-step-${s.n}`}
-          /* Even-numbered steps take the shade; step 1 above is white. */
+          /* Even-numbered steps take the shade. ⚠ Inert since E158 — the class
+             resolves to the same colour as the base. Kept deliberately; see above. */
           className={"spn" + (s.n % 2 === 0 ? " is-shade" : "")}
         >
           <div className="wrap">
