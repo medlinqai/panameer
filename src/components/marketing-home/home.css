@@ -199,7 +199,40 @@
 /* CTA unchanged — same magenta, same 12px radius as the light hero shipped with. */
 .pm-home .hero-cta{margin-top:34px;display:inline-flex;align-items:center;gap:10px;background:var(--mag);color:#fff;padding:16px 30px;border-radius:12px;font-weight:600;font-size:17px}
 .pm-home .hero-cta:hover{background:var(--mag-d)}
-.pm-home .hero-right p{color:#cec7db;font-size:19px;line-height:1.6;max-width:none}
+/*
+  ⚠ `text-wrap:pretty`, AND IT IS NOT `balance` — THE DISTINCTION IS THE WHOLE POINT
+  (E170). `balance` shortens EVERY line to equalise them, which is the defect E135 exists
+  to remove and which the standing rule further down this file forbids on this page.
+  `pretty` leaves earlier lines alone and only reflows to avoid a short last line. Do not
+  "simplify" one into the other.
+
+  ⚠ ADDED TO THIS RULE RATHER THAN A NEW ONE, on purpose. `.pm-home .hero-right p` is
+  (0,2,1) and has already beaten a class-only override on this exact element once — the
+  bridge line's colour, which silently did nothing. Extending the winning rule removes the
+  contest entirely. Verified by reading the computed value, not the stylesheet: `pretty`.
+
+  Unsupported browsers ignore the declaration, so the worst case is the previous behaviour
+  and no fallback is needed.
+
+  ── ⚠ WHAT THIS DOES AND DOES NOT DO. THE RESIDUAL IS ACCEPTED. ───────────────
+
+  It does NOT eliminate the short last line E169 left behind. Measured across 64 widths
+  (340-1600 in 20px steps) plus 10px bounding over 660-730: it lifts 680/690/700 from
+  ~10.5% of the column to ~14.5% by pulling the em dash down, and leaves 710 unchanged at
+  10.3% — the next token up is "expert", which will not fit, and the pair below it is bound
+  by the nbsp. So the worst case in that 30px window between phone-landscape and
+  small-tablet stays 10.3%.
+
+  It ships anyway because it is a strict improvement at zero cost: `all` and `free.` split
+  at NO width, and the line-count distribution is BYTE-IDENTICAL across all 64 widths
+  (2 lines x10, 3 x37, 4 x14, 5 x2, 6 x1), so it never reflowed a paragraph it was not
+  meant to.
+
+  ⚠ THE BAND IS CLOSED AS AN ISSUE, NOT FIXED. Scott, 2026-08-18: 15% was a round number,
+  not a specification, and discarding a free improvement for landing at 14.5% instead of
+  15.0% is worse than keeping it. DO NOT REVISIT IT AND DO NOT CUT WORDS FOR IT.
+*/
+.pm-home .hero-right p{color:#cec7db;font-size:19px;line-height:1.6;max-width:none;text-wrap:pretty}
 /*
   THE BRIDGE INTO THE SPINE (E160) — a pointer, not body copy, so it reads magenta
   rather than in the lede's #cec7db.
