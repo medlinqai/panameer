@@ -1864,7 +1864,7 @@
   into this file: an explicit row per chip is what stops a two-line domain name
   making one chip taller than its siblings and pushing every connector off target.
 */
-.pm-home .fnl-procs{display:grid;gap:7px;position:relative;z-index:1}
+.pm-home .fnl-procs{display:grid;grid-template-rows:var(--fnl-rows);gap:7px;position:relative;z-index:1}
 /* the muted label above the stack, sized to its own row */
 .pm-home .fnl-domk{display:flex;align-items:center;font-family:var(--font-display),sans-serif;font-size:9.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
 /*
@@ -1907,6 +1907,9 @@
 .pm-home .fnl-bar i{flex:1;height:5px;border-radius:99px;background:rgba(255,255,255,.15);overflow:hidden}
 .pm-home .fnl-bar b{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#7b2fd4,var(--mag))}
 
+/* the stacked flow markers — inert above 900px, where the real connectors run */
+.pm-home .fnl-gap{display:none}
+
 .pm-home .fnl-outs{display:grid;gap:16px;position:relative;z-index:1}
 .pm-home .fnl-out{display:flex;flex-direction:column;justify-content:center;height:96px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:15px 17px;box-shadow:0 14px 30px -20px rgba(23,30,62,.55)}
 /* magenta edge on the ROADMAP only — it is what marks the human-in-the-loop output */
@@ -1917,16 +1920,79 @@
 .pm-home .fnl-badge.is-ai{background:#eef0f6;color:var(--text)}
 .pm-home .fnl-badge.is-hum{background:var(--mag-soft);color:var(--mag-d)}
 
+/* -------------------------------------------------------------------------
+   THE FUNNEL ON A PHONE  (brief_step3_mobile, E152)
+
+   ⚠ THE <=900 RULES ARE NOT A SHRUNK DESKTOP, THEY ARE A DIFFERENT DIAGRAM, and
+   E152 is what happens when they are treated as the former. Dropping the
+   connectors and stacking three groups was the right call when the left column
+   held FOUR process buttons. After E143 it holds TEN capability domains, and the
+   identical rule produced a 900px column: ten full-width chips, a void, the AIP,
+   a void, two cards. Measured at 390px before this change: `.fnl` 900.1px tall,
+   ten chip rows one per row. Nothing about it read as a funnel — three unrelated
+   lists, and more than a phone screen of scroll before the AIP appeared.
+
+   Desktop is untouched. Every rule below lives inside a media query.
+   ------------------------------------------------------------------------- */
 @media(max-width:900px){
   /*
-    ⚠ THE CONNECTORS GO ENTIRELY, AND THE HEIGHT PIN GOES WITH THEM. Stacked, an
-    arrow between two blocks points at whatever wrapped underneath — worse than no
-    arrow. `height:auto` releases the pin so the stack can be as tall as it needs;
-    the fixed item heights stay, since the curves are gone but the rhythm is still
-    wanted.
+    ⚠ `grid-template-rows:auto` IS REQUIRED, NOT TIDYING. `.fnl`'s desktop rule
+    pins a single explicit row to `--fnl-h` (424px) so the connector viewBoxes map
+    1:1 in y. Stacked, that explicit row still applies to the FIRST item, so the
+    two-up chip stack — which only needs about 220px — would be padded out to 424
+    and the saving would vanish into a void. The curves are gone here, so the pin
+    has nothing left to serve.
+
+    ⚠ `gap:0` GOES WITH THE CHEVRONS. The 34px chevron row IS the spacing now;
+    leaving the old `gap:26px` in place double-spaces every seam (26 + 34 + 26).
   */
-  .pm-home .fnl{grid-template-columns:1fr;height:auto;gap:26px}
+  .pm-home .fnl{grid-template-columns:1fr;grid-template-rows:auto;height:auto;gap:0}
+  /*
+    The connector cells go entirely. An arrow drawn between two stacked blocks
+    points at whatever wrapped underneath it, which is worse than no arrow — the
+    chevrons below are a different element for exactly that reason.
+  */
   .pm-home .fnl-link{display:none}
+
+  /*
+    TWO-UP HALVES THE STACK: ten rows become five, and the eyebrow spans both so
+    it still reads as one label over one group. The rows go `auto` here — see the
+    note on `--fnl-rows` in SubmitToAI.tsx for why they could not simply be
+    overridden.
+  */
+  .pm-home .fnl-procs{grid-template-columns:1fr 1fr;grid-template-rows:auto;gap:6px}
+  .pm-home .fnl-domk{grid-column:1 / -1}
+  /*
+    `height:auto` releases the desktop `height:100%`, which resolved against a
+    fixed 34px track that no longer exists. `min-height` replaces it, so a
+    one-line and a two-line name still share a baseline without a fixed track.
+  */
+  .pm-home .fnl-proc{height:auto;min-height:38px;padding:7px 9px;font-size:10.5px;line-height:1.2}
+
+  /* the flow markers the stacked layout needs, since the curves are gone */
+  .pm-home .fnl-gap{display:grid;place-items:center;height:34px}
+  /*
+    A CSS chevron, not a glyph and not an SVG: two borders on a rotated box. It
+    is decoration with no text alternative, which is why the element carries
+    `aria-hidden` in the component. `margin-top:-6px` optically centres it —
+    rotating a square moves its visual mass down relative to its box.
+  */
+  .pm-home .fnl-chev{width:13px;height:13px;border-right:2.5px solid var(--mag);border-bottom:2.5px solid var(--mag);border-radius:0 0 3px 0;transform:rotate(45deg);margin-top:-6px}
+
+  /* the centre and right groups tighten to match */
+  .pm-home .fnl-aip{padding:18px 18px 16px}
+  .pm-home .fnl-aip-n{font-size:22px}
+  .pm-home .fnl-outs{gap:12px}
+}
+@media(max-width:430px){
+  /*
+    ⚠ STAYS TWO-UP. Falling back to one column here is the trap: it re-creates the
+    900px queue on the narrowest screen, which is precisely where the scroll costs
+    most. The type gets smaller instead, the two longest names take two lines, and
+    `min-height` grows to hold them.
+  */
+  .pm-home .fnl-procs{gap:5px}
+  .pm-home .fnl-proc{min-height:42px;padding:6px;font-size:9.5px;letter-spacing:-.1px}
 }
 
 /* =========================================================================
