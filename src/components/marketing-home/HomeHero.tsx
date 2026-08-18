@@ -78,25 +78,40 @@ export function HomeHero() {
             </div>
             <div className="hero-right">
               {/*
-                ⚠ IT NAMES BOTH OUTPUTS NOW, AND THE SPLIT IS THE POINT.
+                ⚠ THE HERO NO LONGER CARRIES THE TWO-OUTPUTS SPLIT (E160), AND THE
+                DECISION BEHIND IT IS UNCHANGED — only its mention here is dropped.
 
-                It used to promise one vague thing — "benchmarks your current
-                capabilities and shows you where to focus first". The product
-                produces TWO artefacts and the difference between them is why the
-                expert call exists rather than being a sales pretext: AI can list
-                every option, but only the client can say which ones they require
-                and in what order.
+                This used to read "…an AI Roadmap built with an expert — the ones you
+                actually require, in priority order." Scott replaced it because the
+                lede named the outputs and no action: "the tagline is missing
+                something...naming the output and the action." The new copy carries
+                four beats he specified — what it is · why you need to see it (the
+                industry comparison) · what we do about it · it is free — and the
+                requirements/sequence split does not fit alongside them.
 
-                ⚠ "REQUIREMENTS", NOT "SEQUENCE THEM". Scott: "They never want
-                every option in the world of possible. So we select what they
-                REQUIRE — everyone knows and uses requirements terminology — and
-                then prioritize." The roadmap is not the option list re-ordered;
-                it is the SUBSET the client requires, prioritized. That matches
-                the Step 5 title and `assessment_engine_spec.md`, which already
-                calls the output a scoped requirements list.
+                ⚠ "REQUIREMENTS", NOT "SEQUENCE THEM" IS STILL LOCKED. Scott: "They
+                never want every option in the world of possible. So we select what
+                they REQUIRE — everyone knows and uses requirements terminology — and
+                then prioritize." The roadmap is not the option list re-ordered; it is
+                the SUBSET the client requires, prioritized. It now lives in Step 5's
+                title in `spine-steps.ts`, in `AiRoadmapShot`'s output copy, and in
+                `assessment_engine_spec.md`. Do not restore it here to "fix" the hero.
               */}
-              <p>You get two things: a dashboard of every AI option open to you, and an AI Roadmap built with an expert &mdash; the ones you actually require, in priority order.</p>
-              {/* WS-9 — one shared component; /assess step 0 renders the same source. */}
+              <p>Take our AI Maturity Assessment to see where your processes stand against your industry and where AI can actually move the needle. Then meet an expert to turn those opportunities into your 12-month AI roadmap &mdash; all free.</p>
+              {/*
+                ⚠ A DISTINCT BEAT, NOT A SENTENCE ON THE LEDE. It is the bridge into
+                the spine below, so it gets its own `<p>` and a lighter magenta to read
+                as a pointer rather than as body copy.
+
+                ⚠ NOT A LINK AND NOT A SCROLL ANCHOR — this is copy only. It says
+                "below", and the spine is directly below it, so the page does the
+                pointing. Making it interactive is a separate decision.
+              */}
+              <p className="hero-bridge">Check out the steps below to see how it works.</p>
+              {/* WS-9 — one shared component; /assess step 0 renders the same source.
+                  ⚠ THE CARDS STAY ON THE RIGHT, below the lede. Scott: "i want to keep
+                  the cards on the right." The taller lede re-centres the left column
+                  against them; it does not move them. */}
               <ProofStats />
             </div>
           </div>
