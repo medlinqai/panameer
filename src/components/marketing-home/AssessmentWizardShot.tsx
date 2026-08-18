@@ -178,7 +178,12 @@ export function AssessmentWizardShot() {
                     <span className="wz-oh">{r.title}</span>
                     <span className="wz-op">{r.examples}</span>
                   </div>
-                  <span className="wz-rung">Rung {i + 1}</span>
+                  {/* ⚠ "Option", NOT "Rung" (E035). Scott: "change the word 'rung' to
+                      'option'? Rung is an odd word. Good for a ladder." The CLASS stays
+                      `wz-rung` — it is not user-visible, and renaming it would touch
+                      home.css for no reader's benefit. The ladder metaphor is still
+                      correct in the CODE, where it explains the 10/23/37/50 spacing. */}
+                  <span className="wz-rung">Option {i + 1}</span>
                 </div>
               ))}
             </div>

@@ -18,6 +18,7 @@ import {
 import { P2P_DOMAINS } from "@/lib/assessment/questions-p2p";
 import { REVENUE_BANDS, EBITDA_BANDS, SPEND_BANDS } from "@/lib/assessment/bands";
 import { P2P_MOVES } from "@/lib/assessment/solutions";
+import { UNWEIGHTED_DOMAINS } from "@/lib/assessment/scoring";
 import { fundingFromEbitda, DEFAULT_TAX_RATE_BPS } from "@/lib/assessment/tax-rate";
 import { formatRange } from "@/lib/assessment/report";
 import { readFileSync } from "fs";
@@ -59,15 +60,37 @@ console.log("\n=== the weights table ===");
     Math.abs(sum - 1) < 1e-9,
     sum
   );
+  /*
+    ⚠ THESE TWO GUARDS ARE NOT WEAKENED, THEY ARE PINNED (E034). They used to
+    require EVERY domain to carry a weight and a curated move. Two domains authored
+    from the 2026-08-18 deck — Data Analytics & AI Governance and Change Management &
+    AI Adoption — are assessed but deliberately outside the dollar model, because
+    weighting them means rescaling all eight existing weights (they are asserted to
+    sum to 1.0) and therefore changing the dollars on every report. That is Scott's
+    call, reserved to him.
+
+    So the exemption is EXACTLY `UNWEIGHTED_DOMAINS` and nothing else, and the third
+    assertion below fails if that set stops matching reality. A ninth unweighted
+    domain still breaks the build, which is what the original guards protected.
+  */
+  const weighted = P2P_DOMAINS.filter((d) => !UNWEIGHTED_DOMAINS.has(d.key));
   check(
-    "every capability domain has a weight",
-    P2P_DOMAINS.every((d) => typeof DOLLAR_WEIGHTS[d.key] === "number"),
-    P2P_DOMAINS.filter((d) => !(d.key in DOLLAR_WEIGHTS)).map((d) => d.key)
+    "every dollar-model capability domain has a weight",
+    weighted.every((d) => typeof DOLLAR_WEIGHTS[d.key] === "number"),
+    weighted.filter((d) => !(d.key in DOLLAR_WEIGHTS)).map((d) => d.key)
   );
   check(
-    "every capability domain has a curated move (a gap with nothing to do about it is a dead end)",
-    P2P_DOMAINS.every((d) => Boolean(P2P_MOVES[d.key])),
-    P2P_DOMAINS.filter((d) => !P2P_MOVES[d.key]).map((d) => d.key)
+    "every dollar-model capability domain has a curated move (a gap with nothing to do about it is a dead end)",
+    weighted.every((d) => Boolean(P2P_MOVES[d.key])),
+    weighted.filter((d) => !P2P_MOVES[d.key]).map((d) => d.key)
+  );
+  check(
+    "UNWEIGHTED_DOMAINS names exactly the domains with no weight — the declared hole cannot silently grow",
+    P2P_DOMAINS.filter((d) => !(d.key in DOLLAR_WEIGHTS))
+      .map((d) => d.key)
+      .sort()
+      .join(",") === [...UNWEIGHTED_DOMAINS].sort().join(","),
+    P2P_DOMAINS.filter((d) => !(d.key in DOLLAR_WEIGHTS)).map((d) => d.key)
   );
 }
 

@@ -32,6 +32,7 @@ import {
 import {
   domainForStep,
   domainStepId,
+  sectionProgress,
   stepsFor,
   type Step,
 } from "@/lib/assessment/steps";
@@ -206,7 +207,9 @@ export function AssessmentWizard({
   const signedInEmail = session?.user?.email?.trim() || null;
   const STEPS = useMemo(() => stepsFor(signedInEmail), [signedInEmail]);
 
-  const [rawStep, setRawStep] = useState<Step>("basics");
+  /* ⚠ THE WALK OPENS ON THE PROCESS PICK (E036), not on company details — deck
+     slide 1. It was "basics" while company/financial came first. */
+  const [rawStep, setRawStep] = useState<Step>("process");
   /*
     THE STEP LIST CAN CHANGE UNDER THE VISITOR — once, and only ever by one
     step. `useSession()` starts undefined and resolves a moment later, so a
@@ -302,9 +305,25 @@ export function AssessmentWizard({
       the `body > flex-1` chain that E020 depends on stays intact.
     */
     frameClassName: "marketing-surface",
+    /*
+      ⚠ THE BAR IS PER-SCREEN, THE LABEL IS PER-SECTION (E036), and mixing them is
+      deliberate. `step`/`totalSteps` still count screens so the bar advances every
+      time the visitor answers something; a bar driven by the five sections would sit
+      motionless through ten consecutive domain screens and read as broken. The words
+      beside it name sections, because "4 of 15" reads as a chore where "Section 2 of
+      5 · Capability Domains" reads as a place in a structure.
+
+      The whole section string goes in `stepLabel` and the numeric counter is hidden
+      (`counterText: null`), so the top line is exactly the one the brief specifies
+      rather than the shell's default label-left/count-right split.
+    */
     step: STEPS.indexOf(step) + 1,
     totalSteps: STEPS.length,
-    stepLabel: STEP_LABELS[step],
+    stepLabel: sectionProgress(step, STEPS).label,
+    counterText: null,
+    /* bare "4 of 10" — never "Domain 4 of 10"; `domain` is reserved for the
+       capability domains themselves. Null on single-screen sections. */
+    subCounter: sectionProgress(step, STEPS).sub,
     canBack: STEPS.indexOf(step) > 0,
     onBack: back,
     busy,

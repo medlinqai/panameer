@@ -27,6 +27,8 @@ export function WizardShell({
   step,
   totalSteps = 13,
   stepLabel,
+  counterText,
+  subCounter,
   progress,
   title,
   subtitle,
@@ -55,6 +57,22 @@ export function WizardShell({
    * (e.g. "Your Experience") beside the counter.
    */
   stepLabel?: string;
+  /**
+   * ⚠ ADDITIVE, AND ONBOARDING DOES NOT PASS IT. `/assess` shows FIVE named
+   * sections over fifteen screens (E036), so its counter reads "Section 2 of 5 ·
+   * Capability Domains" rather than "2/15". Pass a string to replace the numeric
+   * `step/totalSteps` counter, or `null` to hide it — `step` and `totalSteps` are
+   * still what drive the progress BAR, so a bar that advances one screen at a time
+   * keeps working under a label that names sections. A bar that jumped 20% per
+   * section would sit motionless through ten consecutive domain screens.
+   */
+  counterText?: string | null;
+  /**
+   * A second, lighter line under the counter row. `/assess` puts the within-section
+   * position there — bare `4 of 10`, never "Domain 4 of 10", because the word
+   * *domain* is reserved for capability domains.
+   */
+  subCounter?: string | null;
   /**
    * Legacy 0..1 fraction used by the buyer + Work Request wizards, which have
    * their own step counts and are out of scope for brief_P. Renders the same
@@ -161,18 +179,35 @@ export function WizardShell({
               <span className="text-[13px] font-bold uppercase tracking-wide text-ink-2">
                 {stepLabel ?? "Build Your Profile"}
               </span>
-              <span className="text-[14px] font-extrabold tabular-nums text-magenta">
-                {step}/{totalSteps}
-              </span>
+              {counterText !== null && (
+                <span className="text-[14px] font-extrabold tabular-nums text-magenta">
+                  {counterText ?? `${step}/${totalSteps}`}
+                </span>
+              )}
             </div>
           )}
+          {/* the within-section line, lighter than the row above it */}
+          {showCounter && subCounter ? (
+            <div className="-mt-1 mb-2.5 text-[12px] font-semibold tabular-nums text-muted">
+              {subCounter}
+            </div>
+          ) : null}
           <div
             className="h-1.5 w-full overflow-hidden rounded-full bg-line"
             role="progressbar"
             aria-valuenow={showCounter ? step : Math.round(pct)}
             aria-valuemin={showCounter ? 1 : 0}
             aria-valuemax={showCounter ? totalSteps : 100}
-            aria-label={showCounter ? `Step ${step} of ${totalSteps}` : "Progress"}
+            /* ⚠ the accessible name follows the VISIBLE counter when one is supplied —
+               announcing "Step 4 of 15" under a label reading "Section 2 of 5" would
+               describe a different progress model to a screen-reader user. */
+            aria-label={
+              showCounter
+                ? [counterText ?? `Step ${step} of ${totalSteps}`, subCounter]
+                    .filter(Boolean)
+                    .join(", ")
+                : "Progress"
+            }
           >
             <div
               className="h-full rounded-full bg-magenta transition-[width] duration-300"
