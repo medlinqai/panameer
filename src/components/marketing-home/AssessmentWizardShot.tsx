@@ -51,6 +51,12 @@ import { P2P_DOMAINS as ASSESSED_DOMAINS } from "@/lib/assessment/questions-p2p"
  * Management". It has one — `INTEGRATED` is a single shared RungOption used by all
  * eight domains, so the string exists, it is just not per-domain. It comes from
  * the file like the rest, and no filler ships.
+ *
+ * ⚠ NOTHING IN THIS SHOT IS HAND-WRITTEN COPY ANY MORE (E155). The question was the
+ * last exception and is derived too now, so every string describing the assessment —
+ * domain names, the counter, the question, rung titles, rung examples — has exactly
+ * one source of truth. The only authored strings left are the shot's own chrome: the
+ * header, the sub-line, the two buttons and the footer note.
  */
 
 /**
@@ -142,15 +148,15 @@ export function AssessmentWizardShot() {
               {CAPABILITY_DOMAINS.length} · {ACTIVE_DOMAIN.name}
             </p>
             {/*
-              ⚠ THE QUESTION IS THE BRIEF'S, NOT THE FILE'S — flagged, not fixed.
-              The bank asks "How does your organization place and manage orders
-              with suppliers?"; the brief specifies this wording verbatim. The
-              brief's "take it from the file" instruction was attached to the rung
-              EXAMPLES, so the examples are derived and this stays as written.
+              ⚠ DERIVED, NOT WRITTEN (E155). This shipped carrying chat's wording,
+              "How are purchase orders created, approved and priced today?" — the one
+              hand-authored string sitting among derived ones. It matters for honesty
+              rather than tidiness: the domain list, all four rung titles and all four
+              example lines come from the bank, so a written question made this a
+              PICTURE OF the wizard instead of the wizard, and it was the one string
+              that would drift the moment Scott edits the bank.
             */}
-            <h4 className="wz-q">
-              How are purchase orders created, approved and priced today?
-            </h4>
+            <h4 className="wz-q">{ACTIVE_LADDER.question}</h4>
             <p className="wz-qs">
               Pick the description closest to how it actually runs — not how the
               policy reads.
