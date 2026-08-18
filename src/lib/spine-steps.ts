@@ -83,16 +83,23 @@ export const SPINE_STEPS: SpineStep[] = [
     n: 4,
     eyebrow: "Step 4 - Check Out Your Optimization Dashboard",
     /**
-     * ⚠ "your industry" — A CORRECTION TO WHAT SCOTT TYPED, FLAGGED.
+     * ⚠ VERBATIM, Scott 2026-08-18 (E167). The previous wording — "See the AI
+     * automation options possible and where your adoption stands in relation to your
+     * industry." — survived only because chat approved this replacement and then
+     * failed to write it into the brief that shipped the rest of the step.
      *
-     * He wrote the "...peers" form. That word asserts a surveyed comparison pool
-     * which does not exist (`HANDOFF_2026-08-16.md` §6 lists it as an open
-     * claim), and he removed it once already before it crept back in. "your
-     * industry" makes the same point without promising a benchmark we cannot
+     * ⚠ "versus" matches the hero lede and the dashboard's own "Your Org Versus
+     * Industry" — one word across all three.
+     *
+     * ⚠ "your industry", NEVER "peers" — STILL A CORRECTION TO WHAT SCOTT TYPED, and
+     * it survives this rewrite. He wrote the "...peers" form. That word asserts a
+     * surveyed comparison pool which does not exist (`HANDOFF_2026-08-16.md` §6 lists
+     * it as an open claim), and he removed it once already before it crept back in.
+     * "your industry" makes the same point without promising a benchmark we cannot
      * produce.
      */
     title:
-      "See the AI automation options possible and where your adoption stands in relation to your industry.",
+      "Follow the link in your email to see the AI automation options possible and where you stand versus your industry.",
     /*
      * Built as a component, not an image — see `SpineSteps`' registry. It DRAWS
      * the report dashboard rather than importing it: every figure in it is

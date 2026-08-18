@@ -2459,6 +2459,69 @@
 .pm-home .rm-btn .ash-sv{width:14px;height:14px}
 .pm-home .rm-note{font-size:11px;color:var(--muted);margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
 
+/* ---- STEP 5's BOOKING CARD (E165) ------------------------------------- */
+/*
+  ⚠ SAME PATTERN AS STEP 4's EMAIL CARD, DELIBERATELY. `.ash` is `overflow:hidden`, so
+  the card is a sibling of the frame inside a positioned wrapper rather than a child of
+  it. Ported from mockups/step5_ai_roadmap_timeline_2026-08-18.html, which uses the
+  same `.shotwrap` shape.
+*/
+.pm-home .rm-wrap{position:relative}
+/*
+  ⚠ THE BLANK BAND. 26px -> 214px of bottom padding inside the frame so the card's
+  overlapping portion lands on empty canvas and occludes nothing — including the
+  footnote, which an earlier attempt clipped because it was not in the test set.
+
+  ⚠ THIS LEAVES A VISIBLE EMPTY BAND AT DESKTOP and that is the accepted cost, not an
+  oversight. Trading a little occlusion for less dead space is Scott's call.
+
+  ⚠ IF THE CARD'S COPY OR TYPE CHANGES, RE-RUN THE INTERSECTION TEST — this number is a
+  function of the card's rendered height, which is exactly how E163's 118px turned out
+  to be 47px short.
+
+  STEP-5-ONLY. `.ash-main` is shared with the wizard and the dashboard.
+*/
+.pm-home .rm-main{padding-bottom:214px}
+.pm-home .rm-bk{position:absolute;left:-40px;bottom:-92px;width:336px;z-index:5;background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 15px 15px;box-shadow:0 26px 60px -18px rgba(23,30,62,.42)}
+.pm-home .rm-bk-h{display:flex;align-items:center;gap:10px;margin-bottom:11px}
+/* ⚠ CIRCULAR and INK, not the magenta rounded square the other cards use — it is a
+   person, not a brand mark or a product tile. Initials, never a photograph. */
+.pm-home .rm-bk-av{width:30px;height:30px;flex:0 0 auto;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font-family:var(--font-display),sans-serif;font-size:11.5px;font-weight:700}
+/* ⚠ scoped to this wrapper's own children — a bare `span{display:block}` would capture
+   the avatar and the 45-minute pill, which is the collision the mockups hit twice. */
+.pm-home .rm-bk-n{min-width:0;font-family:var(--font-display),sans-serif;font-size:12.5px;font-weight:700;line-height:1.2}
+.pm-home .rm-bk-n b{display:block;font-weight:700;color:var(--ink)}
+.pm-home .rm-bk-n span{display:block;font-family:var(--font-body),sans-serif;font-size:10px;font-weight:400;color:var(--muted);margin-top:2px}
+.pm-home .rm-bk-len{margin-left:auto;flex:0 0 auto;font-size:10px;color:var(--text);border:1px solid var(--line);border-radius:99px;padding:3px 9px;white-space:nowrap}
+/* the reassurance band — magenta-soft, the one tinted block on the card */
+.pm-home .rm-bk-r{display:flex;gap:8px;background:var(--mag-soft);border-radius:9px;padding:9px 11px;margin-bottom:11px}
+.pm-home .rm-bk-r i{flex:0 0 auto;font-style:normal;font-size:11px;line-height:1.5;color:var(--mag)}
+.pm-home .rm-bk-r p{font-size:10.5px;line-height:1.5;color:var(--text)}
+.pm-home .rm-bk-days{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pm-home .rm-bk-d{border:1px solid var(--line);border-radius:9px;padding:6px 4px 7px;text-align:center}
+.pm-home .rm-bk-d b{display:block;font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.pm-home .rm-bk-d s{display:block;text-decoration:none;font-family:var(--font-display),sans-serif;font-size:16px;font-weight:700;color:var(--ink);margin:1px 0 2px}
+.pm-home .rm-bk-d em{font-style:normal;font-size:10px;font-weight:600;color:var(--mag-d)}
+/* the taken slot greys out entirely — a booked slot that still looks available is worse
+   than not showing it */
+.pm-home .rm-bk-d.is-off b,.pm-home .rm-bk-d.is-off s{color:#c3c9d4}
+.pm-home .rm-bk-d.is-off em{color:#c3c9d4;font-weight:400}
+/*
+  ⚠ THE SAME 1216px CLAMP AS STEP 4's EMAIL CARD, AND IT HAS TO LIVE HERE, NOT BESIDE
+  IT. Both rules are `.pm-home .rm-bk` / `.pm-home .osd-mail` at (0,2,0) and a media
+  query adds NO specificity — so a clamp written next to the email card, hundreds of
+  lines above `.rm-bk`'s base rule, lost to that base rule on source order and silently
+  did nothing. Measured: still `off-left 40` and `clipped left: -8px` at 1200/1100/1000
+  with the clamp "in place". Placed after the rules it overrides, it works.
+
+  The cause is identical to Step 4's: `.wrap` is max-width:1200 with 32px padding, so
+  the frame's left edge only clears a 40px offset from 1216px up. And as there, left
+  overflow never extends `scrollWidth`, so the scroll check cannot catch it.
+*/
+@media(max-width:1215px){
+  .pm-home .rm-bk{left:-24px}
+}
+
 @media(max-width:900px){
   /* step 2's two columns stack; the rail's right border becomes a bottom rule */
   .pm-home .wz{grid-template-columns:1fr}
@@ -2470,6 +2533,13 @@
     worse than no header, and the rule is what re-associates a lane with the action
     above it.
   */
+  /*
+    ⚠ THE CARD STOPS BEING AN OVERLAY, same reasoning as Step 4's email: an absolutely
+    positioned layer hanging off a ~300px frame is a collision, not a layer. The 214px
+    band reverts with it, since nothing overlaps it any more.
+  */
+  .pm-home .rm-main{padding-bottom:26px}
+  .pm-home .rm-bk{position:static;width:auto;margin-top:18px;box-shadow:0 18px 40px -22px rgba(23,30,62,.4)}
   .pm-home .rm-hd{grid-template-columns:1fr}
   .pm-home .rm-hd-a{display:none}
   .pm-home .rm-row{grid-template-columns:1fr}
