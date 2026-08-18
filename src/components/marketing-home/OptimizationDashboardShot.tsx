@@ -82,6 +82,20 @@ const RAIL_SUPPORT: LucideIcon[] = [LifeBuoy, Settings];
  * Ten bars for the ten P2P capability domains, four highlighted. `n` is the
  * count printed beneath the bar and is the labelled figure; `h` is only the bar
  * height, which the mockup drew for shape rather than to scale.
+ *
+ * ⚠ THESE TEN MUST SUM TO THE KPI ABOVE THEM (E148). They shipped summing to 22
+ * under a KPI reading 23. The tenth was raised 1 -> 2 rather than dropping the KPI
+ * to 22, for two reasons:
+ *
+ *   - `23` is also quoted by Step 5 ("Built from 23 optimization opportunities"),
+ *     so lowering the KPI would have moved the defect to a second graphic.
+ *   - The tenth is Change Management & AI Adoption, which scores 25 — the LOWEST
+ *     of the ten in `capability-domains.ts`. The worst-scoring domain having the
+ *     fewest opportunities was backwards, so the arithmetic and the internal
+ *     logic were wrong in the same place and are fixed in the same move.
+ *
+ * Its bar went 28% -> 46% with it, because a bar that disagrees with its own
+ * printed label is the defect this was.
  */
 const SPARK: { h: number; on: boolean; n: number }[] = [
   { h: 100, on: true, n: 4 },
@@ -93,7 +107,7 @@ const SPARK: { h: number; on: boolean; n: number }[] = [
   { h: 88, on: true, n: 3 },
   { h: 46, on: false, n: 2 },
   { h: 36, on: false, n: 1 },
-  { h: 28, on: false, n: 1 },
+  { h: 46, on: false, n: 2 },
 ];
 
 /* ── KPI 3's stacked bar ──────────────────────────────────────────────────── */
@@ -189,10 +203,15 @@ export function OptimizationDashboardShot() {
             <div className="osd-search" aria-hidden>
               <Search className="osd-sv" strokeWidth={1.9} aria-hidden />
               <span>Search here…</span>
-              {/* ⌘ is U+2318 and does fall back per-glyph in Montserrat; it is
-                  named in the brief, so it ships, but it is the one character in
-                  here that is not guaranteed by the font stack. */}
-              <span className="osd-kbd">⌘ K</span>
+              {/*
+                ⚠ `/` NOT `⌘ K` (E150). U+2318 falls back per-glyph in Montserrat
+                — the same failure class as the `▦ ◔ ▤ ◈ ⚙` characters this shot
+                already replaced with lucide icons, and it survived only because
+                the first brief named it explicitly. `/` is ASCII, renders in every
+                font, and is a real search-shortcut convention rather than a
+                Mac-only one on a page that is not Mac-only.
+              */}
+              <span className="osd-kbd">/</span>
             </div>
             <div className="osd-tops">
               <span className="osd-ico" aria-hidden>
@@ -220,12 +239,22 @@ export function OptimizationDashboardShot() {
                 {/* ⚠ Scott's explicit heading change from "AI Maturity
                     Assessment — Procure-to-Pay". Do not restore the old wording. */}
                 <h3 className="osd-h3">Procure-to-Pay Optimization Dashboard</h3>
-                <p className="osd-date">Thursday, 30 September 2022</p>
+                {/*
+                  ⚠ NO HARDCODED ABSOLUTE DATE IN MARKETING CHROME (E149). This
+                  read "Thursday, 30 September 2022" from Scott's source image —
+                  four years stale on a page that elsewhere wants to read as live,
+                  which makes it look like an abandoned product. An absolute date
+                  only ever gets worse and nobody remembers to update it. The
+                  replacement also does more work than a date did: it says what the
+                  dashboard covers.
+                */}
+                <p className="osd-date">Procure-to-Pay · all ten capability domains</p>
               </div>
               <div className="osd-mact">
                 <span className="osd-pill">
                   <Calendar className="osd-sv" strokeWidth={1.7} aria-hidden />
-                  1 Sep 22 – 30 Sep 22
+                  {/* relative, for the same reason as the sub-line above */}
+                  Last 30 days
                   {/* the mockup's ▾ (U+25BE) replaced by a drawn chevron — same
                       failing class of glyph as the icons it banned */}
                   <ChevronDown className="osd-cv" strokeWidth={2} aria-hidden />
