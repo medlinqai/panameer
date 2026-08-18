@@ -36,6 +36,24 @@
     --ink-2:#0f1530;
     --paper:#ffffff;
     --paper-2:#f2f6f7;
+    /*
+      ⚠ THE SHADED-BAND COLOUR (E158). Scott, 2026-08-18: "i want all the SHADED
+      backgrounds to be this." It is `.hiw`'s value, which was hardcoded at one site
+      and signed off twice, so tokenising it changed no rendered colour there and the
+      other two shaded bands moved onto it.
+
+      ⚠ THE ALTERNATION IS UNCHANGED AND STAYS. Scott, same message: "the first two
+      are shaded, then the remaining alternate. SECTION 1 and 2 are shaded...then 3
+      is not...4 is...5 is not." That is already what ships — `s.n % 2 === 0` in
+      SpineSteps.tsx shades steps 2 and 4, and `.hero` and `.hiw` are both shaded. So
+      E115's rhythm rule still holds; only the shade's VALUE moved.
+
+      ⚠ `--paper-2` IS NOT DEAD. `.ptr` and `.erp` still use it, so #f2f6f7 survives
+      BELOW the spine while this runs above it. That is the inconsistency Scott
+      originally spotted, and it resolves when he repurposes the lower page — it is
+      deliberately left alone here, not overlooked.
+    */
+    --paper-3:#f6f4fb;
     --line:#e6e9ef;
     --muted:#7b8496;
     --text:#2a3345;
@@ -100,20 +118,21 @@
   opened white header on white surround, and the first shaded band was the strip
   below it. Scott, 2026-08-17: "Need shading on section 1 of HOME."
 
-  `var(--paper-2)`, the token `.fw`, `.erp` and `.ptr` already share — never a
-  new hex, per the E115 rhythm rule. The hero card and its gradient are
-  untouched; only the surround it floats on changes.
+  The hero card and its gradient are untouched; only the surround it floats on
+  changes.
 
-  ⚠ AND THIS CREATES ONE ADJACENCY WORTH SCOTT'S EYE, reported rather than
-  resolved: `.hero` is now #f2f6f7 and `.hiw` immediately below it is #f6f4fb
-  (VideoSequence's `soft`). Two shaded bands, four points apart, touching. The
-  `.erp` comment three hundred lines down says exactly why that is a risk —
-  "two shaded sections at slightly different values look like a mistake, two at
-  the same value look like a system". Fixing it means either moving `.hiw` onto
-  `--paper-2` or tokenising #f6f4fb, and both change a band Scott has signed
-  off twice. Not mine to pick.
+  ⚠ RESOLVED AT E158, VIA THE SECOND OF THE TWO OPTIONS THIS COMMENT NAMED. It used
+  to read: `.hero` is #f2f6f7 and `.hiw` immediately below it is #f6f4fb
+  (VideoSequence's `soft`) — two shaded bands, four points apart, touching, which the
+  `.erp` comment three hundred lines down calls out as reading like a mistake rather
+  than a system. The fix was either moving `.hiw` onto `--paper-2` or tokenising
+  #f6f4fb, "and both change a band Scott has signed off twice. Not mine to pick."
+
+  He picked the second: #f6f4fb became `--paper-3` and every SHADED band took it, so
+  `.hiw` did not move at all and `.hero` came to meet it. The alternation itself is
+  untouched — see the token's own comment.
 */
-  .hero{position:relative;background:var(--paper-2)}
+  .hero{position:relative;background:var(--paper-3)}
 /* The margin the card is inset by. Not full-bleed any more — that is the point. */
 .pm-home .hero-stage{padding:6px 44px 0}
 /*
@@ -1189,7 +1208,7 @@
    first line — E137 rev. Both sections use the same numbers; that is the point.
    ------------------------------------------------------------------------- */
 .pm-home{--sec-step:8px}
-.pm-home .hiw{background:#f6f4fb;padding:calc(var(--sec-step) * 6) 0 calc(var(--sec-step) * 10)}
+.pm-home .hiw{background:var(--paper-3);padding:calc(var(--sec-step) * 6) 0 calc(var(--sec-step) * 10)}
 /*
   ⚠ DARK ON LIGHT. This was hard-coded `color:#fff` for the navy band and would
   have rendered white-on-lilac — an invisible heading — the moment the band
@@ -1706,11 +1725,15 @@
    stylesheet edit, which is the exact thing this section exists to avoid.
 
    ⚠ WHITE BAND, NOT THE MOCKUP'S SHADE — A DELIBERATE DEPARTURE.
-   The mockup draws this section as `band--shade` because it draws it alone. On
-   the real page it lands directly under `.hiw` (#f6f4fb), which itself now sits
-   under a shaded `.hero` (#f2f6f7) since E123. Shading it would put THREE
-   shaded bands in a row and break the E115 alternation the page is locked to.
-   Reported rather than assumed.
+   The mockup draws this section as `band--shade` because it draws it alone. On the
+   real page it lands directly under `.hiw`, which itself sits under a shaded `.hero`
+   since E123. Shading it would put THREE shaded bands in a row and break the E115
+   alternation the page is locked to. Reported rather than assumed.
+
+   The argument got STRONGER at E158, not weaker: `.hero` and `.hiw` used to be four
+   points apart (#f2f6f7 and #f6f4fb) and now both take `--paper-3`, so the two above
+   this band are visibly one field. A third would read as a very long pale run with
+   the spine's first white break arriving late.
    ------------------------------------------------------------------------- */
 /*
   ── B1/B4: SECTION 3 IS ON THE SAME SCALE AS SECTION 2 ───────────────────────
@@ -1805,7 +1828,7 @@
    band, and that is a single modifier the component derives from the step number.
    ------------------------------------------------------------------------- */
 .pm-home .spn{background:#fff;padding:calc(var(--sec-step) * 6) 0 calc(var(--sec-step) * 10);border-top:1px solid var(--line)}
-.pm-home .spn.is-shade{background:var(--paper-2)}
+.pm-home .spn.is-shade{background:var(--paper-3)}
 .pm-home .spn .eyebrow{font-size:19px}
 .pm-home .spn-h2{font-size:34px;color:var(--ink);font-weight:700;letter-spacing:-.5px;line-height:1.28;margin:calc(var(--sec-step) * 3) 0 0;max-width:1040px}
 /* The graphic slot, for when real screenshots land. Nothing renders while
