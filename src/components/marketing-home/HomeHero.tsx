@@ -97,7 +97,17 @@ export function HomeHero() {
                 title in `spine-steps.ts`, in `AiRoadmapShot`'s output copy, and in
                 `assessment_engine_spec.md`. Do not restore it here to "fix" the hero.
               */}
-              <p>Take our AI Maturity Assessment to see where your processes stand against your industry and where AI can actually move the needle. Then meet an expert to turn those opportunities into your 12-month AI roadmap &mdash; all free.</p>
+              {/*
+                ⚠ "versus", NOT "against" — AND IT IS THE CONSISTENT CHOICE, not just
+                the softer one. `OptimizationDashboardShot` already ships "Your Org
+                Versus Industry", so the hero and the dashboard now use one word.
+
+                ⚠ "your processes" IS GONE FROM THE FIRST CLAUSE, and that is a real
+                loss: it made the comparison concrete rather than a generic industry
+                benchmark. Scott accepted the trade to recover a line (E166). Do not
+                reinstate it.
+              */}
+              <p>Take our AI Maturity Assessment to see where you stand versus your industry and where AI can move the needle. Then build your 12-month roadmap with an expert &mdash; all free.</p>
               {/*
                 ⚠ A DISTINCT BEAT, NOT A SENTENCE ON THE LEDE. It is the bridge into
                 the spine below, so it gets its own `<p>` and a lighter magenta to read

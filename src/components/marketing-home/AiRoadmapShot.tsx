@@ -151,19 +151,65 @@ const ROWS: Row[] = [
 
 const QUARTERS = ["Q1", "Q2", "Q3", "Q4"];
 
+/* ── the booking card, lifted from `steps/ConsultShot.tsx` (E165) ──────────── */
+/**
+ * ⚠ LIFTED, NOT REBUILT. `ConsultShot` is the source and E164 proposes deleting the
+ * section that renders it, so this moved first. Its reasoning came across with it:
+ *
+ * THE COORDINATOR IS A REAL ROLE, NOT A STOCK PERSON.
+ * `panameer_virtual_firm_identity.md`: the Project Coordinator is "assigned the moment
+ * the maturity assessment completes… a senior person who translates the read". That
+ * doc also names the first one — "Scott is the first retainer" — so the card uses him
+ * rather than inventing a plausible stranger. A fabricated name on a public page is
+ * the same class of unverified claim as the placeholder testimonials further down, and
+ * this one at least is true.
+ *
+ * ⚠ PRE-LAUNCH COPY SWAP. When coordinators beyond Scott exist this becomes whoever is
+ * actually assigned, on the same list as the testimonial names and the "● Live" chip.
+ *
+ * NO PHOTOGRAPH. Initials, not a face — a real portrait needs a real consent
+ * conversation, and a stock face would undo the entire point of the card.
+ *
+ * ⚠ NAME CONFLICT INSIDE THIS ONE GRAPHIC, FLAGGED AND NOT RESOLVED. The expert strip
+ * above says `Dana Whitfield` / `Panameer expert · Procure-to-Pay`; this card says
+ * `Scott Walls` / `Project Coordinator`. Two people, two role titles, one frame. Both
+ * ship as given — which one the reader actually meets is Scott's call, not mine.
+ *
+ * Inert by construction: the slots are spans. Booking happens at /assess, and a fake
+ * calendar that swallowed a click would be worse than no calendar.
+ */
+const SLOTS = [
+  { day: "Tue", date: "19", time: "10:30 am", taken: false },
+  { day: "Wed", date: "20", time: "2:00 pm", taken: true },
+  { day: "Thu", date: "21", time: "9:00 am", taken: false },
+];
+
 export function AiRoadmapShot() {
   return (
-    <AppShot railActive={2}>
-      <div className="ash-main">
-        <div className="ash-mh">
-          <div>
-            <h3 className="ash-h3">Procure-to-Pay AI Roadmap — Year 1</h3>
-            <p className="ash-sub">
-              Built from 23 optimization opportunities · 5 selected
-            </p>
-          </div>
-          <div className="ash-mact">
-            {/*
+    /*
+      ⚠ THE WRAPPER EXISTS BECAUSE `.ash` IS `overflow:hidden` — the same reason
+      `OptimizationDashboardShot` has one. The booking card hangs off the frame's
+      bottom-left corner, and anything absolutely positioned inside `.ash` is clipped
+      by the rule that keeps the frame's 14px radius honest. The card is a SIBLING of
+      the frame, not a child of it.
+    */
+    <div className="rm-wrap">
+      <AppShot railActive={2}>
+        {/*
+          ⚠ `rm-main` IS A STEP-5-ONLY MODIFIER. `ash-main` is shared by steps 2, 4 and
+          5, so the deep bottom padding that gives the booking card blank canvas cannot
+          go there — it would put dead space under the wizard and the dashboard too.
+        */}
+        <div className="ash-main rm-main">
+          <div className="ash-mh">
+            <div>
+              <h3 className="ash-h3">Procure-to-Pay AI Roadmap — Year 1</h3>
+              <p className="ash-sub">
+                Built from 23 optimization opportunities · 5 selected
+              </p>
+            </div>
+            <div className="ash-mact">
+              {/*
               ⚠ DRAWN, NOT WIRED. No state, no `"use client"`, no handler. Every
               graphic in this spine is inert by construction, and an interactive
               control mid-page would push a client boundary into a Server Component
@@ -171,126 +217,178 @@ export function AiRoadmapShot() {
               non-functional two-segment control announced as a control is worse
               than one not announced at all.
             */}
-            <span className="rm-seg" aria-hidden>
-              <span className="is-on">Timeline</span>
-              <span>Roadmap</span>
-            </span>
-            <span className="ash-pill">
-              <Calendar className="ash-sv" strokeWidth={1.7} aria-hidden />
-              Next 12 months
-            </span>
+              <span className="rm-seg" aria-hidden>
+                <span className="is-on">Timeline</span>
+                <span>Roadmap</span>
+              </span>
+              <span className="ash-pill">
+                <Calendar className="ash-sv" strokeWidth={1.7} aria-hidden />
+                Next 12 months
+              </span>
+            </div>
           </div>
-        </div>
 
-        {/*
+          {/*
           ⚠ THE EXPERT STRIP IS LOAD-BEARING. It is the only place on this page a
           named human appears inside product chrome, and it is what makes "built
           together" true rather than decorative. `.rm-ex-t` is a wrapper so the
           `span{display:block}` rule cannot reach the badge — the mockup's
           `.expert span` did exactly that and flattened it.
         */}
-        <div className="rm-ex">
-          <span className="rm-ex-cam" aria-hidden>
-            <svg
-              viewBox="0 0 20 20"
-              className="ash-sv"
-              aria-hidden
-              focusable="false"
-            >
-              <rect
-                x="2.2"
-                y="5.2"
-                width="11.4"
-                height="9.6"
-                rx="2.2"
-                fill="currentColor"
-              />
-              <path d="M14.4 9.2l3.4-2.4v6.4l-3.4-2.4z" fill="currentColor" />
-            </svg>
-          </span>
-          <span className="rm-ex-t">
-            <b>Dana Whitfield</b>
-            <span>Panameer expert · Procure-to-Pay</span>
-          </span>
-          <span className="rm-live">
-            <i aria-hidden />
-            In session with you
-          </span>
-        </div>
-
-        {/* ---- the timeline ------------------------------------------- */}
-        <div className="rm-tl">
-          <div className="rm-hd">
-            <span className="rm-hd-a">Action</span>
-            <span className="rm-lane" aria-hidden>
-              {QUARTERS.map((q) => (
-                <span className="rm-q" key={q}>
-                  {q}
-                </span>
-              ))}
+          <div className="rm-ex">
+            <span className="rm-ex-cam" aria-hidden>
+              <svg
+                viewBox="0 0 20 20"
+                className="ash-sv"
+                aria-hidden
+                focusable="false"
+              >
+                <rect
+                  x="2.2"
+                  y="5.2"
+                  width="11.4"
+                  height="9.6"
+                  rx="2.2"
+                  fill="currentColor"
+                />
+                <path d="M14.4 9.2l3.4-2.4v6.4l-3.4-2.4z" fill="currentColor" />
+              </svg>
+            </span>
+            <span className="rm-ex-t">
+              <b>Dana Whitfield</b>
+              <span>Panameer expert · Procure-to-Pay</span>
+            </span>
+            <span className="rm-live">
+              <i aria-hidden />
+              In session with you
             </span>
           </div>
 
-          {ROWS.map((r) => (
-            <div className="rm-row" key={r.action}>
-              <div className="rm-a">
-                <span className="rm-ico" aria-hidden>
-                  <r.Icon className="ash-sv" strokeWidth={2} aria-hidden />
-                </span>
-                <span className="rm-at">
-                  <b>
-                    {r.action}
-                    {/* ⚠ the value moves here at <=620, where a 9% bar is ~26px
+          {/* ---- the timeline ------------------------------------------- */}
+          <div className="rm-tl">
+            <div className="rm-hd">
+              <span className="rm-hd-a">Action</span>
+              <span className="rm-lane" aria-hidden>
+                {QUARTERS.map((q) => (
+                  <span className="rm-q" key={q}>
+                    {q}
+                  </span>
+                ))}
+              </span>
+            </div>
+
+            {ROWS.map((r) => (
+              <div className="rm-row" key={r.action}>
+                <div className="rm-a">
+                  <span className="rm-ico" aria-hidden>
+                    <r.Icon className="ash-sv" strokeWidth={2} aria-hidden />
+                  </span>
+                  <span className="rm-at">
+                    <b>
+                      {r.action}
+                      {/* ⚠ the value moves here at <=620, where a 9% bar is ~26px
                         and cannot hold a label. Hidden above that. */}
-                    <span className="rm-av">{r.value}</span>
-                  </b>
-                  <span>
-                    {r.detail} ·{" "}
-                    <span
-                      className={"rm-own" + (r.isPartner ? " is-partner" : "")}
-                    >
-                      {r.owner}
+                      <span className="rm-av">{r.value}</span>
+                    </b>
+                    <span>
+                      {r.detail} ·{" "}
+                      <span
+                        className={
+                          "rm-own" + (r.isPartner ? " is-partner" : "")
+                        }
+                      >
+                        {r.owner}
+                      </span>
                     </span>
                   </span>
-                </span>
-              </div>
-              {/*
+                </div>
+                {/*
                 The lane is the coordinate space: `left`/`width` are percentages of
                 it, so the bars keep their positions and their ratios at every
                 width without a single measured pixel. The three dividers are drawn
                 by the stylesheet at 25/50/75%.
               */}
-              <div className="rm-lane">
-                <span
-                  className={`rm-bar is-${r.tone}`}
-                  style={{ left: `${r.left}%`, width: `${r.width}%` }}
-                >
-                  <b className="rm-bv">{r.value}</b>
-                </span>
+                <div className="rm-lane">
+                  <span
+                    className={`rm-bar is-${r.tone}`}
+                    style={{ left: `${r.left}%`, width: `${r.width}%` }}
+                  >
+                    <b className="rm-bv">{r.value}</b>
+                  </span>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
 
-        <div className="rm-f">
-          <span className="rm-tot">
-            <span>Year-1 opportunity sequenced</span>
-            <b>$2,590,000</b>
-          </span>
-          {/*
+          <div className="rm-f">
+            <span className="rm-tot">
+              <span>Year-1 opportunity sequenced</span>
+              <b>$2,590,000</b>
+            </span>
+            {/*
             ⚠ THIS BUTTON IS THE ARGUMENT — `Load into Project Tracker`, never
             `Download PDF`. See the note at the top of this file before changing it.
           */}
-          <span className="rm-btn">
-            Load into Project Tracker
-            <ArrowRight className="ash-sv" strokeWidth={2} aria-hidden />
-          </span>
+            <span className="rm-btn">
+              Load into Project Tracker
+              <ArrowRight className="ash-sv" strokeWidth={2} aria-hidden />
+            </span>
+          </div>
+          <p className="rm-note">
+            The roadmap lives in Panameer — the tracker picks it up as
+            milestones, so the plan and the work you buy against it stay in one
+            place.
+          </p>
         </div>
-        <p className="rm-note">
-          The roadmap lives in Panameer — the tracker picks it up as milestones,
-          so the plan and the work you buy against it stay in one place.
-        </p>
-      </div>
-    </AppShot>
+      </AppShot>
+
+      {/*
+        ⚠ NOTHING IN THE ROADMAP MAY BE OBSCURED — same rule and same method as E163's
+        email on Step 4. `rm-main`'s deep bottom padding is what gives the overlapping
+        portion blank canvas to land on.
+
+        ⚠ THE FOOTNOTE IS IN THE TEST SET, and that is not a detail. Chat's first
+        attempt cleared every table cell and still clipped "The roadmap lives in
+        Panameer — the tracker picks it up as milestones…", because the first
+        intersection test did not include it. It is included now.
+
+        ⚠ THE EMPTY BAND INSIDE THE FRAME IS THE COST OF OCCLUDING NOTHING, and it is
+        deliberate. Trading a little occlusion for less dead space is Scott's call — do
+        not tune it here.
+      */}
+      <aside className="rm-bk">
+        <div className="rm-bk-h">
+          <span className="rm-bk-av" aria-hidden>
+            SW
+          </span>
+          <span className="rm-bk-n">
+            <b>Scott Walls</b>
+            <span>Project Coordinator</span>
+          </span>
+          <span className="rm-bk-len">45 minutes</span>
+        </div>
+        {/*
+          ⚠ THE LOAD-BEARING STRING. It answers the objection that actually stops people
+          booking a free call — "I'll have to explain everything again." It sits ON the
+          card, in the graphic, because the graphic is what gets looked at. Do not trim.
+        */}
+        <div className="rm-bk-r">
+          <i aria-hidden>✓</i>
+          <p>
+            Has already read your scorecard — every domain, every score, and the
+            ranked opportunities.
+          </p>
+        </div>
+        <div className="rm-bk-days">
+          {SLOTS.map((s) => (
+            <div className={"rm-bk-d" + (s.taken ? " is-off" : "")} key={s.day}>
+              <b>{s.day}</b>
+              <s>{s.date}</s>
+              <em>{s.taken ? "booked" : s.time}</em>
+            </div>
+          ))}
+        </div>
+      </aside>
+    </div>
   );
 }
