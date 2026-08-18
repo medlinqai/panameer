@@ -13,12 +13,6 @@ import { HomeFooter } from "@/components/marketing-home/HomeFooter";
 import { HowItWorks } from "@/components/marketing-home/HowItWorks";
 import { ProcessPicker } from "@/components/marketing-home/ProcessPicker";
 import { SpineSteps } from "@/components/marketing-home/SpineSteps";
-import { StepDetail } from "@/components/marketing-home/StepDetail";
-import { QuestionShot } from "@/components/marketing-home/steps/QuestionShot";
-import { LadderShot } from "@/components/marketing-home/steps/LadderShot";
-import { HandoffShot } from "@/components/marketing-home/steps/HandoffShot";
-import { ReviewShot } from "@/components/marketing-home/steps/ReviewShot";
-import { ConsultShot } from "@/components/marketing-home/steps/ConsultShot";
 import { GetTheTalent } from "@/components/marketing-home/GetTheTalent";
 import { ProjectTracker } from "@/components/marketing-home/ProjectTracker";
 import "@/components/marketing-home/home.css";
@@ -134,12 +128,14 @@ export default function Home() {
           before anything else. Rendered from `lib/spine-steps.ts`; a sixth step
           is a data edit.
 
-          ⚠ NOTE FOR WHOEVER READS THIS NEXT: `DashboardShot` and the five
-          `#step-1..5` StepDetail sections below still carry their own "Step N"
-          headings, so the page now numbers steps twice. The brief's stated page
-          order omits both, but removing sections from Home was not asked for and
-          "nothing comes off Home" is the standing rule — so they stay and the
-          collision is reported rather than resolved by guess. It is Scott's call.
+          ⚠ THE DUPLICATE STEP NUMBERING IS RESOLVED (E164). This note used to say
+          the page numbered its steps twice — the spine here, and five `#step-1..5`
+          StepDetail sections further down — and that it stayed because "nothing
+          comes off Home" was the standing rule and it was Scott's call. He made it:
+          "I think these sections can be deleted. Any concerns? I see these as
+          duplicates." They are gone. `DashboardShot` below still carries its own
+          "Step" language and is deliberately untouched — it is stale in other ways
+          (E159) and Scott is repurposing everything from it down himself.
         */}
         <SpineSteps />
         <DashboardShot />
@@ -148,99 +144,37 @@ export default function Home() {
           ── THE ASSESSMENT SPINE (brief_home_assessment_spine, 2026-08-16) ────
 
           Home stops being a marketplace brochure. It pitches the
-          process-specific assessment, explains it in five cards, expands each
-          card into its own section with a graphic, then hands the visitor the
-          talent and the tracker.
+          process-specific assessment, explains it in five cards, then hands the
+          visitor the talent and the tracker.
 
-          ⚠ ADDITIVE AND REORDER ONLY. Every section that used to sit here is
-          still on the page, in its original relative order, below the tracker.
-          Several of them cost multiple briefs to build — the capability
-          explorer, the two lightbox sections, the flow diagrams — and retiring
-          or relocating any of them is a separate owner decision, not a
-          consequence of this one. Nothing was deleted.
+          ⚠ THE FIVE `StepDetail` SECTIONS THAT USED TO SIT HERE ARE GONE (E164),
+          AND THAT OVERRODE THE RULE THIS COMMENT USED TO STATE. It read: "ADDITIVE
+          AND REORDER ONLY. Every section that used to sit here is still on the page,
+          in its original relative order, below the tracker… retiring or relocating
+          any of them is a separate owner decision, not a consequence of this one.
+          Nothing was deleted." Scott made that separate decision: "I think these
+          sections can be deleted. Any concerns? I see these as duplicates." The
+          spine above tells steps 1-5 once; these told them a second time.
+
+          ⚠ THE RULE STILL HOLDS FOR EVERYTHING ELSE. Every other section that was
+          moved below the tracker is still there, in its original relative order —
+          the capability explorer, the two lightbox sections, the flow diagrams. Each
+          cost multiple briefs. This deletion was named and scoped; it is not a
+          licence to prune.
+
+          ⚠ THE `HowItWorks` CARDS NOW POINT AT THE SPINE — see the note on their
+          `href`. They were the only thing referencing `#step-1..5`.
+
+          ⚠ THE COMPONENT FILES ARE STILL ON DISK, UNIMPORTED, ON PURPOSE. Two of
+          them are not duplicates of anything: `steps/LadderShot.tsx` (the per-domain
+          scorecard across the whole ladder) and `steps/ReviewShot.tsx` ("Here's
+          what's on the table", the 0% savings ring, "Your Highest-Impact Moves") have
+          no spine equivalent, and where that content goes is an open question. The
+          other three are superseded — QuestionShot by `AssessmentWizardShot`,
+          HandoffShot by the Step 4 email (E163), ConsultShot by the Step 5 booking
+          card (E165) — and can be deleted in a later pass. Keeping the files makes
+          this reversible and loses nothing.
         */}
-        <StepDetail
-          n={1}
-          title="Step 1 · Take the Assessment"
-          lead={
-            <>
-              Pick the process you care about and answer for it &mdash; one question a
-              screen, no forms, no preparation. Most people are done in about eight
-              minutes, and you can stop and send the rest to whoever owns it.
-            </>
-          }
-        >
-          <QuestionShot />
-        </StepDetail>
-
-        <StepDetail
-          n={2}
-          shade
-          title="Step 2 · AI Scores Every Domain"
-          lead={
-            <>
-              Every capability domain inside that process is placed on the same
-              maturity ladder, so the gaps are comparable to each other and not
-              just to a benchmark. <strong>Nothing is guessed</strong>{" "}
-              &mdash; a domain
-              you skip is excluded from the score rather than counted as the worst
-              rung.
-            </>
-          }
-        >
-          <LadderShot />
-        </StepDetail>
-
-        <StepDetail
-          n={3}
-          title="Step 3 · We Build Your Dashboard"
-          lead={
-            <>
-              The scores become an analytics dashboard sized in your own dollars:
-              what the opportunity is worth, what it costs, and how much of it the
-              tax code can fund. Then we send you the link.
-            </>
-          }
-        >
-          <HandoffShot />
-        </StepDetail>
-
-        <StepDetail
-          n={4}
-          shade
-          wide
-          title="Step 4 · You Log In and Review"
-          lead={
-            <>
-              <strong>The link signs you in</strong>{" "}
-              &mdash; no password to set, nothing
-              to install. Your scores and your opportunities, ranked by the dollars
-              running through each area rather than by how far behind it is. It is
-              yours to keep and yours to forward.
-            </>
-          }
-        >
-          <ReviewShot />
-        </StepDetail>
-
-        <StepDetail
-          n={5}
-          title="Step 5 · Free Consultation"
-          lead={
-            <>
-              A coordinator who has already read your scorecard walks you through how
-              to deploy each opportunity and what the net effect on the business
-              would be.{" "}
-              <strong>
-                It is not a pitch, it is not a discovery call, and it is not a
-                prerequisite for anything
-              </strong>{" "}
-              &mdash; the dashboard is yours whether you book it or not.
-            </>
-          }
-        >
-          <ConsultShot />
-        </StepDetail>
 
         <GetTheTalent />
         <ProjectTracker />
