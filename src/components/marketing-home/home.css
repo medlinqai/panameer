@@ -2518,6 +2518,21 @@
    than not showing it */
 .pm-home .rm-bk-d.is-off b,.pm-home .rm-bk-d.is-off s{color:#c3c9d4}
 .pm-home .rm-bk-d.is-off em{color:#c3c9d4;font-weight:400}
+
+/* ---- STEP 5's CONSULTATION PHOTO (E168) -------------------------------- */
+/*
+  Bottom-RIGHT, mirroring the booking card at bottom-left so the pair brackets the
+  frame. The 3px white border is what makes it read as a print laid on the product
+  rather than a hole cut in it; `overflow:hidden` keeps the caption inside the radius.
+*/
+.pm-home .rm-photo{position:absolute;right:-38px;bottom:-46px;width:300px;height:172px;z-index:5;overflow:hidden;border-radius:13px;border:3px solid #fff;box-shadow:0 26px 60px -18px rgba(23,30,62,.45)}
+/* ⚠ CSS SIZES THE IMAGE, next/image only supplies it — see the note in the component
+   on why this is not `fill`. `object-fit:cover` on a 880x587 source going into a
+   300x172 box is a 3:2 into a ~1.74:1, so the crop is a few pixels, not a reframing. */
+.pm-home .rm-photo img{display:block;width:100%;height:100%;object-fit:cover}
+/* the caption strip — transparent to dark, so the words sit on the photo without a
+   band across it */
+.pm-home .rm-photo figcaption{position:absolute;left:0;right:0;bottom:0;padding:16px 11px 8px;font-size:10.5px;line-height:1.35;color:#fff;background:linear-gradient(180deg,rgba(13,18,48,0),rgba(13,18,48,.82) 58%)}
 /*
   ⚠ THE SAME 1216px CLAMP AS STEP 4's EMAIL CARD, AND IT HAS TO LIVE HERE, NOT BESIDE
   IT. Both rules are `.pm-home .rm-bk` / `.pm-home .osd-mail` at (0,2,0) and a media
@@ -2532,6 +2547,16 @@
 */
 @media(max-width:1215px){
   .pm-home .rm-bk{left:-24px}
+  /*
+    ⚠ THE PHOTO NEEDS THE SAME CLAMP, AND UNLIKE THE CARD'S THIS ONE WOULD FAIL THE
+    GATE. The brief notes the left-clip clamp "does not apply here" because a
+    right-hand overflow is something `scrollWidth` DOES catch — true, and that is
+    exactly why it has to be clamped rather than merely reported: the frame's right
+    edge is `vw - 32` at and below 1200px, so a 38px offset put the photo 6px past the
+    viewport and `scrollWidth === innerWidth` would have broken from 1211px down. 24px
+    keeps it 8px inside.
+  */
+  .pm-home .rm-photo{right:-24px}
 }
 
 @media(max-width:900px){
@@ -2552,6 +2577,9 @@
   */
   .pm-home .rm-main{padding-bottom:26px}
   .pm-home .rm-bk{position:static;width:auto;margin-top:18px;box-shadow:0 18px 40px -22px rgba(23,30,62,.4)}
+  /* the photo stacks under the card, full width — `right` is inert once static, and
+     the height is fixed so `object-fit:cover` still has a box to fill */
+  .pm-home .rm-photo{position:static;width:auto;height:190px;margin-top:14px;box-shadow:0 18px 40px -22px rgba(23,30,62,.4)}
   .pm-home .rm-hd{grid-template-columns:1fr}
   .pm-home .rm-hd-a{display:none}
   .pm-home .rm-row{grid-template-columns:1fr}
