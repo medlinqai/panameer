@@ -95,7 +95,13 @@ export function AssessmentWizardShot() {
       <div className="ash-main">
         <div className="ash-mh">
           <div>
-            <h3 className="ash-h3">Procure-to-Pay AI Adoption Assessment</h3>
+            {/* ⚠ "AI Maturity Assessment", NOT "AI Adoption Assessment" (E162). The
+                page used two names for one product; this was the outlier. The name is
+                already what DashboardShot, ErpIntegration and the source deck use, so
+                this aligns the odd one out rather than renaming anything. Not to be
+                confused with the capability domain "Change Management & AI Adoption",
+                which is about adoption as a concept and is untouched. */}
+            <h3 className="ash-h3">Procure-to-Pay AI Maturity Assessment</h3>
             <p className="ash-sub">Ten capability domains · about 20 minutes</p>
           </div>
           <div className="ash-mact">

@@ -201,6 +201,28 @@
 .pm-home .hero-cta:hover{background:var(--mag-d)}
 .pm-home .hero-right p{color:#cec7db;font-size:19px;line-height:1.6;max-width:none}
 /*
+  THE BRIDGE INTO THE SPINE (E160) — a pointer, not body copy, so it reads magenta
+  rather than in the lede's #cec7db.
+
+  ⚠ A NEW HEX, AND HERE IS WHY. `--mag` (#D72CD6) is a DARK magenta built for white
+  backgrounds; on the hero card's near-black gradient it measures about 4.3:1, under
+  AA. `--mag-soft` (#fbeafb) goes the other way and reads as off-white, not as an
+  accent. There is no light-magenta token because nothing else on the page puts
+  magenta TEXT on a dark surface — the hero's only other magenta is the CTA's fill,
+  which carries white text. This is the same hue lightened until it clears AA on
+  that gradient; measured, not picked.
+*/
+/*
+  ⚠ `p.hero-bridge`, NOT `.hero-bridge` — THE ELEMENT IN THE SELECTOR IS LOAD-BEARING.
+  `.pm-home .hero-right p` is (0,2,1) and beat a plain `.pm-home .hero-bridge` at
+  (0,2,0), so the colour silently did nothing and the bridge rendered in the lede's
+  #cec7db. Measured, not guessed: computed colour came back rgb(206,199,219). This is
+  the third specificity loss of exactly this shape in this file — see `section.block`
+  vs `.fw`, and `.pm-home .fw` vs `.pm-home section.block`. Check the rule you are
+  overriding before assuming a later declaration wins.
+*/
+.pm-home .hero-right p.hero-bridge{margin-top:14px;color:#efa3ee;font-weight:600}
+/*
   The stats become glass tiles: same three numbers, same labels, restyled for
   dark. The light hero ran them inline separated by 1px rules — a hairline
   divider disappears on this background, so the exploration boxes each one
@@ -2177,6 +2199,73 @@
 .pm-home .osd-own{display:inline-block;font-size:10.5px;border:1px solid var(--line);border-radius:7px;padding:4px 9px;background:#fafbfd;color:var(--text);white-space:nowrap}
 .pm-home .osd-own.is-partner{background:#fff4d9;border-color:#f0dfae;color:#8a6b12}
 
+/* ---- STEP 4's EMAIL NOTIFICATION CARD (E163) --------------------------- */
+/*
+  ⚠ THE POSITIONING CONTEXT IS THE WRAPPER, NOT THE FRAME. `.ash` is
+  `overflow:hidden` (it has to be — the 14px radius clips the chrome bar), so a card
+  positioned inside it would be cut off at the frame edge instead of hanging past it.
+  The wrapper is a sibling context that does not clip.
+*/
+.pm-home .osd-wrap{position:relative}
+/*
+  ⚠ THE BLANK BAND, AND IT IS THE WHOLE MECHANISM. Bottom padding inside the frame,
+  below the findings table, so the card's overlapping portion lands on empty canvas.
+  Scott: "dont want to obscure the numbers or the text for the highest value savings
+  number (TDWCA)." The alternative — sliding the card further off the frame — would
+  stop it reading as sitting ON the product.
+
+  ⚠ 172px, NOT THE BRIEF'S 118px, AND THE BAND IS THE DERIVED QUANTITY. The brief's
+  three placement numbers (left -40, bottom -66, width 284) are the design; the band
+  is whatever makes the overlap land on blank canvas. 118 is only correct for a card
+  184px tall, which is what chat's mockup renders. THE REAL CARD IS 231px — it uses
+  Comfortaa/Montserrat through the project's font vars and the verbatim body copy
+  wraps to more lines at 284px. So the overlap is 231 - 66 = 165px, and a 118px band
+  left 47px of card lying across the findings table's last row ("P2P Supplier
+  Registration Document Validation Agent"). Measured, not eyeballed: the intersection
+  test named that exact `td` at all six absolute widths before this changed.
+  165px of overlap + 7px clearance = 172.
+
+  ⚠ IF THE CARD'S COPY OR TYPE CHANGES, RE-RUN THE INTERSECTION TEST. This number is
+  a function of the card's rendered height, not a spacing preference.
+
+  STEP-4-ONLY. `.ash-main` is shared by the wizard and the roadmap; this must not be.
+*/
+.pm-home .osd-main{padding-bottom:172px}
+/*
+  Offset over the bottom-left corner, mostly outside the frame. The shadow is doing
+  the "on top" work, so it is deliberately heavier than any card inside the frame.
+*/
+.pm-home .osd-mail{position:absolute;left:-40px;bottom:-66px;width:284px;z-index:2;background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 15px 13px;box-shadow:0 26px 60px -18px rgba(23,30,62,.42)}
+.pm-home .osd-mail-from{display:flex;align-items:center;gap:9px;margin-bottom:11px}
+.pm-home .osd-mail-av{width:28px;height:28px;flex:0 0 auto;border-radius:9px;background:var(--mag);color:#fff;display:grid;place-items:center;font-family:var(--font-display),sans-serif;font-size:13px;font-weight:700}
+/* ⚠ scoped to the wrapper's children — a bare `span{display:block}` here would
+   capture the avatar and kill its grid centring, which is the collision the three
+   mockups hit twice. */
+.pm-home .osd-mail-who{min-width:0}
+.pm-home .osd-mail-who b{display:block;font-size:11.5px;font-weight:700;color:var(--ink);line-height:1.3}
+.pm-home .osd-mail-who span{display:block;font-size:10px;color:var(--muted);line-height:1.3}
+.pm-home .osd-mail-subj{font-family:var(--font-display),sans-serif;font-size:12.5px;font-weight:700;color:var(--ink);line-height:1.3;margin-bottom:6px}
+.pm-home .osd-mail-body{font-size:11px;line-height:1.5;color:var(--text);margin-bottom:10px}
+.pm-home .osd-mail-link{display:block;font-size:10.5px;color:var(--mag-d);background:var(--mag-soft);border-radius:7px;padding:6px 9px;margin-bottom:9px;overflow-wrap:anywhere}
+.pm-home .osd-mail-foot{font-size:9.5px;line-height:1.45;color:var(--muted)}
+/*
+  ⚠ THE OFFSET SHRINKS BEFORE IT WOULD LEAVE THE VIEWPORT, and 1215 is derived, not
+  taste. `.wrap` is `max-width:1200px` with 32px of padding, so the frame's left edge
+  sits at `max(0,(vw-1200)/2) + 32`. That only clears the card's 40px offset once
+  (vw-1200)/2 >= 8 — i.e. from 1216px up. Below that the card's left edge went
+  NEGATIVE: measured -8px at 1200, 1100 and 1000, so 8px of it was cut off by the
+  viewport edge.
+
+  It did NOT show up as horizontal scroll, which is exactly why this needs measuring
+  rather than trusting the scroll check: content overflowing to the LEFT is clipped
+  and never extends `scrollWidth`, so `scrollWidth === innerWidth` held at all eight
+  widths while the card was quietly losing its edge. A 24px offset puts the left edge
+  at +8px instead.
+*/
+@media(max-width:1215px){
+  .pm-home .osd-mail{left:-24px}
+}
+
 @media(max-width:900px){
   /*
     The rail flips from a 64px column to a horizontal strip, so its two eyebrows
@@ -2194,6 +2283,14 @@
     nothing at or above 390px moves.
   */
   .pm-home .ash-rail{flex-direction:row;flex-wrap:wrap;justify-content:center;gap:14px}
+  /*
+    ⚠ THE CARD STOPS BEING AN OVERLAY. An absolutely-positioned layer hanging off a
+    ~300px frame is a collision, not a layer, so it becomes a normal block under the
+    frame — and the 118px blank band goes back to the shared 26px with it, since
+    there is no longer anything overlapping it to make room for.
+  */
+  .pm-home .osd-main{padding-bottom:26px}
+  .pm-home .osd-mail{position:static;width:auto;margin-top:18px;box-shadow:0 18px 40px -22px rgba(23,30,62,.4)}
   .pm-home .ash-rlogo{margin-bottom:0}
   .pm-home .ash-rlab{display:none}
 }

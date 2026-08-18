@@ -70,7 +70,10 @@ export const SPINE_STEPS: SpineStep[] = [
      * mark. Scott is doing this deliberately; it belongs on the pre-launch review
      * list with the others. Do not soften it and do not remove it.
      */
-    eyebrow: "Step 3 - Complete Assessment & Submit to AI",
+    /* ⚠ VERBATIM, Scott 2026-08-18 (E161). Was "Complete Assessment & Submit to
+       AI" — the eyebrow now says AIP where it used to say AI, which makes the
+       comment above MORE load-bearing, not less. The `title` below is unchanged. */
+    eyebrow: "Step 3 - Submit the Completed Assessment to our AIP",
     title:
       "Answer all of the questions on the assessment and submit it to the Panameer AIP (AI Platform).",
     /* Built as a component, not an image — see `SpineSteps`' registry. */
