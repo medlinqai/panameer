@@ -8,6 +8,7 @@ import {
   Sparkles,
   type LucideIcon,
 } from "lucide-react";
+import Image from "next/image";
 import { AppShot } from "@/components/marketing-home/AppShot";
 
 /**
@@ -389,6 +390,45 @@ export function AiRoadmapShot() {
           ))}
         </div>
       </aside>
+
+      {/*
+        ⚠ BOTTOM-RIGHT, MIRRORING THE BOOKING CARD AT BOTTOM-LEFT so the two bracket
+        the frame. Scott: "this might be a better image for the online consultation
+        step — as opposed to an email."
+
+        ⚠ IT SITS AFTER THE BOOKING CARD IN DOM ORDER ON PURPOSE. Below 900px both go
+        static and document order becomes the stacking order — the brief asks for the
+        photo beneath the card, so it has to come second here.
+
+        ⚠ SAME TWO STRUCTURAL CONSTRAINTS AS THE CARD: `.ash` is `overflow:hidden`, so
+        this is a SIBLING of the frame inside `rm-wrap`, not a child of it; and the
+        deep bottom padding it overlaps lives on the step-5-only `rm-main`.
+
+        ⚠ `next/image` WITH INTRINSIC DIMENSIONS AND CSS SIZING, NOT `fill`. `fill`
+        needs a positioned ancestor, and this container is deliberately `position:static`
+        below 900px — so `fill` would silently start positioning against `rm-wrap`
+        instead and the photo would jump back over the frame at exactly the widths where
+        it is supposed to have stopped overlapping. Passing 880x587 and letting CSS size
+        the box works identically in both modes. `sizes` is explicit because the box is
+        300px at desktop and full-width on a phone; without it next/image would optimise
+        for 300px and serve a blurry image at 390.
+
+        ⚠ STOCK PHOTOGRAPHY OF A STRANGER IS A CLAIM OF SORTS — it implies a person who
+        is not a Panameer expert, in a frame that also names Dana Whitfield and Scott
+        Walls. Counsel-gate item alongside the named availability.
+
+        `alt=""` because the caption strip below carries the meaning as real text.
+      */}
+      <figure className="rm-photo">
+        <Image
+          src="/work-images/consultation.png"
+          alt=""
+          width={880}
+          height={587}
+          sizes="(max-width: 900px) 100vw, 300px"
+        />
+        <figcaption>Your session — 45 minutes, screen shared, no slides.</figcaption>
+      </figure>
     </div>
   );
 }
