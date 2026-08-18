@@ -107,7 +107,25 @@ export function HomeHero() {
                 benchmark. Scott accepted the trade to recover a line (E166). Do not
                 reinstate it.
               */}
-              <p>Take our AI Maturity Assessment to see where you stand versus your industry and where AI can move the needle. Then build your 12-month roadmap with an expert &mdash; all free.</p>
+              {/*
+                ⚠ `&nbsp;` BETWEEN "all" AND "free." IS A GUARD, NOT THE FIX (E169).
+                Scott: "That last wrap and giving the word 'free' its own line is not
+                correct. It is why I consented to removing 'actually'." The shortening
+                that removed "actually" brought the line count down and handed the
+                orphan straight back.
+
+                On its own the nbsp only converts a one-word orphan into a two-word
+                one — it is here so the defect cannot return at a width nobody
+                measured. The real fix is the shorter second sentence beside it.
+
+                ⚠ THE PRODUCT NAME IS NO LONGER IN THE LEDE. "Take our AI Maturity
+                Assessment to" is gone from the opening. It still appears in the CTA
+                immediately below ("Take Our Free Assessment"), on the Step 2 wizard
+                shot, on the dashboard and in ErpIntegration — so the page still names
+                it, just not here. Putting it back brings the orphan back with it and
+                something else has to give; that is Scott's trade to make, not mine.
+              */}
+              <p>See where you stand versus your industry and where AI moves the needle. Then build your 12-month roadmap with an expert &mdash; all&nbsp;free.</p>
               {/*
                 ⚠ A DISTINCT BEAT, NOT A SENTENCE ON THE LEDE. It is the bridge into
                 the spine below, so it gets its own `<p>` and a lighter magenta to read
