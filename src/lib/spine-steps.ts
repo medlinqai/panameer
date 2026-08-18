@@ -51,7 +51,10 @@ export const SPINE_STEPS: SpineStep[] = [
     eyebrow: "Step 2 - Provide Capability Domain Details",
     title:
       "Provide the processing methods for each capability domain within your business process.",
-    graphic: "",
+    /* Built as a component, not an image — see `SpineSteps`' registry. Its rung
+       ladder is DERIVED from `lib/assessment/questions-p2p.ts`, so the art cannot
+       drift from the ladder the assessment actually asks. */
+    graphic: "assessment-wizard",
   },
   {
     n: 3,
@@ -108,6 +111,8 @@ export const SPINE_STEPS: SpineStep[] = [
      */
     title:
       "Walk through each of the options available, define your organization's requirements and priorities, and build your 1 year AI roadmap together.",
-    graphic: "",
+    /* Built as a component, not an image — see `SpineSteps`' registry. It ships the
+       TIMELINE view; the serpentine mockup is a second view that is not built. */
+    graphic: "ai-roadmap",
   },
 ];

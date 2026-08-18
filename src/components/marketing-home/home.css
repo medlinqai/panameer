@@ -1996,88 +1996,106 @@
 }
 
 /* =========================================================================
-   STEP 4's OPTIMIZATION DASHBOARD SHOT  (brief_step4_dashboard_graphic, E144)
-   Ported from mockups/step4_optimization_dashboard_2026-08-17.html.
+   THE SHARED APP SHELL  (`AppShot`) — steps 2, 4 and 5
+   Extracted at brief_steps_2_and_5_graphics (E145/E146) from the Step 4 shot,
+   which shipped it first at f5d6fed. Ported from the three mockups, which draw
+   identical chrome.
 
-   ⚠ THIS DRAWS A PRODUCT SCREEN, IT IS NOT THE PRODUCT SCREEN. Nothing in here
-   is shared with the real report dashboard and nothing should become shared:
-   these are marketing proportions at a fixed scale, and the real surface is
-   under active change. See the long note in OptimizationDashboardShot.tsx.
+   ⚠ THREE SECTIONS RENDER THESE RULES. Anything added here shows up in the
+   assessment wizard, the optimization dashboard AND the AI roadmap. Rules that
+   belong to one shot go in that shot's block below, not in here — the whole point
+   of the extraction is that the rail cannot drift between the three.
 
-   ⚠ PINK = SMALL ACCENTS ONLY. Magenta appears as the rail logo tile, the pen
-   tile, the avatar, the notification dot, the Export pill, KPI 1's icon tile and
-   meter fill, and the faint row wash in the table. Nothing is a large fill; the
-   one big dark object is the 64px rail, and that is navy (`#141033`), not pink.
+   ⚠ THIS DRAWS A PRODUCT SCREEN, IT IS NOT THE PRODUCT SCREEN. Nothing here is
+   shared with the real app shell (`casing/`) and nothing should become shared:
+   these are marketing proportions at a fixed scale, and the real surface is under
+   active change. See the long note in AppShot.tsx.
 
-   No `text-wrap:balance` anywhere in this component — the standing rule.
+   ⚠ PINK = SMALL ACCENTS ONLY, across all three shots. Magenta appears as the
+   rail logo tile, the pen tile, the avatar and the notification dot here, plus
+   each body's own small accents. Nothing is a large fill; the one big dark object
+   is the 64px rail, and that is navy (`#141033`), not pink.
+
+   ⚠ NO GEOMETRY IS SET INLINE BY `AppShot` — the E152 lesson. An inline style
+   beats every selector, so a dimension set inline could not be released at a
+   breakpoint. Everything sizable is here, where a media query can reach it.
+
+   No `text-wrap:balance` anywhere in these components — the standing rule.
    ------------------------------------------------------------------------- */
 /* the browser frame */
-.pm-home .osd{margin-top:calc(var(--sec-step) * 6);border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff;box-shadow:0 34px 70px -30px rgba(23,30,62,.45)}
-.pm-home .osd-chrome{display:flex;align-items:center;gap:7px;padding:11px 15px;background:#f2f3f7;border-bottom:1px solid var(--line)}
-.pm-home .osd-dot{width:11px;height:11px;border-radius:50%;flex:0 0 auto}
-.pm-home .osd-url{flex:1;height:17px;border-radius:99px;background:#e2e5ee;margin-left:12px}
+.pm-home .ash{margin-top:calc(var(--sec-step) * 6);border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff;box-shadow:0 34px 70px -30px rgba(23,30,62,.45)}
+.pm-home .ash-chrome{display:flex;align-items:center;gap:7px;padding:11px 15px;background:#f2f3f7;border-bottom:1px solid var(--line)}
+.pm-home .ash-dot{width:11px;height:11px;border-radius:50%;flex:0 0 auto}
+.pm-home .ash-url{flex:1;height:17px;border-radius:99px;background:#e2e5ee;margin-left:12px}
 /*
   ⚠ `min-height` NOT `height`. The shot must be able to grow: at 1080px the
   findings actions wrap to two lines and at 620px the header row stacks, and a
   fixed height would clip the table rather than let the frame follow.
 */
-.pm-home .osd-app{display:grid;grid-template-columns:64px 1fr;min-height:520px}
+.pm-home .ash-app{display:grid;grid-template-columns:64px 1fr;min-height:520px}
 /* `min-width:0` so the table can shrink inside the grid instead of forcing the
    column wider than its track — the usual grid-blowout that produces horizontal
    overflow on a page like this. */
-.pm-home .osd-side{min-width:0}
+.pm-home .ash-side{min-width:0}
 
 /* the rail */
-.pm-home .osd-rail{background:#141033;padding:14px 0;display:flex;flex-direction:column;align-items:center;gap:8px}
-.pm-home .osd-rlogo{width:30px;height:30px;flex:0 0 auto;border-radius:9px;background:var(--mag);display:grid;place-items:center;color:#fff;margin-bottom:10px}
-.pm-home .osd-rlogo .osd-sv{width:17px;height:17px}
-.pm-home .osd-rlab{font-size:7.5px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.34);margin:8px 0 2px}
-.pm-home .osd-ri{width:26px;height:26px;flex:0 0 auto;border-radius:7px;display:grid;place-items:center;color:rgba(255,255,255,.5)}
-.pm-home .osd-ri.is-on{background:rgba(255,255,255,.12);color:#fff}
+.pm-home .ash-rail{background:#141033;padding:14px 0;display:flex;flex-direction:column;align-items:center;gap:8px}
+.pm-home .ash-rlogo{width:30px;height:30px;flex:0 0 auto;border-radius:9px;background:var(--mag);display:grid;place-items:center;color:#fff;margin-bottom:10px}
+.pm-home .ash-rlogo .ash-sv{width:17px;height:17px}
+.pm-home .ash-rlab{font-size:7.5px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.34);margin:8px 0 2px}
+.pm-home .ash-ri{width:26px;height:26px;flex:0 0 auto;border-radius:7px;display:grid;place-items:center;color:rgba(255,255,255,.5)}
+.pm-home .ash-ri.is-on{background:rgba(255,255,255,.12);color:#fff}
 
 /* the top bar */
-.pm-home .osd-top{display:flex;align-items:center;gap:14px;padding:12px 18px;border-bottom:1px solid var(--line);background:#fff}
+.pm-home .ash-top{display:flex;align-items:center;gap:14px;padding:12px 18px;border-bottom:1px solid var(--line);background:#fff}
 /*
   ⚠ NO `min-width:0` HERE — it is load-bearing by its ABSENCE, and this cost a
   visible defect once. The field's contents are `nowrap`, so the default
   `min-width:auto` gives it a 140px min-content floor, and that floor is what
-  pushes `.osd-tops` onto a second line at phone widths (see the ≤620 wrap).
+  pushes `.ash-tops` onto a second line at phone widths (see the ≤620 wrap).
   Adding `min-width:0` as blanket grid-blowout defence let it shrink to 26px
   instead: the magnifier survived and "Search here…" plus the ⌘ K chip overflowed
   out of the pill and straight through the bell and avatar. Measured at 390px:
   `scrollWidth 140` inside `clientWidth 26`. The blowout guard belongs on
-  `.osd-side`, which has it; this element needs the floor.
+  `.ash-side`, which has it; this element needs the floor.
 */
-.pm-home .osd-search{flex:1;max-width:280px;height:34px;border-radius:9px;background:#f4f5f9;display:flex;align-items:center;padding:0 12px;gap:8px;color:#9aa2b1;font-size:12.5px;white-space:nowrap}
-.pm-home .osd-kbd{margin-left:auto;font-size:10px;background:#e7e9f0;border-radius:4px;padding:2px 5px;color:#8b93a5}
-.pm-home .osd-tops{margin-left:auto;display:flex;align-items:center;gap:12px}
-.pm-home .osd-ico{position:relative;width:26px;height:26px;flex:0 0 auto;border-radius:7px;display:grid;place-items:center;color:#8b93a5}
-.pm-home .osd-ico.is-mag{background:var(--mag);color:#fff}
-.pm-home .osd-dotr{position:absolute;top:3px;right:4px;width:6px;height:6px;border-radius:50%;background:var(--mag)}
-.pm-home .osd-who{display:flex;align-items:center;gap:9px}
-.pm-home .osd-av{width:31px;height:31px;flex:0 0 auto;border-radius:9px;background:var(--mag);color:#fff;display:grid;place-items:center;font-family:var(--font-display),sans-serif;font-size:11.5px;font-weight:700}
-.pm-home .osd-whot{display:block;line-height:1.35}
-.pm-home .osd-whot b{display:block;font-size:12px;color:var(--ink);white-space:nowrap}
-.pm-home .osd-whot span{display:block;font-size:10.5px;color:var(--muted);white-space:nowrap}
+.pm-home .ash-search{flex:1;max-width:280px;height:34px;border-radius:9px;background:#f4f5f9;display:flex;align-items:center;padding:0 12px;gap:8px;color:#9aa2b1;font-size:12.5px;white-space:nowrap}
+.pm-home .ash-kbd{margin-left:auto;font-size:10px;background:#e7e9f0;border-radius:4px;padding:2px 5px;color:#8b93a5}
+.pm-home .ash-tops{margin-left:auto;display:flex;align-items:center;gap:12px}
+.pm-home .ash-ico{position:relative;width:26px;height:26px;flex:0 0 auto;border-radius:7px;display:grid;place-items:center;color:#8b93a5}
+.pm-home .ash-ico.is-mag{background:var(--mag);color:#fff}
+.pm-home .ash-dotr{position:absolute;top:3px;right:4px;width:6px;height:6px;border-radius:50%;background:var(--mag)}
+.pm-home .ash-who{display:flex;align-items:center;gap:9px}
+.pm-home .ash-av{width:31px;height:31px;flex:0 0 auto;border-radius:9px;background:var(--mag);color:#fff;display:grid;place-items:center;font-family:var(--font-display),sans-serif;font-size:11.5px;font-weight:700}
+.pm-home .ash-whot{display:block;line-height:1.35}
+.pm-home .ash-whot b{display:block;font-size:12px;color:var(--ink);white-space:nowrap}
+.pm-home .ash-whot span{display:block;font-size:10.5px;color:var(--muted);white-space:nowrap}
 
-/* the dashboard body */
-.pm-home .osd-main{padding:20px 22px 26px;background:#fff}
-.pm-home .osd-mh{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:20px}
-.pm-home .osd-h3{font-size:21px;font-weight:700;color:var(--ink);letter-spacing:-.3px;line-height:1.2;margin-bottom:4px}
-.pm-home .osd-date{font-size:12px;color:var(--muted)}
-.pm-home .osd-mact{display:flex;gap:9px;align-items:center;flex:0 0 auto}
-.pm-home .osd-pill{display:flex;align-items:center;gap:7px;font-size:11.5px;border:1px solid var(--line);border-radius:9px;padding:8px 12px;color:var(--text);white-space:nowrap}
-.pm-home .osd-pill.is-mag{background:var(--mag);border-color:var(--mag);color:#fff;font-weight:600}
-.pm-home .osd-pill .osd-sv{width:13px;height:13px}
-.pm-home .osd-cv{width:11px;height:11px;color:var(--muted)}
-.pm-home .osd-pill.is-mag .osd-cv{color:#fff}
+/* the header row — shot title, sub-line and action pills. Shared: all three
+   mockups draw this identically, only the strings differ. */
+.pm-home .ash-main{padding:20px 22px 26px;background:#fff}
+.pm-home .ash-mh{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:20px}
+.pm-home .ash-h3{font-size:21px;font-weight:700;color:var(--ink);letter-spacing:-.3px;line-height:1.2;margin-bottom:4px}
+.pm-home .ash-sub{font-size:12px;color:var(--muted)}
+.pm-home .ash-mact{display:flex;gap:9px;align-items:center;flex:0 0 auto}
+.pm-home .ash-pill{display:flex;align-items:center;gap:7px;font-size:11.5px;border:1px solid var(--line);border-radius:9px;padding:8px 12px;color:var(--text);white-space:nowrap}
+.pm-home .ash-pill.is-mag{background:var(--mag);border-color:var(--mag);color:#fff;font-weight:600}
+.pm-home .ash-pill .ash-sv{width:13px;height:13px}
+.pm-home .ash-cv{width:11px;height:11px;color:var(--muted)}
+.pm-home .ash-pill.is-mag .ash-cv{color:#fff}
+
+/* =========================================================================
+   STEP 4's DASHBOARD BODY  (brief_step4_dashboard_graphic, E144)
+   Everything below is the Optimization Dashboard only — it renders inside the
+   shared shell above. Ported from mockups/step4_optimization_dashboard_2026-08-17.html.
+   ------------------------------------------------------------------------- */
 
 /* the three KPI cards */
 .pm-home .osd-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:18px}
 .pm-home .osd-kpi{position:relative;border:1px solid var(--line);border-radius:13px;padding:15px 16px}
 .pm-home .osd-kt{display:flex;align-items:center;gap:11px;margin-bottom:12px}
 .pm-home .osd-kico{width:32px;height:32px;flex:0 0 auto;border-radius:9px;display:grid;place-items:center;color:#fff}
-.pm-home .osd-kico .osd-sv{width:16px;height:16px}
+.pm-home .osd-kico .ash-sv{width:16px;height:16px}
 .pm-home .osd-kico.is-a{background:var(--mag)}
 .pm-home .osd-kico.is-b{background:#7b4fd8}
 .pm-home .osd-kico.is-c{background:var(--blue)}
@@ -2142,7 +2160,7 @@
     go — "General" and "Support" label a vertical grouping that no longer exists
     once the tiles sit in one row.
   */
-  .pm-home .osd-app{grid-template-columns:1fr}
+  .pm-home .ash-app{grid-template-columns:1fr}
   /*
     ⚠ `flex-wrap` IS WHAT KEEPS THIS OFF THE PHONE FLOOR, and it was measured.
     Eight tiles in a row with a 14px gap has a min-content width of exactly
@@ -2152,23 +2170,25 @@
     both measured 310. Wrapping costs nothing at any width where the row fits, so
     nothing at or above 390px moves.
   */
-  .pm-home .osd-rail{flex-direction:row;flex-wrap:wrap;justify-content:center;gap:14px}
-  .pm-home .osd-rlogo{margin-bottom:0}
-  .pm-home .osd-rlab{display:none}
+  .pm-home .ash-rail{flex-direction:row;flex-wrap:wrap;justify-content:center;gap:14px}
+  .pm-home .ash-rlogo{margin-bottom:0}
+  .pm-home .ash-rlab{display:none}
+}
+@media(max-width:900px){
   .pm-home .osd-kpis{grid-template-columns:1fr}
 }
 @media(max-width:620px){
   /*
     The top bar wraps: the search keeps its 140px floor on line one and the bell /
     pen / user block drop to line two, right-aligned by the `margin-left:auto`
-    they already carry. `.osd-tops` wraps too, so the user block can drop below
+    they already carry. `.ash-tops` wraps too, so the user block can drop below
     the two icon tiles rather than set a ~226px floor of its own — that is the
     next thing to blow out below 340px.
   */
-  .pm-home .osd-top{flex-wrap:wrap}
-  .pm-home .osd-tops{flex-wrap:wrap;justify-content:flex-end}
-  .pm-home .osd-search{max-width:none}
-  .pm-home .osd-mh{flex-direction:column}
+  .pm-home .ash-top{flex-wrap:wrap}
+  .pm-home .ash-tops{flex-wrap:wrap;justify-content:flex-end}
+  .pm-home .ash-search{max-width:none}
+  .pm-home .ash-mh{flex-direction:column}
   /*
     The pill row must be able to wrap too. Both pills are `white-space:nowrap` —
     a date range broken across two lines is worse than a wrapped row — so
@@ -2177,8 +2197,10 @@
     what actually produced the overflow, and this would have become the next one
     the moment that was fixed.
   */
-  .pm-home .osd-mact{flex-wrap:wrap}
-  .pm-home .osd-main{padding:16px 14px 20px}
+  .pm-home .ash-mact{flex-wrap:wrap}
+  .pm-home .ash-main{padding:16px 14px 20px}
+}
+@media(max-width:620px){
   /*
     ⚠ OWNER AND TIMEFRAME GO, ACTION AND EST. SAVINGS STAY. Four columns inside a
     ~300px measure gives the action ~90px, which wraps every row to four lines and
@@ -2189,4 +2211,186 @@
   .pm-home .osd-tbl th:nth-child(3),.pm-home .osd-tbl td:nth-child(3){display:none}
   .pm-home .osd-tbl th,.pm-home .osd-tbl td{padding-left:12px;padding-right:12px}
   .pm-home .osd-tbl td:first-child{font-size:12px}
+}
+
+/* =========================================================================
+   STEP 2's ASSESSMENT WIZARD BODY  (brief_steps_2_and_5_graphics, E145)
+   Ported from mockups/step2_assessment_wizard_2026-08-17.html. Renders inside the
+   shared shell above.
+   ------------------------------------------------------------------------- */
+.pm-home .wz{display:grid;grid-template-columns:238px 1fr}
+/* `min-width:0` on both tracks — the ladder's example lines are long, and without
+   it a long word sets a min-content floor that widens the column past its track. */
+.pm-home .wz-l{min-width:0;border-right:1px solid var(--line);padding:20px 16px 26px}
+.pm-home .wz-r{min-width:0;padding:22px 24px 26px}
+.pm-home .wz-k{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.pm-home .wz-p{font-size:11.5px;color:var(--text);margin-bottom:14px}
+.pm-home .wz-bar{height:5px;border-radius:99px;background:#eef0f6;margin-bottom:16px;overflow:hidden}
+.pm-home .wz-bar b{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#a13fd0,var(--mag))}
+
+/* the ten domains */
+.pm-home .wz-dl{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.pm-home .wz-dl li{display:flex;align-items:center;gap:8px;font-size:11.5px;line-height:1.25;color:var(--muted);padding:6px 8px;border-radius:7px}
+.pm-home .wz-dl li.is-done{color:var(--text)}
+/* the active row: soft fill, magenta text, and a ringed rather than filled tick */
+.pm-home .wz-dl li.is-on{background:var(--mag-soft);color:var(--mag-d);font-weight:700}
+.pm-home .wz-tick{width:15px;height:15px;flex:0 0 auto;border-radius:50%;border:1.5px solid #d7dbe6;display:grid;place-items:center;color:#fff}
+.pm-home .wz-dl li.is-done .wz-tick{background:var(--mag);border-color:var(--mag)}
+.pm-home .wz-dl li.is-on .wz-tick{border-color:var(--mag);border-width:2px}
+.pm-home .wz-tick .ash-sv{width:9px;height:9px}
+
+/* the question */
+.pm-home .wz-qk{font-family:var(--font-display),sans-serif;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--mag);margin-bottom:7px}
+.pm-home .wz-q{font-family:var(--font-display),sans-serif;font-size:19px;font-weight:700;color:var(--ink);line-height:1.25;margin-bottom:4px}
+.pm-home .wz-qs{font-size:12px;color:var(--muted);margin-bottom:18px}
+
+/* the four rung cards */
+.pm-home .wz-opts{display:grid;gap:10px}
+.pm-home .wz-opt{display:flex;gap:12px;align-items:flex-start;border:1.5px solid var(--line);border-radius:12px;padding:13px 15px}
+/* the selected answer — magenta border plus a wash that fades out by 60% */
+.pm-home .wz-opt.is-sel{border-color:var(--mag);background:linear-gradient(90deg,rgba(215,44,214,.06),rgba(215,44,214,0) 60%)}
+.pm-home .wz-radio{width:17px;height:17px;flex:0 0 auto;margin-top:1px;border-radius:50%;border:2px solid #d7dbe6;display:grid;place-items:center}
+.pm-home .wz-opt.is-sel .wz-radio{border-color:var(--mag)}
+.pm-home .wz-opt.is-sel .wz-radio::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--mag)}
+.pm-home .wz-ot{min-width:0}
+.pm-home .wz-oh{display:block;font-family:var(--font-display),sans-serif;font-size:14px;font-weight:700;color:var(--ink);line-height:1.25;margin-bottom:3px}
+.pm-home .wz-op{display:block;font-size:11.5px;line-height:1.5;color:var(--muted)}
+.pm-home .wz-rung{margin-left:auto;flex:0 0 auto;font-family:var(--font-display),sans-serif;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:3px 9px;white-space:nowrap}
+.pm-home .wz-opt.is-sel .wz-rung{background:var(--mag);border-color:var(--mag);color:#fff}
+
+/* the footer */
+.pm-home .wz-f{display:flex;align-items:center;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}
+.pm-home .wz-btn{display:flex;align-items:center;gap:8px;font-family:var(--font-display),sans-serif;font-size:12.5px;font-weight:700;border:1px solid var(--line);border-radius:10px;padding:10px 18px;color:var(--text);white-space:nowrap}
+.pm-home .wz-btn.is-mag{background:var(--mag);border-color:var(--mag);color:#fff}
+.pm-home .wz-btn .ash-sv{width:14px;height:14px}
+.pm-home .wz-sp{margin-left:auto;font-size:11.5px;color:var(--muted)}
+
+/* =========================================================================
+   STEP 5's AI ROADMAP BODY  (brief_steps_2_and_5_graphics, E146)
+
+   ⚠ THERE IS NO MOCKUP FOR THIS VIEW. mockups/step5_ai_roadmap_2026-08-17.html
+   draws the SERPENTINE, which is the second view and is not built — see the long
+   note in AiRoadmapShot.tsx. These rules come from the brief's table. The expert
+   strip, the button and the note are the only values ported from that mockup,
+   because the Timeline reuses them unchanged.
+   ------------------------------------------------------------------------- */
+/* the expert strip */
+.pm-home .rm-ex{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:12px;padding:11px 14px;margin-bottom:20px;background:linear-gradient(90deg,var(--mag-soft),#fff 62%)}
+.pm-home .rm-ex-cam{width:34px;height:34px;flex:0 0 auto;border-radius:9px;background:var(--mag);color:#fff;display:grid;place-items:center}
+.pm-home .rm-ex-cam .ash-sv{width:17px;height:17px}
+/* ⚠ scoped to the WRAPPER's children. The mockup's `.expert span{display:block}`
+   captured the "In session with you" badge and flattened it. */
+.pm-home .rm-ex-t{min-width:0}
+.pm-home .rm-ex-t b{display:block;font-family:var(--font-display),sans-serif;font-size:13px;font-weight:700;color:var(--ink)}
+.pm-home .rm-ex-t span{display:block;font-size:11.5px;color:var(--muted)}
+.pm-home .rm-live{margin-left:auto;flex:0 0 auto;display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--mag-d);white-space:nowrap}
+.pm-home .rm-live i{width:7px;height:7px;border-radius:50%;background:var(--mag);display:block;flex:0 0 auto}
+
+/* the inert view switcher */
+.pm-home .rm-seg{display:flex;flex:0 0 auto;border:1px solid var(--line);border-radius:9px;overflow:hidden;font-size:11.5px}
+.pm-home .rm-seg span{padding:8px 12px;color:var(--muted);white-space:nowrap}
+.pm-home .rm-seg span.is-on{background:var(--ink);color:#fff;font-weight:600}
+
+/* the timeline. 296px for the action, the rest is one four-quarter lane. */
+.pm-home .rm-tl{border:1px solid var(--line);border-radius:13px;overflow:hidden}
+.pm-home .rm-hd,.pm-home .rm-row{display:grid;grid-template-columns:296px 1fr;align-items:center}
+.pm-home .rm-hd{border-bottom:1px solid var(--line);background:#fafbfd}
+.pm-home .rm-hd-a{padding:9px 16px;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.pm-home .rm-row{border-bottom:1px solid #f2f3f8}
+.pm-home .rm-row:last-child{border-bottom:0}
+.pm-home .rm-a{display:flex;align-items:center;gap:11px;min-width:0;padding:12px 16px}
+.pm-home .rm-ico{width:32px;height:32px;flex:0 0 auto;border-radius:9px;background:var(--mag);color:#fff;display:grid;place-items:center}
+.pm-home .rm-ico .ash-sv{width:16px;height:16px}
+.pm-home .rm-at{min-width:0}
+.pm-home .rm-at b{display:flex;align-items:baseline;gap:8px;font-size:12.5px;font-weight:600;color:var(--ink);line-height:1.3}
+.pm-home .rm-at > span{display:block;font-size:10.5px;color:var(--muted);margin-top:2px}
+.pm-home .rm-own{display:inline-block;font-size:9.5px;border:1px solid var(--line);border-radius:6px;padding:2px 7px;background:#fafbfd;color:var(--text);white-space:nowrap}
+/* ⚠ amber for the partner, grey for us — the same two-tone rule as the Step 4
+   findings table, and for the same reason. Do not collapse them. */
+.pm-home .rm-own.is-partner{background:#fff4d9;border-color:#f0dfae;color:#8a6b12}
+/* the value beside the action name is for <=620 only, where a 9% bar is ~26px */
+.pm-home .rm-av{display:none}
+
+/*
+  THE LANE IS THE COORDINATE SPACE. Bars are positioned in percentages of it, so
+  they keep both their positions and their ratios at every width with no measured
+  pixel anywhere — the same reasoning as the Step 3 connectors, one level simpler
+  because a percentage is enough here.
+*/
+.pm-home .rm-lane{position:relative;height:100%;min-height:42px;display:flex;align-items:center}
+/* the three quarter dividers at 25/50/75%, drawn rather than four bordered cells
+   so the lane stays one positioning context for the bars */
+.pm-home .rm-lane::before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(to right,transparent calc(25% - .5px),var(--line) calc(25% - .5px),var(--line) calc(25% + .5px),transparent calc(25% + .5px),transparent calc(50% - .5px),var(--line) calc(50% - .5px),var(--line) calc(50% + .5px),transparent calc(50% + .5px),transparent calc(75% - .5px),var(--line) calc(75% - .5px),var(--line) calc(75% + .5px),transparent calc(75% + .5px))}
+.pm-home .rm-hd .rm-lane{min-height:0;padding:9px 0}
+.pm-home .rm-q{flex:1;text-align:center;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.pm-home .rm-bar{position:absolute;top:50%;transform:translateY(-50%);height:22px;border-radius:99px;display:flex;align-items:center;justify-content:center;padding:0 8px;z-index:1}
+.pm-home .rm-bar.is-mag{background:linear-gradient(90deg,#a13fd0,var(--mag))}
+.pm-home .rm-bar.is-violet{background:#7b4fd8}
+.pm-home .rm-bar.is-blue{background:var(--blue)}
+.pm-home .rm-bar.is-grey{background:#9aa2b1}
+.pm-home .rm-bv{font-family:var(--font-display),sans-serif;font-size:9.5px;font-weight:700;color:#fff;white-space:nowrap}
+
+/* the footer */
+.pm-home .rm-f{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:18px}
+.pm-home .rm-tot{display:flex;flex-direction:column}
+.pm-home .rm-tot span{font-size:11px;color:var(--muted)}
+.pm-home .rm-tot b{font-family:var(--font-display),sans-serif;font-size:21px;font-weight:700;color:var(--ink)}
+.pm-home .rm-btn{margin-left:auto;display:inline-flex;align-items:center;gap:8px;font-family:var(--font-display),sans-serif;font-size:12.5px;font-weight:700;border:1px solid var(--mag);background:var(--mag);color:#fff;border-radius:10px;padding:11px 16px;white-space:nowrap}
+.pm-home .rm-btn .ash-sv{width:14px;height:14px}
+.pm-home .rm-note{font-size:11px;color:var(--muted);margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
+
+@media(max-width:900px){
+  /* step 2's two columns stack; the rail's right border becomes a bottom rule */
+  .pm-home .wz{grid-template-columns:1fr}
+  .pm-home .wz-l{border-right:0;border-bottom:1px solid var(--line)}
+  /*
+    ⚠ STEP 5 DROPS THE `Action` HEADER AND GIVES EACH LANE A TOP RULE. Stacked, a
+    296px action column and a lane cannot both fit, so the row becomes two rows —
+    at which point a header labelling a column that is no longer beside its data is
+    worse than no header, and the rule is what re-associates a lane with the action
+    above it.
+  */
+  .pm-home .rm-hd{grid-template-columns:1fr}
+  .pm-home .rm-hd-a{display:none}
+  .pm-home .rm-row{grid-template-columns:1fr}
+  .pm-home .rm-a{padding-bottom:6px}
+  .pm-home .rm-lane{border-top:1px solid var(--line);margin:0 16px 12px;min-height:34px}
+  .pm-home .rm-hd .rm-lane{border-top:0;margin-bottom:0}
+}
+@media(max-width:620px){
+  /*
+    ⚠ THE EXPERT STRIP MUST WRAP, and this was measured, not assumed. `.rm-live`
+    is `nowrap` and `flex:0 0 auto`, so it holds a hard 121px while `.rm-ex-t` is
+    the only shrinkable item in the row — it absorbed every pixel of shortfall and
+    collapsed to 57px at 360px, wrapping "Dana Whitfield" onto three lines and the
+    role onto five, and taking the strip to 132px tall. The row had 264px of room
+    for 236px of content; it was distribution, not space. Wrapping drops the badge
+    to its own line and gives the name back its width. Costs nothing at any width
+    where the row already fits on one line.
+  */
+  .pm-home .rm-ex{flex-wrap:wrap}
+  .pm-home .rm-live{margin-left:0}
+
+  .pm-home .ash-main .wz-l{padding:16px 12px 20px}
+  .pm-home .ash-main .wz-r{padding:18px 14px 20px}
+  /* the rung chip drops under the title rather than squeezing the option text */
+  .pm-home .wz-opt{flex-wrap:wrap}
+  .pm-home .wz-rung{margin-left:0}
+  /* the footer wraps and the "saves as you go" note takes its own full-width row */
+  .pm-home .wz-f{flex-wrap:wrap}
+  .pm-home .wz-sp{margin-left:0;width:100%;order:3}
+  .pm-home .wz-btn{padding:9px 13px;font-size:12px}
+
+  /*
+    ⚠ A 9% BAR IS ~26px HERE AND CANNOT HOLD ITS OWN LABEL. The bar becomes a pure
+    duration mark — no padding, a 14px floor so a 2-week item is still visible —
+    and the dollar value moves up beside the action name, which is the one place
+    with room for it. A bar whose label overflows it is the single defect this
+    layout reliably produces at narrow widths.
+  */
+  .pm-home .rm-bar{padding:0;min-width:14px;height:16px}
+  .pm-home .rm-bv{display:none}
+  .pm-home .rm-av{display:inline;margin-left:auto;font-family:var(--font-display),sans-serif;font-size:11.5px;font-weight:700;color:var(--ink)}
+  .pm-home .rm-f{gap:12px}
+  .pm-home .rm-btn{margin-left:0;width:100%;justify-content:center}
 }

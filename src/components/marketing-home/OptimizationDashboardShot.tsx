@@ -1,20 +1,12 @@
 import {
-  AlignLeft,
   BarChart3,
-  Bell,
   Calendar,
   ChevronDown,
   DollarSign,
   Download,
-  FileText,
-  LayoutGrid,
-  LifeBuoy,
-  PenLine,
-  Search,
-  Settings,
   Sparkles,
-  type LucideIcon,
 } from "lucide-react";
+import { AppShot } from "@/components/marketing-home/AppShot";
 
 /**
  * STEP 4's GRAPHIC — the Optimization Dashboard, drawn as a browser shot.
@@ -54,28 +46,14 @@ import {
  * list with the tax-savings copy, the Oracle mark, the AIP and the rung-4 agent
  * names. Not a blocker for building it — a blocker for LAUNCHING it.
  *
- * ── ⚠ ICONS ARE COMPONENTS, NOT CHARACTERS ───────────────────────────────────
+ * ── THE SHELL LIVES IN `AppShot`, NOT HERE ───────────────────────────────────
  *
- * The first pass at this shot used `▦ ◔ ▤ ◈ ⚙` and half of them failed to render
- * on the box — geometric-shape codepoints are missing from most webfonts and fall
- * back per-glyph, so an icon row renders as a row of different-sized boxes.
- *
- * The mockup answered that with an SVG `<defs>` block plus `<use href="#id">`.
- * This uses `lucide-react` instead, which is THE PROJECT'S EXISTING APPROACH
- * (`casing/RailIcon.tsx` maps names to the same package) and is the better fit
- * here for two reasons: `<use href="#i-grid">` puts a dozen global ids into a
- * page that already renders other SVGs, and lucide is imported by name so only
- * the fourteen used are bundled. It carries no `"use client"`, so this stays a
- * Server Component and `/` keeps prerendering with zero JS from these icons.
- *
- * The mockup's filled symbols become lucide's stroked ones — the one deliberate
- * visual deviation, noted so it is not read as drift.
+ * The browser frame, the 64px rail and the top bar were extracted at E145/E146,
+ * when steps 2 and 5 needed the same three. This file owns the dashboard BODY and
+ * nothing else; `railActive={0}` is all it says about the rail. The icon rationale
+ * (lucide rather than the mockups' `<defs>` + `<use>`, and why never a text glyph)
+ * moved there with it.
  */
-
-/* ── the rail ─────────────────────────────────────────────────────────────── */
-/** First is active — a dashboard, which is the screen being shown. */
-const RAIL_GENERAL: LucideIcon[] = [LayoutGrid, BarChart3, AlignLeft, Sparkles, FileText];
-const RAIL_SUPPORT: LucideIcon[] = [LifeBuoy, Settings];
 
 /* ── KPI 2's sparkline ────────────────────────────────────────────────────── */
 /**
@@ -147,9 +125,27 @@ const FINDINGS: {
     weeks: "4 weeks",
     savings: "$980,000",
   },
-  { action: "P2P Rogue-Spend Alert", owner: "Panameer", isPartner: false, weeks: "2 weeks", savings: "$610,000" },
-  { action: "P2P PO Price Alerts", owner: "Panameer", isPartner: false, weeks: "2 weeks", savings: "$520,000" },
-  { action: "Negotiation Alert", owner: "Panameer", isPartner: false, weeks: "4 weeks", savings: "$265,000" },
+  {
+    action: "P2P Rogue-Spend Alert",
+    owner: "Panameer",
+    isPartner: false,
+    weeks: "2 weeks",
+    savings: "$610,000",
+  },
+  {
+    action: "P2P PO Price Alerts",
+    owner: "Panameer",
+    isPartner: false,
+    weeks: "2 weeks",
+    savings: "$520,000",
+  },
+  {
+    action: "Negotiation Alert",
+    owner: "Panameer",
+    isPartner: false,
+    weeks: "4 weeks",
+    savings: "$265,000",
+  },
   {
     action: "P2P Supplier Registration Document Validation Agent",
     owner: "Panameer",
@@ -159,226 +155,170 @@ const FINDINGS: {
   },
 ];
 
-function RailTile({ Icon, on = false }: { Icon: LucideIcon; on?: boolean }) {
-  return (
-    <span className={"osd-ri" + (on ? " is-on" : "")}>
-      <Icon className="osd-sv" strokeWidth={1.8} aria-hidden />
-    </span>
-  );
-}
-
 export function OptimizationDashboardShot() {
   return (
-    <div className="osd">
-      {/* browser chrome — decoration, so it is hidden from AT entirely */}
-      <div className="osd-chrome" aria-hidden>
-        <span className="osd-dot" style={{ background: "#ff5f57" }} />
-        <span className="osd-dot" style={{ background: "#febc2e" }} />
-        <span className="osd-dot" style={{ background: "#28c840" }} />
-        <span className="osd-url" />
-      </div>
-
-      <div className="osd-app">
-        {/*
-          The rail is chrome too — seven unlabelled tiles read to a screen reader
-          as seven meaningless stops. The dashboard's CONTENT below stays
-          readable, because the figures are the pitch.
-        */}
-        <div className="osd-rail" aria-hidden>
-          <span className="osd-rlogo">
-            <LayoutGrid className="osd-sv" strokeWidth={2} aria-hidden />
-          </span>
-          <span className="osd-rlab">General</span>
-          {RAIL_GENERAL.map((Icon, i) => (
-            <RailTile Icon={Icon} on={i === 0} key={i} />
-          ))}
-          <span className="osd-rlab">Support</span>
-          {RAIL_SUPPORT.map((Icon, i) => (
-            <RailTile Icon={Icon} key={i} />
-          ))}
+    /*
+      ⚠ THE SHELL IS `AppShot`, NOT A COPY OF IT. Steps 2, 4 and 5 draw the same
+      browser frame, rail and top bar; this shot owns only the dashboard BODY
+      below. `railActive={0}` is the dashboard tile — the screen being shown.
+    */
+    <AppShot railActive={0}>
+      <div className="ash-main">
+        <div className="ash-mh">
+          <div>
+            {/* ⚠ Scott's explicit heading change from "AI Maturity
+                Assessment — Procure-to-Pay". Do not restore the old wording. */}
+            <h3 className="ash-h3">Procure-to-Pay Optimization Dashboard</h3>
+            {/*
+              ⚠ NO HARDCODED ABSOLUTE DATE IN MARKETING CHROME (E149). This
+              read "Thursday, 30 September 2022" from Scott's source image —
+              four years stale on a page that elsewhere wants to read as live,
+              which makes it look like an abandoned product. An absolute date
+              only ever gets worse and nobody remembers to update it. The
+              replacement also does more work than a date did: it says what the
+              dashboard covers.
+            */}
+            <p className="ash-sub">
+              Procure-to-Pay · all ten capability domains
+            </p>
+          </div>
+          <div className="ash-mact">
+            <span className="ash-pill">
+              <Calendar className="ash-sv" strokeWidth={1.7} aria-hidden />
+              {/* relative, for the same reason as the sub-line above */}
+              Last 30 days
+              {/* the mockup's ▾ (U+25BE) replaced by a drawn chevron — same
+                  failing class of glyph as the icons it banned */}
+              <ChevronDown className="ash-cv" strokeWidth={2} aria-hidden />
+            </span>
+            <span className="ash-pill is-mag">
+              <Download className="ash-sv" strokeWidth={1.9} aria-hidden />
+              Export Data
+            </span>
+          </div>
         </div>
 
-        <div className="osd-side">
-          <div className="osd-top">
-            <div className="osd-search" aria-hidden>
-              <Search className="osd-sv" strokeWidth={1.9} aria-hidden />
-              <span>Search here…</span>
-              {/*
-                ⚠ `/` NOT `⌘ K` (E150). U+2318 falls back per-glyph in Montserrat
-                — the same failure class as the `▦ ◔ ▤ ◈ ⚙` characters this shot
-                already replaced with lucide icons, and it survived only because
-                the first brief named it explicitly. `/` is ASCII, renders in every
-                font, and is a real search-shortcut convention rather than a
-                Mac-only one on a page that is not Mac-only.
-              */}
-              <span className="osd-kbd">/</span>
+        <div className="osd-kpis">
+          {/* ---- KPI 1: the industry gap ------------------------------ */}
+          <div className="osd-kpi">
+            <span className="osd-info" aria-hidden>
+              i
+            </span>
+            <div className="osd-kt">
+              <span className="osd-kico is-a" aria-hidden>
+                <BarChart3 className="ash-sv" strokeWidth={2} aria-hidden />
+              </span>
+              <span className="osd-kv">−31 pts</span>
             </div>
-            <div className="osd-tops">
-              <span className="osd-ico" aria-hidden>
-                <Bell className="osd-sv" strokeWidth={1.8} aria-hidden />
-                <span className="osd-dotr" />
-              </span>
-              <span className="osd-ico is-mag" aria-hidden>
-                <PenLine className="osd-sv" strokeWidth={1.9} aria-hidden />
-              </span>
-              <div className="osd-who">
-                <span className="osd-av" aria-hidden>
-                  PI
-                </span>
-                <span className="osd-whot">
-                  <b>Paul Ingrao</b>
-                  <span>Ingrao Dental Services</span>
-                </span>
+            <p className="osd-klab">Your Org Versus Industry</p>
+            <p className="osd-knote">
+              42 vs. 73 — industry median for your rung
+            </p>
+            <div className="osd-meter">
+              <div className="osd-mrow">
+                <span>You 42</span>
+                <span>100</span>
               </div>
+              <div className="osd-mtrack">
+                <span className="osd-mfill" style={{ width: "42%" }} />
+                <span className="osd-mmark" style={{ left: "73%" }} />
+              </div>
+              {/* `osd-mind` — see the note at the top of this file on why
+                  this is not called `osd-mpeer`. */}
+              <span className="osd-mind" style={{ left: "73%" }}>
+                Industry 73
+              </span>
             </div>
           </div>
 
-          <div className="osd-main">
-            <div className="osd-mh">
-              <div>
-                {/* ⚠ Scott's explicit heading change from "AI Maturity
-                    Assessment — Procure-to-Pay". Do not restore the old wording. */}
-                <h3 className="osd-h3">Procure-to-Pay Optimization Dashboard</h3>
-                {/*
-                  ⚠ NO HARDCODED ABSOLUTE DATE IN MARKETING CHROME (E149). This
-                  read "Thursday, 30 September 2022" from Scott's source image —
-                  four years stale on a page that elsewhere wants to read as live,
-                  which makes it look like an abandoned product. An absolute date
-                  only ever gets worse and nobody remembers to update it. The
-                  replacement also does more work than a date did: it says what the
-                  dashboard covers.
-                */}
-                <p className="osd-date">Procure-to-Pay · all ten capability domains</p>
-              </div>
-              <div className="osd-mact">
-                <span className="osd-pill">
-                  <Calendar className="osd-sv" strokeWidth={1.7} aria-hidden />
-                  {/* relative, for the same reason as the sub-line above */}
-                  Last 30 days
-                  {/* the mockup's ▾ (U+25BE) replaced by a drawn chevron — same
-                      failing class of glyph as the icons it banned */}
-                  <ChevronDown className="osd-cv" strokeWidth={2} aria-hidden />
-                </span>
-                <span className="osd-pill is-mag">
-                  <Download className="osd-sv" strokeWidth={1.9} aria-hidden />
-                  Export Data
-                </span>
-              </div>
+          {/* ---- KPI 2: the opportunity count ------------------------- */}
+          <div className="osd-kpi">
+            <span className="osd-info" aria-hidden>
+              i
+            </span>
+            <div className="osd-kt">
+              <span className="osd-kico is-b" aria-hidden>
+                <Sparkles className="ash-sv" strokeWidth={2} aria-hidden />
+              </span>
+              <span className="osd-kv">23</span>
             </div>
-
-            <div className="osd-kpis">
-              {/* ---- KPI 1: the industry gap ------------------------------ */}
-              <div className="osd-kpi">
-                <span className="osd-info" aria-hidden>
-                  i
-                </span>
-                <div className="osd-kt">
-                  <span className="osd-kico is-a" aria-hidden>
-                    <BarChart3 className="osd-sv" strokeWidth={2} aria-hidden />
-                  </span>
-                  <span className="osd-kv">−31 pts</span>
-                </div>
-                <p className="osd-klab">Your Org Versus Industry</p>
-                <p className="osd-knote">42 vs. 73 — industry median for your rung</p>
-                <div className="osd-meter">
-                  <div className="osd-mrow">
-                    <span>You 42</span>
-                    <span>100</span>
-                  </div>
-                  <div className="osd-mtrack">
-                    <span className="osd-mfill" style={{ width: "42%" }} />
-                    <span className="osd-mmark" style={{ left: "73%" }} />
-                  </div>
-                  {/* `osd-mind` — see the note at the top of this file on why
-                      this is not called `osd-mpeer`. */}
-                  <span className="osd-mind" style={{ left: "73%" }}>
-                    Industry 73
-                  </span>
-                </div>
-              </div>
-
-              {/* ---- KPI 2: the opportunity count ------------------------- */}
-              <div className="osd-kpi">
-                <span className="osd-info" aria-hidden>
-                  i
-                </span>
-                <div className="osd-kt">
-                  <span className="osd-kico is-b" aria-hidden>
-                    <Sparkles className="osd-sv" strokeWidth={2} aria-hidden />
-                  </span>
-                  <span className="osd-kv">23</span>
-                </div>
-                <p className="osd-klab">Optimization Opportunities</p>
-                <p className="osd-knote">Across 10 capability domains</p>
-                <div className="osd-spark" aria-hidden>
-                  {SPARK.map((b, i) => (
-                    <b className={b.on ? "is-on" : undefined} style={{ height: `${b.h}%` }} key={i} />
-                  ))}
-                </div>
-                <div className="osd-slab" aria-hidden>
-                  {SPARK.map((b, i) => (
-                    <span key={i}>{b.n}</span>
-                  ))}
-                </div>
-              </div>
-
-              {/* ---- KPI 3: the dollars ---------------------------------- */}
-              <div className="osd-kpi">
-                <span className="osd-info" aria-hidden>
-                  i
-                </span>
-                <div className="osd-kt">
-                  <span className="osd-kico is-c" aria-hidden>
-                    <DollarSign className="osd-sv" strokeWidth={2} aria-hidden />
-                  </span>
-                  <span className="osd-kv">$2,590,000</span>
-                </div>
-                <p className="osd-klab">Est. Savings — Rev/Heads</p>
-                <p className="osd-knote">14% of $18.5M addressable P2P spend</p>
-                <div className="osd-stack" aria-hidden>
-                  {STACK.map((f, i) => (
-                    <i style={{ flex: f }} key={i} />
-                  ))}
-                </div>
-                <div className="osd-slegend" aria-hidden>
-                  <span>TDWCA</span>
-                  <span>Rogue spend</span>
-                  <span>5 findings</span>
-                </div>
-              </div>
+            <p className="osd-klab">Optimization Opportunities</p>
+            <p className="osd-knote">Across 10 capability domains</p>
+            <div className="osd-spark" aria-hidden>
+              {SPARK.map((b, i) => (
+                <b
+                  className={b.on ? "is-on" : undefined}
+                  style={{ height: `${b.h}%` }}
+                  key={i}
+                />
+              ))}
             </div>
+            <div className="osd-slab" aria-hidden>
+              {SPARK.map((b, i) => (
+                <span key={i}>{b.n}</span>
+              ))}
+            </div>
+          </div>
 
-            <div className="osd-find">
-              <div className="osd-fh">
-                <h4 className="osd-h4">Optimization Findings</h4>
-                <span className="osd-chip">Top 5 by value</span>
-              </div>
-              <table className="osd-tbl">
-                <thead>
-                  <tr>
-                    <th>Action</th>
-                    <th>Owner</th>
-                    <th>Timeframe</th>
-                    <th className="is-r">Est. Savings</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {FINDINGS.map((f) => (
-                    <tr key={f.action}>
-                      <td>{f.action}</td>
-                      <td>
-                        <span className={"osd-own" + (f.isPartner ? " is-partner" : "")}>{f.owner}</span>
-                      </td>
-                      <td>{f.weeks}</td>
-                      <td className="is-r">{f.savings}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          {/* ---- KPI 3: the dollars ---------------------------------- */}
+          <div className="osd-kpi">
+            <span className="osd-info" aria-hidden>
+              i
+            </span>
+            <div className="osd-kt">
+              <span className="osd-kico is-c" aria-hidden>
+                <DollarSign className="ash-sv" strokeWidth={2} aria-hidden />
+              </span>
+              <span className="osd-kv">$2,590,000</span>
+            </div>
+            <p className="osd-klab">Est. Savings — Rev/Heads</p>
+            <p className="osd-knote">14% of $18.5M addressable P2P spend</p>
+            <div className="osd-stack" aria-hidden>
+              {STACK.map((f, i) => (
+                <i style={{ flex: f }} key={i} />
+              ))}
+            </div>
+            <div className="osd-slegend" aria-hidden>
+              <span>TDWCA</span>
+              <span>Rogue spend</span>
+              <span>5 findings</span>
             </div>
           </div>
         </div>
+
+        <div className="osd-find">
+          <div className="osd-fh">
+            <h4 className="osd-h4">Optimization Findings</h4>
+            <span className="osd-chip">Top 5 by value</span>
+          </div>
+          <table className="osd-tbl">
+            <thead>
+              <tr>
+                <th>Action</th>
+                <th>Owner</th>
+                <th>Timeframe</th>
+                <th className="is-r">Est. Savings</th>
+              </tr>
+            </thead>
+            <tbody>
+              {FINDINGS.map((f) => (
+                <tr key={f.action}>
+                  <td>{f.action}</td>
+                  <td>
+                    <span
+                      className={"osd-own" + (f.isPartner ? " is-partner" : "")}
+                    >
+                      {f.owner}
+                    </span>
+                  </td>
+                  <td>{f.weeks}</td>
+                  <td className="is-r">{f.savings}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
+    </AppShot>
   );
 }
