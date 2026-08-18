@@ -226,8 +226,12 @@ export function OptimizationDashboardShot() {
                 <span className="osd-kv">−31 pts</span>
               </div>
               <p className="osd-klab">Your Org Versus Industry</p>
+              {/* ⚠ "maturity level", NOT "option" (E035). The rung->option rename is
+                  user-visible, but "industry median for your option" is meaningless —
+                  this sentence names the visitor's POSITION on the ladder, not one of
+                  the four choices, so it needed rewording rather than substitution. */}
               <p className="osd-knote">
-                42 vs. 73 — industry median for your rung
+                42 vs. 73 — industry median for your maturity level
               </p>
               <div className="osd-meter">
                 <div className="osd-mrow">

@@ -58,6 +58,37 @@ export type Basics = {
  * asserts the sum, because a table that drifts off 1.0 silently rescales every
  * report.
  */
+/**
+ * ⚠ THE TWO DOMAINS DELIBERATELY OUTSIDE THE DOLLAR MODEL (E034), AND THIS SET
+ * EXISTS SO THE HOLE IS DECLARED RATHER THAN SILENT.
+ *
+ * Scott authored Data Analytics & AI Governance and Change Management & AI Adoption
+ * in the 2026-08-18 design deck, so they are ASSESSED — they answer questions and
+ * they move `maturityPct`. They recover $0, because `DOLLAR_WEIGHTS` has no entry
+ * for either.
+ *
+ * ⚠ THAT IS NOT AN OVERSIGHT TO FIX IN PASSING. The weights are asserted to sum to
+ * exactly 1.0, so giving these two a share means RESCALING ALL EIGHT existing
+ * weights — which changes the dollar figure on every report ever produced. That is
+ * Scott's decision, explicitly reserved to him, and the brief that added these
+ * domains says to report it and not to invent a weight.
+ *
+ * ⚠ IT IS ALSO A REAL PRODUCT GAP, not just bookkeeping: a domain can score badly
+ * here and contribute nothing to the opportunity ranking, so the report can show a
+ * weakness with no dollars and no curated move beside it. Two of ten domains are in
+ * that state today.
+ *
+ * `check:assessment` pins this set: the "every domain has a weight" and "every
+ * domain has a curated move" guards exempt exactly these keys and nothing else, and
+ * a separate assertion fails if the set and the actual gaps stop agreeing. So a
+ * NINTH unweighted domain still breaks the build, which is the property the original
+ * assertions were protecting.
+ */
+export const UNWEIGHTED_DOMAINS: ReadonlySet<string> = new Set([
+  "data_ai_governance",
+  "change_ai_adoption",
+]);
+
 export const DOLLAR_WEIGHTS: Record<string, number> = {
   sourcing: 0.24,
   contracts: 0.16,

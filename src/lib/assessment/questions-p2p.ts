@@ -114,11 +114,17 @@ const purposeBuilt = (examples: string): RungOption => ({
 });
 
 /*
-  ⚠ EIGHT DOMAINS HERE, TEN ON THE HOME PAGE. `lib/capability-domains.ts`
-  advertises ten P2P capability domains on `/`; this bank measures eight. The
-  two that have never been assessed are "Data, Analytics & AI Governance" and
-  "Change Management & AI Adoption". Authoring them is a separate brief — do not
-  paper over the gap by inventing ladders for them here.
+  ⚠ TEN DOMAINS, AND THE 8-vs-10 GAP IS CLOSED (E034). This bank measured eight
+  while `lib/capability-domains.ts` advertised ten on `/`. Scott authored the
+  missing two in the 2026-08-18 design deck, so they are assessed now and the
+  two lists agree on COUNT.
+
+  ⚠ THEY STILL DISAGREE ON WORDING, and always did — six of the eight original
+  names differ between the two files ("Request and Demand Management" here vs
+  "Requisitioning & Demand Management" there, and so on). That is pre-existing and
+  is not resolved here. Anything joining the two lists must join on a key, not a
+  name; `AssessmentWizardShot` joins on name and gets away with it only because
+  "Purchase Order Management" happens to match in both.
 */
 export const P2P_DOMAINS: CapabilityDomain[] = [
   {
@@ -236,6 +242,60 @@ export const P2P_DOMAINS: CapabilityDomain[] = [
       aiNative(
         "Government Compliance Agent, News Monitoring Agent, Credit Rating Agent, etc."
       ),
+    ],
+  },
+  /*
+    ⚠ THE TWO DOMAINS THIS BANK NEVER ASSESSED, NOW AUTHORED BY SCOTT (E034).
+    The comment above used to forbid adding them — "Authoring them is a separate
+    brief — do not paper over the gap by inventing ladders for them here." That
+    condition is met: every string below is verbatim from slides 10 and 11 of
+    `AI Maturity Assessment DESIGN 2026-08-18.pptx`. Nothing here is invented,
+    and option 3 is the shared INTEGRATED string like the other eight.
+
+    ⚠ THEY SCORE BUT RECOVER $0, AND THAT IS UNRESOLVED. `DOLLAR_WEIGHTS` in
+    scoring.ts has eight keys and neither of these is one of them, so both feed
+    `maturityPct` and neither contributes opportunity dollars. Weighting them is
+    Scott's decision — see the note on DOLLAR_WEIGHTS. Do not invent a weight.
+  */
+  {
+    key: "data_ai_governance",
+    /*
+      ⚠ THE DECK'S NAME, WITHOUT THE COMMA. `capability-domains.ts` advertises
+      "Data, Analytics & AI Governance"; the deck says "Data Analytics & AI
+      Governance" on slides 9 and 10 both. The deck wins per the brief. This is
+      not a new inconsistency — the bank and the advertised list already use
+      different wording for six of the eight existing domains (e.g. "Request and
+      Demand Management" here vs "Requisitioning & Demand Management" there).
+    */
+    name: "Data Analytics & AI Governance",
+    formal: "Data Analytics & AI Governance",
+    question: "How does your organization analyze data and control AI?",
+    rungs: [
+      manual(
+        "Excel/XLS exports, hand-built pivots, ad-hoc reports, no named data owner, etc."
+      ),
+      purposeBuilt(
+        "Standalone BI or spend-analytics tools (Tableau, Power BI, spend cubes), classified periodically"
+      ),
+      INTEGRATED,
+      aiNative("The Spend Analytics Agent, AI Governance Agent"),
+    ],
+  },
+  {
+    key: "change_ai_adoption",
+    name: "Change Management & AI Adoption",
+    formal: "Change Management & AI Adoption",
+    question: "How does your organization manage change & rollout AI?",
+    rungs: [
+      manual(
+        "Slide decks, one-off sessions, email announcements, tribal knowledge, etc."
+      ),
+      purposeBuilt(
+        "LMS or digital-adoption platforms (WalkMe, Whatfix, etc.), static help sites"
+      ),
+      INTEGRATED,
+      /* ⚠ the curly quotes around “How Do I” are Scott's, verbatim from slide 11. */
+      aiNative("The “How Do I” Agent, AI Roadmap, Optimization Dashboard"),
     ],
   },
 ];
