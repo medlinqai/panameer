@@ -938,54 +938,30 @@
   .pm-home .sv-grid,.pm-home .cmp{grid-template-columns:1fr}
   .pm-home .sv-kpis{grid-template-columns:1fr 1fr}
 }
-.pm-home /* ===== PROJECT TRACKER ===== */
-  .trk-sec{background:linear-gradient(180deg,#fbfaff 0%,#fff 62%);padding:74px 0 82px;border-top:1px solid var(--line)}
-.pm-home .trk-head{display:flex;align-items:flex-end;justify-content:space-between;gap:28px;flex-wrap:wrap;margin-bottom:30px}
-.pm-home .trk-head h2{font-size:40px;color:var(--ink);font-weight:700;letter-spacing:-.5px;margin:10px 0 10px;max-width:22ch}
-.pm-home .trk-head p{color:var(--muted);font-size:16.5px;max-width:46ch;margin:0}
-.pm-home .trk-feed{display:flex;align-items:center;gap:10px;color:var(--mag);font-size:13px;font-weight:600;background:rgba(215,44,214,.07);border:1px solid rgba(215,44,214,.2);border-radius:999px;padding:9px 16px;white-space:nowrap}
-.pm-home .trk-feed svg{width:16px;height:16px;flex-shrink:0}
-.pm-home .trk{border:1px solid var(--line);border-radius:16px;background:#fff;box-shadow:0 26px 60px -30px rgba(23,30,62,.3);overflow:hidden}
-.pm-home .trk-bar{display:flex;align-items:center;gap:14px;padding:15px 20px;border-bottom:1px solid var(--line);flex-wrap:wrap}
-.pm-home .trk-bar b{font-family:var(--font-display);font-size:16px;color:var(--ink)}
-.pm-home .trk-chips{display:flex;gap:7px;margin-left:auto;flex-wrap:wrap}
-.pm-home .trk-chip{font-size:11.5px;font-weight:600;border-radius:999px;padding:5px 11px;border:1px solid var(--line);color:var(--muted);background:#fff}
-.pm-home .trk-chip.ok{color:#0f8a5f;border-color:#bfe6d5;background:#f2fbf7}
-.pm-home .trk-chip.risk{color:#b7791f;border-color:#f0dcae;background:#fdf8ec}
-.pm-home .trk-chip.done{color:#5b6478;background:#f4f5f8}
-.pm-home /* phase axis */
-  .trk-axis{display:grid;grid-template-columns:190px repeat(5,1fr);border-bottom:1px solid var(--line);background:#fafaff}
-.pm-home .trk-axis span{font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:#8a91a6;padding:11px 8px;text-align:center;border-left:1px solid var(--line)}
-.pm-home .trk-axis span:first-child{border-left:none;text-align:left;padding-left:20px;color:#b9bfcd}
-.pm-home .trk-axis span.now{color:var(--mag);background:rgba(215,44,214,.06)}
-.pm-home /* rows */
-  .trk-row{display:grid;grid-template-columns:190px 1fr;align-items:center;border-bottom:1px solid var(--line)}
-.pm-home .trk-row:last-child{border-bottom:none}
-.pm-home .trk-name{padding:14px 16px 14px 20px;font-size:13.5px;color:var(--ink);font-weight:600;display:flex;align-items:center;gap:9px;min-width:0}
-.pm-home .trk-name small{display:block;font-weight:500;color:var(--muted);font-size:11.5px;margin-top:2px}
-.pm-home .trk-lane{position:relative;height:56px}
-.pm-home .trk-lane .grid{position:absolute;inset:0;display:grid;grid-template-columns:repeat(5,1fr)}
-.pm-home .trk-lane .grid i{border-left:1px solid var(--line)}
-.pm-home .trk-bararea{position:absolute;inset:0;display:flex;align-items:center}
-.pm-home .tbar{position:absolute;height:26px;border-radius:8px;display:flex;align-items:center;gap:7px;padding:0 10px;font-size:11.5px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden}
-.pm-home .tbar.m{background:linear-gradient(90deg,#D72CD6,#b224b1)}
-.pm-home .tbar.p{background:linear-gradient(90deg,#8a2be2,#6f22b4)}
-.pm-home .tbar.b{background:linear-gradient(90deg,#4b7bef,#3a62c4)}
-.pm-home .tbar.g{background:#e9eaf0;color:#6b7288}
-.pm-home .tbar .who{width:19px;height:19px;border-radius:50%;background:rgba(255,255,255,.28);display:grid;place-items:center;font-size:9px;font-weight:700;flex-shrink:0}
-.pm-home .tbar.g .who{background:#cfd3de;color:#4b5266}
-.pm-home .tbar.risk{box-shadow:0 0 0 2px #f6b93b, 0 0 0 4px rgba(246,185,59,.22)}
-.pm-home .trk-today{position:absolute;top:0;bottom:0;width:2px;background:var(--mag);opacity:.55}
-.pm-home .trk-today.lbl::after{content:'TODAY';position:absolute;top:-1px;left:6px;font-size:9px;letter-spacing:.1em;font-weight:700;color:var(--mag)}
-.pm-home .trk-foot{display:flex;align-items:center;gap:18px;padding:14px 20px;border-top:1px solid var(--line);background:#fafaff;flex-wrap:wrap}
-.pm-home .trk-foot .lgd{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted)}
-.pm-home .trk-foot .sw{width:11px;height:11px;border-radius:3px;flex-shrink:0}
-@media(max-width:860px){
-.pm-home .trk-axis{grid-template-columns:130px repeat(5,1fr)}
-.pm-home .trk-row{grid-template-columns:130px 1fr}
-.pm-home .trk-name{padding:12px 10px 12px 14px;font-size:12.5px}
-.pm-home .trk-head h2{font-size:31px}
-  }
+/* =========================================================================
+   THE OLD PROJECT-TRACKER RULE SET USED TO LIVE HERE. REMOVED AT E173.
+
+   ⚠ IT WAS A LANDMINE, NOT JUST CLUTTER. It styled a previous ProjectTracker design —
+   `.trk-sec`, `.trk-head`, `.trk-axis`, `.trk-lane`, `.trk-today`, `.trk-feed`,
+   `.trk-chips`, `.tbar`, a Gantt-ish thing — and NOTHING referenced any of its fifteen
+   classes: verified zero uses across src/, e2e/ and scripts/ before deleting.
+
+   It mattered because three of those names — `.trk-bar`, `.trk-row`, `.trk-foot` — are
+   also the rebuilt tracker's, and this block sat ~1600 lines EARLIER in the file. So
+   the collision resolved as what looked like a bug in the new code: the old
+   `.trk-bar{display:flex;padding:15px 20px}` survived beside the new `height:6px`, and
+   every row's progress bar rendered as a 31px grey pill with a 0px fill inside it.
+   Measured, not guessed.
+
+   ⚠ THE DELETION RANGE ENDS AT THE 860px MEDIA QUERY AND NOT ONE LINE FURTHER. A first
+   attempt cut to the next `===== HEADER =====`, which also took `.rcard-slot` and the
+   "the tab row must scroll inside itself, not scroll the page" port fix — and that
+   second one silently widened the whole page, taking `scrollWidth` at 390px from 498 to
+   598 with the offender in a section this brief never touched.
+
+   The rebuilt tracker's rules are in the `.trk-*` block further down, beside the other
+   product shots. Do not add `.trk-*` rules up here.
+   ------------------------------------------------------------------------- */
 
 /* ---------------------------------------------------------------------------
    THE TALENT CARD SLOT.
@@ -2522,6 +2498,108 @@
 .pm-home .rm-btn{margin-left:auto;display:inline-flex;align-items:center;gap:8px;font-family:var(--font-display),sans-serif;font-size:12.5px;font-weight:700;border:1px solid var(--mag);background:var(--mag);color:#fff;border-radius:10px;padding:11px 16px;white-space:nowrap}
 .pm-home .rm-btn .ash-sv{width:14px;height:14px}
 .pm-home .rm-note{font-size:11px;color:var(--muted);margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
+
+/* ---- THE PROJECT TRACKER SHOT (brief_project_tracker_beef, E173) -------- */
+/*
+  Rebuilt from three stat cards + four flat bars into phase groups with their own
+  progress, a five-across KPI row and a status column. Ported from
+  mockups/project_tracker_2026-08-19.html.
+
+  ⚠ SHAPE FROM THE AIM BUILDER, NOT ITS DENSITY. No task ids, no owner inputs, no
+  search, no phase filters, no Proposed/amber treatment — those belong to the tool we
+  build WITH, not to the client's view of their own five milestones.
+
+  ⚠ NO PADDING ON `.ash-main` FROM HERE. It is shared by steps 2, 4 and 5; nothing
+  overhangs this frame so nothing needs reserving, and the tracker adds no modifier.
+
+  ⚠ THESE NAMES COLLIDED WITH A DEAD RULE SET until E173 removed it — see the tombstone
+  where the old PROJECT TRACKER block used to be, ~1600 lines above.
+*/
+.pm-home .trk-kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px}
+.pm-home .trk-k{border:1px solid var(--line);border-radius:12px;padding:12px 13px 13px;min-width:0}
+.pm-home .trk-kl{display:block;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:5px}
+.pm-home .trk-kv{display:block;font-family:var(--font-display),sans-serif;font-size:21px;font-weight:700;letter-spacing:-.4px;color:var(--ink);line-height:1.15}
+/* the one green figure in the shot — "on schedule" is the only KPI with a verdict in it */
+.pm-home .trk-kv.is-up{color:#16a06a}
+.pm-home .trk-arrow{color:var(--mag)}
+.pm-home .trk-kn{display:block;font-size:10px;color:var(--muted);margin-top:3px}
+
+/* a phase group: its own header, its own progress */
+.pm-home .trk-ph{border:1px solid var(--line);border-radius:13px;overflow:hidden;margin-bottom:12px}
+.pm-home .trk-phh{display:flex;align-items:center;gap:12px;padding:11px 14px;background:#fafbfd;border-bottom:1px solid var(--line)}
+.pm-home .trk-pht{min-width:0}
+.pm-home .trk-pht h4{font-family:var(--font-display),sans-serif;font-size:13.5px;font-weight:700;color:var(--ink)}
+.pm-home .trk-pht p{font-size:10.5px;color:var(--muted)}
+.pm-home .trk-phm{margin-left:auto;flex:0 0 auto;display:flex;align-items:center;gap:10px}
+.pm-home .trk-phm span{font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.pm-home .trk-phm i{display:block;width:120px;height:5px;border-radius:99px;background:#eef0f6;overflow:hidden}
+.pm-home .trk-phm i b{display:block;height:100%;border-radius:99px;background:var(--mag)}
+.pm-home .trk-phm em{font-style:normal;font-family:var(--font-display),sans-serif;font-size:12px;font-weight:700;color:var(--ink);min-width:34px;text-align:right}
+
+/* one milestone */
+.pm-home .trk-row{display:grid;grid-template-columns:26px 1fr 116px 150px 96px;align-items:center;gap:12px;padding:11px 14px 11px 0;border-bottom:1px solid #f2f3f8}
+.pm-home .trk-ph .trk-row:last-child{border-bottom:0}
+/* green done · magenta running · grey queued. The dot is the fastest read in the row. */
+.pm-home .trk-dot{width:9px;height:9px;border-radius:50%;margin-left:8px;flex:0 0 auto}
+.pm-home .trk-dot.is-done{background:#16a06a}
+.pm-home .trk-dot.is-run{background:var(--mag)}
+.pm-home .trk-dot.is-next{background:#cfd5e0}
+.pm-home .trk-nm{min-width:0}
+.pm-home .trk-nm b{display:block;font-size:12.5px;font-weight:600;color:var(--ink);line-height:1.3}
+.pm-home .trk-nm span{display:block;font-size:10.5px;color:var(--muted);margin-top:2px}
+/* ⚠ amber partner vs grey us — the same two-tone rule as the Step 4 findings table and
+   the Step 5 roadmap, driven by the same `isPartner` flag in roadmap-milestones.ts. */
+.pm-home .trk-own{justify-self:start;font-size:9.5px;border:1px solid var(--line);border-radius:6px;padding:3px 8px;background:#fafbfd;color:var(--text);white-space:nowrap}
+.pm-home .trk-own.is-partner{background:#fff4d9;border-color:#f0dfae;color:#8a6b12}
+.pm-home .trk-bar{height:6px;border-radius:99px;background:#eef0f6;overflow:hidden}
+.pm-home .trk-bar b{display:block;height:100%;border-radius:99px;background:var(--mag)}
+.pm-home .trk-bar b.is-done{background:#16a06a}
+.pm-home .trk-bar b.is-next{background:transparent}
+/* the status control — drawn, never wired. See the note in the component. */
+.pm-home .trk-st{display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:10.5px;border:1px solid var(--line);border-radius:7px;padding:5px 9px;color:var(--text);white-space:nowrap}
+.pm-home .trk-st.is-done{background:#eaf7f1;border-color:#c6e8d8;color:#137a51}
+.pm-home .trk-st i{font-style:normal;font-size:8px;color:var(--muted)}
+
+.pm-home .trk-foot{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.pm-home .trk-foot p{font-size:11px;color:var(--muted)}
+.pm-home .trk-btn{margin-left:auto;display:inline-flex;align-items:center;gap:8px;font-family:var(--font-display),sans-serif;font-size:12.5px;font-weight:700;border:1px solid var(--mag);background:var(--mag);color:#fff;border-radius:10px;padding:10px 16px;white-space:nowrap}
+.pm-home .trk-btn .ash-sv{width:14px;height:14px}
+
+@media(max-width:900px){
+  /*
+    ⚠ THE ROW COLLAPSES TO NAME-OVER-CONTROLS, not to a narrower five-column grid. At
+    836px the owner chip, bar and status cannot hold 116/150/96px between them beside a
+    name, and shrinking them makes three unreadable things instead of one clear one. The
+    dot keeps its own column so the state is still the first thing read.
+  */
+  .pm-home .trk-kpis{grid-template-columns:1fr 1fr}
+  .pm-home .trk-row{grid-template-columns:26px 1fr;gap:8px}
+  .pm-home .trk-own,.pm-home .trk-bar,.pm-home .trk-st{grid-column:2}
+  .pm-home .trk-btn{margin-left:0}
+}
+@media(max-width:620px){
+  .pm-home .trk-kpis{grid-template-columns:1fr}
+  /* the group's own bar is the first thing to give — the `n of m` beside it says the
+     same thing in less room */
+  .pm-home .trk-phm i{width:70px}
+  /*
+    ⚠ THE PHASE HEADER WRAPS, AND THIS WAS MEASURED. `.trk-phm` is `flex:0 0 auto` and
+    still 154px after the bar shrinks (30 + 70 + 34 + gaps), so it was the only rigid
+    item in the row and `.trk-pht` absorbed the whole shortfall — squeezed to 50px at
+    340px against a 65px min-content title ("Queued" is one unbreakable word), so it
+    overflowed by 15px. Wrapping drops the progress cluster to its own line and hands the
+    title its width back. Same failure and same fix as the Step 5 expert strip.
+  */
+  .pm-home .trk-phh{flex-wrap:wrap}
+  .pm-home .trk-phm{margin-left:0}
+  /*
+    ⚠ AND THE BUTTON STOPS BEING `nowrap`. "Add work from your roadmap" plus its icon and
+    16px of side padding is a hard 247px min-content against 246px of content box at
+    340px — so the footer overflowed by 21px even though it was already wrapping. Full
+    width and centred, letting the label break, is the version that fits.
+  */
+  .pm-home .trk-btn{width:100%;justify-content:center;white-space:normal;text-align:center}
+}
 
 /* ---- STEP 5's BOOKING CARD (E165) ------------------------------------- */
 /*

@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { AppShot } from "@/components/marketing-home/AppShot";
+import { milestoneByKey, milestoneDetail } from "@/lib/roadmap-milestones";
 
 /**
  * STEP 5's GRAPHIC — the Year-1 AI Roadmap, built on the call and handed to the
@@ -66,12 +67,17 @@ import { AppShot } from "@/components/marketing-home/AppShot";
  * timeframes in the Step 4 findings table.
  */
 
+/**
+ * ⚠ THE NAMES AND OWNERS ARE NO LONGER DECLARED HERE — they come from
+ * `lib/roadmap-milestones.ts`, which `ProjectTracker` reads too (E173). This roadmap
+ * and that tracker are the SAME five milestones, planned and then executing; two
+ * arrays could not keep that promise and had already broken it. This view adds only
+ * what is its own: an icon, a bar position, a tone and a value.
+ */
 type Row = {
   Icon: LucideIcon;
-  action: string;
-  detail: string;
-  owner: string;
-  isPartner: boolean;
+  /** Key into `ROADMAP_MILESTONES`. */
+  key: string;
   /** Percent across the four-quarter lane. */
   left: number;
   width: number;
@@ -93,10 +99,7 @@ type Row = {
 const ROWS: Row[] = [
   {
     Icon: Check,
-    action: "Invoice match exceptions",
-    detail: "Package · 2 wks",
-    owner: "Panameer",
-    isPartner: false,
+    key: "invoice_match",
     left: 2,
     width: 9,
     tone: "mag",
@@ -104,10 +107,7 @@ const ROWS: Row[] = [
   },
   {
     Icon: BarChart3,
-    action: "PO price alerts",
-    detail: "Agent · 2 wks",
-    owner: "Panameer",
-    isPartner: false,
+    key: "po_price",
     left: 8,
     width: 9,
     tone: "mag",
@@ -115,23 +115,17 @@ const ROWS: Row[] = [
   },
   {
     Icon: Sparkles,
-    action: "Rogue-spend alert",
-    detail: "Agent · 2 wks",
-    owner: "Panameer",
-    isPartner: false,
+    key: "rogue_spend",
     left: 28,
     width: 9,
     tone: "violet",
     value: "$610K",
   },
-  /* ⚠ StratERP is amber against four grey Panameer chips — one item is a
-     partner's product. Same two-tone rule as the Step 4 findings table. */
+  /* ⚠ StratERP is amber against four grey Panameer chips — one item is a partner's
+     product. Both the owner and that flag live in `roadmap-milestones.ts`. */
   {
     Icon: FileText,
-    action: "Contract renegotiation",
-    detail: "Expert · 4 wks",
-    owner: "StratERP",
-    isPartner: true,
+    key: "contract_reneg",
     left: 54,
     width: 17,
     tone: "blue",
@@ -139,10 +133,7 @@ const ROWS: Row[] = [
   },
   {
     Icon: AlignLeft,
-    action: "Supplier doc validation",
-    detail: "Agent · 2 wks",
-    owner: "Panameer",
-    isPartner: false,
+    key: "supplier_docs",
     left: 79,
     width: 9,
     tone: "grey",
@@ -278,47 +269,50 @@ export function AiRoadmapShot() {
               </span>
             </div>
 
-            {ROWS.map((r) => (
-              <div className="rm-row" key={r.action}>
-                <div className="rm-a">
-                  <span className="rm-ico" aria-hidden>
-                    <r.Icon className="ash-sv" strokeWidth={2} aria-hidden />
-                  </span>
-                  <span className="rm-at">
-                    <b>
-                      {r.action}
-                      {/* ⚠ the value moves here at <=620, where a 9% bar is ~26px
+            {ROWS.map((r) => {
+              const m = milestoneByKey(r.key);
+              return (
+                <div className="rm-row" key={r.key}>
+                  <div className="rm-a">
+                    <span className="rm-ico" aria-hidden>
+                      <r.Icon className="ash-sv" strokeWidth={2} aria-hidden />
+                    </span>
+                    <span className="rm-at">
+                      <b>
+                        {m.action}
+                        {/* ⚠ the value moves here at <=620, where a 9% bar is ~26px
                         and cannot hold a label. Hidden above that. */}
-                      <span className="rm-av">{r.value}</span>
-                    </b>
-                    <span>
-                      {r.detail} ·{" "}
-                      <span
-                        className={
-                          "rm-own" + (r.isPartner ? " is-partner" : "")
-                        }
-                      >
-                        {r.owner}
+                        <span className="rm-av">{r.value}</span>
+                      </b>
+                      <span>
+                        {milestoneDetail(m)} ·{" "}
+                        <span
+                          className={
+                            "rm-own" + (m.isPartner ? " is-partner" : "")
+                          }
+                        >
+                          {m.owner}
+                        </span>
                       </span>
                     </span>
-                  </span>
-                </div>
-                {/*
+                  </div>
+                  {/*
                 The lane is the coordinate space: `left`/`width` are percentages of
                 it, so the bars keep their positions and their ratios at every
                 width without a single measured pixel. The three dividers are drawn
                 by the stylesheet at 25/50/75%.
               */}
-                <div className="rm-lane">
-                  <span
-                    className={`rm-bar is-${r.tone}`}
-                    style={{ left: `${r.left}%`, width: `${r.width}%` }}
-                  >
-                    <b className="rm-bv">{r.value}</b>
-                  </span>
+                  <div className="rm-lane">
+                    <span
+                      className={`rm-bar is-${r.tone}`}
+                      style={{ left: `${r.left}%`, width: `${r.width}%` }}
+                    >
+                      <b className="rm-bv">{r.value}</b>
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="rm-f">
@@ -427,7 +421,9 @@ export function AiRoadmapShot() {
           height={587}
           sizes="(max-width: 900px) 100vw, 300px"
         />
-        <figcaption>Your session — 45 minutes, screen shared, no slides.</figcaption>
+        <figcaption>
+          Your session — 45 minutes, screen shared, no slides.
+        </figcaption>
       </figure>
     </div>
   );
