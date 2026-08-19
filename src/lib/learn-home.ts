@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { isPlayable } from "@/lib/learn";
-import { marketplaceVisibleWhere } from "@/lib/access";
+import { lessonFace } from "@/lib/learn-faces";
 import {
   instructorIdsFor,
   loadInstructors,
@@ -424,18 +424,28 @@ export async function getLearnLesson(
   });
 
   /*
-    This lesson's OWN expert wins. Falling back to the path's lead is only for
-    a lesson that names nobody — showing the lead's face over someone else's
-    video would be a straightforward misattribution, and it is the PIP, so it
-    is the most visible claim on the page.
+    ⚠ THROUGH `lessonFace`, NOT INLINE (brief_learn_app_shell).
+
+    This block used to implement the fallback itself — own expert wins, else the
+    path's lead — which was the right RULE and a second copy of it. It had no
+    "TBD" handling at all, so a placeholder Person would have become a person on
+    the picture-in-picture, the most visible face on the page.
+
+    `check:learn` now fails the build on any file that maps a lesson to a single
+    instructor without going through that function, and this call is why the
+    guard can be enforced rather than aspired to.
   */
-  let instructor: Instructor | null = null;
-  if (own?.expert_person_id) {
-    const directory = await loadInstructors([own.expert_person_id]);
-    const person = directory.get(own.expert_person_id);
-    if (person) instructor = { ...person, lessons: 1 };
-  }
-  if (!instructor) instructor = path.instructors[0] ?? null;
+  const directory = own?.expert_person_id
+    ? await loadInstructors([own.expert_person_id])
+    : new Map<string, Omit<Instructor, "lessons">>();
+  const instructor = lessonFace(
+    { expert_person_id: own?.expert_person_id ?? null },
+    directory,
+    /* No course-level list is loaded here, so the path's derived instructors are
+       the inheritance step — which is exactly what the old code fell back to. */
+    [],
+    path.instructors
+  ).instructor;
 
   return {
     lesson: {

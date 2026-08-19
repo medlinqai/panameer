@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getLearnPath } from "@/lib/learn-home";
+import { getAppPath } from "@/lib/learn-path-app";
+import { AppPath } from "@/components/learn/app/AppPath";
 import { getSessionViewer } from "@/lib/session";
 import { AUDIENCE_LABEL, STYLE_LABEL } from "@/lib/learn";
 import { InstructorBadge } from "@/components/learn/InstructorBadge";
@@ -24,7 +26,32 @@ export default async function LearningPathPage({
 }) {
   const { slug } = await params;
   const viewer = await getSessionViewer();
-  const path = await getLearnPath(slug, viewer?.userId ?? null);
+
+  /*
+    ── ⚠ SIGNED IN, THIS IS THE LEVEL-1 PATH SCREEN (brief_learn_app_shell WS3) ──
+
+    The same branch `/learn` itself uses, and for the same reason: a learner is
+    inside the product and a visitor is being sold it. Two concrete reasons this
+    is a branch rather than one page with flags:
+
+      1. The dashboard chrome is AppShell's — `AppPath` FULL-BLEEDS by cancelling
+         `main`'s `px-5 py-6 sm:px-8`. Signed out, `learn/layout.tsx` renders the
+         marketing shell whose `<main>` has NO padding, so the same negative
+         margins would push the hero off the left edge.
+      2. Everything the spine adds — per-lesson faces, the real test rules, the
+         leaderboard floor — is per-learner. A visitor has none of it.
+
+    ⚠ THE PUBLIC BODY BELOW IS UNCHANGED. `getLearnPath(slug, null)` is what it
+    already resolved to for a visitor, so a shared curriculum URL still shows the
+    full outline to whoever it was shared with.
+  */
+  if (viewer) {
+    const app = await getAppPath(slug, viewer.userId);
+    if (!app) notFound();
+    return <AppPath path={app} signedIn />;
+  }
+
+  const path = await getLearnPath(slug, null);
   if (!path) notFound();
 
   const firstPlayable = path.courses
@@ -80,7 +107,7 @@ export default async function LearningPathPage({
               pathId={path.id}
               slug={path.slug}
               enrolled={path.enrolled}
-              signedIn={Boolean(viewer)}
+              signedIn={false}
             />
             {firstPlayable && (
               <Link
