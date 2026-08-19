@@ -124,8 +124,27 @@ export function HomeHero() {
                 shot, on the dashboard and in ErpIntegration — so the page still names
                 it, just not here. Putting it back brings the orphan back with it and
                 something else has to give; that is Scott's trade to make, not mine.
+
+                ⚠ THE INDUSTRY COMPARISON IS GONE FROM THE HERO TOO (E175) — Scott's third
+                pass on this sentence. Flagged, not argued.
+
+                It read "…where you stand versus your industry and where AI moves the
+                needle." He added that beat deliberately on 2026-08-18 ("peers/industry
+                comparison was left out by me on accident"), and it is the reason E166 chose
+                "versus" over "against" — to match `OptimizationDashboardShot`'s "Your Org
+                Versus Industry". It now reads "…where you stand and where AI can move the
+                needle IN YOUR BUSINESS", which does different work: the promise is personal
+                rather than comparative. Note "can" comes BACK — E166 had cut it to recover a
+                line.
+
+                ⚠ TWO CONSEQUENCES, BEFORE ANYONE "RESTORES" IT.
+                  1. The industry-comparison claim is a counsel-gate item — a benchmark
+                     derived from the maturity ladder, not surveyed — so dropping it from the
+                     headline REDUCES exposure. Deliberate or incidental, it is Scott's.
+                  2. "versus" still ships on the Step 4 dashboard shot, untouched. The word
+                     is no longer used in two places for consistency; it is used in one.
               */}
-              <p>See where you stand versus your industry and where AI moves the needle. Then build your 12-month roadmap with an expert &mdash; all&nbsp;free.</p>
+              <p>See where you stand and where AI can move the needle in your business. Then build your 12-month roadmap with an expert &mdash; all&nbsp;free.</p>
               {/*
                 ⚠ A DISTINCT BEAT, NOT A SENTENCE ON THE LEDE. It is the bridge into
                 the spine below, so it gets its own `<p>` and a lighter magenta to read
