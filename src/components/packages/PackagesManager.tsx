@@ -2,7 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { Modal } from "@/components/Modal";
-import { Field, TextInput, TextArea, Notice } from "@/components/onboarding/controls";
+import {
+  Field,
+  TextInput,
+  TextArea,
+  Notice,
+} from "@/components/onboarding/controls";
 import { formatCents, centsToDollarInput, dollarsToCents } from "@/lib/display";
 
 /**
@@ -32,6 +37,17 @@ export type ProviderPackage = {
   deliverables: PackageDeliverable[];
   milestones: PackageMilestone[];
   skills: { id: string; name: string }[];
+  /** The saved classification — see the note on the form controls. */
+  capabilityDomainIds: string[];
+  /** Derived from the first linked domain; null for a package that predates the field. */
+  process: string | null;
+};
+
+export type CapabilityDomainOption = {
+  id: string;
+  process: string;
+  name: string;
+  key: string | null;
 };
 
 /** The default payment terms Scott specified. */
@@ -42,6 +58,9 @@ const DEFAULT_MILESTONES: PackageMilestone[] = [
 
 const emptyForm = () => ({
   title: "",
+  /* the chosen business process — one, because a provider almost never serves two */
+  process: "",
+  capabilityDomainIds: [] as string[],
   summary: "",
   durationWeeks: "",
   priceDollars: "",
@@ -60,11 +79,15 @@ export function PackagesManager() {
   const [modal, setModal] = useState<{ id?: string } | null>(null);
   const [form, setForm] = useState<Form>(emptyForm());
   const [uploading, setUploading] = useState(false);
+  const [domains, setDomains] = useState<CapabilityDomainOption[]>([]);
 
   useEffect(() => {
     fetch("/api/provider/packages")
-      .then((r) => (r.ok ? r.json() : { packages: [] }))
-      .then((d) => setPackages(d.packages ?? []))
+      .then((r) => (r.ok ? r.json() : { packages: [], capabilityDomains: [] }))
+      .then((d) => {
+        setPackages(d.packages ?? []);
+        setDomains(d.capabilityDomains ?? []);
+      })
       .catch(() => setError("We couldn't load your packages."))
       .finally(() => setLoading(false));
   }, []);
@@ -99,11 +122,20 @@ export function PackagesManager() {
   const openEdit = (p: ProviderPackage) => {
     setForm({
       title: p.title,
+      /*
+        ⚠ THE PROCESS IS RESTORED FROM THE SAVED DOMAINS, not from a stored column. If a
+        legacy package has none it opens blank, which is exactly right: the notice below the
+        picker then explains why it needs one.
+      */
+      process: p.process ?? "",
+      capabilityDomainIds: p.capabilityDomainIds ?? [],
       summary: p.summary ?? "",
       durationWeeks: p.durationWeeks != null ? String(p.durationWeeks) : "",
       priceDollars: centsToDollarInput(p.priceCents),
       coverImageUrl: p.coverImageUrl,
-      deliverables: p.deliverables.length ? p.deliverables.map((d) => d.text) : [""],
+      deliverables: p.deliverables.length
+        ? p.deliverables.map((d) => d.text)
+        : [""],
       milestones: p.milestones.length
         ? p.milestones.map((m) => ({ label: m.label, percent: m.percent }))
         : DEFAULT_MILESTONES.map((m) => ({ ...m })),
@@ -112,14 +144,30 @@ export function PackagesManager() {
     setModal({ id: p.id });
   };
 
+  /* nine processes, from the taxonomy the list endpoint sent — never a hard-coded list */
+  const processes = [...new Set(domains.map((d) => d.process))].sort();
+  /*
+    ⚠ FILTERED BY THE CHOSEN PROCESS, AND THAT IS WHAT MAKES ~87 DOMAINS USABLE. A flat list
+    of every domain in every process is unreadable and invites the wrong pick; nine options
+    then ten is two easy decisions.
+  */
+  const domainsForProcess = domains.filter((d) => d.process === form.process);
+  const allSelected =
+    domainsForProcess.length > 0 &&
+    domainsForProcess.every((d) => form.capabilityDomainIds.includes(d.id));
+  /* a legacy package being edited that never had a domain — nagged, never blocked */
+  const legacyUnclassified =
+    Boolean(modal?.id) && form.capabilityDomainIds.length === 0;
+
   const milestoneTotal = form.milestones.reduce(
     (s, m) => s + (Number(m.percent) || 0),
-    0
+    0,
   );
 
   const save = async () => {
     const pkg = {
       title: form.title,
+      capabilityDomainIds: form.capabilityDomainIds,
       summary: form.summary,
       durationWeeks: form.durationWeeks ? Number(form.durationWeeks) : null,
       priceCents: dollarsToCents(form.priceDollars),
@@ -132,7 +180,7 @@ export function PackagesManager() {
     const ok = await post(
       modal?.id
         ? { action: "update", packageId: modal.id, package: pkg }
-        : { action: "create", package: pkg }
+        : { action: "create", package: pkg },
     );
     if (ok) setModal(null);
   };
@@ -143,7 +191,10 @@ export function PackagesManager() {
     try {
       const body = new FormData();
       body.append("file", file);
-      const r = await fetch("/api/provider/package-image", { method: "POST", body });
+      const r = await fetch("/api/provider/package-image", {
+        method: "POST",
+        body,
+      });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) {
         setError(d.error ?? "Could not upload that image.");
@@ -170,8 +221,8 @@ export function PackagesManager() {
           <p className="font-bold">No packages yet</p>
           <p className="mx-auto mt-1 max-w-md text-[14px] text-ink-2">
             A package is something a buyer can buy outright — a fixed scope, a
-            timeline and a price. For example: &ldquo;Install DocuSign for Oracle
-            Cloud — 5 weeks, $40,000, 50% up front.&rdquo;
+            timeline and a price. For example: &ldquo;Install DocuSign for
+            Oracle Cloud — 5 weeks, $40,000, 50% up front.&rdquo;
           </p>
           <button
             type="button"
@@ -185,7 +236,10 @@ export function PackagesManager() {
         <>
           <div className="space-y-4">
             {packages.map((p) => (
-              <article key={p.id} className="rounded-brand border border-line p-5">
+              <article
+                key={p.id}
+                className="rounded-brand border border-line p-5"
+              >
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div className="flex min-w-0 items-start gap-4">
                     {p.coverImageUrl && (
@@ -240,7 +294,8 @@ export function PackagesManager() {
                         void post({
                           action: "setStatus",
                           packageId: p.id,
-                          status: p.status === "PUBLISHED" ? "DRAFT" : "PUBLISHED",
+                          status:
+                            p.status === "PUBLISHED" ? "DRAFT" : "PUBLISHED",
                         })
                       }
                       disabled={busy}
@@ -297,7 +352,136 @@ export function PackagesManager() {
             />
           </Field>
 
-          <Field label="What's Included" hint="The scope a buyer is agreeing to.">
+          {/*
+            ⚠ CLASSIFICATION SITS DIRECTLY AFTER TITLE AND IS REQUIRED. Scott: "ok to put it
+            near the top...REQUIRED." It is above scope and price because it decides whether
+            the product is findable at all — the rest describes something nobody reaches
+            otherwise.
+          */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field
+              label="Business process *"
+              hint="One process. Almost no provider serves more than one."
+            >
+              <select
+                value={form.process}
+                onChange={(e) =>
+                  /*
+                    ⚠ CHANGING PROCESS CLEARS THE DOMAINS, on purpose. A domain belongs to
+                    exactly one process, so keeping the old selection would leave the product
+                    classified under domains its process no longer offers — invisible in a way
+                    that looks fine on screen.
+                  */
+                  setForm({
+                    ...form,
+                    process: e.target.value,
+                    capabilityDomainIds: [],
+                  })
+                }
+                aria-label="Business process"
+                className="w-full rounded-[12px] border border-line bg-white px-4 py-3 text-[15px] text-ink outline-none focus:border-magenta"
+              >
+                <option value="">Select a process…</option>
+                {processes.map((pr) => (
+                  <option key={pr} value={pr}>
+                    {pr}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          </div>
+
+          <Field
+            label="Capability domains *"
+            hint="This is how buyers find you: a roadmap line names a capability domain, and we show the products indexed to it. A product with none is invisible."
+          >
+            {!form.process ? (
+              <p className="text-[14px] text-ink-2">
+                Pick a business process first.
+              </p>
+            ) : (
+              <>
+                {/*
+                  ⚠ ONE CLICK, NOT TEN. Scott: "Might have to be a 'select all CDs' as opposed
+                  to choose which CD this agent runs on." A health check or an agent that
+                  watches everything legitimately spans the whole process, and making that ten
+                  clicks would push people to under-classify.
+                */}
+                <div className="mb-2.5 flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setForm({
+                        ...form,
+                        capabilityDomainIds: allSelected
+                          ? []
+                          : domainsForProcess.map((d) => d.id),
+                      })
+                    }
+                    className="rounded-[9px] border border-magenta px-3 py-1.5 text-[13px] font-bold text-magenta-dark"
+                  >
+                    {allSelected ? "Clear all" : "Select all in this process"}
+                  </button>
+                  <span className="text-[13px] text-ink-2">
+                    {form.capabilityDomainIds.length} of{" "}
+                    {domainsForProcess.length} selected
+                  </span>
+                </div>
+                <div className="grid gap-1.5 sm:grid-cols-2">
+                  {domainsForProcess.map((d) => {
+                    const on = form.capabilityDomainIds.includes(d.id);
+                    return (
+                      <label
+                        key={d.id}
+                        className={
+                          "flex cursor-pointer items-start gap-2.5 rounded-[10px] border px-3 py-2 text-[14px] " +
+                          (on
+                            ? "border-magenta bg-magenta/[0.04]"
+                            : "border-line")
+                        }
+                      >
+                        <input
+                          type="checkbox"
+                          checked={on}
+                          onChange={() =>
+                            setForm({
+                              ...form,
+                              capabilityDomainIds: on
+                                ? form.capabilityDomainIds.filter(
+                                    (x) => x !== d.id,
+                                  )
+                                : [...form.capabilityDomainIds, d.id],
+                            })
+                          }
+                          className="mt-0.5 accent-magenta"
+                        />
+                        <span className="text-ink">{d.name}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </Field>
+
+          {/*
+            ⚠ A NOTICE, NOT A BLOCK, FOR A PACKAGE THAT PREDATES THIS FIELD. Blocking every
+            edit to a legacy package would freeze published catalog entries behind a field
+            their author never saw. It can still be saved; it just cannot be found until it is
+            classified, and it says so.
+          */}
+          {legacyUnclassified && (
+            <Notice>
+              This package has no capability domains yet, so buyers cannot find
+              it from a roadmap. You can still save other changes — but pick at
+              least one when you can.
+            </Notice>
+          )}
+
+          <Field
+            label="What's Included"
+            hint="The scope a buyer is agreeing to."
+          >
             <TextArea
               value={form.summary}
               onChange={(e) => setForm({ ...form, summary: e.target.value })}
@@ -312,7 +496,9 @@ export function PackagesManager() {
                 min="0"
                 step="0.01"
                 value={form.priceDollars}
-                onChange={(e) => setForm({ ...form, priceDollars: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, priceDollars: e.target.value })
+                }
                 placeholder="40000"
               />
             </Field>
@@ -321,7 +507,9 @@ export function PackagesManager() {
                 type="number"
                 min="0"
                 value={form.durationWeeks}
-                onChange={(e) => setForm({ ...form, durationWeeks: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, durationWeeks: e.target.value })
+                }
                 placeholder="5"
               />
             </Field>
@@ -349,7 +537,9 @@ export function PackagesManager() {
                     onClick={() =>
                       setForm({
                         ...form,
-                        deliverables: form.deliverables.filter((_, n) => n !== i),
+                        deliverables: form.deliverables.filter(
+                          (_, n) => n !== i,
+                        ),
                       })
                     }
                     aria-label="Remove deliverable"
@@ -396,7 +586,10 @@ export function PackagesManager() {
                       value={m.percent}
                       onChange={(e) => {
                         const next = [...form.milestones];
-                        next[i] = { ...next[i], percent: Number(e.target.value) };
+                        next[i] = {
+                          ...next[i],
+                          percent: Number(e.target.value),
+                        };
                         setForm({ ...form, milestones: next });
                       }}
                       className="pr-8"
@@ -442,7 +635,8 @@ export function PackagesManager() {
                   (milestoneTotal === 100 ? "text-emerald-600" : "text-red-700")
                 }
               >
-                Total {milestoneTotal}%{milestoneTotal === 100 ? " ✓" : " — must be 100%"}
+                Total {milestoneTotal}%
+                {milestoneTotal === 100 ? " ✓" : " — must be 100%"}
               </span>
             </div>
           </div>

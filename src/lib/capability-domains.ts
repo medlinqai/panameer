@@ -64,6 +64,20 @@ const k = (value: string, label: string, delta: string, dir: Direction): Kpi => 
   dir,
 });
 
+/*
+  ⚠ THE `id` FIELDS ARE THE ASSESSMENT BANK'S KEYS, AND THREE OF THEM WERE ALIGNED AT E004.
+  They read `receipt`, `data_ai_gov` and `change_adoption`; the bank
+  (`lib/assessment/questions-p2p.ts`) calls those `receiving`, `data_ai_governance` and
+  `change_ai_adoption`. Seven of ten already matched, so this was a three-key reconciliation
+  rather than a re-taxonomy.
+
+  The bank wins because it is what SCORES a respondent and stored answers already reference
+  it. Aligning these cost nothing — they were consumed only as React `key=` props and
+  nothing ever looked them up, which is exactly why the divergence survived unnoticed.
+
+  ⚠ THE DISPLAY NAMES ARE UNTOUCHED and stay different from the bank's on purpose. Join on
+  the key; never on the name.
+*/
 export const P2P_DOMAINS: CapabilityDomain[] = [
   {
     id: "requisitioning",
@@ -118,7 +132,7 @@ export const P2P_DOMAINS: CapabilityDomain[] = [
     score: 72,
   },
   {
-    id: "receipt",
+    id: "receiving",
     name: "Goods & Services Receipt",
     kpis: [
       k("76%", "Receipt On Time", "▲ +5% vs last qtr", "up"),
@@ -170,7 +184,7 @@ export const P2P_DOMAINS: CapabilityDomain[] = [
     score: 39,
   },
   {
-    id: "data_ai_gov",
+    id: "data_ai_governance",
     name: "Data, Analytics & AI Governance",
     kpis: [
       k("72%", "Spend Classified", "▲ +10% vs last qtr", "up"),
@@ -183,7 +197,7 @@ export const P2P_DOMAINS: CapabilityDomain[] = [
     score: 30,
   },
   {
-    id: "change_adoption",
+    id: "change_ai_adoption",
     name: "Change Management & AI Adoption",
     kpis: [
       k("47%", "Trained Users", "▲ +14% vs last qtr", "up"),
