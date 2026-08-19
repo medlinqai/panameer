@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { MarketingHeader } from "@/components/marketing/MarketingHeader";
+import { HomeFooter } from "@/components/marketing-home/HomeFooter";
 import { MeProvider } from "@/components/MeProvider";
 import { AppShell } from "@/components/casing/AppShell";
 import { getSessionViewer } from "@/lib/session";
@@ -44,11 +45,20 @@ export default async function LearnLayout({ children }: { children: ReactNode })
     <div className="marketing-surface flex min-h-screen flex-col bg-white font-body text-ink">
       <MarketingHeader />
       <main className="flex-1">{children}</main>
-      <footer className="border-t border-line">
-        <div className="mx-auto w-full max-w-6xl px-6 py-6 text-[13.5px] text-ink-2">
-          Panameer Learn — free courses on Oracle Cloud and the work around it.
-        </div>
-      </footer>
+      {/*
+        ⚠ THE REAL FOOTER, NOT A STUB (E223). This was a one-line
+        "Panameer Learn — free courses…" strip, which is fine under a catalog and wrong
+        under a sales page: every other public page ends in the full footer and a visitor
+        who scrolls to the bottom of a pitch expects the same destinations.
+
+        ⚠ IMPORTED IN PLACE RATHER THAN MOVED. `HomeFooter`'s header comment claims
+        `app/page.tsx` is its only importer and that was TRUE when checked — so it could
+        have been lifted to `components/marketing/` under a neutral name. It was not,
+        because moving it edits `/`, which is walked and stable, to gain nothing but a
+        better filename. ONE footer, two callers. The name is now slightly wrong and that
+        is the cheaper of the two errors.
+      */}
+      <HomeFooter />
     </div>
   );
 }
