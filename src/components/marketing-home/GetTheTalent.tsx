@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { GetTheTalentShot } from "@/components/marketing-home/GetTheTalentShot";
 
 /**
  * "GET THE TALENT" — the close (brief_home_assessment_spine §4).
@@ -69,6 +70,17 @@ export function GetTheTalent() {
             </li>
           ))}
         </ul>
+
+        {/*
+          ⚠ PLACED DIRECTLY UNDER THE THREE-COLUMN BLOCK IT ILLUSTRATES (E176). The brief
+          says "below the existing three-column text block and above the CTA pair", and the
+          quote sits between those two anchors, so either side of it satisfies the letter of
+          it. Under the list is the version that earns its place: the list names an expert,
+          a package and a pre-built agent in the abstract and the shot is those same three
+          made concrete, so the reader meets the idea and the instance together. The quote
+          and the CTA pair both still follow it.
+        */}
+        <GetTheTalentShot />
 
         {/* Scott's copy, verbatim. */}
         <blockquote className="gtt-quote">
