@@ -647,8 +647,33 @@
 .pm-home .fcol h5{color:#8b93ad;font-size:12px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:18px;font-weight:600;font-family:var(--font-body)}
 .pm-home .fcol a{display:block;font-size:14.5px;color:#c1c6dc;padding:7px 0}
 .pm-home .fcol a:hover{color:var(--mag)}
-.pm-home .foot-bot{border-top:1px solid rgba(255,255,255,.08);margin-top:48px;padding-top:26px;display:flex;justify-content:space-between;font-size:13.5px;color:#8b93ad}
-.pm-home .foot-bot .lg{display:flex;gap:26px}
+/*
+  ⚠ BOTH THIS ROW AND THE `.lg` SPAN INSIDE IT HAD TO WRAP (E174), and this outer one is
+  the half that is easy to miss. `.foot-bot` is `justify-content:space-between` holding
+  the copyright beside the legal links, and at 390px its two children need 71 + 395 =
+  466px of min-content against 326px of container. So the row was over-constrained
+  regardless of what the inner span did — fixing only the span would have left this one
+  squeezing it.
+*/
+.pm-home .foot-bot{border-top:1px solid rgba(255,255,255,.08);margin-top:48px;padding-top:26px;display:flex;flex-wrap:wrap;gap:14px 24px;justify-content:space-between;font-size:13.5px;color:#8b93ad}
+/*
+  ⚠ THE LAST HORIZONTAL SCROLL ON `/` WAS THIS ONE DECLARATION (E174), and the
+  attribution was wrong for a week. `scrollWidth 498` at a 390px viewport was reported
+  again and again — in walk notes and in briefs — as `DashboardShot`'s `.tab`/`.soon`
+  rules. It was not: E171 removed DashboardShot entirely and measured 498 before AND
+  after, unchanged. The tab row could never have been the cause, because `.tabs` carries
+  `overflow-x:auto` further down this file and clips itself.
+
+  It was five legal links in a `display:flex` with no wrap — one unbroken 395px line
+  inside a 326px container, right edge landing at exactly 498.
+
+  ⚠ THE ROW GAP IS SMALLER THAN THE COLUMN GAP ON PURPOSE. `gap:8px 26px` keeps the 26px
+  between links on a line and puts only 8px between wrapped lines; a single `26px` would
+  have left a wrapped second line floating a full link-gap below the first.
+
+  ⚠ NO LINK MAY BE SHORTENED OR DROPPED TO MAKE THIS FIT. They are legal links.
+*/
+.pm-home .foot-bot .lg{display:flex;flex-wrap:wrap;gap:8px 26px}
 @media(max-width:900px){
 .pm-home .hero-row, .pm-home .fw-top, .pm-home .fw-body, .pm-home .cta-dark .wrap, .pm-home .tgrid, .pm-home .kpis, .pm-home .foot{grid-template-columns:1fr}
   .pm-home .foot-groups{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}
