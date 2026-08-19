@@ -1,6 +1,7 @@
 import { getLearnHome, groupChips } from "@/lib/learn-home";
 import { getSessionViewer } from "@/lib/session";
 import { LearnHome } from "@/components/learn/LearnHome";
+import { LearnPublic } from "@/components/learn/LearnPublic";
 
 export const metadata = {
   title: "Learn — Panameer",
@@ -28,7 +29,29 @@ export default async function LearnPage({
   searchParams: Promise<{ tab?: string }>;
 }) {
   const viewer = await getSessionViewer();
-  const cards = await getLearnHome(viewer?.userId ?? null);
+
+  /*
+    ── ⚠ SIGNED OUT, `/learn` IS A SALES PAGE (E223) ──────────────────────────
+    Scott: "the public facing pages are sales... pretty much only. They are to get you
+    to create an account." The layout already branched on the viewer for the SHELL;
+    this is the same branch for the CONTENT. No new route, no redirect, no second URL.
+
+    ⚠ THE RETURN IS BEFORE `getLearnHome`, DELIBERATELY. `LearnPublic` renders no
+    catalog data, so a visitor must not cost a catalog query — asserted from the server
+    log, not from reading this.
+
+    ⚠ AND IT CHANGES WHAT `?tab=mine` DOES SIGNED OUT. That used to render the catalog
+    with an empty "Sign in to keep track" state; a shared `?tab=mine` link now lands on
+    the sales page instead. That is correct — the tab is a filter over a catalog the
+    visitor no longer sees — but it is a change in what an existing link does.
+
+    ⚠ `searchParams` IS STILL AWAITED BELOW, not here: awaiting it on this branch would
+    make the sales page depend on the request's query string for nothing, and a page
+    that reads searchParams cannot be statically rendered.
+  */
+  if (!viewer) return <LearnPublic />;
+
+  const cards = await getLearnHome(viewer.userId);
   /*
     WS1-B — `?tab=mine` opens on My Learning Paths. The rail lists the two as
     separate submenu entries; they are one page with the filter flipped, which
@@ -41,7 +64,7 @@ export default async function LearnPage({
     <LearnHome
       cards={cards}
       chips={groupChips(cards)}
-      signedIn={Boolean(viewer)}
+      signedIn
       initialTab={tab === "mine" ? "mine" : "all"}
     />
   );
