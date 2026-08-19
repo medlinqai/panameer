@@ -2524,6 +2524,61 @@
 .pm-home .rm-btn .ash-sv{width:14px;height:14px}
 .pm-home .rm-note{font-size:11px;color:var(--muted);margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
 
+/* ---- GET THE TALENT's SHOT (brief_get_the_talent_graphic, E176) --------- */
+/*
+  One roadmap milestone offered three ways. Ported from
+  mockups/get_the_talent_2026-08-19.html.
+
+  ⚠ EVERY CLASS IS NAMESPACED `gts-`, AND THE AVATAR IS WHY. The mockup styles its
+  avatar as `.ch .av`, which worked there because nothing else defined `.av`. This
+  stylesheet HAS a bare `.pm-home .av` at ~line 892 — a 38px square with a 10px radius,
+  belonging to another shot — and it would have captured the person's round avatar,
+  squaring it and leaving the initials on no background. That is the collision class the
+  brief warned about and it is real here, not hypothetical.
+
+  ⚠ NO PADDING ON `.ash-main` FROM HERE. It is shared by steps 2/4/5 and the tracker;
+  nothing overhangs this frame, so this section adds no modifier to it.
+*/
+.pm-home .gts-three{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+/* `flex-column` so `.gts-price` can `margin-top:auto` and the three price blocks line up
+   however unevenly the facts above them wrap */
+.pm-home .gts-c{display:flex;flex-direction:column;min-width:0;border:1px solid var(--line);border-radius:14px;padding:16px 16px 17px}
+/* the selected state — magenta border plus a soft ring, not a fill */
+.pm-home .gts-c.is-pick{border-color:var(--mag);box-shadow:0 0 0 3px rgba(215,44,214,.08)}
+.pm-home .gts-ck{align-self:flex-start;margin-bottom:12px;font-family:var(--font-display),sans-serif;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mag-d);background:var(--mag-soft);border-radius:99px;padding:3px 9px;white-space:nowrap}
+.pm-home .gts-ck.is-n{color:var(--text);background:#eef0f6}
+.pm-home .gts-ch{display:flex;align-items:center;gap:11px;margin-bottom:11px}
+/* ⚠ ROUND AND INK for a PERSON, magenta square for a THING — that difference is the
+   fastest read of which of the three kinds a card is. */
+.pm-home .gts-av{width:40px;height:40px;flex:0 0 auto;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;line-height:1;font-family:var(--font-display),sans-serif;font-size:13px;font-weight:700}
+.pm-home .gts-av.is-sq{border-radius:11px;background:var(--mag)}
+.pm-home .gts-av .ash-sv{width:19px;height:19px}
+.pm-home .gts-cht{min-width:0}
+.pm-home .gts-cht b{display:block;font-family:var(--font-display),sans-serif;font-size:13.5px;font-weight:700;color:var(--ink);line-height:1.25}
+.pm-home .gts-cht span{display:block;font-size:10.5px;color:var(--muted);margin-top:2px}
+.pm-home .gts-meta{display:grid;gap:5px;margin-bottom:13px}
+.pm-home .gts-meta div{display:flex;align-items:baseline;gap:7px;font-size:11px;color:var(--text)}
+/* the label column is fixed so the three cards' values start on one line */
+.pm-home .gts-meta u{flex:0 0 auto;width:74px;text-decoration:none;font-size:10.5px;color:var(--muted)}
+.pm-home .gts-price{margin-top:auto;padding-top:12px;border-top:1px solid var(--line)}
+.pm-home .gts-price b{display:block;font-family:var(--font-display),sans-serif;font-size:19px;font-weight:700;color:var(--ink)}
+.pm-home .gts-price span{display:block;font-size:10.5px;color:var(--muted);margin-top:1px}
+/*
+  ⚠ THREE TONES FOR THREE DIFFERENT COMMITMENTS — see the long note in the component on
+  why the verbs differ. Outlined magenta = a conversation, grey outline = a review, solid
+  = the only one with nobody left to accept.
+*/
+.pm-home .gts-act{display:block;margin-top:12px;padding:9px 12px;text-align:center;font-family:var(--font-display),sans-serif;font-size:12px;font-weight:700;border-radius:9px;border:1.5px solid var(--mag);color:var(--mag-d)}
+.pm-home .gts-act.is-n{border-color:var(--line);color:var(--text)}
+.pm-home .gts-act.is-fill{background:var(--mag);border-color:var(--mag);color:#fff}
+.pm-home .gts-note{margin-top:16px;font-size:11px;color:var(--muted)}
+
+@media(max-width:900px){
+  /* one column — three cards this dense cannot share 836px and stay readable. The action
+     buttons are already `display:block`, so they stay full-width and legible. */
+  .pm-home .gts-three{grid-template-columns:1fr}
+}
+
 /* ---- THE PROJECT TRACKER SHOT (brief_project_tracker_beef, E173) -------- */
 /*
   Rebuilt from three stat cards + four flat bars into phase groups with their own
