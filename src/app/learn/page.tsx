@@ -1,6 +1,6 @@
-import { getLearnHome, groupChips } from "@/lib/learn-home";
 import { getSessionViewer } from "@/lib/session";
-import { LearnHome } from "@/components/learn/LearnHome";
+import { getMyLearning } from "@/lib/learn-dashboard";
+import { MyLearning } from "@/components/learn/app/MyLearning";
 import { LearnPublic } from "@/components/learn/LearnPublic";
 
 export const metadata = {
@@ -10,62 +10,33 @@ export const metadata = {
 };
 
 /**
- * Learn Home (brief_learn_experience WS1, design ref E136).
+ * `/learn` — TWO PRODUCTS BEHIND ONE URL.
  *
- * ONE page for both audiences. The layout picks the shell; the page folds a
- * signed-in learner's enrolments and progress into the same grid a visitor
- * sees. The design's All / My Learning Paths tabs are a FILTER over one
- * catalog, not two pages — building them as two would let a path look
- * different depending on which door you came through.
+ * Signed out it is a SALES PAGE (E223): the public surfaces exist to get you to
+ * make an account, and a visitor never sees a catalog query.
  *
- * Replaces the audience → group → path browse that brief_learn_v1 WS2 shipped.
- * That page grouped by facet and was right when the catalog was a list to read;
- * cards fronted by the instructor's face are right now that the instructor IS
- * the proposition.
+ * Signed in it is MY LEARNING (brief_learn_app_shell WS2) — the learner's
+ * dashboard, not a catalog. Scott: *"The layout and design i started with is
+ * boring and sucks... Seeing total learning paths vs the LPs, courses, and
+ * lessons i have taken. Gamify it and make the UI look BEAUTIFUL."*
+ *
+ * ⚠ THE CATALOG BROWSER MOVED, IT DID NOT DIE. Search, domain chips, the All /
+ * My filter and the PathCard grid are the only way to find a path by name or by
+ * instructor, and this page is no longer a list. They live at `/learn/paths`,
+ * rendering the same `LearnHome` component unchanged; the dashboard's two
+ * "browse" links point there and so does the rail's submenu. Flagged in the
+ * report as one route more than the brief describes.
+ *
+ * ⚠ `searchParams` IS GONE FROM THIS PAGE. `?tab=mine` was a filter over the
+ * catalog that is no longer here; it now belongs to `/learn/paths`. An existing
+ * `/learn?tab=mine` link lands on the dashboard and the query is ignored — a
+ * change in what an old link does, and the right one, since the tab has nothing
+ * to filter here.
  */
-export default async function LearnPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ tab?: string }>;
-}) {
+export default async function LearnPage() {
   const viewer = await getSessionViewer();
-
-  /*
-    ── ⚠ SIGNED OUT, `/learn` IS A SALES PAGE (E223) ──────────────────────────
-    Scott: "the public facing pages are sales... pretty much only. They are to get you
-    to create an account." The layout already branched on the viewer for the SHELL;
-    this is the same branch for the CONTENT. No new route, no redirect, no second URL.
-
-    ⚠ THE RETURN IS BEFORE `getLearnHome`, DELIBERATELY. `LearnPublic` renders no
-    catalog data, so a visitor must not cost a catalog query — asserted from the server
-    log, not from reading this.
-
-    ⚠ AND IT CHANGES WHAT `?tab=mine` DOES SIGNED OUT. That used to render the catalog
-    with an empty "Sign in to keep track" state; a shared `?tab=mine` link now lands on
-    the sales page instead. That is correct — the tab is a filter over a catalog the
-    visitor no longer sees — but it is a change in what an existing link does.
-
-    ⚠ `searchParams` IS STILL AWAITED BELOW, not here: awaiting it on this branch would
-    make the sales page depend on the request's query string for nothing, and a page
-    that reads searchParams cannot be statically rendered.
-  */
   if (!viewer) return <LearnPublic />;
 
-  const cards = await getLearnHome(viewer.userId);
-  /*
-    WS1-B — `?tab=mine` opens on My Learning Paths. The rail lists the two as
-    separate submenu entries; they are one page with the filter flipped, which
-    is what the tabs already were. Anything else falls back to "all" rather
-    than erroring — a bad query in a URL should not be a broken page.
-  */
-  const { tab } = await searchParams;
-
-  return (
-    <LearnHome
-      cards={cards}
-      chips={groupChips(cards)}
-      signedIn
-      initialTab={tab === "mine" ? "mine" : "all"}
-    />
-  );
+  const data = await getMyLearning(viewer.userId);
+  return <MyLearning data={data} />;
 }

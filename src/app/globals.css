@@ -47,6 +47,49 @@
   --color-learn-hot: #bf1e8b;
 
   /*
+   * LEARN APP RAMP — a SECOND dark ramp, added rather than a repaint of the
+   * four above (brief_learn_app_shell WS1, which asks explicitly whether the
+   * existing tokens were reused or extended).
+   *
+   * ⚠ MEASURED BEFORE DECIDING, because "close enough" was the question. CIE76
+   * ΔE between the existing ramp and the mockup's, stop for stop:
+   *
+   *   0   #1b0d36 → #0f0b1c   ΔE 20.2
+   *   1   #3d1a5b → #241546   ΔE 12.0
+   *   2   #6d1e7c → #4a1560   ΔE 14.0
+   *   3   #bf1e8b → #6b1a6e   ΔE 30.1
+   *
+   * A just-noticeable difference is ~2.3. Stop 3 is the one that settles it:
+   * the existing ramp ENDS IN HOT MAGENTA (#bf1e8b) and the mockup's ends in a
+   * deep aubergine, with the magenta arriving instead as a radial wash on top.
+   * Repointing --color-learn-hot to #6b1a6e would have silently restyled the
+   * marketing Learn band, PathCard, ProviderHome and the /learn public hero,
+   * none of which this brief touches.
+   *
+   * So: FOUR NEW TOKENS, the old four untouched. The cost is two dark ramps in
+   * one stylesheet, which is worth naming — if the surfaces ever converge, this
+   * is the block to delete.
+   */
+  --color-learn-night: #0f0b1c;
+  --color-learn-plum: #241546;
+  --color-learn-wine: #4a1560;
+  --color-learn-orchid: #6b1a6e;
+
+  /*
+   * LEARN ACCENTS — the section-icon rhythm and the progress rings.
+   *
+   * Tokens rather than Tailwind's emerald/amber/blue because these four values
+   * are a SET: grey book, green plus, blue magnifier, amber pencil is the
+   * four-part rhythm the catalog repeats, and its job is that a learner reads
+   * the verb from the colour. Picking each one out of a different palette scale
+   * is how a set drifts.
+   */
+  --color-learn-gold: #f0a500;
+  --color-learn-green: #12a05f;
+  --color-learn-blue: #4a63d8;
+  --color-learn-slate: #6b7280;
+
+  /*
    * CASING PALETTE — sampled from E151-provider-home-casing.png (MASTER WS9),
    * the same pixel-reader method the Learn tokens used:
    *   rail            #272334   (see the E212 note below)

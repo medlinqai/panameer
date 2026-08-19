@@ -172,14 +172,18 @@ export const REQUESTER_NAV: NavItem[] = [
  */
 export const PAGE_TABS: Record<string, NavItem[]> = {
   /*
-    LEARN IS THE EXCEPTION, and deliberately. Its hero already carries an
-    All / My Learning Paths pill row — a live client-side filter over one
-    catalog, not two routes — so a `PageTabs` row above it would be the exact
-    double-row the brief forbids. The two genuinely new destinations (All
-    Courses, My Courses) were folded into that existing row as links instead;
-    see LearnHome. This entry exists so `pageTitleFor` still knows their names.
+    LEARN IS THE EXCEPTION, and deliberately. The pill row that used to carry
+    these — a live client-side filter over one catalog, not two routes — is
+    `LearnHome`'s, and `LearnHome` now lives at `/learn/paths`: `/learn` itself
+    became the learner's dashboard (brief_learn_app_shell WS2). A `PageTabs` row
+    above that dashboard would be the exact double-row the brief forbids, so the
+    dashboard carries a quiet link row of its own instead.
+
+    ⚠ THIS ENTRY IS STILL NOT RENDERED ANYWHERE. It exists so `pageTitleFor`
+    knows these routes' names. `/learn/paths` joins it for the same reason.
   */
   "/learn": [
+    { label: "All Learning Paths", href: "/learn/paths" },
     { label: "All Courses", href: "/learn/courses" },
     { label: "My Courses", href: "/learn/my-courses" },
   ],
