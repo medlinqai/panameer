@@ -47,7 +47,9 @@
     "seed:test-data": "npx esbuild prisma/seed-test-data.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/seed-test-data.cjs --log-level=error && node -r dotenv/config .harness/seed-test-data.cjs dotenv_config_path=.env.local",
     "seed:catalog": "ts-node --project tsconfig.seed.json prisma/seed-catalog.ts",
     "check:email": "npx esbuild src/lib/email/templates.test.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/email.cjs --log-level=error && node .harness/email.cjs",
-    "check:ui": "playwright test"
+    "check:ui": "playwright test",
+    "check:catalog-value": "npx esbuild src/lib/catalog/value-factors.test.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/catalog-value.cjs --log-level=error && node .harness/catalog-value.cjs",
+    "seed:catalog-products": "npx esbuild prisma/seed-catalog-products.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/seed-catalog-products.cjs --log-level=error && node .harness/seed-catalog-products.cjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",

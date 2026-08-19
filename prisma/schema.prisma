@@ -640,7 +640,8 @@ model CapabilityDomain {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  bridges CapabilityModuleBridge[]
+  bridges  CapabilityModuleBridge[]
+  packages PackageCapabilityDomain[]
 
   @@unique([process, name])
   @@index([process])
@@ -1460,11 +1461,16 @@ model Package {
   created_at          DateTime           @default(now())
   updated_at          DateTime           @updatedAt
 
-  providerProfile ProviderProfile      @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
-  roleType        RoleType?            @relation(fields: [role_type_id], references: [id], onDelete: SetNull)
-  deliverables    PackageDeliverable[]
-  milestones      PackageMilestone[]
-  skills          PackageSkill[]
+  providerProfile   ProviderProfile           @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
+  roleType          RoleType?                 @relation(fields: [role_type_id], references: [id], onDelete: SetNull)
+  deliverables      PackageDeliverable[]
+  milestones        PackageMilestone[]
+  skills            PackageSkill[]
+  /// Which capability domains this product operates on — MANY, see the join model.
+  capabilityDomains PackageCapabilityDomain[]
+  /// How this product's value is estimated. MANY: a product can save contract value
+  /// AND avoid a fixed risk, so these are rows, not columns.
+  valueFactors      PackageValueFactor[]
 
   @@index([provider_profile_id])
   @@index([role_type_id])
@@ -2839,4 +2845,103 @@ model TaxRate {
   updated_by String?  @db.Uuid
 
   @@map("tax_rates")
+}
+
+/// PRODUCT <-> CAPABILITY DOMAIN — "which domains does this product operate on" (E002).
+///
+/// ⚠ MANY-TO-MANY, DELIBERATELY, AND A SINGLE COLUMN WOULD HAVE BEEN WRONG. Scott,
+/// 2026-08-19: "Might have to be a 'select all CDs' as opposed to choose which CD this
+/// agent runs on." A P2P health check spans all ten domains; an agent that watches for
+/// off-contract spend touches several. Retrofitting many-to-many after providers have
+/// authored against a single FK is painful, so it is modelled that way from the start.
+///
+/// ⚠ PROCESS IS NOT STORED HERE. It is already reachable through
+/// `CapabilityDomain.process`, and business-process -> capability-domain was ALREADY
+/// modelled before this brief — roughly nine processes decomposing into ~85 domains, with
+/// `@@unique([process, name])` on the domain. A `process` column on the package or on this
+/// join would be a second source of truth that drifts. A query that needs process joins.
+///
+/// ⚠ `Package.role_type_id` IS UNAFFECTED. It answers a different question — what kind of
+/// PRACTITIONER — and nothing here replaces it.
+model PackageCapabilityDomain {
+  id                   String   @id @default(uuid()) @db.Uuid
+  package_id           String   @db.Uuid
+  capability_domain_id String   @db.Uuid
+  created_at           DateTime @default(now())
+
+  package          Package          @relation(fields: [package_id], references: [id], onDelete: Cascade)
+  capabilityDomain CapabilityDomain @relation(fields: [capability_domain_id], references: [id], onDelete: Cascade)
+
+  /// One row per pair — selecting a domain twice is not a different fact.
+  @@unique([package_id, capability_domain_id])
+  /// Indexed BOTH ways: "which domains does this product cover" and "which products
+  /// cover this domain" are both first-class queries.
+  @@index([package_id])
+  @@index([capability_domain_id])
+  @@map("package_capability_domains")
+}
+
+/// WHICH ASSESSMENT VARIABLE A PRODUCT'S ESTIMATE MULTIPLIES.
+///
+/// ⚠ THE ENUM IS CLOSED, AND THAT CLOSURE IS THE WHOLE DESIGN (E003). Scott, 2026-08-19:
+/// "I or the creator will need to estimate its value (saves a 50,000 lawsuit or saves 12%
+/// on each contract)... that something has to be one of the things we are capturing in the
+/// assessment." So a factor may ONLY reference a variable the assessment actually collects.
+/// Anything else produces an estimate anchored to data nobody ever gathered.
+///
+/// `src/lib/catalog/value-factors.ts` maps each member to the wizard field it needs, and
+/// `check:catalog-value` FAILS if any member names a field `AssessmentWizard` does not
+/// collect. Adding a member without adding the question is a build error, on purpose.
+enum ValueFactorBasis {
+  /// `spendBand` — "how much did you spend with outside suppliers last year?"
+  SUPPLIER_SPEND
+  /// `spendBand` x `costLeverBand` — the share of spend on negotiated contracts.
+  CONTRACT_SPEND
+  /// `headcountBand` — people supporting purchasing end to end.
+  PURCHASING_HEADCOUNT
+  /// `revenueBand`
+  REVENUE
+  /// `ebitdaBand`
+  EBITDA
+  /// ⚠ A REAL CASE, NOT A FALLBACK. "Saves a $50,000 lawsuit" is risk avoidance: it does
+  /// not scale with the buyer's size, so it must stay distinguishable from a proportional
+  /// factor whose rate happens to be small. Its rate is CENTS, not basis points.
+  FLAT
+}
+
+/// HOW ONE PRODUCT'S VALUE IS ESTIMATED — basis x rate, gated by a condition (E003).
+///
+/// ⚠ ITS OWN TABLE, NOT COLUMNS ON `Package`, because a product may carry MORE THAN ONE
+/// factor: an agent can save a share of contract value AND avoid a fixed risk. Columns
+/// would force a choice between them.
+///
+/// ⚠ NOTHING COMPUTES ANYTHING FROM THIS YET. This brief stores the factor and stops.
+/// Whether solution values replace, feed, or reconcile against the existing top-down
+/// `DOLLAR_WEIGHTS` model in `lib/assessment/scoring.ts` is Scott's decision and was
+/// explicitly out of scope. Do not wire it to scoring or to the dashboard on the strength
+/// of this model existing.
+model PackageValueFactor {
+  id                 String           @id @default(uuid()) @db.Uuid
+  package_id         String           @db.Uuid
+  basis              ValueFactorBasis
+  /// ⚠ INTEGER, AND THE UNIT IS DECIDED BY `basis` — basis points for every proportional
+  /// basis, CENTS when `basis = FLAT`. Same rule as every other money value in the app: a
+  /// float here produces totals that do not reconcile. `factorUnit()` in
+  /// `lib/catalog/value-factors.ts` is the single place that rule is written down; read it
+  /// rather than re-deriving it at each call site.
+  rate               Int
+  /// The gating condition: apply only when the domain's maturity is BELOW this rung
+  /// (10/23/37/50 — see `MATURITY_RUNGS`). Null = applies at any maturity. A product that
+  /// only helps the manual case says so here instead of being silently over-credited.
+  applies_below_rung Int?
+  /// Free text for the estimator — where the number came from. Not parsed.
+  note               String?
+  created_at         DateTime         @default(now())
+  updated_at         DateTime         @updatedAt
+
+  package Package @relation(fields: [package_id], references: [id], onDelete: Cascade)
+
+  @@index([package_id])
+  @@index([basis])
+  @@map("package_value_factors")
 }
