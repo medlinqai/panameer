@@ -232,8 +232,13 @@ export function ReportDashboard({
           Where you are today
         </h2>
         <p className="mt-1.5 max-w-3xl text-[14.5px] text-ink-2">
-          Your maturity across the eight procurement capability domains — measured from
-          your answers, not a sample.
+          {/*
+            ⚠ WAS "the eight procurement capability domains" AND WENT STALE THE DAY TWO
+            MORE WERE ADDED (E034). Derived from the bank now, so it cannot say the
+            wrong number again — an eleventh domain updates this sentence with no edit.
+          */}
+          Your maturity across the {model.maturityArea.domains.length} procurement
+          capability domains — measured from your answers, not a sample.
         </p>
         <div className="mt-4">
           <MaturityDashboard area={model.maturityArea} />

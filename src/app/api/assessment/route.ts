@@ -91,6 +91,25 @@ const Body = z.object({
     costLeverBand: z.string().max(40).optional().default(""),
     headcountBand: z.string().max(40).optional().default(""),
     aiMode: z.string().max(40).optional().default(""),
+    /*
+      ⚠ SLIDE 15's OTHER FOUR FIELDS (E039), ALL OPTIONAL. Only `email` is required
+      and it keeps its own column — these are stored inside `answers` because the
+      model's Json comment says a new question should not be a migration, and because
+      nothing reads them yet.
+
+      ⚠ OPTIONAL HERE MEANS OPTIONAL IN `REQUIRED_BASICS` TOO. `check:assessment`
+      asserts the client gate and this schema require exactly the same fields, so
+      making any of these required on one side alone fails the build — which is the
+      point. Enforcing one is a one-line change in each of two places, never one.
+    */
+    contact: z
+      .object({
+        timeZone: z.string().trim().max(60).optional().default(""),
+        firstName: z.string().trim().max(80).optional().default(""),
+        lastName: z.string().trim().max(80).optional().default(""),
+        mobile: z.string().trim().max(40).optional().default(""),
+      })
+      .optional(),
   }),
 });
 
