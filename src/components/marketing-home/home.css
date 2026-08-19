@@ -1665,7 +1665,19 @@
 .pm-home .cos-slot.is-taken .cos-time{color:var(--muted)}
 
 /* ---- GetTheTalent ------------------------------------------------------- */
-.pm-home .gtt{background:#fff;padding:74px 0 80px;border-top:1px solid var(--line)}
+/*
+  ⚠ SHADED SINCE E172, AND IT TAKES `--paper-3` (VIOLET) NOT `--paper-2` (BLUE-GREY).
+  Scott: "Swap the shading on these two sections." A LITERAL swap would have handed
+  `.gtt` the `#f2f6f7` blue-grey that `.ptr` was carrying, and dropped it directly under
+  the run of violet `--paper-3` bands the spine has used since E158 — where his
+  instruction was "I want all the SHADED backgrounds to be this," pointing at the
+  violet. So becoming shaded means taking the violet: that is executing the E158
+  decision, not overriding this one.
+
+  The white cards inside this section stay white — that contrast is what makes them read
+  as objects on the field rather than holes in it.
+*/
+.pm-home .gtt{background:var(--paper-3);padding:74px 0 80px;border-top:1px solid var(--line)}
 .pm-home .gtt-h2{font-size:38px;color:var(--ink);font-weight:700;letter-spacing:-.5px;line-height:1.14;margin:12px 0 16px;max-width:900px}
 .pm-home .gtt-lead{color:var(--muted);font-size:17px;line-height:1.6;max-width:760px}
 .pm-home .gtt-needs{list-style:none;margin:22px 0 0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
@@ -1685,7 +1697,14 @@
 .pm-home .gtt-supply a:hover{color:var(--mag)}
 
 /* ---- ProjectTracker ----------------------------------------------------- */
-.pm-home .ptr{background:var(--paper-2);padding:74px 0 80px;border-top:1px solid var(--line)}
+/*
+  ⚠ WHITE SINCE E172 — it was the blue-grey `--paper-2`, which is why the swap could not
+  be literal in the other direction either. The `border-top` stays: with a flat field on
+  one side of a seam and white on the other, and no colour change to do the work at the
+  bottom edge, that 1px rule is the only thing separating this section from what follows
+  (E158 answered that it stays).
+*/
+.pm-home .ptr{background:#fff;padding:74px 0 80px;border-top:1px solid var(--line)}
 .pm-home .ptr-h2{font-size:38px;color:var(--ink);font-weight:700;letter-spacing:-.5px;line-height:1.14;margin:12px 0 16px;max-width:900px}
 .pm-home .ptr-lead{color:var(--muted);font-size:17px;line-height:1.6;max-width:820px}
 .pm-home .ptr-shot{margin-top:32px;background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 30px 70px -46px rgba(23,30,62,.55)}
