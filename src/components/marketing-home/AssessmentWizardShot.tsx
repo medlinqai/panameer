@@ -73,7 +73,14 @@ const ACTIVE_DOMAIN = CAPABILITY_DOMAINS[ACTIVE_INDEX];
  * a prerender failure naming the domain is the cheaper outcome.
  */
 const ACTIVE_LADDER = (() => {
-  const found = ASSESSED_DOMAINS.find((d) => d.name === ACTIVE_DOMAIN.name);
+  /*
+    ⚠ JOINED ON KEY SINCE E004, NOT ON NAME — and this was a latent copy of the defect that
+    brief exists to close. It read `d.name === ACTIVE_DOMAIN.name` and survived only because
+    "Purchase Order Management" happens to be phrased identically in both files; six of the
+    other nine are not, so moving `ACTIVE_INDEX` by one would have thrown. The advertised
+    list's `id` is now the bank's `key`, so there is a real identifier to join on.
+  */
+  const found = ASSESSED_DOMAINS.find((d) => d.key === ACTIVE_DOMAIN.id);
   if (!found) {
     throw new Error(
       `AssessmentWizardShot: "${ACTIVE_DOMAIN.name}" is in capability-domains.ts ` +

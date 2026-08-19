@@ -636,6 +636,23 @@ model CapabilityDomain {
   /// The business process this belongs to — "Procure-to-Pay", "Hire-to-Retire".
   process    String
   name       String
+  /**
+   * ⚠ THE STABLE JOIN KEY (E004). JOIN ON THIS, NEVER ON `name`.
+   * Three files named the same domains three ways — the assessment bank
+   * (`questions-p2p.ts`), the list advertised on `/` (`capability-domains.ts`) and this
+   * table, seeded from `Service Catalog.xlsx`. Names differ BY DESIGN: the deck, the
+   * marketing page and the catalog each phrase them for their own reader, and they changed
+   * twice in one week. Joining on a display string is what produced that defect.
+   * ⚠ THE BANK'S KEY WINS. `questions-p2p.ts` is what scores a respondent and stored
+   * answers already reference it, so changing it would orphan real data; the other two cost
+   * nothing to align.
+   * ⚠ NULLABLE ON PURPOSE, and that is a statement not a gap. Only Procure-to-Pay has an
+   * authored assessment bank, so only its ten rows have keys. Inventing keys for the other
+   * ~75 domains would bake in names no bank scores — the next process's brief assigns its
+   * own keys when its bank is written. Postgres allows many NULLs under a unique index, so
+   * `@@unique([process, key])` still binds every key that exists.
+   */
+  key        String?
   sort_order Int      @default(100)
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -644,7 +661,10 @@ model CapabilityDomain {
   packages PackageCapabilityDomain[]
 
   @@unique([process, name])
+  /// One key per process — the join the value model depends on.
+  @@unique([process, key])
   @@index([process])
+  @@index([key])
   @@map("capability_domains")
 }
 

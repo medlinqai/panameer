@@ -38,6 +38,12 @@ export type PackageInput = {
   skillIds?: string[];
   coverImageUrl?: string | null;
   milestones?: MilestoneInput[];
+  /**
+   * ⚠ WHICH CAPABILITY DOMAINS THIS PRODUCT OPERATES ON — REQUIRED, see
+   * `requireDomains` below for exactly when. A product with none cannot be reached from
+   * any roadmap line, so it is invisible to the buyers it was written for.
+   */
+  capabilityDomainIds?: string[];
 };
 
 async function ownedProfileId(viewer: Viewer): Promise<string> {
@@ -71,6 +77,10 @@ const shape = (p: {
   deliverables: { id: string; text: string; sequence: number }[];
   milestones: { id: string; label: string; percent: number; sequence: number }[];
   skills?: { skill: { id: string; name: string } }[];
+  capabilityDomains?: {
+    capability_domain_id: string;
+    capabilityDomain: { id: string; process: string; name: string };
+  }[];
 }) => ({
   id: p.id,
   title: p.title,
@@ -92,6 +102,14 @@ const shape = (p: {
     .sort((a, b) => a.sequence - b.sequence)
     .map((m) => ({ id: m.id, label: m.label, percent: m.percent })),
   skills: (p.skills ?? []).map((s) => ({ id: s.skill.id, name: s.skill.name })),
+  /* the saved selection, so re-opening the form shows what was chosen */
+  capabilityDomainIds: (p.capabilityDomains ?? []).map((c) => c.capability_domain_id),
+  /*
+    The process is DERIVED from the first linked domain rather than stored on the package —
+    `CapabilityDomain.process` is the one source of truth for it, and a `process` column
+    here would be a second one that drifts. Null for a legacy package with no domains.
+  */
+  process: (p.capabilityDomains ?? [])[0]?.capabilityDomain.process ?? null,
 });
 
 const INCLUDE = {
@@ -99,7 +117,25 @@ const INCLUDE = {
   deliverables: true,
   milestones: true,
   skills: { include: { skill: { select: { id: true, name: true } } } },
+  capabilityDomains: {
+    include: { capabilityDomain: { select: { id: true, process: true, name: true } } },
+  },
 } as const;
+
+/**
+ * The taxonomy the form needs: ~87 domains across nine processes.
+ *
+ * ⚠ SENT WITH THE PACKAGE LIST RATHER THAN FROM ITS OWN ROUTE, so the editor never renders
+ * a process picker before it knows what the processes are. It is small, static reference
+ * data — one fetch is cheaper than two and removes a loading state that could only ever
+ * flash.
+ */
+export async function listCapabilityDomains() {
+  return prisma.capabilityDomain.findMany({
+    orderBy: [{ process: "asc" }, { sort_order: "asc" }, { name: "asc" }],
+    select: { id: true, process: true, name: true, key: true },
+  });
+}
 
 /** Every package the owner has, draft and published. */
 export async function listOwnPackages(viewer: Viewer) {
@@ -195,10 +231,58 @@ async function validSkillIds(ids?: string[]): Promise<string[]> {
   return found.map((f) => f.id);
 }
 
+/**
+ * Filters to capability domains that really exist. Mirrors `validSkillIds`, with one
+ * difference: unknown ids are dropped SILENTLY there because a stale skill is cosmetic,
+ * whereas here dropping everything would leave a product invisible — so the caller checks
+ * the result is non-empty rather than trusting it.
+ */
+async function validCapabilityDomainIds(ids?: string[]): Promise<string[]> {
+  const wanted = [...new Set(ids ?? [])].slice(0, 100);
+  if (wanted.length === 0) return [];
+  const found = await prisma.capabilityDomain.findMany({
+    where: { id: { in: wanted } },
+    select: { id: true },
+  });
+  return found.map((f) => f.id);
+}
+
+/**
+ * ⚠ WHEN AT LEAST ONE DOMAIN IS REQUIRED — AND WHY IT IS NOT SIMPLY "ALWAYS".
+ *
+ * The brief asked for this to be decided and reported rather than assumed, because
+ * "existing packages have no domains" and it must not "silently invalidate every published
+ * package". The rule is:
+ *
+ *   CREATE            -> required. Nothing is published yet, nobody is inconvenienced, and
+ *                        a product born unclassified is a product nobody can find.
+ *   UPDATE, had >= 1   -> required. A classified product must not become unclassified; that
+ *                        would be a silent regression to invisibility.
+ *   UPDATE, had 0      -> NOT required. A package that predates this field can still have
+ *                        its price fixed or a typo corrected. It is nagged, not blocked —
+ *                        the form shows a standing notice, and the moment it gains a domain
+ *                        the rule above locks it in.
+ *
+ * The alternative — blocking every edit to a legacy package — would freeze published
+ * catalog entries behind a field their author never saw, which is the exact failure the
+ * brief named.
+ */
+function requireDomains(resolved: string[], hadBefore: number, isCreate: boolean) {
+  const mustHave = isCreate || hadBefore > 0;
+  if (mustHave && resolved.length === 0) {
+    throw new OnboardingError(
+      "Pick at least one capability domain — it is how buyers find this product from their roadmap.",
+      "INVALID"
+    );
+  }
+}
+
 export async function createPackage(viewer: Viewer, input: PackageInput) {
   const profileId = await ownedProfileId(viewer);
   const milestones = normalizeMilestones(input.milestones);
   const skillIds = await validSkillIds(input.skillIds);
+  const domainIds = await validCapabilityDomainIds(input.capabilityDomainIds);
+  requireDomains(domainIds, 0, true);
   const count = await prisma.package.count({
     where: { provider_profile_id: profileId },
   });
@@ -213,6 +297,9 @@ export async function createPackage(viewer: Viewer, input: PackageInput) {
       deliverables: { create: deliverableRows(input) },
       milestones: { create: milestones },
       skills: { create: skillIds.map((skill_id) => ({ skill_id })) },
+      capabilityDomains: {
+        create: domainIds.map((capability_domain_id) => ({ capability_domain_id })),
+      },
     },
     select: { id: true },
   });
@@ -233,6 +320,12 @@ export async function updatePackage(
 
   const milestones = normalizeMilestones(input.milestones);
   const skillIds = await validSkillIds(input.skillIds);
+  const domainIds = await validCapabilityDomainIds(input.capabilityDomainIds);
+  /* how many it had BEFORE this edit — that is what decides whether zero is allowed */
+  const hadDomains = await prisma.packageCapabilityDomain.count({
+    where: { package_id: owned.id },
+  });
+  requireDomains(domainIds, hadDomains, false);
 
   // Children are small owned sets the editor posts whole — replace them rather
   // than diffing, inside one transaction so a package can never be left with
@@ -241,6 +334,7 @@ export async function updatePackage(
     prisma.packageDeliverable.deleteMany({ where: { package_id: owned.id } }),
     prisma.packageMilestone.deleteMany({ where: { package_id: owned.id } }),
     prisma.packageSkill.deleteMany({ where: { package_id: owned.id } }),
+    prisma.packageCapabilityDomain.deleteMany({ where: { package_id: owned.id } }),
     prisma.package.update({
       where: { id: owned.id },
       data: {
@@ -248,6 +342,9 @@ export async function updatePackage(
         deliverables: { create: deliverableRows(input) },
         milestones: { create: milestones },
         skills: { create: skillIds.map((skill_id) => ({ skill_id })) },
+        capabilityDomains: {
+          create: domainIds.map((capability_domain_id) => ({ capability_domain_id })),
+        },
       },
     }),
   ]);

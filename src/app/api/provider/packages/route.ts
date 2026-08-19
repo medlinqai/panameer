@@ -6,6 +6,7 @@ import {
   updatePackage,
   deletePackage,
   setPackageStatus,
+  listCapabilityDomains,
 } from "@/lib/packages";
 import { OnboardingError } from "@/lib/onboarding";
 
@@ -25,7 +26,12 @@ export async function GET() {
   const gate = await guardApi("canProvideServices");
   if (gate instanceof NextResponse) return gate;
   try {
-    return NextResponse.json({ packages: await listOwnPackages(gate) });
+    /* the taxonomy rides along — see `listCapabilityDomains` for why it is not its own route */
+    const [packages, capabilityDomains] = await Promise.all([
+      listOwnPackages(gate),
+      listCapabilityDomains(),
+    ]);
+    return NextResponse.json({ packages, capabilityDomains });
   } catch (e) {
     return handle(e, "Could not load packages");
   }
@@ -57,7 +63,11 @@ export async function POST(request: Request) {
       default:
         return NextResponse.json({ error: "Unknown action" }, { status: 400 });
     }
-    return NextResponse.json({ ok: true, packages: await listOwnPackages(viewer) });
+    return NextResponse.json({
+      ok: true,
+      packages: await listOwnPackages(viewer),
+      capabilityDomains: await listCapabilityDomains(),
+    });
   } catch (e) {
     return handle(e, "Could not save the package");
   }
