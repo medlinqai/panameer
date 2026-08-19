@@ -89,9 +89,47 @@ import {
  * the casing is invisible there — but WS-5 reuses the SAME strings inside the
  * Continue label ("Next: Pick a Process"), where it very much shows.
  */
+/**
+ * A short list, not the full IANA set (~600 names). This is the last screen before
+ * the payoff and the value is already prefilled from the browser, so the list only
+ * has to cover "the prefill is wrong and I want to correct it" — for which the US
+ * zones plus the handful of business centres are enough. An unrecognised prefill is
+ * prepended at render time rather than dropped.
+ */
+const TIME_ZONES = [
+  "America/New_York",
+  "America/Chicago",
+  "America/Denver",
+  "America/Phoenix",
+  "America/Los_Angeles",
+  "America/Anchorage",
+  "Pacific/Honolulu",
+  "America/Toronto",
+  "America/Mexico_City",
+  "Europe/London",
+  "Europe/Dublin",
+  "Europe/Amsterdam",
+  "Europe/Berlin",
+  "Asia/Kolkata",
+  "Asia/Singapore",
+  "Australia/Sydney",
+];
+
 const STEP_LABELS: Record<Step, string> = {
-  basics: "Company Details",
-  money: "Financial Details",
+  /*
+    ⚠ THE DECK'S NAMES (E040). Scott: "use the deck." These were "Company Details",
+    "Financial Details" and "Where Do We Send It?". They render in the `Next: …`
+    button on the PRECEDING screen as well as in the stepper, so this changes button
+    text too — intended, and each step's on-screen `title` was changed to match so the
+    heading and the button that promised it agree.
+
+    `aimode` keeps "One Last Question" because it has no deck slide and therefore no
+    deck name. `process` keeps "Pick a Process": nothing precedes step 1, so this label
+    never renders in a button.
+  */
+  basics: "Company Information",
+  money: "Financial Information",
+  process_detail: "Process Information",
   process: "Pick a Process",
   /*
     Built from the bank so the label, the counter and the "Next: …" button all
@@ -102,7 +140,7 @@ const STEP_LABELS: Record<Step, string> = {
   */
   ...Object.fromEntries(P2P_DOMAINS.map((d) => [domainStepId(d.key), d.name])),
   aimode: "One Last Question",
-  contact: "Where Do We Send It?",
+  contact: "My Information",
 } as Record<Step, string>;
 
 /**
@@ -168,6 +206,17 @@ type Basics = {
   ebitdaBand: string;
   platform: string;
   email: string;
+  /*
+    ── SLIDE 15's OTHER FOUR FIELDS (E039) ──────────────────────────────────────
+    Scott: "yes, deck wins." ⚠ ONLY `email` IS REQUIRED — see the note on the
+    `contact` step. These four ride to the API inside `answers`, not as columns:
+    `Assessment.answers` is Json precisely so a new question is not a migration, and
+    adding columns would be a schema change this brief does not authorise.
+  */
+  timeZone: string;
+  firstName: string;
+  lastName: string;
+  mobile: string;
 };
 
 export type IndustryOption = { id: string; name: string };
@@ -236,6 +285,23 @@ export function AssessmentWizard({
     ebitdaBand: "",
     platform: "",
     email: "",
+    /*
+      ⚠ TIME ZONE IS PREFILLED FROM THE BROWSER, which already knows it. The step
+      model's own rule: "a form field holding an answer the visitor cannot usefully
+      change is a question pretending to be a confirmation." On the last screen before
+      the payoff, the cheapest honest version of this question is one that is already
+      answered. Guarded because `resolvedOptions()` can throw on an exotic runtime.
+    */
+    timeZone: (() => {
+      try {
+        return Intl.DateTimeFormat().resolvedOptions().timeZone ?? "";
+      } catch {
+        return "";
+      }
+    })(),
+    firstName: "",
+    lastName: "",
+    mobile: "",
   });
   const [process, setProcess] = useState<string>("P2P");
   const [spendBand, setSpendBand] = useState("");
@@ -382,7 +448,27 @@ export function AssessmentWizard({
           ...basics,
           email,
           process,
-          answers: { maturity, spendBand, costLeverBand, headcountBand, aiMode },
+          /*
+            ⚠ THE FOUR NEW CONTACT FIELDS RIDE IN `answers`, NOT AT THE TOP LEVEL, and
+            that is not cosmetic: the `z` schema strips unknown keys, so the copies the
+            `...basics` spread above puts at the top level are DISCARDED. `answers` is
+            Json on the model precisely so a new question is not a migration — the
+            column comment says so — and adding columns would be a schema change this
+            brief does not authorise.
+          */
+          answers: {
+            maturity,
+            spendBand,
+            costLeverBand,
+            headcountBand,
+            aiMode,
+            contact: {
+              timeZone: basics.timeZone,
+              firstName: basics.firstName,
+              lastName: basics.lastName,
+              mobile: basics.mobile,
+            },
+          },
         }),
       });
       const body = await r.json().catch(() => null);
@@ -422,7 +508,8 @@ export function AssessmentWizard({
       return (
         <WizardShell
           {...shell({
-            title: "Company Details",
+            /* Deck slide 12's own title (E040). Was "Company Details". */
+            title: "Company Information",
             subtitle:
               "First, a few basics about your business. Ninety seconds. This is what lets us size the opportunity in real dollars — and figure out how much of it the tax code can fund.",
             /* Never disabled — see `continueBasics`. */
@@ -634,10 +721,21 @@ export function AssessmentWizard({
       return (
         <WizardShell
           {...shell({
-            /* Deck slide 2's own title. */
-            title: "Financial Details",
-            subtitle: "Bands are fine — this is what turns a generic list into your dollars.",
-            continueDisabled: !spendBand || !costLeverBand || !headcountBand,
+            /* Deck slide 13's own title (E040). Was "Financial Details". */
+            title: "Financial Information",
+            subtitle: "Tell us about your revenue and earnings?",
+            /*
+              ⚠ NO `continueDisabled` HERE ANY MORE, AND ITS REMOVAL IS THE FIX FOR A
+              DEAD END (E038). It used to read
+              `!spendBand || !costLeverBand || !headcountBand` — three fields that have
+              MOVED to `process_detail`. Left in place, this screen would have greyed
+              its own Continue out over answers it no longer displays, with no way for
+              the visitor to satisfy it.
+
+              Revenue and EBITDA are gated the way every other required field is: by
+              `continueStep`, which names the first missing one and moves focus to it
+              rather than silently disabling the button (WS-4).
+            */
             onContinue: () => continueStep("money", next),
           })}
         >
@@ -684,6 +782,36 @@ export function AssessmentWizard({
             </Field>
             </div>
 
+          </div>
+        </WizardShell>
+      );
+
+    /*
+      ── SLIDE 14 — PROCESS INFORMATION (E038) ────────────────────────────────
+
+      Scott: "SLIDE 14 IS NOT RELATED TO AI MODE." These three questions used to
+      share the `money` screen, which made that screen carry five answers and made
+      slide 14 look like it had no content of its own. They are the PROCESS-SPECIFIC
+      three: spend with outside suppliers, share on negotiated contracts, and people
+      supporting purchasing are all about Procure-to-Pay, where revenue and EBITDA
+      would read identically on an Order-to-Cash assessment.
+
+      ⚠ THIS SCREEN GATES ONLY ON FIELDS IT SHOWS. All three are rendered below and
+      all three are in `continueDisabled`; none of them is required anywhere else.
+      They are not in `REQUIRED_BASICS` because they are not part of `basics` — they
+      are their own state and ride to the API inside `answers`.
+    */
+    case "process_detail":
+      return (
+        <WizardShell
+          {...shell({
+            title: "Process Information",
+            subtitle: "And finally, give us a few process-specific details…",
+            continueDisabled: !spendBand || !costLeverBand || !headcountBand,
+            onContinue: next,
+          })}
+        >
+          <div className="grid gap-x-8 gap-y-6 lg:grid-cols-2 lg:items-start">
             <Field label="About how much did you spend with outside suppliers last year?">
               <div className="flex flex-wrap gap-2">
                 {SPEND_BANDS.map((b) => (
@@ -857,8 +985,9 @@ export function AssessmentWizard({
       return (
         <WizardShell
           {...shell({
-            title: "We\u2019re Working on Your Dashboard",
-            subtitle: "Where do we send the link?",
+            title: "My Information",
+            /* Deck slide 15's own question — it asks WHO as well as where now. */
+            subtitle: "Who and where do we send your dashboard link to?",
             /*
               ⚠ STILL REQUIRED, AND SIGNED-OUT ONLY. Moving email to the end is
               a FUNNEL change, not a validation change: it is the delivery
@@ -876,7 +1005,45 @@ export function AssessmentWizard({
           })}
         >
           {error && <Notice>{error}</Notice>}
-          <div className="max-w-xl" data-field="email">
+          {/*
+            ⚠ EMAIL IS THE ONLY REQUIRED FIELD ON THIS SCREEN, AND THAT IS A CHOICE I
+            AM STATING SO IT CAN BE ARGUED WITH (E039). The brief asked which of the
+            deck's other four I made required and why.
+
+            Answer: none of them. Email is the only one the report NEEDS — it is the
+            delivery address for the link and `/api/assessment` rejects a submit
+            without it. First/last name improve a greeting, mobile is a second channel
+            nobody has asked to use yet, and time zone is already answered by the
+            browser. This is the last screen before the payoff, so every additional
+            required field here is paid for in completions, and none of these four buys
+            anything the report cannot do without. Each is marked "(optional)" so the
+            visitor can see that rather than infer it.
+
+            If Scott wants any of them enforced, the change is one line each in
+            `REQUIRED_BASICS` plus the matching `z` field — and `check:assessment`
+            asserts the two agree, so it cannot be done on one side only.
+          */}
+          <div className="grid max-w-xl gap-5 sm:grid-cols-2">
+            <div data-field="firstName">
+              <Field label="First name (optional)">
+                <TextInput
+                  value={basics.firstName}
+                  onChange={(e) => set("firstName", e.target.value)}
+                  placeholder="Paul"
+                />
+              </Field>
+            </div>
+            <div data-field="lastName">
+              <Field label="Last name (optional)">
+                <TextInput
+                  value={basics.lastName}
+                  onChange={(e) => set("lastName", e.target.value)}
+                  placeholder="Ingrao"
+                />
+              </Field>
+            </div>
+          </div>
+          <div className="mt-5 max-w-xl" data-field="email">
             <Field
               label="Your email"
               /*
@@ -898,6 +1065,50 @@ export function AssessmentWizard({
                 placeholder="you@company.com"
               />
             </Field>
+          </div>
+          <div className="mt-5 grid max-w-xl gap-5 sm:grid-cols-2">
+            <div data-field="mobile">
+              <Field
+                label="Mobile (optional)"
+                hint="Only if you would rather be texted the link than emailed it."
+              >
+                <TextInput
+                  type="tel"
+                  value={basics.mobile}
+                  onChange={(e) => set("mobile", e.target.value)}
+                  placeholder="+1 555 010 4477"
+                />
+              </Field>
+            </div>
+            <div data-field="timeZone">
+              <Field
+                label="Time zone (optional)"
+                hint="Prefilled from your browser. It sets the times we offer for the expert session."
+              >
+                <select
+                  value={basics.timeZone}
+                  onChange={(e) => set("timeZone", e.target.value)}
+                  aria-label="Time zone"
+                  className="w-full rounded-[12px] border border-line bg-white px-4 py-3 text-[15px] text-ink outline-none focus:border-magenta"
+                >
+                  {/*
+                    ⚠ THE EMPTY OPTION STAYS even though this is prefilled — the same
+                    reasoning as the state select. And the browser's own zone is added
+                    to the list when it is not one of the named ones, so a prefilled
+                    value can never be a <select> showing something it does not hold.
+                  */}
+                  <option value="">Not sure</option>
+                  {(TIME_ZONES.includes(basics.timeZone) || !basics.timeZone
+                    ? TIME_ZONES
+                    : [basics.timeZone, ...TIME_ZONES]
+                  ).map((tz) => (
+                    <option key={tz} value={tz}>
+                      {tz.replace(/_/g, " ")}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            </div>
           </div>
           {/*
             ⚠ NO PHOTO CONTROL, DELIBERATELY. Slide 13 offers an optional "Add

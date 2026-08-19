@@ -17,7 +17,7 @@ import { P2P_DOMAINS } from "@/lib/assessment/questions-p2p";
  * a server render would throw. So the shared fact moves to a plain module that
  * both sides import, and neither owns.
  *
- * ── FIFTEEN STEPS, AND TEN OF THEM ARE GENERATED ─────────────────────────────
+ * ── SIXTEEN STEPS, AND TEN OF THEM ARE GENERATED ─────────────────────────────
  *
  * Scott walked the old five-step version and filed ten errors, nine with one
  * cause: all the capability domains were asked on ONE screen. The deck answers it
@@ -37,8 +37,9 @@ import { P2P_DOMAINS } from "@/lib/assessment/questions-p2p";
  *   slides 2-11   ten capability domains           -> `cd_*`
  *   slide 12      Input Company Information        -> `basics`
  *   slide 13      Input Financial Information      -> `money`
- *   slide 14      Input Process-Specific Information -> `aimode`
+ *   slide 14      Input Process Information        -> `process_detail`
  *   slide 15      Input Your Contact Information   -> `contact`
+ *   (no slide)    the AI Mode question             -> `aimode`
  *
  * It was `basics · money · process · …domains… · aimode · contact`. Process moves
  * from third to FIRST, and company/financial move from first/second to after the
@@ -46,14 +47,21 @@ import { P2P_DOMAINS } from "@/lib/assessment/questions-p2p";
  * already two separate steps, which already satisfied the deck's split of Company
  * Information from Financial Information.
  *
- * ⚠ `aimode` IS THE SLIDE-14 SLOT, AND THIS IS THE ONE PLACE THE CODE DOES NOT
- * FOLLOW THE DECK LITERALLY. The AI Mode question (Do It / Notify / Approve /
- * Delegate) appears NOWHERE in the deck — grepped all 15 slides. Slide 14 asks for
- * "a few process-specific details" and specifies no fields; its only unique content
- * is that heading. Deleting `aimode` to match the deck exactly would remove a LOCKED
- * decision (the maturity ladder x AI Mode axis) and the field the scoring model
- * stores, to replace it with a screen that has no specified content. So AI Mode
- * holds the slot, and the conflict is reported rather than resolved by guess.
+ * ⚠ SLIDE 14 IS `process_detail`, NOT `aimode` — SCOTT RULED (E038): "SLIDE 14 IS
+ * NOT RELATED TO AI MODE." An earlier pass had AI Mode holding that slot because the
+ * deck has no AI Mode screen at all; it turned out the slot belonged to three
+ * questions that were sharing the `money` screen.
+ *
+ * THE SPLIT TEST IS "WOULD THIS ANSWER CHANGE FOR A DIFFERENT PROCESS?" `spendBand`,
+ * `costLeverBand` and `headcountBand` are all about Procure-to-Pay — spend with
+ * outside suppliers, share on negotiated contracts, people supporting purchasing.
+ * `revenueBand` and `ebitdaBand` are about the COMPANY and would be identical on an
+ * Order-to-Cash assessment. That is what "process-specific" means, and it is why the
+ * split survives adding a second process rather than needing redoing.
+ *
+ * ⚠ `aimode` STAYS AND STILL HAS NO DECK SLIDE. It is a locked decision and a field
+ * scoring stores; Scott has confirmed it is simply ABSENT from the deck rather than
+ * replaced by it. So the walk is one screen longer than the deck is slides.
  *
  * ⚠ FOUR SCREENS SIT BETWEEN THE LAST DOMAIN AND THE RESULT, which is where
  * drop-off concentrates. Chat flagged it and Scott kept it: a known trade, not a
@@ -66,6 +74,7 @@ export const ALL_STEPS = [
   ...P2P_DOMAINS.map((d) => domainStepId(d.key)),
   "basics",
   "money",
+  "process_detail",
   "aimode",
   "contact",
 ] as const;
@@ -100,11 +109,16 @@ export const SECTIONS = [
   { id: "company", name: "Company Information", steps: ["basics"] },
   { id: "financial", name: "Financial Information", steps: ["money"] },
   /*
-    Two screens, and the second one disappears for a signed-in visitor — see
-    `stepsFor`. `sectionProgress` counts only the steps actually in the walk, so
-    the sub-counter never promises a screen that will not come.
+    THREE screens since E038, and the last one disappears for a signed-in visitor —
+    see `stepsFor`. `sectionProgress` counts only the steps actually in the walk, so
+    the sub-counter reads "1 of 3 … 3 of 3" signed out and "1 of 2 … 2 of 2" signed
+    in, and never promises a screen that will not come.
   */
-  { id: "wrapup", name: "Process & Contact", steps: ["aimode", "contact"] },
+  {
+    id: "wrapup",
+    name: "Process & Contact",
+    steps: ["process_detail", "aimode", "contact"],
+  },
 ] as const satisfies readonly { id: string; name: string; steps: readonly string[] }[];
 
 /**
@@ -115,7 +129,7 @@ export const SECTIONS = [
  * form field holding an answer the visitor cannot usefully change is a question
  * pretending to be a confirmation.
  *
- * FIFTEEN signed out, FOURTEEN signed in. A visitor reading the marketing page is
+ * SIXTEEN signed out, FIFTEEN signed in. A visitor reading the marketing page is
  * by definition logged out, so `stepsFor(null).length` is the honest number to put
  * in front of them.
  */
