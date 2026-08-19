@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { MarketingHeader } from "@/components/marketing/MarketingHeader";
 import { HomeHero } from "@/components/marketing-home/HomeHero";
-import { DashboardShot } from "@/components/marketing-home/DashboardShot";
 import { LogoRibbon } from "@/components/marketing-home/LogoRibbon";
 import { MethodologyRing } from "@/components/marketing-home/MethodologyRing";
 import { ErpPackages } from "@/components/marketing-home/ErpPackages";
@@ -112,10 +111,11 @@ export default function Home() {
 
           Placed directly after the strip because the walk matrix numbers it
           "Home section 3" against Scott's own numbering — 1 hero, 2 the strip,
-          3 this. The brief says "between HowItWorks and the existing #step-1",
-          and DashboardShot sits in that gap; section 3 puts it here, ahead of
-          the shot, so the reader picks a process before being shown the
-          artefact a process produces.
+          3 this. The brief said "between HowItWorks and the existing #step-1" and
+          positioned it ahead of the dashboard shot that used to sit in that gap, so
+          the reader picked a process before being shown the artefact a process
+          produces. That shot is gone (E159/E171) and the spine's own Step 4 shows the
+          dashboard now, but the ordering argument is unchanged: process first.
 
           Data-driven: every card comes from `lib/processes.ts`. A fifth process
           is an entry in that array and nothing here changes.
@@ -133,12 +133,24 @@ export default function Home() {
           StepDetail sections further down — and that it stayed because "nothing
           comes off Home" was the standing rule and it was Scott's call. He made it:
           "I think these sections can be deleted. Any concerns? I see these as
-          duplicates." They are gone. `DashboardShot` below still carries its own
-          "Step" language and is deliberately untouched — it is stale in other ways
-          (E159) and Scott is repurposing everything from it down himself.
+          duplicates." They are gone.
+
+          ⚠ AND SO IS `DashboardShot` (E159/E171). Scott: "please remove the second
+          image of the dashboard...it is a duplicate." It sat immediately below Step 5
+          showing the same optimization dashboard the spine's Step 4 shows — and it was
+          the STALE copy, still carrying seven strings corrected elsewhere this week:
+          the old heading, "Thursday, 30 September 2022", the "1 Sep 22 – 30 Sep 22"
+          pill and its `▾` glyph, "Your Org Versus Peers", "best-practice ERP peer
+          median", a "Peers" label, and a second TDWCA row. Fixing seven strings in a
+          component whose only job was to duplicate another one would have been wasted
+          work; removing it closed all seven at once.
+
+          ⚠ `DashboardShot.tsx` STAYS ON DISK, UNIMPORTED — same rule as E164. It is the
+          only place some of that chrome exists and the stretch below the spine is still
+          Scott's to repurpose. Its nine `.tab` / `.soon` rules in home.css are now dead
+          too and are deliberately left for that pass.
         */}
         <SpineSteps />
-        <DashboardShot />
 
         {/*
           ── THE ASSESSMENT SPINE (brief_home_assessment_spine, 2026-08-16) ────
