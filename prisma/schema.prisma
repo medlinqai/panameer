@@ -235,6 +235,10 @@ model Company {
   sites       Site[]
   people      Person[]
   memberships CompanyMembership[]
+  /// Assessments ATTRIBUTED to this company (brief_assessment_instance_model).
+  /// Nullable on the other side and it stays that way — an assessment filled in
+  /// before any account exists has no company, and that is the top of the funnel.
+  assessments Assessment[]
 
   @@index([p_account_id])
   @@index([email_domain])
@@ -2816,12 +2820,120 @@ model Assessment {
   user_id String? @db.Uuid
   user    User?   @relation(fields: [user_id], references: [id], onDelete: SetNull)
 
-  invites AssessmentInvite[]
+  /**
+   * ⚠ THE COMPANY THIS ASSESSMENT BELONGS TO — AND IT IS NULLABLE FOREVER.
+   * Scott, 2026-08-19: *"assessments are done at the company level (conceivably
+   * they could do more than one)"*. `company_name` above cannot answer that:
+   * it is whatever the visitor typed, so "StratERP", "Strat ERP" and "straterp"
+   * are three companies and *"this company's assessments"* is not a query you
+   * can write. This column is.
+   * ⚠ `company_name` IS NOT REPLACED BY IT. The assessment is filled in BEFORE
+   * the account exists — `user_id` is null until the magic link is used — so a
+   * visitor has no `Company` to point at. The typed string is what they told us
+   * and it stays; this is added beside it and populated when the assessment is
+   * CLAIMED by someone who already has a company binding.
+   * ⚠ AND IT IS NEVER BACKFILLED BY MATCHING THE STRING. Fuzzy-matching a typed
+   * name to a Company row would attribute a stranger's assessment to a real
+   * customer. (Measured 2026-08-19: 0 of the 7 distinct strings in the table
+   * match any of the 62 Company rows, so there was nothing to be tempted by.)
+   * ⚠ RESOLVED THROUGH `getCompanyBinding`, NEVER `Person.company_id` — the
+   * latter is the signup placeholder and treating it as a company is exactly
+   * `P1-J1.2-E003`. `check:assessment-instance` fails the build on it.
+   */
+  company_id String?  @db.Uuid
+  company    Company? @relation(fields: [company_id], references: [id], onDelete: SetNull)
+
+  invites       AssessmentInvite[]
+  domainResults AssessmentDomainResult[]
 
   @@index([email])
   @@index([user_id])
+  @@index([company_id])
   @@index([industry_specialization_id])
   @@map("assessments")
+}
+
+/**
+ * ONE ROW PER CAPABILITY DOMAIN PER ASSESSMENT — the per-domain result, frozen.
+ * ── ⚠ WHY THIS HAS TO EXIST ──────────────────────────────────────────────────
+ * `Assessment.score_pct`'s comment says the score is stored *"so that a later
+ * change to the scoring code cannot silently rewrite a report somebody has
+ * already been shown."* That protection covered ONE number. Every per-domain
+ * rung, dollar figure and ranking on the report — the part a buyer actually
+ * reads and the part a call is run off — was derived live from `answers` by
+ * `scoreAssessment()`. Move a weight in `DOLLAR_WEIGHTS` and every historical
+ * report changed. This table applies the existing rule to the rest of the model.
+ * ── ⚠ `domain_key` IS THE DURABLE FIELD; THE FK IS A CONVENIENCE ──────────────
+ * Keys are authored in the question bank. `CapabilityDomain.key` exists for all
+ * ten P2P domains, but 77 of 87 catalog rows still have no key and the other
+ * three processes have no bank at all — so the FK is nullable, resolved by key
+ * at write time, and an UNRESOLVABLE KEY WRITES THE ROW WITH A NULL FK rather
+ * than failing the submission. Losing a buyer's assessment because a taxonomy
+ * row is missing is not an acceptable trade.
+ * This is also the join that `"show me the products that address this company's
+ * weakest domains"` needs — `Package` is already indexed by
+ * `capability_domain_id`. ⚠ NOTHING USES THAT YET, deliberately: whether
+ * `PackageValueFactor` replaces, feeds or reconciles against `DOLLAR_WEIGHTS` is
+ * an open decision, and building the match first would bake in the answer.
+ */
+model AssessmentDomainResult {
+  id            String @id @default(uuid()) @db.Uuid
+  assessment_id String @db.Uuid
+
+  /// The bank key as answered ("invoices", "sourcing") — the durable identifier.
+  domain_key           String
+  /// Resolved from `CapabilityDomain.key` at write time. Null when unresolvable.
+  capability_domain_id String? @db.Uuid
+
+  /// 10|23|37|50 (and the legacy 20|30|40), or NULL for "Not sure".
+  /// ⚠ A NULL RUNG IS A ROW, NOT A MISSING ROW. The absence of an answer is
+  /// information — the report counts it and names it back to them.
+  rung Int?
+
+  /**
+   * ⚠ A RANGE, NOT A SCALAR, AND THAT IS A DEVIATION FROM THE BRIEF'S SCHEMA.
+   * The brief specified a single `opportunity_cents`. Every dollar figure on the
+   * report is a RANGE — `formatRange` prints "$90–140K" — because every input is
+   * a band. One column cannot carry it, so the report would have had to
+   * recompute the other end, which is the exact thing this table exists to stop.
+   * Both ends are stored; flagged in the report rather than done quietly.
+   * ⚠ BigInt, not Int. $2.59M is 259,000,000 cents and fits — but the $18.5M
+   * revenue base does not survive a few multiplications inside Int, and a
+   * silently truncated dollar figure on a buyer's report is not a bug you notice.
+   */
+  opportunity_low_cents  BigInt?
+  opportunity_high_cents BigInt?
+
+  /**
+   * ⚠ STORED RATHER THAN RE-SORTED, so the order cannot drift.
+   * Ranking sorts on the high end with no explicit tiebreak, which means the
+   * order of ties comes from the question bank's array order. Re-deriving it
+   * later would reproduce that only by accident.
+   */
+  rank Int?
+
+  /// The dollar weight in force AT SUBMIT, in basis points. 0 for the two
+  /// enabler domains, which recover $0 by design — see UNWEIGHTED_DOMAINS.
+  weight_bps Int?
+
+  /**
+   * ⚠ TRUE MEANS RECONSTRUCTED, NOT MEASURED.
+   * WS3 backfills historical assessments from their stored `answers` using
+   * TODAY's weights, because the weights in force when those reports were shown
+   * were never recorded. That is unavoidable and it must be visible: a row with
+   * this set was rebuilt after the fact and may not match what the recipient saw.
+   */
+  backfilled Boolean @default(false)
+
+  created_at DateTime @default(now())
+
+  assessment Assessment @relation(fields: [assessment_id], references: [id], onDelete: Cascade)
+
+  @@unique([assessment_id, domain_key])
+  @@index([assessment_id])
+  @@index([capability_domain_id])
+  @@index([domain_key])
+  @@map("assessment_domain_results")
 }
 
 /// "Send the other assessments to colleagues" — the referral engine (WS-E).

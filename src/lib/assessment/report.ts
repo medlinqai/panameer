@@ -1,6 +1,14 @@
 import { prisma } from "@/lib/prisma";
 import { EBITDA_BANDS, findBand } from "@/lib/assessment/bands";
-import { scoreAssessment, ebitdaRange, type Answers, type Basics } from "@/lib/assessment/scoring";
+import {
+  scoreAssessment,
+  ebitdaRange,
+  type Answers,
+  type Basics,
+  type DomainResult,
+  type Scored,
+} from "@/lib/assessment/scoring";
+import type { StoredDomainRow } from "@/lib/assessment/domain-results";
 import { moveFor, type Move } from "@/lib/assessment/solutions";
 import { fundingFromEbitda, resolveTaxRate } from "@/lib/assessment/tax-rate";
 import { MATURITY_STAGES, type ProcessArea } from "@/lib/assessment-data";
@@ -13,6 +21,23 @@ import { P2P_DOMAINS } from "@/lib/assessment/questions-p2p";
  * never disagree about the number. One builder, two renderers: if the funding
  * tile says $90–140K, the slide cannot say something else, because neither of
  * them computes it.
+ *
+ * ── ⚠ IT READS STORED ROWS NOW, IT DOES NOT RE-SCORE ─────────────────────────
+ *
+ * Every per-domain rung, dollar range and rank used to be recomputed here by
+ * `scoreAssessment()` on every render, which meant moving a judgement weight in
+ * `DOLLAR_WEIGHTS` silently rewrote every report ever sent — the exact failure
+ * `Assessment.score_pct`'s own comment was written to prevent, applied to one
+ * field out of a dozen (brief_assessment_instance_model WS2).
+ *
+ * `AssessmentDomainResult` now holds one frozen row per domain, and
+ * `scoredFromStored` below reassembles the shape the renderers already expect.
+ *
+ * ⚠ THE RECOMPUTE PATH IS DELIBERATELY STILL HERE, and reachable only when an
+ * assessment has NO stored rows: a submission that landed between this deploy and
+ * the backfill, or one whose rows were deleted. It is a fallback, not the
+ * default, and `check:assessment-instance` fails the build if it becomes the
+ * default again.
  */
 
 export type MoneyRange = [number, number];
@@ -74,7 +99,14 @@ const PROCESS_NAMES: Record<string, string> = {
 export async function buildReport(shareToken: string): Promise<ReportModel | null> {
   const a = await prisma.assessment.findUnique({
     where: { share_token: shareToken },
-    include: { invites: { select: { process: true, name: true, email: true } } },
+    include: {
+      invites: { select: { process: true, name: true, email: true } },
+      /*
+        Ordered by `rank` so the ranked list rebuilds in exactly the order it was
+        stored in. Nulls (unranked — rung 50 or "Not sure") sort last.
+      */
+      domainResults: { orderBy: [{ rank: { sort: "asc", nulls: "last" } }, { domain_key: "asc" }] },
+    },
   });
   if (!a) return null;
 
@@ -86,7 +118,14 @@ export async function buildReport(shareToken: string): Promise<ReportModel | nul
     state: a.state,
   };
 
-  const scored = scoreAssessment(answers, basics);
+  /*
+    ⚠ STORED FIRST. `scoreAssessment` is the FALLBACK and only runs for an
+    assessment with no domain rows at all.
+  */
+  const scored: Scored =
+    a.domainResults.length > 0
+      ? scoredFromStored(a.domainResults, a.score_pct, a.platform)
+      : scoreAssessment(answers, basics);
   const ebitda = ebitdaRange(basics);
   const rate = await resolveTaxRate(a.state);
   const funding = fundingFromEbitda(ebitda, rate.bps);
@@ -181,4 +220,84 @@ export function formatRange([lo, hi]: MoneyRange): string {
   const a = fmt(lo);
   const b = fmt(hi);
   return a === b ? a : `${a}–${b.replace("$", "")}`;
+}
+
+/**
+ * Stored rows → the `Scored` shape the report and the deck already render.
+ *
+ * ── ⚠ NOTHING HERE IS ARITHMETIC ON THE ANSWERS ──────────────────────────────
+ *
+ * Each field is either read straight off a row or is a pure function of the
+ * stored rows. In particular:
+ *
+ *   maturityPct   `Assessment.score_pct` — frozen at submit since day one.
+ *   opportunity   the SUM of the stored per-domain ranges.
+ *   investment    55–70% of the opportunity LOW end. This is not a weight, it is
+ *                 the "pays for itself" ratio the tile's own claim rests on, and
+ *                 it is reproduced here EXACTLY — including the rounding — because
+ *                 a report re-rendered after this change has to print what it
+ *                 printed before.
+ *   leapfrog      a field read: `platform === "legacy"`.
+ *
+ * ⚠ `name` AND `formal` STILL COME FROM THE QUESTION BANK, not from the row.
+ * They are display copy, not results — a typo fix in a domain's name SHOULD
+ * appear on an old report, and storing them would freeze the typo. `domain_key`
+ * is the durable identifier; a key the bank no longer knows falls back to
+ * showing the key rather than an empty label.
+ */
+function scoredFromStored(rows: StoredDomainRow[], scorePct: number, platform: string | null): Scored {
+  const domains: DomainResult[] = rows.map((r) => {
+    const d = P2P_DOMAINS.find((x) => x.key === r.domain_key);
+    return {
+      key: r.domain_key,
+      name: d?.name ?? r.domain_key,
+      formal: d?.formal ?? r.domain_key,
+      rung: r.rung,
+      /*
+        ⚠ `?? 0` AFTER `Number()`, NOT A BigInt LITERAL. `0n` needs an ES2020
+        target and this tsconfig targets lower; `Number(null)` is 0 anyway, so
+        the coalesce guards the null case without a literal the build rejects.
+      */
+      opportunity: [
+        Number(r.opportunity_low_cents ?? 0),
+        Number(r.opportunity_high_cents ?? 0),
+      ],
+      rank: r.rank,
+    };
+  });
+
+  /*
+    ⚠ THE BANK'S ORDER, NOT THE QUERY'S. `scoreAssessment` maps over
+    `P2P_DOMAINS`, so `domains` was always in bank order — and the report's
+    "areas still manual" tile counts over it while the dashboard lists it. The
+    query is ordered by rank so `ranked` rebuilds correctly; this puts `domains`
+    back the way every renderer has always received it. Rows whose key is not in
+    the bank keep their relative order at the end.
+  */
+  const bankIndex = new Map(P2P_DOMAINS.map((d, i) => [d.key, i]));
+  domains.sort(
+    (x, y) =>
+      (bankIndex.get(x.key) ?? Number.MAX_SAFE_INTEGER) -
+      (bankIndex.get(y.key) ?? Number.MAX_SAFE_INTEGER)
+  );
+
+  /* Ranked = exactly the rows that carry a rank, in stored rank order. */
+  const ranked = domains
+    .filter((d) => d.rank !== null)
+    .sort((x, y) => (x.rank ?? 0) - (y.rank ?? 0));
+
+  const opportunity: MoneyRange = [
+    ranked.reduce((n, d) => n + d.opportunity[0], 0),
+    ranked.reduce((n, d) => n + d.opportunity[1], 0),
+  ];
+
+  return {
+    maturityPct: scorePct,
+    unknownDomains: domains.filter((d) => d.rung === null).map((d) => d.key),
+    domains,
+    ranked,
+    opportunity,
+    investment: [Math.round(opportunity[0] * 0.55), Math.round(opportunity[0] * 0.7)],
+    leapfrog: platform === "legacy",
+  };
 }

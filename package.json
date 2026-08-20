@@ -52,7 +52,9 @@
     "seed:catalog-products": "npx esbuild prisma/seed-catalog-products.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/seed-catalog-products.cjs --log-level=error && node .harness/seed-catalog-products.cjs",
     "seed:cd-keys": "npx esbuild prisma/seed-cd-keys.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/seed-cd-keys.cjs --log-level=error && node .harness/seed-cd-keys.cjs",
     "check:cd-keys": "npx esbuild prisma/check-cd-keys.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/check-cd-keys.cjs --log-level=error && node .harness/check-cd-keys.cjs",
-    "check:learn": "npx esbuild scripts/check-learn.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/learn.cjs --log-level=error && node .harness/learn.cjs"
+    "check:learn": "npx esbuild scripts/check-learn.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/learn.cjs --log-level=error && node .harness/learn.cjs",
+    "backfill:assessment-domains": "npx esbuild prisma/backfill-assessment-domains.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/backfill-assessment-domains.cjs --log-level=error && node -r dotenv/config .harness/backfill-assessment-domains.cjs dotenv_config_path=.env.local",
+    "check:assessment-instance": "npx esbuild scripts/check-assessment-instance.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/assessment-instance.cjs --log-level=error && node .harness/assessment-instance.cjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
