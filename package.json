@@ -55,7 +55,8 @@
     "check:learn": "npx esbuild scripts/check-learn.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/learn.cjs --log-level=error && node .harness/learn.cjs",
     "backfill:assessment-domains": "npx esbuild prisma/backfill-assessment-domains.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/backfill-assessment-domains.cjs --log-level=error && node -r dotenv/config .harness/backfill-assessment-domains.cjs dotenv_config_path=.env.local",
     "check:assessment-instance": "npx esbuild scripts/check-assessment-instance.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/assessment-instance.cjs --log-level=error && node .harness/assessment-instance.cjs",
-    "check:app-shell": "playwright test --config=playwright.app-shell.config.ts"
+    "check:app-shell": "playwright test --config=playwright.app-shell.config.ts",
+    "check:community": "npx esbuild scripts/check-community.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/community.cjs --log-level=error && node .harness/community.cjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",

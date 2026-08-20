@@ -4,6 +4,7 @@ import { formatCents, displayFullName } from "@/lib/display";
 import { RichText } from "@/components/profile/RichText";
 import { WorkHistoryEntry } from "@/components/profile/WorkHistoryEntry";
 import { CappedList } from "@/components/profile/CappedList";
+import type { MentorState } from "@/lib/community-signal";
 
 /**
  * The Profile-View section vocabulary (brief_X / E056).
@@ -258,6 +259,7 @@ export function ProfileHero({
   headline,
   overview,
   validated = false,
+  mentor = null,
   rateMinCents,
   rateMaxCents,
   currency = "USD",
@@ -274,6 +276,16 @@ export function ProfileHero({
   headline?: string | null;
   overview?: string | null;
   validated?: boolean;
+  /**
+   * ⚠ THE MENTOR BADGE, SHIPPED DARK ON PURPOSE (brief_community_signal WS3).
+   *
+   * `null` renders NO ROW — that is the onboarding review, which knows nothing
+   * about forums. A state object renders the badge with its condition in words,
+   * and `earned` cannot be true until a threshold exists: see
+   * MENTOR_HELPFUL_THRESHOLD, which is `null` because there is no distribution to
+   * choose one against yet.
+   */
+  mentor?: MentorState | null;
   rateMinCents?: number | null;
   rateMaxCents?: number | null;
   currency?: string;
@@ -341,6 +353,21 @@ export function ProfileHero({
               {validated ? "✓ Validated" : "Validated"}
             </dd>
           </div>
+          {/*
+            MENTOR — same treatment as Validated: dim until earned. It cannot be
+            earned yet by construction (no threshold), so the sub-line carries
+            what it is FOR, which is the point of shipping it dark rather than
+            hiding it: Scott can see the mechanic and the live number before
+            choosing a bar.
+          */}
+          {mentor && (
+            <div>
+              <dd className={mentor.earned ? "font-bold text-emerald-600" : "text-ink-2/60"}>
+                {mentor.earned ? "✓ Mentor" : "Mentor"}
+              </dd>
+              <p className="text-[12.5px] text-ink-2/60">{mentor.detail}</p>
+            </div>
+          )}
           {rateLabel && (
             <div>
               <dt className="inline font-bold">Hourly Rate: </dt>

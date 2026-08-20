@@ -168,8 +168,15 @@ export async function getBoard(slug: string) {
   };
 }
 
-/** One thread: the opening post plus every reply, oldest first. */
-export async function getThread(id: string) {
+/**
+ * One thread: the opening post plus every reply, oldest first.
+ *
+ * `viewerPersonId` is OPTIONAL and read-only — it decides `canMarkHelpful` per
+ * reply, which is a rendering hint and nothing more. ⚠ THE PERMISSION IS NOT
+ * HERE: `markHelpful` re-checks it from the session on every write, because a
+ * hidden button is not a permission.
+ */
+export async function getThread(id: string, viewerPersonId?: string | null) {
   const thread = await prisma.forumThread.findUnique({
     where: { id },
     select: {
@@ -185,12 +192,18 @@ export async function getThread(id: string) {
           id: true,
           body: true,
           created_at: true,
+          marked_helpful_at: true,
           author: { select: authorSelect },
         },
       },
     },
   });
   if (!thread) return null;
+
+  /* Only the person who ASKED can say whether an answer answered. */
+  const viewerIsThreadAuthor =
+    Boolean(viewerPersonId) && thread.author.id === viewerPersonId;
+
   return {
     id: thread.id,
     title: thread.title,
@@ -198,11 +211,17 @@ export async function getThread(id: string) {
     createdAt: thread.created_at.toISOString(),
     author: authorView(thread.author),
     board: thread.board,
+    viewerIsThreadAuthor,
     posts: thread.posts.map((p) => ({
       id: p.id,
       body: p.body,
       createdAt: p.created_at.toISOString(),
       author: authorView(p.author),
+      markedHelpfulAt: p.marked_helpful_at ? p.marked_helpful_at.toISOString() : null,
+      /* ⚠ AND NOT ON THEIR OWN REPLY. A thread author who also answers must not
+         be able to mark themselves helpful — that is the one shape of this
+         mechanic that would be farmable by a single account. */
+      canMarkHelpful: viewerIsThreadAuthor && p.author.id !== viewerPersonId,
     })),
   };
 }
@@ -296,4 +315,90 @@ export async function createPost(
 
   await awardForumPost(person.id, post.id);
   return post;
+}
+
+// ---------------------------------------------------------------------------
+// "This answered my question" (brief_community_signal WS1)
+// ---------------------------------------------------------------------------
+
+/**
+ * MARK A REPLY HELPFUL — the only involvement signal this product has.
+ *
+ * ── ⚠ TWO RULES, BOTH ENFORCED HERE AND NOWHERE ELSE ─────────────────────────
+ *
+ *   1  ONLY THE THREAD'S AUTHOR. The person who asked is the only one who knows
+ *      whether an answer answered, and making it theirs alone is also what stops
+ *      it being brigaded.
+ *   2  NEVER YOUR OWN REPLY. A thread author who answers their own question must
+ *      not be able to mark themselves helpful; that is the single shape of this
+ *      mechanic a lone account could farm.
+ *
+ * ⚠ IT REFUSES, IT DOES NOT SILENTLY NO-OP. A click that appears to work and
+ * changes nothing is worse than an error the UI can explain, and a no-op would
+ * also make the API indistinguishable from a permission bug in testing.
+ *
+ * ⚠ THE ACTING PERSON COMES FROM THE SESSION, never from a body field — the same
+ * rule every other write in this file and in `lib/company.ts` follows. There is
+ * deliberately no `personId` parameter, so no request shape can mark on behalf
+ * of somebody else.
+ */
+async function loadForMarking(viewer: Viewer, postId: string) {
+  const person = await ownPerson(viewer);
+  const post = await prisma.forumPost.findUnique({
+    where: { id: postId },
+    select: {
+      id: true,
+      author_id: true,
+      marked_helpful_at: true,
+      thread: { select: { id: true, author_id: true } },
+    },
+  });
+  if (!post) throw new ForumError("That reply no longer exists.", "NOT_FOUND");
+
+  if (post.thread.author_id !== person.id) {
+    throw new ForumError(
+      "Only the person who asked the question can mark an answer helpful.",
+      "INVALID"
+    );
+  }
+  if (post.author_id === person.id) {
+    throw new ForumError("You can't mark your own reply helpful.", "INVALID");
+  }
+  return { person, post };
+}
+
+export async function markHelpful(viewer: Viewer, postId: string) {
+  const { person, post } = await loadForMarking(viewer, postId);
+  /* Idempotent: re-marking an already-marked reply is not an error, it just
+     does not move the timestamp. Double-clicks happen. */
+  if (post.marked_helpful_at) return { id: post.id, markedHelpfulAt: post.marked_helpful_at.toISOString() };
+
+  const updated = await prisma.forumPost.update({
+    where: { id: post.id },
+    data: { marked_helpful_at: new Date(), marked_helpful_by: person.id },
+    select: { id: true, marked_helpful_at: true },
+  });
+  return {
+    id: updated.id,
+    markedHelpfulAt: updated.marked_helpful_at ? updated.marked_helpful_at.toISOString() : null,
+  };
+}
+
+/** Undo it. Same two rules — an author who mis-clicks has to be able to reverse. */
+export async function unmarkHelpful(viewer: Viewer, postId: string) {
+  const { post } = await loadForMarking(viewer, postId);
+  await prisma.forumPost.update({
+    where: { id: post.id },
+    data: { marked_helpful_at: null, marked_helpful_by: null },
+  });
+  return { id: post.id, markedHelpfulAt: null };
+}
+
+/** The viewer's own Person id, for the read path's rendering hints. */
+export async function viewerPersonId(viewer: Viewer): Promise<string | null> {
+  const person = await prisma.person.findUnique({
+    where: { user_id: viewer.userId },
+    select: { id: true },
+  });
+  return person?.id ?? null;
 }
