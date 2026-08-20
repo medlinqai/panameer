@@ -230,7 +230,14 @@ for (const url of PAGES) {
     for (const w of WIDTHS) {
       await page.setViewportSize({ width: w, height: 900 });
       await page.goto(url, { waitUntil: "domcontentloaded" });
-      await page.waitForTimeout(600);
+      /*
+        ⚠ WAIT FOR THE HEADER, NOT FOR A CLOCK. A fixed 600ms lost a race once on
+        the first visit to a route in a session — a cold Turbopack compile beats
+        it — and `retries: 0` means a flake is a finding rather than something to
+        re-run past. Waiting on the thing being measured removes the class.
+      */
+      await page.waitForSelector("header", { state: "attached", timeout: 30_000 });
+      await page.waitForTimeout(400);
       const m = await measure(page);
       expect(m, `no <header> rendered on ${url}`).not.toBeNull();
       const r = m!;
@@ -362,4 +369,201 @@ test("GUARD 3 — no arbitrary min-[…] variant competes with a named breakpoin
     what this fails on.
   */
   expect(offences, offences.join("\n")).toEqual([]);
+});
+
+// ---------------------------------------------------------------------------
+// THE MARKETING HEADER (P1-ALL-E004)
+// ---------------------------------------------------------------------------
+
+/**
+ * ⚠ 767 · 768 · 769 ARE IN THIS LIST ON PURPOSE.
+ *
+ * The bug lived at exactly `md` and for ~27px above it: at 767 the ☰ carried
+ * everything and the row was 21px wide; at 768 the nav and the auth cluster both
+ * switched on while the ☰ switched off, and the row needed 819px of a 768px
+ * viewport. A sweep that steps 640 → 900 walks straight over it.
+ */
+const PUBLIC_WIDTHS = [360, 375, 640, 767, 768, 769, 900, 1000, 1100, 1180, 1282, 1440, 1562];
+
+const PUBLIC_PAGES = ["/", "/learn", "/hire-talent", "/find-work", "/buy-services"];
+
+/** The four labels are Scott's (P1-J0-E222) and this suite reads them, never sets them. */
+const PUBLIC_NAV_LABELS = ["Learn", "Find Talent", "Find Work", "Shop"];
+
+async function measurePublic(p: Page) {
+  return p.evaluate((labels: string[]) => {
+    const header = document.querySelector("header");
+    if (!header) return null;
+    const iw = window.innerWidth;
+
+    /* An element inside a horizontal scroller is legitimately past the edge. */
+    const inScroller = (e: Element) => {
+      let n = e.parentElement;
+      while (n && n !== document.body) {
+        if (/auto|scroll|hidden/.test(getComputedStyle(n).overflowX)) return true;
+        n = n.parentElement;
+      }
+      return false;
+    };
+    const visible = (e: Element | null) => {
+      if (!e) return false;
+      const cs = getComputedStyle(e);
+      const b = e.getBoundingClientRect();
+      return cs.display !== "none" && cs.visibility !== "hidden" && b.width > 0 && b.height > 0;
+    };
+    const size = (e: Element | null) => {
+      if (!e) return { w: 0, h: 0 };
+      const b = e.getBoundingClientRect();
+      return { w: Math.round(b.width), h: Math.round(b.height) };
+    };
+
+    const pastRight: string[] = [];
+    const offLeft: string[] = [];
+    header.querySelectorAll("*").forEach((e) => {
+      const b = e.getBoundingClientRect();
+      const cs = getComputedStyle(e);
+      if (cs.display === "none" || cs.visibility === "hidden") return;
+      if (b.width === 0 || b.height === 0) return;
+      if (inScroller(e)) return;
+      const d = `${e.tagName}.${String((e as HTMLElement).className).slice(0, 40)}`;
+      if (b.right > iw + 0.5) pastRight.push(`${d} right=${Math.round(b.right)}`);
+      if (b.left < -0.5) offLeft.push(`${d} left=${Math.round(b.left)}`);
+    });
+
+    /*
+      ⚠ EVERY LINK IN THE HEADER, ROW OR DRAWER. The drawer is only in the DOM
+      while it is open, so the burger is clicked before this runs — which is also
+      the only honest way to assert "Log In is reachable at 375".
+    */
+    const links = [...header.querySelectorAll("a")];
+    const byText = (t: string) =>
+      links.filter((a) => (a.textContent ?? "").trim() === t).find((a) => visible(a)) ?? null;
+
+    const logo = header.querySelector("img, svg");
+    const burger = header.querySelector('button[aria-label="Toggle navigation"]');
+    const current = links.filter((a) => a.getAttribute("aria-current") === "page");
+
+    return {
+      innerWidth: iw,
+      headerClientWidth: header.clientWidth,
+      headerScrollWidth: header.scrollWidth,
+      /* ⚠ scrollWidth omits the END PADDING once content overflows. Add it back
+         before treating this as the row's true requirement. */
+      endPadding: (() => {
+        const row = header.firstElementChild;
+        return row ? Math.round(parseFloat(getComputedStyle(row).paddingRight)) : 0;
+      })(),
+      docScrollWidth: document.documentElement.scrollWidth,
+      pastRight,
+      offLeft,
+      logo: { ...size(logo), shown: visible(logo) },
+      burgerShown: visible(burger),
+      nav: Object.fromEntries(
+        labels.map((l) => {
+          const el = byText(l);
+          return [l, { ...size(el), shown: Boolean(el) }];
+        })
+      ),
+      logIn: { ...size(byText("Log In")), shown: Boolean(byText("Log In")) },
+      signUp: { ...size(byText("Sign Up")), shown: Boolean(byText("Sign Up")) },
+      ariaCurrent: current.map((a) => `${(a.textContent ?? "").trim()}→${a.getAttribute("href")}`),
+    };
+  }, labels_);
+}
+
+/* Passed in rather than closed over, so the browser context gets a plain array. */
+const labels_ = PUBLIC_NAV_LABELS;
+
+test.describe("the MARKETING header", () => {
+  for (const url of PUBLIC_PAGES) {
+    test(`MARKETING GUARD 1+2 — clean and whole across the width sweep on ${url}`, async ({
+      browser,
+    }) => {
+      /* No session: these are public pages, and signing in would change the shell. */
+      const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+      const pub = await ctx.newPage();
+      const rows: string[] = [];
+      try {
+        for (const w of PUBLIC_WIDTHS) {
+          await pub.setViewportSize({ width: w, height: 900 });
+          await pub.goto(url, { waitUntil: "domcontentloaded" });
+          /* Same reason as the app block above: wait on the header, not a clock. */
+          await pub.waitForSelector("header", { state: "attached", timeout: 30_000 });
+          await pub.waitForTimeout(400);
+
+          /*
+            Open the drawer when it is the thing carrying the links. Below lg the
+            row has only the logo and the ☰, so "Log In is reachable" is a claim
+            about the drawer and has to be tested there.
+          */
+          const burger = await pub.$('button[aria-label="Toggle navigation"]');
+          const burgerVisible = burger ? await burger.isVisible() : false;
+          if (burgerVisible) {
+            await burger!.click();
+            await pub.waitForTimeout(250);
+          }
+
+          const m = await measurePublic(pub);
+          expect(m, `no <header> on ${url}`).not.toBeNull();
+          const r = m!;
+          rows.push(
+            `  ${String(w).padStart(4)}  doc ${String(r.docScrollWidth).padStart(4)}  hdr ${String(r.headerClientWidth).padStart(4)}/${String(r.headerScrollWidth).padStart(4)} (+${r.endPadding} end pad)  ☰ ${r.burgerShown ? "on" : "off"}`
+          );
+
+          // ── GUARD 1 — overflow, both directions, separately (E168) ──────
+          expect(r.pastRight, `${url} @${w}: marketing header past the RIGHT edge`).toEqual([]);
+          expect(r.offLeft, `${url} @${w}: marketing header clipped off the LEFT`).toEqual([]);
+          expect(
+            r.headerScrollWidth,
+            `${url} @${w}: the marketing header scrolls sideways`
+          ).toBeLessThanOrEqual(r.headerClientWidth);
+
+          // ── GUARD 2 — everything reachable, with real size ──────────────
+          expect(r.logo.shown, `${url} @${w}: the logo is not rendered`).toBe(true);
+          expect(r.logo.w, `${url} @${w}: the logo has no width`).toBeGreaterThan(40);
+
+          for (const label of PUBLIC_NAV_LABELS) {
+            const item = r.nav[label];
+            expect(item.shown, `${url} @${w}: nav item "${label}" is unreachable`).toBe(true);
+            expect(item.w, `${url} @${w}: nav item "${label}" has no width`).toBeGreaterThan(20);
+          }
+          /*
+            ⚠ BOTH AUTH BUTTONS, AT EVERY WIDTH. This is the assertion that would
+            have caught moving the cluster to `lg:flex` while leaving the ☰ at
+            `md:hidden` — a band with no Log In and no Sign Up anywhere.
+          */
+          for (const [name, btn] of [["Log In", r.logIn], ["Sign Up", r.signUp]] as const) {
+            expect(btn.shown, `${url} @${w}: "${name}" is unreachable`).toBe(true);
+            expect(btn.w, `${url} @${w}: "${name}" has no width`).toBeGreaterThan(40);
+            expect(btn.h, `${url} @${w}: "${name}" is under 24px tall`).toBeGreaterThanOrEqual(24);
+          }
+
+          /*
+            ⚠ EXACTLY ONE aria-current. The component's own comment records a bug
+            where three items read as selected at once; a breakpoint change must
+            not resurrect it. `/` has no nav destination of its own, so zero there
+            is correct — one is the ceiling, not the floor.
+
+            The drawer duplicates the nav above md, so the current item legitimately
+            appears twice in the DOM; they are the same destination, which is what
+            is asserted.
+          */
+          const destinations = new Set(r.ariaCurrent.map((x) => x.split("→")[1]));
+          expect(
+            destinations.size,
+            `${url} @${w}: ${destinations.size} different items claim aria-current — ${r.ariaCurrent.join(", ")}`
+          ).toBeLessThanOrEqual(1);
+          if (url !== "/") {
+            expect(
+              destinations.size,
+              `${url} @${w}: nothing is marked as the current page`
+            ).toBe(1);
+          }
+        }
+        console.log(`\n${url}\n${rows.join("\n")}`);
+      } finally {
+        await ctx.close();
+      }
+    });
+  }
 });
