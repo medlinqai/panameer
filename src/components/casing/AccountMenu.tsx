@@ -104,8 +104,14 @@ export function AccountMenu({
     setCompanyOpen(false);
   }, []);
 
-  const first = me?.person.firstName ?? "";
-  const last = me?.person.lastName ?? "";
+  /*
+    ⚠ `me?.person?.` — a signed-in user can have NO Person (P1-ALL-E002).
+    `/api/me` answers 200 with `person: null` for them now instead of 404, so the
+    menu renders with an initials-less avatar and no role badge rather than the
+    whole shell falling back to its error state.
+  */
+  const first = me?.person?.firstName ?? "";
+  const last = me?.person?.lastName ?? "";
   const badge = isAdmin ? "Panameer Admin" : membershipBadge(me);
   /* The company the rail chip used to name. See the My Company block below. */
   const company = me?.company;
@@ -166,7 +172,7 @@ export function AccountMenu({
           <Avatar
             firstName={first}
             lastName={last}
-            photoUrl={me?.person.photoUrl}
+            photoUrl={me?.person?.photoUrl}
             size={34}
           />
           <span className="min-w-0 flex-1">
@@ -196,7 +202,7 @@ export function AccountMenu({
           <Avatar
             firstName={first}
             lastName={last}
-            photoUrl={me?.person.photoUrl}
+            photoUrl={me?.person?.photoUrl}
             size={32}
           />
         </button>
@@ -222,7 +228,7 @@ export function AccountMenu({
               <Avatar
                 firstName={first}
                 lastName={last}
-                photoUrl={me?.person.photoUrl}
+                photoUrl={me?.person?.photoUrl}
                 size={40}
               />
               <div className="min-w-0">

@@ -11,6 +11,21 @@ export type Rates = {
 };
 
 export type Me = {
+  /**
+   * ⚠ NULLABLE — A SIGNED-IN USER WITH NO `Person` IS A STATE THE APP CAN REACH
+   * (P1-ALL-E002).
+   *
+   * `/assess/claim` creates a `User` AND NOTHING ELSE, by design: "a Person needs
+   * a Company, and inventing an org record for someone who has answered eight
+   * questions would put a half-built tenant in the backbone for every curious
+   * visitor." `/api/me` used to answer 404 for exactly that person, so the shell
+   * degraded for a state its own funnel produces.
+   *
+   * It is not merely "the admin before onboarding" either: `P1-J1.2-E003` is the
+   * proof that Person-related state in this codebase DOES drift from what
+   * onboarding assumes, so "every account has a Person" is precisely the kind of
+   * invariant that should be typed rather than believed.
+   */
   person: {
     id: string;
     firstName: string;
@@ -33,7 +48,8 @@ export type Me = {
       isSupport: boolean;
     };
     site: { id: string; name: string } | null;
-  };
+  } | null;
+  /** Null whenever `person` is — a Company is reached through the Person. */
   company: {
     id: string;
     name: string;
@@ -42,8 +58,9 @@ export type Me = {
     logoUrl: string | null;
     /** True when this person administers the company (E214). */
     isAdmin: boolean;
-  };
-  pAccount: { id: string; name: string; kind: string };
+  } | null;
+  /** Null whenever `person` is — same reason. */
+  pAccount: { id: string; name: string; kind: string } | null;
   providerProfile: {
     id: string;
     status: "PENDING" | "ACTIVE";

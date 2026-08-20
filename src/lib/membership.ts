@@ -47,7 +47,10 @@ function plan(me: Me): Plan {
  * Provider.
  */
 function roleWord(me: Me): string | null {
-  const r = me.person.roles;
+  /* ⚠ NO PERSON, NO JOB. A signed-in user without a Person holds no actor flags,
+     and inventing one would put a job title on an account that has none. */
+  const r = me.person?.roles;
+  if (!r) return null;
   if (r.isServiceCoordinator) return "Recruiter";
   if (r.isServiceProvider) return "Provider";
   /*

@@ -86,7 +86,7 @@ export function AppHeader() {
       }).format(now)
     : null;
 
-  const first = me?.person.firstName ?? "";
+  const first = me?.person?.firstName ?? "";
 
   /*
     THE PILL READS ONE SEAM (`getCreditsSummary`). In PHASE 1 that returns
@@ -98,11 +98,11 @@ export function AppHeader() {
   const [credits, setCredits] = useState<CreditsSummary | null>(null);
   useEffect(() => {
     let alive = true;
-    getCreditsSummary(me?.person.id ?? null).then((c) => alive && setCredits(c));
+    getCreditsSummary(me?.person?.id ?? null).then((c) => alive && setCredits(c));
     return () => {
       alive = false;
     };
-  }, [me?.person.id]);
+  }, [me?.person?.id]);
 
   return (
     <header className="flex items-center gap-3 border-b border-line bg-white px-5 py-3 sm:px-8">
@@ -144,26 +144,106 @@ export function AppHeader() {
 
       {/* ---- RIGHT (spec order): Credits · date · AI on · Home · Bug ·
               Notifications · Profile ------------------------------------- */}
+      {/*
+        ── ⚠ THE BREAKPOINTS ON THE THREE AMBIENT PILLS ARE DERIVED, NOT PICKED
+             (P1-ALL-E001) ──────────────────────────────────────────────────
+
+        This row overflowed EVERY authenticated page between 760 and 1180, and
+        the defect was being filed against whatever page was being walked.
+
+        ⚠ THE 248px NOBODY COULD ACCOUNT FOR IS THE RAIL, NOT THE HEADER.
+        `documentElement.scrollWidth` measured 1259 at viewports of both 1100 and
+        1180 — wider than the header's own 1011 min-content, which looked like
+        something being sized from the viewport. It is not. `AppShell` is
+        `flex-col lg:flex-row`, and `AppRail`'s desktop column is
+        `hidden w-[248px] shrink-0 lg:block`. At lg the rail becomes a SIBLING
+        COLUMN of fixed width that cannot shrink, so the document's min-content
+        is rail + header: 248 + 1011 = 1259. Below lg the rail is a stacked top
+        bar and contributes nothing, which is why the number steps by breakpoint
+        (771 · 1011 · 1259) instead of scaling with the window.
+
+        ⚠ AND 1011 IS NOT THE HEADER'S REAL MINIMUM EITHER. Chromium's
+        `scrollWidth` omits the end padding once content overflows, so the true
+        figure is 1011 + 32 = 1043.
+
+        MEASURED WIDTHS (Chromium, 2026-08-19, /dashboard signed in):
+
+          CreditsPill      411px   (301 below md — "Coming soon" is md:inline)
+          day/date pill    125px
+          "AI on"           69px
+          each icon link    36px   x4 (Search-icon below sm, Home, Bug, Bell)
+          AccountMenu       36px
+          gap between       6px
+
+        THE ARITHMETIC. Required header width R = 64 (px-8 both sides) + 24 (two
+        12px gaps) + 170 (the search pill's floor) + G, and the available width A
+        is the viewport minus 248 at lg and above:
+
+          G = 4 icons                          162   R =  420
+          G + "AI on"                          231   R =  489
+          G + AI + credits(301)                544   R =  802
+          G + AI + credits(411)                654   R =  912
+          G + AI + credits + date              785   R = 1043
+
+        The rail is what creates the trap: at 1023 the header has 1023px and the
+        old set (R = 1043) nearly fits; at 1024 it has 776 and the same set needs
+        1043. So every threshold that lands between 1024 and 1043 + 248 = 1291 has
+        to be pushed to the next NAMED breakpoint above it.
+
+          credits  → xl  (1280): A = 1032, R = 912 ✓   (lg would be A = 776 ✗)
+          AI on    → 2xl (1536): A = 1288, R = 1043 ✓
+          date     → 2xl (1536): same row, same budget ✓
+
+        ⚠ NAMED VARIANTS ONLY. `pitfalls.md` 2026-08-19: `sm:` beat
+        `min-[1100px]:` because both media queries match and source order decides.
+        Named breakpoints are ordered by definition. `check:app-shell` fails the
+        build on an arbitrary variant competing with a named one.
+
+        ⚠ THE ORDER THEY DISAPPEAR IN IS THE SPEC'S: date → "AI on" → credits.
+        Credits outlives both, which is why it sits a whole breakpoint lower. The
+        date and "AI on" now go together at 2xl rather than in two steps — there
+        is no named breakpoint between them and 1291, and inventing one to
+        preserve a two-step sequence would be a design-system change to satisfy a
+        sequence nobody watches.
+
+        ⚠ WHAT DID NOT CHANGE, AND WHY. `shrink-0` on this container stays: it is
+        what stops the controls being squeezed into each other, and dropping
+        ambient items is strictly better than shrinking controls people tap. The
+        search pill's `min-w-[170px]` floor also stays — collapsing it to its icon
+        form across a wider band would buy ~134px and is a DESIGN change, so it is
+        proposed in the report rather than shipped here.
+      */}
       <div className="ml-auto flex shrink-0 items-center gap-1.5">
         {/*
-          THE PILL DROPS BELOW sm, and it is the right thing to drop. Something
+          THE PILL DROPS BELOW xl, and it is the right thing to drop. Something
           had to — at 375px the greeting, a 150px pill and four controls
           measured 482px against a 360px viewport, and the three controls on the
           right were pushed clean off the screen. Everything else in this row is
-          a way to GO somewhere; the pill is a number you read. It returns at sm.
+          a way to GO somewhere; the pill is a number you read.
+
+          ⚠ IT USED TO RETURN AT sm (640) AND NOW RETURNS AT xl (1280). At 411px
+          it is by far the widest thing in this row — wider than the four icon
+          links, the date and "AI on" put together — and at sm it made the row
+          802px wide against a 640px viewport. It is still the LAST of the three
+          ambient items to go, per the spec's ranking; it just needs a viewport
+          that can hold it.
         */}
         {credits && (
-          <span className="hidden sm:contents">
+          <span className="hidden xl:contents">
             <CreditsPill summary={credits} />
           </span>
         )}
 
         {/*
-          DAY/DATE — ambient, so it is the first thing to go as the row narrows
-          (md and up only). Restored from 4b7e0ef per the locked spec.
+          DAY/DATE — ambient, so it is the first thing to go as the row narrows.
+          Restored from 4b7e0ef per the locked spec.
+
+          ⚠ md (768) → 2xl (1536). At md it was visible in the exact band where
+          the rail also appears and nothing could shrink, and its 125px was the
+          difference between 912 and 1043 required against 776 available.
         */}
         {dateLabel && (
-          <span className="hidden items-center gap-1.5 rounded-full bg-[#f1faff] px-3 py-1.5 text-[13px] font-semibold text-[#1f7ab8] md:inline-flex">
+          <span className="hidden items-center gap-1.5 rounded-full bg-[#f1faff] px-3 py-1.5 text-[13px] font-semibold text-[#1f7ab8] 2xl:inline-flex">
             <CalendarIcon />
             {dateLabel}
           </span>
@@ -175,8 +255,13 @@ export function AppHeader() {
           styled as a status rather than a control precisely so nobody tries to
           click it, and it carries no aria-live or role — announcing a state
           that never changes would be noise to a screen reader.
+
+          ⚠ sm (640) → 2xl (1536). It is only 69px, so it is not what broke the
+          row — but it is the item the spec ranks SECOND to go, and leaving it at
+          sm would have inverted the ranking against credits at xl. It costs
+          nothing to a walk and it is the cheapest thing on the row to lose.
         */}
-        <span className="hidden items-center gap-1.5 rounded-full bg-black/[0.05] px-3 py-1.5 text-[12.5px] font-semibold text-ink-2 sm:inline-flex">
+        <span className="hidden items-center gap-1.5 rounded-full bg-black/[0.05] px-3 py-1.5 text-[12.5px] font-semibold text-ink-2 2xl:inline-flex">
           <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
           AI on
         </span>

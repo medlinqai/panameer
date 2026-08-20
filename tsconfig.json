@@ -31,11 +31,11 @@
     "**/*.mts"
   ],
   /*
-    `e2e/` IS NOT APP CODE. Playwright compiles its own specs, and pulling them
+    `e2e/` AND `e2e-shell/` ARE NOT APP CODE. Playwright compiles its own specs, and pulling them
     into the app's build scope would put @playwright/test types on the app's
     typecheck for no benefit. Same reasoning that keeps `.harness/` out of
     eslint: a folder that is tooling should not move a gate that measures the
     app.
   */
-  "exclude": ["node_modules", "e2e"]
+  "exclude": ["node_modules", "e2e", "e2e-shell"]
 }
