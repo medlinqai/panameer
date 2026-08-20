@@ -1,5 +1,4 @@
 import { ArrowRight, Calendar } from "lucide-react";
-import Link from "next/link";
 import { AppShot } from "@/components/marketing-home/AppShot";
 import { milestoneByKey, milestoneDetail } from "@/lib/roadmap-milestones";
 
@@ -153,13 +152,13 @@ const KPIS = [
   },
 ];
 
-export function ProjectTracker() {
+export function WorkTracker() {
   return (
     <section className="ptr">
       <div className="wrap">
         {/*
           ⚠ THE EYEBROW ANSWERS A QUESTION INSTEAD OF NAMING A FEATURE.
-          "Project Tracker" labelled the tool; this labels the moment in the
+          "Work Tracker" labelled the tool; this labels the moment in the
           narrative — assess, dashboard, AI Roadmap, and then what? Only the
           eyebrow changes; the heading below it was already right.
         */}
@@ -187,8 +186,19 @@ export function ProjectTracker() {
           <div className="ash-main">
             <div className="ash-mh">
               <div>
+                {/*
+                  ⚠ "Work Tracker", NOT "Work Tracker" (E250), and Scott is
+                  right on a harder point than vocabulary: `Project` IS ALREADY A
+                  DIFFERENT OBJECT. `prisma/schema.prisma` defines `model Project`
+                  with ProjectValidation / ProjectApplication / ProjectOutcome —
+                  THE PROVIDER'S PORTFOLIO WORK, owned by the seller and shown on
+                  their profile. This tracker tracks the BUYER'S purchased work:
+                  work requests and work orders. Naming it after an entity that
+                  exists and means something else is the P1-J2-E004 defect again,
+                  a display string standing in for an identity.
+                */}
                 <h3 className="ash-h3">
-                  Procure-to-Pay AI Roadmap — Project Tracker
+                  Procure-to-Pay AI Roadmap — Work Tracker
                 </h3>
                 <p className="ash-sub">
                   5 milestones from your Year-1 roadmap · loaded from your
@@ -307,14 +317,20 @@ export function ProjectTracker() {
           </div>
         </AppShot>
 
-        <div className="ptr-cta">
-          <Link className="btn btn-solid" href="/assess">
-            Where Can AI Help My Business? &rsaquo;
-          </Link>
-          <span className="ptr-ctan">
-            Free. About eight minutes. No account needed to start.
-          </span>
-        </div>
+        {/*
+          ⚠ THE PAGE NOW ENDS ON THE TRACKER SCREENSHOT WITH NO CLOSING ACTION,
+          AND THAT IS DELIBERATE (E251). Scott: "remove this."
+
+          It was the page's THIRD assessment CTA — the hero has `Take Our Free
+          Assessment` and GetTheTalent has `Start the Assessment ›`, and all three
+          pointed at /assess. The grey note beneath the button went with it rather
+          than being relocated: it quoted a duration that sits on the same page as
+          E226's "in under an hour of your time" — two true statements that were
+          never reconciled, and moving one of them elsewhere would not have
+          reconciled them either.
+
+          ⚠ DO NOT RESTORE IT AS A MISSING CTA.
+        */}
       </div>
     </section>
   );

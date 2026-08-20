@@ -13,7 +13,7 @@ import { HowItWorks } from "@/components/marketing-home/HowItWorks";
 import { ProcessPicker } from "@/components/marketing-home/ProcessPicker";
 import { SpineSteps } from "@/components/marketing-home/SpineSteps";
 import { GetTheTalent } from "@/components/marketing-home/GetTheTalent";
-import { ProjectTracker } from "@/components/marketing-home/ProjectTracker";
+import { WorkTracker } from "@/components/marketing-home/WorkTracker";
 import "@/components/marketing-home/home.css";
 
 /**
@@ -189,7 +189,7 @@ export default function Home() {
         */}
 
         <GetTheTalent />
-        <ProjectTracker />
+        <WorkTracker />
 
         {/*
           ── EVERYTHING BELOW THIS LINE IS THE PRE-SPINE PAGE, UNCHANGED ──────

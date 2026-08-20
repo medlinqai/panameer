@@ -14,16 +14,17 @@ import { GetTheTalentShot } from "@/components/marketing-home/GetTheTalentShot";
  * rendered as one sentence-shaped row keyed to "each recommendation", not as
  * three competing cards you are asked to choose between.
  *
- * ── SCOTT'S COPY IS VERBATIM, WINK INCLUDED ──────────────────────────────────
+ * ── ⚠ THE CONSULTING-FIRM JAB IS GONE (E249) ─────────────────────────────────
  *
- * "Or take our assessment to a consulting firm and pay 250% more to meet us
- * later. 😉" — the brief says verbatim, and the emoji is load-bearing: it is
- * what turns a jab into a joke. Do not sand it off, and do not soften "250%".
+ * A comment block here used to argue at length that the second paragraph was
+ * verbatim and that its emoji was load-bearing. IT WAS SCOTT'S LINE AND SCOTT
+ * WITHDREW IT: *"i think this gets deleted, no? I dont see how we need this."*
+ * The string is not preserved in a comment — a withdrawn claim kept as prose is
+ * still a claim somebody will restore.
  *
- * ⚠ THE ONE THING THAT WOULD BREAK THIS: the positioning guardrail in
- * `panameer_virtual_firm_identity.md` says never compete on price. This line
- * is not a price claim — it is a markup claim about consulting firms, which is
- * the opposite argument. Left exactly as written.
+ * ⚠ THE FIRST PARAGRAPH STAYS. "…we have the world's best Oracle talent — the
+ * same people who built the assessment" is what the Start the Assessment / See
+ * the Bench pair rests on.
  *
  * ── THE PROVIDER LINK IS A LINK, NOT A SECTION ───────────────────────────────
  *
@@ -53,7 +54,16 @@ export function GetTheTalent() {
     <section className="gtt">
       <div className="wrap">
         {/*
-          ⚠ E235 — TITLE CASE IN SOURCE. `.eyebrow` applies
+          ⚠ E246 REVISES E235, and E235 was not wrong — Scott changed his mind on
+          the second walk of the same day. Verbatim: "HIRE TALENT FROM WITHIN YOUR
+          ROADMAP", which restores the sense of his own first draft.
+
+          ⚠ THE PREPOSITION IS THE POINT. *From within* says the talent is
+          reachable INSIDE the artefact; *for* reads as talent hired on behalf of
+          a roadmap that lives somewhere else. That is the whole E238 product
+          claim in one word.
+
+          ⚠ TITLE CASE IN SOURCE. `.eyebrow` applies
           `text-transform:uppercase`, and every other eyebrow on this page is
           authored in title case; hardcoding caps here would be the odd one out.
 
@@ -63,7 +73,7 @@ export function GetTheTalent() {
           It echoes the nav's `Find Talent`, and the section shows three resource
           types — *talent* stretches to cover a package, *expert* does not.
         */}
-        <div className="eyebrow">Hire Talent for Your Roadmap</div>
+        <div className="eyebrow">Hire Talent from Within Your Roadmap</div>
         {/*
           ⚠ E236 IS CHAT'S RECOMMENDATION, NOT SCOTT'S VERBATIM, and the brief
           says so. Scott proposed "Hire your experts directly from the solution
@@ -106,15 +116,11 @@ export function GetTheTalent() {
         */}
         <GetTheTalentShot />
 
-        {/* Scott's copy, verbatim. */}
+        {/* Scott's copy, verbatim. Second paragraph withdrawn — see above (E249). */}
         <blockquote className="gtt-quote">
           <p>
             If you want to move forward, we have the world&rsquo;s best Oracle talent
             &mdash; the same people who built the assessment.
-          </p>
-          <p>
-            Or take our assessment to a consulting firm and pay 250% more to meet
-            us later. <span className="gtt-wink">&#128521;</span>
           </p>
         </blockquote>
 

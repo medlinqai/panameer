@@ -17,7 +17,7 @@
  *
  * So the FACTS live here and each view adds only what is its own:
  *   `AiRoadmapShot`  — an icon, a bar position, a tone and a dollar value
- *   `ProjectTracker` — a phase, a state, a percentage and a status label
+ *   `WorkTracker` — a phase, a state, a percentage and a status label
  *
  * ⚠ `detail` IS COMPOSED, NOT STORED, because the two views need different tails.
  * The roadmap shows "Agent · 2 wks"; the tracker appends a state — "Agent · 2 wks ·
