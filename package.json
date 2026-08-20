@@ -56,7 +56,8 @@
     "backfill:assessment-domains": "npx esbuild prisma/backfill-assessment-domains.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/backfill-assessment-domains.cjs --log-level=error && node -r dotenv/config .harness/backfill-assessment-domains.cjs dotenv_config_path=.env.local",
     "check:assessment-instance": "npx esbuild scripts/check-assessment-instance.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/assessment-instance.cjs --log-level=error && node .harness/assessment-instance.cjs",
     "check:app-shell": "playwright test --config=playwright.app-shell.config.ts",
-    "check:community": "npx esbuild scripts/check-community.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/community.cjs --log-level=error && node .harness/community.cjs"
+    "check:community": "npx esbuild scripts/check-community.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/community.cjs --log-level=error && node .harness/community.cjs",
+    "check:company-binding": "npx esbuild scripts/check-company-binding.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/company-binding.cjs --log-level=error && node .harness/company-binding.cjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",

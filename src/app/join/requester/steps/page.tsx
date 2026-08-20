@@ -148,12 +148,31 @@ export default function RequesterStepsPage() {
         router.replace("/join/requester");
         return;
       }
-      if (s.completed) {
+      /*
+        ── ⚠ DO NOT THROW OUT SOMEBODY THIS WIZARD IS THE ONLY CURE FOR ────────
+        (P1-J1.2-E005)
+
+        A completed requester WITH a company binding belongs on /ready and that
+        redirect is right, unchanged. A completed requester with NO binding is the
+        orphan this brief exists for: `requesterGaps` used to pass them on the
+        strength of the signup placeholder's NAME, so `completed_at` got written
+        while `Person.companyMemberships` stayed empty. They cannot transact, and
+        `CompanyStep` — the only UI in the codebase that can create the
+        membership they are missing — lives on the other side of this line.
+
+        ⚠ THE NARROWEST CHANGE, DELIBERATELY. The brief suggested letting
+        `?step=company` through; this page reads no query parameters at all, so
+        adding that plumbing would be the WIDER change. Gating the bounce on the
+        binding and opening on the company step achieves the same thing and
+        touches the resume logic in one condition.
+      */
+      const unbound = s.completed && !s.company?.bound;
+      if (s.completed && !unbound) {
         router.replace("/join/requester/ready");
         return;
       }
       hydrate(s);
-      setStep((s.resumeStep as RequesterStep) ?? "company");
+      setStep(unbound ? "company" : ((s.resumeStep as RequesterStep) ?? "company"));
       setReady(true);
     })();
   }, [router, hydrate]);

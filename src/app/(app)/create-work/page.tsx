@@ -22,7 +22,16 @@ export default async function Page() {
   if (!viewer) redirect("/login?callbackUrl=%2Fcreate-work");
 
   const transact = await checkTransact(viewer);
-  if (!transact.ok) redirect(`/company?blocked=${transact.reason}`);
+  /*
+    ⚠ `from=` AS WELL AS `blocked=` (P1-J1.2-E004). The reason names which door
+    closed; it does NOT name where the person was. `/company` now renders the
+    company form inline and sends them back afterwards, and without this it would
+    have to guess — two different callers redirect here with NO_COMPANY, so a
+    guess would send half of them somewhere they had never been.
+  */
+  if (!transact.ok) {
+    redirect(`/company?blocked=${transact.reason}&from=${encodeURIComponent("/create-work")}`);
+  }
 
   return <CreateWorkRequest />;
 }
