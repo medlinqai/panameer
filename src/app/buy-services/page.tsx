@@ -19,8 +19,10 @@ import "@/components/marketing-home/home.css";
  * so a second `src/app/packages` would be a duplicate route and fail the build —
  * and that authed page is the provider's OWN packages, a different thing from a
  * public catalogue. Scott's call: the public page lives here; the authed route is
- * untouched. (The header label was "Packages" under the old six-item nav; it is
- * "Buy Services" since block 1 cut the header to four.)
+ * untouched. (The header label was "Packages" under the old six-item nav; it
+ * became "Buy Services" when block 1 cut the header to four, and is "Shop" as of
+ * E222, 2026-08-19. ⚠ THE ROUTE HAS NEVER CHANGED and deliberately does not now —
+ * see the note on `MARKETING_NAV`.)
  *
  * ── STILL NOT THE CATALOGUE, AND THE SECTION IS HONEST ABOUT IT ──────────────
  *
@@ -44,7 +46,10 @@ import "@/components/marketing-home/home.css";
  * prerenders static. Check the build's route table, do not assume.
  */
 export const metadata: Metadata = {
-  title: "Buy Services — Panameer",
+  /* ⚠ MIRRORS THE NAV LABEL, so it moved with it (E222). The other three nav
+     destinations' titles are their own sentences rather than the menu word, so
+     they were left alone. */
+  title: "Shop — Panameer",
   description:
     "Productized services on Panameer — a fixed scope, a fixed price, a named expert.",
 };

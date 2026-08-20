@@ -842,7 +842,10 @@ export const WHY_HERO = {
 } as const;
 
 export const BUY_SERVICES_HERO = {
-  kicker: "PLACEHOLDER — Buy Services",
+  /* ⚠ "Shop" since E222 (2026-08-19). Still a PLACEHOLDER awaiting Scott's copy —
+     the rename only keeps the page's own eyebrow from saying "Buy Services" on a
+     page the header now calls Shop. */
+  kicker: "PLACEHOLDER — Shop",
   headline: "PLACEHOLDER — headline about packaged services goes here.",
 } as const;
 
