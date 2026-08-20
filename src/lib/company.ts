@@ -358,7 +358,18 @@ export type CompanyBinding = Awaited<ReturnType<typeof getCompanyBinding>>;
  * pending/rejected request, so a page can say "waiting on Acme" rather than
  * "no company".
  */
-export async function getCompanyBinding(viewer: Viewer) {
+/*
+  ⚠ TAKES `Pick<Viewer, "userId">`, NOT A WHOLE `Viewer` — widened, not changed.
+
+  The body only ever reads `viewer.userId`, and `brief_assessment_instance_model`
+  needs to call this from `/assess/claim`, where the user has just been CREATED
+  and there is no session to build a Viewer from yet. The alternatives were both
+  worse: fabricate a Viewer with invented role flags, or re-implement the
+  membership query beside this one — and a second copy of "which company is this
+  person actually in" is how `Person.company_id` gets used as a company again
+  (P1-J1.2-E003). Every existing caller passes a full Viewer and still compiles.
+*/
+export async function getCompanyBinding(viewer: Pick<Viewer, "userId">) {
   const person = await prisma.person.findUnique({
     where: { user_id: viewer.userId },
     select: {

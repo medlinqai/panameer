@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { normalizeEmail } from "@/lib/normalizeEmail";
+import { resolveAssessmentCompanyId } from "@/lib/assessment/domain-results";
 import { issueSignInToken } from "@/lib/verification";
 import { OnboardingFrame } from "@/components/onboarding/OnboardingFrame";
 import { VerifiedSignIn } from "@/components/onboarding/VerifiedSignIn";
@@ -76,10 +77,32 @@ export default async function ClaimPage({
     });
   }
 
+  /*
+    ── ⚠ CLAIMING IS WHERE `company_id` GETS SET, WHEN IT CAN BE ───────────────
+
+    Scott's requirement is that assessments belong to a COMPANY, and this is the
+    first moment there is a candidate: the visitor filled the form with no
+    account at all. `resolveAssessmentCompanyId` goes through
+    `getCompanyBinding`, never `Person.company_id`, and returns null for anyone
+    without an APPROVED membership.
+
+    ⚠ WHICH IS ALMOST EVERYONE ARRIVING HERE, BY DESIGN. This page creates a
+    `User` AND NOTHING ELSE — no Person, no Company, no P-Account (see the note
+    above). So a first-time claimer has no binding and `company_id` stays null.
+    It fills in for someone who already had an account in a company and
+    happened to take the assessment logged out. That is the honest behaviour, and
+    ⚠ IT MUST NEVER BLOCK THE CLAIM: a null company is not an error.
+
+    Re-clicking the link is idempotent, so `company_id` is only written on the
+    first claim — a later company change is not this page's business to chase.
+  */
   if (!assessment.user_id) {
     await prisma.assessment.update({
       where: { id: assessment.id },
-      data: { user_id: user.id },
+      data: {
+        user_id: user.id,
+        company_id: await resolveAssessmentCompanyId(user.id),
+      },
     });
   }
 

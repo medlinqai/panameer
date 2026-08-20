@@ -6,6 +6,10 @@ import { appBaseUrl } from "@/lib/verification";
 import { mailConfigured, sendEmail } from "@/lib/resend";
 import { getSessionViewer } from "@/lib/session";
 import { scoreAssessment } from "@/lib/assessment/scoring";
+import {
+  resolveAssessmentCompanyId,
+  writeDomainResults,
+} from "@/lib/assessment/domain-results";
 import { assessmentReadyTemplate } from "@/lib/email/templates/assessment-ready";
 
 /**
@@ -20,12 +24,20 @@ import { assessmentReadyTemplate } from "@/lib/email/templates/assessment-ready"
  * from the browser. A client that could post its own `score_pct` could post
  * itself a report.
  *
- * ── THE SCORE IS FROZEN AT SUBMIT ────────────────────────────────────────────
+ * ── THE SCORE IS FROZEN AT SUBMIT — AND SO IS EVERY DOMAIN, NOW ──────────────
  *
  * `score_pct` is stored rather than derived on every render. The scoring
  * weights will be tuned — they are judgement calls in a named table — and a
  * report someone was emailed in August should not quietly say something
  * different in October because a weight moved.
+ *
+ * ⚠ THAT USED TO COVER EXACTLY ONE NUMBER (brief_assessment_instance_model).
+ * Every per-domain rung, dollar range and rank on the report was recomputed on
+ * every read, so moving a weight in `DOLLAR_WEIGHTS` silently rewrote every
+ * historical report — the precise failure the paragraph above was written to
+ * prevent, applied to one field out of a dozen. The submission and its ten
+ * `AssessmentDomainResult` rows are now written in ONE TRANSACTION, from the
+ * SAME `Scored` object, and the report reads those rows.
  *
  * ── THE EMAIL FAILING MUST NOT LOSE THE LEAD ─────────────────────────────────
  *
@@ -156,24 +168,56 @@ export async function POST(req: Request) {
     state: b.state || null,
   });
 
-  const a = await prisma.assessment.create({
-    data: {
-      email,
-      company_name: b.companyName,
-      industry: b.industry || null,
-      industry_specialization_id: b.industrySpecializationId || null,
-      state: b.state || null,
-      entity_type: b.entityType || null,
-      revenue_band: b.revenueBand,
-      ebitda_band: b.ebitdaBand || null,
-      platform: b.platform,
-      process: b.process,
-      answers: b.answers,
-      score_pct: scored.maturityPct,
-      /* Null for a logged-out visitor — /assess/claim fills it in later. */
-      user_id: owner?.id ?? null,
-    },
-    select: { id: true, share_token: true, company_name: true },
+  /*
+    ── THE COMPANY, WHEN THERE IS ONE ──────────────────────────────────────────
+
+    ⚠ ONLY REACHABLE FOR A SIGNED-IN SUBMITTER, and that is most of the point:
+    an anonymous visitor has no account and therefore no company, which is the
+    top of the funnel and a first-class case. `company_id` stays null for them
+    and `/assess/claim` fills it in if the claimer turns out to have a binding.
+
+    ⚠ RESOLVED THROUGH `getCompanyBinding` (inside the helper), NEVER from
+    `Person.company_id` — that column is the signup placeholder and reading it as
+    a company is `P1-J1.2-E003`. `check:assessment-instance` fails the build if
+    this file mentions it.
+  */
+  const companyId = owner ? await resolveAssessmentCompanyId(owner.id) : null;
+
+  /*
+    ── ⚠ ONE TRANSACTION: THE ASSESSMENT AND ITS DOMAIN ROWS ───────────────────
+
+    A submission and its per-domain breakdown are one fact. If a domain row
+    fails, the whole thing rolls back and the visitor retries — a stored
+    assessment whose report shows three of ten domains is worse than no stored
+    assessment, because nothing downstream can tell it is incomplete.
+
+    ⚠ `writeDomainResults` IS HANDED THE `scored` OBJECT, NOT THE ANSWERS. It
+    does not re-score. Scoring twice is two chances to disagree with the number
+    that was just stored in `score_pct`.
+  */
+  const a = await prisma.$transaction(async (tx) => {
+    const created = await tx.assessment.create({
+      data: {
+        email,
+        company_name: b.companyName,
+        company_id: companyId,
+        industry: b.industry || null,
+        industry_specialization_id: b.industrySpecializationId || null,
+        state: b.state || null,
+        entity_type: b.entityType || null,
+        revenue_band: b.revenueBand,
+        ebitda_band: b.ebitdaBand || null,
+        platform: b.platform,
+        process: b.process,
+        answers: b.answers,
+        score_pct: scored.maturityPct,
+        /* Null for a logged-out visitor — /assess/claim fills it in later. */
+        user_id: owner?.id ?? null,
+      },
+      select: { id: true, share_token: true, company_name: true },
+    });
+    await writeDomainResults(tx, created.id, scored);
+    return created;
   });
 
   /*
