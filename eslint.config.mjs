@@ -28,6 +28,8 @@ const eslintConfig = defineConfig([
       on this folder.
     */
     "e2e/**",
+    /* Same reasoning, same rule — `check:app-shell`'s suite. */
+    "e2e-shell/**",
     /* Playwright's output, and gitignored — never source. */
     "test-results/**",
     "playwright-report/**",

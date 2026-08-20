@@ -63,3 +63,4 @@ src/lib/resume/__fixtures__/expected-parses.json
 test-results/
 playwright-report/
 e2e/.artifacts/
+e2e-shell/.artifacts/

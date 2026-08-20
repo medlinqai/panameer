@@ -380,7 +380,11 @@ export const ADMIN_PERSONA_NAV: NavItem[] = [
 
 /** Does this viewer hold the capability an item asks for? */
 function holds(me: Me, capability: Capability): boolean {
-  const r = me.person.roles;
+  /* ⚠ NO PERSON, NO CAPABILITIES (P1-ALL-E002). Actor flags live on the Person;
+     a user without one holds nothing, and the rail filters down to empty rather
+     than offering actions the account cannot take. */
+  const r = me.person?.roles;
+  if (!r) return false;
   switch (capability) {
     case "canProvideServices":
       return r.isServiceProvider;
@@ -429,7 +433,12 @@ function holds(me: Me, capability: Capability): boolean {
  * When `USER_CLASS` lands, this one line is what changes.
  */
 function isSellerSide(me: Me): boolean {
-  return me.person.roles.isServiceProvider;
+  /* ⚠ AN UNPROFILED USER IS NOT A SELLER. They are not a buyer either, but the
+     buying side is the safe default: every item is filtered by `holds()` anyway,
+     which returns false for all of them, so the practical answer is an empty
+     rail — and defaulting to the SELLER menu would caption that empty rail
+     "SELLER", which is confidently wrong. */
+  return me.person?.roles.isServiceProvider === true;
 }
 
 export function menuForUserClass(me: Me): NavItem[] {
@@ -514,7 +523,7 @@ export function navForRoles(me: Me | null): NavItem[] {
 
 /** Human-readable role labels for greeting/summary. */
 export function roleLabels(me: Me | null): string[] {
-  if (!me) return [];
+  if (!me?.person) return [];
   const r = me.person.roles;
   const labels: string[] = [];
   if (r.isServiceProvider) labels.push("Service Provider");
