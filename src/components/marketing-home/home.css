@@ -1296,6 +1296,15 @@
 */
 .pm-home .hiw-h2{font-size:34px;color:var(--ink);font-weight:700;letter-spacing:-.5px;line-height:1.14;margin:calc(var(--sec-step) * 3) 0 0;max-width:1040px}
 /*
+  ⚠ E228's SUB-LINE. VALUES COPIED FROM `.gtt-lead`, not invented: muted, 17px,
+  1.6 line-height, 760px cap — the page already has a section sub-line and a
+  second scale would be a second thing to keep in step.
+
+  ⚠ NO `text-wrap:balance`, per the STANDING RULE at the top of this section
+  block. The heading above it paid 38px of height for symmetry once already.
+*/
+.pm-home .hiw-sub{color:var(--muted);font-size:17px;line-height:1.6;max-width:760px;margin:14px 0 0}
+/*
   ── THE KICKER, SCOPED TO THIS SECTION ONLY ──────────────────────────────────
 
   ⚠ DO NOT MOVE THIS TO `.pm-home .eyebrow`. That rule is shared by every

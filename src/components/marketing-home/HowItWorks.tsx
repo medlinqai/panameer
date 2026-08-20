@@ -91,7 +91,8 @@ const STEPS: Step[] = [
   {
     n: 2,
     label: "Capability Domain Scoring",
-    body: "Detail processing per capability domain",
+    /* ⚠ E227, verbatim. The LABEL is unchanged. */
+    body: "Provide transaction-level details",
   },
   {
     n: 3,
@@ -162,10 +163,36 @@ export function HowItWorks() {
           the symmetry. See the STANDING RULE at the top of the section block in
           home.css — neither comes back.
         */}
+        {/*
+          ⚠ E226 — VERBATIM, Scott 2026-08-20. "of your time" is LOAD-BEARING:
+          elapsed time includes waiting for an expert, and *your time* promises
+          only the part Panameer controls. The expert is deliberately NOT named
+          here — the buyer attends the review so it counts inside the hour, and
+          the five-tile strip below already names the expert at step 5.
+        */}
         <h2 className="hiw-h2">
-          From process questions to reviewing your AI Roadmap with an expert in
-          about an hour.
+          From process questions to a finished AI Roadmap in under an hour of
+          your time.
         </h2>
+
+        {/*
+          ⚠ E228 — A NEW ELEMENT, NOT A REPLACEMENT. The asymmetry pitch, which
+          was stated nowhere on the page: what the buyer spends against what
+          Panameer does with it.
+
+          ⚠ PLACEMENT HERE IS CHAT'S ASSUMPTION, NOT SCOTT'S DECISION. Measured:
+          it adds 27px at 1440 and pushes `.hiw-strip` from 757 to 784, so the
+          strip does not leave the fold at 900 or 1180. If it reads badly here it
+          should MOVE — reported, not relocated on a guess.
+
+          `.hiw-sub` mirrors `.gtt-lead`'s values exactly (muted, 17px, 1.6,
+          760px cap) rather than inventing a scale, and carries NO
+          `text-wrap:balance` — see the standing rule in home.css.
+        */}
+        <p className="hiw-sub">
+          You spend under an hour. We do the analysis, build the dashboard, build
+          the roadmap, and put an expert on it.
+        </p>
 
         {/*
           ── THE STRIP WRAPS THE LIST BECAUSE THE RAIL IS NOT A LIST ITEM ──────

@@ -105,9 +105,19 @@ export function ProcessPicker() {
           is DELETED, not emptied — this longer title absorbs it. Its CSS rule is
           gone from home.css too.
         */}
+        {/*
+          ⚠ E230 — VERBATIM, Scott 2026-08-20. The detail is DROPPED, not lost:
+          *"we will cover the details in the next section."* Do NOT re-add
+          methods, counts or dollars to this heading.
+
+          ⚠ THE SUBSTANTIVE CHANGE IS `you own` → `you are most familiar with`,
+          and it must survive a re-word. Ownership is a title; the assessment
+          needs whoever knows the numbers. The same qualification is now in
+          `assessment-ready.ts` — two surfaces, one phrase, or the invite
+          contradicts the page that sent it.
+        */}
         <h2 className="pp-h2">
-          Choose the process you own to answer detailed questions about its
-          processing methods, volumes, and dollar amounts.
+          Choose the business process you are most familiar with.
         </h2>
 
         <div className="pp-grid">

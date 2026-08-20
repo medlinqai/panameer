@@ -52,9 +52,33 @@ export function GetTheTalent() {
   return (
     <section className="gtt">
       <div className="wrap">
-        <div className="eyebrow">Get the Talent</div>
+        {/*
+          ⚠ E235 — TITLE CASE IN SOURCE. `.eyebrow` applies
+          `text-transform:uppercase`, and every other eyebrow on this page is
+          authored in title case; hardcoding caps here would be the odd one out.
+
+          ⚠ `Talent`, NOT `Experts`, and that was decided rather than defaulted:
+          `expert` is already load-bearing on this page for the REVIEWER (step 5's
+          eyebrow and title), while this section is who you HIRE TO DO THE WORK.
+          It echoes the nav's `Find Talent`, and the section shows three resource
+          types — *talent* stretches to cover a package, *expert* does not.
+        */}
+        <div className="eyebrow">Hire Talent for Your Roadmap</div>
+        {/*
+          ⚠ E236 IS CHAT'S RECOMMENDATION, NOT SCOTT'S VERBATIM, and the brief
+          says so. Scott proposed "Hire your experts directly from the solution
+          line in your AI Roadmap"; chat flagged that it narrows to one of three
+          cards and that *hire* is wrong for an agent you DEPLOY, and Scott did
+          not pick between the alternatives offered. This covers all three and
+          avoids echoing the new eyebrow's `hire`/`roadmap`.
+          ⚠ IF SCOTT HAS SINCE SAID OTHERWISE, HIS STRING WINS.
+
+          ⚠ THE SUB-LINE BELOW IS UNTOUCHED — "Not a menu to browse…" is what
+          actually carries the pre-scoped-shortcut point.
+        */}
         <h2 className="gtt-h2">
-          Your dashboard names the fixes. This is who does them.
+          Every solution line in your AI Roadmap is something you can hire, buy
+          or deploy.
         </h2>
 
         <p className="gtt-lead">

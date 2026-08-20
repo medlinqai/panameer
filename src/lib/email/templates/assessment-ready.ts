@@ -102,7 +102,7 @@ export function assessmentInviteTemplate({
             <p style="margin:0 0 16px;font-size:16px;line-height:1.6;">
               <strong>${escapeHtml(fromName)}</strong> just finished a free AI opportunity
               assessment for ${escapeHtml(companyName)} and thought you should do the one for
-              <strong>${escapeHtml(processName)}</strong> — the area you own.
+              <strong>${escapeHtml(processName)}</strong> — the area you are most familiar with.
             </p>
             <p style="margin:0 0 24px;font-size:16px;line-height:1.6;">
               It&rsquo;s about eight minutes, and it gets you your own report: what the
