@@ -75,7 +75,20 @@ export const SPINE_STEPS: SpineStep[] = [
        comment above MORE load-bearing, not less. The `title` below is unchanged. */
     eyebrow: "Step 3 - Submit the Completed Assessment to our AIP",
     title:
-      "Answer all of the questions on the assessment and submit it to the Panameer AIP (AI Platform).",
+    /*
+      ⚠ E232 — VERBATIM, Scott 2026-08-20. The acronym expansion order FLIPS to
+      the conventional one: `AI Platform (AIP)`.
+
+      ⚠ AND THAT LEAVES THE EYEBROW ABOVE READING "…to our AIP", so the acronym
+      is now INTRODUCED in the label and EXPANDED in the sentence below it —
+      backwards. Left exactly as it is and FLAGGED: the eyebrow is Scott's string
+      and this brief does not touch it.
+
+      ⚠ THE AIP CLAIM ITSELF IS UNCHANGED AND STAYS — a product named before it
+      exists, deliberately, counsel-gate item 3. This re-word is not licence to
+      revisit it.
+    */
+      "Provide your contact details and submit your answers to the Panameer AI Platform (AIP).",
     /* Built as a component, not an image — see `SpineSteps`' registry. */
     graphic: "submit-to-ai",
   },
@@ -99,7 +112,18 @@ export const SPINE_STEPS: SpineStep[] = [
      * produce.
      */
     title:
-      "Follow the link in your email to see the AI automation options possible and where you stand versus your industry.",
+    /*
+      ⚠ E233 — VERBATIM, Scott 2026-08-20, and three details are deliberate:
+        · `rank`, not `stand`;
+        · the tail is `improve that ranking`, NOT `improve it` — *it* would attach
+          to *your industry*;
+        · `dramatically` was removed on Scott's own call and must not return.
+
+      ⚠ "your industry", NEVER "peers" — still a correction to what Scott typed,
+      and it survives this rewrite. That word asserts a surveyed comparison pool
+      which does not exist.
+    */
+      "Follow the link in your email to see where you rank versus your industry and the solutions that improve that ranking.",
     /*
      * Built as a component, not an image — see `SpineSteps`' registry. It DRAWS
      * the report dashboard rather than importing it: every figure in it is
@@ -120,7 +144,19 @@ export const SPINE_STEPS: SpineStep[] = [
      * two different promises on one page.
      */
     title:
-      "Walk through each of the options available, define your organization's requirements and priorities, and build your 1 year AI roadmap together.",
+    /*
+      ⚠ E234 — VERBATIM, Scott 2026-08-20.
+
+      ⚠ `1-year`, HYPHENATED, AND NOT `3-year`. Unchanged reasoning: the dashboard
+      sizes a YEAR-1 opportunity and the findings table quotes 2–4 weeks per
+      action, so a 3-year roadmap printed beside a Year-1 number is two different
+      promises on one page. ⚠ THE HERO SAYS "12-month roadmap" — three surfaces
+      have to agree.
+
+      ⚠ ALSO: `Roadmap` is CAPITALISED now, where this string had `roadmap`. That
+      is the brief's own casing and it matches every other use on the page.
+    */
+      "This is where it comes together: an expert walks every solution with you, and you prioritize them into your 1-year AI Roadmap.",
     /* Built as a component, not an image — see `SpineSteps`' registry. It ships the
        TIMELINE view; the serpentine mockup is a second view that is not built. */
     graphic: "ai-roadmap",
