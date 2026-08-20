@@ -75,7 +75,15 @@ const CARDS: Card[] = [
       ["History", "14 engagements · 4.9"],
       ["Availability", "2 weeks out"],
     ],
-    price: "$185/hr",
+    price: /*
+      ⚠ E247 — $125, NOT $185. It is a plain string and nothing derives from it,
+      but it changes what this row ARGUES. At `est. 4 wks` the expert now reads as
+      ≈$20,000 against the package's $18,000 fixed and the agent's $450/mo. At
+      $185 it read ≈$29,600 — half again the package — so "three ways to get it
+      done" was not a real choice, it was one obviously-priced option and two
+      cheap ones. ⚠ DO NOT "fix" the other two to restore the old spread.
+    */
+    "$125/hr",
     priceNote: "proposed rate · est. 4 wks",
     action: "Interview",
     actionTone: "",

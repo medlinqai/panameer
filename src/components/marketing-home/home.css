@@ -966,7 +966,7 @@
 /* =========================================================================
    THE OLD PROJECT-TRACKER RULE SET USED TO LIVE HERE. REMOVED AT E173.
 
-   ⚠ IT WAS A LANDMINE, NOT JUST CLUTTER. It styled a previous ProjectTracker design —
+   ⚠ IT WAS A LANDMINE, NOT JUST CLUTTER. It styled a previous WorkTracker design —
    `.trk-sec`, `.trk-head`, `.trk-axis`, `.trk-lane`, `.trk-today`, `.trk-feed`,
    `.trk-chips`, `.tbar`, a Gantt-ish thing — and NOTHING referenced any of its fifteen
    classes: verified zero uses across src/, e2e/ and scripts/ before deleting.
@@ -1188,7 +1188,7 @@
 }
 
 /* =========================================================================
-   THE ASSESSMENT SPINE — HowItWorks, StepDetail x5, GetTheTalent, ProjectTracker
+   THE ASSESSMENT SPINE — HowItWorks, StepDetail x5, GetTheTalent, WorkTracker
    (brief_home_assessment_spine, 2026-08-16)
 
    ⚠ AUTHORED HERE, NOT PORTED. Everything above this line came from
@@ -1696,8 +1696,10 @@
 .pm-home .gtt-when{font-size:14px;line-height:1.55;color:var(--muted)}
 .pm-home .gtt-quote{margin:34px 0 0;border-left:3px solid var(--line);padding:2px 0 2px 20px;max-width:760px}
 .pm-home .gtt-quote p{font-size:18.5px;line-height:1.55;color:var(--text);font-weight:600}
-.pm-home .gtt-quote p+p{margin-top:12px;color:var(--muted);font-weight:500}
-.pm-home .gtt-wink{font-size:17px}
+/* ⚠ TWO RULES REMOVED HERE (E249): the second-paragraph rule and the emoji span
+   rule. Scott withdrew that paragraph, so both had no element left to style.
+   `.gtt-quote` itself stays — its border-left is what a one-paragraph
+   pull-quote wants. */
 .pm-home .gtt-cta{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:30px}
 .pm-home .gtt-cta .btn-solid{padding:14px 30px;font-size:16px}
 .pm-home .gtt-cta .btn-ghost{padding:12.5px 26px;font-size:16px}
@@ -1706,7 +1708,10 @@
 .pm-home .gtt-supply a{color:var(--muted);text-decoration:underline;text-underline-offset:3px}
 .pm-home .gtt-supply a:hover{color:var(--mag)}
 
-/* ---- ProjectTracker ----------------------------------------------------- */
+/* ---- WorkTracker --------------------------------------------------------- */
+/* ⚠ THE `ptr` PREFIX IS HISTORICAL and deliberately kept (E250). The component
+   is `WorkTracker` now; renaming the prefix would touch 40+ rules here and buy
+   nothing a reader of this file cares about. */
 /*
   ⚠ WHITE SINCE E172 — it was the blue-grey `--paper-2`, which is why the swap could not
   be literal in the other direction either. The `border-top` stays: with a flat field on
@@ -1740,9 +1745,10 @@
 .pm-home .ptr-fill{display:block;height:100%;border-radius:999px;background:#dfe4ee}
 .pm-home .ptr-fill.is-done{background:var(--green)}
 .pm-home .ptr-fill.is-run{background:var(--mag)}
-.pm-home .ptr-cta{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-top:30px}
-.pm-home .ptr-cta .btn-solid{padding:15px 32px;font-size:16.5px}
-.pm-home .ptr-ctan{font-size:14px;color:var(--muted)}
+/* ⚠ THREE RULES REMOVED HERE (E251): the closing-CTA row, its solid button and
+   its grey note. That was the page's THIRD assessment CTA and Scott removed it,
+   so all three rules were dead. The page now ends on the tracker screenshot with
+   no closing action, and that is deliberate — see WorkTracker.tsx. */
 
 /* ---- responsive --------------------------------------------------------- */
 @media(max-width:1080px){
@@ -2487,7 +2493,15 @@
 
 /* the timeline. 296px for the action, the rest is one four-quarter lane. */
 .pm-home .rm-tl{border:1px solid var(--line);border-radius:13px;overflow:hidden}
-.pm-home .rm-hd,.pm-home .rm-row{display:grid;grid-template-columns:296px 1fr;align-items:center}
+/* ⚠ A THIRD COLUMN (E248) — the per-line `Request` action. `auto` so it takes
+   exactly the chip's width and the lane keeps every remaining pixel: the lane is
+   the coordinate space the bars are positioned in, so it must not be given a
+   fixed share. */
+.pm-home .rm-hd,.pm-home .rm-row{display:grid;grid-template-columns:296px 1fr auto;align-items:center}
+/* ⚠ QUIET BY CONSTRUCTION. `Load into Work Tracker` is the section's primary
+   action; this must never compete with it — no fill, no brand colour, one step
+   down in size. */
+.pm-home .rm-req{margin:0 16px 0 14px;font-size:10px;font-weight:600;letter-spacing:.02em;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:4px 10px;white-space:nowrap;background:#fff}
 .pm-home .rm-hd{border-bottom:1px solid var(--line);background:#fafbfd}
 .pm-home .rm-hd-a{padding:9px 16px;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
 .pm-home .rm-row{border-bottom:1px solid #f2f3f8}
@@ -2803,6 +2817,15 @@
   .pm-home .rm-hd-a{display:none}
   .pm-home .rm-row{grid-template-columns:1fr}
   .pm-home .rm-a{padding-bottom:6px}
+  /*
+    ⚠ THE `Request` CHIP MUST NOT STRETCH ONCE THE ROW STACKS (E248). With the
+    grid collapsed to one column the third cell is full width, and a 10px chip
+    rendered 758px wide reads as a banner rather than an affordance. Measured
+    before this rule: 234px at 360 and 758px at 900. `justify-self:start` gives
+    it back its content width; it moves under the lane, which is where a stacked
+    row wants it.
+  */
+  .pm-home .rm-req{justify-self:start;margin:0 16px 12px}
   .pm-home .rm-lane{border-top:1px solid var(--line);margin:0 16px 12px;min-height:34px}
   .pm-home .rm-hd .rm-lane{border-top:0;margin-bottom:0}
 }

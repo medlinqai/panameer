@@ -14,7 +14,7 @@ import { milestoneByKey, milestoneDetail } from "@/lib/roadmap-milestones";
 
 /**
  * STEP 5's GRAPHIC — the Year-1 AI Roadmap, built on the call and handed to the
- * Project Tracker.
+ * Work Tracker.
  *
  * ── ⚠ THIS GRAPHIC EXISTS TO MAKE ONE ARGUMENT (Scott, 2026-08-17) ────────────
  *
@@ -22,10 +22,15 @@ import { milestoneByKey, milestoneDetail } from "@/lib/roadmap-milestones";
  * tracker... it really keeps the client in our infrastructure. I do not want to
  * give them a document they take away."
  *
+ * ⚠ THAT QUOTATION IS LEFT VERBATIM, INCLUDING THE OLD SECTION NAME — it
+ * became the WORK TRACKER on 2026-08-20 (E250), and you cannot rename a word
+ * inside a record of what somebody said. It is the ONE remaining occurrence in
+ * `src/`, it is a quotation in a comment, and nothing user-visible carries it.
+ *
  * So the roadmap is not a deliverable that leaves on its own: it is built inside
- * Panameer, on the call, and it lands in the Project Tracker — the section already
+ * Panameer, on the call, and it lands in the Work Tracker — the section already
  * further down this page under *What Comes After the Roadmap*. That is why the
- * primary button is `Load into Project Tracker` and NOT `Download PDF`, and why
+ * primary button is `Load into Work Tracker` and NOT `Download PDF`, and why
  * the footnote says the roadmap lives in Panameer.
  *
  * ⚠ DO NOT ADD AN EXPORT, DOWNLOAD OR SHARE AFFORDANCE HERE. Its absence is the
@@ -69,7 +74,7 @@ import { milestoneByKey, milestoneDetail } from "@/lib/roadmap-milestones";
 
 /**
  * ⚠ THE NAMES AND OWNERS ARE NO LONGER DECLARED HERE — they come from
- * `lib/roadmap-milestones.ts`, which `ProjectTracker` reads too (E173). This roadmap
+ * `lib/roadmap-milestones.ts`, which `WorkTracker` reads too (E173). This roadmap
  * and that tracker are the SAME five milestones, planned and then executing; two
  * arrays could not keep that promise and had already broken it. This view adds only
  * what is its own: an icon, a bar position, a tone and a value.
@@ -267,6 +272,10 @@ export function AiRoadmapShot() {
                   </span>
                 ))}
               </span>
+              {/* The third column's header cell. Deliberately unlabelled — a
+                  column heading over a one-word action reads as a table of
+                  actions rather than a timeline with an affordance on it. */}
+              <span className="rm-hd-a" aria-hidden />
             </div>
 
             {ROWS.map((r) => {
@@ -310,6 +319,45 @@ export function AiRoadmapShot() {
                       <b className="rm-bv">{r.value}</b>
                     </span>
                   </div>
+                  {/*
+                    ── ⚠ THE SOLUTION-LEVEL ACTION (E248) ───────────────────────
+
+                    Scott: *"we need to show how a solution-level button on the
+                    roadmap line is linking to this graphic (what you buy)."*
+                    `GetTheTalentShot` already opens with "From your roadmap · Q3 ·
+                    three ways to get it done" — a sentence that referred to a
+                    click the reader had never been shown. This is that click.
+
+                    ⚠ THE LABEL IS `Request`, DECIDED BY SCOTT, AND IT IS NOT A
+                    SYNONYM TO BE TIDIED. A buyer raises a WORK REQUEST; providers
+                    respond; it becomes a WORK ORDER once one accepts. At this line
+                    nobody has accepted anything and the reader has not yet seen
+                    the three options.
+
+                    ⚠ AND THE NEXT SCREEN ALREADY AGREES. The expert card says
+                    `proposed rate · est. 4 wks` and its action is `Interview` —
+                    both state plainly that terms are not settled. `Order` here
+                    would promise a commercial certainty the very next screen
+                    withdraws. `Buy` is ruled out (Scott: "services are soooo
+                    different"), and `Find Talent` is ruled out because two of the
+                    three destinations are a package and a pre-built agent, and an
+                    agent is not talent. THIS IS ALREADY CONSISTENT WITH THE OBJECT
+                    MODEL — do not "fix" it to Order.
+
+                    ⚠ SECONDARY BY CONSTRUCTION. `Load into Work Tracker` below is
+                    the section's argument; this is smaller, quieter and greyer, and
+                    must stay that way.
+
+                    ⚠ THIS IS A MARKETING SHOT, NOT THE PRODUCT. Rendered, never
+                    wired — no route, no handler. The real roadmap→work-request path
+                    is UNBUILT AND COUNSEL-GATED; `WorkTracker.tsx` carries the same
+                    note for "Add work from your roadmap", recorded in
+                    `claude/roadmap_to_talent_flow.md`. The gate is now visible in
+                    both places.
+                  */}
+                  <span className="rm-req" aria-hidden>
+                    Request
+                  </span>
                 </div>
               );
             })}
@@ -321,11 +369,11 @@ export function AiRoadmapShot() {
               <b>$2,590,000</b>
             </span>
             {/*
-            ⚠ THIS BUTTON IS THE ARGUMENT — `Load into Project Tracker`, never
+            ⚠ THIS BUTTON IS THE ARGUMENT — `Load into Work Tracker`, never
             `Download PDF`. See the note at the top of this file before changing it.
           */}
             <span className="rm-btn">
-              Load into Project Tracker
+              Load into Work Tracker
               <ArrowRight className="ash-sv" strokeWidth={2} aria-hidden />
             </span>
           </div>

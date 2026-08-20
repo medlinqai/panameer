@@ -144,7 +144,7 @@ export function HomeHero() {
                   2. "versus" still ships on the Step 4 dashboard shot, untouched. The word
                      is no longer used in two places for consistency; it is used in one.
               */}
-              <p>See where you stand and where AI can move the needle in your business. Then build your 12-month roadmap with an expert &mdash; all&nbsp;free.</p>
+              <p>See where you stand and where AI can move the needle in your business. Then build your 12-month roadmap with an expert &mdash; all for&nbsp;free.</p>
               {/*
                 ⚠ A DISTINCT BEAT, NOT A SENTENCE ON THE LEDE. It is the bridge into
                 the spine below, so it gets its own `<p>` and a lighter magenta to read
