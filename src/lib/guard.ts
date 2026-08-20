@@ -65,9 +65,18 @@ export async function guardApi(
  * carrying the reason, so the page can say "your company hasn't accepted the
  * terms" rather than a blank refusal — a gate nobody can act on reads as a bug.
  */
-export async function guardTransact(viewer: Viewer): Promise<void> {
+export async function guardTransact(viewer: Viewer, from?: string): Promise<void> {
   const verdict = await checkTransact(viewer);
-  if (!verdict.ok) redirect(`/company?blocked=${verdict.reason.toLowerCase()}`);
+  /*
+    ⚠ `from` IS THE CALLER'S TO SUPPLY. A server-side redirect has no idea what
+    path it is running under, and `?blocked=` names the REASON rather than the
+    origin — so `/company` falls back to `/dashboard` when nobody says. Pass the
+    path when you have it (see `/create-work`).
+  */
+  if (!verdict.ok) {
+    const to = from ? `&from=${encodeURIComponent(from)}` : "";
+    redirect(`/company?blocked=${verdict.reason.toLowerCase()}${to}`);
+  }
 }
 
 /** The same check, for API routes and for pages that want to render a reason. */

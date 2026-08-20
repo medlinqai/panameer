@@ -147,6 +147,26 @@ async function loadRequester(viewer: Viewer) {
       company_id: true,
       site_id: true,
       company: { select: { id: true, name: true, p_account_id: true } },
+      /*
+        ⚠ THE MEMBERSHIPS ARE WHAT "HAS A COMPANY" MEANS (P1-J1.2-E003).
+
+        `Person.company_id` above is the SIGNUP PLACEHOLDER — every account gets
+        one automatically — and `requesterGaps` used to accept its `name` as
+        proof. `getCompanyBinding` and `checkTransact` read memberships instead,
+        so a person could satisfy onboarding forever and never satisfy the
+        transact gate. This select is what lets both ask the same question.
+
+        Ordered the way `getCompanyBinding` orders: APPROVED first (status sorts
+        alphabetically before PENDING and REJECTED), newest decision first within
+        a status, so `[0]` is the binding that matters.
+      */
+      companyMemberships: {
+        orderBy: [{ status: "asc" }, { updated_at: "desc" }],
+        select: {
+          status: true,
+          company: { select: { id: true, name: true, tax_type: true } },
+        },
+      },
       site: {
         select: {
           id: true,
@@ -205,12 +225,39 @@ export async function getRequesterState(viewer: Viewer) {
         }
       : null;
 
+  /*
+    ── ⚠ THE BINDING, ON THE PAYLOAD (P1-J1.2-E003 / E005) ────────────────────
+
+    Added here rather than fetched a second way by the client, because two reads
+    of "does this person have a company" is how the two answers diverged in the
+    first place. `pitfalls.md`: a new field has to reach the TYPE and every
+    caller that builds one — `RequesterState` is inferred from this return and
+    the only caller is `/api/onboarding/requester/status`, which passes the whole
+    object through, so both are satisfied by adding it once, here.
+
+    `bound` is deliberately "ANY membership", not "an APPROVED one". Onboarding
+    needs a membership to EXIST; transacting needs it APPROVED. Two different
+    bars, both correct — see `requesterGaps`.
+  */
+  const membership = p.companyMemberships[0] ?? null;
+
   return {
     email: p.user?.email ?? "",
     emailVerified: !!p.user?.email_verified,
     steps: REQUESTER_STEPS,
     resumeStep: rp.onboarding_step,
     completed: !!rp.completed_at,
+    company: {
+      /** Any CompanyMembership at all — PENDING counts. */
+      bound: p.companyMemberships.length > 0,
+      status: membership?.status ?? null,
+      /**
+       * The bound company has a `tax_type`, i.e. somebody actually DEFINED it
+       * rather than binding to a bare placeholder. Null when unbound.
+       */
+      defined: membership ? membership.company.tax_type !== null : false,
+      name: membership?.company.name ?? null,
+    },
     profile: {
       firstName: p.first_name,
       lastName: p.last_name,
@@ -406,10 +453,39 @@ export async function saveRequesterStep(
 }
 
 /** What's still missing before the requester can finish. */
+/**
+ * ── ⚠ WHAT "HAS A COMPANY" MEANS, AND WHY THIS CHANGED (P1-J1.2-E003) ────────
+ *
+ * This function used to test `profile.companyName`, which is
+ * `Person.company.name` — THE SIGNUP PLACEHOLDER, which every account gets
+ * automatically and which therefore always has a name. So onboarding always
+ * passed, while `getCompanyBinding` and `checkTransact` read
+ * `Person.companyMemberships` and always failed. Two pieces of code disagreeing
+ * about one word, and a person could satisfy the first forever without ever
+ * satisfying the second — a closed loop with the only company form behind it.
+ *
+ * ⚠ PENDING COUNTS AS SATISFIED HERE. `joinCompany` on a company whose admin
+ * must approve you legitimately leaves the membership PENDING, and the wizard
+ * already has a branch that lets that move on. Requiring APPROVED would swap
+ * this trap for a worse one: a requester frozen until a stranger clicks a
+ * button. ONBOARDING NEEDS A MEMBERSHIP TO EXIST; TRANSACTING NEEDS IT
+ * APPROVED. Two bars, both correct, and `verifyTransactAbility` owns the second.
+ *
+ * ⚠ THE NAME CHECK IS NOT DELETED, IT IS MOVED. A person bound to a company that
+ * still has no `tax_type` is on a placeholder somebody joined without defining —
+ * a real, different gap, so it keeps its own line worded for what it is.
+ *
+ * ⚠ THIS MAKES SOME "COMPLETE" REQUESTERS INCOMPLETE AGAIN. That is the intent
+ * and it is the safe direction: they are already blocked from transacting, so
+ * this only surfaces the block somewhere they can act on it. NO BACKFILL MINTS
+ * MEMBERSHIPS — a `CompanyMembership` is an attestation a human made, and
+ * manufacturing one silently binds a person to a company they never claimed.
+ */
 export function requesterGaps(state: RequesterState): string[] {
   const p = state.profile;
   const gaps: string[] = [];
-  if (!p.companyName.trim()) gaps.push("Your company");
+  if (!state.company.bound) gaps.push("Your company");
+  else if (!state.company.defined) gaps.push("Your company's business type");
   if (!p.firstName.trim() || !p.lastName.trim()) gaps.push("Your name");
   if (!p.address?.country) gaps.push("Your address");
   if (!p.approverName?.trim()) gaps.push("Your approver");

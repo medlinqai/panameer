@@ -7,6 +7,7 @@ import { TRANSACT_MESSAGE } from "@/lib/transact-message";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/Card";
 import { CompanyRequests } from "@/components/company/CompanyRequests";
+import { CompanyStepInline } from "@/components/company/CompanyStepInline";
 import { AcceptCompanyTos } from "@/components/company/AcceptCompanyTos";
 import { LegalLink } from "@/components/legal/LegalLink";
 
@@ -35,7 +36,7 @@ const TAX_LABELS: Record<string, string> = {
 export default async function CompanyPage({
   searchParams,
 }: {
-  searchParams: Promise<{ blocked?: string }>;
+  searchParams: Promise<{ blocked?: string; from?: string }>;
 }) {
   const viewer = await getSessionViewer();
   if (!viewer) redirect("/login?callbackUrl=%2Fcompany");
@@ -44,11 +45,32 @@ export default async function CompanyPage({
     page with no explanation reads as a bug; this says which door closed and
     what clears it — and the fix (accept the terms) is on this same page.
   */
-  const { blocked } = await searchParams;
+  const { blocked, from } = await searchParams;
   const blockedMessage = blocked
     ? TRANSACT_MESSAGE[blocked.toUpperCase() as keyof typeof TRANSACT_MESSAGE]
     : null;
 
+  /*
+    ── ⚠ THIS PAGE IS THE DOOR, NOT A SIGNPOST (P1-J1.2-E004) ──────────────────
+
+    It used to render "No company yet" with one link, to `/join`. Scott:
+    *"I went to look at the buyer side the other day and I was forced to do
+    something with my company details and I couldn't, so it kept me from doing
+    anything."* He was right, and the loop was closed:
+
+      /create-work  →  /company?blocked=NO_COMPANY  →  "No company yet"  →
+      /join  →  /join/buyer  →  "This account isn't a buyer account."  →
+      /dashboard, and nowhere else.
+
+    `CompanyStep` is the ONLY UI in the codebase that can write a
+    `CompanyMembership`, and it was rendered in exactly two files — the requester
+    wizard and the provider wizard — both of which refuse an account in this
+    state. So there was no door at all. Now there is one, here.
+
+    ⚠ NO `guardTransact` ON THIS PAGE, EVER. A page whose job is to clear the
+    transact block cannot be behind the transact block. It is inside `(app)` and
+    already requires a session; that is the correct and only gate.
+  */
   const binding = await getCompanyBinding(viewer);
   if (!binding) {
     return (
@@ -60,17 +82,15 @@ export default async function CompanyPage({
           </Card>
         )}
         <Card>
-          <h1 className="text-2xl tracking-tight">No company yet</h1>
+          <h1 className="text-2xl tracking-tight">Set up your company</h1>
           <p className="mt-2 text-black/70 dark:text-white/70">
-            You aren&apos;t bound to a company. Everything on Panameer happens
-            between companies, so this is the first thing to set up.
+            Everything on Panameer happens between companies, so this is the
+            first thing to set up. Join the one you work for, or define it if
+            it isn&apos;t here yet.
           </p>
-          <Link
-            href="/join"
-            className="mt-5 inline-flex rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90"
-          >
-            Set up my company
-          </Link>
+          <div className="mt-6">
+            <CompanyStepInline from={from ?? null} />
+          </div>
         </Card>
       </div>
     );
