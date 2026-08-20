@@ -3,6 +3,7 @@ import { getSessionViewer } from "@/lib/session";
 import { getOwnProviderProfileView } from "@/lib/provider-profile-view";
 import { getPathsTaughtByProfile } from "@/lib/learn-home";
 import { publicTestimonials } from "@/lib/recommendations";
+import { getCommunitySignalForProfile } from "@/lib/community-signal";
 import { ProviderProfileViewPage } from "@/components/profile/ProviderProfileView";
 import { EmployeeProfile } from "@/components/profile/EmployeeProfile";
 
@@ -44,6 +45,7 @@ export default async function MyProfilePage() {
       p={profile}
       taughtPaths={await getPathsTaughtByProfile(profile.id)}
       testimonials={await publicTestimonials(profile.id)}
+      community={await getCommunitySignalForProfile(profile.id)}
     />
   );
 }

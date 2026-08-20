@@ -5,6 +5,8 @@ import type { ProviderProfileView } from "@/lib/provider-profile-view";
 import type { TaughtPath } from "@/lib/learn-home";
 import type { Testimonial } from "@/lib/recommendations";
 import { TaughtPaths } from "@/components/learn/TaughtPaths";
+import { CommunitySignalBlock } from "@/components/profile/CommunitySignal";
+import { mentorState, type CommunitySignal } from "@/lib/community-signal";
 import {
   ProfileCard,
   ProfileHero,
@@ -80,6 +82,7 @@ export function ProviderProfileViewPage({
   p,
   taughtPaths = [],
   testimonials = [],
+  community = null,
   condensedWorkHistory = false,
   banner,
   footer,
@@ -87,6 +90,12 @@ export function ProviderProfileViewPage({
   p: ProviderProfileView;
   /** Learn paths this person instructs (E137). Empty renders nothing at all. */
   taughtPaths?: TaughtPath[];
+  /**
+   * Forum involvement (brief_community_signal WS2). ⚠ NULL RENDERS NOTHING —
+   * same contract as `taughtPaths`, and for the same reason: a zeroed block on a
+   * profile is a claim about a person rather than an absence of one.
+   */
+  community?: CommunitySignal | null;
   /**
    * Recommendations this provider has actually been given (J2.4 WS-F / E012).
    *
@@ -215,6 +224,18 @@ export function ProviderProfileViewPage({
           headline={p.headline}
           overview={p.overview}
           validated={p.validated}
+          /*
+            ⚠ ONLY WHEN THERE IS A SIGNAL TO READ. No forum activity → no
+            Mentor row either, for the same reason the block below is absent:
+            "answers marked helpful: 0" on a stranger's profile is a zero with a
+            person's name on it. The OWNER sees the number regardless, because
+            for them it is a mechanic rather than a verdict.
+          */
+          mentor={
+            community || p.isOwner
+              ? mentorState(community?.helpfulAnswers ?? 0, p.isOwner)
+              : null
+          }
           rateMinCents={p.rates.minCents}
           rateMaxCents={p.rates.maxCents}
           currency={p.rates.currency}
@@ -508,6 +529,22 @@ export function ProviderProfileViewPage({
             <TaughtPaths
               paths={taughtPaths}
               name={`${p.person.firstName ?? ""} ${p.person.lastName ?? ""}`.trim()}
+              isOwner={p.isOwner}
+            />
+          </div>
+        )}
+
+        {/*
+          Community involvement, below the courses strip and above the footer.
+          Renders nothing when the signal is null — which, measured on the live DB
+          2026-08-19, is every profile on the platform, because the forums have
+          zero threads and zero posts.
+        */}
+        {community && (
+          <div className="mt-6">
+            <CommunitySignalBlock
+              signal={community}
+              firstName={p.person.firstName ?? ""}
               isOwner={p.isOwner}
             />
           </div>

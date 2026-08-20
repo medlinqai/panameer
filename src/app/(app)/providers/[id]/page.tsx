@@ -4,6 +4,7 @@ import { getProviderProfileView } from "@/lib/provider-profile-view";
 import { getSessionViewer } from "@/lib/session";
 import { getPathsTaughtByProfile } from "@/lib/learn-home";
 import { publicTestimonials } from "@/lib/recommendations";
+import { getCommunitySignalForProfile } from "@/lib/community-signal";
 
 /**
  * Provider profile — a marketplace surface, BEHIND LOGIN as of E049.
@@ -139,6 +140,7 @@ export default async function PublicProviderPage({
           p={profile}
           taughtPaths={taughtPaths}
           testimonials={testimonials}
+          community={await getCommunitySignalForProfile(profile.id)}
         />
       </main>
     </div>

@@ -1,14 +1,21 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { guardApi } from "@/lib/guard";
-import { ForumError, createPost, createThread } from "@/lib/forums";
+import { ForumError, createPost, createThread, markHelpful, unmarkHelpful } from "@/lib/forums";
 
 /**
  * POST /api/community/forums — start a thread or reply to one (WS2-C).
  *
- * One route, two actions. AUTHORSHIP IS NEVER IN THE BODY: the lib resolves the
+ * One route, four actions. AUTHORSHIP IS NEVER IN THE BODY: the lib resolves the
  * poster from the session, so there is no shape of request that posts as
  * somebody else.
+ *
+ * ⚠ `helpful` / `unhelpful` CARRY NO ACTOR EITHER (brief_community_signal WS1).
+ * Only the thread's author may mark a reply helpful, and never their own — both
+ * checked in `lib/forums.ts` against the SESSION on every call. The thread page
+ * hides the button for everyone else, and that hiding is cosmetic: a hidden
+ * control is not a permission, so the refusal has to live server-side and be
+ * testable by calling this route directly.
  */
 const Body = z.discriminatedUnion("action", [
   z.object({
@@ -22,6 +29,12 @@ const Body = z.discriminatedUnion("action", [
     threadId: z.string().uuid(),
     body: z.string().trim().min(2, "Say something first.").max(8000),
   }),
+  /*
+    ⚠ NO `personId`, DELIBERATELY. The only thing a caller may name is WHICH
+    REPLY; who is marking it is the session's business.
+  */
+  z.object({ action: z.literal("helpful"), postId: z.string().uuid() }),
+  z.object({ action: z.literal("unhelpful"), postId: z.string().uuid() }),
 ]);
 
 export async function POST(request: Request) {
@@ -37,10 +50,16 @@ export async function POST(request: Request) {
   }
 
   try {
+    const d = parsed.data;
+    if (d.action === "helpful" || d.action === "unhelpful") {
+      const r =
+        d.action === "helpful"
+          ? await markHelpful(gate, d.postId)
+          : await unmarkHelpful(gate, d.postId);
+      return NextResponse.json({ ok: true, id: r.id, markedHelpfulAt: r.markedHelpfulAt });
+    }
     const result =
-      parsed.data.action === "thread"
-        ? await createThread(gate, parsed.data)
-        : await createPost(gate, parsed.data);
+      d.action === "thread" ? await createThread(gate, d) : await createPost(gate, d);
     return NextResponse.json({ ok: true, id: result.id });
   } catch (e) {
     if (e instanceof ForumError) {

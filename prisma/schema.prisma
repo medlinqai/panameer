@@ -377,14 +377,15 @@ model Person {
   // J2.4 WS-H — the payee-side records. On Person, not ProviderProfile: one
   // login can hold several memberships, and a bank account or a tax form
   // belongs to the human being paid, not to one of the hats they wear.
-  billingMethods       BillingMethod[]
-  payoutMethods        PayoutMethod[]
+  billingMethods          BillingMethod[]
+  payoutMethods           PayoutMethod[]
   // WS2-C — forum authorship. On Person, like every other social surface here.
-  forumThreads         ForumThread[]            @relation("ForumThreadAuthor")
-  forumPosts           ForumPost[]              @relation("ForumPostAuthor")
-  taxProfile           TaxProfile?
-  identityVerification IdentityVerification?
-  notificationPrefs    NotificationPreference[]
+  forumThreads            ForumThread[]            @relation("ForumThreadAuthor")
+  forumPosts              ForumPost[]              @relation("ForumPostAuthor")
+  forumPostsMarkedHelpful ForumPost[]              @relation("ForumPostHelpfulMarker")
+  taxProfile              TaxProfile?
+  identityVerification    IdentityVerification?
+  notificationPrefs       NotificationPreference[]
 
   @@index([company_id])
   @@index([site_id])
@@ -2733,11 +2734,45 @@ model ForumPost {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  thread ForumThread @relation(fields: [thread_id], references: [id], onDelete: Cascade)
-  author Person      @relation("ForumPostAuthor", fields: [author_id], references: [id], onDelete: Cascade)
+  /**
+   * ⚠ DID THIS REPLY ACTUALLY HELP — the one field that turns a VOLUME signal
+   * into an INVOLVEMENT signal (brief_community_signal).
+   * Scott wants community involvement visible on a profile. A raw reply count
+   * cannot carry that: twenty-five one-line replies out-rank three answers that
+   * solved someone's problem, and the first person to notice the number is on
+   * their public profile will optimise for it. A badge that rewards posting is a
+   * badge that produces posting.
+   * ── WHO MAY SET IT, AND WHY IT IS ONLY THEM ─────────────────────────────────
+   * THE THREAD'S AUTHOR. Not a vote, not a reaction, not a moderator flag: the
+   * person who asked is the only one who knows whether an answer answered. That
+   * also makes it un-farmable in the ordinary way — you cannot mark your own
+   * work, and nobody can brigade somebody else's thread.
+   * ⚠ ENFORCED IN `lib/forums.ts`, NEVER IN A COMPONENT, and it REFUSES rather
+   * than silently no-ops so the UI can explain why. `check:community` fails the
+   * build if this column is written anywhere else.
+   * ⚠ A NULLABLE TIMESTAMP RATHER THAN A BOOLEAN, so it is reversible: a thread
+   * author who mis-clicks has to be able to undo, and "when" is worth keeping.
+   * ⚠ THERE ARE NO UPVOTES, REACTIONS, POINTS OR LEADERBOARD, deliberately. One
+   * signal, owned by the person who asked. Everything else is a product decision
+   * that has not been made.
+   */
+  marked_helpful_at DateTime?
+  /**
+   * The thread author who marked it. `SetNull` on delete, which leaves
+   * `marked_helpful_at` set with no marker — correct: the judgement was made and
+   * still stands even if that account is later removed. Read it as "marked
+   * helpful, by someone no longer here", never as "not marked".
+   */
+  marked_helpful_by String?   @db.Uuid
+
+  thread        ForumThread @relation(fields: [thread_id], references: [id], onDelete: Cascade)
+  author        Person      @relation("ForumPostAuthor", fields: [author_id], references: [id], onDelete: Cascade)
+  helpfulMarker Person?     @relation("ForumPostHelpfulMarker", fields: [marked_helpful_by], references: [id], onDelete: SetNull)
 
   @@index([thread_id, created_at])
   @@index([author_id])
+  /// The profile signal counts helpful answers per author, so it filters on this.
+  @@index([marked_helpful_at])
   @@map("forum_posts")
 }
 
