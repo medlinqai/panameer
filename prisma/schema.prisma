@@ -377,15 +377,17 @@ model Person {
   // J2.4 WS-H — the payee-side records. On Person, not ProviderProfile: one
   // login can hold several memberships, and a bank account or a tax form
   // belongs to the human being paid, not to one of the hats they wear.
-  billingMethods          BillingMethod[]
-  payoutMethods           PayoutMethod[]
+  billingMethods           BillingMethod[]
+  payoutMethods            PayoutMethod[]
   // WS2-C — forum authorship. On Person, like every other social surface here.
-  forumThreads            ForumThread[]            @relation("ForumThreadAuthor")
-  forumPosts              ForumPost[]              @relation("ForumPostAuthor")
-  forumPostsMarkedHelpful ForumPost[]              @relation("ForumPostHelpfulMarker")
-  taxProfile              TaxProfile?
-  identityVerification    IdentityVerification?
-  notificationPrefs       NotificationPreference[]
+  forumThreads             ForumThread[]            @relation("ForumThreadAuthor")
+  forumPosts               ForumPost[]              @relation("ForumPostAuthor")
+  forumPostsMarkedHelpful  ForumPost[]              @relation("ForumPostHelpfulMarker")
+  /// Assessments this person REVIEWED and published — see LearnAssessment.status.
+  learnAssessmentsReviewed LearnAssessment[]        @relation("LearnAssessmentReviewer")
+  taxProfile               TaxProfile?
+  identityVerification     IdentityVerification?
+  notificationPrefs        NotificationPreference[]
 
   @@index([company_id])
   @@index([site_id])
@@ -2231,8 +2233,8 @@ model LearningPath {
 /// "Learning Path = Course", and forcing an artificial second level there would
 /// invent structure the content doesn't have.
 model Course {
-  id               String       @id @default(uuid()) @db.Uuid
-  learning_path_id String       @db.Uuid
+  id               String  @id @default(uuid()) @db.Uuid
+  learning_path_id String  @db.Uuid
   title            String
   slug             String
   summary          String?
@@ -2244,15 +2246,49 @@ model Course {
   thumbnail_url    String?
   /// Optional course intro video — same loose Vimeo reference as Lesson.
   intro_video_ref  String?
-  style            CourseStyle?
-  sort_order       Int          @default(0)
-  created_at       DateTime     @default(now())
+
+  /**
+   * ⚠ ORACLE'S OWN DOCUMENTATION FOR THIS APPLICATION, as assessment source
+   * material (brief_learn_assessments_generate WS1).
+   * ── WHY IT IS NEEDED ────────────────────────────────────────────────────────
+   * `buildAssessmentSource`'s own comment admits the problem: *"Lesson TITLES
+   * carry most of the signal in this catalog — descriptions are sparse and many
+   * are empty."* Measured: 290 of 522 lessons have NO description. So the model
+   * is asked to write a graded assessment from strings like `"STEP 3 - How to
+   * Create a Qualification Area"`. It will produce plausible questions that test
+   * the TITLE rather than the lesson.
+   * Oracle documents these applications precisely — the Qualification Areas
+   * topic states the four statuses (Draft/Active/Inactive/Archived), that scored
+   * question weights must add up to 100, and the knockout-score rule. Verified
+   * against the live docs: 17,841 characters of exactly the right kind of
+   * material. That is what these columns hold.
+   * ── ⚠ PER COURSE, NOT PER LESSON ────────────────────────────────────────────
+   * A course maps to one Oracle application. 522 lesson-level fetches would be
+   * both wrong and rude to a server doing us a favour.
+   * ── ⚠ COUNSEL GATE, UNRESOLVED ──────────────────────────────────────────────
+   * Storing Oracle's documentation text in Panameer's database and generating
+   * derived, GRADED assessment content from it is a LICENSING question and it is
+   * not answered. The columns exist and the fetch path works; exactly ONE course
+   * is populated as a demonstration, deliberately, and nothing is bulk-populated
+   * until that question is cleared. `doc_source_url` sits beside the text so
+   * provenance is never inferred.
+   * ⚠ VERSION-PINNED ORACLE URLS ROT. Measured: `25a` for this same topic
+   * 302-redirects to a "Get Started" landing page. The fetcher asserts the final
+   * URL is still the requested topic and refuses to store a landing page.
+   */
+  doc_source_url  String?
+  doc_source_text String?
+  doc_fetched_at  DateTime?
+
+  style      CourseStyle?
+  sort_order Int          @default(0)
+  created_at DateTime     @default(now())
   /// XLS-RE-RUN SHIELD (WS1). The catalog is seed-driven, but the admin console
   /// (brief_learn_admin_authoring) will edit the same rows. A re-import is
   /// authoritative only for rows it created: anything flagged `is_custom` was
   /// touched by a human and an XLS re-run leaves it alone. Same rule the service
   /// taxonomy uses.
-  is_custom        Boolean      @default(false)
+  is_custom  Boolean      @default(false)
 
   learningPath LearningPath @relation(fields: [learning_path_id], references: [id], onDelete: Cascade)
   sections     Section[]
@@ -2369,12 +2405,41 @@ model LearnAssessment {
   /// out. Per-path so a short path isn't held to a long one's bar.
   pass_threshold   Int      @default(70)
   max_attempts     Int      @default(3)
-  created_at       DateTime @default(now())
-  updated_at       DateTime @updatedAt
+
+  /**
+   * ⚠ A GENERATED TEST NOBODY HAS READ MUST NOT AWARD A CERTIFICATE
+   * (brief_learn_assessments_generate WS4).
+   * Scott's constraint stands — he will not hand-build question banks — and
+   * REVIEW IS NOT AUTHORING. Reading twenty questions is minutes; writing them is
+   * days. So generation stays automatic and PUBLISHING is the human act.
+   * ⚠ DEFAULT DRAFT, AND THAT RE-GATES THE ONE EXISTING SET. The single
+   * assessment in the database was model-written and never reviewed, so on this
+   * push it becomes DRAFT and its test stops being sittable until somebody reads
+   * it. That is the column doing its job rather than a side effect of it, and the
+   * certificate already issued from it is untouched.
+   */
+  status      LearnPublishStatus @default(DRAFT)
+  /**
+   * ⚠ THE MISSING FIELD `P1-J2.4-E024` NEEDS. That walk error records the EXPERT
+   * badge — "created assessment" — as unbuildable because this model recorded
+   * only WHICH MODEL wrote the set, never which human stood behind it. This is
+   * the column that makes the badge earnable. The badge itself is not built here.
+   */
+  reviewed_by String?            @db.Uuid
+  reviewed_at DateTime?
+  /**
+   * Which documentation URLs, if any, informed this set. Provenance, not prose.
+   */
+  source_note String?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
   learningPath LearningPath       @relation(fields: [learning_path_id], references: [id], onDelete: Cascade)
+  reviewer     Person?            @relation("LearnAssessmentReviewer", fields: [reviewed_by], references: [id], onDelete: SetNull)
   attempts     LearnTestAttempt[]
 
+  @@index([status])
   @@map("learn_assessments")
 }
 

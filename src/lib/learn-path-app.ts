@@ -84,6 +84,16 @@ export type AppPathView = {
     passThreshold: number | null;
     maxAttempts: number | null;
     exists: boolean;
+    /**
+     * ⚠ A ROW EXISTING IS NOT THE TEST BEING OPEN
+     * (brief_learn_assessments_generate WS4).
+     *
+     * Generated sets land as DRAFT and a human publishes them. `exists` was the
+     * only signal here, so a DRAFT would have printed its pass mark and attempt
+     * limit beside a test nobody can sit — a page confidently quoting the rules
+     * of a closed door.
+     */
+    ready: boolean;
     attemptsUsed: number;
     passed: boolean;
   };
@@ -163,7 +173,7 @@ export async function getAppPath(slug: string, userId: string | null): Promise<A
       group: true,
       audience: true,
       expert_person_id: true,
-      assessment: { select: { pass_threshold: true, max_attempts: true } },
+      assessment: { select: { pass_threshold: true, max_attempts: true, status: true } },
       courses: {
         orderBy: [{ sort_order: "asc" }, { title: "asc" }],
         select: {
@@ -312,6 +322,7 @@ export async function getAppPath(slug: string, userId: string | null): Promise<A
       passThreshold: path.assessment?.pass_threshold ?? null,
       maxAttempts: path.assessment?.max_attempts ?? null,
       exists: Boolean(path.assessment),
+      ready: path.assessment?.status === "PUBLISHED",
       attemptsUsed: attempts.length,
       passed: attempts.some((a) => a.passed),
     },

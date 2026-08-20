@@ -3,6 +3,7 @@ import { randomUUID, createHash } from "crypto";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { env } from "@/lib/env";
+import { DOC_SOURCE_LABEL, docExcerpt } from "@/lib/learn-doc-source";
 
 /**
  * AI-GENERATED path assessments (brief_learn_experience WS5).
@@ -35,16 +36,77 @@ export const QUESTION_SCHEMA = z.object({
   explanation: z.string().default(""),
   /** Which course this came from, so a review can point somewhere useful. */
   courseTitle: z.string().default(""),
+  /**
+   * ⚠ WHICH LESSON THIS QUESTION TESTS — REQUIRED
+   * (brief_learn_assessments_generate WS2).
+   *
+   * The single most useful constraint available. A question that cannot name the
+   * lesson it tests is a question written from the reference documentation alone,
+   * or from a title, and both are the exact failure this work exists to prevent.
+   * `generateAssessment` REJECTS any question whose `lessonId` is not in the
+   * path — the same defensive posture as the existing self-consistency check.
+   */
+  lessonId: z.string().min(1),
+  /**
+   * Whether the vendor documentation was needed to write it.
+   *
+   * Not decoration: it is the field a reviewer sorts by. A LESSON_PLUS_DOCS
+   * question is the one most likely to have drifted outside what a learner could
+   * have learned here, which is the thing review is for.
+   */
+  sourceKind: z.enum(["LESSON", "LESSON_PLUS_DOCS"]).default("LESSON"),
 });
 
 export const ASSESSMENT_SCHEMA = z.object({
   questions: z.array(QUESTION_SCHEMA).min(1),
 });
 
+/**
+ * ⚠ THE MODEL'S RAW OUTPUT IS PARSED LENIENTLY, THEN FILTERED, THEN VALIDATED
+ * STRICTLY — and that order was learned the hard way.
+ *
+ * `QUESTION_SCHEMA` is the STORAGE contract and it stays strict. But parsing the
+ * model's reply against it makes ONE bad question fail the WHOLE set: measured on
+ * the 4-lesson Payroll path, the reply came back with an empty string as a fifth
+ * option and the run died with `questions.2.options.4`, discarding nineteen good
+ * questions with it.
+ *
+ * That is the wrong shape of strictness. The file's own established posture is to
+ * throw out the bad question and keep the set — the `correctIndex` check right
+ * below has always done exactly that. So: read loosely, discard per question,
+ * and re-validate each survivor against the strict schema before storage.
+ */
+const LENIENT_ASSESSMENT_SCHEMA = z.object({
+  questions: z
+    .array(
+      z.object({
+        id: z.string().optional(),
+        question: z.string().optional(),
+        options: z.array(z.string()).optional(),
+        correctIndex: z.number().optional(),
+        explanation: z.string().optional(),
+        courseTitle: z.string().optional(),
+        lessonId: z.string().optional(),
+        sourceKind: z.string().optional(),
+      })
+    )
+    .min(1),
+});
+
 export type AssessmentQuestion = z.infer<typeof QUESTION_SCHEMA>;
 
-/** What a learner is allowed to see: everything except the answer. */
-export type PublicQuestion = Omit<AssessmentQuestion, "correctIndex" | "explanation">;
+/**
+ * What a learner is allowed to see: everything except the answer.
+ *
+ * ⚠ `lessonId` AND `sourceKind` ARE ALSO WITHHELD. They exist for the REVIEWER —
+ * "which lesson does this test" and "did this need the vendor docs" are the two
+ * questions a review turns on — and neither is information a learner mid-test
+ * benefits from. Smaller payload, and nothing to reverse-engineer from.
+ */
+export type PublicQuestion = Omit<
+  AssessmentQuestion,
+  "correctIndex" | "explanation" | "lessonId" | "sourceKind"
+>;
 
 export function aiAssessmentAvailable(): boolean {
   return Boolean(env.ANTHROPIC_API_KEY);
@@ -59,17 +121,73 @@ function client(): Anthropic {
 }
 
 /**
- * Flatten a path into the text the model writes questions from.
+ * ── ⚠ THE THREE CATALOG DEFECTS THAT WOULD POISON A GENERATED TEST ───────────
+ * (brief_learn_assessments_generate WS3; the defects are `P1-J3-E003`)
  *
- * Lesson TITLES carry most of the signal in this catalog — descriptions are
- * sparse and many are empty — so titles are always included and descriptions
- * are added where they exist, rather than dropping a lesson that has no prose.
+ * FILTERED OUT OF THE SOURCE, NOT FIXED HERE. They are content bugs and fixing
+ * them inside a generation change would hide them — each is reported with a
+ * per-path count instead.
+ *
+ *   1  "Ideas for Future Videos" — production notes, learner-visible by
+ *      accident. One of them is literally
+ *      `How to Use Supplier Portal for Sub-Consultants (Portal V Cognibox?)`.
+ *
+ *   2  "Learning Path Overview" sections. ⚠ WIDER THAN THE BRIEF ASKED, and
+ *      deliberately: the brief says exclude the ones naming a DIFFERENT path.
+ *      Measured, there are seven, each holding exactly ONE lesson, and four
+ *      demonstrably name the next path in the import order (Advanced
+ *      Procurement's Catalogs course points at the Supplier Integration LP).
+ *      The other three are `Learning Path = Course` and similar — pointers to a
+ *      path rather than teachable content. NONE of the seven is material a
+ *      question can be right or wrong about, and a name-matching heuristic to
+ *      separate four from three would be a fragile guess in place of a simple
+ *      true statement. All seven are excluded; the count is reported.
+ *
+ *   3  Courses with an EMPTY title. Three of them, already omitted from the
+ *      spine UI for the same reason.
  */
-export async function buildAssessmentSource(learningPathId: string): Promise<{
+const EXCLUDE_SECTION_TITLE = [
+  /ideas\s+for\s+future/i,
+  /^\s*learning\s+path\s+overview\s*$/i,
+];
+
+export function sectionIsExcluded(title: string): boolean {
+  const t = title.replace(/^\s*\d+\s*[.)]?\s*/, "").trim();
+  return EXCLUDE_SECTION_TITLE.some((re) => re.test(t));
+}
+
+export type SourceLesson = { id: string; title: string; courseTitle: string };
+
+export type AssessmentSource = {
   title: string;
   text: string;
   lessons: number;
-}> {
+  /** Every lesson the model is allowed to cite, by id. */
+  index: SourceLesson[];
+  /** What the WS3 filters removed, for the report. */
+  excluded: { ideasForFuture: number; pathOverview: number; emptyCourse: number };
+  /** Courses whose vendor documentation was included. */
+  docSources: string[];
+};
+
+/**
+ * Flatten a path into the text the model writes questions from.
+ *
+ * Lesson TITLES carry most of the signal in this catalog — descriptions are
+ * sparse and 290 of 522 are empty — so titles are always included and
+ * descriptions are added where they exist, rather than dropping a lesson that
+ * has no prose. That is precisely why WS1's reference documentation exists.
+ *
+ * ⚠ EVERY LESSON IS EMITTED WITH ITS ID, and the ids are returned in `index`.
+ * That is what lets `generateAssessment` reject a question naming a lesson
+ * outside this path — the constraint is worth nothing if the model cannot see
+ * the identifiers it is being asked to cite.
+ *
+ * ⚠ THE VENDOR DOCS ARE DELIMITED AND LABELLED AS VENDOR DOCS, never presented
+ * as though the instructor said it. The prompt then forbids testing anything the
+ * lessons do not cover — the docs are context for ACCURACY, not extra syllabus.
+ */
+export async function buildAssessmentSource(learningPathId: string): Promise<AssessmentSource> {
   const path = await prisma.learningPath.findUnique({
     where: { id: learningPathId },
     select: {
@@ -80,6 +198,8 @@ export async function buildAssessmentSource(learningPathId: string): Promise<{
         select: {
           title: true,
           summary: true,
+          doc_source_url: true,
+          doc_source_text: true,
           sections: {
             orderBy: { sort_order: "asc" },
             select: {
@@ -87,7 +207,7 @@ export async function buildAssessmentSource(learningPathId: string): Promise<{
               description: true,
               lessons: {
                 orderBy: { sort_order: "asc" },
-                select: { title: true, description: true },
+                select: { id: true, title: true, description: true },
               },
             },
           },
@@ -99,30 +219,107 @@ export async function buildAssessmentSource(learningPathId: string): Promise<{
 
   const lines: string[] = [`LEARNING PATH: ${path.title}`];
   if (path.summary) lines.push(path.summary);
-  let lessons = 0;
+  const index: SourceLesson[] = [];
+  const excluded = { ideasForFuture: 0, pathOverview: 0, emptyCourse: 0 };
+  const docSources: string[] = [];
+  const docBlocks: string[] = [];
 
   for (const c of path.courses) {
+    if (!c.title.trim()) {
+      excluded.emptyCourse += c.sections.reduce((n, sec) => n + sec.lessons.length, 0);
+      continue;
+    }
     lines.push(`\n## COURSE: ${c.title}`);
     if (c.summary) lines.push(c.summary);
-    for (const s of c.sections) {
-      lines.push(`\n### SECTION: ${s.title}`);
-      if (s.description) lines.push(s.description);
-      for (const l of s.lessons) {
-        lessons++;
-        lines.push(l.description ? `- ${l.title} — ${l.description}` : `- ${l.title}`);
+
+    for (const sec of c.sections) {
+      if (sectionIsExcluded(sec.title)) {
+        if (/ideas\s+for\s+future/i.test(sec.title)) excluded.ideasForFuture += sec.lessons.length;
+        else excluded.pathOverview += sec.lessons.length;
+        continue;
       }
+      lines.push(`\n### SECTION: ${sec.title}`);
+      if (sec.description) lines.push(sec.description);
+      for (const l of sec.lessons) {
+        index.push({ id: l.id, title: l.title, courseTitle: c.title });
+        lines.push(
+          l.description
+            ? `- [lessonId: ${l.id}] ${l.title} — ${l.description}`
+            : `- [lessonId: ${l.id}] ${l.title}`
+        );
+      }
+    }
+
+    /*
+      Collected rather than inlined, so the curriculum — which carries the
+      lessonIds the model must cite — is never the part that gets truncated.
+    */
+    const doc = docExcerpt(c.doc_source_text);
+    if (doc && c.doc_source_url) {
+      docSources.push(c.doc_source_url);
+      docBlocks.push(
+        `\n<<< ${DOC_SOURCE_LABEL} — for the course "${c.title}"\nSOURCE: ${c.doc_source_url}\n${doc}\n>>> END REFERENCE DOCUMENTATION`
+      );
     }
   }
 
+  /*
+    ⚠ THE CURRICULUM IS NEVER THE PART THAT GETS CUT. The old version sliced the
+    whole string at MAX_SOURCE_CHARS, which with documentation appended could have
+    truncated the lesson list and silently removed ids the model was told to cite.
+    Curriculum first, in full; documentation only while there is room.
+  */
+  let text = lines.join("\n");
+  for (const block of docBlocks) {
+    if (text.length + block.length > MAX_SOURCE_CHARS) break;
+    text += block;
+  }
+
+  return { title: path.title, text: text.slice(0, MAX_SOURCE_CHARS), lessons: index.length, index, excluded, docSources };
+}
+
+/**
+ * ⚠ REJECT ANY QUESTION NAMING A LESSON OUTSIDE THIS PATH (WS2).
+ *
+ * Extracted rather than inlined so it can be exercised with an INJECTED bad
+ * question — the brief asks for exactly that, and a rule enforced only inside a
+ * live model call is a rule nobody can test. `check:learn-assessment` calls this
+ * with a fabricated orphan.
+ *
+ * REJECTED, never repaired. A question citing an unknown lessonId was written
+ * from the reference documentation or from a title, and there is no honest way to
+ * guess which lesson it meant.
+ */
+export function keepQuestionsInPath<T extends { lessonId: string }>(
+  questions: T[],
+  known: Map<string, unknown> | Set<string>
+): { kept: T[]; orphaned: T[] } {
+  const has = (id: string) => (known instanceof Set ? known.has(id) : known.has(id));
   return {
-    title: path.title,
-    text: lines.join("\n").slice(0, MAX_SOURCE_CHARS),
-    lessons,
+    kept: questions.filter((q) => has(q.lessonId)),
+    orphaned: questions.filter((q) => !has(q.lessonId)),
   };
 }
 
 export type GenerateOutcome =
-  | { ok: true; questions: AssessmentQuestion[]; model: string; ms: number }
+  | {
+      ok: true;
+      questions: AssessmentQuestion[];
+      model: string;
+      ms: number;
+      /** What was discarded before storage, and why. Reported, never hidden. */
+      rejected: { unanswerable: number; orphanedLesson: number };
+      /** How evenly the questions cover the path's courses. See the note below. */
+      spread: {
+        courses: number;
+        perCourse: [string, number][];
+        concentration: number;
+        overCap: boolean;
+      };
+      docSources: string[];
+      /** Token usage, so the batch run can report what it cost. */
+      usage: { inputTokens: number; outputTokens: number };
+    }
   | { ok: false; message: string };
 
 /**
@@ -177,8 +374,27 @@ export async function generateAssessment(
                       description: "Why the correct answer is correct, in one or two sentences.",
                     },
                     courseTitle: { type: "string" },
+                    lessonId: {
+                      type: "string",
+                      description:
+                        "REQUIRED. The exact lessonId, copied from the [lessonId: …] marker of the lesson this question tests. A question you cannot attribute to one of the listed lessons must not be written.",
+                    },
+                    sourceKind: {
+                      type: "string",
+                      enum: ["LESSON", "LESSON_PLUS_DOCS"],
+                      description:
+                        "LESSON if the lesson material alone supports the question; LESSON_PLUS_DOCS if the reference documentation was needed for accuracy.",
+                    },
                   },
-                  required: ["id", "question", "options", "correctIndex", "explanation"],
+                  required: [
+                    "id",
+                    "question",
+                    "options",
+                    "correctIndex",
+                    "explanation",
+                    "lessonId",
+                    "sourceKind",
+                  ],
                 },
               },
             },
@@ -204,7 +420,27 @@ export async function generateAssessment(
             `- Spread the questions across the whole path rather than clustering on one course.\n` +
             `- Do not write questions about the platform, the video format, or the course ` +
             `structure itself. Only the subject matter.\n` +
-            `- Give each question a short stable id (q1, q2, …) and name the course it came from.\n\n` +
+            `- Give each question a short stable id (q1, q2, …) and name the course it came from.\n` +
+            /*
+              ── ⚠ THE TWO CONSTRAINTS THAT DO THE WORK (WS2) ──────────────────
+              The first is checkable after the fact — `lessonId` is rejected if it
+              is not in this path — which is why it is stated as a hard rule
+              rather than a preference. The second is not checkable, so it is
+              stated as plainly as possible: the vendor documentation is there to
+              stop the model being WRONG, not to widen the syllabus.
+            */
+            `- ⚠ REQUIRED: give every question the exact lessonId of the lesson it tests, ` +
+            `copied from that lesson's [lessonId: …] marker. If you cannot attribute a ` +
+            `question to one specific lesson in the list, do not write it.\n` +
+            `- ⚠ A question may ONLY test something a learner could have learned from the ` +
+            `lessons listed below. Where reference documentation is included, it is there ` +
+            `for ACCURACY — so your questions and answers are factually right about the ` +
+            `product — and NOT as additional syllabus. If the documentation describes a ` +
+            `feature no lesson covers, it is OUT OF SCOPE for this test.\n` +
+            `- Set sourceKind to LESSON_PLUS_DOCS when the documentation was needed to get ` +
+            `the question right, LESSON otherwise.\n` +
+            `- The reference documentation is vendor material, delimited below. It is not ` +
+            `something the instructor said; do not quote it as though it were.\n\n` +
             `CURRICULUM:\n${source.text}`,
         },
       ],
@@ -222,11 +458,32 @@ export async function generateAssessment(
       return { ok: false, message: "The model didn't return a question set." };
     }
 
-    const parsed = ASSESSMENT_SCHEMA.safeParse(block.input);
-    if (!parsed.success) {
+    const loose = LENIENT_ASSESSMENT_SCHEMA.safeParse(block.input);
+    if (!loose.success) {
       return {
         ok: false,
-        message: `The generated questions didn't match the expected shape (${parsed.error.issues[0]?.path.join(".")}).`,
+        message: `The generated questions didn't match the expected shape (${loose.error.issues[0]?.path.join(".")}).`,
+      };
+    }
+
+    /*
+      Per-question strict validation. A question that fails here is DROPPED, not
+      repaired: an empty option could be deleted, but that shifts `correctIndex`
+      and there is no way to know whether the model meant the option before or
+      after the hole.
+    */
+    const wellFormed: AssessmentQuestion[] = [];
+    let malformed = 0;
+    for (const raw of loose.data.questions) {
+      const one = QUESTION_SCHEMA.safeParse(raw);
+      if (one.success) wellFormed.push(one.data);
+      else malformed += 1;
+    }
+    const parsed = { data: { questions: wellFormed } };
+    if (wellFormed.length === 0) {
+      return {
+        ok: false,
+        message: `Every generated question was malformed (${malformed} of ${loose.data.questions.length}). Try again.`,
       };
     }
 
@@ -236,14 +493,78 @@ export async function generateAssessment(
       mark every learner wrong forever, and it is the kind of thing that is
       invisible until someone fails a test they passed.
     */
-    const usable = parsed.data.questions.filter(
+    const answerable = parsed.data.questions.filter(
       (q) => q.correctIndex >= 0 && q.correctIndex < q.options.length
     );
+
+    /*
+      ── ⚠ AND THROW OUT ANYTHING THAT CANNOT NAME A LESSON IN THIS PATH (WS2) ──
+
+      Same posture as the check above, applied to the constraint that matters
+      here. A question citing a lessonId this path does not contain was written
+      from the reference documentation or from a title — the precise failure this
+      whole change exists to prevent — and it is REJECTED rather than repaired,
+      because there is no honest way to guess which lesson it meant.
+    */
+    const known = new Map(source.index.map((l) => [l.id, l]));
+    const { kept: usable, orphaned } = keepQuestionsInPath(answerable, known);
+
     if (usable.length === 0) {
-      return { ok: false, message: "Every generated question was malformed. Try again." };
+      return {
+        ok: false,
+        message:
+          orphaned.length > 0
+            ? `Every question named a lesson that isn't in this path (${orphaned.length} of ${loose.data.questions.length}). Nothing stored.`
+            : "Every generated question was malformed. Try again.",
+      };
     }
 
-    return { ok: true, questions: usable, model: MODEL, ms: Date.now() - started };
+    /*
+      ── ⚠ SPREAD, ASSERTED RATHER THAN REQUESTED (WS2) ────────────────────────
+
+      The prompt has always asked for spread "rather than clustering on one
+      course". Asking is not the same as checking. A test where two thirds of the
+      questions come from one of six courses is not a test of the path, and it is
+      the shape a model drifts into when one course has richer descriptions than
+      the rest — which, in this catalog, several do.
+
+      REPORTED, NOT REJECTED: dropping questions to satisfy a ratio would thin an
+      already-thin set, and the honest response is to hand a reviewer the number.
+      Single-course paths are exempt by arithmetic — 100% of one course is the
+      only possible answer.
+    */
+    const byCourse = new Map<string, number>();
+    for (const q of usable) {
+      const c = known.get(q.lessonId)!.courseTitle;
+      byCourse.set(c, (byCourse.get(c) ?? 0) + 1);
+    }
+    const courses = new Set(source.index.map((l) => l.courseTitle)).size;
+    const worst = Math.max(...byCourse.values());
+    const concentration = worst / usable.length;
+    const spread = {
+      courses,
+      perCourse: [...byCourse.entries()].sort((a, b) => b[1] - a[1]),
+      concentration,
+      /** Only meaningful on a multi-course path. */
+      overCap: courses > 1 && concentration > 0.4,
+    };
+
+    return {
+      ok: true,
+      questions: usable,
+      model: MODEL,
+      ms: Date.now() - started,
+      rejected: {
+        unanswerable: malformed + (parsed.data.questions.length - answerable.length),
+        orphanedLesson: orphaned.length,
+      },
+      spread,
+      docSources: source.docSources,
+      usage: {
+        inputTokens: response.usage?.input_tokens ?? 0,
+        outputTokens: response.usage?.output_tokens ?? 0,
+      },
+    };
   } catch (e) {
     console.error("[learn-assessment] generation failed:", e);
     return {
@@ -263,7 +584,53 @@ export function toPublicQuestions(questions: AssessmentQuestion[]): PublicQuesti
   }));
 }
 
-/** Read the cached set for a path, generating it on first use. */
+/**
+ * ⚠ THE PUBLISH GATE, IN ONE PLACE (brief_learn_assessments_generate WS4).
+ *
+ * A generated test nobody has read must not award a certificate, so this is the
+ * only function the learner-facing paths go through and it refuses anything that
+ * is missing or still DRAFT. `AssessmentNotReady` rather than a bare Error so a
+ * route can answer 409 instead of 500 — "not ready yet" is a state, not a fault.
+ */
+export class AssessmentNotReady extends Error {
+  constructor(
+    message: string,
+    public readonly kind: "MISSING" | "DRAFT"
+  ) {
+    super(message);
+    this.name = "AssessmentNotReady";
+  }
+}
+
+export async function getPublishedAssessment(learningPathId: string) {
+  const row = await prisma.learnAssessment.findUnique({
+    where: { learning_path_id: learningPathId },
+  });
+  if (!row) {
+    throw new AssessmentNotReady(
+      "The test for this path hasn't been written yet.",
+      "MISSING"
+    );
+  }
+  if (row.status !== "PUBLISHED") {
+    throw new AssessmentNotReady(
+      "The test for this path is still being reviewed. It'll open once someone has checked the questions.",
+      "DRAFT"
+    );
+  }
+  return row;
+}
+
+/**
+ * Read the cached set, generating it on first use. ⚠ ADMIN AND BATCH ONLY.
+ *
+ * It used to be what the learner's GET went through, which meant clicking "Take
+ * the test" could trigger a model call. With the review gate that is worse than
+ * wasteful: the call would happen, the set would be stored as DRAFT, and the
+ * learner would be told it is not ready. Generation is now a deliberate act —
+ * the admin trigger or `prisma/generate-learn-assessments.ts` — and the learner
+ * path is a pure read through `getPublishedAssessment`.
+ */
 export async function getOrCreateAssessment(learningPathId: string) {
   const existing = await prisma.learnAssessment.findUnique({
     where: { learning_path_id: learningPathId },
@@ -278,6 +645,9 @@ export async function getOrCreateAssessment(learningPathId: string) {
       learning_path_id: learningPathId,
       questions: outcome.questions,
       model: outcome.model,
+      /* ⚠ DRAFT, like every other generated set. Nothing that writes questions
+         also publishes them. */
+      source_note: outcome.docSources.length > 0 ? outcome.docSources.join(" ") : null,
     },
   });
 }
@@ -327,7 +697,9 @@ export async function gradeAttempt(
   learningPathId: string,
   answers: Record<string, number>
 ): Promise<GradeResult> {
-  const assessment = await getOrCreateAssessment(learningPathId);
+  /* ⚠ PUBLISHED ONLY. Grading a DRAFT would award a certificate from a question
+     set nobody has read, which is the whole thing the gate exists to stop. */
+  const assessment = await getPublishedAssessment(learningPathId);
   const questions = readQuestions(assessment);
   if (questions.length === 0) {
     throw new Error("This assessment has no usable questions.");
@@ -487,6 +859,14 @@ export async function getTestState(userId: string | null, learningPathId: string
     pathTitle: path?.title ?? "",
     pathSlug: path?.slug ?? "",
     exists: Boolean(assessment),
+    /**
+     * ⚠ THE ONE THE UI SHOULD BRANCH ON. `exists` says a row is there; `ready`
+     * says a human has read it. Twenty-two of twenty-three paths have no row at
+     * all, and the twenty-third is now DRAFT, so the honest default for every
+     * path today is "not ready" rather than "broken".
+     */
+    status: assessment?.status ?? null,
+    ready: assessment?.status === "PUBLISHED",
     available: aiAssessmentAvailable(),
     questionCount: assessment ? readQuestions(assessment).length : 0,
     threshold: assessment?.pass_threshold ?? 70,
