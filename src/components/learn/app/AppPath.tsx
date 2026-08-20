@@ -211,7 +211,16 @@ export function AppPath({ path, signedIn }: { path: AppPathView; signedIn: boole
                   {allDone ? (
                     <>
                       <Check className="h-3 w-3" aria-hidden />
-                      Every lesson complete — the test is open
+                      {/*
+                        ⚠ "the test is open" IS ONLY TRUE IF IT IS. Finishing the
+                        lessons clears the PREREQUISITE; whether the question set
+                        has been reviewed is a separate gate, and this chip sat
+                        next to a column saying the set was still being checked.
+                        Two true sentences that read as a contradiction.
+                      */}
+                      {path.test.ready
+                        ? "Every lesson complete — the test is open"
+                        : "Every lesson complete — waiting on the question set"}
                     </>
                   ) : (
                     <>
@@ -230,7 +239,13 @@ export function AppPath({ path, signedIn }: { path: AppPathView; signedIn: boole
                 rules.
               */}
               <div className="flex gap-8 sm:block sm:shrink-0 sm:text-right">
-                {path.test.exists ? (
+                {/*
+                  ⚠ `ready`, NOT `exists` (WS4). A generated set lands as DRAFT
+                  until a human reads it; quoting its pass mark and attempt limit
+                  beside a test nobody can sit would be the page stating the rules
+                  of a closed door.
+                */}
+                {path.test.ready ? (
                   <>
                     <div className="mb-2">
                       <b className="block font-display text-[15px] font-bold">
@@ -247,8 +262,9 @@ export function AppPath({ path, signedIn }: { path: AppPathView; signedIn: boole
                   </>
                 ) : (
                   <p className="max-w-[210px] text-[10.5px] leading-relaxed text-white/60">
-                    The question set for this path hasn&apos;t been generated yet, so its pass mark
-                    and attempt limit aren&apos;t set.
+                    {path.test.exists
+                      ? "The question set for this path is written and being reviewed. Its pass mark opens with it."
+                      : "The question set for this path hasn't been written yet, so its pass mark and attempt limit aren't set."}
                   </p>
                 )}
               </div>

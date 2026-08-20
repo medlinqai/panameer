@@ -3,7 +3,8 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getSessionViewer } from "@/lib/session";
 import {
-  getOrCreateAssessment,
+  AssessmentNotReady,
+  getPublishedAssessment,
   getTestState,
   gradeAttempt,
   readQuestions,
@@ -18,6 +19,18 @@ import {
  * only the learner's choices and compares against the stored set here. Anything
  * else makes the test decorative, and this one issues a credential that goes on
  * a professional profile.
+ *
+ * ── ⚠ BOTH VERBS REFUSE A DRAFT (brief_learn_assessments_generate WS4) ────────
+ *
+ * A generated set nobody has read must not award a certificate, so GET does not
+ * serve its questions and POST does not grade against it. 409, not 500: "still
+ * being reviewed" is a state of the world, and a 500 would put it in the error
+ * log as a fault every time a learner clicked.
+ *
+ * ⚠ GET ALSO NO LONGER GENERATES. It used to call `getOrCreateAssessment`, so a
+ * learner clicking Take the test could trigger a model call — which under the
+ * review gate would spend money to produce something the same request then
+ * refuses. Generation is the admin trigger and the batch script; this is a read.
  */
 export async function GET(
   _request: Request,
@@ -38,13 +51,17 @@ export async function GET(
   }
 
   try {
-    const assessment = await getOrCreateAssessment(pathId);
+    const assessment = await getPublishedAssessment(pathId);
     const state = await getTestState(viewer.userId, pathId);
     return NextResponse.json({
       ...state,
       questions: toPublicQuestions(readQuestions(assessment)),
     });
   } catch (e) {
+    /* Not ready is not an outage. No console.error, no 5xx, no questions. */
+    if (e instanceof AssessmentNotReady) {
+      return NextResponse.json({ error: e.message, kind: e.kind }, { status: 409 });
+    }
     console.error("[learn-test] load failed:", e);
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "Could not load the test." },
@@ -76,6 +93,9 @@ export async function POST(
   try {
     return NextResponse.json(await gradeAttempt(viewer.userId, pathId, parsed.data.answers));
   } catch (e) {
+    if (e instanceof AssessmentNotReady) {
+      return NextResponse.json({ error: e.message, kind: e.kind }, { status: 409 });
+    }
     console.error("[learn-test] grade failed:", e);
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "Could not grade that attempt." },
