@@ -93,11 +93,42 @@ export type MarketingNavItem = {
   called "Find Work" landing on /for-providers is a name the visitor never sees
   matching the one they clicked. See `next.config.ts` for the redirects.
 */
+/*
+  ── ⚠ RE-WORDED AND RE-ORDERED, 2026-08-19 (P1-J0-E222) ──────────────────────
+
+  Scott's call, asked for as "the most understandable set", with the note
+  *"honestly, we are splitting atoms"* — so this was a WORDING change and nothing
+  else. Two labels moved and the order changed; NOT ONE HREF DID.
+
+    Learn         /learn          unchanged
+    Find Talent   /hire-talent    was "Hire Talent", and moves to 2nd
+    Find Work     /find-work      label unchanged, moves to 3rd
+    Shop          /buy-services   was "Buy Services"
+
+  Buyer-side now sits second and seller-side third.
+
+  ⚠ TWO LABELS NOW DIFFER BY ONE WORD AND SIT ADJACENT. "Find Talent" and "Find
+  Work" are the two sides of one market, which is the point — and it means an
+  off-by-one in this array swaps a buyer destination for a seller one and still
+  reads plausibly. CHECK THE PAIRING BY HREF, NEVER BY READING DOWN THE LABELS.
+
+  ── ⚠ THE LABEL AND THE ROUTE DIVERGE ON PURPOSE, AND IT IS DATED ─────────────
+
+  "Find Talent" points at `/hire-talent`. "Shop" points at `/buy-services`. The
+  comment above says "MENU LABEL == PAGE ROUTE" and that WAS the rule when those
+  two routes were renamed; as of 2026-08-19 it no longer holds for these two, and
+  that is a decision rather than an oversight.
+
+  ⚠ DO NOT "TIDY" IT BY RENAMING THE ROUTES. A rename means redirects, external
+  links, metadata, sitemap entries and every in-app link — a large, risky change
+  to close a cosmetic gap, in a change Scott sized at twenty minutes. The routes
+  stay.
+*/
 export const MARKETING_NAV: MarketingNavItem[] = [
   { label: "Learn", href: "/learn" },
+  { label: "Find Talent", href: "/hire-talent" },
   { label: "Find Work", href: "/find-work" },
-  { label: "Hire Talent", href: "/hire-talent" },
-  { label: "Buy Services", href: "/buy-services" },
+  { label: "Shop", href: "/buy-services" },
 ];
 
 /**
@@ -114,10 +145,21 @@ export const MARKETING_NAV: MarketingNavItem[] = [
  * is shared, which is the part that was drifting: the same label can no longer
  * resolve to two places.
  *
- * ⚠ THE LABELS MATCH THE HEADER ON PURPOSE. Hire Talent · Find Work · Buy
- * Services · Learn. This table sits beside `MARKETING_NAV` so a re-word has to
- * pass both at once — the footer used to say "Buy Pre-Built Services" and
- * "Find Talent" for things the header called something else.
+ * ⚠ THE LABELS MATCH THE HEADER ON PURPOSE. Learn · Find Talent · Find Work ·
+ * Shop. This table sits beside `MARKETING_NAV` so a re-word has to pass both at
+ * once — the footer used to say "Buy Pre-Built Services" and "Find Talent" for
+ * things the header called something else.
+ *
+ * ── ⚠ AND E222 REVERSED HALF OF THAT UNIFICATION, DELIBERATELY ───────────────
+ *
+ * Read the sentence above carefully before "fixing" anything: the footer's OLD
+ * wording was "Find Talent", and E118 unified it TO "Hire Talent" because that is
+ * what the header said. E222 (2026-08-19) moved BOTH to "Find Talent".
+ *
+ * So the current label is the one E118 removed. THAT IS A REVERSAL, NOT A
+ * REGRESSION — E118's rule was "one word per destination", and that rule still
+ * holds; only the word changed. Anyone reading E118's note and restoring "Hire
+ * Talent" here would re-break the very thing E118 was written to fix.
  *
  * ── ⚠ AN ENTRY WITH NO `href` IS NOT A LINK ──────────────────────────────────
  *
@@ -139,7 +181,10 @@ export const FOOTER_GROUPS: { title: string; entries: FooterEntry[] }[] = [
   {
     title: "Hire",
     entries: [
-      { label: "Hire Talent", href: "/hire-talent" },
+      /* ⚠ "Find Talent", matching the header since E222. The GROUP heading stays
+         "Hire" — it is a category of intent, not a nav label, and the header has
+         never had a word for it. */
+      { label: "Find Talent", href: "/hire-talent" },
       { label: "Post a Work Request", href: "/join/buyer" },
     ],
   },
