@@ -193,7 +193,47 @@ export function MarketingHeader() {
           an auto margin here would fight it for the same space and pull the
           nav back off centre.
         */}
-        <div className="hidden shrink-0 items-center gap-3 md:flex">
+        {/*
+          ── ⚠ THE AUTH CLUSTER JOINS AT lg, NOT md (P1-ALL-E004) ──────────────
+
+          This header overflowed every public page except `/` at exactly 768 and
+          for ~27px above it. Same defect class as `P1-ALL-E001` in the app
+          header, fixed at `c192009`: fixed, `shrink-0` clusters colliding at a
+          named breakpoint.
+
+          THE ARITHMETIC, measured on /hire-talent at 768 rather than derived:
+
+            logo            159   shrink-0
+            nav             336   shrink-1, but nowrap children floor it here
+            Log In/Sign Up  212   shrink-0
+            gap-8 x2         64
+            px-6  x2         48
+                            ───
+                            819   required, against 768 available
+
+          ⚠ `scrollWidth` REPORTED 795, NOT 819. It omits the end padding once
+          content overflows (`pitfalls.md`, `c192009`) — 795 + 24 = 819. Budgeting
+          against the reported figure would have left the fix 24px short, which is
+          exactly how the app-header fix nearly went wrong.
+
+          `md` is 768, so the nav AND the auth cluster both switched on at the one
+          width where the ☰ switched off — three desktop pieces at their tightest
+          and two of them unable to give.
+
+          THE SMALLEST NAMED BREAKPOINT THAT CLEARS 819 IS lg (1024):
+
+            at 1024   159 + 354 (nav at its lg gap) + 212 + 64 + 48 = 837  ✓
+            at 1023   159 + 336 + 21 (☰) + 64 + 48          = 628  ✓
+            at  768   same 628                                       ✓
+
+          ⚠ THE AUTH CLUSTER GIVES, NOT THE NAV, and not the type size. It is
+          212px of the 819 and the ☰ drawer below already contains BOTH buttons —
+          verified in the DOM, not assumed — so nothing becomes unreachable. The
+          four labels stay visible from 768 because a tablet has room for them:
+          628 of 768. The nav's font and Scott's four labels (`P1-J0-E222`,
+          yesterday) are untouched.
+        */}
+        <div className="hidden shrink-0 items-center gap-3 lg:flex">
           {/*
             E003 — LOG IN IS A CONTROL NOW, not bold body text. It was
             `font-bold` with no colour of its own, inheriting `--color-ink`,
@@ -210,18 +250,33 @@ export function MarketingHeader() {
           <Btn href="/join">Sign Up</Btn>
         </div>
 
+        {/*
+          ⚠ lg, MATCHING THE AUTH CLUSTER. If this stayed `md:hidden` while the
+          buttons moved to `lg:flex`, then between 768 and 1023 there would be no
+          Log In and no Sign Up ANYWHERE — the row would not have them and the ☰
+          that carries them would be hidden. That is the trap in moving one
+          breakpoint without the other, and it is why the guard asserts both
+          buttons have non-zero size at EVERY width rather than only at the ends.
+        */}
         <button
           onClick={() => setOpen((v) => !v)}
           aria-label="Toggle navigation"
           aria-expanded={open}
-          className="ml-auto cursor-pointer text-2xl md:hidden"
+          className="ml-auto cursor-pointer text-2xl lg:hidden"
         >
           ☰
         </button>
       </div>
 
+      {/*
+        ⚠ THE DRAWER KEEPS EVERYTHING, including the four nav items that are also
+        visible in the row between 768 and 1023. The duplication is deliberate:
+        one drawer with the same contents at every width beats a drawer whose
+        contents change at a breakpoint, and a person who opens it at 800px and
+        finds the nav there is not surprised by it.
+      */}
       {open && (
-        <div className="border-t border-line bg-white px-6 py-4 md:hidden">
+        <div className="border-t border-line bg-white px-6 py-4 lg:hidden">
           <nav className="flex flex-col gap-1 text-[15px] font-semibold text-ink-2">
             {MARKETING_NAV.map((item, i) => {
               const on = isActive(item.href);
