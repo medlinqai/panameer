@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { HeroBox } from "@/components/marketing/HeroBox";
 import { HERO_COPY } from "@/lib/brand";
 import { BRAND_BADGE_SHORT } from "@/lib/brand";
 
@@ -47,7 +48,20 @@ export function MarketingHero({
   const mode = audience === "buyer" ? "hire" : "work";
 
   return (
-    <div className="relative overflow-hidden bg-[radial-gradient(1100px_500px_at_82%_-10%,rgba(215,44,214,0.42),transparent_60%),linear-gradient(150deg,#0d1230_0%,#191a44_55%,#3a1c53_100%)] text-white">
+    /*
+      ── ⚠ BOXED, NOT FULL-BLEED (P1-J0-E264) ─────────────────────────────────
+      Scott: *"TALENT/WORK: The Section 1 is fullwidth (incorrect)."* This one
+      change boxes FIVE pages — /hire-talent, /find-work, /buy-services,
+      /enterprise and /why-panameer — because they all render this component.
+      `/enterprise` and `/why-panameer` were not in his list and are included
+      deliberately: they use the same hero, and leaving two of five full-bleed
+      would re-create the inconsistency the row is about.
+
+      ⚠ THE GRADIENT MOVED ONTO THE CARD, not into a second layer. `HeroBox`
+      owns the inset and the radius; the surface is still this hero's own, so a
+      page that wants a different one changes it here and nowhere else.
+    */
+    <HeroBox cardClassName="bg-[radial-gradient(1100px_500px_at_82%_-10%,rgba(215,44,214,0.42),transparent_60%),linear-gradient(150deg,#0d1230_0%,#191a44_55%,#3a1c53_100%)] text-white">
       {/*
         The faint grid, masked to the top-right so it fades before it reaches
         the copy. Decorative, and the mask is what keeps it from competing with
@@ -166,6 +180,6 @@ export function MarketingHero({
           </p>
         )}
       </div>
-    </div>
+    </HeroBox>
   );
 }

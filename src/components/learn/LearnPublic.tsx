@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { HeroVideoBackdrop } from "@/components/media/HeroVideoBackdrop";
+import { HeroBox } from "@/components/marketing/HeroBox";
 import { SellSection } from "@/components/marketing/SellSection";
 import { PathProgressShot } from "@/components/learn/public/PathProgressShot";
 import { CertificateShot } from "@/components/learn/public/CertificateShot";
@@ -348,7 +349,26 @@ const SECTIONS = [
 export function LearnPublic() {
   return (
     <>
-      <section className="relative isolate overflow-hidden bg-[linear-gradient(150deg,#1b1f45_0%,#33194f_55%,#4a1a5e_100%)] px-6 py-16 text-white min-[900px]:py-[84px]">
+      {/*
+        ── ⚠ BOXED, NOT FULL-BLEED (P1-J0-E264) ───────────────────────────────
+
+        Scott: *"LEARN/SHOP: the Section 1 is fullwidth (incorrect) — I want it to
+        be a boxed layout like the HOME."* This hero was the THIRD implementation
+        of a public hero — hand-rolled here, neither `HomeHero` nor
+        `MarketingHero` — which is the part of E264 he could not see from the
+        outside. It now shares `HeroBox` with the five `MarketingHero` pages.
+
+        ⚠ THE CONTAINER CHANGED AND THE COPY DID NOT. The `<h1>` is Scott's
+        verbatim string and the lede is `P1-J3-E011`'s; neither is touched here.
+
+        ⚠ `isolate` MOVED TO THE CARD along with the gradient, because it is what
+        keeps the video and the scrim stacking inside this hero rather than
+        against the page. `overflow-hidden` now comes from `HeroBox`, which is
+        also what makes the clip respect the radius — the same reason `HomeHero`
+        needs two elements rather than one.
+      */}
+      <HeroBox cardClassName="isolate bg-[linear-gradient(150deg,#1b1f45_0%,#33194f_55%,#4a1a5e_100%)] text-white">
+        <section className="px-6 py-16 min-[900px]:py-[84px]">
         {/*
           ⚠ THE GRADIENT UNDER THIS IS NOT DECORATION AND MUST STAY. It paints before the clip
           arrives, it is what a `prefers-reduced-motion` visitor sees, and it is the only thing
@@ -404,7 +424,8 @@ export function LearnPublic() {
             account.
           </p>
         </div>
-      </section>
+        </section>
+      </HeroBox>
 
       {/*
         ⚠ THE SPINE'S OWN `.map`, ABOVE `SECTIONS` AND NEVER INSIDE IT. Its index space is its

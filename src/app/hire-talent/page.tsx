@@ -55,8 +55,28 @@ export const metadata: Metadata = {
 };
 
 export default function HireTalentPage() {
+  /*
+    ── ⚠ NO `page` PROP: THE AUDIENCE STRIP IS GONE (P1-J0-E265) ──────────────
+
+    `MarketingShell` renders `{page && <AudienceStrip …/>}` and only this page and
+    its counterpart ever passed it, so dropping the prop is the whole removal —
+    `MarketingShell` is not edited and `AudienceStrip.tsx` stays on disk,
+    unimported, which is the `E164` resolution.
+
+    ⚠ THIS REVERSES A DELIBERATE DECISION AND THE REASONING IS STILL IN
+    `AudienceStrip.tsx`. That file records the control being moved OUT of the hero
+    (WS-2a) because there it *"did two unrelated jobs at once: it switched the
+    whole page, and it looked exactly like a filter on the search beneath it."*
+    ⚠ THAT PROBLEM WAS REAL AND REMOVING THE CONTROL DOES NOT RE-CREATE IT —
+    there is no longer a control to be ambiguous. Do not restore the strip from
+    that comment.
+
+    ⚠ IT REMOVES THE ONLY BUYER/SELLER SWITCH ON THE PUBLIC SITE. `Talent` and
+    `Work` are both top-level nav items now, which arguably IS the switch.
+    Reported, not decided.
+  */
   return (
-    <MarketingShell page="hire">
+    <MarketingShell>
       <MarketingHero
         audience="buyer"
         kicker={HIRE_HERO.kicker}

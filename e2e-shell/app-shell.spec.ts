@@ -638,3 +638,163 @@ test.describe("the MARKETING header", () => {
     });
   }
 });
+
+/**
+ * ── ⚠ EVERY PUBLIC HERO IS BOXED, AND THE STRIP IS GONE (E264 / E265) ───────
+ *
+ * Scott, walking the public site 2026-08-21: *"HOME: the SECTION 1 is boxed
+ * (correct). LEARN/SHOP: the Section 1 is fullwidth (incorrect)… TALENT/WORK: The
+ * Section 1 is fullwidth (incorrect)."*
+ *
+ * ⚠ ASSERTED BY GEOMETRY, NEVER BY CLASS. There were THREE implementations of a
+ * public hero — `HomeHero`'s inset card, `MarketingHero`'s band and a hand-rolled
+ * one on `/learn` — and a test keyed on `.hero-card` would have passed on the one
+ * page that was already right and been silent about the other six. The card's
+ * LEFT EDGE MUST NOT TOUCH THE VIEWPORT is the claim, and it is true of every
+ * implementation or the page is wrong.
+ *
+ * ⚠ THE EXPECTED INSET IS HOME'S, MEASURED FROM THE RENDERED PAGE before
+ * anything moved: 44px at 1440 and 10px at 390, with a 26px/20px radius. Home is
+ * in the list too, so the page Scott called CORRECT is the one holding the number.
+ */
+const BOXED_HERO_PAGES = [
+  "/",
+  "/optimize",
+  "/learn",
+  "/hire-talent",
+  "/find-work",
+  "/buy-services",
+  "/enterprise",
+  "/why-panameer",
+];
+
+/**
+ * ⚠ HOME'S OWN BREAKPOINT, OFF-BY-ONE INCLUDED. `.pm-home .hero-stage`'s
+ * override is `@media(max-width:900px)`, which INCLUDES 900 — so 900 is a MOBILE
+ * width and the desktop inset starts at 901. The first version of this guard used
+ * `>= 900` and failed on `/` itself, which is how the mismatch between home's CSS
+ * and the new `HeroBox` was found rather than shipped.
+ */
+const insetFor = (w: number) => (w > 900 ? 44 : 10);
+
+test.describe("the PUBLIC hero", () => {
+  for (const url of BOXED_HERO_PAGES) {
+    test(`HERO GUARD — boxed, inset and rounded on ${url}`, async ({ browser }) => {
+      const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+      const pub = await ctx.newPage();
+      try {
+        for (const w of [1440, 1100, 900, 390]) {
+          await pub.setViewportSize({ width: w, height: 900 });
+          await pub.goto(url, { waitUntil: "domcontentloaded" });
+          await pub.waitForSelector("header", { state: "attached", timeout: 30_000 });
+          await pub.waitForTimeout(400);
+
+          const m = await pub.evaluate(() => {
+            const iw = document.documentElement.clientWidth;
+            /*
+              The hero card: a DARK surface in the top 300px with real height,
+              found by luminance and ranked by border-radius. Ranking by width
+              picks the outer full-bleed band every time — that is how an earlier
+              version of this measurement reported home, a boxed page, as inset 0.
+            */
+            const dark = (cs: CSSStyleDeclaration) => {
+              const m2 = (cs.backgroundColor.match(/\d+/g) ?? []).map(Number);
+              const solid = m2.length >= 3 && (m2[0] + m2[1] + m2[2]) / 3 < 90;
+              return solid || /gradient/.test(cs.backgroundImage);
+            };
+            const rad = (e: Element) => parseFloat(getComputedStyle(e).borderTopLeftRadius) || 0;
+            const cand = Array.from(document.querySelectorAll("section, div")).filter((e) => {
+              const r = e.getBoundingClientRect();
+              if (r.top > 300 || r.height < 200 || r.width < 200) return false;
+              return dark(getComputedStyle(e));
+            });
+            const card = cand.sort(
+              (a, x) => rad(x) - rad(a) || x.getBoundingClientRect().width - a.getBoundingClientRect().width
+            )[0];
+            if (!card) return null;
+            const r = card.getBoundingClientRect();
+            /*
+              ⚠ EVERYTHING THE HERO OFFERS, WITH REAL SIZE — and this half was
+              added because a break proved it was missing. Hiding the search form
+              below `xl` passed a guard that only measured the CARD: geometry says
+              nothing about whether the thing inside it can be used. A control
+              with a 0x0 box is still in the DOM and still `querySelector`-able,
+              so the rect is the only honest test of "reachable".
+            */
+            const h1 = card.querySelector("h1");
+            const controls = Array.from(
+              card.querySelectorAll("a[href], button, input:not([type=hidden])")
+            ).map((e) => {
+              const b2 = e.getBoundingClientRect();
+              const cls = typeof e.className === "string" ? e.className.slice(0, 34) : "";
+              return { d: `${e.tagName.toLowerCase()}.${cls}`, w: Math.round(b2.width), h: Math.round(b2.height) };
+            });
+            return {
+              iw,
+              left: Math.round(r.left),
+              right: Math.round(r.right),
+              radius: Math.round(rad(card)),
+              docW: document.documentElement.scrollWidth,
+              h1w: h1 ? Math.round(h1.getBoundingClientRect().width) : 0,
+              controls,
+              dead: controls.filter((c) => c.w === 0 || c.h === 0).map((c) => c.d),
+            };
+          });
+
+          expect(m, `${url} @${w}: no hero card found at all`).not.toBeNull();
+          const r = m!;
+          const want = insetFor(w);
+          /*
+            ⚠ THE CLAIM IS "NOT TOUCHING THE VIEWPORT", asserted as a real number
+            rather than `> 0`, because a 1px inset would satisfy "> 0" and look
+            exactly like the full-bleed band this replaced.
+          */
+          expect(r.left, `${url} @${w}: the hero is full-bleed on the left`).toBe(want);
+          expect(r.iw - r.right, `${url} @${w}: the hero is full-bleed on the right`).toBe(want);
+          /* A card with square corners is a band with margins, not a card. */
+          expect(r.radius, `${url} @${w}: the hero card has no radius`).toBeGreaterThanOrEqual(20);
+          expect(r.docW, `${url} @${w}: the page scrolls sideways`).toBeLessThanOrEqual(r.iw);
+
+          /*
+            ⚠ THE HERO'S CONTENTS SURVIVE THE BOX. Boxing narrows the column, and
+            the failure mode is a control that gets hidden at a breakpoint to make
+            it fit — which looks like a fix and is a removal.
+          */
+          expect(r.h1w, `${url} @${w}: the hero has no visible <h1>`).toBeGreaterThan(40);
+          expect(
+            r.controls.length,
+            `${url} @${w}: the hero offers nothing to click — is this the right element?`
+          ).toBeGreaterThan(0);
+          expect(
+            r.dead,
+            `${url} @${w}: a hero control has no size — hidden at a breakpoint rather than fitted`
+          ).toEqual([]);
+        }
+      } finally {
+        await ctx.close();
+      }
+    });
+  }
+
+  /**
+   * ⚠ THE AUDIENCE STRIP IS GONE FROM BOTH PAGES (E265), asserted by its text
+   * rather than by a component name — the removal is `MarketingShell`'s `page`
+   * prop being dropped, and a class-based assertion would miss a restore that
+   * came back through a different route.
+   */
+  for (const url of ["/hire-talent", "/find-work"]) {
+    test(`HERO GUARD — no audience strip on ${url}`, async ({ browser }) => {
+      const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+      const pub = await ctx.newPage();
+      try {
+        await pub.goto(url, { waitUntil: "domcontentloaded" });
+        await pub.waitForSelector("header", { state: "attached", timeout: 30_000 });
+        const text = await pub.evaluate(() => document.body.innerText);
+        expect(text, `${url}: the audience strip is back`).not.toContain("See where I stand");
+        expect(text, `${url}: the audience strip is back`).not.toContain("I want to hire");
+      } finally {
+        await ctx.close();
+      }
+    });
+  }
+});
