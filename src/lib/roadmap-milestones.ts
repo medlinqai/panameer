@@ -20,8 +20,9 @@
  *   `WorkTracker` — a phase, a state, a percentage and a status label
  *
  * ⚠ `detail` IS COMPOSED, NOT STORED, because the two views need different tails.
- * The roadmap shows "Agent · 2 wks"; the tracker appends a state — "Agent · 2 wks ·
- * in build". Storing one string would have forced one of them to lie.
+ * The roadmap shows "Deployable · 2 wks"; the tracker appends a state —
+ * "Deployable · 2 wks · in build". Storing one string would have forced one of them
+ * to lie.
  *
  * ⚠ THE ORDER IS THE ROADMAP'S SEQUENCE and both views depend on it: the roadmap
  * draws bars left to right in it, and the tracker groups them into quarters in it.
@@ -29,7 +30,27 @@
 export type RoadmapMilestone = {
   key: string;
   action: string;
-  /** Package · Agent · Expert — what kind of thing does the work. */
+  /**
+   * ⚠ `Deliverable` · `Deployable` · `Expert's hours` — WHAT IS BEING BOUGHT, in
+   * Scott's vocabulary as of 2026-08-21 (E254's brief, WS2). Was `Package` /
+   * `Agent` / `Expert`.
+   *
+   * ⚠ THESE ARE THE SAME THREE NAMES AS `Package.kind`
+   * (`DELIVERABLE · DEPLOYABLE · HOURS`, `brief_solution_types_2026-08-21`) AND
+   * THEY MUST NOT DRIFT FROM IT. A roadmap line that says one word and the catalog
+   * row behind it that says another is the same class of defect E173 fixed between
+   * this list and the tracker.
+   *
+   * ⚠ `Deployment` IS BANNED AS A WORD ON THIS SURFACE — one letter from
+   * `Deployable` and the opposite meaning: a deployable is the THING, a deployment
+   * is the ACT. Do not "correct" one into the other.
+   *
+   * ⚠ CHANGING A WORD HERE CHANGES BOTH SURFACES ON `/`, WHICH IS THE POINT OF THIS
+   * FILE. `AiRoadmapShot` and `WorkTracker` both render it through
+   * `milestoneDetail`, so the plan and the execution cannot disagree about what
+   * kind of thing is being bought. An override in one view would re-create exactly
+   * the drift this module exists to prevent.
+   */
   resource: string;
   weeks: string;
   owner: string;
@@ -38,14 +59,14 @@ export type RoadmapMilestone = {
 };
 
 export const ROADMAP_MILESTONES: RoadmapMilestone[] = [
-  { key: "invoice_match", action: "Invoice match exceptions", resource: "Package", weeks: "2 wks", owner: "Panameer", isPartner: false },
-  { key: "po_price", action: "PO price alerts", resource: "Agent", weeks: "2 wks", owner: "Panameer", isPartner: false },
-  { key: "rogue_spend", action: "Rogue-spend alert", resource: "Agent", weeks: "2 wks", owner: "Panameer", isPartner: false },
-  { key: "contract_reneg", action: "Contract renegotiation", resource: "Expert", weeks: "4 wks", owner: "StratERP", isPartner: true },
-  { key: "supplier_docs", action: "Supplier doc validation", resource: "Agent", weeks: "2 wks", owner: "Panameer", isPartner: false },
+  { key: "invoice_match", action: "Invoice match exceptions", resource: "Deliverable", weeks: "2 wks", owner: "Panameer", isPartner: false },
+  { key: "po_price", action: "PO price alerts", resource: "Deployable", weeks: "2 wks", owner: "Panameer", isPartner: false },
+  { key: "rogue_spend", action: "Rogue-spend alert", resource: "Deployable", weeks: "2 wks", owner: "Panameer", isPartner: false },
+  { key: "contract_reneg", action: "Contract renegotiation", resource: "Expert’s hours", weeks: "4 wks", owner: "StratERP", isPartner: true },
+  { key: "supplier_docs", action: "Supplier doc validation", resource: "Deployable", weeks: "2 wks", owner: "Panameer", isPartner: false },
 ];
 
-/** "Agent · 2 wks", plus an optional state tail for the tracker. */
+/** "Deployable · 2 wks", plus an optional state tail for the tracker. */
 export const milestoneDetail = (m: RoadmapMilestone, tail?: string) =>
   [m.resource, m.weeks, tail].filter(Boolean).join(" · ");
 

@@ -73,15 +73,31 @@ const PHASES = [
         pct: 100,
         status: "Done",
       },
-      /* "live" rather than "2 wks · complete" — an agent that is running is not a
-         finished project, it is a thing still working. */
+      /*
+        "live" rather than "2 wks · complete" — a deployable that is running is not
+        a finished project, it is a thing still working.
+
+        ⚠ THE RESOURCE WORD IS NO LONGER HARD-CODED HERE, AND THAT WAS A REAL BUG.
+        This row is the one place in either graphic that bypasses
+        `milestoneDetail`, and it carried the literal string "Agent · live". When
+        the vocabulary changed to `Deliverable · Deployable · Expert's hours`
+        (E254's brief, WS2) every other line followed the shared list and this one
+        did not — so `/` rendered `Deployable · 2 wks` on the roadmap and
+        `Agent · live` on the tracker FOR THE SAME MILESTONE, two sections apart.
+        That is exactly the drift `lib/roadmap-milestones.ts` exists to prevent,
+        and `resource` is now read from it like everything else.
+
+        ⚠ THE OVERRIDE ITSELF STAYS. It exists because this row's tail is not a
+        duration — see above — and `milestoneDetail` would have to invent a
+        "no weeks" mode to express that. It just may not re-state the noun.
+      */
       {
         key: "po_price",
         tail: null,
         state: "done",
         pct: 100,
         status: "Done",
-        detail: "Agent · live",
+        detail: `${milestoneByKey("po_price").resource} · live`,
       },
     ],
   },

@@ -372,3 +372,165 @@ test.describe("the page as a whole", () => {
     }
   });
 });
+
+/**
+ * ── ⚠ THE STEP-5 ROADMAP GRID (P1-J0-E254 + the 2026-08-21 dashboard decision) ─
+ *
+ * ── WHY THIS SUITE AND NOT ANOTHER ───────────────────────────────────────────
+ *
+ * All three claims below are about the RENDERED page and nothing else can state
+ * them honestly:
+ *
+ *   · "Request is not inside a quarter" is a fact about DOM ancestry AND about
+ *     geometry. A source scan can see the JSX nesting and would have passed the
+ *     defect that prompted E254 — the chip was ALREADY a sibling of the lane and
+ *     still read as part of Q4, because nothing was drawn between them.
+ *   · "exactly four quarter headers" is a count of what the browser laid out.
+ *   · "the total is not a point figure" is about the text a reader sees.
+ *
+ * `check:ui` already owns `/` and already runs Chromium against it, so this is
+ * the nearest existing guard rather than a new harness with its own config.
+ * `check:app-shell` is about shells and headers on five public pages and would be
+ * the wrong subject; a `check:*` esbuild harness cannot measure a rect.
+ *
+ * ⚠ NOTHING IN THE `CARDS` CONTRACT ABOVE IS TOUCHED, WEAKENED OR RE-SCOPED.
+ * This is additive: a new describe block on the same page. `P1-J0-E256` is the
+ * case where a change DID collide with that list, and the instruction there was
+ * to stop and report rather than edit the gate — that is not this.
+ */
+test.describe("the Step 5 roadmap grid", () => {
+  /**
+   * ⚠ THE QUARTERS ARE A CONTINUOUS LANE, NOT FOUR CELLS, and the assertion is
+   * written against that reality rather than against the mockup's flat-HTML
+   * `repeat(4,1fr)`. `.rm-lane` is one grid cell with the dividers painted at
+   * 25/50/75%, which is what lets a 4-week bar be visibly twice a 2-week one and
+   * lets the two Q1 items overlap. So "inside a quarter" means "inside the lane".
+   */
+  test("§15 Request lives outside the quarter lane — by ancestry AND by geometry", async ({
+    page,
+  }) => {
+    const m = await page.evaluate(() => {
+      const chips = Array.from(document.querySelectorAll(".rm-req"));
+      const lanes = Array.from(document.querySelectorAll(".rm-row .rm-lane"));
+      return {
+        chips: chips.length,
+        lanes: lanes.length,
+        /* ancestry: no chip may be a descendant of a lane */
+        insideLane: chips.filter((c) => c.closest(".rm-lane")).length,
+        /*
+          geometry: every chip's LEFT edge is at or right of its row's lane's
+          RIGHT edge. This is the half that catches "sibling in the DOM, sitting
+          on top of Q4 on screen" — the state E254 was actually filed against.
+        */
+        overlapping: chips
+          .map((c, i) => {
+            const lane = lanes[i];
+            if (!lane) return null;
+            const cr = c.getBoundingClientRect();
+            const lr = lane.getBoundingClientRect();
+            return cr.left + 0.5 < lr.right ? `row ${i + 1}: chip ${Math.round(cr.left)} < lane right ${Math.round(lr.right)}` : null;
+          })
+          .filter(Boolean),
+      };
+    });
+    expect(m.chips, "one Request per row").toBe(5);
+    expect(m.lanes, "one quarter lane per row").toBe(5);
+    expect(m.insideLane, "a Request chip is nested inside the quarter lane").toBe(0);
+    expect(m.overlapping, "a Request chip overlaps the quarter lane on screen").toEqual([]);
+  });
+
+  /**
+   * ⚠ FOUR, AND THE ACTION COLUMN IS NOT A FIFTH. A header over the action column
+   * would read as another time bucket, which is precisely the misreading E254
+   * exists to end — so its cell is present (the 2px rule has to run the full
+   * height of the table) and deliberately empty.
+   */
+  test("§16 there are exactly four quarter headers, and the action column is unheaded", async ({
+    page,
+  }) => {
+    const qs = await page.locator(".rm-hd .rm-q").allTextContents();
+    expect(qs.map((t) => t.trim())).toEqual(["Q1", "Q2", "Q3", "Q4"]);
+    const actHeader = await page.locator(".rm-hd .rm-act").first().textContent();
+    expect((actHeader ?? "").trim(), "the action column must carry no label").toBe("");
+  });
+
+  /**
+   * ⚠ THE DIVIDER IS THE FIX. The chip was already in its own grid column; what
+   * was missing was a boundary that reads as a DIFFERENT KIND of boundary from
+   * the three inside the lane. So this asserts the relationship — heavier than a
+   * quarter divider — not a magic number.
+   */
+  test("§17 the action column is divided by a heavier rule than the quarters", async ({
+    page,
+  }) => {
+    const w = await page.locator(".rm-row .rm-act").first().evaluate((el) =>
+      parseFloat(getComputedStyle(el).borderLeftWidth)
+    );
+    expect(w, "the action column's left rule").toBeGreaterThan(1);
+  });
+
+  /**
+   * ⚠ A BAND, NOT A POINT FIGURE (`decisions-01.md`, 2026-08-21). The danger was
+   * never a wrong number — it was a precise one: a point total invites an audit
+   * of the model, and the conversation is the product. This asserts the SHAPE, so
+   * the illustrative figures stay free to change and a regression to any bare
+   * `$n,nnn,nnn` fails.
+   */
+  test("§18 the Year-1 total is a directional band, not a point figure", async ({ page }) => {
+    const total = (await page.locator(".rm-tot b").first().textContent())?.trim() ?? "";
+    expect(total, "a bare $ figure is a point total").not.toMatch(/^\$[\d,]+$/);
+    expect(total, "a band needs two ends").toMatch(/–|—|-/);
+    const label = (await page.locator(".rm-tot span").first().textContent())?.trim();
+    expect(label, "the label above the band is unchanged").toBe(
+      "Year-1 opportunity sequenced"
+    );
+    const qualifier = (await page.locator(".rm-tot-q").first().textContent())?.trim();
+    expect(qualifier, "the band has to say it is directional").toMatch(/directional/i);
+  });
+
+  /**
+   * ⚠ `Load into Work Tracker` STAYS THE PRIMARY (`P1-J0-E250`). Pulling `Request`
+   * out of the grid must not let it start competing, so the two are asserted
+   * together: the section's argument is the button, and the per-line action is
+   * secondary by construction.
+   */
+  /**
+   * ⚠ THE VOCABULARY IS ONE VOCABULARY, ACROSS BOTH SECTIONS (E254's brief, WS2).
+   *
+   * The roadmap and the Work Tracker render the SAME five milestones from
+   * `lib/roadmap-milestones.ts` — the plan, and that plan executing. When the
+   * resource words changed to `Deliverable · Deployable · Expert's hours`, one
+   * tracker row was found still saying `Agent · live` because it hard-coded its
+   * own detail string and bypassed `milestoneDetail`. So `/` shipped two nouns for
+   * one milestone, two sections apart, AND NO GATE IN THE REPO COULD SEE IT.
+   *
+   * This is that gate. It asserts the SET of nouns rather than a mapping, because
+   * the two views order their rows differently — the tracker groups by quarter.
+   *
+   * ⚠ `Deployment` IS BANNED IN THIS SET — one letter from `Deployable` and the
+   * opposite meaning: a deployable is the thing, a deployment is the act.
+   */
+  test("§19 the roadmap and the tracker use one resource vocabulary", async ({ page }) => {
+    const nouns = (lines: string[]) =>
+      [...new Set(lines.map((t) => t.trim().split("·")[0].trim()).filter(Boolean))].sort();
+    const roadmap = nouns(await page.locator(".rm-at > span").allTextContents());
+    const tracker = nouns(await page.locator(".trk-nm > span").allTextContents());
+    const ALLOWED = ["Deliverable", "Deployable", "Expert\u2019s hours"].sort();
+    expect(roadmap, "the roadmap's resource words").toEqual(ALLOWED);
+    expect(tracker, "the tracker's resource words — a hard-coded detail string drifts here").toEqual(
+      ALLOWED
+    );
+    for (const set of [roadmap, tracker]) {
+      expect(set.join(" "), "\"Deployment\" is banned on this surface").not.toMatch(/Deployment/);
+    }
+  });
+
+  test("§20 Load into Work Tracker is still the primary action", async ({ page }) => {
+    await expect(page.locator(".rm-btn")).toHaveText(/Load into Work Tracker/);
+    const [btn, chip] = await Promise.all([
+      page.locator(".rm-btn").first().evaluate((el) => parseFloat(getComputedStyle(el).fontSize)),
+      page.locator(".rm-req").first().evaluate((el) => parseFloat(getComputedStyle(el).fontSize)),
+    ]);
+    expect(chip, "the per-line Request must stay smaller than the primary").toBeLessThan(btn);
+  });
+});
