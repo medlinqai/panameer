@@ -92,15 +92,36 @@ export async function getProviderProfileView(
           },
         },
       },
-      certifications: {
-        orderBy: [{ issued_on: "desc" }, { year: "desc" }, { name: "asc" }],
-      },
       education: { orderBy: { created_at: "asc" } },
       languages: { orderBy: { created_at: "asc" } },
     },
   });
 
   if (!profile) return null;
+
+  /*
+    ── ⚠ THE USER'S CREDENTIALS, NOT THE PROFILE'S (`P1-J3-E019`) ─────────────
+
+    A credential belongs to the PERSON now, so a profile shows the certifications
+    of the USER who owns it — which is what "a profile shows their certifications"
+    always meant. Reading the profile's own relation would hide two real cases:
+
+      · a `LEARN` credential earned BEFORE the learner became a seller, whose
+        `provider_profile_id` is null and always was;
+      · any credential whose profile link was nulled when an old profile was
+        deleted — the FK is `SetNull` precisely so that can happen.
+
+    ⚠ A SEPARATE QUERY RATHER THAN A NESTED INCLUDE, because the owner is two hops
+    away (profile -> person -> user) and nesting it would make every caller of this
+    view carry a `user` object it has no other use for.
+  */
+  const certifications = profile.person?.user_id
+    ? await prisma.certification.findMany({
+        where: { user_id: profile.person.user_id },
+        orderBy: [{ issued_on: "desc" }, { year: "desc" }, { name: "asc" }],
+      })
+    : [];
+
 
   const isOwner =
     opts.viewerUserId != null && profile.person.user_id === opts.viewerUserId;
@@ -347,7 +368,7 @@ export async function getProviderProfileView(
       })),
     })),
     // E044 — standalone; no employer anywhere.
-    certifications: profile.certifications.map((c) => ({
+    certifications: certifications.map((c) => ({
       id: c.id,
       name: c.name,
       issuer: c.issuer,

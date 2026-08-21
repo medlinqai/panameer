@@ -473,7 +473,15 @@ async function main() {
       await prisma.certification.update({ where: { id: found.id }, data });
     } else {
       await prisma.certification.create({
-        data: { provider_profile_id: providerProfile.id, name: spec.name, ...data },
+        /* ⚠ BOTH. `user_id` is the owner (`P1-J3-E019`); the profile is where it
+           displays. A seed that set only the profile would not compile, which is
+           the point of making the column required. */
+        data: {
+          user_id: admin.id,
+          provider_profile_id: providerProfile.id,
+          name: spec.name,
+          ...data,
+        },
       });
     }
   }

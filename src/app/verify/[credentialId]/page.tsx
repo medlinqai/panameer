@@ -34,19 +34,31 @@ export default async function VerifyPage({
       issued_on: true,
       credential_id: true,
       learningPath: { select: { title: true, slug: true, status: true } },
-      providerProfile: {
+      /*
+        ── ⚠ THE HOLDER COMES FROM THE USER, NOT THE SELLER PROFILE (E019) ─────
+
+        This page used to read the name and photo through `providerProfile`, which
+        meant a credential earned by a learner who is not a seller had nowhere to
+        get a holder from — and, before `user_id` existed, no such credential could
+        be issued at all. Both halves are fixed here: the owner is the User, and
+        their Person carries the name and the photo whether or not they sell.
+
+        ⚠ THE PROFILE IS STILL SELECTED, for the link back to it. It is OPTIONAL
+        now, so every use of it below is guarded.
+      */
+      user: {
         select: {
-          id: true,
           person: { select: { first_name: true, last_name: true, photo_url: true } },
         },
       },
+      providerProfile: { select: { id: true } },
     },
   });
   if (!cert) notFound();
 
+  const person = cert.user?.person ?? null;
   const holder =
-    `${cert.providerProfile.person.first_name ?? ""} ${cert.providerProfile.person.last_name ?? ""}`.trim() ||
-    "This member";
+    `${person?.first_name ?? ""} ${person?.last_name ?? ""}`.trim() || "This member";
 
   return (
     <div className="flex min-h-screen flex-col bg-white font-body text-ink">
@@ -58,10 +70,10 @@ export default async function VerifyPage({
               ✓ Verified Credential
             </p>
 
-            {cert.providerProfile.person.photo_url && (
+            {person?.photo_url && (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={cert.providerProfile.person.photo_url}
+                src={person.photo_url}
                 alt=""
                 className="mx-auto mt-5 h-20 w-20 rounded-full border border-line object-cover"
               />
@@ -96,12 +108,22 @@ export default async function VerifyPage({
                 See the Path
               </Link>
             )}
-            <Link
-              href={`/providers/${cert.providerProfile.id}`}
-              className="rounded-full bg-magenta px-6 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
-            >
-              View Profile
-            </Link>
+            {/*
+              ⚠ ONLY WHEN THERE IS A PROFILE TO VIEW (E019). A learner who is not
+              a seller has a real, verifiable credential and no public profile
+              page; linking to `/providers/undefined` would turn a working verify
+              page into a 404 for exactly the person this brief exists to serve.
+              `HomeFooter`'s standing rule again: a link ships only when its
+              destination exists.
+            */}
+            {cert.providerProfile && (
+              <Link
+                href={`/providers/${cert.providerProfile.id}`}
+                className="rounded-full bg-magenta px-6 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
+              >
+                View Profile
+              </Link>
+            )}
           </div>
 
           <p className="mt-8 text-center text-[13.5px] text-ink-2">

@@ -51,10 +51,17 @@ export default async function MyStatsPage() {
           employers: true,
           projects: true,
           packages: true,
-          certifications: true,
         },
       },
     },
+  });
+
+
+  /* ⚠ COUNTED ON THE USER, NOT THE PROFILE (`P1-J3-E019`). A credential belongs to
+     the person, so a seller's own stats include a `LEARN` credential they earned
+     before they were a seller — which has no `provider_profile_id` at all. */
+  const certificationCount = await prisma.certification.count({
+    where: { user_id: viewer.userId },
   });
 
   if (!profile) {
@@ -125,7 +132,7 @@ export default async function MyStatsPage() {
             <StatRow label="Packages" value={String(profile._count.packages)} />
             <StatRow
               label="Certifications"
-              value={String(profile._count.certifications)}
+              value={String(certificationCount)}
             />
           </div>
         </StatTile>

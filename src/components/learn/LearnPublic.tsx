@@ -219,12 +219,17 @@ const SPINE: SpineSection[] = [
       `/verify/{id}`, the issuer writes both on a pass, and `app/verify/[credentialId]/page.tsx`
       exists. The LinkedIn/résumé claim is honest.
 
-      ⚠ AND IT DOES NOT SAY WHO GETS ONE — `P1-J3-E019`. The issuer opens
-      `if (!profile || !path) return null` where `profile` is a `ProviderProfile`, and
-      `Certification.provider_profile_id` is NOT NULLABLE. A learner with no provider profile
-      passes the test and gets nothing: no row, no credential, no verify page, no error. So this
-      copy is about what a verified credential IS and where it goes, and never about
-      entitlement — no "anyone", no "you will". Not fixed here, by instruction; reported.
+      ⚠ `P1-J3-E019` IS FIXED — THIS NOTE USED TO RECORD THE OPPOSITE AND WOULD OTHERWISE
+      RE-TEACH THE OLD DEFECT. It said the issuer opened `if (!profile || !path) return null`
+      and that `Certification.provider_profile_id` was NOT NULLABLE, so a learner with no
+      provider profile passed the test and got nothing — no row, no credential, no verify
+      page, no error. As of 2026-08-21 `Certification.user_id` is the owner, the profile link
+      is nullable, and the issuer requires only the path. ⚠ A LEARNER WITH NO SELLER PROFILE
+      NOW EARNS A REAL CREDENTIAL WITH A WORKING VERIFY URL.
+
+      ⚠ THE COPY IS STILL NOT CHANGED HERE, AND THAT IS DELIBERATE. `P1-J0-E282`/`E283` are
+      separate rows and still need Scott — the schema stopped lying, and rewriting the sentence
+      is his call, not a consequence of the fix.
     */
     heading: "Your certificate publishes to your profile, with a link you can put anywhere.",
     body:

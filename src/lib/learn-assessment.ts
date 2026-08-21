@@ -935,16 +935,30 @@ function credentialId(): string {
  * certification, and a second model would give a provider's profile two
  * Certifications sections that looked identical and behaved differently.
  *
- * Requires a ProviderProfile because that is what Certification hangs off. A
- * learner who is not a provider still passes, still has the attempt recorded,
- * and simply has nowhere to hang the badge yet — reported honestly rather than
- * failing the test they just passed.
+ * ── ⚠ IT NO LONGER REQUIRES A ProviderProfile (`P1-J3-E019`) ────────────────
+ *
+ * This function used to open `if (!profile || !path) return null`, and the note
+ * here used to say a non-provider learner "simply has nowhere to hang the badge
+ * yet". ⚠ THAT WAS THE DEFECT, NOT A CAVEAT: they passed the test, no row was
+ * written, no credential existed, no verify page resolved, and NO ERROR WAS
+ * RAISED — while the public Learn page invited exactly that person and §6 of the
+ * spine promised "the credential is issued in your name".
+ *
+ * `Certification.user_id` is the owner now. The provider profile is attached WHEN
+ * THERE IS ONE, so a seller's profile still shows the credential, and its absence
+ * is no longer a reason to issue nothing.
+ *
+ * ⚠ THE LOOKUP IS BY `user_id`, NOT BY PROFILE. Keying the "already issued?"
+ * check on the profile would have re-issued a second credential to anyone who
+ * became a seller after passing.
  */
 export async function issueCredential(
   userId: string,
   learningPathId: string
 ): Promise<{ id: string; url: string } | null> {
   const [profile, path] = await Promise.all([
+    /* ⚠ OPTIONAL NOW. Looked up so a seller's profile still shows the credential;
+       its absence is no longer a reason to issue nothing. */
     prisma.providerProfile.findFirst({
       where: { person: { user_id: userId } },
       select: { id: true },
@@ -954,11 +968,13 @@ export async function issueCredential(
       select: { title: true },
     }),
   ]);
-  if (!profile || !path) return null;
+  /* ⚠ ONLY THE PATH IS REQUIRED. `!profile` used to be half of this test — see
+     the note above; that half was `E019`. */
+  if (!path) return null;
 
   const existing = await prisma.certification.findFirst({
     where: {
-      provider_profile_id: profile.id,
+      user_id: userId,
       learning_path_id: learningPathId,
       issued_from: "LEARN",
     },
@@ -974,7 +990,9 @@ export async function issueCredential(
   const id = credentialId();
   await prisma.certification.create({
     data: {
-      provider_profile_id: profile.id,
+      /* ⚠ THE OWNER IS THE USER. The profile rides along when there is one. */
+      user_id: userId,
+      provider_profile_id: profile?.id ?? null,
       name: path.title,
       issuer: "Panameer Learn",
       issued_on: new Date(),
