@@ -1,4 +1,11 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
+/*
+  ⚠ THE SOURCE OF TRUTH, IMPORTED — NOT RETYPED. `/optimize`'s five summaries are
+  derived from `SPINE_STEPS`, and a test comparing the page to a typed literal
+  would prove only that somebody typed the same thing twice. `spine-steps.ts` has
+  no imports of its own, so pulling it in here costs nothing.
+*/
+import { SPINE_STEPS, summaryFor } from "../src/lib/spine-steps";
 
 /**
  * THE DIALOG CONTRACT ON `/`.
@@ -144,7 +151,15 @@ async function openByEnter(page: Page, card: Locator) {
  */
 function nestedInteractive(page: Page): Promise<string[]> {
   return page.evaluate(() => {
-    const INTERACTIVE = "button, a[href], input, select, textarea";
+    /*
+      ⚠ `summary` IS IN THIS LIST, AND IT WAS NOT UNTIL A BREAK PROVED IT HAD TO
+      BE (P1-J0-E259 WS5, break 4). A `<button>` inside a `<summary>` is `E097`
+      wearing a different tag — the summary IS the control, and a control inside
+      it eats the Enter that opens the panel — but the audit did not recognise a
+      summary as a host, so nesting one sailed through. Widening the list can only
+      make this catch more, never less.
+    */
+    const INTERACTIVE = "button, a[href], input, select, textarea, summary";
     const describe = (n: Element) => {
       // SVG elements carry an SVGAnimatedString, not a string, in `className`.
       const cls = typeof n.className === "string" ? n.className.trim() : "";
@@ -350,7 +365,13 @@ test.describe("the page as a whole", () => {
       its own controls. Auditing one page would leave two-thirds of the surface
       that produced the original defect unchecked.
     */
-    for (const url of ["/", ...CARD_PAGES]) {
+    /*
+      ⚠ `/optimize` IS IN THIS LIST BECAUSE ITS SUMMARIES ARE CONTROLS. A
+      `<button>` inside a `<summary>` is `E097` wearing a different tag — the
+      summary is already the interactive element, and a control inside it eats
+      the Enter that opens the panel.
+    */
+    for (const url of ["/", "/optimize", ...CARD_PAGES]) {
       await page.goto(url);
       expect(await nestedInteractive(page), `at rest on ${url}`).toEqual([]);
       for (const c of CARDS.filter((x) => x.url === url)) {
@@ -632,5 +653,143 @@ test.describe("the Step 5 roadmap grid", () => {
       page.locator(".rm-req").first().evaluate((el) => parseFloat(getComputedStyle(el).fontSize)),
     ]);
     expect(chip, "the per-line Request must stay smaller than the primary").toBeLessThan(btn);
+  });
+});
+
+
+/**
+ * ── ⚠ `/optimize` — THE DISCLOSURE CONTRACT (P1-J0-E259, WS5) ────────────────
+ *
+ * The five steps are NATIVE `<details>` / `<summary>`, which is the whole reason
+ * the page prerenders `○` with no client island. Native gives keyboard operation,
+ * screen-reader semantics and open-on-find-in-page for free — but "for free" is
+ * a claim, and these are the assertions that make it one.
+ *
+ * ⚠ THE E097 HALF IS NOT HERE — it is `/optimize` joining §12's page list above,
+ * so the nested-interactive audit that already exists covers this page too rather
+ * than being written a second time.
+ */
+test.describe("/optimize — the five steps as disclosures", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/optimize");
+  });
+
+  test("§21 exactly five disclosures, and every one closed at rest", async ({ page }) => {
+    const d = page.locator("details.opt-d");
+    /* ⚠ FIVE, DERIVED: step 1 is ProcessPicker and is deliberately not in the data. */
+    await expect(d).toHaveCount(SPINE_STEPS.length + 1);
+    await expect(page.locator("details.opt-d[open]")).toHaveCount(0);
+  });
+
+  /**
+   * ⚠ AGAINST THE DATA, NOT AGAINST A TYPED LITERAL. If someone re-words an
+   * eyebrow in `spine-steps.ts`, this test follows them; if someone hand-types a
+   * summary onto the page, it fails. That is the only version of this assertion
+   * worth having — the whole point of `/optimize` deriving its strings is that it
+   * cannot drift from `/`.
+   */
+  test("§22 each summary is its SPINE_STEPS eyebrow, minus the Step N prefix", async ({ page }) => {
+    const rendered = (await page.locator("summary.opt-sum .opt-t").allTextContents()).map((t) => t.trim());
+    expect(rendered).toHaveLength(SPINE_STEPS.length + 1);
+    /* Step 1 is the one exception — ProcessPicker, not a SPINE_STEPS row. */
+    expect(rendered[0]).toBe("Select a Business Process");
+
+    /*
+      ⚠ COMPARED TO THE **EYEBROW**, NOT TO `summaryFor(eyebrow)` — AND A BREAK IS
+      WHY. The first version asserted `rendered === SPINE_STEPS.map(summaryFor)`,
+      which puts the same function on both sides: making `summaryFor` return the
+      literal "Provide Details" for every step kept the test GREEN, because the
+      expectation broke identically. That is a circular assertion, which is the
+      exact failure the file's own note about `button.erp-card` warns against.
+
+      So this asserts the RELATIONSHIP to the data instead: the rendered summary
+      must be a non-empty tail of its eyebrow, and must not have carried the
+      prefix through. `summaryFor` is still used — as the thing under test, on one
+      side only.
+    */
+    SPINE_STEPS.forEach((step, i) => {
+      const got = rendered[i + 1];
+      expect(got, `step ${step.n} rendered an empty summary`).not.toBe("");
+      expect(
+        step.eyebrow.endsWith(got),
+        `step ${step.n}: "${got}" is not the tail of its eyebrow "${step.eyebrow}"`
+      ).toBe(true);
+      expect(got, `step ${step.n} kept its "Step N -" prefix`).not.toMatch(/^Step\s+\d/i);
+      /* And the helper agrees with the page — the last link in the chain. */
+      expect(got, `step ${step.n} does not match summaryFor()`).toBe(summaryFor(step.eyebrow));
+    });
+  });
+
+  test("§23 the summary takes focus and Enter toggles it", async ({ page }) => {
+    const sum = page.locator("summary.opt-sum").first();
+    const det = page.locator("details.opt-d").first();
+    /*
+      ⚠ TAB-REACHABLE, NOT MERELY `focus()`-ABLE — AND A BREAK IS WHY. Putting
+      `tabIndex={-1}` on the summary left `el.focus()` working perfectly, so the
+      first version of this test stayed green while the control had been removed
+      from the keyboard entirely. A negative tabIndex is exactly the regression
+      worth catching, so it is asserted directly.
+    */
+    const tabIndex = await sum.evaluate((el) => (el as HTMLElement).tabIndex);
+    expect(tabIndex, "the summary was taken out of the tab order").toBeGreaterThanOrEqual(0);
+    await sum.focus();
+    await expect(sum, "the summary is the control and must be reachable by Tab").toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(det).toHaveAttribute("open", "");
+    await page.keyboard.press("Enter");
+    await expect(det).not.toHaveAttribute("open", "");
+  });
+
+  test("§24 Space toggles it too", async ({ page }) => {
+    const sum = page.locator("summary.opt-sum").nth(3);
+    const det = page.locator("details.opt-d").nth(3);
+    await sum.focus();
+    await page.keyboard.press(" ");
+    await expect(det).toHaveAttribute("open", "");
+    await page.keyboard.press(" ");
+    await expect(det).not.toHaveAttribute("open", "");
+  });
+
+  /**
+   * ⚠ THE ASSERTION THAT SEPARATES A DISCLOSURE FROM A `display:none` TRICK.
+   *
+   * A closed panel's contents must be out of the tab order entirely — not merely
+   * invisible. Step 1's panel is the one with a focusable descendant
+   * (`ProcessPicker`'s card link), which is why it is the one tested: asserting
+   * this on a panel with nothing focusable in it would pass forever.
+   *
+   * ⚠ FOCUS IS ATTEMPTED AND THEN THE DOM IS ASKED WHO HAS IT, rather than
+   * counting elements. `el.focus()` on something inside a closed `<details>` is a
+   * no-op, and that is exactly the behaviour being claimed.
+   */
+  test("§25 a closed panel's content is not keyboard-reachable; open, it is", async ({ page }) => {
+    /*
+      ⚠ SCOPED TO `.opt-panel`, NOT TO `details .opt-panel` — AND A BREAK IS WHY.
+      Hoisting the panel OUT of its `<details>` is the regression this test exists
+      to catch, and a selector that required the panel to be a descendant of a
+      details simply stopped finding it: the test failed on its own vacuity guard
+      instead of on the reachability claim. Page-scoped, the hoisted panel is
+      still found and the real assertion is the one that fires.
+    */
+    const inPanel = ".opt-panel a[href]";
+    const count = await page.locator(inPanel).count();
+    expect(count, "step 1's panel must contain something focusable, or this test is vacuous").toBeGreaterThan(0);
+
+    const focusedWhileClosed = await page.evaluate((sel) => {
+      const el = document.querySelector<HTMLElement>(sel);
+      el?.focus();
+      return el !== null && document.activeElement === el;
+    }, inPanel);
+    expect(focusedWhileClosed, "a link inside a CLOSED panel took focus").toBe(false);
+
+    await page.locator("summary.opt-sum").first().click();
+    await expect(page.locator("details.opt-d").first()).toHaveAttribute("open", "");
+
+    const focusedWhileOpen = await page.evaluate((sel) => {
+      const el = document.querySelector<HTMLElement>(sel);
+      el?.focus();
+      return el !== null && document.activeElement === el;
+    }, inPanel);
+    expect(focusedWhileOpen, "a link inside an OPEN panel could not take focus").toBe(true);
   });
 });

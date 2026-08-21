@@ -113,14 +113,23 @@ export type MarketingNavItem = {
     Talent      /hire-talent    was "Find Talent"
     Work        /find-work      was "Find Work"
     Shop        /buy-services   unchanged
-    Optimize    /assess         NEW
+    Optimize    /optimize       NEW at E245 (as /assess), repointed at E266
     Integrate   /enterprise     NEW
 
-  ⚠ `Optimize` POINTS AT `/assess`, NOT AT `/`. `nav_model_LOCKED` settled this:
-  "Home IS the assessment front door, so a plain home link would be redundant
-  with the logo." `/` is where the assessment is EXPLAINED; `/assess` is where it
-  is TAKEN. A nav item that lands on the page explaining the thing, rather than on
-  the thing, is the defect E119 already fixed once in the footer.
+  ⚠ `Optimize` POINTS AT `/optimize` AS OF 2026-08-21 (`P1-J0-E266`), AND IT
+  POINTED AT `/assess` FOR ONE DAY. Do not put it back.
+
+  `/assess` IS THE WIZARD AND IT KEEPS FOCUSED CHROME WITH NO MARKETING NAV —
+  documented at `assess/page.tsx` and locked in `nav_model_LOCKED`: *"a Sign Up
+  button in a nav bar while someone is signing up is wrong."* So a nav item
+  pointing there DROPPED THE VISITOR OUT OF THE SITE'S OWN NAVIGATION: click
+  Optimize, and the six-item header you clicked it from disappears. That is the
+  defect, and it is why the destination moved rather than the chrome.
+
+  ⚠ `/optimize` IS NOT `/`. It is the assessment journey at its own address —
+  hero, "Here's How It Works", and the five steps as disclosures — and its own
+  CTA starts the wizard. `nav_model_LOCKED`'s reasoning that a plain HOME link
+  would be redundant with the logo still holds and is not what this changes.
 
   ⚠ THE HEADER FITS, AND IT WAS MEASURED ON THE REAL PAGE RATHER THAN ASSUMED.
   Six items are WIDER than four despite two labels shortening, because the two
@@ -144,7 +153,7 @@ export type MarketingNavItem = {
   ── ⚠ THE LABEL AND THE ROUTE DIVERGE ON PURPOSE, AND IT IS DATED ─────────────
 
   `Talent` -> `/hire-talent`. `Shop` -> `/buy-services`. `Integrate` ->
-  `/enterprise`. `Optimize` -> `/assess`. The comment above says "MENU LABEL ==
+  `/enterprise`. `Optimize` -> `/optimize`. The comment above says "MENU LABEL ==
   PAGE ROUTE" and that WAS the rule when those routes were renamed; as of
   2026-08-19 it no longer holds, and as of 2026-08-21 four of the six diverge.
   That is a decision rather than an oversight.
@@ -158,7 +167,7 @@ export const MARKETING_NAV: MarketingNavItem[] = [
   { label: "Talent", href: "/hire-talent" },
   { label: "Work", href: "/find-work" },
   { label: "Shop", href: "/buy-services" },
-  { label: "Optimize", href: "/assess" },
+  { label: "Optimize", href: "/optimize" },
   { label: "Integrate", href: "/enterprise" },
 ];
 
@@ -305,6 +314,21 @@ export const FOOTER_GROUPS: { title: string; entries: FooterEntry[] }[] = [
  * and neither reached it: the nav item "AI Assessment" and this one both went
  * to the home page. The nav item is gone, so this is the only one left — it had
  * better work (E119).
+ *
+ * ── ⚠ IT DID **NOT** MOVE TO `/optimize` WITH THE NAV ITEM (E266) ───────────
+ *
+ * `brief_optimize_page` WS4 says to check whether any footer entry points at
+ * `/assess` and move it if one does. ⚠ NO ENTRY IN `FOOTER_GROUPS` DOES — this
+ * one is a separate export, and repointing it would RE-BREAK E119 above: a link
+ * labelled `AI Maturity Assessment` that lands on the page EXPLAINING the
+ * assessment rather than on the assessment is the exact defect E119 fixed.
+ *
+ * ⚠ AND THIS IS NOT AN `E118` VIOLATION. That rule is one word per DESTINATION;
+ * the header's `Optimize` and this `AI Maturity Assessment` are now two
+ * different words for two different pages, which is what they should be.
+ *
+ * Reported rather than decided — if Scott wants the footer to reach the journey
+ * page instead of the wizard, it is a one-line change here.
  */
 export const FOOTER_ASSESSMENT: FooterEntry = {
   label: "AI Maturity Assessment",

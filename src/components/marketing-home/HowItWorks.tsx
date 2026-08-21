@@ -141,7 +141,28 @@ function breakAtSlash(label: string) {
   ));
 }
 
-export function HowItWorks() {
+export function HowItWorks({
+  /**
+   * ── ⚠ THE CARD STRIP DOES NOT RENDER ON `/optimize` (P1-J0-E242) ───────────
+   *
+   * That row records this page telling ONE journey from TWO independent arrays in
+   * different words — this file's local `STEPS` against `SPINE_STEPS` — with the
+   * cards linking down into the sections. On `/optimize` the five steps ARE the
+   * list, as disclosures, so the cards would be a second telling of the same
+   * five things and the defect would ship at a new address.
+   *
+   * ⚠ THE HEADING AND THE LEDE STAY. They are this section's argument, they are
+   * not duplicated by the disclosures, and deriving them from here rather than
+   * retyping them onto `/optimize` is what stops them drifting apart.
+   *
+   * ⚠ DEFAULT `true`, SO `/` IS BYTE-IDENTICAL. `HowItWorks` on `/` is NOT
+   * touched by this brief; its fate belongs to the home rebuild. `STEPS` is not
+   * edited and the component is not deleted.
+   */
+  showStrip = true,
+}: {
+  showStrip?: boolean;
+} = {}) {
   return (
     <section className="hiw">
       <div className="wrap">
@@ -194,133 +215,137 @@ export function HowItWorks() {
           the roadmap, and put an expert on it.
         </p>
 
-        {/*
-          ── THE STRIP WRAPS THE LIST BECAUSE THE RAIL IS NOT A LIST ITEM ──────
-
-          `<ol>` may only contain `<li>`, so the rail and the four circles are
-          siblings of the list inside a positioned wrapper rather than children
-          of it. They are decoration: the ordered list already carries the
-          sequence for anything that is not looking at the page.
-        */}
-        <div className="hiw-strip">
+        {showStrip && (
+          <>
           {/*
-            ⚠ THE RAIL IS THE POINT OF THIS REVISION.
+            ── THE STRIP WRAPS THE LIST BECAUSE THE RAIL IS NOT A LIST ITEM ──────
 
-            The arrows were never the problem — the absence of a line joining
-            them was. Four circles in four gutters read as four loose dots; the
-            same four circles on a rule read as stations on a route, which is
-            what the section is describing. It runs centre-of-card-1 to
-            centre-of-card-5 and sits BEHIND the cards, so it emerges from under
-            one and disappears under the next.
-
-            The last segment is DASHED, and that is the argument in one line:
-            the sequence visibly becomes optional a card before the reader
-            reaches the word.
+            `<ol>` may only contain `<li>`, so the rail and the four circles are
+            siblings of the list inside a positioned wrapper rather than children
+            of it. They are decoration: the ordered list already carries the
+            sequence for anything that is not looking at the page.
           */}
-          <span className="hiw-rail" aria-hidden />
-          <span className="hiw-rail is-dashed" aria-hidden />
+          <div className="hiw-strip">
+            {/*
+              ⚠ THE RAIL IS THE POINT OF THIS REVISION.
 
-          <ol className="hiw-grid">
-            {STEPS.map((s) => (
-              <li className="hiw-cell" key={s.n}>
-                <Link
-                  /*
-                    ⚠ THESE POINT AT THE SPINE NOW, NOT AT THE OLD StepDetail SECTIONS
-                    (E164). Scott: "each of those cards should now link to the related
-                    section... meaning these new sections we have been working on. That
-                    makes those cards disposable, no?" `#step-1`…`#step-5` were the
-                    StepDetail anchors and those sections are gone, so leaving these as
-                    they were would have made all five cards dead links — that is the
-                    breakage this brief leads with, and it is why the repoint had to
-                    land in the same commit as the deletion.
+              The arrows were never the problem — the absence of a line joining
+              them was. Four circles in four gutters read as four loose dots; the
+              same four circles on a rule read as stations on a route, which is
+              what the section is describing. It runs centre-of-card-1 to
+              centre-of-card-5 and sits BEHIND the cards, so it emerges from under
+              one and disappears under the next.
 
-                    ⚠ STEP 1 IS A GENUINE SPECIAL CASE, DO NOT PATTERN-MATCH IT AWAY.
-                    Step 1 is not in `SPINE_STEPS` — it is `ProcessPicker`, which
-                    carries `id="step-process"`. Steps 2–5 are `SpineSteps`, which emits
-                    `id="spine-step-{n}"`. Renaming `step-process` to fit the pattern
-                    would touch an unrelated component to save one conditional here; a
-                    special case in one place is the cheaper trade.
-                  */
-                  href={s.n === 1 ? "#step-process" : `#spine-step-${s.n}`}
-                  className={
-                    "hiw-card" + (s.optional ? " is-opt" : ` is-g${s.n}`)
-                  }
-                >
-                  {/*
-                    THE SCRIM, over the gradient and under the words — the same
-                    180deg navy ramp VideoSequence uses. It is what lets 13px
-                    body copy sit on a saturated fill without hand-tuning a text
-                    colour per card.
-                  */}
-                  <span className="hiw-scrim" aria-hidden />
-                  <span className="hiw-n" aria-hidden>
-                    {s.n}
-                  </span>
-                  {/*
-                    Top-RIGHT, where VideoSequence puts its play chip — the one
-                    corner in this design system that carries a card-level flag.
-                    Inside the anchor and NOT aria-hidden, so its accessible
-                    name opens with "Optional".
-                  */}
-                  {s.optional && <span className="hiw-tag">Optional</span>}
+              The last segment is DASHED, and that is the argument in one line:
+              the sequence visibly becomes optional a card before the reader
+              reaches the word.
+            */}
+            <span className="hiw-rail" aria-hidden />
+            <span className="hiw-rail is-dashed" aria-hidden />
 
-                  <span className="hiw-text">
-                    <span className="hiw-l">{breakAtSlash(s.label)}</span>
-                    <span className="hiw-s">{s.body}</span>
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ol>
+            <ol className="hiw-grid">
+              {STEPS.map((s) => (
+                <li className="hiw-cell" key={s.n}>
+                  <Link
+                    /*
+                      ⚠ THESE POINT AT THE SPINE NOW, NOT AT THE OLD StepDetail SECTIONS
+                      (E164). Scott: "each of those cards should now link to the related
+                      section... meaning these new sections we have been working on. That
+                      makes those cards disposable, no?" `#step-1`…`#step-5` were the
+                      StepDetail anchors and those sections are gone, so leaving these as
+                      they were would have made all five cards dead links — that is the
+                      breakage this brief leads with, and it is why the repoint had to
+                      land in the same commit as the deletion.
 
-          {/*
-            Four circles on the four seams. `--k` is the seam index; the exact
-            offset is computed in home.css from the grid gap, because "20%" is
-            not the seam centre once a gap exists.
-          */}
-          {[1, 2, 3, 4].map((k) => (
-            <span
-              className="hiw-arrow"
-              style={{ "--k": k } as React.CSSProperties}
-              key={k}
-              aria-hidden
-            >
-              {/*
-                ⚠ AN OPEN CHEVRON, NOT A FILLED DISC (E122 revised).
+                      ⚠ STEP 1 IS A GENUINE SPECIAL CASE, DO NOT PATTERN-MATCH IT AWAY.
+                      Step 1 is not in `SPINE_STEPS` — it is `ProcessPicker`, which
+                      carries `id="step-process"`. Steps 2–5 are `SpineSteps`, which emits
+                      `id="spine-step-{n}"`. Renaming `step-process` to fit the pattern
+                      would touch an unrelated component to save one conditional here; a
+                      special case in one place is the cheaper trade.
+                    */
+                    href={s.n === 1 ? "#step-process" : `#spine-step-${s.n}`}
+                    className={
+                      "hiw-card" + (s.optional ? " is-opt" : ` is-g${s.n}`)
+                    }
+                  >
+                    {/*
+                      THE SCRIM, over the gradient and under the words — the same
+                      180deg navy ramp VideoSequence uses. It is what lets 13px
+                      body copy sit on a saturated fill without hand-tuning a text
+                      colour per card.
+                    */}
+                    <span className="hiw-scrim" aria-hidden />
+                    <span className="hiw-n" aria-hidden>
+                      {s.n}
+                    </span>
+                    {/*
+                      Top-RIGHT, where VideoSequence puts its play chip — the one
+                      corner in this design system that carries a card-level flag.
+                      Inside the anchor and NOT aria-hidden, so its accessible
+                      name opens with "Optional".
+                    */}
+                    {s.optional && <span className="hiw-tag">Optional</span>}
 
-                Scott: "These arrows are childish. Can you make them bigger?
-                Better?" It was a 42px saturated magenta circle with a drop
-                shadow, five of them across the row — which read as five
-                identical buttons and broke the standing PINK = SMALL ACCENTS
-                ONLY rule (decisions-01.md, 2026-08-13).
+                    <span className="hiw-text">
+                      <span className="hiw-l">{breakAtSlash(s.label)}</span>
+                      <span className="hiw-s">{s.body}</span>
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ol>
 
-                An open stroke can grow without gaining weight, which is the
-                whole trick: this is TALLER than the disc it replaces and
-                narrower, so it reads bigger while taking less of the gutter and
-                giving the rail more room to show. Magenta is the STROKE now;
-                there is no fill and no shadow.
-
-                Drawn as SVG rather than a text glyph so stroke weight and cap
-                shape are controllable rather than whatever the font ships.
-                No `id` anywhere — nothing for check:ui §13 to collide with.
-              */}
-              <svg
-                viewBox="0 0 14 28"
-                fill="none"
+            {/*
+              Four circles on the four seams. `--k` is the seam index; the exact
+              offset is computed in home.css from the grid gap, because "20%" is
+              not the seam centre once a gap exists.
+            */}
+            {[1, 2, 3, 4].map((k) => (
+              <span
+                className="hiw-arrow"
+                style={{ "--k": k } as React.CSSProperties}
+                key={k}
                 aria-hidden
-                focusable="false"
               >
-                <path
-                  d="M3.5 3.5 L11 14 L3.5 24.5"
-                  stroke="currentColor"
-                  strokeWidth="2.4"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </span>
-          ))}
-        </div>
+                {/*
+                  ⚠ AN OPEN CHEVRON, NOT A FILLED DISC (E122 revised).
+
+                  Scott: "These arrows are childish. Can you make them bigger?
+                  Better?" It was a 42px saturated magenta circle with a drop
+                  shadow, five of them across the row — which read as five
+                  identical buttons and broke the standing PINK = SMALL ACCENTS
+                  ONLY rule (decisions-01.md, 2026-08-13).
+
+                  An open stroke can grow without gaining weight, which is the
+                  whole trick: this is TALLER than the disc it replaces and
+                  narrower, so it reads bigger while taking less of the gutter and
+                  giving the rail more room to show. Magenta is the STROKE now;
+                  there is no fill and no shadow.
+
+                  Drawn as SVG rather than a text glyph so stroke weight and cap
+                  shape are controllable rather than whatever the font ships.
+                  No `id` anywhere — nothing for check:ui §13 to collide with.
+                */}
+                <svg
+                  viewBox="0 0 14 28"
+                  fill="none"
+                  aria-hidden
+                  focusable="false"
+                >
+                  <path
+                    d="M3.5 3.5 L11 14 L3.5 24.5"
+                    stroke="currentColor"
+                    strokeWidth="2.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
+            ))}
+          </div>
+          </>
+        )}
       </div>
     </section>
   );

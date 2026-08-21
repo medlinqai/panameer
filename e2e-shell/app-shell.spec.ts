@@ -399,7 +399,14 @@ const PUBLIC_NAV_ITEMS = [
   { label: "Talent", href: "/hire-talent" },
   { label: "Work", href: "/find-work" },
   { label: "Shop", href: "/buy-services" },
-  { label: "Optimize", href: "/assess" },
+  /*
+    ⚠ `/optimize`, NOT `/assess` — REPOINTED 2026-08-21 (`P1-J0-E266`). This
+    assertion caught the change, which is what it is for. `/assess` is the wizard
+    and keeps focused chrome with NO marketing nav, so a nav item pointing there
+    dropped the visitor out of the header they had just used. The destination
+    moved; the assertion follows it.
+  */
+  { label: "Optimize", href: "/optimize" },
   { label: "Integrate", href: "/enterprise" },
 ] as const;
 
