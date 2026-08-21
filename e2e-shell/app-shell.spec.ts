@@ -387,8 +387,23 @@ const PUBLIC_WIDTHS = [360, 375, 640, 767, 768, 769, 900, 1000, 1100, 1180, 1282
 
 const PUBLIC_PAGES = ["/", "/learn", "/hire-talent", "/find-work", "/buy-services"];
 
-/** The four labels are Scott's (P1-J0-E222) and this suite reads them, never sets them. */
-const PUBLIC_NAV_LABELS = ["Learn", "Find Talent", "Find Work", "Shop"];
+/**
+ * ⚠ SIX ITEMS SINCE `P1-J0-E245`, AND THIS SUITE READS THEM, NEVER SETS THEM.
+ *
+ * They are Scott's labels. The pairs are declared here as label+href TOGETHER
+ * because the assertion below keys on the HREF and checks the label against it —
+ * see the note on `navByHref`.
+ */
+const PUBLIC_NAV_ITEMS = [
+  { label: "Learn", href: "/learn" },
+  { label: "Talent", href: "/hire-talent" },
+  { label: "Work", href: "/find-work" },
+  { label: "Shop", href: "/buy-services" },
+  { label: "Optimize", href: "/assess" },
+  { label: "Integrate", href: "/enterprise" },
+] as const;
+
+const PUBLIC_NAV_LABELS = PUBLIC_NAV_ITEMS.map((i) => i.label);
 
 async function measurePublic(p: Page) {
   return p.evaluate((labels: string[]) => {
@@ -464,6 +479,31 @@ async function measurePublic(p: Page) {
           return [l, { ...size(el), shown: Boolean(el) }];
         })
       ),
+      /*
+        ⚠ KEYED BY HREF, NOT BY LABEL, AND THAT IS THE WHOLE POINT (E245).
+
+        "Talent" and "Work" are single words that sit adjacent and are the two
+        sides of one market, so an off-by-one in `MARKETING_NAV` swaps a buyer
+        destination for a seller one AND STILL READS PLAUSIBLY down the row. A
+        label-keyed lookup cannot see that — `byText("Talent")` finds an anchor
+        called Talent whatever it points at. This reads every visible header
+        anchor by its href and reports the WORD attached to it, so the test can
+        assert the pairing rather than the vocabulary.
+
+        First visible match wins: the drawer duplicates the row between 768 and
+        1023 by design, and both copies carry the same href.
+      */
+      navByHref: Object.fromEntries(
+        [...new Set(links.map((a) => a.getAttribute("href") ?? ""))]
+          .filter(Boolean)
+          .map((href) => {
+            const el = links.filter((a) => a.getAttribute("href") === href).find((a) => visible(a));
+            return [
+              href,
+              { label: el ? (el.textContent ?? "").trim() : null, ...size(el), shown: Boolean(el) },
+            ];
+          })
+      ),
       logIn: { ...size(byText("Log In")), shown: Boolean(byText("Log In")) },
       signUp: { ...size(byText("Sign Up")), shown: Boolean(byText("Sign Up")) },
       ariaCurrent: current.map((a) => `${(a.textContent ?? "").trim()}→${a.getAttribute("href")}`),
@@ -522,10 +562,34 @@ test.describe("the MARKETING header", () => {
           expect(r.logo.shown, `${url} @${w}: the logo is not rendered`).toBe(true);
           expect(r.logo.w, `${url} @${w}: the logo has no width`).toBeGreaterThan(40);
 
+          /*
+            ⚠ PRESENCE **WITH NON-ZERO SIZE**, NOT PRESENCE. An item hidden at a
+            breakpoint is still in the DOM and still `querySelector`-able; only
+            its rect says whether anyone can click it. `> 20` is the floor for the
+            shortest label in the set ("Work", 41.77 at 1024) with room to spare.
+          */
           for (const label of PUBLIC_NAV_LABELS) {
             const item = r.nav[label];
             expect(item.shown, `${url} @${w}: nav item "${label}" is unreachable`).toBe(true);
             expect(item.w, `${url} @${w}: nav item "${label}" has no width`).toBeGreaterThan(20);
+          }
+
+          /*
+            ⚠ AND THE SAME SIX ASSERTED **BY HREF** (E245). The loop above proves
+            six words are on screen; this proves each word is on the right door.
+            `Talent`/`Work` is the pair that matters — swap those two hrefs in
+            `MARKETING_NAV` and the row still reads plausibly left to right, so a
+            label-keyed test passes a broken nav.
+          */
+          for (const { label, href } of PUBLIC_NAV_ITEMS) {
+            const item = r.navByHref[href];
+            expect(item, `${url} @${w}: no header link points at ${href}`).toBeTruthy();
+            expect(item.shown, `${url} @${w}: the link to ${href} is unreachable`).toBe(true);
+            expect(item.w, `${url} @${w}: the link to ${href} has no width`).toBeGreaterThan(20);
+            expect(
+              item.label,
+              `${url} @${w}: ${href} is labelled "${item.label}", expected "${label}" — a nav item is on the wrong door`
+            ).toBe(label);
           }
           /*
             ⚠ BOTH AUTH BUTTONS, AT EVERY WIDTH. This is the assertion that would

@@ -230,8 +230,37 @@ export function MarketingHeader() {
           212px of the 819 and the ☰ drawer below already contains BOTH buttons —
           verified in the DOM, not assumed — so nothing becomes unreachable. The
           four labels stay visible from 768 because a tablet has room for them:
-          628 of 768. The nav's font and Scott's four labels (`P1-J0-E222`,
-          yesterday) are untouched.
+          628 of 768.
+
+          ── ⚠ RE-MEASURED 2026-08-21, SIX ITEMS (P1-J0-E245) ─────────────────
+
+          `MARKETING_NAV` went from four to six. Two labels SHORTENED and two were
+          added, so the net was genuinely unknown and was measured on the real
+          page rather than derived. It went UP, because the two new words are the
+          two longest in the set AND each one also buys a 34px gap:
+
+            Learn      43.63     Shop       39.70
+            Talent     48.98     Optimize   70.95     <- new, longest
+            Work       41.77     Integrate  71.09     <- new, longest
+                                 ────────────────
+            labels    316.12  +  5 gaps x 34 = 486.12 nav required
+
+          Worst public page is /hire-talent and /find-work (their auth cluster is
+          212.20; `/` is lighter at 202.78):
+
+            at 1024   158.78 + 486.12 + 212.20 + 64 + 48 = 969.10  vs 1024  ✓
+            at 1023   158.78 + 456.12 + 21.11 (☰) + 64 + 48 = 748.01 vs 1023 ✓
+
+          ⚠ MEASURED ON ELEMENT RECTS, NOT `scrollWidth`. scrollWidth reported
+          1024 flat — it clamps to the viewport when nothing overflows and omits
+          end padding when something does (`pitfalls.md`, `P1-ALL-E001`), so it
+          cannot answer "how much room is left". The harness reproduced the 837
+          figure above exactly (836.86) before it was trusted for the new one.
+
+          ⚠ `lg` STILL CLEARS AND NO BREAKPOINT MOVED — but the slack fell from
+          187.14 to 54.90. That is the whole remaining budget at `lg`: a SEVENTH
+          item, or a longer word in place of any of the six, overflows here first.
+          Re-measure rather than eyeballing it.
         */}
         <div className="hidden shrink-0 items-center gap-3 lg:flex">
           {/*
@@ -269,7 +298,7 @@ export function MarketingHeader() {
       </div>
 
       {/*
-        ⚠ THE DRAWER KEEPS EVERYTHING, including the four nav items that are also
+        ⚠ THE DRAWER KEEPS EVERYTHING, including the six nav items that are also
         visible in the row between 768 and 1023. The duplication is deliberate:
         one drawer with the same contents at every width beats a drawer whose
         contents change at a breakpoint, and a person who opens it at 800px and
