@@ -3017,6 +3017,37 @@ model AssessmentDomainResult {
   weight_bps Int?
 
   /**
+   * ⚠ THE DECK'S PER-DOMAIN EXTRA FIELDS, RESOLVED AT SUBMIT — slides 2–11 of
+   * `AI Maturity Assessment.pptx`. An array of
+   * `{ id, label, type, meaning, period, value }`, canonicalised: `count` in whole
+   * units, `dollars` IN CENTS, `percent` as an integer 0–100, `boolean` as a bool.
+   * `lib/assessment/domain-fields.ts` is the spec and the only writer.
+   * ⚠ JSON WHERE ITS NEIGHBOURS ARE COLUMNS, AND THAT IS THE POINT. `rung`,
+   * `rank` and `weight_bps` are uniform — exactly one number per domain, every
+   * time. These are NOT: eight domains carry fields and two carry none, one
+   * carries four, one carries three percentages and no volume, and the dollar
+   * field means three different quantities across the eight. Expressing that in
+   * columns takes nine mostly-null domain-specific columns on a generic table.
+   * ⚠ THE LABEL AND THE MEANING ARE STORED WITH THE VALUE, not looked up at read
+   * time. Sourcing asks dollars SAVED, contracts asks SPEND UNDER CONTRACT, the
+   * rest ask GROSS DOLLARS — three incompatible quantities that a dashboard would
+   * otherwise sum. Storing the meaning is what makes a stored report immune to a
+   * later edit of the spec, the same principle `score_pct` already follows.
+   * ⚠ NULL MEANS NOT ASKED, `[]` MEANS ASKED-AND-THE-SLIDE-HAS-NO-FIELDS, AND
+   * NEITHER IS ZERO. The 13 assessments taken before this column existed are NOT
+   * backfilled; their reports must render byte-identically.
+   * ⚠ NOTHING COMPUTES A DOLLAR FROM THIS YET. Whether these figures replace, feed
+   * or are reconciled against the top-down `DOLLAR_WEIGHTS` model is an open
+   * decision and it decides what the headline figure on the dashboard actually is.
+   * Storing the input is deliberately as far as this goes.
+   * ⚠ AND THE DECK NAMES NO PERIOD — "Estimated Number of Invoice Lines" per month
+   * or per year is not stated on any of the 15 slides. `period` is therefore null
+   * on every field, recorded rather than invented. Nothing can normalise these into
+   * a rate until Scott names one.
+   */
+  fields Json?
+
+  /**
    * ⚠ TRUE MEANS RECONSTRUCTED, NOT MEASURED.
    * WS3 backfills historical assessments from their stored `answers` using
    * TODAY's weights, because the weights in force when those reports were shown
