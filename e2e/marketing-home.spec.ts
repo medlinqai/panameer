@@ -36,18 +36,48 @@ type Card = {
    * rather than a second copy of the whole describe block.
    */
   grid: string;
+  /**
+   * ── ⚠ THE PAGE THIS CARD LIVES ON (P1-J0-E255 / E273) ─────────────────────
+   *
+   * All six used to be on `/` and the file did one `goto("/")` in `beforeEach`.
+   * Both ERP sections came off the home page on 2026-08-21 — they were rendering
+   * twice — so the cards moved address and this suite moved with them. It is a
+   * field rather than two forked describe blocks because the CONTRACT is
+   * identical wherever a doorway lives; only the address changed.
+   *
+   * ⚠ NOTHING WAS DELETED OR SKIPPED TO GET A GREEN RUN. Same six cards, same
+   * eight assertions each, same whole-page checks — asserted where the sections
+   * actually are. Deleting coverage is what let `E097` ship.
+   */
+  url: string;
 };
 
+/**
+ * ⚠ `/buy-services` IS `ErpPackages`' ONLY HOME NOW, and it is that page's entire
+ * body — the `Shop` nav item's whole reason to exist. `/enterprise` is
+ * `ErpIntegration`'s, and it is the `Integrate` nav item's destination (E245).
+ *
+ * ⚠ BOTH PAGES WRAP THEIR PAYLOAD IN AN EXPLICIT `<div className="pm-home">`
+ * where `/` carried `.pm-home` page-wide. Every rule these dialogs rely on is
+ * `.pm-home`-prefixed in `home.css`, so a passing test on `/` proved nothing
+ * about either — which is exactly why these tests now run there.
+ */
+const SHOP = "/buy-services";
+const ENTERPRISE = "/enterprise";
+
 const CARDS: Card[] = [
-  // ErpPackages — the four agent categories.
-  { grid: ".erp-grid", name: "Reports & Dashboards", dialog: "Spend Overview dashboard" },
-  { grid: ".erp-grid", name: "Price Alerts", dialog: "Price alert email" },
-  { grid: ".erp-grid", name: "Document Validation", dialog: "W-9 document validation" },
-  { grid: ".erp-grid", name: "Extend Your Apps", dialog: "Work request with matched experts" },
-  // ErpIntegration — the two flow doorways (brief_home_erp_integration WS-4).
-  { grid: ".erpx-doors", name: "Fulfillment", dialog: "Service procurement fulfillment flow" },
-  { grid: ".erpx-doors", name: "Settlement", dialog: "Service procurement settlement flow" },
+  // ErpPackages — the four agent categories. Now on /buy-services only.
+  { grid: ".erp-grid", name: "Reports & Dashboards", dialog: "Spend Overview dashboard", url: SHOP },
+  { grid: ".erp-grid", name: "Price Alerts", dialog: "Price alert email", url: SHOP },
+  { grid: ".erp-grid", name: "Document Validation", dialog: "W-9 document validation", url: SHOP },
+  { grid: ".erp-grid", name: "Extend Your Apps", dialog: "Work request with matched experts", url: SHOP },
+  // ErpIntegration — the two flow doorways. Now on /enterprise only.
+  { grid: ".erpx-doors", name: "Fulfillment", dialog: "Service procurement fulfillment flow", url: ENTERPRISE },
+  { grid: ".erpx-doors", name: "Settlement", dialog: "Service procurement settlement flow", url: ENTERPRISE },
 ];
+
+/** The distinct pages the cards live on, in a stable order. */
+const CARD_PAGES = [...new Set(CARDS.map((c) => c.url))];
 
 /** Everything the browser will hand focus to. Mirrors the app's own trap query. */
 const FOCUSABLE =
@@ -135,17 +165,29 @@ function nestedInteractive(page: Page): Promise<string[]> {
 */
 let consoleErrors: string[];
 
+/*
+  ⚠ THE LISTENERS ATTACH HERE; THE NAVIGATION DOES NOT ANY MORE.
+
+  This used to end `await page.goto("/")`, which was the single assumption that
+  the whole file lived on one page. With the cards on three different addresses,
+  each test says where it goes — and the listeners still attach BEFORE any
+  navigation, which is the only way to catch what happens during a load.
+*/
 test.beforeEach(async ({ page }) => {
   consoleErrors = [];
   page.on("console", (msg) => {
     if (msg.type() === "error") consoleErrors.push(`console.error: ${msg.text()}`);
   });
   page.on("pageerror", (err) => consoleErrors.push(`pageerror: ${err.message}`));
-  await page.goto("/");
 });
 
 for (const [i, c] of CARDS.entries()) {
-  test.describe(`card ${i + 1} — ${c.name}`, () => {
+  test.describe(`card ${i + 1} — ${c.name} (${c.url})`, () => {
+    /* ⚠ The card's OWN page. See the note on `Card.url`. */
+    test.beforeEach(async ({ page }) => {
+      await page.goto(c.url);
+    });
+
     test("§1 the card is a <button> that advertises the dialog", async ({ page }) => {
       const card = cardFor(page, c);
       await expect(card).toHaveCount(1);
@@ -240,6 +282,11 @@ for (const [i, c] of CARDS.entries()) {
 }
 
 test.describe("card 1 scene — the dashboard stays live inside the dialog", () => {
+  /* CARDS[0] is a `.erp-grid` card, so its scene now lives on /buy-services. */
+  test.beforeEach(async ({ page }) => {
+    await page.goto(CARDS[0].url);
+  });
+
   test("§9 Table view is a real <button> and reveals the table", async ({ page }) => {
     await openByClick(page, cardFor(page, CARDS[0]));
     const dialog = page.getByRole("dialog");
@@ -274,11 +321,20 @@ test.describe("card 1 scene — the dashboard stays live inside the dialog", () 
 
 test.describe("the page as a whole", () => {
   test("§11 zero console errors on load and across every open/close", async ({ page }) => {
-    for (const c of CARDS) {
-      await openByClick(page, cardFor(page, c));
-      await expect(page.getByRole("dialog", { name: c.dialog })).toBeVisible();
-      await page.keyboard.press("Escape");
-      await expect(page.getByRole("dialog")).toHaveCount(0);
+    /*
+      ⚠ EVERY PAGE THE CARDS LIVE ON, PLUS `/` ITSELF. The cards moved but the
+      home page still has to load clean, and it is no longer visited by any card
+      test — so it is loaded here explicitly or nothing would check it at all.
+    */
+    await page.goto("/");
+    for (const url of CARD_PAGES) {
+      await page.goto(url);
+      for (const c of CARDS.filter((x) => x.url === url)) {
+        await openByClick(page, cardFor(page, c));
+        await expect(page.getByRole("dialog", { name: c.dialog })).toBeVisible();
+        await page.keyboard.press("Escape");
+        await expect(page.getByRole("dialog")).toHaveCount(0);
+      }
     }
     /*
       A React hydration mismatch arrives as a console error and nothing else.
@@ -288,15 +344,51 @@ test.describe("the page as a whole", () => {
   });
 
   test("§12 no interactive element is nested inside another — the E097 regression", async ({ page }) => {
-    expect(await nestedInteractive(page), "at rest").toEqual([]);
-
-    for (const c of CARDS) {
-      await openByClick(page, cardFor(page, c));
-      await expect(page.getByRole("dialog", { name: c.dialog })).toBeVisible();
-      expect(await nestedInteractive(page), `with "${c.dialog}" open`).toEqual([]);
-      await page.keyboard.press("Escape");
-      await expect(page.getByRole("dialog")).toHaveCount(0);
+    /*
+      ⚠ AT REST ON EVERY PAGE, NOT JUST THE ONE. `E097` was a `<button>` inside a
+      `<button>` in a card crop; the crops are now on two pages and `/` still has
+      its own controls. Auditing one page would leave two-thirds of the surface
+      that produced the original defect unchecked.
+    */
+    for (const url of ["/", ...CARD_PAGES]) {
+      await page.goto(url);
+      expect(await nestedInteractive(page), `at rest on ${url}`).toEqual([]);
+      for (const c of CARDS.filter((x) => x.url === url)) {
+        await openByClick(page, cardFor(page, c));
+        await expect(page.getByRole("dialog", { name: c.dialog })).toBeVisible();
+        expect(await nestedInteractive(page), `with "${c.dialog}" open on ${url}`).toEqual([]);
+        await page.keyboard.press("Escape");
+        await expect(page.getByRole("dialog")).toHaveCount(0);
+      }
     }
+  });
+
+  /**
+   * ── ⚠ NEITHER ERP SECTION MAY COME BACK TO `/` (E255 / E273) ───────────────
+   *
+   * ⚠ THIS IS AN ABSENCE ASSERTION AND IT IS DELIBERATE. The brief left the
+   * choice open and this is the side it lands on: E255 and E273 are decisions
+   * that each section renders ONCE, and without this, re-adding either render to
+   * `/` restores the duplicate silently — the re-homed card tests would still
+   * pass, because they assert the sections on `/buy-services` and `/enterprise`,
+   * not their absence here.
+   *
+   * ⚠ SO WS3's BREAK 1 — putting `<ErpPackages />` back on `/` — MUST FAIL, and
+   * it is this test that fails it.
+   *
+   * ⚠ ASSERTED ON THE GRIDS, NOT ON A COMPONENT NAME, because a grid is what the
+   * browser can see. `.erp-grid` and `.erpx-doors` are each rendered by exactly
+   * one component.
+   */
+  test("§12b neither ERP section renders on / any more", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.locator(".erp-grid"), "ErpPackages is back on /").toHaveCount(0);
+    await expect(page.locator(".erpx-doors"), "ErpIntegration is back on /").toHaveCount(0);
+    /* And they are still on the pages that own them, so this is not vacuous. */
+    await page.goto(SHOP);
+    await expect(page.locator(".erp-grid")).toHaveCount(1);
+    await page.goto(ENTERPRISE);
+    await expect(page.locator(".erpx-doors")).toHaveCount(1);
   });
 
   /**
@@ -313,6 +405,8 @@ test.describe("the page as a whole", () => {
    * that ids are unique, each reference must land inside its OWN `<svg>`.
    */
   test("§13 flow-diagram SVG ids are unique and every marker resolves in its own svg", async ({ page }) => {
+    /* The two flow diagrams are `.erpx-doors` crops — now on /enterprise only. */
+    await page.goto(ENTERPRISE);
     const audit = () =>
       page.evaluate(() => {
         const svgs = Array.from(document.querySelectorAll("svg.flw-svg"));
@@ -362,6 +456,7 @@ test.describe("the page as a whole", () => {
 
   /** §14 — the crops are true-scale windows. A `scale()` would break that. */
   test("§14 neither ERP doorway crop applies a scale()", async ({ page }) => {
+    await page.goto(ENTERPRISE);
     const transforms = await page.locator(".erpx-doors .crop-inner").evaluateAll((els) =>
       els.map((el) => (el as HTMLElement).style.transform)
     );
@@ -399,6 +494,11 @@ test.describe("the page as a whole", () => {
  * to stop and report rather than edit the gate — that is not this.
  */
 test.describe("the Step 5 roadmap grid", () => {
+  /* ⚠ STILL `/`. The roadmap never moved; it only lost the file-wide `goto`. */
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/");
+  });
+
   /**
    * ⚠ THE QUARTERS ARE A CONTINUOUS LANE, NOT FOUR CELLS, and the assertion is
    * written against that reality rather than against the mockup's flat-HTML
