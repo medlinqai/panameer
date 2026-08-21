@@ -23,7 +23,17 @@ import { milestoneByKey } from "@/lib/roadmap-milestones";
  *
  *   Expert   no price yet; location, history and scarcity set it   -> `Interview`
  *   Package  one named provider, published price, human accepts    -> `Review & hire`
- *   Agent    Panameer's own, no provider to accept                 -> `Deploy`
+ *   Agent    a provider's published product, standing SOW          -> `Deploy`
+ *
+ * ⚠ THE AGENT LINE ABOVE WAS REWRITTEN 2026-08-21 AND BOTH HALVES OF IT WERE FALSE.
+ * It read *"Panameer's own, no provider to accept"*. Scott, dissolving `P1-J2-E007`:
+ * *"AI Agents are service products created by experts on the AIP. As with everything,
+ * we will start with me and with P2P."* So an agent IS a provider's product — it
+ * carries a `provider_profile_id` like every other `Package`, and that column stayed
+ * NOT NULL — and there IS a provider to accept: the SOW runs until the buyer stops it.
+ *
+ * ⚠ THE VERB IS STILL `Deploy` AND THAT WAS NOT THE THING THAT WAS WRONG. Only the
+ * ownership claim was. Do not change the action while "fixing" this note.
  *
  * ⚠ THERE IS NO "BUY NOW" ANYWHERE, because nothing completes on click — every path
  * ends with someone accepting. A button promising a checkout would be untrue.
@@ -107,7 +117,24 @@ const CARDS: Card[] = [
     chip: "A pre-built agent",
     Icon: Sparkles,
     name: "Contract Price Alert Agent",
-    sub: "Panameer",
+    /*
+      ⚠ AN EXPERT'S NAME, NOT "Panameer" — `P1-J2-E008`'s brief, WS4b. The byline said
+      `Panameer` while the package card beside it said `StratERP`, which asserted that
+      an agent is a house product. Scott dissolved that on 2026-08-21: an agent is an
+      expert's product, and he is the first expert on P2P.
+
+      ⚠ THE PERSON, NOT THE FIRM, AND IT IS A JUDGEMENT CALL I AM FLAGGING. The brief
+      says both "the byline is the expert's name" and "use his provider name"; those
+      point at `Scott Walls` and `StratERP` respectively. The person wins here for two
+      reasons: `StratERP` is already the byline on the package card immediately to the
+      left, where it reads as a partner FIRM, and this card's chip says "a pre-built
+      agent" — an expert's product. One word to change if Scott wants the firm.
+
+      ⚠ COUNSEL GATE, AND THIS RAISES IT: the card now attaches a real person's name
+      to a monthly price and an ERP-connection claim. It joins the named-availability
+      and stock-photo items on that list rather than sitting outside it.
+    */
+    sub: "Scott Walls",
     facts: [
       ["Runs", "continuously"],
       /* ⚠ flagged above — this asserts no installation, which is not settled. */
