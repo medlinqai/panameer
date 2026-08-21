@@ -272,10 +272,16 @@ export function AiRoadmapShot() {
                   </span>
                 ))}
               </span>
-              {/* The third column's header cell. Deliberately unlabelled — a
-                  column heading over a one-word action reads as a table of
-                  actions rather than a timeline with an affordance on it. */}
-              <span className="rm-hd-a" aria-hidden />
+              {/*
+                ⚠ THE ACTION COLUMN'S HEADER CELL, AND IT IS DELIBERATELY EMPTY
+                (E254). A heading over a one-word action would read as a FIFTH
+                TIME BUCKET, which is the exact misreading this column exists to
+                end. It is present rather than absent so the 2px rule and the
+                tint run the full height of the table, header included — without
+                it the divider would start below the header and the column would
+                still look like part of Q4.
+              */}
+              <span className="rm-act is-hd" aria-hidden />
             </div>
 
             {ROWS.map((r) => {
@@ -346,7 +352,36 @@ export function AiRoadmapShot() {
 
                     ⚠ SECONDARY BY CONSTRUCTION. `Load into Work Tracker` below is
                     the section's argument; this is smaller, quieter and greyer, and
-                    must stay that way.
+                    must stay that way. Giving it its own column (E254, below) did
+                    NOT promote it — the chip is unchanged; only the cell around it
+                    is new.
+
+                    ── ⚠ IT LIVES OUTSIDE THE QUARTERS (E254) ───────────────────
+
+                    Scott, 2026-08-21: *"the Create Request button should be outside
+                    of Q4."* ⚠ THE MEANING WAS WRONG, NOT JUST THE POSITION. The
+                    quarter lane says WHEN a milestone is scheduled — $980K in Q1,
+                    $265K in Q3. `Request` is NOT scheduled: it is available now, on
+                    every row, whichever quarter that row's bar sits in. Sitting
+                    unruled beside Q4 said "you can request this in Q4", which is the
+                    opposite of what E248 put it there to say.
+
+                    ⚠ IT WAS ALREADY ITS OWN GRID COLUMN. `.rm-row` has been
+                    `296px 1fr auto` since E248 — measured before touching anything,
+                    the chip's left edge was 1181.78 against a lane ending at
+                    1167.78. What was missing was the SEPARATION: no rule, no tint,
+                    and a Q4 header centred over a cell that visually ran to the
+                    table's right edge. So this adds the divider the mockup draws —
+                    2px where the quarter dividers are 1px — and does not move the
+                    chip.
+
+                    ⚠ THE QUARTERS ARE STILL A CONTINUOUS LANE, NOT FOUR CELLS, and
+                    that is deliberate — see the note on ROWS. The approved mockup
+                    draws `repeat(4,1fr)` with each bar in exactly one cell; doing
+                    that here would flatten the 4-week item to the same width as the
+                    2-week ones and un-overlap the two Q1 items, which is the
+                    misdescription this layout exists to avoid and the reason the
+                    serpentine was rejected. Composition ported; the grid was not.
 
                     ⚠ THIS IS A MARKETING SHOT, NOT THE PRODUCT. Rendered, never
                     wired — no route, no handler. The real roadmap→work-request path
@@ -355,8 +390,10 @@ export function AiRoadmapShot() {
                     `claude/roadmap_to_talent_flow.md`. The gate is now visible in
                     both places.
                   */}
-                  <span className="rm-req" aria-hidden>
-                    Request
+                  <span className="rm-act">
+                    <span className="rm-req" aria-hidden>
+                      Request
+                    </span>
                   </span>
                 </div>
               );
@@ -364,9 +401,40 @@ export function AiRoadmapShot() {
           </div>
 
           <div className="rm-f">
+            {/*
+              ── ⚠ A DIRECTIONAL BAND, NOT A POINT FIGURE (decided 2026-08-21) ──
+
+              `decisions-01.md` § *The dashboard QUALIFIES; the roadmap meeting
+              QUANTIFIES*. Scott: *"just some percentage in the beginning designed
+              to get the buyer into the AI Roadmap mtg... We can use THAT meeting to
+              pick solutions and estimate true savings."*
+
+              ⚠ THE DANGER WAS NEVER A WRONG NUMBER — IT WAS A PRECISE ONE. The
+              seven-figure point total this replaced invited a CFO to audit the
+              model; a band invites a conversation, and the conversation is the
+              product. The sub-line says so out loud rather than leaving the reader
+              to infer it.
+
+              (⚠ The retired figure is PARAPHRASED, not quoted — same convention as
+              the retired rung-4 line in `questions-p2p.ts`, so that grepping `src/`
+              for it returns only real usages and stays a usable check.)
+
+              ⚠ THE LABEL ABOVE IT IS UNCHANGED — `Year-1 opportunity sequenced`.
+
+              ⚠ THIS IS A MARKETING SHOT. The figures are illustrative and stay
+              hardcoded here; they are NOT wired to `lib/assessment/scoring.ts` and
+              must not be. Counsel gate, with the rest of this graphic's numbers.
+
+              ⚠ AND `Est. savings hidden from providers` DOWNSTREAM BECOMES MORE
+              LOAD-BEARING, NOT LESS. A directional estimate must never become the
+              quote anchor a provider prices against. That pill is untouched.
+            */}
             <span className="rm-tot">
               <span>Year-1 opportunity sequenced</span>
-              <b>$2,590,000</b>
+              <b>$1.8M &ndash; $3.2M</b>
+              <span className="rm-tot-q">
+                directional · sized with you in this session
+              </span>
             </span>
             {/*
             ⚠ THIS BUTTON IS THE ARGUMENT — `Load into Work Tracker`, never

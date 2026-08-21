@@ -2497,11 +2497,56 @@
    exactly the chip's width and the lane keeps every remaining pixel: the lane is
    the coordinate space the bars are positioned in, so it must not be given a
    fixed share. */
-.pm-home .rm-hd,.pm-home .rm-row{display:grid;grid-template-columns:296px 1fr auto;align-items:center}
+/*
+  ⚠ THE THIRD COLUMN IS A FIXED 118px, NOT `auto`, AND THAT IS A BUG FIX (E254).
+
+  With `auto` the header and the rows sized their third column INDEPENDENTLY: the
+  header cell is empty (26px of padding and border) while a row cell holds the
+  chip (92.2px). Measured, not guessed — so the moment the column got a 2px
+  divider, the header's divider landed 66px right of the rows', and the table had
+  a rule that stepped sideways under its own header.
+
+  118px is the approved mockup's own action-column width and it comfortably holds
+  the chip: 66.22px of pill plus 24px of cell padding = 90.22px needed.
+
+  ⚠ DO NOT PUT THIS BACK TO `auto`, and do not "fix" the misalignment by stuffing a
+  non-breaking space into the header cell — that makes the two widths agree by
+  accident of glyph metrics rather than by declaration.
+*/
+.pm-home .rm-hd,.pm-home .rm-row{display:grid;grid-template-columns:296px 1fr 118px;align-items:center}
 /* ⚠ QUIET BY CONSTRUCTION. `Load into Work Tracker` is the section's primary
    action; this must never compete with it — no fill, no brand colour, one step
    down in size. */
-.pm-home .rm-req{margin:0 16px 0 14px;font-size:10px;font-weight:600;letter-spacing:.02em;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:4px 10px;white-space:nowrap;background:#fff}
+/*
+  ── ⚠ THE ACTION COLUMN IS ITS OWN ZONE, OUTSIDE THE QUARTERS (E254) ─────────
+
+  `Request` was already in the third grid column — `.rm-row` has been
+  `296px 1fr auto` since E248 — but with no rule and no tint it read as part of
+  Q4, whose header is centred over a lane that runs to the table's right edge.
+  Scott: "the Create Request button should be outside of Q4."
+
+  ⚠ 2px WHERE THE QUARTER DIVIDERS ARE 1px, which is the mockup's own ratio and
+  the whole signal: the reader has to see that this boundary is a different KIND
+  of boundary from the three inside the lane. The quarter dividers are painted by
+  `.rm-lane::before` as a gradient at 25/50/75%; this one is a real border, so it
+  cannot be confused for a fourth of them.
+
+  ⚠ FULL HEIGHT INCLUDING THE HEADER. `.is-hd` carries the same rule and a
+  warmer tint, so the divider starts at the top of the table rather than under
+  the header row — a divider that begins below `Q4` still lets `Q4` look like it
+  owns this column.
+
+  ⚠ THE CELL IS NEW; THE CHIP IS NOT. `.rm-req` below is untouched — E248's rule
+  that `Load into Work Tracker` stays the primary and this stays "smaller,
+  quieter and greyer" is not relaxed by giving it a cell to sit in.
+*/
+.pm-home .rm-act{border-left:2px solid var(--line);background:#fdfbfe;height:100%;display:flex;align-items:center;justify-content:center;padding:11px 12px}
+/* `stretch` so the tint and the rule run the header's full height rather than
+   only the height of an empty box. */
+.pm-home .rm-act.is-hd{background:#fdf7fd;align-self:stretch;padding:0}
+/* ⚠ margins go: the cell owns the spacing now, and a margin here would push the
+   chip off the centre of the column it was just given. */
+.pm-home .rm-req{font-size:10px;font-weight:600;letter-spacing:.02em;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:4px 10px;white-space:nowrap;background:#fff}
 .pm-home .rm-hd{border-bottom:1px solid var(--line);background:#fafbfd}
 .pm-home .rm-hd-a{padding:9px 16px;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
 .pm-home .rm-row{border-bottom:1px solid #f2f3f8}
@@ -2543,6 +2588,10 @@
 .pm-home .rm-tot{display:flex;flex-direction:column}
 .pm-home .rm-tot span{font-size:11px;color:var(--muted)}
 .pm-home .rm-tot b{font-family:var(--font-display),sans-serif;font-size:21px;font-weight:700;color:var(--ink)}
+/* ⚠ THE QUALIFIER RIDES WITH THE NUMBER (2026-08-21). It is the sentence that
+   turns a band from a vague figure into a stated method, so it sits directly
+   under the band rather than in the footnote where it would read as small print. */
+.pm-home .rm-tot-q{margin-top:3px}
 .pm-home .rm-btn{margin-left:auto;display:inline-flex;align-items:center;gap:8px;font-family:var(--font-display),sans-serif;font-size:12.5px;font-weight:700;border:1px solid var(--mag);background:var(--mag);color:#fff;border-radius:10px;padding:11px 16px;white-space:nowrap}
 .pm-home .rm-btn .ash-sv{width:14px;height:14px}
 .pm-home .rm-note{font-size:11px;color:var(--muted);margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
@@ -2825,7 +2874,15 @@
     it back its content width; it moves under the lane, which is where a stacked
     row wants it.
   */
-  .pm-home .rm-req{justify-self:start;margin:0 16px 12px}
+  /*
+    ⚠ STACKED, THE COLUMN STOPS BEING A COLUMN. `.rm-row` collapses to `1fr`
+    here, so a 2px left border and a tinted full-height cell would draw a rule
+    down the left of a full-width block — a divider between nothing and nothing.
+    The chip goes back to sitting on the row, left-aligned, exactly as it did
+    before E254.
+  */
+  .pm-home .rm-act{display:block;border-left:0;background:transparent;height:auto;padding:0;justify-self:start;margin:0 16px 12px}
+  .pm-home .rm-act.is-hd{display:none}
   .pm-home .rm-lane{border-top:1px solid var(--line);margin:0 16px 12px;min-height:34px}
   .pm-home .rm-hd .rm-lane{border-top:0;margin-bottom:0}
 }
