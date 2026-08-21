@@ -94,41 +94,72 @@ export type MarketingNavItem = {
   matching the one they clicked. See `next.config.ts` for the redirects.
 */
 /*
-  ── ⚠ RE-WORDED AND RE-ORDERED, 2026-08-19 (P1-J0-E222) ──────────────────────
+  ── ⚠ THIS IS THE **THIRD** LABEL SET. READ ALL THREE BEFORE CHANGING ONE ─────
 
-  Scott's call, asked for as "the most understandable set", with the note
-  *"honestly, we are splitting atoms"* — so this was a WORDING change and nothing
-  else. Two labels moved and the order changed; NOT ONE HREF DID.
+  ⚠ IF YOU ARE HERE BECAUSE AN OLDER NOTE SOMEWHERE SAYS THE LABEL SHOULD BE
+  SOMETHING ELSE: the older note is describing set 1 or set 2. Do not "restore"
+  it. Every one of these was Scott's call, and each supersedes the last.
 
-    Learn         /learn          unchanged
-    Find Talent   /hire-talent    was "Hire Talent", and moves to 2nd
-    Find Work     /find-work      label unchanged, moves to 3rd
-    Shop          /buy-services   was "Buy Services"
+    set 1 (E118)   Learn · Hire Talent · Find Work · Buy Services
+    set 2 (E222)   Learn · Find Talent · Find Work · Shop          — wording only,
+                   two labels moved and the order changed; not one href did.
+    set 3 (E245)   Learn · Talent · Work · Shop · Optimize · Integrate
 
-  Buyer-side now sits second and seller-side third.
+  ── ⚠ SET 3, 2026-08-21 (P1-J0-E245) — FOUR ITEMS BECOME SIX ─────────────────
 
-  ⚠ TWO LABELS NOW DIFFER BY ONE WORD AND SIT ADJACENT. "Find Talent" and "Find
-  Work" are the two sides of one market, which is the point — and it means an
-  off-by-one in this array swaps a buyer destination for a seller one and still
-  reads plausibly. CHECK THE PAIRING BY HREF, NEVER BY READING DOWN THE LABELS.
+  Two labels SHORTEN and two are ADDED. Again, NOT ONE EXISTING HREF MOVED.
+
+    Learn       /learn          unchanged
+    Talent      /hire-talent    was "Find Talent"
+    Work        /find-work      was "Find Work"
+    Shop        /buy-services   unchanged
+    Optimize    /assess         NEW
+    Integrate   /enterprise     NEW
+
+  ⚠ `Optimize` POINTS AT `/assess`, NOT AT `/`. `nav_model_LOCKED` settled this:
+  "Home IS the assessment front door, so a plain home link would be redundant
+  with the logo." `/` is where the assessment is EXPLAINED; `/assess` is where it
+  is TAKEN. A nav item that lands on the page explaining the thing, rather than on
+  the thing, is the defect E119 already fixed once in the footer.
+
+  ⚠ THE HEADER FITS, AND IT WAS MEASURED ON THE REAL PAGE RATHER THAN ASSUMED.
+  Six items are WIDER than four despite two labels shortening, because the two
+  new labels are the two longest in the set and each one also buys a 34px gap.
+  At 1024 the nav went 353.88 -> 486.12 and the required row total 836.86 ->
+  969.10 against 1024 available. `lg` still clears, but the slack fell from
+  187.14 to 54.90. The full arithmetic is in `MarketingHeader.tsx`.
+
+  ⚠ 54.90px IS THE WHOLE REMAINING BUDGET AND IT IS THE THING TO WATCH. A
+  SEVENTH item, or a longer word in place of any of these six, overflows `lg`
+  before it overflows anything else. This is not a number to eyeball a future
+  change against — re-measure.
+
+  ⚠ TWO LABELS STILL DIFFER BY ONE WORD AND STILL SIT ADJACENT — and shortening
+  them made it WORSE, not better: "Talent" and "Work" are now single words with
+  nothing else to tell them apart. They are the two sides of one market, which is
+  the point, and it means an off-by-one in this array swaps a buyer destination
+  for a seller one and STILL READS PLAUSIBLY. CHECK THE PAIRING BY HREF, NEVER BY
+  READING DOWN THE LABELS. `check:app-shell` asserts it by href for that reason.
 
   ── ⚠ THE LABEL AND THE ROUTE DIVERGE ON PURPOSE, AND IT IS DATED ─────────────
 
-  "Find Talent" points at `/hire-talent`. "Shop" points at `/buy-services`. The
-  comment above says "MENU LABEL == PAGE ROUTE" and that WAS the rule when those
-  two routes were renamed; as of 2026-08-19 it no longer holds for these two, and
-  that is a decision rather than an oversight.
+  `Talent` -> `/hire-talent`. `Shop` -> `/buy-services`. `Integrate` ->
+  `/enterprise`. `Optimize` -> `/assess`. The comment above says "MENU LABEL ==
+  PAGE ROUTE" and that WAS the rule when those routes were renamed; as of
+  2026-08-19 it no longer holds, and as of 2026-08-21 four of the six diverge.
+  That is a decision rather than an oversight.
 
-  ⚠ DO NOT "TIDY" IT BY RENAMING THE ROUTES. A rename means redirects, external
-  links, metadata, sitemap entries and every in-app link — a large, risky change
-  to close a cosmetic gap, in a change Scott sized at twenty minutes. The routes
-  stay.
+  ⚠ DO NOT "TIDY" IT BY RENAMING THE ROUTES — `/enterprise` least of all. A
+  rename means redirects, external links, metadata, sitemap entries and every
+  in-app link: a large, risky change to close a cosmetic gap. The routes stay.
 */
 export const MARKETING_NAV: MarketingNavItem[] = [
   { label: "Learn", href: "/learn" },
-  { label: "Find Talent", href: "/hire-talent" },
-  { label: "Find Work", href: "/find-work" },
+  { label: "Talent", href: "/hire-talent" },
+  { label: "Work", href: "/find-work" },
   { label: "Shop", href: "/buy-services" },
+  { label: "Optimize", href: "/assess" },
+  { label: "Integrate", href: "/enterprise" },
 ];
 
 /**
@@ -145,10 +176,17 @@ export const MARKETING_NAV: MarketingNavItem[] = [
  * is shared, which is the part that was drifting: the same label can no longer
  * resolve to two places.
  *
- * ⚠ THE LABELS MATCH THE HEADER ON PURPOSE. Learn · Find Talent · Find Work ·
- * Shop. This table sits beside `MARKETING_NAV` so a re-word has to pass both at
- * once — the footer used to say "Buy Pre-Built Services" and "Find Talent" for
- * things the header called something else.
+ * ⚠ THE LABELS MATCH THE HEADER ON PURPOSE. As of E245 the header is Learn ·
+ * Talent · Work · Shop · Optimize · Integrate. This table sits beside
+ * `MARKETING_NAV` so a re-word has to pass both at once — the footer used to say
+ * "Buy Pre-Built Services" and "Find Talent" for things the header called
+ * something else, and it said "Enterprise Integration" for what the header now
+ * calls `Integrate`.
+ *
+ * ⚠ THE TWO TABLES ARE NOT THE SAME SHAPE AND ARE NOT MEANT TO BE. The footer is
+ * the full INDEX, including entries with no header item and entries with no page
+ * at all; the header is six doors. The rule is one WORD PER DESTINATION, not one
+ * row per row.
  *
  * ── ⚠ AND E222 REVERSED HALF OF THAT UNIFICATION, DELIBERATELY ───────────────
  *
@@ -239,8 +277,17 @@ export const FOOTER_GROUPS: { title: string; entries: FooterEntry[] }[] = [
         page headed "Pricing" with no price is a worse promise than a section.
       */
       { label: "Pricing", href: "/hire-talent#value" },
-      /* Was a TBD with no href until /enterprise existed (WS-7). */
-      { label: "Enterprise Integration", href: "/enterprise" },
+      /*
+        Was a TBD with no href until /enterprise existed (WS-7).
+
+        ⚠ "Integrate", NOT "Enterprise Integration" — E245, and it is E118's rule
+        doing its job rather than a re-word for its own sake. `/enterprise` is now
+        a HEADER destination too, and E118 is "one word per destination": the
+        header saying `Integrate` while the footer said `Enterprise Integration`
+        for the same route is exactly the drift that rule exists to stop. These
+        two tables sit beside each other so a change has to pass both at once.
+      */
+      { label: "Integrate", href: "/enterprise" },
     ],
   },
   {
