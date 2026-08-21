@@ -3,8 +3,6 @@ import { MarketingHeader } from "@/components/marketing/MarketingHeader";
 import { HomeHero } from "@/components/marketing-home/HomeHero";
 import { LogoRibbon } from "@/components/marketing-home/LogoRibbon";
 import { MethodologyRing } from "@/components/marketing-home/MethodologyRing";
-import { ErpPackages } from "@/components/marketing-home/ErpPackages";
-import { ErpIntegration } from "@/components/marketing-home/ErpIntegration";
 import { CapabilityFramework } from "@/components/marketing-home/CapabilityFramework";
 import { TalentTeaser } from "@/components/marketing-home/TalentTeaser";
 import { Testimonials } from "@/components/marketing-home/Testimonials";
@@ -224,26 +222,49 @@ export default function Home() {
         <CapabilityFramework />
         <MethodologyRing />
         {/*
-          WS-3 sits after the method and before the talent (Scott's slot): the
-          page has just explained HOW Panameer works, so packaged ERP solutions
-          are the first concrete thing you can buy, and the people who build
-          them follow.
-        */}
-        <ErpPackages />
-        {/*
-          THE ORDER IS THE ARGUMENT (brief_home_erp_integration WS-2). The
-          agents section above says WHAT plugs into your ERP; this says HOW it
-          connects; the talent section below says who builds it. Integration
-          before talent, because "we move the native data both ways" is what
-          makes the people worth hiring — the reverse order reads as a staffing
-          pitch with an integration footnote.
+          ── ⚠ BOTH ERP SECTIONS CAME OFF THIS PAGE, 2026-08-21 ────────────────
+          ── `P1-J0-E273` (ErpPackages) and `P1-J0-E255` (ErpIntegration) ──────
 
-          ⚠ `erpx-band` IS THE CHROME, AND IT IS PASSED IN ON PURPOSE. The
-          component owns no background or padding of its own so it can be
-          dropped onto the Enterprise page — its second home, per Scott
-          2026-08-15 — without arriving wearing this page's spacing.
+          ⚠ THIS PAGE CARRIES A STANDING RULE AND THESE ARE THE **SECOND AND
+          THIRD** DELIBERATE OVERRIDES OF IT. The rule, quoted from the note
+          further up this file: *"ADDITIVE AND REORDER ONLY. Every section that
+          used to sit here is still on the page, in its original relative order…
+          retiring or relocating any of them is a separate owner decision, not a
+          consequence of this one."* `E164` was the first override and recorded
+          itself with the words *"this deletion was named and scoped; it is not a
+          licence to prune."* Neither is this one.
+
+          ⚠ NOTHING WAS MOVED, PORTED OR REBUILT. Both sections were rendering
+          TWICE and this deletes the second render of each:
+
+            ErpPackages     -> `/buy-services` (buy-services/page.tsx), where it
+                               is that page's ENTIRE BODY — the `Shop` nav item's
+                               whole reason to exist.
+            ErpIntegration  -> `/enterprise` (enterprise/page.tsx:67), now the
+                               `Integrate` nav item's destination (E245).
+
+          ⚠ VERIFIED BY IDENTITY, NOT BY COMPARISON. Scott's condition on E255
+          was that home's ERP graphic be *the exact same image* as Integrate's.
+          Both call sites were byte-identical (`<ErpIntegration className=
+          "erpx-band" />`), `className` is the component's only prop, and
+          `.pm-home .erpx-band` has one definition (`home.css:1042`). One
+          component, rendered twice; one render removed.
+
+          ⚠ THE COMPONENT FILES BOTH STAY AND BOTH ARE STILL IMPORTED — by their
+          surviving page. This is not `E164`'s case of an unimported orphan.
+
+          ⚠ THE GUARD MOVED WITH THEM, WHICH WAS THE ACTUAL WORK.
+          `e2e/marketing-home.spec.ts` asserted all six lightbox doorways on `/`
+          through a single `goto("/")`. Every `Card` now carries its own `url` and
+          the suite navigates per card — 60 tests before, 60 after, nothing
+          skipped and nothing deleted. It also now asserts that NEITHER SECTION
+          RENDERS HERE, so putting one back fails the build rather than quietly
+          restoring the duplicate.
+
+          ⚠ NOTHING ELSE COMES OFF `/`. `CapabilityFramework` and
+          `MethodologyRing` above are becoming link targets under E270/E272 and
+          are deliberately untouched.
         */}
-        <ErpIntegration className="erpx-band" />
         <TalentTeaser />
         <Testimonials />
         <HomeFooter />
