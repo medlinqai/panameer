@@ -8,6 +8,7 @@ import { WizardShell } from "@/components/onboarding/WizardShell";
 import { VerifyGate } from "@/components/onboarding/VerifyGate";
 import { OptionCard, Field, TextInput, Notice } from "@/components/onboarding/controls";
 import { LegalLink } from "@/components/legal/LegalLink";
+import { NoProfileYet, readBlockedParams } from "@/components/onboarding/NoProfileYet";
 
 // Buyer flow is short: create account (+ToS) → verify email → pick tier → done.
 const SCREENS = ["account", "verify", "tier"] as const;
@@ -20,6 +21,11 @@ export default function JoinBuyerPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notBuyer, setNotBuyer] = useState(false);
+  /* `?blocked=` / `?from=` if the transact gate sent them here — see NoProfileYet. */
+  const [blockedParams, setBlockedParams] = useState<{ blocked: string | null; from: string | null }>({
+    blocked: null,
+    from: null,
+  });
 
   const [acct, setAcct] = useState({
     firstName: "",
@@ -40,6 +46,7 @@ export default function JoinBuyerPage() {
   // Land on the right step for a returning/refreshing user.
   useEffect(() => {
     (async () => {
+      setBlockedParams(readBlockedParams());
       const r = await fetch("/api/onboarding/buyer/status");
       if (r.status === 401) {
         setScreen("account");
@@ -135,17 +142,14 @@ export default function JoinBuyerPage() {
     );
   }
 
+  /*
+    ⚠ THE 404 MEANS "NO BUYER PROFILE", NOT "WRONG ACCOUNT TYPE" — `P1-J1.2-E009`.
+    `loadBuyer` throws one code for three different causes, so this screen states
+    only what the 404 establishes and offers a door that exists. See NoProfileYet.
+  */
   if (notBuyer) {
     return (
-      <div className="grid min-h-screen place-items-center bg-white px-6 text-center font-body text-ink">
-        <div>
-          <h1 className="text-2xl font-extrabold">You&apos;re already signed in</h1>
-          <p className="mt-2 text-ink-2">This account isn&apos;t a buyer account.</p>
-          <Link href="/dashboard" className="mt-4 inline-block font-bold text-magenta">
-            Go to Dashboard →
-          </Link>
-        </div>
-      </div>
+      <NoProfileYet path="buyer" blocked={blockedParams.blocked} from={blockedParams.from} />
     );
   }
 

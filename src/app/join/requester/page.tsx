@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 import { SignUpForm, type SignUpValues } from "@/components/onboarding/SignUpForm";
 import { VerifyGate } from "@/components/onboarding/VerifyGate";
 import { Notice } from "@/components/onboarding/controls";
+import { NoProfileYet, readBlockedParams } from "@/components/onboarding/NoProfileYet";
 
 /**
  * REQUESTER onboarding — journey P1-J1.2 (brief_requester_onboarding).
@@ -32,6 +32,11 @@ export default function JoinRequesterPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notRequester, setNotRequester] = useState(false);
+  /* `?blocked=` / `?from=` if the transact gate sent them here — see NoProfileYet. */
+  const [blockedParams, setBlockedParams] = useState<{ blocked: string | null; from: string | null }>({
+    blocked: null,
+    from: null,
+  });
   const [email, setEmail] = useState("");
   const [devLink, setDevLink] = useState<string | null>(null);
 
@@ -50,6 +55,7 @@ export default function JoinRequesterPage() {
   // for an account they already have.
   useEffect(() => {
     (async () => {
+      setBlockedParams(readBlockedParams());
       const r = await fetch("/api/onboarding/requester/status");
       if (r.status === 401) {
         setScreen("signup");
@@ -117,17 +123,15 @@ export default function JoinRequesterPage() {
     );
   }
 
+  /*
+    ⚠ THE 404 MEANS "NO REQUESTER PROFILE", NOT "WRONG ACCOUNT TYPE" —
+    `P1-J1.2-E009`. `getRequesterState` throws whenever `requesterProfile` is
+    missing, and a requester has no type flag at all, so this route cannot tell
+    "not started" from "provider account" even in principle. See NoProfileYet.
+  */
   if (notRequester) {
     return (
-      <div className="grid min-h-screen place-items-center bg-white px-6 text-center font-body text-ink">
-        <div>
-          <h1 className="text-2xl font-extrabold">You&apos;re already signed in</h1>
-          <p className="mt-2 text-ink-2">This account isn&apos;t a requester account.</p>
-          <Link href="/dashboard" className="mt-4 inline-block font-bold text-magenta">
-            Go to Dashboard →
-          </Link>
-        </div>
-      </div>
+      <NoProfileYet path="requester" blocked={blockedParams.blocked} from={blockedParams.from} />
     );
   }
 
