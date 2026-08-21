@@ -60,7 +60,8 @@
     "learn:fetch-docs": "npx esbuild prisma/fetch-course-docs.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/fetch-course-docs.cjs --log-level=error && node -r dotenv/config .harness/fetch-course-docs.cjs dotenv_config_path=.env.local",
     "learn:assessments": "npx esbuild prisma/generate-learn-assessments.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/generate-learn-assessments.cjs --log-level=error && node -r dotenv/config .harness/generate-learn-assessments.cjs dotenv_config_path=.env.local",
     "check:learn-assessment": "npx esbuild scripts/check-learn-assessment.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/learn-assessment.cjs --log-level=error && node -r dotenv/config .harness/learn-assessment.cjs dotenv_config_path=.env.local",
-    "check:assessment-volume": "npx esbuild scripts/check-assessment-volume.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/assessment-volume.cjs --log-level=error && node .harness/assessment-volume.cjs"
+    "check:assessment-volume": "npx esbuild scripts/check-assessment-volume.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/assessment-volume.cjs --log-level=error && node .harness/assessment-volume.cjs",
+    "check:solution-types": "npx esbuild scripts/check-solution-types.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/solution-types.cjs --log-level=error && node -r dotenv/config .harness/solution-types.cjs dotenv_config_path=.env.local"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",

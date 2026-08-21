@@ -1473,9 +1473,22 @@ model Package {
   title               String
   /// The scope — what the buyer is actually getting.
   summary             String?
-  /// Timeline in weeks.
+  /**
+   * Timeline in weeks.
+   * ⚠ A DELIVERY CONSTRUCT, AND MEANINGLESS ON A `DEPLOYABLE`. An agent has no
+   * duration — it has coverage and setup. `kind = DEPLOYABLE` must leave this null,
+   * and `check:solution-types` fails the build over a row that does not.
+   * ⚠ NOT DELETED AND NOT REPURPOSED: `DELIVERABLE` still needs it.
+   */
   duration_weeks      Int?
-  /// V1 is FIXED-price only; the enum leaves room for HOURLY/TM later.
+  /**
+   * ⚠ NO LONGER "FIXED-PRICE ONLY" — the old comment here said *"V1 is FIXED-price
+   * only; the enum leaves room for HOURLY/TM later"* and, as of 2026-08-21, that
+   * contradicts both the enum and the product: a `DEPLOYABLE` bills `RECURRING` and
+   * `HOURS` bills `HOURLY`. Corrected rather than left to mislead.
+   * The kind constrains this — see `lib/catalog/solution-types.ts`, which is the one
+   * place the rule is written down.
+   */
   pricing_type        PackagePricingType @default(FIXED)
   /// Integer cents, like every other money value in the app.
   price_cents         Int?
@@ -1483,6 +1496,28 @@ model Package {
   /// Optional categorization for the catalog and future Work Request matching.
   role_type_id        String?            @db.Uuid
   cover_image_url     String?
+  /**
+   * ⚠ THE PERIOD `price_cents` CANNOT CARRY. Non-null EXACTLY WHEN
+   * `pricing_type = RECURRING`, and null otherwise — asserted in
+   * `check:solution-types`, in both directions. A `FIXED` package carrying a period
+   * is as wrong as a `RECURRING` one without it.
+   */
+  billing_period      BillingPeriod?
+  /**
+   * ⚠ WHAT IS BEING BOUGHT. Defaults to `DELIVERABLE` so every row that existed
+   * before 2026-08-21 keeps behaving exactly as it does today — they are all
+   * fixed-price scoped packages.
+   * ⚠ ONE OF THOSE ROWS IS MISDESCRIBED BY THE DEFAULT AND IT IS REPORTED, NOT
+   * QUIETLY RETYPED: `Contract Price Alert Agent` is semantically a `DEPLOYABLE`.
+   * Re-typing it is CONTENT — it needs Scott's merged agent list — and the brief that
+   * added this column put seeding out of scope.
+   * ⚠ AN AGENT HAS A `provider_profile_id` LIKE EVERY OTHER PACKAGE. Scott,
+   * 2026-08-21, dissolving `P1-J2-E007`: *"AI Agents are service products created by
+   * experts on the AIP. As with everything, we will start with me and with P2P."* So
+   * there is NO first-party flag, NO nullable owner and NO `HouseProduct` model, and
+   * `provider_profile_id` STAYS NOT NULL.
+   */
+  kind                PackageKind        @default(DELIVERABLE)
   status              PackageStatus      @default(DRAFT)
   sort_order          Int                @default(100)
   created_at          DateTime           @default(now())
@@ -1504,11 +1539,67 @@ model Package {
   @@map("packages")
 }
 
+/// ⚠ WHAT YOU ARE BUYING — NOT HOW IT BILLS. That is `PackagePricingType`, and the
+/// separation is the whole design (brief_solution_types).
+///
+/// Scott, 2026-08-21: *"i am thinking each service package has a 'type'. One being AI
+/// Agent."* — then named six: AI Agents · Consultation · Monthly Retainer · Packaged
+/// Deployment · Mentoring · Support.
+///
+/// ⚠ THREE OF THOSE SIX ARE ONE PRODUCT WEARING THREE LABELS. Consultation, Monthly
+/// Retainer and Mentoring are all AN EXPERT'S TIME; they differ by billing and by
+/// where they are sold. Modelled as six enum members, the first buyer who wants a
+/// RETAINED MENTOR or a ONE-OFF SUPPORT CALL cannot express it, and you are back in a
+/// schema change to add a label. So: THREE STORED KINDS, SIX DERIVED LABELS. The
+/// labels are a display concern and are deliberately not in the database.
+///
+/// ⚠⚠ THESE NAMES ARE SCOTT'S, FROM `mockups/roadmap_request_pathways_2026-08-21.html`,
+/// AND THEY REPLACED AN EARLIER CHAT TRIO OF `AGENT · ENGAGEMENT · DEPLOYMENT`.
+///
+/// ⚠ `DEPLOYMENT` IS BANNED AND MUST NOT BE REINTRODUCED. It is one letter from
+/// `DEPLOYABLE` and means the OPPOSITE THING: a `DEPLOYABLE` is an agent that runs; a
+/// "deployment" is a scoped package that ends. Anyone reading an older note and
+/// "restoring" it would silently swap a subscription for a fixed-price project.
+///
+/// ⚠ `EXPERT` IS NOT A MEMBER AND MUST NOT BE ADDED. An expert is a PERSON with a
+/// rate, not a `Package`. `GetTheTalentShot` shows three RECOMMENDATION SHAPES —
+/// expert · package · agent — and only two of them are rows in this table. Adding
+/// `EXPERT` here would permit a package with no human attached, which is the one thing
+/// the `provider_profile_id NOT NULL` constraint exists to prevent.
+enum PackageKind {
+  /// An agent an expert publishes. Runs under a standing SOW until cancelled: no end
+  /// date, no milestones, no duration. Bills `RECURRING`.
+  DEPLOYABLE
+  /// A named person's time, settled by timesheet. `HOURLY`, or `RECURRING` for a
+  /// retainer.
+  HOURS
+  /// A defined scope, settled by payment request — lump sum or milestones. `FIXED`.
+  DELIVERABLE
+}
+
+/// ⚠ `RECURRING` NEEDS A PERIOD AND `price_cents` ALONE CANNOT CARRY ONE. `$450` is
+/// not `$450/mo`.
+///
+/// ⚠ SAME LESSON AS `P1-J0.4-E044`, WHICH LANDED THE SAME DAY: the AI-maturity deck
+/// asks for "Estimated Number of Invoice Lines" and names no period anywhere, so
+/// nothing downstream can normalise it into a rate. Not repeating that here.
+enum BillingPeriod {
+  MONTHLY
+  ANNUAL
+}
+
+/// ⚠ HOW IT BILLS — the other half of `PackageKind`.
 enum PackagePricingType {
+  /// A lump sum or milestone total. The only shape shipped before 2026-08-21.
   FIXED
-  /// Reserved — brief_V is fixed-price only.
+  /// A rate against a timesheet.
   HOURLY
+  /// Time & materials.
   TM
+  /// ⚠ ADDED 2026-08-21, AND IT SHIPPED WITH `PackageKind` RATHER THAN AFTER IT
+  /// because `$450/mo` was not expressible at all: a `DEPLOYABLE` has no other shape.
+  /// Requires `billing_period`; see the invariant on `Package.billing_period`.
+  RECURRING
 }
 
 enum PackageStatus {
@@ -1518,6 +1609,13 @@ enum PackageStatus {
 
 /// One line of "what you get". A child row rather than String[] so the order is
 /// explicit and each line can grow (e.g. a note) without a migration.
+///
+/// ⚠ A DELIVERY CONSTRUCT. A `DEPLOYABLE` must have NONE — an agent does not deliver
+/// a list of things once, it runs. `check:solution-types` refuses a row that does.
+///
+/// ⚠ WHETHER THIS CAN CARRY AN AGENT'S OWN THREE FACTS — `Runs · Setup · Covers`,
+/// where a package draws `Scope · Duration · Delivered` — IS AN OPEN QUESTION AND IS
+/// NOT ANSWERED HERE. See the report on brief_solution_types.
 model PackageDeliverable {
   id         String   @id @default(uuid()) @db.Uuid
   package_id String   @db.Uuid
@@ -1532,6 +1630,10 @@ model PackageDeliverable {
 }
 
 /// A payment term: "50% Upfront", "50% On completion".
+///
+/// ⚠ A DELIVERY CONSTRUCT, AND NONSENSE ON A `DEPLOYABLE`: a milestone on a thing that
+/// never ends has nothing to be a percentage of the completion of. `check:solution-types`
+/// refuses one rather than leaving it merely unused.
 ///
 /// Percent OF THE TOTAL rather than an amount, so editing the price can never
 /// leave the milestones summing to something other than the package price. The
