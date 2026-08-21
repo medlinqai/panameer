@@ -101,7 +101,23 @@ check(
   the SUBMIT route (scoring at submit is the point) and the BACKFILL (which
   reconstructs, and says so on every row it writes).
 */
-const SCORE_ALLOWED = new Set([REPORT, SUBMIT, BACKFILL, join("src", "lib", "assessment", "scoring.ts"), join("src", "lib", "assessment", "scoring.test.ts")]);
+/*
+  ⚠ `check-assessment-volume.ts` JOINED THIS LIST, AND IT IS THE SAME CATEGORY AS
+  `scoring.test.ts` — a HARNESS, not a render path. `brief_per_domain_volume` WS5
+  requires an assertion that a fixed input produces a byte-identical `Scored` with
+  and without the new per-domain answers, and that assertion cannot be written
+  without calling the scorer. The property this guard protects — that no component,
+  page or lib re-scores at render time — is untouched: every name here is either the
+  scorer itself, the two writers, or a test.
+*/
+const SCORE_ALLOWED = new Set([
+  REPORT,
+  SUBMIT,
+  BACKFILL,
+  join("src", "lib", "assessment", "scoring.ts"),
+  join("src", "lib", "assessment", "scoring.test.ts"),
+  join("scripts", "check-assessment-volume.ts"),
+]);
 const rogueScorers = [...bodies.entries()]
   .filter(([f]) => !SCORE_ALLOWED.has(f))
   .filter(([, b]) => /\bscoreAssessment\s*\(/.test(b))

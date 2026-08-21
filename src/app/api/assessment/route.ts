@@ -104,6 +104,33 @@ const Body = z.object({
     headcountBand: z.string().max(40).optional().default(""),
     aiMode: z.string().max(40).optional().default(""),
     /*
+      ── ⚠ THE DECK'S PER-DOMAIN EXTRA FIELDS (slides 2–11) ────────────────────
+
+      domainKey → fieldId → the CANONICAL value: a count in whole units, dollars in
+      CENTS, a percent as an integer 0–100, or a boolean. The wizard canonicalises
+      through `parseFieldValue` and this schema accepts the result.
+
+      ⚠ OPTIONAL AT THIS BOUNDARY EVEN THOUGH EVERY FIELD IS REQUIRED IN THE WIZARD,
+      and that is deliberate. Absent means NOT ASKED — the 13 assessments taken
+      before this brief have no such key and must keep rendering — and rejecting the
+      whole submission here would throw away a completed assessment over a field
+      nobody could see. The requirement is enforced where the visitor can act on it:
+      `continueDisabled` on each `cd_*` step.
+
+      ⚠ NOTHING HERE IS SCORED. `scoreAssessment` does not read this key and
+      `check:assessment-volume` asserts the `Scored` object is byte-identical with
+      and without it. This brief adds an input; it changes no output.
+
+      ⚠ `.passthrough()` IS NOT USED. Unknown field ids are dropped rather than
+      stored, so a stale client cannot write a key the spec no longer has.
+    */
+    domainFields: z
+      .record(
+        z.string().max(60),
+        z.record(z.string().max(60), z.union([z.number().finite(), z.boolean()]))
+      )
+      .optional(),
+    /*
       ⚠ SLIDE 15's OTHER FOUR FIELDS (E039), ALL OPTIONAL. Only `email` is required
       and it keeps its own column — these are stored inside `answers` because the
       model's Json comment says a new question should not be a migration, and because
@@ -216,7 +243,14 @@ export async function POST(req: Request) {
       },
       select: { id: true, share_token: true, company_name: true },
     });
-    await writeDomainResults(tx, created.id, scored);
+    /*
+      ⚠ THE DECK FIELDS RIDE ALONG WITH THE SCORE, IN THE SAME TRANSACTION. They are
+      resolved to stored rows inside `writeDomainResults` — not recomputed, not
+      re-parsed — so a report can never hold a figure the submission did not carry.
+    */
+    await writeDomainResults(tx, created.id, scored, {
+      domainFields: b.answers.domainFields,
+    });
     return created;
   });
 

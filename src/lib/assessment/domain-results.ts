@@ -1,7 +1,15 @@
-import type { Prisma, PrismaClient } from "@prisma/client";
+/* ⚠ `Prisma` IS A VALUE IMPORT, not a type-only one — `Prisma.DbNull` below is a
+   runtime sentinel. A `Json?` column cannot be set to a bare `null`: Prisma reads
+   that as "leave it alone", and `DbNull` is how you say SQL NULL. */
+import { Prisma } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getCompanyBinding } from "@/lib/company";
 import { DOLLAR_WEIGHTS, type Scored } from "@/lib/assessment/scoring";
+import {
+  storedFieldsFor,
+  type DomainFieldAnswers,
+} from "@/lib/assessment/domain-fields";
 
 /**
  * THE PER-DOMAIN RESULT — writing it, and reading it back
@@ -92,7 +100,16 @@ export type DomainRowInput = Omit<Prisma.AssessmentDomainResultCreateManyInput, 
 export function domainRowsFor(
   scored: Scored,
   cdIds: Map<string, string>,
-  backfilled = false
+  backfilled = false,
+  /**
+   * The deck's per-domain extra fields as the wizard sent them, or undefined.
+   *
+   * ⚠ UNDEFINED IS "NOT ASKED" AND MUST STAY DISTINGUISHABLE FROM ZERO. The 13
+   * assessments taken before this existed have no `domainFields` key, the backfill
+   * script has nothing to read, and both must write `fields: null` — never `[]` and
+   * never a row of zeroes. `check:assessment-volume` fails the build over it.
+   */
+  domainFields?: DomainFieldAnswers
 ): DomainRowInput[] {
   return scored.domains.map((d) => ({
     domain_key: d.key,
@@ -113,6 +130,17 @@ export function domainRowsFor(
       a declared hole (UNWEIGHTED_DOMAINS), not a missing weight to invent.
     */
     weight_bps: Math.round((DOLLAR_WEIGHTS[d.key] ?? 0) * 10_000),
+    /*
+      ⚠ RESOLVED AT WRITE TIME, exactly as `weight_bps` and `score_pct` are. The
+      label, the type and the recorded MEANING are stored beside the value, so a
+      later edit to `domain-fields.ts` cannot silently restate a report somebody has
+      already been shown. That principle is already in this table and this column
+      does not weaken it.
+
+      `null` when the domain was not asked; `[]` when it was asked and the deck slide
+      genuinely carries no fields (slides 10 and 11).
+    */
+    fields: storedFieldsFor(d.key, domainFields) ?? Prisma.DbNull,
     backfilled,
   }));
 }
@@ -133,10 +161,10 @@ export async function writeDomainResults(
   tx: Db,
   assessmentId: string,
   scored: Scored,
-  opts: { backfilled?: boolean } = {}
+  opts: { backfilled?: boolean; domainFields?: DomainFieldAnswers } = {}
 ): Promise<number> {
   const cdIds = await resolveCapabilityDomainIds(tx, scored.domains.map((d) => d.key));
-  const rows = domainRowsFor(scored, cdIds, opts.backfilled ?? false);
+  const rows = domainRowsFor(scored, cdIds, opts.backfilled ?? false, opts.domainFields);
   if (rows.length === 0) return 0;
   const res = await tx.assessmentDomainResult.createMany({
     data: rows.map((r) => ({ ...r, assessment_id: assessmentId })),
@@ -156,6 +184,8 @@ export type StoredDomainRow = {
   opportunity_high_cents: bigint | null;
   rank: number | null;
   weight_bps: number | null;
+  /** ⚠ `null` = NOT ASKED. `[]` = asked, slide has no fields. Never zero. */
+  fields: unknown;
   backfilled: boolean;
 };
 

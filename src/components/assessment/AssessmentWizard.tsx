@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { WizardShell } from "@/components/onboarding/WizardShell";
+import { DomainFields } from "@/components/assessment/DomainFields";
 import {
   OptionCard,
   Chip,
@@ -36,6 +37,13 @@ import {
   stepsFor,
   type Step,
 } from "@/lib/assessment/steps";
+import {
+  PERCENT_SUM_100,
+  fieldsForDomain,
+  parseFieldValue,
+  type DomainFieldAnswers,
+  type ParsedFieldValue,
+} from "@/lib/assessment/domain-fields";
 
 /**
  * THE ASSESSMENT QUESTIONNAIRE (WS-A).
@@ -310,9 +318,90 @@ export function AssessmentWizard({
   /** domainKey → rung (10-50) or null for "Not sure". Absent = unanswered. */
   const [maturity, setMaturity] = useState<Record<string, number | null>>({});
   const [aiMode, setAiMode] = useState("");
+  /*
+    ── THE DECK'S PER-DOMAIN EXTRA FIELDS, HELD AS RAW TEXT ────────────────────
+
+    ⚠ RAW STRINGS, NOT PARSED NUMBERS. Scott decided free text with typed edits, so
+    the box has to hold exactly what was typed — including a half-finished "1,2" —
+    or every keystroke fights the parser. Canonicalising happens once, at submit,
+    through the single parser in `domain-fields.ts`.
+
+    ⚠ THE BOOLEAN RIDES IN THE SAME MAP AS `"true"` / `"false"`. One shape for one
+    concern beats a second parallel map that can fall out of step with this one.
+  */
+  const [domainText, setDomainText] = useState<Record<string, Record<string, string>>>({});
 
   const set = <K extends keyof Basics>(k: K, v: Basics[K]) =>
     setBasics((b) => ({ ...b, [k]: v }));
+
+  /** What is currently typed in one of the deck's boxes. */
+  const fieldText = (domainKey: string, fieldId: string) =>
+    domainText[domainKey]?.[fieldId] ?? "";
+
+  const setFieldText = (domainKey: string, fieldId: string, v: string) =>
+    setDomainText((d) => ({ ...d, [domainKey]: { ...(d[domainKey] ?? {}), [fieldId]: v } }));
+
+  /**
+   * The three payment percentages as they stand. `null` for anything not yet a
+   * clean number, so a half-typed box does not read as a zero in the running total.
+   */
+  const percentGroupTotal = (domainKey: string) => {
+    const group = PERCENT_SUM_100[domainKey];
+    if (!group) return null;
+    let sum = 0;
+    for (const id of group) {
+      const r = parseFieldValue("percent", fieldText(domainKey, id));
+      if (!r.ok || typeof r.value !== "number") return null;
+      sum += r.value;
+    }
+    return sum;
+  };
+
+  /**
+   * ⚠ EVERY FIELD ON SLIDES 2–9 IS REQUIRED — Scott, 2026-08-20. Slides 10 and 11
+   * carry no fields, so `fieldsForDomain` returns `[]` and this is vacuously true:
+   * those two steps gate on nothing new, exactly as they did before this brief.
+   *
+   * ⚠ THE MATURITY LADDER IS STILL NOT GATED ANYWHERE, and that is deliberate and
+   * FLAGGED. The brief says slides 10/11 gate "on the maturity option alone, exactly
+   * as today" — but today nothing gates on it at all, and `scoring.ts` depends on an
+   * unanswered domain scoring `null` rather than as the worst rung. Changing that is
+   * a behaviour change on ten screens that this brief does not otherwise ask for, so
+   * it is reported for Scott rather than decided here.
+   */
+  const domainFieldsComplete = (domainKey: string) => {
+    for (const field of fieldsForDomain(domainKey)) {
+      const r = parseFieldValue(field.type, fieldText(domainKey, field.id));
+      if (!r.ok) return false;
+    }
+    const total = percentGroupTotal(domainKey);
+    if (total !== null && total !== 100) return false;
+    return true;
+  };
+
+  /**
+   * Raw text → the canonical payload. ⚠ A DOMAIN WITH NOTHING TYPED IS ABSENT FROM
+   * THE RESULT, not present with zeroes: absent is "not asked" and zero is a real
+   * answer meaning *this domain does nothing*. The two must never collapse.
+   */
+  const canonicalDomainFields = (): DomainFieldAnswers => {
+    const out: DomainFieldAnswers = {};
+    for (const d of P2P_DOMAINS) {
+      const fields = fieldsForDomain(d.key);
+      /* Slides 10 and 11: asked, no fields. `{}` records that they were walked. */
+      if (fields.length === 0) {
+        if (d.key in maturity) out[d.key] = {};
+        continue;
+      }
+      const vals: Record<string, ParsedFieldValue> = {};
+      for (const field of fields) {
+        const r = parseFieldValue(field.type, fieldText(d.key, field.id));
+        if (r.ok) vals[field.id] = r.value;
+      }
+      if (Object.keys(vals).length > 0) out[d.key] = vals;
+    }
+    return out;
+  };
 
   const goTo = (s: Step) => {
     setError(null);
@@ -462,6 +551,13 @@ export function AssessmentWizard({
             costLeverBand,
             headcountBand,
             aiMode,
+            /*
+              ⚠ BEFORE `contact`, AND THAT IS LOAD-BEARING. `check:catalog-value`
+              reads this payload by slicing from `answers: {` to the FIRST `},` —
+              which is the end of the `contact` block below. A key added after it
+              falls outside the slice and the guard silently stops seeing it.
+            */
+            domainFields: canonicalDomainFields(),
             contact: {
               timeZone: basics.timeZone,
               firstName: basics.firstName,
@@ -877,11 +973,22 @@ export function AssessmentWizard({
           title: `Capability Domain: ${domain.name}`,
           subtitle: domain.question,
           /*
-            NEVER BLOCKING. Every domain is skippable — `next()` with nothing
-            chosen simply leaves the key absent, which scores exactly like "Not
-            sure": excluded from the average rather than counted as the worst
-            rung. Gating eight steps would turn a free diagnostic into an exam.
+            ⚠ THE MATURITY LADDER IS STILL NEVER BLOCKING. `next()` with nothing
+            chosen leaves the key absent, which scores exactly like "Not sure":
+            excluded from the average rather than counted as the worst rung.
+
+            ⚠ WHAT DOES BLOCK NOW IS THE DECK'S EXTRA FIELDS, on slides 2–9 only.
+            Scott, 2026-08-20: "these fields should also be required." Slides 10 and
+            11 carry none, so `domainFieldsComplete` is vacuously true there and
+            those two steps behave exactly as they did before this brief.
+
+            ⚠ THAT ASYMMETRY IS REAL AND IT IS FLAGGED, NOT HIDDEN: on slide 2 a
+            visitor must type two numbers but may still walk past the maturity
+            question itself. Gating maturity too would be a behaviour change on ten
+            screens that the brief does not ask for, and "Not sure" already exists as
+            the honest answer. Reported for Scott.
           */
+          continueDisabled: !domainFieldsComplete(domain.key),
           onContinue: next,
         })}
       >
@@ -926,6 +1033,14 @@ export function AssessmentWizard({
         >
           I&rsquo;m not sure
         </button>
+
+        <DomainFields
+          domainKey={domain.key}
+          fields={fieldsForDomain(domain.key)}
+          value={(id) => fieldText(domain.key, id)}
+          onChange={(id, v) => setFieldText(domain.key, id, v)}
+          groupTotal={percentGroupTotal(domain.key)}
+        />
       </WizardShell>
     );
   }
