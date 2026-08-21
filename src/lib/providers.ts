@@ -53,13 +53,25 @@ export async function getPublicProviderProfile(
           projects: { select: { id: true, name: true, description: true } },
         },
       },
-      certifications: true,
       education: true,
       languages: true,
     },
   });
 
   if (!profile) return null;
+
+  /* ⚠ THE USER'S CREDENTIALS, NOT THE PROFILE'S — see the note in
+     `provider-profile-view.ts`. A `LEARN` credential earned before the learner
+     became a seller has no `provider_profile_id` and would otherwise be invisible
+     on the profile of the very person who earned it. */
+  const certifications = profile.person?.user_id
+    ? await prisma.certification.findMany({
+        where: { user_id: profile.person.user_id },
+        orderBy: [{ issued_on: "desc" }, { year: "desc" }, { name: "asc" }],
+        select: { id: true, name: true, issuer: true, year: true },
+      })
+    : [];
+
 
   // Visibility gate — owner always bypasses; everyone else needs the profile to
   // be marketplace-visible.
@@ -119,7 +131,7 @@ export async function getPublicProviderProfile(
       endDate: we.end_date,
       projects: we.projects,
     })),
-    certifications: profile.certifications.map((c) => ({
+    certifications: certifications.map((c) => ({
       id: c.id,
       name: c.name,
       issuer: c.issuer,

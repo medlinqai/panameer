@@ -329,11 +329,14 @@ export function InstructorsShot() {
  * removed everywhere as an identity provider and as a profile field; "a URL you can paste into
  * LinkedIn" is a place a learner puts a link, which is what he asked for verbatim.
  *
- * ⚠ THE ONE THING THIS CARD DOES NOT SAY IS WHO GETS A CERTIFICATE. `P1-J3-E019`: the issuer
- * opens `if (!profile || !path) return null` where `profile` is a `ProviderProfile`, and
- * `Certification.provider_profile_id` is not nullable — so a learner without one passes the
- * test and gets nothing, silently. §8's copy is about what a verified credential IS and where
- * it goes, never about entitlement. Not fixed here, by instruction; reported.
+ * ⚠ `P1-J3-E019` IS FIXED, AND THIS NOTE USED TO SAY THE OPPOSITE. It recorded that the issuer
+ * opened `if (!profile || !path) return null` and that `Certification.provider_profile_id` was
+ * not nullable, so a learner without a seller profile passed the test and got nothing,
+ * silently. As of 2026-08-21 `Certification.user_id` is the owner, the profile link is
+ * nullable, and only the path is required. ⚠ THE CARD'S CLAIM IS TRUE FOR EVERYONE NOW.
+ *
+ * ⚠ §8's COPY IS STILL UNCHANGED, deliberately — `P1-J0-E282`/`E283` are separate rows and
+ * still need Scott. The schema stopped lying; the sentence is his to widen.
  */
 export function ProfileCertificatesShot() {
   return (

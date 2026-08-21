@@ -1980,14 +1980,43 @@ export async function applyProviderSection(
         }))
         .filter((c) => c.name);
 
+      /*
+        ⚠ THE OWNER IS THE USER, AND IT IS RESOLVED FROM THE PERSON THIS WRITER
+        ALREADY HAS (`P1-J3-E019`). `Certification.user_id` is required now: a
+        credential belongs to the person, not to the seller profile they happen to
+        be editing. The profile is still written so the profile page keeps showing
+        them — writes set BOTH while `provider_profile_id` exists.
+      */
+      const certOwner = await prisma.person.findUnique({
+        where: { id: personId },
+        select: { user_id: true },
+      });
+      if (!certOwner?.user_id) {
+        /* ⚠ REFUSED, NOT GUESSED. A Person with no User cannot own a credential,
+           and inventing one would put a certificate under an account nobody holds. */
+        throw new OnboardingError(
+          "This profile has no account attached, so certifications cannot be saved.",
+          "INVALID"
+        );
+      }
+      const certUserId = certOwner.user_id;
+
       await prisma.$transaction([
+        /* ⚠ SCOPED TO THIS PROFILE, NOT TO THE USER. The editor is replacing the
+           SELF_REPORTED list on one seller profile; deleting by user would sweep
+           away LEARN credentials Panameer issued, which is the very thing this
+           brief stopped the cascade from doing. */
         prisma.certification.deleteMany({
-          where: { provider_profile_id: profileId },
+          where: { provider_profile_id: profileId, issued_from: "SELF_REPORTED" },
         }),
         ...(clean.length
           ? [
               prisma.certification.createMany({
-                data: clean.map((c) => ({ provider_profile_id: profileId, ...c })),
+                data: clean.map((c) => ({
+                  user_id: certUserId,
+                  provider_profile_id: profileId,
+                  ...c,
+                })),
               }),
             ]
           : []),

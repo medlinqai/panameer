@@ -251,13 +251,18 @@ export async function uploadResumeFile(
 }
 
 /** Store a certificate file; returns its object PATH (the bucket is private). */
+/**
+ * ⚠ THE FOLDER IS THE OWNER'S USER ID SINCE `P1-J3-E019` — a credential belongs
+ * to the person, so its attachment is filed under the person. Existing objects
+ * under a profile-id folder are not moved; see the route's note.
+ */
 export async function uploadCertificationFile(
-  profileId: string,
+  ownerId: string,
   file: { name: string; type: string; bytes: ArrayBuffer }
 ): Promise<string> {
   const safeName =
     file.name.replace(/[^A-Za-z0-9._-]/g, "_").slice(-80) || "certificate";
-  const objectPath = `${profileId}/${randomUUID()}-${safeName}`;
+  const objectPath = `${ownerId}/${randomUUID()}-${safeName}`;
 
   const { error } = await getStorageClient()
     .from(CERTIFICATION_BUCKET)

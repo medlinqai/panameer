@@ -75,7 +75,13 @@ model User {
   /// J2.4 WS-H (E018) — two-step verification, keyed to the LOGIN rather than
   /// to a profile: it protects the account, and one login can hold several
   /// memberships.
-  twoFactor TwoFactorSetting?
+  twoFactor      TwoFactorSetting?
+  /**
+   * ⚠ THE CREDENTIALS THIS PERSON OWNS (`P1-J3-E019`). Not the seller profile's —
+   * a learner with no `ProviderProfile` has these too, which is the whole point
+   * of the column.
+   */
+  certifications Certification[]
 
   @@map("users")
 }
@@ -1843,9 +1849,43 @@ model Language {
 /// the CERTIFYING AGENCY that issued it, not to an employer the provider
 /// happened to work for when they earned it. The employer link and the
 /// carry-it-forward-by-name logic that came with it are gone.
+/// ── ⚠ A CREDENTIAL BELONGS TO THE PERSON, NOT TO THEIR SELLER PROFILE ───────
+///
+/// `P1-J3-E019`. Scott, 2026-08-21: *"it will be mostly providers...but we should
+/// make certification.user_id."*
+///
+/// ⚠ TWO CONSEQUENCES OF THE OLD SHAPE, AND THE SECOND IS THE ONE THAT DECIDED IT:
+///
+///   1. A LEARNER WHO IS NOT A SELLER EARNED NOTHING. `provider_profile_id` was
+///      required, so the issuer's `if (!profile) return null` meant a learner with
+///      no `ProviderProfile` passed the test and got no row, no credential, no
+///      verify page and no error. The public Learn page invites exactly that
+///      person.
+///   2. ⚠⚠ `onDelete: Cascade` FROM `ProviderProfile` MEANT DELETING A PROVIDER
+///      PROFILE DELETED THEIR CERTIFICATIONS — INCLUDING `LEARN` ROWS PANAMEER
+///      ISSUED AND VOUCHES FOR. Someone who stopped selling lost a credential we
+///      certified and published a verify URL for.
+///
+/// ⚠ NOT A FORK. The model's own note below still holds: a Learn certificate IS a
+/// certification, `issued_from` is what tells the two apart, and a parallel model
+/// would give a provider two identical-looking sections that behaved differently.
 model Certification {
   id                  String    @id @default(uuid()) @db.Uuid
-  provider_profile_id String    @db.Uuid
+  /**
+   * ⚠ THE OWNER, AND IT IS REQUIRED. Every credential has one; this is the column
+   * that makes a non-seller learner possible at all.
+   * ⚠ IT WAS ADDED NULLABLE, BACKFILLED, VERIFIED AT ZERO NULLS, AND ONLY THEN
+   * ENFORCED — four steps, three pushes and a data step between them. Enforcing
+   * first would either have failed on the seven existing rows or, worse, succeeded
+   * by inventing a default owner for a credential.
+   */
+  user_id             String    @db.Uuid
+  /**
+   * ⚠ NULLABLE NOW. A learner with no seller profile has no value for it, and a
+   * seller who stops selling keeps their credentials with the link nulled rather
+   * than the row deleted — see the relation's `onDelete` below.
+   */
+  provider_profile_id String?   @db.Uuid
   name                String
   /// The certifying agency / issuing body (e.g. "Oracle", "PMI").
   issuer              String?
@@ -1880,9 +1920,35 @@ model Certification {
   /// lives, this one is ours and we are accountable for it.
   public_credential_url String?
 
-  providerProfile ProviderProfile @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
-  learningPath    LearningPath?   @relation(fields: [learning_path_id], references: [id], onDelete: SetNull)
+  /**
+   * ⚠ `onDelete: Cascade` ON THE **USER**, AND IT IS A DECISION, NOT A DEFAULT.
+   * The credential belongs to the person. Deleting the person removes it — which
+   * is the same property that makes cascading from the SELLER PROFILE wrong:
+   * ceasing to sell is not ceasing to exist. It is also what an account-deletion
+   * request requires; `Restrict` would make deleting a user fail until somebody
+   * hand-removed their certificates, turning a right into a support ticket.
+   * ⚠ THE VERIFY URL IS THE COUNTER-ARGUMENT AND IT LOSES ON PURPOSE. Panameer is
+   * accountable for `/verify/{id}`, so a deleted user leaves a dead verify page.
+   * That is correct: the page attests that a NAMED PERSON earned something, and
+   * when that person is erased the attestation has no subject. A credential that
+   * outlived its holder would be a public record of someone who asked to be
+   * removed.
+   */
+  user            User?            @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  /**
+   * ⚠ `SetNull`, NOT `Cascade` — THIS IS HOW THE PROVIDER CASCADE STOPS REACHING
+   * `LEARN` ROWS. Deleting a provider profile now NULLS the link and keeps the
+   * row, so a Panameer-issued credential survives its holder ceasing to sell.
+   * ⚠ IT APPLIES TO `SELF_REPORTED` ROWS TOO, and that is coherent rather than
+   * collateral: a self-reported certification is still the PERSON'S claim, and
+   * `user_id` still holds it. Postgres cannot express "cascade only where
+   * issued_from = SELF_REPORTED", and a partial rule would be a worse thing to
+   * reason about than one that is the same for both.
+   */
+  providerProfile ProviderProfile? @relation(fields: [provider_profile_id], references: [id], onDelete: SetNull)
+  learningPath    LearningPath?    @relation(fields: [learning_path_id], references: [id], onDelete: SetNull)
 
+  @@index([user_id])
   @@index([provider_profile_id])
   @@index([learning_path_id])
   @@map("certifications")
