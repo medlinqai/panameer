@@ -2923,3 +2923,60 @@
   .pm-home .rm-f{gap:12px}
   .pm-home .rm-btn{margin-left:0;width:100%;justify-content:center}
 }
+
+/* ────────────────────────────────────────────────────────────────────────────
+   /optimize — THE FIVE STEPS AS NATIVE DISCLOSURES (P1-J0-E259)
+
+   ⚠ SCOPED `.pm-home` LIKE EVERYTHING ELSE IN THIS FILE, so `/optimize`'s own
+   `.pm-home` wrapper is what makes these resolve — the same contract
+   `/enterprise` and `/buy-services` already live under.
+
+   ⚠ THE DEFAULT MARKER IS STRIPPED IN BOTH DIALECTS, AND BOTH ARE NEEDED.
+   `list-style:none` kills it in Firefox and modern Chromium; the
+   `::-webkit-details-marker` rule kills it in Safari, which ignores the first.
+   Without both, the browser's triangle sits beside the drawn chevron and they
+   fight — which is the visible failure this rule exists to prevent.
+   ──────────────────────────────────────────────────────────────────────────── */
+.pm-home .opt-steps{background:#fff;padding:0 0 calc(var(--sec-step) * 10)}
+.pm-home .opt-list{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.pm-home .opt-item{border-bottom:1px solid var(--line)}
+
+/* ⚠ THE WHOLE ROW IS THE HIT TARGET, not just the words. A disclosure whose
+   control is a 200px label in a 1136px row reads as broken on a phone. */
+.pm-home .opt-sum{display:flex;align-items:center;gap:18px;padding:22px 4px;cursor:pointer;
+  list-style:none;transition:background-color .15s}
+.pm-home .opt-sum::-webkit-details-marker{display:none}
+.pm-home .opt-sum:hover{background:var(--paper-3)}
+/* ⚠ A REAL FOCUS RING. `<summary>` is the control and it is reached by Tab; the
+   browser's default outline is removed by nothing here, but the offset makes it
+   readable against the row's own hover fill. */
+.pm-home .opt-sum:focus-visible{outline:2px solid var(--mag);outline-offset:-2px;border-radius:10px}
+
+.pm-home .opt-n{flex:0 0 40px;height:40px;border-radius:50%;background:var(--mag);color:#fff;
+  font-family:var(--font-display),sans-serif;font-weight:700;font-size:17px;
+  display:flex;align-items:center;justify-content:center}
+.pm-home .opt-t{flex:1;min-width:0;font-family:var(--font-display),sans-serif;font-weight:700;
+  font-size:23px;letter-spacing:-.3px;color:var(--ink);line-height:1.25}
+.pm-home .opt-chev{flex:0 0 22px;width:22px;height:22px;color:var(--muted);transition:transform .18s}
+.pm-home details[open] > .opt-sum .opt-chev{transform:rotate(180deg)}
+.pm-home details[open] > .opt-sum{background:var(--paper-3)}
+
+/* ⚠ THE PANEL CARRIES THE STEP'S OWN HEADING AND ART, UNCHANGED. The graphics
+   own their internal spacing, so this adds only the gap that used to come from
+   the section band they were lifted out of. */
+.pm-home .opt-panel{padding:8px 4px calc(var(--sec-step) * 5)}
+.pm-home .opt-h2{font-size:27px;color:var(--ink);font-weight:700;letter-spacing:-.4px;
+  line-height:1.2;margin:0 0 calc(var(--sec-step) * 3);max-width:1040px}
+/* ⚠ `ProcessPicker` and the spine sections bring their own band chrome — a
+   background, a top border and section padding. Inside a panel that would draw a
+   band inside a row, so it is neutralised here rather than in the components,
+   which `/` still renders as bands. */
+.pm-home .opt-panel .pp,
+.pm-home .opt-panel .spn{background:transparent;border-top:0;padding:0}
+
+@media (max-width:760px){
+  .pm-home .opt-sum{gap:13px;padding:18px 2px}
+  .pm-home .opt-n{flex:0 0 32px;height:32px;font-size:14.5px}
+  .pm-home .opt-t{font-size:18.5px}
+  .pm-home .opt-h2{font-size:21px}
+}

@@ -32,7 +32,23 @@ import { HeroVideoBackdrop } from "@/components/media/HeroVideoBackdrop";
  * `app/page.tsx`) and adding an island for a media query would have spent it
  * for nothing.
  */
-export function HomeHero() {
+export function HomeHero({
+  /**
+   * ⚠ ONE STRING, ONE CALLER, AND `/` KEEPS ITS OWN (P1-J0-E259).
+   *
+   * `/optimize` renders this hero unchanged — same art, same headline, same stat
+   * row — and differs in exactly one word-group: its CTA reads `Start the
+   * Assessment`, because on that page the button is the page's own next step
+   * rather than a hand-off to somewhere else. `/` still reads `Take Our Free
+   * Assessment` and is byte-identical, which is what the default guarantees.
+   *
+   * ⚠ THE HREF DOES NOT MOVE. Both go to `/assess` — that is where the wizard
+   * is, and `/optimize` does not embed it. Only the label changes.
+   */
+  ctaLabel = "Take Our Free Assessment",
+}: {
+  ctaLabel?: string;
+} = {}) {
   return (
     <section className="hero">
       {/*
@@ -74,7 +90,7 @@ export function HomeHero() {
               <h1>Optimize Your Business with AI</h1>
               {/* THE BUTTON GOES TO /assess. It was `#` — an honest stub while
                   the assessment did not exist. No `›` affectation. */}
-              <Link href="/assess" className="hero-cta">Take Our Free Assessment</Link>
+              <Link href="/assess" className="hero-cta">{ctaLabel}</Link>
             </div>
             <div className="hero-right">
               {/*

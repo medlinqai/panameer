@@ -162,3 +162,25 @@ export const SPINE_STEPS: SpineStep[] = [
     graphic: "ai-roadmap",
   },
 ];
+
+/**
+ * ── ⚠ THE DISCLOSURE SUMMARY, DERIVED FROM THE EYEBROW (P1-J0-E259) ──────────
+ *
+ * `/optimize` renders these five steps as `<details>` rows whose summary is the
+ * eyebrow WITHOUT its `Step N - ` prefix — the number is already drawn as its own
+ * element beside the text, so leaving the prefix in would print it twice:
+ * "1  Step 2 - Provide Capability Domain Details".
+ *
+ * ⚠ IT LIVES HERE, BESIDE THE DATA, RATHER THAN IN THE COMPONENT, so the guard
+ * can assert the rendered summaries against their SOURCE without importing React.
+ * A test that compares the page to a typed literal proves only that somebody
+ * typed the same thing twice.
+ *
+ * ⚠ STRIPPED BY PATTERN, NOT BY SLICING A FIXED LENGTH — the eyebrows are
+ * Scott's and their prefixes are not all the same width. Deliberately forgiving:
+ * an eyebrow with no prefix passes through unchanged, so a future step whose
+ * eyebrow he writes differently still renders its own words rather than an empty
+ * row.
+ */
+export const summaryFor = (eyebrow: string) =>
+  eyebrow.replace(/^\s*Step\s+\d+\s*[-\u2013\u2014]\s*/i, "").trim() || eyebrow;

@@ -43,6 +43,37 @@ const GRAPHICS: Record<string, () => React.JSX.Element> = {
   "optimization-dashboard": OptimizationDashboardShot,
   "ai-roadmap": AiRoadmapShot,
 };
+
+/**
+ * ── ⚠ THE ONE PLACE A `graphic` KEY BECOMES ART (P1-J0-E259) ─────────────────
+ *
+ * `/optimize` renders the same five steps as disclosure panels, and it resolves
+ * its art through THIS function rather than keeping its own copy of the registry
+ * above. That is the same rule that made `E155` correct: the art must not be able
+ * to drift from the data. Two registries would drift the first time a screenshot
+ * replaced a drawn component on one page and not the other.
+ *
+ * Empty string renders NOTHING — not an empty frame, which would read as a broken
+ * image. A key the registry knows renders that component; anything starting with
+ * `/` is an image path. All three behaviours live here, once.
+ */
+export function StepGraphic({ graphic }: { graphic: string }) {
+  if (!graphic) return null;
+  const G = GRAPHICS[graphic];
+  if (G) return <G />;
+  /* Not a registered component, so it is an image path. */
+  return (
+    <div className="spn-art">
+      <Image
+        src={graphic}
+        alt=""
+        width={1200}
+        height={720}
+        sizes="(max-width: 1200px) 100vw, 1136px"
+      />
+    </div>
+  );
+}
 export function SpineSteps() {
   return (
     <>
@@ -60,23 +91,7 @@ export function SpineSteps() {
               The slot. Empty string = nothing rendered, not an empty box — a
               framed blank would read as a broken image.
             */}
-            {(() => {
-              if (!s.graphic) return null;
-              const G = GRAPHICS[s.graphic];
-              if (G) return <G />;
-              /* Not a registered component, so it is an image path. */
-              return (
-                <div className="spn-art">
-                  <Image
-                    src={s.graphic}
-                    alt=""
-                    width={1200}
-                    height={720}
-                    sizes="(max-width: 1200px) 100vw, 1136px"
-                  />
-                </div>
-              );
-            })()}
+            <StepGraphic graphic={s.graphic} />
           </div>
         </section>
       ))}
