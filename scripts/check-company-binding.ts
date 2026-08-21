@@ -204,23 +204,25 @@ for (const fn of ["defineCompany", "joinCompany"]) {
   manufacturing one silently binds a person to a company they never claimed.
 */
 /**
- * ⚠ ONE HISTORICAL BACKFILL EXISTS, AND DECLARING IT IS THE POINT.
+ * ⚠ ONE HISTORICAL BACKFILL EXISTS, IT IS NOW RETIRED, AND DECLARING IT IS THE POINT.
  *
- * `prisma/backfill-memberships.ts` (brief_company_model WS1) mints memberships
- * from `Person.company_id` — precisely the act this brief says not to perform,
- * written before this brief existed and for a defensible reason at the time
+ * `prisma/_retired_backfill-memberships.ts` (brief_company_model WS1) mints
+ * memberships from `Person.company_id` — precisely the act that brief says not to
+ * perform, written before it existed and for a defensible reason at the time
  * ("that binding was real, it just wasn't recorded as a decision").
  *
- * It is NOT deleted here: it is a documented historical migration, out of scope,
- * and it is its own npm script rather than part of any automatic seed. It IS
- * named, so the exception cannot quietly grow — the same shape as
- * `UNWEIGHTED_DOMAINS` in `check:assessment`.
+ * ⚠ RETIRED 2026-08-21 BY SCOTT ("retire it.") — `brief_buyer_side_cleanup` WS1.
+ * It was a LIVE HAZARD: running it today would mint 64 APPROVED memberships for
+ * people who never claimed those companies, 51 of them onto one untyped company,
+ * and make one of them ADMIN over 52 others by accident of signup order.
  *
- * ⚠ AND IT IS A LIVE HAZARD, reported rather than papered over: re-running it
- * today would bind every person who has only a placeholder `company_id` to that
- * placeholder, silently, as APPROVED.
+ * It is NOT deleted: it is the written record of a migration that really ran and
+ * of the rows that exist because of it. It is renamed with a `_retired_` prefix,
+ * it exits non-zero before any query, and its npm script is gone — all three are
+ * asserted below. It IS still named here, so the exception cannot quietly grow —
+ * the same shape as `UNWEIGHTED_DOMAINS` in `check:assessment`.
  */
-const KNOWN_MINT = join("prisma", "backfill-memberships.ts");
+const KNOWN_MINT = join("prisma", "_retired_backfill-memberships.ts");
 const seedWriters = [...bodies.entries()]
   .filter(([f]) => f.startsWith("prisma") || f.startsWith("scripts"))
   .filter(([, b]) => MEMBERSHIP_CREATE.test(b))
@@ -234,6 +236,67 @@ check(
 check(
   "GUARD 2 — and that backfill is not wired into an automatic seed",
   !/backfill-memberships/.test(bodies.get(join("prisma", "seed.ts")) ?? "")
+);
+
+// ---------------------------------------------------------------------------
+// GUARD 2b — the retired backfill is RETIRED, not merely renamed
+// (brief_buyer_side_cleanup WS3)
+// ---------------------------------------------------------------------------
+
+/*
+  ⚠ REMOVING THE npm SCRIPT IS THE PART THAT ACTUALLY REMOVES THE HAZARD — the
+  danger was a one-line command, not the file. `pkg` is read RAW, not stripped,
+  because JSON has no comments to strip and `strip()` would mangle the `//` in a
+  URL if one ever appeared in there.
+*/
+const pkg = readFileSync("package.json", "utf8");
+const mintScripts = Object.entries(
+  (JSON.parse(pkg) as { scripts?: Record<string, string> }).scripts ?? {}
+).filter(([name, cmd]) => /backfill-memberships/.test(name) || /backfill-memberships/.test(cmd));
+check(
+  "GUARD 2b — no package.json script invokes a membership-minting backfill",
+  mintScripts.length === 0,
+  mintScripts.map(([n]) => n).join(", ")
+);
+
+/*
+  ⚠ AND THE FILE REFUSES TO RUN EVEN IF INVOKED DIRECTLY. A file that still
+  executes is still a hazard: `npx tsx prisma/_retired_backfill-memberships.ts`
+  does not care that the npm script is gone, and somebody will eventually type it.
+  The refusal has to come BEFORE the first query, so this asserts `process.exit`
+  appears ahead of every `prisma.` call in the file — position, not presence.
+*/
+const retired = bodies.get(KNOWN_MINT) ?? "";
+const exitAt = retired.indexOf("process.exit(1)");
+const firstQueryAt = retired.search(/prisma\.[a-zA-Z]+\.(findMany|findFirst|findUnique|create|count|update|delete)/);
+check(
+  "GUARD 2b — the retired backfill calls process.exit(1)",
+  exitAt >= 0,
+  "removing the exit turns a documented record back into a loaded gun"
+);
+check(
+  "GUARD 2b — and it exits BEFORE any query, not after one",
+  exitAt >= 0 && (firstQueryAt === -1 || exitAt < firstQueryAt),
+  `exit@${exitAt} firstQuery@${firstQueryAt}`
+);
+check(
+  "GUARD 2b — the retired file is the guard's single named exception, by its new path",
+  bodies.has(KNOWN_MINT) && /^prisma[/\\]_retired_/.test(KNOWN_MINT),
+  KNOWN_MINT
+);
+
+/*
+  ⚠ THE MEMBERSHIP-WRITE SCAN COVERS `prisma/` — asserted, not assumed.
+
+  The first version of this guard walked only `src/` and `scripts/`, and a
+  membership-minting backfill dropped into `prisma/` sailed through it. That is
+  precisely where this defect arrives, so the coverage itself is now a check
+  rather than a comment: if somebody narrows the walk, this fails.
+*/
+check(
+  "GUARD 2b — the scan actually covers prisma/, src/ and scripts/",
+  ["prisma", "src", "scripts"].every((d) => files.some((f) => f.startsWith(d + "/") || f.startsWith(d + "\\"))),
+  files.length + " files walked"
 );
 
 // ---------------------------------------------------------------------------
@@ -270,6 +333,75 @@ check(
 check(
   "GUARD 3 — the wizard no longer bounces a completed, UNBOUND requester",
   /s\.completed && !s\.company\?\.bound/.test(steps)
+);
+
+// ---------------------------------------------------------------------------
+// GUARD 4 — no /join refusal dead-ends on /dashboard
+// (brief_buyer_side_cleanup WS2 + WS3, P1-J1.2-E009)
+// ---------------------------------------------------------------------------
+
+/*
+  ⚠ THE DEAD END WAS THE DEFECT, NOT THE WORDING.
+
+  `/join/buyer` and `/join/requester` told a signed-in person "This account isn't
+  a buyer account" and offered ONE link, to `/dashboard`. That is aimed at
+  somebody who is on `/join/buyer` TRYING TO BECOME A BUYER, and it re-opened one
+  hop later the exact loop `P1-J1.2-E004` had just closed at `/company`.
+
+  So this asserts the SHAPE — a refusal must offer a door that is not
+  `/dashboard` — rather than the sentence, which is free to be re-worded.
+*/
+const REFUSAL = join("src", "components", "onboarding", "NoProfileYet.tsx");
+const JOIN_BUYER = join("src", "app", "join", "buyer", "page.tsx");
+const JOIN_REQ = join("src", "app", "join", "requester", "page.tsx");
+const JOIN_FORK = join("src", "app", "join", "page.tsx");
+for (const f of [REFUSAL, JOIN_BUYER, JOIN_REQ, JOIN_FORK]) {
+  check(`the file this guard is about exists: ${f}`, bodies.has(f));
+}
+const refusal = bodies.get(REFUSAL) ?? "";
+const fork = bodies.get(JOIN_FORK) ?? "";
+
+check(
+  "GUARD 4 — the refusal screen offers /company, not only /dashboard",
+  /href=\{companyHref\}/.test(refusal) && /"\/company"/.test(refusal) && /"\/dashboard"/.test(refusal),
+  "a refusal whose only door is /dashboard is the trap this closed"
+);
+check(
+  "GUARD 4 — and /company is the PRIMARY link — it comes before /dashboard",
+  refusal.indexOf("companyHref") < refusal.indexOf('"/dashboard"')
+);
+check(
+  "GUARD 4 — the refusal carries ?blocked= and ?from= back to /company",
+  /qs\.set\("blocked"/.test(refusal) && /qs\.set\("from"/.test(refusal),
+  "dropping them lands the visitor on a bare company page with no memory of why"
+);
+for (const [name, body] of [["buyer", bodies.get(JOIN_BUYER) ?? ""], ["requester", bodies.get(JOIN_REQ) ?? ""]] as const) {
+  check(
+    `GUARD 4 — /join/${name} renders the shared refusal instead of its own dead end`,
+    /<NoProfileYet/.test(body)
+  );
+  /*
+    ⚠ THE OLD SENTENCE IS BANNED BY SHAPE: any claim about what KIND of account
+    this is. The 404 cannot establish that — see NoProfileYet's header — so a
+    string asserting it is a guess, and it was the wrong guess for the person
+    most likely to read it.
+  */
+  check(
+    `GUARD 4 — /join/${name} no longer claims to know what kind of account this is`,
+    !/isn.t a (buyer|requester|provider) account/i.test(body),
+    "the status route collapses several causes into one 404"
+  );
+}
+/*
+  ⚠ THE RESUME REDIRECT IS THE ONE THAT MATTERS. `/join/buyer` is unreachable
+  from the manual fork (`P1-J1.2-E005`), so the only way a signed-in buyer-side
+  account lands on it is `/join`'s auto-resume — and that dropped the context.
+*/
+check(
+  "GUARD 4 — /join carries the blocked context through its resume redirects",
+  /router\.replace\(withCtx\("\/join\/buyer"\)\)/.test(fork) &&
+    /router\.replace\(withCtx\("\/join\/requester"\)\)/.test(fork),
+  "without this the ?blocked= reason never reaches the screen that needs it"
 );
 
 // ---------------------------------------------------------------------------

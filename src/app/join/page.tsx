@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { useCallback, Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { OptionCard } from "@/components/onboarding/controls";
@@ -82,6 +82,38 @@ function JoinRouter() {
 
   const [choice, setChoice] = useState<UserType | Job | null>(null);
 
+  /**
+   * ⚠ CARRY `?blocked=` AND `?from=` THROUGH THIS FORK — `P1-J1.2-E009`.
+   *
+   * `/create-work` and `guardTransact` redirect to `/company?blocked=…&from=…`
+   * when a buyer has no company. From there a visitor reaches `/join`, and this
+   * page then sends them onward — historically to a bare path, dropping both
+   * parameters. So by the time `/join/buyer` refused them, nothing on the page
+   * knew which door had closed or where they had been trying to go, and the only
+   * link left was `/dashboard`. That is the dead end `P1-J1.2-E004` closed at
+   * `/company` and this fork quietly re-opened one hop later.
+   *
+   * ⚠ THE AUTO-RESUME `router.replace` CALLS BELOW ARE THE ONES THAT MATTER.
+   * `/join/buyer` is not reachable from the manual fork at all — `buyer-admin`
+   * still goes to the coming-soon stub (`P1-J1.2-E005`, out of scope) — so the
+   * ONLY way a signed-in buyer-side account lands on it is the resume redirect.
+   */
+  /* ⚠ `useCallback` ON THE TWO STRINGS, not on `params`. The resume effect below
+     depends on this, and a fresh closure every render would re-fire its
+     `/api/me` fetch on every render instead of only when the URL changes. */
+  const blockedParam = params.get("blocked");
+  const fromParam = params.get("from");
+  const withCtx = useCallback(
+    (path: string) => {
+      if (!blockedParam && !fromParam) return path;
+      const q = new URLSearchParams(path.includes("?") ? path.slice(path.indexOf("?") + 1) : "");
+      if (blockedParam) q.set("blocked", blockedParam);
+      if (fromParam) q.set("from", fromParam);
+      return `${path.split("?")[0]}?${q}`;
+    },
+    [blockedParam, fromParam]
+  );
+
   // Clear the selection when the step changes, so stepping back and forward
   // can't carry a page-1 answer into page 2's Continue.
   useEffect(() => {
@@ -94,18 +126,18 @@ function JoinRouter() {
       .then((r) => (r.ok ? r.json() : null))
       .then((me) => {
         const roles = me?.person?.roles;
-        if (roles?.isServiceProvider) router.replace("/join/provider");
+        if (roles?.isServiceProvider) router.replace(withCtx("/join/provider"));
         /*
           A signed-in buyer-side user resumes THEIR OWN flow. Requester and
           Buyer are both is_service_buyer, so the flag alone can't tell them
           apart — owning a requester profile can, and /api/me now says so.
         */
-        else if (roles?.isRequester) router.replace("/join/requester");
-        else if (roles?.isServiceBuyer) router.replace("/join/buyer");
+        else if (roles?.isRequester) router.replace(withCtx("/join/requester"));
+        else if (roles?.isServiceBuyer) router.replace(withCtx("/join/buyer"));
         else setReady(true);
       })
       .catch(() => setReady(true));
-  }, [router]);
+  }, [router, withCtx]);
 
   if (!ready) {
     return (
@@ -125,11 +157,11 @@ function JoinRouter() {
 
     switch (choice) {
       case "provider":
-        router.push("/join/provider");
+        router.push(withCtx("/join/provider"));
         break;
       case "recruiter":
         // PJv2 WS1 — one wizard, two itineraries; `type` picks which.
-        router.push("/join/provider?type=recruiter");
+        router.push(withCtx("/join/provider?type=recruiter"));
         break;
       /*
         REQUESTER — a real flow now (P1-J1.2), not the coming-soon stub. It is
@@ -137,10 +169,16 @@ function JoinRouter() {
         landed the buying side of the fork dead-ended on both branches.
       */
       case "requester":
-        router.push("/join/requester");
+        router.push(withCtx("/join/requester"));
         break;
       /* Buyer (the one who SUPPORTS the buying) is still the stub — its own
-         journey, deliberately not in this brief. */
+         journey, deliberately not in this brief.
+
+         ⚠ LEFT EXACTLY AS IT WAS, INCLUDING NOT CARRYING THE CONTEXT.
+         `P1-J1.2-E005` is out of scope: a fully written `/join/buyer` sits
+         unreachable behind this line, and wiring it up would mint the orphan
+         `brief_company_binding_trap` just fixed, because it has no company step.
+         Reported, not touched. */
       case "buyer-admin":
         router.push("/join/coming-soon?job=buyer");
         break;

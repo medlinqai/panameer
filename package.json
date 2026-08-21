@@ -21,7 +21,6 @@
     "seed:learn": "ts-node --project tsconfig.seed.json prisma/seed-learn-run.ts",
     "seed:learn-experts": "ts-node --project tsconfig.seed.json prisma/seed-learn-experts.ts",
     "learn:export-catalog": "ts-node --project tsconfig.seed.json prisma/export-learn-catalog.ts",
-    "db:backfill-memberships": "ts-node --project tsconfig.seed.json prisma/backfill-memberships.ts",
     "fix:admin": "ts-node --project tsconfig.seed.json prisma/fix-admin-employee.ts",
     "learn:thumbnails": "ts-node --project tsconfig.seed.json prisma/apply-learn-thumbnails.ts",
     "check:gate": "npx esbuild scripts/check-onboarding-gate.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/gate.cjs --log-level=error && node .harness/gate.cjs",
