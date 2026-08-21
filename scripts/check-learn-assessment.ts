@@ -163,9 +163,51 @@ check(
   `where: { status: "PUBLISHED" }` — the filter that selects PUBLISHED LEARNING
   PATHS, an entirely different model. A guard that cannot tell a query from a
   write is a guard that gets relaxed.
+
+  ⚠ NARROWED AGAIN 2026-08-21, ONE LEVEL DEEPER, AND THE PROPERTY IS UNCHANGED.
+  The claim this makes is in its own name: nothing that writes QUESTIONS also
+  publishes them — generation must never be its own review. The previous regex
+  could not tell a QUESTION write from a STATUS write, so it fired on
+  `publishAssessment`, which is the human review act and writes no questions at
+  all (`P1-J3-E020`). That is the same failure mode as the paragraph above, one
+  level in: a guard that cannot tell what is being written is a guard that gets
+  relaxed.
+
+  So the match now requires BOTH `questions:` and `status: "PUBLISHED"` inside the
+  same write. A generate path that published would carry both and still fails;
+  a publish action that carries only the status does not.
+
+  ⚠ THIS IS A NARROWING, NOT A WEAKENING, and it was proven by breaking: adding
+  `status: "PUBLISHED"` to the batch script's question-writing upsert still fails
+  this assertion. `check:learn-review` asserts the same property from the other
+  direction — every write of `status: "PUBLISHED"` must carry both review stamps —
+  so the two cannot both be satisfied by a generator that publishes.
 */
+/*
+  ⚠ THE CALL'S OWN ARGUMENT, FOUND BY BRACE MATCHING — not a fixed character
+  window. A 900-character window from `dropQuestions`'s question write ran past the
+  end of that function and into `publishAssessment`'s status write forty lines
+  below, and reported the two as one call. Reading to the matching brace is the
+  only way to ask "does THIS write carry both".
+*/
+const callArgument = (src: string, from: number): string => {
+  const open = src.indexOf("{", from);
+  if (open < 0) return "";
+  let depth = 0;
+  for (let i = open; i < src.length; i += 1) {
+    if (src[i] === "{") depth += 1;
+    else if (src[i] === "}") {
+      depth -= 1;
+      if (depth === 0) return src.slice(open, i + 1);
+    }
+  }
+  return src.slice(open);
+};
 const publishesOnWrite = (src: string) =>
-  /learnAssessment\.(create|update|upsert)\(([\s\S]{0,900}?)status:\s*"PUBLISHED"/.test(src);
+  [...src.matchAll(/learnAssessment\.(create|update|upsert)\(/g)].some((m) => {
+    const arg = callArgument(src, (m.index ?? 0) + m[0].length);
+    return /questions:/.test(arg) && /status:\s*"PUBLISHED"/.test(arg);
+  });
 check(
   "GUARD 2 — nothing that WRITES questions also publishes them",
   !publishesOnWrite(lib) && !publishesOnWrite(batch)

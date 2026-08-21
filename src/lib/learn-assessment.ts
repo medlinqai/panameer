@@ -652,6 +652,156 @@ export async function getOrCreateAssessment(learningPathId: string) {
   });
 }
 
+/**
+ * ── ⚠ THE REVIEW ACTIONS — PUBLISH, UNPUBLISH, DROP (P1-J3-E020) ─────────────
+ *
+ * `status` has defaulted to `DRAFT` since `brief_learn_assessments_generate`, and
+ * `reviewed_by` / `reviewed_at` were added at the same time — and NOTHING WROTE
+ * THEM. Every generated set was therefore permanently unsittable: the columns for
+ * the human act existed and the act itself was unimplemented. Generating all 23
+ * sets would have produced 23 tests nobody could take.
+ *
+ * ⚠ REVIEW IS NOT AUTHORING. Scott will not hand-build question banks, so there is
+ * deliberately no editor here: no `addQuestion`, no way to rewrite a stem or an
+ * option. The only destructive act is DROPPING a whole question, and the remedy for
+ * a bad set is REGENERATE, not repair.
+ */
+
+/**
+ * ⚠ THE FLOOR A REVIEWED SET MAY NOT FALL THROUGH.
+ *
+ * It is the generator's own floor, not a new number:
+ * `Math.max(5, Math.min(20, round(lessons / 4) + 4))` in `generateAssessment` can
+ * never ask for fewer than five, so a set that drops below five is smaller than
+ * anything this system would have written on purpose.
+ *
+ * ⚠ AND LOWERING IT IS HOW A CERTIFICATE STOPS MEANING ANYTHING. The same argument
+ * `MIN_LESSONS` carries in the batch script: a three-question test that certifies
+ * somebody is worse than no test.
+ */
+export const MIN_REVIEWED_QUESTIONS = 5;
+
+export type ReviewOutcome =
+  | { ok: true; questions: AssessmentQuestion[]; status: string }
+  | { ok: false; message: string; code: "MISSING" | "TOO_FEW" | "NO_PERSON" };
+
+/**
+ * Drop questions by id, renumbering nothing — ids are stable and the ORDER is the
+ * stored order.
+ *
+ * ⚠ IT REFUSES TO TAKE THE SET BELOW THE FLOOR, rather than letting the caller
+ * discover that at publish time. A reviewer who has just dropped four questions
+ * needs to be told immediately, not after clicking Publish.
+ *
+ * ⚠ DROPPING DOES NOT PUBLISH AND DOES NOT TOUCH `reviewed_by`. Reading a set and
+ * standing behind it are two acts; only the second one signs.
+ */
+export async function dropQuestions(
+  learningPathId: string,
+  dropIds: string[]
+): Promise<ReviewOutcome> {
+  const row = await prisma.learnAssessment.findUnique({
+    where: { learning_path_id: learningPathId },
+  });
+  if (!row) return { ok: false, message: "No question set for this path.", code: "MISSING" };
+
+  const drop = new Set(dropIds);
+  const kept = readQuestions(row).filter((q) => !drop.has(q.id));
+  if (kept.length < MIN_REVIEWED_QUESTIONS) {
+    return {
+      ok: false,
+      code: "TOO_FEW",
+      message: `That would leave ${kept.length} question${kept.length === 1 ? "" : "s"}. A set needs at least ${MIN_REVIEWED_QUESTIONS} — regenerate it instead.`,
+    };
+  }
+
+  const saved = await prisma.learnAssessment.update({
+    where: { learning_path_id: learningPathId },
+    data: { questions: kept },
+  });
+  return { ok: true, questions: readQuestions(saved), status: saved.status };
+}
+
+/**
+ * Publish a set: `status = PUBLISHED`, and STAMP WHO SAID SO.
+ *
+ * ⚠ `reviewed_by` IS NOT OPTIONAL HERE AND THE REASON IS A DIFFERENT FEATURE.
+ * `P1-J2.4-E024` records the EXPERT badge — "created assessment" — as unbuildable
+ * because this model recorded only WHICH MODEL wrote a set and never which human
+ * stood behind it. A publish that leaves this null makes that badge unearnable all
+ * over again, so a viewer with no `Person` CANNOT publish rather than publishing
+ * anonymously.
+ *
+ * ⚠ IT ALSO REFUSES A SET BELOW THE FLOOR. `dropQuestions` checks at drop time and
+ * this checks again at publish time, because the two are separate requests and a
+ * set can be shrunk by a regenerate in between.
+ */
+export async function publishAssessment(
+  learningPathId: string,
+  userId: string
+): Promise<ReviewOutcome> {
+  const row = await prisma.learnAssessment.findUnique({
+    where: { learning_path_id: learningPathId },
+  });
+  if (!row) return { ok: false, message: "No question set for this path.", code: "MISSING" };
+
+  const questions = readQuestions(row);
+  if (questions.length < MIN_REVIEWED_QUESTIONS) {
+    return {
+      ok: false,
+      code: "TOO_FEW",
+      message: `This set has ${questions.length} question${questions.length === 1 ? "" : "s"} and needs at least ${MIN_REVIEWED_QUESTIONS}. Regenerate it before publishing.`,
+    };
+  }
+
+  const person = await prisma.person.findUnique({
+    where: { user_id: userId },
+    select: { id: true },
+  });
+  if (!person) {
+    return {
+      ok: false,
+      code: "NO_PERSON",
+      message:
+        "This account has no Person record, so the review cannot be attributed. Publishing anonymously would break the Expert badge.",
+    };
+  }
+
+  const saved = await prisma.learnAssessment.update({
+    where: { learning_path_id: learningPathId },
+    data: { status: "PUBLISHED", reviewed_by: person.id, reviewed_at: new Date() },
+  });
+  console.info(
+    `[learn-assessment] published path=${learningPathId} by=${person.id} questions=${questions.length}`
+  );
+  return { ok: true, questions: readQuestions(saved), status: saved.status };
+}
+
+/**
+ * Back to `DRAFT`.
+ *
+ * ⚠ IT DELETES NOTHING. Attempts reference this row, and someone who passed last
+ * week passed a real test — the same reasoning the regenerate path already carries.
+ * Revoking a set from circulation and erasing the history of it being sat are two
+ * different acts and only the first one is offered.
+ *
+ * ⚠ `reviewed_by` AND `reviewed_at` ARE LEFT STANDING. They record that a human DID
+ * review this set on that date, which remains true after it is withdrawn; clearing
+ * them would rewrite history to say nobody ever looked.
+ */
+export async function unpublishAssessment(learningPathId: string): Promise<ReviewOutcome> {
+  const row = await prisma.learnAssessment.findUnique({
+    where: { learning_path_id: learningPathId },
+  });
+  if (!row) return { ok: false, message: "No question set for this path.", code: "MISSING" };
+
+  const saved = await prisma.learnAssessment.update({
+    where: { learning_path_id: learningPathId },
+    data: { status: "DRAFT" },
+  });
+  return { ok: true, questions: readQuestions(saved), status: saved.status };
+}
+
 export function readQuestions(row: { questions: unknown }): AssessmentQuestion[] {
   const parsed = ASSESSMENT_SCHEMA.safeParse({ questions: row.questions });
   return parsed.success ? parsed.data.questions : [];
