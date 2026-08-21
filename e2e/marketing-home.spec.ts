@@ -6,6 +6,8 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
   no imports of its own, so pulling it in here costs nothing.
 */
 import { SPINE_STEPS, summaryFor } from "../src/lib/spine-steps";
+/* The product's name, from its one source — see `ASSESSMENT_PRODUCT`'s note. */
+import { ASSESSMENT_PRODUCT } from "../src/lib/brand";
 
 /**
  * THE DIALOG CONTRACT ON `/`.
@@ -791,5 +793,96 @@ test.describe("/optimize — the five steps as disclosures", () => {
       return el !== null && document.activeElement === el;
     }, inPanel);
     expect(focusedWhileOpen, "a link inside an OPEN panel could not take focus").toBe(true);
+  });
+});
+
+
+/**
+ * ── ⚠ OPTIMIZE WALK 1 (E274 · E243 · E257) ──────────────────────────────────
+ *
+ * Three renamings-and-removals that a source scan could see but only a browser can
+ * prove landed on every surface that renders them. All three are asserted against
+ * the RENDERED page, so a literal that arrives from a component nobody thought to
+ * grep still fails.
+ */
+test.describe("optimize walk 1 — the product name, the sub-line, the total", () => {
+  /**
+   * ⚠ THE RETIRED NAME APPEARS ON NO PUBLIC PAGE, AND THE LIVE NAME COMES FROM
+   * ONE SOURCE (`P1-J0-E274`, superseding `E162`).
+   *
+   * E162's defect was FOUR literals in four files — one product, several
+   * spellings, nowhere to change it. So this asserts the absence of the retired
+   * name and the presence of the constant, rather than checking file by file.
+   *
+   * ⚠ `DashboardShot.tsx` STILL CONTAINS IT AND THAT IS DELIBERATE — an
+   * unimported stale file (`E159`) Scott is repurposing from. Unimported means it
+   * renders nowhere, so this rendered assertion is unaffected by it, which is
+   * exactly why the assertion is made here and not against the source tree.
+   */
+  test("§26 no public page says the retired product name; the live one is present", async ({ page }) => {
+    const PAGES = ["/", "/optimize", "/hire-talent", "/buy-services", "/enterprise"];
+    let sawLive = false;
+    for (const url of PAGES) {
+      await page.goto(url);
+      const text = await page.evaluate(() => document.body.innerText);
+      expect(text, `${url} still says the retired product name`).not.toContain("AI Maturity Assessment");
+      if (text.includes(ASSESSMENT_PRODUCT)) sawLive = true;
+    }
+    /* Not vacuous: the new name has to actually be on the site somewhere. */
+    expect(sawLive, `no public page renders "${ASSESSMENT_PRODUCT}"`).toBe(true);
+  });
+
+  /**
+   * ⚠ THE SUB-LINE IS GONE FROM BOTH PAGES (`P1-J0-E243`). `HowItWorks` renders on
+   * `/` AND `/optimize` today, so the removal has to be true on both or it is half
+   * done. Asserted by the class AND by the sentence, because the element could be
+   * re-added under a different class and the string is what Scott removed.
+   */
+  test("§27 the HowItWorks sub-line is gone from / and /optimize", async ({ page }) => {
+    for (const url of ["/", "/optimize"]) {
+      await page.goto(url);
+      await expect(page.locator(".hiw-sub"), `${url}: .hiw-sub is back`).toHaveCount(0);
+      const text = await page.evaluate(() => document.body.innerText);
+      expect(text, `${url}: the deleted sub-line is back`).not.toContain("You spend under an hour");
+      /* The heading above it is NOT in scope and must still be there. */
+      await expect(page.locator(".hiw-h2")).toHaveCount(1);
+    }
+  });
+
+  /**
+   * ⚠ THE YEAR-1 TOTAL IS A BAND, ON BOTH SURFACES THAT STATE IT (`P1-J0-E257`).
+   *
+   * The dashboard's KPI and the roadmap's total describe the SAME five findings,
+   * and the findings overlap — invoice matching, PO price alerts and rogue-spend
+   * all read the same lines — so their sum double-counts. The shape is asserted,
+   * not the digits, so the illustrative figures stay free to change and a
+   * regression to any bare `$n,nnn,nnn` fails.
+   */
+  test("§28 the dashboard KPI and the roadmap total are the same band, not a point figure", async ({ page }) => {
+    await page.goto("/optimize");
+    /* Step 4 carries the dashboard; step 5 the roadmap. Open both. */
+    await page.evaluate(() => document.querySelectorAll("details.opt-d").forEach((d) => d.setAttribute("open", "")));
+    /*
+      ⚠ THE SAVINGS KPI, NOT `.osd-kv` FIRST. There are THREE KPIs on the shot —
+      a maturity delta, an opportunity count and the savings figure — and
+      `.first()` picked the delta, so the first version of this test failed
+      claiming "-31 pts" was not a band. Selected by its own label instead, which
+      is what a reader would use.
+    */
+    const kpiTexts = await page.locator(".osd-kv").allTextContents();
+    const kpi = (kpiTexts.find((t) => t.trim().startsWith("$")) ?? "").trim();
+    expect(kpi, "no savings KPI found on the dashboard shot").not.toBe("");
+    const roadmap = (await page.locator(".rm-tot b").first().textContent())?.trim() ?? "";
+    for (const [name, v] of [["the dashboard KPI", kpi], ["the roadmap total", roadmap]] as const) {
+      expect(v, `${name} is a bare $ figure — a point total`).not.toMatch(/^\$[\d,]+$/);
+      expect(v, `${name} is not a band`).toMatch(/–|—|-/);
+    }
+    /*
+      ⚠ AND THEY AGREE. Two different bands for one set of findings is the same
+      defect as two different totals, one step less obvious.
+    */
+    expect(kpi.replace(/\s/g, ""), "the dashboard and the roadmap state different bands").toBe(
+      roadmap.replace(/\s/g, "")
+    );
   });
 });

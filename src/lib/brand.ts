@@ -125,6 +125,41 @@ export const BRAND_ERP_TAGLINE = "Automating the space between the modern ERPs."
  * distinction, and keeping them in one file is what stops a future edit
  * quietly promoting the keyword into a headline.
  */
+/**
+ * ── ⚠ THE PRODUCT'S NAME, IN ONE PLACE (P1-J0-E274) ─────────────────────────
+ *
+ * Scott, 2026-08-21: *"it is not an AI maturity assessment...we are assessing the
+ * process. end of story."*
+ *
+ * ⚠⚠ THIS SUPERSEDES `P1-J0-E162`, WHICH SCOTT SETTLED THE OTHER WAY ON
+ * 2026-08-18. That row aligned the page on `AI Maturity Assessment` — three
+ * surfaces said it and one said `AI Adoption Assessment`, so the outlier moved.
+ * The name itself is now retired. ⚠ ANYONE READING E162 AND RESTORING
+ * "AI Maturity Assessment" WOULD BE RESTORING A NAME ITS OWN OWNER RETIRED.
+ * Full reasoning in `decisions-01.md` § 2026-08-21.
+ *
+ * ⚠ IT IS A CONSTANT BECAUSE IT WAS A LITERAL IN THREE FILES AND THAT IS HOW
+ * E162 HAPPENED IN THE FIRST PLACE — one product, four spellings, no single
+ * place to change. `check:ui` asserts the retired name appears nowhere the
+ * product is named, so a fourth literal cannot quietly arrive.
+ *
+ * ⚠ NOT THE CAPABILITY DOMAIN. `Change Management & AI Adoption` is a domain the
+ * assessment measures, not the assessment. Untouched.
+ *
+ * ⚠ AND NOT THE DECK'S FILENAME. `AI Maturity Assessment.pptx` is a citation of a
+ * file on disk in seven comments; renaming a citation makes it stop pointing at
+ * anything. Those are exempt by design, and the guard exempts them by shape.
+ */
+export const ASSESSMENT_PRODUCT = "Optimization Assessment";
+
+/**
+ * Qualified by the process where one is named — `Procure-to-Pay Optimization
+ * Assessment`. A function rather than a second constant, so a page assessing
+ * Order-to-Cash cannot end up with a hand-typed variant.
+ */
+export const assessmentProductFor = (process: string) =>
+  `${process} ${ASSESSMENT_PRODUCT}`;
+
 export const SEO_TITLE =
   "Panameer — The Enterprise Systems + AI services marketplace";
 

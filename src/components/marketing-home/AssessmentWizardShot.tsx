@@ -2,6 +2,7 @@ import { ArrowRight, Check } from "lucide-react";
 import { AppShot } from "@/components/marketing-home/AppShot";
 import { P2P_DOMAINS as CAPABILITY_DOMAINS } from "@/lib/capability-domains";
 import { P2P_DOMAINS as ASSESSED_DOMAINS } from "@/lib/assessment/questions-p2p";
+import { assessmentProductFor } from "@/lib/brand";
 
 /**
  * STEP 2's GRAPHIC — the assessment wizard, mid-questionnaire.
@@ -102,13 +103,24 @@ export function AssessmentWizardShot() {
       <div className="ash-main">
         <div className="ash-mh">
           <div>
-            {/* ⚠ "AI Maturity Assessment", NOT "AI Adoption Assessment" (E162). The
-                page used two names for one product; this was the outlier. The name is
-                already what DashboardShot, ErpIntegration and the source deck use, so
-                this aligns the odd one out rather than renaming anything. Not to be
-                confused with the capability domain "Change Management & AI Adoption",
-                which is about adoption as a concept and is untouched. */}
-            <h3 className="ash-h3">Procure-to-Pay AI Maturity Assessment</h3>
+            {/*
+              ⚠ THE NAME COMES FROM `ASSESSMENT_PRODUCT`, NOT FROM A LITERAL HERE
+              (`P1-J0-E274`). Scott, 2026-08-21: *"it is not an AI maturity
+              assessment...we are assessing the process. end of story."*
+
+              ⚠⚠ THIS SUPERSEDES `E162`, WHICH SETTLED THE OTHER WAY ON 2026-08-18
+              AND WHOSE NOTE USED TO LIVE HERE. It read: *"AI Maturity Assessment,
+              NOT AI Adoption Assessment (E162). The page used two names for one
+              product; this was the outlier."* That was true and the alignment was
+              right — the NAME is what changed, and it changed at its owner's
+              instruction. ⚠ DO NOT RESTORE IT FROM E162.
+
+              ⚠ THE E162 DEFECT WAS FOUR LITERALS IN FOUR FILES, so the fix for it
+              is a constant rather than a fifth literal. Not to be confused with the
+              capability domain "Change Management & AI Adoption", which is about
+              adoption as a concept and is untouched.
+            */}
+            <h3 className="ash-h3">{assessmentProductFor("Procure-to-Pay")}</h3>
             <p className="ash-sub">Ten capability domains · about 20 minutes</p>
           </div>
           <div className="ash-mact">

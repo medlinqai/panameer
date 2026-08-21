@@ -6,6 +6,7 @@ import { Lightbox } from "@/components/marketing-home/Lightbox";
 import { DecorativeSceneProvider } from "@/components/marketing-home/scenes/decorative";
 import { FulfillmentScene } from "@/components/marketing-home/scenes/FulfillmentScene";
 import { SettlementScene } from "@/components/marketing-home/scenes/SettlementScene";
+import { ASSESSMENT_PRODUCT } from "@/lib/brand";
 
 /**
  * "Integrate Seamlessly — with the Click of a Button" (brief_home_erp_integration).
@@ -100,7 +101,9 @@ const ERP_DOCS: readonly string[] = [
  * so it wraps rather than being abbreviated.
  */
 const PANAMEER_OBJECTS: readonly { name: string; qualifier?: string }[] = [
-  { name: "AI Maturity Assessment" },
+  /* ⚠ ONE SOURCE — `ASSESSMENT_PRODUCT` in `lib/brand.ts` (E274, superseding
+     E162). This was one of the four literals that made E162 possible. */
+  { name: ASSESSMENT_PRODUCT },
   { name: "Project Timeline Tracker" },
   { name: "Work Request" },
   { name: "Invitation to Propose" },
