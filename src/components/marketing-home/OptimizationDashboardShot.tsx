@@ -12,7 +12,7 @@ import { AppShot } from "@/components/marketing-home/AppShot";
  * STEP 4's GRAPHIC — the Optimization Dashboard, drawn as a browser shot.
  *
  * A COMPONENT, NOT A PNG, for the same reason `SubmitToAI` is: the figures ARE
- * the pitch and they will change. A screenshot would freeze $2,590,000 and the
+ * the pitch and they will change. A screenshot would freeze the headline figure and the
  * five findings into a bitmap, and it would not survive a theme or a retina.
  *
  * ── ⚠ THIS IS A RENDERING OF A PRODUCT SCREEN, NOT THE PRODUCT SCREEN ────────
@@ -41,7 +41,7 @@ import { AppShot } from "@/components/marketing-home/AppShot";
  *
  * ── ⚠ EVERY DOLLAR FIGURE IN HERE IS A PUBLIC PRODUCT CLAIM ──────────────────
  *
- * $2,590,000, the $18.5M addressable base, the five per-finding amounts and the
+ * the headline savings band, the $18.5M addressable base, the five per-finding amounts and the
  * industry median of 73 all sit on a pre-account page. They join the counsel-gate
  * list with the tax-savings copy, the Oracle mark, the AIP and the rung-4 agent
  * names. Not a blocker for building it — a blocker for LAUNCHING it.
@@ -90,8 +90,17 @@ const SPARK: { h: number; on: boolean; n: number }[] = [
 
 /* ── KPI 3's stacked bar ──────────────────────────────────────────────────── */
 /**
- * The five findings as a share of $2,590,000 — 980/610/520/265/215 rounds to
- * exactly these, which is why the segments sum to 100.
+ * The five findings as a share of their own arithmetic sum — 980/610/520/265/215
+ * rounds to exactly these, which is why the segments sum to 100.
+ *
+ * ⚠ THE SHARES ARE STILL RIGHT EVEN THOUGH THE SUM IS NOT A TOTAL (E257). This
+ * bar shows the findings' sizes RELATIVE TO EACH OTHER, and that ratio holds
+ * whether or not they overlap. What the sum could not honestly be is the KPI
+ * above it, which is a band now.
+ *
+ * ⚠ THE RETIRED FIGURE IS PARAPHRASED, NOT QUOTED, throughout this file — same
+ * convention as the retired rung-4 line in `questions-p2p.ts`, so grepping for it
+ * returns only real usages and stays a usable check.
  */
 const STACK = [38, 24, 20, 10, 8];
 
@@ -288,7 +297,27 @@ export function OptimizationDashboardShot() {
                 <span className="osd-kico is-c" aria-hidden>
                   <DollarSign className="ash-sv" strokeWidth={2} aria-hidden />
                 </span>
-                <span className="osd-kv">$2,590,000</span>
+                {/*
+                  ── ⚠ A BAND, AND THE REASON IS ARITHMETIC (P1-J0-E257) ───────
+
+                  ⚠ THE OPERATION WAS WRONG, NOT MERELY THE PRECISION. The figure
+                  here was the SUM of the five findings below — 980 + 610 + 520 +
+                  265 + 215 — and those findings OVERLAP: invoice matching, PO
+                  price alerts and rogue-spend all read the same purchase-order
+                  and invoice lines. Adding them counts the same dollars up to
+                  three times. A more precise total would have been more wrong.
+
+                  ⚠ IT IS THE ROADMAP'S BAND, NOT A NEW NUMBER. `AiRoadmapShot`
+                  already ships `$1.8M – $3.2M` for THE SAME FIVE OPPORTUNITIES —
+                  the dashboard and the roadmap describe one set of findings, and
+                  until now they stated two different totals for it. One band,
+                  both places.
+
+                  ⚠ NO OVERLAP OR NETTING MODEL WAS BUILT. That needs
+                  per-solution economics which do not exist. The band is the
+                  honest answer, not a placeholder for a calculation.
+                */}
+                <span className="osd-kv">$1.8M &ndash; $3.2M</span>
               </div>
               <p className="osd-klab">Est. Savings — Rev/Heads</p>
               <p className="osd-knote">14% of $18.5M addressable P2P spend</p>

@@ -48,7 +48,7 @@ export type SpineStep = {
 export const SPINE_STEPS: SpineStep[] = [
   {
     n: 2,
-    eyebrow: "Step 2 - Provide Capability Domain Details",
+    eyebrow: "Step 2 - Provide Capability Domain (Transaction-Level) Details",
     title:
       "Provide the processing methods for each capability domain within your business process.",
     /* Built as a component, not an image — see `SpineSteps`' registry. Its rung
@@ -73,28 +73,33 @@ export const SPINE_STEPS: SpineStep[] = [
     /* ⚠ VERBATIM, Scott 2026-08-18 (E161). Was "Complete Assessment & Submit to
        AI" — the eyebrow now says AIP where it used to say AI, which makes the
        comment above MORE load-bearing, not less. The `title` below is unchanged. */
-    eyebrow: "Step 3 - Submit the Completed Assessment to our AIP",
+    eyebrow:
+      "Step 3 - Submit Your Completed Assessment to Panameer's AI Platform (AIP)",
     title:
     /*
-      ⚠ E232 — VERBATIM, Scott 2026-08-20. The acronym expansion order FLIPS to
-      the conventional one: `AI Platform (AIP)`.
+      ⚠ E275 — VERBATIM, Scott 2026-08-21, AND IT CLOSES THE BACKWARDS ACRONYM.
 
-      ⚠ AND THAT LEAVES THE EYEBROW ABOVE READING "…to our AIP", so the acronym
-      is now INTRODUCED in the label and EXPANDED in the sentence below it —
-      backwards. Left exactly as it is and FLAGGED: the eyebrow is Scott's string
-      and this brief does not touch it.
+      E232 flipped this sentence to the conventional `AI Platform (AIP)` and left
+      a real defect behind, flagged at the time: the eyebrow above read "…to our
+      AIP", so the acronym was INTRODUCED in the label and EXPANDED in the
+      sentence beneath it — backwards. The eyebrow now carries the expansion
+      (`Panameer's AI Platform (AIP)`) and this sentence uses the short form. The
+      order is right for the first time.
+
+      ⚠ `your completed assessment`, NOT `your answers` — it names the thing being
+      submitted rather than the act of answering, and it matches the eyebrow.
 
       ⚠ THE AIP CLAIM ITSELF IS UNCHANGED AND STAYS — a product named before it
       exists, deliberately, counsel-gate item 3. This re-word is not licence to
       revisit it.
     */
-      "Provide your contact details and submit your answers to the Panameer AI Platform (AIP).",
+      "Provide your contact details and submit your completed assessment to the AIP.",
     /* Built as a component, not an image — see `SpineSteps`' registry. */
     graphic: "submit-to-ai",
   },
   {
     n: 4,
-    eyebrow: "Step 4 - Check Out Your Optimization Dashboard",
+    eyebrow: "Step 4 - Preview Your Solutions and Savings on the Optimization Dashboard",
     /**
      * ⚠ VERBATIM, Scott 2026-08-18 (E167). The previous wording — "See the AI
      * automation options possible and where your adoption stands in relation to your
@@ -134,7 +139,7 @@ export const SPINE_STEPS: SpineStep[] = [
   },
   {
     n: 5,
-    eyebrow: "Step 5 - Build Your AI Roadmap with the Expert",
+    eyebrow: "Step 5 - Collaborate with Our Experts to Build Your AI Roadmap",
     /**
      * ⚠ "1 year", NOT "3 year" — a correction, flagged.
      *
@@ -169,7 +174,7 @@ export const SPINE_STEPS: SpineStep[] = [
  * `/optimize` renders these five steps as `<details>` rows whose summary is the
  * eyebrow WITHOUT its `Step N - ` prefix — the number is already drawn as its own
  * element beside the text, so leaving the prefix in would print it twice:
- * "1  Step 2 - Provide Capability Domain Details".
+ * "1  Step 2 - Provide Capability Domain (Transaction-Level) Details".
  *
  * ⚠ IT LIVES HERE, BESIDE THE DATA, RATHER THAN IN THE COMPONENT, so the guard
  * can assert the rendered summaries against their SOURCE without importing React.

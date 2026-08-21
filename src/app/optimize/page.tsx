@@ -57,8 +57,16 @@ export default function OptimizePage() {
       */}
       <MarketingHeader />
       <div className="pm-home">
-        {/* ⚠ ONE WORD-GROUP DIFFERENT FROM `/`. See the note on `HomeHero`. */}
-        <HomeHero ctaLabel="Start the Assessment" />
+        {/*
+          ⚠ ONE WORD-GROUP DIFFERENT FROM `/`. See the note on `HomeHero`.
+
+          ⚠ THE LONG LABEL SHIPPED, NOT SCOTT'S FALLBACK, AND IT WAS MEASURED
+          RATHER THAN CHOSEN. `Start Your Free Optimization Assessment` is 39
+          characters against the previous 20; his fallback `Start Your Free
+          Assessment` applies ONLY if the long one does not fit. It fits at every
+          width — see the report — so the short one was not taken for tidiness.
+        */}
+        <HomeHero ctaLabel="Start Your Free Optimization Assessment" />
         {/* ⚠ Heading and lede only — the card strip is E242. See above. */}
         <HowItWorks showStrip={false} />
         <OptimizeSteps />

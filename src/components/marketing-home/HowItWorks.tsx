@@ -197,23 +197,25 @@ export function HowItWorks({
         </h2>
 
         {/*
-          ⚠ E228 — A NEW ELEMENT, NOT A REPLACEMENT. The asymmetry pitch, which
-          was stated nowhere on the page: what the buyer spends against what
-          Panameer does with it.
+          ── ⚠ THE SUB-LINE IS DELETED (P1-J0-E243) ───────────────────────────
 
-          ⚠ PLACEMENT HERE IS CHAT'S ASSUMPTION, NOT SCOTT'S DECISION. Measured:
-          it adds 27px at 1440 and pushes `.hiw-strip` from 757 to 784, so the
-          strip does not leave the fold at 900 or 1180. If it reads badly here it
-          should MOVE — reported, not relocated on a guess.
+          It read *"You spend under an hour. We do the analysis, build the
+          dashboard, build the roadmap, and put an expert on it."* — E228's
+          asymmetry pitch. Scott removed it on 2026-08-21.
 
-          `.hiw-sub` mirrors `.gtt-lead`'s values exactly (muted, 17px, 1.6,
-          760px cap) rather than inventing a scale, and carries NO
-          `text-wrap:balance` — see the standing rule in home.css.
+          ⚠ THIS ALSO DELETES ONE OF THE TWO FREE-EXPERT PROMISES ON THE PAGE:
+          `and put an expert on it`. The other is the hero lede's *"build your
+          12-month roadmap with an expert — all for free"*, which is untouched, so
+          the claim still appears once rather than not at all. Flagged rather than
+          assumed harmless.
+
+          ⚠ IT LANDS ON BOTH `/` AND `/optimize`, because `HowItWorks` renders on
+          both today. That is correct and temporary — the home rebuild removes
+          this section from `/` in a later brief — and is not an unintended change
+          to home.
+
+          ⚠ THE `<h2>` ABOVE IS UNCHANGED, including E226's "of your time".
         */}
-        <p className="hiw-sub">
-          You spend under an hour. We do the analysis, build the dashboard, build
-          the roadmap, and put an expert on it.
-        </p>
 
         {showStrip && (
           <>

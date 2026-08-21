@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { ASSESSMENT_PRODUCT } from "@/lib/brand";
 
 /*
   THE MARKETING NAV (brief_home_rebuild_08_09).
@@ -320,18 +321,19 @@ export const FOOTER_GROUPS: { title: string; entries: FooterEntry[] }[] = [
  * `brief_optimize_page` WS4 says to check whether any footer entry points at
  * `/assess` and move it if one does. ⚠ NO ENTRY IN `FOOTER_GROUPS` DOES — this
  * one is a separate export, and repointing it would RE-BREAK E119 above: a link
- * labelled `AI Maturity Assessment` that lands on the page EXPLAINING the
+ * labelled with the product name that lands on the page EXPLAINING the
  * assessment rather than on the assessment is the exact defect E119 fixed.
  *
  * ⚠ AND THIS IS NOT AN `E118` VIOLATION. That rule is one word per DESTINATION;
- * the header's `Optimize` and this `AI Maturity Assessment` are now two
+ * the header's `Optimize` and this `Optimization Assessment` are now two
  * different words for two different pages, which is what they should be.
  *
  * Reported rather than decided — if Scott wants the footer to reach the journey
  * page instead of the wizard, it is a one-line change here.
  */
 export const FOOTER_ASSESSMENT: FooterEntry = {
-  label: "AI Maturity Assessment",
+  /* ⚠ ONE SOURCE — see `ASSESSMENT_PRODUCT` in `lib/brand.ts` (E274). */
+  label: ASSESSMENT_PRODUCT,
   href: "/assess",
 };
 
