@@ -8,6 +8,15 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 import { SPINE_STEPS, summaryFor } from "../src/lib/spine-steps";
 /* The product's name, from its one source — see `ASSESSMENT_PRODUCT`'s note. */
 import { ASSESSMENT_PRODUCT } from "../src/lib/brand";
+/*
+  ⚠ `/learn`'s five row labels, IMPORTED FROM THE SAME MODULE THE PAGE READS.
+  `learn-steps.ts` is strings only and imports nothing, which is why it can be
+  pulled into a Playwright spec at all — the panels are React and stay in
+  `LearnPublic.tsx`.
+*/
+import { LEARN_STEPS, LEARN_SPINE_HEADING, LEARN_SPINE_TAGLINE } from "../src/lib/learn-steps";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 /**
  * THE DIALOG CONTRACT ON `/`.
@@ -671,16 +680,35 @@ test.describe("the Step 5 roadmap grid", () => {
  * so the nested-interactive audit that already exists covers this page too rather
  * than being written a second time.
  */
+/**
+ * ⚠ THE SELECTORS IN THIS BLOCK SAY `.stepd-*` WHERE THEY USED TO SAY `.opt-*`,
+ * AND THAT IS THE ONLY THING THAT CHANGED IN IT.
+ *
+ * `P1-J0-E281` moved the disclosure markup out of `OptimizeSteps.tsx` into the
+ * shared `StepDisclosures`, which renamed the classes. NOT ONE ASSERTION'S
+ * SUBSTANCE WAS TOUCHED — same counts, same derivation from `SPINE_STEPS`, same
+ * keyboard contract, same scoping. The migration was measured before and after at
+ * 1440 / 900 / 390 and every geometry number and the panel innerText hash are
+ * identical, which is the actual proof the render did not move; these strings are
+ * a class rename and nothing more.
+ *
+ * ⚠ THE PREFIX IS `stepd-`, NOT the `sd-` the brief named. `home.css:1550-1557`
+ * already owns `.pm-home .sd-n` — the home spine's 64px numeral — and at (0,2,0)
+ * it beat a bare `.sd-n` at (0,1,0) on `/optimize`, which renders inside
+ * `.pm-home`. The numeral came out 23px wide instead of 40px. Caught by the
+ * before/after measurement, not by eye: it was invisible at 1440 and 900 and only
+ * moved the 390 numbers.
+ */
 test.describe("/optimize — the five steps as disclosures", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/optimize");
   });
 
   test("§21 exactly five disclosures, and every one closed at rest", async ({ page }) => {
-    const d = page.locator("details.opt-d");
+    const d = page.locator("details.stepd-d");
     /* ⚠ FIVE, DERIVED: step 1 is ProcessPicker and is deliberately not in the data. */
     await expect(d).toHaveCount(SPINE_STEPS.length + 1);
-    await expect(page.locator("details.opt-d[open]")).toHaveCount(0);
+    await expect(page.locator("details.stepd-d[open]")).toHaveCount(0);
   });
 
   /**
@@ -691,7 +719,7 @@ test.describe("/optimize — the five steps as disclosures", () => {
    * cannot drift from `/`.
    */
   test("§22 each summary is its SPINE_STEPS eyebrow, minus the Step N prefix", async ({ page }) => {
-    const rendered = (await page.locator("summary.opt-sum .opt-t").allTextContents()).map((t) => t.trim());
+    const rendered = (await page.locator("summary.stepd-sum .stepd-t").allTextContents()).map((t) => t.trim());
     expect(rendered).toHaveLength(SPINE_STEPS.length + 1);
     /* Step 1 is the one exception — ProcessPicker, not a SPINE_STEPS row. */
     expect(rendered[0]).toBe("Select a Business Process");
@@ -723,8 +751,8 @@ test.describe("/optimize — the five steps as disclosures", () => {
   });
 
   test("§23 the summary takes focus and Enter toggles it", async ({ page }) => {
-    const sum = page.locator("summary.opt-sum").first();
-    const det = page.locator("details.opt-d").first();
+    const sum = page.locator("summary.stepd-sum").first();
+    const det = page.locator("details.stepd-d").first();
     /*
       ⚠ TAB-REACHABLE, NOT MERELY `focus()`-ABLE — AND A BREAK IS WHY. Putting
       `tabIndex={-1}` on the summary left `el.focus()` working perfectly, so the
@@ -743,8 +771,8 @@ test.describe("/optimize — the five steps as disclosures", () => {
   });
 
   test("§24 Space toggles it too", async ({ page }) => {
-    const sum = page.locator("summary.opt-sum").nth(3);
-    const det = page.locator("details.opt-d").nth(3);
+    const sum = page.locator("summary.stepd-sum").nth(3);
+    const det = page.locator("details.stepd-d").nth(3);
     await sum.focus();
     await page.keyboard.press(" ");
     await expect(det).toHaveAttribute("open", "");
@@ -766,14 +794,14 @@ test.describe("/optimize — the five steps as disclosures", () => {
    */
   test("§25 a closed panel's content is not keyboard-reachable; open, it is", async ({ page }) => {
     /*
-      ⚠ SCOPED TO `.opt-panel`, NOT TO `details .opt-panel` — AND A BREAK IS WHY.
+      ⚠ SCOPED TO `.stepd-panel`, NOT TO `details .stepd-panel` — AND A BREAK IS WHY.
       Hoisting the panel OUT of its `<details>` is the regression this test exists
       to catch, and a selector that required the panel to be a descendant of a
       details simply stopped finding it: the test failed on its own vacuity guard
       instead of on the reachability claim. Page-scoped, the hoisted panel is
       still found and the real assertion is the one that fires.
     */
-    const inPanel = ".opt-panel a[href]";
+    const inPanel = ".stepd-panel a[href]";
     const count = await page.locator(inPanel).count();
     expect(count, "step 1's panel must contain something focusable, or this test is vacuous").toBeGreaterThan(0);
 
@@ -784,8 +812,8 @@ test.describe("/optimize — the five steps as disclosures", () => {
     }, inPanel);
     expect(focusedWhileClosed, "a link inside a CLOSED panel took focus").toBe(false);
 
-    await page.locator("summary.opt-sum").first().click();
-    await expect(page.locator("details.opt-d").first()).toHaveAttribute("open", "");
+    await page.locator("summary.stepd-sum").first().click();
+    await expect(page.locator("details.stepd-d").first()).toHaveAttribute("open", "");
 
     const focusedWhileOpen = await page.evaluate((sel) => {
       const el = document.querySelector<HTMLElement>(sel);
@@ -861,7 +889,7 @@ test.describe("optimize walk 1 — the product name, the sub-line, the total", (
   test("§28 the dashboard KPI and the roadmap total are the same band, not a point figure", async ({ page }) => {
     await page.goto("/optimize");
     /* Step 4 carries the dashboard; step 5 the roadmap. Open both. */
-    await page.evaluate(() => document.querySelectorAll("details.opt-d").forEach((d) => d.setAttribute("open", "")));
+    await page.evaluate(() => document.querySelectorAll("details.stepd-d").forEach((d) => d.setAttribute("open", "")));
     /*
       ⚠ THE SAVINGS KPI, NOT `.osd-kv` FIRST. There are THREE KPIs on the shot —
       a maturity delta, an opportunity count and the savings figure — and
@@ -884,5 +912,184 @@ test.describe("optimize walk 1 — the product name, the sub-line, the total", (
     expect(kpi.replace(/\s/g, ""), "the dashboard and the roadmap state different bands").toBe(
       roadmap.replace(/\s/g, "")
     );
+  });
+});
+
+
+/**
+ * `/learn` — THE SPINE AS DISCLOSURES (`P1-J0-E281`, `E283`, `E280`, `E282`).
+ *
+ * ⚠ WHY THESE LIVE IN `marketing-home.spec.ts` AND NOT A NEW FILE: the component
+ * under test is SHARED. `StepDisclosures` renders on `/optimize` and `/learn`, so
+ * a change to it reaches both pages at once, and splitting the two pages' guards
+ * across two specs is how a shared component drifts on one page without anybody
+ * noticing. §21–§25 above and §29–§33 below assert the same shell.
+ */
+test.describe("/learn — the spine as five disclosures", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/learn");
+  });
+
+  /**
+   * BREAK 1 — revert the spine to `SellSection` and this fails on the count.
+   *
+   * ⚠ IT ASSERTS THE ROWS EXIST **AND** THAT THE BANDS DID NOT COME BACK ALONGSIDE
+   * THEM. A half-revert that renders both would otherwise pass a count-only test,
+   * and "both" is the state that actually ships duplicate copy.
+   */
+  test("§29 exactly five disclosures, closed at rest, and the teaching bands are gone", async ({
+    page,
+  }) => {
+    const d = page.locator("details.stepd-d");
+    await expect(d).toHaveCount(LEARN_STEPS.length);
+    await expect(page.locator("details.stepd-d[open]")).toHaveCount(0);
+
+    /*
+      ⚠ THE FIVE SELL SECTIONS BELOW ARE NOT IN SCOPE AND MUST STILL BE THERE.
+      This is the assertion that stops "delete the bands" being read as "delete
+      `SellSection`" — the spine's SEVEN went to disclosures; the sell five did
+      not move. Counted by their own headings so it does not depend on a class.
+    */
+    const sellHeadings = ["Learning paths", "Free & certified", "Learn together", "One-on-one"];
+    for (const h of sellHeadings) {
+      await expect(
+        page.getByText(h, { exact: false }).first(),
+        `the sell section "${h}" is out of scope and must survive`
+      ).toBeVisible();
+    }
+
+    /* ⚠ AND THE SPINE'S OWN HEADINGS MUST NOT ALSO APPEAR AS BANDS. `While You Are
+       Learning` was §7's eyebrow; as a row label it is now `Meet Your Instructor`,
+       so the old eyebrow appearing anywhere means the bands came back. */
+    await expect(page.getByText("While You Are Learning")).toHaveCount(0);
+    await expect(page.getByText("What Do You Do After the Training")).toHaveCount(0);
+  });
+
+  /**
+   * BREAK 2 — hardcode a summary in `LearnPublic.tsx` instead of reading
+   * `LEARN_STEPS[i].summary`, and this fails.
+   *
+   * ⚠ THE ORDER IS ASSERTED, NOT JUST THE SET. These are numbered steps; a page
+   * that renders all five labels in the wrong sequence is wrong in the one way a
+   * numbered list can be wrong, and a set comparison would call it green.
+   *
+   * ⚠ THE SECOND HALF IS THE PART THAT IS NOT A TYPED-TWICE COMPARISON. No row's
+   * label may appear again INSIDE its own panel — that is `E275`'s duplication
+   * rule, the same one that took the eyebrows off `/optimize`, and it is a
+   * property of the render rather than of the data.
+   */
+  test("§30 each summary is its LEARN_STEPS label, in order, and no panel repeats it", async ({
+    page,
+  }) => {
+    const rendered = (await page.locator("summary.stepd-sum .stepd-t").allTextContents()).map((t) =>
+      t.trim()
+    );
+    expect(rendered).toEqual(LEARN_STEPS.map((s) => s.summary));
+
+    for (const [i, step] of LEARN_STEPS.entries()) {
+      const panel = page.locator("details.stepd-d").nth(i).locator(".stepd-panel");
+      const text = ((await panel.textContent()) ?? "").replace(/\s+/g, " ");
+      expect(
+        text.includes(step.summary),
+        `row ${step.n} reprints its own label "${step.summary}" inside its panel (E275)`
+      ).toBe(false);
+    }
+
+    /* ⚠ ROW 3 CARRIES TWO SECTIONS AND MUST STAY TWO BLOCKS (`E283`). Merging them
+       into one sentence would finish collapsing the course/lesson level this page
+       exists to teach, and it would still pass every assertion above. */
+    await page.locator("summary.stepd-sum").nth(2).click();
+    await expect(
+      page.locator("details.stepd-d").nth(2).locator(".stepd-block"),
+      "row 3 must present course and lesson as two blocks, not one merged sentence"
+    ).toHaveCount(2);
+  });
+
+  /**
+   * BREAK 3 — put `"use client"` in `StepDisclosures.tsx` and this fails. ⚠ THIS
+   * IS THE ONE THAT MATTERS: the shell is SHARED, so one directive reaches
+   * `/optimize` and `/learn` at once.
+   *
+   * ⚠⚠ IT DOES **NOT** COST `/optimize` ITS `○`, AND THE BRIEF SAID IT WOULD.
+   * Measured 2026-08-21 — the directive was added and `npm run build` printed
+   * `○ /optimize` anyway, twice. Next prerenders client components; a route only
+   * leaves `○` when it reads request-time data, which this one does not. The cost
+   * is the JS bundle and the hydration — this component and its whole subtree
+   * shipped to the browser to re-implement what `<details>` does with no script.
+   * That is why the assertion below reads the FILE instead of the route table:
+   * the route-mode proxy was tried and it does not fire.
+   *
+   * ⚠⚠ THE FIRST HALF IS A SOURCE ASSERTION, WHICH IS AGAINST THIS FILE'S WHOLE
+   * PREMISE, AND IT IS DELIBERATE BECAUSE NO RUNTIME SIGNAL EXISTS. Two were
+   * tried and both were dead ends: the build's route table does not move (above),
+   * and Turbopack's dev chunks are named by DIRECTORY rather than by component,
+   * so a client boundary is invisible in the served HTML and in the script tags —
+   * verified against `/optimize`, not assumed. Reading the file is what is left.
+   *
+   * ⚠ THE SECOND HALF IS REAL RUNTIME. The five rows must be in the HTML THE
+   * SERVER SENT, before any JavaScript runs. That is what a Server Component
+   * buys, and a shell that started rendering its rows on the client would fail it
+   * whatever the source said.
+   */
+  test("§31 the shared disclosure shell is a Server Component, and its rows are server-rendered", async ({
+    page,
+    request,
+  }) => {
+    const shell = readFileSync(
+      join(process.cwd(), "src/components/marketing/StepDisclosures.tsx"),
+      "utf8"
+    );
+    expect(
+      /^\s*["']use client["']/m.test(shell),
+      '"use client" in StepDisclosures.tsx spends /optimize\'s static render — nothing in it needs one'
+    ).toBe(false);
+
+    for (const url of ["/optimize", "/learn"]) {
+      const html = await (await request.get(url)).text();
+      for (const label of url === "/learn" ? LEARN_STEPS.map((s) => s.summary) : ["Select a Business Process"]) {
+        expect(html, `${url} must send "${label}" in its server HTML`).toContain(label);
+      }
+    }
+  });
+
+  /**
+   * BREAK 4 — restore `within 24 hours` to the tagline and this fails.
+   *
+   * ⚠ IT IS NOT A STRING BAN, IT IS AN SLA BAN. `b5f3923` put a HUMAN review gate
+   * between passing a test and holding a credential, and there is no queue, no
+   * timer and no alert behind it. Any duration attached to getting certified is a
+   * promise nothing in the system keeps, so the pattern is matched rather than the
+   * one phrase Scott happened to write.
+   */
+  test("§32 /learn attaches no turnaround time to getting certified", async ({ page }) => {
+    const body = ((await page.locator("body").textContent()) ?? "").replace(/\s+/g, " ");
+    const sla = body.match(/within\s+\d+\s*(hours?|hrs?|days?|minutes?|business days?)/gi) ?? [];
+    expect(
+      sla,
+      "there is no queue, no timer and no alert behind a certification SLA — see b5f3923"
+    ).toEqual([]);
+  });
+
+  /**
+   * BREAK 5 — put `5 minutes` back in the hero sub and this fails.
+   *
+   * ⚠ `E243` WAS EXACTLY THIS SHAPE: two numbers for one signup on one page. The
+   * assertion is that the page states ONE duration, not that it states `3` —
+   * changing his mind to 2 minutes in both places must stay green, and only
+   * DISAGREEING with itself must go red.
+   */
+  test("§33 /learn gives exactly one time-to-start-learning", async ({ page }) => {
+    const body = ((await page.locator("body").textContent()) ?? "").replace(/\s+/g, " ");
+    const durations = new Set(
+      (body.match(/\b\d+\s*minutes?\b/gi) ?? []).map((m) => m.replace(/\s+/g, " ").toLowerCase())
+    );
+    expect(
+      [...durations],
+      "one signup, one duration — E243. The hero and the tagline must agree."
+    ).toHaveLength(1);
+
+    /* The heading and the tagline are the page's, from their one source. */
+    await expect(page.getByText(LEARN_SPINE_HEADING, { exact: true })).toBeVisible();
+    await expect(page.getByText(LEARN_SPINE_TAGLINE, { exact: true })).toBeVisible();
   });
 });
