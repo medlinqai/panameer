@@ -22,11 +22,17 @@ import "@/components/marketing-home/home.css";
  *
  * ── ⚠ WHY IT PRERENDERS `○`, AND WHAT WOULD SPEND THAT ──────────────────────
  *
- * It reads no cookies and calls no `getSessionViewer()`. The five steps are
- * NATIVE `<details>`, so the whole page is a Server Component with no client
- * island at all — a hand-built accordion would have needed `"use client"` and
- * would have cost the static render for behaviour the browser already gives
- * away. `HomeHero` and the graphics are the same components `/` uses, and `/`
+ * It reads no cookies and calls no `getSessionViewer()`. THAT is what keeps it
+ * `○` — a route leaves the static column when it reads REQUEST-TIME data, and
+ * this one reads none.
+ *
+ * ⚠ THIS NOTE USED TO SAY A CLIENT ISLAND WOULD HAVE "COST THE STATIC RENDER",
+ * AND THAT WAS WRONG. Measured 2026-08-21: `"use client"` was added to
+ * `StepDisclosures` and `npm run build` still printed `○ /optimize`. Next
+ * prerenders client components too. The five steps being native `<details>`
+ * saves the JS BUNDLE and the hydration, not the route mode — a real saving, and
+ * not the one this paragraph claimed. `check:ui` §31 asserts the directive's
+ * absence directly for exactly that reason. `HomeHero` and the graphics are the same components `/` uses, and `/`
  * prerenders too, so nothing here is new in that respect. Check the build's
  * route table rather than assuming.
  *

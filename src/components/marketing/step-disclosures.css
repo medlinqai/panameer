@@ -1,0 +1,134 @@
+/* ────────────────────────────────────────────────────────────────────────────
+   THE SHARED STEP DISCLOSURES — `StepDisclosures.tsx`
+
+   ── ⚠ WHY THIS FILE EXISTS AT ALL, AND WHY THE VALUES ARE MIRRORED ──────────
+
+   These rules began life as `.pm-home .opt-*` in `marketing-home/home.css`, where
+   every selector is `.pm-home`-scoped AND every variable it uses is declared
+   inside `.pm-home`. `/learn` neither imports that stylesheet nor wraps itself in
+   `.pm-home`, so the rules could not simply be de-scoped: the selectors would
+   have matched and the variables would have resolved to nothing.
+
+   The two alternatives were worse:
+     · wrapping `/learn` in `.pm-home` drags the whole marketing-home stylesheet —
+       including its `*{margin:0;padding:0}` reset — onto a page that does not
+       want it;
+     · re-expressing 30 lines of MEASURED css as Tailwind cannot be proven
+       identical, and `/optimize` is a settled page whose migration had to be
+       provably invisible.
+
+   ── ⚠ THE PREFIX IS `stepd-`, AND `sd-` IS THE ONE IT CANNOT BE ──────────────
+
+   The first cut of this file used `.sd-*`. It rendered WRONG on `/optimize`, and
+   the failure was invisible at 1440 and 900 — only the 390 measurement moved,
+   because a summary un-wrapped by one line.
+
+   `home.css:1550-1557` already owns an `.sd-*` namespace: `.pm-home .sd` is the
+   home spine's section shell and `.pm-home .sd-n` is its 64px numeral. That
+   selector is (0,2,0); a bare `.sd-n` here is (0,1,0). `/optimize` renders inside
+   `.pm-home`, so the OLDER rule won and the numeral came out `flex:0 0 auto`
+   (23px wide) instead of `flex:0 0 40px`. Background, radius and font-size all
+   applied, so the circle LOOKED right — only its width was another section's.
+
+   ⚠ THIS IS THE COST OF SHARING A FILE ACROSS PAGES ONE OF WHICH IS `.pm-home`-
+   SCOPED. An unscoped rule in here can always lose to a `.pm-home `-prefixed one.
+   Before adding a selector to this file, grep `home.css` for the bare class name;
+   if it exists there at all, pick a different word. Raising specificity instead
+   would re-scope this file to `.pm-home` and defeat its whole purpose.
+
+   ⚠ SO THE FOUR VALUES BELOW ARE MIRRORED, NOT INVENTED. Copied verbatim from
+   `marketing-home/home.css`:
+
+       --stepd-mag      #D72CD6   <- home.css:32   (--mag)
+       --stepd-ink      #171E3E   <- home.css:35   (--ink)
+       --stepd-paper-3  #f6f4fb   <- home.css:56   (--paper-3)
+       --stepd-line     #e6e9ef   <- home.css:57   (--line)
+       --stepd-muted    #7b8496   <- home.css:58   (--muted)
+       --stepd-step     8px       <- home.css:1266 (--sec-step)
+
+   ⚠ AND `.wrap` IS `.pm-home`-SCOPED TOO — `home.css:82`,
+   `max-width:1200px;margin:0 auto;padding:0 32px`. It is what gives a row its
+   1136px measure at 1440, so it is mirrored as `.stepd-wrap` rather than borrowed.
+   Missed on the first pass and caught by measuring `/optimize`: without it a row
+   would have gone full-bleed on `/learn` and stayed 1136 on `/optimize`, which is
+   exactly the drift this file exists to prevent.
+
+   ⚠ THIS IS A DRIFT RISK AND IT IS BEING TAKEN DELIBERATELY, in one small file,
+   rather than by either alternative above. WHEN A SHARED TOKEN FILE EXISTS THESE
+   MOVE THERE and this block is deleted.
+
+   ⚠ `--font-display` IS GLOBAL (`globals.css:135`) and needs no mirroring.
+   ──────────────────────────────────────────────────────────────────────────── */
+.stepd-steps {
+  --stepd-mag: #d72cd6;
+  --stepd-ink: #171e3e;
+  --stepd-paper-3: #f6f4fb;
+  --stepd-line: #e6e9ef;
+  --stepd-muted: #7b8496;
+  --stepd-step: 8px;
+
+  background: #fff;
+  padding: 0 0 calc(var(--stepd-step) * 10);
+}
+/* ⚠ MIRRORED — `home.css:82`. See the note above. */
+.stepd-wrap{max-width:1200px;margin:0 auto;padding:0 32px}
+
+.stepd-list{list-style:none;margin:0;padding:0;border-top:1px solid var(--stepd-line)}
+.stepd-item{border-bottom:1px solid var(--stepd-line)}
+
+/* ⚠ THE WHOLE ROW IS THE HIT TARGET, not just the words. A disclosure whose
+   control is a 200px label in a 1136px row reads as broken on a phone. */
+.stepd-sum{display:flex;align-items:center;gap:18px;padding:22px 4px;cursor:pointer;
+  list-style:none;transition:background-color .15s}
+.stepd-sum::-webkit-details-marker{display:none}
+.stepd-sum:hover{background:var(--stepd-paper-3)}
+/* ⚠ A REAL FOCUS RING. `<summary>` is the control and it is reached by Tab; the
+   browser's default outline is removed by nothing here, but the offset makes it
+   readable against the row's own hover fill. */
+.stepd-sum:focus-visible{outline:2px solid var(--stepd-mag);outline-offset:-2px;border-radius:10px}
+
+.stepd-n{flex:0 0 40px;height:40px;border-radius:50%;background:var(--stepd-mag);color:#fff;
+  font-family:var(--font-display),sans-serif;font-weight:700;font-size:17px;
+  display:flex;align-items:center;justify-content:center}
+.stepd-t{flex:1;min-width:0;font-family:var(--font-display),sans-serif;font-weight:700;
+  font-size:23px;letter-spacing:-.3px;color:var(--stepd-ink);line-height:1.25}
+.stepd-chev{flex:0 0 22px;width:22px;height:22px;color:var(--stepd-muted);transition:transform .18s}
+.stepd-steps details[open] > .stepd-sum .stepd-chev{transform:rotate(180deg)}
+.stepd-steps details[open] > .stepd-sum{background:var(--stepd-paper-3)}
+
+/* ⚠ THE PANEL CARRIES THE STEP'S OWN HEADING AND ART, UNCHANGED. The graphics
+   own their internal spacing, so this adds only the gap that used to come from
+   the section band they were lifted out of. */
+.stepd-panel{padding:8px 4px calc(var(--stepd-step) * 5)}
+.stepd-h2{font-size:27px;color:var(--stepd-ink);font-weight:700;letter-spacing:-.4px;
+  line-height:1.2;margin:0 0 calc(var(--stepd-step) * 3);max-width:1040px}
+/* ── `/learn`'s PANELS CARRY A BODY PARAGRAPH; `/optimize`'s DO NOT ──────────
+   Not a divergence to tidy up. `/optimize`'s panels open onto a heading and a
+   large drawn graphic that carries its own labels; Learn's open onto a product
+   screenshot that explains nothing on its own, so each block is heading, body,
+   graphic. `/optimize` renders no `.stepd-body`, so these rules are inert there.
+
+   ⚠ `.stepd-block` EXISTS FOR STEP 3, WHICH CARRIES TWO SECTIONS (`E283`). The
+   gap between the two blocks is the whole point: merging course and lesson into
+   one row already collapses a level this page was built to teach, so inside the
+   panel they stay visibly two things. Do not reduce it to zero to "tighten" the
+   row. */
+.stepd-body{color:var(--stepd-muted);font-size:16.5px;line-height:1.62;max-width:760px;
+  margin:calc(var(--stepd-step) * -1.5) 0 calc(var(--stepd-step) * 3)}
+.stepd-block + .stepd-block{margin-top:calc(var(--stepd-step) * 6)}
+
+/* ⚠ `ProcessPicker` and the spine sections bring their own band chrome — a
+   background, a top border and section padding. Inside a panel that would draw a
+   band inside a row, so it is neutralised here rather than in the components,
+   which `/` still renders as bands. */
+.stepd-panel .pp,
+.stepd-panel .spn{background:transparent;border-top:0;padding:0}
+
+@media (max-width:760px){
+  .stepd-sum{gap:13px;padding:18px 2px}
+  .stepd-n{flex:0 0 32px;height:32px;font-size:14.5px}
+  .stepd-t{font-size:18.5px}
+  .stepd-h2{font-size:21px}
+  .stepd-body{font-size:15.5px}
+  .stepd-block + .stepd-block{margin-top:calc(var(--stepd-step) * 4)}
+}
