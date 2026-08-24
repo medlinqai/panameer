@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
-import { MarketingHero } from "@/components/marketing/MarketingHero";
+import { HireTalentHero } from "@/components/marketing/HireTalentHero";
+import { TalentSpine } from "@/components/marketing/TalentSpine";
 import { ThreeWays } from "@/components/marketing/sections/ThreeWays";
 import { AiMatch } from "@/components/marketing/sections/AiMatch";
 import { ValueStack } from "@/components/marketing/sections/ValueStack";
@@ -9,7 +10,6 @@ import { VideoSequence } from "@/components/marketing/VideoSequence";
 import { AppShots } from "@/components/marketing/sections/AppShots";
 import { FourBeats } from "@/components/marketing/sections/FourBeats";
 import { ClosingCta } from "@/components/marketing/sections/ClosingCta";
-import { HIRE_HERO } from "@/lib/brand";
 
 /**
  * HIRE TALENT — the buyer who is ready to hire (brief_public_pages_ia WS-2).
@@ -77,11 +77,14 @@ export default function HireTalentPage() {
   */
   return (
     <MarketingShell>
-      <MarketingHero
-        audience="buyer"
-        kicker={HIRE_HERO.kicker}
-        headline={HIRE_HERO.headline}
-      />
+      <HireTalentHero />
+      {/*
+        ⚠ THE SPINE SITS DIRECTLY UNDER THE HERO (P1-J1-E012), before ThreeWays —
+        the five steps are how the page explains itself, so they come before the
+        comparison. Its panels are EMPTY by instruction; brief_talent_spine_panels
+        fills them.
+      */}
+      <TalentSpine />
       <ThreeWays />
       <AiMatch />
       <ValueStack />

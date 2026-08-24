@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { MarketingHeader } from "@/components/marketing/MarketingHeader";
 import { HomeHero } from "@/components/marketing-home/HomeHero";
+import { OneWayTwoWay } from "@/components/marketing-home/OneWayTwoWay";
 import { LogoRibbon } from "@/components/marketing-home/LogoRibbon";
 import { MethodologyRing } from "@/components/marketing-home/MethodologyRing";
 import { CapabilityFramework } from "@/components/marketing-home/CapabilityFramework";
@@ -129,7 +130,6 @@ export default function Home() {
           this leaves as an invitation to fill it.
         */}
 
-
         {/*
           ── THE ASSESSMENT SPINE (brief_home_assessment_spine, 2026-08-16) ────
 
@@ -166,6 +166,21 @@ export default function Home() {
           this reversible and loses nothing.
         */}
 
+        {/*
+          ⚠ THE MACRO SECTION (`P1-J0-E314`). It goes HERE, directly after the hero,
+          because it is exactly what the page currently lacks: `brief_home_strip`
+          removed the strip, the picker and the spine, and `zero to hero` was spent
+          on `/learn`'s `<h1>` (`E313`) — so `/` had no statement of what this place
+          IS.
+
+          ⚠ IT PRECEDES `GetTheTalent` DELIBERATELY — "your output is sellable" is
+          the premise that makes a talent pitch land, not the other way round.
+
+          ⚠ `brief_home_four_audiences` (`E311`) IS PARKED AND EDITS THIS SAME FILE.
+          Different subject (WHO it is sold to — three parties SAVE, one MAKEs) and
+          it belongs AFTER this one. See `OneWayTwoWay.tsx`'s header.
+        */}
+        <OneWayTwoWay />
         <GetTheTalent />
         <WorkTracker />
 

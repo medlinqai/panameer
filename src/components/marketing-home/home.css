@@ -2936,3 +2936,44 @@
    ⚠ NOTHING REPLACED THEM HERE. `/optimize` renders `StepDisclosures` now.
    ──────────────────────────────────────────────────────────────────────────── */
 
+
+/* ────────────────────────────────────────────────────────────────────────────
+   ONE LISTING VERSUS A STACK — `OneWayTwoWay.tsx` (`P1-J0-E314`)
+
+   ⚠ `.pm-home`-SCOPED LIKE EVERYTHING ELSE IN THIS FILE, and that is the point:
+   this section renders on `/` only, inside the wrapper, so it uses the page's own
+   variables directly. No mirrored values, no Tailwind duplication — the drift
+   risk `/learn` and `/hire-talent` have to carry does not apply here.
+
+   ⚠ `owtw-` WAS CHECKED AGAINST THIS FILE BEFORE USE. The `.sd-n` collision in
+   `5d50135` shipped a broken numeral because a bare class lost to a
+   `.pm-home `-prefixed one; grep before adding a prefix here.
+
+   ⚠ IT REUSES `.sd` (the section shell) AND `.eyebrow` deliberately, so this
+   section's band, padding and eyebrow are the SAME rules every other `/` section
+   uses rather than a lookalike.
+   ──────────────────────────────────────────────────────────────────────────── */
+.pm-home .owtw-grid{margin-top:34px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 28px}
+.pm-home .owtw-row{display:flex;gap:16px;align-items:flex-start;padding:20px 22px;
+  background:var(--paper-3);border:1px solid var(--line);border-radius:16px}
+/* ⚠ FIXED WIDTH, NOT `auto` — this is the rule `.sd-n` got wrong. The numeral is a
+   disc and its size must not depend on the glyph inside it. */
+.pm-home .owtw-n{flex:0 0 30px;height:30px;border-radius:50%;background:var(--mag);color:#fff;
+  font-family:var(--font-display),sans-serif;font-weight:700;font-size:14px;
+  display:flex;align-items:center;justify-content:center}
+.pm-home .owtw-body{min-width:0}
+.pm-home .owtw-layer{font-family:var(--font-display),sans-serif;font-weight:700;font-size:17.5px;
+  color:var(--ink);letter-spacing:-.2px;line-height:1.25}
+.pm-home .owtw-sell{margin:5px 0 0;font-size:15.5px;line-height:1.5;color:var(--text)}
+/* ⚠ THE "WHAT EXISTS" LINE, VISUALLY QUIETER THAN THE CLAIM ABOVE IT — it is
+   corroboration, not the pitch. */
+.pm-home .owtw-built{margin:6px 0 0;font-size:13.5px;line-height:1.45;color:var(--muted)}
+.pm-home .owtw-note{margin-top:26px;font-size:14.5px;line-height:1.55;color:var(--muted)}
+.pm-home .owtw-note::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;
+  background:var(--mag);margin-right:9px;vertical-align:middle;opacity:.55}
+
+@media (max-width:900px){
+  .pm-home .owtw-grid{grid-template-columns:1fr;gap:14px}
+  .pm-home .owtw-layer{font-size:16.5px}
+  .pm-home .owtw-sell{font-size:15px}
+}
