@@ -643,7 +643,9 @@ test.describe("the Step 5 roadmap grid", () => {
     /* Not a click — all five, unconditionally, so a re-ordered step cannot make a
        test silently measure a closed panel. Same line as §28. */
     await page.evaluate(() =>
-      document.querySelectorAll("details.stepd-d").forEach((d) => d.setAttribute("open", "")),
+      document
+        .querySelectorAll("details.stepd-d")
+        .forEach((d) => d.setAttribute("open", "")),
     );
     /* The assertion below is the guard against this beforeEach going stale: if the
        roadmap ever stops rendering here, every test in the block fails loudly
@@ -1131,7 +1133,10 @@ test.describe("optimize walk 1 — the product name, the sub-line, the total", (
     /* The banned sentence must not appear on EITHER page, under any class. */
     for (const url of ["/", "/optimize"]) {
       await page.goto(url);
-      await expect(page.locator(".hiw-sub"), `${url}: .hiw-sub is back`).toHaveCount(0);
+      await expect(
+        page.locator(".hiw-sub"),
+        `${url}: .hiw-sub is back`,
+      ).toHaveCount(0);
       const text = await page.evaluate(() => document.body.innerText);
       expect(text, `${url}: the deleted sub-line is back`).not.toContain(
         "You spend under an hour",
@@ -1165,8 +1170,18 @@ test.describe("optimize walk 1 — the product name, the sub-line, the total", (
       "generalised" into a site-wide ban.
     */
     await page.goto("/");
-    for (const sel of [".hiw-h2", ".hiw-sub", "a.hiw-card", ".hiw", ".pp", ".spn"]) {
-      await expect(page.locator(sel), `/ still renders ${sel} — E298 removed it`).toHaveCount(0);
+    for (const sel of [
+      ".hiw-h2",
+      ".hiw-sub",
+      "a.hiw-card",
+      ".hiw",
+      ".pp",
+      ".spn",
+    ]) {
+      await expect(
+        page.locator(sel),
+        `/ still renders ${sel} — E298 removed it`,
+      ).toHaveCount(0);
     }
 
     /*
@@ -1176,11 +1191,19 @@ test.describe("optimize walk 1 — the product name, the sub-line, the total", (
       ("DELETING ANY FILE BREAKS /optimize").
     */
     await page.goto("/optimize");
-    await expect(page.locator(".hiw-h2"), "/optimize lost the heading").toHaveCount(1);
+    await expect(
+      page.locator(".hiw-h2"),
+      "/optimize lost the heading",
+    ).toHaveCount(1);
     await page.evaluate(() =>
-      document.querySelectorAll("details.stepd-d").forEach((d) => d.setAttribute("open", "")),
+      document
+        .querySelectorAll("details.stepd-d")
+        .forEach((d) => d.setAttribute("open", "")),
     );
-    await expect(page.locator(".pp"), "/optimize lost ProcessPicker").toHaveCount(1);
+    await expect(
+      page.locator(".pp"),
+      "/optimize lost ProcessPicker",
+    ).toHaveCount(1);
     /*
       ⚠ THE SPINE'S PROOF-OF-LIFE IS `.stepd-h2`, NOT `.spn`, AND A FAILED ASSERTION
       TAUGHT ME WHY. `.spn` is the SECTION WRAPPER `SpineSteps` emits, and
@@ -1285,17 +1308,39 @@ test.describe("/learn — the spine as five disclosures", () => {
       `SellSection`" — the spine's SEVEN went to disclosures; the sell five did
       not move. Counted by their own headings so it does not depend on a class.
     */
-    const sellHeadings = [
-      "Learning paths",
-      "Free & certified",
-      "Learn together",
-      "One-on-one",
-    ];
-    for (const h of sellHeadings) {
+    /*
+      ⚠⚠ INVERTED BY `P1-J0-E312`. THIS USED TO ASSERT THE FIVE SELL SECTIONS SURVIVE.
+
+      It existed so "delete the teaching bands" could not be read as "delete
+      `SellSection`" — three rows (`E281`, `E283`, `E297`) marked those five out of
+      scope pending Scott's confirmation. ⚠ HE CONFIRMED BY DELETING THEM: *"REMOVE
+      these sections."*
+
+      ⚠ IT NOW ASSERTS THEIR ABSENCE, WHICH IS A STRONGER CLAIM. Each carried
+      something already flagged — `One-on-one`'s present-tense messaging promise
+      (contradicting step 2 in `E296`/`E306`/`E307`), `Free & certified`'s unkeepable
+      *"get certified — free"*, `Learn together`'s *"Every course has a room"*. If one
+      returns, its contradiction returns with it.
+
+      ⚠ `Learning paths` IS DELIBERATELY NOT IN THIS LIST. It was one of the five
+      headings, but the words also appear legitimately in the hero's stat card and in
+      row 1's headline — banning the phrase would fail on copy that must stay.
+
+      ⚠ `SellSection` ITSELF IS NOT DELETED and is still the shared band elsewhere.
+    */
+    /*
+      ⚠ `One-on-one` IS DELIBERATELY NOT IN THIS LIST EITHER, AND A FAILURE PUT IT
+      HERE. `E307`'s new row-2 headline says *"...book one-on-one time for direct
+      training or support."*, and `E306`'s paid tier row is `Book time one-to-one`, so
+      a substring ban on that phrase fails on Scott's own copy. The sell section it
+      used to name is gone; what survives is the PANEL's promise, which is guarded by
+      the tier list instead (see row 2's note).
+    */
+    for (const h of ["Free & certified", "Learn together", "Your brand"]) {
       await expect(
-        page.getByText(h, { exact: false }).first(),
-        `the sell section "${h}" is out of scope and must survive`,
-      ).toBeVisible();
+        page.getByText(h, { exact: false }),
+        `the sell section "${h}" is back on /learn — E312 removed it`,
+      ).toHaveCount(0);
     }
 
     /* ⚠ AND THE SPINE'S OWN HEADINGS MUST NOT ALSO APPEAR AS BANDS. `While You Are
@@ -1328,26 +1373,75 @@ test.describe("/learn — the spine as five disclosures", () => {
     ).map((t) => t.trim());
     expect(rendered).toEqual(LEARN_STEPS.map((s) => s.summary));
 
+    /*
+      ⚠⚠ REWRITTEN BY `P1-J0-E305`, NOT RELAXED — READ WHY BEFORE "RESTORING" IT.
+
+      It used to assert a panel's text NEVER contains its own row label, which was
+      `E275`'s duplication rule. `E305` gave every panel `/optimize`'s format, whose
+      first element is an eyebrow reading `STEP N - <THE ROW LABEL>`. The label now
+      appears inside the panel BY DESIGN, so the old form was asserting the absence of
+      the thing Scott asked for.
+
+      ⚠ `E275` IS NOT VIOLATED. That row was about printing a `Step N - ` prefix INSIDE
+      a label that already carried one — "1  Step 2 - Provide…". This eyebrow is a
+      separate element from the summary and is exactly what `/optimize` draws.
+
+      ⚠ SO THE ASSERTION MOVED UP A LEVEL AND GOT STRICTER: the eyebrow must be
+      DERIVED — byte-equal to `Step {n} - {label}` — and the HEADLINE beneath must still
+      not repeat the label. A hand-typed eyebrow and a self-restating headline both fail.
+    */
     for (const [i, step] of LEARN_STEPS.entries()) {
       const panel = page
         .locator("details.stepd-d")
         .nth(i)
         .locator(".stepd-panel");
-      const text = ((await panel.textContent()) ?? "").replace(/\s+/g, " ");
+
+      const eyebrow = (
+        (await panel.locator("p").first().textContent()) ?? ""
+      ).trim();
       expect(
-        text.includes(step.summary),
-        `row ${step.n} reprints its own label "${step.summary}" inside its panel (E275)`,
+        eyebrow,
+        `row ${step.n}'s eyebrow must be derived from its label, not typed`,
+      ).toBe(`Step ${step.n} - ${step.summary}`);
+
+      const headline = (
+        (await panel.locator("h2").first().textContent()) ?? ""
+      ).replace(/\s+/g, " ");
+      expect(
+        headline.includes(step.summary),
+        `row ${step.n}'s HEADLINE reprints its own label "${step.summary}" (E275)`,
       ).toBe(false);
+
+      /* ⚠ AND NO PANEL CARRIES A BODY PARAGRAPH ANY MORE (`E305`). `/optimize`'s
+         format has none; the moment one row has a paragraph the two pages have
+         diverged again. */
+      await expect(
+        panel.locator("p.stepd-body"),
+        `row ${step.n} grew a body paragraph back — E305 deleted all five`,
+      ).toHaveCount(0);
     }
 
-    /* ⚠ ROW 3 CARRIES TWO SECTIONS AND MUST STAY TWO BLOCKS (`E283`). Merging them
-       into one sentence would finish collapsing the course/lesson level this page
-       exists to teach, and it would still pass every assertion above. */
+    /*
+      ⚠⚠ ROW 3 IS ONE BLOCK NOW, AND THIS ASSERTION WAS INVERTED BY `P1-J0-E308`.
+
+      It used to require TWO blocks. `E283` had merged a COURSE section and a LESSON
+      section into one row and kept them visibly separate INSIDE the panel, precisely
+      because collapsing them collapses a level this page was built to teach — and
+      this assertion was the guard on that.
+
+      ⚠ SCOTT COLLAPSED IT ANYWAY on 2026-08-24, into one sentence naming both, and
+      removed `LessonShot` with it. So the guard now asserts the new shape: exactly
+      one block, which is also what every other row has.
+
+      ⚠ THE LEVEL THE OLD GUARD PROTECTED IS NOW PROTECTED ONLY BY THE SENTENCE —
+      *"Courses and lessons explain..."* names both. That is weaker than two blocks
+      and it is his call; it is reported rather than resisted.
+    */
     await page.locator("summary.stepd-sum").nth(2).click();
     await expect(
       page.locator("details.stepd-d").nth(2).locator(".stepd-block"),
-      "row 3 must present course and lesson as two blocks, not one merged sentence",
-    ).toHaveCount(2);
+      "every row is a single block since E308 collapsed row 3",
+    ).toHaveCount(1);
   });
 
   /**
@@ -1429,14 +1523,25 @@ test.describe("/learn — the spine as five disclosures", () => {
   });
 
   /**
-   * BREAK 5 — put `5 minutes` back in the hero sub and this fails.
+   * ⚠⚠ REWRITTEN BY `P1-J0-E302` + `E304`, AND THE NEW SHAPE IS "NEVER TWO", NOT
+   * "EXACTLY ONE".
    *
-   * ⚠ `E243` WAS EXACTLY THIS SHAPE: two numbers for one signup on one page. The
-   * assertion is that the page states ONE duration, not that it states `3` —
-   * changing his mind to 2 minutes in both places must stay green, and only
-   * DISAGREEING with itself must go red.
+   * This asserted `/learn` states exactly ONE duration — `E243`'s defect was two
+   * numbers for one signup on one page. On 2026-08-24 Scott replaced BOTH strings
+   * that carried the claim: the hero's second sentence became `Check out the steps
+   * below to see how it works.` (`E302`) and the tagline became
+   * `From courses to certification in hours...` (`E304`).
+   *
+   * ⚠⚠ SO `under 3 minutes` NOW APPEARS NOWHERE ON `/learn`, and he had asked for
+   * it to be STRESSED earlier the same day (`E295`). THAT LOSS IS REPORTED, NOT
+   * ASSERTED AWAY — and it is why this test does not simply flip to expecting zero.
+   *
+   * ⚠ THE INVARIANT THAT SURVIVES IS THE ONE WORTH GUARDING: the page must never
+   * state two DIFFERENT durations for one signup. Zero is allowed (today's state,
+   * flagged); one is allowed (if he puts it back); two is `E243` and fails. Writing
+   * it as "exactly zero" would make restoring his own claim a test failure.
    */
-  test("§33 /learn gives exactly one time-to-start-learning", async ({
+  test("§33 /learn never states two different signup durations", async ({
     page,
   }) => {
     const body = ((await page.locator("body").textContent()) ?? "").replace(
@@ -1449,11 +1554,11 @@ test.describe("/learn — the spine as five disclosures", () => {
       ),
     );
     expect(
-      [...durations],
-      "one signup, one duration — E243. The hero and the tagline must agree.",
-    ).toHaveLength(1);
+      [...durations].length,
+      "one signup, one duration — E243. Two different times on one page is the defect.",
+    ).toBeLessThanOrEqual(1);
 
-    /* The heading and the tagline are the page's, from their one source. */
+    /* The eyebrow and the promoted headline are the page's, from their one source. */
     await expect(
       page.getByText(LEARN_SPINE_HEADING, { exact: true }),
     ).toBeVisible();
@@ -1491,11 +1596,13 @@ test.describe("/learn — walk 2: the hero and the how-it-works block", () => {
     const tagline = page.getByText(LEARN_SPINE_TAGLINE, { exact: true });
     await expect(tagline).toBeVisible();
 
-    const band = await page.evaluate(() => {
-      const ps = [...document.querySelectorAll("p")];
-      const tag = ps.find((e) =>
-        e.textContent?.trim().startsWith("From Account Creation to"),
-      );
+    const band = await page.evaluate((tagline) => {
+      /* ⚠ `p, h2` BECAUSE `E304` PROMOTED THE TAGLINE FROM SUB-COPY TO THE BLOCK'S
+         DISPLAY HEADLINE. It used to be a <p>; searching only <p> silently found
+         nothing and the test passed its own null check instead of measuring. */
+      const ps = [...document.querySelectorAll("p, h2")];
+      const TAGLINE_HEAD = tagline;
+      const tag = ps.find((e) => e.textContent?.trim() === TAGLINE_HEAD);
       const row1 = document.querySelector("li.stepd-item");
       if (!tag || !row1) return null;
       const top = tag.getBoundingClientRect().bottom;
@@ -1511,7 +1618,7 @@ test.describe("/learn — walk 2: the hero and the how-it-works block", () => {
         gap: Math.round(bottom - top),
         found: drawn.map((e) => e.tagName.toLowerCase()),
       };
-    });
+    }, LEARN_SPINE_TAGLINE);
     expect(band, "tagline or row 1 not found").not.toBeNull();
     expect(
       band!.found,
@@ -1577,10 +1684,25 @@ test.describe("/learn — walk 2: the hero and the how-it-works block", () => {
     await expect(
       hero.getByRole("link", { name: "Browse the catalog" }),
     ).toBeVisible();
+    /*
+      ⚠⚠ INVERTED BY `P1-J0-E301`. THIS USED TO ASSERT THE FOOTNOTE IS VISIBLE.
+
+      Scott, 2026-08-24: *"remove this text. messes the feel."* The line read
+      *"Browsing works signed out. Paths, progress, certificates and instructors need
+      an account."* — and `E291` had kept it specifically because it was the only
+      place the page said what works without an account.
+
+      ⚠ IT IS NOW ASSERTED ABSENT, because he reversed himself within the hour and a
+      DIFFERENT reworded version was drafted and killed too. Neither may ship.
+
+      ⚠ THE PAGE NOW TELLS A SIGNED-OUT VISITOR NOTHING about what needs an account,
+      and `Browse the Catalog` points at `/learn/courses`, which renders
+      "This area is coming soon." — measured, reported, not fixed here.
+    */
     await expect(
-      hero.getByText("Browsing works signed out", { exact: false }),
-      "the only place /learn says what works without an account",
-    ).toBeVisible();
+      page.getByText("Browsing works signed out", { exact: false }),
+      "E301 deleted the signed-out footnote — neither version may return",
+    ).toHaveCount(0);
 
     /*
       ⚠ AND THE TWO COLUMNS ARE REAL ABOVE 900, not a one-column grid that happens
@@ -1637,37 +1759,109 @@ test.describe("/learn — walk 2: the hero and the how-it-works block", () => {
   });
 
   /**
-   * ⚠ THE HEADLINE'S TERMINAL PERIOD (`P1-J0-E289`) and the ONE time claim.
+   * ⚠ THE HEADLINE'S TERMINAL PERIOD (`P1-J0-E289`, re-applied by `E313`).
    *
-   * ⚠ THE TIME ASSERTION IS THAT THE PAGE AGREES WITH ITSELF, not that it says
-   * "3". Scott typed `within 3 minutes` in the hero and `in under 3 minutes` in
-   * the tagline — `E243` twice over. `E295` picked one phrasing; if he changes it
-   * to two minutes in both places this must stay green, and only DISAGREEING must
-   * go red. §33 already counts the numbers; this counts the PHRASINGS.
+   * `E313` shortened the `<h1>` to `Go Zero to Hero. Stay Supported.` — Scott typed
+   * no period after `Supported`, and E289 is his own request for one on this exact
+   * `<h1>` made the same day, so it is applied and reported.
+   *
+   * ⚠ THE TIME-PHRASING HALF MOVED TO §33 AND CHANGED SHAPE. `E302`/`E304` removed
+   * every instance of the 3-minute claim from `/learn`, so "exactly one phrasing"
+   * would now fail on the page's own copy. §33 guards the invariant that survives —
+   * never TWO different durations. See its note.
    */
-  test("§38 the h1 ends in a period and one phrasing states the time claim", async ({
-    page,
-  }) => {
+  test("§38 the /learn h1 ends in a period", async ({ page }) => {
     const h1 = ((await page.locator("h1").first().textContent()) ?? "").trim();
     expect(
       h1.endsWith("."),
-      `the /learn h1 needs its terminal period (E289): "${h1}"`,
+      `the /learn h1 needs its terminal period (E289/E313): "${h1}"`,
     ).toBe(true);
 
-    const body = ((await page.locator("body").textContent()) ?? "").replace(
-      /\s+/g,
-      " ",
-    );
-    const phrasings = new Set(
-      (
-        body.match(
-          /\b(?:in under|within|in the next|in)\s+\d+\s*minutes?\b/gi,
-        ) ?? []
-      ).map((m) => m.replace(/\s+/g, " ").toLowerCase()),
-    );
+    /*
+      ⚠ AND IT IS THE SHORT ONE (`E313`). The 8-word string it replaced would still
+      pass the period check, so the length is asserted too — 6 words, not 8. Scott:
+      *"Thinking it needs to be shorter..punchier."*
+    */
     expect(
-      [...phrasings],
-      "one claim, one phrasing — E243/E295. The hero and the tagline must use the same words.",
-    ).toHaveLength(1);
+      h1.split(/\s+/).length,
+      "E313 shortened this h1; the long string must not come back",
+    ).toBeLessThanOrEqual(6);
+  });
+
+  /**
+   * ⚠⚠ THE FOOTER, GEOMETRICALLY (`P1-ALL-E013`).
+   *
+   * Scott, 2026-08-24: *"what is this? Guessing it is the footer and it is all goofed
+   * up?"* The YouTube mark rendered 1440x1440 on `/learn`, filling the viewport.
+   *
+   * ── WHY THIS IS A GEOMETRIC GUARD AND NOT A SELECTOR ONE ─────────────────
+   *
+   * The cause was not the icon. Every rule `HomeFooter` needs is `.pm-home`-scoped
+   * and `app/learn/layout.tsx` rendered it outside that scope AND without importing
+   * `home.css` at all — so the grid, the chips and the background were unstyled too,
+   * and the unsized `<svg>` (a `viewBox` and no intrinsic dimensions) simply expanded
+   * to fill its parent. A test for `svg[width]` would have passed the next unsized
+   * asset straight through.
+   *
+   * ⚠ SO IT ASSERTS THE SHAPE: nothing inside the footer exceeds a sane box, and the
+   * footer's own grid is actually applied. Any future unsized asset — or a fourth
+   * caller that forgets the scope — fails the same way.
+   *
+   * ⚠ ALL THREE PAGES, because the bug was visible on exactly one of them and that
+   * asymmetry is what made it survive. `/` and `/optimize` were always correct.
+   */
+  test("§39 the footer renders sanely on every page that has one", async ({
+    page,
+  }) => {
+    for (const url of ["/", "/optimize", "/learn"]) {
+      await page.goto(url);
+      const r = await page.evaluate(() => {
+        const f = document.querySelector("footer");
+        if (!f) return { missing: true } as const;
+        const fh = f.getBoundingClientRect().height;
+        const oversize = [...f.querySelectorAll("*")]
+          .map((e) => {
+            const q = e.getBoundingClientRect();
+            return {
+              tag: e.tagName.toLowerCase(),
+              w: Math.round(q.width),
+              h: Math.round(q.height),
+            };
+          })
+          /*
+            ⚠ THE THRESHOLD IS THE FOOTER'S OWN HEIGHT, NOT A CONSTANT. A first cut
+            used a flat 420px and fired on `/` — the footer is 565px tall and its
+            own column containers are legitimately taller than any constant I would
+            have guessed. A descendant TALLER THAN ITS OWN FOOTER is the thing that
+            cannot happen unless it escaped its box, which is exactly what E013 was:
+            a 1440x1440 icon inside a footer that should have been 565 tall.
+          */
+          .filter((x) => x.h > fh + 1);
+        const grid = getComputedStyle(
+          f.querySelector(".foot") as HTMLElement,
+        ).gridTemplateColumns;
+        const svg = f.querySelector("svg")?.getBoundingClientRect();
+        return {
+          footH: Math.round(fh),
+          oversize,
+          grid,
+          svg: svg
+            ? `${Math.round(svg.width)}x${Math.round(svg.height)}`
+            : "none",
+        };
+      });
+      expect(r.missing, `${url} has no footer`).toBeUndefined();
+      expect(
+        r.oversize,
+        `${url}: something in the footer escaped its box — E013`,
+      ).toEqual([]);
+      /* ⚠ NOT VACUOUS: the footer's own grid must be APPLIED, which is what proves
+         the stylesheet reached it. `none` is the unstyled state the bug shipped. */
+      expect(
+        r.grid,
+        `${url}: the footer's grid is not applied — E013`,
+      ).not.toBe("none");
+      expect(r.svg, `${url}: the social icon is unsized — E013`).toBe("16x16");
+    }
   });
 });
