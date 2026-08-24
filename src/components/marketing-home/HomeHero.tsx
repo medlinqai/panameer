@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ProofStats } from "@/components/marketing/ProofStats";
 import { HeroVideoBackdrop } from "@/components/media/HeroVideoBackdrop";
+import { HeroTwoUp } from "@/components/marketing/HeroTwoUp";
 
 /**
  * HERO — the dark video CARD (brief_home_hero_dark_card_2026-08-13).
@@ -73,9 +74,21 @@ export function HomeHero({
           */}
           <div aria-hidden className="hero-grain" />
 
-          <div className="wrap hero-row">
-            <div className="hero-left">
-              {/*
+          {/*
+            ⚠ THE ROW IS `HeroTwoUp` NOW, AND THE CLASS NAMES ARE UNCHANGED
+            (`P1-J0-E291`). `/learn` needed this hero's two-column structure and
+            could not have its stylesheet — see that component's note. The three
+            class strings passed here are byte-for-byte what this file emitted
+            before the extraction, which is why `/optimize` measured identical at
+            1440 / 900 / 390 rather than merely looking the same.
+          */}
+          <HeroTwoUp
+            rowClassName="wrap hero-row"
+            leftClassName="hero-left"
+            rightClassName="hero-right"
+            left={
+              <>
+                {/*
                 ⚠ BOTH STRINGS ARE THE OWNER'S AND THEY ARE SETTLED.
 
                 This pair has now been round the houses: it was a claim + a
@@ -87,13 +100,17 @@ export function HomeHero({
                 DO NOT soften, lengthen or "improve" either string. If they
                 change again it will be because he says so.
               */}
-              <h1>Optimize Your Business with AI</h1>
-              {/* THE BUTTON GOES TO /assess. It was `#` — an honest stub while
+                <h1>Optimize Your Business with AI</h1>
+                {/* THE BUTTON GOES TO /assess. It was `#` — an honest stub while
                   the assessment did not exist. No `›` affectation. */}
-              <Link href="/assess" className="hero-cta">{ctaLabel}</Link>
-            </div>
-            <div className="hero-right">
-              {/*
+                <Link href="/assess" className="hero-cta">
+                  {ctaLabel}
+                </Link>
+              </>
+            }
+            right={
+              <>
+                {/*
                 ⚠ THE HERO NO LONGER CARRIES THE TWO-OUTPUTS SPLIT (E160), AND THE
                 DECISION BEHIND IT IS UNCHANGED — only its mention here is dropped.
 
@@ -113,7 +130,7 @@ export function HomeHero({
                 title in `spine-steps.ts`, in `AiRoadmapShot`'s output copy, and in
                 `assessment_engine_spec.md`. Do not restore it here to "fix" the hero.
               */}
-              {/*
+                {/*
                 ⚠ "versus", NOT "against" — AND IT IS THE CONSISTENT CHOICE, not just
                 the softer one. `OptimizationDashboardShot` already ships "Your Org
                 Versus Industry", so the hero and the dashboard now use one word.
@@ -123,7 +140,7 @@ export function HomeHero({
                 benchmark. Scott accepted the trade to recover a line (E166). Do not
                 reinstate it.
               */}
-              {/*
+                {/*
                 ⚠ `&nbsp;` BETWEEN "all" AND "free." IS A GUARD, NOT THE FIX (E169).
                 Scott: "That last wrap and giving the word 'free' its own line is not
                 correct. It is why I consented to removing 'actually'." The shortening
@@ -160,8 +177,12 @@ export function HomeHero({
                   2. "versus" still ships on the Step 4 dashboard shot, untouched. The word
                      is no longer used in two places for consistency; it is used in one.
               */}
-              <p>See where you stand and where AI can move the needle in your business. Then build your 12-month roadmap with an expert &mdash; all for&nbsp;free.</p>
-              {/*
+                <p>
+                  See where you stand and where AI can move the needle in your
+                  business. Then build your 12-month roadmap with an expert
+                  &mdash; all for&nbsp;free.
+                </p>
+                {/*
                 ⚠ A DISTINCT BEAT, NOT A SENTENCE ON THE LEDE. It is the bridge into
                 the spine below, so it gets its own `<p>` and a lighter magenta to read
                 as a pointer rather than as body copy.
@@ -170,14 +191,17 @@ export function HomeHero({
                 "below", and the spine is directly below it, so the page does the
                 pointing. Making it interactive is a separate decision.
               */}
-              <p className="hero-bridge">Check out the steps below to see how it works.</p>
-              {/* WS-9 — one shared component; /assess step 0 renders the same source.
+                <p className="hero-bridge">
+                  Check out the steps below to see how it works.
+                </p>
+                {/* WS-9 — one shared component; /assess step 0 renders the same source.
                   ⚠ THE CARDS STAY ON THE RIGHT, below the lede. Scott: "i want to keep
                   the cards on the right." The taller lede re-centres the left column
                   against them; it does not move them. */}
-              <ProofStats />
-            </div>
-          </div>
+                <ProofStats />
+              </>
+            }
+          />
         </div>
       </div>
     </section>
