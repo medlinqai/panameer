@@ -5,7 +5,7 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
   would prove only that somebody typed the same thing twice. `spine-steps.ts` has
   no imports of its own, so pulling it in here costs nothing.
 */
-import { SPINE_STEPS, summaryFor } from "../src/lib/spine-steps";
+import { SPINE_STEPS } from "../src/lib/spine-steps";
 /* The product's name, from its one source — see `ASSESSMENT_PRODUCT`'s note. */
 import { ASSESSMENT_PRODUCT } from "../src/lib/brand";
 /*
@@ -915,56 +915,110 @@ test.describe("/optimize — the five steps as disclosures", () => {
     page,
   }) => {
     const d = page.locator("details.stepd-d");
-    /* ⚠ FIVE, DERIVED: step 1 is ProcessPicker and is deliberately not in the data. */
-    await expect(d).toHaveCount(SPINE_STEPS.length + 1);
+    /* ⚠ FIVE, DERIVED — AND THE `+ 1` IS GONE (`P1-J0-E288`). This used to read
+       `SPINE_STEPS.length + 1` because step 1 was `ProcessPicker`, hardcoded in
+       `OptimizeSteps` and deliberately absent from the data. It is `SPINE_STEPS[0]`
+       now, with `graphic: "process-picker"`, so the array IS the five. */
+    await expect(d).toHaveCount(SPINE_STEPS.length);
     await expect(page.locator("details.stepd-d[open]")).toHaveCount(0);
   });
 
   /**
-   * ⚠ AGAINST THE DATA, NOT AGAINST A TYPED LITERAL. If someone re-words an
-   * eyebrow in `spine-steps.ts`, this test follows them; if someone hand-types a
-   * summary onto the page, it fails. That is the only version of this assertion
-   * worth having — the whole point of `/optimize` deriving its strings is that it
-   * cannot drift from `/`.
+   * ── ⚠⚠ THE CONTRACT CHANGED ON PURPOSE (`P1-J0-E286`/`E288`) ───────────────
+   *
+   * This asserted the summary was DERIVED from the eyebrow by `summaryFor()`.
+   * `summaryFor()` no longer exists: Scott asked for 3-4 word rows, and no rule
+   * turns *"Submit Your Completed Assessment to Panameer's AI Platform (AIP)"* into
+   * *"Submit to the AIP"* without inventing the second string. A short HANDLE and a
+   * full EYEBROW are now deliberately two fields.
+   *
+   * ⚠ THIS IS NOT THE "STOP AND REPORT" CASE. The brief is replacing the contract
+   * knowingly, which is the difference between a guard that has been outgrown and
+   * one that is being weakened to make new work go green.
+   *
+   * ⚠ WHAT SURVIVES FROM THE OLD ASSERTION IS THE ANTI-CIRCULARITY LESSON, and it
+   * is why the new one compares to the DATA rather than to a typed literal: the
+   * first version of the old test put `summaryFor` on both sides, so making it
+   * return "Provide Details" for every step kept the suite GREEN.
+   *
+   * ⚠⚠ AND THE `E275` HALF IS THE IMPORTANT ONE. Shortening the rows DELETED the
+   * full eyebrow from the page, because `/optimize`'s panel never rendered it —
+   * which would have re-introduced the exact backwards state `E275` fixed six days
+   * earlier: `AIP` introduced in a label and expanded nowhere. The panel gained the
+   * eyebrow in the same commit, and this asserts both expansions survive.
    */
-  test("§22 each summary is its SPINE_STEPS eyebrow, minus the Step N prefix", async ({
+  test("§22 rows are short handles, and every full eyebrow still renders", async ({
     page,
   }) => {
     const rendered = (
       await page.locator("summary.stepd-sum .stepd-t").allTextContents()
     ).map((t) => t.trim());
-    expect(rendered).toHaveLength(SPINE_STEPS.length + 1);
-    /* Step 1 is the one exception — ProcessPicker, not a SPINE_STEPS row. */
-    expect(rendered[0]).toBe("Select a Business Process");
 
-    /*
-      ⚠ COMPARED TO THE **EYEBROW**, NOT TO `summaryFor(eyebrow)` — AND A BREAK IS
-      WHY. The first version asserted `rendered === SPINE_STEPS.map(summaryFor)`,
-      which puts the same function on both sides: making `summaryFor` return the
-      literal "Provide Details" for every step kept the test GREEN, because the
-      expectation broke identically. That is a circular assertion, which is the
-      exact failure the file's own note about `button.erp-card` warns against.
+    /* ⚠ FIVE, AND STEP 1 IS NO LONGER AN EXCEPTION (`E288`) — it is `SPINE_STEPS[0]`
+       now, with `graphic: "process-picker"`, so there is no `+ 1` here any more. */
+    expect(rendered).toEqual(SPINE_STEPS.map((s) => s.summary));
 
-      So this asserts the RELATIONSHIP to the data instead: the rendered summary
-      must be a non-empty tail of its eyebrow, and must not have carried the
-      prefix through. `summaryFor` is still used — as the thing under test, on one
-      side only.
-    */
-    SPINE_STEPS.forEach((step, i) => {
-      const got = rendered[i + 1];
-      expect(got, `step ${step.n} rendered an empty summary`).not.toBe("");
+    /* 1. Scott's rule: 3-4 words. Asserted as a ceiling, not an exact count. */
+    for (const [i, got] of rendered.entries()) {
+      expect(got, `row ${i + 1} is empty`).not.toBe("");
       expect(
-        step.eyebrow.endsWith(got),
-        `step ${step.n}: "${got}" is not the tail of its eyebrow "${step.eyebrow}"`,
-      ).toBe(true);
-      expect(got, `step ${step.n} kept its "Step N -" prefix`).not.toMatch(
+        got.split(/\s+/).length,
+        `row ${i + 1} "${got}" is longer than 4 words`,
+      ).toBeLessThanOrEqual(4);
+      expect(got, `row ${i + 1} kept a "Step N -" prefix`).not.toMatch(
         /^Step\s+\d/i,
       );
-      /* And the helper agrees with the page — the last link in the chain. */
-      expect(got, `step ${step.n} does not match summaryFor()`).toBe(
-        summaryFor(step.eyebrow),
-      );
-    });
+    }
+
+    /* 3. The five render in order 1-5 — the numerals, not just the labels. */
+    expect(
+      await page.locator("summary.stepd-sum .stepd-n").allTextContents(),
+    ).toEqual(["1", "2", "3", "4", "5"]);
+
+    /*
+      2. ⚠⚠ THE `E275` GUARD. Every full eyebrow must still render SOMEWHERE on the
+      page — asserted against the data so a re-worded eyebrow follows automatically,
+      and then the two expansions that do the actual work are asserted by literal,
+      because those are the strings whose loss `E275` was about.
+    */
+    /*
+      ⚠ THE ROWS ARE FORCE-OPENED FIRST, AND A FAILURE TAUGHT ME WHY. The eyebrows
+      live INSIDE the panels, and `innerText` excludes content hidden by a closed
+      `<details>` — so reading it closed reported every eyebrow missing. Reading
+      `page.content()` instead would have passed, but it would only prove the string
+      is in the MARKUP; `innerText` after opening proves it is RENDERED, which is
+      what `E275` is actually about. Same force-open line as §28.
+    */
+    await page.evaluate(() =>
+      document
+        .querySelectorAll("details.stepd-d")
+        .forEach((d) => d.setAttribute("open", "")),
+    );
+    /*
+      ⚠ CASE-INSENSITIVE, AND A SECOND FAILURE TAUGHT ME WHY. `innerText` returns
+      text as TRANSFORMED by CSS, and the eyebrow is `uppercase` — so the page reads
+      "STEP 1 - SELECT A BUSINESS PROCESS" while the data says
+      "Step 1 - Select a Business Process". The casing is a presentation choice; the
+      STRING is the claim `E275` cares about, so the comparison folds case rather
+      than the data being retyped in caps to match.
+    */
+    const body = (
+      await page.evaluate(() => document.body.innerText)
+    ).toLowerCase();
+    for (const step of SPINE_STEPS) {
+      expect(
+        body.includes(step.eyebrow.toLowerCase()),
+        `step ${step.n}'s full eyebrow is not rendered anywhere — E275`,
+      ).toBe(true);
+    }
+    expect(
+      body.includes("(transaction-level)"),
+      "step 2's (Transaction-Level) is the part that does the work — E275",
+    ).toBe(true);
+    expect(
+      body.includes("panameer's ai platform (aip)"),
+      "AIP must be EXPANDED on the page, not just introduced in a label — E275",
+    ).toBe(true);
   });
 
   test("§23 the summary takes focus and Enter toggles it", async ({ page }) => {

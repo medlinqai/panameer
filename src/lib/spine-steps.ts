@@ -1,5 +1,5 @@
 /**
- * STEPS 2 THROUGH 5 OF THE HOME SPINE — one list, one component.
+ * ALL FIVE STEPS OF THE ASSESSMENT SPINE — one list, one component.
  *
  * ── WHY THIS IS DATA AND NOT FOUR COMPONENTS ─────────────────────────────────
  *
@@ -10,8 +10,19 @@
  * redo this again."* Adding a sixth step, or dropping a screenshot into an
  * existing one, is an edit here and nothing else.
  *
- * Step 1 is NOT in this list — it is `ProcessPicker`, which carries the four
- * process cards and has a different shape. It is the exception, not the pattern.
+ * ── ⚠⚠ STEP 1 IS IN THIS LIST NOW (`P1-J0-E288`) ────────────────────────────
+ *
+ * Scott, 2026-08-24: *"all steps after the first are effectively 'grouped'. I
+ * thought that should be corrected and consistent."* He was reading the code
+ * correctly — this file used to open *"STEPS 2 THROUGH 5 ... Step 1 is NOT in this
+ * list ... It is the exception, not the pattern"*, and `OptimizeSteps` hardcoded a
+ * `STEP_ONE` const rendered as a separate `<li>` above the `.map`. One journey, two
+ * mechanisms, which is the `E242` shape.
+ *
+ * ⚠ ITS GRAPHIC IS A REGISTRY KEY LIKE EVERY OTHER — `process-picker` resolves to
+ * `<ProcessPicker />` through `StepGraphic`. That is what let the special case go:
+ * the thing that made step 1 different was never its data, it was that its art was
+ * a component nobody had put in the registry.
  *
  * ── ⚠ AN EMPTY `graphic` RENDERS NOTHING, AND THAT IS THE POINT ───────────────
  *
@@ -29,7 +40,57 @@
 export type SpineStep = {
   /** 1-based step number, used for the id and the eyebrow. */
   n: number;
-  /** ⚠ VERBATIM. Rendered uppercase by CSS, so the casing here is title case. */
+  /**
+   * ── ⚠⚠ THE SHORT HANDLE — 3-4 WORDS, AND IT IS NOT DERIVED (`P1-J0-E286`) ──
+   *
+   * Scott, 2026-08-24: *"i am also thinking to create the steps (the top level
+   * accordion that gets expanded) using 3-4 words only."* Closed, a reader should
+   * get the whole sequence in one pass; `/optimize`'s rows ran to nine words.
+   *
+   * ── ⚠ WHY `summaryFor()` IS GONE, AND WHY THAT IS NOT ABANDONING ITS RULE ──
+   *
+   * This field replaced a function. The comment that stood on `summaryFor()` is
+   * reproduced here rather than summarised, because a future reader finding a bare
+   * string field WILL try to restore the derivation:
+   *
+   *   > `/optimize` renders these five steps as `<details>` rows whose summary is
+   *   > the eyebrow WITHOUT its `Step N - ` prefix — the number is already drawn as
+   *   > its own element beside the text, so leaving the prefix in would print it
+   *   > twice: "1  Step 2 - Provide Capability Domain (Transaction-Level) Details".
+   *   >
+   *   > ⚠ IT LIVES BESIDE THE DATA, rather than in the component, so the guard can
+   *   > assert the rendered summaries against their SOURCE without importing React.
+   *   > A test that compares the page to a typed literal proves only that somebody
+   *   > typed the same thing twice.
+   *   >
+   *   > ⚠ STRIPPED BY PATTERN, NOT BY SLICING A FIXED LENGTH — the eyebrows are
+   *   > Scott's and their prefixes are not all the same width. Deliberately
+   *   > forgiving: an eyebrow with no prefix passes through unchanged.
+   *
+   * ⚠⚠ THE RULE BEHIND IT — *"derive, don't retype"*, `E155` and `E242` — IS NOT
+   * ABANDONED. THE REQUIREMENT CHANGED. A short HANDLE and a full EYEBROW are now
+   * deliberately TWO DIFFERENT STRINGS with two different jobs, so derivation is no
+   * longer the correct relationship between them: there is no rule that turns
+   * "Submit Your Completed Assessment to Panameer's AI Platform (AIP)" into "Submit
+   * to the AIP" without inventing the second one.
+   *
+   * ⚠ THE FIELD STILL LIVES BESIDE THE DATA for the other half of that reasoning —
+   * `check:ui` asserts the rendered rows against THIS array without importing React.
+   *
+   * ⚠ NO `Step N - ` PREFIX HERE. The numeral is drawn as its own element beside the
+   * text; a prefix would print it twice, which is what `summaryFor` existed to strip.
+   */
+  summary: string;
+  /**
+   * ⚠ VERBATIM. Rendered uppercase by CSS, so the casing here is title case.
+   *
+   * ⚠⚠ THIS IS NO LONGER WHAT THE ROW SHOWS, AND IT MUST STILL RENDER SOMEWHERE.
+   * `summary` above is the row; this is the full string, and `/optimize` now prints
+   * it as a lead line INSIDE the panel. That is not decoration — see `E275` in the
+   * step-3 note below: shortening the row without moving the eyebrow into the panel
+   * would introduce `AIP` in a label and expand it nowhere on the page, which is the
+   * exact backwards state `E275` corrected.
+   */
   eyebrow: string;
   title: string;
   /**
@@ -47,7 +108,29 @@ export type SpineStep = {
 
 export const SPINE_STEPS: SpineStep[] = [
   {
+    /*
+      ⚠⚠ STEP 1, WHICH USED TO BE A HARDCODED `STEP_ONE` CONST IN `OptimizeSteps`
+      (`P1-J0-E288`). Its eyebrow and title are the strings that page already
+      rendered; nothing here is new copy.
+
+      ⚠ `graphic: "process-picker"` IS THE WHOLE FIX. `StepGraphic`'s registry now
+      resolves that key to `<ProcessPicker />`, so step 1 carries its art the same
+      way every other step does and `OptimizeSteps` is one `.map` over five.
+    */
+    n: 1,
+    summary: "Select a Process",
+    eyebrow: "Step 1 - Select a Business Process",
+    /* ⚠ `ProcessPicker` CARRIES ITS OWN HEADING, so this title is the one string
+       `/optimize` never rendered for step 1 and still does not — the panel prints
+       the eyebrow and the picker. Kept because the field is required and because
+       `SpineSteps` (if it is ever re-rendered) needs one. */
+    title:
+      "Pick the business process you want to assess — the questions follow from it.",
+    graphic: "process-picker",
+  },
+  {
     n: 2,
+    summary: "Answer by Domain",
     eyebrow: "Step 2 - Provide Capability Domain (Transaction-Level) Details",
     title:
       "Provide the processing methods for each capability domain within your business process.",
@@ -58,6 +141,7 @@ export const SPINE_STEPS: SpineStep[] = [
   },
   {
     n: 3,
+    summary: "Submit to the AIP",
     /**
      * ⚠ FIRST REFERENCE TO THE AIP ANYWHERE IN THE APP.
      *
@@ -76,7 +160,7 @@ export const SPINE_STEPS: SpineStep[] = [
     eyebrow:
       "Step 3 - Submit Your Completed Assessment to Panameer's AI Platform (AIP)",
     title:
-    /*
+      /*
       ⚠ E275 — VERBATIM, Scott 2026-08-21, AND IT CLOSES THE BACKWARDS ACRONYM.
 
       E232 flipped this sentence to the conventional `AI Platform (AIP)` and left
@@ -99,7 +183,9 @@ export const SPINE_STEPS: SpineStep[] = [
   },
   {
     n: 4,
-    eyebrow: "Step 4 - Preview Your Solutions and Savings on the Optimization Dashboard",
+    summary: "Preview Your Savings",
+    eyebrow:
+      "Step 4 - Preview Your Solutions and Savings on the Optimization Dashboard",
     /**
      * ⚠ VERBATIM, Scott 2026-08-18 (E167). The previous wording — "See the AI
      * automation options possible and where your adoption stands in relation to your
@@ -117,7 +203,7 @@ export const SPINE_STEPS: SpineStep[] = [
      * produce.
      */
     title:
-    /*
+      /*
       ⚠ E233 — VERBATIM, Scott 2026-08-20, and three details are deliberate:
         · `rank`, not `stand`;
         · the tail is `improve that ranking`, NOT `improve it` — *it* would attach
@@ -139,6 +225,7 @@ export const SPINE_STEPS: SpineStep[] = [
   },
   {
     n: 5,
+    summary: "Build Your Roadmap",
     eyebrow: "Step 5 - Collaborate with Our Experts to Build Your AI Roadmap",
     /**
      * ⚠ "1 year", NOT "3 year" — a correction, flagged.
@@ -149,7 +236,7 @@ export const SPINE_STEPS: SpineStep[] = [
      * two different promises on one page.
      */
     title:
-    /*
+      /*
       ⚠ E234 — VERBATIM, Scott 2026-08-20.
 
       ⚠ `1-year`, HYPHENATED, AND NOT `3-year`. Unchanged reasoning: the dashboard
@@ -168,24 +255,14 @@ export const SPINE_STEPS: SpineStep[] = [
   },
 ];
 
-/**
- * ── ⚠ THE DISCLOSURE SUMMARY, DERIVED FROM THE EYEBROW (P1-J0-E259) ──────────
- *
- * `/optimize` renders these five steps as `<details>` rows whose summary is the
- * eyebrow WITHOUT its `Step N - ` prefix — the number is already drawn as its own
- * element beside the text, so leaving the prefix in would print it twice:
- * "1  Step 2 - Provide Capability Domain (Transaction-Level) Details".
- *
- * ⚠ IT LIVES HERE, BESIDE THE DATA, RATHER THAN IN THE COMPONENT, so the guard
- * can assert the rendered summaries against their SOURCE without importing React.
- * A test that compares the page to a typed literal proves only that somebody
- * typed the same thing twice.
- *
- * ⚠ STRIPPED BY PATTERN, NOT BY SLICING A FIXED LENGTH — the eyebrows are
- * Scott's and their prefixes are not all the same width. Deliberately forgiving:
- * an eyebrow with no prefix passes through unchanged, so a future step whose
- * eyebrow he writes differently still renders its own words rather than an empty
- * row.
- */
-export const summaryFor = (eyebrow: string) =>
-  eyebrow.replace(/^\s*Step\s+\d+\s*[-\u2013\u2014]\s*/i, "").trim() || eyebrow;
+/*
+  ── ⚠⚠ `summaryFor()` IS GONE (`P1-J0-E286`) ──────────────────────────────────
+
+  It derived a row label from an eyebrow by stripping the `Step N - ` prefix. The
+  rows are now 3-4 words that no rule can produce from the full eyebrow, so the
+  derivation had nothing left to do and every caller was removed first.
+
+  ⚠ ITS ENTIRE COMMENT BLOCK MOVED ONTO THE `summary` FIELD ABOVE — quoted, not
+  summarised — precisely so nobody finds a bare string field and "restores" the
+  derivation. Read that note before adding one back.
+*/
