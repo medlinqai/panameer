@@ -110,11 +110,43 @@ export const BRAND_DESCRIPTOR =
  * Enterprise page next, so a re-wording has to be one edit that cannot
  * half-land.
  *
- * "The modern ERPs" is plural on purpose. Oracle is the wedge and the diagram
- * names Oracle Cloud, but the claim being made is about the SPACE BETWEEN
- * systems of record — which is only interesting if there is more than one.
+ * ── ⚠⚠ IT SAYS ORACLE NOW, AND THE PLURAL WAS THE DEFECT (`P1-J0-E315`) ─────
+ *
+ * This note used to argue the opposite: *"'The modern ERPs' is plural on purpose.
+ * Oracle is the wedge and the diagram names Oracle Cloud, but the claim being made
+ * is about the SPACE BETWEEN systems of record — which is only interesting if
+ * there is more than one."* ⚠ THAT ARGUMENT DESCRIBED AN AMBITION, NOT THE BUILD.
+ *
+ * `integration_model.md`: the integration model is ORACLE END TO END — AME (an
+ * E-Business Suite tool) for soft integrations, Oracle-developed APIs for hard
+ * ones. ⚠ THERE IS NO SAP, WORKDAY OR NETSUITE PATH AND NONE IS PLANNED. A plural,
+ * vendor-neutral brand line in front of a single-vendor build is the brand being
+ * broader than the product.
+ *
+ * ⚠ IT ALSO COLLIDED WITH THE SHARPEST LINE ON THE SITE. `/hire-talent`'s spine
+ * step 5 is `Sell Direct to Oracle Licensees` (`P1-J1-E012`). Scott asked whether
+ * that should soften to *"organizations with modern ERPs"*; the collision resolves
+ * the other way — the SPECIFIC line was right and the general one was wrong.
+ * `positioning_decision.md` 2026-08-24: **say Oracle in the brand, stay general in
+ * the SCHEMA.**
+ *
+ * ⚠⚠ THE SCHEMA IS NOT TOUCHED AND MUST NOT BE. `SoftwareSuite` still carries
+ * PeopleSoft, Workday, Salesforce and the rest; no field, enum or table is renamed.
+ * That vendor-neutrality is free optionality and it costs nothing to keep — this
+ * work stream changes ONE MARKETING STRING.
+ *
+ * ⚠ BLAST RADIUS, CHECKED BEFORE THE EDIT: this constant renders in exactly ONE
+ * place — `ErpIntegration.tsx:262` (`.erpx-tagline`) — and `ErpIntegration` renders
+ * on exactly ONE page, `/enterprise`. Verified live: the string appears 0 times on
+ * `/`, `/optimize`, `/learn` and `/hire-talent`. (`app/page.tsx` mentions it only
+ * in a comment recording that `/`'s copy of the section was removed earlier.)
+ *
+ * ⚠ THE ORACLE-vs-ERP-GENERAL FORK ITSELF IS STILL OPEN in
+ * `positioning_decision.md`. This settles the TAGLINE only; the wider positioning
+ * question is Scott's.
  */
-export const BRAND_ERP_TAGLINE = "Automating the space between the modern ERPs.";
+export const BRAND_ERP_TAGLINE =
+  "Automating the space between your Oracle systems.";
 
 /**
  * SEO ONLY — the single place "marketplace" is allowed.
@@ -333,7 +365,8 @@ export const SEQUENCE_COPY = {
   lead: {
     buyer:
       "Learn, connect, create, and settle — all\u00A0in\u00A0one\u00A0place, on one fully integrated platform.",
-    provider: "The same platform your buyers use — seen from your side of the table.",
+    provider:
+      "The same platform your buyers use — seen from your side of the table.",
   },
   beats: {
     buyer: [
@@ -557,10 +590,26 @@ export const OMNI_CHANNEL = {
   lead: "One profile, many revenue streams. Productize once, sell many.",
   cards: [
     { icon: "$", title: "Consultations", body: "Bite-size, on-demand advice." },
-    { icon: "▤", title: "Courses", body: "Guided paths that end in a certification." },
-    { icon: "◫", title: "Packages", body: "Pre-scoped services, off the shelf." },
-    { icon: "⚙", title: "Engagements", body: "Full deployments, days to months." },
-    { icon: "✦", title: "Mentoring", body: "Coach teams before and during the work." },
+    {
+      icon: "▤",
+      title: "Courses",
+      body: "Guided paths that end in a certification.",
+    },
+    {
+      icon: "◫",
+      title: "Packages",
+      body: "Pre-scoped services, off the shelf.",
+    },
+    {
+      icon: "⚙",
+      title: "Engagements",
+      body: "Full deployments, days to months.",
+    },
+    {
+      icon: "✦",
+      title: "Mentoring",
+      body: "Coach teams before and during the work.",
+    },
   ],
 } as const;
 
@@ -749,7 +798,8 @@ export const HOME_HERO = {
     "Sample Read" chip and its own caption. Honesty does not get more honest by
     being repeated; it gets skipped.
   */
-  frameworkNote: "Sample read — the framework below is what you're scored against.",
+  frameworkNote:
+    "Sample read — the framework below is what you're scored against.",
 } as const;
 
 /**
@@ -890,9 +940,18 @@ export const AI_MATCH_COPY = {
   headline: "Post what you need. Get ranked, vetted experts.",
   lead: "Your Work Request is matched against every expert's actual work history — the systems they ran, how deep, how recently — and comes back ranked.",
   steps: [
-    { label: "Your Work Request", body: "Say what you need, in your own words." },
-    { label: "Matched on real history", body: "Against dated engagements, not a self-scored checklist." },
-    { label: "Ranked by depth and recency", body: "Deep and current beats touched-it-once." },
+    {
+      label: "Your Work Request",
+      body: "Say what you need, in your own words.",
+    },
+    {
+      label: "Matched on real history",
+      body: "Against dated engagements, not a self-scored checklist.",
+    },
+    {
+      label: "Ranked by depth and recency",
+      body: "Deep and current beats touched-it-once.",
+    },
   ],
   note: "Ranking runs on each expert's dated work history — see how a profile is built on Find Work.",
 } as const;
