@@ -362,57 +362,89 @@ const PANELS: Record<number, PanelBlock[]> = {
         headline implies it; the page no longer says it.
       */
       heading:
-        "Each Learning path has its own test and every certificate is verified and issued by Panameer.",
+        "Each Learning path has its own test, and every certificate is verified, issued by Panameer, and published to your profile with a link you can put anywhere.",
+      /*
+        ⚠⚠ THE TAIL OF THIS SENTENCE IS STEP 5's OLD PANEL, FOLDED UP (`P1-J0-E322`).
+        *"...published to your profile with a link you can put anywhere"* was its own
+        step under the label `Tell Your Peers`, which is the `E296`/`E310` mismatch.
+        Issued, verified and publishes-with-a-link is ONE idea and this is its home.
+
+        ⚠ SCOTT'S TWO CLAUSES ARE UNCHANGED — `Each Learning path has its own test`
+        (his capitalisation, capital L lowercase p) and `every certificate is verified
+        and issued by Panameer`. Only the third clause is new here, and it is his own
+        words from the old step 5, not a rewrite.
+
+        ⚠ THE `each` FLAG STANDS AND GETS NO WEAKER: 23 paths, 8 with a
+        `LearnAssessment`, 7 publishable, **0 sittable today**. Still the strongest
+        unkeepable promise on the page, still for the pre-launch list.
+      */
       graphic: <PathCertificateShot />,
     },
   ],
   5: [
     {
       /*
-        ⚠ THIS ONE IS REAL AND ALREADY BUILT, so it is said plainly.
-        `Certification.issued_from = LEARN` separates a Panameer-issued credential from a
-        self-reported one, `learning_path_id` binds it to the path, `public_credential_url` holds
-        `/verify/{id}`, the issuer writes both on a pass, and `app/verify/[credentialId]/page.tsx`
-        exists. The LinkedIn/résumé claim is honest.
+        ── ⚠⚠ THIS PANEL IS NEW, AND STEP 5's OLD CONTENT MOVED UP TO STEP 4 ─────
 
-        ⚠ THE ROW LABEL IS AN INSTRUCTION THE LEARNER PERFORMS — `Add Certification to LinkedIn
-        and Resume`. PANAMEER POSTS NOTHING. `deployment.md` records that LinkedIn's partner
-        programs are approval-gated, and no integration exists or is planned here. Neither the
-        label nor this copy may imply otherwise.
+        Scott, 2026-08-24 (`P1-J0-E322`): *"The tell your peers could be swapped out
+        for 'Get Expert Support'. This is the 'keeps you working' idea. Now…we could
+        still say the same and make sure it is referenced in step 2 or we call it out
+        specifically. What do you think?"* He asked for an answer: CALL IT OUT AS ITS
+        OWN STEP, and leave step 2 alone.
 
-        ⚠ `P1-J3-E019` IS FIXED — THIS NOTE USED TO RECORD THE OPPOSITE AND WOULD OTHERWISE
-        RE-TEACH THE OLD DEFECT. It said the issuer opened `if (!profile || !path) return null`
-        and that `Certification.provider_profile_id` was NOT NULLABLE, so a learner with no
-        provider profile passed the test and got nothing — no row, no credential, no verify
-        page, no error. As of 2026-08-21 `Certification.user_id` is the owner, the profile link
-        is nullable, and the issuer requires only the path. ⚠ A LEARNER WITH NO SELLER PROFILE
-        NOW EARNS A REAL CREDENTIAL WITH A WORKING VERIFY URL.
+        ⚠ THE FOLD IS THE REAL FIX. Step 5 used to say *"Your certificate publishes to
+        your profile, with a link you can put anywhere."* — a CREDENTIAL, under a label
+        about advocacy. That is the mismatch `E296` raised and `E310` recorded as
+        DELIBERATE when Scott took neither exit. `Get Certified!` was always its
+        natural home: issued, verified, and publishes to your profile with a shareable
+        link is ONE IDEA. Splitting it across two steps was a leftover from the old
+        six-section structure, and it is why step 5 never read right.
 
-        ⚠ THE COPY IS STILL NOT CHANGED HERE, AND THAT IS DELIBERATE. `P1-J0-E282`/`E283` are
-        separate rows and still need Scott — the schema stopped lying, and rewriting the sentence
-        is his call, not a consequence of the fix.
-      */
-      /*
-        ⚠ UNCHANGED — ROW 5 IS THE ONLY HEADLINE SCOTT DID NOT REWRITE (`P1-J0-E310`):
-        *"We will keep the bigger text."*
+        ⚠ `Tell Your Peers` IS RETIRED. `E296` AND `E310` BOTH RECORDED IT AS SETTLED
+        — THIS SUPERSEDES BOTH. Do not restore the label citing either row.
+        ⚠ AND REMOVING IT REMOVES THE ONLY THING THAT IMPLIED A REFERRAL FEATURE. No
+        referral, share or invite model exists and none is being built; that stays true
+        and is now also unimplied.
 
-        ⚠⚠ AND THAT SETTLES THE `P1-J0-E296` MISMATCH BY CHOOSING NEITHER EXIT. E296
-        flagged that the label `Tell Your Peers` is ADVOCACY while this panel is about a
-        CREDENTIAL, and left two ways out: the panel follows the label, or the label
-        returns. Scott kept BOTH. ⚠ THE MISMATCH IS NOW DELIBERATE — do not "fix" it.
+        ── ⚠⚠ DRAFT — CC's WORDS, NOT SCOTT'S ──────────────────────────────────
 
-        ⚠ AND THE DELETED BODY REMOVED THE ONLY SENTENCE THAT MADE THE LABEL MAKE SENSE:
-        *"a recruiter clicking it is checking with us, not taking your word"* was the
-        closest this panel came to being about telling anyone. `Tell Your Peers` now sits
-        above a headline and a graphic that never mention peers.
+        He gave the LABEL only. This sentence is drafted and reported verbatim so he
+        can overwrite it in one message.
 
-        ⚠ NO REFERRAL, SHARE OR INVITE FEATURE EXISTS AND NONE IS BEING BUILT (`E296`),
-        and `deployment.md` records that LinkedIn's partner programs are approval-gated.
-        Panameer posts nothing.
+        ⚠ IT IS DELIBERATELY NOT STEP 2. Step 2 is MEETING the instructor — who they
+        are, that they are named on every lesson, and the three access tiers. This is
+        AFTER the course: the problem you hit at work, months later. Two moments in one
+        relationship, and the drafts do not read alike — step 2 says *"Connect with
+        your instructor, join their community, and book one-on-one time"*; this says
+        nothing about meeting anyone and everything about a question you already have.
+
+        ⚠⚠ THE HONEST COST, AND IT IS THE WORST THING IN THIS WORK STREAM: STEPS 2 AND
+        5 NOW BOTH LEAN ON MESSAGING THAT DOES NOT EXIST. No `Conversation`, `Message`
+        or `Thread` model; `/messages` ships a disabled composer (`P1-J3-E014`). Two of
+        five steps promise the same missing feature, which makes the PAID ONE-TO-ONE
+        TIER the most load-bearing unbuilt thing on the site. Reported as its own line.
+
+        ⚠ SO THE SENTENCE NAMES THE GROUP FIRST — that is `ForumThread`/`ForumPost`,
+        which exist — and the expert second, which is the paid `soon` tier in
+        `InstructorTiers`. It carries no present-tense messaging verb: no `message`,
+        `chat`, `DM` or `reply`.
       */
       heading:
-        "Your certificate publishes to your profile, with a link you can put anywhere.",
-      graphic: <ProfileCertificatesShot />,
+        "Months later, when the real problem lands, the group and the expert who taught you are still there.",
+      /*
+        ⚠ `InstructorsShot` IS REUSED, NOT REDRAWN. It shows the instructors named on
+        lessons, which is exactly who this step is about, and it is already on the page
+        in step 2 — the same faces in both places is the point: one relationship, two
+        moments. ⚠ A "support ticket" or "chat thread" screen would be a picture of
+        unbuilt software, the same trap `P1-J1-E017` left steps 3 and 5 empty for.
+      */
+      graphic: <InstructorsShot />,
+      /*
+        ⚠ `InstructorTiers` IS **NOT** REPEATED HERE. It renders in step 2, and it is
+        the only thing on the page that says the one-to-one tier is PAID and `soon`.
+        Printing it twice would read as two different offers. ⚠ BUT THAT MEANS THIS
+        PANEL'S PROMISE IS PRICED TWO ROWS AWAY — see the note above.
+      */
     },
   ],
 };
@@ -765,37 +797,32 @@ export function LearnPublic() {
               left={
                 <>
                   {/*
-                  ⚠ VERBATIM SCOTT, 2026-08-24 (`P1-J0-E313`): *"Thinking it needs to
-                  be shorter..punchier. 'Go Zero to Hero. Stay Supported'"*
+                  ⚠ VERBATIM SCOTT, 2026-08-24 (`P1-J0-E320`): *"Go from Zero to
+                  Hero…and Stay There"*.
 
-                  ⚠ THE TERMINAL PERIOD IS ADDED — he typed none after `Supported`.
-                  `P1-J0-E289` is his own request for a period on this exact `<h1>`,
-                  made the same day, so applying it is consistency with his
-                  instruction rather than a rewrite. ⚠ E289 IS NOW SUBSUMED: the
-                  string it was punctuating no longer exists.
+                  ⚠ HIS ELLIPSIS `…` WITH NO SPACES EITHER SIDE, SHIPPED AS TYPED.
+                  A single character, not three dots.
 
-                  ⚠ IT MAKES THIS HERO INCONSISTENT WITH `/` AND `/optimize`, WHICH
-                  HAVE NO TERMINAL PERIOD — audited and deliberately not changed.
-                  `/hire-talent` and `/find-work` end in a period; `/` and `/optimize`
-                  share one string that does not; the other three public heroes are
-                  PLACEHOLDER text and prove nothing. Template question, Scott's once.
+                  ⚠⚠ NO TERMINAL PERIOD, AND THAT REVERSES HIS OWN EARLIER REQUEST.
+                  `P1-J0-E289` was Scott asking for a period on THIS `<h1>`, and
+                  `E313` added one on that basis. He typed none this time. Shipped as
+                  typed; the reversal is reported.
 
-                  ⚠⚠ `Zero to Hero` WAS HIS FRAMING FOR THE HOME PAGE, NOT LEARN.
-                  2026-08-24: *"I also think the HOME page can focus more on the macro
-                  (zero to hero for example)."* Spending it here means `/` needs a
-                  different macro line, or the two pages share one and `/` echoes
-                  `/learn`. ⚠ `brief_home_strip` has already emptied `/`, so this is a
-                  live positioning question, not a hypothetical.
+                  ⚠ `Stay Supported` IS GONE, AND THAT CLOSES `E313`'s FLAG. CC
+                  reported that nothing on the page backed the word "Supported" —
+                  the sell sections had been deleted, no messaging model exists, and
+                  the one-to-one tier is marked `soon`. `Stay There` is a claim about
+                  the LEARNER'S state, not about a Panameer service, so it needs no
+                  feature behind it. ⚠ THAT FLAG IS CLOSED, NOT CARRIED FORWARD.
 
-                  ⚠ `Stay Supported` SURVIVES AND IS STILL THE THINNEST PROMISE — and
-                  it is THINNER than when that was last written. `E312` deletes the
-                  five sell sections, `One-on-one` among them; no messaging model
-                  exists (`P1-J3-E014`); and `E306` marks one-to-one `soon`. What
-                  actually backs the word today is the instructor named on 466 of 522
-                  lessons and a group tier that is NOT BUILT.
+                  ⚠ IT IS INCONSISTENT WITH `/` AND `/optimize`, WHICH HAVE NO
+                  TERMINAL PERIOD EITHER — so this `<h1>` now MATCHES them, where
+                  `E313` had made it the odd one out. `/hire-talent` also has none.
+                  `/find-work` and the three PLACEHOLDER heroes do. Still a template
+                  question, and still Scott's once.
                 */}
                   <h1 className="font-display text-[34px] font-bold leading-[1.08] tracking-[-0.8px] min-[901px]:text-[46px] min-[901px]:tracking-[-1px]">
-                    Go Zero to Hero. Stay Supported.
+                    Go from Zero to Hero…and Stay There
                   </h1>
                   {/*
                   ⚠⚠ BOTH BUTTONS SURVIVE, AND IT IS A DECISION. Scott, 2026-08-24:
@@ -847,34 +874,34 @@ export function LearnPublic() {
               right={
                 <>
                   {/*
-                  ⚠ VERBATIM SCOTT, `P1-J0-E290`, 2026-08-24.
+                  ⚠ VERBATIM SCOTT, 2026-08-24 (`P1-J0-E321`).
 
-                  ⚠ `...all for free` KEEPS HIS ELLIPSIS AND ITS SPACING AS TYPED — no
-                  space before it, and NOT converted to an em dash. `/optimize`'s lede
-                  says "— all for&nbsp;free."; this one is his own punctuation and the
-                  two are allowed to differ.
+                  ⚠⚠ `...all for free` IS GONE, AND SO IS `free` FROM THE HERO
+                  ENTIRELY. `P1-J0-E295` was Scott asking for `free` to be STRESSED
+                  on this page; after `E304` replaced the tagline and this string
+                  drops the clause, **`free` appears nowhere in the hero at all**.
+                  ⚠ REPORTED, NOT RE-ADDED.
 
-                  ⚠⚠ `connect with instructors` IS AN UNBUILT VERB AND IT SHIPPED
-                  BECAUSE SCOTT WROTE IT. There is still no `Conversation`, `Message`
-                  or `Thread` model, and `/messages` ships a `disabled` composer
-                  reading "Messaging isn't available yet" (`P1-J3-E014`). He dropped
-                  `the` from the earlier `connect with the instructors`; the claim is
-                  unchanged.
+                  ⚠ `get certified` IS A PROMISE THE CATALOG CANNOT KEEP.
+                  `P1-J3-E030`: 0 of 23 paths have a sittable test. Shipped as
+                  written and flagged; this is now the page's second such claim
+                  alongside `E304`'s `certification in hours` in the display headline.
 
-                  ⚠ AND THE PAGE NOW MAKES IT TWICE — step 2's label is
-                  `Connect with the Instructor` as of `P1-J0-E296`, which reverses the
-                  `Meet Your Instructor` he settled the same morning. Both are his
-                  words, both are flagged, neither is harmonised here.
+                  ⚠ `connect with instructors` IS THE UNBUILT VERB AGAIN. No
+                  `Conversation`/`Message`/`Thread` model; `/messages` ships a
+                  disabled composer (`P1-J3-E014`). This is the THIRD page-surface
+                  carrying it — the hero, step 2's label, and step 2's headline — and
+                  `E322` adds a fourth in step 5. Counted and reported.
 
-                  ⚠ THIS PARAGRAPH IS ALSO WHERE `P1-J3-E011`'s HELD-BACK CLAUSE
-                  ORIGINALLY SAT — *"Message your instructor from within the course."*
-                  It was removed for exactly the reason above. It has now returned in
-                  different words, in the same paragraph. That history is the point of
-                  this comment.
+                  ⚠ `get the support you need to stay working` IS THE `Stay There`
+                  IDEA, and it is what step 5 (`Get Expert Support`) exists to
+                  deliver. The hero and the spine now agree on that beat, which they
+                  did not when the hero said `Stay Supported` and nothing followed it.
                 */}
-                  <p className="text-[17px] leading-[1.6] text-[#cec7db] min-[901px]:text-[19px]">
-                    Enroll in Learning paths, connect with instructors, take
-                    courses, and watch lessons...all for free.
+                  <p className="text-[17px] leading-[1.6] text-[#e9e6f5] min-[901px]:text-[19px]">
+                    Enroll in learning paths, connect with instructors, take
+                    courses, get certified and get the support you need to stay
+                    working.
                   </p>
                   {/*
                   ⚠⚠ WHITE, NOT PINK, AND THE TEXT IS `/optimize`'s (`P1-J0-E302`).
@@ -962,7 +989,18 @@ export function LearnPublic() {
         promoted to a headline while still carrying an inline pink span would have
         been the worst of both.
       */}
-      <section className="bg-white pt-14 min-[900px]:pt-[72px]">
+      {/*
+        ⚠ `pb-[80px]` MATCHES `/optimize`, IT IS NOT A NEW VALUE (`P1-J0-E319`).
+        Scott: *"The HERE'S HOW IT WORKS section needs a little space between it and
+        the first step."* Measured before choosing: the tagline-to-row-1 gap is
+        **81px on `/optimize` at all three widths and 1px here** — so this was a
+        DIVERGENCE from the template (`E281`), not a missing design decision.
+        80px of bottom padding on top of the existing 1px lands on 81.
+
+        ⚠ TAILWIND, NOT A `home.css` RULE — `/learn` is not inside `.pm-home`. Fifth
+        time that scoping has mattered on this page.
+      */}
+      <section className="bg-white pb-[80px] pt-14 min-[900px]:pt-[72px]">
         <div className="mx-auto max-w-[1200px] px-8">
           <p className="font-body text-[19px] font-bold uppercase leading-[28.5px] tracking-[2.66px] text-[#d72cd6]">
             {LEARN_SPINE_HEADING}

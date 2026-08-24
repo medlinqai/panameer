@@ -1796,12 +1796,22 @@ test.describe("/learn — walk 2: the hero and the how-it-works block", () => {
       await page.locator("summary.stepd-sum .stepd-t").allTextContents()
     ).map((t) => t.trim());
     expect(rendered).toEqual(LEARN_STEPS.map((s) => s.summary));
+    /*
+      ⚠ `Get Expert Support` REPLACED `Tell Your Peers` (`P1-J0-E322`), AND THAT ROW
+      SUPERSEDES TWO THAT RECORDED THE OLD LABEL AS SETTLED — `E296` and `E310`. The
+      literal list is updated deliberately, in the same commit, which is exactly the
+      procedure this assertion's own note prescribes for a real relabel.
+
+      ⚠ IT ALSO CLOSED THE `E296` MISMATCH BY MOVING CONTENT, NOT COPY: step 5's
+      certificate sentence folded UP into step 4, where issued/verified/published is
+      one idea, and step 5 got a support panel that matches its label.
+    */
     expect(rendered).toEqual([
       "Enroll in a Learning Path",
       "Connect with the Instructor",
       "Watch the Courses and Lessons",
       "Get Certified!",
-      "Tell Your Peers",
+      "Get Expert Support",
     ]);
     for (const label of rendered) {
       expect(
@@ -1816,33 +1826,38 @@ test.describe("/learn — walk 2: the hero and the how-it-works block", () => {
   });
 
   /**
-   * ⚠ THE HEADLINE'S TERMINAL PERIOD (`P1-J0-E289`, re-applied by `E313`).
+   * ── ⚠⚠ THE TERMINAL PERIOD IS GONE, AND SCOTT REVERSED HIMSELF (`P1-J0-E320`) ─
    *
-   * `E313` shortened the `<h1>` to `Go Zero to Hero. Stay Supported.` — Scott typed
-   * no period after `Supported`, and E289 is his own request for one on this exact
-   * `<h1>` made the same day, so it is applied and reported.
+   * This asserted the `/learn` `<h1>` ENDS IN A PERIOD. `P1-J0-E289` was Scott's own
+   * request for one on this exact headline, and `E313` added it on that basis. He
+   * then typed `Go from Zero to Hero…and Stay There` with no period, so the
+   * assertion now asserts the opposite of what it was written for.
    *
-   * ⚠ THE TIME-PHRASING HALF MOVED TO §33 AND CHANGED SHAPE. `E302`/`E304` removed
-   * every instance of the 3-minute claim from `/learn`, so "exactly one phrasing"
-   * would now fail on the page's own copy. §33 guards the invariant that survives —
-   * never TWO different durations. See its note.
+   * ⚠ IT IS NOT DELETED, BECAUSE THE UNDERLYING QUESTION IS STILL OPEN. `/`,
+   * `/optimize` and `/hire-talent` have no terminal period; `/find-work` and the
+   * three PLACEHOLDER heroes do. That is a template decision Scott gets to make
+   * once, and until he does, the useful guard is that THIS page's headline matches
+   * what he last typed — not that it carries punctuation he removed.
+   *
+   * ⚠ SO IT ASSERTS THE STRING. A relabel is then a deliberate edit here, in the
+   * same commit, which is the same procedure §37 uses for the row labels.
    */
-  test("§38 the /learn h1 ends in a period", async ({ page }) => {
+  test("§38 the /learn h1 is the string Scott last typed", async ({ page }) => {
     const h1 = ((await page.locator("h1").first().textContent()) ?? "").trim();
-    expect(
-      h1.endsWith("."),
-      `the /learn h1 needs its terminal period (E289/E313): "${h1}"`,
-    ).toBe(true);
+    expect(h1, "the /learn h1 (E320)").toBe(
+      "Go from Zero to Hero…and Stay There",
+    );
 
     /*
-      ⚠ AND IT IS THE SHORT ONE (`E313`). The 8-word string it replaced would still
-      pass the period check, so the length is asserted too — 6 words, not 8. Scott:
-      *"Thinking it needs to be shorter..punchier."*
+      ⚠ AND IT CARRIES HIS ELLIPSIS AS A SINGLE CHARACTER, not three dots. Asserted
+      separately because a prettier run or an editor's autocorrect turning `…` into
+      `...` is a silent change to a verbatim string.
     */
     expect(
-      h1.split(/\s+/).length,
-      "E313 shortened this h1; the long string must not come back",
-    ).toBeLessThanOrEqual(6);
+      h1.includes("…"),
+      "his ellipsis is one character, not three dots",
+    ).toBe(true);
+    expect(h1.includes("..."), "three dots is not what he typed").toBe(false);
   });
 
   /**

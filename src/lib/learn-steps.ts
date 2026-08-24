@@ -87,7 +87,27 @@ export const LEARN_STEPS: LearnStepLabel[] = [
     partner programs are approval-gated. There is no referral, share or invite
     feature anywhere in the schema — do not build one to justify the label.
   */
-  { n: 5, summary: "Tell Your Peers" },
+  {
+    n: 5,
+    /*
+      ⚠⚠ `Get Expert Support` SUPERSEDES `Tell Your Peers` (`P1-J0-E322`), AND IT
+      SUPERSEDES TWO ROWS THAT RECORDED THAT LABEL AS SETTLED — `P1-J0-E296` and
+      `P1-J0-E310`. Do not restore it citing either.
+
+      Scott, 2026-08-24: *"The tell your peers could be swapped out for 'Get Expert
+      Support'. This is the 'keeps you working' idea."* It is also the beat the hero
+      now ends on — `get the support you need to stay working` (`E321`) — so the
+      headline and the spine agree for the first time.
+
+      ⚠ STEP 5's PANEL CONTENT CHANGED WITH IT, and step 5's OLD content (the
+      certificate publishing to your profile) folded UP into step 4 where it belongs.
+      See `LearnPublic.tsx`'s notes on both panels.
+
+      ⚠ REMOVING THE OLD LABEL REMOVES THE ONLY THING ON THE PAGE THAT IMPLIED A
+      REFERRAL FEATURE. None exists and none is being built.
+    */
+    summary: "Get Expert Support",
+  },
 ];
 
 /*
