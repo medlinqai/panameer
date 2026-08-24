@@ -619,10 +619,36 @@ test.describe("the page as a whole", () => {
  * case where a change DID collide with that list, and the instruction there was
  * to stop and report rather than edit the gate — that is not this.
  */
+/**
+ * ⚠⚠ RE-HOMED TO `/optimize` ON 2026-08-24 (`P1-J0-E298`). THE SUBJECT MOVED; NOT
+ * ONE ASSERTION WAS WEAKENED TO FOLLOW IT.
+ *
+ * `AiRoadmapShot` is step 5's graphic. It rendered on `/` inside `SpineSteps`, and
+ * `SpineSteps` came off `/` when the assessment journey stopped being on the site
+ * twice. It now renders ONLY inside `/optimize`'s step-5 disclosure panel. Every
+ * `.rm-*` assertion below is byte-for-byte what it was; only the page it opens and
+ * the panel it opens changed.
+ *
+ * ⚠ THE PANEL IS FORCE-OPENED, AND THAT IS NOT BELT-AND-BRACES. Measured
+ * 2026-08-24: Chromium still resolves rects and computed styles for `.rm-act`
+ * inside a CLOSED `<details>` (width 118, `border-left-width: 2px`), so §15-§17
+ * would have passed without opening it. ⚠ THAT IS EXACTLY WHY IT IS OPENED — the
+ * pass would have depended on how one browser treats hidden content, and a
+ * geometry assertion that survives its subject being invisible has stopped
+ * measuring anything. `§28` already force-opens for the same reason.
+ */
 test.describe("the Step 5 roadmap grid", () => {
-  /* ⚠ STILL `/`. The roadmap never moved; it only lost the file-wide `goto`. */
   test.beforeEach(async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/optimize");
+    /* Not a click — all five, unconditionally, so a re-ordered step cannot make a
+       test silently measure a closed panel. Same line as §28. */
+    await page.evaluate(() =>
+      document.querySelectorAll("details.stepd-d").forEach((d) => d.setAttribute("open", "")),
+    );
+    /* The assertion below is the guard against this beforeEach going stale: if the
+       roadmap ever stops rendering here, every test in the block fails loudly
+       rather than passing on an empty locator. */
+    await expect(page.locator(".rm-tot b").first()).toBeVisible();
   });
 
   /**
@@ -759,6 +785,30 @@ test.describe("the Step 5 roadmap grid", () => {
    *
    * ⚠ `Deployment` IS BANNED IN THIS SET — one letter from `Deployable` and the
    * opposite meaning: a deployable is the thing, a deployment is the act.
+   *
+   * ── ⚠⚠ THIS TEST NOW READS TWO PAGES, AND THE ALTERNATIVE WAS WORSE ─────────
+   *
+   * `P1-J0-E298` split the two subjects apart: the roadmap left `/` with
+   * `SpineSteps` and lives in `/optimize`'s step-5 panel; the Work Tracker stayed
+   * on `/`. The brief offered two ways out — read both pages, or assert the shared
+   * SOURCE (`lib/roadmap-milestones.ts`) instead of the shared page.
+   *
+   * ⚠ ASSERTING THE SOURCE WOULD HAVE RE-ADMITTED THE ORIGINAL DEFECT, WHICH IS
+   * WHY IT WAS REJECTED. The bug was NOT that the source disagreed with itself —
+   * the source was fine. The bug was that `WorkTracker` HARD-CODED its own detail
+   * string and BYPASSED `milestoneDetail` entirely. A test that reads
+   * `roadmap-milestones.ts` and finds three correct nouns passes while a component
+   * ignores the file completely. The whole value of this assertion is that it reads
+   * what each component actually RENDERED.
+   *
+   * ⚠ SO IT NAVIGATES TWICE. Two pages is the honest cost of the two sections
+   * living apart; a cheaper assertion here would be a different, weaker assertion.
+   * ⚠ DO NOT "TIDY" THIS BACK INTO A ONE-PAGE TEST — there is no page that renders
+   * both any more, and one that reads only the page it happens to be on would go
+   * green while the other surface drifted.
+   *
+   * ⚠ THE `beforeEach` ALREADY PUT US ON `/optimize` WITH THE PANELS OPEN, so the
+   * roadmap is read first and `/` is visited second, for the tracker.
    */
   test("§19 the roadmap and the tracker use one resource vocabulary", async ({
     page,
@@ -769,12 +819,22 @@ test.describe("the Step 5 roadmap grid", () => {
           lines.map((t) => t.trim().split("·")[0].trim()).filter(Boolean),
         ),
       ].sort();
-    const roadmap = nouns(
-      await page.locator(".rm-at > span").allTextContents(),
-    );
-    const tracker = nouns(
-      await page.locator(".trk-nm > span").allTextContents(),
-    );
+    /* ── the roadmap, on `/optimize` (this block's page), panels already open ── */
+    const roadmapLines = await page.locator(".rm-at > span").allTextContents();
+    expect(
+      roadmapLines.length,
+      "no roadmap rows found on /optimize — the subject moved again",
+    ).toBeGreaterThan(0);
+    const roadmap = nouns(roadmapLines);
+
+    /* ── the tracker, on `/` — a DIFFERENT PAGE since E298. See the note above. ── */
+    await page.goto("/");
+    const trackerLines = await page.locator(".trk-nm > span").allTextContents();
+    expect(
+      trackerLines.length,
+      "no tracker rows found on / — WorkTracker was supposed to STAY",
+    ).toBeGreaterThan(0);
+    const tracker = nouns(trackerLines);
     const ALLOWED = ["Deliverable", "Deployable", "Expert\u2019s hours"].sort();
     expect(roadmap, "the roadmap's resource words").toEqual(ALLOWED);
     expect(
@@ -1043,27 +1103,101 @@ test.describe("optimize walk 1 — the product name, the sub-line, the total", (
   });
 
   /**
-   * ⚠ THE SUB-LINE IS GONE FROM BOTH PAGES (`P1-J0-E243`). `HowItWorks` renders on
-   * `/` AND `/optimize` today, so the removal has to be true on both or it is half
-   * done. Asserted by the class AND by the sentence, because the element could be
-   * re-added under a different class and the string is what Scott removed.
+   * ⚠ THE SUB-LINE IS GONE (`P1-J0-E243`). Asserted by the class AND by the
+   * sentence, because the element could come back under a different class and the
+   * string is what Scott removed.
+   *
+   * ── ⚠⚠ SPLIT IN TWO BY `P1-J0-E298`, AND IT GOT STRONGER, NOT WEAKER ────────
+   *
+   * This test used to loop over `["/", "/optimize"]` asserting the same three
+   * things on each, including *"the heading above it is NOT in scope and must
+   * still be there"* — a guard against the sub-line's deletion taking `.hiw-h2`
+   * with it.
+   *
+   * ⚠ `HowItWorks` NO LONGER RENDERS ON `/` AT ALL. E298 took the whole component
+   * off that page, so `.hiw-h2` is legitimately absent there and the old
+   * `toHaveCount(1)` failed for the right reason. ⚠ THE FIX WAS NOT TO DROP THAT
+   * HALF. The over-deletion guard still matters — it just only has a subject on
+   * `/optimize` now.
+   *
+   * So: the STRING ban still runs on BOTH pages (it must never come back anywhere),
+   * the heading guard runs on `/optimize` where the heading lives, and `/` gains a
+   * NEW positive assertion that `HowItWorks` is entirely absent — which is E298's
+   * own claim and was previously guarded by nothing at all.
    */
-  test("§27 the HowItWorks sub-line is gone from / and /optimize", async ({
+  test("§27 the sub-line is gone, and all three moved sections are off / but alive on /optimize", async ({
     page,
   }) => {
+    /* The banned sentence must not appear on EITHER page, under any class. */
     for (const url of ["/", "/optimize"]) {
       await page.goto(url);
-      await expect(
-        page.locator(".hiw-sub"),
-        `${url}: .hiw-sub is back`,
-      ).toHaveCount(0);
+      await expect(page.locator(".hiw-sub"), `${url}: .hiw-sub is back`).toHaveCount(0);
       const text = await page.evaluate(() => document.body.innerText);
       expect(text, `${url}: the deleted sub-line is back`).not.toContain(
         "You spend under an hour",
       );
-      /* The heading above it is NOT in scope and must still be there. */
-      await expect(page.locator(".hiw-h2")).toHaveCount(1);
     }
+
+    /*
+      ⚠ `/optimize` KEEPS THE HEADING. This is the original over-deletion guard,
+      unchanged in substance — only its page is now singular.
+    */
+    await page.goto("/optimize");
+    await expect(
+      page.locator(".hiw-h2"),
+      "/optimize: the heading is not in scope and must still be there",
+    ).toHaveCount(1);
+
+    /*
+      ⚠ AND `/` RENDERS NONE OF THE THREE SECTIONS THAT MOVED (`E298`) — the strip,
+      the process picker and the spine. All three files are still on disk and still
+      imported by `/optimize`; what must not come back is their RENDER here. Scott:
+      *"let's REMOVE the ones we moved to optimize."*
+
+      ⚠⚠ ALL THREE ARE LISTED BECAUSE A BREAK TEST PROVED TWO OF THEM WERE
+      UNGUARDED. Re-adding `<HowItWorks />` to `page.tsx` failed this test — but
+      re-adding `<SpineSteps />` left the whole 79-test suite GREEN. The assessment
+      journey could have gone back to being on the site twice and nothing would have
+      said so. `.pp` and `.spn` are here for that reason, not for symmetry.
+
+      ⚠ THIS ASSERTS ABSENCE ON `/` ONLY. The same selectors MUST resolve on
+      `/optimize`, which §21-§25 and §15-§20 depend on — so this cannot be
+      "generalised" into a site-wide ban.
+    */
+    await page.goto("/");
+    for (const sel of [".hiw-h2", ".hiw-sub", "a.hiw-card", ".hiw", ".pp", ".spn"]) {
+      await expect(page.locator(sel), `/ still renders ${sel} — E298 removed it`).toHaveCount(0);
+    }
+
+    /*
+      ⚠ NOT VACUOUS, AND THIS IS THE HALF THAT KEEPS IT HONEST. Every selector above
+      has to still resolve SOMEWHERE, or the ban would pass by the components having
+      been deleted rather than moved — which the brief explicitly forbids
+      ("DELETING ANY FILE BREAKS /optimize").
+    */
+    await page.goto("/optimize");
+    await expect(page.locator(".hiw-h2"), "/optimize lost the heading").toHaveCount(1);
+    await page.evaluate(() =>
+      document.querySelectorAll("details.stepd-d").forEach((d) => d.setAttribute("open", "")),
+    );
+    await expect(page.locator(".pp"), "/optimize lost ProcessPicker").toHaveCount(1);
+    /*
+      ⚠ THE SPINE'S PROOF-OF-LIFE IS `.stepd-h2`, NOT `.spn`, AND A FAILED ASSERTION
+      TAUGHT ME WHY. `.spn` is the SECTION WRAPPER `SpineSteps` emits, and
+      `/optimize` never rendered it — its panels call `StepGraphic` directly, which
+      is the same reason `#spine-step-2..5` are absent on that page (found in
+      `brief_learn_walk2`'s WS4 test). So `.spn` only ever existed on `/`: banning
+      it here is right, asserting it on `/optimize` was wrong.
+
+      What actually moved is the four steps' HEADINGS AND GRAPHICS, and those are the
+      four `.stepd-h2` panels. `§22` separately proves each summary derives from
+      `SPINE_STEPS`, so the two together say the spine is alive and still sourced
+      from the same data.
+    */
+    await expect(
+      page.locator(".stepd-h2"),
+      "/optimize lost the four spine step panels",
+    ).toHaveCount(4);
   });
 
   /**
