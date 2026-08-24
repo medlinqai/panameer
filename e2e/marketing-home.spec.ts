@@ -22,6 +22,8 @@ import {
 /* `/hire-talent`'s five labels, from the module the page reads — same reason as
    `learn-steps.ts` above: strings only, no imports, so a spec can pull it in. */
 import { TALENT_STEPS } from "../src/lib/talent-steps";
+/* `/find-work`'s five labels, from the module the page reads. */
+import { WORK_STEPS } from "../src/lib/work-steps";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -1796,12 +1798,22 @@ test.describe("/learn — walk 2: the hero and the how-it-works block", () => {
       await page.locator("summary.stepd-sum .stepd-t").allTextContents()
     ).map((t) => t.trim());
     expect(rendered).toEqual(LEARN_STEPS.map((s) => s.summary));
+    /*
+      ⚠ `Get Expert Support` REPLACED `Tell Your Peers` (`P1-J0-E322`), AND THAT ROW
+      SUPERSEDES TWO THAT RECORDED THE OLD LABEL AS SETTLED — `E296` and `E310`. The
+      literal list is updated deliberately, in the same commit, which is exactly the
+      procedure this assertion's own note prescribes for a real relabel.
+
+      ⚠ IT ALSO CLOSED THE `E296` MISMATCH BY MOVING CONTENT, NOT COPY: step 5's
+      certificate sentence folded UP into step 4, where issued/verified/published is
+      one idea, and step 5 got a support panel that matches its label.
+    */
     expect(rendered).toEqual([
       "Enroll in a Learning Path",
       "Connect with the Instructor",
       "Watch the Courses and Lessons",
       "Get Certified!",
-      "Tell Your Peers",
+      "Get Expert Support",
     ]);
     for (const label of rendered) {
       expect(
@@ -1816,33 +1828,38 @@ test.describe("/learn — walk 2: the hero and the how-it-works block", () => {
   });
 
   /**
-   * ⚠ THE HEADLINE'S TERMINAL PERIOD (`P1-J0-E289`, re-applied by `E313`).
+   * ── ⚠⚠ THE TERMINAL PERIOD IS GONE, AND SCOTT REVERSED HIMSELF (`P1-J0-E320`) ─
    *
-   * `E313` shortened the `<h1>` to `Go Zero to Hero. Stay Supported.` — Scott typed
-   * no period after `Supported`, and E289 is his own request for one on this exact
-   * `<h1>` made the same day, so it is applied and reported.
+   * This asserted the `/learn` `<h1>` ENDS IN A PERIOD. `P1-J0-E289` was Scott's own
+   * request for one on this exact headline, and `E313` added it on that basis. He
+   * then typed `Go from Zero to Hero…and Stay There` with no period, so the
+   * assertion now asserts the opposite of what it was written for.
    *
-   * ⚠ THE TIME-PHRASING HALF MOVED TO §33 AND CHANGED SHAPE. `E302`/`E304` removed
-   * every instance of the 3-minute claim from `/learn`, so "exactly one phrasing"
-   * would now fail on the page's own copy. §33 guards the invariant that survives —
-   * never TWO different durations. See its note.
+   * ⚠ IT IS NOT DELETED, BECAUSE THE UNDERLYING QUESTION IS STILL OPEN. `/`,
+   * `/optimize` and `/hire-talent` have no terminal period; `/find-work` and the
+   * three PLACEHOLDER heroes do. That is a template decision Scott gets to make
+   * once, and until he does, the useful guard is that THIS page's headline matches
+   * what he last typed — not that it carries punctuation he removed.
+   *
+   * ⚠ SO IT ASSERTS THE STRING. A relabel is then a deliberate edit here, in the
+   * same commit, which is the same procedure §37 uses for the row labels.
    */
-  test("§38 the /learn h1 ends in a period", async ({ page }) => {
+  test("§38 the /learn h1 is the string Scott last typed", async ({ page }) => {
     const h1 = ((await page.locator("h1").first().textContent()) ?? "").trim();
-    expect(
-      h1.endsWith("."),
-      `the /learn h1 needs its terminal period (E289/E313): "${h1}"`,
-    ).toBe(true);
+    expect(h1, "the /learn h1 (E320)").toBe(
+      "Go from Zero to Hero…and Stay There",
+    );
 
     /*
-      ⚠ AND IT IS THE SHORT ONE (`E313`). The 8-word string it replaced would still
-      pass the period check, so the length is asserted too — 6 words, not 8. Scott:
-      *"Thinking it needs to be shorter..punchier."*
+      ⚠ AND IT CARRIES HIS ELLIPSIS AS A SINGLE CHARACTER, not three dots. Asserted
+      separately because a prettier run or an editor's autocorrect turning `…` into
+      `...` is a silent change to a verbatim string.
     */
     expect(
-      h1.split(/\s+/).length,
-      "E313 shortened this h1; the long string must not come back",
-    ).toBeLessThanOrEqual(6);
+      h1.includes("…"),
+      "his ellipsis is one character, not three dots",
+    ).toBe(true);
+    expect(h1.includes("..."), "three dots is not what he typed").toBe(false);
   });
 
   /**
@@ -2140,5 +2157,173 @@ test.describe("talent walk 1 — the seller page and /'s macro section", () => {
       /linkedin/i.test(body),
       "/ must not name a competitor — E314 records this decision",
     ).toBe(false);
+  });
+});
+
+/**
+ * PHASE B — SECTIONS LEAVE `/hire-talent` (`P1-J1-E020`, `P1-J1-E022`).
+ */
+test.describe("talent relocations — what left /hire-talent", () => {
+  /**
+   * ⚠ `ErpPunchout` MOVED TO `/enterprise` AND MUST BE ON EXACTLY ONE PAGE.
+   * Scott: *"This needs to be moved to INTEGRATE."* Asserting both halves, because
+   * a half-done move — added there, still here — is the state that looks fine on
+   * whichever page you happen to open.
+   */
+  test("§43 ErpPunchout renders on /enterprise and not on /hire-talent", async ({
+    page,
+  }) => {
+    await page.goto("/enterprise");
+    await expect(page.locator("#punchout")).toHaveCount(1);
+    await page.goto("/hire-talent");
+    await expect(
+      page.locator("#punchout"),
+      "ErpPunchout moved to /enterprise — E020",
+    ).toHaveCount(0);
+
+    /*
+      ⚠ AND THE FOOTER LINK FOLLOWS IT. `brand.txs`'s "Services Punch-Out" pointed
+      at `/hire-talent#punchout`; the fragment left with the section, so the link
+      was repointed in the same commit. Same defect class as the dead
+      `/optimize#spine-step-N` fragments — a fragment whose target moved.
+    */
+    const href = await page
+      .getByRole("link", { name: "Services Punch-Out" })
+      .first()
+      .getAttribute("href");
+    expect(href, "the footer link must follow the section it targets").toBe(
+      "/enterprise#punchout",
+    );
+  });
+
+  /**
+   * ⚠⚠ `FourBeats` AND `ClosingCta` ARE OFF `/hire-talent` (`E022`), AND BOTH MUST
+   * STILL EXIST ELSEWHERE — `E164`. Scott: *"REMOVE both of these."*
+   *
+   * ⚠ THE NON-VACUITY HALF IS THE POINT: both components still serve `/find-work`,
+   * so this cannot pass by them having been deleted rather than removed from a page.
+   */
+  test("§44 FourBeats and ClosingCta are off /hire-talent but alive on /find-work", async ({
+    page,
+  }) => {
+    await page.goto("/hire-talent");
+    const text = await page.evaluate(() => document.body.innerText);
+    expect(text, "FourBeats is back on /hire-talent — E022").not.toContain(
+      "How hiring works here",
+    );
+    expect(text, "ClosingCta is back on /hire-talent — E022").not.toContain(
+      "Describe what you need",
+    );
+
+    await page.goto("/find-work");
+    const work = await page.evaluate(() => document.body.innerText);
+    expect(
+      work.length,
+      "/find-work must still render — the components were removed from a page, not deleted",
+    ).toBeGreaterThan(500);
+  });
+});
+
+/**
+ * PHASE C — `/find-work` BECOMES THE BUYER'S PAGE (`P1-J4-E001`..`E006`).
+ */
+test.describe("work walk 1 — the buyer's page", () => {
+  /**
+   * ⚠ THE FIVE LABELS ARE BUYER VERBS: Create · Accept · Release · Approve · Pay.
+   * That is what makes it one person's journey rather than a system diagram, and it
+   * is the audience flip applied consistently. A step whose verb belongs to the
+   * PROVIDER or to PANAMEER would break the whole point, so the literal list is
+   * asserted alongside the module.
+   *
+   * ⚠⚠ ONE OF FIVE IS BUILT. Step 1 is a real wizard writing real `DRAFT` rows;
+   * steps 2-5 have NO model at all — no `Proposal`, no `Offer`, no `WorkOrder`, no
+   * `SettlementRequest`, no `Invoice`, no `Payment` — and `WorkRequest.status` never
+   * advances past `POSTED`. Shipped because outstanding parts gate promotion, not
+   * the build; steps 2-5 are on the pre-launch list as a BLOCK.
+   */
+  test("§45 /find-work renders the five buyer steps with derived, empty panels", async ({
+    page,
+  }) => {
+    await page.goto("/find-work");
+    const rows = (
+      await page.locator("summary.stepd-sum .stepd-t").allTextContents()
+    ).map((t) => t.trim());
+    expect(rows).toEqual(WORK_STEPS.map((s) => s.summary));
+    expect(rows).toEqual([
+      "Create Work Request",
+      "Accept Proposal",
+      "Release Work Order",
+      "Approve Settlement Request",
+      "Pay Panameer",
+    ]);
+    /* Scott's 3-4 word rule (`P1-J0-E286`): 3 / 2 / 3 / 3 / 2. */
+    for (const r of rows) expect(r.split(/\s+/).length).toBeLessThanOrEqual(4);
+
+    for (const [i, step] of WORK_STEPS.entries()) {
+      const panel = page
+        .locator("details.stepd-d")
+        .nth(i)
+        .locator(".stepd-panel");
+      expect(
+        ((await panel.locator("p").first().textContent()) ?? "").trim(),
+        `step ${step.n}'s eyebrow must be derived, not typed`,
+      ).toBe(`Step ${step.n} - ${step.summary}`);
+      /* ⚠ EMPTY BY INSTRUCTION — panel copy is a separate brief. Exactly one node. */
+      expect(
+        await panel.locator("p, h2, h3, img, svg").count(),
+        `step ${step.n}'s panel gained content before its brief fired`,
+      ).toBe(1);
+    }
+  });
+
+  /**
+   * ⚠ `ThreeWays` AND `AiMatch` MOVED TO THE BUYER'S PAGE (`P1-J4-E005`), which
+   * withdraws `P1-J1-E021`'s recommendation to RETIRE them — that was made because
+   * the buyer's hiring story had no page. It has one now.
+   *
+   * ⚠ BOTH HALVES ASSERTED: a half-done move looks fine on whichever page you open.
+   */
+  test("§46 ThreeWays and AiMatch are on /find-work and not on /hire-talent", async ({
+    page,
+  }) => {
+    await page.goto("/find-work");
+    await expect(page.locator("#three-ways")).toHaveCount(1);
+    await expect(page.locator("#ai-match")).toHaveCount(1);
+    await page.goto("/hire-talent");
+    await expect(
+      page.locator("#three-ways"),
+      "ThreeWays moved to /find-work — E005",
+    ).toHaveCount(0);
+    await expect(
+      page.locator("#ai-match"),
+      "AiMatch moved to /find-work — E005",
+    ).toHaveCount(0);
+  });
+
+  /**
+   * ⚠⚠ NO STAT ROW ON EITHER PAGE, AND THIS IS THE GUARD ON THAT.
+   *
+   * `P1-J1-E013` and `P1-J4-E001` both refused one: there is no honest count. The 85
+   * `ProviderProfile` rows are SEED (`decisions-01.md` puts only the admin and three
+   * experts in the protected set) and exactly ONE `Package` is published. A seed
+   * count shipped as traction is the defect both rows already declined.
+   *
+   * ⚠ THE ROW IS ABSENT, NOT EMPTY. An empty row would read as a loading state.
+   */
+  test("§47 neither seller nor buyer page ships a hero stat row", async ({
+    page,
+  }) => {
+    for (const url of ["/hire-talent", "/find-work"]) {
+      await page.goto(url);
+      const inHero = await page.evaluate(() => {
+        const h1 = document.querySelector("h1");
+        const hero = h1?.closest("section");
+        return hero ? hero.querySelectorAll("dl").length : -1;
+      });
+      expect(
+        inHero,
+        `${url} grew a hero stat row — no honest count exists`,
+      ).toBe(0);
+    }
   });
 });

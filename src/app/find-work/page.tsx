@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
-import { MarketingHero } from "@/components/marketing/MarketingHero";
+import { FindWorkHero } from "@/components/marketing/FindWorkHero";
+import { WorkSpine } from "@/components/marketing/WorkSpine";
+import { ThreeWays } from "@/components/marketing/sections/ThreeWays";
+import { AiMatch } from "@/components/marketing/sections/AiMatch";
 import { TwoPains } from "@/components/marketing/sections/TwoPains";
 import { OmniChannel } from "@/components/marketing/sections/OmniChannel";
 import { VideoSequence } from "@/components/marketing/VideoSequence";
@@ -10,7 +13,6 @@ import { AppShots } from "@/components/marketing/sections/AppShots";
 import { FourBeats } from "@/components/marketing/sections/FourBeats";
 import { AiStrip } from "@/components/marketing/sections/AiStrip";
 import { ClosingCta } from "@/components/marketing/sections/ClosingCta";
-import { HERO_COPY } from "@/lib/brand";
 
 /**
  * THE SELLER PAGE (brief_home_rebuild_08_09 WS-C).
@@ -77,12 +79,53 @@ export default function SellerPage() {
   */
   return (
     <MarketingShell>
-      <MarketingHero
-        audience="provider"
-        headline="Go direct. Find consistent work, break the hourly ceiling."
-        kicker={HERO_COPY.provider.kicker}
-      />
-      <TwoPains />
+      <FindWorkHero />
+      {/*
+        ⚠ THE SPINE SITS DIRECTLY UNDER THE HERO (`P1-J4-E006`), before the argument
+        sections — the five steps are how the page explains itself, so they come
+        before the comparison. Panels are EMPTY by instruction.
+      */}
+      <WorkSpine />
+      {/*
+        ── ⚠⚠ `ThreeWays` AND `AiMatch` ARRIVED FROM `/hire-talent` (`P1-J4-E005`) ─
+
+        ⚠ THE ORDER IS DELIBERATE: `ThreeWays` THEN `AiMatch`, and both BEFORE the
+        seven provider-facing sections below.
+
+        `ThreeWays` is the buyer's COMPARISON — independents versus consultancies
+        versus here. It answers "why this at all", which is the question a buyer has
+        before any mechanism matters. `AiMatch` then answers "how do you find me the
+        right person", which only lands once the reader has decided to look. That is
+        the same general-before-specific ordering `ErpIntegration` -> `ErpPunchout`
+        uses on `/enterprise`, and it is the order they already had on
+        `/hire-talent`, so neither section moved relative to the other.
+
+        ⚠ THEY GO ABOVE THE SEVEN `audience="provider"` SECTIONS because those are
+        now the audience mismatch (`P1-J4-E002`), not the argument. Putting buyer
+        sections after them would bury the only copy addressed to the new audience.
+
+        ⚠ `AiMatch` DESCRIBES A FLOW THAT ONLY HALF EXISTS —
+        `work-request-match.ts` ranks providers against a `WorkRequest` and works,
+        but `/create-work`'s wizard is the only real creation path and `(app)/hire`
+        and `(app)/search` are `ComingSoon`. Reported; no copy changed.
+
+        ⚠ `ThreeWays` NEEDED NO CHANGE TO BE CORRECT HERE and was not re-authored.
+      */}
+      <ThreeWays />
+      <AiMatch />
+      {/*
+        ── ⚠⚠ THE SEVEN SECTIONS BELOW ARE ALL `audience="provider"` ─────────────
+
+        `P1-J4-E002`: *"The audience for WORK are the service buyers."* ⚠ EVERY
+        SECTION FROM HERE DOWN ARGUES TO A PROVIDER. That is a page re-point, not a
+        hero change, and it is NOT being fixed here: Scott re-pointed the audience,
+        he did not author seven replacements, and a section re-written by CC is a
+        section he never approved.
+
+        ⚠ ENUMERATED AND REPORTED, UNTOUCHED. See the brief report for what each one
+        argues and to whom.
+      */}
+      <TwoPains /> <TwoPains />
       <OmniChannel />
       <VideoSequence audience="provider" tone="soft" />
       <GoDirectBionic />

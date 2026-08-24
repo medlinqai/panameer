@@ -264,7 +264,12 @@ export const FOOTER_GROUPS: { title: string; entries: FooterEntry[] }[] = [
         at this same anchor from two different columns; one destination with two
         names in one footer is how a reader concludes they are two things.
       */
-      { label: "Services Punch-Out", href: "/hire-talent#punchout" },
+      /* ⚠ REPOINTED BY `P1-J1-E020`. `ErpPunchout` moved to `/enterprise`, so this
+         link's `#punchout` target left `/hire-talent` with it — the fragment would
+         have landed on a page that no longer contains it. Same defect class as the
+         dead `/optimize#spine-step-N` fragments; caught by grepping the anchor
+         before the move rather than after. */
+      { label: "Services Punch-Out", href: "/enterprise#punchout" },
       { label: "OTS Goods Contracts" },
       { label: "Analytics" },
     ],
