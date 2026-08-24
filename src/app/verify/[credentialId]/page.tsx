@@ -56,7 +56,19 @@ export default async function VerifyPage({
   });
   if (!cert) notFound();
 
-  const person = cert.user?.person ?? null;
+  /*
+    ⚠ `cert.user.person`, NOT `cert.user?.person` — THE `?` ON `user` WAS DEAD
+    (`P1-J3-E028`). `Certification.user_id` is NOT NULL and so is the FK; the
+    relation field was typed `User?` by mistake, so the client claimed a credential
+    might have no owner and this line handled a null the database cannot produce.
+    The relation is `User` now and this fallback is gone with it.
+
+    ⚠ `?? null` AND EVERY `person?.` BELOW STAY, AND THEY ARE A DIFFERENT NULL.
+    `User.person` is genuinely `Person?` — the schema records that *"a User need not
+    have a Person"* — so a credential can have an owner whose Person row does not
+    exist. That guard is real; do not tidy it away with the other one.
+  */
+  const person = cert.user.person ?? null;
   const holder =
     `${person?.first_name ?? ""} ${person?.last_name ?? ""}`.trim() || "This member";
 

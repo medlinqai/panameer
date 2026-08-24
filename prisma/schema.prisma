@@ -1934,7 +1934,37 @@ model Certification {
    * outlived its holder would be a public record of someone who asked to be
    * removed.
    */
-  user            User?            @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  /**
+   * ⚠⚠ REQUIRED, NOT `User?`, AND THE `?` WAS A REAL DEFECT (`P1-J3-E028`).
+   *
+   * `user_id String @db.Uuid` above is NOT NULL and so is the FK. Prisma accepts an
+   * optional relation field over a required scalar without complaint, and then
+   * types it `user: Prisma.$UserPayload<ExtArgs> | null` — so the CLIENT said a
+   * credential may have no owner while the COLUMN said it must have one.
+   *
+   * ⚠ THAT PARTLY UNDID WHAT `c68fad4` BOUGHT. WS1 of that brief made
+   * `Certification.user_id` the owner precisely to remove the ambiguity about who
+   * holds a credential; an optional relation field put the ambiguity back one layer
+   * up, in the only place a reader actually looks.
+   *
+   * ⚠ IT HAD ALREADY PRODUCED A FALLBACK FOR AN IMPOSSIBLE CASE —
+   * `app/verify/[credentialId]/page.tsx` read `cert.user?.person ?? null`, handling
+   * a null the database cannot produce. Every future `include: { user: true }` would
+   * have inherited the optional and the compiler would never have forced a reader to
+   * deal with the owner.
+   *
+   * ⚠ THE DATABASE DID NOT CHANGE. `prisma migrate diff` against the live schema
+   * emitted an EMPTY migration — the column and the FK were always correct. This is
+   * a client-typing fix only.
+   *
+   * ⚠ DO NOT "FIX" IT BACK TO `User?`. If a compiler error says the owner might be
+   * null, the reader is wrong, not this line.
+   *
+   * ⚠ `providerProfile` BELOW STAYS OPTIONAL AND ITS GUARDS STAY — that link IS
+   * genuinely nullable (`SetNull`), and a learner with no seller profile earning a
+   * real credential is the whole point of `c68fad4`.
+   */
+  user            User             @relation(fields: [user_id], references: [id], onDelete: Cascade)
   /**
    * ⚠ `SetNull`, NOT `Cascade` — THIS IS HOW THE PROVIDER CASCADE STOPS REACHING
    * `LEARN` ROWS. Deleting a provider profile now NULLS the link and keeps the

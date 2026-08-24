@@ -1296,14 +1296,26 @@
 */
 .pm-home .hiw-h2{font-size:34px;color:var(--ink);font-weight:700;letter-spacing:-.5px;line-height:1.14;margin:calc(var(--sec-step) * 3) 0 0;max-width:1040px}
 /*
-  ⚠ E228's SUB-LINE. VALUES COPIED FROM `.gtt-lead`, not invented: muted, 17px,
-  1.6 line-height, 760px cap — the page already has a section sub-line and a
-  second scale would be a second thing to keep in step.
+  ── ⚠ `.pm-home .hiw-sub` IS GONE, RULE AND DOC TOGETHER (`P1-J0-E285`) ──────
 
-  ⚠ NO `text-wrap:balance`, per the STANDING RULE at the top of this section
-  block. The heading above it paid 38px of height for symmetry once already.
+  `12ceedb` deleted the sub-line ELEMENT from `HowItWorks.tsx` as briefed and left
+  the rule and its note behind, matching nothing. Both are removed here — a
+  comment explaining a rule that does not exist is the same debt as the rule.
+
+  ⚠ VERIFIED BEFORE DELETING: `grep -rn "hiw-sub" src/` returned the rule and
+  nothing else, so no JSX had brought the element back.
+
+  ⚠ `check:ui` §27 STILL BANS THE ELEMENT and is unaffected — it asserts
+  `.hiw-sub` renders nowhere. That is now true of the stylesheet too, so anyone
+  re-adding it gets unstyled copy AND a red gate, rather than something that looks
+  deliberate.
+
+  ⚠ WHAT THE DELETED NOTE RECORDED, KEPT BECAUSE IT IS STILL TRUE OF THE PAGE: the
+  values were copied from `.gtt-lead` rather than invented (muted, 17px, 1.6
+  line-height, 760px cap) precisely so `/` would not carry two section sub-line
+  scales. If a sub-line ever returns here, copy `.gtt-lead` again — do not invent a
+  second scale.
 */
-.pm-home .hiw-sub{color:var(--muted);font-size:17px;line-height:1.6;max-width:760px;margin:14px 0 0}
 /*
   ── THE KICKER, SCOPED TO THIS SECTION ONLY ──────────────────────────────────
 
