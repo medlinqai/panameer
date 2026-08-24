@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
 import { HireTalentHero } from "@/components/marketing/HireTalentHero";
 import { TalentSpine } from "@/components/marketing/TalentSpine";
-import { ThreeWays } from "@/components/marketing/sections/ThreeWays";
-import { AiMatch } from "@/components/marketing/sections/AiMatch";
 import { ValueStack } from "@/components/marketing/sections/ValueStack";
 import { VideoSequence } from "@/components/marketing/VideoSequence";
 import { AppShots } from "@/components/marketing/sections/AppShots";
@@ -82,8 +80,22 @@ export default function HireTalentPage() {
         fills them.
       */}
       <TalentSpine />
-      <ThreeWays />
-      <AiMatch />
+      {/*
+        ── ⚠ `ThreeWays` AND `AiMatch` MOVED TO `/find-work` (`P1-J4-E005`) ──────
+
+        `P1-J4-E002` settled that Work is the BUYER's page, and both sections are
+        buyer content. ⚠ THAT WITHDRAWS `P1-J1-E021`'s RECOMMENDATION to RETIRE them:
+        it was made because four of six pillars had gone provider-facing and the
+        buyer's hiring story had no page. It has one now.
+
+        ⚠ `AiMatch`'s HEADLINE IS THE WHOLE REASON — *"Post what you need. Get
+        ranked, vetted experts."* was a BUYER sentence stranded under a SELLER
+        headline, which is `P1-J1-E019`. On a buyer page it is finally in the right
+        place. ⚠ `E019` IS CLOSED BY RELOCATION for that half; the hero lockup half
+        stays open.
+
+        ⚠ `E164`: both stay on disk and both now render on `/find-work`.
+      */}
       <ValueStack />
       <VideoSequence audience="buyer" />
       <AppShots page="hire" />

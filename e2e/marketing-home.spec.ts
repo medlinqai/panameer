@@ -22,6 +22,8 @@ import {
 /* `/hire-talent`'s five labels, from the module the page reads — same reason as
    `learn-steps.ts` above: strings only, no imports, so a spec can pull it in. */
 import { TALENT_STEPS } from "../src/lib/talent-steps";
+/* `/find-work`'s five labels, from the module the page reads. */
+import { WORK_STEPS } from "../src/lib/work-steps";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -2219,5 +2221,109 @@ test.describe("talent relocations — what left /hire-talent", () => {
       work.length,
       "/find-work must still render — the components were removed from a page, not deleted",
     ).toBeGreaterThan(500);
+  });
+});
+
+/**
+ * PHASE C — `/find-work` BECOMES THE BUYER'S PAGE (`P1-J4-E001`..`E006`).
+ */
+test.describe("work walk 1 — the buyer's page", () => {
+  /**
+   * ⚠ THE FIVE LABELS ARE BUYER VERBS: Create · Accept · Release · Approve · Pay.
+   * That is what makes it one person's journey rather than a system diagram, and it
+   * is the audience flip applied consistently. A step whose verb belongs to the
+   * PROVIDER or to PANAMEER would break the whole point, so the literal list is
+   * asserted alongside the module.
+   *
+   * ⚠⚠ ONE OF FIVE IS BUILT. Step 1 is a real wizard writing real `DRAFT` rows;
+   * steps 2-5 have NO model at all — no `Proposal`, no `Offer`, no `WorkOrder`, no
+   * `SettlementRequest`, no `Invoice`, no `Payment` — and `WorkRequest.status` never
+   * advances past `POSTED`. Shipped because outstanding parts gate promotion, not
+   * the build; steps 2-5 are on the pre-launch list as a BLOCK.
+   */
+  test("§45 /find-work renders the five buyer steps with derived, empty panels", async ({
+    page,
+  }) => {
+    await page.goto("/find-work");
+    const rows = (
+      await page.locator("summary.stepd-sum .stepd-t").allTextContents()
+    ).map((t) => t.trim());
+    expect(rows).toEqual(WORK_STEPS.map((s) => s.summary));
+    expect(rows).toEqual([
+      "Create Work Request",
+      "Accept Proposal",
+      "Release Work Order",
+      "Approve Settlement Request",
+      "Pay Panameer",
+    ]);
+    /* Scott's 3-4 word rule (`P1-J0-E286`): 3 / 2 / 3 / 3 / 2. */
+    for (const r of rows) expect(r.split(/\s+/).length).toBeLessThanOrEqual(4);
+
+    for (const [i, step] of WORK_STEPS.entries()) {
+      const panel = page
+        .locator("details.stepd-d")
+        .nth(i)
+        .locator(".stepd-panel");
+      expect(
+        ((await panel.locator("p").first().textContent()) ?? "").trim(),
+        `step ${step.n}'s eyebrow must be derived, not typed`,
+      ).toBe(`Step ${step.n} - ${step.summary}`);
+      /* ⚠ EMPTY BY INSTRUCTION — panel copy is a separate brief. Exactly one node. */
+      expect(
+        await panel.locator("p, h2, h3, img, svg").count(),
+        `step ${step.n}'s panel gained content before its brief fired`,
+      ).toBe(1);
+    }
+  });
+
+  /**
+   * ⚠ `ThreeWays` AND `AiMatch` MOVED TO THE BUYER'S PAGE (`P1-J4-E005`), which
+   * withdraws `P1-J1-E021`'s recommendation to RETIRE them — that was made because
+   * the buyer's hiring story had no page. It has one now.
+   *
+   * ⚠ BOTH HALVES ASSERTED: a half-done move looks fine on whichever page you open.
+   */
+  test("§46 ThreeWays and AiMatch are on /find-work and not on /hire-talent", async ({
+    page,
+  }) => {
+    await page.goto("/find-work");
+    await expect(page.locator("#three-ways")).toHaveCount(1);
+    await expect(page.locator("#ai-match")).toHaveCount(1);
+    await page.goto("/hire-talent");
+    await expect(
+      page.locator("#three-ways"),
+      "ThreeWays moved to /find-work — E005",
+    ).toHaveCount(0);
+    await expect(
+      page.locator("#ai-match"),
+      "AiMatch moved to /find-work — E005",
+    ).toHaveCount(0);
+  });
+
+  /**
+   * ⚠⚠ NO STAT ROW ON EITHER PAGE, AND THIS IS THE GUARD ON THAT.
+   *
+   * `P1-J1-E013` and `P1-J4-E001` both refused one: there is no honest count. The 85
+   * `ProviderProfile` rows are SEED (`decisions-01.md` puts only the admin and three
+   * experts in the protected set) and exactly ONE `Package` is published. A seed
+   * count shipped as traction is the defect both rows already declined.
+   *
+   * ⚠ THE ROW IS ABSENT, NOT EMPTY. An empty row would read as a loading state.
+   */
+  test("§47 neither seller nor buyer page ships a hero stat row", async ({
+    page,
+  }) => {
+    for (const url of ["/hire-talent", "/find-work"]) {
+      await page.goto(url);
+      const inHero = await page.evaluate(() => {
+        const h1 = document.querySelector("h1");
+        const hero = h1?.closest("section");
+        return hero ? hero.querySelectorAll("dl").length : -1;
+      });
+      expect(
+        inHero,
+        `${url} grew a hero stat row — no honest count exists`,
+      ).toBe(0);
+    }
   });
 });
