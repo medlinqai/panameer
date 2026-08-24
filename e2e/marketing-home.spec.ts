@@ -1884,7 +1884,7 @@ test.describe("talent walk 1 — the seller page and /'s macro section", () => {
    * Scott has given labels only. A panel that grows a paragraph before he writes
    * one is chat's words in his product, which is the failure this asserts against.
    */
-  test("§40 /hire-talent renders the five-step spine with derived, empty panels", async ({
+  test("§40 /hire-talent renders the five-step spine with derived panels", async ({
     page,
   }) => {
     await page.goto("/hire-talent");
@@ -1911,14 +1911,57 @@ test.describe("talent walk 1 — the seller page and /'s macro section", () => {
         `step ${step.n}'s eyebrow must be derived, not typed`,
       ).toBe(`Step ${step.n} - ${step.summary}`);
       /*
-        ⚠ EXACTLY ONE ELEMENT IN THE PANEL — the eyebrow. Any second paragraph,
-        heading or graphic means panel copy was written before Scott wrote it.
+        ⚠⚠ THIS HALF WAS INVERTED BY `P1-J1-E016`, WHICH IS THE BRIEF THAT FILLED
+        THE PANELS. It used to require EXACTLY ONE element — the eyebrow — because
+        Scott had given labels only and any second paragraph would have been chat
+        copy in his product. He has now asked for the descriptions to be drafted.
+
+        ⚠ SO IT ASSERTS THE NEW SHAPE, AND STILL BANS THE OLD DEFECT: exactly one
+        `<h2>` carrying the description from `TALENT_STEPS`, and ZERO body
+        paragraphs. `/learn`'s five bodies were deleted in `brief_learn_walk3`
+        (`E305`); a body reappearing here is the same regression through a different
+        door.
       */
+      const h2s = panel.locator("h2");
+      await expect(
+        h2s,
+        `step ${step.n} must carry exactly one description`,
+      ).toHaveCount(1);
       expect(
-        await panel.locator("p, h2, h3, img, svg").count(),
-        `step ${step.n}'s panel gained content before the panels brief fired`,
-      ).toBe(1);
+        ((await h2s.first().textContent()) ?? "").trim(),
+        `step ${step.n}'s description must come from TALENT_STEPS, not be typed here`,
+      ).toBe(step.description);
+      await expect(
+        panel.locator("p.stepd-body"),
+        `step ${step.n} grew a body paragraph — E305 banned them`,
+      ).toHaveCount(0);
     }
+
+    /*
+      ⚠⚠ STEPS 3 AND 5 MUST HAVE NO GRAPHIC, AND THAT IS ASSERTED RATHER THAN LEFT
+      TO A COMMENT (`P1-J1-E017`).
+
+      A connections screen and a "your product sold" screen would both be pictures
+      of software that does not exist — no `Connection`/`Conversation`/`Message`
+      model, and `(app)/packages`, `(app)/services/offers`, `(app)/hire`,
+      `(app)/search` all `ComingSoon` with no `Offer` model. ⚠ THE GAP IS THE
+      HONEST STATE and this is what keeps somebody from filling it with a drawing.
+
+      ⚠ AND STEPS 1, 2 AND 4 MUST HAVE ONE, or the assertion above would pass on a
+      spine with no graphics at all.
+    */
+    const drawn = await page.evaluate(() =>
+      [...document.querySelectorAll(".stepd-panel")].map(
+        (e) => e.querySelectorAll("ul, dl, img, svg, canvas").length > 0,
+      ),
+    );
+    expect(drawn, "steps 3 and 5 must ship with no graphic — E017").toEqual([
+      true,
+      true,
+      false,
+      true,
+      false,
+    ]);
   });
 
   /**

@@ -64,42 +64,36 @@ import { BRAND_BADGE_SHORT, HERO_COPY } from "@/lib/brand";
  */
 
 /**
- * ⚠ THE CLIP: `panameer-office.mp4`, AND THE CHOICE IS CHECKABLE.
+ * ⚠⚠ THERE IS NO VIDEO BACKDROP, AND IT IS NOT COMING BACK WITHOUT A NEW ASSET.
  *
- * Scott: *"please add one that is not used in the other menu page section
- * headers."* The full inventory of `public/*.mp4`:
+ * `P1-J1-E011` asked for one; `panameer-office.mp4` was the only clip not already
+ * a header elsewhere or playing further down this same page. It was built,
+ * measured, and DROPPED. Scott, 2026-08-24, after the numbers: *"dont want the
+ * video there - remove as i said."*
  *
- *     learn.mp4         1.4M  /learn hero · LearnHome hero · VideoSequence
- *     connect.mp4       1.5M  VideoSequence
- *     consultation.mp4  4.7M  HomeHero -> / AND /optimize · VideoSequence
- *     get-paid.mp4      3.1M  VideoSequence
- *     panameer-office   9.2M  NOWHERE — unused in the entire tree
+ * Why, so nobody re-proposes it:
  *
- * ⚠⚠ THE OTHER FOUR ALL REPEAT ON THIS VERY PAGE. `hire-talent/page.tsx` renders
- * `<VideoSequence audience="buyer" />`, and `VideoSequence` plays learn, connect,
- * consultation AND get-paid. So any of those as the hero would appear twice on
- * one page, a few sections down. `panameer-office.mp4` is the only clip that is
- * neither a header elsewhere nor already on this page.
+ *   · IT IS 9.2MB. Adding it measured +9.21MB on first load (12.20 -> 21.41MB,
+ *     +75%), and LCP on fast 3G went 1,036ms -> 14,028ms — 13.5x. ⚠ LOCALHOST HID
+ *     IT COMPLETELY; there the LCP got faster. Only throttled numbers showed it.
+ *   · A SMALLER OR SHORTER CUT IS AN ASSET DECISION AND SCOTT'S. Not a transcode
+ *     to be done on CC's initiative.
  *
- * ── ⚠⚠ IT IS 9.2MB AND THE LOAD COST WAS MEASURED, NOT ASSUMED ─────────────
+ * ⚠ `public/panameer-office.mp4` STAYS ON DISK — it is Scott's asset, not build
+ * output.
  *
- * See the brief report for the full table. The headline number: this page ALREADY
- * transferred 10.63MB of video before this change, because `VideoSequence` eagerly
- * loads all four of its clips. So the hero clip is an increment on an existing
- * problem, not the cause of a new one — and that context is why it was shipped
- * rather than stopped on.
+ * ⚠ AND THE CONTRAST FAILURE DIED WITH IT. `Learn. Connect. Create. Settle.`
+ * measured 3.00 / 2.50 / 2.70 : 1 against the footage — failing AA at every width
+ * — but 5.74 / 6.05 / 6.17 on the flat gradient below, which passes and always
+ * did. ⚠ THE FAILURE WAS CONDITIONAL ON THE CLIP. No colour was ever changed, and
+ * none needs to be. ⚠ IF A CLIP IS EVER PUT BACK, THAT LOCKUP HAS TO BE
+ * RE-MEASURED FIRST.
  *
- * ⚠ NO TRANSCODE, NO RE-ENCODE, NO TRIM. A shorter or smaller cut is an ASSET
- * change and Scott's call.
+ * ⚠ `HeroVideoBackdrop` IS UNTOUCHED and still serves `/` and `/learn`.
  *
- * ⚠ NO POSTER, AND THAT IS `HeroVideoBackdrop`'s OWN DESIGN, NOT AN OMISSION.
- * The brief asked for a poster frame; the component takes no `poster` prop and
- * its header explains why — the gradient painted UNDER the clip is the fallback,
- * it is what a `prefers-reduced-motion` visitor sees, and it is present before
- * any frame arrives. `/posters/` holds SVGs for `VideoSequence`'s four beats
- * (connect · create · learn · settle) and has no `panameer-office` entry.
- * ⚠ ADDING A `poster` PROP WOULD EDIT A COMPONENT `/` AND `/learn` ALSO RENDER,
- * so it was not done on this brief's authority. REPORTED.
+ * ⚠ THE PAGE'S REAL VIDEO PROBLEM IS ELSEWHERE AND LARGER: `VideoSequence` eagerly
+ * loads all four of its clips — 10.63MB, 6.4s to first frame on fast 3G, with no
+ * hero clip at all. Filed as `P1-J1-E018`; needs its own brief.
  */
 export function HireTalentHero() {
   return (
@@ -116,80 +110,6 @@ export function HireTalentHero() {
     */
     <HeroBox cardClassName="isolate bg-[radial-gradient(1100px_500px_at_82%_-10%,rgba(215,44,214,0.42),transparent_60%),linear-gradient(150deg,#0d1230_0%,#191a44_55%,#3a1c53_100%)] text-white">
       <section className="px-6 py-16 min-[900px]:py-[84px]">
-        {/*
-          ⚠⚠⚠ THE VIDEO BACKDROP IS **NOT SHIPPED**, AND TWO SEPARATE STOP
-          CONDITIONS IN THE BRIEF BOTH REQUIRE THAT. `P1-J1-E011` IS BLOCKED ON
-          SCOTT, NOT ABANDONED.
-
-          The component call is written out below, ready, so putting it back is
-          deleting a comment — not re-deriving the work.
-
-          ── ⚠ STOP 1: FIRST-LOAD BYTES. The brief: *"IF FIRST-LOAD BYTES REGRESS
-          BADLY, STOP AND REPORT — do not transcode, re-encode or trim the clip on
-          your own initiative."*
-
-          Measured 2026-08-24, Chromium, CDP network emulation:
-
-                                        without clip   with clip     delta
-              transferred                  12.20 MB     21.41 MB    +9.21 MB (+75%)
-              LCP  cable 20Mbps @1440        564 ms      1292 ms    +728 ms  (2.3x)
-              LCP  fast 3G 1.6Mbps @1440    1036 ms     14028 ms    +12,992 ms (13.5x)
-              first frame  cable @1440       980 ms      1403 ms    +423 ms
-              first frame  fast 3G @1440     6434 ms     15605 ms   +9,171 ms
-
-          ⚠ FOURTEEN SECONDS TO LARGEST-CONTENTFUL-PAINT ON FAST 3G is not a
-          borderline call. Localhost hid it entirely — there the LCP got *faster*
-          (684 -> 608ms), which is exactly why the throttled numbers were taken.
-
-          ── ⚠⚠ STOP 2: CONTRAST, AND IT IS `P1-J0-E299` REPEATING EXACTLY. The
-          brief: *"If anything fails AA, STOP AND REPORT — change no colour."*
-
-          Worst case across nine frames of the clip, per width:
-
-                                         1440     900     390
-              h1 (white)               10.27    6.73    8.08   PASS
-              sub-copy (#e9e6f5)        5.50    5.41    5.35   PASS
-              LOCKUP (#a7a3c6)          3.00    2.50    2.70   ⚠ FAIL
-
-          `Learn. Connect. Create. Settle.` at 13px/600 FAILS AA at all three
-          widths over the footage, and fails even the AA-LARGE 3:1 floor at 900 and
-          390. ⚠ ON THE FLAT GRADIENT THE SAME STRING MEASURES 5.74 / 6.05 / 6.17 —
-          it passes comfortably. So the colour is fine and the VIDEO is the defect,
-          which is precisely the E299 pattern: a flat-gradient colour reused over
-          footage.
-
-          ⚠ THE COLOUR WAS NOT CHANGED. The brief forbids it, and changing it would
-          have hidden a load regression behind a contrast fix.
-
-          ── WHAT UNBLOCKS IT, ALL OF WHICH ARE SCOTT'S CALLS ─────────────────
-
-          1. A SHORTER OR SMALLER CUT of `panameer-office.mp4`. It is 9.2MB and
-             14.6s long — six times `learn.mp4`. An asset change; explicitly his.
-          2. LAZY-LOADING `VideoSequence`, which eagerly pulls all four of its
-             clips and is ALREADY 10.63MB of this page before the hero adds
-             anything. ⚠ THE PAGE WAS ALREADY IN TROUBLE — 6.4s to first frame on
-             fast 3G with no hero clip at all. Fixing that frees the headroom the
-             hero needs, and it is a bigger win than the hero is a loss.
-          3. Accepting the cost knowingly.
-
-          ⚠ ONE MORE THING TO KNOW BEFORE IT SHIPS: the lockup at the bottom of
-          this hero has to move, lose the video behind it, or take a different
-          colour — and per the brief that last option is his, not mine.
-
-          ── ⚠ AND THE CLIP CHOICE ITSELF IS STILL CORRECT ────────────────────
-
-          `panameer-office.mp4` remains the only clip that is neither a header
-          elsewhere nor already on this page. That analysis (in the note above)
-          does not need redoing; only the cost does.
-        */}
-        {/*
-        <HeroVideoBackdrop
-          src="/panameer-office.mp4"
-          videoClassName="absolute inset-0 h-full w-full object-cover opacity-40"
-          scrimClassName="absolute inset-0 bg-[linear-gradient(115deg,rgba(13,18,48,0.82)_0%,rgba(25,26,68,0.62)_45%,rgba(215,44,214,0.30)_100%)]"
-        />
-        */}
-
         <div className="relative z-[2] mx-auto max-w-[1120px]">
           {/*
             ⚠ THE `FOR TEAMS READY TO HIRE` PILL IS GONE (`P1-J1-E014`, his image 3).
