@@ -2,6 +2,7 @@ import Image from "next/image";
 import { SPINE_STEPS } from "@/lib/spine-steps";
 import { SubmitToAI } from "@/components/marketing-home/SubmitToAI";
 import { OptimizationDashboardShot } from "@/components/marketing-home/OptimizationDashboardShot";
+import { ProcessPicker } from "@/components/marketing-home/ProcessPicker";
 import { AssessmentWizardShot } from "@/components/marketing-home/AssessmentWizardShot";
 import { AiRoadmapShot } from "@/components/marketing-home/AiRoadmapShot";
 
@@ -38,6 +39,11 @@ import { AiRoadmapShot } from "@/components/marketing-home/AiRoadmapShot";
  * so a screenshot drops in without touching this file's structure.
  */
 const GRAPHICS: Record<string, () => React.JSX.Element> = {
+  /* ⚠ STEP 1's ART, REGISTERED (`P1-J0-E288`). It was the only step whose graphic
+     was a component nobody had put in this registry — which is the whole reason
+     step 1 was a special case in `OptimizeSteps`. Registering it is what let the
+     special case go. */
+  "process-picker": ProcessPicker,
   "assessment-wizard": AssessmentWizardShot,
   "submit-to-ai": SubmitToAI,
   "optimization-dashboard": OptimizationDashboardShot,
@@ -74,10 +80,35 @@ export function StepGraphic({ graphic }: { graphic: string }) {
     </div>
   );
 }
+/**
+ * ── ⚠⚠ THIS COMPONENT IS CURRENTLY RENDERED BY NOBODY ───────────────────────
+ *
+ * Verified 2026-08-24: nothing in `src/` imports `SpineSteps`. `brief_home_strip`
+ * (`P1-J0-E298`) took it off `/` along with `HowItWorks` and `ProcessPicker`, and
+ * `/optimize` uses `StepGraphic` from this file rather than this section. It stays
+ * on disk under the `E164` rule — `brief_home_page` is queued to rebuild `/` and
+ * this is the band it would rebuild from.
+ *
+ * ⚠ THE FILTER BELOW IS THEREFORE PRE-EMPTIVE, AND `P1-J0-E288`'s BRIEF ASKED FOR
+ * IT AGAINST A PREMISE THAT HAS SINCE DISSOLVED. That brief said `/` renders
+ * `<ProcessPicker />` standalone AND `<SpineSteps />`, so adding step 1 to
+ * `SPINE_STEPS` would render the picker TWICE on `/`. ⚠ THAT CANNOT HAPPEN NOW:
+ * `/` renders neither. Measured before the change — `.pp` count on `/` is ZERO.
+ *
+ * ⚠ IT SHIPPED ANYWAY BECAUSE THE HAZARD MOVED RATHER THAN VANISHED. Without it,
+ * the day anybody re-renders this component they get step 1 as a full-width band
+ * INSIDE another section's wrapper — and `#step-1` is an anchor target that
+ * `HowItWorks`' cards point at. The filter makes that impossible instead of
+ * conditional on whoever does the rebuild reading this file first.
+ *
+ * ⚠ IT IS TEMPORARY AND IT COLLAPSES IN `brief_home_page`, DELIBERATELY, not here
+ * as a tidy-up: whoever rebuilds `/` decides where step 1 sits and removes this
+ * line in the same commit.
+ */
 export function SpineSteps() {
   return (
     <>
-      {SPINE_STEPS.map((s) => (
+      {SPINE_STEPS.filter((s) => s.n > 1).map((s) => (
         <section
           key={s.n}
           id={`spine-step-${s.n}`}
