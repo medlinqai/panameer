@@ -18,7 +18,6 @@ import {
   CourseStepsShot,
   PathCertificateShot,
   InstructorsShot,
-  ProfileCertificatesShot,
 } from "@/components/learn/public/spine-shots";
 
 /**
@@ -653,6 +652,11 @@ function InstructorTiers() {
     </div>
   );
 }
+
+/* ⚠ `ProfileCertificatesShot` IS NO LONGER IMPORTED (`P1-J0-E322`). Step 5's
+   certificate panel folded UP into step 4, and step 4 draws `PathCertificateShot`;
+   step 5 now reuses `InstructorsShot`. The file stays on disk under the `E164`
+   rule — it is the only drawing of a profile's certificate list. */
 
 /*
   ── ⚠ `SECTIONS` IS GONE (`P1-J0-E312`) ───────────────────────────────────────

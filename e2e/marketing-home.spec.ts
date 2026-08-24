@@ -2157,3 +2157,67 @@ test.describe("talent walk 1 — the seller page and /'s macro section", () => {
     ).toBe(false);
   });
 });
+
+/**
+ * PHASE B — SECTIONS LEAVE `/hire-talent` (`P1-J1-E020`, `P1-J1-E022`).
+ */
+test.describe("talent relocations — what left /hire-talent", () => {
+  /**
+   * ⚠ `ErpPunchout` MOVED TO `/enterprise` AND MUST BE ON EXACTLY ONE PAGE.
+   * Scott: *"This needs to be moved to INTEGRATE."* Asserting both halves, because
+   * a half-done move — added there, still here — is the state that looks fine on
+   * whichever page you happen to open.
+   */
+  test("§43 ErpPunchout renders on /enterprise and not on /hire-talent", async ({
+    page,
+  }) => {
+    await page.goto("/enterprise");
+    await expect(page.locator("#punchout")).toHaveCount(1);
+    await page.goto("/hire-talent");
+    await expect(
+      page.locator("#punchout"),
+      "ErpPunchout moved to /enterprise — E020",
+    ).toHaveCount(0);
+
+    /*
+      ⚠ AND THE FOOTER LINK FOLLOWS IT. `brand.txs`'s "Services Punch-Out" pointed
+      at `/hire-talent#punchout`; the fragment left with the section, so the link
+      was repointed in the same commit. Same defect class as the dead
+      `/optimize#spine-step-N` fragments — a fragment whose target moved.
+    */
+    const href = await page
+      .getByRole("link", { name: "Services Punch-Out" })
+      .first()
+      .getAttribute("href");
+    expect(href, "the footer link must follow the section it targets").toBe(
+      "/enterprise#punchout",
+    );
+  });
+
+  /**
+   * ⚠⚠ `FourBeats` AND `ClosingCta` ARE OFF `/hire-talent` (`E022`), AND BOTH MUST
+   * STILL EXIST ELSEWHERE — `E164`. Scott: *"REMOVE both of these."*
+   *
+   * ⚠ THE NON-VACUITY HALF IS THE POINT: both components still serve `/find-work`,
+   * so this cannot pass by them having been deleted rather than removed from a page.
+   */
+  test("§44 FourBeats and ClosingCta are off /hire-talent but alive on /find-work", async ({
+    page,
+  }) => {
+    await page.goto("/hire-talent");
+    const text = await page.evaluate(() => document.body.innerText);
+    expect(text, "FourBeats is back on /hire-talent — E022").not.toContain(
+      "How hiring works here",
+    );
+    expect(text, "ClosingCta is back on /hire-talent — E022").not.toContain(
+      "Describe what you need",
+    );
+
+    await page.goto("/find-work");
+    const work = await page.evaluate(() => document.body.innerText);
+    expect(
+      work.length,
+      "/find-work must still render — the components were removed from a page, not deleted",
+    ).toBeGreaterThan(500);
+  });
+});

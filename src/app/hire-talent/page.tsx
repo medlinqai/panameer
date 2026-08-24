@@ -5,11 +5,8 @@ import { TalentSpine } from "@/components/marketing/TalentSpine";
 import { ThreeWays } from "@/components/marketing/sections/ThreeWays";
 import { AiMatch } from "@/components/marketing/sections/AiMatch";
 import { ValueStack } from "@/components/marketing/sections/ValueStack";
-import { ErpPunchout } from "@/components/marketing/sections/ErpPunchout";
 import { VideoSequence } from "@/components/marketing/VideoSequence";
 import { AppShots } from "@/components/marketing/sections/AppShots";
-import { FourBeats } from "@/components/marketing/sections/FourBeats";
-import { ClosingCta } from "@/components/marketing/sections/ClosingCta";
 
 /**
  * HIRE TALENT — the buyer who is ready to hire (brief_public_pages_ia WS-2).
@@ -88,11 +85,37 @@ export default function HireTalentPage() {
       <ThreeWays />
       <AiMatch />
       <ValueStack />
-      <ErpPunchout />
       <VideoSequence audience="buyer" />
       <AppShots page="hire" />
-      <FourBeats page="hire" />
-      <ClosingCta audience="buyer" />
+      {/*
+        ── ⚠⚠ THREE SECTIONS LEFT THIS PAGE (`P1-J1-E020`, `P1-J1-E022`) ────────
+
+        `ErpPunchout` -> `/enterprise` (Integrate). Scott: *"This needs to be moved
+        to INTEGRATE."* It rejoins `ErpIntegration` there, and it IS the Integrate
+        story by definition — `integration_model.md` describes the services
+        procurement chain this section draws.
+
+        `FourBeats` and `ClosingCta` -> deleted from here. Scott: *"REMOVE both of
+        these."*
+
+        ⚠ `E164`: all three stay ON DISK. `FourBeats` and `ClosingCta` both still
+        serve `/find-work`; `ErpPunchout` now renders on `/enterprise`.
+
+        ⚠ `ClosingCta audience="buyer"` WAS A BUYER CTA CLOSING A SELLER PAGE —
+        *"Describe what you need"* / *"Talk to us"*. Its removal is consistent with
+        `P1-J1-E013`, not merely a deletion.
+
+        ⚠⚠ BUT IT WAS THIS PAGE'S CLOSING CALL TO ACTION AND NOTHING REPLACES IT.
+        The page now ends on `AppShots`, which is a product-screenshot band with no
+        action in it. `/hire-talent` therefore has NO closing CTA at all, and its
+        only remaining control anywhere is the hero search box. ⚠ SCOTT HAS NOT
+        NAMED A REPLACEMENT — reported, not invented.
+
+        ⚠ `FourBeats` LEAVING PARTLY CLOSES `P1-J1-E019`: it was the expansion of
+        `LEARN. CONNECT. CREATE. SETTLE.`, four verbs against a five-step spine with
+        `Settle` where the spine says `Sell`. ⚠ THE HERO'S LOCKUP LINE STILL SAYS IT
+        AND STILL CONFLICTS — that half stays open.
+      */}
     </MarketingShell>
   );
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
 import { MarketingHero } from "@/components/marketing/MarketingHero";
+import { ErpPunchout } from "@/components/marketing/sections/ErpPunchout";
 import { ErpIntegration } from "@/components/marketing-home/ErpIntegration";
 import { ENTERPRISE_HERO } from "@/lib/brand";
 import "@/components/marketing-home/home.css";
@@ -66,6 +67,47 @@ export default function EnterprisePage() {
       <div className="pm-home">
         <ErpIntegration className="erpx-band" />
       </div>
+      {/*
+        ── ⚠ `ErpPunchout`, MOVED HERE FROM `/hire-talent` (`P1-J1-E020`) ────────
+
+        Scott, 2026-08-24, screenshotting *"Punch out for talent — not just
+        parts."*: *"This needs to be moved to INTEGRATE."*
+
+        ⚠ IT IS THE INTEGRATE STORY BY DEFINITION, not just a tidier address.
+        `integration_model.md`: *"the services procurement integration uses cXML
+        format and REST APIs ... as detailed in the model on the integrate page."*
+        This section IS that chain — requisition -> find & hire -> approve & PO ->
+        work order -> service receipt, with the ERP as system of record.
+
+        ⚠ ONE CALL SITE BEFORE THE MOVE, VERIFIED: `hire-talent/page.tsx:91` and
+        nowhere else. So this is a relocation, not a shared-component question.
+
+        ── ⚠⚠ WHY IT SITS **OUTSIDE** THE `.pm-home` DIV ────────────────────────
+
+        `ErpPunchout` is pure Tailwind — `bg-[#f6f4fb]`, `max-w-[1120px]`,
+        `border-line`. `.pm-home` sets a font stack, a colour and a line-height on
+        everything inside it, so putting this section in there would restyle it in a
+        way `/hire-talent` never did. OUTSIDE the wrapper reproduces its previous
+        environment exactly — measured on both pages, identical.
+
+        ⚠ THAT SCOPING TRAP HAS BITTEN FOUR TIMES (`.sd-n`, `P1-J0-E290`, the footer
+        `P1-ALL-E013`, `/learn`'s hero). It was checked here, not assumed.
+
+        ── ⚠ THE ORDER: `ErpIntegration` THEN `ErpPunchout` ────────────────────
+
+        General before specific. `ErpIntegration` is the integration MODEL — what
+        connects to what. This is the one PROCESS that model exists to serve, and it
+        names the ERP at every step. Reading the chain first and the model second
+        would explain the mechanism to somebody who had not yet been told what it
+        is for. (`ErpPackages` is NOT on this page — it renders on `/buy-services`;
+        the brief's premise that both were here did not hold.)
+
+        ⚠⚠ REPORTED, NOT FIXED: `ENTERPRISE_HERO` STILL LITERALLY READS
+        `"PLACEHOLDER — headline about ERP integration goes here."` This is a strong
+        section landing on an unwalked page whose hero is a placeholder.
+        `/enterprise` needs its own walk.
+      */}
+      <ErpPunchout />
     </MarketingShell>
   );
 }
