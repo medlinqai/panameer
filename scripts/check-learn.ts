@@ -232,6 +232,52 @@ check(
   totalOffences.join(" | ")
 );
 
+/*
+  ── GUARD 3c — THE ONE PLACE A CATALOG TOTAL IS ALLOWED TO BE A LITERAL ───────
+
+  ⚠ GUARD 3 ABOVE IS UNCHANGED, UNWIDENED AND UNWEAKENED. This is additive, and it
+  exists because `P1-J0-E291` put three catalog totals in `/learn`'s signed-out
+  hero and three shipped decisions met on them:
+
+    · the brief said HARDCODE (a query in a hero buys nothing);
+    · GUARD 3 forbids a literal under `src/components/learn/` — it FIRED on the
+      first cut of that work, correctly;
+    · `E223` (`app/learn/page.tsx`) says a signed-out visitor NEVER sees a catalog
+      query, so GUARD 3b's "derive it from a query" is not available on this
+      surface.
+
+  GUARD 3's scope is the resolution: it watches components, where a stale total
+  masquerades as live UI. The numbers moved to ONE named module instead, and this
+  guard is what stops that module becoming a place where undated digits accumulate
+  — it must carry the date it was read, and the component must import rather than
+  inline.
+
+  ⚠ IF SOMEBODY MOVES THE DIGITS BACK INTO THE COMPONENT, GUARD 3 CATCHES IT. If
+  somebody drops the provenance from the module, this one does. Neither guard is
+  sufficient alone, which is why there are two.
+*/
+const countsPath = join("src", "lib", "learn-catalog-counts.ts");
+const counts = readFileSync(countsPath, "utf8");
+check(
+  "GUARD 3c — the catalog counts module records the date it was measured",
+  /CATALOG_COUNTS_MEASURED_ON\s*=\s*"\d{4}-\d{2}-\d{2}"/.test(counts),
+  "an undated catalog total cannot be told from a stale one"
+);
+check(
+  "GUARD 3c — it names the queries the numbers came from, not a seed file",
+  /prisma\.learningPath\.count\(\)/.test(counts) &&
+    /prisma\.course\.count\(\)/.test(counts) &&
+    /prisma\.lesson\.count\(\)/.test(counts),
+  "chat_kickoff.md: a fact about content may only be stated from a live DB read"
+);
+check(
+  "GUARD 3c — /learn's hero reads the counts from that module rather than inlining them",
+  /import\s*\{\s*CATALOG_COUNTS\s*\}\s*from\s*"@\/lib\/learn-catalog-counts"/.test(
+    readFileSync(join("src", "components", "learn", "LearnPublic.tsx"), "utf8")
+  ),
+  "if the hero stops importing them, the digits came back into the component"
+);
+
 /* Stated positively: the totals reach the UI from a query result. */
 const dash = readFileSync(join("src", "lib", "learn-dashboard.ts"), "utf8");
 check(

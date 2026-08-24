@@ -14,7 +14,11 @@ import { ASSESSMENT_PRODUCT } from "../src/lib/brand";
   pulled into a Playwright spec at all — the panels are React and stay in
   `LearnPublic.tsx`.
 */
-import { LEARN_STEPS, LEARN_SPINE_HEADING, LEARN_SPINE_TAGLINE } from "../src/lib/learn-steps";
+import {
+  LEARN_STEPS,
+  LEARN_SPINE_HEADING,
+  LEARN_SPINE_TAGLINE,
+} from "../src/lib/learn-steps";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -85,13 +89,43 @@ const ENTERPRISE = "/enterprise";
 
 const CARDS: Card[] = [
   // ErpPackages — the four agent categories. Now on /buy-services only.
-  { grid: ".erp-grid", name: "Reports & Dashboards", dialog: "Spend Overview dashboard", url: SHOP },
-  { grid: ".erp-grid", name: "Price Alerts", dialog: "Price alert email", url: SHOP },
-  { grid: ".erp-grid", name: "Document Validation", dialog: "W-9 document validation", url: SHOP },
-  { grid: ".erp-grid", name: "Extend Your Apps", dialog: "Work request with matched experts", url: SHOP },
+  {
+    grid: ".erp-grid",
+    name: "Reports & Dashboards",
+    dialog: "Spend Overview dashboard",
+    url: SHOP,
+  },
+  {
+    grid: ".erp-grid",
+    name: "Price Alerts",
+    dialog: "Price alert email",
+    url: SHOP,
+  },
+  {
+    grid: ".erp-grid",
+    name: "Document Validation",
+    dialog: "W-9 document validation",
+    url: SHOP,
+  },
+  {
+    grid: ".erp-grid",
+    name: "Extend Your Apps",
+    dialog: "Work request with matched experts",
+    url: SHOP,
+  },
   // ErpIntegration — the two flow doorways. Now on /enterprise only.
-  { grid: ".erpx-doors", name: "Fulfillment", dialog: "Service procurement fulfillment flow", url: ENTERPRISE },
-  { grid: ".erpx-doors", name: "Settlement", dialog: "Service procurement settlement flow", url: ENTERPRISE },
+  {
+    grid: ".erpx-doors",
+    name: "Fulfillment",
+    dialog: "Service procurement fulfillment flow",
+    url: ENTERPRISE,
+  },
+  {
+    grid: ".erpx-doors",
+    name: "Settlement",
+    dialog: "Service procurement settlement flow",
+    url: ENTERPRISE,
+  },
 ];
 
 /** The distinct pages the cards live on, in a stable order. */
@@ -117,7 +151,9 @@ function cardFor(page: Page, c: Card): Locator {
 function focusIsInDialog(page: Page): Promise<boolean> {
   return page.evaluate(() => {
     const d = document.querySelector('[role="dialog"]');
-    return !!d && !!document.activeElement && d.contains(document.activeElement);
+    return (
+      !!d && !!document.activeElement && d.contains(document.activeElement)
+    );
   });
 }
 
@@ -174,7 +210,9 @@ function nestedInteractive(page: Page): Promise<string[]> {
     const describe = (n: Element) => {
       // SVG elements carry an SVGAnimatedString, not a string, in `className`.
       const cls = typeof n.className === "string" ? n.className.trim() : "";
-      return n.tagName.toLowerCase() + (cls ? `.${cls.split(/\s+/).join(".")}` : "");
+      return (
+        n.tagName.toLowerCase() + (cls ? `.${cls.split(/\s+/).join(".")}` : "")
+      );
     };
     return Array.from(document.querySelectorAll(INTERACTIVE))
       .map((el) => ({ el, host: el.parentElement?.closest(INTERACTIVE) }))
@@ -202,9 +240,12 @@ let consoleErrors: string[];
 test.beforeEach(async ({ page }) => {
   consoleErrors = [];
   page.on("console", (msg) => {
-    if (msg.type() === "error") consoleErrors.push(`console.error: ${msg.text()}`);
+    if (msg.type() === "error")
+      consoleErrors.push(`console.error: ${msg.text()}`);
   });
-  page.on("pageerror", (err) => consoleErrors.push(`pageerror: ${err.message}`));
+  page.on("pageerror", (err) =>
+    consoleErrors.push(`pageerror: ${err.message}`),
+  );
 });
 
 for (const [i, c] of CARDS.entries()) {
@@ -214,21 +255,27 @@ for (const [i, c] of CARDS.entries()) {
       await page.goto(c.url);
     });
 
-    test("§1 the card is a <button> that advertises the dialog", async ({ page }) => {
+    test("§1 the card is a <button> that advertises the dialog", async ({
+      page,
+    }) => {
       const card = cardFor(page, c);
       await expect(card).toHaveCount(1);
       await expect(card).toHaveJSProperty("tagName", "BUTTON");
       await expect(card).toHaveAttribute("aria-haspopup", "dialog");
     });
 
-    test("§2 click opens a modal dialog with an accessible name", async ({ page }) => {
+    test("§2 click opens a modal dialog with an accessible name", async ({
+      page,
+    }) => {
       await openByClick(page, cardFor(page, c));
       const dialog = page.getByRole("dialog", { name: c.dialog });
       await expect(dialog).toBeVisible();
       await expect(dialog).toHaveAttribute("aria-modal", "true");
     });
 
-    test("§3 Enter opens it from keyboard focus — a nested button eats Enter", async ({ page }) => {
+    test("§3 Enter opens it from keyboard focus — a nested button eats Enter", async ({
+      page,
+    }) => {
       await openByEnter(page, cardFor(page, c));
       await expect(page.getByRole("dialog", { name: c.dialog })).toBeVisible();
     });
@@ -239,12 +286,17 @@ for (const [i, c] of CARDS.entries()) {
       expect(await focusIsInDialog(page)).toBe(true);
     });
 
-    test("§5 focus is trapped — Tab and Shift+Tab cycle, nothing behind is reachable", async ({ page }) => {
+    test("§5 focus is trapped — Tab and Shift+Tab cycle, nothing behind is reachable", async ({
+      page,
+    }) => {
       await openByClick(page, cardFor(page, c));
       const dialog = page.getByRole("dialog");
       const stops = dialog.locator(FOCUSABLE);
       const n = await stops.count();
-      expect(n, "a dialog with no focusable element cannot be escaped from OR used").toBeGreaterThan(0);
+      expect(
+        n,
+        "a dialog with no focusable element cannot be escaped from OR used",
+      ).toBeGreaterThan(0);
 
       // Forward off the end wraps to the front.
       await stops.nth(n - 1).focus();
@@ -263,11 +315,16 @@ for (const [i, c] of CARDS.entries()) {
       */
       for (let k = 0; k < n + 3; k++) {
         await page.keyboard.press("Tab");
-        expect(await focusIsInDialog(page), `focus escaped after ${k + 1} Tab(s)`).toBe(true);
+        expect(
+          await focusIsInDialog(page),
+          `focus escaped after ${k + 1} Tab(s)`,
+        ).toBe(true);
       }
     });
 
-    test("§6 Esc closes it and focus returns to the card that opened it", async ({ page }) => {
+    test("§6 Esc closes it and focus returns to the card that opened it", async ({
+      page,
+    }) => {
       const card = cardFor(page, c);
       await openByClick(page, card);
       await page.keyboard.press("Escape");
@@ -275,7 +332,9 @@ for (const [i, c] of CARDS.entries()) {
       await expect(card).toBeFocused();
     });
 
-    test("§7 the backdrop closes it; a click inside the scene does not", async ({ page }) => {
+    test("§7 the backdrop closes it; a click inside the scene does not", async ({
+      page,
+    }) => {
       await openByClick(page, cardFor(page, c));
       const dialog = page.getByRole("dialog");
 
@@ -313,7 +372,9 @@ test.describe("card 1 scene — the dashboard stays live inside the dialog", () 
     await page.goto(CARDS[0].url);
   });
 
-  test("§9 Table view is a real <button> and reveals the table", async ({ page }) => {
+  test("§9 Table view is a real <button> and reveals the table", async ({
+    page,
+  }) => {
     await openByClick(page, cardFor(page, CARDS[0]));
     const dialog = page.getByRole("dialog");
 
@@ -329,7 +390,9 @@ test.describe("card 1 scene — the dashboard stays live inside the dialog", () 
 
     await toggle.click();
     await expect(dialog.locator(".sv-tables")).toBeVisible();
-    await expect(dialog.getByRole("button", { name: "Hide table" })).toBeVisible();
+    await expect(
+      dialog.getByRole("button", { name: "Hide table" }),
+    ).toBeVisible();
   });
 
   test("§10 hovering a chart bar shows the tooltip", async ({ page }) => {
@@ -346,7 +409,9 @@ test.describe("card 1 scene — the dashboard stays live inside the dialog", () 
 });
 
 test.describe("the page as a whole", () => {
-  test("§11 zero console errors on load and across every open/close", async ({ page }) => {
+  test("§11 zero console errors on load and across every open/close", async ({
+    page,
+  }) => {
     /*
       ⚠ EVERY PAGE THE CARDS LIVE ON, PLUS `/` ITSELF. The cards moved but the
       home page still has to load clean, and it is no longer visited by any card
@@ -357,7 +422,9 @@ test.describe("the page as a whole", () => {
       await page.goto(url);
       for (const c of CARDS.filter((x) => x.url === url)) {
         await openByClick(page, cardFor(page, c));
-        await expect(page.getByRole("dialog", { name: c.dialog })).toBeVisible();
+        await expect(
+          page.getByRole("dialog", { name: c.dialog }),
+        ).toBeVisible();
         await page.keyboard.press("Escape");
         await expect(page.getByRole("dialog")).toHaveCount(0);
       }
@@ -366,10 +433,15 @@ test.describe("the page as a whole", () => {
       A React hydration mismatch arrives as a console error and nothing else.
       This is the check that would have caught E097 with no human reading a log.
     */
-    expect(consoleErrors, `console output:\n${consoleErrors.join("\n")}`).toEqual([]);
+    expect(
+      consoleErrors,
+      `console output:\n${consoleErrors.join("\n")}`,
+    ).toEqual([]);
   });
 
-  test("§12 no interactive element is nested inside another — the E097 regression", async ({ page }) => {
+  test("§12 no interactive element is nested inside another — the E097 regression", async ({
+    page,
+  }) => {
     /*
       ⚠ AT REST ON EVERY PAGE, NOT JUST THE ONE. `E097` was a `<button>` inside a
       `<button>` in a card crop; the crops are now on two pages and `/` still has
@@ -387,8 +459,13 @@ test.describe("the page as a whole", () => {
       expect(await nestedInteractive(page), `at rest on ${url}`).toEqual([]);
       for (const c of CARDS.filter((x) => x.url === url)) {
         await openByClick(page, cardFor(page, c));
-        await expect(page.getByRole("dialog", { name: c.dialog })).toBeVisible();
-        expect(await nestedInteractive(page), `with "${c.dialog}" open on ${url}`).toEqual([]);
+        await expect(
+          page.getByRole("dialog", { name: c.dialog }),
+        ).toBeVisible();
+        expect(
+          await nestedInteractive(page),
+          `with "${c.dialog}" open on ${url}`,
+        ).toEqual([]);
         await page.keyboard.press("Escape");
         await expect(page.getByRole("dialog")).toHaveCount(0);
       }
@@ -414,8 +491,14 @@ test.describe("the page as a whole", () => {
    */
   test("§12b neither ERP section renders on / any more", async ({ page }) => {
     await page.goto("/");
-    await expect(page.locator(".erp-grid"), "ErpPackages is back on /").toHaveCount(0);
-    await expect(page.locator(".erpx-doors"), "ErpIntegration is back on /").toHaveCount(0);
+    await expect(
+      page.locator(".erp-grid"),
+      "ErpPackages is back on /",
+    ).toHaveCount(0);
+    await expect(
+      page.locator(".erpx-doors"),
+      "ErpIntegration is back on /",
+    ).toHaveCount(0);
     /* And they are still on the pages that own them, so this is not vacuous. */
     await page.goto(SHOP);
     await expect(page.locator(".erp-grid")).toHaveCount(1);
@@ -436,7 +519,9 @@ test.describe("the page as a whole", () => {
    * Two assertions, and the second is the one that matters: it is not enough
    * that ids are unique, each reference must land inside its OWN `<svg>`.
    */
-  test("§13 flow-diagram SVG ids are unique and every marker resolves in its own svg", async ({ page }) => {
+  test("§13 flow-diagram SVG ids are unique and every marker resolves in its own svg", async ({
+    page,
+  }) => {
     /* The two flow diagrams are `.erpx-doors` crops — now on /enterprise only. */
     await page.goto(ENTERPRISE);
     const audit = () =>
@@ -446,14 +531,18 @@ test.describe("the page as a whole", () => {
         const stolen: string[] = [];
         for (const svg of svgs) {
           for (const el of svg.querySelectorAll("[id]")) ids.push(el.id);
-          for (const el of svg.querySelectorAll("[marker-end],[fill^='url('],[marker-start]")) {
+          for (const el of svg.querySelectorAll(
+            "[marker-end],[fill^='url('],[marker-start]",
+          )) {
             for (const attr of ["marker-end", "marker-start", "fill"]) {
               const v = el.getAttribute(attr) ?? "";
               const m = v.match(/^url\(#(.+)\)$/);
               if (!m) continue;
               // The reference must be satisfiable from inside this same <svg>.
               if (!svg.querySelector(`#${CSS.escape(m[1])}`)) {
-                stolen.push(`${el.tagName}@${attr} -> #${m[1]} is not in its own svg`);
+                stolen.push(
+                  `${el.tagName}@${attr} -> #${m[1]} is not in its own svg`,
+                );
               }
             }
           }
@@ -480,7 +569,10 @@ test.describe("the page as a whole", () => {
       const open = await audit();
       expect(open.svgCount, `${c.name}: two crops + the dialog`).toBe(3);
       expect(open.dupes, `duplicate ids with "${c.dialog}" open`).toEqual([]);
-      expect(open.stolen, `cross-svg marker references with "${c.dialog}" open`).toEqual([]);
+      expect(
+        open.stolen,
+        `cross-svg marker references with "${c.dialog}" open`,
+      ).toEqual([]);
       await page.keyboard.press("Escape");
       await expect(page.getByRole("dialog")).toHaveCount(0);
     }
@@ -489,9 +581,11 @@ test.describe("the page as a whole", () => {
   /** §14 — the crops are true-scale windows. A `scale()` would break that. */
   test("§14 neither ERP doorway crop applies a scale()", async ({ page }) => {
     await page.goto(ENTERPRISE);
-    const transforms = await page.locator(".erpx-doors .crop-inner").evaluateAll((els) =>
-      els.map((el) => (el as HTMLElement).style.transform)
-    );
+    const transforms = await page
+      .locator(".erpx-doors .crop-inner")
+      .evaluateAll((els) =>
+        els.map((el) => (el as HTMLElement).style.transform),
+      );
     expect(transforms).toHaveLength(2);
     for (const t of transforms) {
       expect(t, "crop transform").toMatch(/^translate\(/);
@@ -560,15 +654,23 @@ test.describe("the Step 5 roadmap grid", () => {
             if (!lane) return null;
             const cr = c.getBoundingClientRect();
             const lr = lane.getBoundingClientRect();
-            return cr.left + 0.5 < lr.right ? `row ${i + 1}: chip ${Math.round(cr.left)} < lane right ${Math.round(lr.right)}` : null;
+            return cr.left + 0.5 < lr.right
+              ? `row ${i + 1}: chip ${Math.round(cr.left)} < lane right ${Math.round(lr.right)}`
+              : null;
           })
           .filter(Boolean),
       };
     });
     expect(m.chips, "one Request per row").toBe(5);
     expect(m.lanes, "one quarter lane per row").toBe(5);
-    expect(m.insideLane, "a Request chip is nested inside the quarter lane").toBe(0);
-    expect(m.overlapping, "a Request chip overlaps the quarter lane on screen").toEqual([]);
+    expect(
+      m.insideLane,
+      "a Request chip is nested inside the quarter lane",
+    ).toBe(0);
+    expect(
+      m.overlapping,
+      "a Request chip overlaps the quarter lane on screen",
+    ).toEqual([]);
   });
 
   /**
@@ -582,8 +684,14 @@ test.describe("the Step 5 roadmap grid", () => {
   }) => {
     const qs = await page.locator(".rm-hd .rm-q").allTextContents();
     expect(qs.map((t) => t.trim())).toEqual(["Q1", "Q2", "Q3", "Q4"]);
-    const actHeader = await page.locator(".rm-hd .rm-act").first().textContent();
-    expect((actHeader ?? "").trim(), "the action column must carry no label").toBe("");
+    const actHeader = await page
+      .locator(".rm-hd .rm-act")
+      .first()
+      .textContent();
+    expect(
+      (actHeader ?? "").trim(),
+      "the action column must carry no label",
+    ).toBe("");
   });
 
   /**
@@ -595,9 +703,10 @@ test.describe("the Step 5 roadmap grid", () => {
   test("§17 the action column is divided by a heavier rule than the quarters", async ({
     page,
   }) => {
-    const w = await page.locator(".rm-row .rm-act").first().evaluate((el) =>
-      parseFloat(getComputedStyle(el).borderLeftWidth)
-    );
+    const w = await page
+      .locator(".rm-row .rm-act")
+      .first()
+      .evaluate((el) => parseFloat(getComputedStyle(el).borderLeftWidth));
     expect(w, "the action column's left rule").toBeGreaterThan(1);
   });
 
@@ -608,16 +717,25 @@ test.describe("the Step 5 roadmap grid", () => {
    * the illustrative figures stay free to change and a regression to any bare
    * `$n,nnn,nnn` fails.
    */
-  test("§18 the Year-1 total is a directional band, not a point figure", async ({ page }) => {
-    const total = (await page.locator(".rm-tot b").first().textContent())?.trim() ?? "";
+  test("§18 the Year-1 total is a directional band, not a point figure", async ({
+    page,
+  }) => {
+    const total =
+      (await page.locator(".rm-tot b").first().textContent())?.trim() ?? "";
     expect(total, "a bare $ figure is a point total").not.toMatch(/^\$[\d,]+$/);
     expect(total, "a band needs two ends").toMatch(/–|—|-/);
-    const label = (await page.locator(".rm-tot span").first().textContent())?.trim();
+    const label = (
+      await page.locator(".rm-tot span").first().textContent()
+    )?.trim();
     expect(label, "the label above the band is unchanged").toBe(
-      "Year-1 opportunity sequenced"
+      "Year-1 opportunity sequenced",
     );
-    const qualifier = (await page.locator(".rm-tot-q").first().textContent())?.trim();
-    expect(qualifier, "the band has to say it is directional").toMatch(/directional/i);
+    const qualifier = (
+      await page.locator(".rm-tot-q").first().textContent()
+    )?.trim();
+    expect(qualifier, "the band has to say it is directional").toMatch(
+      /directional/i,
+    );
   });
 
   /**
@@ -642,31 +760,55 @@ test.describe("the Step 5 roadmap grid", () => {
    * ⚠ `Deployment` IS BANNED IN THIS SET — one letter from `Deployable` and the
    * opposite meaning: a deployable is the thing, a deployment is the act.
    */
-  test("§19 the roadmap and the tracker use one resource vocabulary", async ({ page }) => {
+  test("§19 the roadmap and the tracker use one resource vocabulary", async ({
+    page,
+  }) => {
     const nouns = (lines: string[]) =>
-      [...new Set(lines.map((t) => t.trim().split("·")[0].trim()).filter(Boolean))].sort();
-    const roadmap = nouns(await page.locator(".rm-at > span").allTextContents());
-    const tracker = nouns(await page.locator(".trk-nm > span").allTextContents());
+      [
+        ...new Set(
+          lines.map((t) => t.trim().split("·")[0].trim()).filter(Boolean),
+        ),
+      ].sort();
+    const roadmap = nouns(
+      await page.locator(".rm-at > span").allTextContents(),
+    );
+    const tracker = nouns(
+      await page.locator(".trk-nm > span").allTextContents(),
+    );
     const ALLOWED = ["Deliverable", "Deployable", "Expert\u2019s hours"].sort();
     expect(roadmap, "the roadmap's resource words").toEqual(ALLOWED);
-    expect(tracker, "the tracker's resource words — a hard-coded detail string drifts here").toEqual(
-      ALLOWED
-    );
+    expect(
+      tracker,
+      "the tracker's resource words — a hard-coded detail string drifts here",
+    ).toEqual(ALLOWED);
     for (const set of [roadmap, tracker]) {
-      expect(set.join(" "), "\"Deployment\" is banned on this surface").not.toMatch(/Deployment/);
+      expect(
+        set.join(" "),
+        '"Deployment" is banned on this surface',
+      ).not.toMatch(/Deployment/);
     }
   });
 
-  test("§20 Load into Work Tracker is still the primary action", async ({ page }) => {
+  test("§20 Load into Work Tracker is still the primary action", async ({
+    page,
+  }) => {
     await expect(page.locator(".rm-btn")).toHaveText(/Load into Work Tracker/);
     const [btn, chip] = await Promise.all([
-      page.locator(".rm-btn").first().evaluate((el) => parseFloat(getComputedStyle(el).fontSize)),
-      page.locator(".rm-req").first().evaluate((el) => parseFloat(getComputedStyle(el).fontSize)),
+      page
+        .locator(".rm-btn")
+        .first()
+        .evaluate((el) => parseFloat(getComputedStyle(el).fontSize)),
+      page
+        .locator(".rm-req")
+        .first()
+        .evaluate((el) => parseFloat(getComputedStyle(el).fontSize)),
     ]);
-    expect(chip, "the per-line Request must stay smaller than the primary").toBeLessThan(btn);
+    expect(
+      chip,
+      "the per-line Request must stay smaller than the primary",
+    ).toBeLessThan(btn);
   });
 });
-
 
 /**
  * ── ⚠ `/optimize` — THE DISCLOSURE CONTRACT (P1-J0-E259, WS5) ────────────────
@@ -704,7 +846,9 @@ test.describe("/optimize — the five steps as disclosures", () => {
     await page.goto("/optimize");
   });
 
-  test("§21 exactly five disclosures, and every one closed at rest", async ({ page }) => {
+  test("§21 exactly five disclosures, and every one closed at rest", async ({
+    page,
+  }) => {
     const d = page.locator("details.stepd-d");
     /* ⚠ FIVE, DERIVED: step 1 is ProcessPicker and is deliberately not in the data. */
     await expect(d).toHaveCount(SPINE_STEPS.length + 1);
@@ -718,8 +862,12 @@ test.describe("/optimize — the five steps as disclosures", () => {
    * worth having — the whole point of `/optimize` deriving its strings is that it
    * cannot drift from `/`.
    */
-  test("§22 each summary is its SPINE_STEPS eyebrow, minus the Step N prefix", async ({ page }) => {
-    const rendered = (await page.locator("summary.stepd-sum .stepd-t").allTextContents()).map((t) => t.trim());
+  test("§22 each summary is its SPINE_STEPS eyebrow, minus the Step N prefix", async ({
+    page,
+  }) => {
+    const rendered = (
+      await page.locator("summary.stepd-sum .stepd-t").allTextContents()
+    ).map((t) => t.trim());
     expect(rendered).toHaveLength(SPINE_STEPS.length + 1);
     /* Step 1 is the one exception — ProcessPicker, not a SPINE_STEPS row. */
     expect(rendered[0]).toBe("Select a Business Process");
@@ -742,11 +890,15 @@ test.describe("/optimize — the five steps as disclosures", () => {
       expect(got, `step ${step.n} rendered an empty summary`).not.toBe("");
       expect(
         step.eyebrow.endsWith(got),
-        `step ${step.n}: "${got}" is not the tail of its eyebrow "${step.eyebrow}"`
+        `step ${step.n}: "${got}" is not the tail of its eyebrow "${step.eyebrow}"`,
       ).toBe(true);
-      expect(got, `step ${step.n} kept its "Step N -" prefix`).not.toMatch(/^Step\s+\d/i);
+      expect(got, `step ${step.n} kept its "Step N -" prefix`).not.toMatch(
+        /^Step\s+\d/i,
+      );
       /* And the helper agrees with the page — the last link in the chain. */
-      expect(got, `step ${step.n} does not match summaryFor()`).toBe(summaryFor(step.eyebrow));
+      expect(got, `step ${step.n} does not match summaryFor()`).toBe(
+        summaryFor(step.eyebrow),
+      );
     });
   });
 
@@ -761,9 +913,15 @@ test.describe("/optimize — the five steps as disclosures", () => {
       worth catching, so it is asserted directly.
     */
     const tabIndex = await sum.evaluate((el) => (el as HTMLElement).tabIndex);
-    expect(tabIndex, "the summary was taken out of the tab order").toBeGreaterThanOrEqual(0);
+    expect(
+      tabIndex,
+      "the summary was taken out of the tab order",
+    ).toBeGreaterThanOrEqual(0);
     await sum.focus();
-    await expect(sum, "the summary is the control and must be reachable by Tab").toBeFocused();
+    await expect(
+      sum,
+      "the summary is the control and must be reachable by Tab",
+    ).toBeFocused();
     await page.keyboard.press("Enter");
     await expect(det).toHaveAttribute("open", "");
     await page.keyboard.press("Enter");
@@ -792,7 +950,9 @@ test.describe("/optimize — the five steps as disclosures", () => {
    * counting elements. `el.focus()` on something inside a closed `<details>` is a
    * no-op, and that is exactly the behaviour being claimed.
    */
-  test("§25 a closed panel's content is not keyboard-reachable; open, it is", async ({ page }) => {
+  test("§25 a closed panel's content is not keyboard-reachable; open, it is", async ({
+    page,
+  }) => {
     /*
       ⚠ SCOPED TO `.stepd-panel`, NOT TO `details .stepd-panel` — AND A BREAK IS WHY.
       Hoisting the panel OUT of its `<details>` is the regression this test exists
@@ -803,27 +963,37 @@ test.describe("/optimize — the five steps as disclosures", () => {
     */
     const inPanel = ".stepd-panel a[href]";
     const count = await page.locator(inPanel).count();
-    expect(count, "step 1's panel must contain something focusable, or this test is vacuous").toBeGreaterThan(0);
+    expect(
+      count,
+      "step 1's panel must contain something focusable, or this test is vacuous",
+    ).toBeGreaterThan(0);
 
     const focusedWhileClosed = await page.evaluate((sel) => {
       const el = document.querySelector<HTMLElement>(sel);
       el?.focus();
       return el !== null && document.activeElement === el;
     }, inPanel);
-    expect(focusedWhileClosed, "a link inside a CLOSED panel took focus").toBe(false);
+    expect(focusedWhileClosed, "a link inside a CLOSED panel took focus").toBe(
+      false,
+    );
 
     await page.locator("summary.stepd-sum").first().click();
-    await expect(page.locator("details.stepd-d").first()).toHaveAttribute("open", "");
+    await expect(page.locator("details.stepd-d").first()).toHaveAttribute(
+      "open",
+      "",
+    );
 
     const focusedWhileOpen = await page.evaluate((sel) => {
       const el = document.querySelector<HTMLElement>(sel);
       el?.focus();
       return el !== null && document.activeElement === el;
     }, inPanel);
-    expect(focusedWhileOpen, "a link inside an OPEN panel could not take focus").toBe(true);
+    expect(
+      focusedWhileOpen,
+      "a link inside an OPEN panel could not take focus",
+    ).toBe(true);
   });
 });
-
 
 /**
  * ── ⚠ OPTIMIZE WALK 1 (E274 · E243 · E257) ──────────────────────────────────
@@ -847,17 +1017,29 @@ test.describe("optimize walk 1 — the product name, the sub-line, the total", (
    * renders nowhere, so this rendered assertion is unaffected by it, which is
    * exactly why the assertion is made here and not against the source tree.
    */
-  test("§26 no public page says the retired product name; the live one is present", async ({ page }) => {
-    const PAGES = ["/", "/optimize", "/hire-talent", "/buy-services", "/enterprise"];
+  test("§26 no public page says the retired product name; the live one is present", async ({
+    page,
+  }) => {
+    const PAGES = [
+      "/",
+      "/optimize",
+      "/hire-talent",
+      "/buy-services",
+      "/enterprise",
+    ];
     let sawLive = false;
     for (const url of PAGES) {
       await page.goto(url);
       const text = await page.evaluate(() => document.body.innerText);
-      expect(text, `${url} still says the retired product name`).not.toContain("AI Maturity Assessment");
+      expect(text, `${url} still says the retired product name`).not.toContain(
+        "AI Maturity Assessment",
+      );
       if (text.includes(ASSESSMENT_PRODUCT)) sawLive = true;
     }
     /* Not vacuous: the new name has to actually be on the site somewhere. */
-    expect(sawLive, `no public page renders "${ASSESSMENT_PRODUCT}"`).toBe(true);
+    expect(sawLive, `no public page renders "${ASSESSMENT_PRODUCT}"`).toBe(
+      true,
+    );
   });
 
   /**
@@ -866,12 +1048,19 @@ test.describe("optimize walk 1 — the product name, the sub-line, the total", (
    * done. Asserted by the class AND by the sentence, because the element could be
    * re-added under a different class and the string is what Scott removed.
    */
-  test("§27 the HowItWorks sub-line is gone from / and /optimize", async ({ page }) => {
+  test("§27 the HowItWorks sub-line is gone from / and /optimize", async ({
+    page,
+  }) => {
     for (const url of ["/", "/optimize"]) {
       await page.goto(url);
-      await expect(page.locator(".hiw-sub"), `${url}: .hiw-sub is back`).toHaveCount(0);
+      await expect(
+        page.locator(".hiw-sub"),
+        `${url}: .hiw-sub is back`,
+      ).toHaveCount(0);
       const text = await page.evaluate(() => document.body.innerText);
-      expect(text, `${url}: the deleted sub-line is back`).not.toContain("You spend under an hour");
+      expect(text, `${url}: the deleted sub-line is back`).not.toContain(
+        "You spend under an hour",
+      );
       /* The heading above it is NOT in scope and must still be there. */
       await expect(page.locator(".hiw-h2")).toHaveCount(1);
     }
@@ -886,10 +1075,16 @@ test.describe("optimize walk 1 — the product name, the sub-line, the total", (
    * not the digits, so the illustrative figures stay free to change and a
    * regression to any bare `$n,nnn,nnn` fails.
    */
-  test("§28 the dashboard KPI and the roadmap total are the same band, not a point figure", async ({ page }) => {
+  test("§28 the dashboard KPI and the roadmap total are the same band, not a point figure", async ({
+    page,
+  }) => {
     await page.goto("/optimize");
     /* Step 4 carries the dashboard; step 5 the roadmap. Open both. */
-    await page.evaluate(() => document.querySelectorAll("details.stepd-d").forEach((d) => d.setAttribute("open", "")));
+    await page.evaluate(() =>
+      document
+        .querySelectorAll("details.stepd-d")
+        .forEach((d) => d.setAttribute("open", "")),
+    );
     /*
       ⚠ THE SAVINGS KPI, NOT `.osd-kv` FIRST. There are THREE KPIs on the shot —
       a maturity delta, an opportunity count and the savings figure — and
@@ -900,21 +1095,27 @@ test.describe("optimize walk 1 — the product name, the sub-line, the total", (
     const kpiTexts = await page.locator(".osd-kv").allTextContents();
     const kpi = (kpiTexts.find((t) => t.trim().startsWith("$")) ?? "").trim();
     expect(kpi, "no savings KPI found on the dashboard shot").not.toBe("");
-    const roadmap = (await page.locator(".rm-tot b").first().textContent())?.trim() ?? "";
-    for (const [name, v] of [["the dashboard KPI", kpi], ["the roadmap total", roadmap]] as const) {
-      expect(v, `${name} is a bare $ figure — a point total`).not.toMatch(/^\$[\d,]+$/);
+    const roadmap =
+      (await page.locator(".rm-tot b").first().textContent())?.trim() ?? "";
+    for (const [name, v] of [
+      ["the dashboard KPI", kpi],
+      ["the roadmap total", roadmap],
+    ] as const) {
+      expect(v, `${name} is a bare $ figure — a point total`).not.toMatch(
+        /^\$[\d,]+$/,
+      );
       expect(v, `${name} is not a band`).toMatch(/–|—|-/);
     }
     /*
       ⚠ AND THEY AGREE. Two different bands for one set of findings is the same
       defect as two different totals, one step less obvious.
     */
-    expect(kpi.replace(/\s/g, ""), "the dashboard and the roadmap state different bands").toBe(
-      roadmap.replace(/\s/g, "")
-    );
+    expect(
+      kpi.replace(/\s/g, ""),
+      "the dashboard and the roadmap state different bands",
+    ).toBe(roadmap.replace(/\s/g, ""));
   });
 });
-
 
 /**
  * `/learn` — THE SPINE AS DISCLOSURES (`P1-J0-E281`, `E283`, `E280`, `E282`).
@@ -950,11 +1151,16 @@ test.describe("/learn — the spine as five disclosures", () => {
       `SellSection`" — the spine's SEVEN went to disclosures; the sell five did
       not move. Counted by their own headings so it does not depend on a class.
     */
-    const sellHeadings = ["Learning paths", "Free & certified", "Learn together", "One-on-one"];
+    const sellHeadings = [
+      "Learning paths",
+      "Free & certified",
+      "Learn together",
+      "One-on-one",
+    ];
     for (const h of sellHeadings) {
       await expect(
         page.getByText(h, { exact: false }).first(),
-        `the sell section "${h}" is out of scope and must survive`
+        `the sell section "${h}" is out of scope and must survive`,
       ).toBeVisible();
     }
 
@@ -962,7 +1168,9 @@ test.describe("/learn — the spine as five disclosures", () => {
        Learning` was §7's eyebrow; as a row label it is now `Meet Your Instructor`,
        so the old eyebrow appearing anywhere means the bands came back. */
     await expect(page.getByText("While You Are Learning")).toHaveCount(0);
-    await expect(page.getByText("What Do You Do After the Training")).toHaveCount(0);
+    await expect(
+      page.getByText("What Do You Do After the Training"),
+    ).toHaveCount(0);
   });
 
   /**
@@ -981,17 +1189,20 @@ test.describe("/learn — the spine as five disclosures", () => {
   test("§30 each summary is its LEARN_STEPS label, in order, and no panel repeats it", async ({
     page,
   }) => {
-    const rendered = (await page.locator("summary.stepd-sum .stepd-t").allTextContents()).map((t) =>
-      t.trim()
-    );
+    const rendered = (
+      await page.locator("summary.stepd-sum .stepd-t").allTextContents()
+    ).map((t) => t.trim());
     expect(rendered).toEqual(LEARN_STEPS.map((s) => s.summary));
 
     for (const [i, step] of LEARN_STEPS.entries()) {
-      const panel = page.locator("details.stepd-d").nth(i).locator(".stepd-panel");
+      const panel = page
+        .locator("details.stepd-d")
+        .nth(i)
+        .locator(".stepd-panel");
       const text = ((await panel.textContent()) ?? "").replace(/\s+/g, " ");
       expect(
         text.includes(step.summary),
-        `row ${step.n} reprints its own label "${step.summary}" inside its panel (E275)`
+        `row ${step.n} reprints its own label "${step.summary}" inside its panel (E275)`,
       ).toBe(false);
     }
 
@@ -1001,7 +1212,7 @@ test.describe("/learn — the spine as five disclosures", () => {
     await page.locator("summary.stepd-sum").nth(2).click();
     await expect(
       page.locator("details.stepd-d").nth(2).locator(".stepd-block"),
-      "row 3 must present course and lesson as two blocks, not one merged sentence"
+      "row 3 must present course and lesson as two blocks, not one merged sentence",
     ).toHaveCount(2);
   });
 
@@ -1037,17 +1248,22 @@ test.describe("/learn — the spine as five disclosures", () => {
   }) => {
     const shell = readFileSync(
       join(process.cwd(), "src/components/marketing/StepDisclosures.tsx"),
-      "utf8"
+      "utf8",
     );
     expect(
       /^\s*["']use client["']/m.test(shell),
-      '"use client" in StepDisclosures.tsx spends /optimize\'s static render — nothing in it needs one'
+      '"use client" in StepDisclosures.tsx spends /optimize\'s static render — nothing in it needs one',
     ).toBe(false);
 
     for (const url of ["/optimize", "/learn"]) {
       const html = await (await request.get(url)).text();
-      for (const label of url === "/learn" ? LEARN_STEPS.map((s) => s.summary) : ["Select a Business Process"]) {
-        expect(html, `${url} must send "${label}" in its server HTML`).toContain(label);
+      for (const label of url === "/learn"
+        ? LEARN_STEPS.map((s) => s.summary)
+        : ["Select a Business Process"]) {
+        expect(
+          html,
+          `${url} must send "${label}" in its server HTML`,
+        ).toContain(label);
       }
     }
   });
@@ -1061,12 +1277,20 @@ test.describe("/learn — the spine as five disclosures", () => {
    * promise nothing in the system keeps, so the pattern is matched rather than the
    * one phrase Scott happened to write.
    */
-  test("§32 /learn attaches no turnaround time to getting certified", async ({ page }) => {
-    const body = ((await page.locator("body").textContent()) ?? "").replace(/\s+/g, " ");
-    const sla = body.match(/within\s+\d+\s*(hours?|hrs?|days?|minutes?|business days?)/gi) ?? [];
+  test("§32 /learn attaches no turnaround time to getting certified", async ({
+    page,
+  }) => {
+    const body = ((await page.locator("body").textContent()) ?? "").replace(
+      /\s+/g,
+      " ",
+    );
+    const sla =
+      body.match(
+        /within\s+\d+\s*(hours?|hrs?|days?|minutes?|business days?)/gi,
+      ) ?? [];
     expect(
       sla,
-      "there is no queue, no timer and no alert behind a certification SLA — see b5f3923"
+      "there is no queue, no timer and no alert behind a certification SLA — see b5f3923",
     ).toEqual([]);
   });
 
@@ -1078,18 +1302,238 @@ test.describe("/learn — the spine as five disclosures", () => {
    * changing his mind to 2 minutes in both places must stay green, and only
    * DISAGREEING with itself must go red.
    */
-  test("§33 /learn gives exactly one time-to-start-learning", async ({ page }) => {
-    const body = ((await page.locator("body").textContent()) ?? "").replace(/\s+/g, " ");
+  test("§33 /learn gives exactly one time-to-start-learning", async ({
+    page,
+  }) => {
+    const body = ((await page.locator("body").textContent()) ?? "").replace(
+      /\s+/g,
+      " ",
+    );
     const durations = new Set(
-      (body.match(/\b\d+\s*minutes?\b/gi) ?? []).map((m) => m.replace(/\s+/g, " ").toLowerCase())
+      (body.match(/\b\d+\s*minutes?\b/gi) ?? []).map((m) =>
+        m.replace(/\s+/g, " ").toLowerCase(),
+      ),
     );
     expect(
       [...durations],
-      "one signup, one duration — E243. The hero and the tagline must agree."
+      "one signup, one duration — E243. The hero and the tagline must agree.",
     ).toHaveLength(1);
 
     /* The heading and the tagline are the page's, from their one source. */
-    await expect(page.getByText(LEARN_SPINE_HEADING, { exact: true })).toBeVisible();
-    await expect(page.getByText(LEARN_SPINE_TAGLINE, { exact: true })).toBeVisible();
+    await expect(
+      page.getByText(LEARN_SPINE_HEADING, { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByText(LEARN_SPINE_TAGLINE, { exact: true }),
+    ).toBeVisible();
+  });
+});
+
+/**
+ * `/learn`'s HERO AND ITS HOW-IT-WORKS BLOCK (`P1-J0-E289`..`E296`, walk 2).
+ *
+ * ⚠ THESE FOUR GUARD THINGS SCOTT ASKED FOR THAT ARE EASY TO LOSE SILENTLY: a
+ * graphic he had removed on purpose, a second CTA he explicitly kept, and five
+ * labels that a DIFFERENT UNFIRED BRIEF still wants to overwrite.
+ */
+test.describe("/learn — walk 2: the hero and the how-it-works block", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/learn");
+  });
+
+  /**
+   * ⚠ `P1-J0-E292`. `SixStepShot` used to render between the tagline and row 1 and
+   * was pushing the five rows below the fold — Scott: *"it gets the accordion in
+   * the main page and instantly visible."* Removing it was the objective.
+   *
+   * ⚠ THE ASSERTION IS GEOMETRIC, NOT BY SELECTOR. A test for "no `<SixStepShot>`"
+   * would pass the moment somebody drops a DIFFERENT illustration into the same
+   * gap, which is the same mistake in the same place. This asserts NO image of any
+   * kind occupies the band between the tagline and the first row.
+   */
+  test("§34 nothing renders between the how-it-works tagline and row 1", async ({
+    page,
+  }) => {
+    const tagline = page.getByText(LEARN_SPINE_TAGLINE, { exact: true });
+    await expect(tagline).toBeVisible();
+
+    const band = await page.evaluate(() => {
+      const ps = [...document.querySelectorAll("p")];
+      const tag = ps.find((e) =>
+        e.textContent?.trim().startsWith("From Account Creation to"),
+      );
+      const row1 = document.querySelector("li.stepd-item");
+      if (!tag || !row1) return null;
+      const top = tag.getBoundingClientRect().bottom;
+      const bottom = row1.getBoundingClientRect().top;
+      /* Every drawn thing on the page, then keep only what sits in the gap. */
+      const drawn = [
+        ...document.querySelectorAll("img, svg, canvas, picture, video"),
+      ].filter((e) => {
+        const r = e.getBoundingClientRect();
+        return r.height > 4 && r.top >= top - 1 && r.bottom <= bottom + 1;
+      });
+      return {
+        gap: Math.round(bottom - top),
+        found: drawn.map((e) => e.tagName.toLowerCase()),
+      };
+    });
+    expect(band, "tagline or row 1 not found").not.toBeNull();
+    expect(
+      band!.found,
+      `an image is back in the gap between the tagline and row 1 (E292/E284/E293) — gap ${band!.gap}px`,
+    ).toEqual([]);
+  });
+
+  /**
+   * ⚠ `P1-J0-E284` CLOSED BY REMOVAL, AND THIS IS WHAT KEEPS IT CLOSED. The drawn
+   * graphic numbered SIX steps on a page that lists five. The five rows carry
+   * numerals 1-5, so the assertion is that no numbered sequence on this page
+   * reaches 6 — which a restored six-step drawing would, wherever it was put.
+   */
+  test("§35 no numbered six-step sequence exists anywhere on /learn", async ({
+    page,
+  }) => {
+    const numerals = await page.evaluate(() => {
+      /* The disclosure numerals are the only legitimate numbered sequence here. */
+      const rows = [...document.querySelectorAll(".stepd-n")].map((e) =>
+        e.textContent?.trim(),
+      );
+      /* Any OTHER element whose entire text is a lone 1-9, anywhere on the page. */
+      const stray = [...document.querySelectorAll("body *")]
+        .filter(
+          (e) => !e.classList.contains("stepd-n") && e.children.length === 0,
+        )
+        .map((e) => e.textContent?.trim() ?? "")
+        .filter((t) => /^[1-9]$/.test(t));
+      return { rows, stray };
+    });
+    expect(numerals.rows, "the five disclosure numerals").toEqual([
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+    ]);
+    expect(
+      numerals.stray.includes("6"),
+      "something on /learn numbers a step 6 again — E284 closed by removing the six-step drawing",
+    ).toBe(false);
+  });
+
+  /**
+   * ⚠ BOTH BUTTONS AND THE FOOTNOTE. Scott, 2026-08-24: *"The two buttons that you
+   * have there are great. keep those...add the rest."*
+   *
+   * ⚠ THIS IS A DIVERGENCE FROM `/optimize`, WHICH HAS ONE CTA, AND THE GUARD
+   * EXISTS BECAUSE IT LOOKS LIKE DRIFT. Anybody "aligning" the two heroes would
+   * delete `Browse the catalog` and the footnote with it — and the footnote is the
+   * only place the page says what works without an account.
+   */
+  test("§36 the hero keeps both CTAs and the signed-out footnote", async ({
+    page,
+  }) => {
+    const hero = page
+      .locator("h1")
+      .first()
+      .locator("xpath=ancestor::section[1]");
+    await expect(
+      hero.getByRole("link", { name: "Create your free account" }),
+    ).toBeVisible();
+    await expect(
+      hero.getByRole("link", { name: "Browse the catalog" }),
+    ).toBeVisible();
+    await expect(
+      hero.getByText("Browsing works signed out", { exact: false }),
+      "the only place /learn says what works without an account",
+    ).toBeVisible();
+
+    /*
+      ⚠ AND THE TWO COLUMNS ARE REAL ABOVE 900, not a one-column grid that happens
+      to look right. `HeroTwoUp` breaks at min-[901px] to match `home.css`'s hero,
+      whose `max-width:900px` collapse INCLUDES 900.
+    */
+    const cols = await page.evaluate(() => {
+      const h1 = document.querySelector("h1");
+      const row = h1?.parentElement?.parentElement;
+      return row
+        ? getComputedStyle(row).gridTemplateColumns.split(" ").length
+        : 0;
+    });
+    expect(cols, "the hero is two columns at 1280 wide").toBe(2);
+  });
+
+  /**
+   * ⚠⚠ THIS ONE GUARDS AGAINST A BRIEF, NOT AGAINST A BUG.
+   *
+   * `P1-J0-E296` settled these five labels on 2026-08-24 and SUPERSEDED
+   * `P1-J0-E287` in `brief_step_summaries_short_2026-08-24.md`, which is written
+   * and unfired. If that brief runs later it will try to revert them. Its Learn
+   * table has been corrected in the same commit — this asserts the outcome either
+   * way, so the labels cannot regress silently even if a stale copy is followed.
+   *
+   * ⚠ `Get Certified!` KEEPS ITS EXCLAMATION. It is the only terminal punctuation
+   * in the set and it is deliberate; the other four carry none, because what Scott
+   * typed was prose punctuation in a sentence, not label punctuation.
+   */
+  test("§37 the five row labels are E296's, in order, with no terminal periods", async ({
+    page,
+  }) => {
+    const rendered = (
+      await page.locator("summary.stepd-sum .stepd-t").allTextContents()
+    ).map((t) => t.trim());
+    expect(rendered).toEqual(LEARN_STEPS.map((s) => s.summary));
+    expect(rendered).toEqual([
+      "Enroll in a Learning Path",
+      "Connect with the Instructor",
+      "Watch the Courses and Lessons",
+      "Get Certified!",
+      "Tell Your Peers",
+    ]);
+    for (const label of rendered) {
+      expect(
+        label.endsWith("."),
+        `"${label}" took a terminal period — labels do not carry one`,
+      ).toBe(false);
+    }
+    expect(
+      rendered.filter((l) => l.endsWith("!")),
+      "exactly one label carries emphasis",
+    ).toEqual(["Get Certified!"]);
+  });
+
+  /**
+   * ⚠ THE HEADLINE'S TERMINAL PERIOD (`P1-J0-E289`) and the ONE time claim.
+   *
+   * ⚠ THE TIME ASSERTION IS THAT THE PAGE AGREES WITH ITSELF, not that it says
+   * "3". Scott typed `within 3 minutes` in the hero and `in under 3 minutes` in
+   * the tagline — `E243` twice over. `E295` picked one phrasing; if he changes it
+   * to two minutes in both places this must stay green, and only DISAGREEING must
+   * go red. §33 already counts the numbers; this counts the PHRASINGS.
+   */
+  test("§38 the h1 ends in a period and one phrasing states the time claim", async ({
+    page,
+  }) => {
+    const h1 = ((await page.locator("h1").first().textContent()) ?? "").trim();
+    expect(
+      h1.endsWith("."),
+      `the /learn h1 needs its terminal period (E289): "${h1}"`,
+    ).toBe(true);
+
+    const body = ((await page.locator("body").textContent()) ?? "").replace(
+      /\s+/g,
+      " ",
+    );
+    const phrasings = new Set(
+      (
+        body.match(
+          /\b(?:in under|within|in the next|in)\s+\d+\s*minutes?\b/gi,
+        ) ?? []
+      ).map((m) => m.replace(/\s+/g, " ").toLowerCase()),
+    );
+    expect(
+      [...phrasings],
+      "one claim, one phrasing — E243/E295. The hero and the tagline must use the same words.",
+    ).toHaveLength(1);
   });
 });

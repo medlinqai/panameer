@@ -2,19 +2,23 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { HeroVideoBackdrop } from "@/components/media/HeroVideoBackdrop";
 import { HeroBox } from "@/components/marketing/HeroBox";
+import { HeroTwoUp } from "@/components/marketing/HeroTwoUp";
+import { CATALOG_COUNTS } from "@/lib/learn-catalog-counts";
 import { SellSection } from "@/components/marketing/SellSection";
 import { StepDisclosures } from "@/components/marketing/StepDisclosures";
 import {
   LEARN_STEPS,
   LEARN_SPINE_HEADING,
-  LEARN_SPINE_TAGLINE,
+  LEARN_SPINE_TAGLINE_LEAD,
+  LEARN_SPINE_TAGLINE_STRESS,
 } from "@/lib/learn-steps";
 import { PathProgressShot } from "@/components/learn/public/PathProgressShot";
 import { CertificateShot } from "@/components/learn/public/CertificateShot";
 import { CohortRoomShot } from "@/components/learn/public/CohortRoomShot";
 import { MentorDmShot } from "@/components/learn/public/MentorDmShot";
 import { LearnerProfileShot } from "@/components/learn/public/LearnerProfileShot";
-import { SixStepShot } from "@/components/learn/public/SixStepShot";
+/* ⚠ `SixStepShot` IS NO LONGER IMPORTED (`P1-J0-E292`). The file stays on disk,
+   unimported — same rule as `E164`/`DashboardShot`. See the how-it-works block. */
 import {
   EnrollShot,
   CourseStepsShot,
@@ -183,8 +187,7 @@ const PANELS: Record<number, PanelBlock[]> = {
       */
       heading:
         "Learning paths correspond to functional areas — select one or more based on your area of interest.",
-      body:
-        "The path reflects your overall area of study. You can hold as many as you like at once, and each one carries its own certificate.",
+      body: "The path reflects your overall area of study. You can hold as many as you like at once, and each one carries its own certificate.",
       graphic: <EnrollShot />,
     },
   ],
@@ -215,8 +218,7 @@ const PANELS: Record<number, PanelBlock[]> = {
         sections are explicitly out of scope and Scott wants them confirmed first.
       */
       heading: "The person who recorded the lesson is named on it.",
-      body:
-        "Every lesson carries its instructor. You are never watching an anonymous screen recording — and when you have a question, there is somebody to ask.",
+      body: "Every lesson carries its instructor. You are never watching an anonymous screen recording — and when you have a question, there is somebody to ask.",
       graphic: <InstructorsShot />,
       extra: <InstructorTiers />,
     },
@@ -232,8 +234,7 @@ const PANELS: Record<number, PanelBlock[]> = {
          one transaction or several, and the parenthesis is the honest form. A terminal period was
          added to match every other heading on the page. */
       heading: "The course explains the application and its transaction(s).",
-      body:
-        "Each path is a handful of courses. A course is one application — what it is for, and every transaction you will actually run in it.",
+      body: "Each path is a handful of courses. A course is one application — what it is for, and every transaction you will actually run in it.",
       graphic: <CourseStepsShot />,
     },
     {
@@ -247,8 +248,7 @@ const PANELS: Record<number, PanelBlock[]> = {
         sequence a practitioner actually works in, and it is his.
       */
       heading: "Lessons explain how to create, change, and find transactions.",
-      body:
-        "Short, recorded, and taught by the person who does this work. The lesson is the level where you actually learn the click path.",
+      body: "Short, recorded, and taught by the person who does this work. The lesson is the level where you actually learn the click path.",
       graphic: <LessonShot />,
     },
   ],
@@ -269,9 +269,9 @@ const PANELS: Record<number, PanelBlock[]> = {
         gate with no queue, no timer and no alert behind it, so that number is not stated
         anywhere on this page.
       */
-      heading: "One test at the end of the path, and the certificate is verified by Panameer.",
-      body:
-        "The test covers the whole path, not a single course. Pass it and the credential is issued in your name — checkable by anyone you send it to.",
+      heading:
+        "One test at the end of the path, and the certificate is verified by Panameer.",
+      body: "The test covers the whole path, not a single course. Pass it and the credential is issued in your name — checkable by anyone you send it to.",
       graphic: <PathCertificateShot />,
     },
   ],
@@ -301,9 +301,9 @@ const PANELS: Record<number, PanelBlock[]> = {
         separate rows and still need Scott — the schema stopped lying, and rewriting the sentence
         is his call, not a consequence of the fix.
       */
-      heading: "Your certificate publishes to your profile, with a link you can put anywhere.",
-      body:
-        "It lands the moment you earn it — on the same profile buyers search when they are hiring. The verification page is ours, so a recruiter clicking it is checking with us, not taking your word.",
+      heading:
+        "Your certificate publishes to your profile, with a link you can put anywhere.",
+      body: "It lands the moment you earn it — on the same profile buyers search when they are hiring. The verification page is ours, so a recruiter clicking it is checking with us, not taking your word.",
       graphic: <ProfileCertificatesShot />,
     },
   ],
@@ -375,7 +375,10 @@ function InstructorTiers() {
   return (
     <div className="mt-4">
       {TIERS.map((t) => (
-        <div key={t.tag} className="flex items-start gap-3 border-t border-line py-3">
+        <div
+          key={t.tag}
+          className="flex items-start gap-3 border-t border-line py-3"
+        >
           <span
             className={
               "w-[88px] flex-none py-1 font-display text-[10.5px] font-bold uppercase leading-none tracking-[0.08em] " +
@@ -393,7 +396,9 @@ function InstructorTiers() {
                 </span>
               ) : null}
             </span>
-            <span className="mt-[2px] block text-[12px] leading-[1.45] text-ink-2">{t.sub}</span>
+            <span className="mt-[2px] block text-[12px] leading-[1.45] text-ink-2">
+              {t.sub}
+            </span>
           </span>
         </div>
       ))}
@@ -409,39 +414,72 @@ const SECTIONS = [
   {
     eyebrow: "Learning paths",
     heading: "Consultants use paths to raise what they can charge.",
-    body:
-      "A path is a sequence, not a shelf. Finish it and you have a certificate, a skill on your profile, and a specific answer when a buyer asks what you know.",
+    body: "A path is a sequence, not a shelf. Finish it and you have a certificate, a skill on your profile, and a specific answer when a buyer asks what you know.",
     graphic: <PathProgressShot />,
   },
   {
     eyebrow: "Free & certified",
     heading: "Anyone can learn a new skill and get certified — free.",
-    body:
-      "No tiers, no trial, no card. The certificate is verified by Panameer and it lands on your profile the moment you earn it.",
+    body: "No tiers, no trial, no card. The certificate is verified by Panameer and it lands on your profile the moment you earn it.",
     graphic: <CertificateShot />,
   },
   {
     eyebrow: "Learn together",
     heading: "Every course has a room, and the instructor is in it.",
-    body:
-      "Ask where you are stuck and get an answer from the person who built the lesson — and from the several hundred people working through it alongside you.",
+    body: "Ask where you are stuck and get an answer from the person who built the lesson — and from the several hundred people working through it alongside you.",
     graphic: <CohortRoomShot />,
   },
   {
     eyebrow: "One-on-one",
     heading: "Message an instructor when the group is not enough.",
-    body:
-      "Book a review, get your own configuration looked at, or keep a mentor on hand through a hard project. Some instructors include it with their path; others price it.",
+    body: "Book a review, get your own configuration looked at, or keep a mentor on hand through a hard project. Some instructors include it with their path; others price it.",
     graphic: <MentorDmShot />,
   },
   {
     eyebrow: "Your brand",
     heading: "Instructors and students both build a name here.",
-    body:
-      "What you finish shows on your profile. What you teach shows too — with the learners you have taught and how they rate you. It is the same profile buyers search when they are hiring.",
+    body: "What you finish shows on your profile. What you teach shows too — with the learners you have taught and how they rate you. It is the same profile buyers search when they are hiring.",
     graphic: <LearnerProfileShot />,
   },
 ] as const;
+
+/**
+ * THE HERO'S THREE-UP CARDS (`P1-J0-E291`).
+ *
+ * ⚠ THE NUMBERS ARE NOT HERE, AND THAT IS DELIBERATE, NOT INDIRECTION FOR ITS OWN
+ * SAKE. `check:learn` GUARD 3 forbids a catalog total appearing as a literal
+ * anywhere under `src/components/learn/` — it fired on the first cut of this work
+ * and was right to. They live in `lib/learn-catalog-counts.ts` with the date they
+ * were measured, the exact queries, and the distribution behind the 54. ⚠ READ
+ * THAT FILE'S HEADER BEFORE CHANGING EITHER END OF THIS; three shipped decisions
+ * meet on those three digits and the note explains which.
+ *
+ * ⚠ NO LIVE QUERY, AND THAT IS `E223`, NOT LAZINESS — signed out, `/learn` is a
+ * sales page and *"a visitor never sees a catalog query"* (`app/learn/page.tsx`).
+ * The signed-in dashboard still derives its totals from the tree it read.
+ */
+function LearnStats() {
+  return (
+    /*
+      ⚠ THREE ACROSS AT EVERY WIDTH, INCLUDING 390. They are short — a number and
+      two words — so they do not need to stack, and stacking them would push the
+      five disclosure rows below the fold, which is the exact problem `P1-J0-E292`
+      removed the graphic to solve.
+    */
+    <dl className="mt-8 grid grid-cols-3 gap-3 border-t border-white/15 pt-6">
+      {CATALOG_COUNTS.map((s) => (
+        <div key={s.label}>
+          <dd className="font-display text-[26px] font-bold leading-none text-white min-[901px]:text-[32px]">
+            {s.value}
+          </dd>
+          <dt className="mt-1.5 text-[12px] uppercase leading-[1.3] tracking-[0.06em] text-white/60 min-[901px]:text-[12.5px]">
+            {s.label}
+          </dt>
+        </div>
+      ))}
+    </dl>
+  );
+}
 
 export function LearnPublic() {
   return (
@@ -477,7 +515,7 @@ export function LearnPublic() {
       */}
       <HeroBox cardClassName="isolate bg-[linear-gradient(150deg,#1b1f45_0%,#33194f_55%,#4a1a5e_100%)] text-white">
         <section className="px-6 py-16 min-[900px]:py-[84px]">
-        {/*
+          {/*
           ⚠ THE GRADIENT UNDER THIS IS NOT DECORATION AND MUST STAY. It paints before the clip
           arrives, it is what a `prefers-reduced-motion` visitor sees, and it is the only thing
           guaranteeing the white headline is legible — footage is whatever the camera saw. The
@@ -487,69 +525,178 @@ export function LearnPublic() {
           Same component, same clip and same treatment as the SIGNED-IN LearnHome hero, so
           creating an account does not change the footage under you.
         */}
-        <HeroVideoBackdrop
-          src="/learn.mp4"
-          videoClassName="absolute inset-0 h-full w-full object-cover opacity-40"
-          scrimClassName="absolute inset-0 bg-[linear-gradient(115deg,rgba(15,11,28,0.82)_0%,rgba(40,20,80,0.62)_45%,rgba(215,44,214,0.30)_100%)]"
-        />
+          <HeroVideoBackdrop
+            src="/learn.mp4"
+            videoClassName="absolute inset-0 h-full w-full object-cover opacity-40"
+            scrimClassName="absolute inset-0 bg-[linear-gradient(115deg,rgba(15,11,28,0.82)_0%,rgba(40,20,80,0.62)_45%,rgba(215,44,214,0.30)_100%)]"
+          />
 
-        <div className="relative z-[2] mx-auto max-w-[1136px]">
-          <h1 className="max-w-[900px] font-display text-[34px] font-bold leading-[1.08] tracking-[-0.8px] min-[900px]:text-[50px] min-[900px]:tracking-[-1px]">
-            Get Trained, Get Certified, Get Hired, and Stay Supported
-          </h1>
           {/*
-            ⚠ VERBATIM SCOTT, `P1-J0-E280`, 2026-08-22. STILL NAMES ALL FOUR OBJECTS — path,
-            course, lesson, certificate — which was `P1-J3-E011`'s point and survives this
-            rewrite: the line before E011 said path · lesson · certificate and skipped COURSE,
-            level 2 of the hierarchy the spine below exists to teach.
+          ⚠ TWO COLUMNS NOW, VIA THE SHARED `HeroTwoUp` (`P1-J0-E291`). Scott, with
+          both heroes screenshotted side by side: *"Structuring. I want you to
+          structure LEARN like you did OPTIMIZE."*
 
-            ⚠⚠ `connect with the instructors` IS AN UNBUILT VERB, AND IT SHIPPED ANYWAY BECAUSE
-            SCOTT WROTE IT. FLAGGED, NOT SILENTLY HARMONISED — this is the report, not a
-            decision taken here.
+          ⚠ THIS PAGE CANNOT USE `/optimize`'s HERO CSS AND THAT WAS CHECKED, NOT
+          ASSUMED — every rule is `.pm-home`-scoped (`home.css:182`, `:200`, `:235`,
+          `:257`) and this page is Tailwind, outside that scope. `HeroTwoUp` shares
+          the STRUCTURE; the skin is local to each caller, which is also what let
+          `/optimize` measure byte-identical through the extraction.
 
-            This comment used to say the opposite, and the history is the whole point. E011's
-            sentence ended *"Message your instructor from within the course."* and that clause
-            was HELD BACK under `P1-J3-E014`: there is no `Conversation`, `Message` or `Thread`
-            model in the schema and `/messages` ships a `disabled` composer reading "Messaging
-            isn't available yet". ⚠ NONE OF THAT HAS CHANGED. The same promise has now arrived
-            through a different door, in different words, in the same paragraph it was removed
-            from.
+          ⚠ THE COLUMNS ARE `min-[901px]`, NOT `min-[900px]` — `home.css`'s hero
+          collapses at `max-width:900px`, which INCLUDES 900, so the two heroes have
+          to break at the same width or 900 shows one column on one page and two on
+          the other.
+        */}
+          <div className="relative z-[2] mx-auto max-w-[1136px]">
+            <HeroTwoUp
+              rowClassName="grid grid-cols-1 items-center gap-10 min-[901px]:grid-cols-2 min-[901px]:gap-14"
+              left={
+                <>
+                  {/*
+                  ⚠ TERMINAL PERIOD, `P1-J0-E289`. Scott, 2026-08-24: *"Period after
+                  stay supported."*
 
-            ⚠ AND IT CONTRADICTS THE ROW BELOW IT. Step 2 is `Meet Your Instructor` PRECISELY
-            because `Connect to the Instructor` overstates what exists — Scott settled that on
-            the same day he wrote this sentence. The hero now promises the verb the row was
-            renamed to avoid. ⚠ SCOTT DECIDES; do not resolve it by editing either one.
+                  ⚠ IT MAKES THIS HERO INCONSISTENT WITH `/` AND `/optimize`, WHICH
+                  HAVE NO TERMINAL PERIOD — audited in the same pass and DELIBERATELY
+                  NOT CHANGED. `/hire-talent` and `/find-work` both end in a period;
+                  `/` and `/optimize` share one string that does not; the other three
+                  public heroes are PLACEHOLDER text and prove nothing either way.
+                  That is a template question and it is Scott's to answer once.
 
-            ⚠ `3 minutes`, NOT `5` — `E243` was exactly this shape, two numbers for one signup on
-            one page, and the tagline above says 3.
+                  ⚠ THE NEW `<h1>` IS LONGER THAN THE STRING IT REPLACED, so it wraps
+                  where the old one did not. Re-measured against sampled frames of the
+                  clip, not against a mockup — the mockup's hero has no video, so its
+                  contrast is not proof of this one's.
 
-            ⚠ `Learning paths` KEEPS SCOTT'S CAPITAL L. `conventions.md` Title Case governs
-            LABELS; this is prose and it is his.
-          */}
-          <p className="mt-5 max-w-[640px] text-[17px] leading-[1.6] text-[#cec7db] min-[900px]:text-[19px]">
-            Enroll in Learning paths, connect with the instructors, take their courses, and
-            watch their lessons. Create your account and start learning for free in the next 3
-            minutes.
-          </p>
-          <div className="mt-8 flex flex-wrap items-center gap-3">
-            <Link
-              href="/login?callbackUrl=/learn"
-              className="rounded-[12px] bg-magenta px-7 py-4 font-display text-[16px] font-bold text-white"
-            >
-              Create your free account
-            </Link>
-            <Link
-              href="/learn/courses"
-              className="rounded-[12px] border border-white/35 px-7 py-4 font-display text-[16px] font-bold text-white"
-            >
-              Browse the catalog
-            </Link>
+                  ⚠ `Stay Supported` IS THE FOURTH PROMISE AND IT IS THE THINNEST.
+                  What backs it today is the instructor named on every lesson and the
+                  free group community; the two tiers that need messaging are marked
+                  `earned` and `soon`. Scott's string, shipped as written.
+                */}
+                  <h1 className="font-display text-[34px] font-bold leading-[1.08] tracking-[-0.8px] min-[901px]:text-[46px] min-[901px]:tracking-[-1px]">
+                    Get Trained, Get Certified, Get Hired, and Stay Supported.
+                  </h1>
+                  {/*
+                  ⚠⚠ BOTH BUTTONS SURVIVE, AND IT IS A DECISION. Scott, 2026-08-24:
+                  *"The two buttons that you have there are great. keep
+                  those...add the rest."*
+
+                  ⚠ THIS DIVERGES FROM `/optimize`, WHICH HAS ONE CTA, DELIBERATELY —
+                  `/learn` has a real signed-out browse path and `/optimize` does not.
+                  Do not "align" the two heroes by deleting one.
+                */}
+                  <div className="mt-8 flex flex-wrap items-center gap-3">
+                    <Link
+                      href="/login?callbackUrl=/learn"
+                      className="rounded-[12px] bg-magenta px-7 py-4 font-display text-[16px] font-bold text-white"
+                    >
+                      Create your free account
+                    </Link>
+                    <Link
+                      href="/learn/courses"
+                      className="rounded-[12px] border border-white/35 px-7 py-4 font-display text-[16px] font-bold text-white"
+                    >
+                      Browse the catalog
+                    </Link>
+                  </div>
+                  {/*
+                  ⚠ THE FOOTNOTE STAYS, BENEATH THE BUTTONS. It is the ONLY place the
+                  page says what works without an account, which is why it is not
+                  folded into the sub-copy and not deleted for tidiness.
+                */}
+                  <p className="mt-5 max-w-[520px] text-[13px] text-white/65">
+                    Browsing works signed out. Paths, progress, certificates and
+                    instructors need an account.
+                  </p>
+                </>
+              }
+              right={
+                <>
+                  {/*
+                  ⚠ VERBATIM SCOTT, `P1-J0-E290`, 2026-08-24.
+
+                  ⚠ `...all for free` KEEPS HIS ELLIPSIS AND ITS SPACING AS TYPED — no
+                  space before it, and NOT converted to an em dash. `/optimize`'s lede
+                  says "— all for&nbsp;free."; this one is his own punctuation and the
+                  two are allowed to differ.
+
+                  ⚠⚠ `connect with instructors` IS AN UNBUILT VERB AND IT SHIPPED
+                  BECAUSE SCOTT WROTE IT. There is still no `Conversation`, `Message`
+                  or `Thread` model, and `/messages` ships a `disabled` composer
+                  reading "Messaging isn't available yet" (`P1-J3-E014`). He dropped
+                  `the` from the earlier `connect with the instructors`; the claim is
+                  unchanged.
+
+                  ⚠ AND THE PAGE NOW MAKES IT TWICE — step 2's label is
+                  `Connect with the Instructor` as of `P1-J0-E296`, which reverses the
+                  `Meet Your Instructor` he settled the same morning. Both are his
+                  words, both are flagged, neither is harmonised here.
+
+                  ⚠ THIS PARAGRAPH IS ALSO WHERE `P1-J3-E011`'s HELD-BACK CLAUSE
+                  ORIGINALLY SAT — *"Message your instructor from within the course."*
+                  It was removed for exactly the reason above. It has now returned in
+                  different words, in the same paragraph. That history is the point of
+                  this comment.
+                */}
+                  <p className="text-[17px] leading-[1.6] text-[#cec7db] min-[901px]:text-[19px]">
+                    Enroll in Learning paths, connect with instructors, take
+                    courses, and watch lessons...all for free.
+                  </p>
+                  {/*
+                  ⚠ THE BRIDGE LINE — its own beat, not a sentence on the lede, which
+                  is exactly what `/optimize`'s `hero-bridge` is (`home.css:257`).
+
+                  ⚠ THE COLOUR IS MIRRORED FROM THAT RULE (`#efa3ee`, weight 600) AND
+                  THE CLASS IS **NOT** REUSED. `.pm-home .hero-right p.hero-bridge`
+                  would not match here — `/learn` is not inside `.pm-home`. That is the
+                  same trap that produced the `.sd-n` collision in `5d50135`, checked
+                  rather than assumed.
+
+                  ⚠⚠ MEASURED ON THE VIDEO, NOT ON A SWATCH, AND IT FAILS WCAG AA
+                  FOR NORMAL TEXT AT ALL THREE WIDTHS. `#efa3ee` sits over a FLAT
+                  gradient on `/optimize`, where it is fine; here it sits over footage
+                  at 40% opacity under a scrim, and the footage is whatever the camera
+                  saw.
+
+                  Sampled 2026-08-24 — brightest pixel behind this line, across nine
+                  frames of `/learn.mp4` (t=0..8s, clip is 11.8s):
+
+                      1440   19px/600   worst 3.09:1  (t=0s)   AA normal FAIL
+                       900   17px/600   worst 4.19:1  (t=0s)   AA normal FAIL
+                       390   17px/600   worst 4.06:1  (t=1s)   AA normal FAIL
+
+                  All three clear AA LARGE (3:1), but `font-weight:600` at 17-19px is
+                  not WCAG large text (that needs 24px, or 18.66px at weight 700), so
+                  4.5:1 is the threshold that applies. Mean-background ratios are
+                  comfortable (4.94 / 6.35 / 5.43) — it is the bright frames that fail.
+
+                  ⚠ SHIPPED AS SCOTT SPECIFIED, UNCHANGED, AND REPORTED AS A BLOCKING
+                  FINDING. `P1-J0-E290` says measure it and, on failure, STOP AND
+                  REPORT — *"do not pick a different pink."* So no colour was
+                  substituted, and the hero's scrim was not quietly darkened either;
+                  both are design calls that are Scott's.
+
+                  ⚠ THE TWO FIXES THAT DO NOT TOUCH THE PINK, for when he decides:
+                  darken the scrim behind the text column, or take this line to 24px
+                  (or 18.66px at weight 700), which makes 3:1 the correct threshold and
+                  it passes today. ⚠ DO NOT apply either one without him.
+
+                  ⚠ THE `<h1>` ABOVE IS FINE — white on the same backdrop measured
+                  8.39 / 6.02 / 8.07:1. It is only the pink that is marginal.
+
+                  ⚠ `in under 3 minutes`, WHICH IS **NOT** WHAT SCOTT TYPED HERE. He
+                  wrote `within 3 minutes` in the hero and `in under 3 minutes` in the
+                  tagline — two phrasings of one claim on one page, which is `E243`
+                  exactly. `P1-J0-E295` says pick one; this is the one, in both places.
+                */}
+                  <p className="mt-4 text-[17px] font-semibold leading-[1.6] text-[#efa3ee] min-[901px]:text-[19px]">
+                    Create your account and start learning in under 3 minutes.
+                  </p>
+                  <LearnStats />
+                </>
+              }
+            />
           </div>
-          <p className="mt-5 max-w-[640px] text-[13px] text-white/65">
-            Browsing works signed out. Paths, progress, certificates and instructors need an
-            account.
-          </p>
-        </div>
         </section>
       </HeroBox>
 
@@ -559,28 +706,56 @@ export function LearnPublic() {
         Works` used to be a whole `SellSection`; as a row it would have been a
         step that is not a step.
 
-        ⚠ THE TAGLINE IS ONE SENTENCE AND SCOTT WROTE TWO. `for most learning
-        paths` is HELD — it did not survive the live DB read (7 of 23 paths hold a
-        publishable question set, ZERO are published). The reasoning and the exact
-        counts are in `lib/learn-steps.ts`; it goes in unchanged the day the ratio
-        is a majority. Same precedent as `P1-J3-E011` in the hero below.
+        ── ⚠⚠ NO GRAPHIC HERE, AND THAT IS THE POINT (`P1-J0-E292`) ────────────
 
-        ⚠⚠ `SixStepShot` DRAWS SIX STEPS AND THIS PAGE NOW LISTS FIVE. FILED AS
-        `P1-J0-E284` AND LEFT ALONE ON PURPOSE — whether it is redrawn,
-        re-captioned or retired is Scott's call, and quietly dropping it here
-        would delete art he approved rather than surface the contradiction.
+        `<SixStepShot />` used to render between this tagline and row 1. Scott,
+        2026-08-24: *"ahhhh, interesting...then lets just use text like optimize
+        does."* And his reason, recorded so nobody restores it: *"plus it gets the
+        accordion in the main page and instantly visible. it is obvious what to do
+        with it once they see it."* ⚠ THE GRAPHIC WAS PUSHING THE FIVE ROWS BELOW
+        THE FOLD. Removing it is the objective, not a side effect.
+
+        ⚠ FOUR DESIGNS WERE CONSIDERED AND ARE DEAD — do not build any of them:
+        moving the graphic into row 1 · hiding it behind a `Learn How Our Training
+        is Structured` disclosure · replacing it with a Training/Testing/
+        Instructing composition diagram · linking its boxes into the accordion.
+
+        ⚠ `SixStepShot.tsx` STAYS ON DISK, UNIMPORTED — same rule as `E164` and
+        `DashboardShot`. Deleting a component Scott approved because one page
+        stopped rendering it is a decision he did not make.
+
+        ⚠ TWO ROWS CLOSE BY REMOVAL, which is why they are named here rather than
+        fixed anywhere: `P1-J0-E284` (six drawn steps beside a five-step list) and
+        `P1-J0-E293` (the graphic omitted the lesson level the spine teaches).
+        Both died with the render. `check:ui` asserts nothing renders an image
+        between the tagline and row 1, and that no numbered six-step sequence
+        exists on the page, so neither can come back unnoticed.
       */}
       <section className="bg-white pt-14 min-[900px]:pt-[72px]">
         <div className="mx-auto max-w-[1200px] px-8">
           <h2 className="max-w-[900px] font-display text-[28px] font-bold leading-[1.14] tracking-[-0.5px] text-[#171e3e] min-[900px]:text-[34px]">
             {LEARN_SPINE_HEADING}
           </h2>
+          {/*
+            ⚠ THE SECOND HALF IS PINK, THE FIRST HALF IS NOT (`P1-J0-E295`). Scott:
+            *"we should stress free and you can be learning in under 3 minutes."*
+            Both of those are in the stressed half; the split is in
+            `lib/learn-steps.ts` beside the strings.
+
+            ⚠ `#efa3ee` AND WEIGHT 600 ARE MIRRORED FROM `home.css:257`
+            (`.pm-home .hero-right p.hero-bridge`) — the same treatment as the hero
+            bridge line above, so the page has ONE emphasis colour rather than two.
+            The CLASS is not reused; this page is not inside `.pm-home`.
+
+            ⚠ A SPAN, NOT THE WHOLE LINE. The whole line in pink would be a second
+            bridge line competing with the hero's.
+          */}
           <p className="mt-3 max-w-[720px] text-[16.5px] leading-[1.62] text-[#7b8496]">
-            {LEARN_SPINE_TAGLINE}
+            {LEARN_SPINE_TAGLINE_LEAD}
+            <span className="font-semibold text-[#efa3ee]">
+              {LEARN_SPINE_TAGLINE_STRESS}
+            </span>
           </p>
-          <div className="mt-9">
-            <SixStepShot />
-          </div>
         </div>
       </section>
 
