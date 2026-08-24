@@ -19,6 +19,9 @@ import {
   LEARN_SPINE_HEADING,
   LEARN_SPINE_TAGLINE,
 } from "../src/lib/learn-steps";
+/* `/hire-talent`'s five labels, from the module the page reads — same reason as
+   `learn-steps.ts` above: strings only, no imports, so a spec can pull it in. */
+import { TALENT_STEPS } from "../src/lib/talent-steps";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -1863,5 +1866,182 @@ test.describe("/learn — walk 2: the hero and the how-it-works block", () => {
       ).not.toBe("none");
       expect(r.svg, `${url}: the social icon is unsized — E013`).toBe("16x16");
     }
+  });
+});
+
+/**
+ * `/hire-talent` AND `/`'s MACRO SECTION — TALENT WALK 1 (`P1-J1-E011`..`E015`,
+ * `P1-J0-E314`).
+ */
+test.describe("talent walk 1 — the seller page and /'s macro section", () => {
+  /**
+   * ⚠ THE FIVE LABELS ARE SCOTT'S FINAL SET (`P1-J1-E012`) and they superseded an
+   * earlier draft in the same work stream — chat's `Connect with Experts and
+   * Buyers` and `Create Service Products or Job Requests` both lost their buyer
+   * half. A guard by literal is what stops the earlier draft creeping back.
+   *
+   * ⚠ AND THE PANELS MUST STAY EMPTY. `brief_talent_spine_panels` has not fired;
+   * Scott has given labels only. A panel that grows a paragraph before he writes
+   * one is chat's words in his product, which is the failure this asserts against.
+   */
+  test("§40 /hire-talent renders the five-step spine with derived, empty panels", async ({
+    page,
+  }) => {
+    await page.goto("/hire-talent");
+    const rows = (
+      await page.locator("summary.stepd-sum .stepd-t").allTextContents()
+    ).map((t) => t.trim());
+    expect(rows).toEqual(TALENT_STEPS.map((s) => s.summary));
+    expect(rows).toEqual([
+      "Join Panameer",
+      "Learn New Skills",
+      "Connect with Experts",
+      "Create Service Products",
+      "Sell Direct to Oracle Licensees",
+    ]);
+
+    for (const [i, step] of TALENT_STEPS.entries()) {
+      const panel = page
+        .locator("details.stepd-d")
+        .nth(i)
+        .locator(".stepd-panel");
+      /* The eyebrow is DERIVED, exactly as on /optimize and /learn. */
+      expect(
+        ((await panel.locator("p").first().textContent()) ?? "").trim(),
+        `step ${step.n}'s eyebrow must be derived, not typed`,
+      ).toBe(`Step ${step.n} - ${step.summary}`);
+      /*
+        ⚠ EXACTLY ONE ELEMENT IN THE PANEL — the eyebrow. Any second paragraph,
+        heading or graphic means panel copy was written before Scott wrote it.
+      */
+      expect(
+        await panel.locator("p, h2, h3, img, svg").count(),
+        `step ${step.n}'s panel gained content before the panels brief fired`,
+      ).toBe(1);
+    }
+  });
+
+  /**
+   * ⚠ THE BUYER FURNITURE IS GONE FROM THE SELLER PAGE (`P1-J1-E013`/`E014`).
+   *
+   * `Sell More than Just Your Resume` is seller copy, so the buyer eyebrow pill
+   * (`For teams ready to hire`) and the Work-journey search box both came out.
+   * ⚠ THE SEARCH BOX'S CAPTION — *"AI drafts your scoped Work Request"* — is what
+   * made this read as the WORK page, which is the confusion Scott flagged.
+   *
+   * ⚠ `MarketingHero` IS NOT DELETED and still serves four other pages, so this
+   * asserts absence on `/hire-talent` ONLY and non-vacuity on `/find-work`.
+   */
+  test("§41 /hire-talent drops the buyer pill and the Work-journey caption, keeps its control", async ({
+    page,
+  }) => {
+    await page.goto("/hire-talent");
+    /*
+      ⚠⚠ THE SEARCH FORM IS ASSERTED PRESENT, NOT ABSENT, AND `E014`'s OWN
+      CONDITION IS WHY. Scott: *"REMOVE the search box (unless it is a teaser to
+      see sample profiles)."* The brief judged that unmeetable; it is met.
+      Measured 2026-08-24: `/explore?mode=hire&q=oracle` returns 200 signed out and
+      renders "22 experts found" with real provider cards, and this form posts
+      exactly there. The `ComingSoon` routes the brief cited are all inside
+      `(app)` — signed-in surfaces a visitor never reaches.
+
+      ⚠ IT IS ALSO THE HERO'S ONLY CONTROL, and `check:app-shell`'s PUBLIC HERO
+      guard requires one: *"the hero offers nothing to click"*. Removing it turned
+      that guard red, and the alternatives were to weaken it or to invent a CTA
+      Scott has not named. Neither was acceptable.
+
+      ⚠ IF HE OVERRIDES AND WANTS IT GONE, this assertion flips — but only
+      alongside a named CTA, or the app-shell guard fails again.
+    */
+    await expect(
+      page.locator('form[action="/explore"]'),
+      "the hero's only control — see the note above before removing it",
+    ).toHaveCount(1);
+    const text = await page.evaluate(() => document.body.innerText);
+    expect(text, "the buyer eyebrow pill is back — E014").not.toContain(
+      "For teams ready to hire",
+    );
+    expect(
+      text,
+      "the Work-Request caption is back — it is what made this read as /work",
+    ).not.toContain("AI drafts your scoped Work Request");
+    expect(text, "the seller headline must be present").toContain(
+      "Sell More than Just Your Resume",
+    );
+
+    /*
+      ⚠ `MarketingHero` IS UNTOUCHED AND STILL SERVES FOUR PAGES. `/hire-talent`
+      composes its own hero; the shared one was not edited, so a change Scott made
+      to one page cannot leak to four he did not walk.
+    */
+    await page.goto("/find-work");
+    await expect(
+      page.locator('form[action="/explore"]'),
+      "MarketingHero was edited or deleted rather than left alone",
+    ).toHaveCount(1);
+    await expect(
+      page.getByText("For teams ready to hire", { exact: false }),
+      "the buyer pill must still exist where it belongs",
+    ).toHaveCount(0);
+  });
+
+  /**
+   * ⚠ `/`'s MACRO SECTION (`P1-J0-E314`), AND THE HONEST-TENSE GUARD WITH IT.
+   *
+   * The section's whole defensibility is that every line describes what a
+   * provider can BUILD, never what a buyer can PURCHASE — `(app)/packages`,
+   * `(app)/services/offers`, `(app)/hire` and `(app)/search` are all `ComingSoon`
+   * and there is no `Offer` model.
+   *
+   * ⚠ SO THE BUYER-VERB BAN IS ASSERTED, NOT JUST THE SECTION'S PRESENCE. A future
+   * edit that tightens the copy by dropping the development note, or that adds
+   * "buyers order it", turns a positioning claim into a false one.
+   */
+  test("§42 / renders the macro section, and it makes no buyer-side promise", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await expect(page.locator(".owtw-row")).toHaveCount(4);
+
+    /* ⚠ THE NUMERAL IS A FIXED-WIDTH DISC. This is the `.sd-n` bug (`5d50135`)
+       asserted against: a bare class lost to a `.pm-home ` one and the disc came
+       out glyph-width. */
+    const numW = await page
+      .locator(".owtw-n")
+      .first()
+      .evaluate((e) => Math.round(e.getBoundingClientRect().width));
+    expect(numW, "the numeral disc must not size to its glyph").toBe(30);
+
+    const section = ((await page.locator(".owtw-grid").textContent()) ?? "")
+      .replace(/\s+/g, " ")
+      .toLowerCase();
+    for (const banned of [
+      "buy ",
+      "purchase",
+      "checkout",
+      "order it",
+      "hire them",
+      "add to cart",
+    ]) {
+      expect(
+        section.includes(banned),
+        `the stack cannot be bought yet — "${banned}" is a buyer-side promise`,
+      ).toBe(false);
+    }
+
+    /* ⚠ AND THE LIMIT MUST BE STATED. Deleting it is how the section becomes a lie. */
+    await expect(
+      page.locator(".owtw-note"),
+      "the in-development note is what keeps the four rows defensible",
+    ).toContainText(/still in development/i);
+
+    /* ⚠ LINKEDIN IS NOT NAMED. Scott's framing names it; the page deliberately
+       does not — a competitor's name in marketing copy is a risk he did not ask
+       us to take. */
+    const body = await page.evaluate(() => document.body.innerText);
+    expect(
+      /linkedin/i.test(body),
+      "/ must not name a competitor — E314 records this decision",
+    ).toBe(false);
   });
 });
