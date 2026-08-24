@@ -19,7 +19,11 @@ import { getSessionViewer } from "@/lib/session";
  * routes to keep in step, two sets of links to get right, and a course URL that
  * showed a stranger's chrome to whoever it was shared with.
  */
-export default async function LearnLayout({ children }: { children: ReactNode }) {
+export default async function LearnLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
   const viewer = await getSessionViewer();
 
   if (viewer) {
@@ -57,6 +61,12 @@ export default async function LearnLayout({ children }: { children: ReactNode })
         because moving it edits `/`, which is walked and stable, to gain nothing but a
         better filename. ONE footer, two callers. The name is now slightly wrong and that
         is the cheaper of the two errors.
+      */}
+      {/*
+        ⚠ `HomeFooter` NOW BRINGS ITS OWN STYLESHEET AND ITS OWN `.pm-home` SCOPE
+        (`P1-ALL-E013`) — this layout renders it plainly and correctly. Read that
+        component's header before adding a fourth caller; the reason it is
+        self-contained is that this page proved a caller can forget.
       */}
       <HomeFooter />
     </div>

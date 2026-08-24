@@ -131,59 +131,56 @@ export const LEARN_SPINE_HEADING = "Here’s How It Works";
  * and there is no queue, no timer and no alert behind that number. It returns the
  * day a queue exists.
  */
-export const LEARN_SPINE_TAGLINE_LEAD = "From Account Creation to ";
-
 /**
- * ⚠ THE STRESSED HALF, RENDERED IN `#efa3ee` AT WEIGHT 600 (`P1-J0-E295`).
+ * ⚠⚠ THE BLOCK'S HEADLINE — PROMOTED FROM SUB-COPY BY `P1-J0-E304`, AND IT NOW
+ * CARRIES THREE PROBLEMS THAT ARE REPORTED, NOT FIXED.
  *
- * Scott, 2026-08-24: *"we should stress free and you can be learning in under 3
- * minutes."* Both of those live in this half, which is why the split falls here.
+ * Scott, 2026-08-24: *"Here is what the text should say — 'From courses to
+ * certification in hours, with the support of the community forever.'"*
  *
- * ⚠ A SPAN INSIDE THE LINE, NOT THE WHOLE LINE. The whole line in pink would be a
- * second bridge line, and the page would then have two competing ones — the hero
- * already owns that treatment.
+ * ⚠ IT IS THE BIGGEST TEXT IN THE BLOCK NOW. `E304` swapped the two strings' roles:
+ * `Here's How It Works` became a small magenta eyebrow and this became the display
+ * headline. So each flag below matters MORE than it did as grey sub-copy.
  *
- * ⚠ `free` IS THE ONE CLAIM ON THIS PAGE THAT IS UNCONDITIONALLY TRUE TODAY.
- * Every path, every course and every lesson is free; `P1-J3-E030` (0 of 23 paths
- * with a published test) constrains the TEST, not the training. So it is stressed
- * without qualification.
+ * ── 1. ⚠⚠ `certification in hours` IS THE SLA HE DELETED THIS MORNING, TIGHTER ──
  *
- * ⚠ TWICE IS STRESS, THREE TIMES IS A SALES PAGE. The pink appears exactly twice
- * on `/learn` — the hero bridge line and this span. Do not add a third.
- */
-export const LEARN_SPINE_TAGLINE_STRESS = "Free Training in under 3 minutes.";
-
-/**
- * ⚠ THE WHOLE SENTENCE, DERIVED FROM ITS TWO HALVES so there is one source and the
- * guard can assert the rendered line without knowing where the span falls.
+ * He removed `within 24 hours` from THIS EXACT TAGLINE on 2026-08-24, because
+ * `b5f3923` added a HUMAN REVIEW GATE: a pass does not issue a credential until a
+ * person reviews it, and there is no queue, no timer and no alert behind it.
+ * `in hours` is a TIGHTER promise than the one he just pulled, on the same line, the
+ * same day. ⚠ AND `P1-J3-E030`: 0 OF 23 PATHS HAVE A PUBLISHED TEST — nobody can be
+ * certified in hours, in days, or at all, today.
  *
- * ⚠⚠ SCOTT WROTE TWO SENTENCES AND THE SECOND IS STILL HELD.
+ * ── 2. ⚠ `forever` IS A PERPETUITY CLAIM ────────────────────────────────────
  *
- * His string was: *"From Account Creation to Free Training in under 3 minutes. Get
- * certified for most learning paths, for free."*
+ * Counsel-gate class, the same family as the retired `only` and `endless`. What the
+ * community actually is, measured 2026-08-24: `ForumThread`/`ForumPost` exist in the
+ * schema, and NOTHING ON `/learn` LINKS TO A FORUM — there is no reachable community
+ * surface from this page at all. `E306`'s free tier (`Ask the group`) describes it as
+ * a thing that will exist. So the page promises forever access to something a visitor
+ * cannot reach today. ⚠ NOT SOFTENED — reported.
  *
- * ⚠ `most` DID NOT SURVIVE A LIVE DB READ. Measured 2026-08-21:
+ * ── 3. ⚠⚠ `free` DROPS TO ONE MENTION AND THE TIME CLAIM DIES ENTIRELY ──────
  *
- *     LearningPath total                                23
- *     could carry a test (>= 2 lessons)              17/23  (74%)
- *     hold a LearnAssessment row at all                8/23  (35%)
- *     PUBLISHABLE (>= 5 valid questions)               7/23  (30%)
- *     PUBLISHED (a learner can sit it today)           0/23  (0%)
+ * The string this replaced was *"From Account Creation to Free Training in under 3
+ * minutes."* — it carried BOTH. `E302` separately replaced the hero's second sentence
+ * (which carried the only other `under 3 minutes`) with `Check out the steps below to
+ * see how it works.` ⚠ SO AFTER `E302` AND `E304` TOGETHER, `under 3 minutes` APPEARS
+ * NOWHERE ON `/learn`. `...all for free` survives in the hero's first sentence, so
+ * `free` survives exactly once.
  *
- * `most` is true only of "could EVENTUALLY carry a test". On the reading a visitor
- * takes — *can I get certified in most paths* — it is 0%.
+ * ⚠ SCOTT ASKED FOR BOTH TO BE STRESSED EARLIER THE SAME DAY (`P1-J0-E295`). He may
+ * not intend the loss. REPORTED — and DO NOT RE-ADD EITHER.
  *
- * ⚠ HELD BACK, NOT DROPPED, AND NOT SOFTENED. Same precedent as `P1-J3-E011`. The
- * clause goes in unchanged the day the ratio is a majority.
+ * ── WHAT IS NO LONGER HERE ─────────────────────────────────────────────────
  *
- * ⚠ ALSO GONE FROM SCOTT'S ORIGINAL: `within 24 hours`. `b5f3923` added a HUMAN
- * review gate, so a pass does not issue a credential until a person reviews it —
- * and there is no queue, no timer and no alert behind that number.
+ * ⚠ THE `_LEAD`/`_STRESS` SPLIT IS GONE. It existed so a `#efa3ee` span could stress
+ * half the line; `E302` removed the pink from this page entirely, so the split has no
+ * job and a two-constant tagline would just invite the span back.
  *
- * ⚠ `in under 3 minutes`, AND THE HERO NOW SAYS THE SAME. Scott typed `within 3
- * minutes` in the hero (`P1-J0-E290`) and `in under 3 minutes` here — two
- * phrasings of one claim on one page, which is `E243` exactly. `P1-J0-E295` picks
- * one; this is it, in both places.
+ * ⚠ THE HELD-BACK `most learning paths` CLAUSE IS STILL HELD, and now moot for a
+ * different reason — Scott replaced the whole sentence. The measurement that held it
+ * stands: 7 of 23 paths hold a publishable question set, 0 are published.
  */
 export const LEARN_SPINE_TAGLINE =
-  LEARN_SPINE_TAGLINE_LEAD + LEARN_SPINE_TAGLINE_STRESS;
+  "From courses to certification in hours, with the support of the community forever.";

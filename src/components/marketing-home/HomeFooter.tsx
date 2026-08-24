@@ -1,3 +1,15 @@
+/*
+  ⚠⚠ THIS COMPONENT'S STYLESHEET, IMPORTED BY THE COMPONENT (`P1-ALL-E013`).
+
+  It used to rely on whichever page rendered it having imported `home.css` and
+  having wrapped it in `.pm-home`. `/` and `/optimize` both do. `app/learn/layout.tsx`
+  did NEITHER, and shipped a broken footer for as long as it has existed.
+
+  ⚠ CSS IMPORTS DEDUPE, so `/` and `/optimize` importing it too costs nothing —
+  proven by measurement, not assumed: both pages' footers are byte-identical
+  before and after this change at 1440 and 390.
+*/
+import "@/components/marketing-home/home.css";
 import Link from "next/link";
 import { BRAND_BADGE } from "@/lib/brand";
 import {
@@ -116,7 +128,56 @@ const COLUMNS = FOOTER_GROUPS;
 
 export function HomeFooter() {
   return (
-    <>
+    /*
+      ⚠⚠ THE `.pm-home` WRAPPER IS PART OF THE COMPONENT NOW, AND IT IS THE FIX FOR
+      `P1-ALL-E013`.
+
+      Scott, 2026-08-24, screenshotting the bottom of `/learn`: *"what is this?
+      Guessing it is the footer and it is all goofed up?"* The YouTube mark rendered
+      1440x1440, filling the viewport and crushing every footer column into an
+      unreadable stack.
+
+      ── THE CAUSE, MEASURED RATHER THAN GUESSED ───────────────────────────────
+
+      ⚠ IT WAS NEVER ABOUT THE ICON. EVERY rule this markup needs is
+      `.pm-home`-scoped — `home.css:617` (`footer`), `:632` (`.foot`'s grid),
+      `:643-646` (`.socials`) — and `app/learn/layout.tsx` rendered it outside that
+      scope AND without importing the stylesheet at all. `/` and `/optimize` do both
+      at page level, which is why they were always fine and only `/learn` broke.
+
+      Measured on `/learn` before the fix: `.foot` `grid-template-columns: none`
+      instead of `1.4fr 3fr`; `.socials` `display:block` at 1440 wide instead of
+      `flex`; `.socials a` `display:inline` with no background instead of a 36x36
+      chip; footer background transparent instead of `--ink`. The icon was simply
+      the loudest symptom — the `<svg>` carries a `viewBox` and no intrinsic size, so
+      with `.pm-home .socials a svg{width:16px;height:16px}` not matching, it
+      expanded to fill its parent.
+
+      ⚠ SO THE FIX IS SCOPE AND OWNERSHIP, NOT A WIDTH ATTRIBUTE. Sizing the `<svg>`
+      would have hidden one symptom and left the grid, the chips and the background
+      still wrong — a fix that makes a bug harder to see is worse than the bug.
+
+      ⚠ AND THE STANDING OBJECTION TO `.pm-home` DOES NOT APPLY. The usual argument
+      is that the wrapper drags the mockup's `*{margin:0;padding:0}` reset onto a
+      Tailwind page — but `home.css:64-77` records that THE RESET WAS DELIBERATELY
+      NEVER PORTED. All `.pm-home` carries is the variable block, `box-sizing`, a
+      font stack, a colour, and a `background:#fff` the dark `footer` paints over.
+
+      ⚠ NESTING IS HARMLESS AND IS WHAT HAPPENS ON `/` AND `/optimize` — this
+      `.pm-home` sits inside theirs. Descendant selectors still match and the
+      variables re-declare to identical values. Byte-identity at 1440 and 390 was
+      measured before and after; nothing on those two pages moved.
+
+      ⚠ THE DEFECT CLASS WAS A COMPONENT DEPENDING ON ITS CALLER'S STYLESHEET. Three
+      callers, two of which happened to be right. Owning both here is what stops a
+      fourth caller getting it wrong. `check:ui` also asserts geometrically that
+      nothing inside the footer exceeds a sane box, so a future unsized asset fails
+      the same way.
+
+      ⚠ PRE-EXISTING, NOT INTRODUCED BY THE 2026-08-24 WORK. This has been broken
+      since `E223` replaced `/learn`'s one-line strip with the real footer.
+    */
+    <div className="pm-home">
       {/* FOOTER */}
       <footer>
         <div className="wrap">
@@ -126,7 +187,11 @@ export function HomeFooter() {
           stylesheet sizes this by class (.brand-logo/.foot-logo); next/image
           needs explicit dimensions and would fight the mockup's CSS for a
           30px-tall wordmark. Same call the rest of the marketing surface makes. */}
-              <img className="brand-logo foot-logo" src="/brand/panameer-new-on-dark.png" alt="Panameer" />
+              <img
+                className="brand-logo foot-logo"
+                src="/brand/panameer-new-on-dark.png"
+                alt="Panameer"
+              />
               {/*
                 THE CONSTANT, NOT A COPY. The badge has been re-cut three times
                 (E050, E065, E075); a hardcoded string here is exactly how a
@@ -150,13 +215,15 @@ export function HomeFooter() {
 
             <div className="foot-groups">
               {COLUMNS.map((col) => (
-              <div className="fcol" key={col.title}>
-                <h5>{col.title}</h5>
-                {col.entries.map((e) => (
-                  <FooterRow key={e.label} entry={e} />
-                ))}
-                {/* The assessment hangs under Learn — the free front door. */}
-                {col.title === "Learn" && <FooterRow entry={FOOTER_ASSESSMENT} />}
+                <div className="fcol" key={col.title}>
+                  <h5>{col.title}</h5>
+                  {col.entries.map((e) => (
+                    <FooterRow key={e.label} entry={e} />
+                  ))}
+                  {/* The assessment hangs under Learn — the free front door. */}
+                  {col.title === "Learn" && (
+                    <FooterRow entry={FOOTER_ASSESSMENT} />
+                  )}
                 </div>
               ))}
             </div>
@@ -174,6 +241,6 @@ export function HomeFooter() {
           </div>
         </div>
       </footer>
-    </>
+    </div>
   );
 }
