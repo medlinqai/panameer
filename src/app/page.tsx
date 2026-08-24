@@ -7,11 +7,12 @@ import { CapabilityFramework } from "@/components/marketing-home/CapabilityFrame
 import { TalentTeaser } from "@/components/marketing-home/TalentTeaser";
 import { Testimonials } from "@/components/marketing-home/Testimonials";
 import { HomeFooter } from "@/components/marketing-home/HomeFooter";
-import { HowItWorks } from "@/components/marketing-home/HowItWorks";
-import { ProcessPicker } from "@/components/marketing-home/ProcessPicker";
-import { SpineSteps } from "@/components/marketing-home/SpineSteps";
 import { GetTheTalent } from "@/components/marketing-home/GetTheTalent";
 import { WorkTracker } from "@/components/marketing-home/WorkTracker";
+/* ⚠ `HowItWorks`, `ProcessPicker` AND `SpineSteps` ARE DELIBERATELY NOT IMPORTED
+   HERE ANY MORE (`P1-J0-E298`) — they render on `/optimize` instead. All three
+   files are still on disk and still imported THERE; deleting one breaks that
+   page. See the note where they used to render. */
 import "@/components/marketing-home/home.css";
 
 /**
@@ -95,60 +96,39 @@ export default function Home() {
         <HomeHero />
 
         {/*
-          ⚠ THE STRIP COMES BEFORE THE PRODUCT SHOT (brief_hiw_video_treatment §1).
+          ── ⚠⚠ THREE SECTIONS LEFT THIS PAGE ON 2026-08-24 (`P1-J0-E298`) ─────
 
-          The hero CTA says "take the free assessment", so the next thing on the
-          page is what happens when you do. It used to show the dashboard first
-          — the artefact, before any explanation of how to get one. It also puts
-          card 4, "You Log In and Review", directly above the dashboard it is
-          talking about. Do not revert this to put the shot back on top.
+          Scott, screenshotting `/`: *"let's REMOVE the ones we moved to optimize.
+          I will redo what we need to add last."*
+
+          `HowItWorks` (the five-card strip), `ProcessPicker` (step 1) and
+          `SpineSteps` (steps 2-5) all rendered here AND on `/optimize`, which
+          shipped in `1586502`. THE ASSESSMENT JOURNEY WAS ON THE SITE TWICE. This
+          is the second half of a deliberately two-part move: `/optimize` was
+          additive first — *"a destination exists and renders before anything comes
+          off Home"* — and `optimize/page.tsx` recorded the duplication as
+          time-boxed, with an instruction not to "fix" it by deleting either copy
+          until this brief. This is that brief.
+
+          ⚠ ALL THREE COMPONENTS ARE STILL IMPORTED AND STILL RENDER — on
+          `/optimize`. `HowItWorks` there with `showStrip={false}`; `ProcessPicker`
+          and `StepGraphic` from inside `OptimizeSteps`' panels. ⚠ DELETING ANY OF
+          THOSE FILES BREAKS `/optimize`. Same rule as `E164` and `DashboardShot`:
+          unimported from here, on disk, still owned.
+
+          ⚠ THE FIVE `hiw-card` LINKS WENT WITH THE STRIP, so the `#step-process`
+          and `#spine-step-2..5` fragments they pointed at are no longer TARGETED
+          from this page — and the anchors themselves left with the spine, so
+          nothing dangles. Verified after removal: zero `href="#..."` links remain
+          on `/`.
+
+          ⚠⚠ THIS BRIEF ONLY REMOVES. Scott: *"I will redo what we need to add
+          last."* `GetTheTalent`, `WorkTracker`, `CapabilityFramework`,
+          `MethodologyRing` and `Testimonials` are NOT on `/optimize` and STAY —
+          removing them would delete content with no home. ⚠ Do not read the gap
+          this leaves as an invitation to fill it.
         */}
-        <HowItWorks />
-        {/*
-          ── SECTION 3: THE PROCESS PICKER (E126) ──────────────────────────────
 
-          Placed directly after the strip because the walk matrix numbers it
-          "Home section 3" against Scott's own numbering — 1 hero, 2 the strip,
-          3 this. The brief said "between HowItWorks and the existing #step-1" and
-          positioned it ahead of the dashboard shot that used to sit in that gap, so
-          the reader picked a process before being shown the artefact a process
-          produces. That shot is gone (E159/E171) and the spine's own Step 4 shows the
-          dashboard now, but the ordering argument is unchanged: process first.
-
-          Data-driven: every card comes from `lib/processes.ts`. A fifth process
-          is an entry in that array and nothing here changes.
-        */}
-        <ProcessPicker />
-        {/*
-          ── SPINE STEPS 2-5 (brief_home_spine_copy parts C-F) ─────────────────
-
-          Directly after Step 1, so the five steps read 1-2-3-4-5 in one run
-          before anything else. Rendered from `lib/spine-steps.ts`; a sixth step
-          is a data edit.
-
-          ⚠ THE DUPLICATE STEP NUMBERING IS RESOLVED (E164). This note used to say
-          the page numbered its steps twice — the spine here, and five `#step-1..5`
-          StepDetail sections further down — and that it stayed because "nothing
-          comes off Home" was the standing rule and it was Scott's call. He made it:
-          "I think these sections can be deleted. Any concerns? I see these as
-          duplicates." They are gone.
-
-          ⚠ AND SO IS `DashboardShot` (E159/E171). Scott: "please remove the second
-          image of the dashboard...it is a duplicate." It sat immediately below Step 5
-          showing the same optimization dashboard the spine's Step 4 shows — and it was
-          the STALE copy, still carrying seven strings corrected elsewhere this week:
-          the old heading, "Thursday, 30 September 2022", the "1 Sep 22 – 30 Sep 22"
-          pill and its `▾` glyph, "Your Org Versus Peers", "best-practice ERP peer
-          median", a "Peers" label, and a second TDWCA row. Fixing seven strings in a
-          component whose only job was to duplicate another one would have been wasted
-          work; removing it closed all seven at once.
-
-          ⚠ `DashboardShot.tsx` STAYS ON DISK, UNIMPORTED — same rule as E164. It is the
-          only place some of that chrome exists and the stretch below the spine is still
-          Scott's to repurpose. Its nine `.tab` / `.soon` rules in home.css are now dead
-          too and are deliberately left for that pass.
-        */}
-        <SpineSteps />
 
         {/*
           ── THE ASSESSMENT SPINE (brief_home_assessment_spine, 2026-08-16) ────
