@@ -33,10 +33,34 @@
  */
 export function HeroVideoBackdrop({
   src,
+  poster,
   videoClassName,
   scrimClassName,
 }: {
   src: string;
+  /**
+   * ── ⚠⚠ OPTIONAL, DEFAULTED OFF (`P1-ALL-E018`) ────────────────────────────
+   *
+   * Every page that gained a hero clip lost ~2.3s of LCP, and the shape is
+   * identical everywhere: the text paints at ~1.7s and then the `<video>`
+   * SUPERSEDES it as the largest contentful paint when its first frame arrives.
+   * Measured throttled on 2026-08-25 — `/learn` 4,720ms, `/hire-talent` 4,172ms,
+   * `/find-work` 3,992ms, `/buy-services` 3,828ms, `/enterprise` 3,712ms.
+   *
+   * ⚠ IT IS NOT SIZE-DOMINATED: the 0.14MB clip scored WORSE than the 0.83MB one.
+   * The 562ms RTT dominates, so the fix has to be something that paints WITHOUT a
+   * round trip for the video.
+   *
+   * ⚠ NO `poster` MEANS NO ATTRIBUTE AND BYTE-IDENTICAL OUTPUT. Six call sites
+   * share this component; the ones that pass nothing are proven unchanged by
+   * `innerText` hash and geometry at three widths, not by inspection.
+   *
+   * ⚠ THE HEADER ABOVE SAYS "No poster needed" AND THAT WAS TRUE WHEN THE ONLY
+   * JOB WAS THE REDUCED-MOTION FALLBACK — the gradient still does that, and still
+   * does it better, because it costs zero bytes. This prop exists for LCP, which
+   * is a different problem. Both statements are true; see the note at the tag.
+   */
+  poster?: string;
   /** Positioning + opacity for the clip. Caller owns it; the layers differ per hero. */
   videoClassName: string;
   /** The gradient re-laid over the footage. Must match the card's own background ramp. */
@@ -50,6 +74,12 @@ export function HeroVideoBackdrop({
         tabIndex={-1}
         className={videoClassName}
         src={src}
+        /*
+          ⚠ ABSENT UNLESS THE CALLER ASKS. React omits the attribute entirely for
+          `undefined`, so a caller that passes nothing renders exactly the markup it
+          rendered before this prop existed.
+        */
+        poster={poster}
         autoPlay
         muted
         loop
