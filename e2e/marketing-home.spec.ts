@@ -24,6 +24,7 @@ import {
 import { TALENT_STEPS } from "../src/lib/talent-steps";
 /* `/find-work`'s five labels, from the module the page reads. */
 import { WORK_STEPS } from "../src/lib/work-steps";
+import { SHOP_STEPS } from "../src/lib/shop-steps";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -2622,5 +2623,163 @@ test.describe("work walk 1 — the buyer's page", () => {
       { seen, mediaBytes },
       "a hero clip or an eager sequence is back — RE-MEASURE LCP ON FAST 3G, E019",
     ).toEqual({ seen: [], mediaBytes: 0 });
+  });
+});
+
+/**
+ * ── ⚠⚠ THE FIFTH SPINE, AND THE FIRST WITH NOTHING BEHIND ANY STEP ─────────
+ *
+ * `/buy-services` (nav's `Shop`) replaced a hero whose kicker and `<h1>` literally
+ * read `PLACEHOLDER — Shop` and `PLACEHOLDER — headline about packaged services
+ * goes here.` on a top-level nav destination.
+ */
+test.describe("shop walk 1 — /buy-services", () => {
+  /**
+   * ⚠ ZERO OF FIVE STEPS ARE BUILT — no public `Package` listing, no `Offer`, no
+   * `WorkOrder`, no `SettlementRequest`, no `Invoice`, no `Payment`. So EVERY panel
+   * ships without a graphic, and that is the ANSWER rather than a gap
+   * (`P1-J2-E005`). `/optimize` ships two empties and `/find-work` four; this page
+   * ships five, and the guard exists so nobody fills one because a row "looks
+   * empty".
+   *
+   * ⚠ IT ALSO ASSERTS THE PLACEHOLDERS ARE GONE. They were the loudest broken thing
+   * on the public surface and they shipped for five days behind a nav item.
+   */
+  test("§53 /buy-services renders the five Shop steps, every panel graphic-free", async ({
+    page,
+  }) => {
+    await page.goto("/buy-services");
+
+    const body = await page.locator("body").innerText();
+    expect(
+      body,
+      "the hero placeholders shipped on a nav destination",
+    ).not.toContain("PLACEHOLDER");
+
+    const rows = (
+      await page.locator("summary.stepd-sum .stepd-t").allTextContents()
+    ).map((t) => t.trim());
+    expect(rows).toEqual(SHOP_STEPS.map((s) => s.summary));
+    expect(rows).toEqual([
+      "Shop Service Products",
+      "Make Offer to Buy",
+      "Accept Work Order",
+      "Approve Payment Request",
+      "Pay Panameer",
+    ]);
+    /* Scott's 3-4 word rule (`P1-J0-E286`): 3 / 4 / 3 / 3 / 2. */
+    for (const r of rows) expect(r.split(/\s+/).length).toBeLessThanOrEqual(4);
+
+    for (const [i, step] of SHOP_STEPS.entries()) {
+      const panel = page
+        .locator("details.stepd-d")
+        .nth(i)
+        .locator(".stepd-panel");
+      expect(
+        ((await panel.locator("p").first().textContent()) ?? "").trim(),
+        `step ${step.n}'s eyebrow must be derived, not typed`,
+      ).toBe(`Step ${step.n} - ${step.summary}`);
+      const h2s = panel.locator("h2");
+      await expect(h2s, `step ${step.n} needs one description`).toHaveCount(1);
+      expect(
+        ((await h2s.first().textContent()) ?? "").trim(),
+        `step ${step.n}'s description must come from SHOP_STEPS, not be typed here`,
+      ).toBe(step.description);
+    }
+
+    /* ⚠ FIVE EMPTIES. Same probe §48 uses on /find-work. */
+    await page.evaluate(() =>
+      document
+        .querySelectorAll("details.stepd-d")
+        .forEach((d) => d.setAttribute("open", "")),
+    );
+    const drawn = await page.evaluate(() =>
+      [...document.querySelectorAll(".stepd-panel")].map(
+        (e) => e.querySelectorAll("dl, ul, img, svg, canvas").length > 0,
+      ),
+    );
+    expect(
+      drawn,
+      "zero of five Shop steps are built; any drawn screen here is a picture of software that does not exist",
+    ).toEqual([false, false, false, false, false]);
+  });
+
+  /**
+   * ── ⚠⚠ `Start Shopping Now` HAS NOWHERE TO GO (`P1-J2-E002`) ───────────────
+   *
+   * Checked live, signed out, rather than assumed: `(app)/packages` and
+   * `(app)/services/offers` are `ComingSoon` AND 307 to `/login`;
+   * `(app)/providers/[id]` — the ONLY page in the app that renders a published
+   * `Package` — also 307s; `/explore` lists PEOPLE. `P1-J0-E316` is explicit that a
+   * primary CTA landing on a `ComingSoon` is worse than no CTA.
+   *
+   * ⚠ SO IT SHIPS DISABLED, AND THIS GUARD IS WHAT MAKES THAT A DECISION RATHER
+   * THAN A DRIFT: the day someone gives it an `href`, this turns red and the
+   * destination has to be justified. It is not "no link allowed" — it is "prove the
+   * catalog exists first".
+   *
+   * ⚠ AND IT MUST STAY A REAL CONTROL. `check:app-shell`'s PUBLIC HERO guard counts
+   * `a[href], button, input` with real size; an `<a>` with no href would satisfy
+   * neither that guard nor a keyboard.
+   */
+  test("§54 the Shop hero's button is a real control with no false destination", async ({
+    page,
+  }) => {
+    await page.goto("/buy-services");
+    const hero = page
+      .locator("h1")
+      .first()
+      .locator("xpath=ancestor::section[1]");
+
+    const btn = hero.getByRole("button", { name: "Start Shopping Now" });
+    await expect(
+      btn,
+      "the hero must offer something — check:app-shell",
+    ).toHaveCount(1);
+    const box = await btn.boundingBox();
+    expect(box?.width ?? 0, "a 0-size control is a hidden one").toBeGreaterThan(
+      40,
+    );
+
+    await expect(
+      hero.locator("a[href]"),
+      "Start Shopping Now was given a destination — prove a PUBLIC package listing exists first (E002)",
+    ).toHaveCount(0);
+  });
+
+  /**
+   * ── ⚠⚠ ONE HEADLINE, ONE PAGE ─────────────────────────────────────────────
+   *
+   * `Deploy Faster. With Less Risk.` was `/find-work`'s (`P1-J4-E003`) until
+   * `P1-J4-E017` replaced it there and `P1-J2-E001` moved it here. ⚠ RUN THOSE TWO
+   * BRIEFS OUT OF ORDER AND THE SAME HEADLINE SITS ON TWO PAGES — which is a defect
+   * nobody sees, because each page looks correct on its own.
+   *
+   * ⚠ ASSERTED ACROSS EVERY PUBLIC PAGE AND AS A COUNT, not as "it is on
+   * /buy-services". Both halves matter: exactly one, and the right one.
+   */
+  test("§55 Deploy Faster. With Less Risk. renders on exactly one page", async ({
+    page,
+  }) => {
+    const HEADLINE = "Deploy Faster. With Less Risk.";
+    const hits: string[] = [];
+    for (const url of [
+      "/",
+      "/find-work",
+      "/hire-talent",
+      "/buy-services",
+      "/optimize",
+      "/enterprise",
+      "/learn",
+      "/why-panameer",
+    ]) {
+      await page.goto(url);
+      if ((await page.locator("body").innerText()).includes(HEADLINE)) {
+        hits.push(url);
+      }
+    }
+    expect(hits, "the moved headline is on the wrong number of pages").toEqual([
+      "/buy-services",
+    ]);
   });
 });

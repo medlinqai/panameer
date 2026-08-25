@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
-import { MarketingHero } from "@/components/marketing/MarketingHero";
+import { ShopHero } from "@/components/marketing/ShopHero";
+import { ShopSpine } from "@/components/marketing/ShopSpine";
 import { ErpPackages } from "@/components/marketing-home/ErpPackages";
-import { BUY_SERVICES_HERO } from "@/lib/brand";
 import "@/components/marketing-home/home.css";
 
 /**
@@ -32,6 +32,22 @@ import "@/components/marketing-home/home.css";
  * buy" without pretending a catalogue exists. The section ALSO still renders on
  * `/` — nothing comes off Home until block 3.
  *
+ * ── ⚠⚠ AND THAT IS WHY THE HERO BUTTON HAS NO DESTINATION (`P1-J2-E002`) ────
+ *
+ * `Start Shopping Now` ships DISABLED. There is no public surface anywhere in the
+ * app that lists `Package` rows: `listPublishedPackages` has ONE caller and the
+ * page it feeds 307s to `/login`, `(app)/packages` and `(app)/services/offers` are
+ * both `ComingSoon` AND auth-gated, and `/explore` lists PEOPLE. ⚠ THE HREF IS THE
+ * ONE THING THIS WORK STREAM STOPPED ON, by instruction. See `ShopHero`.
+ *
+ * ── ⚠ THE HERO IS `ShopHero` NOW, NOT `MarketingHero` (`P1-J2-E001`) ─────────
+ *
+ * Its kicker and `<h1>` literally read `PLACEHOLDER — Shop` and `PLACEHOLDER —
+ * headline about packaged services goes here.` on a top-level nav destination.
+ * ⚠ `BUY_SERVICES_HERO` STAYS IN `lib/brand.ts`, NOW UNIMPORTED — the `E164`
+ * resolution. `MarketingHero` is untouched and still serves `/enterprise` and
+ * `/why-panameer`.
+ *
  * ── ⚠ THE `.pm-home` WRAPPER IS LOAD-BEARING ─────────────────────────────────
  *
  * `ErpPackages` is styled entirely by `.pm-home`-prefixed rules in `home.css`
@@ -57,12 +73,35 @@ export const metadata: Metadata = {
 export default function BuyServicesPage() {
   return (
     <MarketingShell>
-      <MarketingHero
-        audience="buyer"
-        kicker={BUY_SERVICES_HERO.kicker}
-        headline={BUY_SERVICES_HERO.headline}
-      />
-      {/* The scope for the ported stylesheet, around the payload only. */}
+      <ShopHero />
+      {/*
+        ⚠ THE SPINE SITS DIRECTLY UNDER THE HERO (`P1-J2-E003`), before
+        `ErpPackages` — the same placement `/find-work` uses (`P1-J4-E006`) and for
+        the same reason: the five steps are how the page explains itself, so they
+        come before the thing it is showing.
+
+        ⚠⚠ ZERO OF THE FIVE STEPS ARE BUILT — the first spine on the site with
+        nothing behind any step. See `SHOP_BUILD_STATE`'s note in
+        `lib/shop-steps.ts`; all five are on the pre-launch list as ONE block.
+      */}
+      <ShopSpine />
+      {/*
+        ⚠ `ErpPackages` IS UNTOUCHED AND STAYS WHERE IT WAS — not instructed, so
+        not moved and not re-authored. It now sits BELOW the spine rather than
+        directly under the hero, which is the only positional change and is a
+        consequence of the spine being inserted above it.
+
+        ⚠ IT IS NOT THE CATALOG AND ITS OWN HEADER SAYS SO: agent CATEGORIES, no
+        provider name, no price, no rating, no availability count on any card. That
+        is exactly why it cannot be `Start Shopping Now`'s destination — see the
+        note on the button in `ShopHero`.
+
+        ⚠ THE `.pm-home` WRAPPER IS LOAD-BEARING and stays around the PAYLOAD ONLY.
+        Measured, not assumed: strip the class and `.erp-head h2` drops from 40px to
+        16px and the card grid collapses. ⚠ THE SPINE IS DELIBERATELY OUTSIDE IT —
+        `StepDisclosures` is `.stepd-`-scoped and the eyebrow is Tailwind mirroring
+        `/optimize`'s computed values, which is the seventh instance of that trap.
+      */}
       <div className="pm-home">
         <ErpPackages />
       </div>
