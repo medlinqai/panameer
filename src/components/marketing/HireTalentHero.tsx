@@ -255,12 +255,70 @@ export async function HireTalentHero() {
                 >
                   Join Panameer &amp; Create My Profile
                 </a>
+
+                {/*
+                  ── ⚠⚠ THE BUTTON'S PAYOFF LINE (`P1-J1-E031`) ──────────────────
+
+                  Scott moved this out of the right column. ⚠ VERBATIM, INCLUDING
+                  THE FULL STOP — his sentence, unchanged, only relocated.
+
+                  ⚠ IT IS THE STRONGEST CLAIM ON THE PAGE AND IT NOW SITS DIRECTLY
+                  UNDER THE CTA, which is the right place for it: the résumé parser
+                  is REAL and shipped — `lib/resume/ai-extract.ts`, `ai-provider.ts`,
+                  `/api/onboarding/provider/resume-ai`, `/skill-suggestions`,
+                  `/import` — and it was measured end to end for `P1-J1-E026`
+                  (6 runs, 9.0s to 31.8s). Nothing else in this hero is that solid.
+
+                  ⚠ `mt-4` TIES IT TO THE BUTTON, NOT TO THE COLUMN. It is the same
+                  gap the right column already uses between its sub-copy and its
+                  bridge line — no new spacing value was invented, and a larger gap
+                  would let it float free of the control it explains.
+
+                  ⚠⚠ `HeroTwoUp`'s LEFT-BEFORE-RIGHT DOM ORDER IS LOAD-BEARING AND
+                  UNCHANGED. Below 901px the grid collapses to ONE column, so DOM
+                  order IS reading order: headline -> button -> this line -> the
+                  right column. Reordering with `order` would read the hero to a
+                  screen reader in a sequence nobody designed. ⚠ PROVEN AT 390 IN
+                  THE BRIEF REPORT, not asserted.
+                */}
+                <p className="mt-4 text-[17px] leading-[1.6] text-[#e9e6f5] min-[901px]:text-[19px]">
+                  Use AI to auto-create your profile.
+                </p>
               </>
             }
             right={
               <>
                 {/*
-                  ── ⚠⚠ VERBATIM SCOTT, 2026-08-25 (`P1-J1-E024`) ────────────────
+                  ── ⚠⚠ APPROVED COPY, NOT A DRAFT (`P1-J1-E031`, 2026-08-25) ────
+
+                  Scott invited a rewrite — *"FOR THIS SECTION FEEL FREE TO SUGGEST
+                  BETTER WORDING."* — chat offered one, and he approved it verbatim:
+                  *"this is it."* ⚠ THIS IS NOT CC's DRAFT. It ships as written and
+                  must not be softened, shortened or re-punctuated. The em dashes are
+                  part of the approved string.
+
+                  ⚠ HIS EARLIER VERSION IS SUPERSEDED AND IS RECORDED HERE ONLY SO
+                  THE DEAD ONE IS LEGIBLE AND NOBODY REBUILDS IT: *"Start by creating
+                  your profile to sell services. Then create service products
+                  (previous deploy-ables, a consultation, retainers, mentoring, or
+                  application demos) and list them for sale in the Panameer SHOP."*
+
+                  ⚠ WHY IT DIFFERS, RECORDED NOT ARGUED: `Start by… Then…` duplicated
+                  `TalentSpine` directly below, which already carries the order; the
+                  parenthetical buried `Shop` mid-sentence where the em-dash aside now
+                  puts it at the end, as the point; and the opening carries the thesis
+                  from `ORIENTATION_2026-08-24.md` §2 — *"On LinkedIn you ARE the
+                  product. On Panameer you HAVE products."* ⚠ `deploy-ables` ->
+                  `deployables` and `SHOP` -> `Shop` are the standing corrections.
+
+                  ⚠⚠ AND IT SENDS A SELLER TO A SHOP THEY CANNOT BROWSE. `/shop`'s
+                  `Start Shopping Now` is DISABLED — no public product listing exists
+                  (`walk-fixes` WS6). Two public pages now contradict each other and a
+                  seller disproves it in four seconds. ⚠ FILED AND ON THE PRE-LAUNCH
+                  LIST. It closes when `/shop` gets a real catalog, NOT by weakening
+                  this sentence.
+
+                  ── ⚠ THE PREVIOUS STRING'S NOTES, SUPERSEDED ──────────────────
 
                   It REPLACES *"Don't just upload your resume and sit — create
                   service products and use AI to sell them directly to buyers."*
@@ -302,10 +360,10 @@ export async function HireTalentHero() {
                   WITH THE OTHER SURFACE.
                 */}
                 <p className="text-[17px] leading-[1.6] text-[#e9e6f5] min-[901px]:text-[19px]">
-                  Use AI to auto-create your profile. Expand existing and create
-                  new income streams by building new or sharing existing skills,
-                  reselling previous deployables, and offering retainer,
-                  mentoring, or application demo hours.
+                  Your profile sells your time. Service products sell everything
+                  else &mdash; a past deployable, a consultation, a retainer,
+                  mentoring, an application demo &mdash; listed for sale in the
+                  Panameer Shop.
                 </p>
 
                 {/*
