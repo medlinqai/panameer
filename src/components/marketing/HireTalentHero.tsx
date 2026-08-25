@@ -1,6 +1,5 @@
 import { HeroBox } from "@/components/marketing/HeroBox";
 import { HeroTwoUp } from "@/components/marketing/HeroTwoUp";
-import { BRAND_BADGE_SHORT, HERO_COPY } from "@/lib/brand";
 
 /**
  * `/hire-talent`'s HERO — ITS OWN COMPOSITION, NOT `MarketingHero` (`P1-J1-E013`).
@@ -137,6 +136,66 @@ export function HireTalentHero() {
                 <h1 className="font-display text-[34px] font-bold leading-[1.08] tracking-[-0.8px] min-[901px]:text-[46px] min-[901px]:tracking-[-1px]">
                   Sell More than Just Your Resume
                 </h1>
+
+                {/*
+                  ── ⚠⚠ THE NAMED CTA (`P1-J1-E025`) — AND ITS DESTINATION IS A
+                  REPORTED DEVIATION, NOT THE ONE THE BRIEF NAMED ──────────────
+
+                  The brief specified `/join/provider/start` and called it "VERIFIED
+                  ON DISK". ⚠ THE FILE EXISTS; THE ROUTE IS NOT REACHABLE. Measured
+                  signed-out 2026-08-25:
+
+                      /join/provider/start   307 -> /login?callbackUrl=...
+                      /join/provider         200
+                      /join/provider/preview 307 -> /dashboard
+
+                  ⚠ `join/provider/start/page.tsx` IS AN IN-WIZARD PAGE, not an entry
+                  point: its own header calls it *"the FIRST page of the
+                  profile-building process: verify email -> HERE -> step 1/12"*, and it
+                  redirects on THREE conditions — no viewer, not a provider or no
+                  `providerProfile`, and unverified email. A signed-out visitor cannot
+                  reach it by construction.
+
+                  ⚠⚠ SO IT POINTS AT `/join/provider`, WHICH IS A DEVIATION FROM THE
+                  BRIEF'S NAMED DESTINATION AND IS REPORTED AS ONE. Three reasons it is
+                  the right target rather than a guess:
+
+                    · it is the ONLY public (200, signed-out) provider entry, and it
+                      is the provider signup wizard itself — `SignUpForm` +
+                      `VerifyGate` — so it does what the label promises;
+                    · `join/provider/start/page.tsx:33` ITSELF redirects there
+                      (`redirect("/join/provider")`) for an unverified user, so this is
+                      the app's own answer, not CC's;
+                    · the brief forbade substituting **`/join`**, the generic
+                      chooser. This is not that.
+
+                  ⚠ ONE-WORD CHANGE IF HE WANTS IT ELSEWHERE. Flagged in the report
+                  with the measurements.
+
+                  ── ⚠ THE STYLING MIRRORS `/optimize`'s HERO CTA, MEASURED ────────
+
+                  `.hero-cta` computed at 1440 on 2026-08-25: Montserrat / 17px / 600 /
+                  `#d72cd6` / white / radius 12px / padding 16px 30px / line-height
+                  25.5px. ⚠ MIRRORED IN TAILWIND, NOT REUSED — `home.css` is entirely
+                  `.pm-home`-scoped INCLUDING ITS VARIABLES and this page is outside
+                  that wrapper. That trap has bitten four times in one day.
+
+                  ⚠ THIS BUTTON IS WHAT LETS THE SEARCH BOX GO. `check:app-shell`'s
+                  PUBLIC HERO guard requires the hero to offer something clickable and
+                  the box was the only thing satisfying it. ⚠ THE GUARD IS NOT
+                  WEAKENED — it is run and green.
+
+                  ⚠ THE LABEL'S 4.02:1 ON ITS OWN MAGENTA FILL IS `P1-J4-E020` — a
+                  site-wide, pre-existing, brand-token AA failure with nothing to do
+                  with any clip. Reported; NOT a stop condition here, per Scott
+                  2026-08-25.
+                */}
+                <a
+                  href="/join/provider"
+                  className="mt-8 inline-block rounded-[12px] bg-magenta px-[30px] py-4 text-[17px] font-semibold leading-[25.5px] text-white transition-colors hover:bg-magenta-dark"
+                >
+                  Create My Profile
+                </a>
               </>
             }
             right={
@@ -194,83 +253,38 @@ export function HireTalentHero() {
           />
 
           {/*
-            ── ⚠⚠ THE SEARCH FORM STAYS, AND SCOTT'S OWN CONDITION IS WHY ─────
+            ── ⚠⚠ THE SEARCH BOX IS GONE (`P1-J1-E025`) ─────────────────
 
-            `P1-J1-E014`: *"REMOVE the search box (unless it is a teaser to see
-            sample profiles)."* The brief read that condition as unmeetable and
-            instructed removal, on the stated grounds that *"There is NO public
-            profile browse anywhere"* — no `/providers` route, `(app)/hire` and
-            `(app)/search` both `ComingSoon`.
+            A ~45-line comment used to sit here arguing for its retention, and it is
+            REMOVED WITH THE CODE rather than left behind. Its argument was sound and
+            explicitly conditional: Scott's `E014` said *"REMOVE the search box (unless
+            it is a teaser to see sample profiles)"*, `/explore` signed-out really does
+            return 22 experts, so the box WAS the teaser his condition asked for — and
+            the comment closed by saying it goes the moment he names a CTA. ⚠ HE HAS
+            NAMED ONE (above). The condition is spent.
 
-            ⚠⚠ THAT PREMISE IS FALSE, AND IT WAS CHECKED RATHER THAN ASSUMED.
-            `/explore` is the public browse and it WORKS SIGNED OUT. Measured
-            2026-08-24: `GET /explore?mode=hire&q=oracle` returns 200 and renders
-            *"These experts match what you need — Showing matches for 'oracle' ·
-            22 experts found"* with real provider cards. This form posts to exactly
-            that URL with `mode=hire`.
+            ⚠ A STALE ARGUMENT FOR A DELETED ELEMENT IS HOW THINGS GET RESTORED BY
+            MISTAKE. That is the whole reason it is not preserved here.
 
-            ⚠ SO THE BOX **IS** THE TEASER HIS CONDITION ASKED FOR, and his
-            conditional says keep it. The three `ComingSoon` routes the brief cites
-            are all INSIDE `(app)` — signed-in surfaces — which is why they read as
-            "no browse exists" from a route listing and are not what a signed-out
-            visitor hits.
-
-            ⚠ IT IS ALSO THE ONLY THING IN THIS HERO TO CLICK. Removing it turned
-            `check:app-shell`'s PUBLIC HERO guard red — *"the hero offers nothing to
-            click"* — and the honest fixes were to keep it or to invent a CTA Scott
-            has not named. ⚠ WEAKENING THAT GUARD WAS NOT AN OPTION.
-
-            ⚠⚠ REPORTED FOR SCOTT TO OVERRIDE. If he wants it gone regardless, it
-            goes the moment he names a CTA to replace it — not before.
-
-            ── ⚠ WHAT DID COME OUT, WHICH IS THE PART HE ACTUALLY OBJECTED TO ──
-
-            Scott: *"this seems to be confused with WORK."* The Work-journey framing
-            is GONE:
-
-              · the caption *"Describe it in a sentence or drop a document — AI
-                drafts your scoped Work Request"* — ⚠ THIS was the Work journey on a
-                Talent page, and it is the removal that matters;
-              · the six domain filter chips (`P1-J1-E015` — see the report: only ONE
-                published `Package` exists, so product tags could not replace them);
-              · the `For teams ready to hire` buyer pill (`P1-J1-E014`).
-
-            ⚠ THE PLACEHOLDER IS `MarketingHero`'s OWN, from `HERO_COPY.buyer`, so
-            the two pages still ask for the same thing in the same words. It is a
-            BUYER-shaped prompt under a SELLER headline — reported, not rewritten,
-            because rewriting it would put chat's words in the hero's only control.
+            ⚠ `/explore` IS UNTOUCHED and still works signed out; only this doorway to
+            it is closed. The buyer placeholder and search-CTA strings stay in
+            `lib/brand.ts`, still rendered by `MarketingHero` on `/enterprise` and
+            `/why-panameer`.
           */}
-          <form
-            action="/explore"
-            method="get"
-            className="relative z-[2] mt-8 flex w-full max-w-[620px] rounded-full bg-white py-[7px] pl-5 pr-[7px] shadow-[0_18px_40px_rgba(0,0,0,0.28)] sm:pl-[22px]"
-          >
-            <input type="hidden" name="mode" value="hire" />
-            <input
-              name="q"
-              aria-label={HERO_COPY.buyer.searchPlaceholder}
-              placeholder={HERO_COPY.buyer.searchPlaceholder}
-              className="min-w-0 flex-1 bg-transparent text-[16px] text-ink outline-none placeholder:text-[#9aa0b8]"
-            />
-            <button
-              type="submit"
-              className="shrink-0 whitespace-nowrap rounded-full bg-magenta px-4 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-magenta-dark sm:px-6"
-            >
-              {HERO_COPY.buyer.searchCta}
-            </button>
-          </form>
 
           {/*
-            ⚠ THE LOCKUP STAYS, AND IT NOW CONFLICTS WITH THE SPINE BELOW IT.
-            `BRAND_BADGE_SHORT` is `Learn. Connect. Create. Settle.`; the new spine
-            (`P1-J1-E012`) is `Join · Learn · Connect · Create · Sell`. Four verbs
-            versus five, three shared, and `Settle` versus `Sell` in the last slot —
-            two different four/five-beat stories on one page.
-            ⚠ NOT INSTRUCTED. Scott did not ask for either to change. REPORTED.
+            ── ⚠⚠ THE FOUR-VERB LOCKUP IS GONE, CLOSING `P1-J1-E019` ────────
+
+            The constant is `Learn. Connect. Create. Settle.` and this page's spine
+            (`P1-J1-E012`) is `Join · Learn · Connect · Create · Sell` — four verbs
+            against five, three shared, and `Settle` against `Sell` in the last slot.
+            Two four/five-beat stories on one page, and it was Scott's third walk item.
+            ⚠ THIS WAS THE OPEN HALF OF `E019`; `/find-work` lost its copy in
+            `718abc3`. Both halves are now closed.
+
+            ⚠ THE CONSTANT STAYS IN `src/lib/brand.ts` AND ITS OTHER CALL SITES ARE
+            UNTOUCHED — enumerated in the report. Only this page's render goes.
           */}
-          <p className="relative z-[2] mt-7 font-display text-[13px] font-semibold uppercase tracking-[0.2em] text-[#a7a3c6]">
-            {BRAND_BADGE_SHORT}
-          </p>
         </div>
       </section>
     </HeroBox>
