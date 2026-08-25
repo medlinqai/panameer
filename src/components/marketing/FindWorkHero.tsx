@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { HeroBox } from "@/components/marketing/HeroBox";
 import { HeroTwoUp } from "@/components/marketing/HeroTwoUp";
-import { BRAND_BADGE_SHORT, HERO_COPY } from "@/lib/brand";
 
 /**
  * `/find-work`'s HERO — THE TWO-COLUMN TREATMENT (`P1-J4-E001`).
@@ -18,46 +17,53 @@ import { BRAND_BADGE_SHORT, HERO_COPY } from "@/lib/brand";
  * records: that component still serves `/buy-services`, `/enterprise` and
  * `/why-panameer`, and every change here is `/find-work`-only.
  *
- * ── ⚠⚠ WHAT IS DELIBERATELY ABSENT ─────────────────────────────────────────
+ * ── ⚠⚠ THE HERO HAS ONE JOB: CREATE A WORK REQUEST (`P1-J4-E009`..`E012`) ───
  *
- * ⚠ NO STAT ROW. Same unsolved problem as `/hire-talent` (`P1-J1-E013`): there is
- * no honest provider-side count. The 85 `ProviderProfile` rows are SEED —
- * `decisions-01.md` 2026-08-24 puts only the admin and three experts in the
- * protected set and calls everything else disposable — and exactly ONE `Package` is
- * published. A seed count shipped as traction is the defect `E013` already refused.
- * ⚠ THE ROW IS ABSENT, NOT EMPTY AND NOT INVENTED. Scott picks.
+ * Scott walked this page after `532e6c8`. Everything that competed with that one
+ * action came out, and the CTA is now the hero's ONLY control:
  *
- * ⚠ NO BRIDGE LINE. `/optimize` and `/learn` have one; Scott has not written one for
- * this page and drafting it would put CC's words in his hero.
+ *   · the `GO DIRECT` pill                          removed (`E009`)
+ *   · the search box + `Find Work →`                removed (`E009`)
+ *   · the six domain tags                           removed (`E012`)
+ *   · the `Learn. Connect. Create. Settle.` lockup  removed (`E009`)
+ *   · the résumé/LinkedIn caption                   replaced by the sub (`E011`)
  *
- * ⚠ NO VIDEO. `P1-J1-E011`: he dropped the `/hire-talent` clip after it measured
- * +9.2MB on first load and 13.5x LCP on fast 3G.
+ * ⚠ THE PILL: `brief_work_walk1` SAID **"DO NOT delete the pill"** AT LINE 28, and
+ * the first pass kept it and reported the asymmetry, which is what that brief asked
+ * for. Scott has now said to remove it. Both instructions were followed in turn;
+ * neither was missed.
  *
- * ── ⚠ THE PILL STAYS, AND THAT IS AN ASYMMETRY TO REPORT ───────────────────
+ * ⚠ REMOVING THE SEARCH CLOSES `P1-J4-E007`. It posted `GET /explore?mode=work`,
+ * which returns HTTP 200 and ZERO results — *"No Work Requests are open yet —
+ * Panameer is pre-launch"* — a PROVIDER's search on the BUYER's page.
  *
- * `/hire-talent`'s `FOR TEAMS READY TO HIRE` pill was removed on Scott's explicit
- * instruction (`P1-J1-E013`). He has said NOTHING about this one, so `GO DIRECT`
- * ships. ⚠ THE TWO SISTER PAGES NOW DIFFER ON WHETHER A HERO HAS AN EYEBROW PILL,
- * and `/optimize` has none either. Reported, not resolved.
+ * ⚠ REMOVING THE LOCKUP CLOSES THE SECOND HALF OF `P1-J1-E019`. ⚠ IT STILL RENDERS
+ * ON `/hire-talent` — verified — and Scott has not said to remove it there.
  *
- * ── ⚠⚠ THE AUDIENCE FLIPPED AND MOST OF THIS COPY DID NOT ──────────────────
+ * ⚠ THE TAGS WENT FOR THREE REASONS, and the middle one is the load-bearing one:
+ * the hero has one job and they were a second action; they filtered a search that no
+ * longer exists; and repurposing them as "available resources" COUNTS CANNOT BE MADE
+ * HONEST — the 85 `ProviderProfile` rows are SEED (`decisions-01.md`'s protected set
+ * is the admin plus three experts), so any number beside a skill is seed dressed as
+ * supply.
  *
- * `P1-J4-E002`: *"The audience for WORK are the service buyers."* The `<h1>` is now
- * buyer copy. ⚠ EVERYTHING ELSE IN THIS HERO IS STILL ADDRESSED TO A PROVIDER:
+ * ── ⚠ WHAT IS STILL DELIBERATELY ABSENT ────────────────────────────────────
  *
- *   · the sub — *"Find consistent work. Break the hourly ceiling."* is a SELLER's
- *     rate problem, and it is the loudest remaining mismatch on the page;
- *   · the search placeholder — *"Describe your expertise…"* is what a provider
- *     types, not a buyer;
- *   · the CTA — `Find Work →`;
- *   · the caption — *"Drop your résumé or LinkedIn"*;
- *   · the six tags, which are neutral domain names and read either way.
+ * ⚠ NO STAT ROW — same unsolved problem (`P1-J1-E013`): no honest provider count,
+ * one published `Package`. Absent, not empty, not invented.
+ * ⚠ NO BRIDGE LINE — Scott has not written one.
+ * ⚠ NO VIDEO — `P1-J1-E011`.
+ * ⚠ NO SEPARATE PASTE CONTROL IN THE HERO. The CTA leads to the door that already
+ * exists; building a second one here would be two front doors to one flow.
  *
- * ⚠ SCOTT HAS NOT REPLACED ANY OF THEM AND CC MUST NOT. A section re-written by CC
- * is a section he never approved. All of it is reported.
+ * ⚠ THE `<h1>` IS FINAL (`P1-J4-E003`) and is not touched.
  */
 export function FindWorkHero() {
-  const copy = HERO_COPY.provider;
+  /* ⚠ NOTHING IS READ FROM `HERO_COPY.provider` ANY MORE. `P1-J4-E009`/`E011`/`E012`
+     removed the pill, the search, the tags and the caption — every string this hero
+     used to borrow from the shared constant. What is left is Scott's own copy for
+     this page. ⚠ THE CONSTANT ITSELF IS UNTOUCHED and still serves `MarketingHero`
+     on the pages that still render it. */
   return (
     /*
       ⚠ THE SAME `HeroBox` + GRADIENT `MarketingHero` GAVE THIS PAGE, transcribed so
@@ -67,125 +73,104 @@ export function FindWorkHero() {
     <HeroBox cardClassName="bg-[radial-gradient(1100px_500px_at_82%_-10%,rgba(215,44,214,0.42),transparent_60%),linear-gradient(150deg,#0d1230_0%,#191a44_55%,#3a1c53_100%)] text-white">
       <section className="px-6 py-16 min-[900px]:py-[84px]">
         <div className="relative mx-auto max-w-[1120px]">
-          {/*
-            ⚠ THE `GO DIRECT` PILL — KEPT. See the note above; `/hire-talent` lost
-            its equivalent on an explicit instruction this page never got.
-          */}
-          <span className="mb-[22px] inline-block rounded-full bg-magenta px-3.5 py-1.5 font-display text-[12.5px] font-semibold uppercase tracking-[0.18em] text-white">
-            {copy.kicker}
-          </span>
-
           <HeroTwoUp
             rowClassName="grid grid-cols-1 items-center gap-10 min-[901px]:grid-cols-2 min-[901px]:gap-14"
             left={
               <>
                 {/*
                   ⚠ VERBATIM SCOTT, FINAL (`P1-J4-E003`): *"Deploy Faster. With Less
-                  Risk. That works."* — he accepted chat's edit of his own first
-                  draft, `Deploy Faster and/or with Less Risk`. `and/or` is a contract
-                  construction, not a headline: no reader parses the slash and it
-                  reads as hedging. Two sentences claim both and commit to both.
-
-                  ⚠ BOTH TERMINAL PERIODS ARE PART OF THE STRING.
-
-                  ⚠⚠ THIS IS THE AUDIENCE FLIP LANDING IN THE HERO AND IT IS CORRECT.
-                  The old `<h1>` was *"Go direct. Find consistent work, break the
-                  hourly ceiling."* — `break the hourly ceiling` is a rate ceiling,
-                  a SELLER's problem. `Deploy Faster. With Less Risk.` is what a
-                  buyer wants. ⚠ THE SUB BENEATH IT IS STILL THE OLD SELLER COPY;
-                  see the file header.
+                  Risk. That works."* Both terminal periods are part of the string.
+                  He accepted chat's edit of his own `Deploy Faster and/or with Less
+                  Risk` — `and/or` is a contract construction, not a headline.
                 */}
                 <h1 className="font-display text-[34px] font-bold leading-[1.08] tracking-[-0.8px] min-[901px]:text-[46px] min-[901px]:tracking-[-1px]">
                   Deploy Faster. With Less Risk.
                 </h1>
 
                 {/*
-                  ⚠ THE SEARCH FORM STAYS UNTIL SCOTT SAYS OTHERWISE, and it is this
-                  hero's only control — the same thing that made removing
-                  `/hire-talent`'s trip `check:app-shell`'s PUBLIC HERO guard.
+                  ── ⚠ THE HERO'S ONLY CONTROL (`P1-J4-E010`) ────────────────────
 
-                  ⚠ WHERE IT POSTS, VERIFIED NOT ASSUMED (chat was wrong about the
-                  sister page once — `P1-J1-E014`): `GET /explore` with `mode=work`.
-                  Measured 2026-08-24 signed out — see the report.
+                  ⚠ IT POINTS AT `/create-work`, WHICH IS UNDER `(app)` AND
+                  307-REDIRECTS TO `/login` FOR AN ANONYMOUS VISITOR. Verified
+                  2026-08-24. ⚠ SO THE PRIMARY CTA ON A PUBLIC PAGE BOUNCES OFF A
+                  LOGIN WALL — that is `P1-J0-E316`'s shape. THE AUTH BEHAVIOUR IS
+                  NOT CHANGED HERE; it is reported.
 
-                  ⚠ `Describe your expertise…` AND `Find Work →` BOTH ADDRESS A
-                  PROVIDER on a page whose audience is now the buyer. Moved unchanged
-                  and reported.
+                  ⚠ `check:app-shell`'s PUBLIC HERO guard requires a hero to offer
+                  something to click. After `E009` removed the search box this button
+                  is the only thing satisfying it — the same dependency that made
+                  removing `/hire-talent`'s search turn that guard red.
                 */}
-                <form
-                  action="/explore"
-                  method="get"
-                  className="mt-8 flex w-full max-w-[620px] rounded-full bg-white py-[7px] pl-5 pr-[7px] shadow-[0_18px_40px_rgba(0,0,0,0.28)] sm:pl-[22px]"
+                <Link
+                  href="/create-work"
+                  className="mt-8 inline-block rounded-[12px] bg-magenta px-7 py-4 font-display text-[16px] font-bold text-white transition-colors hover:bg-magenta-dark"
                 >
-                  <input type="hidden" name="mode" value="work" />
-                  <input
-                    name="q"
-                    aria-label={copy.searchPlaceholder}
-                    placeholder={copy.searchPlaceholder}
-                    className="min-w-0 flex-1 bg-transparent text-[16px] text-ink outline-none placeholder:text-[#9aa0b8]"
-                  />
-                  <button
-                    type="submit"
-                    className="shrink-0 whitespace-nowrap rounded-full bg-magenta px-4 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-magenta-dark sm:px-6"
+                  Create a Work Request
+                </Link>
+
+                {/*
+                  ⚠ VERBATIM SCOTT (`P1-J4-E010`), AND BOTH FACTS BEHIND IT ARE
+                  REPORTED RATHER THAN SOFTENED:
+
+                    · `SHOP` IS `/buy-services`, WHOSE HERO LITERALLY READS
+                      `PLACEHOLDER — Shop` and whose `<h1>` is `PLACEHOLDER —
+                      headline about packaged services goes here.`
+                    · THERE IS EXACTLY **ONE** PUBLISHED `Package` — *"Install
+                      DocuSign for Oracle Cloud"* — AND IT IS OWNED BY **PANAMEER
+                      ADMIN**, not a provider (`P1-J4-E008`).
+
+                  ⚠ SO THIS LINE POINTS AT A PLACEHOLDER PAGE LISTING ONE OF OUR OWN
+                  PRODUCTS. Shipped as written and linked, per instruction.
+                */}
+                <p className="mt-4 max-w-[520px] text-[13.5px] leading-[1.5] text-[#cdc9e6]">
+                  <Link
+                    href="/buy-services"
+                    className="underline hover:text-white"
                   >
-                    {copy.searchCta}
-                  </button>
-                </form>
+                    Search on the SHOP page to see a listing of pre-defined
+                    Service Products
+                  </Link>
+                </p>
               </>
             }
             right={
               <>
-                {/* ⚠ MOVED UNCHANGED from `HERO_COPY.provider.subhead`, nbsp and all
-                    — and it is the loudest audience mismatch left on the page. */}
-                <p className="text-[17px] leading-[1.6] text-[#e9e6f5] min-[901px]:text-[19px]">
-                  {copy.subhead}
-                </p>
-
-                {/* ⚠ THE SIX TAGS, UNCHANGED. Neutral domain names — they read for
-                    either audience, which is why they are the one part of this hero
-                    the flip does not strand. */}
-                <div className="mt-[18px] flex flex-wrap gap-2.5">
-                  {copy.chips.map((chip, i) => (
-                    <Link
-                      key={chip}
-                      href={`/explore?mode=work&q=${encodeURIComponent(chip)}`}
-                      className={
-                        "rounded-full px-4 py-2 text-[13.5px] transition-colors " +
-                        (i === 0
-                          ? "border border-magenta bg-magenta/[0.16] text-white"
-                          : "border border-white/[0.22] bg-white/[0.04] text-[#e4e1f2] hover:border-white/60")
-                      }
-                    >
-                      {chip}
-                    </Link>
-                  ))}
-                </div>
-
                 {/*
-                  ⚠ MICROCOPY, NOT A CONTROL — the note `MarketingHero` carries stays
-                  true: the résumé parser is real, but there is no drop target in this
-                  hero, so it is a sentence and never a button.
-                  ⚠ AND IT ADDRESSES A PROVIDER. Reported, unchanged.
+                  ── ⚠⚠ VERBATIM SCOTT (`P1-J4-E011`), AND IT IS THE ONLY FULLY-
+                  BACKED HERO CLAIM ON THE SITE ────────────────────────────────
+
+                  Verified end to end 2026-08-24. `/create-work` step 1 opens on
+                  "Bring your JD" with three doors, and `Paste your JD` is FIRST,
+                  badged `Fastest` and marked `primary`. It posts to
+                  `POST /api/work-requests/import`, which AI-parses the JD and calls
+                  `createDraft`, then `saveSection` for **description + title**,
+                  **start/end dates**, **budget type and min/max**, and
+                  **location country + worksite**. Skills are returned but NOT saved,
+                  deliberately — they cannot be validated until a role and domain
+                  exist. So a real `DRAFT` row is created and pre-filled from the
+                  paste. This sentence describes something that works.
+
+                  ⚠ WITH ONE HONEST CAVEAT ON THE **FIRST CLICK**: signed out, the
+                  button lands on `/login`, not on the paste door. The capability is
+                  real; the sentence over-promises the first click for an anonymous
+                  visitor by exactly one login wall.
+
+                  ⚠ HIS CURLY QUOTES AROUND "Create Work Request" — SHIPPED AS TYPED.
+                  ⚠ AND THEY DO NOT MATCH THE BUTTON, WHICH READS `Create a Work
+                  Request` WITH AN `a`. Both are his. NOT SILENTLY ALIGNED — reported.
+
+                  ⚠ `AIP` IS USED HERE WITHOUT EXPANSION. `/optimize` expands it on
+                  first use (`Panameer's AI Platform (AIP)`, `P1-J0-E275`); this page
+                  never does. Reported.
                 */}
-                <p className="mt-3.5 flex items-center gap-[7px] text-[13.5px] text-[#cdc9e6]">
-                  <span aria-hidden className="text-magenta">
-                    ✦
-                  </span>
-                  {copy.aiHint}
+                <p className="text-[17px] leading-[1.6] text-[#e9e6f5] min-[901px]:text-[19px]">
+                  Click the &ldquo;Create Work Request&rdquo; button, upload
+                  your job description (aka JD), and let the Panameer AIP build
+                  your work request for you.
                 </p>
               </>
             }
           />
-
-          {/*
-            ⚠ THE LOCKUP STAYS, AND IT STILL CONFLICTS (`P1-J1-E019`).
-            `Learn. Connect. Create. Settle.` is four verbs; `/hire-talent`'s spine is
-            five with `Sell` in the last slot, and this page's new spine
-            (`P1-J4-E006`) is a different five again. Not instructed on any page.
-          */}
-          <p className="mt-7 font-display text-[13px] font-semibold uppercase tracking-[0.2em] text-[#a7a3c6]">
-            {BRAND_BADGE_SHORT}
-          </p>
         </div>
       </section>
     </HeroBox>
