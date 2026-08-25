@@ -949,6 +949,32 @@ export function LearnPublic() {
                     is also what makes it read as a distinct beat — `E295`'s "stress it"
                     intent now carried by brightness and placement rather than by pink.
                     The sub-copy's own `#cec7db` is unchanged and out of scope.
+
+                    ── ⚠⚠ PINK WAS ASKED FOR AGAIN ON 2026-08-25 AND MEASURED AGAIN,
+                    AND IT STILL FAILS (`P1-J3-E031`) ─────────────────────────────
+
+                    Scott: *"they all follow the same style.... meaning they are all
+                    pink."* ⚠ IT WAS BUILT AND MEASURED, NOT ARGUED WITH.
+                    `#efa3ee` at weight 600 over 9 sampled frames of `/learn.mp4`:
+
+                        1440  3.04      900  4.34      390  4.21      (AA needs 4.50)
+
+                    ⚠ FAILS AT ALL THREE WIDTHS — consistent with `E299`'s
+                    3.09 / 4.19 / 4.06 the day before. So it is reproducible, not a
+                    sampling artefact. `text-white` measures 5.76 / 7.86 / 7.57 and is
+                    what stays.
+
+                    ⚠⚠ AND NO FALLBACK WAS APPLIED, BY INSTRUCTION. Scott, 2026-08-25:
+                    *"Do not pick a different pink, do not add a shadow, do not deepen
+                    the scrim."* The brief's ladder authorised deepening the scrim;
+                    HIS LATER MESSAGE WITHDREW THAT FOR THIS PAGE, so the scrim, the
+                    video opacity and every colour here are untouched.
+
+                    ⚠ THE REAL CHOICE IS NOW THE PINK OR THE CLIP, AND IT IS HIS.
+                    `/hire-talent` DID get the pink in the same brief, at rung 2 of the
+                    ladder over a different clip (4.16 -> 5.51). ⚠ SO THE TWO PAGES
+                    DISAGREE ON BRIDGE-LINE COLOUR TODAY, and that is the reported
+                    consequence of one page's footage being brighter than the other's.
                   */}
                   <p className="mt-4 text-[17px] leading-[1.6] text-white min-[901px]:text-[19px]">
                     Check out the steps below to see how it works.
