@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { HeroBox } from "@/components/marketing/HeroBox";
+import { HeroVideoBackdrop } from "@/components/media/HeroVideoBackdrop";
 import { HERO_COPY } from "@/lib/brand";
 import { BRAND_BADGE_SHORT } from "@/lib/brand";
 
@@ -30,6 +31,7 @@ export function MarketingHero({
   audience,
   headline,
   kicker,
+  videoSrc,
 }: {
   audience: "buyer" | "provider";
   /**
@@ -42,6 +44,23 @@ export function MarketingHero({
    */
   headline?: string;
   kicker?: string;
+  /**
+   * ── ⚠⚠ OPTIONAL, DEFAULTED OFF, AND THAT IS THE WHOLE DESIGN (`P1-J0-E324`) ─
+   *
+   * Scott: *"INTEGRATE, SHOP, WORK, TALENT — they do not have a video background.
+   * please add this fix."* ⚠ BUT THIS COMPONENT SERVES MORE THAN THE PAGE HE
+   * WALKED. Editing it unconditionally would put a clip on `/why-panameer`, which
+   * he did not walk and did not ask for.
+   *
+   * ⚠ CALLERS TODAY ARE `/enterprise` AND `/why-panameer` — TWO, NOT FOUR. The
+   * brief said four; `/buy-services` moved to `ShopHero` in `1d790be` and its
+   * remaining mention here is a comment. Verified by grepping the imports.
+   *
+   * ⚠ NO `videoSrc` MEANS NO BACKDROP AND NO CLASS CHANGE — the output is
+   * byte-identical, which is proven by `innerText` hash and geometry at three
+   * widths on `/why-panameer` before and after, not by inspection.
+   */
+  videoSrc?: string;
 }) {
   const copy = HERO_COPY[audience];
   // /explore reads `mode`, and treats anything that is not "work" as hiring.
@@ -61,7 +80,36 @@ export function MarketingHero({
       owns the inset and the radius; the surface is still this hero's own, so a
       page that wants a different one changes it here and nowhere else.
     */
-    <HeroBox cardClassName="bg-[radial-gradient(1100px_500px_at_82%_-10%,rgba(215,44,214,0.42),transparent_60%),linear-gradient(150deg,#0d1230_0%,#191a44_55%,#3a1c53_100%)] text-white">
+    <HeroBox
+      cardClassName={
+        /*
+          ⚠ `isolate` ONLY WHEN THERE IS A CLIP — it keeps the video and scrim
+          stacking inside this card rather than against the page. Without a clip the
+          string is character-for-character what it always was, which is what makes
+          the unchanged callers unchanged.
+        */
+        (videoSrc ? "isolate " : "") +
+        "bg-[radial-gradient(1100px_500px_at_82%_-10%,rgba(215,44,214,0.42),transparent_60%),linear-gradient(150deg,#0d1230_0%,#191a44_55%,#3a1c53_100%)] text-white"
+      }
+    >
+      {/*
+        ⚠⚠ THE CLIP, WHEN A CALLER ASKS FOR ONE (`P1-J0-E324`). `HeroVideoBackdrop`
+        is COMPOSED, NEVER EDITED — no props added, no behaviour changed; it still
+        serves `/`, `/learn` and `/hire-talent` unchanged.
+
+        ⚠ THE CARD'S GRADIENT STAYS AND IS NOT DECORATION. It paints before the clip
+        arrives, it is what a `prefers-reduced-motion` visitor sees (`globals.css`
+        hides `[data-autoplay-video]` outright), and it is the only thing
+        guaranteeing the white `<h1>` is legible over whatever the camera saw. The
+        scrim re-lays this card's own three hexes over the footage.
+      */}
+      {videoSrc ? (
+        <HeroVideoBackdrop
+          src={videoSrc}
+          videoClassName="absolute inset-0 h-full w-full object-cover opacity-40"
+          scrimClassName="absolute inset-0 bg-[linear-gradient(150deg,rgba(13,18,48,0.86)_0%,rgba(25,26,68,0.72)_55%,rgba(58,28,83,0.62)_100%)]"
+        />
+      ) : null}
       {/*
         The faint grid, masked to the top-right so it fades before it reaches
         the copy. Decorative, and the mask is what keeps it from competing with

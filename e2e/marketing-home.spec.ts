@@ -2909,3 +2909,129 @@ test.describe("home — the four audiences LEARN is sold to", () => {
     ).not.toMatch(/^\s*\w*students?\b/m);
   });
 });
+
+/**
+ * ── ⚠⚠ HERO CLIPS: THE `-hero` CUTS ONLY, AND A BYTE BUDGET ────────────────
+ *
+ * `panameer-office.mp4` (9.21MB) got a hero video REJECTED on 2026-08-24: +75%
+ * first load, fast-3G LCP 1,036 -> 14,028ms. ⚠ LOCALHOST HID IT COMPLETELY —
+ * there the LCP got FASTER. The full-size clips are `connect.mp4` 1.48MB,
+ * `consultation.mp4` 4.68MB, `get-paid.mp4` 3.07MB, `panameer-office.mp4` 9.21MB;
+ * the shipped cuts are a tenth to a third of those.
+ *
+ * ⚠ THIS GUARD IS A NAME CHECK PLUS A SIZE CHECK, and it needs both: a rename
+ * without a re-encode passes the first, and a 3MB file called `-hero` passes
+ * nothing. The sizes come off the wire, not off disk.
+ */
+test.describe("hero clips — the -hero cuts, and only those", () => {
+  const EXPECT: Record<string, { clip: string; maxMB: number }> = {
+    "/hire-talent": { clip: "connect-hero.mp4", maxMB: 0.3 },
+    "/buy-services": { clip: "get-paid-hero.mp4", maxMB: 1.0 },
+    "/enterprise": { clip: "consultation-hero.mp4", maxMB: 0.4 },
+  };
+
+  for (const [url, want] of Object.entries(EXPECT)) {
+    test(`§58 ${url} renders exactly one hero clip, and it is the -hero cut`, async ({
+      page,
+    }) => {
+      const seen: { name: string; bytes: number }[] = [];
+      page.on("response", (r) => {
+        if (!/\.(mp4|webm|mov)(\?|$)/.test(r.url())) return;
+        seen.push({
+          name: r.url().split("/").pop()!,
+          bytes: Number(r.headers()["content-length"] ?? 0),
+        });
+      });
+
+      await page.goto(url, { waitUntil: "load" });
+      await page.waitForTimeout(1500);
+
+      /*
+        ⚠ ONE CLIP. Two would mean a hero clip landed on top of an eager
+        `VideoSequence` again — `P1-J1-E018`, fixed in `9d7b133`, and the thing that
+        made a hero clip affordable at all.
+      */
+      expect(
+        seen.map((s) => s.name),
+        `${url} should fetch exactly its own hero cut before any scroll`,
+      ).toEqual([want.clip]);
+
+      const mb = seen[0].bytes / 1048576;
+      expect(
+        mb,
+        `${url}'s hero clip is ${mb.toFixed(2)}MB — the -hero cuts are small ON PURPOSE`,
+      ).toBeLessThanOrEqual(want.maxMB);
+
+      /* ⚠ AND IT MUST BE THE BACKDROP, not a decorative clip in a section below. */
+      const inHero = await page.evaluate(() => {
+        const h1 = document.querySelector("h1");
+        const card = h1?.closest('div[class*="rounded-["]');
+        return card
+          ? card.querySelectorAll("video[data-autoplay-video]").length
+          : -1;
+      });
+      expect(inHero, `${url}'s clip is not inside the hero card`).toBe(1);
+    });
+  }
+
+  /**
+   * ⚠ `MarketingHero` SERVES TWO PAGES AND ONLY ONE ASKED FOR A CLIP. The prop is
+   * opt-in precisely so `/why-panameer` — which Scott did not walk — stays as it
+   * was. Asserted, because "defaulted off" is a claim about a default.
+   */
+  test("§59 /why-panameer has no hero clip; the videoSrc prop is opt-in", async ({
+    page,
+  }) => {
+    const clips: string[] = [];
+    page.on("response", (r) => {
+      if (/\.(mp4|webm|mov)(\?|$)/.test(r.url()))
+        clips.push(r.url().split("/").pop()!);
+    });
+    await page.goto("/why-panameer", { waitUntil: "load" });
+    await page.waitForTimeout(1200);
+    expect(clips, "/why-panameer grew a hero clip it never asked for").toEqual(
+      [],
+    );
+    await expect(page.locator("video")).toHaveCount(0);
+  });
+
+  /**
+   * ⚠⚠ THE WRAP FIX, AND IT GUARDS AGAINST A VALUE THAT LOOKS RIGHT AND DOES
+   * NOTHING (`P1-J3-E032`). The brief prescribed `[text-wrap:normal]`; `normal` is
+   * NOT a valid `text-wrap` value, so the browser discarded the declaration and the
+   * computed value stayed `balance`. `text-wrap:wrap` is the one that works.
+   *
+   * ⚠ ASSERTED ON THE COMPUTED VALUE, not on the class list — that is the whole
+   * lesson. A class that is present and inert is what this catches.
+   */
+  test("§60 both how-it-works headlines wrap, not balance", async ({
+    page,
+  }) => {
+    for (const [url, needle] of [
+      ["/learn", "courses to certification"],
+      ["/hire-talent", "in under one minute"],
+    ] as const) {
+      await page.goto(url);
+      const got = await page.evaluate((n) => {
+        const h2 = [...document.querySelectorAll("h2")].find((e) =>
+          (e.textContent ?? "").toLowerCase().includes(n),
+        );
+        if (!h2) return null;
+        const cs = getComputedStyle(h2);
+        return {
+          wrap: cs.textWrap || cs.getPropertyValue("text-wrap"),
+          max: cs.maxWidth,
+        };
+      }, needle);
+      expect(
+        got,
+        `${url}: the how-it-works headline is missing`,
+      ).not.toBeNull();
+      expect(
+        got!.wrap,
+        `${url}: 'balance' wastes the measure — Scott 2026-08-17. An INVALID value reads as balance too.`,
+      ).toBe("wrap");
+      expect(got!.max, `${url}: /optimize's measured width`).toBe("1040px");
+    }
+  });
+});

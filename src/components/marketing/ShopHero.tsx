@@ -1,5 +1,6 @@
 import { HeroBox } from "@/components/marketing/HeroBox";
 import { HeroTwoUp } from "@/components/marketing/HeroTwoUp";
+import { HeroVideoBackdrop } from "@/components/media/HeroVideoBackdrop";
 
 /**
  * `/buy-services`'s HERO — THE TWO-COLUMN TREATMENT (`P1-J2-E001`).
@@ -37,9 +38,38 @@ export function ShopHero() {
       surface is byte-identical to the string that hero renders; `HeroTwoUp`
       supplies the columns and nothing about the skin is new.
     */
-    <HeroBox cardClassName="bg-[radial-gradient(1100px_500px_at_82%_-10%,rgba(215,44,214,0.42),transparent_60%),linear-gradient(150deg,#0d1230_0%,#191a44_55%,#3a1c53_100%)] text-white">
-      <section className="px-6 py-16 min-[900px]:py-[84px]">
-        <div className="relative mx-auto max-w-[1120px]">
+    <HeroBox cardClassName="isolate bg-[radial-gradient(1100px_500px_at_82%_-10%,rgba(215,44,214,0.42),transparent_60%),linear-gradient(150deg,#0d1230_0%,#191a44_55%,#3a1c53_100%)] text-white">
+      <section className="relative px-6 py-16 min-[900px]:py-[84px]">
+        {/*
+          ── ⚠⚠ THE HERO CLIP (`P1-J2-E009`) ─────────────────────────────────
+
+          `get-paid-hero.mp4`, 0.83MB — Scott's revised mapping 2026-08-25: the page
+          whose spine ENDS IN A PAYMENT gets the get-paid footage.
+
+          ⚠ THE `-hero` CUT, NEVER `get-paid.mp4` (3.07MB). Faststart verified
+          (`moov` before `mdat`), ~4.5s to download whole on fast 3G. ⚠ IT IS THE
+          HEAVIEST OF THE THREE CLIPS IN THIS BRIEF and the only one worth watching
+          in the throttled numbers.
+
+          ⚠ THE CARD'S GRADIENT STAYS AND IS NOT DECORATION — it paints before the
+          clip arrives, it is what a `prefers-reduced-motion` visitor sees, and it is
+          what keeps the white `<h1>` legible. `isolate` keeps the video and scrim
+          stacking inside the card; `overflow-hidden` still comes from `HeroBox`,
+          which is what makes the clip respect the radius.
+
+          ⚠ `HeroVideoBackdrop` IS COMPOSED, NEVER EDITED.
+
+          ⚠ THIS PAGE IS NO LONGER `PLACEHOLDER` — `1d790be` gave it a real hero
+          (`Deploy Faster. With Less Risk.`, Scott's sub-copy, a `Start Shopping Now`
+          control) and a real five-step spine. The clip lands behind finished copy
+          here, unlike `/enterprise`.
+        */}
+        <HeroVideoBackdrop
+          src="/get-paid-hero.mp4"
+          videoClassName="absolute inset-0 h-full w-full object-cover opacity-40"
+          scrimClassName="absolute inset-0 bg-[linear-gradient(150deg,rgba(13,18,48,0.86)_0%,rgba(25,26,68,0.72)_55%,rgba(58,28,83,0.62)_100%)]"
+        />
+        <div className="relative z-[2] mx-auto max-w-[1120px]">
           <HeroTwoUp
             rowClassName="grid grid-cols-1 items-center gap-10 min-[901px]:grid-cols-2 min-[901px]:gap-14"
             left={

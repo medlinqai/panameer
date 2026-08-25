@@ -58,10 +58,30 @@ export const metadata: Metadata = {
 export default function EnterprisePage() {
   return (
     <MarketingShell>
+      {/*
+        ⚠⚠ THE HERO CLIP (`P1-J0-E324`, corrected id — `E323` is taken).
+        `consultation-hero.mp4`, 0.26MB, Scott's revised mapping 2026-08-25: the
+        advisory/ERP page gets the consultation footage.
+
+        ⚠ THE `-hero` CUT, NEVER `consultation.mp4` (4.68MB). The full-size clips are
+        forbidden here; the 9.21MB one is what got a hero video rejected on
+        2026-08-24 (fast-3G LCP 1,036 -> 14,028ms), and localhost hid that entirely.
+        Faststart verified (`moov` before `mdat`), ~1.4s to download whole on fast 3G.
+
+        ⚠ `videoSrc` IS OPT-IN, so `/why-panameer` — the other caller — is untouched
+        and comes out byte-identical. Proven by hash and geometry, not inspected.
+
+        ⚠⚠ AND THIS PAGE STILL SAYS `PLACEHOLDER`. Its kicker is `PLACEHOLDER —
+        Enterprise` and its `<h1>` is `PLACEHOLDER — headline about ERP integration
+        goes here.` PUTTING A CLIP BEHIND THAT IS THIS BRIEF'S INSTRUCTION AND IT IS
+        CORRECT — outstanding parts gate promotion, not the build — BUT NOBODY SHOULD
+        SCREENSHOT THIS PAGE AS FINISHED. `/enterprise` has never been walked.
+      */}
       <MarketingHero
         audience="buyer"
         kicker={ENTERPRISE_HERO.kicker}
         headline={ENTERPRISE_HERO.headline}
+        videoSrc="/consultation-hero.mp4"
       />
       {/* The scope for the ported stylesheet, around the payload only. */}
       <div className="pm-home">
