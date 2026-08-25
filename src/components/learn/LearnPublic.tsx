@@ -502,7 +502,7 @@ function Panel({
             second eyebrow inside one panel would read as a second step.
           */}
           {i === 0 && (
-            <p className="mb-3 font-body text-[19px] font-bold uppercase leading-[28.5px] tracking-[2.66px] text-[#d72cd6]">
+            <p className="mb-3 font-body text-[19px] font-bold uppercase leading-[28.5px] tracking-[2.66px] text-magenta-ink">
               {`Step ${step.n} - ${step.summary}`}
             </p>
           )}
@@ -1033,7 +1033,7 @@ export function LearnPublic() {
       */}
       <section className="bg-white pb-[80px] pt-14 min-[900px]:pt-[72px]">
         <div className="mx-auto max-w-[1200px] px-8">
-          <p className="font-body text-[19px] font-bold uppercase leading-[28.5px] tracking-[2.66px] text-[#d72cd6]">
+          <p className="font-body text-[19px] font-bold uppercase leading-[28.5px] tracking-[2.66px] text-magenta-ink">
             {LEARN_SPINE_HEADING}
           </p>
           {/*

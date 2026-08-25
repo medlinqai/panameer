@@ -88,7 +88,7 @@ export function TalentSpine() {
           /find-work use, so the four spines do not diverge on this gap. */}
       <section className="border-t border-line bg-white pb-[80px] pt-14 min-[900px]:pt-[72px]">
         <div className="mx-auto max-w-[1200px] px-8">
-          <p className="font-body text-[19px] font-bold uppercase leading-[28.5px] tracking-[2.66px] text-[#d72cd6]">
+          <p className="font-body text-[19px] font-bold uppercase leading-[28.5px] tracking-[2.66px] text-magenta-ink">
             {TALENT_SPINE_HEADING}
           </p>
           {/*
@@ -181,7 +181,7 @@ export function TalentSpine() {
                 hand-typed eyebrow fails `check:ui`. Values transcribed from
                 `/optimize`: 19px / 700 / #d72cd6 / ls 2.66px / uppercase / lh 28.5px.
               */}
-              <p className="font-body text-[19px] font-bold uppercase leading-[28.5px] tracking-[2.66px] text-[#d72cd6]">
+              <p className="font-body text-[19px] font-bold uppercase leading-[28.5px] tracking-[2.66px] text-magenta-ink">
                 {`Step ${step.n} - ${step.summary}`}
               </p>
               {/*

@@ -39,7 +39,7 @@ export function ShopSpine() {
     <>
       <section className="border-t border-line bg-white pb-[80px] pt-14 min-[900px]:pt-[72px]">
         <div className="mx-auto max-w-[1200px] px-8">
-          <p className="font-body text-[19px] font-bold uppercase leading-[28.5px] tracking-[2.66px] text-[#d72cd6]">
+          <p className="font-body text-[19px] font-bold uppercase leading-[28.5px] tracking-[2.66px] text-magenta-ink">
             {SHOP_SPINE_HEADING}
           </p>
           {/*
@@ -62,7 +62,7 @@ export function ShopSpine() {
           panel: (
             <>
               {/* ⚠ DERIVED, NEVER TYPED — `Step N - <label>` from `SHOP_STEPS`. */}
-              <p className="font-body text-[19px] font-bold uppercase leading-[28.5px] tracking-[2.66px] text-[#d72cd6]">
+              <p className="font-body text-[19px] font-bold uppercase leading-[28.5px] tracking-[2.66px] text-magenta-ink">
                 {`Step ${step.n} - ${step.summary}`}
               </p>
               {/* ⚠ `.stepd-h2` — the SHARED rule, so the five spines cannot drift

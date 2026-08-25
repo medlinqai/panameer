@@ -15,10 +15,38 @@
 @theme {
   --color-magenta: #d72cd6;
   --color-magenta-dark: #b324b2;
-  --color-ink: #181E3C;
+  /*
+    ── ⚠⚠ THE MAGENTAS THAT TEXT IS ALLOWED TO USE (`P1-J4-E020`) ────────────
+
+    Brand Guidelines v2 slide 5 rates `#d72cd6` at **4.02:1 — large & UI only**,
+    *"below the 4.5:1 that small text needs. Use navy for anything that has to be
+    read."* Slide 6 supplies the remedy, and both figures were re-measured here
+    rather than trusted: `#A61AA5` on white is **6.34:1** and `#8E138D` is
+    **7.99:1**, matching the deck exactly.
+
+    ⚠ `E020` WAS NEVER AN OPEN DECISION — it was this constraint, documented, and
+    the build did not follow it.
+
+    ⚠⚠ THESE ARE FOR TEXT ON LIGHT SURFACES ONLY, AND THAT IS A HARD LIMIT THE
+    DECK DOES NOT STATE. Contrast is symmetric, so a DARKER magenta on a DARK
+    surface is WORSE. Measured:
+
+                          on white   on #181E3C navy
+        #d72cd6             4.02          4.05
+        #A61AA5             6.34          2.57   <- fails badly
+        #8E138D             7.99          2.04   <- fails badly
+
+    ⚠ SO NEVER SUBSTITUTE THESE FOR MAGENTA TEXT ON A DARK CARD, A DARK FOOTER OR
+    OVER A HERO GRADIENT. Those sites keep `#d72cd6`, or use the light pink the
+    dark heroes already use (`#efa3ee`).
+    ⚠ AND THE BUTTON FILL STAYS `--color-magenta`. It is the brand.
+  */
+  --color-magenta-ink: #a61aa5;
+  --color-magenta-ink-hover: #8e138d;
+  --color-ink: #181e3c;
   --color-ink-2: #4a4658;
   --color-line: #ece9f1;
-  --color-bg-soft: #F0F7F8;
+  --color-bg-soft: #f0f7f8;
 
   /*
    * LEARN / HOME PALETTE — measured out of the design PNG, not eyeballed.
@@ -133,8 +161,9 @@
   --shadow-brand: 0 10px 30px rgba(20, 10, 40, 0.08);
 
   --font-display: var(--font-comfortaa), "Comfortaa", cursive;
-  --font-body: var(--font-montserrat), "Montserrat", -apple-system,
-    BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-body:
+    var(--font-montserrat), "Montserrat", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 @theme inline {
@@ -344,7 +373,6 @@ body {
   }
 }
 
-
 @layer base {
   .marketing-surface :is(h1, h2, h3, h4) {
     text-wrap: balance;
@@ -356,11 +384,15 @@ body {
 }
 
 .marketing-surface {
-  --color-ink: #181E3C;
+  --color-ink: #181e3c;
   --color-ink-2: #4a4658;
   --color-line: #ece9f1;
-  --color-bg-soft: #F0F7F8;
+  --color-bg-soft: #f0f7f8;
   --color-canvas: #f7f7f5;
+  /* ⚠ MIRRORED so `.marketing-surface` resolves them too — light surfaces only;
+     see the note in `@theme`. */
+  --color-magenta-ink: #a61aa5;
+  --color-magenta-ink-hover: #8e138d;
   color: var(--color-ink);
 }
 

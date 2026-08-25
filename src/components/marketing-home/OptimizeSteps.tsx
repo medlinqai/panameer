@@ -81,7 +81,7 @@ export function OptimizeSteps() {
               ⚠ SO THE FULL STRING KEEPS ITS JOB AND THE SHORT ONE BECOMES THE
               HANDLE. `check:ui` asserts both expansions are still in the DOM.
             */}
-            <p className="mb-3 font-body text-[19px] font-bold uppercase leading-[28.5px] tracking-[2.66px] text-[#d72cd6]">
+            <p className="mb-3 font-body text-[19px] font-bold uppercase leading-[28.5px] tracking-[2.66px] text-magenta-ink">
               {s.eyebrow}
             </p>
             {/*
