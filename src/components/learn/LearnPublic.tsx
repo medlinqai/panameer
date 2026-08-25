@@ -1013,7 +1013,44 @@ export function LearnPublic() {
             ⚠ THE HEADLINE NOW, NOT SUB-COPY. One string, no span — see `E302`'s note
             on the hero bridge line and the three flags in `lib/learn-steps.ts`.
           */}
-          <h2 className="mt-6 max-w-[1040px] font-display text-[28px] font-bold leading-[1.14] tracking-[-0.5px] text-[#171e3e] min-[900px]:text-[34px] min-[900px]:leading-[38.76px]">
+          {/*
+            ── ⚠⚠ `[text-wrap:normal]` — THE WRAP FIX (`P1-J3-E032`) ────────────
+
+            Scott's screenshot: this headline broke as *"From courses to
+            certification in hours," / "with the support of the community forever."*
+            — two short lines in a container wide enough for more. MEASURED BEFORE
+            THE FIX at 1440: 2 lines, widest line 730px inside a 1040px box. 310px
+            of unused measure.
+
+            ⚠ THE CAUSE IS A RULE HE ALREADY OVERRULED ONCE. `globals.css`'s
+            `@layer base` sets `.marketing-surface :is(h1,h2,h3,h4){text-wrap:balance}`
+            and `/learn` is inside `.marketing-surface`, so this `<h2>` inherited
+            `balance` — which optimises for EVEN line lengths, not for filling the
+            line. `/optimize` deliberately does not have it: `home.css:1245-1248`
+            records the same complaint, Scott 2026-08-17 — *"we are wasting space by
+            wrapping text that could go across the screen"* — with the numbers, and
+            `balance` was removed from `.hiw-h2` for exactly this.
+
+            ⚠⚠ IT IS `text-wrap`, NOT THE ARBITRARY `[text-wrap:normal]` THE BRIEF
+            PRESCRIBED, AND THE DIFFERENCE IS THAT ONE OF THEM DOES NOTHING.
+            Tailwind emits a rule for the arbitrary form and the class lands on the
+            element — and the browser then DISCARDS THE DECLARATION, because `normal`
+            is not a valid `text-wrap` value. The property takes
+            `wrap | nowrap | balance | pretty | stable` only. ⚠ MEASURED: with
+            `[text-wrap:normal]` the computed value stayed `balance` at 1440/900/390
+            and the wrap did not move an inch.
+            ⚠ `text-wrap` IS TAILWIND'S OWN UTILITY AND EMITS `text-wrap:wrap` — the
+            property's INITIAL value, i.e. exactly "wrap normally". That is the one
+            that works. Computed values are in the report.
+            ⚠ THIS IS WHY THE BRIEF SAID TO VERIFY RATHER THAN ASSUME. It asserted
+            *"the utility wins and it was already proven"*; the utility it named was
+            never valid CSS.
+
+            ⚠ `max-w-[1040px]` STAYS — it is `/optimize`'s measured width and it was
+            never the problem. ⚠ NO `<br>`, and `LEARN_SPINE_TAGLINE` is untouched:
+            the string is Scott's and out of scope.
+          */}
+          <h2 className="mt-6 max-w-[1040px] text-wrap font-display text-[28px] font-bold leading-[1.14] tracking-[-0.5px] text-[#171e3e] min-[900px]:text-[34px] min-[900px]:leading-[38.76px]">
             {LEARN_SPINE_TAGLINE}
           </h2>
         </div>
