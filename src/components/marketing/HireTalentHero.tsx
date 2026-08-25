@@ -91,9 +91,10 @@ import { BRAND_BADGE_SHORT, HERO_COPY } from "@/lib/brand";
  *
  * ⚠ `HeroVideoBackdrop` IS UNTOUCHED and still serves `/` and `/learn`.
  *
- * ⚠ THE PAGE'S REAL VIDEO PROBLEM IS ELSEWHERE AND LARGER: `VideoSequence` eagerly
- * loads all four of its clips — 10.63MB, 6.4s to first frame on fast 3G, with no
- * hero clip at all. Filed as `P1-J1-E018`; needs its own brief.
+ * ⚠ `P1-J1-E018` IS FIXED — this header used to warn that `VideoSequence` eagerly
+ * loaded all four of its clips (10.63MB) on this page. `9d7b133` made them lazy
+ * (`LazyAutoplayVideo`): first load went 11.01MB -> 0.39MB, media 10.63 -> 0.00MB.
+ * ⚠ THAT IS WHAT MADE A HERO CLIP AFFORDABLE HERE AT ALL — see `E028` below.
  */
 export function HireTalentHero() {
   return (
@@ -141,28 +142,52 @@ export function HireTalentHero() {
             right={
               <>
                 {/*
-                  ⚠ VERBATIM SCOTT with TWO corrections, both recorded so neither
-                  reads as a rewrite:
+                  ── ⚠⚠ VERBATIM SCOTT, 2026-08-25 (`P1-J1-E024`) ────────────────
 
-                    · `use`, not his typed `uase` — standing instruction.
-                    · HIS `...` BECAME AN EM DASH. He typed *"and sit...use AI"*.
-                      `/learn` kept his ellipsis where it was stylistic
-                      (`...all for free`); here it separates two clauses and reads as
-                      a fault rather than a beat. ⚠ REPORTED — revert if he prefers
-                      the ellipsis.
+                  It REPLACES *"Don't just upload your resume and sit — create
+                  service products and use AI to sell them directly to buyers."*
 
-                  ⚠⚠ `use AI to sell them` PUTS THE AI ON THE SELLING SIDE, AND THE
-                  BUILD DOES NOT DO THAT. His first draft was *"use AI to CREATE
-                  service products"*; this final version moves AI to selling.
-                  `AiMatch` renders further down this same page, and
-                  `lib/work-request-match.ts` ranks PROVIDERS — people — against a
-                  `WorkRequest` by weighted skill depth and recency. It contains ZERO
-                  references to `Package`. So nothing matches a PRODUCT to a BUYER.
-                  ⚠ SHIPPED AS WRITTEN AND FLAGGED — the claim is ahead of the build.
+                  ⚠ AND THE REPLACEMENT RETIRES A FLAGGED CLAIM RATHER THAN ADDING
+                  ONE. The old sentence put the AI on the SELLING side, which the
+                  build does not do — `work-request-match.ts` ranks PEOPLE against a
+                  `WorkRequest` and contains zero `Package` references. ⚠ THE NOTE
+                  THAT RECORDED THAT IS DELETED FROM THIS FILE'S HEADER, not left
+                  teaching a claim the page no longer makes.
+
+                  ⚠⚠ SENTENCE ONE IS THE STRONGEST CLAIM ON THE PAGE AND IT IS
+                  BACKED — checked, not assumed. `lib/resume/ai-extract.ts` +
+                  `ai-provider.ts` run live against the Anthropic API;
+                  `/api/onboarding/provider/resume-ai`, `/skill-suggestions` and
+                  `/import` all exist; `ProviderSkill.weight` is derived from dated
+                  jobs. `TALENT_STEPS[1].description` already says the same thing.
+                  ⚠ MEASURED 2026-08-25 for `E026`: 6 real end-to-end runs on two
+                  fixture CVs, 9.0s to 31.8s. The AI does the work it claims.
+
+                  ── ⚠ THREE CORRECTIONS, ALL REPORTED, NONE SILENT ──────────────
+
+                    · `auto create` -> `auto-create`. Compound adjective before a noun.
+                    · `deploy-ables` -> `deployables`. ⚠ THIS IS THE WORD
+                      `ORIENTATION_2026-08-24.md` §2 USES for the stack's top layer
+                      (*"a deployable asset (a report, an AI agent)"*), so the site
+                      now agrees with itself. ⚠ IF HE MEANT `deliverables` THAT IS A
+                      ONE-WORD REVERT — asked in the report.
+                    · his double spaces after the periods collapse to one.
+                      Typographic only.
+
+                  ⚠⚠ `offering retainer... hours` IS THE SECOND RETAINER CLAIM ON THE
+                  PUBLIC SITE THIS WEEK and the position is the same as the first
+                  (`P1-J0-E311`, `FourAudiences`): it says what the PROVIDER offers,
+                  not what the platform sells, schedules or bills — and NONE of that
+                  is built. Zero `Conversation` models, zero `Message` models, no
+                  booking, and `/messages` ships a disabled composer
+                  (`P1-J3-E014`). ⚠ SHIPPED AS HIS WORDS; FLAGGED FOR CONSISTENCY
+                  WITH THE OTHER SURFACE.
                 */}
                 <p className="text-[17px] leading-[1.6] text-[#e9e6f5] min-[901px]:text-[19px]">
-                  Don&apos;t just upload your resume and sit &mdash; create
-                  service products and use AI to sell them directly to buyers.
+                  Use AI to auto-create your profile. Expand existing and create
+                  new income streams by building new or sharing existing skills,
+                  reselling previous deployables, and offering retainer,
+                  mentoring, or application demo hours.
                 </p>
               </>
             }
