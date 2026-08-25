@@ -143,9 +143,20 @@ export function HireTalentHero() {
           camera saw. `isolate` stays on the card; `overflow-hidden` keeps coming
           from `HeroBox`, which is what makes the clip respect the radius.
 
-          ⚠ THE SCRIM IS THIS CARD'S OWN RAMP — the same three hexes as
-          `cardClassName`, at `/learn`'s alphas. A transposition, not a palette
-          tuned until it passed.
+          ⚠⚠ THE SCRIM ALPHAS WERE DEEPENED, AND THAT IS RUNG 2 OF THE BRIEF'S
+          OWN LADDER — PRE-AUTHORISED, NOT AN ADAPTATION. It shipped at `/learn`'s
+          alphas `0.82 / 0.62 / 0.30` and the WS3a pink bridge line measured
+          **4.16 / 4.13 / 4.18** over the clip — a FAIL at AA 4.5 at all three
+          widths. The ladder's rung 2 is *"deepen the scrim under the hero text
+          column only, and re-measure"*, and it changes NO COLOUR SCOTT CHOSE.
+
+          ⚠ `0.86 / 0.72 / 0.62`. The far stop moved most because that is where the
+          RIGHT COLUMN sits — the sub-copy and the bridge line — and 0.30 was the
+          weakest point on the card. ⚠ THE HEXES ARE UNCHANGED; only alpha moved,
+          and it is reversible in three numbers.
+
+          ⚠ NOT TOUCHED, per the ladder: the pink, the type size, the video opacity,
+          the sub-copy, and no text-shadow anywhere.
 
           ⚠ `HeroVideoBackdrop` IS COMPOSED, NEVER EDITED — no props added, no
           behaviour changed. It still serves `/` and `/learn` unchanged.
@@ -153,7 +164,7 @@ export function HireTalentHero() {
         <HeroVideoBackdrop
           src="/connect-hero.mp4"
           videoClassName="absolute inset-0 h-full w-full object-cover opacity-40"
-          scrimClassName="absolute inset-0 bg-[linear-gradient(150deg,rgba(13,18,48,0.82)_0%,rgba(25,26,68,0.62)_55%,rgba(58,28,83,0.30)_100%)]"
+          scrimClassName="absolute inset-0 bg-[linear-gradient(150deg,rgba(13,18,48,0.86)_0%,rgba(25,26,68,0.72)_55%,rgba(58,28,83,0.62)_100%)]"
         />
         <div className="relative z-[2] mx-auto max-w-[1120px]">
           {/*
@@ -292,6 +303,34 @@ export function HireTalentHero() {
                   new income streams by building new or sharing existing skills,
                   reselling previous deployables, and offering retainer,
                   mentoring, or application demo hours.
+                </p>
+
+                {/*
+                  ── ⚠⚠ THE BRIDGE LINE (`P1-J1-E027`) ────────────────────────
+
+                  Scott, 2026-08-25: *"they all follow the same style.... meaning
+                  they are all pink."* ⚠ EXACTLY `/optimize`'s STRING, and its
+                  MEASURED treatment: `color:#efa3ee`, `font-weight:600`, 19px —
+                  read off `.hero-bridge`'s computed style at 1440, not copied from
+                  the stylesheet.
+
+                  ⚠ TAILWIND, MIRRORED — `/hire-talent` IS NOT INSIDE `.pm-home`, so
+                  `home.css`'s class and its variables are both unavailable here.
+                  Fifth instance of that scoping trap in two days.
+
+                  ⚠ THE STRING IS NOW A LITERAL IN FOUR PLACES (`/optimize`,
+                  `/learn`, here, and `/find-work`'s absence). ⚠ A SHARED CONSTANT IS
+                  PROBABLY RIGHT AND IS DELIBERATELY NOT CREATED IN THIS BRIEF —
+                  reported instead, because a constant introduced mid-walk is a
+                  fifth file to review for a copy change nobody asked for.
+
+                  ⚠⚠ IT SITS OVER THE NEW CLIP, so it carries the AA exposure the
+                  flat gradient did not have — and pink is the lightest text on the
+                  card. MEASURED against 9 sampled frames at three widths before
+                  shipping; the numbers are in the report.
+                */}
+                <p className="mt-4 text-[19px] font-semibold leading-[1.5] text-[#efa3ee]">
+                  Check out the steps below to see how it works.
                 </p>
               </>
             }
