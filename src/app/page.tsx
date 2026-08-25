@@ -8,7 +8,10 @@ import { CapabilityFramework } from "@/components/marketing-home/CapabilityFrame
 import { FourAudiences } from "@/components/marketing-home/FourAudiences";
 import { TalentTeaser } from "@/components/marketing-home/TalentTeaser";
 import { Testimonials } from "@/components/marketing-home/Testimonials";
-import { HomeFooter } from "@/components/marketing-home/HomeFooter";
+import { ValueStack } from "@/components/marketing/sections/ValueStack";
+import { VideoSequence } from "@/components/marketing/VideoSequence";
+import { AppShots } from "@/components/marketing/sections/AppShots";
+import { MarketingFooter } from "@/components/marketing/MarketingFooter";
 import { GetTheTalent } from "@/components/marketing-home/GetTheTalent";
 import { WorkTracker } from "@/components/marketing-home/WorkTracker";
 /* ⚠ `HowItWorks`, `ProcessPicker` AND `SpineSteps` ARE DELIBERATELY NOT IMPORTED
@@ -299,7 +302,23 @@ export default function Home() {
         <FourAudiences />
         <TalentTeaser />
         <Testimonials />
-        <HomeFooter />
+        {/*
+          ── ⚠⚠ PARKED FROM `/talent` (`P1-J1-E030`) ─────────────────────────
+
+          Scott: *"i do not think we will need them, but i will leave them on the
+          last page to get refined for now."* ⚠ THIS IS A PARKING PLACE. They are
+          NOT integrated into `/`'s narrative, NOT re-worded and NOT redesigned —
+          the order is the order they had on `/talent`.
+
+          ⚠ `VideoSequence` WAS REPOINTED AT THE `-hero` CUTS IN THE SAME COMMIT.
+          It eager-loaded four FULL-SIZE clips — 10.63MB — and `/` already serves
+          `consultation` as its hero, so moving it here unchanged would have made
+          `/` the heaviest page on the site. See `VideoSequence.tsx`.
+        */}
+        <ValueStack />
+        <VideoSequence audience="buyer" />
+        <AppShots page="hire" />
+        <MarketingFooter />
       </div>
     </>
   );

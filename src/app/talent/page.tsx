@@ -2,9 +2,6 @@ import type { Metadata } from "next";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
 import { HireTalentHero } from "@/components/marketing/HireTalentHero";
 import { TalentSpine } from "@/components/marketing/TalentSpine";
-import { ValueStack } from "@/components/marketing/sections/ValueStack";
-import { VideoSequence } from "@/components/marketing/VideoSequence";
-import { AppShots } from "@/components/marketing/sections/AppShots";
 
 /**
  * HIRE TALENT — the buyer who is ready to hire (brief_public_pages_ia WS-2).
@@ -81,6 +78,19 @@ export default function HireTalentPage() {
       */}
       <TalentSpine />
       {/*
+        ── ⚠⚠ THE PAGE ENDS HERE NOW (`P1-J1-E030`) ─────────────────────────
+
+        `ValueStack`, `VideoSequence` and `AppShots` MOVED to `/` — moved, not
+        copied, and they must not render here. Scott: *"i do not think we will
+        need them, but i will leave them on the last page to get refined for
+        now."* `/` is a PARKING PLACE for them, not a new home.
+
+        ⚠ SO `/talent` ENDS ON THE SPINE + THE HERO'S COUNTER TILES, WITH NO
+        CLOSING CTA. That is `P1-J1-E023`, still open, and NO CLOSING SECTION WAS
+        INVENTED to fill the gap — the hero's `Join Panameer & Create My Profile`
+        is the page's only ask.
+      */}
+      {/*
         ── ⚠ `ThreeWays` AND `AiMatch` MOVED TO `/find-work` (`P1-J4-E005`) ──────
 
         `P1-J4-E002` settled that Work is the BUYER's page, and both sections are
@@ -96,9 +106,6 @@ export default function HireTalentPage() {
 
         ⚠ `E164`: both stay on disk and both now render on `/find-work`.
       */}
-      <ValueStack />
-      <VideoSequence audience="buyer" />
-      <AppShots page="hire" />
       {/*
         ── ⚠⚠ THREE SECTIONS LEFT THIS PAGE (`P1-J1-E020`, `P1-J1-E022`) ────────
 

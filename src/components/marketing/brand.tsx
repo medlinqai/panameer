@@ -234,97 +234,116 @@ export const MARKETING_NAV: MarketingNavItem[] = [
  * the worst possible way to learn the difference.
  */
 export type FooterEntry = {
+  /** ⚠ Off-site. Renders `target="_blank" rel="noopener noreferrer"`. */
+  external?: boolean;
   label: string;
   /** Absent = not built. Renders as text + TBD, never as an anchor. */
   href?: string;
 };
 
 export const FOOTER_GROUPS: { title: string; entries: FooterEntry[] }[] = [
-  {
-    title: "Hire",
-    entries: [
-      /* ⚠ "Find Talent", matching the header since E222. The GROUP heading stays
-         "Hire" — it is a category of intent, not a nav label, and the header has
-         never had a word for it. */
-      { label: "Find Talent", href: "/talent" },
-      { label: "Post a Work Request", href: "/join/buyer" },
-    ],
-  },
-  {
-    title: "Work",
-    entries: [
-      { label: "Find Work", href: "/find-work" },
-      { label: "Become a Provider", href: "/join/provider" },
-      /* The route exists and renders ComingSoon; the DESTINATION does not. */
-      { label: "Work Marketplace" },
-      /* Was `href="#"` — a link that went nowhere is worse than an honest TBD. */
-      { label: "Coordinators" },
-    ],
-  },
-  {
-    title: "Learn",
-    entries: [
-      { label: "Learning Paths", href: "/learn" },
-      { label: "Courses", href: "/learn/courses" },
-      { label: "Categories", href: "/find-work#learn" },
-    ],
-  },
-  {
-    title: "Solutions",
-    entries: [
-      { label: "AI Agents" },
-      /*
-        ⚠ THE ONLY PUNCH-OUT ENTRY. "Enterprise" and "ERP Punchout" both pointed
-        at this same anchor from two different columns; one destination with two
-        names in one footer is how a reader concludes they are two things.
-      */
-      /* ⚠ REPOINTED BY `P1-J1-E020`. `ErpPunchout` moved to `/enterprise`, so this
-         link's `#punchout` target left `/hire-talent` with it — the fragment would
-         have landed on a page that no longer contains it. Same defect class as the
-         dead `/optimize#spine-step-N` fragments; caught by grepping the anchor
-         before the move rather than after. */
-      { label: "Services Punch-Out", href: "/integrate#punchout" },
-      { label: "OTS Goods Contracts" },
-      { label: "Analytics" },
-    ],
-  },
-  {
-    title: "Why & Commercial",
-    entries: [
-      /*
-        ⚠ A PAGE NOW, NOT AN ANCHOR (brief_public_ia_block2 WS-7). It pointed at
-        `/hire-talent#three-ways`, which sent a reader asking "why Panameer" to a
-        hiring page and dropped them mid-way down it.
+  /*
+    ── ⚠⚠ REBUILT FOR ONE SHARED FOOTER (`brief_walk_fixes` WS9) ──────────────
 
-        `ThreeWays` STAYS on /hire-talent and #three-ways is still a valid
-        anchor — this changes where the footer link points, it does not move a
-        section.
-      */
+    Scott: *"i want the footer to be consistent across all public pages."* There
+    were two footers; `HomeFooter` is retired (on disk, unimported — `E164`) and
+    `MarketingFooter` now serves `/`, `/learn` and `/optimize` too.
+
+    ⚠ `HIRE`, `WORK` AND `LEARN` COLUMNS REMOVED. Scott: *"it is duplicating a
+    page."* Those three columns re-listed the header's own destinations.
+
+    ⚠⚠ AND THE RULE THAT SHAPED EVERY ROW BELOW: **NO `href` MEANS NO ANCHOR.**
+    `FooterRow` renders an entry without an href as PLAIN TEXT with a `TBD`
+    marker. Of the 25 items Scott specified, 5 have pages and 20 do not — and the
+    20 are deliberately not links. ⚠ A FOOTER OF DEAD LINKS ON EVERY PUBLIC PAGE
+    IS EXACTLY WHAT `HomeFooter` WAS CUT DOWN TO REMOVE. DO NOT REGROW IT.
+  */
+  {
+    /* ⚠ REAL URLS, and the only group where every row but one is a link. The
+       anchors carry `target="_blank" rel="noopener noreferrer"` — see `FooterRow`. */
+    title: "Panameer on the Web",
+    entries: [
+      {
+        label: "YouTube",
+        href: "https://www.youtube.com/c/panameer",
+        external: true,
+      },
+      {
+        label: "Instagram",
+        href: "https://instagram.com/onpanameer",
+        external: true,
+      },
+      /* ⚠ `?viewAsMember=true` STRIPPED — a preview parameter, not a public link. */
+      {
+        label: "LinkedIn",
+        href: "https://www.linkedin.com/company/panameer/",
+        external: true,
+      },
+      { label: "X", href: "https://x.com/onpanameer", external: true },
+      /* ⚠ NO DESTINATION YET. Plain text, by instruction. */
+      { label: "WhatsApp" },
+    ],
+  },
+  {
+    /* ⚠ ALL FIVE ARE PLAIN TEXT. Every one names a capability a provider does not
+       have a page for: `/settings/packages` publishes a product but it is signed-in
+       and role-gated, and there is no public page for any of these five. */
+    title: "Service SELLER Features",
+    entries: [
+      { label: "Sell Consulting Hours" },
+      { label: "Sell Retainer Hours" },
+      { label: "Sell Pre-Defined Demos" },
+      { label: "Sell Pre-Built AI Agents" },
+      { label: "Sell Pre-Built BI Pub Reports" },
+    ],
+  },
+  {
+    title: "Service BUYER Features",
+    entries: [
+      /* ⚠ WIRED — the public Work page. It is `/find-work` and NOT `/work`:
+         `(app)/work` is the signed-in provider feed, which is why `P1-ALL-E017`
+         stopped that rename. When it resolves, this href moves with it. */
+      { label: "Post Work for Free", href: "/find-work" },
+      /* ⚠ WIRED — `/assess` is public and is the free front door. */
+      { label: "Assess Processing Maturity for Free", href: "/assess" },
+      { label: "Buy Pre-Built Demos, Reports & Agents" },
+      { label: "Buy Pre-Project Consultations" },
+      { label: "Buy Expert on Retainer" },
+    ],
+  },
+  {
+    title: "Panameer",
+    entries: [
+      { label: "About Us" },
+      { label: "Contact Us" },
+      /* ⚠ WIRED — `AIP Integration` is `/integrate`, renamed from `/enterprise`
+         by `P1-ALL-E017`. */
+      { label: "AIP Integration", href: "/integrate" },
       { label: "Why Panameer", href: "/why-panameer" },
       /*
-        An ANCHOR, not a page. There is no approved per-transaction figure, and a
-        page headed "Pricing" with no price is a worse promise than a section.
+        ⚠ PLAIN TEXT, AND THAT IS A CHANGE FROM THE OLD TABLE, WHICH POINTED
+        `Pricing` AT `/talent#value`. `ValueStack` — the section that anchor
+        targeted — MOVED TO `/` in WS1, so the fragment would now land on a page
+        that no longer contains it. Same defect class as the dead
+        `/optimize#spine-step-N` fragments, caught by grepping the anchor before
+        shipping rather than after. There is still no approved price, so it becomes
+        an honest TBD rather than a link to the wrong page.
       */
-      { label: "Pricing", href: "/talent#value" },
-      /*
-        Was a TBD with no href until /enterprise existed (WS-7).
-
-        ⚠ "Integrate", NOT "Enterprise Integration" — E245, and it is E118's rule
-        doing its job rather than a re-word for its own sake. `/enterprise` is now
-        a HEADER destination too, and E118 is "one word per destination": the
-        header saying `Integrate` while the footer said `Enterprise Integration`
-        for the same route is exactly the drift that rule exists to stop. These
-        two tables sit beside each other so a change has to pass both at once.
-      */
-      { label: "Integrate", href: "/integrate" },
+      { label: "Pricing" },
     ],
   },
   {
-    title: "Company",
+    /* ⚠ ALL FIVE PLAIN TEXT. `Services Punchout` is the closest to real — the
+       section exists at `/integrate#punchout` — but Scott's label here names a
+       PLATFORM SOLUTION, not that section, and pointing a solution name at a
+       marketing anchor is the `E119` defect. Left as text. */
+    title: "AI Platform Solutions",
     entries: [
-      { label: "Contact Us" },
-      { label: "About Us" },
-      { label: "Careers" },
+      { label: "Processes-Specific Agent Suites" },
+      { label: 'Services Procurement "Punchout"' },
+      { label: "Dynamic Analytics (Data-Driven Reports)" },
+      { label: "Assessment-Integrated Deployables" },
+      { label: "AI Method-Based Provider Work Tracker" },
     ],
   },
 ];

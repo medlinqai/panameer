@@ -38,6 +38,24 @@ function FooterRow({ entry }: { entry: FooterEntry }) {
       </span>
     );
   }
+  /*
+    ⚠ OFF-SITE LINKS ARE PLAIN `<a>`, NOT `<Link>`, and they carry
+    `rel="noopener noreferrer"` with `target="_blank"` (WS9). `next/link` is for
+    in-app navigation; handing it an absolute external URL works but prefetches
+    and client-routes something that is not ours.
+  */
+  if (entry.external) {
+    return (
+      <a
+        href={entry.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="my-1.5 block text-[14.5px] text-[#cfc7da] hover:text-white"
+      >
+        {entry.label}
+      </a>
+    );
+  }
   return (
     <Link
       href={entry.href}
@@ -48,11 +66,13 @@ function FooterRow({ entry }: { entry: FooterEntry }) {
   );
 }
 
-/* The six index groups, then Legal as the seventh column. */
-const COLS = [
-  ...FOOTER_GROUPS,
-  { title: "Legal", entries: FOOTER_LEGAL },
-];
+/*
+  ⚠ FIVE SECTIONS + LEGAL = SIX COLUMNS (WS9). It was seven; `Hire`, `Work` and
+  `Learn` were removed for duplicating the header, and Scott's five replace the
+  other three. ⚠ THE LEGAL COLUMN AND THE BOTTOM COPYRIGHT ROW ARE UNTOUCHED —
+  Scott: *"i like the row on the bottom for legal...where the copyright is."*
+*/
+const COLS = [...FOOTER_GROUPS, { title: "Legal", entries: FOOTER_LEGAL }];
 
 export function MarketingFooter() {
   return (
@@ -76,8 +96,26 @@ export function MarketingFooter() {
           alt="Panameer"
           width={529}
           height={134}
-          className="mb-9 h-8 w-auto"
+          className="h-8 w-auto"
         />
+        {/*
+          ── ⚠⚠ THE TAGLINE, VERBATIM (WS9) ──────────────────────────────────
+
+          It replaces `Learn. Connect. Create. Settle. Together.` — the four-verb
+          lockup, whose public call sites were removed by `P1-J1-E019` and
+          `P1-J4-E009`. ⚠ `BRAND_BADGE_SHORT` STAYS IN `brand.ts`; only this site
+          changes.
+
+          ⚠ EN DASH (–), NOT A HYPHEN, AND `&` NOT `and` — both as Scott typed it.
+          ⚠ THE COMMENT ABOVE THIS BLOCK USED TO SAY THE TAGLINE WAS REMOVED
+          because the copyright row printed the same sentence. That is no longer
+          true: this is a DIFFERENT sentence from `BRAND_DESCRIPTOR`, so the footer
+          no longer says one thing twice.
+        */}
+        <p className="mb-9 mt-3 max-w-[560px] text-[14.5px] leading-[1.5] text-[#cfc7da]">
+          The home of Oracle application &amp; AI specialists &ndash; and the
+          businesses that need them.
+        </p>
 
         {/*
           SEVEN GROUPS, so the grid goes to four columns at `lg:` rather than
@@ -91,8 +129,16 @@ export function MarketingFooter() {
               {col.entries.map((e) => (
                 <FooterRow key={e.label} entry={e} />
               ))}
-              {/* The assessment hangs under Learn — it is the free front door. */}
-              {col.title === "Learn" && <FooterRow entry={FOOTER_ASSESSMENT} />}
+              {/*
+                ⚠ THE ASSESSMENT HANGS UNDER THE BUYER COLUMN NOW. It used to hang
+                under `Learn`, and that column is gone (WS9). It is the free front
+                door and `E119` exists because two links labelled for the
+                assessment both missed it — so it keeps a home rather than being
+                dropped with the column.
+              */}
+              {col.title === "Service BUYER Features" && (
+                <FooterRow entry={FOOTER_ASSESSMENT} />
+              )}
             </div>
           ))}
         </div>

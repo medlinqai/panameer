@@ -762,7 +762,7 @@ export function LearnPublic() {
         needs two elements rather than one.
       */}
       <HeroBox cardClassName="isolate bg-[linear-gradient(150deg,#1b1f45_0%,#33194f_55%,#4a1a5e_100%)] text-white">
-        <section className="px-6 py-16 min-[900px]:py-[84px]">
+        <section className="px-6 pb-[48px] pt-[44px] min-[901px]:pb-[72px] min-[901px]:pt-[64px]">
           {/*
           ⚠ THE GRADIENT UNDER THIS IS NOT DECORATION AND MUST STAY. It paints before the clip
           arrives, it is what a `prefers-reduced-motion` visitor sees, and it is the only thing
@@ -777,7 +777,7 @@ export function LearnPublic() {
             src="/learn.mp4"
             poster="/posters/learn.svg"
             videoClassName="absolute inset-0 h-full w-full object-cover opacity-40"
-            scrimClassName="absolute inset-0 bg-[linear-gradient(115deg,rgba(15,11,28,0.82)_0%,rgba(40,20,80,0.62)_45%,rgba(215,44,214,0.30)_100%)]"
+            scrimClassName="absolute inset-0 bg-[linear-gradient(115deg,rgba(15,11,28,0.92)_0%,rgba(40,20,80,0.86)_45%,rgba(215,44,214,0.18)_100%)]"
           />
 
           {/*
@@ -843,7 +843,7 @@ export function LearnPublic() {
                       href="/login?callbackUrl=/learn"
                       className="rounded-[12px] bg-magenta px-7 py-4 font-display text-[16px] font-bold text-white"
                     >
-                      Create Your Free Account
+                      Start Learning for Free
                     </Link>
                     <Link
                       href="/learn/courses"
@@ -977,7 +977,7 @@ export function LearnPublic() {
                     DISAGREE ON BRIDGE-LINE COLOUR TODAY, and that is the reported
                     consequence of one page's footage being brighter than the other's.
                   */}
-                  <p className="mt-4 text-[17px] leading-[1.6] text-white min-[901px]:text-[19px]">
+                  <p className="mt-4 text-[17px] font-semibold leading-[1.6] text-[#efa3ee] min-[901px]:text-[19px]">
                     Check out the steps below to see how it works.
                   </p>
                   <LearnStats />

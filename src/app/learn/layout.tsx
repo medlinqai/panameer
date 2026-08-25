@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { MarketingHeader } from "@/components/marketing/MarketingHeader";
-import { HomeFooter } from "@/components/marketing-home/HomeFooter";
+import { MarketingFooter } from "@/components/marketing/MarketingFooter";
 import { MeProvider } from "@/components/MeProvider";
 import { AppShell } from "@/components/casing/AppShell";
 import { getSessionViewer } from "@/lib/session";
@@ -68,7 +68,7 @@ export default async function LearnLayout({
         component's header before adding a fourth caller; the reason it is
         self-contained is that this page proved a caller can forget.
       */}
-      <HomeFooter />
+      <MarketingFooter />
     </div>
   );
 }

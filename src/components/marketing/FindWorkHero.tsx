@@ -2,6 +2,7 @@ import Link from "next/link";
 import { HeroBox } from "@/components/marketing/HeroBox";
 import { HeroTwoUp } from "@/components/marketing/HeroTwoUp";
 import { HeroVideoBackdrop } from "@/components/media/HeroVideoBackdrop";
+import { talentHeroStats } from "@/lib/talent-stats";
 
 /**
  * `/find-work`'s HERO — THE TWO-COLUMN TREATMENT (`P1-J4-E001`).
@@ -81,7 +82,8 @@ import { HeroVideoBackdrop } from "@/components/media/HeroVideoBackdrop";
  * ⚠ THE MEASURED NUMBERS FOR THIS CUT ARE IN THE SECTION COMMENT BELOW. Re-measure
  * before ever swapping the asset again — that is the whole lesson of `E019`.
  */
-export function FindWorkHero() {
+export async function FindWorkHero() {
+  const stats = await talentHeroStats();
   /* ⚠ NOTHING IS READ FROM `HERO_COPY.provider` ANY MORE. `P1-J4-E009`/`E011`/`E012`
      removed the pill, the search, the tags and the caption — every string this hero
      used to borrow from the shared constant. What is left is Scott's own copy for
@@ -94,7 +96,7 @@ export function FindWorkHero() {
       columns; nothing about the surface is new.
     */
     <HeroBox cardClassName="isolate bg-[radial-gradient(1100px_500px_at_82%_-10%,rgba(215,44,214,0.42),transparent_60%),linear-gradient(150deg,#0d1230_0%,#191a44_55%,#3a1c53_100%)] text-white">
-      <section className="relative px-6 py-16 min-[900px]:py-[84px]">
+      <section className="relative px-6 pb-[48px] pt-[44px] min-[901px]:pb-[72px] min-[901px]:pt-[64px]">
         {/*
           ── ⚠⚠ THE HERO CLIP, SECOND ATTEMPT, MEASURED (`P1-J4-E019`) ──────────
 
@@ -307,6 +309,44 @@ export function FindWorkHero() {
                   your job description (aka JD), and let the Panameer AIP build
                   your work request for you.
                 </p>
+                {/*
+                  ── ⚠ THE BRIDGE LINE (`WS4`) ────────────────────────────────
+                  `/optimize`'s exact string in its MEASURED treatment — #efa3ee,
+                  weight 600, 19px, read off `.hero-bridge`'s computed style.
+                  ⚠ TAILWIND, MIRRORED — this page is outside `.pm-home`.
+                  ⚠ IT SITS OVER THIS PAGE'S OWN CLIP, so it was measured over that
+                  clip and the WS2 ladder applied per page. Ratios in the report.
+                */}
+                <p className="mt-4 text-[19px] font-semibold leading-[1.5] text-[#efa3ee]">
+                  Check out the steps below to see how it works.
+                </p>
+
+                {/*
+                  ── ⚠⚠ THE THREE LIVE-COUNT TILES (`WS3`) ────────────────────
+                  Scott, twice: *"where are the counter cards here? I specifically
+                  called out what i wanted counted, still nothing."* Same three
+                  tiles as `/talent`, from the same `talentHeroStats()` build-time
+                  read, so the three pages cannot disagree.
+                  ⚠ `Providers` IS 85 AND IT IS SEED. Scott decided it ships with
+                  the number in front of him; it is on the pre-launch list. Do not
+                  re-argue it here.
+                  ⚠ CHROME COPIED FROM `LearnStats`, not extracted.
+                */}
+                <dl className="mt-[26px] grid grid-cols-3 gap-[14px]">
+                  {stats.map((s) => (
+                    <div
+                      key={s.label}
+                      className="rounded-[14px] border border-white/[0.13] bg-white/[0.06] px-4 py-[18px]"
+                    >
+                      <dd className="font-display text-[34px] font-bold leading-[34px] text-white">
+                        {s.value}
+                      </dd>
+                      <dt className="mt-2 text-[12.5px] font-normal leading-[16.25px] text-[#cec7db]">
+                        {s.label}
+                      </dt>
+                    </div>
+                  ))}
+                </dl>
               </>
             }
           />

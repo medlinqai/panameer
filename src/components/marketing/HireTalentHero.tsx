@@ -112,7 +112,7 @@ export async function HireTalentHero() {
       the clip respect the radius.
     */
     <HeroBox cardClassName="isolate bg-[radial-gradient(1100px_500px_at_82%_-10%,rgba(215,44,214,0.42),transparent_60%),linear-gradient(150deg,#0d1230_0%,#191a44_55%,#3a1c53_100%)] text-white">
-      <section className="relative px-6 py-16 min-[900px]:py-[84px]">
+      <section className="relative px-6 pb-[48px] pt-[44px] min-[901px]:pb-[72px] min-[901px]:pt-[64px]">
         {/*
           ── ⚠⚠ THE HERO CLIP (`P1-J1-E028`) ─────────────────────────────────
 
@@ -253,7 +253,7 @@ export async function HireTalentHero() {
                   href="/join/provider"
                   className="mt-8 inline-block rounded-[12px] bg-magenta px-[30px] py-4 text-[17px] font-semibold leading-[25.5px] text-white transition-colors hover:bg-magenta-dark"
                 >
-                  Create My Profile
+                  Join Panameer &amp; Create My Profile
                 </a>
               </>
             }

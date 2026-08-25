@@ -1,6 +1,7 @@
 import { HeroBox } from "@/components/marketing/HeroBox";
 import { HeroTwoUp } from "@/components/marketing/HeroTwoUp";
 import { HeroVideoBackdrop } from "@/components/media/HeroVideoBackdrop";
+import { talentHeroStats } from "@/lib/talent-stats";
 
 /**
  * `/buy-services`'s HERO — THE TWO-COLUMN TREATMENT (`P1-J2-E001`).
@@ -30,7 +31,8 @@ import { HeroVideoBackdrop } from "@/components/media/HeroVideoBackdrop";
  * ⚠ NO STAT ROW AND NO BRIDGE LINE. Scott has given neither, and nothing on this
  * page is countable: ONE published `Package`, and it is ours.
  */
-export function ShopHero() {
+export async function ShopHero() {
+  const stats = await talentHeroStats();
   return (
     /*
       ⚠ THE SAME `HeroBox` CARD AND GRADIENT `MarketingHero` GAVE THIS PAGE,
@@ -39,7 +41,7 @@ export function ShopHero() {
       supplies the columns and nothing about the skin is new.
     */
     <HeroBox cardClassName="isolate bg-[radial-gradient(1100px_500px_at_82%_-10%,rgba(215,44,214,0.42),transparent_60%),linear-gradient(150deg,#0d1230_0%,#191a44_55%,#3a1c53_100%)] text-white">
-      <section className="relative px-6 py-16 min-[900px]:py-[84px]">
+      <section className="relative px-6 pb-[48px] pt-[44px] min-[901px]:pb-[72px] min-[901px]:pt-[64px]">
         {/*
           ── ⚠⚠ THE HERO CLIP (`P1-J2-E009`) ─────────────────────────────────
 
@@ -121,12 +123,39 @@ export function ShopHero() {
                   copy for a hero, which is exactly what the rest of this file
                   refuses to do.
                 */}
+                {/*
+                  ── ⚠⚠ WS6 — IT READS AS DELIBERATE NOW, NOT BROKEN ───────────
+
+                  Scott: *"Button seems to be behind the color shading? Something
+                  is off."* He was right, and the cause was the previous state: a
+                  FILLED MAGENTA PRIMARY at `opacity-60`. A dimmed primary reads as
+                  a rendering fault, which is worse than either a live button or an
+                  honest one.
+
+                  ⚠ NO REAL DESTINATION EXISTS AND I CHECKED RATHER THAN ASSUMED.
+                  `/explore` takes ONE parameter, `mode`, and `page.tsx:54` reads
+                  `sp.mode !== "work"` — so it serves EXPERTS or WORK REQUESTS and
+                  has no product mode at all. `(app)/packages` and
+                  `(app)/services/offers` are `ComingSoon` AND auth-gated;
+                  `(app)/providers/[id]` is the only page that renders a published
+                  `Package` and it 307s signed out. ⚠ NO ROUTE WAS INVENTED.
+
+                  ⚠ SO IT IS NOW AN OUTLINED, NON-INTERACTIVE STATE WITH ITS REASON
+                  ON IT: a bordered control at full opacity — no magenta fill, so it
+                  cannot be mistaken for a broken primary — carrying the word
+                  `Soon`. `aria-disabled` rather than `disabled` so it stays in the
+                  reading order for a screen reader, which is the honest thing for a
+                  label that explains itself.
+                */}
                 <button
                   type="button"
                   disabled
-                  className="mt-8 inline-block cursor-not-allowed rounded-[12px] bg-magenta px-7 py-4 font-display text-[16px] font-bold text-white opacity-60"
+                  className="mt-8 inline-flex cursor-default items-center gap-2.5 rounded-[12px] border border-white/35 px-7 py-4 font-display text-[16px] font-bold text-white"
                 >
                   Start Shopping Now
+                  <span className="rounded-full bg-white/15 px-2 py-[3px] text-[11px] font-bold uppercase tracking-[0.08em] text-[#e9e6f5]">
+                    Soon
+                  </span>
                 </button>
               </>
             }
@@ -188,6 +217,44 @@ export function ShopHero() {
                   products created by our experts. From mentoring, to demos, to
                   integrations, to AI agents, guarantee delivery at a price.
                 </p>
+                {/*
+                  ── ⚠ THE BRIDGE LINE (`WS4`) ────────────────────────────────
+                  `/optimize`'s exact string in its MEASURED treatment — #efa3ee,
+                  weight 600, 19px, read off `.hero-bridge`'s computed style.
+                  ⚠ TAILWIND, MIRRORED — this page is outside `.pm-home`.
+                  ⚠ IT SITS OVER THIS PAGE'S OWN CLIP, so it was measured over that
+                  clip and the WS2 ladder applied per page. Ratios in the report.
+                */}
+                <p className="mt-4 text-[19px] font-semibold leading-[1.5] text-[#efa3ee]">
+                  Check out the steps below to see how it works.
+                </p>
+
+                {/*
+                  ── ⚠⚠ THE THREE LIVE-COUNT TILES (`WS3`) ────────────────────
+                  Scott, twice: *"where are the counter cards here? I specifically
+                  called out what i wanted counted, still nothing."* Same three
+                  tiles as `/talent`, from the same `talentHeroStats()` build-time
+                  read, so the three pages cannot disagree.
+                  ⚠ `Providers` IS 85 AND IT IS SEED. Scott decided it ships with
+                  the number in front of him; it is on the pre-launch list. Do not
+                  re-argue it here.
+                  ⚠ CHROME COPIED FROM `LearnStats`, not extracted.
+                */}
+                <dl className="mt-[26px] grid grid-cols-3 gap-[14px]">
+                  {stats.map((s) => (
+                    <div
+                      key={s.label}
+                      className="rounded-[14px] border border-white/[0.13] bg-white/[0.06] px-4 py-[18px]"
+                    >
+                      <dd className="font-display text-[34px] font-bold leading-[34px] text-white">
+                        {s.value}
+                      </dd>
+                      <dt className="mt-2 text-[12.5px] font-normal leading-[16.25px] text-[#cec7db]">
+                        {s.label}
+                      </dt>
+                    </div>
+                  ))}
+                </dl>
               </>
             }
           />

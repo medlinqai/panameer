@@ -45,6 +45,24 @@ import { LazyAutoplayVideo } from "@/components/media/LazyAutoplayVideo";
  * request-time data.
  */
 
+/*
+  ── ⚠⚠ THE `-hero` CUTS, NOT THE MASTERS (`P1-J1-E018` closed, `P1-J1-E030`) ─
+
+  This array used to name `connect.mp4` (1.48MB), `consultation.mp4` (4.68MB) and
+  `get-paid.mp4` (3.07MB). With `learn.mp4` that is **10.63MB across four clips**,
+  and this section now renders on `/`, which ALREADY serves a hero clip — so moving
+  it unchanged would have made `/` the heaviest page on the site.
+
+  ⚠ THE RE-CUTS ARE THE SAME FOOTAGE at 1280x720, faststart, audio stripped:
+  0.14 + 0.26 + 0.83 MB against 1.48 + 4.68 + 3.07. **2.63MB total, down from
+  10.63MB, for identical content.**
+
+  ⚠ `learn.mp4` STAYS AT 1.40MB — there is no `-hero` cut of it and it is already
+  the smallest master. Do not invent one to make the set tidy.
+
+  ⚠ THESE CLIPS ARE STILL LAZY. `LazyAutoplayVideo` withholds `src` until the card
+  is approached; this changes WHAT is fetched, not WHEN.
+*/
 const MEDIA = [
   {
     src: "/learn.mp4",
@@ -52,17 +70,17 @@ const MEDIA = [
     grad: "from-[#3b2a63] to-[#6d3b8e]",
   },
   {
-    src: "/connect.mp4",
+    src: "/connect-hero.mp4",
     poster: "/posters/connect.svg",
     grad: "from-[#28306b] to-[#4a5db0]",
   },
   {
-    src: "/consultation.mp4",
+    src: "/consultation-hero.mp4",
     poster: "/posters/create.svg",
     grad: "from-[#5a2a63] to-[#a13c8e]",
   },
   {
-    src: "/get-paid.mp4",
+    src: "/get-paid-hero.mp4",
     poster: "/posters/settle.svg",
     grad: "from-[#1f2a58] to-[#3a4c92]",
   },

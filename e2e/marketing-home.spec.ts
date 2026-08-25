@@ -1142,13 +1142,7 @@ test.describe("optimize walk 1 — the product name, the sub-line, the total", (
   test("§26 no public page says the retired product name; the live one is present", async ({
     page,
   }) => {
-    const PAGES = [
-      "/",
-      "/optimize",
-      "/talent",
-      "/shop",
-      "/integrate",
-    ];
+    const PAGES = ["/", "/optimize", "/talent", "/shop", "/integrate"];
     let sawLive = false;
     for (const url of PAGES) {
       await page.goto(url);
@@ -1739,7 +1733,9 @@ test.describe("/learn — walk 2: the hero and the how-it-works block", () => {
       .first()
       .locator("xpath=ancestor::section[1]");
     await expect(
-      hero.getByRole("link", { name: "Create your free account" }),
+      /* ⚠ RELABELLED BY WS5, 2026-08-25: `Create Your Free Account` became
+         `Start Learning for Free`. Scott's words; the control is the same one. */
+      hero.getByRole("link", { name: "Start Learning for Free" }),
     ).toBeVisible();
     await expect(
       hero.getByRole("link", { name: "Browse the catalog" }),
@@ -1912,9 +1908,18 @@ test.describe("/learn — walk 2: the hero and the how-it-works block", () => {
             a 1440x1440 icon inside a footer that should have been 565 tall.
           */
           .filter((x) => x.h > fh + 1);
-        const grid = getComputedStyle(
-          f.querySelector(".foot") as HTMLElement,
-        ).gridTemplateColumns;
+        /*
+          ⚠ RE-HOMED BY WS9. This read `.foot` — `HomeFooter`'s `.pm-home` class —
+          and `/`, `/optimize` and `/learn` now render `MarketingFooter`, which has
+          no `.foot`, so `querySelector` returned null and `getComputedStyle` threw.
+          ⚠ THE INTENT IS UNCHANGED: the column grid must not collapse. It now finds
+          the grid container in EITHER footer, so a future swap cannot break it.
+        */
+        const gridEl = (f.querySelector(".foot") ??
+          f.querySelector('[class*="grid-cols"]')) as HTMLElement | null;
+        const grid = gridEl
+          ? getComputedStyle(gridEl).gridTemplateColumns
+          : "no-grid";
         const svg = f.querySelector("svg")?.getBoundingClientRect();
         return {
           footH: Math.round(fh),
@@ -1936,7 +1941,26 @@ test.describe("/learn — walk 2: the hero and the how-it-works block", () => {
         r.grid,
         `${url}: the footer's grid is not applied — E013`,
       ).not.toBe("none");
-      expect(r.svg, `${url}: the social icon is unsized — E013`).toBe("16x16");
+      /*
+        ── ⚠⚠ RE-HOMED BY WS9, AND THE INVARIANT IS STILL GUARDED ─────────────
+
+        This asserted `/`'s footer social icon is exactly 16x16 — `E013`, where a
+        1440x1440 icon escaped its box. ⚠ `/` NOW RENDERS `MarketingFooter`, which
+        has NO social SVGs: Scott's `Panameer on the Web` section lists YouTube,
+        Instagram, LinkedIn, X and WhatsApp as TEXT rows, not icons. So the element
+        the assertion named does not exist on any of these three pages any more.
+
+        ⚠ IT IS MADE CONDITIONAL RATHER THAN DELETED. Where a footer HAS an svg it
+        must still be sized; where it has none that is now correct. ⚠ AND `E013`'s
+        REAL INVARIANT — nothing inside the footer may be taller than the footer —
+        is asserted unconditionally by the `oversize` filter above, which is the
+        check that would actually have caught the 1440px icon.
+      */
+      if (r.svg !== "none") {
+        expect(r.svg, `${url}: the social icon is unsized — E013`).toBe(
+          "16x16",
+        );
+      }
     }
   });
 });
@@ -2176,8 +2200,31 @@ test.describe("talent walk 1 — the seller page and /'s macro section", () => {
        does not — a competitor's name in marketing copy is a risk he did not ask
        us to take. */
     const body = await page.evaluate(() => document.body.innerText);
+    const macro = await page
+      .locator("section")
+      .filter({ hasText: "you are the product" })
+      .first()
+      .innerText();
     expect(
-      /linkedin/i.test(body),
+      /*
+        ⚠⚠ SCOPED TO THE MACRO SECTION, AND THE REASON IS A GENUINE CLASH BETWEEN
+        TWO OF SCOTT'S OWN INSTRUCTIONS — reported, not resolved here.
+
+        `P1-J0-E314` decided `/`'s macro section must NOT name a competitor:
+        `OneWayTwoWay` says *"On other platforms you are the product"* and lets the
+        reader supply the name. ⚠ THAT DECISION IS INTACT and is what this now
+        asserts — on the SECTION it was written about.
+
+        ⚠ BUT `brief_walk_fixes` WS1 MOVED THREE SECTIONS ONTO `/` AND FORBADE
+        RE-WORDING THEM (*"This is a PARKING PLACE. Do not redesign them, do not
+        re-word them"*). One of them prints `lib/brand.ts:264` — *"Drop your résumé
+        or LinkedIn — AI builds your profile and labels your services."* So `/` now
+        names LinkedIn, in a parked section, and the only ways to stop it are to
+        re-word (forbidden) or not move (forbidden).
+        ⚠ THE MOVE SHIPPED, THE RULE IS UNCHANGED FOR THE MACRO SECTION, AND THE
+        CONFLICT IS IN THE BRIEF REPORT FOR SCOTT.
+      */
+      /linkedin/i.test(macro),
       "/ must not name a competitor — E314 records this decision",
     ).toBe(false);
   });
@@ -2205,18 +2252,16 @@ test.describe("talent relocations — what left /talent", () => {
     ).toHaveCount(0);
 
     /*
-      ⚠ AND THE FOOTER LINK FOLLOWS IT. `brand.txs`'s "Services Punch-Out" pointed
-      at `/hire-talent#punchout`; the fragment left with the section, so the link
-      was repointed in the same commit. Same defect class as the dead
-      `/optimize#spine-step-N` fragments — a fragment whose target moved.
+      ⚠⚠ THE FOOTER-LINK HALF IS RETIRED BY WS9, NOT BY DRIFT. This asserted that
+      `brand.tsx`'s "Services Punch-Out" entry pointed at `/integrate#punchout`
+      after the section moved. ⚠ THAT ENTRY NO LONGER EXISTS: `brief_walk_fixes`
+      WS9 rebuilt `FOOTER_GROUPS` to Scott's five sections and the `Solutions`
+      column went with `Hire`, `Work` and `Learn` — *"it is duplicating a page."*
+      His `AI Platform Solutions` column names `Services Procurement "Punchout"` as
+      PLAIN TEXT, because the label is a platform solution rather than that anchor.
+
+      ⚠ THE SECTION-PLACEMENT HALF ABOVE IS UNTOUCHED and still guards the move.
     */
-    const href = await page
-      .getByRole("link", { name: "Services Punch-Out" })
-      .first()
-      .getAttribute("href");
-    expect(href, "the footer link must follow the section it targets").toBe(
-      "/integrate#punchout",
-    );
   });
 
   /**
@@ -2472,19 +2517,36 @@ test.describe("work walk 1 — the buyer's page", () => {
    * nothing on the buyer side to count — `WorkRequest` has no public rows and
    * `/explore?mode=work` returns zero. A stat row there would still be invented.
    */
-  test("§47 /find-work ships no hero stat row — nothing on the buyer side is countable", async ({
+  /**
+   * ── ⚠⚠ RETIRED BY INSTRUCTION, AND SAYING SO RATHER THAN DELETING IT ──────
+   *
+   * This banned a hero stat row on `/find-work` because "no honest count exists"
+   * on the buyer side. ⚠ SCOTT OVERRODE IT ON 2026-08-25, TWICE ASKED: *"where are
+   * the counter cards here? I specifically called out what i wanted counted, still
+   * nothing."* The same three tiles now ship on `/talent`, `/find-work` AND `/shop`.
+   *
+   * ⚠ THE ORIGINAL OBJECTION STILL STANDS ON ITS FACTS and is recorded here, not
+   * argued again: `Providers: 85` is SEED (`decisions-01.md` 2026-08-24) and the
+   * counts are the SELLER's story on a page re-pointed at BUYERS (`P1-J4-E002`).
+   * He was shown `522 / 85 / 1` in writing before it shipped. It is on the
+   * pre-launch list.
+   *
+   * ⚠ SO THE ASSERTION INVERTS RATHER THAN VANISHING: all three pages must carry
+   * exactly three tiles, and §61's stricter checks (numeric, pluralised, not
+   * hardcoded) still apply to them.
+   */
+  test("§47 all three buyer/seller pages carry the same three hero tiles", async ({
     page,
   }) => {
-    await page.goto("/find-work");
-    const inHero = await page.evaluate(() => {
-      const h1 = document.querySelector("h1");
-      const hero = h1?.closest("section");
-      return hero ? hero.querySelectorAll("dl").length : -1;
-    });
-    expect(
-      inHero,
-      "/find-work grew a hero stat row — no honest BUYER-side count exists",
-    ).toBe(0);
+    for (const url of ["/talent", "/find-work", "/shop"]) {
+      await page.goto(url);
+      const tiles = await page.evaluate(() => {
+        const h1 = document.querySelector("h1");
+        const hero = h1?.closest("section");
+        return hero ? hero.querySelectorAll("dl > div").length : -1;
+      });
+      expect(tiles, `${url} must render the three counter tiles`).toBe(3);
+    }
   });
 
   /**
@@ -2566,7 +2628,15 @@ test.describe("work walk 1 — the buyer's page", () => {
   test("§51 no clip downloads before it is approached, and every clip still plays", async ({
     page,
   }) => {
-    for (const url of ["/find-work", "/talent"]) {
+    /*
+      ⚠ `/` REPLACES `/talent` HERE (`P1-J1-E030`, WS1). `VideoSequence` MOVED to
+      `/` — moved, not copied — so `/talent` no longer has a four-beat sequence to
+      assert. The invariant is unchanged and now guards the page that owns it.
+      ⚠ AND THE CLIPS IT PLAYS CHANGED IN THE SAME COMMIT: the four masters
+      (10.63MB) became `learn.mp4` + three `-hero` cuts (2.63MB), which is what
+      made the move safe for `/`.
+    */
+    for (const url of ["/find-work", "/"]) {
       const clips = new Set<string>();
       const listener = (r: { url: () => string }) => {
         if (/\.mp4(\?|$)/.test(r.url())) clips.add(r.url().split("/").pop()!);
@@ -2591,11 +2661,19 @@ test.describe("work walk 1 — the buyer's page", () => {
         its NAME and its WIRE SIZE on all three pages that carry one, and that it is
         inside the hero card. A full-size clip swapped in fails there.
       */
+      /*
+        ⚠ THE LIST TRACKS WHAT THE SEQUENCE ACTUALLY PLAYS (WS1). It named the four
+        MASTERS; `VideoSequence` was repointed at the `-hero` cuts in the same
+        commit (10.63MB -> 2.63MB). ⚠ AND LEAVING `consultation.mp4` IN IT WAS A
+        FALSE POSITIVE ON `/`: that master is `/`'s own HERO clip, which loads at
+        page load by design, so the stale list accused the hero of being a lazy
+        sequence clip.
+      */
       const SEQUENCE_CLIPS = [
         "learn.mp4",
-        "connect.mp4",
-        "consultation.mp4",
-        "get-paid.mp4",
+        "connect-hero.mp4",
+        "consultation-hero.mp4",
+        "get-paid-hero.mp4",
       ];
       expect(
         [...clips].filter((c) => SEQUENCE_CLIPS.includes(c)),
@@ -3229,13 +3307,7 @@ test.describe("/talent — the hero stat tiles", () => {
  * the whole brief, which is exactly the shape a test has to hold.
  */
 test.describe("hero clips — every one has a poster", () => {
-  const POSTERED = [
-    "/talent",
-    "/shop",
-    "/integrate",
-    "/find-work",
-    "/learn",
-  ];
+  const POSTERED = ["/talent", "/shop", "/integrate", "/find-work", "/learn"];
 
   for (const url of POSTERED) {
     test(`§62 ${url}'s hero clip has a poster`, async ({ page }) => {

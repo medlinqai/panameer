@@ -3,7 +3,7 @@ import { MarketingHeader } from "@/components/marketing/MarketingHeader";
 import { HomeHero } from "@/components/marketing-home/HomeHero";
 import { HowItWorks } from "@/components/marketing-home/HowItWorks";
 import { OptimizeSteps } from "@/components/marketing-home/OptimizeSteps";
-import { HomeFooter } from "@/components/marketing-home/HomeFooter";
+import { MarketingFooter } from "@/components/marketing/MarketingFooter";
 import "@/components/marketing-home/home.css";
 
 /**
@@ -76,7 +76,7 @@ export default function OptimizePage() {
         {/* ⚠ Heading and lede only — the card strip is E242. See above. */}
         <HowItWorks showStrip={false} />
         <OptimizeSteps />
-        <HomeFooter />
+        <MarketingFooter />
       </div>
     </>
   );
