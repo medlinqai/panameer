@@ -90,8 +90,8 @@ type Card = {
  * `.pm-home`-prefixed in `home.css`, so a passing test on `/` proved nothing
  * about either — which is exactly why these tests now run there.
  */
-const SHOP = "/buy-services";
-const ENTERPRISE = "/enterprise";
+const SHOP = "/shop";
+const ENTERPRISE = "/integrate";
 
 const CARDS: Card[] = [
   // ErpPackages — the four agent categories. Now on /buy-services only.
@@ -1145,9 +1145,9 @@ test.describe("optimize walk 1 — the product name, the sub-line, the total", (
     const PAGES = [
       "/",
       "/optimize",
-      "/hire-talent",
-      "/buy-services",
-      "/enterprise",
+      "/talent",
+      "/shop",
+      "/integrate",
     ];
     let sawLive = false;
     for (const url of PAGES) {
@@ -1956,10 +1956,10 @@ test.describe("talent walk 1 — the seller page and /'s macro section", () => {
    * Scott has given labels only. A panel that grows a paragraph before he writes
    * one is chat's words in his product, which is the failure this asserts against.
    */
-  test("§40 /hire-talent renders the five-step spine with derived panels", async ({
+  test("§40 /talent renders the five-step spine with derived panels", async ({
     page,
   }) => {
-    await page.goto("/hire-talent");
+    await page.goto("/talent");
     const rows = (
       await page.locator("summary.stepd-sum .stepd-t").allTextContents()
     ).map((t) => t.trim());
@@ -2047,10 +2047,10 @@ test.describe("talent walk 1 — the seller page and /'s macro section", () => {
    * ⚠ `MarketingHero` IS NOT DELETED and still serves four other pages, so this
    * asserts absence on `/hire-talent` ONLY and non-vacuity on `/find-work`.
    */
-  test("§41 /hire-talent drops the buyer pill and the Work-journey caption, keeps its control", async ({
+  test("§41 /talent drops the buyer pill and the Work-journey caption, keeps its control", async ({
     page,
   }) => {
-    await page.goto("/hire-talent");
+    await page.goto("/talent");
     /*
       ⚠⚠ RE-HOMED, NOT WEAKENED (`P1-J1-E025`). This asserted
       `form[action="/explore"]` COUNT 1 — the search box — because `E014`'s
@@ -2111,7 +2111,7 @@ test.describe("talent walk 1 — the seller page and /'s macro section", () => {
       is used here. ⚠ THE ASSERTION IS UNCHANGED IN SUBSTANCE — it still proves the
       shared hero was REPLACED ON A PAGE rather than deleted.
     */
-    await page.goto("/enterprise");
+    await page.goto("/integrate");
     await expect(
       page.locator('form[action="/explore"]'),
       "MarketingHero was edited or deleted rather than left alone",
@@ -2186,19 +2186,19 @@ test.describe("talent walk 1 — the seller page and /'s macro section", () => {
 /**
  * PHASE B — SECTIONS LEAVE `/hire-talent` (`P1-J1-E020`, `P1-J1-E022`).
  */
-test.describe("talent relocations — what left /hire-talent", () => {
+test.describe("talent relocations — what left /talent", () => {
   /**
    * ⚠ `ErpPunchout` MOVED TO `/enterprise` AND MUST BE ON EXACTLY ONE PAGE.
    * Scott: *"This needs to be moved to INTEGRATE."* Asserting both halves, because
    * a half-done move — added there, still here — is the state that looks fine on
    * whichever page you happen to open.
    */
-  test("§43 ErpPunchout renders on /enterprise and not on /hire-talent", async ({
+  test("§43 ErpPunchout renders on /integrate and not on /talent", async ({
     page,
   }) => {
-    await page.goto("/enterprise");
+    await page.goto("/integrate");
     await expect(page.locator("#punchout")).toHaveCount(1);
-    await page.goto("/hire-talent");
+    await page.goto("/talent");
     await expect(
       page.locator("#punchout"),
       "ErpPunchout moved to /enterprise — E020",
@@ -2215,7 +2215,7 @@ test.describe("talent relocations — what left /hire-talent", () => {
       .first()
       .getAttribute("href");
     expect(href, "the footer link must follow the section it targets").toBe(
-      "/enterprise#punchout",
+      "/integrate#punchout",
     );
   });
 
@@ -2226,10 +2226,10 @@ test.describe("talent relocations — what left /hire-talent", () => {
    * ⚠ THE NON-VACUITY HALF IS THE POINT: both components still serve `/find-work`,
    * so this cannot pass by them having been deleted rather than removed from a page.
    */
-  test("§44 FourBeats and ClosingCta are off /hire-talent but alive on /find-work", async ({
+  test("§44 FourBeats and ClosingCta are off /talent but alive on /find-work", async ({
     page,
   }) => {
-    await page.goto("/hire-talent");
+    await page.goto("/talent");
     const text = await page.evaluate(() => document.body.innerText);
     expect(text, "FourBeats is back on /hire-talent — E022").not.toContain(
       "How hiring works here",
@@ -2319,13 +2319,13 @@ test.describe("work walk 1 — the buyer's page", () => {
    *
    * ⚠ BOTH HALVES ASSERTED: a half-done move looks fine on whichever page you open.
    */
-  test("§46 ThreeWays and AiMatch are on /find-work and not on /hire-talent", async ({
+  test("§46 ThreeWays and AiMatch are on /find-work and not on /talent", async ({
     page,
   }) => {
     await page.goto("/find-work");
     await expect(page.locator("#three-ways")).toHaveCount(1);
     await expect(page.locator("#ai-match")).toHaveCount(1);
-    await page.goto("/hire-talent");
+    await page.goto("/talent");
     await expect(
       page.locator("#three-ways"),
       "ThreeWays moved to /find-work — E005",
@@ -2513,10 +2513,10 @@ test.describe("work walk 1 — the buyer's page", () => {
     for (const url of [
       "/",
       "/find-work",
-      "/hire-talent",
+      "/talent",
       "/optimize",
-      "/enterprise",
-      "/buy-services",
+      "/integrate",
+      "/shop",
       "/learn",
     ]) {
       await page.goto(url);
@@ -2566,7 +2566,7 @@ test.describe("work walk 1 — the buyer's page", () => {
   test("§51 no clip downloads before it is approached, and every clip still plays", async ({
     page,
   }) => {
-    for (const url of ["/find-work", "/hire-talent"]) {
+    for (const url of ["/find-work", "/talent"]) {
       const clips = new Set<string>();
       const listener = (r: { url: () => string }) => {
         if (/\.mp4(\?|$)/.test(r.url())) clips.add(r.url().split("/").pop()!);
@@ -2719,7 +2719,7 @@ test.describe("work walk 1 — the buyer's page", () => {
  * read `PLACEHOLDER — Shop` and `PLACEHOLDER — headline about packaged services
  * goes here.` on a top-level nav destination.
  */
-test.describe("shop walk 1 — /buy-services", () => {
+test.describe("shop walk 1 — /shop", () => {
   /**
    * ⚠ ZERO OF FIVE STEPS ARE BUILT — no public `Package` listing, no `Offer`, no
    * `WorkOrder`, no `SettlementRequest`, no `Invoice`, no `Payment`. So EVERY panel
@@ -2731,10 +2731,10 @@ test.describe("shop walk 1 — /buy-services", () => {
    * ⚠ IT ALSO ASSERTS THE PLACEHOLDERS ARE GONE. They were the loudest broken thing
    * on the public surface and they shipped for five days behind a nav item.
    */
-  test("§53 /buy-services renders the five Shop steps, every panel graphic-free", async ({
+  test("§53 /shop renders the five Shop steps, every panel graphic-free", async ({
     page,
   }) => {
-    await page.goto("/buy-services");
+    await page.goto("/shop");
 
     const body = await page.locator("body").innerText();
     expect(
@@ -2811,7 +2811,7 @@ test.describe("shop walk 1 — /buy-services", () => {
   test("§54 the Shop hero's button is a real control with no false destination", async ({
     page,
   }) => {
-    await page.goto("/buy-services");
+    await page.goto("/shop");
     const hero = page
       .locator("h1")
       .first()
@@ -2852,10 +2852,10 @@ test.describe("shop walk 1 — /buy-services", () => {
     for (const url of [
       "/",
       "/find-work",
-      "/hire-talent",
-      "/buy-services",
+      "/talent",
+      "/shop",
       "/optimize",
-      "/enterprise",
+      "/integrate",
       "/learn",
       "/why-panameer",
     ]) {
@@ -2865,7 +2865,7 @@ test.describe("shop walk 1 — /buy-services", () => {
       }
     }
     expect(hits, "the moved headline is on the wrong number of pages").toEqual([
-      "/buy-services",
+      "/shop",
     ]);
   });
 });
@@ -3011,9 +3011,9 @@ test.describe("home — the four audiences LEARN is sold to", () => {
  */
 test.describe("hero clips — the -hero cuts, and only those", () => {
   const EXPECT: Record<string, { clip: string; maxMB: number }> = {
-    "/hire-talent": { clip: "connect-hero.mp4", maxMB: 0.3 },
-    "/buy-services": { clip: "get-paid-hero.mp4", maxMB: 1.0 },
-    "/enterprise": { clip: "consultation-hero.mp4", maxMB: 0.4 },
+    "/talent": { clip: "connect-hero.mp4", maxMB: 0.3 },
+    "/shop": { clip: "get-paid-hero.mp4", maxMB: 1.0 },
+    "/integrate": { clip: "consultation-hero.mp4", maxMB: 0.4 },
     /*
       ⚠ `/find-work` JOINED ON 2026-08-25 (`P1-J4-E019`). Its master —
       `panameer-office.mp4`, 9.21MiB — is the clip that got a hero video REJECTED,
@@ -3103,7 +3103,7 @@ test.describe("hero clips — the -hero cuts, and only those", () => {
   }) => {
     for (const [url, needle] of [
       ["/learn", "courses to certification"],
-      ["/hire-talent", "in under one minute"],
+      ["/talent", "in under one minute"],
     ] as const) {
       await page.goto(url);
       const got = await page.evaluate((n) => {
@@ -3143,11 +3143,11 @@ test.describe("hero clips — the -hero cuts, and only those", () => {
  * which is the opposite of what anyone wants. What must hold is the SHAPE: three
  * tiles, numeric, correctly pluralised, and not hardcoded.
  */
-test.describe("/hire-talent — the hero stat tiles", () => {
+test.describe("/talent — the hero stat tiles", () => {
   test("§61 three tiles, numeric, pluralised off the number, and not hardcoded", async ({
     page,
   }) => {
-    await page.goto("/hire-talent");
+    await page.goto("/talent");
     const hero = page
       .locator("h1")
       .first()
@@ -3230,9 +3230,9 @@ test.describe("/hire-talent — the hero stat tiles", () => {
  */
 test.describe("hero clips — every one has a poster", () => {
   const POSTERED = [
-    "/hire-talent",
-    "/buy-services",
-    "/enterprise",
+    "/talent",
+    "/shop",
+    "/integrate",
     "/find-work",
     "/learn",
   ];

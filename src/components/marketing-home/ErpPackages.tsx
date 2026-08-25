@@ -169,7 +169,7 @@ export function ErpPackages() {
         <div className="erp-foot">
           {/* Scott's own framing, kept: a four-item list is not the catalogue. */}
           <p>&mdash; to name just a few.</p>
-          <Link className="btn btn-solid" href="/buy-services">
+          <Link className="btn btn-solid" href="/shop">
             Explore Packages &rsaquo;
           </Link>
         </div>

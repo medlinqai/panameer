@@ -151,25 +151,39 @@ export type MarketingNavItem = {
   for a seller one and STILL READS PLAUSIBLY. CHECK THE PAIRING BY HREF, NEVER BY
   READING DOWN THE LABELS. `check:app-shell` asserts it by href for that reason.
 
-  ── ⚠ THE LABEL AND THE ROUTE DIVERGE ON PURPOSE, AND IT IS DATED ─────────────
+  ── ⚠⚠ THE LABEL AND THE ROUTE AGREE AGAIN — AND THIS REVERSES THE INSTRUCTION
+  THAT USED TO SIT HERE (`P1-ALL-E017`, 2026-08-25) ────────────────────────────
 
-  `Talent` -> `/hire-talent`. `Shop` -> `/buy-services`. `Integrate` ->
-  `/enterprise`. `Optimize` -> `/optimize`. The comment above says "MENU LABEL ==
-  PAGE ROUTE" and that WAS the rule when those routes were renamed; as of
-  2026-08-19 it no longer holds, and as of 2026-08-21 four of the six diverge.
-  That is a decision rather than an oversight.
+  This block used to read: *"DO NOT 'TIDY' IT BY RENAMING THE ROUTES —
+  `/enterprise` least of all. A rename means redirects, external links, metadata,
+  sitemap entries and every in-app link: a large, risky change to close a cosmetic
+  gap. The routes stay."* ⚠ IT IS QUOTED RATHER THAN DELETED because it was a
+  reasonable call on its own facts, and exactly ONE of them changed.
 
-  ⚠ DO NOT "TIDY" IT BY RENAMING THE ROUTES — `/enterprise` least of all. A
-  rename means redirects, external links, metadata, sitemap entries and every
-  in-app link: a large, risky change to close a cosmetic gap. The routes stay.
+  ⚠ SCOTT, 2026-08-25: *"this is JUST me. no one else is seeing anything else. i
+  have not shared anything. it is WAAAAY to early."* NOTHING IS SHARED, so there
+  are no external links and no redirect layer to carry. The cost the old comment
+  priced was the redirect layer, and that cost is currently zero.
+
+  ⚠ THE STANDING RULE IS NOW `decisions-01.md` 2026-08-25: **a public page's URL is
+  its menu name.** `Talent -> /talent`, `Shop -> /shop`, `Integrate -> /integrate`,
+  and the old folders were DELETED — no redirects, by instruction.
+
+  ⚠⚠ `Work` STILL POINTS AT `/find-work` AND THAT IS A BLOCKER, NOT AN OVERSIGHT.
+  `src/app/(app)/work/page.tsx` ALREADY OWNS `/work` — it is the SIGNED-IN provider
+  "Find Work" feed, `guardPage("canProvideServices")`, reached from the rail. Two
+  pages cannot resolve one URL, so the fourth rename was stopped and reported
+  rather than forced. ⚠ IT IS ALSO A NAMING COLLISION, not just a file one: `/work`
+  would mean the BUYER's marketing page publicly and the PROVIDER's job feed when
+  signed in. That needs Scott's decision, not a file move.
 */
 export const MARKETING_NAV: MarketingNavItem[] = [
   { label: "Learn", href: "/learn" },
-  { label: "Talent", href: "/hire-talent" },
+  { label: "Talent", href: "/talent" },
   { label: "Work", href: "/find-work" },
-  { label: "Shop", href: "/buy-services" },
+  { label: "Shop", href: "/shop" },
   { label: "Optimize", href: "/optimize" },
-  { label: "Integrate", href: "/enterprise" },
+  { label: "Integrate", href: "/integrate" },
 ];
 
 /**
@@ -232,7 +246,7 @@ export const FOOTER_GROUPS: { title: string; entries: FooterEntry[] }[] = [
       /* ⚠ "Find Talent", matching the header since E222. The GROUP heading stays
          "Hire" — it is a category of intent, not a nav label, and the header has
          never had a word for it. */
-      { label: "Find Talent", href: "/hire-talent" },
+      { label: "Find Talent", href: "/talent" },
       { label: "Post a Work Request", href: "/join/buyer" },
     ],
   },
@@ -269,7 +283,7 @@ export const FOOTER_GROUPS: { title: string; entries: FooterEntry[] }[] = [
          have landed on a page that no longer contains it. Same defect class as the
          dead `/optimize#spine-step-N` fragments; caught by grepping the anchor
          before the move rather than after. */
-      { label: "Services Punch-Out", href: "/enterprise#punchout" },
+      { label: "Services Punch-Out", href: "/integrate#punchout" },
       { label: "OTS Goods Contracts" },
       { label: "Analytics" },
     ],
@@ -291,7 +305,7 @@ export const FOOTER_GROUPS: { title: string; entries: FooterEntry[] }[] = [
         An ANCHOR, not a page. There is no approved per-transaction figure, and a
         page headed "Pricing" with no price is a worse promise than a section.
       */
-      { label: "Pricing", href: "/hire-talent#value" },
+      { label: "Pricing", href: "/talent#value" },
       /*
         Was a TBD with no href until /enterprise existed (WS-7).
 
@@ -302,7 +316,7 @@ export const FOOTER_GROUPS: { title: string; entries: FooterEntry[] }[] = [
         for the same route is exactly the drift that rule exists to stop. These
         two tables sit beside each other so a change has to pass both at once.
       */
-      { label: "Integrate", href: "/enterprise" },
+      { label: "Integrate", href: "/integrate" },
     ],
   },
   {

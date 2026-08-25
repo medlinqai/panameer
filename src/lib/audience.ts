@@ -56,7 +56,7 @@ export const PUBLIC_PAGES: {
   audience: Audience;
 }[] = [
   { key: "home", href: "/", label: "See where I stand", audience: "buyer" },
-  { key: "hire", href: "/hire-talent", label: "I want to hire", audience: "buyer" },
+  { key: "hire", href: "/talent", label: "I want to hire", audience: "buyer" },
   { key: "work", href: "/find-work", label: "I want to work", audience: "provider" },
 ];
 

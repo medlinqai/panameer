@@ -128,7 +128,7 @@ export function GetTheTalent() {
           <Link className="btn btn-solid" href="/assess">
             Start the Assessment &rsaquo;
           </Link>
-          <Link className="btn btn-ghost" href="/hire-talent">
+          <Link className="btn btn-ghost" href="/talent">
             See the Bench
           </Link>
         </div>

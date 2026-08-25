@@ -77,7 +77,7 @@ export function TalentTeaser() {
             Both CTAs go to /hire-talent per the brief. A real route, not a
             stub — it is the shipped buyer marketplace page.
           */}
-          <Link className="btn btn-solid" href="/hire-talent">
+          <Link className="btn btn-solid" href="/talent">
             Browse the Talent &rsaquo;
           </Link>
         </div>
@@ -96,8 +96,8 @@ export function TalentTeaser() {
           */}
           <ProviderCard
             p={SAMPLE}
-            loginHref="/hire-talent"
-            profileHref="/hire-talent"
+            loginHref="/talent"
+            profileHref="/talent"
           />
         </div>
       </div>

@@ -36,7 +36,7 @@ const LINKS = {
   */
   home: {
     primary: `/login?callbackUrl=${encodeURIComponent("/#assessment")}`,
-    secondary: "/hire-talent",
+    secondary: "/talent",
   },
   buyer: { primary: "/explore?mode=hire", secondary: "/support/bug" },
   provider: { primary: "/join?type=seller", secondary: "#sequence" },

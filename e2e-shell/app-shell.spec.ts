@@ -385,7 +385,7 @@ test("GUARD 3 — no arbitrary min-[…] variant competes with a named breakpoin
  */
 const PUBLIC_WIDTHS = [360, 375, 640, 767, 768, 769, 900, 1000, 1100, 1180, 1282, 1440, 1562];
 
-const PUBLIC_PAGES = ["/", "/learn", "/hire-talent", "/find-work", "/buy-services"];
+const PUBLIC_PAGES = ["/", "/learn", "/talent", "/find-work", "/shop"];
 
 /**
  * ⚠ SIX ITEMS SINCE `P1-J0-E245`, AND THIS SUITE READS THEM, NEVER SETS THEM.
@@ -396,9 +396,9 @@ const PUBLIC_PAGES = ["/", "/learn", "/hire-talent", "/find-work", "/buy-service
  */
 const PUBLIC_NAV_ITEMS = [
   { label: "Learn", href: "/learn" },
-  { label: "Talent", href: "/hire-talent" },
+  { label: "Talent", href: "/talent" },
   { label: "Work", href: "/find-work" },
-  { label: "Shop", href: "/buy-services" },
+  { label: "Shop", href: "/shop" },
   /*
     ⚠ `/optimize`, NOT `/assess` — REPOINTED 2026-08-21 (`P1-J0-E266`). This
     assertion caught the change, which is what it is for. `/assess` is the wizard
@@ -407,7 +407,7 @@ const PUBLIC_NAV_ITEMS = [
     moved; the assertion follows it.
   */
   { label: "Optimize", href: "/optimize" },
-  { label: "Integrate", href: "/enterprise" },
+  { label: "Integrate", href: "/integrate" },
 ] as const;
 
 const PUBLIC_NAV_LABELS = PUBLIC_NAV_ITEMS.map((i) => i.label);
@@ -661,10 +661,10 @@ const BOXED_HERO_PAGES = [
   "/",
   "/optimize",
   "/learn",
-  "/hire-talent",
+  "/talent",
   "/find-work",
-  "/buy-services",
-  "/enterprise",
+  "/shop",
+  "/integrate",
   "/why-panameer",
 ];
 
@@ -782,7 +782,7 @@ test.describe("the PUBLIC hero", () => {
    * prop being dropped, and a class-based assertion would miss a restore that
    * came back through a different route.
    */
-  for (const url of ["/hire-talent", "/find-work"]) {
+  for (const url of ["/talent", "/find-work"]) {
     test(`HERO GUARD — no audience strip on ${url}`, async ({ browser }) => {
       const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
       const pub = await ctx.newPage();

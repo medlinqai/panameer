@@ -35,7 +35,7 @@ const CTA = {
     label: "Start the free assessment",
   },
   experts: {
-    href: "/hire-talent",
+    href: "/talent",
     label: "Meet our experts",
   },
 } as const;
