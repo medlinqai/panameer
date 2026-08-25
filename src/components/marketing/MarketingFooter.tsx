@@ -49,9 +49,10 @@ import {
  * ⚠ THE ONE EXCEPTION IS A TEXT COLOUR, AND THE BRIEF'S OWN AA GATE IS WHY.
  * `#8a8199` — the legal row — measures **4.40:1** on the navy and AA needs 4.5.
  * It is a PRE-EXISTING failure, 0.10 short, and shipping it would fail the gate
- * this brief sets. It becomes `#9a92a8` (**5.47:1**), the smallest step in the
- * same hue that passes. ⚠ THE BACKGROUND IS UNCHANGED; only this one foreground
- * moved, and it is reported.
+ * this brief sets. It became `#9a92a8`, the smallest step in the
+ * same hue that passes. ⚠ AND ITS BACKGROUND CHANGED AGAIN ON 2026-08-25 when the
+ * legal bar's `bg-black/20` tint was removed — so the ratio was re-measured on the
+ * flat navy rather than carried over. See the note on band 3.
  */
 
 /** ⚠ `currentColor`, so the icon recolours with the link on hover. */
@@ -193,13 +194,21 @@ export function MarketingFooter() {
 
       {/* ══ BAND 3 — the legal bar. ⚠ CONTENT AND LINKS UNCHANGED ═══════════ */}
       {/*
-        ⚠ ITS OWN SURFACE, EDGE TO EDGE — `bg-black/20` over the navy, which is the
-        "slightly different surface" treatment the brief allows and which reads as
-        clearly not part of band 2. ⚠ THE COMPUTED HEX IS IN THE REPORT.
+        ── ⚠⚠ SEPARATION IS A HAIRLINE, NOT A SURFACE (2026-08-25) ─────────────
+
+        This band shipped with `bg-black/20`, which composited to `#131830` over the
+        navy. ⚠ SCOTT: all three bands are the brand navy `#181E3C` — nothing
+        tinted, nothing darkened, nothing lightened. So the tint is GONE and band 3
+        now carries the SAME `border-t border-white/10` that already divides bands 1
+        and 2. One separation treatment for both seams.
+
+        ⚠ THE TEXT RATIO MOVED WITH IT and was re-measured, not assumed: `#9a92a8`
+        was sitting on the darker composited bar at 5.87:1 and now sits on the navy.
+        The new figure is in the report.
         ⚠ `2026 Panameer`, NO `©` GLYPH, first item. Scott's wording.
         ⚠ ITEMS SPREAD ACROSS THE WIDTH, not bunched left.
       */}
-      <div className="bg-black/20">
+      <div className="border-t border-white/10">
         <div className="mx-auto flex max-w-[1180px] flex-wrap items-center justify-between gap-x-6 gap-y-2 px-6 py-4 text-[13px] text-[#9a92a8]">
           <span>2026 Panameer</span>
           {FOOTER_LEGAL.map((e) =>
