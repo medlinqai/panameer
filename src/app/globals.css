@@ -15,10 +15,10 @@
 @theme {
   --color-magenta: #d72cd6;
   --color-magenta-dark: #b324b2;
-  --color-ink: #171e3e;
+  --color-ink: #181E3C;
   --color-ink-2: #4a4658;
   --color-line: #ece9f1;
-  --color-bg-soft: #faf8fc;
+  --color-bg-soft: #F0F7F8;
 
   /*
    * LEARN / HOME PALETTE — measured out of the design PNG, not eyeballed.
@@ -356,10 +356,10 @@ body {
 }
 
 .marketing-surface {
-  --color-ink: #171e3e;
+  --color-ink: #181E3C;
   --color-ink-2: #4a4658;
   --color-line: #ece9f1;
-  --color-bg-soft: #faf8fc;
+  --color-bg-soft: #F0F7F8;
   --color-canvas: #f7f7f5;
   color: var(--color-ink);
 }
@@ -373,7 +373,7 @@ body {
   `OnboardingFrame` puts `marketing-surface` and `bg-white` on ONE element, so
   in dark mode it fell through to `:root[data-theme="dark"] .bg-white` and
   painted itself #171128 while the surface forced the LIGHT ink palette on
-  everything inside it — `text-ink` #171E3E on a #171128 card, contrast 1.13.
+  everything inside it — `text-ink` #181E3C on a #171128 card, contrast 1.13.
   That is E017, and adding the class alone did not fix it.
 */
 :root[data-theme="dark"] .marketing-surface.bg-white {

@@ -50,7 +50,7 @@ export function recommendationRequestTemplate({
 
   const logoBlock = logoUrl
     ? `<img src="${logoUrl}" alt="Panameer" width="180" height="25" style="display:block;border:0;height:auto;width:180px;max-width:180px;">`
-    : `<div style="font-size:22px;font-weight:800;letter-spacing:-.5px;color:#171E3E;">Panameer</div>`;
+    : `<div style="font-size:22px;font-weight:800;letter-spacing:-.5px;color:#181E3C;">Panameer</div>`;
 
   const quoted = escapeHtml(message)
     .split("\n")
@@ -59,7 +59,7 @@ export function recommendationRequestTemplate({
 
   const inviteBlock = invite
     ? `<tr><td style="padding:24px 32px 32px;border-top:1px solid #ECE9F1;">
-         <div style="font-size:15px;font-weight:700;color:#171E3E;">What Is Panameer?</div>
+         <div style="font-size:15px;font-weight:700;color:#181E3C;">What Is Panameer?</div>
          <p style="margin:8px 0 14px;font-size:14px;line-height:1.6;color:#4A4658;">
            A marketplace for Oracle Cloud and enterprise-application talent, training and services.
            If you deliver this kind of work too, you can put up your own profile in a few minutes.
@@ -74,7 +74,7 @@ export function recommendationRequestTemplate({
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:14px;overflow:hidden;">
     <tr><td style="padding:28px 32px 0;">${logoBlock}</td></tr>
     <tr><td style="padding:20px 32px 0;">
-      <h1 style="margin:0;font-size:21px;line-height:1.3;color:#171E3E;">Hi ${escapeHtml(contact)}, would you recommend ${escapeHtml(provider)}?</h1>
+      <h1 style="margin:0;font-size:21px;line-height:1.3;color:#181E3C;">Hi ${escapeHtml(contact)}, would you recommend ${escapeHtml(provider)}?</h1>
       <p style="margin:12px 0 0;font-size:15px;line-height:1.6;color:#4A4658;">
         ${escapeHtml(provider)} is building a profile on Panameer and asked whether you'd write a few sentences about working together. It takes a couple of minutes and appears on their public profile.
       </p>

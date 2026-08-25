@@ -26,7 +26,7 @@ export function projectValidatedTemplate({
   const logoBlock = logoUrl
     ? `<img src="${logoUrl}" alt="Panameer" width="180" height="25"
            style="display:block;border:0;outline:none;text-decoration:none;height:auto;width:180px;max-width:180px;">`
-    : `<div style="font-size:22px;font-weight:800;letter-spacing:-.5px;color:#171E3E;">Panameer</div>`;
+    : `<div style="font-size:22px;font-weight:800;letter-spacing:-.5px;color:#181E3C;">Panameer</div>`;
 
   const html = `<!doctype html>
 <html>
@@ -36,19 +36,19 @@ export function projectValidatedTemplate({
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
   </head>
-  <body style="margin:0;padding:0;background:#faf8fc;font-family:Arial,Helvetica,sans-serif;color:#171E3E;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#faf8fc;padding:32px 0;">
+  <body style="margin:0;padding:0;background:#F0F7F8;font-family:Arial,Helvetica,sans-serif;color:#181E3C;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F0F7F8;padding:32px 0;">
       <tr><td align="center">
         <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:14px;border:1px solid #ece9f1;overflow:hidden;">
           <tr><td style="padding:32px 40px 8px;">${logoBlock}</td></tr>
           <tr><td style="padding:8px 40px 0;">
-            <h1 style="font-size:22px;margin:0 0 12px;color:#171E3E;">
+            <h1 style="font-size:22px;margin:0 0 12px;color:#181E3C;">
               Good news${name ? `, ${escapeHtml(name)}` : ""} &mdash; that&rsquo;s confirmed
             </h1>
             <p style="font-size:15px;line-height:1.65;color:#4a4658;margin:0 0 20px;">
-              Your contact at <b style="color:#171E3E;">${escapeHtml(clientName)}</b>
+              Your contact at <b style="color:#181E3C;">${escapeHtml(clientName)}</b>
               confirmed you worked on
-              <b style="color:#171E3E;">${escapeHtml(projectName)}</b>. It now carries
+              <b style="color:#181E3C;">${escapeHtml(projectName)}</b>. It now carries
               the Validated &#10003; badge on your profile.
             </p>
             <a href="${profileUrl}"

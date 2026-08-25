@@ -70,9 +70,9 @@ function BenchmarkTrack({ you, peers }: { you: number; peers: number }) {
       <rect x="0" y="20" width={w} height="10" rx="5" fill="#eef0f5" />
       <rect x="0" y="20" width={(w * you) / 100} height="10" rx="5" fill="#D72CD6" />
       <line x1={(w * peers) / 100} y1="12" x2={(w * peers) / 100} y2="38"
-        stroke="#171E3E" strokeWidth="2.5" strokeLinecap="round" />
-      <text x="0" y="12" fontSize="10.5" fontWeight="700" fill="#171E3E">You {you}</text>
-      <text x={(w * peers) / 100} y="52" fontSize="10.5" fontWeight="700" fill="#171E3E"
+        stroke="#181E3C" strokeWidth="2.5" strokeLinecap="round" />
+      <text x="0" y="12" fontSize="10.5" fontWeight="700" fill="#181E3C">You {you}</text>
+      <text x={(w * peers) / 100} y="52" fontSize="10.5" fontWeight="700" fill="#181E3C"
         textAnchor="middle">Peers {peers}</text>
       <text x={w} y="12" fontSize="10" fill="#9aa2b3" textAnchor="end">100</text>
     </svg>

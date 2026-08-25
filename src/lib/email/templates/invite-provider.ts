@@ -39,7 +39,7 @@ export function inviteProviderTemplate({
   const greeting = inviteeName ? `Hi ${escapeHtml(inviteeName)},` : "Hi,";
 
   const messageBlock = message
-    ? `<div style="margin:20px 0;padding:14px 16px;background:#faf8fc;border-left:3px solid #D72CD6;border-radius:8px;">
+    ? `<div style="margin:20px 0;padding:14px 16px;background:#F0F7F8;border-left:3px solid #D72CD6;border-radius:8px;">
          <p style="margin:0;font-size:14px;color:#4a4658;font-style:italic;">${escapeHtml(message)}</p>
        </div>`
     : "";

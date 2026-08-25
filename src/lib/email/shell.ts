@@ -20,11 +20,11 @@
 export const EMAIL_COLORS = {
   magenta: "#D72CD6",
   magentaDark: "#B324B2",
-  ink: "#171E3E",
+  ink: "#181E3C",
   body: "#4a4658",
   muted: "#8a8199",
   line: "#ece9f1",
-  card: "#faf8fc",
+  card: "#F0F7F8",
 } as const;
 
 export const PANAMEER_URL = "https://panameer.com";
