@@ -1,5 +1,6 @@
 import { HeroBox } from "@/components/marketing/HeroBox";
 import { HeroTwoUp } from "@/components/marketing/HeroTwoUp";
+import { HeroVideoBackdrop } from "@/components/media/HeroVideoBackdrop";
 
 /**
  * `/hire-talent`'s HERO — ITS OWN COMPOSITION, NOT `MarketingHero` (`P1-J1-E013`).
@@ -109,7 +110,51 @@ export function HireTalentHero() {
       the clip respect the radius.
     */
     <HeroBox cardClassName="isolate bg-[radial-gradient(1100px_500px_at_82%_-10%,rgba(215,44,214,0.42),transparent_60%),linear-gradient(150deg,#0d1230_0%,#191a44_55%,#3a1c53_100%)] text-white">
-      <section className="px-6 py-16 min-[900px]:py-[84px]">
+      <section className="relative px-6 py-16 min-[900px]:py-[84px]">
+        {/*
+          ── ⚠⚠ THE HERO CLIP (`P1-J1-E028`) ─────────────────────────────────
+
+          Scott: *"INTEGRATE, SHOP, WORK, TALENT — they do not have a video
+          background. please add this fix."*
+
+          ⚠ `connect-hero.mp4`, 0.14MB, ASSIGNED BY SCOTT 2026-08-25. His revised
+          mapping moved `panameer-office-hero.mp4` (1.01MB) off this page and
+          reserved it for `/find-work`, which is a separate brief
+          (`brief_hero_video_trim`, `P1-J4-E019`). ⚠ THE FULL-SIZE CLIPS ARE
+          FORBIDDEN HERE: `connect.mp4` is 1.48MB and `panameer-office.mp4` is
+          9.21MB — the second is what got a hero video REJECTED on this exact page
+          on 2026-08-24 (+9.21MB first load, fast-3G LCP 1,036 -> 14,028ms).
+
+          ⚠ THIS CLIP IS SMALLER THAN EVERY OTHER HERO CLIP ON THE SITE.
+          `/learn.mp4` is 1.40MB and already ships on two pages; this is a tenth of
+          that, faststart (`moov` before `mdat`, verified), ~0.8s to download whole
+          on fast 3G.
+
+          ⚠⚠ AND IT IS ONLY AFFORDABLE BECAUSE `P1-J1-E018` WAS FIXED FIRST. Until
+          `9d7b133` this page eager-loaded 10.63MB of below-the-fold `VideoSequence`
+          clips; a hero clip would have landed on top of that. Measured on this
+          branch before the clip: first load 0.39MB, media 0.00MB. The brief's note
+          that E018 "makes this costlier" is out of date — it makes it possible.
+
+          ⚠ THE CARD'S GRADIENT IS NOT DECORATION AND STAYS. It paints before the
+          clip arrives, it is what a `prefers-reduced-motion` visitor sees
+          (`globals.css` hides `[data-autoplay-video]` outright), and it is the only
+          thing guaranteeing the white `<h1>` is legible — footage is whatever the
+          camera saw. `isolate` stays on the card; `overflow-hidden` keeps coming
+          from `HeroBox`, which is what makes the clip respect the radius.
+
+          ⚠ THE SCRIM IS THIS CARD'S OWN RAMP — the same three hexes as
+          `cardClassName`, at `/learn`'s alphas. A transposition, not a palette
+          tuned until it passed.
+
+          ⚠ `HeroVideoBackdrop` IS COMPOSED, NEVER EDITED — no props added, no
+          behaviour changed. It still serves `/` and `/learn` unchanged.
+        */}
+        <HeroVideoBackdrop
+          src="/connect-hero.mp4"
+          videoClassName="absolute inset-0 h-full w-full object-cover opacity-40"
+          scrimClassName="absolute inset-0 bg-[linear-gradient(150deg,rgba(13,18,48,0.82)_0%,rgba(25,26,68,0.62)_55%,rgba(58,28,83,0.30)_100%)]"
+        />
         <div className="relative z-[2] mx-auto max-w-[1120px]">
           {/*
             ⚠ THE `FOR TEAMS READY TO HIRE` PILL IS GONE (`P1-J1-E014`, his image 3).
