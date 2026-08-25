@@ -1,4 +1,6 @@
+import type { ReactNode } from "react";
 import { StepDisclosures } from "@/components/marketing/StepDisclosures";
+import { WorkRequestDraftShot } from "@/components/marketing/work-shots";
 import { WORK_STEPS, WORK_SPINE_HEADING } from "@/lib/work-steps";
 
 /**
@@ -9,14 +11,14 @@ import { WORK_STEPS, WORK_SPINE_HEADING } from "@/lib/work-steps";
  * hand-rolled accordion is what `E242`/`E264`/`E281` all exist to prevent — one
  * behaviour, one implementation, four callers.
  *
- * ⚠⚠ THE PANELS ARE EMPTY BY INSTRUCTION. Scott has given the five LABELS and
- * nothing else; panel copy is a separate brief, the same split as
- * `brief_talent_walk1` / `brief_talent_spine_panels`. ⚠ NOTHING HERE MAY BE INVENTED.
+ * ⚠ THE PANELS ARE FILLED NOW (`P1-J4-E014`/`E015`). Scott, seeing an open step 1
+ * with an eyebrow and nothing else: *"you did not create suggested graphics and text
+ * for each step."* Every description is CC's DRAFT, marked as such at its site in
+ * `lib/work-steps.ts` and reported verbatim so he can overwrite them in one message.
  *
- * ⚠ EACH PANEL RENDERS ITS DERIVED EYEBROW AND NOTHING ELSE — `Step N - <label>`,
- * computed from `WORK_STEPS`, exactly as the other three pages do (`P1-J0-E305`).
- * That is not invented copy, and it beats a disclosure that opens onto literally
- * nothing, which reads as broken rather than unfinished.
+ * ⚠ ONLY STEP 1 HAS A GRAPHIC, and the other four absences are deliberate — see
+ * `work-shots.tsx`. A drawn screen for a model that does not exist is a claim
+ * stronger than the sentence above it.
  *
  * ⚠⚠ ONE OF FIVE STEPS IS BUILT. See `WORK_BUILD_STATE`'s note in
  * `lib/work-steps.ts` — step 1 is a real wizard writing real rows; steps 2-5 have no
@@ -27,6 +29,18 @@ import { WORK_STEPS, WORK_SPINE_HEADING } from "@/lib/work-steps";
  * `/optimize`'s computed values — 19px / 700 / #d72cd6 / ls 2.66px / uppercase /
  * lh 28.5px. Sixth instance of that scoping trap; measured, not assumed.
  */
+/**
+ * ⚠ THE GRAPHIC PER STEP. Only step 1 has one, and the four absences are the
+ * ANSWER rather than a gap — see `work-shots.tsx` for the honesty test that
+ * decided it. Steps 2-5 have no models at all; a drawn screen would be a claim
+ * stronger than the sentence above it.
+ */
+const GRAPHICS: Record<number, ReactNode> = {
+  1: <WorkRequestDraftShot />,
+  /* 2-5 — none. No Proposal/Offer, WorkOrder, SettlementRequest, Invoice or Payment
+     model exists. Do not fill these until they do. */
+};
+
 export function WorkSpine() {
   return (
     <>
@@ -51,9 +65,16 @@ export function WorkSpine() {
           n: step.n,
           summary: step.summary,
           panel: (
-            <p className="font-body text-[19px] font-bold uppercase leading-[28.5px] tracking-[2.66px] text-[#d72cd6]">
-              {`Step ${step.n} - ${step.summary}`}
-            </p>
+            <>
+              {/* ⚠ DERIVED, NEVER TYPED — `Step N - <label>` from `WORK_STEPS`. */}
+              <p className="font-body text-[19px] font-bold uppercase leading-[28.5px] tracking-[2.66px] text-[#d72cd6]">
+                {`Step ${step.n} - ${step.summary}`}
+              </p>
+              {/* ⚠ `.stepd-h2` — the SHARED rule, so the four spines cannot drift
+                  apart on panel type. */}
+              <h2 className="stepd-h2">{step.description}</h2>
+              {GRAPHICS[step.n]}
+            </>
           ),
         }))}
       />

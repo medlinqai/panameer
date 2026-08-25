@@ -46,15 +46,127 @@ export type WorkStepLabel = {
   n: number;
   /** The always-visible disclosure row label. ⚠ SCOTT'S, VERBATIM. */
   summary: string;
+  /**
+   * ⚠⚠ THE PANEL'S ONE-SENTENCE DESCRIPTION — CC's DRAFT, NOT SCOTT'S
+   * (`P1-J4-E014`).
+   *
+   * Scott, 2026-08-24, screenshotting an open step 1 with an eyebrow and nothing
+   * else: *"you did not create suggested graphics and text for each step."* Correct
+   * — `brief_work_walk1` shipped LABELS ONLY. Every string below is marked
+   * `⚠ DRAFT — CC's words, not Scott's` at its site and reported verbatim so he can
+   * overwrite them in one message.
+   *
+   * ⚠ ONE SENTENCE EACH, matching `/optimize`'s panel-headline shape. ⚠ NO BODY
+   * PARAGRAPH — `/learn`'s five were deleted in `brief_learn_walk3`.
+   *
+   * ── ⚠⚠ THE RULE THAT SHAPED STEPS 2-5 ─────────────────────────────────────
+   *
+   * ONE of five steps is built. So steps 2-5 describe **what the step IS in the
+   * pipeline**, never what the user will experience clicking it — no "you'll see",
+   * no "we'll notify you", no verb that implies a screen exists.
+   *
+   * ⚠ AND THEY DO NOT HEDGE WITH "COMING SOON" EITHER. That is a different defect:
+   * a page that labels its own steps as unbuilt is not honest, it is apologetic.
+   * The mechanism is stated plainly and the pre-launch list carries the gap.
+   *
+   * ⚠ THEY ARE DRAWN FROM THE LOCKED PIPELINE (`decisions-01.md` 2026-08-21):
+   * `Work Order -> Settlement Request -> Invoice -> Payment`, with a `basis` of
+   * `TIMESHEET` / `DELIVERABLE_OR_MILESTONE` / `RECURRING_SOW`. NOT from imagination.
+   */
+  description: string;
 };
 
 export const WORK_STEPS: WorkStepLabel[] = [
-  /* ⚠ THE ONLY ONE THAT IS REAL. See `WORK_BUILD_STATE` below. */
-  { n: 1, summary: "Create Work Request" },
-  { n: 2, summary: "Accept Proposal" },
-  { n: 3, summary: "Release Work Order" },
-  { n: 4, summary: "Approve Settlement Request" },
-  { n: 5, summary: "Pay Panameer" },
+  {
+    n: 1,
+    summary: "Create Work Request",
+    /*
+      ⚠ DRAFT — CC's words, not Scott's.
+
+      ⚠⚠ BACKED, AND IT IS THE ONLY FULLY-BACKED STEP IN THIS SPINE. `/create-work`
+      is a 10-section save-as-you-go wizard writing real `DRAFT` rows via
+      `createDraft` (`lib/work-request.ts:168`), with a real `POSTED` transition. Step
+      1 opens on three doors and `Paste your JD` is FIRST, badged `Fastest`: it posts
+      to `POST /api/work-requests/import`, which AI-parses the JD and fills
+      description + title, start/end dates, budget type and min/max, and location
+      country + worksite. Skills are returned but deliberately NOT saved — they cannot
+      be validated until a role and domain exist.
+
+      ⚠ THE SENTENCE CARRIES THE AI PARSE ON PURPOSE. `decisions-01.md` 2026-08-24
+      makes calling out real auto-creation a standing rule, and this is one of only
+      two things on the list that are actually BUILT.
+
+      ⚠ `or answer seven short questions` IS THE MANUAL DOOR, NAMED IN ITS OWN WORDS
+      from the wizard. Saying only "paste a JD" would hide the path a buyer without
+      one has to take.
+    */
+    description:
+      "Paste a job description and the AIP drafts the request for you — title, dates, budget and location — or answer seven short questions instead.",
+  },
+  {
+    n: 2,
+    summary: "Accept Proposal",
+    /*
+      ⚠ DRAFT — CC's words, not Scott's. ⚠ UNBACKED: no `Proposal` and no `Offer`
+      model exists. (⚠ `model Offering` DOES exist and is NOT that — a catalog
+      taxonomy node, Pillar -> Offering -> Application.)
+
+      ⚠ IT DESCRIBES WHAT THE STEP IS, NOT A SCREEN. `decisions-01.md` 2026-08-21:
+      the pipeline is ONE and the variable is HOW THE PRICE GETS AGREED — bid it, or
+      offer against a published price. That is exactly what this sentence says, and
+      it is true of the DESIGN whether or not the model is built.
+
+      ⚠ NO "COMING SOON" HEDGE, deliberately — see the type's note.
+    */
+    description:
+      "Experts respond with a price, either bid against your request or offered from a published rate, and you accept one.",
+  },
+  {
+    n: 3,
+    summary: "Release Work Order",
+    /*
+      ⚠ DRAFT — CC's words, not Scott's. ⚠ UNBACKED: no `WorkOrder` model.
+
+      ⚠ FROM THE LOCKED TABLE, WHICH MAKES THIS THE HINGE: `Create Work Order` is
+      step 3 in ALL THREE columns — the one step identical across every pathway. It
+      is where the agreement stops being a negotiation and becomes the thing work and
+      money both hang off.
+    */
+    description:
+      "The accepted price becomes the work order — the single agreement every timesheet, deliverable and payment is measured against.",
+  },
+  {
+    n: 4,
+    summary: "Approve Settlement Request",
+    /*
+      ⚠ DRAFT — CC's words, not Scott's. ⚠ UNBACKED: no `SettlementRequest` model.
+
+      ⚠ THE THREE BASES ARE THE LOCKED ONES, NAMED: `TIMESHEET` /
+      `DELIVERABLE_OR_MILESTONE` / `RECURRING_SOW` (`decisions-01.md` 2026-08-21).
+      That is the whole reason ONE pipeline serves three pathways, so the sentence
+      says it rather than describing three flows that were deliberately not built.
+    */
+    description:
+      "Work is claimed against that order on one of three bases — hours on a timesheet, a delivered milestone, or a recurring SOW — and you approve it.",
+  },
+  {
+    n: 5,
+    summary: "Pay Panameer",
+    /*
+      ⚠ DRAFT — CC's words, not Scott's. ⚠ UNBACKED: no `Invoice` and no `Payment`
+      model. The locked table calls the invoice half *"Panameer Auto-Creates Invoice"*
+      and `decisions-01.md` 2026-08-24 lists it as DESIGNED AS AUTO with no model yet.
+
+      ⚠ THE LABEL IS THE RIGHT CALL AND THE SENTENCE BACKS IT: `Pay Panameer` NAMES
+      THE INTERMEDIARY instead of hiding it, and it matches the locked pipeline's
+      `Panameer Creates Payment` exactly. One approved request, one invoice, one
+      counterparty — that is the buyer-side benefit and it is what the step is FOR.
+
+      ⚠ NO FIGURE, NO FEE, NO RATE. Nothing in the schema prices this.
+    */
+    description:
+      "An approved request becomes one invoice from Panameer, whoever did the work and however many of them there were.",
+  },
 ];
 
 /**

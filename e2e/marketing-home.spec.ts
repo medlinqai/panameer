@@ -2084,11 +2084,17 @@ test.describe("talent walk 1 — the seller page and /'s macro section", () => {
     );
 
     /*
-      ⚠ `MarketingHero` IS UNTOUCHED AND STILL SERVES FOUR PAGES. `/hire-talent`
-      composes its own hero; the shared one was not edited, so a change Scott made
-      to one page cannot leak to four he did not walk.
+      ⚠ `MarketingHero` IS UNTOUCHED AND STILL SERVES THE PAGES THAT USE IT.
+      `/hire-talent` composes its own hero; the shared one was not edited, so a
+      change Scott made to one page cannot leak to pages he did not walk.
+
+      ⚠ THIS CHECK USED TO POINT AT `/find-work` AND WAS RE-HOMED BY `P1-J4-E001`,
+      which gave that page its own `FindWorkHero` too. `MarketingHero`'s remaining
+      callers are `/buy-services`, `/enterprise` and `/why-panameer`; `/enterprise`
+      is used here. ⚠ THE ASSERTION IS UNCHANGED IN SUBSTANCE — it still proves the
+      shared hero was REPLACED ON A PAGE rather than deleted.
     */
-    await page.goto("/find-work");
+    await page.goto("/enterprise");
     await expect(
       page.locator('form[action="/explore"]'),
       "MarketingHero was edited or deleted rather than left alone",
@@ -2241,7 +2247,7 @@ test.describe("work walk 1 — the buyer's page", () => {
    * advances past `POSTED`. Shipped because outstanding parts gate promotion, not
    * the build; steps 2-5 are on the pre-launch list as a BLOCK.
    */
-  test("§45 /find-work renders the five buyer steps with derived, empty panels", async ({
+  test("§45 /find-work renders the five buyer steps with derived panels", async ({
     page,
   }) => {
     await page.goto("/find-work");
@@ -2268,11 +2274,24 @@ test.describe("work walk 1 — the buyer's page", () => {
         ((await panel.locator("p").first().textContent()) ?? "").trim(),
         `step ${step.n}'s eyebrow must be derived, not typed`,
       ).toBe(`Step ${step.n} - ${step.summary}`);
-      /* ⚠ EMPTY BY INSTRUCTION — panel copy is a separate brief. Exactly one node. */
+      /*
+        ⚠ INVERTED BY `P1-J4-E014`, WHICH IS THE BRIEF THAT FILLED THESE PANELS.
+        It used to require exactly ONE node — the eyebrow — because Scott had given
+        labels only. He then said *"you did not create suggested graphics and text
+        for each step."* So each panel now carries exactly one `<h2>` from
+        `WORK_STEPS`, and no body paragraph (`/learn`'s five were deleted in
+        `brief_learn_walk3` and must not return through this door).
+      */
+      const h2s = panel.locator("h2");
+      await expect(h2s, `step ${step.n} needs one description`).toHaveCount(1);
       expect(
-        await panel.locator("p, h2, h3, img, svg").count(),
-        `step ${step.n}'s panel gained content before its brief fired`,
-      ).toBe(1);
+        ((await h2s.first().textContent()) ?? "").trim(),
+        `step ${step.n}'s description must come from WORK_STEPS, not be typed here`,
+      ).toBe(step.description);
+      await expect(
+        panel.locator("p.stepd-body"),
+        `step ${step.n} grew a body paragraph`,
+      ).toHaveCount(0);
     }
   });
 
@@ -2310,6 +2329,76 @@ test.describe("work walk 1 — the buyer's page", () => {
    *
    * ⚠ THE ROW IS ABSENT, NOT EMPTY. An empty row would read as a loading state.
    */
+  /**
+   * ⚠⚠ ONLY STEP 1 MAY CARRY A GRAPHIC (`P1-J4-E015`), AND THIS IS THE GUARD.
+   *
+   * Steps 2-5 have NO models — no `Proposal`/`Offer`, `WorkOrder`,
+   * `SettlementRequest`, `Invoice` or `Payment`. A drawn "proposal accepted" card or
+   * an "invoice paid" receipt is a claim STRONGER than the sentence above it,
+   * because a reader takes a screenshot as evidence in a way they do not take prose.
+   *
+   * ⚠ THE FOUR ABSENCES ARE THE ANSWER, NOT A GAP. This is what stops someone
+   * filling them in later because the row "looks empty".
+   */
+  test("§48 only the one built Work step carries a graphic", async ({
+    page,
+  }) => {
+    await page.goto("/find-work");
+    await page.evaluate(() =>
+      document
+        .querySelectorAll("details.stepd-d")
+        .forEach((d) => d.setAttribute("open", "")),
+    );
+    const drawn = await page.evaluate(() =>
+      [...document.querySelectorAll(".stepd-panel")].map(
+        (e) => e.querySelectorAll("dl, ul, img, svg, canvas").length > 0,
+      ),
+    );
+    expect(
+      drawn,
+      "steps 2-5 have no models; a drawn screen for them would be a false claim",
+    ).toEqual([true, false, false, false, false]);
+  });
+
+  /**
+   * ⚠ THE HERO HAS ONE JOB (`P1-J4-E009`..`E012`). Four things were removed because
+   * they competed with the single action, and each would be easy to restore by
+   * habit — the pill and the tags especially, since three sister pages have them.
+   *
+   * ⚠ THE CTA IS ALSO WHAT SATISFIES `check:app-shell`'s PUBLIC HERO GUARD. Removing
+   * the search box left it as the hero's only control; deleting it too would turn
+   * that guard red, which is the same dependency `/hire-talent` hit.
+   */
+  test("§49 /find-work's hero has exactly one job", async ({ page }) => {
+    await page.goto("/find-work");
+    const hero = page
+      .locator("h1")
+      .first()
+      .locator("xpath=ancestor::section[1]");
+
+    await expect(
+      hero.getByRole("link", { name: "Create a Work Request" }),
+      "the hero's only primary control — E010",
+    ).toHaveCount(1);
+    await expect(
+      hero.locator("form"),
+      "the search box posted mode=work and returned zero — E007 closed by removal",
+    ).toHaveCount(0);
+    const text = await hero.innerText();
+    expect(text, "the GO DIRECT pill — E009").not.toContain("Go Direct");
+    expect(
+      text,
+      "the lockup conflicted with both five-step spines — E019 closed here",
+    ).not.toContain("Learn. Connect. Create. Settle.");
+    expect(text, "the résumé caption was provider copy — E009").not.toContain(
+      "Drop your résumé",
+    );
+    await expect(
+      hero.locator('a[href*="mode=work&q="]'),
+      "the six tags filtered a search that no longer exists — E012",
+    ).toHaveCount(0);
+  });
+
   test("§47 neither seller nor buyer page ships a hero stat row", async ({
     page,
   }) => {
