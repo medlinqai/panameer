@@ -2385,7 +2385,45 @@ test.describe("work walk 1 — the buyer's page", () => {
       "the search box posted mode=work and returned zero — E007 closed by removal",
     ).toHaveCount(0);
     const text = await hero.innerText();
-    expect(text, "the GO DIRECT pill — E009").not.toContain("Go Direct");
+
+    /*
+      ⚠⚠ THIS ASSERTION WAS RE-HOMED, NOT WEAKENED (`P1-J4-E017`).
+
+      It used to read `expect(text).not.toContain("Go Direct")` — a SUBSTRING
+      standing in for "the pill is gone". `E017` makes `Go Direct` the second half
+      of Scott's own `<h1>`, so the substring is now present ON PURPOSE and the
+      proxy no longer expresses what it was protecting.
+
+      ⚠ SO IT NOW ASSERTS THE PILL AS A THING RATHER THAN AS A WORD: the pill was
+      a fully-rounded, filled, uppercase badge above the headline
+      (`MarketingHero` still renders exactly that shape on four sister pages), and
+      structure is what `E009` actually removed. The check got STRICTER — it now
+      catches a pill carrying ANY text, where the old one only caught these two
+      words.
+    */
+    const pills = await hero.evaluate(
+      (el) =>
+        [...el.querySelectorAll("*")].filter((n) => {
+          const cs = getComputedStyle(n);
+          const r = parseFloat(cs.borderTopLeftRadius);
+          const bg = cs.backgroundColor;
+          return (
+            cs.textTransform === "uppercase" &&
+            r >= 100 &&
+            bg !== "transparent" &&
+            !/rgba\(0, 0, 0, 0\)/.test(bg) &&
+            (n.textContent || "").trim().length > 0
+          );
+        }).length,
+    );
+    expect(pills, "the GO DIRECT eyebrow pill — E009").toBe(0);
+
+    /* And the headline that legitimately carries the phrase now — E017. */
+    await expect(
+      hero.locator("h1"),
+      "Scott's own headline, double space normalised and terminal period added",
+    ).toHaveText("Save Money. Go Direct.");
+
     expect(
       text,
       "the lockup conflicted with both five-step spines — E019 closed here",
@@ -2414,5 +2452,175 @@ test.describe("work walk 1 — the buyer's page", () => {
         `${url} grew a hero stat row — no honest count exists`,
       ).toBe(0);
     }
+  });
+
+  /**
+   * ── ⚠⚠ NOTHING COUNTED SECTIONS, SO A SECTION SHIPPED TWICE (`P1-J4-E016`) ──
+   *
+   * `aa28c0f` left `src/app/find-work/page.tsx` reading `<TwoPains /> <TwoPains />`
+   * — on ONE line, separated by a space, which is why the diff read as the section
+   * it replaced. `build`, `typecheck` and `lint` are all perfectly happy with a
+   * second valid element. `P1-ALL-E014` was the same hole and shipped green too.
+   *
+   * ⚠ THIS DELIBERATELY DOES NOT HARD-CODE A LIST OF SECTIONS. A guard that names
+   * the seven sections on this page is a guard that says nothing about the eighth.
+   * Two page-wide invariants instead, both of which a pasted section breaks:
+   *
+   *   · NO DUPLICATE `id`. Half these sections carry one (`#pains`, `#monetization`,
+   *     `#go-direct`, `#sequence`, `#three-ways`, `#ai-match`) and duplicate ids are
+   *     invalid HTML besides — an in-page anchor lands on whichever came first.
+   *   · NO REPEATED SECTION HEADING. That covers the ones with no id at all
+   *     (`ProfileViz`, `AppShots`, `FourBeats`, `ClosingCta`).
+   *
+   * ⚠ RUN ON EVERY PUBLIC MARKETING PAGE, not just the one that was broken.
+   */
+  test("§50 no public page renders the same section twice", async ({
+    page,
+  }) => {
+    for (const url of [
+      "/",
+      "/find-work",
+      "/hire-talent",
+      "/optimize",
+      "/enterprise",
+      "/buy-services",
+      "/learn",
+    ]) {
+      await page.goto(url);
+
+      const dupIds = await page.evaluate(() => {
+        const seen = new Map<string, number>();
+        for (const el of document.querySelectorAll("[id]")) {
+          seen.set(el.id, (seen.get(el.id) ?? 0) + 1);
+        }
+        return [...seen]
+          .filter(([, n]) => n > 1)
+          .map(([id, n]) => `${id}×${n}`);
+      });
+      expect(dupIds, `${url} renders a duplicated element id — E016`).toEqual(
+        [],
+      );
+
+      const dupHeads = await page.evaluate(() => {
+        const seen = new Map<string, number>();
+        for (const h of document.querySelectorAll("main h2, body > div h2")) {
+          const t = (h.textContent || "").trim().toLowerCase();
+          if (!t) continue;
+          seen.set(t, (seen.get(t) ?? 0) + 1);
+        }
+        return [...seen].filter(([, n]) => n > 1).map(([t, n]) => `${t}×${n}`);
+      });
+      expect(
+        dupHeads,
+        `${url} renders the same section heading twice — E016`,
+      ).toEqual([]);
+    }
+  });
+
+  /**
+   * ── ⚠⚠ THE 10.63MB THAT LOADED BEFORE ANYONE SCROLLED (`P1-J1-E018`) ───────
+   *
+   * Measured on `c962c56`, production build, DevTools Fast 3G: `/find-work` pulled
+   * **11.01MB on first load, 10.63MB of it the four clips `VideoSequence` renders
+   * BELOW THE FOLD**, first frames landing at 4.9s / 6.4s / 9.5s / 16.7s. The page
+   * had no hero clip at all — the section nobody had reached cost more than a hero
+   * would. After `LazyAutoplayVideo`: **0.39MB**.
+   *
+   * ⚠ THE GUARD IS IN TWO HALVES AND BOTH MATTER. "No bytes at load" alone is
+   * satisfied by a broken video that never plays; "it plays" alone is satisfied by
+   * the eager version this replaced.
+   */
+  test("§51 no clip downloads before it is approached, and every clip still plays", async ({
+    page,
+  }) => {
+    for (const url of ["/find-work", "/hire-talent"]) {
+      const clips = new Set<string>();
+      const listener = (r: { url: () => string }) => {
+        if (/\.mp4(\?|$)/.test(r.url())) clips.add(r.url().split("/").pop()!);
+      };
+      page.on("request", listener);
+
+      await page.goto(url, { waitUntil: "load" });
+      await page.waitForTimeout(1500);
+
+      expect(
+        [...clips],
+        `${url} fetched video before the reader was anywhere near it — E018`,
+      ).toEqual([]);
+
+      const srcsAtLoad = await page.evaluate(() =>
+        [...document.querySelectorAll("#sequence video")].map((v) =>
+          v.getAttribute("src"),
+        ),
+      );
+      expect(
+        srcsAtLoad.length,
+        `${url} lost the four-beat sequence entirely`,
+      ).toBe(4);
+      expect(
+        srcsAtLoad.every((s) => s === null),
+        `${url} shipped a src on a below-the-fold clip — E018`,
+      ).toBe(true);
+
+      /* ⚠ NOW WALK TO IT. A lazy clip that never arrives is a deleted clip. */
+      await page.locator("#sequence").scrollIntoViewIfNeeded();
+      await page.waitForFunction(
+        () =>
+          [...document.querySelectorAll("#sequence video")].every(
+            (v) => (v as HTMLVideoElement).readyState >= 3,
+          ),
+        null,
+        { timeout: 30_000 },
+      );
+      const playing = await page.evaluate(() =>
+        [...document.querySelectorAll("#sequence video")].map((v) => {
+          const el = v as HTMLVideoElement;
+          return !el.paused && !el.ended && !!el.getAttribute("src");
+        }),
+      );
+      expect(
+        playing,
+        `${url} left a clip loaded but not playing on approach`,
+      ).toEqual([true, true, true, true]);
+
+      page.off("request", listener);
+    }
+  });
+
+  /**
+   * ── ⚠⚠ THE HERO CLIP THAT WAS BUILT, MEASURED AND TAKEN BACK OUT (`E019`) ──
+   *
+   * Scott asked for a hero video. It was added via `HeroVideoBackdrop` exactly as
+   * `/learn` and `/` do, and on a PRODUCTION build under Fast 3G the LCP element
+   * became the `<video>` itself and the number went **1,636ms -> 5,772ms** at 1440,
+   * 5,788 at 900, 5,616 at 390. The brief's stop condition is 4s at any width, so
+   * it came out.
+   *
+   * ⚠ THE GUARD IS A BYTE BUDGET, NOT "NO VIDEO ALLOWED". It asserts this page
+   * fetches NO media before a scroll — which is broken equally by re-adding
+   * `panameer-office.mp4` to the hero and by undoing the lazy-load underneath it.
+   * A future authorised hero clip SHOULD turn this red: that is the prompt to
+   * re-measure, which is exactly what was missing the first time (`P1-J1-E011`,
+   * where localhost showed LCP getting FASTER as bytes doubled).
+   */
+  test("§52 /find-work spends no media bytes before the reader scrolls", async ({
+    page,
+  }) => {
+    let mediaBytes = 0;
+    const seen: string[] = [];
+    page.on("response", async (r) => {
+      if (!/\.(mp4|webm|mov)(\?|$)/.test(r.url())) return;
+      seen.push(r.url().split("/").pop()!);
+      const len = Number(r.headers()["content-length"] ?? 0);
+      mediaBytes += len;
+    });
+
+    await page.goto("/find-work", { waitUntil: "load" });
+    await page.waitForTimeout(2000);
+
+    expect(
+      { seen, mediaBytes },
+      "a hero clip or an eager sequence is back — RE-MEASURE LCP ON FAST 3G, E019",
+    ).toEqual({ seen: [], mediaBytes: 0 });
   });
 });

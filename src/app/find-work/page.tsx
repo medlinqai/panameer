@@ -45,8 +45,13 @@ import { ClosingCta } from "@/components/marketing/sections/ClosingCta";
  * domains and AI maturity are things an ORGANISATION has — and neither the
  * mockup nor the brief puts it here.
  *
- * Every section is a server component, so this route carries no client JS at
- * all and prerenders static.
+ * ⚠ THE OLD CLAIM HERE — *"every section is a server component, so this route
+ * carries no client JS at all"* — WAS ALREADY FALSE BEFORE THIS BRIEF, and it is
+ * corrected rather than carried forward: `MarketingShell` renders
+ * `MarketingHeader` and this page's own hero renders `HeroTwoUp`, both client
+ * components. What is true, and what the gate actually checks, is that the route
+ * still PRERENDERS STATIC (`○`) — a client component is prerendered too, and a
+ * route only loses `○` when it reads request-time data.
  */
 export const metadata: Metadata = {
   title: "Sell Your Expertise Direct — Panameer",
@@ -124,8 +129,21 @@ export default function SellerPage() {
 
         ⚠ ENUMERATED AND REPORTED, UNTOUCHED. See the brief report for what each one
         argues and to whom.
+
+        ── ⚠⚠ `<TwoPains />` RENDERED TWICE HERE (`P1-J4-E016`) ─────────────────
+
+        `aa28c0f` (Phase C of `brief_public_pages_combined`) left this line reading
+        `<TwoPains /> <TwoPains />` — the anchored insert above it carried the anchor
+        into its own replacement text and the original was never consumed. ⚠ ON ONE
+        LINE, SEPARATED BY A SPACE, which is why it survived a diff review: the added
+        `+` line reads as the section it replaced.
+
+        ⚠ NO GATE COULD SEE IT. `build`, `typecheck` and `lint` are all satisfied by a
+        second valid element, and nothing counted sections — the same hole that let
+        `P1-ALL-E014` ship. `check:ui` NOW COUNTS THIS SECTION ON THIS PAGE, so the
+        next paste fails instead of shipping.
       */}
-      <TwoPains /> <TwoPains />
+      <TwoPains />
       <OmniChannel />
       <VideoSequence audience="provider" tone="soft" />
       <GoDirectBionic />

@@ -1,4 +1,5 @@
 import { SEQUENCE_COPY } from "@/lib/brand";
+import { LazyAutoplayVideo } from "@/components/media/LazyAutoplayVideo";
 
 /**
  * The four-beat video sequence — Learn → Connect → Create → Settle.
@@ -26,13 +27,45 @@ import { SEQUENCE_COPY } from "@/lib/brand";
  *
  * The videos are decorative: `aria-hidden`, not focusable, pointer-events off.
  * Every word a reader needs is in the text layer above them.
+ *
+ * ── ⚠⚠ AND THEY NO LONGER DOWNLOAD AT PAGE LOAD (`P1-J1-E018`) ──────────────
+ *
+ * This section is BELOW THE FOLD on both pages that render it, and it was
+ * costing 10.63MB before the visitor had scrolled to it — more than a hero clip
+ * would. The `<video>` is now `LazyAutoplayVideo`, which withholds `src` until
+ * the card is approached. See that file for why this cannot be done in CSS.
+ *
+ * ⚠ NOTHING ABOUT WHAT THIS PLAYS CHANGED. Same four clips, same order, same
+ * captions, same posters, same reduced-motion behaviour. The only difference is
+ * WHEN the bytes are fetched.
+ *
+ * ⚠ THIS SECTION IS THEREFORE THE PAGE'S FIRST CLIENT ISLAND — one observer per
+ * card, no state above them. Both routes still prerender static (`○`); a client
+ * component is prerendered too, and a route only loses `○` when it reads
+ * request-time data.
  */
 
 const MEDIA = [
-  { src: "/learn.mp4", poster: "/posters/learn.svg", grad: "from-[#3b2a63] to-[#6d3b8e]" },
-  { src: "/connect.mp4", poster: "/posters/connect.svg", grad: "from-[#28306b] to-[#4a5db0]" },
-  { src: "/consultation.mp4", poster: "/posters/create.svg", grad: "from-[#5a2a63] to-[#a13c8e]" },
-  { src: "/get-paid.mp4", poster: "/posters/settle.svg", grad: "from-[#1f2a58] to-[#3a4c92]" },
+  {
+    src: "/learn.mp4",
+    poster: "/posters/learn.svg",
+    grad: "from-[#3b2a63] to-[#6d3b8e]",
+  },
+  {
+    src: "/connect.mp4",
+    poster: "/posters/connect.svg",
+    grad: "from-[#28306b] to-[#4a5db0]",
+  },
+  {
+    src: "/consultation.mp4",
+    poster: "/posters/create.svg",
+    grad: "from-[#5a2a63] to-[#a13c8e]",
+  },
+  {
+    src: "/get-paid.mp4",
+    poster: "/posters/settle.svg",
+    grad: "from-[#1f2a58] to-[#3a4c92]",
+  },
 ] as const;
 
 export function VideoSequence({
@@ -75,19 +108,10 @@ export function VideoSequence({
                 // reduced-motion visitor sees once the video is hidden.
                 style={{ backgroundImage: `url('${m.poster}')` }}
               >
-                <video
-                  data-autoplay-video
-                  aria-hidden
-                  tabIndex={-1}
+                <LazyAutoplayVideo
                   className="absolute inset-0 h-full w-full object-cover"
                   src={m.src}
                   poster={m.poster}
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  preload="metadata"
-                  style={{ pointerEvents: "none" }}
                 />
 
                 {/* The scrim, over the media, under the words. */}

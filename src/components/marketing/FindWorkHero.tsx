@@ -7,11 +7,12 @@ import { HeroTwoUp } from "@/components/marketing/HeroTwoUp";
  *
  * Scott, 2026-08-24: *"we need to change the WORK image to be like LEARN/OPTIMIZE."*
  *
- * ⚠⚠ THIS WORK STREAM IS THE CONTAINER ONLY. Scott gave no new copy for this page
- * beyond the `<h1>` (`P1-J4-E003`). Every other string below is MOVED UNCHANGED out
- * of `MarketingHero`'s `HERO_COPY.provider` — the sub, the search placeholder, the
- * CTA label, the six tags and the résumé caption are all read from that constant
- * rather than retyped, so they cannot drift from where they came from.
+ * ⚠ EVERY STRING IN HERE IS SCOTT'S OWN NOW. It began as a container-only change
+ * that borrowed the sub, the placeholder, the CTA label, the tags and the caption
+ * from `MarketingHero`'s `HERO_COPY.provider`; `E009`..`E012` then removed every
+ * one of those, and `E017`/`E018` replaced the rest. ⚠ NOTHING IS READ FROM
+ * `HERO_COPY` ANY MORE and the constant itself is untouched — it still serves
+ * `MarketingHero` on the pages that render it.
  *
  * ⚠ ITS OWN FILE, NOT AN EDIT TO `MarketingHero`, for the reason `HireTalentHero`
  * records: that component still serves `/buy-services`, `/enterprise` and
@@ -49,14 +50,28 @@ import { HeroTwoUp } from "@/components/marketing/HeroTwoUp";
  *
  * ── ⚠ WHAT IS STILL DELIBERATELY ABSENT ────────────────────────────────────
  *
- * ⚠ NO STAT ROW — same unsolved problem (`P1-J1-E013`): no honest provider count,
- * one published `Package`. Absent, not empty, not invented.
+ * ⚠ NO STAT ROW — and it is BLOCKED, NOT FORGOTTEN (`P1-J1-E013`). Scott asked
+ * *"Didn't we define cards on this one?"* and the answer is yes: `HeroTwoUp`'s
+ * right column is the slot, and there is NO HONEST NUMBER TO PUT IN IT. The 85
+ * `ProviderProfile` rows are SEED — `decisions-01.md`'s protected set is the admin
+ * plus three experts — and exactly ONE `Package` is published, owned by Panameer
+ * Admin. Absent, not empty, not invented.
  * ⚠ NO BRIDGE LINE — Scott has not written one.
- * ⚠ NO VIDEO — `P1-J1-E011`.
  * ⚠ NO SEPARATE PASTE CONTROL IN THE HERO. The CTA leads to the door that already
  * exists; building a second one here would be two front doors to one flow.
  *
- * ⚠ THE `<h1>` IS FINAL (`P1-J4-E003`) and is not touched.
+ * ⚠ THE HOW-IT-WORKS TAGLINE UNDER THE SPINE IS STILL MISSING (`P1-J4-E013`) —
+ * the eyebrow renders with nothing after it. `/optimize` and `/learn` both carry
+ * one and both are Scott's. NOT DRAFTED HERE.
+ *
+ * ── ⚠⚠ STILL NO VIDEO — AND THIS TIME IT WAS BUILT, MEASURED AND REMOVED ───
+ *
+ * `P1-J4-E019`. Scott: *"No video in the background on the hero...please add
+ * one."* It was added, wired through `HeroVideoBackdrop` exactly as `/learn` and
+ * `/` do, and measured on a PRODUCTION build under DevTools' own Fast 3G preset.
+ * ⚠ IT TRIPPED THE BRIEF'S OWN STOP CONDITION AT EVERY WIDTH AND CAME BACK OUT.
+ * The numbers are in the section comment below. Do not re-add it from Scott's
+ * request alone — the request is not the thing that changed.
  */
 export function FindWorkHero() {
   /* ⚠ NOTHING IS READ FROM `HERO_COPY.provider` ANY MORE. `P1-J4-E009`/`E011`/`E012`
@@ -72,19 +87,80 @@ export function FindWorkHero() {
     */
     <HeroBox cardClassName="bg-[radial-gradient(1100px_500px_at_82%_-10%,rgba(215,44,214,0.42),transparent_60%),linear-gradient(150deg,#0d1230_0%,#191a44_55%,#3a1c53_100%)] text-white">
       <section className="px-6 py-16 min-[900px]:py-[84px]">
+        {/*
+          ── ⚠⚠ THE HERO CLIP WAS BUILT AND MEASURED OUT (`P1-J4-E019`) ─────────
+
+          Scott: *"No video in the background on the hero...please add one."* It
+          was added — `HeroVideoBackdrop`, `/panameer-office.mp4`, `opacity-40`,
+          with this card's own three hexes re-laid as the scrim at `/learn`'s
+          alphas — then measured, and the brief's stop condition fired.
+
+          ⚠ MEASURED ON A PRODUCTION BUILD, NOT LOCALHOST, under DevTools' Fast 3G
+          preset (1.6Mb/s ×0.9, 562.5ms RTT). Localhost is why this was missed the
+          first time on `/hire-talent`: unthrottled, LCP with the clip in was
+          104-136ms, FASTER than several unclipped runs.
+
+              Fast 3G LCP, /find-work        1440      900      390
+              lazy sequence, no hero clip   1,636    1,672    1,636 ms
+              + panameer-office.mp4         5,772    5,788    5,616 ms
+
+          ⚠ THE STOP CONDITION IS 4s AT ANY WIDTH. It failed at ALL THREE, by
+          ~1.6s, reproducibly across two runs — so the clip is not here.
+
+          ⚠ THE MECHANISM, BECAUSE IT DECIDES WHETHER A SMALLER CLIP WOULD HELP:
+          the LCP ELEMENT CHANGES. Without the clip the largest paint is the
+          headline at ~1.67s; with it, the `<video>` itself becomes the LCP element
+          and the number is simply when its first frame decodes. 9.21MB over a
+          188KB/s pipe is ~49s to finish, and ~5.7s to the first frame even though
+          the file IS already faststart (`moov` before `mdat`, verified). So this
+          is a WEIGHT problem, and it is the only clip that can go here at all —
+          `VideoSequence` further down this page plays the other four, and any of
+          them in the hero would repeat on the page.
+
+          ⚠ NOT TRANSCODED, TRIMMED OR RE-ENCODED. That is an asset change and
+          Scott's call, not CC's. A ~1.5MB cut of this footage would very likely
+          clear 4s; nobody has authorised making one.
+
+          ⚠ WHAT WAS SHIPPED INSTEAD IS THE BUDGET FIX THAT HAD TO COME FIRST —
+          `VideoSequence` no longer eagerly loads 10.63MB below the fold
+          (`P1-J1-E018`). First load on this page went 11.01MB -> 0.39MB. That
+          headroom is now banked for whenever a hero clip does arrive.
+
+          ⚠ `HeroVideoBackdrop` IS UNTOUCHED and still serves `/`, `/learn` and
+          `LearnHome` — the `E164` shape: the component stays, this page just does
+          not call it.
+        */}
         <div className="relative mx-auto max-w-[1120px]">
           <HeroTwoUp
             rowClassName="grid grid-cols-1 items-center gap-10 min-[901px]:grid-cols-2 min-[901px]:gap-14"
             left={
               <>
                 {/*
-                  ⚠ VERBATIM SCOTT, FINAL (`P1-J4-E003`): *"Deploy Faster. With Less
-                  Risk. That works."* Both terminal periods are part of the string.
-                  He accepted chat's edit of his own `Deploy Faster and/or with Less
-                  Risk` — `and/or` is a contract construction, not a headline.
+                  ── ⚠⚠ SCOTT'S OWN HEADLINE (`P1-J4-E017`) ──────────────────────
+
+                  He asked chat for suggestions and took NEITHER — this is his. It
+                  replaces `Deploy Faster. With Less Risk.` (`P1-J4-E003`), which was
+                  also his and which MOVES TO `/buy-services` (`P1-J2-E001`).
+
+                  ⚠ TWO NORMALISATIONS, BOTH REPORTED RATHER THAN DONE QUIETLY. He
+                  typed `Save Money.  Go Direct` — DOUBLE SPACE after the first
+                  period, NO terminal period. The space is collapsed to one, and the
+                  final period is ADDED so the string matches the two-sentence shape
+                  every other hero on the site uses (`Deploy Faster. With Less Risk.`;
+                  `Go from Zero to Hero…and Stay There` is the one exception, and it
+                  is not two sentences).
+
+                  ⚠ `Go Direct` IS THE PILL TEXT REMOVED FROM THIS HERO IN
+                  `P1-J4-E009`. It comes back as the headline. Reported because it
+                  reads as deliberate reuse — the phrase was never the problem, a
+                  second competing element in the hero was.
+
+                  ⚠ IT IS ALSO THIS PAGE'S FIRST SELLER-FACING WORD SINCE THE PAGE WAS
+                  RE-POINTED AT BUYERS (`P1-J4-E002`) — `Save Money` is the buyer's
+                  half, `Go Direct` is the seller's. Reported, not resolved.
                 */}
                 <h1 className="font-display text-[34px] font-bold leading-[1.08] tracking-[-0.8px] min-[901px]:text-[46px] min-[901px]:tracking-[-1px]">
-                  Deploy Faster. With Less Risk.
+                  Save Money. Go Direct.
                 </h1>
 
                 {/*
@@ -100,6 +176,21 @@ export function FindWorkHero() {
                   something to click. After `E009` removed the search box this button
                   is the only thing satisfying it — the same dependency that made
                   removing `/hire-talent`'s search turn that guard red.
+
+                  ── ⚠⚠ AND THIS LABEL FAILS WCAG AA. IT IS NOT THIS PAGE'S BUG ────
+
+                  White on brand magenta `#d72cd6` is **4.02:1**. The label is 16px
+                  bold, which is BELOW WCAG's large-text floor (18.66px bold), so the
+                  threshold is 4.5 and it misses. ⚠ THE FILL IS OPAQUE, so this has
+                  nothing to do with footage and did not move across any of the nine
+                  frames measured for `E019` — 4.02 at 1440, 900 and 390 alike, and
+                  4.02 before the clip was ever added.
+
+                  ⚠ IT IS A BRAND-TOKEN FACT, NOT A LOCAL ONE — `--color-magenta`
+                  under white text reads 4.02 everywhere it is used. `magenta-dark`,
+                  which this button already uses on hover, is 5.74 and would pass.
+                  ⚠ NO COLOUR CHANGED HERE: the brief says measure, report and change
+                  nothing, and a brand token is not a `/find-work` decision.
                 */}
                 <Link
                   href="/create-work"
@@ -109,28 +200,27 @@ export function FindWorkHero() {
                 </Link>
 
                 {/*
-                  ⚠ VERBATIM SCOTT (`P1-J4-E010`), AND BOTH FACTS BEHIND IT ARE
-                  REPORTED RATHER THAN SOFTENED:
+                  ── ⚠⚠ THE SHOP LINE IS GONE, AND IT WAS SCOTT'S OWN, ADDED TODAY ─
 
-                    · `SHOP` IS `/buy-services`, WHOSE HERO LITERALLY READS
-                      `PLACEHOLDER — Shop` and whose `<h1>` is `PLACEHOLDER —
-                      headline about packaged services goes here.`
-                    · THERE IS EXACTLY **ONE** PUBLISHED `Package` — *"Install
-                      DocuSign for Oracle Cloud"* — AND IT IS OWNED BY **PANAMEER
-                      ADMIN**, not a provider (`P1-J4-E008`).
+                  `Search on the SHOP page to see a listing of pre-defined Service
+                  Products` went IN as `P1-J4-E010` and comes OUT as `P1-J4-E018` —
+                  a SAME-DAY REVERSAL by the same person. Recorded here so nobody
+                  restores it citing E010; E018 is the later instruction.
 
-                  ⚠ SO THIS LINE POINTS AT A PLACEHOLDER PAGE LISTING ONE OF OUR OWN
-                  PRODUCTS. Shipped as written and linked, per instruction.
+                  ⚠ ITS REMOVAL ALSO CLOSES THE FLAG RAISED WHEN IT SHIPPED. The line
+                  linked to `/buy-services`, whose hero still literally reads
+                  `PLACEHOLDER — Shop` over `PLACEHOLDER — headline about packaged
+                  services goes here.`, and which lists exactly ONE published
+                  `Package` — *"Install DocuSign for Oracle Cloud"* — owned by
+                  PANAMEER ADMIN rather than a provider (`P1-J4-E008`). The public
+                  site no longer points a buyer at that page from this hero. ⚠ THE
+                  PLACEHOLDER PAGE ITSELF IS UNCHANGED and is still reachable from the
+                  header nav; only this doorway is closed.
+
+                  ⚠ THE HERO IS BACK TO EXACTLY ONE CONTROL, which is what `E009`..
+                  `E012` were for. `check:app-shell`'s PUBLIC HERO guard is satisfied
+                  by the button alone.
                 */}
-                <p className="mt-4 max-w-[520px] text-[13.5px] leading-[1.5] text-[#cdc9e6]">
-                  <Link
-                    href="/buy-services"
-                    className="underline hover:text-white"
-                  >
-                    Search on the SHOP page to see a listing of pre-defined
-                    Service Products
-                  </Link>
-                </p>
               </>
             }
             right={
