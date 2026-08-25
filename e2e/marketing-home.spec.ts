@@ -3212,3 +3212,95 @@ test.describe("/hire-talent — the hero stat tiles", () => {
     ).toBe(true);
   });
 });
+
+/**
+ * ── ⚠⚠ EVERY HERO CLIP CARRIES A POSTER, AND IT IS A MEASURED FIX ──────────
+ *
+ * `P1-ALL-E018`. Throttled fast 3G, before -> after:
+ *
+ *     /learn         4,720 -> 1,844 ms      /hire-talent   4,172 -> 1,664 ms
+ *     /find-work     3,992 -> 2,404 ms      /buy-services  3,828 -> 1,672 ms
+ *     /enterprise    3,712 -> 1,764 ms
+ *
+ * ⚠ THE MECHANISM IS WHY THIS NEEDS A GUARD AT ALL. Without a poster the `<video>`
+ * SUPERSEDES the text as the largest contentful paint when its first frame lands,
+ * so LCP becomes "when the clip arrives" — a ~2.3s regression that is INVISIBLE in
+ * the DOM, in the bytes, and on localhost. Deleting one attribute silently undoes
+ * the whole brief, which is exactly the shape a test has to hold.
+ */
+test.describe("hero clips — every one has a poster", () => {
+  const POSTERED = [
+    "/hire-talent",
+    "/buy-services",
+    "/enterprise",
+    "/find-work",
+    "/learn",
+  ];
+
+  for (const url of POSTERED) {
+    test(`§62 ${url}'s hero clip has a poster`, async ({ page }) => {
+      await page.goto(url);
+      const got = await page.evaluate(() => {
+        const h1 = document.querySelector("h1");
+        const card =
+          h1?.closest("section") ?? h1?.closest('div[class*="rounded-["]');
+        const v = card?.querySelector("video[data-autoplay-video]");
+        if (!v) return null;
+        return {
+          poster: v.getAttribute("poster"),
+          src: v.getAttribute("src"),
+        };
+      });
+      expect(got, `${url} lost its hero clip entirely`).not.toBeNull();
+      expect(
+        got!.poster,
+        `${url}'s hero clip has no poster — LCP goes back to ~4s and nothing else shows it`,
+      ).toBeTruthy();
+      /* ⚠ A PATH, not an empty string or a data: URI nobody can audit. */
+      expect(
+        got!.poster,
+        `${url}'s poster must be a file under /posters/`,
+      ).toMatch(/^\/posters\/[\w.-]+$/);
+    });
+  }
+
+  /**
+   * ⚠⚠ AND THE PROP MUST STAY OPT-IN. `HomeHero` passes no poster, and `/` is out
+   * of scope for this brief — it is stripped and awaiting rebuild, and it still
+   * carries the 4.68MB `consultation.mp4`. If a future edit defaults the prop ON
+   * inside `HeroVideoBackdrop`, `/` changes without anyone choosing that, and the
+   * byte-identical proof this brief rests on stops being true.
+   *
+   * ⚠ ASSERTED ON THE ATTRIBUTE BEING ABSENT, not falsy — `poster=""` is a
+   * different bug that also needs to fail here.
+   */
+  test("§63 / keeps no poster — the prop is opt-in", async ({ page }) => {
+    /*
+      ⚠ `/` RENDERS ONLY ON A MARKETING HOST (`proxy.ts:25` -> `isMarketingHost`),
+      which is why this reads the component source rather than the page: on a
+      non-marketing host `/` 307s to `/login` and the assertion would pass
+      vacuously against a login form.
+    */
+    const src = readFileSync(
+      join(process.cwd(), "src/components/marketing-home/HomeHero.tsx"),
+      "utf8",
+    );
+    expect(
+      /poster\s*=/.test(src),
+      "HomeHero grew a poster — / is out of scope for E018 and its clip is 4.68MB",
+    ).toBe(false);
+
+    const backdrop = readFileSync(
+      join(process.cwd(), "src/components/media/HeroVideoBackdrop.tsx"),
+      "utf8",
+    );
+    expect(
+      /poster\?\:\s*string/.test(backdrop),
+      "the poster prop must stay OPTIONAL — five callers rely on the default being off",
+    ).toBe(true);
+    expect(
+      /poster\s*=\s*["'`]/.test(backdrop),
+      "HeroVideoBackdrop must not hardcode a default poster",
+    ).toBe(false);
+  });
+});
