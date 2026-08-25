@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
 import { IntegrateHero } from "@/components/marketing/IntegrateHero";
 import { LogoRibbon } from "@/components/marketing-home/LogoRibbon";
+import { IntegrateSpine } from "@/components/marketing/IntegrateSpine";
 import { ErpPunchout } from "@/components/marketing/sections/ErpPunchout";
 import { ErpIntegration } from "@/components/marketing-home/ErpIntegration";
 import "@/components/marketing-home/home.css";
@@ -96,6 +97,26 @@ export default function EnterprisePage() {
       <div className="pm-home">
         <LogoRibbon />
       </div>
+      {/*
+        ── ⚠⚠ THE SIXTH SPINE (`P1-J0-E328`) ───────────────────────────────────
+
+        ⚠ IT CLOSES THE OPEN ROW `brief_integrate_walk1` FILED. That brief shipped
+        the hero's bridge line — *"Check out the steps below to see how it works."*
+        — onto a page with NO steps below it, and recorded the gap. There are steps
+        now, and the line points at them.
+
+        ⚠ PLACEMENT: directly below the hero and ABOVE `ErpIntegration`, so the
+        bridge line's "below" is the very next thing a reader meets.
+
+        ⚠⚠ ZERO OF THE FIVE ARE BUILT AND SCOTT SAID SO: *"Yes, it is not built,
+        but it will be before this is released."* Same standing as `/shop`.
+        Outstanding parts gate PROMOTION, not the build; all five are on the
+        pre-launch list as one block.
+
+        ⚠ OUTSIDE THE `.pm-home` WRAPPER, deliberately — `StepDisclosures` is
+        `.stepd-`-scoped and the eyebrow mirrors `/optimize` in Tailwind.
+      */}
+      <IntegrateSpine />
       {/* The scope for the ported stylesheet, around the payload only. */}
       <div className="pm-home">
         <ErpIntegration className="erpx-band" />
