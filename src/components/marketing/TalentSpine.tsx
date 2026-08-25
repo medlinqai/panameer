@@ -82,17 +82,91 @@ const GRAPHICS: Record<number, ReactNode> = {
 export function TalentSpine() {
   return (
     <>
-      <section className="border-t border-line bg-white pt-14 min-[900px]:pt-[72px]">
+      {/* ⚠ `pb-[80px]` ARRIVES WITH THE HEADLINE (`P1-J0-E319`) — /optimize's
+          MEASURED tagline-to-row-1 gap is 81px, and the section previously had no
+          bottom padding because it had no tagline to space. Same value /learn and
+          /find-work use, so the four spines do not diverge on this gap. */}
+      <section className="border-t border-line bg-white pb-[80px] pt-14 min-[900px]:pt-[72px]">
         <div className="mx-auto max-w-[1200px] px-8">
           <p className="font-body text-[19px] font-bold uppercase leading-[28.5px] tracking-[2.66px] text-[#d72cd6]">
             {TALENT_SPINE_HEADING}
           </p>
           {/*
-            ⚠ NO TAGLINE UNDER THE EYEBROW. `/optimize` and `/learn` both promote a
-            sentence into a display headline here; Scott has not written one for
-            Talent. ⚠ DRAFTING ONE WOULD PUT CHAT'S WORDS IN THE LARGEST TEXT ON
-            THE PAGE. Reported and left out.
+            ── ⚠⚠ THE DISPLAY HEADLINE (`P1-J1-E026`) — SCOTT'S STRING, VERBATIM ─
+
+            This slot used to carry a comment saying the tagline was deliberately
+            left out because he had not written one. ⚠ HE HAS NOW WRITTEN IT AND HE
+            ASKED WHERE IT WAS. Not a draft; not CC's words.
+
+            ⚠ `/optimize`'s TREATMENT, MIRRORED IN TAILWIND — 34px / 700 / #171e3e /
+            ls -0.5px / lh 38.76px / max-w 1040px / Comfortaa (`.hiw-h2`). ⚠ THE
+            `.pm-home` SCOPE AGAIN: this page is outside the wrapper, so `home.css`'s
+            class is unreachable. Copied from `/learn`'s own `E304` implementation,
+            which solved the identical problem on the identical rule.
+
+            ⚠⚠ IT IS `text-wrap`, NOT THE ARBITRARY `[text-wrap:normal]` THE BRIEF
+            PRESCRIBED, AND THE DIFFERENCE IS THAT ONE OF THEM DOES NOTHING.
+            Tailwind emits a rule for the arbitrary form and the class lands on the
+            element — and the browser then DISCARDS THE DECLARATION, because `normal`
+            is not a valid `text-wrap` value. The property takes
+            `wrap | nowrap | balance | pretty | stable` only. ⚠ MEASURED: with
+            `[text-wrap:normal]` the computed value stayed `balance` at 1440/900/390
+            and the wrap did not move an inch.
+            ⚠ `text-wrap` IS TAILWIND'S OWN UTILITY AND EMITS `text-wrap:wrap` — the
+            property's INITIAL value, i.e. exactly "wrap normally". That is the one
+            that works. Computed values are in the report.
+            ⚠ THIS IS WHY THE BRIEF SAID TO VERIFY RATHER THAN ASSUME. It asserted
+            *"the utility wins and it was already proven"*; the utility it named was
+            never valid CSS.
+
+            ⚠⚠ THE UTILITY IS LOAD-BEARING, NOT TIDINESS. `/hire-talent`
+            renders inside `.marketing-surface`, and `globals.css`'s `@layer base`
+            balances every `h1`-`h4` under it. A new display headline without this
+            utility ships with the exact defect `WS7`/`P1-J3-E032` exists to remove —
+            Scott, 2026-08-17: *"we are wasting space by wrapping text that could go
+            across the screen."*
+
+            ── ⚠ `resume`, NOT `résumé` — HIS SPELLING ────────────────────────────
+
+            It matches the `<h1>` above it (`Sell More than Just Your Resume`). ⚠ THE
+            REST OF THE CODEBASE USES THE ACCENTED FORM, so this PAGE is now
+            internally consistent and the SITE is not. Reported; nothing else changed.
+
+            ── ⚠⚠ `AIP` IS NOT AN ASPIRATIONAL CLAIM AND THE OLD FRAMING IS WRONG ─
+
+            Scott, 2026-08-25, on the record: *"the AIP is the AI we are deploying and
+            are going to deploy on Panameer."* ⚠ IT NAMES DEPLOYED SOFTWARE: the
+            résumé parser (`lib/resume/ai-extract.ts`, `ai-provider.ts`,
+            `/api/onboarding/provider/resume-ai`), the JD paste door
+            (`/api/work-requests/import`), and the assessment engine. ⚠ TWO DOCUMENTS
+            CURRENTLY LIST THE AIP AMONG THE UNKEEPABLE PROMISES — that is being
+            corrected. ⚠ DO NOT HEDGE THIS SENTENCE OR ADD A "COMING SOON".
+
+            ⚠ HE WROTE `our AI Platform (AIP)`, NOT the locked `Panameer's AI
+            Platform (AIP)` (`P1-J0-E275`). Same expansion, same shape, his voice on
+            his page — SHIPPED AS HIS WORD, divergence reported.
+
+            ── ⚠⚠ `in under one minute` WAS MEASURED BEFORE IT SHIPPED ───────────
+
+            It is a stopwatch claim, so it was timed end to end on the real path —
+            file read, text extract, live Anthropic parse, shape, per-job skill
+            derivation against the real 566-entry catalog vocabulary. SIX RUNS, TWO
+            REAL FIXTURE CVs, 2026-08-25:
+
+                p2p-atul.docx    (56KB,  8,473 chars, 7 jobs)   12.3s · 9.0s · 11.3s
+                marelise.docx  (1.65MB,  8,914 chars, 8-17 jobs) 18.5s · 31.8s · 23.5s
+
+            ⚠ EVERY RUN UNDER 60s — worst 31.8s, 53% of the budget. SHIPPED.
+            ⚠ THE VARIANCE IS ENTIRELY THE MODEL CALL (18.3s -> 31.7s on identical
+            input) AND THE HEADROOM IS THINNER THAN IT LOOKS: the route declares
+            `maxDuration = 60` and `ai-provider.ts` sets `MODEL_TIMEOUT_MS = 55_000`,
+            so a slow call does not render a slow profile — it renders an error.
+            ⚠ IF THE MODEL OR THE PROMPT CHANGES, RE-TIME THIS SENTENCE.
           */}
+          <h2 className="mt-6 max-w-[1040px] text-wrap font-display text-[28px] font-bold leading-[1.14] tracking-[-0.5px] text-[#171e3e] min-[900px]:text-[34px] min-[900px]:leading-[38.76px]">
+            Upload your resume to our AI Platform (AIP) and create your Panameer
+            profile in under one minute.
+          </h2>
         </div>
       </section>
       <StepDisclosures
