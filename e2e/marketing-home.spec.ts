@@ -2052,25 +2052,41 @@ test.describe("talent walk 1 — the seller page and /'s macro section", () => {
   }) => {
     await page.goto("/hire-talent");
     /*
-      ⚠⚠ THE SEARCH FORM IS ASSERTED PRESENT, NOT ABSENT, AND `E014`'s OWN
-      CONDITION IS WHY. Scott: *"REMOVE the search box (unless it is a teaser to
-      see sample profiles)."* The brief judged that unmeetable; it is met.
-      Measured 2026-08-24: `/explore?mode=hire&q=oracle` returns 200 signed out and
-      renders "22 experts found" with real provider cards, and this form posts
-      exactly there. The `ComingSoon` routes the brief cited are all inside
-      `(app)` — signed-in surfaces a visitor never reaches.
+      ⚠⚠ RE-HOMED, NOT WEAKENED (`P1-J1-E025`). This asserted
+      `form[action="/explore"]` COUNT 1 — the search box — because `E014`'s
+      condition was *"REMOVE the search box (unless it is a teaser to see sample
+      profiles)"*, the box met that condition, and it was the hero's ONLY control.
+      The comment closed by saying the assertion flips *"only alongside a named
+      CTA"*.
 
-      ⚠ IT IS ALSO THE HERO'S ONLY CONTROL, and `check:app-shell`'s PUBLIC HERO
-      guard requires one: *"the hero offers nothing to click"*. Removing it turned
-      that guard red, and the alternatives were to weaken it or to invent a CTA
-      Scott has not named. Neither was acceptable.
+      ⚠ SCOTT NAMED ONE ON 2026-08-25. So the condition is spent and the proxy is
+      retired — and what replaces it is STRICTER, not looser: the old check would
+      have passed with a form plus any number of other controls, and it said nothing
+      about where the control goes. This asserts the hero offers EXACTLY ONE control
+      and names it.
 
-      ⚠ IF HE OVERRIDES AND WANTS IT GONE, this assertion flips — but only
-      alongside a named CTA, or the app-shell guard fails again.
+      ⚠ `check:app-shell`'s PUBLIC HERO guard still requires something clickable, and
+      this is now the thing that satisfies it. ⚠ THE SEARCH BOX'S ABSENCE IS ALSO
+      ASSERTED, so it cannot come back quietly alongside the button.
     */
+    const heroCard = page
+      .locator("h1")
+      .first()
+      .locator('xpath=ancestor::div[contains(@class,"rounded-[")][1]');
     await expect(
-      page.locator('form[action="/explore"]'),
-      "the hero's only control — see the note above before removing it",
+      heroCard.locator("form"),
+      "the search box was replaced by a named CTA — E025",
+    ).toHaveCount(0);
+    const controls = heroCard.locator(
+      "a[href], button, input:not([type=hidden])",
+    );
+    await expect(
+      controls,
+      "the hero offers exactly one control — check:app-shell requires one, E025 allows only this one",
+    ).toHaveCount(1);
+    await expect(
+      heroCard.getByRole("link", { name: "Create My Profile" }),
+      "and it is Scott's named CTA",
     ).toHaveCount(1);
     const text = await page.evaluate(() => document.body.innerText);
     expect(text, "the buyer eyebrow pill is back — E014").not.toContain(
@@ -2544,9 +2560,30 @@ test.describe("work walk 1 — the buyer's page", () => {
       await page.goto(url, { waitUntil: "load" });
       await page.waitForTimeout(1500);
 
+      /*
+        ⚠⚠ NARROWED FROM "NO MEDIA AT ALL" TO "NO SEQUENCE CLIP", AND THIS GUARD
+        PREDICTED ITS OWN CHANGE. Written 2026-08-24, its note said: *"A future
+        authorised hero clip SHOULD turn this red: that is the prompt to re-measure,
+        which is exactly what was missing the first time."* Scott authorised one on
+        2026-08-25 (`P1-J1-E028`) and it WAS re-measured, throttled, before shipping.
+
+        ⚠ THE INVARIANT THIS PROTECTS IS UNCHANGED: the four BELOW-THE-FOLD
+        `VideoSequence` clips must not load until approached. That was 10.63MB
+        (`P1-J1-E018`) and it is what made a hero clip affordable at all.
+
+        ⚠ COVERAGE WENT UP, NOT DOWN. The hero clip is not unguarded — §58 asserts
+        its NAME and its WIRE SIZE on all three pages that carry one, and that it is
+        inside the hero card. A full-size clip swapped in fails there.
+      */
+      const SEQUENCE_CLIPS = [
+        "learn.mp4",
+        "connect.mp4",
+        "consultation.mp4",
+        "get-paid.mp4",
+      ];
       expect(
-        [...clips],
-        `${url} fetched video before the reader was anywhere near it — E018`,
+        [...clips].filter((c) => SEQUENCE_CLIPS.includes(c)),
+        `${url} fetched a below-the-fold sequence clip before the reader was anywhere near it — E018`,
       ).toEqual([]);
 
       const srcsAtLoad = await page.evaluate(() =>
