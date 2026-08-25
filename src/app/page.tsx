@@ -11,6 +11,15 @@ import { Testimonials } from "@/components/marketing-home/Testimonials";
 import { ValueStack } from "@/components/marketing/sections/ValueStack";
 import { VideoSequence } from "@/components/marketing/VideoSequence";
 import { AppShots } from "@/components/marketing/sections/AppShots";
+import { ThreeWays } from "@/components/marketing/sections/ThreeWays";
+import { AiMatch } from "@/components/marketing/sections/AiMatch";
+import { TwoPains } from "@/components/marketing/sections/TwoPains";
+import { OmniChannel } from "@/components/marketing/sections/OmniChannel";
+import { GoDirectBionic } from "@/components/marketing/sections/GoDirectBionic";
+import { ProfileViz } from "@/components/marketing/sections/ProfileViz";
+import { FourBeats } from "@/components/marketing/sections/FourBeats";
+import { AiStrip } from "@/components/marketing/sections/AiStrip";
+import { ClosingCta } from "@/components/marketing/sections/ClosingCta";
 import { MarketingFooter } from "@/components/marketing/MarketingFooter";
 import { GetTheTalent } from "@/components/marketing-home/GetTheTalent";
 import { WorkTracker } from "@/components/marketing-home/WorkTracker";
@@ -318,6 +327,33 @@ export default function Home() {
         <ValueStack />
         <VideoSequence audience="buyer" />
         <AppShots page="hire" />
+        {/*
+          ── ⚠⚠ NINE MORE PARKED, FROM `/find-work` (`P1-J4-E023`) ────────────
+
+          Scott moved them; they keep the order they had on `/find-work`, after the
+          three `walk-fixes` parked from `/talent`. ⚠ A PARKING PLACE — not
+          re-worded, not re-styled, not woven into `/`'s narrative.
+
+          ⚠⚠ `VideoSequence` AND `AppShots` ARE NOT REPEATED HERE. `/find-work`
+          carried `audience="provider"` and `page="work"`; `/` already renders the
+          same two components as `audience="buyer"` and `page="hire"` three lines
+          above. ⚠ THE PROVIDER/WORK VARIANTS ARE NOW UNRENDERED ANYWHERE ON THE
+          SITE — stated in the brief report, not left to be found.
+
+          ⚠ SEVEN OF THESE ARE `audience="provider"`, WHICH IS WHY THEY LEFT THE
+          BUYER'S PAGE (`P1-J4-E005`). They are provider copy on a page that has no
+          single audience yet, which is a smaller problem than provider copy on a
+          page explicitly re-pointed at buyers.
+        */}
+        <ThreeWays />
+        <AiMatch />
+        <TwoPains />
+        <OmniChannel />
+        <GoDirectBionic />
+        <ProfileViz />
+        <FourBeats page="work" />
+        <AiStrip audience="provider" />
+        <ClosingCta audience="provider" />
       </div>
       {/*
         ── ⚠⚠ THE FOOTER SITS OUTSIDE `.pm-home`, AND THAT IS LOAD-BEARING ────

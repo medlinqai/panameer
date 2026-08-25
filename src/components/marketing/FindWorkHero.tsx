@@ -201,6 +201,13 @@ export async function FindWorkHero() {
                   `Go from Zero to Hero…and Stay There` is the one exception, and it
                   is not two sentences).
 
+                  ⚠⚠ REPLACED AGAIN 2026-08-25 (`P1-J4-E021`): `Save Money. Go
+                  Direct.` becomes `Go Direct. Single Contract. Save Money with No W2
+                  Risk.` — Scott's string, verbatim, and he expects it to wrap to two
+                  rows and improve the hero's spacing. ⚠ NO `<br>`: it wraps on its
+                  own, and the measured line count at three widths is in the report.
+                  ⚠ `W2` IS US-SPECIFIC AND IT IS HIS WORD. Shipped; flagged once.
+
                   ⚠ `Go Direct` IS THE PILL TEXT REMOVED FROM THIS HERO IN
                   `P1-J4-E009`. It comes back as the headline. Reported because it
                   reads as deliberate reuse — the phrase was never the problem, a
@@ -211,7 +218,7 @@ export async function FindWorkHero() {
                   half, `Go Direct` is the seller's. Reported, not resolved.
                 */}
                 <h1 className="font-display text-[34px] font-bold leading-[1.08] tracking-[-0.8px] min-[901px]:text-[46px] min-[901px]:tracking-[-1px]">
-                  Save Money. Go Direct.
+                  Go Direct. Single Contract. Save Money with No W2 Risk.
                 </h1>
 
                 {/*

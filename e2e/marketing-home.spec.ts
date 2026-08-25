@@ -2378,10 +2378,12 @@ test.describe("work walk 1 — the buyer's page", () => {
    *
    * ⚠ BOTH HALVES ASSERTED: a half-done move looks fine on whichever page you open.
    */
-  test("§46 ThreeWays and AiMatch are on /find-work and not on /talent", async ({
+  test("§46 ThreeWays and AiMatch are on / and not on /talent", async ({
     page,
   }) => {
-    await page.goto("/find-work");
+    /* ⚠ RE-HOMED BY `P1-J4-E023`: both moved from /find-work to / with nine others.
+       The invariant — they live on ONE page, not on /talent — is unchanged. */
+    await page.goto("/");
     await expect(page.locator("#three-ways")).toHaveCount(1);
     await expect(page.locator("#ai-match")).toHaveCount(1);
     await page.goto("/talent");
@@ -2497,8 +2499,10 @@ test.describe("work walk 1 — the buyer's page", () => {
     /* And the headline that legitimately carries the phrase now — E017. */
     await expect(
       hero.locator("h1"),
-      "Scott's own headline, double space normalised and terminal period added",
-    ).toHaveText("Save Money. Go Direct.");
+      "Scott's headline — E021 replaced E017's",
+      /* ⚠ REPLACED AGAIN BY `P1-J4-E021`, 2026-08-25. Scott's string; he expects it
+         to wrap to two rows and it lands on THREE at 1440 — reported, his call. */
+    ).toHaveText("Go Direct. Single Contract. Save Money with No W2 Risk.");
 
     expect(
       text,
@@ -2650,7 +2654,11 @@ test.describe("work walk 1 — the buyer's page", () => {
       (10.63MB) became `learn.mp4` + three `-hero` cuts (2.63MB), which is what
       made the move safe for `/`.
     */
-    for (const url of ["/find-work", "/"]) {
+    /* ⚠ `/find-work` DROPPED BY `P1-J4-E023`: its `VideoSequence` call site was
+       DELETED, not moved — `/` already renders the same component with
+       `audience="buyer"`, and two would have shipped. The provider variant now
+       renders nowhere. */
+    for (const url of ["/"]) {
       const clips = new Set<string>();
       const listener = (r: { url: () => string }) => {
         if (/\.mp4(\?|$)/.test(r.url())) clips.add(r.url().split("/").pop()!);

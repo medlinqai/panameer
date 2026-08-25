@@ -50,14 +50,40 @@ export function WorkSpine() {
             {WORK_SPINE_HEADING}
           </p>
           {/*
-            ⚠ NO TAGLINE UNDER THE EYEBROW. `/optimize` and `/learn` both promote a
-            sentence into a display headline here; Scott has not written one for Work.
-            Drafting it would put CC's words in the largest text on the page.
+            ── ⚠⚠ THE DISPLAY HEADLINE (`P1-J4-E022`) — ⚠ CC's DRAFT, NOT SCOTT'S ─
+
+            This slot carried a comment saying the tagline was deliberately left out
+            because he had not written one, and that drafting it *"would put CC's
+            words in the largest text on the page."* ⚠ THAT IS EXACTLY WHAT THIS IS,
+            and it ships because `/find-work` was the LAST of the five pages missing
+            it — `/optimize`, `/learn`, `/talent` and `/shop` all carry one.
+
+            ⚠ REPORTED VERBATIM AND FLAGGED so he can overwrite it in one line. It is
+            built from the five step labels and from his own new `<h1>`; nothing in it
+            is invented about the product.
+
+            ⚠⚠ IT PROMISES A `WORK ORDER`, WHICH IS STEP 3 AND HAS NO MODEL. Same
+            standing as every other claim in this spine — 0 of 5 steps are built
+            (`WORK_BUILD_STATE`). Outstanding parts gate PROMOTION, not the build; it
+            goes on the pre-launch list.
+
+            ⚠ `/optimize`'s TREATMENT, MIRRORED IN TAILWIND — 34px / 700 / #181E3C /
+            ls -0.5px / lh 38.76px / max-w 1040px / Comfortaa. `.pm-home` is out of
+            scope on this page, so the class is unreachable.
+
+            ⚠⚠ `text-wrap`, TAILWIND'S OWN UTILITY, NOT `[text-wrap:normal]`.
+            `.marketing-surface` balances every `h1`-`h4` (`P1-J3-E032`) and `normal`
+            is NOT a valid `text-wrap` value — the browser discards it and the
+            computed value stays `balance`. `text-wrap` emits `text-wrap: wrap`, which
+            is the one that works. Computed value in the report.
 
             ⚠ `pb-[80px]` MATCHES `/optimize`'s 81px tagline-to-row-1 gap, the value
-            measured for `P1-J0-E319` — so the fourth spine does not repeat the
-            spacing divergence `/learn` had.
+            measured for `P1-J0-E319`.
           */}
+          <h2 className="mt-6 max-w-[1040px] text-wrap font-display text-[28px] font-bold leading-[1.14] tracking-[-0.5px] text-ink min-[900px]:text-[34px] min-[900px]:leading-[38.76px]">
+            From a job description to a signed work order &mdash; on one
+            contract, with no employment risk.
+          </h2>
         </div>
       </section>
       <StepDisclosures

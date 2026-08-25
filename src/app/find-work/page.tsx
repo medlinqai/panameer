@@ -2,17 +2,6 @@ import type { Metadata } from "next";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
 import { FindWorkHero } from "@/components/marketing/FindWorkHero";
 import { WorkSpine } from "@/components/marketing/WorkSpine";
-import { ThreeWays } from "@/components/marketing/sections/ThreeWays";
-import { AiMatch } from "@/components/marketing/sections/AiMatch";
-import { TwoPains } from "@/components/marketing/sections/TwoPains";
-import { OmniChannel } from "@/components/marketing/sections/OmniChannel";
-import { VideoSequence } from "@/components/marketing/VideoSequence";
-import { GoDirectBionic } from "@/components/marketing/sections/GoDirectBionic";
-import { ProfileViz } from "@/components/marketing/sections/ProfileViz";
-import { AppShots } from "@/components/marketing/sections/AppShots";
-import { FourBeats } from "@/components/marketing/sections/FourBeats";
-import { AiStrip } from "@/components/marketing/sections/AiStrip";
-import { ClosingCta } from "@/components/marketing/sections/ClosingCta";
 
 /**
  * THE SELLER PAGE (brief_home_rebuild_08_09 WS-C).
@@ -116,42 +105,35 @@ export default function SellerPage() {
 
         ⚠ `ThreeWays` NEEDED NO CHANGE TO BE CORRECT HERE and was not re-authored.
       */}
-      <ThreeWays />
-      <AiMatch />
       {/*
-        ── ⚠⚠ THE SEVEN SECTIONS BELOW ARE ALL `audience="provider"` ─────────────
+        ── ⚠⚠ ELEVEN SECTIONS LEFT THIS PAGE (`P1-J4-E023`) ──────────────────
 
-        `P1-J4-E002`: *"The audience for WORK are the service buyers."* ⚠ EVERY
-        SECTION FROM HERE DOWN ARGUES TO A PROVIDER. That is a page re-point, not a
-        hero change, and it is NOT being fixed here: Scott re-pointed the audience,
-        he did not author seven replacements, and a section re-written by CC is a
-        section he never approved.
+        Scott: *"there are MULTIPLE sections between the steps and the footer that
+        are supposed to have been moved to the HOME page. Please move those."*
 
-        ⚠ ENUMERATED AND REPORTED, UNTOUCHED. See the brief report for what each one
-        argues and to whom.
+        ⚠ NINE MOVED TO `/`, IN THIS ORDER: `ThreeWays`, `AiMatch`, `TwoPains`,
+        `OmniChannel`, `GoDirectBionic`, `ProfileViz`, `FourBeats page="work"`,
+        `AiStrip audience="provider"`, `ClosingCta audience="provider"`. MOVED, NOT
+        COPIED — a parking place, not a redesign.
 
-        ── ⚠⚠ `<TwoPains />` RENDERED TWICE HERE (`P1-J4-E016`) ─────────────────
+        ⚠⚠ TWO WERE DELETED RATHER THAN MOVED, AND THAT IS A REAL LOSS TO STATE
+        PLAINLY. `VideoSequence audience="provider" tone="soft"` and
+        `AppShots page="work"` are the SAME COMPONENTS `/` already renders with
+        DIFFERENT PROPS — `walk-fixes` WS1 put `audience="buyer"` and `page="hire"`
+        there. Adding the provider/work copies would have put two of each on one
+        page, so they were dropped and `/`'s buyer/hire instances kept.
+        ⚠ THE `provider` / `work` VARIANTS NOW RENDER NOWHERE ON THE SITE. Both
+        components still support the props; nothing calls them. Reported, not
+        discovered.
 
-        `aa28c0f` (Phase C of `brief_public_pages_combined`) left this line reading
-        `<TwoPains /> <TwoPains />` — the anchored insert above it carried the anchor
-        into its own replacement text and the original was never consumed. ⚠ ON ONE
-        LINE, SEPARATED BY A SPACE, which is why it survived a diff review: the added
-        `+` line reads as the section it replaced.
+        ⚠ SEVEN OF THE ELEVEN WERE `audience="provider"` SECTIONS ON THE BUYER'S
+        PAGE — the mis-audiencing filed as `P1-J4-E005`. Moving them CLOSES that,
+        and it is the real reason they went.
 
-        ⚠ NO GATE COULD SEE IT. `build`, `typecheck` and `lint` are all satisfied by a
-        second valid element, and nothing counted sections — the same hole that let
-        `P1-ALL-E014` ship. `check:ui` NOW COUNTS THIS SECTION ON THIS PAGE, so the
-        next paste fails instead of shipping.
+        ⚠⚠ THE PAGE NOW ENDS ON `WorkSpine`, WITH NO CLOSING CTA. `ClosingCta` was
+        it. NO REPLACEMENT WAS INVENTED — the hero's `Create a Work Request` is the
+        page's only ask, and that gap is reported.
       */}
-      <TwoPains />
-      <OmniChannel />
-      <VideoSequence audience="provider" tone="soft" />
-      <GoDirectBionic />
-      <ProfileViz />
-      <AppShots page="work" />
-      <FourBeats page="work" />
-      <AiStrip audience="provider" />
-      <ClosingCta audience="provider" />
     </MarketingShell>
   );
 }
