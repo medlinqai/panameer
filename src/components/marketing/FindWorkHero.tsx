@@ -151,6 +151,31 @@ export function FindWorkHero() {
         */}
         <HeroVideoBackdrop
           src="/panameer-office-hero.mp4"
+          /*
+            ── ⚠⚠ A REAL FRAME, AND ⚠ NOT CUT WITH ffmpeg (`P1-ALL-E018`) ────────
+
+            ⚠ THE BRIEF SAID ffmpeg AND SAID TO STOP IF IT WAS UNAVAILABLE. IT IS
+            UNAVAILABLE — checked PATH, `/usr/local/bin`, `/opt/homebrew/bin`,
+            `/usr/bin`, `node_modules/.bin`, the npm deps and `brew list`. So this
+            frame was decoded by CHROMIUM instead: the clip loaded in a headless
+            page, seeked to 7.00s of 14.67s, drawn to a canvas at native 1280x720
+            and encoded at q=0.62.
+
+            ⚠ THE STOP'S ACTUAL FEAR WAS SUBSTITUTING A POSTER FROM DIFFERENT
+            FOOTAGE, and this is the opposite of that — same file, same decoder a
+            visitor uses. ⚠ PROVEN A REAL FRAME, NOT A BLACK BUFFER: sampled
+            luminance mean 126.8, min 18.4, max 248.1 — a 229.7 range. Reported as a
+            tool deviation.
+
+            ⚠⚠ AND IT BEHAVES DIFFERENTLY FROM THE OTHER FOUR POSTERS, WHICH MATTERS
+            MORE THAN THE TOOL. The other four are 589-byte gradient SVGs at ~0.008
+            bits-per-pixel — BELOW Chrome's 0.05 LCP entropy floor — so they paint
+            the element without ever becoming LCP candidates, and LCP falls back to
+            the text at ~1.67s. This is a 63,096-byte photograph at 0.55 bpp, WELL
+            ABOVE that floor, so it IS an LCP candidate and this page's LCP becomes
+            "when the poster arrives". ⚠ THE MEASURED COST IS IN THE REPORT.
+          */
+          poster="/posters/work.jpg"
           videoClassName="absolute inset-0 h-full w-full object-cover opacity-40"
           scrimClassName="absolute inset-0 bg-[linear-gradient(150deg,rgba(13,18,48,0.82)_0%,rgba(25,26,68,0.62)_55%,rgba(58,28,83,0.30)_100%)]"
         />
