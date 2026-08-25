@@ -2143,13 +2143,18 @@ test.describe("talent walk 1 — the seller page and /'s macro section", () => {
       `/hire-talent` composes its own hero; the shared one was not edited, so a
       change Scott made to one page cannot leak to pages he did not walk.
 
-      ⚠ THIS CHECK USED TO POINT AT `/find-work` AND WAS RE-HOMED BY `P1-J4-E001`,
-      which gave that page its own `FindWorkHero` too. `MarketingHero`'s remaining
-      callers are `/buy-services`, `/enterprise` and `/why-panameer`; `/enterprise`
-      is used here. ⚠ THE ASSERTION IS UNCHANGED IN SUBSTANCE — it still proves the
-      shared hero was REPLACED ON A PAGE rather than deleted.
+      ⚠ THIS ANCHOR HAS MOVED TWICE AS PAGES TOOK THEIR OWN HEROES: `/find-work`
+      (`P1-J4-E001`), then `/enterprise`, and now `/integrate` has `IntegrateHero`
+      (`P1-J0-E325`). ⚠ `MarketingHero` HAS EXACTLY ONE CALLER LEFT — `/why-panameer`
+      — so that is where the non-vacuity check has to live. THE ASSERTION IS
+      UNCHANGED IN SUBSTANCE: it still proves the shared hero was REPLACED ON A PAGE
+      rather than edited or deleted.
+
+      ⚠ WHEN `/why-panameer` TAKES ITS OWN HERO, `MarketingHero` HAS NO CALLERS AND
+      THIS CHECK BECOMES UNANCHORABLE. At that point the component is dead and the
+      right move is to retire both, not to find it a third home.
     */
-    await page.goto("/integrate");
+    await page.goto("/why-panameer");
     await expect(
       page.locator('form[action="/explore"]'),
       "MarketingHero was edited or deleted rather than left alone",

@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
-import { MarketingHero } from "@/components/marketing/MarketingHero";
+import { IntegrateHero } from "@/components/marketing/IntegrateHero";
+import { LogoRibbon } from "@/components/marketing-home/LogoRibbon";
 import { ErpPunchout } from "@/components/marketing/sections/ErpPunchout";
 import { ErpIntegration } from "@/components/marketing-home/ErpIntegration";
-import { ENTERPRISE_HERO } from "@/lib/brand";
 import "@/components/marketing-home/home.css";
 
 /**
@@ -59,30 +59,43 @@ export default function EnterprisePage() {
   return (
     <MarketingShell>
       {/*
-        ⚠⚠ THE HERO CLIP (`P1-J0-E324`, corrected id — `E323` is taken).
-        `consultation-hero.mp4`, 0.26MB, Scott's revised mapping 2026-08-25: the
-        advisory/ERP page gets the consultation footage.
+        ── ⚠⚠ WALK 1: THIS PAGE SAID `PLACEHOLDER` (`P1-J0-E325`) ─────────────
 
-        ⚠ THE `-hero` CUT, NEVER `consultation.mp4` (4.68MB). The full-size clips are
-        forbidden here; the 9.21MB one is what got a hero video rejected on
-        2026-08-24 (fast-3G LCP 1,036 -> 14,028ms), and localhost hid that entirely.
-        Faststart verified (`moov` before `mdat`), ~1.4s to download whole on fast 3G.
+        `/integrate` had never been walked. Its kicker read `PLACEHOLDER —
+        Enterprise` and its `<h1>` read `PLACEHOLDER — headline about ERP
+        integration goes here.` ⚠ IT IS `IntegrateHero` NOW — its own component
+        composing the same `HeroBox` + `HeroVideoBackdrop` + `HeroTwoUp` every other
+        pillar hero uses, so nothing about the SHAPE is re-implemented.
 
-        ⚠ `videoSrc` IS OPT-IN, so `/why-panameer` — the other caller — is untouched
-        and comes out byte-identical. Proven by hash and geometry, not inspected.
+        ⚠ `MarketingHero` IS UNTOUCHED AND STILL SERVES `/why-panameer`, which is
+        not in this brief and is proven byte-identical in the report. Its `videoSrc`
+        prop stays; this page simply no longer calls it.
 
-        ⚠⚠ AND THIS PAGE STILL SAYS `PLACEHOLDER`. Its kicker is `PLACEHOLDER —
-        Enterprise` and its `<h1>` is `PLACEHOLDER — headline about ERP integration
-        goes here.` PUTTING A CLIP BEHIND THAT IS THIS BRIEF'S INSTRUCTION AND IT IS
-        CORRECT — outstanding parts gate promotion, not the build — BUT NOBODY SHOULD
-        SCREENSHOT THIS PAGE AS FINISHED. `/enterprise` has never been walked.
+        ⚠ THE CLIP AND ITS POSTER MOVED ACROSS UNCHANGED — `consultation-hero.mp4`
+        (0.26MB) with `/posters/create.svg`. Losing the poster would have taken this
+        page's LCP from ~1.8s back to ~3.7s (`P1-ALL-E018`).
       */}
-      <MarketingHero
-        audience="buyer"
-        kicker={ENTERPRISE_HERO.kicker}
-        headline={ENTERPRISE_HERO.headline}
-        videoSrc="/consultation-hero.mp4"
-      />
+      <IntegrateHero />
+      {/*
+        ── ⚠⚠ THE RIBBON (`P1-J0-E326`) ────────────────────────────────────────
+
+        Scott: *"Let's bring back the ribbon on this page."* It rendered only on `/`.
+
+        ⚠ IT **MUST** SIT INSIDE A `.pm-home` WRAPPER. `LogoRibbon`'s markup is
+        `.logos` / `.wrap` / `.row` / `.co` — every one of those is a
+        `.pm-home`-prefixed rule in `home.css`, and this page is not otherwise inside
+        that scope. ⚠ MEASURED ON BOTH PAGES, NOT INSPECTED; the geometry is in the
+        report. This trap has caused five defects.
+
+        ⚠⚠ AND WHAT IT RENDERS IS SIX INVENTED COMPANY NAMES — Meridian, Northpeak,
+        Vantage, Cedarline, Halcyon, Brightpath. NOT CUSTOMERS, not logos, just words
+        beside generic SVG glyphs. A logo wall of non-customers is a traction claim.
+        ⚠ SHIPPED BECAUSE SCOTT ASKED FOR IT AND REPORTED PLAINLY so he can decide
+        whether it belongs here — or comes off `/` too.
+      */}
+      <div className="pm-home">
+        <LogoRibbon />
+      </div>
       {/* The scope for the ported stylesheet, around the payload only. */}
       <div className="pm-home">
         <ErpIntegration className="erpx-band" />
