@@ -2783,3 +2783,129 @@ test.describe("shop walk 1 — /buy-services", () => {
     ]);
   });
 });
+
+/**
+ * ── ⚠⚠ WHO LEARN IS SOLD TO — THREE SAVE, ONE MAKE (`P1-J0-E311`) ──────────
+ *
+ * Scott: *"3 can SAVE money, one can MAKE money."* ⚠ THE SPLIT IS THE SECTION'S
+ * WHOLE IDEA and the brief forbids flattening it into four identical cards — so
+ * the assertion is not "four rows exist", it is "four rows and EXACTLY ONE of them
+ * is the MAKE side". A fourth SAVE card, or a second MAKE row, is the failure this
+ * catches.
+ */
+test.describe("home — the four audiences LEARN is sold to", () => {
+  test("§56 / renders four audience rows, exactly one on the MAKE side", async ({
+    page,
+  }) => {
+    await page.goto("/");
+
+    const rows = page.locator("[data-aud-side]");
+    await expect(rows, "four parties, no more and no fewer").toHaveCount(4);
+
+    const sides = await rows.evaluateAll((els) =>
+      els.map((e) => e.getAttribute("data-aud-side")),
+    );
+    expect(
+      sides.filter((s) => s === "make").length,
+      "exactly one party MAKES money — three SAVE",
+    ).toBe(1);
+    expect(
+      sides.filter((s) => s === "save").length,
+      "the other three SAVE",
+    ).toBe(3);
+
+    /*
+      ⚠ THE MAKE ROW MUST NOT BE INSIDE THE SAVE GRID. That is how "three, then one
+      that is different" gets quietly flattened into a 2×2 — the markup would still
+      report 4 rows and 1 make, and the idea would be gone.
+    */
+    const flattened = await page.evaluate(() => {
+      const make = document.querySelector('[data-aud-side="make"]');
+      return !!make?.closest(".aud-grid");
+    });
+    expect(
+      flattened,
+      "the MAKE row was moved into the SAVE grid — the split is structural, not a chip",
+    ).toBe(false);
+
+    /*
+      ⚠⚠ THE RETAINER STOP, ASSERTED. `1-2 hours a month` and any retainer price
+      are absent because NOTHING is built — zero `Conversation`/`Message` models, no
+      booking, no scheduling, and `/messages` ships a disabled composer
+      (`P1-J3-E014`). This is the half of the row that could not ship, so it is the
+      half a future edit is most likely to restore.
+    */
+    const section = await page
+      .locator("section.sd")
+      .filter({ hasText: "One can make money" })
+      .first()
+      .innerText();
+    for (const banned of [
+      "1-2 hours",
+      "1–2 hours",
+      "hours a month",
+      "retainer",
+      "/month",
+      "per month",
+    ]) {
+      expect(
+        section.toLowerCase(),
+        `the platform neither sells, schedules nor bills a retainer — "${banned}" cannot ship here`,
+      ).not.toContain(banned.toLowerCase());
+    }
+
+    /*
+      ⚠ AND NO CERTIFICATE CLAIM. Read live 2026-08-24: 8 `LearnAssessment` rows,
+      ALL `DRAFT` — 0 of 23 paths can be tested, so no certificate can be earned
+      today (`P1-J3-E030`). The three SAVE lines lean on "free", which IS
+      unconditionally true; a certificate line would not be.
+    */
+    expect(
+      section.toLowerCase(),
+      "0 of 23 paths have a sittable test — nothing here may promise a certificate",
+    ).not.toContain("certif");
+
+    /* ⚠ NO INVENTED SAVINGS FIGURE. The brief forbids one for all three SAVE
+       parties, and the simplest guard is that the section carries no currency at
+       all. */
+    expect(
+      section,
+      "no savings figure may be invented for any of the three SAVE parties",
+    ).not.toMatch(/[$€£]\s?\d/);
+  });
+
+  /**
+   * ⚠ THE SELF-IDENTIFICATION TEST, ENFORCED (`positioning_decision.md`,
+   * 2026-08-24). Two of Scott's four party names FAIL it and a third is flagged,
+   * with the instruction *"FIX BEFORE THE HOME SECTION IS BUILT"* attached to this
+   * row. The labels shipped are the test's own replacements — so the guard is that
+   * the failing ones never come back as page copy.
+   *
+   * ⚠ THEY REMAIN CORRECT AS INTERNAL VOCABULARY. This asserts the rendered
+   * SECTION, not the codebase.
+   */
+  test("§57 no audience label is Panameer's word for the audience", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    const section = (
+      await page
+        .locator("section.sd")
+        .filter({ hasText: "One can make money" })
+        .first()
+        .innerText()
+    ).toLowerCase();
+
+    for (const jargon of ["external contact", "end-user", "end user"]) {
+      expect(
+        section,
+        `"${jargon}" is a label from inside the system — nobody uses it about themselves`,
+      ).not.toContain(jargon);
+    }
+    /* `student` is the flagged-not-failed one: nobody here calls themselves one. */
+    expect(
+      section,
+      '"student" as an AUDIENCE LABEL — Scott\'s own row-4 sentence may say it, a heading may not',
+    ).not.toMatch(/^\s*\w*students?\b/m);
+  });
+});

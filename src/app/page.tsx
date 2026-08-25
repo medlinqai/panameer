@@ -5,6 +5,7 @@ import { OneWayTwoWay } from "@/components/marketing-home/OneWayTwoWay";
 import { LogoRibbon } from "@/components/marketing-home/LogoRibbon";
 import { MethodologyRing } from "@/components/marketing-home/MethodologyRing";
 import { CapabilityFramework } from "@/components/marketing-home/CapabilityFramework";
+import { FourAudiences } from "@/components/marketing-home/FourAudiences";
 import { TalentTeaser } from "@/components/marketing-home/TalentTeaser";
 import { Testimonials } from "@/components/marketing-home/Testimonials";
 import { HomeFooter } from "@/components/marketing-home/HomeFooter";
@@ -181,6 +182,13 @@ export default function Home() {
           it belongs AFTER this one. See `OneWayTwoWay.tsx`'s header.
         */}
         <OneWayTwoWay />
+        {/*
+          ⚠ `FourAudiences` (`E311`) IS NO LONGER PARKED and renders BELOW, after
+          `MethodologyRing` — see the note at its render site for why it is not
+          here. This comment's old claim that it "belongs AFTER this one" still
+          holds; "after" turned out to mean after the Optimize block, not
+          immediately after this section.
+        */}
         <GetTheTalent />
         <WorkTracker />
 
@@ -260,6 +268,35 @@ export default function Home() {
           `MethodologyRing` above are becoming link targets under E270/E272 and
           are deliberately untouched.
         */}
+        {/*
+          ── ⚠⚠ WHO LEARN IS SOLD TO (`P1-J0-E311`), UNPARKED 2026-08-25 ────────
+
+          It goes HERE, and the placement is a judgement worth recording. Three
+          candidates:
+
+            · directly after `OneWayTwoWay` — where that file's own comment guessed
+              it would land. ⚠ REJECTED: it pushes the Optimize argument down, and
+              `P1-J0-E297`'s selection of treatment `B` rests on ONE property Scott
+              said he did not want to lose — *"the assessment stops being the
+              loudest thing on the page around band three."* Two audience sections
+              back to back before `GetTheTalent` spends that.
+            · at the very bottom, after `Testimonials`. ⚠ REJECTED: the only Learn
+              content on `/` should not be below the closing proof.
+            · HERE — after `MethodologyRing` closes the Optimize argument and
+              before `TalentTeaser` opens the Talent one. ⚠ CHOSEN: it is the seam,
+              and the MAKE row hands directly into the talent pitch.
+
+          ⚠ IT IS THE ONLY LEARN CONTENT ON `/`. There is no Learn pillar row yet —
+          `P1-J0-E297` selects treatment `B` for six of them and NONE EXIST. That is
+          survivable because this section carries its own `Learn` eyebrow, but see
+          the component header: when the pillar row lands it will carry a CONDENSED
+          Learn value summary and this is a second one, which is `E162`/`E242`'s
+          shape. ⚠ THE TWO MUST BE DESIGNED TOGETHER. Reported, not decided.
+
+          ⚠ ONLY ROW 4's SENTENCE IS SCOTT'S. The other three, all three labels and
+          the limit line are CC's drafts, marked at their sites.
+        */}
+        <FourAudiences />
         <TalentTeaser />
         <Testimonials />
         <HomeFooter />
