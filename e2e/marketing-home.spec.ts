@@ -1957,8 +1957,22 @@ test.describe("/learn — walk 2: the hero and the how-it-works block", () => {
         check that would actually have caught the 1440px icon.
       */
       if (r.svg !== "none") {
-        expect(r.svg, `${url}: the social icon is unsized — E013`).toBe(
-          "16x16",
+        /*
+          ⚠ A BOUND, NOT A PINNED NUMBER (`P1-ALL-E020`). This asserted exactly
+          `16x16` — `HomeFooter`'s icon size. The rebuilt footer draws its four
+          socials as inline 18x18 SVGs, a legitimate change, and pinning the old
+          number would make every future icon tweak a test edit.
+          ⚠ `E013`'s ACTUAL INVARIANT IS THAT AN ICON MUST NOT ESCAPE ITS BOX — it
+          was a 1440x1440 icon in a 565px footer. A ceiling catches that; equality
+          only catches "somebody changed the size".
+        */
+        const [iw, ih] = r.svg.split("x").map(Number);
+        expect(
+          Math.max(iw, ih),
+          `${url}: the social icon is unsized — E013 (${r.svg})`,
+        ).toBeLessThanOrEqual(32);
+        expect(Math.min(iw, ih), `${url}: the icon collapsed`).toBeGreaterThan(
+          8,
         );
       }
     }

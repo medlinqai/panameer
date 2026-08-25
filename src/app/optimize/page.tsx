@@ -76,8 +76,22 @@ export default function OptimizePage() {
         {/* ⚠ Heading and lede only — the card strip is E242. See above. */}
         <HowItWorks showStrip={false} />
         <OptimizeSteps />
-        <MarketingFooter />
       </div>
+      {/*
+        ── ⚠⚠ THE FOOTER SITS OUTSIDE `.pm-home`, AND THAT IS LOAD-BEARING ────
+
+        `P1-ALL-E020` measured it: inside the wrapper, `home.css` repainted the
+        footer's inherited colour from `#cfc7da` to `#aeb4cf`, and the footer stood
+        910px tall on five public pages and 1008px on this one. ⚠ ONE COMPONENT
+        RENDERING IN TWO COLOURS AND TWO HEIGHTS IS EXACTLY WHAT "one footer, every
+        public page" WAS MEANT TO END.
+
+        ⚠ IT IS THE MIRROR OF `P1-ALL-E013`, WHICH `HomeFooter` FIXED BY *ADDING*
+        `.pm-home`. That footer NEEDED the scope because its styles live in
+        `home.css`; this one is Tailwind and has to ESCAPE it. Same trap, opposite
+        ends.
+      */}
+      <MarketingFooter />
     </>
   );
 }

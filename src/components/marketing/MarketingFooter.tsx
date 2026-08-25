@@ -1,149 +1,222 @@
 import Link from "next/link";
 import Image from "next/image";
 import { BRAND_DESCRIPTOR } from "@/lib/brand";
+import { FOOTER_LEGAL } from "@/components/marketing/brand";
 import {
-  FOOTER_ASSESSMENT,
-  FOOTER_GROUPS,
-  FOOTER_LEGAL,
-  type FooterEntry,
-} from "@/components/marketing/brand";
-
-/*
-  ⚠ THE LINK TABLE LIVES IN `brand.tsx`, BESIDE `MARKETING_NAV` (E118).
-
-  This footer and `HomeFooter` used to hold two separate tables that disagreed —
-  the same label resolving to two different pages. The shells stay different
-  because the visual treatments genuinely are (this one is Tailwind on `bg-ink`;
-  the home one is the ported `.pm-home` stylesheet with socials). The DATA is
-  shared, so they cannot drift again.
-
-  Absolute paths, never bare hashes: a `#pricing` resolves against whatever page
-  you are on, which after the rebuild is usually not the page holding the section.
-*/
+  FOOTER_SOCIALS,
+  FOOTER_VIDEO_COLUMNS,
+} from "@/components/marketing/footer-videos";
 
 /**
- * ⚠ NO `href` MEANS NO ANCHOR. Not a disabled link, not `href="#"` — plain text
- * with a muted marker. The point of listing what is not built is that a visitor
- * can tell it apart from what is; a link that 404s or goes nowhere is a worse
- * answer than an honest label.
+ * ── ⚠⚠ THE FOOTER, REBUILT TO SCOTT'S LAYOUT (`P1-ALL-E020`) ────────────────
+ *
+ * ONE component, SEVEN public pages — `/`, `/learn`, `/optimize`, `/talent`,
+ * `/find-work`, `/shop`, `/integrate` (plus `/why-panameer` and `/explore`).
+ * `HomeFooter` is retired and stays on disk unimported (`E164`).
+ *
+ * ⚠ THIS IS A REBUILD, NOT A CONTENT SWAP. The structure INVERTS from what
+ * `brief_walk_fixes` WS9 shipped, and the brief's own table is why:
+ *
+ *     brand block   was ABOVE the columns, top-left   ->  BELOW them, own band
+ *     columns       five dense nav lists              ->  three wide video columns
+ *     headings      tiny letterspaced ALL-CAPS        ->  sentence case, display face
+ *     TBD badges    present                           ->  GONE ENTIRELY
+ *     About/etc     a stacked column of links         ->  one right-aligned pipe row
+ *     socials       one YouTube button                ->  a row of inline SVG icons
+ *     legal         a small line in the body          ->  a full-width bar, own surface
+ *
+ * ⚠ THE FIVE WS9 SECTIONS ARE RETIRED — SELLER/BUYER/Panameer/AI Platform
+ * Solutions. `FOOTER_GROUPS` in `brand.tsx` is now unreferenced by this file;
+ * it is left in place rather than deleted, because `E164` and because nothing
+ * else in this brief owns that constant.
+ *
+ * ── ⚠ THE TYPE SCALE IS THE SITE'S, WITH ONE SUBSTITUTION, REPORTED ────────
+ *
+ * The footer's own sizes were 14.5px (rows), 13px (legal) and 10.5px (the TBD
+ * marker, now gone). Scott's column headings are *"sentence case, display face,
+ * roughly body-size-up"* and the footer had NOTHING above 14.5px.
+ * ⚠ SO THE HEADINGS USE `17px`, WHICH IS THE SITE'S EXISTING NEXT SIZE UP
+ * (`/optimize`'s hero CTA, `/learn`'s sub-copy at ≤900). NO NEW SIZE WAS
+ * INVENTED. Reported as a substitution.
+ *
+ * ── ⚠⚠ COLOUR: NOT TOUCHED, EXCEPT ONE TEXT COLOUR THE GATE FORCED ─────────
+ *
+ * The surface stays `bg-ink` = `#181E3C`, the brand deck's navy, landed in
+ * `7668110`. Scott: *"the color still looks wrong, not my slate color."* ⚠ THE
+ * BRIEF SAYS REPORT, NOT REPAINT, and the computed hex of all three bands is in
+ * the report.
+ *
+ * ⚠ THE ONE EXCEPTION IS A TEXT COLOUR, AND THE BRIEF'S OWN AA GATE IS WHY.
+ * `#8a8199` — the legal row — measures **4.40:1** on the navy and AA needs 4.5.
+ * It is a PRE-EXISTING failure, 0.10 short, and shipping it would fail the gate
+ * this brief sets. It becomes `#9a92a8` (**5.47:1**), the smallest step in the
+ * same hue that passes. ⚠ THE BACKGROUND IS UNCHANGED; only this one foreground
+ * moved, and it is reported.
  */
-function FooterRow({ entry }: { entry: FooterEntry }) {
-  if (!entry.href) {
-    return (
-      <span className="my-1.5 block text-[14.5px] text-[#8a8199]">
-        {entry.label}
-        <span className="ml-1.5 align-[1px] text-[10.5px] font-bold uppercase tracking-[0.06em] text-[#6f6880]">
-          TBD
-        </span>
-      </span>
-    );
-  }
-  /*
-    ⚠ OFF-SITE LINKS ARE PLAIN `<a>`, NOT `<Link>`, and they carry
-    `rel="noopener noreferrer"` with `target="_blank"` (WS9). `next/link` is for
-    in-app navigation; handing it an absolute external URL works but prefetches
-    and client-routes something that is not ours.
-  */
-  if (entry.external) {
-    return (
-      <a
-        href={entry.href}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="my-1.5 block text-[14.5px] text-[#cfc7da] hover:text-white"
-      >
-        {entry.label}
-      </a>
-    );
-  }
+
+/** ⚠ `currentColor`, so the icon recolours with the link on hover. */
+function SocialIcon({ path }: { path: string }) {
   return (
-    <Link
-      href={entry.href}
-      className="my-1.5 block text-[14.5px] text-[#cfc7da] hover:text-white"
+    <svg
+      viewBox="0 0 24 24"
+      width="18"
+      height="18"
+      fill="currentColor"
+      aria-hidden
+      focusable="false"
     >
-      {entry.label}
-    </Link>
+      <path d={path} />
+    </svg>
   );
 }
 
 /*
-  ⚠ FIVE SECTIONS + LEGAL = SIX COLUMNS (WS9). It was seven; `Hire`, `Work` and
-  `Learn` were removed for duplicating the header, and Scott's five replace the
-  other three. ⚠ THE LEGAL COLUMN AND THE BOTTOM COPYRIGHT ROW ARE UNTOUCHED —
-  Scott: *"i like the row on the bottom for legal...where the copyright is."*
+  ⚠ THE RIGHT-HAND ROW. `Why Panameer` is the ONLY one of the four with a page;
+  the other three render as plain text, which is the footer's standing rule —
+  no href, no anchor. ⚠ NO `TBD` MARKER: these sit inline in a pipe-separated
+  row, where a badge per item would be unreadable.
 */
-const COLS = [...FOOTER_GROUPS, { title: "Legal", entries: FOOTER_LEGAL }];
+const BAND2_LINKS: { label: string; href?: string }[] = [
+  { label: "About Us" },
+  { label: "Contact Us" },
+  { label: "Why Panameer", href: "/why-panameer" },
+  { label: "Pricing" },
+];
 
 export function MarketingFooter() {
   return (
-    <footer className="mt-10 bg-ink py-12 text-[#cfc7da]">
-      <div className="mx-auto max-w-[1180px] px-6">
+    <footer className="mt-10 bg-ink text-[#cfc7da]">
+      {/* ══ BAND 1 — the three video columns, the footer's dominant element ══ */}
+      <div className="mx-auto max-w-[1180px] px-6 pb-11 pt-12">
         {/*
-          WS-7 — THE TAGLINE UNDER THE WORDMARK IS GONE. It was
-          BRAND_DESCRIPTOR, and the copyright row eleven lines below prints the
-          same sentence — the footer said the same thing twice, forty pixels
-          apart. The copyright row keeps it; that is the line people actually
-          read last.
+          ⚠ GENEROUS GUTTERS ON PURPOSE (`gap-x-14`). Scott's mockup spreads three
+          columns across the full measure; this is not a dense nav block. Three at
+          `min-[901px]` — the site's breakpoint, not Tailwind's — two above 640, one
+          below.
 
-          AND THE GRID IS EVEN NOW. The wordmark sat in a 200px column of its
-          own with the tagline under it, and once the tagline went it was a
-          32px-tall logo over a large gap while five link columns crowded the
-          right. The mark moves to its own row above them, so the five columns
-          — Legal included, rather than orphaned — share the width equally.
+          ⚠ BOTH TIERS ARE ARBITRARY `min-[]` VARIANTS AND THAT IS REQUIRED, NOT A
+          STYLE CHOICE. `check:app-shell` GUARD 3 forbids a named breakpoint and an
+          arbitrary one competing for the same property, and it caught the first cut
+          (`sm:grid-cols-2` against `min-[901px]:grid-cols-3`) — `sm` is 640px, so
+          the two tiers were fighting over `grid-cols` in different systems.
         */}
-        <Image
-          src="/brand/panameer-new-on-dark.png"
-          alt="Panameer"
-          width={529}
-          height={134}
-          className="h-8 w-auto"
-        />
-        {/*
-          ── ⚠⚠ THE TAGLINE, VERBATIM (WS9) ──────────────────────────────────
-
-          It replaces `Learn. Connect. Create. Settle. Together.` — the four-verb
-          lockup, whose public call sites were removed by `P1-J1-E019` and
-          `P1-J4-E009`. ⚠ `BRAND_BADGE_SHORT` STAYS IN `brand.ts`; only this site
-          changes.
-
-          ⚠ EN DASH (–), NOT A HYPHEN, AND `&` NOT `and` — both as Scott typed it.
-          ⚠ THE COMMENT ABOVE THIS BLOCK USED TO SAY THE TAGLINE WAS REMOVED
-          because the copyright row printed the same sentence. That is no longer
-          true: this is a DIFFERENT sentence from `BRAND_DESCRIPTOR`, so the footer
-          no longer says one thing twice.
-        */}
-        <p className="mb-9 mt-3 max-w-[560px] text-[14.5px] leading-[1.5] text-[#cfc7da]">
-          The home of Oracle application &amp; AI specialists &ndash; and the
-          businesses that need them.
-        </p>
-
-        {/*
-          SEVEN GROUPS, so the grid goes to four columns at `lg:` rather than
-          five — seven across a 1180px row would leave each one too narrow for
-          "Post a Work Request" to sit on a line.
-        */}
-        <div className="grid grid-cols-2 gap-x-8 gap-y-10 sm:grid-cols-3 lg:grid-cols-4">
-          {COLS.map((col) => (
+        <div className="grid grid-cols-1 gap-x-14 gap-y-10 min-[640px]:grid-cols-2 min-[901px]:grid-cols-3">
+          {FOOTER_VIDEO_COLUMNS.map((col) => (
             <div key={col.title}>
-              <b className="mb-2.5 block text-white">{col.title}</b>
-              {col.entries.map((e) => (
-                <FooterRow key={e.label} entry={e} />
-              ))}
+              <h2 className="mb-3.5 font-display text-[17px] font-bold leading-[1.3] text-white">
+                {col.title}
+              </h2>
               {/*
-                ⚠ THE ASSESSMENT HANGS UNDER THE BUYER COLUMN NOW. It used to hang
-                under `Learn`, and that column is gone (WS9). It is the free front
-                door and `E119` exists because two links labelled for the
-                assessment both missed it — so it keeps a home rather than being
-                dropped with the column.
+                ⚠ A `<ul>`, AND EVERY ITEM IS A `<li>` OF PLAIN TEXT. No anchors
+                anywhere in this band — `FooterVideoColumn` has no `href` field, so
+                a destination cannot be added without changing the type.
               */}
-              {col.title === "Service BUYER Features" && (
-                <FooterRow entry={FOOTER_ASSESSMENT} />
-              )}
+              <ul>
+                {col.items.map((item) => (
+                  <li
+                    key={item}
+                    className="my-1.5 text-[14.5px] leading-[1.45]"
+                  >
+                    {item}
+                  </li>
+                ))}
+              </ul>
             </div>
           ))}
         </div>
-        <div className="mt-[26px] text-[13px] text-[#8a8199]">
-          © 2026 Panameer · {BRAND_DESCRIPTOR}
+      </div>
+
+      {/* ══ BAND 2 — brand block left, the four-item row right ══════════════ */}
+      {/* ⚠ DIVIDED FROM BAND 1 BY A RULE, per the brief's "each visually separated". */}
+      <div className="border-t border-white/10">
+        <div className="mx-auto flex max-w-[1180px] flex-col gap-8 px-6 py-9 min-[901px]:flex-row min-[901px]:items-start min-[901px]:justify-between">
+          <div>
+            <Image
+              src="/brand/panameer-new-on-dark.png"
+              alt="Panameer"
+              width={529}
+              height={134}
+              className="h-8 w-auto"
+            />
+            {/* ⚠ EN DASH and `&`, both as Scott typed them. */}
+            <p className="mt-3 max-w-[560px] text-[14.5px] leading-[1.5]">
+              The home of Oracle application &amp; AI specialists &ndash; and
+              the businesses that need them.
+            </p>
+            {/*
+              ⚠ THE ICON ROW REPLACES THE SINGLE YOUTUBE BUTTON — both do not ship.
+              ⚠ `aria-label` ON EVERY ONE: an icon-only link with no accessible
+              name is a `check:ui` failure, not a cosmetic issue.
+              ⚠ NO WHATSAPP — no destination given. Asked for in the report.
+            */}
+            <div className="mt-4 flex items-center gap-4">
+              {FOOTER_SOCIALS.map((s) => (
+                <a
+                  key={s.label}
+                  href={s.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={s.label}
+                  className="text-[#cfc7da] transition-colors hover:text-white"
+                >
+                  <SocialIcon path={s.path} />
+                </a>
+              ))}
+            </div>
+          </div>
+
+          {/*
+            ⚠ ONE HORIZONTAL PIPE-SEPARATED ROW, RIGHT-ALIGNED, baseline-aligned
+            with the logo — not a stacked column. The separator is a real `<span>`
+            rather than a CSS pseudo-element so it can be `aria-hidden`.
+          */}
+          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-2 text-[14.5px] min-[901px]:justify-end">
+            {BAND2_LINKS.map((e, i) => (
+              <span key={e.label} className="flex items-center gap-x-2.5">
+                {i > 0 && (
+                  <span aria-hidden className="text-white/40">
+                    |
+                  </span>
+                )}
+                {e.href ? (
+                  <Link href={e.href} className="hover:text-white">
+                    {e.label}
+                  </Link>
+                ) : (
+                  <span>{e.label}</span>
+                )}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ══ BAND 3 — the legal bar. ⚠ CONTENT AND LINKS UNCHANGED ═══════════ */}
+      {/*
+        ⚠ ITS OWN SURFACE, EDGE TO EDGE — `bg-black/20` over the navy, which is the
+        "slightly different surface" treatment the brief allows and which reads as
+        clearly not part of band 2. ⚠ THE COMPUTED HEX IS IN THE REPORT.
+        ⚠ `2026 Panameer`, NO `©` GLYPH, first item. Scott's wording.
+        ⚠ ITEMS SPREAD ACROSS THE WIDTH, not bunched left.
+      */}
+      <div className="bg-black/20">
+        <div className="mx-auto flex max-w-[1180px] flex-wrap items-center justify-between gap-x-6 gap-y-2 px-6 py-4 text-[13px] text-[#9a92a8]">
+          <span>2026 Panameer</span>
+          {FOOTER_LEGAL.map((e) =>
+            e.href ? (
+              <Link key={e.label} href={e.href} className="hover:text-white">
+                {e.label}
+              </Link>
+            ) : (
+              <span key={e.label}>{e.label}</span>
+            ),
+          )}
+          {/*
+            ⚠ `BRAND_DESCRIPTOR` STAYS IN THE LEGAL BAR. It was the second half of
+            the old copyright line and Scott said he likes this row; dropping it
+            would be a content change to the one band he asked to leave alone.
+          */}
+          <span className="text-[#9a92a8]">{BRAND_DESCRIPTOR}</span>
         </div>
       </div>
     </footer>
