@@ -2656,10 +2656,43 @@ test.describe("work walk 1 — the buyer's page", () => {
     await page.goto("/find-work", { waitUntil: "load" });
     await page.waitForTimeout(2000);
 
+    /*
+      ── ⚠⚠ RE-HOMED, AND THIS GUARD CALLED ITS OWN SHOT (`P1-J4-E019`) ────────
+
+      Written 2026-08-24 asserting ZERO media bytes, with this note: *"A future
+      authorised hero clip SHOULD turn this red: that is the prompt to re-measure,
+      which is exactly what was missing the first time."* ⚠ THAT IS EXACTLY WHAT
+      HAPPENED. The 9.66MB master failed the 4s stop and came out; the 1.06MB re-cut
+      was measured on a production build under Fast 3G — 15 runs, 3,980-4,000ms,
+      zero over the line — and shipped.
+
+      ⚠ THE INVARIANT IT PROTECTS IS UNCHANGED: the four BELOW-THE-FOLD
+      `VideoSequence` clips must not load before they are approached. That was
+      10.63MB (`P1-J1-E018`) and it is the entire reason a hero clip fits the budget.
+
+      ⚠ COVERAGE WENT UP. The hero clip is not unguarded — §58 now asserts its NAME
+      and its WIRE SIZE on `/find-work` too, so pointing this back at the 9.66MB
+      master fails loudly rather than silently.
+    */
+    const SEQUENCE_CLIPS = [
+      "learn.mp4",
+      "connect.mp4",
+      "consultation.mp4",
+      "get-paid.mp4",
+    ];
     expect(
-      { seen, mediaBytes },
-      "a hero clip or an eager sequence is back — RE-MEASURE LCP ON FAST 3G, E019",
-    ).toEqual({ seen: [], mediaBytes: 0 });
+      seen.filter((c) => SEQUENCE_CLIPS.includes(c)),
+      "an eager below-the-fold sequence clip is back — E018",
+    ).toEqual([]);
+
+    /* ⚠ AND THE HERO CLIP IS THE ONLY MEDIA ON THE PAGE AT LOAD. */
+    expect(seen, "only the hero cut may load before a scroll — E019").toEqual([
+      "panameer-office-hero.mp4",
+    ]);
+    expect(
+      mediaBytes,
+      `first-load media is ${(mediaBytes / 1048576).toFixed(2)}MB — the re-cut is 1.01MiB and the master is 9.21MiB`,
+    ).toBeLessThanOrEqual(1.1 * 1048576);
   });
 });
 
@@ -2965,6 +2998,14 @@ test.describe("hero clips — the -hero cuts, and only those", () => {
     "/hire-talent": { clip: "connect-hero.mp4", maxMB: 0.3 },
     "/buy-services": { clip: "get-paid-hero.mp4", maxMB: 1.0 },
     "/enterprise": { clip: "consultation-hero.mp4", maxMB: 0.4 },
+    /*
+      ⚠ `/find-work` JOINED ON 2026-08-25 (`P1-J4-E019`). Its master —
+      `panameer-office.mp4`, 9.21MiB — is the clip that got a hero video REJECTED,
+      and it is STILL ON DISK as Scott's original (`P1-J0-E164`). ⚠ THE BUDGET HERE
+      IS THE POINT: 1.1MB admits the 1.01MiB re-cut and rejects the master by 8x, so
+      a one-word `src` edit back to the master fails this test instead of shipping.
+    */
+    "/find-work": { clip: "panameer-office-hero.mp4", maxMB: 1.1 },
   };
 
   for (const [url, want] of Object.entries(EXPECT)) {

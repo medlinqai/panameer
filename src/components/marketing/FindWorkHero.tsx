@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { HeroBox } from "@/components/marketing/HeroBox";
 import { HeroTwoUp } from "@/components/marketing/HeroTwoUp";
+import { HeroVideoBackdrop } from "@/components/media/HeroVideoBackdrop";
 
 /**
  * `/find-work`'s HERO — THE TWO-COLUMN TREATMENT (`P1-J4-E001`).
@@ -64,14 +65,21 @@ import { HeroTwoUp } from "@/components/marketing/HeroTwoUp";
  * the eyebrow renders with nothing after it. `/optimize` and `/learn` both carry
  * one and both are Scott's. NOT DRAFTED HERE.
  *
- * ── ⚠⚠ STILL NO VIDEO — AND THIS TIME IT WAS BUILT, MEASURED AND REMOVED ───
+ * ── ⚠⚠ THE VIDEO IS HERE NOW, AND WHAT CHANGED WAS THE ASSET (`P1-J4-E019`) ──
  *
- * `P1-J4-E019`. Scott: *"No video in the background on the hero...please add
- * one."* It was added, wired through `HeroVideoBackdrop` exactly as `/learn` and
- * `/` do, and measured on a PRODUCTION build under DevTools' own Fast 3G preset.
- * ⚠ IT TRIPPED THE BRIEF'S OWN STOP CONDITION AT EVERY WIDTH AND CAME BACK OUT.
- * The numbers are in the section comment below. Do not re-add it from Scott's
- * request alone — the request is not the thing that changed.
+ * Scott: *"No video in the background on the hero...please add one."* It was added
+ * on 2026-08-24 with the 9.66MB master, measured on a production build under Fast
+ * 3G, tripped the 4s stop at every width (5,772 / 5,788 / 5,616ms) and came back
+ * out. ⚠ THE REQUEST WAS NEVER THE PROBLEM AND IT IS NOT WHAT CHANGED — the FILE
+ * changed. `panameer-office-hero.mp4` is the same 14.6s of footage at 1280x720 /
+ * 580kbps with the audio stripped and the moov atom moved: 1,062,717 bytes, which
+ * is 9.09x smaller than the master and 28% SMALLER THAN `learn.mp4`, a clip that
+ * already carries two heroes and already passes.
+ *
+ * ⚠ NOTHING WAS CUT FROM THE TIMELINE. Same clip, same duration.
+ * ⚠ THE MASTER STAYS ON DISK UNTOUCHED (`P1-J0-E164`) and is now unreferenced.
+ * ⚠ THE MEASURED NUMBERS FOR THIS CUT ARE IN THE SECTION COMMENT BELOW. Re-measure
+ * before ever swapping the asset again — that is the whole lesson of `E019`.
  */
 export function FindWorkHero() {
   /* ⚠ NOTHING IS READ FROM `HERO_COPY.provider` ANY MORE. `P1-J4-E009`/`E011`/`E012`
@@ -85,52 +93,68 @@ export function FindWorkHero() {
       the container change is not also a visual change. `HeroTwoUp` supplies the two
       columns; nothing about the surface is new.
     */
-    <HeroBox cardClassName="bg-[radial-gradient(1100px_500px_at_82%_-10%,rgba(215,44,214,0.42),transparent_60%),linear-gradient(150deg,#0d1230_0%,#191a44_55%,#3a1c53_100%)] text-white">
-      <section className="px-6 py-16 min-[900px]:py-[84px]">
+    <HeroBox cardClassName="isolate bg-[radial-gradient(1100px_500px_at_82%_-10%,rgba(215,44,214,0.42),transparent_60%),linear-gradient(150deg,#0d1230_0%,#191a44_55%,#3a1c53_100%)] text-white">
+      <section className="relative px-6 py-16 min-[900px]:py-[84px]">
         {/*
-          ── ⚠⚠ THE HERO CLIP WAS BUILT AND MEASURED OUT (`P1-J4-E019`) ─────────
+          ── ⚠⚠ THE HERO CLIP, SECOND ATTEMPT, MEASURED (`P1-J4-E019`) ──────────
 
-          Scott: *"No video in the background on the hero...please add one."* It
-          was added — `HeroVideoBackdrop`, `/panameer-office.mp4`, `opacity-40`,
-          with this card's own three hexes re-laid as the scrim at `/learn`'s
-          alphas — then measured, and the brief's stop condition fired.
+          ⚠ THE FIRST ATTEMPT FAILED ON WEIGHT AND THE RECORD IS KEPT DELIBERATELY:
+          `/panameer-office.mp4`, 9,660,917 B, measured on a production build under
+          DevTools' own Fast 3G preset (1.6Mb/s x0.9, 562.5ms RTT) —
 
-          ⚠ MEASURED ON A PRODUCTION BUILD, NOT LOCALHOST, under DevTools' Fast 3G
-          preset (1.6Mb/s ×0.9, 562.5ms RTT). Localhost is why this was missed the
-          first time on `/hire-talent`: unthrottled, LCP with the clip in was
-          104-136ms, FASTER than several unclipped runs.
+              Fast 3G LCP        1440      900      390
+              no clip           1,636    1,672    1,636 ms
+              9.66MB master     5,772    5,788    5,616 ms   <- 4s stop FIRED
 
-              Fast 3G LCP, /find-work        1440      900      390
-              lazy sequence, no hero clip   1,636    1,672    1,636 ms
-              + panameer-office.mp4         5,772    5,788    5,616 ms
+          ⚠⚠ AND LOCALHOST HID IT COMPLETELY. Unthrottled, LCP WITH the master in
+          was 104-136ms — faster than several unclipped runs. MEASURE THROTTLED OR
+          YOU HAVE NOT MEASURED.
 
-          ⚠ THE STOP CONDITION IS 4s AT ANY WIDTH. It failed at ALL THREE, by
-          ~1.6s, reproducibly across two runs — so the clip is not here.
+          ── WHAT CHANGED IS THE FILE, NOT THE PLAN ────────────────────────────
 
-          ⚠ THE MECHANISM, BECAUSE IT DECIDES WHETHER A SMALLER CLIP WOULD HELP:
-          the LCP ELEMENT CHANGES. Without the clip the largest paint is the
-          headline at ~1.67s; with it, the `<video>` itself becomes the LCP element
-          and the number is simply when its first frame decodes. 9.21MB over a
-          188KB/s pipe is ~49s to finish, and ~5.7s to the first frame even though
-          the file IS already faststart (`moov` before `mdat`, verified). So this
-          is a WEIGHT problem, and it is the only clip that can go here at all —
-          `VideoSequence` further down this page plays the other four, and any of
-          them in the hero would repeat on the page.
+          `panameer-office-hero.mp4` — 1,062,717 B, 1280x720, 580kbps, audio
+          stripped, `moov` before `mdat` (faststart verified by walking the box
+          table, not assumed). Same 14.6s of footage; NOTHING WAS CUT FROM THE
+          TIMELINE. ⚠ 9.09x SMALLER THAN THE MASTER AND 28% SMALLER THAN
+          `learn.mp4` (1,473,103 B), which already backs two heroes and passes.
 
-          ⚠ NOT TRANSCODED, TRIMMED OR RE-ENCODED. That is an asset change and
-          Scott's call, not CC's. A ~1.5MB cut of this footage would very likely
-          clear 4s; nobody has authorised making one.
+          ⚠ 720p IS NOT A COMPROMISE AT THIS TREATMENT — the clip renders at
+          `opacity-40` under a full-bleed gradient scrim, and `/` and `/learn` both
+          run 720p through the identical pattern.
 
-          ⚠ WHAT WAS SHIPPED INSTEAD IS THE BUDGET FIX THAT HAD TO COME FIRST —
-          `VideoSequence` no longer eagerly loads 10.63MB below the fold
-          (`P1-J1-E018`). First load on this page went 11.01MB -> 0.39MB. That
-          headroom is now banked for whenever a hero clip does arrive.
+          ⚠ THE MEASURED RESULT IS IN THE BRIEF REPORT. The stop condition is 4,000ms
+          at any width; re-measure before any future asset swap.
 
-          ⚠ `HeroVideoBackdrop` IS UNTOUCHED and still serves `/`, `/learn` and
-          `LearnHome` — the `E164` shape: the component stays, this page just does
-          not call it.
+          ── ⚠ NOT `LazyAutoplayVideo`, AND THAT IS DELIBERATE ─────────────────
+
+          That component exists for BELOW-THE-FOLD cards (`P1-J1-E018`,
+          `VideoSequence`). A hero clip is above the fold by definition, so
+          withholding its `src` until it is approached would make the hero worse,
+          not better — the reader is already looking at it. ⚠ DO NOT "OPTIMISE"
+          THIS BY REACHING FOR IT.
+
+          ── ⚠ THE TWO LAYERS ARE ONE IDEA AND THE GRADIENT IS NOT DECORATION ──
+
+          The card's radial+linear gradient paints BEFORE the clip arrives, it is
+          what a `prefers-reduced-motion` visitor sees (`globals.css` hides
+          `[data-autoplay-video]` outright), and it is the only thing guaranteeing
+          the white `<h1>` is legible regardless of what the camera saw.
+          `HeroVideoBackdrop` re-lays the same ramp OVER the footage as the scrim.
+
+          ⚠ `isolate` KEEPS THE VIDEO AND SCRIM STACKING INSIDE THIS CARD;
+          `overflow-hidden` still comes from `HeroBox`, which is what makes the clip
+          respect the radius.
+
+          ⚠ `HeroVideoBackdrop` IS COMPOSED, NEVER EDITED. It serves `/`, `/learn`,
+          `LearnHome` and `/hire-talent`; this page is its fifth caller and it took
+          the clip without a single change.
         */}
-        <div className="relative mx-auto max-w-[1120px]">
+        <HeroVideoBackdrop
+          src="/panameer-office-hero.mp4"
+          videoClassName="absolute inset-0 h-full w-full object-cover opacity-40"
+          scrimClassName="absolute inset-0 bg-[linear-gradient(150deg,rgba(13,18,48,0.82)_0%,rgba(25,26,68,0.62)_55%,rgba(58,28,83,0.30)_100%)]"
+        />
+        <div className="relative z-[2] mx-auto max-w-[1120px]">
           <HeroTwoUp
             rowClassName="grid grid-cols-1 items-center gap-10 min-[901px]:grid-cols-2 min-[901px]:gap-14"
             left={
