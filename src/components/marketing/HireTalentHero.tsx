@@ -1,6 +1,7 @@
 import { HeroBox } from "@/components/marketing/HeroBox";
 import { HeroTwoUp } from "@/components/marketing/HeroTwoUp";
 import { HeroVideoBackdrop } from "@/components/media/HeroVideoBackdrop";
+import { talentHeroStats } from "@/lib/talent-stats";
 
 /**
  * `/hire-talent`'s HERO — ITS OWN COMPOSITION, NOT `MarketingHero` (`P1-J1-E013`).
@@ -96,7 +97,8 @@ import { HeroVideoBackdrop } from "@/components/media/HeroVideoBackdrop";
  * (`LazyAutoplayVideo`): first load went 11.01MB -> 0.39MB, media 10.63 -> 0.00MB.
  * ⚠ THAT IS WHAT MADE A HERO CLIP AFFORDABLE HERE AT ALL — see `E028` below.
  */
-export function HireTalentHero() {
+export async function HireTalentHero() {
+  const stats = await talentHeroStats();
   return (
     /*
       ⚠ THE GRADIENT IS ON THE CARD AND IT IS NOT DECORATION. It paints before the
@@ -332,6 +334,52 @@ export function HireTalentHero() {
                 <p className="mt-4 text-[19px] font-semibold leading-[1.5] text-[#efa3ee]">
                   Check out the steps below to see how it works.
                 </p>
+
+                {/*
+                  ── ⚠⚠ THE THREE LIVE-COUNT TILES (`P1-J1-E029`) ─────────────────
+
+                  Scott, answering the WS5 fork on 2026-08-25: *"these would all be
+                  counts of what is in the DB."* ⚠ THE EARLIER RUN STOPPED HERE on a
+                  contradiction between the brief and its launch text; the
+                  contradiction was chat's stale paste and the answer is TILES.
+
+                  ⚠ THEY GO IN THE RIGHT COLUMN UNDER THE BRIDGE LINE — the position
+                  `/optimize` and `/learn` both use. That is what *"they all follow
+                  the same style"* means structurally: every hero's right column is
+                  sub-copy -> bridge line -> stat row. This column used to end after
+                  the sub-copy, which is why the hero looked half-empty.
+
+                  ⚠ THE CHROME IS `LearnStats`' VALUES, COPIED, NOT THE COMPONENT
+                  EXTRACTED. Extracting it would mean re-measuring `/learn`, and a
+                  shared component moving pages has bitten four times in two days
+                  (`.sd-n`, `E290`, `E303`, the footer). Copying is the cheap,
+                  reversible choice here and the brief asked for it explicitly.
+
+                  ⚠⚠ `Providers` IS 85 AND IT IS SEED DATA. `decisions-01.md`
+                  2026-08-24 names those rows as seed and disposable and says NO SEED
+                  COUNT MAY SHIP AS TRACTION. ⚠ SCOTT WAS SHOWN `522 / 85 / 1` IN
+                  WRITING AND ASKED FOR THEM ANYWAY — a decision, not an oversight.
+                  It is on the pre-launch list. DO NOT RE-ARGUE IT HERE.
+
+                  ⚠ PLURALS COME OFF THE NUMBER, in `talent-stats.ts` — today
+                  `Service Product` is SINGULAR because there is exactly one, and
+                  that is the live case rather than a theoretical one.
+                */}
+                <dl className="mt-[26px] grid grid-cols-3 gap-[14px]">
+                  {stats.map((s) => (
+                    <div
+                      key={s.label}
+                      className="rounded-[14px] border border-white/[0.13] bg-white/[0.06] px-4 py-[18px]"
+                    >
+                      <dd className="font-display text-[34px] font-bold leading-[34px] text-white">
+                        {s.value}
+                      </dd>
+                      <dt className="mt-2 text-[12.5px] font-normal leading-[16.25px] text-[#cec7db]">
+                        {s.label}
+                      </dt>
+                    </div>
+                  ))}
+                </dl>
               </>
             }
           />

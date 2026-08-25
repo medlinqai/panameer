@@ -2454,21 +2454,37 @@ test.describe("work walk 1 — the buyer's page", () => {
     ).toHaveCount(0);
   });
 
-  test("§47 neither seller nor buyer page ships a hero stat row", async ({
+  /**
+   * ── ⚠⚠ RE-HOMED TO `/find-work` ONLY (`P1-J1-E029`) ────────────────────────
+   *
+   * This asserted BOTH pages carried no hero stat row, on the stated grounds that
+   * *"no honest count exists"*. ⚠ THAT IS STILL TRUE OF `/find-work` AND IS NO
+   * LONGER SCOTT'S POSITION ON `/hire-talent`: on 2026-08-25 he asked for three
+   * live DB counts there, was shown `522 / 85 / 1` in writing first, and shipped
+   * them. `85` is seed data and he knows.
+   *
+   * ⚠ COVERAGE WENT UP, NOT DOWN. `/hire-talent` did not become unguarded — §61
+   * asserts far more about its tiles than "there are none": three of them, numeric,
+   * pluralised off the number, and NOT hardcoded in the JSX.
+   *
+   * ⚠ `/find-work` KEEPS THE BAN AND THE REASON IS UNCHANGED. It is the BUYER's
+   * page: 85 providers and 1 published package are the SELLER's story, and there is
+   * nothing on the buyer side to count — `WorkRequest` has no public rows and
+   * `/explore?mode=work` returns zero. A stat row there would still be invented.
+   */
+  test("§47 /find-work ships no hero stat row — nothing on the buyer side is countable", async ({
     page,
   }) => {
-    for (const url of ["/hire-talent", "/find-work"]) {
-      await page.goto(url);
-      const inHero = await page.evaluate(() => {
-        const h1 = document.querySelector("h1");
-        const hero = h1?.closest("section");
-        return hero ? hero.querySelectorAll("dl").length : -1;
-      });
-      expect(
-        inHero,
-        `${url} grew a hero stat row — no honest count exists`,
-      ).toBe(0);
-    }
+    await page.goto("/find-work");
+    const inHero = await page.evaluate(() => {
+      const h1 = document.querySelector("h1");
+      const hero = h1?.closest("section");
+      return hero ? hero.querySelectorAll("dl").length : -1;
+    });
+    expect(
+      inHero,
+      "/find-work grew a hero stat row — no honest BUYER-side count exists",
+    ).toBe(0);
   });
 
   /**
@@ -3111,5 +3127,88 @@ test.describe("hero clips — the -hero cuts, and only those", () => {
       ).toBe("wrap");
       expect(got!.max, `${url}: /optimize's measured width`).toBe("1040px");
     }
+  });
+});
+
+/**
+ * ── ⚠⚠ /hire-talent's THREE LIVE-COUNT TILES (`P1-J1-E029`) ────────────────
+ *
+ * Scott: *"these would all be counts of what is in the DB."* ⚠ TWO OF THE THREE
+ * ARE UNCOMFORTABLE AND HE SHIPPED THEM WITH THE NUMBERS IN FRONT OF HIM — 85 is
+ * seed data and 1 is a single published `Package` owned by Panameer Admin. That is
+ * a decision, and this guard protects HOW they render, not WHETHER they should.
+ *
+ * ⚠ IT DELIBERATELY DOES NOT ASSERT `522 / 85 / 1`. Those are live reads and they
+ * SHOULD move; a test that pins them would fail the first time a provider signs up,
+ * which is the opposite of what anyone wants. What must hold is the SHAPE: three
+ * tiles, numeric, correctly pluralised, and not hardcoded.
+ */
+test.describe("/hire-talent — the hero stat tiles", () => {
+  test("§61 three tiles, numeric, pluralised off the number, and not hardcoded", async ({
+    page,
+  }) => {
+    await page.goto("/hire-talent");
+    const hero = page
+      .locator("h1")
+      .first()
+      .locator("xpath=ancestor::section[1]");
+
+    const tiles = await hero.locator("dl > div").evaluateAll((els) =>
+      els.map((e) => ({
+        value: e.querySelector("dd")?.textContent?.trim() ?? "",
+        label: e.querySelector("dt")?.textContent?.trim() ?? "",
+      })),
+    );
+    expect(tiles.length, "three tiles, in the hero's right column").toBe(3);
+
+    for (const t of tiles) {
+      expect(
+        t.value,
+        `tile "${t.label}" must render a number, not prose`,
+      ).toMatch(/^\d+$/);
+
+      /*
+        ⚠⚠ THE PLURAL RULE, AND TODAY THE SINGULAR BRANCH IS THE LIVE ONE.
+        `Service Products` is exactly ONE, so a tile reading `1` over a plural label
+        is simply wrong. Asserted both ways so the rule cannot rot in either
+        direction once the number moves.
+      */
+      const n = Number(t.value);
+      if (n === 1) {
+        expect(
+          t.label.endsWith("s"),
+          `"${t.value} ${t.label}" — 1 takes the singular`,
+        ).toBe(false);
+      } else {
+        expect(
+          t.label.endsWith("s"),
+          `"${t.value} ${t.label}" — ${n} takes the plural`,
+        ).toBe(true);
+      }
+    }
+
+    /*
+      ⚠⚠ AND THE DIGITS MUST NOT BE IN THE COMPONENT — the same shape as
+      `check:learn`'s GUARD 3c. A hardcoded tile is indistinguishable from a live one
+      in the DOM, so the source is the only place this can be checked. `522` is
+      allowed to reach the page from `learn-catalog-counts.ts` (which carries its own
+      MEASURED_ON date and is asserted elsewhere); what is forbidden is a literal
+      sitting in the hero's JSX.
+    */
+    const src = readFileSync(
+      join(process.cwd(), "src/components/marketing/HireTalentHero.tsx"),
+      "utf8",
+    );
+    const jsx = src.slice(src.indexOf("export async function HireTalentHero"));
+    for (const t of tiles) {
+      expect(
+        jsx.includes(`>${t.value}<`) || jsx.includes(`"${t.value}"`),
+        `${t.value} is hardcoded in HireTalentHero — it must come from talent-stats.ts`,
+      ).toBe(false);
+    }
+    expect(
+      jsx.includes("stats.map"),
+      "the tiles must be mapped from the awaited live read",
+    ).toBe(true);
   });
 });
