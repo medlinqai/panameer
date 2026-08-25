@@ -66,6 +66,7 @@ export function ShopHero() {
         */}
         <HeroVideoBackdrop
           src="/get-paid-hero.mp4"
+          poster="/posters/settle.svg"
           videoClassName="absolute inset-0 h-full w-full object-cover opacity-40"
           scrimClassName="absolute inset-0 bg-[linear-gradient(150deg,rgba(13,18,48,0.86)_0%,rgba(25,26,68,0.72)_55%,rgba(58,28,83,0.62)_100%)]"
         />

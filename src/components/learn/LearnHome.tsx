@@ -53,7 +53,7 @@ export function LearnHome({
         (!needle ||
           c.title.toLowerCase().includes(needle) ||
           (c.summary ?? "").toLowerCase().includes(needle) ||
-          c.instructors.some((i) => i.name.toLowerCase().includes(needle)))
+          c.instructors.some((i) => i.name.toLowerCase().includes(needle))),
     );
   }, [cards, tab, group, query]);
 
@@ -83,48 +83,53 @@ export function LearnHome({
         */}
         <HeroVideoBackdrop
           src="/learn.mp4"
+          poster="/posters/learn.svg"
           videoClassName="absolute inset-0 h-full w-full object-cover opacity-40"
           scrimClassName="absolute inset-0 bg-[linear-gradient(115deg,rgba(15,11,28,0.82)_0%,rgba(40,20,80,0.62)_45%,rgba(215,44,214,0.30)_100%)]"
         />
 
         <div className="relative z-[2]">
-        <h1 className="max-w-2xl font-display text-[28px] font-bold leading-tight tracking-[-0.5px] sm:text-[34px]">
-          Learn Oracle Cloud from the people who implement it
-        </h1>
-        <p className="mt-3 max-w-xl text-[15.5px] text-white/80">
-          {cards.length} learning paths, {totalLessons.toLocaleString()} lessons —
-          free, and taught by working consultants.
-        </p>
+          <h1 className="max-w-2xl font-display text-[28px] font-bold leading-tight tracking-[-0.5px] sm:text-[34px]">
+            Learn Oracle Cloud from the people who implement it
+          </h1>
+          <p className="mt-3 max-w-xl text-[15.5px] text-white/80">
+            {cards.length} learning paths, {totalLessons.toLocaleString()}{" "}
+            lessons — free, and taught by working consultants.
+          </p>
 
-        {/*
+          {/*
           WRAPS AT NARROW WIDTHS (WS-5 audit). Four pills in an `inline-flex`
           pill group need ~470px; at 390 the fourth ran off the right edge of
           the hero. `flex-wrap` lets them fall onto a second row instead, and
           `justify-start` keeps them left-aligned with everything above.
         */}
-        <div className="mt-6 inline-flex flex-wrap justify-start rounded-[26px] border border-white/30 p-1 sm:rounded-full">
-          <button
-            type="button"
-            onClick={() => setTab("all")}
-            className={
-              "rounded-full px-5 py-2 text-[14px] font-bold transition-colors " +
-              (tab === "all" ? "bg-white text-learn-card" : "text-white/80 hover:text-white")
-            }
-          >
-            All learning paths
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab("mine")}
-            className={
-              "rounded-full px-5 py-2 text-[14px] font-bold transition-colors " +
-              (tab === "mine" ? "bg-white text-learn-card" : "text-white/80 hover:text-white")
-            }
-          >
-            My learning paths{enrolledCount > 0 ? ` (${enrolledCount})` : ""}
-          </button>
+          <div className="mt-6 inline-flex flex-wrap justify-start rounded-[26px] border border-white/30 p-1 sm:rounded-full">
+            <button
+              type="button"
+              onClick={() => setTab("all")}
+              className={
+                "rounded-full px-5 py-2 text-[14px] font-bold transition-colors " +
+                (tab === "all"
+                  ? "bg-white text-learn-card"
+                  : "text-white/80 hover:text-white")
+              }
+            >
+              All learning paths
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab("mine")}
+              className={
+                "rounded-full px-5 py-2 text-[14px] font-bold transition-colors " +
+                (tab === "mine"
+                  ? "bg-white text-learn-card"
+                  : "text-white/80 hover:text-white")
+              }
+            >
+              My learning paths{enrolledCount > 0 ? ` (${enrolledCount})` : ""}
+            </button>
 
-          {/*
+            {/*
             E216 — THE COURSE VIEWS JOIN THIS ROW rather than getting a second
             one. The rail's Start Learning flyout listed four children: these
             two filters, which this row already was, and two course routes. The
@@ -136,68 +141,70 @@ export function LearnHome({
             reads as one control, never both active — a link is never the
             current tab while you are standing on /learn.
           */}
-          <Link
-            href="/learn/courses"
-            className="rounded-full px-5 py-2 text-[14px] font-bold text-white/80 transition-colors hover:text-white"
-          >
-            All courses
-          </Link>
-          <Link
-            href="/learn/my-courses"
-            className="rounded-full px-5 py-2 text-[14px] font-bold text-white/80 transition-colors hover:text-white"
-          >
-            My courses
-          </Link>
-        </div>
-
-        <div className="mt-4 max-w-md">
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search learning paths"
-            aria-label="Search learning paths"
-            className="w-full rounded-full border border-white/30 bg-white/10 px-5 py-2.5 text-[14.5px] text-white outline-none placeholder:text-white/60 focus:border-white/70"
-          />
-        </div>
-
-        {chips.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-2">
-            {chips.slice(0, 6).map((c) => {
-              const active = group === c.group;
-              return (
-                <button
-                  key={c.group}
-                  type="button"
-                  onClick={() => setGroup(active ? null : c.group)}
-                  aria-pressed={active}
-                  className={
-                    "rounded-full border px-4 py-1.5 text-[13.5px] font-semibold transition-colors " +
-                    (active
-                      ? "border-white bg-white text-learn-card"
-                      : "border-white/35 text-white/90 hover:border-white")
-                  }
-                >
-                  {c.group} <span aria-hidden>→</span>
-                </button>
-              );
-            })}
-            {group && (
-              <button
-                type="button"
-                onClick={() => setGroup(null)}
-                className="rounded-full px-3 py-1.5 text-[13.5px] font-semibold text-white/70 underline underline-offset-4 hover:text-white"
-              >
-                Clear
-              </button>
-            )}
+            <Link
+              href="/learn/courses"
+              className="rounded-full px-5 py-2 text-[14px] font-bold text-white/80 transition-colors hover:text-white"
+            >
+              All courses
+            </Link>
+            <Link
+              href="/learn/my-courses"
+              className="rounded-full px-5 py-2 text-[14px] font-bold text-white/80 transition-colors hover:text-white"
+            >
+              My courses
+            </Link>
           </div>
-        )}
+
+          <div className="mt-4 max-w-md">
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search learning paths"
+              aria-label="Search learning paths"
+              className="w-full rounded-full border border-white/30 bg-white/10 px-5 py-2.5 text-[14.5px] text-white outline-none placeholder:text-white/60 focus:border-white/70"
+            />
+          </div>
+
+          {chips.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {chips.slice(0, 6).map((c) => {
+                const active = group === c.group;
+                return (
+                  <button
+                    key={c.group}
+                    type="button"
+                    onClick={() => setGroup(active ? null : c.group)}
+                    aria-pressed={active}
+                    className={
+                      "rounded-full border px-4 py-1.5 text-[13.5px] font-semibold transition-colors " +
+                      (active
+                        ? "border-white bg-white text-learn-card"
+                        : "border-white/35 text-white/90 hover:border-white")
+                    }
+                  >
+                    {c.group} <span aria-hidden>→</span>
+                  </button>
+                );
+              })}
+              {group && (
+                <button
+                  type="button"
+                  onClick={() => setGroup(null)}
+                  className="rounded-full px-3 py-1.5 text-[13.5px] font-semibold text-white/70 underline underline-offset-4 hover:text-white"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </section>
 
       {tab === "mine" && enrolledCount === 0 ? (
         <div className="mt-8 rounded-brand border border-line p-8 text-center">
-          <p className="text-[16px] font-bold">You haven&apos;t enrolled in anything yet.</p>
+          <p className="text-[16px] font-bold">
+            You haven&apos;t enrolled in anything yet.
+          </p>
           <p className="mx-auto mt-2 max-w-md text-[14.5px] text-ink-2">
             {signedIn
               ? "Enrolling is free and just keeps your place — pick a path and it'll show up here."
@@ -225,7 +232,10 @@ export function LearnHome({
 
       {!signedIn && (
         <p className="mt-8 text-center text-[14px] text-ink-2">
-          <Link href="/login" className="font-bold text-magenta hover:underline">
+          <Link
+            href="/login"
+            className="font-bold text-magenta hover:underline"
+          >
             Sign in
           </Link>{" "}
           to track your progress and earn certificates.

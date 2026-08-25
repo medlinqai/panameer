@@ -775,6 +775,7 @@ export function LearnPublic() {
         */}
           <HeroVideoBackdrop
             src="/learn.mp4"
+            poster="/posters/learn.svg"
             videoClassName="absolute inset-0 h-full w-full object-cover opacity-40"
             scrimClassName="absolute inset-0 bg-[linear-gradient(115deg,rgba(15,11,28,0.82)_0%,rgba(40,20,80,0.62)_45%,rgba(215,44,214,0.30)_100%)]"
           />
