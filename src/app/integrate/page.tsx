@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
 import { IntegrateHero } from "@/components/marketing/IntegrateHero";
-import { LogoRibbon } from "@/components/marketing-home/LogoRibbon";
 import { IntegrateSpine } from "@/components/marketing/IntegrateSpine";
 import { ErpPunchout } from "@/components/marketing/sections/ErpPunchout";
 import { ErpIntegration } from "@/components/marketing-home/ErpIntegration";
@@ -78,25 +77,26 @@ export default function EnterprisePage() {
       */}
       <IntegrateHero />
       {/*
-        ── ⚠⚠ THE RIBBON (`P1-J0-E326`) ────────────────────────────────────────
+        ── ⚠ THE RIBBON WAS TRIED HERE AND REMOVED (`P1-J0-E326`, closed) ──────
 
-        Scott: *"Let's bring back the ribbon on this page."* It rendered only on `/`.
+        `brief_integrate_walk1` added `LogoRibbon` below this hero on Scott's
+        request — *"Let's bring back the ribbon on this page."* ⚠ HE WALKED IT AND
+        TOOK IT BACK OUT: *"I tried it there and it doesn't fit."*
 
-        ⚠ IT **MUST** SIT INSIDE A `.pm-home` WRAPPER. `LogoRibbon`'s markup is
-        `.logos` / `.wrap` / `.row` / `.co` — every one of those is a
-        `.pm-home`-prefixed rule in `home.css`, and this page is not otherwise inside
-        that scope. ⚠ MEASURED ON BOTH PAGES, NOT INSPECTED; the geometry is in the
-        report. This trap has caused five defects.
+        ⚠ `LogoRibbon.tsx` STAYS ON DISK AND ITS CALL SITE ON `/` IS UNTOUCHED —
+        the `E164` shape. This page simply no longer calls it.
 
-        ⚠⚠ AND WHAT IT RENDERS IS SIX INVENTED COMPANY NAMES — Meridian, Northpeak,
-        Vantage, Cedarline, Halcyon, Brightpath. NOT CUSTOMERS, not logos, just words
-        beside generic SVG glyphs. A logo wall of non-customers is a traction claim.
-        ⚠ SHIPPED BECAUSE SCOTT ASKED FOR IT AND REPORTED PLAINLY so he can decide
-        whether it belongs here — or comes off `/` too.
+        ⚠ THE `.pm-home` WRAPPER THAT EXISTED ONLY FOR THE RIBBON WENT WITH IT.
+        Every class the component uses (`.logos`, `.wrap`, `.row`, `.co`) is a
+        `.pm-home`-prefixed rule in `home.css`, so the wrapper was load-bearing
+        while the ribbon was here and is dead weight now. ⚠ THE SEPARATE WRAPPER
+        AROUND `ErpIntegration` BELOW IS A DIFFERENT ONE AND STAYS.
+
+        ⚠ WHAT IT RENDERED IS STILL WORTH KNOWING IF IT IS EVER RECONSIDERED: six
+        INVENTED company names — Meridian, Northpeak, Vantage, Cedarline, Halcyon,
+        Brightpath — beside generic SVG glyphs. Not customers, not logos. That is
+        reported against `/`, where it still ships.
       */}
-      <div className="pm-home">
-        <LogoRibbon />
-      </div>
       {/*
         ── ⚠⚠ THE SIXTH SPINE (`P1-J0-E328`) ───────────────────────────────────
 
