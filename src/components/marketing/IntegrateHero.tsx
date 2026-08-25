@@ -127,28 +127,42 @@ export async function IntegrateHero() {
                 </p>
 
                 {/*
-                  ── ⚠⚠ THE COUNTERS: ONE TILE SHIPS, NOT THREE (`P1-J0-E327`) ────
+                  ── ⚠⚠ ALL THREE TILES, SCOTT'S LABELS (`P1-J0-E327`) ────────────
 
-                  Scott asked for three. ⚠ ONLY ONE HAS AN HONEST NON-ZERO SOURCE:
-                  `Integration Methods` = `INTEGRATION_METHODS.length`, the three his
-                  own sub-copy names. The `Work Request` count READ 0, and the third
-                  has no model at all. Both are explained in `lib/integrate-hero.ts`
-                  and in the brief report.
+                  ⚠ `integrate-walk1` SHIPPED ONE TILE, `Integration Methods = 3`,
+                  AND THAT WAS A SUBSTITUTION HE NEVER ASKED FOR — it counted the
+                  methods Panameer SUPPORTS, not the integrations it HAS, and the
+                  label had been bent to fit the only number available. It is gone.
 
-                  ⚠ THE GRID IS SIZED FROM THE DATA, not fixed at three — a 3-column
-                  grid holding one tile leaves two empty cells, which reads as a
-                  loading failure. The chrome is `LearnStats`' values, copied.
+                  ⚠ TWO OF THE THREE ARE NAMED STUBS, NOT LITERALS:
+                  `STUB_INTEGRATIONS` and `STUB_SERVICE_PRODUCT_REQUESTS` in
+                  `lib/integrate-hero.ts`, each carrying the exact query that
+                  replaces it when its model lands. The middle tile is the only live
+                  read — `prisma.workRequest.count()`.
+
+                  ⚠⚠ ALL THREE RENDER `0` TODAY, and the live one reads 0 for the
+                  same reason `/explore?mode=work` says out loud: nothing is posted
+                  yet. ⚠ EXACTLY ONE OF THEM WILL MOVE ON ITS OWN — which is why the
+                  stubs are named constants and why `stat.stub` exists.
+
+                  ⚠ `0` IS HONEST AND `0` SHIPS. No "coming soon", no dash, and no
+                  tile hidden because its number is unflattering. ⚠ THE WALK-1 FILTER
+                  THAT DROPPED ZERO-VALUED TILES IS REMOVED.
+
+                  ⚠ FIXED THREE-COLUMN GRID NOW, not sized from the data — there are
+                  always three. The chrome is `LearnStats`' values, copied.
                 */}
                 {stats.length > 0 && (
-                  <dl
-                    className="mt-[26px] grid gap-[14px]"
-                    style={{
-                      gridTemplateColumns: `repeat(${Math.min(stats.length, 3)}, minmax(0, 1fr))`,
-                    }}
-                  >
+                  <dl className="mt-[26px] grid grid-cols-3 gap-[14px]">
                     {stats.map((s) => (
                       <div
                         key={s.label}
+                        /* ⚠ `data-stub` MARKS THE PLACEHOLDERS FOR THE GUARD AND FOR
+                           WHOEVER READS THE DOM. It changes NOTHING visually — a
+                           stub and a live read are indistinguishable to a visitor,
+                           and dressing one up as provisional would be the "coming
+                           soon" hedge Scott ruled out. */
+                        data-stub={s.stub ? "true" : "false"}
                         className="rounded-[14px] border border-white/[0.13] bg-white/[0.06] px-4 py-[18px]"
                       >
                         <dd className="font-display text-[34px] font-bold leading-[34px] text-white">
