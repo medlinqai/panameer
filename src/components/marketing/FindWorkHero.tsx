@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { HeroBox } from "@/components/marketing/HeroBox";
 import { HeroTwoUp } from "@/components/marketing/HeroTwoUp";
+import { WORK_CTA_LABEL } from "@/lib/work-steps";
 import { HeroVideoBackdrop } from "@/components/media/HeroVideoBackdrop";
 import { talentHeroStats } from "@/lib/talent-stats";
 
@@ -254,7 +255,9 @@ export async function FindWorkHero() {
                   href="/create-work"
                   className="mt-8 inline-block rounded-[12px] bg-magenta px-7 py-4 font-display text-[16px] font-bold text-white transition-colors hover:bg-magenta-dark"
                 >
-                  Create a Work Request
+                  {/* ⚠ THE CONSTANT, NOT A LITERAL (`P1-J4-E024`). ⚠ THE LABEL ITSELF
+                      IS UNCHANGED — Scott kept it and the SENTENCE moved to match. */}
+                  {WORK_CTA_LABEL}
                 </Link>
 
                 {/*
@@ -303,7 +306,14 @@ export async function FindWorkHero() {
                   real; the sentence over-promises the first click for an anonymous
                   visitor by exactly one login wall.
 
-                  ⚠ HIS CURLY QUOTES AROUND "Create Work Request" — SHIPPED AS TYPED.
+                  ⚠ HIS CURLY QUOTES — SHIPPED AS TYPED, AND STILL HIS.
+                  ⚠⚠ THE MISMATCH THIS COMMENT USED TO RECORD IS CLOSED
+                  (`P1-J4-E024`). It read: *"AND THEY DO NOT MATCH THE BUTTON, WHICH
+                  READS `Create a Work Request` WITH AN `a`. Both are his. NOT
+                  SILENTLY ALIGNED — reported."* ⚠ SCOTT CLOSED IT 2026-08-26 —
+                  *"keep Create a Work Request."* THE BUTTON WON and this sentence
+                  gained the `a`. Both now render `WORK_CTA_LABEL`, so there is one
+                  string and it cannot drift again.
                   ⚠ AND THEY DO NOT MATCH THE BUTTON, WHICH READS `Create a Work
                   Request` WITH AN `a`. Both are his. NOT SILENTLY ALIGNED — reported.
 
@@ -312,9 +322,9 @@ export async function FindWorkHero() {
                   never does. Reported.
                 */}
                 <p className="text-[17px] leading-[1.6] text-[#e9e6f5] min-[901px]:text-[19px]">
-                  Click the &ldquo;Create Work Request&rdquo; button, upload
-                  your job description (aka JD), and let the Panameer AIP build
-                  your work request for you.
+                  Click the &ldquo;{WORK_CTA_LABEL}&rdquo; button, upload your
+                  job description (aka JD), and let the Panameer AIP build your
+                  work request for you.
                 </p>
                 {/*
                   ── ⚠ THE BRIDGE LINE (`WS4`) ────────────────────────────────

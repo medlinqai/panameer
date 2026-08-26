@@ -41,6 +41,31 @@
  * `Panameer Creates Payment` exactly.
  */
 
+/**
+ * ── ⚠⚠ ONE SOURCE OF TRUTH FOR THE CTA LABEL (`P1-J4-E024`) ────────────────
+ *
+ * `/find-work`'s hero button AND the sentence that quotes it both print this.
+ *
+ * ⚠ THIS CONSTANT EXISTS BECAUSE THE LABEL WAS TYPED TWICE IN ONE FILE AND THE TWO
+ * COPIES DRIFTED. The button said `Create a Work Request`, the sub-copy quoted
+ * `Create Work Request`, and BOTH WERE SCOTT'S — `P1-J4-E011` shipped the sentence
+ * verbatim and REPORTED the mismatch rather than silently aligning it. He closed it
+ * on 2026-08-26: *"keep Create a Work Request."* THE BUTTON WON. ⚠ ALIGNING THE
+ * STRINGS WITHOUT THIS CONSTANT WOULD JUST RESET THE CLOCK.
+ *
+ * ⚠ THE `a` FORM IS ALSO WHAT THE PRODUCT USES — `create-work/page.tsx:17`'s own
+ * page title is `Create a Work Request`.
+ *
+ * ⚠ SAME SHAPE AND SAME NAME PATTERN AS `TALENT_CTA_LABEL` in `talent-steps.ts`,
+ * which landed first (`P1-J1-E033`, `2b677ea`): the constant lives beside its page's
+ * other strings, not in a new module of its own. ⚠ TWO PILLARS, ONE CONVENTION.
+ *
+ * ⚠⚠ AND IT IS DELIBERATELY *NOT* WIRED TO `WORK_STEPS[0].summary` BELOW, WHICH
+ * STILL READS `Create Work Request` WITHOUT THE `a`. Scott's decision was about the
+ * hero sentence, not a site-wide sweep — see the note on step 1.
+ */
+export const WORK_CTA_LABEL = "Create a Work Request";
+
 export type WorkStepLabel = {
   /** The drawn numeral, 1-based. */
   n: number;
@@ -79,6 +104,17 @@ export type WorkStepLabel = {
 export const WORK_STEPS: WorkStepLabel[] = [
   {
     n: 1,
+    /*
+      ⚠⚠ STILL `Create Work Request`, WITHOUT THE `a`, AND THAT IS NOW A VISIBLE
+      DISAGREEMENT (`P1-J4-E024`). The hero sentence directly above this spine says
+      `Create a Work Request` as of 2026-08-26; this step name does not.
+      ⚠ THE MISMATCH MOVED DOWN THE PAGE RATHER THAN DISAPPEARING, and that is
+      EXPECTED: Scott's decision was about the hero sentence only, and this brief was
+      explicitly told to report the other four sites and change none of them.
+      ⚠ IT ALSO DIVERGES FROM `/talent`, whose step 1 summary IS its hero button's
+      label (`TALENT_CTA_LABEL`, `P1-J1-E034`). Two pillars, two answers.
+      ⚠ DO NOT "FINISH" THIS BY POINTING IT AT `WORK_CTA_LABEL` — it is Scott's call.
+    */
     summary: "Create Work Request",
     /*
       ⚠ DRAFT — CC's words, not Scott's.
