@@ -10,10 +10,22 @@ import { useState } from "react";
  * (WS3); nothing here is an eyeballed hex.
  *
  * THE SEARCH BACKEND IS OUT OF SCOPE and this component does not pretend
- * otherwise. Submitting routes to /work with the query on the URL, where a
- * "coming soon" results state explains itself. That is the brief's instruction —
- * wire the box, don't build the engine — and it beats a disabled input, which
- * would tell a provider nothing about what this page is for.
+ * otherwise. Submitting routes to the SIGNED-IN provider feed at
+ * `/find-work?q=`, which reads the query — `searchParams: { tab?, q? }` and
+ * `const query = (sp.q ?? "").trim()` in `(app)/find-work/page.tsx`. That is
+ * the brief's instruction — wire the box, don't build the engine — and it beats
+ * a disabled input, which would tell a provider nothing about what this page is
+ * for.
+ *
+ * ⚠⚠ SUPERSEDED 2026-08-26 (`P1-ALL-E021`) — the dead text, kept per convention:
+ *   "Submitting routes to /work with the query on the URL, where a 'coming
+ *    soon' results state explains itself."
+ * That was TRUE until the route swap (`P1-ALL-E017`). `/work` is now the PUBLIC
+ * BUYER marketing page and has NO `searchParams` at all, so the query branch was
+ * sending a signed-in provider to the buyer's page and DISCARDING the search
+ * silently — no error, no 404. The empty branch had already been repointed.
+ * ⚠ DO NOT "FIX" A FUTURE VERSION OF THIS BY TEACHING `/work` TO READ `?q=`:
+ * `P1-J4-E002` spent three briefs separating the buyer and provider audiences.
  */
 export function FindWorkHero({ chips }: { chips: string[] }) {
   const router = useRouter();
@@ -21,7 +33,7 @@ export function FindWorkHero({ chips }: { chips: string[] }) {
 
   const go = (query: string) => {
     const trimmed = query.trim();
-    router.push(trimmed ? `/work?q=${encodeURIComponent(trimmed)}` : "/find-work");
+    router.push(trimmed ? `/find-work?q=${encodeURIComponent(trimmed)}` : "/find-work");
   };
 
   return (
