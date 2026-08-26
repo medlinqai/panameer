@@ -139,10 +139,35 @@ export function MarketingFooter() {
               height={134}
               className="h-8 w-auto"
             />
-            {/* ⚠ EN DASH and `&`, both as Scott typed them. */}
+            {/*
+              ── ⚠⚠ THE TAGLINE IS `BRAND_DESCRIPTOR` NOW (`P1-ALL-E030`) ────────
+
+              ⚠ THIS FILE SHIPPED TWO DIFFERENT TAGLINES IN ONE FOOTER, ON ALL SEVEN
+              PUBLIC PAGES. It imported `BRAND_DESCRIPTOR` on line 3, rendered it in
+              the legal bar below, AND HARDCODED A DIFFERENT STRING HERE — one screen,
+              two claims about what Panameer is. `DERIVE, DON'T RETYPE` broken in the
+              highest-traffic string on the site.
+
+              ⚠ BOTH DEAD STRINGS, QUOTED 2026-08-26 (`P1-ALL-E030`) — the convention
+              here is quote-the-superseded, never delete:
+                band 2, hardcoded here:
+                  *"The home of Oracle application & AI specialists – and the
+                   businesses that need them."*
+                the old `BRAND_DESCRIPTOR`, in the legal bar:
+                  *"The home for Enterprise Systems + AI experts — and the businesses
+                   that need them."*
+
+              ⚠⚠ NO FALLBACK. The literal is DELETED, not kept behind an `??`. A
+              fallback is a second copy, and a second copy is how these two drifted
+              apart in the first place.
+              ⚠ THE EN DASH AND THE `&` WERE LOCKED FOR THE OLD STRING ONLY and are
+              gone with it. The new string is a plain sentence with one full stop —
+              `&ndash;` and `&amp;` must not come back here.
+              ⚠ THE LEGAL BAR BELOW IS UNTOUCHED. It already read the constant; it
+              simply starts SAYING THE SAME THING as this line, which is the point.
+            */}
             <p className="mt-3 max-w-[560px] text-[14.5px] leading-[1.5]">
-              The home of Oracle application &amp; AI specialists &ndash; and
-              the businesses that need them.
+              {BRAND_DESCRIPTOR}
             </p>
             {/*
               ⚠ THE ICON ROW REPLACES THE SINGLE YOUTUBE BUTTON — both do not ship.

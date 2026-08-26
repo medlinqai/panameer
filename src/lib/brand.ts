@@ -96,10 +96,35 @@ export const BRAND_MONEY_LINE =
  * THE DESCRIPTOR — what Panameer is, for someone who has never heard of it.
  * Carries both sides of the marketplace deliberately: a page that only names
  * the experts reads as a directory, and one that only names the businesses
- * reads as a staffing agency.
+ * reads as a staffing agency. The new string keeps that balance in four words:
+ * `buyers and sellers`.
+ *
+ * ⚠⚠ SCOTT'S WORDS, 2026-08-26 (`P1-ALL-E030`), FINAL. Do not rephrase, shorten
+ * or "improve" them.
+ *
+ * ⚠ HE CONSIDERED DROPPING `Oracle` FOR TRADEMARK REASONS AND DECIDED AGAINST IT.
+ * *"I want to change the tagline for panameer to 'Connecting buyers and sellers of
+ * ERP services'… I do NOT want to use the specific name of Oracle."* — and then
+ * he landed on `Oracle-related`, which is the phrasing that ships. THE VENDOR
+ * NAME STAYS. ⚠ `Oracle-related services` is DESCRIPTIVE use, and the standing
+ * gate is unchanged: THE NAME RENDERS AS TEXT, NEVER THE LOGO.
+ * ⚠ CHAT PROPOSED `ERP licensees` AND SCOTT REJECTED IT. Recorded so nobody
+ * re-proposes it. He also mentioned `post-licensing services` as his own older
+ * name for the category; it is not the tagline.
+ *
+ * ⚠⚠ PLAIN SENTENCE, ONE FULL STOP. NO EN DASH AND NO AMPERSAND. Both were locked
+ * for the OLD string and DO NOT CARRY OVER — do not add them back.
+ *
+ * ⚠ SUPERSEDED 2026-08-26 (`P1-ALL-E030`), quoted not deleted:
+ *   *"The home for Enterprise Systems + AI experts — and the businesses that need
+ *    them."*
+ *
+ * ⚠ ONE STRING, EVERY SURFACE. Consumers: `MarketingFooter`'s band 2 AND its legal
+ * bar (which disagreed with each other until E030), and `OnboardingFrame`. All
+ * three moved together, which is the entire point of the constant.
  */
 export const BRAND_DESCRIPTOR =
-  "The home for Enterprise Systems + AI experts — and the businesses that need them.";
+  "Connecting buyers and sellers of Oracle-related services.";
 
 /**
  * THE ERP POSITIONING LINE.
