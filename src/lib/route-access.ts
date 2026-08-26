@@ -6,10 +6,34 @@ import type { Capability } from "@/lib/access";
  *   - the edge proxy (`src/proxy.ts`), token-only, first line;
  *   - the server guards (`src/lib/guard.ts`), authoritative.
  *
- * Anything NOT listed here is not role-gated. In-flow / public routes are
- * deliberately absent — a user mid-signup has no role yet:
- *   /join/*, /verify-email, /invite/accept, /login, and public marketplace
- *   reads (/providers/[id]).
+ * ⚠⚠ "NOT LISTED HERE" NO LONGER MEANS "PUBLIC". Since 2026-08-26 (`P1-ALL-E025`)
+ * public is an ENUMERATED ALLOWLIST in `src/lib/public-routes.ts`, and a route in
+ * neither this map nor that allowlist nor a self-guard FAILS the assertion in
+ * `e2e-shell/app-shell.spec.ts` by name. `public-routes.ts` IMPORTS `ROUTE_ACCESS`
+ * from this file, so "public" and "gated" are checked against each other and
+ * cannot both claim a route. This file stays the authority on WHAT is required;
+ * that file is the authority on what needs nothing.
+ *
+ * In-flow routes are deliberately absent — a user mid-signup has no role yet:
+ * `/join/*`, `/verify-email`, `/invite/accept`, `/login`. All are category 2 or 4
+ * in `public-routes.ts`, where the reasoning now lives.
+ *
+ * ⚠ SUPERSEDED 2026-08-26 (`P1-ALL-E025`): this list used to end *"and public
+ * marketplace reads (/providers/[id])"*. THAT IS NO LONGER TRUE — `/providers/[id]`
+ * SELF-GUARDS: `if (!viewer) redirect('/login?callbackUrl=…')` at `page.tsx:68`,
+ * added by `E049` so the profile costs an account. It is absent from this map
+ * because the page gates itself, NOT because it is public. It is deliberately
+ * NOT in the allowlist.
+ *
+ * ⚠ `/admin/*` LIVES OUTSIDE `(app)` AND IS GATED HERE + BY `src/app/admin/layout.tsx`
+ * (`guardPage("canAdminister")`), not by its folder. That is why only a handful of
+ * the ~30 admin pages carry their own guard and it still works. ⚠ DO NOT move
+ * admin into `(app)` and do not add per-page self-guards.
+ *
+ * ⚠⚠ AND `(app)` IS NOT A GATE. `src/app/(app)/layout.tsx` supplies MeProvider +
+ * AppShell and nothing else — no session check. Every route under it is gated by
+ * this map, by `settings/layout.tsx`, or by its own `guardPage`. Never assume the
+ * folder is doing it.
  */
 
 /** A route needs either a specific capability or just any authenticated user. */
