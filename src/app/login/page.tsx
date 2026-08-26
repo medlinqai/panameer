@@ -162,7 +162,18 @@ function LoginBackdrop() {
 
       {/* Brand wash: ink navy → magenta, plus a vignette for card contrast. */}
       <div className="absolute inset-0 bg-gradient-to-br from-ink/95 via-ink/80 to-magenta/50" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(23,30,62,0.75)_100%)]" />
+      {/*
+        ⚠⚠ THE VIGNETTE COLOUR IS THE BRAND NAVY #181E3C = rgb(24,30,60), MATCHING
+        `bg-ink` AND THE WASH ABOVE. Keep it that way.
+          SUPERSEDED 2026-08-26 (`P1-ALL-E022`): this read `rgba(23,30,62,0.75)`
+          — #171E3E, the OLD app navy that `P1-ALL-E015` replaced site-wide.
+        It survived E015 because it is a RAW rgba() inside a Tailwind arbitrary
+        value and that sweep grepped for the HEX. ⚠ Only the two colour digits
+        moved: the 0.75 alpha and the ellipse are unchanged, so /login looks the
+        same. ⚠ A hex cannot be used here — `_` is the space escape inside a
+        Tailwind arbitrary value, and the commas are what keep this parseable.
+      */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(24,30,60,0.75)_100%)]" />
     </div>
   );
 }
