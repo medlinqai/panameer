@@ -3316,7 +3316,20 @@ test.describe("/talent — the hero stat tiles", () => {
       ),
       "utf8",
     );
-    const jsx = src.slice(src.indexOf("export async function HireTalentHero"));
+    /*
+      ⚠ ANCHORED AND ASSERTED, BECAUSE THE SILENT VERSION OF THIS BIT ME. It read
+      `src.indexOf("export async function HireTalentHero")` — `P1-ALL-E019` renamed
+      that function to `TalentHero`, `indexOf` returned -1, and `slice(-1)` handed the
+      probe the LAST CHARACTER of the file. The test then failed on "must be mapped
+      from the awaited live read" rather than on the real cause, a stale anchor.
+      ⚠ THE `expect` BELOW MAKES A FUTURE RENAME FAIL LOUDLY AND ACCURATELY.
+    */
+    const at = src.indexOf("export async function TalentHero");
+    expect(
+      at,
+      "the hero's exported name changed — update this anchor",
+    ).toBeGreaterThan(-1);
+    const jsx = src.slice(at);
     for (const t of tiles) {
       expect(
         jsx.includes(`>${t.value}<`) || jsx.includes(`"${t.value}"`),
