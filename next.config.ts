@@ -58,12 +58,15 @@ const nextConfig: NextConfig = {
       */
       { source: "/for-providers", destination: "/work", permanent: true },
       /*
-        ⚠⚠ THIS DESTINATION IS DEAD AND IT IS NOT THIS BRIEF'S TO FIX. `/buy-services`
-        was renamed to `/shop` by `P1-ALL-E017` and 404s, so `/services` 308s to a
-        404. PRE-EXISTING, reported, NOT swept — the brief is explicit about not
-        sweeping. One word (`/shop`) closes it whenever someone owns it.
+        ⚠⚠ FIXED 2026-08-26 (`P1-ALL-E023`). The destination is `/shop`.
+          SUPERSEDED: this read `destination: "/buy-services"`, and `/buy-services`
+          was renamed to `/shop` by `P1-ALL-E017`, so `/services` 308'd to a 404.
+        ⚠ A 308 IS CACHED BY BROWSERS AND CRAWLERS, which made it worse than a bare
+        404 — a client that saw it once kept sending people there without asking the
+        server again. ⚠ STILL NOT A WILDCARD, for the reason above: `(app)/services/offers`
+        is a different authenticated route and `/:path*` here would swallow it.
       */
-      { source: "/services", destination: "/buy-services", permanent: true },
+      { source: "/services", destination: "/shop", permanent: true },
     ];
   },
 };
