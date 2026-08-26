@@ -169,13 +169,26 @@ export type MarketingNavItem = {
   its menu name.** `Talent -> /talent`, `Shop -> /shop`, `Integrate -> /integrate`,
   and the old folders were DELETED — no redirects, by instruction.
 
-  ⚠⚠ `Work` STILL POINTS AT `/find-work` AND THAT IS A BLOCKER, NOT AN OVERSIGHT.
-  `src/app/(app)/work/page.tsx` ALREADY OWNS `/work` — it is the SIGNED-IN provider
-  "Find Work" feed, `guardPage("canProvideServices")`, reached from the rail. Two
-  pages cannot resolve one URL, so the fourth rename was stopped and reported
-  rather than forced. ⚠ IT IS ALSO A NAMING COLLISION, not just a file one: `/work`
-  would mean the BUYER's marketing page publicly and the PROVIDER's job feed when
-  signed in. That needs Scott's decision, not a file move.
+  ⚠⚠ `Work` POINTS AT `/work` AND THAT IS CORRECT AND FINISHED. The fourth rename
+  landed on 2026-08-26: `/work` is the PUBLIC BUYER marketing page (`src/app/work/page.tsx`,
+  `○`, 200 signed out) and the SIGNED-IN provider feed moved to `/find-work`
+  (`src/app/(app)/find-work/page.tsx`, `guardPage("canProvideServices")`, reached from the
+  rail). The two routes SWAPPED. No redirects — nothing was shared. So all six public
+  pages now obey the standing rule above, `Work` included.
+
+  ⚠⚠ SUPERSEDED 2026-08-26 (`P1-ALL-E017` CLOSED) — the dead claim, QUOTED not deleted:
+    *"`Work` STILL POINTS AT `/find-work` AND THAT IS A BLOCKER, NOT AN OVERSIGHT.
+     `src/app/(app)/work/page.tsx` ALREADY OWNS `/work` — it is the SIGNED-IN provider
+     'Find Work' feed … Two pages cannot resolve one URL, so the fourth rename was
+     stopped and reported rather than forced. ⚠ IT IS ALSO A NAMING COLLISION … That
+     needs Scott's decision, not a file move."*
+  ⚠ IT WAS TRUE WHEN WRITTEN and it is FALSE NOW. Scott made that decision (swap, not
+  rename), `src/app/(app)/work/` no longer exists, and the naming collision is resolved
+  because each URL now names one audience: `/work` = buyer, `/find-work` = provider.
+  ⚠⚠ A COMMENT THAT ASSERTS A PRESENT-TENSE FACT IS INHERITED AS FACT BY THE NEXT
+  READER — that is why this was rewritten rather than left to rot (`ORIENTATION §10.1`).
+
+  ⚠ `/work-marketplace` IS A DIFFERENT ROUTE and was not touched by any of this.
 */
 export const MARKETING_NAV: MarketingNavItem[] = [
   { label: "Learn", href: "/learn" },
@@ -300,9 +313,17 @@ export const FOOTER_GROUPS: { title: string; entries: FooterEntry[] }[] = [
   {
     title: "Service BUYER Features",
     entries: [
-      /* ⚠ WIRED — the public Work page. It is `/find-work` and NOT `/work`:
-         `(app)/work` is the signed-in provider feed, which is why `P1-ALL-E017`
-         stopped that rename. When it resolves, this href moves with it. */
+      /* ⚠ WIRED — the public Work page. IT IS `/work`, and `/work` IS PUBLIC: the
+         route swap of 2026-08-26 moved the signed-in provider feed out to
+         `/find-work` and gave this URL to the buyer's marketing page. The href
+         below is right and does not need to move again.
+
+         ⚠⚠ SUPERSEDED 2026-08-26 (`P1-ALL-E017` CLOSED) — the dead claim, quoted:
+           *"It is `/find-work` and NOT `/work`: `(app)/work` is the signed-in provider
+            feed, which is why `P1-ALL-E017` stopped that rename. When it resolves,
+            this href moves with it."*
+         It resolved, and the href moved WITH the page rather than away from it — so
+         the sentence read backwards against the code beneath it. Kept, not deleted. */
       { label: "Post Work for Free", href: "/work" },
       /* ⚠ WIRED — `/assess` is public and is the free front door. */
       { label: "Assess Processing Maturity for Free", href: "/assess" },
