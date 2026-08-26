@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
 import { IntegrateHero } from "@/components/marketing/IntegrateHero";
 import { IntegrateSpine } from "@/components/marketing/IntegrateSpine";
-import { ErpPunchout } from "@/components/marketing/sections/ErpPunchout";
 import { ErpIntegration } from "@/components/marketing-home/ErpIntegration";
 import "@/components/marketing-home/home.css";
 
@@ -117,51 +116,59 @@ export default function EnterprisePage() {
         `.stepd-`-scoped and the eyebrow mirrors `/optimize` in Tailwind.
       */}
       <IntegrateSpine />
-      {/* The scope for the ported stylesheet, around the payload only. */}
-      <div className="pm-home">
+      {/*
+        The scope for the ported stylesheet, around the payload only.
+
+        ── ⚠⚠ THIS WRAPPER NOW OWNS `id="punchout"` (`P1-J0-E333`) ──────────────
+
+        ⚠ THE HERO'S CTA IS `href="#punchout"` AND IT IS THAT HERO'S ONLY CONTROL.
+        `ErpPunchout` carried that id and MOVED TO `/` in this same commit, so the
+        anchor was re-homed HERE FIRST — at no point does `main` have a hero button
+        pointing at a missing id.
+
+        ⚠ `ErpIntegration` IS THE RIGHT TARGET, and this is CHAT'S CALL, REPORTED so
+        Scott can overrule it: the CTA says `See How Punchout Works`, and this is the
+        integration diagram — requisition, cart, order, invoice, payment. It is the
+        closest thing left on the page to what the button promises.
+
+        ⚠⚠ ON THE WRAPPER IN THIS FILE, NEVER INSIDE `ErpIntegration`. That component
+        rendered on `/` until `P1-J0-E255` and could again, and an id inside it would
+        appear on BOTH pages. One id, one page, one meaning.
+
+        ⚠ `scroll-mt-[71px]` IS THE MEASURED STICKY `MarketingHeader` HEIGHT — read
+        off `getBoundingClientRect()` at 1440 on this page, not guessed, not taken
+        from a token. `position: sticky`, 71px. Without it the anchor scrolls the
+        heading UNDER the header.
+        ⚠ THE CTA's `href` AND LABEL DID NOT CHANGE. Only what `#punchout` names.
+      */}
+      <div id="punchout" className="pm-home scroll-mt-[71px]">
         <ErpIntegration className="erpx-band" />
       </div>
       {/*
-        ── ⚠ `ErpPunchout`, MOVED HERE FROM `/hire-talent` (`P1-J1-E020`) ────────
+        ── ⚠⚠ `ErpPunchout` HAS MOVED TO `/` (`P1-J0-E333`, 2026-08-26) ──────────
 
-        Scott, 2026-08-24, screenshotting *"Punch out for talent — not just
-        parts."*: *"This needs to be moved to INTEGRATE."*
+        SCOTT, 2026-08-26, screenshotting *"Punch out for talent — not just parts."*:
+        *"Move this graphic to the home page."*
 
-        ⚠ IT IS THE INTEGRATE STORY BY DEFINITION, not just a tidier address.
-        `integration_model.md`: *"the services procurement integration uses cXML
-        format and REST APIs ... as detailed in the model on the integrate page."*
-        This section IS that chain — requisition -> find & hire -> approve & PO ->
-        work order -> service receipt, with the ERP as system of record.
+        ⚠⚠ THIS REVERSED HIS OWN EARLIER INSTRUCTION AND THE DEAD ONE IS QUOTED SO
+        NOBODY RESTORES IT CITING `E020`:
+          `P1-J1-E020`, 2026-08-24, same component:
+            *"This needs to be moved to INTEGRATE."*
+        It went `/hire-talent` -> `/integrate` then, and `/integrate` -> `/` now.
+        ⚠ THE LATER INSTRUCTION WINS. Do not move it back on the strength of the
+        2026-08-24 note — read the date before acting on either.
 
-        ⚠ ONE CALL SITE BEFORE THE MOVE, VERIFIED: `hire-talent/page.tsx:91` and
-        nowhere else. So this is a relocation, not a shared-component question.
+        ⚠ A MOVE, NOT A COPY. Two copies of one diagram is two sources of truth, so
+        it renders ONLY on `/` now (`app/page.tsx`, outside the `.pm-home` wrapper).
+        ⚠ THE COMPONENT GAINED `marketing-surface font-body` ON ITS OWN ROOT to
+        survive the move — Scott approved that on 2026-08-26 after the first attempt
+        measured 33 property differences. It had been inheriting its whole
+        environment from `MarketingShell` on THIS page. See the header of
+        `ErpPunchout.tsx`; the classes are INERT here, measured identical.
 
-        ── ⚠⚠ WHY IT SITS **OUTSIDE** THE `.pm-home` DIV ────────────────────────
-
-        `ErpPunchout` is pure Tailwind — `bg-[#f6f4fb]`, `max-w-[1120px]`,
-        `border-line`. `.pm-home` sets a font stack, a colour and a line-height on
-        everything inside it, so putting this section in there would restyle it in a
-        way `/hire-talent` never did. OUTSIDE the wrapper reproduces its previous
-        environment exactly — measured on both pages, identical.
-
-        ⚠ THAT SCOPING TRAP HAS BITTEN FOUR TIMES (`.sd-n`, `P1-J0-E290`, the footer
-        `P1-ALL-E013`, `/learn`'s hero). It was checked here, not assumed.
-
-        ── ⚠ THE ORDER: `ErpIntegration` THEN `ErpPunchout` ────────────────────
-
-        General before specific. `ErpIntegration` is the integration MODEL — what
-        connects to what. This is the one PROCESS that model exists to serve, and it
-        names the ERP at every step. Reading the chain first and the model second
-        would explain the mechanism to somebody who had not yet been told what it
-        is for. (`ErpPackages` is NOT on this page — it renders on `/buy-services`;
-        the brief's premise that both were here did not hold.)
-
-        ⚠⚠ REPORTED, NOT FIXED: `ENTERPRISE_HERO` STILL LITERALLY READS
-        `"PLACEHOLDER — headline about ERP integration goes here."` This is a strong
-        section landing on an unwalked page whose hero is a placeholder.
-        `/enterprise` needs its own walk.
+        ⚠ WHAT STAYED BEHIND: `id="punchout"`, re-homed onto the `ErpIntegration`
+        wrapper above, because the hero's only CTA points at it.
       */}
-      <ErpPunchout />
     </MarketingShell>
   );
 }

@@ -20,6 +20,7 @@ import { ProfileViz } from "@/components/marketing/sections/ProfileViz";
 import { FourBeats } from "@/components/marketing/sections/FourBeats";
 import { AiStrip } from "@/components/marketing/sections/AiStrip";
 import { ClosingCta } from "@/components/marketing/sections/ClosingCta";
+import { ErpPunchout } from "@/components/marketing/sections/ErpPunchout";
 import { MarketingFooter } from "@/components/marketing/MarketingFooter";
 import { GetTheTalent } from "@/components/marketing-home/GetTheTalent";
 import { WorkTracker } from "@/components/marketing-home/WorkTracker";
@@ -355,6 +356,59 @@ export default function Home() {
         <AiStrip audience="provider" />
         <ClosingCta audience="provider" />
       </div>
+      {/*
+        ── ⚠⚠ `ErpPunchout`, MOVED HERE FROM `/integrate` (`P1-J0-E333`) ─────────
+
+        SCOTT, 2026-08-26, screenshotting *"Punch out for talent — not just parts."*:
+        *"Move this graphic to the home page."*
+
+        ⚠⚠ HE REVERSED HIMSELF AND THE DEAD INSTRUCTION IS QUOTED SO NOBODY RESTORES
+        IT CITING `E020`:
+          `P1-J1-E020`, 2026-08-24, same component:
+            *"This needs to be moved to INTEGRATE."*
+        `/hire-talent` -> `/integrate` on 2026-08-24, `/integrate` -> here on
+        2026-08-26. ⚠ THE LATER INSTRUCTION WINS. Check the date before moving it on
+        the strength of either note.
+
+        ⚠ A MOVE, NOT A COPY — it renders on THIS PAGE ONLY. `/integrate` no longer
+        imports it. Two copies of one diagram is two sources of truth.
+
+        ── ⚠⚠ WHY IT SITS **OUTSIDE** THE `.pm-home` DIV ────────────────────────
+
+        `ErpPunchout` is pure Tailwind — `bg-[#f6f4fb]`, `max-w-[1120px]`,
+        `border-line`. `.pm-home` sets a FONT STACK, a COLOUR and a LINE-HEIGHT on
+        everything inside it, so dropping this section into the wrapper above would
+        restyle it in a way neither `/hire-talent` nor `/integrate` ever did.
+        ⚠⚠ `/` IS THE `.pm-home` PAGE, so this is the one page where the naive
+        placement is wrong. ⚠ THAT SCOPING TRAP HAS BITTEN FOUR TIMES (`.sd-n`,
+        `P1-J0-E290`, the footer `P1-ALL-E013`, `/learn`'s hero) — measured here.
+        ⚠ IT IS THE SAME REASON THE FOOTER BELOW IS OUT HERE. Two Tailwind sections
+        escaping one ported stylesheet, for one reason.
+
+        ⚠⚠ AND OUTSIDE `.pm-home` WAS NOT ENOUGH ON ITS OWN. `/` DOES NOT USE
+        `MarketingShell` (`:61`, deliberate), so out here a section inherits raw
+        `<body>` — Geist, `#171717`. The first attempt measured 33 property
+        differences across all 37 elements. `ErpPunchout` NOW CARRIES
+        `marketing-surface font-body` ON ITS OWN ROOT (Scott's call, 2026-08-26) and
+        depends on no ancestor. ⚠ DO NOT "TIDY" THOSE CLASSES OFF IT.
+
+        ── ⚠ PLACEMENT: LAST SECTION, BEFORE THE FOOTER ────────────────────────
+
+        ⚠ SCOTT SAID "the home page" AND DID NOT SAY WHERE — this is the brief's
+        stated default, not an invention: the same relative slot it held on
+        `/integrate`, after the ERP material and before the footer.
+        ⚠ ON `/` THERE IS NO ERP MATERIAL TO SIT AFTER — `ErpIntegration` and
+        `ErpPackages` BOTH LEFT THIS PAGE (`P1-J0-E255`, `P1-J0-E273`) and render on
+        `/integrate` and `/shop`. So "after the ERP material" resolves to "last",
+        which is also the ONLY slot outside `.pm-home` that is in reading order.
+        ⚠ IT FOLLOWS `ClosingCta audience="provider"` — a closing CTA is a strange
+        thing to have a section after. REPORTED for Scott's walk rather than
+        reordered, because the ordering above it is his.
+
+        ⚠ `id="punchout"` TRAVELS WITH IT: once here, once on `/integrate` (re-homed
+        onto that page's `ErpIntegration` wrapper). ⚠ ONE PER PAGE — two is a defect.
+      */}
+      <ErpPunchout />
       {/*
         ── ⚠⚠ THE FOOTER SITS OUTSIDE `.pm-home`, AND THAT IS LOAD-BEARING ────
 
