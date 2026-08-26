@@ -59,9 +59,36 @@ export function IntegrateSpine() {
             ⚠ `pb-[80px]` IS `/optimize`'s MEASURED 81px tagline-to-row-1 gap
             (`P1-J0-E319`), so the sixth spine does not repeat `/learn`'s divergence.
           */}
+          {/*
+            ── ⚠⚠ SCOTT'S STRING, VERBATIM, 2026-08-26 (`P1-J0-E331`) ────────────
+
+            He replaced the previous line because it RESTATED THE HERO rather than
+            adding to it. This one names the four mechanics instead.
+
+            ⚠ SUPERSEDED 2026-08-26, quoted not deleted:
+              *"Punchout was built for parts. Panameer makes it work for people,
+               services, and everything you buy."*
+
+            ⚠ HIS STRAIGHT DOUBLE QUOTES AROUND `Punch` SHIP, rendered `&ldquo;`/
+            `&rdquo;` to match every other quoted term on the public pages
+            (`/work`, `/talent`, `/learn`).
+            ⚠⚠ `cXML` APPEARS TWICE ON PURPOSE — both clauses name it and it is his
+            sentence. DO NOT COLLAPSE THEM into one mention.
+            ⚠ `cXML` AND `EFT` STAY UPPERCASE AS TYPED.
+            ⚠ THE CLASSES ARE UNTOUCHED — `text-wrap` (Tailwind's utility, never
+            `[text-wrap:normal]`, which is invalid CSS the browser discards) and the
+            `pb-[80px]` measured gap on the wrapper (`P1-J0-E319`) both stay.
+
+            ⚠⚠ FOUR MECHANICS NAMED, NONE BUILT — and that is KNOWINGLY so.
+            `IntegrateHero.tsx:108` records it: no `Integration` model, no punchout
+            endpoint, no cXML, no EFT path. `decisions-01.md` records `0 of 5 built,
+            knowingly`. ⚠ OUTSTANDING PARTS GATE PROMOTION, NOT THE BUILD — this is
+            on the pre-launch list, and HIS COPY IS NOT SOFTENED TO MATCH THE BUILD.
+          */}
           <h2 className="mt-6 max-w-[1040px] text-wrap font-display text-[28px] font-bold leading-[1.14] tracking-[-0.5px] text-ink min-[900px]:text-[34px] min-[900px]:leading-[38.76px]">
-            Punchout was built for parts. Panameer makes it work for people,
-            services, and everything you buy.
+            &ldquo;Punch&rdquo; into our commerce site, return your cart using
+            cXML, send orders and receive invoices using cXML, and send payments
+            using EFT.
           </h2>
         </div>
       </section>
