@@ -147,7 +147,7 @@ export async function getAttentionCards(input: {
       id: "invites",
       label: "Invites Awaiting Proposal",
       detail: "buyers want your rate",
-      href: "/work/invitations",
+      href: "/find-work/invitations",
       icon: "Briefcase",
     },
     null,

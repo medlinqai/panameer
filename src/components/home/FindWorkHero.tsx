@@ -21,7 +21,7 @@ export function FindWorkHero({ chips }: { chips: string[] }) {
 
   const go = (query: string) => {
     const trimmed = query.trim();
-    router.push(trimmed ? `/work?q=${encodeURIComponent(trimmed)}` : "/work");
+    router.push(trimmed ? `/work?q=${encodeURIComponent(trimmed)}` : "/find-work");
   };
 
   return (

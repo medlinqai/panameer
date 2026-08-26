@@ -82,7 +82,7 @@ export const config = {
     "/account-health/:path*",
     "/recommendations/:path*",
     "/hire/:path*",
-    "/work/:path*",
+    "/find-work/:path*",
     "/reports/:path*",
     "/search/:path*",
     "/contracts/:path*",

@@ -51,7 +51,7 @@ export default async function FindWorkPage({
 
   return (
     <div className="mx-auto w-full max-w-6xl">
-      <WorkFeed tab={tab} query={query} cards={cards} basePath="/work" />
+      <WorkFeed tab={tab} query={query} cards={cards} basePath="/find-work" />
     </div>
   );
 }

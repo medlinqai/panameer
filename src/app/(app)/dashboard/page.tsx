@@ -225,7 +225,7 @@ export default async function DashboardPage({
               ) : null}
             </p>
             <Link
-              href="/work/new"
+              href="/find-work/new"
               className="mt-5 inline-flex rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90"
             >
               Create Work Request
@@ -253,7 +253,7 @@ export default async function DashboardPage({
             enterprise-application catalog.
           </p>
           <Link
-            href="/work/new"
+            href="/find-work/new"
             className="mt-5 inline-flex rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90"
           >
             Create Work Request

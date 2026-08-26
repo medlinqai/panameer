@@ -59,7 +59,7 @@ export default async function RequesterReadyPage() {
             Go to my dashboard
           </Link>
           <Link
-            href="/work/new"
+            href="/find-work/new"
             className="ml-auto inline-flex justify-center rounded-full bg-magenta px-8 py-3.5 text-[17px] font-bold text-white shadow-brand transition-colors hover:bg-magenta-dark"
           >
             Post a Work Request

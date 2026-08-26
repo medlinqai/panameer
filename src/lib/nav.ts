@@ -227,11 +227,11 @@ export const PAGE_TABS: Record<string, NavItem[]> = {
  * /work/proposals is "My Proposals" even though the tab row is built elsewhere.
  */
 export const WORK_FEED_EXTRA_TITLES: NavItem[] = [
-  { label: "Find Work", href: "/work" },
-  { label: "Work Requests for My Skills", href: "/work/for-my-skills" },
-  { label: "My Work Requests (Saved)", href: "/work/saved" },
-  { label: "Invitations to Propose My Rate", href: "/work/invitations" },
-  { label: "My Proposals", href: "/work/proposals" },
+  { label: "Find Work", href: "/find-work" },
+  { label: "Work Requests for My Skills", href: "/find-work/for-my-skills" },
+  { label: "My Work Requests (Saved)", href: "/find-work/saved" },
+  { label: "Invitations to Propose My Rate", href: "/find-work/invitations" },
+  { label: "My Proposals", href: "/find-work/proposals" },
 ];
 
 export const COMPANY_NAV: NavItem[] = [
@@ -298,7 +298,7 @@ export const PROVIDER_NAV: NavItem[] = [
   { label: "Start Learning", href: "/learn", icon: "GraduationCap" },
   {
     label: "Find Work",
-    href: "/work",
+    href: "/find-work",
     icon: "Briefcase",
     requires: "canProvideServices",
   },
