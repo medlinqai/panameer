@@ -50,7 +50,19 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       { source: "/for-buyers", destination: "/", permanent: true },
-      { source: "/for-providers", destination: "/find-work", permanent: true },
+      /*
+        ⚠⚠ REPOINTED BY THE ROUTE SWAP (`P1-ALL-E017`). This said `/find-work`, which
+        WAS the public marketing page. After the swap `/find-work` is the SIGNED-IN
+        provider feed, so a legacy `/for-providers` link would have 308'd to a route
+        that immediately 307s to `/login`. ⚠ THE PUBLIC PAGE IS `/work` NOW.
+      */
+      { source: "/for-providers", destination: "/work", permanent: true },
+      /*
+        ⚠⚠ THIS DESTINATION IS DEAD AND IT IS NOT THIS BRIEF'S TO FIX. `/buy-services`
+        was renamed to `/shop` by `P1-ALL-E017` and 404s, so `/services` 308s to a
+        404. PRE-EXISTING, reported, NOT swept — the brief is explicit about not
+        sweeping. One word (`/shop`) closes it whenever someone owns it.
+      */
       { source: "/services", destination: "/buy-services", permanent: true },
     ];
   },

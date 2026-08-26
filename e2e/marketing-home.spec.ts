@@ -3309,14 +3309,18 @@ test.describe("/talent — the hero stat tiles", () => {
       sitting in the hero's JSX.
     */
     const src = readFileSync(
-      join(process.cwd(), "src/components/marketing/HireTalentHero.tsx"),
+      join(
+        process.cwd() /* ⚠ RENAMED BY `P1-ALL-E019`: HireTalentHero.tsx -> TalentHero.tsx, so the
+         component matches the page it renders. Path only; the assertion is unchanged. */,
+        "src/components/marketing/TalentHero.tsx",
+      ),
       "utf8",
     );
     const jsx = src.slice(src.indexOf("export async function HireTalentHero"));
     for (const t of tiles) {
       expect(
         jsx.includes(`>${t.value}<`) || jsx.includes(`"${t.value}"`),
-        `${t.value} is hardcoded in HireTalentHero — it must come from talent-stats.ts`,
+        `${t.value} is hardcoded in TalentHero — it must come from talent-stats.ts`,
       ).toBe(false);
     }
     expect(
