@@ -160,9 +160,29 @@ export function SocialSignIn({
       </div>
 
       {available !== null && !anyLive && (
+        /*
+          ⚠⚠ `sign in`, NOT `create an account` (`P1-J1.4-E230`, Scott 2026-08-26:
+          *"make the change."*).
+
+          ⚠ THE FORM BELOW THIS CALLS `signIn("credentials")` AND NOTHING ELSE. IT
+          AUTHENTICATES; IT CANNOT REGISTER. So this line used to instruct a
+          brand-new visitor to create an account, and the only control under the
+          instruction would reject them. ⚠ IT IS ALSO THE LANDING SPOT FOR
+          `/learn`'s `Start Learning for Free`, so the first thing a new learner
+          read was an instruction the page could not honour.
+
+          ⚠ SUPERSEDED 2026-08-26, quoted not deleted:
+            *"Social sign-in isn't configured yet — create an account with your
+             email below."*
+
+          ⚠ THE FIX IS THE COPY PLUS THE WAY OUT — `login/page.tsx` now carries a
+          `Need an account? Sign up` link to `/join`, the only sign-up door that
+          exists. ⚠ REGISTRATION WAS NOT BUILT HERE; real sign-up on `/login` is a
+          separate brief Scott has parked.
+        */
         <p className="mt-2.5 text-center text-[13px] text-ink-2">
-          Social sign-in isn&apos;t configured yet — create an account with your
-          email below.
+          Social sign-in isn&apos;t configured yet — sign in with your email
+          below.
         </p>
       )}
     </div>

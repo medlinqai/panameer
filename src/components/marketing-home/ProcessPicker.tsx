@@ -89,7 +89,29 @@ export function ProcessPicker() {
   return (
     <section className="pp" id="step-process">
       <div className="wrap">
-        <div className="eyebrow">Step 1 - Select a Business Process</div>
+        {/*
+          ── ⚠⚠ THE EYEBROW IS GONE FROM HERE (`P1-J0-E330`) ─────────────────
+
+          ⚠ `/optimize` PRINTED IT TWICE IN ONE PANEL. `OptimizeSteps` maps
+          `SPINE_STEPS` and prints `{s.eyebrow}` for every step, then renders
+          `StepGraphic graphic="process-picker"` — which is this component,
+          which printed its own hardcoded copy of the same string right beneath
+          it. Two leaf nodes, same text, same panel.
+
+          ⚠ SUPERSEDED 2026-08-26, quoted not deleted:
+            *`<div className="eyebrow">Step 1 - Select a Business Process</div>`*
+
+          ⚠ `OptimizeSteps` IS THE ONE THAT STAYS because it DERIVES the string
+          from `spine-steps.ts:122`; this one was a second copy of it.
+          ⚠ VERIFIED BEFORE DELETING, not assumed: nothing renders this component
+          outside `OptimizeSteps`. `SpineSteps.tsx:46` maps it in the registry and
+          `OptimizeSteps` imports only `StepGraphic`; the `SpineSteps` SECTION is
+          imported by nothing, and `app/page.tsx:26` still holds — none of
+          `HowItWorks`/`ProcessPicker`/`SpineSteps` is imported on `/`. So this
+          component has exactly one live render path and it already has an eyebrow.
+          ⚠ IF `SpineSteps` IS EVER RE-RENDERED it prints `s.eyebrow` too — the
+          registry entry does not need this div back.
+        */}
         {/*
           ⚠ E139 — SHIPPED AS THE EXACT LITERAL, INCLUDING NO TERMINAL PERIOD.
 

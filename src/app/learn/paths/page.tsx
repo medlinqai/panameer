@@ -31,7 +31,23 @@ export default async function LearnPathsPage({
   searchParams: Promise<{ tab?: string }>;
 }) {
   const viewer = await getSessionViewer();
-  if (!viewer) redirect("/learn");
+  /*
+    ⚠⚠ `/login`, NOT `/learn` (`P1-J3-E036`). THIS IS THE SECOND HALF OF THE FIX
+    AND IT IS NOT OPTIONAL.
+
+    ⚠ SUPERSEDED 2026-08-26, quoted not deleted:  *`redirect("/learn")`*
+    ⚠ THAT WAS A LOOP. `/learn`'s hero button now points HERE, so a signed-out
+    click on `/learn` returned the visitor to `/learn` — the page they clicked
+    from, with nothing changed and no explanation. Scott asked for *"a LOGIN or
+    CREATE YOUR ACCOUNT page"*; this is it.
+
+    ⚠ THE CALLBACK IS ENCODED (`%2Flearn%2Fpaths`) so signing in lands on the paths
+    they were trying to open, not on a dashboard.
+    ⚠ THIS ROUTE STAYS GATED. It moves from redirecting to `/learn` to redirecting
+    to `/login`, which is a BETTER gate, not a new one — its `public-routes.ts`
+    status does not change and it is still absent from the allowlist.
+  */
+  if (!viewer) redirect("/login?callbackUrl=%2Flearn%2Fpaths");
 
   const cards = await getLearnHome(viewer.userId);
   const { tab } = await searchParams;

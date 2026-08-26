@@ -839,8 +839,32 @@ export function LearnPublic() {
                   Do not "align" the two heroes by deleting one.
                 */}
                   <div className="mt-8 flex flex-wrap items-center gap-3">
+                    {/*
+                      ── ⚠⚠ `/learn/paths`, NOT `/login` (`P1-J3-E036`) ─────────────
+
+                      SCOTT, 2026-08-26: *"The Start Learning for Free button? IF
+                      LOGGED IN it shows you the learning paths...IF NOT it takes you
+                      to a LOGIN or CREATE YOUR ACCOUNT page."*
+
+                      ⚠ SUPERSEDED 2026-08-26, quoted not deleted:
+                        *`href="/login?callbackUrl=/learn"`*
+                      ⚠ THAT SENT A SIGNED-IN VISITOR TO A LOGIN PAGE AND BOUNCED THEM
+                      BACK TO THE PAGE THEY WERE ALREADY ON. It only ever behaved
+                      correctly for half the audience.
+
+                      ⚠⚠ `LearnPublic` IS NOT MADE SESSION-AWARE TO FIX THIS, ON
+                      PURPOSE. It reads no viewer today, and `learn/paths/page.tsx`
+                      ALREADY branches on one — `getSessionViewer()` then
+                      `getLearnHome(viewer.userId)`. The button points at that route
+                      and lets it decide: signed in -> the paths; signed out -> the
+                      login, with a callback back to the paths. One branch, one place.
+                      ⚠ DO NOT ADD A BRANCH HERE.
+
+                      ⚠ THE LABEL, CLASSES AND COLOUR ARE UNTOUCHED — this hero's AA
+                      failure is `P1-J3-E033`, Scott's open decision, NOT this fix.
+                    */}
                     <Link
-                      href="/login?callbackUrl=/learn"
+                      href="/learn/paths"
                       className="rounded-[12px] bg-magenta px-7 py-4 font-display text-[16px] font-bold text-white"
                     >
                       Start Learning for Free

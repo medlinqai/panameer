@@ -176,6 +176,34 @@ export const PUBLIC_ROUTES: PublicRoute[] = [
   { route: "/explore", category: 5 },
   { route: "/why-panameer", category: 5 },
   { route: "/work-marketplace", category: 5, status: "OPEN" },
+
+  /*
+    ── ⚠⚠ LEARN'S BROWSE SURFACE — CLASSIFIED 2026-08-26 (`P1-J3-E035`) ───────
+
+    SCOTT, 2026-08-26: *"NO. you HAVE to be logged into take free lessons. PERIOD."*
+    ⚠⚠ HIS RULE IS ABOUT **TAKING** A LESSON, NOT BROWSING ONE. `/learn/[slug]/[lessonId]`
+    — the PLAYER — is now gated with `guardPage("authenticated")`. These three
+    DESCRIBE what is inside; they do not play it, and browsing is the funnel that
+    makes somebody want an account in the first place.
+
+    ⚠⚠ `/learn/courses` IS THE ONE THAT MUST NOT BE GATED. `/learn`'s public hero
+    links STRAIGHT AT IT — `Browse the Catalog` — so a gate there turns the public
+    hero's second CTA into a login wall. It was also shipped deliberately by
+    `brief_walk_fixes` WS8 to REPLACE a "coming soon", so gating it would undo that
+    same week. ⚠ DO NOT GATE IT, and do not read the `/learn` prefix as a licence
+    to sweep the whole subtree.
+
+    ⚠ `/learn/[slug]` and `/learn/[slug]/course/[courseSlug]` are session-AWARE and
+    never redirect: they render for a visitor and personalise for a member.
+
+    ⚠ THREE `/learn` ROUTES ARE GATED AND ARE DELIBERATELY ABSENT FROM THIS LIST:
+    `/learn/[slug]/[lessonId]` and `/learn/my-courses` (both `guardPage`), and
+    `/learn/paths` (session redirect). ⚠ THE PREFIX DECIDES NOTHING HERE — check
+    the page.
+  */
+  { route: "/learn/courses", category: 5 },
+  { route: "/learn/[slug]", category: 5 },
+  { route: "/learn/[slug]/course/[courseSlug]", category: 5 },
 ];
 
 /**
@@ -209,23 +237,23 @@ export const UNCLASSIFIED_PENDING_DECISION: {
     route: "/assess/submitted",
     note: "The post-submit thank-you. No session read. Reached straight after the wizard, before the magic link creates the account.",
   },
-  {
-    route: "/learn/[slug]",
-    note: "A learning path's own page. Reads the session but NEVER redirects — it renders for a visitor and personalises for a member. Public in fact; the brief's category 1 names only /learn.",
-  },
-  {
-    route: "/learn/[slug]/[lessonId]",
-    note: "A lesson. Same shape: session-aware, no redirect. This is the one worth Scott's eye — free lessons are the Learn moat, but it is also the whole product behind a bare URL.",
-  },
-  {
-    route: "/learn/[slug]/course/[courseSlug]",
-    note: "A course inside a path. Session-aware, no redirect.",
-  },
-  {
-    route: "/learn/courses",
-    note: 'The real catalog signed out — deliberate, shipped by brief_walk_fixes WS8 to replace a "coming soon". No session read. Public on purpose but never categorised.',
-  },
 ];
+
+/*
+  ⚠⚠ FOUR ENTRIES LEFT THIS LIST ON 2026-08-26 (`P1-J3-E035`) AND IT MAY ONLY EVER
+  SHRINK. Recorded here rather than deleted, so the list's history is readable:
+
+    /learn/[slug]/[lessonId]              -> GATED. `guardPage("authenticated")`
+                                             added; Scott: *"you HAVE to be logged
+                                             in to take free lessons. PERIOD."*
+    /learn/courses                        -> PUBLIC, category 5
+    /learn/[slug]                         -> PUBLIC, category 5
+    /learn/[slug]/course/[courseSlug]     -> PUBLIC, category 5
+
+  ⚠ THE TWO THAT REMAIN ARE THE ASSESSMENT PAIR, AND THEY STAY UNTOUCHED BECAUSE
+  SCOTT PARKED ASSESSMENTS. They are still public, still uncategorised, still his
+  decision.
+*/
 
 /** Every gated prefix, straight from the map the proxy and guards both consume. */
 export const GATED_PREFIXES: string[] = ROUTE_ACCESS.map((e) => e.prefix);

@@ -38,20 +38,35 @@ import { ASSESSMENT_PRODUCT } from "@/lib/brand";
   visitor picks a shape of engagement rather than declaring which side they are
   on.
 
-  "FIND WORK" IS ITS OWN ITEM AGAIN, and its own page: /find-work, renamed from
-  /for-providers so the label and the route say the same word. It was briefly a
-  separate "For Experts" door rendered apart from the six (E002 removed that);
-  it is now simply one of the four.
+  "WORK" IS ITS OWN ITEM, and its own page: `/work`, which is PUBLIC. It was
+  briefly a separate "For Experts" door rendered apart from the six (E002 removed
+  that); it is now simply one of the six.
+
+  ⚠⚠ SUPERSEDED 2026-08-26 (P1-ALL-E017 closed) — the dead claim, quoted:
+    *""FIND WORK" IS ITS OWN ITEM AGAIN, and its own page: /find-work, renamed
+     from /for-providers so the label and the route say the same word."*
+  ⚠ TRUE WHEN WRITTEN, FALSE NOW. The route swap gave `/work` to the PUBLIC page
+  and moved the SIGNED-IN provider feed to `/find-work`, which is GATED
+  (`guardPage("canProvideServices")`). The label is `Work`, not `Find Work`, and
+  the public page it points at is `/work`. `/for-providers` survives only as a
+  308 in `next.config.ts`, repointed to `/work`.
 
   PRICING IS NOT IN THE NAV. Price surfaces contextually, when a selection needs
   a plan, plus a passive link in the footer — which the footer already carries.
   Removed here rather than left as a seventh item: a nav "Pricing" invites a
   comparison before there is anything to compare.
 
-  ONE DESTINATION IN THE NAV IS AN HONEST STUB. /buy-services (renamed from
-  /services) renders ComingSoon behind the public header: a real route that says
-  it is not built rather than faking a listing. /work-marketplace is the same
-  kind of stub but is no longer in the nav — footer only, as TBD.
+  NO NAV DESTINATION IS A STUB ANY MORE. `/shop` HAS A REAL HERO AND A REAL
+  FIVE-STEP SPINE as of `1d790be`. `/work-marketplace` is still an honest stub
+  ("not built" behind the public header) and is still footer-only, not in the nav.
+
+  ⚠⚠ SUPERSEDED 2026-08-26 (P1-ALL-E017 closed) — DOUBLE-STALE, quoted:
+    *"ONE DESTINATION IN THE NAV IS AN HONEST STUB. /buy-services (renamed from
+     /services) renders ComingSoon behind the public header."*
+  ⚠ WRONG TWICE OVER: the route is `/shop`, not `/buy-services` (that folder is
+  DELETED, and `/services` is a 308 to `/shop` since `P1-ALL-E023`), AND it no
+  longer renders `ComingSoon` — `1d790be` gave it real content. Do not go looking
+  for a stub that is not there.
 */
 export type MarketingNavItem = {
   label: string;
@@ -106,16 +121,27 @@ export type MarketingNavItem = {
                    two labels moved and the order changed; not one href did.
     set 3 (E245)   Learn · Talent · Work · Shop · Optimize · Integrate
 
-  ── ⚠ SET 3, 2026-08-21 (P1-J0-E245) — FOUR ITEMS BECOME SIX ─────────────────
+  ── ⚠⚠ SET 3, 2026-08-21 (P1-J0-E245) — A HISTORICAL SNAPSHOT, NOT THE CURRENT
+        TABLE. FIVE OF THESE SIX HREFS HAVE SINCE MOVED (2026-08-26, P1-ALL-E017
+        closed). THE LIVE TABLE IS `MARKETING_NAV` BELOW — READ THAT, NOT THIS. ──
 
-  Two labels SHORTEN and two are ADDED. Again, NOT ONE EXISTING HREF MOVED.
+  What SET 3 changed on the day: two labels SHORTEN and two are ADDED, and on
+  that day not one existing href moved. ⚠ THE HREF COLUMN BELOW IS AS OF
+  2026-08-21 AND IS NOW WRONG; the third column says where each one went.
 
-    Learn       /learn          unchanged
-    Talent      /hire-talent    was "Find Talent"
-    Work        /find-work      was "Find Work"
-    Shop        /buy-services   unchanged
-    Optimize    /optimize       NEW at E245 (as /assess), repointed at E266
-    Integrate   /enterprise     NEW
+    label       href @ 2026-08-21   ⚠ href TODAY
+    Learn       /learn              /learn          unchanged
+    Talent      /hire-talent        /talent         renamed, old folder DELETED
+    Work        /find-work          /work           ⚠ SWAPPED — /find-work is now
+                                                    the GATED provider feed
+    Shop        /buy-services       /shop           renamed, old folder DELETED
+    Optimize    /optimize           /optimize       unchanged (NEW at E245 as
+                                                    /assess, repointed at E266)
+    Integrate   /enterprise         /integrate      renamed, old folder DELETED
+
+  ⚠ NO REDIRECTS FOR THE RENAMES — nothing was shared, so the old folders were
+  deleted outright by instruction. The standing rule is `decisions-01.md`
+  2026-08-25: A PUBLIC PAGE'S URL IS ITS MENU NAME, which all six now obey.
 
   ⚠ `Optimize` POINTS AT `/optimize` AS OF 2026-08-21 (`P1-J0-E266`), AND IT
   POINTED AT `/assess` FOR ONE DAY. Do not put it back.
@@ -428,9 +454,17 @@ export const FOOTER_LEGAL: FooterEntry[] = [
  *
  * ── THE ROUTE IS STILL REACHABLE, AND THAT IS THE THING TO PROTECT ───────────
  *
- * `/find-work` (renamed from `/for-providers`) is a HEADER ITEM again as of
- * E029, so the door's original worry — a seller page with no inbound link — no
- * longer applies. It also keeps its footer entries.
+ * `/work` IS A HEADER ITEM (labelled `Work`), so the door's original worry — a
+ * seller page with no inbound link — no longer applies. It also keeps its footer
+ * entries. ⚠ THE `href` ON THIS EXPORT IS `/work` AND IS CORRECT.
+ *
+ * ⚠⚠ SUPERSEDED 2026-08-26 (P1-ALL-E017 closed) — the dead claim, quoted:
+ *   *"`/find-work` (renamed from `/for-providers`) is a HEADER ITEM again as of
+ *    E029."*
+ * ⚠ `/find-work` IS NOT A HEADER ITEM AND IS NOT PUBLIC. Since the route swap it
+ * is the SIGNED-IN provider feed behind `guardPage("canProvideServices")`, reached
+ * from the app RAIL, and it 307s to `/login` signed out. The public seller page
+ * this export points at is `/work`.
  *
  * KEPT AS AN EXPORT deliberately. The label and href are the paper trail for a
  * decision that has now been made twice in opposite directions; deleting them

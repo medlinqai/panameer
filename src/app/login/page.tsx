@@ -118,6 +118,37 @@ function LoginForm() {
         >
           {loading ? "Signing in…" : "Sign In"}
         </button>
+
+        {/*
+          ── ⚠⚠ THE WAY OUT (`P1-J1.4-E230`) ──────────────────────────────────
+
+          This page AUTHENTICATES and cannot REGISTER — `onSubmit` calls
+          `signIn("credentials")` and there is no create-account path on it at
+          all. `SocialSignIn`'s notice used to tell a new visitor to create an
+          account here; it now says `sign in`, and this is where a visitor who
+          has no account actually goes.
+
+          ⚠ A BARE `/join`, DELIBERATELY. `/join` reads `type`, `blocked` and
+          `from` — it DOES NOT READ `callbackUrl`. Passing one would be a
+          decorative parameter that goes nowhere, so it is not passed.
+          ⚠ `/join` IS THE ONLY SIGN-UP DOOR THAT EXISTS.
+
+          ⚠ A TEXT LINK, NOT A BUTTON, and it INHERITS the surrounding
+          `text-ink-2` rather than introducing `text-magenta` — the magenta-on-
+          white ratios are an open AA item (`P1-J4-E020`'s neighbours) and this
+          link does not need to join them. Underline carries the affordance.
+          ⚠ PLACED INSIDE THE CARD, after the submit button: the `<form>` IS the
+          white card, so a sibling after `</form>` would land on the dark video
+          backdrop where the surrounding type and colour do not apply.
+          ⚠ THE FORM, `signIn` AND THE SOCIAL BUTTONS ARE UNTOUCHED. Registration
+          was NOT built — that is a separate, parked brief.
+        */}
+        <p className="text-center text-[13px] text-ink-2">
+          Need an account?{" "}
+          <a href="/join" className="underline transition-colors hover:text-ink">
+            Sign up
+          </a>
+        </p>
       </form>
     </main>
   );
