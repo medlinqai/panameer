@@ -135,7 +135,7 @@ export function GetTheTalent() {
 
         {/* Quiet, and at the foot. Not a section. */}
         <p className="gtt-supply">
-          <Link href="/find-work">
+          <Link href="/work">
             Are you the expert? See how work reaches you &rarr;
           </Link>
         </p>

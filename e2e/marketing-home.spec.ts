@@ -2310,7 +2310,7 @@ test.describe("talent relocations — what left /talent", () => {
       "Describe what you need",
     );
 
-    await page.goto("/find-work");
+    await page.goto("/work");
     const work = await page.evaluate(() => document.body.innerText);
     expect(
       work.length,
@@ -2339,7 +2339,7 @@ test.describe("work walk 1 — the buyer's page", () => {
   test("§45 /find-work renders the five buyer steps with derived panels", async ({
     page,
   }) => {
-    await page.goto("/find-work");
+    await page.goto("/work");
     const rows = (
       await page.locator("summary.stepd-sum .stepd-t").allTextContents()
     ).map((t) => t.trim());
@@ -2434,7 +2434,7 @@ test.describe("work walk 1 — the buyer's page", () => {
   test("§48 only the one built Work step carries a graphic", async ({
     page,
   }) => {
-    await page.goto("/find-work");
+    await page.goto("/work");
     await page.evaluate(() =>
       document
         .querySelectorAll("details.stepd-d")
@@ -2461,7 +2461,7 @@ test.describe("work walk 1 — the buyer's page", () => {
    * that guard red, which is the same dependency `/hire-talent` hit.
    */
   test("§49 /find-work's hero has exactly one job", async ({ page }) => {
-    await page.goto("/find-work");
+    await page.goto("/work");
     const hero = page
       .locator("h1")
       .first()
@@ -2569,7 +2569,7 @@ test.describe("work walk 1 — the buyer's page", () => {
   test("§47 all three buyer/seller pages carry the same three hero tiles", async ({
     page,
   }) => {
-    for (const url of ["/talent", "/find-work", "/shop"]) {
+    for (const url of ["/talent", "/work", "/shop"]) {
       await page.goto(url);
       const tiles = await page.evaluate(() => {
         const h1 = document.querySelector("h1");
@@ -2605,7 +2605,7 @@ test.describe("work walk 1 — the buyer's page", () => {
   }) => {
     for (const url of [
       "/",
-      "/find-work",
+      "/work",
       "/talent",
       "/optimize",
       "/integrate",
@@ -2782,7 +2782,7 @@ test.describe("work walk 1 — the buyer's page", () => {
       mediaBytes += len;
     });
 
-    await page.goto("/find-work", { waitUntil: "load" });
+    await page.goto("/work", { waitUntil: "load" });
     await page.waitForTimeout(2000);
 
     /*
@@ -2964,7 +2964,7 @@ test.describe("shop walk 1 — /shop", () => {
     const hits: string[] = [];
     for (const url of [
       "/",
-      "/find-work",
+      "/work",
       "/talent",
       "/shop",
       "/optimize",
@@ -3134,7 +3134,7 @@ test.describe("hero clips — the -hero cuts, and only those", () => {
       IS THE POINT: 1.1MB admits the 1.01MiB re-cut and rejects the master by 8x, so
       a one-word `src` edit back to the master fails this test instead of shipping.
     */
-    "/find-work": { clip: "panameer-office-hero.mp4", maxMB: 1.1 },
+    "/work": { clip: "panameer-office-hero.mp4", maxMB: 1.1 },
   };
 
   for (const [url, want] of Object.entries(EXPECT)) {
@@ -3342,7 +3342,7 @@ test.describe("/talent — the hero stat tiles", () => {
  * the whole brief, which is exactly the shape a test has to hold.
  */
 test.describe("hero clips — every one has a poster", () => {
-  const POSTERED = ["/talent", "/shop", "/integrate", "/find-work", "/learn"];
+  const POSTERED = ["/talent", "/shop", "/integrate", "/work", "/learn"];
 
   for (const url of POSTERED) {
     test(`§62 ${url}'s hero clip has a poster`, async ({ page }) => {

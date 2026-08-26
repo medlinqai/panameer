@@ -180,7 +180,7 @@ export type MarketingNavItem = {
 export const MARKETING_NAV: MarketingNavItem[] = [
   { label: "Learn", href: "/learn" },
   { label: "Talent", href: "/talent" },
-  { label: "Work", href: "/find-work" },
+  { label: "Work", href: "/work" },
   { label: "Shop", href: "/shop" },
   { label: "Optimize", href: "/optimize" },
   { label: "Integrate", href: "/integrate" },
@@ -303,7 +303,7 @@ export const FOOTER_GROUPS: { title: string; entries: FooterEntry[] }[] = [
       /* ⚠ WIRED — the public Work page. It is `/find-work` and NOT `/work`:
          `(app)/work` is the signed-in provider feed, which is why `P1-ALL-E017`
          stopped that rename. When it resolves, this href moves with it. */
-      { label: "Post Work for Free", href: "/find-work" },
+      { label: "Post Work for Free", href: "/work" },
       /* ⚠ WIRED — `/assess` is public and is the free front door. */
       { label: "Assess Processing Maturity for Free", href: "/assess" },
       { label: "Buy Pre-Built Demos, Reports & Agents" },
@@ -417,7 +417,7 @@ export const FOOTER_LEGAL: FooterEntry[] = [
  */
 export const MARKETING_PROVIDER_DOOR = {
   label: "For Experts",
-  href: "/find-work",
+  href: "/work",
 };
 const BASE =
   "inline-flex items-center justify-center gap-2 rounded-full px-[22px] py-3 " +

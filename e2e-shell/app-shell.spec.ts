@@ -385,7 +385,7 @@ test("GUARD 3 — no arbitrary min-[…] variant competes with a named breakpoin
  */
 const PUBLIC_WIDTHS = [360, 375, 640, 767, 768, 769, 900, 1000, 1100, 1180, 1282, 1440, 1562];
 
-const PUBLIC_PAGES = ["/", "/learn", "/talent", "/find-work", "/shop"];
+const PUBLIC_PAGES = ["/", "/learn", "/talent", "/work", "/shop"];
 
 /**
  * ⚠ SIX ITEMS SINCE `P1-J0-E245`, AND THIS SUITE READS THEM, NEVER SETS THEM.
@@ -397,7 +397,7 @@ const PUBLIC_PAGES = ["/", "/learn", "/talent", "/find-work", "/shop"];
 const PUBLIC_NAV_ITEMS = [
   { label: "Learn", href: "/learn" },
   { label: "Talent", href: "/talent" },
-  { label: "Work", href: "/find-work" },
+  { label: "Work", href: "/work" },
   { label: "Shop", href: "/shop" },
   /*
     ⚠ `/optimize`, NOT `/assess` — REPOINTED 2026-08-21 (`P1-J0-E266`). This
@@ -662,7 +662,7 @@ const BOXED_HERO_PAGES = [
   "/optimize",
   "/learn",
   "/talent",
-  "/find-work",
+  "/work",
   "/shop",
   "/integrate",
   "/why-panameer",
@@ -782,7 +782,7 @@ test.describe("the PUBLIC hero", () => {
    * prop being dropped, and a class-based assertion would miss a restore that
    * came back through a different route.
    */
-  for (const url of ["/talent", "/find-work"]) {
+  for (const url of ["/talent", "/work"]) {
     test(`HERO GUARD — no audience strip on ${url}`, async ({ browser }) => {
       const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
       const pub = await ctx.newPage();

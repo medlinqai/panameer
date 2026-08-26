@@ -31,7 +31,7 @@ export type Audience = "neutral" | "buyer" | "provider";
 export const AUDIENCE_PATH: Record<Audience, string> = {
   neutral: "/",
   buyer: "/",
-  provider: "/find-work",
+  provider: "/work",
 };
 
 // ---------------------------------------------------------------------------
@@ -57,7 +57,7 @@ export const PUBLIC_PAGES: {
 }[] = [
   { key: "home", href: "/", label: "See where I stand", audience: "buyer" },
   { key: "hire", href: "/talent", label: "I want to hire", audience: "buyer" },
-  { key: "work", href: "/find-work", label: "I want to work", audience: "provider" },
+  { key: "work", href: "/work", label: "I want to work", audience: "provider" },
 ];
 
 export const publicPageHref = (key: PublicPage) =>
