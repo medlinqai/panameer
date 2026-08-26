@@ -83,7 +83,7 @@ import { talentHeroStats } from "@/lib/talent-stats";
  * ⚠ THE MEASURED NUMBERS FOR THIS CUT ARE IN THE SECTION COMMENT BELOW. Re-measure
  * before ever swapping the asset again — that is the whole lesson of `E019`.
  */
-export async function FindWorkHero() {
+export async function WorkHero() {
   const stats = await talentHeroStats();
   /* ⚠ NOTHING IS READ FROM `HERO_COPY.provider` ANY MORE. `P1-J4-E009`/`E011`/`E012`
      removed the pill, the search, the tags and the caption — every string this hero

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
-import { FindWorkHero } from "@/components/marketing/FindWorkHero";
+import { WorkHero } from "@/components/marketing/WorkHero";
 import { WorkSpine } from "@/components/marketing/WorkSpine";
 
 /**
@@ -73,7 +73,7 @@ export default function SellerPage() {
   */
   return (
     <MarketingShell>
-      <FindWorkHero />
+      <WorkHero />
       {/*
         ⚠ THE SPINE SITS DIRECTLY UNDER THE HERO (`P1-J4-E006`), before the argument
         sections — the five steps are how the page explains itself, so they come

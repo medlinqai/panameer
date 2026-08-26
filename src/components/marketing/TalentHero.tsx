@@ -98,7 +98,7 @@ import { TALENT_CTA_LABEL } from "@/lib/talent-steps";
  * (`LazyAutoplayVideo`): first load went 11.01MB -> 0.39MB, media 10.63 -> 0.00MB.
  * ⚠ THAT IS WHAT MADE A HERO CLIP AFFORDABLE HERE AT ALL — see `E028` below.
  */
-export async function HireTalentHero() {
+export async function TalentHero() {
   const stats = await talentHeroStats();
   return (
     /*

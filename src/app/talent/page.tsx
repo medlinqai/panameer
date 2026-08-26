@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
-import { HireTalentHero } from "@/components/marketing/HireTalentHero";
+import { TalentHero } from "@/components/marketing/TalentHero";
 import { TalentSpine } from "@/components/marketing/TalentSpine";
 
 /**
@@ -69,7 +69,7 @@ export default function HireTalentPage() {
   */
   return (
     <MarketingShell>
-      <HireTalentHero />
+      <TalentHero />
       {/*
         ⚠ THE SPINE SITS DIRECTLY UNDER THE HERO (P1-J1-E012), before ThreeWays —
         the five steps are how the page explains itself, so they come before the
