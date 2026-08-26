@@ -84,7 +84,22 @@ const count = (label: string): string => {
  * than retyped because the constant is defined in this very file, so there is no
  * awkward import to weigh.
  */
-export const TALENT_CTA_LABEL = "Create My Panameer Profile";
+/*
+  ⚠⚠ SCOTT, 2026-08-26 (`P1-J1-E036`): DROP THE WORD `Panameer`. The visitor is
+  already on Panameer; naming it inside the button spends a word on nothing.
+
+  ⚠ FOURTH VALUE IN THREE DAYS, and the churn is exactly why this is a constant:
+      E031  `Create My Profile`
+      E033  `Join Panameer & Create My Profile`
+      E034  `Create My Panameer Profile`
+      E036  `Create My Profile`            <- here, back to E031's wording
+  ⚠ FOUR CONSUMERS FOLLOW AUTOMATICALLY and none was edited: the hero button,
+  the hero sentence that QUOTES it, `TALENT_STEPS[0].summary` below, and the
+  `check:ui` assertion. ⚠ SPINE STEP 1 RENAMING IS INTENDED, NOT A SIDE EFFECT —
+  Scott asked for both.
+  ⚠ `href="/join/provider"` DID NOT CHANGE.
+*/
+export const TALENT_CTA_LABEL = "Create My Profile";
 
 export type TalentStepLabel = {
   /** The drawn numeral, 1-based. */

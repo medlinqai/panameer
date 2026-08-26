@@ -352,12 +352,52 @@ export async function TalentHero() {
                   (`P1-J3-E014`). ⚠ SHIPPED AS HIS WORDS; FLAGGED FOR CONSISTENCY
                   WITH THE OTHER SURFACE.
                 */}
+                {/*
+                  ── ⚠⚠ REWRITTEN 2026-08-26 (`P1-J1-E036`) — APPROVED, NOT A DRAFT ──
+
+                  Scott invited the rewrite (*"WORDSMITH THIS...YOU WILL DO BETTER"*)
+                  and then approved this exact string: *"as i said - you would do
+                  better. that works."* ⚠ APPROVED COPY. Do not soften it, shorten it,
+                  re-punctuate it, or mark it as CC's words.
+
+                  ⚠ SUPERSEDED, quoted per convention — the previous string:
+                    *"Click the “{TALENT_CTA_LABEL}” button, use our AI to create your
+                     profile to sell time, then create Service Products to sell
+                     everything else (past deployables, interfaces, consultations,
+                     retainers, mentoring, application demos, and more) in the
+                     Panameer shop."*
+
+                  Four deliberate differences from Scott's own draft, recorded:
+                    · `to create your profile` came out — it restates the button's own
+                      name one word after quoting it.
+                    · the bracketed list moved back onto `Service Products`, which is
+                      what it describes. His version parked it after `shop`, so the
+                      aside modified the DESTINATION rather than the products.
+                    · the sentence now ENDS on the Shop — the destination is the point.
+                    · `anything else` -> `everything else`, parallel with `sells your time`.
+
+                  ⚠ EM DASHES, REVERSING `brief_talent_cta_and_spine`, which said
+                  *"PARENTHESES, NOT EM DASHES"* because the list was Scott's own
+                  bracketed aside. The list has moved MID-SENTENCE, where brackets read
+                  as an interruption. Chat's call, reported. If Scott wants his brackets
+                  back they go back, and this note is why.
+
+                  ⚠ `resume`, NOT `résumé` — matches the spine `<h2>` directly below.
+                  One spelling per page, and the accented form is what the rest of the
+                  codebase uses; the divergence is deliberate and local.
+                  ⚠ `Panameer shop`, LOWERCASE `s` — SCOTT'S FORM, used twice now.
+                  `decisions-01.md` says `Shop`. His usage wins; the divergence is
+                  RECORDED, NOT CORRECTED.
+                  ⚠ THE LABEL IS INTERPOLATED FROM `TALENT_CTA_LABEL`, NEVER RETYPED —
+                  it has changed four times in three days.
+                */}
                 <p className="text-[17px] leading-[1.6] text-[#e9e6f5] min-[901px]:text-[19px]">
-                  Click the &ldquo;{TALENT_CTA_LABEL}&rdquo; button, use our AI
-                  to create your profile to sell time, then create Service
-                  Products to sell everything else (past deployables,
-                  interfaces, consultations, retainers, mentoring, application
-                  demos, and more) in the Panameer shop.
+                  Click the &ldquo;{TALENT_CTA_LABEL}&rdquo; button and our AI
+                  builds it from your resume. Your profile sells your time.
+                  Service Products sell everything else &mdash; past
+                  deployables, interfaces, consultations, retainers, mentoring,
+                  application demos and more &mdash; listed for sale in the
+                  Panameer shop.
                 </p>
 
                 {/*
