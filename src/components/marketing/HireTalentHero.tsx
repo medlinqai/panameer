@@ -2,6 +2,7 @@ import { HeroBox } from "@/components/marketing/HeroBox";
 import { HeroTwoUp } from "@/components/marketing/HeroTwoUp";
 import { HeroVideoBackdrop } from "@/components/media/HeroVideoBackdrop";
 import { talentHeroStats } from "@/lib/talent-stats";
+import { TALENT_CTA_LABEL } from "@/lib/talent-steps";
 
 /**
  * `/hire-talent`'s HERO — ITS OWN COMPOSITION, NOT `MarketingHero` (`P1-J1-E013`).
@@ -253,37 +254,29 @@ export async function HireTalentHero() {
                   href="/join/provider"
                   className="mt-8 inline-block rounded-[12px] bg-magenta px-[30px] py-4 text-[17px] font-semibold leading-[25.5px] text-white transition-colors hover:bg-magenta-dark"
                 >
-                  Join Panameer &amp; Create My Profile
+                  {/* ⚠ THE CONSTANT, NOT A LITERAL — see WS1b in `talent-steps.ts`.
+                      The right column's sentence quotes this same value. */}
+                  {TALENT_CTA_LABEL}
                 </a>
 
                 {/*
-                  ── ⚠⚠ THE BUTTON'S PAYOFF LINE (`P1-J1-E031`) ──────────────────
+                  ── ⚠⚠ THE AI PAYOFF LINE IS GONE, REVERSING YESTERDAY ─────────
 
-                  Scott moved this out of the right column. ⚠ VERBATIM, INCLUDING
-                  THE FULL STOP — his sentence, unchanged, only relocated.
+                  `P1-J1-E031` put that sentence here, under the button, ON SCOTT'S
+                  OWN INSTRUCTION — and he removed it the next day: *"REMOVE the
+                  'Use AI to auto-create...' text."* (2026-08-26). ⚠ THE LATER
+                  INSTRUCTION WINS. RECORDED SO NOBODY RESTORES IT CITING E031.
 
-                  ⚠ IT IS THE STRONGEST CLAIM ON THE PAGE AND IT NOW SITS DIRECTLY
-                  UNDER THE CTA, which is the right place for it: the résumé parser
-                  is REAL and shipped — `lib/resume/ai-extract.ts`, `ai-provider.ts`,
-                  `/api/onboarding/provider/resume-ai`, `/skill-suggestions`,
-                  `/import` — and it was measured end to end for `P1-J1-E026`
-                  (6 runs, 9.0s to 31.8s). Nothing else in this hero is that solid.
+                  ⚠ THE CLAIM IS NOT LOST — the right column's new sentence carries
+                  it as `use our AI to create your profile`.
 
-                  ⚠ `mt-4` TIES IT TO THE BUTTON, NOT TO THE COLUMN. It is the same
-                  gap the right column already uses between its sub-copy and its
-                  bridge line — no new spacing value was invented, and a larger gap
-                  would let it float free of the control it explains.
-
-                  ⚠⚠ `HeroTwoUp`'s LEFT-BEFORE-RIGHT DOM ORDER IS LOAD-BEARING AND
-                  UNCHANGED. Below 901px the grid collapses to ONE column, so DOM
-                  order IS reading order: headline -> button -> this line -> the
-                  right column. Reordering with `order` would read the hero to a
-                  screen reader in a sequence nobody designed. ⚠ PROVEN AT 390 IN
-                  THE BRIEF REPORT, not asserted.
+                  ⚠ SO THE LEFT COLUMN IS NOW `<h1>` -> BUTTON AND NOTHING ELSE,
+                  which is `/find-work`'s exact left column. That is the point —
+                  Scott: *"I really like the CTA on the WORK page, so will replicate
+                  that."* ⚠ `check:app-shell`'s PUBLIC HERO GUARD IS SATISFIED BY THE
+                  BUTTON ALONE. ⚠ `HeroTwoUp`'s left-before-right DOM order is
+                  load-bearing below 901px and is untouched.
                 */}
-                <p className="mt-4 text-[17px] leading-[1.6] text-[#e9e6f5] min-[901px]:text-[19px]">
-                  Use AI to auto-create your profile.
-                </p>
               </>
             }
             right={
@@ -360,10 +353,11 @@ export async function HireTalentHero() {
                   WITH THE OTHER SURFACE.
                 */}
                 <p className="text-[17px] leading-[1.6] text-[#e9e6f5] min-[901px]:text-[19px]">
-                  Your profile sells your time. Service products sell everything
-                  else &mdash; a past deployable, a consultation, a retainer,
-                  mentoring, an application demo &mdash; listed for sale in the
-                  Panameer Shop.
+                  Click the &ldquo;{TALENT_CTA_LABEL}&rdquo; button, use our AI
+                  to create your profile to sell time, then create Service
+                  Products to sell everything else (past deployables,
+                  interfaces, consultations, retainers, mentoring, application
+                  demos, and more) in the Panameer shop.
                 </p>
 
                 {/*

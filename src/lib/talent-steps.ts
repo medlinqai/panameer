@@ -66,6 +66,26 @@ const count = (label: string): string => {
   return hit.value;
 };
 
+/**
+ * ── ⚠⚠ ONE SOURCE OF TRUTH FOR THE CTA LABEL (`P1-J1-E033`) ────────────────
+ *
+ * `/talent`'s hero button AND its right-column sentence both print this. ⚠ THE
+ * SENTENCE QUOTES THE BUTTON BY NAME, so two copies of the string would drift —
+ * and there is a LIVE EXAMPLE OF EXACTLY THAT on the page this copy was modelled
+ * on: `/find-work`'s button says `Create a Work Request` while its sub-copy quotes
+ * `Create Work Request`. Both are Scott's, the mismatch shipped, and this constant
+ * exists so it is not repeated.
+ *
+ * ⚠ IT LIVES HERE because this file already holds this page's strings — the brief
+ * is explicit that a new `lib/` file per string is not wanted.
+ *
+ * ⚠ AND SPINE STEP 1 REUSES IT (`P1-J1-E034`). Its summary IS this label, by
+ * design — the same words on the hero button and on the first step. Reused rather
+ * than retyped because the constant is defined in this very file, so there is no
+ * awkward import to weigh.
+ */
+export const TALENT_CTA_LABEL = "Create My Panameer Profile";
+
 export type TalentStepLabel = {
   /** The drawn numeral, 1-based. */
   n: number;
@@ -94,7 +114,9 @@ export type TalentStepLabel = {
 export const TALENT_STEPS: TalentStepLabel[] = [
   {
     n: 1,
-    summary: "Join Panameer",
+    /* ⚠ WAS `Join Panameer` (`P1-J1-E034`). It is the hero's CTA label now, reused
+       from the constant above rather than retyped. ⚠ `description` UNCHANGED. */
+    summary: TALENT_CTA_LABEL,
     /*
       ⚠ DRAFT — CC's words, not Scott's. He gave the label only.
 

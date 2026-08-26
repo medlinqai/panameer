@@ -21,7 +21,7 @@ import {
 } from "../src/lib/learn-steps";
 /* `/hire-talent`'s five labels, from the module the page reads — same reason as
    `learn-steps.ts` above: strings only, no imports, so a spec can pull it in. */
-import { TALENT_STEPS } from "../src/lib/talent-steps";
+import { TALENT_STEPS, TALENT_CTA_LABEL } from "../src/lib/talent-steps";
 /* `/find-work`'s five labels, from the module the page reads. */
 import { WORK_STEPS } from "../src/lib/work-steps";
 import { SHOP_STEPS } from "../src/lib/shop-steps";
@@ -2003,7 +2003,10 @@ test.describe("talent walk 1 — the seller page and /'s macro section", () => {
     ).map((t) => t.trim());
     expect(rows).toEqual(TALENT_STEPS.map((s) => s.summary));
     expect(rows).toEqual([
-      "Join Panameer",
+      /* ⚠ RENAMED BY `P1-J1-E034`: was `Join Panameer`. It is the hero's CTA label
+         now, and step 1 REUSES the constant, so this asserts the constant rather
+         than a second copy of the string. */
+      TALENT_CTA_LABEL,
       "Learn New Skills",
       "Connect with Experts",
       "Create Service Products",
@@ -2123,8 +2126,13 @@ test.describe("talent walk 1 — the seller page and /'s macro section", () => {
       "the hero offers exactly one control — check:app-shell requires one, E025 allows only this one",
     ).toHaveCount(1);
     await expect(
-      heroCard.getByRole("link", { name: "Create My Profile" }),
-      "and it is Scott's named CTA",
+      heroCard.getByRole("link", { name: TALENT_CTA_LABEL }),
+      /* ⚠ ASSERTED FROM THE CONSTANT, NOT A LITERAL (`P1-J1-E033`). The label has
+         changed twice in two days — `Create My Profile`, then `Join Panameer & Create
+         My Profile`, now `Create My Panameer Profile` — and the hero's own sentence
+         QUOTES it. Pinning a literal here would make the test a third copy of a
+         string that already drifted once on `/find-work`. */
+      "and it is Scott's named CTA, read from TALENT_CTA_LABEL",
     ).toHaveCount(1);
     const text = await page.evaluate(() => document.body.innerText);
     expect(text, "the buyer eyebrow pill is back — E014").not.toContain(
