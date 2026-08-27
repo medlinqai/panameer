@@ -16,7 +16,7 @@ import type { Instructor } from "@/lib/learn-instructor-format";
  * Separate from `getLearnPath` in `learn-home.ts`, which the course and lesson
  * pages still use, because this one answers three things that one doesn't and
  * shouldn't be made to: the per-lesson FACE (through the inheritance chain), the
- * path's REAL test rules, and the leaderboard's enrolment floor.
+ * path's REAL test rules, and the leaderboard's enrollment floor.
  *
  * ── ⚠ THE FOUR LEVELS, AND WHY `Section` IS NOT ONE ──────────────────────────
  *
@@ -99,7 +99,7 @@ export type AppPathView = {
   };
   certificate: { earned: boolean; verifyUrl: string | null };
   /**
-   * ⚠ ENROLMENT AND THE LEADERBOARD SHARE ONE FLOOR. Both are only shown when
+   * ⚠ ENROLLMENT AND THE LEADERBOARD SHARE ONE FLOOR. Both are only shown when
    * the path has at least this many enrolled learners — see the note in
    * `getAppPath`. Null means "below the floor, render neither".
    */
@@ -113,8 +113,8 @@ export type AppPathView = {
  * ⚠ THE FLOOR. Publishing a ranking of three named people to a fourth is a
  * different act from publishing a ranking of a thousand, and an "enrolled: 1"
  * figure on a path header is worse than no figure. Measured on the live DB
- * 2026-08-19: 2 enrolment rows across 2 paths, max 1 per path — so NOTHING
- * renders a leaderboard or an enrolment count today, which is the correct
+ * 2026-08-19: 2 enrollment rows across 2 paths, max 1 per path — so NOTHING
+ * renders a leaderboard or an enrollment count today, which is the correct
  * outcome and not a bug.
  */
 export const AUDIENCE_FLOOR = 10;

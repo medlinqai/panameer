@@ -14,7 +14,7 @@ import {
  *
  * Separate from `learn.ts` (the anonymous read) and `learn-admin.ts` (the
  * authoring read) because this one is the only one that knows who is asking:
- * enrolment and progress are per-user, and every query here is scoped to a
+ * enrollment and progress are per-user, and every query here is scoped to a
  * session-resolved id. That id is NEVER accepted from the client — the caller
  * passes what the session resolved, so a crafted request can't read another
  * learner's progress.
@@ -43,7 +43,7 @@ export type LearnCard = {
 };
 
 /**
- * Every published path, with this learner's enrolment and progress folded in.
+ * Every published path, with this learner's enrollment and progress folded in.
  *
  * One pass over the catalog rather than a query per card: 23 paths today, but
  * the counts come from lessons and a per-card round trip would be 23 queries

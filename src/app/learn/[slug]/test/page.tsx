@@ -8,7 +8,7 @@ import { TestRunner } from "@/components/learn/TestRunner";
 /**
  * The path test (brief_learn_experience WS5).
  *
- * GATED ON FINISHING THE PATH, not on enrolment. The credential says you know
+ * GATED ON FINISHING THE PATH, not on enrollment. The credential says you know
  * the material, so the honest precondition is having worked through it — and a
  * test you can sit before watching anything would make the badge worthless the
  * first time somebody noticed.

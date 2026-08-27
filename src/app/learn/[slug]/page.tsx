@@ -6,7 +6,7 @@ import { AppPath } from "@/components/learn/app/AppPath";
 import { getSessionViewer } from "@/lib/session";
 import { AUDIENCE_LABEL, STYLE_LABEL } from "@/lib/learn";
 import { InstructorBadge } from "@/components/learn/InstructorBadge";
-import { EnrolButton } from "@/components/learn/EnrolButton";
+import { EnrollButton } from "@/components/learn/EnrollButton";
 import { ProgressBar } from "@/components/learn/ProgressBar";
 import { LessonTable } from "@/components/learn/LessonTable";
 
@@ -91,7 +91,7 @@ export default async function LearningPathPage({
               {/*
                 Lesson counts are shown here because on a multi-teacher path
                 "who taught most of this" is exactly what a learner deciding to
-                enrol, and a buyer deciding to hire, want to know.
+                enroll, and a buyer deciding to hire, want to know.
               */}
               <InstructorBadge instructors={path.instructors} showLessonCounts />
             </div>
@@ -103,7 +103,7 @@ export default async function LearningPathPage({
           </p>
 
           <div className="mt-5 flex flex-wrap items-center gap-3">
-            <EnrolButton
+            <EnrollButton
               pathId={path.id}
               slug={path.slug}
               enrolled={path.enrolled}

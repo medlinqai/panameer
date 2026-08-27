@@ -5,20 +5,20 @@ import { getSessionViewer } from "@/lib/session";
 
 const BODY = z.object({
   pathId: z.string().uuid(),
-  /** false = un-enrol. */
-  enrol: z.boolean().default(true),
+  /** false = un-enroll. */
+  enroll: z.boolean().default(true),
 });
 
 /**
- * POST /api/learn/enrol — free enrolment in a learning path.
+ * POST /api/learn/enroll — free enrollment in a learning path.
  *
  * OWNER-SCOPED BY CONSTRUCTION: the user id comes from the session and is never
  * read from the body. The client sends which PATH to join and nothing about
- * WHO is joining, so there is no shape of request that enrols someone else.
+ * WHO is joining, so there is no shape of request that enrolls someone else.
  *
  * Un-enrolling deletes the LearnEnrollment and deliberately leaves
  * LessonProgress alone. Those rows are a record of what someone watched, not a
- * property of the enrolment — deleting them would mean an accidental un-enrol
+ * property of the enrollment — deleting them would mean an accidental un-enroll
  * silently erased months of progress, and re-enrolling restores the picture
  * exactly.
  */
@@ -26,7 +26,7 @@ export async function POST(request: Request) {
   const viewer = await getSessionViewer();
   if (!viewer) {
     return NextResponse.json(
-      { error: "Sign in to enrol — it's free and keeps your place." },
+      { error: "Sign in to enroll — it's free and keeps your place." },
       { status: 401 }
     );
   }
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: "That isn't a valid request." }, { status: 400 });
   }
-  const { pathId, enrol } = parsed.data;
+  const { pathId, enroll } = parsed.data;
 
   const path = await prisma.learningPath.findFirst({
     where: { id: pathId, status: "PUBLISHED" },
@@ -45,7 +45,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "That learning path isn't available." }, { status: 404 });
   }
 
-  if (!enrol) {
+  if (!enroll) {
     await prisma.learnEnrollment.deleteMany({
       where: { user_id: viewer.userId, learning_path_id: pathId },
     });

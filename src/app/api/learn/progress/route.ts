@@ -14,7 +14,7 @@ const BODY = z.object({
  * OWNER-SCOPED: the user id is the session's. The body says which LESSON and
  * whether it is done — never who did it.
  *
- * Marking a lesson complete ALSO enrols the learner in its path if they weren't
+ * Marking a lesson complete ALSO enrolls the learner in its path if they weren't
  * already. Watching a lesson through is a stronger statement of intent than
  * clicking Enrol, and a progress row belonging to a path you aren't enrolled in
  * would be invisible on "My Learning Paths" — the one place the learner would

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Check, GraduationCap, Lock, Play, ShieldCheck, Layers } from "lucide-react";
 import { AUDIENCE_LABEL } from "@/lib/learn";
 import { InstructorAvatar } from "@/components/learn/InstructorBadge";
-import { EnrolButton } from "@/components/learn/EnrolButton";
+import { EnrollButton } from "@/components/learn/EnrollButton";
 import { ProgressRing } from "@/components/learn/app/ProgressRing";
 import { PathSpine } from "@/components/learn/app/PathSpine";
 import { initialsOf } from "@/lib/learn-instructor-format";
@@ -68,7 +68,7 @@ export function AppPath({ path, signedIn }: { path: AppPathView; signedIn: boole
 
               ⚠ AND `1,240 ENROLLED` IS OMITTED UNLESS IT IS REAL. It renders only
               above the same floor the leaderboard uses — measured on the live DB
-              there are 2 enrolment rows in the whole catalog, so it renders
+              there are 2 enrollment rows in the whole catalog, so it renders
               nowhere today. A header reading "1 ENROLLED" is worse than a header
               with one fewer figure.
             */}
@@ -120,10 +120,10 @@ export function AppPath({ path, signedIn }: { path: AppPathView; signedIn: boole
             />
 
             {!signedIn ? (
-              <EnrolButton pathId={path.id} slug={path.slug} enrolled={false} signedIn={false} />
+              <EnrollButton pathId={path.id} slug={path.slug} enrolled={false} signedIn={false} />
             ) : !path.enrolled ? (
               <>
-                <EnrolButton
+                <EnrollButton
                   pathId={path.id}
                   slug={path.slug}
                   enrolled={false}

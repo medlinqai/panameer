@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
  * Public Learn queries (brief_learn_v1 WS2).
  *
  * Everything here is READ-ONLY and PUBLIC — no viewer, no ownership check,
- * because the curriculum is the front door. Enrolment and progress (WS4) are the
+ * because the curriculum is the front door. Enrollment and progress (WS4) are the
  * parts that need a session; browsing and watching do not.
  */
 

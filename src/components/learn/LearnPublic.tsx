@@ -193,7 +193,7 @@ const PANELS: Record<number, PanelBlock[]> = {
         unbuilt hierarchy. Same words, different ladder.)
 
         ⚠ "ONE OR MORE" IS A PRODUCT CLAIM AND IT CHECKS OUT — `learn_enrollments` is unique on
-        `[user_id, learning_path_id]`, which blocks a duplicate enrolment in ONE path and permits
+        `[user_id, learning_path_id]`, which blocks a duplicate enrollment in ONE path and permits
         any number of DIFFERENT concurrent paths.
 
         ⚠ `based`, not Scott's typed `base`, and `your` for his `you` — corrected under his

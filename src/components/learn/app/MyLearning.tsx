@@ -187,7 +187,7 @@ export function MyLearning({ data }: { data: MyLearningData }) {
             <div className="rounded-brand border border-line bg-white p-6">
               <p className="text-[15px] font-bold">Nothing on the go yet.</p>
               <p className="mt-1.5 max-w-lg text-[13.5px] leading-relaxed text-ink-2">
-                {totals.paths} learning paths and {totals.lessons} lessons, all free. Enrol in one
+                {totals.paths} learning paths and {totals.lessons} lessons, all free. Enroll in one
                 and it shows up here with your place kept.
               </p>
               <Link
@@ -340,7 +340,20 @@ function ContinueBlock({ card }: { card: NonNullable<MyLearningData["continueCar
               </>
             ) : (
               /* ⚠ NOT "Resume" — there is nothing to resume. */
-              <>Open lesson</>
+              <>
+                    {/*
+                      ⚠ `Watch`, NOT `Open` (`P1-J3-E039`, Scott 2026-08-27).
+                      THE THREE VERBS, ONE PER LEVEL:
+                        Learning Path -> ENROLL · Course -> REGISTER · Lesson -> WATCH
+                      ⚠ THIS IS THE ONLY LESSON-LEVEL CONTROL ON THE SURFACE, so it is
+                      the only place `WATCH` had anywhere to land.
+                      ⚠ SUPERSEDED: *`Open lesson`*.
+                      ⚠ NO CONTROL WAS INVENTED FOR `REGISTER` — there is no
+                      course-level control anywhere in `src/components/learn` or
+                      `src/app/learn` today, and the brief forbids inventing one.
+                      Reported instead.
+                    */}
+                    Watch lesson</>
             )}
           </Link>
         </div>

@@ -155,6 +155,29 @@ export const LEARN_SPINE_HEADING = "Here’s How It Works";
 */
 export const LEARN_CTA_LABEL = "Start Learning for Free";
 
+/*
+  ⚠⚠ THE ENROLL CONTROL'S LABEL, AND `Free` IS DELIBERATELY **NOT** IN IT.
+
+  Scott, 2026-08-27: *"I don't want to over use free. Enroll Here or now...these
+  work better. We should isolate free...so if we invite a different provider in and
+  they charge the changes are isolated."*
+
+  ⚠ THAT IS THE WHOLE REASON. `Enrol Free` baked a PRICE into a CONTROL LABEL, so
+  the day a provider charges, every one of those buttons becomes a lie and the fix
+  is a hunt through JSX. The price belongs in the surrounding copy, which is one
+  edit; the control just says what it does.
+  ⚠ SUPERSEDED: *`"Enrol Free"`* — single-l AND priced. Both wrong.
+  ⚠ `Enrolled ✓` KEPT ITS SPELLING — it was already American.
+
+  ⚠ THE THREE VERBS, ONE PER LEVEL (Scott, same message):
+      Learning Path -> ENROLL      Course -> REGISTER      Lesson -> WATCH
+  ⚠ DO NOT use `enroll` for a course or a lesson, and do not invent controls to
+  carry the other two — only user-visible strings changed.
+
+  ⚠ ONE LIVE LITERAL, repo-wide. Both `EnrollButton` call sites read this.
+*/
+export const LEARN_ENROLL_CTA = "Enroll Now";
+
 /**
  * ⚠⚠ THE TAGLINE SHIPS AS ONE SENTENCE. SCOTT WROTE TWO, AND THE SECOND IS HELD.
  *

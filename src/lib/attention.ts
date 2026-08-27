@@ -252,13 +252,13 @@ async function countNewMatches(profileId: string): Promise<number> {
 /**
  * COURSES TO WATCH — enrolled paths with lessons still unwatched.
  *
- * REAL DATA, and the only card with any today. Counts ENROLMENTS rather than
+ * REAL DATA, and the only card with any today. Counts ENROLLMENTS rather than
  * lessons: "3 courses to watch" is a resumable thing, "47 lessons" is a wall.
- * An enrolment whose every lesson is complete is finished, not pending, so it
+ * An enrollment whose every lesson is complete is finished, not pending, so it
  * drops out on its own — which is what makes the card self-clearing.
  */
 async function countCoursesToWatch(userId: string): Promise<number> {
-  const enrolments = await prisma.learnEnrollment.findMany({
+  const enrollments = await prisma.learnEnrollment.findMany({
     where: { user_id: userId },
     select: {
       learning_path_id: true,
@@ -269,10 +269,10 @@ async function countCoursesToWatch(userId: string): Promise<number> {
       },
     },
   });
-  if (enrolments.length === 0) return 0;
+  if (enrollments.length === 0) return 0;
 
   let pending = 0;
-  for (const e of enrolments) {
+  for (const e of enrollments) {
     const total = e.learningPath.courses.reduce(
       (n, c) => n + c.sections.reduce((m, s) => m + s._count.lessons, 0),
       0
@@ -284,7 +284,7 @@ async function countCoursesToWatch(userId: string): Promise<number> {
       the row's existence is the fact and filtering on it being non-null was
       both redundant and a type error. Counted per PATH rather than globally:
       counting a user's completions across the catalog would let progress on one
-      path mark another finished, which only shows up once somebody enrols in a
+      path mark another finished, which only shows up once somebody enrolls in a
       second course.
     */
     const done = await prisma.lessonProgress.count({

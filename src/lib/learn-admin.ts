@@ -352,7 +352,7 @@ export async function updatePath(id: string, input: PathInput) {
  * right: the FK is `onDelete: Cascade`, so a single mis-click on a 100-lesson
  * path would take the whole subtree with it and there is no undo in this
  * console. Making the admin empty it first turns an irreversible accident into
- * a deliberate sequence of steps. Enrolments are checked for the same reason,
+ * a deliberate sequence of steps. Enrollments are checked for the same reason,
  * and matter more — those are learners' records, not ours.
  */
 export async function deletePath(id: string) {

@@ -57,9 +57,9 @@
  * ── ⚠ WHAT IS BACKED, READ LIVE 2026-08-24 ─────────────────────────────────
  *
  * `LearningPath` — 23 rows, ALL 23 `PUBLISHED`; 54 `Course`; 522 `Lesson`.
- * `/api/learn/enrol` gates on a SESSION ONLY — no role check, no `USER_CLASS`, no
+ * `/api/learn/enroll` gates on a SESSION ONLY — no role check, no `USER_CLASS`, no
  * provider requirement — so a supplier, a requisitioner and a consultant can all
- * genuinely enrol. That is what makes rows 1-3 true rather than aspirational.
+ * genuinely enroll. That is what makes rows 1-3 true rather than aspirational.
  *
  * ⚠ AND WHAT IS NOT: 8 `LearnAssessment` rows, ALL `DRAFT` — so 0 of 23 paths
  * have a sittable test (`P1-J3-E030`) and NO CERTIFICATE CAN BE EARNED TODAY. ⚠ NO
@@ -106,7 +106,7 @@ type Audience = {
  * ⚠ THREE ROWS, THREE DRAFT SENTENCES. Every one is a claim about FREE TRAINING ON
  * A PROCESS THE READER ALREADY OPERATES, because that is the only Learn mechanism
  * that is unconditionally true today (23 published paths, no role gate on
- * enrolment, nothing to pay). ⚠ NO FIGURES, NO CERTIFICATE, NO TIMEFRAME.
+ * enrollment, nothing to pay). ⚠ NO FIGURES, NO CERTIFICATE, NO TIMEFRAME.
  */
 const SAVE_SIDE: Audience[] = [
   {
@@ -252,7 +252,7 @@ export function FourAudiences() {
           ⚠ DO NOT DELETE IT TO TIGHTEN THE SECTION.
         */}
         <p className="aud-note">
-          Training and enrolment are live and free today. One-to-one mentoring
+          Training and enrollment are live and free today. One-to-one mentoring
           is arranged between the two people — Panameer does not schedule or
           bill it yet.
         </p>

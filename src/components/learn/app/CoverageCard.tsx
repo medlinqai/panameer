@@ -157,7 +157,7 @@ export function CoverageCard({ data }: { data: MyLearning }) {
 
         {/*
           THE CLOSING STRIP. Omitted entirely when nothing is enrolled: a "next
-          certificate" panel on an account with no enrolments would have to
+          certificate" panel on an account with no enrollments would have to
           invent a target.
         */}
         {/*

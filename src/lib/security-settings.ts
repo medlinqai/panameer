@@ -43,7 +43,7 @@ export async function getSecurity(viewer: Viewer) {
       apple: user.oauth_providers.includes("apple"),
     },
     totp: {
-      /** Enrolment STARTED is not enrolment DONE — only `confirmed_at` counts. */
+      /** Enrollment STARTED is not enrollment DONE — only `confirmed_at` counts. */
       enabled: !!user.twoFactor?.confirmed_at,
       pending: !!user.twoFactor?.totp_secret && !user.twoFactor?.confirmed_at,
     },
@@ -85,7 +85,7 @@ export async function changePassword(
 }
 
 /**
- * Begin TOTP enrolment: mint a secret, return it and the otpauth URI.
+ * Begin TOTP enrollment: mint a secret, return it and the otpauth URI.
  *
  * The secret is stored UNCONFIRMED. Until a valid code proves the authenticator
  * actually holds it, two-step stays off — otherwise a mistyped scan locks
@@ -106,7 +106,7 @@ export async function beginTotp(viewer: Viewer) {
   return { secret, uri: otpauthUri(secret, user.email) };
 }
 
-/** Confirm enrolment with a live code. This is what turns two-step on. */
+/** Confirm enrollment with a live code. This is what turns two-step on. */
 export async function confirmTotp(viewer: Viewer, code: string) {
   const user = await ownUser(viewer);
   const secret = user.twoFactor?.totp_secret;

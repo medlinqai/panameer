@@ -37,7 +37,7 @@ export const metadata = {
 };
 
 export default async function AllCoursesPage() {
-  /* ⚠ `null` IS THE SIGNED-OUT VIEWER. No enrolment state, no progress — the
+  /* ⚠ `null` IS THE SIGNED-OUT VIEWER. No enrollment state, no progress — the
      cards render their catalog face, which is what a visitor should see. */
   const cards = await getLearnHome(null);
 

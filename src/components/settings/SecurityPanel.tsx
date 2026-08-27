@@ -9,7 +9,7 @@ import { Card, Input, Select, postSetting } from "@/components/settings/controls
  *
  * REAL TOTP. The secret is minted server-side, shown once, and two-step only
  * turns on when a live code proves the authenticator holds it — an unconfirmed
- * enrolment leaves the account exactly as it was, which is what stops a
+ * enrollment leaves the account exactly as it was, which is what stops a
  * mistyped scan locking somebody out.
  *
  * MOBILE-PUSH 2FA IS DEFERRED with the app that would receive it, and the page
