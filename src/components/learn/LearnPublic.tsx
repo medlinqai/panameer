@@ -903,34 +903,55 @@ export function LearnPublic() {
               right={
                 <>
                   {/*
-                  ⚠ VERBATIM SCOTT, 2026-08-24 (`P1-J0-E321`).
+                  ── ⚠⚠ SCOTT-APPROVED, 2026-08-26 (`P1-J3-E037`) — NOT A DRAFT ────
 
-                  ⚠⚠ `...all for free` IS GONE, AND SO IS `free` FROM THE HERO
-                  ENTIRELY. `P1-J0-E295` was Scott asking for `free` to be STRESSED
-                  on this page; after `E304` replaced the tagline and this string
-                  drops the clause, **`free` appears nowhere in the hero at all**.
-                  ⚠ REPORTED, NOT RE-ADDED.
+                  ⚠ CHAT'S MISS, NAMED: he approved this on 2026-08-26 and the brief
+                  was never written. The separate question it raised — where the
+                  button should go — WAS briefed and shipped (`P1-J3-E036`, `e88d26b`),
+                  and the sentence itself was dropped on the floor. He found it still
+                  wrong on the page.
 
-                  ⚠ `get certified` IS A PROMISE THE CATALOG CANNOT KEEP.
-                  `P1-J3-E030`: 0 of 23 paths have a sittable test. Shipped as
-                  written and flagged; this is now the page's second such claim
-                  alongside `E304`'s `certification in hours` in the display headline.
+                  ⚠ SUPERSEDED, quoted per convention:
+                    *"Enroll in learning paths, connect with instructors, take
+                     courses, get certified and get the support you need to stay
+                     working."*
 
-                  ⚠ `connect with instructors` IS THE UNBUILT VERB AGAIN. No
-                  `Conversation`/`Message`/`Thread` model; `/messages` ships a
-                  disabled composer (`P1-J3-E014`). This is the THIRD page-surface
-                  carrying it — the hero, step 2's label, and step 2's headline — and
-                  `E322` adds a fourth in step 5. Counted and reported.
+                  ⚠⚠ AND THE REPLACEMENT RETIRES TWO CLAIMS THE PRODUCT DOES NOT
+                  KEEP. That is a consequence, not the reason — it is Scott's copy —
+                  but it is worth recording that both leave this hero:
+                    · `connect with instructors` — NO `Conversation`, `Message` or
+                      `Thread` MODEL EXISTS; `/messages` ships a disabled composer
+                      (`P1-J3-E014`). ⚠ IT SURVIVES ON THIS PAGE'S SPINE (step 2's
+                      label AND its headline) and in step 5 (`E322`), so the count
+                      goes 4 -> 2, not to zero. NOT TOUCHED HERE, by instruction.
+                    · `get certified` — `P1-J3-E030`: 0 of 23 paths have a sittable
+                      test, because the seven assessments are publishable and
+                      unpublished (operational, not code). ⚠ IT SURVIVES in this
+                      page's display headline (`certification in hours`, `E304`) and
+                      in the spine. NOT TOUCHED HERE.
 
-                  ⚠ `get the support you need to stay working` IS THE `Stay There`
-                  IDEA, and it is what step 5 (`Get Expert Support`) exists to
-                  deliver. The hero and the spine now agree on that beat, which they
-                  did not when the hero said `Stay Supported` and nothing followed it.
+                  ⚠ `free` IS BACK IN THE HERO. `P1-J0-E295` asked for it to be
+                  stressed here and `E321` had removed it entirely; this sentence says
+                  it twice — the button name and the em-dash clause.
+
+                  ⚠ `Oracle Cloud + AI` IS HIS PHRASING and agrees with the tagline
+                  shipped in `cb39905`, which kept `Oracle`. ⚠ THE NAME RENDERS AS
+                  TEXT. NO LOGO, EVER.
+                  ⚠ CURLY QUOTES, EM DASH, AND THE QUESTION MARK IS HIS — all three
+                  ship as typed. Do not "tidy" the question into a full stop.
+
+                  ⚠⚠ THE QUOTED LABEL IS TYPED TWICE — HERE AND ON THE BUTTON AT
+                  `:870`. There is NO `LEARN_CTA_LABEL` constant and this brief was
+                  explicitly one string, so one was NOT created. ⚠ THAT IS THE EXACT
+                  DEFECT `P1-J1-E033` AND `P1-J4-E024` EXIST TO PREVENT — `/work`'s
+                  button and sub-copy drifted apart that way. ⚠ IF EITHER STRING IS
+                  EVER EDITED, EDIT BOTH, or extract the constant properly.
                 */}
                   <p className="text-[17px] leading-[1.6] text-[#e9e6f5] min-[901px]:text-[19px]">
-                    Enroll in learning paths, connect with instructors, take
-                    courses, get certified and get the support you need to stay
-                    working.
+                    Click the &ldquo;Start Learning for Free&rdquo; button, create
+                    your account, and start on Oracle Cloud + AI &mdash; free, and
+                    taught by the people who ran the systems. What are you waiting
+                    for?
                   </p>
                   {/*
                   ⚠⚠ WHITE, NOT PINK, AND THE TEXT IS `/optimize`'s (`P1-J0-E302`).
