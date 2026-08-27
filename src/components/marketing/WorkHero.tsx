@@ -11,7 +11,7 @@ import { HeroBox } from "@/components/marketing/HeroBox";
 import { HeroTwoUp } from "@/components/marketing/HeroTwoUp";
 import { WORK_CTA_LABEL } from "@/lib/work-steps";
 import { HeroVideoBackdrop } from "@/components/media/HeroVideoBackdrop";
-import { talentHeroStats } from "@/lib/talent-stats";
+import { workHeroStats } from "@/lib/work-stats";
 
 /**
  * `/find-work`'s HERO — THE TWO-COLUMN TREATMENT (`P1-J4-E001`).
@@ -92,7 +92,7 @@ import { talentHeroStats } from "@/lib/talent-stats";
  * before ever swapping the asset again — that is the whole lesson of `E019`.
  */
 export async function WorkHero() {
-  const stats = await talentHeroStats();
+  const stats = await workHeroStats();
   /* ⚠ NOTHING IS READ FROM `HERO_COPY.provider` ANY MORE. `P1-J4-E009`/`E011`/`E012`
      removed the pill, the search, the tags and the caption — every string this hero
      used to borrow from the shared constant. What is left is Scott's own copy for
@@ -358,15 +358,32 @@ export async function WorkHero() {
                 <p className={HERO_BRIDGE_CLASS}>{HERO_BRIDGE_TEXT}</p>
 
                 {/*
-                  ── ⚠⚠ THE THREE LIVE-COUNT TILES (`WS3`) ────────────────────
+                  ── ⚠⚠ THE THREE TILES, AND THEY ARE THIS PAGE'S OWN (`P1-J1-E041`) ─
+
                   Scott, twice: *"where are the counter cards here? I specifically
-                  called out what i wanted counted, still nothing."* Same three
-                  tiles as `/talent`, from the same `talentHeroStats()` build-time
-                  read, so the three pages cannot disagree.
-                  ⚠ `Providers` IS 85 AND IT IS SEED. Scott decided it ships with
-                  the number in front of him; it is on the pre-launch list. Do not
-                  re-argue it here.
-                  ⚠ CHROME COPIED FROM `LearnStats`, not extracted.
+                  called out what i wanted counted, still nothing."* and then
+                  2026-08-27: *"The card/counters on the WORK page are wrong… Card #1
+                  is tracking 'Lessons'. This should be tracking Work Requests."*
+
+                  Work Requests · Work Orders · Settlement Requests, from
+                  `workHeroStats()` — a build-time read, so `/work` stays `○`.
+
+                  ⚠⚠ SUPERSEDED 2026-08-27 — the dead claim, quoted not deleted:
+                    *"Same three tiles as `/talent`, from the same `talentHeroStats()`
+                     build-time read, so the three pages cannot disagree."*
+                  ⚠ THAT WAS THE DEFECT, NOT THE DESIGN. One function fed `/talent`,
+                  `/work` AND `/shop`, so this page printed `Lessons · Providers ·
+                  Service Products` — `/talent`'s set. The three pages CAN now
+                  disagree, and they SHOULD: they count different transactions.
+                  ⚠ THE `Providers`-IS-SEED NOTE WENT WITH IT — this page no longer
+                  has a Providers tile. `/shop` and `/talent` still do.
+
+                  ⚠ TWO OF THESE THREE ARE STUBBED `0`: `WorkOrder` and
+                  `SettlementRequest` have NO MODEL. Scott: *"i know we have not
+                  created any of these just yet"*. `0` ships bare — no caveat, no
+                  footnote. See `unbuilt-counters.ts` and its tripwire test.
+                  ⚠ CHROME COPIED FROM `LearnStats`, not extracted — only the numbers
+                  and labels moved.
                 */}
                 <dl className="mt-[26px] grid grid-cols-3 gap-[14px]">
                   {stats.map((s) => (

@@ -10,7 +10,7 @@ import {
 } from "@/components/marketing/hero-treatment";
 import { HeroTwoUp } from "@/components/marketing/HeroTwoUp";
 import { HeroVideoBackdrop } from "@/components/media/HeroVideoBackdrop";
-import { talentHeroStats } from "@/lib/talent-stats";
+import { shopHeroStats } from "@/lib/shop-stats";
 
 /**
  * `/buy-services`'s HERO — THE TWO-COLUMN TREATMENT (`P1-J2-E001`).
@@ -41,7 +41,7 @@ import { talentHeroStats } from "@/lib/talent-stats";
  * page is countable: ONE published `Package`, and it is ours.
  */
 export async function ShopHero() {
-  const stats = await talentHeroStats();
+  const stats = await shopHeroStats();
   return (
     /*
       ⚠ THE SAME `HeroBox` CARD AND GRADIENT `MarketingHero` GAVE THIS PAGE,
@@ -282,14 +282,26 @@ export async function ShopHero() {
                 <p className={HERO_BRIDGE_CLASS}>{HERO_BRIDGE_TEXT}</p>
 
                 {/*
-                  ── ⚠⚠ THE THREE LIVE-COUNT TILES (`WS3`) ────────────────────
-                  Scott, twice: *"where are the counter cards here? I specifically
-                  called out what i wanted counted, still nothing."* Same three
-                  tiles as `/talent`, from the same `talentHeroStats()` build-time
-                  read, so the three pages cannot disagree.
-                  ⚠ `Providers` IS 85 AND IT IS SEED. Scott decided it ships with
-                  the number in front of him; it is on the pre-launch list. Do not
-                  re-argue it here.
+                  ── ⚠⚠ THE THREE TILES, AND THEY ARE THIS PAGE'S OWN (`P1-J1-E041`) ─
+
+                  Scott, 2026-08-27: `/shop` counts Service Providers · Service
+                  Products · Work Orders, from `shopHeroStats()` — a build-time read,
+                  so `/shop` stays `○`.
+
+                  ⚠⚠ SUPERSEDED 2026-08-27 — the dead claim, quoted not deleted:
+                    *"Same three tiles as `/talent`, from the same `talentHeroStats()`
+                     build-time read, so the three pages cannot disagree."*
+                  ⚠ THAT WAS THE DEFECT, NOT THE DESIGN. One function fed three pages,
+                  so this page printed `Lessons` — which `/shop` does not sell. They
+                  CAN now disagree, and they SHOULD.
+
+                  ⚠ `Service Providers` IS 85 AND IT IS SEED. Scott decided it ships
+                  with the number in front of him; it is on the pre-launch list. Do
+                  not re-argue it here.
+                  ⚠ `Work Orders` IS A STUB `0` — no `WorkOrder` model exists — and it
+                  comes from the SAME constant `/work` reads, so the two pages cannot
+                  print different numbers for the same claim. See
+                  `unbuilt-counters.ts` and its tripwire test.
                   ⚠ CHROME COPIED FROM `LearnStats`, not extracted.
                 */}
                 <dl className="mt-[26px] grid grid-cols-3 gap-[14px]">

@@ -56,7 +56,15 @@ export type TalentStat = {
  * `Service Products` is exactly ONE, and a tile reading `1` over `Service Products`
  * is simply wrong. ⚠ THE `1` CASE IS THE LIVE CASE, not a theoretical one.
  */
-function plural(n: number, singular: string): string {
+/*
+  ⚠ EXPORTED FOR `work-stats.ts` AND `shop-stats.ts` (`P1-J1-E041`). They print the
+  same shape of tile and must pluralise identically; a second copy of this two-line
+  function is exactly how `0 Work Order` ships on one page and `0 Work Orders` on the
+  other. ⚠ THIS IS THE ONLY CHANGE TO THIS FILE — `talentHeroStats()` itself is not
+  touched, and after `E041` it serves `/talent` ALONE, which is what its name always
+  claimed.
+*/
+export function plural(n: number, singular: string): string {
   return n === 1 ? singular : `${singular}s`;
 }
 
