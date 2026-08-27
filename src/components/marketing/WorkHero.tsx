@@ -1,4 +1,12 @@
 import Link from "next/link";
+import {
+  HERO_CARD,
+  HERO_SCRIM,
+  HERO_BUTTON,
+  HERO_BRIDGE_TEXT,
+  HERO_BRIDGE_CLASS,
+  HERO_DESC_CLASS,
+} from "@/components/marketing/hero-treatment";
 import { HeroBox } from "@/components/marketing/HeroBox";
 import { HeroTwoUp } from "@/components/marketing/HeroTwoUp";
 import { WORK_CTA_LABEL } from "@/lib/work-steps";
@@ -96,7 +104,7 @@ export async function WorkHero() {
       the container change is not also a visual change. `HeroTwoUp` supplies the two
       columns; nothing about the surface is new.
     */
-    <HeroBox cardClassName="isolate bg-[radial-gradient(1100px_500px_at_82%_-10%,rgba(215,44,214,0.42),transparent_60%),linear-gradient(150deg,#0d1230_0%,#191a44_55%,#3a1c53_100%)] text-white">
+    <HeroBox cardClassName={HERO_CARD}>
       <section className="relative px-6 pb-[48px] pt-[44px] min-[901px]:pb-[72px] min-[901px]:pt-[64px]">
         {/*
           ── ⚠⚠ THE HERO CLIP, SECOND ATTEMPT, MEASURED (`P1-J4-E019`) ──────────
@@ -180,7 +188,7 @@ export async function WorkHero() {
           */
           poster="/posters/work.jpg"
           videoClassName="absolute inset-0 h-full w-full object-cover opacity-40"
-          scrimClassName="absolute inset-0 bg-[linear-gradient(150deg,rgba(13,18,48,0.82)_0%,rgba(25,26,68,0.62)_55%,rgba(58,28,83,0.30)_100%)]"
+          scrimClassName={HERO_SCRIM}
         />
         <div className="relative z-[2] mx-auto max-w-[1120px]">
           <HeroTwoUp
@@ -253,7 +261,7 @@ export async function WorkHero() {
                 */}
                 <Link
                   href="/create-work"
-                  className="mt-8 inline-block rounded-[12px] bg-magenta px-7 py-4 font-display text-[16px] font-bold text-white transition-colors hover:bg-magenta-dark"
+                  className={HERO_BUTTON}
                 >
                   {/* ⚠ THE CONSTANT, NOT A LITERAL (`P1-J4-E024`). ⚠ THE LABEL ITSELF
                       IS UNCHANGED — Scott kept it and the SENTENCE moved to match. */}
@@ -321,10 +329,23 @@ export async function WorkHero() {
                   first use (`Panameer's AI Platform (AIP)`, `P1-J0-E275`); this page
                   never does. Reported.
                 */}
-                <p className="text-[17px] leading-[1.6] text-[#e9e6f5] min-[901px]:text-[19px]">
-                  Click the &ldquo;{WORK_CTA_LABEL}&rdquo; button, upload your
-                  job description (aka JD), and let the Panameer AIP build your
-                  work request for you.
+                {/*
+                  ── ⚠⚠ SCOTT-APPROVED DESCRIPTION (`P1-ALL-E031` amendment §3) ──
+
+                  ⚠ HIS WORDS. SHIP AS WRITTEN. Not a draft, not chat's.
+                  ⚠ REVISED BY SCOTT 2026-08-26. ⚠ HIS HYPHEN `-` BEFORE `contract
+                  included`, NOT an em dash. Shipped as typed.
+
+                  ⚠ THE QUOTED LABEL IS INTERPOLATED FROM `WORK_CTA_LABEL`,
+                  NEVER RETYPED (`P1-J4-E024`).
+                  ⚠ `HERO_DESC_CLASS` CARRIES THE FOUR-LINE `min-height` — the
+                  hero's height is the breadcrumb, so all seven must match. See
+                  `hero-treatment.ts`. ⚠ SHORTER COPY LEAVES WHITESPACE ON PURPOSE.
+                */}
+                <p className={HERO_DESC_CLASS}>
+                  Click the &ldquo;{WORK_CTA_LABEL}&rdquo; button, build your JD using AI,
+                  instantly see talent and hire with the click of a button -
+                  contract included.
                 </p>
                 {/*
                   ── ⚠ THE BRIDGE LINE (`WS4`) ────────────────────────────────
@@ -334,9 +355,7 @@ export async function WorkHero() {
                   ⚠ IT SITS OVER THIS PAGE'S OWN CLIP, so it was measured over that
                   clip and the WS2 ladder applied per page. Ratios in the report.
                 */}
-                <p className="mt-4 text-[19px] font-semibold leading-[1.5] text-[#efa3ee]">
-                  Check out the steps below to see how it works.
-                </p>
+                <p className={HERO_BRIDGE_CLASS}>{HERO_BRIDGE_TEXT}</p>
 
                 {/*
                   ── ⚠⚠ THE THREE LIVE-COUNT TILES (`WS3`) ────────────────────

@@ -138,3 +138,18 @@ export const INTEGRATE_STEPS: IntegrateStepLabel[] = [
  * one alone would not make this page true.
  */
 export const INTEGRATE_SPINE_HEADING = "Here's How It Works";
+/*
+  ⚠⚠ `/integrate`'s CTA LABEL, DEFINED ONCE (`P1-ALL-E031`, Scott 2026-08-26).
+  ⚠ RELABELLED from `See How Punchout Works`.
+  ⚠⚠ THE `href="#punchout"` DOES NOT CHANGE — only the label. That anchor is this
+  hero's ONLY control and it has already been re-homed once (`P1-J0-E333`).
+
+  ⚠ ONE CONVENTION ACROSS THE PUBLIC PAGES — the exact shape of `TALENT_CTA_LABEL`,
+  `WORK_CTA_LABEL` and `LEARN_CTA_LABEL`. It is a constant because the hero's
+  APPROVED DESCRIPTION QUOTES IT, and `/work` already shipped that defect for real
+  (`P1-J4-E024`: the button said `Create a Work Request` while the sub-copy quoted
+  `Create Work Request` — two live strings on one screen).
+  ⚠ THE DESCRIPTION INTERPOLATES THIS. NEVER RETYPE IT.
+*/
+
+export const INTEGRATE_CTA_LABEL = "How We Integrate";

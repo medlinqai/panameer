@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { OPTIMIZE_CTA_LABEL } from "@/lib/spine-steps";
 import { MarketingHeader } from "@/components/marketing/MarketingHeader";
 import { HomeHero } from "@/components/marketing-home/HomeHero";
 import { HowItWorks } from "@/components/marketing-home/HowItWorks";
@@ -72,7 +73,27 @@ export default function OptimizePage() {
           Assessment` applies ONLY if the long one does not fit. It fits at every
           width — see the report — so the short one was not taken for tidiness.
         */}
-        <HomeHero ctaLabel="Start Your Free Optimization Assessment" />
+        {/*
+          ── ⚠⚠ SCOTT-APPROVED DESCRIPTION (`P1-ALL-E031` amendment §3) ────────────
+
+          ⚠ CHAT DRAFTED IT, SCOTT APPROVED IT. Not a draft marker — it is approved.
+          ⚠ THE QUOTED LABEL IS THE SAME STRING AS `ctaLabel` ONE LINE ABOVE, which is
+          why both come from `OPTIMIZE_CTA_LABEL` rather than being typed twice —
+          `P1-J4-E024` is exactly this defect shipping for real on `/work`.
+          ⚠ `/` KEEPS ITS OWN DESCRIPTION. See the note at `app/page.tsx`; these two
+          pages are one component and that is why the prop exists.
+          ⚠ THIS PAGE ALSO GAINED THE BRIDGE LINE — it was the only one of seven
+          missing it, and it comes with the shared treatment now.
+        */}
+        <HomeHero
+          ctaLabel={OPTIMIZE_CTA_LABEL}
+          description={
+            <>
+              Click the &ldquo;{OPTIMIZE_CTA_LABEL}&rdquo; button, see where you
+              stand, and build your 12-month AI roadmap with an expert.
+            </>
+          }
+        />
         {/* ⚠ Heading and lede only — the card strip is E242. See above. */}
         <HowItWorks showStrip={false} />
         <OptimizeSteps />

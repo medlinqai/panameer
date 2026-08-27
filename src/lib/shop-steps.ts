@@ -192,3 +192,26 @@ export const SHOP_STEPS: ShopStepLabel[] = [
  * of them alone would not make this page true.
  */
 export const SHOP_SPINE_HEADING = "Here's How It Works";
+/*
+  ⚠⚠ `/shop`'s CTA LABEL, DEFINED ONCE (`P1-ALL-E031`, Scott 2026-08-26).
+  ⚠ RELABELLED: the control read `Start Shopping Now` with a `Soon` pill.
+
+  ⚠⚠ THE CONTROL IS STILL `aria-disabled` WITH NO `href`, AND THAT IS DELIBERATE.
+  Scott named WHAT it opens (2026-08-27: *"shop destination will be the items. IF you
+  are not logged in - a subset of them. If you are, all of them."*) but NOT a route,
+  and NO SUCH ROUTE EXISTS. `/shop` renders no catalogue; `(app)/packages` is the
+  provider's own sellable list behind the app shell and 307s signed out. The public
+  item list is a `P1-J2` BUILD, not part of `E031`. ⚠ AN ENABLED, LIVE-LOOKING BUTTON
+  WITH NO DESTINATION IS THE FOUR-SECOND DISPROOF AND IS WORSE THAN THE DISABLED
+  STATE IT REPLACES (`P1-J2-E010`, still open — as is `P1-J2-E011`, the footer button
+  that links to `/shop` from `/shop`. Same missing feature, two rows.)
+
+  ⚠ ONE CONVENTION ACROSS THE PUBLIC PAGES — the exact shape of `TALENT_CTA_LABEL`,
+  `WORK_CTA_LABEL` and `LEARN_CTA_LABEL`. It is a constant because the hero's
+  APPROVED DESCRIPTION QUOTES IT, and `/work` already shipped that defect for real
+  (`P1-J4-E024`: the button said `Create a Work Request` while the sub-copy quoted
+  `Create Work Request` — two live strings on one screen).
+  ⚠ THE DESCRIPTION INTERPOLATES THIS. NEVER RETYPE IT.
+*/
+
+export const SHOP_CTA_LABEL = "Shop Service Products";

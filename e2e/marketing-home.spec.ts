@@ -25,7 +25,7 @@ import {
 import { TALENT_STEPS, TALENT_CTA_LABEL } from "../src/lib/talent-steps";
 /* `/find-work`'s five labels, from the module the page reads. */
 import { WORK_STEPS } from "../src/lib/work-steps";
-import { SHOP_STEPS } from "../src/lib/shop-steps";
+import { SHOP_CTA_LABEL, SHOP_STEPS } from "../src/lib/shop-steps";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -2944,7 +2944,15 @@ test.describe("shop walk 1 — /shop", () => {
       .first()
       .locator("xpath=ancestor::section[1]");
 
-    const btn = hero.getByRole("button", { name: "Start Shopping Now" });
+    /*
+      ⚠ NAMED FROM `SHOP_CTA_LABEL`, NOT A LITERAL (`P1-ALL-E031`). Scott relabelled
+      this control `Shop Service Products` in the amendment, and the literal here was
+      the THIRD copy of the old string — the same shape as `P1-J3-E038`.
+      ⚠⚠ THE ASSERTION IS NOT WEAKENED. It still requires exactly one control, still
+      requires it to have real size, and still requires ZERO `a[href]` in the hero.
+      Only how the control is NAMED changed, because the product's label changed.
+    */
+    const btn = hero.getByRole("button", { name: SHOP_CTA_LABEL });
     await expect(
       btn,
       "the hero must offer something — check:app-shell",
@@ -3440,5 +3448,84 @@ test.describe("hero clips — every one has a poster", () => {
       /poster\s*=\s*["'`]/.test(backdrop),
       "HeroVideoBackdrop must not hardcode a default poster",
     ).toBe(false);
+  });
+});
+
+/*
+  ── ⚠⚠ §64 — THE ONE HERO TREATMENT (`P1-ALL-E031`) ─────────────────────────
+
+  ⚠ THIS IS THE BRIEF'S ACTUAL DELIVERABLE. Seven public heroes drifted apart over
+  two days because there was no shared treatment — every fix landed in one file and
+  the others silently diverged. `hero-treatment.ts` ended that, and this guard is
+  what stops it starting again: A FUTURE HERO THAT HARDCODES ITS OWN CARD OR SCRIM
+  FAILS HERE, BY NAME.
+
+  ⚠ IT ASSERTS THE RENDERED COMPUTED VALUE, NOT THE SOURCE TEXT. A source grep would
+  pass on a component that imports the constant and then overrides it downstream;
+  what matters is what the browser paints.
+  ⚠ `/why-panameer` IS INCLUDED. It was out of the brief's scope for CONTENT, but it
+  shares the standard card via `MarketingHero`, so it is in scope for TREATMENT.
+*/
+test.describe("§64 one hero treatment", () => {
+  /* The two gradients every public hero must paint, as CSS computes them. */
+  /* ⚠ THE COMPUTED FORM KEEPS THE SIZE AND POSITION — read off the rendered page,
+     not transcribed from the source. A hand-written guess at this string failed
+     all eight pages on the first run. */
+  const CARD_RADIAL =
+    "radial-gradient(1100px 500px at 82% -10%, rgba(215, 44, 214, 0.42), rgba(0, 0, 0, 0) 60%)";
+  const CARD_LINEAR = "linear-gradient(150deg, rgb(13, 18, 48) 0%, rgb(25, 26, 68) 55%, rgb(58, 28, 83) 100%)";
+  const SCRIM = "linear-gradient(150deg, rgba(13, 18, 48, 0.86) 0%, rgba(25, 26, 68, 0.72) 55%, rgba(58, 28, 83, 0.62) 100%)";
+
+  for (const url of ["/", "/optimize", "/talent", "/work", "/shop", "/integrate", "/learn", "/why-panameer"]) {
+    test(`${url} paints the shared card and scrim`, async ({ page }) => {
+      await page.goto(url, { waitUntil: "load" });
+      await page.waitForSelector("h1");
+      await page.waitForTimeout(600);
+      const found = await page.evaluate(() => {
+        const h1 = document.querySelector("h1");
+        let card = h1?.closest(".hero-card") ?? null;
+        if (!card) {
+          let n = h1?.parentElement ?? null;
+          while (n && n !== document.body) {
+            const cs = getComputedStyle(n);
+            if (cs.overflow === "hidden" && parseFloat(cs.borderTopLeftRadius) >= 18) { card = n; break; }
+            n = n.parentElement;
+          }
+        }
+        if (!card) return null;
+        const scrim = [...card.querySelectorAll("div")]
+          .map((d) => getComputedStyle(d).backgroundImage)
+          .find((b) => b.startsWith("linear-gradient(150deg, rgba(13, 18, 48"));
+        return { card: getComputedStyle(card).backgroundImage, scrim: scrim ?? null };
+      });
+      expect(found, `${url}: no hero card found`).not.toBeNull();
+      expect(
+        found!.card,
+        `${url}: the hero card is not painting HERO_CARD. ⚠ DO NOT fix this by ` +
+          `editing the test — import { HERO_CARD } from "@/components/marketing/hero-treatment" ` +
+          `and pass it as the card's className. Retyping a gradient is the defect P1-ALL-E031 closed.`,
+      ).toContain(CARD_RADIAL);
+      expect(found!.card, `${url}: the card's base gradient is not HERO_CARD's`).toContain(CARD_LINEAR);
+      /* `/why-panameer` has no clip, so it has no scrim to assert. */
+      if (url !== "/why-panameer") {
+        expect(
+          found!.scrim,
+          `${url}: the hero scrim is not HERO_SCRIM. Import it; do not retype it.`,
+        ).toBe(SCRIM);
+      }
+    });
+  }
+
+  test("the bridge line is word-for-word identical on every public page", async ({ page }) => {
+    const BRIDGE = "Check out the steps below to see how it works.";
+    for (const url of ["/", "/optimize", "/talent", "/work", "/shop", "/integrate", "/learn"]) {
+      await page.goto(url, { waitUntil: "load" });
+      await page.waitForSelector("h1");
+      const n = await page.evaluate(
+        (t) => [...document.querySelectorAll("p")].filter((p) => p.innerText.trim() === t).length,
+        BRIDGE,
+      );
+      expect(n, `${url}: expected exactly one bridge line reading "${BRIDGE}"`).toBe(1);
+    }
   });
 });

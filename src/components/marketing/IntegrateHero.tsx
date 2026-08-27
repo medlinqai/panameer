@@ -1,8 +1,25 @@
 import Link from "next/link";
+import { INTEGRATE_CTA_LABEL } from "@/lib/integrate-steps";
+import {
+  HERO_CARD,
+  HERO_SCRIM,
+  HERO_BUTTON,
+  HERO_BRIDGE_TEXT,
+  HERO_BRIDGE_CLASS,
+  HERO_DESC_CLASS,
+} from "@/components/marketing/hero-treatment";
 import { HeroBox } from "@/components/marketing/HeroBox";
 import { HeroTwoUp } from "@/components/marketing/HeroTwoUp";
 import { HeroVideoBackdrop } from "@/components/media/HeroVideoBackdrop";
-import { INTEGRATE_SUB, integrateHeroStats } from "@/lib/integrate-hero";
+/*
+  ⚠ `INTEGRATE_SUB` IS NO LONGER IMPORTED (`P1-ALL-E031`). Scott's approved
+  description replaced it in the hero, so the import went with it — an unused
+  import is a new lint warning and the baseline is 0-new.
+  ⚠ THE CONSTANT STAYS ON DISK at `lib/integrate-hero.ts:83`, unimported, per the
+  `E164` rule. It is the record of what this hero said before, and the brief is
+  explicit that nothing existing is deleted.
+*/
+import { integrateHeroStats } from "@/lib/integrate-hero";
 
 /**
  * `/integrate`'s HERO (`P1-J0-E325`). ⚠ WALK 1 — this page had never been walked
@@ -43,7 +60,7 @@ export async function IntegrateHero() {
       the video and scrim stacking inside the card; `overflow-hidden` comes from
       `HeroBox` and is what makes the clip respect the radius.
     */
-    <HeroBox cardClassName="isolate bg-[radial-gradient(1100px_500px_at_82%_-10%,rgba(215,44,214,0.42),transparent_60%),linear-gradient(150deg,#0d1230_0%,#191a44_55%,#3a1c53_100%)] text-white">
+    <HeroBox cardClassName={HERO_CARD}>
       <section className="relative px-6 pb-[48px] pt-[44px] min-[901px]:pb-[72px] min-[901px]:pt-[64px]">
         {/*
           ⚠ THE CLIP IS UNCHANGED — `consultation-hero.mp4`, 0.26MB, with the poster
@@ -56,7 +73,7 @@ export async function IntegrateHero() {
           src="/consultation-hero.mp4"
           poster="/posters/create.svg"
           videoClassName="absolute inset-0 h-full w-full object-cover opacity-40"
-          scrimClassName="absolute inset-0 bg-[linear-gradient(150deg,rgba(13,18,48,0.86)_0%,rgba(25,26,68,0.72)_55%,rgba(58,28,83,0.62)_100%)]"
+          scrimClassName={HERO_SCRIM}
         />
         <div className="relative z-[2] mx-auto max-w-[1120px]">
           <HeroTwoUp
@@ -94,9 +111,16 @@ export async function IntegrateHero() {
                 */}
                 <Link
                   href="#punchout"
-                  className="mt-8 inline-block rounded-[12px] bg-magenta px-[30px] py-4 text-[17px] font-semibold leading-[25.5px] text-white transition-colors hover:bg-magenta-dark"
+                  className={HERO_BUTTON}
                 >
-                  See How Punchout Works
+                  {/*
+                    ⚠ RELABELLED `How We Integrate` (`P1-ALL-E031` §4, Scott
+                    2026-08-26) AND READ FROM `INTEGRATE_CTA_LABEL`, because the
+                    approved description above QUOTES it. ⚠ THE `href="#punchout"`
+                    DID NOT CHANGE — only the label.
+                    ⚠ SUPERSEDED: *`See How Punchout Works`*.
+                  */}
+                  {INTEGRATE_CTA_LABEL}
                 </Link>
               </>
             }
@@ -109,8 +133,25 @@ export async function IntegrateHero() {
                   handler. Unlike `/talent`'s `in under one minute`, this one cannot
                   even be timed, because there is nothing to time. PRE-LAUNCH LIST.
                 */}
-                <p className="text-[17px] leading-[1.6] text-[#e9e6f5] min-[901px]:text-[19px]">
-                  {INTEGRATE_SUB}
+                {/*
+                  ── ⚠⚠ SCOTT-APPROVED DESCRIPTION (`P1-ALL-E031` amendment §3) ──
+
+                  ⚠ HIS WORDS. SHIP AS WRITTEN. Not a draft, not chat's.
+                  ⚠ REVISED BY SCOTT 2026-08-26: his rewrite ADDS the word `button`, so it
+                  now matches every other page, and drops `immediately`.
+                  ⚠ `ERP&rsquo;s` — a curly apostrophe, to match the curly quotes
+                  around the label. His text used a straight one.
+
+                  ⚠ THE QUOTED LABEL IS INTERPOLATED FROM `INTEGRATE_CTA_LABEL`,
+                  NEVER RETYPED (`P1-J4-E024`).
+                  ⚠ `HERO_DESC_CLASS` CARRIES THE FOUR-LINE `min-height` — the
+                  hero's height is the breadcrumb, so all seven must match. See
+                  `hero-treatment.ts`. ⚠ SHORTER COPY LEAVES WHITESPACE ON PURPOSE.
+                */}
+                <p className={HERO_DESC_CLASS}>
+                  Click the &ldquo;{INTEGRATE_CTA_LABEL}&rdquo; button to see how existing
+                  technologies expand your ERP&rsquo;s functionality and optimize
+                  its processing.
                 </p>
 
                 {/*
@@ -122,9 +163,7 @@ export async function IntegrateHero() {
                   The line says "the steps below" and there are none. ⚠ OPEN ROW,
                   reported; it closes with the spine brief, not this one.
                 */}
-                <p className="mt-4 text-[19px] font-semibold leading-[1.5] text-[#efa3ee]">
-                  Check out the steps below to see how it works.
-                </p>
+                <p className={HERO_BRIDGE_CLASS}>{HERO_BRIDGE_TEXT}</p>
 
                 {/*
                   ── ⚠⚠ ALL THREE TILES, SCOTT'S LABELS (`P1-J0-E327`) ────────────

@@ -1,4 +1,14 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
+import { HeroBox } from "@/components/marketing/HeroBox";
+import {
+  HERO_BRIDGE_CLASS,
+  HERO_BRIDGE_TEXT,
+  HERO_BUTTON,
+  HERO_CARD,
+  HERO_DESC_CLASS,
+  HERO_SCRIM,
+} from "@/components/marketing/hero-treatment";
 import { ProofStats } from "@/components/marketing/ProofStats";
 import { HeroVideoBackdrop } from "@/components/media/HeroVideoBackdrop";
 import { HeroTwoUp } from "@/components/marketing/HeroTwoUp";
@@ -47,8 +57,29 @@ export function HomeHero({
    * is, and `/optimize` does not embed it. Only the label changes.
    */
   ctaLabel = "Take Our Free Assessment",
+  /*
+    ⚠⚠ `headline` AND `description` ARE PROPS BECAUSE `/` AND `/optimize` ARE ONE
+    COMPONENT (`P1-ALL-E031` amendment §3).
+
+    `/optimize` gained Scott's approved description in this brief. Without these
+    props that string would have landed on `/` too, and Scott is explicit that `/`
+    waits: *"let's handle HOME after this brief and the other pages have been
+    finalized."*
+    ⚠ THE DEFAULTS ARE `/`'s CURRENT STRINGS, and `/` ALSO PASSES THEM EXPLICITLY —
+    belt and braces, so a future caller that forgets cannot silently retitle the
+    home page. ⚠ THE STRINGS ARE UNCHANGED BYTE FOR BYTE; see `app/page.tsx`.
+  */
+  headline = "Optimize Your Business with AI",
+  description = (
+    <>
+      See where you stand and where AI can move the needle in your business. Then
+      build your 12-month roadmap with an expert &mdash; all for&nbsp;free.
+    </>
+  ),
 }: {
   ctaLabel?: string;
+  headline?: ReactNode;
+  description?: ReactNode;
 } = {}) {
   return (
     <section className="hero">
@@ -59,12 +90,44 @@ export function HomeHero({
         `overflow:hidden`, and an element that clips cannot also be the one
         holding it away from the viewport edge.
       */}
-      <div className="hero-stage">
-        <div className="hero-card">
+      {/*
+        ── ⚠⚠ `HeroBox` NOW, AND THE `hero-card` CLASS RIDES ALONG ON PURPOSE ────
+
+        `P1-ALL-E031`: this was the last hero not using `HeroBox`, which was the
+        entire divergence. ⚠ `HeroBox`'s GEOMETRY IS THIS PAGE'S OWN — its comment
+        records it was measured off `/` (stage 6px/44px -> 6px/10px, radius 26 -> 20),
+        so the swap is geometry-neutral by construction.
+
+        ⚠⚠ SUPERSEDED, quoted not deleted — `HeroBox`'s own reason for `HomeHero`
+        staying out, which was true and is now overruled by Scott's consistency ask:
+          *"`HomeHero` already renders the target treatment — it is the page Scott
+           says is CORRECT — and its inset lives in `.pm-home`-scoped CSS that is
+           coupled to `.hero-card .wrap`, the video clip, the grain and the scrim.
+           There is also a measured constraint recorded in `home.css`: at 390 the H1
+           needs >=326px of measure and the current 10px + 20px gives it 330."*
+
+        ⚠⚠ THAT COUPLING IS REAL, AND IT IS WHY `hero-card` IS STILL IN THE CLASS
+        LIST. `.pm-home .hero-card .wrap{padding:0 20px}` is a DESCENDANT rule: drop
+        the class and the mobile 20px goes with it, taking the H1's measure at 390
+        from 330px to 310px — under the recorded 326px floor — and wrapping the
+        headline to four lines. The class is kept so that rule still matches.
+        ⚠ `home.css`'s `.pm-home .hero-card` NO LONGER PAINTS A BACKGROUND — its
+        `background` and `box-shadow` were removed so `HERO_CARD` is the ONLY source
+        of this card's surface. Its padding and radius stay; they are the geometry.
+        ⚠ THAT IS A DELETION FROM AN EXISTING RULE, NOT NEW GLOBAL CSS.
+
+        ⚠ THE VIDEO CLASS IS THE STANDARD ONE NOW, not `.hero-video` — the other six
+        heroes all pass `absolute inset-0 h-full w-full object-cover opacity-40`, and
+        depending on a `.pm-home` rule for it is what made this hero special.
+        ⚠ `.hero-grain` STAYS: it is decorative, it is inside `.pm-home` on both
+        pages, and it is the one part of the old treatment worth keeping.
+      */}
+      <HeroBox cardClassName={`hero-card ${HERO_CARD}`}>
+        <div className="hero-card-inner">
           <HeroVideoBackdrop
             src="/consultation.mp4"
-            videoClassName="hero-video"
-            scrimClassName="hero-scrim"
+            videoClassName="absolute inset-0 h-full w-full object-cover opacity-40"
+            scrimClassName={HERO_SCRIM}
           />
           {/*
             The grid survives the redesign, inverted: white hairlines at 14%
@@ -100,10 +163,18 @@ export function HomeHero({
                 DO NOT soften, lengthen or "improve" either string. If they
                 change again it will be because he says so.
               */}
-                <h1>Optimize Your Business with AI</h1>
+                <h1>{headline}</h1>
                 {/* THE BUTTON GOES TO /assess. It was `#` — an honest stub while
                   the assessment did not exist. No `›` affectation. */}
-                <Link href="/assess" className="hero-cta">
+                {/*
+                  ⚠ THE STANDARD BUTTON (`HERO_BUTTON`), NOT `.hero-cta`. Scott named
+                  `/work`'s CTA as the one he likes and this is it.
+                  ⚠ THE HREF IS UNCHANGED AND WAS ALREADY `/assess`. The brief's WS4
+                  said *"`/` HAS NO BUTTON"* and asked chat to choose an href — BOTH
+                  HALVES WERE ALREADY FALSE: `ctaLabel` defaults to `Take Our Free
+                  Assessment` and the link already pointed at `/assess`. Reported.
+                */}
+                <Link href="/assess" className={HERO_BUTTON}>
                   {ctaLabel}
                 </Link>
               </>
@@ -177,11 +248,7 @@ export function HomeHero({
                   2. "versus" still ships on the Step 4 dashboard shot, untouched. The word
                      is no longer used in two places for consistency; it is used in one.
               */}
-                <p>
-                  See where you stand and where AI can move the needle in your
-                  business. Then build your 12-month roadmap with an expert
-                  &mdash; all for&nbsp;free.
-                </p>
+                <p className={HERO_DESC_CLASS}>{description}</p>
                 {/*
                 ⚠ A DISTINCT BEAT, NOT A SENTENCE ON THE LEDE. It is the bridge into
                 the spine below, so it gets its own `<p>` and a lighter magenta to read
@@ -191,9 +258,7 @@ export function HomeHero({
                 "below", and the spine is directly below it, so the page does the
                 pointing. Making it interactive is a separate decision.
               */}
-                <p className="hero-bridge">
-                  Check out the steps below to see how it works.
-                </p>
+                <p className={HERO_BRIDGE_CLASS}>{HERO_BRIDGE_TEXT}</p>
                 {/* WS-9 — one shared component; /assess step 0 renders the same source.
                   ⚠ THE CARDS STAY ON THE RIGHT, below the lede. Scott: "i want to keep
                   the cards on the right." The taller lede re-centres the left column
@@ -203,7 +268,7 @@ export function HomeHero({
             }
           />
         </div>
-      </div>
+      </HeroBox>
     </section>
   );
 }

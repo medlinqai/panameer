@@ -1,4 +1,13 @@
 import { HeroBox } from "@/components/marketing/HeroBox";
+import { SHOP_CTA_LABEL } from "@/lib/shop-steps";
+import {
+  HERO_BUTTON,
+  HERO_CARD,
+  HERO_SCRIM,
+  HERO_BRIDGE_TEXT,
+  HERO_BRIDGE_CLASS,
+  HERO_DESC_CLASS,
+} from "@/components/marketing/hero-treatment";
 import { HeroTwoUp } from "@/components/marketing/HeroTwoUp";
 import { HeroVideoBackdrop } from "@/components/media/HeroVideoBackdrop";
 import { talentHeroStats } from "@/lib/talent-stats";
@@ -40,7 +49,7 @@ export async function ShopHero() {
       surface is byte-identical to the string that hero renders; `HeroTwoUp`
       supplies the columns and nothing about the skin is new.
     */
-    <HeroBox cardClassName="isolate bg-[radial-gradient(1100px_500px_at_82%_-10%,rgba(215,44,214,0.42),transparent_60%),linear-gradient(150deg,#0d1230_0%,#191a44_55%,#3a1c53_100%)] text-white">
+    <HeroBox cardClassName={HERO_CARD}>
       <section className="relative px-6 pb-[48px] pt-[44px] min-[901px]:pb-[72px] min-[901px]:pt-[64px]">
         {/*
           ── ⚠⚠ THE HERO CLIP (`P1-J2-E009`) ─────────────────────────────────
@@ -70,7 +79,7 @@ export async function ShopHero() {
           src="/get-paid-hero.mp4"
           poster="/posters/settle.svg"
           videoClassName="absolute inset-0 h-full w-full object-cover opacity-40"
-          scrimClassName="absolute inset-0 bg-[linear-gradient(150deg,rgba(13,18,48,0.86)_0%,rgba(25,26,68,0.72)_55%,rgba(58,28,83,0.62)_100%)]"
+          scrimClassName={HERO_SCRIM}
         />
         <div className="relative z-[2] mx-auto max-w-[1120px]">
           <HeroTwoUp
@@ -147,13 +156,40 @@ export async function ShopHero() {
                   reading order for a screen reader, which is the honest thing for a
                   label that explains itself.
                 */}
+                {/*
+                  ── ⚠⚠ THE STANDARD MAGENTA FILL, STILL NOT A LINK (`P1-ALL-E031` §5) ─
+
+                  ⚠ IT TAKES THE STANDARD TREATMENT — same magenta, same radius, same
+                  `font-display` type — because Scott asked for consistency *"even if
+                  they have not been linked yet"*. It was outlined `border-white/35`
+                  before, which made it the one control on the site that did not look
+                  like a CTA.
+
+                  ⚠⚠ AND IT IS STILL `aria-disabled` WITH NO `href`, DELIBERATELY.
+                  Scott named WHAT it opens on 2026-08-27 — *"shop destination will be
+                  the items. IF you are not logged in - a subset of them. If you are,
+                  all of them."* — but HE NAMED NO ROUTE AND NO SUCH ROUTE EXISTS. The
+                  public item list is a `P1-J2` BUILD.
+                  ⚠ NOT `href="#"`, NOT an empty `href`, NOT a dead click handler, NOT
+                  `(app)/packages` (signed-in, 307s), NOT `/explore` (that shows
+                  EXPERTS and Scott has superseded it). No catalogue, stub or
+                  "coming soon" page was built to link to.
+
+                  ⚠ THE `Soon` PILL IS WHAT KEEPS THE MAGENTA HONEST. A live-looking
+                  magenta button with no destination is the four-second disproof
+                  (`ORIENTATION §6`) and worse than the disabled state it replaces;
+                  the pill is what stops the fill from making that promise.
+                  ⚠ `aria-disabled` RATHER THAN `disabled` so it keeps its place in
+                  the reading order for a screen reader.
+                  ⚠ `P1-J2-E010` AND `P1-J2-E011` BOTH STAY OPEN against that build.
+                */}
                 <button
                   type="button"
-                  disabled
-                  className="mt-8 inline-flex cursor-default items-center gap-2.5 rounded-[12px] border border-white/35 px-7 py-4 font-display text-[16px] font-bold text-white"
+                  aria-disabled="true"
+                  className={`${HERO_BUTTON} inline-flex cursor-default items-center gap-2.5 hover:bg-magenta`}
                 >
-                  Start Shopping Now
-                  <span className="rounded-full bg-white/15 px-2 py-[3px] text-[11px] font-bold uppercase tracking-[0.08em] text-[#e9e6f5]">
+                  {SHOP_CTA_LABEL}
+                  <span className="rounded-full bg-white/20 px-2 py-[3px] text-[11px] font-bold uppercase tracking-[0.08em] text-white">
                     Soon
                   </span>
                 </button>
@@ -212,10 +248,28 @@ export async function ShopHero() {
                   the field that would express it does not exist — the dashboard ships
                   eight hardcoded strings (`lib/assessment/solutions.ts:47`).
                 */}
-                <p className="text-[17px] leading-[1.6] text-[#e9e6f5] min-[901px]:text-[19px]">
-                  Search the ever-increasing list of pre-defined service
-                  products created by our experts. From mentoring, to demos, to
-                  integrations, to AI agents, guarantee delivery at a price.
+                {/*
+                  ── ⚠⚠ SCOTT-APPROVED DESCRIPTION (`P1-ALL-E031` amendment §3) ──
+
+                  ⚠ HIS WORDS. SHIP AS WRITTEN. Not a draft, not chat's.
+                  ⚠⚠ THIS SENTENCE SAYS `Click` AND THE BUTTON IS `aria-disabled` WITH NO
+                  `href`. THAT IS A KNOWN MISMATCH AND SCOTT APPROVED THE SENTENCE
+                  KNOWING IT — the amendment is explicit that it overrides the body's
+                  "its sentence must not say click". ⚠ DO NOT REWORD IT AND DO NOT
+                  ENABLE THE BUTTON TO MAKE IT TRUE. Reported for his call on which
+                  moves when the `P1-J2` item list ships.
+                  ⚠ HIS HYPHEN `-` BEFORE `agents, demos`, not an em dash.
+
+                  ⚠ THE QUOTED LABEL IS INTERPOLATED FROM `SHOP_CTA_LABEL`,
+                  NEVER RETYPED (`P1-J4-E024`).
+                  ⚠ `HERO_DESC_CLASS` CARRIES THE FOUR-LINE `min-height` — the
+                  hero's height is the breadcrumb, so all seven must match. See
+                  `hero-treatment.ts`. ⚠ SHORTER COPY LEAVES WHITESPACE ON PURPOSE.
+                */}
+                <p className={HERO_DESC_CLASS}>
+                  Click the &ldquo;{SHOP_CTA_LABEL}&rdquo; button and buy fixed-scope &amp;
+                  fixed-price items built by our experts - agents, demos,
+                  retainers, and more.
                 </p>
                 {/*
                   ── ⚠ THE BRIDGE LINE (`WS4`) ────────────────────────────────
@@ -225,9 +279,7 @@ export async function ShopHero() {
                   ⚠ IT SITS OVER THIS PAGE'S OWN CLIP, so it was measured over that
                   clip and the WS2 ladder applied per page. Ratios in the report.
                 */}
-                <p className="mt-4 text-[19px] font-semibold leading-[1.5] text-[#efa3ee]">
-                  Check out the steps below to see how it works.
-                </p>
+                <p className={HERO_BRIDGE_CLASS}>{HERO_BRIDGE_TEXT}</p>
 
                 {/*
                   ── ⚠⚠ THE THREE LIVE-COUNT TILES (`WS3`) ────────────────────

@@ -1,4 +1,13 @@
 import type { ReactNode } from "react";
+import {
+  HERO_BRIDGE_CLASS,
+  HERO_BRIDGE_TEXT,
+  HERO_BUTTON,
+  HERO_BUTTON_OUTLINE,
+  HERO_CARD,
+  HERO_DESC_CLASS,
+  HERO_SCRIM,
+} from "@/components/marketing/hero-treatment";
 import Link from "next/link";
 import { HeroVideoBackdrop } from "@/components/media/HeroVideoBackdrop";
 import { HeroBox } from "@/components/marketing/HeroBox";
@@ -762,7 +771,7 @@ export function LearnPublic() {
         also what makes the clip respect the radius — the same reason `HomeHero`
         needs two elements rather than one.
       */}
-      <HeroBox cardClassName="isolate bg-[linear-gradient(150deg,#1b1f45_0%,#33194f_55%,#4a1a5e_100%)] text-white">
+      <HeroBox cardClassName={HERO_CARD}>
         <section className="px-6 pb-[48px] pt-[44px] min-[901px]:pb-[72px] min-[901px]:pt-[64px]">
           {/*
           ⚠ THE GRADIENT UNDER THIS IS NOT DECORATION AND MUST STAY. It paints before the clip
@@ -778,7 +787,7 @@ export function LearnPublic() {
             src="/learn.mp4"
             poster="/posters/learn.svg"
             videoClassName="absolute inset-0 h-full w-full object-cover opacity-40"
-            scrimClassName="absolute inset-0 bg-[linear-gradient(115deg,rgba(15,11,28,0.92)_0%,rgba(40,20,80,0.86)_45%,rgba(215,44,214,0.18)_100%)]"
+            scrimClassName={HERO_SCRIM}
           />
 
           {/*
@@ -866,13 +875,13 @@ export function LearnPublic() {
                     */}
                     <Link
                       href="/learn/paths"
-                      className="rounded-[12px] bg-magenta px-7 py-4 font-display text-[16px] font-bold text-white"
+                      className={HERO_BUTTON}
                     >
                       {LEARN_CTA_LABEL}
                     </Link>
                     <Link
                       href="/learn/courses"
-                      className="rounded-[12px] border border-white/35 px-7 py-4 font-display text-[16px] font-bold text-white"
+                      className={HERO_BUTTON_OUTLINE}
                     >
                       Browse the Catalog
                     </Link>
@@ -958,11 +967,27 @@ export function LearnPublic() {
                   third at `e2e/marketing-home.spec.ts:1738`, which is the one that
                   drifts unnoticed. All three now read the constant.
                 */}
-                  <p className="text-[17px] leading-[1.6] text-[#e9e6f5] min-[901px]:text-[19px]">
-                    Click the &ldquo;{LEARN_CTA_LABEL}&rdquo; button, create your
-                    account, and start on Oracle Cloud + AI &mdash; free, and taught
-                    by the people who ran the systems. What are you waiting for?
-                  </p>
+                  {/*
+                  ── ⚠⚠ REVISED BY SCOTT 2026-08-26 (`P1-ALL-E031` amendment §3) ──
+
+                  ⚠ HE READ `E037`'s VERSION RENDERED AND REWROTE IT. This supersedes
+                  `P1-J3-E037` (`3655436`), which was itself approved copy — so the
+                  page has had three approved descriptions in three days.
+                  ⚠ SUPERSEDED, quoted not deleted:
+                    *"Click the “{LEARN_CTA_LABEL}” button, create your account, and
+                     start on Oracle Cloud + AI — free, and taught by the people who
+                     ran the systems. What are you waiting for?"*
+                  ⚠ WHAT HE CHANGED: `&` not `+`, `courses` plural, HIS THREE-PERIOD
+                  ELLIPSIS `...` and NOT `&hellip;`, `deploy` not `ran`, and the
+                  question is gone. ⚠ `&` RENDERS AS `&amp;` IN JSX.
+                  ⚠ THE LABEL IS INTERPOLATED FROM `LEARN_CTA_LABEL` (`P1-J3-E038`).
+                  ⚠ `HERO_DESC_CLASS` carries the four-line `min-height`.
+                */}
+                <p className={HERO_DESC_CLASS}>
+                  Click the &ldquo;{LEARN_CTA_LABEL}&rdquo; button and take Oracle
+                  Cloud &amp; AI courses for free...all taught by the people who
+                  deploy the systems.
+                </p>
                   {/*
                   ⚠⚠ WHITE, NOT PINK, AND THE TEXT IS `/optimize`'s (`P1-J0-E302`).
                   Scott, 2026-08-24: *"this isn't looking like i thought. Lets move both
@@ -1032,9 +1057,12 @@ export function LearnPublic() {
                     DISAGREE ON BRIDGE-LINE COLOUR TODAY, and that is the reported
                     consequence of one page's footage being brighter than the other's.
                   */}
-                  <p className="mt-4 text-[17px] font-semibold leading-[1.6] text-[#efa3ee] min-[901px]:text-[19px]">
-                    Check out the steps below to see how it works.
-                  </p>
+                  {/* ⚠ THE BRIDGE CLASS WAS THIS PAGE'S OWN — `text-[17px] … leading-[1.6]
+                      min-[901px]:text-[19px]`, i.e. 17px below 901 where the other six
+                      were a FIXED 19px/1.5. The TEXT was verbatim; the TREATMENT was not.
+                      It takes `HERO_BRIDGE_CLASS` now (`P1-ALL-E031`) — reported, because
+                      the brief believed six pages already matched and only five did. */}
+                  <p className={HERO_BRIDGE_CLASS}>{HERO_BRIDGE_TEXT}</p>
                   <LearnStats />
                 </>
               }

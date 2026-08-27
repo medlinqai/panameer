@@ -266,3 +266,18 @@ export const SPINE_STEPS: SpineStep[] = [
   summarised — precisely so nobody finds a bare string field and "restores" the
   derivation. Read that note before adding one back.
 */
+
+/*
+  ⚠⚠ `/optimize`'s CTA LABEL, DEFINED ONCE (`P1-ALL-E031`, 2026-08-26).
+
+  ⚠ THE STRING DID NOT CHANGE — it is what `optimize/page.tsx` already passed as
+  `ctaLabel`. It becomes a constant because Scott's APPROVED DESCRIPTION QUOTES IT,
+  and a label quoted in prose beside the button it names is exactly how `/work`
+  shipped two different strings on one screen (`P1-J4-E024`).
+  ⚠ ONE CONVENTION with `TALENT_CTA_LABEL`, `WORK_CTA_LABEL`, `LEARN_CTA_LABEL`,
+  `SHOP_CTA_LABEL` and `INTEGRATE_CTA_LABEL`. ⚠ IT LIVES HERE because this file
+  already holds `/optimize`'s spine strings — no new `lib/` file per page.
+  ⚠ `/` DOES NOT USE THIS. Its label is `HomeHero`'s default, `Take Our Free
+  Assessment`, and Scott is handling HOME after this brief.
+*/
+export const OPTIMIZE_CTA_LABEL = "Start Your Free Optimization Assessment";

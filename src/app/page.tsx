@@ -108,7 +108,31 @@ export default function Home() {
       */}
       <MarketingHeader />
       <div className="pm-home">
-        <HomeHero />
+        {/*
+          ⚠⚠ `/` PASSES ITS OWN STRINGS EXPLICITLY (`P1-ALL-E031` amendment §3).
+
+          `/` and `/optimize` are ONE component. `/optimize` gained Scott's approved
+          description in this brief; without these two props that string would have
+          landed here too, and Scott is explicit that HOME waits: *"let's handle HOME
+          after this brief and the other pages have been finalized."*
+          ⚠ THESE ARE THE STRINGS THAT ALREADY SHIPPED, BYTE FOR BYTE — this is a
+          prop extraction, not a copy change. They are also `HomeHero`'s defaults;
+          passing them anyway means a future caller that forgets cannot silently
+          retitle the home page.
+          ⚠ `&mdash;` AND `&nbsp;` ARE BOTH DELIBERATE. The `&nbsp;` between `all` and
+          `free.` is `E169`'s orphan guard — Scott: *"giving the word 'free' its own
+          line is not correct."* DO NOT normalise either one.
+        */}
+        <HomeHero
+          headline="Optimize Your Business with AI"
+          description={
+            <>
+              See where you stand and where AI can move the needle in your
+              business. Then build your 12-month roadmap with an expert &mdash;
+              all for&nbsp;free.
+            </>
+          }
+        />
 
         {/*
           ── ⚠⚠ THREE SECTIONS LEFT THIS PAGE ON 2026-08-24 (`P1-J0-E298`) ─────

@@ -1,4 +1,12 @@
 import { HeroBox } from "@/components/marketing/HeroBox";
+import {
+  HERO_CARD,
+  HERO_SCRIM,
+  HERO_BUTTON,
+  HERO_BRIDGE_TEXT,
+  HERO_BRIDGE_CLASS,
+  HERO_DESC_CLASS,
+} from "@/components/marketing/hero-treatment";
 import { HeroTwoUp } from "@/components/marketing/HeroTwoUp";
 import { HeroVideoBackdrop } from "@/components/media/HeroVideoBackdrop";
 import { talentHeroStats } from "@/lib/talent-stats";
@@ -112,7 +120,7 @@ export async function TalentHero() {
       against the page; `overflow-hidden` comes from `HeroBox` and is what makes
       the clip respect the radius.
     */
-    <HeroBox cardClassName="isolate bg-[radial-gradient(1100px_500px_at_82%_-10%,rgba(215,44,214,0.42),transparent_60%),linear-gradient(150deg,#0d1230_0%,#191a44_55%,#3a1c53_100%)] text-white">
+    <HeroBox cardClassName={HERO_CARD}>
       <section className="relative px-6 pb-[48px] pt-[44px] min-[901px]:pb-[72px] min-[901px]:pt-[64px]">
         {/*
           ── ⚠⚠ THE HERO CLIP (`P1-J1-E028`) ─────────────────────────────────
@@ -168,7 +176,7 @@ export async function TalentHero() {
           src="/connect-hero.mp4"
           poster="/posters/connect.svg"
           videoClassName="absolute inset-0 h-full w-full object-cover opacity-40"
-          scrimClassName="absolute inset-0 bg-[linear-gradient(150deg,rgba(13,18,48,0.86)_0%,rgba(25,26,68,0.72)_55%,rgba(58,28,83,0.62)_100%)]"
+          scrimClassName={HERO_SCRIM}
         />
         <div className="relative z-[2] mx-auto max-w-[1120px]">
           {/*
@@ -252,7 +260,7 @@ export async function TalentHero() {
                 */}
                 <a
                   href="/join/provider"
-                  className="mt-8 inline-block rounded-[12px] bg-magenta px-[30px] py-4 text-[17px] font-semibold leading-[25.5px] text-white transition-colors hover:bg-magenta-dark"
+                  className={HERO_BUTTON}
                 >
                   {/* ⚠ THE CONSTANT, NOT A LITERAL — see WS1b in `talent-steps.ts`.
                       The right column's sentence quotes this same value. */}
@@ -391,13 +399,27 @@ export async function TalentHero() {
                   ⚠ THE LABEL IS INTERPOLATED FROM `TALENT_CTA_LABEL`, NEVER RETYPED —
                   it has changed four times in three days.
                 */}
-                <p className="text-[17px] leading-[1.6] text-[#e9e6f5] min-[901px]:text-[19px]">
-                  Click the &ldquo;{TALENT_CTA_LABEL}&rdquo; button and our AI
-                  builds it from your resume. Your profile sells your time.
-                  Service Products sell everything else &mdash; past
-                  deployables, interfaces, consultations, retainers, mentoring,
-                  application demos and more &mdash; listed for sale in the
-                  Panameer shop.
+                {/*
+                  ── ⚠⚠ SCOTT-APPROVED DESCRIPTION (`P1-ALL-E031` amendment §3) ──
+
+                  ⚠ HIS WORDS. SHIP AS WRITTEN. Not a draft, not chat's.
+                  ⚠ REVISED BY SCOTT 2026-08-26: two sentences now, `&` not `and`,
+                  `work-product` not `work-units`, ellipsis gone.
+                  ⚠⚠ HE TYPED TWO SPACES AFTER `sell your time.` — JSX COLLAPSES
+                  WHITESPACE and it renders SINGLE-SPACED. No `&nbsp;` was added to
+                  force two; reported instead.
+                  ⚠ `work-product` IS HYPHENATED AND SINGULAR. His word.
+
+                  ⚠ THE QUOTED LABEL IS INTERPOLATED FROM `TALENT_CTA_LABEL`,
+                  NEVER RETYPED (`P1-J4-E024`).
+                  ⚠ `HERO_DESC_CLASS` CARRIES THE FOUR-LINE `min-height` — the
+                  hero's height is the breadcrumb, so all seven must match. See
+                  `hero-treatment.ts`. ⚠ SHORTER COPY LEAVES WHITESPACE ON PURPOSE.
+                */}
+                <p className={HERO_DESC_CLASS}>
+                  Click the &ldquo;{TALENT_CTA_LABEL}&rdquo; button &amp; build your profile with AI,
+                  sell your time. Then create Service Products to resell your
+                  previous work-product.
                 </p>
 
                 {/*
@@ -424,9 +446,7 @@ export async function TalentHero() {
                   card. MEASURED against 9 sampled frames at three widths before
                   shipping; the numbers are in the report.
                 */}
-                <p className="mt-4 text-[19px] font-semibold leading-[1.5] text-[#efa3ee]">
-                  Check out the steps below to see how it works.
-                </p>
+                <p className={HERO_BRIDGE_CLASS}>{HERO_BRIDGE_TEXT}</p>
 
                 {/*
                   ── ⚠⚠ THE THREE LIVE-COUNT TILES (`P1-J1-E029`) ─────────────────

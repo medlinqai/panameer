@@ -249,24 +249,40 @@
   dark corner is what meets the left rail; Home has no rail, but the direction
   is kept so the two cards read as the same object.
 */
+/*
+  ⚠⚠ THE BACKGROUND AND BOX-SHADOW WERE REMOVED HERE (`P1-ALL-E031`, 2026-08-26).
+
+  `HERO_CARD` in `src/components/marketing/hero-treatment.ts` is now the ONLY
+  source of every public hero's surface, and this rule outranked it: a Tailwind
+  arbitrary `bg-[...]` is one class (0,1,0) and `.pm-home .hero-card` is two
+  (0,2,0), so home.css would have silently won on the one page that mattered most.
+
+  ⚠ SUPERSEDED, quoted not deleted — the gradient this card used to paint, and the
+  reasoning that went with it:
+    *"GRADIENT DIRECTION IS LOAD-BEARING (locked in the brief): darkest TOP-LEFT,
+     magenta bloom BOTTOM-RIGHT, with a cooler violet bloom behind it. 133deg in CSS
+     points down-and-right, so the 0% stop (#120a24, the near-black) lands in the
+     top-left corner and the ramp lightens toward the blooms."*
+      background:
+        radial-gradient(130% 120% at 88% 92%, rgba(215,44,214,0.4) 0%, transparent 52%),
+        radial-gradient(120% 120% at 92% 88%, rgba(130,74,224,0.22) 0%, transparent 55%),
+        linear-gradient(133deg, #120a24 0%, #201338 55%, #2b1a48 100%);
+      box-shadow: 0 30px 70px -34px rgba(30,10,50,0.7);
+  ⚠ THE STANDARD CARD'S BLOOM IS TOP-RIGHT (`at 82% -10%`), NOT BOTTOM-RIGHT, so the
+  direction genuinely changed on this page. Scott asked for consistency across seven
+  heroes and that is the trade he chose.
+
+  ⚠⚠ WHAT STAYS IS THE GEOMETRY, AND IT IS LOAD-BEARING: `padding` and
+  `border-radius` here, plus `.hero-card .wrap`'s mobile `0 20px` below. `HomeHero`
+  keeps the `hero-card` CLASS on `HeroBox`'s card precisely so these still match —
+  drop them and the H1's measure at 390 falls from 330px to 310px, under the 326px
+  floor recorded below, and the headline wraps to four lines.
+*/
 .pm-home .hero-card {
   position: relative;
   overflow: hidden;
   border-radius: 26px;
   padding: 64px 12px 72px;
-  background:
-    radial-gradient(
-      130% 120% at 88% 92%,
-      rgba(215, 44, 214, 0.4) 0%,
-      transparent 52%
-    ),
-    radial-gradient(
-      120% 120% at 92% 88%,
-      rgba(130, 74, 224, 0.22) 0%,
-      transparent 55%
-    ),
-    linear-gradient(133deg, #120a24 0%, #201338 55%, #2b1a48 100%);
-  box-shadow: 0 30px 70px -34px rgba(30, 10, 50, 0.7);
 }
 /*
   The clip and its scrim (HeroVideoBackdrop). Both sit at z-index auto so they

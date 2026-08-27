@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { HERO_CARD, HERO_SCRIM } from "@/components/marketing/hero-treatment";
 import { HeroBox } from "@/components/marketing/HeroBox";
 import { HeroVideoBackdrop } from "@/components/media/HeroVideoBackdrop";
 import { HERO_COPY } from "@/lib/brand";
@@ -89,7 +90,7 @@ export function MarketingHero({
           the unchanged callers unchanged.
         */
         (videoSrc ? "isolate " : "") +
-        "bg-[radial-gradient(1100px_500px_at_82%_-10%,rgba(215,44,214,0.42),transparent_60%),linear-gradient(150deg,#0d1230_0%,#191a44_55%,#3a1c53_100%)] text-white"
+        HERO_CARD
       }
     >
       {/*
@@ -108,7 +109,7 @@ export function MarketingHero({
           src={videoSrc}
           poster="/posters/create.svg"
           videoClassName="absolute inset-0 h-full w-full object-cover opacity-40"
-          scrimClassName="absolute inset-0 bg-[linear-gradient(150deg,rgba(13,18,48,0.86)_0%,rgba(25,26,68,0.72)_55%,rgba(58,28,83,0.62)_100%)]"
+          scrimClassName={HERO_SCRIM}
         />
       ) : null}
       {/*
