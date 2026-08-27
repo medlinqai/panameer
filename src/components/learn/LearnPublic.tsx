@@ -7,9 +7,10 @@ import { CATALOG_COUNTS } from "@/lib/learn-catalog-counts";
 import { StepDisclosures } from "@/components/marketing/StepDisclosures";
 import type { LearnStepLabel } from "@/lib/learn-steps";
 import {
-  LEARN_STEPS,
+  LEARN_CTA_LABEL,
   LEARN_SPINE_HEADING,
   LEARN_SPINE_TAGLINE,
+  LEARN_STEPS,
 } from "@/lib/learn-steps";
 /* ⚠ `SixStepShot` IS NO LONGER IMPORTED (`P1-J0-E292`). The file stays on disk,
    unimported — same rule as `E164`/`DashboardShot`. See the how-it-works block. */
@@ -867,7 +868,7 @@ export function LearnPublic() {
                       href="/learn/paths"
                       className="rounded-[12px] bg-magenta px-7 py-4 font-display text-[16px] font-bold text-white"
                     >
-                      Start Learning for Free
+                      {LEARN_CTA_LABEL}
                     </Link>
                     <Link
                       href="/learn/courses"
@@ -940,18 +941,27 @@ export function LearnPublic() {
                   ⚠ CURLY QUOTES, EM DASH, AND THE QUESTION MARK IS HIS — all three
                   ship as typed. Do not "tidy" the question into a full stop.
 
-                  ⚠⚠ THE QUOTED LABEL IS TYPED TWICE — HERE AND ON THE BUTTON AT
-                  `:870`. There is NO `LEARN_CTA_LABEL` constant and this brief was
-                  explicitly one string, so one was NOT created. ⚠ THAT IS THE EXACT
-                  DEFECT `P1-J1-E033` AND `P1-J4-E024` EXIST TO PREVENT — `/work`'s
-                  button and sub-copy drifted apart that way. ⚠ IF EITHER STRING IS
-                  EVER EDITED, EDIT BOTH, or extract the constant properly.
+                  ⚠ THE QUOTED LABEL IS `LEARN_CTA_LABEL` (`lib/learn-steps.ts`),
+                  interpolated — never retyped. The button above reads the same
+                  constant, and so does `check:ui`. One string, three consumers.
+
+                  ⚠⚠ SUPERSEDED 2026-08-26 (`P1-J3-E038`) — the dead warning, quoted
+                  not deleted, because it was TRUE when written and the debt it names
+                  is what `E038` paid:
+                    *"THE QUOTED LABEL IS TYPED TWICE — HERE AND ON THE BUTTON AT
+                     `:870`. There is NO `LEARN_CTA_LABEL` constant and this brief was
+                     explicitly one string, so one was NOT created. ⚠ THAT IS THE EXACT
+                     DEFECT `P1-J1-E033` AND `P1-J4-E024` EXIST TO PREVENT — `/work`'s
+                     button and sub-copy drifted apart that way. ⚠ IF EITHER STRING IS
+                     EVER EDITED, EDIT BOTH, or extract the constant properly."*
+                  ⚠ IT UNDERCOUNTED: there were THREE copies, not two — the spec held a
+                  third at `e2e/marketing-home.spec.ts:1738`, which is the one that
+                  drifts unnoticed. All three now read the constant.
                 */}
                   <p className="text-[17px] leading-[1.6] text-[#e9e6f5] min-[901px]:text-[19px]">
-                    Click the &ldquo;Start Learning for Free&rdquo; button, create
-                    your account, and start on Oracle Cloud + AI &mdash; free, and
-                    taught by the people who ran the systems. What are you waiting
-                    for?
+                    Click the &ldquo;{LEARN_CTA_LABEL}&rdquo; button, create your
+                    account, and start on Oracle Cloud + AI &mdash; free, and taught
+                    by the people who ran the systems. What are you waiting for?
                   </p>
                   {/*
                   ⚠⚠ WHITE, NOT PINK, AND THE TEXT IS `/optimize`'s (`P1-J0-E302`).

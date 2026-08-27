@@ -123,6 +123,38 @@ export const LEARN_STEPS: LearnStepLabel[] = [
 /** ⚠ THE SECTION HEADING ABOVE THE ROWS, NOT A ROW — same as `/optimize` (`E281`). */
 export const LEARN_SPINE_HEADING = "Here’s How It Works";
 
+/*
+  ⚠⚠ `/learn`'s CTA LABEL, DEFINED ONCE (`P1-J3-E038`). Scott, 2026-08-26:
+  *"the button is the LEARN CTA."*
+
+  ⚠ THE STRING DID NOT CHANGE — byte-identical to what `E037` shipped. This closes
+  a debt, it does not restyle a button.
+
+  ── ⚠⚠ WHY, AND IT IS NOT HYPOTHETICAL ──────────────────────────────────────
+
+  `E037` shipped Scott's hero sentence, which QUOTES the button. That brief was
+  explicitly one string and forbade creating a constant, so the label ended up typed
+  in THREE places — the button, the sentence, and the `check:ui` assertion. ⚠ THE
+  SPEC IS THE ONE PEOPLE FORGET, and it is why this drifts anyway once the first two
+  are fixed.
+
+  ⚠⚠ `/work` ALREADY SHIPPED THIS DEFECT FOR REAL (`P1-J4-E024`): its button said
+  `Create a Work Request` while its own sub-copy quoted `Create Work Request`. Two
+  live strings, on one screen, caught only when Scott read them side by side.
+
+  ⚠ THIRD PAGE, ONE CONVENTION — the exact shape of `TALENT_CTA_LABEL`
+  (`talent-steps.ts`) and `WORK_CTA_LABEL` (`work-steps.ts`). ⚠ DO NOT INVENT A
+  FOURTH PATTERN, and do not add a `lib/` file: this file already holds this page's
+  strings, which is the same reason the other two live where they do.
+
+  ⚠ CONSUMERS — three, and the literal now exists NOWHERE else:
+    `LearnPublic.tsx` the hero button
+    `LearnPublic.tsx` the label quoted inside Scott's sentence
+    `e2e/marketing-home.spec.ts` the accessible-name assertion
+  ⚠ IF THE LABEL CHANGES, IT CHANGES HERE AND ALL THREE FOLLOW.
+*/
+export const LEARN_CTA_LABEL = "Start Learning for Free";
+
 /**
  * ⚠⚠ THE TAGLINE SHIPS AS ONE SENTENCE. SCOTT WROTE TWO, AND THE SECOND IS HELD.
  *

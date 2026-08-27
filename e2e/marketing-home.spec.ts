@@ -15,6 +15,7 @@ import { ASSESSMENT_PRODUCT } from "../src/lib/brand";
   `LearnPublic.tsx`.
 */
 import {
+  LEARN_CTA_LABEL,
   LEARN_STEPS,
   LEARN_SPINE_HEADING,
   LEARN_SPINE_TAGLINE,
@@ -1733,9 +1734,22 @@ test.describe("/learn — walk 2: the hero and the how-it-works block", () => {
       .first()
       .locator("xpath=ancestor::section[1]");
     await expect(
-      /* ⚠ RELABELLED BY WS5, 2026-08-25: `Create Your Free Account` became
-         `Start Learning for Free`. Scott's words; the control is the same one. */
-      hero.getByRole("link", { name: "Start Learning for Free" }),
+      /*
+        ⚠ ASSERTED FROM `LEARN_CTA_LABEL`, NOT A LITERAL (`P1-J3-E038`).
+
+        ⚠⚠ THIS LINE WAS THE THIRD COPY OF THE STRING and it is the one that drifts
+        unnoticed: the two in `LearnPublic.tsx` are a screen apart and get read
+        together, this one is in another directory. Same fix and same reasoning as
+        `TALENT_CTA_LABEL` above (`2b677ea`), where the label had already changed
+        three times in two days.
+        ⚠ STILL AN EXACT ACCESSIBLE NAME — `getByRole` name matching is whole-string
+        by default, NOT a substring and NOT a regex, so this fails loudly if the
+        button and the constant ever disagree. ⚠ DO NOT loosen it to `{ name: /…/ }`.
+
+        ⚠ RELABELLED BY WS5, 2026-08-25: `Create Your Free Account` became
+        `Start Learning for Free`. Scott's words; the control is the same one.
+      */
+      hero.getByRole("link", { name: LEARN_CTA_LABEL }),
     ).toBeVisible();
     await expect(
       hero.getByRole("link", { name: "Browse the catalog" }),
