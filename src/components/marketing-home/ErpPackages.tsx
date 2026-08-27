@@ -169,8 +169,36 @@ export function ErpPackages() {
         <div className="erp-foot">
           {/* Scott's own framing, kept: a four-item list is not the catalogue. */}
           <p>&mdash; to name just a few.</p>
+          {/*
+            ── ⚠ `Explore Service Products`, SCOTT 2026-08-26 (`P1-J2-E011`) ──────
+
+            ⚠ SUPERSEDED, quoted not deleted:  *`Explore Packages &rsaquo;`*
+            `Service Product` is his copy term; `Package` is the SCHEMA MODEL. This
+            button now uses his word. ⚠ THE `&rsaquo;` AND THE SPACE BEFORE IT ARE
+            PART OF THE BUTTON'S TREATMENT, not decoration — kept.
+            ⚠ NO CONSTANT. One occurrence repo-wide, and a constant for a single
+            string is the wrong trade; if a second surface ever quotes it, extract
+            one then.
+
+            ⚠⚠ REPORTED, NOT FIXED — `href="/shop"` AND THIS SECTION RENDERS ON
+            `/shop` (`app/shop/page.tsx:106`, its only call site). SO THIS BUTTON
+            RELOADS THE PAGE THE VISITOR IS ALREADY READING.
+
+            ⚠ IT IS NOT A TYPO, IT IS A MISSING FEATURE. There is no public
+            catalogue to link to: `/packages` DOES NOT EXIST publicly — only
+            `(app)/packages`, which is gated. ⚠ DO NOT INVENT A DESTINATION AND DO
+            NOT POINT THIS AT THE SIGNED-IN ROUTE.
+
+            ⚠⚠ THREE ROWS, ONE MISSING FEATURE, and they close together or not at all:
+              `P1-J2-E010`  /shop's hero `Start Shopping Now` is `disabled`, no href
+              `P1-J2-E011`  this button links to the page it is on   <- here
+              `P1-J1-E032`  /talent tells SELLERS to list products in a Shop that no
+                            BUYER can browse
+            All three are the same hole seen from three surfaces. Fixing any one in
+            isolation would just move the dishonesty.
+          */}
           <Link className="btn btn-solid" href="/shop">
-            Explore Packages &rsaquo;
+            Explore Service Products &rsaquo;
           </Link>
         </div>
       </div>
