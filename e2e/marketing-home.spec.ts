@@ -1,4 +1,13 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
+import {
+  HOME_SECTIONS,
+  HOME_OPTIMIZE_CTA,
+  HOME_LEARN_CTA,
+  HOME_TALENT_CTA,
+  HOME_SHOP_CTA,
+  HOME_WORK_CTA,
+  HOME_INTEGRATE_CTA,
+} from "../src/lib/home-sections";
 /*
   ⚠ THE SOURCE OF TRUTH, IMPORTED — NOT RETYPED. `/optimize`'s five summaries are
   derived from `SPINE_STEPS`, and a test comparing the page to a typed literal
@@ -3526,6 +3535,123 @@ test.describe("§64 one hero treatment", () => {
         BRIDGE,
       );
       expect(n, `${url}: expected exactly one bridge line reading "${BRIDGE}"`).toBe(1);
+    }
+  });
+});
+
+/*
+  ── ⚠⚠ §65 — HOME'S SIX MENU SECTIONS (`P1-J0-E336`) ────────────────────────
+
+  ⚠ THE FOUR THINGS THAT WOULD SILENTLY ROT, ASSERTED. Scott intends to reorder
+  these sections by hand, so the guard checks INVARIANTS (stripe alternation, column
+  equality, one-line eyebrows, the disabled Shop control) rather than a fixed order.
+*/
+test.describe("§65 HOME's six menu sections", () => {
+  const DARK_RADIAL =
+    "radial-gradient(1100px 500px at 82% -10%, rgba(215, 44, 214, 0.42), rgba(0, 0, 0, 0) 60%)";
+  const LILAC = "rgb(246, 243, 250)";
+
+  test("six sections, alternating hero-gradient and lilac, starting dark", async ({ page }) => {
+    await page.goto("/", { waitUntil: "load" });
+    await page.waitForSelector('section[id^="home-"]');
+    const bands = await page.evaluate(() =>
+      [...document.querySelectorAll('section[id^="home-"]')].map((s) => ({
+        id: s.id,
+        img: getComputedStyle(s).backgroundImage,
+        col: getComputedStyle(s).backgroundColor,
+      })),
+    );
+    expect(bands.length, "expected exactly six HOME sections").toBe(6);
+    bands.forEach((b, i) => {
+      if (i % 2 === 0) {
+        expect(
+          b.img,
+          `${b.id}: dark band must paint HERO_GRADIENT — import it from ` +
+            `hero-treatment.ts, never retype it (P1-J0-E336)`,
+        ).toContain(DARK_RADIAL);
+      } else {
+        expect(b.col, `${b.id}: light band must be #F6F3FA, not #F0F7F8`).toBe(LILAC);
+      }
+    });
+  });
+
+  test("all six copy columns are equal, and the eyebrows hold one line at 1440 and 1160", async ({ browser }) => {
+    for (const w of [1440, 1160]) {
+      const ctx = await browser.newContext({ viewport: { width: w, height: 900 } });
+      const pg = await ctx.newPage();
+      await pg.goto("/", { waitUntil: "load" });
+      await pg.waitForSelector('section[id^="home-"]');
+      const rows = await pg.evaluate(() =>
+        [...document.querySelectorAll('section[id^="home-"]')].map((s) => {
+          const eb = s.querySelector("p")!;
+          const cs = getComputedStyle(eb);
+          const lh = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.2;
+          const kids = [...s.querySelector(".grid")!.children];
+          const copy = kids.find((k) => k.querySelector("h3"))!;
+          return {
+            id: s.id,
+            lines: Math.round(eb.getBoundingClientRect().height / lh),
+            copyW: Math.round(copy.getBoundingClientRect().width),
+          };
+        }),
+      );
+      /*
+        ⚠ EQUAL COPY COLUMNS IS THE POINT. `order` alone gave 564 on odd sections and
+        510 on even; the fix is flipping the TRACKS (.95fr/1.05fr) so the copy track
+        is 1.05fr on all six. A regression here means someone reverted that.
+      */
+      const widths = [...new Set(rows.map((r) => r.copyW))];
+      expect(widths, `@${w}: the six copy columns must be equal — got ${JSON.stringify(rows)}`).toHaveLength(1);
+      for (const r of rows) {
+        expect(
+          r.lines,
+          `@${w} ${r.id}: the eyebrow wrapped. Scott: "do NOT wrap the SECTIONAL HEADERS."`,
+        ).toBe(1);
+      }
+      /* No locked line may push the document wider than the viewport. */
+      const hs = await pg.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
+      expect(hs, `@${w}: the page scrolls horizontally`).toBe(false);
+      await ctx.close();
+    }
+  });
+
+  test("the six HOME CTA labels are HOME's own, not the page heroes'", async ({ page }) => {
+    await page.goto("/", { waitUntil: "load" });
+    await page.waitForSelector('section[id^="home-"]');
+    const labels = await page.evaluate(() =>
+      [...document.querySelectorAll('section[id^="home-"]')].map(
+        (s) => s.querySelector("a[href], button")!.textContent!.trim(),
+      ),
+    );
+    /*
+      ⚠⚠ DELIBERATELY DIFFERENT FROM THE PAGE HEROES. Scott: *"why use the same CTA
+      twice…vary it a bit."* ⚠ IF THIS FAILS BECAUSE SOMEONE POINTED THESE AT
+      LEARN_CTA_LABEL ET AL, THE FIX IS TO REVERT THAT, NOT TO EDIT THIS TEST.
+    */
+    expect(labels).toEqual([
+      HOME_OPTIMIZE_CTA, HOME_LEARN_CTA, HOME_TALENT_CTA,
+      HOME_SHOP_CTA, HOME_WORK_CTA, HOME_INTEGRATE_CTA,
+    ]);
+  });
+
+  test("Shop's CTA is aria-disabled with no href — there is no public catalogue", async ({ page }) => {
+    await page.goto("/", { waitUntil: "load" });
+    const shop = page.locator("#home-shop");
+    const ctl = shop.locator("button, a[href]").first();
+    /*
+      ⚠ `P1-J2-E010` — no public catalogue exists, so this control has no
+      destination. ⚠ DO NOT "FIX" THIS BY GIVING IT href="#", an empty href, a dead
+      handler, or (app)/packages (signed-in, 307s). An enabled button with nowhere to
+      go is the four-second disproof.
+    */
+    await expect(ctl).toHaveAttribute("aria-disabled", "true");
+    expect(await ctl.getAttribute("href"), "Shop's HOME CTA was given a destination").toBeNull();
+    expect(await shop.locator('a[href="#"], a[href=""]').count(), "dead href on Shop").toBe(0);
+    /* Every other section's CTA does have a real destination. */
+    for (const s of HOME_SECTIONS.filter((x) => x.ctaHref !== null)) {
+      await expect(
+        page.locator(`#home-${s.key}`).locator(`a[href="${s.ctaHref}"]`).first(),
+      ).toHaveCount(1);
     }
   });
 });

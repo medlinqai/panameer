@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { MarketingHeader } from "@/components/marketing/MarketingHeader";
 import { HomeHero } from "@/components/marketing-home/HomeHero";
 import { OneWayTwoWay } from "@/components/marketing-home/OneWayTwoWay";
+import { HomeSections } from "@/components/marketing-home/HomeSections";
 import { LogoRibbon } from "@/components/marketing-home/LogoRibbon";
 import { MethodologyRing } from "@/components/marketing-home/MethodologyRing";
 import { CapabilityFramework } from "@/components/marketing-home/CapabilityFramework";
@@ -218,6 +219,22 @@ export default function Home() {
           Different subject (WHO it is sold to — three parties SAVE, one MAKEs) and
           it belongs AFTER this one. See `OneWayTwoWay.tsx`'s header.
         */}
+        {/*
+          ── ⚠⚠ HOME'S SIX MENU SECTIONS (`P1-J0-E336`, 2026-08-27) ────────────────
+
+          Scott: *"add all these section on top of the existing sections on home. The
+          first thing I will do is normalize the sections."*
+          ⚠ HE IS GOING TO CUT AND REORDER THIS PAGE HIMSELF. This block was INSERTED
+          immediately after `HomeHero` and immediately before `OneWayTwoWay`; NOT ONE
+          existing section was deleted, merged, reordered or tidied, and `HomeHero`
+          and `ProofStats` were not touched.
+          ⚠ ONE COMPONENT, SIX INSTANCES — the six differ only in DATA
+          (`lib/home-sections.ts`). Reordering that array re-stripes the page, which
+          is what he needs.
+          ⚠ THE SIX CTA LABELS ARE DELIBERATELY DIFFERENT from the page heroes'. See
+          that file's header before "fixing" them.
+        */}
+        <HomeSections />
         <OneWayTwoWay />
         {/*
           ⚠ `FourAudiences` (`E311`) IS NO LONGER PARKED and renders BELOW, after
