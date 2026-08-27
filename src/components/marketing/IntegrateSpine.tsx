@@ -1,4 +1,7 @@
+import type { ReactNode } from "react";
 import { StepDisclosures } from "@/components/marketing/StepDisclosures";
+import { IntegrationModelDiagram } from "@/components/marketing/diagrams/IntegrationModelDiagram";
+import { EHubbingDiagram } from "@/components/marketing/diagrams/EHubbingDiagram";
 import {
   INTEGRATE_STEPS,
   INTEGRATE_SPINE_HEADING,
@@ -14,23 +17,85 @@ import {
  * accordion is what `E242`/`E264`/`E281` all exist to prevent: one behaviour, one
  * implementation, six callers. ⚠ `/integrate` STAYS `○`.
  *
- * ── ⚠⚠ NO PANEL GRAPHICS, ON ANY STEP ─────────────────────────────────────
+ * ── ⚠⚠ TWO PANEL GRAPHICS, ON STEPS 2 AND 3 ONLY (`P1-J0-E335`) ────────────
  *
- * ZERO of five steps are built, so a drawn punchout flow would be a picture of
- * software that does not exist — the honesty test from `P1-J4-E015`, applied to a
- * page where it disqualifies everything.
+ * `GRAPHICS` below maps them: step 2 is `IntegrationModelDiagram`, step 3 is
+ * `EHubbingDiagram`. ⚠ STEPS 1, 4 AND 5 RENDER NO GRAPHIC and an absent key is the
+ * correct, deliberate value.
  *
- * ⚠ AND THIS PAGE ALREADY SHOWS THE TWO THINGS A PANEL GRAPHIC WOULD HAVE DRAWN:
- * `ErpPunchout` renders the punchout flow diagram and `ErpIntegration` renders the
- * connection-method cards. Both sit BELOW this spine. Drawing either again inside a
- * panel would put the same picture on one page twice — `E162`/`E242`'s shape.
- * ⚠ WHAT EACH ACTUALLY SHOWS IS IN THE BRIEF REPORT, with the overlap named.
+ * ⚠⚠ STEP 1 HAS NONE BY DECISION, NOT BY OMISSION. Scott, 2026-08-27, choosing
+ * OPTION 3 of three: `ErpIntegration` STAYS IN THE PAGE BODY
+ * (`app/integrate/page.tsx`), where its two `.erpx-doors` LIGHTBOXES ARE REACHABLE
+ * ON PAGE LOAD. Moving it into step 1's panel put them behind a closed `<details>`
+ * and turned 17 `check:ui` assertions red — §2-§8 on both cards, plus §11, §12 (the
+ * `E097` nested-interactive regression) and §13. That was a real product regression,
+ * not a test problem: the page's only two lightboxes became unreachable without a
+ * click, and the hero CTA landed on a collapsed accordion.
+ * ⚠ THE MOVE WAS REVERTED BEFORE IT EVER MERGED. Do not re-attempt it.
+ *
+ * ⚠⚠ SUPERSEDED 2026-08-26 — the dead claim, QUOTED not deleted, because it was
+ * right on its own facts and only ONE of them changed:
+ *   *"NO PANEL GRAPHICS, ON ANY STEP. ZERO of five steps are built, so a drawn
+ *    punchout flow would be a picture of software that does not exist — the
+ *    honesty test from `P1-J4-E015`, applied to a page where it disqualifies
+ *    everything.
+ *    AND THIS PAGE ALREADY SHOWS THE TWO THINGS A PANEL GRAPHIC WOULD HAVE DRAWN:
+ *    `ErpPunchout` renders the punchout flow diagram and `ErpIntegration` renders
+ *    the connection-method cards. Both sit BELOW this spine. Drawing either again
+ *    inside a panel would put the same picture on one page twice — `E162`/`E242`'s
+ *    shape."*
+ *
+ * ⚠ WHAT CHANGED, AND WHAT DID NOT:
+ *   · THE DUPLICATION ARGUMENT IS STILL CORRECT AND IT IS WHY STEP 1 IS EMPTY.
+ *     `ErpIntegration` renders in the page body and NOWHERE ELSE on this page. One
+ *     picture, one place — which is what the dead comment was protecting.
+ *   · `ErpPunchout` IS NO LONGER ON THIS PAGE AT ALL — `P1-J0-E333` moved it to `/`
+ *     on Scott's instruction, so the second half of that argument has no subject.
+ *   · THE HONESTY POINT STANDS AND IS NOT DISMISSED. Steps 2 and 3 draw software
+ *     that does not exist, and A DIAGRAM IS A STRONGER CLAIM THAN A STEP LABEL. It
+ *     ships because `decisions-01.md` records `0 of 5 built, knowingly` and
+ *     outstanding parts gate PROMOTION, not the build — 2 of 12 objects on the
+ *     Integration Model exist and 0 of 11 on the eHubbing model. Every one is listed
+ *     in that diagram's own header and on the pre-launch list.
  *
  * ⚠ THIS PAGE IS NOT INSIDE `.pm-home` AT THIS POINT — the wrapper is around
  * `LogoRibbon` and `ErpIntegration` ONLY — so the eyebrow and headline are Tailwind
  * mirroring `/optimize`'s computed values. Eighth instance of that scoping trap;
  * measured, not assumed.
  */
+/**
+ * ⚠ THE GRAPHIC PER STEP, AS A REGISTRY — `TalentSpine.tsx:74`'s pattern exactly,
+ * which is `spine-steps.ts`'s shape, so adding or removing one is an edit here and
+ * nothing else.
+ *
+ * ⚠⚠ A MISSING KEY IS A VALID, DELIBERATE VALUE. Steps 4 and 5 have none and
+ * render nothing. ⚠ DO NOT INVENT ONE FOR THEM.
+ * ⚠ THIS IS NOT `/optimize`'s `StepGraphic` REGISTRY — that is `SpineSteps`' string
+ * -keyed mechanism and a different thing. One page, one pattern.
+ */
+const GRAPHICS: Record<number, ReactNode> = {
+  /*
+    ⚠⚠ 1 — NO GRAPHIC, AND THAT IS SCOTT'S DECISION, 2026-08-27: OPTION 3.
+
+    `ErpIntegration` STAYS IN THE PAGE BODY at `app/integrate/page.tsx`. It was
+    briefly moved into this panel and the move was reverted before it ever merged.
+    ⚠ WHY: that component's two `.erpx-doors` lightbox doorways — `Fulfillment` and
+    `Settlement` — are `CARDS` rows 5-6 in `e2e/marketing-home.spec.ts`, and §2-§8,
+    §11, §12 (the E097 nested-interactive regression) and §13 all reach them by
+    CLICKING THEM ON PAGE LOAD. Inside a `<details>` that is closed by default they
+    are unreachable, and 17 assertions went red.
+    ⚠⚠ IT WAS NOT A TEST PROBLEM. The lightboxes genuinely became unreachable
+    without opening step 1, and the hero CTA landed on a collapsed accordion.
+    ⚠ SO: DO NOT PUT A GRAPHIC HERE. If step 1 ever needs one it must be something
+    other than `ErpIntegration`, or the lightboxes have to move out of it first.
+  */
+  2: <IntegrationModelDiagram />,
+  3: <EHubbingDiagram />,
+  /* 4 — none. "We Transmit to Any Supplier" has no diagram; Scott named three,
+     and step 1's became a page-body section instead. */
+  /* 5 — none. Same. */
+};
+
 export function IntegrateSpine() {
   return (
     <>
@@ -105,7 +170,8 @@ export function IntegrateSpine() {
               {/* ⚠ `.stepd-h2` — the SHARED rule, so the six spines cannot drift
                   apart on panel type. */}
               <h2 className="stepd-h2">{step.description}</h2>
-              {/* ⚠ NO GRAPHIC, ON PURPOSE, ON ALL FIVE. See the header. */}
+              {/* ⚠ STEPS 1-3 ONLY. An absent key renders nothing — see `GRAPHICS`. */}
+              {GRAPHICS[step.n]}
             </>
           ),
         }))}
