@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { MarketingHeader } from "@/components/marketing/MarketingHeader";
-import { HomeHero } from "@/components/marketing-home/HomeHero";
 import { OneWayTwoWay } from "@/components/marketing-home/OneWayTwoWay";
 import { HomeSections } from "@/components/marketing-home/HomeSections";
 import { LogoRibbon } from "@/components/marketing-home/LogoRibbon";
@@ -110,30 +109,28 @@ export default function Home() {
       <MarketingHeader />
       <div className="pm-home">
         {/*
-          ⚠⚠ `/` PASSES ITS OWN STRINGS EXPLICITLY (`P1-ALL-E031` amendment §3).
+          ── ⚠⚠ `<HomeHero />` REMOVED FROM `/` (`P1-J0-E337`, 2026-08-27) ────────
 
-          `/` and `/optimize` are ONE component. `/optimize` gained Scott's approved
-          description in this brief; without these two props that string would have
-          landed here too, and Scott is explicit that HOME waits: *"let's handle HOME
-          after this brief and the other pages have been finalized."*
-          ⚠ THESE ARE THE STRINGS THAT ALREADY SHIPPED, BYTE FOR BYTE — this is a
-          prop extraction, not a copy change. They are also `HomeHero`'s defaults;
-          passing them anyway means a future caller that forgets cannot silently
-          retitle the home page.
-          ⚠ `&mdash;` AND `&nbsp;` ARE BOTH DELIBERATE. The `&nbsp;` between `all` and
-          `free.` is `E169`'s orphan guard — Scott: *"giving the word 'free' its own
-          line is not correct."* DO NOT normalise either one.
+          Scott: *"Let's start by removing the first (duplicate) section for
+          optimization."* `/` printed `Optimize Your Business with AI` TWICE — once
+          here and once as `HomeSections`' first section. This one went.
+
+          ⚠⚠ `HomeHero` IS NOT DELETED AND `/optimize` IS UNTOUCHED. The component has
+          a SECOND call site at `app/optimize/page.tsx`, which still renders it with
+          `ctaLabel={OPTIMIZE_CTA_LABEL}`. `HomeHero.tsx` is byte-identical and
+          `/optimize` renders byte-identical — both proved in the brief report.
+          ⚠ DO NOT "TIDY" `HomeHero.tsx` AWAY as unused. It is not unused.
+
+          ⚠⚠ THIS ALSO REMOVED `ProofStats` FROM `/`, because it renders INSIDE
+          `HomeHero`. So `942 Assessments Completed`, `10M+ Total Savings` and
+          `$6M+ Tax Savings` — the three figures `ProofStats.tsx:9` states are
+          INVENTED — are no longer on the home page. ⚠ THEY STILL RENDER ON
+          `/optimize`, untouched, and that row stays open. This is a CONSEQUENCE of
+          Scott's instruction, not a decision taken here.
+
+          ⚠ THE HERO IS NOW `HomeSections`' FIRST SECTION, full-width, carrying the
+          same gradient, scrim and `/consultation.mp4` clip. See `HomeSections.tsx`.
         */}
-        <HomeHero
-          headline="Optimize Your Business with AI"
-          description={
-            <>
-              See where you stand and where AI can move the needle in your
-              business. Then build your 12-month roadmap with an expert &mdash;
-              all for&nbsp;free.
-            </>
-          }
-        />
 
         {/*
           ── ⚠⚠ THREE SECTIONS LEFT THIS PAGE ON 2026-08-24 (`P1-J0-E298`) ─────

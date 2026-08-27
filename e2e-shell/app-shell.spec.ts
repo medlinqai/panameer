@@ -657,8 +657,25 @@ test.describe("the MARKETING header", () => {
  * anything moved: 44px at 1440 and 10px at 390, with a 26px/20px radius. Home is
  * in the list too, so the page Scott called CORRECT is the one holding the number.
  */
+/*
+  ── ⚠⚠ `/` IS NOT ON THIS LIST ANY MORE (`P1-J0-E337`, 2026-08-27) ───────────
+
+  Scott: *"I want to style the next section down with the same background and video,
+  but I want to keep it fullwidth."* `/`'s hero is now `HomeSections`' first section
+  — a FULL-WIDTH, SQUARE band with NO `HeroBox`, NO inset and NO border radius. This
+  guard asserts the exact opposite, so on `/` it was asserting something Scott had
+  just instructed away.
+
+  ⚠⚠ THIS IS A RE-HOME, NOT A WEAKENING, AND THE DISTINCTION MATTERS. The guard
+  still proves boxed/inset/rounded for the SEVEN pages that are still boxed cards,
+  at all four widths, unchanged. Nothing was loosened for them; one page left the
+  set because the product deliberately left the pattern.
+  ⚠ `/` IS NOT UNGUARDED. `check:ui §64` asserts it paints `HERO_CARD`'s gradient and
+  `HERO_SCRIM` — it was updated in the same commit to resolve the hero by what it
+  PAINTS rather than by its geometry, precisely so `/` keeps a real assertion.
+  ⚠ IF `/` EVER GOES BACK TO A BOXED HERO, PUT IT BACK ON THIS LIST.
+*/
 const BOXED_HERO_PAGES = [
-  "/",
   "/optimize",
   "/learn",
   "/talent",

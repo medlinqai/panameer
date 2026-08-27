@@ -3491,13 +3491,31 @@ test.describe("§64 one hero treatment", () => {
       await page.waitForSelector("h1");
       await page.waitForTimeout(600);
       const found = await page.evaluate(() => {
+        /*
+          ── ⚠⚠ RESOLVED BY WHAT IT PAINTS, NOT BY ITS GEOMETRY (`P1-J0-E337`) ────
+
+          ⚠ THIS USED TO WALK UP FROM THE `<h1>` LOOKING FOR `overflow:hidden` PLUS A
+          RADIUS >= 18 — i.e. it assumed every hero is an INSET ROUNDED CARD. That was
+          true of all eight pages until `/`'s hero became a FULL-WIDTH, SQUARE band
+          with no `HeroBox` and no radius, and the walk then found nothing.
+
+          ⚠⚠ IT IS NOT WEAKENED. It still starts from the page's `<h1>` and still
+          requires that heading to sit INSIDE the surface painting the shared
+          gradient — which is the actual claim: "the hero is the shared treatment".
+          What changed is HOW the surface is recognised: by the gradient it paints,
+          which is geometry-agnostic and works for a card and a band alike.
+          ⚠ DO NOT "SIMPLIFY" THIS TO `querySelector` ON THE FIRST GRADIENT ELEMENT —
+          `/` has three more bands painting the same gradient (`§65`), and the tie to
+          the `<h1>` is what keeps this about the HERO.
+        */
         const h1 = document.querySelector("h1");
-        let card = h1?.closest(".hero-card") ?? null;
+        if (!h1) return null;
+        const RADIAL = "radial-gradient(1100px 500px at 82% -10%";
+        let card: Element | null = h1.closest(".hero-card");
         if (!card) {
-          let n = h1?.parentElement ?? null;
+          let n: Element | null = h1.parentElement;
           while (n && n !== document.body) {
-            const cs = getComputedStyle(n);
-            if (cs.overflow === "hidden" && parseFloat(cs.borderTopLeftRadius) >= 18) { card = n; break; }
+            if (getComputedStyle(n).backgroundImage.includes(RADIAL)) { card = n; break; }
             n = n.parentElement;
           }
         }
@@ -3587,10 +3605,31 @@ test.describe("§65 HOME's six menu sections", () => {
           const cs = getComputedStyle(eb);
           const lh = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.2;
           const kids = [...s.querySelector(".grid")!.children];
-          const copy = kids.find((k) => k.querySelector("h3"))!;
+          /*
+            ⚠ `h1, h3` — NOT `h3` ALONE. `P1-J0-E337` made the FIRST section `/`'s
+            hero, so its headline is the page's `<h1>` while the other five stay
+            `<h3>`. Matching only `h3` made `copy` undefined and this test threw.
+            ⚠ NOT A WEAKENING: it still requires ALL SIX copy columns to be equal.
+          */
+          const copy = kids.find((k) => k.querySelector("h1, h3"))!;
+          /*
+            ⚠⚠ TEXT WIDTH VIA A `Range`, NOT THE BOX, AND NOT A LINE COUNT.
+            These eyebrows are `whitespace-nowrap` above 1150px, so an oversized
+            line DOES NOT WRAP — it OVERFLOWS its column silently. The box then
+            still measures one line high and a line-count check PASSES while the
+            text spills into the panel. That shipped once: `E337`'s first cut ran
+            the hero eyebrow at 13px, measuring 630px in a 553px column, and read
+            as a clean single line.
+            ⚠ SO OVERFLOW IS THE ASSERTION AND THE LINE COUNT IS KEPT ALONGSIDE IT.
+          */
+          const rng = document.createRange();
+          rng.selectNodeContents(eb);
           return {
             id: s.id,
             lines: Math.round(eb.getBoundingClientRect().height / lh),
+            textW: Math.ceil(rng.getBoundingClientRect().width),
+            ebColW: Math.round(eb.parentElement!.getBoundingClientRect().width),
+            overflows: eb.scrollWidth > eb.clientWidth + 1,
             copyW: Math.round(copy.getBoundingClientRect().width),
           };
         }),
@@ -3607,6 +3646,13 @@ test.describe("§65 HOME's six menu sections", () => {
           r.lines,
           `@${w} ${r.id}: the eyebrow wrapped. Scott: "do NOT wrap the SECTIONAL HEADERS."`,
         ).toBe(1);
+        expect(
+          r.overflows,
+          `@${w} ${r.id}: the eyebrow OVERFLOWS its column — ${r.textW}px of text in ` +
+            `${r.ebColW}px. It is \`whitespace-nowrap\`, so it spills instead of wrapping ` +
+            `and still reports as one line. ⚠ SHRINK THE TYPE OR THE TRACKING; do not ` +
+            `remove the nowrap, which would wrap it and break Scott's standing rule.`,
+        ).toBe(false);
       }
       /* No locked line may push the document wider than the viewport. */
       const hs = await pg.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);

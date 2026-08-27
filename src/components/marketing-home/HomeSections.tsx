@@ -1,6 +1,14 @@
 import Link from "next/link";
 import { HOME_SECTIONS, type HomeSection } from "@/lib/home-sections";
-import { HERO_GRADIENT } from "@/components/marketing/hero-treatment";
+import { HeroVideoBackdrop } from "@/components/media/HeroVideoBackdrop";
+import {
+  HERO_BRIDGE_CLASS,
+  HERO_BRIDGE_TEXT,
+  HERO_BUTTON,
+  HERO_BUTTON_OUTLINE,
+  HERO_GRADIENT,
+  HERO_SCRIM,
+} from "@/components/marketing/hero-treatment";
 
 /**
  * ── ⚠⚠ HOME'S SIX MENU SECTIONS — ONE COMPONENT, SIX INSTANCES (`P1-J0-E336`) ─
@@ -65,6 +73,25 @@ function Section({ s, i }: { s: HomeSection; i: number }) {
     Alternation starts DARK: 1 dark · 2 light · 3 dark · 4 light · 5 dark · 6 light.
   */
   const dark = i % 2 === 0;
+  /*
+    ⚠⚠ SECTION 1 IS `/`'s HERO NOW (`P1-J0-E337`). Scott, 2026-08-27: *"Let's start
+    by removing the first (duplicate) section for optimization. HOWEVER — I want to
+    style the next section down with the same background and video, but I want to
+    keep it fullwidth."*
+
+    `/` printed `Optimize Your Business with AI` TWICE — once in `HomeHero` and once
+    here. `HomeHero`'s call site on `/` is gone; this section inherited the job.
+    ⚠ `HomeHero` ITSELF SURVIVES UNTOUCHED and still renders `/optimize`.
+
+    ⚠⚠ FULL-WIDTH IS THE POINT, AND IT IS WHY THIS IS NOT `HeroBox`. `HomeHero`
+    wraps itself in an INSET, ROUNDED card. This band keeps the edge-to-edge shape it
+    already had and gains only the gradient, the scrim and the clip.
+    ⚠ NO `HeroBox`, NO `hero-card` CLASS, NO BORDER RADIUS, NO INSET.
+    ⚠ THE INNER CONTENT STAYS ON THE SAME `max-w-[1180px]` RAIL as the other five,
+    so only the BAND is full-width — the copy does not run to the screen edge.
+    ⚠ THE OTHER FIVE SECTIONS ARE UNCHANGED. `isHero` gates every difference.
+  */
+  const isHero = i === 0;
 
   const eyebrow = dark ? "text-[#efa3ee]" : "text-[#A61AA5]";
   const head = dark ? "text-white" : "text-[#181E3C]";
@@ -90,30 +117,129 @@ function Section({ s, i }: { s: HomeSection; i: number }) {
       */}
       <p
         className={
-          "mb-3 text-[11.5px] font-bold uppercase tracking-[0.12em] " +
-          "min-[1151px]:whitespace-nowrap min-[1151px]:tracking-[0.15em] " +
+          /*
+            ⚠ THE HERO'S EYEBROW IS BIGGER — Scott: *"Change the pink text and make
+            it bigger."* The other five stay at 11.5px / .15em.
+
+            ⚠⚠ 12px / .06em, AND BOTH NUMBERS WERE MEASURED, NOT CHOSEN. The brief
+            said start at 14px; 14px DOES NOT FIT. The string is 61 characters and the
+            copy column is 564px at 1440 and 553px at 1160, and with
+            `whitespace-nowrap` an oversized line does not wrap — IT SILENTLY
+            OVERFLOWS ITS COLUMN INTO THE PANEL, which a line-count check reports as
+            a clean single line. ⚠ MEASURE THE TEXT WITH A `Range`, NOT THE BOX.
+
+            Measured text width at 1160 (column 553px):
+                        14px    13px   12.5px    12px   11.5px
+              .15em      705     654      629     604      579
+              .12em      679     630      606     582      558
+              .10em      661     614      591     567      543
+              .06em      627     582      560   ->537<-    515
+              .04em      609     566      544     522      501
+
+            ⚠ 13px/.12em WAS SHIPPED FIRST AND WAS WRONG — 630px in a 553px column,
+            overflowing by 77px. Caught by measuring the Range; the box read 553 and
+            "one line", which is the false pass.
+            ⚠ 12px/.06em IS THE LARGEST TYPE THAT FITS WITH REAL SLACK: 537px at 1160
+            (16px spare) and 548px at 1440 (16px spare). It is 0.5px larger and
+            visibly heavier than the other five; the tracking is what gave way,
+            because at this length tracking costs more width than size does.
+            ⚠ REPORTED: a genuinely LARGER eyebrow needs the string to span the full
+            1180px rail rather than the copy column — a layout change nobody asked
+            for. Scott's call.
+          */
+          (isHero
+            ? "mb-3 text-[12px] font-bold uppercase tracking-[0.05em] min-[1151px]:whitespace-nowrap min-[1151px]:tracking-[0.06em] "
+            : "mb-3 text-[11.5px] font-bold uppercase tracking-[0.12em] min-[1151px]:whitespace-nowrap min-[1151px]:tracking-[0.15em] ") +
           eyebrow
         }
       >
         {s.eyebrow}
       </p>
-      <h3
-        className={
-          "mb-3.5 font-display text-[30px] font-bold leading-[1.2] " +
-          "tracking-[-0.6px] " + head
-        }
-      >
-        {s.headline.a}
-        {s.headline.b && (
-          <>
-            <br />
-            {s.headline.b}
-          </>
-        )}
-      </h3>
-      <p className={"text-[15.5px] leading-[1.68] " + bodyc}>{s.body}</p>
+      {/*
+        ── ⚠⚠ THE HERO'S HEADING IS AN `<h1>`; THE OTHER FIVE STAY `<h3>` ────────
 
-      <div className="mt-[26px] flex flex-wrap gap-3">
+        ⚠ NOT COSMETIC, AND NOT OPTIONAL. Removing `<HomeHero />` from `/`
+        (`P1-J0-E337`) took the page's ONLY `<h1>` with it — `/` shipped for a few
+        minutes with no top-level heading at all, which is a real accessibility and
+        SEO defect, and it is also what made `check:ui §64` time out on
+        `waitForSelector("h1")`.
+        ⚠ THIS SECTION IS NOW THE PAGE'S HERO, so its headline IS the page's `<h1>`.
+        That is the semantically correct fix, not a workaround for the test.
+        ⚠ ONLY THE HERO. Six `<h1>`s on one page would be a different defect.
+        ⚠ THE VISUAL TREATMENT IS IDENTICAL either way — same classes, same 30px.
+        `.marketing-surface`'s `:is(h1,h2,h3,h4)` rules already cover both tags.
+      */}
+      {isHero ? (
+        <h1
+          className={
+            "mb-3.5 font-display text-[30px] font-bold leading-[1.2] " +
+            "tracking-[-0.6px] " + head
+          }
+        >
+          {s.headline.a}
+          {s.headline.b && (
+            <>
+              <br />
+              {s.headline.b}
+            </>
+          )}
+        </h1>
+      ) : (
+        <h3
+          className={
+            "mb-3.5 font-display text-[30px] font-bold leading-[1.2] " +
+            "tracking-[-0.6px] " + head
+          }
+        >
+          {s.headline.a}
+          {s.headline.b && (
+            <>
+              <br />
+              {s.headline.b}
+            </>
+          )}
+        </h3>
+      )}
+      {/*
+        ⚠ `%s` IS THE PAGE'S OWN CTA LABEL, SUBSTITUTED HERE FROM `s.ctaLabel` —
+        the copy QUOTES the button and must never hold a second typed copy of it
+        (`P1-J4-E024`: `/work` shipped two different strings for one control).
+        ⚠ ONLY THE OPTIMIZE BODY CONTAINS `%s`; `replace` is a no-op on the other five.
+      */}
+      <p className={"text-[15.5px] leading-[1.68] " + bodyc}>
+        {s.body.replace("%s", s.ctaLabel)}
+      </p>
+
+      {isHero && (
+        /*
+          ── ⚠⚠ THE BRIDGE LINE, RESTORED TO `/` (`P1-J0-E337`) ─────────────────
+
+          ⚠ `/` LOST IT WHEN `<HomeHero />` WENT — the line lived inside that
+          component, so removing it from `/` took the bridge line with it and
+          `check:ui §64` went red on "the bridge line is word-for-word identical on
+          every public page". SEVEN PAGES CARRY IT; `/` briefly carried none.
+          ⚠⚠ §64 WAS NOT WEAKENED TO GO GREEN. Scott's standing instruction is
+          explicit — *"They all should say 'Check out the steps...'"* (`P1-ALL-E031`)
+          — so the page got the line back rather than the test losing the page.
+          ⚠ IT IS `HERO_BRIDGE_TEXT`, THE SHARED CONSTANT. No copy was invented and
+          no word was retyped.
+
+          ⚠ REPORTED: on `/` the word *"below"* now points at five marketing
+          sections rather than at a numbered step spine, which is what it means on
+          the other six pages. The string is identical by instruction; whether it
+          still reads right HERE is Scott's call, not a thing to reword quietly.
+        */
+        <p className={HERO_BRIDGE_CLASS}>{HERO_BRIDGE_TEXT}</p>
+      )}
+      {/*
+        ⚠ THE HERO'S ROW DROPS ITS OWN `mt-[26px]`, AND THAT IS THE `mt-8`
+        RECONCILIATION: `HERO_BUTTON` and `HERO_BUTTON_OUTLINE` both start with
+        `mt-8`, which applies to each BUTTON inside a flex row. Keeping the row
+        margin too would stack 26px + 32px = 58px above the buttons. The row margin
+        goes; the constants' own `mt-8` (32px) provides the gap, and the constants
+        are NOT edited — they are shared with six other heroes.
+      */}
+      <div className={(isHero ? "" : "mt-[26px] ") + "flex flex-wrap gap-3"}>
         {/*
           ⚠ THE CTA. `ctaHref === null` MEANS `aria-disabled` WITH NO `href` — Shop
           only, because there is no public catalogue (`P1-J2-E010`). It takes the
@@ -138,9 +264,17 @@ function Section({ s, i }: { s: HomeSection; i: number }) {
           <Link
             href={s.ctaHref}
             className={
-              "rounded-[12px] border-2 border-magenta bg-magenta px-[26px] py-3.5 " +
-              "font-display text-[15px] font-bold text-white transition-colors " +
-              "hover:border-magenta-dark hover:bg-magenta-dark"
+              /*
+                ⚠ THE HERO TAKES `HERO_BUTTON` — Scott: *"CHANGE the style to the
+                section above it."* ⚠ THE OTHER FIVE KEEP THEIR OWN CLASSES, which
+                means HOME now runs TWO button treatments. REPORTED, NOT RESOLVED —
+                Scott asked for this section only.
+              */
+              isHero
+                ? HERO_BUTTON
+                : "rounded-[12px] border-2 border-magenta bg-magenta px-[26px] py-3.5 " +
+                  "font-display text-[15px] font-bold text-white transition-colors " +
+                  "hover:border-magenta-dark hover:bg-magenta-dark"
             }
           >
             {s.ctaLabel}
@@ -150,11 +284,21 @@ function Section({ s, i }: { s: HomeSection; i: number }) {
         <Link
           href={s.learnMoreHref}
           className={
-            "rounded-[12px] border-2 px-[26px] py-3.5 font-display text-[15px] " +
-            "font-bold transition-colors " +
-            (dark
-              ? "border-white/60 text-white hover:border-white hover:bg-white hover:text-[#181E3C]"
-              : "border-[#181E3C] text-[#181E3C] hover:bg-[#181E3C] hover:text-white")
+            /*
+              ⚠ `Learn More` ON THE HERO TAKES `HERO_BUTTON_OUTLINE` — Scott: *"CHANGE
+              the button next to it (Learn More) to the clear style we used in Browse
+              Catalog."*
+              ⚠⚠ THAT CONSTANT CARRIES `bg-[rgba(13,18,48,0.40)]` (`P1-J3-E033`) AND
+              THE FILL IS THE POINT — it is what makes a white label legible over
+              video, which is exactly the situation here. DO NOT STRIP IT.
+            */
+            isHero
+              ? HERO_BUTTON_OUTLINE
+              : "rounded-[12px] border-2 px-[26px] py-3.5 font-display text-[15px] " +
+                "font-bold transition-colors " +
+                (dark
+                  ? "border-white/60 text-white hover:border-white hover:bg-white hover:text-[#181E3C]"
+                  : "border-[#181E3C] text-[#181E3C] hover:bg-[#181E3C] hover:text-white")
           }
         >
           Learn More
@@ -203,10 +347,37 @@ function Section({ s, i }: { s: HomeSection; i: number }) {
     <section
       id={`home-${s.key}`}
       className={
-        "font-body py-[76px] " + (dark ? HERO_GRADIENT : "bg-[#F6F3FA]")
+        "font-body py-[76px] " +
+        (dark ? HERO_GRADIENT : "bg-[#F6F3FA]") +
+        /*
+          ⚠ `relative isolate` ONLY ON THE HERO — the clip is `absolute inset-0` and
+          needs a positioned ancestor, and `isolate` keeps the video and scrim
+          stacking inside this band instead of against the page.
+          ⚠ NO `overflow-hidden` AND NO RADIUS: the band is deliberately square and
+          edge-to-edge. The clip is `inset-0`, so it fills exactly without clipping.
+        */
+        (isHero ? " relative isolate" : "")
       }
     >
-      <div className={INNER}>
+      {isHero && (
+        /*
+          ⚠ THE SAME CLIP `HomeHero` PLAYS — `/consultation.mp4` — with the same
+          attributes, so `/` and `/optimize` still show the same footage.
+          ⚠ `HeroVideoBackdrop` IS COMPOSED, NEVER EDITED.
+          ⚠ `HERO_SCRIM` IS IMPORTED, NOT RETYPED. `a349e6f` fixed this constant being
+          emitted as a broken string concatenation that Tailwind could not see — so
+          `check:ui §64` asserts the COMPUTED scrim is non-null, and this section is
+          now one of the places it looks.
+        */
+        <HeroVideoBackdrop
+          src="/consultation.mp4"
+          videoClassName="absolute inset-0 h-full w-full object-cover opacity-40"
+          scrimClassName={HERO_SCRIM}
+        />
+      )}
+      {/* ⚠ THE RAIL IS UNCHANGED — only the BAND is full-width. `z-[2]` lifts the
+          content above the clip and its scrim. */}
+      <div className={INNER + (isHero ? " relative z-[2]" : "")}>
         <div
           className={
             "grid grid-cols-1 items-center gap-[30px] " +

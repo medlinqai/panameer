@@ -34,7 +34,14 @@
  * (`P1-J4-E024`: `/work` shipped two different strings for one button).
  */
 
-export const HOME_OPTIMIZE_CTA = "Start the Assessment";
+/*
+  ⚠ RELABELLED 2026-08-27 (`P1-J0-E337`): `Start the Assessment` -> this. Scott's
+  words, and the body copy beside it QUOTES this constant — never retype it.
+  ⚠ THE `href` DID NOT CHANGE (`/assess`).
+  ⚠ IT NOW MATCHES `HomeHero`'s DEFAULT `ctaLabel`, which is not an accident: this
+  section replaced `HomeHero` as `/`'s hero, so it inherited the label with the job.
+*/
+export const HOME_OPTIMIZE_CTA = "Take Our Free Assessment";
 export const HOME_LEARN_CTA = "Start Learning Now";
 export const HOME_TALENT_CTA = "Start Shaping Your Time";
 export const HOME_SHOP_CTA = "Start Reselling Your Work";
@@ -76,13 +83,34 @@ export type HomeSection = {
 export const HOME_SECTIONS: HomeSection[] = [
   {
     key: "optimize",
-    eyebrow: "Learn where you stand…get a plan to optimize…now",
+    /*
+      ⚠ SCOTT'S STRING, 2026-08-27: *"Change the pink text and make it bigger."*
+      ⚠ HIS HYPHEN `-`, NOT AN EM DASH. Do not "improve" it.
+      ⚠ SUPERSEDED: *"Learn where you stand…get a plan to optimize…now"*.
+      ⚠ THIS ONE IS RENDERED LARGER THAN THE OTHER FIVE — see `HomeSections.tsx`,
+      which sizes the hero section's eyebrow separately and must keep it on ONE LINE.
+    */
+    eyebrow: "See Where You Stand Today - Build Your AI Roadmap for Tomorrow",
     headline: { a: "Optimize Your Business with AI" },
+    /*
+      ⚠⚠ SCOTT'S COPY, 2026-08-27, WITH THREE TYPOS CORRECTED — ALL THREE FLAGGED
+      SO HE CAN REVERT ANY OF THEM:
+        · `take 15 minute`      -> `take a 15 minute`
+        · `one of out experts`  -> `one of our experts`
+        · a stray closing quote after `for free` removed
+      ⚠ `1 year` AND `- for free` ARE HIS AND ARE NOT TOUCHED. Do not "improve" them
+      to `one-year` or an em dash.
+      ⚠ THE QUOTED LABEL IS INTERPOLATED FROM `HOME_OPTIMIZE_CTA` at the render site,
+      never retyped — `%s` is substituted in `HomeSections.tsx`.
+      ⚠ SUPERSEDED — the previous body began *"Take our assessment and let us build
+      you a personalized AI dashboard…"*.
+    */
     body:
-      "Take our assessment and let us build you a personalized AI dashboard. See " +
-      "where you stand and where AI can move the needle in your business. Then meet " +
-      "with our expert to select the solutions that work for your business, " +
-      "prioritize them, and build your 12-month roadmap — all for free.",
+      'Click the \u201c%s\u201d button below to take a 15 minute assessment. We will ' +
+      "build you an AI Optimization dashboard listing the world of possible " +
+      "solutions. You can then schedule a meeting with one of our experts to " +
+      "discuss which solutions make sense for your organization and build your " +
+      "1 year AI Roadmap - for free.",
     chipsTitle: "What you get",
     chips: [
       "A personalized AI dashboard showing where you stand",
