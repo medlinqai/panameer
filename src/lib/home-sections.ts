@@ -293,13 +293,56 @@ export const HOME_SECTIONS: HomeSection[] = [
       ⚠ HEADING, CHROME, NUMBERING AND LAYOUT ARE UNCHANGED. Numerals derive from
       the index. NO 2x3 GRID, no redesign — `E341` measured 381/389, an 8px gap.
     */
+    /*
+      ── ⚠⚠ SET SIX (`P1-J0-E344`) — AND THE FIRST THAT IS INTERNALLY CONSISTENT ──
+
+      ⚠⚠ NO FULL STOPS ON ANY OF THE SIX, deliberate and consistent this time. Set
+      five had a stop on five of six and none on the first; that was reported to
+      Scott and this is his answer. DO NOT ADD THEM BACK.
+      ⚠⚠ `w/in` IS HIS ABBREVIATION FOR `within` AND IT IS LOAD-BEARING — item 4 is
+      the longest line in the card and the abbreviation is part of how it fits. DO
+      NOT EXPAND IT.
+      ⚠ TITLE CASE IS HIS. Item 1 has no article and item 3 has `An` — do NOT make
+      them parallel.
+
+      ⚠⚠ EVERY CHIP FITS ON ONE LINE BECAUSE THE STRINGS ARE SHORT ENOUGH — NOT
+      BECAUSE OF `whitespace-nowrap`. Scott: *"Want each number to fit on 1 line."*
+      ⚠ DO NOT ADD `nowrap` TO A CHIP. A nowrap chip that is too long overflows the
+      card SILENTLY while every line-count check reports one clean line; that false
+      pass has already cost this page two cuts (`E337`, `E341`).
+      ⚠ MEASURED WITH A `Range` AGAINST THE ROW'S REAL AVAILABLE WIDTH — the row
+      minus the numeral minus the gap — NOT against the span's own shrink-to-fit box,
+      which reports the text width and would have made any string look like it fits:
+        1440 — available 422px · longest is item 4 at 355px · all six one line
+        1160 — available 413px · longest is item 4 at 355px · all six one line
+        390  — available 250px · four of six wrap, expected on a phone
+      ⚠ ITEM 4 HAS 58px OF SLACK AT 1160. Lengthening it is what will break this.
+
+      ── THE SUPERSEDED RECORD — SIX SETS, NONE DROPPED ─────────────────────────
+      ⚠ `E340` had to RECOVER a set from `f51080e` because `b28758e` deleted instead
+      of quoting. Every set since is written out in full for that reason.
+      ⚠ SET FIVE — SUPERSEDED by this commit (`fb2ad4f`, `E342`): *"A Process-Based
+      Optimization Dashboard"* · *"See Optimization Solutions for My Business."* ·
+      *"A Review Session with an Expert for My Panameer AI Roadmap."* · *"Hire
+      Talent, Create Timeline from AI Roadmap."* · *"Track Progress from My Work
+      Order."* · *"Create Roadmaps for Other Processes."*
+      ⚠ SETS ONE TO FOUR are quoted in the comment blocks ABOVE this one: the pass-1
+      three, the pass-2 three (`f51080e`), `b28758e`'s three, and `a7394d7`'s six.
+      With set five directly above, the record holds SIX superseded sets.
+      ⚠⚠ ALL OF THEM ARE HISTORY, NOT LIVE INSTRUCTIONS. Do not restore any from a
+      quote.
+      ⚠ THIS BLOCK IS UNWIELDY — flagged in the `E344` report with a proposed shape.
+      NOT restructured here; restructuring it unasked is how a set gets lost.
+
+      ⚠ HEADING, CHROME AND NUMBERING UNCHANGED. Numerals derive from the index.
+    */
     chips: [
-      "A Process-Based Optimization Dashboard",
-      "See Optimization Solutions for My Business.",
-      "A Review Session with an Expert for My Panameer AI Roadmap.",
-      "Hire Talent, Create Timeline from AI Roadmap.",
-      "Track Progress from My Work Order.",
-      "Create Roadmaps for Other Processes.",
+      "Process-Based Optimization Dashboard",
+      "AI Solutions for Your Business",
+      "An AI Roadmap with Expert Review",
+      "Hire Talent, Create Timeline from w/in AI Roadmap",
+      "Track Deployment Progress from Work Order",
+      "Create Roadmaps for Other Business Processes",
     ],
     ctaLabel: HOME_OPTIMIZE_CTA,
     ctaHref: "/assess",
@@ -309,17 +352,57 @@ export const HOME_SECTIONS: HomeSection[] = [
     key: "learn",
     /* ⚠ `GET SUPPORT WHILE`, Scott 2026-08-27, replacing the deck's `BET BTTER`. */
     eyebrow: "Expand your services…get support while delivering them",
-    headline: { a: "Learn New Skills & Build a Support Network" },
+    /* ⚠ SUPERSEDED, quoted not deleted: *"Learn New Skills & Build a Support
+       Network"*. Scott shortened it (`P1-J0-E344`). */
+    headline: { a: "Learn Skills & Build Your Network" },
+    /*
+      ⚠⚠ SCOTT'S COPY, 2026-08-27 (`E344`). ONE TYPO CORRECTED AND FLAGGED:
+        · `post top your resume/socials` -> `post TO your resume/socials`
+      ⚠ `and/or` AND `resume/socials` HAVE NO SPACES AROUND THE SLASHES. His.
+      ⚠ THE EM DASH IN `— all for free` IS HIS and carries over from the old copy.
+      ⚠⚠ THE BRIEF WARNED HE TYPED DOUBLE SPACES BETWEEN SENTENCES AND THAT JSX WOULD
+      COLLAPSE THEM. The authoritative string the brief supplied contains NONE —
+      checked byte by byte, ZERO occurrences of two consecutive spaces — so nothing
+      collapses and the `&nbsp;` question never arises. Single-spaced because that is
+      how he was quoted, not because anything was normalised here.
+      ⚠ SUPERSEDED, quoted not deleted: *"Sign up for Panameer. Enroll in one or more
+      learning paths, take the courses, watch the lessons — all for free. Connect
+      with the learning path community or specifically with that instructor. When you
+      are ready, take the certification test and work your network to get working and
+      keep working."*
+      ⚠ IT SAYS *"the button below"* AND DOES NOT QUOTE THE LABEL, so it does not
+      interpolate `HOME_LEARN_CTA`; `replace("%s", ...)` is a no-op here.
+    */
     body:
-      "Sign up for Panameer. Enroll in one or more learning paths, take the courses, " +
-      "watch the lessons — all for free. Connect with the learning path community " +
-      "or specifically with that instructor. When you are ready, take the " +
-      "certification test and work your network to get working and keep working.",
+      "Click the button below and join Panameer. Enroll in a learning path and " +
+      "connect with its community and/or the expert who created that learning path. " +
+      "Take its courses, watch its lessons — all for free. When done, take the " +
+      "certification test and post to your resume/socials. Collaborate with your " +
+      "community while working.",
     chipsTitle: "What you get",
+    /*
+      ⚠⚠ FOUR CHIPS, NOT THREE (`E344`). The other five sections keep three; `chips`
+      is already `string[]` (widened at `a7394d7`) so nothing structural changed, and
+      the numerals derive from the index, so the panel counts to 4 by itself.
+      ⚠⚠ ITEM 2 HAS NO FULL STOP AND THE OTHER THREE DO. SHIPPED AS TYPED, NOT
+      "FIXED" — reported to Scott instead of silently corrected; his punctuation
+      ships verbatim. ⚠ THE HERO'S SET SIX WENT THE OTHER WAY (no stops at all), so
+      the two cards are inconsistent WITH EACH OTHER BY HIS INSTRUCTION, not by
+      accident. Do not "harmonise" them.
+      ⚠ HIS `&` AND HIS OXFORD COMMA IN ITEM 1. Ship them.
+      ⚠ ONE LINE EACH, BY LENGTH AND NOT BY `nowrap` — same rule as the hero card.
+      `Range`-measured against the row's real available width: 1440 available 422px,
+      longest is item 1 at 316px; 1160 available 413px, same 316px; all four one
+      line. They wrap at 390, which is expected.
+      ⚠ SUPERSEDED, quoted not deleted: *"Learning paths, courses and lessons —
+      free"* · *"The path community, and the instructor directly"* · *"A
+      certification test, then a network to work"*.
+    */
     chips: [
-      "Learning paths, courses and lessons — free",
-      "The path community, and the instructor directly",
-      "A certification test, then a network to work",
+      "Access to Learning Paths, Courses, & Lessons.",
+      "Access to Learning Path Communities",
+      "Ability to Connect with Instructors.",
+      "Access to Free Certifications.",
     ],
     ctaLabel: HOME_LEARN_CTA,
     ctaHref: "/learn/paths",
