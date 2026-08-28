@@ -90,7 +90,7 @@ export const HOME_SECTIONS: HomeSection[] = [
       ⚠ THIS ONE IS RENDERED LARGER THAN THE OTHER FIVE — see `HomeSections.tsx`,
       which sizes the hero section's eyebrow separately and must keep it on ONE LINE.
     */
-    eyebrow: "See Where You Stand Today - Build Your AI Roadmap for Tomorrow",
+    eyebrow: "See Your Options - Build Your AI Roadmap",
     headline: { a: "Optimize Your Business with AI" },
     /*
       ⚠⚠ SCOTT'S COPY, 2026-08-27, WITH THREE TYPOS CORRECTED — ALL THREE FLAGGED
@@ -105,17 +105,38 @@ export const HOME_SECTIONS: HomeSection[] = [
       ⚠ SUPERSEDED — the previous body began *"Take our assessment and let us build
       you a personalized AI dashboard…"*.
     */
+    /*
+      ⚠⚠ SCOTT'S COPY, 2026-08-27 (pass 2). ONE TYPO CORRECTED AND FLAGGED:
+        · `we will  review` -> `we will review`  (a double space)
+      ⚠ `1 year`, `All for free.` AND THE CLOSING `!` ARE HIS. Do not change them.
+      ⚠⚠ IT NO LONGER QUOTES THE BUTTON — it says *"the button below"*, so this
+      sentence DOES NOT interpolate `HOME_OPTIMIZE_CTA` any more. THAT IS
+      INTENTIONAL, not a regression of `P1-J4-E024`: there is no quoted label left
+      to drift. `HOME_OPTIMIZE_CTA` still exists and still labels the button.
+      ⚠ SUPERSEDED — the previous body opened *"Click the “Take Our Free Assessment”
+      button below to take a 15 minute assessment…"*.
+    */
     body:
-      'Click the \u201c%s\u201d button below to take a 15 minute assessment. We will ' +
-      "build you an AI Optimization dashboard listing the world of possible " +
-      "solutions. You can then schedule a meeting with one of our experts to " +
-      "discuss which solutions make sense for your organization and build your " +
-      "1 year AI Roadmap - for free.",
+      "Click the button below, answer several questions, and submit your answers. " +
+      "Next, Panameer will build your AI Optimization Dashboard (listing the " +
+      "possible solutions for your organization). Review those solutions and click " +
+      "the button to schedule a meeting with an expert. Together, we will review " +
+      "and prioritize your options to create a 1 year AI Roadmap. All for free. " +
+      "You can even use our project tracker to manage the deployment!",
     chipsTitle: "What you get",
+    /*
+      ⚠ SCOTT'S THREE LINES, 2026-08-27 (pass 2). ⚠ HIS
+      `organization/business process` HAS NO SPACES AROUND THE SLASH — as typed.
+      ⚠ THE CARD'S HEADING, CHROME, NUMBERING AND LAYOUT ARE UNCHANGED; only these
+      three strings moved.
+      ⚠ SUPERSEDED: *"A personalized AI dashboard showing where you stand"* ·
+      *"An expert session to pick and prioritize solutions"* ·
+      *"Your 12-month roadmap — all for free"*.
+    */
     chips: [
-      "A personalized AI dashboard showing where you stand",
-      "An expert session to pick and prioritize solutions",
-      "Your 12-month roadmap — all for free",
+      "See your ranking",
+      "See a list of possible solutions for your organization/business process",
+      "Review and prioritize those solutions with an expert",
     ],
     ctaLabel: HOME_OPTIMIZE_CTA,
     ctaHref: "/assess",

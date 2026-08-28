@@ -3545,7 +3545,22 @@ test.describe("§64 one hero treatment", () => {
 
   test("the bridge line is word-for-word identical on every public page", async ({ page }) => {
     const BRIDGE = "Check out the steps below to see how it works.";
-    for (const url of ["/", "/optimize", "/talent", "/work", "/shop", "/integrate", "/learn"]) {
+    /*
+      ── ⚠⚠ `/` IS NOT IN THIS LIST (`P1-J0-E338`, Scott 2026-08-27) ───────────
+
+      ⚠ THE REASON IS THE WORDING, NOT THE TEST. The line says *"Check out the steps
+      BELOW"*, and `/` no longer has a step spine below its hero — it has five
+      marketing sections. Scott read it in place and cut it.
+      ⚠ HISTORY, SO NOBODY LOOPS: `P1-J0-E337` removed `<HomeHero />` from `/`, which
+      took the line with it and turned this assertion red; that brief RESTORED the
+      line to the page. `E338` is the second pass and the answer is the opposite —
+      the line goes, and the list loses `/`.
+      ⚠⚠ A RE-HOME WITH A RECORDED REASON, NOT A WEAKENING. THE OTHER SIX PAGES ARE
+      ASSERTED WORD FOR WORD AND EXACTLY ONCE EACH, unchanged. `HERO_BRIDGE_TEXT` and
+      `HERO_BRIDGE_CLASS` are untouched and still serve all six.
+      ⚠ IF `/` EVER GROWS A STEP SPINE, PUT IT BACK IN THIS ARRAY.
+    */
+    for (const url of ["/optimize", "/talent", "/work", "/shop", "/integrate", "/learn"]) {
       await page.goto(url, { waitUntil: "load" });
       await page.waitForSelector("h1");
       const n = await page.evaluate(

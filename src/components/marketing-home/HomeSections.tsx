@@ -1,9 +1,16 @@
 import Link from "next/link";
 import { HOME_SECTIONS, type HomeSection } from "@/lib/home-sections";
 import { HeroVideoBackdrop } from "@/components/media/HeroVideoBackdrop";
+import { LazyAutoplayVideo } from "@/components/media/LazyAutoplayVideo";
+import { ProofStats } from "@/components/marketing/ProofStats";
+/*
+  ⚠ `HERO_BRIDGE_CLASS` AND `HERO_BRIDGE_TEXT` ARE NO LONGER IMPORTED
+  (`P1-J0-E338`). `/` dropped the bridge line — see the note where it used to
+  render — and an unused import is a new lint warning against a 0-new baseline.
+  ⚠ BOTH CONSTANTS STAY IN `hero-treatment.ts`, UNEDITED: six public pages still
+  render them. This file simply stopped being one of the callers.
+*/
 import {
-  HERO_BRIDGE_CLASS,
-  HERO_BRIDGE_TEXT,
   HERO_BUTTON,
   HERO_BUTTON_OUTLINE,
   HERO_GRADIENT,
@@ -66,6 +73,53 @@ const INNER = "mx-auto w-full max-w-[1180px] px-[26px]";
  */
 const COL = "min-w-0";
 
+/*
+  ── ⚠⚠ `text-white!` — A SPECIFICITY FIX, NOT A COLOUR CHOICE (`P1-J0-E338`) ──
+
+  Every `<Link>` on `/` was rendering its label in `rgb(42,51,69)` instead of white,
+  and the components were already ASKING for white. `home.css:106` is
+  `.pm-home a { color: inherit }` — specificity (0,1,1). Tailwind's `text-white` is
+  a single class, (0,1,0). THE STYLESHEET WINS, so every anchor inherits its
+  parent's colour. MEASURED before the fix: 11 of 12 labels `rgb(42,51,69)`.
+  ⚠ THE ONE THAT WAS ALREADY WHITE IS `/shop`'s, because it is a `<button>` — the
+  rule only matches `a`. That is the tell.
+
+  ⚠ IT AFFECTS `/` ALONE. Only `/` is wrapped in `.pm-home` (`page.tsx:110`), which
+  is why the same constants render correctly on six other heroes.
+
+  ⚠ TAILWIND v4 PUTS THE IMPORTANT MODIFIER AT THE END — `text-white!`, not
+  `!text-white`. The v3 prefix form is silently ignored here.
+
+  ⚠⚠ THE FIX IS AT THE CALL SITES, DELIBERATELY:
+    · NOT in `hero-treatment.ts` — those constants are shared with six heroes that
+      render correctly, and `!important` would follow them everywhere.
+    · NOT in `home.css:106` — 21 legacy sections depend on `color: inherit`.
+  Scott asked for *"all pink buttons on the page"*, so it is on all four labels
+  (both hero controls and both of the other five sections'), magenta and clear alike.
+*/
+const LABEL_WHITE = " text-white!";
+
+/**
+ * ⚠⚠ WHICH CLIP EACH DARK BAND PLAYS — CHAT'S INFERENCE, NOT SCOTT'S INSTRUCTION.
+ *
+ * He asked for *"video behind the other purple bands"* and did not name the files.
+ * Each band takes ITS OWN MENU PAGE'S hero clip, so the band on `/` and the page it
+ * links to show the same footage:
+ *
+ *     section 3  Talent  ->  /connect-hero.mp4          0.14MB   (what `/talent` uses)
+ *     section 5  Work    ->  /panameer-office-hero.mp4  1.01MB   (what `/work` uses)
+ *
+ * ⚠ THE `-hero` CUTS, NOT THE FULL FILMS. `connect.mp4` is 1.47MB and
+ * `panameer-office.mp4` is 9.21MB; both are unused and must stay that way here.
+ * ⚠ SECTION 1 IS ABSENT ON PURPOSE — the hero renders `/consultation.mp4` eagerly
+ * through `HeroVideoBackdrop`, because it IS the fold.
+ * ⚠ THE LILAC BANDS ARE ABSENT ON PURPOSE — video only behind the purple.
+ */
+const BAND_CLIPS: Record<string, string | undefined> = {
+  talent: "/connect-hero.mp4",
+  work: "/panameer-office-hero.mp4",
+};
+
 function Section({ s, i }: { s: HomeSection; i: number }) {
   /*
     ⚠ THE STRIPE AND THE SIDE BOTH COME FROM THE INDEX, so reordering
@@ -92,6 +146,8 @@ function Section({ s, i }: { s: HomeSection; i: number }) {
     ⚠ THE OTHER FIVE SECTIONS ARE UNCHANGED. `isHero` gates every difference.
   */
   const isHero = i === 0;
+  /* ⚠ HOISTED so TypeScript narrows it — `BAND_CLIPS[key]` is `string | undefined`. */
+  const bandClip = !isHero && dark ? BAND_CLIPS[s.key] : undefined;
 
   const eyebrow = dark ? "text-[#efa3ee]" : "text-[#A61AA5]";
   const head = dark ? "text-white" : "text-[#181E3C]";
@@ -121,34 +177,25 @@ function Section({ s, i }: { s: HomeSection; i: number }) {
             ⚠ THE HERO'S EYEBROW IS BIGGER — Scott: *"Change the pink text and make
             it bigger."* The other five stay at 11.5px / .15em.
 
-            ⚠⚠ 12px / .06em, AND BOTH NUMBERS WERE MEASURED, NOT CHOSEN. The brief
-            said start at 14px; 14px DOES NOT FIT. The string is 61 characters and the
-            copy column is 564px at 1440 and 553px at 1160, and with
-            `whitespace-nowrap` an oversized line does not wrap — IT SILENTLY
-            OVERFLOWS ITS COLUMN INTO THE PANEL, which a line-count check reports as
-            a clean single line. ⚠ MEASURE THE TEXT WITH A `Range`, NOT THE BOX.
+            ⚠⚠ 17px AT THE FULL .15em, AND THE STRING IS WHY. `P1-J0-E338` shortened
+            it from 61 characters to 40 (*"See Your Options - Build Your AI Roadmap"*),
+            and at this length TRACKING NO LONGER DOMINATES — `E337` had to cut
+            tracking to .06em just to reach 12px, because at 61 chars every 0.01em
+            costs ~6px. At 40 chars the full .15em is affordable.
 
-            Measured text width at 1160 (column 553px):
-                        14px    13px   12.5px    12px   11.5px
-              .15em      705     654      629     604      579
-              .12em      679     630      606     582      558
-              .10em      661     614      591     567      543
-              .06em      627     582      560   ->537<-    515
-              .04em      609     566      544     522      501
+            Measured text width at 1160 (column 553px, `Range` not box):
+              20px  624 ✗   18px  561 ✗   17px  530 ✓   16px  499   15px  468   14px  437
+            ⚠ 18px MISSES BY 8px. 17px IS THE LARGEST THAT FITS, with 23px of slack at
+            1160 and 34px at 1440 — and it is 5.5px larger than the other five.
 
-            ⚠ 13px/.12em WAS SHIPPED FIRST AND WAS WRONG — 630px in a 553px column,
-            overflowing by 77px. Caught by measuring the Range; the box read 553 and
-            "one line", which is the false pass.
-            ⚠ 12px/.06em IS THE LARGEST TYPE THAT FITS WITH REAL SLACK: 537px at 1160
-            (16px spare) and 548px at 1440 (16px spare). It is 0.5px larger and
-            visibly heavier than the other five; the tracking is what gave way,
-            because at this length tracking costs more width than size does.
-            ⚠ REPORTED: a genuinely LARGER eyebrow needs the string to span the full
-            1180px rail rather than the copy column — a layout change nobody asked
-            for. Scott's call.
+            ⚠⚠ MEASURE THE TEXT WITH A `Range`, NEVER A LINE COUNT. These are
+            `whitespace-nowrap` above 1150px, so an oversized line does NOT wrap — it
+            OVERFLOWS its column silently while the box still reports one clean line.
+            That false pass cost `E337` a cut (13px, 630px of text in a 553px column,
+            read as "1 line"). ⚠ `§65` now asserts overflow, so it cannot recur.
           */
           (isHero
-            ? "mb-3 text-[12px] font-bold uppercase tracking-[0.05em] min-[1151px]:whitespace-nowrap min-[1151px]:tracking-[0.06em] "
+            ? "mb-3 text-[17px] font-bold uppercase tracking-[0.12em] min-[1151px]:whitespace-nowrap min-[1151px]:tracking-[0.15em] "
             : "mb-3 text-[11.5px] font-bold uppercase tracking-[0.12em] min-[1151px]:whitespace-nowrap min-[1151px]:tracking-[0.15em] ") +
           eyebrow
         }
@@ -210,27 +257,23 @@ function Section({ s, i }: { s: HomeSection; i: number }) {
         {s.body.replace("%s", s.ctaLabel)}
       </p>
 
-      {isHero && (
-        /*
-          ── ⚠⚠ THE BRIDGE LINE, RESTORED TO `/` (`P1-J0-E337`) ─────────────────
+      {/*
+        ── ⚠⚠ NO BRIDGE LINE ON `/` (`P1-J0-E338`, Scott 2026-08-27) ────────────
 
-          ⚠ `/` LOST IT WHEN `<HomeHero />` WENT — the line lived inside that
-          component, so removing it from `/` took the bridge line with it and
-          `check:ui §64` went red on "the bridge line is word-for-word identical on
-          every public page". SEVEN PAGES CARRY IT; `/` briefly carried none.
-          ⚠⚠ §64 WAS NOT WEAKENED TO GO GREEN. Scott's standing instruction is
-          explicit — *"They all should say 'Check out the steps...'"* (`P1-ALL-E031`)
-          — so the page got the line back rather than the test losing the page.
-          ⚠ IT IS `HERO_BRIDGE_TEXT`, THE SHARED CONSTANT. No copy was invented and
-          no word was retyped.
+        ⚠ IT WAS HERE AND IT IS GONE ON PURPOSE. `P1-J0-E337` had ADDED it, because
+        removing `<HomeHero />` took `/`'s copy of the line with it and `check:ui`
+        went red. Scott has now looked at the result and cut it.
+        ⚠⚠ DO NOT PUT IT BACK. `E337` already made that mistake once; this is the
+        second pass over the same line and the answer is that `/` does not carry it.
 
-          ⚠ REPORTED: on `/` the word *"below"* now points at five marketing
-          sections rather than at a numbered step spine, which is what it means on
-          the other six pages. The string is identical by instruction; whether it
-          still reads right HERE is Scott's call, not a thing to reword quietly.
-        */
-        <p className={HERO_BRIDGE_CLASS}>{HERO_BRIDGE_TEXT}</p>
-      )}
+        ⚠ THE REASON IS THE WORDING: the line reads *"Check out the steps BELOW to
+        see how it works."* and `/` has no step spine below the hero — it has five
+        marketing sections. `E337` flagged exactly that when it restored the line.
+        ⚠ THE OTHER SIX PUBLIC PAGES KEEP IT WORD FOR WORD, and
+        `HERO_BRIDGE_TEXT`/`HERO_BRIDGE_CLASS` ARE NOT EDITED — they still serve
+        those six. `check:ui`'s assertion dropped `/` from its URL list with the
+        reason recorded there.
+      */}
       {/*
         ⚠ THE HERO'S ROW DROPS ITS OWN `mt-[26px]`, AND THAT IS THE `mt-8`
         RECONCILIATION: `HERO_BUTTON` and `HERO_BUTTON_OUTLINE` both start with
@@ -255,7 +298,7 @@ function Section({ s, i }: { s: HomeSection; i: number }) {
             aria-disabled="true"
             className={
               "cursor-default rounded-[12px] border-2 border-magenta bg-magenta " +
-              "px-[26px] py-3.5 font-display text-[15px] font-bold text-white"
+              "px-[26px] py-3.5 font-display text-[15px] font-bold text-white" + LABEL_WHITE
             }
           >
             {s.ctaLabel}
@@ -270,11 +313,11 @@ function Section({ s, i }: { s: HomeSection; i: number }) {
                 means HOME now runs TWO button treatments. REPORTED, NOT RESOLVED —
                 Scott asked for this section only.
               */
-              isHero
+              (isHero
                 ? HERO_BUTTON
                 : "rounded-[12px] border-2 border-magenta bg-magenta px-[26px] py-3.5 " +
                   "font-display text-[15px] font-bold text-white transition-colors " +
-                  "hover:border-magenta-dark hover:bg-magenta-dark"
+                  "hover:border-magenta-dark hover:bg-magenta-dark") + LABEL_WHITE
             }
           >
             {s.ctaLabel}
@@ -292,13 +335,16 @@ function Section({ s, i }: { s: HomeSection; i: number }) {
               THE FILL IS THE POINT — it is what makes a white label legible over
               video, which is exactly the situation here. DO NOT STRIP IT.
             */
-            isHero
-              ? HERO_BUTTON_OUTLINE
+            (isHero
+              ? HERO_BUTTON_OUTLINE + LABEL_WHITE
               : "rounded-[12px] border-2 px-[26px] py-3.5 font-display text-[15px] " +
                 "font-bold transition-colors " +
+                /* ⚠ THE LILAC BANDS' OUTLINE IS NAVY-ON-LILAC BY DESIGN — it is not
+                   over video and must NOT be forced white. Only the DARK bands'
+                   outline takes the override. */
                 (dark
-                  ? "border-white/60 text-white hover:border-white hover:bg-white hover:text-[#181E3C]"
-                  : "border-[#181E3C] text-[#181E3C] hover:bg-[#181E3C] hover:text-white")
+                  ? "border-white/60 text-white hover:border-white hover:bg-white hover:text-[#181E3C]" + LABEL_WHITE
+                  : "border-[#181E3C] text-[#181E3C] hover:bg-[#181E3C] hover:text-white"))
           }
         >
           Learn More
@@ -340,6 +386,34 @@ function Section({ s, i }: { s: HomeSection; i: number }) {
           </div>
         ))}
       </div>
+      {isHero && (
+        /*
+          ── ⚠⚠ THE TILES ARE BACK ON `/` (`P1-J0-E338`) ─────────────────────
+
+          `P1-J0-E337` removed `<HomeHero />` from `/` and `ProofStats` went with it,
+          because it renders INSIDE that component. Scott wants the tiles back — so
+          they are IMPORTED here, DIRECTLY BELOW the What-you-get card, in the hero's
+          right column. ⚠ `ProofStats.tsx` IS NOT EDITED and `/optimize` IS NOT
+          TOUCHED — both still render it exactly as before.
+          ⚠ NO MARKUP COPIED AND NO FIGURE RETYPED. One component, two callers.
+
+          ⚠⚠ `variant="home"` EMITS `.stats/.stat/.big/.lbl`, WHICH ARE
+          `.pm-home`-SCOPED IN `home.css`. Outside that wrapper they paint NOTHING —
+          the scoping trap that has cost this codebase six defects. ⚠ THIS SECTION
+          RENDERS INSIDE `page.tsx:110`'s `.pm-home` div, so the classes resolve;
+          CONFIRMED by reading the computed styles of all three tiles, not by
+          assuming. If these sections are ever moved outside that wrapper, the tiles
+          go blank silently.
+
+          ⚠⚠ AND THE FIGURES ARE INVENTED. `ProofStats.tsx:9` SAYS SO IN THE FILE:
+          `942 Assessments Completed`, `10M+ Total Savings`, `$6M+ Tax Savings` are
+          not live reads. Bringing them back to `/` re-opens that on the home page.
+          Scott's call, made knowingly; the row stays open.
+        */
+        <div className="mt-4">
+          <ProofStats />
+        </div>
+      )}
     </div>
   );
 
@@ -356,9 +430,53 @@ function Section({ s, i }: { s: HomeSection; i: number }) {
           ⚠ NO `overflow-hidden` AND NO RADIUS: the band is deliberately square and
           edge-to-edge. The clip is `inset-0`, so it fills exactly without clipping.
         */
-        (isHero ? " relative isolate" : "")
+        /* ⚠ ALSO ON BANDS 3 AND 5 NOW — their clips are `absolute inset-0`
+           and need a positioned, isolated ancestor exactly as the hero does. */
+        (isHero || bandClip ? " relative isolate" : "")
       }
     >
+      {bandClip && (
+        /*
+          ── ⚠⚠ THE OTHER TWO PURPLE BANDS GET A CLIP (`P1-J0-E338`) ──────────
+
+          Scott asked for video behind the other purple bands. Sections 1, 3 and 5
+          are the dark ones; 1 is the hero and already has `/consultation.mp4`.
+          ⚠⚠ HE DID NOT NAME WHICH CLIP FOR 3 AND 5 — CHAT'S INFERENCE, STATED SO HE
+          CAN CORRECT IT: each takes ITS OWN MENU PAGE'S hero video, so the band and
+          the page it links to show the same footage. See `BAND_CLIPS`.
+          ⚠ THE THREE LILAC BANDS GET NONE.
+
+          ⚠⚠ `LazyAutoplayVideo`, NOT `HeroVideoBackdrop`, AND THAT IS THE WHOLE
+          POINT. These are BELOW THE FOLD and must not compete with the hero's clip
+          for bandwidth. `preload="none"` alone does NOT work — it is overridden the
+          moment `autoplay` is present — so the `src` is withheld until an
+          `IntersectionObserver` says the band is near the viewport.
+          ⚠ `/`'s LCP was already 10,776ms and first-load 4.80MB. MEASURED AFTER:
+          the numbers are in the brief report, and the gate was +0.2MB / +300ms.
+          ⚠ THE SCRIM IS THE SAME `HERO_SCRIM` the hero uses — imported, not retyped.
+        */
+        <>
+          <LazyAutoplayVideo
+            src={bandClip}
+            /*
+              ⚠⚠ `rootMargin` 100px, NOT THE COMPONENT'S 600px DEFAULT, AND IT IS A
+              MEASURED NUMBER. Section 3 sits only 229px below the fold at 1440
+              (669px at 900, 1447px at 390) — so a 600px margin INTERSECTS AT LOAD
+              and `connect-hero.mp4` was fetched before the reader had scrolled at
+              all. `check:ui §51` caught it: *"/ fetched a below-the-fold sequence
+              clip before the reader was anywhere near it — E018"*. That guarantee
+              exists because `/find-work` once pulled 10.63MB of unseen video.
+              ⚠ 100px CLEARS THE TIGHTEST WIDTH BY 129px and still starts the fetch
+              before the band is on screen. Both clips are small (0.14MB / 1.01MB).
+              ⚠ THE PROP IS PASSED HERE, NOT CHANGED IN THE COMPONENT — 600px is
+              right for `VideoSequence`, whose clips sit much further down.
+            */
+            rootMargin="100px"
+            className="absolute inset-0 h-full w-full object-cover opacity-40"
+          />
+          <div aria-hidden className={HERO_SCRIM} />
+        </>
+      )}
       {isHero && (
         /*
           ⚠ THE SAME CLIP `HomeHero` PLAYS — `/consultation.mp4` — with the same
@@ -377,7 +495,12 @@ function Section({ s, i }: { s: HomeSection; i: number }) {
       )}
       {/* ⚠ THE RAIL IS UNCHANGED — only the BAND is full-width. `z-[2]` lifts the
           content above the clip and its scrim. */}
-      <div className={INNER + (isHero ? " relative z-[2]" : "")}>
+      <div
+        className={
+          INNER +
+          (isHero || bandClip ? " relative z-[2]" : "")
+        }
+      >
         <div
           className={
             "grid grid-cols-1 items-center gap-[30px] " +
