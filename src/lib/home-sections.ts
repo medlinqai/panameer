@@ -57,8 +57,13 @@ export type HomeSection = {
   headline: { a: string; b?: string };
   body: string;
   chipsTitle: string;
-  /** ⚠ ALWAYS THREE. The panel's numerals are 1-3. */
-  chips: [string, string, string];
+  /*
+    ⚠ WAS A 3-TUPLE, NOW A LIST. `P1-J0-E338` §6 gave the OPTIMIZE section SIX
+    lines; the other five still have three. ⚠ THE NUMERALS ARE DERIVED FROM THE
+    INDEX, so the panel counts whatever is here — no numbering to keep in step.
+    ⚠ SUPERSEDED: *"⚠ ALWAYS THREE. The panel's numerals are 1-3."*
+  */
+  chips: string[];
   ctaLabel: string;
   /**
    * ⚠ READ OFF EACH PAGE'S OWN HERO, NOT INVENTED — the brief is explicit.
@@ -133,10 +138,36 @@ export const HOME_SECTIONS: HomeSection[] = [
       *"An expert session to pick and prioritize solutions"* ·
       *"Your 12-month roadmap — all for free"*.
     */
+    /*
+      ⚠⚠ SIX LINES, NOT THREE. Scott, 2026-08-27, SUPERSEDING HIS OWN THREE-ITEM
+      LIST from minutes earlier — the three-line version shipped in `E338` and this
+      replaces it whole.
+      ⚠ SUPERSEDED: *"See your ranking"* · *"See a list of possible solutions for
+      your organization/business process"* · *"Review and prioritize those solutions
+      with an expert"*.
+
+      ⚠⚠ TWO TYPOS CORRECTED, BOTH FLAGGED SO HE CAN REVERT EITHER:
+        · item 4  `from within you AI Roadmap`  ->  `your`
+        · item 6  `hire manage within tracker`  ->  `hire and manage within the tracker`
+      ⚠⚠ THE SECOND IS CHAT SUPPLYING TWO WORDS (`and`, `the`) TO A GARBLED CLAUSE,
+      not fixing a slip. If that is not what he meant, item 6 is the line to re-read.
+
+      ⚠ HIS `&` IN ITEM 3, HIS `1 year`, HIS SENTENCE-ENDING PERIODS — all shipped as
+      typed. Do not normalise the ampersand or hyphenate `1 year`.
+
+      ⚠ ITEMS 4, 5 AND 6 DESCRIBE THINGS THAT DO NOT EXIST YET — hiring from inside a
+      roadmap, tracking deployment, and managing multiple roadmaps. `P1-J0-E238`
+      already records *"copy is ahead of the build"* for the roadmap -> work-request
+      path. ⚠ SHIPPED AS WRITTEN REGARDLESS: outstanding parts gate PROMOTION, not
+      the build. It is a pre-launch line, not a reason to soften a word.
+    */
     chips: [
-      "See your ranking",
-      "See a list of possible solutions for your organization/business process",
-      "Review and prioritize those solutions with an expert",
+      "See your rank, how you compare to your peers.",
+      "See a list of possible solutions based on your processing details.",
+      "Review & prioritize the solutions into a 1 year deployment roadmap.",
+      "Hire talent to deploy from within your AI Roadmap.",
+      "Track the progress of that work within Panameer.",
+      "Create additional roadmaps for other processes, hire and manage within the tracker.",
     ],
     ctaLabel: HOME_OPTIMIZE_CTA,
     ctaHref: "/assess",
