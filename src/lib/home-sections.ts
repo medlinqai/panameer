@@ -35,15 +35,24 @@
  */
 
 /*
-  ⚠⚠ `FREE` IS CAPITALISED AND THAT IS SCOTT'S, 2026-08-27. DO NOT TITLE-CASE IT.
-  ⚠ SUPERSEDED, in order: `Start the Assessment` (`E337`) -> `Take Our Free
-  Assessment` (`E338`) -> this. Third label in two days; that churn is exactly why
-  it is a constant.
+  ⚠⚠ FOURTH LABEL IN THREE DAYS. That churn is exactly why this is a constant with
+  ONE live literal — `P1-J4-E024` is the precedent, where `/work` shipped two
+  different strings for one button and they drifted apart.
+  ⚠ SUPERSEDED, in order, quoted not deleted: *"Start the Assessment"* (`E337`) ->
+  *"Take Our Free Assessment"* (`E338`) -> *"Create My FREE AI Roadmap"* (`E339`,
+  whose capitalised `FREE` was Scott's and shipped as typed) -> this (`E342`).
+  ⚠⚠ THE WORD `FREE` HAS LEFT THE BUTTON. Scott, 2026-08-27: the label is now
+  *"Start Optimizing My Business Now"*. The offer is still free and the body copy
+  still says so (*"- all for free"*); only the BUTTON stopped saying it. Do not
+  re-add it here on the strength of the `E339` note above — that note is history.
+  ⚠ IT MATCHES THE FIRST-PERSON VOICE of the six chips below (`My Business`,
+  `My Work Order`). Button and card now speak as the reader; keep them in step.
   ⚠ THE `href` HAS NEVER CHANGED (`/assess`).
-  ⚠ THE BODY COPY NO LONGER QUOTES IT — it says *"the button below"* — so nothing
-  interpolates this any more. It is still the button's only source.
+  ⚠ THE BODY COPY DOES NOT QUOTE IT — it says *"Click the button below"* — so
+  nothing interpolates this. `s.body.replace("%s", s.ctaLabel)` is a no-op for this
+  section. It is still the button's only source.
 */
-export const HOME_OPTIMIZE_CTA = "Create My FREE AI Roadmap";
+export const HOME_OPTIMIZE_CTA = "Start Optimizing My Business Now";
 export const HOME_LEARN_CTA = "Start Learning Now";
 export const HOME_TALENT_CTA = "Start Shaping Your Time";
 export const HOME_SHOP_CTA = "Start Reselling Your Work";
@@ -241,13 +250,56 @@ export const HOME_SECTIONS: HomeSection[] = [
       from the index. NO 2x3 GRID — `E340` measured the columns at 387/437, a 50px
       gap, and shorter strings can only narrow it. Measured again for `E341`.
     */
+    /*
+      ── ⚠⚠ SET FIVE (`P1-J0-E342`) — FIFTH SET IN FOUR DAYS ────────────────────
+
+      ⚠⚠ HIS VOICE SHIFTED TO FIRST PERSON AND IT IS CONSISTENT: `My Business`,
+      `My Panameer AI Roadmap`, `My Work Order`. Deliberate, and it now matches the
+      button (`HOME_OPTIMIZE_CTA` = *"Start Optimizing My Business Now"*).
+      ⚠ DO NOT CHANGE `My` TO `Your`. Button and card speak as the reader together.
+
+      ⚠⚠ ITEM 1 HAS NO FULL STOP AND THE OTHER FIVE DO. SHIPPED AS TYPED, NOT
+      "FIXED". Scott has instructed twice that his punctuation ships verbatim, so
+      the inconsistency is REPORTED to him rather than silently corrected. If he
+      wants the stop he will say so; do not add it on your own judgement.
+      ⚠ ITEMS 1 AND 3 ARE NOUN PHRASES (`A Process-Based…`, `A Review Session…`);
+      2, 4, 5 and 6 OPEN WITH VERBS. THE MIXED GRAMMAR IS HIS — do not make them
+      parallel. ⚠ TITLE CASE THROUGHOUT IS HIS — do not sentence-case it.
+
+      ⚠⚠ ONE TYPO CORRECTED, FLAGGED SO HE CAN REVERT: item 3 was typed *"with en
+      Expert"* -> shipped as *"with an Expert"*. That is the ONLY departure from his
+      text. ⚠ A stray leading apostrophe appeared before item 5 in his message
+      (`'"Track Progress…`) — a typing artifact, not copy, so it is not shipped.
+
+      ── THE SUPERSEDED RECORD — FIVE SETS, NONE DROPPED ────────────────────────
+      ⚠ `E340` had to RECOVER a set from `f51080e` because `b28758e` deleted instead
+      of quoting. Every set since is written out in full for that reason.
+
+      ⚠ SET FOUR — SUPERSEDED by this commit (`38d69c6`, `E341`; Scott rewrote it
+      for spacing and it lasted one commit): *"Create process-based optimization
+      dashboard."* · *"See optimization solutions for your business."* · *"Create AI
+      Roadmap with an Expert."* · *"Hire Talent from within AI Roadmap."* · *"Track
+      progress from Panameer work order."* · *"Create additional AI Roadmaps for
+      other processes."*
+      ⚠ SETS ONE TO THREE are quoted in the two comment blocks ABOVE this one — the
+      pass-1 three, the pass-2 three (`f51080e`), `b28758e`'s three, and `a7394d7`'s
+      six. Counting set four directly above, the record holds FIVE superseded sets.
+
+      ⚠⚠ EVERY SET ABOVE IS HISTORY, NOT A LIVE INSTRUCTION, and so is every
+      instruction that produced one. Do not restore any of them from a quote.
+      ⚠ THIS COMMENT BLOCK IS GETTING UNWIELDY — flagged in the `E342` report, NOT
+      restructured here, because restructuring it unasked is how a set gets lost.
+
+      ⚠ HEADING, CHROME, NUMBERING AND LAYOUT ARE UNCHANGED. Numerals derive from
+      the index. NO 2x3 GRID, no redesign — `E341` measured 381/389, an 8px gap.
+    */
     chips: [
-      "Create process-based optimization dashboard.",
-      "See optimization solutions for your business.",
-      "Create AI Roadmap with an Expert.",
-      "Hire Talent from within AI Roadmap.",
-      "Track progress from Panameer work order.",
-      "Create additional AI Roadmaps for other processes.",
+      "A Process-Based Optimization Dashboard",
+      "See Optimization Solutions for My Business.",
+      "A Review Session with an Expert for My Panameer AI Roadmap.",
+      "Hire Talent, Create Timeline from AI Roadmap.",
+      "Track Progress from My Work Order.",
+      "Create Roadmaps for Other Processes.",
     ],
     ctaLabel: HOME_OPTIMIZE_CTA,
     ctaHref: "/assess",
