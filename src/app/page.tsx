@@ -5,7 +5,6 @@ import { LogoRibbon } from "@/components/marketing-home/LogoRibbon";
 import { MethodologyRing } from "@/components/marketing-home/MethodologyRing";
 import { CapabilityFramework } from "@/components/marketing-home/CapabilityFramework";
 import { Testimonials } from "@/components/marketing-home/Testimonials";
-import { ValueStack } from "@/components/marketing/sections/ValueStack";
 import { MarketingFooter } from "@/components/marketing/MarketingFooter";
 /* ⚠ `HowItWorks`, `ProcessPicker` AND `SpineSteps` ARE DELIBERATELY NOT IMPORTED
    HERE ANY MORE (`P1-J0-E298`) — they render on `/optimize` instead. All three
@@ -269,6 +268,18 @@ export default function Home() {
           OPEN and is a separate brief. Between that commit and this one it renders
           nowhere, KNOWN AND ACCEPTED. ⚠ Do not park it somewhere to keep it alive.
 
+          ⚠⚠ AN EIGHTEENTH FOLLOWED, `P1-J0-E351`: `ValueStack` (eyebrow `WHAT
+          PROCUREMENT GETS`). `E350` KEPT IT ON PURPOSE — it was in none of Scott's
+          screenshots, so that brief gated on it SURVIVING — and he then walked the
+          result and named it: *"still there."* That reverses one `E350` gate and
+          nothing else. ⚠ `ValueStack.tsx` stays on disk under `E164` like the other
+          seventeen. ⚠ NO DEAD ANCHOR: it owns `id="value"`, and the only three
+          mentions of `#value` in the tree are comments — the footer's `Pricing`
+          entry is plain text with no `href` (`brand.tsx:379`), checked before
+          deleting rather than after.
+          ⚠ `Testimonials` IS NOW THE ONLY SECTION between `MethodologyRing` and the
+          closing `</div>` and WILL LOOK STRANDED. Scott has not named it. LEAVE IT.
+
           ⚠ THE GAPS THIS LEAVES ARE DELIBERATE. Nothing that survives was re-ordered,
           re-spaced or re-styled — Scott wants to look at the result before anything
           is closed up.
@@ -354,25 +365,6 @@ export default function Home() {
           are deliberately untouched.
         */}
         <Testimonials />
-        {/*
-          ── ⚠⚠ PARKED FROM `/talent` (`P1-J1-E030`) ─────────────────────────
-
-          Scott: *"i do not think we will need them, but i will leave them on the
-          last page to get refined for now."* ⚠ THIS IS A PARKING PLACE. They are
-          NOT integrated into `/`'s narrative, NOT re-worded and NOT redesigned —
-          the order is the order they had on `/talent`.
-
-          ⚠⚠ TWO OF THE THREE LEFT AT `P1-J0-E350` — `VideoSequence audience="buyer"`
-          and `AppShots page="hire"`. ONLY `ValueStack` BELOW SURVIVES, so this note
-          now documents one section, not three. Both files stay on disk (`E164`).
-          ⚠ THE `VideoSequence` NOTE IS KEPT AS HISTORY because it is the reason that
-          component is pointed at the `-hero` cuts and would matter again if it is
-          ever re-added anywhere: it eager-loaded four FULL-SIZE clips — 10.63MB — and
-          `/` already serves `consultation` as its hero, so moving it here unchanged
-          would have made `/` the heaviest page on the site. See `VideoSequence.tsx`.
-          ⚠ IT IS HISTORY, NOT A LIVE INSTRUCTION. Do not re-add either one from it.
-        */}
-        <ValueStack />
       </div>
       {/*
         ── ⚠⚠ THE FOOTER SITS OUTSIDE `.pm-home`, AND THAT IS LOAD-BEARING ────
