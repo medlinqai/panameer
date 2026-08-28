@@ -2602,6 +2602,16 @@ test.describe("work walk 1 — the buyer's page", () => {
       "/integrate",
       "/shop",
       "/learn",
+      /*
+        ⚠ ADDED BY `P1-J0-E352`. This test's own docblock says *"RUN ON EVERY PUBLIC
+        MARKETING PAGE"*, and `/capability-domains` is one. ⚠ THIS WIDENS THE TEST,
+        it does not loosen it: the page renders `CapabilityFramework`, which also
+        renders on `/`, and this asserts NEITHER page renders it twice.
+        ⚠ THE TEST IS PER-PAGE, checked against the body rather than assumed — the
+        `seen` maps below are rebuilt inside this loop, so two pages each rendering a
+        section once has never been what it measures.
+      */
+      "/capability-domains",
     ]) {
       await page.goto(url);
 

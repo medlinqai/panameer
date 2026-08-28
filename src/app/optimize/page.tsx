@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
-import { OPTIMIZE_CTA_LABEL } from "@/lib/spine-steps";
+import {
+  CAPABILITY_EXPLAINED_LABEL,
+  OPTIMIZE_CTA_LABEL,
+} from "@/lib/spine-steps";
 import { MarketingHeader } from "@/components/marketing/MarketingHeader";
 import { HomeHero } from "@/components/marketing-home/HomeHero";
 import { HowItWorks } from "@/components/marketing-home/HowItWorks";
@@ -85,8 +88,20 @@ export default function OptimizePage() {
           ⚠ THIS PAGE ALSO GAINED THE BRIDGE LINE — it was the only one of seven
           missing it, and it comes with the shared treatment now.
         */}
+        {/*
+          ⚠ THE SECOND CONTROL, `P1-J0-E352`. Both props are passed together — the
+          component renders nothing unless it has label AND href.
+          ⚠ `ctaLabel` AND `description` ARE UNCHANGED. The description still quotes
+          `OPTIMIZE_CTA_LABEL`, the same constant the primary button uses.
+          ⚠ THE ROUTE `/capability-domains` IS CHAT'S NAME, NOT SCOTT'S — he named the
+          button, not the URL. It matches `src/lib/capability-domains.ts`, where the
+          data already lives. FLAGGED in the `E352` report; renaming the folder is a
+          one-line change here.
+        */}
         <HomeHero
           ctaLabel={OPTIMIZE_CTA_LABEL}
+          secondaryCtaLabel={CAPABILITY_EXPLAINED_LABEL}
+          secondaryCtaHref="/capability-domains"
           description={
             <>
               Click the &ldquo;{OPTIMIZE_CTA_LABEL}&rdquo; button, see where you

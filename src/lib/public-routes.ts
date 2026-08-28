@@ -87,6 +87,16 @@ export const PUBLIC_ROUTES: PublicRoute[] = [
   { route: "/work", category: 1 },
   { route: "/shop", category: 1 },
   { route: "/integrate", category: 1 },
+  /*
+    ⚠ `/capability-domains` (`P1-J0-E352`) — the `/optimize` hero's second button
+    points here. It renders `CapabilityFramework` and nothing else: no form, no
+    session read, no data. Category 1 like the six above.
+    ⚠ IT IS LISTED BECAUSE A NEW `page.tsx` IS OTHERWISE "PUBLIC BY ACCIDENT" — the
+    app-shell suite asserts every page is explicitly allowlisted or gated, and the
+    default is DENY. Adding the route without this entry fails that guard, which is
+    the guard working.
+  */
+  { route: "/capability-domains", category: 1 },
 
   /*
     ── 2. AUTH DOORS ──────────────────────────────────────────────────────────

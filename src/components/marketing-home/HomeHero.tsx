@@ -5,6 +5,7 @@ import {
   HERO_BRIDGE_CLASS,
   HERO_BRIDGE_TEXT,
   HERO_BUTTON,
+  HERO_BUTTON_OUTLINE,
   HERO_CARD,
   HERO_DESC_CLASS,
   HERO_SCRIM,
@@ -76,10 +77,24 @@ export function HomeHero({
       build your 12-month roadmap with an expert &mdash; all for&nbsp;free.
     </>
   ),
+  /*
+    ⚠⚠ THE SECOND CONTROL IS OPT-IN AND MUST STAY THAT WAY (`P1-J0-E352`).
+    Scott asked for it on `/optimize` only: *"put it below the Start Your Free
+    Optimization… in the /optimize hero"*. BOTH PROPS DEFAULT TO `undefined` and the
+    button renders NOTHING when either is absent, so every other caller — and `/`,
+    which shares this component — produces BYTE-IDENTICAL output. Proved in the
+    `E352` report by diffing the rendered HTML of six pages, not by reading the code.
+    ⚠ BOTH ARE REQUIRED TOGETHER. A label with no href would be a dead control and an
+    href with no label an invisible one, so the render tests for both.
+  */
+  secondaryCtaLabel,
+  secondaryCtaHref,
 }: {
   ctaLabel?: string;
   headline?: ReactNode;
   description?: ReactNode;
+  secondaryCtaLabel?: string;
+  secondaryCtaHref?: string;
 } = {}) {
   return (
     <section className="hero">
@@ -177,6 +192,40 @@ export function HomeHero({
                 <Link href="/assess" className={HERO_BUTTON}>
                   {ctaLabel}
                 </Link>
+                {/*
+                  ── ⚠⚠ THE SECOND, OUTLINED CONTROL (`P1-J0-E352`) ─────────────
+
+                  Scott: *"Create a button like 'Browse Catalog', put it below the
+                  Start Your Free Optimization…"* — BELOW, so STACKED, not a
+                  side-by-side pair. `HERO_BUTTON_OUTLINE` is the skin `Browse the
+                  Catalog` on `/learn` already uses, so a page growing a second
+                  control does not invent a third shape.
+
+                  ⚠⚠ `HERO_BUTTON_OUTLINE` IS IMPORTED, NEVER RE-TYPED, RE-WRAPPED OR
+                  CONCATENATED. Tailwind scans source text for whole class tokens and
+                  never evaluates JavaScript — a class split across a `+` is invisible
+                  to it, which is exactly how `HERO_SCRIM` shipped DEAD on seven pages
+                  for two days (`E338`). The constant carries its own
+                  `prettier-ignore` for the same reason. ⚠ It also carries a
+                  translucent fill from `P1-J3-E033`, because a white label on a bare
+                  border failed contrast. DO NOT STRIP IT.
+
+                  ⚠ THE STACK GAP IS SET HERE, NOT IN THE CONSTANT. Both constants
+                  carry `mt-8`; two of those stacked is too much air, so this call
+                  site overrides the second one down. ⚠ SIX OTHER HEROES RENDER THESE
+                  CONSTANTS — editing either one to fix spacing here would move all of
+                  them. The override is a wrapper `div`, so the constant's own class
+                  string is untouched and Tailwind still sees it whole.
+                  ⚠ MEASURED, NOT GUESSED: the gap and the label widths at
+                  1440/1160/768/390 are in the `E352` report.
+                */}
+                {secondaryCtaLabel && secondaryCtaHref ? (
+                  <div className="-mt-4">
+                    <Link href={secondaryCtaHref} className={HERO_BUTTON_OUTLINE}>
+                      {secondaryCtaLabel}
+                    </Link>
+                  </div>
+                ) : null}
               </>
             }
             right={

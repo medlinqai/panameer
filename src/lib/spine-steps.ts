@@ -281,3 +281,17 @@ export const SPINE_STEPS: SpineStep[] = [
   Assessment`, and Scott is handling HOME after this brief.
 */
 export const OPTIMIZE_CTA_LABEL = "Start Your Free Optimization Assessment";
+
+/*
+  ⚠ SCOTT'S STRING AND HIS CASING, 2026-08-28 (`P1-J0-E352`): *"have it say
+  'Capability Domain Assessment Explained'."* Shipped exactly — not sentence-cased,
+  not shortened, no `›`.
+  ⚠ ONE LIVE LITERAL. `P1-J4-E024` is the precedent and it is not theoretical:
+  `/work` shipped two different strings for one button and they drifted apart.
+  ⚠ IT LIVES BESIDE `OPTIMIZE_CTA_LABEL` because it labels the SECOND control in the
+  same `/optimize` hero, and this file already holds that page's strings.
+  ⚠ 38 CHARACTERS, one shy of `OPTIMIZE_CTA_LABEL`. MEASURED at 1440/1160/768/390 —
+  the numbers are in the `E352` report. NO `whitespace-nowrap` was added anywhere.
+*/
+export const CAPABILITY_EXPLAINED_LABEL =
+  "Capability Domain Assessment Explained";
