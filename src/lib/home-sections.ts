@@ -198,13 +198,56 @@ export const HOME_SECTIONS: HomeSection[] = [
       SITTING UNDER THE CARD — 113px of it was the tiles. This ships the six
       WITHOUT them, so that number does not carry over; it was re-measured.
     */
+    /*
+      ── ⚠⚠ SET FOUR (`P1-J0-E341`) — SCOTT REWROTE ALL SIX FOR SPACING ─────────
+
+      He is tuning the card's HEIGHT by the copy: these are deliberately shorter
+      than the set they replace. That is the point of the rewrite, so do not "fix"
+      them by expanding them back out.
+
+      ⚠⚠ HIS CAPITALISATION IS UNEVEN AND IT IS DELIBERATE. `AI Roadmap`, `Hire
+      Talent`, `an Expert` and `Panameer work order` are capitalised; `optimization`
+      and `dashboard` are not. SHIP EXACTLY AS TYPED — do not normalise, do not
+      title-case, do not sentence-case. He said he would wordsmith these himself.
+      ⚠ AMERICAN SPELLING IS HIS: `optimization`, not `optimisation`.
+
+      ⚠⚠ ONE TYPO CORRECTED, FLAGGED SO HE CAN REVERT IT. He typed item 6 as
+      *"Create additional AI Roadmaps roadmaps for other processes."* — `Roadmaps
+      roadmaps` is a duplicated word. Shipped with the second one dropped. That is
+      the ONLY departure from his text; nothing else was touched.
+
+      ── THE SUPERSEDED RECORD — FOUR SETS, NONE DROPPED ────────────────────────
+      This card has now had four sets of strings in three days. `b28758e` dropped
+      one WITHOUT quoting it and `E340` had to recover it from `f51080e`; that is
+      why every set below is written out in full rather than referenced.
+
+      ⚠ THE OUTGOING SET — SUPERSEDED by this commit. `a7394d7`'s six, restored by
+      `E340` and live until now: *"See your rank, how you compare to your peers."* ·
+      *"See a list of possible solutions based on your processing details."* ·
+      *"Review & prioritize the solutions into a 1 year deployment roadmap."* ·
+      *"Hire talent to deploy from within your AI Roadmap."* · *"Track the progress
+      of that work within Panameer."* · *"Create additional roadmaps for other
+      processes, hire and manage within the tracker."*
+      ⚠ THE THREE EARLIER SETS are quoted in the two comments above this one: the
+      pass-1 three, the pass-2 three (`f51080e`), and `b28758e`'s three. Counting
+      the six directly above, the record holds FOUR superseded sets. All present.
+
+      ⚠⚠ ALL FOUR SUPERSEDED SETS ARE HISTORY, NOT LIVE INSTRUCTIONS, and so are the
+      instructions that produced them (*"six options look horrible. Let's move it
+      back to 3."* · *"I think i like the six from before..."*). Do not restore any
+      of them on the strength of a quote. The six below are current.
+
+      ⚠ HEADING, CHROME, NUMBERING AND LAYOUT ARE UNCHANGED. The numerals derive
+      from the index. NO 2x3 GRID — `E340` measured the columns at 387/437, a 50px
+      gap, and shorter strings can only narrow it. Measured again for `E341`.
+    */
     chips: [
-      "See your rank, how you compare to your peers.",
-      "See a list of possible solutions based on your processing details.",
-      "Review & prioritize the solutions into a 1 year deployment roadmap.",
-      "Hire talent to deploy from within your AI Roadmap.",
-      "Track the progress of that work within Panameer.",
-      "Create additional roadmaps for other processes, hire and manage within the tracker.",
+      "Create process-based optimization dashboard.",
+      "See optimization solutions for your business.",
+      "Create AI Roadmap with an Expert.",
+      "Hire Talent from within AI Roadmap.",
+      "Track progress from Panameer work order.",
+      "Create additional AI Roadmaps for other processes.",
     ],
     ctaLabel: HOME_OPTIMIZE_CTA,
     ctaHref: "/assess",

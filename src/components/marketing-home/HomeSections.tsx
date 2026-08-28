@@ -186,15 +186,25 @@ function Section({ s, i }: { s: HomeSection; i: number }) {
       <p
         className={
           /*
-            ⚠ THE HERO'S EYEBROW IS BIGGER — Scott: *"Change the pink text and make
-            it bigger."* The other five stay at 11.5px / .15em.
+            ⚠ THE HERO'S EYEBROW IS BIGGER THAN THE OTHER FIVE — Scott: *"Change the
+            pink text and make it bigger."* The other five stay at 11.5px / .15em on
+            the branch directly below; it does not move.
 
-            ⚠⚠ 18px AT THE FULL .15em, RE-MEASURED FOR THE SHORTER STRING. Scott
-            dropped `AI` (`P1-J0-E339`), taking it 40 -> 37 characters, which buys
-            one more step. Measured with a `Range` at 1160 (column 553px):
+            ⚠⚠ 14px, DOWN FROM 18px (`P1-J0-E341`). Scott, on the 18px `E339` shipped:
+            *"This is too big. Perhaps a size between that and image 2?"* — image 2
+            being the other five at 11.5px. 14px sits between the two.
+            ⚠ SIZE ONLY. The string, the white colour, the uppercase and the nowrap
+            rule are unchanged.
+            ⚠⚠ THE `E341` BRIEF CALLED THE OUTGOING SIZE `17px` TWICE. IT WAS 18px —
+            this file's own sweep below records `18px 529 ✓ · 17px 499`, and 17px was
+            never shipped. The brief's "530px at 17px" is in fact the 18px
+            measurement. 14px was an explicit instruction and is between 11.5 and 18
+            either way, so it shipped; the arithmetic it was derived from did not.
+
+            ⚠ MEASURED SWEEP AT 1160 (column 553px), `Range`-measured, from `E339`:
               22px 646 ✗ · 21px 617 ✗ · 20px 587 ✗ · 19px 558 ✗ · 18px 529 ✓ · 17px 499
-            ⚠ 19px MISSES BY 5px. 18px is the largest that fits — 24px of slack at
-            1160, 35px at 1440, and 6.5px larger than the other five.
+            18px was the LARGEST that fits. 14px is a taste cut, not a fit cut — the
+            measured widths at 14px are in the `E341` report.
 
             ⚠⚠ MEASURE THE TEXT WITH A `Range`, NEVER A LINE COUNT. These are
             `whitespace-nowrap` above 1150px, so an oversized line does NOT wrap — it
@@ -203,7 +213,7 @@ function Section({ s, i }: { s: HomeSection; i: number }) {
             read as "1 line"). ⚠ `§65` asserts overflow now, so it cannot recur.
           */
           (isHero
-            ? "mb-3 text-[18px] font-bold uppercase tracking-[0.12em] min-[1151px]:whitespace-nowrap min-[1151px]:tracking-[0.15em] "
+            ? "mb-3 text-[14px] font-bold uppercase tracking-[0.12em] min-[1151px]:whitespace-nowrap min-[1151px]:tracking-[0.15em] "
             : "mb-3 text-[11.5px] font-bold uppercase tracking-[0.12em] min-[1151px]:whitespace-nowrap min-[1151px]:tracking-[0.15em] ") +
           eyebrow
         }
