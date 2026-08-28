@@ -774,7 +774,21 @@ export const HOME_SECTIONS: HomeSection[] = [
       ⚠ REPORTED, NOT CHANGED — the instruction was to read the href, not invent one.
       Scott may prefer `/integrate` here; `Learn More` already goes there.
     */
-    ctaHref: "#punchout",
+    /*
+      ⚠⚠ REPOINTED FROM `"#punchout"` TO `"/integrate#punchout"` (`P1-J0-E350`).
+      `ErpPunchout` owned `id="punchout"` and `E350` removed it from `/`, so the old
+      same-page anchor pointed at nothing — the button would have sat there and done
+      nothing when clicked. This is a DEAD-ANCHOR FIX, not a destination change.
+      ⚠ THE TARGET IS REAL AND PRE-EXISTING, verified before relying on it:
+      `src/app/integrate/page.tsx:144` renders
+      `<div id="punchout" className="pm-home scroll-mt-[71px]">` around
+      `ErpIntegration`. `E333` re-homed the id there deliberately. ⚠ NO SECOND
+      `id="punchout"` WAS CREATED — one per page is the rule, two is a defect.
+      ⚠ `learnMoreHref` STAYS `"/integrate"`. Two controls pointing at one page, one
+      of them deep-linked, is intended — not duplication to collapse.
+      ⚠ NO OTHER SECTION'S `ctaHref` CHANGED.
+    */
+    ctaHref: "/integrate#punchout",
     learnMoreHref: "/integrate",
   },
 ];

@@ -1,29 +1,12 @@
 import type { Metadata } from "next";
 import { MarketingHeader } from "@/components/marketing/MarketingHeader";
-import { OneWayTwoWay } from "@/components/marketing-home/OneWayTwoWay";
 import { HomeSections } from "@/components/marketing-home/HomeSections";
 import { LogoRibbon } from "@/components/marketing-home/LogoRibbon";
 import { MethodologyRing } from "@/components/marketing-home/MethodologyRing";
 import { CapabilityFramework } from "@/components/marketing-home/CapabilityFramework";
-import { FourAudiences } from "@/components/marketing-home/FourAudiences";
-import { TalentTeaser } from "@/components/marketing-home/TalentTeaser";
 import { Testimonials } from "@/components/marketing-home/Testimonials";
 import { ValueStack } from "@/components/marketing/sections/ValueStack";
-import { VideoSequence } from "@/components/marketing/VideoSequence";
-import { AppShots } from "@/components/marketing/sections/AppShots";
-import { ThreeWays } from "@/components/marketing/sections/ThreeWays";
-import { AiMatch } from "@/components/marketing/sections/AiMatch";
-import { TwoPains } from "@/components/marketing/sections/TwoPains";
-import { OmniChannel } from "@/components/marketing/sections/OmniChannel";
-import { GoDirectBionic } from "@/components/marketing/sections/GoDirectBionic";
-import { ProfileViz } from "@/components/marketing/sections/ProfileViz";
-import { FourBeats } from "@/components/marketing/sections/FourBeats";
-import { AiStrip } from "@/components/marketing/sections/AiStrip";
-import { ClosingCta } from "@/components/marketing/sections/ClosingCta";
-import { ErpPunchout } from "@/components/marketing/sections/ErpPunchout";
 import { MarketingFooter } from "@/components/marketing/MarketingFooter";
-import { GetTheTalent } from "@/components/marketing-home/GetTheTalent";
-import { WorkTracker } from "@/components/marketing-home/WorkTracker";
 /* ⚠ `HowItWorks`, `ProcessPicker` AND `SpineSteps` ARE DELIBERATELY NOT IMPORTED
    HERE ANY MORE (`P1-J0-E298`) — they render on `/optimize` instead. All three
    files are still on disk and still imported THERE; deleting one breaks that
@@ -243,24 +226,56 @@ export default function Home() {
           image 1."* `E349` deleted the band and its `BRAND_DESCRIPTOR` import.
 
           ⚠⚠ DO NOT RE-ADD IT FROM THE `E340` REPORT OR ITS COMMENT. That block is
-          history; this is the live decision. `<HomeSections />` is followed directly
-          by `<OneWayTwoWay />` on purpose.
+          history; this is the live decision.
+          ⚠ THIS NOTE SAID *"`<HomeSections />` is followed directly by
+          `<OneWayTwoWay />` on purpose"* — TRUE AT `E349`, FALSE SINCE `P1-J0-E350`,
+          which removed `OneWayTwoWay` from this page along with sixteen others. See
+          the `E350` tombstone directly below. `<HomeSections />` is now followed by
+          that tombstone and then the pre-spine block.
           ⚠ `BRAND_DESCRIPTOR` IS NOT RETIRED and `lib/brand.ts` is untouched. It
           keeps three consumers, all unchanged: `MarketingFooter`'s band 2 and its
           legal bar (both on every public page) and `OnboardingFrame`. `/` still
           renders it twice, in the footer. This removed ONE consumer, not the string.
           ⚠ IT WAS NOT MOVED TO `MarketingHeader` — he said remove, not relocate.
         */}
-        <OneWayTwoWay />
         {/*
-          ⚠ `FourAudiences` (`E311`) IS NO LONGER PARKED and renders BELOW, after
-          `MethodologyRing` — see the note at its render site for why it is not
-          here. This comment's old claim that it "belongs AFTER this one" still
-          holds; "after" turned out to mean after the Optimize block, not
-          immediately after this section.
+          ── ⚠⚠ SEVENTEEN SECTIONS CAME OFF `/` (`P1-J0-E350`, 2026-08-28) ─────────
+
+          Scott walked the page and listed them. This is the tombstone for the whole
+          run so the next reader does not restore one from an older comment.
+
+          REMOVED FROM THIS PAGE, in the order they used to appear:
+            1  OneWayTwoWay                       (was here, after HomeSections)
+            2  GetTheTalent            3  WorkTracker
+            4  FourAudiences           5  TalentTeaser     (were after MethodologyRing)
+            6  VideoSequence audience="buyer"     7  AppShots page="hire"
+            8  ThreeWays               9  AiMatch         10  TwoPains
+           11  OmniChannel            12  GoDirectBionic  13  ProfileViz
+           14  FourBeats page="work"  15  AiStrip audience="provider"
+           16  ClosingCta audience="provider"
+           17  ErpPunchout                         (was below the `.pm-home` wrapper)
+
+          ⚠⚠ `E164` STILL HOLDS: ALL SEVENTEEN `.tsx` FILES STAY ON DISK, UNMODIFIED.
+          Only the render calls and their imports went. That is what makes this
+          reversible, and it is why none of them was "tidied away" as unused.
+          ⚠ `src/lib/brand.ts` IS UNTOUCHED. Most of these read their copy from it and
+          it now looks like dead weight. IT IS NOT — `/talent`, `/work`, `/shop`,
+          `/learn` and `/integrate` read from it too.
+
+          ⚠ SEVERAL NOW RENDER ON NO PAGE AT ALL. That is the instruction, recorded
+          rather than an oversight. ⚠ `GetTheTalent` IS THE ONE TO WATCH: Scott,
+          2026-08-28 — *"the hire talent from within your roadmap should move to the
+          optimization section."* Which parts become `/optimize`'s step 6 is STILL
+          OPEN and is a separate brief. Between that commit and this one it renders
+          nowhere, KNOWN AND ACCEPTED. ⚠ Do not park it somewhere to keep it alive.
+
+          ⚠ THE GAPS THIS LEAVES ARE DELIBERATE. Nothing that survives was re-ordered,
+          re-spaced or re-styled — Scott wants to look at the result before anything
+          is closed up.
+          ⚠ `#punchout` LOST ITS TARGET WITH `ErpPunchout` AND WAS REPOINTED, not left
+          dangling: HOME section 6's `ctaHref` is now `/integrate#punchout`. See
+          `home-sections.ts`.
         */}
-        <GetTheTalent />
-        <WorkTracker />
 
         {/*
           ── EVERYTHING BELOW THIS LINE IS THE PRE-SPINE PAGE, UNCHANGED ──────
@@ -338,36 +353,6 @@ export default function Home() {
           `MethodologyRing` above are becoming link targets under E270/E272 and
           are deliberately untouched.
         */}
-        {/*
-          ── ⚠⚠ WHO LEARN IS SOLD TO (`P1-J0-E311`), UNPARKED 2026-08-25 ────────
-
-          It goes HERE, and the placement is a judgement worth recording. Three
-          candidates:
-
-            · directly after `OneWayTwoWay` — where that file's own comment guessed
-              it would land. ⚠ REJECTED: it pushes the Optimize argument down, and
-              `P1-J0-E297`'s selection of treatment `B` rests on ONE property Scott
-              said he did not want to lose — *"the assessment stops being the
-              loudest thing on the page around band three."* Two audience sections
-              back to back before `GetTheTalent` spends that.
-            · at the very bottom, after `Testimonials`. ⚠ REJECTED: the only Learn
-              content on `/` should not be below the closing proof.
-            · HERE — after `MethodologyRing` closes the Optimize argument and
-              before `TalentTeaser` opens the Talent one. ⚠ CHOSEN: it is the seam,
-              and the MAKE row hands directly into the talent pitch.
-
-          ⚠ IT IS THE ONLY LEARN CONTENT ON `/`. There is no Learn pillar row yet —
-          `P1-J0-E297` selects treatment `B` for six of them and NONE EXIST. That is
-          survivable because this section carries its own `Learn` eyebrow, but see
-          the component header: when the pillar row lands it will carry a CONDENSED
-          Learn value summary and this is a second one, which is `E162`/`E242`'s
-          shape. ⚠ THE TWO MUST BE DESIGNED TOGETHER. Reported, not decided.
-
-          ⚠ ONLY ROW 4's SENTENCE IS SCOTT'S. The other three, all three labels and
-          the limit line are CC's drafts, marked at their sites.
-        */}
-        <FourAudiences />
-        <TalentTeaser />
         <Testimonials />
         {/*
           ── ⚠⚠ PARKED FROM `/talent` (`P1-J1-E030`) ─────────────────────────
@@ -377,95 +362,18 @@ export default function Home() {
           NOT integrated into `/`'s narrative, NOT re-worded and NOT redesigned —
           the order is the order they had on `/talent`.
 
-          ⚠ `VideoSequence` WAS REPOINTED AT THE `-hero` CUTS IN THE SAME COMMIT.
-          It eager-loaded four FULL-SIZE clips — 10.63MB — and `/` already serves
-          `consultation` as its hero, so moving it here unchanged would have made
-          `/` the heaviest page on the site. See `VideoSequence.tsx`.
+          ⚠⚠ TWO OF THE THREE LEFT AT `P1-J0-E350` — `VideoSequence audience="buyer"`
+          and `AppShots page="hire"`. ONLY `ValueStack` BELOW SURVIVES, so this note
+          now documents one section, not three. Both files stay on disk (`E164`).
+          ⚠ THE `VideoSequence` NOTE IS KEPT AS HISTORY because it is the reason that
+          component is pointed at the `-hero` cuts and would matter again if it is
+          ever re-added anywhere: it eager-loaded four FULL-SIZE clips — 10.63MB — and
+          `/` already serves `consultation` as its hero, so moving it here unchanged
+          would have made `/` the heaviest page on the site. See `VideoSequence.tsx`.
+          ⚠ IT IS HISTORY, NOT A LIVE INSTRUCTION. Do not re-add either one from it.
         */}
         <ValueStack />
-        <VideoSequence audience="buyer" />
-        <AppShots page="hire" />
-        {/*
-          ── ⚠⚠ NINE MORE PARKED, FROM `/find-work` (`P1-J4-E023`) ────────────
-
-          Scott moved them; they keep the order they had on `/find-work`, after the
-          three `walk-fixes` parked from `/talent`. ⚠ A PARKING PLACE — not
-          re-worded, not re-styled, not woven into `/`'s narrative.
-
-          ⚠⚠ `VideoSequence` AND `AppShots` ARE NOT REPEATED HERE. `/find-work`
-          carried `audience="provider"` and `page="work"`; `/` already renders the
-          same two components as `audience="buyer"` and `page="hire"` three lines
-          above. ⚠ THE PROVIDER/WORK VARIANTS ARE NOW UNRENDERED ANYWHERE ON THE
-          SITE — stated in the brief report, not left to be found.
-
-          ⚠ SEVEN OF THESE ARE `audience="provider"`, WHICH IS WHY THEY LEFT THE
-          BUYER'S PAGE (`P1-J4-E005`). They are provider copy on a page that has no
-          single audience yet, which is a smaller problem than provider copy on a
-          page explicitly re-pointed at buyers.
-        */}
-        <ThreeWays />
-        <AiMatch />
-        <TwoPains />
-        <OmniChannel />
-        <GoDirectBionic />
-        <ProfileViz />
-        <FourBeats page="work" />
-        <AiStrip audience="provider" />
-        <ClosingCta audience="provider" />
       </div>
-      {/*
-        ── ⚠⚠ `ErpPunchout`, MOVED HERE FROM `/integrate` (`P1-J0-E333`) ─────────
-
-        SCOTT, 2026-08-26, screenshotting *"Punch out for talent — not just parts."*:
-        *"Move this graphic to the home page."*
-
-        ⚠⚠ HE REVERSED HIMSELF AND THE DEAD INSTRUCTION IS QUOTED SO NOBODY RESTORES
-        IT CITING `E020`:
-          `P1-J1-E020`, 2026-08-24, same component:
-            *"This needs to be moved to INTEGRATE."*
-        `/hire-talent` -> `/integrate` on 2026-08-24, `/integrate` -> here on
-        2026-08-26. ⚠ THE LATER INSTRUCTION WINS. Check the date before moving it on
-        the strength of either note.
-
-        ⚠ A MOVE, NOT A COPY — it renders on THIS PAGE ONLY. `/integrate` no longer
-        imports it. Two copies of one diagram is two sources of truth.
-
-        ── ⚠⚠ WHY IT SITS **OUTSIDE** THE `.pm-home` DIV ────────────────────────
-
-        `ErpPunchout` is pure Tailwind — `bg-[#f6f4fb]`, `max-w-[1120px]`,
-        `border-line`. `.pm-home` sets a FONT STACK, a COLOUR and a LINE-HEIGHT on
-        everything inside it, so dropping this section into the wrapper above would
-        restyle it in a way neither `/hire-talent` nor `/integrate` ever did.
-        ⚠⚠ `/` IS THE `.pm-home` PAGE, so this is the one page where the naive
-        placement is wrong. ⚠ THAT SCOPING TRAP HAS BITTEN FOUR TIMES (`.sd-n`,
-        `P1-J0-E290`, the footer `P1-ALL-E013`, `/learn`'s hero) — measured here.
-        ⚠ IT IS THE SAME REASON THE FOOTER BELOW IS OUT HERE. Two Tailwind sections
-        escaping one ported stylesheet, for one reason.
-
-        ⚠⚠ AND OUTSIDE `.pm-home` WAS NOT ENOUGH ON ITS OWN. `/` DOES NOT USE
-        `MarketingShell` (`:61`, deliberate), so out here a section inherits raw
-        `<body>` — Geist, `#171717`. The first attempt measured 33 property
-        differences across all 37 elements. `ErpPunchout` NOW CARRIES
-        `marketing-surface font-body` ON ITS OWN ROOT (Scott's call, 2026-08-26) and
-        depends on no ancestor. ⚠ DO NOT "TIDY" THOSE CLASSES OFF IT.
-
-        ── ⚠ PLACEMENT: LAST SECTION, BEFORE THE FOOTER ────────────────────────
-
-        ⚠ SCOTT SAID "the home page" AND DID NOT SAY WHERE — this is the brief's
-        stated default, not an invention: the same relative slot it held on
-        `/integrate`, after the ERP material and before the footer.
-        ⚠ ON `/` THERE IS NO ERP MATERIAL TO SIT AFTER — `ErpIntegration` and
-        `ErpPackages` BOTH LEFT THIS PAGE (`P1-J0-E255`, `P1-J0-E273`) and render on
-        `/integrate` and `/shop`. So "after the ERP material" resolves to "last",
-        which is also the ONLY slot outside `.pm-home` that is in reading order.
-        ⚠ IT FOLLOWS `ClosingCta audience="provider"` — a closing CTA is a strange
-        thing to have a section after. REPORTED for Scott's walk rather than
-        reordered, because the ordering above it is his.
-
-        ⚠ `id="punchout"` TRAVELS WITH IT: once here, once on `/integrate` (re-homed
-        onto that page's `ErpIntegration` wrapper). ⚠ ONE PER PAGE — two is a defect.
-      */}
-      <ErpPunchout />
       {/*
         ── ⚠⚠ THE FOOTER SITS OUTSIDE `.pm-home`, AND THAT IS LOAD-BEARING ────
 

@@ -845,26 +845,35 @@ test.describe("the Step 5 roadmap grid", () => {
     ).toBeGreaterThan(0);
     const roadmap = nouns(roadmapLines);
 
-    /* ── the tracker, on `/` — a DIFFERENT PAGE since E298. See the note above. ── */
-    await page.goto("/");
-    const trackerLines = await page.locator(".trk-nm > span").allTextContents();
-    expect(
-      trackerLines.length,
-      "no tracker rows found on / — WorkTracker was supposed to STAY",
-    ).toBeGreaterThan(0);
-    const tracker = nouns(trackerLines);
     const ALLOWED = ["Deliverable", "Deployable", "Expert\u2019s hours"].sort();
     expect(roadmap, "the roadmap's resource words").toEqual(ALLOWED);
     expect(
-      tracker,
-      "the tracker's resource words — a hard-coded detail string drifts here",
-    ).toEqual(ALLOWED);
-    for (const set of [roadmap, tracker]) {
-      expect(
-        set.join(" "),
-        '"Deployment" is banned on this surface',
-      ).not.toMatch(/Deployment/);
-    }
+      roadmap.join(" "),
+      '"Deployment" is banned on this surface',
+    ).not.toMatch(/Deployment/);
+    /*
+      ── ⚠⚠ THE TRACKER HALF IS RETIRED BY `P1-J0-E350`, NOT BY DRIFT ─────────
+
+      It read `.trk-nm > span` on `/` and asserted the tracker used the SAME three
+      resource words as the roadmap. ⚠ `WorkTracker` WAS REMOVED FROM `/` by `E350`,
+      one of seventeen sections Scott listed, so there is no tracker on any page to
+      read. Its own failure message — *"no tracker rows found on / — WorkTracker was
+      supposed to STAY"* — was true until he reversed it.
+
+      ⚠ THE ROADMAP HALF ABOVE IS UNTOUCHED and still guards the vocabulary on
+      `/optimize`, which is the surface that still exists.
+      ⚠ THE CONTRACT IS NOT ABANDONED, ONLY UNOBSERVABLE. `WorkTracker.tsx` is still
+      on disk under `E164` and the three ALLOWED words above are still the shared
+      vocabulary. If it is ever rendered again — `/optimize` step 6 is the likely
+      home — RESTORE THIS HALF rather than writing a new one.
+      ⚠ AND THE ABSENCE IS ASSERTED BELOW so this cannot pass vacuously: a tracker
+      that quietly returns to `/` unguarded would go undetected otherwise.
+    */
+    await page.goto("/");
+    await expect(
+      page.locator(".trk-nm"),
+      "WorkTracker is back on / — restore the retired vocabulary half above (E350)",
+    ).toHaveCount(0);
   });
 
   test("§20 Load into Work Tracker is still the primary action", async ({
@@ -2196,87 +2205,31 @@ test.describe("talent walk 1 — the seller page and /'s macro section", () => {
     ).toHaveCount(0);
   });
 
-  /**
-   * ⚠ `/`'s MACRO SECTION (`P1-J0-E314`), AND THE HONEST-TENSE GUARD WITH IT.
-   *
-   * The section's whole defensibility is that every line describes what a
-   * provider can BUILD, never what a buyer can PURCHASE — `(app)/packages`,
-   * `(app)/services/offers`, `(app)/hire` and `(app)/search` are all `ComingSoon`
-   * and there is no `Offer` model.
-   *
-   * ⚠ SO THE BUYER-VERB BAN IS ASSERTED, NOT JUST THE SECTION'S PRESENCE. A future
-   * edit that tightens the copy by dropping the development note, or that adds
-   * "buyers order it", turns a positioning claim into a false one.
-   */
-  test("§42 / renders the macro section, and it makes no buyer-side promise", async ({
-    page,
-  }) => {
+  /*
+    ── ⚠⚠ RETIRED BY `P1-J0-E350`, INVERTED RATHER THAN DELETED ──────────────
+
+    This asserted `OneWayTwoWay` on `/`: four `.owtw-row`s, the 30px numeral disc
+    (the `.sd-n` fixed-width bug), a ban on six buyer-side verbs inside `.owtw-grid`,
+    and the `.owtw-note` "still in development" line that kept the four rows
+    defensible. ⚠ SCOTT REMOVED THE SECTION FROM `/` at `E350` — one of seventeen —
+    so there is nothing on any page to read: `OneWayTwoWay` now renders NOWHERE.
+    `OneWayTwoWay.tsx` stays on disk under `E164`.
+
+    ⚠ THE BUYER-VERB BAN AND THE IN-DEVELOPMENT NOTE ARE STILL THE RIGHT CONTRACT.
+    They are not withdrawn, only unobservable. IF THIS SECTION IS EVER RENDERED
+    AGAIN, RESTORE THIS TEST from git rather than writing a weaker one — the whole
+    body is in `ef4addc`.
+    ⚠ WHAT REPLACES IT IS AN ABSENCE GUARD, so the retirement cannot pass vacuously
+    and the section cannot creep back unnoticed.
+  */
+  test("§42 the macro section is off / — retired by E350", async ({ page }) => {
     await page.goto("/");
-    await expect(page.locator(".owtw-row")).toHaveCount(4);
-
-    /* ⚠ THE NUMERAL IS A FIXED-WIDTH DISC. This is the `.sd-n` bug (`5d50135`)
-       asserted against: a bare class lost to a `.pm-home ` one and the disc came
-       out glyph-width. */
-    const numW = await page
-      .locator(".owtw-n")
-      .first()
-      .evaluate((e) => Math.round(e.getBoundingClientRect().width));
-    expect(numW, "the numeral disc must not size to its glyph").toBe(30);
-
-    const section = ((await page.locator(".owtw-grid").textContent()) ?? "")
-      .replace(/\s+/g, " ")
-      .toLowerCase();
-    for (const banned of [
-      "buy ",
-      "purchase",
-      "checkout",
-      "order it",
-      "hire them",
-      "add to cart",
-    ]) {
-      expect(
-        section.includes(banned),
-        `the stack cannot be bought yet — "${banned}" is a buyer-side promise`,
-      ).toBe(false);
-    }
-
-    /* ⚠ AND THE LIMIT MUST BE STATED. Deleting it is how the section becomes a lie. */
     await expect(
-      page.locator(".owtw-note"),
-      "the in-development note is what keeps the four rows defensible",
-    ).toContainText(/still in development/i);
-
-    /* ⚠ LINKEDIN IS NOT NAMED. Scott's framing names it; the page deliberately
-       does not — a competitor's name in marketing copy is a risk he did not ask
-       us to take. */
-    const body = await page.evaluate(() => document.body.innerText);
-    const macro = await page
-      .locator("section")
-      .filter({ hasText: "you are the product" })
-      .first()
-      .innerText();
-    expect(
-      /*
-        ⚠⚠ SCOPED TO THE MACRO SECTION, AND THE REASON IS A GENUINE CLASH BETWEEN
-        TWO OF SCOTT'S OWN INSTRUCTIONS — reported, not resolved here.
-
-        `P1-J0-E314` decided `/`'s macro section must NOT name a competitor:
-        `OneWayTwoWay` says *"On other platforms you are the product"* and lets the
-        reader supply the name. ⚠ THAT DECISION IS INTACT and is what this now
-        asserts — on the SECTION it was written about.
-
-        ⚠ BUT `brief_walk_fixes` WS1 MOVED THREE SECTIONS ONTO `/` AND FORBADE
-        RE-WORDING THEM (*"This is a PARKING PLACE. Do not redesign them, do not
-        re-word them"*). One of them prints `lib/brand.ts:264` — *"Drop your résumé
-        or LinkedIn — AI builds your profile and labels your services."* So `/` now
-        names LinkedIn, in a parked section, and the only ways to stop it are to
-        re-word (forbidden) or not move (forbidden).
-        ⚠ THE MOVE SHIPPED, THE RULE IS UNCHANGED FOR THE MACRO SECTION, AND THE
-        CONFLICT IS IN THE BRIEF REPORT FOR SCOTT.
-      */
-      /linkedin/i.test(macro),
-      "/ must not name a competitor — E314 records this decision",
-    ).toBe(false);
+      page.locator(".owtw-row"),
+      "OneWayTwoWay is back on / — restore §42's full body from ef4addc (E350)",
+    ).toHaveCount(0);
+    await expect(page.locator(".owtw-grid")).toHaveCount(0);
+    await expect(page.locator(".owtw-note")).toHaveCount(0);
   });
 });
 
@@ -2417,11 +2370,26 @@ test.describe("work walk 1 — the buyer's page", () => {
   test("§46 ThreeWays and AiMatch are on / and not on /talent", async ({
     page,
   }) => {
-    /* ⚠ RE-HOMED BY `P1-J4-E023`: both moved from /find-work to / with nine others.
-       The invariant — they live on ONE page, not on /talent — is unchanged. */
+    /*
+      ── ⚠⚠ THE "ON `/`" HALF IS RETIRED BY `P1-J0-E350`, NOT BY DRIFT ────────
+
+      `P1-J4-E023` re-homed both from `/find-work` to `/`, and this asserted
+      `toHaveCount(1)` for each there. ⚠ `E350` REMOVED BOTH FROM `/` — two of the
+      seventeen Scott listed — so NEITHER RENDERS ON ANY PAGE NOW. Both files stay on
+      disk under `E164`.
+      ⚠ THE ASSERTION INVERTS RATHER THAN VANISHING, which is stricter than deleting
+      it: if either is re-added to `/` without a decision, this goes red.
+      ⚠ THE `/talent` HALF BELOW IS UNTOUCHED and still guards `E005`'s move.
+    */
     await page.goto("/");
-    await expect(page.locator("#three-ways")).toHaveCount(1);
-    await expect(page.locator("#ai-match")).toHaveCount(1);
+    await expect(
+      page.locator("#three-ways"),
+      "ThreeWays is back on / — E350 removed it",
+    ).toHaveCount(0);
+    await expect(
+      page.locator("#ai-match"),
+      "AiMatch is back on / — E350 removed it",
+    ).toHaveCount(0);
     await page.goto("/talent");
     await expect(
       page.locator("#three-ways"),
@@ -2666,115 +2634,35 @@ test.describe("work walk 1 — the buyer's page", () => {
     }
   });
 
-  /**
-   * ── ⚠⚠ THE 10.63MB THAT LOADED BEFORE ANYONE SCROLLED (`P1-J1-E018`) ───────
-   *
-   * Measured on `c962c56`, production build, DevTools Fast 3G: `/find-work` pulled
-   * **11.01MB on first load, 10.63MB of it the four clips `VideoSequence` renders
-   * BELOW THE FOLD**, first frames landing at 4.9s / 6.4s / 9.5s / 16.7s. The page
-   * had no hero clip at all — the section nobody had reached cost more than a hero
-   * would. After `LazyAutoplayVideo`: **0.39MB**.
-   *
-   * ⚠ THE GUARD IS IN TWO HALVES AND BOTH MATTER. "No bytes at load" alone is
-   * satisfied by a broken video that never plays; "it plays" alone is satisfied by
-   * the eager version this replaced.
-   */
-  test("§51 no clip downloads before it is approached, and every clip still plays", async ({
-    page,
-  }) => {
-    /*
-      ⚠ `/` REPLACES `/talent` HERE (`P1-J1-E030`, WS1). `VideoSequence` MOVED to
-      `/` — moved, not copied — so `/talent` no longer has a four-beat sequence to
-      assert. The invariant is unchanged and now guards the page that owns it.
-      ⚠ AND THE CLIPS IT PLAYS CHANGED IN THE SAME COMMIT: the four masters
-      (10.63MB) became `learn.mp4` + three `-hero` cuts (2.63MB), which is what
-      made the move safe for `/`.
-    */
-    /* ⚠ `/find-work` DROPPED BY `P1-J4-E023`: its `VideoSequence` call site was
-       DELETED, not moved — `/` already renders the same component with
-       `audience="buyer"`, and two would have shipped. The provider variant now
-       renders nowhere. */
-    for (const url of ["/"]) {
-      const clips = new Set<string>();
-      const listener = (r: { url: () => string }) => {
-        if (/\.mp4(\?|$)/.test(r.url())) clips.add(r.url().split("/").pop()!);
-      };
-      page.on("request", listener);
+  /*
+    ── ⚠⚠ RETIRED BY `P1-J0-E350`, AND THE MEASUREMENT IT RECORDS STILL MATTERS ──
 
-      await page.goto(url, { waitUntil: "load" });
-      await page.waitForTimeout(1500);
+    This guarded `VideoSequence`'s four-beat strip on `/` in two halves: no `.mp4`
+    bytes before the strip is approached, and every clip still plays once it is.
+    ⚠ `E350` REMOVED `VideoSequence audience="buyer"` FROM `/` — one of seventeen —
+    and the provider variant already rendered nowhere, so THE COMPONENT NOW RENDERS
+    ON NO PAGE and there is no four-beat sequence anywhere to assert.
 
-      /*
-        ⚠⚠ NARROWED FROM "NO MEDIA AT ALL" TO "NO SEQUENCE CLIP", AND THIS GUARD
-        PREDICTED ITS OWN CHANGE. Written 2026-08-24, its note said: *"A future
-        authorised hero clip SHOULD turn this red: that is the prompt to re-measure,
-        which is exactly what was missing the first time."* Scott authorised one on
-        2026-08-25 (`P1-J1-E028`) and it WAS re-measured, throttled, before shipping.
-
-        ⚠ THE INVARIANT THIS PROTECTS IS UNCHANGED: the four BELOW-THE-FOLD
-        `VideoSequence` clips must not load until approached. That was 10.63MB
-        (`P1-J1-E018`) and it is what made a hero clip affordable at all.
-
-        ⚠ COVERAGE WENT UP, NOT DOWN. The hero clip is not unguarded — §58 asserts
-        its NAME and its WIRE SIZE on all three pages that carry one, and that it is
-        inside the hero card. A full-size clip swapped in fails there.
-      */
-      /*
-        ⚠ THE LIST TRACKS WHAT THE SEQUENCE ACTUALLY PLAYS (WS1). It named the four
-        MASTERS; `VideoSequence` was repointed at the `-hero` cuts in the same
-        commit (10.63MB -> 2.63MB). ⚠ AND LEAVING `consultation.mp4` IN IT WAS A
-        FALSE POSITIVE ON `/`: that master is `/`'s own HERO clip, which loads at
-        page load by design, so the stale list accused the hero of being a lazy
-        sequence clip.
-      */
-      const SEQUENCE_CLIPS = [
-        "learn.mp4",
-        "connect-hero.mp4",
-        "consultation-hero.mp4",
-        "get-paid-hero.mp4",
-      ];
-      expect(
-        [...clips].filter((c) => SEQUENCE_CLIPS.includes(c)),
-        `${url} fetched a below-the-fold sequence clip before the reader was anywhere near it — E018`,
-      ).toEqual([]);
-
-      const srcsAtLoad = await page.evaluate(() =>
-        [...document.querySelectorAll("#sequence video")].map((v) =>
-          v.getAttribute("src"),
-        ),
-      );
-      expect(
-        srcsAtLoad.length,
-        `${url} lost the four-beat sequence entirely`,
-      ).toBe(4);
-      expect(
-        srcsAtLoad.every((s) => s === null),
-        `${url} shipped a src on a below-the-fold clip — E018`,
-      ).toBe(true);
-
-      /* ⚠ NOW WALK TO IT. A lazy clip that never arrives is a deleted clip. */
-      await page.locator("#sequence").scrollIntoViewIfNeeded();
-      await page.waitForFunction(
-        () =>
-          [...document.querySelectorAll("#sequence video")].every(
-            (v) => (v as HTMLVideoElement).readyState >= 3,
-          ),
-        null,
-        { timeout: 30_000 },
-      );
-      const playing = await page.evaluate(() =>
-        [...document.querySelectorAll("#sequence video")].map((v) => {
-          const el = v as HTMLVideoElement;
-          return !el.paused && !el.ended && !!el.getAttribute("src");
-        }),
-      );
-      expect(
-        playing,
-        `${url} left a clip loaded but not playing on approach`,
-      ).toEqual([true, true, true, true]);
-
-      page.off("request", listener);
-    }
+    ⚠ THE NUMBERS ARE KEPT BECAUSE THEY ARE WHY THE COMPONENT IS BUILT THE WAY IT IS:
+    measured on `c962c56`, Fast 3G, `/find-work` pulled 11.01MB on first load, 10.63MB
+    of it four below-the-fold clips, first frames at 4.9s / 6.4s / 9.5s / 16.7s. After
+    `LazyAutoplayVideo`: 0.39MB. ⚠ IF `VideoSequence` IS EVER RENDERED AGAIN, RESTORE
+    THIS TEST from `ef4addc` — both halves — rather than trusting the component.
+    ⚠ `/`'s REMAINING CLIPS ARE STILL GUARDED ELSEWHERE: §58 asserts the `-hero` cuts,
+    §62 asserts posters, and `HomeSections`' band clips keep their `rootMargin="100px"`
+    note. This retirement does not leave `/`'s video unwatched.
+  */
+  test("§51 the four-beat sequence is off / — retired by E350", async ({ page }) => {
+    await page.goto("/");
+    /* ⚠ `#sequence` IS `VideoSequence`'s OWN ROOT ID (`VideoSequence.tsx:101`) and
+       the selector the retired body used (`#sequence video`). It is checked against
+       the component, not guessed — an absence guard on a selector that does not
+       exist passes whether or not the section renders, which is worse than none. */
+    await expect(
+      page.locator("#sequence"),
+      "VideoSequence is back on / — restore §51's full body from ef4addc (E350)",
+    ).toHaveCount(0);
+    await expect(page.locator("#sequence video")).toHaveCount(0);
   });
 
   /**
@@ -3022,122 +2910,39 @@ test.describe("shop walk 1 — /shop", () => {
  * the assertion is not "four rows exist", it is "four rows and EXACTLY ONE of them
  * is the MAKE side". A fourth SAVE card, or a second MAKE row, is the failure this
  * catches.
+ *
+ * ⚠⚠ ALL OF THE ABOVE IS HISTORY AS OF `P1-J0-E350`. Scott removed `FourAudiences`
+ * from `/` and it renders on no page, so both tests in this block are retired and
+ * replaced by a single absence guard. The contract above is NOT withdrawn — restore
+ * both bodies from `ef4addc` if the section ever returns. See the notes inside.
  */
 test.describe("home — the four audiences LEARN is sold to", () => {
-  test("§56 / renders four audience rows, exactly one on the MAKE side", async ({
-    page,
-  }) => {
+  /*
+    ── ⚠⚠ RETIRED BY `P1-J0-E350`, INVERTED RATHER THAN DELETED ──────────────
+
+    This asserted `FourAudiences` on `/`: exactly four `[data-aud-side]` rows with
+    exactly one on the MAKE side. ⚠ `E350` REMOVED THE SECTION — one of seventeen —
+    so it renders on no page. `FourAudiences.tsx` stays on disk under `E164`.
+    ⚠ RESTORE FROM `ef4addc` if it is ever rendered again; the four-rows/one-MAKE
+    contract is not withdrawn, only unobservable.
+  */
+  test("§56 the four audience rows are off / — retired by E350", async ({ page }) => {
     await page.goto("/");
-
-    const rows = page.locator("[data-aud-side]");
-    await expect(rows, "four parties, no more and no fewer").toHaveCount(4);
-
-    const sides = await rows.evaluateAll((els) =>
-      els.map((e) => e.getAttribute("data-aud-side")),
-    );
-    expect(
-      sides.filter((s) => s === "make").length,
-      "exactly one party MAKES money — three SAVE",
-    ).toBe(1);
-    expect(
-      sides.filter((s) => s === "save").length,
-      "the other three SAVE",
-    ).toBe(3);
-
-    /*
-      ⚠ THE MAKE ROW MUST NOT BE INSIDE THE SAVE GRID. That is how "three, then one
-      that is different" gets quietly flattened into a 2×2 — the markup would still
-      report 4 rows and 1 make, and the idea would be gone.
-    */
-    const flattened = await page.evaluate(() => {
-      const make = document.querySelector('[data-aud-side="make"]');
-      return !!make?.closest(".aud-grid");
-    });
-    expect(
-      flattened,
-      "the MAKE row was moved into the SAVE grid — the split is structural, not a chip",
-    ).toBe(false);
-
-    /*
-      ⚠⚠ THE RETAINER STOP, ASSERTED. `1-2 hours a month` and any retainer price
-      are absent because NOTHING is built — zero `Conversation`/`Message` models, no
-      booking, no scheduling, and `/messages` ships a disabled composer
-      (`P1-J3-E014`). This is the half of the row that could not ship, so it is the
-      half a future edit is most likely to restore.
-    */
-    const section = await page
-      .locator("section.sd")
-      .filter({ hasText: "One can make money" })
-      .first()
-      .innerText();
-    for (const banned of [
-      "1-2 hours",
-      "1–2 hours",
-      "hours a month",
-      "retainer",
-      "/month",
-      "per month",
-    ]) {
-      expect(
-        section.toLowerCase(),
-        `the platform neither sells, schedules nor bills a retainer — "${banned}" cannot ship here`,
-      ).not.toContain(banned.toLowerCase());
-    }
-
-    /*
-      ⚠ AND NO CERTIFICATE CLAIM. Read live 2026-08-24: 8 `LearnAssessment` rows,
-      ALL `DRAFT` — 0 of 23 paths can be tested, so no certificate can be earned
-      today (`P1-J3-E030`). The three SAVE lines lean on "free", which IS
-      unconditionally true; a certificate line would not be.
-    */
-    expect(
-      section.toLowerCase(),
-      "0 of 23 paths have a sittable test — nothing here may promise a certificate",
-    ).not.toContain("certif");
-
-    /* ⚠ NO INVENTED SAVINGS FIGURE. The brief forbids one for all three SAVE
-       parties, and the simplest guard is that the section carries no currency at
-       all. */
-    expect(
-      section,
-      "no savings figure may be invented for any of the three SAVE parties",
-    ).not.toMatch(/[$€£]\s?\d/);
+    await expect(
+      page.locator("[data-aud-side]"),
+      "FourAudiences is back on / — restore §56 and §57 from ef4addc (E350)",
+    ).toHaveCount(0);
   });
 
-  /**
-   * ⚠ THE SELF-IDENTIFICATION TEST, ENFORCED (`positioning_decision.md`,
-   * 2026-08-24). Two of Scott's four party names FAIL it and a third is flagged,
-   * with the instruction *"FIX BEFORE THE HOME SECTION IS BUILT"* attached to this
-   * row. The labels shipped are the test's own replacements — so the guard is that
-   * the failing ones never come back as page copy.
-   *
-   * ⚠ THEY REMAIN CORRECT AS INTERNAL VOCABULARY. This asserts the rendered
-   * SECTION, not the codebase.
-   */
-  test("§57 no audience label is Panameer's word for the audience", async ({
-    page,
-  }) => {
-    await page.goto("/");
-    const section = (
-      await page
-        .locator("section.sd")
-        .filter({ hasText: "One can make money" })
-        .first()
-        .innerText()
-    ).toLowerCase();
+  /*
+    ── ⚠⚠ RETIRED BY `P1-J0-E350` — SAME COMPONENT AS §56 ────────────────────
 
-    for (const jargon of ["external contact", "end-user", "end user"]) {
-      expect(
-        section,
-        `"${jargon}" is a label from inside the system — nobody uses it about themselves`,
-      ).not.toContain(jargon);
-    }
-    /* `student` is the flagged-not-failed one: nobody here calls themselves one. */
-    expect(
-      section,
-      '"student" as an AUDIENCE LABEL — Scott\'s own row-4 sentence may say it, a heading may not',
-    ).not.toMatch(/^\s*\w*students?\b/m);
-  });
+    This asserted no audience label was Panameer's own word for the audience. It
+    reads the same `[data-aud-side]` rows `FourAudiences` renders, so it went with
+    §56 when `E350` removed the section. ⚠ THE BRIEF PREDICTED §56 AND NOT THIS ONE;
+    it is the same removal, found by running the suite rather than by reading it.
+    ⚠ §56's absence guard covers both. Restore both from `ef4addc` together.
+  */
 });
 
 /**
