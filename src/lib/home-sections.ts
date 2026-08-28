@@ -22,9 +22,9 @@
  * hero says; these six are what HOME says. Two different jobs:
  *
  *     HOME says                        the page's hero says
- *     Start the Assessment             Start Your Free Optimization Assessment
+ *     Start Optimizing My Business Now Start Your Free Optimization Assessment
  *     Start Learning Now               Start Learning for Free
- *     Start Shaping Your Time          Create My Profile
+ *     Sell More Time Now               Create My Profile
  *     Start Reselling Your Work        Shop Service Products
  *     Start Posting Your Work          Create a Work Request
  *     Integrate with Panameer's AIP    How We Integrate
@@ -54,7 +54,16 @@
 */
 export const HOME_OPTIMIZE_CTA = "Start Optimizing My Business Now";
 export const HOME_LEARN_CTA = "Start Learning Now";
-export const HOME_TALENT_CTA = "Start Shaping Your Time";
+/*
+  ⚠ SCOTT CHOSE BETWEEN TWO LABELS, `P1-J0-E346`: *"good catch - use Sell More Time
+  Now."* ⚠ *"Start Selling Your Time Now"* WAS THE OTHER CANDIDATE AND IS NOT USED —
+  it appears nowhere in the tree; do not "restore" it from this note.
+  ⚠ SUPERSEDED, quoted not deleted: *"Start Shaping Your Time"*.
+  ⚠⚠ THE HEADLINE ABOVE THIS BUTTON STILL READS *"Sell More Time by Shaping It to
+  Client Needs"*, so the section now says "Sell More Time" TWICE. Reported to Scott
+  at `E346` and deliberately NOT changed — the headline is his to cut.
+*/
+export const HOME_TALENT_CTA = "Sell More Time Now";
 export const HOME_SHOP_CTA = "Start Reselling Your Work";
 export const HOME_WORK_CTA = "Start Posting Your Work";
 export const HOME_INTEGRATE_CTA = "Integrate with Panameer’s AIP";
@@ -464,16 +473,57 @@ export const HOME_SECTIONS: HomeSection[] = [
     */
     eyebrow: "The Talent You Need...When you need it",
     headline: { a: "Sell More Time by Shaping It to Client Needs" },
+    /*
+      ⚠⚠ SCOTT'S COPY, `P1-J0-E346`. ⚠ `software lifecycle` -> `deployment lifecycle`
+      IS HIS EDIT, not a synonym swap — do not revert it.
+      ⚠ IT NOW OPENS WITH A CALL TO ACTION (*"Click the button below, upload your
+      resume, and use AI to create your profile in seconds."*) which the old copy did
+      not have. ⚠ IT SAYS *"the button below"* AND DOES NOT QUOTE THE LABEL, so it
+      does not interpolate `HOME_TALENT_CTA`; `replace("%s", ...)` is a no-op here.
+      That matters more than usual this time — the label changed in the same commit.
+      ⚠ THE BRIEF WARNED HE TYPED DOUBLE SPACES BETWEEN SENTENCES. The authoritative
+      string it supplied contains NONE — checked byte by byte, zero occurrences of
+      two consecutive spaces — so nothing collapses and no `&nbsp;` question arises.
+      ⚠ SUPERSEDED, quoted not deleted: *"Clients need expert help at different
+      inflection points and for different durations during the software lifecycle. By
+      offering one or multi-day consultations, monthly retainers as well as long term
+      time and expense work, both parties are incentivized to create better incomes
+      and better outcomes."*
+    */
     body:
       "Clients need expert help at different inflection points and for different " +
-      "durations during the software lifecycle. By offering one or multi-day " +
-      "consultations, monthly retainers as well as long term time and expense work, " +
-      "both parties are incentivized to create better incomes and better outcomes.",
-    chipsTitle: "Shape your time",
+      "durations during the deployment lifecycle. Click the button below, upload your " +
+      "resume, and use AI to create your profile in seconds. Offer your expertise in " +
+      "one or multi-day consultations, monthly retainers as well as long term time " +
+      "and expense work. Both parties are incentivized to create better incomes and " +
+      "better outcomes.",
+    /*
+      ⚠ WAS *"Shape your time"* UNTIL `P1-J0-E346`. Scott: all six cards say *"What you get"* now.
+      ⚠ FOR THE RECORD — NOTHING BROKE THIS. The four distinct titles were in the
+      ORIGINAL MOCKUP and had been distinct ever since; no commit drifted them apart.
+      ⚠ SENTENCE CASE, matching sections 1 and 2. The CSS uppercases it — do NOT
+      force uppercase in the data.
+    */
+    chipsTitle: "What you get",
+    /*
+      ⚠⚠ FOUR CHIPS, REPLACING THREE (`P1-J0-E346`). Scott first said *"add"*, then
+      confirmed *"Replace current options with the 4 ones i gave you."* — so the
+      three below are GONE, not appended to.
+      ⚠⚠ ONE TYPO CORRECTED AND CONFIRMED BY HIM: item 3 was typed *"Ability to
+      Monthly/Quarterly Retainers"*, missing the verb. He confirmed the fix —
+      *"Correct...ability to sell..."*. Shipped as *"Ability to Sell
+      Monthly/Quarterly Retainers"*.
+      ⚠ `Monthly/Quarterly` HAS NO SPACES AROUND THE SLASH. His. Title Case is his.
+      No full stops, consistent with sections 1 and 2.
+      ⚠ ONE LINE EACH BY LENGTH, NOT BY `nowrap` — measured in the `E346` report.
+      ⚠ SUPERSEDED, quoted not deleted: *"One-day and multi-day consultations"* ·
+      *"Monthly retainers"* · *"Long-term time and expense work"*.
+    */
     chips: [
-      "One-day and multi-day consultations",
-      "Monthly retainers",
-      "Long-term time and expense work",
+      "Ability to Sell 1 Week Project Planning Consults",
+      "Ability to Sell One-Day App Demos",
+      "Ability to Sell Monthly/Quarterly Retainers",
+      "Ability to Sell RFP Sales Assistance",
     ],
     ctaLabel: HOME_TALENT_CTA,
     ctaHref: "/join/provider",
@@ -495,7 +545,14 @@ export const HOME_SECTIONS: HomeSection[] = [
       "Products to Buyers as fixed-scope and fixed-fee “products”. You get " +
       "to resell your reports, integrations, AI agents and more. They get cheaper " +
       "services, faster, and with less risk. Everyone wins!",
-    chipsTitle: "Everyone wins",
+    /*
+      ⚠ WAS *"Everyone wins"* UNTIL `P1-J0-E346`. Scott: all six cards say *"What you get"* now.
+      ⚠ FOR THE RECORD — NOTHING BROKE THIS. The four distinct titles were in the
+      ORIGINAL MOCKUP and had been distinct ever since; no commit drifted them apart.
+      ⚠ SENTENCE CASE, matching sections 1 and 2. The CSS uppercases it — do NOT
+      force uppercase in the data.
+    */
+    chipsTitle: "What you get",
     chips: [
       "Fixed-scope, fixed-fee Service Products",
       "Buyers get it cheaper, faster, with less risk",
@@ -523,7 +580,14 @@ export const HOME_SECTIONS: HomeSection[] = [
       "track and settle with that talent with the click of a button on a " +
       "predetermined contract. You can even integrate your ERP to automate the " +
       "whole process.",
-    chipsTitle: "Click to",
+    /*
+      ⚠ WAS *"Click to"* UNTIL `P1-J0-E346`. Scott: all six cards say *"What you get"* now.
+      ⚠ FOR THE RECORD — NOTHING BROKE THIS. The four distinct titles were in the
+      ORIGINAL MOCKUP and had been distinct ever since; no commit drifted them apart.
+      ⚠ SENTENCE CASE, matching sections 1 and 2. The CSS uppercases it — do NOT
+      force uppercase in the data.
+    */
+    chipsTitle: "What you get",
     chips: [
       "Build the JD with AI and post the Work Request",
       "See talent ranked by experts and your peers",
@@ -552,7 +616,14 @@ export const HOME_SECTIONS: HomeSection[] = [
       "your business. They launch them from within our AI Platform to optimize your " +
       "roles. Our agents cross your applications, looking and listening to everyday " +
       "interactions and then transacting across apps.",
-    chipsTitle: "How it runs",
+    /*
+      ⚠ WAS *"How it runs"* UNTIL `P1-J0-E346`. Scott: all six cards say *"What you get"* now.
+      ⚠ FOR THE RECORD — NOTHING BROKE THIS. The four distinct titles were in the
+      ORIGINAL MOCKUP and had been distinct ever since; no commit drifted them apart.
+      ⚠ SENTENCE CASE, matching sections 1 and 2. The CSS uppercases it — do NOT
+      force uppercase in the data.
+    */
+    chipsTitle: "What you get",
     chips: [
       "Agents launch from the Panameer AI Platform",
       "They cross your applications, not just one",
