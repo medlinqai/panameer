@@ -336,13 +336,43 @@ export const HOME_SECTIONS: HomeSection[] = [
 
       ⚠ HEADING, CHROME AND NUMBERING UNCHANGED. Numerals derive from the index.
     */
+    /*
+      ── ⚠⚠ SET SEVEN (`P1-J0-E345`) — FIVE CHIPS, NOT SIX ──────────────────────
+
+      Scott dropped one outright: *"no space for one"*. The line that went was
+      *"Hire Talent, Create Timeline from w/in AI Roadmap"* — set six's item 4 and
+      the longest chip on the page at 355px.
+      ⚠ NO FULL STOPS — deliberate, and consistent with set six.
+      ⚠ `w/in` IS HIS ABBREVIATION FOR `within` and survives in item 4. DO NOT EXPAND.
+      ⚠ EVERY LINE NOW OPENS WITH `Free` EXCEPT ITEM 5, WHICH PUTS IT SECOND
+      (*"Create Free Roadmaps…"*). His, deliberate, do not make them parallel.
+
+      ⚠⚠ ONE LINE EACH BY LENGTH, NOT BY `nowrap`. DO NOT ADD `nowrap` TO A CHIP — a
+      nowrap chip that is too long overflows the card silently while a line count
+      reports one clean line. ⚠ `Range`-measured against the row's REAL available
+      width (row minus numeral minus gap), NOT the span's own shrink-to-fit box,
+      which reports the text width and makes any string look like it fits:
+        1440 available 422px · 1160 available 413px
+        315 · 295 · 319 · 334 · 366 — all five one line, longest is item 5 with
+        47px of slack at 1160. They wrap at 390, which is correct on a phone.
+
+      ⚠ SET SIX — SUPERSEDED by this commit (`4149af3`, `E344`), quoted not deleted:
+      *"Process-Based Optimization Dashboard"* · *"AI Solutions for Your Business"* ·
+      *"An AI Roadmap with Expert Review"* · *"Hire Talent, Create Timeline from w/in
+      AI Roadmap"* · *"Track Deployment Progress from Work Order"* · *"Create
+      Roadmaps for Other Business Processes"*
+      ⚠ SETS ONE TO FIVE are quoted in the comment blocks ABOVE this one. With set six
+      directly above, the record holds SEVEN superseded sets for this card alone.
+      ⚠⚠ ALL HISTORY, NOT LIVE INSTRUCTIONS. Do not restore any set from a quote.
+      ⚠ THIS BLOCK IS UNWIELDY AND WAS FLAGGED AT `E344` WITH A PROPOSED SHAPE. Not
+      restructured here; doing it unasked is how a set gets lost.
+    */
     chips: [
-      "Process-Based Optimization Dashboard",
-      "AI Solutions for Your Business",
-      "An AI Roadmap with Expert Review",
-      "Hire Talent, Create Timeline from w/in AI Roadmap",
-      "Track Deployment Progress from Work Order",
-      "Create Roadmaps for Other Business Processes",
+      "Free Process-Based Optimization Dashboard",
+      "Free AI Solution Options for Your Business",
+      "Free AI Roadmap with the Expert to Review It",
+      "Free Deployment Tracker from w/in Work Order",
+      "Create Free Roadmaps for Other Business Processes",
     ],
     ctaLabel: HOME_OPTIMIZE_CTA,
     ctaHref: "/assess",
@@ -351,7 +381,20 @@ export const HOME_SECTIONS: HomeSection[] = [
   {
     key: "learn",
     /* ⚠ `GET SUPPORT WHILE`, Scott 2026-08-27, replacing the deck's `BET BTTER`. */
-    eyebrow: "Expand your services…get support while delivering them",
+    /*
+      ⚠ SCOTT'S STRING, `P1-J0-E345`. ⚠ THREE DOTS `...`, NOT AN ELLIPSIS `…` — as he
+      typed it. Sections 3 and 6 are also three dots; 4 and 5 are a single `…`
+      character. THE PAGE IS INCONSISTENT AND THAT IS HIS TEXT — reported, not tidied.
+      ⚠ SOURCE CASING IS MIXED AND IRRELEVANT — the CSS uppercases it. Do not "fix"
+      the source string to match what renders.
+      ⚠⚠ IT IS ALSO THE TIGHTEST HEADER ON THE PAGE at 14px: 502px against a 553px
+      column at 1160, 51px of slack. Lengthening it is what will break the line.
+      ⚠ SUPERSEDED, quoted not deleted: *"Expand your services…get support while
+      delivering them"* (54 chars, and at 14px it measured 607px — it OVERFLOWED by
+      54px, which is why `E343` and `E344` both stopped on it rather than shipping.
+      Shortening the string is what unblocked the uniform 14px).
+    */
+    eyebrow: "The Support You Need...to Increase Your Income",
     /* ⚠ SUPERSEDED, quoted not deleted: *"Learn New Skills & Build a Support
        Network"*. Scott shortened it (`P1-J0-E344`). */
     headline: { a: "Learn Skills & Build Your Network" },
@@ -384,25 +427,27 @@ export const HOME_SECTIONS: HomeSection[] = [
       ⚠⚠ FOUR CHIPS, NOT THREE (`E344`). The other five sections keep three; `chips`
       is already `string[]` (widened at `a7394d7`) so nothing structural changed, and
       the numerals derive from the index, so the panel counts to 4 by itself.
-      ⚠⚠ ITEM 2 HAS NO FULL STOP AND THE OTHER THREE DO. SHIPPED AS TYPED, NOT
-      "FIXED" — reported to Scott instead of silently corrected; his punctuation
-      ships verbatim. ⚠ THE HERO'S SET SIX WENT THE OTHER WAY (no stops at all), so
-      the two cards are inconsistent WITH EACH OTHER BY HIS INSTRUCTION, not by
-      accident. Do not "harmonise" them.
-      ⚠ HIS `&` AND HIS OXFORD COMMA IN ITEM 1. Ship them.
+      ⚠⚠ REWRITTEN AGAIN AT `P1-J0-E345` — AND THE FULL-STOP PROBLEM IS GONE. The
+      previous set had a stop on three of four and none on item 2; that was reported
+      rather than corrected, and this set has NO stops at all, matching the hero card.
+      The two cards now agree. ⚠ Every line opens with `Free` except item 3, which
+      puts it last (*"…for Free"*). His, deliberate — do not make them parallel.
       ⚠ ONE LINE EACH, BY LENGTH AND NOT BY `nowrap` — same rule as the hero card.
       `Range`-measured against the row's real available width: 1440 available 422px,
-      longest is item 1 at 316px; 1160 available 413px, same 316px; all four one
-      line. They wrap at 390, which is expected.
-      ⚠ SUPERSEDED, quoted not deleted: *"Learning paths, courses and lessons —
+      1160 available 413px; widths 282 · 302 · 296 · 299, all four one line, longest
+      has 111px of slack at 1160. They wrap at 390, which is expected.
+      ⚠ SUPERSEDED, quoted not deleted — the `E344` four: *"Access to Learning Paths,
+      Courses, & Lessons."* · *"Access to Learning Path Communities"* · *"Ability to
+      Connect with Instructors."* · *"Access to Free Certifications."*
+      ⚠ SUPERSEDED, the original three: *"Learning paths, courses and lessons —
       free"* · *"The path community, and the instructor directly"* · *"A
       certification test, then a network to work"*.
     */
     chips: [
-      "Access to Learning Paths, Courses, & Lessons.",
-      "Access to Learning Path Communities",
-      "Ability to Connect with Instructors.",
-      "Access to Free Certifications.",
+      "Free Access to Learning Paths & Courses",
+      "Free Access to Learning Path Communities",
+      "Ability to Connect with Instructors for Free",
+      "Free Access to Learning Path Certifications",
     ],
     ctaLabel: HOME_LEARN_CTA,
     ctaHref: "/learn/paths",
@@ -410,7 +455,14 @@ export const HOME_SECTIONS: HomeSection[] = [
   },
   {
     key: "talent",
-    eyebrow: "Get the talent your business needs…when it needs it",
+    /*
+      ⚠ SCOTT'S STRING, `P1-J0-E345`. Three dots, his casing.
+      ⚠ SUPERSEDED, quoted not deleted: *"Get the talent your business needs…when it
+      needs it"* — 457px at 11.5px, which scales to ~556px at 14px against a 553px
+      column. IT WOULD HAVE OVERFLOWED; this shorter string (408px) is what allows
+      section 3 to take the uniform size.
+    */
+    eyebrow: "The Talent You Need...When you need it",
     headline: { a: "Sell More Time by Shaping It to Client Needs" },
     body:
       "Clients need expert help at different inflection points and for different " +
@@ -483,7 +535,13 @@ export const HOME_SECTIONS: HomeSection[] = [
   },
   {
     key: "integrate",
-    eyebrow: "Integrate to buy services, deploy BI, and use data to AI",
+    /*
+      ⚠ SCOTT'S STRING, `P1-J0-E345`. His casing; no dots in this one.
+      ⚠ SUPERSEDED, quoted not deleted: *"Integrate to buy services, deploy BI, and
+      use data to AI"* — 481px at 11.5px, ~586px at 14px against a 553px column. IT
+      WOULD HAVE OVERFLOWED; the new string measures 488px.
+    */
+    eyebrow: "Integrate to extend apps and deploy AI and BI",
     /* ⚠ CHAT'S `<br>` SPLIT of the deck's one-liner. Flagged for Scott to revert. */
     headline: {
       a: "Punch Out Beyond “Parts”.",

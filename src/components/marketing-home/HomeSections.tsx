@@ -57,8 +57,10 @@ import {
  * In the mockup `.sec p{font-size:15.5px}` is (0,1,1) and `.eyebrow` is (0,1,0), so
  * the body rule silently won and three "shrink the font" edits did nothing; the fix
  * was `.sec .eyebrow` at (0,2,0). ⚠ TAILWIND HAS NO DESCENDANT SELECTORS — the
- * eyebrow carries `text-[11.5px]` on itself and nothing can outrank it. Measured
- * computed size is in the report.
+ * eyebrow carries its size on itself and nothing can outrank it. Measured computed
+ * size is in the report.
+ * ⚠ THAT SIZE IS `text-[14px]` ON ALL SIX AS OF `P1-J0-E345`. This line used to name
+ * `text-[11.5px]`, which was true only of sections 2-6 and is now true of none.
  */
 
 /** ⚠ 1180px + 26px gutters — the mockup's `.in`. */
@@ -186,35 +188,44 @@ function Section({ s, i }: { s: HomeSection; i: number }) {
       <p
         className={
           /*
-            ⚠ THE HERO'S EYEBROW IS BIGGER THAN THE OTHER FIVE — Scott: *"Change the
-            pink text and make it bigger."* The other five stay at 11.5px / .15em on
-            the branch directly below; it does not move.
+            ⚠⚠ ONE SIZE FOR ALL SIX — 14px (`P1-J0-E345`). Scott: *"please make ALL
+            HEADER SECTION TEXT the same size as SECTION 1."* Section 1 was already
+            14px and sections 2-6 were 11.5px, so the two branches now agree and the
+            ternary was COLLAPSED rather than left as two strings saying one thing.
+            ⚠ SUPERSEDED, quoted not deleted — the branch this replaces:
+                (isHero
+                  ? "mb-3 text-[14px] ..."
+                  : "mb-3 text-[11.5px] ...") +
+            ⚠ SIZE ONLY. The COLOUR is still per-band and still branches — see the
+            `eyebrow` const above, `dark ? "text-white" : "text-[#A61AA5]"`. Do NOT
+            collapse that one: white on the lilac `#F6F3FA` measures ~1.1:1.
 
-            ⚠⚠ 14px, DOWN FROM 18px (`P1-J0-E341`). Scott, on the 18px `E339` shipped:
-            *"This is too big. Perhaps a size between that and image 2?"* — image 2
-            being the other five at 11.5px. 14px sits between the two.
-            ⚠ SIZE ONLY. The string, the white colour, the uppercase and the nowrap
-            rule are unchanged.
-            ⚠⚠ THE `E341` BRIEF CALLED THE OUTGOING SIZE `17px` TWICE. IT WAS 18px —
-            this file's own sweep below records `18px 529 ✓ · 17px 499`, and 17px was
-            never shipped. The brief's "530px at 17px" is in fact the 18px
-            measurement. 14px was an explicit instruction and is between 11.5 and 18
-            either way, so it shipped; the arithmetic it was derived from did not.
-
-            ⚠ MEASURED SWEEP AT 1160 (column 553px), `Range`-measured, from `E339`:
+            ⚠ HISTORY OF THIS NUMBER, NOT LIVE INSTRUCTIONS: 18px shipped at `E339`;
+            `E341` cut the hero to 14px on *"This is too big. Perhaps a size between
+            that and image 2?"*. ⚠ THE `E341` BRIEF CALLED THE OUTGOING SIZE 17px
+            TWICE — it was 18px, and 17px was never shipped.
+            ⚠ THE `E339` SWEEP AT 1160 (column 553px), for the HERO's string only:
               22px 646 ✗ · 21px 617 ✗ · 20px 587 ✗ · 19px 558 ✗ · 18px 529 ✓ · 17px 499
-            18px was the LARGEST that fits. 14px is a taste cut, not a fit cut — the
-            measured widths at 14px are in the `E341` report.
+
+            ⚠⚠ 14px IS NOT FREE FOR EVERY STRING — IT ONLY FITS BECAUSE THREE OF THEM
+            WERE SHORTENED IN THE SAME COMMIT. Measured at 11.5px BEFORE `E345`,
+            section 3 was 457px and section 6 was 481px; scaled to 14px those are
+            ~556px and ~586px against a 553px column, i.e. BOTH WOULD HAVE OVERFLOWED.
+            Sections 2, 3 and 6 got new, shorter strings, which is what made the
+            uniform size possible. ⚠ LENGTHENING ANY HEADER CAN NOW BREAK THE PAGE.
+            ⚠ MEASURED AT 14px AFTER (`Range`, 1160, column 553px):
+              1: 411 · 2: 502 · 3: 408 · 4: 447 · 5: 445 · 6: 488 — all one line,
+              tightest is section 2 with 51px of slack.
 
             ⚠⚠ MEASURE THE TEXT WITH A `Range`, NEVER A LINE COUNT. These are
             `whitespace-nowrap` above 1150px, so an oversized line does NOT wrap — it
             OVERFLOWS its column silently while the box still reports one clean line.
-            That false pass cost `E337` a cut (13px, 630px of text in a 553px column,
-            read as "1 line"). ⚠ `§65` asserts overflow now, so it cannot recur.
+            That false pass cost `E337` a cut, and `E343`'s branch produced 28px of
+            real page scroll at 1160 the same way. ⚠ `§65` asserts overflow now.
+            ⚠ NO `nowrap` WAS ADDED TO BUY A FIT — the rule above predates `E345` and
+            applies to the whole line; the fit comes from the strings being shorter.
           */
-          (isHero
-            ? "mb-3 text-[14px] font-bold uppercase tracking-[0.12em] min-[1151px]:whitespace-nowrap min-[1151px]:tracking-[0.15em] "
-            : "mb-3 text-[11.5px] font-bold uppercase tracking-[0.12em] min-[1151px]:whitespace-nowrap min-[1151px]:tracking-[0.15em] ") +
+          "mb-3 text-[14px] font-bold uppercase tracking-[0.12em] min-[1151px]:whitespace-nowrap min-[1151px]:tracking-[0.15em] " +
           eyebrow
         }
       >
