@@ -26,7 +26,7 @@
  *     Start Learning Now               Start Learning for Free
  *     Sell More Time Now               Create My Profile
  *     Shop for Service Products Now    Shop Service Products
- *     Start Posting Your Work          Create a Work Request
+ *     Create A Work Request Now        Create a Work Request
  *     Integrate with Panameer's AIP    How We Integrate
  *
  * ⚠ THEY ARE STILL CONSTANTS, single-sourced WITHIN HOME — one live literal each,
@@ -80,7 +80,16 @@ export const HOME_TALENT_CTA = "Sell More Time Now";
   or `(app)/packages` (signed-in, 307s). The test asserts all three.
 */
 export const HOME_SHOP_CTA = "Shop for Service Products Now";
-export const HOME_WORK_CTA = "Start Posting Your Work";
+/*
+  ⚠ SCOTT'S LABEL, `P1-J0-E348`. ⚠ HIS CAPITAL `A` IN *"Create A Work Request Now"* —
+  do NOT lower-case it to `a`. ⚠ SUPERSEDED, quoted not deleted: *"Start Posting Your
+  Work"*. ⚠ THE `href` IS UNCHANGED.
+  ⚠ IT IS NOW ONE WORD OFF `/work`'s OWN HERO LABEL, *"Create a Work Request"* (lower
+  -case a, no `Now`) — two near-identical strings for two different controls. That is
+  the `P1-J4-E024` shape; reported at `E348`, not merged, because they are separate
+  constants by design (HOME says one thing, the page hero says another).
+*/
+export const HOME_WORK_CTA = "Create A Work Request Now";
 export const HOME_INTEGRATE_CTA = "Integrate with Panameer’s AIP";
 
 export type HomeSection = {
@@ -641,7 +650,14 @@ export const HOME_SECTIONS: HomeSection[] = [
   },
   {
     key: "work",
-    eyebrow: "Reduce temp labor costs & contract risks",
+    /*
+      ⚠ SCOTT'S STRING, `P1-J0-E348`. ⚠ FOUR DOTS `....` AS HE TYPED THEM.
+      ⚠⚠ THE PAGE NOW RUNS FOUR DIFFERENT DOT STYLES ACROSS SIX HEADERS: section 1 a
+      hyphen `-`, sections 2/3/6 three dots `...`, section 4 a single ellipsis `…`,
+      and this one four dots `....`. HIS CALL, reported at `E348`, not normalised.
+      ⚠ SUPERSEDED, quoted not deleted: *"Reduce temp labor costs & contract risks"*.
+    */
+    eyebrow: "Reduce Costs....Remove Employment Risks",
     /* ⚠ CHAT'S `<br>` SPLIT of the deck's one-liner. Flagged for Scott to revert. */
     headline: { a: "Go Direct & Save Money.", b: "One Contract, No W2 Risk." },
     body:
@@ -658,10 +674,29 @@ export const HOME_SECTIONS: HomeSection[] = [
       force uppercase in the data.
     */
     chipsTitle: "What you get",
+    /*
+      ⚠⚠ FIVE CHIPS, REPLACING THREE (`P1-J0-E348`). No full stops, consistent with
+      sections 1-4. `Jobs/Create` has no spaces around the slash. His.
+      ⚠ THE BRIEF FLAGGED A TRAILING SPACE after *"…Under 1 Contract "* and said it
+      was trimmed. THE BLOCK THE BRIEF SUPPLIED ALREADY HAD NO TRAILING SPACE —
+      checked byte by byte — so the trim was a no-op and NOTHING departs from the
+      authoritative text here. Same pattern as the repeated double-space warnings.
+      ⚠⚠ REPORT-ONLY, ACTED ON BY NOBODY: `WorkOrder` AND `SettlementRequest` DO NOT
+      EXIST AS MODELS. `P1-J1-E041` stubs both counts at literal 0 and `check:app-shell`
+      has a tripwire asserting they are still absent. Chips 3, 4 and 5 describe
+      hiring under one contract, tracking a work order and settling with a single
+      payment — none of which is built. SHIPPED AS WRITTEN because outstanding parts
+      gate PROMOTION, not the build. Pre-launch list item.
+      ⚠ SUPERSEDED, quoted not deleted: *"Build the JD with AI and post the Work
+      Request"* · *"See talent ranked by experts and your peers"* · *"Interview, hire,
+      track and settle — one contract"*.
+    */
     chips: [
-      "Build the JD with AI and post the Work Request",
-      "See talent ranked by experts and your peers",
-      "Interview, hire, track and settle — one contract",
+      "Post Jobs/Create Work Requests for Free",
+      "Immediately Invite Talent to Propose Rate",
+      "Hire, Work, and Settle All Talent Under 1 Contract",
+      "Track Worker Progress through Entire Work Order",
+      "Settle All Talent with Single Payment",
     ],
     ctaLabel: HOME_WORK_CTA,
     ctaHref: "/create-work",
