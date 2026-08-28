@@ -716,11 +716,28 @@ export const HOME_SECTIONS: HomeSection[] = [
       a: "Punch Out Beyond “Parts”.",
       b: "Deploy Pre-Built AI Agents in Hours.",
     },
+    /*
+      ⚠⚠ SCOTT'S COPY, 2026-08-28 (`P1-J0-E349`). ONE TYPO CORRECTED AND FLAGGED:
+        · `just accept the service product AN it is enabled` -> `AND it is enabled`
+      Unambiguous, corrected under the standing rule, and reported so he can reverse
+      it in one word.
+      ⚠⚠ THE DOUBLE SPACE AFTER `products.` IS PRESERVED VERBATIM IN THIS SOURCE
+      STRING and is NOT a mistake to clean up. HTML collapses runs of whitespace at
+      render, so the page shows one space either way; the source keeps what he typed.
+      ⚠ Do NOT add `&nbsp;` to make it survive — he did not ask for a wide gap, and
+      the collapse is correct behaviour.
+      ⚠ CONCATENATION ACROSS LINES IS SAFE HERE. The `HERO_SCRIM` rule (`E338`) is
+      about TAILWIND CLASS LITERALS, which Tailwind scans as raw source text and
+      never evaluates — a class split across `+` is invisible to it. This is PROSE:
+      the runtime joins it and nothing scans it. Do not "fix" body strings into one
+      long line on account of that rule.
+      ⚠ SUPERSEDED, quoted not deleted: *"Our experts are continually creating AI agents to optimize each role within your business. They launch them from within our AI Platform to optimize your roles. Our agents cross your applications, looking and listening to everyday interactions and then transacting across apps."*
+    */
     body:
-      "Our experts are continually creating AI agents to optimize each role within " +
-      "your business. They launch them from within our AI Platform to optimize your " +
-      "roles. Our agents cross your applications, looking and listening to everyday " +
-      "interactions and then transacting across apps.",
+      "Connect to the Panameer AI Platform (AIP) to extend the functionality of " +
+      "your ERP and enable continuous improvement via AI agents, analytics, and " +
+      "deployable service products.  We create them continuously, once you are " +
+      "connected just accept the service product and it is enabled on your data.",
     /*
       ⚠ WAS *"How it runs"* UNTIL `P1-J0-E346`. Scott: all six cards say *"What you get"* now.
       ⚠ FOR THE RECORD — NOTHING BROKE THIS. The four distinct titles were in the
@@ -729,10 +746,25 @@ export const HOME_SECTIONS: HomeSection[] = [
       force uppercase in the data.
     */
     chipsTitle: "What you get",
+    /*
+      ⚠⚠ FOUR CHIPS, REPLACING THREE (`P1-J0-E349`). Scott's order, his casing, his
+      `&`. No full stops, consistent with sections 1-5.
+      ⚠ FOUR IS NOT NEW — sections 2 and 5 already run four and five. The card grid
+      takes it; the numerals derive from the index. Do not change the grid.
+      ⚠ ONE LINE EACH BY LENGTH, NOT BY `nowrap`. DO NOT ADD `whitespace-nowrap` on
+      the strength of any width table — `nowrap` overflows SILENTLY while a line
+      count reports one clean line, which has already cost this page a defect
+      (`E339` §1). Widths were re-measured in-app and CONFIRMED AGAINST A SCREENSHOT
+      for `E349`; the numbers are in that report.
+      ⚠ SUPERSEDED, quoted not deleted: *"Agents launch from the Panameer AI
+      Platform"* · *"They cross your applications, not just one"* · *"They look,
+      listen, then transact across apps"*.
+    */
     chips: [
-      "Agents launch from the Panameer AI Platform",
-      "They cross your applications, not just one",
-      "They look, listen, then transact across apps",
+      "Read, Accept, & Deploy New Agents in Minutes",
+      "Extend Your ERP to Buy Services via Punchout",
+      "Instantly Setup Soft Integrations & Leverage AI",
+      "Deploy AI Agents Across Applications",
     ],
     ctaLabel: HOME_INTEGRATE_CTA,
     /*
