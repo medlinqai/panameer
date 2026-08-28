@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { MarketingHeader } from "@/components/marketing/MarketingHeader";
+import { BRAND_DESCRIPTOR } from "@/lib/brand";
 import { OneWayTwoWay } from "@/components/marketing-home/OneWayTwoWay";
 import { HomeSections } from "@/components/marketing-home/HomeSections";
 import { LogoRibbon } from "@/components/marketing-home/LogoRibbon";
@@ -232,6 +233,42 @@ export default function Home() {
           that file's header before "fixing" them.
         */}
         <HomeSections />
+        {/*
+          ── ⚠⚠ THE TAGLINE BAND (`P1-J0-E340`) ───────────────────────────────────
+
+          Scott, 2026-08-27: *"I also do not want the tagline IN the hero...should be
+          somewhere outside."* `E339` §6b had it inside the hero, in
+          `HomeSections.tsx`; it was removed from there and rebuilt here.
+
+          ⚠⚠ THE PLACEMENT AND THE STYLING BELOW ARE CHAT'S, INFERRED FROM THAT ONE
+          LINE. Scott said "outside the hero" and nothing else — he did not choose a
+          band, a position, a ground or a colour. FLAGGED IN THE `E340` REPORT so he
+          can move it. Moving it is a one-line move of this block.
+          ⚠ THE ALTERNATIVE HE MAY HAVE MEANT — the tagline under the wordmark in
+          `MarketingHeader` — WAS NOT BUILT, deliberately: that component renders on
+          ALL SEVEN public pages, so it would put the line on six pages he did not
+          ask about, on top of the two `MarketingFooter` slots it already occupies
+          everywhere. If that is what he wants, it is a different brief.
+
+          ⚠ `/` ONLY. `BRAND_DESCRIPTOR` is already in `MarketingFooter`'s band 2 and
+          legal bar on every public page, and in `OnboardingFrame`. This band adds a
+          THIRD rendering to `/` and no rendering anywhere else.
+          ⚠ IMPORTED, NEVER RETYPED — one constant, four consumers, moving together.
+
+          ⚠⚠ THE HAIRLINE IS LOAD-BEARING, NOT DECORATION. The band is lilac
+          `#F6F3FA` and `HomeSections`' section 2 (Learn) is ALSO lilac, sitting
+          directly above `OneWayTwoWay`. Without the `#E4DCEE` bottom rule the band
+          and the section it follows read as one undifferentiated field.
+          ⚠ NAVY `#181E3C` ON `#F6F3FA` MEASURES 16.28:1 — comfortably AA and AAA.
+          ⚠ IT MAY WRAP TO TWO LINES AT 390 AND THAT IS FINE. Do NOT add
+          `whitespace-nowrap` — `nowrap` overflows silently and has already cost
+          this page one defect (`E339` §1, the eyebrow).
+        */}
+        <div className="border-b border-[#E4DCEE] bg-[#F6F3FA] py-7">
+          <p className="mx-auto max-w-[1180px] px-6 text-center text-[19px] font-semibold text-[#181E3C]">
+            {BRAND_DESCRIPTOR}
+          </p>
+        </div>
         <OneWayTwoWay />
         {/*
           ⚠ `FourAudiences` (`E311`) IS NO LONGER PARKED and renders BELOW, after

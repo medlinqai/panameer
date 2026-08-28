@@ -162,24 +162,49 @@ export const HOME_SECTIONS: HomeSection[] = [
       *"Your 12-month roadmap — all for free"*.
     */
     /*
-      ⚠⚠ BACK TO THREE. Scott, 2026-08-27: *"six options look horrible. Let's move
-      it back to 3."* This REVERTS `a7394d7`, which had itself replaced a three-item
-      list from hours earlier — third version of this card in two days.
-      ⚠ SUPERSEDED, the six: *"See your rank, how you compare to your peers."* ·
-      *"See a list of possible solutions based on your processing details."* ·
-      *"Review & prioritize the solutions into a 1 year deployment roadmap."* ·
-      *"Hire talent to deploy from within your AI Roadmap."* · *"Track the progress
-      of that work within Panameer."* · *"Create additional roadmaps for other
-      processes, hire and manage within the tracker."*
-      ⚠ THE 215px COLUMN GAP `a7394d7` REPORTED CLOSES ITSELF AT THREE CHIPS — it
-      was 24px before the six landed. ⚠ NO 2x3 GRID WAS EVER BUILT and none is
-      needed; `a7394d7` proposed it and did not build it, correctly.
-      ⚠ HIS `&` IN ITEM 3, HIS CAPITALISATION, HIS PERIODS. Ship them.
+      ── ⚠⚠ FOURTH VERSION OF THIS CARD IN TWO DAYS — READ THE WHOLE HISTORY ────
+
+      Scott, 2026-08-27 (pass 4, `P1-J0-E340`): *"I think i like the six from
+      before...might be more impactful then the tiles."* THE SIX ARE LIVE AGAIN and
+      `ProofStats` came off `/` to make room — see the note in `HomeSections.tsx`
+      where the tiles used to render.
+
+      ⚠⚠ HE SAID THE OPPOSITE ONE DAY EARLIER, AND THAT INSTRUCTION IS NOT DELETED.
+      Scott, 2026-08-27 (pass 3, `b28758e`): *"six options look horrible. Let's move
+      it back to 3."* ⚠ SUPERSEDED, the three that shipped under it: *"Create Your
+      List of Optimization Options."* · *"Free meeting with an Expert to
+      Prioritize."* · *"Build Your AI Roadmap & Hire from within Panameer."*
+      ⚠ SUPERSEDED, the pass-2 three (`f51080e`, restored to this record by `E340` —
+      `b28758e` dropped them WITHOUT quoting them while leaving the note above that
+      cites their slash): *"See your ranking"* · *"See a list of possible solutions
+      for your organization/business process"* · *"Review and prioritize those
+      solutions with an expert"*.
+      ⚠⚠ THE TWO SUPERSEDED SETS ABOVE ARE HISTORY, NOT LIVE INSTRUCTIONS. Do not
+      "restore" either one on the strength of the quote. The six below are current.
+
+      ⚠⚠ THE SIX WERE LIFTED OUT OF `a7394d7` BYTE-FOR-BYTE, NOT RETYPED
+      (`git show a7394d7:src/lib/home-sections.ts`), and were diffed against this
+      file's own superseded quote before the restore — both sources agreed on all
+      six. A retyped string is how an `&` silently becomes an `and`.
+      ⚠ HIS `&` IN ITEM 3, HIS UNHYPHENATED `1 year`, HIS CAPITALISATION, HIS
+      PERIODS. Scott is wordsmithing these himself: do not edit a character, do not
+      re-space, do not re-punctuate.
+
+      ⚠ HEADING, CHROME, NUMBERING AND LAYOUT ARE UNCHANGED. The numerals derive
+      from the index, so six chips number themselves 1-6 with no other edit.
+      ⚠ NO 2x3 GRID WAS EVER BUILT and none is briefed. `a7394d7` proposed one and
+      correctly did not build it; `E340` forbids it in as many words.
+      ⚠ THE 215px COLUMN GAP `a7394d7` REPORTED WAS MEASURED WITH THE TILES STILL
+      SITTING UNDER THE CARD — 113px of it was the tiles. This ships the six
+      WITHOUT them, so that number does not carry over; it was re-measured.
     */
     chips: [
-      "Create Your List of Optimization Options.",
-      "Free meeting with an Expert to Prioritize.",
-      "Build Your AI Roadmap & Hire from within Panameer.",
+      "See your rank, how you compare to your peers.",
+      "See a list of possible solutions based on your processing details.",
+      "Review & prioritize the solutions into a 1 year deployment roadmap.",
+      "Hire talent to deploy from within your AI Roadmap.",
+      "Track the progress of that work within Panameer.",
+      "Create additional roadmaps for other processes, hire and manage within the tracker.",
     ],
     ctaLabel: HOME_OPTIMIZE_CTA,
     ctaHref: "/assess",

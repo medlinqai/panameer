@@ -1,9 +1,7 @@
 import Link from "next/link";
-import { BRAND_DESCRIPTOR } from "@/lib/brand";
 import { HOME_SECTIONS, type HomeSection } from "@/lib/home-sections";
 import { HeroVideoBackdrop } from "@/components/media/HeroVideoBackdrop";
 import { LazyAutoplayVideo } from "@/components/media/LazyAutoplayVideo";
-import { ProofStats } from "@/components/marketing/ProofStats";
 /*
   ⚠ `HERO_BRIDGE_CLASS` AND `HERO_BRIDGE_TEXT` ARE NO LONGER IMPORTED
   (`P1-J0-E338`). `/` dropped the bridge line — see the note where it used to
@@ -257,29 +255,28 @@ function Section({ s, i }: { s: HomeSection; i: number }) {
           )}
         </h3>
       )}
-      {isHero && (
-        /*
-          ── ⚠⚠ THE TAGLINE, IN THE SLOT THE BRIDGE LINE VACATED (`P1-J0-E339` §6b) ─
+      {/*
+        ── ⚠⚠ THE TAGLINE LEFT THE HERO (`P1-J0-E340`) ─────────────────────────
 
-          Scott: *"tagline yes. use the version you have but add the acronym ERP."*
-          ⚠ `BRAND_DESCRIPTOR` IS IMPORTED, NEVER RETYPED. It is a SITE-WIDE constant
-          with four consumers now — this hero, `MarketingFooter`'s band 2, that
-          footer's legal bar, and `OnboardingFrame` — and they all move together.
+        Scott, 2026-08-27: *"I also do not want the tagline IN the hero...should be
+        somewhere outside."* `E339` §6b had put `BRAND_DESCRIPTOR` here, in the slot
+        the bridge line vacated. It now renders in a BAND OF ITS OWN in
+        `app/page.tsx`, directly below `<HomeSections />` and above `<OneWayTwoWay />`.
 
-          ⚠ THE GEOMETRY IS THE BRIDGE LINE'S: `mt-4`, 19px, semibold, `leading-[1.5]`.
-          ⚠⚠ THE COLOUR IS WHITE, NOT `#efa3ee`, AND THAT IS CHAT'S CALL — FLAGGED SO
-          SCOTT CAN REVERT IT. He has just said this section's pink text *"looks
-          better if it is white"*, and dropping a NEW pink line into the same block
-          would contradict him. White measures 14.28 against the gradient's darkest
-          stop; `#efa3ee` measures 7.58. Both pass AA; white is his stated preference.
-          ⚠⚠ IT DOES NOT USE `HERO_BRIDGE_CLASS` AND MUST NOT — six other pages render
-          that class and it is pink BY DESIGN there. This line owns its own class.
-          ⚠ HERO SECTION ONLY. The other five get no tagline.
-        */
-        <p className="mt-4 text-[19px] font-semibold leading-[1.5] text-white">
-          {BRAND_DESCRIPTOR}
-        </p>
-      )}
+        ⚠⚠ THE BAND IS ON `/` ONLY, AND IT LIVES IN `page.tsx`, NOT HERE. Putting it
+        back inside this component would paint it on the hero again, and — because
+        this component renders six sections — risks painting it six times.
+        ⚠ `BRAND_DESCRIPTOR` IS NO LONGER IMPORTED BY THIS FILE. Nothing else here
+        used it, so the import went with the render; an import kept for a render that
+        no longer exists is a new lint warning against a 0-new baseline (`E338`).
+        ⚠ THE CONSTANT ITSELF IS UNTOUCHED in `lib/brand.ts`, and its other three
+        consumers — `MarketingFooter`'s band 2, that footer's legal bar, and
+        `OnboardingFrame` — are untouched. They all still move together.
+
+        ⚠ HISTORY, NOT A LIVE INSTRUCTION: `E339` chose WHITE here over `#efa3ee`,
+        on the strength of *"looks better if it is white"*. The band restates the
+        colour question on a light ground and answers it with navy; see `page.tsx`.
+      */}
       {/*
         ⚠ `%s` IS THE PAGE'S OWN CTA LABEL, SUBSTITUTED HERE FROM `s.ctaLabel` —
         the copy QUOTES the button and must never hold a second typed copy of it
@@ -419,34 +416,33 @@ function Section({ s, i }: { s: HomeSection; i: number }) {
           </div>
         ))}
       </div>
-      {isHero && (
-        /*
-          ── ⚠⚠ THE TILES ARE BACK ON `/` (`P1-J0-E338`) ─────────────────────
+      {/*
+        ── ⚠⚠ THE TILES CAME OFF `/` AGAIN (`P1-J0-E340`) ──────────────────────
 
-          `P1-J0-E337` removed `<HomeHero />` from `/` and `ProofStats` went with it,
-          because it renders INSIDE that component. Scott wants the tiles back — so
-          they are IMPORTED here, DIRECTLY BELOW the What-you-get card, in the hero's
-          right column. ⚠ `ProofStats.tsx` IS NOT EDITED and `/optimize` IS NOT
-          TOUCHED — both still render it exactly as before.
-          ⚠ NO MARKUP COPIED AND NO FIGURE RETYPED. One component, two callers.
+        Scott, 2026-08-27: *"Can you replace the tiles with the six?"* — the
+        What-you-get card went back to SIX chips (see `home-sections.ts`) and
+        `<ProofStats />` rendered here, directly below it, until this commit. The
+        card replaces it; nothing took its place in the layout.
 
-          ⚠⚠ `variant="home"` EMITS `.stats/.stat/.big/.lbl`, WHICH ARE
-          `.pm-home`-SCOPED IN `home.css`. Outside that wrapper they paint NOTHING —
-          the scoping trap that has cost this codebase six defects. ⚠ THIS SECTION
-          RENDERS INSIDE `page.tsx:110`'s `.pm-home` div, so the classes resolve;
-          CONFIRMED by reading the computed styles of all three tiles, not by
-          assuming. If these sections are ever moved outside that wrapper, the tiles
-          go blank silently.
+        ⚠⚠ `ProofStats.tsx` IS STILL ON DISK, UNEDITED, AND IS NOT UNUSED. It is
+        rendered by `HomeHero.tsx:266`, which `/optimize` calls — so `/optimize`
+        STILL SHOWS ALL THREE TILES and is untouched by `E340`. DO NOT "tidy away"
+        the component as dead; deleting it breaks that page.
+        ⚠ THE IMPORT WAS REMOVED FROM THIS FILE'S HEADER TOO. An import left behind
+        for a render that no longer exists is a new lint warning against a 0-new
+        baseline — `E338` cost exactly that, twice.
 
-          ⚠⚠ AND THE FIGURES ARE INVENTED. `ProofStats.tsx:9` SAYS SO IN THE FILE:
-          `942 Assessments Completed`, `10M+ Total Savings`, `$6M+ Tax Savings` are
-          not live reads. Bringing them back to `/` re-opens that on the home page.
-          Scott's call, made knowingly; the row stays open.
-        */
-        <div className="mt-4">
-          <ProofStats />
-        </div>
-      )}
+        ⚠⚠ THIS TAKES THE INVENTED FIGURES OFF THE HOME PAGE AGAIN. `942 Assessments
+        Completed`, `10M+ Total Savings` and `$6M+ Tax Savings` are stated as
+        INVENTED in `ProofStats.tsx:9` and are NOT live reads. They still render on
+        `/optimize`, so THAT ROW STAYS OPEN — this narrows the exposure to one page,
+        it does not close it.
+
+        ⚠ HISTORY, NOT A LIVE INSTRUCTION: `E338` put the tiles here on the
+        instruction *"Scott wants the tiles back"*, and `E337` had removed them
+        before that by taking `<HomeHero />` off `/`. Third move of this strip. Do
+        not re-add it on the strength of the `E338` quote.
+      */}
     </div>
   );
 
