@@ -25,7 +25,7 @@
  *     Start Optimizing My Business Now Start Your Free Optimization Assessment
  *     Start Learning Now               Start Learning for Free
  *     Sell More Time Now               Create My Profile
- *     Start Reselling Your Work        Shop Service Products
+ *     Shop for Service Products Now    Shop Service Products
  *     Start Posting Your Work          Create a Work Request
  *     Integrate with Panameer's AIP    How We Integrate
  *
@@ -64,7 +64,22 @@ export const HOME_LEARN_CTA = "Start Learning Now";
   at `E346` and deliberately NOT changed — the headline is his to cut.
 */
 export const HOME_TALENT_CTA = "Sell More Time Now";
-export const HOME_SHOP_CTA = "Start Reselling Your Work";
+/*
+  ⚠ SCOTT'S LABEL, `P1-J0-E347`. ⚠ SUPERSEDED, quoted not deleted: *"Start Reselling
+  Your Work"*.
+  ⚠⚠ THIS BUTTON GOES NOWHERE AND THE NEW LABEL MAKES THAT WORSE, NOT BETTER. The
+  shop section's `ctaHref` is `null` (see below), so the control renders
+  `aria-disabled` with NO `href` — `P1-J2-E010`, there is no public catalogue. The
+  label is now an imperative, *"Shop for Service Products Now"*, and the new body
+  copy says *"Click the button below to see the service products"*. THE COPY TELLS
+  THE READER TO CLICK A CONTROL THAT CANNOT BE CLICKED.
+  ⚠ THAT IS REPORTED AT `E347` AND DELIBERATELY NOT FIXED HERE — the brief says do
+  not touch the href, and `check:ui` locks it disabled for a good reason: an enabled
+  button with nowhere to go is worse. It is a PRE-LAUNCH item, not a build item.
+  ⚠ DO NOT "FIX" IT by giving the button `href="#"`, an empty href, a dead handler,
+  or `(app)/packages` (signed-in, 307s). The test asserts all three.
+*/
+export const HOME_SHOP_CTA = "Shop for Service Products Now";
 export const HOME_WORK_CTA = "Start Posting Your Work";
 export const HOME_INTEGRATE_CTA = "Integrate with Panameer’s AIP";
 
@@ -533,18 +548,58 @@ export const HOME_SECTIONS: HomeSection[] = [
     key: "shop",
     eyebrow: "Deploy cheaper and faster…with less risk",
     /* ⚠ CHAT'S `<br>` SPLIT of the deck's one-liner. Flagged for Scott to revert. */
-    headline: { a: "Don’t Just Sell Your Time…", b: "Resell Your Work" },
     /*
-      ⚠⚠ VERBATIM, AND `past work` + `resell` ARE DELIBERATE. Scott, 2026-08-27,
-      OVERRULED the 2026-08-27 copy rule in `decisions-01.md` FOR THIS PARAGRAPH
-      ONLY. ⚠ DO NOT SOFTEN IT, DO NOT SUBSTITUTE `expertise`, DO NOT ADD A
-      DISCLAIMER. The general rule still stands everywhere else on the site.
+      ⚠⚠ ONE PART NOW — THE `b` KEY IS GONE (`P1-J0-E347`). This is a single-line
+      headline. ⚠ NO RENDER CHANGE WAS NEEDED: `HomeSections.tsx` already guards it
+      with `{s.headline.b && (...)}` and the type is `b?: string`, so a missing `b`
+      renders nothing — sections 1, 2 and 3 have shipped without it for days. The
+      brief asked to check whether the component assumed both parts existed; it does
+      not, and no second line was invented.
+      ⚠ HIS HYPHEN `-`, NOT AN EM DASH, AND HIS `&`. Do not typographically "improve"
+      the hyphen to an en or em dash.
+      ⚠ SUPERSEDED, quoted not deleted: a: *"Don’t Just Sell Your Time…"* ·
+      b: *"Resell Your Work"* — note the old `a` ended in a real ellipsis character.
+    */
+    headline: { a: "Lower Costs & Risk - Buy Outcomes Not Hours" },
+    /*
+      ⚠⚠ VERBATIM, AND `resell` IS DELIBERATE. Scott, 2026-08-27, OVERRULED the
+      2026-08-27 copy rule in `decisions-01.md` FOR THIS PARAGRAPH ONLY. ⚠ DO NOT
+      SOFTEN IT, DO NOT SUBSTITUTE `expertise`, DO NOT ADD A DISCLAIMER. The general
+      rule still stands everywhere else on the site.
+      ⚠ THIS NOTE ORIGINALLY READ "`past work` + `resell` ARE DELIBERATE". `past work`
+      LEFT THE COPY AT `P1-J0-E347` — Scott's own rewrite made it `past efforts` — so
+      the overrule now protects `resell` alone. IT STILL APPLIES: the paragraph says
+      *"Sellers get to resell their reports, integrations, AI agents and more."*
+    */
+    /*
+      ⚠⚠ SCOTT'S REWRITE, `P1-J0-E347`, AND THE VOICE CHANGED FROM SECOND TO THIRD
+      PERSON: *"your past work"* -> *"their past efforts"*, *"You get to resell"* ->
+      *"Sellers get to resell"*. THAT IS HIS EDIT — do not put it back into "you".
+      ⚠ CURLY QUOTES AROUND “products” — keep them curly, do not straighten.
+      ⚠ `Everyone wins!` IS HIS, exclamation mark included. `applications/areas` has
+      no spaces around the slash. His.
+      ⚠ `Service Products` IS CAPITALISED IN SENTENCE 1 AND LOWER-CASE `service
+      products` IN THE LAST SENTENCE. HIS. Do not normalise either way.
+      ⚠ THE BRIEF WARNED HE TYPED DOUBLE SPACES BETWEEN SENTENCES. The authoritative
+      string it supplied contains NONE — checked byte by byte, zero occurrences of
+      two consecutive spaces — so nothing collapses and no `&nbsp;` question arises.
+      ⚠⚠ IT SAYS *"Click the button below to see the service products"* AND THE
+      BUTTON BELOW IS `aria-disabled` WITH NO DESTINATION (`ctaHref: null`,
+      `P1-J2-E010`). The instruction cannot be followed. Reported at `E347`, not
+      fixed here — see the note on `HOME_SHOP_CTA`.
+      ⚠ IT DOES NOT QUOTE THE LABEL, so it does not interpolate `HOME_SHOP_CTA`.
+      ⚠ SUPERSEDED, quoted not deleted: *"Repackage your past work and sell it as
+      a Service Product. Sell Service Products to Buyers as fixed-scope and
+      fixed-fee “products”. You get to resell your reports, integrations, AI agents
+      and more. They get cheaper services, faster, and with less risk. Everyone
+      wins!"*
     */
     body:
-      "Repackage your past work and sell it as a Service Product. Sell Service " +
-      "Products to Buyers as fixed-scope and fixed-fee “products”. You get " +
-      "to resell your reports, integrations, AI agents and more. They get cheaper " +
-      "services, faster, and with less risk. Everyone wins!",
+      "Our experts repackage their past efforts and sell them as Service Products. " +
+      "Service products are sold to buyers as fixed-scope and fixed-fee “products”. " +
+      "Sellers get to resell their reports, integrations, AI agents and more. Buyers " +
+      "get cheaper services, faster deployments, and lower risk. Everyone wins! Click " +
+      "the button below to see the service products for your applications/areas.",
     /*
       ⚠ WAS *"Everyone wins"* UNTIL `P1-J0-E346`. Scott: all six cards say *"What you get"* now.
       ⚠ FOR THE RECORD — NOTHING BROKE THIS. The four distinct titles were in the
@@ -553,10 +608,25 @@ export const HOME_SECTIONS: HomeSection[] = [
       force uppercase in the data.
     */
     chipsTitle: "What you get",
+    /*
+      ⚠⚠ FIVE CHIPS, REPLACING THREE (`P1-J0-E347`). No full stops, consistent with
+      sections 1, 2 and 3. Title Case and every line opening with `Buy` are his.
+      ⚠⚠ REPORT-ONLY, ACTED ON BY NOBODY: FIVE OF THESE NAME THINGS THAT DO NOT EXIST
+      AS MODELS. `Package` exists; there is no AI-agent-suite, KPI-dashboard,
+      end-to-end-demo, cookbook or training-video type behind any of them, and
+      `/shop` has no public catalogue at all (`P1-J2-E010`, `P1-J2-E011`, both open).
+      They ship as written because outstanding parts gate PROMOTION, not the build —
+      Scott's explicit call. THIS IS A PRE-LAUNCH LIST ITEM, not a bug to fix here.
+      ⚠ SUPERSEDED, quoted not deleted: *"Fixed-scope, fixed-fee Service Products"* ·
+      *"Buyers get it cheaper, faster, with less risk"* · *"Experts get paid for the
+      same expertise again"*.
+    */
     chips: [
-      "Fixed-scope, fixed-fee Service Products",
-      "Buyers get it cheaper, faster, with less risk",
-      "Experts get paid for the same expertise again",
+      "Buy Process-Specific AI Agent Suites",
+      "Buy Pre-Built Process KPI Dashboards",
+      "Buy an End-to-End Application Demo",
+      "Buy a P2P Implementation Cookbook",
+      "Buy a Suite of Supplier Portal Training Videos",
     ],
     ctaLabel: HOME_SHOP_CTA,
     /*
