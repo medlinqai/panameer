@@ -115,16 +115,25 @@ export const BRAND_MONEY_LINE =
  * ⚠⚠ PLAIN SENTENCE, ONE FULL STOP. NO EN DASH AND NO AMPERSAND. Both were locked
  * for the OLD string and DO NOT CARRY OVER — do not add them back.
  *
+ * ⚠⚠ `ERP` ADDED 2026-08-27 (`P1-J0-E339`). Scott: *"tagline yes. use the version
+ * you have but add the acronym ERP."*
+ * ⚠ `-related` IS KEPT ON PURPOSE. He asked to ADD the acronym, not to remove the
+ * hedge — and `Oracle ERP services` would drop it. The descriptive-use reasoning
+ * above is why `-related` exists; it stands until he says otherwise.
+ *
+ * ⚠ SUPERSEDED 2026-08-27 (`P1-J0-E339`), quoted not deleted:
+ *   *"Connecting buyers and sellers of Oracle-related services."*
  * ⚠ SUPERSEDED 2026-08-26 (`P1-ALL-E030`), quoted not deleted:
  *   *"The home for Enterprise Systems + AI experts — and the businesses that need
  *    them."*
  *
  * ⚠ ONE STRING, EVERY SURFACE. Consumers: `MarketingFooter`'s band 2 AND its legal
- * bar (which disagreed with each other until E030), and `OnboardingFrame`. All
- * three moved together, which is the entire point of the constant.
+ * bar (which disagreed with each other until E030), `OnboardingFrame`, and — since
+ * `P1-J0-E339` — `/`'s HERO, in the slot the bridge line vacated. All FOUR move
+ * together, which is the entire point of the constant.
  */
 export const BRAND_DESCRIPTOR =
-  "Connecting buyers and sellers of Oracle-related services.";
+  "Connecting buyers and sellers of Oracle ERP-related services.";
 
 /**
  * THE ERP POSITIONING LINE.

@@ -35,13 +35,15 @@
  */
 
 /*
-  ⚠ RELABELLED 2026-08-27 (`P1-J0-E337`): `Start the Assessment` -> this. Scott's
-  words, and the body copy beside it QUOTES this constant — never retype it.
-  ⚠ THE `href` DID NOT CHANGE (`/assess`).
-  ⚠ IT NOW MATCHES `HomeHero`'s DEFAULT `ctaLabel`, which is not an accident: this
-  section replaced `HomeHero` as `/`'s hero, so it inherited the label with the job.
+  ⚠⚠ `FREE` IS CAPITALISED AND THAT IS SCOTT'S, 2026-08-27. DO NOT TITLE-CASE IT.
+  ⚠ SUPERSEDED, in order: `Start the Assessment` (`E337`) -> `Take Our Free
+  Assessment` (`E338`) -> this. Third label in two days; that churn is exactly why
+  it is a constant.
+  ⚠ THE `href` HAS NEVER CHANGED (`/assess`).
+  ⚠ THE BODY COPY NO LONGER QUOTES IT — it says *"the button below"* — so nothing
+  interpolates this any more. It is still the button's only source.
 */
-export const HOME_OPTIMIZE_CTA = "Take Our Free Assessment";
+export const HOME_OPTIMIZE_CTA = "Create My FREE AI Roadmap";
 export const HOME_LEARN_CTA = "Start Learning Now";
 export const HOME_TALENT_CTA = "Start Shaping Your Time";
 export const HOME_SHOP_CTA = "Start Reselling Your Work";
@@ -95,7 +97,13 @@ export const HOME_SECTIONS: HomeSection[] = [
       ⚠ THIS ONE IS RENDERED LARGER THAN THE OTHER FIVE — see `HomeSections.tsx`,
       which sizes the hero section's eyebrow separately and must keep it on ONE LINE.
     */
-    eyebrow: "See Your Options - Build Your AI Roadmap",
+    /*
+      ⚠ SCOTT DROPPED `AI` 2026-08-27 — it is `Build Your Roadmap`, not `Build Your
+      AI Roadmap`. Shipped as typed. ⚠ HIS HYPHEN `-`, NOT AN EM DASH.
+      ⚠ SUPERSEDED: *"See Your Options - Build Your AI Roadmap"* (40 chars).
+      ⚠ 36 CHARS NOW — the size was RE-MEASURED, see `HomeSections.tsx`.
+    */
+    eyebrow: "See Your Options - Build Your Roadmap",
     headline: { a: "Optimize Your Business with AI" },
     /*
       ⚠⚠ SCOTT'S COPY, 2026-08-27, WITH THREE TYPOS CORRECTED — ALL THREE FLAGGED
@@ -121,13 +129,28 @@ export const HOME_SECTIONS: HomeSection[] = [
       ⚠ SUPERSEDED — the previous body opened *"Click the “Take Our Free Assessment”
       button below to take a 15 minute assessment…"*.
     */
+    /*
+      ⚠⚠ SCOTT'S COPY, 2026-08-27 (pass 3). ONE TYPO CORRECTED AND FLAGGED:
+        · `hire from within dashboard` -> `hire from within THE dashboard`
+      ⚠ `immediate AI Roadmap`, `- all for free` AND HIS HYPHEN ARE HIS. Do not
+      improve them to `an immediate AI Roadmap` or an em dash.
+      ⚠ IT SAYS *"the button below"* AND DOES NOT QUOTE THE LABEL, so it does NOT
+      interpolate `HOME_OPTIMIZE_CTA`. Correct and intentional — there is no quoted
+      label left to drift out of step with the button.
+      ⚠ SUPERSEDED — the previous body ran *"…Next, Panameer will build your AI
+      Optimization Dashboard … Together, we will review and prioritize your options
+      to create a 1 year AI Roadmap. All for free. You can even use our project
+      tracker to manage the deployment!"*
+    */
     body:
       "Click the button below, answer several questions, and submit your answers. " +
-      "Next, Panameer will build your AI Optimization Dashboard (listing the " +
-      "possible solutions for your organization). Review those solutions and click " +
-      "the button to schedule a meeting with an expert. Together, we will review " +
-      "and prioritize your options to create a 1 year AI Roadmap. All for free. " +
-      "You can even use our project tracker to manage the deployment!",
+      "Panameer builds your AI Optimization Dashboard (listing the possible " +
+      "solutions for your organization) within minutes and sends you the link. " +
+      "Access the dashboard, review the solutions, and click the button to " +
+      "schedule a meeting with our expert. Together, we select and prioritize the " +
+      "options that are right for your organization, creating your immediate AI " +
+      "Roadmap - all for free. You can even hire from within the dashboard and " +
+      "track the deployment from within Panameer.",
     chipsTitle: "What you get",
     /*
       ⚠ SCOTT'S THREE LINES, 2026-08-27 (pass 2). ⚠ HIS
@@ -139,35 +162,24 @@ export const HOME_SECTIONS: HomeSection[] = [
       *"Your 12-month roadmap — all for free"*.
     */
     /*
-      ⚠⚠ SIX LINES, NOT THREE. Scott, 2026-08-27, SUPERSEDING HIS OWN THREE-ITEM
-      LIST from minutes earlier — the three-line version shipped in `E338` and this
-      replaces it whole.
-      ⚠ SUPERSEDED: *"See your ranking"* · *"See a list of possible solutions for
-      your organization/business process"* · *"Review and prioritize those solutions
-      with an expert"*.
-
-      ⚠⚠ TWO TYPOS CORRECTED, BOTH FLAGGED SO HE CAN REVERT EITHER:
-        · item 4  `from within you AI Roadmap`  ->  `your`
-        · item 6  `hire manage within tracker`  ->  `hire and manage within the tracker`
-      ⚠⚠ THE SECOND IS CHAT SUPPLYING TWO WORDS (`and`, `the`) TO A GARBLED CLAUSE,
-      not fixing a slip. If that is not what he meant, item 6 is the line to re-read.
-
-      ⚠ HIS `&` IN ITEM 3, HIS `1 year`, HIS SENTENCE-ENDING PERIODS — all shipped as
-      typed. Do not normalise the ampersand or hyphenate `1 year`.
-
-      ⚠ ITEMS 4, 5 AND 6 DESCRIBE THINGS THAT DO NOT EXIST YET — hiring from inside a
-      roadmap, tracking deployment, and managing multiple roadmaps. `P1-J0-E238`
-      already records *"copy is ahead of the build"* for the roadmap -> work-request
-      path. ⚠ SHIPPED AS WRITTEN REGARDLESS: outstanding parts gate PROMOTION, not
-      the build. It is a pre-launch line, not a reason to soften a word.
+      ⚠⚠ BACK TO THREE. Scott, 2026-08-27: *"six options look horrible. Let's move
+      it back to 3."* This REVERTS `a7394d7`, which had itself replaced a three-item
+      list from hours earlier — third version of this card in two days.
+      ⚠ SUPERSEDED, the six: *"See your rank, how you compare to your peers."* ·
+      *"See a list of possible solutions based on your processing details."* ·
+      *"Review & prioritize the solutions into a 1 year deployment roadmap."* ·
+      *"Hire talent to deploy from within your AI Roadmap."* · *"Track the progress
+      of that work within Panameer."* · *"Create additional roadmaps for other
+      processes, hire and manage within the tracker."*
+      ⚠ THE 215px COLUMN GAP `a7394d7` REPORTED CLOSES ITSELF AT THREE CHIPS — it
+      was 24px before the six landed. ⚠ NO 2x3 GRID WAS EVER BUILT and none is
+      needed; `a7394d7` proposed it and did not build it, correctly.
+      ⚠ HIS `&` IN ITEM 3, HIS CAPITALISATION, HIS PERIODS. Ship them.
     */
     chips: [
-      "See your rank, how you compare to your peers.",
-      "See a list of possible solutions based on your processing details.",
-      "Review & prioritize the solutions into a 1 year deployment roadmap.",
-      "Hire talent to deploy from within your AI Roadmap.",
-      "Track the progress of that work within Panameer.",
-      "Create additional roadmaps for other processes, hire and manage within the tracker.",
+      "Create Your List of Optimization Options.",
+      "Free meeting with an Expert to Prioritize.",
+      "Build Your AI Roadmap & Hire from within Panameer.",
     ],
     ctaLabel: HOME_OPTIMIZE_CTA,
     ctaHref: "/assess",

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BRAND_DESCRIPTOR } from "@/lib/brand";
 import { HOME_SECTIONS, type HomeSection } from "@/lib/home-sections";
 import { HeroVideoBackdrop } from "@/components/media/HeroVideoBackdrop";
 import { LazyAutoplayVideo } from "@/components/media/LazyAutoplayVideo";
@@ -149,7 +150,20 @@ function Section({ s, i }: { s: HomeSection; i: number }) {
   /* ⚠ HOISTED so TypeScript narrows it — `BAND_CLIPS[key]` is `string | undefined`. */
   const bandClip = !isHero && dark ? BAND_CLIPS[s.key] : undefined;
 
-  const eyebrow = dark ? "text-[#efa3ee]" : "text-[#A61AA5]";
+  /*
+    ⚠⚠ WHITE ON THE DARK BANDS, `#A61AA5` ON THE LILAC (`P1-J0-E339` §1b).
+    Scott, 2026-08-27, of this section's pink text: *"looks better if it is white."*
+    He confirmed it against a render; it was written into a follow-up that was only
+    half-run, so it never shipped until now.
+    ⚠⚠ THE LILAC BANDS MUST NOT FOLLOW. White on `#F6F3FA` measures ~1.1:1 and
+    simply disappears — the `dark` gate is what keeps them apart.
+    ⚠ WHITE ALSO MEASURES BETTER ON THE DARK BANDS: 14.28 against the gradient's
+    darkest stop `#3a1c53`, where `#efa3ee` is 7.58. Both pass; white is his call.
+    ⚠ `HERO_BRIDGE_CLASS` ALSO CARRIES `#efa3ee` AND SIX OTHER PAGES RENDER IT.
+    IT IS NOT TOUCHED — this is a local colour, not the shared constant.
+    ⚠ SUPERSEDED: `dark ? "text-[#efa3ee]" : "text-[#A61AA5]"`.
+  */
+  const eyebrow = dark ? "text-white" : "text-[#A61AA5]";
   const head = dark ? "text-white" : "text-[#181E3C]";
   const bodyc = dark ? "text-[#DDE0F0]" : "text-[#5B6183]";
 
@@ -177,25 +191,21 @@ function Section({ s, i }: { s: HomeSection; i: number }) {
             ⚠ THE HERO'S EYEBROW IS BIGGER — Scott: *"Change the pink text and make
             it bigger."* The other five stay at 11.5px / .15em.
 
-            ⚠⚠ 17px AT THE FULL .15em, AND THE STRING IS WHY. `P1-J0-E338` shortened
-            it from 61 characters to 40 (*"See Your Options - Build Your AI Roadmap"*),
-            and at this length TRACKING NO LONGER DOMINATES — `E337` had to cut
-            tracking to .06em just to reach 12px, because at 61 chars every 0.01em
-            costs ~6px. At 40 chars the full .15em is affordable.
-
-            Measured text width at 1160 (column 553px, `Range` not box):
-              20px  624 ✗   18px  561 ✗   17px  530 ✓   16px  499   15px  468   14px  437
-            ⚠ 18px MISSES BY 8px. 17px IS THE LARGEST THAT FITS, with 23px of slack at
-            1160 and 34px at 1440 — and it is 5.5px larger than the other five.
+            ⚠⚠ 18px AT THE FULL .15em, RE-MEASURED FOR THE SHORTER STRING. Scott
+            dropped `AI` (`P1-J0-E339`), taking it 40 -> 37 characters, which buys
+            one more step. Measured with a `Range` at 1160 (column 553px):
+              22px 646 ✗ · 21px 617 ✗ · 20px 587 ✗ · 19px 558 ✗ · 18px 529 ✓ · 17px 499
+            ⚠ 19px MISSES BY 5px. 18px is the largest that fits — 24px of slack at
+            1160, 35px at 1440, and 6.5px larger than the other five.
 
             ⚠⚠ MEASURE THE TEXT WITH A `Range`, NEVER A LINE COUNT. These are
             `whitespace-nowrap` above 1150px, so an oversized line does NOT wrap — it
             OVERFLOWS its column silently while the box still reports one clean line.
             That false pass cost `E337` a cut (13px, 630px of text in a 553px column,
-            read as "1 line"). ⚠ `§65` now asserts overflow, so it cannot recur.
+            read as "1 line"). ⚠ `§65` asserts overflow now, so it cannot recur.
           */
           (isHero
-            ? "mb-3 text-[17px] font-bold uppercase tracking-[0.12em] min-[1151px]:whitespace-nowrap min-[1151px]:tracking-[0.15em] "
+            ? "mb-3 text-[18px] font-bold uppercase tracking-[0.12em] min-[1151px]:whitespace-nowrap min-[1151px]:tracking-[0.15em] "
             : "mb-3 text-[11.5px] font-bold uppercase tracking-[0.12em] min-[1151px]:whitespace-nowrap min-[1151px]:tracking-[0.15em] ") +
           eyebrow
         }
@@ -246,6 +256,29 @@ function Section({ s, i }: { s: HomeSection; i: number }) {
             </>
           )}
         </h3>
+      )}
+      {isHero && (
+        /*
+          ── ⚠⚠ THE TAGLINE, IN THE SLOT THE BRIDGE LINE VACATED (`P1-J0-E339` §6b) ─
+
+          Scott: *"tagline yes. use the version you have but add the acronym ERP."*
+          ⚠ `BRAND_DESCRIPTOR` IS IMPORTED, NEVER RETYPED. It is a SITE-WIDE constant
+          with four consumers now — this hero, `MarketingFooter`'s band 2, that
+          footer's legal bar, and `OnboardingFrame` — and they all move together.
+
+          ⚠ THE GEOMETRY IS THE BRIDGE LINE'S: `mt-4`, 19px, semibold, `leading-[1.5]`.
+          ⚠⚠ THE COLOUR IS WHITE, NOT `#efa3ee`, AND THAT IS CHAT'S CALL — FLAGGED SO
+          SCOTT CAN REVERT IT. He has just said this section's pink text *"looks
+          better if it is white"*, and dropping a NEW pink line into the same block
+          would contradict him. White measures 14.28 against the gradient's darkest
+          stop; `#efa3ee` measures 7.58. Both pass AA; white is his stated preference.
+          ⚠⚠ IT DOES NOT USE `HERO_BRIDGE_CLASS` AND MUST NOT — six other pages render
+          that class and it is pink BY DESIGN there. This line owns its own class.
+          ⚠ HERO SECTION ONLY. The other five get no tagline.
+        */
+        <p className="mt-4 text-[19px] font-semibold leading-[1.5] text-white">
+          {BRAND_DESCRIPTOR}
+        </p>
       )}
       {/*
         ⚠ `%s` IS THE PAGE'S OWN CTA LABEL, SUBSTITUTED HERE FROM `s.ctaLabel` —
