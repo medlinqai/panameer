@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
 import { IntegrateHero } from "@/components/marketing/IntegrateHero";
 import { IntegrateSpine } from "@/components/marketing/IntegrateSpine";
-import { ErpIntegration } from "@/components/marketing-home/ErpIntegration";
-import "@/components/marketing-home/home.css";
 
 /**
  * /enterprise — the ERP integration story, at its own address
@@ -117,33 +115,29 @@ export default function EnterprisePage() {
       */}
       <IntegrateSpine />
       {/*
-        The scope for the ported stylesheet, around the payload only.
+        ── ⚠⚠ `ErpIntegration` AND `id="punchout"` BOTH LEFT (`P1-J0-E359`) ────────
 
-        ── ⚠⚠ THIS WRAPPER NOW OWNS `id="punchout"` (`P1-J0-E333`) ──────────────
+        Scott, 2026-08-29: *"this page is incorrect. It puts the image on the same
+        page (muddies the water) and then scrolls down to it... I want to move image 2
+        to a secon[d] page. then i want to link the button - image 3 - to that page."*
+        The section is now at `/erp-integration` and the hero button goes there.
 
-        ⚠ THE HERO'S CTA IS `href="#punchout"` AND IT IS THAT HERO'S ONLY CONTROL.
-        `ErpPunchout` carried that id and MOVED TO `/` in this same commit, so the
-        anchor was re-homed HERE FIRST — at no point does `main` have a hero button
-        pointing at a missing id.
+        ⚠ SUPERSEDED, quoted not deleted: *"── ⚠⚠ THIS WRAPPER NOW OWNS
+        `id="punchout"` (`P1-J0-E333`) ── ⚠ THE HERO'S CTA IS `href="#punchout"` AND
+        IT IS THAT HERO'S ONLY CONTROL... ⚠ THE CTA's `href` AND LABEL DID NOT CHANGE.
+        Only what `#punchout` names."* Both halves are now false: the id is gone from
+        this page and the CTA's `href` DID change (its LABEL still did not).
 
-        ⚠ `ErpIntegration` IS THE RIGHT TARGET, and this is CHAT'S CALL, REPORTED so
-        Scott can overrule it: the CTA says `See How Punchout Works`, and this is the
-        integration diagram — requisition, cart, order, invoice, payment. It is the
-        closest thing left on the page to what the button promises.
+        ⚠ THE `scroll-mt-[71px]` MEASUREMENT TRAVELLED WITH THE ANCHOR — the sticky
+        `MarketingHeader` is 71px, read off `getBoundingClientRect()` at 1440 rather
+        than guessed. It lives in `app/erp-integration/page.tsx` now.
+        ⚠ THE `.pm-home` WRAPPER WENT TOO, because it existed only for this section.
+        `IntegrateSpine` is `StepDisclosures`, `.stepd-`-scoped in its own stylesheet,
+        and was always outside it.
 
-        ⚠⚠ ON THE WRAPPER IN THIS FILE, NEVER INSIDE `ErpIntegration`. That component
-        rendered on `/` until `P1-J0-E255` and could again, and an id inside it would
-        appear on BOTH pages. One id, one page, one meaning.
-
-        ⚠ `scroll-mt-[71px]` IS THE MEASURED STICKY `MarketingHeader` HEIGHT — read
-        off `getBoundingClientRect()` at 1440 on this page, not guessed, not taken
-        from a token. `position: sticky`, 71px. Without it the anchor scrolls the
-        heading UNDER the header.
-        ⚠ THE CTA's `href` AND LABEL DID NOT CHANGE. Only what `#punchout` names.
+        ⚠ THIS PAGE ENDS ON THE SPINE. Do not re-add the section — it renders on
+        exactly one page and `§43` asserts that.
       */}
-      <div id="punchout" className="pm-home scroll-mt-[71px]">
-        <ErpIntegration className="erpx-band" />
-      </div>
       {/*
         ── ⚠⚠ `ErpPunchout` HAS MOVED TO `/` (`P1-J0-E333`, 2026-08-26) ──────────
 
@@ -166,8 +160,11 @@ export default function EnterprisePage() {
         environment from `MarketingShell` on THIS page. See the header of
         `ErpPunchout.tsx`; the classes are INERT here, measured identical.
 
-        ⚠ WHAT STAYED BEHIND: `id="punchout"`, re-homed onto the `ErpIntegration`
-        wrapper above, because the hero's only CTA points at it.
+        ⚠ SUPERSEDED, quoted not deleted: *"WHAT STAYED BEHIND: `id="punchout"`,
+        re-homed onto the `ErpIntegration` wrapper above, because the hero's only CTA
+        points at it."* ⚠ NOTHING STAYED BEHIND AS OF `P1-J0-E359` — the wrapper, the
+        section and the id all moved to `/erp-integration`, and the hero's only CTA is
+        now a page link rather than a same-page anchor. THIS PAGE HAS NO `#punchout`.
       */}
     </MarketingShell>
   );

@@ -141,8 +141,15 @@ export const INTEGRATE_SPINE_HEADING = "Here's How It Works";
 /*
   ⚠⚠ `/integrate`'s CTA LABEL, DEFINED ONCE (`P1-ALL-E031`, Scott 2026-08-26).
   ⚠ RELABELLED from `See How Punchout Works`.
-  ⚠⚠ THE `href="#punchout"` DOES NOT CHANGE — only the label. That anchor is this
-  hero's ONLY control and it has already been re-homed once (`P1-J0-E333`).
+  ⚠⚠ SUPERSEDED, quoted not deleted: *"THE `href="#punchout"` DOES NOT CHANGE — only
+  the label. That anchor is this hero's ONLY control and it has already been re-homed
+  once (`P1-J0-E333`)."* ⚠ `P1-J0-E359` CHANGED THE href AND NOT THE LABEL — the exact
+  inverse. It is `/erp-integration` now, a page link rather than a same-page anchor,
+  because the section moved off `/integrate`.
+  ⚠⚠ THIS EDIT IS A COMMENT ONLY. `INTEGRATE_CTA_LABEL` BELOW IS BYTE-IDENTICAL and
+  `E359` diffed this file to prove it. The hero's approved description interpolates
+  that constant, and `P1-J4-E024` is the precedent for what happens when two strings
+  describe one control.
 
   ⚠ ONE CONVENTION ACROSS THE PUBLIC PAGES — the exact shape of `TALENT_CTA_LABEL`,
   `WORK_CTA_LABEL` and `LEARN_CTA_LABEL`. It is a constant because the hero's

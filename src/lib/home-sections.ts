@@ -775,7 +775,22 @@ export const HOME_SECTIONS: HomeSection[] = [
       Scott may prefer `/integrate` here; `Learn More` already goes there.
     */
     /*
-      ⚠⚠ REPOINTED FROM `"#punchout"` TO `"/integrate#punchout"` (`P1-J0-E350`).
+      ⚠⚠ REPOINTED AGAIN, TO `"/erp-integration"` (`P1-J0-E359`).
+      ⚠ SUPERSEDED VALUES, in order: `"#punchout"` -> `"/integrate#punchout"`
+      (`E350`) -> this. ⚠⚠ THIS IS THE CONSUMER THAT BREAKS SILENTLY. `E350` set the
+      middle value precisely because `ErpPunchout` left `/` and its anchor died;
+      `E359` moved `ErpIntegration` AND `id="punchout"` off `/integrate`, so leaving
+      the string alone would have landed this button on `/integrate` and scrolled it
+      to NOTHING — the same defect, one page over. Nothing on HOME references that
+      anchor, so no HOME test would have caught it. ⚠ `E359` CLICKED THIS BUTTON IN A
+      BROWSER rather than reading the href.
+      ⚠ THE ANCHOR STILL EXISTS at `/erp-integration#punchout`, but this points at the
+      bare page: that page's only content IS the section, so the fragment adds
+      nothing here.
+      ⚠ `learnMoreHref` STAYS `"/integrate"` — a button to the detail page and a
+      Learn More to the section page. Intended, not duplication.
+
+      ⚠ THE `E350` NOTE, kept for the record:
       `ErpPunchout` owned `id="punchout"` and `E350` removed it from `/`, so the old
       same-page anchor pointed at nothing — the button would have sat there and done
       nothing when clicked. This is a DEAD-ANCHOR FIX, not a destination change.
@@ -788,7 +803,7 @@ export const HOME_SECTIONS: HomeSection[] = [
       of them deep-linked, is intended — not duplication to collapse.
       ⚠ NO OTHER SECTION'S `ctaHref` CHANGED.
     */
-    ctaHref: "/integrate#punchout",
+    ctaHref: "/erp-integration",
     learnMoreHref: "/integrate",
   },
 ];

@@ -101,7 +101,17 @@ type Card = {
  * about either — which is exactly why these tests now run there.
  */
 const SHOP = "/shop";
-const ENTERPRISE = "/integrate";
+/*
+  ⚠ REPOINTED BY `P1-J0-E359` — `ErpIntegration`, its `.pm-home` wrapper and
+  `id="punchout"` MOVED off `/integrate` to `/erp-integration`. Every use of this
+  constant is an assertion about where that section lives, so all of them follow it:
+  the two doorway cards, §12b's non-vacuity half, §13's SVG-id audit and §14's crop
+  check. ⚠ THAT IS THE ASSERTIONS MOVING WITH THEIR SUBJECT, NOT BEING LOOSENED.
+  ⚠ THE NAME IS KEPT — it has been historical since `/enterprise` was renamed
+  `/integrate` (`P1-ALL-E017`), and renaming it here would touch five call sites for
+  no behavioural gain. Its VALUE is what matters and it is correct.
+*/
+const ENTERPRISE = "/erp-integration";
 /*
   ⚠ `ErpPackages` MOVED OFF `/shop` TO ITS OWN PAGE AT `P1-J0-E358` — a MOVE, not a
   copy, so `.erp-grid` is now on `/service-products` and NOWHERE else. The four card
@@ -541,6 +551,16 @@ test.describe("the page as a whole", () => {
     ).toHaveCount(0);
     await page.goto(ENTERPRISE);
     await expect(page.locator(".erpx-doors")).toHaveCount(1);
+    /*
+      ⚠ AND `/integrate` IS ASSERTED CLEAN (`P1-J0-E359`), the same shape `E358` gave
+      `/shop`. Without it, re-adding the section there would restore the duplicate
+      silently — the exact half-done-move state this test exists to catch.
+    */
+    await page.goto("/integrate");
+    await expect(
+      page.locator(".erpx-doors"),
+      "ErpIntegration is back on /integrate — E359 moved it to /erp-integration",
+    ).toHaveCount(0);
   });
 
   /**
@@ -559,7 +579,7 @@ test.describe("the page as a whole", () => {
   test("§13 flow-diagram SVG ids are unique and every marker resolves in its own svg", async ({
     page,
   }) => {
-    /* The two flow diagrams are `.erpx-doors` crops — now on /enterprise only. */
+    /* The two flow diagrams are `.erpx-doors` crops — on /erp-integration only (E359). */
     await page.goto(ENTERPRISE);
     const audit = () =>
       page.evaluate(() => {
@@ -2264,11 +2284,26 @@ test.describe("talent relocations — what left /talent", () => {
    * a half-done move — added there, still here — is the state that looks fine on
    * whichever page you happen to open.
    */
-  test("§43 ErpPunchout renders on /integrate and not on /talent", async ({
+  /*
+    ⚠ REPOINTED BY `P1-J0-E359`, NOT RETIRED. The rule this guards — the section and
+    its `#punchout` id live on EXACTLY ONE PAGE — is unchanged; only the page moved.
+    `E359` took `ErpIntegration`, its `.pm-home` wrapper and the id off `/integrate`
+    and onto `/erp-integration`.
+    ⚠ SUPERSEDED: `await page.goto("/integrate")` then `#punchout` count 1.
+    ⚠ AND `/integrate` IS NOW ASSERTED CLEAN, which the old shape could not do —
+    without it, re-adding the section there would restore the duplicate silently,
+    which is the exact failure a half-done move produces.
+  */
+  test("§43 ErpIntegration's #punchout renders on /erp-integration only", async ({
     page,
   }) => {
-    await page.goto("/integrate");
+    await page.goto("/erp-integration");
     await expect(page.locator("#punchout")).toHaveCount(1);
+    await page.goto("/integrate");
+    await expect(
+      page.locator("#punchout"),
+      "#punchout is back on /integrate — E359 moved it to /erp-integration",
+    ).toHaveCount(0);
     await page.goto("/talent");
     await expect(
       page.locator("#punchout"),

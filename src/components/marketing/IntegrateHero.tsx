@@ -94,12 +94,20 @@ export async function IntegrateHero() {
                   control — the same dependency that turned that guard red on
                   `/hire-talent`.
 
-                  ⚠⚠ THE ANCHOR IS REAL AND ON THIS PAGE. `ErpPunchout` renders
-                  `<section id="punchout">` further down `/integrate`, so this CTA
-                  goes somewhere that exists — which is the entire point.
-                  ⚠ `P1-J0-E300` IS FOUR DEAD FRAGMENTS ON `/optimize`; the report
-                  carries proof that this one resolves AND scrolls, not just that
-                  the id is in the markup.
+                  ⚠⚠ IT IS A PAGE LINK NOW, NOT AN ANCHOR (`P1-J0-E359`). Scott:
+                  *"this page is incorrect. It puts the image on the same page
+                  (muddies the water) and then scrolls down to it... I want to move
+                  image 2 to a secon[d] page. then i want to link the button - image
+                  3 - to that page."*
+                  ⚠ SUPERSEDED, quoted not deleted: *"THE ANCHOR IS REAL AND ON THIS
+                  PAGE. `ErpPunchout` renders `<section id="punchout">` further down
+                  `/integrate`, so this CTA goes somewhere that exists."* `E333`
+                  re-homed that id onto `ErpIntegration`'s wrapper; `E359` moved the
+                  section, the wrapper and the id to `/erp-integration` together.
+                  ⚠ THE POINT IT MADE STILL HOLDS — the destination must EXIST. It is
+                  a real page now, and `E359` proved it by CLICKING the control in a
+                  browser rather than reading the href. `P1-J0-E300` is four dead
+                  fragments on `/optimize`; this is not one of them.
 
                   ⚠ STYLED BY MIRRORING `/optimize`'s `.hero-cta` COMPUTED VALUES —
                   Montserrat / 17px / 600 / #d72cd6 / radius 12px / padding 16px
@@ -110,15 +118,22 @@ export async function IntegrateHero() {
                   brand-token failure, footage-independent, reported not fixed.
                 */}
                 <Link
-                  href="#punchout"
+                  href="/erp-integration"
                   className={HERO_BUTTON}
                 >
                   {/*
                     ⚠ RELABELLED `How We Integrate` (`P1-ALL-E031` §4, Scott
                     2026-08-26) AND READ FROM `INTEGRATE_CTA_LABEL`, because the
-                    approved description above QUOTES it. ⚠ THE `href="#punchout"`
-                    DID NOT CHANGE — only the label.
-                    ⚠ SUPERSEDED: *`See How Punchout Works`*.
+                    approved description above QUOTES it.
+                    ⚠⚠ THE LABEL IS UNCHANGED BY `P1-J0-E359` — only the `href` moved,
+                    `#punchout` -> `/erp-integration`. ⚠ SUPERSEDED, quoted not
+                    deleted: *"THE `href="#punchout"` DID NOT CHANGE — only the
+                    label."* That was `E031`'s statement and `E359` inverts it: this
+                    time the href changed and the label did not.
+                    ⚠ `integrate-steps.ts` WAS NOT TOUCHED beyond its comment — the
+                    constant is byte-identical and the description still interpolates
+                    it. `P1-J4-E024` is why that matters.
+                    ⚠ SUPERSEDED LABEL: *`See How Punchout Works`*.
                   */}
                   {INTEGRATE_CTA_LABEL}
                 </Link>

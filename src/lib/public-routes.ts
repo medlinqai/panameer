@@ -117,6 +117,16 @@ export const PUBLIC_ROUTES: PublicRoute[] = [
     failed the guard.
   */
   { route: "/service-products", category: 1 },
+  /*
+    ⚠ `/erp-integration` (`P1-J0-E359`) — `ErpIntegration` at its own address, MOVED
+    off `/integrate`. Reached from that page's hero button AND from HOME section 6.
+    Renders one section and nothing else: no form, no session read, no data.
+    Category 1, like the nine above.
+    ⚠ NOT OPTIONAL. The default is DENY and the app-shell suite asserts every page is
+    explicitly allowlisted or gated — `E352` learned that when `/capability-domains`
+    failed the guard.
+  */
+  { route: "/erp-integration", category: 1 },
 
   /*
     ── 2. AUTH DOORS ──────────────────────────────────────────────────────────
