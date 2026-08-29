@@ -102,32 +102,40 @@ type Card = {
  */
 const SHOP = "/shop";
 const ENTERPRISE = "/integrate";
+/*
+  ⚠ `ErpPackages` MOVED OFF `/shop` TO ITS OWN PAGE AT `P1-J0-E358` — a MOVE, not a
+  copy, so `.erp-grid` is now on `/service-products` and NOWHERE else. The four card
+  tests below and §12b's non-vacuity half follow it. ⚠ THAT IS THE ASSERTION MOVING
+  WITH ITS SUBJECT, NOT BEING LOOSENED: §12b still proves the grid renders exactly
+  once, on the page that owns it.
+*/
+const SERVICE_PRODUCTS = "/service-products";
 
 const CARDS: Card[] = [
-  // ErpPackages — the four agent categories. Now on /buy-services only.
+  // ErpPackages — the four agent categories. On /service-products only (E358).
   {
     grid: ".erp-grid",
     name: "Reports & Dashboards",
     dialog: "Spend Overview dashboard",
-    url: SHOP,
+    url: SERVICE_PRODUCTS,
   },
   {
     grid: ".erp-grid",
     name: "Price Alerts",
     dialog: "Price alert email",
-    url: SHOP,
+    url: SERVICE_PRODUCTS,
   },
   {
     grid: ".erp-grid",
     name: "Document Validation",
     dialog: "W-9 document validation",
-    url: SHOP,
+    url: SERVICE_PRODUCTS,
   },
   {
     grid: ".erp-grid",
     name: "Extend Your Apps",
     dialog: "Work request with matched experts",
-    url: SHOP,
+    url: SERVICE_PRODUCTS,
   },
   // ErpIntegration — the two flow doorways. Now on /enterprise only.
   {
@@ -516,8 +524,21 @@ test.describe("the page as a whole", () => {
       "ErpIntegration is back on /",
     ).toHaveCount(0);
     /* And they are still on the pages that own them, so this is not vacuous. */
-    await page.goto(SHOP);
+    /*
+      ⚠ `/service-products`, NOT `/shop` — `E358` MOVED `ErpPackages` off `/shop` to
+      its own page. The assertion followed its subject; it still proves the grid
+      renders exactly once.
+      ⚠ AND `/shop` IS NOW ASSERTED CLEAN TOO, below — without that, re-adding the
+      section to `/shop` would restore the duplicate silently, which is the exact
+      failure mode this whole test exists for.
+    */
+    await page.goto(SERVICE_PRODUCTS);
     await expect(page.locator(".erp-grid")).toHaveCount(1);
+    await page.goto(SHOP);
+    await expect(
+      page.locator(".erp-grid"),
+      "ErpPackages is back on /shop — E358 moved it to /service-products",
+    ).toHaveCount(0);
     await page.goto(ENTERPRISE);
     await expect(page.locator(".erpx-doors")).toHaveCount(1);
   });
@@ -2869,10 +2890,56 @@ test.describe("shop walk 1 — /shop", () => {
       40,
     );
 
+    /*
+      ── ⚠⚠ RE-HOMED BY `P1-J0-E358`, AND IT IS NOT WEAKER ─────────────────────
+
+      ⚠ SUPERSEDED, quoted not deleted, this assertion was:
+          await expect(
+            hero.locator("a[href]"),
+            "Start Shopping Now was given a destination — prove a PUBLIC package
+             listing exists first (E002)",
+          ).toHaveCount(0);
+      i.e. ZERO anchors anywhere in the hero.
+
+      ⚠ `E358` ADDED A SECOND, OUTLINED CONTROL to this hero — `What are Service
+      Products?` linking to `/service-products`, the page `ErpPackages` moved to. That
+      is an `<a href>` in the hero and it tripped the count.
+
+      ⚠⚠ THE BLUNT COUNT WAS NEVER THE POINT, AND THIS TEST'S OWN DOCBLOCK SAYS SO:
+      *"It is not 'no link allowed' — it is 'prove the catalog exists first'."* The
+      subject is the PRIMARY control and the missing public catalogue. An explainer
+      page that exists, and that promises no listing, is not what `E002` forbade.
+
+      ⚠ SO THE GUARD NOW NAMES WHAT IS FORBIDDEN INSTEAD OF BANNING ALL ANCHORS, which
+      is STRICTER about the real risk: any hero anchor must be on this allowlist, so
+      pointing one at `(app)/packages`, `(app)/services/offers`, `/explore` or an
+      invented `/packages` still turns this red. Adding a destination still requires
+      editing this list, which IS the justification step `E002` demands.
+      ⚠ AND THE PRIMARY CONTROL IS STILL ASSERTED HREF-LESS below — that half is the
+      one `E002` is actually about and it is unchanged in substance.
+    */
+    const HERO_LINK_ALLOWLIST = ["/service-products"];
+    const heroHrefs = await hero.locator("a[href]").evaluateAll((els) =>
+      els.map((e) => e.getAttribute("href")),
+    );
+    expect(
+      heroHrefs.filter((h) => !HERO_LINK_ALLOWLIST.includes(h ?? "")),
+      "a Shop hero link points somewhere unvetted — prove a PUBLIC package listing " +
+        "exists before adding a destination here (E002)",
+    ).toEqual([]);
+
+    /*
+      ⚠ THE PRIMARY CONTROL ITSELF STILL HAS NO DESTINATION. This is the half `E002`
+      is about: the day someone turns it into a link, this turns red.
+    */
+    expect(
+      await btn.getAttribute("href"),
+      "Shop Service Products was given a destination — E002",
+    ).toBeNull();
     await expect(
-      hero.locator("a[href]"),
-      "Start Shopping Now was given a destination — prove a PUBLIC package listing exists first (E002)",
-    ).toHaveCount(0);
+      btn,
+      "the primary Shop control must stay aria-disabled — P1-J2-E010/E011",
+    ).toHaveAttribute("aria-disabled", "true");
   });
 
   /**

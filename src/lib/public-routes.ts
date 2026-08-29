@@ -107,6 +107,16 @@ export const PUBLIC_ROUTES: PublicRoute[] = [
     default is DENY. `E352` learned this when `/capability-domains` failed that guard.
   */
   { route: "/ai-method", category: 1 },
+  /*
+    ⚠ `/service-products` (`P1-J0-E358`) — `ErpPackages` at its own address, MOVED
+    off `/shop`. Reached from `/shop`'s second hero button. Renders that one section
+    and nothing else: no form, no session read, no data. Category 1 like the eight
+    above.
+    ⚠ NOT OPTIONAL. The default is DENY and the app-shell suite asserts every page is
+    explicitly allowlisted or gated — `E352` learned that when `/capability-domains`
+    failed the guard.
+  */
+  { route: "/service-products", category: 1 },
 
   /*
     ── 2. AUTH DOORS ──────────────────────────────────────────────────────────

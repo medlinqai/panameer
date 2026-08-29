@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
 import { ShopHero } from "@/components/marketing/ShopHero";
 import { ShopSpine } from "@/components/marketing/ShopSpine";
-import { ErpPackages } from "@/components/marketing-home/ErpPackages";
-import "@/components/marketing-home/home.css";
 
 /**
  * /buy-services — the public "Buy Services" nav destination.
@@ -48,14 +46,17 @@ import "@/components/marketing-home/home.css";
  * resolution. `MarketingHero` is untouched and still serves `/enterprise` and
  * `/why-panameer`.
  *
- * ── ⚠ THE `.pm-home` WRAPPER IS LOAD-BEARING ─────────────────────────────────
+ * ── ⚠ THE `.pm-home` WRAPPER AND ITS SECTION BOTH LEFT (`P1-J0-E358`) ────────
  *
- * `ErpPackages` is styled entirely by `.pm-home`-prefixed rules in `home.css`
- * and `MarketingShell` provides no such scope. MEASURED, not assumed — strip the
- * class and `.erp-head h2` drops from 40px to 16px and the card grid collapses.
- *
- * Inside the shell, around the PAYLOAD ONLY. Verified: `header`, the hero `h1`
- * and `footer` all resolve `closest(".pm-home") === null`.
+ * ⚠ SUPERSEDED, quoted not deleted: *"`ErpPackages` is styled entirely by
+ * `.pm-home`-prefixed rules in `home.css` and `MarketingShell` provides no such
+ * scope. MEASURED, not assumed — strip the class and `.erp-head h2` drops from 40px
+ * to 16px and the card grid collapses. Inside the shell, around the PAYLOAD ONLY.
+ * Verified: `header`, the hero `h1` and `footer` all resolve
+ * `closest(".pm-home") === null`."*
+ * ⚠ THAT MEASUREMENT IS STILL TRUE AND STILL MATTERS — it MOVED to
+ * `app/service-products/page.tsx`, which is the page that now carries the wrapper.
+ * This page has neither the wrapper nor the section.
  *
  * ⚠ `ErpPackages` is a CLIENT component (it owns the lightbox). That does not
  * make the route dynamic — only request-time data would — so this page still
@@ -86,25 +87,28 @@ export default function BuyServicesPage() {
       */}
       <ShopSpine />
       {/*
-        ⚠ `ErpPackages` IS UNTOUCHED AND STAYS WHERE IT WAS — not instructed, so
-        not moved and not re-authored. It now sits BELOW the spine rather than
-        directly under the hero, which is the only positional change and is a
-        consequence of the spine being inserted above it.
+        ── ⚠⚠ `ErpPackages` MOVED TO `/service-products` (`P1-J0-E358`) ────────────
 
-        ⚠ IT IS NOT THE CATALOG AND ITS OWN HEADER SAYS SO: agent CATEGORIES, no
-        provider name, no price, no rating, no availability count on any card. That
-        is exactly why it cannot be `Start Shopping Now`'s destination — see the
-        note on the button in `ShopHero`.
+        Scott, 2026-08-29: *"now i want to move the image 1 to a separate page."*
+        ⚠ A MOVE, NOT A COPY — it renders THERE AND NOWHERE ELSE. `E352` built
+        `/capability-domains` as a copy and `E355` reversed it one commit later; this
+        brief was explicit that the same mistake was not to be repeated. DO NOT
+        re-add it here.
+        ⚠ `/shop`'s HERO NOW LINKS TO IT — a second, outlined control below the
+        primary one. See `ShopHero.tsx`.
 
-        ⚠ THE `.pm-home` WRAPPER IS LOAD-BEARING and stays around the PAYLOAD ONLY.
-        Measured, not assumed: strip the class and `.erp-head h2` drops from 40px to
-        16px and the card grid collapses. ⚠ THE SPINE IS DELIBERATELY OUTSIDE IT —
-        `StepDisclosures` is `.stepd-`-scoped and the eyebrow is Tailwind mirroring
-        `/optimize`'s computed values, which is the seventh instance of that trap.
+        ⚠ THE `.pm-home` WRAPPER WENT WITH IT, because it existed ONLY for this
+        section. The 40px->16px measurement that justified it now lives in
+        `app/service-products/page.tsx`, which is the page it describes.
+        ⚠ THE SPINE WAS ALWAYS OUTSIDE THAT WRAPPER and is unaffected —
+        `StepDisclosures` is `.stepd-`-scoped and its eyebrow is Tailwind mirroring
+        `/optimize`'s computed values.
+
+        ⚠ THE MOVE ALSO CLOSED `P1-J2-E011`: that section's `Explore Service
+        Products ›` button is `href="/shop"` and, while it rendered here, linked the
+        page to itself. From its own page that is a real destination. ⚠ `P1-J2-E010`
+        and `P1-J1-E032` STAY OPEN — there is still no public catalogue.
       */}
-      <div className="pm-home">
-        <ErpPackages />
-      </div>
     </MarketingShell>
   );
 }

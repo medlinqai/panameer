@@ -215,3 +215,15 @@ export const SHOP_SPINE_HEADING = "Here's How It Works";
 */
 
 export const SHOP_CTA_LABEL = "Shop Service Products";
+
+/*
+  ⚠ SCOTT'S STRING VERBATIM, 2026-08-29 (`P1-J0-E358`), QUESTION MARK INCLUDED:
+  *"create a button like what we did on /optimize, but call it 'What are Service
+  Products?'"*. Do not sentence-case it, shorten it, or drop the `?`.
+  ⚠ ONE LIVE LITERAL. `P1-J4-E024` is the precedent and it is not theoretical —
+  `/work` shipped two different strings for one button and they drifted apart.
+  ⚠ IT LABELS THE SECOND CONTROL in `/shop`'s hero, which points at
+  `/service-products`. It lives beside `SHOP_CTA_LABEL` because this file already
+  holds that page's strings.
+*/
+export const SERVICE_PRODUCTS_EXPLAINED_LABEL = "What are Service Products?";

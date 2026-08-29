@@ -1,7 +1,12 @@
+import Link from "next/link";
 import { HeroBox } from "@/components/marketing/HeroBox";
-import { SHOP_CTA_LABEL } from "@/lib/shop-steps";
+import {
+  SERVICE_PRODUCTS_EXPLAINED_LABEL,
+  SHOP_CTA_LABEL,
+} from "@/lib/shop-steps";
 import {
   HERO_BUTTON,
+  HERO_BUTTON_OUTLINE,
   HERO_CARD,
   HERO_SCRIM,
   HERO_BRIDGE_TEXT,
@@ -193,6 +198,40 @@ export async function ShopHero() {
                     Soon
                   </span>
                 </button>
+                {/*
+                  ── ⚠⚠ THE SECOND, OUTLINED CONTROL (`P1-J0-E358`) ─────────────
+
+                  Scott: *"create a button like what we did on /optimize, but call it
+                  'What are Service Products?'. Lastly, I want to link the button to
+                  the page."* Same shape `E352` shipped in `/optimize`'s hero:
+                  `HERO_BUTTON_OUTLINE`, stacked BELOW the primary control.
+
+                  ⚠⚠ `HERO_BUTTON_OUTLINE` IS IMPORTED, NEVER RE-TYPED, RE-WRAPPED OR
+                  CONCATENATED. It is a single unbroken literal with `prettier-ignore`
+                  guards, and the reason is `E338`: `HERO_SCRIM` was implemented as a
+                  JS concatenation, Tailwind emitted NO CSS for it, and it shipped
+                  DEAD on seven pages for two days behind a warm cache. Tailwind scans
+                  source text for whole class tokens and never evaluates JavaScript.
+
+                  ⚠⚠ IT GETS NO `Soon` PILL, DELIBERATELY. `/service-products` EXISTS
+                  — the pill above marks a promise that cannot be kept yet, and
+                  putting one here would say the opposite of the truth.
+                  ⚠ THE PRIMARY CONTROL ABOVE IS UNCHANGED: still a
+                  `<button aria-disabled="true">` with NO `href` and its pill.
+                  `P1-J2-E010` and `P1-J2-E011` are unaffected by this control.
+
+                  ⚠ THE STACK GAP IS SET HERE, NOT IN THE CONSTANT. Both `HERO_BUTTON`
+                  and `HERO_BUTTON_OUTLINE` carry `mt-8`; two stacked is too much air,
+                  so this call site overrides the second one down. SIX OTHER HEROES
+                  render those constants — editing either to fix spacing here would
+                  move all of them. The override is a wrapper `div`, so the constant's
+                  class string stays whole and Tailwind still sees it.
+                */}
+                <div className="-mt-4">
+                  <Link href="/service-products" className={HERO_BUTTON_OUTLINE}>
+                    {SERVICE_PRODUCTS_EXPLAINED_LABEL}
+                  </Link>
+                </div>
               </>
             }
             right={

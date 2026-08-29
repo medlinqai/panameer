@@ -180,9 +180,15 @@ export function ErpPackages() {
             string is the wrong trade; if a second surface ever quotes it, extract
             one then.
 
-            ⚠⚠ REPORTED, NOT FIXED — `href="/shop"` AND THIS SECTION RENDERS ON
-            `/shop` (`app/shop/page.tsx:106`, its only call site). SO THIS BUTTON
-            RELOADS THE PAGE THE VISITOR IS ALREADY READING.
+            ⚠⚠ CLOSED BY RELOCATION AT `P1-J0-E358` — NOT by editing this line.
+            ⚠ SUPERSEDED, quoted not deleted: *"REPORTED, NOT FIXED — `href="/shop"`
+            AND THIS SECTION RENDERS ON `/shop` (`app/shop/page.tsx:106`, its only
+            call site). SO THIS BUTTON RELOADS THE PAGE THE VISITOR IS ALREADY
+            READING."*
+            ⚠⚠ `E358` MOVED THIS SECTION TO `/service-products`, so `href="/shop"` is
+            now a REAL destination and is CORRECT EXACTLY AS WRITTEN. DO NOT change
+            it — changing it would re-break what the move fixed. The self-link was
+            never a typo in this file; it was a symptom of where the section lived.
 
             ⚠ IT IS NOT A TYPO, IT IS A MISSING FEATURE. There is no public
             catalogue to link to: `/packages` DOES NOT EXIST publicly — only
@@ -191,11 +197,16 @@ export function ErpPackages() {
 
             ⚠⚠ THREE ROWS, ONE MISSING FEATURE, and they close together or not at all:
               `P1-J2-E010`  /shop's hero `Start Shopping Now` is `disabled`, no href
-              `P1-J2-E011`  this button links to the page it is on   <- here
+              `P1-J2-E011`  this button links to the page it is on   <- CLOSED by
+                            `E358`; the section moved and the link now leaves the page
               `P1-J1-E032`  /talent tells SELLERS to list products in a Shop that no
                             BUYER can browse
-            All three are the same hole seen from three surfaces. Fixing any one in
-            isolation would just move the dishonesty.
+            All three were the same hole seen from three surfaces. ⚠ `E011` CLOSED
+            WITHOUT THE OTHER TWO, and that is legitimate rather than the "moving the
+            dishonesty" this warned about: the fix was not a new destination, it was
+            moving the section so the existing one stopped being circular. ⚠ `E010`
+            AND `P1-J1-E032` REMAIN OPEN — there is still no public catalogue, and
+            `/shop`'s primary hero button is still `aria-disabled` with a `Soon` pill.
           */}
           <Link className="btn btn-solid" href="/shop">
             Explore Service Products &rsaquo;
