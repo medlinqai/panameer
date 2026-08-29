@@ -48,7 +48,6 @@ export function AppRail() {
   const isAdmin = session?.user?.isSystemAdmin === true;
 
   const items = navForRoles(me);
-  const consoleLabel = isAdmin ? "Platform Console" : "Provider Console";
   /*
     E098 — WHICH SIDE OF THE MARKETPLACE THIS RAIL IS SHOWING.
 
@@ -56,12 +55,59 @@ export function AppRail() {
     and the items under it cannot disagree. Not a prop and not a per-page
     string: a caption a page could pass in is a caption a page could get wrong.
 
-    ⚠ THIS IS NOT THE CONSOLE LABEL. `consoleLabel` above says which PORTAL you
-    are in and reads "Provider Console" for buyers and sellers alike; this says
-    which SIDE you are on. They answer different questions — see the WS-2 note
-    in the brief and the rail section of casing_spec_LOCKED.md.
+    ⚠⚠ THE CONSOLE LABEL NOW DERIVES FROM THIS (`P1-J1.1-E248`) — see the note
+    directly below. This paragraph used to insist the two were separate:
+    *"THIS IS NOT THE CONSOLE LABEL. `consoleLabel` above says which PORTAL you are
+    in and reads 'Provider Console' for buyers and sellers alike; this says which
+    SIDE you are on. They answer different questions — see the WS-2 note in the brief
+    and the rail section of casing_spec_LOCKED.md."*
+    ⚠ SUPERSEDED BY SCOTT, quoted not deleted. Reading `Provider Console` over a
+    `BUYER` caption and a buyer menu is not answering a different question — it is
+    answering the same one wrongly, which is what he filed.
   */
   const persona = railPersona(me, isAdmin);
+  /*
+    ── ⚠⚠ THE CONSOLE LABEL FOLLOWS THE PERSONA (`P1-J1.1-E248`) ────────────────
+
+    Scott, on a requester's first signed-in screen: the rail read `Provider Console`
+    under the wordmark while the group label directly beneath it read `BUYER`, above
+    a buyer rail. A requester was being told they were in the provider console.
+
+    ⚠ SUPERSEDED, quoted not deleted, and it sat ABOVE `persona` so the two could
+    never agree:
+        const consoleLabel = isAdmin ? "Platform Console" : "Provider Console";
+    The note beside `persona` even recorded the split as deliberate — *"THIS IS NOT
+    THE CONSOLE LABEL. `consoleLabel` above says which PORTAL you are in and reads
+    'Provider Console' for buyers and sellers alike; this says which SIDE you are
+    on."* ⚠ THAT DISTINCTION IS WHAT SCOTT REJECTED: a portal name that contradicts
+    the caption and the menu under it is not answering a different question, it is
+    answering the same one wrongly.
+
+    ⚠⚠ DERIVED FROM `persona`, NOT FROM A SECOND TEST. `railPersona` already reads
+    the SAME inputs the menu does (`isSellerSide` plus the `isSystemAdmin` session
+    bit), so the label, the caption and the items cannot disagree — one source of
+    truth (`P1-J4-E024`). ⚠ DO NOT re-derive this from `me.person.roles` here; that
+    is the second test this replaced.
+
+    ⚠⚠ THE DUAL-ROLE RULE IS UNCHANGED AND IS PRESERVED BY CONSTRUCTION. Somebody
+    holding BOTH actor flags gets `SELLER` from `railPersona` — because
+    `menuForUserClass` gives them `PROVIDER_NAV` — so they still read
+    `Provider Console`. Nothing here alters that; it inherits it.
+    ⚠ `null` PERSONA (no `me` yet) TAKES THE BUYER LABEL, deliberately: `isSellerSide`
+    is false for an unprofiled user, so the rail is already rendering `REQUESTER_NAV`
+    underneath. Falling back to `Provider Console` there would be the same defect.
+
+    ⚠⚠ `Buyer Console` IS PROVISIONAL AND IS CHAT'S, NOT SCOTT'S. He has not chosen
+    the buyer-side wording. It uses the persona name the code already has (`BUYER`)
+    in the shape the other two labels use (`Platform Console`, `Provider Console`).
+    Reported at `E248` as provisional so he can name it.
+  */
+  const consoleLabel =
+    persona === "PANAMEER"
+      ? "Platform Console"
+      : persona === "SELLER"
+        ? "Provider Console"
+        : "Buyer Console";
   /*
     HOME ROUTES MATCH EXACTLY. "/admin" is a prefix of every admin page, so a
     startsWith test lit up Panameer Dashboard on all fifteen of them — two
