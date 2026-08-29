@@ -2,7 +2,6 @@
 
 import { useCallback, Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
 import { OptionCard } from "@/components/onboarding/controls";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 
@@ -207,7 +206,43 @@ function JoinRouter() {
       : JOBS[userType!];
 
   return (
-    <OnboardingShell contentWidth="max-w-lg">
+    <OnboardingShell
+      contentWidth="max-w-lg"
+      /*
+        ⚠ THE BAND, WHICH THIS PAGE USED TO OPT OUT OF (`E246` §9). Secondary left,
+        primary right — the shape the frame's band was built for.
+        ⚠⚠ `Back` MOVED TOO, NOT JUST `Continue`. §9 names `Continue`, but the row it
+        tells us to delete also held a step-2 `Back`; removing the row while moving
+        only one of them would have LOST that control on step 2. Both moved, exactly
+        as §5 did on the sign-up screen. Reported.
+        ⚠⚠ THE DISABLED GATE IS UNCHANGED AND WAS NOT RE-WIRED: `disabled={!choice}`
+        reads the same page state from the same scope, so `Continue` is still inert
+        until a role is chosen. Nothing about how `go` fires changed.
+        ⚠ `ml-auto` IS KEPT ON `Continue`. The band is `justify-between`, so with
+        `Back` absent on step 1 a lone child would sit LEFT; `ml-auto` holds the
+        primary action right on both steps.
+      */
+      footer={
+        <>
+          {step === 2 && (
+            <button
+              type="button"
+              onClick={() => router.push("/join")}
+              className="rounded-full border-[1.5px] border-line px-7 py-3 font-bold transition-colors hover:border-magenta hover:text-magenta"
+            >
+              Back
+            </button>
+          )}
+          <button
+            onClick={go}
+            disabled={!choice}
+            className="ml-auto rounded-full bg-magenta px-8 py-3 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
+          >
+            Continue
+          </button>
+        </>
+      }
+    >
       <div className="text-center">
         {/*
           E161 — the H1 names the QUESTION on the page. Both steps said "Welcome
@@ -244,31 +279,26 @@ function JoinRouter() {
         ))}
       </div>
 
-      <div className="mt-10 flex items-center gap-4 border-t border-line pt-6">
-        {step === 2 && (
-          <button
-            type="button"
-            onClick={() => router.push("/join")}
-            className="rounded-full border-[1.5px] border-line px-7 py-3 font-bold transition-colors hover:border-magenta hover:text-magenta"
-          >
-            Back
-          </button>
-        )}
-        <button
-          onClick={go}
-          disabled={!choice}
-          className="ml-auto rounded-full bg-magenta px-8 py-3 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
-        >
-          Continue
-        </button>
-      </div>
+      {/*
+        ── ⚠⚠ THE ACTION ROW MOVED TO THE FRAME'S BAND (`P1-J1.1-E246` §9) ────────
 
-      <p className="mt-6 text-center text-[14px] text-ink-2">
-        Already have an account?{" "}
-        <Link href="/login" className="font-bold text-magenta hover:text-magenta-dark">
-          Log In
-        </Link>
-      </p>
+        Scott, walking `19f0d07` + §8: *"Want this line to go fullwidth."*
+        ⚠ SUPERSEDED, quoted not deleted — this held a hand-rolled row,
+        `<div className="mt-10 flex items-center gap-4 border-t border-line pt-6">`
+        carrying a step-2 `Back` and `Continue`. Its `border-t` sat INSIDE the capped
+        `max-w-lg` column, which is why the rule stopped short of the page edge.
+        ⚠ THE SAME DEFECT AS §5's SIGN-UP SCREEN, ON A SECOND PAGE, and the same
+        cause: this page passed no `footer`, so the frame's full-bleed band never
+        rendered and the page drew its own rule instead.
+        ⚠ THE RULE WAS NOT WIDENED TO FAKE IT. The band is full-bleed BY
+        CONSTRUCTION; the fix is to use it, which is what §9 asked for.
+
+        ⚠ ALSO GONE — *"Already have an account? Log In"*. Scott: *"don't need image
+        1 (it is up in the header)."* `MarketingHeader` carries `Log In` now.
+        ⚠⚠ ITS TWIN AT `SignUpForm.tsx:344` IS DELIBERATELY LEFT ALONE. The same
+        reasoning applies to it, but Scott named ONLY `/join`. Reported at `E246` §9
+        so he can rule on it — NOT swept because it looked consistent to do so.
+      */}
     </OnboardingShell>
   );
 }
