@@ -97,6 +97,16 @@ export const PUBLIC_ROUTES: PublicRoute[] = [
     the guard working.
   */
   { route: "/capability-domains", category: 1 },
+  /*
+    ⚠ `/ai-method` (`P1-J0-E356`) — AIM, the five-stage method wheel, at its own
+    address. Reached from the footer's `The AI Method (aka AIM)` row, which is the
+    only anchor in that video band. Renders `MethodologyRing` and nothing else: no
+    form, no session read, no data. Category 1, like the seven above.
+    ⚠ LISTED BECAUSE A NEW `page.tsx` IS OTHERWISE "PUBLIC BY ACCIDENT" — the
+    app-shell suite asserts every page is explicitly allowlisted or gated and the
+    default is DENY. `E352` learned this when `/capability-domains` failed that guard.
+  */
+  { route: "/ai-method", category: 1 },
 
   /*
     ── 2. AUTH DOORS ──────────────────────────────────────────────────────────

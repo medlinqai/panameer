@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { MarketingHeader } from "@/components/marketing/MarketingHeader";
 import { HomeSections } from "@/components/marketing-home/HomeSections";
 import { LogoRibbon } from "@/components/marketing-home/LogoRibbon";
-import { MethodologyRing } from "@/components/marketing-home/MethodologyRing";
 import { Testimonials } from "@/components/marketing-home/Testimonials";
 import { MarketingFooter } from "@/components/marketing/MarketingFooter";
 /* ⚠ `HowItWorks`, `ProcessPicker` AND `SpineSteps` ARE DELIBERATELY NOT IMPORTED
@@ -149,8 +148,10 @@ export default function Home() {
           the historical record of what `E298` decided, NOT as a current statement:
           `GetTheTalent` and `WorkTracker` came off at `P1-J0-E350` and render
           NOWHERE; `CapabilityFramework` came off at `P1-J0-E355` and now renders
-          only on `/capability-domains`. ⚠ `MethodologyRing` and `Testimonials` are
-          the two that still stand. See the `E350`/`E351`/`E355` tombstone below.
+          only on `/capability-domains`; `MethodologyRing` came off at `P1-J0-E356`
+          and renders on `/ai-method` AND `/why-panameer`. ⚠ FOUR OF THE FIVE HAVE
+          NOW LEFT and `Testimonials` is the only one still standing. See the
+          `E350`/`E351`/`E355`/`E356` tombstone below.
         */}
 
         {/*
@@ -305,6 +306,27 @@ export default function Home() {
           are still LIVE — unlike the other eighteen they are not dormant, they are
           the components `/capability-domains` renders.
 
+          ⚠⚠ A TWENTIETH FOLLOWED, `P1-J0-E356`: `MethodologyRing`, the AIM wheel.
+          Scott: *"Create a standalone page for this graphic. Link it to the footer
+          text under solutions called 'The AI Method'. Then, when those two tasks
+          have been done, remove the graphic from the HOME page."* ⚠ THE ORDER WAS
+          HIS AND IT WAS FOLLOWED: the page, the footer link and the eyebrow rename
+          were built and verified BEFORE this render came off.
+          ⚠⚠ IT DID NOT BECOME A SINGLE-HOME SECTION, AND THIS IS THE ONE TO READ.
+          It renders on `/ai-method` (new) AND STILL ON `/why-panameer:62`. Scott
+          named HOME and nothing else, and the `/why-panameer` render was almost
+          certainly never in front of him. ⚠ IT WAS REPORTED, NOT REMOVED — deciding
+          that is his. DO NOT "tidy" the second render away on the strength of the
+          new page existing.
+          ⚠ ITS EYEBROW CHANGED IN THE SAME COMMIT, `Our Method` -> `AIM - The AI
+          Method`, and ONE COMPONENT MEANS THAT HIT `/why-panameer` TOO. Also
+          reported rather than decided.
+          ⚠ NO DEAD ANCHOR: `MethodologyRing.tsx` renders no `id`, and `#method`,
+          `#ring`, `#aim` and `#wheel` appear nowhere in `src/`.
+          ⚠ `MethodologyRing.tsx` IS STILL LIVE, like the framework and unlike the
+          other eighteen — two pages render it. It differs from `E355` by exactly one
+          string, the eyebrow.
+
           ⚠ THE GAPS THIS LEAVES ARE DELIBERATE. Nothing that survives was re-ordered,
           re-spaced or re-styled — Scott wants to look at the result before anything
           is closed up.
@@ -343,7 +365,6 @@ export default function Home() {
           previously ran together. Stays dark.
         */}
         <LogoRibbon />
-        <MethodologyRing />
         {/*
           ── ⚠ BOTH ERP SECTIONS CAME OFF THIS PAGE, 2026-08-21 ────────────────
           ── `P1-J0-E273` (ErpPackages) and `P1-J0-E255` (ErpIntegration) ──────
@@ -390,9 +411,14 @@ export default function Home() {
           `CapabilityFramework`: it came off at `P1-J0-E355` on Scott's instruction
           (*"REMOVE this SECTION from the HOME page."*) and now renders ONLY on
           `/capability-domains`.
-          ⚠ `MethodologyRing` ABOVE IS STILL HERE and is still untouched — it has not
-          been named. So has `Testimonials` below; Scott: *"will stay..will produce
-          those last."*
+          ⚠ `MethodologyRing` LEFT TOO, ONE COMMIT LATER (`P1-J0-E356`). `E355` wrote
+          that it "ABOVE IS STILL HERE and is still untouched — it has not been
+          named"; that was true when written and Scott named it the same day:
+          *"remove the graphic from the HOME page."* ⚠ IT MOVED RATHER THAN VANISHED
+          — it renders on `/ai-method` now, and it ALSO still renders on
+          `/why-panameer`, which he did not name. See the tombstone above.
+          ⚠ `Testimonials` BELOW IS STILL HERE and still untouched; Scott: *"will
+          stay..will produce those last."*
           ⚠⚠ AND NOTHING UNDER `E270`/`E272` EVER DEPENDED ON EITHER BEING ON `/` —
           checked, not assumed. `E270` was a *"Click here"* line from `SpineSteps`
           STEP 2 down to the framework; `E272` was a link from `WorkTracker` down to
@@ -401,6 +427,11 @@ export default function Home() {
           target. Both SOURCE sections are also already gone from this page:
           `SpineSteps` left at `E298` (it renders on `/optimize`) and `WorkTracker`
           at `E350` (it renders nowhere). So the removal breaks no link that exists.
+          ⚠ RE-CHECKED FOR THE RING AT `E356` AND THE ANSWER IS THE SAME. `E272` was
+          the WorkTracker -> method link, and `WorkTracker` has rendered nowhere since
+          `E350`, so nothing could have depended on `MethodologyRing` being on `/`
+          either. `MethodologyRing.tsx` renders NO `id`, and `#method`, `#ring`,
+          `#aim` and `#wheel` appear NOWHERE in `src/` in any form.
         */}
         <Testimonials />
       </div>

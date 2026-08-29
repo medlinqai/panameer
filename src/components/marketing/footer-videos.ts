@@ -1,10 +1,22 @@
 /**
  * THE THREE VIDEO COLUMNS IN THE FOOTER (`P1-ALL-E020`).
  *
- * ⚠⚠ EVERY ITEM IS PLAIN TEXT. THERE IS NO `href` FIELD ON PURPOSE — the type
- * cannot carry one, so nobody can add a destination without changing the shape.
+ * ⚠⚠ TWENTY OF THE TWENTY-ONE ITEMS ARE PLAIN TEXT AND STAY THAT WAY.
+ * ⚠ SUPERSEDED, quoted not deleted — this header used to read: *"EVERY ITEM IS PLAIN
+ * TEXT. THERE IS NO `href` FIELD ON PURPOSE — the type cannot carry one, so nobody
+ * can add a destination without changing the shape."* `P1-J0-E356` is the brief that
+ * changed the shape, deliberately and for exactly one item.
  * Scott: *"I will come back and fill in the links to the videos after i create
- * them...after the pages have been built."*
+ * them...after the pages have been built."* THAT STILL HOLDS FOR THE OTHER TWENTY —
+ * the videos do not exist yet and none of them gets a destination here.
+ *
+ * ⚠⚠ THE ITEM TYPE IS A UNION, NOT AN OBJECT. `string | { label, href }` means the
+ * other twenty stay BARE STRINGS and were not touched. A migration that rewrites
+ * every row into an object is a different brief and would make twenty rows noisier
+ * to read for one row's benefit.
+ * ⚠ ONE ITEM CARRIES AN `href`: `The AI Method (aka AIM)` -> `/ai-method`, because
+ * that page now exists (`E356` §2). Scott pointed at this row in a screenshot.
+ * ⚠ ITS LABEL DID NOT CHANGE — the `(aka AIM)` stays.
  *
  * ⚠ AND NO `TBD` BADGE EITHER. That marker exists for UNBUILT PAGES a reader
  * might otherwise expect to click; these are a COMING LIBRARY, which is a
@@ -19,11 +31,28 @@
  * 2. `Crate Optimization Dashboard` -> `Create`. ⚠ CORRECTED AS A TYPO under the
  *    standing `uase`->`use` precedent, and flagged so he can overrule.
  */
+/**
+ * ⚠ A BARE STRING IS STILL A VALID ITEM and is what twenty of the twenty-one are.
+ * The object form exists only for a row whose destination is BUILT (`P1-J0-E356`).
+ * ⚠ DO NOT ADD AN `href` FOR A PAGE THAT DOES NOT EXIST — a footer link to nothing
+ * is the defect `E119`/`E351` keep catching. If the target is not built, leave the
+ * row a string.
+ */
+export type FooterVideoItem = string | { label: string; href: string };
+
 export type FooterVideoColumn = {
   /** ⚠ SENTENCE CASE, display face. Not an ALL-CAPS eyebrow. */
   title: string;
-  items: string[];
+  items: FooterVideoItem[];
 };
+
+/** ⚠ ONE PLACE THAT KNOWS BOTH SHAPES, so no caller re-implements the narrowing. */
+export function footerVideoLabel(item: FooterVideoItem): string {
+  return typeof item === "string" ? item : item.label;
+}
+export function footerVideoHref(item: FooterVideoItem): string | undefined {
+  return typeof item === "string" ? undefined : item.href;
+}
 
 export const FOOTER_VIDEO_COLUMNS: FooterVideoColumn[] = [
   {
@@ -63,7 +92,8 @@ export const FOOTER_VIDEO_COLUMNS: FooterVideoColumn[] = [
       "Service Procurement Settlement",
       "Dynamic Analytics (Data Driven)",
       "AI Agents Launched from the AIP",
-      "The AI Method (aka AIM)",
+      /* ⚠ THE ONLY LINKED ROW IN THIS BAND (`P1-J0-E356`). Label unchanged. */
+      { label: "The AI Method (aka AIM)", href: "/ai-method" },
       "The Panameer E2E Work Tracker",
     ],
   },

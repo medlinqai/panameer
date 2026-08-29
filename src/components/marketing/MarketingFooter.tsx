@@ -5,6 +5,8 @@ import { FOOTER_LEGAL } from "@/components/marketing/brand";
 import {
   FOOTER_SOCIALS,
   FOOTER_VIDEO_COLUMNS,
+  footerVideoHref,
+  footerVideoLabel,
 } from "@/components/marketing/footer-videos";
 
 /**
@@ -108,19 +110,49 @@ export function MarketingFooter() {
                 {col.title}
               </h2>
               {/*
-                ⚠ A `<ul>`, AND EVERY ITEM IS A `<li>` OF PLAIN TEXT. No anchors
-                anywhere in this band — `FooterVideoColumn` has no `href` field, so
-                a destination cannot be added without changing the type.
+                ── ⚠⚠ ONE ANCHOR IN THIS BAND, AND EXACTLY ONE (`P1-J0-E356`) ──────
+
+                ⚠ SUPERSEDED, quoted not deleted — this note used to read: *"A `<ul>`,
+                AND EVERY ITEM IS A `<li>` OF PLAIN TEXT. No anchors anywhere in this
+                band — `FooterVideoColumn` has no `href` field, so a destination
+                cannot be added without changing the type."* That was a correct
+                description of a deliberate state, and `E356` is the brief that
+                changed it. It is not drift.
+
+                ⚠ `The AI Method (aka AIM)` NOW LINKS TO `/ai-method`, which `E356`
+                built. THE OTHER TWENTY ITEMS ARE STILL BARE STRINGS and still render
+                as plain `<li>` text — no anchor, no hover colour, no layout shift.
+                ⚠ THE ITEM TYPE IS A UNION (`string | {label, href}`), so a row only
+                becomes a link by being rewritten as an object. Twenty were not.
+                ⚠ DO NOT ADD MORE HREFS HERE FOR UNBUILT PAGES. Scott is adding the
+                videos later; a footer link to nothing is the `E119`/`E351` defect.
+                ⚠ THIS FOOTER IS ON EVERY PUBLIC PAGE — a mistake here is a mistake
+                seven times over, which is why `E356` clicked the link from two
+                different pages and confirmed the other twenty stayed anchor-free.
+
+                ⚠ THE `<Link>`/plain-text SHAPE IS THE ONE ALREADY IN THIS FILE at the
+                legal bar below (`BAND2_LINKS`), deliberately — one convention for one
+                behaviour in one component.
               */}
               <ul>
-                {col.items.map((item) => (
-                  <li
-                    key={item}
-                    className="my-1.5 text-[14.5px] leading-[1.45]"
-                  >
-                    {item}
-                  </li>
-                ))}
+                {col.items.map((item) => {
+                  const label = footerVideoLabel(item);
+                  const href = footerVideoHref(item);
+                  return (
+                    <li
+                      key={label}
+                      className="my-1.5 text-[14.5px] leading-[1.45]"
+                    >
+                      {href ? (
+                        <Link href={href} className="hover:text-white">
+                          {label}
+                        </Link>
+                      ) : (
+                        label
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           ))}

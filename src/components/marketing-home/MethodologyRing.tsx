@@ -25,7 +25,20 @@ export function MethodologyRing() {
       <section className="block" style={{ paddingTop: '52px', paddingBottom: '60px' }}>
         <div className="wrap">
           <div className="center">
-            <div className="eyebrow">Our Method</div>
+            {/*
+              ⚠ SCOTT'S STRING VERBATIM, 2026-08-28 (`P1-J0-E356`): *"Change the
+              section header 'Our Method' to 'AIM - The AI Method'."*
+              ⚠ A PLAIN HYPHEN WITH A SPACE EITHER SIDE — not an en-dash or em-dash,
+              which is what a tidy-up reaches for. Do not "fix" the punctuation.
+              ⚠ AUTHORED IN TITLE CASE. `.eyebrow` applies `text-transform:uppercase`,
+              so it RENDERS `AIM - THE AI METHOD`; hardcoding caps here would break
+              the convention every other eyebrow follows.
+              ⚠ SUPERSEDED, quoted not deleted: *"Our Method"*.
+              ⚠⚠ THIS COMPONENT RENDERS ON TWO PAGES, so this string changed BOTH:
+              `/ai-method` (new, `E356`) and `/why-panameer`. Scott named neither —
+              he named the section. Reported at `E356` rather than decided.
+            */}
+            <div className="eyebrow">AIM - The AI Method</div>
             <h2>Optimize by Methodology</h2>
             <p>One method, run continuously — because good businesses never stand still.</p>
           </div>
