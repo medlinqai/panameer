@@ -3,7 +3,6 @@ import { MarketingHeader } from "@/components/marketing/MarketingHeader";
 import { HomeSections } from "@/components/marketing-home/HomeSections";
 import { LogoRibbon } from "@/components/marketing-home/LogoRibbon";
 import { MethodologyRing } from "@/components/marketing-home/MethodologyRing";
-import { CapabilityFramework } from "@/components/marketing-home/CapabilityFramework";
 import { Testimonials } from "@/components/marketing-home/Testimonials";
 import { MarketingFooter } from "@/components/marketing/MarketingFooter";
 /* ⚠ `HowItWorks`, `ProcessPicker` AND `SpineSteps` ARE DELIBERATELY NOT IMPORTED
@@ -146,6 +145,12 @@ export default function Home() {
           `MethodologyRing` and `Testimonials` are NOT on `/optimize` and STAY —
           removing them would delete content with no home. ⚠ Do not read the gap
           this leaves as an invitation to fill it.
+          ⚠⚠ THAT WAS TRUE OF `E298` AND THREE OF THE FIVE HAVE SINCE LEFT. Kept as
+          the historical record of what `E298` decided, NOT as a current statement:
+          `GetTheTalent` and `WorkTracker` came off at `P1-J0-E350` and render
+          NOWHERE; `CapabilityFramework` came off at `P1-J0-E355` and now renders
+          only on `/capability-domains`. ⚠ `MethodologyRing` and `Testimonials` are
+          the two that still stand. See the `E350`/`E351`/`E355` tombstone below.
         */}
 
         {/*
@@ -278,7 +283,27 @@ export default function Home() {
           entry is plain text with no `href` (`brand.tsx:379`), checked before
           deleting rather than after.
           ⚠ `Testimonials` IS NOW THE ONLY SECTION between `MethodologyRing` and the
-          closing `</div>` and WILL LOOK STRANDED. Scott has not named it. LEAVE IT.
+          closing `</div>` and WILL LOOK STRANDED. Scott has not named it. LEAVE IT —
+          he has since confirmed: *"will stay..will produce those last."*
+
+          ⚠⚠ A NINETEENTH FOLLOWED, `P1-J0-E355`: `CapabilityFramework`. Scott,
+          pointing at it on `/`: *"REMOVE this SECTION from the HOME page."*
+          ⚠ THE HISTORY MATTERS HERE MORE THAN USUAL, because this one reverses a
+          decision that was correct when it was made. `E350` and `E351` KEPT it —
+          he had walked `/` three times and never named it, so both briefs gated on
+          it SURVIVING. `E352` then built `/capability-domains` and was explicit that
+          it was a COPY NOT A MOVE, gating `page.tsx` byte-identical for exactly that
+          reason. He named it on 2026-08-28 and `E355` turned that copy into a move.
+          ⚠ SO THE FRAMEWORK NOW RENDERS ON EXACTLY ONE PAGE: `/capability-domains`,
+          reached from `/optimize`'s second hero button. That is the answer to "why
+          is the framework only on its own page?".
+          ⚠ NO DEAD ANCHOR, CHECKED BEFORE DELETING (the `#punchout` lesson from
+          `E350`): `CapabilityFramework` renders NO `id` at all, `CapabilityExplorer`
+          renders none either, and `#framework`, `#fw` and `#capability` appear
+          NOWHERE in `src/` — not as an `href`, not as a string.
+          ⚠ `CapabilityFramework.tsx` AND `CapabilityExplorer.tsx` STAY ON DISK and
+          are still LIVE — unlike the other eighteen they are not dormant, they are
+          the components `/capability-domains` renders.
 
           ⚠ THE GAPS THIS LEAVES ARE DELIBERATE. Nothing that survives was re-ordered,
           re-spaced or re-styled — Scott wants to look at the result before anything
@@ -318,7 +343,6 @@ export default function Home() {
           previously ran together. Stays dark.
         */}
         <LogoRibbon />
-        <CapabilityFramework />
         <MethodologyRing />
         {/*
           ── ⚠ BOTH ERP SECTIONS CAME OFF THIS PAGE, 2026-08-21 ────────────────
@@ -360,9 +384,23 @@ export default function Home() {
           RENDERS HERE, so putting one back fails the build rather than quietly
           restoring the duplicate.
 
-          ⚠ NOTHING ELSE COMES OFF `/`. `CapabilityFramework` and
-          `MethodologyRing` above are becoming link targets under E270/E272 and
-          are deliberately untouched.
+          ⚠ THIS NOTE USED TO READ *"NOTHING ELSE COMES OFF `/`. `CapabilityFramework`
+          and `MethodologyRing` above are becoming link targets under E270/E272 and
+          are deliberately untouched."* ⚠ BOTH HALVES ARE NOW WRONG FOR
+          `CapabilityFramework`: it came off at `P1-J0-E355` on Scott's instruction
+          (*"REMOVE this SECTION from the HOME page."*) and now renders ONLY on
+          `/capability-domains`.
+          ⚠ `MethodologyRing` ABOVE IS STILL HERE and is still untouched — it has not
+          been named. So has `Testimonials` below; Scott: *"will stay..will produce
+          those last."*
+          ⚠⚠ AND NOTHING UNDER `E270`/`E272` EVER DEPENDED ON EITHER BEING ON `/` —
+          checked, not assumed. `E270` was a *"Click here"* line from `SpineSteps`
+          STEP 2 down to the framework; `E272` was a link from `WorkTracker` down to
+          the method. NEITHER LINK WAS EVER WIRED — there is no `href="#..."` for
+          either anywhere in `src/`, and `CapabilityFramework` renders no `id` to
+          target. Both SOURCE sections are also already gone from this page:
+          `SpineSteps` left at `E298` (it renders on `/optimize`) and `WorkTracker`
+          at `E350` (it renders nowhere). So the removal breaks no link that exists.
         */}
         <Testimonials />
       </div>

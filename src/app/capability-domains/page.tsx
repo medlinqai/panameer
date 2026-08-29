@@ -11,21 +11,34 @@ import "@/components/marketing-home/home.css";
  * sized correctly)."* Image 1 was `CapabilityFramework`. The `/optimize` hero's
  * second button — `CAPABILITY_EXPLAINED_LABEL` — is the only thing that links here.
  *
- * ── ⚠⚠ THIS IS A COPY, NOT A MOVE. `CapabilityFramework` STILL RENDERS ON `/` ──
+ * ── ⚠⚠ THIS PAGE IS THE ONLY PLACE `CapabilityFramework` RENDERS (`P1-J0-E355`) ──
  *
- * Scott walked `/` three times across `E350` and `E351` and named eighteen sections
- * to delete. `CapabilityFramework` was on NONE of those lists — he kept it
- * deliberately each time. So this route ADDS a second render site and `app/page.tsx`
- * is byte-identical. ⚠ DO NOT "DE-DUPLICATE" THE TWO by removing it from `/`.
+ * ⚠ IT WAS BUILT AS A COPY AND BECAME A MOVE, and the sequence is worth keeping
+ * because the copy decision was CORRECT ON THE EVIDENCE AT THE TIME:
+ *   · `E350`/`E351` — Scott walked `/` three times and named eighteen sections to
+ *     delete. This one was on NONE of those lists, so both briefs gated on it
+ *     SURVIVING on `/`.
+ *   · `E352` — built this route and was explicit that it ADDED a second render site,
+ *     gating `app/page.tsx` byte-identical for exactly that reason.
+ *   · `E355` — Scott named it: *"REMOVE this SECTION from the HOME page."* The `/`
+ *     render and its import went, and the copy became a move.
  *
- * ⚠ `§50 no public page renders the same section twice` DOES NOT FORBID THIS, and
- * that was checked against the test body rather than assumed: it loops a list of
- * URLs and, PER PAGE, rebuilds its `seen` map to look for a duplicate `id` or a
- * repeated `<h2>` WITHIN that page. Two pages each rendering the section once is
- * outside what it measures. ⚠ THIS ROUTE WAS ADDED TO ITS URL LIST — the test's own
- * docblock says *"RUN ON EVERY PUBLIC MARKETING PAGE"*, and a new public page absent
- * from that list contradicts its stated intent. Widening the list is strictly
- * stronger; nothing was loosened to accommodate this page.
+ * ⚠ SO THE SECTION NOW HAS ONE HOME AND THIS IS IT. `/optimize`'s second hero
+ * button (`CAPABILITY_EXPLAINED_LABEL`) is the only thing that links here, and it
+ * still works — verified at `E355` by clicking it, not by reading the href.
+ * ⚠ SUPERSEDED, quoted not deleted, so nobody restores the `/` render from it: this
+ * header used to read *"THIS IS A COPY, NOT A MOVE. `CapabilityFramework` STILL
+ * RENDERS ON `/`"* and *"DO NOT DE-DUPLICATE THE TWO by removing it from `/`."*
+ * That instruction is HISTORY and was reversed by its owner.
+ *
+ * ⚠ `§50 no public page renders the same section twice` was never the constraint
+ * here, and that was checked against the test body rather than assumed: it loops a
+ * list of URLs and, PER PAGE, rebuilds its `seen` map to look for a duplicate `id`
+ * or a repeated `<h2>` WITHIN that page. It could not have failed on two pages each
+ * rendering the section once, and after `E355` only one page does.
+ * ⚠ THIS ROUTE IS IN ITS URL LIST and stays there — the test's own docblock says
+ * *"RUN ON EVERY PUBLIC MARKETING PAGE"*. Widening it was strictly stronger and
+ * nothing was loosened.
  *
  * ── ⚠⚠ THE STRUCTURE IS NOT A FREE CHOICE — IT IS `/optimize`'s, EXACTLY ────────
  *
