@@ -95,7 +95,7 @@ export default function ErpIntegrationPage() {
     <>
       {/* ⚠ OUTSIDE `.pm-home` — see the header note in the block above. */}
       <MarketingHeader />
-      <div id="punchout" className="pm-home scroll-mt-[71px]">
+      <div id="punchout" className="pm-home pm-solo scroll-mt-[71px]">
         <ErpIntegration className="erpx-band" />
       </div>
       {/* ⚠ OUTSIDE `.pm-home` — see the footer note in the block above. */}

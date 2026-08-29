@@ -103,7 +103,7 @@ export default function CapabilityDomainsPage() {
     <>
       {/* ⚠ OUTSIDE `.pm-home` — see the header note in the block above. */}
       <MarketingHeader />
-      <div className="pm-home">
+      <div className="pm-home pm-solo">
         <CapabilityFramework />
       </div>
       {/* ⚠ OUTSIDE `.pm-home` — see the footer note in the block above. */}

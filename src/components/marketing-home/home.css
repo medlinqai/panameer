@@ -8673,3 +8673,47 @@
     font-size: 17.5px;
   }
 }
+
+/*
+  ── ⚠⚠ SINGLE-SECTION PAGES CARRY NO BAND SHADING (`P1-J0-E360`) ──────────────
+
+  SCOTT'S RULE, IN HIS WORDS, 2026-08-29:
+    *"the AIM page, the page you just built, they both are shaded. I do not want
+    single pages shaded. shading is just a technique i use when there are multiple
+    sections on a page."*
+
+  ⚠ HE OWNS THIS RULE. A page with ONE section has no rhythm to establish, so it gets
+  no tinted band — shading exists to separate adjacent sections from EACH OTHER, and
+  with nothing to separate it is just a grey page. ⚠ BUILD THE NEXT SINGLE-SECTION
+  PAGE WHITE FROM THE START: add `pm-solo` beside `pm-home` on its wrapper.
+
+  ── ⚠⚠ WHY THIS IS A PAGE MODIFIER AND NOT AN EDIT TO THE BAND RULES ──────────
+
+  `.fw` and `.erp` are COMPONENT classes. `CapabilityFramework` and `ErpPackages` each
+  render on one page TODAY (`E355` and `E358` moved them), but they have each rendered
+  on two pages within the last week, and `MethodologyRing` renders on TWO RIGHT NOW —
+  `/ai-method` and `/why-panameer`. Editing a band rule to un-shade a solo page would
+  reach every page that component appears on, including multi-section pages where the
+  shading is the rule WORKING. So the switch belongs to the PAGE, not the component.
+  ⚠ NOTHING ABOVE THIS COMMENT WAS EDITED. This block is purely additive.
+
+  ⚠ NO `!important`, AND IT WAS NOT NEEDED. The rules being overridden are
+  `.pm-home .fw` (`:1203`) and `.pm-home .erp` (`:2049`), both `(0,2,0)` and unlayered
+  — confirmed with CDP's `getMatchedStylesForNode` rather than by reading the file.
+  `.pm-home.pm-solo .fw` is `(0,3,0)` and wins on specificity alone.
+
+  ⚠ ONLY THE FULL-WIDTH SECTION GROUND CHANGES. Cards, chips, the navy scorecard, the
+  wheel's lobes, the `chk` markers and the diagram panels all keep their colours —
+  none of them is matched here. Padding, spacing and borders are untouched.
+
+  ⚠ TWO OF THE FOUR SOLO PAGES NEEDED NO RULE and carry the class anyway, so the
+  intent is declared at every solo page rather than only where a rule happens to bite:
+    `.block`      (`MethodologyRing`, `/ai-method`)      — already transparent
+    `.erpx-band`  (`ErpIntegration`, `/erp-integration`) — already `#fff` (`:3322`)
+  Adding a shaded section to either page later will be caught by this rule, not by a
+  reader remembering.
+*/
+.pm-home.pm-solo .fw,
+.pm-home.pm-solo .erp {
+  background: #fff;
+}
