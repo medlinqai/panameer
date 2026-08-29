@@ -1007,22 +1007,69 @@
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 26px;
+  /* ⚠ 20px, WAS 26px (`P1-J0-E357`). See the sizing note on `.logos .co` below. */
+  gap: 20px;
 }
-.pm-home .logos .co {
+/*
+  ── ⚠⚠ THE ROW WAS RETUNED FOR FIVE REAL CLIENT NAMES (`P1-J0-E357`) ──────────
+
+  ⚠ SUPERSEDED VALUES, quoted not deleted: `.co` font-size 21px, `.co` gap 10px,
+  `.co svg` width/height 26px, `.row` gap 26px.
+
+  ⚠⚠ EVERY NUMBER BELOW WAS MEASURED IN THIS APP, NOT TAKEN FROM THE BRIEF. The
+  `E357` brief's arithmetic was produced in a container where `fonts.googleapis.com`
+  is blocked and `document.fonts.check` returned a FALSE POSITIVE, so all of its
+  figures describe a FALLBACK FACE, not Comfortaa. Measured here: the fallback is
+  9.2% narrower than Comfortaa 700 for the same string at the same size (188.5px vs
+  207.7px for "Northeast Florida Smiles"). ⚠ THAT IS WHY THE BRIEF'S FIRST SIZING
+  SHIPPED NOTHING: at its 17px the row measured 1136.7px against 1096px of space at
+  1160 and wrapped 4+1, orphaning `South Atlanta Periodontics` — the exact defect it
+  set out to remove. ⚠ DO NOT RE-DERIVE THESE FROM THE BRIEF. Measure in-app, with
+  `document.fonts.ready` awaited AND the rendering face confirmed against a canvas
+  probe; `fonts.check` alone is not proof.
+
+  ⚠ THE BRIEF ALSO MIS-SCALED THE BOX. It shrank the whole `.co` by the font ratio,
+  but the glyph and the inner gap are FIXED px and do not scale with `font-size` —
+  each `.co` is 30px of furniture plus text. Only the text moves.
+
+  MEASURED AT THESE VALUES (Comfortaa 700, letter-spacing -0.3px), per item:
+      medlinq.ai 114.1 · Northeast Florida Smiles 230.5 · Palencia MedSpa 170.7 ·
+      Clairemont Orthodontics 233.6 · South Atlanta Periodontics 248.1
+  Row content, including four 20px gaps: 1076.9px.
+      @1440  1136px available -> 59.1px spare, ONE LINE
+      @1160  1096px available -> 19.1px spare, ONE LINE
+  ⚠ ONE LINE DOWN TO A 1141px VIEWPORT, wrapping at 1140 and below, which
+  `flex-wrap` already handles. (The brief claimed 1111px; that too was the fallback
+  face.) ⚠ 1160 IS THE TIGHT WIDTH — 19px of slack. A sixth name, or a longer one,
+  wraps the row. Measure before adding either.
+
+  ⚠ ONLY FOUR DECLARATIONS CHANGED AND ALL ARE `.logos`-SCOPED, so no other section
+  moves. `.pm-home .wrap`, `.pm-home .eyebrow` and every other rule in this file are
+  byte-identical — `E357` diffed the whole file to prove it.
+  ⚠ `color: #fff` AND `color: var(--mag)` ARE UNCHANGED. Scott: *"like the
+  rest....light text and logo."*
+*/.pm-home .logos .co {
   display: flex;
   align-items: center;
-  gap: 10px;
+  /* ⚠ 9px, WAS 10px (`E357`). */
+  gap: 9px;
   color: #fff;
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 21px;
+  /* ⚠ 16px, WAS 21px (`E357`, Scott's choice from a measured sweep). */
+  font-size: 16px;
   letter-spacing: -0.3px;
 }
-/* The glyph is the accent — 26px of magenta each, which is what "small" means. */
+/* The glyph is the accent — 21px of magenta each, which is what "small" means.
+   ⚠ 21px, WAS 26px (`E357`, Scott's number).
+   ⚠⚠ THE `strokeWidth` IS STILL 1.75 AND AT THIS BOX THAT IS SLIGHTLY LIGHT THAN
+   WHAT HE SIGNED OFF. He approved the weight rendered at 26px; the equivalent here is
+   1.5 x 26/21 = 1.86, so 1.75 renders about 6% lighter. The brief forbids changing
+   1.75, so it was NOT changed — reported instead. If he wants the 26px appearance
+   back exactly, 1.86 is the number. See `LogoRibbon.tsx`. */
 .pm-home .logos .co svg {
-  width: 26px;
-  height: 26px;
+  width: 21px;
+  height: 21px;
   flex-shrink: 0;
   color: var(--mag);
 }
