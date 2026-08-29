@@ -1,8 +1,6 @@
 import { MarketingHeader } from "@/components/marketing/MarketingHeader";
 import { MarketingFooter } from "@/components/marketing/MarketingFooter";
 import type { ReactNode } from "react";
-import { Logo } from "@/components/Logo";
-import { BRAND_DESCRIPTOR } from "@/lib/brand";
 
 /**
  * The onboarding page chrome — ONE definition for every onboarding surface
@@ -16,10 +14,17 @@ import { BRAND_DESCRIPTOR } from "@/lib/brand";
  *
  * Three things the design has that a per-page fix kept missing:
  *
- *  - FULL-BLEED RULES. The rule under the logo and the rule above the footer run
- *    edge to edge, while their CONTENTS line up with the content column. A rule
- *    that stops at the column reads as a box around the page; the design's runs
- *    past it, which is what makes the page feel wide.
+ *  - FULL-BLEED RULES. ⚠ HALF OF THIS IS NOW FALSE — see below.
+ *    ⚠ SUPERSEDED, quoted not deleted: *"The rule under the logo and the rule above
+ *    the footer run edge to edge, while their CONTENTS line up with the content
+ *    column. A rule that stops at the column reads as a box around the page; the
+ *    design's runs past it, which is what makes the page feel wide."*
+ *    ⚠ THE FOOTER HALF STILL STANDS and is still why the action band is full-bleed —
+ *    `E246` §5 moved the sign-up buttons into it for exactly that reason, because
+ *    their rule was being drawn inside the capped form column instead.
+ *    ⚠ THE LOGO HALF DOES NOT. `E246` §8 deleted this frame's own header; there is
+ *    no rule under a logo here any more because there is no logo here.
+ *    `MarketingHeader` sits above the frame and owns that edge.
  *  - A FOOTER BAND. Secondary action left, primary right, in its own band pinned
  *    to the bottom — not floating under the content wherever the content happens
  *    to end.
@@ -126,37 +131,38 @@ export function OnboardingFrame({
       <MarketingHeader />
       <div className={`flex flex-1 flex-col bg-white font-body text-ink ${className}`}>
       {/*
-        Header rule spans the viewport; the logo lines up with the column.
+        ── ⚠⚠ THE FRAME'S OWN HEADER IS GONE (`P1-J1.1-E246` §8) ─────────────────
 
-        E182 — THE TAGLINE SITS BESIDE THE MARK, AS TEXT. It is one flex row so
-        the two read as a lockup rather than as a logo with a caption under it,
-        and the divider between them is what keeps the mark itself clean —
-        nothing here is baked into the image, so the wordmark stays reusable and
-        the words stay editable in one constant.
+        Scott, seeing `19f0d07`: *"a casing within a casing?"* — `E246` §1 put
+        `MarketingHeader` above this frame and never said what became of the header
+        the frame already had, so the page shipped with TWO wordmarks and TWO rules
+        stacked. ⚠ CHAT'S MISS, LOGGED AS SUCH; the build matched what §1 wrote.
 
-        THE WORDS CHANGED (brief_brand_tagline_rollout WS-B). E182 put "The
-        Oracle Cloud Talent, Training & Services Marketplace" here: narrower
-        than the positioning now is, and using the one word the brand system
-        deliberately keeps out of display copy. The descriptor replaces it —
-        same slot, same lockup, no layout change.
+        ⚠ `MarketingHeader` OWNS THE TOP OF THE PAGE NOW and already carries the
+        wordmark. Do not re-add a second one here.
 
-        Hidden below `sm`: at 375px the mark plus a nine-word sentence either
-        wraps to three lines or squeezes the mark, and a header that tall costs
-        the form the top of the screen on the one device that can least spare it.
+        ⚠ SUPERSEDED, quoted not deleted — this slot held a `<header
+        className="border-b border-line">` with `<Logo priority />`, an `sm:block`
+        divider span and a `BRAND_DESCRIPTOR` paragraph, documented as:
+          *"Header rule spans the viewport; the logo lines up with the column.
+          E182 — THE TAGLINE SITS BESIDE THE MARK, AS TEXT. It is one flex row so the
+          two read as a lockup rather than as a logo with a caption under it, and the
+          divider between them is what keeps the mark itself clean — nothing here is
+          baked into the image, so the wordmark stays reusable and the words stay
+          editable in one constant.
+          THE WORDS CHANGED (brief_brand_tagline_rollout WS-B). E182 put "The Oracle
+          Cloud Talent, Training & Services Marketplace" here: narrower than the
+          positioning now is, and using the one word the brand system deliberately
+          keeps out of display copy. The descriptor replaces it — same slot, same
+          lockup, no layout change.
+          Hidden below `sm`: at 375px the mark plus a nine-word sentence either wraps
+          to three lines or squeezes the mark, and a header that tall costs the form
+          the top of the screen on the one device that can least spare it."*
+
+        ⚠ `BRAND_DESCRIPTOR` IS NOT LOST FROM THE PAGE — `MarketingFooter`'s brand
+        block renders the same constant, so the descriptor still appears once.
+        Confirmed in the `E246` §8 screenshots, not assumed.
       */}
-      <header className="border-b border-line">
-        <div className={`mx-auto flex w-full ${width} items-center gap-3 px-6 py-5`}>
-          <Logo priority />
-          <span
-            aria-hidden
-            className="hidden h-6 w-px shrink-0 bg-line sm:block"
-          />
-          <p className="hidden text-[13.5px] font-semibold leading-tight text-ink-2 sm:block">
-            {BRAND_DESCRIPTOR}
-          </p>
-        </div>
-      </header>
-
       <main className="flex flex-1 flex-col">
         <div
           className={`mx-auto w-full ${width} px-6 ${pad} ${centered ? "my-auto" : ""}`}
