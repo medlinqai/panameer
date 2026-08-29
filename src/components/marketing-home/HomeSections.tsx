@@ -178,7 +178,19 @@ function Section({ s, i }: { s: HomeSection; i: number }) {
     : "min-[1151px]:grid-cols-[0.95fr_1.05fr]";
 
   const copy = (
-    <div className={COL}>
+    /*
+      ⚠ `COL` IS `"min-w-0"` AND IT IS LOAD-BEARING — see its own note above. `fr`
+      tracks default to `min-width:auto`, so the `whitespace-nowrap` eyebrow would
+      widen its OWN column without it. APPENDED TO, never replaced.
+      ⚠⚠ `min-[1151px]:order-2` IS WRITTEN WHOLE INSIDE ONE STRING LITERAL and must
+      stay that way. Tailwind scans source text for whole class tokens and NEVER
+      evaluates JavaScript — split this across a `+` and no CSS is emitted, mobile
+      still looks right, and the DESKTOP layout silently reverses. That is `E338`,
+      where `HERO_SCRIM` shipped dead on seven pages for two days behind a warm cache.
+      ⚠ `E354` asserts the COMPUTED `order` values, not the class string, for exactly
+      that reason.
+    */
+    <div className={COL + (dark ? "" : " min-[1151px]:order-2")}>
       {/*
         ⚠⚠ ONE LINE ABOVE 1150px — Scott: *"do NOT wrap the SECTIONAL HEADERS."*
         ⚠ `whitespace-nowrap` IS SCOPED TO `min-[1151px]` ONLY. Below that the grid
@@ -450,7 +462,11 @@ function Section({ s, i }: { s: HomeSection; i: number }) {
   );
 
   const media = (
-    <div className={COL}>
+    /* ⚠ THE LIGHT BANDS' MEDIA COLUMN MOVES LEFT ON DESKTOP ONLY (`P1-J0-E354`).
+       `min-[1151px]:order-1` WRITTEN WHOLE — see the note on `copy` above for why a
+       split token here would break desktop while looking fine on mobile.
+       ⚠ `COL` APPENDED TO, not replaced. */
+    <div className={COL + (dark ? "" : " min-[1151px]:order-1")}>
       {/* ⚠ THE PANEL IS WHITE ON BOTH BANDS — navy text on white, 16.28:1. */}
       <div
         className={
@@ -603,10 +619,42 @@ function Section({ s, i }: { s: HomeSection; i: number }) {
             grid
           }
         >
-          {/* ⚠ DOM ORDER CARRIES THE READING ORDER — no `order` utilities, so a
-              screen reader and a sighted reader get the same sequence. */}
-          {dark ? copy : media}
-          {dark ? media : copy}
+          {/*
+            ── ⚠⚠ DOM ORDER IS ALWAYS copy -> media (`P1-J0-E354`) ──────────────
+
+            Scott, 2026-08-28: *"when switching to mobile, the home page doesn't go in
+            order of the text first and what you get listing second."* He was right,
+            and it was exactly the three LIGHT bands — 2, 4 and 6.
+
+            ⚠ SUPERSEDED, quoted not deleted — this line used to read:
+              *"⚠ DOM ORDER CARRIES THE READING ORDER — no `order` utilities, so a
+              screen reader and a sighted reader get the same sequence."*
+            with `{dark ? copy : media}` / `{dark ? media : copy}` below it. The
+            ternary existed to alternate which column sits LEFT ON DESKTOP, but
+            NOTHING SCOPED IT TO DESKTOP: the grid is `grid-cols-1` until
+            `min-[1151px]`, so below that the two children simply stacked in DOM
+            order and the card landed ABOVE the headline, body and buttons it is
+            meant to follow. The old comment's claim was true of the mechanism and
+            false of the result.
+
+            ⚠⚠ THE TRADE THIS MAKES, RECORDED AS ONE. DOM order is now copy -> media
+            on every band at every width — the sequence the copy was written for, and
+            what a screen reader now gets on all six sections. The desktop swap moved
+            onto the two children as `order` utilities scoped to `min-[1151px]`, so
+            ON LIGHT BANDS AT >=1151px THE LEFT-TO-RIGHT POSITION NO LONGER MATCHES
+            DOM ORDER. That is deliberate: visual order is a layout preference,
+            reading order is not, and only one of them can win on a wide screen.
+
+            ⚠ THE `grid` TRACKS ARE UNTOUCHED and that is what keeps desktop
+            identical. The widths belong to the COLUMN POSITIONS, not the components:
+            light bands stay `[0.95fr_1.05fr]`, so `media` moved into column 1 still
+            gets 0.95fr and `copy` still gets 1.05fr. Verified by measuring both
+            columns' x and width at 1440 before and after — unchanged.
+            ⚠ `const dark = i % 2 === 0` IS UNTOUCHED. The index parity that stripes
+            the page is Scott's and was not in scope.
+          */}
+          {copy}
+          {media}
         </div>
       </div>
     </section>
