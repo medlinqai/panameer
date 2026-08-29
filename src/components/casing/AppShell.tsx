@@ -1,3 +1,4 @@
+import { MarketingFooter } from "@/components/marketing/MarketingFooter";
 import type { ReactNode } from "react";
 import { AppRail } from "@/components/casing/AppRail";
 import { AppHeader } from "@/components/casing/AppHeader";
@@ -18,7 +19,9 @@ import { resolveTheme } from "@/lib/themeRecipes";
  * page — it was the only element in the mockup with nowhere else to live.
  */
 export async function AppShell({ children }: { children: ReactNode }) {
-  const year = new Date().getFullYear();
+  /* ⚠ `const year` WENT WITH THE ONE-LINE BAND (`E246` §7). `MarketingFooter`
+     carries its own copyright in its legal bar; an unused local would be a new lint
+     warning against a 0-new baseline. The quoted band below is a comment, not code. */
 
   /*
     THE TENANT THEME, APPLIED AS CSS VARIABLES (E204 WS-C).
@@ -72,9 +75,38 @@ export async function AppShell({ children }: { children: ReactNode }) {
 
         <main className="flex-1 px-5 py-6 sm:px-8">{children}</main>
 
-        <footer className="border-t border-line px-5 py-4 text-[13px] text-ink-2 sm:px-8">
-          Copyright – Panameer Inc {year}
-        </footer>
+        {/*
+          ── ⚠⚠ THE SHELL'S FOOTER IS THE REAL ONE NOW (`P1-J1.1-E246` §7) ────────
+
+          Scott, 2026-08-29: **"the footer must be in."** With **"If logged in, the
+          app shell is there (meaning on the left). If not, there is a top menu and
+          no left side menu."** So: two chromes, ONE footer. This shell keeps OWNING
+          the footer — which its own header already called the right instinct, "part
+          of the SHELL, not of any page" — and what it owns becomes the real one.
+
+          ⚠ SUPERSEDED, quoted not deleted — this was a one-line band:
+              <footer className="border-t border-line px-5 py-4 text-[13px] text-ink-2 sm:px-8">
+                Copyright – Panameer Inc {year}
+              </footer>
+          ⚠⚠ IT WAS REPLACED, NOT STACKED ABOVE THE NEW ONE. `MarketingFooter`
+          already ends in a full-width legal bar carrying the copyright, and two
+          copyright lines on one page is the defect rather than the fix.
+          ⚠ THAT REPLACEMENT IS CHAT'S CALL, NOT SCOTT'S — reported at `E246` so he
+          can overrule it on the walk.
+
+          ⚠⚠ BLAST RADIUS: this shell wraps EVERY AUTHENTICATED PAGE — /dashboard,
+          /company, /settings/*, /contracts, /pay, /community, /notifications,
+          /search, the admin pages and /learn signed-in. All of them gain the
+          three-column video footer. That is what "the footer must be in" means and
+          it is intended, but it is the widest change in `E246`.
+          ⚠ `/learn`'s LAYOUT NEEDED NO EDIT. Its signed-in branch already renders
+          this shell, so the footer arrives through here — that fork was copied, not
+          reinvented.
+          ⚠ MEASURED INSIDE THE SHELL for `E246` — colour, height and the rail/footer
+          corner — because one component rendering in two colours and two heights is
+          exactly what `P1-ALL-E020` was about. Numbers are in that report.
+        */}
+        <MarketingFooter />
       </div>
     </div>
   );

@@ -25,10 +25,26 @@ export const revalidate = 3600;
  * the account before giving the reason to want one. It is on the public
  * allowlist in route-access.ts alongside the other pre-account surfaces.
  *
- * FOCUSED CHROME, NO MARKETING NAV. `WizardShell` brings its own frame — logo
- * top-left and nothing else — which is the same rule the signup wizards follow
- * (NAV_MODEL_LOCKED "Exceptions"): a nav bar full of exits is wrong on a page
- * whose entire job is to be finished.
+ * ⚠⚠ IT NOW CARRIES THE FULL PUBLIC CASING (`P1-J1.1-E246`), BY CONSTRUCTION.
+ * ⚠ SUPERSEDED, quoted not deleted: *"FOCUSED CHROME, NO MARKETING NAV.
+ * `WizardShell` brings its own frame — logo top-left and nothing else — which is the
+ * same rule the signup wizards follow (NAV_MODEL_LOCKED "Exceptions"): a nav bar full
+ * of exits is wrong on a page whose entire job is to be finished."*
+ *
+ * That was true of the signup wizards AND of this page, and BOTH changed together.
+ * Scott, 2026-08-29: **"ALL Pages must use a casing."** `E246` put `MarketingHeader`
+ * and `MarketingFooter` on `OnboardingFrame`; this page renders `WizardShell`, which
+ * renders that frame, so the change reaches here whether or not a brief names it.
+ *
+ * ⚠ THAT IS `P1-J0.4-E010` BEING HONOURED, NOT REVERSED. Scott's own words there:
+ * *"Why would we have one casing for onboarding and a different style for this public
+ * solicitation of data? Make this like the casing for user registration/onboarding."*
+ * The rule is that `/assess` MATCHES onboarding. The onboarding casing is what moved,
+ * so this page follows it. ⚠ Do not re-focus this chrome on the strength of the
+ * superseded paragraph above — it is history.
+ * ⚠ NOTHING ELSE DEPENDED ON THIS PAGE HAVING NO NAV — checked across `e2e/` and
+ * `e2e-shell/` before the change; the app-shell public list is `/`, `/learn`,
+ * `/talent`, `/work`, `/shop` and does not include this route.
  */
 export const metadata: Metadata = {
   title: "Where can AI help my business? — Panameer",

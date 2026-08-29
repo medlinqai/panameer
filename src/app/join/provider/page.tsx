@@ -6,7 +6,11 @@ import { signIn } from "next-auth/react";
 import { WizardShell } from "@/components/onboarding/WizardShell";
 import { Avatar } from "@/components/Avatar";
 import { VerifyGate } from "@/components/onboarding/VerifyGate";
-import { SignUpForm, type SignUpValues } from "@/components/onboarding/SignUpForm";
+import {
+  canSignUp,
+  SignUpForm,
+  type SignUpValues,
+} from "@/components/onboarding/SignUpForm";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 import {
   OptionCard,
@@ -1215,7 +1219,42 @@ export default function JoinProviderPage() {
     // does not. Still a capped, centred form column — 672 of 1024 — so the rule
     // holds; the number comes from that measurement rather than from taste.
     return (
-      <PlainShell compact contentWidth="max-w-2xl">
+      <PlainShell
+        compact
+        contentWidth="max-w-2xl"
+        /*
+          ── ⚠⚠ THE ACTION BAND THIS SCREEN USED TO OPT OUT OF (`E246` §5) ────────
+
+          This was the ONE onboarding screen passing no `footer`, so the frame's
+          full-bleed band never rendered and the rule was drawn INSIDE `SignUpForm`'s
+          capped `max-w-2xl` column — stopping at the form width instead of running
+          edge to edge. That is what Scott filed on the walk.
+          ⚠ THE SAME TWO BUTTONS, the same handlers, the same disabled logic; only
+          WHERE they render moved. `SignUpForm` has no `<form>` element and never
+          used `type="submit"`, so nothing about how submit fires changed — checked
+          before anything was moved.
+          ⚠ `canSignUp` IS IMPORTED, NOT REIMPLEMENTED. One definition of the gate,
+          `tosAccepted` included; retyping it here is `P1-J4-E024`.
+        */
+        footer={
+          <>
+            <button
+              onClick={() => router.push("/join")}
+              disabled={busy}
+              className="rounded-full border-[1.5px] border-line px-6 py-3 font-bold text-ink transition-colors hover:border-[#d9d4e2] disabled:opacity-50"
+            >
+              Back
+            </button>
+            <button
+              onClick={createAccount}
+              disabled={!canSignUp(acct) || busy}
+              className="rounded-full bg-magenta px-8 py-3 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
+            >
+              {busy ? "Creating…" : "Create My Account"}
+            </button>
+          </>
+        }
+      >
         {inviteCtx && (
           <div className="mx-auto mb-4 max-w-xl">
             <Notice tone="info">
@@ -1226,9 +1265,6 @@ export default function JoinProviderPage() {
         <SignUpForm
           values={acct}
           onChange={(patch) => setAcct((a) => ({ ...a, ...patch }))}
-          onSubmit={createAccount}
-          onBack={() => router.push("/join")}
-          busy={busy}
           error={error}
           emailLocked={!!inviteToken}
         />
@@ -3398,13 +3434,28 @@ function PlainShell({
   children,
   contentWidth,
   compact = false,
+  /*
+    ⚠ `footer` FORWARDED (`P1-J1.1-E246` §5). `OnboardingShell` and
+    `OnboardingFrame` have both accepted it all along; THIS local wrapper simply
+    never passed it on, which is why the sign-up screen was the one onboarding page
+    with no full-bleed action band and drew its own rule inside the form column.
+    ⚠ ADDING THE PASSTHROUGH IS THE WHOLE FIX — no frame or shell change was needed.
+    ⚠ OPTIONAL, so the two callers that pass nothing (`check_email`, and this one's
+    sibling) render exactly as before.
+  */
+  footer,
 }: {
   children: React.ReactNode;
   contentWidth?: string;
   compact?: boolean;
+  footer?: React.ReactNode;
 }) {
   return (
-    <OnboardingShell contentWidth={contentWidth} compact={compact}>
+    <OnboardingShell
+      contentWidth={contentWidth}
+      compact={compact}
+      footer={footer}
+    >
       {children}
     </OnboardingShell>
   );

@@ -4,7 +4,11 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
-import { SignUpForm, type SignUpValues } from "@/components/onboarding/SignUpForm";
+import {
+  canSignUp,
+  SignUpForm,
+  type SignUpValues,
+} from "@/components/onboarding/SignUpForm";
 import { VerifyGate } from "@/components/onboarding/VerifyGate";
 import { Notice } from "@/components/onboarding/controls";
 import { NoProfileYet, readBlockedParams } from "@/components/onboarding/NoProfileYet";
@@ -137,13 +141,44 @@ export default function JoinRequesterPage() {
 
   if (screen === "signup") {
     return (
-      <OnboardingShell compact contentWidth="max-w-2xl">
+      <OnboardingShell
+        compact
+        contentWidth="max-w-2xl"
+        /*
+          ── ⚠⚠ THIS SCREEN NEEDED THE BAND TOO (`P1-J1.1-E246` §5) ───────────────
+
+          ⚠ THE BRIEF SAYS `/join/provider`'s SIGN-UP IS *"the one page that opts out
+          of the band"*. IT IS NOT. THIS PAGE RENDERS THE SAME `SignUpForm` AND ALSO
+          PASSED NO `footer`, so §5's move — taking the button row out of the form so
+          the rule runs full-bleed — would have left THIS screen with NO Back and NO
+          Create My Account at all. Reported at `E246` and fixed here rather than
+          shipped broken; the alternative was a sign-up page with no way to sign up.
+          ⚠ SAME TREATMENT, SAME HANDLERS as the provider side, and `canSignUp` is
+          IMPORTED rather than reimplemented — one definition of the gate,
+          `tosAccepted` included (`P1-J4-E024`).
+        */
+        footer={
+          <>
+            <button
+              onClick={() => router.push("/join?type=buyer")}
+              disabled={busy}
+              className="rounded-full border-[1.5px] border-line px-6 py-3 font-bold text-ink transition-colors hover:border-[#d9d4e2] disabled:opacity-50"
+            >
+              Back
+            </button>
+            <button
+              onClick={createAccount}
+              disabled={!canSignUp(acct) || busy}
+              className="rounded-full bg-magenta px-8 py-3 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
+            >
+              {busy ? "Creating…" : "Create My Account"}
+            </button>
+          </>
+        }
+      >
         <SignUpForm
           values={acct}
           onChange={(patch) => setAcct((a) => ({ ...a, ...patch }))}
-          onSubmit={createAccount}
-          onBack={() => router.push("/join?type=buyer")}
-          busy={busy}
           error={error}
           /* WS3 — buyer copy. The seller form says "Find Work"; this side is
              the one doing the hiring. */

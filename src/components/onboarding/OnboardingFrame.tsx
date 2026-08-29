@@ -1,3 +1,5 @@
+import { MarketingHeader } from "@/components/marketing/MarketingHeader";
+import { MarketingFooter } from "@/components/marketing/MarketingFooter";
 import type { ReactNode } from "react";
 import { Logo } from "@/components/Logo";
 import { BRAND_DESCRIPTOR } from "@/lib/brand";
@@ -83,6 +85,36 @@ export function OnboardingFrame({
   const pad = compact ? "py-8 sm:py-10" : "py-10 sm:py-14";
   return (
     /*
+      ── ⚠⚠ THE PUBLIC CASING (`P1-J1.1-E246`) ─────────────────────────────────
+
+      Scott, 2026-08-29, on the walk: **"ALL Pages must use a casing."** He walked
+      six onboarding pages and filed the SAME complaint on each — no menus, no
+      footer. ⚠ THIS IS ONE COMPONENT CHANGE, NOT SIX PAGE FIXES, and the reason is
+      in this file's own history: the walk re-filed it under `E049`, `E064`, `E080`
+      and `E082` because the chrome was re-tuned page by page and each fix left the
+      others behind.
+
+      ⚠⚠ `MarketingHeader` AND `MarketingFooter` ARE SIBLINGS OF THE FRAME, NOT
+      CHILDREN. The frame keeps `flex-1` so it still grows between them; `body`
+      carries `flex flex-col min-h-dvh`.
+      ⚠⚠ NEITHER IS INSIDE A `.pm-home` WRAPPER AND NONE WAS ADDED. `P1-ALL-E020`
+      measured what happens when `MarketingFooter` renders inside that scope: its
+      inherited colour repainted `#cfc7da` -> `#aeb4cf` and it stood 910px on five
+      public pages against 1008px on `/optimize`. It is Tailwind and must ESCAPE
+      the scope; `MarketingHeader` likewise, because `home.css` scoped to
+      `.pm-home *` strips its Tailwind spacing. Onboarding pages carry no
+      `.pm-home` today — DO NOT ADD ONE.
+
+      ⚠ THE ACTION BAND BELOW STAYS `sticky bottom-0` (`E024`) and the site footer
+      renders BELOW it, reached by scrolling. That is the brief's rule, not a new
+      one: on a step taller than the viewport there was no way to know you could
+      proceed without scrolling to the very end.
+
+      ⚠⚠ THE HEADER'S `Log In` / `Sign Up` NOW POINT AT THE PAGE YOU ARE ON, on
+      several of these routes. THAT IS KNOWN, DELIBERATE AND REPORTED — Scott
+      decides. DO NOT suppress, hide, relabel or conditionally render them, and do
+      not add a prop to do it. The exact behaviour per route is in the `E246` report.
+
       ⚠ `flex-1`, NOT `min-h-screen` (E020). `min-h-screen` demanded a full
       viewport for this box while `<DevBanner />` sits ~41px ABOVE it in the root
       layout — so the frame was always taller than the space it had, and the
@@ -90,7 +122,9 @@ export function OnboardingFrame({
       carries `flex flex-col min-h-dvh`, so growing to fill instead of demanding
       a viewport gets the same result and leaves room for whatever is above.
     */
-    <div className={`flex flex-1 flex-col bg-white font-body text-ink ${className}`}>
+    <>
+      <MarketingHeader />
+      <div className={`flex flex-1 flex-col bg-white font-body text-ink ${className}`}>
       {/*
         Header rule spans the viewport; the logo lines up with the column.
 
@@ -150,6 +184,9 @@ export function OnboardingFrame({
           </div>
         </div>
       )}
-    </div>
+      </div>
+      {/* ⚠ OUTSIDE the frame AND outside any `.pm-home` — see the note above. */}
+      <MarketingFooter />
+    </>
   );
 }

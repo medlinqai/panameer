@@ -52,12 +52,39 @@ export type SignUpValues = {
   tosAccepted: boolean;
 };
 
+/**
+ * ⚠⚠ ONE DEFINITION OF THE SUBMIT GATE (`P1-J1.1-E246` §5).
+ *
+ * `E246` moved `Back` and `Create My Account` OUT of this component into
+ * `OnboardingFrame`'s full-bleed action band, so the PAGE now needs the same
+ * predicate the button used to read locally. ⚠ IT WAS EXTRACTED, NOT COPIED —
+ * `P1-J4-E024` is the precedent for what two copies of one rule do to each other.
+ * ⚠ `tosAccepted` IS PART OF THE GATE AND MUST STAY. The required-terms checkbox
+ * gating the button is a legal control, not a UX nicety.
+ */
+export function canSignUp(values: SignUpValues): boolean {
+  return (
+    values.firstName.trim() !== "" &&
+    values.lastName.trim() !== "" &&
+    values.email.trim() !== "" &&
+    values.password.length >= 8 &&
+    values.password === values.confirmPassword &&
+    values.tosAccepted
+  );
+}
+
+/*
+  ⚠⚠ `onSubmit`, `onBack` AND `busy` WERE REMOVED FROM THIS SIGNATURE (`E246` §5).
+  They existed ONLY to drive the button row that moved to `OnboardingFrame`'s action
+  band; once the buttons left, all three were dead parameters and each was a new lint
+  warning against a 0-new baseline. ⚠ THE CALLERS NOW PASS THOSE HANDLERS TO THE BAND
+  DIRECTLY, which is the same wiring one level up — nothing about how submit fires
+  changed, and this component never had a `<form>` or a `type="submit"` to begin with.
+  ⚠ `error` STAYS: it is still rendered in the form body.
+*/
 export function SignUpForm({
   values,
   onChange,
-  onSubmit,
-  onBack,
-  busy,
   error,
   emailLocked = false,
   title = "Sign Up to Find Work",
@@ -66,9 +93,6 @@ export function SignUpForm({
 }: {
   values: SignUpValues;
   onChange: (patch: Partial<SignUpValues>) => void;
-  onSubmit: () => void;
-  onBack: () => void;
-  busy: boolean;
   error: string | null;
   /** True when a coordinator invite fixed the email (brief_I). */
   emailLocked?: boolean;
@@ -101,13 +125,6 @@ export function SignUpForm({
     values.confirmPassword.length > 0 &&
     values.password !== values.confirmPassword;
 
-  const canSubmit =
-    values.firstName.trim() !== "" &&
-    values.lastName.trim() !== "" &&
-    values.email.trim() !== "" &&
-    values.password.length >= 8 &&
-    values.password === values.confirmPassword &&
-    values.tosAccepted;
 
   return (
     // max-w-2xl (672px), not the max-w-md this replaced. brief_W specified
@@ -290,22 +307,26 @@ export function SignUpForm({
         </label>
       </div>
 
-      <div className="mt-5 flex items-center justify-between gap-4 border-t border-line pt-4">
-        <button
-          onClick={onBack}
-          disabled={busy}
-          className="rounded-full border-[1.5px] border-line px-6 py-3 font-bold text-ink transition-colors hover:border-[#d9d4e2] disabled:opacity-50"
-        >
-          Back
-        </button>
-        <button
-          onClick={onSubmit}
-          disabled={!canSubmit || busy}
-          className="rounded-full bg-magenta px-8 py-3 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
-        >
-          {busy ? "Creating…" : "Create My Account"}
-        </button>
-      </div>
+      {/*
+        ── ⚠⚠ THE BUTTON ROW MOVED TO THE FRAME'S ACTION BAND (`E246` §5) ────────
+
+        ⚠ SUPERSEDED, quoted not deleted — this was a row carrying `Back` and
+        `Create My Account` under `mt-5 flex items-center justify-between gap-4
+        border-t border-line pt-4`. Its `border-t` was drawn INSIDE the capped
+        `max-w-2xl` column, so the rule stopped at the form width instead of running
+        edge to edge. That is exactly what Scott filed on the walk; the frame's band
+        is full-bleed, so the rule now runs the viewport like every sibling page.
+
+        ⚠⚠ NO SUBMIT CONTRACT CHANGED, AND IT WAS CHECKED BEFORE ANYTHING MOVED:
+        this component renders NO `<form>`, no `type="submit"` and no form
+        `onSubmit`. Both buttons were always plain `onClick` calls to the `onSubmit`
+        / `onBack` PROPS, so moving them changes nothing about how submit fires.
+        ⚠ THE TERMS GATE TRAVELLED WITH THEM as `canSignUp(values)` above — ONE
+        definition, not a second copy.
+        ⚠ `onSubmit`, `onBack` and `busy` REMAIN PROPS here even though this no
+        longer renders the buttons: the caller passes the same handlers to the band,
+        and removing them would be a wider API change than `E246` asked for.
+      */}
 
       {altPrompt && (
         <p className="mt-4 text-center text-[14px] text-ink-2">
