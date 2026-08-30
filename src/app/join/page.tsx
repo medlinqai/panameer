@@ -37,9 +37,26 @@ type Job = "provider" | "recruiter" | "requester" | "buyer-admin";
 
   The page-1 subtitle that used to carry it is gone with it. Leaving both would
   have printed the same sentence twice on the same screen, six lines apart.
+
+  ⚠⚠ THE SECOND HALF OF THE PARAGRAPH ABOVE IS NOW FALSE, AND `P1-J1.1-E246` §8 ON
+  THIS BRANCH IS WHAT FALSIFIED IT. It says the descriptor *"is now in the onboarding
+  HEADER on every page of the shell — `OnboardingFrame` renders it"*. ⚠ `E246` §8
+  DELETED that header, along with its `Logo`, its divider and its `BRAND_DESCRIPTOR`
+  paragraph, because `MarketingHeader` above the frame already carried the wordmark
+  and the page was rendering two casings.
+  ⚠ THE DESCRIPTOR IS STILL ON THE PAGE — `MarketingFooter` renders it twice, in its
+  brand block and its legal bar — so the reason this page does not print it a second
+  time still holds. Only WHERE it comes from changed. Quoted rather than rewritten
+  over, because the no-duplicate rule above is the part that still governs.
 */
 
-/** Page-2 options per page-1 choice. Seller copy is Scott's, verbatim. */
+/*
+  Page-2 options per page-1 choice.
+  ⚠ ALL FOUR DESCRIPTIONS ARE SCOTT'S, VERBATIM — seller side from earlier, buyer
+  side from `P1-J1.1-E250`. ⚠ SUPERSEDED, quoted: *"Seller copy is Scott's,
+  verbatim"*, which was true when only that half was his and now understates it.
+  ⚠ THE TWO SIDES PUNCTUATE DIFFERENTLY ON PURPOSE — see the note on `buyer` below.
+*/
 const JOBS: Record<UserType, { id: Job; title: string; description: string }[]> = {
   seller: [
     {
@@ -53,16 +70,33 @@ const JOBS: Record<UserType, { id: Job; title: string; description: string }[]> 
       description: "I perform the services for a service buyer",
     },
   ],
+  /*
+    ── ⚠⚠ SCOTT'S BUYER-SIDE COPY, VERBATIM (`P1-J1.1-E250`, 2026-08-29) ────────
+
+    ⚠ SUPERSEDED, quoted not deleted: *"I need services performed"* (Requester) and
+    *"I support the buying"* (Buyer).
+
+    ⚠⚠ THESE TWO END WITH A FULL STOP AND THE ROLE-CHOOSER PAIR AT `E249` DOES NOT.
+    THAT IS HIS TYPING, NOT AN INCONSISTENCY TO FIX. Four strings on two screens of
+    one flow now punctuate two different ways, deliberately. DO NOT add a stop to the
+    `E249` pair, and DO NOT remove one from these — normalising either way is
+    rewriting copy he typed.
+
+    ⚠ THE SELLER SIDE ABOVE IS UNTOUCHED. He named only the buying side; `Recruiter`
+    and `Service Provider` keep their own strings, which are also his and also
+    stop-less.
+  */
   buyer: [
     {
       id: "requester",
       title: "Requester",
-      description: "I need services performed",
+      description:
+        "I create work requests using service providers and the service products they offer.",
     },
     {
       id: "buyer-admin",
       title: "Buyer",
-      description: "I support the buying",
+      description: "I manage pricing by commodity.",
     },
   ],
 };
