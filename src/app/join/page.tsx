@@ -191,16 +191,37 @@ function JoinRouter() {
             id: "buyer" as const,
             title: "Service Buyer",
             /*
-              E157 — this read "I offer work on Panameer", which is what a
-              SELLER does with their time. Two cards that both start "I offer"
-              is the one thing this fork exists to disambiguate.
+              ── ⚠⚠ SCOTT'S COPY, VERBATIM (`P1-J1.1-E249`, 2026-08-29) ────────────
+
+              ⚠ SUPERSEDED, quoted not deleted — the pair this replaces was
+              *"I post work and hire validated experts"* / *"I perform work on
+              Panameer"*, carrying this reasoning:
+                *"E157 — this read 'I offer work on Panameer', which is what a SELLER
+                does with their time. Two cards that both start 'I offer' is the one
+                thing this fork exists to disambiguate."*
+
+              ⚠⚠ THAT CONCERN IS STILL MET, WHICH IS WHY THE NEW PAIR IS SAFE. `E157`
+              banned two cards both opening *"I offer"*. Scott's Buyer line opens
+              *"I offer"* and his Seller line opens *"I provide"*, so the two still
+              part on their FIRST TWO WORDS and the fork still disambiguates. ⚠ THE
+              COMMENT DESCRIBED COPY THAT NO LONGER EXISTS, which is why it was
+              rewritten rather than left standing.
+              ⚠ IF A FUTURE EDIT MAKES BOTH LINES OPEN THE SAME WAY, `E157` IS THE
+              ROW IT REOPENS. That is the rule; the strings are not.
+
+              ⚠ SHIPPED EXACTLY AS HE TYPED THEM — no full stops, no capitalisation
+              changes, no "and/or" tidying, and `service sellers` / `service buyers`
+              left lower-case even though the card TITLES above are Title Case. DO NOT
+              NORMALISE EITHER LINE.
             */
-            description: "I post work and hire validated experts",
+            description:
+              "I offer work to and buy service products from service sellers",
           },
           {
             id: "seller" as const,
             title: "Service Seller",
-            description: "I perform work on Panameer",
+            description:
+              "I provide services for and sell service products to service buyers",
           },
         ]
       : JOBS[userType!];
