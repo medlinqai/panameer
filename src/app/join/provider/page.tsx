@@ -1267,6 +1267,16 @@ export default function JoinProviderPage() {
           onChange={(patch) => setAcct((a) => ({ ...a, ...patch }))}
           error={error}
           emailLocked={!!inviteToken}
+          /*
+            ⚠ EXPLICIT, AND IT IS LOAD-BEARING (`P1-J1.1-E234`, 2026-08-30).
+            This was IMPLICIT: `SignUpForm`'s `callbackUrl` defaulted to
+            "/join/provider" and this call site relied on it. `E234` changed that
+            default to "/join" so no shared component pre-picks a side — which
+            would have ejected a provider from the wizard they are standing in.
+            Stating it here keeps THIS flow byte-identical in behaviour while the
+            default stops deciding for everybody.
+          */
+          callbackUrl="/join/provider"
         />
       </PlainShell>
     );

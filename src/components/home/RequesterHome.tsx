@@ -45,8 +45,18 @@ export function RequesterHome({
 }) {
   return (
     <div className="mx-auto w-full max-w-6xl">
+      {/*
+        ⚠ `Work Requests`, NOT `OVERVIEW` (`P1-J1.1-E265`, 2026-08-30).
+
+        The eyebrow names the card beneath it, and that card is the requester's
+        work-request state — an empty state today, because nobody has posted
+        one. "Overview" named the page rather than the thing.
+        ⚠ THE LITERAL IS MIXED-CASE AND THE CAPITALS COME FROM `uppercase` IN
+        THE CLASS LIST. That is why grepping the codebase for a bare `OVERVIEW`
+        string finds nothing — the brief looked and could not locate it.
+      */}
       <h2 className="text-[13px] font-bold uppercase tracking-[0.08em] text-ink-2">
-        Overview
+        Work Requests
       </h2>
 
       {/* ---- 1. What is in flight ---------------------------------------- */}
@@ -73,7 +83,24 @@ export function RequesterHome({
               page above the fold.
             */}
             <div className="mt-6 flex justify-center">
-              <Button href="/create-work">Create a Work Request</Button>
+              {/*
+                ⚠⚠ `Create Work Request` — NO `a` (`P1-J1.1-E266`, 2026-08-30).
+                THE SWEEP STOPS AT THIS PAGE, AND THAT IS NOT AN OVERSIGHT.
+
+                `E266` asked for the `a` dropped "everywhere it renders as a
+                control". These two buttons on the buyer dashboard are that.
+                ⚠ `WORK_CTA_LABEL` IN `lib/work-steps.ts` IS NOT, AND WAS NOT
+                TOUCHED: Scott closed that exact wording on 2026-08-26 —
+                *"keep Create a Work Request."* (`P1-J4-E024`, THE BUTTON WON) —
+                and `e2e/marketing-home.spec.ts:2518` §49 asserts the `a` form on
+                `/work`'s hero as "the hero's only primary control". Sweeping it
+                would have reversed a four-day-old ruling and reddened a gate.
+                REPORTED, NOT DECIDED.
+                ⚠ The page TITLE (`create-work/page.tsx:17`) and the wizard's own
+                h1 also keep the `a` — titles are not controls, and `E024`'s note
+                cites that title as evidence for his choice.
+              */}
+              <Button href="/create-work">Create Work Request</Button>
             </div>
           </div>
         ) : (
@@ -88,7 +115,7 @@ export function RequesterHome({
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
-              <Button href="/create-work">Create a Work Request</Button>
+              <Button href="/create-work">Create Work Request</Button>
               <Button href="/contracts" variant="ghost">
                 Manage Work
               </Button>

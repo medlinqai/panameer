@@ -4,6 +4,27 @@ import { prisma } from "@/lib/prisma";
 import { getSessionViewer } from "@/lib/session";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 import { displayFirstName } from "@/lib/display";
+import {
+  REQUESTER_STEP_LABELS,
+  REQUESTER_WORK_STEPS,
+} from "@/lib/requester-steps";
+
+/**
+ * One line under each card name.
+ *
+ * ⚠ NOT SCOTT'S WORDS — he named the TILES (`REQUESTER_STEP_LABELS`), not these
+ * blurbs. `company` and `work_location` are carried over verbatim from the
+ * hardcoded cards they replace; `requester_info` is new, because the sentence it
+ * replaced described the removed approver step. Flagged as CC's wording in the
+ * `E259` report so Scott can overwrite it.
+ * ⚠ TYPED TO THE STEP UNION, so a new step fails the build here rather than
+ * rendering a card with no description.
+ */
+const CARD_BLURBS: Record<(typeof REQUESTER_WORK_STEPS)[number], string> = {
+  company: "Join the company you work for, or add it.",
+  requester_info: "Who you are, and how a provider reaches you.",
+  work_location: "The location providers deliver to.",
+};
 
 /**
  * The requester INTRO — the mirror of /join/provider/start (E002/E008): verify
@@ -64,30 +85,44 @@ export default async function RequesterStartPage() {
           </p>
         </div>
 
-        <section className="mt-10 grid gap-4 sm:grid-cols-3">
-          {[
-            {
-              n: "1",
-              t: "Your company",
-              d: "Join the company you work for, or add it.",
-            },
-            {
-              n: "2",
-              t: "You and your approver",
-              d: "Who you are, who buys with you, and who approves.",
-            },
-            {
-              n: "3",
-              t: "Where the work happens",
-              d: "The location providers deliver to.",
-            },
-          ].map((c) => (
-            <div key={c.n} className="rounded-brand border border-line p-5">
+        {/*
+          ⚠⚠ DERIVED FROM `REQUESTER_WORK_STEPS`, NEVER HARDCODED (`E243`/`E259`).
+
+          These three cards used to be a literal array of three while the wizard
+          ran FIVE steps, so the intro promised a shape the wizard did not
+          deliver — and when `E263` cut a step, a hardcoded list would have gone
+          wrong in the other direction. The count and the order now come from
+          the same constant the wizard iterates, so they cannot drift again.
+
+          ⚠ SUPERSEDED, quoted not deleted — the hardcoded cards read
+          *"Your company / Join the company you work for, or add it."*,
+          *"You and your approver / Who you are, who buys with you, and who
+          approves."* and *"Where the work happens / The location providers
+          deliver to."* The middle one described the step `E263` removed.
+
+          ⚠ NAMES ARE SCOTT'S (`REQUESTER_STEP_LABELS`), on his note that *"the
+          tile names are not correct based on the data being captured at each of
+          those steps."* The one-line descriptions below are NOT his — they are
+          carried over/adapted and are flagged as chat-and-CC wording in the
+          report, not approved copy.
+          ⚠ `sm:grid-cols-3` IS DERIVED TOO. A fixed `3` would have silently
+          left a hole the day the step count changed.
+        */}
+        <section
+          className="mt-10 grid gap-4"
+          style={{
+            gridTemplateColumns: `repeat(${REQUESTER_WORK_STEPS.length}, minmax(0, 1fr))`,
+          }}
+        >
+          {REQUESTER_WORK_STEPS.map((step, i) => (
+            <div key={step} className="rounded-brand border border-line p-5">
               <span className="grid h-7 w-7 place-items-center rounded-full bg-magenta/10 text-[13px] font-black text-magenta">
-                {c.n}
+                {i + 1}
               </span>
-              <p className="mt-3 font-bold">{c.t}</p>
-              <p className="mt-1 text-[14.5px] leading-relaxed text-ink-2">{c.d}</p>
+              <p className="mt-3 font-bold">{REQUESTER_STEP_LABELS[step]}</p>
+              <p className="mt-1 text-[14.5px] leading-relaxed text-ink-2">
+                {CARD_BLURBS[step]}
+              </p>
             </div>
           ))}
         </section>

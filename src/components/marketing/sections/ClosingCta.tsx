@@ -39,7 +39,13 @@ const LINKS = {
     secondary: "/talent",
   },
   buyer: { primary: "/explore?mode=hire", secondary: "/support/bug" },
-  provider: { primary: "/join?type=seller", secondary: "#sequence" },
+  /*
+    ⚠ `/join`, NOT `/join?type=seller` (`E234`). The provider-audience closing
+    band still SPEAKS to sellers — that is what `audience` is for — but the link
+    stops filling in step 1 on their behalf.
+    ⚠ SUPERSEDED, quoted: `primary: "/join?type=seller"`.
+  */
+  provider: { primary: "/join", secondary: "#sequence" },
 } as const;
 
 export function ClosingCta({

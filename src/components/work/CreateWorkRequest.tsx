@@ -3,6 +3,26 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { WizardShell } from "@/components/onboarding/WizardShell";
+
+/**
+ * ⚠⚠ THE IN-APP WIZARD SHELL — NO PUBLIC CHROME (`P1-J1.1-E267`, 2026-08-30).
+ *
+ * This page renders INSIDE `AppShell`, which already supplies the header, the
+ * rail and the footer. `E246` gave `OnboardingFrame` a `MarketingHeader` and a
+ * `MarketingFooter` — correct for every PUBLIC onboarding page and wrong here,
+ * so `/create-work` came out with two headers and two footers around one wizard.
+ * That was chat's miss in the `E246` brief, not a CC error.
+ *
+ * ⚠ ONE WRAPPER, NOT A PROP ON EVERY CALL. There are nine `WizardShell`s in this
+ * file and one more in `ReviewWorkRequest`; threading `chrome={false}` through
+ * each by hand is a list somebody adds a tenth screen to and forgets. Setting it
+ * in one place means a new step in this file CANNOT reintroduce the defect.
+ * ⚠ THE DEFAULT ELSEWHERE IS STILL `true`, so no public page changed.
+ */
+function AppWizardShell(props: React.ComponentProps<typeof WizardShell>) {
+  return <WizardShell {...props} chrome={false} />;
+}
+
 import { ParseHeartbeat } from "@/components/onboarding/ParseHeartbeat";
 import { ReviewStep } from "@/components/work/ReviewWorkRequest";
 import {
@@ -306,9 +326,9 @@ export function CreateWorkRequest() {
 
   if (!ready) {
     return (
-      <WizardShell title="Create a Work Request" busy>
+      <AppWizardShell title="Create a Work Request" busy>
         <p className="text-[15px] text-ink-2">Loading…</p>
-      </WizardShell>
+      </AppWizardShell>
     );
   }
 
@@ -316,7 +336,7 @@ export function CreateWorkRequest() {
     // ---- 1 — ROLE -------------------------------------------------------
     case "role":
       return (
-        <WizardShell
+        <AppWizardShell
           {...shell({
             title: "What type of role is this?",
             subtitle: "This narrows everything that follows.",
@@ -457,13 +477,13 @@ export function CreateWorkRequest() {
               </Notice>
             )}
           </div>
-        </WizardShell>
+        </AppWizardShell>
       );
 
     // ---- 2 — DOMAIN -----------------------------------------------------
     case "domain":
       return (
-        <WizardShell
+        <AppWizardShell
           {...shell({
             title: "What service domain are you requesting?",
             // The deck's step 2 carries the role name alone as the subtitle.
@@ -499,7 +519,7 @@ export function CreateWorkRequest() {
               </Notice>
             )}
           </div>
-        </WizardShell>
+        </AppWizardShell>
       );
 
     // ---- 3 — SKILLS -----------------------------------------------------
@@ -541,7 +561,7 @@ export function CreateWorkRequest() {
         );
 
       return (
-        <WizardShell
+        <AppWizardShell
           {...shell({
             title: "What skills does your work require?",
             subtitle: domainName
@@ -633,7 +653,7 @@ export function CreateWorkRequest() {
               The catalog has no skills for {domainName || "this domain"} yet.
             </Notice>
           )}
-        </WizardShell>
+        </AppWizardShell>
       );
     }
 
@@ -653,7 +673,7 @@ export function CreateWorkRequest() {
         );
 
       return (
-        <WizardShell
+        <AppWizardShell
           {...shell({
             title: "Anything specific this work touches?",
             subtitle:
@@ -708,14 +728,14 @@ export function CreateWorkRequest() {
               there is nothing to choose from. Skipping is fine.
             </Notice>
           )}
-        </WizardShell>
+        </AppWizardShell>
       );
     }
 
     // ---- 4 — DATES ------------------------------------------------------
     case "dates":
       return (
-        <WizardShell
+        <AppWizardShell
           {...shell({
             title: "When does this work start and end?",
             subtitle: "An estimate is fine — providers use it to judge fit.",
@@ -742,13 +762,13 @@ export function CreateWorkRequest() {
               />
             </Field>
           </div>
-        </WizardShell>
+        </AppWizardShell>
       );
 
     // ---- 5 — LOCATION ---------------------------------------------------
     case "location":
       return (
-        <WizardShell
+        <AppWizardShell
           {...shell({
             title: "Where will this work be performed?",
             subtitle:
@@ -796,13 +816,13 @@ export function CreateWorkRequest() {
               </div>
             </Field>
           </div>
-        </WizardShell>
+        </AppWizardShell>
       );
 
     // ---- 6 — BUDGET -----------------------------------------------------
     case "budget":
       return (
-        <WizardShell
+        <AppWizardShell
           {...shell({
             title: "What is your budget?",
             subtitle: "A range is fine. You can change it after you post.",
@@ -872,13 +892,13 @@ export function CreateWorkRequest() {
             Panameer, so drawing one would be inventing a market. It comes back
             when there are rates to average.
           */}
-        </WizardShell>
+        </AppWizardShell>
       );
 
     // ---- 7 — DESCRIPTION ------------------------------------------------
     case "description":
       return (
-        <WizardShell
+        <AppWizardShell
           {...shell({
             title: "Describe what you need in detail",
             subtitle: "Already have a description? Paste it here.",
@@ -917,7 +937,7 @@ export function CreateWorkRequest() {
               </p>
             </aside>
           </div>
-        </WizardShell>
+        </AppWizardShell>
       );
 
     // ---- REVIEW ---------------------------------------------------------

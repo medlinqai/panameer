@@ -245,6 +245,44 @@ export default async function DashboardPage({
             </ul>
           </Card>
         </>
+      ) : person?.requesterProfile ? (
+        /*
+          ⚠⚠ THE HALF-FINISHED REQUESTER (`P1-J1.1-E245`, 2026-08-30).
+
+          This branch did not exist, and WITHOUT IT a requester whose
+          `completed_at` is null fell all the way through to the `Get Started`
+          card below — which tells a BUYER *"Your profile isn't set up yet.
+          Build a provider profile to be found by service buyers"* and points at
+          `/join`. Wrong side of the marketplace, exactly the defect the comment
+          above says was fixed for COMPLETED requesters; it was still live for
+          incomplete ones. VERIFIED IN THE APP as `test_user4@medlinq.ai`
+          (`onboarding_step = requester_info`) before this was written, not
+          reasoned about.
+
+          ⚠ IT IS A PRECONDITION OF `E245`, NOT A FREE ADDITION. That row adds a
+          `Finish later` escape to every wizard step, landing here. The brief
+          said to render this page first and STOP if it was "a bare header",
+          because *"an exit into an empty room is worse than no exit"* — what is
+          actually here is worse than an empty room, so the escape could not
+          ship until the room was right. REPORTED as a deviation.
+
+          ⚠ THE WIZARD OWNS THE RESUME POINT, so this links at
+          `/join/requester/steps` with no `?step=` — the page reads
+          `onboarding_step` off the server and opens where they stopped.
+        */
+        <Card>
+          <h2 className="text-lg">Finish Setting Up</h2>
+          <p className="mt-2 text-black/70 dark:text-white/70">
+            Your account is ready — there are just a few details left before you
+            can post work. We saved everything you have entered so far.
+          </p>
+          <Link
+            href="/join/requester/steps"
+            className="mt-5 inline-flex rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90"
+          >
+            Pick Up Where I Left Off
+          </Link>
+        </Card>
       ) : person?.buyerProfile ? (
         <Card>
           <h2 className="text-lg">Hire Talent</h2>

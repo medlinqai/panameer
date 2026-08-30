@@ -4,12 +4,19 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { WizardShell } from "@/components/onboarding/WizardShell";
 import { LocationFields, type LocationValue } from "@/components/onboarding/LocationFields";
+import Link from "next/link";
 import { Field, TextInput, Notice } from "@/components/onboarding/controls";
+import { PhoneField } from "@/components/onboarding/PhoneField";
+import { isPhoneComplete } from "@/lib/phone";
 import { CompanyStep, type CompanyOutcome } from "@/components/company/CompanyStep";
 import { REQUESTER_STEPS, type RequesterStep } from "@/lib/requester-steps";
 
 /**
- * The REQUESTER wizard — five steps on the provider's shell (P1-J1.2 WS2).
+ * The REQUESTER wizard — FOUR steps on the provider's shell (P1-J1.2 WS2).
+ *
+ * ⚠ IT WAS FIVE UNTIL `P1-J1.1-E263` (2026-08-30) removed `buyer_approver`.
+ * The columns behind that screen are still on `RequesterProfile` and still in
+ * the step route's zod schema — see `lib/requester-steps.ts` for why.
  *
  * WizardShell, OnboardingFrame and LocationFields are reused verbatim, so the
  * stepper, the footer band, the frame width and the address form are the same
@@ -21,10 +28,19 @@ import { REQUESTER_STEPS, type RequesterStep } from "@/lib/requester-steps";
  * sync, and closing the tab on step 3 costs nothing.
  */
 
+/*
+  THE IN-WIZARD STEPPER'S LABELS — deliberately NOT the pre-flight card names.
+
+  `REQUESTER_STEP_LABELS` in `lib/requester-steps.ts` carries Scott's tile names
+  ("Company Details" / "Requester Details" / "Location Details"). He named the
+  TILES on the intro page (`E259`), not this stepper, so the two are reported as
+  different rather than silently unified into one string.
+  ⚠ SUPERSEDED, quoted: this map also held `buyer_approver: "Buyer & Approver"`
+  before `E263` removed that step.
+*/
 const LABELS: Record<RequesterStep, string> = {
   company: "Your Company",
   requester_info: "Requester Information",
-  buyer_approver: "Buyer & Approver",
   work_location: "Work Location",
   review: "Review",
 };
@@ -179,6 +195,21 @@ export default function RequesterStepsPage() {
 
   const idx = REQUESTER_STEPS.indexOf(step);
 
+  /*
+    THE PHONE MASK'S COUNTRY, NOW THAT STEP 2 HAS NO ADDRESS BLOCK (`E262`).
+
+    `PhoneField` picks its rule from a country, and on `/join/provider` that
+    comes from the address fields directly above it. Those are gone here, so it
+    reads the SIGN-UP country instead — the country-only `Address` that
+    `requester-onboarding.ts:120` seeds at account creation and that `hydrate`
+    still loads into `draft.address`.
+    ⚠ UNDEFINED IS A LEGAL ANSWER: `ruleFor(null)` returns null and
+    `validatePhone` falls back to a generic length check, so a requester who
+    signed up without a country still gets a usable field rather than a broken
+    one.
+  */
+  const phoneCountry = draft.address.country;
+
   const save = async (payload: Record<string, unknown>, next?: RequesterStep) => {
     setBusy(true);
     setError(null);
@@ -225,6 +256,28 @@ export default function RequesterStepsPage() {
   }
 
   const back = idx > 0 ? () => setStep(REQUESTER_STEPS[idx - 1]) : undefined;
+  /*
+    ── ⚠⚠ `Finish later` ON EVERY STEP (`P1-J1.1-E245`, 2026-08-30) ───────────
+
+    `WizardShell` has taken `secondaryLabel` + `onSecondary` all along; this
+    wizard passed neither, so step 1's footer had an empty left slot
+    (`canBack: idx > 0`) and there was no way out of the flow at all except the
+    browser's back button.
+
+    ⚠ NOT "Cancel", DELIBERATELY. Nothing is cancelled by leaving: the account
+    exists, the ToS is accepted, the email is verified, every step already saved
+    itself, and `onboarding_step` brings them back to this exact screen. "Cancel"
+    would describe a destructive action the button does not perform.
+
+    ⚠⚠ ITS LANDING PAGE HAD TO BE FIXED FIRST. `/dashboard` for a requester with
+    `completed_at: null` showed *"Build a provider profile"* — the wrong side of
+    the marketplace. That branch is now in `(app)/dashboard/page.tsx`; without it
+    this button was an exit into a worse room than an empty one. Reported.
+
+    ⚠ ON THE REVIEW STEP TOO. Every step means every step — someone who reaches
+    the summary and wants to check a detail with their approver should not have
+    to abandon the tab to do it.
+  */
   const shell = {
     step: idx + 1,
     totalSteps: REQUESTER_STEPS.length,
@@ -232,10 +285,12 @@ export default function RequesterStepsPage() {
     busy,
     onBack: back,
     canBack: idx > 0,
+    secondaryLabel: "Finish later",
+    onSecondary: () => router.push("/dashboard"),
   };
   const nextLabel = `Next: ${LABELS[REQUESTER_STEPS[idx + 1] ?? "review"]}`;
 
-  // ---- 1/5 — Company ----------------------------------------------------
+  // ---- 1/4 — Company ----------------------------------------------------
   if (step === "company") {
     /*
       A PENDING join is a STOP, not a step you continue past. The requester has
@@ -272,7 +327,7 @@ export default function RequesterStepsPage() {
     return (
       <WizardShell
         {...shell}
-        title="Which company do you buy for?"
+        title="Which Company Do You Buy For?"
         subtitle="Your company is the legal entity every work order and settlement is between. Join it if it's already here, or add it and become its admin."
         continueLabel={nextLabel}
         continueDisabled={!companyValid}
@@ -307,16 +362,33 @@ export default function RequesterStepsPage() {
     );
   }
 
-  // ---- 2/5 — Requester Information --------------------------------------
+  // ---- 2/4 — Requester Information --------------------------------------
   if (step === "requester_info") {
     return (
       <WizardShell
         {...shell}
-        title="Tell us who you are."
+        title="Tell Us Who You Are."
         subtitle="This is the person on the request — the contact a provider sees, and the identity your ERP sends if you connect one later."
         continueLabel={nextLabel}
+        /*
+          ⚠⚠ THE GATE IS FIRST + LAST + A COMPLETE PHONE, AND THAT IS TWO BRIEF
+          CLAUSES RECONCILED (`E262` + `E242`, reported).
+
+          `E262` says the gate "becomes first name + last name only" — it is
+          describing the removal of the `!draft.address.country` clause that the
+          deleted address block used to require. `E242` says phone BECOMES
+          REQUIRED. Taken literally together they contradict: a required field
+          the gate ignores is not required. So the address clause is gone and a
+          phone clause replaces it.
+
+          ⚠ `isPhoneComplete`, NOT `.trim()` — a half-typed number is not an
+          answer, and `lib/phone.ts` already owns what "complete" means per
+          country (`E203`). No new validation was written here.
+        */
         continueDisabled={
-          !draft.firstName.trim() || !draft.lastName.trim() || !draft.address.country
+          !draft.firstName.trim() ||
+          !draft.lastName.trim() ||
+          !isPhoneComplete(draft.phone, phoneCountry)
         }
         onContinue={() =>
           save({
@@ -324,7 +396,13 @@ export default function RequesterStepsPage() {
             lastName: draft.lastName,
             phone: draft.phone,
             employeeId: draft.employeeId,
-            address: draft.address,
+            /*
+              ⚠ `address` IS NO LONGER POSTED (`E262`). The block that collected
+              it is gone, so re-sending the hydrated copy would rewrite the
+              signup-seeded Address from client state that no field on this
+              screen can change. The record stays exactly as
+              `requester-onboarding.ts:120` wrote it.
+            */
           })
         }
       >
@@ -348,126 +426,85 @@ export default function RequesterStepsPage() {
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Phone">
-              <TextInput
-                value={draft.phone}
-                onChange={(e) => setDraft((d) => ({ ...d, phone: e.target.value }))}
-                autoComplete="tel"
-                placeholder="+1 555 010 4477"
-              />
-            </Field>
-            <Field
-              label="Employee ID"
-              hint="Your id in your own system. Optional — it's what links you to your ERP later."
-            >
-              <TextInput
-                value={draft.employeeId}
-                onChange={(e) => setDraft((d) => ({ ...d, employeeId: e.target.value }))}
-              />
-            </Field>
-          </div>
-
-          <div className="pt-2">
-            <p className="mb-3 text-[14px] font-bold">Your address</p>
-            <div className="space-y-3">
-              <LocationFields
-                value={draft.address}
-                onChange={(patch) =>
-                  setDraft((d) => ({ ...d, address: { ...d.address, ...patch } }))
-                }
-                withStreet
-              />
+            {/*
+              ⚠ THE BUILT VALIDATOR, NOT A RAW INPUT (`E241`). This was a plain
+              `TextInput` while `PhoneField` — masking on change, validating on
+              blur, backed by `lib/phone.ts` and `npm run check:phone` — was
+              already shipping on `/join/provider`. No new validation was
+              written; the component was imported.
+            */}
+            <PhoneField
+              value={draft.phone}
+              onChange={(next) => setDraft((d) => ({ ...d, phone: next }))}
+              country={phoneCountry}
+            />
+            <div>
+              <Field label="Employee ID">
+                <TextInput
+                  value={draft.employeeId}
+                  onChange={(e) =>
+                    setDraft((d) => ({ ...d, employeeId: e.target.value }))
+                  }
+                />
+              </Field>
+              {/*
+                ⚠ THE HELPER SITS OUTSIDE `Field`, NOT IN ITS `hint` (`E261`).
+                `Field` renders a `<label>` and its `hint` is typed `string`;
+                an `<a>` inside a `<label>` is interactive content the HTML
+                spec forbids there, and clicking it focuses the input instead
+                of following the link. Same two lines, valid markup.
+                ⚠ SUPERSEDED, quoted: the old hint read *"Your id in your own
+                system. Optional — it's what links you to your ERP later."*
+                ⚠ SCOTT'S WORDS, VERBATIM, INCLUDING THE PLAIN HYPHEN — it is
+                not an en dash and was not "tidied" into one.
+              */}
+              <p className="mt-1 text-[13px] text-ink-2">
+                Your HR ID - used for integrated buyers
+              </p>
+              <Link
+                href="/integrate"
+                className="mt-0.5 block text-[13px] font-semibold text-magenta hover:underline"
+              >
+                Click here to learn more
+              </Link>
             </div>
           </div>
+
+          {/*
+            ⚠⚠ THE `Your address` BLOCK STOOD HERE AND IS GONE (`E262`).
+
+            ⚠ SUPERSEDED, quoted: a `<p>Your address</p>` heading over
+            `<LocationFields withStreet>` bound to `draft.address`.
+
+            ⚠ THE ADDRESS RECORD ITSELF SURVIVES. `requester-onboarding.ts:120`
+            still creates a country-only `Address` from the sign-up country at
+            account creation, and `draft.address` is still hydrated from it —
+            which is what feeds the phone mask above and what Work Location
+            pre-fills from. WORK LOCATION IS NOW THE ONLY FULL ADDRESS THIS
+            WIZARD CAPTURES.
+          */}
         </div>
       </WizardShell>
     );
   }
 
-  // ---- 3/5 — Buyer & Approver -------------------------------------------
-  if (step === "buyer_approver") {
-    return (
-      <WizardShell
-        {...shell}
-        title="Who buys with you, and who approves?"
-        subtitle="One named approver is enough to start. Approval chains and spend thresholds are set up on the company later."
-        continueLabel={nextLabel}
-        continueDisabled={!draft.approverName.trim()}
-        onContinue={() =>
-          save({
-            buyerName: draft.buyerName,
-            buyerEmail: draft.buyerEmail,
-            approverName: draft.approverName,
-            approverEmail: draft.approverEmail,
-          })
-        }
-      >
-        <div className="mx-auto w-full max-w-xl space-y-6">
-          {error && <Notice>{error}</Notice>}
+  /*
+    ⚠⚠ THE `buyer_approver` SCREEN STOOD HERE AND IS GONE (`P1-J1.1-E263`).
 
-          <section>
-            <p className="mb-3 text-[14px] font-bold">
-              Your buyer{" "}
-              <span className="font-medium text-ink-2">
-                — the person who supports your buying
-              </span>
-            </p>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Name">
-                <TextInput
-                  value={draft.buyerName}
-                  onChange={(e) => setDraft((d) => ({ ...d, buyerName: e.target.value }))}
-                />
-              </Field>
-              <Field label="Work Email">
-                <TextInput
-                  type="email"
-                  value={draft.buyerEmail}
-                  onChange={(e) => setDraft((d) => ({ ...d, buyerEmail: e.target.value }))}
-                  placeholder="buyer@company.com"
-                />
-              </Field>
-            </div>
-          </section>
+    ⚠ SUPERSEDED, quoted not deleted so nobody rebuilds it from scratch: it
+    asked *"Who buys with you, and who approves?"* under the sub-line *"One
+    named approver is enough to start. Approval chains and spend thresholds are
+    set up on the company later."*, collected `buyerName` / `buyerEmail` /
+    `approverName` / `approverEmail` in two labelled sections, gated Continue on
+    `approverName` alone, and closed with *"We record the name now. Nothing is
+    sent to them yet — routing approvals is a later step."*
 
-          <section>
-            <p className="mb-3 text-[14px] font-bold">
-              Your approver{" "}
-              <span className="font-medium text-ink-2">
-                — who signs off on the work
-              </span>
-            </p>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Name *">
-                <TextInput
-                  value={draft.approverName}
-                  onChange={(e) =>
-                    setDraft((d) => ({ ...d, approverName: e.target.value }))
-                  }
-                />
-              </Field>
-              <Field label="Work Email">
-                <TextInput
-                  type="email"
-                  value={draft.approverEmail}
-                  onChange={(e) =>
-                    setDraft((d) => ({ ...d, approverEmail: e.target.value }))
-                  }
-                  placeholder="approver@company.com"
-                />
-              </Field>
-            </div>
-            <p className="mt-2 text-[13.5px] text-ink-2">
-              We record the name now. Nothing is sent to them yet — routing
-              approvals is a later step.
-            </p>
-          </section>
-        </div>
-      </WizardShell>
-    );
-  }
+    Scott, 2026-08-30: *"we can leave it in the first onboarding page (for now),
+    but it is likely to come out at some point."* The four columns survive on
+    `RequesterProfile` and nothing gates on them.
+  */
 
-  // ---- 4/5 — Work Location ----------------------------------------------
+  // ---- 3/4 — Work Location ----------------------------------------------
   if (step === "work_location") {
     const wl = draft.workLocationSet ? draft.workLocation : draft.address;
     const sameAsYours =
@@ -476,7 +513,7 @@ export default function RequesterStepsPage() {
     return (
       <WizardShell
         {...shell}
-        title="Where does the work happen?"
+        title="Where Does the Work Happen?"
         subtitle="The deliver-to for your engagements. It starts as your own address — change it if the work lands somewhere else."
         continueLabel={nextLabel}
         continueDisabled={!wl.country}
@@ -509,7 +546,7 @@ export default function RequesterStepsPage() {
     );
   }
 
-  // ---- 5/5 — Review ------------------------------------------------------
+  // ---- 4/4 — Review ------------------------------------------------------
   const addr = (a: LocationValue) =>
     [a.line1, a.city, a.state, a.postalCode, a.country].filter(Boolean).join(", ") ||
     "—";
@@ -522,21 +559,9 @@ export default function RequesterStepsPage() {
     },
     { label: "Phone", value: draft.phone || "—", step: "requester_info" },
     { label: "Employee ID", value: draft.employeeId || "—", step: "requester_info" },
-    { label: "Your address", value: addr(draft.address), step: "requester_info" },
+    { label: "Your Address", value: addr(draft.address), step: "requester_info" },
     {
-      label: "Buyer",
-      value:
-        [draft.buyerName, draft.buyerEmail].filter(Boolean).join(" · ") || "—",
-      step: "buyer_approver",
-    },
-    {
-      label: "Approver",
-      value:
-        [draft.approverName, draft.approverEmail].filter(Boolean).join(" · ") || "—",
-      step: "buyer_approver",
-    },
-    {
-      label: "Work location",
+      label: "Work Location",
       value: addr(draft.workLocationSet ? draft.workLocation : draft.address),
       step: "work_location",
     },
@@ -545,9 +570,9 @@ export default function RequesterStepsPage() {
   return (
     <WizardShell
       {...shell}
-      title="Check this over."
+      title="Check This Over."
       subtitle="Everything here is editable later — this is the shape a provider sees when you post work."
-      continueLabel="I'm Ready to Post Work"
+      continueLabel="Complete My Profile"
       onContinue={finish}
     >
       <div className="mx-auto w-full max-w-2xl">

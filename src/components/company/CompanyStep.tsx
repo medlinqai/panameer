@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { LegalLink } from "@/components/legal/LegalLink";
 import { Field, TextInput, Notice, OptionCard } from "@/components/onboarding/controls";
+import { COUNTRIES } from "@/lib/countries";
 
 /**
  * DEFINE OR JOIN — the company building block, shared by BOTH onboarding tracks
@@ -113,6 +114,20 @@ export function CompanyStep({
   const [name, setName] = useState("");
   const [taxType, setTaxType] = useState<TaxTypeValue | "">("");
   const [website, setWebsite] = useState("");
+  /*
+    JURISDICTION (`P1-J1.1-E260`) — Scott, 2026-08-30: *"Jurisdiction is just
+    country. do this."*
+
+    ⚠⚠ OPTIONAL ON PURPOSE, AND THAT IS A SCOPE DECISION WORTH READING.
+    `CompanyStep` is shared by SIX call sites — the requester wizard, the
+    provider wizard, `(app)/company`, `CompanyStepInline` and `NoProfileYet` —
+    so a field added here appears in ALL of them, including the provider journey
+    this brief did not ask for. Leaving it out of `valid` below means NO existing
+    Continue gate anywhere changed, so nothing that used to pass can now block.
+    Making it required, or scoping it to the requester with a prop, are both
+    one-line changes and both are Scott's call.
+  */
+  const [country, setCountry] = useState("");
   const [companyTos, setCompanyTos] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [logoBusy, setLogoBusy] = useState(false);
@@ -193,6 +208,7 @@ export function CompanyStep({
               : {
                   name: name.trim(),
                   taxType,
+                  country: country || null,
                   website: website.trim() || null,
                   logoUrl,
                   attestation,
@@ -381,6 +397,33 @@ export function CompanyStep({
                 <option key={t.value} value={t.value}>
                   {t.label}
                   {t.hint ? ` — ${t.hint}` : ""}
+                </option>
+              ))}
+            </select>
+          </Field>
+
+          {/*
+            ⚠ THE SHARED COUNTRY LIST, NOT A RETYPED ONE (`E260`). `COUNTRIES`
+            in `lib/countries.ts` is what every address field on this site
+            already uses, and it stores FULL NAMES ("United States"), not ISO
+            codes — `Company.country` matches that shape deliberately.
+            ⚠ NO `*` IN THE LABEL, because it does not gate Continue. A star on
+            a field that lets you past is the kind of small lie that teaches
+            people to ignore stars.
+          */}
+          <Field
+            label="Country"
+            hint="Where the company is registered — its jurisdiction."
+          >
+            <select
+              value={country}
+              onChange={(e) => setCountry(e.target.value)}
+              className={SELECT}
+            >
+              <option value="">Choose a country…</option>
+              {COUNTRIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
                 </option>
               ))}
             </select>

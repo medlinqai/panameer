@@ -43,6 +43,7 @@ export function OnboardingFrame({
   footer,
   className = "",
   width = FRAME_WIDTH,
+  chrome = true,
   /**
    * Tighter vertical rhythm for the ONE pre-verify page carrying a full form
    * (brief_W / E047): sign-up has a social block, a divider, five fields, two
@@ -76,6 +77,25 @@ export function OnboardingFrame({
 }: {
   children: ReactNode;
   footer?: ReactNode;
+  /**
+   * ⚠⚠ RENDER THE PUBLIC HEADER AND FOOTER? (`P1-J1.1-E267`, 2026-08-30)
+   *
+   * DEFAULT `true`, WHICH IS THE WHOLE POINT — every public onboarding surface
+   * keeps `E246`'s casing with no call-site change, so `/join/*`, `/login` and
+   * `/assess` are untouched by this prop existing.
+   *
+   * ⚠ THE ONE CONSUMER THAT PASSES `false` IS `(app)/create-work`, and it is the
+   * ONLY SIGNED-IN CONSUMER OF THIS FRAME IN THE CODEBASE — verified by walking
+   * every `WizardShell` / `OnboardingFrame` / `OnboardingShell` importer, not
+   * taken from the brief. That page already sits inside `AppShell`, which brings
+   * its own header, rail and footer, so `E246` gave it a SECOND header and a
+   * SECOND footer stacked around an in-app wizard.
+   *
+   * ⚠ THE ALTERNATIVE — stripping the casing out of this frame — WAS REJECTED:
+   * it would undo `E246` across every public onboarding page to fix one signed-in
+   * one. An opt-out inverts that blast radius to exactly the page with the defect.
+   */
+  chrome?: boolean;
   width?: string;
   compact?: boolean;
   centered?: boolean;
@@ -128,7 +148,8 @@ export function OnboardingFrame({
       a viewport gets the same result and leaves room for whatever is above.
     */
     <>
-      <MarketingHeader />
+      {/* ⚠ `chrome` — see the prop's docblock. Default true = `E246` unchanged. */}
+      {chrome && <MarketingHeader />}
       <div className={`flex flex-1 flex-col bg-white font-body text-ink ${className}`}>
       {/*
         ── ⚠⚠ THE FRAME'S OWN HEADER IS GONE (`P1-J1.1-E246` §8) ─────────────────
@@ -192,7 +213,7 @@ export function OnboardingFrame({
       )}
       </div>
       {/* ⚠ OUTSIDE the frame AND outside any `.pm-home` — see the note above. */}
-      <MarketingFooter />
+      {chrome && <MarketingFooter />}
     </>
   );
 }

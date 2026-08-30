@@ -20,8 +20,17 @@ import {
  *    top right, which is exactly what E003 flagged. Track and counter now share
  *    the frame's `max-w-3xl`, so they line up with the heading beneath them.
  *
- * Footer layout (brief_O): Back far-left, primary Continue far-right, optional
- * secondary ("Skip for Now") de-emphasised in the left cluster.
+ * Footer layout: Back far-left, primary Continue far-right, optional secondary
+ * immediately LEFT OF CONTINUE in the right-hand cluster.
+ *
+ * ⚠ SUPERSEDED, quoted not deleted — this line used to read *"optional
+ * secondary (\"Skip for Now\") de-emphasised in the left cluster"* (brief_O).
+ * THAT WAS STALE AND THE CODE BELOW HAS BEEN RIGHT ALL ALONG: the secondary
+ * renders inside the `ml-auto` cluster with the primary, and the footer's own
+ * inline comment explains why — `P1-J1.4-E032` found that beside Back a skip
+ * reads as a way BACKWARD, beside Next as a way PAST this step. Checked in the
+ * running app for `P1-J1.1-E245` before this docblock was corrected; the two
+ * comments in this file disagreed and the header was the wrong one.
  */
 export function WizardShell({
   step,
@@ -47,6 +56,7 @@ export function WizardShell({
   wide = false,
   tightBody = false,
   frameClassName = "",
+  chrome = true,
 }: {
   /** 1-based step number. OMIT on pre-verify pages — that hides the stepper. */
   step?: number;
@@ -111,6 +121,11 @@ export function WizardShell({
   tightBody?: boolean;
   /** Passed to OnboardingFrame — see its `className`. */
   frameClassName?: string;
+  /**
+   * Passed straight to `OnboardingFrame` — see its `chrome` docblock (`E267`).
+   * Default `true`, so every existing caller is byte-identical in behaviour.
+   */
+  chrome?: boolean;
 }) {
   const showCounter = typeof step === "number";
   const showStepper = showCounter || typeof progress === "number";
@@ -170,7 +185,7 @@ export function WizardShell({
   );
 
   return (
-    <OnboardingFrame width={width} footer={footer} className={frameClassName}>
+    <OnboardingFrame width={width} footer={footer} className={frameClassName} chrome={chrome}>
       {/* Stepper — inside the frame, so it can never overflow (E003). */}
       {showStepper && (
         <div className="mb-9">

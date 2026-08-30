@@ -550,7 +550,15 @@ export const HOME_SECTIONS: HomeSection[] = [
       "Ability to Sell RFP Sales Assistance",
     ],
     ctaLabel: HOME_TALENT_CTA,
-    ctaHref: "/join/provider",
+    /*
+      ⚠ `/join`, NOT `/join/provider` (`P1-J1.1-E234`, 2026-08-30). HOME cannot
+      know which side of the marketplace a visitor is on, so it stopped
+      answering that question for them. The chooser is one click and it is the
+      top of the funnel; landing straight in the seller wizard silently
+      committed anyone who clicked a "sell your time" card.
+      ⚠ SUPERSEDED, quoted: `ctaHref: "/join/provider"`.
+    */
+    ctaHref: "/join",
     learnMoreHref: "/talent",
   },
   {

@@ -70,16 +70,35 @@ function AppleMark({ className = "h-[19px] w-[19px] shrink-0" }: { className?: s
   );
 }
 
+/*
+  ── ⚠⚠ COLOUR AND HOVER ARE SEPARATE FIELDS (`P1-J1.1-E233`, 2026-08-30) ────
+
+  Scott: *"We can do B for now, gets them looking right, can fix later."*
+
+  `className` is what the button ALWAYS looks like. `hoverClassName` is applied
+  ONLY when the provider is actually live. Before this split, both lived in one
+  string and `disabled:opacity-45` sat on the shared base — so with no OAuth
+  credentials configured (which is ALWAYS, today) Apple's black and Google's
+  white both rendered as the same dead grey, and a disabled button still
+  changed colour under the cursor.
+
+  ⚠⚠ THE COLOURS THEMSELVES ARE UNTOUCHED. Apple black and Google's untinted
+  four-colour mark on white are mandated by `E020` and by Google's own brand
+  guidelines. This row was about the DISABLED TREATMENT, never the palette.
+  ⚠ AND THE BUTTONS ARE NOT HIDDEN — Scott chose B over C explicitly.
+*/
 const BUTTONS: {
   id: ProviderId;
   label: string;
   className: string;
+  hoverClassName: string;
   icon: React.ReactNode;
 }[] = [
   {
     id: "apple",
     label: "Apple",
-    className: "bg-black text-white hover:bg-[#1a1a1a] border-black",
+    className: "bg-black text-white border-black",
+    hoverClassName: "hover:bg-[#1a1a1a]",
     icon: <AppleMark />,
   },
   {
@@ -87,13 +106,21 @@ const BUTTONS: {
     // Google's guidelines: white button, dark text, untinted multicolour mark.
     label: "Google",
     className:
-      "bg-white text-[#3c4043] hover:bg-[#f7f8f8] border-[#dadce0] shadow-[0_1px_2px_rgba(60,64,67,0.15)]",
+      "bg-white text-[#3c4043] border-[#dadce0] shadow-[0_1px_2px_rgba(60,64,67,0.15)]",
+    hoverClassName: "hover:bg-[#f7f8f8]",
     icon: <GoogleG />,
   },
 ];
 
 export function SocialSignIn({
-  callbackUrl = "/join/provider",
+  /*
+    ⚠ `/join` (`E234`). ⚠ SUPERSEDED, quoted: `"/join/provider"`.
+    ⚠ THIS DEFAULT IS DEAD IN PRACTICE and was still worth fixing — both call
+    sites pass one explicitly (`login/page.tsx:109`, and `SignUpForm.tsx:153`
+    which forwards its own). A default nobody reaches is exactly where a
+    side-picking value survives unnoticed.
+  */
+  callbackUrl = "/join",
   disabledHint = "Coming soon",
 }: {
   callbackUrl?: string;
@@ -139,6 +166,16 @@ export function SocialSignIn({
               key={b.id}
               type="button"
               disabled={!live || busy !== null}
+              /*
+                ⚠ `aria-disabled` ALONGSIDE `disabled`, NOT INSTEAD OF IT
+                (`E233`). The real `disabled` attribute is what makes the button
+                genuinely non-interactive — this row is a LOOK, not a behaviour,
+                and Scott's note ("can fix later") is about wiring OAuth, not
+                about letting people click a dead button. The ARIA attribute is
+                stated explicitly so the disabled state survives any future
+                refactor to a non-`<button>` element.
+              */
+              aria-disabled={!live || busy !== null}
               title={live ? `Continue with ${b.label}` : disabledHint}
               aria-label={`Continue with ${b.label}`}
               onClick={() => {
@@ -148,8 +185,19 @@ export function SocialSignIn({
               className={
                 // `whitespace-nowrap`, never `truncate`: a label that doesn't
                 // fit must be visible as a layout bug, not quietly clipped.
-                "flex items-center justify-center gap-1.5 rounded-full border px-2.5 py-2 text-[13.5px] font-bold whitespace-nowrap transition-colors disabled:cursor-not-allowed disabled:opacity-45 " +
-                b.className
+                /*
+                  ⚠ NO `disabled:opacity-45` (`E233`). It used to sit here and it
+                  is what turned both brand colours grey whenever OAuth was not
+                  configured. `disabled:cursor-not-allowed` STAYS — with the
+                  colour no longer signalling the state, the cursor and the
+                  caption beneath the row are what say "not yet".
+                  ⚠ THE HOVER CLASS IS GATED ON `live`, so a dead button does not
+                  brighten under the pointer. Concatenating it unconditionally
+                  would have left the one interactive-looking behaviour behind.
+                */
+                "flex items-center justify-center gap-1.5 rounded-full border px-2.5 py-2 text-[13.5px] font-bold whitespace-nowrap transition-colors disabled:cursor-not-allowed " +
+                b.className +
+                (live ? " " + b.hoverClassName : "")
               }
             >
               {b.icon}

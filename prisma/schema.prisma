@@ -46,6 +46,19 @@ model User {
   is_system_admin       Boolean   @default(false)
   locked                Boolean   @default(false)
   failed_login_attempts Int       @default(0)
+  /// WHEN THE LOCK LIFTS BY ITSELF (`P1-J1.1-E252a`).
+  ///
+  /// `locked` alone was a ONE-WAY DOOR: `auth.ts` set it at
+  /// `MAX_FAILED_LOGINS` and refused the account before comparing the
+  /// password, and there is no reset, unlock or forgot-password route
+  /// anywhere in `src/app`. Scott locked himself out of `admin@panameer.com`
+  /// on 2026-08-30 and the only way back in was a hand-written script.
+  ///
+  /// Set alongside `locked` to now + the cooling-off window. `authorize`
+  /// clears both once it has passed, so the account heals itself.
+  /// ⚠ NULL WHILE `locked` IS TRUE MEANS AN INDEFINITE, ADMIN-ONLY LOCK —
+  /// that is deliberate, so an admin can still hard-lock an account.
+  locked_until          DateTime?
   /// When the user's email was verified (null = unverified). Set by the
   /// tokenized verify link during onboarding (brief_E).
   email_verified        DateTime?
@@ -214,6 +227,14 @@ model Company {
   email_domain String?
   vertical     String?
   website      String?
+  /// JURISDICTION — Scott, 2026-08-30: *"Jurisdiction is just country. do
+  /// this."* (`P1-J1.1-E260`). Captured on the requester wizard's company
+  /// step and stored as the FULL COUNTRY NAME from `COUNTRIES` in
+  /// `lib/countries.ts` ("United States"), which is the shape every other
+  /// address field on this site already stores — NOT an ISO alpha-2 code.
+  /// ⚠ NULLABLE: 3 companies predate this column and cannot be back-filled
+  /// without asking somebody. It is not a gate on anything today.
+  country      String?
   logo_url     String?
 
   /// TENANT THEME (E204) — a brand HUE and a recipe id, never a set of hexes.
@@ -1935,31 +1956,26 @@ model Certification {
    * removed.
    */
   /**
+   * /**
    * ⚠⚠ REQUIRED, NOT `User?`, AND THE `?` WAS A REAL DEFECT (`P1-J3-E028`).
-   *
    * `user_id String @db.Uuid` above is NOT NULL and so is the FK. Prisma accepts an
    * optional relation field over a required scalar without complaint, and then
    * types it `user: Prisma.$UserPayload<ExtArgs> | null` — so the CLIENT said a
    * credential may have no owner while the COLUMN said it must have one.
-   *
    * ⚠ THAT PARTLY UNDID WHAT `c68fad4` BOUGHT. WS1 of that brief made
    * `Certification.user_id` the owner precisely to remove the ambiguity about who
    * holds a credential; an optional relation field put the ambiguity back one layer
    * up, in the only place a reader actually looks.
-   *
    * ⚠ IT HAD ALREADY PRODUCED A FALLBACK FOR AN IMPOSSIBLE CASE —
    * `app/verify/[credentialId]/page.tsx` read `cert.user?.person ?? null`, handling
    * a null the database cannot produce. Every future `include: { user: true }` would
    * have inherited the optional and the compiler would never have forced a reader to
    * deal with the owner.
-   *
    * ⚠ THE DATABASE DID NOT CHANGE. `prisma migrate diff` against the live schema
    * emitted an EMPTY migration — the column and the FK were always correct. This is
    * a client-typing fix only.
-   *
    * ⚠ DO NOT "FIX" IT BACK TO `User?`. If a compiler error says the owner might be
    * null, the reader is wrong, not this line.
-   *
    * ⚠ `providerProfile` BELOW STAYS OPTIONAL AND ITS GUARDS STAY — that link IS
    * genuinely nullable (`SetNull`), and a learner with no seller profile earning a
    * real credential is the whole point of `c68fad4`.
@@ -2066,6 +2082,22 @@ model ProfileImport {
 /// extrinsic, the ERP-linkage key, and `work_site_id` is its ShipTo. Direct
 /// (web) requesters key the same fields here that a punch would carry per
 /// transaction, so one model serves both paths.
+/// THE REQUESTER WIZARD'S RESUME POINTS, AS A CLOSED SET (`P1-J1.1-E271`).
+///
+/// This was a free `String`, so nothing stopped a typo from becoming a resume
+/// point the wizard could never match, and the admin progression strip
+/// (`E256`) cannot be trusted to count buckets that are not enumerable.
+///
+/// ⚠ `buyer_approver` IS GONE (`E263` removed the step). The values are the
+/// four `REQUESTER_STEPS` in `lib/requester-steps.ts` and the two lists must
+/// stay in step — that file is the client-safe mirror of this enum.
+enum RequesterOnboardingStep {
+  company
+  requester_info
+  work_location
+  review
+}
+
 model RequesterProfile {
   id             String  @id @default(uuid()) @db.Uuid
   person_id      String  @unique @db.Uuid
@@ -2086,9 +2118,22 @@ model RequesterProfile {
 
   /// Resume point for the wizard — same save-as-you-go contract the provider
   /// wizard uses, so a half-finished requester lands back where they stopped.
-  onboarding_step String    @default("company")
+  onboarding_step RequesterOnboardingStep @default(company)
   /// Set when the wizard finishes — the "Ready to Post Work Request" state.
   completed_at    DateTime?
+
+  /// ⚠⚠ A STATUS, AND DELIBERATELY NOT A MECHANISM (`P1-J1.1-E269`).
+  ///
+  /// Scott, 2026-08-30: *"IDK yet... it might annoy the people we are trying
+  /// to get to pay us... so let's set it up as a status."* So the column
+  /// exists and the admin board renders it, and NOTHING sets it — there is no
+  /// buyer request route, no admin grant route and no email. The provider
+  /// side's `validation_status` is a real track with
+  /// `validation_requested_at` / `validated_at` behind it; this one is a
+  /// placeholder his decision can land on later.
+  /// ⚠ IT HAS NO TIMESTAMP ON PURPOSE. Adding a `validated_at` here would
+  /// invent the trend data `E257` explicitly forbids inventing.
+  validation_status ValidationStatus @default(NOT_REQUESTED)
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt

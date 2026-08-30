@@ -160,10 +160,18 @@ export default async function ExplorePage({
                       ? `Create a free account to see all ${total}`
                       : "Create a free account"}
                   </Btn>
-                  <Btn
-                    href={hiring ? "/join?type=buyer" : "/join?type=seller"}
-                    variant="ghost"
-                  >
+                  {/*
+                    ⚠ `/join` FLAT (`P1-J1.1-E234`, 2026-08-30). This read
+                    `hiring ? "/join?type=buyer" : "/join?type=seller"`, which
+                    pre-answered step 1 from the SEARCH MODE the visitor happened
+                    to be in — a browsing choice, not a declaration of which side
+                    of the marketplace they are on. The ternary collapsed because
+                    both arms became the same string.
+                    ⚠ THE LABEL STILL NAMES A SIDE and was NOT changed — `E234`
+                    is href-only, explicitly. Reported: this button can read
+                    "Create your provider profile" and land on the chooser.
+                  */}
+                  <Btn href="/join" variant="ghost">
                     {hiring ? "Post a Work Request" : "Create your provider profile"}
                   </Btn>
                 </div>
@@ -182,7 +190,8 @@ export default async function ExplorePage({
                   : "No Work Requests are open yet — Panameer is pre-launch, and requesters are still arriving. Build your profile now and you'll be in the pool the day the first one posts."}
               </p>
               <div className="mt-7 flex flex-wrap items-center gap-3">
-                <Btn href={hiring ? "/join?type=buyer" : "/join?type=seller"}>
+                {/* ⚠ `/join` flat — same reasoning as the CTA above (`E234`). */}
+                <Btn href="/join">
                   {hiring ? "Post a Work Request" : "Create your provider profile"}
                 </Btn>
                 <Btn href="/" variant="ghost">

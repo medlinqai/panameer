@@ -28,9 +28,35 @@ async function main() {
   const password = process.env.SEED_ADMIN_PASSWORD ?? "change-me-now";
   const password_hash = await bcrypt.hash(password, 10);
 
+  /*
+    ── ⚠⚠ `password_hash` IS CREATE-ONLY, AND THAT COST A LOGIN (`E251`) ──────
+
+    READ THIS BEFORE ASSUMING A RESEED FIXES YOUR ADMIN PASSWORD. IT DOES NOT.
+
+    `password_hash` appears in the `create` branch below and NOWHERE IN
+    `update`. The admin row has existed since the first seed, so EVERY RUN SINCE
+    HAS TAKEN THE `update` PATH and left the original hash untouched. Changing
+    `SEED_ADMIN_PASSWORD` in `.env.local` and re-running `npm run seed` there-
+    fore has NO EFFECT ON AN EXISTING ADMIN — the value above is hashed on every
+    run and then discarded.
+
+    ⚠ On 2026-08-30 that cost Scott access to `admin@panameer.com` outright: the
+    password he had set was never in the database, and five attempts with it
+    tripped `MAX_FAILED_LOGINS` and locked the account.
+
+    ⚠⚠ THIS IS DELIBERATE AND SCOTT RULED ON IT — *"No on the password."*
+    Moving `password_hash` into `update` would make every seed run overwrite a
+    live admin's credentials from whatever happens to be in `.env.local`, which
+    is a far worse footgun on a shared database.
+
+    ⚠ THE SUPPORTED WAY TO CHANGE IT is `npm run admin:reset-password`
+    (`prisma/reset-admin-password.ts`) — guarded, dry-run by default, and it
+    clears the lockout at the same time because the two travel together.
+  */
   const admin = await prisma.user.upsert({
     where: { email },
     // brief_K: verify the demo admin's email so its provider profile is ACTIVE.
+    // ⚠ NO `password_hash` HERE — ON PURPOSE. See the block above.
     update: { email_verified: new Date() },
     create: {
       email,

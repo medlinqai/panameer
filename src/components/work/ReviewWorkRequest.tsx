@@ -2,6 +2,26 @@
 
 import { useMemo, useState } from "react";
 import { WizardShell } from "@/components/onboarding/WizardShell";
+
+/**
+ * ⚠⚠ THE IN-APP WIZARD SHELL — NO PUBLIC CHROME (`P1-J1.1-E267`, 2026-08-30).
+ *
+ * This page renders INSIDE `AppShell`, which already supplies the header, the
+ * rail and the footer. `E246` gave `OnboardingFrame` a `MarketingHeader` and a
+ * `MarketingFooter` — correct for every PUBLIC onboarding page and wrong here,
+ * so `/create-work` came out with two headers and two footers around one wizard.
+ * That was chat's miss in the `E246` brief, not a CC error.
+ *
+ * ⚠ ONE WRAPPER, NOT A PROP ON EVERY CALL. There are nine `WizardShell`s in this
+ * file and one more in `ReviewWorkRequest`; threading `chrome={false}` through
+ * each by hand is a list somebody adds a tenth screen to and forgets. Setting it
+ * in one place means a new step in this file CANNOT reintroduce the defect.
+ * ⚠ THE DEFAULT ELSEWHERE IS STILL `true`, so no public page changed.
+ */
+function AppWizardShell(props: React.ComponentProps<typeof WizardShell>) {
+  return <WizardShell {...props} chrome={false} />;
+}
+
 import { Notice } from "@/components/onboarding/controls";
 import type { Draft, Step } from "@/components/work/CreateWorkRequest";
 
@@ -63,7 +83,7 @@ export function ReviewStep({
       : null;
 
   return (
-    <WizardShell
+    <AppWizardShell
       title="Looking good — here's your Work Request"
       subtitle="Check it over. You can change anything before you post."
       canBack
@@ -146,7 +166,7 @@ export function ReviewStep({
           </div>
         </div>
       )}
-    </WizardShell>
+    </AppWizardShell>
   );
 }
 

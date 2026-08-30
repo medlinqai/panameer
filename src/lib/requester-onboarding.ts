@@ -329,7 +329,18 @@ export type StepPayload = {
   phone?: string | null;
   employeeId?: string | null;
   address?: AddressInput;
-  /** buyer_approver */
+  /*
+    ⚠⚠ THESE FOUR OUTLIVED THEIR STEP (`P1-J1.1-E263`, 2026-08-30).
+
+    `buyer_approver` was removed from `REQUESTER_STEPS`, so NOTHING POSTS THESE
+    TODAY and no branch below reads them. They are kept — here, in the step
+    route's zod schema, and as columns on `RequesterProfile` — because Scott
+    removed the SCREEN, not the model: *"we can leave it in the first
+    onboarding page (for now), but it is likely to come out at some point."*
+    ⚠ DO NOT "TIDY" THEM AWAY. Deleting them is a second, separate decision he
+    has not made, and the columns already hold data for the profiles that
+    completed the old five-step wizard.
+  */
   buyerName?: string | null;
   buyerEmail?: string | null;
   approverName?: string | null;
@@ -404,21 +415,16 @@ export async function saveRequesterStep(
     }
   }
 
-  if (step === "buyer_approver") {
-    await prisma.requesterProfile.update({
-      where: { id: rp.id },
-      data: {
-        buyer_name: payload.buyerName?.trim() || null,
-        buyer_email: payload.buyerEmail?.trim()
-          ? normalizeEmail(payload.buyerEmail)
-          : null,
-        approver_name: payload.approverName?.trim() || null,
-        approver_email: payload.approverEmail?.trim()
-          ? normalizeEmail(payload.approverEmail)
-          : null,
-      },
-    });
-  }
+  /*
+    ⚠ SUPERSEDED, quoted not deleted (`P1-J1.1-E263`): a `buyer_approver` branch
+    sat here and wrote `buyer_name` / `buyer_email` / `approver_name` /
+    `approver_email`, normalising both addresses through `normalizeEmail`.
+
+    It went with the step. It is NOT commented-out code kept "just in case" —
+    `RequesterStep` no longer contains that value, so the comparison would not
+    compile. If the step ever returns, the columns and the payload keys are
+    still here and this branch is four lines of `prisma.requesterProfile.update`.
+  */
 
   if (step === "work_location" && payload.workLocation) {
     const current = await prisma.person.findUnique({
@@ -481,14 +487,41 @@ export async function saveRequesterStep(
  * MEMBERSHIPS — a `CompanyMembership` is an attestation a human made, and
  * manufacturing one silently binds a person to a company they never claimed.
  */
+/*
+  ── ⚠⚠ A GATE MAY ONLY REQUIRE WHAT THE WIZARD CAN COLLECT (`E263`/`E262`) ───
+
+  ⚠⚠ THIS FUNCTION BLOCKED EVERY REQUESTER ON THE DAY THE STEPS CHANGED, and it
+  is worth being explicit about because the brief said the opposite.
+
+  `E263` removed the `buyer_approver` step on the stated premise that the four
+  columns behind it are *"all `nullish()`, nothing gates on them."* THAT PREMISE
+  WAS FALSE. This function required `approverName`, and it is the only thing
+  standing between the Review step and `completed_at`. With the step gone and the
+  check left in place, `Complete My Profile` failed for everybody with
+  *"Still needed: Your approver."* — CAUGHT BY WALKING THE WIZARD, not by reading
+  it, and it would have shipped as a dead-ended journey.
+
+  ⚠ `Your address` WENT FOR THE SAME REASON, and it was a QUIETER version of the
+  same defect. `E262` removed the address block from step 2, so the only source
+  left is the country-only `Address` seeded at signup — and signup's `country` is
+  `.optional()` in `api/onboarding/requester/account/route.ts:12`. A requester who
+  signed up without one would have been permanently unable to finish, with NO
+  SCREEN ANYWHERE that could supply the missing value. `E262` also says Work
+  Location is now the only full address this journey captures, and the
+  `workLocation` gap below already enforces exactly that.
+
+  ⚠ THE OTHER THREE GATES ARE UNCHANGED and each still maps to a live step:
+  company binding + business type (step 1), name (step 2), work location (step 3).
+  ⚠ THE COLUMNS ARE NOT DELETED — `buyer_name` / `approver_name` and the seeded
+  `Address` all still exist and still hold data for profiles that completed the
+  old five-step wizard. This removes a REQUIREMENT, not a record.
+*/
 export function requesterGaps(state: RequesterState): string[] {
   const p = state.profile;
   const gaps: string[] = [];
   if (!state.company.bound) gaps.push("Your company");
   else if (!state.company.defined) gaps.push("Your company's business type");
   if (!p.firstName.trim() || !p.lastName.trim()) gaps.push("Your name");
-  if (!p.address?.country) gaps.push("Your address");
-  if (!p.approverName?.trim()) gaps.push("Your approver");
   if (!p.workLocation?.country) gaps.push("A work location");
   return gaps;
 }

@@ -14,6 +14,8 @@ const schema = z.object({
     "SOLE_PROP_INDIVIDUAL",
     "NONPROFIT",
   ]),
+  /* `E260` — jurisdiction. Nullish: it does not gate the form (see CompanyStep). */
+  country: z.string().trim().max(80).nullish(),
   website: z.string().trim().max(300).nullish(),
   logoUrl: z.string().trim().max(600).nullish(),
   attestation: z.boolean(),

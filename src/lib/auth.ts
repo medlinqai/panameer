@@ -14,6 +14,64 @@ import { consumeSignInToken } from "@/lib/verification";
 const MAX_FAILED_LOGINS = 5;
 
 /**
+ * HOW LONG THE AUTO-LOCK LASTS (`P1-J1.1-E252a`, 2026-08-30).
+ *
+ * ⚠⚠ THE LOCK USED TO BE A ONE-WAY DOOR. `locked: true` was set here at
+ * `MAX_FAILED_LOGINS` and checked BEFORE the password compare, and there is no
+ * reset, unlock or forgot-password route anywhere in `src/app` — so five wrong
+ * guesses removed an account from the product permanently. Scott did this to
+ * `admin@panameer.com` on 2026-08-30 and the only way back was a hand-written
+ * script against the database.
+ *
+ * Thirty minutes is the cooling-off window: long enough that online guessing at
+ * five-per-window is not worth attempting, short enough that a real person who
+ * fat-fingered their password gets back in without needing anybody.
+ *
+ * ⚠ THIS IS NOT `E252b`. Self-serve password reset needs working email
+ * (`RESEND_API_KEY` / `EMAIL_FROM` are still unset) and is explicitly a later
+ * brief. This row only stops the lock being permanent.
+ */
+const LOCKOUT_MINUTES = 30;
+
+/**
+ * Is this account locked RIGHT NOW?
+ *
+ * ⚠ `locked === true` WITH A NULL `locked_until` IS AN INDEFINITE LOCK and stays
+ * one, deliberately — that is the shape an admin hard-lock takes, and a
+ * cooling-off window must not quietly release it. Only a lock that named its own
+ * expiry can expire.
+ */
+function lockActive(user: { locked: boolean; locked_until: Date | null }): boolean {
+  if (!user.locked) return false;
+  if (!user.locked_until) return true;
+  return user.locked_until.getTime() > Date.now();
+}
+
+/**
+ * Clear an auto-lock whose window has passed, so the account heals itself on the
+ * next attempt rather than waiting for an admin.
+ *
+ * Best-effort: a bookkeeping write must never be the reason a valid credential
+ * is refused, which is the same contract the counter writes below follow.
+ */
+async function releaseExpiredLock(user: {
+  id: string;
+  locked: boolean;
+  locked_until: Date | null;
+}) {
+  if (!user.locked || !user.locked_until) return;
+  if (user.locked_until.getTime() > Date.now()) return;
+  try {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { locked: false, locked_until: null, failed_login_attempts: 0 },
+    });
+  } catch {
+    /* best-effort */
+  }
+}
+
+/**
  * OAuth providers, registered ONLY when their credentials exist (brief_Q).
  *
  * Built inside a function rather than at module scope so the env read is lazy —
@@ -86,7 +144,11 @@ export const authOptions: NextAuthOptions = {
         const user = await prisma.user.findUnique({
           where: { id: consumed.id },
         });
-        if (!user || user.locked || user.is_active === false) return null;
+        /* `E252a` — an EXPIRED auto-lock is not a lock. Same rule as the
+           credentials path below, so a magic link and a password agree. */
+        if (!user || user.is_active === false) return null;
+        if (lockActive(user)) return null;
+        await releaseExpiredLock(user);
 
         await prisma.user
           .update({
@@ -135,8 +197,18 @@ export const authOptions: NextAuthOptions = {
         });
         if (!user || !user.password_hash) return null;
 
-        // A locked or deactivated user cannot authenticate — checked before compare.
-        if (user.locked === true || user.is_active === false) return null;
+        /*
+          A locked or deactivated user cannot authenticate — checked before the
+          compare, so a locked account leaks nothing about its password.
+
+          ⚠ `E252a`: "locked" now means "locked RIGHT NOW". A lock whose
+          `locked_until` has passed is released and the attempt proceeds — that
+          release is what makes the lock a cooling-off window instead of a
+          permanent exile. An indefinite lock (`locked_until` null) still refuses.
+        */
+        if (user.is_active === false) return null;
+        if (lockActive(user)) return null;
+        await releaseExpiredLock(user);
 
         const ok = await bcrypt.compare(credentials.password, user.password_hash);
         if (!ok) {
@@ -148,7 +220,14 @@ export const authOptions: NextAuthOptions = {
               where: { id: user.id },
               data: {
                 failed_login_attempts: attempts,
-                ...(attempts >= MAX_FAILED_LOGINS ? { locked: true } : {}),
+                /* `E252a` — the lock now names its own expiry. `locked` without
+                   `locked_until` would be the permanent door this row removed. */
+                ...(attempts >= MAX_FAILED_LOGINS
+                  ? {
+                      locked: true,
+                      locked_until: new Date(Date.now() + LOCKOUT_MINUTES * 60_000),
+                    }
+                  : {}),
               },
             });
           } catch {
@@ -161,7 +240,13 @@ export const authOptions: NextAuthOptions = {
         try {
           await prisma.user.update({
             where: { id: user.id },
-            data: { failed_login_attempts: 0, last_login: new Date() },
+            /* `E252a` — a successful sign-in clears the window too, so a stale
+               `locked_until` cannot re-lock a healthy account later. */
+            data: {
+              failed_login_attempts: 0,
+              locked_until: null,
+              last_login: new Date(),
+            },
           });
         } catch {
           /* best-effort */

@@ -125,28 +125,47 @@ export const UTILITY_NAV: NavItem[] = [SEARCH_NAV, HOME_NAV, NOTIFICATIONS_NAV];
  * marketplace. They are declared again rather than imported, because a shared
  * array would make "change it for buyers" mean "change it for everybody".
  */
+/*
+  ── ⚠⚠ LABELS CHANGED, ROUTES DID NOT (`P1-J1.1-E268`, 2026-08-30) ──────────
+
+  ⚠ SUPERSEDED, quoted not deleted, so the old names are recoverable:
+      Start Learning   -> Learning Paths
+      Create Work      -> Work Requests
+      Search Packages  -> Service Products
+      Manage Work      -> Work Orders
+      Pay Providers    -> Payments
+      Community        -> Community (unchanged)
+
+  ⚠⚠ EVERY `href` IS BYTE-IDENTICAL TO WHAT IT WAS. `/contracts` now READS
+  "Work Orders" and `/packages` now READS "Service Products" — the label is the
+  product's language, the route is the codebase's, and they are allowed to
+  disagree. Renaming a route here would 404 every existing link and is a
+  separate decision nobody has made.
+  ⚠ THE `requires: "canHireTalent"` GATES ARE UNCHANGED on all four items that
+  had them. Relabelling is not re-permissioning.
+*/
 export const REQUESTER_NAV: NavItem[] = [
-  { label: "Start Learning", href: "/learn", icon: "GraduationCap" },
+  { label: "Learning Paths", href: "/learn", icon: "GraduationCap" },
   {
-    label: "Create Work",
+    label: "Work Requests",
     href: "/create-work",
     icon: "ClipboardList",
     requires: "canHireTalent",
   },
   {
-    label: "Search Packages",
+    label: "Service Products",
     href: "/packages",
     icon: "Package",
     requires: "canHireTalent",
   },
   {
-    label: "Manage Work",
+    label: "Work Orders",
     href: "/contracts",
     icon: "ClipboardCheck",
     requires: "canHireTalent",
   },
   {
-    label: "Pay Providers",
+    label: "Payments",
     href: "/pay",
     icon: "CreditCard",
     requires: "canHireTalent",

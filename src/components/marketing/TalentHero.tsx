@@ -217,28 +217,43 @@ export async function TalentHero() {
                       /join/provider         200
                       /join/provider/preview 307 -> /dashboard
 
-                  ⚠ `join/provider/start/page.tsx` IS AN IN-WIZARD PAGE, not an entry
-                  point: its own header calls it *"the FIRST page of the
-                  profile-building process: verify email -> HERE -> step 1/12"*, and it
-                  redirects on THREE conditions — no viewer, not a provider or no
-                  `providerProfile`, and unverified email. A signed-out visitor cannot
-                  reach it by construction.
+                  ── ⚠⚠ IT POINTS AT `/join` — SCOTT REVERSED THIS (`P1-J1.1-E236`) ──
 
-                  ⚠⚠ SO IT POINTS AT `/join/provider`, WHICH IS A DEVIATION FROM THE
-                  BRIEF'S NAMED DESTINATION AND IS REPORTED AS ONE. Three reasons it is
-                  the right target rather than a guess:
+                  Scott, 2026-08-30: *"The talent create my profile button has to go to
+                  the top of the registration funnel...could be a seller or a buyer.
+                  Point at /join."*
 
-                    · it is the ONLY public (200, signed-out) provider entry, and it
-                      is the provider signup wizard itself — `SignUpForm` +
-                      `VerifyGate` — so it does what the label promises;
+                  ⚠⚠ SUPERSEDED, QUOTED NOT DELETED, because the argument below was
+                  correct on the evidence it had and was explicitly overruled by its
+                  owner — not by chat, and not by CC. It read:
+
+                    *"⚠ `join/provider/start/page.tsx` IS AN IN-WIZARD PAGE, not an
+                    entry point ... A signed-out visitor cannot reach it by
+                    construction. ⚠⚠ SO IT POINTS AT `/join/provider`, WHICH IS A
+                    DEVIATION FROM THE BRIEF'S NAMED DESTINATION AND IS REPORTED AS
+                    ONE. Three reasons it is the right target rather than a guess:
+                    · it is the ONLY public (200, signed-out) provider entry, and it is
+                      the provider signup wizard itself — `SignUpForm` + `VerifyGate` —
+                      so it does what the label promises;
                     · `join/provider/start/page.tsx:33` ITSELF redirects there
                       (`redirect("/join/provider")`) for an unverified user, so this is
                       the app's own answer, not CC's;
-                    · the brief forbade substituting **`/join`**, the generic
-                      chooser. This is not that.
+                    · the brief forbade substituting **`/join`**, the generic chooser.
+                      This is not that."*
 
-                  ⚠ ONE-WORD CHANGE IF HE WANTS IT ELSEWHERE. Flagged in the report
-                  with the measurements.
+                  ⚠ THE THIRD BULLET IS THE ONE THAT IS NOW BACKWARDS. An earlier brief
+                  did forbid `/join`; Scott has now REQUIRED it. The first two bullets
+                  are still true statements about `/join/provider` — they were just
+                  answering the wrong question, because the premise was that this
+                  button belongs to sellers.
+
+                  ⚠⚠ AND THE LABEL DOES NOT CHANGE. `TALENT_CTA_LABEL` STAYS
+                  *"Create My Profile"*. Chat argued it was seller language and Scott
+                  corrected that too: *"Why is profile 'seller' language? Really is
+                  both...all of them need a profile."* He is right — a buyer builds a
+                  requester profile through the same door. ⚠ DO NOT touch the constant
+                  in `lib/talent-steps.ts`, and DO NOT touch the sentence in this
+                  hero's right column that interpolates it.
 
                   ── ⚠ THE STYLING MIRRORS `/optimize`'s HERO CTA, MEASURED ────────
 
@@ -259,7 +274,7 @@ export async function TalentHero() {
                   2026-08-25.
                 */}
                 <a
-                  href="/join/provider"
+                  href="/join"
                   className={HERO_BUTTON}
                 >
                   {/* ⚠ THE CONSTANT, NOT A LITERAL — see WS1b in `talent-steps.ts`.

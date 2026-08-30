@@ -26,6 +26,8 @@ import type { TaxType } from "@prisma/client";
 export type DefineInput = {
   name: string;
   taxType: TaxType;
+  /** Jurisdiction (`E260`) — a full country name from `COUNTRIES`, not an ISO code. */
+  country?: string | null;
   website?: string | null;
   /** Public URL from /api/company/logo, uploaded before define (E168). */
   logoUrl?: string | null;
@@ -127,6 +129,8 @@ export async function defineCompany(viewer: Viewer, input: DefineInput) {
       name,
       legal_name: name,
       tax_type: input.taxType,
+      /* `E260` — jurisdiction, stored as the full country name. */
+      country: input.country?.trim() || null,
       website,
       ...(input.logoUrl ? { logo_url: input.logoUrl } : {}),
       // Only a WORK domain is stored. Recording gmail.com here would auto-

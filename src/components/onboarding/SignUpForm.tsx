@@ -88,7 +88,17 @@ export function SignUpForm({
   error,
   emailLocked = false,
   title = "Sign Up to Find Work",
-  callbackUrl = "/join/provider",
+  /*
+    ⚠ `/join` (`E234`). ⚠ SUPERSEDED, quoted: `"/join/provider"`.
+    ⚠⚠ THIS DEFAULT WAS LIVE, UNLIKE `SocialSignIn`'s. `join/provider/page.tsx`
+    rendered `<SignUpForm>` WITHOUT a `callbackUrl` and relied on this value to
+    keep a provider inside the provider wizard after signup. Flipping the default
+    alone would have bounced them out to the chooser mid-funnel — a regression
+    dressed as a fix — so that call site now passes `callbackUrl="/join/provider"`
+    EXPLICITLY and its behaviour is unchanged. `/join/requester` already passed
+    its own.
+  */
+  callbackUrl = "/join",
   altPrompt,
 }: {
   values: SignUpValues;
