@@ -338,7 +338,7 @@ export function CreateWorkRequest() {
       return (
         <AppWizardShell
           {...shell({
-            title: "What type of role is this?",
+            title: "What Type of Role Is This?",
             subtitle: "This narrows everything that follows.",
             continueDisabled: !draft?.roleTypeId,
             onContinue: () => saveAnd("role", { roleTypeId: draft?.roleTypeId }),
@@ -367,14 +367,14 @@ export function CreateWorkRequest() {
               </p>
               <div className="space-y-3">
                 <JdDoor
-                  title="Paste your JD"
+                  title="Paste Your JD"
                   badge="Fastest"
                   primary
                   description="Paste it in and we'll draft the Work Request from what it says."
                   onClick={() => setDoorsOpen("paste")}
                 />
                 <JdDoor
-                  title="Fill it out manually"
+                  title="Fill It Out Manually"
                   description="Answer seven short questions. Takes a few minutes."
                   onClick={() => setDoorsOpen("manual")}
                 />
@@ -386,7 +386,7 @@ export function CreateWorkRequest() {
                   wired to a placeholder page.
                 */}
                 <JdDoor
-                  title="Email your JD"
+                  title="Email Your JD"
                   badge="Coming soon"
                   disabled
                   description="Forward a JD to Panameer and we'll draft it for you."
@@ -485,7 +485,7 @@ export function CreateWorkRequest() {
       return (
         <AppWizardShell
           {...shell({
-            title: "What service domain are you requesting?",
+            title: "What Service Domain Are You Requesting?",
             // The deck's step 2 carries the role name alone as the subtitle.
             subtitle: roleName || undefined,
             continueDisabled: !draft?.pillarId,
@@ -563,7 +563,7 @@ export function CreateWorkRequest() {
       return (
         <AppWizardShell
           {...shell({
-            title: "What skills does your work require?",
+            title: "What Skills Does Your Work Require?",
             subtitle: domainName
               ? `${domainName} skills. Add 3–5 so providers can match.`
               : "Add 3–5 so providers can match.",
@@ -675,7 +675,7 @@ export function CreateWorkRequest() {
       return (
         <AppWizardShell
           {...shell({
-            title: "Anything specific this work touches?",
+            title: "Anything Specific This Work Touches?",
             subtitle:
               "Products, processes or industries. Optional — pick what applies, or skip.",
             wide: true,
@@ -737,7 +737,7 @@ export function CreateWorkRequest() {
       return (
         <AppWizardShell
           {...shell({
-            title: "When does this work start and end?",
+            title: "When Does This Work Start and End?",
             subtitle: "An estimate is fine — providers use it to judge fit.",
             onContinue: () => saveAnd("dates", { startDate, endDate }),
             secondaryLabel: "I'm not sure yet",
@@ -770,7 +770,7 @@ export function CreateWorkRequest() {
       return (
         <AppWizardShell
           {...shell({
-            title: "Where will this work be performed?",
+            title: "Where Will This Work Be Performed?",
             subtitle:
               "A preference, not a filter — providers see it, and anyone may still propose.",
             continueDisabled: !locationCountry,
@@ -786,7 +786,7 @@ export function CreateWorkRequest() {
             <OptionCard
               selected={locationCountry === "United States"}
               onClick={() => setLocationCountry("United States")}
-              title="US only"
+              title="US Only"
               description="Providers based in the United States."
             />
             <OptionCard
@@ -824,7 +824,7 @@ export function CreateWorkRequest() {
       return (
         <AppWizardShell
           {...shell({
-            title: "What is your budget?",
+            title: "What Is Your Budget?",
             subtitle: "A range is fine. You can change it after you post.",
             onContinue: () =>
               saveAnd("budget", {
@@ -900,7 +900,7 @@ export function CreateWorkRequest() {
       return (
         <AppWizardShell
           {...shell({
-            title: "Describe what you need in detail",
+            title: "Describe What You Need in Detail",
             subtitle: "Already have a description? Paste it here.",
             continueDisabled: description.trim().length === 0,
             continueLabel: "Review Work Request",

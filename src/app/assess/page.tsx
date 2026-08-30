@@ -47,7 +47,7 @@ export const revalidate = 3600;
  * `/talent`, `/work`, `/shop` and does not include this route.
  */
 export const metadata: Metadata = {
-  title: "Where can AI help my business? — Panameer",
+  title: "Where Can AI Help My Business? — Panameer",
   description:
     "A free AI maturity assessment. Answer for one process in about eight minutes and get a report sized in your own dollars.",
 };

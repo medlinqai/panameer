@@ -4,7 +4,7 @@ import { getSessionViewer } from "@/lib/session";
 import { LearnHome } from "@/components/learn/LearnHome";
 
 export const metadata = {
-  title: "All learning paths — Panameer Learn",
+  title: "All Learning Paths — Panameer Learn",
   description: "Every Panameer learning path, searchable by name, domain and instructor.",
 };
 

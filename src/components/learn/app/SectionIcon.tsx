@@ -11,9 +11,9 @@ import { sectionKind, type SectionKind } from "@/lib/learn-sections";
  */
 const MARKS: Record<SectionKind, { Icon: typeof BookOpen; bg: string; title: string }> = {
   overview: { Icon: BookOpen, bg: "bg-learn-slate", title: "Overview" },
-  create: { Icon: Plus, bg: "bg-learn-green", title: "Create new" },
-  find: { Icon: Search, bg: "bg-learn-blue", title: "Find existing" },
-  change: { Icon: Pencil, bg: "bg-learn-gold", title: "Change existing" },
+  create: { Icon: Plus, bg: "bg-learn-green", title: "Create New" },
+  find: { Icon: Search, bg: "bg-learn-blue", title: "Find Existing" },
+  change: { Icon: Pencil, bg: "bg-learn-gold", title: "Change Existing" },
   /*
     ⚠ NEUTRAL, and visibly so. A pale dot rather than a fifth colour: the point
     of the set is that colour carries the verb, and giving "unknown" its own

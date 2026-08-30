@@ -233,7 +233,7 @@ export default async function DashboardPage({
           </Card>
 
           <Card>
-            <h2 className="text-lg">What comes next</h2>
+            <h2 className="text-lg">What Comes Next</h2>
             <p className="mt-2 text-black/70 dark:text-white/70">
               These arrive with the fulfillment thread — none of them are built
               yet, so there is nothing here to miss.

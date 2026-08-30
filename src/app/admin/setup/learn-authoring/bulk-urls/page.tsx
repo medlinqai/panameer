@@ -99,7 +99,7 @@ export default function BulkUrlsPage() {
 
       <div className="mt-3">
         <AdminHeading
-          title="Load Video URLs From CSV"
+          title="Load Video URLs from CSV"
           subtitle="Fill in many lessons at once. Nothing is written until you've seen what would change."
         />
       </div>

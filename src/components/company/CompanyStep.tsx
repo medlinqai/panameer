@@ -115,19 +115,30 @@ export function CompanyStep({
   const [taxType, setTaxType] = useState<TaxTypeValue | "">("");
   const [website, setWebsite] = useState("");
   /*
-    JURISDICTION (`P1-J1.1-E260`) — Scott, 2026-08-30: *"Jurisdiction is just
-    country. do this."*
+    JURISDICTION — REQUIRED, DEFAULTING TO THE UNITED STATES
+    (`P1-J1.1-E260` → `E260a`, Scott 2026-08-30).
 
-    ⚠⚠ OPTIONAL ON PURPOSE, AND THAT IS A SCOPE DECISION WORTH READING.
-    `CompanyStep` is shared by SIX call sites — the requester wizard, the
-    provider wizard, `(app)/company`, `CompanyStepInline` and `NoProfileYet` —
-    so a field added here appears in ALL of them, including the provider journey
-    this brief did not ask for. Leaving it out of `valid` below means NO existing
-    Continue gate anywhere changed, so nothing that used to pass can now block.
-    Making it required, or scoping it to the requester with a prop, are both
-    one-line changes and both are Scott's call.
+    *"Jurisdiction is just country. do this."* then, on the follow-up:
+    *"Country should be required, but it should default to USA."*
+
+    ⚠ SUPERSEDED, quoted not deleted: this shipped OPTIONAL at `E260` and the
+    note here said *"Making it required, or scoping it to the requester with a
+    prop, are both one-line changes and both are Scott's call."* He made it.
+
+    ⚠⚠ REQUIRED IN ALL SIX CALL SITES, DELIBERATELY. `CompanyStep` is shared by
+    the requester wizard, the provider wizard, `(app)/company`,
+    `CompanyStepInline` and `NoProfileYet`. `E260a` is explicit that changing all
+    six is INTENDED and must not be scoped back with a prop.
+
+    ⚠ THE DEFAULT IS WHAT MAKES THAT SAFE. Because this initialises to
+    "United States" rather than empty, `valid` is satisfied from first render —
+    so no existing flow gains a gate it can fail by DOING NOTHING. Somebody who
+    never touches the field is exactly as unblocked as before; only somebody who
+    actively clears it is stopped. Walked the provider company step to confirm.
+    ⚠ THE STRING MUST MATCH `COUNTRIES[0]` EXACTLY — it is the option value, not
+    a label, and a mismatch would render a select with nothing selected.
   */
-  const [country, setCountry] = useState("");
+  const [country, setCountry] = useState<string>(COUNTRIES[0]);
   const [companyTos, setCompanyTos] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [logoBusy, setLogoBusy] = useState(false);
@@ -182,7 +193,12 @@ export function CompanyStep({
   const valid =
     mode === "join"
       ? !!picked && attestation
-      : name.trim().length > 1 && !!taxType && attestation && companyTos;
+      : name.trim().length > 1 &&
+        !!taxType &&
+        /* `E260a` — country joins the required set. Defaulted, so it starts satisfied. */
+        !!country &&
+        attestation &&
+        companyTos;
 
   useEffect(() => {
     onValidityChange?.(valid);
@@ -412,7 +428,7 @@ export function CompanyStep({
             people to ignore stars.
           */}
           <Field
-            label="Country"
+            label="Country *"
             hint="Where the company is registered — its jurisdiction."
           >
             <select
@@ -420,7 +436,15 @@ export function CompanyStep({
               onChange={(e) => setCountry(e.target.value)}
               className={SELECT}
             >
-              <option value="">Choose a country…</option>
+              {/*
+                ⚠ NO EMPTY "Choose a country…" OPTION ANY MORE (`E260a`). The
+                field defaults to the United States, so an empty choice would be
+                a way to UNSET a required value — the one path that turns a
+                defaulted-satisfied gate back into a blocked one. Removing it
+                means the select can only ever hold a real country.
+                ⚠ THE `*` IS NOW HONEST: it gates Continue, which it did not at
+                `E260`.
+              */}
               {COUNTRIES.map((c) => (
                 <option key={c} value={c}>
                   {c}

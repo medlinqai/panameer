@@ -92,7 +92,7 @@ export default function LegalIndexPage() {
           </p>
         </div>
 
-        <Section title="The agreements you accept">
+        <Section title="The Agreements You Accept">
           {CORE.map((d) => (
             <Row key={d.href} href={d.href} title={d.title} summary={d.summary} />
           ))}

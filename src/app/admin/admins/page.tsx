@@ -71,7 +71,7 @@ export default async function Page() {
       </section>
 
       <section className="rounded-brand border border-line bg-white p-6">
-        <h2 className="font-display text-[17px] font-bold">Grant to an existing user</h2>
+        <h2 className="font-display text-[17px] font-bold">Grant to an Existing User</h2>
         <p className="mt-1 text-[13.5px] text-ink-2">
           The user must already have a Panameer login. Adds the platform-admin role.
         </p>

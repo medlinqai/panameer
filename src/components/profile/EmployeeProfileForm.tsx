@@ -84,7 +84,7 @@ export function EmployeeProfileForm({
 
   return (
     <div className="mt-5 rounded-brand border border-line bg-white p-6">
-      <h2 className="font-display text-[19px] font-bold">Your details</h2>
+      <h2 className="font-display text-[19px] font-bold">Your Details</h2>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         <label className="block text-[13px] font-bold uppercase tracking-wide text-ink-2">

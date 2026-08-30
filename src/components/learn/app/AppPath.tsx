@@ -310,7 +310,7 @@ export function AppPath({ path, signedIn }: { path: AppPathView; signedIn: boole
         */}
         <aside className="flex flex-col gap-3.5 min-[1100px]:sticky min-[1100px]:top-3.5">
           {path.instructors.length > 0 && (
-            <Card title="Your instructors">
+            <Card title="Your Instructors">
               {path.instructors.map((ins, i) => (
                 <div
                   key={ins.id}
@@ -349,7 +349,7 @@ export function AppPath({ path, signedIn }: { path: AppPathView; signedIn: boole
           )}
 
           {path.claims.length > 0 && (
-            <Card title="What this certificate says you can do">
+            <Card title="What This Certificate Says You Can Do">
               {path.claims.map((c) => (
                 <p key={c} className="flex items-start gap-2.5 py-1.5 text-[11.5px] text-ink-2">
                   <Check className="mt-[2px] h-3.5 w-3.5 shrink-0 text-learn-green" strokeWidth={3} aria-hidden />
@@ -366,7 +366,7 @@ export function AppPath({ path, signedIn }: { path: AppPathView; signedIn: boole
             measured on the live DB nothing clears that today.
           */}
           {path.leaderboard.length > 0 && (
-            <Card title="This path, this month">
+            <Card title="This Path, This Month">
               {path.leaderboard.map((r, i) => (
                 <div
                   key={`${r.label}-${i}`}

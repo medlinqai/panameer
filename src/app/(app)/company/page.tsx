@@ -77,12 +77,12 @@ export default async function CompanyPage({
       <div className="mx-auto w-full max-w-3xl space-y-6">
         {blockedMessage && (
           <Card>
-            <h2 className="text-lg">One step first</h2>
+            <h2 className="text-lg">One Step First</h2>
             <p className="mt-2 text-black/70 dark:text-white/70">{blockedMessage}</p>
           </Card>
         )}
         <Card>
-          <h1 className="text-2xl tracking-tight">Set up your company</h1>
+          <h1 className="text-2xl tracking-tight">Set Up Your Company</h1>
           <p className="mt-2 text-black/70 dark:text-white/70">
             Everything on Panameer happens between companies, so this is the
             first thing to set up. Join the one you work for, or define it if
@@ -138,7 +138,7 @@ export default async function CompanyPage({
     <div className="mx-auto w-full max-w-3xl space-y-6">
       {blockedMessage && (
         <Card>
-          <h2 className="text-lg">One step first</h2>
+          <h2 className="text-lg">One Step First</h2>
           <p className="mt-2 text-black/70 dark:text-white/70">{blockedMessage}</p>
         </Card>
       )}
@@ -165,7 +165,7 @@ export default async function CompanyPage({
 
       {binding.status === "PENDING" && (
         <Card>
-          <h2 className="text-lg">Waiting for approval</h2>
+          <h2 className="text-lg">Waiting for Approval</h2>
           <p className="mt-2 text-black/70 dark:text-white/70">
             You asked to join {c.name}. Their admin has to approve it before you
             can transact.
@@ -175,7 +175,7 @@ export default async function CompanyPage({
 
       {binding.status === "REJECTED" && (
         <Card>
-          <h2 className="text-lg">That request was declined</h2>
+          <h2 className="text-lg">That Request Was Declined</h2>
           <p className="mt-2 text-black/70 dark:text-white/70">
             {c.name} didn&apos;t approve your request. You can ask to join a
             different company, or add your own.

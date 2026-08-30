@@ -176,7 +176,7 @@ export function ReportDashboard({
         {/* ---- PROGRESS + CTA -------------------------------------------- */}
         <aside className="space-y-5">
           <div className="rounded-brand border border-line bg-white p-6 text-center">
-            <h3 className="text-[15px] font-bold text-ink">Savings progress vs plan</h3>
+            <h3 className="text-[15px] font-bold text-ink">Savings Progress vs Plan</h3>
             <Donut pct={model.progressPct} />
             <p className="mt-3 text-[14px] text-ink-2">
               <span className="font-bold text-ink">{model.progressPct}%</span> — this is your

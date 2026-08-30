@@ -155,7 +155,7 @@ export function IdentityVerificationPanel({
         convention nobody outside the team knows.
       */}
       <Card
-        title="This Is Not The Validated Badge"
+        title="This Is Not the Validated Badge"
         tone="dashed"
       >
         <p className="max-w-2xl text-[14px] leading-relaxed text-ink-2">

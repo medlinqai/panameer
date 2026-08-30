@@ -103,7 +103,7 @@ export function BrandingEditor({
     <div className="space-y-8">
       {/* ---- 1. Your logo ------------------------------------------------- */}
       <section className="rounded-brand border border-line bg-white p-6">
-        <h2 className="text-[18px] font-bold">Your logo</h2>
+        <h2 className="text-[18px] font-bold">Your Logo</h2>
         <p className="mt-1 max-w-2xl text-[14.5px] leading-relaxed text-ink-2">
           We read your brand colour straight out of it. Nothing is saved by
           scanning — you confirm the colour below.
@@ -145,7 +145,7 @@ export function BrandingEditor({
 
       {/* ---- 2. Your brand colour ----------------------------------------- */}
       <section className="rounded-brand border border-line bg-white p-6">
-        <h2 className="text-[18px] font-bold">Your brand colour</h2>
+        <h2 className="text-[18px] font-bold">Your Brand Colour</h2>
         <p className="mt-1 max-w-2xl text-[14.5px] leading-relaxed text-ink-2">
           This is the only colour you choose. Everything else is derived from it.
         </p>
@@ -213,7 +213,7 @@ export function BrandingEditor({
 
       {/* ---- 3. The recipe picker ------------------------------------------ */}
       <section className="rounded-brand border border-line bg-white p-6">
-        <h2 className="text-[18px] font-bold">Pick a theme</h2>
+        <h2 className="text-[18px] font-bold">Pick a Theme</h2>
         <p className="mt-1 max-w-2xl text-[14.5px] leading-relaxed text-ink-2">
           The structure is fixed — your colour makes it yours. You can&apos;t
           pick anything unreadable.

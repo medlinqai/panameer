@@ -174,7 +174,7 @@ export function MyLearning({ data }: { data: MyLearningData }) {
 
         {continueCard ? (
           <>
-            <SectionHead title="Pick up where you left off">
+            <SectionHead title="Pick Up Where You Left Off">
               <Link href="/learn/paths?tab=mine" className="ml-auto shrink-0 text-[12px] font-semibold text-magenta hover:underline">
                 All my paths <span aria-hidden>→</span>
               </Link>
@@ -183,7 +183,7 @@ export function MyLearning({ data }: { data: MyLearningData }) {
           </>
         ) : (
           <>
-            <SectionHead title="Start somewhere" />
+            <SectionHead title="Start Somewhere" />
             <div className="rounded-brand border border-line bg-white p-6">
               <p className="text-[15px] font-bold">Nothing on the go yet.</p>
               <p className="mt-1.5 max-w-lg text-[13.5px] leading-relaxed text-ink-2">
@@ -200,7 +200,7 @@ export function MyLearning({ data }: { data: MyLearningData }) {
           </>
         )}
 
-        <SectionHead title="Your coverage of the catalog">
+        <SectionHead title="Your Coverage of the Catalog">
           <p className="text-[12px] text-ink-2">
             {totals.paths} learning paths · {totals.courses} courses · {totals.lessons} lessons
           </p>
@@ -209,7 +209,7 @@ export function MyLearning({ data }: { data: MyLearningData }) {
 
         {inProgress.length > 0 && (
           <>
-            <SectionHead title="Paths in progress">
+            <SectionHead title="Paths in Progress">
               <Link href="/learn/paths" className="ml-auto shrink-0 text-[12px] font-semibold text-magenta hover:underline">
                 Browse all {paths.length} <span aria-hidden>→</span>
               </Link>

@@ -84,7 +84,7 @@ export function ReviewStep({
 
   return (
     <AppWizardShell
-      title="Looking good — here's your Work Request"
+      title="Looking Good — Here's Your Work Request"
       subtitle="Check it over. You can change anything before you post."
       canBack
       onBack={onBack}
@@ -97,7 +97,7 @@ export function ReviewStep({
       {error && <Notice>{error}</Notice>}
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <ReviewCard title="Role & domain" onEdit={() => onEdit("role")}>
+        <ReviewCard title="Role & Domain" onEdit={() => onEdit("role")}>
           {roleName || "—"}
           {domainName ? ` · ${domainName}` : ""}
         </ReviewCard>

@@ -102,7 +102,7 @@ export function BillingMethods({ methods }: { methods: Method[] }) {
       </Card>
 
       <Card
-        title="Add A Billing Method"
+        title="Add a Billing Method"
         description="Panameer records which method you intend to use. Card details are collected by the payment processor when billing goes live — we never store a full card number."
       >
         <div className="grid max-w-xl gap-3 sm:grid-cols-2">

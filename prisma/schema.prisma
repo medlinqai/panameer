@@ -1957,6 +1957,7 @@ model Certification {
    */
   /**
    * /**
+   * /**
    * ⚠⚠ REQUIRED, NOT `User?`, AND THE `?` WAS A REAL DEFECT (`P1-J3-E028`).
    * `user_id String @db.Uuid` above is NOT NULL and so is the FK. Prisma accepts an
    * optional relation field over a required scalar without complaint, and then
@@ -2131,9 +2132,36 @@ model RequesterProfile {
   /// side's `validation_status` is a real track with
   /// `validation_requested_at` / `validated_at` behind it; this one is a
   /// placeholder his decision can land on later.
-  /// ⚠ IT HAS NO TIMESTAMP ON PURPOSE. Adding a `validated_at` here would
-  /// invent the trend data `E257` explicitly forbids inventing.
+  /// ⚠ SUPERSEDED, quoted not deleted: this said *"IT HAS NO TIMESTAMP ON
+  /// PURPOSE. Adding a `validated_at` here would invent the trend data `E257`
+  /// explicitly forbids inventing."* That was right on 2026-08-30 morning —
+  /// `E257` said STOP rather than invent a timestamp, and this column had none,
+  /// so `Validated` was the one buyer status that could not be trended.
+  /// Scott then ASKED for it: *"we will need more info from the buyers - TIN for
+  /// example. So, yes, timestamp the validated, create the trending report."*
+  /// The timestamps below are no longer invented; they are requested.
   validation_status ValidationStatus @default(NOT_REQUESTED)
+
+  /// WHEN A BUYER ASKED TO BE VALIDATED (`P1-J1.1-E269b`).
+  ///
+  /// ⚠⚠ NOTHING IN THE APP SETS THIS. There is no buyer request flow and no
+  /// buyer email — `E269b` is explicit that neither gets built here. It mirrors
+  /// the seller's `ProviderProfile.validation_requested_at` so the two sides
+  /// have the same shape when the buyer mechanism does arrive.
+  validation_requested_at DateTime?
+
+  /// WHEN AN ADMIN GRANTED IT (`P1-J1.1-E269b`).
+  ///
+  /// ⚠ THIS IS THE `Validated` TREND'S ONLY TIMESTAMP. Without it, three of the
+  /// four buyer statuses could be trended and the fourth could not — which is
+  /// exactly why `E257` stopped the first time.
+  ///
+  /// ⚠ WHY THE COLUMN EXISTS AHEAD OF THE FEATURE, in Scott's words:
+  /// *"we will need more info from the buyers - TIN for example."* Buyer
+  /// validation is heading toward a real verification step — tax id and whatever
+  /// else the money path needs. ⚠ THAT STEP IS NOT BUILT AND IS NOT IN THIS
+  /// BRIEF. Do not read this column as evidence that it is.
+  validated_at DateTime?
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt

@@ -83,7 +83,7 @@ export function TaxRateEditor({
       {error && <Notice>{error}</Notice>}
 
       <section className="rounded-brand border border-line bg-white p-6">
-        <h2 className="text-[17px] font-bold text-ink">Global default</h2>
+        <h2 className="text-[17px] font-bold text-ink">Global Default</h2>
         <p className="mt-1.5 text-[14.5px] text-ink-2">
           Applies wherever no state override matches. Funding on a report ={" "}
           <span className="font-semibold text-ink">EBITDA × this rate</span>.
@@ -125,7 +125,7 @@ export function TaxRateEditor({
       </section>
 
       <section className="rounded-brand border border-line bg-white p-6">
-        <h2 className="text-[17px] font-bold text-ink">Per-geography overrides</h2>
+        <h2 className="text-[17px] font-bold text-ink">Per-Geography Overrides</h2>
         <p className="mt-1.5 text-[14.5px] text-ink-2">
           Most specific wins: a row here beats the global default for assessments filed in
           that state.

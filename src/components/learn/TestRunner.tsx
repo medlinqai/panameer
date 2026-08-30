@@ -297,7 +297,7 @@ function ResultPanel({
         )}
       </div>
 
-      <h2 className="mt-8 text-[19px] font-bold">Your answers</h2>
+      <h2 className="mt-8 text-[19px] font-bold">Your Answers</h2>
       <div className="mt-3 space-y-3">
         {result.review.map((r, i) => (
           <div

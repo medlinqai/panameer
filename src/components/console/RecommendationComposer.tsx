@@ -62,7 +62,7 @@ export function RecommendationComposer({
       onSubmit={submit}
       className="rounded-brand border border-line bg-white p-5"
     >
-      <h2 className="font-display text-[16px] font-bold">Ask For A Recommendation</h2>
+      <h2 className="font-display text-[16px] font-bold">Ask for a Recommendation</h2>
       <p className="mt-1 text-[13.5px] leading-relaxed text-ink-2">
         They don&apos;t need a Panameer account — they&apos;ll get an email with a
         link, and what they write appears in your Testimonials.

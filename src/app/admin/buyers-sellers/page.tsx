@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import {
   TileRow,
@@ -38,25 +39,25 @@ export const dynamic = "force-dynamic";
  * file for Scott's four statuses and why the buyer-side `Validated` has no
  * mechanism behind it.
  *
- * ── ⚠⚠ WHAT THIS PAGE DELIBERATELY DOES **NOT** DO ─────────────────────────
+ * ── ⚠ THE TREND SHIPPED (`E257`), ONE BRIEF LATE AND FOR GOOD REASON ───────
  *
- * `E257` asked for the progression tiles to be CLICKABLE, reaching a trend of
- * users entering each status over time. IT IS NOT BUILT, and it stopped on two
- * independent conditions the brief itself set as stop conditions:
+ * ⚠ SUPERSEDED, quoted not deleted, because the stop was CORRECT BEHAVIOUR and
+ * the record of why matters more than the fact it is now gone. This header used
+ * to read: *"`E257` asked for the progression tiles to be CLICKABLE... IT IS NOT
+ * BUILT, and it stopped on two independent conditions the brief itself set as
+ * stop conditions: 1. `.claude/skills/dataviz` DOES NOT EXIST... 2. THE
+ * BUYER-SIDE `Validated` HAS NO TIMESTAMP TO TREND ON."*
  *
- *   1. `.claude/skills/dataviz` DOES NOT EXIST. The brief says *"read
- *      `.claude/skills/dataviz` before writing any chart code"* — it is absent
- *      from the repo, from `5. Application/.claude` (which holds only
- *      `settings.local.json`) and from `~/.claude/skills/`. Writing charts
- *      anyway would ignore a mandatory instruction about how they must look.
- *   2. THE BUYER-SIDE `Validated` HAS NO TIMESTAMP TO TREND ON. `E257` says to
- *      STOP AND REPORT rather than invent one. `RequesterProfile` carries
- *      `created_at` and `completed_at` but NO `validated_at` — the seller side
- *      has `validation_requested_at` and `validated_at`, the buyer side has
- *      nothing, because that status has no mechanism. Three of the four buyer
- *      statuses can be trended and the fourth cannot.
+ * Both are resolved, and differently:
+ *   1. THE SKILL REQUIREMENT WAS WITHDRAWN, not satisfied — *"THAT PATH DOES NOT
+ *      EXIST AND NEVER DID — chat's error, not a real gate."* The chart rules
+ *      were inlined in the brief instead and are followed in
+ *      `components/admin/StatusTrendChart.tsx`.
+ *   2. THE MISSING COLUMN WAS ADDED on Scott's instruction (`E269b`):
+ *      *"timestamp the validated, create the trending report."* Refusing to
+ *      invent it was right; being TOLD to add it is a different thing.
  *
- * Both are reported. The tiles render live counts and are not links.
+ * Tiles now link to `/admin/buyers-sellers/trend`.
  */
 export default async function Page() {
   /*
@@ -241,6 +242,12 @@ export default async function Page() {
         tiles={ONBOARDING_STATUSES.map((s) => ({
           label: s,
           value: counts.get(s) ?? 0,
+          /*
+            ⚠ CLICKABLE NOW (`E257`). `Tile` already carried an optional `href`,
+            so the shared primitive did not need changing — the tiles simply
+            stopped declining to use it.
+          */
+          href: `/admin/buyers-sellers/trend?status=${encodeURIComponent(s)}&period=month`,
           hint:
             s === "Created"
               ? "No profile yet"
@@ -254,9 +261,14 @@ export default async function Page() {
       <p className="mt-2 mb-6 text-[12.5px] text-ink-2">
         Derived from existing state — there is no status column. Counted per SIDE,
         so a dual-role account appears once as a buyer and once as a seller:{" "}
-        {sideTotal} sides across {people.length} people. Tiles are not links —
-        the trend view (E257) stopped on two conditions recorded in this page&apos;s
-        header.
+        {sideTotal} sides across {people.length} people.{" "}
+        <Link
+          href="/admin/buyers-sellers/trend?status=all&period=month"
+          className="font-semibold text-magenta hover:underline"
+        >
+          Click any tile for its trend, or see all four steps
+        </Link>
+        .
       </p>
 
       <Listing

@@ -16,7 +16,7 @@ export default function ScopePage() {
       <MarketingHeader />
       <main className="flex-1">
         <div className="py-16">
-          <ComingSoon title="The detailed scope assessment" />
+          <ComingSoon title="The Detailed Scope Assessment" />
           <p className="mx-auto mt-4 max-w-2xl px-6 text-center text-[15px] text-ink-2">
             Your report shows the moves and what they&rsquo;re worth. The full scope — every
             requirement, who owns it, and a pre-filled Work Request for each — is being

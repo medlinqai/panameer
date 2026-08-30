@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { OnboardingFrame } from "@/components/onboarding/OnboardingFrame";
 
-export const metadata: Metadata = { title: "Your answers are saved — Panameer" };
+export const metadata: Metadata = { title: "Your Answers Are Saved — Panameer" };
 
 /**
  * THE FALLBACK, AND ONLY THE FALLBACK.

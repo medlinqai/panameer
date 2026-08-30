@@ -138,7 +138,7 @@ export default async function Page() {
         well-formed questions written from titles that a reviewer will skim and pass.
       */}
       <Listing
-        title="Certification tests"
+        title="Certification Tests"
         columns={["Learning Path", "Lessons", "Described", "Test", "Questions", ""]}
         rows={queueRows.map((r) => [
           <Link

@@ -46,7 +46,7 @@ export function LegalDocNav({ current }: { current?: string }) {
         Legal Center
       </Link>
 
-      <NavGroup title="The agreements you accept">
+      <NavGroup title="The Agreements You Accept">
         {CORE_DOCS.map((d) => (
           <NavRow key={d.slug} href={d.href} title={d.title} active={current === d.slug} />
         ))}

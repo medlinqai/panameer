@@ -1626,7 +1626,7 @@ export default function JoinProviderPage() {
               */}
               {(importOutcome?.applied.skillSuggestions?.length ?? 0) > 0 && (
                 <div className="mt-4">
-                  <ProfileCard title="AI found these — they're not in our catalog yet">
+                  <ProfileCard title="AI Found These — They're Not in Our Catalog Yet">
                     <p className="mb-3 text-[14px] text-ink-2">
                       AI read these off your document but couldn&apos;t match
                       them to the ERP Service Catalog. Tick the ones that are
@@ -1711,7 +1711,7 @@ export default function JoinProviderPage() {
       return (
         <WizardShell
           {...shell({
-            title: "What kind of work do you do?",
+            title: "What Kind of Work Do You Do?",
             subtitle:
               "Pick the role that fits. Most people pick one — choose more if you genuinely work across them, like a techno-functional consultant.",
             onContinue: () =>
@@ -1866,7 +1866,7 @@ export default function JoinProviderPage() {
               provider does here: add everything true of you, and more of them
               means more ways to be found.
             */
-            title: "Which skills do you want to be found for?",
+            title: "Which Skills Do You Want to Be Found For?",
             subtitle:
               roleNames.length > 0
                 ? `Add every skill you have across ${roleNames.join(" and ")} — there's no limit, and each one is another search a buyer can find you in. Search the catalog or add your own.`
@@ -2164,7 +2164,7 @@ export default function JoinProviderPage() {
       return (
         <WizardShell
           {...shell({
-            title: "What are your specializations?",
+            title: "What Are Your Specializations?",
             // E054 — one line. The old three-sentence version explained the
             // feature to someone who had already understood it from the title.
             subtitle: "The systems, processes and industries you've worked in.",
@@ -2396,7 +2396,7 @@ export default function JoinProviderPage() {
       return (
         <WizardShell
           {...shell({
-            title: "Clients love to hear about your education",
+            title: "Clients Love to Hear About Your Education",
             subtitle: "Even if you're still studying, or didn't finish — it all counts.",
             secondaryLabel: "Skip for Now",
             onSecondary: goNext,
@@ -2427,7 +2427,7 @@ export default function JoinProviderPage() {
       return (
         <WizardShell
           {...shell({
-            title: "What languages do you speak?",
+            title: "What Languages Do You Speak?",
             subtitle: "All profiles include English. Add any others you work in.",
             onContinue: () => saveAnd("languages", { languages: langs }),
             // E034 — BOTH fields required: every row needs a name AND a level.
@@ -2539,7 +2539,7 @@ export default function JoinProviderPage() {
       return (
         <WizardShell
           {...shell({
-            title: "Tell clients what you do",
+            title: "Tell Clients What You Do",
             subtitle:
               "A few lines is all it takes — this becomes the Overview at the top of your profile. What do you do best? You can always edit it later.",
             onContinue: () => saveAnd("bio", { overview: profile.overview }),
@@ -2600,7 +2600,7 @@ export default function JoinProviderPage() {
       return (
         <WizardShell
           {...shell({
-            title: "Tell clients what you charge",
+            title: "Tell Clients What You Charge",
             subtitle: "You can change your rate any time.",
             onContinue: () =>
               saveAnd("rate", {
@@ -2721,7 +2721,7 @@ export default function JoinProviderPage() {
       return (
         <WizardShell
           {...shell({
-            title: "Last thing — your photo and a few details",
+            title: "Last Thing — Your Photo and a Few Details",
             subtitle:
               "Profiles with a photo get noticeably more responses. We need your phone and address too — they stay private, and they're how a buyer reaches you.",
             // E188 — the ONLY change to this step's layout. Its body opens with
@@ -2903,7 +2903,7 @@ export default function JoinProviderPage() {
       return (
         <WizardShell
           {...shell({
-            title: "Who are you working as?",
+            title: "Who Are You Working As?",
             subtitle:
               "Work orders and payments are between companies. Working for yourself? That's a company of one — pick Sole Proprietor as the business type.",
           })}
