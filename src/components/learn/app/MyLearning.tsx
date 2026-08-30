@@ -194,7 +194,27 @@ export function MyLearning({ data }: { data: MyLearningData }) {
                 href="/learn/paths"
                 className="mt-4 inline-flex items-center gap-2 rounded-full bg-magenta px-5 py-2.5 text-[13.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
               >
-                Browse the catalog <ArrowRight className="h-4 w-4" aria-hidden />
+                {/*
+                  ⚠⚠ `Browse the Catalog` — SCOTT OVERRODE HIMSELF (`P1-J3-E042`, 2026-08-30).
+                  ⚠ SUPERSEDED, quoted: `Browse the catalog`.
+                
+                  That lowercase form was SETTLED BY HIM on 2026-08-24 (`HeroTwoUp.tsx:38`
+                  records it: *"The two buttons that you have there are great. keep
+                  those...add the rest."*), which is why the `E272` title-case sweep
+                  correctly left it alone — his verbatim rule outranks the casing rule. He
+                  has now asked for it fixed, so the casing rule applies: `the` is an
+                  article, `Catalog` is the last word.
+                
+                  ⚠ THIS ALIGNS THE TWO, IT DOES NOT SPLIT THEM. The marketing hero at
+                  `LearnPublic.tsx:886` ALREADY renders `Browse the Catalog` with the
+                  capital — checked before changing this, because the brief warned the two
+                  could diverge. This was the ONLY live lowercase copy in the codebase.
+                  ⚠ `e2e/marketing-home.spec.ts:1814` writes the name lowercase but asserts
+                  the HERO, and Playwright's `getByRole` name match is case-insensitive —
+                  so it was green against the capitalised hero before this change and is
+                  unaffected by it.
+                */}
+                Browse the Catalog <ArrowRight className="h-4 w-4" aria-hidden />
               </Link>
             </div>
           </>

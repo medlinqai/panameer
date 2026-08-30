@@ -374,16 +374,25 @@ export async function saveRequesterStep(
       building block, which records a real membership decision; all this step
       does is confirm the binding exists and advance the resume point.
     */
-    const bound = await prisma.companyMembership.findFirst({
-      where: { person_id: p.id, status: "APPROVED" },
-      select: { id: true },
-    });
-    if (!bound) {
-      throw new OnboardingError(
-        "Choose or add your company before continuing",
-        "INVALID"
-      );
-    }
+    /*
+      ⚠⚠ NO BINDING CHECK ANY MORE (`P1-J1.1-E274`). The company is OPTIONAL at
+      onboarding — see the block on `requesterGaps` above for the rule and for
+      where it IS enforced.
+
+      ⚠ SUPERSEDED, quoted not deleted: this step used to look up an APPROVED
+      `CompanyMembership` and throw
+      `OnboardingError("Choose or add your company before continuing", "INVALID")`
+      when there was none.
+
+      ⚠⚠ THIS WAS THE THIRD OF THREE GATES and the only SERVER-SIDE one, which
+      makes it the dangerous one: removing the two client gates and leaving this
+      would have produced a Continue button that posts, fails, and shows an error
+      the user cannot act on — a worse defect than the block it replaced.
+
+      ⚠ THE STEP STILL ADVANCES THE RESUME POINT, which is the whole of what it
+      does now. Somebody who DOES bind a company still gets the membership
+      written by `/api/company/define` or `/join`; this step never wrote it.
+    */
   }
 
   if (step === "requester_info") {
@@ -516,11 +525,62 @@ export async function saveRequesterStep(
   `Address` all still exist and still hold data for profiles that completed the
   old five-step wizard. This removes a REQUIREMENT, not a record.
 */
+/*
+  ── ⚠⚠ THE COMPANY IS OPTIONAL **HERE** AND MANDATORY **BEFORE HIRE** ────────
+     (`P1-J1.1-E274` + `E280`, Scott 2026-08-30)
+
+  ⚠⚠ IF YOU ARE BUILDING WORK ORDERS, THIS BLOCK IS ADDRESSED TO YOU. Read it
+  before you decide what a buyer needs on file.
+
+  THE RULE SCOTT SET, in his words: *"we still probably want to make the company
+  optional at this point. We will need it before a work order could become a
+  legal document."* And on why: *"we need to know what corporate or business
+  entity we are contracting with."*
+
+  So the requirement is:
+
+      COMPANY + EIN + REGISTERED ADDRESS ARE REQUIRED BEFORE A BUYER CAN **HIRE**
+      (web), AND BEFORE AN APPROVED **PO IS ACCEPTED** (ERP).
+      They are NOT required to finish onboarding.
+
+  ⚠⚠ THAT GATE IS NOT BUILT, AND DELIBERATELY SO — THERE IS NOTHING TO BUILD IT
+  ON. There is no `WorkOrder` model and no hire route in this codebase;
+  `WorkRequest` and `WorkRequestStatus` exist and the second half of the pipeline
+  does not. A gate written here would fire at onboarding, which is the exact
+  place Scott just said it must NOT fire. ⚠ A FAKE GATE WOULD BE WORSE THAN
+  NONE: it would read as "the rule is enforced" while enforcing it in the wrong
+  place, and the real one would never get written.
+
+  ⚠ SO THE REQUIREMENT IS RECORDED HERE INSTEAD, where whoever adds the hire
+  path will be reading. The three values are already captured and already
+  nullable, so the check is a read, not a migration:
+      · company    — `Person.company_id` + an APPROVED `CompanyMembership`
+      · EIN        — `Company.tin`               (captured by `E273`)
+      · registered address — the `Site` named `REGISTERED_SITE_NAME`
+                     and its `Address`           (captured by `E280`)
+
+  ── ⚠ WHY THE TWO COMPANY CHECKS CAME OUT OF THE LIST BELOW ─────────────────
+
+  ⚠ SUPERSEDED, quoted not deleted:
+      `if (!state.company.bound) gaps.push("Your company");`
+      `else if (!state.company.defined) gaps.push("Your company's business type");`
+
+  ⚠⚠ AND THEY DID NOT COME OUT ALONE. Two other gates enforced the same thing
+  and ALL THREE had to go in one change, because leaving one standing is exactly
+  what dead-ended every requester this morning when `approverName` survived
+  `E263`:
+      1. these two gaps;
+      2. `continueDisabled={!companyValid}` on the company step;
+      3. the `OnboardingError("Choose or add your company before continuing")`
+         thrown by `saveRequesterStep` below — SERVER-SIDE, so removing only the
+         client gate would have produced a Continue button that posted and
+         failed.
+  ⚠ A GATE IS NOT REMOVED UNTIL EVERY LAYER OF IT IS. Walk the flow, do not
+  grep for one string.
+*/
 export function requesterGaps(state: RequesterState): string[] {
   const p = state.profile;
   const gaps: string[] = [];
-  if (!state.company.bound) gaps.push("Your company");
-  else if (!state.company.defined) gaps.push("Your company's business type");
   if (!p.firstName.trim() || !p.lastName.trim()) gaps.push("Your name");
   if (!p.workLocation?.country) gaps.push("A work location");
   return gaps;

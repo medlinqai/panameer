@@ -14,8 +14,25 @@ const schema = z.object({
     "SOLE_PROP_INDIVIDUAL",
     "NONPROFIT",
   ]),
-  /* `E260` — jurisdiction. Nullish: it does not gate the form (see CompanyStep). */
+  /* `E260`/`E260a` — jurisdiction, derived from the registered address's country. */
   country: z.string().trim().max(80).nullish(),
+  /* `E273` — EIN. Writes to the pre-existing `Company.tin` column. */
+  ein: z.string().trim().max(40).nullish(),
+  /*
+    `E280` — the REGISTERED address, stored as a Site + Address on the backbone.
+    ⚠ Every part is nullish: `E274` makes the company itself optional at
+    onboarding, so a partially-answered company must still be savable. The
+    contracting requirement is enforced before HIRE, not here.
+  */
+  registeredAddress: z
+    .object({
+      line1: z.string().trim().max(200).nullish(),
+      city: z.string().trim().max(120).nullish(),
+      state: z.string().trim().max(120).nullish(),
+      postalCode: z.string().trim().max(40).nullish(),
+      country: z.string().trim().max(80).nullish(),
+    })
+    .nullish(),
   website: z.string().trim().max(300).nullish(),
   logoUrl: z.string().trim().max(600).nullish(),
   attestation: z.boolean(),

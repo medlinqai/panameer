@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { WizardShell } from "@/components/onboarding/WizardShell";
 import { LocationFields, type LocationValue } from "@/components/onboarding/LocationFields";
-import Link from "next/link";
 import { Field, TextInput, Notice } from "@/components/onboarding/controls";
 import { PhoneField } from "@/components/onboarding/PhoneField";
 import { isPhoneComplete } from "@/lib/phone";
@@ -104,6 +103,13 @@ export default function RequesterStepsPage() {
     emailVerified: boolean;
     completed: boolean;
     resumeStep: string;
+    /*
+      ⚠ THE REAL BINDING, from `/api/onboarding/requester/status`. Added to this
+      type by `E274` so the Review row can ask whether a company EXISTS rather
+      than inferring it from the resume point — see `companyAnswered` below.
+      Optional because the same endpoint shape is used before the lookup runs.
+    */
+    company?: { bound?: boolean } | null;
     profile: {
       firstName: string; lastName: string; phone: string | null;
       employeeId: string | null; companyName: string;
@@ -125,9 +131,31 @@ export default function RequesterStepsPage() {
 
       The step is answered once the server's resume point has moved past it.
     */
-    const companyAnswered =
-      REQUESTER_STEPS.indexOf(s.resumeStep as RequesterStep) >
-      REQUESTER_STEPS.indexOf("company");
+    /*
+      ⚠⚠ "ANSWERED" NOW MEANS **BOUND**, NOT "PAST THAT STEP" (`P1-J1.1-E274`).
+
+      ⚠ SUPERSEDED, quoted not deleted:
+        `const companyAnswered =
+           REQUESTER_STEPS.indexOf(s.resumeStep) > REQUESTER_STEPS.indexOf("company");`
+
+      That heuristic was correct while the company step was MANDATORY — being
+      past it proved you had answered it. `E274` made the step SKIPPABLE, and the
+      moment it did, "past it" stopped implying "answered" and this line started
+      reporting the signup placeholder as a real company.
+
+      ⚠ CAUGHT BY WALKING GATE 7, NOT BY READING: a requester who skipped the
+      step reached Review and saw `COMPANY: Test User 5` — the placeholder named
+      after themselves — which is EXACTLY the defect the block above warns about
+      ("a requester who clicks straight through ends up working for a company
+      named after themselves. Caught walking the wizard: the review page said
+      COMPANY: Nora Requester"). Making the step optional re-opened it.
+
+      ⚠ THE SERVER ALREADY KNOWS THE ANSWER. `s.company.bound` is a real
+      `CompanyMembership` lookup, so this asks the question directly instead of
+      inferring it from a resume point — which is also why it cannot drift again
+      the next time the step order changes.
+    */
+    const companyAnswered = !!s.company?.bound;
     const companyName = companyAnswered ? (p.companyName ?? "") : "";
 
     setDraft({
@@ -330,9 +358,47 @@ export default function RequesterStepsPage() {
         title="Which Company Do You Buy For?"
         subtitle="Your company is the legal entity every work order and settlement is between. Join it if it's already here, or add it and become its admin."
         continueLabel={nextLabel}
-        continueDisabled={!companyValid}
+        /*
+          ── ⚠⚠ NO `continueDisabled` — THE COMPANY IS OPTIONAL (`E274`) ────────
+
+          Scott: *"we still probably want to make the company optional at this
+          point. We will need it before a work order could become a legal
+          document."*
+
+          ⚠ SUPERSEDED, quoted not deleted: `continueDisabled={!companyValid}`.
+
+          ⚠⚠ THIS IS ONE OF THREE GATES THAT HAD TO GO TOGETHER, and the other two
+          are in `lib/requester-onboarding.ts` — the two `requesterGaps` checks
+          and the server-side throw in `saveRequesterStep`. Removing this one
+          alone would have let somebody press Continue and hit a 400 they could
+          do nothing about. See the block on `requesterGaps` for the full list
+          and for where the requirement IS enforced (before HIRE).
+
+          ⚠ OPTIONAL MEANS SKIPPABLE, NOT REMOVED. The step still renders, still
+          binds a company when one is chosen, and still writes the membership
+          through `/api/company/*`. `onContinue` below branches on whether the
+          embedded form is actually answered.
+        */
         busy={busy || companyBusy}
-        onContinue={() => companySubmit.current?.()}
+        onContinue={() => {
+          /*
+            ⚠ TWO PATHS, ONE BUTTON, AND THE BRANCH IS ON THE FORM'S OWN
+            VALIDITY — not on a second control. A "Skip" button beside Continue
+            was the alternative and was rejected: `WizardShell` already spends
+            its one secondary slot on `Finish later` (`E245`), and a third
+            action on a two-action footer is how people end up leaving by
+            accident.
+            · answered  -> submit it; `onDone` binds the company and advances.
+            · untouched -> advance with no company at all. `save({})` posts the
+              step so the SERVER moves `onboarding_step`; the wizard never owns
+              the resume point.
+          */
+          if (companyValid) {
+            companySubmit.current?.();
+            return;
+          }
+          void save({});
+        }}
       >
         <div className="mx-auto w-full max-w-xl">
           {error && (
@@ -461,12 +527,48 @@ export default function RequesterStepsPage() {
               <p className="mt-1 text-[13px] text-ink-2">
                 Your HR ID - used for integrated buyers
               </p>
-              <Link
+              {/*
+                ⚠⚠ A NEW TAB, BECAUSE THIS LINK USED TO DESTROY THE FORM
+                (`P1-J1.1-E277`, 2026-08-30).
+
+                It was a plain in-app navigation out of a PART-FILLED wizard.
+                Step 2 is save-as-you-go only on Continue, so clicking "learn
+                more" threw away whatever was typed and browser-back returned an
+                empty form — punishing exactly the person who stopped to read.
+
+                ⚠⚠ THIS IS `E162` A SECOND TIME. That row fixed the identical bug
+                on the signup form's Terms links and produced
+                `components/legal/LegalLink.tsx`, whose docblock warned: *"Use
+                this for EVERY legal link. The bug was one component doing it
+                wrong while the others happened to be on pages with nothing to
+                lose."* This page had something to lose.
+
+                ⚠ `LegalLink` WAS DELIBERATELY NOT REUSED, AND NOT WIDENED.
+                `/integrate` is a marketing page, not a legal document — routing
+                it through a component named `LegalLink` would make the name
+                false, and renaming that component to something generic would
+                touch every legal call site to fix one marketing link. The two
+                attributes are the whole of its behaviour, so they are applied
+                here directly and this comment carries the reasoning instead.
+
+                ⚠ A PLAIN `<a>`, NOT `next/link`. Client-side routing buys
+                nothing for a tab that is about to be a fresh document, and it is
+                the same shape `LegalLink` uses.
+                ⚠ `rel="noopener noreferrer"` IS NOT OPTIONAL — `target="_blank"`
+                without it hands the opened page a handle on this one.
+                ⚠ AND NOT `window.open`. Scott raised popup blockers directly:
+                blockers target SCRIPTED opens, not user-clicked anchors. This is
+                an anchor a person clicked, so it is not a popup and is not
+                blocked.
+              */}
+              <a
                 href="/integrate"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="mt-0.5 block text-[13px] font-semibold text-magenta hover:underline"
               >
                 Click here to learn more
-              </Link>
+              </a>
             </div>
           </div>
 
@@ -506,15 +608,36 @@ export default function RequesterStepsPage() {
 
   // ---- 3/4 — Work Location ----------------------------------------------
   if (step === "work_location") {
+    /*
+      ⚠⚠ THIS FALLBACK IS NOT A PRE-FILL ANY MORE (`P1-J1.1-E278`, 2026-08-30).
+
+      ⚠ THE LOGIC IS DELIBERATELY UNCHANGED and the comment is the fix. It reads
+      "use the work location once touched, otherwise the requester's address" —
+      which WAS a real pre-fill while step 2 collected a full address. `E262`
+      deleted that block, so `draft.address` is now the country-only `Address`
+      seeded at signup (`requester-onboarding.ts:120`) and NOTHING ELSE.
+
+      So this supplies A COUNTRY and never a street, city or postcode. That is
+      still worth having — it seeds the country select and drives the phone
+      mask — but anyone reading it as "their address is already in here" will be
+      wrong. ⚠ THE NOTICE THAT SAID EXACTLY THAT IS GONE; see below.
+    */
     const wl = draft.workLocationSet ? draft.workLocation : draft.address;
-    const sameAsYours =
-      !draft.workLocationSet ||
-      JSON.stringify(draft.workLocation) === JSON.stringify(draft.address);
     return (
       <WizardShell
         {...shell}
         title="Where Does the Work Happen?"
-        subtitle="The deliver-to for your engagements. It starts as your own address — change it if the work lands somewhere else."
+        /*
+          ⚠⚠ NO SUBTITLE, AND THAT IS SCOTT'S ANSWER, NOT AN OMISSION (`E278`).
+          Asked directly what should replace it, he said: **"none."**
+
+          ⚠ SUPERSEDED, quoted not deleted: *"The deliver-to for your
+          engagements. It starts as your own address — change it if the work
+          lands somewhere else."* The second sentence described the `E262`
+          pre-fill that no longer exists, so the line was half false; he chose to
+          drop the whole thing rather than have chat draft a replacement.
+          ⚠ DO NOT WRITE ONE. A subtitle here is copy Scott has already declined.
+        */
         continueLabel={nextLabel}
         continueDisabled={!wl.country}
         onContinue={() => save({ workLocation: wl })}
@@ -522,11 +645,18 @@ export default function RequesterStepsPage() {
         <div className="mx-auto w-full max-w-xl space-y-4">
           {error && <Notice>{error}</Notice>}
 
-          {sameAsYours && (
-            <Notice tone="info">
-              Pre-filled from your address. Edit any field to make it different.
-            </Notice>
-          )}
+          {/*
+            ⚠⚠ THE "Pre-filled from your address" NOTICE IS GONE (`E278`).
+            Scott: *"that notice just gets removed."*
+
+            ⚠ SUPERSEDED, quoted: *"Pre-filled from your address. Edit any field
+            to make it different."* It was TRUE until `E262` deleted the address
+            block on step 2; after that the fields rendered EMPTY under a banner
+            claiming they were filled — a notice that contradicted the form
+            directly beneath it.
+            ⚠ ITS `sameAsYours` FLAG WENT WITH IT. Nothing else read it, and a
+            computed value with no reader is a lint error waiting to happen.
+          */}
 
           <div className="space-y-3">
             <LocationFields
@@ -559,7 +689,24 @@ export default function RequesterStepsPage() {
     },
     { label: "Phone", value: draft.phone || "—", step: "requester_info" },
     { label: "Employee ID", value: draft.employeeId || "—", step: "requester_info" },
-    { label: "Your Address", value: addr(draft.address), step: "requester_info" },
+    /*
+      ⚠⚠ THE `Your Address` ROW IS GONE (`P1-J1.1-E279`, 2026-08-30).
+
+      ⚠ SUPERSEDED, quoted not deleted:
+        `{ label: "Your Address", value: addr(draft.address), step: "requester_info" }`
+
+      Two things were wrong with it once `E262` removed the address block. Its
+      VALUE was the signup-seeded country and nothing else, so it printed
+      "United States" under a label promising an address. And its EDIT LINK
+      pointed at `requester_info` — a step that no longer contains a single
+      address field, so the one action the row offered led somewhere that could
+      not honour it. A review row whose Edit goes nowhere useful is worse than no
+      row: it invites a click that cannot work.
+
+      ⚠ THE UNDERLYING `Address` RECORD IS NOT DELETED. It still exists, still
+      holds the signup country, and still feeds the phone mask and the Work
+      Location country. Only this row is gone.
+    */
     {
       label: "Work Location",
       value: addr(draft.workLocationSet ? draft.workLocation : draft.address),

@@ -28,6 +28,16 @@ export type DefineInput = {
   taxType: TaxType;
   /** Jurisdiction (`E260`) — a full country name from `COUNTRIES`, not an ISO code. */
   country?: string | null;
+  /** `E273` — EIN / tax registration id. Writes to the existing `Company.tin`. */
+  ein?: string | null;
+  /** `E280` — the company's REGISTERED address (not the deliver-to). */
+  registeredAddress?: {
+    line1?: string | null;
+    city?: string | null;
+    state?: string | null;
+    postalCode?: string | null;
+    country?: string | null;
+  } | null;
   website?: string | null;
   /** Public URL from /api/company/logo, uploaded before define (E168). */
   logoUrl?: string | null;
@@ -85,6 +95,16 @@ async function isPlaceholder(companyId: string): Promise<boolean> {
  * Person FK already points at it, and leaving it behind is how the database
  * fills with one empty company per signup.
  */
+/**
+ * The `Site.name` that holds a company's REGISTERED address (`E280`).
+ *
+ * ⚠ A NAMED CONSTANT because it is a LOOKUP KEY, not a label — a typo would
+ * silently create a second site on every save instead of updating the one.
+ * ⚠ DISTINCT FROM "Primary" (the requester's own address) and from the
+ * requester's work site, which is referenced by id rather than by name.
+ */
+export const REGISTERED_SITE_NAME = "Registered";
+
 export async function defineCompany(viewer: Viewer, input: DefineInput) {
   const person = await actingPerson(viewer);
 
@@ -131,6 +151,13 @@ export async function defineCompany(viewer: Viewer, input: DefineInput) {
       tax_type: input.taxType,
       /* `E260` — jurisdiction, stored as the full country name. */
       country: input.country?.trim() || null,
+      /*
+        `E273` — EIN. ⚠ `tin` ALREADY EXISTED and was never captured; the
+        column's own comment says it was "DEFERRED to the money gate on
+        purpose". Scott has now asked for it at company creation, so the form
+        catches up with the column. ⚠ STILL NULLABLE — see `E274`.
+      */
+      ...(input.ein?.trim() ? { tin: input.ein.trim() } : {}),
       website,
       ...(input.logoUrl ? { logo_url: input.logoUrl } : {}),
       // Only a WORK domain is stored. Recording gmail.com here would auto-
@@ -142,6 +169,65 @@ export async function defineCompany(viewer: Viewer, input: DefineInput) {
     },
     select: { id: true, name: true, p_account_id: true },
   });
+
+  /*
+    ── ⚠⚠ THE REGISTERED ADDRESS GOES ON THE BACKBONE (`P1-J1.1-E280`) ─────────
+
+    ⚠ THE MODELLING CHOICE, AND WHY. Two options were on the table: a `Site` +
+    `Address` on the existing backbone, or new address columns on `Company`.
+    THIS IS THE SITE OPTION, and it wins on four counts:
+
+      · `Company` ALREADY HAS `sites`, and `Address` is ALREADY the one postal-
+        address entity in the schema. Columns on `Company` would create a SECOND
+        way to store an address, and the two would drift.
+      · The backbone is literally `P-Account → Company → Site → Address →
+        Person`. Address-on-Company routes around the model the product is
+        built on.
+      · IT NEEDED NO SCHEMA CHANGE AT ALL — not even a `db:push`. The columns
+        option would have added five or six.
+      · `Site.name` keeps registered and deliver-to APART BY CONSTRUCTION: this
+        one is "Registered", the requester's own is "Primary", and the work
+        location is its own site on `RequesterProfile.work_site_id`.
+        ⚠ SCOTT WAS EXPLICIT THAT THESE ARE NOT THE SAME ADDRESS — the ERP model
+        carries a deliver-to per transaction, so merging them would make it
+        impossible to have work delivered anywhere but head office.
+
+    ⚠ IDEMPOTENT. It looks the site up by name rather than creating one every
+    time — `defineCompany` can run again against a reused placeholder company
+    (see `isPlaceholder` above), and a second "Registered" site would be a silent
+    duplicate nothing reads.
+    ⚠ `line1` IS NON-NULLABLE ON `Address`, so an unanswered street is stored as
+    "" rather than refusing the write. `E274` allows a part-answered company; a
+    required column must not turn that into a 500.
+  */
+  const reg = input.registeredAddress;
+  if (reg && (reg.country || reg.line1 || reg.city)) {
+    const data = {
+      line1: reg.line1?.trim() || "",
+      city: reg.city?.trim() || null,
+      state: reg.state?.trim() || null,
+      postal_code: reg.postalCode?.trim() || null,
+      country: reg.country?.trim() || null,
+    };
+    const site =
+      (await prisma.site.findFirst({
+        where: { company_id: company.id, name: REGISTERED_SITE_NAME },
+        select: { id: true },
+      })) ??
+      (await prisma.site.create({
+        data: { company_id: company.id, name: REGISTERED_SITE_NAME },
+        select: { id: true },
+      }));
+    const existing = await prisma.address.findFirst({
+      where: { site_id: site.id },
+      select: { id: true },
+    });
+    if (existing) {
+      await prisma.address.update({ where: { id: existing.id }, data });
+    } else {
+      await prisma.address.create({ data: { site_id: site.id, ...data } });
+    }
+  }
 
   // Keep the P-Account name in step — it is the placeholder's person-name
   // otherwise, and the admin console lists accounts by it.

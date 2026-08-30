@@ -4,6 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import { LegalLink } from "@/components/legal/LegalLink";
 import { Field, TextInput, Notice, OptionCard } from "@/components/onboarding/controls";
 import { COUNTRIES } from "@/lib/countries";
+import {
+  LocationFields,
+  type LocationValue,
+} from "@/components/onboarding/LocationFields";
 
 /**
  * DEFINE OR JOIN — the company building block, shared by BOTH onboarding tracks
@@ -115,30 +119,43 @@ export function CompanyStep({
   const [taxType, setTaxType] = useState<TaxTypeValue | "">("");
   const [website, setWebsite] = useState("");
   /*
-    JURISDICTION — REQUIRED, DEFAULTING TO THE UNITED STATES
-    (`P1-J1.1-E260` → `E260a`, Scott 2026-08-30).
+    ── ⚠⚠ THE CONTRACTING SET (`P1-J1.1-E273` + `E280`, Scott 2026-08-30) ──────
 
-    *"Jurisdiction is just country. do this."* then, on the follow-up:
-    *"Country should be required, but it should default to USA."*
+    *"we need to capture the EIN for the company when created"* and *"we NEED the
+    corp address here… this will be part of the contracting requirements."*
 
-    ⚠ SUPERSEDED, quoted not deleted: this shipped OPTIONAL at `E260` and the
-    note here said *"Making it required, or scoping it to the requester with a
-    prop, are both one-line changes and both are Scott's call."* He made it.
+    `ein` writes to `Company.tin`, WHICH ALREADY EXISTED — nullable and never
+    captured. No schema change for it; this is a form catching up with a column.
 
-    ⚠⚠ REQUIRED IN ALL SIX CALL SITES, DELIBERATELY. `CompanyStep` is shared by
-    the requester wizard, the provider wizard, `(app)/company`,
-    `CompanyStepInline` and `NoProfileYet`. `E260a` is explicit that changing all
-    six is INTENDED and must not be scoped back with a prop.
+    `regAddress` is the REGISTERED address and is stored as a `Site` + `Address`
+    on the existing backbone (P-Account → Company → Site → Address → Person).
+    ⚠ THAT CHOICE IS EXPLAINED IN `lib/company.ts`, and it needed NO schema
+    change at all — not even a `db:push`.
 
-    ⚠ THE DEFAULT IS WHAT MAKES THAT SAFE. Because this initialises to
-    "United States" rather than empty, `valid` is satisfied from first render —
-    so no existing flow gains a gate it can fail by DOING NOTHING. Somebody who
-    never touches the field is exactly as unblocked as before; only somebody who
-    actively clears it is stopped. Walked the provider company step to confirm.
-    ⚠ THE STRING MUST MATCH `COUNTRIES[0]` EXACTLY — it is the option value, not
-    a label, and a mismatch would render a select with nothing selected.
+    ⚠⚠ REGISTERED ADDRESS ≠ DELIVER-TO. The requester wizard's Work Location is a
+    separate value on `RequesterProfile.work_site_id` and stays that way. Scott's
+    spec calls that one *"the deliver-to for the engagement"*, and the ERP model
+    carries a deliver-to PER TRANSACTION — merging them would make it impossible
+    to have work delivered anywhere but head office.
+
+    ── ⚠ ONE COUNTRY QUESTION, NOT TWO — A REPORTED PRESENTATION CHANGE ────────
+
+    `E260a` shipped jurisdiction as its own `<select>`: required, defaulting to
+    the United States. An address block also asks for a country, so keeping both
+    would have put TWO country selects on one short form and allowed a company
+    whose jurisdiction says United States and whose registered address says
+    Canada — a contradiction the form itself invites.
+
+    ⚠ SO THERE IS NOW ONE COUNTRY FIELD, inside the address block, and
+    `Company.country` is derived from it. ⚠ `E260a`'s CONTRACT IS UNCHANGED:
+    still required, still defaults to the United States, still a full country
+    name from `COUNTRIES`. Only where it is drawn moved. REPORTED, because Scott
+    ruled on that field directly.
   */
-  const [country, setCountry] = useState<string>(COUNTRIES[0]);
+  const [ein, setEin] = useState("");
+  const [regAddress, setRegAddress] = useState<LocationValue>({
+    country: COUNTRIES[0],
+  });
   const [companyTos, setCompanyTos] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [logoBusy, setLogoBusy] = useState(false);
@@ -195,8 +212,19 @@ export function CompanyStep({
       ? !!picked && attestation
       : name.trim().length > 1 &&
         !!taxType &&
-        /* `E260a` — country joins the required set. Defaulted, so it starts satisfied. */
-        !!country &&
+        /*
+          ⚠ COUNTRY IS THE REQUIRED PART OF THE ADDRESS, and the street/city are
+          not — deliberately, and it is what makes `E273`/`E280`/`E274` consistent
+          with each other. `E274` makes the whole COMPANY optional at onboarding
+          ("we still probably want to make the company optional at this point"),
+          and `E280`'s full contracting set is required BEFORE HIRE, not before
+          Continue — see the note on `requesterGaps` in `lib/requester-onboarding.ts`.
+          Gating Continue on a full registered address here would re-impose at
+          step 1 the requirement Scott just deferred to the work order.
+          ⚠ COUNTRY ITSELF STAYS REQUIRED because `E260a` said so, and it is
+          defaulted, so nobody is blocked by doing nothing.
+        */
+        !!regAddress.country &&
         attestation &&
         companyTos;
 
@@ -224,7 +252,10 @@ export function CompanyStep({
               : {
                   name: name.trim(),
                   taxType,
-                  country: country || null,
+                  /* `E280` — jurisdiction IS the registered address's country. */
+                  country: regAddress.country || null,
+                  ein: ein.trim() || null,
+                  registeredAddress: regAddress,
                   website: website.trim() || null,
                   logoUrl,
                   attestation,
@@ -419,39 +450,48 @@ export function CompanyStep({
           </Field>
 
           {/*
-            ⚠ THE SHARED COUNTRY LIST, NOT A RETYPED ONE (`E260`). `COUNTRIES`
-            in `lib/countries.ts` is what every address field on this site
-            already uses, and it stores FULL NAMES ("United States"), not ISO
-            codes — `Company.country` matches that shape deliberately.
-            ⚠ NO `*` IN THE LABEL, because it does not gate Continue. A star on
-            a field that lets you past is the kind of small lie that teaches
-            people to ignore stars.
+            ⚠ SCOTT NAMED THIS FIELD "EIN" (`E273`) and the label uses his word.
+            It writes to `Company.tin`, which is the generic tax-registration id
+            (EIN · VAT/company number · SSN/ITIN) — the column is deliberately
+            broader than the US-specific label, and the hint says so rather than
+            promising a US-only form.
+            ⚠ NOT REQUIRED HERE — see the `valid` note above and `E274`.
           */}
           <Field
-            label="Country *"
-            hint="Where the company is registered — its jurisdiction."
+            label="EIN"
+            hint="Your federal tax id. Outside the US, the equivalent company or VAT registration number."
           >
-            <select
-              value={country}
-              onChange={(e) => setCountry(e.target.value)}
-              className={SELECT}
-            >
-              {/*
-                ⚠ NO EMPTY "Choose a country…" OPTION ANY MORE (`E260a`). The
-                field defaults to the United States, so an empty choice would be
-                a way to UNSET a required value — the one path that turns a
-                defaulted-satisfied gate back into a blocked one. Removing it
-                means the select can only ever hold a real country.
-                ⚠ THE `*` IS NOW HONEST: it gates Continue, which it did not at
-                `E260`.
-              */}
-              {COUNTRIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
+            <TextInput
+              value={ein}
+              onChange={(e) => setEin(e.target.value)}
+              placeholder="12-3456789"
+              autoComplete="off"
+            />
           </Field>
+
+          {/*
+            ⚠⚠ THE REGISTERED ADDRESS (`E280`) — the entity you contract WITH,
+            not where work is delivered. See the block at the top of this file.
+            ⚠ `LocationFields` IS REUSED, NOT RE-TYPED: it is the one component
+            that already knows a region is a "State" in the US and a "Province"
+            in Canada, and it is what the requester wizard's Work Location uses.
+            Two address forms in one product is the drift it exists to prevent.
+          */}
+          <div>
+            <p className="mb-2 text-[14px] font-bold text-ink">
+              Registered Address
+            </p>
+            <div className="space-y-3">
+              <LocationFields
+                value={regAddress}
+                onChange={(patch) =>
+                  setRegAddress((a) => ({ ...a, ...patch }))
+                }
+                withStreet
+                countryHint="Where the company is registered — its jurisdiction."
+              />
+            </div>
+          </div>
 
           <Field label="Website">
             <TextInput
