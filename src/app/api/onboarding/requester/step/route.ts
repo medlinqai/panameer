@@ -23,6 +23,9 @@ const schema = z.object({
     companyBound: z.boolean().optional(),
     firstName: z.string().trim().max(80).optional(),
     lastName: z.string().trim().max(80).optional(),
+    /* `E281` — the requester's ROLE. `photoUrl` is deliberately absent: it is
+       written by `POST /api/profile/photo`, not through this step. */
+    title: z.string().trim().max(120).nullish(),
     phone: z.string().trim().max(40).nullish(),
     employeeId: z.string().trim().max(80).nullish(),
     address,

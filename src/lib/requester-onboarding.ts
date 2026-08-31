@@ -143,6 +143,9 @@ async function loadRequester(viewer: Viewer) {
       id: true,
       first_name: true,
       last_name: true,
+      /* `E281` — read for the wizard's Requester Details step. */
+      photo_url: true,
+      title: true,
       phone: true,
       company_id: true,
       site_id: true,
@@ -261,6 +264,17 @@ export async function getRequesterState(viewer: Viewer) {
     profile: {
       firstName: p.first_name,
       lastName: p.last_name,
+      /*
+        `E281` — the requester gets a face and a role. ⚠ BOTH COLUMNS ALREADY
+        EXISTED on `Person`; this is the wizard finally reading them.
+        ⚠ `photo_url` IS NOT WRITTEN BY THIS MODULE. `POST /api/profile/photo`
+        owns that column — it uploads, then writes `Person.photo_url` directly
+        for anyone without a `providerProfile`. So the wizard READS it here to
+        show what is already stored and never posts it back, which is why there
+        is no `photoUrl` on `StepPayload` below.
+      */
+      photoUrl: p.photo_url,
+      title: p.title,
       phone: p.phone,
       employeeId: rp.employee_id,
       companyId: p.company_id,
@@ -326,6 +340,14 @@ export type StepPayload = {
   /** requester_info */
   firstName?: string;
   lastName?: string;
+  /*
+    `E281` — the requester's ROLE ("Director of Procurement"), not a provider's
+    sales headline. Same `Person.title` column both sides write; THE DIFFERENCE IS
+    THE COPY ASKING FOR IT, which lives in the wizard.
+    ⚠ NO `photoUrl` HERE ON PURPOSE — `POST /api/profile/photo` already owns that
+    column and writes it directly. A second writer would be two paths to one field.
+  */
+  title?: string | null;
   phone?: string | null;
   employeeId?: string | null;
   address?: AddressInput;
@@ -401,6 +423,17 @@ export async function saveRequesterStep(
       data: {
         ...(payload.firstName?.trim() ? { first_name: payload.firstName.trim() } : {}),
         ...(payload.lastName?.trim() ? { last_name: payload.lastName.trim() } : {}),
+        /*
+          `E281` — the requester's ROLE.
+          ⚠ KEYED ON `!== undefined`, NOT ON TRUTHINESS, unlike the two names
+          above. Those use `?.trim() ? ... : {}` so an empty string leaves the
+          stored name alone — right for a name, wrong here: it would make the
+          field impossible to CLEAR once set. An absent key means "not
+          submitted"; an empty one means "cleared".
+        */
+        ...(payload.title !== undefined
+          ? { title: payload.title?.trim() || null }
+          : {}),
         phone: payload.phone?.trim() || null,
       },
     });

@@ -6,6 +6,8 @@ import { WizardShell } from "@/components/onboarding/WizardShell";
 import { LocationFields, type LocationValue } from "@/components/onboarding/LocationFields";
 import { Field, TextInput, Notice } from "@/components/onboarding/controls";
 import { PhoneField } from "@/components/onboarding/PhoneField";
+import { Avatar } from "@/components/Avatar";
+import { PhotoCropModal } from "@/components/onboarding/PhotoCropModal";
 import { isPhoneComplete } from "@/lib/phone";
 import { CompanyStep, type CompanyOutcome } from "@/components/company/CompanyStep";
 import { REQUESTER_STEPS, type RequesterStep } from "@/lib/requester-steps";
@@ -49,6 +51,9 @@ type Draft = {
   companyName: string;
   firstName: string;
   lastName: string;
+  /* `E281` — both already columns on `Person`; the wizard just never asked. */
+  photoUrl: string | null;
+  title: string;
   phone: string;
   employeeId: string;
   address: LocationValue;
@@ -66,6 +71,8 @@ const EMPTY: Draft = {
   companyName: "",
   firstName: "",
   lastName: "",
+  photoUrl: null,
+  title: "",
   phone: "",
   employeeId: "",
   address: {},
@@ -98,6 +105,8 @@ export default function RequesterStepsPage() {
   const [companyValid, setCompanyValid] = useState(false);
   const [companyBusy, setCompanyBusy] = useState(false);
   const [pendingCompany, setPendingCompany] = useState<CompanyOutcome | null>(null);
+  /* `E281` — drives the SHARED `PhotoCropModal`, the provider wizard's own uploader. */
+  const [photoModal, setPhotoModal] = useState(false);
 
   const hydrate = useCallback((s: {
     emailVerified: boolean;
@@ -112,6 +121,7 @@ export default function RequesterStepsPage() {
     company?: { bound?: boolean } | null;
     profile: {
       firstName: string; lastName: string; phone: string | null;
+      photoUrl: string | null; title: string | null;
       employeeId: string | null; companyName: string;
       buyerName: string | null; buyerEmail: string | null;
       approverName: string | null; approverEmail: string | null;
@@ -163,6 +173,8 @@ export default function RequesterStepsPage() {
       companyName,
       firstName: p.firstName ?? "",
       lastName: p.lastName ?? "",
+      photoUrl: p.photoUrl ?? null,
+      title: p.title ?? "",
       phone: p.phone ?? "",
       employeeId: p.employeeId ?? "",
       address: p.address ?? {},
@@ -454,12 +466,28 @@ export default function RequesterStepsPage() {
         continueDisabled={
           !draft.firstName.trim() ||
           !draft.lastName.trim() ||
+          /*
+            `E281` — photo AND title are REQUIRED, per Scott: *"The requester
+            onboarding never asked me for a picture like the provider... it is
+            annoying to have no image."*
+            ⚠ VERIFIED SATISFIABLE BEFORE BEING MADE REQUIRED. Supabase storage
+            is configured and 28 people already carry a `photo_url`, so this is
+            not a gate nobody can pass — which is the failure mode that
+            dead-ended this wizard once already this week.
+            ⚠ GATED HERE, NOT IN `requesterGaps` — see the report. An existing
+            requester already parked on `review` never re-passes this step, so
+            the server does not enforce it retroactively.
+          */
+          !draft.photoUrl ||
+          !draft.title.trim() ||
           !isPhoneComplete(draft.phone, phoneCountry)
         }
         onContinue={() =>
           save({
             firstName: draft.firstName,
             lastName: draft.lastName,
+            /* `E281`. ⚠ NO `photoUrl` — `/api/profile/photo` already wrote it. */
+            title: draft.title,
             phone: draft.phone,
             employeeId: draft.employeeId,
             /*
@@ -474,6 +502,73 @@ export default function RequesterStepsPage() {
       >
         <div className="mx-auto w-full max-w-xl space-y-4">
           {error && <Notice>{error}</Notice>}
+
+          {/*
+            ── ⚠⚠ THE PROVIDER'S OWN UPLOADER, REUSED (`P1-J1.1-E281`) ──────────
+
+            `PhotoCropModal` + `Avatar` is EXACTLY the pattern
+            `join/provider/page.tsx:2746` uses on its own photo step, and the
+            modal posts to the owner-scoped `POST /api/profile/photo`.
+
+            ⚠ WHY THAT ROUTE NEEDED NO CHANGE: it already branches on whether the
+            person has a `providerProfile` — providers go through
+            `applyProviderSection` so `completeness` recomputes, and EVERYONE ELSE
+            gets `Person.photo_url` written directly. A requester was always the
+            "everyone else" case; nobody had ever sent one down it.
+
+            ⚠ `PhotoUpload.tsx` WAS **NOT** USED, and it is the trap here. It
+            looks like the obvious component and its own docblock says it is
+            *"CURRENTLY UNUSED"* — the provider wizard uses this modal instead,
+            because this one CROPS. Reusing the unused one would have shipped a
+            second upload path for one column, which is the defect the brief
+            named.
+            ⚠ SO NOTHING WAS WRITTEN: no new component, no new route, no new
+            column. The only new thing is the panel below.
+          */}
+          <div className="flex flex-col items-center gap-5 rounded-brand border border-line p-6 sm:flex-row sm:items-center sm:text-left">
+            <Avatar
+              firstName={draft.firstName}
+              lastName={draft.lastName}
+              photoUrl={draft.photoUrl}
+              size={96}
+            />
+            <div className="min-w-0">
+              <p className="text-[14px] font-bold text-ink">Your Photo *</p>
+              <p className="mt-1 text-[13.5px] leading-relaxed text-ink-2">
+                Providers see this next to your name on a work request. A clear
+                headshot gets a faster response than an empty circle.
+              </p>
+              <button
+                type="button"
+                onClick={() => setPhotoModal(true)}
+                className="mt-3 rounded-full border-[1.5px] border-line px-4 py-2 text-[13.5px] font-bold text-ink transition-colors hover:border-[#d9d4e2]"
+              >
+                {draft.photoUrl ? "Change Photo" : "Add a Photo"}
+              </button>
+            </div>
+          </div>
+
+          {/*
+            ⚠⚠ A ROLE, NOT A SALES HEADLINE (`E281`). Same `Person.title` column
+            the provider writes, and the copy is the whole difference: a provider
+            types *"Oracle Cloud P2P Expert"* to be FOUND, a requester types
+            *"Director of Procurement"* so a provider knows WHO THEY ARE TALKING
+            TO. The label, placeholder and hint all say job, not pitch.
+            ⚠ THE COPY IS CC'S AND IS REPORTED FOR SCOTT TO OVERRULE — he named
+            the concept and the example, not these words.
+          */}
+          <Field
+            label="Job Title *"
+            hint="Your role at your company — for example, Director of Procurement. Providers see it next to your name."
+          >
+            <TextInput
+              value={draft.title}
+              onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
+              placeholder="Director of Procurement"
+              autoComplete="organization-title"
+            />
+          </Field>
+
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label="First Name *">
               <TextInput
@@ -571,6 +666,17 @@ export default function RequesterStepsPage() {
               </a>
             </div>
           </div>
+
+          {/*
+            ⚠ THE SHARED MODAL. `onUploaded` fires only after the server has
+            stored the file and returned its public URL, so `draft.photoUrl` can
+            never hold a URL the database does not also have.
+          */}
+          <PhotoCropModal
+            open={photoModal}
+            onClose={() => setPhotoModal(false)}
+            onUploaded={(photoUrl) => setDraft((d) => ({ ...d, photoUrl }))}
+          />
 
           {/*
             ⚠⚠ THE `Your address` BLOCK STOOD HERE AND IS GONE (`E262`).
@@ -687,6 +793,9 @@ export default function RequesterStepsPage() {
       value: `${draft.firstName} ${draft.lastName}`.trim() || "—",
       step: "requester_info",
     },
+    /* `E281` — a required field belongs on the review. Employee ID is OPTIONAL
+       and has always been listed, so omitting a REQUIRED one would be odd. */
+    { label: "Job Title", value: draft.title || "—", step: "requester_info" },
     { label: "Phone", value: draft.phone || "—", step: "requester_info" },
     { label: "Employee ID", value: draft.employeeId || "—", step: "requester_info" },
     /*
