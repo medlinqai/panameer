@@ -1,5 +1,8 @@
 import { prisma } from "@/lib/prisma";
-import { recomputeProviderRollup } from "@/lib/provider-rollup";
+import {
+  recomputeProviderRollup,
+  SELF_ADDED_WEIGHT,
+} from "@/lib/provider-rollup";
 import { projectToCard } from "@/lib/project-card";
 import { toView as toArtifactView } from "@/lib/artifacts";
 import { hashPassword } from "@/lib/password";
@@ -89,13 +92,41 @@ import { capitalizeName } from "@/lib/display";
   ability to WRITE would 400 a surface this brief does not touch. They are no
   longer stops on the tour.
 */
+/*
+  ── ⚠⚠ THE V3 ITINERARY, RESTORED (`P1-J1.1-E283`, 2026-08-31) ────────────────
+
+  Scott, of the V3 deck: *"this is what used to be and it worked. i want this."*
+
+  ⚠ SUPERSEDED, quoted not deleted — this list was SIX and it was a launch-class
+  fatal:  title · work_history · rate · picture · company · finish
+
+  `0ae97e2` (08-11, "the work-history review replaces Role and Skills") swapped
+  the two steps a provider can COMPLETE BY TYPING for one that only REVIEWS
+  imported data, gated on `employers.length > 0`. Its only producer — the résumé
+  screen — had already been demoted to a one-shot pre-step by `db803b5` eight days
+  earlier. Nobody wrote a bug: a producer step was replaced by a display step
+  after its producer had quietly become unreachable. A provider who typed a title
+  could never get back to the upload and could never leave `2/6`.
+
+  ⚠⚠ THE PROPERTY THAT MAKES V3 WORK, AND THE REASON THIS IS THE FIX:
+  THE RÉSUMÉ IS AN OFFER, AND EVERY COUNTED STEP CAN BE COMPLETED BY TYPING.
+  Upload and Role and Skills arrive pre-filled; skip it and you type them. NOTHING
+  COUNTED IS EVER GATED ON AN IMPORT HAVING HAPPENED. Keep that true and the dead
+  end cannot come back — a stronger guarantee than patching this one path.
+
+  ⚠ NOT A `git revert` of `0ae97e2`. Three weeks sit on top of it and it carries
+  per-job capture Scott has walked and likes. The steps are RE-LISTED; the history
+  is not unwound. `work_history` leaves the itinerary and keeps its file, its
+  `case` block and its type membership (`E164`).
+*/
 export const PROVIDER_STEPS = [
-  "title", //         1 — what you do
-  "work_history", //  2 — WS-4: the jobs, each with suite + role + skills
-  "rate", //          3 — provider only; the match needs a price
-  "picture", //       4 — required to publish (WS7 addendum, unchanged)
-  "company", //       5 — the entity a work order is with (brief_company_model)
-  "finish", //        6 — Review + publish
+  "title", //    1 — what you do
+  "roles", //    2 — typed, or pre-filled by the résumé
+  "skills", //   3 — typed, or pre-filled by the résumé
+  "rate", //     4 — provider only; the match needs a price
+  "picture", //  5 — required to publish (WS7 addendum, unchanged)
+  "company", //  6 — the entity a work order is with (brief_company_model)
+  "finish", //   7 — Review + publish
 ] as const;
 export type ProviderStep =
   | (typeof PROVIDER_STEPS)[number]
@@ -112,8 +143,22 @@ export type ProviderStep =
     client tab left open mid-flow; refusing the write would 400 a surface this
     brief does not touch. They are simply no longer on the itinerary.
   */
-  | "roles"
-  | "skills"
+  /*
+    ⚠ `roles` AND `skills` ARE BACK IN `PROVIDER_STEPS` (`E283`), so they reach
+    this union through the first branch and are NOT listed again here — a
+    duplicate member is legal TypeScript and a lie to the reader.
+  */
+  /*
+    ⚠⚠ `work_history` LEFT THE ITINERARY AND STAYS IN THE CODEBASE (`E283`).
+
+    HOUSE RULE `E164`: a retired screen stays on disk, unimported. So
+    `WorkHistoryReview.tsx` stays, its `case` block in `page.tsx` stays, its
+    `applyProviderSection` case stays, and it stays in this union — dropping it
+    here would delete the ability to WRITE work history at all, from Settings and
+    from the review page, which is not what was asked. It is simply no longer a
+    numbered stop.
+  */
+  | "work_history"
   | "specializations"
   | "education"
   | "languages"
@@ -146,10 +191,24 @@ export const SAVEABLE_STEPS: readonly ProviderStep[] = [
   "bio",
 ];
 
-/** Recruiter journey: no Rate — a recruiter sells other people's time (E070). */
+/**
+ * Recruiter journey: no Rate — a recruiter sells other people's time (E070).
+ *
+ * ⚠ RESTORED TO MATCH V3 (`E283`). ⚠ SUPERSEDED, quoted:
+ *     title · work_history · picture · company · finish
+ * A recruiter was blocked by the same `work_history` dead end as a provider.
+ *
+ * ⚠ IT TAKES `roles` AND `skills`, and that follows from the code rather than a
+ * preference: `PROVIDER_ONLY_STEPS` below holds exactly `education` and `rate`,
+ * so every OTHER counted step belongs to both journeys. Excluding Role and Skills
+ * here would have been inventing a third rule — and a recruiter who cannot say
+ * what kind of work they place, or which skills, is not searchable.
+ * ⚠ SIX, NOT SEVEN — Rate is the one difference, exactly as before.
+ */
 export const RECRUITER_STEPS = [
   "title",
-  "work_history",
+  "roles",
+  "skills",
   "picture",
   "company",
   "finish",
@@ -173,7 +232,10 @@ export function stepsForProfile(p: {
   return isRecruiterProfile(p) ? RECRUITER_STEPS : PROVIDER_STEPS;
 }
 
-export const TOTAL_PROVIDER_STEPS = PROVIDER_STEPS.length; // 10 (PJv2 WS1)
+/* ⚠ SEVEN (`E283`). The comment said `10 (PJv2 WS1)` while the array held six —
+   two restructures had moved past it. Derived from the array either way, but a
+   false comment is how the next reader gets the count wrong. */
+export const TOTAL_PROVIDER_STEPS = PROVIDER_STEPS.length; // 7 (E283, V3 restored)
 
 /** 1-based position within the caller's own step list. */
 export function providerStepNumber(
@@ -194,7 +256,11 @@ export const PROVIDER_STEP_LABELS: Record<
   ProviderStep,
   { stepper: string; next: string }
 > = {
-  title: { stepper: "Your Title", next: "Next: Your Work History" },
+  /* ⚠ `E283` — the title forwards to the résumé screen and then Role.
+     `nextLabelFor` derives the real label from the live itinerary; this is only
+     the fallback, and it said "Next: Your Work History", which is no longer a
+     counted step at all. */
+  title: { stepper: "Your Title", next: "Next: Your Role" },
   work_history: {
     stepper: "Your Work History",
     next: "Next: Your Rate",
@@ -243,8 +309,15 @@ export function nextLabelFor(
  * `tell_us` is a method CHOICE — picking "manual" is a valid way through it.
  */
 const OPTIONAL_STEPS = new Set<ProviderStep>([
-  // The Upload/Review pre-step: uploading is one valid way through it, and
-  // entering everything by hand is the other. Never a resume target.
+  /*
+    The Upload/Review screen: uploading is one valid way through it, and entering
+    everything by hand is the other.
+    ⚠ SUPERSEDED, quoted: this said *"Never a resume target."* `E283` made the
+    screen reachable more than once — a provider who skips it must be able to come
+    back — so it IS a legitimate target now. It stays OPTIONAL because skipping it
+    is still a complete answer; what changed is that skipping is no longer
+    permanent.
+  */
   "tell_us",
   // WS1 — these left the itinerary entirely. Listed so that if one is ever put
   // back, it comes back optional rather than silently becoming a blocker.
@@ -754,9 +827,22 @@ function computeResumeStep(p: Awaited<ReturnType<typeof loadDraft>>): ProviderSt
       optional correction into a blocker. The review surface nudges; it does not
       hold the door.
 
-      Note this reads `employers`, not `skills`: the old skills condition
-      counted profile-level picks, which nothing writes any more, so leaving it
-      as the gate would strand every new provider on a step they cannot pass.
+      ⚠⚠ THE PARAGRAPH THAT STOOD HERE WAS WRONG, AND `E283` CHECKED IT RATHER
+      THAN INHERITING IT. ⚠ SUPERSEDED, quoted: *"Note this reads `employers`,
+      not `skills`: the old skills condition counted profile-level picks, which
+      nothing writes any more, so leaving it as the gate would strand every new
+      provider on a step they cannot pass."*
+
+      `pp.skills` IS WRITTEN, by four paths — the skills step itself
+      (`applyProviderSection` case "skills", `deleteMany` + `createMany` from
+      `skillIds`), the résumé import (`resume/import.ts`), the rollup
+      (`provider-rollup.ts`) and `skill-suggestions`. The claim was false when it
+      was written, or became false shortly after.
+
+      ⚠ AND THE SKILLS STEP CANNOT BE PASSED WITHOUT WRITING ONE: its Continue is
+      `continueDisabled: totalPicked === 0`. So `skills: pp.skills.length > 0` is
+      a SAFE resume condition — passing the step and satisfying the condition are
+      the same act, which is exactly what `work_history` was NOT.
     */
     work_history: pp.employers.length > 0,
     // The combined page these replaced. Not in any itinerary; satisfied so a
@@ -1537,6 +1623,30 @@ export async function applyProviderSection(
         throw new OnboardingError("Unknown skill selected", "INVALID");
       }
 
+      /*
+        ── ⚠⚠ `SELF_ADDED`, NOT THE DEFAULT (`E283`) ───────────────────────────
+
+        THIS IS THE TRAP THE BRIEF SENT ME LOOKING FOR, AND IT IS REAL.
+        `ProviderSkill.source` DEFAULTS TO `DERIVED`, and this `createMany` set no
+        source — so every skill a provider TYPED was stored as though it had been
+        computed from a job. `recomputeProviderRollup` deletes exactly that:
+        *"Only DERIVED rows are cleared."* Any later rollup — adding an employer,
+        importing a résumé, editing a job — silently wiped the hand-picked skills,
+        `pp.skills.length` fell to 0, and `computeResumeStep` sent the provider
+        back to Skills. `3/7` WOULD HAVE STRANDED PEOPLE EXACTLY THE WAY `2/6`
+        DOES TODAY.
+
+        ⚠ `SELF_ADDED` IS THE PURPOSE-BUILT ESCAPE HATCH — the enum's own comment
+        calls it *"claimed on the profile with no job behind it"*, and the rollup
+        preserves those rows unless the skill later gains a job, at which point
+        the job is better evidence and DERIVED replaces it. That is precisely the
+        semantics of a typed skill.
+
+        ⚠ `SELF_ADDED_WEIGHT` TRAVELS WITH IT. Left at the 0 default these rows
+        would be hidden by `getOnboardingState`, which filters on
+        `s.weight > 0 || s.source === "SELF_ADDED"`, and would misreport depth.
+        One constant, already tuned, in one place (`provider-rollup.ts:55`).
+      */
       await prisma.$transaction([
         prisma.providerSkill.deleteMany({
           where: { provider_profile_id: profileId },
@@ -1545,6 +1655,8 @@ export async function applyProviderSection(
           data: skillIds.map((skill_id) => ({
             provider_profile_id: profileId,
             skill_id,
+            source: "SELF_ADDED" as const,
+            weight: SELF_ADDED_WEIGHT,
           })),
         }),
       ]);

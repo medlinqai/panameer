@@ -769,7 +769,34 @@ export default function JoinProviderPage() {
           // (?step=bio). Anything unrecognised falls back to the resume point.
           const params = new URLSearchParams(window.location.search);
           const requested = params.get("step");
-          const target = (s.steps ?? DEFAULT_STEPS).includes(requested as Step)
+          /*
+            ⚠⚠ UNCOUNTED SCREENS ARE LEGAL JUMP TARGETS TOO (`P1-J1.1-E285`).
+          
+            ⚠ SUPERSEDED, quoted: `const target = (s.steps ?? DEFAULT_STEPS).includes(
+            requested) ? requested : s.resumeStep`.
+          
+            `s.steps` is the COUNTED itinerary, and `tell_us` has never been in it — so
+            the provider profile's two "Work History" and "Solo Projects" edit links
+            (`ProviderProfileView.tsx:259` and `:321`, both
+            `?step=tell_us&return=review`) silently failed the guard and dumped the owner
+            on their resume step instead of the section they clicked. Two dead links that
+            looked alive.
+          
+            ⚠ THE ITINERARY GUARD IS NOT WEAKENED. A step that is not on YOUR journey is
+            still refused — a recruiter still cannot jump to `rate`. What is added is the
+            set of screens that are renderable but never counted, which `PRE_STEPS`
+            already names. `E283` made `tell_us` genuinely reachable, so this is the
+            guard catching up with that rather than a new permission.
+          */
+          const jumpable = new Set<Step>([
+            ...((s.steps ?? DEFAULT_STEPS) as Step[]),
+            /* The uncounted-but-renderable screens. `page.tsx` keeps its own
+               `Step` vocabulary (`ALL_STEPS` above) rather than importing the
+               server's, so this names the screen directly instead of pulling in
+               `PRE_STEPS` and coupling the two lists. */
+            "tell_us" as Step,
+          ]);
+          const target = jumpable.has(requested as Step)
             ? (requested as Step)
             : (s.resumeStep as Step);
           // E118 — the profile view's edit links can ask for the same
@@ -779,21 +806,37 @@ export default function JoinProviderPage() {
             setReturnToReview(true);
           }
           /*
-            WS1 — THE UPLOAD IS A PRE-STEP, not stop 1.
-
-            The brief keeps the résumé / AI entry "up-front, preceding the
-            steps", so it renders before the counter starts and carries no
-            number. Shown only on a genuinely fresh profile: nothing imported
-            and no work history typed. A returning provider goes straight to
-            wherever the server resumed them, because being asked to upload a
-            CV again on every visit is exactly the friction this brief cuts.
+            ── ⚠⚠ THE ONE-SHOT `fresh` GATE IS GONE (`P1-J1.1-E283`) ──────────────────
+          
+            ⚠ SUPERSEDED, quoted not deleted, because the reasoning was sound and only
+            its PLACEMENT was wrong: *"WS1 — THE UPLOAD IS A PRE-STEP, not stop 1. The
+            brief keeps the résumé / AI entry 'up-front, preceding the steps', so it
+            renders before the counter starts and carries no number. Shown only on a
+            genuinely fresh profile: nothing imported and no work history typed. A
+            returning provider goes straight to wherever the server resumed them,
+            because being asked to upload a CV again on every visit is exactly the
+            friction this brief cuts."* The condition was:
+          
+                const fresh = target === "title"
+                  && (s.imports?.length ?? 0) === 0
+                  && (s.profile?.employers?.length ?? 0) === 0
+                  && !requested;
+          
+            ⚠⚠ THAT GATE IS HALF OF THE LAUNCH-CLASS FATAL. It could fire ONCE, before
+            the title, on a profile with nothing on it. The moment a provider typed a
+            title it could never be true again, so the upload became permanently
+            unreachable — and `0ae97e2` then made the next step depend on data only the
+            upload produced.
+          
+            ⚠ AND IT COUNTED FAILED IMPORTS. `s.imports` carries `status` and `error`
+            and nothing filtered on either, so ONE FAILED PARSE locked a provider out of
+            the upload for good. Deleting the gate removes that bug with it — there is
+            no longer any count that can lock the door.
+          
+            In V3 the screen sits AFTER the title and is reachable whenever the provider
+            is on it, so resume simply honours the target.
           */
-          const fresh =
-            target === "title" &&
-            (s.imports?.length ?? 0) === 0 &&
-            (s.profile?.employers?.length ?? 0) === 0 &&
-            !requested;
-          setScreen(fresh ? "tell_us" : target);
+          setScreen(target);
         }
       }
       setReady(true);
@@ -963,6 +1006,18 @@ export default function JoinProviderPage() {
       Continue did nothing at all, which is how a pre-step becomes a dead end.
     */
     if (stepIndex < 0) {
+      /*
+        ⚠ `E283` — THE RÉSUMÉ SCREEN NOW SITS AFTER THE TITLE, so "next" from it is
+        the step after `title`, not `steps[0]`. Sending it to `steps[0]` would bounce
+        the provider back onto the title they just filled in — a loop.
+        ⚠ DERIVED FROM THE ITINERARY, not hardcoded to `roles`: a recruiter walks a
+        different list and both start with `title`, so "the one after title" is right
+        for either without naming a step one of them may not have.
+      */
+      if (screen === "tell_us") {
+        goTo(steps[steps.indexOf("title") + 1] ?? steps[0] ?? "title");
+        return;
+      }
       goTo(steps[0] ?? "title");
       return;
     }
@@ -1341,7 +1396,18 @@ export default function JoinProviderPage() {
             title: "Got it. Now, add a title to tell the world what you do.",
             subtitle:
               "It's the very first thing clients see, so make it count. Stand out by describing your expertise in your own words.",
-            onContinue: () => saveAnd("title", { headline: profile.headline }),
+            /*
+              ⚠⚠ THE TITLE FORWARDS TO THE RÉSUMÉ SCREEN, NOT TO STEP 2 (`E283`).
+              That is the V3 order and the deck shows it: `1/7` Your Title → "How would
+              you like to tell us about yourself?" (uncounted) → the import review
+              (uncounted) → `2/7` Your Role.
+              ⚠ SUPERSEDED: this passed no `then`, so it used the default `goNext` and
+              went straight to the next COUNTED step, leaving the upload unreachable.
+              ⚠ IT IS AN OFFER, NOT A GATE — the résumé screen's own Skip for Now and
+              Continue both lead on to `2/7`, which can be completed by typing.
+            */
+            onContinue: () =>
+              saveAnd("title", { headline: profile.headline }, () => goTo("tell_us")),
             continueDisabled: profile.headline.trim() === "",
           })}
         >
