@@ -96,8 +96,30 @@ export function assessParse(
   const reasons: string[] = [];
   const fromAi = options.source === "ai";
 
-  const totalEntries = parsed.experiences.length;
-  const datedEntries = parsed.experiences.filter((e) => e.startDate).length;
+  /*
+    ⚠⚠ PROJECTS COUNT AS WORK HISTORY (`P1-J1.4-E294`, 2026-09-01).
+  
+    ⚠ SUPERSEDED, quoted: `const totalEntries = parsed.experiences.length;`
+  
+    That was correct while the mapper FLATTENED every project into
+    `experiences` — Marelise's ten project tables arrived as ten fake
+    employers, so counting experiences counted her whole CV. `E294` stops that
+    flattening, and counting experiences alone would then score a
+    projects-only résumé as *"We couldn't find any work history in this
+    file."* — a hard tell, on a document the parser read perfectly.
+    ⚠ CAUGHT BY `check:ai-extract`, WHICH FAILED RATHER THAN DRIFTED. The
+    Marelise gate asserts her output must score HIGH; it went red the moment
+    projects stopped being experiences, which is the test doing its job.
+    ⚠ A PROJECT IS WORK. It is a different SHAPE of entry, not an absence of
+    one, and the tell below is about an empty read — not about classification.
+  */
+  const totalEntries = parsed.experiences.length + parsed.projects.length;
+  /* `E294` — same reasoning as `totalEntries` above: a dated PROJECT is a dated
+     entry. Counting only experiences would tell Marelise we found her work and
+     could not read a single date, when every one of her ten carries one. */
+  const datedEntries =
+    parsed.experiences.filter((e) => e.startDate).length +
+    parsed.projects.filter((p) => p.startDate).length;
   const dateRangesInText = (text.match(DATE_RANGE) ?? []).length;
   const unplaced = unplacedRatio(text, parsed);
   const skillsOverflow = parsed.gaps.some((g) => /too many to be right|didn't look like skills/i.test(g));

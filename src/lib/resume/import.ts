@@ -53,6 +53,10 @@ export type ImportResult = {
     headline: boolean;
     overview: boolean;
     experiences: number;
+    /* `E294` — projects written with an `employer_id` resolved. */
+    projectsAttached: number;
+    /* `E294` — projects written with `employer_id` null, awaiting placement. */
+    projectsUnattached: number;
     education: number;
     /** WS4 — matched against the seeded vocabulary, not asked of the model. */
     specializations: number;
@@ -326,6 +330,8 @@ function emptyApplied(): ImportResult["applied"] {
     headline: false,
     overview: false,
     experiences: 0,
+    projectsAttached: 0,
+    projectsUnattached: 0,
     education: 0,
     specializations: 0,
     skillsMatched: 0,
@@ -430,6 +436,11 @@ export async function applyParsedResume(
     ])
   );
 
+  /* `E294` — name -> id for the employers created just below, so a project
+     naming one can be hung off it. Keyed on the SAME string the mapper matched
+     against, so the two agree by construction, not by a second normalisation. */
+  const employerIdByName = new Map<string, string>();
+
   for (const [i, e] of parsed.experiences.entries()) {
     const key = `${e.employer}|${e.roleTitle}`.toLowerCase();
     if (haveRole.has(key)) continue;
@@ -462,10 +473,74 @@ export async function applyParsedResume(
       },
       select: { id: true },
     });
-    void employer;
+    employerIdByName.set(e.employer, employer.id);
     applied.experiences++;
     applied.jobSkills += found.skillIds.length;
     if (found.needsSuite) applied.needsSuite++;
+  }
+
+  /*
+    ── ⚠⚠ PROJECTS BECOME `Project` ROWS (`P1-J1.4-E294`, 2026-09-01) ──────────
+  
+    ⚠ THIS IS THE PATH THAT HAS NEVER EXISTED. `git log --all -S employer_id --
+    src/lib/resume` returns NO COMMITS ON ANY BRANCH: no parse has ever written a
+    Project row, which is the only reason every per-employer `Projects` link on
+    the profile has been inert. The affordance was built (`E075`); the data
+    behind it never arrived.
+  
+    ⚠ TWO OUTCOMES, NEVER A THIRD. `employerName` non-null and known -> attached.
+    Anything else -> written with `employer_id` null and surfaced for the user to
+    place in one click (`E296`). NOTHING IS SKIPPED — there is deliberately no
+    `continue` in this loop.
+  
+    ⚠ `client_name` IS NON-NULLABLE ON `Project`, so an unnamed client stores ""
+    rather than refusing the row. A required column must never be the reason a
+    transcribed project is lost — that is the whole rule this brief serves.
+  
+    ⚠ SOFTWARE IS APPENDED TO THE DESCRIPTION, not dropped. `Project` has no
+    software column and this brief forbids a migration, so the text rides along
+    where the user can still read it — the same shape the old mapper used when it
+    flattened projects into experiences.
+  */
+  for (const [i, pr] of parsed.projects.entries()) {
+    const employerId = pr.employerName
+      ? employerIdByName.get(pr.employerName) ?? null
+      : null;
+    const description =
+      [pr.description, pr.software.length ? `Software: ${pr.software.join(", ")}` : null]
+        .filter(Boolean)
+        .join("\n") || null;
+    await prisma.project.create({
+      data: {
+        provider_profile_id: profileId,
+        employer_id: employerId,
+        name: (pr.name || "Untitled project").slice(0, 200),
+        description: description?.slice(0, 4000) ?? null,
+        client_name: (pr.client ?? "").slice(0, 200),
+        start_date: pr.startDate ? new Date(pr.startDate) : null,
+        end_date: pr.endDate ? new Date(pr.endDate) : null,
+        is_current: Boolean(pr.startDate) && !pr.endDate,
+        sort_order: i * 10,
+      },
+    });
+    if (employerId) applied.projectsAttached++;
+    else applied.projectsUnattached++;
+  }
+  
+  /*
+    ⚠ THE ACCEPTANCE TEST, ASSERTED WHERE IT CAN ACTUALLY FAIL. `E294`'s test is
+    extracted === attached + unattached. The mapper already guards its own half;
+    this guards the WRITE half, so a future `continue`, filter or early return in
+    the loop above surfaces as a loud failure instead of quietly missing rows.
+  */
+  if (
+    applied.projectsAttached + applied.projectsUnattached !==
+    parsed.projects.length
+  ) {
+    throw new Error(
+      `resume import lost projects: parsed ${parsed.projects.length}, ` +
+        `attached ${applied.projectsAttached}, unattached ${applied.projectsUnattached}`
+    );
   }
 
   // --- Education -----------------------------------------------------------

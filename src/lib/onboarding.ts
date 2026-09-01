@@ -2545,6 +2545,10 @@ async function currentProfileAsParsed(profileId: string): Promise<ParsedResume> 
     overview: pp?.overview ?? null,
     experienceLevel: null,
     experienceYears: null,
+    /* `E294` — this shape re-reads a SAVED profile back into `ParsedResume`;
+       projects are read from their own rows elsewhere, not reconstructed here.
+       Empty, never absent, so the field is always present. */
+    projects: [],
     experiences: (pp?.employers ?? []).map((e) => ({
       employer: e.name,
       roleTitle: e.role_title ?? "",

@@ -29,6 +29,30 @@ export type ParsedEducation = {
   description: string | null;
 };
 
+/**
+ * A project lifted off the document (`E294`).
+ *
+ * ⚠ EVERY FIELD THE MODEL RETURNED IS CARRIED. The rule this serves is
+ * `decisions-01.md` § "the résumé parser's real job": THE AI'S VALUE IS
+ * TRANSCRIPTION, NOT CLASSIFICATION — the text is the hour saved, the box it
+ * lands in is a click. Dropping `software` or `client` to keep the type tidy
+ * would be discarding exactly what the user is paying the parser for.
+ */
+export type ParsedProject = {
+  name: string;
+  description: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  client: string | null;
+  software: string[];
+  /**
+   * The employer this project resolved to, or null when it could not be placed.
+   * ⚠ NULL IS A LEGITIMATE, VISIBLE OUTCOME — not a failure and never a reason to
+   * drop the row. See `WS-3`: the user places it in one click.
+   */
+  employerName: string | null;
+};
+
 export type ParsedResume = {
   headline: string | null;
   overview: string | null;
@@ -37,6 +61,24 @@ export type ParsedResume = {
   /** Years of experience behind that inference, for the review copy. */
   experienceYears: number | null;
   experiences: ParsedExperience[];
+  /*
+    ── ⚠⚠ PROJECTS ARE A FIRST-CLASS RESULT NOW (`P1-J1.4-E294`, 2026-09-01) ───
+
+    `ParsedResume` had NO projects concept at all — `projects` appears in
+    `SECTION_PATTERNS` below only as a section to IGNORE — which is why no
+    `Project` row has ever been written from a parse on any branch, ever.
+
+    Scott's spec is one sentence: *"make the projects under the employers... IF
+    you are not sure, make them separate AND allow the user an easy way to add
+    them under an employer."* TWO OUTCOMES, NEVER A THIRD: attached, or visible
+    and movable. Never discarded.
+
+    ⚠ `employerName` IS THE MATCH RESULT, NOT THE RAW FIELD. The mapper resolves
+    the model's free-text employer against the employers it actually emitted and
+    puts the MATCHED name here, or null when it could not place it confidently.
+    The importer then only has to look the name up among the rows it just created.
+  */
+  projects: ParsedProject[];
   education: ParsedEducation[];
   skills: string[];
   languages: string[];
@@ -683,6 +725,10 @@ export function parseResume(text: string): ParsedResume {
     overview,
     experienceLevel: inferred?.level ?? null,
     experienceYears: inferred?.years ?? null,
+    /* `E294` — the REGEX parser does not read a projects section: `projects` is
+       an IGNORE header in `SECTION_PATTERNS` above. Only the AI path returns
+       them. Empty, never absent. */
+    projects: [],
     experiences: cappedExperiences,
     education: cappedEducation,
     skills,

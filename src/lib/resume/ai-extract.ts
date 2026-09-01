@@ -640,28 +640,106 @@ export function aiToParsedResume(ai: AiResume): ParsedResume {
   }));
 
   /*
-    Projects the document did NOT attach to an employer still describe work, and
-    dropping them would lose Marelise's entire history — her ten tables are
-    projects, not jobs. They become entries in their own right, with the client
-    as the employer when one is named, so the review shows them rather than
-    silently discarding them.
+    ── ⚠⚠ NOTHING IS DISCARDED. TWO OUTCOMES, NEVER A THIRD (`P1-J1.4-E294`) ────
+
+    Scott, 2026-09-01: *"make the projects under the employers... IF you are not
+    sure, make them separate AND allow the user an easy way to add them under an
+    employer."*
+
+    ⚠ SUPERSEDED, QUOTED NOT DELETED — the block that stood here, and the line
+    that lost the data:
+
+        const alreadyUnderEmployer =
+          p.employer && experiences.some((e) => e.employer === p.employer);
+        if (alreadyUnderEmployer) continue;          // <-- DISCARDED
+        experiences.push({ employer: p.client ?? p.employer ?? p.name, ... });
+
+    carrying the reasoning *"Projects the document did NOT attach to an employer
+    still describe work, and dropping them would lose Marelise's entire history —
+    her ten tables are projects, not jobs. They become entries in their own right,
+    with the client as the employer when one is named, so the review shows them
+    rather than silently discarding them."*
+
+    ⚠⚠ THAT COMMENT WAS HALF RIGHT AND THE CODE DID THE OPPOSITE OF WHAT IT SAID.
+    It protected the UNPLACEABLE projects by promoting them to fake employers —
+    Scott's 28 "employers" — and it SILENTLY DELETED the placeable ones, which is
+    the dangerous face: five clean employers, no projects anywhere, and a page
+    that looks right while the data is gone.
+
+    ⚠ BOTH FACES GO. Every project the model returns now reaches the caller,
+    either attached or explicitly unattached. `continue` is deleted and no project
+    is ever pushed into `experiences` again.
   */
-  for (const p of ai.projects) {
-    const alreadyUnderEmployer =
-      p.employer && experiences.some((e) => e.employer === p.employer);
-    if (alreadyUnderEmployer) continue;
-    experiences.push({
-      employer: p.client ?? p.employer ?? p.name,
-      // E129/WS3 — fall back to the project's own name before giving up on a
-      // role. An entry with an empty role renders as a bare company on the
-      // profile, which is worse than saying what the work was.
-      roleTitle: p.roleType ?? p.name ?? "",
-      description: [p.description, p.software.length ? `Software: ${p.software.join(", ")}` : null]
-        .filter(Boolean)
-        .join("\n") || null,
-      startDate: iso(p.startDate),
-      endDate: iso(p.endDate),
-    });
+
+  /*
+    MATCHING, AND IT DELIBERATELY ERRS TOWARD "NOT SURE".
+
+    A document will not spell an employer the same way twice — `Oracle` vs
+    `Oracle Corporation`, a trailing `Inc.`, stray case and punctuation. The
+    comparison is normalised: lower-cased, punctuation stripped, common legal
+    suffixes removed, whitespace collapsed.
+
+    ⚠ AND WHEN IN DOUBT IT DOES NOT MATCH. An UNATTACHED project is recoverable in
+    one click (`E296`); a WRONGLY attached one is a lie the user has to spot first.
+    An ambiguous key — one that matches two employers — resolves to null rather
+    than picking a winner. That is recall-over-precision applied in the only
+    direction that is safe here: never lose the row, never assert a link the
+    document did not support.
+  */
+  const LEGAL_SUFFIX =
+    /\b(inc|llc|ltd|limited|corp|corporation|co|plc|gmbh|sa|nv|bv|pty|llp|lp)\b/g;
+  const normEmployer = (v: string) =>
+    v
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, " ")
+      .replace(LEGAL_SUFFIX, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  const employerKeys = experiences.map((e) => ({
+    name: e.employer,
+    key: normEmployer(e.employer),
+  }));
+
+  const matchEmployer = (raw: string | null | undefined): string | null => {
+    const k = raw ? normEmployer(raw) : "";
+    if (!k) return null;
+    const exact = employerKeys.filter((e) => e.key === k);
+    if (exact.length === 1) return exact[0].name;
+    if (exact.length > 1) return null; // two employers normalise alike — ambiguous
+    /* One contains the other ("oracle" vs "oracle consulting"). Both sides are
+       length-guarded so a short fragment cannot swallow an unrelated employer. */
+    const partial = employerKeys.filter(
+      (e) =>
+        e.key.length >= 4 &&
+        k.length >= 4 &&
+        (e.key.startsWith(k) || k.startsWith(e.key))
+    );
+    return partial.length === 1 ? partial[0].name : null;
+  };
+
+  const projects = ai.projects.map((p) => ({
+    name: p.name,
+    description: p.description ?? null,
+    startDate: iso(p.startDate),
+    endDate: iso(p.endDate),
+    client: p.client ?? null,
+    software: p.software ?? [],
+    /* `p.employer` is the model's answer to "delivered under whom"; `p.client` is
+       the second-best signal when it did not say. Same tolerant match for both. */
+    employerName: matchEmployer(p.employer) ?? matchEmployer(p.client),
+  }));
+
+  /*
+    ⚠ THE EQUATION, ASSERTED AT THE BOUNDARY. `E294`'s acceptance test is
+    extracted === attached + unattached. Checking it HERE — where the mapper hands
+    off — makes "nothing is dropped" a property of the code rather than a claim in
+    a commit message. It can only fire if someone reintroduces a filter.
+  */
+  if (projects.length !== ai.projects.length) {
+    throw new Error(
+      `resume mapper lost projects: extracted ${ai.projects.length}, mapped ${projects.length}`
+    );
   }
 
   return {
@@ -672,6 +750,7 @@ export function aiToParsedResume(ai: AiResume): ParsedResume {
     experienceLevel: null,
     experienceYears: null,
     experiences,
+    projects,
     // E164 — repair the row, then keep it only if it is plausibly a school.
     education: ai.education.map(fixEducationRow).filter(isPlausibleEducationRow),
     // Project software and skills are skills too — they are the most specific

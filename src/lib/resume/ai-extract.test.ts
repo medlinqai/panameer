@@ -83,26 +83,58 @@ console.log("=== schema validation ===");
 console.log("\n=== projects survive the conversion (the Marelise case) ===");
 {
   const parsed = aiToParsedResume(AI_RESUME_SCHEMA.parse(MARELISE_LIKE));
-  check("all 10 projects become entries", parsed.experiences.length === 10, parsed.experiences.length);
+  /*
+    ── ⚠⚠ RE-HOMED, NOT WEAKENED (`P1-J1.4-E294`, 2026-09-01) ──────────────────
+
+    The SCENARIO is unchanged — Marelise's ten project tables, no employers — and
+    the assertions are STRONGER: they now pin the equation this brief is judged on.
+
+    ⚠ SUPERSEDED, quoted, all four:
+      · `check("all 10 projects become entries", parsed.experiences.length === 10)`
+      · `check("each carries its client as the employer",
+         parsed.experiences.every((e) => /^Client \d+$/.test(e.employer)))`
+      · `check("each carries a start date",
+         parsed.experiences.every((e) => e.startDate === "2023-09-01"))`
+      · `check("software is named in the description, not lost",
+         parsed.experiences[0]?.description?.includes(...))`
+
+    The first asserted the FLATTENING — ten projects arriving as ten fake
+    employers, which is precisely the defect Scott filed as *"28 employers"*.
+    Correct for the old contract, wrong for this one, so it is INVERTED.
+
+    ⚠⚠ AND TWO OF THE FOUR HAD ALREADY GONE VACUOUSLY GREEN. With `experiences`
+    now empty, `parsed.experiences.every(...)` is TRUE OF AN EMPTY ARRAY — the
+    client and start-date checks were passing while asserting nothing at all.
+    A test that cannot fail is worse than a missing one, so both were re-pointed
+    at `projects`, where the data actually is.
+  */
+  check("no project is promoted to a fake employer", parsed.experiences.length === 0, parsed.experiences.length);
+  check("all 10 projects survive as projects", parsed.projects.length === 10, parsed.projects.length);
   check(
-    "each carries its client as the employer",
-    parsed.experiences.every((e) => /^Client \d+$/.test(e.employer)),
-    parsed.experiences.slice(0, 2).map((e) => e.employer)
+    "THE EQUATION: extracted === attached + unattached, nothing lost",
+    parsed.projects.filter((p) => p.employerName).length +
+      parsed.projects.filter((p) => !p.employerName).length ===
+      MARELISE_LIKE.projects.length,
+    { extracted: MARELISE_LIKE.projects.length, mapped: parsed.projects.length }
+  );
+  check(
+    "with no employers to match, every project is UNATTACHED not dropped",
+    parsed.projects.length > 0 && parsed.projects.every((p) => p.employerName === null)
+  );
+  check(
+    "each carries its client",
+    parsed.projects.length > 0 && parsed.projects.every((p) => /^Client \d+$/.test(p.client ?? "")),
+    parsed.projects.slice(0, 2).map((p) => p.client)
   );
   check(
     "each carries a start date",
-    parsed.experiences.every((e) => e.startDate === "2023-09-01"),
-    parsed.experiences[0]?.startDate
+    parsed.projects.length > 0 && parsed.projects.every((p) => p.startDate === "2023-09-01"),
+    parsed.projects[0]?.startDate
   );
   check(
-    "software and skills are folded into skills",
-    parsed.skills.includes("Oracle Cloud HCM Applications") &&
-      parsed.skills.includes("OTBI Dashboards"),
-    parsed.skills
-  );
-  check(
-    "software is named in the description, not lost",
-    Boolean(parsed.experiences[0]?.description?.includes("Oracle Cloud HCM Applications"))
+    "software survives as structured data, not lost",
+    Boolean(parsed.projects[0]?.software?.includes("Oracle Cloud HCM Applications")),
+    parsed.projects[0]?.software
   );
 }
 

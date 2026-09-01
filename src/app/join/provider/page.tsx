@@ -1788,6 +1788,10 @@ export default function JoinProviderPage() {
         <WizardShell
           {...shell({
             title: "What Kind of Work Do You Do?",
+            /* `E297` — `tightBody` closes the 32px gap under the title block to 16.
+               It is the opt-in `WizardShell` already provides (`E188`), used here
+               to buy back height without touching the shared card. */
+            tightBody: true,
             subtitle:
               "Pick the role that fits. Most people pick one — choose more if you genuinely work across them, like a techno-functional consultant.",
             onContinue: () =>
@@ -1804,10 +1808,41 @@ export default function JoinProviderPage() {
             <p className="text-ink-2">Loading roles…</p>
           ) : (
             <>
-              {/* Bounded for the same reason the skills list is: the page's
-                  height must not depend on how big the taxonomy gets. */}
-              <div className={`max-h-[420px] ${SCROLL_REGION}`}>
-                <div className="space-y-3">
+              {/*
+                ── ⚠⚠ NO WRAPPER. THE CARDS SIT ON THE PAGE (`P1-J1.4-E297`, 2026-09-01) ──
+              
+                Scott, with both screenshots: *"I want image 1 to look like the style of
+                image 2. No grey, no scroll... shrink them if you have to, but all on one
+                page."* Image 2 is `/join`, which renders the SAME `OptionCard` straight
+                onto white.
+              
+                ⚠ SUPERSEDED, quoted: `<div className={`max-h-[420px] ${SCROLL_REGION}`}>`,
+                carrying *"Bounded for the same reason the skills list is: the page's height
+                must not depend on how big the taxonomy gets."*
+              
+                ⚠⚠ ONE WRAPPER WAS CAUSING ALL THREE COMPLAINTS, and removing it fixes a
+                fourth thing that is not obvious: `SCROLL_REGION` carries `bg-bg-soft/40`,
+                and `OptionCard` SETS NO BACKGROUND WHEN UNSELECTED — it is transparent and
+                takes whatever is behind it. So the tint was showing THROUGH the cards. On
+                `/join` the page behind them is white, which is why they look different
+                there. Dropping the wrapper makes the unselected cards white by itself.
+                ⚠ DO NOT "FIX" THAT BY ADDING `bg-white` TO `OptionCard` — it is shared, and
+                that would repaint every card in the app, including ones deliberately on
+                tinted surfaces.
+              
+                ⚠ SAFE TO UNBOUND HERE, AND ONLY HERE. `fieldRoles` is `RoleType`, a SEEDED
+                TAXONOMY, not user data — five rows today (AI-Specialist,
+                Application-Specific, Operations-Specific, Project-Specific,
+                Technology-Specific), counted against the live database, and it grows only
+                when someone edits the catalog. ⚠ THE SKILLS STEP KEEPS ITS `SCROLL_REGION`
+                (300+ catalog entries) AND SO DO THE OTHER THREE USES. The constant stays.
+                `E053`/`E054` are about lists that grow; this list does not.
+              */}
+              {/* ⚠ `space-y-2`, NOT `space-y-3` (`E297`). Scott: *"shrink them if you have
+                  to, but all on one page."* Tightening the GAP is in scope; tightening the
+                  CARD is not — `OptionCard` is shared with `/join` and the brief forbids
+                  restyling it. See the report for what this does and does not buy. */}
+              <div className="space-y-2">
                   {fieldRoles.map((r) => {
                     const picked = profile.roleTypeIds.includes(r.id);
                     const isPrimary = profile.roleTypeIds[0] === r.id;
@@ -1837,7 +1872,6 @@ export default function JoinProviderPage() {
                     );
                   })}
                 </div>
-              </div>
               {profile.roleTypeIds.length > 1 && (
                 <p className="mt-3 text-[14px] text-ink-2">
                   You&apos;ll pick skills from all{" "}
