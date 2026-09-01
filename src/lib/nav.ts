@@ -207,7 +207,7 @@ export const PAGE_TABS: Record<string, NavItem[]> = {
     { label: "My Courses", href: "/learn/my-courses" },
   ],
   "/settings/packages": [
-    { label: "My Services", href: "/settings/packages" },
+    { label: "Service Products", href: "/settings/packages" },
     { label: "Offers for My Services", href: "/services/offers" },
   ],
   "/finances": [

@@ -30,7 +30,7 @@ export function LearnHome({
   /**
    * Which tab to open on (WS1-B).
    *
-   * The rail's Start Learning submenu has "All learning paths" and "My Learning
+   * The rail's Start Learning submenu has "All Learning Paths" and "My Learning
    * Paths" as separate entries, and they are the same page with this filter
    * flipped — the tabs were already a filter over one catalog rather than two
    * pages, which is why this is an initial value and not a second route. Read
@@ -114,7 +114,7 @@ export function LearnHome({
                   : "text-white/80 hover:text-white")
               }
             >
-              All learning paths
+              All Learning Paths
             </button>
             <button
               type="button"
@@ -145,13 +145,13 @@ export function LearnHome({
               href="/learn/courses"
               className="rounded-full px-5 py-2 text-[14px] font-bold text-white/80 transition-colors hover:text-white"
             >
-              All courses
+              All Courses
             </Link>
             <Link
               href="/learn/my-courses"
               className="rounded-full px-5 py-2 text-[14px] font-bold text-white/80 transition-colors hover:text-white"
             >
-              My courses
+              My Courses
             </Link>
           </div>
 

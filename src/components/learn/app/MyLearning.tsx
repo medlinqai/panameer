@@ -136,7 +136,7 @@ export function MyLearning({ data }: { data: MyLearningData }) {
             tone="blue"
             value={`${mine.coursesFinished}`}
             sub={`/ ${totals.courses}`}
-            label="Courses finished"
+            label="Courses Finished"
           />
           <StatTile
             icon={<ShieldCheck className="h-[19px] w-[19px]" aria-hidden />}
@@ -149,7 +149,7 @@ export function MyLearning({ data }: { data: MyLearningData }) {
             tone="green"
             value={`${mine.lessonsCompleted}`}
             sub={`/ ${totals.lessons}`}
-            label="Lessons completed"
+            label="Lessons Completed"
           />
         </div>
 
@@ -162,10 +162,10 @@ export function MyLearning({ data }: { data: MyLearningData }) {
         */}
         <nav className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12.5px]">
           <Link href="/learn/paths" className="font-semibold text-magenta hover:underline">
-            All learning paths
+            All Learning Paths
           </Link>
           <Link href="/learn/courses" className="text-ink-2 hover:text-magenta">
-            All courses
+            All Courses
           </Link>
           <Link href="/learn/my-courses" className="text-ink-2 hover:text-magenta">
             My courses

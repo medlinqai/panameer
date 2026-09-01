@@ -78,7 +78,7 @@ export function CoverageCard({ data }: { data: MyLearning }) {
         </div>
 
         <div className="flex w-full flex-col gap-2.5">
-          <LegendRow swatch="var(--color-magenta)" name="Learning paths" state="certified" value={`${mine.pathsCertified} / ${totals.paths}`} />
+          <LegendRow swatch="var(--color-magenta)" name="Learning Paths" state="certified" value={`${mine.pathsCertified} / ${totals.paths}`} />
           <LegendRow swatch="#8b1fa8" name="Courses" state="finished" value={`${mine.coursesFinished} / ${totals.courses}`} />
           <LegendRow swatch="var(--color-learn-blue)" name="Lessons" state="watched" value={`${mine.lessonsCompleted} / ${totals.lessons}`} />
         </div>

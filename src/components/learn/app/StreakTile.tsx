@@ -35,7 +35,7 @@ export default function StreakTile({ completedAt }: { completedAt: string[] }) {
       icon={<Flame className="h-[19px] w-[19px]" aria-hidden />}
       tone="flame"
       value={`${streak.current} day${streak.current === 1 ? "" : "s"}`}
-      label="Current streak"
+      label="Current Streak"
       /* "best yet" only when it is genuinely their best AND there is one. */
       note={streak.current > 0 && streak.current >= streak.best ? "best yet" : undefined}
     />
