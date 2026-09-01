@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { notify } from "@/lib/notifications";
 import { prisma } from "@/lib/prisma";
 import { getSessionViewer } from "@/lib/session";
 
@@ -39,7 +40,7 @@ export async function POST(request: Request) {
 
   const path = await prisma.learningPath.findFirst({
     where: { id: pathId, status: "PUBLISHED" },
-    select: { id: true },
+    select: { id: true, title: true, slug: true },
   });
   if (!path) {
     return NextResponse.json({ error: "That learning path isn't available." }, { status: 404 });
@@ -60,5 +61,29 @@ export async function POST(request: Request) {
     create: { user_id: viewer.userId, learning_path_id: pathId },
     update: {},
   });
+
+  /*
+    ⚠ THE DUPLICATE-SIGNUP FIX SCOTT ASKED FOR ON THE LEARN WALK — *"add the
+    prevent for duplicate sign up"*. The enrollment itself was already idempotent
+    (the upsert above); the NOTIFICATION would not have been, so `dedupeKey` makes
+    enrolling twice produce one row, not two.
+    ⚠ `notify()` NEVER THROWS INTO THIS HANDLER — a failed notification must not
+    fail an enrollment. It catches internally; no try/catch is needed here.
+    ⚠ KEYED ON THE PERSON, NOT THE USER. Notifications address a `Person`.
+  */
+  const person = await prisma.person.findUnique({
+    where: { user_id: viewer.userId },
+    select: { id: true },
+  });
+  if (person) {
+    await notify({
+      event: "learn.path_enrolled",
+      personId: person.id,
+      entityType: "LearningPath",
+      entityId: path.id,
+      dedupeKey: `learn.path_enrolled:${path.id}`,
+      vars: { pathTitle: path.title, pathSlug: path.slug },
+    });
+  }
   return NextResponse.json({ ok: true, enrolled: true });
 }

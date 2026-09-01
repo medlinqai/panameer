@@ -81,7 +81,17 @@ export async function getMe(viewer: Viewer) {
     where: scopedToPAccount(scopedViewer, {}),
   });
 
+  /*
+    ⚠ THE BELL'S NUMBER (`P1-ALL`, 2026-09-01). Unread AND delivered — a `DIGEST`
+    or `SILENT` row exists but was never sent, so counting it would put a number on
+    the bell for something the user cannot open.
+  */
+  const notificationsUnread = await prisma.notification.count({
+    where: { person_id: person.id, delivered_in_app_at: { not: null }, read_at: null },
+  });
+
   return {
+    notificationsUnread,
     person: {
       id: person.id,
       firstName: person.first_name,

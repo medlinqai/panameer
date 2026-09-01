@@ -39,6 +39,8 @@ import { CreditsPill } from "@/components/casing/CreditsPill";
  */
 export function AppHeader() {
   const { me } = useMe();
+  /* `P1-ALL` — unread AND delivered; absent at zero, never a 0 badge. */
+  const unreadCount = me?.notificationsUnread ?? 0;
   const pathname = usePathname();
 
   /*
@@ -304,18 +306,38 @@ export function AppHeader() {
         </span>
 
         {/*
-          NO COUNT ON THE BELL, deliberately. The notifications backend is not
-          built; the page renders an empty state and its own comment says the
-          bell carries no badge "because a '0' badge asserts something we
-          haven't checked and a fake number is worse than none". The badge ships
-          with the feed, in one change, when there is a number behind it.
+          ⚠⚠ THE BADGE SHIPS WITH THE FEED, IN ONE CHANGE (`P1-ALL`, 2026-09-01).
+        
+          ⚠ SUPERSEDED, quoted, and it was a PROMISE rather than a limitation: *"NO
+          COUNT ON THE BELL, deliberately. The notifications backend is not built;
+          the page renders an empty state… because a '0' badge asserts something we
+          haven't checked and a fake number is worse than none. The badge ships with
+          the feed, in one change, when there is a number behind it."*
+          THERE IS NOW A NUMBER BEHIND IT, so the comment is redeemed rather than
+          left lying next to a badge it says should not exist.
+        
+          ⚠ IT COUNTS UNREAD **AND DELIVERED** rows only — a `DIGEST` or `SILENT`
+          row exists but was never sent, and badging one would point the user at
+          something they cannot open.
+          ⚠ AND IT STILL RENDERS NOTHING AT ZERO. The original objection was to a
+          "0" badge, and that objection survives: absent, not zero.
         */}
         <IconLink
           href={NOTIFICATIONS_NAV.href}
           label={NOTIFICATIONS_NAV.label}
           active={pathname.startsWith(NOTIFICATIONS_NAV.href)}
         >
-          <BellIcon />
+          <span className="relative inline-flex">
+            <BellIcon />
+            {unreadCount > 0 && (
+              <span
+                aria-label={`${unreadCount} unread notifications`}
+                className="absolute -right-1.5 -top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-magenta px-1 text-[10px] font-bold text-white"
+              >
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
+          </span>
         </IconLink>
 
         {/* The account menu — the ONE home for Sign Out (locked spec). */}

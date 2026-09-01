@@ -415,6 +415,7 @@ model Person {
   taxProfile               TaxProfile?
   identityVerification     IdentityVerification?
   notificationPrefs        NotificationPreference[]
+  notifications            Notification[]
 
   @@index([company_id])
   @@index([site_id])
@@ -1958,6 +1959,7 @@ model Certification {
   /**
    * /**
    * /**
+   * /**
    * ⚠⚠ REQUIRED, NOT `User?`, AND THE `?` WAS A REAL DEFECT (`P1-J3-E028`).
    * `user_id String @db.Uuid` above is NOT NULL and so is the FK. Prisma accepts an
    * optional relation field over a required scalar without complaint, and then
@@ -2957,6 +2959,116 @@ enum IdvStatus {
 /// category list is Panameer's event model and it will grow, and every new
 /// event would otherwise be a migration. Absent row = the category's documented
 /// default, so a new category ships with sensible behaviour and no backfill.
+/// AI AUTONOMY, DECLARED PER EVENT × RECIPIENT (`P1-ALL`, 2026-09-01).
+///
+/// ⚠⚠ MedLinq's six, adopted wholesale at Scott's prompt. For a product whose
+/// pitch is "AI-native", THIS COLUMN IS THE GOVERNANCE MODEL — it is where
+/// autonomy is granted or withheld, event by event, on the record.
+///
+/// ⚠ STORING IT DOES NOT EXECUTE IT. Nothing in this codebase reads `ai_mode` to
+/// decide behaviour yet, and nothing in the brief that introduced it does either.
+/// It is written so the decision is AUDITABLE the day something does act.
+enum NotificationAiMode {
+  /// Autonomous. 33 of MedLinq's 58 events are this.
+  DO_IT
+  REVIEW_IT
+  /// AI drafts, a human approves. Used where a row names one person to another,
+  /// or broadcasts to many — neither is a thing an AI should send unreviewed.
+  SEND_FOR_APPROVAL
+  PENDING_GROUP_APPROVAL
+  DELEGATE_TO_HUMAN
+  NONE
+}
+
+/// WHETHER A RECORDED EVENT IS ALSO DELIVERED.
+///
+/// ⚠⚠ THE EVENT IS RECORDED EVEN WHEN NOTHING IS DELIVERED. A decision NOT to
+/// notify is a decision, and writing it down is what stops it being re-litigated
+/// on every walk.
+enum NotificationVisibility {
+  /// Appears in the feed now and counts toward the bell badge.
+  FEED
+  /// Recorded; does NOT appear and does NOT count. `learn.lesson_completed` is
+  /// this — 522 lessons exist and per-lesson delivery is the fastest way to get
+  /// muted. ⚠ The digest SENDER is deliberately not built; rows accumulate.
+  DIGEST
+  /// Recorded, never delivered. `profile.published` is this — the user is looking
+  /// at the screen that says it.
+  SILENT
+}
+
+/// ONE DELIVERED (OR DELIBERATELY UNDELIVERED) EVENT, ADDRESSED TO ONE PERSON.
+///
+/// ⚠⚠ ONE TABLE, NOT TWO. Scott: *"much of Medlinq's notifications work like
+/// Oracle cloud's notifications… or should i say worklist."* An Oracle worklist is
+/// not a second inbox — it is the subset of your notifications WAITING ON YOU. So
+/// the bell and the worklist are two VIEWS of this one list:
+///   · bell     = everything delivered, newest first
+///   · worklist = `requires_action && resolved_at IS NULL`
+/// Two tables would mean two write paths, two unread counts, and two places for an
+/// item to be missed.
+///
+/// ⚠ ONE ROW PER (EVENT × RECIPIENT), never one row addressed to two people.
+/// `learn.course_completed` fires TWICE — to the learner and to the instructor —
+/// with different text and different `ai_mode`.
+///
+/// ⚠ READING IS NOT RESOLVING. `read_at` says they saw it; `resolved_at` says the
+/// thing it asked for is done. An actionable row stays on the worklist after it
+/// has been read.
+model Notification {
+  id        String @id @default(uuid()) @db.Uuid
+  /// THE RECIPIENT. Always exactly one person.
+  person_id String @db.Uuid
+
+  /// e.g. "learn.course_completed" — the key in `lib/notification-events.ts`.
+  event_key String
+  /// MUST match a key in `lib/notification-categories.ts`; `check:notifications`
+  /// fails the build if it does not, because an unknown category would write rows
+  /// no settings page can ever reach.
+  category  String
+
+  title String
+  body  String?
+  /// Where the action lives. Null for rows that are purely informational.
+  href  String?
+
+  entity_type String?
+  entity_id   String? @db.Uuid
+
+  ai_mode    NotificationAiMode     @default(DO_IT)
+  visibility NotificationVisibility @default(FEED)
+
+  /// True when this row belongs on the worklist rather than only the bell.
+  requires_action Boolean @default(false)
+
+  /// ⚠ IDEMPOTENCY IS A COLUMN, NOT A CONVENTION. Enrolling in a path twice must
+  /// not produce two rows — this is also the duplicate-signup fix Scott asked for
+  /// on the Learn walk. `notify()` upserts on it; events with no natural key pass
+  /// null and always insert.
+  dedupe_key String?
+
+  /// Set when the row actually reached the in-app feed. Null means it did not, and
+  /// `suppressed_reason` says why.
+  delivered_in_app_at DateTime?
+  /// ⚠⚠ A DROPPED DELIVERY WITH NO RECORD IS HOW "I NEVER GOT TOLD" BECOMES
+  /// UNANSWERABLE. One of: "digest" · "silent" · "user_opted_out" ·
+  /// "email_not_configured" · "sms_not_configured".
+  suppressed_reason   String?
+
+  read_at     DateTime?
+  resolved_at DateTime?
+  created_at  DateTime  @default(now())
+
+  person Person @relation(fields: [person_id], references: [id], onDelete: Cascade)
+
+  /// ⚠ NULL `dedupe_key` DOES NOT COLLIDE IN POSTGRES — several nulls are allowed
+  /// under a unique index, which is exactly the "always insert" behaviour wanted.
+  @@unique([person_id, dedupe_key])
+  @@index([person_id, read_at])
+  @@index([person_id, requires_action, resolved_at])
+  @@map("notifications")
+}
+
 model NotificationPreference {
   id         String   @id @default(uuid()) @db.Uuid
   person_id  String   @db.Uuid

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { notify } from "@/lib/notifications";
 import {
   recomputeProviderRollup,
   SELF_ADDED_WEIGHT,
@@ -2392,11 +2393,39 @@ export async function publishProfile(viewer: Viewer) {
     );
   }
 
+  const wasAlreadyPublished = pp.onboarding_completed_at != null;
   await prisma.providerProfile.update({
     where: { id: pp.id },
     data: { onboarding_completed_at: pp.onboarding_completed_at ?? new Date() },
   });
   await recomputeCompleteness(pp.id);
+
+  /*
+    ⚠ TWO EVENTS AT ONE WRITE POINT (`P1-ALL`), because the spec defines two:
+      · `profile.ready`     -> FEED, the user is told
+      · `profile.published` -> SILENT, recorded and deliberately NOT delivered,
+        because the user is looking at the screen that says it. A decision not to
+        notify is a decision; the row is what stops it being re-litigated.
+    ⚠ ONLY ON THE TRANSITION. Re-saving a published profile must not re-announce
+    it, which is what `wasAlreadyPublished` guards — the dedupe key would also
+    catch it, and both is deliberate: one is intent, one is the safety net.
+  */
+  if (!wasAlreadyPublished) {
+    await notify({
+      event: "profile.ready",
+      personId: pp.person_id,
+      entityType: "ProviderProfile",
+      entityId: pp.id,
+      dedupeKey: `profile.ready:${pp.id}`,
+    });
+    await notify({
+      event: "profile.published",
+      personId: pp.person_id,
+      entityType: "ProviderProfile",
+      entityId: pp.id,
+      dedupeKey: `profile.published:${pp.id}`,
+    });
+  }
 
   /*
     WS-G — THE CORRECTION SIGNAL, captured at review-save.

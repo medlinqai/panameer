@@ -16,8 +16,25 @@
  */
 export type NotificationGroup = "messages" | "email" | "tax";
 
+/**
+ * ⚠⚠ WHICH SIDE OF THE MARKETPLACE A CATEGORY BELONGS TO (`P1-ALL`, 2026-09-01).
+ *
+ * Filed as blocking in `event_behavior.md`: the model had NO audience concept, so
+ * `NotificationSettings` rendered every category to everyone. A buyer was shown
+ * *"Panameer can't pay you until a W-9 or W-8 is on file"*, and a seller was shown
+ * *"A settlement request needs your approval"*.
+ *
+ * ⚠ A TS FIELD, NOT A MIGRATION. The categories live in this file and
+ * `NotificationPreference.category` is a plain string, so nothing in the database
+ * changes.
+ * ⚠ `both` IS NOT A COP-OUT — messages, Learn and product news genuinely reach
+ * both sides. Only use it where that is true.
+ */
+export type NotificationAudience = "seller" | "buyer" | "both";
+
 export type NotificationCategory = {
   key: string;
+  audience: NotificationAudience;
   group: NotificationGroup;
   label: string;
   blurb: string;
@@ -51,6 +68,7 @@ export const NOTIFICATION_GROUPS: {
 export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   {
     key: "message.received",
+    audience: "both",
     group: "messages",
     label: "New message from a buyer",
     blurb: "Someone started or replied to a conversation with you.",
@@ -58,6 +76,7 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   },
   {
     key: "work_request.matched",
+    audience: "seller",
     group: "messages",
     label: "A work request matches your profile",
     blurb: "A buyer posted work your skills and packages fit.",
@@ -65,6 +84,7 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   },
   {
     key: "work_order.status",
+    audience: "seller",
     group: "messages",
     label: "Work order status changes",
     blurb: "A work order you're on was issued, amended or closed.",
@@ -72,6 +92,7 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   },
   {
     key: "milestone.due",
+    audience: "seller",
     group: "messages",
     label: "Milestone and timesheet deadlines",
     blurb: "Something you owe a buyer is due, or a submitted milestone was approved.",
@@ -136,6 +157,7 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   */
   {
     key: "buyer.proposals.received",
+    audience: "buyer",
     group: "messages",
     label: "Proposals on your work request",
     blurb: "A provider responded to work you posted.",
@@ -143,6 +165,7 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   },
   {
     key: "buyer.provider.responded",
+    audience: "buyer",
     group: "messages",
     label: "A provider accepted or declined",
     blurb: "Someone you invited to your work request answered.",
@@ -150,6 +173,7 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   },
   {
     key: "buyer.work_order.status",
+    audience: "buyer",
     group: "messages",
     label: "Your work order status changes",
     blurb: "A work order you released was accepted, amended or closed.",
@@ -157,6 +181,7 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   },
   {
     key: "buyer.settlement.approval",
+    audience: "buyer",
     group: "messages",
     label: "A settlement request needs your approval",
     blurb: "A provider submitted work for you to approve before it can be paid.",
@@ -164,6 +189,7 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   },
   {
     key: "buyer.timesheet.approval",
+    audience: "buyer",
     group: "messages",
     label: "A timesheet needs approving",
     blurb: "Hours were submitted against a work order you own.",
@@ -192,6 +218,7 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   */
   {
     key: "profile.visibility",
+    audience: "seller",
     group: "email",
     label: "Profile and visibility",
     blurb:
@@ -200,6 +227,7 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   },
   {
     key: "recommendation.received",
+    audience: "seller",
     group: "email",
     label: "Recommendations and validations",
     blurb: "Someone you asked wrote you a recommendation, or confirmed a project.",
@@ -207,13 +235,42 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   },
   {
     key: "learn.progress",
+    audience: "both",
     group: "email",
     label: "Learn — courses and certifications",
     blurb: "A certification was issued, or a path you're enrolled in was updated.",
     defaults: { inApp: true, email: false, sms: false },
   },
+  /*
+    ⚠⚠ THE ONE CATEGORY I ADDED, AND SCOTT HAS NOT NAMED IT (`P1-ALL`, 2026-09-01).
+
+    `event_behavior.md` defines `community.joined` and `community.content_added`,
+    and NO existing category covers them — the sixteen shipped rows are seller
+    lifecycle, buyer lifecycle, tax and product news. The spec's own instruction is
+    *"Map new events onto existing categories before creating any"*, and I did:
+    nothing fits.
+
+    ⚠ THE ALTERNATIVE WAS WORSE. Leaving them uncategorised would either point
+    registry rows at a category that does not exist — which `check:notifications`
+    fails the build on, correctly — or drop two events the spec defines, which the
+    same harness also fails. So the category exists and the NAME is flagged.
+    ⚠ CATEGORY NAMES HAVE BEEN SCOTT'S TO APPROVE SINCE `P1-ALL-E032`. This one is
+    CC's. Renaming it is one line here plus two `category:` values in
+    `notification-events.ts`; no migration, because preferences key on a string and
+    an absent row means these defaults.
+    ⚠ `email: false` — email cannot send. Consistent with the buyer rows.
+  */
+  {
+    key: "community.activity",
+    audience: "both",
+    group: "messages",
+    label: "Community activity",
+    blurb: "You joined, or something new was added where you follow.",
+    defaults: { inApp: true, email: false, sms: false },
+  },
   {
     key: "product.updates",
+    audience: "both",
     group: "email",
     label: "Product news from Panameer",
     blurb: "New features, and occasional research invitations. Never sales mail.",
@@ -221,6 +278,7 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   },
   {
     key: "tax.documents",
+    audience: "seller",
     group: "tax",
     label: "Tax documents",
     blurb: "Your annual summary is ready, or a form on file needs renewing.",
@@ -228,6 +286,7 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   },
   {
     key: "tax.form_required",
+    audience: "seller",
     group: "tax",
     label: "A tax form is required before payout",
     blurb:
@@ -237,6 +296,7 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   },
   {
     key: "payout.sent",
+    audience: "seller",
     group: "tax",
     label: "Withdrawals and payouts",
     blurb: "Money left Panameer for your account, or a withdrawal failed.",
@@ -246,6 +306,25 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
 
 export function categoriesFor(group: NotificationGroup): NotificationCategory[] {
   return NOTIFICATION_CATEGORIES.filter((c) => c.group === group);
+}
+
+/**
+ * The categories one person should be offered.
+ *
+ * ⚠ SOMEBODY WHO IS BOTH SEES BOTH SIDES, which is correct — a dual-role account
+ * genuinely receives both kinds of notification. ⚠ AND SOMEBODY WHO IS NEITHER
+ * still sees the `both` rows rather than an empty page.
+ */
+export function categoriesForAudience(
+  group: NotificationGroup,
+  opts: { isSeller: boolean; isBuyer: boolean }
+): NotificationCategory[] {
+  return categoriesFor(group).filter(
+    (c) =>
+      c.audience === "both" ||
+      (c.audience === "seller" && opts.isSeller) ||
+      (c.audience === "buyer" && opts.isBuyer)
+  );
 }
 
 export function findCategory(key: string): NotificationCategory | undefined {

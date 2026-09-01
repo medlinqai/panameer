@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Card, postSetting } from "@/components/settings/controls";
 import {
   NOTIFICATION_GROUPS,
-  categoriesFor,
+  categoriesForAudience,
   type NotificationGroup,
 } from "@/lib/notification-categories";
 
@@ -28,14 +28,30 @@ import {
  */
 type Pref = { key: string; inApp: boolean; email: boolean; sms: boolean };
 
-export function NotificationSettings({ prefs }: { prefs: Pref[] }) {
+export function NotificationSettings({
+  prefs,
+  isSeller,
+  isBuyer,
+}: {
+  prefs: Pref[];
+  /** ⚠ `P1-ALL` — audience filtering. See `categoriesForAudience`. */
+  isSeller: boolean;
+  isBuyer: boolean;
+}) {
   const [tab, setTab] = useState<NotificationGroup>("messages");
   const [state, setState] = useState<Record<string, Pref>>(
     Object.fromEntries(prefs.map((p) => [p.key, p]))
   );
 
   const group = NOTIFICATION_GROUPS.find((g) => g.id === tab)!;
-  const rows = categoriesFor(tab);
+  /*
+    ⚠ FILTERED BY AUDIENCE (`P1-ALL`, 2026-09-01). ⚠ SUPERSEDED, quoted:
+    `const rows = categoriesFor(tab);` — unfiltered, so a buyer was shown
+    "Panameer can't pay you until a W-9 or W-8 is on file" and a seller was shown
+    "A settlement request needs your approval". A dual-role account sees both,
+    which is correct.
+  */
+  const rows = categoriesForAudience(tab, { isSeller, isBuyer });
 
   const setChannel = async (
     key: string,

@@ -11,6 +11,8 @@ export type Rates = {
 };
 
 export type Me = {
+  /** `P1-ALL` — unread AND delivered. Drives the bell badge. */
+  notificationsUnread: number;
   /**
    * ⚠ NULLABLE — A SIGNED-IN USER WITH NO `Person` IS A STATE THE APP CAN REACH
    * (P1-ALL-E002).

@@ -21,7 +21,25 @@ import { NotificationSettings } from "@/components/settings/NotificationSettings
 export const metadata = { title: "Notification Settings · Panameer" };
 
 export default async function NotificationsPage() {
-  const viewer = await guardPage("canProvideServices");
+  /*
+    ⚠⚠ `authenticated`, NOT `canProvideServices` (`P1-ALL`, 2026-09-01).
+
+    ⚠ SUPERSEDED, quoted: `guardPage("canProvideServices")`.
+
+    This page holds the FIVE BUYER CATEGORIES shipped in `98f9675`, and the guard
+    meant a buyer could not open the settings page that owns their own
+    preferences. Filed as blocking in `event_behavior.md`; this is the fix.
+    ⚠ NOT A WEAKENING: the rows are now filtered BY AUDIENCE below, so a seller
+    still does not see buyer categories and vice versa. The gate stopped the wrong
+    people entering; the filter shows the right people the right rows.
+  */
+  const viewer = await guardPage("authenticated");
   const prefs = await getNotificationPrefs(viewer);
-  return <NotificationSettings prefs={prefs} />;
+  return (
+    <NotificationSettings
+      prefs={prefs}
+      isSeller={viewer.isServiceProvider || viewer.isServiceCoordinator}
+      isBuyer={viewer.isServiceBuyer}
+    />
+  );
 }
