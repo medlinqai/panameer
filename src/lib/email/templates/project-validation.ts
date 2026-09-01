@@ -37,7 +37,7 @@ export function projectValidationTemplate({
   const logoBlock = logoUrl
     ? `<img src="${logoUrl}" alt="Panameer" width="180" height="25"
            style="display:block;border:0;outline:none;text-decoration:none;height:auto;width:180px;max-width:180px;">`
-    : `<div style="font-size:22px;font-weight:800;letter-spacing:-.5px;color:#181E3C;">Panameer</div>`;
+    : `<div style="font-size:22px;font-weight:800;letter-spacing:-.5px;color:#272334;">Panameer</div>`;
 
   const html = `<!doctype html>
 <html>
@@ -47,7 +47,7 @@ export function projectValidationTemplate({
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
   </head>
-  <body style="margin:0;padding:0;background:#F0F7F8;font-family:Arial,Helvetica,sans-serif;color:#181E3C;">
+  <body style="margin:0;padding:0;background:#F0F7F8;font-family:Arial,Helvetica,sans-serif;color:#272334;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F0F7F8;padding:32px 0;">
       <tr><td align="center">
         <table role="presentation" width="520" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:14px;border:1px solid #ece9f1;overflow:hidden;">
@@ -56,20 +56,20 @@ export function projectValidationTemplate({
           </td></tr>
 
           <tr><td style="padding:8px 40px 0;">
-            <h1 style="font-size:22px;line-height:1.35;margin:0 0 16px;color:#181E3C;">
+            <h1 style="font-size:22px;line-height:1.35;margin:0 0 16px;color:#272334;">
               Did ${escapeHtml(provider)} work on this project?
             </h1>
 
             <p style="font-size:15px;line-height:1.65;color:#4a4658;margin:0 0 20px;">
-              <b style="color:#181E3C;">${escapeHtml(provider)}</b> listed a project
+              <b style="color:#272334;">${escapeHtml(provider)}</b> listed a project
               they worked on with your team at
-              <b style="color:#181E3C;">${escapeHtml(clientName)}</b>:
+              <b style="color:#272334;">${escapeHtml(clientName)}</b>:
             </p>
 
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
                    style="background:#F0F7F8;border:1px solid #ece9f1;border-radius:10px;margin:0 0 24px;">
               <tr><td style="padding:16px 18px;">
-                <div style="font-size:16px;font-weight:700;color:#181E3C;">${escapeHtml(projectName)}</div>
+                <div style="font-size:16px;font-weight:700;color:#272334;">${escapeHtml(projectName)}</div>
                 <div style="font-size:13px;color:#8a8199;margin-top:4px;">${escapeHtml(clientName)}</div>
               </td></tr>
             </table>
@@ -104,7 +104,7 @@ export function projectValidationTemplate({
 
           <tr><td style="padding:28px 40px 32px;">
             <hr style="border:0;border-top:1px solid #ece9f1;margin:0 0 18px;">
-            <div style="font-size:14px;font-weight:700;color:#181E3C;margin:0 0 6px;">
+            <div style="font-size:14px;font-weight:700;color:#272334;margin:0 0 6px;">
               What Is Panameer?
             </div>
             <p style="font-size:13px;line-height:1.65;color:#8a8199;margin:0 0 12px;">

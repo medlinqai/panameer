@@ -182,7 +182,10 @@ export default function JoinRequesterPage() {
           error={error}
           /* WS3 — buyer copy. The seller form says "Find Work"; this side is
              the one doing the hiring. */
-          title="Sign Up to Find Talent"
+          /* ⚠ SCOTT'S WORDS, VERBATIM (`E289`). ⚠ SUPERSEDED: "Sign Up to Find Talent".
+             Both buyer-side strings collapse to this one — `Find Talent` and
+             `Hire Talent` were two names for one page. */
+          title="Sign Up to Buy Services and/or Service Products"
           callbackUrl="/join/requester"
           altPrompt={{
             label: "Looking for work?",

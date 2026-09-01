@@ -43,7 +43,10 @@ import {
  *
  * ── ⚠⚠ COLOUR: NOT TOUCHED, EXCEPT ONE TEXT COLOUR THE GATE FORCED ─────────
  *
- * The surface stays `bg-ink` = `#181E3C`, the brand deck's navy, landed in
+ * The surface stays `bg-ink` = `#272334`, the brand deck's one dark colour
+ * (⚠ `E300` retired the navy — hex deliberately not repeated, see §7.4; this
+ * was described as "the brand deck's
+ * navy" until 2026-08-31), landed in
  * `7668110`. Scott: *"the color still looks wrong, not my slate color."* ⚠ THE
  * BRIEF SAYS REPORT, NOT REPAINT, and the computed hex of all three bands is in
  * the report.
@@ -254,7 +257,8 @@ export function MarketingFooter() {
         ── ⚠⚠ SEPARATION IS A HAIRLINE, NOT A SURFACE (2026-08-25) ─────────────
 
         This band shipped with `bg-black/20`, which composited to `#131830` over the
-        navy. ⚠ SCOTT: all three bands are the brand navy `#181E3C` — nothing
+        dark. ⚠ SCOTT: all three bands are the brand dark `#272334` — nothing
+        (⚠ `E300`: this read "the brand navy" while the navy existed) —
         tinted, nothing darkened, nothing lightened. So the tint is GONE and band 3
         now carries the SAME `border-t border-white/10` that already divides bands 1
         and 2. One separation treatment for both seams.

@@ -52,8 +52,19 @@ export default async function GetStartedPage() {
             The caption stays, as the brief specifies.
           */}
           <p className="max-w-md text-[14.5px] text-ink-2">
-            It only takes 5–10 minutes and you can edit it later. We&apos;ll save
-            as you go.
+            {/* ⚠ SCOTT'S WORDS, VERBATIM (`E291`). ⚠ SUPERSEDED, quoted: *"It only
+                takes 5–10 minutes and you can edit it later. We'll save as you go."*
+                ⚠ HIS `3-5` USES A PLAIN HYPHEN where the old string used an en dash.
+                SHIPPED AS TYPED — do not normalise it back.
+                ⚠ TYPO CORRECTED, AND IT IS THE ONLY ONE: he typed `an we will`; this
+                ships `and we will`.
+                ⚠⚠ LAYOUT NOT MOVED, DELIBERATELY. `E291` also asks for this line to sit
+                ABOVE the horizontal rule rather than in the action bar, but that
+                placement came from Scott's WORDS ONLY — the reference images that
+                reached chat were duplicates — and the brief says to confirm with him
+                before shipping the move. The COPY is safe either way, so the copy ships
+                and the move waits on him. */}
+            It takes 3-5 minutes, you can edit it later, and we will save as you go.
           </p>
           <Link
             href="/join/provider"
@@ -86,7 +97,15 @@ export default async function GetStartedPage() {
       <div className="mx-auto w-full max-w-3xl">
         <div>
           <h1 className="text-[34px] tracking-[-0.8px] sm:text-[40px]">
-            Hey {firstName}. Are you ready for your next big opportunity?
+            {/* ⚠ SCOTT'S WORDS, VERBATIM (`P1-J1.1-E290`, 2026-08-31).
+                ⚠ SUPERSEDED, quoted: *"Hey {firstName}. Are you ready for your next big
+                opportunity?"*
+                ⚠ NO COMMA AFTER `Welcome`, NO FULL STOP — exactly as he typed it.
+                ⚠ THE PURPOSE OF THE PAGE NOW SITS IN THE LINE UNDER THE TITLE
+                (*"Let's build an amazing profile so the work finds you!"*), which is
+                unchanged and is the point of this change — Scott: *"(the lets build a
+                profile text in under the title)"*. */}
+            Welcome {firstName}
           </h1>
 
           {/*

@@ -20,7 +20,7 @@
 export const EMAIL_COLORS = {
   magenta: "#D72CD6",
   magentaDark: "#B324B2",
-  ink: "#181E3C",
+  ink: "#272334",
   body: "#4a4658",
   muted: "#8a8199",
   line: "#ece9f1",

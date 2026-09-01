@@ -42,6 +42,7 @@ import {
   type JobPatch,
 } from "@/components/onboarding/WorkHistoryReview";
 import { SUITES, SUITE_ORDER } from "@/lib/suite";
+import { titleCase } from "@/lib/title-case";
 import type { SoftwareSuite } from "@prisma/client";
 import { TestimonialCard, DECK_TESTIMONIALS } from "@/components/onboarding/TestimonialCarousel";
 import {
@@ -1318,6 +1319,9 @@ export default function JoinProviderPage() {
           </div>
         )}
         <SignUpForm
+          /* ⚠ SCOTT'S WORDS, VERBATIM (`E288`). Was inherited from the removed
+             default, which read "Sign Up to Find Work". */
+          title="Sign Up to Sell Services and/or Service Products"
           values={acct}
           onChange={(patch) => setAcct((a) => ({ ...a, ...patch }))}
           error={error}
@@ -1393,7 +1397,13 @@ export default function JoinProviderPage() {
       return (
         <WizardShell
           {...shell({
-            title: "Got it. Now, add a title to tell the world what you do.",
+            /* ⚠ SCOTT'S WORDS, VERBATIM (`E292`). ⚠ SUPERSEDED, quoted: *"Got it. Now,
+               add a title to tell the world what you do."*
+               ⚠ `Got it.` WAS AN ANSWERING WORD WHOSE ANTECEDENT IS GONE — after
+               `E290` the screen before this asks nothing, so it answered a
+               question nobody had been asked. A sequencing fix, not a tone
+               preference. ⚠ The sub-copy on the next line is NOT changed. */
+            title: "Let's start by telling the world what you do.",
             subtitle:
               "It's the very first thing clients see, so make it count. Stand out by describing your expertise in your own words.",
             /*
@@ -1431,7 +1441,7 @@ export default function JoinProviderPage() {
           */}
           <Field
             label="Your Title"
-            hint="This is the title buyers see on your card — one line, so keep it tight."
+            hint="This is the title buyers see on your profile — one line, so keep it tight."
           >
             <TextInput
               value={profile.headline}
@@ -1877,7 +1887,26 @@ export default function JoinProviderPage() {
         });
 
       const addCustomSkill = () => {
-        const name = skillQuery.trim();
+        /*
+          ⚠⚠ TITLE-CASED ON SAVE (`P1-J1.4-E298`, 2026-08-31). Scott's own chip read
+          `purchase requisitons` — lower-case, and the page prints the stakes right
+          below it: *"each one is another search a buyer can find you in."*
+      
+          ⚠ `titleCase` IS THE SHARED HELPER (`lib/title-case.ts`) and this is its
+          first caller. ⚠ THE BRIEF SAID TO REUSE THE ONE FROM THE `e96cd2e` SWEEP —
+          THERE WASN'T ONE. That pass was a static rewrite of 60 literals by an
+          uncommitted scanner, so no runtime function existed. Reported; the helper
+          is created ONCE so the instruction's real intent — never two
+          implementations — holds from here.
+      
+          ⚠⚠ CAPITALISATION IS THE SMALL HALF AND IT SHIPS ALONE, DELIBERATELY.
+          `purchase requisitons` becomes `Purchase Requisitons` — still misspelled,
+          still unmatchable, now looking deliberate. The fuzzy-match-before-create
+          that would actually fix it ("Did you mean Purchase Requisitions?") is
+          CHAT'S ADDITION, not Scott's ask, and `E298` says capitalisation ships
+          alone unless he says yes. Surfaced in the report; NOT BUILT HERE.
+        */
+        const name = titleCase(skillQuery.trim());
         if (!name) return;
         if (
           profile.customSkills.some((c) => c.toLowerCase() === name.toLowerCase()) ||

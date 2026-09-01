@@ -157,7 +157,10 @@ export default function JoinBuyerPage() {
     return (
       <WizardShell
         progress={progress}
-        title="Sign Up to Hire Talent"
+        /* ⚠ SCOTT'S WORDS, VERBATIM (`E289`). ⚠ SUPERSEDED: "Sign Up to Hire Talent".
+             This is a `WizardShell` title, not `SignUpForm` — the third of the
+             three sign-up titles the brief names, and the second to collapse. */
+          title="Sign Up to Buy Services and/or Service Products"
         subtitle="Create your account to post work and hire experts."
         canBack={false}
         busy={busy}

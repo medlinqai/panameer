@@ -62,12 +62,12 @@ const JOBS: Record<UserType, { id: Job; title: string; description: string }[]> 
     {
       id: "recruiter",
       title: "Recruiter",
-      description: "I offer service providers to service buyers",
+      description: "I sell service providers to service buyers",
     },
     {
       id: "provider",
       title: "Service Provider",
-      description: "I perform the services for a service buyer",
+      description: "I sell my services to service buyers",
     },
   ],
   /*
@@ -225,37 +225,47 @@ function JoinRouter() {
             id: "buyer" as const,
             title: "Service Buyer",
             /*
-              ── ⚠⚠ SCOTT'S COPY, VERBATIM (`P1-J1.1-E249`, 2026-08-29) ────────────
+              ── ⚠⚠ SCOTT'S COPY, VERBATIM (`P1-J1.1-E286`, 2026-08-31) ────────────
 
-              ⚠ SUPERSEDED, quoted not deleted — the pair this replaces was
-              *"I post work and hire validated experts"* / *"I perform work on
-              Panameer"*, carrying this reasoning:
-                *"E157 — this read 'I offer work on Panameer', which is what a SELLER
-                does with their time. Two cards that both start 'I offer' is the one
-                thing this fork exists to disambiguate."*
+              ⚠ SUPERSEDED, QUOTED NOT DELETED — TWO GENERATIONS OF IT, because the pair
+              before last is what `E157` was actually about, and deleting it would lose the
+              rule's origin:
 
-              ⚠⚠ THAT CONCERN IS STILL MET, WHICH IS WHY THE NEW PAIR IS SAFE. `E157`
-              banned two cards both opening *"I offer"*. Scott's Buyer line opens
-              *"I offer"* and his Seller line opens *"I provide"*, so the two still
-              part on their FIRST TWO WORDS and the fork still disambiguates. ⚠ THE
-              COMMENT DESCRIBED COPY THAT NO LONGER EXISTS, which is why it was
-              rewritten rather than left standing.
-              ⚠ IF A FUTURE EDIT MAKES BOTH LINES OPEN THE SAME WAY, `E157` IS THE
-              ROW IT REOPENS. That is the rule; the strings are not.
+                · `E249` (2026-08-29): *"I offer work to and buy service products from
+                  service sellers"* / *"I provide services for and sell service products to
+                  service buyers"*.
+                · before that: *"I post work and hire validated experts"* / *"I perform work
+                  on Panameer"*, carrying the note *"E157 — this read 'I offer work on
+                  Panameer', which is what a SELLER does with their time. Two cards that both
+                  start 'I offer' is the one thing this fork exists to disambiguate."*
 
-              ⚠ SHIPPED EXACTLY AS HE TYPED THEM — no full stops, no capitalisation
-              changes, no "and/or" tidying, and `service sellers` / `service buyers`
-              left lower-case even though the card TITLES above are Title Case. DO NOT
-              NORMALISE EITHER LINE.
+              ⚠ AND THE `E249` REASONING IS SUPERSEDED WITH IT. It argued the pair was safe
+              because *"Scott's Buyer line opens 'I offer' and his Seller line opens 'I
+              provide', so the two still part on their FIRST TWO WORDS."* NOT ONE OF THOSE
+              STRINGS EXISTS ANY MORE, so that argument now describes nothing.
+
+              ⚠⚠ `E157` IS IN PLAY HERE AND SCOTT HAS ALREADY RULED — DO NOT REOPEN IT.
+              These two lines are `I buy services` / `I sell services`: they part on the
+              SECOND word, not the first. On the job picker above, `E287` makes BOTH seller
+              lines open `I sell`, parting on the third word. HE WAS SHOWN THIS AND CHOSE IT
+              — page 1 now says `I sell services`, so the echo on the seller side is
+              deliberate reinforcement, not drift.
+              ⚠ THE RULE STILL STANDS FOR ANY FUTURE EDIT: a fork whose two cards read the
+              same way is the defect `E157` names. What changed is that Scott, who owns the
+              copy, judged these distinguishable. THE STRINGS ARE NOT THE RULE.
+
+              ⚠ SHIPPED EXACTLY AS HE TYPED THEM — no full stops, no capitalisation changes,
+              no "and/or" tidying, and `service sellers` / `service buyers` left lower-case
+              even though the card TITLES above are Title Case. DO NOT NORMALISE EITHER LINE.
             */
             description:
-              "I offer work to and buy service products from service sellers",
+              "I buy services",
           },
           {
             id: "seller" as const,
             title: "Service Seller",
             description:
-              "I provide services for and sell service products to service buyers",
+              "I sell services",
           },
         ]
       : JOBS[userType!];

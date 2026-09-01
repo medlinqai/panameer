@@ -67,7 +67,7 @@ export function WorkSpine() {
             (`WORK_BUILD_STATE`). Outstanding parts gate PROMOTION, not the build; it
             goes on the pre-launch list.
 
-            ⚠ `/optimize`'s TREATMENT, MIRRORED IN TAILWIND — 34px / 700 / #181E3C /
+            ⚠ `/optimize`'s TREATMENT, MIRRORED IN TAILWIND — 34px / 700 / #272334 /
             ls -0.5px / lh 38.76px / max-w 1040px / Comfortaa. `.pm-home` is out of
             scope on this page, so the class is unreachable.
 

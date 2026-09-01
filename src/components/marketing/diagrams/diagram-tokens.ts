@@ -9,7 +9,7 @@
  *
  * ── ⚠⚠ WHY THESE ARE HEX LITERALS AND NOT `var(--color-ink)` ────────────────
  *
- * `NAVY`, `MAG` and `MAGINK` are byte-identical to `--color-ink`, `--color-magenta`
+ * `INK`, `MAG` and `MAGINK` are byte-identical to `--color-ink`, `--color-magenta`
  * and `--color-magenta-ink`. They are still written as literals, because
  * `--color-ink` FLIPS TO `#f2f0f7` UNDER `:root[data-theme="dark"]` and every lane
  * tint below is a HARDCODED LIGHT COLOUR that does not flip with it. A themed ink
@@ -21,7 +21,16 @@
  */
 
 /** `--navy` — identical to `--color-ink`. */
-export const NAVY = "#181E3C";
+/*
+ * ⚠⚠ RENAMED FROM `NAVY` (`P1-J1.4-E300`, 2026-08-31). THE NAVY IS RETIRED.
+ * Scott: *"272334 replaces [the navy] EVERYWHERE. why would we want that other
+ * color?"* — there is now ONE dark colour in the product.
+ * ⚠ A constant called `NAVY` holding slate is exactly how the navy gets
+ * "restored" by someone being helpful, so the NAME had to move with the value.
+ * ⚠ It is still byte-identical to `--color-ink`; that relationship is the point
+ * of this file and is unchanged.
+ */
+export const INK = "#272334";
 /** `--mag` — identical to `--color-magenta`. The rail colour. */
 export const MAG = "#D72CD6";
 /** `--magink` — identical to `--color-magenta-ink`. Rail LABELS only. */
@@ -58,10 +67,10 @@ export const T = {
     fontFamily: "var(--font-display), Comfortaa, cursive",
     fontWeight: 700,
     fontSize: 15,
-    fill: NAVY,
+    fill: INK,
   },
   cap: { fontSize: 7.5, fontWeight: 700, letterSpacing: "0.09em", fill: INK2 },
-  n: { fontSize: 11, fontWeight: 600, fill: NAVY },
+  n: { fontSize: 11, fontWeight: 600, fill: INK },
   ns: { fontSize: 8.5, fontWeight: 500, fill: INK2 },
   pl: { fontSize: 7.5, fontWeight: 700, letterSpacing: "0.07em", fill: INK2 },
   rl: { fontSize: 7.5, fontWeight: 700, letterSpacing: "0.05em", fill: MAGINK },

@@ -87,7 +87,25 @@ export function SignUpForm({
   onChange,
   error,
   emailLocked = false,
-  title = "Sign Up to Find Work",
+  /*
+    ⚠⚠ NO DEFAULT ANY MORE (`P1-J1.1-E288`, 2026-08-31). ⚠ SUPERSEDED, quoted:
+    `title = "Sign Up to Find Work"`.
+
+    There are two titles in the product now, one per side of the marketplace, and
+    Scott was explicit there is no third: *"there should be two pages - one shown
+    to the service buyers and another shown to the service sellers… there is no
+    sub-division that i am aware of (nor a reason to have one) under sellers based
+    on type."*
+
+    ⚠ MAKING IT REQUIRED RATHER THAN RE-DEFAULTING IT IS THE DECISION, and it is
+    the same call `E234` made about `callbackUrl` on this very component: a
+    DEFAULT silently decides for every future call site that omits the prop, and
+    the thing being decided here is WHICH SIDE OF THE MARKETPLACE the page is for.
+    `/join/provider` inherited "Sign Up to Find Work" purely by omission. With no
+    default the compiler asks the question, and a new sign-up surface cannot ship
+    wearing the wrong side's title by accident.
+  */
+  title,
   /*
     ⚠ `/join` (`E234`). ⚠ SUPERSEDED, quoted: `"/join/provider"`.
     ⚠⚠ THIS DEFAULT WAS LIVE, UNLIKE `SocialSignIn`'s. `join/provider/page.tsx`
@@ -116,7 +134,8 @@ export function SignUpForm({
    * the confirm-password comparison and the measured 672px width, and a copy
    * of it would drift from all four.
    */
-  title?: string;
+  /** ⚠ REQUIRED (`E288`) — see the note on the destructured prop above. */
+  title: string;
   /** Where OAuth returns to — the seller and buyer paths differ. */
   callbackUrl?: string;
   /** The "wrong side of the marketplace?" link under the form. */

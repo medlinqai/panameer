@@ -153,6 +153,15 @@ export function CompanyStep({
     ruled on that field directly.
   */
   const [ein, setEin] = useState("");
+  /*
+    ── ⚠ US ZIP, CHECKED ON BLUR (`P1-J1.4-E299`) ─────────────────────────────
+    The same rule the server enforces, shown where it can still be fixed cheaply.
+    ⚠ US ONLY — see the route's note. Other countries keep the length cap and no
+    format, because `K1A 0B1` and `SW1A 1AA` are correct postcodes.
+    ⚠ THE BLUR FLAG EXISTS SO THE MESSAGE DOES NOT SCOLD SOMEBODY MID-TYPE — the
+    same contract `PhoneField` uses (`E203`): mask/allow on change, judge on blur.
+  */
+  const [zipTouched, setZipTouched] = useState(false);
   const [regAddress, setRegAddress] = useState<LocationValue>({
     country: COUNTRIES[0],
   });
@@ -207,6 +216,13 @@ export function CompanyStep({
     return () => clearTimeout(t);
   }, [q, mode]);
 
+  /* Empty is allowed; wrong is not. Mirrors the server's superRefine exactly. */
+  const zipValue = (regAddress.postalCode ?? "").trim();
+  const zipOk =
+    regAddress.country !== "United States" ||
+    zipValue === "" ||
+    /^\d{5}(-\d{4})?$/.test(zipValue);
+
   const valid =
     mode === "join"
       ? !!picked && attestation
@@ -225,6 +241,9 @@ export function CompanyStep({
           defaulted, so nobody is blocked by doing nothing.
         */
         !!regAddress.country &&
+        /* `E299` — a malformed US ZIP blocks Continue, an ABSENT one does not
+           (`E274` allows a part-answered company). */
+        zipOk &&
         attestation &&
         companyTos;
 
@@ -482,14 +501,28 @@ export function CompanyStep({
               Registered Address
             </p>
             <div className="space-y-3">
-              <LocationFields
-                value={regAddress}
-                onChange={(patch) =>
-                  setRegAddress((a) => ({ ...a, ...patch }))
-                }
-                withStreet
-                countryHint="Where the company is registered — its jurisdiction."
-              />
+              <div onBlur={() => setZipTouched(true)}>
+                <LocationFields
+                  value={regAddress}
+                  onChange={(patch) =>
+                    setRegAddress((a) => ({ ...a, ...patch }))
+                  }
+                  withStreet
+                  countryHint="Where the company is registered — its jurisdiction."
+                />
+              </div>
+              {/*
+                ⚠ THE MESSAGE LIVES HERE, NOT INSIDE `LocationFields` (`E299`).
+                That component is SHARED with the requester wizard's Work
+                Location, and this brief says not to touch the requester wizard.
+                A blur listener on the wrapper gets the same behaviour without
+                changing a component two journeys render.
+              */}
+              {zipTouched && !zipOk && (
+                <p className="mt-1 text-[13px] text-red-700">
+                  Enter a US ZIP code — 5 digits, or ZIP+4 as 12345-6789.
+                </p>
+              )}
             </div>
           </div>
 

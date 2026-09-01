@@ -40,7 +40,7 @@
    `marketing-home/home.css`:
 
        --stepd-mag      #D72CD6   <- home.css:32   (--mag)
-       --stepd-ink      #181E3C   <- home.css:35   (--ink)
+       --stepd-ink      #272334   <- home.css:35   (--ink)
        --stepd-paper-3  #f6f4fb   <- home.css:56   (--paper-3)
        --stepd-line     #e6e9ef   <- home.css:57   (--line)
        --stepd-muted    #7b8496   <- home.css:58   (--muted)
@@ -61,7 +61,7 @@
    ──────────────────────────────────────────────────────────────────────────── */
 .stepd-steps {
   --stepd-mag: #d72cd6;
-  --stepd-ink: #181E3C;
+  --stepd-ink: #272334;
   --stepd-paper-3: #f6f4fb;
   --stepd-line: #e6e9ef;
   --stepd-muted: #7b8496;

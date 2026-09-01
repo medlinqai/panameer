@@ -98,7 +98,7 @@ export function TalentSpine() {
             left out because he had not written one. ⚠ HE HAS NOW WRITTEN IT AND HE
             ASKED WHERE IT WAS. Not a draft; not CC's words.
 
-            ⚠ `/optimize`'s TREATMENT, MIRRORED IN TAILWIND — 34px / 700 / #181E3C /
+            ⚠ `/optimize`'s TREATMENT, MIRRORED IN TAILWIND — 34px / 700 / #272334 /
             ls -0.5px / lh 38.76px / max-w 1040px / Comfortaa (`.hiw-h2`). ⚠ THE
             `.pm-home` SCOPE AGAIN: this page is outside the wrapper, so `home.css`'s
             class is unreachable. Copied from `/learn`'s own `E304` implementation,
@@ -163,7 +163,7 @@ export function TalentSpine() {
             so a slow call does not render a slow profile — it renders an error.
             ⚠ IF THE MODEL OR THE PROMPT CHANGES, RE-TIME THIS SENTENCE.
           */}
-          <h2 className="mt-6 max-w-[1040px] text-wrap font-display text-[28px] font-bold leading-[1.14] tracking-[-0.5px] text-[#181E3C] min-[900px]:text-[34px] min-[900px]:leading-[38.76px]">
+          <h2 className="mt-6 max-w-[1040px] text-wrap font-display text-[28px] font-bold leading-[1.14] tracking-[-0.5px] text-[#272334] min-[900px]:text-[34px] min-[900px]:leading-[38.76px]">
             Upload your resume to our AI Platform (AIP) and create your Panameer
             profile in under one minute.
           </h2>

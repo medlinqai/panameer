@@ -164,7 +164,7 @@ function Section({ s, i }: { s: HomeSection; i: number }) {
     ⚠ SUPERSEDED: `dark ? "text-[#efa3ee]" : "text-[#A61AA5]"`.
   */
   const eyebrow = dark ? "text-white" : "text-[#A61AA5]";
-  const head = dark ? "text-white" : "text-[#181E3C]";
+  const head = dark ? "text-white" : "text-[#272334]";
   const bodyc = dark ? "text-[#DDE0F0]" : "text-[#5B6183]";
 
   /*
@@ -417,7 +417,7 @@ function Section({ s, i }: { s: HomeSection; i: number }) {
                   ⚠⚠ THE CAUSE IS NOT `(0,1,1)` BEATING `(0,1,0)`. CDP's
                   `getMatchedStylesForNode` resolves it as:
                       a                        color:inherit   layer=base
-                      .text-[#181E3C]          color:#181e3c   layer=utilities
+                      .text-[#272334]          color:#272334   layer=utilities
                       .hover:text-white:hover  color:#fff      layer=utilities
                       .pm-home a               color:inherit   layer=(none)  <- WINS
                   `home.css` is UNLAYERED and Tailwind's utilities are in
@@ -429,21 +429,21 @@ function Section({ s, i }: { s: HomeSection; i: number }) {
                   normal UNLAYERED one.
 
                   DARK BANDS (3 and 5): `LABEL_WHITE` is `text-white!`, important, so
-                  it beat the normal `hover:text-[#181E3C]`. Background went white,
+                  it beat the normal `hover:text-[#272334]`. Background went white,
                   label stayed white. MEASURED 1.00:1 — invisible.
-                  ⚠ FIX: `hover:text-[#181E3C]!`. Both are important and in the same
+                  ⚠ FIX: `hover:text-[#272334]!`. Both are important and in the same
                   layer, so specificity decides between them and the `hover:` variant
                   (0,2,0) beats the base (0,1,0).
 
                   LILAC BANDS (2, 4 and 6): ⚠⚠ THE BRIEF'S TABLE SAID THESE WERE "OK —
                   no LABEL_WHITE". THEY WERE NOT. Having no `!` is exactly what broke
-                  them: BOTH `text-[#181E3C]` and `hover:text-white` lost to the
+                  them: BOTH `text-[#272334]` and `hover:text-white` lost to the
                   unlayered rule, so the label sat at the inherited `rgb(42,51,69)` in
                   both states while the background went navy. MEASURED 1.29:1.
                   ⚠ FIX: `hover:text-white!` only.
 
                   ⚠ THE RESTING LILAC LABEL IS STILL THE INHERITED `rgb(42,51,69)`,
-                  NOT the `#181E3C` this class asks for — the same layer defeat. It
+                  NOT the `#272334` this class asks for — the same layer defeat. It
                   measures 11.53 on lilac, so it is LEGIBLE and was left alone: this
                   brief authorises `!` only where a HOVER state is unreachable.
                   Reported at `E348` as a separate cosmetic deviation.
@@ -451,8 +451,8 @@ function Section({ s, i }: { s: HomeSection; i: number }) {
                   buttons and the disabled control were all measured and are fine.
                 */
                 (dark
-                  ? "border-white/60 text-white hover:border-white hover:bg-white hover:text-[#181E3C]!" + LABEL_WHITE
-                  : "border-[#181E3C] text-[#181E3C] hover:bg-[#181E3C] hover:text-white!"))
+                  ? "border-white/60 text-white hover:border-white hover:bg-white hover:text-[#272334]!" + LABEL_WHITE
+                  : "border-[#272334] text-[#272334] hover:bg-[#272334] hover:text-white!"))
           }
         >
           Learn More
@@ -494,7 +494,7 @@ function Section({ s, i }: { s: HomeSection; i: number }) {
             >
               {n + 1}
             </span>
-            <span className="text-[14px] leading-[1.5] text-[#181E3C]">{c}</span>
+            <span className="text-[14px] leading-[1.5] text-[#272334]">{c}</span>
           </div>
         ))}
       </div>

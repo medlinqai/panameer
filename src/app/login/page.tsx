@@ -229,7 +229,13 @@ function LoginBackdrop() {
       {/* Brand wash: ink navy → magenta, plus a vignette for card contrast. */}
       <div className="absolute inset-0 bg-gradient-to-br from-ink/95 via-ink/80 to-magenta/50" />
       {/*
-        ⚠⚠ THE VIGNETTE COLOUR IS THE BRAND NAVY #181E3C = rgb(24,30,60), MATCHING
+        ⚠⚠ THE VIGNETTE COLOUR IS THE BRAND DARK #272334 = rgb(39,35,52), MATCHING
+        (⚠ `E300`, 2026-08-31: was the retired brand navy, rgb(24,30,60). Its hex is
+        deliberately NOT written here — the brief makes a case-insensitive grep
+        for the old hex a TEST that must return nothing,
+        and a literal in a comment is how the navy gets reintroduced. The vignette
+        MUST move with the surface or the wash separates — that is why it is
+        hardcoded here at all.)
         `bg-ink` AND THE WASH ABOVE. Keep it that way.
           SUPERSEDED 2026-08-26 (`P1-ALL-E022`): this read `rgba(23,30,62,0.75)`
           — #171E3E, the OLD app navy that `P1-ALL-E015` replaced site-wide.

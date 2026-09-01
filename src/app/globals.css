@@ -31,7 +31,7 @@
     DECK DOES NOT STATE. Contrast is symmetric, so a DARKER magenta on a DARK
     surface is WORSE. Measured:
 
-                          on white   on #181E3C navy
+                          on white   on #272334 navy
         #d72cd6             4.02          4.05
         #A61AA5             6.34          2.57   <- fails badly
         #8E138D             7.99          2.04   <- fails badly
@@ -43,7 +43,7 @@
   */
   --color-magenta-ink: #a61aa5;
   --color-magenta-ink-hover: #8e138d;
-  --color-ink: #181e3c;
+  --color-ink: #272334;
   --color-ink-2: #4a4658;
   --color-line: #ece9f1;
   --color-bg-soft: #f0f7f8;
@@ -384,7 +384,7 @@ body {
 }
 
 .marketing-surface {
-  --color-ink: #181e3c;
+  --color-ink: #272334;
   --color-ink-2: #4a4658;
   --color-line: #ece9f1;
   --color-bg-soft: #f0f7f8;
@@ -405,7 +405,7 @@ body {
   `OnboardingFrame` puts `marketing-surface` and `bg-white` on ONE element, so
   in dark mode it fell through to `:root[data-theme="dark"] .bg-white` and
   painted itself #171128 while the surface forced the LIGHT ink palette on
-  everything inside it — `text-ink` #181E3C on a #171128 card, contrast 1.13.
+  everything inside it — `text-ink` #272334 on a #171128 card, contrast 1.13.
   That is E017, and adding the class alone did not fix it.
 */
 :root[data-theme="dark"] .marketing-surface.bg-white {

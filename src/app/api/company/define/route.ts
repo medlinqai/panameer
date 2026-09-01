@@ -25,6 +25,22 @@ const schema = z.object({
     contracting requirement is enforced before HIRE, not here.
   */
   registeredAddress: z
+    /*
+      ── ⚠⚠ US ZIP IS VALIDATED ON THE SERVER TOO (`P1-J1.4-E299`) ─────────────
+
+      `postalCode` was `z.string().trim().max(40).nullish()` — forty characters of
+      anything. A LENGTH CAP IS NOT A FORMAT, and `295265326` sailed through.
+
+      ⚠ THE CHECK IS CONDITIONAL ON `country === "United States"`, and only that.
+      Imposing the 5-or-9-digit shape on the other 17 countries in `COUNTRIES`
+      would reject perfectly good Canadian (`K1A 0B1`) and UK (`SW1A 1AA`)
+      postcodes. NON-US KEEPS THE LENGTH CAP AND NOTHING ELSE — reported, not
+      silently widened.
+
+      ⚠ VALIDATED ON BOTH SIDES BY DESIGN. `CompanyStep` shows the message on
+      blur, but a client-only check is a suggestion: this route is reachable
+      without the form.
+    */
     .object({
       line1: z.string().trim().max(200).nullish(),
       city: z.string().trim().max(120).nullish(),
@@ -32,7 +48,20 @@ const schema = z.object({
       postalCode: z.string().trim().max(40).nullish(),
       country: z.string().trim().max(80).nullish(),
     })
-    .nullish(),
+    .nullish()
+    .superRefine((addr, ctx) => {
+      if (!addr) return;
+      const zip = addr.postalCode?.trim();
+      if (!zip) return; // absent is fine — `E274` allows a part-answered company
+      if (addr.country?.trim() !== "United States") return;
+      if (!/^\d{5}(-\d{4})?$/.test(zip)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["postalCode"],
+          message: "Enter a US ZIP code — 5 digits, or ZIP+4 as 12345-6789.",
+        });
+      }
+    }),
   website: z.string().trim().max(300).nullish(),
   logoUrl: z.string().trim().max(600).nullish(),
   attestation: z.boolean(),

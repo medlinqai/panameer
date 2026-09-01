@@ -112,7 +112,7 @@ export function IntegrateSpine() {
             Just Parts"* — and sets up steps 3-4, which are the half of this page a
             reader does not expect.
 
-            ⚠ `/optimize`'s TREATMENT, MIRRORED IN TAILWIND: 34px / 700 / #181E3C /
+            ⚠ `/optimize`'s TREATMENT, MIRRORED IN TAILWIND: 34px / 700 / #272334 /
             ls -0.5px / lh 38.76px / max-w 1040px / Comfortaa. The class is
             `.pm-home`-scoped and unreachable here.
 

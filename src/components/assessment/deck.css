@@ -63,7 +63,7 @@
   letter-spacing: -0.4px;
   font-weight: 700;
   margin: 0 0 16px;
-  color: #181E3C;
+  color: #272334;
 }
 .deck-page .slide-dark h2 { color: #fff; }
 .deck-page .big {
@@ -99,7 +99,7 @@
 .deck-page .move-title {
   font-size: clamp(17px, 2vw, 24px);
   font-weight: 700;
-  color: #181E3C;
+  color: #272334;
 }
 .deck-page .move-detail { font-size: 14.5px; color: #7b8496; }
 .deck-page .deck-cta {

@@ -473,7 +473,7 @@ const PANELS: Record<number, PanelBlock[]> = {
  *
  *   eyebrow  `home.css:1290`-family  19px / 700 / #d72cd6 / ls 2.66px / uppercase
  *            / line-height 28.5px / Montserrat  (`.pm-home .eyebrow`)
- *   headline `home.css`'s `.stepd-h2`               27px / 700 / #181E3C / ls -0.4px
+ *   headline `home.css`'s `.stepd-h2`               27px / 700 / #272334 / ls -0.4px
  *            / line-height 32.4px / max-width 1040px / Comfortaa
  *
  * ⚠ THE HEADLINE NEEDED NO WORK — `.stepd-h2` is the SHARED rule in
@@ -1092,7 +1092,7 @@ export function LearnPublic() {
 
             eyebrow   19px / 700 / #d72cd6 / ls 2.66px / uppercase / lh 28.5px
                       / Montserrat                       (`.pm-home .eyebrow`)
-            headline  34px / 700 / #181E3C / ls -0.5px / lh 38.76px
+            headline  34px / 700 / #272334 / ls -0.5px / lh 38.76px
                       / max-width 1040px / Comfortaa     (`.hiw-h2`)
 
         ⚠ TAILWIND, NOT THE CLASSES — both rules are `.pm-home`-scoped and this page
@@ -1160,7 +1160,7 @@ export function LearnPublic() {
             never the problem. ⚠ NO `<br>`, and `LEARN_SPINE_TAGLINE` is untouched:
             the string is Scott's and out of scope.
           */}
-          <h2 className="mt-6 max-w-[1040px] text-wrap font-display text-[28px] font-bold leading-[1.14] tracking-[-0.5px] text-[#181E3C] min-[900px]:text-[34px] min-[900px]:leading-[38.76px]">
+          <h2 className="mt-6 max-w-[1040px] text-wrap font-display text-[28px] font-bold leading-[1.14] tracking-[-0.5px] text-[#272334] min-[900px]:text-[34px] min-[900px]:leading-[38.76px]">
             {LEARN_SPINE_TAGLINE}
           </h2>
         </div>

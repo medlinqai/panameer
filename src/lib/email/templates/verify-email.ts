@@ -10,7 +10,7 @@ import {
 /**
  * Verification email template. Inline styles only (email clients ignore
  * external CSS) using the Panameer brand colors from brief_F — magenta #D72CD6,
- * navy ink #181E3C. Kept as a pure function so it's testable and reusable.
+ * navy ink #272334. Kept as a pure function so it's testable and reusable.
  *
  * brief_P / E006 fixes three things the walk caught:
  *   1. the Panameer LOGO upper-left, not the plain word "Panameer";
