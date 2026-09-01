@@ -313,22 +313,51 @@ export const COMPANY_NAV: NavItem[] = [
     COMMUNITY IS BACK. E191 dropped it; it is the heart of the earning story
     (Credits, forums, mentoring) and is the sixth primary item.
 */
+/*
+  ── ⚠⚠ THE SELLER RAIL CATCHES UP (`P1-J1.4-E303`, 2026-09-01) ────────────────
+
+  Scott: *"These are old names/titles. I thought we changed all the menus
+  (probably for the service buyers). That means we need to do the same for the
+  service providers."* He is right — `E268` renamed `REQUESTER_NAV` and left this
+  one behind, so the two sides have been speaking different languages since.
+
+  ⚠ SUPERSEDED, quoted not deleted:
+      Start Learning  -> Learning Paths
+      Find Work       -> Work Requests
+      Create Packages -> Service Products
+      Manage Work     -> Work Orders
+      Get Paid        -> Payments
+      Community       -> Community (already correct)
+
+  ⚠⚠ LABELS ONLY. NOT ONE `href` AND NOT ONE `requires` GATE CHANGED. The two
+  rails deliberately point the SAME WORD at DIFFERENT ROUTES — provider
+  `Work Requests` -> `/find-work`, buyer -> `/create-work`; provider
+  `Service Products` -> `/settings/packages`, buyer -> `/packages`. That is the
+  design: one vocabulary, two destinations. DO NOT "align" the routes.
+
+  ⚠ THIS ALSO MOVES PAGE HEADINGS, and that is intended — `pageTitleFor` derives
+  every heading from these definitions (see its docblock). ⚠ AND IT FIXES AN
+  EXISTING INCONSISTENCY NOBODY FILED: `pageTitleFor`'s lookup list spreads
+  `PROVIDER_NAV` but NOT `REQUESTER_NAV`, so a BUYER on `/learn` has been getting
+  the heading "Start Learning" while their own rail said "Learning Paths". Both
+  now read "Learning Paths". Same for `/contracts` -> "Work Orders".
+*/
 export const PROVIDER_NAV: NavItem[] = [
-  { label: "Start Learning", href: "/learn", icon: "GraduationCap" },
+  { label: "Learning Paths", href: "/learn", icon: "GraduationCap" },
   {
-    label: "Find Work",
+    label: "Work Requests",
     href: "/find-work",
     icon: "Briefcase",
     requires: "canProvideServices",
   },
   {
-    label: "Create Packages",
+    label: "Service Products",
     href: "/settings/packages",
     icon: "Tag",
     requires: "canProvideServices",
   },
-  { label: "Manage Work", href: "/contracts", icon: "ClipboardCheck" },
-  { label: "Get Paid", href: "/finances", icon: "Wallet" },
+  { label: "Work Orders", href: "/contracts", icon: "ClipboardCheck" },
+  { label: "Payments", href: "/finances", icon: "Wallet" },
   { label: "Community", href: "/community", icon: "MessagesSquare" },
 ];
 

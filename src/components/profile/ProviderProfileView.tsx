@@ -343,10 +343,19 @@ export function ProviderProfileViewPage({
 
                 PUBLISHED-ONLY: packages are a post-publish selling surface, so
                 brief_X deliberately leaves them off the pre-publish review. */}
+              {/*
+                ⚠ `Service Products`, NOT `Packages` (`P1-J1.4-E301`, 2026-09-01).
+                ⚠ THE ROUTE `/settings/packages` DOES NOT CHANGE — only the words. The
+                `edit(...)` label moves with the title so the card and its control agree.
+                ⚠ `P1-J1.4-E045` deliberately established `Solutions` -> `Packages`. THIS
+                SUPERSEDES THAT VOCABULARY FOR THIS SURFACE ONLY, so nobody restores
+                `Packages` here on E045's authority. `Packages` stays user-facing in ~18
+                other places Scott did NOT name — listed in the report, untouched.
+              */}
             {(p.packages.length > 0 || p.isOwner) && (
               <ProfileCard
-                title="Packages"
-                edit={edit("Packages", "/settings/packages")}
+                title="Service Products"
+                edit={edit("Service Products", "/settings/packages")}
               >
                 {p.packages.length > 0 ? (
                   <div className="grid gap-4 sm:grid-cols-2">

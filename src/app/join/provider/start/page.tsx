@@ -51,21 +51,6 @@ export default async function GetStartedPage() {
             so "Back" pointed at a fork whose answer had already been acted on.
             The caption stays, as the brief specifies.
           */}
-          <p className="max-w-md text-[14.5px] text-ink-2">
-            {/* ⚠ SCOTT'S WORDS, VERBATIM (`E291`). ⚠ SUPERSEDED, quoted: *"It only
-                takes 5–10 minutes and you can edit it later. We'll save as you go."*
-                ⚠ HIS `3-5` USES A PLAIN HYPHEN where the old string used an en dash.
-                SHIPPED AS TYPED — do not normalise it back.
-                ⚠ TYPO CORRECTED, AND IT IS THE ONLY ONE: he typed `an we will`; this
-                ships `and we will`.
-                ⚠⚠ LAYOUT NOT MOVED, DELIBERATELY. `E291` also asks for this line to sit
-                ABOVE the horizontal rule rather than in the action bar, but that
-                placement came from Scott's WORDS ONLY — the reference images that
-                reached chat were duplicates — and the brief says to confirm with him
-                before shipping the move. The COPY is safe either way, so the copy ships
-                and the move waits on him. */}
-            It takes 3-5 minutes, you can edit it later, and we will save as you go.
-          </p>
           <Link
             href="/join/provider"
             className="ml-auto inline-flex justify-center rounded-full bg-magenta px-8 py-3.5 text-[17px] font-bold text-white shadow-brand transition-colors hover:bg-magenta-dark"
@@ -100,12 +85,16 @@ export default async function GetStartedPage() {
             {/* ⚠ SCOTT'S WORDS, VERBATIM (`P1-J1.1-E290`, 2026-08-31).
                 ⚠ SUPERSEDED, quoted: *"Hey {firstName}. Are you ready for your next big
                 opportunity?"*
-                ⚠ NO COMMA AFTER `Welcome`, NO FULL STOP — exactly as he typed it.
+                ⚠⚠ THE FULL STOP IS BACK (`P1-J1.4-E304`, 2026-09-01) — this REVERSES a
+                  clause of `E290`, which shipped stop-less on Scott's own instruction
+                  and whose comment here read *"NO COMMA AFTER `Welcome`, NO FULL STOP
+                  — exactly as he typed it."* He has changed his mind about the stop.
+                  ⚠ THE COMMA IS STILL NOT WANTED: `Welcome Mel.`, never `Welcome, Mel.`
                 ⚠ THE PURPOSE OF THE PAGE NOW SITS IN THE LINE UNDER THE TITLE
                 (*"Let's build an amazing profile so the work finds you!"*), which is
                 unchanged and is the point of this change — Scott: *"(the lets build a
                 profile text in under the title)"*. */}
-            Welcome {firstName}
+            Welcome {firstName}.
           </h1>
 
           {/*
@@ -136,6 +125,27 @@ export default async function GetStartedPage() {
         <section className="mx-auto mt-10 w-full max-w-2xl">
           <TestimonialCarousel />
         </section>
+        {/*
+          ── ⚠⚠ THE TIMING LINE MOVED ABOVE THE RULE (`P1-J1.4-E305`, 2026-09-01) ──
+        
+          Scott, having seen it rendered: *"move the line from under the separator to
+          above the separator and center it... remove the carriage return."*
+        
+          ⚠ THIS CLOSES THE HOLD `E291` PLACED. That row asked for the same move but
+          its reference images reached chat as duplicates, so the copy shipped and the
+          placement waited on him. He has now confirmed it against the rendered page,
+          and the comment recording that hold is deleted with the move — it described
+          a decision that is no longer pending.
+        
+          ⚠ THE WRAP WAS `max-w-md`, NOT THE COPY. In the action bar the paragraph
+          carried `max-w-md` (28rem) and broke after *"and we will save as"*. Out here
+          it is unconstrained and centred, so the "carriage return" Scott saw is gone
+          because its cause is gone — no text was shortened to achieve it.
+          ⚠ `Get Started Now!` STAYS in the action bar. Only the sentence moved.
+        */}
+        <p className="mt-10 text-center text-[14.5px] text-ink-2">
+          It takes 3-5 minutes, you can edit it later, and we will save as you go.
+        </p>
       </div>
     </OnboardingShell>
   );
