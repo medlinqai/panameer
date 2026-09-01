@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useSession } from "next-auth/react";
+import { MeProvider, useMe } from "@/components/MeProvider";
+import { AccountMenu } from "@/components/casing/AccountMenu";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -35,7 +38,59 @@ import { Logo } from "@/components/Logo";
  *
  * The badge still renders in the hero, from BRAND_BADGE_SHORT (D1).
  */
+/**
+ * ⚠ THE REASON A DISABLED ITEM GIVES (`P1-J1.4-E306`, 2026-09-01).
+ *
+ * ⚠ A GREYED WORD WITH NO EXPLANATION READS AS BROKEN; the same word with a
+ * reason reads as gated. That is the entire difference and it is one string.
+ * ⚠ REPORTED FOR SCOTT TO APPROVE — CC's wording, not his.
+ */
+const GATED_REASON = "Available once your profile is published";
+
+/**
+ * ── ⚠⚠ THE SIGNED-IN HEADER (`P1-J1.4-E306`) ─────────────────────────────────
+ *
+ * `MarketingHeader` was NOT auth-aware — no session reference existed in it — so
+ * it rendered `Log In` / `Sign Up` unconditionally on all 19 surfaces that mount
+ * it, INCLUDING every `/join/provider` step. ⚠⚠ `Sign Up` WAS THE LIVE HARM: a
+ * signed-in user could start a SECOND account in one click, mid-onboarding.
+ *
+ * ── WHY THIS SHAPE, AND WHY NOT THE OBVIOUS ONE ──────────────────────────────
+ *
+ * ⚠ THE SIGNAL IS `useSession()`, NOT `useMe()`. `SessionProvider` wraps the whole
+ * app (`app/providers.tsx:7`), so it is available here on every surface.
+ * `MeProvider` is mounted in exactly THREE layouts — `(app)`, `admin`, `learn` —
+ * and NOT on public pages or the wizard. Reaching for `useMe()` first would have
+ * rendered a permanently-loading chip on all 19 pages, because `MeContext`
+ * defaults to `{ me: null, loading: true }`.
+ *
+ * ⚠ SO THE PROVIDER IS MOUNTED HERE, AND ONLY WHEN SIGNED IN. A header-local
+ * provider, never a layout one: adding `MeProvider` to a public layout would fire
+ * `/api/me` for every anonymous visitor on every marketing page.
+ * ⚠ IT WRAPS THE WHOLE HEADER, not just the chip, because the NAV also needs
+ * `published` to know whether it is gated.
+ */
 export function MarketingHeader() {
+  const { status } = useSession();
+  /*
+    ⚠ `status` HAS THREE VALUES AND "loading" IS NOT "signed out". Treating it as
+    signed-out would flash `Log In / Sign Up` at a signed-in user on every page
+    load — briefly re-offering the exact button this row exists to remove. While
+    it resolves we render the signed-out header, which is what an anonymous
+    visitor sees anyway, and swap once. ⚠ THE ONE THING THAT MUST NOT HAPPEN IS
+    THE REVERSE: a signed-out visitor must never see a chip.
+  */
+  if (status === "authenticated") {
+    return (
+      <MeProvider>
+        <MarketingHeaderInner signedIn />
+      </MeProvider>
+    );
+  }
+  return <MarketingHeaderInner signedIn={false} />;
+}
+
+function MarketingHeaderInner({ signedIn }: { signedIn: boolean }) {
   const [open, setOpen] = useState(false);
   /*
     WS-6b — THE ACTIVE NAV ITEM COMES FROM THE PATH, not from a prop.
@@ -61,6 +116,21 @@ export function MarketingHeader() {
     from ALSO lighting up the home while they were stale.)
   */
   const pathname = usePathname();
+  const { me } = useMe();
+  /*
+    ⚠⚠ GATED ONLY FOR AN UNPUBLISHED **PROVIDER**, AND THAT IS AN INTERPRETATION
+    I AM REPORTING RATHER THAN ASSUMING.
+
+    `E306` says "signed in and not yet published -> the nav is DISABLED", and
+    `published` is `ProviderProfile.onboarding_completed_at`. A signed-in BUYER
+    has NO `providerProfile` at all, so a literal reading would disable the whole
+    marketing nav for every buyer browsing `/` — which is not what the row is
+    about and would be a regression on a public page.
+    ⚠ SO THE GATE REQUIRES A PROVIDER PROFILE THAT EXISTS AND IS UNPUBLISHED.
+    Somebody with nothing to publish is not "not yet published".
+  */
+  const provider = me?.providerProfile ?? null;
+  const navGated = signedIn && provider !== null && !provider.published;
   const isActive = (href: string) => {
     if (href.includes("#")) return false;
     if (href === "/") return pathname === "/";
@@ -164,6 +234,40 @@ export function MarketingHeader() {
               magenta for "important" and for "you are here" is what collided,
               and it will collide again the moment both are true at once.
             */
+            /*
+              ⚠⚠ DISABLED, NOT REMOVED, AND NOT `pointer-events:none` (`E306`).
+            
+              A `pointer-events:none` link is unreachable by keyboard and by screen
+              reader — so the user cannot be TOLD why it is off, which is the whole
+              difference between "gated" and "broken". This renders a real focusable
+              element that says so:
+                · `aria-disabled="true"` — announced as unavailable
+                · `tabIndex={0}` — still in the tab order
+                · `title` — the reason on HOVER
+                · `aria-describedby` — the same reason on FOCUS, from one shared
+                  visually-hidden node rendered once after the map
+              ⚠ NAVIGATION IS STOPPED IN THE HANDLER, not by CSS, so click and Enter
+              behave identically.
+            */
+            if (navGated) {
+              return (
+                <span
+                  key={`${item.label}-${i}`}
+                  role="link"
+                  aria-disabled="true"
+                  aria-describedby="mh-gated-reason"
+                  tabIndex={0}
+                  title={GATED_REASON}
+                  onClick={(e) => e.preventDefault()}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") e.preventDefault();
+                  }}
+                  className="cursor-not-allowed whitespace-nowrap text-ink-2/45"
+                >
+                  {item.label}
+                </span>
+              );
+            }
             return (
               <Link
                 key={`${item.label}-${i}`}
@@ -178,6 +282,11 @@ export function MarketingHeader() {
               </Link>
             );
           })}
+          {/* One shared reason node — the `aria-describedby` target for every gated
+              item, so the explanation is announced on FOCUS as well as on hover. */}
+          <span id="mh-gated-reason" className="sr-only">
+            {GATED_REASON}
+          </span>
 
           {/*
             ⚠ THE SELLER DOOR IS GONE FROM HERE (P1-J0.4-E002). "For Experts"
@@ -273,10 +382,26 @@ export function MarketingHeader() {
             colour, a border, and the secondary half of the button standard
             beside Sign Up's solid primary.
           */}
-          <Btn href="/login" variant="white">
-            Log In
-          </Btn>
-          <Btn href="/join">Sign Up</Btn>
+          {signedIn ? (
+            /*
+              ⚠⚠ THE CHIP REPLACES BOTH BUTTONS (`E306`). ⚠ SUPERSEDED, quoted:
+              `<Btn href="/login" variant="white">Log In</Btn>` and
+              `<Btn href="/join">Sign Up</Btn>`, rendered unconditionally on all 19
+              surfaces. `Sign Up` shown to a signed-in user is the live harm this kills.
+              ⚠ `AccountMenu` IS REUSED, NOT REBUILT — the same identity control the app
+              shell uses, so Sign Out cannot drift into two behaviours. It works here
+              only because of the header-local `MeProvider`.
+              ⚠ THE CHIP AND SIGN OUT STAY LIVE IN EVERY STATE, published or not.
+            */
+            <AccountMenu isAdmin={Boolean(me?.person?.roles?.isSupport)} />
+          ) : (
+            <>
+              <Btn href="/login" variant="white">
+                Log In
+              </Btn>
+              <Btn href="/join">Sign Up</Btn>
+            </>
+          )}
         </div>
 
         {/*
@@ -334,12 +459,21 @@ export function MarketingHeader() {
               );
             })}
             <div className="mt-2 flex items-center gap-3 border-t border-line pt-3">
+              {signedIn ? (
+                /* ⚠ SAME RULE IN THE MOBILE SHEET (`E306`) — this row offered `Sign Up`
+                   to a signed-in user too. `variant="rail"` gives the stacked
+                   avatar + name form the sheet has room for. */
+                <AccountMenu isAdmin={Boolean(me?.person?.roles?.isSupport)} variant="rail" />
+              ) : (
+                <>
               <Btn href="/login" variant="white">
                 Log In
               </Btn>
               <Btn href="/join" className="ml-auto">
                 Sign Up
               </Btn>
+                </>
+              )}
             </div>
           </nav>
         </div>

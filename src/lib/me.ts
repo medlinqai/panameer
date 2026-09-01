@@ -49,6 +49,9 @@ export async function getMe(viewer: Viewer) {
           validation_status: true,
           completeness: true,
           paused_at: true,
+          /* `E306` — the marketing header needs to know whether the nav is gated.
+             A READ of an existing column, not a new flag and not a migration. */
+          onboarding_completed_at: true,
           available_for_messages: true,
           rating: true,
           currency: true,
@@ -114,6 +117,10 @@ export async function getMe(viewer: Viewer) {
           validationStatus: provider.validation_status,
           completeness: provider.completeness,
           paused: provider.paused_at != null,
+          /* `E306` — THE EXISTING SIGNAL. `onboarding.ts` already calls this
+             `published`; this exposes the same fact to a header that has no
+             onboarding state of its own. */
+          published: provider.onboarding_completed_at != null,
           availableForMessages: provider.available_for_messages,
           visible: isMarketplaceVisible(provider),
           rating: provider.rating === null ? null : Number(provider.rating),

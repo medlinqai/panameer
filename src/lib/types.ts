@@ -67,6 +67,8 @@ export type Me = {
     validationStatus: "NOT_REQUESTED" | "REQUESTED" | "VALIDATED" | "REJECTED";
     completeness: number;
     paused: boolean;
+    /** `E306` — `onboarding_completed_at != null`. Gates the marketing nav. */
+    published: boolean;
     /** J2.4 WS-B — the persona menu's "Online for messages" state. */
     availableForMessages: boolean;
     visible: boolean;
