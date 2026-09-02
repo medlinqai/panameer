@@ -164,7 +164,41 @@ for (const key of Object.keys(GATE_REASONS) as GateField[]) {
 
 /* The rungs are ordered, and the differences are deliberate. */
 check("2 — IDENTITY is name, photo, job title", JSON.stringify(COMMUNITY_BAR) === JSON.stringify(["name", "photo", "jobTitle"]));
-check("2 — LEARN is IDENTITY plus exactly one field", LEARN_BAR.length === COMMUNITY_BAR.length + 1 && LEARN_BAR.includes("skill"));
+/*
+  ── ⚠⚠ RE-HOMED, NOT WEAKENED (`P1-ALL-E034` correction, 2026-09-02) ─────────
+
+  ⚠ SUPERSEDED, quoted: `check("2 — LEARN is IDENTITY plus exactly one field",
+  LEARN_BAR.length === COMMUNITY_BAR.length + 1 && LEARN_BAR.includes("skill"))`.
+
+  It asserted the OLD bar, which shipped and closed the product — 0 of 129
+  accounts could enrol. ⚠ THE REPLACEMENT IS STRICTER, NOT LOOSER: the old one
+  allowed any four-field bar containing `skill`; these pin the set EXACTLY and
+  name each forbidden field, so putting one back fails a test and gets READ
+  rather than slipping in as a quiet edit.
+*/
+check("2 — ⚠ LEARN is EXACTLY one field: a name", JSON.stringify(LEARN_BAR) === JSON.stringify(["name"]));
+for (const f of ["photo", "jobTitle", "skill"] as const) {
+  check(
+    `2 — ⚠ LEARN does NOT require "${f}"`,
+    !LEARN_BAR.includes(f),
+    f === "skill"
+      ? "the broadcast that justified it cannot run — no mail key, no digest sender, no trigger"
+      : "it has no learner-facing reason; putting it back needs a brief"
+  );
+}
+/*
+  ⚠⚠ THE TWO SETS DIVERGED ON PURPOSE AND MUST NOT BE SILENTLY RE-MERGED.
+  Community is people talking to each other and non-anonymity is the whole point
+  there (`P1-ALL-E033`); learning is a person watching a video.
+*/
+for (const f of ["name", "photo", "jobTitle"] as const) {
+  check(`2 — COMMUNITY still requires "${f}"`, COMMUNITY_BAR.includes(f));
+}
+check(
+  "2 — ⚠ LEARN and COMMUNITY are NOT the same list any more",
+  JSON.stringify(LEARN_BAR) !== JSON.stringify(COMMUNITY_BAR),
+  "if these converge again, one of the two surfaces has the wrong bar"
+);
 check("2 — ⚠ LEARN asks for NO company", !LEARN_BAR.some((f) => f === "approvedCompany" || f.startsWith("company")));
 check("2 — ⚠ LEARN asks for NO address and NO phone", !LEARN_BAR.includes("address") && !LEARN_BAR.includes("phone"));
 check("2 — SELL contains everything SEARCHABLE does", GATE_SETS.SEARCHABLE.every((f) => GATE_SETS.SELL.includes(f)));
@@ -192,7 +226,47 @@ const PERSON_OK = {
   firstName: "Ada", lastName: "Lovelace", photoUrl: "/p.jpg", jobTitle: "Analyst",
   hasApprovedCompanyMembership: false, companyName: null, companyCountry: null,
 };
-check("2 — LEARN blocks someone with no skill", missingForLearn({ ...PERSON_OK, skillCount: 0 }).some((g) => g.key === "skill"));
+/*
+  ⚠ SUPERSEDED, quoted: `check("2 — LEARN blocks someone with no skill", ...)`.
+  It is no longer true and it should not be — see the header of `LEARN_BAR`.
+  ⚠ THE REPLACEMENT ASSERTS THE OPPOSITE **AND THE REASON**, so the day the
+  broadcast can actually run, this is the test that has to be changed
+  deliberately.
+*/
+check(
+  "2 — ⚠ LEARN does NOT block someone with no skill",
+  !missingForLearn({ ...PERSON_OK, skillCount: 0 }).some((g) => g.key === "skill"),
+  "a field required for a feature that cannot run is what E034's own rule forbids"
+);
+check(
+  "2 — ⚠ a learner with ONLY a name can enrol",
+  missingForLearn({
+    firstName: "Ada", lastName: "Lovelace", photoUrl: null, jobTitle: null,
+    hasApprovedCompanyMembership: false, companyName: null, companyCountry: null,
+    skillCount: 0,
+  }).length === 0,
+  "no photo, no job title, no skill — this is the case that was broken"
+);
+check(
+  "2 — ⚠ LEARN still blocks a nameless learner",
+  missingForLearn({
+    firstName: null, lastName: null, photoUrl: "/p.jpg", jobTitle: "Analyst",
+    hasApprovedCompanyMembership: false, companyName: null, companyCountry: null,
+    skillCount: 5,
+  }).some((g) => g.key === "name"),
+  "a certificate is issued to a person — this is the one field that passes the rule"
+);
+check(
+  "2 — and the LEARN refusal talks about the certificate, not about being hired",
+  /certificate/i.test(
+    missingForLearn({
+      firstName: null, lastName: null, photoUrl: null, jobTitle: null,
+      hasApprovedCompanyMembership: false, companyName: null, companyCountry: null,
+      skillCount: 0,
+    })[0]?.reason ?? ""
+  ),
+  "one sentence could not serve all three surfaces, so LEARN overrides the copy"
+);
 check("2 — LEARN passes someone with one skill and no employer", missingForLearn({ ...PERSON_OK, skillCount: 1 }).length === 0);
 check("2 — SELL blocks with no payout method", missingForSell({ ...EMPTY_REQUIRED, payoutMethodCount: 0 }).some((g) => g.key === "payoutMethod"));
 check(

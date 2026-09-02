@@ -293,36 +293,124 @@ export const GATE_REASONS: Record<GateField, { field: string; reason: string; hr
 
 export const gateGap = (key: GateField): GateGap => ({ key, ...GATE_REASONS[key] });
 
-/** `LEARN` = `IDENTITY` + one skill. Deliberately light — see below. */
-export const LEARN_BAR: GateField[] = [...COMMUNITY_BAR, "skill"];
+/**
+ * ⚠ `GateField` IS WIDER THAN `IdentityField` — it also holds `skill`, `title`,
+ * `rate`, `address`, `phone` and `payoutMethod`. `SATISFIED`'s keys ARE the
+ * identity fields, so this narrows off the one table rather than a second list
+ * that could drift from it.
+ */
+const isIdentityField = (f: GateField): f is IdentityField =>
+  Object.prototype.hasOwnProperty.call(SATISFIED, f);
 
 /**
- * ⚠⚠ `LEARN` ASKS FOR NO COMPANY, NO ADDRESS AND NO PHONE, ON PURPOSE.
+ * ⚠⚠ `LEARN` IS ONE FIELD: A NAME. AND `LEARN` IS **NOT** `IDENTITY + skill`
+ * ANY MORE (`P1-ALL-E034` correction, 2026-09-02).
  *
- * Scott: *"I can flex on this because there is no money involved."* And skills
- * are cheap — the résumé upload already produces them, so a provider who
- * uploaded a CV has them for free.
+ * ── ⚠⚠ SUPERSEDED, QUOTED, NOT DELETED ───────────────────────────────────────
  *
- * ⚠ THE SKILL IS NOT ARBITRARY. Scott, 2026-09-01: skills are required to learn
- * BECAUSE THE NEXUS BROADCASTS COURSES BY SKILL (`learn.course_published` in
- * `notification-events.ts` is addressed to *"every provider whose skills match
- * the course's tags"*). No skills means that broadcast can never reach you,
- * which is exactly the member-interest reason the rule demands.
+ * It was `export const LEARN_BAR: GateField[] = [...COMMUNITY_BAR, "skill"];` —
+ * name · photo · job title · skill — described here as *"`LEARN` = `IDENTITY` +
+ * one skill. Deliberately light."*
  *
- * ⚠⚠ CONTACT PREFERENCE IS DELIBERATELY ABSENT, AND THIS IS REPORTED NOT
- * FORGOTTEN. Scott named an off-app contact preference so instructors could
- * reach a learner. It is not here for two independent reasons:
- *   1. `NotificationPreference` rows carry DEFAULTS, so "has a preference" is
- *      true for everyone by construction — a gate that can never fire.
- *   2. There is no channel behind it: email cannot send (`RESEND_API_KEY` is
- *      commented out) and SMS has no sender.
- * ⚠ AND NO "has chosen" FLAG WAS INVENTED to paper over (1).
+ * ⚠⚠ IT WAS NOT LIGHT. IT CLOSED THE PRODUCT. Measured against live data the day
+ * it shipped: **0 of 129 accounts passed.** 123 had no job title, 97 no photo, 74
+ * no skill. Scott's own account was blocked, so was `admin@panameer.com`, and a
+ * real tester could not enrol in anything.
+ *
+ * ── ⚠⚠ WHY IT WAS WRONG: THE RULE FAILED ITS OWN TEST ────────────────────────
+ *
+ * `E034`'s rule is that a field is required by THE NEXT THING THE PLATFORM MUST
+ * DO FOR YOU, and — its own words — *"if you cannot state what breaks for the
+ * member when a field is missing, that field does not belong in the set."*
+ * Audited honestly, three of the four failed:
+ *
+ *   `skill`     ⚠⚠ NOTHING BREAKS TODAY. The stated reason was the skill-nexus
+ *               broadcast — and that broadcast CANNOT RUN, for three independent
+ *               reasons verified in the codebase: `RESEND_API_KEY` is commented
+ *               out in `.env.local`, `learn.course_published` is a DIGEST event
+ *               and no digest sender exists, and NOTHING IN THE CODEBASE EVEN
+ *               TRIGGERS THE EVENT. A field required for a feature that cannot
+ *               run is precisely what the rule forbids.
+ *   `photo`     Nothing. A photo helps a buyer judge a seller. It does nothing
+ *               for a learner watching a lesson.
+ *   `jobTitle`  Nothing. It tells a forum reader why an answer is worth reading.
+ *               It has no bearing on learning.
+ *   `name`      ⚠ A CERTIFICATE. A credential is issued to a person and
+ *               published to a profile; issuing one to nobody is the one real
+ *               break. THE ONLY FIELD THAT PASSES.
+ *
+ * ⚠ AND NOBODY IS BLOCKED BY IT — measured: 0 of 129 accounts are missing a name.
+ *
+ * ── ⚠⚠ THE CONDITION FOR PUTTING `skill` BACK, WRITTEN DOWN ──────────────────
+ *
+ * **When email can send AND the course broadcast actually runs** — a real
+ * `RESEND_API_KEY`, a digest sender, and something that actually fires
+ * `learn.course_published` — the stated reason becomes TRUE and `skill` earns its
+ * place in this bar. ⚠ NOT BEFORE, AND NOT WITHOUT A BRIEF. The harness fails if
+ * it is put back quietly.
+ *
+ * ── ⚠ THE MECHANISM IS UNCHANGED. ONLY THE BAR MOVED ─────────────────────────
+ *
+ * `LEARN` is still a named set, `learnGaps` still runs server-side on enrol and
+ * on sitting a test, and the refusal UI is untouched. ⚠ NOTHING WAS DELETED to
+ * make the number come out.
+ *
+ * ⚠⚠ AND `LEARN` AND `COMMUNITY` ARE NO LONGER THE SAME LIST, DELIBERATELY.
+ * `COMMUNITY_BAR` keeps all three — community is people talking to each other and
+ * non-anonymity is the whole point there (`P1-ALL-E033`). Learning is a person
+ * watching a video. ⚠ DO NOT RE-MERGE THEM; the harness asserts they differ.
+ *
+ * ⚠ CONTACT PREFERENCE REMAINS DELIBERATELY ABSENT, and for the same class of
+ * reason the skill requirement just failed on: `NotificationPreference` rows
+ * carry DEFAULTS, so "has a preference" is true for everyone by construction — a
+ * gate that can never fire — and there is no channel behind it either.
  */
+export const LEARN_BAR: GateField[] = ["name"];
+
+/**
+ * ⚠⚠ ONE SENTENCE COULD NOT HONESTLY SERVE ALL THREE SURFACES, SO IT DOES NOT
+ * TRY.
+ *
+ * `GATE_REASONS.name` reads *"People answer people, and buyers don't hire someone
+ * they can't name."* That is true for community and for selling. It is NOT true
+ * for learning — telling a learner about being hired is the same category of
+ * mismatch this correction exists to fix.
+ *
+ * ⚠ SO LEARN OVERRIDES THE COPY AND NOT THE PREDICATE, which is exactly the
+ * pattern `P1-ALL-E033` established: *"the predicate is shared; the WORDS are
+ * not, because the reason a provider needs your photo is not the reason the
+ * community does."* One field test, three voices.
+ */
+export const LEARN_REASON_OVERRIDES: Partial<Record<GateField, string>> = {
+  name: "Your certificate is issued in your name, so we need one before you enrol.",
+};
+
 export type LearnSubject = IdentitySubject & { skillCount: number };
 
 export function missingForLearn(subject: LearnSubject): GateGap[] {
-  const gaps: GateGap[] = missingIdentity(subject, COMMUNITY_BAR).map(gateGap);
-  if (subject.skillCount < 1) gaps.push(gateGap("skill"));
+  /*
+    ⚠ `skillCount` STAYS ON THE SUBJECT even though the bar no longer reads it.
+    Removing it would change every caller's shape for no gain, and it is what
+    `skill` needs the day the broadcast can actually run.
+  */
+  /*
+    ⚠ THE BAR IS SPLIT THE SAME WAY IT ALWAYS WAS — the identity fields go through
+    `missingIdentity`, and `skill` is tested separately because it is not one.
+    ⚠ AND IT IS DRIVEN OFF `LEARN_BAR` RATHER THAN HARDCODED, so the day `skill`
+    earns its place back, adding it to the bar is enough — this function does not
+    also need editing, and it cannot silently ignore it.
+  */
+  const gaps: GateGap[] = missingIdentity(
+    subject,
+    LEARN_BAR.filter(isIdentityField)
+  ).map((f) => {
+    const gap = gateGap(f);
+    const override = LEARN_REASON_OVERRIDES[f];
+    return override ? { ...gap, reason: override } : gap;
+  });
+  if (LEARN_BAR.includes("skill") && subject.skillCount < 1) {
+    gaps.push(gateGap("skill"));
+  }
   return gaps;
 }
 
