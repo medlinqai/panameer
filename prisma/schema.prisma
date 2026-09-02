@@ -2732,6 +2732,30 @@ model Lesson {
   /// display copy from a spreadsheet, and parsing it to seconds would invent a
   /// precision the source doesn't have.
   run_time          String?
+
+  /// ── ⚠⚠ A NUMERIC LENGTH, SO IT CAN BE SUMMED (`P1-J3-E361`) ──────────────
+  ///
+  /// SCOTT, 2026-09-02: *"people will ask it more than anything else."* No
+  /// surface could say *"24 minutes left in this course"* because there was no
+  /// number anywhere — only `run_time`, which is spreadsheet DISPLAY COPY and
+  /// really does contain `Intro`, `NA`, `Done` and `Incomplete`.
+  ///
+  /// ⚠⚠ `run_time` ABOVE IS NOT TOUCHED, NOT DEPRECATED AND NOT DELETED. It
+  /// keeps rendering verbatim wherever it renders today, and `check:learn`
+  /// GUARD 1's ban on SUMMING it stays exactly as written — that ban is
+  /// permanent and correct. This is a SEPARATE field, and
+  /// `lib/lesson-duration.ts` is the only thing that turns one into the other.
+  ///
+  /// ⚠ THE STORED XLS VALUES ARE EXACTLY 60× TOO LARGE — Scott typed `2:13`
+  /// into a cell formatted as hours-and-minutes. Measured against Vimeo's oEmbed
+  /// endpoint: `2:13:00` -> 133 s and Vimeo says 133 s, to the second.
+  /// ⚠ CAPPED AT TWO HOURS on write. A longer "lesson" is far likelier to be a
+  /// bad cell than a real video.
+  duration_seconds Int?
+  /// Where the number came from — `"xls"` or `"vimeo"`. ⚠ NEVER GUESSED, and a
+  /// duration without a source is a number nobody can defend; `check:duration`
+  /// fails the build if one exists without the other.
+  duration_source  String?
   /// Poster art for the lesson. NOT the Vimeo thumbnail: a lesson can need a
   /// card image long before it has a video, which is most of the catalog today.
   thumbnail_url     String?
