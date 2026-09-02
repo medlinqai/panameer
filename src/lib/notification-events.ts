@@ -154,14 +154,26 @@ export const NOTIFICATION_EVENTS = {
     event: "learn.course_completed",
     recipient: "the instructor",
     category: "learn.progress",
-    /* ⚠⚠ `SEND_FOR_APPROVAL`, NOT `DO_IT` — this row discloses a named learner to
-       a third party. Whether it names them, anonymises them or requires opt-in is
-       SCOTT'S AND IS UNDECIDED (`P1-J3-E048`). The copy below therefore does NOT
-       name the learner; see the report. */
+    /*
+      ⚠⚠ THE LEARNER IS NAMED — SCOTT DECIDED IT (`P1-J3-E048`, 2026-09-02).
+
+      ⚠ SUPERSEDED, quoted: this said *"Whether it names them, anonymises them or
+      requires opt-in is SCOTT'S AND IS UNDECIDED… The copy below therefore does
+      NOT name the learner"*, and rendered `Someone finished …`. Withholding the
+      name was the right default while it was undecided; it is decided now:
+      *"When JOE completes my course, I want to know it. I might want to give him
+      an at-a-boy… just build a relationship."* A nameless notification cannot do
+      that, which is the whole point of the row.
+
+      ⚠ `SEND_FOR_APPROVAL` IS UNCHANGED, deliberately — the brief says the AI Mode
+      stays as the registry has it. What Scott settled is the COPY, not the
+      autonomy, and the row still discloses one person to another.
+    */
     aiMode: "SEND_FOR_APPROVAL",
     visibility: "FEED",
     requiresAction: false,
-    title: (v) => `Someone finished ${str(v, "courseTitle", "your course")}`,
+    title: (v) =>
+      `${str(v, "learnerName", "Someone")} finished ${str(v, "courseTitle", "your course")}`,
     body: () => null,
   },
   "learn.certified.learner": {
