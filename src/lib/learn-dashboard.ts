@@ -9,6 +9,7 @@ import {
 import { lessonFace, withoutPlaceholders } from "@/lib/learn-faces";
 import { headlineFor, levelFor, type LevelState } from "@/lib/learn-progress";
 import type { Instructor } from "@/lib/learn-instructor-format";
+import { getLearnerSignal, pickSuggestion, type Suggestion } from "@/lib/learn-suggestion";
 
 /**
  * MY LEARNING — everything the signed-in `/learn` dashboard says, computed once
@@ -43,6 +44,9 @@ export type DashPath = {
   title: string;
   slug: string;
   group: string | null;
+  /* ⚠ ADDED FOR `E043`. The suggestion's Foundations tiers resolve on the
+     BEGINNERS audience, because no path is titled "Foundations". */
+  audience: string;
   coverImage: string | null;
   lessons: number;
   completed: number;
@@ -104,6 +108,13 @@ export type MyLearning = {
   paths: DashPath[];
   inProgress: DashPath[];
   continueCard: ContinueCard | null;
+  /**
+   * The right half of the empty state (`E043`). ⚠ NULL WHENEVER `continueCard`
+   * IS SET — the half only exists when there is nothing on the go, so the read
+   * behind it is skipped entirely for an active learner rather than computed
+   * and thrown away.
+   */
+  suggestion: Suggestion | null;
   nextCertificate: { title: string; slug: string; percent: number; remaining: number; courses: number; coursesFinished: number } | null;
   achievements: Achievement[];
 };
@@ -118,6 +129,7 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
         title: true,
         slug: true,
         group: true,
+        audience: true,
         cover_image: true,
         expert_person_id: true,
         courses: {
@@ -232,6 +244,7 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
       title: p.title,
       slug: p.slug,
       group: p.group,
+      audience: p.audience,
       coverImage: p.cover_image,
       lessons,
       completed,
@@ -378,6 +391,16 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
     },
   ];
 
+  /*
+    ── ⚠ THE SUGGESTED FIRST PATH (`E043`) ────────────────────────────────────
+
+    ⚠ ONLY WHEN THERE IS NOTHING ON THE GO. `continueCard` is the exact
+    condition `MyLearning.tsx` renders the empty state on, so gating the read on
+    the same value means an active learner pays nothing for a half they will
+    never see — and the two can never disagree about which state the page is in.
+  */
+  const suggestion = continueCard ? null : pickSuggestion(rows, await getLearnerSignal(userId));
+
   return {
     headline: headlineFor({
       /*
@@ -409,6 +432,7 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
       .sort((a, b) => b.percent - a.percent || b.completed - a.completed)
       .slice(0, 3),
     continueCard,
+    suggestion,
     nextCertificate: nearest
       ? {
           title: nearest.title,
