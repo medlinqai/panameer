@@ -102,12 +102,24 @@ export type Draft = {
   endDate: string | null;
   worksite: string | null;
   locationCountry: string | null;
+  /** ⚠ `P1-J4-E025` — how the COMPANY NAME publishes. Never the person. */
+  companyVisibility: string;
+  companyCodeName: string | null;
 };
 
 const dollars = (cents: number | null) =>
   cents === null || cents === undefined ? "" : String(cents / 100);
 
-export function CreateWorkRequest() {
+/**
+ * ⚠ `identityGaps` IS COMPUTED ON THE SERVER (`P1-J4-E025`) and passed down. It
+ * is a MIRROR of the post gate, never the gate — `postWorkRequest` refuses on
+ * the same rule whatever this component does with it.
+ */
+export function CreateWorkRequest({
+  identityGaps = [],
+}: {
+  identityGaps?: { key: string; field: string; reason: string; href: string }[];
+} = {}) {
   const router = useRouter();
   const [step, setStep] = useState<Step>("role");
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -944,6 +956,8 @@ export function CreateWorkRequest() {
     case "review":
       return (
         <ReviewStep
+          identityGaps={identityGaps}
+          onSaveVisibility={(v, code) => save("review", { companyVisibility: v, companyCodeName: code })}
           draft={draft}
           roleName={roleName}
           domainName={domainName}

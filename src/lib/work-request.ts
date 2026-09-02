@@ -3,6 +3,11 @@ import { scopedToPAccount, withPAccount, type Viewer } from "@/lib/access";
 import { sendEmail } from "@/lib/resend";
 import { appBaseUrl } from "@/lib/verification";
 import { workRequestPostedTemplate } from "@/lib/email/templates/work-request-posted";
+import {
+  missingIdentityForPost,
+  requirementFor,
+  type PostRequirementKey,
+} from "@/lib/work-request-identity";
 
 /**
  * Work Requests (brief_L) — a Service Buyer creates, saves-as-you-go, and posts.
@@ -49,10 +54,28 @@ export const WORK_REQUEST_SECTIONS = [
 ] as const;
 export type WorkRequestSection = (typeof WORK_REQUEST_SECTIONS)[number];
 
+export type MissingIdentityField = {
+  key: string;
+  field: string;
+  reason: string;
+  href: string;
+};
+
 export class WorkRequestError extends Error {
   constructor(
     message: string,
-    public code: "NOT_A_BUYER" | "NOT_FOUND" | "INVALID" | "POSTED" | "INCOMPLETE"
+    public code:
+      | "NOT_A_BUYER"
+      | "NOT_FOUND"
+      | "INVALID"
+      | "POSTED"
+      | "INCOMPLETE"
+      /* ⚠ `P1-J4-E025`. Distinct from INCOMPLETE because the fix lives on a
+         DIFFERENT page — the profile or the company, not the wizard — and the
+         UI has to be able to tell those two refusals apart to link correctly. */
+      | "IDENTITY_REQUIRED",
+    /** Populated for IDENTITY_REQUIRED: the named fields, with their links. */
+    public fields?: MissingIdentityField[]
   ) {
     super(message);
     this.name = "WorkRequestError";
@@ -108,6 +131,11 @@ function serialize(wr: Awaited<ReturnType<typeof loadOwned>>) {
     locationCountry: wr.location_country,
     regionId: wr.region_id,
     duration: wr.duration,
+    /* ⚠ `P1-J4-E025` — the buyer's own view of their publishing choice. This is
+       the OWNER's read, so the real name is never redacted here; the redaction
+       lives in `work-feed.ts`, which is what a provider sees. */
+    companyVisibility: wr.company_visibility,
+    companyCodeName: wr.company_code_name,
   };
 }
 
@@ -511,8 +539,49 @@ export async function saveSection(
       break;
     }
 
-    case "review":
+    /*
+      ── ⚠⚠ STEP 10 — HOW IT PUBLISHES (`P1-J4-E025`) ─────────────────────────
+
+      The review step was a no-op case because reviewing wrote nothing. It now
+      carries the one publishing decision the buyer makes: whether the COMPANY
+      NAME is shown.
+
+      ⚠ SAME THREE-STATE PATTERN AS `Project.client_visibility`, on the SAME
+      `ClientVisibility` enum, validated the same way — `employers.ts:301`
+      refuses a CONFIDENTIAL project with no code name, and this refuses the
+      same thing for the same reason: a redaction with nothing in its place
+      renders as missing data rather than as a decision.
+
+      ⚠ IT GOVERNS THE NAME AND NOTHING ELSE. There is deliberately no way to
+      hide the person, the standing counts, the industry or the verification
+      state — a request that hid all of those is the scam this brief exists to
+      stop.
+    */
+    case "review": {
+      if (data.companyVisibility === undefined && data.companyCodeName === undefined) break;
+      const visibility = String(data.companyVisibility ?? wr.company_visibility);
+      if (!["PUBLIC", "PLUS_ONLY", "CONFIDENTIAL"].includes(visibility)) {
+        throw new WorkRequestError("Invalid company visibility", "INVALID");
+      }
+      const codeName =
+        data.companyCodeName === undefined
+          ? wr.company_code_name
+          : String(data.companyCodeName ?? "").trim() || null;
+      if (visibility === "CONFIDENTIAL" && !codeName) {
+        throw new WorkRequestError(
+          "Give the company a code name providers will see instead",
+          "INVALID"
+        );
+      }
+      await prisma.workRequest.update({
+        where: { id: wr.id },
+        data: {
+          company_visibility: visibility as "PUBLIC" | "PLUS_ONLY" | "CONFIDENTIAL",
+          company_code_name: codeName,
+        },
+      });
       break;
+    }
   }
 
   return getWorkRequest(viewer, id);
@@ -525,6 +594,56 @@ function missingForPost(wr: Awaited<ReturnType<typeof loadOwned>>): string[] {
   if (!wr.role_type_id) missing.push("category");
   if (wr.skills.length === 0) missing.push("skills");
   return missing;
+}
+
+/**
+ * ⚠⚠ THE IDENTITY HALF OF THE POST GATE (`P1-J4-E025`) — SERVER-SIDE.
+ *
+ * **SCOTT:** *"i am letting you post for free… if you refuse to give basic
+ * details… meh, maybe it isn't the place for you?"*
+ *
+ * ⚠ THIS IS THE BOUNDARY. The wizard mirrors it, but the wizard is not it — the
+ * route is reachable directly and a client that skipped the check would post an
+ * anonymous request anyway. The UI reads the SAME function.
+ *
+ * ⚠ IT EXTENDS `missingForPost`'s CONTRACT RATHER THAN ADDING A SECOND GATE.
+ * ⚠ SUPERSEDED, quoted: the brief that ordered this said the post route *"today
+ * checks only `guardApi(\"canHireTalent\")`"*. IT DID NOT — `missingForPost`
+ * already required title, category and skills server-side. That check is
+ * untouched and this runs after it, so nothing that used to be refused is now
+ * allowed.
+ *
+ * ⚠ DRAFTS ARE NEVER TOUCHED BY THIS. `saveSection` does not call it; only
+ * posting does. Write and save whatever you like.
+ */
+export async function missingIdentityForPerson(buyerPersonId: string): Promise<PostRequirementKey[]> {
+  const person = await prisma.person.findUnique({
+    where: { id: buyerPersonId },
+    select: {
+      first_name: true,
+      last_name: true,
+      title: true,
+      photo_url: true,
+      company: { select: { name: true, country: true } },
+      /* ⚠ THE SAME SHAPE `lib/onboarding.ts:2360` USES FOR PROVIDER PUBLISH —
+         same status, same reason: a work order is between companies. */
+      companyMemberships: {
+        where: { status: "APPROVED" as const },
+        select: { id: true },
+        take: 1,
+      },
+    },
+  });
+  if (!person) return ["personName"];
+  return missingIdentityForPost({
+    firstName: person.first_name,
+    lastName: person.last_name,
+    photoUrl: person.photo_url,
+    jobTitle: person.title,
+    hasApprovedCompanyMembership: person.companyMemberships.length > 0,
+    companyName: person.company?.name,
+    companyCountry: person.company?.country,
+  });
 }
 
 /** Post a DRAFT → POSTED + posted_at (PAccount-scoped; immutable after). */
@@ -540,6 +659,22 @@ export async function postWorkRequest(viewer: Viewer, id: string) {
     throw new WorkRequestError(
       `Complete these before posting: ${missing.join(", ")}`,
       "INCOMPLETE"
+    );
+  }
+
+  /*
+    ⚠ THE REFUSAL NAMES THE FIELD AND SAYS WHY, one reason per field, in the
+    PROVIDER's interest. Not "complete your profile". The structured `fields`
+    array carries the link so the UI can offer it; `message` is the same content
+    flattened for a client that only reads the string.
+  */
+  const missingIds = await missingIdentityForPerson(wr.buyer_person_id);
+  if (missingIds.length) {
+    const reqs = missingIds.map(requirementFor);
+    throw new WorkRequestError(
+      reqs.map((r) => `${r.field} — ${r.reason}`).join(" "),
+      "IDENTITY_REQUIRED",
+      reqs.map((r) => ({ key: r.key, field: r.field, reason: r.reason, href: r.href }))
     );
   }
   await prisma.workRequest.update({

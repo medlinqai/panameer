@@ -2399,6 +2399,20 @@ model WorkRequest {
   unspsc_code         String?
   status              WorkRequestStatus    @default(DRAFT)
   posted_at           DateTime?
+
+  /// ── CONFIDENTIAL HIRING (`P1-J4-E025`) ────────────────────────────────────
+  /// Some buyers cannot name the company while they are hiring. This is the
+  /// SAME three-state pattern `Project.client_visibility` already runs, on the
+  /// SAME `ClientVisibility` enum — deliberately not a second mechanism — and
+  /// `lib/plus.ts:clientNameVisibility()` is reused verbatim to resolve it.
+  /// ⚠⚠ IT GOVERNS THE COMPANY NAME AND NOTHING ELSE. It never hides the
+  /// person, the standing counts, the industry, or the verification state. A
+  /// request that hid all of those would be the scam this brief exists to stop.
+  company_visibility  ClientVisibility     @default(PUBLIC)
+  /// Shown INSTEAD of the company name when confidential — the buyer-side twin
+  /// of `Project.code_name`. Null renders a neutral placeholder rather than a
+  /// blank, so the row never reads as missing data.
+  company_code_name   String?
   created_at          DateTime             @default(now())
   updated_at          DateTime             @updatedAt
 

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { relativeDay } from "@/lib/relative-day";
+import { WhoIsAsking } from "@/components/work/WhoIsAsking";
 import { WORK_CARD_IMAGE_ALT, workCardImage } from "@/lib/work-images";
 import {
   UNBACKED_TABS,
@@ -224,22 +225,49 @@ function WorkRequestCard({ card }: { card: WorkCard }) {
               )}
             </div>
 
-            {/* The buyer's mark, when they have one. Absent rather than a grey
-                placeholder square — an empty logo slot on every card is noise. */}
-            {card.companyLogoUrl && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={card.companyLogoUrl}
-                alt={card.companyName ?? ""}
-                className="h-10 w-10 shrink-0 rounded-[8px] object-cover"
-              />
-            )}
+            {/*
+              ── ⚠⚠ WHO IS ASKING (`P1-J4-E025`) ─────────────────────────────
+
+              SCOTT: *"I SEE THEIR REQUEST… WANT TO SEE WHO THEY ARE JUST LIKE I
+              WOULD IN LINKEDIN… AND THERE IS ONLY A TITLE? LOOKS LIKE A SCAM
+              FOR A SITE I DO NOT KNOW WELL."*
+
+              ⚠ BESIDE THE REQUEST ON A WIDE CARD, UNDER IT ON A NARROW ONE. The
+              block is four rows of prose; squeezed into a 200px column beside
+              the description at 390px it renders a word per line, which is the
+              failure `CoverageCard`'s closing strip already documents.
+
+              ⚠⚠ THIS IS THE ONLY SURFACE A PROVIDER CAN SEE A WORK REQUEST ON
+              TODAY, which is why the block lands here. `/work/[id]` — the
+              detail route this card's title has always linked to — STILL DOES
+              NOT EXIST; that 404 is pre-existing and was reported at `E025`
+              rather than fixed inside this brief. `WhoIsAsking` takes a
+              `BuyerIdentity` and reads nothing else, so it moves there unchanged
+              on the day that page lands.
+
+              ⚠ SUPERSEDED, quoted not deleted: a bare 40px company logo sat here
+              — *"The buyer's mark, when they have one. Absent rather than a grey
+              placeholder square."* The logo is now inside the block, where it is
+              captioned by the company name and suppressed with it when the
+              request is confidential. A floating logo beside a redacted name
+              would have named the company anyway.
+            */}
+            <div className="hidden w-[260px] shrink-0 min-[900px]:block">
+              <WhoIsAsking identity={card.identity} />
+            </div>
+          </div>
+
+          <div className="mt-4 min-[900px]:hidden">
+            <WhoIsAsking identity={card.identity} />
           </div>
 
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-ink-2">
-            {card.companyName && (
-              <span className="font-semibold">{card.companyName}</span>
-            )}
+            {/*
+              ⚠ THE COMPANY NAME CAME OUT OF THIS ROW (`P1-J4-E025`). It is in
+              the "Who's asking" block above, where it is redacted when the
+              request is confidential; leaving a second unredacted copy down here
+              would have defeated the redaction entirely.
+            */}
             {card.postedAt && <span>Posted {relativeDay(card.postedAt)}</span>}
             {/*
               THE EARN HOOK. Stated as the rule rather than a number, because

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { WizardShell } from "@/components/onboarding/WizardShell";
 
@@ -36,6 +37,8 @@ import type { Draft, Step } from "@/components/work/CreateWorkRequest";
  * VOCABULARY: Work Request throughout. Not "job details", not "post this job".
  */
 export function ReviewStep({
+  identityGaps = [],
+  onSaveVisibility,
   draft,
   roleName,
   domainName,
@@ -56,7 +59,19 @@ export function ReviewStep({
   onPost: () => void;
   busy: boolean;
   error: string | null;
+  /**
+   * ⚠ THE POST GATE'S IDENTITY HALF, MIRRORED (`P1-J4-E025`). Computed on the
+   * server by the same function the API refuses with; empty means nothing is
+   * missing. ⚠ NOT THE BOUNDARY — see `create-work/page.tsx`.
+   */
+  identityGaps?: { key: string; field: string; reason: string; href: string }[];
+  /** ⚠ `P1-J4-E025` — persists the COMPANY-NAME visibility on the review step. */
+  onSaveVisibility?: (visibility: string, codeName: string | null) => void;
 }) {
+  const [confidential, setConfidential] = useState(
+    draft?.companyVisibility === "CONFIDENTIAL"
+  );
+  const [codeName, setCodeName] = useState(draft?.companyCodeName ?? "");
   const [confirm, setConfirm] = useState(false);
   const money = (c: number | null) =>
     c === null || c === undefined
@@ -92,9 +107,54 @@ export function ReviewStep({
       wide
       onContinue={() => setConfirm(true)}
       continueLabel="Post Work Request"
-      continueDisabled={!draft || draft.skillIds.length === 0}
+      continueDisabled={
+        !draft ||
+        draft.skillIds.length === 0 ||
+        identityGaps.length > 0 ||
+        (confidential && !codeName.trim())
+      }
     >
       {error && <Notice>{error}</Notice>}
+
+      {/*
+        ── ⚠⚠ WHO IS ASKING — THE POST GATE, STATED BEFORE THE BUTTON ─────────
+
+        SCOTT: *"i am letting you post for free… if you refuse to give basic
+        details… meh, maybe it isn't the place for you?"*
+
+        ⚠ EACH ROW NAMES THE FIELD, GIVES ONE REASON IN THE PROVIDER'S INTEREST,
+        AND LINKS TO WHERE IT IS FIXED. Not "complete your profile" — that tells
+        a requester nothing and is the exact refusal this replaces. The strings
+        come from `POST_REQUIREMENTS`, the same table the server refuses with.
+
+        ⚠ IT IS NOT STYLED AS AN ERROR. Nothing has gone wrong; they have not
+        finished. Red here would read as a fault.
+      */}
+      {identityGaps.length > 0 && (
+        <div className="mb-5 rounded-brand border border-line bg-bg-soft p-5">
+          <p className="text-[15px] font-bold">
+            Before you post, providers need to know who is asking
+          </p>
+          <p className="mt-1 text-[13.5px] leading-relaxed text-ink-2">
+            Posting is free. Posting anonymously is not something providers will
+            answer — they see who is asking before they spend an afternoon on a
+            proposal.
+          </p>
+          <ul className="mt-3 grid gap-2.5">
+            {identityGaps.map((g) => (
+              <li key={g.key} className="text-[14px] leading-relaxed">
+                <Link
+                  href={g.href}
+                  className="font-bold text-magenta hover:underline"
+                >
+                  {g.field}
+                </Link>{" "}
+                <span className="text-ink-2">— {g.reason}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2">
         <ReviewCard title="Role & Domain" onEdit={() => onEdit("role")}>
@@ -121,6 +181,72 @@ export function ReviewStep({
         <ReviewCard title="Description" onEdit={() => onEdit("description")}>
           {draft?.description ? `${draft.description.slice(0, 160)}…` : "Not set"}
         </ReviewCard>
+      </div>
+
+      {/*
+        ── ⚠⚠ CONFIDENTIAL HIRING (`P1-J4-E025`) ───────────────────────────────
+
+        ⚠ IT HIDES THE COMPANY NAME AND THE LOGO. NOTHING ELSE — and the copy
+        says so out loud, because a buyer who believes this hides THEM will use
+        it expecting anonymity and a provider will read the result as a scam.
+        The person, the country, the industry, the standing counts and both
+        verification lines stay visible: *"a verified company in Oil & Gas,
+        hiring confidentially"* is still answerable.
+
+        ⚠ A CODE NAME IS REQUIRED, exactly as `employers.ts:301` requires one for
+        a CONFIDENTIAL project. The server refuses without it; this asks for it
+        first rather than letting the save fail.
+      */}
+      <div className="mt-5 rounded-brand border border-line p-5">
+        <label className="flex cursor-pointer items-start gap-3">
+          <input
+            type="checkbox"
+            checked={confidential}
+            onChange={(e) => {
+              const on = e.target.checked;
+              setConfidential(on);
+              if (!on) onSaveVisibility?.("PUBLIC", null);
+              else if (codeName.trim()) onSaveVisibility?.("CONFIDENTIAL", codeName.trim());
+            }}
+            className="mt-1 h-4 w-4 shrink-0 accent-magenta"
+          />
+          <span>
+            <span className="block text-[14.5px] font-bold">
+              Hire confidentially
+            </span>
+            <span className="mt-0.5 block text-[13px] leading-relaxed text-ink-2">
+              Providers see a code name instead of your company name and logo.
+              They still see you, your country, your industry, how many requests
+              you have posted, and what Panameer has verified.
+            </span>
+          </span>
+        </label>
+        {confidential && (
+          <div className="mt-3 pl-7">
+            <label
+              htmlFor="wr-code-name"
+              className="block text-[13px] font-semibold"
+            >
+              Code name providers will see
+            </label>
+            <input
+              id="wr-code-name"
+              value={codeName}
+              onChange={(e) => setCodeName(e.target.value)}
+              onBlur={() =>
+                codeName.trim() && onSaveVisibility?.("CONFIDENTIAL", codeName.trim())
+              }
+              placeholder="A global energy company"
+              className="mt-1.5 w-full max-w-sm rounded-[10px] border border-line px-3 py-2 text-[14px]"
+            />
+            {!codeName.trim() && (
+              <p className="mt-1.5 text-[12.5px] text-ink-2">
+                Required — a blank space where a company name should be reads as
+                missing data, not as a decision.
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       {confirm && (

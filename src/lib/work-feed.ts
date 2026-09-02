@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { buildBuyerIdentity, type BuyerIdentity } from "@/lib/work-request-identity";
 
 /**
  * THE WORK FEED (brief_sp_dashboard WS-B) — the body of the provider dashboard.
@@ -71,6 +72,12 @@ export type WorkCard = {
   companyLogoUrl: string | null;
   skills: string[];
   postedAt: string | null;
+  /**
+   * ⚠ WHO IS ASKING (`P1-J4-E025`). Already redacted for this viewer — a
+   * CONFIDENTIAL company name never reaches the card, so it cannot leak through
+   * the RSC payload the way `client_domain` once could.
+   */
+  identity: BuyerIdentity;
 };
 
 function money(cents: number | null, currency: string): string | null {
@@ -158,12 +165,81 @@ export async function getWorkFeed(input: {
       worksite: true,
       posted_at: true,
       roleType: { select: { display: true, name: true } },
+      /* ⚠ `P1-J4-E025` — the poster, their company and their account. All of it
+         already hung off the row; none of it was reaching the provider. */
+      company_visibility: true,
+      company_code_name: true,
+      p_account_id: true,
       buyer: {
-        select: { company: { select: { name: true, logo_url: true } } },
+        select: {
+          first_name: true,
+          last_name: true,
+          title: true,
+          photo_url: true,
+          company: {
+            select: {
+              id: true,
+              name: true,
+              country: true,
+              vertical: true,
+              logo_url: true,
+              tin: true,
+            },
+          },
+          user: { select: { email_verified: true } },
+        },
       },
       skills: { select: { skill: { select: { id: true, name: true } } } },
     },
   });
+
+  /*
+    ── ⚠ STANDING, IN TWO QUERIES FOR THE WHOLE PAGE ──────────────────────────
+
+    `groupBy` over the accounts actually on this page rather than a count per
+    card: 40 cards would otherwise be 80 round trips for two numbers.
+    ⚠ THE POSTED COUNT IS A REAL COUNT OF POSTED ROWS, seeded rows included —
+    Scott's counters rule, 2026-08-27. Nothing is filtered out to flatter it.
+  */
+  const accountIds = [...new Set(rows.map((w) => w.p_account_id))];
+  const [postedCounts, accounts] = await Promise.all([
+    accountIds.length
+      ? prisma.workRequest.groupBy({
+          by: ["p_account_id"],
+          where: { p_account_id: { in: accountIds }, status: "POSTED" },
+          _count: { _all: true },
+        })
+      : Promise.resolve([]),
+    accountIds.length
+      ? prisma.pAccount.findMany({
+          where: { id: { in: accountIds } },
+          select: { id: true, created_at: true },
+        })
+      : Promise.resolve([]),
+  ]);
+  const postedByAccount = new Map(postedCounts.map((r) => [r.p_account_id, r._count._all]));
+  const createdByAccount = new Map(accounts.map((a) => [a.id, a.created_at]));
+
+  /*
+    ⚠ THE FEED IS A PROVIDER SURFACE, so the viewer is never the owner, never an
+    admin, and Plus is not plumbed into this read. `clientNameVisibility` is
+    given the honest answer — all three false — which means CONFIDENTIAL and
+    PLUS_ONLY both redact here. ⚠ THAT IS STRICTER THAN THE PROJECT RULE, NOT
+    LOOSER: the failure this brief exists to prevent is a name LEAKING, and a
+    Plus buyer seeing a code name they were entitled to read is a lesser fault
+    than the reverse. Flagged at `E025` — plumbing Plus through is a follow-up.
+  */
+  const identityFor = (w: (typeof rows)[number]) =>
+    buildBuyerIdentity({
+      person: w.buyer,
+      companyVisibility: w.company_visibility,
+      companyCodeName: w.company_code_name,
+      standing: {
+        memberSince: createdByAccount.get(w.p_account_id)?.toISOString() ?? null,
+        postedCount: postedByAccount.get(w.p_account_id) ?? 0,
+      },
+      viewer: { isOwner: false, isAdmin: false, isPlus: false },
+    });
 
   const cards = rows.map((w) => ({
     id: w.id,
@@ -178,8 +254,9 @@ export async function getWorkFeed(input: {
     location: w.location_country,
     worksite: pretty(w.worksite),
     roleType: w.roleType?.display ?? w.roleType?.name ?? null,
-    companyName: w.buyer.company?.name ?? null,
-    companyLogoUrl: w.buyer.company?.logo_url ?? null,
+    companyName: identityFor(w).companyName,
+    companyLogoUrl: identityFor(w).companyLogoUrl,
+    identity: identityFor(w),
     skills: w.skills.map((s) => s.skill.name),
     postedAt: w.posted_at?.toISOString() ?? null,
     _overlap: w.skills.filter((s) => skillIds.includes(s.skill.id)).length,

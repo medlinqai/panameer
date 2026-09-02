@@ -3,6 +3,9 @@ import { guardPage } from "@/lib/guard";
 import { getSessionViewer } from "@/lib/session";
 import { checkTransact } from "@/lib/guard";
 import { CreateWorkRequest } from "@/components/work/CreateWorkRequest";
+import { missingIdentityForPerson } from "@/lib/work-request";
+import { requirementFor } from "@/lib/work-request-identity";
+import { prisma } from "@/lib/prisma";
 
 /**
  * Create a Work Request (brief_create_work_request_v1).
@@ -33,5 +36,24 @@ export default async function Page() {
     redirect(`/company?blocked=${transact.reason}&from=${encodeURIComponent("/create-work")}`);
   }
 
-  return <CreateWorkRequest />;
+  /*
+    ── ⚠⚠ THE UI MIRROR OF THE POST GATE (`P1-J4-E025`) ───────────────────────
+
+    ⚠ A MIRROR, NOT THE BOUNDARY. `postWorkRequest` runs the identical check
+    server-side and refuses regardless of what this page renders; the API is
+    reachable without ever loading this component. This exists so a requester
+    learns what is missing BEFORE they write a whole request, rather than at the
+    Post button.
+    ⚠ IT READS THE SAME FUNCTION — `missingIdentityForPerson` — so the two
+    cannot disagree about the rule, and the strings come from the same table.
+  */
+  const person = await prisma.person.findFirst({
+    where: { user_id: viewer.userId },
+    select: { id: true },
+  });
+  const identityGaps = person
+    ? (await missingIdentityForPerson(person.id)).map(requirementFor)
+    : [];
+
+  return <CreateWorkRequest identityGaps={identityGaps} />;
 }
