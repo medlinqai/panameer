@@ -3,7 +3,9 @@ import { notFound } from "next/navigation";
 import { guardPage } from "@/lib/guard";
 import { getBoard } from "@/lib/forums";
 import { relativeDay } from "@/lib/relative-day";
+import { Avatar } from "@/components/Avatar";
 import { ForumComposer } from "@/components/community/ForumComposer";
+import { communityIdentityGaps } from "@/lib/community-identity";
 
 /** One board: its threads, newest activity first, plus the composer (WS2-C). */
 export default async function BoardPage({
@@ -11,10 +13,14 @@ export default async function BoardPage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  await guardPage("authenticated");
+  const gate = await guardPage("authenticated");
   const { slug } = await params;
   const board = await getBoard(slug);
   if (!board) notFound();
+
+  /* ⚠ THE COMPOSER'S MIRROR (`P1-ALL-E033`) — the same function the write path
+     refuses with, so the two cannot disagree. Reading this page is untouched. */
+  const identityGaps = await communityIdentityGaps(gate.userId);
 
   return (
     <div className="mx-auto max-w-4xl space-y-4">
@@ -49,14 +55,41 @@ export default async function BoardPage({
             <li key={t.id}>
               <Link
                 href={`/community/forums/thread/${t.id}`}
-                className="group flex flex-wrap items-baseline gap-x-4 gap-y-1 px-5 py-4"
+                className="group flex flex-wrap items-center gap-x-4 gap-y-1 px-5 py-4"
               >
+                {/*
+                  ── ⚠⚠ NON-ANONYMITY ONLY WORKS IF IT IS VISIBLE (`P1-ALL-E033`)
+
+                  ⚠ A rule that COLLECTS a photo and does not SHOW it buys
+                  nothing. The thread PAGE already rendered all three — avatar,
+                  name and job title — but this LIST rendered the name alone:
+                  *"{t.author.name} · {relativeDay(t.lastPostAt)}"*, quoted here
+                  because it is what changed. So the board, which is where most
+                  people decide whether a thread is worth opening, was the one
+                  surface where the author was still just a string.
+
+                  ⚠ THE DATA WAS ALREADY THERE — `authorView` in `lib/forums.ts`
+                  has carried `photoUrl` and `title` all along; nothing was
+                  added to the query.
+
+                  ⚠ NO BADGE, NO SCORE, NO POST COUNT, NO VERIFIED TICK. Facts
+                  about who wrote it, nothing more. `mentorState` exists and is
+                  deliberately not used here.
+                */}
+                <Avatar
+                  firstName={t.author.firstName}
+                  lastName={t.author.lastName}
+                  photoUrl={t.author.photoUrl}
+                  size={32}
+                />
                 <div className="min-w-0 flex-1">
                   <p className="font-semibold group-hover:text-magenta">
                     {t.title}
                   </p>
                   <p className="mt-0.5 text-[13px] text-ink-2">
-                    {t.author.name} · {relativeDay(t.lastPostAt)}
+                    {t.author.name}
+                    {t.author.title ? ` · ${t.author.title}` : ""} ·{" "}
+                    {relativeDay(t.lastPostAt)}
                   </p>
                 </div>
                 <span className="shrink-0 text-[13px] text-ink-2">
@@ -68,7 +101,7 @@ export default async function BoardPage({
         </ul>
       )}
 
-      <ForumComposer mode="thread" boardSlug={board.slug} />
+      <ForumComposer mode="thread" boardSlug={board.slug} identityGaps={identityGaps} />
     </div>
   );
 }

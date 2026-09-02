@@ -634,7 +634,7 @@ export async function missingIdentityForPerson(buyerPersonId: string): Promise<P
       },
     },
   });
-  if (!person) return ["personName"];
+  if (!person) return ["name"];
   return missingIdentityForPost({
     firstName: person.first_name,
     lastName: person.last_name,

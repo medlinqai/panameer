@@ -6,6 +6,15 @@ import { ForumError, createPost, createThread, markHelpful, unmarkHelpful } from
 /**
  * POST /api/community/forums — start a thread or reply to one (WS2-C).
  *
+ * ⚠ `guardApi("authenticated")` IS STILL THE ONLY CAPABILITY, AND DELIBERATELY SO
+ * (`P1-ALL-E033`). Requiring name, photo and job title before writing is a
+ * PROFILE-COMPLETENESS check, not a role; modelling it as a capability would put
+ * a mutable data question into the permission system. The check lives in
+ * `lib/forums.ts`, which is the boundary for all four actions.
+ * ⚠ AND IT GATES WRITING ONLY. `helpful`/`unhelpful` pass through ungated —
+ * marking an answer helpful is a reader's act and it is the signal the board
+ * runs on.
+ *
  * One route, four actions. AUTHORSHIP IS NEVER IN THE BODY: the lib resolves the
  * poster from the session, so there is no shape of request that posts as
  * somebody else.
@@ -63,7 +72,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, id: result.id });
   } catch (e) {
     if (e instanceof ForumError) {
-      return NextResponse.json({ error: e.message }, { status: 400 });
+      /*
+        ⚠ `fields` TRAVELS WITH THE REFUSAL (`P1-ALL-E033`). Without it the
+        composer can only say "complete your profile", which is the exact
+        non-answer the brief forbids — the named field, its reason and its link
+        all come from the server so the UI cannot paraphrase them into something
+        vaguer.
+      */
+      return NextResponse.json(
+        { error: e.message, code: e.code, ...(e.fields ? { fields: e.fields } : {}) },
+        { status: 400 }
+      );
     }
     console.error("[forums] write failed:", e);
     return NextResponse.json(

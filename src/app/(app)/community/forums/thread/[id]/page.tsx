@@ -5,6 +5,7 @@ import { getThread, viewerPersonId } from "@/lib/forums";
 import { relativeDay } from "@/lib/relative-day";
 import { Avatar } from "@/components/Avatar";
 import { ForumComposer } from "@/components/community/ForumComposer";
+import { communityIdentityGaps } from "@/lib/community-identity";
 import { HelpfulButton } from "@/components/community/HelpfulButton";
 
 /** One thread: the question, every reply oldest-first, and the reply box. */
@@ -22,6 +23,9 @@ export default async function ThreadPage({
     boundary.
   */
   const thread = await getThread(id, await viewerPersonId(gate));
+
+  /* ⚠ THE COMPOSER'S MIRROR (`P1-ALL-E033`). Reading the thread is untouched. */
+  const identityGaps = await communityIdentityGaps(gate.userId);
   if (!thread) notFound();
 
   const entries = [
@@ -104,7 +108,7 @@ export default async function ThreadPage({
         ))}
       </div>
 
-      <ForumComposer mode="reply" threadId={thread.id} />
+      <ForumComposer mode="reply" threadId={thread.id} identityGaps={identityGaps} />
     </div>
   );
 }

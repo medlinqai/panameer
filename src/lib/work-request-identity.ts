@@ -1,4 +1,10 @@
 import { clientNameVisibility } from "@/lib/plus";
+import {
+  missingIdentity,
+  WORK_REQUEST_BAR,
+  type IdentityField,
+  type IdentitySubject,
+} from "@/lib/identity-bar";
 
 /**
  * WHO IS ASKING — identity on a work request (`P1-J4-E025`).
@@ -158,13 +164,28 @@ export function verificationLines(input: {
    WS-3 — WHAT YOU MUST GIVE TO POST
    ──────────────────────────────────────────────────────────────────────────── */
 
-export type PostRequirementKey =
-  | "personName"
-  | "personPhoto"
-  | "personTitle"
-  | "approvedCompany"
-  | "companyName"
-  | "companyCountry";
+/**
+ * ⚠⚠ RE-HOMED ONTO THE SHARED PREDICATE (`P1-ALL-E033` WS-0, 2026-09-02).
+ *
+ * ⚠ SUPERSEDED, quoted not deleted: this was its own union —
+ * `"personName" | "personPhoto" | "personTitle" | "approvedCompany" |
+ * "companyName" | "companyCountry"` — and `missingIdentityForPost` did its own
+ * six field tests. `P1-ALL-E033` requires the SAME three person fields for a
+ * community post, and its WS-0 is explicit that the rule must not be written
+ * twice: *"two copies drift, and the day they disagree nobody will know which is
+ * the rule."*
+ *
+ * ⚠ SO THE THREE PERSON KEYS WERE RENAMED to the shared vocabulary
+ * (`personName` -> `name`, `personPhoto` -> `photo`, `personTitle` ->
+ * `jobTitle`). ⚠ NOT ONE ASSERTION WAS WEAKENED OR DROPPED —
+ * `check:work-request-identity` still drives all six fields and still refuses
+ * "complete your profile"; only the identifiers changed.
+ * ⚠ THE COPY STAYED HERE ON PURPOSE. The predicate is shared; the WORDS are not,
+ * because the reason a provider needs your photo is not the reason the community
+ * does. `POST_REQUIREMENTS` below is this surface's voice and nothing else reads
+ * it.
+ */
+export type PostRequirementKey = IdentityField;
 
 /**
  * ⚠⚠ ONE REASON PER FIELD, WRITTEN IN THE PROVIDER'S INTEREST, NOT THE
@@ -188,19 +209,19 @@ export const POST_REQUIREMENTS: {
   href: string;
 }[] = [
   {
-    key: "personName",
+    key: "name",
     field: "Add your name",
     reason: "Providers will not answer an unnamed request, and there is no way to check one.",
     href: "/settings/profile",
   },
   {
-    key: "personPhoto",
+    key: "photo",
     field: "Add a photo",
     reason: "Providers see who is asking before they spend an afternoon on a proposal.",
     href: "/settings/profile",
   },
   {
-    key: "personTitle",
+    key: "jobTitle",
     field: "Add your job title",
     reason: "It tells a provider whether they are talking to the person who decides.",
     href: "/settings/profile",
@@ -225,15 +246,7 @@ export const POST_REQUIREMENTS: {
   },
 ];
 
-export type PostIdentityInput = {
-  firstName: string | null | undefined;
-  lastName: string | null | undefined;
-  photoUrl: string | null | undefined;
-  jobTitle: string | null | undefined;
-  hasApprovedCompanyMembership: boolean;
-  companyName: string | null | undefined;
-  companyCountry: string | null | undefined;
-};
+export type PostIdentityInput = IdentitySubject;
 
 /**
  * The identity half of the post gate. PURE, so `check:work-request-identity`
@@ -243,15 +256,7 @@ export type PostIdentityInput = {
  * governs what a PROVIDER is shown, not what the buyer has to give Panameer.
  */
 export function missingIdentityForPost(input: PostIdentityInput): PostRequirementKey[] {
-  const has = (v: string | null | undefined) => Boolean(v && v.trim());
-  const missing: PostRequirementKey[] = [];
-  if (!has(input.firstName) || !has(input.lastName)) missing.push("personName");
-  if (!has(input.photoUrl)) missing.push("personPhoto");
-  if (!has(input.jobTitle)) missing.push("personTitle");
-  if (!input.hasApprovedCompanyMembership) missing.push("approvedCompany");
-  if (!has(input.companyName)) missing.push("companyName");
-  if (!has(input.companyCountry)) missing.push("companyCountry");
-  return missing;
+  return missingIdentity(input, WORK_REQUEST_BAR);
 }
 
 export const requirementFor = (key: PostRequirementKey) =>

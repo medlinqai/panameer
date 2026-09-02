@@ -1,5 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import type { Viewer } from "@/lib/access";
+import {
+  communityIdentityGapsForPerson,
+  type CommunityGap,
+} from "@/lib/community-identity";
 
 /**
  * Forums (PHASE 2 / WS2-C) — board list → threads → posts.
@@ -14,10 +18,46 @@ import type { Viewer } from "@/lib/access";
  */
 
 export class ForumError extends Error {
-  constructor(message: string, public code: "NOT_FOUND" | "INVALID") {
+  constructor(
+    message: string,
+    public code:
+      | "NOT_FOUND"
+      | "INVALID"
+      /* ⚠ `P1-ALL-E033`. Distinct from INVALID because the fix is not in the
+         composer — it is on the profile — and the UI has to tell the two apart
+         to link correctly. */
+      | "IDENTITY_REQUIRED",
+    /** Populated for IDENTITY_REQUIRED: the named fields, with their links. */
+    public fields?: CommunityGap[]
+  ) {
     super(message);
     this.name = "ForumError";
   }
+}
+
+/**
+ * ⚠⚠ THE WRITE GATE (`P1-ALL-E033`) — name · photo · job title.
+ *
+ * **SCOTT:** *"That isn't vetting, it's non-anonymity."* Shit-posting collapses
+ * when your face and your job are attached to it.
+ *
+ * ⚠ THE LIB IS THE BOUNDARY. The composer mirrors this and explains itself
+ * before anyone types a paragraph, but `/api/community/forums` is reachable
+ * directly and a gate that lives only in the client is not a gate.
+ *
+ * ⚠⚠ CALLED FROM `createThread` AND `createPost` AND FROM NOWHERE ELSE. Not from
+ * any read, not from `markHelpful` — `check:community-identity` fails the build
+ * if it appears on either. Reading stays open, signed out included, and marking
+ * an answer helpful is a reader's act.
+ */
+async function requireIdentity(personId: string): Promise<void> {
+  const gaps = await communityIdentityGapsForPerson(personId);
+  if (gaps.length === 0) return;
+  throw new ForumError(
+    gaps.map((g) => `${g.field} — ${g.reason}`).join(" "),
+    "IDENTITY_REQUIRED",
+    gaps
+  );
 }
 
 /**
@@ -248,6 +288,7 @@ export async function createThread(
   input: { boardSlug: string; title: string; body: string }
 ) {
   const person = await ownPerson(viewer);
+  await requireIdentity(person.id);
   const board = await prisma.forumBoard.findUnique({
     where: { slug: input.boardSlug },
     select: { id: true },
@@ -283,6 +324,7 @@ export async function createPost(
   input: { threadId: string; body: string }
 ) {
   const person = await ownPerson(viewer);
+  await requireIdentity(person.id);
   const body = input.body.trim();
   if (body.length < 2) throw new ForumError("Say something first.", "INVALID");
 

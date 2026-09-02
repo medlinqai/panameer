@@ -66,10 +66,14 @@ const block = read(BLOCK);
 // GUARD 1 — the post gate is server-side, and it is the whole required set
 // ---------------------------------------------------------------------------
 
+/* ⚠ RENAMED, NOT REDUCED (`P1-ALL-E033` WS-0). The three person keys moved to
+   the shared vocabulary in `lib/identity-bar.ts` — `personName` -> `name`,
+   `personPhoto` -> `photo`, `personTitle` -> `jobTitle`. All six are still
+   asserted and no assertion below was dropped or loosened. */
 const ALL_KEYS: PostRequirementKey[] = [
-  "personName",
-  "personPhoto",
-  "personTitle",
+  "name",
+  "photo",
+  "jobTitle",
   "approvedCompany",
   "companyName",
   "companyCountry",
@@ -105,7 +109,7 @@ for (const r of POST_REQUIREMENTS) {
 }
 check(
   "1 — whitespace is not a name",
-  missingIdentityForPost({ ...COMPLETE, firstName: "   " }).includes("personName")
+  missingIdentityForPost({ ...COMPLETE, firstName: "   " }).includes("name")
 );
 check(
   "1 — a PENDING membership is not an approved one",
