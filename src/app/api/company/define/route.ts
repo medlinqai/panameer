@@ -31,6 +31,10 @@ const schema = z.object({
     refinement cannot see its siblings, and EIN is a US-only rule.
   */
   ein: z.string().trim().max(40).nullish(),
+  /* `E282` — the full state name, US only. ⚠ NOT format-validated against a
+     list here: the lib owns the supported-state question and an unknown state is
+     a lookup outcome, not a save error. */
+  stateOfFiling: z.string().trim().max(60).nullish(),
   /*
     `E280` — the REGISTERED address, stored as a Site + Address on the backbone.
     ⚠ Every part is nullish: `E274` makes the company itself optional at

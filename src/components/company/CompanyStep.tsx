@@ -12,8 +12,14 @@ import {
   EIN_MESSAGE,
   US_ZIP_MESSAGE,
   ein as einFormat,
+  isUnitedStates,
   usZip,
 } from "@/lib/field-formats";
+import {
+  SUPPORTED_STATES,
+  US_STATES,
+  type ValidationResult,
+} from "@/lib/company-validation";
 
 /**
  * DEFINE OR JOIN — the company building block, shared by BOTH onboarding tracks
@@ -169,6 +175,33 @@ export function CompanyStep({
   */
   const [zipTouched, setZipTouched] = useState(false);
   const [einTouched, setEinTouched] = useState(false);
+
+  /*
+    ── ENTITY VALIDATION (`P1-J1.1-E282`) ─────────────────────────────────────
+
+    SCOTT: *"Every state has a Secretary of State website. They list their
+    corporations under a corporate search."* — and *"let's present it and use
+    it"*, which is present and use, NOT lock.
+
+    ⚠⚠ `Continue` IS NEVER DISABLED BY ANY OF THIS (decision 5). Nothing below
+    touches `valid`.
+  */
+  const [stateOfFiling, setStateOfFiling] = useState("");
+  const [checking, setChecking] = useState(false);
+  const [lookup, setLookup] = useState<ValidationResult | null>(null);
+  /**
+   * ⚠ WHICH FIELDS CAME FROM THE REGISTER, so each can carry a visible marker
+   * UNTIL THE USER EDITS IT. Cleared per-field on edit rather than wholesale —
+   * correcting the city should not un-mark the postcode.
+   */
+  const [fromRegister, setFromRegister] = useState<Set<string>>(new Set());
+  const unmark = (k: string) =>
+    setFromRegister((prev) => {
+      if (!prev.has(k)) return prev;
+      const next = new Set(prev);
+      next.delete(k);
+      return next;
+    });
   const [regAddress, setRegAddress] = useState<LocationValue>({
     country: COUNTRIES[0],
   });
@@ -176,6 +209,60 @@ export function CompanyStep({
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [logoBusy, setLogoBusy] = useState(false);
   const logoInput = useRef<HTMLInputElement>(null);
+
+  /*
+    ⚠ THE LOOKUP IS A READ AND IT WRITES NOTHING. `/api/company/validate` never
+    persists; `defineCompany()` stays the only writer, which is what lets a user
+    correct a bad match before anything is saved.
+  */
+  const runLookup = async () => {
+    setChecking(true);
+    setLookup(null);
+    try {
+      const r = await fetch("/api/company/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: q.trim(), stateOfFiling }),
+      });
+      const data = (await r.json()) as ValidationResult;
+      setLookup(data);
+      /* ⚠ EXACTLY ONE MATCH AUTO-FILLS. With several, the user picks — filling
+         from the first would be choosing an entity on their behalf. */
+      if (data.ok && data.status !== "not_found" && data.matches.length === 1) {
+        applyMatch(data.matches[0]);
+      }
+    } catch {
+      setLookup({
+        ok: false,
+        reason: "error",
+        message: "We couldn't reach the register just now. Nothing has been checked.",
+      });
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  /**
+   * ⚠ PRE-FILL, NOT LOCK. Every field stays editable and marked until edited.
+   * ⚠ AND IT NEVER TOUCHES THE EIN — a state register does not publish one, and
+   * Texas's taxpayer number is a different identifier (see `lib/company-validation.ts`).
+   */
+  const applyMatch = (m: NonNullable<Extract<ValidationResult, { ok: true }>["matches"]>[number]) => {
+    const marks = new Set<string>();
+    setName(m.legalName.value);
+    setQ(m.legalName.value);
+    marks.add("name");
+    setRegAddress((a) => {
+      const next = { ...a };
+      if (m.addressLine1) { next.line1 = m.addressLine1.value; marks.add("line1"); }
+      if (m.city) { next.city = m.city.value; marks.add("city"); }
+      if (m.stateCode) { next.state = m.stateCode.value; marks.add("state"); }
+      if (m.postalCode) { next.postalCode = m.postalCode.value; marks.add("postalCode"); }
+      return next;
+    });
+    setFromRegister(marks);
+  };
+
 
   /** What the signup email suggests the company might be (E167 nudge). */
   const [suggestion, setSuggestion] = useState<string | null>(null);
@@ -297,6 +384,8 @@ export function CompanyStep({
                   /* `E280` — jurisdiction IS the registered address's country. */
                   country: regAddress.country || null,
                   ein: ein.trim() || null,
+                  /* `E282` — US only; null everywhere else. */
+                  stateOfFiling: stateOfFiling || null,
                   registeredAddress: regAddress,
                   website: website.trim() || null,
                   logoUrl,
@@ -382,6 +471,8 @@ export function CompanyStep({
             <TextInput
               value={q}
               onChange={(e) => {
+                /* ⚠ EDITING CLEARS THE MARKER — the value is the user's now. */
+                unmark("name");
                 setQ(e.target.value);
                 setPicked(null);
               }}
@@ -499,6 +590,146 @@ export function CompanyStep({
             promising a US-only form.
             ⚠ NOT REQUIRED HERE — see the `valid` note above and `E274`.
           */}
+          {/*
+            ── ⚠⚠ STATE OF FILING + THE LOOKUP (`P1-J1.1-E282`) ────────────────
+
+            SCOTT: *"The user gives the company name and the state of filing.
+            Panameer does the rest."*
+
+            ⚠ US ONLY (decision 5), so the whole block is conditional on the
+            registered address's country — which is also the jurisdiction
+            (`E260`/`E280`).
+            ⚠⚠ AND NOTHING HERE CAN BLOCK `Continue`. `valid` is untouched by
+            this feature: a failed lookup, an unsupported state and a company
+            that is not on the register all leave the form exactly as the user
+            left it.
+            ⚠ EVERY US STATE IS OFFERED, INCLUDING THE ONES WE CANNOT CHECK.
+            Hiding Delaware would leave somebody wondering why their state is
+            missing; telling them we cannot check it yet is information.
+          */}
+          {/*
+            ⚠ THE MARKER, NOT A LOCK. Scott: *"let's present it and use it"* —
+            so the value is filled in, attributed, and fully editable; the chip
+            disappears the moment the user changes the field.
+          */}
+          {fromRegister.has("name") && (
+            <p className="-mt-2 text-[12.5px] text-ink-2">
+              ✓ Legal name from the state register — edit it if it&rsquo;s wrong.
+            </p>
+          )}
+
+          {isUnitedStates(regAddress.country) && (
+            <div className="rounded-brand border border-line p-4">
+              <Field
+                label="State of filing"
+                hint="Where the company is registered. We'll look it up on that state's corporate register."
+              >
+                <select
+                  value={stateOfFiling}
+                  onChange={(e) => {
+                    setStateOfFiling(e.target.value);
+                    setLookup(null);
+                  }}
+                  className="w-full rounded-[10px] border border-line px-3 py-2.5 text-[15px]"
+                >
+                  <option value="">Choose a state…</option>
+                  {US_STATES.map((st) => (
+                    <option key={st} value={st}>
+                      {st}
+                      {SUPPORTED_STATES.includes(st) ? "" : " — can't check yet"}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+
+              <button
+                type="button"
+                onClick={() => void runLookup()}
+                disabled={checking || !stateOfFiling || q.trim().length < 2}
+                className="mt-3 rounded-full border-[1.5px] border-magenta px-5 py-2 text-[14px] font-bold text-magenta transition-colors hover:bg-magenta hover:text-white disabled:opacity-40"
+              >
+                {checking ? "Checking the register…" : "Look up this company"}
+              </button>
+
+              {/* ── THE RESULT. ⚠ NEVER CLAIMS MORE THAN THE REGISTER RETURNED. */}
+              {lookup && !lookup.ok && (
+                <p className="mt-3 rounded-[10px] border border-line bg-bg-soft px-3 py-2.5 text-[13.5px] leading-relaxed text-ink-2">
+                  {lookup.message}
+                </p>
+              )}
+              {lookup?.ok && lookup.status === "not_found" && (
+                <p className="mt-3 rounded-[10px] border border-line bg-bg-soft px-3 py-2.5 text-[13.5px] leading-relaxed text-ink-2">
+                  No company starting with that name on the {lookup.registerName}.
+                  Check the spelling, or carry on — we haven&rsquo;t changed anything.
+                </p>
+              )}
+              {lookup?.ok && lookup.matches.length > 1 && (
+                <div className="mt-3">
+                  <p className="text-[13.5px] font-semibold">
+                    {lookup.totalMatches} entities start with that name. Which one?
+                  </p>
+                  <ul className="mt-2 grid gap-1.5">
+                    {lookup.matches.map((m) => (
+                      <li key={m.entityNumber?.value ?? m.legalName.value}>
+                        <button
+                          type="button"
+                          onClick={() => applyMatch(m)}
+                          className="w-full rounded-[10px] border border-line bg-white px-3 py-2 text-left text-[13.5px] transition-colors hover:border-magenta"
+                        >
+                          <b>{m.legalName.value}</b>
+                          <span className="text-ink-2">
+                            {m.entityType ? ` · ${m.entityType.value}` : ""}
+                            {m.city ? ` · ${m.city.value}` : ""}
+                            {m.status ? ` · ${m.status.value}` : ""}
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {lookup?.ok && lookup.matches.length === 1 && (
+                <div className="mt-3 rounded-[10px] border border-line bg-bg-soft px-3 py-2.5 text-[13.5px] leading-relaxed">
+                  {/*
+                    ⚠⚠ THE CLAIM MATCHES WHAT WAS ACTUALLY READ. New York's
+                    register publishes NO status column, so for New York this says
+                    "listed on" and never "in good standing" — `publishesStatus`
+                    is what carries that, and it comes from the adapter.
+                  */}
+                  <p>
+                    <b>
+                      {lookup.status === "not_in_good_standing"
+                        ? "Found, but not marked in good standing"
+                        : "Found on the register"}
+                    </b>{" "}
+                    — {lookup.matches[0].legalName.value}
+                    {lookup.matches[0].entityNumber
+                      ? `, entity #${lookup.matches[0].entityNumber.value}`
+                      : ""}
+                    .
+                  </p>
+                  <p className="mt-1 text-ink-2">
+                    {lookup.publishesStatus && lookup.matches[0].status
+                      ? `The register records its status as “${lookup.matches[0].status.value}”.`
+                      : "This register doesn't publish a status, so we haven't checked good standing."}
+                  </p>
+                  <p className="mt-1 text-ink-2">
+                    We&rsquo;ve filled in what it holds. Everything stays editable —
+                    change anything that looks wrong.
+                  </p>
+                  <a
+                    href={lookup.matches[0].legalName.sourceUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-1.5 inline-block font-semibold text-magenta hover:underline"
+                  >
+                    {lookup.registerName} ↗
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
+
           <Field
             label="EIN"
             hint="Your federal tax id. Outside the US, the equivalent company or VAT registration number."
@@ -539,9 +770,12 @@ export function CompanyStep({
               <div onBlur={() => setZipTouched(true)}>
                 <LocationFields
                   value={regAddress}
-                  onChange={(patch) =>
-                    setRegAddress((a) => ({ ...a, ...patch }))
-                  }
+                  onChange={(patch) => {
+                    /* ⚠ ONLY THE EDITED KEYS LOSE THEIR MARKER — correcting the
+                       city must not un-attribute the postcode. */
+                    for (const k of Object.keys(patch)) unmark(k);
+                    setRegAddress((a) => ({ ...a, ...patch }));
+                  }}
                   withStreet
                   countryHint="Where the company is registered — its jurisdiction."
                 />
@@ -553,6 +787,12 @@ export function CompanyStep({
                 A blur listener on the wrapper gets the same behaviour without
                 changing a component two journeys render.
               */}
+              {/* ⚠ `E282` — same marker rule for the address the lookup filled. */}
+              {["line1", "city", "state", "postalCode"].some((k) => fromRegister.has(k)) && (
+                <p className="mt-1 text-[12.5px] text-ink-2">
+                  ✓ Address from the state register — edit anything that looks wrong.
+                </p>
+              )}
               {/* ⚠ THE CONSTANT, NOT THE SENTENCE (`E299`). The literal that was
                   here was the second copy of the server's message. */}
               {zipTouched && !zipOk && (
