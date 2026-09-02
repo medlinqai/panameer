@@ -368,3 +368,90 @@ export async function validationStateFor(
   }
   return out;
 }
+
+/**
+ * ── ⚠⚠ SAVE THE FIVE ANSWERS (`P1-J2.1-E024`, 2026-09-01) ────────────────────
+ *
+ * ⚠⚠ THIS FUNCTION IS DELIBERATELY UNABLE TO AFFECT THE VALIDATION. It never
+ * writes `status`, never writes `responded_at`, and never touches `Project`. The
+ * badge was earned by the click that came before this, in `respondToValidation`'s
+ * own transaction, and nothing here can take it back or hold it up.
+ *
+ * ⚠ THE TOKEN IS THE AUTHORIZATION, exactly as the confirm path already works —
+ * no session, and a `projectId` is NEVER accepted from the client. The token
+ * hashes to one row and that row names its own project.
+ *
+ * ⚠ IT MUST WORK ON AN ALREADY-CONFIRMED REQUEST. That is the NORMAL case, not an
+ * edge one: confirmation commits first, and only then are the questions shown. A
+ * guard that refused a CONFIRMED row would break the only path this ever runs on.
+ * ⚠ SO IT DOES NOT USE `getValidationRequest`, which treats an answered row as
+ * `used` and refuses it. It re-reads the row directly and applies the two checks
+ * that DO still matter: the token must resolve, and it must not have expired.
+ *
+ * ⚠ EVERY FIELD IS OPTIONAL. Saving an empty response is legal and simply stamps
+ * `answered_at` — a client may open the questions, decide they have nothing to
+ * add, and press Save. That is a complete interaction, not a failure.
+ */
+export async function saveValidationAnswers(
+  rawToken: string,
+  answers: {
+    responderName?: string | null;
+    responderTitle?: string | null;
+    workedFrom?: string | null;
+    workedTo?: string | null;
+    roleNote?: string | null;
+    skillsNoted?: string[] | null;
+    wouldWorkAgain?: "YES" | "MAYBE" | "NO" | null;
+    testimonial?: string | null;
+    testimonialPublic?: boolean;
+    attributionPublic?: boolean;
+  }
+): Promise<{ ok: true } | { ok: false; reason: "invalid" | "expired" }> {
+  if (!rawToken) return { ok: false, reason: "invalid" };
+
+  const record = await prisma.projectValidation.findUnique({
+    where: { token_hash: hashToken(rawToken) },
+    select: { id: true, expires_at: true },
+  });
+  if (!record) return { ok: false, reason: "invalid" };
+  if (record.expires_at.getTime() < Date.now()) {
+    return { ok: false, reason: "expired" };
+  }
+
+  /* Trim and cap everything. A public-facing, session-less endpoint is exactly
+     where an unbounded string ends up in the database. */
+  const text = (v: string | null | undefined, max: number) => {
+    const t = (v ?? "").trim();
+    return t ? t.slice(0, max) : null;
+  };
+  const date = (v: string | null | undefined) => {
+    if (!v) return null;
+    const d = new Date(v);
+    return Number.isNaN(d.getTime()) ? null : d;
+  };
+
+  await prisma.projectValidation.update({
+    where: { id: record.id },
+    data: {
+      responder_name: text(answers.responderName, 120),
+      responder_title: text(answers.responderTitle, 120),
+      worked_from: date(answers.workedFrom),
+      worked_to: date(answers.workedTo),
+      role_note: text(answers.roleNote, 300),
+      /* ⚠ CAPPED AT 12 and de-duplicated. Free strings, never catalog ids. */
+      skills_noted: [
+        ...new Set(
+          (answers.skillsNoted ?? [])
+            .map((x) => x.trim().slice(0, 80))
+            .filter(Boolean)
+        ),
+      ].slice(0, 12),
+      would_work_again: answers.wouldWorkAgain ?? null,
+      testimonial: text(answers.testimonial, 2000),
+      testimonial_public: answers.testimonialPublic === true,
+      attribution_public: answers.attributionPublic === true,
+      answered_at: new Date(),
+    },
+  });
+  return { ok: true };
+}

@@ -45,6 +45,18 @@ export function projectToCard(p: {
     status: string;
     sent_at: Date;
     responded_at: Date | null;
+    /* `P1-J2.1-E024` — the five optional answers, for the provider's own view. */
+    answered_at?: Date | null;
+    worked_from?: Date | null;
+    worked_to?: Date | null;
+    role_note?: string | null;
+    skills_noted?: string[];
+    would_work_again?: string | null;
+    testimonial?: string | null;
+    responder_name?: string | null;
+    responder_title?: string | null;
+    testimonial_public?: boolean;
+    attribution_public?: boolean;
   }[];
 }) {
   return {
@@ -82,6 +94,43 @@ export function projectToCard(p: {
     /** A live request — drives "Requested — awaiting reply" + Resend. */
     validationRequestedAt:
       p.validations?.find((v) => v.status === "SENT")?.sent_at?.toISOString() ?? null,
+    /*
+      ── ⚠ WHAT THE CLIENT ANSWERED (`P1-J2.1-E024`, 2026-09-01) ───────────────
+
+      ⚠⚠ CONSENT GOVERNS **PUBLIC** DISPLAY ONLY. The provider may ALWAYS read
+      what their own client said about them — withholding it would be strange and
+      would make the feature feel like surveillance rather than evidence. The two
+      flags decide whether it may ever appear on a PUBLIC profile, and this brief
+      publishes nothing at all.
+      ⚠ `answeredCount` IS DERIVED, NOT STORED — a stored counter is one more
+      thing to keep in step with the columns it counts.
+    */
+    clientAnswers: (() => {
+      const v = p.validations?.find((x) => x.answered_at);
+      if (!v) return null;
+      const answered = [
+        v.worked_from || v.worked_to,
+        v.role_note,
+        v.skills_noted && v.skills_noted.length > 0,
+        v.would_work_again,
+        v.testimonial,
+      ].filter(Boolean).length;
+      return {
+        answeredCount: answered,
+        totalQuestions: 5,
+        workedFrom: v.worked_from?.toISOString() ?? null,
+        workedTo: v.worked_to?.toISOString() ?? null,
+        roleNote: v.role_note ?? null,
+        skillsNoted: v.skills_noted ?? [],
+        wouldWorkAgain: v.would_work_again ?? null,
+        testimonial: v.testimonial ?? null,
+        responderName: v.responder_name ?? null,
+        responderTitle: v.responder_title ?? null,
+        /* ⚠ CARRIED SO A FUTURE PUBLIC VIEW CANNOT FORGET TO CHECK THEM. */
+        testimonialPublic: v.testimonial_public === true,
+        attributionPublic: v.attribution_public === true,
+      };
+    })(),
   };
 }
 

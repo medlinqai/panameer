@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ValidationAnswers } from "@/components/validate/ValidationAnswers";
 import type { ValidationRequestView } from "@/lib/project-validation";
 
 /**
@@ -58,20 +59,53 @@ export function ValidateActions({
       : null;
 
   if (done) {
+    /*
+      ── ⚠⚠ THE CONFIRMATION IS ALREADY COMMITTED BEFORE THIS RENDERS ──────────
+         (`P1-J2.1-E024`, 2026-09-01)
+
+      `respond()` above awaits `POST /api/validate`, which runs
+      `respondToValidation` — a `prisma.$transaction` that writes
+      `status: CONFIRMED`, `responded_at`, and the project's `validation_status`.
+      `setDone(decision)` only runs AFTER that request resolves, and this branch
+      only renders once `done` is set. So by the time a single question is on
+      screen the badge is earned, committed and irreversible.
+
+      ⚠⚠ NOTHING BELOW CAN UNDO IT. `saveValidationAnswers` writes no `status`,
+      and the Save button is not a submit for the validation — a client who
+      confirms and closes the tab has validated the project completely. Every
+      question is optional and there is no copy anywhere here implying otherwise.
+      ⚠ GET THIS WRONG AND THE FEATURE LOSES VALIDATIONS, which is strictly worse
+      than not shipping it.
+    */
     return (
-      <div className="rounded-brand border border-line bg-white p-8 text-center">
-        <p className="text-[40px] leading-none" aria-hidden>
-          {done === "confirm" ? "🎉" : "👍"}
-        </p>
-        <h1 className="mt-4 text-[24px]">
-          {done === "confirm" ? "Thank you — that's confirmed" : "Thanks for letting us know"}
-        </h1>
-        <p className="mx-auto mt-2 max-w-md text-[15px] text-ink-2">
-          {done === "confirm"
-            ? `${request.projectName} now carries a Validated ✓ badge on ${request.providerName}'s profile. We won't email you about it again.`
-            : "We've recorded that. The project won't be shown as validated, and we won't email you about it again."}
-        </p>
-        <div className="mt-6 border-t border-line pt-6">
+      <div className="space-y-5">
+        <div className="rounded-brand border border-line bg-white p-8 text-center">
+          <p className="text-[40px] leading-none" aria-hidden>
+            {done === "confirm" ? "🎉" : "👍"}
+          </p>
+          <h1 className="mt-4 text-[24px]">
+            {done === "confirm" ? "Thank you — that's confirmed" : "Thanks for letting us know"}
+          </h1>
+          <p className="mx-auto mt-2 max-w-md text-[15px] text-ink-2">
+            {done === "confirm"
+              ? `${request.projectName} now carries a Validated ✓ badge on ${request.providerName}'s profile. We won't email you about it again.`
+              : "We've recorded that. The project won't be shown as validated, and we won't email you about it again."}
+          </p>
+        </div>
+
+        {/*
+          ⚠ A DECLINING CLIENT IS NOT ASKED FIVE QUESTIONS. One optional line and
+          nothing else — they have already told us the thing that mattered, and
+          interrogating a "no" is how you never get an honest one again.
+        */}
+        <ValidationAnswers
+          token={request.token}
+          declined={done === "decline"}
+          projectName={request.projectName}
+          providerName={request.providerName}
+        />
+
+        <div className="rounded-brand border border-line bg-white p-6 text-center">
           <p className="text-[14px] font-bold">What Is Panameer?</p>
           <p className="mx-auto mt-1 max-w-md text-[14px] text-ink-2">
             Panameer is where organizations find and buy expert services —

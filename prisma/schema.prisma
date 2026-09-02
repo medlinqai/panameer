@@ -1412,6 +1412,16 @@ model Project {
 /// Kept as its own row rather than columns on Project because the ANSWER is
 /// evidence: who confirmed, from where, and when. A resend supersedes the live
 /// request instead of overwriting that history.
+/// Q4's answer. ⚠ THREE OPTIONS, NOT FIVE STARS (`P1-J2.1-E024`) — the
+/// client-ranking primitive, chosen so every option is one a real person can pick
+/// honestly. A five-point scale makes the middle meaningless and the top
+/// compulsory.
+enum WouldWorkAgain {
+  YES
+  MAYBE
+  NO
+}
+
 model ProjectValidation {
   id            String                         @id @default(uuid()) @db.Uuid
   project_id    String                         @db.Uuid
@@ -1428,8 +1438,60 @@ model ProjectValidation {
   /// so a disputed confirmation can be investigated.
   responder_ip  String?
   responder_ua  String?
-  created_at    DateTime                       @default(now())
-  updated_at    DateTime                       @updatedAt
+
+  /// ── ⚠⚠ THE FIVE ANSWERS (`P1-J2.1-E024`, 2026-09-01) ──────────────────────
+  ///
+  /// Scott: *"the email validation should push you back to a listing of 5
+  /// questions. when did you work with them. what skills… or something like
+  /// this."*
+  ///
+  /// ⚠⚠ EVERY ONE IS NULLABLE, AND THAT IS THE WHOLE DESIGN. The confirmation is
+  /// committed BEFORE these are shown and is NEVER conditional on them — a client
+  /// who confirms and closes the tab has still validated the project. Making any
+  /// of these required would turn a feature that adds evidence into one that
+  /// LOSES validations, which is strictly worse than shipping nothing.
+  ///
+  /// ⚠ THEY LIVE HERE, WITH `responder_ip` / `responder_ua`, because they are the
+  /// same kind of thing: evidence attached to one verified third-party response.
+  /// A separate table would let an answer exist without the response it belongs to.
+
+  /// Who answered — attribution, and only shown publicly if they tick the flag.
+  responder_name  String?
+  responder_title String?
+
+  /// Q1 — corroborated dates. Pre-filled from the project; their CORRECTION is
+  /// the evidence, which is why this is stored separately rather than overwriting
+  /// the project's own dates.
+  worked_from      DateTime?
+  worked_to        DateTime?
+  /// Q2 — "what did they do for you".
+  role_note        String?
+  /// ⚠ Q3 — FREE STRINGS, NOT `Skill` IDS. The client is naming what they
+  /// remember, not picking from a taxonomy. Mapping their words onto catalog
+  /// skills is a later decision and must not be made silently here.
+  skills_noted     String[]
+  /// ⚠ Q4 — THREE HONEST OPTIONS, DELIBERATELY NOT A STAR RATING. Nobody has to
+  /// decide what four stars means, and three options are answerable truthfully.
+  would_work_again WouldWorkAgain?
+  /// Q5 — the testimonial, from someone whose email domain proves they were the
+  /// client. The opposite of a solicited recommendation from a friend.
+  testimonial      String?
+
+  /// ── ⚠⚠ TWO CONSENT FLAGS, NOT ONE ─────────────────────────────────────────
+  /// *"You may show what I wrote"* and *"You may use my name"* are DIFFERENT
+  /// permissions, and a client may well give the first and withhold the second.
+  /// ⚠ BOTH DEFAULT FALSE. Nothing is published without an explicit tick.
+  /// ⚠ THEY GOVERN PUBLIC DISPLAY ONLY — the provider may always read what their
+  /// own client said about them.
+  testimonial_public Boolean @default(false)
+  attribution_public Boolean @default(false)
+
+  /// Set when any answer is saved. ⚠ NEVER changes `status` — the badge was
+  /// already earned by the click that came before.
+  answered_at DateTime?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
   project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
 
@@ -1957,6 +2019,7 @@ model Certification {
    * removed.
    */
   /**
+   * /**
    * /**
    * /**
    * /**
