@@ -1341,6 +1341,33 @@ model Project {
   /// REQUIRED. Held even when `client_visibility` hides it — the redaction is
   /// a RENDER decision, so the name stays available for the validation email
   /// and for Plus members once that ships.
+  /// ── ⚠⚠ THE TWO FIELDS AN EMPLOYER HAS AND A PROJECT DID NOT (`P1-J1.4-E296`)
+  ///
+  /// SCOTT: *"this is the edit process. I would need to delete EVERY employer and
+  /// then re-add them as a project. Maybe if there was a employer/project radio
+  /// button?"* — and the rule behind it: *"what really determines the value of
+  /// the AI is how easy the edit is… if the change of employer to project is
+  /// easy, who cares. If not, they are mad."*
+  ///
+  /// Reclassifying an employer as a project maps every other field one-to-one.
+  /// These two had NO HOME: `Employer.role_title` and `Employer.location`. Without
+  /// them the conversion either DROPS "Lead Oracle Cloud Procurement Consultant"
+  /// and "Houston, TX", or smuggles them into `description` as appended lines.
+  ///
+  /// ⚠⚠ THE APPENDED-LINE TRICK IS WHAT MAKES THE OPERATION IRREVERSIBLE — undoing
+  /// it means parsing prose back out of a text field, and every round trip either
+  /// duplicates the block or corrupts it. Two nullable columns make the conversion
+  /// LOSSLESS IN BOTH DIRECTIONS, which is what lets Undo be a clean inverse
+  /// instead of a snapshot table.
+  ///
+  /// ⚠ THEY STAND ON THEIR OWN MERITS TOO: a project has a role you played and a
+  /// place it happened, and the résumé states both. ⚠ `role_type_id` is the
+  /// catalog CLASSIFICATION, not the title — they are different fields.
+  /// ⚠ NOTHING RENDERS THEM YET. Stored, mapped and round-tripped only; putting
+  /// them on a card is a separate ask.
+  role_title        String?
+  location          String?
+
   client_name       String
   client_visibility ClientVisibility @default(PUBLIC)
   /// The project alias shown INSTEAD of the client when confidential.

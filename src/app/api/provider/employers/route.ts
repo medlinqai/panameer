@@ -8,6 +8,10 @@ import {
   createProject,
   updateProject,
   deleteProject,
+  moveProject,
+  convertEmployerToProject,
+  convertProjectToEmployer,
+  projectLoss,
 } from "@/lib/employers";
 import { OnboardingError } from "@/lib/onboarding";
 
@@ -21,6 +25,12 @@ import { OnboardingError } from "@/lib/onboarding";
  *        { action: "createProject",  employerId, project }
  *        { action: "updateProject",  projectId, project }
  *        { action: "deleteProject",  projectId }
+ *
+ * RECLASSIFY IN PLACE (`P1-J1.4-E296`):
+ *        { action: "moveProject", projectId, employerId | null }
+ *        { action: "employerToProject", employerId, targetEmployerId, clientName }
+ *        { action: "projectToEmployer", projectId, name }
+ *        { action: "projectLoss", projectId }   ← a READ, for the confirm dialog
  *
  * OWNER-SCOPED throughout: the lib resolves the profile from the session and
  * re-checks every client-supplied id against it, so a foreign id resolves to
@@ -64,6 +74,44 @@ export async function POST(request: Request) {
       case "deleteProject":
         await deleteProject(viewer, String(body.projectId));
         break;
+
+      /*
+        ── RECLASSIFY IN PLACE (`P1-J1.4-E296`) ─────────────────────────────────
+
+        ⚠ `employerId` MAY BE NULL on `moveProject` and that is meaningful, not a
+        missing argument: null DETACHES. So it is read with `?? null` rather than
+        `String(...)`, which would turn null into the string "null" and then fail
+        an ownership lookup for the wrong reason.
+      */
+      case "moveProject":
+        await moveProject(
+          viewer,
+          String(body.projectId),
+          body.employerId ? String(body.employerId) : null
+        );
+        break;
+
+      case "employerToProject": {
+        const r = await convertEmployerToProject(viewer, String(body.employerId), {
+          targetEmployerId: String(body.targetEmployerId),
+          clientName: String(body.clientName ?? ""),
+        });
+        /* ⚠ THE COUNTS TRAVEL BACK so the UI can say what actually moved rather
+           than guessing. */
+        return NextResponse.json({ employers: await listEmployers(viewer), ...r });
+      }
+
+      case "projectToEmployer": {
+        const r = await convertProjectToEmployer(viewer, String(body.projectId), {
+          name: String(body.name ?? ""),
+        });
+        return NextResponse.json({ employers: await listEmployers(viewer), ...r });
+      }
+
+      /* ⚠ A READ ON A POST, deliberately: it answers "what would I lose" for the
+         confirm dialog and must not be cacheable as a GET on a project id. */
+      case "projectLoss":
+        return NextResponse.json({ loss: await projectLoss(viewer, String(body.projectId)) });
       default:
         return NextResponse.json({ error: "Unknown action" }, { status: 400 });
     }

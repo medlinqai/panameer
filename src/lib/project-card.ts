@@ -22,6 +22,10 @@ export function projectToCard(p: {
   start_date: Date | null;
   end_date: Date | null;
   is_current: boolean;
+  /** ⚠ `P1-J1.4-E296` — nothing renders these yet; they exist so a conversion
+      is lossless in both directions. Mapped here so every surface gets them. */
+  role_title: string | null;
+  location: string | null;
   client_name: string;
   client_domain: string | null;
   client_visibility: string;
@@ -68,6 +72,9 @@ export function projectToCard(p: {
     startDate: p.start_date ? p.start_date.toISOString().slice(0, 10) : null,
     endDate: p.end_date ? p.end_date.toISOString().slice(0, 10) : null,
     isCurrent: p.is_current,
+    /* ⚠ `E296`. NOT RENDERED — see the type note above. */
+    roleTitle: p.role_title,
+    location: p.location,
     clientName: p.client_name,
     // PROVIDER-FACING ONLY. `provider-profile-view.ts` (the public read) does
     // NOT select this — a confidential project must not leak its client through
