@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Modal } from "@/components/Modal";
+/* ⚠ THE LOSS SENTENCE IS THE LIB'S, NOT RE-TYPED HERE (`E296`). */
+import { describeProjectLoss as describeLoss } from "@/lib/reclassify";
 import { Field, TextInput, TextArea, Notice } from "@/components/onboarding/controls";
 import { LocationFields } from "@/components/onboarding/LocationFields";
 
@@ -41,6 +43,9 @@ export type EmployerProject = {
   endDate: string | null;
   /** brief_project_model_v2 — the rest of the card + modal payload. */
   isCurrent?: boolean;
+  /** ⚠ `P1-J1.4-E296` — carried so a conversion round-trips. Not rendered. */
+  roleTitle?: string | null;
+  location?: string | null;
   clientName?: string;
   clientDomain?: string | null;
   clientVisibility?: string;
@@ -116,10 +121,23 @@ export function EmployersStep({
   employers,
   onChanged,
   onError,
+  projects = [],
 }: {
   employers: EmployerCard[];
   onChanged: (next: EmployerCard[]) => void;
   onError: (msg: string | null) => void;
+  /**
+   * ⚠⚠ THE FLAT LIST, FOR THE OTHER HALF OF THE `E294` HOLE (`P1-J1.4-E296`).
+   *
+   * `listEmployers` returns projects NESTED UNDER employers only, so a project
+   * with `employer_id: null` vanishes from that payload entirely. The Review step
+   * already renders those as "Solo Projects"; THIS step did not, so somebody who
+   * imported a résumé saw them on Review, came back to fix them, and found no
+   * trace of them on the page where employers are edited.
+   * ⚠ THE WIZARD'S STATUS PAYLOAD RETURNS THE FULL FLAT LIST DELIBERATELY —
+   * `lib/onboarding.ts` says why. This prop is that list.
+   */
+  projects?: EmployerProject[];
 }) {
   const [busy, setBusy] = useState(false);
   // WS9b — multi-select delete for AI-added employers.
@@ -133,6 +151,36 @@ export function EmployersStep({
 
   const [projectModal, setProjectModal] = useState<
     { employerId: string; project?: EmployerProject } | null
+  >(null);
+
+  /*
+    ── ⚠⚠ RECLASSIFY IN PLACE (`P1-J1.4-E296`) ────────────────────────────────
+
+    SCOTT: *"Maybe if there was a employer/project radio button?"* — so it is a
+    radio, and it changes NOTHING until Save. A radio that mutates on click is a
+    trapdoor.
+  */
+  const [reclassify, setReclassify] = useState<
+    | { kind: "employer"; id: string; name: string }
+    | { kind: "project"; id: string; name: string; clientName: string }
+    | null
+  >(null);
+  /** `Employer` | `Project` — the radio's own value, independent of the row. */
+  const [reclassifyAs, setReclassifyAs] = useState<"employer" | "project">("project");
+  const [reclassifyTarget, setReclassifyTarget] = useState("");
+  const [reclassifyClient, setReclassifyClient] = useState("");
+  const [reclassifyName, setReclassifyName] = useState("");
+  const [loss, setLoss] = useState<string | null>(null);
+  /*
+    ⚠ UNDO IS THE INVERSE CONVERSION, NOT A SNAPSHOT TABLE. The two directions
+    are exact inverses now that `role_title` and `location` exist, so all that is
+    held here is what to call the opposite action with.
+    ⚠ AND IT IS PAGE-STATE ONLY, WHICH THE STRING SAYS OUT LOUD.
+  */
+  const [undo, setUndo] = useState<
+    | { kind: "toProject"; projectId: string; name: string }
+    | { kind: "toEmployer"; employerId: string; name: string; targetEmployerId: string; clientName: string }
+    | null
   >(null);
   const [projectForm, setProjectForm] = useState<ProjectDraft>(emptyProject());
   /**
@@ -148,7 +196,25 @@ export function EmployersStep({
   const [logos, setLogos] = useState<LogoSuggestion[]>([]);
   const [logoLoading, setLogoLoading] = useState(false);
 
-  const post = async (body: Record<string, unknown>): Promise<boolean> => {
+  /*
+    ⚠ THE UNATTACHED ROWS, DERIVED not fetched (`P1-J1.4-E296`). `projects` is the
+    FLAT list from the wizard's status payload; anything already nested under an
+    employer is filtered out by id so a row never appears twice on one screen.
+  */
+  const nested = new Set(employers.flatMap((e) => (e.projects ?? []).map((p) => p.id)));
+  const unplaced = projects.filter((p) => !nested.has(p.id));
+
+  /*
+    ⚠ IT RETURNS THE PAYLOAD, NOT A BOOLEAN (`P1-J1.4-E296`).
+    ⚠ SUPERSEDED, quoted: `Promise<boolean>`. The conversion actions return the id
+    of the row they CREATED, and Undo has to call the inverse with that id — a
+    boolean threw it away, and the first draft of Undo silently posted an empty
+    string. An object is still truthy, so every existing `if (ok)` call site
+    behaves exactly as before.
+  */
+  const post = async (
+    body: Record<string, unknown>
+  ): Promise<Record<string, unknown> | null> => {
     setBusy(true);
     onError(null);
     try {
@@ -160,12 +226,33 @@ export function EmployersStep({
       const data = await r.json().catch(() => ({}));
       if (!r.ok) {
         onError(data.error ?? "Could not save.");
-        return false;
+        return null;
       }
-      onChanged(data.employers ?? []);
-      return true;
+      /* ⚠ `projectLoss` is a READ and returns no employer list — leave the list
+         alone rather than blanking it. */
+      if (data.employers) onChanged(data.employers);
+      return data;
     } finally {
       setBusy(false);
+    }
+  };
+
+  /*
+    ⚠ WHAT WOULD BE LOST, FETCHED BEFORE THE DIALOG COMMITS (`E296`). Counted and
+    NAMED by the server — never a generic "some data may be lost", which tells
+    nobody anything.
+  */
+  const loadLoss = async (projectId: string) => {
+    try {
+      const r = await fetch("/api/provider/employers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "projectLoss", projectId }),
+      });
+      const d = await r.json().catch(() => ({}));
+      setLoss(d?.loss ? describeLoss(d.loss) : null);
+    } catch {
+      setLoss(null);
     }
   };
 
@@ -416,12 +503,47 @@ export function EmployersStep({
                   >
                     ✏️
                   </button>
+                  {/*
+                    ── ⚠ THE THIRD CONTROL (`P1-J1.4-E296`) ────────────────────
+                    SCOTT: *"I would need to delete EVERY employer and then
+                    re-add them as a project."* Same 9x9 magenta circle as its two
+                    neighbours — no new button style was invented.
+                  */}
                   <button
                     type="button"
                     onClick={() => {
+                      setReclassify({ kind: "employer", id: e.id, name: e.name });
+                      setReclassifyAs("employer");
+                      setReclassifyTarget("");
+                      setReclassifyClient("");
+                      setLoss(null);
+                    }}
+                    aria-label={`Change what ${e.name} is`}
+                    title="This is a project, not a job"
+                    className="grid h-9 w-9 place-items-center rounded-full border-[1.5px] border-magenta text-magenta transition-colors hover:bg-magenta hover:text-white"
+                  >
+                    ⇄
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      /*
+                        ── ⚠⚠ `P1-J1.4-E307` — THIS SENTENCE WAS FALSE ──────────
+
+                        ⚠ SUPERSEDED, quoted: *"Remove {name}? Its projects will
+                        be removed too."* `Project.employer_id` is
+                        `onDelete: SetNull`, NOT Cascade — the projects are not
+                        removed, they are ORPHANED, and because `listEmployers`
+                        only reaches projects through their employer they became
+                        INVISIBLE while still sitting in the database.
+                        ⚠ THE SCHEMA IS RIGHT AND THE COPY WAS WRONG. Deleting a
+                        job must not destroy the project history under it, and
+                        there is now somewhere for the orphans to land — the
+                        "Projects not yet under a job" section below.
+                      */
                       if (
                         confirm(
-                          `Remove ${e.name}? Its projects will be removed too.`
+                          `Remove ${e.name}? Any projects under it are kept — they move to “Projects not yet under a job”, where you can place them again.`
                         )
                       ) {
                         void post({ action: "deleteEmployer", employerId: e.id });
@@ -572,6 +694,27 @@ export function EmployersStep({
                               >
                                 Edit
                               </button>
+                              {/* ⚠ THE MIRROR CONTROL (`P1-J1.4-E296`) — same
+                                  modal, radio defaulted to Project. */}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setReclassify({
+                                    kind: "project",
+                                    id: pr.id,
+                                    name: pr.name,
+                                    clientName: pr.clientName ?? "",
+                                  });
+                                  setReclassifyAs("project");
+                                  setReclassifyName(pr.clientName || pr.name);
+                                  setLoss(null);
+                                  void loadLoss(pr.id);
+                                }}
+                                className="font-bold text-magenta"
+                                title="This is a job, not a project"
+                              >
+                                ⇄
+                              </button>
                               <button
                                 type="button"
                                 onClick={() =>
@@ -631,6 +774,307 @@ export function EmployersStep({
           </button>
         </>
       )}
+
+      {/*
+        ── ⚠⚠ WS-6 — THE OTHER HALF OF THE `E294` HOLE (`P1-J1.4-E296`) ─────────
+
+        `resume/import.ts` writes projects with `employer_id: null` whenever the
+        model could not place them, and `listEmployers` only reaches projects
+        through their employer — so those rows were INVISIBLE on this step. The
+        Review step already showed them as "Solo Projects"; a user who imported a
+        résumé saw them there, came back here to fix them, and found nothing.
+
+        ⚠ ONE CONTROL, ONE CLICK, NO MODAL. Scott's whole point is the cheapness
+        of the edit: *"what really determines the value of the AI is how easy the
+        edit is."* A picker that fires `moveProject` on change is the cheapest
+        correct thing. ⚠ IT IS ALSO WHERE ORPHANS FROM A DELETED JOB LAND, which
+        is what makes `E307`'s corrected copy true.
+
+        ⚠ RENDERED ONLY WHEN THE LIST IS NON-EMPTY — an empty "nothing to place"
+        section on every profile is noise.
+      */}
+      {unplaced.length > 0 && (
+        <section className="mt-8 rounded-brand border border-dashed border-line p-4">
+          <h3 className="text-[15px] font-bold">Projects not yet under a job</h3>
+          <p className="mt-1 max-w-xl text-[13px] leading-relaxed text-ink-2">
+            These came off your résumé without a job attached, or the job they
+            were under was removed. Pick where each one belongs.
+          </p>
+          <ul className="mt-3 grid gap-2">
+            {unplaced.map((pr) => (
+              <li
+                key={pr.id}
+                className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-[10px] border border-line bg-bg-soft px-3 py-2.5"
+              >
+                <span className="min-w-0 flex-1 text-[14px] font-semibold">{pr.name}</span>
+                <label className="flex items-center gap-2 text-[13px] text-ink-2">
+                  <span className="sr-only">Put {pr.name} under a job</span>
+                  <select
+                    value=""
+                    disabled={busy || employers.length === 0}
+                    onChange={(ev) => {
+                      const employerId = ev.target.value;
+                      if (!employerId) return;
+                      void post({ action: "moveProject", projectId: pr.id, employerId });
+                    }}
+                    className="rounded-[8px] border border-line bg-white px-2.5 py-1.5 text-[13.5px]"
+                  >
+                    <option value="">
+                      {employers.length === 0 ? "Add a job first" : "Put it under…"}
+                    </option>
+                    {employers.map((e) => (
+                      <option key={e.id} value={e.id}>
+                        {e.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/*
+        ── ⚠ UNDO — THE INVERSE, NOT A SNAPSHOT (`P1-J1.4-E296`) ────────────────
+
+        ⚠ NO UNDO LOG, NO UNDO TABLE, NO SOFT DELETE. The two conversions are
+        exact inverses now that `role_title` and `location` have a home, so undo
+        is just the opposite call with what the client already knew.
+        ⚠ PERSISTENT, NOT A TOAST — a timed toast on a destructive edit is a race
+        with the reader.
+        ⚠ AND THE STRING SAYS ITS OWN SCOPE. "Undo" unqualified promises
+        durability that does not exist here.
+      */}
+      {undo && (
+        <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-brand border border-line bg-bg-soft px-4 py-3">
+          <span className="text-[13.5px]">
+            <b>{undo.name}</b>{" "}
+            {undo.kind === "toProject" ? "is now a project." : "is now a job."}
+          </span>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={async () => {
+              const ok =
+                undo.kind === "toProject"
+                  ? await post({
+                      action: "projectToEmployer",
+                      projectId: undo.projectId,
+                      name: undo.name,
+                    })
+                  : await post({
+                      action: "employerToProject",
+                      employerId: undo.employerId,
+                      targetEmployerId: undo.targetEmployerId,
+                      clientName: undo.clientName,
+                    });
+              if (ok) setUndo(null);
+            }}
+            className="font-bold text-magenta hover:underline disabled:opacity-50"
+          >
+            Undo
+          </button>
+          <span className="text-[12.5px] text-ink-2">
+            Only while you stay on this page.
+          </span>
+        </div>
+      )}
+
+      {/*
+        ── ⚠⚠ THE RECLASSIFY MODAL (`P1-J1.4-E296`) ─────────────────────────────
+
+        SCOTT ASKED FOR A RADIO, SO IT SHIPS A RADIO. ⚠ AND THE RADIO CHANGES
+        NOTHING UNTIL SAVE — a radio that mutates on click is a trapdoor on a
+        destructive edit.
+        ⚠ THE EXISTING `Modal` COMPONENT, not a hand-rolled one.
+        ⚠ SAVE IS DISABLED UNTIL THE CHOICE IS COMPLETE. The modal is not the
+        security boundary — the lib re-checks every id against the session — but
+        it must not offer an impossible save.
+      */}
+      <Modal
+        open={reclassify !== null}
+        onClose={() => setReclassify(null)}
+        title={reclassify ? `What is “${reclassify.name}”?` : ""}
+      >
+        {reclassify && (
+          <div className="space-y-4">
+            <fieldset className="grid gap-2">
+              <legend className="sr-only">Employer or project</legend>
+              {(["employer", "project"] as const).map((v) => (
+                <label
+                  key={v}
+                  className={
+                    "flex cursor-pointer items-start gap-3 rounded-[10px] border p-3 " +
+                    (reclassifyAs === v ? "border-magenta bg-magenta/[0.04]" : "border-line")
+                  }
+                >
+                  <input
+                    type="radio"
+                    name="reclassify-as"
+                    value={v}
+                    checked={reclassifyAs === v}
+                    onChange={() => setReclassifyAs(v)}
+                    className="mt-0.5 h-4 w-4 shrink-0 accent-magenta"
+                  />
+                  <span>
+                    <span className="block text-[14.5px] font-bold">
+                      {v === "employer" ? "A job" : "A project"}
+                    </span>
+                    <span className="mt-0.5 block text-[13px] leading-relaxed text-ink-2">
+                      {v === "employer"
+                        ? "Somewhere you were employed. Projects can sit under it."
+                        : "A piece of work delivered for a client, under one of your jobs."}
+                    </span>
+                  </span>
+                </label>
+              ))}
+            </fieldset>
+
+            {/* EMPLOYER → PROJECT: it needs a home and a client. */}
+            {reclassify.kind === "employer" && reclassifyAs === "project" && (
+              <>
+                <Field label="Put it under this job *">
+                  <select
+                    value={reclassifyTarget}
+                    onChange={(ev) => {
+                      setReclassifyTarget(ev.target.value);
+                      /*
+                        ⚠ SUGGESTED, THEN CONFIRMED — NEVER AUTO-APPLIED. The
+                        `E043` rule the logo and `client_domain` already follow.
+                        The natural client is the job it will sit under, but the
+                        user has to be able to change it, and the server takes
+                        whatever the field ends up holding.
+                      */
+                      const chosen = employers.find((x) => x.id === ev.target.value);
+                      if (chosen && !reclassifyClient.trim()) setReclassifyClient(chosen.name);
+                    }}
+                    className="w-full rounded-[10px] border border-line px-3 py-2.5 text-[15px]"
+                  >
+                    <option value="">Choose a job…</option>
+                    {/* ⚠ NEVER ITSELF. A row cannot be its own parent, and the
+                        server refuses it too. */}
+                    {employers
+                      .filter((x) => x.id !== reclassify.id)
+                      .map((x) => (
+                        <option key={x.id} value={x.id}>
+                          {x.name}
+                        </option>
+                      ))}
+                  </select>
+                </Field>
+                <Field label="Client name *">
+                  <TextInput
+                    value={reclassifyClient}
+                    onChange={(ev) => setReclassifyClient(ev.target.value)}
+                    placeholder="Who the work was for"
+                  />
+                </Field>
+                <p className="text-[13px] leading-relaxed text-ink-2">
+                  Its skills, artifacts and any projects under it move with it.
+                </p>
+              </>
+            )}
+
+            {/* PROJECT → EMPLOYER: it needs a name, and it can lose things. */}
+            {reclassify.kind === "project" && reclassifyAs === "employer" && (
+              <>
+                <Field label="Employer name *">
+                  <TextInput
+                    value={reclassifyName}
+                    onChange={(ev) => setReclassifyName(ev.target.value)}
+                    placeholder="The company you worked for"
+                  />
+                </Field>
+                <p className="text-[13px] leading-relaxed text-ink-2">
+                  Its skills and artifacts move with it.
+                </p>
+                {/* ⚠⚠ ENUMERATED, NEVER GENERIC — the server counts and names it. */}
+                {loss && (
+                  <p className="rounded-[10px] border border-amber-200 bg-amber-50 px-3 py-2.5 text-[13px] leading-relaxed text-amber-900">
+                    {loss}
+                  </p>
+                )}
+              </>
+            )}
+
+            <div className="flex flex-wrap justify-end gap-3 pt-1">
+              <button
+                type="button"
+                onClick={() => setReclassify(null)}
+                className="rounded-full border-[1.5px] border-line px-5 py-2.5 font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={
+                  busy ||
+                  /* Nothing changed — the radio still matches what the row is. */
+                  (reclassify.kind === "employer" && reclassifyAs === "employer") ||
+                  (reclassify.kind === "project" && reclassifyAs === "project") ||
+                  (reclassify.kind === "employer" &&
+                    (!reclassifyTarget || !reclassifyClient.trim())) ||
+                  (reclassify.kind === "project" && !reclassifyName.trim())
+                }
+                onClick={async () => {
+                  if (reclassify.kind === "employer") {
+                    const target = reclassifyTarget;
+                    const client = reclassifyClient.trim();
+                    const ok = await post({
+                      action: "employerToProject",
+                      employerId: reclassify.id,
+                      targetEmployerId: target,
+                      clientName: client,
+                    });
+                    if (ok) {
+                      setReclassify(null);
+                      /* ⚠ THE INVERSE IS PRE-FILLED FROM THE SERVER'S OWN ANSWER —
+                         `projectId` is the row it just created, which is the only
+                         thing the opposite call needs. */
+                      setUndo({
+                        kind: "toProject",
+                        projectId: String(ok.projectId ?? ""),
+                        name: reclassify.name,
+                      });
+                    }
+                  } else {
+                    const ok = await post({
+                      action: "projectToEmployer",
+                      projectId: reclassify.id,
+                      name: reclassifyName.trim(),
+                    });
+                    if (ok) {
+                      setReclassify(null);
+                      /*
+                        ⚠ UNDOING THIS DIRECTION NEEDS A TARGET JOB, and the
+                        project's original parent is gone by now. Only offer Undo
+                        when there is somewhere for it to go back to — otherwise
+                        the button would open a modal, which is not an undo.
+                      */
+                      const target = employers.find((x) => x.id !== ok.employerId);
+                      setUndo(
+                        target
+                          ? {
+                              kind: "toEmployer",
+                              employerId: String(ok.employerId ?? ""),
+                              name: reclassify.name,
+                              targetEmployerId: target.id,
+                              clientName: reclassify.clientName || reclassify.name,
+                            }
+                          : null
+                      );
+                    }
+                  }
+                }}
+                className="rounded-full bg-magenta px-6 py-2.5 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       {/* ---- Employer modal ------------------------------------------- */}
       <Modal

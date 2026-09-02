@@ -5,6 +5,27 @@ import { recomputeProviderRollup } from "@/lib/provider-rollup";
 import { normalizeHost } from "@/lib/email-domain";
 import { toView as toArtifactView } from "@/lib/artifacts";
 import { projectToCard } from "@/lib/project-card";
+import {
+  clean,
+  employerToProjectData,
+  projectToEmployerData,
+  describeProjectLoss,
+  type EmployerScalars,
+  type ProjectScalars,
+  type ProjectLoss,
+} from "@/lib/reclassify";
+
+/* ⚠ RE-EXPORTED so every existing server-side import path keeps working. ⚠ A
+   CLIENT COMPONENT MUST IMPORT FROM `lib/reclassify` DIRECTLY — going through
+   this file drags prisma into the browser. */
+export {
+  employerToProjectData,
+  projectToEmployerData,
+  describeProjectLoss,
+  type EmployerScalars,
+  type ProjectScalars,
+  type ProjectLoss,
+};
 
 export { projectToCard };
 
@@ -52,6 +73,11 @@ export type ProjectInput = {
   endDate?: string | null;
   isCurrent?: boolean;
   roleTypeId?: string | null;
+  /* ⚠ `P1-J1.4-E296` — the two fields an Employer has and a Project did not.
+     `roleTitle` is the TITLE you held; `roleTypeId` is the catalog
+     classification. They are different fields and both travel. */
+  roleTitle?: string | null;
+  location?: string | null;
   industrySpecializationId?: string | null;
   clientName?: string | null;
   clientDomain?: string | null;
@@ -89,10 +115,9 @@ const toDate = (v?: string | null) => {
   return Number.isNaN(d.getTime()) ? null : d;
 };
 
-const clean = (v?: string | null, max = 400) => {
-  const s = (v ?? "").trim();
-  return s ? s.slice(0, max) : null;
-};
+/* ⚠ `clean` MOVED to `lib/reclassify.ts` (`E296`) — that module is prisma-free so
+   a client component can import the loss sentence without pulling `pg` into the
+   browser bundle. One definition, imported here. */
 
 /** Everything the capture step and management surfaces render. */
 export async function listEmployers(viewer: Viewer) {
@@ -236,9 +261,24 @@ export async function updateEmployer(
 
 export async function deleteEmployer(viewer: Viewer, employerId: string) {
   const profileId = await ownedProfileId(viewer);
-  // Projects cascade with the employer (schema onDelete: Cascade), so deleting
-  // a job takes its projects with it — which is what the user means by
-  // removing a job.
+  /*
+    ── ⚠⚠ THIS COMMENT WAS FALSE (`P1-J1.4-E307`, 2026-09-02) ─────────────────
+
+    ⚠ SUPERSEDED, quoted verbatim because it was believed for months: *"Projects
+    cascade with the employer (schema onDelete: Cascade), so deleting a job takes
+    its projects with it — which is what the user means by removing a job."*
+
+    ⚠⚠ `prisma/schema.prisma` SAYS `onDelete: SetNull`. The projects are NOT
+    deleted. They are ORPHANED — and because `listEmployers` only reaches projects
+    through their employer, they become INVISIBLE while remaining in the database.
+    The confirm dialog in `EmployersStep.tsx` stated the same falsehood to the
+    user.
+
+    ⚠ THE SCHEMA IS RIGHT AND THE COPY WAS WRONG. Deleting a job must not destroy
+    the project history under it — that is Scott's *"not throwing things away"*
+    rule — and there is now somewhere for the orphans to go. DO NOT "fix" this by
+    changing the schema to Cascade.
+  */
   const res = await prisma.employer.deleteMany({
     where: { id: employerId, provider_profile_id: profileId },
   });
@@ -270,6 +310,12 @@ function projectData(input: ProjectInput) {
 
   const roleTypeId = clean(input.roleTypeId, 64);
   if (!roleTypeId) throw new OnboardingError("Pick the role you played", "INVALID");
+
+  /* ⚠ `E296` — optional on the modal path too. A project created by hand may
+     well not state a role title or a location, and neither is in the required
+     set; they exist so a CONVERSION does not have to throw them away. */
+  const roleTitle = clean(input.roleTitle, 200);
+  const location = clean(input.location, 200);
 
   const isCurrent = Boolean(input.isCurrent);
   const start = toDate(input.startDate);
@@ -316,6 +362,8 @@ function projectData(input: ProjectInput) {
     .slice(0, 12);
 
   return {
+    role_title: roleTitle,
+    location,
     name,
     description,
     url: clean(input.url, 1000),
@@ -479,4 +527,340 @@ export async function deleteProject(viewer: Viewer, projectId: string) {
   });
   if (res.count === 0) throw new OnboardingError("Project not found", "INVALID");
   await afterJobChange(profileId);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   RECLASSIFY IN PLACE — employer ⇄ project (`P1-J1.4-E296` / `P1-J1.4-E307`)
+   ══════════════════════════════════════════════════════════════════════════════
+
+   **SCOTT:** *"what really determines the value of the AI is how easy the edit
+   is… if the change of employer to project is easy, who cares. If not, they are
+   mad."* And: *"this is the edit process. I would need to delete EVERY employer
+   and then re-add them as a project."*
+
+   ⚠⚠ PERCEIVED AI QUALITY IS ERROR **COST**, NOT ERROR RATE. `E294` reduced the
+   parser's misses; it did not end them and it never will. This is what makes a
+   miss cheap.
+
+   ── ⚠⚠ AND IT CLOSES A HOLE THE IMPORT ALREADY OPENED ─────────────────────────
+
+   `resume/import.ts` writes projects with `employer_id: null` whenever the model
+   could not place them. Verified: `updateProject` never touches `employer_id` and
+   `createProject` demands an employer up front, so BEFORE THIS FILE THERE WAS NO
+   CODE PATH THAT COULD ATTACH ONE. The parser was producing rows the user could
+   not fix.
+
+   ── ⚠⚠ THE CONVERSIONS DO NOT GO THROUGH `projectData()`. READ THIS ───────────
+
+   `projectData()` REQUIRES client name, description, role type, a start date and
+   an end date unless current. A parser-created employer is guaranteed NONE of
+   those — `Employer.start_date` and `description` are both nullable and there is
+   no role type at all. Routing a conversion through it would reject exactly the
+   rows this feature exists to rescue. So the row is written DIRECTLY, and the
+   schema's own comment on `Project.role_type_id` blesses the case: *"a résumé
+   importer cannot know the role, and defaulting it would write a value the
+   provider never chose… A null is honest and queryable."*
+   ⚠ THE MODAL'S REQUIRED SET STILL GOVERNS THE MODAL. It does not govern a
+   reclassification of data that already exists.
+*/
+
+/**
+ * WS-2 — attach, re-attach or DETACH a project. The cheap half.
+ *
+ * ⚠ THIS ALONE CLOSES THE `E294` HOLE: it is the only code path that can set
+ * `Project.employer_id`.
+ *
+ * ⚠⚠ OWNERSHIP IS RE-CHECKED ON **BOTH** IDS against the resolved profile, the
+ * same way `updateProject` does it. A foreign id must resolve to NOTHING rather
+ * than to somebody else's row — the profile comes from the session and neither id
+ * is trusted.
+ * ⚠ `employerId: null` IS LEGAL and means detach. It is not an error and it is
+ * not a no-op: an unattached project is a real state the import already produces.
+ */
+export async function moveProject(
+  viewer: Viewer,
+  projectId: string,
+  employerId: string | null
+) {
+  const profileId = await ownedProfileId(viewer);
+
+  const project = await prisma.project.findFirst({
+    where: { id: projectId, provider_profile_id: profileId },
+    select: { id: true },
+  });
+  if (!project) throw new OnboardingError("Project not found", "INVALID");
+
+  let target: string | null = null;
+  if (employerId) {
+    const employer = await prisma.employer.findFirst({
+      where: { id: employerId, provider_profile_id: profileId },
+      select: { id: true },
+    });
+    if (!employer) throw new OnboardingError("Employer not found", "INVALID");
+    target = employer.id;
+  }
+
+  /* Sorted to the end of its new home, the same rule `createProject` uses. */
+  const count = target
+    ? await prisma.project.count({ where: { employer_id: target } })
+    : 0;
+
+  await prisma.project.update({
+    where: { id: project.id },
+    data: { employer_id: target, sort_order: count * 10 },
+  });
+  /* ⚠ EVERY OTHER MUTATION IN THIS FILE DOES THIS. A stale rollup misreports
+     what somebody can do. */
+  await afterJobChange(profileId);
+}
+
+/**
+ * WS-3 — EMPLOYER → PROJECT.
+ *
+ * ⚠⚠ THE ORDER OF THE TRANSACTION IS THE WHOLE CORRECTNESS ARGUMENT. Two
+ * relations would be destroyed silently if the delete came first, and a third
+ * would survive as an invisible orphan.
+ *
+ *   1  load the employer, owner-scoped
+ *   2  refuse self-parenting
+ *   3  verify the target, owner-scoped — REQUIRED, see below
+ *   4  create the project from the field map
+ *   5  MOVE `job_skills` and `artifacts` — before the delete
+ *   6  RE-PARENT the employer's own projects to the target
+ *   7  delete the employer
+ *
+ * ⚠ `targetEmployerId` IS REQUIRED HERE. Scott's whole complaint is a project
+ * sitting at employer level; converting it to an UNATTACHED project would move
+ * the mess rather than clear it. Detach stays available through `moveProject`.
+ */
+export async function convertEmployerToProject(
+  viewer: Viewer,
+  employerId: string,
+  input: { targetEmployerId: string; clientName: string }
+): Promise<{ projectId: string; reparentedProjects: number; movedSkills: number; movedArtifacts: number }> {
+  const profileId = await ownedProfileId(viewer);
+
+  /* ⚠ A ROW CANNOT BE ITS OWN PARENT. Checked before any read so the error is
+     about the request rather than about what happens to be in the database. */
+  if (input.targetEmployerId === employerId) {
+    throw new OnboardingError(
+      "Pick a different job for this project to sit under",
+      "INVALID"
+    );
+  }
+
+  const employer = await prisma.employer.findFirst({
+    where: { id: employerId, provider_profile_id: profileId },
+  });
+  if (!employer) throw new OnboardingError("Employer not found", "INVALID");
+
+  const target = await prisma.employer.findFirst({
+    where: { id: input.targetEmployerId, provider_profile_id: profileId },
+    select: { id: true },
+  });
+  if (!target) throw new OnboardingError("Employer not found", "INVALID");
+
+  const clientName = clean(input.clientName, 200);
+  if (!clientName) {
+    throw new OnboardingError("Say which client this project was for", "INVALID");
+  }
+
+  const count = await prisma.project.count({ where: { employer_id: target.id } });
+
+  const result = await prisma.$transaction(async (tx) => {
+    const created = await tx.project.create({
+      data: {
+        provider_profile_id: profileId,
+        employer_id: target.id,
+        sort_order: count * 10,
+        ...employerToProjectData(employer, clientName),
+      },
+      select: { id: true },
+    });
+
+    /*
+      ⚠⚠ SKILLS AND ARTIFACTS **MOVE**. THEY ARE NOT COPIED AND NOT DROPPED.
+      Both models carry a nullable `employer_id` AND a nullable `project_id`, and
+      both relations are `onDelete: Cascade` — so a row still pointing at the
+      employer when it is deleted is DESTROYED SILENTLY. This has to happen
+      before step 7 and there is no version of this that is safe afterwards.
+    */
+    const movedSkills = await tx.jobSkill.updateMany({
+      where: { employer_id: employer.id },
+      data: { employer_id: null, project_id: created.id },
+    });
+    const movedArtifacts = await tx.artifact.updateMany({
+      where: { employer_id: employer.id },
+      data: { employer_id: null, project_id: created.id },
+    });
+
+    /*
+      ⚠⚠ THE EMPLOYER'S OWN PROJECTS ARE RE-PARENTED, NOT ORPHANED. A
+      misclassified employer often already has children, and
+      `Project.employer_id` is `onDelete: SetNull` — deleting the employer would
+      leave them ALIVE BUT INVISIBLE, because `listEmployers` only reaches
+      projects through employers. Projects cannot nest, so the target employer is
+      their only sane home.
+    */
+    const reparented = await tx.project.updateMany({
+      where: { employer_id: employer.id },
+      data: { employer_id: target.id },
+    });
+
+    await tx.employer.delete({ where: { id: employer.id } });
+
+    return {
+      projectId: created.id,
+      reparentedProjects: reparented.count,
+      movedSkills: movedSkills.count,
+      movedArtifacts: movedArtifacts.count,
+    };
+  });
+
+  /* ⚠ OUTSIDE the transaction — the rollup reads its own tables and must see the
+     committed state. */
+  await afterJobChange(profileId);
+  return result;
+}
+
+/**
+ * WS-4 — PROJECT → EMPLOYER. Also Undo.
+ *
+ * ⚠ Scott: *"IT MUST WORK BOTH WAYS"* — the parser misjudges in both directions.
+ *
+ * ⚠⚠ THIS DIRECTION CAN LOSE DATA AND IT SAYS SO. `Employer` has no home for
+ * outcomes, tools, highlights, `client_visibility`/`code_name`/`client_domain`,
+ * `video_url`, `document_path`, `url`, `image_url` or `industry`. The caller is
+ * given the count and the names through `projectLoss` BEFORE it commits.
+ *
+ * ⚠⚠ AND IT REFUSES OUTRIGHT ON A VALIDATED PROJECT. A client confirmed that
+ * work happened; silently discarding their confirmation is not an edit somebody
+ * gets to make by accident. Deleting it deliberately is still available.
+ */
+export async function projectLoss(viewer: Viewer, projectId: string): Promise<ProjectLoss> {
+  const profileId = await ownedProfileId(viewer);
+  const p = await prisma.project.findFirst({
+    where: { id: projectId, provider_profile_id: profileId },
+    select: {
+      highlights: true,
+      url: true,
+      image_url: true,
+      video_url: true,
+      document_path: true,
+      client_domain: true,
+      code_name: true,
+      client_visibility: true,
+      industry_specialization_id: true,
+      _count: { select: { outcomes: true, applications: true } },
+    },
+  });
+  if (!p) throw new OnboardingError("Project not found", "INVALID");
+
+  const fields: string[] = [];
+  if (p.url) fields.push("the project link");
+  if (p.image_url) fields.push("the cover image");
+  if (p.video_url) fields.push("the video");
+  if (p.document_path) fields.push("the attached document");
+  if (p.client_domain) fields.push("the client domain");
+  if (p.client_visibility !== "PUBLIC") fields.push("the confidentiality setting");
+  if (p.code_name) fields.push("the code name");
+  if (p.industry_specialization_id) fields.push("the industry");
+
+  return {
+    outcomes: p._count.outcomes,
+    tools: p._count.applications,
+    highlights: p.highlights.length,
+    fields,
+  };
+}
+
+export async function convertProjectToEmployer(
+  viewer: Viewer,
+  projectId: string,
+  input: { name: string }
+): Promise<{ employerId: string; movedSkills: number; movedArtifacts: number }> {
+  const profileId = await ownedProfileId(viewer);
+
+  const project = await prisma.project.findFirst({
+    where: { id: projectId, provider_profile_id: profileId },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      role_title: true,
+      location: true,
+      start_date: true,
+      end_date: true,
+      is_current: true,
+      logo_url: true,
+      contact_email: true,
+      software_suite: true,
+      role_type_id: true,
+      client_name: true,
+      validation_status: true,
+      _count: { select: { validations: true } },
+    },
+  });
+  if (!project) throw new OnboardingError("Project not found", "INVALID");
+
+  /*
+    ⚠⚠ THE REFUSAL. A CONFIRMED validation is somebody else's statement about
+    this work — the provider does not get to discard it as a side effect of
+    reclassifying a row.
+  */
+  /*
+    ⚠ THE BRIEF NAMED `CONFIRMED`; THE ENUM HAS NO SUCH MEMBER.
+    `ProjectValidationStatus` is `NONE | PENDING | VALIDATED` — `CONFIRMED` is the
+    status on a `ProjectValidation` ROW, not on the project. Corrected to
+    `VALIDATED` and reported at `E296`; the intent is unchanged.
+    ⚠ AND **ANY** VALIDATION ROW BLOCKS, not only a confirmed one. A request that
+    has been sent and not yet answered is a live question with a client — dropping
+    it silently is the same fault one step earlier.
+  */
+  if (project.validation_status === "VALIDATED" || project._count.validations > 0) {
+    throw new OnboardingError(
+      "This project has a client validation on it, so it can’t be turned into a job. " +
+        "Delete the project deliberately if that is really what you want.",
+      "INVALID"
+    );
+  }
+
+  const name = clean(input.name, 200);
+  if (!name) throw new OnboardingError("Give the job an employer name", "INVALID");
+
+  const count = await prisma.employer.count({
+    where: { provider_profile_id: profileId },
+  });
+
+  const result = await prisma.$transaction(async (tx) => {
+    const created = await tx.employer.create({
+      data: {
+        provider_profile_id: profileId,
+        sort_order: count * 10,
+        ...projectToEmployerData(project, name),
+      },
+      select: { id: true },
+    });
+
+    /* ⚠ SAME RULE, SAME ORDER — before the delete, or Cascade eats them. */
+    const movedSkills = await tx.jobSkill.updateMany({
+      where: { project_id: project.id },
+      data: { project_id: null, employer_id: created.id },
+    });
+    const movedArtifacts = await tx.artifact.updateMany({
+      where: { project_id: project.id },
+      data: { project_id: null, employer_id: created.id },
+    });
+
+    await tx.project.delete({ where: { id: project.id } });
+
+    return {
+      employerId: created.id,
+      movedSkills: movedSkills.count,
+      movedArtifacts: movedArtifacts.count,
+    };
+  });
+
+  await afterJobChange(profileId);
+  return result;
 }

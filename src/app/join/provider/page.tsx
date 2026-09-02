@@ -1670,6 +1670,14 @@ export default function JoinProviderPage() {
                 {editingWork ? (
                   <EmployersStep
                     employers={profile.employers}
+                    /*
+                      ⚠ THE FLAT PROJECT LIST (`P1-J1.4-E296`). `listEmployers`
+                      nests projects under employers, so `employer_id: null` rows
+                      never reach the step through `employers`. This list already
+                      held them — the Review step has been rendering them as
+                      "Solo Projects" all along — it just was not passed down.
+                    */
+                    projects={profile.projects}
                     onChanged={(employers) =>
                       setProfile((p) => ({ ...p, employers }))
                     }
