@@ -1,6 +1,5 @@
-import Link from "next/link";
-import { Check } from "lucide-react";
 import { ProgressRing } from "@/components/learn/app/ProgressRing";
+import { CoverageRow } from "@/components/learn/app/CoverageRow";
 import type { MyLearning } from "@/lib/learn-dashboard";
 
 /**
@@ -19,10 +18,17 @@ import type { MyLearning } from "@/lib/learn-dashboard";
  * fill and its percentage; NOT STARTED CARRIES ITS LESSON COUNT, so the 17 grey
  * squares a new learner sees are still telling them how big each path is.
  *
- * ⚠ 23 IS TODAY'S COUNT, NOT A CONSTANT. The grid is 12 columns of
- * `minmax(0,1fr)` and reflows; nothing here knows how many paths there are and
- * nothing assumes two rows. `check:learn` fails the build if 23, 54 or 522 turn
- * up as a literal in a component.
+ * ⚠ 23 IS TODAY'S COUNT, NOT A CONSTANT. Nothing here knows how many paths
+ * there are and nothing assumes a number of rows. `check:learn` fails the build
+ * if 23, 54 or 522 turn up as a literal in a component.
+ *
+ * ⚠⚠ SUPERSEDED BY `P1-J3-E045`, quoted rather than deleted: the tiles were a
+ * reflowing `grid grid-cols-8 min-[520px]:grid-cols-12` that wrapped onto as
+ * many rows as it needed, and this note used to read *"The grid is 12 columns
+ * of `minmax(0,1fr)` and reflows"*. Scott asked for ONE row showing what the
+ * width fits with an arrow to the rest, so the tiles now live in
+ * `CoverageRow.tsx` — a horizontally scrollable row. The tile STATES are
+ * unchanged and moved verbatim.
  */
 export function CoverageCard({ data }: { data: MyLearning }) {
   const { totals, mine, paths, nextCertificate } = data;
@@ -92,53 +98,7 @@ export function CoverageCard({ data }: { data: MyLearning }) {
           </span>
         </div>
 
-        <div className="grid grid-cols-8 gap-1.5 min-[520px]:grid-cols-12 sm:gap-2">
-          {paths.map((p) => {
-            const label = p.certified
-              ? `${p.title} — certified`
-              : p.completed > 0
-                ? `${p.title} — ${p.percent}% complete`
-                : `${p.title} — not started, ${p.lessons} lesson${p.lessons === 1 ? "" : "s"}`;
-            return (
-              <Link
-                key={p.id}
-                href={`/learn/${p.slug}`}
-                title={label}
-                aria-label={label}
-                className={
-                  "relative grid aspect-square place-items-center overflow-hidden rounded-[9px] transition-transform hover:scale-105 " +
-                  (p.certified
-                    ? "border border-transparent bg-[linear-gradient(140deg,var(--color-magenta),#8b1fa8)]"
-                    : p.completed > 0
-                      ? "border-2 border-magenta bg-white"
-                      : "border border-line bg-bg-soft")
-                }
-              >
-                {p.certified ? (
-                  <Check className="h-3.5 w-3.5 text-white" strokeWidth={3.5} aria-hidden />
-                ) : p.completed > 0 ? (
-                  <>
-                    {/*
-                      The fill is a proportional slab from the bottom, so the tile
-                      reads as a tiny gauge. `--tile-fill` rather than a Tailwind
-                      class because the value is per-path data.
-                    */}
-                    <span
-                      className="absolute inset-x-0 bottom-0 bg-magenta/20"
-                      style={{ height: `${p.percent}%` }}
-                      aria-hidden
-                    />
-                    <b className="relative font-display text-[9px] font-bold text-magenta">
-                      {p.percent}%
-                    </b>
-                  </>
-                ) : (
-                  <em className="text-[9.5px] not-italic text-ink-2/70">{p.lessons}</em>
-                )}
-              </Link>
-            );
-          })}
-        </div>
+        <CoverageRow paths={paths} />
 
         <div className="mt-3.5 flex flex-wrap gap-x-4 gap-y-1.5 text-[11px] text-ink-2">
           <span className="inline-flex items-center gap-1.5">

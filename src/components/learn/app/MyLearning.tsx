@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Play, ShieldCheck, LayoutGrid, GraduationCap, ArrowRight } from "lucide-react";
+import { Play, ShieldCheck, LayoutGrid, GraduationCap, ArrowRight, Compass } from "lucide-react";
 import { InstructorAvatar } from "@/components/learn/InstructorBadge";
 import { ProgressRing } from "@/components/learn/app/ProgressRing";
 import { StatTile } from "@/components/learn/app/StatTile";
@@ -11,6 +11,7 @@ import { CoverageCard } from "@/components/learn/app/CoverageCard";
 */
 import { AchievementGrid, StreakTile } from "@/components/learn/app/ClientOnly";
 import type { DashPath, MyLearning as MyLearningData } from "@/lib/learn-dashboard";
+import type { Suggestion } from "@/lib/learn-suggestion";
 
 /**
  * MY LEARNING — the signed-in `/learn` (brief_learn_app_shell WS2).
@@ -44,7 +45,7 @@ import type { DashPath, MyLearning as MyLearningData } from "@/lib/learn-dashboa
  * is no total to add up, so the page shows counts, which are exact.
  */
 export function MyLearning({ data }: { data: MyLearningData }) {
-  const { level, totals, mine, continueCard, inProgress, paths } = data;
+  const { level, totals, mine, continueCard, inProgress, paths, suggestion } = data;
 
   return (
     <div className="-mx-5 -mt-6 sm:-mx-8">
@@ -184,6 +185,27 @@ export function MyLearning({ data }: { data: MyLearningData }) {
         ) : (
           <>
             <SectionHead title="Start Somewhere" />
+            {/*
+              ── ⚠⚠ TWO HALVES (`P1-J3-E043`) ────────────────────────────────
+
+              SCOTT: *"Split the 'Nothing on the go yet' into two halves. Put the
+              suggested first course (based on skills or on Foundations if they
+              have no skills or less than 2 years of experience)."*
+
+              ⚠ THE LEFT HALF IS UNCHANGED — same heading, same sentence, same
+              `Browse the Catalog` button, including the `E042` casing note it
+              still carries. Only its container changed.
+
+              ⚠ ONE COLUMN BELOW 900px. The right half's reason line is prose;
+              at 390px inside a 50% column it renders a word per line, which is
+              the failure `CoverageCard`'s closing strip already documents.
+
+              ⚠ AND IT COLLAPSES TO ONE COLUMN WHEN THERE IS NO SUGGESTION.
+              `suggestion` is null only when the catalog has nothing left to
+              suggest; the left half then fills the row rather than sitting
+              beside an empty box. That is the "do not render half a row" case.
+            */}
+            <div className={suggestion ? "grid gap-4 min-[900px]:grid-cols-2" : ""}>
             <div className="rounded-brand border border-line bg-white p-6">
               <p className="text-[15px] font-bold">Nothing on the go yet.</p>
               <p className="mt-1.5 max-w-lg text-[13.5px] leading-relaxed text-ink-2">
@@ -216,6 +238,8 @@ export function MyLearning({ data }: { data: MyLearningData }) {
                 */}
                 Browse the Catalog <ArrowRight className="h-4 w-4" aria-hidden />
               </Link>
+            </div>
+            {suggestion && <SuggestedFirstPath s={suggestion} />}
             </div>
           </>
         )}
@@ -459,6 +483,42 @@ function PathProgressCard({ path, index }: { path: DashPath; index: number }) {
           </Link>
         )}
       </div>
+    </div>
+  );
+}
+
+/**
+ * THE RIGHT HALF OF THE EMPTY STATE (`P1-J3-E043`) — ONE suggestion.
+ *
+ * ⚠ ONE. Not three, not a carousel. `pickSuggestion` returns a single row and
+ * this renders it; there is no array here to grow later by accident.
+ *
+ * ⚠⚠ EVERY WORD OF `s.reason` COMES FROM `lib/learn-suggestion.ts` AND IS
+ * CC-AUTHORED, flagged there and reported at `E043` for Scott to overrule. This
+ * component invents no copy of its own beyond the eyebrow and the button label.
+ *
+ * ⚠ THE SELECTION IS NOT RE-DERIVED HERE. Title, slug, reason and the counts all
+ * arrive decided from the server, so the page cannot disagree with the picker.
+ */
+function SuggestedFirstPath({ s }: { s: Suggestion }) {
+  return (
+    <div className="flex flex-col rounded-brand border border-magenta/30 bg-[linear-gradient(160deg,rgba(215,44,214,0.07),rgba(215,44,214,0.01))] p-6">
+      <p className="mb-2 inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-magenta">
+        <Compass className="h-3.5 w-3.5" aria-hidden />
+        Suggested First Path
+      </p>
+      <p className="text-[15px] font-bold">{s.title}</p>
+      <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-2">{s.reason}</p>
+      <p className="mt-1 text-[12px] text-ink-2">
+        {s.courses} course{s.courses === 1 ? "" : "s"} · {s.lessons} lesson
+        {s.lessons === 1 ? "" : "s"}
+      </p>
+      <Link
+        href={`/learn/${s.slug}`}
+        className="mt-4 inline-flex w-fit items-center gap-2 rounded-full border border-magenta px-5 py-2.5 text-[13.5px] font-bold text-magenta transition-colors hover:bg-magenta hover:text-white"
+      >
+        Start This Path <ArrowRight className="h-4 w-4" aria-hidden />
+      </Link>
     </div>
   );
 }

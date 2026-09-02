@@ -42,6 +42,14 @@ import { streakFrom, levelFor, headlineFor, spell } from "@/lib/learn-progress";
 import { isPlaceholderInstructor, lessonFace } from "@/lib/learn-faces";
 import { certificateClaims, leaderLabel } from "@/lib/learn-path-app";
 import type { Instructor } from "@/lib/learn-instructor-format";
+import {
+  pickSuggestion,
+  MIN_YEARS_FOR_SKILL_MATCH,
+  REASON_NO_SKILLS,
+  REASON_TOO_NEW,
+  REASON_NO_MATCH,
+  type SuggestPath,
+} from "@/lib/learn-suggestion";
 
 let pass = 0;
 const failures: string[] = [];
@@ -493,6 +501,80 @@ check("claims: nothing in, nothing out", certificateClaims([]).length === 0);
 check("leader label: first initial + surname", leaderLabel("Marelise", "Steenkamp") === "M. Steenkamp");
 check("leader label: surname only", leaderLabel(null, "Tran") === "Tran");
 check("leader label: no name is not an email", leaderLabel(null, null) === "A learner");
+
+// ---------------------------------------------------------------------------
+// 4 — THE SUGGESTED FIRST PATH IS SCOTT'S RULE AND NOTHING ELSE (`P1-J3-E043`)
+// ---------------------------------------------------------------------------
+
+/*
+  SCOTT: *"Put the suggested first course (based on skills or on Foundations if
+  they have no skills or less than 2 years of experience)."*
+
+  ⚠ `pickSuggestion` IS PURE FOR EXACTLY THIS. Every branch of that sentence is
+  driven here with no database and no fixture account, so the rule cannot drift
+  without a red build. ⚠ THE FIXTURES BELOW ARE SHAPED LIKE THE LIVE CATALOG —
+  read 2026-09-02 — but no live count is hardcoded: three paths, not 23.
+*/
+const P = (o: Partial<SuggestPath> & { title: string; slug: string }): SuggestPath => ({
+  id: o.slug, group: null, audience: "END_USER", lessons: 10, courses: 1,
+  enrolled: false, certified: false, ...o,
+});
+const FOUND = P({ title: "1. Background", slug: "background", audience: "BEGINNERS", group: "Foundational Learning Paths", lessons: 8 });
+const PAY = P({ title: "Basic Payables", slug: "basic-payables", group: "Accounting", lessons: 41 });
+const PROC = P({ title: "Advanced Procurement", slug: "adv-proc", group: "Procurement", lessons: 105 });
+const CATALOG = [FOUND, PAY, PROC];
+
+const sug = (skills: string[], years: number, paths = CATALOG) =>
+  pickSuggestion(paths, { skills, years, hasProfile: skills.length > 0 });
+
+check("E043: Scott's threshold is two years", MIN_YEARS_FOR_SKILL_MATCH === 2);
+check("E043: no skills falls to Foundations", sug([], 20)?.slug === FOUND.slug);
+check("E043: no skills says why", sug([], 20)?.reason === REASON_NO_SKILLS);
+check(
+  "E043: under two years falls to Foundations even with matching skills",
+  sug(["Payables"], MIN_YEARS_FOR_SKILL_MATCH - 1)?.slug === FOUND.slug
+);
+check("E043: under two years says why", sug(["Payables"], 1)?.reason === REASON_TOO_NEW);
+check(
+  "E043: exactly two years is ENOUGH — the rule says FEWER than two",
+  sug(["Payables"], MIN_YEARS_FOR_SKILL_MATCH)?.basis === "skills"
+);
+check("E043: a skill matches through the title", sug(["Payables"], 5)?.slug === PAY.slug);
+check("E043: a skill matches through the group", sug(["Procurement"], 5)?.slug === PROC.slug);
+check("E043: the reason names the skill", sug(["Payables"], 5)?.reason === "Because Payables is on your profile.");
+check(
+  "E043: skills that match nothing fall to Foundations, and SAY SO rather than posing as a match",
+  sug(["Underwater Basket Weaving"], 5)?.reason === REASON_NO_MATCH
+);
+check(
+  "E043: a shape word is not a subject — 'Absence Management' must not match 'Inventory Management'",
+  pickSuggestion([P({ title: "Inventory Management", slug: "inv", group: "Supply Chain Execution" })],
+    { skills: ["Absence Management"], years: 9, hasProfile: true })?.basis === "foundations"
+);
+check(
+  "E043: a path already enrolled is never suggested",
+  sug(["Payables"], 5, [{ ...PAY, enrolled: true }, FOUND])?.slug === FOUND.slug
+);
+check(
+  "E043: a certified path is never suggested",
+  sug(["Payables"], 5, [{ ...PAY, certified: true }, FOUND])?.slug === FOUND.slug
+);
+check(
+  "E043: ONE suggestion, never a list",
+  !Array.isArray(sug(["Payables"], 5))
+);
+check(
+  "E043: no provider profile does not throw and still gets Foundations",
+  pickSuggestion(CATALOG, { skills: [], years: 0, hasProfile: false })?.slug === FOUND.slug
+);
+check(
+  "E043: an empty catalog returns null rather than half a row",
+  pickSuggestion([], { skills: [], years: 0, hasProfile: false }) === null
+);
+check(
+  "E043: with no BEGINNERS path at all, Foundations still resolves to something real",
+  pickSuggestion([PAY, PROC], { skills: [], years: 0, hasProfile: false })?.slug === PAY.slug
+);
 
 // ---------------------------------------------------------------------------
 // report
