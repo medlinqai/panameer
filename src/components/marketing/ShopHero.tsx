@@ -107,7 +107,7 @@ export async function ShopHero() {
                   Every candidate destination was checked live, signed out, rather
                   than assumed:
 
-                    · `(app)/packages` (Search Packages)  ComingSoon **and** 307 -> /login
+                    · `(app)/packages` (Search Service Products)  ComingSoon **and** 307 -> /login
                     · `(app)/services/offers`             ComingSoon **and** 307 -> /login
                     · `(app)/providers/[id]`              307 -> /login — and it is the
                       ONLY page in the app that renders a published `Package` at all

@@ -5,7 +5,7 @@
  * decision from the brief, and the thing it rules out is worth naming: the Task
  * Panel (Page / Recent / Reports) is NOT the settings menu. It is reserved for
  * transaction pages, where "recent" and "reports" mean something. Settings is
- * eight sibling pages with no ordering and no history worth surfacing, which is
+ * nine sibling pages with no ordering (eight until `E025` added Service Products) and no history worth surfacing, which is
  * exactly the shape a left-nav is for.
  *
  * MEMBERSHIP IS FIRST AND IS THE DEFAULT. `/settings` lands there rather than on
@@ -51,6 +51,22 @@ export const SETTINGS_NAV: SettingsNavItem[] = [
     label: "Withdrawals",
     href: "/settings/withdrawals",
     blurb: "How Panameer pays you, and the tax details required first.",
+  },
+  {
+    /*
+      ⚠⚠ ADDED (`P1-J2.1-E025`, 2026-09-02). `/settings/packages` HAS ALWAYS
+      EXISTED AND WAS NEVER IN THIS LIST, and `SettingsNav` highlights on
+      `pathname === item.href` — so a user standing on that page had NOTHING lit
+      in the settings nav. Inside Settings with no "you are here".
+
+      ⚠ PLACED WITH THE SELLER-FACING MONEY ITEMS — after Billing & Payments and
+      Withdrawals, before the account-security block. A service product is a thing
+      you SELL, so it belongs beside the pages about being paid rather than beside
+      the ones about your password.
+    */
+    label: "Service Products",
+    href: "/settings/packages",
+    blurb: "The fixed offerings buyers can buy outright, and their prices.",
   },
   {
     label: "Password & Security",

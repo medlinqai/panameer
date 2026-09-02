@@ -131,7 +131,7 @@ export const UTILITY_NAV: NavItem[] = [SEARCH_NAV, HOME_NAV, NOTIFICATIONS_NAV];
   ⚠ SUPERSEDED, quoted not deleted, so the old names are recoverable:
       Start Learning   -> Learning Paths
       Create Work      -> Work Requests
-      Search Packages  -> Service Products
+      Search Packages  -> Service Products (shipped)
       Manage Work      -> Work Orders
       Pay Providers    -> Payments
       Community        -> Community (unchanged)

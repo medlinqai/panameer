@@ -23,7 +23,7 @@ import { getSessionViewer } from "@/lib/session";
  *
  * ⚠ WHAT REVERSED IT: the dashboard already carries all three transactions with real
  * data behind them — its empty state's primary button already reads `Create a Work
- * Request`, `Search Packages` is in the rail, and the *Collaborate with an expert*
+ * Request`, `Service Products` is in the rail, and the *Collaborate with an expert*
  * row is the talent search. The ready page congratulated the requester and then asked
  * them to click again to reach a page that says it better.
  *

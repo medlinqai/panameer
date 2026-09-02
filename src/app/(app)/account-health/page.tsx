@@ -87,7 +87,7 @@ export default async function AccountHealthPage() {
       ok: visible,
       note: visible
         ? "Your packages are purchasable."
-        : "Packages go on sale when your profile is visible.",
+        : "Service products go on sale when your profile is visible.",
     },
   ];
 

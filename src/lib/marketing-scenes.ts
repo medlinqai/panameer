@@ -71,7 +71,7 @@ export const SPEND_KPIS = [
 
 /** The requester rail, matching REQUESTER_NAV plus an Analytics group. */
 export const SPEND_RAIL = {
-  buyer: ["Start Learning", "Create Work", "Search Packages", "Manage Work", "Pay Providers", "Community"],
+  buyer: ["Start Learning", "Create Work", "Search Service Products", "Manage Work", "Pay Providers", "Community"],
   analytics: ["Spend", "Savings", "Contracts", "Suppliers"],
   active: "Spend",
 };

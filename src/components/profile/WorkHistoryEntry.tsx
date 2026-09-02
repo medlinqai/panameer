@@ -6,7 +6,9 @@ import { ProjectCard, dateRange, type EmployerItem, type ProjectItem } from "@/c
 /**
  * One Work-History entry — PJv2 WS3, matching "Profile Review Mock up" pg1.
  *
- * Shape per the mockup: `Employer · Role Title` on the left with the date range
+ * Shape: the EMPLOYER as the heading with the ROLE on a sub-line beneath it,
+ * and the date range on the right. ⚠ It was `Employer · Role Title` on one line
+ * until `P1-J1.4-E295` (2026-09-02) — see the block at the heading.
  * right-aligned, the description beneath, then a row of four evenly-spaced
  * magenta links:
  *
@@ -140,11 +142,36 @@ export function WorkHistoryEntry({
 
   return (
     <div>
+      {/*
+        ── ⚠⚠ EMPLOYER IS THE HEADING, ROLE IS A SUB-LINE (`P1-J1.4-E295`) ───────
+
+        Scott, 2026-09-02, of the review page: the two shapes were indisting-
+        uishable. `StratERP Inc. · Founder & Principal Consultant` (employer ·
+        role) and `Ceres Insurance · Oracle Cloud Basic Procurement Quick Install`
+        (client · engagement) rendered as STRUCTURALLY IDENTICAL ROWS, and the `·`
+        hid which was which — ONE VISUAL FORM DOING TWO JOBS.
+
+        ⚠ SUPERSEDED, quoted: `{employer.name}{role ? ` · ${role}` : ""}` on one
+        bold line.
+
+        ⚠ THE WORDS ARE UNCHANGED. Same two strings, different arrangement — the
+        employer carries the weight, the role sits under it in secondary type, and
+        the separator is gone. An employer block can no longer be read as a
+        project because a project never renders this shape.
+        ⚠ CHANGED IN THE ONE SHARED COMPONENT (`E084`), so the wizard review, the
+        profile editor and the public profile cannot drift apart.
+        ⚠ PROJECTS ARE UNTOUCHED — they stay under their employer behind the
+        existing Projects disclosure. This is the employer block's typography only.
+      */}
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <p className="font-bold">
-          {employer.name}
-          {displayRole(employer.roleTitle) ? ` · ${displayRole(employer.roleTitle)}` : ""}
-        </p>
+        <div className="min-w-0">
+          <p className="font-bold">{employer.name}</p>
+          {displayRole(employer.roleTitle) && (
+            <p className="mt-0.5 text-[14px] text-ink-2">
+              {displayRole(employer.roleTitle)}
+            </p>
+          )}
+        </div>
         {range && <p className="text-[13.5px] text-ink-2">{range}</p>}
       </div>
 

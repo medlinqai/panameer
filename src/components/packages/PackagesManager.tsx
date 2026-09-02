@@ -218,7 +218,7 @@ export function PackagesManager() {
 
       {packages.length === 0 ? (
         <div className="rounded-brand border-2 border-dashed border-line p-10 text-center">
-          <p className="font-bold">No packages yet</p>
+          <p className="font-bold">No service products yet</p>
           <p className="mx-auto mt-1 max-w-md text-[14px] text-ink-2">
             A package is something a buyer can buy outright — a fixed scope, a
             timeline and a price. For example: &ldquo;Install DocuSign for
@@ -229,7 +229,7 @@ export function PackagesManager() {
             onClick={openAdd}
             className="mt-4 rounded-full bg-magenta px-6 py-3 font-bold text-white transition-colors hover:bg-magenta-dark"
           >
-            + Create a Package
+            + Create a Service Product
           </button>
         </div>
       ) : (
@@ -332,7 +332,7 @@ export function PackagesManager() {
             onClick={openAdd}
             className="mt-5 rounded-full border-[1.5px] border-line px-5 py-2.5 font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
           >
-            + Create a Package
+            + Create a Service Product
           </button>
         </>
       )}
@@ -340,7 +340,7 @@ export function PackagesManager() {
       <Modal
         open={modal !== null}
         onClose={() => setModal(null)}
-        title={modal?.id ? "Edit Package" : "Create a Package"}
+        title={modal?.id ? "Edit Package" : "Create a Service Product"}
         width="max-w-2xl"
       >
         <div className="space-y-4">

@@ -31,7 +31,7 @@ const HIRE_SHOTS: Shot[] = [
 const WORK_SHOTS: Shot[] = [
   { title: "Your profile", caption: "Built from your résumé, weighted by real time served." },
   { title: "Incoming work", caption: "Requests matched to what you actually do." },
-  { title: "Packages & payouts", caption: "Productize once; get paid on delivery." },
+  { title: "Service products & payouts", caption: "Productize once; get paid on delivery." },
 ];
 
 export function AppShots({ page }: { page: "hire" | "work" }) {

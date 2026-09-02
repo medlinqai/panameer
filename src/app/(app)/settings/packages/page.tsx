@@ -23,7 +23,7 @@ export default function SettingsPackagesPage() {
       />
 
       <section className="rounded-brand border border-line p-6">
-        <h2 className="text-[18px] font-bold">Packages</h2>
+        <h2 className="text-[18px] font-bold">Service Products</h2>
         <p className="mt-1 max-w-2xl text-[14.5px] leading-relaxed text-ink-2">
           A package is a fixed offering buyers can buy outright — a defined
           scope, a timeline and a price. Published packages appear in the

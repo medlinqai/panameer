@@ -39,15 +39,6 @@ import { Logo } from "@/components/Logo";
  * The badge still renders in the hero, from BRAND_BADGE_SHORT (D1).
  */
 /**
- * ⚠ THE REASON A DISABLED ITEM GIVES (`P1-J1.4-E306`, 2026-09-01).
- *
- * ⚠ A GREYED WORD WITH NO EXPLANATION READS AS BROKEN; the same word with a
- * reason reads as gated. That is the entire difference and it is one string.
- * ⚠ REPORTED FOR SCOTT TO APPROVE — CC's wording, not his.
- */
-const GATED_REASON = "Available once your profile is published";
-
-/**
  * ── ⚠⚠ THE SIGNED-IN HEADER (`P1-J1.4-E306`) ─────────────────────────────────
  *
  * `MarketingHeader` was NOT auth-aware — no session reference existed in it — so
@@ -67,8 +58,10 @@ const GATED_REASON = "Available once your profile is published";
  * ⚠ SO THE PROVIDER IS MOUNTED HERE, AND ONLY WHEN SIGNED IN. A header-local
  * provider, never a layout one: adding `MeProvider` to a public layout would fire
  * `/api/me` for every anonymous visitor on every marketing page.
- * ⚠ IT WRAPS THE WHOLE HEADER, not just the chip, because the NAV also needs
- * `published` to know whether it is gated.
+ * ⚠ IT WRAPS THE WHOLE HEADER rather than just the chip. That was originally
+ * because the NAV needed `published` too; the nav gate came out on 2026-09-02
+ * (`E306` reversal) and the wrapper stayed, because `AccountMenu` needs the
+ * provider either way and narrowing it would be churn for no behaviour change.
  */
 export function MarketingHeader() {
   const { status } = useSession();
@@ -117,20 +110,6 @@ function MarketingHeaderInner({ signedIn }: { signedIn: boolean }) {
   */
   const pathname = usePathname();
   const { me } = useMe();
-  /*
-    ⚠⚠ GATED ONLY FOR AN UNPUBLISHED **PROVIDER**, AND THAT IS AN INTERPRETATION
-    I AM REPORTING RATHER THAN ASSUMING.
-
-    `E306` says "signed in and not yet published -> the nav is DISABLED", and
-    `published` is `ProviderProfile.onboarding_completed_at`. A signed-in BUYER
-    has NO `providerProfile` at all, so a literal reading would disable the whole
-    marketing nav for every buyer browsing `/` — which is not what the row is
-    about and would be a regression on a public page.
-    ⚠ SO THE GATE REQUIRES A PROVIDER PROFILE THAT EXISTS AND IS UNPUBLISHED.
-    Somebody with nothing to publish is not "not yet published".
-  */
-  const provider = me?.providerProfile ?? null;
-  const navGated = signedIn && provider !== null && !provider.published;
   const isActive = (href: string) => {
     if (href.includes("#")) return false;
     if (href === "/") return pathname === "/";
@@ -235,39 +214,24 @@ function MarketingHeaderInner({ signedIn }: { signedIn: boolean }) {
               and it will collide again the moment both are true at once.
             */
             /*
-              ⚠⚠ DISABLED, NOT REMOVED, AND NOT `pointer-events:none` (`E306`).
+              ⚠⚠ THE NAV GATE IS GONE — SCOTT REVERSED IT (`E306` REVERSAL, 2026-09-02):
+              *"ok, pull it."*
             
-              A `pointer-events:none` link is unreachable by keyboard and by screen
-              reader — so the user cannot be TOLD why it is off, which is the whole
-              difference between "gated" and "broken". This renders a real focusable
-              element that says so:
-                · `aria-disabled="true"` — announced as unavailable
-                · `tabIndex={0}` — still in the tab order
-                · `title` — the reason on HOVER
-                · `aria-describedby` — the same reason on FOCUS, from one shared
-                  visually-hidden node rendered once after the map
-              ⚠ NAVIGATION IS STOPPED IN THE HANDLER, not by CSS, so click and Enter
-              behave identically.
+              ⚠ SUPERSEDED, quoted not deleted, because THE CODE DID EXACTLY WHAT IT WAS
+              ASKED — this is a decision, not a bug fix. An unpublished provider used to get
+              every marketing link rendered as a focusable `aria-disabled` span carrying
+              *"Available once your profile is published"* on hover and focus.
+            
+              ⚠ THE RULE HE SET: GATE THE TRANSACTION, NOT THE BROWSING. A provider who
+              abandons the wizard and comes back to read about Learn should not find a dead
+              marketing site.
+              ⚠ IT ALSO DISPOSES OF A SPLIT NOBODY HAD FILED: the mobile drawer's six links
+              were never gated, so the gate's behaviour depended on window width.
+            
+              ⚠⚠ THE IDENTITY CHIP IS NOT PART OF THIS REVERSAL AND STAYS, desktop AND
+              mobile. Removing `Sign Up` for a signed-in user was the live-harm fix — a
+              second account was one click away on every wizard step.
             */
-            if (navGated) {
-              return (
-                <span
-                  key={`${item.label}-${i}`}
-                  role="link"
-                  aria-disabled="true"
-                  aria-describedby="mh-gated-reason"
-                  tabIndex={0}
-                  title={GATED_REASON}
-                  onClick={(e) => e.preventDefault()}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") e.preventDefault();
-                  }}
-                  className="cursor-not-allowed whitespace-nowrap text-ink-2/45"
-                >
-                  {item.label}
-                </span>
-              );
-            }
             return (
               <Link
                 key={`${item.label}-${i}`}
@@ -282,11 +246,6 @@ function MarketingHeaderInner({ signedIn }: { signedIn: boolean }) {
               </Link>
             );
           })}
-          {/* One shared reason node — the `aria-describedby` target for every gated
-              item, so the explanation is announced on FOCUS as well as on hover. */}
-          <span id="mh-gated-reason" className="sr-only">
-            {GATED_REASON}
-          </span>
 
           {/*
             ⚠ THE SELLER DOOR IS GONE FROM HERE (P1-J0.4-E002). "For Experts"

@@ -18,6 +18,14 @@ import { SETTINGS_NAV } from "@/lib/settings-nav";
  * heading read one definition — a heading and a nav entry disagreeing about
  * what a page is called is the drift the shared nav modules exist to stop.
  *
+ * ⚠⚠ AND `/settings/packages` WAS EXACTLY THAT DRIFT (`P1-J2.1-E025`, 2026-09-02).
+ * The page existed and was NEVER IN `SETTINGS_NAV`, so nothing here highlighted
+ * while a user stood on it — inside Settings with no "you are here". Its own
+ * `<h2>` also said "Packages" while the product had renamed the thing to Service
+ * Products. Both halves of the rule stated above, broken on one page.
+ * The entry is added and the heading now matches it; the rule and its repair are
+ * recorded together so the next reader sees why the rule exists.
+ *
  * Horizontal scroll below md: eight labels stacked as a column on a phone push
  * the actual settings off the bottom of the screen.
  */

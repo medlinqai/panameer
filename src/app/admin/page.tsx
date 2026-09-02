@@ -60,7 +60,7 @@ export default async function AdminDashboardPage() {
           { label: "New Buyers/Sellers Last 30 Days", value: newPeople, hint: "Joined in the last 30 days" },
           { label: "New Lessons Last 30 Days", value: newLessons, hint: "Added in the last 30 days" },
           { label: "New Work Last 30 Days", hint: "Awaits work requests" },
-          { label: "New Packages Last 30 Days", hint: "Awaits packages" },
+          { label: "New Service Products Last 30 Days", hint: "Awaits packages" },
         ]}
       />
 
