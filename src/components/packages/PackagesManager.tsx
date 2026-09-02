@@ -9,6 +9,7 @@ import {
   Notice,
 } from "@/components/onboarding/controls";
 import { formatCents, centsToDollarInput, dollarsToCents } from "@/lib/display";
+import { GateNotice, type GateNoticeGap } from "@/components/GateNotice";
 
 /**
  * Package management (brief_V / E045) — the provider's sellable catalog.
@@ -70,7 +71,16 @@ const emptyForm = () => ({
 });
 type Form = ReturnType<typeof emptyForm>;
 
-export function PackagesManager() {
+/**
+ * ⚠ `sellGaps` IS COMPUTED ON THE SERVER (`P1-ALL-E034`) and passed down. It
+ * MIRRORS the publish gate in `setPackageStatus`; the lib is the boundary.
+ */
+export function PackagesManager({
+  sellGaps = [],
+}: {
+  sellGaps?: GateNoticeGap[];
+} = {}) {
+  const cannotPublish = sellGaps.length > 0;
   const [packages, setPackages] = useState<ProviderPackage[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -216,6 +226,24 @@ export function PackagesManager() {
         </div>
       )}
 
+      {/*
+        ⚠⚠ SHOWN BEFORE THE BLOCK, ABOVE THE LIST (`P1-ALL-E034`). Scott's
+        argument for the early gate is that the LATE one is what causes fake
+        listings: *"you don't have details… then you add fake details and the
+        product then is deemed to be fake."* Telling a seller what publishing
+        needs while they are still BUILDING the product is the whole point —
+        discovering it at the Publish button is the version that produces
+        invented data.
+        ⚠ BUILDING AND EDITING DRAFTS IS UNAFFECTED. This notice explains why
+        Publish is disabled; nothing else on this page is.
+      */}
+      <GateNotice
+        className="mb-4"
+        heading="Before a buyer can see a service product"
+        lede="Keep building — drafts are never blocked. These are what publishing needs."
+        gaps={sellGaps}
+      />
+
       {packages.length === 0 ? (
         <div className="rounded-brand border-2 border-dashed border-line p-10 text-center">
           <p className="font-bold">No service products yet</p>
@@ -288,6 +316,15 @@ export function PackagesManager() {
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">
+                    {/*
+                      ⚠⚠ ONLY *PUBLISHING* IS BLOCKED (`P1-ALL-E034`).
+                      `Unpublish` stays live for an already-published product —
+                      nothing is retro-unpublished, and somebody who published
+                      before the bar existed must still be able to withdraw it.
+                      ⚠ THE BUTTON STAYS VISIBLE AND DISABLED, never hidden and
+                      never `pointer-events: none` (the `E306` rule); the reason
+                      is in the notice above the list.
+                    */}
                     <button
                       type="button"
                       onClick={() =>
@@ -298,7 +335,9 @@ export function PackagesManager() {
                             p.status === "PUBLISHED" ? "DRAFT" : "PUBLISHED",
                         })
                       }
-                      disabled={busy}
+                      disabled={
+                        busy || (cannotPublish && p.status !== "PUBLISHED")
+                      }
                       className="rounded-full border-[1.5px] border-line px-4 py-2 text-[13.5px] font-bold text-ink transition-colors hover:border-magenta hover:text-magenta disabled:opacity-50"
                     >
                       {p.status === "PUBLISHED" ? "Unpublish" : "Publish"}

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getSessionViewer } from "@/lib/session";
+import { gapSentence, learnGaps } from "@/lib/gate-reads";
 import {
   AssessmentNotReady,
   getPublishedAssessment,
@@ -12,6 +13,11 @@ import {
 } from "@/lib/learn-assessment";
 
 /**
+ * ⚠⚠ `LEARN` IS THE ONLY BAR ON SITTING A TEST (`P1-ALL-E034`). There is NO
+ * COMPLETION GATE and Scott wants none: *"I want to allow every panameerian to
+ * take the certification without having taken the courses."* Nothing here reads
+ * `LessonProgress`, and nothing may start to.
+ *
  * GET  /api/learn/test/[pathId] — the question set, WITHOUT the answers.
  * POST /api/learn/test/[pathId] — submit answers, get graded, maybe get a badge.
  *
@@ -48,6 +54,28 @@ export async function GET(
   });
   if (!path) {
     return NextResponse.json({ error: "That path isn't available." }, { status: 404 });
+  }
+
+  /*
+    ── ⚠⚠ THE `LEARN` GATE (`P1-ALL-E034`) ────────────────────────────────────
+
+    **A field is required by the NEXT THING THE PLATFORM MUST DO FOR YOU.**
+    Enrolling means the platform starts keeping your place and telling you about
+    courses — and `learn.course_published` is addressed to *"every provider whose
+    skills match the course's tags"*, so with no skill that broadcast can never
+    reach you. That is the member-interest reason, and it is why a SKILL is in
+    this set and a company is not.
+
+    ⚠ SERVER-SIDE, AND THIS IS THE BOUNDARY. The button mirrors it.
+    ⚠ BROWSING, READING AND WATCHING ARE UNTOUCHED — Learn is the top of the
+    funnel and gating discovery costs the audience for everything downstream.
+  */
+  const gaps = await learnGaps(viewer.userId);
+  if (gaps.length > 0) {
+    return NextResponse.json(
+      { error: gapSentence(gaps), code: "IDENTITY_REQUIRED", fields: gaps },
+      { status: 403 }
+    );
   }
 
   try {
@@ -88,6 +116,28 @@ export async function POST(
   const parsed = SUBMIT.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {
     return NextResponse.json({ error: "That isn't a valid submission." }, { status: 400 });
+  }
+
+  /*
+    ── ⚠⚠ THE `LEARN` GATE (`P1-ALL-E034`) ────────────────────────────────────
+
+    **A field is required by the NEXT THING THE PLATFORM MUST DO FOR YOU.**
+    Enrolling means the platform starts keeping your place and telling you about
+    courses — and `learn.course_published` is addressed to *"every provider whose
+    skills match the course's tags"*, so with no skill that broadcast can never
+    reach you. That is the member-interest reason, and it is why a SKILL is in
+    this set and a company is not.
+
+    ⚠ SERVER-SIDE, AND THIS IS THE BOUNDARY. The button mirrors it.
+    ⚠ BROWSING, READING AND WATCHING ARE UNTOUCHED — Learn is the top of the
+    funnel and gating discovery costs the audience for everything downstream.
+  */
+  const gaps = await learnGaps(viewer.userId);
+  if (gaps.length > 0) {
+    return NextResponse.json(
+      { error: gapSentence(gaps), code: "IDENTITY_REQUIRED", fields: gaps },
+      { status: 403 }
+    );
   }
 
   try {

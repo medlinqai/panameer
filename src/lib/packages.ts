@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { ownedProviderProfile, type Viewer } from "@/lib/access";
 import { OnboardingError } from "@/lib/onboarding";
+import { gapSentence, sellGaps } from "@/lib/gate-reads";
 
 /**
  * Packages — the provider's sellable catalog (brief_V / E045).
@@ -362,6 +363,28 @@ export async function deletePackage(viewer: Viewer, packageId: string) {
  * Draft ⇄ Publish. Publishing is what puts a package in front of buyers, so it
  * requires the parts a buyer needs to make a decision — a nameless, priceless
  * package on the catalog would be worse than no package.
+ *
+ * ── ⚠⚠ AND IT NOW REQUIRES `SELL` (`P1-ALL-E034`) ───────────────────────────
+ *
+ * **SCOTT:** *"You list a product, someone likes it, then you don't have
+ * details… wait buyer… then you add fake details and the product then is deemed
+ * to be fake and not available… this is messy."*
+ *
+ * ⚠ THE TIMING IS THE WHOLE POINT. The late gate is what CAUSES the fake data —
+ * a seller under pressure to close types whatever closes it. Asking at publish
+ * costs an empty listing; asking at purchase costs a buyer.
+ *
+ * ⚠ SUPERSEDED, quoted: this call was gated on the ROLE and nothing else.
+ * `api/provider/packages/route.ts` checks `canProvideServices`, which asks *"is
+ * this kind of user allowed to sell"* and nothing about whether this particular
+ * seller can be found, contracted or paid.
+ *
+ * ⚠⚠ DRAFTS ARE NEVER GATED. The check is inside the `status === "PUBLISHED"`
+ * branch, so DRAFT ⇄ DRAFT and PUBLISHED → DRAFT both pass untouched — you can
+ * build a product freely and you can always withdraw one.
+ * ⚠ AND NOTHING IS RETRO-UNPUBLISHED. This runs on the TRANSITION only; an
+ * already-PUBLISHED row is never re-checked. `check:transaction-gates` asserts
+ * that placement.
  */
 export async function setPackageStatus(
   viewer: Viewer,
@@ -376,6 +399,17 @@ export async function setPackageStatus(
   if (!pkg) throw new OnboardingError("Package not found", "INVALID");
 
   if (status === "PUBLISHED") {
+    /*
+      ⚠ THE SELLER GATE RUNS FIRST, BEFORE THE PRODUCT GATE. The product checks
+      below are about THIS package; `SELL` is about whether this seller can be
+      found and paid at all. Reporting a missing deliverable to someone who also
+      has no rate and no payout method would send them to fix the smaller thing.
+    */
+    const gaps = await sellGaps(viewer.userId);
+    if (gaps.length > 0) {
+      throw new OnboardingError(gapSentence(gaps), "GATE_UNMET", gaps);
+    }
+
     const missing: string[] = [];
     if (!pkg.title.trim()) missing.push("a title");
     if (pkg.price_cents == null) missing.push("a price");

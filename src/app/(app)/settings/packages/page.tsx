@@ -1,6 +1,8 @@
 import { PackagesManager } from "@/components/packages/PackagesManager";
 import { PageTabs } from "@/components/casing/PageTabs";
 import { PAGE_TABS } from "@/lib/nav";
+import { guardPage } from "@/lib/guard";
+import { sellGaps } from "@/lib/gate-reads";
 
 /**
  * Packages — the provider's sellable catalog (brief_V / E045).
@@ -12,7 +14,13 @@ import { PAGE_TABS } from "@/lib/nav";
  * The provider-only gate is the settings layout's `guardPage`; every write
  * re-checks ownership server-side in `src/lib/packages.ts`.
  */
-export default function SettingsPackagesPage() {
+export default async function SettingsPackagesPage() {
+  /* ⚠ `P1-ALL-E034` — the `SELL` gate, computed here and MIRRORED in the manager.
+     The boundary is `setPackageStatus`; this is so a seller learns what
+     publishing needs while they are still building, not at the button. */
+  const viewer = await guardPage("canProvideServices");
+  const gaps = await sellGaps(viewer.userId);
+
   return (
     <div className="space-y-6">
       {/* E216 — "Sell My Services" flattened; its two children are this row. */}
@@ -33,7 +41,7 @@ export default function SettingsPackagesPage() {
       </section>
 
       <section className="rounded-brand border border-line p-6">
-        <PackagesManager />
+        <PackagesManager sellGaps={gaps} />
       </section>
     </div>
   );

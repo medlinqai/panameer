@@ -406,6 +406,12 @@ export class OnboardingError extends Error {
       | "NOT_VERIFIED"
       | "INVALID"
       | "INCOMPLETE"
+      /* ⚠ `P1-ALL-E034`. Distinct from INCOMPLETE because the fix is not on the
+         thing being published — it is on the PROFILE — and the UI has to tell
+         those two refusals apart to link to the right place. */
+      | "GATE_UNMET",
+    /** Populated for GATE_UNMET: the named fields, their reasons, their links. */
+    public fields?: { key: string; field: string; reason: string; href: string }[]
   ) {
     super(message);
     this.name = "OnboardingError";

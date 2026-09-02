@@ -9,6 +9,7 @@ import { InstructorBadge } from "@/components/learn/InstructorBadge";
 import { EnrollButton } from "@/components/learn/EnrollButton";
 import { ProgressBar } from "@/components/learn/ProgressBar";
 import { LessonTable } from "@/components/learn/LessonTable";
+import { learnGaps } from "@/lib/gate-reads";
 
 /**
  * Learning-path landing (brief_learn_experience WS2).
@@ -48,7 +49,10 @@ export default async function LearningPathPage({
   if (viewer) {
     const app = await getAppPath(slug, viewer.userId);
     if (!app) notFound();
-    return <AppPath path={app} signedIn />;
+    /* ⚠ `P1-ALL-E034` — the `LEARN` gate shown BEFORE the block. Only the
+       signed-in branch computes it; the public body below is a read and stays
+       completely open. */
+    return <AppPath path={app} signedIn learnGaps={await learnGaps(viewer.userId)} />;
   }
 
   const path = await getLearnPath(slug, null);

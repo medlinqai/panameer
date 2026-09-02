@@ -75,8 +75,14 @@ export async function POST(request: Request) {
 
 function handle(e: unknown, fallback: string) {
   if (e instanceof OnboardingError) {
-    const status = e.code === "NOT_A_PROVIDER" ? 404 : 400;
-    return NextResponse.json({ error: e.message, code: e.code }, { status });
+    const status = e.code === "NOT_A_PROVIDER" ? 404 : e.code === "GATE_UNMET" ? 403 : 400;
+    /* ⚠ `fields` TRAVELS WITH THE REFUSAL (`P1-ALL-E034`) — the named field, its
+       member-interest reason and its link all come from the server, so the UI
+       cannot paraphrase them into "complete your profile". */
+    return NextResponse.json(
+      { error: e.message, code: e.code, ...(e.fields ? { fields: e.fields } : {}) },
+      { status }
+    );
   }
   console.error("[packages]", e);
   return NextResponse.json({ error: fallback }, { status: 500 });

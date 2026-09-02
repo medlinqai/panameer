@@ -16,7 +16,20 @@ import type { AppPathView } from "@/lib/learn-path-app";
  * the stickiness RELEASES when it stacks — a sticky element in a single-column
  * flow pins a card over the content below it.
  */
-export function AppPath({ path, signedIn }: { path: AppPathView; signedIn: boolean }) {
+export function AppPath({
+  path,
+  signedIn,
+  /**
+   * ⚠ THE `LEARN` GATE, MIRRORED (`P1-ALL-E034`) — computed on the server by the
+   * same function `api/learn/enroll` refuses with. Threaded rather than fetched
+   * so the hero cannot disagree with the route.
+   */
+  learnGaps = [],
+}: {
+  path: AppPathView;
+  signedIn: boolean;
+  learnGaps?: { key: string; field: string; reason: string; href: string }[];
+}) {
   const allDone = path.lessons > 0 && path.completed === path.lessons;
   const remaining = path.lessons - path.completed;
 
@@ -128,6 +141,7 @@ export function AppPath({ path, signedIn }: { path: AppPathView; signedIn: boole
                   slug={path.slug}
                   enrolled={false}
                   signedIn
+                  learnGaps={learnGaps}
                 />
                 <p className="mt-2.5 text-[10.5px] leading-relaxed text-white/60">
                   Enrolling is free and only keeps your place.

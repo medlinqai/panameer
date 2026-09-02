@@ -3,6 +3,7 @@ import { z } from "zod";
 import { notify } from "@/lib/notifications";
 import { prisma } from "@/lib/prisma";
 import { getSessionViewer } from "@/lib/session";
+import { gapSentence, learnGaps } from "@/lib/gate-reads";
 
 const BODY = z.object({
   pathId: z.string().uuid(),
@@ -37,6 +38,29 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "That isn't a valid request." }, { status: 400 });
   }
   const { pathId, enroll } = parsed.data;
+
+  /*
+    ── ⚠⚠ THE `LEARN` GATE (`P1-ALL-E034`) ────────────────────────────────────
+
+    **A field is required by the NEXT THING THE PLATFORM MUST DO FOR YOU.**
+    Enrolling means the platform starts keeping your place and telling you about
+    courses — and `learn.course_published` is addressed to *"every provider whose
+    skills match the course's tags"*, so with no skill that broadcast can never
+    reach you. That is the member-interest reason, and it is why a SKILL is in
+    this set and a company is not.
+
+    ⚠ SERVER-SIDE, AND THIS IS THE BOUNDARY. The button mirrors it.
+    ⚠ BROWSING, READING AND WATCHING ARE UNTOUCHED — Learn is the top of the
+    funnel and gating discovery costs the audience for everything downstream.
+  */
+  const gaps = await learnGaps(viewer.userId);
+  if (gaps.length > 0) {
+    return NextResponse.json(
+      { error: gapSentence(gaps), code: "IDENTITY_REQUIRED", fields: gaps },
+      { status: 403 }
+    );
+  }
+
 
   const path = await prisma.learningPath.findFirst({
     where: { id: pathId, status: "PUBLISHED" },

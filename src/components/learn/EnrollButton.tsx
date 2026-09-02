@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { LEARN_ENROLL_CTA } from "@/lib/learn-steps";
 import { useState } from "react";
 import { AccountPitch } from "@/components/learn/AccountPitch";
+import { GateNotice, type GateNoticeGap } from "@/components/GateNotice";
 
 /**
  * The free-enrollment CTA (WS2 design ref; the convert-to-account path is WS4).
@@ -19,15 +20,25 @@ export function EnrollButton({
   slug,
   enrolled,
   signedIn,
+  learnGaps = [],
 }: {
   pathId: string;
   slug: string;
   enrolled: boolean;
   signedIn: boolean;
+  /**
+   * ⚠ THE `LEARN` GATE, MIRRORED (`P1-ALL-E034`). Computed on the server by the
+   * same function the route refuses with. ⚠ NOT THE BOUNDARY — the route refuses
+   * regardless of what this renders.
+   */
+  learnGaps?: GateNoticeGap[];
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /* ⚠ Already ENROLLED is never blocked. The gate is on joining, and someone who
+     joined before the bar existed must still be able to LEAVE. */
+  const blocked = !enrolled && learnGaps.length > 0;
 
   if (!signedIn) {
     /*
@@ -81,10 +92,26 @@ export function EnrollButton({
 
   return (
     <span className="inline-flex flex-col">
+      {/*
+        ⚠⚠ THE REASON IS SHOWN BEFORE THE BLOCK, NOT AFTER THE CLICK
+        (`P1-ALL-E034`). Learning what you owe by being refused is the worst
+        version of this, and the page already knows.
+        ⚠ THE BUTTON STAYS VISIBLE AND DISABLED — never hidden, never
+        `pointer-events: none`, so the explanation and its links are reachable by
+        keyboard (the `E306` rule).
+      */}
+      {blocked && (
+        <GateNotice
+          className="mb-3 max-w-md"
+          heading="Add a couple of things and you're in"
+          lede="It's still free. Browsing and watching stay open either way — this is only about enrolling."
+          gaps={learnGaps}
+        />
+      )}
       <button
         type="button"
         onClick={toggle}
-        disabled={busy}
+        disabled={busy || blocked}
         className={
           "rounded-full px-6 py-2.5 text-[14.5px] font-bold transition-colors disabled:opacity-50 " +
           (enrolled
