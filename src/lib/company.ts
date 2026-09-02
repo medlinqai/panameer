@@ -28,6 +28,8 @@ export type DefineInput = {
   taxType: TaxType;
   /** Jurisdiction (`E260`) — a full country name from `COUNTRIES`, not an ISO code. */
   country?: string | null;
+  /** `E282` — the US state the company was filed in. Full name, not a code. */
+  stateOfFiling?: string | null;
   /** `E273` — EIN / tax registration id. Writes to the existing `Company.tin`. */
   ein?: string | null;
   /** `E280` — the company's REGISTERED address (not the deliver-to). */
@@ -151,6 +153,8 @@ export async function defineCompany(viewer: Viewer, input: DefineInput) {
       tax_type: input.taxType,
       /* `E260` — jurisdiction, stored as the full country name. */
       country: input.country?.trim() || null,
+      /* `E282` — nullable and back-fills nothing; existing companies predate it. */
+      state_of_filing: input.stateOfFiling?.trim() || null,
       /*
         `E273` — EIN. ⚠ `tin` ALREADY EXISTED and was never captured; the
         column's own comment says it was "DEFERRED to the money gate on

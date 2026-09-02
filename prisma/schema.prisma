@@ -225,6 +225,26 @@ model Company {
   /// whose own email domain matches it is auto-approved (v1 = exact,
   /// case-insensitive string match; free-mail domains never match).
   email_domain String?
+
+  /// ── STATE OF FILING (`P1-J1.1-E282`) ──────────────────────────────────────
+  ///
+  /// SCOTT, 2026-08-31: *"Every state has a Secretary of State website. They list
+  /// their corporations under a corporate search."* The user gives the company
+  /// name and the state it was filed in; Panameer looks the rest up.
+  ///
+  /// ⚠ THE FULL STATE NAME, NOT A TWO-LETTER CODE — matching `country`, which
+  /// stores `"United States"` and not `"US"` (`E260`).
+  /// ⚠⚠ AND THAT DISAGREES WITH `Address.state`, WHICH HOLDS CODES. Measured on
+  /// the live rows: 41 of 44 non-null `Address.state` values are two-letter codes
+  /// (`FL`, `IL`, `TX`, `CA`, `MO`, `NY`), plus two outliers (`CABA`,
+  /// `new york`). REPORTED AT `E282` rather than silently reconciled.
+  /// ⚠ THEY DO NOT NEED TO AGREE: this is the JURISDICTION A COMPANY WAS FILED
+  /// IN, which is not the state of a mailing address — `Pfizer Inc.` is filed in
+  /// Delaware and has a New York process address. Nothing joins the two.
+  ///
+  /// ⚠ US ONLY, nullable, and it back-fills nothing — existing companies predate
+  /// it. A failed or absent lookup NEVER blocks onboarding (decision 5).
+  state_of_filing String?
   vertical     String?
   website      String?
   /// JURISDICTION — Scott, 2026-08-30: *"Jurisdiction is just country. do
