@@ -8,6 +8,12 @@ import {
   LocationFields,
   type LocationValue,
 } from "@/components/onboarding/LocationFields";
+import {
+  EIN_MESSAGE,
+  US_ZIP_MESSAGE,
+  ein as einFormat,
+  usZip,
+} from "@/lib/field-formats";
 
 /**
  * DEFINE OR JOIN — the company building block, shared by BOTH onboarding tracks
@@ -162,6 +168,7 @@ export function CompanyStep({
     same contract `PhoneField` uses (`E203`): mask/allow on change, judge on blur.
   */
   const [zipTouched, setZipTouched] = useState(false);
+  const [einTouched, setEinTouched] = useState(false);
   const [regAddress, setRegAddress] = useState<LocationValue>({
     country: COUNTRIES[0],
   });
@@ -216,12 +223,26 @@ export function CompanyStep({
     return () => clearTimeout(t);
   }, [q, mode]);
 
-  /* Empty is allowed; wrong is not. Mirrors the server's superRefine exactly. */
-  const zipValue = (regAddress.postalCode ?? "").trim();
-  const zipOk =
-    regAddress.country !== "United States" ||
-    zipValue === "" ||
-    /^\d{5}(-\d{4})?$/.test(zipValue);
+  /*
+    ⚠⚠ THE SAME FUNCTION THE SERVER RUNS (`P1-J1.4-E299`). Empty is allowed;
+    wrong is not.
+
+    ⚠ SUPERSEDED, quoted: this was a re-typed `/^\d{5}(-\d{4})?$/` plus
+    `regAddress.country !== "United States"`, described in its own comment as
+    *"Mirrors the server's superRefine exactly"* — a comment asserting two copies
+    agree is the tell that there are two copies. Now there is one, in
+    `lib/field-formats.ts`, and "mirrors" is a fact rather than a hope.
+    ⚠ THE EXACT STRING COMPARE WENT WITH IT: `"USA"` used to skip the check.
+  */
+  const zipOk = usZip(regAddress.postalCode, regAddress.country).ok;
+
+  /*
+    ⚠ EIN, SAME RULE AS THE SERVER'S OBJECT-LEVEL REFINE, INCLUDING HOW COUNTRY
+    RESOLVES — jurisdiction first, then the registered address. Optional: blank
+    is valid and never blocks Continue.
+  */
+  const einCountry = regAddress.country ?? null;
+  const einOk = einFormat(ein, einCountry).ok;
 
   const valid =
     mode === "join"
@@ -241,9 +262,11 @@ export function CompanyStep({
           defaulted, so nobody is blocked by doing nothing.
         */
         !!regAddress.country &&
-        /* `E299` — a malformed US ZIP blocks Continue, an ABSENT one does not
-           (`E274` allows a part-answered company). */
+        /* `E299` — a malformed US ZIP or EIN blocks Continue; an ABSENT one does
+           not (`E274` allows a part-answered company). ⚠ THE EIN IS NEVER
+           REQUIRED — `einOk` is true for blank. */
         zipOk &&
+        einOk &&
         attestation &&
         companyTos;
 
@@ -483,9 +506,21 @@ export function CompanyStep({
             <TextInput
               value={ein}
               onChange={(e) => setEin(e.target.value)}
+              onBlur={() => setEinTouched(true)}
               placeholder="12-3456789"
               autoComplete="off"
             />
+            {/*
+              ⚠ ON BLUR, WHICH IS WHAT SCOTT ASKED FOR: *"i added an alpha and
+              tabbed out… didn't get an error."* Not while typing — flagging
+              `12-345` mid-entry would call every EIN wrong for the first eight
+              keystrokes.
+              ⚠ THE MESSAGE IS THE SHARED CONSTANT, so this cannot drift from the
+              route's refusal.
+            */}
+            {einTouched && !einOk && (
+              <p className="mt-1 text-[13px] text-red-700">{EIN_MESSAGE}</p>
+            )}
           </Field>
 
           {/*
@@ -518,10 +553,10 @@ export function CompanyStep({
                 A blur listener on the wrapper gets the same behaviour without
                 changing a component two journeys render.
               */}
+              {/* ⚠ THE CONSTANT, NOT THE SENTENCE (`E299`). The literal that was
+                  here was the second copy of the server's message. */}
               {zipTouched && !zipOk && (
-                <p className="mt-1 text-[13px] text-red-700">
-                  Enter a US ZIP code — 5 digits, or ZIP+4 as 12345-6789.
-                </p>
+                <p className="mt-1 text-[13px] text-red-700">{US_ZIP_MESSAGE}</p>
               )}
             </div>
           </div>

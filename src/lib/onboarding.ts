@@ -22,6 +22,7 @@ import { suggestedCompany } from "@/lib/resume/job-skills";
 import type { ParsedResume } from "@/lib/resume/parse";
 import { USER_TOS_VERSION } from "@/lib/tos";
 import { capitalizeName } from "@/lib/display";
+import { matchSkill } from "@/lib/skill-match";
 
 /**
  * Provider onboarding — all business logic for the /join wizard (API-first, so
@@ -1570,9 +1571,59 @@ export async function applyProviderSection(
         const catalogRow = await prisma.serviceCatalog.findFirst({
           select: { id: true },
         });
+        /*
+          ── ⚠⚠ MATCH THE WHOLE CATALOG BEFORE CREATING ANYTHING (`E298`) ──────
+
+          SCOTT: *"i added a new skill - purchase requisitions… but that is as i
+          typed it… that means we will get misspellings and non-capitalizations."*
+
+          ⚠ THE PATTERN IS `resolveApplicationIds`' (`lib/employers.ts:352`),
+          copied not invented — its own comment states the rule: *"Matching is
+          case-insensitive against the WHOLE catalog before creating anything, so
+          typing 'oracle fusion' when 'Oracle Fusion' already exists links the
+          baseline row instead of spawning a near-duplicate custom for an admin to
+          clean up later."*
+
+          ⚠⚠ ONLY THE **EXACT-ISH** TIER ACTS HERE, AND THAT IS THE WHOLE DESIGN.
+          A NEAR match ASKS, and a server cannot ask — so `matchSkill`'s `near`
+          result is deliberately treated as `none` on this path and the custom
+          row is created as typed. THE ASKING HAPPENS IN THE UI, against
+          `api/onboarding/provider/skill-match`, which runs THIS SAME matcher
+          before the wizard ever submits. ⚠ SO A NEAR MATCH IS NEVER SILENTLY
+          APPLIED ANYWHERE — a skill is a claim about what somebody can do, and
+          rewriting it without an answer puts words in their mouth.
+          ⚠ THIS SPLIT IS REPORTED AT `E298`. It is why the server is not the only
+          place the matcher runs, and why it is still the place that prevents the
+          duplicate.
+
+          ⚠ NAMES ARE LOADED ONCE, NOT PER SKILL. `select: { id, name }` over the
+          catalog rather than a query per typed term.
+        */
+        const catalogRows = await prisma.skill.findMany({
+          select: { id: true, name: true, is_custom: true },
+        });
+        /* ⚠ `is_custom` -> `isCustom`: the matcher prefers a BASELINE row over a
+           provider-authored one, the same preference `resolveApplicationIds`
+           states. See `lib/skill-match.ts`. */
+        const catalogSkills = catalogRows.map((c) => ({
+          id: c.id,
+          name: c.name,
+          isCustom: c.is_custom,
+        }));
+
         for (const raw of customSkills) {
           const name = String(raw).trim().slice(0, 120);
           if (!name || !catalogRow) continue;
+          /*
+            ⚠ EXACT-ISH LINKS THE EXISTING ROW AND CREATES NOTHING. This is the
+            line that stops `Purchase Requisitions` becoming a second row when
+            the catalog already holds it.
+          */
+          const m = matchSkill(name, catalogSkills);
+          if (m.kind === "exact") {
+            if (!skillIds.includes(m.skill.id)) skillIds.push(m.skill.id);
+            continue;
+          }
           const skill = await prisma.skill.upsert({
             where: {
               catalog_id_role_type_id_pillar_id_name: {

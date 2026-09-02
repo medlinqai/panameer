@@ -535,6 +535,15 @@ export default function JoinProviderPage() {
   } | null>(null);
   const [skillQuery, setSkillQuery] = useState("");
   /*
+    ⚠ THE PENDING "DID YOU MEAN…?" (`P1-J1.4-E298`). Non-null means the matcher
+    found a NEAR row and nothing has been added — the member has to answer.
+  */
+  const [skillMatch, setSkillMatch] = useState<{
+    typed: string;
+    prompt: string;
+    skill: { id: string; name: string };
+  } | null>(null);
+  /*
     WS-4 — the work-history review's pending corrections, and the module lists
     it offers.
 
@@ -1940,7 +1949,36 @@ export default function JoinProviderPage() {
           CHAT'S ADDITION, not Scott's ask, and `E298` says capitalisation ships
           alone unless he says yes. Surfaced in the report; NOT BUILT HERE.
         */
-        const name = titleCase(skillQuery.trim());
+        void addSkillMatched(titleCase(skillQuery.trim()));
+      };
+
+      /*
+        ── ⚠⚠ MATCH BEFORE CREATE (`P1-J1.4-E298`) ─────────────────────────────
+
+        SCOTT: *"i added a new skill - purchase requisitions… but that is as i
+        typed it… that means we will get misspellings and non-capitalizations."*
+
+        ⚠ SUPERSEDED, quoted: `addCustomSkill` used to title-case the text and push
+        it straight into `customSkills`, and its own comment admitted the gap —
+        *"still misspelled, still unmatchable, now looking deliberate"*. It now
+        asks `api/onboarding/provider/skill-match`, which runs THE SAME
+        `matchSkill` the save path runs, against the WHOLE catalog rather than the
+        current role's `skillOpts`.
+
+        ⚠⚠ EXACT-ISH LINKS SILENTLY. NEAR ASKS. `Purchase Requisitions` typed by
+        hand now selects the catalog row; `purchase requisitons` offers *"Did you
+        mean Purchase Requisitions?"* and CHANGES NOTHING until answered. A skill
+        is a claim about what somebody can do — auto-correcting it would put words
+        in their mouth, and if the guess is wrong it is a false claim with their
+        name on it.
+
+        ⚠ THE DEDUPE WITHIN THEIR OWN LIST IS KEPT AND RUNS FIRST — it is cheap,
+        local, and stops a round trip for something already on screen.
+        ⚠ AND IF THE LOOKUP FAILS FOR ANY REASON THE OLD BEHAVIOUR STANDS: the
+        custom skill is added as typed. A network blip must not silently swallow
+        a skill somebody just asked for.
+      */
+      const addSkillMatched = async (name: string) => {
         if (!name) return;
         if (
           profile.customSkills.some((c) => c.toLowerCase() === name.toLowerCase()) ||
@@ -1949,7 +1987,56 @@ export default function JoinProviderPage() {
           setSkillQuery("");
           return;
         }
+        setSkillMatch(null);
+        try {
+          const r = await fetch(
+            `/api/onboarding/provider/skill-match?q=${encodeURIComponent(name)}`
+          );
+          const m = r.ok ? await r.json() : { kind: "none" };
+          if (m.kind === "exact" && m.skill?.id) {
+            /* Already in the catalog — link the real row, create nothing. */
+            if (!profile.skillIds.includes(m.skill.id)) {
+              setProfile((p) => ({
+                ...p,
+                skillIds: [...p.skillIds, m.skill.id],
+                skillNames: [...p.skillNames, { id: m.skill.id, name: m.skill.name, area: null }],
+              }));
+            }
+            setSkillQuery("");
+            return;
+          }
+          if (m.kind === "near" && m.skill?.id) {
+            /* ⚠ ASK. Nothing is added yet — both options stay on screen. */
+            setSkillMatch({ typed: name, prompt: m.prompt, skill: m.skill });
+            return;
+          }
+        } catch {
+          /* fall through to adding it as typed */
+        }
         setProfile((p) => ({ ...p, customSkills: [...p.customSkills, name] }));
+        setSkillQuery("");
+      };
+
+      /** Take the suggestion — link the catalog row instead of the typed text. */
+      const acceptSkillMatch = () => {
+        if (!skillMatch) return;
+        const { skill } = skillMatch;
+        if (!profile.skillIds.includes(skill.id)) {
+          setProfile((p) => ({
+            ...p,
+            skillIds: [...p.skillIds, skill.id],
+            skillNames: [...p.skillNames, { id: skill.id, name: skill.name, area: null }],
+          }));
+        }
+        setSkillMatch(null);
+        setSkillQuery("");
+      };
+
+      /** Keep what they typed. ⚠ A REAL, SUPPORTED OUTCOME — Scott types real ones. */
+      const keepTypedSkill = () => {
+        if (!skillMatch) return;
+        setProfile((p) => ({ ...p, customSkills: [...p.customSkills, skillMatch.typed] }));
+        setSkillMatch(null);
         setSkillQuery("");
       };
 
@@ -2106,6 +2193,44 @@ export default function JoinProviderPage() {
               + Add
             </button>
           </div>
+
+          {/*
+            ── ⚠⚠ A NEAR MATCH ASKS (`P1-J1.4-E298`) ────────────────────────────
+
+            ⚠ BOTH ANSWERS ARE REAL AND BOTH ARE ONE CLICK. The suggestion is
+            offered first because it is usually right, and KEEPING WHAT THEY TYPED
+            IS NOT A PENALTY — Scott types genuinely new skills and this must not
+            make that feel like a mistake.
+            ⚠ THE TYPED TEXT STAYS ON SCREEN, quoted, so the member can compare
+            the two rather than trusting a guess about what they meant.
+            ⚠ NOTHING HAS BEEN ADDED AT THIS POINT. No auto-correct, no silent
+            write — a skill is a claim about what somebody can do.
+          */}
+          {skillMatch && (
+            <div className="mt-3 max-w-md rounded-brand border border-line bg-bg-soft p-4">
+              <p className="text-[14px] font-bold">{skillMatch.prompt}</p>
+              <p className="mt-1 text-[13px] leading-relaxed text-ink-2">
+                It&apos;s already in the catalog, so buyers already search for it.
+                You typed &ldquo;{skillMatch.typed}&rdquo;.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={acceptSkillMatch}
+                  className="rounded-full bg-magenta px-4 py-2 text-[13.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
+                >
+                  Use {skillMatch.skill.name}
+                </button>
+                <button
+                  type="button"
+                  onClick={keepTypedSkill}
+                  className="rounded-full border-[1.5px] border-line px-4 py-2 text-[13.5px] font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
+                >
+                  Keep &ldquo;{skillMatch.typed}&rdquo;
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className={`mt-3 max-h-[220px] ${SCROLL_REGION}`}>
             <div className="flex flex-wrap gap-2">

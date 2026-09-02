@@ -3,6 +3,7 @@ import { z } from "zod";
 import { guardApi } from "@/lib/guard";
 import { OnboardingError } from "@/lib/onboarding";
 import { defineCompany } from "@/lib/company";
+import { ein as einFormat, usZip } from "@/lib/field-formats";
 
 const schema = z.object({
   name: z.string().trim().min(2).max(200),
@@ -16,7 +17,19 @@ const schema = z.object({
   ]),
   /* `E260`/`E260a` — jurisdiction, derived from the registered address's country. */
   country: z.string().trim().max(80).nullish(),
-  /* `E273` — EIN. Writes to the pre-existing `Company.tin` column. */
+  /*
+    `E273` — EIN. Writes to the pre-existing `Company.tin` column.
+
+    ⚠⚠ THE FORMAT IS NOW CHECKED (`P1-J1.4-E299`). ⚠ SUPERSEDED, quoted: this was
+    `z.string().trim().max(40).nullish()` — FORTY CHARACTERS OF ANYTHING, which is
+    the same defect the ZIP half fixed for postcodes. A LENGTH CAP IS NOT A FORMAT.
+    ⚠ THE RULE LIVES IN `lib/field-formats.ts`, not here — see the ZIP note below
+    for why there is exactly one copy.
+    ⚠ STILL OPTIONAL, AND THAT DOES NOT CHANGE. A blank EIN is valid; a malformed
+    one is not. Scott: *"US only, never blocks."*
+    ⚠ THE COUNTRY IS RESOLVED IN `superRefine` BELOW, not here — a per-field
+    refinement cannot see its siblings, and EIN is a US-only rule.
+  */
   ein: z.string().trim().max(40).nullish(),
   /*
     `E280` — the REGISTERED address, stored as a Site + Address on the backbone.
@@ -51,14 +64,22 @@ const schema = z.object({
     .nullish()
     .superRefine((addr, ctx) => {
       if (!addr) return;
-      const zip = addr.postalCode?.trim();
-      if (!zip) return; // absent is fine — `E274` allows a part-answered company
-      if (addr.country?.trim() !== "United States") return;
-      if (!/^\d{5}(-\d{4})?$/.test(zip)) {
+      /*
+        ⚠⚠ MOVED, NOT COPIED (`P1-J1.4-E299`). The regex and the message used to
+        be written out here, and the same sentence was ALSO a bare literal in
+        `CompanyStep.tsx:523`. Both now come from `lib/field-formats.ts`, so the
+        rule and the words have one home each. `check:field-quality` fails the
+        build if a second copy of either reappears.
+        ⚠ `isUnitedStates` REPLACED `country?.trim() !== "United States"`, which
+        was an exact string compare — `"USA"` slipped past it and got no check
+        at all.
+      */
+      const r = usZip(addr.postalCode, addr.country);
+      if (!r.ok) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["postalCode"],
-          message: "Enter a US ZIP code — 5 digits, or ZIP+4 as 12345-6789.",
+          message: r.message!,
         });
       }
     }),
@@ -66,7 +87,35 @@ const schema = z.object({
   logoUrl: z.string().trim().max(600).nullish(),
   attestation: z.boolean(),
   companyTos: z.boolean(),
-});
+})
+  /*
+    ── ⚠⚠ EIN IS VALIDATED AT THE OBJECT LEVEL, BECAUSE OF THE COUNTRY ─────────
+
+    ⚠ HOW COUNTRY IS RESOLVED, and it takes two fields: the top-level `country`
+    is the JURISDICTION (`E260`, *"derived from the registered address's
+    country"*), and it is `nullish` — `E274` lets a company be part-answered, so
+    it is genuinely absent on some payloads. The registered address carries its
+    own country too. **THE EFFECTIVE COUNTRY IS `country ?? registeredAddress
+    .country`**, jurisdiction first because that is the field that means
+    "which country's rules apply".
+    ⚠ AND WHEN BOTH ARE ABSENT, EIN IS NOT CHECKED — the rule is US-only and an
+    unknown country is not the US. Reported rather than defaulted: assuming US
+    would tell a company with no country yet that its perfectly good foreign tax
+    id is malformed.
+    ⚠ A PER-FIELD `.refine` COULD NOT DO THIS. Zod field refinements cannot see
+    sibling fields, which is why this sits on the object.
+  */
+  .superRefine((val, ctx) => {
+    const country = val.country ?? val.registeredAddress?.country ?? null;
+    const r = einFormat(val.ein, country);
+    if (!r.ok) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["ein"],
+        message: r.message!,
+      });
+    }
+  });
 
 /**
  * POST /api/company/define — create the company and become its admin.
@@ -81,7 +130,28 @@ export async function POST(request: Request) {
 
   const parsed = schema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+    /*
+      ── ⚠⚠ THE MESSAGE REACHES THE CLIENT (`P1-J1.4-E299`) ────────────────────
+
+      ⚠ SUPERSEDED, quoted: this was `{ error: "Invalid input" }`, which THREW
+      AWAY every message the schema had just produced.
+      ⚠⚠ THAT MEANT THE ZIP HALF SHIPPED HALF-BROKEN AND NOBODY SAW IT. `E299`
+      wrote *"Enter a US ZIP code — 5 digits, or ZIP+4 as 12345-6789."* into the
+      route's `superRefine` on 2026-09-02, and a caller posting `295265326` got
+      back the words *"Invalid input"*. The component only looked right because
+      it had its OWN copy of the sentence — the second copy this brief deleted.
+      Found by POSTing to the route directly rather than by reading the code.
+      ⚠ `path` TRAVELS TOO, so a client can attach the message to the field it
+      belongs to instead of guessing.
+    */
+    const issue = parsed.error.issues[0];
+    return NextResponse.json(
+      {
+        error: issue?.message ?? "Invalid input",
+        field: issue?.path?.join(".") || undefined,
+      },
+      { status: 400 }
+    );
   }
   try {
     return NextResponse.json({ ok: true, ...(await defineCompany(gate, parsed.data)) });
