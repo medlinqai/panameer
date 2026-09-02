@@ -182,6 +182,100 @@ check("4 — and drops them over an hour", formatDuration(6036) === "1h 40m");
 check("4 — a zero formats to nothing, not to `0m`", formatDuration(0) === "");
 
 // ---------------------------------------------------------------------------
+// GUARD 6 — the Vimeo token (`P1-J3-E363`)
+// ---------------------------------------------------------------------------
+
+const BACKFILL = join("prisma", "backfill-lesson-duration.ts");
+check(`6 — the backfill exists: ${BACKFILL}`, existsSync(BACKFILL));
+const backfillRaw = existsSync(BACKFILL) ? readFileSync(BACKFILL, "utf8") : "";
+const backfill = strip(backfillRaw);
+
+/*
+  ⚠⚠ IT MUST REFUSE TO RUN PASS B WITHOUT A TOKEN, not silently fill nothing.
+  `E361`'s oEmbed path is KNOWN not to work here — measured on 145 of 173
+  domain-restricted videos — so a fallback would fill almost nothing and read as
+  success.
+*/
+check(
+  "6 — the backfill reads the token from process.env",
+  /process\.env\.VIMEO_ACCESS_TOKEN/.test(backfill)
+);
+check(
+  "6 — ⚠ and THROWS when it is missing rather than falling back",
+  /if\s*\(!token\)\s*\{[\s\S]{0,400}throw new Error/.test(backfill),
+  "no token must stop the pass, not quietly fill nothing"
+);
+/*
+  ⚠ THE ENDPOINT, NOT THE WORD. The first draft of this assertion banned the
+  string "oembed" outright and went red on the backfill's own REFUSAL MESSAGE —
+  *"There is deliberately NO oEmbed fallback"* — which is runtime copy explaining
+  why the fallback is absent, not a fallback. Asserting the URL is absent is
+  stricter about the thing that actually matters.
+*/
+check(
+  "6 — ⚠ the oEmbed ENDPOINT is not called anywhere in the backfill",
+  !/vimeo\.com\/api\/oembed/i.test(backfill),
+  "oEmbed cannot read a domain-restricted video; a fallback would look like success"
+);
+check(
+  "6 — and the only Vimeo host it calls is the authenticated API",
+  !/vimeo\.com/.test(backfill.replace(/api\.vimeo\.com/g, "").replace(/https:\/\/vimeo\.com\/\$\{/g, "")),
+  "every Vimeo call must go through api.vimeo.com with the bearer token"
+);
+check(
+  "6 — it follows paging.next rather than computing page numbers",
+  /paging\?\.next|paging\.next/.test(backfill)
+);
+check(
+  "6 — a 401 is reported and stops, not retried with another auth shape",
+  /401/.test(backfill) && /throw new Error/.test(backfill)
+);
+/*
+  ⚠⚠ MATCHING IS ON THE NUMERIC ID ONLY. `vimeo_ref` holds `1054816305` AND
+  `1059388912/cfafc87f30`; the API's `uri` carries no hash.
+  `learn-admin.ts:819` records a bug where matching the whole ref rejected 243 of
+  304 rows.
+*/
+check(
+  "6 — ⚠ it matches on the numeric id before the slash",
+  /split\("\/"\)\[0\]/.test(backfill),
+  "an unlisted ref is id/hash and the API uri has no hash"
+);
+/*
+  ⚠⚠ AND A ZERO-LENGTH VIDEO IS NOT A DURATION. The library really does contain
+  one, and the first run of Pass B wrote it straight into the column.
+*/
+check(
+  "6 — ⚠ a library duration of 0 is refused",
+  /duration > 0/.test(backfill),
+  "a 0 is a placeholder or a failed upload, not a 0-second lesson"
+);
+
+/*
+  ⚠⚠ THE TOKEN IS NEVER LOGGED OR PRINTED. It reads Scott's whole library, so it
+  may appear ONLY as a `process.env` read — never in a template string, a
+  console call, or a returned value.
+*/
+for (const f of files) {
+  const body = strip(readFileSync(f, "utf8"));
+  if (!/VIMEO_ACCESS_TOKEN/.test(body)) continue;
+  const bad = body
+    .split("\n")
+    .filter((l) => /VIMEO_ACCESS_TOKEN/.test(l))
+    .filter((l) => !/process\.env\.VIMEO_ACCESS_TOKEN/.test(l));
+  check(
+    `6 — ⚠ ${f} mentions the token only as a process.env read`,
+    bad.length === 0,
+    bad.join(" | ").slice(0, 120)
+  );
+  check(
+    `6 — ⚠ ${f} never logs or prints the token`,
+    !/console\.\w+\([^)]*VIMEO_ACCESS_TOKEN/.test(body) && !/`[^`]*\$\{[^}]*VIMEO_ACCESS_TOKEN[^}]*\}[^`]*`\s*\)/.test(body),
+    "it reads the whole library"
+  );
+}
+
+// ---------------------------------------------------------------------------
 // GUARDS 2 + 3 — the DATA, live
 // ---------------------------------------------------------------------------
 
@@ -224,6 +318,28 @@ async function data() {
     drifted.slice(0, 3).map((d) => `"${d.run_time}" != ${d.duration_seconds} (${d.title.slice(0, 40)})`).join("; ")
   );
   check("3 — the backfill actually populated something", xlsRows.length > 100, `only ${xlsRows.length} xls rows`);
+
+  /*
+    ⚠ `P1-J3-E363` — every API-sourced duration is inside the same bounds as an
+    XLS one. The API is a better source, not an exempt one.
+  */
+  const vimAgg = await prisma.lesson.aggregate({
+    where: { duration_source: "vimeo" },
+    _count: { _all: true },
+    _min: { duration_seconds: true },
+    _max: { duration_seconds: true },
+  });
+  check("3 — ⚠ the API pass populated something", (vimAgg._count._all ?? 0) > 50, `only ${vimAgg._count._all} vimeo rows`);
+  check(
+    "3 — ⚠ every vimeo duration is above zero",
+    (vimAgg._min.duration_seconds ?? 1) > 0,
+    `min is ${vimAgg._min.duration_seconds}`
+  );
+  check(
+    "3 — ⚠ and every vimeo duration is within the ceiling",
+    (vimAgg._max.duration_seconds ?? 0) <= DURATION_CEILING_SECONDS,
+    `max is ${vimAgg._max.duration_seconds}`
+  );
 }
 
 data()
