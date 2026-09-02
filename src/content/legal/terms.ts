@@ -342,7 +342,103 @@ export const TERMS_DOC: LegalNode[] = [
   },
   {
     "t": "h2",
-    "text": "5. Definitions"
+    "text": "5. What we check, and what we don’t"
+  },
+  {
+    "t": "p",
+    "text": "Here we set out what we verify about the people and companies on Panameer (5.1), what we don’t (5.2), what happens when an engagement goes wrong (5.3), what we do with what we learn (5.4), and why this section will change (5.5)."
+  },
+  {
+    "t": "h3",
+    "text": "5.1 What we verify"
+  },
+  {
+    "t": "p",
+    "text": "We verify what we assert. We host what we don’t."
+  },
+  {
+    "t": "p",
+    "text": "There are three things we say about a person or a company. Each one is a check we can actually perform, and each one appears on the profile it belongs to."
+  },
+  {
+    "t": "p",
+    "text": "That this person controls this email address. When you sign up we send a single-use link to the address you gave us, and you have to open it. That proves you can read that inbox. It proves nothing else — not your name, not your employer, and not that you are who you say you are. Anyone can create an email address and confirm it. We are telling you this because it is the weakest of the three checks, and you should treat it that way."
+  },
+  {
+    "t": "p",
+    "text": "That this company is a registered entity. We look the company up on the public register for its jurisdiction, and we compare the legal name and tax identification number it gave us against what the register returns. Where we have run this check, the company’s profile says so. Where the profile does not say so, we have not run it — and you should not assume we have."
+  },
+  {
+    "t": "p",
+    "text": "That this person did this work for this client. When a provider claims a project, they can ask the client to confirm it. We send that request to an email address at the client’s own internet domain, and only to such an address. A provider cannot confirm their own work from a personal inbox. A confirmed project on a profile means somebody at the client answered us."
+  },
+  {
+    "t": "h3",
+    "text": "5.2 What we don’t verify"
+  },
+  {
+    "t": "p",
+    "text": "We don’t check whether anyone is good at their job."
+  },
+  {
+    "t": "p",
+    "text": "We do not assess competence, quality of work, or whether a provider is suitable for your particular engagement. We do not run background checks, credit checks or criminal record checks. We do not test skills and we do not interview anyone. Nobody on Panameer is recommended, endorsed, approved or accredited by us."
+  },
+  {
+    "t": "p",
+    "text": "A profile is what its owner wrote, plus whatever we have verified and said so about. Deciding whether to work with someone is your decision. Our job is to put real evidence in front of you so you are deciding on facts rather than on claims."
+  },
+  {
+    "t": "h3",
+    "text": "5.3 When an engagement goes wrong"
+  },
+  {
+    "t": "p",
+    "text": "We can’t promise delivery. We can make failure recoverable."
+  },
+  {
+    "t": "p",
+    "text": "We cannot guarantee that a provider will deliver, that work will meet your expectations, or that a date will be met. What you agree with each other is between you."
+  },
+  {
+    "t": "p",
+    "text": "What we take responsibility for is making a failure survivable rather than total. Work offered on Panameer carries defined deliverables, and where it is priced in stages those payment milestones have to add up to the whole. That is what lets an engagement that goes wrong stop at the stage it went wrong on, instead of at the end."
+  },
+  {
+    "t": "p",
+    "text": "We do not offer insurance, a guarantee, or a refund of what you have paid a provider. Where we handle money at all, the terms that apply are in the User Agreement, not here."
+  },
+  {
+    "t": "h3",
+    "text": "5.4 What we do with what we learn"
+  },
+  {
+    "t": "p",
+    "text": "The more we know about a problem, the more we owe you."
+  },
+  {
+    "t": "p",
+    "text": "If you tell us something went wrong, we look at it. If we find that somebody has broken these terms, we act on it under section 4."
+  },
+  {
+    "t": "p",
+    "text": "Our responsibility scales with what we know. Not knowing about a problem is a position we can defend. Knowing about one and staying quiet is not. We are not going to promise you a specific remedy here that we have not built — but that is the standard we hold ourselves to, and you can hold us to it."
+  },
+  {
+    "t": "h3",
+    "text": "5.5 This section describes today"
+  },
+  {
+    "t": "p",
+    "text": "When the checks change, this changes with them."
+  },
+  {
+    "t": "p",
+    "text": "Verification is something we are still building. This section describes what is in place now, not what we intend to add. When we add a check it will appear on the profiles it applies to, and this section will say so. If a claim is not on the profile in front of you, we have not made it."
+  },
+  {
+    "t": "h2",
+    "text": "6. Definitions"
   },
   {
     "t": "p",

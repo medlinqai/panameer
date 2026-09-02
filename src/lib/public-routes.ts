@@ -154,6 +154,14 @@ export const PUBLIC_ROUTES: PublicRoute[] = [
   { route: "/legal/[slug]", category: 3 },
   { route: "/policies/[slug]", category: 3 },
   { route: "/company-terms", category: 3 },
+  /*
+    ⚠ `/trust` (`P1-ALL-E035`) — the plain-language version of Terms of Use
+    section 5. It is CATEGORY 3 for the same reason the documents are: a claim
+    about what we verify that a prospective buyer cannot read without an account
+    is not a claim, it is a secret. ⚠ THE DEFAULT IS DENY, so without this line
+    the page would 302 to /login and the footer link would be a dead end.
+  */
+  { route: "/trust", category: 3 },
 
   /*
     ── 4. TOKEN-ADDRESSED ─────────────────────────────────────────────────────

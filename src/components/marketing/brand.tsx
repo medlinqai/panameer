@@ -429,6 +429,17 @@ export const FOOTER_ASSESSMENT: FooterEntry = {
  * placements.
  */
 export const FOOTER_LEGAL: FooterEntry[] = [
+  /*
+    ⚠ `What we check` IS NOT A LEGAL DOCUMENT, and it sits here anyway
+    (`P1-ALL-E035`). It is the plain-language version of Terms of Use section 5,
+    and the footer is the one place that already carries the "what are the rules
+    here" links — so this row is where somebody looks for it. It is also the
+    stable home a profile badge can link to later.
+    ⚠ SO THE DOCBLOCK ABOVE IS NOW SLIGHTLY WRONG: this list is no longer only
+    "the four a person actually accepts, plus the hub". Nobody accepts this page.
+    Recorded rather than quietly redefined.
+  */
+  { label: "What we check", href: "/trust" },
   { label: "Terms of Use", href: "/terms" },
   { label: "User Agreement", href: "/user-agreement" },
   { label: "Privacy Policy", href: "/privacy" },
