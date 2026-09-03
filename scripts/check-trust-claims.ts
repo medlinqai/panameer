@@ -32,6 +32,11 @@ import { join } from "node:path";
 import { TERMS_DOC } from "@/content/legal/terms";
 import { PUBLIC_ROUTES } from "@/lib/public-routes";
 import { FOOTER_LEGAL } from "@/components/marketing/brand";
+import {
+  ADAPTERS,
+  SUPPORTED_STATES,
+  US_STATES,
+} from "@/lib/company-validation";
 
 let pass = 0;
 const failures: string[] = [];
@@ -57,6 +62,8 @@ function walk(dir: string, out: string[] = []): string[] {
 const TRUST_PAGE = join("src", "app", "trust", "page.tsx");
 const TERMS_TS = join("src", "content", "legal", "terms.ts");
 const TOS_SRC = join("scripts", "data", "legal", "tos_panameer.md");
+const VALIDATION = join("src", "lib", "company-validation.ts");
+const STEP_PAGE = join("src", "components", "company", "CompanyStep.tsx");
 
 for (const f of [TRUST_PAGE, TERMS_TS, TOS_SRC]) {
   check(`the file this guard is about exists: ${f}`, existsSync(f));
@@ -111,10 +118,43 @@ const NEVER_ANYWHERE = FORBIDDEN.filter((f) =>
   ["background check", "credit check", "criminal record check", "identity screening"].includes(f.name)
 );
 
+/*
+  ── ⚠⚠ THE `E282` RELAXATION (`P1-J3-E365`), AND IT IS DELIBERATELY NARROW ────
+
+  This file's own header named the exit and forbade the shortcut: *"WHEN `E282`
+  LANDS, ASSERTION 1 GETS RELAXED DELIBERATELY, BY A BRIEF, ON THE RECORD. Not by
+  editing this file because it went red."* `P1-J3-E365` is that brief.
+
+  `E282` shipped entity validation against three real state registers, so the
+  premise the outright ban rested on — *"E282 is unbuilt and none of these checks
+  exist"* — is now FALSE for Texas, Colorado and New York. Colorado's register
+  literally returns the string `Good Standing`, and `lib/company-validation.ts`
+  exists to report it with the URL it came from.
+
+  ⚠⚠ THESE FILES ARE **NOT** ADDED TO `DESCRIBING_FILES`, AND THAT MATTERS.
+  That set SWAPS the whole `FORBIDDEN` list for the four never-anywhere phrases,
+  which would let these two files also say *"vetted"*, *"screened"*, *"verified
+  company"* and the rest. THAT IS WIDER THAN THE TRUTH WE HAVE EARNED.
+
+  ⚠ SO THIS SUBTRACTS EXACTLY TWO RULES FROM EXACTLY TWO FILES. Every other
+  phrase stays banned in these files, and both of these phrases stay banned in
+  every other file in the repository.
+*/
+const ENTITY_LOOKUP_PHRASES = ["good standing", "secretary of state"];
+const ENTITY_LOOKUP_FILES = new Set([
+  join("src", "lib", "company-validation.ts"),
+  join("src", "components", "company", "CompanyStep.tsx"),
+]);
+
 const sourceFiles = walk("src").filter((f) => !/content\/legal\/|\.test\.tsx?$/.test(f));
 for (const f of sourceFiles) {
   const body = strip(readFileSync(f, "utf8"));
-  const rules = DESCRIBING_FILES.has(f) ? NEVER_ANYWHERE : FORBIDDEN;
+  const rules = DESCRIBING_FILES.has(f)
+    ? NEVER_ANYWHERE
+    : ENTITY_LOOKUP_FILES.has(f)
+      /* ⚠ SUBTRACTED, NOT SWAPPED — see the block above. */
+      ? FORBIDDEN.filter((r) => !ENTITY_LOOKUP_PHRASES.includes(r.name))
+      : FORBIDDEN;
   for (const rule of rules) {
     check(
       `1 — ${f} does not claim "${rule.name}"`,
@@ -163,6 +203,107 @@ for (const emblem of ["badge", "seal", "shield", "ShieldCheck", "BadgeCheck", "T
     "words only — a trust emblem is a claim Panameer has not earned"
   );
 }
+
+/*
+  ── ⚠⚠ WHAT THE RELAXATION IS PAID FOR WITH (`P1-J3-E365`) ───────────────────
+
+  Two rules came out of two files. These four assertions go in, and they are
+  strictly stronger than the ban they replace: the ban said "nobody may say it",
+  which was true only while nothing could check. These say "it may be said ONLY
+  where it was actually read, and ONLY with the URL it was read from".
+*/
+
+/* ── 1 · A GOOD-STANDING CLAIM CANNOT RENDER WITHOUT ITS SOURCE URL ────────── */
+
+check(
+  "1a — ⚠ every field the lookup returns is a SourcedField, so a claim carries its URL",
+  /export type SourcedField = \{[\s\S]{0,200}sourceUrl: string/.test(readFileSync(VALIDATION, "utf8")),
+  "E282 built SourcedField for exactly this — a value without a URL is unattributable"
+);
+check(
+  "1a — ⚠ the status field is typed as a SourcedField, not a bare string",
+  /status\?: SourcedField/.test(readFileSync(VALIDATION, "utf8")),
+  "a status the caller cannot trace is the thing the ban existed to prevent"
+);
+/*
+  ⚠ AND THE UI CANNOT PRINT THE STATUS WITHOUT THE LINK. Asserted on the source
+  because the two live in the same block: the panel that renders
+  `matches[0].status.value` also renders `legalName.sourceUrl`.
+*/
+const stepSrc = strip(readFileSync(STEP_PAGE, "utf8"));
+check(
+  "1a — ⚠⚠ the panel that shows the register's status also shows its source link",
+  !/status\.value/.test(stepSrc) || /sourceUrl/.test(stepSrc),
+  "a status on screen with no link back is an unsourced claim"
+);
+
+/* ── 2 · IT MAY ONLY APPEAR FOR A STATE WITH AN ADAPTER ───────────────────── */
+
+/*
+  ⚠⚠ THIS IS THE HALF OF THE ORIGINAL BAN THAT MUST SURVIVE. `ADAPTERS` has three
+  keys; there are 51 jurisdictions. For the other 48 the phrase must remain
+  IMPOSSIBLE, which is what the outright ban used to guarantee for all 51.
+*/
+check("2a — there are 51 US jurisdictions offered", US_STATES.length === 51);
+check("2a — and only three have an adapter", SUPPORTED_STATES.length === 3, SUPPORTED_STATES.join(", "));
+/*
+  ⚠ ASSERTED STRUCTURALLY, NOT BY CALLING THE REGISTERS. `validateEntity` returns
+  `unsupported_state` for any state with no adapter and NEVER REACHES A NETWORK —
+  so the absence of the adapter IS the guarantee, and asserting it keeps this
+  harness pure. Calling 48 live registers to prove a negative would also be 48
+  ways for a merge gate to fail on somebody else's downtime.
+*/
+const unsupported = US_STATES.filter((st) => !SUPPORTED_STATES.includes(st));
+check("2a — 48 jurisdictions have no adapter", unsupported.length === 48, `${unsupported.length}`);
+for (const st of unsupported) {
+  check(
+    `2a — ⚠ ${st} has no adapter, so no status can be produced for it`,
+    ADAPTERS[st] === undefined,
+    "an unsupported state returns unsupported_state, never a claim"
+  );
+}
+/* ⚠ AND THE LIB MUST STILL REFUSE RATHER THAN FALL THROUGH. */
+check(
+  "2a — ⚠ a state with no adapter is refused explicitly",
+  /unsupported_state/.test(readFileSync(VALIDATION, "utf8")),
+  "silently returning an empty result would read as 'checked and found nothing'"
+);
+/*
+  ⚠⚠ AND NEW YORK, WHICH HAS AN ADAPTER AND STILL MAY NOT MAKE THE CLAIM.
+  Its dataset is *Active Corporations* and publishes NO status column, so
+  `publishesStatus: false`. Being in the active register is a different statement
+  and `E282` was careful about it — this is the assertion that keeps it careful.
+*/
+check(
+  "2a — ⚠⚠ New York has an adapter but publishes NO status",
+  ADAPTERS["New York"] !== undefined && ADAPTERS["New York"].publishesStatus === false,
+  "being in the Active Corporations register is not a good-standing claim"
+);
+check(
+  "2a — and it has no goodStanding predicate to be asked",
+  ADAPTERS["New York"]?.goodStanding === undefined
+);
+for (const st of ["Texas", "Colorado"]) {
+  check(`2a — ${st} DOES publish a status, so the claim is earned there`, ADAPTERS[st]?.publishesStatus === true);
+  check(`2a — and ${st} has a goodStanding predicate behind it`, typeof ADAPTERS[st]?.goodStanding === "function");
+}
+/*
+  ⚠ THE UI GATES THE SENTENCE ON `publishesStatus`, not on "we got a row back".
+  Without this, New York would silently inherit Colorado's wording.
+*/
+check(
+  "2a — ⚠ the UI only claims a status when the register publishes one",
+  /publishesStatus && lookup\.matches\[0\]\.status/.test(stepSrc),
+  "and says so plainly otherwise"
+);
+/* ⚠ EITHER APOSTROPHE. The sentence lives in a JS string literal, so it is a
+   plain `'` — `&rsquo;` is only needed in JSX text, and the first draft of this
+   assertion looked for the entity and went red on correct copy. */
+check(
+  "2a — and it says so plainly when the register does not",
+  /doesn(&rsquo;|')t publish a status/.test(stepSrc),
+  "New York must say we did not check, not inherit Colorado's wording"
+);
 
 // ---------------------------------------------------------------------------
 // GUARD 2 — terms.ts is generated

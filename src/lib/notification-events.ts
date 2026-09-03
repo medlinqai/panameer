@@ -67,6 +67,60 @@ export const NOTIFICATION_EVENTS = {
     body: () => null,
     href: () => "/dashboard",
   },
+  /*
+    ── ⚠⚠ `profile.details_needed` (`P1-J3-E365`) ─────────────────────────────
+
+    `check:notifications` was RED on main because `event_behavior.md:129`
+    declared this event and the registry had no row for it. That harness was
+    working correctly — the drift was real — and its own message states the rule:
+    *"An event left UNWIRED still needs its registry row."*
+
+    ⚠⚠ THE NAME CHANGED, AND THAT WAS THE DECISION. The spec called it
+    `profile.details_added` with a `Do It` CTA — and you do not tell somebody to
+    "do it" about something they already did. It is a PROMPT TO ADD details, not
+    a confirmation that details WERE added, so the old name described the
+    opposite of its own behaviour. Renamed in `event_behavior.md` too, in the
+    same change, or the two would drift again in the other direction.
+
+    ⚠ WHAT "DETAILS" MEANS IS NOW DECIDED, AND IT REUSES A SET THAT EXISTS: fire
+    when onboarding completes and the profile is below the `SEARCHABLE` bar
+    (`lib/identity-bar.ts`), naming the missing field. Scott, 2026-09-02, on
+    where the link should point: *"I would like that link to be somewhere the
+    expert is going."* The gap that matters is the one keeping a provider out of
+    search — so the href is the profile, not a generic dashboard.
+    ⚠ NO SECOND DEFINITION OF "COMPLETE". `SEARCHABLE` is already explained to
+    the user by `GateNotice`, so the notification and the refusal agree by
+    construction.
+
+    ⚠⚠ IN-APP ONLY, AND THE REASON IS MEASURED, NOT ASSUMED. `RESEND_API_KEY` is
+    commented out at `.env.local:21`, there is no digest sender, and nothing in
+    the codebase fires a digest event. This is the same three-legged audit that
+    corrected the LEARN bar at `P1-ALL-E034`: declaring an email channel here
+    would put a promise in the registry that the build cannot keep — precisely
+    what that correction exists to prevent.
+    ⚠ THE SENDER, THE KEY AND A SCHEDULER ARE NOT BUILT HERE. Email is its own
+    brief for when the pipe exists.
+
+    ⚠ `requiresAction: true` — unlike its siblings. This one IS a to-do: it names
+    a field the member has to go and fill in, so it belongs on the worklist as
+    well as the bell.
+  */
+  "profile.details_needed": {
+    event: "profile.details_needed",
+    recipient: "the new user",
+    category: "profile.visibility",
+    aiMode: "DO_IT",
+    visibility: "FEED",
+    requiresAction: true,
+    title: () => "Your profile is missing something buyers filter on",
+    /* ⚠ THE MISSING FIELD IS NAMED BY THE CALLER, never guessed here — `field`
+       comes from `missingForSearchable()`'s own reason table. */
+    body: (v) =>
+      str(v, "field")
+        ? `${str(v, "field")} — without it you won't come up in search.`
+        : "A few fields are still keeping you out of search results.",
+    href: () => "/settings/profile",
+  },
   "profile.ready": {
     event: "profile.ready",
     recipient: "the new user",
