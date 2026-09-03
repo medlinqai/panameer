@@ -183,7 +183,17 @@ export function groupChips(cards: LearnCard[]): { group: string; paths: number; 
     if (!c.group) continue;
     const row = map.get(c.group) ?? { group: c.group, paths: 0, lessons: 0 };
     row.paths += 1;
-    row.lessons += c.lessons;
+    /*
+      ⚠ PLAYABLE, FOR THE SAME REASON THE HEADLINE TOTAL IS (`P1-J3-E362`).
+      ⚠ SUPERSEDED: `row.lessons += c.lessons`. A chip is a way IN — its number
+      is a promise about what is behind it, and counting lessons a learner cannot
+      watch made a domain look fuller than it is. Found while fixing the headline
+      total, which had the identical bug one file over.
+      ⚠ THE CHIP ORDERING FALLS OUT OF THIS TOO, and correctly: chips are sorted
+      by how much is behind them, so they now rank by watchable weight rather
+      than by catalogued weight.
+    */
+    row.lessons += c.playable;
     map.set(c.group, row);
   }
   return [...map.values()].sort((a, b) => b.lessons - a.lessons || a.group.localeCompare(b.group));

@@ -57,7 +57,26 @@ export function LearnHome({
     );
   }, [cards, tab, group, query]);
 
-  const totalLessons = cards.reduce((n, c) => n + c.lessons, 0);
+  /*
+    ── ⚠⚠ PLAYABLE LESSONS, NOT ALL LESSONS (`P1-J3-E362`) ────────────────────
+
+    ⚠ SUPERSEDED: `cards.reduce((n, c) => n + c.lessons, 0)`.
+
+    ⚠⚠ THE TWO SURFACES DISAGREED IN PRODUCTION. `E362` filtered the PATH list at
+    the data layer, so both pages agreed on 12 paths — but this line kept summing
+    every lesson INSIDE those twelve, so `/learn` said 305 lessons and
+    `/learn/paths` said 446. Same catalogue, two numbers, and the bigger one was
+    the wrong one.
+
+    ⚠ `c.playable` IS ALREADY ON THE CARD — `learn-home.ts` computes it per path
+    off `isPlayable`, and `PathCard` has been rendering it as "· N ready" all
+    along. Nothing new is computed here; this line was just reading the wrong
+    field.
+    ⚠ THE PER-CARD "N lessons · N ready" IS DELIBERATE AND UNCHANGED. A card
+    describes what a path COVERS; a headline total claims what a learner can
+    WATCH. Those are different questions and only the total was lying.
+  */
+  const totalLessons = cards.reduce((n, c) => n + c.playable, 0);
 
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-8">

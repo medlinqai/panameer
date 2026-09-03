@@ -29,7 +29,7 @@ import { join } from "node:path";
 import { prisma } from "@/lib/prisma";
 import { isPlayable, hasPlayableLessons, pathHasPlayableLessons, PLAYABLE_STATUSES } from "@/lib/learn";
 import { pickSuggestion, type SuggestPath } from "@/lib/learn-suggestion";
-import { getLearnHome } from "@/lib/learn-home";
+import { getLearnHome, groupChips } from "@/lib/learn-home";
 import { getMyLearning } from "@/lib/learn-dashboard";
 import { getPathsTaughtBy } from "@/lib/learn-home";
 
@@ -239,6 +239,45 @@ async function live() {
       return Boolean(row && row.playableLessons > 0);
     })());
   }
+
+  /*
+    ── ⚠⚠ THE TWO LEARNER SURFACES MUST AGREE ─────────────────────────────────
+
+    They did not. `E362` filtered the PATH list in the data layer, so both pages
+    said 12 paths — but `LearnHome` kept summing every lesson INSIDE those twelve
+    and `groupChips` did the same, so `/learn` said 305 lessons and `/learn/paths`
+    said 446. One catalogue, two numbers, and the bigger one was wrong.
+    ⚠ ASSERTED HERE so a future edit to either aggregate breaks the build rather
+    than quietly disagreeing on a headline.
+  */
+  const cardsForTotals = await getLearnHome(null);
+  const catalogLessons = cardsForTotals.reduce((n, c) => n + c.playable, 0);
+  if (admin) {
+    const dash2 = await getMyLearning(admin.id);
+    check(
+      "2 — ⚠⚠ the catalog and the dashboard agree on the LESSON total",
+      catalogLessons === dash2.totals.lessons,
+      `catalog ${catalogLessons} vs dashboard ${dash2.totals.lessons}`
+    );
+    check(
+      "2 — and on the PATH total",
+      cardsForTotals.length === dash2.totals.paths,
+      `catalog ${cardsForTotals.length} vs dashboard ${dash2.totals.paths}`
+    );
+  }
+  check(
+    "2 — ⚠ the catalog total counts PLAYABLE lessons, not every lesson",
+    catalogLessons < cardsForTotals.reduce((n, c) => n + c.lessons, 0),
+    "if these are equal, either nothing is unplayable or the filter regressed"
+  );
+  /* ⚠ AND THE CHIPS ARE WEIGHTED THE SAME WAY. A chip is a promise about what is
+     behind it. */
+  const chipTotal = groupChips(cardsForTotals).reduce((n, c) => n + c.lessons, 0);
+  check(
+    "2 — ⚠ the domain chips are playable-weighted too",
+    chipTotal <= catalogLessons,
+    `chips sum ${chipTotal} vs ${catalogLessons} playable`
+  );
 
   /*
     ── ⚠⚠ TEACHER: VISIBLE. THE ASSERTION THAT PROTECTS MARELISE ──────────────

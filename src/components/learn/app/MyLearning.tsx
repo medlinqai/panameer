@@ -139,11 +139,20 @@ export function MyLearning({ data }: { data: MyLearningData }) {
             sub={`/ ${totals.courses}`}
             label="Courses Finished"
           />
+          {/*
+            ⚠ `Certificates Earned`, TITLE CASE AND ALWAYS PLURAL. Its two
+            siblings are `Courses Finished` and `Lessons Completed`; this one read
+            `Certificate earned` / `Certificates earned` — a lowercase verb AND a
+            singularising noun, so it broke the row's casing twice.
+            ⚠ THE LABEL IS THE CATEGORY, NOT A SENTENCE ABOUT THE VALUE. The
+            number sits above it, so "1 · Certificates Earned" reads correctly and
+            matches the tiles either side of it.
+          */}
           <StatTile
             icon={<ShieldCheck className="h-[19px] w-[19px]" aria-hidden />}
             tone="magenta"
             value={`${mine.pathsCertified}`}
-            label={`Certificate${mine.pathsCertified === 1 ? "" : "s"} earned`}
+            label="Certificates Earned"
           />
           <StatTile
             icon={<LayoutGrid className="h-[19px] w-[19px]" aria-hidden />}
