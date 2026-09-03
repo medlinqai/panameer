@@ -84,6 +84,7 @@ export function ProviderProfileViewPage({
   testimonials = [],
   community = null,
   condensedWorkHistory = false,
+  connect = null,
   banner,
   footer,
 }: {
@@ -108,6 +109,23 @@ export function ProviderProfileViewPage({
   testimonials?: Testimonial[];
   /** One tight line per role, for the "You're live" page (WS1/E146). */
   condensedWorkHistory?: boolean;
+  /**
+   * ⚠⚠ THE CONNECT CONTROL (`P1-ALL-E374` WS-3) — THE LAST LINK IN THE LEARN
+   * BRIDGE. The chain lesson -> `InstructorBadge` -> `/providers/{id}` already
+   * existed; only this was missing. Scott: *"I should be able to see the
+   * instructor on my class and request mentor services from him, no?"*
+   *
+   * ⚠ PASSED IN RATHER THAN BUILT HERE, and that is not indirection for its own
+   * sake: this component is rendered by THREE pages — `/providers/[id]`,
+   * `/profile` and `/join/provider`. Only the first is somebody else's profile.
+   * The other two would need a control that refuses itself, so the page that
+   * knows the answer supplies it and the other two pass nothing.
+   *
+   * ⚠ NO BUY BUTTON GOES HERE OR ANYWHERE. Paying for mentoring runs on
+   * WorkRequest -> WorkOrder -> Settlement, which is unbuilt, and a checkout that
+   * goes nowhere is worse than none.
+   */
+  connect?: React.ReactNode;
   /** Replaces the default owner status banner. */
   banner?: React.ReactNode;
   /** Rendered after every section — the "You're live" CTA lives here. */
@@ -244,6 +262,17 @@ export function ProviderProfileViewPage({
           experience={p.experience}
           country={p.country}
         />
+
+        {/* ⚠ NEAR THE TOP, WHERE A VIEWER DECIDES — directly under the identity
+            block rather than below the fold. ⚠ Never on your own profile: the
+            page passes nothing when `isOwner`, and `lib/connections.ts` refuses
+            SELF regardless, so the control is absent rather than disabled.
+            ⚠ THE RATE IS NOT PRINTED AGAIN HERE. It already renders in the
+            identity block above as `Hourly Rate:` — fed by
+            `provider-profile-view.ts:258-266`, which ALREADY falls back to
+            `hourly_rate_cents`, so it obeys the WS-0 rule as it stands. Printing
+            it twice was the thing the brief told me to check for. */}
+        {connect && <div className="mt-4">{connect}</div>}
 
         {/* ---- pg1: Work History, full width ---------------------------- */}
         <div className="mt-5">

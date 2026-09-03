@@ -412,6 +412,278 @@ check(
 );
 
 // ---------------------------------------------------------------------------
+// GUARD 8 — THE SCREEN OVER THE ENGINE (`P1-ALL-E374`).
+//
+// `E372` built the whole relationship engine and nothing rendered it. These
+// assertions guard the three things the rendering could get wrong in ways a
+// human walk would not reliably catch.
+// ---------------------------------------------------------------------------
+
+/* ── 1 · THE WORD `FOLLOW` IS DEAD IN EVERY RENDERED STRING ──────────────────
+   SCOTT: *"maybe we remove the word follow and capacity defines the
+   connection...i want to connect to you as a colleague...i want to connect to
+   her as a mentor."*
+   ⚠ THE INTERNAL IDENTIFIERS STAY — `followMentor`, `unfollowMentor` and the
+   `"FOLLOWING"` relation literal. Renaming them churns this harness for no
+   user-visible gain, and the brief says so explicitly. So the scan looks for
+   the word as USER-FACING TEXT, not as an identifier.
+   ⚠ EXEMPTED NARROWLY, PER LINE, NEVER BY WHOLE FILE — a file-level exemption
+   would let a real rendered `Follow` in later under cover of an identifier. */
+const FOLLOW_WORD = /\b(un)?follow(ing|ers?|s|ed)?\b/i;
+
+/* ⚠⚠ THE SCAN LOOKS AT COPY, NOT AT CODE, and getting that boundary right is
+   the whole assertion. A first version tested whole lines and flagged four
+   things that are not copy at all: `robots: { follow: true }` (Next.js
+   metadata), and the local identifiers `const following = …`,
+   `following.length`, `following.map`. Exempting those by NAME would have been
+   a growing blocklist that eventually lets real copy through.
+   ⚠ SO IT EXTRACTS WHAT A USER CAN ACTUALLY READ — string literals and JSX text
+   nodes — and tests only that. An identifier is never inside either. */
+function userFacingText(src: string): { line: number; text: string }[] {
+  const out: { line: number; text: string }[] = [];
+  /* Offset -> 1-based line, so a match anywhere reports a usable location. */
+  const lineAt = (idx: number) => src.slice(0, idx).split("\n").length;
+
+  /* Quoted strings, all three delimiters. */
+  for (const m of src.matchAll(
+    /"([^"\\\n]*(?:\\.[^"\\\n]*)*)"|'([^'\\\n]*(?:\\.[^'\\\n]*)*)'|`([^`\\]*(?:\\.[^`\\]*)*)`/g
+  )) {
+    const text = (m[1] ?? m[2] ?? m[3] ?? "").trim();
+    if (text) out.push({ line: lineAt(m.index ?? 0), text });
+  }
+
+  /* ⚠⚠ JSX TEXT NODES, ACROSS LINE BREAKS — and that `s`-less multiline match is
+     the point. A first version scanned line by line and therefore MISSED the
+     commonest formatting of all:
+         <Link …>
+           Follow
+         </Link>
+     because the `>` and the `<` are on different lines. It was caught by
+     mutation-testing rather than by reading: injecting a bare `Follow` as JSX
+     text passed a green harness. `[^<>{}]` already matches newlines, so running
+     the scan over the WHOLE SOURCE instead of per line closes it. */
+  for (const m of src.matchAll(/>([^<>{}]+)</g)) {
+    const text = m[1].trim();
+    if (text) out.push({ line: lineAt(m.index ?? 0), text });
+  }
+  return out;
+}
+
+/* ⚠ THE ONE EXEMPTION, AND IT IS A SINGLE EXACT LITERAL, NOT A FILE OR A
+   PATTERN: the `"FOLLOWING"` relation value. It is a wire/DB value the brief
+   explicitly keeps. */
+const FOLLOWING_LITERAL = /^FOLLOWING$/;
+/* ⚠⚠ NEXT.JS ROBOTS METADATA IS A MACHINE DIRECTIVE, NOT COPY — BUT THIS
+   EXEMPTION HAD TO BE NARROWED, AND THE FIRST VERSION WAS A REAL DEFECT.
+   It read `^(index|noindex|follow|nofollow)(,\s*…)*$`, which matches the bare
+   string `"Follow"` — THE EXACT LABEL THIS GUARD EXISTS TO BAN. A rendered
+   `Follow` sailed through a green harness; mutation-testing caught it, reading
+   did not.
+   ⚠ SO A DIRECTIVE NOW HAS TO LOOK LIKE ONE: two or more comma-separated
+   tokens. `"index, follow"` is exempt; `"Follow"` can never be. Property-key
+   forms like `robots: { follow: true }` need no exemption at all — they are not
+   string literals and the scan never sees them. */
+const ROBOTS_DIRECTIVE =
+  /^(index|noindex|follow|nofollow)(\s*,\s*(index|noindex|follow|nofollow))+$/i;
+
+/* ⚠⚠ THE TEST IS "IS THIS THE SOCIAL-GRAPH LABEL", NOT "DOES THIS CONTAIN THE
+   ENGLISH WORD FOLLOW", and the difference is the whole assertion. The brief
+   bans the word *"as a user-facing label"* — it does not ban ordinary English.
+   A version that banned the word outright flagged five innocent sentences:
+     · *"our reader may have missed a layout it couldn't follow"* (OwnerAiPass)
+     · *"Reports follow this page's Volume-Over-Time metrics"* (TaskPanel)
+     · *"This narrows everything that follows."* (CreateWorkRequest)
+   ⚠ REWRITING THOSE WOULD BE INVENTING COPY to satisfy a harness — the exact
+   inversion of what the assertion is for. So the rule is: a LABEL is a SHORT
+   string that STARTS with the word and is not a sentence. `Follow`,
+   `Following`, `Unfollow`, `Follow back` and `Followers` all fail; a sentence
+   that merely uses the verb does not. */
+const FOLLOW_LABEL = /^(un)?follow(ing|ers?|s)?\b/i;
+function isFollowLabel(text: string): boolean {
+  const t = text.trim();
+  if (!FOLLOW_LABEL.test(t)) return false;
+  /* A label is short and is not a sentence. Both conditions, so a sentence that
+     happens to open with "Following the assessment, …" is not a false hit. */
+  return t.length <= 24 && !/[.!?,;:]$/.test(t) && !/\s(the|a|an|this|that|these|your)\s/i.test(t);
+}
+
+const UI_DIRS = [join("src", "app"), join("src", "components")];
+const uiFiles = [...bodies.entries()].filter(([f]) => UI_DIRS.some((d) => f.startsWith(d)));
+const followLeaks: string[] = [];
+for (const [file, body] of uiFiles) {
+  for (const { line, text } of userFacingText(body)) {
+    if (!FOLLOW_WORD.test(text)) continue;
+    if (FOLLOWING_LITERAL.test(text)) continue;
+    if (ROBOTS_DIRECTIVE.test(text)) continue;
+    if (!isFollowLabel(text)) continue;
+    followLeaks.push(`${file}:${line} ${text.slice(0, 80)}`);
+  }
+}
+check(
+  "E374/1 — no rendered string in src/app or src/components says Follow",
+  followLeaks.length === 0,
+  followLeaks.slice(0, 8).join(" || ")
+);
+check(
+  "E374/1 — the scan is real (it looked at a meaningful number of files)",
+  uiFiles.length > 100,
+  `${uiFiles.length} files scanned`
+);
+/* ⚠ AND THE INTERNAL NAMES ARE STILL THERE. If a later change renames them, the
+   scan above would pass VACUOUSLY — this is what stops that. */
+check(
+  "E374/1 — followMentor / unfollowMentor kept their names in the lib",
+  /\bexport async function followMentor\b/.test(connections) &&
+    /\bexport async function unfollowMentor\b/.test(connections)
+);
+check(
+  "E374/1 — the FOLLOWING relation literal is unchanged",
+  /"FOLLOWING"/.test(connections)
+);
+/* ⚠ THE REPLACEMENT VERB ACTUALLY SHIPS. Deleting the word without shipping
+   `Connect as mentor` would also pass the scan. */
+const controls = bodies.get(join("src", "components", "community", "ConnectControls.tsx")) ?? "";
+check("E374/1 — ConnectControls is on disk", controls.length > 0);
+check(
+  "E374/1 — one verb, two capacities: both labels ship",
+  /Connect as colleague/.test(controls) && /Connect as mentor/.test(controls)
+);
+check(
+  "E374/1 — Decline is a real button, not a hidden menu item",
+  />\s*Decline\s*</.test(controls)
+);
+/* ⚠ SINGLE-CLICK IS THE SPECIFICATION — no modal, no confirm, not even on
+   Decline. A `confirm(` or a dialog in this component is a brief violation. */
+check(
+  "E374/1 — no confirmation step anywhere in the connect controls",
+  !/\bwindow\.confirm\(|\bconfirm\(|role="dialog"|<Modal\b/.test(controls)
+);
+
+/* ── 2 · THE PLATFORM RATE ANCHOR HAS NO LIVE CALLER ────────────────────────
+   A platform-fixed price goes stale, cannot answer demand, and tells a
+   genuinely senior person their hour is worth what everyone else's is. */
+const mentorsLib = bodies.get(join("src", "lib", "mentors.ts")) ?? "";
+check("E374/2 — lib/mentors.ts is on disk", mentorsLib.length > 0);
+check(
+  "E374/2 — MICRO_SESSION_PRICE is commented out, not deleted",
+  !/^\s*export const MICRO_SESSION_PRICE/m.test(mentorsLib) &&
+    /MICRO_SESSION_PRICE/.test(readFileSync(join("src", "lib", "mentors.ts"), "utf8")),
+  "the constant must survive on disk inside a comment"
+);
+check(
+  "E374/2 — MICRO_SESSION_MINUTES is commented out, not deleted",
+  !/^\s*export const MICRO_SESSION_MINUTES/m.test(mentorsLib) &&
+    /MICRO_SESSION_MINUTES/.test(readFileSync(join("src", "lib", "mentors.ts"), "utf8"))
+);
+const anchorCallers = [...bodies.entries()]
+  .filter(([f]) => f !== join("src", "lib", "mentors.ts"))
+  .filter(([, b]) => /MICRO_SESSION_(PRICE|MINUTES)/.test(b))
+  .map(([f]) => f);
+check(
+  "E374/2 — the platform anchor has no live caller anywhere",
+  anchorCallers.length === 0,
+  anchorCallers.join(", ")
+);
+/* ⚠ PHASE 4 IS CANCELLED and the header must not still promise it. */
+check(
+  "E374/2 — mentors.ts no longer promises a PHASE 4 MentorProfile storefront",
+  !/PHASE 4 adds that model, the storefront and the booking/.test(
+    mentorsLib.replace(/\*"[\s\S]*?"\*/g, " ")
+  ) || /PHASE 4 IS CANCELLED/.test(readFileSync(join("src", "lib", "mentors.ts"), "utf8")),
+  "the old plan may be QUOTED, but the cancellation has to be stated"
+);
+/* ⚠ NO MENTOR OPT-IN WAS BUILT. Scott: everyone CAN be; demand confers it. */
+check(
+  "E374/2 — no MentorProfile model was added to the schema",
+  !/model\s+MentorProfile\b/.test(schemaNoComments)
+);
+check(
+  "E374/2 — no mentor opt-in flag was added to ProviderProfile",
+  !/\b(is_mentor|mentor_opt_in|accepts_mentoring|mentor_rate_cents)\b/.test(schemaNoComments)
+);
+
+/* ── 3 · A RENDERED RATE IS THE PROVIDER'S OWN, AND NEVER A ZERO ────────────
+   The rule lives in `lib/rate-display.ts` so it can be asserted at all. */
+const rateLib = bodies.get(join("src", "lib", "rate-display.ts")) ?? "";
+check("E374/3 — lib/rate-display.ts is on disk", rateLib.length > 0);
+check(
+  "E374/3 — the rule reads the provider's own three fields",
+  /rateMinCents/.test(rateLib) && /rateMaxCents/.test(rateLib) && /hourlyRateCents/.test(rateLib)
+);
+check(
+  "E374/3 — the range wins only when BOTH bounds are present",
+  /r\.rateMinCents != null && r\.rateMaxCents != null/.test(rateLib),
+  "one half of a range is not a range"
+);
+check(
+  "E374/3 — absence returns null so the caller can say so honestly",
+  /return null;/.test(rateLib) && /NO_RATE_PUBLISHED/.test(rateLib)
+);
+/* ⚠ `!= null`, NOT TRUTHINESS. `||` would treat a real 0 as absent and fall
+   through to the wrong branch — the exact bug this rule exists to prevent. */
+check(
+  "E374/3 — the rule tests for null, never truthiness",
+  !/if \(r\.(rateMinCents|rateMaxCents|hourlyRateCents)\)\s/.test(rateLib)
+);
+/* ⚠ NOBODY PRINTS A ZERO OR A PLACEHOLDER PRICE ON A COMMUNITY SURFACE. */
+const RATE_SURFACES = [
+  join("src", "components", "community", "MemberRow.tsx"),
+  join("src", "components", "community", "CommunityBlocks.tsx"),
+  join("src", "app", "(app)", "community", "mentors", "page.tsx"),
+];
+for (const f of RATE_SURFACES) {
+  const b = bodies.get(f) ?? "";
+  check(`E374/3 — ${f} is on disk`, b.length > 0);
+  check(
+    `E374/3 — ${f} prints no hardcoded price`,
+    !/\$\d/.test(b),
+    "a literal dollar figure in a component is a platform anchor by another name"
+  );
+  check(
+    `E374/3 — ${f} does not format money itself`,
+    !/formatCents\(/.test(b),
+    "money formatting belongs behind rateDisplay, so the null case cannot be skipped"
+  );
+}
+/* ⚠ THE MENTOR-COUNT READ IS THE MECHANISM AND IT LIVES IN THE LIB. */
+check(
+  "E374/3 — the who-connected-to-me read is in lib/connections.ts",
+  /mentorConnectionCount/.test(connections) &&
+    /kind === "MENTOR" && r\.to_user_id === me/.test(connections)
+);
+const blocks = bodies.get(join("src", "components", "community", "CommunityBlocks.tsx")) ?? "";
+check(
+  "E374/3 — the mentor-count block is hidden at zero",
+  /mine\.mentorConnectionCount > 0/.test(blocks),
+  "0 members connected to you tells a new member they are unwanted"
+);
+check(
+  "E374/3 — declinedCount is rendered nowhere",
+  !/declinedCount/.test(blocks) && !/declinedCount/.test(bodies.get(join("src", "app", "(app)", "community", "page.tsx")) ?? "")
+);
+/* ⚠ NO INVITE STUB. A dead invite makes a member think they vouched for
+   somebody who never heard. */
+const connectionsRoute =
+  bodies.get(join("src", "app", "api", "community", "connections", "route.ts")) ?? "";
+check("E374/3 — the connections route is on disk", connectionsRoute.length > 0);
+check(
+  "E374/3 — no invite action was stubbed",
+  !/\binvite\b/i.test(connectionsRoute) && !/\bInvite\b/.test(blocks)
+);
+/* ⚠ NO BUY BUTTON ANYWHERE ON THE MENTORING SURFACES. */
+const mentorsPage = bodies.get(join("src", "app", "(app)", "community", "mentors", "page.tsx")) ?? "";
+check(
+  "E374/3 — no buy or booking control on the mentoring page",
+  !/\b(Book|Buy|Checkout|Pay now|Purchase)\b/.test(mentorsPage),
+  "paying runs on WorkRequest -> WorkOrder -> Settlement, which is unbuilt"
+);
+check(
+  "E374/3 — nobody on the ask-for-mentoring page is labelled a mentor",
+  !/>\s*Mentors?\s*</.test(mentorsPage),
+  "nobody is a mentor until asked; the page offers people you can ASK"
+);
+
+// ---------------------------------------------------------------------------
 
 if (failures.length > 0) {
   console.error(`check:community — ${failures.length} FAILED, ${pass} passed\n`);

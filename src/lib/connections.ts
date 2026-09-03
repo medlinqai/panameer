@@ -362,5 +362,36 @@ export async function getMyCommunity(viewer: Viewer) {
       be cruelty with no purpose. The count exists so the number is auditable.
     */
     declinedCount: rows.filter((r) => r.kind === "COLLEAGUE" && r.status === "DECLINED").length,
+
+    /*
+      ⚠⚠ HOW MANY MEMBERS CONNECTED TO **ME** AS A MENTOR (`P1-ALL-E374`).
+
+      ⚠ THIS IS THE MECHANISM, NOT A VANITY COUNTER, AND IT IS THE REASON THIS
+      READ EXISTS AT ALL. Everything else in this function answers "who did I
+      reach out to". `following` is MENTOR rows where `from_user_id` is me —
+      people I asked. This is the mirror: MENTOR rows where `to_user_id` is me.
+
+      SCOTT, 2026-09-03: *"everyone CAN be. the determining factor is if anyone
+      wants you to be...and therefore makes a request from you."*
+
+      ⚠⚠ SO THIS NUMBER IS THE ONLY PLACE IN THE ENTIRE PRODUCT WHERE A MEMBER
+      FINDS OUT THEY ARE A MENTOR. There is no opt-in, no MentorProfile, no
+      application and no approval — being asked IS the qualification, so the
+      count IS the status. Nothing else tells them.
+
+      ⚠ THERE IS DELIBERATELY NOTHING TO ACT ON. No accept, no decline, no
+      inbox. A MENTOR row is written ACCEPTED by `followMentor`, and
+      `check:community` asserts a MENTOR row is never PENDING — so there is no
+      pending state that could need a button. Adding one would invent an
+      approval step Scott explicitly refused.
+
+      ⚠ THE CALLER HIDES THE BLOCK AT ZERO. *"0 members connected to you as a
+      mentor"* tells a new member they are unwanted, which is useless and untrue
+      this early. The lib still returns the honest 0 — hiding is a rendering
+      decision, and the number stays auditable either way.
+    */
+    mentorConnectionCount: rows.filter(
+      (r) => r.kind === "MENTOR" && r.to_user_id === me
+    ).length,
   };
 }

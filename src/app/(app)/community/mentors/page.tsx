@@ -1,8 +1,19 @@
 import Link from "next/link";
 import { guardPage } from "@/lib/guard";
-import { listMentors, MICRO_SESSION_MINUTES, MICRO_SESSION_PRICE } from "@/lib/mentors";
+import { listMentors } from "@/lib/mentors";
+/* ⚠ `P1-ALL-E374` — the platform anchor is parked in `lib/mentors.ts`. The rate
+   shown here is the provider's own, through the one decided rule. */
+import { rateDisplay, NO_RATE_PUBLISHED } from "@/lib/rate-display";
+import { getSessionViewer } from "@/lib/session";
+import { getMyCommunity } from "@/lib/connections";
+import { ConnectControls } from "@/components/community/ConnectControls";
 import { Avatar } from "@/components/Avatar";
-import { formatCents } from "@/lib/display";
+/* ⚠ `formatCents` IS NO LONGER IMPORTED HERE (`P1-ALL-E374`). This page used to
+   format money itself — a half-range printed as "Their project rate". That is
+   now `rateDisplay`'s job, and `check:community` asserts this file does NOT
+   call `formatCents`, so the null case cannot be skipped by formatting a value
+   straight out of the row. */
+// import { formatCents } from "@/lib/display";
 import { PageTabs } from "@/components/casing/PageTabs";
 import { PAGE_TABS } from "@/lib/nav";
 
@@ -37,34 +48,59 @@ export default async function MentorsPage({
   const { skill } = await searchParams;
   const mentors = await listMentors({ skill: skill?.trim() || undefined });
 
+  /* ⚠ WHO I HAVE ALREADY CONNECTED TO AS A MENTOR, so a card that is already
+     connected reads `Disconnect` rather than offering the same action twice.
+     ⚠ THIS IS A JOIN BETWEEN TWO LIB READS, NOT A RULE — `getMyCommunity`
+     computed `following` and the lib refuses SELF on the way in regardless. */
+  const viewer = await getSessionViewer();
+  const mine = viewer ? await getMyCommunity(viewer) : null;
+  const mentorUserIds = new Set(
+    (mine?.following ?? []).filter((f) => f.person).map((f) => f.person!.userId)
+  );
+  const viewerUserId = viewer?.userId ?? null;
+
   return (
     <>
       {/* E216 — the Community rail flyout's children are this section's tab row now. */}
       <PageTabs tabs={PAGE_TABS["/community"]} current="/community/mentors" />
       <div className="mx-auto max-w-5xl space-y-5">
       <header>
+        {/* ⚠⚠ NOBODY ON THIS PAGE IS CALLED A MENTOR, AND THAT IS THE POINT
+            (`P1-ALL-E374`). Under Scott's rule a member becomes a mentor when
+            somebody ASKS them to be one — *"the determining factor is if anyone
+            wants you to be...and therefore makes a request from you."* So a page
+            that presents people AS mentors advertises a consent nobody gave,
+            which is the exact failure `lib/mentors.ts`'s own header was written
+            to avoid. THIS PAGE OFFERS PEOPLE YOU CAN ASK.
+            ⚠ THE HEADING KEPT THE WORD `Mentor` ONLY AS THE THING YOU ASK FOR —
+            "Ask for mentoring", not "here are mentors". Reported verbatim in the
+            `E374` report so Scott can overrule the wording. */}
         <h1 className="font-display text-[26px] font-bold tracking-[-0.5px]">
-          Find a Mentor
+          Ask for Mentoring
         </h1>
         <p className="mt-1.5 max-w-2xl text-[15px] leading-relaxed text-ink-2">
-          Senior practitioners who have done the work. A focused{" "}
-          {MICRO_SESSION_MINUTES} minutes with the right person beats a week of
-          searching — and it books here, so it&apos;s covered by Panameer.
+          Every member can be asked. These are practitioners on Panameer whose
+          profiles show the work — connect as a mentor and their published rate
+          is what applies.
         </p>
       </header>
 
-      {/*
-        THE HONEST FRAME, at the top rather than buried on a card. These people
-        have not agreed to mentor anybody yet; saying so once, clearly, is what
-        makes the rest of the page truthful.
-      */}
+      {/* ⚠⚠ THE HONEST FRAME, REWRITTEN FOR THE NEW MODEL (`P1-ALL-E374`).
+          ⚠ SUPERSEDED, QUOTED NOT DELETED — it used to read: *"Mentoring opens
+          in a later release... None has set a price or opted in yet, so nothing
+          here is bookable, and the buttons say so."* Every clause of that is now
+          wrong: there is no opt-in to wait for, the rate is already set, and
+          connecting works today. What has NOT changed is that PAYING is not
+          built — that runs on WorkRequest -> WorkOrder -> Settlement and there is
+          NO BUY BUTTON anywhere, because a checkout that goes nowhere is worse
+          than none. */}
       <section className="rounded-brand border border-dashed border-magenta/30 bg-magenta/[0.03] p-4">
         <p className="text-[14px] leading-relaxed text-ink-2">
-          <b className="text-ink">Mentoring opens in a later release.</b> These
-          are practitioners on Panameer whose profiles are complete enough to be
-          found — the people who would be first to offer sessions. None has set a
-          price or opted in yet, so nothing here is bookable, and the buttons say
-          so.
+          <b className="text-ink">Connecting is free and immediate.</b> Nobody
+          here has to accept, opt in or be approved — asking is what makes
+          somebody a mentor. Their rate is the one they published. Paying for
+          time through Panameer arrives with the rest of the commerce path; until
+          then you arrange it between yourselves.
         </p>
       </section>
 
@@ -125,30 +161,24 @@ export default async function MentorsPage({
               )}
 
               <dl className="mt-4 flex-1 space-y-1.5 text-[13px]">
+                {/* ⚠⚠ THEIR OWN RATE, THROUGH THE ONE DECIDED RULE — never a
+                    platform constant, and NEVER a `$0` or a placeholder when
+                    absent. ⚠ SUPERSEDED: this row used to print
+                    `MICRO_SESSION_PRICE / MICRO_SESSION_MINUTES min`, a fixed
+                    platform anchor no provider had agreed to. A second row
+                    printed a half-range as "Their project rate" — that is now
+                    the ONLY rate, and it reads `hourly_rate_cents` too, which
+                    carries 19 of 25 live providers. */}
                 <div className="flex items-baseline justify-between gap-3">
-                  <dt className="text-ink-2">Micro-session</dt>
-                  <dd className="font-bold">
-                    {MICRO_SESSION_PRICE}{" "}
-                    <span className="font-normal text-ink-2">
-                      / {MICRO_SESSION_MINUTES} min
-                    </span>
+                  <dt className="text-ink-2">Their rate</dt>
+                  <dd className="font-semibold">
+                    {rateDisplay({
+                      hourlyRateCents: m.hourlyRateCents,
+                      rateMinCents: m.rateMinCents,
+                      rateMaxCents: m.rateMaxCents,
+                      currency: m.currency,
+                    }) ?? <span className="font-normal text-ink-2">{NO_RATE_PUBLISHED}</span>}
                   </dd>
-                </div>
-                {(m.rateMinCents ?? m.rateMaxCents) != null && (
-                  <div className="flex items-baseline justify-between gap-3">
-                    <dt className="text-ink-2">Their project rate</dt>
-                    <dd className="font-semibold">
-                      {formatCents(m.rateMinCents ?? m.rateMaxCents, m.currency)}
-                      {m.rateMaxCents != null && m.rateMinCents != null
-                        ? `–${formatCents(m.rateMaxCents, m.currency)}`
-                        : ""}
-                      <span className="font-normal text-ink-2"> / hr</span>
-                    </dd>
-                  </div>
-                )}
-                <div className="flex items-baseline justify-between gap-3">
-                  <dt className="text-ink-2">Group session</dt>
-                  <dd className="text-ink-2">Fridays — not scheduled yet</dd>
                 </div>
                 {m.teaches > 0 && (
                   <div className="flex items-baseline justify-between gap-3">
@@ -159,19 +189,24 @@ export default async function MentorsPage({
               </dl>
 
               <div className="mt-4 flex flex-wrap gap-2">
-                {/*
-                  BOOK IS DISABLED, not a link to nowhere. Booking is PHASE 4;
-                  a live-looking button that opened a placeholder would waste a
-                  click and teach that buttons here don't work.
-                */}
-                <button
-                  type="button"
-                  disabled
-                  title="Booking opens when mentor sessions launch"
-                  className="rounded-full bg-magenta px-4 py-2 text-[13.5px] font-bold text-white opacity-40"
-                >
-                  Book {MICRO_SESSION_MINUTES} min
-                </button>
+                {/* ⚠⚠ THERE IS NO BUY BUTTON, AND THE DISABLED ONE IS GONE TOO.
+                    ⚠ SUPERSEDED, QUOTED NOT DELETED: *"BOOK IS DISABLED, not a
+                    link to nowhere. Booking is PHASE 4; a live-looking button
+                    that opened a placeholder would waste a click and teach that
+                    buttons here don't work."* PHASE 4 IS CANCELLED, so a button
+                    waiting for it is waiting for nothing. Paying runs on
+                    WorkRequest -> WorkOrder -> Settlement when that lands; it does
+                    not get its own path and it does not get a stub.
+                    ⚠ WHAT REPLACES IT WORKS TODAY: connecting is free, instant,
+                    and needs nobody's permission. */}
+                {m.userId && (
+                  <ConnectControls
+                    toUserId={m.userId}
+                    relation={null}
+                    isMentor={mentorUserIds.has(m.userId)}
+                    isSelf={m.userId === viewerUserId}
+                  />
+                )}
                 <Link
                   href={`/providers/${m.profileId}`}
                   className="rounded-full border-[1.5px] border-line px-4 py-2 text-[13.5px] font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
