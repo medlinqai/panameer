@@ -170,7 +170,9 @@ export const REQUESTER_NAV: NavItem[] = [
     icon: "CreditCard",
     requires: "canHireTalent",
   },
-  { label: "Community", href: "/community", icon: "MessagesSquare" },
+  /* ⚠ `My Community` (`P1-ALL-E372` WS-5). Scott: *"'Community' sounds like a
+     place you visit; 'My Community' sounds like something you have."* */
+  { label: "My Community", href: "/community", icon: "MessagesSquare" },
 ];
 
 /**
@@ -233,7 +235,7 @@ export const PAGE_TABS: Record<string, NavItem[]> = {
     { label: "Payment Requests", href: "/finances/payment-requests" },
   ],
   "/community": [
-    { label: "Community", href: "/community" },
+    { label: "My Community", href: "/community" },
     { label: "Messages", href: "/messages" },
     { label: "Forums", href: "/community/forums" },
     { label: "My Teams", href: "/community/teams" },
@@ -376,7 +378,7 @@ export const PROVIDER_NAV: NavItem[] = [
   },
   { label: "Work Orders", href: "/contracts", icon: "ClipboardCheck" },
   { label: "Payments", href: "/finances", icon: "Wallet" },
-  { label: "Community", href: "/community", icon: "MessagesSquare" },
+  { label: "My Community", href: "/community", icon: "MessagesSquare" },
 ];
 
 
