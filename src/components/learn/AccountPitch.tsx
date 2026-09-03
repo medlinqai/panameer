@@ -41,9 +41,13 @@ export function AccountPitch({
         Create a free account to earn certifications as you learn.
       </p>
       <p className="mt-1.5 max-w-xl text-[14px] leading-relaxed text-ink-2">
+        {/* ⚠ CREDITS COPY PARKED 2026-09-03 (`P1-ALL-E375`) — the feature is commented
+            out, so a live surface must not keep promising it. See `src/lib/credits.ts`.
+            ⚠ ONE COMPLETE TRAILING SENTENCE WAS REMOVED, NOT REWRITTEN: *"It's
+            also where Community Credits will accrue."* The two sentences that
+            remain stand on their own and no new copy was written. */}
         Your progress and certificates save to your profile, each with a public
-        verify link you can share. It&apos;s also where Community Credits will
-        accrue.
+        verify link you can share.
       </p>
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <Link

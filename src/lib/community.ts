@@ -39,7 +39,11 @@ const BLURBS: Record<string, { blurb: string; state: CommunitySection["state"] }
   },
   "/community/forums": {
     blurb:
-      "Ask questions, answer them, and be seen doing it. Posting earns Community Credits.",
+      /* ⚠ CREDITS CLAUSE PARKED 2026-09-03 (`P1-ALL-E375`). ONE COMPLETE
+         SENTENCE REMOVED, NOT REWRITTEN — the blurb read *"Ask questions, answer
+         them, and be seen doing it. Posting earns Community Credits."* What is
+         left is the original first sentence, untouched. NO NEW COPY WAS WRITTEN. */
+      "Ask questions, answer them, and be seen doing it.",
     state: "live",
   },
   "/community/teams": {
@@ -85,33 +89,49 @@ export function communitySections(): CommunitySection[] {
  * a second source that drifts the moment Scott tunes the first. Each line says
  * WHAT earns, not how much.
  */
-export const CREDIT_EARN_ACTIONS: { action: string; detail: string }[] = [
-  {
-    action: "Finish your profile",
-    detail: "A complete profile earns a one-off grant — and gets you found.",
-  },
-  {
-    action: "Complete a course",
-    detail: "Every Learn course you finish pays out once.",
-  },
-  {
-    action: "Answer in the forums",
-    detail: "Posting and replying earns a little back each time.",
-  },
-  {
-    action: "Respond to work requests",
-    detail: "Replying to a buyer's request earns, whether or not you win it.",
-  },
-  {
-    action: "Bring someone in",
-    detail: "When a person you invited signs up, you both benefit.",
-  },
-];
+/* ⚠⚠ THE CREDITS EARN/SPEND TABLES — PARKED 2026-09-03 (`P1-ALL-E375`, brief
+   amendment A2). ⚠ COMMENTED OUT, NOT DELETED.
 
-export const CREDIT_SPEND_ACTIONS: { action: string; detail: string }[] = [
-  {
-    action: "A seat at a Friday group session",
-    detail:
-      "Thirty minutes with a senior practitioner, one-to-many. Seats are earned, not sold.",
-  },
-];
+   SCOTT, 2026-09-03: *"just comment it out. we can come back to it if we want,
+   but it is just too much rn. we NEED to move faster. that has no real value."*
+
+   ⚠ PARKED DELIBERATELY, NOT ABANDONED — no ledger, no scheduling, and a
+   standing Friday commitment nobody wants. The decision and every parked call
+   site are listed in `src/lib/credits.ts`. Their only consumer was the Credits
+   card on `/community`, which is parked in the same commit.
+
+   ⚠ THE DOCBLOCK ABOVE STAYS LIVE AND STILL EARNS ITS PLACE: it records why the
+   VALUES ARE DELIBERATELY ABSENT — *"printing '100 Credits' here would create a
+   second source that drifts the moment Scott tunes the first"*. That is the rule
+   to re-read before anyone rebuilds this, so it is not buried in the comment. */
+// export const CREDIT_EARN_ACTIONS: { action: string; detail: string }[] = [
+//   {
+//     action: "Finish your profile",
+//     detail: "A complete profile earns a one-off grant — and gets you found.",
+//   },
+//   {
+//     action: "Complete a course",
+//     detail: "Every Learn course you finish pays out once.",
+//   },
+//   {
+//     action: "Answer in the forums",
+//     detail: "Posting and replying earns a little back each time.",
+//   },
+//   {
+//     action: "Respond to work requests",
+//     detail: "Replying to a buyer's request earns, whether or not you win it.",
+//   },
+//   {
+//     action: "Bring someone in",
+//     detail: "When a person you invited signs up, you both benefit.",
+//   },
+// ];
+//
+// export const CREDIT_SPEND_ACTIONS: { action: string; detail: string }[] = [
+//   {
+//     action: "A seat at a Friday group session",
+//     detail:
+//       "Thirty minutes with a senior practitioner, one-to-many. Seats are earned, not sold.",
+//   },
+// ];
+//

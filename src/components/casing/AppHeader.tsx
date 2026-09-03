@@ -3,13 +3,26 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { useEffect, useState, useSyncExternalStore } from "react";
+/* ⚠ `useEffect` AND `useState` WENT WITH THE CREDITS SEAM (`P1-ALL-E375`). The
+   parked `getCreditsSummary` effect was their ONLY consumer in this component,
+   so leaving them imported is an unused-var warning — and the lint baseline is
+   43 with 0 new allowed. ⚠ `useSyncExternalStore` IS NOT CREDITS WORK and stays.
+   ⚠ THE `"use client"` DIRECTIVE STAYS TOO: `usePathname`, `useSession`,
+   `useMe` and `useSyncExternalStore` all still need it. */
+import { useSyncExternalStore } from "react";
 import { useMe } from "@/components/MeProvider";
 import { AccountMenu } from "@/components/casing/AccountMenu";
 import { HOME_NAV, NOTIFICATIONS_NAV, SEARCH_NAV } from "@/lib/nav";
 import { greetingFor } from "@/lib/greeting";
-import { getCreditsSummary, type CreditsSummary } from "@/lib/credits";
-import { CreditsPill } from "@/components/casing/CreditsPill";
+/* ⚠⚠ COMMUNITY CREDITS PARKED 2026-09-03 (`P1-ALL-E375`, amendment A2). Scott:
+   *"just comment it out... it is just too much rn. we NEED to move faster. that
+   has no real value."* Parked DELIBERATELY, NOT ABANDONED — no ledger, no
+   scheduling, and a standing Friday commitment nobody wants. Decision and the
+   full call-site list: `src/lib/credits.ts`. ⚠ THE IMPORTS HAD TO GO IN THE SAME
+   PASS: `lib/credits.ts` is commented out, so leaving these would break the
+   build — that is why this is one commit and not several. */
+// import { getCreditsSummary, type CreditsSummary } from "@/lib/credits";
+// import { CreditsPill } from "@/components/casing/CreditsPill";
 
 /**
  * The header — greeting, Search, and the universal controls.
@@ -97,14 +110,20 @@ export function AppHeader() {
     passed from a server layout because the header is already a client component
     and the shell has no other reason to become async.
   */
-  const [credits, setCredits] = useState<CreditsSummary | null>(null);
-  useEffect(() => {
-    let alive = true;
-    getCreditsSummary(me?.person?.id ?? null).then((c) => alive && setCredits(c));
-    return () => {
-      alive = false;
-    };
-  }, [me?.person?.id]);
+/* ⚠⚠ COMMUNITY CREDITS PARKED 2026-09-03 (`P1-ALL-E375`, amendment A2). Scott:
+   *"just comment it out... it is just too much rn. we NEED to move faster. that
+   has no real value."* Parked DELIBERATELY, NOT ABANDONED — no ledger, no
+   scheduling, and a standing Friday commitment nobody wants. Decision and the
+   full call-site list: `src/lib/credits.ts`. ⚠ THE SEAM READ IS PARKED WITH IT,
+   not just the render — a fetch nobody displays is a request for nothing. */
+  // const [credits, setCredits] = useState<CreditsSummary | null>(null);
+  // useEffect(() => {
+  //   let alive = true;
+  //   getCreditsSummary(me?.person?.id ?? null).then((c) => alive && setCredits(c));
+  //   return () => {
+  //     alive = false;
+  //   };
+  // }, [me?.person?.id]);
 
   return (
     <header className="flex items-center gap-3 border-b border-line bg-white px-5 py-3 sm:px-8">
@@ -230,11 +249,22 @@ export function AppHeader() {
           ambient items to go, per the spec's ranking; it just needs a viewport
           that can hold it.
         */}
-        {credits && (
+        {/* ⚠⚠ COMMUNITY CREDITS CHIP PARKED 2026-09-03 (`P1-ALL-E375`, amendment
+            A2). Scott: *"just comment it out... that has no real value."* Parked
+            deliberately, not abandoned — no ledger, no scheduling, no mentor
+            asking for the Friday commitment. See `src/lib/credits.ts`.
+            ⚠ THE BREAKPOINT LADDER ABOVE IS PARKED, NOT DELETED, AND STAYS
+            ACCURATE FOR THE DAY THIS RETURNS: it was solved in a browser against
+            a 411px chip (301px below `md`), and re-deriving it would mean
+            re-measuring rather than reading. ⚠ THE ROW IS NOW ONE ITEM SHORTER,
+            so the `xl` breakpoint this chip forced is no longer load-bearing —
+            REPORTED at `E375`, not re-tuned, because retuning it would be
+            inventing pixel figures nobody measured. */}
+        {/* {credits && (
           <span className="hidden xl:contents">
             <CreditsPill summary={credits} />
           </span>
-        )}
+        )} */}
 
         {/*
           DAY/DATE — ambient, so it is the first thing to go as the row narrows.

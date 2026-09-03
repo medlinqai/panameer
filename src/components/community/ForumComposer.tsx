@@ -74,12 +74,18 @@ export function ForumComposer({
       <h2 className="font-display text-[16px] font-bold">
         {mode === "thread" ? "Ask A Question" : "Reply"}
       </h2>
+      {/* ⚠ CREDITS COPY PARKED 2026-09-03 (`P1-ALL-E375`) — the feature is commented
+            out, so a live surface must not keep promising it. See `src/lib/credits.ts`.
+          ⚠ THE WHOLE SENTENCE IS CREDITS COPY — both clauses are about earning,
+          so nothing non-Credits was lost here. */}
+      {/*
       {mode === "thread" && (
         <p className="mt-1 text-[13.5px] leading-relaxed text-ink-2">
           Posting earns Community Credits once the ledger is switched on — and
           answering someone else&apos;s question earns more than asking.
         </p>
       )}
+      */}
 
       {/*
         ── ⚠⚠ YOU POST AS A PERSON, NOT AN INBOX (`P1-ALL-E033`) ───────────────

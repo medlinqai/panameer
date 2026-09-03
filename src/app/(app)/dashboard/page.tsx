@@ -5,7 +5,12 @@ import { PublishedDialog } from "@/components/home/PublishedDialog";
 import { AttentionStrip } from "@/components/home/AttentionStrip";
 import { WorkFeed } from "@/components/home/WorkFeed";
 import { getAttentionCards } from "@/lib/attention";
-import { getCreditsSummary } from "@/lib/credits";
+/* ⚠⚠ COMMUNITY CREDITS PARKED 2026-09-03 (`P1-ALL-E375`, amendment A2). Scott:
+   *"just comment it out... it is just too much rn. we NEED to move faster. that
+   has no real value."* Parked DELIBERATELY, NOT ABANDONED — no ledger, no
+   scheduling, and a standing Friday commitment nobody wants. Decision and the
+   full call-site list: `src/lib/credits.ts`. */
+// import { getCreditsSummary } from "@/lib/credits";
 import { getWorkFeed, WORK_FEED_TABS, type WorkFeedTab } from "@/lib/work-feed";
 import { Card } from "@/components/Card";
 import { prisma } from "@/lib/prisma";
@@ -70,13 +75,20 @@ export default async function DashboardPage({
       stamp is deliberately after the await for that reason and not by accident
       of ordering.
     */
-    const [attention, credits, cards] = await Promise.all([
+    /* ⚠⚠ THE CREDITS FETCH IS PARKED (`P1-ALL-E375`) — one fewer round trip on
+       every dashboard load, since nothing renders the result.
+       ⚠⚠ THE DESTRUCTURE WAS RE-INDEXED, NOT JUST BLANKED. `Promise.all` returns
+       positionally, so leaving `[attention, credits, cards]` over a two-element
+       array would have silently bound `cards` to `undefined` and the work feed
+       would have rendered empty with no error. Both the array entry and the name
+       came out together. */
+    const [attention, cards] = await Promise.all([
       getAttentionCards({
         personId: providerProfile.person_id,
         profileId: providerProfile.id,
         userId: viewer.userId,
       }),
-      getCreditsSummary(providerProfile.person_id),
+      // getCreditsSummary(providerProfile.person_id),
       getWorkFeed({ tab, profileId: providerProfile.id, query: query || undefined }),
     ]);
 
@@ -91,9 +103,9 @@ export default async function DashboardPage({
           <PublishedDialog />
         </Suspense>
 
+        {/* ⚠ `credits` prop parked with the tile — `P1-ALL-E375`. */}
         <AttentionStrip
           cards={attention.cards}
-          credits={credits}
           completeness={providerProfile.completeness}
         />
 
