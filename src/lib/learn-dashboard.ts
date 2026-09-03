@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import { isPlayable, pathHasPlayableLessons } from "@/lib/learn";
+import { isPlayable, pathHasPlayableLessons, playableProgress } from "@/lib/learn";
+import { buildSpine, type Spine } from "@/lib/learn-spine";
 import {
   instructorIdsFor,
   loadInstructors,
@@ -49,6 +50,14 @@ export type DashPath = {
   audience: string;
   coverImage: string | null;
   lessons: number;
+  /** ⚠ `E364` — the Oracle product family. Null for a path outside the mapping. */
+  pillar: string | null;
+  /**
+   * ⚠⚠ THE GRAPHIC THAT PICKS THE PATH (`P1-J3-E364` WS-4). Null when the
+   * structure could not be resolved — the caller renders NO spine in that case
+   * rather than a plausible one.
+   */
+  spine: Spine | null;
   /**
    * ⚠ HOW MANY OF THEM A LEARNER CAN ACTUALLY WATCH (`P1-J3-E362`). Carried so
    * `pickSuggestion` — a PURE function a future caller could feed an unfiltered
@@ -136,6 +145,8 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
         title: true,
         slug: true,
         group: true,
+        /* ⚠ `E364` — the default slice on the pillar row. */
+        pillar: true,
         audience: true,
         cover_image: true,
         expert_person_id: true,
@@ -250,7 +261,9 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
     );
 
     let lessons = 0;
-    let completed = 0;
+    /* ⚠ SUPERSEDED BY `pathProg.completed` (`E364` WS-5) — that one counts only
+       PLAYABLE lessons on both sides of the ratio. This accumulator survives only
+       to drive `finishedHere` per course below, which is a per-course question. */
     let finishedHere = 0;
     let nextLesson: DashPath["nextLesson"] = null;
 
@@ -280,9 +293,13 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
       if (cl.some(isPlayable)) totalCourses += 1;
       totalLessons += cl.filter(isPlayable).length;
       lessons += cl.length;
+      /*
+        ⚠ `finishedHere` IS A PER-COURSE QUESTION AND STAYS ON THE FULL COUNT.
+        "Courses Finished" means every lesson in it is watched; a course with an
+        unshot lesson is not finished, and counting it as such would be the
+        mirror of the 94% bug `E364` WS-5 just closed.
+      */
       const cd = cl.filter((l) => done.has(l.id)).length;
-      completed += cd;
-      /* A course with no lessons is not "finished" — 0 of 0 is nothing done. */
       if (cl.length > 0 && cd === cl.length) finishedHere += 1;
       if (!nextLesson) {
         const nxt = cl.find((l) => !done.has(l.id));
@@ -291,12 +308,18 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
     }
     /* ⚠ `totalLessons` accrues per COURSE above, from playable lessons only. */
     coursesFinished += finishedHere;
-    const playableLessons = p.courses
-      .flatMap((c) => c.sections.flatMap((sec) => sec.lessons))
-      .filter(isPlayable).length;
+    const pathProg = playableProgress(
+      p.courses.flatMap((c) => c.sections.flatMap((sec) => sec.lessons)),
+      done
+    );
+    const playableLessons = pathProg.playable;
 
     return {
       id: p.id,
+      pillar: p.pillar,
+      /* ⚠ QUERIED, NEVER INVENTED — `buildSpine` returns null when it cannot
+         resolve the structure, and the component renders nothing. */
+      spine: buildSpine(p.courses, done),
       playableLessons,
       title: p.title,
       slug: p.slug,
@@ -304,8 +327,14 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
       audience: p.audience,
       coverImage: p.cover_image,
       lessons,
-      completed,
-      percent: lessons > 0 ? Math.round((completed / lessons) * 100) : 0,
+      /*
+        ⚠ `E364` WS-5 — BOTH SIDES OVER PLAYABLE. `completed` was every progress
+        row and `lessons` was every lesson, so Inventory Management capped at 94%.
+        `DashPath.lessons` above stays the FULL figure on purpose — a card says
+        "50 lessons · 47 ready" — but the ratio may only use what can be watched.
+      */
+      completed: pathProg.completed,
+      percent: pathProg.percent,
       enrolled: enrolledIds.has(p.id),
       certified: certifiedIds.has(p.id),
       instructors: pathInstructors,

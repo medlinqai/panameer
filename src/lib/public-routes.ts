@@ -250,6 +250,19 @@ export const PUBLIC_ROUTES: PublicRoute[] = [
     the page.
   */
   { route: "/learn/courses", category: 5 },
+  /*
+    ⚠⚠ `/learn/paths` IS PUBLIC AS OF `P1-J3-E364` WS-8, and this entry is what
+    makes it so — the default is DENY.
+    ⚠ SUPERSEDED, quoted: the note above used to list it among *"THREE `/learn`
+    ROUTES [that] ARE GATED AND ARE DELIBERATELY ABSENT FROM THIS LIST"*, on
+    `E036`'s reasoning that a signed-out visitor should meet a login. That
+    contradicted `E316`, which kept `/learn/courses` public precisely so the
+    public hero CTA reached a real catalog — the same catalog, from the same
+    `getLearnHome(null)` call. `E364` resolved it in favour of the public one.
+    ⚠ `/learn/my-courses` STAYS ABSENT: it redirects to `?tab=mine`, a personal
+    view, and still calls `guardPage` itself.
+  */
+  { route: "/learn/paths", category: 5 },
   { route: "/learn/[slug]", category: 5 },
   { route: "/learn/[slug]/course/[courseSlug]", category: 5 },
 ];

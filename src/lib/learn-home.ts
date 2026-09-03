@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { isPlayable, pathHasPlayableLessons } from "@/lib/learn";
+import { isPlayable, pathHasPlayableLessons, playableProgress, playableProgressOfRows } from "@/lib/learn";
 import { lessonFace } from "@/lib/learn-faces";
 import {
   instructorIdsFor,
@@ -140,7 +140,8 @@ export async function getLearnHome(userId: string | null): Promise<LearnCard[]> 
 
   return discoverable.map((p) => {
     const lessons = p.courses.flatMap((c) => c.sections.flatMap((s) => s.lessons));
-    const completed = lessons.filter((l) => done.has(l.id)).length;
+    /* ⚠ ONE DEFINITION — `lib/learn.ts`. Numerator AND denominator are playable. */
+    const prog = playableProgress(lessons, done);
     const isEnrolled = enrolled.has(p.id);
 
     return {
@@ -159,13 +160,15 @@ export async function getLearnHome(userId: string | null): Promise<LearnCard[]> 
         p.expert_person_id
       ),
       enrolled: isEnrolled,
-      progress:
-        isEnrolled && lessons.length > 0
-          ? Math.round((completed / lessons.length) * 100)
-          : isEnrolled
-            ? 0
-            : null,
-      completedLessons: completed,
+      /*
+        ⚠ OVER PLAYABLE LESSONS (`P1-J3-E364` WS-5). Scott: *"why do we have a
+        94%? that is silly."* ⚠ SUPERSEDED: `Math.round((completed /
+        lessons.length) * 100)` — the FULL count, which capped Inventory
+        Management at 94% for a learner who had watched all 47 watchable lessons
+        of its 50.
+      */
+      progress: isEnrolled ? prog.percent : null,
+      completedLessons: prog.completed,
     };
   });
 }
@@ -391,7 +394,8 @@ export async function getLearnPath(
     enrolled: Boolean(enrollment),
     lessons: allLessons.length,
     completed,
-    progress: allLessons.length > 0 ? Math.round((completed / allLessons.length) * 100) : 0,
+    /* ⚠ `E364` WS-5 — playable denominator, same rule as above. */
+    progress: playableProgressOfRows(allLessons).percent,
     courses,
   };
 }
