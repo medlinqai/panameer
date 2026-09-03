@@ -1,12 +1,29 @@
 import Link from "next/link";
 import { guardPage } from "@/lib/guard";
-import { getSessionViewer } from "@/lib/session";
-import { prisma } from "@/lib/prisma";
-import { getCreditsSummary, formatCredits } from "@/lib/credits";
+/* ⚠ PARKED WITH COMMUNITY CREDITS (`P1-ALL-E375`) — its only consumer on this
+   page was the Credits person-id lookup. */
+// import { getSessionViewer } from "@/lib/session";
+/* ⚠⚠ COMMUNITY CREDITS PARKED 2026-09-03 (`P1-ALL-E375`, amendment A2). Scott:
+   *"just comment it out. we can come back to it if we want, but it is just too
+   much rn. we NEED to move faster. that has no real value."*
+   ⚠ THE OBJECTION IS TO THE STANDING FRIDAY COMMITMENT, NOT THE CURRENCY: *"no
+   one wants to hold sessions every friday...unless that is all they do."*
+   PARKED DELIBERATELY, NOT ABANDONED — three unbuilt things were stacked behind
+   it: no ledger, no scheduling, and no mentor asking for it. The decision and
+   every parked call site are listed in `src/lib/credits.ts`.
+   ⚠ `prisma` AND `getSessionViewer` CAME OUT WITH IT, and that is not overreach:
+   the ONLY thing this page used either one for was resolving the person id for
+   the Credits seam. Leaving them would be an unused-import lint error against a
+   baseline of 43 that allows 0 new. */
+// import { prisma } from "@/lib/prisma";
+// import { getCreditsSummary, formatCredits } from "@/lib/credits";
 import { BRAND_MONEY_LINE } from "@/lib/brand";
+/* ⚠ THE EARN/SPEND TABLES ARE PARKED IN `lib/community.ts` TOO (`P1-ALL-E375`),
+   so these two imports go with them. `communitySections` is NOT credits work and
+   stays live. */
 import {
-  CREDIT_EARN_ACTIONS,
-  CREDIT_SPEND_ACTIONS,
+  // CREDIT_EARN_ACTIONS,
+  // CREDIT_SPEND_ACTIONS,
   communitySections,
 } from "@/lib/community";
 import { PageTabs } from "@/components/casing/PageTabs";
@@ -37,21 +54,22 @@ export const metadata = { title: "My Community · Panameer" };
 
 export default async function CommunityPage() {
   await guardPage("authenticated");
-  const viewer = await getSessionViewer();
-
-  /*
-    The person id, for the Credits seam. PHASE 1's implementation ignores it;
-    PHASE 3 reads the ledger with it. Resolved here so the call site is already
-    correct when the body behind it changes.
-  */
-  const person = viewer
-    ? await prisma.person.findUnique({
-        where: { user_id: viewer.userId },
-        select: { id: true },
-      })
-    : null;
-
-  const credits = await getCreditsSummary(person?.id ?? null);
+  /* ⚠⚠ THE WHOLE viewer -> person -> credits CHAIN IS PARKED (`P1-ALL-E375`).
+     ⚠ ITS ORIGINAL REASONING IS PRESERVED VERBATIM rather than deleted, because
+     it explains why the seam took a person id it never used: *"The person id,
+     for the Credits seam. PHASE 1's implementation ignores it; PHASE 3 reads the
+     ledger with it. Resolved here so the call site is already correct when the
+     body behind it changes."*
+     ⚠ `guardPage("authenticated")` ABOVE IS UNTOUCHED — the page is still gated.
+     Only the Credits read went quiet, never the access check. */
+  // const viewer = await getSessionViewer();
+  // const person = viewer
+  //   ? await prisma.person.findUnique({
+  //       where: { user_id: viewer.userId },
+  //       select: { id: true },
+  //     })
+  //   : null;
+  // const credits = await getCreditsSummary(person?.id ?? null);
   const sections = communitySections();
 
   return (
@@ -112,7 +130,38 @@ export default async function CommunityPage() {
         ))}
       </div>
 
-      {/* ---- Credits: the balance, then the rule in plain language -------- */}
+      {/* ⚠⚠ COMMUNITY CREDITS AND UPCOMING GROUP SESSIONS — BOTH PARKED
+          2026-09-03 (`P1-ALL-E375`, brief amendment A2).
+
+          SCOTT, 2026-09-03: *"just comment it out. we can come back to it if we
+          want, but it is just too much rn. we NEED to move faster. that has no
+          real value."*
+
+          ⚠ PARKED DELIBERATELY, NOT ABANDONED. Three unbuilt things were stacked
+          behind these two sections and the page itself admitted the middle one:
+          *"Mentors publish their Friday sessions here once scheduling is
+          switched on."* No ledger, no scheduling, and no mentor wanting the
+          weekly commitment — Scott: *"no one wants to hold sessions every
+          friday...unless that is all they do."*
+
+          ⚠ THE OBJECTION IS TO THE FRIDAY COMMITMENT, NOT THE CURRENCY. The copy
+          below was already honest about its boundary — *"One-to-one time with a
+          mentor is paid for in cash, not Credits"* — so nothing here was
+          misleading. It was simply three features from working.
+
+          ⚠ THIS IS A BUILT SECTION FROM `brief_MASTER_rails_and_community`, NOT A
+          LABEL: a card with five earn rules, a "what they unlock" column, and the
+          sessions block. DELETING IT WOULD UNDO A PRIOR BRIEF'S WORK as a side
+          effect of an amendment. It stays on disk in full.
+
+          ⚠ THE TWO SECTION LABELS ARE ABSORBED HERE rather than kept inline,
+          because a nested comment delimiter terminates this wrapper early:
+          *"---- Credits: the balance, then the rule in plain language ----"* and
+          *"---- Group sessions: honestly empty until PHASE 4 ----"*.
+
+          To bring it back: uncomment `src/lib/credits.ts`, then the two consts in
+          `src/lib/community.ts`, then this block and the imports above. */}
+      {/*
       <section className="rounded-brand border border-magenta/25 bg-magenta/[0.04] p-5">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
@@ -184,7 +233,6 @@ export default async function CommunityPage() {
         </div>
       </section>
 
-      {/* ---- Group sessions: honestly empty until PHASE 4 ----------------- */}
       <section className="rounded-brand border border-line bg-white p-5">
         <h2 className="font-display text-[17px] font-bold">
           Upcoming Group Sessions
@@ -202,6 +250,7 @@ export default async function CommunityPage() {
           </p>
         </div>
       </section>
+      */}
     </div>
     </>
   );

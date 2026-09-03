@@ -50,9 +50,13 @@ export function WorkFeed({
     <section id="work-feed" className="scroll-mt-6">
       <div className="mb-3 flex flex-wrap items-baseline gap-x-4 gap-y-2">
         <h2 className="font-display text-[19px] font-bold">Find Work</h2>
+        {/* ⚠ CREDITS COPY PARKED 2026-09-03 (`P1-ALL-E375`) — the feature is commented
+            out, so a live surface must not keep promising it. See `src/lib/credits.ts`. */}
+        {/*
         <p className="text-[13px] text-ink-2">
           Responding earns Community Credits.
         </p>
+        */}
       </div>
 
       {/* ---- Tabs ---------------------------------------------------------- */}
@@ -269,15 +273,18 @@ function WorkRequestCard({ card }: { card: WorkCard }) {
               would have defeated the redaction entirely.
             */}
             {card.postedAt && <span>Posted {relativeDay(card.postedAt)}</span>}
+            {/* ⚠ THE PER-CARD EARN HOOK, PARKED 2026-09-03 (`P1-ALL-E375`).
+                ⚠ ITS REASONING IS PRESERVED HERE VERBATIM because the wrapper
+                below cannot contain a nested delimiter: *"THE EARN HOOK. Stated
+                as the rule rather than a number, because CREDIT_RULES lands with
+                the ledger in the master brief's PHASE 3 and a hardcoded '100'
+                here would be a second source that drifts the moment Scott tunes
+                the first."* That rule still applies if Credits return. */}
             {/*
-              THE EARN HOOK. Stated as the rule rather than a number, because
-              CREDIT_RULES lands with the ledger in the master brief's PHASE 3
-              and a hardcoded "100" here would be a second source that drifts
-              the moment Scott tunes the first.
-            */}
             <span className="ml-auto font-semibold text-magenta">
               Responding earns Community Credits
             </span>
+            */}
           </div>
         </div>
       </div>

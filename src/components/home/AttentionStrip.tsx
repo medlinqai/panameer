@@ -3,7 +3,14 @@
 import Link from "next/link";
 import { useState } from "react";
 import { RailIcon } from "@/components/casing/RailIcon";
-import { formatCredits, type CreditsSummary } from "@/lib/credits";
+/* ⚠⚠ COMMUNITY CREDITS PARKED 2026-09-03 (`P1-ALL-E375`, amendment A2). Scott: *"just comment it out... it is just too much rn. we NEED to move
+   faster. that has no real value."* Parked DELIBERATELY, NOT ABANDONED — no
+   ledger, no scheduling, and a standing Friday commitment nobody wants.
+   Decision + every call site: `src/lib/credits.ts`.
+   ⚠ THIS FILE WAS NOT IN THE INSTRUCTION'S LIST — it was found by following the
+   imports out of `lib/credits.ts`. The DASHBOARD renders its own Credits tile in
+   calm mode, separate from the header chip. REPORTED at `E375`. */
+// import { formatCredits, type CreditsSummary } from "@/lib/credits";
 import type { AttentionCard } from "@/lib/attention";
 
 /**
@@ -29,11 +36,14 @@ const VISIBLE_CAP = 4;
 
 export function AttentionStrip({
   cards,
-  credits,
+  /* ⚠⚠ COMMUNITY CREDITS PARKED 2026-09-03 (`P1-ALL-E375`, amendment A2) — the `credits` prop and its type
+     came out with the tile, and the DASHBOARD's fetch went with them. A prop
+     nobody renders is a fetch for nothing. */
+  // credits,
   completeness,
 }: {
   cards: AttentionCard[];
-  credits: CreditsSummary;
+  // credits: CreditsSummary;
   /** Null when the viewer has no provider profile. */
   completeness: number | null;
 }) {
@@ -49,7 +59,9 @@ export function AttentionStrip({
   const live = cards.filter((c) => !dismissed.includes(c.id));
 
   if (live.length === 0) {
-    return <CalmStrip credits={credits} completeness={completeness} />;
+    /* ⚠⚠ COMMUNITY CREDITS PARKED 2026-09-03 (`P1-ALL-E375`, amendment A2). The `credits`
+       prop is parked; `completeness` still drives calm mode. */
+    return <CalmStrip completeness={completeness} />;
   }
 
   const visible = expanded ? live : live.slice(0, VISIBLE_CAP);
@@ -175,10 +187,11 @@ function ActionCard({
  * because it is the thing most likely to already be done.
  */
 function CalmStrip({
-  credits,
+  /* ⚠⚠ COMMUNITY CREDITS PARKED 2026-09-03 (`P1-ALL-E375`, amendment A2) — see the header of this file. */
+  // credits,
   completeness,
 }: {
-  credits: CreditsSummary;
+  // credits: CreditsSummary;
   completeness: number | null;
 }) {
   return (
@@ -188,8 +201,25 @@ function CalmStrip({
       </p>
 
       <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-1">
-        {/* Credits — the earn-more nudge. Deliberately NOT the header pill's
-            job: that is an at-a-glance balance, this says what to do next. */}
+        {/* ⚠⚠ THE DASHBOARD COMMUNITY CREDITS TILE — PARKED 2026-09-03
+            (`P1-ALL-E375`, amendment A2). Scott: *"just comment it out... that
+            has no real value."* Parked deliberately, not abandoned — no ledger,
+            no scheduling, no mentor wanting the Friday commitment. The decision
+            and every other parked call site are listed in `src/lib/credits.ts`.
+
+            ⚠ ITS OWN DOCBLOCK IS PRESERVED HERE VERBATIM rather than deleted,
+            because the wrapper below could not contain it — a nested comment
+            delimiter terminates the wrapper early, which is a real defect this
+            file would have shipped: *"Credits — the earn-more nudge.
+            Deliberately NOT the header pill's job: that is an at-a-glance
+            balance, this says what to do next."*
+
+            ⚠ CALM MODE NOW LEADS WITH EARNINGS YTD. The docblock above says
+            *"Credits leads because earning is the behaviour the platform most
+            wants"* — that sentence is now WRONG about the render and is left
+            standing rather than rewritten, because re-ranking the tiles is a
+            design call nobody made. REPORTED at `E375`. */}
+        {/*
         <Link
           href="/community"
           className="w-[248px] shrink-0 rounded-brand border border-magenta/25 bg-magenta/[0.04] p-4 transition-colors hover:border-magenta/50"
@@ -209,6 +239,7 @@ function CalmStrip({
               : "Earn more → seats at a Friday group session."}
           </p>
         </Link>
+        */}
 
         {/* Earnings — stubbed, and says so. Same rule as My Stats: a "$0" here
             would be a measurement we have not made. */}

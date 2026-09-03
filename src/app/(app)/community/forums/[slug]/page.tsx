@@ -44,9 +44,23 @@ export default async function BoardPage({
       {board.threads.length === 0 ? (
         <div className="rounded-brand border border-dashed border-line px-4 py-8 text-center">
           <p className="text-[15px] font-semibold">No questions here yet.</p>
+          {/* ⚠⚠ CREDITS COPY PARKED 2026-09-03 (`P1-ALL-E375`) — AND THIS IS
+              THE ONE PLACE WHERE PARKING CREDITS COST A NON-CREDITS SENTENCE.
+              REPORTED, NOT PAPERED OVER.
+
+              The Credits promise was welded mid-sentence by an em-dash, so the
+              clause could not be lifted out without REWRITING the sentence —
+              and nothing here gets to invent copy. So ONE COMPLETE SENTENCE was
+              removed rather than edited, preserved verbatim for a one-paste
+              restore: *"A question with real detail gets a real answer — and
+              both earn Credits once the ledger is on."*
+
+              ⚠ *"Someone has to go first."* IS UNTOUCHED and still carries the
+              empty state on its own. If Scott wants the lost half back without
+              the Credits clause, that is a copy decision for him, not a
+              silent rewrite here. */}
           <p className="mx-auto mt-1 max-w-md text-[13.5px] leading-relaxed text-ink-2">
-            Someone has to go first. A question with real detail gets a real
-            answer — and both earn Credits once the ledger is on.
+            Someone has to go first.
           </p>
         </div>
       ) : (
