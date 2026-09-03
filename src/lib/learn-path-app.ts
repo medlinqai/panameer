@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { isPlayable } from "@/lib/learn";
+import { isPlayable, playableProgress } from "@/lib/learn";
 import {
   instructorIdsFor,
   loadInstructors,
@@ -285,7 +285,8 @@ export async function getAppPath(slug: string, userId: string | null): Promise<A
       summary: c.summary,
       lessons: courseLessons.length,
       completed,
-      percent: courseLessons.length > 0 ? Math.round((completed / courseLessons.length) * 100) : 0,
+      /* ⚠ `E364` WS-5 — playable denominator. */
+      percent: playableProgress(courseLessons, done).percent,
       sectionCount: c.sections.length,
       instructors: courseInstructors,
       current: c.id === currentCourseId,
@@ -305,7 +306,8 @@ export async function getAppPath(slug: string, userId: string | null): Promise<A
     audience: path.audience,
     lessons: allLessons.length,
     completed,
-    percent: allLessons.length > 0 ? Math.round((completed / allLessons.length) * 100) : 0,
+    /* ⚠ `E364` WS-5 — playable denominator, path level. */
+    percent: playableProgress(allLessons, done).percent,
     enrolled: Boolean(enrolment),
     instructors: pathInstructors,
     courses,

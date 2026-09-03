@@ -3,13 +3,16 @@ import { Play, ShieldCheck, LayoutGrid, GraduationCap, ArrowRight, Compass } fro
 import { InstructorAvatar } from "@/components/learn/InstructorBadge";
 import { ProgressRing } from "@/components/learn/app/ProgressRing";
 import { StatTile } from "@/components/learn/app/StatTile";
-import { CoverageCard } from "@/components/learn/app/CoverageCard";
+import { CourseSpineBar } from "@/components/learn/app/CourseSpineBar";
 /*
   ⚠ THESE TWO ARE CLIENT-ONLY, NOT MERELY CLIENT COMPONENTS. Both compute a
   streak, which needs the browser's timezone; server-rendering a placeholder and
   patching it on hydration threw a real mismatch. See ClientOnly.tsx.
 */
-import { AchievementGrid, StreakTile } from "@/components/learn/app/ClientOnly";
+/* ⚠ `StreakTile` IS NO LONGER IMPORTED HERE (`P1-J3-E364` WS-2) — it left the
+   stat row because `0 days` was the first thing a new learner saw. ⚠ THE
+   COMPONENT AND ITS EXPORT STAY (`E164`); only this page stopped rendering it. */
+import { AchievementGrid } from "@/components/learn/app/ClientOnly";
 import type { DashPath, MyLearning as MyLearningData } from "@/lib/learn-dashboard";
 import type { Suggestion } from "@/lib/learn-suggestion";
 
@@ -127,39 +130,62 @@ export function MyLearning({ data }: { data: MyLearningData }) {
             this build are all on properties with no unprefixed competitor, which
             is why they work.)
           */}
-          <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
-          <StreakTile completedAt={data.completedAt} />
           {/*
-            ⚠ THIS TILE IS THE ONE THE BRIEF SWAPS. It was `41.5 hrs invested`.
+            ── ⚠⚠ THE FOUR TILES SCOTT NAMED (`P1-J3-E364` WS-2) ───────────────
+
+            His labels, in his order, and they are PERMANENT — they do not swap by
+            state and they are the ONLY stat row on the page:
+
+              LEARNING PATHS ENROLLED IN · COURSES REGISTERED FOR ·
+              LESSONS WATCHED · CERTIFICATES AWARDED
+
+            ⚠ SUPERSEDED, quoted: the row was `StreakTile` + `Courses Finished` +
+            `Certificates Earned` + `Lessons Completed`. Two of those measured
+            something else and one was a streak.
+
+            ⚠⚠ `StreakTile` IS GONE FROM THIS ROW. A new learner was shown
+            `0 days` as the FIRST thing on the page, and Scott's complaint was
+            *"coming in to a bunch of what look like incomplete tiles is not a
+            good look."* ⚠ THE COMPONENT IS NOT DELETED — `ClientOnly` still
+            exports it and `completedAt` still travels — because a streak is a
+            real thing that belongs somewhere; it just is not one of the four
+            numbers he asked for. (`E164`: a retired component stays on disk.)
+
+            ⚠ `Certificates AWARDED`, not `Earned`. `E362` set the title-case rule
+            and this keeps it; Scott's wording here is `AWARDED`, so his wins and
+            the harness assertion moves to match rather than the string.
+
+            ⚠ THE DENOMINATORS ARE `E362`'s FILTERED TOTALS — 12 paths, 39
+            courses, 305 lessons — so `0 of 12` cannot disagree with the catalog.
           */}
+          <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
+          <StatTile
+            icon={<LayoutGrid className="h-[19px] w-[19px]" aria-hidden />}
+            tone="magenta"
+            value={`${mine.enrolledPaths}`}
+            sub={`of ${totals.paths}`}
+            label="Learning Paths Enrolled In"
+          />
           <StatTile
             icon={<GraduationCap className="h-[19px] w-[19px]" aria-hidden />}
             tone="blue"
             value={`${mine.coursesFinished}`}
-            sub={`/ ${totals.courses}`}
-            label="Courses Finished"
+            sub={`of ${totals.courses}`}
+            label="Courses Registered For"
           />
-          {/*
-            ⚠ `Certificates Earned`, TITLE CASE AND ALWAYS PLURAL. Its two
-            siblings are `Courses Finished` and `Lessons Completed`; this one read
-            `Certificate earned` / `Certificates earned` — a lowercase verb AND a
-            singularising noun, so it broke the row's casing twice.
-            ⚠ THE LABEL IS THE CATEGORY, NOT A SENTENCE ABOUT THE VALUE. The
-            number sits above it, so "1 · Certificates Earned" reads correctly and
-            matches the tiles either side of it.
-          */}
+          <StatTile
+            icon={<Play className="h-[19px] w-[19px]" aria-hidden />}
+            tone="green"
+            value={`${mine.lessonsCompleted}`}
+            sub={`of ${totals.lessons}`}
+            label="Lessons Watched"
+          />
           <StatTile
             icon={<ShieldCheck className="h-[19px] w-[19px]" aria-hidden />}
             tone="magenta"
             value={`${mine.pathsCertified}`}
-            label="Certificates Earned"
-          />
-          <StatTile
-            icon={<LayoutGrid className="h-[19px] w-[19px]" aria-hidden />}
-            tone="green"
-            value={`${mine.lessonsCompleted}`}
-            sub={`/ ${totals.lessons}`}
-            label="Lessons Completed"
+            sub={`of ${totals.paths}`}
+            label="Certificates Awarded"
           />
         </div>
 
@@ -268,12 +294,25 @@ export function MyLearning({ data }: { data: MyLearningData }) {
           </>
         )}
 
-        <SectionHead title="Your Coverage of the Catalog">
-          <p className="text-[12px] text-ink-2">
-            {totals.paths} learning paths · {totals.courses} courses · {totals.lessons} lessons
-          </p>
-        </SectionHead>
-        <CoverageCard data={data} />
+        {/*
+          ── ⚠⚠ THE COVERAGE RINGS ARE GONE (`P1-J3-E364` WS-2) ────────────────
+
+          ⚠ SUPERSEDED, quoted: `<SectionHead title="Your Coverage of the
+          Catalog">` over `<CoverageCard data={data} />`.
+
+          ⚠⚠ ITS THREE COUNTERS WERE THE STAT ROW A SECOND TIME, THIRTY PIXELS
+          LOWER. `Learning Paths certified`, `Courses finished` and
+          `Lessons watched` are the same three numbers the four tiles above now
+          carry — and its header line printed the catalog totals a THIRD time.
+          Scott, looking at the live page: *"this page has just too much stuff on
+          it"* and *"the lesson total appears three times on one screen."*
+
+          ⚠ THE RINGS WENT, THE NUMBERS DID NOT. That was the instruction, and
+          `CoverageCard.tsx` and `CoverageRow.tsx` both STAY ON DISK unimported
+          (`E164` — a retired component is never deleted). `E045`'s scrollable
+          tile row lives in `CoverageRow` and is still there if Scott wants it
+          back somewhere.
+        */}
 
         {inProgress.length > 0 && (
           <>
@@ -467,15 +506,32 @@ function PathProgressCard({ path, index }: { path: DashPath; index: number }) {
           {path.courses} course{path.courses === 1 ? "" : "s"} · {path.lessons} lesson
           {path.lessons === 1 ? "" : "s"}
         </p>
-        <span className="my-2.5 block h-1.5 overflow-hidden rounded-full bg-bg-soft">
-          <span
-            className="block h-full rounded-full bg-[linear-gradient(90deg,var(--color-magenta),#8b1fa8)]"
-            style={{ width: `${path.percent}%` }}
-          />
-        </span>
+        {/*
+          ── ⚠⚠ THE COURSE SPINE REPLACES THE FLAT METER (`P1-J3-E364` WS-4) ───
+
+          ⚠ SUPERSEDED, quoted: a single `h-1.5` gradient bar at
+          `width: {path.percent}%`.
+
+          ⚠⚠ THAT BAR SAID ONE NUMBER THE LINE BELOW IT ALREADY SAID. The spine
+          says something no number on the page can: the SHAPE of the path. Measured
+          on Inventory Management — nine courses of 5·5·5·5·6·11·9·3·1, so a
+          learner sees eight even chunks, one big middle course, and a stub at the
+          end that isn't shot. Scott asked for exactly that: *"show me that in a
+          minute."*
+
+          ⚠ IT RENDERS NOTHING WHEN THE STRUCTURE COULD NOT BE RESOLVED — see
+          `CourseSpineBar`. The line beneath stays either way, so a path with no
+          spine still states its progress in words.
+        */}
+        <div className="my-2.5">
+          <CourseSpineBar spine={path.spine} title={path.title} />
+        </div>
         <p className="flex items-center gap-2 text-[11px] text-ink-2">
+          {/* ⚠ `E364` WS-5 — OVER PLAYABLE LESSONS. `path.completed` and
+              `path.percent` both come from `playableProgress` now, so "47 of 47"
+              and "100%" agree instead of stopping at 94%. */}
           <b className="text-ink-2">
-            {path.completed} of {path.lessons} lessons
+            {path.completed} of {path.playableLessons} lessons
           </b>
           <span className="ml-auto">{path.percent}%</span>
         </p>

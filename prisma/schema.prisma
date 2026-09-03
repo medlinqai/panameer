@@ -2593,6 +2593,24 @@ model LearningPath {
   summary          String?
   /// Facets — see the block comment above.
   audience         LearnAudience
+  /// ── ⚠ THE TOP OF THE TAXONOMY (`P1-J3-E364`) ──────────────────────────────
+  ///
+  /// Oracle's product families: `SCM`, `ERP`, `HCM`, plus `FOUNDATIONS` for the
+  /// beginner paths — which is NOT a pillar and is deliberately in the same
+  /// field anyway. Scott, 2026-09-02: *"yeah...i know this is not a pillar."* A
+  /// learner picks from ONE list, not two.
+  ///
+  /// ⚠ `group` BELOW IS UNCHANGED and stays the functional area. `/learn`'s row
+  /// toggles between the two slices; neither replaces the other.
+  /// ⚠ NULLABLE, AND A NULL IS HONEST: a path whose group is not in `E364`'s
+  /// mapping keeps `null` rather than being guessed into a family. Every one of
+  /// them today has zero playable lessons, so `E362` already hides it from a
+  /// learner — but the null is what makes that visible instead of invented.
+  /// ⚠ EPM AND CX ARE REAL ORACLE PILLARS WITH NOTHING ON PANAMEER. They are not
+  /// values here and not tiles on the page; the row carries one honest sentence
+  /// instead. Same rule `E282` set with Delaware — say what you cannot do rather
+  /// than hide it, without giving an empty thing equal weight to a full one.
+  pillar           String?
   /// Free-string domain tag (Procurement, Supply Chain Execution, Core HR, …).
   /// Deliberately NOT an enum: the catalog adds groups faster than a migration
   /// can, and WS1 imports whatever the spreadsheet says.

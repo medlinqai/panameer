@@ -6,6 +6,7 @@ import { STYLE_LABEL } from "@/lib/learn";
 import { InstructorBadge } from "@/components/learn/InstructorBadge";
 import { LessonTable } from "@/components/learn/LessonTable";
 import { ProgressBar } from "@/components/learn/ProgressBar";
+import { playableProgressOfRows } from "@/lib/learn";
 
 /**
  * Course page (brief_learn_experience WS2; design ref Learn-course-page-design.png).
@@ -35,8 +36,16 @@ export default async function CoursePage({
 
   const index = path.courses.findIndex((c) => c.id === course.id);
   const next = path.courses[index + 1] ?? null;
-  const percent =
-    course.lessons > 0 ? Math.round((course.completed / course.lessons) * 100) : 0;
+  /*
+    ⚠ `E364` WS-5 — OVER PLAYABLE LESSONS. ⚠ SUPERSEDED:
+    `Math.round((course.completed / course.lessons) * 100)` — the same 94% bug one
+    level down from the path card. `LearnCourseView`'s lesson rows already carry
+    `playable` and `completed`, so the shared rule reads them directly rather than
+    this page re-deriving a ratio from two totals.
+  */
+  const percent = playableProgressOfRows(
+    course.sections.flatMap((s) => s.lessons)
+  ).percent;
   // The face on the course tile: whoever teaches most of THIS course and has a
   // photo, falling back to the lead so the tile is never blank when a face exists.
   const courseLead =

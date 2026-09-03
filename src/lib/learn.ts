@@ -84,6 +84,87 @@ export function hasPlayableLessons(
  * The same question about a path shaped as the nested tree the reads return.
  * ⚠ A CONVENIENCE OVER `hasPlayableLessons`, not a second rule.
  */
+/**
+ * PERSONAL PROGRESS, OVER WHAT CAN ACTUALLY BE WATCHED (`P1-J3-E364` WS-5).
+ *
+ * **SCOTT, 2026-09-02:** *"why do we have a 94%? that is silly. sounds like we
+ * are counting a course that will never be there...just don't count it then."*
+ *
+ * ⚠⚠ HE IS DESCRIBING A REAL ARITHMETIC BUG. Inventory Management has 50 lessons
+ * and 47 playable, so `completed / lessons.length` capped a learner who had
+ * watched EVERYTHING WATCHABLE at 94%. They could never finish.
+ *
+ * ⚠ SAME RULE `E362` APPLIED TO CATALOG TOTALS, NOW APPLIED TO PERSONAL
+ * PROGRESS. Before this the two disagreed — the catalog counted 305 lessons and
+ * progress counted 522 — which is the whole defect.
+ *
+ * ── ⚠ `completed` IS ALSO COUNTED OVER PLAYABLE ONLY ─────────────────────────
+ *
+ * Not just the denominator. A lesson watched before its video was pulled still
+ * has a `LessonProgress` row, and counting it in the numerator while excluding it
+ * from the denominator would produce a percentage OVER 100. Both sides read the
+ * same set, so the ratio is always 0..100 by construction.
+ *
+ * ── ⚠ ONE DEFINITION, SIX CALLERS ───────────────────────────────────────────
+ *
+ * Six files computed this separately. They now all call this, and
+ * `check:playable` fails the build if any file divides by a raw `lessons.length`
+ * again.
+ *
+ * ⚠ A CONSEQUENCE, INTENDED AND NOT PREVENTED: shooting a missing video LENGTHENS
+ * a path, so somebody at 100% can drop back. That is honest — the path really did
+ * get longer. ⚠ AND NO CERTIFICATE IS AFFECTED: a credential comes from PASSING
+ * THE TEST (`learn-assessment.ts:890`), never from reaching 100%.
+ */
+export type PlayableProgress = {
+  /** Lessons a learner can watch. The denominator. */
+  playable: number;
+  /** How many of THOSE they have watched. */
+  completed: number;
+  /** 0-100. Always 0 for a path with nothing playable, never NaN. */
+  percent: number;
+  /** Still to watch. Never negative. */
+  remaining: number;
+};
+
+export function playableProgress(
+  lessons: { id: string; vimeo_ref: string | null; production_status: string }[],
+  done: Set<string> | ReadonlySet<string>
+): PlayableProgress {
+  const watchable = lessons.filter(isPlayable);
+  const completed = watchable.filter((l) => done.has(l.id)).length;
+  const playable = watchable.length;
+  return {
+    playable,
+    completed,
+    percent: playable > 0 ? Math.round((completed / playable) * 100) : 0,
+    remaining: Math.max(0, playable - completed),
+  };
+}
+
+/**
+ * The same rule over an ALREADY-MAPPED view row — `{ playable, completed }`.
+ *
+ * ⚠ NOT A SECOND DEFINITION. Some reads (`getAppPath`, the provider Build Skills
+ * row) hand their components rows that already carry `playable` and `completed`
+ * as booleans rather than the raw `vimeo_ref`/`production_status` pair. The RULE
+ * — count only playable, on BOTH sides of the ratio — lives once, here, and this
+ * is the second adapter onto it.
+ */
+export function playableProgressOfRows(
+  rows: { playable: boolean; completed: boolean }[]
+): PlayableProgress {
+  const watchable = rows.filter((r) => r.playable);
+  const completed = watchable.filter((r) => r.completed).length;
+  const playable = watchable.length;
+  return {
+    playable,
+    completed,
+    percent: playable > 0 ? Math.round((completed / playable) * 100) : 0,
+    remaining: Math.max(0, playable - completed),
+  };
+}
+
 export function pathHasPlayableLessons(path: {
   courses: { sections: { lessons: { vimeo_ref: string | null; production_status: string }[] }[] }[];
 }): boolean {

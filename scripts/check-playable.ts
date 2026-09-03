@@ -27,7 +27,10 @@
 import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { prisma } from "@/lib/prisma";
-import { isPlayable, hasPlayableLessons, pathHasPlayableLessons, PLAYABLE_STATUSES } from "@/lib/learn";
+import { isPlayable, hasPlayableLessons, pathHasPlayableLessons, playableProgress, PLAYABLE_STATUSES } from "@/lib/learn";
+import { buildSpine } from "@/lib/learn-spine";
+import { PILLARS, GROUP_TO_PILLAR, MISSING_PILLARS_NOTE, pillarForGroup } from "@/lib/learn-pillars";
+import { PUBLIC_ROUTES as PUBLIC } from "@/lib/public-routes";
 import { pickSuggestion, type SuggestPath } from "@/lib/learn-suggestion";
 import { getLearnHome, groupChips } from "@/lib/learn-home";
 import { getMyLearning } from "@/lib/learn-dashboard";
@@ -319,6 +322,109 @@ async function live() {
   /* ⚠ AND NOTHING WAS REMOVED FROM THE DATABASE. */
   check("2 — ⚠⚠ every published path is still IN the database", published.length >= 23, `${published.length} published paths`);
 }
+
+// ---------------------------------------------------------------------------
+// GUARD 6 — the LEARN home page does one job (`P1-J3-E364` WS-9)
+// ---------------------------------------------------------------------------
+
+const MYLEARNING = join("src", "components", "learn", "app", "MyLearning.tsx");
+const myLearning = strip(readFileSync(MYLEARNING, "utf8"));
+const SPINEBAR = join("src", "components", "learn", "app", "CourseSpineBar.tsx");
+
+/* ⚠ Scott named these exactly; they are permanent. `Certificates AWARDED` is HIS
+   wording, so the STRING wins and this assertion matches it. */
+const TILE_LABELS = [
+  "Learning Paths Enrolled In",
+  "Courses Registered For",
+  "Lessons Watched",
+  "Certificates Awarded",
+];
+for (const label of TILE_LABELS) {
+  check(`6 — the stat row carries "${label}"`, myLearning.includes(`label="${label}"`));
+}
+check(
+  "6 — ⚠ and in Scott's order",
+  TILE_LABELS.map((l) => myLearning.indexOf(`label="${l}"`)).every((v, i, a) => v > -1 && (i === 0 || v > a[i - 1]))
+);
+check(
+  "6 — ⚠ the superseded labels are gone",
+  !/label="Certificates Earned"|label="Courses Finished"|label="Lessons Completed"/.test(myLearning),
+  "they measured something else, or said it twice"
+);
+
+/* ⚠⚠ NO TOTAL RENDERED TWICE — the rings were the stat row again, lower down. */
+check("6 — ⚠⚠ the coverage rings are no longer rendered", !/<CoverageCard/.test(myLearning));
+check("6 — ⚠ but CoverageCard is still ON DISK (E164)", existsSync(join("src", "components", "learn", "app", "CoverageCard.tsx")));
+check("6 — and so is CoverageRow, which holds E045's scrollable tiles", existsSync(join("src", "components", "learn", "app", "CoverageRow.tsx")));
+check("6 — StreakTile left the row but not the codebase", !/<StreakTile/.test(myLearning) && existsSync(join("src", "components", "learn", "app", "ClientOnly.tsx")));
+
+/* ⚠ PROGRESS DENOMINATORS. Scott: "why do we have a 94%? that is silly." */
+const PROGRESS_FILES = [
+  join("src", "lib", "learn-home.ts"),
+  join("src", "lib", "learn-dashboard.ts"),
+  join("src", "lib", "learn-path-app.ts"),
+  join("src", "app", "learn", "[slug]", "course", "[courseSlug]", "page.tsx"),
+];
+for (const f of PROGRESS_FILES) {
+  const body = strip(readFileSync(f, "utf8"));
+  check(
+    `6 — ⚠ ${f} does not divide by a raw lesson count`,
+    !/Math\.round\(\s*\(\s*completed\s*\/\s*\w*[Ll]essons(\.length)?\s*\)/.test(body),
+    "use playableProgress — a full denominator caps Inventory Management at 94%"
+  );
+  check(`6 — and ${f} uses the shared progress rule`, /playableProgress(OfRows)?\s*\(/.test(body));
+}
+const L6 = (id: string, playable: boolean) => ({
+  id, vimeo_ref: playable ? "1" : null,
+  production_status: playable ? "BLOG_RELEASED" : "SCRIPT_WRITTEN",
+});
+const fifty = [...Array(47)].map((_, i) => L6(`p${i}`, true)).concat([...Array(3)].map((_, i) => L6(`u${i}`, false)));
+const allWatched = new Set(fifty.map((l) => l.id));
+check("6 — ⚠⚠ 47 of 47 watchable lessons is 100%, not 94%", playableProgress(fifty, allWatched).percent === 100);
+check("6 — the denominator is the playable count", playableProgress(fifty, new Set()).playable === 47);
+check("6 — a stale progress row cannot push it over 100", playableProgress(fifty, allWatched).percent <= 100);
+check("6 — nothing playable is 0%, never NaN", playableProgress([L6("x", false)], new Set()).percent === 0);
+
+/* ⚠ EVERY PILLAR IS ONE OF FOUR, OR NULL. */
+check("6 — there are exactly four pillars", PILLARS.length === 4);
+check("6 — FOUNDATIONS is deliberately among them", (PILLARS as readonly string[]).includes("FOUNDATIONS"));
+check("6 — ⚠ EPM and CX are NOT pillar values", !(PILLARS as readonly string[]).some((p) => p === "EPM" || p === "CX"));
+check("6 — the row says so instead of two dead tiles", /EPM and CX aren't on Panameer yet/.test(MISSING_PILLARS_NOTE));
+for (const [group, pillar] of Object.entries(GROUP_TO_PILLAR)) {
+  check(`6 — mapping "${group}" -> a real pillar`, (PILLARS as readonly string[]).includes(pillar));
+  check(`6 — pillarForGroup agrees for "${group}"`, pillarForGroup(group) === pillar);
+}
+check("6 — an unmapped group is null, never guessed", pillarForGroup("Implementer's Journal") === null && pillarForGroup(null) === null);
+
+/* ⚠⚠ THE SPINE COVERS EVERY COURSE AND SUMS TO 100. */
+const C6 = (id: string, ready: number, filming: number) => ({
+  id, title: `Course ${id}`,
+  sections: [{ lessons: [...Array(ready)].map((_, i) => L6(`${id}r${i}`, true)).concat([...Array(filming)].map((_, i) => L6(`${id}f${i}`, false))) }],
+});
+const inv = [C6("a",5,0),C6("b",5,0),C6("c",5,0),C6("d",5,0),C6("e",6,0),C6("f",9,2),C6("g",9,0),C6("h",3,0),C6("i",0,1)];
+const sp6 = buildSpine(inv, new Set());
+check("6 — ⚠ the spine covers EVERY course", sp6?.courses === inv.length, `${sp6?.courses} of ${inv.length}`);
+check("6 — ⚠⚠ the widths sum to exactly 100", Math.abs((sp6?.blocks.reduce((n, b) => n + b.widthPct, 0) ?? 0) - 100) < 0.001);
+check("6 — a mixed course splits into adjacent blocks", (sp6?.blocks.filter((b) => b.courseId === "f").length ?? 0) === 2, "Min-Max is 9 ready + 2 filming");
+check("6 — the block lesson counts sum to the path's lessons", sp6?.blocks.reduce((n, b) => n + b.lessons, 0) === 50);
+check("6 — ⚠ no courses means NO spine, not an empty one", buildSpine([], new Set()) === null);
+check("6 — ⚠ nothing playable means no spine either", buildSpine([C6("z",0,3)], new Set()) === null);
+check("6 — a watched lesson colours watched", buildSpine([C6("w",2,0)], new Set(["wr0","wr1"]))?.blocks[0].state === "watched");
+check("6 — every block is labelled for a screen reader, not only a tooltip", /aria-label=\{blockLabel/.test(strip(readFileSync(SPINEBAR, "utf8"))));
+check("6 — ⚠ the component renders nothing for a null spine", /return null;/.test(readFileSync(SPINEBAR, "utf8")));
+/* ⚠⚠ AppPath's PathSpine is a DIFFERENT component and the first draft of E364
+   overwrote it. AppPath is out of scope for this brief. */
+check("6 — ⚠⚠ AppPath's PathSpine accordion survives and is not this bar", (() => {
+  const f = join("src", "components", "learn", "app", "PathSpine.tsx");
+  return existsSync(f) && /export function PathSpine\(\{ path \}/.test(readFileSync(f, "utf8")) && readFileSync(f, "utf8").length > 5000;
+})(), "two things called 'spine' one directory apart — do not merge them");
+
+/* ⚠ THE ROUTES (WS-8) — E316 is closed by these. */
+check("6 — /learn/courses redirects", /permanentRedirect\("\/learn\/paths"\)/.test(strip(readFileSync(join("src","app","learn","courses","page.tsx"), "utf8"))));
+check("6 — /learn/my-courses redirects to the tab", /redirect\("\/learn\/paths\?tab=mine"\)/.test(strip(readFileSync(join("src","app","learn","my-courses","page.tsx"), "utf8"))));
+check("6 — ⚠ and my-courses still guards itself first", /guardPage\("authenticated"\)/.test(strip(readFileSync(join("src","app","learn","my-courses","page.tsx"), "utf8"))));
+check("6 — ⚠⚠ /learn/paths no longer redirects a signed-out visitor", !/callbackUrl=%2Flearn%2Fpaths/.test(strip(readFileSync(join("src","app","learn","paths","page.tsx"), "utf8"))));
+check("6 — and it is on the public allowlist, because the default is DENY", PUBLIC.some((r) => r.route === "/learn/paths"));
 
 live()
   .then(() => prisma.$disconnect())
