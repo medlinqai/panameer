@@ -97,6 +97,10 @@ model User {
   certifications Certification[]
 
   @@map("users")
+  /// `P1-ALL-E372` — both directions, because a colleague request has a sender
+  /// and a recipient and both need to see it.
+  connectionsSent     Connection[] @relation("ConnectionsSent")
+  connectionsReceived Connection[] @relation("ConnectionsReceived")
 }
 
 enum Role {
@@ -2593,6 +2597,38 @@ model LearningPath {
   summary          String?
   /// Facets — see the block comment above.
   audience         LearnAudience
+  /// ── ⚠⚠ CARRIED FROM `P1-J3-E364`, WHICH IS PUSHED BUT NOT MERGED ──────────
+  ///
+  /// ⚠ THIS FIELD IS NOT `E372`'s WORK. It is `E364`'s, reproduced here VERBATIM
+  /// because the two branches share one dev database and `E364` already pushed
+  /// the column with 16 non-null values. Without this, `prisma db push` from this
+  /// branch tries to DROP it — measured: *"You are about to drop the column
+  /// `pillar` on the `learning_paths` table, which still contains 16 non-null
+  /// values."*
+  /// ⚠⚠ `--accept-data-loss` WAS NOT USED. Destroying another branch's live
+  /// backfill to land an unrelated model is not a trade this brief gets to make.
+  /// ⚠ THE TEXT IS IDENTICAL TO `E364`'s, so the merge is a no-op rather than a
+  /// conflict. ⚠ REPORTED AT `E372`: the brief's hold condition named `nav.ts`,
+  /// but the real cross-branch collision is the SCHEMA — `E364` should merge
+  /// first.
+  /// ── ⚠ THE TOP OF THE TAXONOMY (`P1-J3-E364`) ──────────────────────────────
+  ///
+  /// Oracle's product families: `SCM`, `ERP`, `HCM`, plus `FOUNDATIONS` for the
+  /// beginner paths — which is NOT a pillar and is deliberately in the same
+  /// field anyway. Scott, 2026-09-02: *"yeah...i know this is not a pillar."* A
+  /// learner picks from ONE list, not two.
+  ///
+  /// ⚠ `group` BELOW IS UNCHANGED and stays the functional area. `/learn`'s row
+  /// toggles between the two slices; neither replaces the other.
+  /// ⚠ NULLABLE, AND A NULL IS HONEST: a path whose group is not in `E364`'s
+  /// mapping keeps `null` rather than being guessed into a family. Every one of
+  /// them today has zero playable lessons, so `E362` already hides it from a
+  /// learner — but the null is what makes that visible instead of invented.
+  /// ⚠ EPM AND CX ARE REAL ORACLE PILLARS WITH NOTHING ON PANAMEER. They are not
+  /// values here and not tiles on the page; the row carries one honest sentence
+  /// instead. Same rule `E282` set with Delaware — say what you cannot do rather
+  /// than hide it, without giving an empty thing equal weight to a full one.
+  pillar           String?
   /// Free-string domain tag (Procurement, Supply Chain Execution, Core HR, …).
   /// Deliberately NOT an enum: the catalog adds groups faster than a migration
   /// can, and WS1 imports whatever the spreadsheet says.
@@ -3738,4 +3774,65 @@ model PackageValueFactor {
   @@index([package_id])
   @@index([basis])
   @@map("package_value_factors")
+}
+
+/// ── ⚠⚠ THE RELATIONSHIP MODEL (`P1-ALL-E372`) ─────────────────────────────────
+///
+/// SCOTT, 2026-09-03: *"how can you promote commerce without facilitating the
+/// connection of people to do that trading/commerce? This section CONNECTS
+/// people."*
+///
+/// ⚠ THE SECTION WAS NAMED FOR CONNECTING PEOPLE AND COULD NOT RECORD THAT TWO
+/// PEOPLE WERE CONNECTED. Surveyed 2026-09-03: `/community`,
+/// `/community/mentors`, `/community/teams` and `/messages` are all real pages —
+/// and there was NO `Connection`, `Colleague`, `Mentor`, `Follow`, `Team` or
+/// `Message` model anywhere in the schema. Verified by grep, not assumed.
+///
+/// ⚠⚠ TWO SHAPES, AND THEY MUST NOT COLLAPSE INTO ONE GENERIC "CONNECTION":
+///   COLLEAGUE  MUTUAL — created `PENDING`, needs the other side to accept.
+///              Scott's equivalent is a LinkedIn connection.
+///   MENTOR     ONE-WAY — created `ACCEPTED` on the spot. Following requires no
+///              permission, and asking for one would make it a different feature.
+///
+/// ⚠ `TEAM` IS DELIBERATELY NOT A KIND HERE, and the survey is why: `lib/teams.ts`
+/// ALREADY WORKS, off `ProviderProfile.coordinator_person_id` and
+/// `CoordinatorInvite` — the Service Coordinator model. Adding a `TEAM` kind
+/// would be a second, competing implementation of a relationship that exists.
+///
+/// ⚠⚠ `DECLINED` IS A FIRST-CLASS STATE, NEVER A DELETED ROW. `P1-ALL-E369`'s
+/// growth strategy rests on a colleague request meaning *"I vouch for this
+/// person"*, and a decline is the true signal that protects it. A declined row
+/// also stops the same request being re-sent forever.
+model Connection {
+  id           String           @id @default(uuid()) @db.Uuid
+  from_user_id String           @db.Uuid
+  to_user_id   String           @db.Uuid
+  kind         ConnectionKind
+  status       ConnectionStatus
+  created_at   DateTime         @default(now())
+  /// Set when the other side answered. ⚠ A `COLLEAGUE` can never be `ACCEPTED`
+  /// without one — `check:community` fails the build on that.
+  responded_at DateTime?
+
+  fromUser User @relation("ConnectionsSent", fields: [from_user_id], references: [id], onDelete: Cascade)
+  toUser   User @relation("ConnectionsReceived", fields: [to_user_id], references: [id], onDelete: Cascade)
+
+  /// ⚠ ONE ROW PER (pair, kind) — so following somebody you are already
+  /// colleagues with is a separate, legal row, and re-sending the same request
+  /// is not.
+  @@unique([from_user_id, to_user_id, kind])
+  @@index([to_user_id, status])
+  @@index([from_user_id, status])
+  @@map("connections")
+}
+
+enum ConnectionKind {
+  COLLEAGUE
+  MENTOR
+}
+
+enum ConnectionStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
 }

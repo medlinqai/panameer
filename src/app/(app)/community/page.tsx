@@ -32,7 +32,8 @@ import { PAGE_TABS } from "@/lib/nav";
  * nobody understands is a currency nobody chases. So the earn actions and the
  * spend are stated before anyone has a balance worth looking at.
  */
-export const metadata = { title: "Community · Panameer" };
+/* ⚠ `My Community` (`P1-ALL-E372` WS-5) — Scott: *"something you have"*. */
+export const metadata = { title: "My Community · Panameer" };
 
 export default async function CommunityPage() {
   await guardPage("authenticated");
@@ -59,8 +60,15 @@ export default async function CommunityPage() {
       <PageTabs tabs={PAGE_TABS["/community"]} current="/community" />
       <div className="mx-auto max-w-5xl space-y-5">
       <header>
+        {/*
+          ⚠ `My Community` (`P1-ALL-E372` WS-5). ⚠ SUPERSEDED, QUOTED NOT DELETED:
+          this `<h1>` read *"The Panameer Community"* until `E372`. Scott's
+          terminology table renamed the surface — a place you visit became
+          something you have. ⚠ THE ROUTE IS STILL `/community`; renaming the
+          folder was NOT in the brief and is not chat's call.
+        */}
         <h1 className="font-display text-[26px] font-bold tracking-[-0.5px]">
-          The Panameer Community
+          My Community
         </h1>
         {/*
           THE MONEY LINE IS THE HUB'S INTRO (brief_brand_tagline_rollout WS-C).

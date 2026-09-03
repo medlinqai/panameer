@@ -258,6 +258,160 @@ check(
 );
 
 // ---------------------------------------------------------------------------
+// GUARD 7 — THE RELATIONSHIP MODEL (`P1-ALL-E372` WS-6).
+//
+// Scott's terminology table encodes THREE shapes and the whole point of these six
+// assertions is that they CANNOT COLLAPSE INTO ONE GENERIC CONNECTION:
+//   · Colleague — MUTUAL, needs acceptance.
+//   · Mentor    — ONE-WAY, needs none.
+//   · Team      — a list one party keeps about others. ⚠ NOT a `ConnectionKind`;
+//                 `lib/teams.ts` already implements it via
+//                 `ProviderProfile.coordinator_person_id`. Folding it in here would
+//                 give one row two meanings.
+// ⚠ These read the SOURCE, not the database — this harness has no DB handle. They
+// guard the shape of the code that writes the rows, which is where the invariant
+// can actually be broken.
+// ---------------------------------------------------------------------------
+
+const CONNECTIONS = join("src", "lib", "connections.ts");
+const SUGGESTIONS = join("src", "lib", "colleague-suggestions.ts");
+const connections = bodies.get(CONNECTIONS) ?? "";
+const suggestions = bodies.get(SUGGESTIONS) ?? "";
+
+check("E372 — lib/connections.ts is on disk", connections.length > 0);
+check("E372 — lib/colleague-suggestions.ts is on disk", suggestions.length > 0);
+
+/* 1. ⚠ A `COLLEAGUE` NEVER REACHES `ACCEPTED` WITHOUT A `responded_at`. The
+      acceptance IS the timestamp; an accepted row with a null one cannot say when
+      it was accepted, and the mutual half of the model rests on that. Every write
+      that sets `ACCEPTED` is required to set `responded_at` in the SAME object. */
+const acceptedWrites = [...connections.matchAll(/status\s*:\s*"ACCEPTED"[\s\S]{0,200}?\}/g)].map(
+  (m) => m[0]
+);
+check(
+  "E372/1 — every ACCEPTED write exists (the pattern still matches the source)",
+  acceptedWrites.length >= 3,
+  `found ${acceptedWrites.length}`
+);
+const acceptedWithoutStamp = acceptedWrites.filter((w) => !/responded_at\s*:/.test(w));
+check(
+  "E372/1 — no ACCEPTED write lands without responded_at",
+  acceptedWithoutStamp.length === 0,
+  acceptedWithoutStamp.join(" || ")
+);
+
+/* 2. ⚠ A `MENTOR` ROW IS NEVER `PENDING`. Following is one-way and needs nobody's
+      permission, so a pending mentor row is a state the product does not have. */
+const mentorPending = /kind\s*:\s*"MENTOR"[\s\S]{0,160}?status\s*:\s*"PENDING"|status\s*:\s*"PENDING"[\s\S]{0,160}?kind\s*:\s*"MENTOR"/;
+check(
+  "E372/2 — no MENTOR row is ever written PENDING",
+  !mentorPending.test(connections)
+);
+check(
+  "E372/2 — the MENTOR create sets ACCEPTED explicitly",
+  /kind\s*:\s*"MENTOR"[\s\S]{0,120}?status\s*:\s*"ACCEPTED"/.test(connections)
+);
+
+/* 3. ⚠ `DECLINED` IS A FIRST-CLASS STATE, NEVER A DELETED ROW. Deleting a decline
+      re-offers the same person forever. Declining must UPDATE.
+      ⚠ ONE delete is legitimate and is not a loophole: unfollowing a mentor. A
+      follow is not a claim about the other person, so it leaves nothing behind.
+      That delete is required to be scoped to `kind: "MENTOR"`. */
+const deletes = [...connections.matchAll(/prisma\.connection\.delete(?:Many)?\(\{[\s\S]{0,260}?\}\)/g)].map(
+  (m) => m[0]
+);
+check(
+  "E372/3 — the only connection delete is the MENTOR unfollow",
+  deletes.length === 1 && /kind\s*:\s*"MENTOR"/.test(deletes[0]),
+  `${deletes.length} delete(s): ${deletes.join(" || ").slice(0, 200)}`
+);
+check(
+  "E372/3 — declining UPDATES to DECLINED rather than deleting",
+  /status\s*:\s*"DECLINED"/.test(connections) &&
+    /prisma\.connection\.update\(\{[\s\S]{0,300}?status\s*:\s*"DECLINED"/.test(connections)
+);
+check(
+  "E372/3 — DECLINED rows are still counted, so they are provably not gone",
+  /"DECLINED"[\s\S]{0,80}?\.length|declinedCount/.test(connections)
+);
+
+/* 4. ⚠ NO SELF-CONNECTION, ASSERTED IN THE LIB AND NOT ONLY IN THE UI. A hidden
+      button is not a rule; the API is reachable without it. */
+check(
+  "E372/4 — the lib refuses a self-connection",
+  /\bfunction refuseSelf\b/.test(connections) && /code\s*[:=][\s\S]{0,120}"SELF"/.test(connections)
+);
+const entryPoints = ["requestColleague", "followMentor"];
+const unguarded = entryPoints.filter((fn) => {
+  const m = new RegExp("export async function " + fn + "\\([\\s\\S]{0,600}").exec(connections);
+  return !m || !/refuseSelf\(/.test(m[0]);
+});
+check(
+  "E372/4 — every relationship entry point calls refuseSelf",
+  unguarded.length === 0,
+  `unguarded: ${unguarded.join(", ")}`
+);
+check(
+  "E372/4 — search never returns the searcher",
+  /searchMembers[\s\S]{0,900}?\bid\s*:\s*\{\s*not\s*:/.test(connections)
+);
+
+/* 5. ⚠ EVERY SUGGESTION CARRIES ITS REASON IN THE UI. Scott's rule is that a
+      suggestion has to say WHY, so `reason` is NOT OPTIONAL ON THE TYPE — a
+      reasonless suggestion is a type error, not a lint warning. This is the guard
+      against the generic "people you may know" the brief forbids. */
+check(
+  "E372/5 — reason is required on ColleagueSuggestion (no `?`)",
+  /\breason\s*:\s*string;/.test(suggestions) && !/\breason\s*\?\s*:/.test(suggestions)
+);
+const addCalls = [...suggestions.matchAll(/\badd\(\s*[\s\S]{0,220}?\)/g)].map((m) => m[0]);
+check(
+  "E372/5 — the three overlap rules all fire (add() is called at least 3×)",
+  addCalls.length >= 3,
+  `${addCalls.length} call(s)`
+);
+check(
+  "E372/5 — no suggestion rule invents a person with no overlap",
+  /SuggestionRule\s*=\s*"employer"\s*\|\s*"project"\s*\|\s*"specialization"/.test(suggestions),
+  "the rule union is the whole set of reasons a suggestion can exist"
+);
+check(
+  "E372/5 — already-connected people are excluded in EVERY state, DECLINED included",
+  /connectionsSent|connection\.findMany/.test(suggestions) &&
+    !/status\s*:\s*\{\s*(?:not\s*:\s*)?"?DECLINED/.test(suggestions),
+  "a DECLINED row must suppress the suggestion, so it cannot be filtered out"
+);
+
+/* 6. ⚠ `ConnectionKind` IS EXACTLY `COLLEAGUE` AND `MENTOR`, AND TEAM IS NOT IN IT. */
+const kindEnum = /enum ConnectionKind \{([^}]*)\}/.exec(schemaNoComments);
+const kinds = (kindEnum?.[1] ?? "").split(/\s+/).filter(Boolean);
+check(
+  "E372/6 — ConnectionKind is exactly COLLEAGUE + MENTOR",
+  kinds.length === 2 && kinds.includes("COLLEAGUE") && kinds.includes("MENTOR"),
+  `[${kinds.join(", ")}]`
+);
+check(
+  "E372/6 — TEAM is NOT folded into ConnectionKind",
+  !kinds.includes("TEAM"),
+  "team is ProviderProfile.coordinator_person_id in lib/teams.ts — one row, one meaning"
+);
+check(
+  "E372/6 — ConnectionStatus keeps all three states",
+  ["PENDING", "ACCEPTED", "DECLINED"].every((v) =>
+    new RegExp(`enum ConnectionStatus \\{[^}]*\\b${v}\\b`).test(schemaNoComments)
+  )
+);
+check(
+  "E372/6 — one row per pair per kind, enforced by the DB not the app",
+  /@@unique\(\[from_user_id,\s*to_user_id,\s*kind\]\)/.test(schemaNoComments)
+);
+check(
+  "E372/6 — lib/teams.ts still owns Team and was not rewritten onto Connection",
+  (bodies.get(join("src", "lib", "teams.ts")) ?? "").length > 0 &&
+    !/prisma\.connection/.test(bodies.get(join("src", "lib", "teams.ts")) ?? "")
+);
+
+// ---------------------------------------------------------------------------
 
 if (failures.length > 0) {
   console.error(`check:community — ${failures.length} FAILED, ${pass} passed\n`);
