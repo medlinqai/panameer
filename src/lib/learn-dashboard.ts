@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { isPlayable } from "@/lib/learn";
+import { isPlayable, pathHasPlayableLessons } from "@/lib/learn";
 import {
   instructorIdsFor,
   loadInstructors,
@@ -49,6 +49,13 @@ export type DashPath = {
   audience: string;
   coverImage: string | null;
   lessons: number;
+  /**
+   * ⚠ HOW MANY OF THEM A LEARNER CAN ACTUALLY WATCH (`P1-J3-E362`). Carried so
+   * `pickSuggestion` — a PURE function a future caller could feed an unfiltered
+   * list — can refuse a path with nothing to watch on its own, rather than
+   * trusting that somebody upstream filtered first.
+   */
+  playableLessons: number;
   completed: number;
   /** 0–100, of lessons. 0 for a path with no lessons rather than NaN. */
   percent: number;
@@ -209,7 +216,31 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
   let totalLessons = 0;
   let coursesFinished = 0;
 
-  const rows: DashPath[] = paths.map((p) => {
+  /*
+    ── ⚠⚠ A LEARNER ONLY SEES WHAT A LEARNER CAN WATCH (`P1-J3-E362`) ─────────
+
+    SCOTT: *"If there is no video...no sense adding the course/lesson."*
+
+    ⚠⚠ THE HEADLINE NUMBERS MOVE AND THAT IS CORRECT. This is where the
+    dashboard's totals come from, so they go 23 -> 12 paths, 54 -> 39 courses and
+    522 -> 305 lessons. `check:learn` GUARD 3 already forbids those as literals
+    because they are query results, so every surface that prints them follows on
+    its own.
+
+    ⚠ HIDE, NEVER DELETE — a query-time filter, so a path returns the day it gets
+    a video.
+    ⚠ AND AN ENROLLED LEARNER KEEPS THEIR PATH: the filter is on DISCOVERY, not
+    on "what I'm already in". Without the `enrolledIds` clause, somebody's own
+    in-progress path would vanish from their dashboard, which is the same mistake
+    as hiding a teacher's work.
+    ⚠ THE COVERAGE ROW AND THE PATH LIST BOTH READ `rows`, so filtering here
+    fixes all three at once rather than in three components.
+  */
+  const visible = paths.filter(
+    (p) => pathHasPlayableLessons(p) || enrolledIds.has(p.id)
+  );
+
+  const rows: DashPath[] = visible.map((p) => {
     const pathInstructors = withoutPlaceholders(
       resolveInstructors(
         tallyExperts(p.courses.flatMap((c) => c.sections.flatMap((s) => s.lessons))),
@@ -224,8 +255,30 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
     let nextLesson: DashPath["nextLesson"] = null;
 
     for (const c of p.courses) {
-      totalCourses += 1;
       const cl = c.sections.flatMap((s) => s.lessons);
+      /*
+        ── ⚠⚠ THE TOTALS COUNT WHAT A LEARNER CAN WATCH (`P1-J3-E362`) ────────
+
+        ⚠ SUPERSEDED: `totalCourses += 1` for every course and `totalLessons +=
+        cl.length` for every lesson. Filtering only at the PATH level moved the
+        headline to 12 paths but left courses at 43 and lessons at 446 — because
+        a visible path still counted the unplayable lessons inside it.
+
+        ⚠⚠ THE HERO SAYS *"N learning paths, N lessons, all free."* A learner told
+        446 lessons who can watch 305 has been given a number that overstates by a
+        third. Scott's rule is about the lesson too: *"If there is no video...no
+        sense adding the course/lesson."* So a course counts when it has something
+        playable in it, and a lesson counts when it plays.
+
+        ⚠ THIS IS NOT THE SAME AS HIDING THE CURRICULUM, and `lib/learn.ts`'s own
+        note stands: *"An unplayable lesson still appears in the outline with its
+        title and run time… we gate playback, not visibility."* The OUTLINE still
+        shows everything; the COUNT counts what is watchable. `DashPath.lessons`
+        below is deliberately still the full figure, so a path card can say
+        "8 lessons · 7 ready".
+      */
+      if (cl.some(isPlayable)) totalCourses += 1;
+      totalLessons += cl.filter(isPlayable).length;
       lessons += cl.length;
       const cd = cl.filter((l) => done.has(l.id)).length;
       completed += cd;
@@ -236,11 +289,15 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
         if (nxt) nextLesson = { id: nxt.id, title: nxt.title, playable: isPlayable(nxt) };
       }
     }
-    totalLessons += lessons;
+    /* ⚠ `totalLessons` accrues per COURSE above, from playable lessons only. */
     coursesFinished += finishedHere;
+    const playableLessons = p.courses
+      .flatMap((c) => c.sections.flatMap((sec) => sec.lessons))
+      .filter(isPlayable).length;
 
     return {
       id: p.id,
+      playableLessons,
       title: p.title,
       slug: p.slug,
       group: p.group,

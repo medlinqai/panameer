@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { isPlayable } from "@/lib/learn";
+import { isPlayable, pathHasPlayableLessons } from "@/lib/learn";
 import { lessonFace } from "@/lib/learn-faces";
 import {
   instructorIdsFor,
@@ -113,7 +113,32 @@ export async function getLearnHome(userId: string | null): Promise<LearnCard[]> 
   const enrolled = new Set(enrollments.map((e) => e.learning_path_id));
   const done = new Set(progress.map((p) => p.lesson_id));
 
-  return paths.map((p) => {
+  /*
+    ── ⚠⚠ A LEARNER ONLY SEES WHAT A LEARNER CAN WATCH (`P1-J3-E362`) ─────────
+
+    SCOTT: *"If there is no video...no sense adding the course/lesson."*
+    Measured: ELEVEN of 23 published paths have zero playable lessons.
+
+    ⚠⚠ HIDE, NEVER DELETE. This is a QUERY-TIME predicate, not a stored flag and
+    not a delete — so the day a video is uploaded the path comes back on its own
+    with no migration, no re-import and no code change.
+
+    ⚠ THE FILTER IS IN THE DATA LAYER AND NOT IN JSX, so a new component cannot
+    forget it.
+
+    ⚠⚠ AND AN ALREADY-ENROLLED LEARNER KEEPS THEIR PATH. Hiding something
+    somebody enrolled in is the same mistake as hiding a teacher's own work: the
+    filter is on DISCOVERY, not on "what I'm already in". Measured 2026-09-02: 0
+    enrollments are affected today, but the rule holds regardless of the count.
+
+    ⚠ `getPathsTaughtBy` / `getPathsTaughtByProfile` BELOW ARE DELIBERATELY NOT
+    FILTERED — that is the instructor's own work queue. See `lib/learn.ts`.
+  */
+  const discoverable = paths.filter(
+    (p) => pathHasPlayableLessons(p) || enrolled.has(p.id)
+  );
+
+  return discoverable.map((p) => {
     const lessons = p.courses.flatMap((c) => c.sections.flatMap((s) => s.lessons));
     const completed = lessons.filter((l) => done.has(l.id)).length;
     const isEnrolled = enrolled.has(p.id);

@@ -201,10 +201,28 @@ export const PAGE_TABS: Record<string, NavItem[]> = {
     ⚠ THIS ENTRY IS STILL NOT RENDERED ANYWHERE. It exists so `pageTitleFor`
     knows these routes' names. `/learn/paths` joins it for the same reason.
   */
+  /*
+    ── ⚠ ONE TAB REMOVED, ONE KEPT, AND ONE RENAMED (`P1-J3-E362`) ───────────
+
+    ⚠ SUPERSEDED: `{ label: "My Courses", href: "/learn/my-courses" }`. That
+    route was still a `ComingSoon` while `/learn/paths?tab=mine` already worked,
+    so it now REDIRECTS there (not deleted — the URL may be linked) and the tab
+    points straight at the real destination. ⚠ `My learning`, not `My courses`:
+    the tab lists PATHS.
+
+    ⚠⚠ `/learn/courses` STAYS, AND THAT IS A DELIBERATE DEPARTURE FROM THE BRIEF.
+    `E362` asked for it to redirect to `/learn/paths` as a duplicate. IT CANNOT:
+    `/learn/courses` is PUBLIC by `P1-J0-E316` (*"a gate there turns the public
+    hero's second CTA into a login wall"*) and `/learn/paths` is GATED by
+    `P1-J3-E036` (*"THIS ROUTE STAYS GATED"*, redirecting signed-out visitors to
+    `/login`). Redirecting the public one at the gated one would silently undo
+    `E316`. ⚠ THE DUPLICATION IS THE RESIDUE OF TWO OPPOSITE RECORDED DECISIONS,
+    and reconciling them is Scott's call, not this brief's. REPORTED at `E362`.
+  */
   "/learn": [
     { label: "All Learning Paths", href: "/learn/paths" },
     { label: "All Courses", href: "/learn/courses" },
-    { label: "My Courses", href: "/learn/my-courses" },
+    { label: "My learning", href: "/learn/paths?tab=mine" },
   ],
   "/settings/packages": [
     { label: "Service Products", href: "/settings/packages" },

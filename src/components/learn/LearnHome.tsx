@@ -133,25 +133,29 @@ export function LearnHome({
             E216 — THE COURSE VIEWS JOIN THIS ROW rather than getting a second
             one. The rail's Start Learning flyout listed four children: these
             two filters, which this row already was, and two course routes. The
-            brief's rule is fold in, don't stack — so the two genuinely new
-            destinations become links in the row that already exists.
+            brief's rule is fold in, don't stack.
 
-            Links, not `setTab`, because they ARE other pages: /learn/courses
-            lists courses, this page lists paths. Same pill styling so the row
-            reads as one control, never both active — a link is never the
-            current tab while you are standing on /learn.
+            ── ⚠ ONE OF THE TWO IS GONE (`P1-J3-E362`) ────────────────────────
+
+            ⚠ SUPERSEDED: a second `<Link href="/learn/my-courses">My Courses`
+            pill. That route was a `ComingSoon` while the `My learning paths`
+            pill directly above already did the job, so it now redirects to
+            `?tab=mine` and the duplicate control is removed.
+
+            ⚠⚠ `/learn/courses` STAYS A LINK, AND THAT IS NOT AN OVERSIGHT.
+            `E362` called it a duplicate of this page and asked for a redirect.
+            It cannot have one: `/learn/courses` is PUBLIC (`P1-J0-E316`) and
+            `/learn/paths` REDIRECTS SIGNED-OUT VISITORS TO `/login`
+            (`P1-J3-E036`) — so pointing the public route at this one would turn
+            the public hero's `Browse the Catalog` back into a login wall.
+            REPORTED at `E362` rather than resolved here.
+            ⚠ THE WRAP NOTE ABOVE MEASURED FOUR PILLS. There are three.
           */}
             <Link
               href="/learn/courses"
               className="rounded-full px-5 py-2 text-[14px] font-bold text-white/80 transition-colors hover:text-white"
             >
               All Courses
-            </Link>
-            <Link
-              href="/learn/my-courses"
-              className="rounded-full px-5 py-2 text-[14px] font-bold text-white/80 transition-colors hover:text-white"
-            >
-              My Courses
             </Link>
           </div>
 

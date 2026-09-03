@@ -73,6 +73,12 @@ export type SuggestPath = {
   group: string | null;
   audience: string;
   lessons: number;
+  /**
+   * ⚠⚠ HOW MANY A LEARNER CAN ACTUALLY WATCH (`P1-J3-E362`). Optional so an
+   * existing caller still compiles, and absent means "not told" rather than
+   * zero — a missing field must never silently empty the catalog.
+   */
+  playableLessons?: number;
   courses: number;
   enrolled: boolean;
   certified: boolean;
@@ -168,8 +174,22 @@ export function pickSuggestion(
   paths: SuggestPath[],
   signal: LearnerSignal
 ): Suggestion | null {
-  /* Never suggest something they are already in. */
-  const open = paths.filter((p) => !p.enrolled && !p.certified);
+  /*
+    Never suggest something they are already in.
+
+    ⚠⚠ AND NEVER SUGGEST A PATH WITH NOTHING TO WATCH (`P1-J3-E362`). Suggesting
+    a path whose Start button leads to a wall of "video coming" is the worst
+    version of the bug that brief closes — this is the one card on the page that
+    says "begin here".
+    ⚠ `learn-dashboard.ts` ALREADY FILTERS ITS ROWS, so this is a second line of
+    defence rather than the only one. It is here because `pickSuggestion` is PURE
+    and a future caller could hand it an unfiltered list.
+    ⚠ `undefined` MEANS "NOT TOLD", NOT "ZERO" — a caller that has not populated
+    the field keeps its old behaviour instead of getting an empty catalog.
+  */
+  const open = paths.filter(
+    (p) => !p.enrolled && !p.certified && p.playableLessons !== 0
+  );
 
   const foundations = (reason: string): Suggestion | null => {
     const tiers: ((p: SuggestPath) => boolean)[] = [

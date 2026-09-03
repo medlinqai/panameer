@@ -155,11 +155,26 @@ export function MyLearning({ data }: { data: MyLearningData }) {
         </div>
 
         {/*
-          ⚠ THE THREE CATALOG DESTINATIONS, KEPT REACHABLE. `LearnHome`'s pill row
-          carried links to /learn/courses and /learn/my-courses, and that row moved
-          to /learn/paths with it — which would have left this page, the Learn front
-          door, with no way to reach either. One quiet row rather than a second tab
-          strip above the hero.
+          ── ⚠ TWO CATALOG DESTINATIONS, NOT THREE (`P1-J3-E362` WS-3) ──────────
+
+          ⚠ SUPERSEDED, quoted, because a stale explanation is a trap for whoever
+          reads it next: *"THE THREE CATALOG DESTINATIONS, KEPT REACHABLE.
+          `LearnHome`'s pill row carried links to /learn/courses and
+          /learn/my-courses… which would have left this page, the Learn front
+          door, with no way to reach either."*
+
+          ⚠ `/learn/my-courses` WAS DEAD — a `ComingSoon` while
+          `/learn/paths?tab=mine` already worked. It now REDIRECTS there (not
+          deleted; the URL may be linked) and this row points at the real tab.
+          ⚠ `My learning` RATHER THAN `My courses`: the tab lists PATHS.
+
+          ⚠⚠ `/learn/courses` STAYS, AND THAT IS A REPORTED DEPARTURE FROM `E362`.
+          It asked for that route to redirect here too, as a duplicate. It cannot:
+          `/learn/courses` is PUBLIC (`P1-J0-E316` — *"a gate there turns the
+          public hero's second CTA into a login wall"*) while `/learn/paths`
+          redirects signed-out visitors to `/login` (`P1-J3-E036` — *"THIS ROUTE
+          STAYS GATED"*). The duplication is the residue of two opposite recorded
+          decisions and reconciling them is Scott's call.
         */}
         <nav className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12.5px]">
           <Link href="/learn/paths" className="font-semibold text-magenta hover:underline">
@@ -168,8 +183,8 @@ export function MyLearning({ data }: { data: MyLearningData }) {
           <Link href="/learn/courses" className="text-ink-2 hover:text-magenta">
             All Courses
           </Link>
-          <Link href="/learn/my-courses" className="text-ink-2 hover:text-magenta">
-            My courses
+          <Link href="/learn/paths?tab=mine" className="text-ink-2 hover:text-magenta">
+            My learning
           </Link>
         </nav>
 

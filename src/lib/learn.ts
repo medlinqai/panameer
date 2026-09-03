@@ -40,6 +40,59 @@ export function isPlayable(lesson: {
 }
 
 /**
+ * A path a learner can actually START — at least one playable lesson anywhere in
+ * it (`P1-J3-E362`).
+ *
+ * **SCOTT, 2026-09-02:** *"If there is no video...no sense adding the
+ * course/lesson."*
+ *
+ * ⚠⚠ DERIVED FROM `isPlayable` ABOVE, NEVER RE-IMPLEMENTED. There is exactly one
+ * definition of playability on the server and this composes it. Measured
+ * 2026-09-02: 305 of 522 lessons are playable and ELEVEN of 23 published paths
+ * have zero.
+ *
+ * ── ⚠⚠ HIDE, NEVER DELETE, AND THE VISIBILITY IS PER AUDIENCE ────────────────
+ *
+ * Nothing is removed from the database. A path with no video today is a path
+ * with video next month, and the day one is uploaded it comes back on its own —
+ * no migration, no re-import, no code change, because this is a query-time
+ * predicate and not a stored flag.
+ *
+ * ⚠ AND IT IS APPLIED ONLY ON THE LEARNER'S DISCOVERY SURFACES:
+ *   HIDDEN   the `/learn` dashboard, its catalog grid, coverage, totals, and
+ *            the suggested first path
+ *   VISIBLE  `getPathsTaughtByProfile` (the instructor's own profile) and
+ *            everything under `/admin`
+ *
+ * ⚠⚠ THE INSTRUCTOR EXCEPTION IS NOT OPTIONAL. Marelise Steenkamp teaches
+ * lessons across five paths and THREE of them have zero playable lessons
+ * (Payroll Mgmt, Benefits Admin, Talent Mgmt). A blunt global filter would mean
+ * she opens her own profile and finds them gone — which reads as data loss, not
+ * as a design rule. For a teacher an un-shot lesson is a WORK QUEUE.
+ *
+ * ⚠ AND AN ALREADY-ENROLLED LEARNER KEEPS THEIR PATH. The filter is on
+ * DISCOVERY, not on "what I'm already in". Measured: 0 enrollments are affected
+ * today, but the rule holds regardless.
+ */
+export function hasPlayableLessons(
+  lessons: { vimeo_ref: string | null; production_status: string }[]
+): boolean {
+  return lessons.some(isPlayable);
+}
+
+/**
+ * The same question about a path shaped as the nested tree the reads return.
+ * ⚠ A CONVENIENCE OVER `hasPlayableLessons`, not a second rule.
+ */
+export function pathHasPlayableLessons(path: {
+  courses: { sections: { lessons: { vimeo_ref: string | null; production_status: string }[] }[] }[];
+}): boolean {
+  return hasPlayableLessons(
+    path.courses.flatMap((c) => c.sections.flatMap((s) => s.lessons))
+  );
+}
+
+/**
  * A Vimeo reference → an embeddable player URL.
  *
  * The column is deliberately loose about what it holds (a bare id, a
