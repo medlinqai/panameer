@@ -23,6 +23,10 @@ import { identityVerificationRequestTemplate } from "@/lib/email/templates/ident
 import { verifyEmailTemplate } from "@/lib/email/templates/verify-email";
 import { inviteProviderTemplate } from "@/lib/email/templates/invite-provider";
 import { EMAIL_COLORS } from "@/lib/email/shell";
+/* ⚠ `P1-ALL-E371` WS-A2 — asserting the capture transport's default. */
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { mailCaptureEnabled } from "@/lib/resend";
 
 let passed = 0;
 const failures: string[] = [];
@@ -235,6 +239,61 @@ ok(
 );
 ok("request: CTA is Get Started", request.html.includes("Get Started"));
 ok("request: states the seven-day window", request.text.includes("seven days"));
+
+// ---------------------------------------------------------------------------
+// ⚠⚠ THE CAPTURE TRANSPORT MUST NEVER BE THE DEFAULT (`P1-ALL-E371` WS-A2).
+//
+// A capture mode that switched itself on is the worst failure this code can
+// have: every transactional email silently stops reaching anyone while the
+// caller is told it succeeded. Verification, invites, recommendations — all
+// dead, all reporting success. So the default is asserted, not trusted.
+// ---------------------------------------------------------------------------
+
+const resendSrc = readFileSync(join("src", "lib", "resend.ts"), "utf8");
+
+ok(
+  "WS-A2 — the capture transport exists",
+  /export function mailCaptureEnabled/.test(resendSrc)
+);
+/* ⚠ EXACTLY `"1"`, NOT TRUTHINESS. `MAIL_CAPTURE=0` and `MAIL_CAPTURE=false`
+   must both mean SEND — and `Boolean("0")` is `true`, which would turn either
+   of those into silent capture. */
+ok(
+  "WS-A2 — capture requires MAIL_CAPTURE === \"1\" exactly",
+  /process\.env\.MAIL_CAPTURE\?\.trim\(\) === "1"/.test(resendSrc),
+  "truthiness would make MAIL_CAPTURE=0 mean capture"
+);
+/* ⚠ AND THE LIVE PROCESS PROVES IT, not just the source: this harness runs with
+   no MAIL_CAPTURE set, so the real function must say "send". */
+ok(
+  "WS-A2 — with no MAIL_CAPTURE set, the live build takes the SENDING path",
+  mailCaptureEnabled() === false,
+  `MAIL_CAPTURE=${JSON.stringify(process.env.MAIL_CAPTURE ?? null)} -> capture=${mailCaptureEnabled()}`
+);
+/* ⚠ THE CAPTURE BRANCH IS THE ONLY EARLY RETURN and sits BEFORE `getResend()`,
+   which throws without a key. Reordering them would make capture unusable on a
+   machine with no key — which is exactly the machine that needs it. */
+ok(
+  "WS-A2 — the capture branch precedes the Resend client construction",
+  resendSrc.indexOf("if (mailCaptureEnabled())") < resendSrc.indexOf("await getResend()"),
+  "getResend() throws without a key, so capture must be reached first"
+);
+/* ⚠ CAPTURED MAIL IS GITIGNORED. Nothing captured may enter the repo — a
+   captured file holds a real recipient address and a rendered body. */
+ok(
+  "WS-A2 — the capture directory is gitignored",
+  readFileSync(".gitignore", "utf8").includes(".mail-capture"),
+  "a captured file holds a real address and a rendered body"
+);
+/* ⚠ AND THE SAFETY NET FOR WS-A: the default sender is Resend's test domain,
+   which only delivers to the account's own address. ⚠⚠ WHEN THIS DEFAULT
+   CHANGES TO A VERIFIED PANAMEER DOMAIN, MAIL GOES WHEREVER THE CODE SAYS —
+   this assertion is the tripwire for that moment. */
+ok(
+  "WS-A — EMAIL_FROM still defaults to the Resend test domain",
+  /onboarding@resend\.dev/.test(resendSrc),
+  "on a verified domain a stray send reaches a real member; capture stops being a convenience"
+);
 
 if (failures.length) {
   console.error(`\n${failures.length} failed:\n`);

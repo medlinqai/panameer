@@ -64,3 +64,6 @@ test-results/
 playwright-report/
 e2e/.artifacts/
 e2e-shell/.artifacts/
+
+# ⚠ P1-ALL-E371 WS-A2 — captured mail. NOTHING captured goes in the repo.
+.mail-capture/
