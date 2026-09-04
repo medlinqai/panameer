@@ -389,6 +389,195 @@ check("3 — and the footer links to it", FOOTER_LEGAL.some((e) => e.href === "/
 
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// ⚠⚠ E282 — THE VALIDATION IS PERSISTED, AND THE TRUST RULES HOLD AT REST.
+//
+// THE DEFECT THIS CLOSES: `validateEntity()` got a real answer from a state
+// register, with a source URL, and NOTHING WROTE IT DOWN — so "Company not yet
+// verified" could never flip, for anybody, ever.
+//
+// ⚠ THESE SEVEN GUARD THE THINGS THAT GO WRONG QUIETLY: a status with no
+// citation, a "verified" that secretly means "passed", a client-supplied trust
+// claim, and the read/write split that this brief is the most likely thing ever
+// to break.
+// ---------------------------------------------------------------------------
+
+const e282Schema = readFileSync(join("prisma", "schema.prisma"), "utf8");
+const e282Company = readFileSync(join("src", "lib", "company.ts"), "utf8");
+const e282Identity = readFileSync(join("src", "lib", "work-request-identity.ts"), "utf8");
+const e282Validation = readFileSync(join("src", "lib", "company-validation.ts"), "utf8");
+const e282Route = readFileSync(
+  join("src", "app", "api", "company", "validate", "route.ts"),
+  "utf8"
+);
+
+/* ── 1 · ⚠⚠ A STORED STATUS NEVER EXISTS WITHOUT A SOURCE URL ─────────────
+   The SourcedField rule enforced AT REST, not just at render. A status with no
+   citation is exactly the unsourced trust claim this whole harness exists to
+   stop — it just survives a page reload. */
+for (const col of [
+  "entity_validated_at",
+  "entity_validation_status",
+  "entity_validation_source_url",
+  "entity_status_detail",
+]) {
+  check(`E282/1 — Company.${col} exists`, new RegExp(`\\b${col}\\s+`).test(e282Schema));
+}
+/* ⚠ THE WRITE IS ONE OBJECT, so a status can never be written without the URL
+   beside it. Both fields are set in the same `data`, and the URL is required
+   before that object is reached. */
+const writeBlock =
+  /entity_validated_at: new Date\(\)[\s\S]{0,400}?\}/.exec(e282Company)?.[0] ?? "";
+check("E282/1 — the write block was found by the scan", writeBlock.length > 0);
+check(
+  "E282/1 — status and source URL are written in the SAME object",
+  /entity_validation_status/.test(writeBlock) &&
+    /entity_validation_source_url/.test(writeBlock),
+  "a stored status with no citation is an unsourced trust claim that survives a reload"
+);
+/* ⚠ AND A MATCHED STATUS CANNOT BE WRITTEN WITHOUT ONE: the helper returns early
+   when the match carries no URL. */
+check(
+  "E282/1 — a match with no source URL writes nothing",
+  /sourceUrl = match\.legalName\.sourceUrl;[\s\S]{0,120}?if \(!sourceUrl\) return;/.test(
+    e282Company
+  ),
+  "the URL is the match's own and is never synthesised"
+);
+/* ⚠⚠ AND THE DETAIL IS THE REGISTER'S OWN STRING, VERBATIM — never a Panameer
+   summary. It is assigned from `match.status.value` and from nothing else. */
+const detailAssigns = [...e282Company.matchAll(/detail = ([^;]+);/g)].map((m) => m[1].trim());
+check(
+  "E282/1 — entity_status_detail is only ever the register's own words",
+  detailAssigns.length > 0 && detailAssigns.every((a) => a === "match.status.value"),
+  `assigned from: ${detailAssigns.join(" | ")}`
+);
+/* ⚠ `has_issues` REQUIRES A DETAIL — an issue with no stated reason is an
+   accusation. */
+check(
+  "E282/1 — has_issues without a detail writes nothing",
+  /status = "has_issues";[\s\S]{0,260}?if \(!detail\?\.trim\(\)\) return;/.test(e282Company)
+);
+
+/* ── 2 · ⚠⚠ entityVerificationState READS THE COLUMN ─────────────────────── */
+check(
+  "E282/2 — entityVerificationState reads entity_validated_at",
+  /company\?\.entity_validated_at \? "verified" : "unverified"/.test(e282Identity),
+  "reverting it to `void _company` must fail this"
+);
+check(
+  "E282/2 — and it no longer voids its argument",
+  !/void _company/.test(e282Identity)
+);
+
+/* ── 3 · ⚠⚠ "verified" MEANS "WE CHECKED", NOT "IT PASSED" ───────────────
+   Gating on a passing status would render "not yet verified" for a company we
+   checked and found problems with — which HIDES THE FINDING and looks like
+   inaction rather than a result. */
+check(
+  "E282/3 — verified does not require a passing status",
+  !/entity_validation_status[\s\S]{0,80}?(===|!==)[\s\S]{0,40}?(in_good_standing|has_issues)[\s\S]{0,60}?"verified"/.test(
+    e282Identity
+  ) && !/in_good_standing/.test(e282Identity),
+  "has_issues is still a company Panameer checked"
+);
+
+/* ── 4 · THE 48 UNSUPPORTED STATES STAY IMPOSSIBLE ───────────────────────── */
+/* ⚠ THE KEYS ARE BARE IDENTIFIERS OR QUOTED depending on whether the state name
+   has a space — `Texas:` but `"New York":`. My first version matched only the
+   quoted form and found one adapter instead of three. Both forms, scoped to the
+   ADAPTERS block so a state name in prose cannot inflate the count. */
+const adaptersBlock =
+  /export const ADAPTERS: Record<string, Adapter> = \{[\s\S]*?\n\};/.exec(e282Validation)?.[0] ??
+  "";
+check("E282/4 — the ADAPTERS block was found by the scan", adaptersBlock.length > 0);
+const adapterStates = [
+  ...adaptersBlock.matchAll(/^\s{2}(?:"([A-Z][A-Za-z ]+)"|([A-Z][A-Za-z]+)):\s*\{/gm),
+].map((m) => m[1] ?? m[2]);
+check(
+  "E282/4 — still exactly three states have an adapter",
+  adapterStates.length === 3,
+  `[${adapterStates.join(", ")}]`
+);
+/* ⚠ AND AN UNSUPPORTED STATE CANNOT PRODUCE A STORED CHECK: `ok: false` writes
+   nothing, which is the only path an adapter-less state can take. */
+check(
+  "E282/4 — an ok:false result writes nothing",
+  /if \(!result\.ok\) return;/.test(e282Company),
+  "an unsupported state or an unreachable register is not a check"
+);
+
+/* ── 5 · ⚠⚠ NEW YORK STILL CANNOT CLAIM GOOD STANDING ──────────────────── */
+check(
+  "E282/5 — New York still publishes no standing",
+  /publishesStatus: false/.test(e282Validation)
+);
+/* ⚠ EVEN WITH A ROW ON FILE. A register with no standing column lands on
+   `standing_unknown`, which is why there are FOUR states and not three. */
+check(
+  "E282/5 — a register with no standing column stores standing_unknown",
+  /if \(!result\.publishesStatus \|\| !match\.status\) \{[\s\S]{0,200}?status = "standing_unknown"/.test(
+    e282Company
+  ),
+  "without the fourth state NY would have to be recorded as a pass or a problem"
+);
+check(
+  "E282/5 — and it can never be stored as in_good_standing",
+  e282Company.indexOf('status = "standing_unknown"') <
+    e282Company.indexOf('status = "in_good_standing"'),
+  "the no-standing branch must be reached first"
+);
+
+/* ── 6 · ⚠⚠ THE VALIDATE ROUTE STILL WRITES NOTHING ─────────────────────
+   Its own docblock: "keeping the read and the write apart is what lets a user
+   correct a bad lookup before anything is persisted." ⚠ THIS BRIEF IS THE MOST
+   LIKELY THING EVER TO BREAK THAT SPLIT, so it is asserted structurally. */
+check(
+  "E282/6 — api/company/validate/route.ts performs no write",
+  !/prisma\.[a-zA-Z]+\.(create|update|updateMany|upsert|delete|deleteMany)\(/.test(e282Route),
+  "the route's body has no company id — it does not know what to write to"
+);
+check(
+  "E282/6 — and the write lives in defineCompany instead",
+  /await persistEntityValidation\(/.test(e282Company)
+);
+
+/* ── 7 · ⚠⚠ DefineInput CARRIES NO VALIDATION FIELDS ────────────────────
+   Accepting a status or a source URL from the browser is a FORGEABLE TRUST
+   CLAIM. The lookup is made server-side, from the name and state the function
+   already has. */
+const defineInput = /export type DefineInput = \{[\s\S]*?\n\};/.exec(e282Company)?.[0] ?? "";
+check("E282/7 — DefineInput was found by the scan", defineInput.length > 0);
+for (const f of [
+  "entity_validated_at",
+  "entity_validation_status",
+  "entity_validation_source_url",
+  "entity_status_detail",
+  "sourceUrl",
+  "validationStatus",
+]) {
+  check(
+    `E282/7 — DefineInput carries no ${f}`,
+    !new RegExp(f).test(defineInput),
+    "a client-supplied trust claim is forgeable"
+  );
+}
+/* ⚠ AND THE CALL IS MADE FROM THE SERVER'S OWN VALUES, not from anything the
+   client could have shaped into a match. */
+check(
+  "E282/7 — validateEntity is called with the server's name and state",
+  /validateEntity\(\{[\s\S]{0,160}?name: input\.name[\s\S]{0,160}?stateOfFiling: state/.test(
+    e282Company
+  )
+);
+/* ⚠ AND IT CAN NEVER COST A USER THEIR COMPANY RECORD. */
+check(
+  "E282/7 — the lookup cannot fail the save",
+  /try \{[\s\S]*?await prisma\.company\.update\([\s\S]*?\} catch \{/.test(e282Company) &&
+    /timeoutMs: 5000/.test(e282Company),
+  "a dead register must not block onboarding — decision 5"
+);
+
 if (failures.length > 0) {
   console.error(`check:trust-claims — ${failures.length} FAILED, ${pass} passed\n`);
   for (const f of failures) console.error(`  ✗ ${f}`);

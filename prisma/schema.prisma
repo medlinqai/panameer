@@ -253,6 +253,44 @@ model Company {
   /// ⚠ US ONLY, nullable, and it back-fills nothing — existing companies predate
   /// it. A failed or absent lookup NEVER blocks onboarding (decision 5).
   state_of_filing String?
+
+  /// ── ⚠⚠ THE ENTITY VALIDATION RECORD (`P1-ALL-E282` WS-1) ────────────────
+  ///
+  /// THE DEFECT THIS CLOSES: `validateEntity()` looked a company up in a state
+  /// register, got a real answer with a source URL, and NOTHING WROTE IT DOWN.
+  /// So *"Company not yet verified"* could never flip to verified, for anybody,
+  /// ever — including for a company Panameer had just checked.
+  ///
+  /// ⚠ FOUR NULLABLE COLUMNS, NOT A TABLE. A validation HISTORY is a different
+  /// feature with its own retention question; if this ever needs one, that is
+  /// its own brief. There is deliberately no `CompanyValidation` model.
+  ///
+  /// ⚠⚠ NULL `entity_validated_at` MEANS NEVER CHECKED, and that is the only
+  /// thing `entityVerificationState` reads. It is the presence of a CHECK, not
+  /// a PASS — see that function for why gating on a passing status would hide a
+  /// finding.
+  entity_validated_at         DateTime?
+  /// ⚠⚠ ONE OF FOUR, AND THERE ARE FOUR RATHER THAN THREE BECAUSE NEW YORK
+  /// PUBLISHES NO STANDING COLUMN (`publishesStatus: false` — *"there is no
+  /// good-standing field to read"*):
+  ///   `not_found`          — checked, no match in the register
+  ///   `in_good_standing`   — the register says so, in its own words
+  ///   `has_issues`         — the register says otherwise; `entity_status_detail`
+  ///                          carries WHY, verbatim
+  ///   `standing_unknown`   — found, but this register publishes no standing (NY)
+  /// ⚠ WITHOUT the fourth, New York would have to be recorded as either a pass
+  /// or a problem, and both would be claims nobody read.
+  entity_validation_status    String?
+  /// ⚠⚠ THE EXACT URL THE ANSWER CAME FROM — the `SourcedField` rule enforced
+  /// AT REST rather than only at render. `check:trust-claims` asserts a stored
+  /// status can never exist without one. ⚠ NEVER SYNTHESISED: it is
+  /// `legalName.sourceUrl` from the match, or the write does not happen.
+  entity_validation_source_url String?
+  /// ⚠⚠ THE REGISTER'S OWN WORDS, VERBATIM. Never a Panameer summary, never a
+  /// friendlier phrasing — `check:trust-claims` asserts it appears unchanged in
+  /// the match it came from. ⚠ REQUIRED when the status is `has_issues`: an
+  /// issue with no stated reason is an accusation.
+  entity_status_detail        String?
   vertical     String?
   website      String?
   /// JURISDICTION — Scott, 2026-08-30: *"Jurisdiction is just country. do

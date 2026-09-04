@@ -184,6 +184,10 @@ export async function getWorkFeed(input: {
               vertical: true,
               logo_url: true,
               tin: true,
+              /* ⚠⚠ REQUIRED BY `P1-ALL-E282`. `entityVerificationState` reads
+                 this; a select that omits it silently returns "unverified" and
+                 the original bug survives while looking fixed. */
+              entity_validated_at: true,
             },
           },
           user: { select: { email_verified: true } },

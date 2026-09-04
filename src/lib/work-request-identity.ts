@@ -132,25 +132,52 @@ export const VERIFICATION_COPY: Record<
 };
 
 /**
- * ⚠⚠ THE ONE LINE THAT CHANGES WHEN `E282` LANDS.
+ * ⚠⚠ `E282` HAS NOW LANDED, AND THIS IS THAT ONE LINE.
  *
- * It takes the company so the signature does not change later, and it returns
- * `"unverified"` unconditionally because there is nothing to read: no field
- * records an entity check because no code performs one. ⚠ THIS IS NOT A STUB
- * STANDING IN FOR DATA — it is the honest answer to "has this been checked", and
- * the answer is no.
+ * ⚠ SUPERSEDED, QUOTED NOT DELETED — this docblock read:
+ *   *"⚠⚠ THE ONE LINE THAT CHANGES WHEN `E282` LANDS. It takes the company so
+ *   the signature does not change later, and it returns `"unverified"`
+ *   unconditionally because there is nothing to read: no field records an entity
+ *   check because no code performs one. ⚠ THIS IS NOT A STUB STANDING IN FOR
+ *   DATA — it is the honest answer to 'has this been checked', and the answer is
+ *   no."*
+ *
+ * ⚠ IT WAS RIGHT WHEN WRITTEN, AND IT IS WHY THIS FIX IS ONE LINE: the
+ * signature already took the company. Now a column records the check.
+ *
+ * ── ⚠⚠ "verified" MEANS "WE CHECKED", NOT "IT PASSED" ────────────────────
+ *
+ * The copy says Panameer checked this company against a state register. That is
+ * TRUE for `has_issues` too. ⚠ SO THIS DELIBERATELY DOES **NOT** GATE ON A
+ * PASSING STATUS: doing so would render *"not yet verified"* for a company we
+ * checked and found problems with, which HIDES THE FINDING — the worst possible
+ * outcome, because it looks like inaction rather than a result.
+ * ⚠ `check:trust-claims` asserts that "verified" does not require a passing
+ * status, so nobody "tightens" this later and reintroduces the hole.
+ *
+ * ⚠⚠ EVERY CALLER MUST SELECT `entity_validated_at`. A caller that does not
+ * silently reads `undefined`, returns `"unverified"`, and the original bug
+ * survives while looking fixed. Call sites are enumerated in the `E282` report.
  */
-export function entityVerificationState(_company: {
+export function entityVerificationState(company: {
   id?: string;
   tin?: string | null;
+  entity_validated_at?: Date | string | null;
 } | null): VerificationState {
-  void _company;
-  return "unverified";
+  /* ⚠ NULL = NEVER CHECKED. A FAILED check also leaves this null, and that is
+     correct: "not yet verified" is true in both cases. */
+  return company?.entity_validated_at ? "verified" : "unverified";
 }
 
 export function verificationLines(input: {
   emailVerifiedAt: Date | string | null;
-  company: { id?: string; tin?: string | null } | null;
+  /* ⚠ WIDENED BY `P1-ALL-E282` — the caller must pass the new column or the
+     line silently reads "unverified". */
+  company: {
+    id?: string;
+    tin?: string | null;
+    entity_validated_at?: Date | string | null;
+  } | null;
 }): VerificationLine[] {
   const email: VerificationState = input.emailVerifiedAt ? "verified" : "unverified";
   const entity = entityVerificationState(input.company);
@@ -296,6 +323,10 @@ export function buildBuyerIdentity(input: {
       vertical: string | null;
       logo_url: string | null;
       tin: string | null;
+      /* ⚠ `P1-ALL-E282` — `entityVerificationState` reads this. Optional so
+         existing callers compile, but a caller that omits it reads "unverified";
+         the report enumerates every one. */
+      entity_validated_at?: Date | string | null;
     } | null;
     user: { email_verified: Date | null } | null;
   };
@@ -332,7 +363,18 @@ export function buildBuyerIdentity(input: {
     standing: input.standing,
     verification: verificationLines({
       emailVerifiedAt: person.user?.email_verified ?? null,
-      company: company ? { id: company.id, tin: company.tin } : null,
+      /* ⚠⚠ THE COLUMN IS CARRIED THROUGH EXPLICITLY (`P1-ALL-E282`). This
+         object NARROWS `company`, so omitting the field here would drop it even
+         though the type allows it — silently reading "unverified" forever. That
+         is the exact failure the brief warned about, and it was live in this
+         line until `E282`. */
+      company: company
+        ? {
+            id: company.id,
+            tin: company.tin,
+            entity_validated_at: company.entity_validated_at ?? null,
+          }
+        : null,
     }),
   };
 }
