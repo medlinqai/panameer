@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { emailConfigured } from "@/lib/email-status";
 import { findCategory } from "@/lib/notification-categories";
 import {
   NOTIFICATION_EVENTS,
@@ -93,7 +94,10 @@ export async function notify(input: {
       not fire — the row still reached the person, just not by every route they
       asked for.
     */
-    if (!suppressed && wantsEmail && !process.env.RESEND_API_KEY) {
+    /* ⚠ THE SAME FACT THE SETTINGS SCREEN READS (`P1-ALL-E382`) — one function,
+       two callers, so the UI can never claim email works while this records that
+       it does not. */
+    if (!suppressed && wantsEmail && !emailConfigured()) {
       suppressed = "email_not_configured";
     } else if (!suppressed && wantsSms) {
       suppressed = "sms_not_configured";

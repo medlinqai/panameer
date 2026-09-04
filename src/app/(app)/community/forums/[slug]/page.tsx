@@ -29,12 +29,31 @@ export default async function BoardPage({
   return (
     <div className="mx-auto max-w-4xl space-y-4">
       <header>
-        <Link
-          href="/community/forums"
-          className="text-[13.5px] font-semibold text-ink-2 hover:text-magenta"
-        >
-          ← All forums
-        </Link>
+        {/*
+          ⚠ ONE CONDITIONAL, NOT A NEW LAYOUT (`P1-ALL-E381` WS-2).
+
+          A PATH BOARD BREADCRUMBS TO ITS PATH. `E383` kept path boards OUT of
+          `/community/forums` on purpose — twelve mostly-empty rooms beside four
+          that can fill is the fragmentation `forums.ts` warns about — so a link
+          back to that index was a dead end: the visitor arrives at a list their
+          board is not in.
+          ⚠ THE FOUR GENERAL BOARDS KEEP THEIRS EXACTLY AS IT WAS.
+        */}
+        {board.learningPath ? (
+          <Link
+            href={`/learn/${board.learningPath.slug}`}
+            className="text-[13.5px] font-semibold text-ink-2 hover:text-magenta"
+          >
+            ← {board.learningPath.title}
+          </Link>
+        ) : (
+          <Link
+            href="/community/forums"
+            className="text-[13.5px] font-semibold text-ink-2 hover:text-magenta"
+          >
+            ← All forums
+          </Link>
+        )}
         <h1 className="mt-2 font-display text-[26px] font-bold tracking-[-0.5px]">
           {board.title}
         </h1>

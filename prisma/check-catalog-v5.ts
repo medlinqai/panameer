@@ -25,7 +25,33 @@ const EXPECT = {
   app: 302,
   tech: 264,
   opsProject: 101,
-  capabilityDomains: 85,
+  /*
+    ⚠⚠ MOVED 85 -> 87 ON 2026-09-04 (`P1-ALL-E381` WS-5). THIS EDITS A LOCKED
+    SPEC — the catalog pipeline's expected counts are recorded in `CLAUDE.md`
+    under "Data model — LOCKED", and the matching value there was moved in the
+    same change.
+
+    ⚠ WHY THE CONSTANT MOVED AND NOT THE DATABASE. Two rows appeared on
+    2026-08-19 — `Data, Analytics & AI Governance` (sort_order 108) and `Change
+    Management & AI Adoption` (109) — and `check:catalog` has been the only red
+    gate on `main` ever since. It was red at `32be570` and `d02f0e1` too, so it
+    predates this week entirely.
+
+    ⚠⚠ THE ALTERNATIVE IS REJECTED AND QUOTED SO NOBODY RE-PROPOSES IT:
+    *"delete the rows."* DELETING LIVE ROWS TO SATISFY A CONSTANT IS THE WRONG
+    DIRECTION — THE DATABASE IS THE RECORD AND THE CONSTANT IS A CLAIM ABOUT IT.
+    An accidental seed does not invent two plausible capability domains.
+
+    ⚠ AND THEY WERE CHECKED FOR REACHABILITY BEFORE BEING BLESSED, not assumed:
+    both carry a `process` of `Procure-to-Pay`, real keys, and sort_orders that
+    continue that list. P2P now holds exactly TEN domains — which is what
+    `question_bank_p2p.md` has always said it has. The database agrees with the
+    question bank; the constant was the thing left behind.
+
+    ⚠ ONLY THIS COUNT CHANGED. app 302, tech 264 and ops+project 101 all still
+    pass untouched.
+  */
+  capabilityDomains: 87,
 };
 
 async function main() {
