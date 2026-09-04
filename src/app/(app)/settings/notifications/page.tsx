@@ -1,3 +1,4 @@
+import { emailConfigured, EMAIL_UNAVAILABLE_NOTE } from "@/lib/email-status";
 import { guardPage } from "@/lib/guard";
 import { getNotificationPrefs } from "@/lib/settings";
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
@@ -36,10 +37,23 @@ export default async function NotificationsPage() {
   const viewer = await guardPage("authenticated");
   const prefs = await getNotificationPrefs(viewer);
   return (
-    <NotificationSettings
-      prefs={prefs}
-      isSeller={viewer.isServiceProvider || viewer.isServiceCoordinator}
-      isBuyer={viewer.isServiceBuyer}
-    />
+    <>
+      {/* ⚠ ONE HONEST LINE (`P1-ALL-E382`), shown only while the pipe is down.
+          It disappears on its own when `E371` lands — nothing to remember. */}
+      {!emailConfigured() && (
+        <p className="mb-4 rounded-brand border border-dashed border-line px-4 py-3 text-[13.5px] leading-relaxed text-ink-2">
+          {EMAIL_UNAVAILABLE_NOTE}
+        </p>
+      )}
+      {/* ⚠ `emailConfigured()` IS THE SAME FUNCTION `notify()` CALLS
+          (`P1-ALL-E382`) — read HERE, on the server, because `process.env` is
+          empty in the browser. One fact, two readers, never two switches. */}
+      <NotificationSettings
+        emailEnabled={emailConfigured()}
+        prefs={prefs}
+        isSeller={viewer.isServiceProvider || viewer.isServiceCoordinator}
+        isBuyer={viewer.isServiceBuyer}
+      />
+    </>
   );
 }

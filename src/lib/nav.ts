@@ -536,12 +536,25 @@ export const COMPANY_NAV: NavItem[] = [
   `Service Products` -> `/settings/packages`, buyer -> `/packages`. That is the
   design: one vocabulary, two destinations. DO NOT "align" the routes.
 
-  ⚠ THIS ALSO MOVES PAGE HEADINGS, and that is intended — `pageTitleFor` derives
-  every heading from these definitions (see its docblock). ⚠ AND IT FIXES AN
-  EXISTING INCONSISTENCY NOBODY FILED: `pageTitleFor`'s lookup list spreads
-  `PROVIDER_NAV` but NOT `REQUESTER_NAV`, so a BUYER on `/learn` has been getting
-  the heading "Start Learning" while their own rail said "Learning Paths". Both
-  now read "Learning Paths". Same for `/orders` -> "Work Orders".
+  ⚠⚠ SUPERSEDED 2026-09-04 (`P1-ALL-E381` WS-3), QUOTED NOT DELETED. THIS
+  PARAGRAPH USED TO OPEN: *"⚠ THIS ALSO MOVES PAGE HEADINGS, and that is intended
+  — `pageTitleFor` derives every heading from these definitions."*
+
+  ⚠⚠ THAT WAS TRUE WHEN WRITTEN AND IS FALSE NOW: `pageTitleFor` HAS NO CALLER.
+  Re-verified at `E381` across `src`, `scripts` and `e2e` — every page renders its
+  own `<h1>`. So relabelling the rail moves NO heading, and anyone reading the old
+  sentence would have believed a rename here changed page titles for free.
+
+  ⚠ A STALE COMMENT IS HOW THE NEXT BRIEF GETS WRITTEN ON A WRONG PREMISE, and
+  this project has the receipt: `E378`'s brief asserted the active tab was
+  signalled by *"COLOUR ALONE"* when the component had carried a 2px underline all
+  along. That premise came from exactly this failure mode.
+
+  ⚠ THE REST OF THE PARAGRAPH STILL HOLDS, so it is corrected rather than
+  removed: `pageTitleFor`'s lookup list spreads `PROVIDER_NAV` but NOT
+  `REQUESTER_NAV`, so IF IT WERE CALLED a buyer on `/learn` would read
+  "Learning Paths" from `heading` rather than the rail's one-word `Learn`. Same
+  for `/orders` -> "Work Orders".
   ⚠ THAT ROUTE WAS `/contracts` UNTIL `P1-ALL-E380`. ⚠ NOT ON `E380`'s
   REFERENCE LIST EITHER — found by grepping rather than trusting the brief.
 */
@@ -968,6 +981,28 @@ export function tabSequenceFor(baseRoute: string): "process" | "suggested" | "no
   return TAB_SEQUENCE[baseRoute] ?? "none";
 }
 
+/**
+ * ⚠⚠ THIS FUNCTION HAS NO CALLER (`P1-ALL-E381` WS-3, verified 2026-09-04).
+ *
+ * Grepped across `src`, `scripts` and `e2e`: nothing invokes it. Every page
+ * renders its own `<h1>`. ⚠ SO IT AFFECTS NOTHING AT RUNTIME, and any comment
+ * claiming a nav change "moves page headings" is describing a mechanism that is
+ * not connected — see the corrected paragraph above `PROVIDER_NAV`.
+ *
+ * ⚠⚠ IT IS DELIBERATELY NOT DELETED, AND THE REASON IS THE `heading` FIELD.
+ * `E378` turned the rail into one-word verbs and put each journey's full name on
+ * `NavItem.heading`; this function is the ONLY place those names are read as
+ * DATA rather than sitting in prose. Deleting it would make `heading` an unused
+ * field, and the next cleanup would delete that too — and with it the record of
+ * what `Learn`, `Hire`, `Shop` and `Connect` are actually called.
+ *
+ * ⚠ IT IS ALSO CORRECT AS IT STANDS: `best.heading ?? best.label` returns the
+ * journey name over the rail verb. If a header ever wants a derived title again,
+ * it works on the day it is called.
+ *
+ * ⚠ IF YOU ARE HERE TO DELETE DEAD CODE: check whether anything reads `heading`
+ * first. If nothing does, that is a decision about the nav model, not a cleanup.
+ */
 export function pageTitleFor(pathname: string): string | null {
   if (pathname === "/dashboard" || pathname === "/admin") return null;
 

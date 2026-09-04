@@ -219,6 +219,12 @@ export async function getBoard(slug: string, viewer: Viewer | null = null) {
     select: {
       slug: true,
       title: true,
+      /* ⚠ THE PATH COMES BACK SO THE PAGE CAN POINT AT IT (`P1-ALL-E381` WS-2).
+         `E383` reused the general forum chrome, which breadcrumbs to
+         `/community/forums` — a list path boards are DELIBERATELY excluded from,
+         so the link was a dead end. ⚠ `null` FOR THE FOUR GENERAL BOARDS, whose
+         breadcrumb is unchanged. */
+      learningPath: { select: { slug: true, title: true } },
       description: true,
       threads: {
         orderBy: { last_post_at: "desc" },
@@ -238,6 +244,10 @@ export async function getBoard(slug: string, viewer: Viewer | null = null) {
     slug: board.slug,
     title: board.title,
     description: board.description,
+    /* ⚠ `null` FOR THE FOUR GENERAL BOARDS (`P1-ALL-E381` WS-2). The page
+       breadcrumbs to the path when this is set, and to `/community/forums` when
+       it is not — which is the general boards' unchanged behaviour. */
+    learningPath: board.learningPath,
     threads: board.threads.map((t) => ({
       id: t.id,
       title: t.title,

@@ -32,11 +32,29 @@ export function NotificationSettings({
   prefs,
   isSeller,
   isBuyer,
+  emailEnabled,
 }: {
   prefs: Pref[];
   /** ⚠ `P1-ALL` — audience filtering. See `categoriesForAudience`. */
   isSeller: boolean;
   isBuyer: boolean;
+  /**
+   * ⚠⚠ WHETHER THIS BUILD CAN SEND AN EMAIL AT ALL (`P1-ALL-E382`).
+   *
+   * Passed in from the server page, which calls `emailConfigured()` — THE SAME
+   * FUNCTION `notify()` USES to stamp `suppressed_reason:
+   * "email_not_configured"`. ⚠ NOT a second flag: one fact, two readers, so this
+   * screen can never show "Email ON" for a channel the delivery layer is
+   * recording as unconfigured.
+   *
+   * ⚠ IT CANNOT BE READ HERE. This is a client component and `process.env` is
+   * empty in the browser, which would make the answer silently `false` for
+   * everyone.
+   *
+   * ⚠ WHEN `E371` LANDS THIS GOES `true` ON ITS OWN and the column un-disables.
+   * No line of `E382` needs deleting.
+   */
+  emailEnabled: boolean;
 }) {
   const [tab, setTab] = useState<NotificationGroup>("messages");
   const [state, setState] = useState<Record<string, Pref>>(
@@ -95,9 +113,20 @@ export function NotificationSettings({
           {(["In-App", "Email", "SMS"] as const).map((c) => (
             <span
               key={c}
-              className="text-center text-[11.5px] font-bold uppercase tracking-wide text-ink-2"
+              className={
+                "text-center text-[11.5px] font-bold uppercase tracking-wide " +
+                /* ⚠ THE HEADER IS LABELLED TOO (`P1-ALL-E382`), not just the
+                   toggles — a greyed checkbox with a live-looking header reads
+                   as a bug rather than as a state. */
+                (c === "Email" && !emailEnabled ? "text-ink-2/50" : "text-ink-2")
+              }
             >
               {c}
+              {c === "Email" && !emailEnabled && (
+                <span className="block text-[10px] font-semibold normal-case tracking-normal">
+                  not yet
+                </span>
+              )}
             </span>
           ))}
         </div>
@@ -122,11 +151,33 @@ export function NotificationSettings({
                     <span className="text-[12.5px] font-semibold text-ink-2 sm:hidden">
                       {channel === "inApp" ? "In-App" : channel === "email" ? "Email" : "SMS"}
                     </span>
+                    {/*
+                      ⚠⚠ THE EMAIL TOGGLE IS DISABLED WHILE THE PIPE IS DOWN
+                      (`P1-ALL-E382`). A member was seeing *"Messages — Email
+                      ON"* for a channel that has never sent anything, which is
+                      the `E034` shape with a USER-VISIBLE CONTROL: a promise the
+                      build cannot keep, presented as a setting they chose.
+
+                      ⚠ THE STORED PREFERENCE IS NOT TOUCHED. `checked` still
+                      shows what they are opted into, and the category defaults
+                      still say `email: true`. Flipping those to `false` would
+                      silently rewrite every user's intent to fix a RENDERING
+                      problem — and would lose the record of what they wanted the
+                      day email starts working.
+
+                      ⚠ `cat.locked` KEEPS ITS OWN MEANING. The two reasons a
+                      toggle is disabled are different and both survive.
+                    */}
                     <input
                       type="checkbox"
-                      aria-label={`${cat.label} — ${channel}`}
+                      aria-label={
+                        `${cat.label} — ${channel}` +
+                        (channel === "email" && !emailEnabled
+                          ? " (email delivery is not switched on yet)"
+                          : "")
+                      }
                       checked={pref[channel]}
-                      disabled={cat.locked}
+                      disabled={cat.locked || (channel === "email" && !emailEnabled)}
                       onChange={(e) => setChannel(cat.key, channel, e.target.checked)}
                       className="h-4 w-4 accent-magenta disabled:opacity-40"
                     />
