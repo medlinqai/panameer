@@ -130,7 +130,9 @@ async function main() {
     const mine: Expectation = {
       headline: parsed.headline,
       employers: parsed.experiences.map((e) => ({
-        employer: e.employer,
+        /* ⚠ `null` -> `""` FOR THE FIXTURE FILE ONLY (`P1-J1.4-E373`). The
+           expectation JSON is a string-comparison artefact, not product data. */
+        employer: e.employer ?? "",
         roleTitle: e.roleTitle,
         startDate: e.startDate,
       })),

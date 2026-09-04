@@ -113,15 +113,29 @@ async function run() {
       );
     }
 
-    const names = new Set(parsed.experiences.map((e) => e.employer.trim().toLowerCase()));
+    /* ⚠ UNNAMED ENTRIES ARE EXCLUDED FROM THE DISTINCT-NAME COUNT
+       (`P1-J1.4-E373`) rather than counted as one shared "" name — two
+       contractors with no company are two entries, not a duplicate. */
+    const names = new Set(
+      parsed.experiences
+        .map((e) => e.employer?.trim().toLowerCase())
+        .filter((n): n is string => Boolean(n))
+    );
     const dated = parsed.experiences.filter((e) => e.startDate).length;
 
     assert(parsed.experiences.length >= c.minEmployers, `≥${c.minEmployers} entries`, parsed.experiences.length);
     assert(names.size >= c.minDistinctNames, `≥${c.minDistinctNames} distinct names (not duplicates)`, names.size);
     assert(dated >= c.minDated, `≥${c.minDated} carry dates`, dated);
+    /* ⚠⚠ RE-HOMED, NOT DELETED (`P1-J1.4-E373`). It read *"every entry names an
+       employer or client"* — which is now FALSE BY DESIGN: a contractor's line
+       names no company and `null` is the correct answer. Scott: *"Legally I HAVE
+       to have a company… so no one tends to mention it."*
+       ⚠ THE RULE IT PROTECTED SURVIVES IN A STRONGER FORM: an entry may have NO
+       employer, but it must never carry an EMPTY one — `""` is the ambiguous
+       state that hid the original defect, and it is now banned outright. */
     assert(
-      parsed.experiences.every((e) => e.employer.trim().length > 0),
-      "every entry names an employer or client"
+      parsed.experiences.every((e) => e.employer === null || e.employer.trim().length > 0),
+      "no entry carries an empty employer string (null is allowed, \"\" is not)"
     );
     // The AI result must itself clear the gate, or the panel would reappear on
     // top of a successful AI pass.

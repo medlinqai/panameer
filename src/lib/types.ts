@@ -106,7 +106,8 @@ export type PublicProviderProfile = {
   skills: { id: string; name: string; roleType: string }[];
   experience: {
     id: string;
-    employer: string;
+    /* ⚠ NULLABLE (`P1-J1.4-E373`). */
+    employer: string | null;
     roleTitle: string;
     description: string | null;
     startDate: string | null;

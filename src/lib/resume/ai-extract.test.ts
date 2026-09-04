@@ -68,13 +68,44 @@ console.log("=== schema validation ===");
   const ok = AI_RESUME_SCHEMA.safeParse(MARELISE_LIKE);
   check("a well-formed response validates", ok.success, ok.success ? undefined : ok.error.issues[0]);
 
-  // A model that omits a required field must be REFUSED, not partially applied —
-  // half an employer in someone's profile is worse than no employer.
+  /*
+    ⚠⚠ RE-HOMED BY `P1-J1.4-E373`, NOT DELETED — AND IT FIRED, WHICH IS THE
+    HARNESS WORKING CORRECTLY.
+
+    ⚠ SUPERSEDED, QUOTED NOT DELETED: *"A model that omits a required field must
+    be REFUSED, not partially applied — half an employer in someone's profile is
+    worse than no employer."* and `check("an employer with no name is refused",
+    !bad.success)`.
+
+    ⚠⚠ THAT RULE IS NOW FALSE BY DESIGN, AND ITS FALSENESS WAS THE BUG. Scott:
+    *"Legally I HAVE to have a company (aka employer), but it could just be a one
+    person LLC…so no one tends to mention it."* A REQUIRED name with no honest
+    value is what forced the extractor to write the JOB TITLE into it — 36 of 250
+    rows, and 38 of 91 live colleague suggestions reading *"You were both at
+    Founder & Principal Consultant"*.
+
+    ⚠ SO THE ASSERTION IS INVERTED RATHER THAN DROPPED, AND THE RULE IT ACTUALLY
+    PROTECTED SURVIVES IN A STRONGER FORM. The point was never "a name must
+    exist" — it was "the schema must not accept a half-formed employer". A
+    MISSING name is now valid; an employer that is not an OBJECT, or that omits
+    the key entirely rather than nulling it, still is not.
+  */
+  const noName = AI_RESUME_SCHEMA.safeParse({
+    ...EDDIE_LIKE,
+    employers: [{ name: null, roleTitle: "Director" }],
+  });
+  check(
+    "an employer with an explicitly NULL name is ACCEPTED (E373)",
+    noName.success,
+    noName.success ? undefined : noName.error.issues[0]
+  );
+  /* ⚠ AND THE HALF-FORMED CASE IS STILL REFUSED — a non-object employer is not
+     an employer, and that is what the original assertion was really guarding. */
   const bad = AI_RESUME_SCHEMA.safeParse({
     ...EDDIE_LIKE,
-    employers: [{ roleTitle: "Director" }],
+    employers: ["Director"],
   });
-  check("an employer with no name is refused", !bad.success);
+  check("a malformed employer entry is still refused", !bad.success);
 
   const junk = AI_RESUME_SCHEMA.safeParse("not an object");
   check("a non-object response is refused", !junk.success);

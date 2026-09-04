@@ -94,8 +94,23 @@ const looseStringArray = z
 
 /** What we ask the model for — mirrors what the review step already consumes. */
 const aiEmployer = z.object({
-  // The only genuinely required field: an employer with no name is not an entry.
-  name: z.string(),
+  /*
+    ⚠⚠ NULLABLE AS OF `P1-J1.4-E373`, AND THE OLD COMMENT WAS THE BUG.
+
+    ⚠ SUPERSEDED, QUOTED NOT DELETED: *"The only genuinely required field: an
+    employer with no name is not an entry."*
+
+    ⚠⚠ THAT IS FALSE FOR A CONTRACTOR, AND IT IS WHY 36 OF 250 `Employer` ROWS
+    HOLD A JOB TITLE. Scott: *"Legally I HAVE to have a company (aka employer),
+    but it could just be a one person LLC…so no one tends to mention it."* A
+    REQUIRED field with no honest value does not stay empty — it gets filled with
+    the nearest thing to hand, and the nearest thing on a self-employed résumé
+    line is the TITLE. The model was doing its best with an impossible schema.
+
+    ⚠ NULL IS NOW A VALID ANSWER and the prompt says so explicitly. It renders as
+    `Independent` via `employerDisplayName()`.
+  */
+  name: maybe(z.string()),
   roleTitle: maybe(z.string()),
   location: maybe(z.string()),
   startDate: maybe(z.string()),
@@ -155,7 +170,15 @@ const TOOL_SCHEMA = {
       items: {
         type: "object",
         properties: {
-          name: { type: "string", description: "The employing company." },
+          /* ⚠⚠ THE PROMPT HAS TO SAY IT TOO (`P1-J1.4-E373`). Making the Zod
+             field nullable without telling the model changes nothing: the model
+             answers the DESCRIPTION, not the schema. The instruction not to
+             substitute a title is the half that actually fixes mechanism 1. */
+          name: {
+            type: ["string", "null"],
+            description:
+              "The employing company, or null if the résumé names none — do not substitute a job title. A self-employed or contracting line often names no company at all; null is the correct answer there.",
+          },
           roleTitle: { type: ["string", "null"] },
           location: { type: ["string", "null"] },
           startDate: { type: ["string", "null"], description: "YYYY-MM-DD, or YYYY-MM-01 when only a month is given." },
@@ -632,7 +655,10 @@ export function aiToParsedResume(ai: AiResume): ParsedResume {
   };
 
   const experiences = ai.employers.map((e) => ({
-    employer: e.name,
+    /* ⚠ `null` FLOWS THROUGH AS `null` (`P1-J1.4-E373`) — it is not coerced to
+       "" here, because an empty string is indistinguishable from a name nobody
+       typed and the whole point is that the absence is now recordable. */
+    employer: e.name ?? null,
     roleTitle: e.roleTitle ?? "",
     description: e.description ?? null,
     startDate: iso(e.startDate),
@@ -698,7 +724,10 @@ export function aiToParsedResume(ai: AiResume): ParsedResume {
 
   const employerKeys = experiences.map((e) => ({
     name: e.employer,
-    key: normEmployer(e.employer),
+    /* ⚠ A NULL EMPLOYER GETS AN EMPTY KEY (`P1-J1.4-E373`), which never matches a
+       real one — so unnamed lines are never merged with each other or with a
+       named employer. Two contractors are not the same company. */
+    key: e.employer ? normEmployer(e.employer) : "",
   }));
 
   const matchEmployer = (raw: string | null | undefined): string | null => {

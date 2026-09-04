@@ -34,8 +34,11 @@ export const clean = (v?: string | null, max = 400) => {
  * no database. **This is the part that silently rots** — an `Employer` column
  * added later has to be given a destination here or the harness fails.
  */
+import { NO_EMPLOYER_LABEL } from "@/lib/employer-display";
+
 export type EmployerScalars = {
-  name: string;
+  /* ⚠ NULLABLE (`P1-J1.4-E373`) — a contractor's line names no company. */
+  name: string | null;
   role_title: string | null;
   location: string | null;
   city: string | null;
@@ -88,7 +91,14 @@ export function employerToProjectData(
     clean(e.location, 200) ??
     ([e.city, e.state, e.country].map((x) => clean(x, 200)).filter(Boolean).join(", ") || null);
   return {
-    name: e.name,
+    /* ⚠⚠ A PROJECT MUST HAVE A NAME, AND AN EMPLOYER NOW MIGHT NOT
+       (`P1-J1.4-E373`). `ProjectScalars.name` stays REQUIRED on purpose — an
+       unnamed project is a row nobody can identify in a list.
+       ⚠ SO THE FALLBACK IS THE ROLE TITLE, which is the only other thing the row
+       says about the work, and then the SAME label the display helper uses — not
+       a second invented string. `Independent` comes from
+       `NO_EMPLOYER_LABEL`, so there is still exactly one word for this state. */
+    name: e.name ?? e.role_title ?? NO_EMPLOYER_LABEL,
     description: e.description,
     role_title: e.role_title,
     location: place,

@@ -140,7 +140,9 @@ const FULL: EmployerScalars = {
 };
 
 const there = employerToProjectData(FULL, "Northwind");
-const back = projectToEmployerData(there, FULL.name);
+/* ⚠ `FULL.name` IS NOW NULLABLE (`P1-J1.4-E373`); the fixture always sets it, so
+   the assertion is unchanged in meaning — the `??` only satisfies the type. */
+const back = projectToEmployerData(there, FULL.name ?? "");
 
 for (const key of Object.keys(FULL) as (keyof EmployerScalars)[]) {
   if (["city", "state", "country"].includes(key)) continue; // folded — asserted below
@@ -183,7 +185,7 @@ check("2 — ⚠ a bare parser-created employer converts at all", bareOut.name =
 check("2 — with no dates", bareOut.start_date === null && bareOut.end_date === null);
 check("2 — with no role type", bareOut.role_type_id === null);
 check("2 — with no description", bareOut.description === null);
-check("2 — and it round-trips too", projectToEmployerData(bareOut, BARE.name).name === "Some Client");
+check("2 — and it round-trips too", projectToEmployerData(bareOut, BARE.name ?? "").name === "Some Client");
 
 /* The loss sentence is enumerated, never generic. */
 check(
