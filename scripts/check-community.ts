@@ -752,6 +752,35 @@ check(
   "E378/1 — /community is declared suggested in nav.ts",
   /"\/community":\s*"suggested"/.test(navLib)
 );
+/* ── ⚠⚠ EVERY TAB SET IS DELIBERATELY CLASSIFIED (`P1-ALL-E384` WS-3) ──────
+   Scott: *"we could define each menu sequential or parallel, then number the
+   sequential only."* `TAB_SEQUENCE` already does that — but NOTHING STOPPED A
+   FIFTH SET APPEARING WITH NO ENTRY and silently defaulting to `none`. A set
+   that is unnumbered because nobody decided looks exactly like one that is
+   unnumbered because somebody did, and only one of those is a decision.
+   ⚠ `E384`'s brief said only ONE set was classified. That was wrong — `E378`
+   classified all four. The missing piece was the guard, not the classification. */
+const pageTabKeys = [...navLib.matchAll(/^\s*"(\/[^"]*)":\s*\[/gm)].map((m) => m[1]);
+const seqBlock = /export const TAB_SEQUENCE[\s\S]*?\n\};/.exec(navLib)?.[0] ?? "";
+check(
+  "E384/3 — the PAGE_TABS keys were found by the scan",
+  pageTabKeys.length >= 4,
+  `${pageTabKeys.length} key(s)`
+);
+check("E384/3 — the TAB_SEQUENCE block was found by the scan", seqBlock.length > 0);
+const unclassified = pageTabKeys.filter((k) => !seqBlock.includes(`"${k}":`));
+check(
+  "E384/3 — every PAGE_TABS set has an explicit TAB_SEQUENCE mode",
+  unclassified.length === 0,
+  `unclassified: ${unclassified.join(", ")} — unlisted defaults to none, hiding a decision nobody made`
+);
+/* ⚠ AND `process` STAYS IN THE UNION EVEN WITH NO CONSUMER. Scott said keep it. */
+check(
+  "E384/3 — the process mode is kept even though nothing uses it",
+  /"process" \| "suggested" \| "none"/.test(navLib),
+  "Scott said keep it"
+);
+
 check(
   "E378/1 — tabSequenceFor defaults an undeclared set to none",
   /TAB_SEQUENCE\[baseRoute\] \?\? "none"/.test(navLib),

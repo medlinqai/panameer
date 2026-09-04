@@ -85,3 +85,24 @@ export function domainMatches(
   const b = (companyDomain ?? "").trim().toLowerCase() || null;
   return !!a && !!b && a === b && isWorkDomain(a);
 }
+
+/**
+ * ⚠⚠ THE TERMS NOTICE FOR THE FRICTIONLESS PATHS (`P1-ALL-E384` WS-1a/1b).
+ *
+ * SCOTT, 2026-09-04: *"yes, everyone needs to accept ToS...fix."*
+ *
+ * The assessment-claim flow and OAuth sign-in both create an account WITHOUT a
+ * signup form, so neither has a terms checkbox. ⚠ THAT FRICTIONLESSNESS IS
+ * DELIBERATE AND HAD TO SURVIVE — the claim flow is the top of the funnel, and a
+ * control would add a second step to a one-step flow.
+ *
+ * ⚠⚠ SO THE CLICK IS THE AFFIRMATIVE ACT, AND WHAT MAKES THAT LEGITIMATE IS
+ * THAT THE TERMS ARE NAMED AND REACHABLE. AN AGREEMENT NOBODY COULD READ BEFORE
+ * AGREEING IS NOT ONE.
+ *
+ * ⚠ CC-AUTHORED COPY, from the brief's own wording. Scott can overrule it here,
+ * in one place, and both paths change together.
+ */
+export const CLAIM_TERMS_NOTICE =
+  "Claiming your results creates your Panameer account and accepts the Terms of Use and Privacy Policy.";
+

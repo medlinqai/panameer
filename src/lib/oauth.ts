@@ -1,4 +1,7 @@
 import { prisma } from "@/lib/prisma";
+/* ⚠ `P1-ALL-E384` — the ToS is the MSA (`E380`); every account-creating path
+   records acceptance in the same transaction. */
+import { USER_TOS_VERSION } from "@/lib/tos";
 import { normalizeEmail } from "@/lib/normalizeEmail";
 import { capitalizeName } from "@/lib/display";
 
@@ -119,6 +122,31 @@ export async function linkOAuthUser(
       email_verified: new Date(),
       last_login: new Date(),
       oauth_providers: [input.provider],
+      /*
+        ── ⚠⚠ ACCEPTANCE, IN THE SAME CREATE (`P1-ALL-E384` WS-1b) ────────────
+
+        SCOTT, 2026-09-04: *"yes, everyone needs to accept ToS...fix."*
+
+        ⚠ THIS HOLE IS LATENT, NOT LIVE — it has produced 0 rows only because
+        OAuth is wired and OFF until keys are added. That is exactly why it is
+        worth fixing now: the day the keys land, every Google and Apple sign-in
+        would have created a member with no master agreement, and nobody would
+        have noticed because there is no form to be missing a checkbox from.
+
+        ⚠⚠ SAME TRANSACTION AS THE USER, for the same reason as the claim path:
+        an OAuth account without an acceptance must not be a state the database
+        can reach.
+
+        ⚠ AND THE SAME COPY OBLIGATION APPLIES — see `CLAIM_TERMS_NOTICE`. THE
+        SIGN-IN BUTTON MUST CARRY IT before the click. ⚠ REPORTED AT `E384` AND
+        NOT DONE HERE: the OAuth buttons are on the login and signup surfaces,
+        those buttons are not rendered while the providers are disabled, and
+        putting copy under a button nobody can see is not a fix. It has to land
+        with the keys, and `check:tos` names this file so the write cannot
+        disappear in the meantime.
+      */
+      tos_accepted_at: new Date(),
+      tos_version: USER_TOS_VERSION,
     },
   });
 
