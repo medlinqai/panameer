@@ -106,7 +106,8 @@ export const ROUTE_ACCESS: { prefix: string; requires: RouteRequirement }[] = [
   { prefix: "/find-work/new", requires: "canHireTalent" },
   { prefix: "/reports", requires: "canHireTalent" },
   { prefix: "/search", requires: "authenticated" }, // rail stub (E134)
-  { prefix: "/contracts", requires: "authenticated" }, // rail stub (E134)
+  /* ⚠ `/contracts` -> `/orders` (`P1-ALL-E380`). Gate unchanged. */
+  { prefix: "/orders", requires: "authenticated" }, // rail stub (E134)
   { prefix: "/finances", requires: "authenticated" }, // rail stub (E134)
   { prefix: "/messages", requires: "authenticated" }, // shared buyer ↔ provider
   /*

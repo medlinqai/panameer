@@ -95,7 +95,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
           can overrule it on the walk.
 
           ⚠⚠ BLAST RADIUS: this shell wraps EVERY AUTHENTICATED PAGE — /dashboard,
-          /company, /settings/*, /contracts, /pay, /community, /notifications,
+          /company, /settings/*, /orders, /pay, /community, /notifications,
           /search, the admin pages and /learn signed-in. All of them gain the
           three-column video footer. That is what "the footer must be in" means and
           it is intended, but it is the widest change in `E246`.

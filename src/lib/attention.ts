@@ -107,7 +107,8 @@ export async function getAttentionCards(input: {
       id: "work-orders",
       label: "Work Orders to Accept",
       detail: "waiting on your acceptance",
-      href: "/contracts",
+      /* ⚠ `/contracts` -> `/orders` (`P1-ALL-E380`). */
+      href: "/orders",
       icon: "ClipboardCheck",
     },
     null,
