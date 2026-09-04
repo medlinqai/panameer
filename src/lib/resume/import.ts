@@ -458,7 +458,9 @@ export async function applyParsedResume(
     const employer = await prisma.employer.create({
       data: {
         provider_profile_id: profileId,
-        name: e.employer.slice(0, 200),
+        /* ⚠ NULL SURVIVES THE WRITE (`P1-J1.4-E373`). Coercing to "" here would
+           re-create the defect the nullable column exists to fix. */
+        name: e.employer ? e.employer.slice(0, 200) : null,
         role_title: e.roleTitle.slice(0, 200),
         description: e.description?.slice(0, 4000) ?? null,
         start_date: e.startDate ? new Date(e.startDate) : null,
@@ -473,7 +475,11 @@ export async function applyParsedResume(
       },
       select: { id: true },
     });
-    employerIdByName.set(e.employer, employer.id);
+    /* ⚠ AN UNNAMED EMPLOYER IS NOT KEYED (`P1-J1.4-E373`). The map exists so a
+       project can find its employer BY NAME; a null has no name to find, and
+       keying it under "" would attach every unnamed line's projects to whichever
+       one was written last. */
+    if (e.employer) employerIdByName.set(e.employer, employer.id);
     applied.experiences++;
     applied.jobSkills += found.skillIds.length;
     if (found.needsSuite) applied.needsSuite++;

@@ -1150,7 +1150,23 @@ model ProviderProfileSpecialization {
 model Employer {
   id                  String    @id @default(uuid()) @db.Uuid
   provider_profile_id String    @db.Uuid
-  name                String
+  /// ── ⚠⚠ NULLABLE AS OF `P1-J1.4-E373` ────────────────────────────────────
+  ///
+  /// SCOTT, 2026-09-04: *"I was a contractor for 20+ years… **Legally I HAVE to
+  /// have a company (aka employer), but it could just be a one person LLC…so no
+  /// one tends to mention it.**"*
+  ///
+  /// ⚠ SO A MISSING EMPLOYER IS NOT CORRUPTION — IT IS A SHAPE MISMATCH. A
+  /// required field with no honest value forces whatever wrote it to invent one,
+  /// and what the extractor invented was the JOB TITLE: 36 of 250 rows, which
+  /// rendered as *"You were both at Founder & Principal Consultant"* on 38 of 91
+  /// live colleague suggestions.
+  ///
+  /// ⚠ NULL MEANS "the résumé names no company", and it renders as `Independent`
+  /// from ONE helper — `employerDisplayName()` in `src/lib/employer-display.ts`.
+  /// ⚠ NEVER RENDER THE RAW COLUMN. A null reaching a surface as an empty string
+  /// is the same defect wearing different clothes.
+  name                String?
   /// Job title held there.
   role_title          String?
   /// Free-text legacy location ("Chicago, IL"). Superseded by the structured

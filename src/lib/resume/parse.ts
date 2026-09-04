@@ -13,7 +13,9 @@
  */
 
 export type ParsedExperience = {
-  employer: string;
+  /* ⚠ NULLABLE (`P1-J1.4-E373`) — a contractor's line names no company.
+     Render via `employerDisplayName()`, never raw. */
+  employer: string | null;
   roleTitle: string;
   description: string | null;
   startDate: string | null; // YYYY-MM-DD

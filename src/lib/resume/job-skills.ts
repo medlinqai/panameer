@@ -268,16 +268,22 @@ export function extractJobSkills(text: string, vocab: VocabEntry[]): JobExtracti
  * document order, which is how CVs are written.
  */
 export function suggestedCompany(
-  experiences: { employer: string; endDate?: string | null }[]
+  /* ⚠ `employer` NULLABLE (`P1-J1.4-E373`). */
+  experiences: { employer: string | null; endDate?: string | null }[]
 ): string | null {
   if (!experiences.length) return null;
   const current = experiences.find((e) => !e.endDate && e.employer?.trim());
-  if (current) return current.employer.trim();
+  /* ⚠ `!` IS SAFE HERE — the predicate above already required a non-empty
+     employer (`P1-J1.4-E373`). */
+  if (current) return current.employer!.trim();
 
   const dated = experiences
     .filter((e) => e.endDate && e.employer?.trim())
     .sort((a, b) => (a.endDate! < b.endDate! ? 1 : a.endDate! > b.endDate! ? -1 : 0));
-  return dated[0]?.employer.trim() ?? experiences[0]?.employer?.trim() ?? null;
+  /* ⚠ THE FIRST BRANCH IS FILTERED TO NON-EMPTY ABOVE; the second is not, so it
+     keeps its optional chain and can legitimately yield null — a résumé whose
+     only entries name no company HAS no current employer to report. */
+  return dated[0]?.employer?.trim() ?? experiences[0]?.employer?.trim() ?? null;
 }
 
 /** Build the vocabulary from catalog rows. Vendor roles only — see below. */

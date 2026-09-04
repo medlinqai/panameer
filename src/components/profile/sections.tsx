@@ -152,7 +152,8 @@ export type ArtifactItem = {
 
 export type EmployerItem = {
   id: string;
-  name: string;
+  /* ⚠ NULLABLE (`P1-J1.4-E373`) — render via `employerDisplayName()`. */
+  name: string | null;
   roleTitle?: string | null;
   location?: string | null;
   logoUrl?: string | null;

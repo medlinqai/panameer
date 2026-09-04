@@ -1,5 +1,8 @@
 "use client";
 
+/* ⚠ PURE MODULE — no prisma, so a client component may import it. That is why
+   the helper lives in `lib/employer-display.ts` and not beside the DB reads. */
+import { employerDisplayName } from "@/lib/employer-display";
 import { useCallback, useEffect, useState } from "react";
 import { Modal } from "@/components/Modal";
 /* ⚠ THE LOSS SENTENCE IS THE LIB'S, NOT RE-TYPED HERE (`E296`). */
@@ -491,14 +494,14 @@ export function EmployersStep({
                       <SelectTick
                         checked={bulk.picked.has(e.id)}
                         onChange={() => bulk.toggle(e.id)}
-                        label={e.name}
+                        label={employerDisplayName(e.name)}
                       />
                     </span>
                   )}
                   <button
                     type="button"
                     onClick={() => openEditEmployer(e)}
-                    aria-label={`Edit ${e.name}`}
+                    aria-label={`Edit ${employerDisplayName(e.name)}`}
                     className="grid h-9 w-9 place-items-center rounded-full border-[1.5px] border-magenta text-magenta transition-colors hover:bg-magenta hover:text-white"
                   >
                     ✏️
@@ -509,21 +512,78 @@ export function EmployersStep({
                     re-add them as a project."* Same 9x9 magenta circle as its two
                     neighbours — no new button style was invented.
                   */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setReclassify({ kind: "employer", id: e.id, name: e.name });
-                      setReclassifyAs("employer");
-                      setReclassifyTarget("");
-                      setReclassifyClient("");
-                      setLoss(null);
-                    }}
-                    aria-label={`Change what ${e.name} is`}
-                    title="This is a project, not a job"
-                    className="grid h-9 w-9 place-items-center rounded-full border-[1.5px] border-magenta text-magenta transition-colors hover:bg-magenta hover:text-white"
-                  >
-                    ⇄
-                  </button>
+                  {/*
+                    ── ⚠⚠ THE PLAYBACK RADIO (`P1-J1.4-E373` WS-3) ─────────────
+
+                    SCOTT: *"either we ask the style (employer-based or project
+                    based) or we play it back to them in a way that is easy to
+                    change (radio buttons)."*
+
+                    ⚠ SUPERSEDED, QUOTED NOT DELETED — this was `E296`'s `⇄`
+                    button: *"THE THIRD CONTROL. SCOTT: 'I would need to delete
+                    EVERY employer and then re-add them as a project.' Same 9x9
+                    magenta circle as its two neighbours."* ⚠ THE CONVERSION IT
+                    OPENED IS UNCHANGED AND IS NOT REBUILT — this radio calls the
+                    same `setReclassify` path into the same dialog and the same
+                    transactional `moveProject`. Only the AFFORDANCE changed: a
+                    hidden swap button becomes a visible statement of what the
+                    parser decided.
+
+                    ⚠⚠ WHY A RADIO RATHER THAN ASKING THE STYLE UP FRONT: the
+                    honest answer for a 20-year career is BOTH — ten years
+                    employed, then ten contracting — so a global choice gets the
+                    majority case wrong for exactly the people this brief is
+                    about.
+
+                    ⚠ `Employer` IS PRE-SELECTED, AND THE SIGNAL IS STRUCTURAL
+                    RATHER THAN A GUESS: every row in this list IS an `Employer`
+                    record, so "employer" is what the parser actually decided.
+                    ⚠ WHETHER THE IMPORT SHOULD DEFAULT TO PROJECT INSTEAD IS
+                    STILL OPEN AND IS NOT DECIDED HERE — reported at `E373`.
+
+                    ⚠ CHOOSING `Project` OPENS THE EXISTING DIALOG rather than
+                    converting on the spot, and that is not a half-measure: the
+                    conversion needs a CLIENT NAME or a target employer to nest
+                    under, and a radio cannot collect either. A one-click convert
+                    would either invent a client or lose one.
+                  */}
+                  <fieldset className="flex items-center gap-2 rounded-full border border-line px-2 py-1">
+                    <legend className="sr-only">
+                      {`Is ${employerDisplayName(e.name)} a job or a project?`}
+                    </legend>
+                    <label className="flex items-center gap-1 text-[12px] font-semibold text-ink-2">
+                      <input
+                        type="radio"
+                        name={`kind-${e.id}`}
+                        value="employer"
+                        checked
+                        readOnly
+                        className="accent-magenta"
+                      />
+                      Employer
+                    </label>
+                    <label className="flex items-center gap-1 text-[12px] font-semibold text-ink-2">
+                      <input
+                        type="radio"
+                        name={`kind-${e.id}`}
+                        value="project"
+                        checked={false}
+                        onChange={() => {
+                          setReclassify({
+                            kind: "employer",
+                            id: e.id,
+                            name: employerDisplayName(e.name),
+                          });
+                          setReclassifyAs("employer");
+                          setReclassifyTarget("");
+                          setReclassifyClient("");
+                          setLoss(null);
+                        }}
+                        className="accent-magenta"
+                      />
+                      Project
+                    </label>
+                  </fieldset>
                   <button
                     type="button"
                     onClick={() => {
@@ -543,13 +603,13 @@ export function EmployersStep({
                       */
                       if (
                         confirm(
-                          `Remove ${e.name}? Any projects under it are kept — they move to “Projects not yet under a job”, where you can place them again.`
+                          `Remove ${employerDisplayName(e.name)}? Any projects under it are kept — they move to “Projects not yet under a job”, where you can place them again.`
                         )
                       ) {
                         void post({ action: "deleteEmployer", employerId: e.id });
                       }
                     }}
-                    aria-label={`Delete ${e.name}`}
+                    aria-label={`Delete ${employerDisplayName(e.name)}`}
                     className="grid h-9 w-9 place-items-center rounded-full border-[1.5px] border-magenta text-magenta transition-colors hover:bg-magenta hover:text-white"
                   >
                     🗑
@@ -619,7 +679,7 @@ export function EmployersStep({
                         {e.roleTitle || e.name}
                       </p>
                       <p className="mt-1 text-[13.5px] text-ink-2">
-                        <b className="text-ink">{e.name}</b>
+                        <b className="text-ink">{employerDisplayName(e.name)}</b>
                         {e.description ? ` — ${e.description}` : ""}
                       </p>
                       {dateRange(e.startDate, e.endDate, e.isCurrent) && (
@@ -824,7 +884,7 @@ export function EmployersStep({
                     </option>
                     {employers.map((e) => (
                       <option key={e.id} value={e.id}>
-                        {e.name}
+                        {employerDisplayName(e.name)}
                       </option>
                     ))}
                   </select>

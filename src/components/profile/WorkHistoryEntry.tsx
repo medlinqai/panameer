@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { employerDisplayName } from "@/lib/employer-display";
 import { ProjectCard, dateRange, type EmployerItem, type ProjectItem } from "@/components/profile/sections";
 
 /**
@@ -165,7 +166,9 @@ export function WorkHistoryEntry({
       */}
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div className="min-w-0">
-          <p className="font-bold">{employer.name}</p>
+          {/* ⚠ VIA THE ONE HELPER (`P1-J1.4-E373`) — a contractor's line names no
+              company, and `null` reads as `Independent` rather than as a gap. */}
+          <p className="font-bold">{employerDisplayName(employer.name)}</p>
           {displayRole(employer.roleTitle) && (
             <p className="mt-0.5 text-[14px] text-ink-2">
               {displayRole(employer.roleTitle)}
