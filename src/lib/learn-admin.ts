@@ -1,4 +1,7 @@
 import { prisma } from "@/lib/prisma";
+/* ⚠ `P1-J3-E383` — one idempotent board helper, shared with the seed and the
+   backfill so the three cannot drift. */
+import { ensurePathBoard } from "@/lib/forums";
 import { isPlayable } from "@/lib/learn";
 
 /**
@@ -278,22 +281,41 @@ export type PathInput = {
  * flag has to be set on the way out of every mutation — otherwise the next
  * catalog import silently overwrites the work this console exists to do.
  */
+/**
+ * ⚠⚠ THE FORUM IS CREATED WITH THE PATH, IN THE SAME TRANSACTION (`P1-J3-E383`).
+ *
+ * SCOTT, 2026-09-04: *"every learning path should have a forum."* and *"this
+ * needs to be baked into the LP creation."*
+ *
+ * ⚠ A PATH WITHOUT ITS FORUM MUST NOT BE A STATE THE DATABASE CAN BE IN, which
+ * is why this is `$transaction` and not two awaits. A create that half-succeeded
+ * would leave a path whose forum silently never appears, and nothing would ever
+ * notice — `check:forums` asserts every path has exactly one board across the
+ * LIVE library, so a gap becomes a red gate rather than a mystery.
+ */
 export async function createPath(input: PathInput) {
   const slug = await uniquePathSlug(input.slug?.trim() || input.title);
-  return prisma.learningPath.create({
-    data: {
-      title: input.title.trim(),
-      slug,
-      summary: input.summary?.trim() || null,
-      audience: input.audience as never,
-      group: input.group?.trim() || null,
-      expert_person_id: input.expertPersonId || null,
-      cover_image: input.coverImage?.trim() || null,
-      intro_video_ref: input.introVideoRef?.trim() || null,
-      status: (input.status ?? "DRAFT") as never,
-      is_custom: true,
-    },
-    select: { id: true, slug: true },
+  return prisma.$transaction(async (tx) => {
+    const path = await tx.learningPath.create({
+      data: {
+        title: input.title.trim(),
+        slug,
+        summary: input.summary?.trim() || null,
+        audience: input.audience as never,
+        group: input.group?.trim() || null,
+        expert_person_id: input.expertPersonId || null,
+        cover_image: input.coverImage?.trim() || null,
+        intro_video_ref: input.introVideoRef?.trim() || null,
+        status: (input.status ?? "DRAFT") as never,
+        is_custom: true,
+      },
+      select: { id: true, slug: true, title: true, summary: true },
+    });
+    /* ⚠ THE SAME IDEMPOTENT HELPER the seed and the backfill call — one shape,
+       three callers, so they cannot drift. Title and description are the PATH'S
+       OWN; no copy was written here. */
+    await ensurePathBoard(tx, path);
+    return { id: path.id, slug: path.slug };
   });
 }
 
@@ -361,7 +383,9 @@ export async function deletePath(id: string) {
     select: {
       id: true,
       title: true,
+      /* ⚠ `forumBoards` ADDED BY `P1-J3-E383`. See the threads check below. */
       _count: { select: { courses: true, enrollments: true } },
+      forumBoards: { select: { _count: { select: { threads: true } } } },
     },
   });
   if (!path) throw new LearnAdminError("That learning path no longer exists.", "NOT_FOUND");
@@ -375,6 +399,27 @@ export async function deletePath(id: string) {
   if (path._count.courses > 0) {
     throw new LearnAdminError(
       `This path still has ${path._count.courses} course${path._count.courses === 1 ? "" : "s"}. Delete those first — deleting the path would take every section and lesson under it with it, and there's no undo.`,
+      "BLOCKED"
+    );
+  }
+
+  /*
+    ⚠⚠ ONE MORE COUNT, IN THE EXISTING VOICE — NOT A SECOND GUARD (`P1-J3-E383`).
+
+    The two checks above already stop almost everything: a path anyone enrolled
+    in cannot be deleted, and posting requires enrolment. ⚠ BUT AN INSTRUCTOR CAN
+    POST WITHOUT ENROLLING — `canAccessPathForum` grants access by enrolment OR
+    teaching — so a path with an instructor's welcome thread and ZERO enrolments
+    passes both checks, and the board's `onDelete: Cascade` takes that thread
+    with it.
+
+    ⚠ THE FK WAS NOT SWITCHED TO `Restrict`, and the two messages above were not
+    touched. A guard can say WHY; a database error cannot.
+  */
+  const threads = path.forumBoards.reduce((n, b) => n + b._count.threads, 0);
+  if (threads > 0) {
+    throw new LearnAdminError(
+      `This path's forum has ${threads} thread${threads === 1 ? "" : "s"}. Delete those first — deleting the path would take the forum and every question in it with it, and there's no undo.`,
       "BLOCKED"
     );
   }

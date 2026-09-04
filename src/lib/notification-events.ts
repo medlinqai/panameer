@@ -159,6 +159,32 @@ export const NOTIFICATION_EVENTS = {
   },
 
   // ── Learn — P1-J3 ─────────────────────────────────────────────────────────
+  /*
+    ⚠⚠ EXTENDED BY `P1-J3-E383` TO SAY THE FORUM IS OPEN. NO SECOND EVENT.
+
+    SCOTT, 2026-09-04: *"ok, as long as the learner gets an email telling them."*
+
+    ⚠ THIS IS A COPY CHANGE, NOT A FEATURE. The event already existed and already
+    fires at `api/learn/enroll/route.ts`. ⚠ ONE EVENT PER THING THAT HAPPENED —
+    enrolling is ONE action, and firing `community.joined` alongside it would put
+    two notifications in front of somebody who did one thing.
+
+    ⚠⚠ AND IT WILL NOT BE AN EMAIL YET, WHICH IS STATED HERE RATHER THAN HIDDEN.
+    `RESEND_API_KEY` is commented out, there is no digest sender, and nothing
+    fires a digest event (`P1-ALL-E371`). `notify()` will stamp
+    `suppressed_reason: "email_not_configured"` and deliver IN-APP ONLY.
+
+    ⚠⚠ NO EMAIL CHANNEL IS DECLARED HERE, DELIBERATELY. Declaring one to make
+    this look done is the `P1-ALL-E034` shape — a promise in the registry the
+    build cannot keep.
+
+    ⚠ THE GOOD NEWS, AND IT IS WHY THIS COSTS NOTHING TO GET RIGHT: THE CHANNEL
+    COMES FROM THE CATEGORY, NOT THE EVENT. `learn.progress` already carries an
+    email default. So the day `E371` lands, this becomes an email with NO further
+    work — which is why the `body` below is written to be read in an INBOX rather
+    than as a toast: it names the path, says what is now open, and stands alone
+    without the surrounding page.
+  */
   "learn.path_enrolled": {
     event: "learn.path_enrolled",
     recipient: "the learner",
@@ -167,7 +193,11 @@ export const NOTIFICATION_EVENTS = {
     visibility: "FEED",
     requiresAction: false,
     title: (v) => `You enrolled in ${str(v, "pathTitle", "a learning path")}`,
-    body: () => null,
+    /* ⚠ CC-AUTHORED COPY — Scott has not seen this sentence and can overrule it.
+       It says the room is private, because that is the reason it is worth
+       reading: a closed forum gets the question somebody thinks is too basic. */
+    body: (v) =>
+      `The ${str(v, "pathTitle", "path")} forum is now open to you — a private room for the people taking this path, where the instructors answer questions. Ask the one you think is too basic.`,
     href: (v) => (v.pathSlug ? `/learn/${str(v, "pathSlug")}` : "/learn"),
   },
   "learn.course_registered": {

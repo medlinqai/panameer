@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+/* ⚠ `P1-J3-E383` — ONE instructor predicate, extracted rather than copied. */
+import { teachesPathWhere } from "@/lib/learn-home";
 import type { Viewer } from "@/lib/access";
 import {
   communityIdentityGapsForPerson,
@@ -26,7 +28,11 @@ export class ForumError extends Error {
       /* ⚠ `P1-ALL-E033`. Distinct from INVALID because the fix is not in the
          composer — it is on the profile — and the UI has to tell the two apart
          to link correctly. */
-      | "IDENTITY_REQUIRED",
+      | "IDENTITY_REQUIRED"
+      /* ⚠ `P1-J3-E383`. A PATH FORUM IS CLOSED — enrolled learners and the
+         people who teach it. Distinct from the three above because the fix is
+         neither the composer nor the profile: it is enrolling. */
+      | "NOT_ENROLLED",
     /** Populated for IDENTITY_REQUIRED: the named fields, with their links. */
     public fields?: CommunityGap[]
   ) {
@@ -146,6 +152,17 @@ function authorView(a: {
 export async function listBoards() {
   await ensureBoards();
   const boards = await prisma.forumBoard.findMany({
+    /*
+      ⚠⚠ THE FOUR GENERAL BOARDS ONLY (`P1-J3-E383`). Path boards live on their
+      path page and are DELIBERATELY absent here.
+
+      Listing them beside the four would make this page twelve mostly-empty
+      rooms sitting next to four that have a chance of filling — the exact
+      fragmentation this file's own docblock warns about, and it would damage
+      the four that already work. ⚠ `check:forums` asserts this list is the
+      four seed slugs and nothing else.
+    */
+    where: { learning_path_id: null },
     orderBy: { sort_order: "asc" },
     select: {
       id: true,
@@ -172,8 +189,31 @@ export async function listBoards() {
 }
 
 /** One board and its threads, newest activity first. */
-export async function getBoard(slug: string) {
+/**
+ * ⚠⚠ TAKES A VIEWER AS OF `P1-J3-E383`, BECAUSE A PATH BOARD IS CLOSED.
+ *
+ * ⚠ THE FOUR GENERAL BOARDS ARE UNCHANGED — `viewer` is ignored for them, and
+ * passing `null` still returns them exactly as before. Only a board with a
+ * `learning_path_id` is gated.
+ *
+ * ⚠ IT RETURNS `null` FOR A BOARD THE VIEWER MAY NOT OPEN, not a partial board
+ * and not an empty thread list. A page that renders a board with zero threads
+ * cannot be told apart from a locked one by the reader, and "there is nothing
+ * here" is a different and false statement.
+ */
+export async function getBoard(slug: string, viewer: Viewer | null = null) {
   await ensureBoards();
+  const gate = await prisma.forumBoard.findUnique({
+    where: { slug },
+    select: { learning_path_id: true },
+  });
+  /* ⚠⚠ THE GATE RUNS BEFORE THE READ, so a closed board never assembles its
+     thread titles at all — the same ordering `/providers/[id]` uses. A payload
+     built and then discarded is one refactor away from being returned. */
+  if (gate?.learning_path_id) {
+    const allowed = await canAccessPathForum(viewer, gate.learning_path_id);
+    if (!allowed) return null;
+  }
   const board = await prisma.forumBoard.findUnique({
     where: { slug },
     select: {
@@ -216,7 +256,27 @@ export async function getBoard(slug: string) {
  * HERE: `markHelpful` re-checks it from the session on every write, because a
  * hidden button is not a permission.
  */
-export async function getThread(id: string, viewerPersonId?: string | null) {
+/**
+ * ⚠ `viewer` ADDED BY `P1-J3-E383`. A thread inside a PATH board is as closed as
+ * the board itself — reaching it by its own id must not be a way around the
+ * door. ⚠ The four general boards are unaffected and `null` behaves exactly as
+ * before.
+ */
+export async function getThread(
+  id: string,
+  viewerPersonId?: string | null,
+  viewer: Viewer | null = null
+) {
+  /* ⚠⚠ THE GATE BEFORE THE READ. A deep link to a thread id is the obvious hole
+     in a closed room, and it is the one a URL guesser finds first. */
+  const gate = await prisma.forumThread.findUnique({
+    where: { id },
+    select: { board: { select: { learning_path_id: true } } },
+  });
+  if (gate?.board?.learning_path_id) {
+    const allowed = await canAccessPathForum(viewer, gate.board.learning_path_id);
+    if (!allowed) return null;
+  }
   const thread = await prisma.forumThread.findUnique({
     where: { id },
     select: {
@@ -291,9 +351,22 @@ export async function createThread(
   await requireIdentity(person.id);
   const board = await prisma.forumBoard.findUnique({
     where: { slug: input.boardSlug },
-    select: { id: true },
+    select: { id: true, learning_path_id: true },
   });
   if (!board) throw new ForumError("That board doesn't exist.", "NOT_FOUND");
+  /* ⚠⚠ A PATH FORUM IS CLOSED TO POSTING TOO (`P1-J3-E383`) — enrolled learners
+     and the people who teach it. Re-checked HERE and not only where the
+     composer is hidden: a hidden box is not a permission, and this path is
+     reachable through the API route directly. */
+  if (board.learning_path_id) {
+    const allowed = await canAccessPathForum(viewer, board.learning_path_id);
+    if (!allowed) {
+      throw new ForumError(
+        "This forum is for people taking the path. Enroll to join the conversation.",
+        "NOT_ENROLLED"
+      );
+    }
+  }
 
   const title = input.title.trim();
   const body = input.body.trim();
@@ -330,8 +403,18 @@ export async function createPost(
 
   const thread = await prisma.forumThread.findUnique({
     where: { id: input.threadId },
-    select: { id: true },
+    select: { id: true, board: { select: { learning_path_id: true } } },
   });
+  /* ⚠ SAME GATE, REACHED THROUGH THE THREAD'S BOARD. A reply is a post. */
+  if (thread?.board?.learning_path_id) {
+    const allowed = await canAccessPathForum(viewer, thread.board.learning_path_id);
+    if (!allowed) {
+      throw new ForumError(
+        "This forum is for people taking the path. Enroll to join the conversation.",
+        "NOT_ENROLLED"
+      );
+    }
+  }
   if (!thread) throw new ForumError("That thread no longer exists.", "NOT_FOUND");
 
   /*
@@ -443,4 +526,184 @@ export async function viewerPersonId(viewer: Viewer): Promise<string | null> {
     select: { id: true },
   });
   return person?.id ?? null;
+}
+
+
+// ---------------------------------------------------------------------------
+// ⚠⚠ PATH FORUMS (`P1-J3-E383`)
+//
+// SCOTT, 2026-09-04: *"every learning path should have a forum."*
+// And: *"members need to be enrolled in the course or the instructor to have
+// access to the LP forum."*
+// And: *"everyone can see them, but only members enrolled in the LP can access
+// them...marketing."*
+//
+// ⚠ VISIBILITY AND ACCESS ARE TWO DIFFERENT RULES AND ONLY ONE IS CLOSED:
+//
+//                            signed out   signed in, not enrolled   member
+//   that a forum exists          yes                yes               yes
+//   thread titles, posts         no                 no                yes
+//   posting                      no                 no                yes
+//
+// ⚠⚠ THE ROOM IS ADVERTISED; THE DOOR IS LOCKED.
+// ---------------------------------------------------------------------------
+
+/**
+ * ⚠⚠ MAY THIS VIEWER OPEN THIS PATH'S FORUM. Enrolment OR teaching.
+ *
+ * ── WHY IT IS CLOSED, WHICH IS NOT THE ARGUMENT I FIRST MADE ──────────────
+ *
+ * ⚠ SUPERSEDED, QUOTED NOT DELETED — the first draft of `E383` said *"Read is
+ * open. Posting requires enrolment… a Q&A thread is worth more to somebody
+ * deciding whether to take the path than a locked door is."*
+ *
+ * ⚠⚠ THAT WAS WRONG, AND THE REASON MATTERS: A LEARNER ASKING THE QUESTION THEY
+ * THINK IS TOO BASIC, IN A ROOM THEY ASSUMED WAS PRIVATE, THAT TURNS OUT TO BE
+ * PUBLICLY READABLE, IS A TRUST BREACH — and it is exactly the question this
+ * forum exists to get. The `Getting Started` board's own description is *"ask
+ * the question you think is too basic."* A closed room gets better questions
+ * than an open one. ⚠ THE COST, ON THE RECORD: the "see the conversation before
+ * you join" pitch is dead, and that is the trade.
+ *
+ * ⚠⚠ ENROLLING **IS** JOINING. There is no `BoardMember` model, no join button
+ * and no approval queue — which is the answer to the question `E372` had to
+ * leave open when it reported that board membership does not exist.
+ *
+ * ⚠⚠ THE INSTRUCTOR HALF USES `teachesPathWhere`, EXTRACTED IN `learn-home.ts`,
+ * AND THAT IS LOAD-BEARING. `expert_person_id` ALONE IS THE KNOWN-WRONG ANSWER
+ * AND IT HAS ALREADY COST ONCE — it *"would have shown Linus none of Advanced
+ * Procurement despite his 18 lessons in it"*. Marelise teaches 33 lessons across
+ * four paths; a lead-only check locks her out of her own courses.
+ *
+ * ⚠ AN INSTRUCTOR REACHES THE FORUM OF AN UNPLAYABLE PATH, exactly as `E362`
+ * established for the path itself. Playability gates the LEARNER, never the
+ * person who recorded it.
+ */
+export async function canAccessPathForum(
+  viewer: Viewer | null,
+  learningPathId: string
+): Promise<boolean> {
+  /* ⚠ A SIGNED-OUT VISITOR SEES THAT THE FORUM EXISTS AND NEVER ITS CONTENT. */
+  if (!viewer) return false;
+
+  const enrolled = await prisma.learnEnrollment.findFirst({
+    where: { user_id: viewer.userId, learning_path_id: learningPathId },
+    select: { id: true },
+  });
+  if (enrolled) return true;
+
+  const person = await prisma.person.findUnique({
+    where: { user_id: viewer.userId },
+    select: { id: true },
+  });
+  if (!person) return false;
+
+  /* ⚠ NOT `status: "PUBLISHED"` HERE. `getPathsTaughtBy` filters to published
+     because it feeds a PUBLIC profile; an instructor must reach the forum of a
+     draft path they are still recording. Same predicate, different scope, and
+     the difference is deliberate. */
+  const taught = await prisma.learningPath.findFirst({
+    where: { id: learningPathId, ...teachesPathWhere(person.id) },
+    select: { id: true },
+  });
+  return Boolean(taught);
+}
+
+/**
+ * ⚠⚠ THE PUBLIC TEASER — A COUNT, AND NOTHING ELSE, EVER.
+ *
+ * `A COUNT IS A FACT ABOUT THE ROOM; A TITLE IS A THING SOMEBODY WROTE.` That
+ * distinction is the whole reason the closed room stays trustworthy, and
+ * `check:forums` asserts it — adding a `latestThreadTitle` to this return type
+ * FAILS the harness by design.
+ *
+ * ⚠ SO: NO THREAD TITLES, NO SNIPPETS, NO AUTHOR NAMES, NO TIMESTAMPS THAT
+ * IDENTIFY A POST. Only how many threads and how many people are in the room.
+ *
+ * ⚠⚠ AND THE COUNT RENDERS ONLY ABOVE ZERO — the caller's job, but the reason
+ * belongs here: a forum advertising *"0 threads"* is an anti-advertisement.
+ * Identical rule to the unread badge, to `declinedCount` rendering nowhere, and
+ * to `$0` never standing in for a rate. Scott, on the LEARN home: *"coming in to
+ * a bunch of what look like incomplete tiles is not a good look."*
+ */
+export type PathForumTeaser = {
+  /** ⚠ A FACT ABOUT THE ROOM. Zero is honest; the caller shows no number. */
+  threads: number;
+  /** How many people can post — enrolments. A fact about the room. */
+  members: number;
+  /** Whether THIS viewer may open it. */
+  canOpen: boolean;
+};
+
+export async function getPathForumTeaser(
+  viewer: Viewer | null,
+  learningPathId: string
+): Promise<PathForumTeaser> {
+  const board = await prisma.forumBoard.findFirst({
+    where: { learning_path_id: learningPathId },
+    /* ⚠⚠ COUNTS ONLY. NO `threads: { select: { title: true } }`, NOT EVEN
+       `take: 1`. The moment a title enters this select it can reach a
+       non-member, and the harness fails the build for it. */
+    select: { id: true, slug: true, _count: { select: { threads: true } } },
+  });
+  const [members, canOpen] = await Promise.all([
+    prisma.learnEnrollment.count({ where: { learning_path_id: learningPathId } }),
+    canAccessPathForum(viewer, learningPathId),
+  ]);
+  return {
+    threads: board?._count.threads ?? 0,
+    members,
+    canOpen,
+  };
+}
+
+/**
+ * ⚠⚠ THE BOARD IS PART OF WHAT A PATH IS. Scott: *"this needs to be baked into
+ * the LP creation."*
+ *
+ * ⚠ SUPERSEDED, QUOTED NOT DELETED — `E383`'s first draft said *"CREATE LAZILY —
+ * on first visit to a path's forum, not in bulk. A room created before anyone
+ * asks for it is an empty room by construction."*
+ *
+ * ⚠⚠ THAT CONFLATED WHETHER A BOARD *EXISTS* WITH WHETHER ANYONE *SEES AN EMPTY
+ * ROOM*. The empty-room risk is a LISTING problem and `listBoards()` already
+ * solves it by excluding path boards. Lazy creation defended a risk that no
+ * longer existed — and it was worse in one concrete way: A PAGE READ WOULD
+ * PERFORM A DATABASE WRITE. `ensureBoards()` gets away with that because it is
+ * four fixed rows; doing it per path on every path-page view is a write on every
+ * read, scaled by traffic, on a page meant to be fast.
+ *
+ * ⚠ IDEMPOTENT BY THE SAME SHAPE `ensureBoards` USES, so the backfill, the seed
+ * and `createPath` can all call it safely. ⚠ TITLE AND DESCRIPTION ARE THE
+ * PATH'S OWN — NO NEW COPY WAS WRITTEN.
+ */
+export async function ensurePathBoard(
+  tx: Pick<typeof prisma, "forumBoard">,
+  path: { id: string; title: string; slug: string; summary?: string | null }
+) {
+  /* ⚠ THE SLUG IS STILL DERIVED because `slug` is `@unique` and the routes read
+     it — but the RELATION is the column, so a path slug change never orphans a
+     board. That is exactly why `E383` chose a column over a slug convention. */
+  const slug = `path-${path.slug}`;
+  return tx.forumBoard.upsert({
+    where: { slug },
+    /* ⚠ ON UPDATE THE TITLE FOLLOWS THE PATH, so renaming a path renames its
+       room. `learning_path_id` is set on update too, so a board that predates
+       the column gets adopted rather than duplicated. */
+    update: {
+      title: path.title,
+      description: path.summary ?? null,
+      learning_path_id: path.id,
+    },
+    create: {
+      slug,
+      title: path.title,
+      description: path.summary ?? null,
+      learning_path_id: path.id,
+      /* ⚠ SORTED AFTER THE FOUR SEEDED BOARDS (0,10,20,30) so that if a path
+         board ever IS listed somewhere, it never displaces them. */
+      sort_order: 1000,
+    },
+    select: { id: true, slug: true },
+  });
 }

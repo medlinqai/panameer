@@ -4,6 +4,8 @@ import { getLearnPath } from "@/lib/learn-home";
 import { getAppPath } from "@/lib/learn-path-app";
 import { AppPath } from "@/components/learn/app/AppPath";
 import { getSessionViewer } from "@/lib/session";
+/* ⚠ `P1-J3-E383` — a count, never content. */
+import { getPathForumTeaser } from "@/lib/forums";
 import { AUDIENCE_LABEL, STYLE_LABEL } from "@/lib/learn";
 import { InstructorBadge } from "@/components/learn/InstructorBadge";
 import { EnrollButton } from "@/components/learn/EnrollButton";
@@ -57,6 +59,12 @@ export default async function LearningPathPage({
 
   const path = await getLearnPath(slug, null);
   if (!path) notFound();
+
+  /* ⚠ `P1-J3-E383` — a COUNT, and whether THIS viewer may open the room. Never a
+     thread title, a snippet or an author name: `getPathForumTeaser` cannot even
+     select them, and `check:forums` fails the build if one is added. Read AFTER
+     `path` because it needs the id. */
+  const forum = await getPathForumTeaser(viewer, path.id);
 
   const firstPlayable = path.courses
     .flatMap((c) => c.sections.flatMap((s) => s.lessons))
@@ -131,6 +139,63 @@ export default async function LearningPathPage({
               />
             </div>
           )}
+
+          {/*
+            ── ⚠⚠ THE PATH'S FORUM (`P1-J3-E383`) ────────────────────────────
+
+            SCOTT, 2026-09-04: *"every learning path should have a forum."* and
+            *"everyone can see them, but only members enrolled in the LP can
+            access them...marketing."*
+
+            ⚠ IT SITS IN THE HERO, UNDER THE ENROL CONTROLS, ON PURPOSE. This
+            page is PUBLIC — its own docblock says *"The full outline is public —
+            every course, section and lesson title"* — so a signed-out visitor is
+            exactly who this is aimed at, and a forum mentioned below a 39-lesson
+            outline is a forum nobody deciding whether to enrol will ever read.
+
+            ⚠⚠ VISIBILITY AND ACCESS ARE TWO RULES AND ONLY ACCESS IS CLOSED.
+            Everyone sees THAT the room exists; only a member or one of its
+            instructors can open it. `canOpen` comes from `canAccessPathForum`
+            in the lib — this page decides nothing.
+
+            ⚠⚠ ACTIVITY IS THE PITCH, ABOVE ZERO ONLY. But a forum advertising
+            `0 threads` is an ANTI-advertisement — the identical rule to the
+            unread badge, to `declinedCount` rendering nowhere, and to `$0` never
+            standing in for a rate. Scott, on the LEARN home: *"coming in to a
+            bunch of what look like incomplete tiles is not a good look."*
+            ⚠ AT ZERO: say the room exists. Show NO number.
+
+            ⚠⚠ AND THE TEASER LEAKS NO CONTENT. A COUNT IS A FACT ABOUT THE ROOM;
+            A TITLE IS A THING SOMEBODY WROTE.
+          */}
+          <div className="mt-5 rounded-brand border border-line bg-white p-4">
+            <p className="text-[14.5px] font-bold">Path forum</p>
+            {forum.threads > 0 ? (
+              <p className="mt-1 text-[13.5px] leading-relaxed text-ink-2">
+                {forum.threads} question{forum.threads === 1 ? "" : "s"} asked by
+                the people taking this path, answered by the people who teach it.
+              </p>
+            ) : (
+              <p className="mt-1 text-[13.5px] leading-relaxed text-ink-2">
+                A private forum for the people taking this path — ask the people
+                who teach it.
+              </p>
+            )}
+            {forum.canOpen ? (
+              <Link
+                href={`/community/forums/path-${path.slug}`}
+                className="mt-2 inline-block text-[13.5px] font-bold text-magenta hover:underline"
+              >
+                Open the forum &rarr;
+              </Link>
+            ) : (
+              /* ⚠ THE DOOR IS NAMED, NOT HIDDEN. Somebody who cannot open it
+                 should know why, and what to do about it — which is enrol. */
+              <p className="mt-2 text-[13px] text-ink-2">
+                Enroll to read and ask questions.
+              </p>
+            )}
+          </div>
 
           {/*
             The payoff, surfaced the moment it is earned (WS5). A certificate
