@@ -2,11 +2,11 @@ import Link from "next/link";
 import { Avatar } from "@/components/Avatar";
 import { Button } from "@/components/casing/Button";
 import { formatCents } from "@/lib/display";
-import {
-  MICRO_SESSION_MINUTES,
-  MICRO_SESSION_PRICE,
-  type MentorCard,
-} from "@/lib/mentors";
+/* ⚠ THE PLATFORM MICRO-SESSION ANCHOR IS PARKED (`P1-ALL-E374`) — see
+   `lib/mentors.ts`. This card was a SECOND consumer of it and was NOT named in
+   the brief; it was found by following the import when the constants went.
+   REPORTED at `E374`. */
+import { type MentorCard } from "@/lib/mentors";
 
 /**
  * THE REQUESTER HOME (brief_requester_home_v1 WS-B).
@@ -254,15 +254,24 @@ function ExpertCard({ expert }: { expert: MentorCard }) {
 
       <div className="mt-auto pt-4">
         {rate && <p className="text-[13.5px] text-ink-2">{rate}</p>}
-        {/* The micro-session price is the PLATFORM's anchor, not this person's
-            quote — none of them has set one. Same constant the mentor
-            directory uses, so the two can't drift. */}
+        {/* ⚠⚠ THE PLATFORM ANCHOR AND ITS BOOK BUTTON ARE BOTH PARKED
+            (`P1-ALL-E374`). ⚠ SUPERSEDED, QUOTED NOT DELETED: *"The
+            micro-session price is the PLATFORM's anchor, not this person's quote
+            — none of them has set one. Same constant the mentor directory uses,
+            so the two can't drift."* The anchor's own honesty is why it removed
+            cleanly — nothing depended on it being true.
+            ⚠ AND THE `Book a Consultation` BUTTON WENT WITH IT: there is NO BUY
+            BUTTON anywhere, because paying runs on WorkRequest -> WorkOrder ->
+            Settlement, which is unbuilt. A checkout that goes nowhere is worse
+            than none. ⚠ `rate` ABOVE IS THE PERSON'S OWN and still renders. */}
+        {/*
         <p className="text-[13.5px] font-semibold">
           {MICRO_SESSION_PRICE} per {MICRO_SESSION_MINUTES}-minute call
         </p>
         <Button href="/consultations" variant="ghost" className="mt-3 w-full">
           Book a Consultation
         </Button>
+        */}
       </div>
     </article>
   );

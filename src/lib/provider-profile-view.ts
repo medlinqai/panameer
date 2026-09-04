@@ -236,6 +236,16 @@ export async function getProviderProfileView(
       lastName: showSurname ? profile.person.last_name : "",
       title: profile.person.title,
       photoUrl: profile.person.photo_url,
+      /*
+        ⚠ THE OWNER'S USER ID (`P1-ALL-E374`). A `MENTOR` or `COLLEAGUE` row is
+        written against `to_user_id`, so the Connect control on this profile
+        cannot exist without it. ⚠ IT IS NOT NEW DATA — `profile.person.user_id`
+        was ALREADY selected (line 37) and already used to load certifications
+        and to compute `isOwner`; this only surfaces it to the view.
+        ⚠ NULLABLE: a Person without a login is not a member and cannot be
+        connected to. The view renders no control rather than a broken one.
+      */
+      userId: profile.person.user_id,
     },
     location,
     country,

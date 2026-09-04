@@ -1,6 +1,8 @@
 import { notFound, redirect } from "next/navigation";
 import { ProviderProfileViewPage } from "@/components/profile/ProviderProfileView";
 import { getProviderProfileView } from "@/lib/provider-profile-view";
+import { getMyCommunity } from "@/lib/connections";
+import { ConnectControls } from "@/components/community/ConnectControls";
 import { getSessionViewer } from "@/lib/session";
 import { getPathsTaughtByProfile } from "@/lib/learn-home";
 import { publicTestimonials } from "@/lib/recommendations";
@@ -47,6 +49,43 @@ import { getCommunitySignalForProfile } from "@/lib/community-signal";
  * sides are server-side here and share one inferred type, so there is nothing to
  * serialize and nothing to cast.
  */
+/**
+ * ⚠ THE CONNECT SLOT (`P1-ALL-E374` WS-3) — resolved here because THIS is the
+ * page that knows it is showing somebody else. `/profile` and `/join/provider`
+ * render the same component and pass nothing.
+ *
+ * ⚠ IT DECIDES NOTHING. `getMyCommunity` already computed both relations in
+ * `lib/connections.ts`; this reads them and hands the component a node. The
+ * server re-checks every rule on the way in regardless.
+ */
+async function connectSlot(
+  viewer: Awaited<ReturnType<typeof getSessionViewer>>,
+  ownerUserId: string | null,
+  isOwner: boolean
+): Promise<{ connect?: React.ReactNode }> {
+  /* ⚠ A control you cannot press is noise — own profile renders none. */
+  if (!viewer || !ownerUserId || isOwner) return {};
+
+  const mine = await getMyCommunity(viewer);
+  const colleague = [
+    ...mine.colleagues.map((c) => ({ p: c.person, rel: "ACCEPTED" as const, id: c.connectionId })),
+    ...mine.incoming.map((c) => ({ p: c.person, rel: "PENDING" as const, id: c.connectionId })),
+    ...mine.outgoing.map((c) => ({ p: c.person, rel: "PENDING" as const, id: c.connectionId })),
+  ].find((x) => x.p?.userId === ownerUserId);
+  const incomingId = mine.incoming.find((c) => c.person?.userId === ownerUserId)?.connectionId;
+
+  return {
+    connect: (
+      <ConnectControls
+        toUserId={ownerUserId}
+        relation={colleague?.rel ?? null}
+        incomingConnectionId={incomingId ?? null}
+        isMentor={mine.following.some((f) => f.person?.userId === ownerUserId)}
+      />
+    ),
+  };
+}
+
 export default async function PublicProviderPage({
   params,
 }: {
@@ -141,6 +180,7 @@ export default async function PublicProviderPage({
           taughtPaths={taughtPaths}
           testimonials={testimonials}
           community={await getCommunitySignalForProfile(profile.id)}
+          {...(await connectSlot(viewer, profile.person.userId, profile.isOwner))}
         />
       </main>
     </div>

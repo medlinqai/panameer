@@ -28,6 +28,12 @@ import {
 } from "@/lib/community";
 import { PageTabs } from "@/components/casing/PageTabs";
 import { PAGE_TABS } from "@/lib/nav";
+/* ⚠ `P1-ALL-E374` — the screen over `E372`'s engine. The blocks and the search
+   results are server components so `searchMembers`, `getMyCommunity` and
+   `getColleagueSuggestions` never leave the server. */
+import { getSessionViewer } from "@/lib/session";
+import { CommunityBlocks, SearchResults } from "@/components/community/CommunityBlocks";
+import { MemberSearchBox } from "@/components/community/MemberSearchBox";
 
 /**
  * THE COMMUNITY HUB (PHASE 2 / WS2-A).
@@ -52,8 +58,18 @@ import { PAGE_TABS } from "@/lib/nav";
 /* ⚠ `My Community` (`P1-ALL-E372` WS-5) — Scott: *"something you have"*. */
 export const metadata = { title: "My Community · Panameer" };
 
-export default async function CommunityPage() {
+export default async function CommunityPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
   await guardPage("authenticated");
+  /* ⚠ SEARCH LIVES ON THIS PAGE — there is no `/community/people` route. While a
+     query is live the results REPLACE the blocks; clearing `?q=` restores them.
+     `E374`: *"One page is one thing to walk."* */
+  const { q } = await searchParams;
+  const query = (q ?? "").trim();
+  const viewer = await getSessionViewer();
   /* ⚠⚠ THE WHOLE viewer -> person -> credits CHAIN IS PARKED (`P1-ALL-E375`).
      ⚠ ITS ORIGINAL REASONING IS PRESERVED VERBATIM rather than deleted, because
      it explains why the seam took a person id it never used: *"The person id,
@@ -104,6 +120,17 @@ export default async function CommunityPage() {
           learning it.
         </p>
       </header>
+
+      {/* ⚠ THE SEARCH BOX SITS AT THE TOP (`E374` WS-2). */}
+      {viewer && <MemberSearchBox initial={query} />}
+
+      {/* ⚠⚠ RESULTS REPLACE THE BLOCKS WHILE A QUERY IS LIVE — they do not stack
+          under them. */}
+      {viewer && query ? (
+        <SearchResults viewer={viewer} query={query} />
+      ) : (
+        viewer && <CommunityBlocks viewer={viewer} />
+      )}
 
       {/* ---- The four sections ------------------------------------------- */}
       <div className="grid gap-4 sm:grid-cols-2">
