@@ -106,7 +106,29 @@ for (const [key, e] of entries) {
   is why a new category table cannot accidentally be read as eighteen missing
   events.
 */
-const SPEC = join("..", "2. Claude Sub-Files", "event_behavior.md");
+/*
+  ⚠⚠ MOVED INTO THE REPO 2026-09-04 (`P1-ALL-E384`). SCOTT: *"just move it."*
+
+  ⚠ SUPERSEDED, QUOTED NOT DELETED — this read:
+      `const SPEC = join("..", "2. Claude Sub-Files", "event_behavior.md");`
+  and the docblock above still describes why: the file lived in
+  `5. Application/2. Claude Sub-Files/`, ONE LEVEL ABOVE THE GIT ROOT.
+
+  ⚠⚠ SO THESE 834 ASSERTIONS WERE GREEN ON ONE MACHINE AND PROVED NOTHING TO
+  ANYONE ELSE. A clean clone had no spec to read; CI would fail or, worse, skip.
+  `E381` tried to fix it and had to STOP AND REPORT: you cannot `git add` a path
+  outside the repository, and git says so in those words.
+
+  ⚠ IT NOW LIVES IN `scripts/data/`, FOLLOWING AN ESTABLISHED PRECEDENT rather
+  than inventing a location: `scripts/data/legal/*.md` are already tracked
+  markdown specs that `check:trust-claims` reads the same way. A harness's input
+  belongs beside the harness's other inputs.
+
+  ⚠ CONSEQUENCE FOR THE DOCS, REPORTED NOT ACTED ON: `CLAUDE.md`'s topic-file
+  table still lists `event_behavior.md` under `2. Claude Sub-Files/`. That entry
+  is now stale and correcting it is chat's, not this brief's.
+*/
+const SPEC = join("scripts", "data", "event_behavior.md");
 const EVENT_HEADER = ["event", "recipient", "ai mode", "channel", "notes"];
 
 /** Backticks, bold, stray spaces — the spec is prose, the registry is code. */

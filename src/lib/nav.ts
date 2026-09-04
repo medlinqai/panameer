@@ -969,8 +969,56 @@ export const RETIRED_ADMIN_ROUTES: Record<string, string> = {
  * genuinely has a required order can declare it in one line.
  */
 export const TAB_SEQUENCE: Record<string, "process" | "suggested" | "none"> = {
+  /*
+    ── ⚠⚠ EVERY SET IS CLASSIFIED, AND `check:community` NOW ENFORCES THAT
+       (`P1-ALL-E384` WS-3) ──────────────────────────────────────────────────
+
+    SCOTT, 2026-09-04: *"we could define each menu sequential or parallel, then
+    number the sequential only."*
+
+    ⚠ THAT IS WHAT THIS MAP ALREADY DOES — `process` and `suggested` are
+    numbered, `none` is not. ⚠ AND `E384`'s BRIEF SAID ONLY ONE SET WAS
+    CLASSIFIED; THAT WAS WRONG. `E378` classified all four, and all four are
+    below. What was genuinely missing is that NOTHING STOPPED A FIFTH SET
+    APPEARING WITHOUT A MODE and silently defaulting to `none` — a set that is
+    unnumbered because nobody decided, wearing the same face as one that is
+    unnumbered because somebody did. `check:community` now fails the build if a
+    `PAGE_TABS` key has no entry here.
+
+    ── ⚠⚠ THE RULE THAT DECIDES SEQUENTIAL vs PARALLEL, IN SCOTT'S WORDS ─────
+
+    SCOTT, 2026-09-04: *"the sequence won't necessarily match the public pages,
+    due to steps crossing roles on the public page but being role-based
+    internally."*
+
+    ⚠ HE IS RIGHT, AND IT IS ALREADY WHY `/learn` IS `none`. A PUBLIC SPINE IS A
+    JOURNEY ACROSS ROLES AND PAGES; A TAB SET IS SLICES WITHIN ONE PAGE FOR ONE
+    ROLE. `LEARN_STEPS` 2 (`Connect with the Instructor`) and 5 (`Get Expert
+    Support`) happen in COMMUNITY, not on a `/learn` tab — so numbering the three
+    `/learn` tabs 1·3·4 renders gaps, and renumbering them 1·2·3 contradicts the
+    public promise those numbers come from.
+    ⚠⚠ SO THEY ARE NOT FORCED TO AGREE. Where a spine and a tab set disagree,
+    THE SET IS `none` AND THAT IS REPORTED — it is not a mapping waiting to be
+    finished.
+
+    ⚠ `process` IS KEPT EVEN THOUGH NOTHING USES IT. Scott said keep it. It is
+    built and asserted, and the first set that genuinely has a REQUIRED order
+    declares it in one line.
+  */
   "/community": "suggested",
-  /* ⚠ `none` BY EVIDENCE, NOT BY DEFAULT — see the mapping above. */
+  /* ⚠ ALL THREE ARE `none` BY EVIDENCE, NOT BY DEFAULT.
+     · `/learn`             — 3 tabs against a 5-step spine, 2 of which are
+                              Community's. See the mapping above.
+     · `/settings/packages` — 2 tabs (Service Products · Offers for My Services).
+                              Parallel slices of one page: a provider reads their
+                              catalogue and their inbound offers in either order,
+                              and neither completes.
+     · `/finances`          — 2 tabs (Payments · Payment Requests). Also
+                              parallel, and deliberately NOT numbered even though
+                              SHOP_STEPS 4 and 5 look sequential: those two steps
+                              cross BOTH roles — the buyer approves and the
+                              provider is paid — which is exactly the
+                              role-crossing Scott named. */
   "/learn": "none",
   "/settings/packages": "none",
   "/finances": "none",
