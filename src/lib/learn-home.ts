@@ -545,31 +545,49 @@ export type TaughtPath = {
  * public profile would be a hole in the same gate, and the link would 404 for
  * whoever clicked it.
  */
-export async function getPathsTaughtBy(personId: string): Promise<TaughtPath[]> {
-  const paths = await prisma.learningPath.findMany({
-    /*
-      TEACHING IS PER-LESSON (WS6, corrected), so a path counts as theirs when
-      they teach ANY lesson in it — not only when they are its declared lead.
-      The first version matched on expert_person_id alone and would have shown
-      Linus none of Advanced Procurement despite his 18 lessons in it, on the
-      one surface built to prove he teaches this.
-
-      The declared lead still qualifies, for a path whose lessons name nobody.
-    */
-    where: {
-      status: "PUBLISHED",
-      OR: [
-        { expert_person_id: personId },
-        {
-          courses: {
-            some: {
-              sections: {
-                some: { lessons: { some: { expert_person_id: personId } } },
-              },
+/**
+ * ⚠⚠ DOES THIS PERSON TEACH THIS PATH — THE ONE PREDICATE, EXTRACTED
+ * (`P1-J3-E383`).
+ *
+ * TEACHING IS PER-LESSON (WS6, corrected), so a path counts as theirs when they
+ * teach ANY lesson in it — not only when they are its declared lead. The first
+ * version matched on `expert_person_id` ALONE and would have shown Linus none of
+ * Advanced Procurement despite his 18 lessons in it, on the one surface built to
+ * prove he teaches this.
+ *
+ * The declared lead still qualifies, for a path whose lessons name nobody.
+ *
+ * ⚠⚠ EXTRACTED BY `E383` RATHER THAN COPIED, and that is the whole point: the
+ * path FORUM grants access by enrolment OR teaching, and writing a second `OR`
+ * with `expert_person_id` in it would have re-introduced the exact bug this
+ * comment records — this time locking Marelise out of forums for the 33 lessons
+ * she teaches across four paths. ⚠ ONE PREDICATE, TWO CALLERS. If a third
+ * surface needs it, it calls this.
+ */
+export function teachesPathWhere(personId: string) {
+  return {
+    OR: [
+      { expert_person_id: personId },
+      {
+        courses: {
+          some: {
+            sections: {
+              some: { lessons: { some: { expert_person_id: personId } } },
             },
           },
         },
-      ],
+      },
+    ],
+  };
+}
+
+export async function getPathsTaughtBy(personId: string): Promise<TaughtPath[]> {
+  const paths = await prisma.learningPath.findMany({
+    /* ⚠ THE PREDICATE IS `teachesPathWhere` — see its docblock for why
+       `expert_person_id` alone is the known-wrong answer. */
+    where: {
+      status: "PUBLISHED",
+      ...teachesPathWhere(personId),
     },
     orderBy: [{ group: "asc" }, { sort_order: "asc" }, { title: "asc" }],
     select: {

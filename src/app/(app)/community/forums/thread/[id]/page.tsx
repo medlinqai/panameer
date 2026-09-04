@@ -22,7 +22,10 @@ export default async function ThreadPage({
     rules from the session, so the button's absence is a courtesy and not the
     boundary.
   */
-  const thread = await getThread(id, await viewerPersonId(gate));
+  /* ⚠ THE VIEWER IS PASSED AS OF `P1-J3-E383` — a thread inside a PATH board is
+     as closed as the board, and a deep link by thread id must not be a way
+     round the door. `getThread` returns null, which this page 404s. */
+  const thread = await getThread(id, await viewerPersonId(gate), gate);
 
   /* ⚠ THE COMPOSER'S MIRROR (`P1-ALL-E033`). Reading the thread is untouched. */
   const identityGaps = await communityIdentityGaps(gate.userId);

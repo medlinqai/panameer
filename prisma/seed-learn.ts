@@ -1,4 +1,7 @@
 import type { PrismaClient } from "@prisma/client";
+/* ⚠ `P1-J3-E383` — the same idempotent helper `createPath` and the backfill
+   call, so the three cannot drift. */
+import { ensurePathBoard } from "../src/lib/forums";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -159,6 +162,31 @@ export async function seedLearn(prisma: PrismaClient): Promise<LearnSeedCounts> 
       pathId = existingPath.id;
       counts.paths.updated++;
     }
+
+    /*
+      ⚠⚠ EVERY SEEDED PATH GETS ITS FORUM TOO (`P1-J3-E383`).
+
+      SCOTT, 2026-09-04: *"every learning path should have a forum."*
+
+      ⚠ HERE AS WELL AS IN `createPath()`, OR THE SEEDED LIBRARY COMES UP
+      INCONSISTENT WITH THE LIVE ONE — twelve paths with no room while any path
+      an admin creates by hand has one. `check:forums` asserts EVERY path has
+      exactly one board across the live library, so a seed that skipped this
+      would turn that gate red rather than fail quietly.
+
+      ⚠ IT RUNS ON ALL THREE BRANCHES ABOVE — inserted, shielded and updated —
+      because a path that already existed before this column did still needs
+      adopting. `ensurePathBoard` is idempotent by slug, the same shape
+      `ensureBoards` uses, so re-running the seed makes no duplicates.
+      ⚠ AND IT RUNS FOR `is_custom` (SHIELDED) PATHS TOO: the XLS re-run shield
+      protects a human's EDITS, and a missing forum is not an edit.
+    */
+    await ensurePathBoard(prisma, {
+      id: pathId,
+      title: p.title,
+      slug: p.slug,
+      summary: null,
+    });
 
     for (const c of p.courses) {
       const existingCourse = await prisma.course.findUnique({

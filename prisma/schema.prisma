@@ -2666,6 +2666,11 @@ model LearningPath {
   @@index([audience, group])
   @@index([status])
   @@map("learning_paths")
+  /// ⚠ `P1-J3-E383` — a path's forum. At most ONE; `check:forums` asserts it and
+  /// mutation-tests the second, because two rooms for one conversation splits
+  /// the people who found the first.
+  forumBoards ForumBoard[]
+
 }
 
 /// A path may hold exactly ONE course — the catalog sometimes collapses
@@ -3334,8 +3339,35 @@ model ForumBoard {
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 
+  /// ── ⚠⚠ A PATH'S FORUM (`P1-J3-E383`) ────────────────────────────────────
+  ///
+  /// SCOTT, 2026-09-04: *"every learning path should have a forum."*
+  ///
+  /// ⚠ NULL = one of the FOUR GENERAL BOARDS. Non-null = this path's board.
+  /// `check:forums` asserts the four seed slugs are the only null-path boards,
+  /// so a board is always exactly one of the two things — never both, never
+  /// neither.
+  ///
+  /// ⚠⚠ A COLUMN RATHER THAN A `path-<slug>` SLUG CONVENTION. A string
+  /// convention works until a path slug changes, and it makes every read a
+  /// string parse. The column also gives the board its path's title and link
+  /// without a second query.
+  ///
+  /// ⚠ PER PATH, NOT PER COURSE. 12 paths have playable content against 39
+  /// courses, `LearnEnrollment` is already path-level so a path board has a
+  /// membership list the schema can produce, and the interesting questions
+  /// span courses anyway.
+  ///
+  /// ⚠⚠ `onDelete: Cascade` IS DELIBERATE, AND `deletePath()`'s EXISTING GUARD
+  /// IS WHAT MAKES IT SAFE — it refuses on enrolments, on courses, and (as of
+  /// `E383`) on threads. The FK was NOT switched to `Restrict`: the guard is
+  /// the place that can explain WHY, and a database error cannot.
+  learning_path_id String?       @db.Uuid
+  learningPath     LearningPath? @relation(fields: [learning_path_id], references: [id], onDelete: Cascade)
+
   threads ForumThread[]
 
+  @@index([learning_path_id])
   @@map("forum_boards")
 }
 

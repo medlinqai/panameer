@@ -15,7 +15,11 @@ export default async function BoardPage({
 }) {
   const gate = await guardPage("authenticated");
   const { slug } = await params;
-  const board = await getBoard(slug);
+  /* ⚠ THE VIEWER IS PASSED AS OF `P1-J3-E383` — a PATH board is closed to
+     people who are neither enrolled nor teaching, and `getBoard` returns null
+     for them, which this page already turns into a 404. The four general boards
+     ignore it. */
+  const board = await getBoard(slug, gate);
   if (!board) notFound();
 
   /* ⚠ THE COMPOSER'S MIRROR (`P1-ALL-E033`) — the same function the write path
