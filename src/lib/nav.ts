@@ -319,12 +319,22 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
     A MODEL.
   */
   "/community": [
-    { n: 1, label: "Colleagues", href: "/community" },
-    { n: 2, label: "Forums", href: "/community/forums", state: "live" },
-    { n: 3, label: "Mentoring", href: "/community/mentors", state: "early" },
-    { n: 4, label: "Teams", href: "/community/teams", state: "live" },
-    /* ⚠ NO `n` — see the block above. */
-    { label: "Messages", href: "/messages", state: "early" },
+    /* ⚠⚠ MESSAGES IS STEP 1 AS OF `P1-ALL-E379`, AND THIS IS THE FLIP `E378`
+       WAS WAITING FOR. SCOTT'S ORDER, 2026-09-04: *"1. Check Your Messages.
+       2. Search for Colleagues. 3. Check Out Our Forums. 4. Search for a
+       Mentor."*
+       ⚠ SUPERSEDED, QUOTED NOT DELETED — `E378` shipped this entry LAST and
+       UNNUMBERED with the note *"⚠ NO `n` — see the block above"*, because
+       there was no `Message` model and a suggested sequence whose step 1 is a
+       dead end teaches people the numbers are decorative. `E379` built the
+       model, so the dead end is gone and the number is honest.
+       ⚠ THE `early` PILL GOES WITH IT. Messaging is real now; a readiness pill
+       on a working feature is the same lie in the other direction. */
+    { n: 1, label: "Messages", href: "/messages" },
+    { n: 2, label: "Colleagues", href: "/community" },
+    { n: 3, label: "Forums", href: "/community/forums", state: "live" },
+    { n: 4, label: "Mentoring", href: "/community/mentors", state: "early" },
+    { n: 5, label: "Teams", href: "/community/teams", state: "live" },
   ],
   /*
     Manage Work had ONE child pointing at the page it already opened, so it has

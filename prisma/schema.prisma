@@ -101,6 +101,10 @@ model User {
   /// and a recipient and both need to see it.
   connectionsSent     Connection[] @relation("ConnectionsSent")
   connectionsReceived Connection[] @relation("ConnectionsReceived")
+  /// ⚠ `P1-ALL-E379`. Named relations because two fields point at the same
+  /// model — Prisma cannot disambiguate them otherwise.
+  messagesSent     Message[] @relation("MessagesSent")
+  messagesReceived Message[] @relation("MessagesReceived")
 }
 
 enum Role {
@@ -3826,6 +3830,46 @@ model Connection {
   @@index([to_user_id, status])
   @@index([from_user_id, status])
   @@map("connections")
+}
+
+/// ── ⚠⚠ MESSAGES (`P1-ALL-E379`) ────────────────────────────────────────────
+///
+/// SCOTT, 2026-09-04, on being told there is no `Message` model: *"build one!"*
+///
+/// ⚠⚠ ONE TABLE. THERE IS NO `Thread` AND NO `Participant`, AND THAT IS A
+/// DESIGN DECISION RATHER THAN A SHORTCUT. A conversation is DERIVED from the
+/// unordered pair of user ids — 1:1 only. Group messaging needs both of those
+/// models plus a name, a membership policy and a leave semantic; it is a
+/// different feature and this is not it.
+///
+/// ⚠⚠ THE PERMISSION IS NOT IN THIS TABLE AND MUST NOT BE INFERRED FROM IT. A
+/// row here does not mean the pair may still message: `lib/messages.ts`
+/// re-derives permission from the `Connection` table on EVERY send. Two people
+/// who exchanged messages and then declined each other keep their history and
+/// lose the ability to add to it.
+///
+/// ⚠ NOTHING DELETES A MESSAGE — the house pattern, same as `DECLINED`
+/// connections. History is not editable by either party.
+model Message {
+  id           String    @id @default(uuid()) @db.Uuid
+  from_user_id String    @db.Uuid
+  to_user_id   String    @db.Uuid
+  body         String
+  created_at   DateTime  @default(now())
+  /// ⚠⚠ SET BY THE RECIPIENT ONLY. A sender can never mark their own message
+  /// read — `markRead` scopes its update to `to_user_id = me`, and
+  /// `check:messages` asserts it. A sender-settable read receipt would be a
+  /// claim about somebody else's attention.
+  read_at      DateTime?
+
+  from User @relation("MessagesSent", fields: [from_user_id], references: [id], onDelete: Cascade)
+  to   User @relation("MessagesReceived", fields: [to_user_id], references: [id], onDelete: Cascade)
+
+  /// The unread badge's index — one number, read on every page load.
+  @@index([to_user_id, read_at])
+  /// The conversation read, oldest-first within a pair.
+  @@index([from_user_id, to_user_id, created_at])
+  @@map("messages")
 }
 
 enum ConnectionKind {
