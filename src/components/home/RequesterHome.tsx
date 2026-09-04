@@ -116,7 +116,7 @@ export function RequesterHome({
             </div>
             <div className="flex flex-wrap gap-3">
               <Button href="/create-work">Create Work Request</Button>
-              <Button href="/contracts" variant="ghost">
+              <Button href="/orders" variant="ghost">
                 Manage Work
               </Button>
             </div>

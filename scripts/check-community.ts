@@ -877,14 +877,43 @@ check(
   !/label: "Find a Mentor"/.test(navLib) &&
     !/title: "Find a Mentor/.test(bodies.get(join("src", "app", "(app)", "community", "mentors", "page.tsx")) ?? "")
 );
-/* ⚠⚠ NO ROUTE MOVED. This was a LABEL brief; every href is unchanged. */
+/*
+  ⚠⚠ THE ROUTE FREEZE. THIRTEEN ROUTES, EACH ASSERTED BY EXACT STRING SO NOTHING
+  MOVES ONE BY ACCIDENT.
+
+  ⚠ IT FIRED ON 2026-09-04 AND THAT IS THE GUARD DOING ITS JOB, NOT BEING IN THE
+  WAY. `E378` shipped this list with the note *"⚠⚠ NO ROUTE MOVED. This was a
+  LABEL brief; every href is unchanged."* — which was true of `E378` and is the
+  sentence `P1-ALL-E380` deliberately broke.
+
+  ⚠⚠ SO THE VALUE IS UPDATED AND NOTHING ELSE IS: `/contracts` -> `/orders`.
+  SCOTT, 2026-09-04: *"remove contract. we will not have that."* The count is
+  still thirteen, the match is still an EXACT quoted string, and NO ENTRY WAS
+  REMOVED OR LOOSENED TO A PREFIX. A deliberate move updates one value on the
+  record; an accidental one still fails.
+
+  ⚠ `E380` MOVED EXACTLY ONE ROUTE. If a second entry in this list ever needs
+  changing in the same commit, that is a different brief.
+*/
 for (const href of [
   "/learn", "/create-work", "/find-work", "/packages", "/settings/packages",
-  "/contracts", "/pay", "/finances", "/community", "/community/forums",
+  /* ⚠ WAS `/contracts` UNTIL `P1-ALL-E380` — the ToS is the MSA and the Work
+     Order is the SOW, so there is no Contract record for a route to name. */
+  "/orders", "/pay", "/finances", "/community", "/community/forums",
   "/community/teams", "/community/mentors", "/messages",
 ]) {
   check(`E378/5 — route ${href} still exists in the nav`, navLib.includes(`"${href}"`));
 }
+/* ⚠⚠ AND THE OLD NAME IS NOW BANNED FROM THE MEMBER-FACING NAV, so nobody
+   re-adds it from a stale link or a URL segment the way `9ae05d7` did.
+   ⚠ `/admin/contracts` IS DELIBERATELY EXEMPT — see the `E380` report: it was
+   NOT renamed, because `/admin/work-orders` already exists with the label
+   `Work Orders` and renaming would have shipped two identical admin entries. */
+check(
+  "E380 — no member-facing nav entry points at /contracts",
+  !/"\/contracts"/.test(navLib),
+  "the route moved to /orders; a Contract record does not exist"
+);
 
 /* ── 6 · THE DUPLICATE CARDS ARE GONE, PARKED NOT DELETED ─────────────────── */
 const communityLib = bodies.get(join("src", "lib", "community.ts")) ?? "";

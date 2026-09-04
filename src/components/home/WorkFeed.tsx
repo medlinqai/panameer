@@ -49,7 +49,45 @@ export function WorkFeed({
   return (
     <section id="work-feed" className="scroll-mt-6">
       <div className="mb-3 flex flex-wrap items-baseline gap-x-4 gap-y-2">
-        <h2 className="font-display text-[19px] font-bold">Find Work</h2>
+        {/*
+          ⚠⚠ THE HEADING LEVEL AND ITS WORDS BOTH DEPEND ON WHERE THIS RENDERS
+          (`P1-ALL-E380` WS-1b), AND THAT IS NOT OVER-ENGINEERING — IT IS THE
+          ONLY CORRECT ANSWER. This component serves TWO pages, and the naive
+          fix would have broken one of them.
+
+          ⚠ SUPERSEDED, QUOTED NOT DELETED: this was a single unconditional
+          `<h2 className="font-display text-[19px] font-bold">Find Work</h2>`.
+
+          · ON `/find-work` IT IS THE PAGE. The page had NO `<h1>` AT ALL, which
+            is a real accessibility defect and not just a naming one — a screen
+            reader got no page title. So here it is an `<h1>` reading `Work
+            Requests`, the JOURNEY's name, per `E378`'s rule that the rail
+            carries the one-word verb and the page carries the journey.
+
+          · ⚠⚠ ON `/dashboard` IT IS A SECTION, AND IT MUST STAY AN `<h2>`
+            SAYING `Find Work`. THE DASHBOARD ALREADY HAS ITS OWN `<h1>` —
+            *"Welcome Back, {firstName}"* — so promoting this unconditionally
+            would have given that page TWO `<h1>` ELEMENTS: a WORSE
+            accessibility defect than the one being fixed, introduced while
+            fixing it. CHECKED BEFORE CHANGING, not after.
+            ⚠ And `Work Requests` would be wrong there anyway: on the dashboard
+            this is one section among several, and `Find Work` is what that
+            section is.
+
+          ⚠ `onDashboard` IS THE EXISTING CONTEXT SIGNAL, already derived above
+          for the tab hrefs. No new prop was added — the component already knew
+          which of its two homes it was in.
+
+          ⚠ NOTHING DEPENDED ON THE OLD `<h2>`. Verified before touching it:
+          `e2e/` and `scripts/` were searched for a selector on it and there is
+          none — the only `h2` selectors in `e2e/` are `.hiw-h2` on the
+          marketing pages, a different element entirely. Reported at `E380`.
+        */}
+        {onDashboard ? (
+          <h2 className="font-display text-[19px] font-bold">Find Work</h2>
+        ) : (
+          <h1 className="font-display text-[19px] font-bold">Work Requests</h1>
+        )}
         {/* ⚠ CREDITS COPY PARKED 2026-09-03 (`P1-ALL-E375`) — the feature is commented
             out, so a live surface must not keep promising it. See `src/lib/credits.ts`. */}
         {/*

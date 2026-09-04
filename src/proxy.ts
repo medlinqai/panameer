@@ -113,7 +113,8 @@ export const config = {
     "/find-work/:path*",
     "/reports/:path*",
     "/search/:path*",
-    "/contracts/:path*",
+    /* ⚠ `/contracts` -> `/orders` (`P1-ALL-E380`). */
+    "/orders/:path*",
     "/finances/:path*",
     "/messages/:path*",
     "/community/:path*",

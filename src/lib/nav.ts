@@ -153,7 +153,11 @@ export const UTILITY_NAV: NavItem[] = [SEARCH_NAV, HOME_NAV, NOTIFICATIONS_NAV];
       Pay Providers    -> Payments
       Community        -> Community (unchanged)
 
-  ⚠⚠ EVERY `href` IS BYTE-IDENTICAL TO WHAT IT WAS. `/contracts` now READS
+  ⚠ SUPERSEDED IN PART BY `P1-ALL-E380`: `/contracts` BECAME `/orders` on
+  2026-09-04, so this paragraph's "byte-identical" claim no longer covers that
+  one route. Everything else in it still holds, which is why it is corrected
+  rather than deleted. ⚠ NOT ON `E380`'s REFERENCE LIST — found by grepping.
+  ⚠⚠ EVERY OTHER `href` IS BYTE-IDENTICAL TO WHAT IT WAS. `/orders` now READS
   "Work Orders" and `/packages` now READS "Service Products" — the label is the
   product's language, the route is the codebase's, and they are allowed to
   disagree. Renaming a route here would 404 every existing link and is a
@@ -181,6 +185,88 @@ export const REQUESTER_NAV: NavItem[] = [
     icon: "Package",
     requires: "canHireTalent",
   },
+  /*
+    ── ⚠⚠ THE CONTRACT DOCTRINE (`P1-ALL-E380`, 2026-09-04) ─────────────────
+
+    ⚠ THIS BLOCK IS HERE BECAUSE THIS IS WHERE THE MISTAKE WAS MADE. `/contracts`
+    was never a decision — it was a URL segment a placeholder got titled from
+    (`9ae05d7`), and the rail beside it has said `Work Orders` the whole time.
+    A word invented a record. Read this before adding one back.
+
+    SCOTT, 2026-09-04: *"the work order is the SOW...which is a contract. In
+    services, buyer and supplier have 2 contracts. Master Services Agreement
+    (MSA) is buyer supplier across all providers — generic terms, arbitration,
+    PII, confidentiality. The Statement of Work (SOW) is the per-resource
+    definition of what is to be done, how long, how much is to be paid. FOR
+    PANAMEER, the ToS must cover the MSA and the Work Order is the SOW."*
+
+    And: *"remove contract. we will not have that."*
+
+      services layer                              Panameer
+      ------------------------------------------  --------------------------
+      MSA  — across all engagements: arbitration,
+             PII, confidentiality                 THE ToS
+      SOW  — per engagement: what, how long,
+             how much                             THE WORK ORDER
+
+    ⚠⚠ THERE IS NO THIRD CONTRACT, SO THERE IS NO `Contract` MODEL, NO
+    `/contracts` ROUTE AND NO CONTRACTS SCREEN.
+
+    ⚠ THE ToS **IS** THE MSA. So there is no separate MSA record, no MSA signing
+    flow and no MSA storage. Accepting the terms IS accepting the master
+    agreement — which is why `User.tos_accepted_at` / `tos_version` and
+    `Company.company_tos_accepted_by` / `_at` / `_version` are legally
+    load-bearing rather than a formality. ⚠ `E380` VERIFIED THOSE AND REPORTED
+    ON THEM; it changed none of them.
+
+    ⚠ THE WORK ORDER **IS** THE SOW. Scope, duration and price are ITS FIELDS —
+    not a separate document, not an attachment, not a generated PDF to be
+    signed. When Work Orders are built, that is what they carry.
+
+    ⚠⚠ AND `Contract` WAS A ROUTE NAME, NEVER A PRODUCT CONCEPT. Nobody may
+    re-add it from a URL, a stale bookmark, a deck slide or an admin listing.
+
+    ── ⚠⚠ DIRECT WORK ORDERS — THE ONE QUALIFICATION ────────────────────────
+
+    SCOTT, 2026-09-04: *"It WILL be possible that a buyer can create a direct WO
+    to bring a contract created outside Panameer into the application to use its
+    functionality. They are called DIRECT WORK ORDERS."*
+
+    ⚠ SO A WORK ORDER DOES NOT ALWAYS ORIGINATE HERE. The normal path is
+    `Service Product -> Work Request -> proposal -> Work Order`. A Direct Work
+    Order has no Panameer-side origin: the deal was struck elsewhere and brought
+    in to use settlement, timesheets and the rest.
+
+    ⚠⚠ WHICH QUALIFIES "THE ToS IS THE MSA":
+
+                            originated here      DIRECT WORK ORDER
+      MSA                   the ToS              ⚠ THE PARTIES' OWN, MADE
+                                                   ELSEWHERE
+      SOW                   the Work Order       ⚠ A **RECORD OF** A SOW THAT
+                                                   EXISTS ELSEWHERE
+      platform terms        the ToS              the ToS
+
+    ⚠ THE SECOND ROW IS THE ONE THAT MATTERS: for a Direct Work Order the Work
+    Order REPRESENTS the SOW rather than BEING it. If the two ever disagree,
+    which one governs is A LAWYER'S QUESTION AND NOT A BUILD DECISION. `E380`
+    flagged it and did not answer it.
+
+    ⚠⚠ CONSEQUENCE FOR WHENEVER WORK ORDERS ARE BUILT, AND IT IS ONE FIELD: A
+    WORK ORDER MUST KNOW ITS ORIGIN, because the platform can only make claims
+    about what it can see. PANAMEER CAN ASSERT THE TERMS OF AN ORDER IT
+    GENERATED; IT CAN ONLY RECORD THE EXISTENCE OF ONE IT DID NOT.
+
+    ⚠⚠ THAT FIELD IS NOT BUILT AND MUST NOT BE ADDED HERE. Work Orders are still
+    a stub, and a column on a table nobody has is the `E034` shape — a gate that
+    cannot fire, sitting in the code looking implemented. THIS DOCTRINE SAYS THE
+    FIELD IS COMING SO IT ARRIVES WITH THE MODEL RATHER THAN BEING RETROFITTED.
+    IT DOES NOT CREATE ONE.
+
+    ⚠ THE ToS TEXT IS OUT OF SCOPE. Whether it actually carries arbitration, PII
+    and confidentiality as BUYER-TO-SUPPLIER terms rather than only
+    user-to-platform terms is a lawyer's question. `E380` flagged it and edited
+    no legal copy.
+  */
   {
     /* ⚠⚠ A PLURAL NOUN, NOT A VERB, AND SCOTT DECIDED IT: *"yes. i get it. that
        works."* SUPERSEDED, QUOTED NOT DELETED — his draft read `Order | Settle`.
@@ -188,7 +274,7 @@ export const REQUESTER_NAV: NavItem[] = [
        a place. The row loses all-verb symmetry and gains legibility. */
     label: "Orders",
     heading: "Work Orders",
-    href: "/contracts",
+    href: "/orders",
     icon: "ClipboardCheck",
     requires: "canHireTalent",
   },
@@ -455,7 +541,9 @@ export const COMPANY_NAV: NavItem[] = [
   EXISTING INCONSISTENCY NOBODY FILED: `pageTitleFor`'s lookup list spreads
   `PROVIDER_NAV` but NOT `REQUESTER_NAV`, so a BUYER on `/learn` has been getting
   the heading "Start Learning" while their own rail said "Learning Paths". Both
-  now read "Learning Paths". Same for `/contracts` -> "Work Orders".
+  now read "Learning Paths". Same for `/orders` -> "Work Orders".
+  ⚠ THAT ROUTE WAS `/contracts` UNTIL `P1-ALL-E380`. ⚠ NOT ON `E380`'s
+  REFERENCE LIST EITHER — found by grepping rather than trusting the brief.
 */
 export const PROVIDER_NAV: NavItem[] = [
   { label: "Learn", heading: "Learning Paths", href: "/learn", icon: "GraduationCap" },
@@ -476,7 +564,7 @@ export const PROVIDER_NAV: NavItem[] = [
     icon: "Tag",
     requires: "canProvideServices",
   },
-  { label: "Orders", heading: "Work Orders", href: "/contracts", icon: "ClipboardCheck" },
+  { label: "Orders", heading: "Work Orders", href: "/orders", icon: "ClipboardCheck" },
   { label: "Payments", heading: "Payments", href: "/finances", icon: "Wallet" },
   { label: "Connect", heading: "My Community", href: "/community", icon: "MessagesSquare" },
 ];
@@ -736,9 +824,29 @@ export const ADMIN_SETUP: NavItem = {
  * WHAT MOVED, and why it matters more than a rename: the MASTER's rail had one
  * "Work" and one "Packages" entry. The revised model splits the transaction
  * lifecycle into its real stages — Work Requests, Work Orders, Work Packages,
- * Contracts, Settlements, Payments — because those are separate records with
- * separate states, and a single "Work" page could only ever have shown one of
- * them. Buyers/Sellers moves to Configuration Data: it is a directory of who
+ * Settlements, Payments — because those are separate records with separate
+ * states, and a single "Work" page could only ever have shown one of them.
+ *
+ * ⚠ SUPERSEDED 2026-09-04 (`P1-ALL-E380`), QUOTED NOT DELETED: that list read
+ * *"Work Requests, Work Orders, Work Packages, **Contracts**, Settlements,
+ * Payments"*. THE CLAIM THAT THEY ARE SEPARATE RECORDS STAYS TRUE — only the
+ * name goes, because there is no `Contract` record to be one of them. The ToS
+ * is the MSA and the Work Order is the SOW; see the doctrine beside the
+ * `Orders` slot above.
+ *
+ * ⚠⚠ AND THE `/admin/contracts` ENTRY BELOW WAS DELIBERATELY **NOT** RENAMED —
+ * `E380` STOPPED AND REPORTED INSTEAD. `/admin/work-orders` ALREADY EXISTS,
+ * with the label `Work Orders`, as its own nav entry and its own route
+ * directory. Renaming this one to match would have shipped TWO ADMIN ENTRIES
+ * WITH THE SAME LABEL pointing at different routes — a worse defect than the
+ * one being fixed. ⚠ THE DOCTRINE IMPLIES THIS ENTRY SHOULD BE **REMOVED**
+ * RATHER THAN RENAMED, since there is no `Contract` record for an admin screen
+ * to list and `/admin/work-orders` already lists the real thing — but removing
+ * an admin surface is Scott's call and he has not made it. See the `E380`
+ * report.
+ * ⚠ ITS `ADMIN_PAGES` KEY AND `SpecPage` SLUG ARE `"contracts"` AND MUST STAY:
+ * the slug is not a URL, it keys a spec generated from the 2.5 deck slides, and
+ * renaming it would blank the page rather than relabel it. Buyers/Sellers moves to Configuration Data: it is a directory of who
  * exists, not a stream of what happened.
  */
 export const ADMIN_NAV: NavGroup[] = [
