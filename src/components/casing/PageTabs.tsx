@@ -86,6 +86,14 @@ export type PageTab = {
   /** ⚠ Readiness pill, moved off the duplicate section cards (`E378`). */
   state?: "live" | "early";
   /**
+   * ⚠⚠ AN UNREAD COUNT (`P1-ALL-E379`). ZERO MUST RENDER NOTHING — the caller
+   * passes `undefined`, never `0`. A "0" badge is a fabricated number in the
+   * same family as a `$0` rate: it reports an absence as a measurement. Same
+   * rule as `declinedCount`, which renders nowhere at all.
+   * ⚠ THE TYPE CANNOT ENFORCE IT, so `check:messages` does.
+   */
+  badge?: number;
+  /**
    * ⚠⚠ ONLY EVER READ IN `process` MODE. A `suggested` set passing this is
    * ignored by construction rather than by discipline — see `renderState`.
    */
@@ -162,6 +170,13 @@ export function PageTabs({
                   </span>
                 )}
                 {t.label}
+                {/* ⚠ ZERO RENDERS NOTHING. The `> 0` is the guard even though
+                    callers already omit it — two chances to get it right. */}
+                {t.badge !== undefined && t.badge > 0 && (
+                  <span className="grid h-[18px] min-w-[18px] place-items-center rounded-full bg-magenta px-1 text-[11px] font-bold text-white">
+                    {t.badge}
+                  </span>
+                )}
                 {/* ⚠ THE READINESS PILL, on the tab rather than on a second set
                     of cards. `early` is the only one drawn: a `live` pill on
                     everything that works is noise, and the absence of a pill

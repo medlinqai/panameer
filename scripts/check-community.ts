@@ -64,14 +64,38 @@ const block = bodies.get(BLOCK) ?? "";
 // ---------------------------------------------------------------------------
 
 /*
-  THE ROOT FACT FIRST. If a messaging model ever lands, this assertion is what
-  says "re-read the rule" rather than letting the ban quietly become wrong.
+  ⚠⚠ THE ROOT FACT CHANGED ON 2026-09-04, AND THIS ASSERTION IS WHY WE KNOW.
+
+  ⚠ SUPERSEDED, QUOTED NOT DELETED. It used to read *"GUARD 1 — there is still
+  NO messaging model in the schema"*, with the detail *"if one landed, the
+  'messages' ban below needs revisiting rather than deleting"*. `P1-ALL-E379`
+  landed one, so the assertion FIRED — exactly as designed — and its own
+  instruction says REVISIT THE BAN, NOT DELETE IT.
+
+  ⚠⚠ SO IT IS INVERTED RATHER THAN DROPPED. The rule it protects has NOT
+  changed: a forum post count must never be called a "message". What changed is
+  that the word now has a real referent elsewhere in the product, which makes
+  the mislabel MORE confusing, not less — a "3 messages" badge on a profile
+  that means forum replies now collides with a real unread count.
+
+  ⚠ THE BAN BELOW IS THEREFORE UNCHANGED AND STILL TOTAL on the counting lib and
+  the block that renders it. Nothing was relaxed to let `E379` through.
 */
 const schemaNoComments = strip(schema).replace(/\/\/\/[^\n]*/g, " ");
 check(
-  "GUARD 1 — there is still NO messaging model in the schema",
-  !/\bmodel\s+(Conversation|Message|DirectMessage|ChatMessage)\b/.test(schemaNoComments),
-  "if one landed, the 'messages' ban below needs revisiting rather than deleting"
+  "GUARD 1 — the Message model exists, so the 'messages' ban below matters MORE",
+  /\bmodel\s+Message\b/.test(schemaNoComments),
+  "P1-ALL-E379 built it; a forum count called 'messages' now collides with a real one"
+);
+/* ⚠ AND STILL NO CONVERSATION/THREAD MODEL — `E379` is deliberately one table,
+   with the conversation DERIVED from the pair. If one of these ever lands, the
+   1:1 assumption in `lib/messages.ts` needs re-reading. */
+check(
+  "GUARD 1 — messaging is still ONE table, with no Conversation or Thread model",
+  !/\bmodel\s+(Conversation|Thread|DirectMessage|ChatMessage|Participant)\b/.test(
+    schemaNoComments
+  ),
+  "a conversation is derived from the pair; a thread row would be a different feature"
 );
 
 /*
@@ -825,10 +849,28 @@ check(
 /* ⚠⚠ MESSAGES IS UNNUMBERED, AND THAT IS A BUILD FACT: there is no Message
    model, and a suggested sequence whose step 1 is a dead end teaches people the
    numbers are decorative. */
+/* ⚠⚠ THAT DAY CAME. `E378` shipped this as *"Messages carries no step number"*
+   with the detail *"it takes 1 the day it has a model"* — quoted, not deleted.
+   `P1-ALL-E379` built the model, so the assertion is INVERTED rather than
+   dropped: the rule was never "Messages must be unnumbered", it was "a suggested
+   sequence must not open on a dead end". Messages is now step 1, which is
+   Scott's own order: *"1. Check Your Messages. 2. Search for Colleagues."* */
 check(
-  "E378/5 — Messages carries no step number",
-  /\{ label: "Messages", href: "\/messages"/.test(navLib),
-  "it takes 1 the day it has a model"
+  "E378/5 — Messages is step 1 now that it has a model",
+  /\{ n: 1, label: "Messages", href: "\/messages" \}/.test(navLib),
+  "E379 built the Message model, so the sequence no longer opens on a dead end"
+);
+/* ⚠ AND IT LOST ITS `early` PILL — a readiness pill on a working feature is the
+   same lie in the other direction. */
+check(
+  "E378/5 — Messages no longer carries an `early` pill",
+  !/label: "Messages", href: "\/messages", state:/.test(navLib)
+);
+/* ⚠ THE MODE IS STILL `suggested`. You never finish checking your messages, so
+   step 1 must never acquire a done state. */
+check(
+  "E378/5 — /community is still suggested, not process",
+  /"\/community":\s*"suggested"/.test(navLib)
 );
 check(
   "E378/5 — Find a Mentor is gone from every label and title",

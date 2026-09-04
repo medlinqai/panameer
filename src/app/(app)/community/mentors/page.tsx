@@ -16,6 +16,8 @@ import { Avatar } from "@/components/Avatar";
 // import { formatCents } from "@/lib/display";
 import { PageTabs } from "@/components/casing/PageTabs";
 import { PAGE_TABS, tabSequenceFor } from "@/lib/nav";
+/* ⚠ `P1-ALL-E379` — the unread badge rides on the shared tab row. */
+import { tabsWithUnread, unreadCount } from "@/lib/messages";
 
 /**
  * FIND A MENTOR — the directory shell (PHASE 2 / WS2-E).
@@ -51,6 +53,10 @@ export default async function MentorsPage({
   searchParams: Promise<{ skill?: string }>;
 }) {
   await guardPage("authenticated");
+  /* ⚠ `P1-ALL-E379` — the Messages tab carries the unread count on every
+     page that renders this tab row. Zero renders nothing. */
+  const unreadViewer = await getSessionViewer();
+  const unread = unreadViewer ? await unreadCount(unreadViewer) : 0;
   const { skill } = await searchParams;
   const mentors = await listMentors({ skill: skill?.trim() || undefined });
 
@@ -69,7 +75,7 @@ export default async function MentorsPage({
     <>
       {/* E216 — the Community rail flyout's children are this section's tab row now. */}
       <PageTabs
-        sequence={tabSequenceFor("/community")} tabs={PAGE_TABS["/community"]} current="/community/mentors" />
+        sequence={tabSequenceFor("/community")} tabs={tabsWithUnread(PAGE_TABS["/community"], unread)} current="/community/mentors" />
       <div className="mx-auto max-w-5xl space-y-5">
       <header>
         {/* ⚠⚠ NOBODY ON THIS PAGE IS CALLED A MENTOR, AND THAT IS THE POINT

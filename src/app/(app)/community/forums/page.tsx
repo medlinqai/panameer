@@ -4,6 +4,9 @@ import { listBoards } from "@/lib/forums";
 import { relativeDay } from "@/lib/relative-day";
 import { PageTabs } from "@/components/casing/PageTabs";
 import { PAGE_TABS, tabSequenceFor } from "@/lib/nav";
+/* ⚠ `P1-ALL-E379` — the unread badge rides on the shared tab row. */
+import { getSessionViewer } from "@/lib/session";
+import { tabsWithUnread, unreadCount } from "@/lib/messages";
 
 /**
  * FORUMS — the board list (PHASE 2 / WS2-C). REAL, not a scaffold.
@@ -22,13 +25,17 @@ export const metadata = { title: "Forums · Panameer" };
 
 export default async function ForumsPage() {
   await guardPage("authenticated");
+  /* ⚠ `P1-ALL-E379` — the Messages tab carries the unread count on every
+     page that renders this tab row. Zero renders nothing. */
+  const unreadViewer = await getSessionViewer();
+  const unread = unreadViewer ? await unreadCount(unreadViewer) : 0;
   const boards = await listBoards();
 
   return (
     <>
       {/* E216 — the Community rail flyout's children are this section's tab row now. */}
       <PageTabs
-        sequence={tabSequenceFor("/community")} tabs={PAGE_TABS["/community"]} current="/community/forums" />
+        sequence={tabSequenceFor("/community")} tabs={tabsWithUnread(PAGE_TABS["/community"], unread)} current="/community/forums" />
       <div className="mx-auto max-w-4xl">
       <header className="mb-5">
         <h1 className="font-display text-[26px] font-bold tracking-[-0.5px]">

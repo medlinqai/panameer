@@ -6,6 +6,8 @@ import { Avatar } from "@/components/Avatar";
 import { relativeDay } from "@/lib/relative-day";
 import { PageTabs } from "@/components/casing/PageTabs";
 import { PAGE_TABS, tabSequenceFor } from "@/lib/nav";
+/* ⚠ `P1-ALL-E379` — the unread badge rides on the shared tab row. */
+import { tabsWithUnread, unreadCount } from "@/lib/messages";
 
 /**
  * MY TEAMS (PHASE 2 / WS2-D) — REAL, reading data that already existed.
@@ -24,6 +26,10 @@ export const metadata = { title: "My Teams · Panameer" };
 
 export default async function MyTeamsPage() {
   await guardPage("authenticated");
+  /* ⚠ `P1-ALL-E379` — the Messages tab carries the unread count on every
+     page that renders this tab row. Zero renders nothing. */
+  const unreadViewer = await getSessionViewer();
+  const unread = unreadViewer ? await unreadCount(unreadViewer) : 0;
   const viewer = await getSessionViewer();
   const teams = viewer
     ? await getMyTeams(viewer)
@@ -38,7 +44,7 @@ export default async function MyTeamsPage() {
     <>
       {/* E216 — the Community rail flyout's children are this section's tab row now. */}
       <PageTabs
-        sequence={tabSequenceFor("/community")} tabs={PAGE_TABS["/community"]} current="/community/teams" />
+        sequence={tabSequenceFor("/community")} tabs={tabsWithUnread(PAGE_TABS["/community"], unread)} current="/community/teams" />
       <div className="mx-auto max-w-4xl space-y-4">
       <header>
         <h1 className="font-display text-[26px] font-bold tracking-[-0.5px]">

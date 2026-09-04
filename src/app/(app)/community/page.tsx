@@ -31,6 +31,8 @@ import {
 } from "@/lib/community";
 import { PageTabs } from "@/components/casing/PageTabs";
 import { PAGE_TABS, tabSequenceFor } from "@/lib/nav";
+/* ⚠ `P1-ALL-E379` — the unread badge rides on the shared tab row. */
+import { tabsWithUnread, unreadCount } from "@/lib/messages";
 /* ⚠ `P1-ALL-E374` — the screen over `E372`'s engine. The blocks and the search
    results are server components so `searchMembers`, `getMyCommunity` and
    `getColleagueSuggestions` never leave the server. */
@@ -67,6 +69,10 @@ export default async function CommunityPage({
   searchParams: Promise<{ q?: string }>;
 }) {
   await guardPage("authenticated");
+  /* ⚠ `P1-ALL-E379` — the Messages tab carries the unread count on every
+     page that renders this tab row. Zero renders nothing. */
+  const unreadViewer = await getSessionViewer();
+  const unread = unreadViewer ? await unreadCount(unreadViewer) : 0;
   /* ⚠ SEARCH LIVES ON THIS PAGE — there is no `/community/people` route. While a
      query is live the results REPLACE the blocks; clearing `?q=` restores them.
      `E374`: *"One page is one thing to walk."* */
@@ -96,7 +102,7 @@ export default async function CommunityPage({
     <>
       {/* E216 — the Community rail flyout's children are this section's tab row now. */}
       <PageTabs
-        sequence={tabSequenceFor("/community")} tabs={PAGE_TABS["/community"]} current="/community" />
+        sequence={tabSequenceFor("/community")} tabs={tabsWithUnread(PAGE_TABS["/community"], unread)} current="/community" />
       <div className="mx-auto max-w-5xl space-y-5">
       <header>
         {/*
