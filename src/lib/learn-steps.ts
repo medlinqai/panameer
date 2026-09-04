@@ -38,10 +38,33 @@ export type LearnStepLabel = {
   n: number;
   /** The always-visible disclosure row label. */
   summary: string;
+  /**
+   * ⚠⚠ THE SHORT HANDLE — THE SAME STEP AT TAB LENGTH (`P1-ALL-E378`).
+   *
+   * Two lengths, ONE LIST. The marketing summary is *"Watch the Courses and
+   * Lessons"*; the tab handle is *"Courses"*. ⚠ ADDED TO THIS TYPE RATHER THAN
+   * CREATING A SECOND LIST, and that is the whole point of the field: TWO LISTS
+   * IS HOW THE PROMISE AND THE PRODUCT DRIFT APART, and that drift is the reason
+   * `E378` exists. The public page promises an order; the app has to show the
+   * same one.
+   *
+   * ⚠ NOT EVERY STEP HAS A TAB, WHICH IS WHY THIS IS OPTIONAL AND WHY IT IS
+   * HONEST TO LEAVE IT ABSENT. Steps 2 and 5 happen on `/community`, not on a
+   * `/learn` tab. Absent means "this step has no slice on this journey's page",
+   * NOT "nobody has written it yet".
+   *
+   * ⚠⚠ AND NOTHING CONSUMES THESE TODAY. `/learn` ships mode `none` because its
+   * spine does not map onto its three tabs — see `TAB_SEQUENCE` in `nav.ts` for
+   * the full mapping and the reasoning. The handles are recorded here so the
+   * mapping is DATA rather than an argument in a comment, and so the first
+   * person to sequence `/learn` starts from the promise instead of inventing
+   * new names. REPORTED at `E378` rather than shipped as if it were wired.
+   */
+  handle?: string;
 };
 
 export const LEARN_STEPS: LearnStepLabel[] = [
-  { n: 1, summary: "Enroll in a Learning Path" },
+  { n: 1, summary: "Enroll in a Learning Path", handle: "Paths" },
   /*
     ⚠⚠ THIS REVERSES `Meet Your Instructor`, WHICH SCOTT SETTLED THE SAME MORNING,
     AND IT SHIPS BECAUSE THEY ARE BOTH HIS WORDS (`P1-J0-E296`, 2026-08-24).
@@ -67,10 +90,10 @@ export const LEARN_STEPS: LearnStepLabel[] = [
   /* ⚠ ONE ROW CARRIES TWO SECTIONS. `E283`: merging course and lesson collapses a
      level this page was built to teach. Deliberate, and the two blocks stay
      visibly separate INSIDE the panel so the hierarchy is still shown. */
-  { n: 3, summary: "Watch the Courses and Lessons" },
+  { n: 3, summary: "Watch the Courses and Lessons", handle: "Courses" },
   /* ⚠ THE EXCLAMATION MARK IS SCOTT'S AND IT IS THE ONLY ONE ON THE PAGE. It was
      already recorded as deliberate on the old step 4 and it survives `E296`. */
-  { n: 4, summary: "Get Certified!" },
+  { n: 4, summary: "Get Certified!", handle: "My learning" },
   /*
     ⚠⚠ THE PANEL UNDER THIS NO LONGER MATCHES THE LABEL, AND IT IS NOT FIXED HERE.
 

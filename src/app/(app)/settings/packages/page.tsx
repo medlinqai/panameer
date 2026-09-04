@@ -1,6 +1,6 @@
 import { PackagesManager } from "@/components/packages/PackagesManager";
 import { PageTabs } from "@/components/casing/PageTabs";
-import { PAGE_TABS } from "@/lib/nav";
+import { PAGE_TABS, tabSequenceFor } from "@/lib/nav";
 import { guardPage } from "@/lib/guard";
 import { sellGaps } from "@/lib/gate-reads";
 
@@ -25,6 +25,7 @@ export default async function SettingsPackagesPage() {
     <div className="space-y-6">
       {/* E216 — "Sell My Services" flattened; its two children are this row. */}
       <PageTabs
+        sequence={tabSequenceFor("/settings/packages")}
         tabs={PAGE_TABS["/settings/packages"]}
         current="/settings/packages"
         className="mb-0"

@@ -1,7 +1,7 @@
 import { ComingSoon } from "@/components/ComingSoon";
 import { guardPage } from "@/lib/guard";
 import { PageTabs } from "@/components/casing/PageTabs";
-import { PAGE_TABS } from "@/lib/nav";
+import { PAGE_TABS, tabSequenceFor } from "@/lib/nav";
 
 /**
  * Offers for My Services — a titled placeholder (WS1-B).
@@ -16,7 +16,8 @@ export default async function Page() {
   await guardPage("canProvideServices");
   return (
     <div className="mx-auto w-full max-w-6xl">
-      <PageTabs tabs={PAGE_TABS["/settings/packages"]} current="/services/offers" />
+      <PageTabs
+        sequence={tabSequenceFor("/settings/packages")} tabs={PAGE_TABS["/settings/packages"]} current="/services/offers" />
       <ComingSoon title="Offers for My Services" />
     </div>
   );

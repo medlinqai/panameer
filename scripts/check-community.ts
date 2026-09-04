@@ -684,6 +684,200 @@ check(
 );
 
 // ---------------------------------------------------------------------------
+// GUARD 9 — TABS THAT CARRY THE SEQUENCE (`P1-ALL-E378`).
+//
+// ⚠⚠ THE LOAD-BEARING ONE IS THE FIRST: A `suggested` SET NEVER RENDERS A DONE
+// STATE. You never finish "check your messages" — you do it again tomorrow — so
+// a tick beside it asserts something false about the person looking at it.
+// ---------------------------------------------------------------------------
+
+const TABS = join("src", "components", "casing", "PageTabs.tsx");
+const pageTabs = bodies.get(TABS) ?? "";
+const navLib = bodies.get(join("src", "lib", "nav.ts")) ?? "";
+
+check("E378 — PageTabs.tsx is on disk", pageTabs.length > 0);
+check("E378 — lib/nav.ts is on disk", navLib.length > 0);
+
+/* ── 1 · ⚠⚠ `suggested` HAS NO DONE STATE, ENFORCED BY CONSTRUCTION ────────
+   The `done` flag must be gated on the mode being `process` IN THE SAME
+   EXPRESSION that computes it. Checking the mode somewhere else and trusting
+   the author to remember is exactly what this guard exists to prevent. */
+const doneExpr = /const done\s*=\s*sequence === "process"\s*&&/;
+check(
+  "E378/1 — a done state is only computed when the mode is process",
+  doneExpr.test(pageTabs),
+  "the mode must gate the expression itself, not be checked elsewhere"
+);
+/* ⚠ AND `done` IS READ NOWHERE ELSE. If a second site reads `t.done` without
+   the mode gate, the first assertion passes while the bug ships. */
+const doneReads = [...pageTabs.matchAll(/\bt\.done\b/g)].length;
+check(
+  "E378/1 — t.done is read exactly once, inside the gated expression",
+  doneReads === 1,
+  `${doneReads} read(s)`
+);
+/* ⚠ THE TICK ITSELF IS REACHABLE ONLY THROUGH `done`. */
+const tickLines = pageTabs.split("\n").filter((l) => l.includes("✓"));
+check(
+  "E378/1 — the tick glyph is rendered only from the done flag",
+  tickLines.length === 1 && /done \?/.test(tickLines[0]),
+  tickLines.join(" || ")
+);
+/* ⚠ AND THE SET THAT IS ACTUALLY SUGGESTED IS DECLARED AS SUCH. */
+check(
+  "E378/1 — /community is declared suggested in nav.ts",
+  /"\/community":\s*"suggested"/.test(navLib)
+);
+check(
+  "E378/1 — tabSequenceFor defaults an undeclared set to none",
+  /TAB_SEQUENCE\[baseRoute\] \?\? "none"/.test(navLib),
+  "a set acquires a sequence only when somebody decides it has one"
+);
+
+/* ── 2 · THE AFFORDANCE IS NOT COLOUR ALONE ───────────────────────────────── */
+check(
+  "E378/2 — the active tab carries a 2.5px underline",
+  /border-b-\[2\.5px\]/.test(pageTabs)
+);
+check(
+  "E378/2 — inactive tabs hold the same width so nothing shifts",
+  /border-transparent/.test(pageTabs)
+);
+check(
+  "E378/2 — the active tab is announced to assistive tech, not just coloured",
+  /aria-current=\{active \? "page" : undefined\}/.test(pageTabs)
+);
+/* ⚠ NOT PILLS — reusing the LEARN catalog's filter shape to navigate would
+   teach one shape two meanings. A rounded-full on the LINK would be that. */
+/* ⚠ SCOPED TO THE TAB LINK'S OWN CLASSES, AND THE FIRST VERSION WAS WRONG.
+   It scanned the whole file for `rounded-full` and flagged two things that are
+   round ON PURPOSE: the step-number DISC (a circle is what a numbered step is)
+   and the `Early` BADGE (a pill is what a status pill is). Neither is the tab.
+   ⚠ THE RULE IS ABOUT THE NAVIGATION CONTROL ITSELF — a pill-shaped TAB is what
+   would collide with the LEARN catalog's filter pills. */
+const linkTag = /<Link\b[\s\S]*?\n\s*>/.exec(pageTabs)?.[0] ?? "";
+check("E378/2 — the tab link tag was found by the scan", linkTag.length > 0);
+check(
+  "E378/2 — the tab itself is not a pill",
+  !/rounded-full|rounded-\[/.test(linkTag),
+  "on the LEARN catalog a pill FILTERS; reusing that shape to navigate teaches one shape two meanings"
+);
+
+/* ── 3 · MOBILE SCROLLS. NO DROPDOWN. ─────────────────────────────────────── */
+check("E378/3 — the strip scrolls sideways", /overflow-x-auto/.test(pageTabs));
+check(
+  "E378/3 — no dropdown hides the set",
+  !/<select\b/.test(pageTabs) && !/role="menu"/.test(pageTabs) && !/<Menu\b/.test(pageTabs),
+  "being able to SEE the set is the entire job of the row"
+);
+check("E378/3 — the right edge fades", /bg-gradient-to-l/.test(pageTabs));
+check(
+  "E378/3 — the fade cannot swallow a tap",
+  /pointer-events-none[\s\S]{0,200}bg-gradient-to-l|bg-gradient-to-l[\s\S]{0,200}pointer-events-none/.test(
+    pageTabs
+  )
+);
+check("E378/3 — hit targets clear 44px", /min-h-\[44px\]/.test(pageTabs));
+/* ⚠⚠ UPCOMING STEPS STAY CLICKABLE. GREYING IS A STATE, NOT A LOCK — a locked
+   tab would contradict a product where a certificate has no lesson
+   precondition. Nothing in this component may render a disabled tab. */
+check(
+  "E378/3 — no tab is ever disabled or unclickable",
+  !/disabled/.test(pageTabs) && !/pointer-events-none[^"]*"\s*\)?\s*\}?\s*>\s*\{t\.label/.test(pageTabs)
+);
+
+/* ── 4 · THE RAIL IS ONE-WORD VERBS AND THE JOURNEY NAME SURVIVED ─────────── */
+for (const [verb, journey] of [
+  ["Learn", "Learning Paths"],
+  ["Hire", "Work Requests"],
+  ["Work", "Work Requests"],
+  ["Shop", "Service Products"],
+  ["Sell", "Service Products"],
+  ["Orders", "Work Orders"],
+  ["Connect", "My Community"],
+] as const) {
+  check(
+    `E378/4 — rail slot "${verb}" keeps its journey name "${journey}"`,
+    new RegExp(`label: "${verb}",[\\s\\S]{0,40}heading: "${journey}"`).test(navLib),
+    "the rail says the journey in one word; the name moves to the heading"
+  );
+}
+/* ⚠ SLOTS 4 AND 5 ARE PLURAL NOUNS BY SCOTT'S DECISION — `Order`/`Settle` were
+   his draft and were superseded. A revert to the bare verbs is a regression. */
+check(
+  "E378/4 — the money slots ship as Orders | Payments, not Order | Settle",
+  /label: "Orders"/.test(navLib) && /label: "Payments"/.test(navLib) &&
+    !/label: "Settle"/.test(navLib) && !/label: "Order"[,\s]/.test(navLib)
+);
+check(
+  "E378/4 — pageTitleFor returns the journey name over the rail verb",
+  /best\.heading \?\? best\.label/.test(navLib)
+);
+
+/* ── 5 · THE SLICE NAMES, AND NO ROUTE MOVED ──────────────────────────────── */
+for (const label of ["Colleagues", "Forums", "Mentoring", "Teams"]) {
+  check(`E378/5 — /community tab "${label}" ships`, new RegExp(`label: "${label}"`).test(navLib));
+}
+check(
+  "E378/5 — no tab repeats the journey name or says My",
+  !/\{ n: \d+, label: "My /.test(navLib) && !/label: "My Community", href: "\/community" \}/.test(navLib)
+);
+/* ⚠⚠ MESSAGES IS UNNUMBERED, AND THAT IS A BUILD FACT: there is no Message
+   model, and a suggested sequence whose step 1 is a dead end teaches people the
+   numbers are decorative. */
+check(
+  "E378/5 — Messages carries no step number",
+  /\{ label: "Messages", href: "\/messages"/.test(navLib),
+  "it takes 1 the day it has a model"
+);
+check(
+  "E378/5 — Find a Mentor is gone from every label and title",
+  !/label: "Find a Mentor"/.test(navLib) &&
+    !/title: "Find a Mentor/.test(bodies.get(join("src", "app", "(app)", "community", "mentors", "page.tsx")) ?? "")
+);
+/* ⚠⚠ NO ROUTE MOVED. This was a LABEL brief; every href is unchanged. */
+for (const href of [
+  "/learn", "/create-work", "/find-work", "/packages", "/settings/packages",
+  "/contracts", "/pay", "/finances", "/community", "/community/forums",
+  "/community/teams", "/community/mentors", "/messages",
+]) {
+  check(`E378/5 — route ${href} still exists in the nav`, navLib.includes(`"${href}"`));
+}
+
+/* ── 6 · THE DUPLICATE CARDS ARE GONE, PARKED NOT DELETED ─────────────────── */
+const communityLib = bodies.get(join("src", "lib", "community.ts")) ?? "";
+const communityPage = bodies.get(join("src", "app", "(app)", "community", "page.tsx")) ?? "";
+check(
+  "E378/6 — communitySections() is commented out, not deleted",
+  !/^\s*export function communitySections/m.test(communityLib) &&
+    readFileSync(join("src", "lib", "community.ts"), "utf8").includes("communitySections"),
+  "it must survive on disk inside a comment"
+);
+check(
+  "E378/6 — the /community page renders no section cards",
+  !/sections\.map\(/.test(communityPage)
+);
+/* ⚠ THE PILLS WERE NOT DROPPED — they moved onto the tab. */
+check(
+  "E378/6 — the readiness pills moved onto the tab",
+  /state\?: "live" \| "early"/.test(navLib) && /t\.state === "early"/.test(pageTabs)
+);
+
+/* ── 7 · ONE LIST, NOT TWO ────────────────────────────────────────────────── */
+const learnSteps = bodies.get(join("src", "lib", "learn-steps.ts")) ?? "";
+check(
+  "E378/7 — the tab handle lives on the existing step type",
+  /handle\?: string;/.test(learnSteps) && /export type LearnStepLabel/.test(learnSteps),
+  "two lists is how the promise and the product drift apart"
+);
+check(
+  "E378/7 — no second step list was created",
+  ![...bodies.entries()].some(
+    ([f, b]) => f !== join("src", "lib", "learn-steps.ts") && /LEARN_TAB_STEPS|LEARN_HANDLES/.test(b)
+  )
+);
+
+// ---------------------------------------------------------------------------
 
 if (failures.length > 0) {
   console.error(`check:community — ${failures.length} FAILED, ${pass} passed\n`);

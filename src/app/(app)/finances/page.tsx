@@ -1,7 +1,7 @@
 import { ComingSoon } from "@/components/ComingSoon";
 import { guardPage } from "@/lib/guard";
 import { PageTabs } from "@/components/casing/PageTabs";
-import { PAGE_TABS } from "@/lib/nav";
+import { PAGE_TABS, tabSequenceFor } from "@/lib/nav";
 
 /**
  * GET PAID — Payments (E216).
@@ -17,7 +17,8 @@ export default async function Page() {
   await guardPage("authenticated");
   return (
     <div className="mx-auto w-full max-w-6xl">
-      <PageTabs tabs={PAGE_TABS["/finances"]} current="/finances" />
+      <PageTabs
+        sequence={tabSequenceFor("/finances")} tabs={PAGE_TABS["/finances"]} current="/finances" />
       <ComingSoon title="Payments" />
     </div>
   );

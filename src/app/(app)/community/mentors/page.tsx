@@ -15,7 +15,7 @@ import { Avatar } from "@/components/Avatar";
    straight out of the row. */
 // import { formatCents } from "@/lib/display";
 import { PageTabs } from "@/components/casing/PageTabs";
-import { PAGE_TABS } from "@/lib/nav";
+import { PAGE_TABS, tabSequenceFor } from "@/lib/nav";
 
 /**
  * FIND A MENTOR — the directory shell (PHASE 2 / WS2-E).
@@ -37,7 +37,13 @@ import { PAGE_TABS } from "@/lib/nav";
  * because none of these people has set one. Their own published hourly range is
  * shown separately where they have one — that IS theirs.
  */
-export const metadata = { title: "Find a Mentor · Panameer" };
+/* ⚠ THE THIRD PLACE `Find a Mentor` LIVED, AND `E374` MISSED IT (`P1-ALL-E378`).
+   The heading and the tab were renamed; this browser-tab title was not, so the
+   page said `Mentoring` while the tab strip in the OS said `Find a Mentor`.
+   ⚠ `Mentoring` NAMES THE TOPIC, NOT THE PEOPLE — `E374` established that nobody
+   is a mentor until asked, so a label presenting people as mentors advertises a
+   consent nobody gave. */
+export const metadata = { title: "Mentoring · Panameer" };
 
 export default async function MentorsPage({
   searchParams,
@@ -62,7 +68,8 @@ export default async function MentorsPage({
   return (
     <>
       {/* E216 — the Community rail flyout's children are this section's tab row now. */}
-      <PageTabs tabs={PAGE_TABS["/community"]} current="/community/mentors" />
+      <PageTabs
+        sequence={tabSequenceFor("/community")} tabs={PAGE_TABS["/community"]} current="/community/mentors" />
       <div className="mx-auto max-w-5xl space-y-5">
       <header>
         {/* ⚠⚠ NOBODY ON THIS PAGE IS CALLED A MENTOR, AND THAT IS THE POINT

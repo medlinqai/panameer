@@ -5,6 +5,23 @@ export type NavItem = {
   label: string;
   href: string;
   /**
+   * ⚠⚠ THE JOURNEY'S FULL NAME, when the rail label is a one-word verb
+   * (`P1-ALL-E378`). Three levels, each with one job: the RAIL says which
+   * journey in one word, the TABS say which slice, and the PAGE HEADING says
+   * the journey's name. Without this field the verb IS the only name left and
+   * the journey name is simply deleted.
+   *
+   * ⚠ IT HAS NO RUNTIME EFFECT TODAY, AND THAT IS REPORTED RATHER THAN HIDDEN:
+   * `pageTitleFor` is the only reader and NOTHING CALLS `pageTitleFor` — every
+   * page renders its own `<h1>`. Verified by grepping `src`, `scripts` and
+   * `e2e`; the only other hit is a comment. So `nav.ts:358`'s claim that
+   * relabelling *"ALSO MOVES PAGE HEADINGS"* is STALE — it was true when
+   * written and is not true now. The field exists so the names survive in the
+   * data rather than only in this comment, and so the function is CORRECT if
+   * anything ever calls it again.
+   */
+  heading?: string;
+  /**
    * The capability this item requires. Omitted = everyone signed in sees it.
    *
    * Keyed on the SAME `Capability` union `access.ts` uses to guard the routes
@@ -145,34 +162,52 @@ export const UTILITY_NAV: NavItem[] = [SEARCH_NAV, HOME_NAV, NOTIFICATIONS_NAV];
   had them. Relabelling is not re-permissioning.
 */
 export const REQUESTER_NAV: NavItem[] = [
-  { label: "Learning Paths", href: "/learn", icon: "GraduationCap" },
+  { label: "Learn", heading: "Learning Paths", href: "/learn", icon: "GraduationCap" },
   {
-    label: "Work Requests",
+    /* ⚠ MIRRORED SLOT. `nav.ts` already documents why: the rails point the SAME
+       WORD at DIFFERENT ROUTES. The nouns survived both sides because they were
+       nouns — A VERB PICKS A SIDE, so the buyer hires and the provider works. */
+    label: "Hire",
+    heading: "Work Requests",
     href: "/create-work",
     icon: "ClipboardList",
     requires: "canHireTalent",
   },
   {
-    label: "Service Products",
+    /* ⚠ MIRRORED SLOT — buyer shops, provider sells. */
+    label: "Shop",
+    heading: "Service Products",
     href: "/packages",
     icon: "Package",
     requires: "canHireTalent",
   },
   {
-    label: "Work Orders",
+    /* ⚠⚠ A PLURAL NOUN, NOT A VERB, AND SCOTT DECIDED IT: *"yes. i get it. that
+       works."* SUPERSEDED, QUOTED NOT DELETED — his draft read `Order | Settle`.
+       As a bare verb `Order` reads as a command (order something) rather than as
+       a place. The row loses all-verb symmetry and gains legibility. */
+    label: "Orders",
+    heading: "Work Orders",
     href: "/contracts",
     icon: "ClipboardCheck",
     requires: "canHireTalent",
   },
   {
+    /* ⚠⚠ THE SECOND PLURAL NOUN, SAME DECISION. `Settle` is the one label
+       nobody arrives already understanding, in the ONE SECTION WHERE MONEY
+       LIVES. ⚠ The href is `/pay` on this side and `/finances` on the
+       provider's — mirrored routes, unchanged by this brief. */
     label: "Payments",
+    heading: "Payments",
     href: "/pay",
     icon: "CreditCard",
     requires: "canHireTalent",
   },
   /* ⚠ `My Community` (`P1-ALL-E372` WS-5). Scott: *"'Community' sounds like a
      place you visit; 'My Community' sounds like something you have."* */
-  { label: "My Community", href: "/community", icon: "MessagesSquare" },
+  /* ⚠ `Connect` REPLACES `My Community` IN THE RAIL ONLY. The journey keeps its
+     name on the page `<h1>`, which still reads `My Community`. */
+  { label: "Connect", heading: "My Community", href: "/community", icon: "MessagesSquare" },
 ];
 
 /**
@@ -191,7 +226,31 @@ export const REQUESTER_NAV: NavItem[] = [
  * Recent". Folding them in added exactly one genuinely new view, My Proposals,
  * rather than stacking a second row of near-synonyms.
  */
-export const PAGE_TABS: Record<string, NavItem[]> = {
+/**
+ * ⚠ A TAB IS A NAV ITEM PLUS TWO TAB-ONLY FACTS (`P1-ALL-E378`).
+ *
+ * Extended rather than folded into `NavItem` so the RAIL cannot accidentally
+ * acquire a step number — a numbered rail is a different product decision and
+ * nobody made it.
+ *
+ *   `n`     — the step number in a sequenced set. ⚠ ABSENT means unnumbered
+ *             ON PURPOSE and is a real state, not missing data: `/messages`
+ *             sits in the `/community` sequence WITHOUT a number because it has
+ *             no `Message` model behind it.
+ *   `state` — ⚠⚠ WHERE THE `live` / `early` PILLS WENT. They used to ride on
+ *             `communitySections()`'s duplicate cards, which `E378` removes.
+ *             The pill is the one thing on those cards worth keeping, so it
+ *             moves ONTO THE TAB rather than onto a second set of cards —
+ *             which is exactly what the brief asked for. Values match
+ *             `lib/community.ts`'s originals: forums/teams `live`,
+ *             mentors/messages `early`.
+ */
+export type PageTabItem = NavItem & {
+  n?: number;
+  state?: "live" | "early";
+};
+
+export const PAGE_TABS: Record<string, PageTabItem[]> = {
   /*
     LEARN IS THE EXCEPTION, and deliberately. The pill row that used to carry
     these — a live client-side filter over one catalog, not two routes — is
@@ -234,12 +293,38 @@ export const PAGE_TABS: Record<string, NavItem[]> = {
     { label: "Payments", href: "/finances" },
     { label: "Payment Requests", href: "/finances/payment-requests" },
   ],
+  /*
+    ⚠⚠ `/community` — MODE `suggested`, AND THE NUMBERS ARE A RECOMMENDED ORDER
+    OF ATTENTION, NOT A PROCESS (`P1-ALL-E378`).
+
+    SCOTT, 2026-09-04: *"with something like Connect there isn't a real process
+    sequence, but there is a logical sequence."*
+
+    ⚠ THE RAIL SAYS THE JOURNEY, SO NO TAB REPEATS IT AND NONE NEEDS `My`.
+    ⚠ SUPERSEDED, QUOTED NOT DELETED — this set read:
+      *"My Community · Messages · Forums · My Teams · Find a Mentor"*.
+    `My Community` was the active tab sitting forty pixels above an `<h1>` that
+    said `My Community` again.
+
+    ⚠⚠ `Find a Mentor` -> `Mentoring` NAMES THE TOPIC, NOT THE PEOPLE. `E374`
+    established that nobody is a mentor until asked, so a label presenting people
+    as mentors advertises a consent nobody gave.
+
+    ⚠⚠ MESSAGES IS UNNUMBERED AND LAST, AND THAT IS A BUILD FACT RATHER THAN A
+    PREFERENCE. Scott's draft order opened with *"1. Check Your Messages"* and
+    that is right for the finished product — but there is NO `Message` model in
+    the schema and `/messages` ships a disabled composer reading *"Messaging
+    isn't available yet."* A suggested sequence whose step 1 is a dead end
+    teaches people the numbers are decorative. ⚠ MESSAGES TAKES 1 THE DAY IT HAS
+    A MODEL.
+  */
   "/community": [
-    { label: "My Community", href: "/community" },
-    { label: "Messages", href: "/messages" },
-    { label: "Forums", href: "/community/forums" },
-    { label: "My Teams", href: "/community/teams" },
-    { label: "Find a Mentor", href: "/community/mentors" },
+    { n: 1, label: "Colleagues", href: "/community" },
+    { n: 2, label: "Forums", href: "/community/forums", state: "live" },
+    { n: 3, label: "Mentoring", href: "/community/mentors", state: "early" },
+    { n: 4, label: "Teams", href: "/community/teams", state: "live" },
+    /* ⚠ NO `n` — see the block above. */
+    { label: "Messages", href: "/messages", state: "early" },
   ],
   /*
     Manage Work had ONE child pointing at the page it already opened, so it has
@@ -363,22 +448,27 @@ export const COMPANY_NAV: NavItem[] = [
   now read "Learning Paths". Same for `/contracts` -> "Work Orders".
 */
 export const PROVIDER_NAV: NavItem[] = [
-  { label: "Learning Paths", href: "/learn", icon: "GraduationCap" },
+  { label: "Learn", heading: "Learning Paths", href: "/learn", icon: "GraduationCap" },
   {
-    label: "Work Requests",
+    /* ⚠ MIRRORED — the provider WORKS where the buyer HIRES. Same slot, same
+       vocabulary role, different route and different verb. */
+    label: "Work",
+    heading: "Work Requests",
     href: "/find-work",
     icon: "Briefcase",
     requires: "canProvideServices",
   },
   {
-    label: "Service Products",
+    /* ⚠ MIRRORED — the provider SELLS where the buyer SHOPS. */
+    label: "Sell",
+    heading: "Service Products",
     href: "/settings/packages",
     icon: "Tag",
     requires: "canProvideServices",
   },
-  { label: "Work Orders", href: "/contracts", icon: "ClipboardCheck" },
-  { label: "Payments", href: "/finances", icon: "Wallet" },
-  { label: "My Community", href: "/community", icon: "MessagesSquare" },
+  { label: "Orders", heading: "Work Orders", href: "/contracts", icon: "ClipboardCheck" },
+  { label: "Payments", heading: "Payments", href: "/finances", icon: "Wallet" },
+  { label: "Connect", heading: "My Community", href: "/community", icon: "MessagesSquare" },
 ];
 
 
@@ -709,6 +799,57 @@ export const RETIRED_ADMIN_ROUTES: Record<string, string> = {
  * would let the rail and the header disagree about what a page is called — the
  * exact drift the single nav definition exists to prevent.
  */
+/**
+ * ⚠⚠ WHICH TAB SETS CARRY A SEQUENCE (`P1-ALL-E378`).
+ *
+ *   `process`   — numbers + connectors + done/current/upcoming. Doing 1 before
+ *                 2 is REQUIRED.
+ *   `suggested` — numbers + connectors, NO STATE. A recommended order of
+ *                 attention; nothing blocks and nothing completes.
+ *   `none`      — plain tabs. Parallel slices.
+ *
+ * ⚠⚠ A SET DECLARES ITS OWN MODE, AND ANYTHING UNLISTED IS `none`. Defaulting
+ * to `none` is deliberate: a set acquires a sequence only when somebody decides
+ * it has one.
+ *
+ * ── ⚠⚠ WHY ONLY ONE SET IS SEQUENCED, WHICH IS A FINDING, NOT AN OMISSION ──
+ *
+ * The brief expected `/learn` to ship as `process` with handles from
+ * `LEARN_STEPS`. ⚠ IT DOES NOT MAP, AND THE RULE THE BRIEF STATES TWICE IS *"do
+ * not invent steps to force a match"*, so it ships `none` and is reported:
+ *
+ *   LEARN_STEPS                        /learn tab
+ *   1 Enroll in a Learning Path    ->  All Learning Paths
+ *   2 Connect with the Instructor  ->  ⚠ NO TAB — this step is `/community`
+ *   3 Watch the Courses and Lessons->  All Courses
+ *   4 Get Certified!               ->  ~ My learning (progress, not the step)
+ *   5 Get Expert Support           ->  ⚠ NO TAB — this step is `/community`
+ *
+ * Numbering three tabs 1·3·4 renders gaps that read as broken; renumbering them
+ * 1·2·3 would contradict the public promise those numbers come from.
+ *
+ * ⚠ THE SAME IS TRUE OF THE OTHER TWO SETS, and for the same structural reason:
+ * `/settings/packages` (2 tabs) and `/finances` (2 tabs) are SLICES OF ONE PAGE,
+ * while every spine describes an END-TO-END JOURNEY ACROSS PAGES. They are
+ * different granularities, not a missing mapping.
+ *
+ * ⚠ SO `process` SHIPS WITH NO CONSUMER TODAY. Reported rather than quietly
+ * dropped — the mode is specified, built and asserted, and the first set that
+ * genuinely has a required order can declare it in one line.
+ */
+export const TAB_SEQUENCE: Record<string, "process" | "suggested" | "none"> = {
+  "/community": "suggested",
+  /* ⚠ `none` BY EVIDENCE, NOT BY DEFAULT — see the mapping above. */
+  "/learn": "none",
+  "/settings/packages": "none",
+  "/finances": "none",
+};
+
+/** The mode for a tab set. ⚠ Unlisted is `none` by design. */
+export function tabSequenceFor(baseRoute: string): "process" | "suggested" | "none" {
+  return TAB_SEQUENCE[baseRoute] ?? "none";
+}
+
 export function pageTitleFor(pathname: string): string | null {
   if (pathname === "/dashboard" || pathname === "/admin") return null;
 
@@ -739,7 +880,9 @@ export function pageTitleFor(pathname: string): string | null {
       if (!best || item.href.length > best.href.length) best = item;
     }
   }
-  if (best) return best.label;
+  /* ⚠ THE JOURNEY NAME WINS OVER THE RAIL VERB (`P1-ALL-E378`). The rail says
+     `Connect`; the page is still `My Community`. */
+  if (best) return best.heading ?? best.label;
 
   // Not a nav destination — title-case the last meaningful segment.
   const seg = pathname.split("/").filter(Boolean).pop();
