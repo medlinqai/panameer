@@ -1,4 +1,7 @@
-import { PROVIDER_NAV } from "@/lib/nav";
+/* ⚠ PARKED WITH `communitySections()` (`P1-ALL-E378` WS-4). It was imported for
+   ONE reason worth remembering: the section cards derived themselves from the
+   rail's `/community` children, so the cards and the rail could not disagree. */
+// import { PROVIDER_NAV } from "@/lib/nav";
 
 /**
  * The Community section, as data (brief_MASTER_rails_and_community PHASE 2).
@@ -30,33 +33,51 @@ export type CommunitySection = {
   state: "live" | "early";
 };
 
-/** The blurbs, keyed by the href the rail already declares. */
-const BLURBS: Record<string, { blurb: string; state: CommunitySection["state"] }> = {
-  "/messages": {
-    blurb:
-      "Direct conversations with buyers and the people you work with.",
-    state: "early",
-  },
-  "/community/forums": {
-    blurb:
-      /* ⚠ CREDITS CLAUSE PARKED 2026-09-03 (`P1-ALL-E375`). ONE COMPLETE
-         SENTENCE REMOVED, NOT REWRITTEN — the blurb read *"Ask questions, answer
-         them, and be seen doing it. Posting earns Community Credits."* What is
-         left is the original first sentence, untouched. NO NEW COPY WAS WRITTEN. */
-      "Ask questions, answer them, and be seen doing it.",
-    state: "live",
-  },
-  "/community/teams": {
-    blurb:
-      "The providers you represent, and the recruiter who represents you.",
-    state: "live",
-  },
-  "/community/mentors": {
-    blurb:
-      "Senior practitioners offering 15-minute sessions — the fastest way to unblock something.",
-    state: "early",
-  },
-};
+/* ⚠⚠ THE CARD BLURBS AND THEIR `live` / `early` STATES — PARKED 2026-09-04
+   (`P1-ALL-E378` WS-4). ⚠ COMMENTED OUT, NOT DELETED.
+
+   ⚠ THE STATES DID NOT DIE WITH THE CARDS — they were carried onto the TAB as
+   `PageTabItem.state` in `nav.ts`, value for value: forums and teams `live`,
+   mentors and messages `early`. This block is where those values came from and
+   is the record of why each destination was marked as it was.
+
+   ⚠ THE BLURBS HAVE NO NEW HOME, AND THAT IS REPORTED RATHER THAN HIDDEN. A tab
+   is a word, not a sentence, so a one-line description of each destination has
+   nowhere to go in the new shape. They are kept rather than rewritten
+   elsewhere, because inventing a place for them would be inventing copy.
+
+   ⚠ LINE COMMENTS, NOT A BLOCK WRAPPER: this block already contains an `E375`
+   note that ends with a comment delimiter, which would terminate a wrapper
+   early. Measured, not assumed.
+
+   Its original docblock: *"The blurbs, keyed by the href the rail already
+   declares."* */
+// const BLURBS: Record<string, { blurb: string; state: CommunitySection["state"] }> = {
+//   "/messages": {
+//     blurb:
+//       "Direct conversations with buyers and the people you work with.",
+//     state: "early",
+//   },
+//   "/community/forums": {
+//     blurb:
+//       /* ⚠ CREDITS CLAUSE PARKED 2026-09-03 (`P1-ALL-E375`). ONE COMPLETE
+//          SENTENCE REMOVED, NOT REWRITTEN — the blurb read *"Ask questions, answer
+//          them, and be seen doing it. Posting earns Community Credits."* What is
+//          left is the original first sentence, untouched. NO NEW COPY WAS WRITTEN. */
+//       "Ask questions, answer them, and be seen doing it.",
+//     state: "live",
+//   },
+//   "/community/teams": {
+//     blurb:
+//       "The providers you represent, and the recruiter who represents you.",
+//     state: "live",
+//   },
+//   "/community/mentors": {
+//     blurb:
+//       "Senior practitioners offering 15-minute sessions — the fastest way to unblock something.",
+//     state: "early",
+//   },
+// };
 
 /**
  * The four sections, in the order the rail lists them.
@@ -65,15 +86,35 @@ const BLURBS: Record<string, { blurb: string; state: CommunitySection["state"] }
  * child before this file knows about it: a hub missing a description is a small
  * problem, a hub that crashes is not.
  */
-export function communitySections(): CommunitySection[] {
-  const community = PROVIDER_NAV.find((i) => i.href === "/community");
-  return (community?.children ?? []).map((child) => ({
-    label: child.label,
-    href: child.href,
-    blurb: BLURBS[child.href]?.blurb ?? "",
-    state: BLURBS[child.href]?.state ?? "early",
-  }));
-}
+/* ⚠⚠ THE COMMUNITY SECTION CARDS' DATA — PARKED 2026-09-04 (`P1-ALL-E378`
+   WS-4). ⚠ COMMENTED OUT, NOT DELETED, AND IT MUST NOT BE DELETED.
+
+   It fed a grid of cards on `/community` pointing at THE SAME FOUR
+   DESTINATIONS THE TAB ROW ABOVE THEM ALREADY LISTED. The page offered every
+   sub-page twice.
+
+   ⚠ THE CARDS WERE A SYMPTOM: they existed because the tab row did not read as
+   navigation. `E378` WS-2a gave the row a 2.5px underline, numbers and
+   connectors, which removes the reason they were added.
+
+   ⚠ ITS `live` / `early` STATES SURVIVED THE MOVE — they are now
+   `PageTabItem.state` in `nav.ts`, rendered on the tab itself. Forums and Teams
+   were `live`; Mentoring and Messages were `early`. Those exact values were
+   carried across rather than re-decided.
+
+   ⚠ IT READ THE RAIL'S `children`, which is worth keeping visible: it derived
+   the cards from `PROVIDER_NAV`'s `/community` entry so the cards and the rail
+   could not disagree. If these ever come back, that derivation is the part to
+   keep. */
+// export function communitySections(): CommunitySection[] {
+//   const community = PROVIDER_NAV.find((i) => i.href === "/community");
+//   return (community?.children ?? []).map((child) => ({
+//     label: child.label,
+//     href: child.href,
+//     blurb: BLURBS[child.href]?.blurb ?? "",
+//     state: BLURBS[child.href]?.state ?? "early",
+//   }));
+// }
 
 /**
  * How Credits are earned and what they buy, in the platform's own words.

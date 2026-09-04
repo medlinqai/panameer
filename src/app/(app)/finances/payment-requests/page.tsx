@@ -1,7 +1,7 @@
 import { ComingSoon } from "@/components/ComingSoon";
 import { guardPage } from "@/lib/guard";
 import { PageTabs } from "@/components/casing/PageTabs";
-import { PAGE_TABS } from "@/lib/nav";
+import { PAGE_TABS, tabSequenceFor } from "@/lib/nav";
 
 /**
  * Payment Requests — a titled placeholder (WS1-B).
@@ -16,7 +16,8 @@ export default async function Page() {
   await guardPage("authenticated");
   return (
     <div className="mx-auto w-full max-w-6xl">
-      <PageTabs tabs={PAGE_TABS["/finances"]} current="/finances/payment-requests" />
+      <PageTabs
+        sequence={tabSequenceFor("/finances")} tabs={PAGE_TABS["/finances"]} current="/finances/payment-requests" />
       <ComingSoon title="Payment Requests" />
     </div>
   );

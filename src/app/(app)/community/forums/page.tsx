@@ -3,7 +3,7 @@ import { guardPage } from "@/lib/guard";
 import { listBoards } from "@/lib/forums";
 import { relativeDay } from "@/lib/relative-day";
 import { PageTabs } from "@/components/casing/PageTabs";
-import { PAGE_TABS } from "@/lib/nav";
+import { PAGE_TABS, tabSequenceFor } from "@/lib/nav";
 
 /**
  * FORUMS — the board list (PHASE 2 / WS2-C). REAL, not a scaffold.
@@ -27,7 +27,8 @@ export default async function ForumsPage() {
   return (
     <>
       {/* E216 — the Community rail flyout's children are this section's tab row now. */}
-      <PageTabs tabs={PAGE_TABS["/community"]} current="/community/forums" />
+      <PageTabs
+        sequence={tabSequenceFor("/community")} tabs={PAGE_TABS["/community"]} current="/community/forums" />
       <div className="mx-auto max-w-4xl">
       <header className="mb-5">
         <h1 className="font-display text-[26px] font-bold tracking-[-0.5px]">

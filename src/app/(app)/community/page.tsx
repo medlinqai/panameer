@@ -1,4 +1,7 @@
-import Link from "next/link";
+/* ⚠ `Link` PARKED WITH THE SECTION CARDS (`P1-ALL-E378` WS-4) — they were its
+   only live consumer. Its remaining occurrences on this page are all inside the
+   Credits block that `E375` commented out, so nothing renders one now. */
+// import Link from "next/link";
 import { guardPage } from "@/lib/guard";
 /* ⚠ PARKED WITH COMMUNITY CREDITS (`P1-ALL-E375`) — its only consumer on this
    page was the Credits person-id lookup. */
@@ -24,10 +27,10 @@ import { BRAND_MONEY_LINE } from "@/lib/brand";
 import {
   // CREDIT_EARN_ACTIONS,
   // CREDIT_SPEND_ACTIONS,
-  communitySections,
+  // communitySections,
 } from "@/lib/community";
 import { PageTabs } from "@/components/casing/PageTabs";
-import { PAGE_TABS } from "@/lib/nav";
+import { PAGE_TABS, tabSequenceFor } from "@/lib/nav";
 /* ⚠ `P1-ALL-E374` — the screen over `E372`'s engine. The blocks and the search
    results are server components so `searchMembers`, `getMyCommunity` and
    `getColleagueSuggestions` never leave the server. */
@@ -86,12 +89,14 @@ export default async function CommunityPage({
   //     })
   //   : null;
   // const credits = await getCreditsSummary(person?.id ?? null);
-  const sections = communitySections();
+  /* ⚠ PARKED WITH THE CARDS (`P1-ALL-E378` WS-4) — nothing renders it now. */
+  // const sections = communitySections();
 
   return (
     <>
       {/* E216 — the Community rail flyout's children are this section's tab row now. */}
-      <PageTabs tabs={PAGE_TABS["/community"]} current="/community" />
+      <PageTabs
+        sequence={tabSequenceFor("/community")} tabs={PAGE_TABS["/community"]} current="/community" />
       <div className="mx-auto max-w-5xl space-y-5">
       <header>
         {/*
@@ -132,7 +137,33 @@ export default async function CommunityPage({
         viewer && <CommunityBlocks viewer={viewer} />
       )}
 
-      {/* ---- The four sections ------------------------------------------- */}
+      {/* ⚠⚠ THE DUPLICATE SECTION CARDS — REMOVED 2026-09-04 (`P1-ALL-E378`
+          WS-4). ⚠ COMMENTED OUT, NOT DELETED.
+
+          They linked to THE SAME FOUR DESTINATIONS THE TAB ROW ABOVE THEM
+          ALREADY LISTS. `/community` offered every sub-page twice: once as tabs
+          at the top, once as cards below.
+
+          ⚠ THEY WERE A SYMPTOM, NOT THE DISEASE. The cards existed BECAUSE the
+          tab row did not read as navigation — and `E378` WS-2a fixed the cause,
+          so the symptom goes with it. Removing them before fixing the tabs
+          would have taken navigation away rather than de-duplicated it.
+
+          ⚠ THE `live` / `early` PILLS WERE THE ONE THING WORTH KEEPING and they
+          were NOT dropped: they moved ONTO THE TAB, as `PageTabItem.state` in
+          `nav.ts`. A destination that is not ready says so on the tab, which is
+          the control people actually use — not on a second set of cards.
+          ⚠ ONLY `early` IS DRAWN. A `live` pill on everything that works is
+          noise; the absence of a pill already means ready.
+
+          ⚠ THE SECTION LABEL IS ABSORBED HERE rather than kept inline, because a
+          nested comment delimiter terminates this wrapper early: *"---- The four
+          sections ----"*.
+
+          ⚠ `communitySections()` ITSELF IS COMMENTED OUT IN `lib/community.ts`,
+          NOT DELETED, per house rule — its blurbs and states are the record of
+          what each destination is for. */}
+      {/*
       <div className="grid gap-4 sm:grid-cols-2">
         {sections.map((s) => (
           <Link
@@ -156,6 +187,7 @@ export default async function CommunityPage({
           </Link>
         ))}
       </div>
+      */}
 
       {/* ⚠⚠ COMMUNITY CREDITS AND UPCOMING GROUP SESSIONS — BOTH PARKED
           2026-09-03 (`P1-ALL-E375`, brief amendment A2).

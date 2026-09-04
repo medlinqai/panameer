@@ -3,7 +3,7 @@ import { guardPage } from "@/lib/guard";
 import { getSessionViewer } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { PageTabs } from "@/components/casing/PageTabs";
-import { PAGE_TABS } from "@/lib/nav";
+import { PAGE_TABS, tabSequenceFor } from "@/lib/nav";
 
 /**
  * MESSAGES (PHASE 2 / WS2-B) — a SCAFFOLD, not a messaging system.
@@ -50,7 +50,8 @@ export default async function MessagesPage() {
   return (
     <>
       {/* E216 — the Community rail flyout's children are this section's tab row now. */}
-      <PageTabs tabs={PAGE_TABS["/community"]} current="/messages" />
+      <PageTabs
+        sequence={tabSequenceFor("/community")} tabs={PAGE_TABS["/community"]} current="/messages" />
       <div className="mx-auto max-w-5xl">
       <header className="mb-4">
         <h1 className="font-display text-[26px] font-bold tracking-[-0.5px]">
