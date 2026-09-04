@@ -3344,6 +3344,42 @@ model TwoFactorSetting {
 /// reconcile.
 /// ---------------------------------------------------------------------------
 
+/// ── ⚠⚠ EMAIL SUPPRESSION (`P1-ALL-E386`) ────────────────────────────────────
+///
+/// ⚠⚠ KEYED ON THE **EMAIL**, NOT ON A PERSON, AND THAT IS THE WHOLE POINT.
+/// `NotificationPreference` already records per-category choices — but it is
+/// keyed on `person_id`, so it CANNOT record a suppression for an address with
+/// no `Person` row. That is exactly the old-Panameer import list, and exactly
+/// the recipient most likely to unsubscribe.
+///
+/// ⚠ `category` NULL MEANS EVERYTHING. A row with a category suppresses that
+/// category; a row without one suppresses all mail to that address.
+///
+/// ⚠⚠ NOTHING EVER DELETES A ROW HERE. Re-importing a CSV must not resurrect
+/// somebody who opted out — that is the worst thing a sending tool can do, and
+/// `check:unsubscribe` fails the build if any code path deletes one.
+///
+/// ⚠ A SIGNED-IN PERSON UNSUBSCRIBING WRITES BOTH THIS **AND**
+/// `NotificationPreference`, so the settings screen and the email footer cannot
+/// disagree about what somebody chose.
+model EmailSuppression {
+  id         String   @id @default(uuid()) @db.Uuid
+  /// ⚠ Normalised lower-case. One row per address per scope.
+  email      String
+  /// ⚠ NULL = every category. Otherwise a `NotificationCategory` key.
+  category   String?
+  /// Why it was suppressed — "unsubscribe_link", "bounce", "complaint".
+  reason     String
+  created_at DateTime @default(now())
+
+  /// ⚠ ONE ROW PER (ADDRESS, SCOPE). The unique is on the PAIR, not on email
+  /// alone: an address may suppress one category today and everything later,
+  /// and collapsing those would lose the narrower choice.
+  @@unique([email, category])
+  @@index([email])
+  @@map("email_suppressions")
+}
+
 model ForumBoard {
   id          String   @id @default(uuid()) @db.Uuid
   slug        String   @unique

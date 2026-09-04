@@ -28,6 +28,16 @@ export const EMAIL_COLORS = {
 } as const;
 
 export const PANAMEER_URL = "https://panameer.com";
+
+/**
+ * ⚠⚠ THE FOOTER'S UNSUBSCRIBE HREF, RESOLVED BY THE TRANSPORT (`P1-ALL-E386`).
+ *
+ * A literal sentinel rather than a template parameter, because every one of the
+ * thirteen templates would otherwise need a new required argument threaded
+ * through it — and the one that got missed would ship a broken footer silently.
+ * `check:unsubscribe` asserts every rendered email contains it.
+ */
+export const UNSUBSCRIBE_PLACEHOLDER = "{{PANAMEER_UNSUBSCRIBE_URL}}";
 const YOUTUBE_URL = "https://www.youtube.com/c/panameer";
 const LINKEDIN_URL = "https://www.linkedin.com/company/panameer/";
 const INSTAGRAM_URL = "https://www.instagram.com/onpanameer";
@@ -96,10 +106,29 @@ export function chips(items: string[]): string {
  * The footer, identical on every email in the suite.
  *
  * UNSUBSCRIBE AND PRIVACY ARE NOT OPTIONAL. Both are legal furniture for bulk
- * mail and both were absent from every template before this. They point at real
- * routes — /privacy exists; /settings/notifications is where a signed-in person
- * actually turns email off, which is a truer "unsubscribe" than a link that
- * silently does nothing.
+ * mail and both were absent from every template before this.
+ *
+ * ── ⚠⚠ CORRECTED 2026-09-04 (`P1-ALL-E386`). SUPERSEDED, QUOTED NOT DELETED ──
+ *
+ * This docblock used to finish: *"/settings/notifications is where a signed-in
+ * person actually turns email off, which is a truer 'unsubscribe' than a link
+ * that silently does nothing."*
+ *
+ * ⚠ THAT WAS HALF RIGHT, AND THE WRONG HALF WAS THE LEGALLY LOAD-BEARING ONE.
+ * True for a signed-in PROVIDER. False for everyone else: `route-access.ts:59`
+ * gates `/settings` behind `canProvideServices`, so a BUYER clicking Unsubscribe
+ * was BOUNCED, a SIGNED-OUT recipient was bounced, and an address with no
+ * account had no page at all.
+ *
+ * ⚠⚠ AND `E371` MADE IT LIVE. Seven senders now deliver for real, so this was
+ * no longer a dead link in a drawer — it was a dead unsubscribe in DELIVERED
+ * mail, which is how a sending domain gets blocked. `mail.panameer.com` has no
+ * reputation yet to spend.
+ *
+ * ⚠ SO THE FOOTER NOW CARRIES A PLACEHOLDER, AND THE TRANSPORT RESOLVES IT to a
+ * per-recipient signed link. It cannot be resolved here: templates are
+ * recipient-agnostic — `footer()` takes only a year — and only `sendEmail()`
+ * knows `to`.
  */
 function footer(year: number): string {
   const link = (href: string, label: string) =>
@@ -114,7 +143,7 @@ function footer(year: number): string {
         LINKEDIN_URL,
         "LinkedIn"
       )}${dot}${link(INSTAGRAM_URL, "Instagram")}<br>
-      ${link(`${PANAMEER_URL}/settings/notifications`, "Unsubscribe")}${dot}${link(
+      ${link(UNSUBSCRIBE_PLACEHOLDER, "Unsubscribe")}${dot}${link(
         `${PANAMEER_URL}/privacy`,
         "Privacy"
       )}${dot}${link(`${PANAMEER_URL}/support/bug`, "Contact Support")}
@@ -130,7 +159,7 @@ export function footerText(year: number): string {
   return `—
 Panameer
 ${PANAMEER_URL} · YouTube ${YOUTUBE_URL} · LinkedIn ${LINKEDIN_URL} · Instagram ${INSTAGRAM_URL}
-Unsubscribe ${PANAMEER_URL}/settings/notifications · Privacy ${PANAMEER_URL}/privacy · Contact Support ${PANAMEER_URL}/support/bug
+Unsubscribe ${UNSUBSCRIBE_PLACEHOLDER} · Privacy ${PANAMEER_URL}/privacy · Contact Support ${PANAMEER_URL}/support/bug
 ${PANAMEER_ADDRESS}
 © Panameer Inc ${year}`;
 }

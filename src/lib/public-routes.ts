@@ -155,6 +155,25 @@ export const PUBLIC_ROUTES: PublicRoute[] = [
   { route: "/policies/[slug]", category: 3 },
   { route: "/company-terms", category: 3 },
   /*
+    ⚠⚠ `/unsubscribe` IS PUBLIC AND IT IS THE ONE ROUTE THAT MUST NEVER BE
+    GATED (`P1-ALL-E386`).
+
+    It sits under LEGAL for the same reason `/terms` does: an obligation a
+    recipient cannot discharge without logging in is not honoured. And it goes
+    further than terms — an unsubscribe has to work for an address WITH NO
+    ACCOUNT AT ALL, which no capability check can ever be satisfied by.
+
+    ⚠ THE DEFAULT IS DENY, so this entry is what makes the page reachable. Before
+    `E386` the footer pointed at `/settings/notifications`, gated behind
+    `canProvideServices` — a buyer was bounced, a signed-out recipient was
+    bounced, and `E371` had already made those emails live.
+
+    ⚠ `check:unsubscribe` ASSERTS BOTH DIRECTIONS: that this entry exists, and
+    that no `ROUTE_ACCESS` rule gates the path. A capability gate on it must FAIL
+    the build.
+  */
+  { route: "/unsubscribe", category: 3 },
+  /*
     ⚠ `/trust` (`P1-ALL-E035`) — the plain-language version of Terms of Use
     section 5. It is CATEGORY 3 for the same reason the documents are: a claim
     about what we verify that a prospective buyer cannot read without an account

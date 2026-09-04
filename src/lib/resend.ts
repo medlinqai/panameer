@@ -1,4 +1,8 @@
 import { Resend } from "resend";
+/* ⚠ `P1-ALL-E386` — suppression and the signed unsubscribe link both live in the
+   transport, so a new sender cannot forget either. */
+import { isSuppressed, unsubscribeUrl } from "@/lib/unsubscribe";
+import { PANAMEER_URL, UNSUBSCRIBE_PLACEHOLDER } from "@/lib/email/shell";
 
 /**
  * Resend email client + a small typed helper.
@@ -38,6 +42,14 @@ export const EMAIL_FROM =
 
 type SendEmailArgs = {
   to: string | string[];
+  /**
+   * ⚠ THE NOTIFICATION CATEGORY THIS MAIL BELONGS TO (`P1-ALL-E386`), when it
+   * has one. Suppression is per-category, and the footer's unsubscribe link is
+   * scoped to it. ⚠ OMITTED = a transactional email with no category: it is
+   * still blocked by a suppress-everything row, and its footer offers
+   * unsubscribe-from-everything.
+   */
+  category?: string | null;
   subject: string;
   html: string;
   text?: string;
@@ -119,18 +131,69 @@ export async function sendEmail({
   html,
   text,
   replyTo,
+  category,
 }: SendEmailArgs) {
-  /* ⚠⚠ THE CAPTURE BRANCH IS FIRST AND IS THE ONLY EARLY RETURN. It must come
-     before `getResend()`, which throws without a key. */
+  /*
+    ── ⚠⚠ SUPPRESSION IS CHECKED IN THE TRANSPORT (`P1-ALL-E386`) ────────────
+
+    HERE, not in the seven callers, SO A NEW SENDER CANNOT FORGET. Seven senders
+    exist today and each one is a place the check could have been omitted; there
+    is one transport.
+
+    ⚠⚠ A SUPPRESSED ADDRESS IS A SILENT SKIP THAT RETURNS SUCCESS, NOT A THROW.
+    A caller's flow must not break because somebody opted out — a provider
+    validating a project should not see an error because the contact
+    unsubscribed months ago. The skip is logged so it is auditable.
+
+    ⚠ IT RUNS BEFORE CAPTURE AND BEFORE `getResend()`: a suppressed address must
+    not be written to a capture file either. Capture is for testing what WOULD
+    have been sent, and this would not have been.
+
+    ⚠ MULTI-RECIPIENT SENDS ARE FILTERED, NOT ALL-OR-NOTHING. One suppressed
+    address in a list of three must not silence the other two.
+  */
+  const recipients = (Array.isArray(to) ? to : [to]).filter(Boolean);
+  const allowed: string[] = [];
+  for (const r of recipients) {
+    if (await isSuppressed(r, category ?? undefined)) {
+      console.log(`[mail] SKIPPED (suppressed) ${subject} -> ${r}`);
+      continue;
+    }
+    allowed.push(r);
+  }
+  if (allowed.length === 0) {
+    /* ⚠ SEND-SHAPED SUCCESS, so every caller's success path still runs. */
+    return { id: "suppressed" };
+  }
+
+  /*
+    ⚠⚠ THE UNSUBSCRIBE LINK IS INJECTED HERE TOO, AND FOR THE SAME REASON.
+    Templates are recipient-agnostic — `footer()` takes only a year — so a
+    per-recipient signed link CANNOT be built in a template. The transport is
+    the only place that knows `to`.
+    ⚠ ONE RECIPIENT ONLY. A shared link for a multi-recipient send would let one
+    recipient unsubscribe another, so a batch keeps the placeholder resolved to
+    the generic settings route instead.
+  */
+  const withUnsubscribe =
+    allowed.length === 1
+      ? html.replaceAll(
+          UNSUBSCRIBE_PLACEHOLDER,
+          unsubscribeUrl(PANAMEER_URL, allowed[0], category ?? null)
+        )
+      : html.replaceAll(UNSUBSCRIBE_PLACEHOLDER, `${PANAMEER_URL}/settings/notifications`);
+
+  /* ⚠⚠ THE CAPTURE BRANCH IS THE ONLY OTHER EARLY RETURN. It must come before
+     `getResend()`, which throws without a key. */
   if (mailCaptureEnabled()) {
-    return captureEmail({ to, subject, html, text, replyTo });
+    return captureEmail({ to: allowed, subject, html: withUnsubscribe, text, replyTo });
   }
 
   const { data, error } = await getResend().emails.send({
     from: EMAIL_FROM,
-    to,
+    to: allowed,
     subject,
-    html,
+    html: withUnsubscribe,
     text,
     replyTo,
   });
