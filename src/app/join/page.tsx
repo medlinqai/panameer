@@ -86,17 +86,47 @@ const JOBS: Record<UserType, { id: Job; title: string; description: string }[]> 
     and `Service Provider` keep their own strings, which are also his and also
     stop-less.
   */
+  /*
+    ── ⚠⚠ SCOTT'S BUYER-SIDE COPY AGAIN, REPLACED WHOLE (`P2-J1.1-E009`, `E010`,
+       2026-09-05) ─────────────────────────────────────────────────────────────
+
+    ⚠ SUPERSEDED, quoted not deleted:
+      Requester — *"I create work requests using service providers and the service
+        products they offer."*
+      Buyer     — *"I manage pricing by commodity."*
+
+    `E009` — the new Requester line names the two nav pillars a requester actually
+    uses, **Talent** and **Shop**. The old line named an internal artefact (*"work
+    requests"*) that the reader has not met yet at the moment they are choosing.
+
+    `E010` — the new Buyer line sharpens what a `Buyer` is, and matches Scott's own
+    model diagram (*"Buyer — Supports the Buy"*). ⚠ THE JOB KEEPS ITS INDUSTRY
+    TITLE. `Buyer` is the real title in a corporate procurement department, so the
+    TITLE comes from the industry and the DESCRIPTION carries the approver meaning.
+    The job is not renamed.
+
+    ⚠⚠ THE FULL-STOP NOTE DIRECTLY ABOVE IS NOW SUPERSEDED FOR THIS PAIR, AND IT IS
+    QUOTED RATHER THAN DELETED because the RULE it states still governs: the
+    punctuation is Scott's typing and is not ours to normalise. He typed both of
+    these strings WITHOUT a stop, so the buyer pair and the `E249` role-chooser pair
+    now punctuate the same way — by his hand, not by a tidy-up. ⚠ STILL DO NOT ADD A
+    STOP TO EITHER PAIR.
+  */
   buyer: [
     {
       id: "requester",
+      /*
+        ⚠⚠ `title: "Requester"` IS THE USER_JOB AND DOES NOT MOVE. `P2-J1.1-E006`
+        renamed the word `Requester` on the review CARD, where it was a field
+        label. Same word, two meanings, two files — this one is the job.
+      */
       title: "Requester",
-      description:
-        "I create work requests using service providers and the service products they offer.",
+      description: "I hire talent and shop for service products",
     },
     {
       id: "buyer-admin",
       title: "Buyer",
-      description: "I manage pricing by commodity.",
+      description: "I review other people's work requests",
     },
   ],
 };
