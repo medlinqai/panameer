@@ -32,7 +32,10 @@ import {
 export const metadata = { title: "My Stats · Panameer" };
 
 export default async function MyStatsPage() {
-  const viewer = await guardPage("canProvideServices");
+  /* ⚠ `authenticated` (`P2-J1.1-E040`) — ⚠ SUPERSEDED, quoted:
+     `guardPage("canProvideServices")`. The null-profile empty state below is
+     what makes this safe, and it was already here. */
+  const viewer = await guardPage("authenticated");
 
   const profile = await prisma.providerProfile.findFirst({
     where: ownedProviderProfile(viewer),

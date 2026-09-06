@@ -18,7 +18,10 @@ import { Withdrawals } from "@/components/settings/Withdrawals";
 export const metadata = { title: "Withdrawals · Panameer" };
 
 export default async function WithdrawalsPage() {
-  const viewer = await guardPage("canProvideServices");
+  /* ⚠ `authenticated` (`P2-J1.1-E046`) — ⚠ SUPERSEDED, quoted:
+     `guardPage("canProvideServices")`. One of three layers; see
+     `settings/layout.tsx` and `route-access.ts`. Scott opened the tree whole. */
+  const viewer = await guardPage("authenticated");
   const { tax, methods } = await getWithdrawals(viewer);
 
   return (

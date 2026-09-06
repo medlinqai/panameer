@@ -16,7 +16,10 @@ import { ContactForm } from "@/components/settings/ContactForm";
 export const metadata = { title: "Contact Info · Panameer" };
 
 export default async function ContactInfoPage() {
-  const viewer = await guardPage("canProvideServices");
+  /* ⚠ `authenticated` (`P2-J1.1-E046`) — ⚠ SUPERSEDED, quoted:
+     `guardPage("canProvideServices")`. One of three layers; see
+     `settings/layout.tsx` and `route-access.ts`. Scott opened the tree whole. */
+  const viewer = await guardPage("authenticated");
   const info = await getContactInfo(viewer);
   return <ContactForm info={info} />;
 }

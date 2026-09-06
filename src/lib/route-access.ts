@@ -56,7 +56,32 @@ export type RouteRequirement = Capability | "authenticated";
 export const ROUTE_ACCESS: { prefix: string; requires: RouteRequirement }[] = [
   { prefix: "/admin", requires: "canAdminister" },
   { prefix: "/coordinator", requires: "canCoordinate" }, // readied for brief_I
-  { prefix: "/settings", requires: "canProvideServices" }, // provider profile mgmt
+  /*
+    ── ⚠⚠ `authenticated` (`P2-J1.1-E046`, 2026-09-06). FIFTH INSTANCE OF THE
+       CLASS THIS FILE ALREADY RECORDS FOUR TIMES ────────────────────────────
+
+    ⚠ SUPERSEDED, quoted not deleted: `requires: "canProvideServices"` —
+    "provider profile mgmt".
+
+    SCOTT, walking as a requester, 2026-09-06: every settings page bounced him to
+    `/dashboard?noaccess=1`. THE CONSEQUENCE WAS NOT NAV POLISH — a buyer could
+    not change their password, their email, their 2FA, their notification
+    preferences or their billing. That is an account a person cannot administer.
+
+    SCOTT'S RULING: *"Regarding the pages not being there for requester...that is
+    wrong. Some of these pages may not really fit, like withdraws, but we should
+    add them and I will fix them as we go thru the build process."*
+    ⚠ SO THE TREE OPENS WHOLE. A per-page split was proposed and OVERRULED: fit
+    is discovered by using a page, and one nobody can open cannot be evaluated.
+
+    ⚠⚠ AND THE GATE IS THREE LAYERS DEEP — this map, `settings/layout.tsx`, and
+    each page's own `guardPage`. `/settings/notifications` PROVES IT: its page
+    guard was widened to `authenticated` on 2026-09-01 so a buyer could reach
+    their own preferences, and THAT FIX HAS BEEN DEAD EVER SINCE, because this
+    line bounced them before the page was ever reached. Widening one layer alone
+    changes nothing.
+  */
+  { prefix: "/settings", requires: "authenticated" },
   /*
     /profile IS "MY OWN PROFILE", so it needs a login and nothing more (WS5).
 
@@ -77,14 +102,24 @@ export const ROUTE_ACCESS: { prefix: string; requires: RouteRequirement }[] = [
     gate, this is the edge doing the cheap first pass, and a route the map does
     not know about is one the edge silently skips.
 
-    NOT widened to "authenticated" the way /profile was: /profile has a genuine
-    second rendering for a Panameer employee, whereas these three are about
-    seller standing and have nothing to show someone who isn't one — which is
-    also why the admin's persona menu omits them.
+    ⚠⚠ NOW `authenticated` (`P2-J1.1-E040`/`E044`, 2026-09-06).
+
+    ⚠ SUPERSEDED, QUOTED NOT DELETED — this paragraph read:
+      *"NOT widened to `authenticated` the way /profile was: /profile has a
+      genuine second rendering for a Panameer employee, whereas these three are
+      about seller standing and have nothing to show someone who isn't one —
+      which is also why the admin's persona menu omits them."*
+
+    ⚠ THE REASONING WAS SOUND AND THE REMEDY WAS WRONG. "Nothing to show" is an
+    argument for an EMPTY STATE, not for a redirect: all three are offered in the
+    persona menu that a buyer sees, so the gate turned three visible menu items
+    into three bounces to `/dashboard?noaccess=1`. Each now renders the same
+    plain sentence `account-health` already used when there is no provider
+    profile behind the page.
   */
-  { prefix: "/stats", requires: "canProvideServices" },
-  { prefix: "/account-health", requires: "canProvideServices" },
-  { prefix: "/recommendations", requires: "canProvideServices" },
+  { prefix: "/stats", requires: "authenticated" },
+  { prefix: "/account-health", requires: "authenticated" },
+  { prefix: "/recommendations", requires: "authenticated" },
   { prefix: "/hire", requires: "canHireTalent" },
   // FIND WORK IS A PROVIDER SURFACE — searching open job postings. This said
   // canHireTalent while nav.ts offered the same route to providers, so the rail

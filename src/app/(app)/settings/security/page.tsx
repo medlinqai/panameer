@@ -20,7 +20,10 @@ import { SecurityPanel } from "@/components/settings/SecurityPanel";
 export const metadata = { title: "Password & Security · Panameer" };
 
 export default async function SecurityPage() {
-  const viewer = await guardPage("canProvideServices");
+  /* ⚠ `authenticated` (`P2-J1.1-E046`) — ⚠ SUPERSEDED, quoted:
+     `guardPage("canProvideServices")`. One of three layers; see
+     `settings/layout.tsx` and `route-access.ts`. Scott opened the tree whole. */
+  const viewer = await guardPage("authenticated");
   const security = await getSecurity(viewer);
   return <SecurityPanel security={security} />;
 }

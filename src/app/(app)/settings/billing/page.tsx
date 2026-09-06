@@ -15,7 +15,10 @@ import { BillingMethods } from "@/components/settings/BillingMethods";
 export const metadata = { title: "Billing & Payments · Panameer" };
 
 export default async function BillingPage() {
-  const viewer = await guardPage("canProvideServices");
+  /* ⚠ `authenticated` (`P2-J1.1-E046`) — ⚠ SUPERSEDED, quoted:
+     `guardPage("canProvideServices")`. One of three layers; see
+     `settings/layout.tsx` and `route-access.ts`. Scott opened the tree whole. */
+  const viewer = await guardPage("authenticated");
   const methods = await listBillingMethods(viewer);
   return (
     <BillingMethods
