@@ -20,17 +20,23 @@ import {
  *    top right, which is exactly what E003 flagged. Track and counter now share
  *    the frame's `max-w-3xl`, so they line up with the heading beneath them.
  *
- * Footer layout: Back far-left, primary Continue far-right, optional secondary
- * immediately LEFT OF CONTINUE in the right-hand cluster.
+ * Footer layout: THREE EXPLICIT SLOTS — Back left, optional secondary CENTRE,
+ * primary Continue right (`P2-J1.1-E011`, 2026-09-05). Each slot is `flex-1`, so
+ * the centre is the centre of the band whether or not the other two are filled.
+ * The full reasoning, and `E032`'s superseded finding, are on the footer itself.
  *
- * ⚠ SUPERSEDED, quoted not deleted — this line used to read *"optional
- * secondary (\"Skip for Now\") de-emphasised in the left cluster"* (brief_O).
- * THAT WAS STALE AND THE CODE BELOW HAS BEEN RIGHT ALL ALONG: the secondary
- * renders inside the `ml-auto` cluster with the primary, and the footer's own
- * inline comment explains why — `P1-J1.4-E032` found that beside Back a skip
- * reads as a way BACKWARD, beside Next as a way PAST this step. Checked in the
- * running app for `P1-J1.1-E245` before this docblock was corrected; the two
- * comments in this file disagreed and the header was the wrong one.
+ * ⚠ SUPERSEDED, quoted not deleted, the two layouts this replaced:
+ *   · *"optional secondary (\"Skip for Now\") de-emphasised in the left
+ *     cluster"* (brief_O) — which was stale prose describing code that never
+ *     rendered it.
+ *   · *"Back far-left, primary Continue far-right, optional secondary
+ *     immediately LEFT OF CONTINUE in the right-hand cluster"* — which was
+ *     accurate right up until `E011`, and was written to correct the first one.
+ *
+ * ⚠⚠ THIS DOCBLOCK HAS BEEN WRONG ABOUT THE FOOTER ONCE BEFORE, and the note it
+ * carried said so: two comments in this file disagreed and the header was the
+ * wrong one. It is kept in step here for that reason. If you move the footer
+ * again, this paragraph is the second thing to change.
  */
 export function WizardShell({
   step,
@@ -141,15 +147,42 @@ export function WizardShell({
   const footer = hideFooter ? undefined : (
     <>
       {/*
-        Footer band (WS2): secondary far-left, primary far-right, in a full-bleed
-        band of its own rather than a rule floating under the content.
+        ── ⚠⚠ THREE EXPLICIT SLOTS: BACK LEFT, SECONDARY CENTRE, CONTINUE RIGHT
+           (`P2-J1.1-E011`, 2026-09-05) ────────────────────────────────────────
 
-        Skip stays immediately left of Next rather than moving to the left with
-        Back — that grouping is E032's finding (beside Back it reads as a way
-        BACKWARD, beside Next as a way past this step), and this brief is
-        changing where the band is, not relitigating what is in it.
+        ⚠ THE COMMENT THAT STOOD HERE DESCRIBED A LAYOUT THIS FILE DID NOT
+        RENDER, and it is corrected rather than reworded. It opened *"Footer band
+        (WS2): secondary far-left, primary far-right"* while the code below put
+        the secondary on the RIGHT, grouped with `Continue` inside an `ml-auto`
+        cluster. A stale comment is how a later reader inherits a false premise;
+        this one had been wrong long enough to be quoted in the docblock at the
+        top of the file as proof the code was right.
+
+        ⚠ SUPERSEDED, quoted not deleted — `E032`'s finding, which this replaces:
+
+            *"Skip stays immediately left of Next rather than moving to the left
+            with Back — beside Back it reads as a way BACKWARD, beside Next as a
+            way past this step."*
+
+        ⚠⚠ THAT IS NOT REVERSED, IT IS ANSWERED. `E032` was deciding LEFT versus
+        RIGHT, and both of its answers were wrong for the same reason: a
+        secondary touching either control borrows that control's meaning. A
+        CENTRE slot is adjacent to neither, so `Finish later` reads as neither a
+        way backward nor a way forward — it reads as leaving. `E032`'s
+        observation about adjacency is what makes the centre the right answer.
+
+        ⚠ THE SLOTS ARE EQUAL-FLEX, NOT MEASURED. Each takes `flex-1` inside
+        `OnboardingFrame`'s footer row, so the centre is a real centre of the
+        band and stays centred when a slot is empty — which is most of step 1,
+        where `canBack` is false. No widths, no margins, no `ml-auto`.
+
+        ⚠ ONE SHAPE FOR EVERY WIZARD, AND NO POSITION PROP. `Finish later`
+        (requester), `Skip for Now` (provider), `None apply`, `I'm not sure yet`
+        and `Not ready to set a budget` (work request) all render through this
+        one slot and all moved together. Scott: *"whatever footer we have, i want
+        it consistent."* Two footers that differ is the thing this fixes.
       */}
-      <div>
+      <div className="flex flex-1 justify-start">
         {canBack && onBack && (
           <button
             onClick={onBack}
@@ -161,7 +194,7 @@ export function WizardShell({
         )}
       </div>
 
-      <div className="ml-auto flex items-center gap-5">
+      <div className="flex flex-1 items-center justify-center">
         {secondaryLabel && onSecondary && (
           <button
             onClick={onSecondary}
@@ -171,6 +204,9 @@ export function WizardShell({
             {secondaryLabel}
           </button>
         )}
+      </div>
+
+      <div className="flex flex-1 justify-end">
         {onContinue && (
           <button
             onClick={onContinue}

@@ -557,8 +557,19 @@ export default function RequesterStepsPage() {
             ⚠ THE COPY IS CC'S AND IS REPORTED FOR SCOTT TO OVERRULE — he named
             the concept and the example, not these words.
           */}
+          {/*
+            ⚠ `Title *`, NOT `Job Title *` (`P2-J1.1-E007`, 2026-09-05). Scott
+            asked for the change *"on CARD and in the question that solicits the
+            value"*, so the review row and this label move together — a card that
+            calls a thing one name and the question that collects it another is
+            two names for one field.
+            ⚠ SUPERSEDED, quoted not deleted: `label="Job Title *"`.
+            ⚠ THE HINT AND PLACEHOLDER ARE UNTOUCHED. They still say *"role"* and
+            *"Director of Procurement"*, which is the `E281` copy above and was
+            not in scope.
+          */}
           <Field
-            label="Job Title *"
+            label="Title *"
             hint="Your role at your company — for example, Director of Procurement. Providers see it next to your name."
           >
             <TextInput
@@ -786,17 +797,52 @@ export default function RequesterStepsPage() {
   const addr = (a: LocationValue) =>
     [a.line1, a.city, a.state, a.postalCode, a.country].filter(Boolean).join(", ") ||
     "—";
+  /*
+    ── ⚠⚠ THE LABELS SAY WHAT THE FIELD IS (`P2-J1.1-E005`, `E006`, `E007`,
+       2026-09-05) ───────────────────────────────────────────────────────────
+
+    ⚠ SUPERSEDED, quoted not deleted: `Company` (`E005`), `Requester` (`E006`),
+    `Job Title` (`E007`). Three label STRINGS changed. Nothing else did.
+
+    ⚠⚠ `Employer` IS DISPLAY COPY OVER `Company`, AND THAT DISTINCTION IS
+    LOAD-BEARING. The value is still `draft.companyName`, the Edit link still
+    goes to the `company` step, the Prisma model is still `Company` — and
+    `model Employer` ALREADY EXISTS in the schema as a different entity, the
+    work-history employer that `P1-ALL-E373` made honest. Renaming anything in
+    Prisma to match this word would collide with it. This is one string on one
+    card.
+
+    ⚠ `Employee ID` KEEPS ITS NAME. It is the person's staff number
+    (`draft.employeeId`) and not the employer, which is exactly why it is worth
+    saying out loud now that the word `Employer` sits two rows above it. Scott
+    confirmed it explicitly on 2026-09-05.
+  */
   const rows: { label: string; value: string; step: RequesterStep }[] = [
-    { label: "Company", value: draft.companyName || "—", step: "company" },
+    /*
+      ── ⚠ THE ORDER IS THE ORDER A PERSON WOULD SAY IT IN (`P2-J1.1-E008`) ────
+
+      Name, Title, Employer, Employee ID, Work Location, Phone. Who you are,
+      what you do, who you do it for, the number that identifies you there,
+      where you do it, and last the way to reach you.
+
+      ⚠ SUPERSEDED, quoted not deleted, the order this replaced:
+        `Company · Requester · Job Title · Phone · Employee ID · Work Location`
+      Phone sat third because it was typed third on the form. The form's order
+      is a typing order; this card is a reading order, and they are allowed to
+      differ.
+
+      ⚠ A PURE REORDER OF LITERALS. Every `value` and every `step` travels with
+      its own label — no field, link or lookup changed.
+    */
     {
-      label: "Requester",
+      label: "Name",
       value: `${draft.firstName} ${draft.lastName}`.trim() || "—",
       step: "requester_info",
     },
     /* `E281` — a required field belongs on the review. Employee ID is OPTIONAL
        and has always been listed, so omitting a REQUIRED one would be odd. */
-    { label: "Job Title", value: draft.title || "—", step: "requester_info" },
-    { label: "Phone", value: draft.phone || "—", step: "requester_info" },
+    { label: "Title", value: draft.title || "—", step: "requester_info" },
+    { label: "Employer", value: draft.companyName || "—", step: "company" },
     { label: "Employee ID", value: draft.employeeId || "—", step: "requester_info" },
     /*
       ⚠⚠ THE `Your Address` ROW IS GONE (`P1-J1.1-E279`, 2026-08-30).
@@ -821,6 +867,7 @@ export default function RequesterStepsPage() {
       value: addr(draft.workLocationSet ? draft.workLocation : draft.address),
       step: "work_location",
     },
+    { label: "Phone", value: draft.phone || "—", step: "requester_info" },
   ];
 
   return (
