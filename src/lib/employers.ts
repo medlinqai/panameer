@@ -42,6 +42,30 @@ export { projectToCard };
  * weight reads Employer now, so a stale score would misreport visibility.
  */
 
+/*
+  ── ⚠⚠ THE `OnboardingError` MESSAGES IN THIS FILE SAY `Company`. THE
+     IDENTIFIERS SAY `Employer`. BOTH ARE CORRECT (`P2-J1.1-E012` WS-3) ────────
+
+  Eight message strings moved from `Employer` to `Company`: seven `not found` /
+  `name is required` throws, and `Give the job a company name`. They are
+  returned VERBATIM to the client — `api/provider/employers/route.ts:128` puts
+  `e.message` in a 400 body — and `EmployersStep` renders them. So they were the
+  last place a provider could be told *"Employer name is required"* under a modal
+  titled *"Add Company"*, which is the exact contradiction WS-3 exists to remove.
+
+  ⚠⚠ EVERY IDENTIFIER IN THIS FILE STAYS `Employer`: `EmployerScalars`,
+  `EmployerInput`, `employerData`, `listEmployers`, `createEmployer`,
+  `updateEmployer`, `deleteEmployer`, `convertEmployerToProject`,
+  `projectToEmployerData`. They are bound to `model Employer`, which is NOT being
+  renamed and which means the work-history relation. Renaming them would decouple
+  this file from the model it reads.
+
+  ⚠ THE TWO THINGS LIVE IN THE SAME FILE AT DIFFERENT LINES, AND CONFLATING THEM
+  COST A ROUND TRIP: WS-3 first recorded these eight as "function and type names,
+  not strings" and listed them do-not-touch. That came from a truncated grep. The
+  file says otherwise. ⚠ IF YOU GREP THIS FILE FOR `Employer`, READ THE LINE — a
+  hit here is as likely to be an identifier as a sentence.
+*/
 export type EmployerInput = {
   name: string;
   roleTitle?: string | null;
@@ -166,7 +190,7 @@ export async function listEmployers(viewer: Viewer) {
 
 function employerData(input: EmployerInput) {
   const name = clean(input.name, 200);
-  if (!name) throw new OnboardingError("Employer name is required", "INVALID");
+  if (!name) throw new OnboardingError("Company name is required", "INVALID");
 
   const start = toDate(input.startDate);
   const end = toDate(input.endDate);
@@ -250,7 +274,7 @@ export async function updateEmployer(
     where: { id: employerId, provider_profile_id: profileId },
     select: { id: true },
   });
-  if (!owned) throw new OnboardingError("Employer not found", "INVALID");
+  if (!owned) throw new OnboardingError("Company not found", "INVALID");
 
   await prisma.employer.update({
     where: { id: owned.id },
@@ -283,7 +307,7 @@ export async function deleteEmployer(viewer: Viewer, employerId: string) {
     where: { id: employerId, provider_profile_id: profileId },
   });
   if (res.count === 0) {
-    throw new OnboardingError("Employer not found", "INVALID");
+    throw new OnboardingError("Company not found", "INVALID");
   }
   await afterJobChange(profileId);
 }
@@ -480,7 +504,7 @@ export async function createProject(
     where: { id: employerId, provider_profile_id: profileId },
     select: { id: true },
   });
-  if (!employer) throw new OnboardingError("Employer not found", "INVALID");
+  if (!employer) throw new OnboardingError("Company not found", "INVALID");
 
   const count = await prisma.project.count({
     where: { employer_id: employer.id },
@@ -596,7 +620,7 @@ export async function moveProject(
       where: { id: employerId, provider_profile_id: profileId },
       select: { id: true },
     });
-    if (!employer) throw new OnboardingError("Employer not found", "INVALID");
+    if (!employer) throw new OnboardingError("Company not found", "INVALID");
     target = employer.id;
   }
 
@@ -652,13 +676,13 @@ export async function convertEmployerToProject(
   const employer = await prisma.employer.findFirst({
     where: { id: employerId, provider_profile_id: profileId },
   });
-  if (!employer) throw new OnboardingError("Employer not found", "INVALID");
+  if (!employer) throw new OnboardingError("Company not found", "INVALID");
 
   const target = await prisma.employer.findFirst({
     where: { id: input.targetEmployerId, provider_profile_id: profileId },
     select: { id: true },
   });
-  if (!target) throw new OnboardingError("Employer not found", "INVALID");
+  if (!target) throw new OnboardingError("Company not found", "INVALID");
 
   const clientName = clean(input.clientName, 200);
   if (!clientName) {
@@ -826,7 +850,7 @@ export async function convertProjectToEmployer(
   }
 
   const name = clean(input.name, 200);
-  if (!name) throw new OnboardingError("Give the job an employer name", "INVALID");
+  if (!name) throw new OnboardingError("Give the job a company name", "INVALID");
 
   const count = await prisma.employer.count({
     where: { provider_profile_id: profileId },
