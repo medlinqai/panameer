@@ -113,6 +113,57 @@ function oauthProviders(): Provider[] {
  * gate carried into the token/session. brief_Q adds Google /
  * Apple alongside credentials.
  */
+/**
+ * ── ⚠⚠ THE SESSION COOKIE'S DOMAIN (`P2-J1.1-E001` D-2) ──────────────────────
+ *
+ * SCOTT, 2026-09-05: *"we should move the application to the app.panameer.com."*
+ *
+ * THIS FILE HAD NO COOKIE CONFIGURATION AT ALL, which means NextAuth defaults,
+ * which means a HOST-ONLY session cookie. That is invisible today because one
+ * host serves everything. The moment `app.panameer.com` goes live it becomes:
+ *
+ *   1  sign in at app.panameer.com  → cookie scoped to that host alone
+ *   2  visit panameer.com           → `useSession()` returns unauthenticated
+ *   3  MarketingHeader renders      → **Log In / Sign Up**, at a signed-in member
+ *
+ * ⚠⚠ STEP 3 IS THE EXACT LIVE HARM THIS FILE ALREADY RECORDS AS FIXED ONCE
+ * (`:44-47` — *"a signed-in user could start a SECOND account in one click,
+ * mid-onboarding"*), and it would ALSO silently break D-1's "Go to the App",
+ * which only renders in the `authenticated` branch. So the cookie is widened
+ * BEFORE anyone points DNS, not after.
+ *
+ * ⚠⚠ THE DOMAIN COMES FROM `NEXTAUTH_URL`, NOT FROM `NODE_ENV`, AND THAT IS THE
+ * WHOLE SAFETY PROPERTY. A Vercel preview deployment runs with
+ * NODE_ENV=production on a `*.vercel.app` host; a browser REFUSES a cookie whose
+ * Domain it is not under, so a `NODE_ENV === "production"` test would silently
+ * make every preview deployment unable to log in. Keying on the deployment's own
+ * URL means the widened domain applies on panameer.com and nowhere else —
+ * localhost and previews keep today's host-only cookie, unchanged.
+ *
+ * ⚠ `.panameer.com` COVERS THE APEX TOO. A leading-dot Domain matches the domain
+ * and all subdomains, so panameer.com, www. and app. share one session.
+ */
+function sessionCookieDomain(): string | undefined {
+  try {
+    const host = new URL(process.env.NEXTAUTH_URL ?? "").hostname.toLowerCase();
+    if (host === "panameer.com" || host.endsWith(".panameer.com")) return ".panameer.com";
+  } catch {
+    /* NEXTAUTH_URL unset or unparseable — fall through to the default. */
+  }
+  return undefined;
+}
+
+/**
+ * ⚠ THE NAME MUST MATCH WHAT NextAuth WOULD HAVE CHOSEN. Overriding
+ * `cookies.sessionToken` replaces the whole entry, so getting the `__Secure-`
+ * prefix wrong would not "fail" — it would mint a second, differently-named
+ * cookie and log everyone out. NextAuth picks the prefix on whether its own URL
+ * is https; this reads the same signal from the same variable.
+ * ⚠ `__Secure-` (not `__Host-`) is what NextAuth uses, and it is the one of the
+ * two prefixes that PERMITS a Domain attribute. `__Host-` would forbid it.
+ */
+const USE_SECURE_COOKIES = (process.env.NEXTAUTH_URL ?? "").startsWith("https://");
+
 export const authOptions: NextAuthOptions = {
   providers: [
     ...oauthProviders(),
@@ -275,6 +326,25 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   session: { strategy: "jwt" },
+  /*
+    ⚠ ONLY THE DOMAIN IS BEING WIDENED. httpOnly, sameSite, path and secure are
+    NextAuth's own defaults, restated because overriding this entry replaces it
+    wholesale rather than merging. `domain` is spread in conditionally so that
+    off panameer.com the options are byte-for-byte the defaults and the cookie
+    stays host-only, exactly as it is today.
+  */
+  cookies: {
+    sessionToken: {
+      name: `${USE_SECURE_COOKIES ? "__Secure-" : ""}next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: USE_SECURE_COOKIES,
+        ...(sessionCookieDomain() ? { domain: sessionCookieDomain() } : {}),
+      },
+    },
+  },
   callbacks: {
     /**
      * OAuth create-or-link (brief_Q).

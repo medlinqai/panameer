@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { MeProvider, useMe } from "@/components/MeProvider";
 import { AccountMenu } from "@/components/casing/AccountMenu";
@@ -63,6 +63,44 @@ import { Logo } from "@/components/Logo";
  * (`E306` reversal) and the wrapper stayed, because `AccountMenu` needs the
  * provider either way and narrowing it would be churn for no behaviour change.
  */
+/**
+ * WHERE "GO TO THE APP" POINTS (`P2-J1.1-E001` D-1).
+ *
+ * SCOTT, 2026-09-05: *"How would i know to get back into the application from
+ * here? If i click one of the options on the profile dropdown, then i get back
+ * to the app...but this is not an easy or obvious choice."* And: *"yes, return
+ * to the app 'Go to the App' or something similar."*
+ *
+ * ⚠ IT ASKS `/api/home` RATHER THAN HARDCODING `/dashboard`, because the answer
+ * is role-dependent — `homeFor()`'s own rule is that *"a Panameer Admin goes to
+ * the console, not to a provider's job board"*. This is the SAME call
+ * `login/page.tsx:58` makes for the same reason, with the same `/dashboard`
+ * fallback, so the destination cannot drift into two answers.
+ *
+ * ⚠ IT ONLY FIRES WHEN SIGNED IN. An anonymous visitor on a marketing page must
+ * not cost a session round-trip — the same reason `MeProvider` is mounted in the
+ * signed-in branch and never in a public layout.
+ */
+function useAppHome(signedIn: boolean) {
+  const [home, setHome] = useState("/dashboard");
+  useEffect(() => {
+    if (!signedIn) return;
+    let alive = true;
+    fetch("/api/home")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (alive && typeof d?.home === "string" && d.home) setHome(d.home);
+      })
+      .catch(() => {
+        /* the default stands — a dead fetch must not remove the way back */
+      });
+    return () => {
+      alive = false;
+    };
+  }, [signedIn]);
+  return home;
+}
+
 export function MarketingHeader() {
   const { status } = useSession();
   /*
@@ -85,6 +123,7 @@ export function MarketingHeader() {
 
 function MarketingHeaderInner({ signedIn }: { signedIn: boolean }) {
   const [open, setOpen] = useState(false);
+  const appHome = useAppHome(signedIn);
   /*
     WS-6b — THE ACTIVE NAV ITEM COMES FROM THE PATH, not from a prop.
 
@@ -352,7 +391,26 @@ function MarketingHeaderInner({ signedIn }: { signedIn: boolean }) {
               only because of the header-local `MeProvider`.
               ⚠ THE CHIP AND SIGN OUT STAY LIVE IN EVERY STATE, published or not.
             */
-            <AccountMenu isAdmin={Boolean(me?.person?.roles?.isSupport)} />
+            <>
+              {/*
+                ⚠⚠ THE WAY BACK IN (`P2-J1.1-E001` D-1). The chip alone was not
+                one: it opens a MENU, and Scott's words were *"this is not an
+                easy or obvious choice."* This is a labelled destination sitting
+                in the primary slot — the same slot `Sign Up` occupies for an
+                anonymous visitor, which is the slot a signed-in member's
+                primary action belongs in.
+
+                ⚠⚠ IT IS ONE CONTROL, NOT A SECOND CASING. `AppHeader` is NOT
+                mounted here and must not be: search, notifications and
+                bug-report are app-shell affordances a signed-out visitor must
+                never see, and this file's own docblock records that TWO HEADERS
+                ON ONE PRODUCT (`PublicTopNav`, since retired) was the previous
+                defect. One `Btn` from the shared brand module — the same button
+                standard as every other control in this row.
+              */}
+              <Btn href={appHome}>Go to the App</Btn>
+              <AccountMenu isAdmin={Boolean(me?.person?.roles?.isSupport)} />
+            </>
           ) : (
             <>
               <Btn href="/login" variant="white">
@@ -422,7 +480,12 @@ function MarketingHeaderInner({ signedIn }: { signedIn: boolean }) {
                 /* ⚠ SAME RULE IN THE MOBILE SHEET (`E306`) — this row offered `Sign Up`
                    to a signed-in user too. `variant="rail"` gives the stacked
                    avatar + name form the sheet has room for. */
-                <AccountMenu isAdmin={Boolean(me?.person?.roles?.isSupport)} variant="rail" />
+                /* ⚠ THE SHEET GETS THE SAME CONTROL — a member who opened the
+                   mobile menu to find the way back must find it there too. */
+                <>
+                  <Btn href={appHome}>Go to the App</Btn>
+                  <AccountMenu isAdmin={Boolean(me?.person?.roles?.isSupport)} variant="rail" />
+                </>
               ) : (
                 <>
               <Btn href="/login" variant="white">
