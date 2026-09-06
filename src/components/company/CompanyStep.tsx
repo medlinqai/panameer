@@ -83,6 +83,7 @@ export function CompanyStep({
   onValidityChange,
   bounded = false,
   suggestedName = null,
+  nameLabel = "Company Name *",
 }: {
   onDone: (outcome: CompanyOutcome) => void;
   onBusyChange?: (busy: boolean) => void;
@@ -116,6 +117,29 @@ export function CompanyStep({
    * pass the step.
    */
   suggestedName?: string | null;
+  /**
+   * ── ⚠⚠ THE ENTITY WORD, BECAUSE THIS STEP RENDERS ON THREE SURFACES AND THEY
+   *    DO NOT MEAN THE SAME THING (`P2-J1.1-E012`, 2026-09-05) ────────────────
+   *
+   * `/join/requester` -> `Employer Name *`
+   * `/join/provider`  -> `Company Name *`  (the default)
+   * `/company`        -> `Company Name *`  (the default)
+   *
+   * ⚠ THE RULE IS LEGAL, NOT STYLISTIC. A requester is an EMPLOYEE of the
+   * buying organisation, so that organisation is their employer. A provider is
+   * a CONTRACTOR, and under IRS rules a contractor has no employer — they have
+   * a company and they work for clients. Scott, 2026-09-05: *"according to the
+   * IRS, contractors (which MOST of us are) do not have employers."*
+   *
+   * ⚠⚠ ONE PROP, NOT A COMPONENT FORK, AND NOT A SECOND STEP. This component is
+   * the ONLY UI in the codebase that can create a company membership; two
+   * copies of it is how the surfaces drift apart.
+   *
+   * ⚠ THE DEFAULT IS THE LEGALLY SAFE ONE. A surface that says nothing gets
+   * `Company`, which is never wrong about an entity — only ever less specific.
+   * `Employer` is the claim that has to be made deliberately.
+   */
+  nameLabel?: string;
 }) {
   const [mode, setMode] = useState<"join" | "define">("join");
   const [busy, setBusy] = useState(false);
@@ -461,7 +485,7 @@ export function CompanyStep({
       {mode === "join" ? (
         <>
           <Field
-            label="Company Name *"
+            label={nameLabel}
             hint={
               suggestion
                 ? `Suggested from your work email. Change it if that's not where you work.`

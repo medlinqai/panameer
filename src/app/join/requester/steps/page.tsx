@@ -420,6 +420,14 @@ export default function RequesterStepsPage() {
           )}
           <CompanyStep
             bounded
+            /*
+              ⚠ `Employer Name *` HERE, `Company Name *` EVERYWHERE ELSE
+              (`P2-J1.1-E012`). A requester is an EMPLOYEE of the buying
+              organisation; a provider is a contractor and has no employer. One
+              prop on the shared step — see its `nameLabel` docblock for the
+              rule and why the default is the other way round.
+            */
+            nameLabel="Employer Name *"
             submitRef={companySubmit}
             onValidityChange={setCompanyValid}
             onBusyChange={setCompanyBusy}

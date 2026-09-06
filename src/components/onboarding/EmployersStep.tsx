@@ -1039,7 +1039,36 @@ export function EmployersStep({
             {/* PROJECT → EMPLOYER: it needs a name, and it can lose things. */}
             {reclassify.kind === "project" && reclassifyAs === "employer" && (
               <>
-                <Field label="Employer name *">
+                {/*
+                  ⚠⚠ THE RENAME HELD HERE, AND IT WAS CHECKED BEFORE IT WAS
+                  APPLIED. The brief warned this field sits inside the modal
+                  whose whole purpose is choosing between employer and project,
+                  so renaming it might make the modal's own explanation
+                  incoherent, and said to STOP AND REPORT if so.
+
+                  It does not, for one reason: THE CHOICE THIS MODAL OFFERS IS
+                  NOT WORDED `Employer`. The radios read *"A job"* and *"A
+                  project"*, so the word being renamed is not the word being
+                  chosen. And this field's own placeholder ALREADY read *"The
+                  company you worked for"* — `Company name *` agrees with the
+                  placeholder that was always there, where `Employer name *`
+                  quietly disagreed with it.
+
+                  ⚠ THE SIBLING FIELD STAYS `Client name *`. It is the other
+                  branch and the other direction: `Company` is the entity you
+                  worked at, `Client` is who a piece of work was delivered for.
+
+                  `P2-J1.1-E012` — a work-history row is a COMPANY, not an employer.
+       A resume row looks identical for employment and for contract work, the
+       parser cannot tell them apart, and a user must not have to declare their
+       tax status to fill one in. `Company` names the ENTITY, which is constant;
+       `Employer` names the RELATIONSHIP, which varies. ⚠ `Company/Employer` was
+       considered and REJECTED — a slash label puts the tax question back into a
+       UI that had deliberately stopped asking it. ⚠ `Organization` is the fully
+       correct superset and was CONSIDERED, NOT CHOSEN (Scott took `Company` for
+       length and schema fit); recorded so nobody reopens it unknowing.
+                */}
+                <Field label="Company name *">
                   <TextInput
                     value={reclassifyName}
                     onChange={(ev) => setReclassifyName(ev.target.value)}
