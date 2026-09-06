@@ -69,7 +69,16 @@ export type CompanyHit = {
 export type CompanyOutcome = {
   companyId: string;
   name: string;
-  status: "APPROVED" | "PENDING" | "REJECTED";
+  /*
+    ⚠ `NAME_ONLY` (`P2-J1.1-E025`) — the person typed an employer name but has
+    not completed the company form. The name IS STORED (the signup placeholder is
+    renamed) but nothing is BOUND: no membership, no tax type, no ToS acceptance.
+    ⚠⚠ CALLERS MUST NOT TREAT IT AS `APPROVED`. `companyBound` stays false for it,
+    because `getCompanyBinding` reads memberships and there is deliberately none —
+    see `saveCompanyName` in `lib/company.ts` for why creating one would reproduce
+    the `test2`-`test6` corruption.
+  */
+  status: "APPROVED" | "PENDING" | "REJECTED" | "NAME_ONLY";
   autoApproved?: boolean;
 };
 
@@ -81,6 +90,7 @@ export function CompanyStep({
   onBusyChange,
   submitRef,
   onValidityChange,
+  onHasNameChange,
   bounded = false,
   suggestedName = null,
   nameLabel = "Company Name *",
@@ -95,6 +105,18 @@ export function CompanyStep({
    */
   submitRef?: { current: null | (() => void) };
   onValidityChange?: (valid: boolean) => void;
+  /**
+   * ⚠ SEPARATE FROM `onValidityChange`, AND THAT SEPARATION IS THE FIX
+   * (`P2-J1.1-E025` / `E026`).
+   *
+   * `valid` means "this company can be DEFINED" — name, tax type, country, ZIP,
+   * EIN, attestation and company ToS. `hasName` means only "there is a name
+   * worth keeping". The wizard used to have just the first, so its Continue
+   * handler saw one bit where there are three states: valid, part-answered, and
+   * untouched. Part-answered fell into the same branch as untouched and the
+   * typed name was silently discarded.
+   */
+  onHasNameChange?: (hasName: boolean) => void;
   /**
    * WS8 / E179 — bound the body's height so the step is ONE PAGE.
    *
@@ -385,12 +407,53 @@ export function CompanyStep({
     onValidityChange?.(valid);
   }, [valid, onValidityChange]);
 
+  /* ⚠ `> 1` MATCHES the server's `min(2)` and `saveCompanyName`'s own guard, so
+     the button cannot offer a save the lib will refuse. */
+  const hasName = mode === "define" && name.trim().length > 1;
+  useEffect(() => {
+    onHasNameChange?.(hasName);
+  }, [hasName, onHasNameChange]);
+
   useEffect(() => {
     onBusyChange?.(busy);
   }, [busy, onBusyChange]);
 
   const submit = async () => {
-    if (!valid) return;
+    /*
+      ── ⚠⚠ PART-ANSWERED IS ITS OWN OUTCOME NOW (`P2-J1.1-E025` / `E026`) ──────
+
+      ⚠ SUPERSEDED, quoted not deleted: this was `if (!valid) return;` — a silent
+      no-op. Together with the wizard's `if (companyValid) { … } void save({});`
+      it meant a requester who typed `Seattle Gas Company`, failed verification
+      and pressed Continue got NO POST, NO company row, NO membership and NO
+      error. Two gates, same outcome, neither said anything.
+
+      ⚠ THE PREDICATE IS UNTOUCHED. `valid` still means exactly what it meant —
+      the brief's guardrail is *"fix the branch, not the predicate"*, because
+      widening it would push an incomplete company through a gate built to stop
+      one. This adds a THIRD branch rather than moving the first.
+    */
+    if (!valid) {
+      if (!hasName) return;
+      setBusy(true);
+      setError(null);
+      try {
+        const r = await fetch("/api/company/define", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ nameOnly: true, name: name.trim() }),
+        });
+        const body = await r.json().catch(() => ({}));
+        if (!r.ok) {
+          setError(body.error ?? "Could not save that name.");
+          return;
+        }
+        onDone(body as CompanyOutcome);
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
