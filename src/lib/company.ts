@@ -267,6 +267,95 @@ export async function defineCompany(viewer: Viewer, input: DefineInput) {
 }
 
 /**
+ * ── ⚠⚠ STORE THE TYPED EMPLOYER NAME, VERIFIED OR NOT (`P2-J1.1-E025`) ────────
+ *
+ * SCOTT, 2026-09-06: *"I entered Seattle Gas Company, but it could not
+ * verify...so the employer field is blank. I think we should put that name in
+ * and store it regardless."*
+ *
+ * **A TYPED NAME IS A FACT THE PERSON ASSERTED. Verification decides whether it
+ * is CONFIRMED, not whether it EXISTS.**
+ *
+ * ⚠⚠ THIS IS MECHANISM (A) — RENAME THE PLACEHOLDER — AND (B) WAS REJECTED ON
+ * EVIDENCE, not on taste. (B) was "a name-only company plus a membership", and
+ * `isPlaceholder` above is the reason it cannot be: it defines a placeholder as
+ * `!tax_type && people <= 1 && memberships === 0`. A membership against a
+ * tax_type-NULL company reproduces EXACTLY the `test2`-`test6` state that the
+ * current invariant says is impossible — the pre-`a23784f` rows Scott found in
+ * Supabase. (B) would have re-created the corruption this brief exists to explain.
+ *
+ * ⚠⚠ SO EVERY FIELD THAT WOULD FALSIFY `isPlaceholder()` IS DELIBERATELY NOT
+ * WRITTEN HERE:
+ *   · `tax_type`   stays NULL   → a defined company has one; this is not one yet
+ *   · NO membership is created  → `memberships === 0` holds
+ *   · nobody is moved           → `people <= 1` holds
+ *   · NO company ToS is accepted — `defineCompany` takes that on the company's
+ *     behalf, and nobody has attested anything here.
+ * `isPlaceholder()` therefore still returns TRUE afterwards, which is the whole
+ * point: when the person later completes the real form, `defineCompany` sees a
+ * placeholder, REUSES this very row, and upgrades it in place. One company, no
+ * orphan, no second row, and the name they typed survives into it.
+ *
+ * ⚠ `legal_name` IS NOT SET EITHER. `defineCompany` writes `name` AND
+ * `legal_name` together because a DEFINED company has a legal name on its tax
+ * filing. An asserted employer name is not that, and writing it would claim a
+ * legal identity nobody has attested to.
+ *
+ * ⚠ IT ONLY EVER RENAMES A PLACEHOLDER. If the person already has a DEFINED
+ * company, this returns it untouched rather than renaming a real entity out from
+ * under its members — a rename there is a company-administration action, not a
+ * side effect of a wizard step.
+ *
+ * ⚠ NOT A SECOND WRITE PATH. It lives in this module beside `defineCompany`,
+ * shares `actingPerson` and `isPlaceholder`, and is reached through the SAME
+ * route (`POST /api/company/define`, name-only branch). Company writes stay in
+ * one file and behind one URL.
+ */
+export async function saveCompanyName(viewer: Viewer, rawName: string) {
+  const person = await actingPerson(viewer);
+
+  const name = rawName.trim();
+  if (name.length < 2) {
+    throw new OnboardingError("A company name is required", "INVALID");
+  }
+
+  /*
+    Already a real company — leave it alone. Returning APPROVED rather than
+    throwing because the caller is a wizard step that must still advance; this
+    is a no-op, not a failure.
+  */
+  if (!(await isPlaceholder(person.company_id))) {
+    const current = await prisma.company.findUnique({
+      where: { id: person.company_id },
+      select: { id: true, name: true },
+    });
+    return {
+      companyId: person.company_id,
+      name: current?.name ?? name,
+      status: "APPROVED" as const,
+    };
+  }
+
+  const company = await prisma.company.update({
+    where: { id: person.company_id },
+    data: { name },
+    select: { id: true, name: true, p_account_id: true },
+  });
+
+  /*
+    Keep the P-Account name in step, for the same reason `defineCompany` does —
+    the admin console lists accounts by it, and leaving it as the person's own
+    name is how "Layne Staley (11)" ends up in a list of companies.
+  */
+  await prisma.pAccount.update({
+    where: { id: company.p_account_id },
+    data: { name },
+  });
+
+  return { companyId: company.id, name: company.name, status: "NAME_ONLY" as const };
+}
+
+/**
  * JOIN an existing company. Auto-approved on a work-email domain match,
  * otherwise a PENDING request for that company's admin.
  *

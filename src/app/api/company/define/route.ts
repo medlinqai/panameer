@@ -2,10 +2,41 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { guardApi } from "@/lib/guard";
 import { OnboardingError } from "@/lib/onboarding";
-import { defineCompany } from "@/lib/company";
+import { defineCompany, saveCompanyName } from "@/lib/company";
 import { ein as einFormat, usZip } from "@/lib/field-formats";
 
-const schema = z.object({
+/*
+  ── ⚠⚠ THE NAME-ONLY BRANCH (`P2-J1.1-E025`) ────────────────────────────────
+
+  SCOTT, 2026-09-06: *"I entered Seattle Gas Company, but it could not
+  verify...so the employer field is blank. I think we should put that name in and
+  store it regardless."*
+
+  ⚠ IT IS A SEPARATE SCHEMA, NOT A LOOSENED ONE, AND THAT IS THE POINT. The
+  brief's guardrail is explicit: *"Do not widen `companyValid` to make the
+  existing submit fire — that would send an incomplete company through a gate
+  built to stop exactly that."* The same reasoning applies to this route's
+  schema. `taxType` stays REQUIRED for a define, the attestation and the company
+  ToS stay required, and the ZIP/EIN refinements are untouched. A name-only save
+  is a DIFFERENT, STRICTLY SMALLER operation and gets its own shape.
+
+  ⚠ IT IS THE SAME URL ON PURPOSE. The brief forbids a second company write path;
+  `api/onboarding/requester/step/route.ts` says in its own words that *"the
+  company binding is written by /api/company/* (define or join), not here"*. So
+  the name-only save goes through the route that already owns company writes,
+  into `saveCompanyName` beside `defineCompany` in the one module that writes
+  companies.
+
+  ⚠ `nameOnly` IS A LITERAL `true` DISCRIMINATOR, so the union cannot resolve by
+  accident: a full define payload that merely forgot `taxType` fails as a define
+  with the real message, rather than silently degrading into a name-only save.
+*/
+const nameOnlySchema = z.object({
+  nameOnly: z.literal(true),
+  name: z.string().trim().min(2).max(200),
+});
+
+const defineSchema = z.object({
   name: z.string().trim().min(2).max(200),
   taxType: z.enum([
     "C_CORP",
@@ -132,7 +163,30 @@ export async function POST(request: Request) {
   const gate = await guardApi("authenticated");
   if (gate instanceof NextResponse) return gate;
 
-  const parsed = schema.safeParse(await request.json().catch(() => null));
+  const body = await request.json().catch(() => null);
+
+  /*
+    ⚠ TRIED FIRST AND ONLY ON AN EXPLICIT `nameOnly: true`. Nothing else can
+    reach it, so the define path's validation is unreachable-by-accident rather
+    than merely unlikely.
+  */
+  const nameOnly = nameOnlySchema.safeParse(body);
+  if (nameOnly.success) {
+    try {
+      return NextResponse.json({
+        ok: true,
+        ...(await saveCompanyName(gate, nameOnly.data.name)),
+      });
+    } catch (e) {
+      if (e instanceof OnboardingError) {
+        return NextResponse.json({ error: e.message, code: e.code }, { status: 400 });
+      }
+      console.error("[company] name-only save failed:", e);
+      return NextResponse.json({ error: "Could not save that name" }, { status: 500 });
+    }
+  }
+
+  const parsed = defineSchema.safeParse(body);
   if (!parsed.success) {
     /*
       ── ⚠⚠ THE MESSAGE REACHES THE CLIENT (`P1-J1.4-E299`) ────────────────────
