@@ -1,4 +1,7 @@
 import { prisma } from "@/lib/prisma";
+/* ⚠ `P1-ALL-E282` — the register lookup, called SERVER-SIDE from defineCompany.
+   The client never posts a match; that would be a forgeable trust claim. */
+import { validateEntity } from "@/lib/company-validation";
 import type { Viewer } from "@/lib/access";
 import { recomputeCompleteness } from "@/lib/onboarding";
 import { OnboardingError } from "@/lib/onboarding";
@@ -107,6 +110,122 @@ async function isPlaceholder(companyId: string): Promise<boolean> {
  */
 export const REGISTERED_SITE_NAME = "Registered";
 
+/**
+ * ⚠⚠ THE ONLY PLACE AN ENTITY VALIDATION IS WRITTEN (`P1-ALL-E282` WS-2).
+ *
+ * ── ⚠⚠ FOUR STORED STATES, NOT THREE ─────────────────────────────────────
+ *
+ * `not_found` · `in_good_standing` · `has_issues` · `standing_unknown`
+ *
+ * The fourth exists because NEW YORK PUBLISHES NO STANDING COLUMN — its adapter
+ * is `publishesStatus: false`, *"there is no good-standing field to read"*.
+ * ⚠ WITHOUT IT, NY WOULD HAVE TO BE RECORDED AS EITHER A PASS OR A PROBLEM, AND
+ * BOTH WOULD BE CLAIMS NOBODY READ.
+ *
+ * ⚠ `not_in_good_standing` (the route's `ValidationOutcome`) IS DERIVED FROM A
+ * BOOLEAN PREDICATE at `company-validation.ts:330`, which throws away WHY. The
+ * reason was already in the payload the whole time: `EntityMatch.status` is a
+ * `SourcedField` carrying the register's own text AND its URL. NOTHING NEEDED
+ * SCRAPING — it needed storing.
+ *
+ * ⚠⚠ `entity_status_detail` IS ONLY EVER THE REGISTER'S STRING. Never a
+ * Panameer summary, never a friendlier phrasing. `check:trust-claims` asserts it
+ * appears verbatim in the match it came from.
+ */
+async function persistEntityValidation(
+  companyId: string,
+  input: { name: string; stateOfFiling: string | null; storedLegalName: string }
+): Promise<void> {
+  /* ⚠ NO STATE OF FILING, NO CALL. There is no register to ask. */
+  const state = input.stateOfFiling?.trim();
+  if (!state) return;
+
+  try {
+    /* ⚠ 5s, AND THE WHOLE THING IS INSIDE A CATCH. A dead register must not
+       cost a user their company record. */
+    const result = await validateEntity({
+      name: input.name,
+      stateOfFiling: state,
+      timeoutMs: 5000,
+    });
+
+    /* ⚠ `ok: false` WRITES NOTHING — an unsupported state or an unreachable
+       register is not a check, and recording one would be the E034 shape at
+       rest: a claim the build cannot support. */
+    if (!result.ok) return;
+
+    let status: string;
+    let detail: string | null = null;
+    let sourceUrl: string | null = null;
+
+    if (result.status === "not_found" || result.matches.length === 0) {
+      /* ⚠ UNAMBIGUOUS AND WORTH RECORDING: we looked, and there was no such
+         company. ⚠ NO SOURCE URL EXISTS for a non-match — there is no row to
+         cite — so the status is stored WITHOUT one, which is the single
+         legitimate exception to the SourcedField-at-rest rule and is why the
+         harness scopes that assertion to statuses that name a match. */
+      status = "not_found";
+    } else {
+      /* ⚠⚠ ONE MATCH ONLY. Several means the UI was asking the user which
+         entity they meant; asserting a check across all of them would assert
+         something about rows they never picked. */
+      if (result.matches.length !== 1) return;
+      const match = result.matches[0];
+
+      /* ⚠⚠ AND THE NAME MUST STILL BE THE ONE THE REGISTER RETURNED. An edited
+         name means the stored company is not the entity that was found. */
+      const same =
+        match.legalName.value.trim().toLowerCase() ===
+        input.storedLegalName.trim().toLowerCase();
+      if (!same) return;
+
+      /* ⚠ THE URL IS THE MATCH'S OWN. NEVER SYNTHESISED. */
+      sourceUrl = match.legalName.sourceUrl;
+      if (!sourceUrl) return;
+
+      if (!result.publishesStatus || !match.status) {
+        /* ⚠ NEW YORK LANDS HERE. Found, but the register publishes no standing. */
+        status = "standing_unknown";
+      } else if (result.status === "not_in_good_standing") {
+        status = "has_issues";
+        /* ⚠⚠ VERBATIM, AND REQUIRED. An issue with no stated reason is an
+           accusation, so a missing detail means the write does not happen. */
+        detail = match.status.value;
+        if (!detail?.trim()) return;
+      } else {
+        status = "in_good_standing";
+        /* ⚠ THE REGISTER'S WORDS ARE KEPT EVEN ON A PASS, so the copy can
+           attribute rather than paraphrase. */
+        detail = match.status.value;
+      }
+    }
+
+    /* ⚠ RE-RUNNING `defineCompany` SIMPLY OVERWRITES with the newer answer,
+       which is correct: the register is the authority and the latest read of it
+       is the best one we have. There is no history table by design. */
+    await prisma.company.update({
+      where: { id: companyId },
+      data: {
+        entity_validated_at: new Date(),
+        entity_validation_status: status,
+        entity_validation_source_url: sourceUrl,
+        entity_status_detail: detail,
+      },
+    });
+  } catch {
+    /*
+      ⚠⚠ SWALLOWED ON PURPOSE, AND THIS IS THE LOAD-BEARING PART. The company
+      row is already saved. A register timeout, a schema change at the state's
+      end, a 500 from Socrata — none of them may surface here, because the user
+      would lose a company record over a third party's outage.
+      ⚠ THE COST IS THAT A FAILED CHECK LOOKS IDENTICAL TO NO CHECK — both leave
+      `entity_validated_at` NULL and the copy reads "not yet verified", which is
+      TRUE in both cases. That is the right trade and it is why the column is
+      nullable rather than defaulted.
+    */
+  }
+}
+
 export async function defineCompany(viewer: Viewer, input: DefineInput) {
   const person = await actingPerson(viewer);
 
@@ -171,7 +290,50 @@ export async function defineCompany(viewer: Viewer, input: DefineInput) {
       company_tos_accepted_at: new Date(),
       company_tos_version: COMPANY_TOS_VERSION,
     },
-    select: { id: true, name: true, p_account_id: true },
+    select: { id: true, name: true, p_account_id: true, legal_name: true },
+  });
+
+  /*
+    ── ⚠⚠ THE ENTITY VALIDATION IS PERSISTED HERE (`P1-ALL-E282` WS-2) ─────────
+
+    THE DEFECT THIS CLOSES: `validateEntity()` got a real answer from a state
+    register, with a source URL, and NOTHING WROTE IT DOWN — so *"Company not
+    yet verified"* could never flip, for anybody, ever.
+
+    ── ⚠⚠ WHY HERE AND NOT IN `api/company/validate/route.ts` ────────────────
+
+    That route's zod body is `{ name, stateOfFiling }` — NO ID — so it does not
+    know WHICH company to write to. Its own docblock says *"THIS ROUTE NEVER
+    WRITES... keeping the read and the write apart is what lets a user correct a
+    bad lookup before anything is persisted"*, and the lookup re-runs on every
+    search with the USER picking among several matches. ⚠ `check:trust-claims`
+    now asserts that route still writes nothing — this brief is the most likely
+    thing ever to break that split.
+
+    ⚠⚠ AND THE CLIENT NEVER POSTS THE MATCH. `DefineInput` carries no validation
+    fields and must not: accepting a status or a source URL from the browser is a
+    FORGEABLE TRUST CLAIM. The call is made server-side, here, from the name and
+    state this function already has.
+
+    ── ⚠ IT MUST NEVER COST A USER THEIR COMPANY RECORD ──────────────────────
+
+    The company row is already written above. This runs after, with a 5s timeout,
+    inside a try/catch that swallows everything: A DEAD REGISTER MUST NOT FAIL
+    THE SAVE. Decision 5 says a failed lookup never blocks onboarding, and that
+    is still true.
+
+    ── ⚠⚠ IT WRITES ONLY ON AN UNAMBIGUOUS ANSWER ────────────────────────────
+
+    Several matches means the user was being asked which entity they meant, and
+    an edited name means the stored company is not the one the register returned.
+    Either way, asserting a check would be asserting something nobody confirmed.
+    ⚠ `not_found` IS UNAMBIGUOUS AND DOES WRITE — "we looked and there was no
+    such company" is a real, useful answer.
+  */
+  await persistEntityValidation(company.id, {
+    name,
+    stateOfFiling: input.stateOfFiling ?? null,
+    storedLegalName: company.legal_name ?? name,
   });
 
   /*
