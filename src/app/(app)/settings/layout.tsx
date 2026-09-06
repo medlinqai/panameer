@@ -1,4 +1,4 @@
-import { SettingsNav } from "@/components/settings/SettingsNav";
+import { SettingsTabs } from "@/components/settings/SettingsTabs";
 import { SettingsHeading } from "@/components/settings/SettingsHeading";
 import { guardPage } from "@/lib/guard";
 
@@ -16,27 +16,49 @@ import { guardPage } from "@/lib/guard";
  * heading comes from the same definition the nav does, so the two cannot
  * disagree about what a page is called.
  *
+ * ⚠⚠ SUPERSEDED BY TOP TABS, QUOTED NOT DELETED (`P2-J1.1-E046`, 2026-09-06).
+ * The sentence above stays because its SECOND half is still law — the heading and
+ * the tabs read one definition, and `SettingsTabs` reads the same `SETTINGS_NAV`.
+ * Only the SHAPE changed.
+ *
+ * SCOTT, 2026-09-06: *"I DO NOT WANT THIS LAYOUT (DOUBLE MENUS - LOOKS LIKE
+ * SHIT)"* … *"top tabs works, consistent with the other parts of the app and
+ * obvious."* The aside put a vertical menu beside the console's own dark rail —
+ * two vertical menus on one screen.
+ *
+ * ⚠ THIS FINISHES A MOVE THAT WAS HALF-MADE. The note above records Settings
+ * being pulled out of its own chrome into the console, *"which is WS0's rule
+ * applied: one casing for every authenticated page."* THE SECOND CHROME WENT AND
+ * THE SECOND MENU STAYED. It goes now.
+ *
  * AUTHORITATIVE SERVER-SIDE GATE stays exactly where it was. `guardPage` is
- * what enforces provider-only, independently of the edge proxy — the edge is a
- * fast first line and must never be the only one.
+ * what enforces access independently of the edge proxy — the edge is a fast
+ * first line and must never be the only one.
+ *
+ * ⚠⚠ `authenticated`, NOT `canProvideServices` (`P2-J1.1-E046`, 2026-09-06).
+ * ⚠ SUPERSEDED, quoted not deleted: this sentence read *"what enforces
+ * PROVIDER-ONLY"*, and the guard read `guardPage("canProvideServices")`.
+ *
+ * A buyer could not reach their own password, email, 2FA, notification
+ * preferences or billing. Scott ruled the whole tree open — *"we should add them
+ * and I will fix them as we go thru the build process"* — because fit is
+ * discovered by using a page, and one nobody can open cannot be evaluated.
+ * ⚠ THIS IS ONE OF THREE LAYERS. `route-access.ts` and each page's own
+ * `guardPage` moved with it; widening any one alone leaves the others refusing.
  */
 export default async function SettingsLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  await guardPage("canProvideServices");
+  await guardPage("authenticated");
 
   return (
     <div className="mx-auto max-w-5xl">
-      <div className="grid gap-8 md:grid-cols-[232px_1fr]">
-        <aside className="md:sticky md:top-6 md:self-start">
-          <SettingsNav />
-        </aside>
-        <div className="min-w-0">
-          <SettingsHeading />
-          {children}
-        </div>
+      <SettingsTabs />
+      <div className="min-w-0">
+        <SettingsHeading />
+        {children}
       </div>
     </div>
   );
