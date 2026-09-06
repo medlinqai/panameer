@@ -435,7 +435,9 @@ export function EmployersStep({
     <div>
       {employers.length === 0 ? (
         <div className="rounded-brand border-2 border-dashed border-line p-10 text-center">
-          <p className="font-bold">No employers yet</p>
+          {/* ⚠ NOT IN WS-3's TABLE — reported. Same rule, same component:
+              the chrome cannot say `employers` while the fields say `Company`. */}
+          <p className="font-bold">No companies yet</p>
           <p className="mx-auto mt-1 max-w-md text-[14px] text-ink-2">
             Add the companies you&apos;ve worked for, then add the projects you
             delivered within each job.
@@ -445,7 +447,7 @@ export function EmployersStep({
             onClick={openAddEmployer}
             className="mt-4 rounded-full bg-magenta px-6 py-3 font-bold text-white transition-colors hover:bg-magenta-dark"
           >
-            + Add Employer
+            + Add Company
           </button>
         </div>
       ) : (
@@ -467,7 +469,10 @@ export function EmployersStep({
             {/* WS9b/E143 — tick the wrong AI-added employers and remove them in
                 one action instead of a trash icon and a confirm() per card. */}
             <BulkSelectBar
-              label="employers"
+              /* ⚠ NOT IN WS-3's TABLE — reported. `BulkSelect` interpolates this
+                 into *"Select the {label} to remove"* and *"Remove N {label}?"*,
+                 so it is rendered copy, not a key. */
+              label="companies"
               count={employers.length}
               state={bulk}
               busy={busy}
@@ -560,7 +565,27 @@ export function EmployersStep({
                         readOnly
                         className="accent-magenta"
                       />
-                      Employer
+                      {/*
+                        ⚠⚠ `Job`, NOT `Company`, AND THIS IS THE ONE WS-3 CHOICE THE
+                        BRIEF DID NOT MAKE — reported for Scott to overrule.
+
+                        This radio is not naming an entity, it is naming a KIND of
+                        history row, and its partner is `Project`. `Company` is not
+                        the opposite of `Project` — a project sits UNDER a company —
+                        so that pair would not read as a choice.
+
+                        ⚠ THE PRECEDENT IS SCOTT'S OWN, FROM THIS WORK-STREAM. WS-3
+                        rewrites the reclassify modal's legend to *"A job or a
+                        project"*, and the modal's radios already read *"A job"* /
+                        *"A project"*. THIS ROW'S OWN `sr-only` LEGEND ALREADY SAYS
+                        *"Is X a job or a project?"* — so `Job` is the word three
+                        surrounding strings already use for exactly this binary.
+
+                        ⚠ The brief's own rule says why: `Employers` vs `Projects` is
+                        ONGOING ENGAGEMENT vs DISCRETE PIECE OF WORK. That is a
+                        distinction between kinds of work, not between entities.
+                      */}
+                      Job
                     </label>
                     <label className="flex items-center gap-1 text-[12px] font-semibold text-ink-2">
                       <input
@@ -830,7 +855,7 @@ export function EmployersStep({
             onClick={openAddEmployer}
             className="mt-5 rounded-full border-[1.5px] border-line px-5 py-2.5 font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
           >
-            + Add Employer
+            + Add Company
           </button>
         </>
       )}
@@ -960,7 +985,11 @@ export function EmployersStep({
         {reclassify && (
           <div className="space-y-4">
             <fieldset className="grid gap-2">
-              <legend className="sr-only">Employer or project</legend>
+              {/* ⚠ A THIRD ANSWER, NOT EITHER WORD (WS-3). The radios below read
+                  *"A job"* and *"A project"*, so this legend named a choice that is
+                  not on offer — it was already wrong today, independent of the
+                  rename, and a screen-reader user heard the mismatch. */}
+              <legend className="sr-only">A job or a project</legend>
               {(["employer", "project"] as const).map((v) => (
                 <label
                   key={v}
@@ -1169,7 +1198,7 @@ export function EmployersStep({
       <Modal
         open={employerModal !== null}
         onClose={() => setEmployerModal(null)}
-        title={employerModal?.mode === "edit" ? "Edit Employer" : "Add Employer"}
+        title={employerModal?.mode === "edit" ? "Edit Company" : "Add Company"}
       >
         <div className="space-y-4">
           <Field label="Company *">
@@ -1333,7 +1362,7 @@ export function EmployersStep({
             disabled={busy || !employerForm.name.trim()}
             className="rounded-full bg-magenta px-6 py-2.5 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
           >
-            {busy ? "Saving…" : "Save Employer"}
+            {busy ? "Saving…" : "Save Company"}
           </button>
         </div>
       </Modal>

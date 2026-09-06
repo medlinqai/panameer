@@ -389,7 +389,10 @@ export function parseResume(text: string): ParsedResume {
   const flush = () => {
     if (pending && (pending.employer || pending.roleTitle)) {
       // A role with no employer still carries value; label it rather than drop.
-      if (!pending.employer) pending.employer = "(Employer not detected)";
+      /* ⚠ THE VALUE IS SHOWN TO A PERSON after an import, which is why this one
+         line is in scope while the rest of this file's `employer` naming — field
+         keys and internals bound to `model Employer` — is not (WS-3). */
+      if (!pending.employer) pending.employer = "(Company not detected)";
       if (!pending.roleTitle) pending.roleTitle = "(Role not detected)";
       experiences.push(pending);
     }
