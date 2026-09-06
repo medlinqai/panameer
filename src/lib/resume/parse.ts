@@ -389,7 +389,10 @@ export function parseResume(text: string): ParsedResume {
   const flush = () => {
     if (pending && (pending.employer || pending.roleTitle)) {
       // A role with no employer still carries value; label it rather than drop.
-      if (!pending.employer) pending.employer = "(Employer not detected)";
+      /* ⚠ THE VALUE IS SHOWN TO A PERSON after an import, which is why this one
+         line is in scope while the rest of this file's `employer` naming — field
+         keys and internals bound to `model Employer` — is not (WS-3). */
+      if (!pending.employer) pending.employer = "(Company not detected)";
       if (!pending.roleTitle) pending.roleTitle = "(Role not detected)";
       experiences.push(pending);
     }
@@ -571,20 +574,25 @@ export function parseResume(text: string): ParsedResume {
   const undated = experiences.filter((e) => !e.startDate).length;
   if (undated > 0) {
     gaps.push(
-      `${undated} employer${undated === 1 ? "" : "s"} imported without dates — we couldn't read a start date. Add the dates so clients see your timeline.`
+      `${undated} ${undated === 1 ? "company" : "companies"} imported without dates — we couldn't read a start date. Add the dates so clients see your timeline.`
     );
   }
+  /* ⚠ THESE TWO LITERALS ARE WRITTEN IN `flush()` ABOVE and compared here. The
+     WS-3 rename changed the written one and left this one reading `Employer`,
+     which made the comparison dead: an un-named row stopped counting and this
+     gap silently stopped firing. `check:field-quality` now asserts every
+     `(… not detected)` sentinel COMPARED in this file is one this file WRITES. */
   const unnamed = experiences.filter(
-    (e) => e.employer === "(Employer not detected)" || e.roleTitle === "(Role not detected)"
+    (e) => e.employer === "(Company not detected)" || e.roleTitle === "(Role not detected)"
   ).length;
   if (unnamed > 0) {
     gaps.push(
-      `${unnamed} employer${unnamed === 1 ? "" : "s"} imported with a missing employer or job title — please fill those in.`
+      `${unnamed} ${unnamed === 1 ? "company" : "companies"} imported with a missing company or job title — please fill those in.`
     );
   }
   if (buckets.experience.length > 0 && experiences.length === 0) {
     gaps.push(
-      "We found an experience section but couldn't split it into individual employers — please add your work history manually."
+      "We found an experience section but couldn't split it into individual companies — please add your work history manually."
     );
   }
 

@@ -12,6 +12,11 @@
  *   3  EIN ACCEPTS BLANK, accepts hyphenated and bare, rejects malformed, and is
  *      NEVER REQUIRED.
  *   4  THE CUSTOM-SKILL PATH CALLS THE MATCHER BEFORE CREATING.
+ *   5  A SENTINEL WRITTEN IN ONE PLACE AND COMPARED IN ANOTHER STILL MATCHES
+ *      (`P2-J1.1-E012` WS-3). Rule 2's defect class, one file down: the
+ *      résumé parser's `(… not detected)` labels. The rename moved the
+ *      written literal and not the compared one, and an import gap went
+ *      silent for a day. Set equality, so it catches both directions.
  *
  * ⚠ COMMENTS ARE STRIPPED BEFORE ANY SOURCE SCAN, reusing `check-community.ts`'s
  * `strip()`. Every file here documents the very patterns it must not contain.
@@ -281,6 +286,48 @@ check(
   "4 — ⚠ the wizard NEVER auto-applies a near match",
   /setSkillMatch\s*\(\s*\{/.test(wizard) && /keepTypedSkill/.test(wizard),
   "both answers must be reachable — keeping what you typed is a real outcome"
+);
+
+// ---------------------------------------------------------------------------
+
+/*
+  ⚠⚠ 5 — A SENTINEL THAT IS WRITTEN IN ONE PLACE AND COMPARED IN ANOTHER IS THE
+  SAME DEFECT CLASS AS RULE 2, and it bit for real. `resume/parse.ts` labels an
+  un-named row `"(Company not detected)"` in `flush()`, then counts those rows
+  further down to raise an import gap. The `P2-J1.1-E012` WS-3 rename changed the
+  WRITTEN literal to `Company` and left the COMPARED one reading `Employer`, so
+  the comparison matched nothing: the row still imported, but the gap telling the
+  user to fill it in silently stopped firing. Nothing caught it — that commit's
+  own note said "nothing asserts these strings", which is exactly why.
+
+  The assertion is set EQUALITY, not containment, so it catches both directions:
+  a literal compared but never written (the dead comparison above) AND a literal
+  written but never compared (a label nothing acts on).
+
+  ⚠ IF THESE ARE EVER HOISTED into one exported constant — the rule-2 shape, and
+  the better end state — both sets go empty and this fails. That is deliberate:
+  point it at the constant rather than deleting it.
+*/
+const parseSrc = read(join("src", "lib", "resume", "parse.ts"));
+const sentinels = (re: RegExp) => {
+  const out = new Set<string>();
+  for (const m of parseSrc.matchAll(re)) out.add(m[1]);
+  return out;
+};
+const written = sentinels(/(?<![=!<>])=\s*"(\([^"]*?not detected\))"/g);
+const compared = sentinels(/[=!]==\s*"(\([^"]*?not detected\))"/g);
+const setEq = (a: Set<string>, b: Set<string>) =>
+  a.size === b.size && [...a].every((v) => b.has(v));
+
+check(
+  "5 — résumé parse.ts still writes and compares its (… not detected) sentinels literally",
+  parseSrc.length > 0 && written.size > 0 && compared.size > 0,
+  "if they were hoisted into a shared constant, retarget this assertion at it"
+);
+check(
+  "5 — ⚠ every sentinel COMPARED in parse.ts is one parse.ts WRITES, and vice versa",
+  setEq(written, compared),
+  `written {${[...written].sort().join(", ")}} vs compared {${[...compared].sort().join(", ")}}`
 );
 
 // ---------------------------------------------------------------------------

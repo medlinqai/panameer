@@ -48,7 +48,16 @@ export function ExperienceEditor({
       {value.map((exp, i) => (
         <div key={i} className="rounded-brand border border-line p-5">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="font-bold">Employer {i + 1}</h3>
+            {/* `P2-J1.1-E012` — a work-history row is a COMPANY, not an employer.
+       A resume row looks identical for employment and for contract work, the
+       parser cannot tell them apart, and a user must not have to declare their
+       tax status to fill one in. `Company` names the ENTITY, which is constant;
+       `Employer` names the RELATIONSHIP, which varies. ⚠ `Company/Employer` was
+       considered and REJECTED — a slash label puts the tax question back into a
+       UI that had deliberately stopped asking it. ⚠ `Organization` is the fully
+       correct superset and was CONSIDERED, NOT CHOSEN (Scott took `Company` for
+       length and schema fit); recorded so nobody reopens it unknowing. */}
+            <h3 className="font-bold">Company {i + 1}</h3>
             <button
               type="button"
               onClick={() => remove(i)}
@@ -154,7 +163,7 @@ export function ExperienceEditor({
         onClick={() => onChange([...value, emptyExperience()])}
         className="rounded-full border-[1.5px] border-line px-5 py-2.5 font-bold text-ink transition-colors hover:border-[#d9d4e2]"
       >
-        + Add Employer
+        + Add Company
       </button>
     </div>
   );

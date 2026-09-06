@@ -190,7 +190,16 @@ export function ProviderCard({
           {p.employerCount > 0 && (
             <li className="flex items-center gap-1.5">
               <BuildingIcon />
-              {p.employerCount} {p.employerCount === 1 ? "Employer" : "Employers"}
+              {/* `P2-J1.1-E012` — a work-history row is a COMPANY, not an employer.
+       A resume row looks identical for employment and for contract work, the
+       parser cannot tell them apart, and a user must not have to declare their
+       tax status to fill one in. `Company` names the ENTITY, which is constant;
+       `Employer` names the RELATIONSHIP, which varies. ⚠ `Company/Employer` was
+       considered and REJECTED — a slash label puts the tax question back into a
+       UI that had deliberately stopped asking it. ⚠ `Organization` is the fully
+       correct superset and was CONSIDERED, NOT CHOSEN (Scott took `Company` for
+       length and schema fit); recorded so nobody reopens it unknowing. */}
+              {p.employerCount} {p.employerCount === 1 ? "Company" : "Companies"}
             </li>
           )}
           {p.projectCount > 0 && (
