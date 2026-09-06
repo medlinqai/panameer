@@ -103,6 +103,9 @@ export default function RequesterStepsPage() {
   */
   const companySubmit = useRef<null | (() => void)>(null);
   const [companyValid, setCompanyValid] = useState(false);
+  /* `P2-J1.1-E025` — "there is a name worth keeping", which is NOT the same
+     question as "this company can be defined". See the branch below. */
+  const [companyHasName, setCompanyHasName] = useState(false);
   const [companyBusy, setCompanyBusy] = useState(false);
   const [pendingCompany, setPendingCompany] = useState<CompanyOutcome | null>(null);
   /* `E281` — drives the SHARED `PhotoCropModal`, the provider wizard's own uploader. */
@@ -404,8 +407,27 @@ export default function RequesterStepsPage() {
             · untouched -> advance with no company at all. `save({})` posts the
               step so the SERVER moves `onboarding_step`; the wizard never owns
               the resume point.
+
+            ── ⚠⚠ THERE WAS A THIRD STATE AND IT FELL DOWN THE CRACK (`E025`) ──
+
+            ⚠ SUPERSEDED, quoted not deleted: `if (companyValid) { … } void
+            save({});`. The two bullets above are a BINARY — answered or
+            untouched — and PART-ANSWERED is neither. A requester who typed
+            `Seattle Gas Company`, failed verification and pressed Continue took
+            the `save({})` branch: no POST to /api/company/define, no company
+            row, no membership, and no error. `select … from companies where
+            name ilike '%seattle%'` returned ZERO ROWS.
+
+            ⚠⚠ AND IT SILENTLY RE-CREATED THE STATE `/company` WAS BUILT TO
+            RESCUE PEOPLE FROM — Scott, earlier walk: *"I was forced to do
+            something with my company details and I couldn't, so it kept me from
+            doing anything."*
+
+            `companyHasName` is the missing bit. `E274` keeps the step OPTIONAL —
+            typing nothing still advances with no company — but optional means
+            "you may skip it", NOT "what you typed is thrown away".
           */
-          if (companyValid) {
+          if (companyValid || companyHasName) {
             companySubmit.current?.();
             return;
           }
@@ -430,10 +452,27 @@ export default function RequesterStepsPage() {
             nameLabel="Employer Name *"
             submitRef={companySubmit}
             onValidityChange={setCompanyValid}
+            onHasNameChange={setCompanyHasName}
             onBusyChange={setCompanyBusy}
             onDone={(outcome) => {
               if (outcome.status === "PENDING") {
                 setPendingCompany(outcome);
+                return;
+              }
+              /*
+                ⚠⚠ NAME STORED, COMPANY NOT BOUND (`P2-J1.1-E025`). The typed
+                name is now on the person's company row, so the review card and
+                every other `state.profile.companyName` reader show it. But
+                `companyBound` stays FALSE, deliberately: `getCompanyBinding`
+                reads MEMBERSHIPS, and `saveCompanyName` creates none — one
+                against a tax_type-NULL company is precisely the `test2`-`test6`
+                corruption. Claiming `companyBound: true` here would be the
+                two-sources-of-truth defect that `P1-J1.2-E003` cost the buyer
+                side.
+              */
+              if (outcome.status === "NAME_ONLY") {
+                setDraft((d) => ({ ...d, companyName: outcome.name }));
+                void save({});
                 return;
               }
               // Approved (defined, or joined on a domain match) — record it on
