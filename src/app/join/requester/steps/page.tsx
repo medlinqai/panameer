@@ -610,72 +610,6 @@ export default function RequesterStepsPage() {
               onChange={(next) => setDraft((d) => ({ ...d, phone: next }))}
               country={phoneCountry}
             />
-            <div>
-              <Field label="Employee ID">
-                <TextInput
-                  value={draft.employeeId}
-                  onChange={(e) =>
-                    setDraft((d) => ({ ...d, employeeId: e.target.value }))
-                  }
-                />
-              </Field>
-              {/*
-                ⚠ THE HELPER SITS OUTSIDE `Field`, NOT IN ITS `hint` (`E261`).
-                `Field` renders a `<label>` and its `hint` is typed `string`;
-                an `<a>` inside a `<label>` is interactive content the HTML
-                spec forbids there, and clicking it focuses the input instead
-                of following the link. Same two lines, valid markup.
-                ⚠ SUPERSEDED, quoted: the old hint read *"Your id in your own
-                system. Optional — it's what links you to your ERP later."*
-                ⚠ SCOTT'S WORDS, VERBATIM, INCLUDING THE PLAIN HYPHEN — it is
-                not an en dash and was not "tidied" into one.
-              */}
-              <p className="mt-1 text-[13px] text-ink-2">
-                Your HR ID - used for integrated buyers
-              </p>
-              {/*
-                ⚠⚠ A NEW TAB, BECAUSE THIS LINK USED TO DESTROY THE FORM
-                (`P1-J1.1-E277`, 2026-08-30).
-
-                It was a plain in-app navigation out of a PART-FILLED wizard.
-                Step 2 is save-as-you-go only on Continue, so clicking "learn
-                more" threw away whatever was typed and browser-back returned an
-                empty form — punishing exactly the person who stopped to read.
-
-                ⚠⚠ THIS IS `E162` A SECOND TIME. That row fixed the identical bug
-                on the signup form's Terms links and produced
-                `components/legal/LegalLink.tsx`, whose docblock warned: *"Use
-                this for EVERY legal link. The bug was one component doing it
-                wrong while the others happened to be on pages with nothing to
-                lose."* This page had something to lose.
-
-                ⚠ `LegalLink` WAS DELIBERATELY NOT REUSED, AND NOT WIDENED.
-                `/integrate` is a marketing page, not a legal document — routing
-                it through a component named `LegalLink` would make the name
-                false, and renaming that component to something generic would
-                touch every legal call site to fix one marketing link. The two
-                attributes are the whole of its behaviour, so they are applied
-                here directly and this comment carries the reasoning instead.
-
-                ⚠ A PLAIN `<a>`, NOT `next/link`. Client-side routing buys
-                nothing for a tab that is about to be a fresh document, and it is
-                the same shape `LegalLink` uses.
-                ⚠ `rel="noopener noreferrer"` IS NOT OPTIONAL — `target="_blank"`
-                without it hands the opened page a handle on this one.
-                ⚠ AND NOT `window.open`. Scott raised popup blockers directly:
-                blockers target SCRIPTED opens, not user-clicked anchors. This is
-                an anchor a person clicked, so it is not a popup and is not
-                blocked.
-              */}
-              <a
-                href="/integrate"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-0.5 block text-[13px] font-semibold text-magenta hover:underline"
-              >
-                Click here to learn more
-              </a>
-            </div>
           </div>
 
           {/*
@@ -812,18 +746,28 @@ export default function RequesterStepsPage() {
     Prisma to match this word would collide with it. This is one string on one
     card.
 
-    ⚠ `Employee ID` KEEPS ITS NAME. It is the person's staff number
-    (`draft.employeeId`) and not the employer, which is exactly why it is worth
-    saying out loud now that the word `Employer` sits two rows above it. Scott
-    confirmed it explicitly on 2026-09-05.
+    ⚠⚠ SUPERSEDED THE SAME DAY BY `P2-J1.1-E013` — quoted, not deleted:
+    *"`Employee ID` KEEPS ITS NAME. It is the person's staff number
+    (`draft.employeeId`) and not the employer."* ⚠ THE SECOND HALF OF THAT WAS
+    WRONG, and the brief that fixed it says why: the column is the ERP USER ID —
+    the POSR `User`/`UserId` extrinsic — not an HR staff number. The row is gone
+    from this card entirely; see the block on the rows below.
   */
   const rows: { label: string; value: string; step: RequesterStep }[] = [
     /*
       ── ⚠ THE ORDER IS THE ORDER A PERSON WOULD SAY IT IN (`P2-J1.1-E008`) ────
 
-      Name, Title, Employer, Employee ID, Work Location, Phone. Who you are,
-      what you do, who you do it for, the number that identifies you there,
-      where you do it, and last the way to reach you.
+      Name, Title, Employer, Work Location, Phone. Who you are, what you do, who
+      you do it for, where you do it, and last the way to reach you.
+
+      ⚠ FIVE ROWS, NOT SIX (`P2-J1.1-E013`, same day). ⚠ SUPERSEDED, quoted not
+      deleted: *"Name, Title, Employer, Employee ID, Work Location, Phone… the
+      number that identifies you there"*. `Employee ID` was removed from the UI
+      because it is the requester's id IN THEIR OWN ERP, which arrives in a
+      punchout request and is not something a person can type. ⚠ THE COLUMN, THE
+      ZOD FIELD AND THE WRITE PATH ALL SURVIVE — a later punchout brief needs
+      them, and `draft.employeeId` is still hydrated and still posted, so an
+      existing value round-trips untouched rather than being blanked.
 
       ⚠ SUPERSEDED, quoted not deleted, the order this replaced:
         `Company · Requester · Job Title · Phone · Employee ID · Work Location`
@@ -839,11 +783,14 @@ export default function RequesterStepsPage() {
       value: `${draft.firstName} ${draft.lastName}`.trim() || "—",
       step: "requester_info",
     },
-    /* `E281` — a required field belongs on the review. Employee ID is OPTIONAL
-       and has always been listed, so omitting a REQUIRED one would be odd. */
+    /* `E281` — a required field belongs on the review. ⚠ ITS ORIGINAL REASONING
+       IS SPENT, quoted not deleted: *"Employee ID is OPTIONAL and has always
+       been listed, so omitting a REQUIRED one would be odd."* `E013` removed
+       that row, so the comparison it drew no longer has a second term. Title
+       stays on the card on its own merits — it is required and it is what a
+       provider reads next to a name. */
     { label: "Title", value: draft.title || "—", step: "requester_info" },
     { label: "Employer", value: draft.companyName || "—", step: "company" },
-    { label: "Employee ID", value: draft.employeeId || "—", step: "requester_info" },
     /*
       ⚠⚠ THE `Your Address` ROW IS GONE (`P1-J1.1-E279`, 2026-08-30).
 
