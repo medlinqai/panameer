@@ -59,9 +59,46 @@ export type MentorCard = {
   validated: boolean;
   /** Up to six, for the card. Their claimed catalog skills. */
   skills: string[];
+  /**
+   * ⚠⚠ THE RECRUITER FORK (`P2-J1.1-E028` WS-1). `WorkMethod.RECRUITER` is the
+   * user-type fork — *"a recruiter sells the services of OTHERS and is the app's
+   * Coordinator role"*. It rides on the card so the CALLER can split one list
+   * into two rows.
+   * ⚠ IT IS NOT A FILTER HERE, AND THAT IS DELIBERATE: `marketplaceVisibleWhere()`
+   * is untouched, so recruiters stay in search. Scott asked for two carousels,
+   * not an exclusion — *"some will still only want to work with recruiters"*.
+   */
+  isRecruiter: boolean;
+  /**
+   * ⚠ WHAT A RECRUITER ASKS. Scott: *"EVERY recruiter asks the same questions…
+   * how many years of experience do you have? How many projects have you been
+   * on?"* ⚠ `_count`s, NOT rows — the house rule from `explore.ts`: pulling
+   * eight employer records to call `.length` on them would ship a provider's
+   * work history to render one digit.
+   */
+  employerCount: number;
+  projectCount: number;
+  /**
+   * ⚠ SCOTT ASKED FOR THIS ONE BY NAME — *"Specialties (2)"*. It needed NO NEW
+   * QUERY: `specializations` is a relation on `ProviderProfile`, so it is one
+   * more `_count` on the SAME select, which is the sanctioned pattern rather
+   * than the over-fetch the house rule forbids.
+   */
+  specialtyCount: number;
+  /** `0..100`. ⚠ RANKING INPUT — and it is visible, as the fields it counts. */
+  completeness: number;
   /** Their published hourly range, when they have one. Cents. */
   rateMinCents: number | null;
   rateMaxCents: number | null;
+  /**
+   * ⚠⚠ THE OTHER TWO OF THE FIVE THE GATE ACCEPTS (`E028` WS-4).
+   * `marketplaceVisibleWhere()` REQUIRES a rate, ORing across FIVE fields —
+   * hourly, min, max, onsite, remote — so a profile with NO rate cannot be
+   * visible at all. The card read a SUBSET, so anyone priced onsite- or
+   * remote-only rendered blank and looked unpriced. They were not.
+   */
+  onsiteRateCents: number | null;
+  remoteRateCents: number | null;
   /**
    * ⚠ ADDED BY `P1-ALL-E374` AND IT IS NOT OPTIONAL POLISH. The decided display
    * rule falls back to `hourly_rate_cents` when there is no min/max range, and
@@ -105,12 +142,52 @@ export type MentorCard = {
 // export const MICRO_SESSION_MINUTES = 15;
 
 /**
- * Eligible mentors, most-complete first.
+ * ── ⚠⚠ RANK ON WHAT YOU SHOW (`P2-J1.1-E028` WS-5) ──────────────────────────
  *
- * ORDERED BY COMPLETENESS then rating: with no opt-in and no reviews yet, the
- * least-arbitrary ranking available is "who has actually filled their profile
- * in". It is honest about being a proxy — when MentorProfile and session
- * feedback exist in PHASE 4, this ordering is the first thing that should go.
+ * SCOTT, 2026-09-07, on the inputs he had just approved: *"Number 1 is correct,
+ * but I cannot see those things on the cards I am looking at."*
+ *
+ * THAT IS THE RULE. A ranking whose inputs are invisible cannot be explained to
+ * the provider it ranks low. EVERY INPUT BELOW IS A FIELD THE CARD RENDERS:
+ *
+ *   1  VALIDATION      — the `Validated` pill (green when yes, grey when not)
+ *   2  COMPLETENESS    — not a number on the card, but what it COUNTS is: the
+ *                        photo, the headline, the skills, the rate. A profile
+ *                        with a placeholder avatar and no rate scores low and
+ *                        sinks, which fixes the visible problem for free.
+ *   3  EMPLOYER COUNT  — "N Companies" on the card   ⚠ TIEBREAKER ONLY
+ *   4  PROJECT COUNT   — "N Projects" on the card    ⚠ TIEBREAKER ONLY
+ *
+ * ⚠⚠ YOE AND PROJECT COUNT ARE TIEBREAKERS, NOT THE SPINE, AND THAT IS A
+ * PRODUCT DECISION NOT A WEIGHTING ACCIDENT. Ranked on their own they measure
+ * TENURE, NOT FIT: a thirty-year veteran with forty projects would outrank the
+ * person who did exactly this implementation last year — backwards for a
+ * marketplace whose whole value is matching.
+ *
+ * ⚠⚠ THE CLIENT-VERIFIED RECOMMENDATION INPUT IS DROPPED, AND IT IS DROPPED ON
+ * EVIDENCE. `E014` MERGED — but it shipped NO badge, because nothing on
+ * `RecommendationRequest` records a RELATIONSHIP (`recommender_company` is free
+ * text, `contact_off_platform` proves only that an address has an account) and
+ * `model WorkOrder` does not exist, so there is no engagement to join back to.
+ * Ranking on a signal with no badge behind it would break this work-stream's own
+ * rule on its first input. It returns when `E044`'s `Relationship` field lands.
+ *
+ * ⚠ THE SCORE IS HIDDEN. A visible number invites gaming and argument; the FACTS
+ * are visible and the arithmetic is not.
+ *
+ * ⚠⚠ COLD START — NAMED SO IT IS NOT MISTAKEN FOR INTELLIGENCE IT DOES NOT HAVE.
+ * With this few providers and fewer validated ones, this mostly surfaces
+ * whoever filled their profile in most completely. That is fine and arguably
+ * ideal this early, but THE RANKING'S REAL JOB TODAY IS QUALITY CONTROL, NOT
+ * MATCHING. It does not know what the buyer needs, because nothing on the card
+ * tells it. When there is demand data, this ordering is the first thing to go.
+ *
+ * ⚠ SUPERSEDED, QUOTED NOT DELETED: *"ORDERED BY COMPLETENESS then rating: with
+ * no opt-in and no reviews yet, the least-arbitrary ranking available is 'who
+ * has actually filled their profile in'."* Still true, and completeness is still
+ * here — it is now the THIRD tier rather than the first, behind validation.
+ * ⚠ `rating` LEAVES THE ORDERING: it is not on the card, so under Scott's rule
+ * it cannot rank. Nothing has been rated yet either.
  */
 export async function listMentors(opts: { skill?: string } = {}): Promise<MentorCard[]> {
   const rows = await prisma.providerProfile.findMany({
@@ -120,7 +197,13 @@ export async function listMentors(opts: { skill?: string } = {}): Promise<Mentor
         ? { skills: { some: { skill: { name: { contains: opts.skill, mode: "insensitive" } } } } }
         : {}),
     },
-    orderBy: [{ completeness: "desc" }, { rating: "desc" }],
+    /*
+      ⚠ THE DATABASE ORDERS BY COMPLETENESS SO THE `take` KEEPS THE RIGHT 48;
+      the ranking proper is applied below, in memory, because it is a COMPOSITE
+      and Postgres cannot order an enum by anything but its declaration order —
+      see the `validation_status` note under the sort.
+    */
+    orderBy: [{ completeness: "desc" }, { updated_at: "desc" }],
     take: 48,
     select: {
       id: true,
@@ -130,6 +213,12 @@ export async function listMentors(opts: { skill?: string } = {}): Promise<Mentor
       rate_max_cents: true,
       currency: true,
       validation_status: true,
+      work_method: true,
+      completeness: true,
+      onsite_rate_cents: true,
+      remote_rate_cents: true,
+      /* ⚠ `_count`, not rows — see `employerCount` on the type. */
+      _count: { select: { employers: true, projects: true, specializations: true } },
       person: {
         select: {
           id: true,
@@ -147,7 +236,7 @@ export async function listMentors(opts: { skill?: string } = {}): Promise<Mentor
     },
   });
 
-  return rows.map((p) => ({
+  const cards = rows.map((p) => ({
     profileId: p.id,
     name: `${p.person.first_name} ${p.person.last_name}`.trim(),
     firstName: p.person.first_name,
@@ -156,12 +245,35 @@ export async function listMentors(opts: { skill?: string } = {}): Promise<Mentor
     photoUrl: p.person.photo_url,
     validated: p.validation_status === "VALIDATED",
     skills: p.skills.map((s) => s.skill.name),
+    isRecruiter: p.work_method === "RECRUITER",
+    employerCount: p._count.employers,
+    projectCount: p._count.projects,
+    specialtyCount: p._count.specializations,
+    completeness: p.completeness,
     rateMinCents: p.rate_min_cents,
     rateMaxCents: p.rate_max_cents,
     hourlyRateCents: p.hourly_rate_cents,
+    onsiteRateCents: p.onsite_rate_cents,
+    remoteRateCents: p.remote_rate_cents,
     userId: p.person.user_id,
     personId: p.person.id,
     currency: p.currency,
     teaches: p.person.learnLessons.length,
   }));
+
+  /*
+    ⚠⚠ SORTED IN MEMORY, AND THAT IS NOT LAZINESS. Postgres orders an enum by
+    DECLARATION order, and `ValidationStatus` is declared
+    `NOT_REQUESTED, REQUESTED, VALIDATED, REJECTED` — so `asc` puts UNVALIDATED
+    first and `desc` puts REJECTED first. NEITHER DIRECTION LEADS WITH VALIDATED.
+    A boolean derived in the mapping can be ordered correctly; the column cannot.
+    ⚠ The page is already bounded at 48, so this sorts a page, not a table.
+  */
+  return cards.sort(
+    (a, b) =>
+      Number(b.validated) - Number(a.validated) ||
+      b.completeness - a.completeness ||
+      b.employerCount - a.employerCount ||
+      b.projectCount - a.projectCount
+  );
 }

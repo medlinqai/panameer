@@ -43,6 +43,15 @@ export function RequesterHome({
   openWorkCount: number;
   experts: MentorCard[];
 }) {
+  /*
+    ⚠ THE SPLIT IS HERE, IN THE VIEW, AND NOT IN THE QUERY (`E028` WS-1).
+    Scott asked for two carousels, not an exclusion — *"some will still only want
+    to work with recruiters"* — so `marketplaceVisibleWhere()` is untouched and
+    recruiters remain in search. One fetch, two rows.
+  */
+  const recruiters = experts.filter((e) => e.isRecruiter);
+  const individuals = experts.filter((e) => !e.isRecruiter);
+
   return (
     <div className="mx-auto w-full max-w-6xl">
       {/*
@@ -125,6 +134,8 @@ export function RequesterHome({
       </section>
 
       {/* ---- 2. Who can help --------------------------------------------- */}
+      {/* ⚠ ONE LIST, TWO ROWS — split in the view so `marketplaceVisibleWhere()`
+          and therefore SEARCH stay untouched (`E028` WS-1). */}
       <section className="mt-10">
         {/* ⚠ TITLE CASE (`P2-J1.1-E027`). ⚠ SUPERSEDED, quoted: `Collaborate with
             an expert`. `With` CAPITALIZES and `an` does not — the locked rule
@@ -162,7 +173,7 @@ export function RequesterHome({
             </Button>
           </article>
 
-          {experts.map((e) => (
+          {individuals.map((e) => (
             <ExpertCard key={e.profileId} expert={e} />
           ))}
         </div>
@@ -174,6 +185,45 @@ export function RequesterHome({
           </p>
         )}
       </section>
+
+      {/*
+        ── ⚠⚠ RECRUITERS GET THEIR OWN ROW, NEVER A MIXED ONE (`E028` WS-1) ────
+
+        SCOTT, 2026-09-07: *"Ideally, I would like to give the buyers the option
+        (some will still only want to work with recruiters) — meaning show both
+        in two different carousels. What I do not think we want to do is mix them
+        in one grouping/carousel, set of cards."*
+
+        ⚠⚠ SEPARATED, NOT EXCLUDED, AND THAT DISTINCTION IS THE WHOLE RULING.
+        `marketplaceVisibleWhere()` IS UNTOUCHED — a global exclusion would have
+        removed recruiters from SEARCH too, which Scott did not ask for. The
+        split happens here, in the view, on `WorkMethod.RECRUITER`: *"a recruiter
+        sells the services of OTHERS and is the app's Coordinator role."*
+
+        ⚠⚠ AN EMPTY ROW DOES NOT RENDER AT ALL — no heading over nothing, no
+        empty state. If there are no recruiters this whole section is absent,
+        which is why the guard is on the ARRAY and not inside the section.
+
+        ⚠ THE HEADING AND SUB-LINE ARE PLACEHOLDERS AND NEED SCOTT'S WORDS.
+        REPORTED, NOT INVENTED: he wrote the copy for every other block on this
+        page, and marketing copy for a row he has not seen is exactly the kind of
+        thing chat is not allowed to make up.
+      */}
+      {recruiters.length > 0 && (
+        <section className="mt-10">
+          <h2 className="font-display text-[22px] font-bold tracking-[-0.3px]">
+            Work With a Recruiter
+          </h2>
+          <p className="mt-1 text-[15px] text-ink-2">
+            Firms that place consultants on your behalf.
+          </p>
+          <div className="-mx-1 mt-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pb-3">
+            {recruiters.map((e) => (
+              <ExpertCard key={e.profileId} expert={e} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ---- 3. What you can buy off the shelf ---------------------------- */}
       <section className="mt-10 rounded-brand border border-line bg-bg-soft p-7">
@@ -235,14 +285,44 @@ export function RequesterHome({
 }
 
 function ExpertCard({ expert }: { expert: MentorCard }) {
-  const rate =
-    expert.rateMinCents != null
-      ? `${formatCents(expert.rateMinCents, expert.currency)}${
-          expert.rateMaxCents && expert.rateMaxCents !== expert.rateMinCents
-            ? `–${formatCents(expert.rateMaxCents, expert.currency)}`
-            : ""
-        } / hr`
-      : null;
+  /*
+    ── ⚠⚠ ALL FIVE RATE FIELDS, NOT TWO (`P2-J1.1-E028` WS-4) ─────────────────
+
+    ⚠ SUPERSEDED, quoted: this read `rateMinCents` and `rateMaxCents` ONLY.
+
+    `marketplaceVisibleWhere()` REQUIRES a rate and ORs across FIVE fields —
+    hourly, min, max, onsite, remote — so A PROFILE WITH NO RATE CANNOT BE
+    VISIBLE AT ALL. Every blank rate on this row was therefore a RENDER bug, not
+    an unpriced provider: they had a rate the card refused to read.
+
+    ⚠⚠ AND `hourlyRateCents` WAS ALREADY ON THIS CARD'S OWN TYPE, ADDED BY
+    `P1-ALL-E374` FOR EXACTLY THIS REASON — its docblock says the fallback
+    "carries 19 of 25 marketplace-visible providers" and that without it the card
+    "would show no rate for 76% of the directory — which reads as 'they have not
+    priced themselves' and is false." THE FIELD WAS ADDED AND THIS CARD NEVER
+    READ IT.
+
+    HOW EACH RENDERS:
+      · a RANGE  (min and max, and they differ) -> "$120–$180 / hr"
+      · a SINGLE rate (min only, or hourly)     -> "$125 / hr"
+      · onsite/remote only                      -> "$140 / hr onsite" etc., so
+        the qualifier is never dropped silently — a number with a condition on it
+        must not be shown as if it were unconditional.
+  */
+  const money = (c: number) => formatCents(c, expert.currency);
+  let rate: string | null = null;
+  if (expert.rateMinCents != null) {
+    rate =
+      expert.rateMaxCents && expert.rateMaxCents !== expert.rateMinCents
+        ? `${money(expert.rateMinCents)}–${money(expert.rateMaxCents)} / hr`
+        : `${money(expert.rateMinCents)} / hr`;
+  } else if (expert.hourlyRateCents != null) {
+    rate = `${money(expert.hourlyRateCents)} / hr`;
+  } else if (expert.onsiteRateCents != null) {
+    rate = `${money(expert.onsiteRateCents)} / hr onsite`;
+  } else if (expert.remoteRateCents != null) {
+    rate = `${money(expert.remoteRateCents)} / hr remote`;
+  }
 
   return (
     <article className="flex w-[280px] shrink-0 snap-start flex-col rounded-brand border border-line bg-white p-5">
@@ -267,17 +347,82 @@ function ExpertCard({ expert }: { expert: MentorCard }) {
             verdict on them rather than on the platform's age. What IS true
             about them shows instead: validation, and what they teach.
           */}
-          {expert.validated && (
-            <span className="text-[12.5px] font-semibold text-emerald-700">
-              ✓ Validated
-            </span>
-          )}
+          {/*
+            ⚠ ALWAYS RENDERED, GREEN WHEN VALIDATED AND GREY WHEN NOT — Scott:
+            *"I do like Validated (greyed out if they are not validated, green if
+            they are)."* ⚠ SUPERSEDED, quoted: it rendered ONLY when validated,
+            so an unvalidated provider showed nothing and the absence was
+            invisible rather than informative.
+            ⚠⚠ `Validated` IS PANAMEER'S OWN GRANT — the circle of trust — and
+            the grey state says "Panameer has not validated this person", never
+            anything about a client's opinion. `check:trust-claims` watches this
+            word.
+          */}
+          <span
+            className={
+              "text-[12.5px] font-semibold " +
+              (expert.validated ? "text-emerald-700" : "text-ink-2/60")
+            }
+          >
+            {expert.validated ? "✓ Validated" : "Not validated"}
+          </span>
         </div>
       </div>
 
       {expert.headline && (
         <p className="mt-3 line-clamp-2 text-[14px] leading-relaxed text-ink-2">
           {expert.headline}
+        </p>
+      )}
+
+      {/*
+        ── ⚠⚠ WHAT A RECRUITER ASKS (`P2-J1.1-E028` WS-2) ────────────────────
+
+        SCOTT: *"EVERY recruiter asks the same questions when we start the
+        interview — how many years of experience do you have? How many projects
+        have you been on?"*
+
+        ⚠ NOT A FOURTH TAG AND NOT A LONGER HEADLINE. Scott's own diagnosis of
+        the three cards he screenshotted was that they were INTERCHANGEABLE — all
+        "Oracle Cloud [x] Expert", generic chips, $125/$130. THE FAILURE IS
+        NON-DIFFERENTIATION, NOT SPARSENESS, and more fields of the same KIND
+        would give three crowded interchangeable cards. These are a different
+        kind: counts, which actually differ between people.
+
+        ⚠ NOT LINKED. Scott asked whether they "could also be hyperlinks to the
+        projects part of their profile"; `/providers/[id]` has NO anchor for
+        employers or projects to land on, and a link to nowhere is the defect
+        class this walk has filed five times. Plain facts until there is a
+        destination — the NAME above already links to the profile.
+        ⚠ ZERO IS NOT RENDERED: "0 Projects" reads as a verdict on the person
+        rather than on a young marketplace, which is the same reasoning that kept
+        job-success % off this card.
+      */}
+      {(expert.employerCount > 0 ||
+        expert.projectCount > 0 ||
+        expert.specialtyCount > 0) && (
+        <p className="mt-2.5 text-[12.5px] text-ink-2">
+          {expert.employerCount > 0 && (
+            <span>
+              <b className="font-semibold text-ink">{expert.employerCount}</b>{" "}
+              {expert.employerCount === 1 ? "Company" : "Companies"}
+            </span>
+          )}
+          {expert.employerCount > 0 && expert.projectCount > 0 && <span> · </span>}
+          {expert.projectCount > 0 && (
+            <span>
+              <b className="font-semibold text-ink">{expert.projectCount}</b>{" "}
+              {expert.projectCount === 1 ? "Project" : "Projects"}
+            </span>
+          )}
+          {(expert.employerCount > 0 || expert.projectCount > 0) &&
+            expert.specialtyCount > 0 && <span> · </span>}
+          {expert.specialtyCount > 0 && (
+            <span>
+              <b className="font-semibold text-ink">{expert.specialtyCount}</b>{" "}
+              {expert.specialtyCount === 1 ? "Specialty" : "Specialties"}
+            </span>
+          )}
         </p>
       )}
 
