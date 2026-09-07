@@ -1,5 +1,4 @@
 import { SettingsTabs } from "@/components/settings/SettingsTabs";
-import { SettingsHeading } from "@/components/settings/SettingsHeading";
 import { ConsoleHero, ConsoleHeroRow } from "@/components/casing/ConsoleHero";
 import { canProvideServices } from "@/lib/access";
 import { SettingsTitle } from "@/components/settings/SettingsTitle";

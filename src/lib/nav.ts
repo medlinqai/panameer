@@ -372,7 +372,13 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
     { label: "My learning", href: "/learn/paths?tab=mine" },
   ],
   "/settings/packages": [
-    { label: "Service Products", href: "/settings/packages" },
+    /* ⚠ `requires` ADDED (`P2-J1.1-E050`). `/settings/packages` narrowed to
+       `canProvideServices`, and this tab declared nothing — which reads as
+       "everyone signed in". ⚠⚠ THE SIBLING BELOW ALREADY CARRIED IT since
+       `E046`; this one did not, because the ROUTE was still open then. Narrowing
+       the route is what made it a live fourth layer, and `check:nav-reachable`
+       caught it the same run. */
+    { label: "Service Products", href: "/settings/packages", requires: "canProvideServices" },
     /* ⚠ `requires` ADDED (`P2-J1.1-E046` WS-4). `/services/offers` is gated
        `canProvideServices`, and this entry declared nothing — which reads as
        "everyone signed in". It was harmless only while `/settings/packages` was
