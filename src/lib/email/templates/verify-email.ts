@@ -71,9 +71,25 @@ export function verifyEmailTemplate({
     ⚠ THE HEADING IS UNCHANGED TOO: `Confirm your email{, Name}` is this email's
     job. `Continue your registration` belongs to the OTHER email now.
   */
+  /*
+    ⚠⚠ THE WHOLE CLAUSE IS THE VARIANT, NOT JUST ITS TAIL — AND THAT IS A
+    CORRECTION TO THE BRIEF, REPORTED RATHER THAN MADE QUIETLY.
+
+    The brief replaced the tail after a FIXED lead-in of *"Click the button below
+    to verify your email and "*. Scott's approved sentence begins *"verify your
+    email, …"*, so slotting it there rendered:
+
+      "Click the button below to verify your email and verify your email, then
+       log in and complete your registration."
+
+    Verified by rendering it, not by reading it. Scott's words are kept EXACTLY;
+    what moved is the lead-in, which now stops at "to" for the buyer.
+    ⚠ THE PROVIDER SENTENCE IS BYTE-IDENTICAL to what it was — it keeps the
+    "verify your email and" lead-in, because its tail was written to continue one.
+  */
   const nextLine = buyer
     ? "verify your email, then log in and complete your registration."
-    : "start building your provider profile.";
+    : "verify your email and start building your provider profile.";
   const name = capitalizeName(firstName);
 
   const heading = `Confirm your email${name ? `, ${escapeHtml(name)}` : ""}`;
@@ -81,7 +97,7 @@ export function verifyEmailTemplate({
     logoUrl,
     bodyHtml: `<h1 style="font-size:22px;margin:0 0 12px;color:${EMAIL_COLORS.ink};">${heading}</h1>
 <p style="font-size:15px;line-height:1.6;color:${EMAIL_COLORS.body};margin:0 0 24px;">
-  You're almost there. Click the button below to verify your email and ${nextLine}
+  You're almost there. Click the button below to ${nextLine}
 </p>
 ${primaryButton(verifyUrl, "Verify My Email")}
 <p style="font-size:13px;line-height:1.6;color:${EMAIL_COLORS.muted};margin:24px 0 0;">

@@ -56,6 +56,42 @@ export const NOTIFICATION_EVENTS = {
       "Welcome. Everything you do from here is saved as you go.",
     href: () => "/dashboard",
   },
+  /*
+    ── ⚠⚠ `account.finish_later` (`P2-J1.1-E034`) ──────────────────────────────
+
+    SCOTT, 2026-09-06: *"These should be two separate emails. One is start your
+    registration...the other is finish the registration you started."*
+
+    ⚠ CATEGORY REUSED, NOT INVENTED. `profile.visibility` is the category
+    `account.created` and `account.verified` already use — the same onboarding
+    arc, the same recipient, the same "where is my account up to" question. A NEW
+    category would have to be reachable from the notification settings page or it
+    writes rows nobody can control; `profile.visibility` already is
+    (`notification-categories.ts:220`), so nothing is stranded.
+
+    ⚠ `aiMode: DO_IT` and `visibility: FEED` match `account.created` /
+    `account.verified` for the same reason. ⚠ `aiMode` IS STORED, NEVER EXECUTED
+    — see this file's header.
+
+    ⚠ `requiresAction: false` — the worklist is `E033`'s architecture and out of
+    scope. This is a nudge the person already asked for by clicking the button.
+
+    ⚠⚠ THE DEDUPE KEY IS `account.finish_later`, AND PERSON SCOPING IS THE
+    INDEX'S JOB — `@@unique([person_id, dedupe_key])`. `Finish later` appears on
+    EVERY step by design (`E245`: *"Every step means every step"*), so without
+    this a requester who steps out three times receives three identical emails.
+  */
+  "account.finish_later": {
+    event: "account.finish_later",
+    recipient: "the new user",
+    category: "profile.visibility",
+    aiMode: "DO_IT",
+    visibility: "FEED",
+    requiresAction: false,
+    title: () => "Continue your registration",
+    body: () => "You saved your registration for later. Pick up where you left off.",
+    href: () => "/join/requester/steps",
+  },
   "account.verified": {
     event: "account.verified",
     recipient: "the new user",
