@@ -191,3 +191,75 @@ export async function getTicket(viewer: Viewer, ticketId: string, asAdmin = fals
   });
   return { ticket, messages };
 }
+
+/**
+ * ── THE ADMIN SIDE ──────────────────────────────────────────────────────────
+ * Every function below is called only from surfaces already behind
+ * `canAdminister` — `/admin/*` via route-access, the admin layout's `guardPage`,
+ * and `guardApi("canAdminister")` on the routes. Three layers, per the lesson
+ * `E046` paid for.
+ */
+
+/** The triage list. Ordered by recency of ACTIVITY, which is why the column exists. */
+export async function listAllTickets() {
+  return prisma.supportTicket.findMany({
+    orderBy: [{ last_message_at: "desc" }, { created_at: "desc" }],
+    select: {
+      id: true, ticket_code: true, title: true, application: true,
+      status: true, priority: true, reporter_name: true, reporter_email: true,
+      created_at: true, last_message_at: true, assignee_person_id: true,
+    },
+  });
+}
+
+export type TicketUpdate = {
+  status?: string | null;
+  priority?: string | null;
+  assignToSelf?: boolean;
+  unassign?: boolean;
+  resolution?: string | null;
+};
+
+/**
+ * Triage a ticket.
+ *
+ * ⚠ `assignToSelf` RATHER THAN AN ASSIGNEE ID, and that is not laziness: there
+ * is exactly one Panameer admin today — the same fact that made Scott defer
+ * `TicketHelper` — so an id parameter would be an unused surface accepting a
+ * person id from the client. When there is a second admin this grows a picker.
+ * ⚠ `date_solved` IS DERIVED FROM THE STATUS, never sent: it is set the first
+ * time a ticket reaches Resolved/Closed and cleared if it reopens, so the column
+ * and the status cannot disagree.
+ */
+export async function updateTicket(viewer: Viewer, ticketId: string, input: TicketUpdate) {
+  const person = await actingPerson(viewer);
+  const existing = await prisma.supportTicket.findUnique({
+    where: { id: ticketId },
+    select: { id: true, date_solved: true },
+  });
+  if (!existing) throw new SupportError("That ticket no longer exists", "NOT_FOUND");
+
+  if (input.status && !TICKET_STATUSES.includes(input.status as (typeof TICKET_STATUSES)[number])) {
+    throw new SupportError("Unknown status", "INVALID");
+  }
+  if (input.priority && !TICKET_PRIORITIES.includes(input.priority as (typeof TICKET_PRIORITIES)[number])) {
+    throw new SupportError("Unknown priority", "INVALID");
+  }
+
+  const closing = input.status === "Resolved" || input.status === "Closed";
+
+  return prisma.supportTicket.update({
+    where: { id: ticketId },
+    data: {
+      ...(input.status ? { status: input.status } : {}),
+      ...(input.priority ? { priority: input.priority } : {}),
+      ...(input.assignToSelf ? { assignee_person_id: person.id } : {}),
+      ...(input.unassign ? { assignee_person_id: null } : {}),
+      ...(input.resolution !== undefined ? { resolution_description: input.resolution || null } : {}),
+      ...(input.status
+        ? { date_solved: closing ? existing.date_solved ?? new Date() : null }
+        : {}),
+    },
+    select: { id: true },
+  });
+}
