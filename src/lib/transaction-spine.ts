@@ -205,3 +205,197 @@ export function feeReconciles(row: {
 }): boolean {
   return row.net_cents + row.fee_cents === row.gross_cents;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   WS-3 · THE FIVE SETTLEMENT RULES
+   ═════════════════════════════════════════════════════════════════════════ */
+
+export type OrderLineForDraw = {
+  id: string;
+  basis: LineBasis;
+  uom?: string | null;
+  quantity?: number | null;
+  unit_price_cents?: number | null;
+  amount_cents?: number | null;
+  drawn_quantity?: number | null;
+  drawn_amount_cents?: number | null;
+};
+
+export type OrderForSettlement = {
+  status: string;
+  period_start?: Date | null;
+  period_end?: Date | null;
+  not_to_exceed_cents?: number | null;
+};
+
+export type DraftSettlementLine = {
+  work_order_line_id: string;
+  basis: LineBasis;
+  quantity?: number | null;
+  /** ⚠ Present ONLY so rule 2 can refuse it. It is never read as a price. */
+  unit_price_cents?: number | null;
+  amount_cents?: number | null;
+};
+
+/**
+ * ⚠⚠ RULE 2, AS CODE RATHER THAN AS A COMMENT: THE PRICE IS COPIED FROM THE
+ * ORDER LINE AND THE CALLER'S PRICE IS **REFUSED**, NOT IGNORED.
+ *
+ * Ignoring it would be quieter and worse — a caller who believes they set a rate
+ * and silently did not is how a wrong number reaches production believing itself
+ * reviewed. This is the ONLY place a settlement line's price is assigned.
+ */
+export function priceSettlementLine(
+  draft: DraftSettlementLine,
+  orderLine: OrderLineForDraw
+): { unit_price_cents: number | null; amount_cents: number | null } {
+  if (draft.unit_price_cents != null && draft.unit_price_cents !== orderLine.unit_price_cents)
+    throw new SpineError(
+      "A settlement line's price is copied from the work-order line, never supplied",
+      "PRICE_NOT_COPIED"
+    );
+  return orderLine.basis === "RATE"
+    ? { unit_price_cents: orderLine.unit_price_cents ?? null, amount_cents: null }
+    : { unit_price_cents: null, amount_cents: orderLine.amount_cents ?? null };
+}
+
+/**
+ * The five rules, together, because they are only meaningful together — a draw
+ * can satisfy four and still be wrong.
+ *
+ *   1  basis matches the order line
+ *   2  the price is COPIED (delegated to `priceSettlementLine`)
+ *   3  RATE cannot exceed ordered quantity; AMOUNT draws ONCE, IN FULL
+ *   4  `not_to_exceed_cents` caps the WHOLE order
+ *   5  the period sits INSIDE the order's period
+ *  ⚠  and settlements only against a RELEASED order
+ */
+export function assertSettlementDraw(input: {
+  order: OrderForSettlement;
+  periodStart: Date;
+  periodEnd: Date;
+  lines: { draft: DraftSettlementLine; orderLine: OrderLineForDraw }[];
+  /** Cents already settled against this ORDER, for rule 4. */
+  alreadySettledCents: number;
+}): void {
+  /* ⚠ RELEASED, not ACCEPTED. Two-sided activation means the provider accepting
+     is only half — drawing against an order the buyer has not released bills for
+     work nobody authorised to start. */
+  if (input.order.status !== "RELEASED")
+    throw new SpineError(
+      "A settlement may only be raised against a RELEASED work order",
+      "ORDER_NOT_RELEASED"
+    );
+
+  /* ── RULE 5 — the period sits inside the order's ────────────────────────── */
+  if (input.periodEnd < input.periodStart)
+    throw new SpineError("The period ends before it starts", "PERIOD_INVERTED");
+  if (input.order.period_start && input.periodStart < input.order.period_start)
+    throw new SpineError("The period starts before the work order does", "PERIOD_BEFORE_ORDER");
+  if (input.order.period_end && input.periodEnd > input.order.period_end)
+    throw new SpineError("The period ends after the work order does", "PERIOD_AFTER_ORDER");
+
+  let drawCents = 0;
+
+  for (const { draft, orderLine } of input.lines) {
+    /* ── RULE 1 — basis matches ───────────────────────────────────────────── */
+    if (draft.basis !== orderLine.basis)
+      throw new SpineError(
+        "A settlement line's basis must match its work-order line — a timesheet cannot be filed against an amount line",
+        "BASIS_MISMATCH"
+      );
+
+    /* ── RULE 2 — the price is copied, never typed ────────────────────────── */
+    const priced = priceSettlementLine(draft, orderLine);
+
+    /* ── RULE 3 — draw limits ─────────────────────────────────────────────── */
+    if (orderLine.basis === "RATE") {
+      const want = draft.quantity ?? 0;
+      if (want <= 0) throw new SpineError("A RATE draw needs a quantity", "RATE_DRAW_EMPTY");
+      const already = orderLine.drawn_quantity ?? 0;
+      const ordered = orderLine.quantity ?? 0;
+      if (already + want > ordered)
+        throw new SpineError(
+          `Drawing ${want} would exceed the ordered quantity (${already} of ${ordered} already drawn)`,
+          "RATE_OVERDRAW"
+        );
+      drawCents += Math.round(want * (priced.unit_price_cents ?? 0));
+    } else {
+      /* ⚠⚠ AMOUNT DRAWS ONCE, IN FULL — the exact amount, and never twice. A
+         partial draw on an AMOUNT line is a milestone that was never ordered;
+         a second draw is the same money leaving twice. */
+      if ((orderLine.drawn_amount_cents ?? 0) > 0)
+        throw new SpineError("An AMOUNT line has already been drawn", "AMOUNT_ALREADY_DRAWN");
+      if (draft.amount_cents != null && draft.amount_cents !== orderLine.amount_cents)
+        throw new SpineError("An AMOUNT line draws in full, not in part", "AMOUNT_PARTIAL_DRAW");
+      drawCents += priced.amount_cents ?? 0;
+    }
+  }
+
+  /* ── RULE 4 — not-to-exceed caps the WHOLE order ──────────────────────────
+     ⚠ Across every settlement against it, not just this one: a cap that only
+     looked at the current draw would be cleared by filing two. */
+  if (
+    input.order.not_to_exceed_cents != null &&
+    input.alreadySettledCents + drawCents > input.order.not_to_exceed_cents
+  )
+    throw new SpineError(
+      `This draw would take the order past its not-to-exceed cap`,
+      "NOT_TO_EXCEED"
+    );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   WS-4 · ALLOCATION AND RELEASE
+   ═════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * ⚠⚠ `SUM(PaymentLine)` MUST NEVER EXCEED `Payment.amount_cents`.
+ *
+ * Over-allocating releases payouts against money that never arrived — Panameer
+ * would be paying providers out of its own balance and the shortfall would only
+ * surface at a bank reconciliation, long after the cash left.
+ *
+ * ⚠ PARTIAL ALLOCATION IS EXPLICITLY LEGAL: `<` is fine, only `>` is refused.
+ * A payment covering three of four settlements pays those three, because
+ * all-or-nothing matching holds three providers hostage to one disputed line.
+ */
+export function assertAllocation(paymentAmountCents: number, lineAmounts: number[]): void {
+  const allocated = lineAmounts.reduce((n, a) => n + a, 0);
+  if (lineAmounts.some((a) => a <= 0))
+    throw new SpineError("An allocation line must be positive", "ALLOCATION_NOT_POSITIVE");
+  if (allocated > paymentAmountCents)
+    throw new SpineError(
+      `Allocating ${allocated} exceeds the ${paymentAmountCents} received`,
+      "OVER_ALLOCATED"
+    );
+}
+
+export function paymentStatusFor(
+  paymentAmountCents: number,
+  lineAmounts: number[]
+): "UNMATCHED" | "PARTIALLY_ALLOCATED" | "ALLOCATED" {
+  const allocated = lineAmounts.reduce((n, a) => n + a, 0);
+  if (allocated === 0) return "UNMATCHED";
+  return allocated >= paymentAmountCents ? "ALLOCATED" : "PARTIALLY_ALLOCATED";
+}
+
+/**
+ * ⚠⚠ A PAYOUT IS `RELEASABLE` ONLY WHEN **ITS OWN** SETTLEMENT IS ALLOCATED.
+ *
+ * Not when the payment arrives, and not when the PO is paid in full — PER
+ * SETTLEMENT, so one stuck or disputed line never blocks the others.
+ *
+ * ⚠ AND NOT BEFORE. Paying a provider before the buyer pays makes Panameer the
+ * lender, which is a different business with different capital requirements and
+ * a different licence.
+ */
+export function payoutIsReleasable(input: {
+  settlementAllocatedCents: number;
+  settlementTotalCents: number;
+}): boolean {
+  return (
+    input.settlementTotalCents > 0 &&
+    input.settlementAllocatedCents >= input.settlementTotalCents
+  );
+}

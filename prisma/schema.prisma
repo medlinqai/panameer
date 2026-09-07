@@ -4439,3 +4439,223 @@ model WorkOrderLine {
   @@index([work_order_id])
   @@map("work_order_lines")
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// WS-3 · THE SETTLEMENT REQUEST = cXML's `ServiceEntryRequest` (a SERVICE
+// SHEET), **NOT AN INVOICE**.
+//
+// It records services against a services PO, references the LINE it draws,
+// carries a period, and lands as a RECEIPT on the ERP side.
+//
+// ⚠ TIMESHEET vs PAYMENT-REQUEST IS A **RENDERING** DIFFERENCE, NOT A SCHEMA
+// ONE. A RATE line renders as a day-by-day grid; an AMOUNT line as one row. ONE
+// MODEL — two models would let the same draw be filed twice, once per screen.
+// ═══════════════════════════════════════════════════════════════════════════
+
+enum SettlementStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+  PAID
+}
+
+model SettlementRequest {
+  id                String @id @default(uuid()) @db.Uuid
+  settlement_number String @unique
+
+  work_order_id      String @db.Uuid
+  provider_person_id String @db.Uuid
+
+  period_start DateTime
+  period_end   DateTime
+
+  currency String           @default("USD")
+  status   SettlementStatus @default(DRAFT)
+
+  submitted_at         DateTime?
+  decided_at           DateTime?
+  decided_by_person_id String?   @db.Uuid
+  /// ⚠ REQUIRED ON REJECT. A rejection with no stated reason is unanswerable —
+  /// the provider cannot fix what nobody named.
+  decision_note        String?
+
+  external_ref String?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  lines SettlementLine[]
+
+  @@index([work_order_id])
+  @@index([provider_person_id])
+  @@index([status])
+  @@map("settlement_requests")
+}
+
+model SettlementLine {
+  id                    String @id @default(uuid()) @db.Uuid
+  settlement_request_id String @db.Uuid
+  line_number           Int
+
+  /// ⚠⚠ NOT NULLABLE. Scott: *"the settlement request just goes against a
+  /// line."* A settlement with no order line behind it cannot be priced, cannot
+  /// become a receipt, and cannot be traced to what was ordered.
+  work_order_line_id String @db.Uuid
+
+  basis       LineBasis
+  description String?
+
+  uom      String?
+  quantity Decimal?
+
+  /// ── ⚠⚠ COPIED FROM THE ORDER LINE. NEVER TYPED, NEVER EDITABLE ────────────
+  ///
+  /// ERS prices the invoice FROM THE PO and takes only QUANTITY from the
+  /// receipt. So a settlement carrying a different rate does NOT produce a
+  /// disputed invoice — it produces a SILENTLY WRONG one at the PO's price, and
+  /// the provider is short-paid with nothing on either system showing why.
+  /// The only assignment in the codebase reads the order line; WS-5 asserts that
+  /// structurally, because a comment cannot stop a future edit.
+  unit_price_cents Int?
+  amount_cents     Int?
+
+  service_date DateTime?
+  note         String?
+
+  created_at DateTime @default(now())
+
+  settlementRequest SettlementRequest @relation(fields: [settlement_request_id], references: [id], onDelete: Cascade)
+
+  @@unique([settlement_request_id, line_number])
+  @@index([settlement_request_id])
+  @@index([work_order_line_id])
+  @@map("settlement_lines")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// WS-4 · CASH IN (`Payment`) AND CASH OUT (`ProviderPayout`)
+//
+// ⚠⚠ PANAMEER NEVER SENDS THE BUYER AN INVOICE. Under ERS the buyer's system
+// creates it, from THEIR PO price × the receipted quantity. There is deliberately
+// NO buyer-facing invoice model here, and `check:transaction-spine` asserts its
+// ABSENCE — building one would put Panameer's number in competition with the
+// ERP's, and the ERP's is the one that pays.
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// ⚠⚠ UNMATCHED IS A FIRST-CLASS STATE, NOT AN ERROR. Cash arrives before anyone
+/// knows what it is for; a model that cannot hold un-allocated money forces
+/// someone to guess an allocation to make the record savable.
+enum PaymentStatus {
+  UNMATCHED
+  PARTIALLY_ALLOCATED
+  ALLOCATED
+}
+
+enum PayoutStatus {
+  PENDING
+  RELEASABLE
+  PAID
+  FAILED
+}
+
+/// CASH RECEIVED — ⚠ RECORDED, NOT CREATED BY US.
+model Payment {
+  id             String @id @default(uuid()) @db.Uuid
+  payment_number String @unique
+
+  p_account_id String  @db.Uuid
+  /// The buyer's payment reference / remittance id.
+  external_ref String?
+
+  received_at  DateTime
+  currency     String   @default("USD")
+  amount_cents Int
+
+  status PaymentStatus @default(UNMATCHED)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  lines PaymentLine[]
+
+  @@index([p_account_id])
+  @@index([status])
+  @@map("payments")
+}
+
+model PaymentLine {
+  id          String @id @default(uuid()) @db.Uuid
+  payment_id  String @db.Uuid
+  line_number Int
+
+  settlement_request_id String @db.Uuid
+  amount_cents          Int
+
+  created_at DateTime @default(now())
+
+  payment Payment @relation(fields: [payment_id], references: [id], onDelete: Cascade)
+
+  /// ⚠ PARTIAL ALLOCATION MUST BE POSSIBLE — a payment covering three of four
+  /// settlements pays those three. All-or-nothing matching holds three providers
+  /// hostage to one disputed line. That is why allocation is LINES, not a
+  /// foreign key on the header.
+  @@unique([payment_id, line_number])
+  @@index([payment_id])
+  @@index([settlement_request_id])
+  @@map("payment_lines")
+}
+
+model ProviderPayout {
+  id            String @id @default(uuid()) @db.Uuid
+  payout_number String @unique
+
+  provider_person_id String @db.Uuid
+  currency           String @default("USD")
+
+  /// ⚠⚠ `net_cents + fee_cents == gross_cents`, ALWAYS, ON EVERY ROW. Computed
+  /// by `feeSplit()` — the fee is computed and SUBTRACTED, never computed
+  /// alongside the net. See that function for why.
+  gross_cents Int
+  fee_cents   Int
+  net_cents   Int
+
+  status  PayoutStatus @default(PENDING)
+  paid_at DateTime?
+  method  String?
+  /// The payout rail's reference once sent.
+  external_ref String?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  lines ProviderPayoutLine[]
+
+  @@index([provider_person_id])
+  @@index([status])
+  @@map("provider_payouts")
+}
+
+model ProviderPayoutLine {
+  id                 String @id @default(uuid()) @db.Uuid
+  provider_payout_id String @db.Uuid
+  line_number        Int
+
+  /// ⚠⚠ NOT NULLABLE. Every cent traces settlement line → work-order line →
+  /// work-request line. A payout line with no settlement behind it is money
+  /// leaving with no reason recorded, and no later report could reconstruct one.
+  settlement_line_id String @db.Uuid
+
+  gross_cents Int
+  fee_cents   Int
+  net_cents   Int
+
+  created_at DateTime @default(now())
+
+  providerPayout ProviderPayout @relation(fields: [provider_payout_id], references: [id], onDelete: Cascade)
+
+  @@unique([provider_payout_id, line_number])
+  @@index([provider_payout_id])
+  @@index([settlement_line_id])
+  @@map("provider_payout_lines")
+}
