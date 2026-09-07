@@ -69,6 +69,21 @@ export const PROJECT_DOC_BUCKET = "project-docs";
  */
 export const ARTIFACT_BUCKET = "artifacts";
 
+/**
+ * PRIVATE bucket for BUG-REPORT SCREENSHOTS (`P2-J1.1-E032` WS-3).
+ *
+ * ⚠⚠ PRIVATE, AND THIS IS THE ONE REAL DECISION IN THAT WORK-STREAM. The split
+ * above is deliberate — `profile-photos` and `company-logos` are public
+ * *because a logo is rendered on pages anyone can see*. A BUG SCREENSHOT IS THE
+ * OPPOSITE: it is whatever was on the reporter's screen when it broke, which
+ * routinely means another user's name, an email address, a session, or an
+ * internal admin page. Read back only through short-lived signed URLs, like
+ * résumés and project docs.
+ * ⚠ The bucket was CREATED private and verified as such (`public=false`) rather
+ * than assumed to exist.
+ */
+export const SUPPORT_SCREENSHOT_BUCKET = "support-screenshots";
+
 /** E012 — "PDF / Word / rich text, ≤5MB". */
 export const ALLOWED_RESUME_MIME = [
   "application/pdf",
@@ -337,6 +352,61 @@ export async function signedResumeUrl(
     .createSignedUrl(objectPath, expiresInSeconds);
   if (error) {
     console.error("[storage] signed résumé URL failed:", error);
+    return null;
+  }
+  return data?.signedUrl ?? null;
+}
+
+
+/**
+ * Store a bug-report screenshot and return its OBJECT PATH — not a URL, because
+ * the bucket is private (`P2-J1.1-E032` WS-3).
+ *
+ * ⚠ FOLDERED BY TICKET so everything attached to one report sits together and a
+ * ticket's objects can be found without a database round trip.
+ * ⚠ THE UPLOAD IS OPTIONAL AT THE CALL SITE: a reporter with no screenshot must
+ * still be able to file, so this is never on the required path.
+ */
+export async function uploadSupportScreenshot(
+  ticketId: string,
+  file: { name: string; type: string; size: number; bytes: ArrayBuffer }
+): Promise<string> {
+  if (file.size > MAX_PHOTO_BYTES) {
+    throw new StorageError("That image is too large (5MB max).", "TOO_LARGE");
+  }
+  const safeName =
+    file.name.replace(/[^A-Za-z0-9._-]/g, "_").slice(-80) || "screenshot";
+  const objectPath = `${ticketId}/${randomUUID()}-${safeName}`;
+
+  const { error } = await getStorageClient()
+    .from(SUPPORT_SCREENSHOT_BUCKET)
+    .upload(objectPath, file.bytes, {
+      contentType: file.type || "application/octet-stream",
+      upsert: false,
+    });
+
+  if (error) {
+    console.error("[storage] support screenshot upload failed:", error);
+    throw new StorageError("Could not store that screenshot.", "UPLOAD_FAILED");
+  }
+  return objectPath;
+}
+
+/**
+ * A short-lived signed URL for a bug-report screenshot. The bucket is private,
+ * so this is the only way to read one back, and the link expires.
+ * ⚠ SAME SHAPE AS `signedResumeUrl`, deliberately — one way to read a private
+ * object in this codebase, not two.
+ */
+export async function signedSupportScreenshotUrl(
+  objectPath: string,
+  expiresInSeconds = 300
+): Promise<string | null> {
+  const { data, error } = await getStorageClient()
+    .from(SUPPORT_SCREENSHOT_BUCKET)
+    .createSignedUrl(objectPath, expiresInSeconds);
+  if (error) {
+    console.error("[storage] signed screenshot URL failed:", error);
     return null;
   }
   return data?.signedUrl ?? null;

@@ -4004,3 +4004,113 @@ enum ConnectionStatus {
   ACCEPTED
   DECLINED
 }
+
+// ---------------------------------------------------------------------------
+// SUPPORT TICKETING (`P2-J1.1-E032`)
+//
+// SCOTT, 2026-09-06: *"Support Form Wrong. Should be as it is in medlinq...
+// Please go back, find that code, and replicate it and the ability to see and
+// manage it as the Panameer Admin."*
+//
+// Ported from Medlinq's `SupportTicket` + `TicketMessage`, adapted to Panameer's
+// backbone (`Person`/`PAccount`, not Medlinq's `Account`/`UserProfile`).
+// ⚠ `TicketHelper` IS DELIBERATELY NOT PORTED — Scott deferred it until there is
+// more than one Panameer admin. Its whole job is pulling EXTRA admins onto a
+// ticket, which is meaningless with one.
+//
+// ⚠⚠ SCALAR UUIDs, NO FOREIGN KEYS, SINGLE-DROP REVERSIBLE — Medlinq's property,
+// kept on purpose and the reason this is a safe addition. Nothing else in the
+// schema references these two tables and they reference nothing back, so
+// `DROP TABLE support_tickets, ticket_messages` removes the feature completely
+// and leaves every other table untouched. The cost is no referential integrity
+// and no cascade; that is the trade Medlinq made and Scott asked to replicate.
+// ⚠ THE PRICE OF NO FK: a deleted Person leaves an orphan id here rather than
+// cascading. That is CORRECT for a support record — the ticket is evidence, and
+// the reporter's name and email are DENORMALISED below so the ticket still reads
+// after the account is gone.
+// ---------------------------------------------------------------------------
+
+/// One support ticket. Reported by a person, triaged by the Panameer admin.
+model SupportTicket {
+  id String @id @default(uuid()) @db.Uuid
+
+  /// ⚠ WHAT A PERSON QUOTES BACK — "about PAN-3F2A1B". Unique, human-sized, and
+  /// generated at create; it is not the uuid because nobody reads a uuid aloud.
+  ticket_code String @unique
+
+  /// Scalar, no FK (see the block above). Null for a report filed before the
+  /// reporter has an account context.
+  p_account_id String? @db.Uuid
+
+  /// Scalar, no FK. Resolved from the SESSION at create, never from the client.
+  reporter_person_id String  @db.Uuid
+  /// ⚠ DENORMALISED ON PURPOSE so the ticket still reads if the account is
+  /// later deleted — there is no FK to join back through.
+  reporter_name      String
+  reporter_email     String
+
+  /// ⚠⚠ A STABLE KEY, NOT THE DISPLAY LABEL (`WS-2`). The rail's words are
+  /// one-word verbs that change (`Hire`/`Work` are the same slot on two rails),
+  /// so this stores the JOURNEY slug derived from `nav.ts`'s `heading` —
+  /// `work-requests`, `service-products`, … — plus `onboarding` and `other`.
+  /// A ticket filed today still reads after a nav rename.
+  application String
+
+  title       String
+  description String
+  /// How the reporter hit it — the repro, in their words. Optional.
+  how_found   String?
+
+  /// ⚠ OBJECT PATH IN THE **PRIVATE** `support-screenshots` BUCKET, never a URL.
+  /// A bug screenshot can carry another user's data, so it is read back only
+  /// through a short-lived signed URL. Optional: filing must not require one.
+  screenshot_path String?
+
+  priority String @default("Medium")
+  status   String @default("Open")
+
+  /// Scalar, no FK. The admin who owns it.
+  assignee_person_id String? @db.Uuid
+
+  date_found  DateTime?
+  date_solved DateTime?
+  resolution_description String?
+
+  /// ⚠ BUMPED ON EVERY MESSAGE so the admin list can sort by recency — the
+  /// column exists for the triage view, exactly as it does in Medlinq.
+  last_message_at DateTime?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@index([status])
+  @@index([reporter_person_id])
+  @@index([last_message_at])
+  @@map("support_tickets")
+}
+
+/// One message on a ticket — the two-sided thread.
+/// ⚠ REPLY IS WHAT MAKES THIS A TICKETING SYSTEM RATHER THAN A SUGGESTION BOX.
+model TicketMessage {
+  id String @id @default(uuid()) @db.Uuid
+
+  /// Scalar, no FK (see the block above). Deleting a ticket does NOT cascade;
+  /// the delete path is expected to remove both, and there is no delete path.
+  ticket_id String @db.Uuid
+
+  /// Scalar, no FK. Resolved from the session at post time.
+  author_person_id String @db.Uuid
+
+  /// ⚠ `"user"` | `"panameer"` — Panameer's two sides, where Medlinq's were
+  /// `'company' | 'medlinq'`. Stored as a string rather than an enum to keep
+  /// these two tables single-drop: an enum is a schema object that outlives the
+  /// tables and has to be dropped separately.
+  author_side String
+
+  body String
+
+  created_at DateTime @default(now())
+
+  @@index([ticket_id])
+  @@map("ticket_messages")
+}
