@@ -4284,3 +4284,158 @@ model WorkRequestLine {
   @@index([provider_person_id])
   @@map("work_request_lines")
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// WS-2 · THE WORK ORDER = THE SOW
+//
+// ⚠⚠ `E380` DOCTRINE, ALREADY SETTLED: ToS = MSA, WORK ORDER = SOW, and the word
+// "contract" is retired. ONE MSA PER COMPANY; ONE SOW PER PERSON.
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// ⚠⚠ STORED, NOT DERIVED. A null `work_request_id` could ALSO mean data loss;
+/// an explicit enum cannot be mistaken for one.
+///   INDIRECT — sourced through Panameer, has a work request behind it.
+///   DIRECT   — Scott: *"clients bring us contracts and we just open the WO and
+///              let them use the settlement backend."* No work request exists.
+enum WorkOrderOrigin {
+  DIRECT
+  INDIRECT
+}
+
+enum WorkOrderStatus {
+  DRAFT
+  ISSUED
+  ACCEPTED
+  RELEASED
+  ACTIVE
+  CLOSED
+  CANCELLED
+}
+
+enum WorkOrderLineStatus {
+  OPEN
+  DRAWN
+  CLOSED
+  CANCELLED
+}
+
+model WorkOrder {
+  id           String @id @default(uuid()) @db.Uuid
+  order_number String @unique
+
+  origin WorkOrderOrigin
+
+  /// ⚠ INDIRECT has one; DIRECT does not.
+  work_request_id String? @db.Uuid
+
+  buyer_person_id String @db.Uuid
+  /// ⚠ The requisitioning BU, carried down from the request header.
+  p_account_id    String @db.Uuid
+
+  /// ⚠⚠ REQUIRED. A WORK ORDER IS THE CONTRACT WITH **ONE** PROVIDER. Two
+  /// providers cannot share one: they accept separately and are paid separately.
+  /// This column is what makes WS-2's fan-out unavoidable rather than optional.
+  provider_person_id String @db.Uuid
+
+  currency String          @default("USD")
+  status   WorkOrderStatus @default(DRAFT)
+
+  /// ── ⚠⚠ ACTIVATION IS TWO-SIDED, AND ONE FLAG IS NOT ENOUGH ────────────────
+  /// The journey doc: "Provider Accepts New Work Order" → "Buyer Releases
+  /// Accepted Work Order" → live. A single `active` boolean cannot say WHICH
+  /// side has acted, so it cannot tell "waiting on the provider" from "waiting
+  /// on the buyer" — and those need different screens and different chasing.
+  /// ⚠ A settlement may only be raised against a RELEASED order (WS-3).
+  provider_accepted_at DateTime?
+  buyer_released_at    DateTime?
+
+  period_start        DateTime?
+  period_end          DateTime?
+  /// ⚠ Caps the WHOLE order. Enforced across all settlements against it (WS-3).
+  not_to_exceed_cents Int?
+
+  /// ⚠ Which MSA version governs this SOW (`E380`).
+  terms_version String?
+
+  /// ── ⚠⚠ A SNAPSHOT, NOT A SECOND FEE MODEL, AND DELIBERATELY WITH NO DEFAULT ─
+  ///
+  /// THE FEE ALREADY EXISTS: `ProviderProfile.service_fee_bps Int @default(1000)`
+  /// above, `rateBreakdown()` in `lib/display.ts` already does this arithmetic,
+  /// and the provider onboarding screen already renders "Service fee (10%)" and
+  /// "the estimated amount you'll receive". This is not a new one.
+  ///
+  /// ⚠⚠ NO `@default` HERE ON PURPOSE. A default would let an order be written
+  /// with an INVENTED rate when the copy was forgotten, and it would look
+  /// correct. The value must be COPIED from the provider's profile at order
+  /// time, so an order AGREED at one rate KEEPS THAT RATE FOR LIFE even after
+  /// the provider's current rate changes. Snapshot, never lookup.
+  fee_bps Int
+
+  /// ⚠⚠ THE BUYER'S PO NUMBER, AND IT IS **NOT UNIQUE** — SEE THE FAN-OUT NOTE.
+  /// The buyer's ERP sees ONE supplier (Panameer), so ONE PO FANS OUT INTO N
+  /// WORK ORDERS. A unique index here would reject the second provider on a
+  /// two-provider PO and look exactly like duplicate detection working
+  /// correctly. `check:transaction-spine` asserts this constraint's ABSENCE.
+  external_ref String?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  lines WorkOrderLine[]
+
+  /// ⚠ NO SCHEDULES AND NO DISTRIBUTIONS. Oracle's PO has LINE → SCHEDULE →
+  /// DISTRIBUTION; those are DELIVERY and ACCOUNTING splits and they belong to
+  /// the buyer, not to Panameer. WS-5 asserts their absence.
+  @@index([provider_person_id])
+  @@index([buyer_person_id])
+  @@index([status])
+  @@index([external_ref])
+  @@map("work_orders")
+}
+
+model WorkOrderLine {
+  id            String @id @default(uuid()) @db.Uuid
+  work_order_id String @db.Uuid
+  line_number   Int
+
+  work_request_line_id String? @db.Uuid
+
+  basis       LineBasis
+  description String
+  unspsc_code String?
+
+  uom      String?
+  quantity Decimal?
+  /// ⚠⚠ THE TOTAL RATE — WHAT THE BUYER PAYS. The provider receives this LESS
+  /// `fee_bps`. THERE IS NO SECOND PRICE COLUMN: the fee is transparent and is
+  /// computed, never stored as a shadow rate. A "provider price" column would be
+  /// a second source of truth for what someone is owed.
+  unit_price_cents Int?
+  amount_cents     Int?
+
+  supplier_part_id String? @db.Uuid
+
+  /// ⚠⚠ THE BUYER'S PO **LINE** NUMBER. ERS posts a receipt against a PO LINE,
+  /// not a PO — a settlement that cannot name the line cannot become a receipt,
+  /// and the invoice it would have priced never gets created.
+  external_line_ref String?
+
+  service_start DateTime?
+  service_end   DateTime?
+
+  /// ⚠ MAINTAINED BY SETTLEMENT, NEVER TYPED. These are what rule 3 reads to
+  /// stop a RATE line over-drawing and an AMOUNT line drawing twice.
+  drawn_quantity     Decimal? @default(0)
+  drawn_amount_cents Int?     @default(0)
+
+  status WorkOrderLineStatus @default(OPEN)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  workOrder WorkOrder @relation(fields: [work_order_id], references: [id], onDelete: Cascade)
+
+  @@unique([work_order_id, line_number])
+  @@index([work_order_id])
+  @@map("work_order_lines")
+}
