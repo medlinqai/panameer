@@ -83,6 +83,33 @@ export const ROUTE_ACCESS: { prefix: string; requires: RouteRequirement }[] = [
   */
   { prefix: "/settings", requires: "authenticated" },
   /*
+    ── ⚠⚠ THREE SELLER-ONLY TABS INSIDE AN OTHERWISE OPEN TREE (`P2-J1.1-E050`) ─
+
+    `E046` opened `/settings` whole on Scott's ruling that fit would be judged by
+    USING the pages: *"some of these pages may not really fit, like withdraws,
+    but we should add them and I will fix them as we go thru the build process."*
+    THIS IS THAT FIXING — he walked it as a buyer and judged three.
+
+    ⚠⚠ LONGEST PREFIX WINS, which is what makes this work: `/settings` stays
+    `authenticated` and these three beat it for their own subtrees. Every other
+    tab — Membership, Contact Info, Billing, Password & Security, Identity
+    Verification, Notification Settings — and the root are UNTOUCHED.
+    ⚠ `settings/layout.tsx` ALSO STAYS `authenticated`: it gates the whole tree,
+    and narrowing it would re-break every other tab, which is the defect `E046`
+    just fixed.
+
+    ⚠⚠ HIDING THE TAB ALONE WOULD NOT HAVE BEEN THE FIX. A hidden tab over an
+    OPEN route is one URL away from being reachable. Each of the three moves at
+    ALL THREE LAYERS — here, its page's own `guardPage`, and its tab's
+    `requires` in `settings-nav.ts` — and `check:nav-reachable` is what holds the
+    first and third together.
+    ⚠ NO PAGE OR COMPONENT IS DELETED. All three keep working for providers; this
+    is a GATE change only.
+  */
+  { prefix: "/settings/packages", requires: "canProvideServices" },
+  { prefix: "/settings/profile", requires: "canProvideServices" },
+  { prefix: "/settings/withdrawals", requires: "canProvideServices" },
+  /*
     /profile IS "MY OWN PROFILE", so it needs a login and nothing more (WS5).
 
     It said canProvideServices, which bounced the Panameer Admin to

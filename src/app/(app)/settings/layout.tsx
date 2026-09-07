@@ -1,5 +1,7 @@
 import { SettingsTabs } from "@/components/settings/SettingsTabs";
-import { SettingsHeading } from "@/components/settings/SettingsHeading";
+import { ConsoleHero, ConsoleHeroRow } from "@/components/casing/ConsoleHero";
+import { canProvideServices } from "@/lib/access";
+import { SettingsTitle } from "@/components/settings/SettingsTitle";
 import { guardPage } from "@/lib/guard";
 
 /**
@@ -51,15 +53,31 @@ export default async function SettingsLayout({
 }: {
   children: React.ReactNode;
 }) {
-  await guardPage("authenticated");
+  /*
+    ⚠ STILL `authenticated`, AND DELIBERATELY (`P2-J1.1-E050`). This gates the
+    WHOLE tree; narrowing it would re-break every other tab — the defect `E046`
+    just fixed. The three seller-only pages narrow INDIVIDUALLY, at their own
+    route prefix and their own `guardPage`.
+  */
+  const viewer = await guardPage("authenticated");
 
   return (
-    <div className="mx-auto max-w-5xl">
-      <SettingsTabs />
-      <div className="min-w-0">
-        <SettingsHeading />
-        {children}
-      </div>
-    </div>
+    <>
+      {/*
+        ⚠ THE EYEBROW IS THE PAGE NAME — Scott: *"the top left text is the page
+        name."* So it reads SETTINGS, and the `<h1>` under it is the tab you are
+        standing on, read from the SAME definition the tabs are.
+        ⚠ `SettingsHeading` IS NO LONGER MOUNTED and is NOT deleted (`E164`): its
+        `<h1>` moved into the hero, and its blurb is the "descriptive paragraph"
+        `E048` says this header must not carry. REPORTED — that is shipped copy
+        no longer rendered, and Scott rules on whether it returns elsewhere.
+      */}
+      <ConsoleHero eyebrow="Settings" title={<SettingsTitle />}>
+        <ConsoleHeroRow>
+          <SettingsTabs isProvider={canProvideServices(viewer)} />
+        </ConsoleHeroRow>
+      </ConsoleHero>
+      <div className="mx-auto min-w-0 max-w-5xl pt-6">{children}</div>
+    </>
   );
 }
