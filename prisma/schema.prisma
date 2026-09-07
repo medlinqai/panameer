@@ -2501,11 +2501,27 @@ model WorkRequest {
   /// knows "3-6 months" but not the dates can still answer.
   start_date          DateTime?
   end_date            DateTime?
-  /// RESERVED FOR THE ERP BRIDGE. UNSPSC is the classification punch-out and
-  /// cXML carry, and it will be derived from the catalog selection rather than
-  /// typed. Null for now — reserving the column keeps the web-created request
-  /// shaped like the one an ERP will send.
-  unspsc_code         String?
+  /// ── ⚠⚠ SUPERSEDED — UNSPSC MOVED TO THE LINE (`P1-J4-E388` WS-1) ─────────
+  ///
+  /// ⚠ COMMENTED OUT, NOT DELETED, and its own reasoning is quoted because it
+  /// was RIGHT ABOUT WHY AND WRONG ABOUT WHERE:
+  ///
+  ///   "RESERVED FOR THE ERP BRIDGE. UNSPSC is the classification punch-out and
+  ///    cXML carry, and it will be derived from the catalog selection rather
+  ///    than typed. Null for now — reserving the column keeps the web-created
+  ///    request shaped like the one an ERP will send."
+  ///
+  /// ⚠⚠ cXML CARRIES UNSPSC **PER LINE**, not per document — a requisition for a
+  /// P2P consultant and a training package classifies as two different things,
+  /// and one header column cannot say so. It now lives on `WorkRequestLine`.
+  /// ⚠ The column is left here, commented, so the next reader sees the move
+  /// rather than re-adding it. `db push` drops it from the table.
+  ///
+  /// unspsc_code         String?
+  ///
+  /// ⚠ `p_account_id` ABOVE STAYS ON THE HEADER — it is Oracle's
+  /// `RequisitioningBU`, true of every line by construction.
+  lines               WorkRequestLine[]
   status              WorkRequestStatus    @default(DRAFT)
   posted_at           DateTime?
 
@@ -4113,4 +4129,158 @@ model TicketMessage {
 
   @@index([ticket_id])
   @@map("ticket_messages")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// THE TRANSACTION SPINE (`P1-J4-E388`) — WS-1: the catalog identifier and the
+// requisition line.
+//
+// ⚠⚠ EVERY DOCUMENT IN THIS SPINE IS HEADER + LINES. A header carries what is
+// true of every line (dates, parties, currency, status, document number); a LINE
+// carries UNSPSC, UOM, quantity, price and the part number. LINES ARE WHAT cXML
+// EXCHANGES AND WHAT AN ERP PRICES, RECEIPTS AND PAYS. A header-only record
+// cannot be given lines later without rewriting every screen that reads it —
+// which is why this is not deferred.
+//
+// ⚠ R1 BUILDS THE COLUMNS; R2 BUILDS THE CONNECTION. There is no cXML parsing,
+// no punchout endpoint and no ERS reconciliation here. A nullable column is
+// honest; a stub that pretends to talk to an ERP is the `E034` shape.
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// ⚠⚠ THE SWITCH THAT RUNS THE WHOLE SPINE, AND IT IS NOT A PANAMEER INVENTION.
+/// Oracle's cXML punchout list requires a quantity on every line *"except for
+/// amount-based service lines"* — the carve-out is in the STANDARD and this enum
+/// names it.
+///
+///   RATE   → uom + quantity + unit_price_cents present, amount_cents NULL.
+///            Settles as a timesheet: MANY PARTIAL DRAWS until the quantity is
+///            exhausted.
+///   AMOUNT → amount_cents present, the other three NULL.
+///            ⚠⚠ DRAWS ONCE, IN FULL. A line already drawn cannot be drawn again.
+///
+/// ⚠⚠ "LUMP SUM vs MILESTONES" IS NOT A STORED FLAG — IT IS THE LINE COUNT. One
+/// AMOUNT line is a lump sum; several are milestones. There is deliberately NO
+/// settlement-method enum and NO `Milestone` model, and `check:transaction-spine`
+/// asserts their ABSENCE, because a later "improvement" will try to add them.
+enum LineBasis {
+  RATE
+  AMOUNT
+}
+
+enum SupplierPartKind {
+  PROVIDER
+  PACKAGE
+}
+
+/// ── ⚠⚠ ONE IDENTIFIER NAMESPACE OVER TWO SUBJECTS ──────────────────────────
+///
+/// SCOTT: the `SupplierPartID` is the unique id of the service provider OR the
+/// service product. ⚠ SO ONE TABLE OWNS THE NAMESPACE — a prefix convention
+/// enforces nothing and is not a foreign key.
+///
+/// ⚠⚠ THIS IS **NOT** `ServiceCatalog` AND MUST NOT HANG OFF IT.
+/// `ServiceCatalog` already exists and is the TAXONOMY ROOT — it owns `Pillar[]`,
+/// `Skill[]`, `SkillTag[]` and `Specialization[]`. A `SupplierPart` CLASSIFIES
+/// INTO that tree (via `unspsc_code` and the skill/role ids on the line); it is
+/// not part of it. Naming this `CatalogItem` would have merged two different
+/// things under one word.
+model SupplierPart {
+  id String @id @default(uuid()) @db.Uuid
+
+  /// ⚠⚠ THIS IS THE cXML `SupplierPartID`. It reaches the buyer's ERP and is
+  /// stored there as THEIR supplier item, FOREVER — on their requisitions, their
+  /// POs, their receipts and their invoices.
+  /// ⚠⚠ IT IS IMMUTABLE AND IS NEVER REUSED. Re-pointing one at a different
+  /// provider silently re-assigns work inside somebody else's system, and no
+  /// Panameer screen would show it. DEACTIVATE (`active = false`); NEVER RECYCLE.
+  part_number String @unique
+
+  kind SupplierPartKind
+
+  /// ⚠⚠ EXACTLY ONE IS SET, AND `check:transaction-spine` ASSERTS IT IN BOTH
+  /// DIRECTIONS — neither both nor neither. `@unique` on each so one provider and
+  /// one package can never mint two part numbers.
+  provider_profile_id String? @unique @db.Uuid
+  package_id          String? @unique @db.Uuid
+
+  /// ── the cXML line, resolved ONCE, here ────────────────────────────────────
+  display_name String
+  description  String
+  /// ⚠ Per-line in cXML, DEFAULTED from here. Nobody types a UNSPSC.
+  unspsc_code  String?
+  default_basis       LineBasis
+  /// HUR | DAY | WEE | MON | EA — the UN/CEFACT codes cXML expects.
+  default_uom         String?
+  default_price_cents Int?
+  currency            String  @default("USD")
+  /// ⚠ THE ONLY WAY A PART LEAVES CIRCULATION. See `part_number`.
+  active              Boolean @default(true)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@index([kind])
+  @@index([active])
+  @@map("supplier_parts")
+}
+
+enum WorkRequestLineStatus {
+  DRAFT
+  SOURCING
+  ASSIGNED
+  ORDERED
+  CANCELLED
+}
+
+/// The requisition line — ⚠⚠ THIS IS THE cXML SURFACE.
+model WorkRequestLine {
+  id              String @id @default(uuid()) @db.Uuid
+  work_request_id String @db.Uuid
+  line_number     Int
+
+  basis       LineBasis
+  description String
+  /// ⚠⚠ PER LINE. The header column is SUPERSEDED — see `WorkRequest`.
+  unspsc_code String?
+  currency    String @default("USD")
+
+  /// ⚠ RATE lines only. AMOUNT lines leave these three null and set
+  /// `amount_cents`; `check:transaction-spine` asserts both directions.
+  uom              String?
+  quantity         Decimal?
+  unit_price_cents Int?
+  amount_cents     Int?
+
+  supplier_part_id String? @db.Uuid
+
+  /// ⚠⚠ WRITTEN INTO `SupplierPartAuxiliaryID` ON THE WAY OUT AND MATCHED ON THE
+  /// WAY BACK. It is the ONLY field proven to survive the punchout round trip:
+  /// `BuyerCookie` and line-level `Extrinsic` both do NOT come back on the
+  /// OrderRequest, so neither can carry the link. Opaque and unguessable.
+  /// ⚠ UNIQUE — it is the join key on the return leg.
+  punchout_line_ref String? @unique
+
+  role_type_id String? @db.Uuid
+  skill_id     String? @db.Uuid
+
+  /// ⚠ NAMED AT THE LINE, because ONE REQUEST CAN SOURCE SEVERAL PEOPLE — which
+  /// is also what makes the work-order fan-out (WS-2) group by provider.
+  provider_person_id String? @db.Uuid
+
+  positions        Int       @default(1)
+  service_start    DateTime?
+  service_end      DateTime?
+  note_to_supplier String?
+
+  status WorkRequestLineStatus @default(DRAFT)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  workRequest WorkRequest @relation(fields: [work_request_id], references: [id], onDelete: Cascade)
+
+  @@unique([work_request_id, line_number])
+  @@index([work_request_id])
+  @@index([provider_person_id])
+  @@map("work_request_lines")
 }
