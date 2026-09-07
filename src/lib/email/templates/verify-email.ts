@@ -42,11 +42,37 @@ export function verifyEmailTemplate({
   logoUrl?: string;
 }): { subject: string; html: string; text: string } {
   const buyer = audience === "buyer";
+  /*
+    ⚠ TITLE CASE, BOTH VARIANTS (`P2-J1.1-E015`). ⚠ SUPERSEDED, quoted:
+      "New Service Buyer — verify your email to continue on Panameer"
+      "New Service Provider — verify your email to continue on Panameer"
+    Scott screenshotted only the BUYER one; changing only that half would have
+    left the provider subject lowercase and the two out of step. This brings
+    subjects under the convention locked in `brief_N_title_case` — *"as a UI
+    convention (ends the sentence-case papercut)"* — which email was never
+    swept into. ⚠ ONLY THESE TWO. The other 12 templates are REPORTED, not
+    changed; Scott rules on those.
+  */
   const subject = buyer
-    ? "New Service Buyer — verify your email to continue on Panameer"
-    : "New Service Provider — verify your email to continue on Panameer";
+    ? "New Service Buyer — Verify Your Email to Continue on Panameer"
+    : "New Service Provider — Verify Your Email to Continue on Panameer";
+  /*
+    ⚠⚠ THE BUYER CLAUSE STOPPED PROMISING THE FINISH LINE (`P2-J1.1-E018`).
+    ⚠ SUPERSEDED, quoted: `"start finding the talent you need."`
+
+    SCOTT, 2026-09-06: *"These should be two separate emails. One is start your
+    registration...the other is finish the registration you started."* This email
+    was carrying BOTH jobs — proving the address AND being the only thing that
+    ever brings a person back — so it over-promised. Verifying an email does not
+    find anyone talent; there is a whole wizard in between.
+
+    ⚠ THE PROVIDER VARIANT IS UNCHANGED. *"start building your provider
+    profile."* is already honest — only the buyer half lied.
+    ⚠ THE HEADING IS UNCHANGED TOO: `Confirm your email{, Name}` is this email's
+    job. `Continue your registration` belongs to the OTHER email now.
+  */
   const nextLine = buyer
-    ? "start finding the talent you need."
+    ? "verify your email, then log in and complete your registration."
     : "start building your provider profile.";
   const name = capitalizeName(firstName);
 
@@ -69,7 +95,7 @@ ${primaryButton(verifyUrl, "Verify My Email")}
 
   const text = `Confirm your email${name ? `, ${name}` : ""}
 
-Verify your email to ${buyer ? "start finding the talent you need" : "start building your Panameer provider profile"}:
+${buyer ? "Verify your email, then log in and complete your registration" : "Verify your email to start building your Panameer provider profile"}:
 ${verifyUrl}
 
 This link expires in 24 hours. If you didn't create a Panameer account, ignore this email.
