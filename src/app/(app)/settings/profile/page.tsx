@@ -28,7 +28,10 @@ import { ProfileSettingsForm } from "@/components/settings/ProfileSettingsForm";
 export const metadata = { title: "Profile Settings · Panameer" };
 
 export default async function ProfileSettingsPage() {
-  const viewer = await guardPage("canProvideServices");
+  /* ⚠ `authenticated` (`P2-J1.1-E046`) — ⚠ SUPERSEDED, quoted:
+     `guardPage("canProvideServices")`. One of three layers; see
+     `settings/layout.tsx` and `route-access.ts`. Scott opened the tree whole. */
+  const viewer = await guardPage("authenticated");
 
   /*
     WS-3 — DEGRADE, DON'T THROW.

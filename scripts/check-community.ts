@@ -774,6 +774,25 @@ check(
   unclassified.length === 0,
   `unclassified: ${unclassified.join(", ")} — unlisted defaults to none, hiding a decision nobody made`
 );
+/*
+  ⚠⚠ `/settings` IS CLASSIFIED THOUGH IT IS NOT A `PAGE_TABS` KEY (`P2-J1.1-E046`).
+
+  Its tab set is `SETTINGS_NAV` in `lib/settings-nav.ts` — the one definition
+  `SettingsTabs` and `SettingsHeading` both read, so a tab and a page heading
+  cannot disagree about what a page is called. Copying it into `PAGE_TABS` would
+  create the second definition that rule forbids.
+
+  ⚠ BUT THE SCAN ABOVE ONLY SEES `"/key": [` LITERALS, so a set defined
+  elsewhere is invisible to it — it would fall through `tabSequenceFor`'s
+  `?? "none"` and be unnumbered because nobody decided, which is the precise
+  ambiguity `E384` built this guard to stop. This asserts the decision exists.
+*/
+check(
+  "E046 — the /settings tab set is explicitly classified in TAB_SEQUENCE",
+  seqBlock.includes('"/settings":'),
+  "its tabs live in SETTINGS_NAV, so only its MODE is declared in nav.ts"
+);
+
 /* ⚠ AND `process` STAYS IN THE UNION EVEN WITH NO CONSUMER. Scott said keep it. */
 check(
   "E384/3 — the process mode is kept even though nothing uses it",

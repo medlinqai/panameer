@@ -27,7 +27,10 @@ import { POLICIES } from "@/lib/policies";
 export const metadata = { title: "Account Health Checklist · Panameer" };
 
 export default async function AccountHealthPage() {
-  const viewer = await guardPage("canProvideServices");
+  /* ⚠ `authenticated` (`P2-J1.1-E040`) — ⚠ SUPERSEDED, quoted:
+     `guardPage("canProvideServices")`. The null-profile empty state below is
+     what makes this safe, and it was already here. */
+  const viewer = await guardPage("authenticated");
 
   const profile = await prisma.providerProfile.findFirst({
     where: ownedProviderProfile(viewer),

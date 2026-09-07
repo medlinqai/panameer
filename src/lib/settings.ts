@@ -20,6 +20,54 @@ export class SettingsError extends Error {
   }
 }
 
+/**
+ * ── ⚠⚠ THE PERSON, RESOLVED AS THE PERSON (`P2-J1.1-E046`, 2026-09-06) ───────
+ *
+ * ⚠ SUPERSEDED, quoted not deleted — every reader below used to go through this:
+ *
+ *     async function ownIds(viewer: Viewer) {
+ *       const profile = await prisma.providerProfile.findFirst({
+ *         where: ownedProviderProfile(viewer),
+ *         select: { id: true, person_id: true },
+ *       });
+ *       if (!profile) throw new SettingsError("No provider profile", "NOT_FOUND");
+ *       return { profileId: profile.id, personId: profile.person_id };
+ *     }
+ *
+ * IT REACHED THE PERSON THROUGH THE PROVIDER PROFILE. Thirteen of its fifteen
+ * call sites want only `personId` — Contact Info, Billing, Withdrawals, Identity
+ * and Notification Settings are all about the PERSON — so a buyer, who has a
+ * Person and no ProviderProfile, got a 500 on five settings pages the moment
+ * `E046` opened the tree. An empty state would have stopped the crash and left
+ * Scott's actual complaint true: *a buyer cannot change their email, their 2FA,
+ * their notification preferences or their billing.*
+ *
+ * ⚠⚠ THE VALUE IS IDENTICAL FOR EVERY EXISTING USER, AND THAT IS PROVABLE, NOT
+ * HOPED: `ownedProviderProfile(viewer)` is `{ person: { user_id: viewer.userId } }`,
+ * so the old `profile.person_id` WAS the viewer's own Person id. This resolves
+ * the same row by the same key. Nothing that used to work resolves differently;
+ * what used to throw now succeeds.
+ *
+ * ⚠⚠ OWNER-SCOPED BY CONSTRUCTION, AND NOT ONE STEP LOOSER. `user_id` comes from
+ * the SESSION and never from client input — the same rule `ownedProviderProfile`
+ * follows, and `Person.user_id` is `@unique`, so this can match at most one row:
+ * the caller's own. No write below can be steered at another person's record.
+ */
+async function ownPersonId(viewer: Viewer): Promise<string> {
+  const person = await prisma.person.findFirst({
+    where: { user_id: viewer.userId },
+    select: { id: true },
+  });
+  if (!person) throw new SettingsError("This account has no person record", "NOT_FOUND");
+  return person.id;
+}
+
+/**
+ * ⚠ STILL PROFILE-SCOPED, AND STILL THROWS — for the two readers that genuinely
+ * need a `ProviderProfile.id` rather than a person: the provider's own profile
+ * settings and its public-visibility pair. A buyer has no profile there, and
+ * "no provider profile" is the correct answer to those two questions.
+ */
 async function ownIds(viewer: Viewer) {
   const profile = await prisma.providerProfile.findFirst({
     where: ownedProviderProfile(viewer),
@@ -32,7 +80,7 @@ async function ownIds(viewer: Viewer) {
 /* ---- Contact Info (E014) ------------------------------------------------ */
 
 export async function getContactInfo(viewer: Viewer) {
-  const { personId } = await ownIds(viewer);
+  const personId = await ownPersonId(viewer);
   const person = await prisma.person.findUniqueOrThrow({
     where: { id: personId },
     select: {
@@ -74,7 +122,7 @@ export async function updateContactInfo(
   viewer: Viewer,
   patch: { firstName?: string; lastName?: string; phone?: string | null; timeZone?: string | null }
 ) {
-  const { personId } = await ownIds(viewer);
+  const personId = await ownPersonId(viewer);
   await prisma.person.update({
     where: { id: personId },
     data: {
@@ -195,7 +243,7 @@ function handle(raw: string | null): string | null {
 /* ---- Billing & Payments (E016) ------------------------------------------ */
 
 export async function listBillingMethods(viewer: Viewer) {
-  const { personId } = await ownIds(viewer);
+  const personId = await ownPersonId(viewer);
   return prisma.billingMethod.findMany({
     where: { person_id: personId },
     orderBy: [{ is_default: "desc" }, { created_at: "asc" }],
@@ -206,7 +254,7 @@ export async function addBillingMethod(
   viewer: Viewer,
   input: { kind: "CARD" | "PAYPAL" | "BANK_DEBIT"; label: string; last4?: string | null; expMonth?: number | null; expYear?: number | null }
 ) {
-  const { personId } = await ownIds(viewer);
+  const personId = await ownPersonId(viewer);
   const count = await prisma.billingMethod.count({ where: { person_id: personId } });
   return prisma.billingMethod.create({
     data: {
@@ -223,7 +271,7 @@ export async function addBillingMethod(
 }
 
 export async function removeBillingMethod(viewer: Viewer, id: string) {
-  const { personId } = await ownIds(viewer);
+  const personId = await ownPersonId(viewer);
   // Owner scope enforced in the WHERE, so a foreign id deletes nothing.
   await prisma.billingMethod.deleteMany({ where: { id, person_id: personId } });
 }
@@ -231,7 +279,7 @@ export async function removeBillingMethod(viewer: Viewer, id: string) {
 /* ---- Withdrawals (E017) -------------------------------------------------- */
 
 export async function getWithdrawals(viewer: Viewer) {
-  const { personId } = await ownIds(viewer);
+  const personId = await ownPersonId(viewer);
   const [tax, methods] = await Promise.all([
     prisma.taxProfile.findUnique({ where: { person_id: personId } }),
     prisma.payoutMethod.findMany({
@@ -246,7 +294,7 @@ export async function saveTaxProfile(
   viewer: Viewer,
   input: { legalName: string; country: string; asEntity: boolean; tinLast4?: string | null; signedName: string }
 ) {
-  const { personId } = await ownIds(viewer);
+  const personId = await ownPersonId(viewer);
   const form = formFor(input.country, input.asEntity);
   const data = {
     form,
@@ -267,7 +315,7 @@ export async function addPayoutMethod(
   viewer: Viewer,
   input: { kind: "BANK_ACCOUNT" | "PAYPAL" | "WIRE"; label: string; last4?: string | null; country: string }
 ) {
-  const { personId } = await ownIds(viewer);
+  const personId = await ownPersonId(viewer);
 
   /*
     THE MONEY GATE. A payout method cannot exist before a tax profile does.
@@ -300,19 +348,19 @@ export async function addPayoutMethod(
 }
 
 export async function removePayoutMethod(viewer: Viewer, id: string) {
-  const { personId } = await ownIds(viewer);
+  const personId = await ownPersonId(viewer);
   await prisma.payoutMethod.deleteMany({ where: { id, person_id: personId } });
 }
 
 /* ---- Identity Verification (E019) ---------------------------------------- */
 
 export async function getIdentity(viewer: Viewer) {
-  const { personId } = await ownIds(viewer);
+  const personId = await ownPersonId(viewer);
   return prisma.identityVerification.findUnique({ where: { person_id: personId } });
 }
 
 export async function submitIdentity(viewer: Viewer, document: string) {
-  const { personId } = await ownIds(viewer);
+  const personId = await ownPersonId(viewer);
   const data = {
     status: "SUBMITTED" as const,
     document: document.trim().slice(0, 80),
@@ -330,7 +378,7 @@ export async function submitIdentity(viewer: Viewer, document: string) {
 /* ---- Notification Settings (E020) ---------------------------------------- */
 
 export async function getNotificationPrefs(viewer: Viewer) {
-  const { personId } = await ownIds(viewer);
+  const personId = await ownPersonId(viewer);
   const rows = await prisma.notificationPreference.findMany({
     where: { person_id: personId },
   });
@@ -357,7 +405,7 @@ export async function setNotificationPref(
   category: string,
   channels: { inApp?: boolean; email?: boolean; sms?: boolean }
 ) {
-  const { personId } = await ownIds(viewer);
+  const personId = await ownPersonId(viewer);
   const def = findCategory(category);
   if (!def) throw new SettingsError("Unknown notification category", "INVALID");
   if (def.locked) {

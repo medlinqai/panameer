@@ -373,7 +373,12 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
   ],
   "/settings/packages": [
     { label: "Service Products", href: "/settings/packages" },
-    { label: "Offers for My Services", href: "/services/offers" },
+    /* ⚠ `requires` ADDED (`P2-J1.1-E046` WS-4). `/services/offers` is gated
+       `canProvideServices`, and this entry declared nothing — which reads as
+       "everyone signed in". It was harmless only while `/settings/packages` was
+       itself provider-only; opening that tree made it a live sixth instance of
+       the offered-then-refused class. `check:nav-reachable` caught it. */
+    { label: "Offers for My Services", href: "/services/offers", requires: "canProvideServices" },
   ],
   "/finances": [
     { label: "Payments", href: "/finances" },
@@ -1022,6 +1027,24 @@ export const TAB_SEQUENCE: Record<string, "process" | "suggested" | "none"> = {
   "/learn": "none",
   "/settings/packages": "none",
   "/finances": "none",
+  /*
+    ⚠⚠ `/settings` — CLASSIFIED HERE, DEFINED ELSEWHERE (`P2-J1.1-E046`).
+
+    Its tabs are `SETTINGS_NAV` in `lib/settings-nav.ts`, which is the ONE
+    definition `SettingsTabs` and `SettingsHeading` both read so that a tab and a
+    page heading cannot disagree about what a page is called. Copying that list
+    into `PAGE_TABS` would create the second definition that rule forbids, so the
+    set lives there and its MODE lives here.
+
+    ⚠ THE ENTRY IS NOT DECORATIVE. Without it `tabSequenceFor` would fall through
+    to `?? "none"` and the set would be unnumbered because nobody decided rather
+    than because somebody did — the exact ambiguity `E384`'s guard exists to
+    catch. `check:community` asserts this key is present.
+
+    ⚠ `none` BY EVIDENCE: nine parallel slices of one area. Nobody works through
+    Password & Security to reach Billing, and none of them completes.
+  */
+  "/settings": "none",
 };
 
 /** The mode for a tab set. ⚠ Unlisted is `none` by design. */

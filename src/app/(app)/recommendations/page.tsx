@@ -1,4 +1,6 @@
 import { guardPage } from "@/lib/guard";
+import { prisma } from "@/lib/prisma";
+import { ownedProviderProfile } from "@/lib/access";
 import { defaultMessage, listRecommendations } from "@/lib/recommendations";
 import { RecommendationsClient } from "@/components/console/RecommendationsClient";
 
@@ -13,7 +15,34 @@ import { RecommendationsClient } from "@/components/console/RecommendationsClien
 export const metadata = { title: "Request Recommendations · Panameer" };
 
 export default async function RecommendationsPage() {
-  const viewer = await guardPage("canProvideServices");
+  /* ⚠ `authenticated` (`P2-J1.1-E044`) — ⚠ SUPERSEDED, quoted:
+     `guardPage("canProvideServices")`. Offered in the persona menu a buyer sees,
+     so the gate turned a visible item into a bounce to /dashboard?noaccess=1. */
+  const viewer = await guardPage("authenticated");
+
+  /*
+    ⚠⚠ THIS GUARD IS LOAD-BEARING, NOT DEFENSIVE. `listRecommendations` calls
+    `ownedProfile`, which THROWS `NOT_A_PROVIDER` when there is no provider
+    profile — a `RecommendationRequest` hangs off `provider_profile_id`, and a
+    buyer has no profile for it to hang off. Opening the gate WITHOUT this turns
+    a redirect into a crash, which is worse.
+
+    ⚠ THE SAME SHAPE AND THE SAME SENTENCE `account-health` and `/stats` already
+    use — copied deliberately rather than invented, so the three persona pages
+    answer "you are not a seller" identically.
+  */
+  const profile = await prisma.providerProfile.findFirst({
+    where: ownedProviderProfile(viewer),
+    select: { id: true },
+  });
+  if (!profile) {
+    return (
+      <p className="text-ink-2">
+        This account has no provider profile, so there is nothing to request yet.
+      </p>
+    );
+  }
+
   const { providerFirstName, rows } = await listRecommendations(viewer);
 
   return (
