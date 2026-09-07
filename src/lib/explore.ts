@@ -120,7 +120,31 @@ export async function searchProvidersTeaser(
     prisma.providerProfile.findMany({
       where,
       take,
-      orderBy: [{ validation_status: "asc" }, { updated_at: "desc" }],
+      /*
+        ── ⚠⚠ THE SORT WAS INVERTED, AND FLIPPING IT WOULD ALSO BE WRONG (`E028`
+           WS-3) ──────────────────────────────────────────────────────────────
+
+        ⚠ SUPERSEDED, quoted: `{ validation_status: "asc" }`.
+
+        INTENT, CONFIRMED FROM HISTORY NOT GUESSED: `3f6a38e` ("WS-D: /explore
+        becomes a real masked teaser") added the `✓ Validated` badge to the card
+        AND this ordering IN THE SAME COMMIT. It meant to lead with validated
+        experts.
+
+        ⚠⚠ IT DID THE OPPOSITE. Postgres orders an enum by DECLARATION order and
+        `ValidationStatus` is declared `NOT_REQUESTED, REQUESTED, VALIDATED,
+        REJECTED` — so `asc` put UNVALIDATED FIRST and VALIDATED THIRD, which is
+        why the row read weak: the strongest providers sorted behind the ones
+        with placeholder avatars.
+
+        ⚠⚠ AND `desc` IS NOT THE FIX — IT WOULD PUT **REJECTED** FIRST. NEITHER
+        DIRECTION LEADS WITH VALIDATED, so this cannot be repaired by flipping a
+        word. `completeness` orders the page deterministically at the database
+        (so `take` keeps the right rows) and the validated-first ordering is
+        applied to the returned page below, where a derived boolean CAN be
+        ordered correctly.
+      */
+      orderBy: [{ completeness: "desc" }, { updated_at: "desc" }],
       select: {
         id: true,
         headline: true,
@@ -129,6 +153,9 @@ export async function searchProvidersTeaser(
         rate_max_cents: true,
         currency: true,
         validation_status: true,
+        completeness: true,
+        onsite_rate_cents: true,
+        remote_rate_cents: true,
         /*
           WS-2 pedigree. `_count` rather than fetching the rows: the card shows
           "8 Employers", so the number IS the payload — pulling eight employer
@@ -163,7 +190,15 @@ export async function searchProvidersTeaser(
 
   return {
     total,
-    cards: rows.map((p) => {
+    /* ⚠ VALIDATED FIRST, applied to the returned page — see the sort note above
+       for why the column itself cannot express this. */
+    cards: rows
+      .slice()
+      .sort((a, b) =>
+        Number(b.validation_status === "VALIDATED") -
+        Number(a.validation_status === "VALIDATED")
+      )
+      .map((p) => {
       const addr = p.person.site?.addresses[0];
       return {
         id: p.id,
@@ -175,12 +210,22 @@ export async function searchProvidersTeaser(
         projectCount: p._count.projects,
         location: formatLocation(addr?.city, addr?.country),
         skills: p.skills.map((s) => s.skill.name),
-        rate: rateLabel(
-          p.rate_min_cents,
-          p.rate_max_cents,
-          p.hourly_rate_cents,
-          p.currency
-        ),
+        /* ⚠ ALL FIVE FIELDS THE GATE ACCEPTS (`E028` WS-4) — `rateLabel` read
+           three, so anyone priced onsite- or remote-only rendered blank and
+           looked unpriced. `marketplaceVisibleWhere()` requires a rate, so a
+           blank here was always a render bug, never a missing price. */
+        rate:
+          rateLabel(
+            p.rate_min_cents,
+            p.rate_max_cents,
+            p.hourly_rate_cents,
+            p.currency
+          ) ??
+          (p.onsite_rate_cents != null
+            ? `${rateLabel(p.onsite_rate_cents, null, null, p.currency)} onsite`
+            : p.remote_rate_cents != null
+              ? `${rateLabel(p.remote_rate_cents, null, null, p.currency)} remote`
+              : null),
         validated: p.validation_status === "VALIDATED",
         photoUrl: p.person.photo_url,
       };
