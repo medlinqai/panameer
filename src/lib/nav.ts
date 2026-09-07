@@ -277,6 +277,21 @@ export const REQUESTER_NAV: NavItem[] = [
     FIELD IS COMING SO IT ARRIVES WITH THE MODEL RATHER THAN BEING RETROFITTED.
     IT DOES NOT CREATE ONE.
 
+    ⚠⚠ SPENT 2026-09-07, QUOTED NOT DELETED — THE PARAGRAPH ABOVE IS SATISFIED,
+    NOT CONTRADICTED. It was an instruction to `E380`, a NAV brief, and it asked
+    for the field to arrive WITH the model. `P1-J4-E388` added
+    `WorkOrder.origin WorkOrderOrigin (DIRECT | INDIRECT)` in the same commit
+    that created `WorkOrder`, which is exactly what was asked. `P1-J4-E393` then
+    renders it: `OriginBadge` marks DIRECT and the detail page says in words that
+    Panameer RECORDS such an order rather than issuing it.
+    ⚠ READ "MUST NOT BE ADDED HERE" AS "NOT IN THAT BRIEF." It is not a standing
+    ban, and nobody should read it as one and remove the column.
+
+    ⚠ THE REST OF THIS BLOCK IS LIVE AND `E393` OBEYS IT: the ToS is the MSA, the
+    Work Order is the SOW, a DIRECT order REPRESENTS a SOW made elsewhere, and
+    WHICH GOVERNS IF THEY DISAGREE IS STILL A LAWYER'S QUESTION THAT NO BRIEF HAS
+    ANSWERED.
+
     ⚠ THE ToS TEXT IS OUT OF SCOPE. Whether it actually carries arbitration, PII
     and confidentiality as BUYER-TO-SUPPLIER terms rather than only
     user-to-platform terms is a lawyer's question. `E380` flagged it and edited

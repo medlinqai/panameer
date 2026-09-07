@@ -186,7 +186,19 @@ export const ROUTE_ACCESS: { prefix: string; requires: RouteRequirement }[] = [
   { prefix: "/reports", requires: "canHireTalent" },
   { prefix: "/search", requires: "authenticated" }, // rail stub (E134)
   /* ⚠ `/contracts` -> `/orders` (`P1-ALL-E380`). Gate unchanged. */
-  { prefix: "/orders", requires: "authenticated" }, // rail stub (E134)
+  /*
+    ⚠ `authenticated` IS THE CORRECT GATE AND `P1-J4-E393` CONFIRMED IT RATHER
+    THAN CHANGING IT. **BOTH RAILS POINT AT `/orders`** — `REQUESTER_NAV` with
+    `requires: "canHireTalent"`, `PROVIDER_NAV` with none — so a capability gate
+    on either side would refuse the other, which is the offered-then-refused
+    class this map's own comments record five times.
+    ⚠⚠ THE SCOPE IS PER-ORDER, NOT PER-ROLE. `lib/orders.ts` asks which side of
+    THIS order the viewer is on, because one person can be the buyer on one order
+    and the provider on another. A role gate cannot express that.
+    ⚠ SUPERSEDED, quoted not deleted: this line read `// rail stub (E134)`. It is
+    no longer a stub — `/orders` and `/orders/[id]` are built.
+  */
+  { prefix: "/orders", requires: "authenticated" },
   { prefix: "/finances", requires: "authenticated" }, // rail stub (E134)
   { prefix: "/messages", requires: "authenticated" }, // shared buyer ↔ provider
   /*
