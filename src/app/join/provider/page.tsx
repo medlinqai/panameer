@@ -3645,10 +3645,17 @@ export default function JoinProviderPage() {
               </ProfileCard>
 
               {/* E039 — testimonials are EARNED after delivering work. */}
-              <ProfileCard title="Testimonials">
+              {/* ⚠ `Recommendations` (`P2-J1.1-E014`). ⚠ SUPERSEDED, quoted:
+                  `title="Testimonials"` / `No testimonials yet — …`. THIS IS THE
+                  DECK PREVIEW OF THE PROFILE CARD ABOVE, so it must say the same
+                  word: a provider who is shown `Testimonials` here and finds
+                  `Recommendations` on the real profile has been told the product
+                  has two things when it has one. ⚠ The E039 comment above is
+                  HISTORY and stays; only the rendered strings moved. */}
+              <ProfileCard title="Recommendations">
                 <Empty>
-                  No testimonials yet — you&apos;ll collect these as you deliver
-                  work.
+                  No recommendations yet — you&apos;ll collect these as you
+                  deliver work.
                 </Empty>
               </ProfileCard>
             </div>
