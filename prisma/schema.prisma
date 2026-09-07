@@ -4659,3 +4659,502 @@ model ProviderPayoutLine {
   @@index([settlement_line_id])
   @@map("provider_payout_lines")
 }
+
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * SOURCING — invite, bid, test, interview, shortlist (`P1-J4-E395`)
+ * ═════════════════════════════════════════════════════════════════════════
+ * ⚠⚠ EVERY INTERACTION IS A REQUEST AND A RESPONSE, EACH HEADER + LINES.
+ * This is Scott's own shape (`Steps Across Journeys.docx`) and it is how an ERP
+ * models RFQ → Quote:
+ * invite to bid  BidRequest (the ITB)  →  ProviderBid
+ * ask for a test TestRequest           →  TestResponse
+ * ask for times  InterviewRequest      →  InterviewResponse  (⚠ SLOTS ARE LINES)
+ * select         Shortlist             →  —
+ * ⚠ THE PATTERN IS NOT BROKEN FOR THE DOCUMENT THAT LOOKS SIMPLER. A `Shortlist`
+ * could have been a boolean on a bid and an `InterviewResponse` could have been a
+ * JSON array of times; both would have been smaller and both would have been the
+ * one shape that cannot be joined, ordered or audited like the others.
+ * ⚠ NO CROSS-MODEL FOREIGN KEYS, MATCHING `E388`. A header relates to its own
+ * lines and to nothing else; `work_request_id`, `provider_person_id` and the rest
+ * are ids with indexes. `WorkOrder` and `SupplierPart` established that on this
+ * trunk and a second convention inside one journey is worse than either.
+ */
+
+enum BidRequestStatus {
+  DRAFT
+  ISSUED
+  VIEWED
+  RESPONDED
+  DECLINED
+  EXPIRED
+  WITHDRAWN
+}
+
+enum ProviderBidStatus {
+  DRAFT
+  SUBMITTED
+  WITHDRAWN
+  DECLINED
+  SHORTLISTED
+  AWARDED
+  NOT_SELECTED
+}
+
+model BidRequest {
+  id             String @id @default(uuid()) @db.Uuid
+  request_number String @unique
+
+  work_request_id String @db.Uuid
+
+  /// ⚠ ONE ITB PER INVITED PROVIDER. Scott: *"1 work request will have multiple
+  /// ITBs."* THE FAN-OUT IS HERE, NOT INSIDE ONE DOCUMENT — a single invitation
+  /// row carrying a list of providers cannot be issued, viewed, declined or
+  /// expired per provider, and every one of those is per provider.
+  provider_person_id   String @db.Uuid
+  invited_by_person_id String @db.Uuid
+
+  issued_at   DateTime?
+  /// ⚠⚠ A BID WITH NO CLOSING DATE NEVER CLOSES, and a requester cannot
+  /// shortlist against an open-ended set. Nullable because a DRAFT has not
+  /// decided yet; `assertIssuable` is what refuses to ISSUE without one.
+  responds_by DateTime?
+
+  status  BidRequestStatus @default(DRAFT)
+  message String?
+
+  /// ⚠ THE DECLINE IS RECORDED, AND `E366`'S RULE HOLDS: it shows to the
+  /// REQUESTER who issued this ITB, never to other buyers and NEVER as a mark on
+  /// the provider. *"A recorded refusal becomes a scarlet letter on a
+  /// marketplace."* ⚠⚠ NOTHING AGGREGATES THESE — there is no decline count, no
+  /// decline rate and no responsiveness score anywhere, and `check:sourcing`
+  /// fails the build if one appears.
+  declined_at    DateTime?
+  decline_reason String?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  lines BidRequestLine[]
+  bid   ProviderBid?
+
+  @@unique([work_request_id, provider_person_id])
+  @@index([work_request_id])
+  @@index([provider_person_id])
+  @@index([status])
+  @@map("bid_requests")
+}
+
+model BidRequestLine {
+  id             String @id @default(uuid()) @db.Uuid
+  bid_request_id String @db.Uuid
+  line_number    Int
+
+  /// ⚠ WHICH work-request line this provider is asked to price. NOT every ITB
+  /// covers every line — a request for a DBA and a developer goes out as two
+  /// different ITBs naming two different lines.
+  work_request_line_id String @db.Uuid
+
+  created_at DateTime @default(now())
+
+  bidRequest BidRequest @relation(fields: [bid_request_id], references: [id], onDelete: Cascade)
+
+  @@unique([bid_request_id, line_number])
+  @@index([bid_request_id])
+  @@map("bid_request_lines")
+}
+
+model ProviderBid {
+  id         String @id @default(uuid()) @db.Uuid
+  bid_number String @unique
+
+  /// ⚠ `@unique`: one bid per ITB. A second bid is a REVISION of this one, not a
+  /// second document — otherwise "the bid" is ambiguous at the moment of award.
+  bid_request_id String @unique @db.Uuid
+
+  provider_person_id String @db.Uuid
+
+  submitted_at DateTime?
+  status       ProviderBidStatus @default(DRAFT)
+
+  currency    String    @default("USD")
+  valid_until DateTime?
+  cover_note  String?
+
+  /// ⚠ A DECLINE IS A RESPONSE. It lives on the response document as well as the
+  /// request so a provider can decline having opened the ITB, with a reason the
+  /// REQUESTER reads. See the aggregation ban above — it applies here identically.
+  declined_at    DateTime?
+  decline_reason String?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  lines      ProviderBidLine[]
+  bidRequest BidRequest        @relation(fields: [bid_request_id], references: [id], onDelete: Cascade)
+
+  @@index([provider_person_id])
+  @@index([status])
+  @@map("provider_bids")
+}
+
+model ProviderBidLine {
+  id              String @id @default(uuid()) @db.Uuid
+  provider_bid_id String @db.Uuid
+  line_number     Int
+
+  bid_request_line_id String @db.Uuid
+
+  /// ⚠⚠ THE SAME PRICING SHAPE AS `WorkOrderLine`, DELIBERATELY. AWARDING IS A
+  /// COPY, FIELD FOR FIELD. If the two drift the award becomes a TRANSLATION,
+  /// and a translation is where a rate silently changes between what was bid and
+  /// what was ordered. `check:sourcing` compares the two field lists out of this
+  /// file and is mutation-tested: dropping a field from either side fails.
+  ///
+  /// ⚠ THE PRICING SHAPE IS: basis · uom · quantity · unit_price_cents ·
+  /// amount_cents · supplier_part_id. Add a pricing column to one of these two
+  /// models and you MUST add it to the other in the same commit.
+  basis            LineBasis
+  uom              String?
+  quantity         Decimal?
+  /// ⚠⚠ THE TOTAL RATE — WHAT THE BUYER PAYS. `E388`: the provider receives this
+  /// LESS the service fee. ⚠⚠ THIS IS THE ROW `E366` WAS BLOCKED ON — *"a
+  /// proposed rate has nowhere to live."* It lives here.
+  unit_price_cents Int?
+  amount_cents     Int?
+  supplier_part_id String?   @db.Uuid
+
+  available_from DateTime?
+  note           String?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  providerBid ProviderBid @relation(fields: [provider_bid_id], references: [id], onDelete: Cascade)
+
+  @@unique([provider_bid_id, line_number])
+  @@index([provider_bid_id])
+  @@index([bid_request_line_id])
+  @@map("provider_bid_lines")
+}
+
+/**
+ * ─── WS-2 · TEST ────────────────────────────────────────────────────────────
+ * ⚠⚠ THE TEST MACHINERY EXISTS. THIS DOES NOT BUILD A SECOND ONE.
+ * `LearnAssessment` (`learning_path_id @unique`, `pass_threshold`,
+ * `max_attempts`) and `LearnTestAttempt` (`score`, `passed`, `answers`) are the
+ * system of record. These two documents are the ASKING and the ANSWERING; the
+ * SITTING is Learn's, unchanged.
+ */
+
+enum TestRequestStatus {
+  DRAFT
+  ISSUED
+  IN_PROGRESS
+  COMPLETED
+  DECLINED
+  EXPIRED
+}
+
+/// ⚠ `ATTEMPTS_SPENT` IS A STATE, NOT AN ERROR, and it is why this enum is not
+/// simply the request's. `max_attempts` is already enforced in
+/// `lib/learn-assessment.ts` and a buyer's request DOES NOT RESET IT — silently
+/// granting a fresh attempt devalues every score in the marketplace. So a request
+/// that cannot be satisfied lands HERE, as something to SHOW.
+enum TestResponseStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  DECLINED
+  EXPIRED
+  ATTEMPTS_SPENT
+}
+
+model TestRequest {
+  id             String @id @default(uuid()) @db.Uuid
+  request_number String @unique
+
+  work_request_id        String @db.Uuid
+  provider_person_id     String @db.Uuid
+  requested_by_person_id String @db.Uuid
+
+  /// ⚠ `E366`'S ENABLE CONDITION: the SUBMITTED bid this was triggered from.
+  /// Nullable because a buyer may test before inviting, but the button `E366`
+  /// could not build reads this.
+  provider_bid_id String? @db.Uuid
+
+  issued_at   DateTime?
+  responds_by DateTime?
+
+  status  TestRequestStatus @default(DRAFT)
+  message String?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  lines    TestRequestLine[]
+  response TestResponse?
+
+  @@index([work_request_id])
+  @@index([provider_person_id])
+  @@index([provider_bid_id])
+  @@index([status])
+  @@map("test_requests")
+}
+
+model TestRequestLine {
+  id              String @id @default(uuid()) @db.Uuid
+  test_request_id String @db.Uuid
+  line_number     Int
+
+  /// ⚠⚠ POINTS AT A REAL, **PUBLISHED** `LearnAssessment`. A request for a test
+  /// that does not exist — or one still in DRAFT, which nobody can sit — is a
+  /// dead end the provider cannot clear. `assertTestRequestLine` refuses both.
+  learn_assessment_id String  @db.Uuid
+  skill_id            String? @db.Uuid
+
+  created_at DateTime @default(now())
+
+  testRequest TestRequest @relation(fields: [test_request_id], references: [id], onDelete: Cascade)
+
+  @@unique([test_request_id, line_number])
+  @@index([test_request_id])
+  @@index([learn_assessment_id])
+  @@map("test_request_lines")
+}
+
+model TestResponse {
+  id              String @id @default(uuid()) @db.Uuid
+  response_number String @unique
+
+  test_request_id    String @unique @db.Uuid
+  provider_person_id String @db.Uuid
+
+  submitted_at DateTime?
+  status       TestResponseStatus @default(PENDING)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  lines       TestResponseLine[]
+  testRequest TestRequest        @relation(fields: [test_request_id], references: [id], onDelete: Cascade)
+
+  @@index([provider_person_id])
+  @@index([status])
+  @@map("test_responses")
+}
+
+model TestResponseLine {
+  id               String @id @default(uuid()) @db.Uuid
+  test_response_id String @db.Uuid
+  line_number      Int
+
+  test_request_line_id String @db.Uuid
+
+  /// ⚠⚠ THE RESULT IS REFERENCED, NOT COPIED. `LearnTestAttempt` is the system of
+  /// record for a score; a copy creates a second score that can disagree, and the
+  /// PROVIDER'S OWN RECORD MUST WIN.
+  ///
+  /// ⚠⚠ AND IT IS WHAT MAKES A PASS THE PROVIDER'S PROPERTY. A second buyer
+  /// requesting the same test points at THE EXISTING ATTEMPT — it does not force
+  /// a retake — or the test becomes a toll gate rather than a credential.
+  learn_test_attempt_id String? @db.Uuid
+
+  /// ⚠ DENORMALISED FOR THE SHORTLIST GRID ONLY, written FROM the attempt at
+  /// completion, NEVER TYPED. `copyResultFromAttempt` is the only writer and
+  /// `check:sourcing` mutation-tests that it refuses a hand-supplied score.
+  score        Int?
+  passed       Boolean?
+  completed_at DateTime?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  testResponse TestResponse @relation(fields: [test_response_id], references: [id], onDelete: Cascade)
+
+  @@unique([test_response_id, line_number])
+  @@index([test_response_id])
+  @@index([learn_test_attempt_id])
+  @@map("test_response_lines")
+}
+
+/**
+ * ─── WS-3 · INTERVIEW ───────────────────────────────────────────────────────
+ * ⚠ PROVIDER-PROPOSES / REQUESTER-PICKS — Scott: *"request interview times from
+ * providers and then display them to requester."* That is the OPPOSITE of
+ * PeopleSoft sPro, where the coordinator sets the time, and it is right for a
+ * marketplace with no coordinator. ⚠⚠ IT IS ALSO WHY THE SLOT IS A ROW.
+ */
+
+enum InterviewStatus {
+  REQUESTED
+  SLOTS_OFFERED
+  SCHEDULED
+  COMPLETED
+  DECLINED
+  CANCELLED
+}
+
+enum InterviewMode {
+  VIDEO
+  PHONE
+  ONSITE
+}
+
+enum InterviewRating {
+  EXCELLENT
+  GOOD
+  FAIR
+  POOR
+  NONE
+}
+
+model InterviewRequest {
+  id             String @id @default(uuid()) @db.Uuid
+  request_number String @unique
+
+  work_request_id      String  @db.Uuid
+  work_request_line_id String? @db.Uuid
+
+  provider_person_id     String @db.Uuid
+  requested_by_person_id String @db.Uuid
+
+  status           InterviewStatus @default(REQUESTED)
+  mode             InterviewMode?
+  duration_minutes Int             @default(30)
+
+  /// The slot the requester picked — an `InterviewResponseLine.id`.
+  confirmed_line_id String?   @db.Uuid
+  completed_at      DateTime?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  /// ⚠⚠ THE NOTES HANG OFF THE **REQUEST**, WHICH IS THE BUYER'S DOCUMENT, AND
+  /// DELIBERATELY NOT OFF THE RESPONSE. The response is what a provider reads
+  /// back; giving it a `notes` relation would put a traversal from the provider's
+  /// own row to the buyer's private assessment one `include` away. There is no
+  /// such edge, and `check:sourcing` fails if one is added.
+  notes    InterviewNote[]
+  response InterviewResponse?
+
+  @@index([work_request_id])
+  @@index([provider_person_id])
+  @@index([status])
+  @@map("interview_requests")
+}
+
+model InterviewResponse {
+  id                   String @id @default(uuid()) @db.Uuid
+  interview_request_id String @unique @db.Uuid
+  provider_person_id   String @db.Uuid
+
+  submitted_at DateTime?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  lines            InterviewResponseLine[]
+  interviewRequest InterviewRequest        @relation(fields: [interview_request_id], references: [id], onDelete: Cascade)
+
+  @@index([provider_person_id])
+  @@map("interview_responses")
+}
+
+/// ⚠ A SLOT.
+model InterviewResponseLine {
+  id                    String @id @default(uuid()) @db.Uuid
+  interview_response_id String @db.Uuid
+  line_number           Int
+
+  /// ⚠⚠ UTC **AND** THE PROPOSER'S ZONE. TWO PARTIES, TWO TIMEZONES — the
+  /// commonest defect in every scheduling feature ever shipped. The instant alone
+  /// cannot render *"3pm your time on Tuesday"* back to the person who offered
+  /// it, and cannot survive a DST boundary between the offer and the interview.
+  /// `time_zone` is NOT NULL for exactly that reason, and it is an IANA name
+  /// (`America/New_York`), never an offset — an offset is a fact about one
+  /// instant, not about a place.
+  starts_at DateTime
+  time_zone String
+
+  created_at DateTime @default(now())
+
+  interviewResponse InterviewResponse @relation(fields: [interview_response_id], references: [id], onDelete: Cascade)
+
+  @@unique([interview_response_id, line_number])
+  @@index([interview_response_id])
+  @@map("interview_response_lines")
+}
+
+model InterviewNote {
+  id                   String @id @default(uuid()) @db.Uuid
+  interview_request_id String @db.Uuid
+  author_person_id     String @db.Uuid
+
+  /// ⚠⚠ PRIVATE TO THE BUYER SIDE. NEVER RENDERED TO THE PROVIDER, EVER. A
+  /// candidate reading *"weak on OTBI"* is the failure mode, and it is not a
+  /// styling accident — it is one careless `include`. Three things stop it:
+  /// the relation exists only on `InterviewRequest`; `providerFacingInterview()`
+  /// in `lib/sourcing.ts` is the only projection a provider surface may use; and
+  /// `check:sourcing` asserts BOTH structurally.
+  body   String
+  rating InterviewRating?
+
+  created_at DateTime @default(now())
+
+  interviewRequest InterviewRequest @relation(fields: [interview_request_id], references: [id], onDelete: Cascade)
+
+  @@index([interview_request_id])
+  @@map("interview_notes")
+}
+
+/**
+ * ─── WS-4 · SHORTLIST ───────────────────────────────────────────────────────
+ * ⚠ A DOCUMENT, NOT A FLAG. Scott's journey doc has `SHORTLIST_HDR` /
+ * `SHORTLIST_LN`, between *"Reviews Bids"* and *"Selects Final Provider."* A
+ * boolean on a bid cannot be ranked, cannot be re-cut per line, and cannot say
+ * WHO shortlisted or WHEN.
+ */
+
+model Shortlist {
+  id               String @id @default(uuid()) @db.Uuid
+  shortlist_number String @unique
+
+  work_request_id      String  @db.Uuid
+  work_request_line_id String? @db.Uuid
+
+  created_by_person_id String @db.Uuid
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  lines ShortlistLine[]
+
+  @@index([work_request_id])
+  @@map("shortlists")
+}
+
+model ShortlistLine {
+  id           String @id @default(uuid()) @db.Uuid
+  shortlist_id String @db.Uuid
+
+  /// ⚠⚠ THE RANK. A SHORTLIST IS ORDERED — that is most of what makes it a
+  /// shortlist rather than a set. The `@@unique` below is what stops two
+  /// providers sharing rank 1, which is the way an ordering silently stops being
+  /// one.
+  line_number Int
+
+  provider_person_id String  @db.Uuid
+  provider_bid_id    String? @db.Uuid
+  note               String?
+
+  created_at DateTime @default(now())
+
+  shortlist Shortlist @relation(fields: [shortlist_id], references: [id], onDelete: Cascade)
+
+  @@unique([shortlist_id, line_number])
+  @@unique([shortlist_id, provider_person_id])
+  @@index([shortlist_id])
+  @@index([provider_person_id])
+  @@map("shortlist_lines")
+}
