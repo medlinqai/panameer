@@ -329,7 +329,30 @@ export default function RequesterStepsPage() {
     onBack: back,
     canBack: idx > 0,
     secondaryLabel: "Finish later",
-    onSecondary: () => router.push("/dashboard"),
+    /*
+      ⚠⚠ IT NOW SENDS THE WAY BACK (`P2-J1.1-E034`). ⚠ SUPERSEDED, quoted not
+      deleted: `onSecondary: () => router.push("/dashboard")` — the whole button.
+      It sent NOTHING, so "finish later" meant "hope you remember".
+
+      SCOTT, 2026-09-06: *"These should be two separate emails. One is start your
+      registration...the other is finish the registration you started (or saved
+      for later)."* This is the click that sends the second one.
+
+      ⚠ FIRE-AND-LEAVE, DELIBERATELY. The navigation does NOT wait on the send:
+      the button's job is to get out of the wizard, and making that wait on an
+      email round-trip would make leaving feel broken when mail is slow. The
+      route is owner-scoped and idempotent, so nothing is lost by not awaiting.
+      ⚠ A failed send must not trap the person here either — the `catch` is
+      silent ON PURPOSE, and the route already logs the real reason.
+      ⚠ THE DESTINATION IS UNCHANGED. `/dashboard` is where LEAVING goes; the
+      EMAIL's button is what returns them to the wizard at their saved step.
+    */
+    onSecondary: () => {
+      void fetch("/api/onboarding/requester/finish-later", { method: "POST" }).catch(
+        () => {}
+      );
+      router.push("/dashboard");
+    },
   };
   const nextLabel = `Next: ${LABELS[REQUESTER_STEPS[idx + 1] ?? "review"]}`;
 

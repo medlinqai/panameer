@@ -131,15 +131,49 @@ export function chips(items: string[]): string {
  * knows `to`.
  */
 function footer(year: number): string {
+  /*
+    ── ⚠⚠ FOOTER LINKS LOOK LIKE LINKS (`P2-J1.1-E017`) ────────────────────────
+
+    ⚠ SUPERSEDED, quoted not deleted:
+      `style="color:${EMAIL_COLORS.muted};text-decoration:none;"`
+    — grey (#8a8199) with the underline EXPLICITLY REMOVED.
+
+    SCOTT, on his own received mail: *"then at least make a pink hyperlink. that
+    way i know they re links...not just dead text."* His diagnosis was exactly
+    right, and the code was worse than he thought: these were never dead text,
+    they were LIVE LINKS WEARING A DISGUISE.
+
+    ⚠⚠ THE UNDERLINE IS RESTORED **AS WELL AS** THE COLOUR, not instead of it.
+    Colour as the sole affordance fails colour-blind readers, and grey→magenta is
+    a HUE shift more than a contrast one — the two most common forms of colour
+    blindness are exactly the ones that flatten it. The underline is the
+    affordance that survives; the colour is what makes it noticeable.
+
+    ⚠ NO ICONS, AND THIS IS EVIDENCE-BASED. Scott's received email had its images
+    BLOCKED BY OUTLOOK and the Panameer wordmark rendered as an empty box. Today
+    this footer degrades to readable words; as icons it would degrade to nothing.
+
+    ⚠⚠ `primaryButton`'s *"at most one magenta call to action per email"* IS NOT
+    BROKEN BY THIS, AND THE READING IS DELIBERATE RATHER THAN CONVENIENT. That
+    sentence is `primaryButton`'s OWN docblock, and this module's header frames
+    the rule as being about SOLID FILLS — *"a second action uses `ghostButton`
+    … two solid buttons is not emphasis, it is the absence of a decision."* It
+    governs which control is THE action, not what colour a text link may be.
+    There is still exactly one filled magenta button per email.
+  */
   const link = (href: string, label: string) =>
-    `<a href="${href}" style="color:${EMAIL_COLORS.muted};text-decoration:none;">${label}</a>`;
+    `<a href="${href}" style="color:${EMAIL_COLORS.magenta};text-decoration:underline;">${label}</a>`;
   const dot = `<span style="color:${EMAIL_COLORS.line};"> · </span>`;
 
   return `<tr><td style="padding:28px 40px 32px;">
     <hr style="border:0;border-top:1px solid ${EMAIL_COLORS.line};margin:0 0 18px;">
     <div style="font-size:16px;font-weight:800;letter-spacing:-.4px;color:${EMAIL_COLORS.ink};margin:0 0 10px;">Panameer</div>
     <p style="font-size:12px;line-height:1.9;color:${EMAIL_COLORS.muted};margin:0 0 10px;">
-      ${link(PANAMEER_URL, "panameer.com")}${dot}${link(YOUTUBE_URL, "YouTube")}${dot}${link(
+      ${/* ⚠ LABEL ONLY (`P2-J1.1-E016`). The href stays `PANAMEER_URL`
+            (https://panameer.com); `lib/host.ts` allowlists BOTH forms, so
+            display and destination may differ safely. ⚠ The plain-text footer
+            below is UNCHANGED — a bare URL is correct for text/plain. */""}
+      ${link(PANAMEER_URL, "www.panameer.com")}${dot}${link(YOUTUBE_URL, "YouTube")}${dot}${link(
         LINKEDIN_URL,
         "LinkedIn"
       )}${dot}${link(INSTAGRAM_URL, "Instagram")}<br>

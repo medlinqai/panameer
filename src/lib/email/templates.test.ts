@@ -21,6 +21,7 @@ import { paymentMethodAddedTemplate } from "@/lib/email/templates/payment-method
 import { identityVerifiedTemplate } from "@/lib/email/templates/identity-verified";
 import { identityVerificationRequestTemplate } from "@/lib/email/templates/identity-verification-request";
 import { verifyEmailTemplate } from "@/lib/email/templates/verify-email";
+import { finishLaterTemplate } from "@/lib/email/templates/finish-later";
 import { inviteProviderTemplate } from "@/lib/email/templates/invite-provider";
 import { EMAIL_COLORS } from "@/lib/email/shell";
 /* ⚠ `P1-ALL-E371` WS-A2 — asserting the capture transport's default. */
@@ -112,6 +113,31 @@ const SUITE: { name: string; out: Rendered; inSuite: boolean }[] = [
     inSuite: false,
     out: verifyEmailTemplate({ firstName: "scott", verifyUrl: "https://panameer.com/v/x" }),
   },
+  /*
+    ⚠⚠ BOTH VARIANTS ARE IN THE SUITE, AND THAT IS THE POINT (`P2-J1.1-E034`).
+    `E015` existed because the buyer subject was fixed and the provider one was
+    not. Only the buyer half of THIS email is wired today — `Finish later` exists
+    only on the requester wizard — so the provider variant would be the exact
+    half that rots unnoticed. Asserting both is what stops that.
+  */
+  {
+    name: "finish-later (buyer)",
+    inSuite: false,
+    out: finishLaterTemplate({
+      firstName: "layne",
+      resumeUrl: "https://panameer.com/join/requester/steps",
+      audience: "buyer",
+    }),
+  },
+  {
+    name: "finish-later (provider)",
+    inSuite: false,
+    out: finishLaterTemplate({
+      firstName: "layne",
+      resumeUrl: "https://panameer.com/join/requester/steps",
+      audience: "seller",
+    }),
+  },
   {
     name: "invite-provider",
     inSuite: false,
@@ -122,6 +148,73 @@ const SUITE: { name: string; out: Rendered; inSuite: boolean }[] = [
     }),
   },
 ];
+
+/* ---- `P2-J1.1-E034` — the two Finish Later subjects are DIFFERENT and TITLE CASE --
+   ⚠ The failure this guards is `E015`'s: one variant corrected, the other left
+   behind. Asserting they DIFFER is what catches a copy-paste that ships the same
+   subject twice, which no per-variant assertion would notice. */
+{
+  const buyerOut = finishLaterTemplate({
+    firstName: "layne",
+    resumeUrl: "https://panameer.com/join/requester/steps",
+    audience: "buyer",
+  });
+  const sellerOut = finishLaterTemplate({
+    firstName: "layne",
+    resumeUrl: "https://panameer.com/join/requester/steps",
+    audience: "seller",
+  });
+  ok(
+    "finish-later: the buyer subject is Scott's pattern, Title Case",
+    buyerOut.subject === "New Service Buyer — Continue Your Registration on Panameer"
+  );
+  ok(
+    "finish-later: the provider subject is Scott's words, verbatim",
+    sellerOut.subject === "New Service Provider — Continue Your Registration on Panameer"
+  );
+  ok("finish-later: the two subjects differ", buyerOut.subject !== sellerOut.subject);
+  ok(
+    "finish-later: the heading is Scott's copy, with the name",
+    buyerOut.html.includes("Continue your registration, Layne") &&
+      buyerOut.text.includes("Continue your registration, Layne")
+  );
+  ok(
+    "finish-later: the button is Scott's label",
+    buyerOut.html.includes("Continue My Registration")
+  );
+  ok(
+    "finish-later: the body carries Scott's phrase",
+    buyerOut.html.includes("continue the registration you started") &&
+      buyerOut.text.includes("continue the registration you started")
+  );
+  /* ⚠⚠ IT MUST LAND ON THE WIZARD, NOT `/dashboard` — a link to the dashboard
+     would make this email a worse version of the button that sent it. */
+  ok(
+    "finish-later: the button lands on the wizard, never /dashboard",
+    buyerOut.html.includes("/join/requester/steps") &&
+      !buyerOut.html.includes('href="https://panameer.com/dashboard"')
+  );
+}
+
+/* ---- `P2-J1.1-E015`/`E018` — the verification pair --------------------------- */
+{
+  const b = verifyEmailTemplate({ firstName: "scott", verifyUrl: "https://x/v", audience: "buyer" });
+  const s2 = verifyEmailTemplate({ firstName: "scott", verifyUrl: "https://x/v", audience: "seller" });
+  ok("verify-email: buyer subject is Title Case", b.subject === "New Service Buyer — Verify Your Email to Continue on Panameer");
+  ok("verify-email: provider subject is Title Case", s2.subject === "New Service Provider — Verify Your Email to Continue on Panameer");
+  /* ⚠⚠ E018 LIVED IN TWO PLACES — the HTML clause and a separately-worded plain
+     text line. Asserting only the HTML is how text/plain keeps a dropped promise. */
+  ok(
+    "verify-email: the buyer HTML no longer promises the finish line",
+    b.html.includes("complete your registration") && !b.html.includes("start finding the talent you need")
+  );
+  ok(
+    "verify-email: and neither does the plain text",
+    b.text.includes("complete your registration") && !b.text.includes("start finding the talent you need")
+  );
+  ok("verify-email: the provider clause is unchanged", s2.html.includes("start building your provider profile"));
+  ok("verify-email: the heading is unchanged", b.html.includes("Confirm your email"));
+}
 
 /* ---- every template, every rule ------------------------------------------ */
 for (const { name, out, inSuite } of SUITE) {
