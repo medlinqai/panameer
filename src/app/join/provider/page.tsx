@@ -77,6 +77,7 @@ import {
   bpsToPercentLabel,
   rateBreakdown,
   displayFirstName,
+  DEFAULT_SERVICE_FEE_BPS,
 } from "@/lib/display";
 import { PhoneField } from "@/components/onboarding/PhoneField";
 import { formatPhone, isPhoneComplete } from "@/lib/phone";
@@ -442,7 +443,8 @@ const emptyProfile = (): Profile => ({
   hourlyRateCents: null,
   rateMinCents: null,
   rateMaxCents: null,
-  serviceFeeBps: 1000,
+  /* ⚠ ONE CONSTANT, NOT A LITERAL (`P1-J4-E388`) — see its docblock. */
+  serviceFeeBps: DEFAULT_SERVICE_FEE_BPS,
   photoUrl: null,
   firstName: "",
   lastName: "",
@@ -660,7 +662,7 @@ export default function JoinProviderPage() {
       hourlyRateCents: p.hourlyRateCents ?? null,
       rateMinCents: p.rateMinCents ?? null,
       rateMaxCents: p.rateMaxCents ?? null,
-      serviceFeeBps: p.serviceFeeBps ?? 1000,
+      serviceFeeBps: p.serviceFeeBps ?? DEFAULT_SERVICE_FEE_BPS,
       photoUrl: p.photoUrl ?? null,
       firstName: p.firstName ?? "",
       lastName: p.lastName ?? "",

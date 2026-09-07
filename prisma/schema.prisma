@@ -2501,11 +2501,27 @@ model WorkRequest {
   /// knows "3-6 months" but not the dates can still answer.
   start_date          DateTime?
   end_date            DateTime?
-  /// RESERVED FOR THE ERP BRIDGE. UNSPSC is the classification punch-out and
-  /// cXML carry, and it will be derived from the catalog selection rather than
-  /// typed. Null for now — reserving the column keeps the web-created request
-  /// shaped like the one an ERP will send.
-  unspsc_code         String?
+  /// ── ⚠⚠ SUPERSEDED — UNSPSC MOVED TO THE LINE (`P1-J4-E388` WS-1) ─────────
+  ///
+  /// ⚠ COMMENTED OUT, NOT DELETED, and its own reasoning is quoted because it
+  /// was RIGHT ABOUT WHY AND WRONG ABOUT WHERE:
+  ///
+  ///   "RESERVED FOR THE ERP BRIDGE. UNSPSC is the classification punch-out and
+  ///    cXML carry, and it will be derived from the catalog selection rather
+  ///    than typed. Null for now — reserving the column keeps the web-created
+  ///    request shaped like the one an ERP will send."
+  ///
+  /// ⚠⚠ cXML CARRIES UNSPSC **PER LINE**, not per document — a requisition for a
+  /// P2P consultant and a training package classifies as two different things,
+  /// and one header column cannot say so. It now lives on `WorkRequestLine`.
+  /// ⚠ The column is left here, commented, so the next reader sees the move
+  /// rather than re-adding it. `db push` drops it from the table.
+  ///
+  /// unspsc_code         String?
+  ///
+  /// ⚠ `p_account_id` ABOVE STAYS ON THE HEADER — it is Oracle's
+  /// `RequisitioningBU`, true of every line by construction.
+  lines               WorkRequestLine[]
   status              WorkRequestStatus    @default(DRAFT)
   posted_at           DateTime?
 
@@ -4113,4 +4129,533 @@ model TicketMessage {
 
   @@index([ticket_id])
   @@map("ticket_messages")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// THE TRANSACTION SPINE (`P1-J4-E388`) — WS-1: the catalog identifier and the
+// requisition line.
+//
+// ⚠⚠ EVERY DOCUMENT IN THIS SPINE IS HEADER + LINES. A header carries what is
+// true of every line (dates, parties, currency, status, document number); a LINE
+// carries UNSPSC, UOM, quantity, price and the part number. LINES ARE WHAT cXML
+// EXCHANGES AND WHAT AN ERP PRICES, RECEIPTS AND PAYS. A header-only record
+// cannot be given lines later without rewriting every screen that reads it —
+// which is why this is not deferred.
+//
+// ⚠ R1 BUILDS THE COLUMNS; R2 BUILDS THE CONNECTION. There is no cXML parsing,
+// no punchout endpoint and no ERS reconciliation here. A nullable column is
+// honest; a stub that pretends to talk to an ERP is the `E034` shape.
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// ⚠⚠ THE SWITCH THAT RUNS THE WHOLE SPINE, AND IT IS NOT A PANAMEER INVENTION.
+/// Oracle's cXML punchout list requires a quantity on every line *"except for
+/// amount-based service lines"* — the carve-out is in the STANDARD and this enum
+/// names it.
+///
+///   RATE   → uom + quantity + unit_price_cents present, amount_cents NULL.
+///            Settles as a timesheet: MANY PARTIAL DRAWS until the quantity is
+///            exhausted.
+///   AMOUNT → amount_cents present, the other three NULL.
+///            ⚠⚠ DRAWS ONCE, IN FULL. A line already drawn cannot be drawn again.
+///
+/// ⚠⚠ "LUMP SUM vs MILESTONES" IS NOT A STORED FLAG — IT IS THE LINE COUNT. One
+/// AMOUNT line is a lump sum; several are milestones. There is deliberately NO
+/// settlement-method enum and NO `Milestone` model, and `check:transaction-spine`
+/// asserts their ABSENCE, because a later "improvement" will try to add them.
+enum LineBasis {
+  RATE
+  AMOUNT
+}
+
+enum SupplierPartKind {
+  PROVIDER
+  PACKAGE
+}
+
+/// ── ⚠⚠ ONE IDENTIFIER NAMESPACE OVER TWO SUBJECTS ──────────────────────────
+///
+/// SCOTT: the `SupplierPartID` is the unique id of the service provider OR the
+/// service product. ⚠ SO ONE TABLE OWNS THE NAMESPACE — a prefix convention
+/// enforces nothing and is not a foreign key.
+///
+/// ⚠⚠ THIS IS **NOT** `ServiceCatalog` AND MUST NOT HANG OFF IT.
+/// `ServiceCatalog` already exists and is the TAXONOMY ROOT — it owns `Pillar[]`,
+/// `Skill[]`, `SkillTag[]` and `Specialization[]`. A `SupplierPart` CLASSIFIES
+/// INTO that tree (via `unspsc_code` and the skill/role ids on the line); it is
+/// not part of it. Naming this `CatalogItem` would have merged two different
+/// things under one word.
+model SupplierPart {
+  id String @id @default(uuid()) @db.Uuid
+
+  /// ⚠⚠ THIS IS THE cXML `SupplierPartID`. It reaches the buyer's ERP and is
+  /// stored there as THEIR supplier item, FOREVER — on their requisitions, their
+  /// POs, their receipts and their invoices.
+  /// ⚠⚠ IT IS IMMUTABLE AND IS NEVER REUSED. Re-pointing one at a different
+  /// provider silently re-assigns work inside somebody else's system, and no
+  /// Panameer screen would show it. DEACTIVATE (`active = false`); NEVER RECYCLE.
+  part_number String @unique
+
+  kind SupplierPartKind
+
+  /// ⚠⚠ EXACTLY ONE IS SET, AND `check:transaction-spine` ASSERTS IT IN BOTH
+  /// DIRECTIONS — neither both nor neither. `@unique` on each so one provider and
+  /// one package can never mint two part numbers.
+  provider_profile_id String? @unique @db.Uuid
+  package_id          String? @unique @db.Uuid
+
+  /// ── the cXML line, resolved ONCE, here ────────────────────────────────────
+  display_name String
+  description  String
+  /// ⚠ Per-line in cXML, DEFAULTED from here. Nobody types a UNSPSC.
+  unspsc_code  String?
+  default_basis       LineBasis
+  /// HUR | DAY | WEE | MON | EA — the UN/CEFACT codes cXML expects.
+  default_uom         String?
+  default_price_cents Int?
+  currency            String  @default("USD")
+  /// ⚠ THE ONLY WAY A PART LEAVES CIRCULATION. See `part_number`.
+  active              Boolean @default(true)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@index([kind])
+  @@index([active])
+  @@map("supplier_parts")
+}
+
+enum WorkRequestLineStatus {
+  DRAFT
+  SOURCING
+  ASSIGNED
+  ORDERED
+  CANCELLED
+}
+
+/// The requisition line — ⚠⚠ THIS IS THE cXML SURFACE.
+model WorkRequestLine {
+  id              String @id @default(uuid()) @db.Uuid
+  work_request_id String @db.Uuid
+  line_number     Int
+
+  basis       LineBasis
+  description String
+  /// ⚠⚠ PER LINE. The header column is SUPERSEDED — see `WorkRequest`.
+  unspsc_code String?
+  currency    String @default("USD")
+
+  /// ⚠ RATE lines only. AMOUNT lines leave these three null and set
+  /// `amount_cents`; `check:transaction-spine` asserts both directions.
+  uom              String?
+  quantity         Decimal?
+  unit_price_cents Int?
+  amount_cents     Int?
+
+  supplier_part_id String? @db.Uuid
+
+  /// ⚠⚠ WRITTEN INTO `SupplierPartAuxiliaryID` ON THE WAY OUT AND MATCHED ON THE
+  /// WAY BACK. It is the ONLY field proven to survive the punchout round trip:
+  /// `BuyerCookie` and line-level `Extrinsic` both do NOT come back on the
+  /// OrderRequest, so neither can carry the link. Opaque and unguessable.
+  /// ⚠ UNIQUE — it is the join key on the return leg.
+  punchout_line_ref String? @unique
+
+  role_type_id String? @db.Uuid
+  skill_id     String? @db.Uuid
+
+  /// ⚠ NAMED AT THE LINE, because ONE REQUEST CAN SOURCE SEVERAL PEOPLE — which
+  /// is also what makes the work-order fan-out (WS-2) group by provider.
+  provider_person_id String? @db.Uuid
+
+  positions        Int       @default(1)
+  service_start    DateTime?
+  service_end      DateTime?
+  note_to_supplier String?
+
+  status WorkRequestLineStatus @default(DRAFT)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  workRequest WorkRequest @relation(fields: [work_request_id], references: [id], onDelete: Cascade)
+
+  @@unique([work_request_id, line_number])
+  @@index([work_request_id])
+  @@index([provider_person_id])
+  @@map("work_request_lines")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// WS-2 · THE WORK ORDER = THE SOW
+//
+// ⚠⚠ `E380` DOCTRINE, ALREADY SETTLED: ToS = MSA, WORK ORDER = SOW, and the word
+// "contract" is retired. ONE MSA PER COMPANY; ONE SOW PER PERSON.
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// ⚠⚠ STORED, NOT DERIVED. A null `work_request_id` could ALSO mean data loss;
+/// an explicit enum cannot be mistaken for one.
+///   INDIRECT — sourced through Panameer, has a work request behind it.
+///   DIRECT   — Scott: *"clients bring us contracts and we just open the WO and
+///              let them use the settlement backend."* No work request exists.
+enum WorkOrderOrigin {
+  DIRECT
+  INDIRECT
+}
+
+enum WorkOrderStatus {
+  DRAFT
+  ISSUED
+  ACCEPTED
+  RELEASED
+  ACTIVE
+  CLOSED
+  CANCELLED
+}
+
+enum WorkOrderLineStatus {
+  OPEN
+  DRAWN
+  CLOSED
+  CANCELLED
+}
+
+model WorkOrder {
+  id           String @id @default(uuid()) @db.Uuid
+  order_number String @unique
+
+  origin WorkOrderOrigin
+
+  /// ⚠ INDIRECT has one; DIRECT does not.
+  work_request_id String? @db.Uuid
+
+  buyer_person_id String @db.Uuid
+  /// ⚠ The requisitioning BU, carried down from the request header.
+  p_account_id    String @db.Uuid
+
+  /// ⚠⚠ REQUIRED. A WORK ORDER IS THE CONTRACT WITH **ONE** PROVIDER. Two
+  /// providers cannot share one: they accept separately and are paid separately.
+  /// This column is what makes WS-2's fan-out unavoidable rather than optional.
+  provider_person_id String @db.Uuid
+
+  currency String          @default("USD")
+  status   WorkOrderStatus @default(DRAFT)
+
+  /// ── ⚠⚠ ACTIVATION IS TWO-SIDED, AND ONE FLAG IS NOT ENOUGH ────────────────
+  /// The journey doc: "Provider Accepts New Work Order" → "Buyer Releases
+  /// Accepted Work Order" → live. A single `active` boolean cannot say WHICH
+  /// side has acted, so it cannot tell "waiting on the provider" from "waiting
+  /// on the buyer" — and those need different screens and different chasing.
+  /// ⚠ A settlement may only be raised against a RELEASED order (WS-3).
+  provider_accepted_at DateTime?
+  buyer_released_at    DateTime?
+
+  period_start        DateTime?
+  period_end          DateTime?
+  /// ⚠ Caps the WHOLE order. Enforced across all settlements against it (WS-3).
+  not_to_exceed_cents Int?
+
+  /// ⚠ Which MSA version governs this SOW (`E380`).
+  terms_version String?
+
+  /// ── ⚠⚠ A SNAPSHOT, NOT A SECOND FEE MODEL, AND DELIBERATELY WITH NO DEFAULT ─
+  ///
+  /// THE FEE ALREADY EXISTS: `ProviderProfile.service_fee_bps Int @default(1000)`
+  /// above, `rateBreakdown()` in `lib/display.ts` already does this arithmetic,
+  /// and the provider onboarding screen already renders "Service fee (10%)" and
+  /// "the estimated amount you'll receive". This is not a new one.
+  ///
+  /// ⚠⚠ NO `@default` HERE ON PURPOSE. A default would let an order be written
+  /// with an INVENTED rate when the copy was forgotten, and it would look
+  /// correct. The value must be COPIED from the provider's profile at order
+  /// time, so an order AGREED at one rate KEEPS THAT RATE FOR LIFE even after
+  /// the provider's current rate changes. Snapshot, never lookup.
+  fee_bps Int
+
+  /// ⚠⚠ THE BUYER'S PO NUMBER, AND IT IS **NOT UNIQUE** — SEE THE FAN-OUT NOTE.
+  /// The buyer's ERP sees ONE supplier (Panameer), so ONE PO FANS OUT INTO N
+  /// WORK ORDERS. A unique index here would reject the second provider on a
+  /// two-provider PO and look exactly like duplicate detection working
+  /// correctly. `check:transaction-spine` asserts this constraint's ABSENCE.
+  external_ref String?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  lines WorkOrderLine[]
+
+  /// ⚠ NO SCHEDULES AND NO DISTRIBUTIONS. Oracle's PO has LINE → SCHEDULE →
+  /// DISTRIBUTION; those are DELIVERY and ACCOUNTING splits and they belong to
+  /// the buyer, not to Panameer. WS-5 asserts their absence.
+  @@index([provider_person_id])
+  @@index([buyer_person_id])
+  @@index([status])
+  @@index([external_ref])
+  @@map("work_orders")
+}
+
+model WorkOrderLine {
+  id            String @id @default(uuid()) @db.Uuid
+  work_order_id String @db.Uuid
+  line_number   Int
+
+  work_request_line_id String? @db.Uuid
+
+  basis       LineBasis
+  description String
+  unspsc_code String?
+
+  uom      String?
+  quantity Decimal?
+  /// ⚠⚠ THE TOTAL RATE — WHAT THE BUYER PAYS. The provider receives this LESS
+  /// `fee_bps`. THERE IS NO SECOND PRICE COLUMN: the fee is transparent and is
+  /// computed, never stored as a shadow rate. A "provider price" column would be
+  /// a second source of truth for what someone is owed.
+  unit_price_cents Int?
+  amount_cents     Int?
+
+  supplier_part_id String? @db.Uuid
+
+  /// ⚠⚠ THE BUYER'S PO **LINE** NUMBER. ERS posts a receipt against a PO LINE,
+  /// not a PO — a settlement that cannot name the line cannot become a receipt,
+  /// and the invoice it would have priced never gets created.
+  external_line_ref String?
+
+  service_start DateTime?
+  service_end   DateTime?
+
+  /// ⚠ MAINTAINED BY SETTLEMENT, NEVER TYPED. These are what rule 3 reads to
+  /// stop a RATE line over-drawing and an AMOUNT line drawing twice.
+  drawn_quantity     Decimal? @default(0)
+  drawn_amount_cents Int?     @default(0)
+
+  status WorkOrderLineStatus @default(OPEN)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  workOrder WorkOrder @relation(fields: [work_order_id], references: [id], onDelete: Cascade)
+
+  @@unique([work_order_id, line_number])
+  @@index([work_order_id])
+  @@map("work_order_lines")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// WS-3 · THE SETTLEMENT REQUEST = cXML's `ServiceEntryRequest` (a SERVICE
+// SHEET), **NOT AN INVOICE**.
+//
+// It records services against a services PO, references the LINE it draws,
+// carries a period, and lands as a RECEIPT on the ERP side.
+//
+// ⚠ TIMESHEET vs PAYMENT-REQUEST IS A **RENDERING** DIFFERENCE, NOT A SCHEMA
+// ONE. A RATE line renders as a day-by-day grid; an AMOUNT line as one row. ONE
+// MODEL — two models would let the same draw be filed twice, once per screen.
+// ═══════════════════════════════════════════════════════════════════════════
+
+enum SettlementStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+  PAID
+}
+
+model SettlementRequest {
+  id                String @id @default(uuid()) @db.Uuid
+  settlement_number String @unique
+
+  work_order_id      String @db.Uuid
+  provider_person_id String @db.Uuid
+
+  period_start DateTime
+  period_end   DateTime
+
+  currency String           @default("USD")
+  status   SettlementStatus @default(DRAFT)
+
+  submitted_at         DateTime?
+  decided_at           DateTime?
+  decided_by_person_id String?   @db.Uuid
+  /// ⚠ REQUIRED ON REJECT. A rejection with no stated reason is unanswerable —
+  /// the provider cannot fix what nobody named.
+  decision_note        String?
+
+  external_ref String?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  lines SettlementLine[]
+
+  @@index([work_order_id])
+  @@index([provider_person_id])
+  @@index([status])
+  @@map("settlement_requests")
+}
+
+model SettlementLine {
+  id                    String @id @default(uuid()) @db.Uuid
+  settlement_request_id String @db.Uuid
+  line_number           Int
+
+  /// ⚠⚠ NOT NULLABLE. Scott: *"the settlement request just goes against a
+  /// line."* A settlement with no order line behind it cannot be priced, cannot
+  /// become a receipt, and cannot be traced to what was ordered.
+  work_order_line_id String @db.Uuid
+
+  basis       LineBasis
+  description String?
+
+  uom      String?
+  quantity Decimal?
+
+  /// ── ⚠⚠ COPIED FROM THE ORDER LINE. NEVER TYPED, NEVER EDITABLE ────────────
+  ///
+  /// ERS prices the invoice FROM THE PO and takes only QUANTITY from the
+  /// receipt. So a settlement carrying a different rate does NOT produce a
+  /// disputed invoice — it produces a SILENTLY WRONG one at the PO's price, and
+  /// the provider is short-paid with nothing on either system showing why.
+  /// The only assignment in the codebase reads the order line; WS-5 asserts that
+  /// structurally, because a comment cannot stop a future edit.
+  unit_price_cents Int?
+  amount_cents     Int?
+
+  service_date DateTime?
+  note         String?
+
+  created_at DateTime @default(now())
+
+  settlementRequest SettlementRequest @relation(fields: [settlement_request_id], references: [id], onDelete: Cascade)
+
+  @@unique([settlement_request_id, line_number])
+  @@index([settlement_request_id])
+  @@index([work_order_line_id])
+  @@map("settlement_lines")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// WS-4 · CASH IN (`Payment`) AND CASH OUT (`ProviderPayout`)
+//
+// ⚠⚠ PANAMEER NEVER SENDS THE BUYER AN INVOICE. Under ERS the buyer's system
+// creates it, from THEIR PO price × the receipted quantity. There is deliberately
+// NO buyer-facing invoice model here, and `check:transaction-spine` asserts its
+// ABSENCE — building one would put Panameer's number in competition with the
+// ERP's, and the ERP's is the one that pays.
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// ⚠⚠ UNMATCHED IS A FIRST-CLASS STATE, NOT AN ERROR. Cash arrives before anyone
+/// knows what it is for; a model that cannot hold un-allocated money forces
+/// someone to guess an allocation to make the record savable.
+enum PaymentStatus {
+  UNMATCHED
+  PARTIALLY_ALLOCATED
+  ALLOCATED
+}
+
+enum PayoutStatus {
+  PENDING
+  RELEASABLE
+  PAID
+  FAILED
+}
+
+/// CASH RECEIVED — ⚠ RECORDED, NOT CREATED BY US.
+model Payment {
+  id             String @id @default(uuid()) @db.Uuid
+  payment_number String @unique
+
+  p_account_id String  @db.Uuid
+  /// The buyer's payment reference / remittance id.
+  external_ref String?
+
+  received_at  DateTime
+  currency     String   @default("USD")
+  amount_cents Int
+
+  status PaymentStatus @default(UNMATCHED)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  lines PaymentLine[]
+
+  @@index([p_account_id])
+  @@index([status])
+  @@map("payments")
+}
+
+model PaymentLine {
+  id          String @id @default(uuid()) @db.Uuid
+  payment_id  String @db.Uuid
+  line_number Int
+
+  settlement_request_id String @db.Uuid
+  amount_cents          Int
+
+  created_at DateTime @default(now())
+
+  payment Payment @relation(fields: [payment_id], references: [id], onDelete: Cascade)
+
+  /// ⚠ PARTIAL ALLOCATION MUST BE POSSIBLE — a payment covering three of four
+  /// settlements pays those three. All-or-nothing matching holds three providers
+  /// hostage to one disputed line. That is why allocation is LINES, not a
+  /// foreign key on the header.
+  @@unique([payment_id, line_number])
+  @@index([payment_id])
+  @@index([settlement_request_id])
+  @@map("payment_lines")
+}
+
+model ProviderPayout {
+  id            String @id @default(uuid()) @db.Uuid
+  payout_number String @unique
+
+  provider_person_id String @db.Uuid
+  currency           String @default("USD")
+
+  /// ⚠⚠ `net_cents + fee_cents == gross_cents`, ALWAYS, ON EVERY ROW. Computed
+  /// by `feeSplit()` — the fee is computed and SUBTRACTED, never computed
+  /// alongside the net. See that function for why.
+  gross_cents Int
+  fee_cents   Int
+  net_cents   Int
+
+  status  PayoutStatus @default(PENDING)
+  paid_at DateTime?
+  method  String?
+  /// The payout rail's reference once sent.
+  external_ref String?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  lines ProviderPayoutLine[]
+
+  @@index([provider_person_id])
+  @@index([status])
+  @@map("provider_payouts")
+}
+
+model ProviderPayoutLine {
+  id                 String @id @default(uuid()) @db.Uuid
+  provider_payout_id String @db.Uuid
+  line_number        Int
+
+  /// ⚠⚠ NOT NULLABLE. Every cent traces settlement line → work-order line →
+  /// work-request line. A payout line with no settlement behind it is money
+  /// leaving with no reason recorded, and no later report could reconstruct one.
+  settlement_line_id String @db.Uuid
+
+  gross_cents Int
+  fee_cents   Int
+  net_cents   Int
+
+  created_at DateTime @default(now())
+
+  providerPayout ProviderPayout @relation(fields: [provider_payout_id], references: [id], onDelete: Cascade)
+
+  @@unique([provider_payout_id, line_number])
+  @@index([provider_payout_id])
+  @@index([settlement_line_id])
+  @@map("provider_payout_lines")
 }

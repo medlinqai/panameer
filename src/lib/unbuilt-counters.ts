@@ -24,23 +24,23 @@
  * ⚠ DO NOT CREATE EITHER MODEL HERE. Schema work is its own brief.
  */
 
-/**
- * `WorkOrder` — ⚠ NO MODEL, NO TABLE. Verified absent from `prisma/schema.prisma`
- * at `997112b` and asserted absent by the tripwire.
+/* ── ⚠⚠ BOTH STUBS ARE GONE (`P1-J4-E388`, 2026-09-07) ──────────────────────
  *
- * ⚠⚠ WHEN `WorkOrder` LANDS, THIS BECOMES:
- *     `prisma.workOrder.count()`
- * and it must become that in `work-stats.ts` AND `shop-stats.ts` together — both
- * import this one constant, so replacing the export replaces both tiles at once.
- */
-export const WORK_ORDERS_STUB = 0;
-
-/**
- * `SettlementRequest` — ⚠ NO MODEL, NO TABLE. Scott: *"settlement has not been
- * built, stub this for now."* Only `/work` prints it today.
+ * ⚠ SUPERSEDED, QUOTED NOT DELETED — this file exported two constants:
+ *     export const WORK_ORDERS_STUB = 0;         // "WHEN `WorkOrder` LANDS,
+ *     export const SETTLEMENT_REQUESTS_STUB = 0; //  THIS BECOMES …count()"
  *
- * ⚠⚠ WHEN `SettlementRequest` LANDS, THIS BECOMES:
- *     `prisma.settlementRequest.count()`
- * in `work-stats.ts`.
+ * `model WorkOrder` and `model SettlementRequest` LANDED in `P1-J4-E388`, so the
+ * zeros stopped being true statements and became hardcoded ones. Both are now
+ * `prisma.workOrder.count()` / `prisma.settlementRequest.count()` in
+ * `work-stats.ts`, and the first of those in `shop-stats.ts` as well.
+ *
+ * ⚠⚠ THE TRIPWIRE WORKED EXACTLY AS DESIGNED AND THAT IS WORTH RECORDING. It said
+ * *"a test that fails when the world improves is the only placeholder that cannot
+ * rot"* — and it went red on the same run that added the models, naming the three
+ * files to edit and the order to edit them in. This change is that order,
+ * followed: counts first, stubs second, assertion third.
+ *
+ * ⚠ THE FILE IS KEPT, NOT DELETED (`E164`). It is the pattern's home, and the
+ * next counter whose model does not exist yet belongs here — with a tripwire.
  */
-export const SETTLEMENT_REQUESTS_STUB = 0;

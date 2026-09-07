@@ -1,9 +1,5 @@
 import { test, expect } from "@playwright/test";
 import { readFileSync } from "node:fs";
-import {
-  WORK_ORDERS_STUB,
-  SETTLEMENT_REQUESTS_STUB,
-} from "../src/lib/unbuilt-counters";
 
 /**
  * ── ⚠⚠ THE TRIPWIRE (`P1-J1-E041`) ─────────────────────────────────────────
@@ -32,37 +28,69 @@ function modelExists(src: string, model: string): boolean {
   return new RegExp(`^model\\s+${model}\\s*\\{`, "m").test(src);
 }
 
+/*
+ * ── ⚠⚠ THE TRIPWIRE FIRED, AND IT HAS BEEN RETIRED (`P1-J4-E388`, 2026-09-07) ─
+ *
+ * `model WorkOrder` and `model SettlementRequest` landed, this assertion went RED
+ * on the same run, and it named the three files to edit and the order:
+ *   1. `unbuilt-counters.ts` — delete the stubs
+ *   2. `work-stats.ts` and `shop-stats.ts` — real `.count()` queries
+ *   3. delete this assertion — it has done its job
+ * All three are done, in that order, which is why this is a comment and not a
+ * test. ⚠ IT WAS NOT DELETED TO GO GREEN — the stub was replaced first, and the
+ * counts are real.
+ *
+ * ⚠ SUPERSEDED, QUOTED NOT DELETED, because the PATTERN is the valuable part:
+ *
+ *     test("WorkOrder and SettlementRequest are still absent — the stubbed 0s
+ *           are still true", () => {
+ *       expect(modelExists(src, model), "⚠⚠ `model X` NOW EXISTS … SO THE
+ *              STUBBED `0` IS NOW A LIE").toBe(false);
+ *     });
+ *
+ * ⚠⚠ THE SECOND TEST BELOW SURVIVES AND STILL EARNS ITS PLACE: it asserts the
+ * two stats modules no longer import a stub, so a future placeholder cannot
+ * quietly reappear in the tiles this tripwire was built to protect.
+ */
 test.describe("⚠ TRIPWIRE — the stubbed counters (P1-J1-E041)", () => {
-  test("WorkOrder and SettlementRequest are still absent — the stubbed 0s are still true", () => {
-    const src = readFileSync(SCHEMA, "utf8");
 
-    for (const [model, tile, where] of [
-      ["WorkOrder", "Work Orders", "BOTH /work and /shop"],
-      ["SettlementRequest", "Settlement Requests", "/work"],
-    ] as const) {
+  /*
+    ⚠⚠ THE REPLACEMENT INVARIANT. The old assertion checked the stubs were still
+    literally `0` — *"if someone sets a stub to a non-zero placeholder this
+    catches it. An invented number on a public page is the thing
+    `decisions-01.md` bans outright."* THE STUBS ARE GONE, so that exact check
+    cannot run; the DANGER IT GUARDED HAS NOT GONE ANYWHERE.
+
+    This is the same guard aimed at the same risk from the other side: the two
+    stats modules must read the DATABASE and must not import a placeholder. It
+    fails if a hardcoded counter ever returns to either tile — which is Scott's
+    LOCKED rule (2026-08-27): *"a real count of what is in the database, seeded
+    rows included, or a number Scott specifies. Count it and print it."*
+  */
+  test("the /work and /shop tiles COUNT — no stub can return to them", () => {
+    for (const mod of ["src/lib/work-stats.ts", "src/lib/shop-stats.ts"]) {
+      /* ⚠ COMMENTS STRIPPED BEFORE SCANNING — the house rule these harnesses
+         follow, and it matters here: both modules QUOTE their superseded design,
+         which names `unbuilt-counters.ts` in prose. A raw scan reads the history
+         as if it were the code. */
+      const src = readFileSync(mod, "utf8")
+        .replace(/\/\*[\s\S]*?\*\//g, " ")
+        .replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
       expect(
-        modelExists(src, model),
-        `⚠⚠ \`model ${model}\` NOW EXISTS IN ${SCHEMA}, SO THE STUBBED \`0\` ON ` +
-          `${where} IS NOW A LIE.\n\n` +
-          `   The tile "${tile}" is hardcoded to 0 and will keep printing 0 while the ` +
-          `table fills up.\n\n` +
-          `   TO FIX, IN THIS ORDER:\n` +
-          `     1. src/lib/unbuilt-counters.ts — delete ${model === "WorkOrder" ? "WORK_ORDERS_STUB" : "SETTLEMENT_REQUESTS_STUB"}\n` +
-          `     2. src/lib/work-stats.ts${model === "WorkOrder" ? " AND src/lib/shop-stats.ts" : ""} — ` +
-          `replace it with prisma.${model[0].toLowerCase() + model.slice(1)}.count()\n` +
-          `     3. delete this assertion — it has done its job\n\n` +
-          `   ⚠ DO NOT delete or loosen this test to go green. Replace the stub first.`,
+        /unbuilt-counters/.test(src),
+        `${mod} must not import a stubbed counter — the tiles read the database`
       ).toBe(false);
+      expect(
+        /prisma\.workOrder\.count\(\)/.test(src),
+        `${mod} must count WorkOrder rows rather than print a constant`
+      ).toBe(true);
     }
-  });
-
-  test("the stubs are still literally 0, so the tiles and the tripwire agree", () => {
-    /*
-      ⚠ IF SOMEONE SETS A STUB TO A NON-ZERO "PLACEHOLDER" this catches it. An
-      invented number on a public page is the thing `decisions-01.md` bans outright,
-      and a stub is exactly where one would get typed in by accident.
-    */
-    expect(WORK_ORDERS_STUB, "WORK_ORDERS_STUB must be 0 — never an invented figure").toBe(0);
-    expect(SETTLEMENT_REQUESTS_STUB, "SETTLEMENT_REQUESTS_STUB must be 0").toBe(0);
+    const work = readFileSync("src/lib/work-stats.ts", "utf8")
+      .replace(/\/\*[\s\S]*?\*\//g, " ")
+      .replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
+    expect(
+      /prisma\.settlementRequest\.count\(\)/.test(work),
+      "work-stats.ts must count SettlementRequest rows"
+    ).toBe(true);
   });
 });

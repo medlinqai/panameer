@@ -73,6 +73,27 @@ export function bpsToPercentLabel(bps: number): string {
 }
 
 /**
+ * ── ⚠⚠ THE ONE PLACE THE DEFAULT FEE IS WRITTEN IN TYPESCRIPT (`P1-J4-E388`) ──
+ *
+ * It MIRRORS `ProviderProfile.service_fee_bps @default(1000)` in the schema, and
+ * that duplication is unavoidable — a Prisma `@default` is not readable from TS.
+ * What IS avoidable is having it written THREE times, which is what was here:
+ * the schema, plus `join/provider/page.tsx:445` (`serviceFeeBps: 1000`) and
+ * `:663` (`p.serviceFeeBps ?? 1000`). Two literals for one default WILL drift
+ * from the schema, and the drift would show up as a provider being quoted one
+ * fee on screen and charged another.
+ *
+ * ⚠⚠ THE VALUE IS **NOT** CHANGED HERE. The code says 10%; Scott has decided
+ * 14.9% (Amendment 14). That is `E390`'s brief, NOT this one, and the reason it
+ * is not a one-line edit is that a Prisma `@default` APPLIES ONLY ON INSERT:
+ * flipping 1000 → 1490 would leave all 91 existing providers on 10% and put
+ * every new one on 14.9% — a two-tier marketplace nobody decided to create, with
+ * neither group told. Routing the literals through here is what makes that later
+ * change ONE decision instead of a hunt.
+ */
+export const DEFAULT_SERVICE_FEE_BPS = 1000;
+
+/**
  * The E018 rate breakdown, computed in integer cents end to end.
  * `fee` rounds to the nearest cent; `youGet` is the remainder, so the three
  * figures always reconcile exactly (rate = fee + youGet).

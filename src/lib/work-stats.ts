@@ -1,9 +1,5 @@
 import { prisma } from "@/lib/prisma";
 import { plural, type TalentStat } from "@/lib/talent-stats";
-import {
-  SETTLEMENT_REQUESTS_STUB,
-  WORK_ORDERS_STUB,
-} from "@/lib/unbuilt-counters";
 
 /**
  * ── `/work`'s THREE HERO TILES (`P1-J1-E041`) ───────────────────────────────
@@ -20,10 +16,13 @@ import {
  * `talentHeroStats()` serves `/talent` alone, which is what its name always claimed.
  * ⚠ `/talent` RENDERS BYTE-IDENTICAL. Proved by diffing its HTML.
  *
- * ⚠ ONE REAL COUNT, TWO STUBS. `WorkRequest` exists (`schema.prisma:2218`);
- * `WorkOrder` and `SettlementRequest` DO NOT — no model, no table. Both zeros come
- * from `unbuilt-counters.ts` so `/work` and `/shop` cannot disagree about
- * `Work Orders`, and a tripwire test fails the moment either model is added.
+ * ⚠⚠ THREE REAL COUNTS NOW (`P1-J4-E388`, 2026-09-07). ⚠ SUPERSEDED, QUOTED NOT
+ * DELETED: *"ONE REAL COUNT, TWO STUBS. `WorkRequest` exists; `WorkOrder` and
+ * `SettlementRequest` DO NOT — no model, no table. Both zeros come from
+ * `unbuilt-counters.ts` … and a tripwire test fails the moment either model is
+ * added."*
+ * ⚠ BOTH MODELS LANDED AND THE TRIPWIRE DID FAIL, on the same run that added
+ * them, naming the files to edit and the order. This is that fix.
  *
  * ⚠ BUILD TIME, NOT PER REQUEST — the same pattern `talentHeroStats()` uses.
  * Reading a database in a server component does NOT make a route dynamic; only
@@ -39,7 +38,21 @@ export async function workHeroStats(): Promise<TalentStat[]> {
     ⚠ SO THERE IS NO SEED CAVEAT, NO FOOTNOTE AND NO PRE-LAUNCH ROW FOR THIS TILE.
     Do not add a `where` to make the number "more honest" — he was asked and answered.
   */
-  const workRequests = await prisma.workRequest.count();
+  /*
+    ⚠⚠ ALL THREE ARE REAL COUNTS NOW (`P1-J4-E388`). Two of them were stubs until
+    `WorkOrder` and `SettlementRequest` landed in this branch, and the `E041`
+    TRIPWIRE FIRED THE MOMENT THEY DID — which is exactly what it was built to
+    do: *"a test that fails when the world improves is the only placeholder that
+    cannot rot."* This is the fix it prescribed, in the order it prescribed.
+    ⚠ And it is what Scott's LOCKED counter rule requires (2026-08-27): *"a real
+    count of what is in the database, seeded rows included… Count it and print
+    it."* The stubs were honest only while the tables did not exist.
+  */
+  const [workRequests, workOrders, settlementRequests] = await Promise.all([
+    prisma.workRequest.count(),
+    prisma.workOrder.count(),
+    prisma.settlementRequest.count(),
+  ]);
 
   /* ⚠ THE ORDER IS SCOTT'S: Work Requests, Work Orders, Settlement Requests. */
   return [
@@ -48,14 +61,12 @@ export async function workHeroStats(): Promise<TalentStat[]> {
       label: plural(workRequests, "Work Request"),
     },
     {
-      /* ⚠ STUB — see `unbuilt-counters.ts`. Becomes `prisma.workOrder.count()`. */
-      value: String(WORK_ORDERS_STUB),
-      label: plural(WORK_ORDERS_STUB, "Work Order"),
+      value: String(workOrders),
+      label: plural(workOrders, "Work Order"),
     },
     {
-      /* ⚠ STUB — becomes `prisma.settlementRequest.count()`. */
-      value: String(SETTLEMENT_REQUESTS_STUB),
-      label: plural(SETTLEMENT_REQUESTS_STUB, "Settlement Request"),
+      value: String(settlementRequests),
+      label: plural(settlementRequests, "Settlement Request"),
     },
   ];
 }
