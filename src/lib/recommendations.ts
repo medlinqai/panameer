@@ -274,10 +274,46 @@ export async function declineRecommendation(raw: string): Promise<void> {
 }
 
 /**
- * The public Testimonials for a profile.
+ * The public RECOMMENDATIONS for a profile.
  *
  * SUBMITTED only, and no contact address ever leaves this function — a
- * testimonial names its author and their title, not a way to email them.
+ * recommendation names its author and their title, not a way to email them.
+ *
+ * ── ⚠⚠ THE NAME IS STALE ON PURPOSE (`P2-J1.1-E014`) ────────────────────────
+ *
+ * The CARD this feeds now reads `Recommendations`, because it always rendered
+ * `recommendationRequest` rows — never `ProjectValidation`. The function keeps
+ * its name and so does the exported `Testimonial` type, and that was a decision:
+ * renaming is FIVE edits across three files, not the one clean symbol change the
+ * brief allowed for, AND `Testimonial` collides with a SECOND, unrelated
+ * `Testimonial` type in `components/onboarding/TestimonialCarousel.tsx` — the
+ * MARKETING deck's social proof, which this row must not touch. Renaming one and
+ * not the other would blur exactly the boundary this change exists to keep.
+ * ⚠ It is an internal symbol, not a user-facing string. Reported, not renamed.
+ *
+ * ── ⚠⚠ AND THERE IS NO PROVENANCE BADGE, BECAUSE NOTHING PROVES PROVENANCE ───
+ *
+ * `E014`'s settled badge is `Client-verified`, and NO ROW CAN CARRY IT TODAY.
+ * Checked field by field rather than assumed — `RecommendationRequest` holds
+ * `contact_name`, `contact_email`, `contact_off_platform`, `message`,
+ * `token_hash`, `status`, `expires_at`, `sent_at`, `responded_at`, `body`,
+ * `recommender_title`, `recommender_company`, `responder_ip`, `responder_ua`.
+ * NOT ONE OF THEM RECORDS A RELATIONSHIP:
+ *   · `recommender_company` is FREE TEXT the recommender typed about themselves.
+ *   · `contact_off_platform` is `!existingUser` — it proves the address has a
+ *     Panameer ACCOUNT, which is identity, not "was a client of this provider".
+ *     A member could be a colleague, a mentor, or another provider.
+ *   · `contact_email`'s DOMAIN would be a guess, and a guess is not proof.
+ *   · There is NO engagement to join back to: `model WorkOrder` does not exist
+ *     and this row links to no order, contract or project.
+ * The structured `Relationship` field is `E044`'s second half and is not built.
+ *
+ * ⚠⚠ SO NO BADGE RENDERS, AND AN ABSENT BADGE IS THE HONEST STATE — it is the
+ * absence of a claim, not a judgement about the provider. Badging on account
+ * existence would say *a client vouched* when what is known is *this person has
+ * a login*, which is the same overload class the noun change just removed. And
+ * `Validated` is Panameer's OWN grant (`ProviderProfile.validation_status`, the
+ * circle of trust) and must never be borrowed for a claim a client made.
  */
 export async function publicTestimonials(profileId: string) {
   const rows = await prisma.recommendationRequest.findMany({

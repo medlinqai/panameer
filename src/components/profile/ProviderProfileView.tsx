@@ -525,12 +525,35 @@ export function ProviderProfileViewPage({
             can now — asking a past client is a page away — so the empty state
             points at the action instead of at the future.
           */}
-          <ProfileCard title="Testimonials">
+          {/*
+            ⚠⚠ `Recommendations`, NOT `Testimonials` (`P2-J1.1-E014`).
+            ⚠ SUPERSEDED, quoted not deleted: `<ProfileCard title="Testimonials">`.
+
+            SCOTT, 2026-09-06: *"Inconsistency with recommendation vs
+            testimonial. BOTH should be recommendation, no? testimonial is for a
+            product only."* ⚠ CHAT OBJECTED AND CHAT WAS WRONG, and the objection
+            is worth recording because it was built on the wrong object: it cited
+            `ProjectValidation.testimonial`, which is a DIFFERENT thing with two
+            consent flags. THIS CARD DOES NOT RENDER THAT. `publicTestimonials()`
+            queries `recommendationRequest` — solicited recommendations — so on
+            this surface the two words were one thing.
+
+            ⚠⚠ THE WORD MOVES ON THIS CARD ONLY. Three different things share it
+            and a find-and-replace breaks two features and a marketing page —
+            the `E012` lesson. `ProjectValidation.testimonial` and its consent
+            flags are UNTOUCHED (and `check:validation-answers` is written around
+            that word by regex); so is marketing social proof on `/`,
+            `/why-panameer` and the join deck's `DECK_TESTIMONIALS`.
+
+            ⚠ NO PROVENANCE BADGE, AND THAT IS A FINDING RATHER THAN AN OMISSION
+            — see the note above `publicTestimonials()` in `lib/recommendations.ts`.
+          */}
+          <ProfileCard title="Recommendations">
             {testimonials.length === 0 ? (
               <Empty>
                 {p.isOwner ? (
                   <>
-                    No testimonials yet.{" "}
+                    No recommendations yet.{" "}
                     <Link
                       href="/recommendations"
                       className="font-semibold text-magenta hover:underline"
@@ -540,7 +563,7 @@ export function ProviderProfileViewPage({
                     — it takes a minute and buyers read them.
                   </>
                 ) : (
-                  "No testimonials yet."
+                  "No recommendations yet."
                 )}
               </Empty>
             ) : (
