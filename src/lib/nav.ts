@@ -173,7 +173,22 @@ export const REQUESTER_NAV: NavItem[] = [
        nouns — A VERB PICKS A SIDE, so the buyer hires and the provider works. */
     label: "Hire",
     heading: "Work Requests",
-    href: "/create-work",
+    /*
+      ⚠⚠ `/hire`, NOT `/create-work` (`P1-J4-E392`). SUPERSEDED, QUOTED NOT
+      DELETED: this read `href: "/create-work"`.
+
+      ⚠ THE HREF WAS THE WIZARD BECAUSE THE LANDING DID NOT EXIST. `/hire` was a
+      `ComingSoon` stub and nothing linked to it, so the rail pointed at the only
+      built thing in the journey. That made the rail's Hire mean "start a new
+      request", and a requester with three requests already had NOWHERE TO LOOK AT
+      THEM — a second request made the first unreachable.
+
+      ⚠ THE ROUTE IS NOT RENAMED AND NOTHING 404s. `/create-work` is untouched,
+      still gated the same way, still the wizard, and is the FIRST TAB in the set
+      below — one click from where the rail now lands. What changed is which of
+      two existing pages the rail opens.
+    */
+    href: "/hire",
     icon: "ClipboardList",
     requires: "canHireTalent",
   },
@@ -385,6 +400,25 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
        itself provider-only; opening that tree made it a live sixth instance of
        the offered-then-refused class. `check:nav-reachable` caught it. */
     { label: "Offers for My Services", href: "/services/offers", requires: "canProvideServices" },
+  ],
+  /*
+    ⚠ THE HIRE JOURNEY'S TWO SLICES (`P1-J4-E392`). MODE `none` — no numbers.
+
+    ⚠⚠ THESE ARE SLICES, NOT STEPS, WHICH IS WHY THEY ARE UNNUMBERED. `E378`:
+    *a PUBLIC SPINE CROSSES ROLES AND PAGES; A TAB SET IS SLICES WITHIN ONE PAGE
+    FOR ONE ROLE — where they disagree the set is `none`.* Listing your requests
+    and writing a new one are not step 1 and step 2 of anything: most visits are
+    the first and only some are the second.
+
+    ⚠ BOTH DECLARE `requires`. `/hire` is gated `canHireTalent` in
+    `ROUTE_ACCESS`, so the tab must say the same or `check:nav-reachable` reads
+    it as "everyone signed in" — the sixth and seventh instances of the
+    offered-then-refused class were caught exactly this way, including a set
+    whose FIRST tab was the one missing it.
+  */
+  "/hire": [
+    { label: "Work Requests", href: "/hire", requires: "canHireTalent" },
+    { label: "Create a Request", href: "/create-work", requires: "canHireTalent" },
   ],
   "/finances": [
     { label: "Payments", href: "/finances" },

@@ -148,6 +148,23 @@ export const ROUTE_ACCESS: { prefix: string; requires: RouteRequirement }[] = [
   { prefix: "/account-health", requires: "authenticated" },
   { prefix: "/recommendations", requires: "authenticated" },
   { prefix: "/hire", requires: "canHireTalent" },
+  /*
+    ⚠ REGISTERED BY `P1-J4-E392`. The three pages under `/work-requests/[id]`
+    (the detail, `/share` and `/invite`) all call `guardPage("canHireTalent")`
+    already, so this does not change who gets in — it moves the FIRST refusal to
+    the edge, where the other buyer surfaces refuse.
+
+    ⚠⚠ AND IT MUST STAY IN LOCKSTEP WITH `proxy.ts`'s matcher literal.
+    `e2e-shell/public-allowlist.spec.ts` parses that literal out of the source and
+    fails in BOTH directions — a map entry with no matcher means the edge never
+    runs, and a matcher entry with no map entry FAILS CLOSED and bounces everyone
+    to `/dashboard?noaccess=1`.
+
+    ⚠ `/create-work` IS DELIBERATELY NOT ADDED HERE. It self-guards and is
+    classified that way today; registering it is a second, separate change with
+    its own matcher entry, and this brief did not ask for it. REPORTED instead.
+  */
+  { prefix: "/work-requests", requires: "canHireTalent" },
   // FIND WORK IS A PROVIDER SURFACE — searching open job postings. This said
   // canHireTalent while nav.ts offered the same route to providers, so the rail
   // showed a provider "Find Work" and the gate then bounced them to

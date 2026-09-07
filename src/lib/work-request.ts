@@ -83,7 +83,14 @@ export class WorkRequestError extends Error {
 }
 
 /** Resolve the viewer's buyer identity + tenancy fence. Fails closed. */
-async function resolveBuyer(viewer: Viewer) {
+/**
+ * ⚠ EXPORTED FOR `lib/work-request-lines.ts` (`P1-J4-E392`), AND FOR NOTHING
+ * ELSE. The lines domain needs the IDENTICAL owner scope this file uses — the
+ * buyer's Person id and their P-Account, both resolved FROM THE SESSION and
+ * never from client input. A second copy of this six-line function is how a
+ * write path quietly starts scoping to the wrong owner, so there is one.
+ */
+export async function resolveBuyer(viewer: Viewer) {
   const person = await prisma.person.findUnique({
     where: { user_id: viewer.userId },
     select: {
@@ -139,8 +146,11 @@ function serialize(wr: Awaited<ReturnType<typeof loadOwned>>) {
   };
 }
 
-/** Load a request the viewer owns (PAccount-scoped). Throws NOT_FOUND if not. */
-async function loadOwned(viewer: Viewer, id: string, pAccountId: string) {
+/**
+ * Load a request the viewer owns (PAccount-scoped). Throws NOT_FOUND if not.
+ * ⚠ EXPORTED FOR `lib/work-request-lines.ts` — see `resolveBuyer` above.
+ */
+export async function loadOwned(viewer: Viewer, id: string, pAccountId: string) {
   const wr = await prisma.workRequest.findFirst({
     where: scopedToPAccount(scopedViewer(viewer, pAccountId), { id }),
     include: {
