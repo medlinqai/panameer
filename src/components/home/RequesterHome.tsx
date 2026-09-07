@@ -126,8 +126,13 @@ export function RequesterHome({
 
       {/* ---- 2. Who can help --------------------------------------------- */}
       <section className="mt-10">
+        {/* ⚠ TITLE CASE (`P2-J1.1-E027`). ⚠ SUPERSEDED, quoted: `Collaborate with
+            an expert`. `With` CAPITALIZES and `an` does not — the locked rule
+            (`brief_N_title_case.md`) lowercases articles and the short
+            prepositions `of/to/in/on/at/by/up/for` mid-phrase, and `with` is not
+            among them. */}
         <h2 className="font-display text-[22px] font-bold tracking-[-0.3px]">
-          Collaborate with an expert
+          Collaborate With an Expert
         </h2>
         <p className="mt-1 text-[15px] text-ink-2">
           Your goals are our goals.
@@ -143,8 +148,10 @@ export function RequesterHome({
           {/* The guided-tour promo leads, because someone with nothing in
               flight usually needs to talk before they need to hire. */}
           <article className="flex w-[280px] shrink-0 snap-start flex-col rounded-brand border border-magenta/30 bg-magenta/[0.04] p-5">
+            {/* ⚠ TITLE CASE (`P2-J1.1-E027`). ⚠ SUPERSEDED, quoted: `Take the
+                guided tour`. `the` stays lowercase — an article mid-phrase. */}
             <p className="font-display text-[18px] font-bold leading-snug">
-              Take the guided tour
+              Take the Guided Tour
             </p>
             <p className="mt-2 flex-1 text-[14px] leading-relaxed text-ink-2">
               Book a consultation with an expert to review your project&apos;s
@@ -170,9 +177,44 @@ export function RequesterHome({
 
       {/* ---- 3. What you can buy off the shelf ---------------------------- */}
       <section className="mt-10 rounded-brand border border-line bg-bg-soft p-7">
+        {/*
+          ── ⚠⚠ SCOTT REWROTE THIS BLOCK RATHER THAN LENGTHENING IT (`E031`) ────
+
+          ⚠ SUPERSEDED, quoted not deleted: `Shop pre-built packages of services`.
+
+          Mechanical Title Case would have produced `Shop Pre-Built Packages of
+          Services` — longer and heavier for no gain. Scott changed the WORDS
+          instead, and it is a CONSISTENCY WIN rather than only a copy one:
+          `Service Products` is ALREADY the product's own term — four times in
+          `lib/nav.ts` plus `settings/packages/page.tsx`, `ProviderProfileView`
+          and `IntegrationModelDiagram`. `packages of services` was the outlier.
+
+          ⚠ `package` REMAINS A LEGITIMATE CODE WORD — `settings/packages`,
+          `seed:catalog-products`, `model Package`. This is a DISPLAY rename on
+          one heading and nothing else; it is not swept out of the codebase.
+        */}
         <h2 className="font-display text-[22px] font-bold tracking-[-0.3px]">
-          Shop pre-built packages of services
+          Shop Pre-Built Service Products
         </h2>
+        {/*
+          ⚠⚠ TWO SUB-LINES, AND THE ARRANGEMENT IS REPORTED RATHER THAN DECIDED.
+
+          Scott's new line explains the CATEGORY (what a service product IS); the
+          existing line explains the COMMERCIAL MODEL (how it is sold). They do
+          different jobs and both are useful, and Scott has NOT said whether the
+          new line replaces, joins or sits above the old one.
+
+          ⚠ SO NOTHING SHIPPED IS DELETED. The component has ONE sub-line slot,
+          so placement is not obvious from its structure — per the brief the new
+          line goes ABOVE the existing one and the arrangement is Scott's to rule
+          on. Deleting copy nobody asked to remove is the failure mode being
+          avoided here.
+        */}
+        <p className="mt-1 text-[15px] text-ink-2">
+          Service products are pre-built deployables (reports, AI agents, etc.) as
+          well as pre-defined services (Docusign Integration with 10 contract
+          admins).
+        </p>
         <p className="mt-1 text-[15px] text-ink-2">
           Fixed scope, fixed price, published by the provider who delivers it.
         </p>
