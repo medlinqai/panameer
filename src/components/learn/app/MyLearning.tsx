@@ -61,8 +61,15 @@ export function MyLearning({ data }: { data: MyLearningData }) {
       <section className="relative overflow-hidden bg-[radial-gradient(900px_340px_at_84%_-10%,rgba(215,44,214,0.42),transparent_62%),linear-gradient(118deg,var(--color-learn-night)_0%,var(--color-learn-plum)_44%,#3d1560_72%,#5c1668_100%)] px-5 pt-7 pb-[78px] text-white sm:px-8">
         <div className="relative z-[2] grid items-center gap-8 min-[900px]:grid-cols-[1fr_auto]">
           <div className="min-w-0">
+            {/* ⚠ THE EYEBROW IS THE PAGE NAME (`P2-J1.1-E048` WS-3), so `Learn`.
+                ⚠ SUPERSEDED, quoted not deleted: `My Learning`.
+                ⚠⚠ THE EYEBROW ONLY. The headline below is COMPUTED by
+                `headlineFor`, and this file's docblock warns that NOTHING ON THIS
+                PAGE IS HARDCODED COPY — the headline, the counts and the level
+                band are untouched. The component keeps its name: `MyLearning` is
+                a symbol, not a label. */}
             <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/55">
-              My Learning
+              Learn
             </p>
             <h1 className="max-w-[560px] font-display text-[26px] font-bold leading-[1.16] tracking-[-0.4px] sm:text-[31px]">
               {data.headline}

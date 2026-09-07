@@ -1,3 +1,5 @@
+import type { Capability } from "@/lib/access";
+
 /**
  * The Settings sub-navigation (J2.4 WS-G / E013).
  *
@@ -24,6 +26,21 @@ export type SettingsNavItem = {
   href: string;
   /** One line under the label on the page header. */
   blurb: string;
+  /**
+   * ── ⚠⚠ THE CAPABILITY THIS TAB REQUIRES (`P2-J1.1-E050`) ──────────────────
+   *
+   * Omitted = every signed-in person sees it, which is what `E046` opened the
+   * tree to. Three tabs are seller-only and say so here.
+   *
+   * ⚠⚠ DECLARING IT IS NOT DECORATION — IT IS ONE OF THREE LAYERS. A hidden tab
+   * over an OPEN route is one URL away from being reachable, which is the drift
+   * `check:nav-reachable` exists to stop. The other two layers are the route's
+   * `route-access.ts` prefix and the page's own `guardPage`; this is the third,
+   * and the guard cross-references it against the first.
+   * ⚠ Keyed on the SAME `Capability` union `access.ts` uses, so a menu entry and
+   * the page it points at cannot disagree about who is allowed there.
+   */
+  requires?: Capability;
 };
 
 export const SETTINGS_NAV: SettingsNavItem[] = [
@@ -39,6 +56,8 @@ export const SETTINGS_NAV: SettingsNavItem[] = [
   },
   {
     label: "Profile Settings",
+    /* ⚠ SELLER-ONLY (`P2-J1.1-E050`): provider-profile management — one of only TWO call sites that genuinely needs a `profileId`, and it still throws for a buyer BY DESIGN. */
+    requires: "canProvideServices",
     href: "/settings/profile",
     blurb: "Who can see your profile, what work you want, and your categories.",
   },
@@ -49,6 +68,8 @@ export const SETTINGS_NAV: SettingsNavItem[] = [
   },
   {
     label: "Withdrawals",
+    /* ⚠ SELLER-ONLY (`P2-J1.1-E050`): SCOTT, 2026-09-07: *"buyer does not do withdraws."* It is how Panameer pays YOU. */
+    requires: "canProvideServices",
     href: "/settings/withdrawals",
     blurb: "How Panameer pays you, and the tax details required first.",
   },
@@ -65,6 +86,8 @@ export const SETTINGS_NAV: SettingsNavItem[] = [
       the ones about your password.
     */
     label: "Service Products",
+    /* ⚠ SELLER-ONLY (`P2-J1.1-E050`): where a PROVIDER publishes offerings — its own checklist reads *"Add a withdrawal method — Panameer can't pay you for a sale"*. Every line addresses a seller. */
+    requires: "canProvideServices",
     href: "/settings/packages",
     blurb: "The fixed offerings buyers can buy outright, and their prices.",
   },
@@ -88,5 +111,20 @@ export const SETTINGS_NAV: SettingsNavItem[] = [
 export function settingsPageFor(pathname: string): SettingsNavItem | undefined {
   return SETTINGS_NAV.find(
     (i) => pathname === i.href || pathname.startsWith(i.href + "/")
+  );
+}
+
+/**
+ * The tabs THIS viewer should see (`P2-J1.1-E050`).
+ *
+ * ⚠ FILTERING IS THE VISIBLE HALF OF A THREE-LAYER CHANGE, never the whole fix.
+ * Hiding a tab over an open route would leave it one URL away from being
+ * reachable; the route and the page guard are what actually refuse. This is what
+ * stops a buyer being OFFERED a door that then refuses them — the
+ * `check:nav-reachable` bug class, five instances and counting.
+ */
+export function settingsNavFor(isProvider: boolean): SettingsNavItem[] {
+  return SETTINGS_NAV.filter(
+    (i) => !i.requires || (i.requires === "canProvideServices" && isProvider)
   );
 }

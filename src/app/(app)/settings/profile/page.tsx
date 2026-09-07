@@ -28,10 +28,16 @@ import { ProfileSettingsForm } from "@/components/settings/ProfileSettingsForm";
 export const metadata = { title: "Profile Settings · Panameer" };
 
 export default async function ProfileSettingsPage() {
-  /* ⚠ `authenticated` (`P2-J1.1-E046`) — ⚠ SUPERSEDED, quoted:
-     `guardPage("canProvideServices")`. One of three layers; see
-     `settings/layout.tsx` and `route-access.ts`. Scott opened the tree whole. */
-  const viewer = await guardPage("authenticated");
+  /* ⚠⚠ BACK TO `canProvideServices` (`P2-J1.1-E050`), AND THAT IS NOT A REVERSAL
+     OF `E046` — IT IS THE JUDGEMENT `E046` ASKED FOR. Scott opened the tree so
+     fit could be judged by USING the pages; he then walked it as a buyer and
+     judged this one seller-only.
+     ⚠ SUPERSEDED, quoted: `guardPage("authenticated")`, and before that
+     `guardPage("canProvideServices")` — the value returns, the reasoning does
+     not. ⚠ ONE OF THREE LAYERS: `route-access.ts` narrows the prefix and
+     `settings-nav.ts` declares the tab's `requires`. `settings/layout.tsx`
+     deliberately STAYS `authenticated` — it gates the whole tree. */
+  const viewer = await guardPage("canProvideServices");
 
   /*
     WS-3 — DEGRADE, DON'T THROW.
