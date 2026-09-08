@@ -240,12 +240,24 @@ check(
 /* ── 2 · IT MAY ONLY APPEAR FOR A STATE WITH AN ADAPTER ───────────────────── */
 
 /*
-  ⚠⚠ THIS IS THE HALF OF THE ORIGINAL BAN THAT MUST SURVIVE. `ADAPTERS` has three
-  keys; there are 51 jurisdictions. For the other 48 the phrase must remain
-  IMPOSSIBLE, which is what the outright ban used to guarantee for all 51.
+  ⚠⚠ THIS IS THE HALF OF THE ORIGINAL BAN THAT MUST SURVIVE. For every state with
+  NO adapter the phrase must remain IMPOSSIBLE, which is what the outright ban
+  used to guarantee for all 51.
+
+  ⚠ SUPERSEDED, QUOTED NOT DELETED — this asserted `SUPPORTED_STATES.length === 3`
+  and `unsupported.length === 48`. **A PINNED COUNT IS NOT THE INVARIANT.**
+  `P1-J1.1-E387` widened coverage to six, and a hardcoded three would have made
+  ADDING A PROVEN STATE fail a trust gate — which teaches the next person to edit
+  the number rather than read the rule. The rule is: **supported + unsupported ==
+  every jurisdiction, and every unsupported one has no adapter**, asserted below
+  per state. That holds at three, at six, and at fifty-one.
 */
 check("2a — there are 51 US jurisdictions offered", US_STATES.length === 51);
-check("2a — and only three have an adapter", SUPPORTED_STATES.length === 3, SUPPORTED_STATES.join(", "));
+check(
+  "2a — every supported state is a real jurisdiction",
+  SUPPORTED_STATES.every((st) => US_STATES.includes(st)),
+  SUPPORTED_STATES.join(", ")
+);
 /*
   ⚠ ASSERTED STRUCTURALLY, NOT BY CALLING THE REGISTERS. `validateEntity` returns
   `unsupported_state` for any state with no adapter and NEVER REACHES A NETWORK —
@@ -254,7 +266,11 @@ check("2a — and only three have an adapter", SUPPORTED_STATES.length === 3, SU
   ways for a merge gate to fail on somebody else's downtime.
 */
 const unsupported = US_STATES.filter((st) => !SUPPORTED_STATES.includes(st));
-check("2a — 48 jurisdictions have no adapter", unsupported.length === 48, `${unsupported.length}`);
+check(
+  "2a — supported + unsupported accounts for every jurisdiction",
+  SUPPORTED_STATES.length + unsupported.length === US_STATES.length,
+  `${SUPPORTED_STATES.length} + ${unsupported.length} != ${US_STATES.length}`
+);
 for (const st of unsupported) {
   check(
     `2a — ⚠ ${st} has no adapter, so no status can be produced for it`,
@@ -494,9 +510,19 @@ check("E282/4 — the ADAPTERS block was found by the scan", adaptersBlock.lengt
 const adapterStates = [
   ...adaptersBlock.matchAll(/^\s{2}(?:"([A-Z][A-Za-z ]+)"|([A-Z][A-Za-z]+)):\s*\{/gm),
 ].map((m) => m[1] ?? m[2]);
+/* ⚠ SUPERSEDED (`E387`): this pinned `adapterStates.length === 3`. What the scan
+   is FOR is proving the regex still finds every adapter — both the bare-identifier
+   and the quoted key form — so it is asserted against the runtime export instead
+   of a literal. A count that has to be edited every time coverage grows is a
+   number, not a guarantee. */
 check(
-  "E282/4 — still exactly three states have an adapter",
-  adapterStates.length === 3,
+  "E282/4 — the scan finds exactly the adapters the module exports",
+  adapterStates.length === SUPPORTED_STATES.length,
+  `scanned [${adapterStates.join(", ")}] vs exported [${SUPPORTED_STATES.join(", ")}]`
+);
+check(
+  "E282/4 — and they are the same states, both key forms parsed",
+  adapterStates.slice().sort().join("|") === SUPPORTED_STATES.slice().sort().join("|"),
   `[${adapterStates.join(", ")}]`
 );
 /* ⚠ AND AN UNSUPPORTED STATE CANNOT PRODUCE A STORED CHECK: `ok: false` writes
@@ -577,6 +603,123 @@ check(
     /timeoutMs: 5000/.test(e282Company),
   "a dead register must not block onboarding — decision 5"
 );
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   E387 · WIDER REGISTER COVERAGE — the six rules a new adapter cannot break
+   ═════════════════════════════════════════════════════════════════════════ */
+
+/*
+  ⚠⚠ WS-1's PROOF: THE REFACTOR MOVED NO QUERY. `validateEntity` used to build one
+  hardcoded Socrata URL inline; the adapter now owns `search`. If that changed the
+  URL for Texas, Colorado or New York by a single byte, those three states would
+  silently start querying something else. The builder is exported so the exact
+  string can be rebuilt here and compared to the pre-refactor formula, written out
+  longhand below rather than imported — a shared helper would agree with itself.
+*/
+for (const st of ["Texas", "Colorado", "New York"]) {
+  const a = ADAPTERS[st];
+  const needle = "O'BRIEN & CO".toUpperCase().replace(/'/g, "''");
+  const expected =
+    `https://${a.host}/resource/${a.dataset}.json` +
+    `?$where=${encodeURIComponent(`starts_with(upper(${a.nameColumn}),'${needle}')`)}` +
+    `&$limit=9`;
+  /* ⚠⚠ THE URL THE SEARCH CLOSURE ACTUALLY CAPTURED — not one rebuilt from the
+     adapter's own fields, which would agree with itself. See `socrataAdapter`. */
+  check(
+    `E387/1 — ⚠⚠ ${st}'s URL is byte-identical after the WS-1 refactor`,
+    a.search.url?.(needle) === expected,
+    `${a.search.url?.(needle)}`
+  );
+  check(`E387/1 — ${st}'s adapter exposes its URL builder`, typeof a.search.url === "function");
+}
+/* ⚠ AND THE INCUMBENTS' COORDINATES ARE UNCHANGED — the other way the refactor
+   could have moved a query is by editing the dataset id while wiring it up. */
+for (const [st, host, ds, col] of [
+  ["Texas", "data.texas.gov", "9cir-efmm", "taxpayer_name"],
+  ["Colorado", "data.colorado.gov", "4ykn-tg5h", "entityname"],
+  ["New York", "data.ny.gov", "n9v6-gdp6", "current_entity_name"],
+] as const) {
+  check(
+    `E387/1 — ${st} still points at ${host}/${ds}`,
+    ADAPTERS[st].host === host && ADAPTERS[st].dataset === ds && ADAPTERS[st].nameColumn === col
+  );
+}
+
+/* 1 · ⚠⚠ EVERY ADAPTER SETS `publishesStatus` EXPLICITLY. A missing key is falsy
+   and would pass a truthiness test silently, so the KEY's presence is asserted —
+   not its value. */
+for (const st of SUPPORTED_STATES) {
+  check(
+    `E387/2 — ⚠ ${st} declares publishesStatus explicitly`,
+    Object.prototype.hasOwnProperty.call(ADAPTERS[st], "publishesStatus"),
+    "a missing key is falsy and would read as 'publishes nothing' by accident"
+  );
+  check(
+    `E387/2 — and ${st}'s publishesStatus is a boolean`,
+    typeof ADAPTERS[st].publishesStatus === "boolean"
+  );
+}
+
+/* 2 · ⚠ NO `goodStanding` WHILE `publishesStatus` IS FALSE — that combination is
+   a claim about a register that publishes nothing to claim from. */
+for (const st of SUPPORTED_STATES) {
+  const a = ADAPTERS[st];
+  check(
+    `E387/3 — ⚠⚠ ${st} has no goodStanding predicate unless it publishes a status`,
+    !(a.publishesStatus === false && typeof a.goodStanding === "function"),
+    "a predicate over a register with no status column is an invented claim"
+  );
+}
+
+/* 3 · ⚠⚠ `SUPPORTED_STATES` ⊆ `US_STATES`, EXACT STRING MATCH. `ADAPTERS` is keyed
+   by full state name and `validateEntity` looks it up with that key — a typo, an
+   abbreviation, or "Washington DC" for "District of Columbia" makes a state
+   silently unsupported FOREVER, with no error anywhere. */
+for (const st of SUPPORTED_STATES) {
+  check(
+    `E387/4 — ⚠ "${st}" matches a US_STATES entry exactly`,
+    US_STATES.includes(st),
+    "a key that is not an exact match is a state nobody can ever reach"
+  );
+}
+/* ⚠ MUTATION-TESTED: the check must FAIL for each of the ways a key goes wrong. */
+for (const bad of ["texas", "TEXAS", "Texas ", "TX", "Washington DC", "New-York"]) {
+  check(
+    `E387/4 — MUTATION: "${bad}" would be caught as not an exact US_STATES match`,
+    !US_STATES.includes(bad)
+  );
+}
+
+/* 4 · A state with no adapter still returns `unsupported_state` — asserted above
+   per state; re-asserted here as the rule it belongs to. */
+check(
+  "E387/5 — every adapter-less jurisdiction is still unreachable",
+  unsupported.every((st) => ADAPTERS[st] === undefined),
+  unsupported.filter((st) => ADAPTERS[st] !== undefined).join(", ")
+);
+
+/* 5 · ⚠ NEW YORK STILL CANNOT CLAIM GOOD STANDING. `E365` established it and no
+   new adapter may weaken it. */
+check(
+  "E387/6 — ⚠⚠ New York still publishes no status after widening",
+  ADAPTERS["New York"].publishesStatus === false && ADAPTERS["New York"].goodStanding === undefined
+);
+
+/* 6 · ⚠ NO SECOND STATUS GLOSS. Texas's `A` → "Active" is the ONLY translation in
+   this codebase; every other register's string travels verbatim into
+   `entity_status_detail`. A second gloss is a second place a status can be
+   mis-stated, and it would be invisible in review. */
+{
+  const src = readFileSync(VALIDATION, "utf8");
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  /* The gloss shape is a literal string standing in for a register's own code. */
+  const glosses = [...code.matchAll(/value:\s*"(?!\$\{)([A-Z][a-z]+[^"]*)"/g)].map((m) => m[1]);
+  check(
+    "E387/7 — ⚠⚠ Texas's gloss is the only status translation in the module",
+    glosses.length <= 1,
+    `found ${glosses.length}: ${glosses.join(" | ")}`
+  );
+}
 
 if (failures.length > 0) {
   console.error(`check:trust-claims — ${failures.length} FAILED, ${pass} passed\n`);

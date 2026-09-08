@@ -102,18 +102,88 @@ export type ValidationResult =
    THE ADAPTERS — one per state, behind one interface
    ──────────────────────────────────────────────────────────────────────────── */
 
+/**
+ * ── ⚠⚠ AN ADAPTER IS NOT "A STATE" UNTIL IT OWNS ITS OWN SEARCH (`E387` WS-1) ──
+ *
+ * ⚠ SUPERSEDED, QUOTED NOT DELETED — this type used to be Socrata-shaped, with
+ * `host` / `dataset` / `nameColumn` read directly by `validateEntity`, which
+ * built ONE hardcoded Socrata URL. **So "adapter" meant "a Socrata dataset", and
+ * a register that publishes any other way could not be expressed in the type at
+ * all.** Adding rows would not have added states.
+ *
+ * ⚠ NOW THE ADAPTER OWNS `search` — *"given a name and a signal, return rows and
+ * the URL they came from."* `socrataAdapter()` below is ONE implementation of
+ * that, and it is the only one today. A future register that answers a different
+ * way supplies its own `search` and nothing in `validateEntity` changes.
+ *
+ * ⚠⚠ ZERO BEHAVIOUR CHANGE FOR THE THREE THAT ALREADY WORKED. `host`, `dataset`
+ * and `nameColumn` are KEPT on the adapter — not because `validateEntity` still
+ * reads them (it does not), but so `check:trust-claims` can rebuild the exact URL
+ * each state produced before this refactor and assert it byte-for-byte.
+ */
+type SearchResult = { rows: Record<string, string>[]; sourceUrl: string; status: number };
+
 type Adapter = {
   registerName: string;
-  /** Socrata host + dataset + the column holding the entity name. */
+  /** ⚠ Socrata coordinates. Retained for the URL-identity assertion; see above. */
   host: string;
   dataset: string;
   nameColumn: string;
+  /** ⚠⚠ THE SEARCH RESPONSIBILITY. The adapter builds its own request. */
+  search: ((needle: string, signal: AbortSignal) => Promise<SearchResult>) & {
+    /** ⚠ Present on Socrata adapters so `check:trust-claims` can prove the URL. */
+    url?: (needle: string) => string;
+  };
   /** Does this register publish a status/good-standing field at all? */
   publishesStatus: boolean;
   map: (row: Record<string, string>, sourceUrl: string) => EntityMatch;
   /** Given the mapped row, is this entity in good standing? */
   goodStanding?: (row: Record<string, string>) => boolean;
 };
+
+/**
+ * The Socrata implementation of `search` — ⚠ THE URL IS BYTE-IDENTICAL to the one
+ * `validateEntity` used to build inline. `check:trust-claims` asserts that for
+ * every Socrata adapter, so the refactor cannot have moved a query.
+ *
+ * ⚠ SoQL string literals are single-quoted; a quote in the name would break the
+ * predicate, so the caller doubles it the way SQL requires before calling here.
+ */
+export function socrataAdapter(cfg: { host: string; dataset: string; nameColumn: string }) {
+  const search = async (needle: string, signal: AbortSignal): Promise<SearchResult> => {
+    const sourceUrl = socrataUrl(cfg, needle);
+    const r = await fetch(sourceUrl, { headers: { accept: "application/json" }, signal });
+    if (!r.ok) return { rows: [], sourceUrl, status: r.status };
+    return { rows: (await r.json()) as Record<string, string>[], sourceUrl, status: r.status };
+  };
+  /*
+    ⚠⚠ THE URL THIS SEARCH WILL ACTUALLY BUILD, EXPOSED SO IT CAN BE ASSERTED
+    WITHOUT A NETWORK CALL.
+
+    ⚠ FOUND BY MUTATION-TESTING THE ASSERTION, NOT BY REVIEW: the first version of
+    `E387/1` rebuilt the URL from the adapter's own `host`/`dataset`/`nameColumn`
+    and compared it to a formula built from THE SAME FIELDS — so it agreed with
+    itself and could not see a divergence. Editing the dataset id INSIDE this call
+    while leaving `dataset:` on the adapter unchanged passed the gate.
+    **That is precisely the drift that matters: an adapter that says one dataset
+    and queries another.** Now the assertion compares the declared coordinates
+    against what the closure actually captured.
+  */
+  search.url = (needle: string) => socrataUrl(cfg, needle);
+  return search;
+}
+
+/** ⚠ THE URL BUILDER, EXPORTED SO THE ASSERTION CAN CALL IT. */
+export function socrataUrl(
+  cfg: { host: string; dataset: string; nameColumn: string },
+  needle: string
+): string {
+  return (
+    `https://${cfg.host}/resource/${cfg.dataset}.json` +
+    `?$where=${encodeURIComponent(`starts_with(upper(${cfg.nameColumn}),'${needle}')`)}` +
+    `&$limit=${MAX_MATCHES + 1}`
+  );
+}
 
 const f = (v: string | undefined | null, sourceUrl: string): SourcedField | undefined =>
   v && String(v).trim() ? { value: String(v).trim(), sourceUrl } : undefined;
@@ -129,6 +199,7 @@ export const ADAPTERS: Record<string, Adapter> = {
     host: "data.texas.gov",
     dataset: "9cir-efmm",
     nameColumn: "taxpayer_name",
+    search: socrataAdapter({ host: "data.texas.gov", dataset: "9cir-efmm", nameColumn: "taxpayer_name" }),
     publishesStatus: true,
     /* ⚠ `right_to_transact_business_code` IS THE GOOD-STANDING SIGNAL. Measured
        value for an active entity is `A`. Anything else is not asserted as good
@@ -168,6 +239,7 @@ export const ADAPTERS: Record<string, Adapter> = {
     host: "data.colorado.gov",
     dataset: "4ykn-tg5h",
     nameColumn: "entityname",
+    search: socrataAdapter({ host: "data.colorado.gov", dataset: "4ykn-tg5h", nameColumn: "entityname" }),
     publishesStatus: true,
     /* ⚠ COLORADO PUBLISHES THE PHRASE ITSELF — measured: `"Good Standing"`. */
     goodStanding: (r) => String(r.entitystatus ?? "").toLowerCase().includes("good standing"),
@@ -194,6 +266,7 @@ export const ADAPTERS: Record<string, Adapter> = {
     host: "data.ny.gov",
     dataset: "n9v6-gdp6",
     nameColumn: "current_entity_name",
+    search: socrataAdapter({ host: "data.ny.gov", dataset: "n9v6-gdp6", nameColumn: "current_entity_name" }),
     /*
       ⚠⚠ NEW YORK PUBLISHES NO STATUS COLUMN. The dataset is *Active*
       Corporations, so being in it means the entity is listed as active — but
@@ -213,6 +286,122 @@ export const ADAPTERS: Record<string, Adapter> = {
       city: f(r.dos_process_city, u),
       stateCode: f(r.dos_process_state, u),
       postalCode: f(r.dos_process_zip, u),
+    }),
+  },
+
+  /* ═══ ADDED BY `P1-J1.1-E387`. Each proved by a MEASURED call, 2026-09-08 ═══
+     ⚠ THE PROVING PROTOCOL: date, latency, the name column read off a RETURNED
+     ROW (never a field list), whether a status column exists at all, and one
+     real sample. A lead that was not called is not an adapter. */
+
+  /**
+   * CONNECTICUT — measured 2026-09-08.
+   *   probe `?$limit=1` .............. 471ms, 12 columns
+   *   production query shape ......... 355ms, 9 rows, 9 DISTINCT names ✓
+   *   sample row ..... {"name":"ACME 2 REALTY, L.L.C.","status":"Active"}
+   *
+   * ⚠⚠ THE STATUS VALUES WERE READ OFF THE REGISTER, NOT GUESSED FROM THE COLUMN
+   * NAME. Grouped over the whole dataset, the register's own values are:
+   *   Active 459,523 · Forfeited 357,259 · Dissolved 318,882 · Withdrawn 53,760 ·
+   *   Revoked 46,479 · Cancelled 18,795 · Merged 12,710 · Expired Reservation
+   *   12,045 · Rejected 9,314 · … 25 distinct values in all.
+   *
+   * ⚠ SO `goodStanding` IS EXACT-MATCH `Active`, NOT A PREFIX. `Active - Pending
+   * Domestication` (2 rows) is deliberately NOT asserted as good standing — it is
+   * passed through verbatim, the same way Texas treats any code that is not `A`.
+   * ⚠⚠ AND NO SECOND GLOSS IS ADDED: the string travels into
+   * `entity_status_detail` exactly as the register wrote it. Texas's `A` remains
+   * the only translation in this codebase.
+   */
+  Connecticut: {
+    registerName: "Connecticut Secretary of the State — Business Registry",
+    host: "data.ct.gov",
+    dataset: "n7gp-d28j",
+    nameColumn: "name",
+    search: socrataAdapter({ host: "data.ct.gov", dataset: "n7gp-d28j", nameColumn: "name" }),
+    publishesStatus: true,
+    goodStanding: (r) => String(r.status ?? "").trim() === "Active",
+    map: (r, u) => ({
+      legalName: { value: String(r.name), sourceUrl: u },
+      entityNumber: f(r.accountnumber, u),
+      formationDate: f(r.date_registration, u),
+      status: f(r.status, u),
+    }),
+  },
+
+  /**
+   * PENNSYLVANIA — measured 2026-09-08.
+   *   probe `?$limit=1` .............. 383ms, 17 columns
+   *   production query shape ......... 129ms, 9 rows
+   *   sample row ..... {"business_name":"Macro, Inc.","filing_number":"0006436709",
+   *                     "typeofbusinessregistration":"Foreign Business Corporation"}
+   *
+   * ⚠⚠ NO STATUS COLUMN EXISTS, so `publishesStatus: false` — the safe default and
+   * the honest one. Being in this dataset means a registration was filed; it does
+   * NOT mean the entity is currently in good standing, and nothing here claims it.
+   *
+   * ⚠ MATCHING SEMANTICS DIFFER FROM THE OTHERS AND IT IS REPORTED, NOT PAPERED
+   * OVER: a row is a PARTY on a filing (`party_type: "Governor"`), so one entity
+   * can occupy several rows. Measured: a 9-row page for `ACME` held 7 distinct
+   * names. The user sees a slightly short list, never a wrong one.
+   */
+  Pennsylvania: {
+    registerName: "Pennsylvania Department of State — Business Registrations",
+    host: "data.pa.gov",
+    dataset: "xvd7-5r2c",
+    nameColumn: "business_name",
+    search: socrataAdapter({ host: "data.pa.gov", dataset: "xvd7-5r2c", nameColumn: "business_name" }),
+    publishesStatus: false,
+    map: (r, u) => ({
+      legalName: { value: String(r.business_name), sourceUrl: u },
+      entityNumber: f(r.filing_number, u),
+      formationDate: f(r.creationdate, u),
+      entityType: f(r.typeofbusinessregistration, u),
+      addressLine1: f(r.address_line1, u),
+      city: f(r.city, u),
+      stateCode: f(r.state, u),
+      postalCode: f(r.zip, u),
+    }),
+  },
+
+  /**
+   * OREGON — measured 2026-09-08.
+   *   probe `?$limit=1` .............. 475ms, 11 columns
+   *   production query shape ......... 211ms, 9 rows
+   *   sample row ..... {"business_name":"ACME ACRES","registry_number":"299818",
+   *                     "entity_type":"DOMESTIC NONPROFIT CORPORATION"}
+   *
+   * ⚠⚠ NO STATUS COLUMN, so `publishesStatus: false`. The dataset is titled
+   * *Active Businesses — ALL*, and a TITLE IS NOT A FIELD: nothing here claims
+   * good standing from the name of a file.
+   *
+   * ⚠⚠ THE WORST DUPLICATION OF THE THREE, MEASURED AND REPORTED: a row is an
+   * ASSOCIATED NAME (`associated_name_type: "PRINCIPAL PLACE OF BUSINESS"`), so
+   * one registry number spans many rows. A 9-row page for `ACME` held only
+   * **3 DISTINCT NAMES** — the same company four times over. ⚠ A buyer typing a
+   * partial name sees a short, repetitive list. `E387` reports this rather than
+   * adding a de-duplication step, because de-duplicating would change the shared
+   * search contract for the three states that already work, and WS-1 forbids
+   * exactly that. **Scott's call whether it ships as-is or waits for a
+   * `dedupeBy` field.**
+   */
+  Oregon: {
+    registerName: "Oregon Secretary of State — Active Businesses",
+    host: "data.oregon.gov",
+    dataset: "tckn-sxa6",
+    nameColumn: "business_name",
+    search: socrataAdapter({ host: "data.oregon.gov", dataset: "tckn-sxa6", nameColumn: "business_name" }),
+    publishesStatus: false,
+    map: (r, u) => ({
+      legalName: { value: String(r.business_name), sourceUrl: u },
+      entityNumber: f(r.registry_number, u),
+      formationDate: f(r.registry_date, u),
+      entityType: f(r.entity_type, u),
+      jurisdiction: f(r.jurisdiction, u),
+      addressLine1: f(r.address, u),
+      city: f(r.city, u),
+      stateCode: f(r.state, u),
+      postalCode: f(r.zip, u),
     }),
   },
 };
@@ -278,23 +467,25 @@ export async function validateEntity(input: {
   /* ⚠ SoQL string literals are single-quoted; a quote in the name would break
      the predicate, so it is doubled the way SQL requires. */
   const needle = name.toUpperCase().replace(/'/g, "''");
-  const url =
-    `https://${adapter.host}/resource/${adapter.dataset}.json` +
-    `?$where=${encodeURIComponent(`starts_with(upper(${adapter.nameColumn}),'${needle}')`)}` +
-    `&$limit=${MAX_MATCHES + 1}`;
 
+  /* ⚠⚠ THE ADAPTER BUILDS ITS OWN REQUEST NOW (`E387` WS-1). `validateEntity` no
+     longer knows what a Socrata URL looks like — it knows only that an adapter
+     can be asked for rows. The URL a Socrata adapter produces is unchanged and
+     asserted byte-for-byte in `check:trust-claims`. */
   let rows: Record<string, string>[];
+  let url: string;
   try {
     const ctl = AbortSignal.timeout(input.timeoutMs ?? 8000);
-    const r = await fetch(url, { headers: { accept: "application/json" }, signal: ctl });
-    if (!r.ok) {
+    const found = await adapter.search(needle, ctl);
+    url = found.sourceUrl;
+    if (found.status !== 200) {
       return {
         ok: false,
         reason: "error",
-        message: `${adapter.registerName} answered ${r.status}.`,
+        message: `${adapter.registerName} answered ${found.status}.`,
       };
     }
-    rows = (await r.json()) as Record<string, string>[];
+    rows = found.rows;
   } catch (e) {
     const timedOut = e instanceof Error && /abort|timeout/i.test(e.name + e.message);
     return {
