@@ -172,13 +172,28 @@ export default async function Page({
         ))}
       </ul>
 
-      {o.workRequestId && (
-        <div className="mt-8 border-t border-line pt-6">
+      <div className="mt-8 flex flex-wrap items-center gap-4 border-t border-line pt-6">
+        {/*
+          ⚠⚠ RAISING A PAYMENT REQUEST LIVES INSIDE THE ORDER (`P1-J4-E394`).
+          `nav.ts`: *"Timesheet and fixed-firm-price billing both surface as
+          Payment Requests generated from a Work Order… A rail item for a thing
+          that is a tab inside another thing taught the wrong model of how work
+          gets billed."*
+
+          ⚠ AND IT RENDERS FOR THE PROVIDER, ON A RELEASED ORDER, AND NOBODY
+          ELSE — the same party rule the Accept/Release buttons follow. A buyer
+          has nothing to claim; an unreleased order has nothing claimable.
+          Absent, not disabled.
+        */}
+        {o.party === "PROVIDER" && o.status === "RELEASED" && (
+          <Button href={`/orders/${o.id}/settle`}>Raise a payment request</Button>
+        )}
+        {o.workRequestId && (
           <Button href={`/work-requests/${o.workRequestId}`} variant="ghost">
             Open the work request
           </Button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

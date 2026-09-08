@@ -84,7 +84,8 @@
     "db:backfill-certification-user": "npx esbuild prisma/backfill-certification-user.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/backfill-cert-user.cjs --log-level=error && node -r dotenv/config .harness/backfill-cert-user.cjs dotenv_config_path=.env.local",
     "check:sourcing": "npx esbuild scripts/check-sourcing.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/sourcing.cjs --log-level=error && node .harness/sourcing.cjs",
     "check:hire": "npx esbuild scripts/check-hire.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/hire.cjs --log-level=error && node .harness/hire.cjs",
-    "check:orders": "npx esbuild scripts/check-orders.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/orders.cjs --log-level=error && node .harness/orders.cjs"
+    "check:orders": "npx esbuild scripts/check-orders.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/orders.cjs --log-level=error && node .harness/orders.cjs",
+    "check:settle": "npx esbuild scripts/check-settle.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/settle.cjs --log-level=error && node .harness/settle.cjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",

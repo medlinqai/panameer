@@ -199,7 +199,22 @@ export const ROUTE_ACCESS: { prefix: string; requires: RouteRequirement }[] = [
     no longer a stub — `/orders` and `/orders/[id]` are built.
   */
   { prefix: "/orders", requires: "authenticated" },
-  { prefix: "/finances", requires: "authenticated" }, // rail stub (E134)
+  /*
+    ⚠ REGISTERED BY `P1-J4-E394`. `/pay` is the BUYER's Payments surface and was
+    gated ONLY by its own `guardPage` — layer three of three, with the edge never
+    running on it. Its sibling `/finances` has been in this map since `E134`; the
+    two are mirrored routes (`nav.ts`: *"the href is `/pay` on this side and
+    `/finances` on the provider's"*) and only one of them was here.
+    ⚠ `canHireTalent` MATCHES `REQUESTER_NAV`'s OWN `requires` on that item, which
+    is what `check:nav-reachable` compares. The provider's mirror stays
+    `authenticated`, because `PROVIDER_NAV` declares no capability on it.
+    ⚠⚠ PAIRED WITH `proxy.ts` — the spec parses that literal and fails in BOTH
+    directions if the two disagree.
+  */
+  { prefix: "/pay", requires: "canHireTalent" },
+  /* ⚠ SUPERSEDED, quoted not deleted: this line read `// rail stub (E134)`. It is
+     no longer a stub — `/finances/payment-requests` and its detail are built. */
+  { prefix: "/finances", requires: "authenticated" },
   { prefix: "/messages", requires: "authenticated" }, // shared buyer ↔ provider
   /*
     WS1-B — the rail's Community and Sell-My-Services submenus land here.

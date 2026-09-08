@@ -118,6 +118,9 @@ export const config = {
     "/search/:path*",
     /* ⚠ `/contracts` -> `/orders` (`P1-ALL-E380`). */
     "/orders/:path*",
+    /* ⚠ `P1-J4-E394`. Paired with `route-access.ts`'s entry — the buyer's
+       Payments surface was outside the edge entirely until it was built. */
+    "/pay/:path*",
     "/finances/:path*",
     "/messages/:path*",
     "/community/:path*",

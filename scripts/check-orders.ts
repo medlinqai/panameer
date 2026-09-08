@@ -425,8 +425,32 @@ for (const p of ["src/app/(app)/orders/page.tsx", "src/app/(app)/orders/[id]/pag
     "5 — the person id comes from the session, never from input",
     !!lib && /where: \{ user_id: viewer\.userId \}/.test(lib.code)
   );
+  /**
+   * ⚠ THE RULE IS "NO PER-SIDE SPLIT", NOT "EXACTLY N PAGES".
+   *
+   * ⚠ SUPERSEDED, quoted not deleted: this asserted `routes.length === 2` and it
+   * fired the moment `P1-J4-E394` added `/orders/[id]/settle` — a legitimate new
+   * page that splits nothing. **A count was a proxy for the rule and the proxy
+   * was wrong.** What must never exist is a route that names a SIDE, because that
+   * is what forces a person to know which hat they are wearing before clicking.
+   */
   const routes = SRC.filter((f) => f.path.includes(join("app", "(app)", "orders")) && f.path.endsWith("page.tsx"));
-  check("5 — there are exactly two orders pages, not one per side", routes.length === 2, routes.map((r) => r.path).join(", "));
+  check("5 — the orders pages were found", routes.length >= 2, `${routes.length}`);
+  const sideNamed = routes.filter((r) =>
+    /\/(placed|received|buyer|buying|seller|selling|provider|as-buyer|as-provider|incoming|outgoing)\//.test(r.path)
+  );
+  check(
+    "5 — ABSENCE: no orders route names a side",
+    sideNamed.length === 0,
+    sideNamed.map((r) => r.path).join(", ")
+  );
+  /* ⚠ MUTATION: the scan would catch the split it exists to prevent. */
+  check(
+    "5 — MUTATION: the side scan catches /orders/placed",
+    /\/(placed|received|buyer|buying|seller|selling|provider|as-buyer|as-provider|incoming|outgoing)\//.test(
+      join("src", "app", "(app)", "orders", "placed", "page.tsx")
+    )
+  );
 }
 /**
  * ⚠⚠ THE DOCTRINE CHECK THE BRIEF ASKED FOR. `lib/nav.ts` carries the work-order
