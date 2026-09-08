@@ -301,12 +301,35 @@ export function AppRail() {
       className="block px-1"
     >
       {/*
-        E002 CLOSED — the new looped-P wordmark, on-dark variant (white
-        letters), from 4. Logo. The old thin lowercase mark is gone.
+        ── ⚠⚠ THE LOCKUP NOW CARRIES THE SEGMENTED-SQUARE MARK (`P1-ALL-E397`) ──
+
+        ⚠ SUPERSEDED, QUOTED NOT DELETED — this read:
+            *"E002 CLOSED — the new looped-P wordmark, on-dark variant (white
+            letters), from 4. Logo. The old thin lowercase mark is gone."*
+        E002 IS STILL CLOSED and the old thin lowercase mark is still gone; what
+        changed is that the LOOPED-P is gone too. `P1-ALL-E391` put the segmented
+        square in the browser tab and stopped, because no transparent lockup
+        carrying it existed — so the app showed TWO DIFFERENT MARKS, a square in
+        the tab and a looped P in this rail. This closes that.
+
+        ⚠⚠ THE MARK IN THIS LOCKUP IS THE COMPRESSED RAMP, NOT THE 512, AND THAT
+        IS DELIBERATE. This renders at `h-7` = 28px, which is icon territory: at
+        that size the full ramp's palest segments fall within a few units of the
+        canvas and the ring reads as broken — the same failure `E391` measured for
+        the favicon. ⚠ DO NOT regenerate it from the 512 to make it "consistent".
+        MEASURED: the lockup's palest ring pixel is rgb(255,192,255), 24 channel
+        units from `panameer-mark-32.png`'s reference; the full 512 is 69 away.
+        `check:brand-assets` asserts that by COMPARING PIXELS, not the filename.
+
+        ⚠ `alt="Panameer"` IS UNCHANGED — the lockup is still the wordmark and the
+        accessible name has not moved.
+        ⚠ THE OLD `panameer-new-on-dark.png` SURVIVES, UNTOUCHED: seven email and
+        API callers hotlink it in ALREADY-DELIVERED MAIL, and overwriting it would
+        silently restyle mail somebody received last month.
       */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/brand/panameer-new-on-dark.png"
+        src="/brand/panameer-lockup-on-dark.png"
         alt="Panameer"
         className="h-7 w-auto"
       />

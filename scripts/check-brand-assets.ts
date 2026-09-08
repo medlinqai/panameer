@@ -120,11 +120,19 @@ for (const f of HOTLINKED) {
     check(`3 — ${f} is byte-stable`, false, "the file is GONE — see the assertion above");
     continue;
   }
-  const size = statSync(path).size;
+  /* ⚠⚠ A PINNED HASH, MEASURED OFF THE SHIPPED FILE, NOT A SIZE BAND. `E397`
+     repointed every app site away from these two, so NOTHING IN THE APP RENDERS
+     THEM ANY MORE — which means a careless "cleanup" that re-encodes or replaces
+     one would be invisible everywhere except in mail somebody already received.
+     The hash is what notices. */
+  const HOTLINK_MD5: Record<string, string> = {
+    "panameer-new-on-dark.png": "53a94c57fc98e98b50b8844fd8c61753",
+    "panameer-new-on-light.png": "0388c9aed1652ce55aeba468907c5b33",
+  };
   check(
-    `3 — ${f} is byte-stable (${size} bytes)`,
-    size > 5000 && size < 8000,
-    `${size} bytes — if this moved, delivered mail moved with it`
+    `3 — ⚠⚠ ${f} is BYTE-UNCHANGED`,
+    md5(path) === HOTLINK_MD5[f],
+    `${md5(path)} != ${HOTLINK_MD5[f]} — delivered mail just changed`
   );
 }
 /* ⚠ THE CALL SITES ARE STILL POINTING AT THEM, so the guard above is guarding
@@ -152,35 +160,147 @@ check(
    have changed the on-light lockup is the MAGENTA wordmark — a brand decision
    Scott left open. Asserted as-is so a later swap is deliberate. */
 
+/*
+  ⚠ SUPERSEDED BY `P1-ALL-E397`, quoted in spirit: these five assertions used to
+  require `panameer-new-on-*.png` — the OLD looped-P wordmark. `E391` shipped the
+  segmented square to the browser tab and stopped there because no transparent
+  lockup carrying it existed, which left the app showing TWO DIFFERENT MARKS.
+  `E397` closes that, so the five app sites now point at the LOCKUPS.
+  ⚠⚠ THE OLD FILES ARE STILL ASSERTED TO EXIST, UNCHANGED, in section 3 — they are
+  hotlinked by already-delivered mail. What moved is what the APP renders.
+*/
 const ON_DARK = ["AppRail.tsx", "MarketingFooter.tsx", "HomeFooter.tsx"];
 for (const f of ON_DARK) {
   const hit = SRC.find((s) => s.path.endsWith(f));
   check(
     `4 — ${f} renders the ON-DARK lockup`,
-    !!hit && /brand\/panameer-new-on-dark\.png/.test(hit.text)
+    !!hit && /src="\/brand\/panameer-lockup-on-dark\.png"/.test(hit.text)
   );
 }
 for (const f of ["Logo.tsx", join("recommend", "[token]", "page.tsx")]) {
   const hit = SRC.find((s) => s.path.endsWith(f));
   check(
     `4 — ${f.split("/").pop()} renders the ON-LIGHT lockup`,
-    !!hit && /brand\/panameer-new-on-light\.png/.test(hit.text)
+    !!hit && /src="\/brand\/panameer-lockup-on-light\.png"/.test(hit.text)
   );
 }
-/* ⚠ ABSENCE: nothing renders a colorway on the wrong ground. */
+/* ⚠⚠ ABSENCE: NO APP SITE STILL RENDERS THE OLD WORDMARK. Repointing four of five
+   would leave one surface on the looped P and nobody would notice until a
+   screenshot. The scan looks at `src=` only, so the prose above each site — which
+   NAMES the old file to explain why it survives — cannot mask a real one. */
+for (const f of [...ON_DARK, "Logo.tsx", join("recommend", "[token]", "page.tsx")]) {
+  const hit = SRC.find((s) => s.path.endsWith(f));
+  check(
+    `4 — ABSENCE: ${f.split("/").pop()} no longer renders the old looped-P wordmark`,
+    !!hit && !/src="\/brand\/panameer-new-on-(dark|light)\.png"/.test(hit.text)
+  );
+}
+/* ⚠ AND NO COLORWAY ON THE WRONG GROUND. */
 {
   const railText = SRC.find((s) => s.path.endsWith("AppRail.tsx"))?.text ?? "";
   check(
     "4 — ABSENCE: the dark rail does not render the on-light lockup",
-    !/brand\/panameer-new-on-light\.png/.test(railText)
+    !/src="\/brand\/panameer-lockup-on-light\.png"/.test(railText)
   );
+}
+check(
+  "4 — both lockup files are published",
+  existsSync(join(BRAND, "panameer-lockup-on-dark.png")) &&
+    existsSync(join(BRAND, "panameer-lockup-on-light.png"))
+);
+check(
+  "4 — the compressed 512 master is published",
+  existsSync(join(BRAND, "panameer-mark-512-compressed.png"))
+);
+
+/* ═══ 5 · ⚠⚠ THE LOCKUP'S MARK IS THE COMPRESSED RAMP — MEASURED, NOT NAMED ══
+
+   `E391` established the failure and the metric: at icon sizes **the full ramp's
+   palest ring segments fall within a few units of the canvas and the ring reads
+   as broken.** The rail renders this lockup at `h-7` = 28px, which is squarely
+   icon territory, so the mark inside it must be the COMPRESSED ramp.
+
+   ⚠⚠ A FILENAME IS NOT A COLOUR. `panameer-lockup-on-dark.png` could be rebuilt
+   from the full 512 tomorrow and keep its name, so this compares PIXELS: the
+   palest ring pixel of the mark inside each lockup, against the two references
+   already in the repo. It must sit nearer `panameer-mark-32.png` (compressed)
+   than `panameer-mark-512.png` (full).
+
+   MEASURED 2026-09-08:
+     panameer-mark-32.png   (compressed ref) rgb(248,183,247)
+     panameer-mark-512.png  (FULL ramp)      rgb(255,237,255)   69 away
+     lockup-on-dark / -light mark            rgb(255,192,255)   24 away  ✓
+*/
+async function pixelChecks() {
+  /* eslint-disable-next-line @typescript-eslint/no-require-imports */
+  const sharp = require("sharp") as typeof import("sharp");
+
+  /** The palest OPAQUE ring pixel, excluding the near-white centre. */
+  async function palestRing(file: string, box?: { left: number; top: number; width: number; height: number }) {
+    let img = sharp(join(BRAND, file));
+    if (box) img = img.extract(box);
+    const { data, info } = await img.ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    let best: [number, number, number] | null = null;
+    let bestSum = -1;
+    for (let i = 0; i < data.length; i += info.channels) {
+      const [r, g, b, a] = [data[i], data[i + 1], data[i + 2], data[i + 3]];
+      if (a <= 200) continue;
+      /* ⚠ THE CREAM CENTRE IS NOT THE RING. Including it would make every file
+         report ~white and the assertion would compare nothing. */
+      if (r > 248 && g > 245 && b > 245) continue;
+      const sum = r + g + b;
+      if (sum > bestSum) { bestSum = sum; best = [r, g, b]; }
+    }
+    return best;
+  }
+  const delta = (a: number[], b: number[]) => a.reduce((n, x, i) => n + Math.abs(x - b[i]), 0);
+
+  const ref32 = await palestRing("panameer-mark-32.png");
+  const ref512 = await palestRing("panameer-mark-512.png");
+  check("5 — the compressed 32px reference was read", !!ref32);
+  check("5 — the full-ramp 512 reference was read", !!ref512);
+  check(
+    "5 — the two references are genuinely different ramps",
+    !!ref32 && !!ref512 && delta(ref32, ref512) > 30,
+    `32=${ref32} 512=${ref512}`
+  );
+
+  for (const f of ["panameer-lockup-on-dark.png", "panameer-lockup-on-light.png"]) {
+    /* The mark occupies the left square of the 621×128 lockup. */
+    const mark = await palestRing(f, { left: 0, top: 0, width: 128, height: 128 });
+    const dCompressed = mark && ref32 ? delta(mark, ref32) : Infinity;
+    const dFull = mark && ref512 ? delta(mark, ref512) : Infinity;
+    check(
+      `5 — ⚠⚠ ${f}'s mark is the COMPRESSED ramp, not the full one`,
+      dCompressed < dFull,
+      `palest ring ${mark} — ${dCompressed} from the 32px ref, ${dFull} from the full 512`
+    );
+    /* ⚠ AND IT IS ACTUALLY CLOSE, not merely closer. A mark halfway between the
+       two would satisfy "<" while still reading as broken at 28px. */
+    check(
+      `5 — and ${f}'s mark is within tolerance of the 32px reference`,
+      dCompressed <= 40,
+      `${dCompressed}`
+    );
+  }
 }
 
 /* ═══ REPORT ══════════════════════════════════════════════════════════════ */
 
-if (failures.length) {
-  console.error(`\ncheck:brand-assets — ${failures.length} FAILED, ${pass} passed\n`);
-  for (const f of failures) console.error(`  ✗ ${f}`);
-  process.exit(1);
-}
-console.log(`check:brand-assets — ${pass}/${pass} passed`);
+/* ⚠ THE PIXEL WORK IS ASYNC AND THIS BUNDLE IS CJS, so there is no top-level
+   await — the report runs after it resolves. ⚠⚠ A REJECTION MUST FAIL THE GATE
+   rather than print a green line, which is what the `.catch` is for: an
+   unreadable PNG is exactly when this assertion matters most. */
+pixelChecks()
+  .then(() => {
+    if (failures.length) {
+      console.error(`\ncheck:brand-assets — ${failures.length} FAILED, ${pass} passed\n`);
+      for (const f of failures) console.error(`  ✗ ${f}`);
+      process.exit(1);
+    }
+    console.log(`check:brand-assets — ${pass}/${pass} passed`);
+  })
+  .catch((e) => {
+    console.error("check:brand-assets — the pixel comparison threw:", e);
+    process.exit(1);
+  });

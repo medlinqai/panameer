@@ -81,7 +81,7 @@ function Shell({ children }: { children: React.ReactNode }) {
         <Link href="/" aria-label="Panameer" className="mb-6 block">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/brand/panameer-new-on-light.png"
+            src="/brand/panameer-lockup-on-light.png"
             alt="Panameer"
             className="h-7 w-auto"
           />

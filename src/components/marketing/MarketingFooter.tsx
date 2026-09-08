@@ -167,11 +167,15 @@ export function MarketingFooter() {
       <div className="border-t border-white/10">
         <div className="mx-auto flex max-w-[1180px] flex-col gap-8 px-6 py-9 min-[901px]:flex-row min-[901px]:items-start min-[901px]:justify-between">
           <div>
+            {/* ⚠ THE LOCKUP CARRIES THE SEGMENTED-SQUARE MARK (`P1-ALL-E397`).
+                621×128, so `width`/`height` moved with the asset — `next/image`
+                needs the intrinsic size or it letterboxes. The old
+                `panameer-new-on-dark.png` survives untouched for delivered mail. */}
             <Image
-              src="/brand/panameer-new-on-dark.png"
+              src="/brand/panameer-lockup-on-dark.png"
               alt="Panameer"
-              width={529}
-              height={134}
+              width={621}
+              height={128}
               className="h-8 w-auto"
             />
             {/*

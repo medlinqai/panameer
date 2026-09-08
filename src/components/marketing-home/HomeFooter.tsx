@@ -183,13 +183,21 @@ export function HomeFooter() {
         <div className="wrap">
           <div className="foot">
             <div>
+              {/* ⚠ `P1-ALL-E397` — the segmented-square lockup. Sized by
+                  `.foot-logo` (height:30px; width:auto), so the 621×128 aspect is
+                  safe without explicit dimensions. The old
+                  `panameer-new-on-dark.png` survives untouched for delivered mail.
+                  ⚠ THIS NOTE SITS ABOVE THE eslint-disable, NOT BETWEEN IT AND THE
+                  ELEMENT: `disable-next-line` means the NEXT LINE, so a comment
+                  slipped in between silently un-disables the rule and lint reports
+                  the directive as unused. Caught by the 0-new-warnings gate. */}
               {/* eslint-disable-next-line @next/next/no-img-element -- the ported
           stylesheet sizes this by class (.brand-logo/.foot-logo); next/image
           needs explicit dimensions and would fight the mockup's CSS for a
           30px-tall wordmark. Same call the rest of the marketing surface makes. */}
               <img
                 className="brand-logo foot-logo"
-                src="/brand/panameer-new-on-dark.png"
+                src="/brand/panameer-lockup-on-dark.png"
                 alt="Panameer"
               />
               {/*

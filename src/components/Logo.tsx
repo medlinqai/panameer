@@ -4,8 +4,19 @@ import Image from "next/image";
 /**
  * The Panameer wordmark, ON-LIGHT (WS4 / E002).
  *
- * The new looped-P wordmark in navy, for white and tinted surfaces. The rail's
- * on-dark (white-letter) variant lives in AppRail.
+ * ⚠ SUPERSEDED (`P1-ALL-E397`), QUOTED NOT DELETED — this read *"The new looped-P
+ * wordmark in navy…"*. The lockup now carries the SEGMENTED-SQUARE mark; the
+ * looped P is gone from the app entirely. The wordmark LETTERFORMS are untouched
+ * — the lockup composites this same navy wordmark beside the mark.
+ * The navy variant is for white and tinted surfaces; the rail's on-dark
+ * (white-letter) variant lives in AppRail.
+ *
+ * ⚠⚠ THE ASSET IS 621×128 NOW, NOT 524×132, AND `width`/`height` MOVED WITH IT.
+ * `next/image` needs the intrinsic size; leaving the old numbers would letterbox
+ * the artwork. ⚠ `MarketingHeader` nudges this by `-translate-y-[3px]`, measured
+ * against the OLD art — RE-MEASURED for the new lockup and it still holds: the
+ * ink centroid sits +2.45px below box centre at `h-10` versus +2.19px before, so
+ * the same 3px remains the right middle. Nothing there needed changing.
  *
  * Both new assets are genuinely transparent, which the old `panameer-logo.png`
  * was not — its background pixels were opaque white and boxed the mark on any
@@ -27,10 +38,10 @@ export function Logo({
 }) {
   const img = (
     <Image
-      src="/brand/panameer-new-on-light.png"
+      src="/brand/panameer-lockup-on-light.png"
       alt="Panameer"
-      width={524}
-      height={132}
+      width={621}
+      height={128}
       priority={priority}
       className={className}
     />
