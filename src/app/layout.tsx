@@ -47,14 +47,45 @@ const montserrat = Montserrat({
 export const metadata: Metadata = {
   title: SEO_TITLE,
   description: SEO_DESCRIPTION,
-  icons: {
-    // WS4 — the new looped-P mark. `apple` gets the 180px padded variant: iOS
-    // composites a transparent touch icon onto black, and the supplied mark is
-    // 44px, so it is upscaled onto white rather than shipped bare.
-    icon: "/brand/panameer-new-mark.png",
-    shortcut: "/brand/panameer-new-mark.png",
-    apple: "/brand/panameer-new-mark-180.png",
-  },
+  /*
+    ── ⚠⚠ THERE IS NO `icons` BLOCK HERE, AND THAT IS THE FIX (`P1-ALL-E391`) ──
+
+    ⚠ SUPERSEDED, QUOTED NOT DELETED — this file used to declare:
+
+        icons: {
+          // WS4 — the new looped-P mark. `apple` gets the 180px padded variant: iOS
+          // composites a transparent touch icon onto black, and the supplied mark is
+          // 44px, so it is upscaled onto white rather than shipped bare.
+          icon: "/brand/panameer-new-mark.png",
+          shortcut: "/brand/panameer-new-mark.png",
+          apple: "/brand/panameer-new-mark-180.png",
+        },
+
+    ⚠⚠ TWO SOURCES WERE EMITTING ICONS AND THE METADATA ONE WAS WINNING.
+    MEASURED on the running app before any change — the browser received FOUR
+    tags, in this order:
+
+      1  <link rel="shortcut icon" href="/brand/panameer-new-mark.png">   ← metadata
+      2  <link rel="icon" href="/favicon.ico?..." sizes="32x32">          ← src/app/favicon.ico
+      3  <link rel="icon" href="/brand/panameer-new-mark.png">            ← metadata
+      4  <link rel="apple-touch-icon" href="/brand/panameer-new-mark-180.png">
+
+    Next auto-detects `src/app/favicon.ico` AND emits the explicit block, and a
+    browser takes the LAST usable `rel="icon"` — tag 3. So `src/app/favicon.ico`
+    existed, was served at `/favicon.ico`, and was OVERRIDDEN. ⚠⚠ THAT IS WHY A
+    FAVICON "WON'T UPDATE": the file everyone edits is not the one being used.
+
+    ⚠ SO THE FIX IS ONE SOURCE, NOT A BETTER-ORDERED TWO. Next's file conventions
+    in `src/app/` are now the only declaration:
+
+      src/app/icon.png        the tab icon    (the 32px compressed-ramp file)
+      src/app/apple-icon.png  iOS home screen (the delivered 180px, already padded)
+      src/app/favicon.ico     the legacy /favicon.ico request
+
+    ⚠ AND `apple-icon` IS NEXT'S CONVENTION NAME — not `apple-touch-icon`, which
+    is the HTML `rel` value Next generates FROM it. A file named
+    `apple-touch-icon.png` in `src/app/` is detected as nothing at all.
+  */
 };
 
 export default function RootLayout({
