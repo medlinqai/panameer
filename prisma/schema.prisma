@@ -916,9 +916,32 @@ model ProviderProfile {
   /// changed meaning on deploy.
   rate_min_cents          Int?
   rate_max_cents          Int?
-  /// Platform service fee as BASIS POINTS (1000 = 10%). Integer so the fee and
+  /// Platform service fee as BASIS POINTS (1490 = 14.9%). Integer so the fee and
   /// the "You'll get" figure are computed without ever touching a float.
-  service_fee_bps         Int                @default(1000)
+  ///
+  /// ── ⚠⚠ A MIX OF 1000s AND 1490s IN THIS COLUMN IS DELIBERATE (`P1-J1.4-E390`)
+  ///
+  /// ⚠⚠ IT IS NOT DATA CORRUPTION AND IT MUST NOT BE "TIDIED UP".
+  ///
+  ///   · **1000 (10%) — the 91 rows that existed on 2026-09-07.** They predate
+  ///     the change and are GRANDFATHERED.
+  ///   · **1490 (14.9%) — the rate from 2026-09-07 onward.** SCOTT: *"Take it to
+  ///     14.9%… I do not want to charge my customer — removes a big NO."*
+  ///
+  /// ⚠ A PRISMA `@default` APPLIES ONLY ON INSERT, which is exactly why the split
+  /// exists: changing it moved nobody. **Raising a live provider's fee without
+  /// telling them is not something a marketplace recovers from.**
+  ///
+  /// ⚠⚠ DO NOT WRITE A MIGRATION, A BACKFILL OR AN `UPDATE` OVER THIS COLUMN.
+  /// Migrating existing providers is its own decision and its own brief, and it
+  /// needs `WorkOrder.fee_bps` (`E388`) first so an in-flight engagement finishes
+  /// at the rate it was agreed at. `check:service-fee` fails the build on one.
+  ///
+  /// ⚠ THE `@default` BELOW AND `DEFAULT_SERVICE_FEE_BPS` IN `lib/display.ts` ARE
+  /// TWO COPIES OF ONE NUMBER — unavoidable, because a Prisma `@default` is not
+  /// readable from TypeScript. `check:service-fee` reads this file as text and
+  /// fails when they differ. That assertion is what stops a third copy.
+  service_fee_bps         Int                @default(1490)
   currency                String             @default("USD")
   /// The field chosen at the catalog step: a (Role, Domain) PAIR, since the
   /// authoritative catalog is Role → Domain → Skill and the same domain name
@@ -4359,7 +4382,7 @@ model WorkOrder {
 
   /// ── ⚠⚠ A SNAPSHOT, NOT A SECOND FEE MODEL, AND DELIBERATELY WITH NO DEFAULT ─
   ///
-  /// THE FEE ALREADY EXISTS: `ProviderProfile.service_fee_bps Int @default(1000)`
+  /// THE FEE ALREADY EXISTS: `ProviderProfile.service_fee_bps Int @default(1490)`
   /// above, `rateBreakdown()` in `lib/display.ts` already does this arithmetic,
   /// and the provider onboarding screen already renders "Service fee (10%)" and
   /// "the estimated amount you'll receive". This is not a new one.

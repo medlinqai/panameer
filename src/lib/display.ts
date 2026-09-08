@@ -66,32 +66,70 @@ export function centsToDollarInput(cents: number | null | undefined): string {
   return cents == null ? "" : String(cents / 100);
 }
 
-/** Basis points → a display percentage ("10%"). 1000 bps = 10%. */
+/**
+ * Basis points → a display percentage. 1490 bps = `"14.9%"`, 1000 bps = `"10%"`.
+ *
+ * ── ⚠⚠ THE TRAILING ZERO WAS A REAL BUG AND `E390` IS WHAT EXPOSED IT ───────
+ *
+ * ⚠ SUPERSEDED, quoted not deleted — this returned
+ * `` `${Number.isInteger(pct) ? pct : pct.toFixed(2)}%` ``, which rendered
+ * **1490 as `"14.90%"`**. MEASURED BEFORE ANY CHANGE, not assumed.
+ *
+ * ⚠ IT WAS NEVER WRONG WHILE THE FEE WAS 10%: 1000 bps is an integer percentage,
+ * so the `toFixed(2)` branch was unreachable for the only value that ever
+ * reached it. **The fee moving to 14.9% is what made a two-decimal fallback
+ * visible**, and `"14.90%"` is not what Scott decided or what the disclosure
+ * should say.
+ *
+ * ⚠ TRAILING ZEROS ARE TRIMMED, SIGNIFICANT DIGITS ARE NOT: 1250 → `"12.5%"`,
+ * 1005 → `"10.05%"`, 10 → `"0.1%"`. `check:service-fee` asserts each of those,
+ * because "strip the zeros" written carelessly also strips the 5 from 10.05.
+ */
 export function bpsToPercentLabel(bps: number): string {
   const pct = bps / 100;
-  return `${Number.isInteger(pct) ? pct : pct.toFixed(2)}%`;
+  if (Number.isInteger(pct)) return `${pct}%`;
+  return `${pct.toFixed(2).replace(/0+$/, "").replace(/\.$/, "")}%`;
 }
 
 /**
- * ── ⚠⚠ THE ONE PLACE THE DEFAULT FEE IS WRITTEN IN TYPESCRIPT (`P1-J4-E388`) ──
+ * ── ⚠⚠ THE ONE PLACE THE DEFAULT FEE IS WRITTEN IN TYPESCRIPT ───────────────
  *
- * It MIRRORS `ProviderProfile.service_fee_bps @default(1000)` in the schema, and
+ * It MIRRORS `ProviderProfile.service_fee_bps @default(1490)` in the schema, and
  * that duplication is unavoidable — a Prisma `@default` is not readable from TS.
- * What IS avoidable is having it written THREE times, which is what was here:
- * the schema, plus `join/provider/page.tsx:445` (`serviceFeeBps: 1000`) and
- * `:663` (`p.serviceFeeBps ?? 1000`). Two literals for one default WILL drift
- * from the schema, and the drift would show up as a provider being quoted one
- * fee on screen and charged another.
+ * What IS avoidable is having it written THREE times, which is what was here
+ * before `P1-J4-E388`: the schema, plus two literals in
+ * `join/provider/page.tsx`. Two literals for one default WILL drift from the
+ * schema, and the drift shows up as a provider being quoted one fee on screen
+ * and charged another.
  *
- * ⚠⚠ THE VALUE IS **NOT** CHANGED HERE. The code says 10%; Scott has decided
- * 14.9% (Amendment 14). That is `E390`'s brief, NOT this one, and the reason it
- * is not a one-line edit is that a Prisma `@default` APPLIES ONLY ON INSERT:
- * flipping 1000 → 1490 would leave all 91 existing providers on 10% and put
- * every new one on 14.9% — a two-tier marketplace nobody decided to create, with
- * neither group told. Routing the literals through here is what makes that later
- * change ONE decision instead of a hunt.
+ * ⚠⚠ THE DUPLICATION THAT REMAINS IS ASSERTED, NOT TRUSTED. `check:service-fee`
+ * reads the `@default` out of `schema.prisma` as text and FAILS THE BUILD if it
+ * and this constant differ. **That assertion is what stops the fourth copy** —
+ * and it is the only thing that can, because no import can cross that boundary.
+ *
+ * ── ⚠⚠ 1490, AND EXISTING PROVIDERS ARE GRANDFATHERED ON PURPOSE (`E390`) ───
+ *
+ * **SCOTT, 2026-09-07:** *"Take it to 14.9%… I do not want to charge my customer
+ * — removes a big NO. Providers will gladly pay to get work."*
+ *
+ * ⚠ SUPERSEDED, QUOTED NOT DELETED — this constant was `1000` and its docblock
+ * said *"THE VALUE IS NOT CHANGED HERE… That is `E390`'s brief, NOT this one."*
+ * `E390` is this change, and the reason it was held back is the reason the split
+ * below is deliberate rather than an oversight.
+ *
+ * ⚠⚠ A PRISMA `@default` APPLIES ONLY ON INSERT. The 91 `ProviderProfile` rows
+ * that existed on 2026-09-07 keep 1000 (10%) and every row created after it gets
+ * 1490 (14.9%). **THAT IS THE DECISION, NOT AN ACCIDENT** — raising a live
+ * provider's fee without telling them is not something a marketplace recovers
+ * from. ⚠ DO NOT "FINISH THE JOB" WITH A BACKFILL: migrating existing providers
+ * is its own decision and its own brief, and it needs `WorkOrder.fee_bps` (which
+ * `E388` built) so an in-flight engagement finishes at the rate it was agreed
+ * at. `check:service-fee` fails the build on any `UPDATE` over that column.
+ *
+ * ⚠ AND PANAMEER CHARGES THE PROVIDER ONLY. There is no buyer-side fee anywhere
+ * in the schema or the code, and none is being added.
  */
-export const DEFAULT_SERVICE_FEE_BPS = 1000;
+export const DEFAULT_SERVICE_FEE_BPS = 1490;
 
 /**
  * The E018 rate breakdown, computed in integer cents end to end.
