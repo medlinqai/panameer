@@ -370,7 +370,12 @@ export const LEGACY_SECTIONS = [
 ] as const;
 
 const WORK_TYPES = ["HOURLY", "PACKAGES", "AGENCY", "CONTRACT_TO_HIRE"] as const;
-const WORK_METHODS = ["HOURLY", "PACKAGES", "RECRUITER"] as const;
+/* ⚠ `SERVICES` is the merged card (`P1-A1.4-E405`); `HOURLY` and `PACKAGES` stay
+   ACCEPTED so an existing row can be re-saved without being rejected by the very
+   validator that let it in. ⚠ DO NOT CONFUSE WITH `WORK_TYPES` ABOVE — a
+   different field with an overlapping vocabulary, and the four-letter name
+   collision that caused `E405` WS-1. */
+const WORK_METHODS = ["SERVICES", "HOURLY", "PACKAGES", "RECRUITER"] as const;
 // "LINKEDIN" is retained ONLY so rows imported before PJv2 WS13 still read; no
 // code path writes it any more (E069).
 const PROFILE_METHODS = ["LINKEDIN", "RESUME", "MANUAL"] as const;

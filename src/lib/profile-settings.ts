@@ -21,9 +21,33 @@ import {
  * there is exactly one implementation of the save logic.
  */
 
-/** Sections editable from Settings (a superset is allowed by applyProviderSection). */
+/**
+ * Sections editable from Settings (a superset is allowed by applyProviderSection).
+ *
+ * ── ⚠⚠ THIS LIST IS A SECOND ALLOW-LIST, AND IT KILLED A SCREEN (`E405` WS-1) ─
+ *
+ * There are TWO allow-lists on the way in to this endpoint — the Zod body schema
+ * in `section-schemas.ts`, and this one. `P1-A1.3-E401` moved `work_method` from
+ * a wizard step to a SECTION, added the schema entry and the `applyProviderSection`
+ * case, pointed the client at this endpoint — and never added it HERE. The result
+ * was `POST /api/settings/profile/section 400`, and Scott's *"cant go forward…
+ * can't go backward. HARD STOP."*
+ *
+ * ⚠ `work_type` WAS ALREADY IN THIS LIST AND `work_method` WAS NOT — two
+ * different fields whose names differ by four letters. The persistence layer
+ * distinguishes them; this list never learned to.
+ *
+ * ⚠⚠ ADDING A SECTION MEANS ADDING IT IN THREE PLACES. `check:section-endpoint`
+ * now asserts every `section: "<name>"` literal the client sends satisfies all
+ * three, because satisfying two of three is exactly what shipped.
+ */
 const SETTINGS_SECTIONS: ProfileSection[] = [
   "work_type",
+  /* ⚠ NOT A PATCH — IT BELONGS HERE ON THE MERITS. `page.tsx` already promises
+     *"A person can still change their own method later in Settings"*, and
+     `applyProviderSection`'s `case "work_method"` was written to be called from
+     exactly here. */
+  "work_method",
   "skills",
   "title",
   "experience",

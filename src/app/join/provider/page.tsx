@@ -160,10 +160,38 @@ const GOAL_OPTIONS = [
   { value: "NONE", title: "Just Exploring", description: "Seeing what's here for now." },
 ];
 
-// E009 — the third option forks the user to Recruiter (the app's Coordinator).
+/*
+  ── ⚠⚠ TWO CARDS, BECAUSE THERE WERE ONLY EVER TWO QUESTIONS (`E405` WS-3) ───
+
+  ⚠ SUPERSEDED, quoted not deleted — the three-card list `E009` wrote:
+
+      { value: "HOURLY",   title: "I Sell My Services by the Hour",
+        description: "Clients book your time at an hourly rate." },
+      { value: "PACKAGES", title: "I Sell My Services in Packages",
+        description: "Fixed-scope offerings at a set price." },
+
+  ⚠⚠ THOSE TWO WERE NOT MUTUALLY EXCLUSIVE AND NOTHING BRANCHED ON THEM.
+  Measured: the strings appear only in this list and two type arrays; the schema
+  carries BOTH `hourly_rate_cents` and a `Package` model, so a provider who
+  picked HOURLY could already publish packages. The screen forced a choice that
+  was not a choice and told a provider something untrue at step one —
+  consultants routinely do both: hourly for advisory, fixed price for a defined
+  deliverable.
+
+  ⚠ THE RECRUITER CARD IS UNCHANGED AND IS LOAD-BEARING: it selects
+  `RECRUITER_STEPS` (six, not seven), suppresses the rate step and feeds the
+  Coordinator gates. That is a real fork; the other two were not.
+
+  ⚠ SCOTT'S WORDING, VERBATIM — including the "and/or" and the "hour/month"
+  slash. Do not tidy either.
+*/
 const WORK_METHOD_OPTIONS = [
-  { value: "HOURLY", title: "I Sell My Services by the Hour", description: "Clients book your time at an hourly rate." },
-  { value: "PACKAGES", title: "I Sell My Services in Packages", description: "Fixed-scope offerings at a set price." },
+  {
+    value: "SERVICES",
+    title: "I Sell Services and/or Service Products",
+    description:
+      "You sell your time by the hour/month or pre-defined deliverables.",
+  },
   { value: "RECRUITER", title: "I Sell the Services of Others (Recruiter)", description: "You represent other providers and place them on work." },
 ];
 
@@ -877,9 +905,35 @@ setScreen(target);
               data: { workMethod: "RECRUITER" },
             }),
           });
+          /*
+            ── ⚠⚠ A FAILED WRITE MUST SURFACE, NOT FALL THROUGH (`E405` WS-1) ──
+
+            ⚠ SUPERSEDED, quoted not deleted:
+
+                if (saved.ok) {
+                  const again = await fetch("/api/onboarding/status");
+                  if (again.ok) s = await again.json();
+                }
+
+            ⚠⚠ THERE WAS NO `else`, AND THAT IS WHY THE DEFECT HID. When this
+            POST started returning 400, the recruiter entrance discarded it in
+            silence: `workMethod` stayed null, the router fell through to the
+            `work_method` screen, and that screen 400'd too. **BOTH entrances to
+            the recruiter fork were dead and neither said so** — the URL one
+            because it swallowed the error, the screen one because it showed a
+            message with no way past it.
+
+            ⚠ IT SETS THE SAME `error` STATE THE `choose()` HANDLER SETS. One
+            honest message, one surface — not a second error UI invented for the
+            entrance nobody sees.
+          */
           if (saved.ok) {
             const again = await fetch("/api/onboarding/status");
             if (again.ok) s = await again.json();
+          } else {
+            setError(
+              "We couldn't set you up as a recruiter. Please pick how you work below."
+            );
           }
         }
 
@@ -1495,27 +1549,87 @@ setScreen(target);
       }
     };
 
-    return (
-      <PlainShell contentWidth="max-w-2xl">
-        <div>
-          <h1 className="text-center text-[28px] font-extrabold tracking-[-0.6px]">
-            How Do You Work?
-          </h1>
-          {/* ⚠ WHY IT IS BEING ASKED, in one line — a person who arrived by a
-              recruiter link and lost the query string has no idea why the
-              wizard suddenly wants this. */}
-          <p className="mt-2 text-center text-[15px] text-ink-2">
-            This sets up the rest of your profile — you can change it later in
-            Settings.
-          </p>
+    /*
+      ── ⚠⚠ `WizardShell`, NOT `PlainShell` (`P1-A1.4-E405` WS-2) ─────────────
 
+      SCOTT: *"this whole page is a different style. It is not consistent with
+      the service buyer registration pages."* Then, itemised: no line above the
+      button · the bottom buttons are not in a footer band · no Finish later ·
+      *"oh yeah, no back button either."*
+
+      ⚠ SUPERSEDED, quoted not deleted: this rendered
+      `<PlainShell contentWidth="max-w-2xl">` and drew its OWN full-width magenta
+      Continue INSIDE the content column.
+
+      ⚠⚠ `PlainShell` IS THE **PRE**-VERIFY CHROME — logo only, deliberately no
+      stepper (`E001`). This screen is reached only AFTER `s.emailVerified`, so
+      it was wearing the pre-verify shell in a post-verify position. ⚠ NOTHING
+      NEW WAS BUILT: `WizardShell` has taken every one of these props all along
+      and `join/requester/steps/page.tsx` already passes them.
+      ⚠ `PlainShell` IS NOT RESTYLED — it is still correct for `signup` and
+      `check_email`, which Scott did not complain about.
+
+      ── ⚠⚠ AND IT CARRIES NO COUNTER. THAT IS THE DECISION, NOT AN OMISSION ──
+
+      SCOTT: *"Must function the same way the buyer functions... I believe there
+      is an ask to 'get started' and every page after that is numbered, no?"* He
+      is right, and the buyer side already works that way: `/join/requester/start`
+      is ONE UNNUMBERED ASK carrying the full footer band, and every page after
+      it is numbered. This is the provider's equivalent of that ask.
+
+      ⚠ `work_method` IS AN UNCOUNTED SCREEN, NOT A STEP (`P1-A1.3-E401` WS-1),
+      and the screen AFTER it — `title` — is genuinely step 1. Two consecutive
+      screens both reading "1 of 7" is worse than no number at all.
+
+      ⚠ SO NO `step`, NO `totalSteps`, NO `counterText`. `WizardShell`'s own
+      docblock says *"OMIT on pre-verify pages — that hides the stepper"*, and
+      VERIFIED IN THE SOURCE rather than assumed: `showStepper` gates ONLY the
+      counter and the progress track, while the rule above the buttons is
+      `OnboardingFrame`'s footer `border-t`, which renders whenever a `footer`
+      exists. Omitting `step` drops the number and keeps the band.
+    */
+    return (
+      <WizardShell
+        title="How Do You Work?"
+        /* ⚠ WHY IT IS BEING ASKED, in one line — somebody who arrived by a
+           recruiter link and lost the query string has no idea why the wizard
+           suddenly wants this. */
+        subtitle="This sets up the rest of your profile — you can change it later in Settings."
+        /*
+          ⚠ BACK GOES TO `/join`, THE ROLE PICKER, and that is the only truthful
+          destination: it is where this screen was arrived from, and there is no
+          earlier wizard screen to return to — `check_email` sits behind a
+          verification that has already passed, so sending anyone there is a dead
+          end.
+        */
+        onBack={() => router.push("/join")}
+        canBack
+        /*
+          ⚠ "Finish later" MATCHES THE REQUESTER'S DESTINATION.
+          ⚠⚠ IT DOES NOT MIRROR THE REQUESTER'S EMAIL: that side also posts
+          `/api/onboarding/requester/finish-later`, and THERE IS NO PROVIDER
+          EQUIVALENT — `src/app/api/onboarding/provider/` has no `finish-later`
+          route. Navigating only is the honest half; the missing email is
+          reported, not invented here.
+          ⚠ SCOPED TO THIS SCREEN. `WizardShell` has ONE secondary slot and the
+          counted provider steps already spend it on "Skip for Now"; putting
+          "Finish later" on them would take that away.
+        */
+        secondaryLabel="Finish later"
+        onSecondary={() => router.push("/dashboard")}
+        onContinue={choose}
+        continueDisabled={!workMethodPick}
+        continueLabel="Continue"
+        busy={busy}
+      >
+        <div className="mx-auto w-full max-w-2xl">
           {error && (
-            <div className="mt-5">
+            <div className="mb-5">
               <Notice>{error}</Notice>
             </div>
           )}
 
-          <div className="mt-6 grid gap-3">
+          <div className="grid gap-3">
             {WORK_METHOD_OPTIONS.map((o) => (
               <OptionCard
                 key={o.value}
@@ -1526,17 +1640,8 @@ setScreen(target);
               />
             ))}
           </div>
-
-          <button
-            type="button"
-            disabled={!workMethodPick || busy}
-            onClick={choose}
-            className="mt-6 w-full rounded-full bg-magenta px-7 py-3 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-40"
-          >
-            {busy ? "Saving\u2026" : "Continue"}
-          </button>
         </div>
-      </PlainShell>
+      </WizardShell>
     );
   }
 

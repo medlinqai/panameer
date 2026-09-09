@@ -1068,8 +1068,36 @@ enum WorkType {
 /// RECRUITER is the user-type fork: a recruiter sells the services of OTHERS
 /// and is the app's Coordinator role (see User Hierarchy deck / brief_I).
 enum WorkMethod {
+  /// ⚠ THE MERGED CARD (`P1-A1.4-E405` WS-3). *"I Sell Services and/or Service
+  /// Products"* — one value for a provider selling their OWN work, however it is
+  /// priced.
+  SERVICES
+
+  /**
+   * ── ⚠⚠ `HOURLY` AND `PACKAGES` ARE SUPERSEDED, NOT DELETED (`E164`) ─────────
+   * They were two of three cards at signup, and the choice was FALSE: measured,
+   * those strings appear only in the option list and two type arrays — NOTHING in
+   * the app branches on which one a provider picked, and the schema carries BOTH
+   * `hourly_rate_cents` and a `Package` model, so an "HOURLY" provider could
+   * already publish packages. Consultants routinely do both.
+   * ⚠ THE ROWS THAT HOLD THEM KEEP THEM AND ARE **NOT** BACK-FILLED — the same
+   * principle as the fee grandfathering in `P1-J1.4-E390`: a new option applies
+   * going forward, and rewriting history to look tidy is a migration nobody asked
+   * for. MEASURED 2026-09-09: 13 rows HOURLY, 1 PACKAGES, 3 RECRUITER, 82 null.
+   * ⚠ EVERY READER TREATS "NOT RECRUITER" UNIFORMLY, which is why this is safe:
+   * `isRecruiterProfile()` tests `=== "RECRUITER"`, `completeness.ts` scores mere
+   * PRESENCE, and `mentors.ts` tests `=== "RECRUITER"`. No surface renders either
+   * string to a user.
+   * ⚠⚠ IF HOURLY-VS-PACKAGES EVER SHOULD MEAN SOMETHING, IT RETURNS AS A
+   * MULTI-SELECT ON THE PROFILE — not a single exclusive choice at signup.
+   * Recorded, deliberately not built.
+   */
   HOURLY
   PACKAGES
+
+  /// ⚠ THE USER-TYPE FORK, and the only value anything branches on: a recruiter
+  /// sells the services of OTHERS. Selects `RECRUITER_STEPS`, suppresses the rate
+  /// step, and feeds the Coordinator capability gates.
   RECRUITER
 }
 
@@ -2152,6 +2180,7 @@ model Certification {
    * removed.
    */
   /**
+   * /**
    * /**
    * /**
    * /**
