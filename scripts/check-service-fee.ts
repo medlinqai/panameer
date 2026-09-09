@@ -301,9 +301,19 @@ check("6 — ABSENCE: no buyer fee column in the schema", !/buyer_fee|buyer_serv
   );
 }
 /* ⚠ AND NO COMPETITOR COMPARISON. *"Cheaper than Upwork" is NOT supportable* —
-   Upwork's freelancer fee is 0–15% and most pay about 10%. The defensible line is
-   "we never charge the buyer". Copy is Scott's; this only stops one arriving by
-   accident alongside a fee change. */
+   Upwork's freelancer fee is 0–15% and most pay about 10%. Copy is Scott's; this
+   only stops one arriving by accident alongside a fee change.
+
+   ── ⚠⚠ SUPERSEDED BY `P1-ALL-E396`, QUOTED NOT DELETED ─────────────────────
+
+   ⚠ This note used to finish: *"The defensible line is 'we never charge the
+   buyer'."* ⚠⚠ THAT LINE IS NOT DEFENSIBLE AND IS DELETED RATHER THAN REWORDED.
+   `direct-contracts-terms` charges a Service Buyer a $49/month Direct Work
+   Orders Fee, and a flat monthly buyer subscription is planned.
+
+   ⚠ THE ASSERTION BELOW IS UNTOUCHED AND STILL CORRECT. It tests for a buyer
+   fee in the SCHEMA and the CODE, which is a different claim from the marketing
+   one and remains true. Only the sentence justifying it was wrong. */
 {
   const claims = SRC.filter((f) =>
     /(cheaper|lower|less)\s+than\s+(upwork|fiverr|toptal)/i.test(f.text)

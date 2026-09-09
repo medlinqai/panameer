@@ -126,8 +126,24 @@ export function bpsToPercentLabel(bps: number): string {
  * `E388` built) so an in-flight engagement finishes at the rate it was agreed
  * at. `check:service-fee` fails the build on any `UPDATE` over that column.
  *
- * ⚠ AND PANAMEER CHARGES THE PROVIDER ONLY. There is no buyer-side fee anywhere
- * in the schema or the code, and none is being added.
+ * ── ⚠⚠ THE "NEVER CHARGES THE BUYER" CLAIM IS DELETED, NOT REWORDED (`E396`) ─
+ *
+ * ⚠ SUPERSEDED, quoted not deleted: *"⚠ AND PANAMEER CHARGES THE PROVIDER ONLY.
+ * There is no buyer-side fee anywhere in the schema or the code, and none is
+ * being added."*
+ *
+ * ⚠⚠ THE SECOND HALF OF THAT SENTENCE IS STILL TRUE AND THE FIRST HALF IS NOT.
+ * `check:service-fee` still asserts there is no buyer-fee column and no
+ * `buyerFee` in the code, and both assertions pass — **that is a fact about the
+ * SCHEMA.** What is no longer true is the marketing claim built on top of it:
+ * `direct-contracts-terms` charges a Service Buyer a **$49/month Direct Work
+ * Orders Fee**, and Scott has a **flat monthly buyer subscription** planned.
+ *
+ * ⚠ SCOTT'S DECISION WAS TO DELETE THE CLAIM RATHER THAN SOFTEN IT. The
+ * accurate statement is that Panameer charges the buyer no COMMISSION — no
+ * percentage of a transaction — which is a narrower thing than "no fee", and
+ * narrowing it here in a code comment is not where that decision belongs.
+ * ⚠⚠ NO REPLACEMENT CLAIM IS WRITTEN. Copy is Scott's.
  */
 export const DEFAULT_SERVICE_FEE_BPS = 1490;
 

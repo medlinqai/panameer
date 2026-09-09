@@ -10,7 +10,7 @@ export const PRIVACY_DOC: LegalNode[] = [
   },
   {
     "t": "p",
-    "text": "When we say “Panameer”, we mean Panameer Global LLC, and any of its affiliates, including Payment Escrow, Inc. When we say “Site”, we mean www.panameer.com, and when we say “Service”, we mean the Site plus any websites, features, applications, widgets, or online services owned or controlled by Panameer."
+    "text": "When we say “Panameer”, we mean Panameer Inc, and any of its affiliates, including Panameer SA, Inc. When we say “Site”, we mean www.panameer.com, and when we say “Service”, we mean the Site plus any websites, features, applications, widgets, or online services owned or controlled by Panameer."
   },
   {
     "t": "p",
@@ -646,6 +646,6 @@ export const PRIVACY_DOC: LegalNode[] = [
   },
   {
     "t": "p",
-    "text": "by mail addressed to Panameer, Attn: Legal, 3490 S 4400 W #70008 West Valley City, UT 841209998, USA; or by phone at 866-262-4478."
+    "text": "by mail addressed to Panameer, Attn: Legal, 120 Palencia Village Dr, C-105 #162, Saint Augustine, FL 32095, USA; or by phone at 866-262-4478."
   }
 ];

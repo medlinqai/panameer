@@ -9,7 +9,7 @@
 This Privacy Policy explains how and why Panameer collects, uses, and shares personal information when
 you interact with or use our Site or Service. It also includes any information Panameer collects offline in
 connection with the Service, which we may combine with information from the Site and Service.
-When we say “Panameer”, we mean Panameer Global LLC, and any of its affiliates, including Payment Escrow,
+When we say “Panameer”, we mean Panameer Inc, and any of its affiliates, including Panameer SA,
 Inc. When we say “Site”, we mean www.panameer.com, and when we say “Service”, we mean the Site plus
 any websites, features, applications, widgets, or online services owned or controlled by Panameer.
 As part of the Service, Panameer provides a marketplace which facilitates interactions between users.
@@ -462,7 +462,7 @@ If you have any questions about this Privacy Policy, please contact us at:
 https://support.panameer.com;
 By email to privacy@panameer.com;
 
-by mail addressed to Panameer, Attn: Legal, 3490 S 4400 W #70008 West Valley City, UT 841209998, USA; or
+by mail addressed to Panameer, Attn: Legal, 120 Palencia Village Dr, C-105 #162, Saint Augustine, FL 32095, USA; or
 by phone at 866-262-4478.
 
 

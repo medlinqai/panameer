@@ -10,8 +10,8 @@
 
 This is important: This User Agreement (“Agreement”) contains important information about your legal
 rights, remedies, and obligations, and is a legally binding agreement between you (“you” or “User”) and
-Panameer Global LLC (“Panameer,” “we”, or “us”), Payment Escrow Inc. (“Payment Escrow”), and to the
-extent expressly stated, Panameer International Ltd. (“Panameer International”), governing your use of Panameer’s Site and Site
+Panameer Inc (“Panameer,” “we”, or “us”), Panameer SA (“Panameer SA”), and to the
+extent expressly stated, Panameer SA (“Panameer SA”), governing your use of Panameer’s Site and Site
 Services (collectively, “Services”).You understand that by using the Panameer Site or Site Services (which
 generally means using in any way our work marketplace panameer.com or our applications), and by
 clicking accept when prompted on the Site, you agree to be bound by all agreements which constitute
@@ -396,13 +396,13 @@ process that is explained in the Escrow Instructions that apply to your particul
 process does not resolve your dispute, you may pursue your dispute independently, but you
 acknowledge and agree that Panameer will not and is not obligated to provide any further dispute
 resolution assistance.
-If Provider or Service Buyer seeks an order from an arbitrator or court that might direct Panameer, Payment
-Escrow, or our Affiliates to take or refrain from taking any action with respect to an Escrow Account, that
+If Provider or Service Buyer seeks an order from an arbitrator or court that might direct Panameer, Panameer
+SA, or our Affiliates to take or refrain from taking any action with respect to an Escrow Account, that
 party will (a) give us at least five (5) business days’ prior notice of the hearing on the order; (b) include
-in any such order a provision that, as a precondition to any obligation affecting Panameer or Payment
-Escrow, we be paid in full for any amounts to which we would otherwise be entitled; and (c) include in
-any such order a provision that, as a precondition to any obligation affecting Panameer or Payment
-Escrow, Panameer be paid for the reasonable value of the services the order obligates us to undertake.
+in any such order a provision that, as a precondition to any obligation affecting Panameer or Panameer
+SA, we be paid in full for any amounts to which we would otherwise be entitled; and (c) include in
+any such order a provision that, as a precondition to any obligation affecting Panameer or Panameer
+SA, Panameer be paid for the reasonable value of the services the order obligates us to undertake.
 3.3 CONFIDENTIAL INFORMATION
 
 Users can agree to their own confidentiality terms. If they do not, these terms apply. Users
@@ -439,12 +439,12 @@ Service Fees. Providers agree to pay Panameer a service fee for the use of the S
 marketing, invoicing, reporting, payment, and dispute resolution services), as set forth in the Fee and
 ACH Authorization Agreement (the “Service Fees”). Provider is responsible for paying all Service Fees.
 When a Service Buyer pays a Provider for a Project or when funds related to a Project are otherwise released
-to a Provider as required by the applicable Escrow Instructions (see Section 6.1), Payment Escrow will
+to a Provider as required by the applicable Escrow Instructions (see Section 6.1), Panameer SA will
 credit the Provider Escrow Account for the full amount paid or released by the Service Buyer, and then
 subtract and disburse to Panameer the Service Fee. Provider hereby irrevocably authorizes and instructs
-Payment Escrow to deduct the Service Fee from the Provider Escrow Account and pay Panameer on
+Panameer SA to deduct the Service Fee from the Provider Escrow Account and pay Panameer on
 Provider’s behalf. If Provider chooses to withdraw funds in a currency other than U.S. dollars,
-Payment Escrow (or an affiliate) will impose a foreign currency conversion charge, and the rate may
+Panameer SA (or an affiliate) will impose a foreign currency conversion charge, and the rate may
 differ from rates that are in effect on the date of the payment. You may be able to obtain a better rate
 from your bank or financial institution.
 Membership Fees and Community Credits. Providers may subscribe to different levels of participation and
@@ -480,8 +480,8 @@ This section describes how Panameer’s Escrow Services work and discusses your 
 pay Provider Service Fees on Work Orders, what happens if a Service Buyer doesn’t pay, and related
 topics.
 6.1 ESCROW SERVICES
-Payment Escrow provides escrow services to Users to deliver, hold, and receive payment for a Project,
-and to pay fees to Panameer (“Escrow Services”). Payment Escrow is a Delaware corporation and a
+Panameer SA provides escrow services to Users to deliver, hold, and receive payment for a Project,
+and to pay fees to Panameer (“Escrow Services”). Panameer SA is a Delaware corporation and a
 licensed Internet escrow agent that holds California Department of Financial Protection and Innovation
 License No. 963 5086. The Escrow Services are intended for business use, and you agree to use the
 Escrow Services only for business purposes and not for consumer, personal, family, or household
@@ -490,70 +490,70 @@ purposes.
 
 We follow what is in the applicable Escrow Instructions when we give the money held by us in
 escrow to the Provider or back to the Service Buyer for a Work Order.
-Payment Escrow will use and release funds deposited in an Escrow Account only in accordance with this
-Agreement and the applicable Escrow Instructions. You acknowledge and agree that Payment Escrow
-acts merely as an Internet escrow agent. Payment Escrow has fully delivered the Escrow Services to you
-if Payment Escrow provides the Escrow Services described in this Agreement and the applicable Escrow
-Instructions. Payment Escrow is only obligated to perform those duties expressly described in this
+Panameer SA will use and release funds deposited in an Escrow Account only in accordance with this
+Agreement and the applicable Escrow Instructions. You acknowledge and agree that Panameer SA
+acts merely as an Internet escrow agent. Panameer SA has fully delivered the Escrow Services to you
+if Panameer SA provides the Escrow Services described in this Agreement and the applicable Escrow
+Instructions. Panameer SA is only obligated to perform those duties expressly described in this
 Agreement and any applicable Escrow Instructions. Panameer will release funds from any Escrow Account
 in reliance on your authorization, this Agreement, and the applicable Escrow Instructions or as required
 by applicable law.
 Fixed-Price Projects. If Users choose fixed-price compensation, then the Users agree that they will be
-bound by, and Payment Escrow will follow, the Fixed-Price Escrow Instructions.
+bound by, and Panameer SA will follow, the Fixed-Price Escrow Instructions.
 Hourly Projects, Bonus Payments, or Expense Payments. If Users choose hourly compensation or if the
-Service Buyer makes bonus or expense payments, then the Users agree that they will be bound by, and Payment
-Escrow will follow, the Hourly, Bonus and Expense Payment Agreement with Escrow Instructions.
+Service Buyer makes bonus or expense payments, then the Users agree that they will be bound by, and Panameer
+SA will follow, the Hourly, Bonus and Expense Payment Agreement with Escrow Instructions.
 Service Buyer Initiated Direct Work Orders. If Users enter into a Service Buyer Initiated Direct Work Order, then Users agree
-they will be bound by, and Payment Escrow will follow, the Service Buyer Initiated Direct Work Orders Escrow
+they will be bound by, and Panameer SA will follow, the Service Buyer Initiated Direct Work Orders Escrow
 
 Instructions. Dispute assistance and payment protection are not offered for Service Buyer Initiated Direct
 Work Orders.
 6.1.2 ESCROW ACCOUNTS
 
-Payment Escrow will create and maintain an account to hold funds for you—called an Escrow
-Account—based on your needs. You authorize Payment Escrow to be your escrow agent, which means to
+Panameer SA will create and maintain an account to hold funds for you—called an Escrow
+Account—based on your needs. You authorize Panameer SA to be your escrow agent, which means to
 hold your funds and to follow your instructions on the funds held in your Escrow Account.
-Payment Escrow will use and release funds deposited in an Escrow Account only in accordance with this
+Panameer SA will use and release funds deposited in an Escrow Account only in accordance with this
 Agreement, the applicable Escrow Instructions, and applicable law. Depending on your needs and the
-applicable Escrow Instructions, Payment Escrow will establish and maintain one of two different types of
+applicable Escrow Instructions, Panameer SA will establish and maintain one of two different types of
 Escrow Accounts:
 (A) Service Buyer Escrow Account. After entering into a Work Order (hourly or fixed price), the first
-time a Service Buyer makes a payment for a Project, Payment Escrow will establish and maintain a “Service Buyer
+time a Service Buyer makes a payment for a Project, Panameer SA will establish and maintain a “Service Buyer
 Escrow Account” to hold funds for the Service Buyer to use to make payments for Projects, to receive
 refunds in connection with Projects, and to make payments to Panameer.
 (B) Provider Escrow Account. After entering into a Work Order (hourly or fixed price), the
-first time a Provider uses the Site to receive payment for a Project, Payment Escrow will establish
+first time a Provider uses the Site to receive payment for a Project, Panameer SA will establish
 and maintain a “Provider Escrow Account” for Provider to receive payments for Projects,
 withdraw payments, make payments to Panameer and issue refunds to Service Buyers.
-You hereby authorize and instruct Payment Escrow to act as escrow agent in connection with the Escrow
+You hereby authorize and instruct Panameer SA to act as escrow agent in connection with the Escrow
 Accounts and the payment, holding, and receipt of funds for each Project and other specified purposes
 in accordance with the Terms of Service and the applicable Escrow Instructions. Service Buyer and Provider
 may access current information regarding the status of an Escrow Account on the Site.
 6.1.3 PROVIDER APPOINTMENT OF PAYMENT ESCROW AND SUBSIDIARIES AS AGENT
 
-Providers authorize Payment Escrow to act for them to collect and hold payments from
+Providers authorize Panameer SA to act for them to collect and hold payments from
 Service Buyers.
 If you are a Provider and you request payment related to an Hourly Work Order or the release of funds
-from a Fixed-Price Escrow Account, you hereby appoint Payment Escrow as your agent to obtain funds
+from a Fixed-Price Escrow Account, you hereby appoint Panameer SA as your agent to obtain funds
 on your behalf and credit them to your Provider Escrow Account as you agree in the applicable
-Escrow Instructions. Because Payment Escrow is Provider’s agent, Provider must, and hereby does,
-fully discharge and credit Provider’s Service Buyer for all payments and releases of funds that Payment Escrow
+Escrow Instructions. Because Panameer SA is Provider’s agent, Provider must, and hereby does,
+fully discharge and credit Provider’s Service Buyer for all payments and releases of funds that Panameer SA
 receives on Provider’s behalf from or on behalf of such Service Buyer.
 6.1.4 TITLE TO FUNDS
 
-Panameer, Payment Escrow, and our Affiliates are not banks. We will safeguard your money and
+Panameer, Panameer SA, and our Affiliates are not banks. We will safeguard your money and
 not voluntarily make your money available to our creditors.
-Panameer, Payment Escrow, and our Affiliates are not banks. Payment Escrow deposits and maintains all
+Panameer, Panameer SA, and our Affiliates are not banks. Panameer SA deposits and maintains all
 Escrow Account funds in an escrow trust account at a bank insured by the Federal Deposit Insurance
 Corporation and approved to receive, hold, and deliver escrow funds under applicable laws and
-regulations. Payment Escrow may utilize an interest-bearing escrow trust account held at Wells Fargo
+regulations. Panameer SA may utilize an interest-bearing escrow trust account held at Wells Fargo
 Bank, N.A. or Bank of America, N.A. to maintain Escrow Account funds in accordance with applicable
-laws. Payment Escrow may transfer funds between interest and non-interest bearing escrow trust
+laws. Panameer SA may transfer funds between interest and non-interest bearing escrow trust
 accounts but will not release Escrow Account funds except in accordance with applicable Escrow
 Instructions. Any escrow trust account is separate from the operating accounts of Panameer and each of
-our Affiliates. Payment Escrow will not voluntarily make funds deposited in the escrow trust account
+our Affiliates. Panameer SA will not voluntarily make funds deposited in the escrow trust account
 available to its creditors, or the creditors of its Affiliates, in the event of a bankruptcy, or for any other
-purpose. As provided in United States Bankruptcy Code, Section 541(d), Payment Escrow holds only
+purpose. As provided in United States Bankruptcy Code, Section 541(d), Panameer SA holds only
 legal title to, and not any equitable interest in, the escrow trust account and any funds deposited in it.
 This Agreement is supplementary to the Work Order and to any other agreement between Service Buyer
 and Provider concerning the Project, as provided in Title 11 of the United States Code, Section 365(n).
@@ -562,10 +562,10 @@ and Provider concerning the Project, as provided in Title 11 of the United State
 You will not earn any interest on the money we hold in your Escrow Account and you
 understand that we charge fees for our services, as explained in Section 5.
 You agree that you will not receive interest or other earnings on the funds held in your Escrow Account.
-If any interest is earned then you agree that all interest is assigned to Panameer Global LLC. In no event will
+If any interest is earned then you agree that all interest is assigned to Panameer Inc. In no event will
 you receive any interest earnings, including if the Project or payment fails, is canceled, or escrow funds
 are returned to you. Any interest accrued in an escrow trust account may be retained in the interestbearing escrow account until the end of the current calendar month.
-Panameer, Payment Escrow, or our Affiliates may charge or deduct fees, may receive a reduction in fees or
+Panameer, Panameer SA, or our Affiliates may charge or deduct fees, may receive a reduction in fees or
 expenses charged, and may receive other compensation in connection with the services we provide as
 provided in Section 5 and the Fee and ACH Authorization Agreement.
 6.1.6 ESCROW AGENT DUTIES
@@ -602,10 +602,10 @@ funds held in the Escrow Account with a court of competent jurisdiction, in orde
 between Service Buyer and Provider related to the Escrow Account. Except as expressly provided, nothing in
 this Agreement will be construed to limit our legal and equitable rights, including, but not limited to,
 depositing funds held in the Escrow Account with a court of competent jurisdiction. Any corporation or
-association into which Payment Escrow may be merged or converted or with which Payment Escrow
+association into which Panameer SA may be merged or converted or with which Panameer SA
 may be consolidated, or any corporation or association to which all or substantially all the escrow
-business of Payment Escrow may be transferred will succeed to all the rights and obligations of Payment
-Escrow as escrow holder and escrow agent under this Agreement and the applicable Escrow Instructions
+business of Panameer SA may be transferred will succeed to all the rights and obligations of Panameer
+SA as escrow holder and escrow agent under this Agreement and the applicable Escrow Instructions
 to the extent permitted by applicable law.
 6.2 SERVICE BUYER PAYMENTS ON WORK ORDERS
 
@@ -615,7 +615,7 @@ Hourly Work Orders. Provider will invoice Service Buyer for Provider Fees on a w
 and Service Buyer will pay invoices consistent with the Hourly, Bonus, and Expense Payment Agreement with
 Escrow Instructions. When Service Buyer approves an Hourly Invoice for an Hourly Work Order, including an Hourly
 Work Order initiated through Direct Work Orders, Service Buyer automatically and irrevocably authorizes and instructs
-Panameer or its affiliates Payment Escrow or Panameer International to charge Service Buyer’s Payment Method for the
+Panameer or its affiliates Panameer SA or Panameer SA to charge Service Buyer’s Payment Method for the
 Provider Fees.
 Fixed-Price Work Orders. Service Buyer becomes obligated to pay applicable amounts into the Escrow Account
 immediately upon sending a Fixed-Price Work Order offer (for the full amount or for the first milestone, if
@@ -623,7 +623,7 @@ milestones are used), upon activating any additional milestone, or upon acceptin
 via Direct Work Orders. When Service Buyer authorizes the payment of the Provider Fees for a Fixed-Price
 Work Order under the Fixed Price Work Order Escrow Instructions, Service Buyer automatically and
 
-irrevocably authorizes and instructs Panameer or its affiliates Payment Escrow or Panameer International to charge
+irrevocably authorizes and instructs Panameer or its affiliates Panameer SA or Panameer SA to charge
 Service Buyer’s Payment Method for the Provider Fees.
 Service Buyer acknowledges and agrees that for both Hourly Work Orders and Fixed-Price Work Orders, failure by
 Service Buyer to decline or dispute an Hourly Invoice or request for payment is an authorization and instruction
@@ -643,13 +643,13 @@ releases. Each bonus is non-refundable once processed and is not eligible for Di
 bonus payment individually. Bonus payments are characterized as bonuses for all applicable purposes, including tax
 reporting.
 Service Buyer Authorization. By confirming a Bulk Payment Action, Service Buyer authorizes each individual transaction comprising that
-action as a separate, irrevocable instruction to Payment Escrow. Service Buyer is responsible for reviewing and confirming all
+action as a separate, irrevocable instruction to Panameer SA. Service Buyer is responsible for reviewing and confirming all
 individual transactions before submitting a Bulk Payment Action.
 6.3 DISBURSEMENTS TO PROVIDERS ON WORK ORDERS
 
 This section describes when Providers receive their funds that we were holding for the
 Providers in escrow.
-Payment Escrow disburses funds that are available in the applicable Provider Escrow Account and
+Panameer SA disburses funds that are available in the applicable Provider Escrow Account and
 payable to a Provider as described in the relevant Escrow Instructions. A Provider can request
 disbursement of available funds any time on a one-time basis or by setting up an automatic
 disbursement schedule. Otherwise, except as provided in the following paragraph, Panameer will
@@ -676,7 +676,7 @@ Fixed-Price Work Orders. Provider Fees become available to Providers no later th
 expiration of the five-day security period. The security period begins after Service Buyer accepts work
 submitted by Provider and approves payment.
 Except as expressly provided in the Terms of Service or the Escrow Instructions and as prohibited by
-applicable law, Payment Escrow may refuse to process, may hold the disbursement of the Provider
+applicable law, Panameer SA may refuse to process, may hold the disbursement of the Provider
 Fees or any other amounts and offset amounts owed to us, or take such other actions with respect to
 the Escrow Account as we deem appropriate in our sole discretion if: (a) we require additional
 information, such as Provider’s tax information, government-issued identification or other proof of
@@ -687,7 +687,7 @@ grounds for insecurity with respect to the performance of obligations under this
 Terms of Service; or (e) we deem it necessary in connection with any investigation, required by
 applicable law, or necessary due to circumstances outside of our control after a commercially reasonable
 effort has been made by us due to such circumstances. If, after investigation, we determine that the hold
-on the disbursement of the Provider Fees is no longer necessary, Payment Escrow will release the hold
+on the disbursement of the Provider Fees is no longer necessary, Panameer SA will release the hold
 as soon as practicable.
 In addition, except as expressly provided in the Terms of Service or the Escrow Instructions and to the
 extent permitted by applicable law, we reserve the right to seek reimbursement from you, and you will
@@ -695,7 +695,7 @@ reimburse us, if we: (i) suspect fraud or criminal activity associated with your
 Project; (ii) discover erroneous or duplicate transactions; or (iii) have supplied our services in
 accordance with this Agreement yet we receive any chargeback from the Payment Method used by you
 or your Service Buyer despite our provision of the Services in accordance with this Agreement. You agree that
-we have the right to obtain such reimbursement by instructing Payment Escrow (and Payment Escrow
+we have the right to obtain such reimbursement by instructing Panameer SA (and Panameer SA
 will have the right) to charge your account(s), offset any amounts determined to be owing, deduct
 amounts from future payments or withdrawals, charge your Payment Method, or use other lawful means
 to obtain reimbursement from you. If we are unable to obtain such reimbursement, we may, in addition
@@ -728,10 +728,10 @@ limiting other available remedies, Service Buyer must pay Panameer upon demand f
 interest on the outstanding amount at the lesser of one and one-half percent (1.5%) per month or the
 maximum interest allowed by applicable law, plus attorneys’ fees and other costs of collection to the
 extent permitted by applicable law.
-At our discretion and to the extent permitted by applicable law, Panameer, Payment Escrow, Panameer International or
+At our discretion and to the extent permitted by applicable law, Panameer, Panameer SA, Panameer SA or
 its other Affiliates may, without notice, charge all or a portion of any amount that is owed to any
 Payment Method on file on the Service Buyer’s Account; set off amounts due against other amounts received
-from Service Buyer or held by for Service Buyer by Panameer, Payment Escrow or another Affiliate; make appropriate
+from Service Buyer or held by for Service Buyer by Panameer, Panameer SA or another Affiliate; make appropriate
 reports to credit reporting agencies and law enforcement authorities; and cooperate with credit
 reporting agencies and law enforcement authorities in any investigation or prosecution.
 Panameer does not guarantee that Service Buyer is able to pay or will pay Provider Fees, and Panameer is not
@@ -748,10 +748,10 @@ Service Buyers agree that, once Panameer charges their Payment Methods, the char
 refunded except on a condition agreed in the Escrow Instructions. Service Buyers agree not to initiate any
 chargebacks from their credit card companies, banks, or the like.
 
-Service Buyer acknowledges and agrees that Panameer or its affiliates Payment Escrow or Panameer International may charge
+Service Buyer acknowledges and agrees that Panameer or its affiliates Panameer SA or Panameer SA may charge
 or debit Service Buyer’s designated Payment Method for the Provider Fees incurred as described in the
 applicable Escrow Instructions and the Fee and ACH Authorization Agreement. Once Panameer or its
-affiliates Payment Escrow or Panameer International charges or debits the Service Buyer’s designated Payment Method for
+affiliates Panameer SA or Panameer SA charges or debits the Service Buyer’s designated Payment Method for
 the Provider Fees, the charge or debit is non-refundable, except as provided in the applicable Escrow
 Instructions or as otherwise required by applicable law. Service Buyer also acknowledges and agrees that the
 Terms of Service provide a dispute resolution process as a way for Service Buyer to resolve disputes. To the
@@ -759,7 +759,7 @@ extent permitted by applicable law, Service Buyer therefore agrees not to ask it
 other Payment Method provider to charge back any Provider Fees or other fees charged pursuant to
 the Terms of Service for any reason. A chargeback in breach of this obligation is a material breach of the
 Terms of Service. If Service Buyer initiates a chargeback in violation of this Agreement, Service Buyer agrees that
-Panameer or its affiliates Payment Escrow or Panameer International may dispute or appeal the chargeback, institute
+Panameer or its affiliates Panameer SA or Panameer SA may dispute or appeal the chargeback, institute
 collection action against Service Buyer, close Service Buyer’s account, and take such other action it deems appropriate.
 6.6 PAYMENT METHODS
 
@@ -768,7 +768,7 @@ Payment Method.
 In order to use certain Site Services, Users must provide account information for at least one valid
 Payment Method. Certain Site Services, as indicated on the Site from time to time, may require Users to
 provide a backup Payment Method.
-As a Service Buyer or Provider, you hereby authorize Panameer, Payment Escrow, and Panameer International, as applicable,
+As a Service Buyer or Provider, you hereby authorize Panameer, Panameer SA, and Panameer SA, as applicable,
 to run credit card authorizations on all credit cards provided by Service Buyer or Provider, to store credit card
 and banking or other financial details as Service Buyer or Provider's method of payment consistent with our
 Privacy Policy, and to charge Service Buyer or Provider’s credit card (or any other Payment Method) for the
@@ -801,7 +801,7 @@ currency conversion rates for us to change your currency into U.S. Dollars. The 
 be different than the rates that apply to us and may not be the best rate available to you
 The Services operate in U.S. Dollars. If a User’s Payment Method is denominated in a currency other than
 U.S. Dollars and requires currency conversion to make or receive payments in U.S. Dollars, the Site will
-display foreign currency conversion rates that Panameer, Payment Escrow, Panameer International, or our other
+display foreign currency conversion rates that Panameer, Panameer SA, Panameer SA, or our other
 Affiliates currently make available to convert supported foreign currencies to U.S. Dollars. These foreign
 currency conversion rates adjust regularly based on market conditions. Please note that the wholesale
 currency conversion rates at which we or our Affiliates obtain foreign currency will usually be different
@@ -809,16 +809,16 @@ than the foreign currency conversion rates offered on the Site. Each User, at it
 may authorize the charge, debit, or credit of its Payment Method in a supported foreign currency and
 the conversion of the payment to U.S. Dollars at the foreign currency conversion rate displayed on the
 Site. A list of supported foreign currencies is available on the Site. If foreign currency conversion is
-required to make a payment or disbursement in U.S. Dollars and Panameer, its affiliates Payment Escrow or
-Panameer International, as applicable, does not support the foreign currency or the User does not authorize the
-conversion of such payment at the foreign currency conversion rate displayed on the Site, Payment
-Escrow or one of our Affiliates will charge, debit, or credit the User’s Payment Method in U.S. Dollars and
+required to make a payment or disbursement in U.S. Dollars and Panameer, its affiliates Panameer SA or
+Panameer SA, as applicable, does not support the foreign currency or the User does not authorize the
+conversion of such payment at the foreign currency conversion rate displayed on the Site, Panameer
+SA or one of our Affiliates will charge, debit, or credit the User’s Payment Method in U.S. Dollars and
 the User’s Payment Method provider will convert the payment at a foreign currency conversion rate
 selected by the User’s Payment Method provider. The User’s Payment Method provider may also charge
 fees directly to the Payment Method even when no currency conversion is involved and any fees
 assessed by the User's provider will be the responsibility of the User. The User’s authorization of a
 payment using a foreign currency conversion rate displayed on the Site is at the User’s sole risk. Panameer,
-Payment Escrow, Panameer International, and our other Affiliates are not responsible for currency fluctuations that
+Panameer SA, Panameer SA, and our other Affiliates are not responsible for currency fluctuations that
 occur when billing or crediting a Payment Method denominated in a currency other than U.S. Dollars or
 for currency fluctuations that occur when receiving or sending payments to and from the Escrow
 Account.
@@ -972,7 +972,7 @@ extent, some or all of these limitations and exclusions may not apply to you.
 
 You agree not to hold us responsible for any dispute you may have with another User.
 In recognition of the fact that Panameer is not a party to any Work Order between Users, you hereby release
-Panameer, Payment Escrow, our other Affiliates, and our respective officers, directors, agents, subsidiaries,
+Panameer, Panameer SA, our other Affiliates, and our respective officers, directors, agents, subsidiaries,
 joint ventures, employees and service providers from claims, demands, and damages (actual and
 consequential) of every kind and nature, known and unknown, arising out of or in any way connected
 with any dispute you have with another User, whether it be at law or in equity that exist as of the time
@@ -992,7 +992,7 @@ Service.
 If you do something using our Services that gets us sued or fined, you agree to cover our costs
 or losses as described below.
 
-You will indemnify, defend, and hold harmless Panameer, Payment Escrow, our other Affiliates, and our
+You will indemnify, defend, and hold harmless Panameer, Panameer SA, our other Affiliates, and our
 respective directors, officers, employees, representatives, and agents (each an “Indemnified Party”) for
 all Indemnified Claims (defined below) and Indemnified Liabilities (defined below) relating to or arising
 out of: (a) your or your agents’ use of the Services, including any payment obligations or default
@@ -1299,7 +1299,7 @@ Waiver under the Federal Arbitration Act and seek dismissal of such class or col
 You may opt out of the Arbitration Agreement contained in this Section 14 by notifying Panameer in
 writing within 30 days of the date you first registered for the Site or within 30 days of future changes to
 this Arbitration Agreement, as applicable. To opt out, you must send a written notification to Panameer at
-Attn: Legal, 3490 S 4400 W #70008 West Valley City, UT 84120-9998 that includes (a) your Account
+Attn: Legal, 120 Palencia Village Dr, C-105 #162, Saint Augustine, FL 32095, USA that includes (a) your Account
 username, (b) your name, (c) your address, (d) your telephone number, (e) your email address, and (f) a
 statement indicating that you wish to opt out of the Arbitration Agreement. Alternatively, you may send
 this written notification to legalnotices@panameer.com.
@@ -1352,8 +1352,7 @@ These Terms of Service and any rights or obligations hereunder may not be transf
 you unless you follow the provisions in this Section.
 In order to assign the Terms of Service or your Account to a successor after an acquisition of your
 company or substantially all of your assets, a merger, or another change in majority ownership of your
-company, you must provide written notice to Panameer Attn: Legal, 3490 S 4400 W #70008 West Valley
-City, UT 84120-9998 or via email to legalnotices@panameer.com that includes (a) your Account username,
+company, you must provide written notice to Panameer Attn: Legal, 120 Palencia Village Dr, C-105 #162, Saint Augustine, FL 32095, USA or via email to legalnotices@panameer.com that includes (a) your Account username,
 (b) your name, (c) your address, (d) your telephone number, (e) your email address, (f) a statement
 indicating the manner in which your company was acquired, (g) the name and contact information of the
 acquiror, and (h) the effective date of such change in ownership. If Panameer does not object via email

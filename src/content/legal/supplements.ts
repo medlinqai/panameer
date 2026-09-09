@@ -134,7 +134,7 @@ export const SUPPLEMENTS: Supplement[] = [
     "nodes": [
       {
         "t": "p",
-        "text": "Payment Escrow Inc. provides escrow services solely to Users of Panameer. We provide these escrow services solely to deliver, hold, or receive payment for jobs for services engaged through, and to pay fees including service, membership and payment processing and administration fees to, Panameer. These escrow services are intended for business use, and the Users agree to use these escrow services only for business purposes and not for consumer, personal, family, or household purposes."
+        "text": "Panameer SA provides escrow services solely to Users of Panameer. We provide these escrow services solely to deliver, hold, or receive payment for jobs for services engaged through, and to pay fees including service, membership and payment processing and administration fees to, Panameer. These escrow services are intended for business use, and the Users agree to use these escrow services only for business purposes and not for consumer, personal, family, or household purposes."
       },
       {
         "t": "p",
@@ -156,11 +156,11 @@ export const SUPPLEMENTS: Supplement[] = [
     "nodes": [
       {
         "t": "h3",
-        "text": "Panameer Global Data Processing Agreement"
+        "text": "Panameer Inc Data Processing Agreement"
       },
       {
         "t": "p",
-        "text": "The Service Buyer agreeing to these terms (“Customer”), and Panameer Global LLC or any other entity that directly or indirectly controls, is controlled by, or is under common control with Panameer Global LLC (as applicable, “Panameer”) (each, a “party” and collectively, the “parties”), have entered into an agreement under which Panameer has agreed to provide a marketplace where Service Buyers and Providers can identify each other and advertise, buy, and sell Provider Services online, with such other services, if any, described in the agreement (the “Service”) to Customer (as amended from time to time, the “Agreement”)."
+        "text": "The Service Buyer agreeing to these terms (“Customer”), and Panameer Inc or any other entity that directly or indirectly controls, is controlled by, or is under common control with Panameer Inc (as applicable, “Panameer”) (each, a “party” and collectively, the “parties”), have entered into an agreement under which Panameer has agreed to provide a marketplace where Service Buyers and Providers can identify each other and advertise, buy, and sell Provider Services online, with such other services, if any, described in the agreement (the “Service”) to Customer (as amended from time to time, the “Agreement”)."
       },
       {
         "t": "p",
@@ -448,7 +448,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "14.​Miscellaneous Notwithstanding anything to the contrary in the Agreement, where Panameer Global LLC is not a party to the Agreement, Panameer Global LLC will be a third-party beneficiary of Section 7.4 (Reviews and Audits of Compliance),"
+        "text": "14.​Miscellaneous Notwithstanding anything to the contrary in the Agreement, where Panameer Inc is not a party to the Agreement, Panameer Inc will be a third-party beneficiary of Section 7.4 (Reviews and Audits of Compliance),"
       },
       {
         "t": "p",
@@ -560,7 +560,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Data importer(s): Name: Panameer Global LLC Address: 655 Montgomery St., STE 490, DPT 17022, San Francisco, CA 94111-2676 Contact person’s name, position and contact details: Privacy Counsel, legalnotices@panameer.com Activities relevant to the data transferred under these Clauses: Providing the Services to Data Exporter."
+        "text": "Data importer(s): Name: Panameer Inc Address: 655 Montgomery St., STE 490, DPT 17022, San Francisco, CA 94111-2676 Contact person’s name, position and contact details: Privacy Counsel, legalnotices@panameer.com Activities relevant to the data transferred under these Clauses: Providing the Services to Data Exporter."
       },
       {
         "t": "p",
@@ -810,7 +810,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "https://support.panameer.com/home or by mail addressed to Attn: Legal, 3490 S 4400 W #70008 West Valley City, UT 84120-9998, USA."
+        "text": "https://support.panameer.com/home or by mail addressed to Attn: Legal, 120 Palencia Village Dr, C-105 #162, Saint Augustine, FL 32095, USA."
       }
     ]
   },
@@ -820,7 +820,7 @@ export const SUPPLEMENTS: Supplement[] = [
     "nodes": [
       {
         "t": "p",
-        "text": "These API Terms of Use (the “API Terms”) are made and entered into by and between Panameer Global LLC and its affiliates (“Panameer” or “we”), and the organization integrating its procurement system with Panameer (“Integrator” or “you”). Panameer and Integrator are sometimes referred to in the API Terms individually as a “Party” and collectively as the “Parties”. Panameer and Integrator hereby agree as follows:"
+        "text": "These API Terms of Use (the “API Terms”) are made and entered into by and between Panameer Inc and its affiliates (“Panameer” or “we”), and the organization integrating its procurement system with Panameer (“Integrator” or “you”). Panameer and Integrator are sometimes referred to in the API Terms individually as a “Party” and collectively as the “Parties”. Panameer and Integrator hereby agree as follows:"
       },
       {
         "t": "h3",
@@ -1206,7 +1206,7 @@ export const SUPPLEMENTS: Supplement[] = [
     "nodes": [
       {
         "t": "p",
-        "text": "Panameer Global LLC (“Panameer,” “our,” “us,” or “we”) respects the intellectual property rights of others and seeks to offer a platform which contains no content that violates those rights. To promote these objectives, we provide a process for submission of complaints concerning content posted by our users."
+        "text": "Panameer Inc (“Panameer,” “our,” “us,” or “we”) respects the intellectual property rights of others and seeks to offer a platform which contains no content that violates those rights. To promote these objectives, we provide a process for submission of complaints concerning content posted by our users."
       },
       {
         "t": "p",
@@ -1304,7 +1304,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Escrow services are provided by Payment Escrow Inc. (“Payment Escrow”) pursuant to Internet Escrow Agent license no. 9635086, issued by the California Department of Financial Protection and Innovation."
+        "text": "Escrow services are provided by Panameer SA (“Panameer SA”) pursuant to Internet Escrow Agent license no. 9635086, issued by the California Department of Financial Protection and Innovation."
       },
       {
         "t": "h2",
@@ -1324,7 +1324,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Once a Service Buyer and Provider have agreed to a Service Work Order, and the Service Buyer and Provider have selected “Agree” on the send offer, accept offer, or pages relating to the Service Work Order to accept the Terms of Service (including these Escrow Instructions), these Escrow Instructions constitute a binding agreement between Service Buyer, Provider, and Payment Escrow (collectively, the “Parties”). Service Buyer and Provider must execute (by digital signature or by a method mutually agreed upon by both parties), and Payment Escrow must agree to, any supplemental instruction or addition, deletion or alteration thereto in writing (collectively the “Supplemental Escrow Instruction”). Payment Escrow reserves the right to reject any Supplemental Escrow Instruction."
+        "text": "Once a Service Buyer and Provider have agreed to a Service Work Order, and the Service Buyer and Provider have selected “Agree” on the send offer, accept offer, or pages relating to the Service Work Order to accept the Terms of Service (including these Escrow Instructions), these Escrow Instructions constitute a binding agreement between Service Buyer, Provider, and Panameer SA (collectively, the “Parties”). Service Buyer and Provider must execute (by digital signature or by a method mutually agreed upon by both parties), and Panameer SA must agree to, any supplemental instruction or addition, deletion or alteration thereto in writing (collectively the “Supplemental Escrow Instruction”). Panameer SA reserves the right to reject any Supplemental Escrow Instruction."
       },
       {
         "t": "h2",
@@ -1332,7 +1332,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "By sending a Work Order offer to Provider or accepting a Work Order offer from Provider, Service Buyer agrees to deposit project funds for the amount of the first Milestone (as defined on the Site), or, if there are no Milestones, the full amount of the Service Work Order. Additional Milestones may be funded on the same Work Order by Service Buyer by selecting the button to add an additional Milestone or to activate the next Milestone on the Site. Project funds deposited by Service Buyer remain in the Service Buyer Escrow Account until they are released to the Provider Escrow Account or released to Service Buyer Escrow Account. Payment Escrow will release project funds held in escrow pursuant to Section 4 of these Escrow Instructions (Release and Delivery of Amounts in Escrow)."
+        "text": "By sending a Work Order offer to Provider or accepting a Work Order offer from Provider, Service Buyer agrees to deposit project funds for the amount of the first Milestone (as defined on the Site), or, if there are no Milestones, the full amount of the Service Work Order. Additional Milestones may be funded on the same Work Order by Service Buyer by selecting the button to add an additional Milestone or to activate the next Milestone on the Site. Project funds deposited by Service Buyer remain in the Service Buyer Escrow Account until they are released to the Provider Escrow Account or released to Service Buyer Escrow Account. Panameer SA will release project funds held in escrow pursuant to Section 4 of these Escrow Instructions (Release and Delivery of Amounts in Escrow)."
       },
       {
         "t": "h3",
@@ -1348,7 +1348,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Service Buyer and Provider irrevocably authorize and instruct Payment Escrow to release applicable portions of project funds held in the Fixed-Price Escrow Account (each portion, a “Release”) to the Provider Escrow Account or Service Buyer Escrow Account, as applicable, based on the instructions described in this Section 4 (each such instruction, a “Release Condition”), or as otherwise required by applicable law or expressly permitted by the Terms of Service. The amount of each Release will be delivered to the applicable Escrow Account in accordance with Provider’s or Service Buyer’s instructions, these Escrow Instructions, and the other Terms of Service. All project funds released pursuant to these Escrow Instructions are subject to applicable fees as described in the Fee and ACH Authorization Agreement."
+        "text": "Service Buyer and Provider irrevocably authorize and instruct Panameer SA to release applicable portions of project funds held in the Fixed-Price Escrow Account (each portion, a “Release”) to the Provider Escrow Account or Service Buyer Escrow Account, as applicable, based on the instructions described in this Section 4 (each such instruction, a “Release Condition”), or as otherwise required by applicable law or expressly permitted by the Terms of Service. The amount of each Release will be delivered to the applicable Escrow Account in accordance with Provider’s or Service Buyer’s instructions, these Escrow Instructions, and the other Terms of Service. All project funds released pursuant to these Escrow Instructions are subject to applicable fees as described in the Fee and ACH Authorization Agreement."
       },
       {
         "t": "h3",
@@ -1356,15 +1356,15 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Provider and Service Buyer authorize and instruct Payment Escrow to immediately release project funds to the Provider Escrow Account on the occurrence of any of the following Release Conditions, such authorization and instruction to be irrevocable except as expressly provided in these Escrow Instructions: 1. Service Buyer affirmatively selects the option to release project funds for a Milestone or Service Work Order to Provider."
+        "text": "Provider and Service Buyer authorize and instruct Panameer SA to immediately release project funds to the Provider Escrow Account on the occurrence of any of the following Release Conditions, such authorization and instruction to be irrevocable except as expressly provided in these Escrow Instructions: 1. Service Buyer affirmatively selects the option to release project funds for a Milestone or Service Work Order to Provider."
       },
       {
         "t": "p",
-        "text": "2. Service Buyer does not take any action for 14 calendar days from the date of Provider’s Release request, in which case Provider and Service Buyer agree that Payment Escrow is authorized and instructed to immediately release to Provider the amount associated with the applicable Milestone in connection with such Release request."
+        "text": "2. Service Buyer does not take any action for 14 calendar days from the date of Provider’s Release request, in which case Provider and Service Buyer agree that Panameer SA is authorized and instructed to immediately release to Provider the amount associated with the applicable Milestone in connection with such Release request."
       },
       {
         "t": "p",
-        "text": "3. Service Buyer and Provider have jointly submitted Supplemental Escrow Instructions in writing and signed by both Service Buyer and Provider to Payment Escrow at legalnotices@panameer.com requesting a Release to Provider Escrow Account, and Payment Escrow has agreed to the Supplemental Escrow Instructions."
+        "text": "3. Service Buyer and Provider have jointly submitted Supplemental Escrow Instructions in writing and signed by both Service Buyer and Provider to Panameer SA at legalnotices@panameer.com requesting a Release to Provider Escrow Account, and Panameer SA has agreed to the Supplemental Escrow Instructions."
       },
       {
         "t": "p",
@@ -1396,7 +1396,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Service Buyer acknowledges that a Bulk Release constitutes individual Release Instructions for each Milestone listed and that the Dispute Assistance rights described in Section 6 apply separately to each such Milestone. Payment Escrow shall process each Milestone Release as a distinct transaction. A new Transaction Identifier is not generated at release; Milestone Release events reference the original Escrow Transaction Identifier assigned at funding."
+        "text": "Service Buyer acknowledges that a Bulk Release constitutes individual Release Instructions for each Milestone listed and that the Dispute Assistance rights described in Section 6 apply separately to each such Milestone. Panameer SA shall process each Milestone Release as a distinct transaction. A new Transaction Identifier is not generated at release; Milestone Release events reference the original Escrow Transaction Identifier assigned at funding."
       },
       {
         "t": "h3",
@@ -1404,11 +1404,11 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Provider and Service Buyer authorize and instruct Payment Escrow to immediately release project funds to the Service Buyer Escrow Account on the occurrence of any of the following Release Conditions, such authorization and instruction to be irrevocable except as expressly provided in these Escrow Instructions: 1. Provider cancels the Service Work Order or accepts Service Buyer’s request to cancel the Service Work Order (as described in Section 4.4), and project funds for a Milestone or the Service Work Order are held in Escrow."
+        "text": "Provider and Service Buyer authorize and instruct Panameer SA to immediately release project funds to the Service Buyer Escrow Account on the occurrence of any of the following Release Conditions, such authorization and instruction to be irrevocable except as expressly provided in these Escrow Instructions: 1. Provider cancels the Service Work Order or accepts Service Buyer’s request to cancel the Service Work Order (as described in Section 4.4), and project funds for a Milestone or the Service Work Order are held in Escrow."
       },
       {
         "t": "p",
-        "text": "2. Service Buyer and Provider have jointly submitted Supplemental Escrow Instructions in writing and signed by both Service Buyer and Provider to Payment Escrow at legalnotices@panameer.com requesting a Release to the Service Buyer Escrow Account, and Payment Escrow has agreed to the Supplemental Escrow Instructions."
+        "text": "2. Service Buyer and Provider have jointly submitted Supplemental Escrow Instructions in writing and signed by both Service Buyer and Provider to Panameer SA at legalnotices@panameer.com requesting a Release to the Service Buyer Escrow Account, and Panameer SA has agreed to the Supplemental Escrow Instructions."
       },
       {
         "t": "p",
@@ -1468,11 +1468,11 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "3. If Provider submits a Release request within 7 calendar days after the Provider Notice of Dormant Engagement and Service Buyer does not take any action for 14 calendar days from the date of the Release request, Provider and Service Buyer authorize and irrevocably instruct Payment Escrow to immediately release to Provider the amount related to the Milestone with the Release request."
+        "text": "3. If Provider submits a Release request within 7 calendar days after the Provider Notice of Dormant Engagement and Service Buyer does not take any action for 14 calendar days from the date of the Release request, Provider and Service Buyer authorize and irrevocably instruct Panameer SA to immediately release to Provider the amount related to the Milestone with the Release request."
       },
       {
         "t": "p",
-        "text": "4. If neither Provider nor Service Buyer take any action for 7 calendar days after the Provider Notice of Dormant Engagement, Provider and Service Buyer authorize and irrevocably instruct Payment Escrow to immediately release escrow funds to the Service Buyer Escrow Account."
+        "text": "4. If neither Provider nor Service Buyer take any action for 7 calendar days after the Provider Notice of Dormant Engagement, Provider and Service Buyer authorize and irrevocably instruct Panameer SA to immediately release escrow funds to the Service Buyer Escrow Account."
       },
       {
         "t": "h3",
@@ -1488,11 +1488,11 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "If Provider wants to cancel a Service Work Order with funds held in Escrow, Provider must select “End Work Order” on the Panameer platform. When Provider ends the Service Work Order on the Panameer platform, Provider and Service Buyer agree that Payment Escrow is authorized and irrevocably instructed to immediately release to the Service Buyer Escrow Account all funds held in Escrow on the Service Work Order at that time."
+        "text": "If Provider wants to cancel a Service Work Order with funds held in Escrow, Provider must select “End Work Order” on the Panameer platform. When Provider ends the Service Work Order on the Panameer platform, Provider and Service Buyer agree that Panameer SA is authorized and irrevocably instructed to immediately release to the Service Buyer Escrow Account all funds held in Escrow on the Service Work Order at that time."
       },
       {
         "t": "p",
-        "text": "Provider may issue a refund to Service Buyer up to the amount paid on a Service Work Order in the past 180 days by selecting “Give a Refund” on the Panameer platform. Provider may not issue a refund in an amount greater than the combined amount of funds held in Provider Escrow Account, funds for transactions pending to be placed in the Provider Escrow Account, and funds for submitted Milestones. By selecting the option to give a refund, Provider agrees that Payment Escrow is authorized and irrevocably instructed to immediately release to the Service Buyer Escrow Account all Escrow funds currently held in the Provider Escrow Account and such funds as may be placed into the Provider Escrow Account once the funds are available, until the entire refund is provided to Service Buyer."
+        "text": "Provider may issue a refund to Service Buyer up to the amount paid on a Service Work Order in the past 180 days by selecting “Give a Refund” on the Panameer platform. Provider may not issue a refund in an amount greater than the combined amount of funds held in Provider Escrow Account, funds for transactions pending to be placed in the Provider Escrow Account, and funds for submitted Milestones. By selecting the option to give a refund, Provider agrees that Panameer SA is authorized and irrevocably instructed to immediately release to the Service Buyer Escrow Account all Escrow funds currently held in the Provider Escrow Account and such funds as may be placed into the Provider Escrow Account once the funds are available, until the entire refund is provided to Service Buyer."
       },
       {
         "t": "h4",
@@ -1500,7 +1500,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "If Service Buyer wants to cancel a Service Work Order with funds held in Escrow, Service Buyer must select “End Work Order” on the Panameer platform. Provider must select the option to either approve or dispute Service Buyer’s cancellation within 7 calendar days. If Provider approves the cancellation, Provider and Service Buyer agree that Payment Escrow is authorized and irrevocably instructed to immediately release to the Service Buyer Escrow Account all funds held in Escrow on the Service Work Order at that time. If Provider is using the Site on a mobile device and does not have the ability to select the option to approve or dispute the cancellation on the mobile website or application, Provider must dispute Service Buyer’s cancellation via support ticket within 7 calendar days. If Provider takes no action within 7 calendar days from the date notification of the cancellation is sent to Provider by Panameer, Provider and Service Buyer agree that Payment Escrow is authorized and irrevocably instructed to immediately release to the Service Buyer Escrow Account all funds held in Escrow on the Service Work Order at that time. If Provider disputes the cancellation, Provider and Service Buyer will be offered Panameer Dispute Assistance (as described in Section 6)."
+        "text": "If Service Buyer wants to cancel a Service Work Order with funds held in Escrow, Service Buyer must select “End Work Order” on the Panameer platform. Provider must select the option to either approve or dispute Service Buyer’s cancellation within 7 calendar days. If Provider approves the cancellation, Provider and Service Buyer agree that Panameer SA is authorized and irrevocably instructed to immediately release to the Service Buyer Escrow Account all funds held in Escrow on the Service Work Order at that time. If Provider is using the Site on a mobile device and does not have the ability to select the option to approve or dispute the cancellation on the mobile website or application, Provider must dispute Service Buyer’s cancellation via support ticket within 7 calendar days. If Provider takes no action within 7 calendar days from the date notification of the cancellation is sent to Provider by Panameer, Provider and Service Buyer agree that Panameer SA is authorized and irrevocably instructed to immediately release to the Service Buyer Escrow Account all funds held in Escrow on the Service Work Order at that time. If Provider disputes the cancellation, Provider and Service Buyer will be offered Panameer Dispute Assistance (as described in Section 6)."
       },
       {
         "t": "h3",
@@ -1508,7 +1508,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Provider and Service Buyer acknowledge and agree that if, in Payment Escrow’s sole discretion, Payment Escrow believes that fraud, illegal activity, or a violation of the Terms of Service has been committed or is being committed or attempted, then Service Buyer and Provider irrevocably authorize and instruct Payment Escrow to take such actions as deemed appropriate, in Payment Escrow’s sole discretion and in accordance with applicable law, in order to prevent or remedy such acts, including without limitation, to return the funds associated with such acts to their source of payment, as further described in Section 6.3 of the User Agreement. This Section 4.5 allows Payment Escrow—as permitted by law but otherwise in its sole discretion—to return funds to Service Buyer’s Payment Method, continue to hold funds in Escrow, release funds to the Provider Escrow Account, or to turn funds over to third parties such as law enforcement."
+        "text": "Provider and Service Buyer acknowledge and agree that if, in Panameer SA’s sole discretion, Panameer SA believes that fraud, illegal activity, or a violation of the Terms of Service has been committed or is being committed or attempted, then Service Buyer and Provider irrevocably authorize and instruct Panameer SA to take such actions as deemed appropriate, in Panameer SA’s sole discretion and in accordance with applicable law, in order to prevent or remedy such acts, including without limitation, to return the funds associated with such acts to their source of payment, as further described in Section 6.3 of the User Agreement. This Section 4.5 allows Panameer SA—as permitted by law but otherwise in its sole discretion—to return funds to Service Buyer’s Payment Method, continue to hold funds in Escrow, release funds to the Provider Escrow Account, or to turn funds over to third parties such as law enforcement."
       },
       {
         "t": "h2",
@@ -1516,7 +1516,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Service Buyer and Provider are deemed to and hereby agree that the instruction to Payment Escrow and its wholly owned subsidiaries to release funds is irrevocable, except as explicitly provided in these Escrow Instructions. Without limiting the foregoing, Service Buyer’s instruction to Payment Escrow and its wholly owned subsidiaries to release payment to Provider is irrevocable. Such instruction is Service Buyer’s authorization to transfer funds to the Provider Escrow Account from the Service Buyer Escrow Account or authorization to charge Service Buyer’s Payment Method. Such instruction is also Service Buyer’s representation that Service Buyer has received, inspected, and accepted the subject work or expense. Service Buyer acknowledges and agrees that upon receipt of Service Buyer’s instruction to release payment to the Provider Escrow Account, Payment Escrow will transfer funds to the Provider Escrow Account and that Panameer, Payment Escrow, and other Affiliates have no responsibility to and may not be able to recover such funds. Therefore, and in consideration of the services described in these Escrow Instructions and the Terms of Service, Service Buyer agrees that once Payment Escrow or its subsidiaries or Affiliates have charged Service Buyer’s Payment Method, the charge is non-refundable. Service Buyer and Provider further agree that the only manner in which an instruction to Payment Escrow is revocable is if Service Buyer and Provider have jointly submitted Supplemental Escrow Instructions in writing and signed by both Service Buyer and Provider to Payment Escrow at legalnotices@panameer.com requesting that Payment Escrow take specific action with respect to the funds in its possession, and Payment Escrow has agreed to the Supplemental Escrow Instructions."
+        "text": "Service Buyer and Provider are deemed to and hereby agree that the instruction to Panameer SA and its wholly owned subsidiaries to release funds is irrevocable, except as explicitly provided in these Escrow Instructions. Without limiting the foregoing, Service Buyer’s instruction to Panameer SA and its wholly owned subsidiaries to release payment to Provider is irrevocable. Such instruction is Service Buyer’s authorization to transfer funds to the Provider Escrow Account from the Service Buyer Escrow Account or authorization to charge Service Buyer’s Payment Method. Such instruction is also Service Buyer’s representation that Service Buyer has received, inspected, and accepted the subject work or expense. Service Buyer acknowledges and agrees that upon receipt of Service Buyer’s instruction to release payment to the Provider Escrow Account, Panameer SA will transfer funds to the Provider Escrow Account and that Panameer, Panameer SA, and other Affiliates have no responsibility to and may not be able to recover such funds. Therefore, and in consideration of the services described in these Escrow Instructions and the Terms of Service, Service Buyer agrees that once Panameer SA or its subsidiaries or Affiliates have charged Service Buyer’s Payment Method, the charge is non-refundable. Service Buyer and Provider further agree that the only manner in which an instruction to Panameer SA is revocable is if Service Buyer and Provider have jointly submitted Supplemental Escrow Instructions in writing and signed by both Service Buyer and Provider to Panameer SA at legalnotices@panameer.com requesting that Panameer SA take specific action with respect to the funds in its possession, and Panameer SA has agreed to the Supplemental Escrow Instructions."
       },
       {
         "t": "h2",
@@ -1552,7 +1552,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "4. Lack of Participation: Service Buyer must respond to the Notice of Escrow Dispute within 5 calendar days. If Service Buyer does not timely respond to the Notice of Escrow Dispute, Service Buyer and Provider agree that the lack of timely response acts as an irrevocable authorization and instruction to Payment Escrow to release the funds in Escrow from Service Buyer to Provider."
+        "text": "4. Lack of Participation: Service Buyer must respond to the Notice of Escrow Dispute within 5 calendar days. If Service Buyer does not timely respond to the Notice of Escrow Dispute, Service Buyer and Provider agree that the lack of timely response acts as an irrevocable authorization and instruction to Panameer SA to release the funds in Escrow from Service Buyer to Provider."
       },
       {
         "t": "p",
@@ -1560,7 +1560,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "6. Resolution of Escrow Dispute: If the Escrow Disputes Team is able to facilitate a resolution between Service Buyer and Provider that both Service Buyer and Provider agree to in writing, Service Buyer and Provider agree that Payment Escrow is authorized and irrevocably instructed to immediately release Escrow funds in accordance with the agreed-upon resolution. This will result in a closure of the Escrow dispute ticket."
+        "text": "6. Resolution of Escrow Dispute: If the Escrow Disputes Team is able to facilitate a resolution between Service Buyer and Provider that both Service Buyer and Provider agree to in writing, Service Buyer and Provider agree that Panameer SA is authorized and irrevocably instructed to immediately release Escrow funds in accordance with the agreed-upon resolution. This will result in a closure of the Escrow dispute ticket."
       },
       {
         "t": "p",
@@ -1616,7 +1616,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "resolution between Service Buyer and Provider, and if Service Buyer and Provider agree in writing to the resolution, the Dispute Mediation Team will send the applicable party instructions on transferring payment, if any, to an Escrow Account. By agreeing in writing to the resolution, Service Buyer and Provider agree that Payment Escrow is authorized and irrevocably instructed to immediately release Escrow funds in accordance with the agreed-upon resolution. This will result in the closure of the Dispute Mediation ticket."
+        "text": "resolution between Service Buyer and Provider, and if Service Buyer and Provider agree in writing to the resolution, the Dispute Mediation Team will send the applicable party instructions on transferring payment, if any, to an Escrow Account. By agreeing in writing to the resolution, Service Buyer and Provider agree that Panameer SA is authorized and irrevocably instructed to immediately release Escrow funds in accordance with the agreed-upon resolution. This will result in the closure of the Dispute Mediation ticket."
       },
       {
         "t": "p",
@@ -1640,7 +1640,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "h2",
-        "text": "2. Payment Escrow Disputes:"
+        "text": "2. Panameer SA Disputes:"
       },
       {
         "t": "h3",
@@ -1648,7 +1648,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Parties decline to take the matter to Arbitration or do not make the Arbitration Payment within 7 calendar days of the Notice of Non-Resolution, Service Buyer and Provider agree that Payment Escrow is authorized and irrevocably instructed to immediately release the funds in Escrow, if any, to the Service Buyer’s primary payment method on file. This will close the Escrow Dispute ticket. To the extent the parties wish to take legal action to enforce their contractual rights, Panameer may provide contact information on file for Service Buyer or Provider, consistent with Panameer’s Privacy Policy."
+        "text": "Parties decline to take the matter to Arbitration or do not make the Arbitration Payment within 7 calendar days of the Notice of Non-Resolution, Service Buyer and Provider agree that Panameer SA is authorized and irrevocably instructed to immediately release the funds in Escrow, if any, to the Service Buyer’s primary payment method on file. This will close the Escrow Dispute ticket. To the extent the parties wish to take legal action to enforce their contractual rights, Panameer may provide contact information on file for Service Buyer or Provider, consistent with Panameer’s Privacy Policy."
       },
       {
         "t": "h3",
@@ -1656,7 +1656,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "take the matter to Arbitration and has submitted the Arbitration Payment (“Participating Party”), and the other party rejects Arbitration, fails to submit the Arbitration Payment or does not respond within 7 calendar days of the Notice of Non-Resolution (“Non-Participating Party”), Provider and Service Buyer agree that Payment Escrow is authorized and irrevocably instructed to immediately release the funds in Escrow, if any, to the Participating Party. This will close the Escrow Dispute ticket. To the extent the parties wish to take legal action to enforce their contractual rights, Panameer may provide contact information on file for Service Buyer or Provider, consistent with Panameer’s Privacy Policy."
+        "text": "take the matter to Arbitration and has submitted the Arbitration Payment (“Participating Party”), and the other party rejects Arbitration, fails to submit the Arbitration Payment or does not respond within 7 calendar days of the Notice of Non-Resolution (“Non-Participating Party”), Provider and Service Buyer agree that Panameer SA is authorized and irrevocably instructed to immediately release the funds in Escrow, if any, to the Participating Party. This will close the Escrow Dispute ticket. To the extent the parties wish to take legal action to enforce their contractual rights, Panameer may provide contact information on file for Service Buyer or Provider, consistent with Panameer’s Privacy Policy."
       },
       {
         "t": "h2",
@@ -1684,7 +1684,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "When you electronically authorize payment of the invoice for the Arbitration Payment as emailed to you by Panameer, you irrevocably authorize and instruct (i) Payment Escrow or its Affiliates, as your agent, to charge your Payment Method for the amount of the payment for credit to your Escrow Account; and (ii) Payment Escrow, as escrow agent, to immediately release that amount from your Escrow Account and pay it to Panameer. If Payment Escrow or its Affiliates cannot collect sufficient funds to fulfill the Escrow release instructions for any reason, Payment Escrow has no obligation with respect to making the payment to Panameer on your behalf, and you will be considered as not having paid the Arbitration Payment as required by this Section 7.2."
+        "text": "When you electronically authorize payment of the invoice for the Arbitration Payment as emailed to you by Panameer, you irrevocably authorize and instruct (i) Panameer SA or its Affiliates, as your agent, to charge your Payment Method for the amount of the payment for credit to your Escrow Account; and (ii) Panameer SA, as escrow agent, to immediately release that amount from your Escrow Account and pay it to Panameer. If Panameer SA or its Affiliates cannot collect sufficient funds to fulfill the Escrow release instructions for any reason, Panameer SA has no obligation with respect to making the payment to Panameer on your behalf, and you will be considered as not having paid the Arbitration Payment as required by this Section 7.2."
       },
       {
         "t": "h3",
@@ -1692,7 +1692,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "If both Service Buyer and Provider fail to demand Arbitration or fail to timely submit the Arbitration payments within 7 calendar days of the Notice of Non-Resolution, then the dispute is no longer eligible for Arbitration under this process, and Service Buyer and Provider will be deemed to have irrevocably authorized and instructed Payment Escrow to, and Payment Escrow will, release all funds in the Fixed-Price Escrow Account to the Service Buyer’s Escrow Account."
+        "text": "If both Service Buyer and Provider fail to demand Arbitration or fail to timely submit the Arbitration payments within 7 calendar days of the Notice of Non-Resolution, then the dispute is no longer eligible for Arbitration under this process, and Service Buyer and Provider will be deemed to have irrevocably authorized and instructed Panameer SA to, and Panameer SA will, release all funds in the Fixed-Price Escrow Account to the Service Buyer’s Escrow Account."
       },
       {
         "t": "h3",
@@ -1700,7 +1700,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Service Buyer and Provider agree that the arbitrator of the Arbitration Service Provider is authorized to decide the Escrow Dispute or Dispute Mediation within its sole discretion. You agree that the arbitrator’s award is final and binding, that it may be entered in and enforced by any court of competent jurisdiction, and that if the arbitrator delivers notice of any award to Panameer, then Panameer and Payment Escrow have the right to treat such notice as conclusive and act in reliance thereon. If Service Buyer or Provider refuses to comply with the Arbitrator’s award, Panameer will suspend the non-complying Party’s User account, as defined in Section 1.4 of the User Agreement, which may impact the non-complying Party’s ability to withdraw funds."
+        "text": "Service Buyer and Provider agree that the arbitrator of the Arbitration Service Provider is authorized to decide the Escrow Dispute or Dispute Mediation within its sole discretion. You agree that the arbitrator’s award is final and binding, that it may be entered in and enforced by any court of competent jurisdiction, and that if the arbitrator delivers notice of any award to Panameer, then Panameer and Panameer SA have the right to treat such notice as conclusive and act in reliance thereon. If Service Buyer or Provider refuses to comply with the Arbitrator’s award, Panameer will suspend the non-complying Party’s User account, as defined in Section 1.4 of the User Agreement, which may impact the non-complying Party’s ability to withdraw funds."
       },
       {
         "t": "h2",
@@ -1858,7 +1858,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Please contact our Accessibility Coordinator at accessibilitycoordinator@panameer.com or send a letter addressed to: Attn: Accessibility Coordinator, 3490 S 4400 W #70008 West Valley City, UT 84120-9998, USA, to learn more about accessibility support services at Panameer."
+        "text": "Please contact our Accessibility Coordinator at accessibilitycoordinator@panameer.com or send a letter addressed to: Attn: Accessibility Coordinator, 120 Palencia Village Dr, C-105 #162, Saint Augustine, FL 32095, USA, to learn more about accessibility support services at Panameer."
       },
       {
         "t": "h2",
@@ -1866,11 +1866,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Individuals who need a reasonable accommodation to access Panameer’s services and information should send an email to accessibilitycoordinator@panameer.com or send a letter addressed to: Attn: Accessibility Coordinator, 3490 S 4400 W #70008 West Valley City, UT 84120-9998, USA to provide information about the nature of the requested accommodation."
-      },
-      {
-        "t": "p",
-        "text": "Requesters must include contact information such as an email address or telephone number at which they can be reached. Depending on the nature of the request, Panameer may need sufficient notice to provide a reasonable accommodation."
+        "text": "Individuals who need a reasonable accommodation to access Panameer’s services and information should send an email to accessibilitycoordinator@panameer.com or send a letter addressed to: Attn: Accessibility Coordinator, 120 Palencia Village Dr, C-105 #162, Saint Augustine, FL 32095, USA to provide information about the nature of the requested accommodation. Requesters must include contact information such as an email address or telephone number at which they can be reached. Depending on the nature of the request, Panameer may need sufficient notice to provide a reasonable accommodation."
       },
       {
         "t": "h2",
@@ -1886,7 +1882,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Our efforts to improve online accessibility are ongoing. In the event that a user with a disability experiences accessibility issues with our website or mobile application, please notify us by sending an email to accessibilitycoordinator@panameer.com or sending a letter addressed to: Attn: Accessibility Coordinator, 3490 S 4400 W #70008 West Valley City, UT 84120-9998, USA. In your communication to us, please specify the nature of the accessibility difficulty, including the web address or mobile application that may have presented an accessibility challenge."
+        "text": "Our efforts to improve online accessibility are ongoing. In the event that a user with a disability experiences accessibility issues with our website or mobile application, please notify us by sending an email to accessibilitycoordinator@panameer.com or sending a letter addressed to: Attn: Accessibility Coordinator, 120 Palencia Village Dr, C-105 #162, Saint Augustine, FL 32095, USA. In your communication to us, please specify the nature of the accessibility difficulty, including the web address or mobile application that may have presented an accessibility challenge."
       },
       {
         "t": "h2",
@@ -1906,7 +1902,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "letter addressed to: Attn: Accessibility Coordinator, 3490 S 4400 W #70008 West Valley City, UT 84120-9998, USA."
+        "text": "letter addressed to: Attn: Accessibility Coordinator, 120 Palencia Village Dr, C-105 #162, Saint Augustine, FL 32095, USA."
       }
     ]
   },
@@ -1916,7 +1912,7 @@ export const SUPPLEMENTS: Supplement[] = [
     "nodes": [
       {
         "t": "p",
-        "text": "Users who enter into a Service Work Order on the Site with another User are free to agree to these Optional Service Terms in whole or in part, or to agree to different or additional terms for their Service Work Order(s). However, if and to the extent that the Users who are party to a Service Work Order have not agreed to different terms, then they agree to incorporate these Optional Terms. Users may not, by agreement amongst themselves, alter the rights or responsibilities of Panameer or Payment Escrow, including any provision of the Escrow Instructions, or agree to any terms that would violate the Terms of Service. Neither Panameer, Payment Escrow, nor any affiliate of Panameer is a party to any Service Work Order by or between Users regardless of whether these Optional Terms are incorporated."
+        "text": "Users who enter into a Service Work Order on the Site with another User are free to agree to these Optional Service Terms in whole or in part, or to agree to different or additional terms for their Service Work Order(s). However, if and to the extent that the Users who are party to a Service Work Order have not agreed to different terms, then they agree to incorporate these Optional Terms. Users may not, by agreement amongst themselves, alter the rights or responsibilities of Panameer or Panameer SA, including any provision of the Escrow Instructions, or agree to any terms that would violate the Terms of Service. Neither Panameer, Panameer SA, nor any affiliate of Panameer is a party to any Service Work Order by or between Users regardless of whether these Optional Terms are incorporated."
       },
       {
         "t": "p",
@@ -2358,7 +2354,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Escrow services are provided by Payment Escrow Inc. (“Payment Escrow”) pursuant to Internet Escrow Agent license no. 9635086, issued by the California Department of Financial Protection and Innovation."
+        "text": "Escrow services are provided by Panameer SA (“Panameer SA”) pursuant to Internet Escrow Agent license no. 9635086, issued by the California Department of Financial Protection and Innovation."
       },
       {
         "t": "h2",
@@ -2394,7 +2390,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Work Order Value Adjustments. Where a Service Buyer has made a valid Work Order Value Adjustment election in accordance with Section 2.1.1 of the Fee and ACH Authorization Agreement, the hourly rate used to calculate the Hourly Invoice for all billing cycles after the effective date of the election is the Adjusted Rate as defined in that section, not the Provider's originally quoted rate. The Adjusted Rate is the rate of record for all purposes under these Escrow Instructions, including for the calculation of the Provider Service Fee deducted by Payment Escrow prior to crediting the Provider Escrow Account. The Work Order Value Adjustment election applies prospectively only, it does not apply to any billing cycle already invoiced, in the Dispute Period, or released prior to the effective date of the election. The Adjusted Rate replaces the previously agreed hourly rate for all subsequent billing cycles on the same Hourly Work Order and is irrevocable upon Service Buyer's confirmation of the rate change, as described in Section 2.1.1 of the Fee and ACH Authorization Agreement."
+        "text": "Work Order Value Adjustments. Where a Service Buyer has made a valid Work Order Value Adjustment election in accordance with Section 2.1.1 of the Fee and ACH Authorization Agreement, the hourly rate used to calculate the Hourly Invoice for all billing cycles after the effective date of the election is the Adjusted Rate as defined in that section, not the Provider's originally quoted rate. The Adjusted Rate is the rate of record for all purposes under these Escrow Instructions, including for the calculation of the Provider Service Fee deducted by Panameer SA prior to crediting the Provider Escrow Account. The Work Order Value Adjustment election applies prospectively only, it does not apply to any billing cycle already invoiced, in the Dispute Period, or released prior to the effective date of the election. The Adjusted Rate replaces the previously agreed hourly rate for all subsequent billing cycles on the same Hourly Work Order and is irrevocable upon Service Buyer's confirmation of the rate change, as described in Section 2.1.1 of the Fee and ACH Authorization Agreement."
       },
       {
         "t": "h3",
@@ -2410,11 +2406,11 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "On the Friday of the week following submission of the Hourly Invoice, Service Buyer will be deemed to have approved all undisputed amounts on the Hourly Invoice, and irrevocably instructed Panameer’s Affiliate, Payment Escrow, to release escrow funds as described in this Agreement."
+        "text": "On the Friday of the week following submission of the Hourly Invoice, Service Buyer will be deemed to have approved all undisputed amounts on the Hourly Invoice, and irrevocably instructed Panameer’s Affiliate, Panameer SA, to release escrow funds as described in this Agreement."
       },
       {
         "t": "p",
-        "text": "Notwithstanding the foregoing, all hours recorded and submitted by Payroll Employee on the Panameer website will be deemed approved by Service Buyer automatically, and Service Buyer authorizes and irrevocably instructs Payment Escrow to release payments for those hours to be paid to the Staffing Provider by Service Buyer's account each Monday following the week in which the hours were worked. Service Buyer may not reject time or file a Dispute for Payroll Employee time worked."
+        "text": "Notwithstanding the foregoing, all hours recorded and submitted by Payroll Employee on the Panameer website will be deemed approved by Service Buyer automatically, and Service Buyer authorizes and irrevocably instructs Panameer SA to release payments for those hours to be paid to the Staffing Provider by Service Buyer's account each Monday following the week in which the hours were worked. Service Buyer may not reject time or file a Dispute for Payroll Employee time worked."
       },
       {
         "t": "h2",
@@ -2426,7 +2422,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "To make such a payment to a Provider, Service Buyer must follow the instructions and links on the Site and provide the information requested. If Service Buyer clicks to pay such a payment to Provider, Service Buyer irrevocably instructs Payment Escrow to and Payment Escrow will release escrow funds as described in this Agreement."
+        "text": "To make such a payment to a Provider, Service Buyer must follow the instructions and links on the Site and provide the information requested. If Service Buyer clicks to pay such a payment to Provider, Service Buyer irrevocably instructs Panameer SA to and Panameer SA will release escrow funds as described in this Agreement."
       },
       {
         "t": "h2",
@@ -2434,11 +2430,11 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Service Buyer’s instruction to Payment Escrow and its wholly owned subsidiaries to pay a Provider is irrevocable. Such instruction is Service Buyer’s authorization to transfer funds to Provider from the Service Buyer Escrow Account or authorization to charge Service Buyer’s Payment Method. Such instruction is also Service Buyer’s"
+        "text": "Service Buyer’s instruction to Panameer SA and its wholly owned subsidiaries to pay a Provider is irrevocable. Such instruction is Service Buyer’s authorization to transfer funds to Provider from the Service Buyer Escrow Account or authorization to charge Service Buyer’s Payment Method. Such instruction is also Service Buyer’s"
       },
       {
         "t": "p",
-        "text": "representation that Service Buyer has received, inspected, and accepted the subject work or expense. Service Buyer acknowledges and agrees that upon receipt of Service Buyer’s instruction to pay Provider, Payment Escrow will transfer funds to the Provider and that Panameer, Payment Escrow, and other Affiliates have no responsibility to and may not be able to recover such funds. Therefore, and in consideration of services described in this Agreement, Service Buyer agrees that once Payment Escrow or its subsidiary has charged Service Buyer’s Payment Method, the charge is non-refundable."
+        "text": "representation that Service Buyer has received, inspected, and accepted the subject work or expense. Service Buyer acknowledges and agrees that upon receipt of Service Buyer’s instruction to pay Provider, Panameer SA will transfer funds to the Provider and that Panameer, Panameer SA, and other Affiliates have no responsibility to and may not be able to recover such funds. Therefore, and in consideration of services described in this Agreement, Service Buyer agrees that once Panameer SA or its subsidiary has charged Service Buyer’s Payment Method, the charge is non-refundable."
       },
       {
         "t": "h2",
@@ -2446,7 +2442,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "In addition, Payment Escrow is authorized to and will release applicable portions of the Service Buyer Escrow Account (each portion, a “Release”) to the Provider Escrow Account, upon the occurrence of and in accordance with one or more Release Conditions provided below or as otherwise required by applicable law or the Terms of Service. The amount of the Release will be delivered to the Provider Escrow Account, in accordance with Provider’s and Service Buyer’s instructions, as applicable, these Escrow Instructions, and the other Terms of Service."
+        "text": "In addition, Panameer SA is authorized to and will release applicable portions of the Service Buyer Escrow Account (each portion, a “Release”) to the Provider Escrow Account, upon the occurrence of and in accordance with one or more Release Conditions provided below or as otherwise required by applicable law or the Terms of Service. The amount of the Release will be delivered to the Provider Escrow Account, in accordance with Provider’s and Service Buyer’s instructions, as applicable, these Escrow Instructions, and the other Terms of Service."
       },
       {
         "t": "h3",
@@ -2482,7 +2478,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "7. We believe, in our sole discretion, that fraud, an illegal act, or a violation of Panameer's Terms of Service has been committed or is being committed or attempted, in which case Service Buyer and Provider hereby irrevocably authorize and instruct Payment Escrow to take such actions as we deem appropriate in our sole discretion and in accordance with applicable law, in order to"
+        "text": "7. We believe, in our sole discretion, that fraud, an illegal act, or a violation of Panameer's Terms of Service has been committed or is being committed or attempted, in which case Service Buyer and Provider hereby irrevocably authorize and instruct Panameer SA to take such actions as we deem appropriate in our sole discretion and in accordance with applicable law, in order to"
       },
       {
         "t": "p",
@@ -2610,7 +2606,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Panameer further reserves the right to review the Provider's work for 30 days prior to the date of the Dispute for compliance with Hourly Payment Protection requirements, to make adjustments to invoices, and to direct Payment Escrow to make appropriate releases to Service Buyer if it finds work that, in Panameer's sole discretion, clearly does not relate to Hourly Work Order requirements or to Service Buyer instructions in the Timesheets or violations of the Terms of Service during its review of the work."
+        "text": "Panameer further reserves the right to review the Provider's work for 30 days prior to the date of the Dispute for compliance with Hourly Payment Protection requirements, to make adjustments to invoices, and to direct Panameer SA to make appropriate releases to Service Buyer if it finds work that, in Panameer's sole discretion, clearly does not relate to Hourly Work Order requirements or to Service Buyer instructions in the Timesheets or violations of the Terms of Service during its review of the work."
       },
       {
         "t": "p",
@@ -2622,7 +2618,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "You acknowledge and agree that Payment Escrow or its Affiliates may, at its sole discretion, withhold or delay payment in the event of dispute between a Service Buyer and a Provider. You further acknowledge and agree that Panameer and Affiliates are not and will not be a party to any dispute between a Service Buyer and Provider over an Hourly Invoice or Hourly Work Order."
+        "text": "You acknowledge and agree that Panameer SA or its Affiliates may, at its sole discretion, withhold or delay payment in the event of dispute between a Service Buyer and a Provider. You further acknowledge and agree that Panameer and Affiliates are not and will not be a party to any dispute between a Service Buyer and Provider over an Hourly Invoice or Hourly Work Order."
       },
       {
         "t": "p",
@@ -2676,11 +2672,7 @@ export const SUPPLEMENTS: Supplement[] = [
     "nodes": [
       {
         "t": "p",
-        "text": "This Provider Membership Agreement (“Agreement”) is between you and Panameer Global LLC (\"Panameer Global\") or Panameer International Ltd. (\"Panameer International\") as described below in Section 1 (Parties). This Agreement is part of and incorporates by reference the User Agreement and the other Terms of Service."
-      },
-      {
-        "t": "p",
-        "text": "You will be provided advance notice of any material change to this Agreement and your continued participation in a membership program after the last modified date will signify your acceptance of this Agreement. Capitalized terms not defined in this Agreement are defined in the Site Terms of Use, User Agreement, or elsewhere in the Terms of Service."
+        "text": "This Provider Membership Agreement (“Agreement”) is between you and Panameer Inc (\"Panameer Inc\") or Panameer SA (\"Panameer SA\") as described below in Section 1 (Parties). This Agreement is part of and incorporates by reference the User Agreement and the other Terms of Service. You will be provided advance notice of any material change to this Agreement and your continued participation in a membership program after the last modified date will signify your acceptance of this Agreement. Capitalized terms not defined in this Agreement are defined in the Site Terms of Use, User Agreement, or elsewhere in the Terms of Service."
       },
       {
         "t": "h2",
@@ -2692,7 +2684,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "If you reside in the United States, you are entering into this Agreement with Panameer Global. If you reside outside the United States, you are entering into this Agreement with Panameer International"
+        "text": "If you reside in the United States, you are entering into this Agreement with Panameer Inc. If you reside outside the United States, you are entering into this Agreement with Panameer SA"
       },
       {
         "t": "h2",
@@ -2716,7 +2708,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Where applicable, Panameer Global, Panameer International, or Payment Escrow may also collect Taxes (such as value added tax (VAT) in Europe) on membership fees and the cost for Community Credits."
+        "text": "Where applicable, Panameer Inc, Panameer SA, or Panameer SA may also collect Taxes (such as value added tax (VAT) in Europe) on membership fees and the cost for Community Credits."
       },
       {
         "t": "h2",
@@ -2736,11 +2728,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "You can change your membership program at any time, including by moving to an unpaid plan, by going to the Site here. If you change your membership program, the new program and new billing period will be based upon the date Panameer receives payment of the new membership fee. If you upgrade a membership, it will result in a new billing date effective upon the date of payment of the additional fees and, if applicable, will result in a credit of the unused portion of the existing category membership fees."
-      },
-      {
-        "t": "p",
-        "text": "If you downgrade a membership, you will not receive a refund or credit for the fees already paid; instead your membership will continue to the end of your current billing period but will not renew. If your Account is suspended at the beginning of your billing period or you do not pay your membership fees, your Account will be automatically downgraded to an unpaid membership plan. If your Account is reinstated, you may change your membership plan as described in this Agreement. Panameer reserves the right to modify its membership programs at any time, upon reasonable notice posted in advance on the Site."
+        "text": "You can change your membership program at any time, including by moving to an unpaid plan, by going to the Site here. If you change your membership program, the new program and new billing period will be based upon the date Panameer receives payment of the new membership fee. If you upgrade a membership, it will result in a new billing date effective upon the date of payment of the additional fees and, if applicable, will result in a credit of the unused portion of the existing category membership fees. If you downgrade a membership, you will not receive a refund or credit for the fees already paid; instead your membership will continue to the end of your current billing period but will not renew. If your Account is suspended at the beginning of your billing period or you do not pay your membership fees, your Account will be automatically downgraded to an unpaid membership plan. If your Account is reinstated, you may change your membership plan as described in this Agreement. Panameer reserves the right to modify its membership programs at any time, upon reasonable notice posted in advance on the Site."
       },
       {
         "t": "p",
@@ -2764,7 +2752,7 @@ export const SUPPLEMENTS: Supplement[] = [
     "nodes": [
       {
         "t": "p",
-        "text": "This Fee and ACH Authorization Agreement (this “Agreement”) is between you and Panameer Global LLC or Panameer International Ltd. as described below in Section 1 (Parties). This Agreement provides information on the fees Panameer Global LLC (\"Panameer Global\") and its Affiliates Panameer International Ltd. (\"Panameer International\") and Payment Escrow Inc. (“Payment Escrow”) charge for use of the Site’s communication, invoicing, dispute resolution and payment services, including Payment Protection, and includes eligible Users’ authorization for debits and credits from and to their designated bank accounts via the automated clearing house network (“ACH”). This Agreement is part of the Terms of Service. Capitalized terms not defined in this Agreement are defined in the User Agreement, Site Terms of Use, or elsewhere in the Terms of Service."
+        "text": "This Fee and ACH Authorization Agreement (this “Agreement”) is between you and Panameer Inc or Panameer SA as described below in Section 1 (Parties). This Agreement provides information on the fees Panameer Inc (\"Panameer Inc\") and its Affiliates Panameer SA (\"Panameer SA\") and Panameer SA (“Panameer SA”) charge for use of the Site’s communication, invoicing, dispute resolution and payment services, including Payment Protection, and includes eligible Users’ authorization for debits and credits from and to their designated bank accounts via the automated clearing house network (“ACH”). This Agreement is part of the Terms of Service. Capitalized terms not defined in this Agreement are defined in the User Agreement, Site Terms of Use, or elsewhere in the Terms of Service."
       },
       {
         "t": "p",
@@ -2780,7 +2768,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "If you reside in the United States, you are entering into this Agreement with Panameer Global. If you reside outside the United States, you are entering into this Agreement with Panameer International"
+        "text": "If you reside in the United States, you are entering into this Agreement with Panameer Inc. If you reside outside the United States, you are entering into this Agreement with Panameer SA"
       },
       {
         "t": "h2",
@@ -2788,7 +2776,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Pursuant to the User Agreement, we charge Providers a Service Fee on the amounts of Provider Fees invoiced by the Provider to their Service Buyer on a Service Work Order. The Provider Service Fee is described below in Section 2.1. Where applicable, Panameer Global, Panameer International, or Payment Escrow may also collect taxes (such as value added tax (“VAT”) in Europe) on Service Fees."
+        "text": "Pursuant to the User Agreement, we charge Providers a Service Fee on the amounts of Provider Fees invoiced by the Provider to their Service Buyer on a Service Work Order. The Provider Service Fee is described below in Section 2.1. Where applicable, Panameer Inc, Panameer SA, or Panameer SA may also collect taxes (such as value added tax (“VAT”) in Europe) on Service Fees."
       },
       {
         "t": "p",
@@ -2816,7 +2804,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Panameer may, at its sole discretion, offer Service Buyers the option to elect a Work Order Value Adjustment on an Hourly Service Work Order. Where elected, the resulting adjusted hourly rate (the \"Adjusted Rate\") is the Work Order rate of record for all purposes under the Terms of Service. The Provider Service Fee under Section 2.1 is calculated on and deducted from the Adjusted Rate by Payment Escrow pursuant to the Provider's existing authorization; no modification to the Provider Service Fee rate is made by a Work Order Value Adjustment. The Adjusted Rate applies prospectively from the effective date of the Service Buyer's election and is irrevocable upon confirmation."
+        "text": "Panameer may, at its sole discretion, offer Service Buyers the option to elect a Work Order Value Adjustment on an Hourly Service Work Order. Where elected, the resulting adjusted hourly rate (the \"Adjusted Rate\") is the Work Order rate of record for all purposes under the Terms of Service. The Provider Service Fee under Section 2.1 is calculated on and deducted from the Adjusted Rate by Panameer SA pursuant to the Provider's existing authorization; no modification to the Provider Service Fee rate is made by a Work Order Value Adjustment. The Adjusted Rate applies prospectively from the effective date of the Service Buyer's election and is irrevocable upon confirmation."
       },
       {
         "t": "h3",
@@ -2908,7 +2896,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Where applicable, Panameer Global, Panameer International, or Payment Escrow may also collect taxes (such as VAT where applicable) on the Direct Work Orders Fee and the cost for premium services or features, as set forth in the User Agreement."
+        "text": "Where applicable, Panameer Inc, Panameer SA, or Panameer SA may also collect taxes (such as VAT where applicable) on the Direct Work Orders Fee and the cost for premium services or features, as set forth in the User Agreement."
       },
       {
         "t": "h2",
@@ -2962,7 +2950,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Escrow services are provided by Payment Escrow Inc. (“Payment Escrow”) pursuant to Internet Escrow Agent license no. 9635086, issued by the California Department of Financial Protection and Innovation."
+        "text": "Escrow services are provided by Panameer SA (“Panameer SA”) pursuant to Internet Escrow Agent license no. 9635086, issued by the California Department of Financial Protection and Innovation."
       },
       {
         "t": "h2",
@@ -2982,7 +2970,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Service Buyer agrees to deposit funds to the Direct Work Order Escrow Account for the amount of any milestone(s) or the full amount of the Direct Work Order if there is only one milestone for each active fixed-price Direct Work Order when the Service Buyer approves the Provider’s submission of work. Any funds deposited by Service Buyer remain in the Direct Work Order Escrow Account until they are released to the Provider Escrow Account or released to the Service Buyer. Payment Escrow will not release funds held in escrow except as described in these Escrow Instructions."
+        "text": "Service Buyer agrees to deposit funds to the Direct Work Order Escrow Account for the amount of any milestone(s) or the full amount of the Direct Work Order if there is only one milestone for each active fixed-price Direct Work Order when the Service Buyer approves the Provider’s submission of work. Any funds deposited by Service Buyer remain in the Direct Work Order Escrow Account until they are released to the Provider Escrow Account or released to the Service Buyer. Panameer SA will not release funds held in escrow except as described in these Escrow Instructions."
       },
       {
         "t": "h3",
@@ -2994,7 +2982,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "It is the responsibility of the Service Buyer to review any Direct Work Order Hourly Invoice before agreeing to fund the Direct Work Order Escrow Account. Service Buyer will be deemed to have accepted the Provider Services and all hours invoiced by Provider during the invoice period upon funding. If the Service Buyer has deposited sufficient funds to the Direct Work Order Escrow Account and a Release Condition is met, Payment Escrow will release the Direct Work Order Hourly Work Order Funds to Provider. Payment Escrow will not release funds held in escrow except as described in these Escrow Instructions."
+        "text": "It is the responsibility of the Service Buyer to review any Direct Work Order Hourly Invoice before agreeing to fund the Direct Work Order Escrow Account. Service Buyer will be deemed to have accepted the Provider Services and all hours invoiced by Provider during the invoice period upon funding. If the Service Buyer has deposited sufficient funds to the Direct Work Order Escrow Account and a Release Condition is met, Panameer SA will release the Direct Work Order Hourly Work Order Funds to Provider. Panameer SA will not release funds held in escrow except as described in these Escrow Instructions."
       },
       {
         "t": "h2",
@@ -3002,7 +2990,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Service Buyer and Provider irrevocably authorize and instruct Payment Escrow to release applicable portions of the Direct Work Order Escrow Account (each portion, a “Release”) to their Provider Escrow Account or Service Buyer Escrow Account, as applicable, upon the occurrence of and in accordance with one or more Release Conditions provided below or as otherwise required by applicable law or the Terms of Service. If the funds are released to the Service Buyer Escrow Account, they will be automatically returned to the Service Buyer’s Payment Method that was charged to fund escrow. The amount of the Release will be delivered to the applicable Escrow Account in accordance with Provider’s or Service Buyer’s instructions, as applicable, these Escrow Instructions, and the other Terms of Service."
+        "text": "Service Buyer and Provider irrevocably authorize and instruct Panameer SA to release applicable portions of the Direct Work Order Escrow Account (each portion, a “Release”) to their Provider Escrow Account or Service Buyer Escrow Account, as applicable, upon the occurrence of and in accordance with one or more Release Conditions provided below or as otherwise required by applicable law or the Terms of Service. If the funds are released to the Service Buyer Escrow Account, they will be automatically returned to the Service Buyer’s Payment Method that was charged to fund escrow. The amount of the Release will be delivered to the applicable Escrow Account in accordance with Provider’s or Service Buyer’s instructions, as applicable, these Escrow Instructions, and the other Terms of Service."
       },
       {
         "t": "h3",
@@ -3014,7 +3002,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "2. For fixed-price Direct Work Orders, Service Buyer affirmatively clicks to accept the milestone(s) or fixedprice Direct Work Order work performed, but not yet submitted by Provider for approval. 3. For fixed-price Direct Work Orders, Service Buyer does not take any action for 14 days from the date Provider submits the milestone or fixed-price Work Order work for approval, in which case Provider and Service Buyer agree that Payment Escrow is authorized and irrevocably instructed to immediately release to Provider the amount associated with the applicable milestone(s) in connection with such Release request."
+        "text": "2. For fixed-price Direct Work Orders, Service Buyer affirmatively clicks to accept the milestone(s) or fixedprice Direct Work Order work performed, but not yet submitted by Provider for approval. 3. For fixed-price Direct Work Orders, Service Buyer does not take any action for 14 days from the date Provider submits the milestone or fixed-price Work Order work for approval, in which case Provider and Service Buyer agree that Panameer SA is authorized and irrevocably instructed to immediately release to Provider the amount associated with the applicable milestone(s) in connection with such Release request."
       },
       {
         "t": "p",
@@ -3038,7 +3026,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "9. We believe, in our sole discretion, that fraud, an illegal act, or a violation of Panameer's Terms of Service has been committed or is being committed or attempted, in which case Service Buyer and Provider irrevocably authorize and instruct Payment Escrow to take such actions as we deem appropriate in our sole discretion and in accordance with applicable law, in order to prevent or remedy such acts, including without limitation to return the funds associated with such acts to their source of payment."
+        "text": "9. We believe, in our sole discretion, that fraud, an illegal act, or a violation of Panameer's Terms of Service has been committed or is being committed or attempted, in which case Service Buyer and Provider irrevocably authorize and instruct Panameer SA to take such actions as we deem appropriate in our sole discretion and in accordance with applicable law, in order to prevent or remedy such acts, including without limitation to return the funds associated with such acts to their source of payment."
       },
       {
         "t": "h2",
@@ -3046,11 +3034,11 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "On the occurrence of a Release Condition, Service Buyer and Provider are deemed to and hereby agree that the instruction to Payment Escrow and its wholly owned subsidiaries to release funds is irrevocable."
+        "text": "On the occurrence of a Release Condition, Service Buyer and Provider are deemed to and hereby agree that the instruction to Panameer SA and its wholly owned subsidiaries to release funds is irrevocable."
       },
       {
         "t": "p",
-        "text": "Without limiting the foregoing, Service Buyer’s instruction to Payment Escrow and its wholly owned subsidiaries to pay a Provider is irrevocable. Such instruction is Service Buyer’s authorization to transfer funds to Provider from the Service Buyer Escrow Account or authorization to charge Service Buyer’s Payment Method. Such instruction is also Service Buyer’s representation that Service Buyer has received, inspected and accepted the subject work or expense. Service Buyer acknowledges and agrees that upon receipt of Service Buyer’s instruction to pay Provider, Payment Escrow will transfer funds to the Provider and that Panameer, Payment Escrow, and other Affiliates have no responsibility to and may not be able to recover such funds. Therefore, and in consideration of services described in this Agreement, Service Buyer agrees that once Payment Escrow or its subsidiary has charged Service Buyer’s Payment Method, the charge is non-refundable."
+        "text": "Without limiting the foregoing, Service Buyer’s instruction to Panameer SA and its wholly owned subsidiaries to pay a Provider is irrevocable. Such instruction is Service Buyer’s authorization to transfer funds to Provider from the Service Buyer Escrow Account or authorization to charge Service Buyer’s Payment Method. Such instruction is also Service Buyer’s representation that Service Buyer has received, inspected and accepted the subject work or expense. Service Buyer acknowledges and agrees that upon receipt of Service Buyer’s instruction to pay Provider, Panameer SA will transfer funds to the Provider and that Panameer, Panameer SA, and other Affiliates have no responsibility to and may not be able to recover such funds. Therefore, and in consideration of services described in this Agreement, Service Buyer agrees that once Panameer SA or its subsidiary has charged Service Buyer’s Payment Method, the charge is non-refundable."
       },
       {
         "t": "h2",
@@ -3058,7 +3046,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Service Buyers may also make a bonus, tip, expense, or other miscellaneous payment to Provider using the Site. To make such a payment to a Provider, Service Buyer must follow the instructions and links on the Site and provide the information requested. If Service Buyer clicks to pay such a payment to Provider, Service Buyer irrevocably instructs Payment Escrow to and Payment Escrow will release funds to Provider."
+        "text": "Service Buyers may also make a bonus, tip, expense, or other miscellaneous payment to Provider using the Site. To make such a payment to a Provider, Service Buyer must follow the instructions and links on the Site and provide the information requested. If Service Buyer clicks to pay such a payment to Provider, Service Buyer irrevocably instructs Panameer SA to and Panameer SA will release funds to Provider."
       },
       {
         "t": "h2",
@@ -3074,11 +3062,11 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Panameer’s Dispute Assistance Program and Payment Protection Programs do not apply to Service Buyer Initiated Direct Work Orders. Panameer, Payment Escrow, and Affiliates do not guarantee that Provider will be paid by Service Buyer. Upon occurrence of a Release Condition, as defined in Section 3.1, Payment Escrow can release only the amount of funds that have been deposited by Service Buyer to the Direct Work Order Escrow Account."
+        "text": "Panameer’s Dispute Assistance Program and Payment Protection Programs do not apply to Service Buyer Initiated Direct Work Orders. Panameer, Panameer SA, and Affiliates do not guarantee that Provider will be paid by Service Buyer. Upon occurrence of a Release Condition, as defined in Section 3.1, Panameer SA can release only the amount of funds that have been deposited by Service Buyer to the Direct Work Order Escrow Account."
       },
       {
         "t": "p",
-        "text": "Panameer, Payment Escrow, and Affiliates are under no circumstances liable to Provider for payment for Service Buyer’s failure to deposit funds to the Direct Work Order Escrow Account to cover payment to Provider."
+        "text": "Panameer, Panameer SA, and Affiliates are under no circumstances liable to Provider for payment for Service Buyer’s failure to deposit funds to the Direct Work Order Escrow Account to cover payment to Provider."
       },
       {
         "t": "h2",
@@ -3106,11 +3094,11 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Each Provider hereby appoints Payment Escrow as its payment collection agent for the limited purpose of receiving, holding, and settling payments from Service Buyers pursuant to this Agreement. Each Provider further agrees and understands that a payment received by Payment Escrow from a Service Buyer, on Provider’s behalf, shall be considered the same as payment made directly to the Provider. Such payment shall be deemed to satisfy the Service Buyer’s obligation to pay Provider, and the Provider will provide its services to the Service Buyer in the agreed-upon manner as if the Provider had received the payment directly from the Service Buyer. Each Provider understands that Payment Escrow’s obligation to pay the Provider is subject to, and conditional upon, successful receipt of the associated payments from the Service Buyer. Provider further agrees that Payment Escrow is not required to settle such payment to Provider in the event that Service Buyer initiates a chargeback, ACH return, or otherwise disputes the payment. In the event that Payment Escrow does not make a payment to Provider as required by this Agreement, Provider will have recourse against only Payment Escrow and not against Service Buyer. In accepting appointment as the limited payment collection agent of the Provider, Payment Escrow assumes no liability for any acts or omissions of the Provider."
+        "text": "Each Provider hereby appoints Panameer SA as its payment collection agent for the limited purpose of receiving, holding, and settling payments from Service Buyers pursuant to this Agreement. Each Provider further agrees and understands that a payment received by Panameer SA from a Service Buyer, on Provider’s behalf, shall be considered the same as payment made directly to the Provider. Such payment shall be deemed to satisfy the Service Buyer’s obligation to pay Provider, and the Provider will provide its services to the Service Buyer in the agreed-upon manner as if the Provider had received the payment directly from the Service Buyer. Each Provider understands that Panameer SA’s obligation to pay the Provider is subject to, and conditional upon, successful receipt of the associated payments from the Service Buyer. Provider further agrees that Panameer SA is not required to settle such payment to Provider in the event that Service Buyer initiates a chargeback, ACH return, or otherwise disputes the payment. In the event that Panameer SA does not make a payment to Provider as required by this Agreement, Provider will have recourse against only Panameer SA and not against Service Buyer. In accepting appointment as the limited payment collection agent of the Provider, Panameer SA assumes no liability for any acts or omissions of the Provider."
       },
       {
         "t": "p",
-        "text": "Each Service Buyer acknowledges and agrees that, notwithstanding the fact that Payment Escrow is not a party to the agreement between the Service Buyer and the Provider, Payment Escrow acts as each Provider’s payment collection agent for the limited purpose of accepting payments from the Service Buyer on behalf of the Provider. Upon a Service Buyer’s payment of the funds to Payment Escrow, the Service Buyer’s payment obligation to the Provider for the agreed upon amount is extinguished, and Payment Escrow is responsible for remitting the funds successfully received by Payment Escrow to the Provider in the manner described in this Agreement. In the event that Payment Escrow does not remit any such amounts, the Provider will have recourse only against Payment Escrow and not the Service Buyer directly."
+        "text": "Each Service Buyer acknowledges and agrees that, notwithstanding the fact that Panameer SA is not a party to the agreement between the Service Buyer and the Provider, Panameer SA acts as each Provider’s payment collection agent for the limited purpose of accepting payments from the Service Buyer on behalf of the Provider. Upon a Service Buyer’s payment of the funds to Panameer SA, the Service Buyer’s payment obligation to the Provider for the agreed upon amount is extinguished, and Panameer SA is responsible for remitting the funds successfully received by Panameer SA to the Provider in the manner described in this Agreement. In the event that Panameer SA does not remit any such amounts, the Provider will have recourse only against Panameer SA and not the Service Buyer directly."
       },
       {
         "t": "h2",
@@ -3132,7 +3120,7 @@ export const SUPPLEMENTS: Supplement[] = [
     "nodes": [
       {
         "t": "p",
-        "text": "This Panameer Service Buyer Initiated Direct Work Orders Terms (“Direct Work Order Terms”) defines the agreement between you (the “Service Buyer” or the “Provider”, as applicable) and Panameer Global LLC (“Panameer”) regarding Direct Work Order engagements and are part of and incorporate by reference the Panameer User Agreement the other Terms of Service, and the Fee and ACH Authorization Agreement (collectively, the “Agreement”). The Direct Work Order Terms are in addition to and, except where explicitly stated, does not supersede, replace, or limit other similar terms in the Terms of Service. Capitalized terms not defined herein are defined in the User Agreement or elsewhere in the Terms of Service."
+        "text": "This Panameer Service Buyer Initiated Direct Work Orders Terms (“Direct Work Order Terms”) defines the agreement between you (the “Service Buyer” or the “Provider”, as applicable) and Panameer Inc (“Panameer”) regarding Direct Work Order engagements and are part of and incorporate by reference the Panameer User Agreement the other Terms of Service, and the Fee and ACH Authorization Agreement (collectively, the “Agreement”). The Direct Work Order Terms are in addition to and, except where explicitly stated, does not supersede, replace, or limit other similar terms in the Terms of Service. Capitalized terms not defined herein are defined in the User Agreement or elsewhere in the Terms of Service."
       },
       {
         "t": "h2",
@@ -3156,7 +3144,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Service Buyer and Provider acknowledge and agree that the Direct Work Order Escrow Instructions apply to any engagements via Service Buyer Initiated Direct Work Order (each such engagement, a “Direct Work Order”). Payment Escrow provides escrow services, but does not guarantee that Provider will be paid except and only to the extent that all of the following are true: (a) Panameer has received funds from Service Buyer on behalf of the Provider, (b) Service Buyer has directed such funds to be released to Provider, and (c) any hold or security period has passed. Panameer otherwise does not guarantee that Service Buyer is able to or will pay Provider."
+        "text": "Service Buyer and Provider acknowledge and agree that the Direct Work Order Escrow Instructions apply to any engagements via Service Buyer Initiated Direct Work Order (each such engagement, a “Direct Work Order”). Panameer SA provides escrow services, but does not guarantee that Provider will be paid except and only to the extent that all of the following are true: (a) Panameer has received funds from Service Buyer on behalf of the Provider, (b) Service Buyer has directed such funds to be released to Provider, and (c) any hold or security period has passed. Panameer otherwise does not guarantee that Service Buyer is able to or will pay Provider."
       },
       {
         "t": "p",
@@ -3200,7 +3188,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Panameer’s Dispute Assistance Program and Payment Protection Programs do not apply to Service Buyer Initiated Direct Work Orders. Panameer, Payment Escrow, and Affiliates do not guarantee that Provider will be paid by Service Buyer. Panameer, Payment Escrow, and Affiliates are under no circumstances liable to Provider for payment for Service Buyer’s failure to deposit funds to the Direct Work Order Escrow Account to cover payment to Provider."
+        "text": "Panameer’s Dispute Assistance Program and Payment Protection Programs do not apply to Service Buyer Initiated Direct Work Orders. Panameer, Panameer SA, and Affiliates do not guarantee that Provider will be paid by Service Buyer. Panameer, Panameer SA, and Affiliates are under no circumstances liable to Provider for payment for Service Buyer’s failure to deposit funds to the Direct Work Order Escrow Account to cover payment to Provider."
       },
       {
         "t": "h2",
