@@ -1,5 +1,5 @@
 import { guardPage } from "@/lib/guard";
-import { getWithdrawals } from "@/lib/settings";
+import { getWithdrawals, logTaxFormAccess } from "@/lib/settings";
 import { Withdrawals } from "@/components/settings/Withdrawals";
 
 /**
@@ -29,6 +29,20 @@ export default async function WithdrawalsPage() {
      deliberately STAYS `authenticated` — it gates the whole tree. */
   const viewer = await guardPage("canProvideServices");
   const { tax, methods } = await getWithdrawals(viewer);
+
+  /*
+    ── ⚠⚠ "DOCUMENT ALL OCCASIONS OF USER ACCESS" (`P1-ALL-E404` WS-3) ────────
+
+    An IRS condition for an electronic substitute Form W-9, and the one that is
+    NOT about submitting: opening the form is an occasion of access. ⚠ LOGGED
+    HERE, IN THE RENDER, because a log that only fires on submit cannot answer
+    the question the IRS asks — it records signatures, not access.
+
+    ⚠ IT NEVER BLOCKS THE PAGE. The write is awaited so the record is real, and
+    `logTaxFormAccess` swallows its own failure: an audit trail is evidence, and
+    failing evidence must not stop somebody filing their tax form.
+  */
+  await logTaxFormAccess(viewer, tax?.form ?? "W9", "VIEW");
 
   return (
     <Withdrawals

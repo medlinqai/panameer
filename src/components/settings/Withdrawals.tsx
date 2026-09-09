@@ -2,8 +2,16 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import Link from "next/link";
 import { Card, Input, Select, postSetting } from "@/components/settings/controls";
 import { FORM_BLURB, FORM_LABEL, formFor, isUnitedStates } from "@/lib/tax";
+import { checkTin, tinFormatMessage } from "@/lib/tin";
+import {
+  W9_CERTIFICATIONS,
+  W9_CERTIFICATION_PREAMBLE,
+  W9_CONSENT_NOTICE,
+  W8_STUB_NOTICE,
+} from "@/lib/w9";
 
 /**
  * Withdrawals (J2.4 WS-H / E017) — the seller money-gate.
@@ -100,6 +108,9 @@ function TaxSection({ tax, onSaved }: { tax: Tax | null; onSaved: () => void }) 
   const [country, setCountry] = useState(tax?.country ?? "United States");
   const [asEntity, setAsEntity] = useState(tax?.form === "W8BENE");
   const [tin, setTin] = useState("");
+  const [tinKind, setTinKind] = useState<"EIN" | "SSN">("EIN");
+  const [classification, setClassification] = useState("");
+  const [certified, setCertified] = useState(false);
   const [signed, setSigned] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -109,12 +120,25 @@ function TaxSection({ tax, onSaved }: { tax: Tax | null; onSaved: () => void }) 
 
   const save = async () => {
     setBusy(true);
+    /*
+      ── ⚠⚠ THE FULL TIN IS VALIDATED AND THEN DISCARDED (`P1-ALL-E404`) ───────
+
+      `tin` holds the whole number while the form is open, because a W-9 that
+      shows four digits cannot coherently certify *"the number shown on this
+      form is my correct taxpayer identification number."* Only `tinLast4` is
+      SENT and only the last four are stored — the existing decision not to hold
+      a TIN is unchanged by this row, and no regulated value crosses the wire.
+      ⚠ SEE THE REPORT: filing a 1099 will eventually require the full number,
+      and that needs encryption at rest before it needs a form field.
+    */
     const err = await postSetting("/api/settings/tax", {
       legalName,
       country,
       asEntity,
-      tinLast4: tin || null,
+      tinLast4: tin ? tin.replace(/\D/g, "").slice(-4) : null,
       signedName: signed,
+      tinKind: us ? tinKind : null,
+      classification: us && classification ? classification : null,
     });
     setError(err);
     setBusy(false);
@@ -135,6 +159,19 @@ function TaxSection({ tax, onSaved }: { tax: Tax | null; onSaved: () => void }) 
           <b className="text-emerald-800">{FORM_LABEL[tax.form]} on file</b> —{" "}
           {tax.legalName}, {tax.country}
           {tax.tinLast4 ? `, ending ${tax.tinLast4}` : ""}. Signed {tax.signedAt}.
+          {/* ⚠ THE HARD COPY THE IRS MAY ASK FOR — see `withdrawals/w9`. */}
+          {tax.form === "W9" && (
+            <>
+              {" "}
+              <Link
+                href="/settings/withdrawals/w9"
+                className="font-semibold text-magenta underline"
+              >
+                View or print your signed form
+              </Link>
+              .
+            </>
+          )}
         </p>
       )}
 
@@ -163,36 +200,151 @@ function TaxSection({ tax, onSaved }: { tax: Tax | null; onSaved: () => void }) 
             <option value="entity">A company</option>
           </Select>
         )}
+        {us && (
+          <Select
+            label="Your taxpayer ID is an…"
+            value={tinKind}
+            onChange={(e) => setTinKind(e.target.value as "EIN" | "SSN")}
+            hint="A sole proprietor may use either. We ask because the two have different valid formats."
+          >
+            <option value="EIN">EIN (employer identification number)</option>
+            <option value="SSN">SSN (social security number)</option>
+          </Select>
+        )}
+        {us && (
+          <Select
+            label="Federal tax classification"
+            value={classification}
+            onChange={(e) => setClassification(e.target.value)}
+            hint="Line 3 of Form W-9."
+          >
+            <option value="">Choose…</option>
+            <option value="SOLE_PROP_INDIVIDUAL">Individual / sole proprietor</option>
+            <option value="C_CORP">C corporation</option>
+            <option value="S_CORP">S corporation</option>
+            <option value="PARTNERSHIP">Partnership</option>
+            <option value="LLC">Limited liability company</option>
+            <option value="NONPROFIT">Other / tax-exempt</option>
+          </Select>
+        )}
         <Input
-          label={us ? "Last 4 of your TIN/SSN" : "Last 4 of your tax ID"}
+          label={us ? `Your ${tinKind}` : "Last 4 of your tax ID"}
           value={tin}
           onChange={(e) => setTin(e.target.value)}
-          maxLength={4}
-          hint="Optional, and display only — the full number isn't stored."
+          maxLength={us ? 11 : 4}
+          hint={
+            us
+              ? "Nine digits. We check the format, keep only the last four, and never send it to any third party."
+              : "Optional, and display only — the full number isn't stored."
+          }
         />
       </div>
 
-      <div className="mt-4 rounded-[10px] border border-line bg-black/[0.02] p-4">
-        <p className="text-[13.5px] font-bold">{FORM_LABEL[form]}</p>
-        <p className="mt-1 text-[13px] leading-relaxed text-ink-2">
-          {FORM_BLURB[form]}
+      {/* ⚠ FORMAT ONLY, AND IT SAYS SO. `checkTin` cannot confirm the number is
+          THEIRS — Panameer is not enrolled in IRS TIN Matching and cannot be
+          until it has filed 1099s. A green tick that implied otherwise would be
+          the exact failure `E404` WS-2 warns about. */}
+      {us && tin.replace(/\D/g, "").length > 0 && (
+        <p
+          className={
+            "mt-2 max-w-xl text-[13px] " +
+            (checkTin(tin, tinKind).formatOk ? "text-ink-2" : "text-amber-700")
+          }
+        >
+          {tinFormatMessage(checkTin(tin, tinKind))}
         </p>
-        <div className="mt-3 max-w-sm">
-          <Input
-            label="Type your full name to sign"
-            value={signed}
-            onChange={(e) => setSigned(e.target.value)}
-            placeholder="Your full legal name"
-            maxLength={160}
-            hint="Typing your name here is your certification that the details above are true."
-          />
+      )}
+
+      {/*
+        ── ⚠⚠ NON-US STOPS HERE. A WRONG TAX FORM IS WORSE THAN NO TAX FORM ────
+
+        `E404`: do NOT build W-8BEN / W-8BEN-E in this pass. They carry different
+        certifications, and showing W-9 wording to a non-US payee would collect a
+        signature on a statement that is false for them. The US question is
+        answered by `lib/tax.ts` from the payout country — jurisdiction decides,
+        not the user — and everyone else is told which form they need and stopped.
+      */}
+      {!us ? (
+        <div className="mt-4 max-w-xl rounded-[10px] border border-amber-400/60 bg-amber-50 p-4">
+          <p className="text-[13.5px] font-bold">{FORM_LABEL[form]} is needed</p>
+          <p className="mt-1 text-[13px] leading-relaxed text-ink-2">{W8_STUB_NOTICE}</p>
         </div>
-      </div>
+      ) : (
+        <div className="mt-4 max-w-xl rounded-[10px] border border-line bg-black/[0.02] p-4">
+          <p className="text-[13.5px] font-bold">Substitute {FORM_LABEL[form]}</p>
+          <p className="mt-1 text-[13px] leading-relaxed text-ink-2">{FORM_BLURB[form]}</p>
+
+          {/*
+            ⚠⚠ BOXED AND BOLD ON PURPOSE, NOT FOR EMPHASIS. The IRS requires that
+            where a substitute form's signature line covers anything besides the
+            certifications, the certification language be *"highlighted, boxed,
+            printed in bold-face type, or presented in some other manner that
+            causes the language to stand out."* The border and the bold preamble
+            are that requirement, not a design choice — do not flatten them.
+          */}
+          <div className="mt-3 rounded-[10px] border-2 border-ink/25 bg-white p-4">
+            <p className="text-[13.5px] font-extrabold uppercase tracking-[0.03em]">
+              {W9_CERTIFICATION_PREAMBLE}
+            </p>
+            <ul className="mt-2 space-y-2">
+              {W9_CERTIFICATIONS.map((c) => (
+                <li key={c} className="text-[13px] leading-relaxed text-ink">
+                  {c}
+                </li>
+              ))}
+            </ul>
+            {/* ⚠ VERBATIM, DIRECTLY ABOVE THE SIGNATURE. Not a paraphrase. */}
+            <p className="mt-3 border-t border-line pt-3 text-[13px] font-semibold leading-relaxed">
+              {W9_CONSENT_NOTICE}
+            </p>
+          </div>
+
+          <label className="mt-3 flex items-start gap-2.5 text-[13px] leading-relaxed">
+            <input
+              type="checkbox"
+              checked={certified}
+              onChange={(e) => setCertified(e.target.checked)}
+              className="mt-0.5 h-4 w-4 flex-none"
+            />
+            <span>
+              I have read the certifications above and I make them under penalties
+              of perjury.
+            </span>
+          </label>
+
+          <div className="mt-3 max-w-sm">
+            <Input
+              label="Type your full name to sign"
+              value={signed}
+              onChange={(e) => setSigned(e.target.value)}
+              placeholder="Your full legal name"
+              maxLength={160}
+              hint="Typing your name is your signature on this form."
+            />
+          </div>
+        </div>
+      )}
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <button
           type="button"
-          disabled={busy || !legalName.trim() || !signed.trim()}
+          /*
+            ⚠⚠ A US SIGNATURE REQUIRES THE CERTIFICATION TICK AND A CLASSIFICATION.
+            The button is a courtesy — `saveTaxProfile` writes the certification
+            text on every W-9 regardless — but a signature collected without the
+            signer having ticked the perjury statement is not a certification,
+            and this is where that is refused.
+            ⚠ NON-US CANNOT SIGN AT ALL: there is no form to sign yet, so the
+            button stays disabled and the stub explains why.
+          */
+          disabled={
+            busy ||
+            !legalName.trim() ||
+            !signed.trim() ||
+            !us ||
+            !certified ||
+            !classification
+          }
           onClick={save}
           className="rounded-full bg-magenta px-5 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
         >
