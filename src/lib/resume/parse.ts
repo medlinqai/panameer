@@ -22,6 +22,26 @@ export type ParsedExperience = {
   endDate: string | null;
 };
 
+/**
+ * A credential lifted off the document (`P1-A1.4-E399` WS-4).
+ *
+ * ⚠⚠ THIS TYPE DID NOT EXIST, AND THAT IS WHY FIVE ORACLE CERTIFICATIONS VANISHED.
+ * `AI_RESUME_SCHEMA` has defined `certifications` all along, the prompt asks for
+ * them and Zod validates them — but `ParsedResume` had **no field to carry them**,
+ * so `aiToParsedResume` dropped them on the floor and `import.ts` never saw one.
+ * The model was doing its job; the mapper had nowhere to put the answer.
+ *
+ * ⚠ MEASURED: every other key in the AI schema maps through — headline, overview,
+ * employers→experiences, projects, education, skills, languages. **Certifications
+ * was the only one.**
+ */
+export type ParsedCertification = {
+  name: string;
+  issuer: string | null;
+  issuedOn: string | null;
+  expiresOn: string | null;
+};
+
 export type ParsedEducation = {
   institution: string;
   degree: string | null;
@@ -82,6 +102,8 @@ export type ParsedResume = {
   */
   projects: ParsedProject[];
   education: ParsedEducation[];
+  /** ⚠ `P1-A1.4-E399` WS-4 — extracted since forever, carried since now. */
+  certifications: ParsedCertification[];
   skills: string[];
   languages: string[];
   /** Human-readable notes on what could NOT be imported (E019 surfaces these). */
@@ -733,6 +755,10 @@ export function parseResume(text: string): ParsedResume {
   return {
     headline,
     overview,
+    /* ⚠ THE HEURISTIC PATH DOES NOT READ CERTIFICATIONS, and says so rather than
+       leaving the field to be inferred from an absence. `SECTION_PATTERNS` has no
+       certifications section; only the AI path produces them (`P1-A1.4-E399`). */
+    certifications: [],
     experienceLevel: inferred?.level ?? null,
     experienceYears: inferred?.years ?? null,
     /* `E294` — the REGEX parser does not read a projects section: `projects` is

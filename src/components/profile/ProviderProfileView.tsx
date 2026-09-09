@@ -203,6 +203,19 @@ export function ProviderProfileViewPage({
                     ? `Last updated ${p.daysSinceUpdate} days ago — buyers see recently-updated profiles first, so a quick pass through pays.`
                     : "Your profile is up to date. Buyers see recently-updated profiles first."}
               </p>
+              {/*
+                ⚠⚠ WHAT'S MISSING — SEPARATE FROM THE SCORE, AND UNSCORED.
+                A provider at 98% with one employer and no certifications was
+                told they were finished. This says the quiet part, without moving
+                the gate: nothing here affects visibility, and a provider who
+                genuinely has one employer can ignore it.
+              */}
+              {p.enrichmentGaps.length > 0 && (
+                <p className="mt-2 text-[13.5px] text-ink-2">
+                  <span className="font-semibold text-ink">Worth adding:</span>{" "}
+                  {p.enrichmentGaps.join(" · ")}
+                </p>
+              )}
             </div>
             <div className="flex items-center gap-3">
               <div className="hidden w-40 sm:block">
@@ -212,8 +225,19 @@ export function ProviderProfileViewPage({
                     style={{ width: `${Math.min(100, p.completeness)}%` }}
                   />
                 </div>
+                {/*
+                  ⚠⚠ THE METER IS NAMED FOR WHAT IT MEASURES (`P1-A1.4-E399`
+                  WS-5b). It read a bare `98%`, which anybody would take to mean
+                  *"your profile is 98% of the way to being finished"* — and it
+                  said that for a profile missing four employers and all five
+                  certifications. It measures the REQUIRED SET plus a flat
+                  enrichment point, and `VISIBILITY_THRESHOLD` gates on it, so the
+                  honest label is what it gates.
+                  ⚠ THE NUMBER AND THE GATE ARE UNCHANGED — re-weighting would
+                  silently change which of 91 live providers stay findable.
+                */}
                 <p className="mt-1 text-right text-[12px] font-bold text-magenta">
-                  {p.completeness}%
+                  {p.completeness}% of required details
                 </p>
               </div>
               {/*

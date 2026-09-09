@@ -7,7 +7,11 @@ import { uploadResumeFile } from "@/lib/storage";
 import { buildVocabulary, extractJobSkills } from "./job-skills";
 import { matchSkills, suggestableSkills } from "@/lib/resume/match";
 import { assessParse } from "@/lib/resume/confidence";
-import { aiExtractResume, aiToParsedResume } from "@/lib/resume/ai-extract";
+import { aiToParsedResume } from "@/lib/resume/ai-extract";
+import {
+  aiExtractResumeMultiPass,
+  type RecallReport,
+} from "@/lib/resume/ai-passes";
 import { parserConfigProblem, resolveProvider } from "@/lib/resume/ai-provider";
 import type { ParserTier, ProviderName } from "@/lib/resume/ai-provider";
 import type { Prisma } from "@prisma/client";
@@ -58,6 +62,8 @@ export type ImportResult = {
     /* `E294` — projects written with `employer_id` null, awaiting placement. */
     projectsUnattached: number;
     education: number;
+    /** ⚠ `P1-A1.4-E399` WS-4 — was never counted because it was never written. */
+    certifications: number;
     /** WS4 — matched against the seeded vocabulary, not asked of the model. */
     specializations: number;
     skillsMatched: number;
@@ -132,6 +138,19 @@ export async function importProfileDocument({
 
   const gaps = [...parsed.gaps];
   /*
+    ⚠⚠ THE IMPORT NOW SAYS WHEN IT CAME UP SHORT (`P1-A1.4-E399` WS-3).
+
+    **The deepest defect was not that the import was short — it is that NOTHING
+    NOTICED.** The pipeline validated that the JSON parsed; nothing compared what
+    came back against what is in the document, so 1-of-5 cleared every gate and a
+    half-profile presented itself as finished.
+
+    ⚠ THESE ARE WARNINGS, NOT A FAILURE. `gaps` is what the review screen already
+    renders, so the person sees "we found 14 date ranges and imported 9" beside
+    their data, while the import still lands. A hard stop mid-signup loses them.
+  */
+  if (read.recall) gaps.push(...read.recall.warnings);
+  /*
     WS-B — the unmatched count is NOT a gap any more, because we can now do
     something about it. "34 skills aren't in the Panameer catalog and were not
     added" reported a problem, named no fix, and read as an accusation that the
@@ -196,6 +215,18 @@ export async function importProfileDocument({
       ai_output_tokens: read.usage?.outputTokens ?? null,
       ai_cost_usd: read.usage?.costUsd ?? null,
       ai_latency_ms: read.usage?.ms ?? null,
+      /*
+        ⚠⚠ `P1-A1.4-E399` WS-1 — WHAT THE CALL DID, NOT WHAT A PERSON CHANGED.
+        Until these three, a model that STOPPED and a model that SUMMARISED left
+        identical evidence: a short profile and no error. `ai_finish_reason` is
+        the one that tells them apart — `length` means it ran out, `stop` means it
+        decided it was finished, and `E399`'s parse reported `stop`.
+        ⚠ THE RAW RESPONSE IS DELIBERATELY NOT HERE. It is the CV itself and
+        `raw_text` has no retention rule to inherit — see the schema comment.
+      */
+      ai_finish_reason: read.usage?.finishReason ?? null,
+      ai_reasoning_tokens: read.usage?.reasoningTokens ?? null,
+      ai_input_chars: read.usage?.inputChars ?? null,
     },
   });
 
@@ -265,6 +296,8 @@ function describePath(p: ImportPath): string {
 async function readDocument(text: string): Promise<{
   parsed: ParsedResume;
   path: ImportPath;
+  /** ⚠ `P1-A1.4-E399` WS-3 — what the inventory promised vs what arrived. */
+  recall?: RecallReport;
   usage?: {
     provider: ProviderName;
     model: string;
@@ -272,6 +305,10 @@ async function readDocument(text: string): Promise<{
     outputTokens: number;
     costUsd: number | null;
     ms: number;
+    /* ⚠ `P1-A1.4-E399` WS-1 — the three that make a short import diagnosable. */
+    finishReason: string | null;
+    reasoningTokens: number;
+    inputChars: number;
   };
 }> {
   const heuristic = parseResume(text);
@@ -284,7 +321,22 @@ async function readDocument(text: string): Promise<{
     };
   }
 
-  const outcome = await aiExtractResume(text);
+  /*
+    ── ⚠⚠ ENUMERATE FIRST, THEN EXTRACT (`P1-A1.4-E399` WS-2) ──────────────────
+
+    ⚠ SUPERSEDED, QUOTED NOT DELETED: this line read `await aiExtractResume(text)`
+    — ONE call asking a cheap model to emit five employers, fourteen projects,
+    five certifications, forty skills, an overview and education from 11,000
+    characters in a single answer. `E399` measured what that returns: **1 of 5
+    employers, 9 of 14 projects, 0 of 5 certifications** — and proved it was not
+    truncation, because `EDUCATION` is the LAST section and it came through.
+    **The model read everything and returned a subset.**
+
+    ⚠ `aiExtractResume` IS KEPT, NOT DELETED. It is the before-half of the
+    measurement `check:resume-recall` reports, and deleting it would remove the
+    only baseline the change can be judged against.
+  */
+  const outcome = await aiExtractResumeMultiPass(text);
   if (!outcome.ok) {
     console.error(`[resume] the model call failed (${outcome.reason}): ${outcome.message}`);
     return {
@@ -314,6 +366,7 @@ async function readDocument(text: string): Promise<{
       model: outcome.model,
       configProblem,
     },
+    recall: outcome.recall,
     usage: {
       provider: outcome.provider,
       model: outcome.model,
@@ -321,6 +374,9 @@ async function readDocument(text: string): Promise<{
       outputTokens: outcome.usage.outputTokens,
       costUsd: outcome.usage.costUsd,
       ms: outcome.ms,
+      finishReason: outcome.usage.finishReason,
+      reasoningTokens: outcome.usage.reasoningTokens,
+      inputChars: outcome.inputChars,
     },
   };
 }
@@ -333,6 +389,7 @@ function emptyApplied(): ImportResult["applied"] {
     projectsAttached: 0,
     projectsUnattached: 0,
     education: 0,
+    certifications: 0,
     specializations: 0,
     skillsMatched: 0,
     skillsMatchedNames: [],
@@ -364,6 +421,12 @@ export async function applyParsedResume(
       education: { select: { institution: true } },
       languages: { select: { name: true } },
       skills: { select: { skill_id: true } },
+      /* ⚠ `P1-A1.4-E399` WS-4 — needed to de-duplicate, exactly as education is. */
+      certifications: { select: { name: true } },
+      /* ⚠⚠ `Certification.user_id` IS NOT NULL and is the OWNER — a credential
+         belongs to the PERSON, not to the seller profile, so a provider who stops
+         selling keeps it. Selected here because the writer below cannot invent it. */
+      person: { select: { user_id: true } },
     },
   });
   if (!profile) return applied;
@@ -569,6 +632,52 @@ export async function applyParsedResume(
       },
     });
     applied.education++;
+  }
+
+  /*
+    ── ⚠⚠ CERTIFICATIONS, WHICH USED TO REACH HERE AND DIE (`P1-A1.4-E399` WS-4) ──
+
+    `import.ts` contained ZERO references to `certifications` before this block:
+    the schema defined them, the prompt asked for them, Zod validated them, and
+    `aiToParsedResume` had nowhere to put them. Scott's five Oracle certificates
+    would not have appeared even if the model had read every word of the document.
+
+    ⚠ MIRRORS EDUCATION DELIBERATELY — case-insensitive de-dupe on the name,
+    never an overwrite, and the counter goes up only when a row is actually
+    written. A re-read must not duplicate what a provider already has.
+    ⚠ `user_id` IS THE OWNER AND IS REQUIRED. Skipped entirely rather than guessed
+    at if the profile somehow has no person behind it.
+  */
+  const ownerUserId = profile.person?.user_id ?? null;
+  if (ownerUserId) {
+    const haveCert = new Set(
+      profile.certifications.map((c) => c.name.trim().toLowerCase())
+    );
+    for (const c of parsed.certifications) {
+      const name = c.name?.trim();
+      if (!name) continue;
+      if (haveCert.has(name.toLowerCase())) continue;
+      haveCert.add(name.toLowerCase());
+      const issued = c.issuedOn ? new Date(c.issuedOn) : null;
+      const expires = c.expiresOn ? new Date(c.expiresOn) : null;
+      await prisma.certification.create({
+        data: {
+          user_id: ownerUserId,
+          provider_profile_id: profileId,
+          name: name.slice(0, 200),
+          issuer: c.issuer?.slice(0, 200) ?? null,
+          /* ⚠ `year` mirrors education's convention: the year a reader would
+             quote, taken from the issue date when there is one. */
+          year: issued && !Number.isNaN(issued.getTime()) ? issued.getFullYear() : null,
+          issued_on: issued && !Number.isNaN(issued.getTime()) ? issued : null,
+          expires_on: expires && !Number.isNaN(expires.getTime()) ? expires : null,
+          /* ⚠ SELF_REPORTED — it came off the provider's own CV. Panameer has not
+             verified it, and `issued_from` is what keeps that distinction. */
+          issued_from: "SELF_REPORTED",
+        },
+      });
+      applied.certifications++;
+    }
   }
 
   // --- Skills: only ones that exist in the seeded catalog -------------------

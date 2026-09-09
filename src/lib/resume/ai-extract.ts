@@ -771,9 +771,26 @@ export function aiToParsedResume(ai: AiResume): ParsedResume {
     );
   }
 
+  /*
+    ── ⚠⚠ CERTIFICATIONS WERE EXTRACTED AND THROWN AWAY (`P1-A1.4-E399` WS-4) ───
+
+    `AI_RESUME_SCHEMA` has carried `certifications` since it was written, the
+    prompt asks for them and Zod validates them — and this mapper never returned
+    them, because `ParsedResume` had no field to put them in. So five Oracle
+    certifications were parsed correctly and dropped one line before they would
+    have been saved. ⚠ The model was never the problem here.
+  */
+  const certifications = ai.certifications.map((c) => ({
+    name: c.name,
+    issuer: c.issuer ?? null,
+    issuedOn: iso(c.issuedOn ?? null),
+    expiresOn: iso(c.expiresOn ?? null),
+  }));
+
   return {
     headline: ai.headline ?? null,
     overview: ai.overview ?? null,
+    certifications,
     // Derived from the work history downstream (WS6/E068), exactly as the
     // heuristic path leaves them — the model is not asked to grade seniority.
     experienceLevel: null,

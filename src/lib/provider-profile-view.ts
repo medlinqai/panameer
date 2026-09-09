@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { isMarketplaceVisible, providerMeetsRequired } from "@/lib/access";
-import { VISIBILITY_THRESHOLD } from "@/lib/completeness";
+import { profileEnrichmentGaps, VISIBILITY_THRESHOLD } from "@/lib/completeness";
 import { listPublishedPackages } from "@/lib/packages";
 import { toView as toArtifactView } from "@/lib/artifacts";
 import {
@@ -201,6 +201,24 @@ export async function getProviderProfileView(
     viewerIsPlus: isPlus,
     completeness: profile.completeness,
     visibilityThreshold: VISIBILITY_THRESHOLD,
+    /*
+      ⚠⚠ UNSCORED, AND NOT THE SAME QUESTION AS `completeness` (`P1-A1.4-E399`).
+
+      The meter reads 98% for a profile missing four employers and all five
+      certifications, because `enrichment: 6` is satisfied by ANY ONE of work
+      history / education / certs / specializations. That number is not wrong —
+      it answers *"are you allowed to be visible"*, and `VISIBILITY_THRESHOLD`
+      gates 91 live providers on it, so it is not being re-weighted.
+      ⚠ THIS ANSWERS THE OTHER QUESTION — *"is this everything you meant to
+      say?"* — and NOTHING GATES ON IT.
+    */
+    enrichmentGaps: profileEnrichmentGaps({
+      employers: profile.employers.length,
+      projects: profile.projects.length,
+      certifications: certifications.length,
+      education: profile.education.length,
+      specializations: profile.specializations.length,
+    }),
     paused: profile.paused_at != null,
     published: profile.onboarding_completed_at != null,
     /*

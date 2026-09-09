@@ -2258,6 +2258,38 @@ model ProfileImport {
   ai_output_tokens    Int?
   ai_cost_usd         Decimal?            @db.Decimal(10, 6)
   ai_latency_ms       Int?
+  /**
+   * ── ⚠⚠ WHY THE MODEL STOPPED, AND HOW MUCH IT THOUGHT (`P1-A1.4-E399` WS-1) ──
+   *
+   * `E399` diagnosed a parse that returned ONE employer of five, NINE projects of
+   * fourteen and ZERO of five certifications — and the reason it took a
+   * colour-coded Word document to find is that **nothing about the call was
+   * recorded except its cost**. The audit trail writes what a PERSON changed after
+   * review, not what the model returned, so a short import and a short document
+   * looked identical afterwards.
+   *
+   * ⚠ `ai_finish_reason` IS THE ONE THAT ANSWERS "DID IT STOP OR DID IT SKIP".
+   * A model that hit a token ceiling reports `length`/`max_tokens`; one that
+   * summarised reports `stop` and looks perfect. Those are opposite defects with
+   * opposite fixes and, until this column, the same evidence.
+   *
+   * ⚠ `ai_reasoning_tokens` is the reasoning budget a thinking model spent before
+   * emitting anything — measured on `gpt-5-nano` at 6,656 tokens on default effort
+   * versus 0 on `minimal`, which is the difference between a 55-second call and a
+   * 1.3-second one.
+   *
+   * ⚠ `ai_input_chars` is the document size the call actually saw, so "the model
+   * truncated" can be separated from "the reader truncated" without re-running.
+   *
+   * ⚠⚠ NONE OF THESE THREE IS PERSONAL DATA — they are facts about the CALL, not
+   * about the person. **The raw model RESPONSE is deliberately NOT stored here**
+   * even though `E399` WS-1 asked for it: that response is the CV itself — name,
+   * phone, address — and `raw_text` has no retention rule to inherit. See the
+   * report; storing it is blocked on a decision nobody has made.
+   */
+  ai_finish_reason    String?
+  ai_reasoning_tokens Int?
+  ai_input_chars      Int?
   error               String?
   created_at          DateTime            @default(now())
   updated_at          DateTime            @updatedAt

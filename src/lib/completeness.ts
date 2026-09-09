@@ -227,3 +227,51 @@ export function computeProviderCompleteness(p: CompletenessInput): number {
 export function meetsCompletenessThreshold(completeness: number): boolean {
   return completeness >= VISIBILITY_THRESHOLD;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⚠⚠ WHAT'S MISSING — UNSCORED, AND DELIBERATELY SO (`P1-A1.4-E399` WS-5b)
+   ═════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * ⚠⚠ THE METER SAID **98%** FOR A PROFILE MISSING FOUR EMPLOYERS AND ALL FIVE
+ * CERTIFICATIONS. It was arithmetically right and semantically wrong.
+ *
+ * `enrichment: 6` is satisfied by **ANY ONE** of work history / education /
+ * certifications / specializations — so one employer scores exactly what five
+ * score, and zero certifications costs nothing because education already
+ * satisfied it. Employer COUNT is unscored. Solo projects are unscored entirely.
+ *
+ * ── ⚠⚠ AND THE WEIGHTS ARE NOT BEING CHANGED ────────────────────────────────
+ *
+ * `VISIBILITY_THRESHOLD = 80` GATES MARKETPLACE VISIBILITY FOR ALL 91 PROVIDERS.
+ * Re-weighting to make the number "honest" would silently change **who is
+ * findable** — providers who are live today would drop out of search because a
+ * definition moved under them, with no notice and no action of their own.
+ * ⚠ SO THE SCORE AND THE GATE ARE UNTOUCHED, and this is a SEPARATE, UNSCORED
+ * list that answers a different question: not *"are you allowed to be visible"*
+ * but *"is this everything you meant to say?"*
+ *
+ * ⚠ IT RETURNS PROMPTS, NOT FAULTS. A provider with one employer may genuinely
+ * have one employer; the list observes, it does not accuse, and nothing gates on
+ * it.
+ */
+export type EnrichmentGapInput = {
+  employers: number;
+  projects: number;
+  certifications: number;
+  education: number;
+  specializations: number;
+};
+
+export function profileEnrichmentGaps(p: EnrichmentGapInput): string[] {
+  const out: string[] = [];
+  /* ⚠ ONE employer is the signal `E399` was chasing — a 30-year career that
+     imported as a single job. Zero is a different message and gets its own. */
+  if (p.employers === 0) out.push("No work history yet");
+  else if (p.employers === 1) out.push("Only one employer — most careers have more");
+  if (p.certifications === 0) out.push("No certifications");
+  if (p.projects === 0) out.push("No projects");
+  if (p.education === 0) out.push("No education");
+  if (p.specializations === 0) out.push("No specializations");
+  return out;
+}

@@ -88,7 +88,8 @@
     "check:settle": "npx esbuild scripts/check-settle.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/settle.cjs --log-level=error && node .harness/settle.cjs",
     "check:service-fee": "npx esbuild scripts/check-service-fee.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/service-fee.cjs --log-level=error && node .harness/service-fee.cjs",
     "check:brand-assets": "npx esbuild scripts/check-brand-assets.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/brand-assets.cjs --log-level=error && node .harness/brand-assets.cjs",
-    "measure:rate-search": "npx esbuild scripts/measure-rate-search.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/measure-rate-search.cjs --log-level=error && node -r dotenv/config .harness/measure-rate-search.cjs dotenv_config_path=.env.local"
+    "measure:rate-search": "npx esbuild scripts/measure-rate-search.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/measure-rate-search.cjs --log-level=error && node -r dotenv/config .harness/measure-rate-search.cjs dotenv_config_path=.env.local",
+    "measure:resume-recall": "npx esbuild scripts/measure-resume-recall.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/measure-resume-recall.cjs --log-level=error && node -r dotenv/config .harness/measure-resume-recall.cjs dotenv_config_path=.env.local"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",

@@ -176,7 +176,8 @@ const STEP_LABELS: Record<Step, { stepper: string }> = {
   specializations: { stepper: "Your Specializations" },
   education: { stepper: "Your Education" },
   languages: { stepper: "Your Languages" },
-  bio: { stepper: "Your Bio" },
+  /* ⚠ "Overview", matching the column and the rest of the UI (`P1-A1.4-E399`). */
+  bio: { stepper: "Your Overview" },
   rate: { stepper: "Your Rate" },
   picture: { stepper: "Your Photo" },
   company: { stepper: "Your Company" },
@@ -3386,7 +3387,7 @@ export default function JoinProviderPage() {
                 hero and again in the textarea below — was the single largest
                 block of duplicated height on the page. The editable copy is the
                 one that survives, because it is the one that does something,
-                and the hero's "Edit bio" button already scrolls to it.
+                and the hero's "Edit overview" button already scrolls to it.
               */
               overview={null}
               rateMinCents={profile.rateMinCents ?? profile.hourlyRateCents}
@@ -3407,7 +3408,7 @@ export default function JoinProviderPage() {
                   {/* WS5 — the bio is edited on THIS page; there is no bio
                       step to travel to any more. */}
                   <EditButton
-                    title="Bio"
+                    title="Overview"
                     onClick={() => {
                       const el = document.getElementById("review-overview");
                       el?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -3416,7 +3417,7 @@ export default function JoinProviderPage() {
                         350
                       );
                     }}
-                    label="Edit bio"
+                    label="Edit overview"
                   />
                   <EditButton title="Rate" onClick={() => goTo("rate")} label="Edit rate" />
                 </div>
@@ -3439,7 +3440,7 @@ export default function JoinProviderPage() {
             */}
             <div className="mt-5">
               <ProfileCard
-                title="Bio"
+                title="Overview"
                 edit={
                   <span className="text-[13px] text-ink-2">
                     {profile.overview.trim().length}/{MAX_BIO}

@@ -282,7 +282,22 @@ export const PROVIDER_STEP_LABELS: Record<
   specializations: { stepper: "Your Specializations", next: "" },
   education: { stepper: "Your Education", next: "" },
   languages: { stepper: "Your Languages", next: "" },
-  bio: { stepper: "Your Bio", next: "" },
+  /*
+    ⚠⚠ "Overview", NOT "Bio" (`P1-A1.4-E399` WS-5a). ONE FIELD HAD TWO NAMES AND
+    BOTH WERE ON SCREEN AT ONCE: the empty state read *"No overview yet"* while
+    the button beside it read *"Edit bio"*, and the wizard step was called `bio`
+    and saved `{ overview }`. Scott: *"sounds like they are the same. If yes,
+    remove one."* They are.
+
+    ⚠ THE USER-FACING WORD IS NOW "OVERVIEW" EVERYWHERE, chosen because it is what
+    the COLUMN is called — so a reader of the screen and a reader of the schema see
+    the same word and nobody has to learn a mapping.
+    ⚠⚠ THE STEP KEY STAYS `bio` AND THE COLUMN STAYS `overview`. The key is a
+    wire format the client posts and the server switches on; renaming it is a
+    change to an API for a cosmetic reason. Renaming the column is a migration
+    this brief does not authorise.
+  */
+  bio: { stepper: "Your Overview", next: "" },
 };
 
 /*
@@ -2629,6 +2644,10 @@ async function currentProfileAsParsed(profileId: string): Promise<ParsedResume> 
   return {
     headline: pp?.headline ?? null,
     overview: pp?.overview ?? null,
+    /* ⚠ Built from what is already STORED, not from a document — this shape feeds
+       a re-read comparison, and certifications are not part of that comparison
+       today (`P1-A1.4-E399`). Empty is the honest value, not a missing one. */
+    certifications: [],
     experienceLevel: null,
     experienceYears: null,
     /* `E294` — this shape re-reads a SAVED profile back into `ParsedResume`;

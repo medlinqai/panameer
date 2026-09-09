@@ -69,6 +69,21 @@ export type ModelUsage = {
   cachedInputTokens: number;
   /** USD for this call, or null when prices aren't configured. */
   costUsd: number | null;
+  /*
+    ── ⚠⚠ THE TWO FIELDS THAT SEPARATE "STOPPED" FROM "SKIPPED" (`P1-A1.4-E399`) ──
+
+    ⚠ `finishReason` IS THE DIAGNOSTIC THAT WAS MISSING. `E399` traced a parse that
+    returned one employer of five: a model that STOPPED reports `length` /
+    `max_tokens`, a model that SUMMARISED reports `stop` and looks perfect. Same
+    short result, opposite causes, opposite fixes — and until now the same evidence.
+    ⚠ Carried on the SUCCESS path deliberately: the failure paths already hard-fail
+    loudly, so the value that was never visible is the one on a call that "worked".
+
+    ⚠ `reasoningTokens` is what a thinking model spent before emitting anything.
+    Measured on `gpt-5-nano`: 6,656 on default effort, 0 on `minimal`.
+  */
+  finishReason: string | null;
+  reasoningTokens: number;
 };
 
 export type ModelCall =
@@ -288,6 +303,10 @@ export async function callExtractionModel({
           outputTokens: outTok,
           cachedInputTokens: u.cache_read_input_tokens ?? 0,
           costUsd: priceFor(inTok, outTok),
+          /* ⚠ Anthropic calls it `stop_reason`; a clean finish is `end_turn`. */
+          finishReason: response.stop_reason ?? null,
+          /* Anthropic does not report a separate reasoning count on this path. */
+          reasoningTokens: 0,
         },
         ms: Date.now() - started,
       };
@@ -443,6 +462,10 @@ export async function callExtractionModel({
         outputTokens: outTok,
         cachedInputTokens: body.usage?.prompt_tokens_details?.cached_tokens ?? 0,
         costUsd: priceFor(inTok, outTok),
+        /* ⚠ `stop` here means "the model decided it was done" — which is exactly
+           what a model that SUMMARISED reports. See `ModelUsage`. */
+        finishReason: choice?.finish_reason ?? null,
+        reasoningTokens: body.usage?.completion_tokens_details?.reasoning_tokens ?? 0,
       },
       ms: Date.now() - started,
     };
