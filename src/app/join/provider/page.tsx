@@ -12,6 +12,7 @@ import {
   type SignUpValues,
 } from "@/components/onboarding/SignUpForm";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
+import { ambiguousSkillNames, skillQualifier } from "@/lib/skill-labels";
 import {
   OptionCard,
   Chip,
@@ -130,7 +131,18 @@ const ALL_STEPS = [
   "finish",
 ] as const;
 type Step = (typeof ALL_STEPS)[number];
-type Screen = "signup" | "check_email" | Step;
+/*
+  ── ⚠⚠ `work_method` IS A SCREEN, NOT A STEP (`P1-A1.3-E401` WS-1) ───────────
+
+  It has to ask the question WITHOUT touching `RECRUITER_STEPS`,
+  `PROVIDER_STEPS`, `stepsForProfile` or `isRecruiterProfile` — that fork is
+  correct and `E401` forbids editing it. A `Screen` that is not a `Step` is
+  exactly the seam that allows it: `check_email` already works this way, and
+  `P1-J1.1-E285` established that uncounted screens are legal jump targets.
+  ⚠ IT IS UNCOUNTED ON PURPOSE — the stepper still reads x/6 or x/7 from the
+  step list, so asking the question does not renumber anybody's itinerary.
+*/
+type Screen = "signup" | "check_email" | "work_method" | Step;
 
 /** Provider journey (10). The server sends the real list; this is the fallback. */
 const DEFAULT_STEPS: readonly Step[] = ALL_STEPS;
@@ -488,6 +500,13 @@ export default function JoinProviderPage() {
    * read. Field-level errors survive because nothing else writes to them.
    */
   const [notProvider, setNotProvider] = useState(false);
+  /**
+   * The answer to the work-method screen, held before it is saved
+   * (`P1-A1.3-E401` WS-1). ⚠ IT IS NOT PART OF `profile`: `hydrate` overwrites
+   * that wholesale from the server on every re-read, and this value has to
+   * survive the re-read it causes.
+   */
+  const [workMethodPick, setWorkMethodPick] = useState<string | null>(null);
 
   const [acct, setAcct] = useState<SignUpValues>({
     firstName: "",
@@ -697,6 +716,96 @@ export default function JoinProviderPage() {
     if (p.phone) setPhoneInput(formatPhone(p.phone, p.address?.country ?? null));
   }, []);
 
+  /**
+   * WHERE THE WIZARD OPENS — the deep-link-aware resume point.
+   *
+   * ⚠⚠ EXTRACTED, NOT REWRITTEN (`P1-A1.3-E401` WS-1). It ran in exactly one
+   * place, inline in the mount effect. It now has a SECOND caller: the
+   * work-method screen, which has to land the person somewhere once they
+   * answer. ⚠ Answering a question must not cost them their deep link — an
+   * owner who clicked "edit Overview" on their live profile and was asked for
+   * their work method on the way still has to arrive at Overview, and a copy of
+   * this logic in the screen would have dropped `?step=` and `return=review`
+   * on the floor. One definition, two callers, no drift.
+   *
+   * ⚠ ITS DEPENDENCIES ARE ALL SETTERS AND MODULE CONSTANTS, so the callback is
+   * stable and the mount effect below still runs exactly once.
+   */
+  const resumeInto = useCallback((s: StatusPayload) => {
+    // The review page's edit pencils deep-link back to a specific step
+    // (?step=bio). Anything unrecognised falls back to the resume point.
+    const params = new URLSearchParams(window.location.search);
+    const requested = params.get("step");
+    /*
+      ⚠⚠ UNCOUNTED SCREENS ARE LEGAL JUMP TARGETS TOO (`P1-J1.1-E285`).
+    
+      ⚠ SUPERSEDED, quoted: `const target = (s.steps ?? DEFAULT_STEPS).includes(
+      requested) ? requested : s.resumeStep`.
+    
+      `s.steps` is the COUNTED itinerary, and `tell_us` has never been in it — so
+      the provider profile's two "Work History" and "Solo Projects" edit links
+      (`ProviderProfileView.tsx:259` and `:321`, both
+      `?step=tell_us&return=review`) silently failed the guard and dumped the owner
+      on their resume step instead of the section they clicked. Two dead links that
+      looked alive.
+    
+      ⚠ THE ITINERARY GUARD IS NOT WEAKENED. A step that is not on YOUR journey is
+      still refused — a recruiter still cannot jump to `rate`. What is added is the
+      set of screens that are renderable but never counted, which `PRE_STEPS`
+      already names. `E283` made `tell_us` genuinely reachable, so this is the
+      guard catching up with that rather than a new permission.
+    */
+    const jumpable = new Set<Step>([
+      ...((s.steps ?? DEFAULT_STEPS) as Step[]),
+      /* The uncounted-but-renderable screens. `page.tsx` keeps its own
+         `Step` vocabulary (`ALL_STEPS` above) rather than importing the
+         server's, so this names the screen directly instead of pulling in
+         `PRE_STEPS` and coupling the two lists. */
+      "tell_us" as Step,
+    ]);
+    const target = jumpable.has(requested as Step)
+      ? (requested as Step)
+      : (s.resumeStep as Step);
+    // E118 — the profile view's edit links can ask for the same
+    // jump-and-return the review's pencils get, so editing from the live
+    // profile doesn't dump you into the middle of the wizard either.
+    if (params.get("return") === "review" && target !== "finish") {
+      setReturnToReview(true);
+    }
+    /*
+      ── ⚠⚠ THE ONE-SHOT `fresh` GATE IS GONE (`P1-J1.1-E283`) ──────────────────
+    
+      ⚠ SUPERSEDED, quoted not deleted, because the reasoning was sound and only
+      its PLACEMENT was wrong: *"WS1 — THE UPLOAD IS A PRE-STEP, not stop 1. The
+      brief keeps the résumé / AI entry 'up-front, preceding the steps', so it
+      renders before the counter starts and carries no number. Shown only on a
+      genuinely fresh profile: nothing imported and no work history typed. A
+      returning provider goes straight to wherever the server resumed them,
+      because being asked to upload a CV again on every visit is exactly the
+      friction this brief cuts."* The condition was:
+    
+          const fresh = target === "title"
+            && (s.imports?.length ?? 0) === 0
+            && (s.profile?.employers?.length ?? 0) === 0
+            && !requested;
+    
+      ⚠⚠ THAT GATE IS HALF OF THE LAUNCH-CLASS FATAL. It could fire ONCE, before
+      the title, on a profile with nothing on it. The moment a provider typed a
+      title it could never be true again, so the upload became permanently
+      unreachable — and `0ae97e2` then made the next step depend on data only the
+      upload produced.
+    
+      ⚠ AND IT COUNTED FAILED IMPORTS. `s.imports` carries `status` and `error`
+      and nothing filtered on either, so ONE FAILED PARSE locked a provider out of
+      the upload for good. Deleting the gate removes that bug with it — there is
+      no longer any count that can lock the door.
+    
+      In V3 the screen sits AFTER the title and is reachable whenever the provider
+      is on it, so resume simply honours the target.
+    */
+setScreen(target);
+  }, []);
+
   // ---- mount ------------------------------------------------------------
   useEffect(() => {
     (async () => {
@@ -777,84 +886,37 @@ export default function JoinProviderPage() {
         hydrate(s);
         if (!s.emailVerified) {
           setScreen("check_email");
+        } else if (!s.profile?.workMethod) {
+          /*
+            ── ⚠⚠ THE IDENTITY IS RECOVERABLE INSIDE THE WIZARD NOW ────────────
+
+            `?type=recruiter` was **the only thing in the codebase that set
+            `work_method`**, and `app/join/page.tsx` was the only place that sent
+            it. So a recruiter who bookmarked the wizard, resumed from an email
+            link, reloaded after the param dropped, or typed the URL became a
+            PROVIDER SILENTLY — which is what Scott walked into: `/join/provider`,
+            no query string, step 4/7, *"Tell Clients What You Charge."*
+
+            ⚠⚠ AND THE CONSEQUENCE IS BIGGER THAN A WRONG STEP. `work_method`
+            drives the Coordinator role and its capability gates, so a mis-typed
+            recruiter is MIS-PERMISSIONED, not merely mis-stepped.
+
+            ⚠ SO A MISSING METHOD ASKS RATHER THAN ASSUMES. The default was never
+            chosen — it was the absence of a choice, reading as "provider".
+            ⚠⚠ AND IT KEEPS THE PROPERTY THE URL GUARD HAD: this fires ONLY when
+            `workMethod` is null. An established provider is never asked and never
+            re-typed; a person answering for themselves is the point.
+            ⚠ MEASURED 2026-09-09: of 92 profiles, **79 carry no work_method at
+            all** and **ZERO are RECRUITER** — the fork has never once been taken.
+          */
+          setScreen("work_method");
         } else {
-          // The review page's edit pencils deep-link back to a specific step
-          // (?step=bio). Anything unrecognised falls back to the resume point.
-          const params = new URLSearchParams(window.location.search);
-          const requested = params.get("step");
-          /*
-            ⚠⚠ UNCOUNTED SCREENS ARE LEGAL JUMP TARGETS TOO (`P1-J1.1-E285`).
-          
-            ⚠ SUPERSEDED, quoted: `const target = (s.steps ?? DEFAULT_STEPS).includes(
-            requested) ? requested : s.resumeStep`.
-          
-            `s.steps` is the COUNTED itinerary, and `tell_us` has never been in it — so
-            the provider profile's two "Work History" and "Solo Projects" edit links
-            (`ProviderProfileView.tsx:259` and `:321`, both
-            `?step=tell_us&return=review`) silently failed the guard and dumped the owner
-            on their resume step instead of the section they clicked. Two dead links that
-            looked alive.
-          
-            ⚠ THE ITINERARY GUARD IS NOT WEAKENED. A step that is not on YOUR journey is
-            still refused — a recruiter still cannot jump to `rate`. What is added is the
-            set of screens that are renderable but never counted, which `PRE_STEPS`
-            already names. `E283` made `tell_us` genuinely reachable, so this is the
-            guard catching up with that rather than a new permission.
-          */
-          const jumpable = new Set<Step>([
-            ...((s.steps ?? DEFAULT_STEPS) as Step[]),
-            /* The uncounted-but-renderable screens. `page.tsx` keeps its own
-               `Step` vocabulary (`ALL_STEPS` above) rather than importing the
-               server's, so this names the screen directly instead of pulling in
-               `PRE_STEPS` and coupling the two lists. */
-            "tell_us" as Step,
-          ]);
-          const target = jumpable.has(requested as Step)
-            ? (requested as Step)
-            : (s.resumeStep as Step);
-          // E118 — the profile view's edit links can ask for the same
-          // jump-and-return the review's pencils get, so editing from the live
-          // profile doesn't dump you into the middle of the wizard either.
-          if (params.get("return") === "review" && target !== "finish") {
-            setReturnToReview(true);
-          }
-          /*
-            ── ⚠⚠ THE ONE-SHOT `fresh` GATE IS GONE (`P1-J1.1-E283`) ──────────────────
-          
-            ⚠ SUPERSEDED, quoted not deleted, because the reasoning was sound and only
-            its PLACEMENT was wrong: *"WS1 — THE UPLOAD IS A PRE-STEP, not stop 1. The
-            brief keeps the résumé / AI entry 'up-front, preceding the steps', so it
-            renders before the counter starts and carries no number. Shown only on a
-            genuinely fresh profile: nothing imported and no work history typed. A
-            returning provider goes straight to wherever the server resumed them,
-            because being asked to upload a CV again on every visit is exactly the
-            friction this brief cuts."* The condition was:
-          
-                const fresh = target === "title"
-                  && (s.imports?.length ?? 0) === 0
-                  && (s.profile?.employers?.length ?? 0) === 0
-                  && !requested;
-          
-            ⚠⚠ THAT GATE IS HALF OF THE LAUNCH-CLASS FATAL. It could fire ONCE, before
-            the title, on a profile with nothing on it. The moment a provider typed a
-            title it could never be true again, so the upload became permanently
-            unreachable — and `0ae97e2` then made the next step depend on data only the
-            upload produced.
-          
-            ⚠ AND IT COUNTED FAILED IMPORTS. `s.imports` carries `status` and `error`
-            and nothing filtered on either, so ONE FAILED PARSE locked a provider out of
-            the upload for good. Deleting the gate removes that bug with it — there is
-            no longer any count that can lock the door.
-          
-            In V3 the screen sits AFTER the title and is reachable whenever the provider
-            is on it, so resume simply honours the target.
-          */
-          setScreen(target);
+          resumeInto(s);
         }
       }
       setReady(true);
     })();
-  }, [hydrate]);
+  }, [hydrate, resumeInto]);
 
   // ---- reference data ---------------------------------------------------
   useEffect(() => {
@@ -1371,6 +1433,108 @@ export default function JoinProviderPage() {
               initialDevLink={devLink}
             />
           </div>
+        </div>
+      </PlainShell>
+    );
+  }
+
+  /*
+    ── ⚠⚠ THE WORK-METHOD SCREEN — UNCOUNTED, AND ASKED ONLY WHEN UNKNOWN ──────
+
+    `P1-A1.3-E401` WS-1. Rendered from `WORK_METHOD_OPTIONS`, which had been
+    DEAD CODE since `E009` defined it: grep found exactly one reference in the
+    whole repo, its own definition. The three options were written, reviewed and
+    never shown to anybody — the fork existed only as `?type=recruiter`.
+
+    ⚠ IT IS A SCREEN, NOT A STEP, so `RECRUITER_STEPS`, `PROVIDER_STEPS`,
+    `stepsForProfile` and `isRecruiterProfile` are all untouched and the stepper
+    still counts the same x/N it counted before. It renders in `PlainShell`, the
+    same uncounted-screen shell `check_email` uses, ABOVE the counted-step
+    machinery below — so it never reaches `STEP_LABELS[screen]`.
+
+    ⚠⚠ AND IT ASKS ONCE. The router reaches here only when `workMethod` is null,
+    which is the same guard `?type=recruiter` has always carried. A person can
+    still change their own method later in Settings; what stays impossible is a
+    URL — or this screen — re-typing an established provider under them.
+  */
+  if (screen === "work_method") {
+    const choose = async () => {
+      if (!workMethodPick) return;
+      setBusy(true);
+      setError(null);
+      try {
+        /* ⚠ THE SAME OWNER-SCOPED SECTION ENDPOINT the `?type=recruiter` block
+           posts to — one write path for this field, so the two entrances cannot
+           drift apart. The id is resolved from the session there, never sent. */
+        const saved = await fetch("/api/settings/profile/section", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            section: "work_method",
+            data: { workMethod: workMethodPick },
+          }),
+        });
+        if (!saved.ok) {
+          setError("We couldn't save that. Please try again.");
+          return;
+        }
+        /* ⚠⚠ RE-READ RATHER THAN ASSUME THE ITINERARY. The step list is the
+           SERVER's answer to this question — choosing RECRUITER changes which
+           steps exist — so the resume point comes back from `status`, not from
+           anything computed here. */
+        const again = await fetch("/api/onboarding/status");
+        if (!again.ok) {
+          setError("We couldn't save that. Please try again.");
+          return;
+        }
+        const s2 = await again.json();
+        hydrate(s2);
+        resumeInto(s2);
+      } finally {
+        setBusy(false);
+      }
+    };
+
+    return (
+      <PlainShell contentWidth="max-w-2xl">
+        <div>
+          <h1 className="text-center text-[28px] font-extrabold tracking-[-0.6px]">
+            How Do You Work?
+          </h1>
+          {/* ⚠ WHY IT IS BEING ASKED, in one line — a person who arrived by a
+              recruiter link and lost the query string has no idea why the
+              wizard suddenly wants this. */}
+          <p className="mt-2 text-center text-[15px] text-ink-2">
+            This sets up the rest of your profile — you can change it later in
+            Settings.
+          </p>
+
+          {error && (
+            <div className="mt-5">
+              <Notice>{error}</Notice>
+            </div>
+          )}
+
+          <div className="mt-6 grid gap-3">
+            {WORK_METHOD_OPTIONS.map((o) => (
+              <OptionCard
+                key={o.value}
+                selected={workMethodPick === o.value}
+                onClick={() => setWorkMethodPick(o.value)}
+                title={o.title}
+                description={o.description}
+              />
+            ))}
+          </div>
+
+          <button
+            type="button"
+            disabled={!workMethodPick || busy}
+            onClick={choose}
+            className="mt-6 w-full rounded-full bg-magenta px-7 py-3 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-40"
+          >
+            {busy ? "Saving\u2026" : "Continue"}
+          </button>
         </div>
       </PlainShell>
     );
@@ -1920,6 +2084,22 @@ export default function JoinProviderPage() {
       const shownSkills = matchingSkills.slice(0, MAX_SKILL_SUGGESTIONS);
       const hiddenSkillCount = matchingSkills.length - shownSkills.length;
 
+      /*
+        ── ⚠⚠ WHICH LABELS ARE NOT UNIQUE HERE (`P1-A1.3-E401` WS-3) ───────────
+
+        Computed over `skillOpts` — EVERY option for this provider's roles, not
+        just the ones currently on screen. ⚠ THE SEARCH BOX WOULD OTHERWISE HIDE
+        THE COLLISION: typing "recr" narrows the list, and if ambiguity were
+        judged on `shownSkills` a name could gain and lose its qualifier as the
+        provider types. The set is a property of what they may pick, not of what
+        is visible this keystroke.
+        ⚠ AND IT DRIVES THE PICKED CHIPS BELOW TOO, so a chip reads the same
+        after it is clicked as it did before.
+      */
+      const ambiguousSkills = ambiguousSkillNames(
+        skillOpts.map((sk) => ({ name: sk.name, area: sk.pillar?.name ?? null }))
+      );
+
       const toggleSkill = (id: string) =>
         setProfile((p) => {
           const has = p.skillIds.includes(id);
@@ -2154,9 +2334,22 @@ export default function JoinProviderPage() {
                 {profile.skillNames.map((sk) => (
                   <Chip key={sk.id} selected onClick={() => toggleSkill(sk.id)}>
                     {sk.name}
-                    {sk.area && roleNames.length > 1 && (
+                    {/*
+                      ⚠ SUPERSEDED, quoted not deleted (`P1-A1.3-E401` WS-3):
+                      `{sk.area && roleNames.length > 1 && (…)}`.
+
+                      ⚠⚠ THAT CONDITION ASKED THE WRONG QUESTION. It qualified a
+                      chip when the provider held MORE THAN ONE ROLE — but the
+                      collision Scott hit was two `Recruiting` skills inside ONE
+                      role (Oracle Fusion Cloud and Workday, both
+                      Application-Specific), so the test was false exactly when
+                      the qualifier was needed. It also qualified chips that
+                      needed nothing, whenever a second role happened to be
+                      claimed. Wrong in both directions.
+                    */}
+                    {skillQualifier(sk, ambiguousSkills) && (
                       <span className="ml-1 text-[12px] font-normal opacity-75">
-                        · {sk.area}
+                        · {skillQualifier(sk, ambiguousSkills)}
                       </span>
                     )}
                   </Chip>
@@ -2248,6 +2441,15 @@ export default function JoinProviderPage() {
               {shownSkills.map((sk) => (
                 <Chip key={sk.id} selected={false} onClick={() => toggleSkill(sk.id)}>
                   {sk.name}
+                  {/* ⚠⚠ THE CHIP SCOTT ACTUALLY SAW. This list carried the bare
+                      name and nothing else, so the two `Recruiting` options were
+                      indistinguishable AT THE MOMENT OF CHOOSING — which is the
+                      only moment that matters. */}
+                  {skillQualifier({ name: sk.name, area: sk.pillar?.name ?? null }, ambiguousSkills) && (
+                    <span className="ml-1 text-[12px] font-normal opacity-75">
+                      · {sk.pillar?.name}
+                    </span>
+                  )}
                 </Chip>
               ))}
               {shownSkills.length === 0 && (

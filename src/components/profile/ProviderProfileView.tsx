@@ -131,7 +131,22 @@ export function ProviderProfileViewPage({
   /** Rendered after every section — the "You're live" CTA lives here. */
   footer?: React.ReactNode;
 }) {
-  const { youGet } = rateBreakdown(p.rates.hourlyCents, p.serviceFeeBps);
+  /*
+    ── ⚠⚠ THE RATE IS NOT RENDERED FOR A RECRUITER (`P1-A1.3-E401` WS-2) ───────
+
+    `p.isRecruiter` is `isRecruiterProfile()` asked in `provider-profile-view.ts`
+    — the SAME test `stepsForProfile()` uses to keep a recruiter out of the rate
+    step. ⚠ ASKED ONCE, HERE, and read by both the identity block's rate and the
+    owner's take-home line below, so the two cannot disagree.
+
+    ⚠ `youGet` IS NOT COMPUTED EITHER. It is the service fee applied to an
+    hourly rate a recruiter does not charge; leaving it computed and merely
+    unrendered would be a live wrong number one prop away from a page.
+    ⚠⚠ NOTHING REPLACES IT — see the note in `provider-profile-view.ts`.
+  */
+  const { youGet } = p.isRecruiter
+    ? { youGet: null }
+    : rateBreakdown(p.rates.hourlyCents, p.serviceFeeBps);
   // E074 — Solo Projects is null-employer ONLY; everything else belongs to its
   // employer in Work History.
   const soloProjects = p.projects.filter(
@@ -278,8 +293,11 @@ export function ProviderProfileViewPage({
               ? mentorState(community?.helpfulAnswers ?? 0, p.isOwner)
               : null
           }
-          rateMinCents={p.rates.minCents}
-          rateMaxCents={p.rates.maxCents}
+          /* ⚠ ABSENT, NOT ZEROED (`E401` WS-2). `IdentityBlock` renders the
+             whole `Hourly Rate:` row only when it has a figure, so passing null
+             removes the line rather than printing an empty one. */
+          rateMinCents={p.isRecruiter ? null : p.rates.minCents}
+          rateMaxCents={p.isRecruiter ? null : p.rates.maxCents}
           currency={p.rates.currency}
           youGetCents={p.isOwner ? youGet : null}
           language={p.primaryLanguage}
