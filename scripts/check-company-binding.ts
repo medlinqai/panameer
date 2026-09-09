@@ -108,11 +108,66 @@ check(
   idOffences.length === 0,
   idOffences.join(", ")
 );
-/* Stated positively: it tests the BINDING. */
+/*
+  ── ⚠⚠ SUPERSEDED BY `P1-ALL-E404` WS-1 — THIS GATE WAS THE THING THAT WAS WRONG ─
+
+  ⚠ SUPERSEDED, quoted not deleted:
+
+      /* Stated positively: it tests the BINDING. * /
+      check(
+        "GUARD 1 — requesterGaps tests the membership binding",
+        /if \(!state\.company\.bound\) gaps\.push/.test(onboarding)
+      );
+
+  ⚠⚠ IT DEMANDED A LINE THAT WAS DELETED ON PURPOSE, AND STAYED RED FOR A WEEK
+  WHILE FORTY BRIEFS REPORTED "the same two, before and after." That is how a
+  real failure becomes furniture. `E274` removed `if (!state.company.bound)
+  gaps.push("Your company")` because THE COMPANY IS OPTIONAL AT ONBOARDING —
+  requiring it is the defect that cost Scott the entire buyer side.
+
+  ⚠ AND THE GATE COULD NOT SEE ITS OWN ANSWER: `strip()` above removes comments
+  before every scan, so the superseded quote sitting in `requester-onboarding.ts`
+  — which explains exactly why the line is gone — is invisible to it. It was
+  grepping for code that was deleted to fix a bug, and finding its absence.
+
+  ── THE RULE ACTUALLY IN FORCE, READ OFF THE CODE ──────────────────────────
+
+  `requesterGaps()` pushes EXACTLY TWO GAPS: a name and a work location. The
+  company is not tested at any layer. `E274` took out all three gates in one
+  change — the two gaps here, `continueDisabled={!companyValid}` on the company
+  step, and the SERVER-SIDE `OnboardingError("Choose or add your company before
+  continuing")` in `saveRequesterStep` — because leaving one standing is what
+  dead-ended every requester.
+
+  ⚠ COMPANY + EIN + REGISTERED ADDRESS ARE REQUIRED BEFORE **HIRE** (web) AND
+  BEFORE AN APPROVED **PO IS ACCEPTED** (ERP). That gate is deliberately NOT
+  BUILT — there is no `WorkOrder` model and no hire route to hang it on, and a
+  gate written today would fire at onboarding, which is the one place it must
+  not. So the assertions below pin the ABSENCE, which is the live rule.
+*/
 check(
-  "GUARD 1 — requesterGaps tests the membership binding",
-  /if \(!state\.company\.bound\) gaps\.push/.test(onboarding)
+  "GUARD 1 — requesterGaps gaps on a NAME and a WORK LOCATION",
+  /gaps\.push\("Your name"\)/.test(onboarding) &&
+    /gaps\.push\("A work location"\)/.test(onboarding)
 );
+/*
+  ⚠⚠ THE LOAD-BEARING ONE. If a company test ever returns to `requesterGaps` in
+  ANY form — bound, defined, tin, a membership status — the buyer side breaks the
+  way it broke before. This is the assertion the old pair should always have been.
+*/
+{
+  const fn = onboarding.match(/export function requesterGaps[\s\S]*?\n\}/)?.[0] ?? "";
+  check("GUARD 1 — the guard can see requesterGaps", fn.length > 0);
+  check(
+    "GUARD 1 — ⚠ requesterGaps does NOT gate on the company, in any form",
+    fn.length > 0 && !/company/i.test(fn),
+    fn.replace(/\s+/g, " ").slice(0, 200)
+  );
+  /* ⚠ AND IT PUSHES NOTHING ELSE. A third gap added quietly is a third way to
+     dead-end somebody; adding one should be a deliberate edit to this line. */
+  const pushes = [...fn.matchAll(/gaps\.push\(/g)].length;
+  check("GUARD 1 — requesterGaps pushes exactly two gaps", pushes === 2, `${pushes}`);
+}
 /*
   ⚠ PENDING MUST STILL SATISFY ONBOARDING. Requiring APPROVED here would swap
   this trap for a requester frozen until a stranger clicks Approve — two
@@ -127,9 +182,58 @@ check(
   "GUARD 1 — onboarding does NOT require an APPROVED membership",
   !/state\.company\.status\s*(===|!==)\s*["']APPROVED["']/.test(onboarding)
 );
+/*
+  ⚠ SUPERSEDED, quoted not deleted (`P1-ALL-E404` WS-1):
+
+      check(
+        "GUARD 1 — the moved name check survives as its own gap",
+        /!state\.company\.defined\) gaps\.push/.test(onboarding)
+      );
+
+  ⚠⚠ SAME DEFECT AS THE PAIR ABOVE. `else if (!state.company.defined)
+  gaps.push("Your company's business type")` came out in the SAME change and for
+  the same reason. `state.company.defined` still EXISTS and is still computed
+  (`membership.company.tax_type !== null`) — it is read by the surfaces that show
+  a buyer what is still missing. What it must never again do is BLOCK onboarding.
+
+  ⚠ SO THE REPLACEMENT ASSERTS BOTH HALVES: the signal is still computed, and the
+  other two layers of the removed gate stay removed. A gate is not removed until
+  every layer of it is — walk the flow, do not grep for one string.
+*/
 check(
-  "GUARD 1 — the moved name check survives as its own gap",
-  /!state\.company\.defined\) gaps\.push/.test(onboarding)
+  "GUARD 1 — `defined` is still COMPUTED from the company's tax_type",
+  /defined:\s*membership \? membership\.company\.tax_type !== null : false/.test(
+    onboarding
+  )
+);
+/*
+  ⚠⚠ SCOPED TO THE REQUESTER, AND MY FIRST VERSION WAS NOT.
+
+  I wrote this as a repo-wide absence and it FAILED — on
+  `src/app/join/provider/page.tsx:3381`, which is the PROVIDER wizard's "Who Are
+  You Working As?" step. That gate is legitimate and unrelated: a provider must
+  answer it, and SOLE PROPRIETOR is the escape hatch, so it cannot dead-end
+  anybody. `E274` was about the BUYER side.
+
+  ⚠ A REPO-WIDE ABSENCE SCAN FOR A JOURNEY-SPECIFIC RULE IS A FALSE POSITIVE
+  WAITING TO HAPPEN — the same mistake as asserting "exactly two orders pages".
+  The rule is "the REQUESTER company step does not block Continue", so that is
+  what is tested, on that file.
+*/
+{
+  const REQUESTER_STEPS_PAGE = join("src", "app", "join", "requester", "steps", "page.tsx");
+  const body = bodies.get(REQUESTER_STEPS_PAGE) ?? "";
+  check("GUARD 1 — the guard can see the requester steps page", body.length > 0);
+  check(
+    "GUARD 1 — ⚠ layer 2 stays removed: the REQUESTER step does not block Continue",
+    body.length > 0 && !/continueDisabled=\{!companyValid\}/.test(body)
+  );
+}
+check(
+  "GUARD 1 — ⚠ layer 3 stays removed: no server-side company throw",
+  ![...bodies.entries()].some(([, b]) =>
+    /Choose or add your company before continuing/.test(b)
+  )
 );
 check(
   "GUARD 1 — `bound` means ANY membership, not an approved one",

@@ -13,6 +13,40 @@ import { rateBreakdown } from "@/lib/display";
  * ⚠ R1 BUILDS THE COLUMNS; R2 BUILDS THE CONNECTION. Nothing here parses or
  * generates cXML, opens a punchout session or reconciles ERS. A nullable column
  * is honest; a stub that pretends to talk to an ERP is the `E034` shape.
+ *
+ * ── ⚠⚠ PAYMENT IS PUSHED, NEVER PULLED. CONSIDERED AND REJECTED ────────────
+ *      (`P1-ALL-E404` WS-5, Scott 2026-09-09)
+ *
+ * ⚠ RECORDED HERE BECAUSE SOMEBODY WILL PROPOSE IT AGAIN, and the reasoning is
+ * better than the conclusion. Scott raised direct-debit style pulling and
+ * reversed it himself inside a single message:
+ *
+ *   *"Payment pulling also has another issue...was that settlement request
+ *   approved in the ERP/Panameer? So the buyer will always need to transmit
+ *   payment to us."*
+ *
+ * ⚠⚠ THE OBJECTION IS THE BUYER'S CONTROLS, NOT PANAMEER'S PLUMBING. Under ERS
+ * the buyer's ERP creates the invoice from Panameer's receipt and pays it on the
+ * buyer's own AP run. A pull would BYPASS THAT APPROVAL — and no enterprise AP
+ * department authorises a vendor to debit them on the vendor's say-so. **The
+ * push is not a limitation of the design; it IS the design**, and the whole ERP
+ * differentiator depends on transacting inside the buyer's system of record
+ * rather than around it.
+ *
+ * ⚠ AND IT KEEPS PANAMEER FURTHER FROM MONEY TRANSMISSION. Pulling funds means
+ * HOLDING them while a settlement resolves, which is the escrow-shaped activity
+ * Scott has ruled out twice — *"I am NOT a money transmitter no more than a
+ * staffing company gets paid, deducts its fee and pays the provider."* Rejecting
+ * the pull removes a reason to hold anything.
+ *
+ * ⚠⚠ NO CODE, NO SCHEMA, NO SCREEN, AND NO STORED AUTHORISATION. There is
+ * nothing to retain, which is why `lib/retention.ts` records the pull
+ * authorisation as MOOT rather than as a rule with no value.
+ *
+ * ⚠ IT TOUCHES THE OPEN AGENT-VERSUS-PRINCIPAL QUESTION (`P1-ALL-E396`) and does
+ * not settle it: whether the provider's contract is with the buyer or with
+ * Panameer is still counsel's first question. This only records that the money
+ * moves one way.
  */
 
 export class SpineError extends Error {

@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { ownedProviderProfile, type Viewer } from "@/lib/access";
 import { NOTIFICATION_CATEGORIES, findCategory } from "@/lib/notification-categories";
+import { w9Signature } from "@/lib/w9";
+import type { TaxType } from "@prisma/client";
 import { formFor } from "@/lib/tax";
 
 /**
@@ -290,25 +292,85 @@ export async function getWithdrawals(viewer: Viewer) {
   return { tax, methods };
 }
 
+/**
+ * ⚠⚠ "DOCUMENT ALL OCCASIONS OF USER ACCESS" (`P1-ALL-E404` WS-3).
+ *
+ * One of the IRS's four conditions for an electronic substitute Form W-9, and
+ * the one that is not about submitting: OPENING the form is an occasion of
+ * access. ⚠ Called from the page's render as well as from the write below.
+ *
+ * ⚠ IT NEVER THROWS INTO THE CALLER. A failed audit write must not stop somebody
+ * filing their tax form — the log is evidence, not a gate — but it must not fail
+ * silently either, so it is reported without a TIN or a name in the message.
+ */
+export async function logTaxFormAccess(
+  viewer: Viewer,
+  form: "W9" | "W8BEN" | "W8BENE",
+  action: "VIEW" | "SUBMIT"
+) {
+  try {
+    const personId = await ownPersonId(viewer);
+    await prisma.taxFormAccess.create({
+      data: { person_id: personId, form, action },
+    });
+  } catch (e) {
+    console.error(
+      `tax form access log failed (${form}/${action})`,
+      e instanceof Error ? e.message : "unknown"
+    );
+  }
+}
+
 export async function saveTaxProfile(
   viewer: Viewer,
-  input: { legalName: string; country: string; asEntity: boolean; tinLast4?: string | null; signedName: string }
+  input: {
+    legalName: string;
+    country: string;
+    asEntity: boolean;
+    tinLast4?: string | null;
+    signedName: string;
+    tinKind?: "EIN" | "SSN" | null;
+    classification?: TaxType | null;
+  }
 ) {
   const personId = await ownPersonId(viewer);
   const form = formFor(input.country, input.asEntity);
+
+  /*
+    ── ⚠⚠ THE CERTIFICATION IS STORED AS TEXT, NOT AS A FLAG (`E404` WS-3) ────
+
+    `w9Signature()` builds the name and the exact wording together so a caller
+    cannot record one without the other. If IRS Part II wording ever changes, an
+    old row still proves what ITS signer saw — which a boolean, or a pointer to
+    "the current text", could not.
+
+    ⚠ ONLY ON A W-9. A W-8 has different certifications and `E404` forbids
+    building those forms here; attaching W-9 wording to a W-8 record would be a
+    false statement about what was agreed.
+  */
+  const cert = form === "W9" ? w9Signature(input.signedName) : null;
+
   const data = {
     form,
     legal_name: input.legalName.trim().slice(0, 160),
     country: input.country.trim().slice(0, 80),
+    /* ⚠ LAST FOUR ONLY. The full TIN is not stored — see the schema note. */
     tin_last4: digits(input.tinLast4, 4),
+    tin_kind: input.tinKind ?? null,
+    classification: input.classification ?? null,
     signed_name: input.signedName.trim().slice(0, 160),
     signed_at: new Date(),
+    certification_text: cert?.certificationText ?? null,
+    certification_version: cert?.certificationVersion ?? null,
+    certified_at: cert?.certifiedAt ?? null,
   };
-  return prisma.taxProfile.upsert({
+  const saved = await prisma.taxProfile.upsert({
     where: { person_id: personId },
     update: data,
     create: { person_id: personId, ...data },
   });
+  await logTaxFormAccess(viewer, form, "SUBMIT");
+  return saved;
 }
 
 export async function addPayoutMethod(
