@@ -329,7 +329,7 @@ export function AppRail() {
       */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/brand/panameer-lockup-on-dark.png"
+        src="/brand/panameer-lockup-white.png"
         alt="Panameer"
         className="h-7 w-auto"
       />

@@ -57,8 +57,28 @@ export function MyLearning({ data }: { data: MyLearningData }) {
         cancel `px-5 py-6 sm:px-8`, so the hero meets the rail the way the mockup
         shows. `overflow-hidden` is load-bearing: the radial wash is wider than
         the box on purpose.
+
+        ── ⚠⚠ THE 0% STOP IS `--color-rail`, AND THAT IS THE SEAM FIX (`E400`) ──
+
+        Scott: *"we talked about matching the colors at the top, but i have not
+        seen that change happen."* ⚠ THERE ARE TWO HERO SYSTEMS AND ONLY THIS ONE
+        WAS WRONG. `casing/ConsoleHero.tsx` already starts at `var(--color-rail)`,
+        so Work, Sell and Orders have matched the rail all along — which is exactly
+        why the step showed up on Learn and nowhere else.
+
+        ⚠ MEASURED off the running app, sampled not asserted, at four heights:
+            BEFORE   rail #272334  |  hero left edge #0f0b1c–#100b1e
+            AFTER    rail #272334  |  hero left edge #272334
+        This section is FULL-BLEED, so its left edge physically abuts the rail;
+        that is what makes the step visible here and not on `LearnHome` or
+        `FindWorkHero`, which are rounded cards inside padded content.
+
+        ⚠⚠ THE STOP MOVED, NOT THE TOKEN. `--color-learn-night` is untouched, and
+        `globals.css:93` says why: *"Repointing --color-learn-hot to #6b1a6e would
+        have silently restyled…"*. Learn keeps its own palette from the 44% stop
+        onward — only the first stop, the one that touches the rail, is the rail.
       */}
-      <section className="relative overflow-hidden bg-[radial-gradient(900px_340px_at_84%_-10%,rgba(215,44,214,0.42),transparent_62%),linear-gradient(118deg,var(--color-learn-night)_0%,var(--color-learn-plum)_44%,#3d1560_72%,#5c1668_100%)] px-5 pt-7 pb-[78px] text-white sm:px-8">
+      <section className="relative overflow-hidden bg-[radial-gradient(900px_340px_at_84%_-10%,rgba(215,44,214,0.42),transparent_62%),linear-gradient(118deg,var(--color-rail)_0%,var(--color-learn-plum)_44%,#3d1560_72%,#5c1668_100%)] px-5 pt-7 pb-[78px] text-white sm:px-8">
         <div className="relative z-[2] grid items-center gap-8 min-[900px]:grid-cols-[1fr_auto]">
           <div className="min-w-0">
             {/* ⚠ THE EYEBROW IS THE PAGE NAME (`P2-J1.1-E048` WS-3), so `Learn`.

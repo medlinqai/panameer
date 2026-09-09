@@ -197,7 +197,7 @@ export function HomeFooter() {
           30px-tall wordmark. Same call the rest of the marketing surface makes. */}
               <img
                 className="brand-logo foot-logo"
-                src="/brand/panameer-lockup-on-dark.png"
+                src="/brand/panameer-lockup-white.png"
                 alt="Panameer"
               />
               {/*

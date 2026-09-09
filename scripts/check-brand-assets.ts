@@ -146,7 +146,25 @@ function walk(dir: string, out: string[] = []): string[] {
   }
   return out;
 }
-const SRC = walk("src").map((p) => ({ path: p, text: readFileSync(p, "utf8") }));
+/*
+  ⚠⚠ `code` IS `text` WITH COMMENTS STRIPPED, AND SECTION 7 NEEDS IT.
+
+  The first version of the no-navy scan read `text` and found ten files — every
+  one a COMMENT, and most of them PRE-EXISTING notes recording that a navy was
+  already retired (`E300`, `E015`). `login/page.tsx:233` even warns that *"a
+  literal in a comment is how the navy gets reintroduced"*.
+
+  ⚠ A SCAN THAT FORBIDS NAMING THE THING YOU RETIRED MAKES IT IMPOSSIBLE TO
+  DOCUMENT WHY IT WAS RETIRED — and this codebase supersedes by quoting rather
+  than deleting (`E164`). So the ban is on LIVE CODE; the prose explaining it is
+  exactly what should survive.
+*/
+const stripComments = (v: string) =>
+  v.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+const SRC = walk("src").map((p) => {
+  const text = readFileSync(p, "utf8");
+  return { path: p, text, code: stripComments(text) };
+});
 const hotlinkers = SRC.filter((f) => /logoUrl:\s*`\$\{[^`]*\}\/brand\/panameer-new-on-light\.png`/.test(f.text));
 check(
   "3 — the email senders still hotlink the on-light logo (7 call sites)",
@@ -169,19 +187,27 @@ check(
   ⚠⚠ THE OLD FILES ARE STILL ASSERTED TO EXIST, UNCHANGED, in section 3 — they are
   hotlinked by already-delivered mail. What moved is what the APP renders.
 */
+/*
+  ⚠ SUPERSEDED BY `P1-ALL-E400`: these required `panameer-lockup-on-*.png`, the
+  E397 artwork. Scott saw it in the rail and the footer and said, twice, *"this is
+  off."* v2 is a NORMAL P with the mark at 1.19× cap height instead of 0.82×, and
+  the ink is `#272334` instead of the only blue in the set.
+  ⚠⚠ E397's FILES ARE STILL ON DISK AND STILL ASSERTED — see section 6. Nothing
+  is deleted (`E164`); what changed is what the APP renders.
+*/
 const ON_DARK = ["AppRail.tsx", "MarketingFooter.tsx", "HomeFooter.tsx"];
 for (const f of ON_DARK) {
   const hit = SRC.find((s) => s.path.endsWith(f));
   check(
-    `4 — ${f} renders the ON-DARK lockup`,
-    !!hit && /src="\/brand\/panameer-lockup-on-dark\.png"/.test(hit.text)
+    `4 — ${f} renders the v2 ON-DARK lockup`,
+    !!hit && /src="\/brand\/panameer-lockup-white\.png"/.test(hit.text)
   );
 }
 for (const f of ["Logo.tsx", join("recommend", "[token]", "page.tsx")]) {
   const hit = SRC.find((s) => s.path.endsWith(f));
   check(
-    `4 — ${f.split("/").pop()} renders the ON-LIGHT lockup`,
-    !!hit && /src="\/brand\/panameer-lockup-on-light\.png"/.test(hit.text)
+    `4 — ${f.split("/").pop()} renders the v2 ON-LIGHT lockup`,
+    !!hit && /src="\/brand\/panameer-lockup-ink\.png"/.test(hit.text)
   );
 }
 /* ⚠⚠ ABSENCE: NO APP SITE STILL RENDERS THE OLD WORDMARK. Repointing four of five
@@ -191,8 +217,10 @@ for (const f of ["Logo.tsx", join("recommend", "[token]", "page.tsx")]) {
 for (const f of [...ON_DARK, "Logo.tsx", join("recommend", "[token]", "page.tsx")]) {
   const hit = SRC.find((s) => s.path.endsWith(f));
   check(
-    `4 — ABSENCE: ${f.split("/").pop()} no longer renders the old looped-P wordmark`,
-    !!hit && !/src="\/brand\/panameer-new-on-(dark|light)\.png"/.test(hit.text)
+    `4 — ABSENCE: ${f.split("/").pop()} renders neither the looped-P nor the E397 lockup`,
+    !!hit &&
+      !/src="\/brand\/panameer-new-on-(dark|light)\.png"/.test(hit.text) &&
+      !/src="\/brand\/panameer-lockup-on-(dark|light)\.png"/.test(hit.text)
   );
 }
 /* ⚠ AND NO COLORWAY ON THE WRONG GROUND. */
@@ -204,7 +232,13 @@ for (const f of [...ON_DARK, "Logo.tsx", join("recommend", "[token]", "page.tsx"
   );
 }
 check(
-  "4 — both lockup files are published",
+  "4 — both v2 lockup files are published",
+  existsSync(join(BRAND, "panameer-lockup-white.png")) &&
+    existsSync(join(BRAND, "panameer-lockup-ink.png"))
+);
+/* ⚠ E397's ARE KEPT — superseded, not deleted (`E164`). */
+check(
+  "4 — E397's superseded lockups are still on disk",
   existsSync(join(BRAND, "panameer-lockup-on-dark.png")) &&
     existsSync(join(BRAND, "panameer-lockup-on-light.png"))
 );
@@ -291,7 +325,168 @@ async function pixelChecks() {
    await — the report runs after it resolves. ⚠⚠ A REJECTION MUST FAIL THE GATE
    rather than print a green line, which is what the `.catch` is for: an
    unreadable PNG is exactly when this assertion matters most. */
-pixelChecks()
+/* ═══ 6 · ⚠⚠ THE 1.19 RATIO, PINNED BY MEASUREMENT (`P1-ALL-E400` WS-4) ══════
+
+   **A FILENAME IS NOT A RATIO.** `panameer-lockup-white.png` can be regenerated at
+   any proportion tomorrow and keep its name, and 0.82 is exactly what somebody
+   will "tidy" it back to — it is the value that shipped two days ago and looks
+   deliberate. So this reads the PIXELS: it finds the mark's ink box and the
+   wordmark's ink box, and asserts the ratio between them.
+
+   MEASURED off both files:
+     E397  mark/wordmark 0.821 · gap 0.340   <- the mark clings to the P
+     v2    mark/wordmark 1.190 · gap 0.260   <- Scott's own reference image
+*/
+async function ratioChecks() {
+  /* eslint-disable-next-line @typescript-eslint/no-require-imports */
+  const sharp = require("sharp") as typeof import("sharp");
+
+  async function inkBoxes(file: string) {
+    const { data, info } = await sharp(join(BRAND, file))
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    const { width: w, height: h, channels: ch } = info;
+    const alpha = (x: number, y: number) => data[(y * w + x) * ch + 3];
+    const inky = (x: number) => {
+      for (let y = 0; y < h; y++) if (alpha(x, y) > 40) return true;
+      return false;
+    };
+    const cols: number[] = [];
+    for (let x = 0; x < w; x++) if (inky(x)) cols.push(x);
+    if (cols.length === 0) return null;
+    /* ⚠ THE GAP IS THE LONGEST EMPTY COLUMN RUN between the first and last ink —
+       which is what separates the mark from the wordmark, whatever their sizes. */
+    let best: [number, number] | null = null;
+    let run: number | null = null;
+    for (let x = cols[0]; x <= cols[cols.length - 1]; x++) {
+      if (!inky(x)) run = run ?? x;
+      else if (run !== null) {
+        if (!best || x - 1 - run > best[1] - best[0]) best = [run, x - 1];
+        run = null;
+      }
+    }
+    if (!best) return null;
+    const vspan = (x0: number, x1: number) => {
+      let top = -1;
+      let bot = -1;
+      for (let y = 0; y < h; y++) {
+        for (let x = x0; x <= x1; x++) {
+          if (alpha(x, y) > 40) {
+            if (top < 0) top = y;
+            bot = y;
+            break;
+          }
+        }
+      }
+      return bot - top + 1;
+    };
+    const markH = vspan(cols[0], best[0] - 1);
+    const wordH = vspan(best[1] + 1, cols[cols.length - 1]);
+    const gap = best[1] - best[0] + 1;
+    return { markH, wordH, gap, ratio: markH / wordH, gapRatio: gap / wordH };
+  }
+
+  for (const f of ["panameer-lockup-white.png", "panameer-lockup-ink.png"]) {
+    const b = await inkBoxes(f);
+    check(`6 — ${f}'s ink boxes were found`, !!b);
+    if (!b) continue;
+    /* ⚠⚠ 1.19 ± 0.05 — tight enough to catch a regeneration at 0.82, loose enough
+       to survive an antialiasing difference of a pixel or two. */
+    check(
+      `6 — ⚠⚠ ${f}: the mark is 1.19x the wordmark (measured ${b.ratio.toFixed(3)})`,
+      Math.abs(b.ratio - 1.19) < 0.05,
+      `${b.ratio.toFixed(3)} — E397 shipped 0.821 and this is the number that gets "tidied" back`
+    );
+    check(
+      `6 — ${f}: the gap is 0.26x the wordmark (measured ${b.gapRatio.toFixed(3)})`,
+      Math.abs(b.gapRatio - 0.26) < 0.06,
+      `${b.gapRatio.toFixed(3)}`
+    );
+    check(
+      `6 — ABSENCE: ${f} is not E397's 0.82 proportion`,
+      Math.abs(b.ratio - 0.82) > 0.1
+    );
+  }
+  /* ⚠ MUTATION-TESTED AGAINST THE REAL SUPERSEDED FILE, which is still on disk
+     precisely because `E164` keeps it — so the scan is proven to tell the two
+     apart rather than proven only against the file it expects to pass. */
+  const old = await inkBoxes("panameer-lockup-on-dark.png");
+  check(
+    "6 — MUTATION: the measurement scores E397's superseded lockup at ~0.82",
+    !!old && Math.abs(old.ratio - 0.82) < 0.05,
+    old ? old.ratio.toFixed(3) : "not measured"
+  );
+  check(
+    "6 — MUTATION: and that value would FAIL the 1.19 assertion",
+    !!old && Math.abs(old.ratio - 1.19) >= 0.05
+  );
+}
+
+/* ═══ 7 · ⚠⚠ THERE IS NO NAVY ══════════════════════════════════════════════
+
+   Scott: *"I am a little concerned when you say Navy. There should not be navy."*
+   MEASURED: the rail `#272334` is hue 254 deg, the hero panel `#170f2c` is 257,
+   and the wordmark `E400` replaced was `#171c35` — hue 230, THE ONLY THING IN THE
+   SET OUTSIDE THE VIOLET FAMILY. Both the colour and the word go.
+*/
+/* ⚠ THE ASSET, NOT THE WORD. `navy` appears in a dozen comments recording two
+   earlier retirements; what must not exist is a REFERENCE to the rejected file. */
+check(
+  "7 — ABSENCE: no asset named *navy* is referenced in live code",
+  !SRC.some((f) => /navy[\w-]*\.(png|jpe?g|svg|webp)/i.test(f.code)),
+  SRC.filter((f) => /navy[\w-]*\.(png|jpe?g|svg|webp)/i.test(f.code)).map((f) => f.path).join(", ")
+);
+check(
+  "7 — MUTATION: that scan catches the rejected asset by name",
+  /navy[\w-]*\.(png|jpe?g|svg|webp)/i.test('src="/brand/panameer-lockup-navy.png"')
+);
+check(
+  "7 — and does NOT fire on a comment that merely names the retired colour",
+  !/navy[\w-]*\.(png|jpe?g|svg|webp)/i.test("/* E300 retired the brand navy */")
+);
+check(
+  "7 — ABSENCE: panameer-lockup-navy.png was never placed in public/brand",
+  !existsSync(join(BRAND, "panameer-lockup-navy.png")),
+  "it is byte-identical to -ink.png under a name Scott rejected"
+);
+{
+  /* ⚠ THE HEX ITSELF, not just the word — a colour can be re-typed without a name. */
+  /* ⚠ LIVE CODE ONLY — `Logo.tsx` names the hex in its superseded note, which is
+     the record of WHY it went and must survive. */
+  const blue = SRC.filter((f) => /#171c35/i.test(f.code));
+  check(
+    "7 — ABSENCE: #171c35 appears in no LIVE code",
+    blue.length === 0,
+    blue.map((f) => f.path).join(", ")
+  );
+  check("7 — MUTATION: the navy scan catches the word", /navy/i.test('src="/brand/panameer-lockup-navy.png"'));
+  check("7 — MUTATION: the hex scan catches the colour", /#171c35/i.test("color: #171C35;"));
+}
+
+/* ═══ 8 · MARKETING LOCKUPS ARE NOT IN THE APP ═════════════════════════════
+   ⚠ The magenta and tagline variants are marketing assets, and THE TAGLINE IS
+   MARKETING ONLY — it does not belong on any app surface. They were deliberately
+   never copied into `public/brand`, so this asserts both that no surface names one
+   AND that none is sitting there waiting to be named. */
+for (const f of [
+  "panameer-lockup-magenta.png",
+  "panameer-lockup-magenta-tagline.png",
+  "panameer-lockup-white-tagline.png",
+]) {
+  check(`8 — ABSENCE: ${f} is not published in public/brand`, !existsSync(join(BRAND, f)));
+  check(
+    `8 — ABSENCE: no source file references ${f}`,
+    !SRC.some((x) => x.text.includes(f)),
+    SRC.filter((x) => x.text.includes(f)).map((x) => x.path).join(", ")
+  );
+}
+check(
+  "8 — MUTATION: the reference scan would catch a tagline lockup",
+  'src="/brand/panameer-lockup-magenta-tagline.png"'.includes("panameer-lockup-magenta-tagline.png")
+);
+
+Promise.all([pixelChecks(), ratioChecks()])
   .then(() => {
     if (failures.length) {
       console.error(`\ncheck:brand-assets — ${failures.length} FAILED, ${pass} passed\n`);

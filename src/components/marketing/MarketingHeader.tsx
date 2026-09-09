@@ -212,7 +212,23 @@ function MarketingHeaderInner({ signedIn }: { signedIn: boolean }) {
             it wants to grow with the mark is an eyeball call for the walk, not a
             number to derive — flagged, not changed.
           */}
-          <Logo className="h-10 w-auto -translate-y-[3px]" priority />
+          {/*
+            ── ⚠⚠ h-8, DOWN FROM h-10, AND THE OVERFLOW IS WHY (`P1-ALL-E400`) ──
+
+            ⚠ CAUGHT BY `check:app-shell`, NOT BY EYE: *"/ @768: marketing header
+            clipped off the LEFT ... left=-8"*. The v2 lockup is a WIDER RATIO —
+            5.91 against 4.85 — so at `h-10` it renders 236px against the old
+            194px, and those 42px push the header past its own left edge at 768.
+
+            ⚠⚠ AND h-8 PRESERVES THE DECISION h-10 WAS MADE FOR. The note above
+            records that h-10 was measured, not chosen: *"four nav items and two
+            buttons were outweighing the brand"*. That was a WIDTH problem solved
+            with HEIGHT because the old art was narrow. Measured:
+                old @h-10  194.1px      new @h-8  189.0px      Δ 5.1px
+            The brand keeps the width it was given; the wider mark buys it back
+            without the height. ⚠ Reverting to h-10 re-breaks 768.
+          */}
+          <Logo className="h-8 w-auto -translate-y-[3px]" priority />
         </div>
 
         {/*
