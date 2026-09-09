@@ -64,12 +64,6 @@ export const SUPPLEMENT_META: Record<string, SupplementMeta> = {
       "Default terms two users can adopt for a Work Order — IP ownership, confidentiality, warranties — if they don't write their own.",
     group: "Buying and selling",
   },
-  "any-hire-terms": {
-    title: "Any Hire Terms",
-    summary:
-      "Engaging someone you already know through Panameer, rather than matching on the marketplace.",
-    group: "Buying and selling",
-  },
   "direct-contracts-terms": {
     title: "Direct Work Order Terms",
     summary:
@@ -92,31 +86,106 @@ export const SUPPLEMENT_META: Record<string, SupplementMeta> = {
     title: "Fee and ACH Authorization Agreement",
     summary: "The fees Panameer charges and your authorization to debit them.",
     group: "Payments and escrow",
-    notice: { kind: "payments" },
-  },
-  "any-hire-escrow-instructions": {
-    title: "Any Hire Escrow Instructions",
-    summary: "How funds are held and released on an Any Hire Work Order.",
-    group: "Payments and escrow",
-    notice: { kind: "payments" },
+    /*
+      ── ⚠⚠ WHAT `P1-ALL-E396` REMOVED, AND THE THREE GAPS LEFT BEHIND ────────
+
+      ⚠ SUPERSEDED, quoted not deleted: `notice: { kind: "payments" }`. That
+      notice said money movement was being built. The problem turned out to be
+      the opposite — the document described fees Panameer does not charge.
+
+      REMOVED: the Marketplace Fee and the Work Order Initiation Fee (both
+      buyer-side, both per-transaction), the entire Business Plus Plan and its
+      10% / 8%-ACH transaction fee, and the Enterprise 10% Service Fee
+      carve-out. ⚠⚠ THE CARVE-OUT WAS DELETED, NOT REPRICED — Scott's answer
+      was that there is no separate enterprise rate and no tier, so a tier
+      structure that does not exist should not be described.
+
+      ⚠ THE GAPS ARE COUNSEL'S AND ARE NOT DRAFTED HERE. They are named in the
+      notice below so the page says what it does not yet say.
+    */
+    notice: {
+      kind: "todo",
+      what:
+        "Three things are settled but not yet written into this document, and they need counsel rather than an edit. " +
+        "(1) A buyer plan is planned as a FLAT MONTHLY SUBSCRIPTION giving access to validated talent only — it is NOT a percentage of any transaction, and its price and name are not decided. The per-transaction buyer fees this document used to describe have been removed rather than repriced. " +
+        "(2) The Provider Service Fee is 14.9% on all work, with no enterprise rate and no tiers; Section 2.1 still describes a variable fee set by proprietary algorithms, which is the opposite arrangement and is the sentence counsel must replace. " +
+        "(3) Panameer does not operate escrow and does not hold user funds. Where this document still refers to an Escrow Account or to funds being held, that language is inherited and is not Panameer's model.",
+    },
   },
   "direct-contracts-escrow-instructions": {
     title: "Direct Work Order Escrow Instructions",
     summary: "How funds are held and released on a Direct Work Order.",
     group: "Payments and escrow",
-    notice: { kind: "payments" },
+    /*
+      ── ⚠⚠ STUBBED BY `P1-ALL-E396` WS-3, NOT REWRITTEN ────────────────────
+
+      ⚠ SUPERSEDED, quoted not deleted: `notice: { kind: "payments" }` — which
+      said this mechanism was being built. It is not being built; Panameer does
+      not operate it at all.
+
+      ⚠⚠ THE WHOLE DOCUMENT IS SUPPRESSED, NOT EDITED. `legal/[slug]/page.tsx`
+      renders `doc={[]}` for a stub, so none of the escrow prose reaches a
+      reader. That is deliberate: HALF AN ESCROW MODEL IS WORSE THAN NONE,
+      because the surviving half reads as policy.
+
+      ⚠ THE SOURCE TEXT REMAINS IN THE BUNDLE, UNRENDERED, so counsel can see
+      what was there when drafting the replacement. Reported, not hidden.
+    */
+    notice: {
+      kind: "stub",
+      body:
+        "Panameer does not operate escrow. It holds no user funds, maintains no escrow account, and issues no escrow instructions or release conditions. The source document is escrow instructions from end to end, so there is nothing in it to correct \u2014 a partially rewritten escrow model would read as policy, which is worse than none. The page is a placeholder until counsel writes the arrangement that replaces it. Scott Walls, 2026-09-08, recorded verbatim so the drafter has the intent and not a paraphrase: \u201cI am NOT a money transmitter no more than a staffing company gets paid, deducts its fee and pays the provider.\u201d On what happens when a buyer does not pay: \u201cIF the settlement request is approved, the buyer MUST pay Panameer. BUT, if they refuse, we will not pay the supplier. Meaning we pay the supplier when we get paid...if that is never, the supplier needs to pursue the buyer...we are not responsible.\u201d On timing: \u201cour supplier terms are pay immediate. Meaning we do not add time on. When we get the payment, we transmit the payment (the obvious exception is the clearing time for each check).\u201d On what counts as paid: \u201cwe are not PAID until the funds are in our bank and able to be sent - without clawback.\u201d",
+    },
   },
   "fixed-price-escrow-instructions": {
     title: "Fixed-Price Escrow Instructions",
     summary: "Milestones, approval, refunds and disputes on a fixed-price Work Order.",
     group: "Payments and escrow",
-    notice: { kind: "payments" },
+    /*
+      ── ⚠⚠ STUBBED BY `P1-ALL-E396` WS-3, NOT REWRITTEN ────────────────────
+
+      ⚠ SUPERSEDED, quoted not deleted: `notice: { kind: "payments" }` — which
+      said this mechanism was being built. It is not being built; Panameer does
+      not operate it at all.
+
+      ⚠⚠ THE WHOLE DOCUMENT IS SUPPRESSED, NOT EDITED. `legal/[slug]/page.tsx`
+      renders `doc={[]}` for a stub, so none of the escrow prose reaches a
+      reader. That is deliberate: HALF AN ESCROW MODEL IS WORSE THAN NONE,
+      because the surviving half reads as policy.
+
+      ⚠ THE SOURCE TEXT REMAINS IN THE BUNDLE, UNRENDERED, so counsel can see
+      what was there when drafting the replacement. Reported, not hidden.
+    */
+    notice: {
+      kind: "stub",
+      body:
+        "Panameer does not operate escrow. It holds no user funds, maintains no escrow account, and issues no escrow instructions or release conditions. The source document is escrow instructions from end to end, so there is nothing in it to correct \u2014 a partially rewritten escrow model would read as policy, which is worse than none. The page is a placeholder until counsel writes the arrangement that replaces it. Scott Walls, 2026-09-08, recorded verbatim so the drafter has the intent and not a paraphrase: \u201cI am NOT a money transmitter no more than a staffing company gets paid, deducts its fee and pays the provider.\u201d On what happens when a buyer does not pay: \u201cIF the settlement request is approved, the buyer MUST pay Panameer. BUT, if they refuse, we will not pay the supplier. Meaning we pay the supplier when we get paid...if that is never, the supplier needs to pursue the buyer...we are not responsible.\u201d On timing: \u201cour supplier terms are pay immediate. Meaning we do not add time on. When we get the payment, we transmit the payment (the obvious exception is the clearing time for each check).\u201d On what counts as paid: \u201cwe are not PAID until the funds are in our bank and able to be sent - without clawback.\u201d",
+    },
   },
   "hourly-bonus-expense-escrow-instructions": {
     title: "Hourly, Bonus and Expense Escrow Instructions",
     summary: "Weekly billing, bonuses and expenses on an hourly Work Order.",
     group: "Payments and escrow",
-    notice: { kind: "payments" },
+    /*
+      ── ⚠⚠ STUBBED BY `P1-ALL-E396` WS-3, NOT REWRITTEN ────────────────────
+
+      ⚠ SUPERSEDED, quoted not deleted: `notice: { kind: "payments" }` — which
+      said this mechanism was being built. It is not being built; Panameer does
+      not operate it at all.
+
+      ⚠⚠ THE WHOLE DOCUMENT IS SUPPRESSED, NOT EDITED. `legal/[slug]/page.tsx`
+      renders `doc={[]}` for a stub, so none of the escrow prose reaches a
+      reader. That is deliberate: HALF AN ESCROW MODEL IS WORSE THAN NONE,
+      because the surviving half reads as policy.
+
+      ⚠ THE SOURCE TEXT REMAINS IN THE BUNDLE, UNRENDERED, so counsel can see
+      what was there when drafting the replacement. Reported, not hidden.
+    */
+    notice: {
+      kind: "stub",
+      body:
+        "Panameer does not operate escrow. It holds no user funds, maintains no escrow account, and issues no escrow instructions or release conditions. The source document is escrow instructions from end to end, so there is nothing in it to correct \u2014 a partially rewritten escrow model would read as policy, which is worse than none. The page is a placeholder until counsel writes the arrangement that replaces it. Scott Walls, 2026-09-08, recorded verbatim so the drafter has the intent and not a paraphrase: \u201cI am NOT a money transmitter no more than a staffing company gets paid, deducts its fee and pays the provider.\u201d On what happens when a buyer does not pay: \u201cIF the settlement request is approved, the buyer MUST pay Panameer. BUT, if they refuse, we will not pay the supplier. Meaning we pay the supplier when we get paid...if that is never, the supplier needs to pursue the buyer...we are not responsible.\u201d On timing: \u201cour supplier terms are pay immediate. Meaning we do not add time on. When we get the payment, we transmit the payment (the obvious exception is the clearing time for each check).\u201d On what counts as paid: \u201cwe are not PAID until the funds are in our bank and able to be sent - without clawback.\u201d",
+    },
   },
 
   /* ---- Data and compliance --------------------------------------------- */

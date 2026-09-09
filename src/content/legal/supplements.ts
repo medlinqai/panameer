@@ -151,204 +151,6 @@ export const SUPPLEMENTS: Supplement[] = [
     ]
   },
   {
-    "slug": "any-hire-escrow-instructions",
-    "disposition": "ESCROW(counsel)",
-    "nodes": [
-      {
-        "t": "p",
-        "text": "If a Service Buyer and a Provider enter into an Any Hire Work Order, whether fixed-price or hourly, these Any Hire Work Order Escrow Instructions (“Escrow Instructions”) apply. These Escrow Instructions govern Escrow Accounts for Any Hire Work Orders. Service Work Orders are governed by the applicable escrow instructions."
-      },
-      {
-        "t": "p",
-        "text": "To the extent permitted by applicable law, we may modify these Escrow Instructions without prior notice to you, and any revisions to these Escrow Instructions will take effect when posted on the Site unless otherwise stated. Please check the Site often for updates."
-      },
-      {
-        "t": "p",
-        "text": "These Escrow Instructions hereby incorporate by reference the Terms of Service (“Terms of Service”)."
-      },
-      {
-        "t": "p",
-        "text": "Capitalized terms not defined in these Escrow Instructions are defined in the User Agreement, elsewhere in the Terms of Service, or have the meanings given such terms on the Site. These Escrow Instructions only apply to Any Hire Work Orders."
-      },
-      {
-        "t": "p",
-        "text": "Escrow services are provided by Payment Escrow Inc. (“Payment Escrow”) pursuant to Internet Escrow Agent license no. 9635086, issued by the California Department of Financial Protection and Innovation."
-      },
-      {
-        "t": "h2",
-        "text": "1. DIGITAL SIGNATURE"
-      },
-      {
-        "t": "p",
-        "text": "By clicking to accept an Any Hire Work Order, whether fixed-price or hourly, Service Buyer and Provider are deemed to have executed these Escrow Instructions electronically, effective on the date Service Buyer clicks to accept the Any Hire Work Order, pursuant to California Civil Code section 1633.8 and the federal Electronic Signatures in Global and National Commerce Act, 15 U.S.C. Sec. 7001, et seq., as may be amended from time to time (the \"E-Sign Act\"). Doing so constitutes an acknowledgement that Service Buyer and Provider agree to conduct the transaction electronically, and are able to electronically receive, download, and print these Escrow Instructions."
-      },
-      {
-        "t": "h2",
-        "text": "2. ESCROW"
-      },
-      {
-        "t": "h3",
-        "text": "2.1 Any Hire Fixed-Price Work Orders"
-      },
-      {
-        "t": "p",
-        "text": "Service Buyer agrees to deposit funds to the Any Hire Work Order Escrow Account on a biweekly basis the amount of any milestone(s) or the full amount of the Any Hire Work Order if there is only one milestone for each active fixed-price Any Hire Work Order during the biweekly billing cycle. Any funds deposited by Service Buyers remain in the Any Hire Work Order Escrow Account until they are released to the Provider Escrow Account or released to the Service Buyer. Payment Escrow will not release funds held in escrow except as described in these Escrow Instructions."
-      },
-      {
-        "t": "h3",
-        "text": "2.2 Any Hire Hourly Work Orders and Invoices"
-      },
-      {
-        "t": "p",
-        "text": "Service Buyer agrees to fund through the Any Hire Work Order Escrow Account payments to Provider on a biweekly basis for the amount of Provider’s applicable hours logged during the billing period (“Any Hire Hourly Work Order Funds”). The biweekly billing cycle starts Monday at 00:00 midnight UTC and ends 13 days later on Sunday at 23:59 UTC. Invoices for hours recorded by the Provider on Panameer within the biweekly billing cycle will be generated each other Monday, on the Monday that follows the end of the biweekly billing cycle (such invoice, the \"Any Hire Hourly Invoice\")."
-      },
-      {
-        "t": "p",
-        "text": "Provider is required to submit their hours by 23:59 UTC on the Sunday of each week the Any Hire Hourly Work Order is active (the “Any Hire Hourly Invoice Deadline”). Provider irrevocably authorizes"
-      },
-      {
-        "t": "p",
-        "text": "and instructs Panameer, as its agent, to (i) create an invoice on behalf of Provider for payment due based upon the hours that the provider recorded before the Any Hire Hourly Invoice Deadline; and (ii) submit the Any Hire Hourly Invoices on behalf of Provider to Provider's Service Buyer on a biweekly basis for payment."
-      },
-      {
-        "t": "p",
-        "text": "It is the responsibility of Service Buyer to review the Any Hire Hourly Invoices. If Service Buyer takes no action during the four business days following the close of the biweekly invoice period, Service Buyer will be deemed to have accepted the Provider Services and all hours invoiced by Provider during the biweekly billing period."
-      },
-      {
-        "t": "p",
-        "text": "If Service Buyer approves the submitted Any Hire Hourly Invoices or takes no action during the four days following the close of the weekly invoice period, and the Service Buyer has deposited sufficient funds to the Any Hire Work Order Escrow Account, Payment Escrow will release the Any Hire Hourly Work Order Funds to Provider. Payment Escrow will not release funds held in escrow except as described in these Escrow Instructions."
-      },
-      {
-        "t": "h2",
-        "text": "3. RELEASE AND DELIVERY OF AMOUNTS IN ESCROW"
-      },
-      {
-        "t": "p",
-        "text": "Service Buyer and Provider irrevocably authorize and instruct Payment Escrow to release applicable portions of the Any Hire Work Order Escrow Account (each portion, a “Release”) to their Provider Escrow Account or Service Buyer Escrow Account, as applicable, upon the occurrence of and in accordance with one or more Release Conditions provided below or as otherwise required by applicable law or the Terms of Service. If the funds are released to the Service Buyer Escrow Account, they will be automatically returned to the Service Buyer’s Payment Method that was charged to fund escrow. The amount of the Release will be delivered to the applicable Escrow Account in accordance with Provider’s or Service Buyer’s instructions, as applicable, these Escrow Instructions, and the other Terms of Service."
-      },
-      {
-        "t": "h3",
-        "text": "3.1 RELEASE CONDITIONS"
-      },
-      {
-        "t": "p",
-        "text": "As used in these Escrow Instructions, “Release Condition” means any of the following: 1. For fixed-price Any Hire Work Orders, Service Buyer affirmatively clicks to accept the milestone(s) or fixed-price Any Hire Work Order work submitted by Provider for approval."
-      },
-      {
-        "t": "p",
-        "text": "2. For fixed-price Any Hire Work Orders, Service Buyer affirmatively clicks to accept the milestone(s) or fixed-price Any Hire Work Order work performed, but not yet submitted by Provider for approval."
-      },
-      {
-        "t": "p",
-        "text": "3. For fixed-price Any Hire Work Orders, Service Buyer does not take any action for 14 days from the date Provider submits the milestone or Fixed-Price Work Order work for approval, in which case Provider and Service Buyer agree that Payment Escrow is authorized and irrevocably instructed to immediately release to Provider the amount associated with the applicable milestone(s) in connection with such Release request."
-      },
-      {
-        "t": "p",
-        "text": "4. For fixed-price Any Hire Work Orders, Provider cancels the Work Order before a payment has been released to Provider, in which case the funds are to be returned to the Service Buyer."
-      },
-      {
-        "t": "p",
-        "text": "5. For fixed-price Any Hire Work Orders, Service Buyer cancels the Work Order before a payment has been released to Provider and Provider approves the request or takes no action within 7 days, in which case the funds are to be released to the Service Buyer."
-      },
-      {
-        "t": "p",
-        "text": "6. For hourly Any Hire Work Orders, Service Buyer has approved all or a portion of the Provider's Hourly Invoice, or has taken no action during the four days following the close of the weekly invoice"
-      },
-      {
-        "t": "p",
-        "text": "period, which is deemed approval of all hours invoiced for purposes of this Release Condition."
-      },
-      {
-        "t": "p",
-        "text": "7. Service Buyer and Provider have submitted joint written instructions for a Release."
-      },
-      {
-        "t": "p",
-        "text": "8. Issuance of the final order of a court or arbitrator of competent jurisdiction from which appeal is not taken, in which case the funds will be released in accordance with such order."
-      },
-      {
-        "t": "p",
-        "text": "9. We believe, in our sole discretion, that fraud, an illegal act, or a violation of Panameer's Terms of Service has been committed or is being committed or attempted, in which case Service Buyer and Provider irrevocably authorize and instruct Payment Escrow to take such actions as we deem appropriate in our sole discretion and in accordance with applicable law, in order to prevent or remedy such acts, including without limitation to return the funds associated with such acts to their source of payment."
-      },
-      {
-        "t": "h2",
-        "text": "4. INSTRUCTIONS IRREVOCABLE"
-      },
-      {
-        "t": "p",
-        "text": "On the occurrence of a Release Condition, Service Buyer and Provider are deemed to and hereby agree that the instruction to Payment Escrow and its wholly owned subsidiaries to release funds is irrevocable."
-      },
-      {
-        "t": "p",
-        "text": "Without limiting the foregoing, Service Buyer’s instruction to Payment Escrow and its wholly owned subsidiaries to pay a Provider is irrevocable. Such instruction is Service Buyer’s authorization to transfer funds to Provider from the Service Buyer Escrow Account or authorization to charge Service Buyer’s Payment Method. Such instruction is also Service Buyer’s representation that Service Buyer has received, inspected and accepted the subject work or expense. Service Buyer acknowledges and agrees that upon receipt of Service Buyer’s instruction to pay Provider, Payment Escrow will transfer funds to the Provider and that Panameer, Payment Escrow, and other Affiliates have no responsibility to and may not be able to recover such funds. Therefore, and in consideration of services described in this Agreement, Service Buyer agrees that once Payment Escrow or its subsidiary has charged Service Buyer’s Payment Method, the charge is non-refundable."
-      },
-      {
-        "t": "h2",
-        "text": "5. MAKING OR RECEIVING A BONUS OR EXPENSE PAYMENT"
-      },
-      {
-        "t": "p",
-        "text": "Service Buyer may also make a bonus, tip, expense, or other miscellaneous payment to Provider using the Site. To make such a payment to a Provider, Service Buyer must follow the instructions and links on the Site and provide the information requested. If Service Buyer clicks to pay such a payment to Provider, Service Buyer irrevocably instructs Payment Escrow to and Payment Escrow will release escrow funds to Provider."
-      },
-      {
-        "t": "h2",
-        "text": "6. REFUNDS AND CANCELLATIONS"
-      },
-      {
-        "t": "p",
-        "text": "Service Buyer and Provider are encouraged to come to a mutual agreement if refunds or cancellations are necessary. Panameer will hold funds in the Any Hire Work Order Escrow Account until a Release Condition, as defined in Section 3.1 is fulfilled. If there are no funds in escrow, Provider may issue a refund via the Panameer platform up to the full amount paid on the Any Hire Hourly or Any Hire Fixed-Price Work Order."
-      },
-      {
-        "t": "h2",
-        "text": "7. EXCLUSIONS"
-      },
-      {
-        "t": "p",
-        "text": "Panameer’s Dispute Assistance Program and Payment Protection Programs do not apply to Any Hire Work Orders. Panameer, Payment Escrow, and Affiliates do not guarantee that Provider will be paid by Service Buyer. Upon occurrence of a Release Condition, as defined in Section 3.1, Payment Escrow can release only the amount of funds that have been deposited by Service Buyer to the Any Hire Work Order Escrow Account. Panameer, Payment Escrow, and Affiliates are under no circumstances liable to Provider for payment for"
-      },
-      {
-        "t": "p",
-        "text": "Service Buyer’s failure to deposit funds to the Any Hire Work Order Escrow Account to cover payment to Provider."
-      },
-      {
-        "t": "h2",
-        "text": "8. NOTICES"
-      },
-      {
-        "t": "p",
-        "text": "All notices to a User required by these Escrow Instructions will be made via email sent by Panameer to the User’s registered email address. Users are solely responsible for maintaining a current, active email address registered with Panameer, for checking their email and for responding to notices sent by Panameer to the User’s registered email address."
-      },
-      {
-        "t": "h2",
-        "text": "9. ABUSE"
-      },
-      {
-        "t": "p",
-        "text": "Panameer, in its sole discretion, reserves the right to suspend or terminate your Account immediately upon giving notice to you if Panameer believes you are in violation of the Terms of Service."
-      },
-      {
-        "t": "h2",
-        "text": "10. APPOINTMENT OF PAYMENT ESCROW AS PAYMENTS AGENT OF THE PROVIDER"
-      },
-      {
-        "t": "p",
-        "text": "Each Provider hereby appoints Payment Escrow as its payment collection agent for the limited purpose of receiving, holding, and settling payments from Service Buyers pursuant to this Agreement. Each Provider further agrees and understands that a payment received by Payment Escrow from a Service Buyer, on Provider’s behalf, shall be considered the same as payment made directly to the Provider. Such payment shall be deemed to satisfy the Service Buyer’s obligation to pay Provider, and the Provider will provide its services to the Service Buyer in the agreed-upon manner as if the Provider had received the payment directly from the Service Buyer. Each Provider understands that Payment Escrow’s obligation to pay the Provider is subject to, and conditional upon, successful receipt of the associated payments from the Service Buyer. Provider further agrees that Payment Escrow is not required to settle such payment to Provider in the event that Service Buyer initiates a chargeback, ACH return, or otherwise disputes the payment. In the event that Payment Escrow does not make a payment to Provider as required by this Agreement, Provider will have recourse against only Payment Escrow and not against Service Buyer. In accepting appointment as the limited payment collection agent of the Provider, Payment Escrow assumes no liability for any acts or omissions of the Provider."
-      },
-      {
-        "t": "p",
-        "text": "Each Service Buyer acknowledges and agrees that, notwithstanding the fact that Payment Escrow is not a party to the agreement between the Service Buyer and the Provider, Payment Escrow acts as each Provider’s payment collection agent for the limited purpose of accepting payments from the Service Buyer on behalf of the Provider. Upon a Service Buyer’s payment of the funds to Payment Escrow, the Service Buyer’s payment obligation to the Provider for the agreed upon amount is extinguished, and Payment Escrow is responsible for remitting the funds successfully received by Payment Escrow to the Provider in the manner described in this Agreement. In the event that Payment Escrow does not remit any such amounts, the Provider will have recourse only against Payment Escrow and not the Service Buyer directly."
-      },
-      {
-        "t": "h2",
-        "text": "11. NO RESPONSIBILITY FOR SERVICES OR PAYMENTS"
-      },
-      {
-        "t": "p",
-        "text": "Panameer and Affiliates merely provide a platform for Internet payment services. Panameer and Affiliates do not have any responsibility or control over the Provider Services that Service Buyer purchases, except as explicitly provided in Section 10. Nothing in this Agreement deems or will be interpreted to deem Panameer or any Affiliate as Service Buyer’s or Provider’s agent with respect to any Provider Services, or expand or modify any warranty, liability or indemnity stated in the Terms of Service. For example, Panameer does not guarantee the performance, functionality, quality, or timeliness of Provider Services or that a Service Buyer can or will make payments."
-      }
-    ]
-  },
-  {
     "slug": "data-processing-agreement",
     "disposition": "COUNSEL-SHELL",
     "nodes": [
@@ -839,252 +641,6 @@ export const SUPPLEMENTS: Supplement[] = [
       {
         "t": "p",
         "text": "INCLUDING TECHNICAL AND ORGANIZATIONAL MEASURES TO ENSURE THE SECURITY OF THE DATA See Appendix 2 to the DPA."
-      }
-    ]
-  },
-  {
-    "slug": "any-hire-terms",
-    "disposition": "DIRECT-CONTRACTS",
-    "nodes": [
-      {
-        "t": "p",
-        "text": "This Panameer Any Hire Terms (“Any Hire Terms”) defines the agreement between you (the “Service Buyer” or the “Provider”, as applicable) and Panameer Global LLC (“Panameer”) regarding Any Hire services offered through the Site at www.panameer.com/anyhire as described in these Any Hire Terms (“Any Hire Services”), and are part of and incorporate by reference the Panameer User Agreement and other Terms of Service (collectively, the “Agreement”). The Any Hire Terms is in addition to and, except where explicitly stated, does not supersede, replace, or limit other similar terms in the Terms of Service. Capitalized terms not defined herein are defined in the User Agreement or elsewhere in the Terms of Service."
-      },
-      {
-        "t": "p",
-        "text": "In order to use Any Hire Services, you agree to be bound by the Any Hire Work Order terms and the Dispute Process and Arbitration and Class Action Waiver in the User Agreement. If you do not accept these terms, including the arbitration and class action waiver, you may not use or access any Any Hire Services."
-      },
-      {
-        "t": "h2",
-        "text": "1. ESCROW SERVICES"
-      },
-      {
-        "t": "p",
-        "text": "Service Buyer and Provider acknowledge and agree that the Any Hire Work Order Escrow Instructions apply to any engagements via the Any Hire Services (each such engagement, an “Any Hire Work Order”). Payment Escrow provides escrow services, but does not guarantee that Provider will be paid except and only to the extent that all of the following are true: (a) Panameer has received funds from Service Buyer on behalf of the Provider, (b) Service Buyer has directed such funds to be released to Provider, and (c) any hold or security period has passed. Panameer otherwise does not guarantee that Service Buyer is able to or will pay Provider."
-      },
-      {
-        "t": "p",
-        "text": "Service Buyer and Provider acknowledge that these escrow services are intended for business use, and agree to use these escrow services only for business purposes and not for consumer, personal, family, or household purposes."
-      },
-      {
-        "t": "h2",
-        "text": "2. ROLE OF PANAMEER"
-      },
-      {
-        "t": "p",
-        "text": "Service Buyer and Provider understand and agree that Panameer is not involved in or responsible for any work performed by Provider(s), is not involved in or responsible for any payment made under a Any Hire Work Order except as provided in Section 1 (Escrow Services), and has no control over any Provider or Service Buyer. Panameer does not guarantee that Service Buyer or Provider will perform on the Any Hire Work Order. Panameer does not have any power or authority to, and does not, determine any eligibility standards for any Any Hire Work Order, select or contract any Provider to provide services to Service Buyer, determine or control any term or condition of the Any Hire Work Order or Project, or cause any Provider to accept any Any Hire Work Order or perform any Provider Services. The Parties agree that Service Buyer will select the provider, that the scope of work will be set exclusively by agreement between Service Buyer and Provider, and that Service Buyer and Provider will take up any issues with the work and/or its scope between each other."
-      },
-      {
-        "t": "h2",
-        "text": "3. ANY HIRE COMPLIANCE SERVICES"
-      },
-      {
-        "t": "h3",
-        "text": "3.1 WORKER CLASSIFICATION"
-      },
-      {
-        "t": "p",
-        "text": "Panameer will determine the appropriate worker classification (e.g., independent contractor or employee) for each Engagement based on the information that Service Buyer and Provider provide about the applicable Any Hire Work Order. Determining the proper classification for a Provider depends on many factors, including information in Service Buyer’s control. Service Buyer and Provider agree to provide Panameer with all information requested that is related to the Any Hire Work Order and the classification of a Provider in a timely, accurate, and complete manner and notify Panameer immediately if any such information changes."
-      },
-      {
-        "t": "h3",
-        "text": "3.2 PROVIDER ENGAGEMENT"
-      },
-      {
-        "t": "p",
-        "text": "If Service Buyer accepts Panameer’s worker classification, Panameer will, based on its worker classification, either: (i) engage the Provider as an independent contractor for up to a six-month term, with Panameer Talent Group Inc. acting as agent of record for Service Buyer for such purpose, or (ii) cause the Provider to be hired as an employee through Panameer Payroll Services (as"
-      },
-      {
-        "t": "p",
-        "text": "defined in the Panameer Payroll Agreement). Panameer may delegate the engagement of Providers (and other obligations regarding Providers under this Agreement) to one or more third parties. Panameer and Staffing Provider reserve the right not to engage or hire a Provider in their sole discretion. Panameer will cause each Provider classified under Panameer’s classification services and engaged as an independent contractor to execute an Independent Contractor Agreement. Panameer (through Staffing Provider) will cause each Provider classified and hired as an employee to execute an employment agreement containing confidentiality and intellectual property assignment provisions consistent with this Agreement."
-      },
-      {
-        "t": "p",
-        "text": "At the end of any six-month independent contractor agreement term, Service Buyer may seek to re-enage the Provider via Any Hire, and the engagement and worker classification process will begin again."
-      },
-      {
-        "t": "h3",
-        "text": "3.3 OPTION TO REJECT CLASSIFICATION SERVICES"
-      },
-      {
-        "t": "p",
-        "text": "A Service Buyer may choose to decline the worker classification services described in Section 3.1. If Service Buyer does not accept Panameer’s worker classification, the Service Buyer may engage the Provider as the Service Buyer so chooses, but Panameer shall not be responsible for the classification of the worker or the engagement of the worker. Service Buyer shall have sole responsibility of engaging the Provider (including preparing any independent contractor agreement or using the Optional Service Work Order Terms). In addition, if Service Buyer declines the worker classification services and still engages the Provider, Section 8.2 shall not apply; Service Buyer shall have no right to indemnity or any other remedy against Panameer, except as provided in the User Agreement Section 10, Section 11, and Section 12, all three of which shall be deemed to control any conflict with these Panameer Any Hire Terms."
-      },
-      {
-        "t": "h3",
-        "text": "3.4 LEGAL COMPLIANCE"
-      },
-      {
-        "t": "p",
-        "text": "Panameer, Staffing Provider, or any third party acting to engage a Provider, as applicable, shall comply with applicable laws and regulations governing the engagement and payment of Providers; except that Panameer or Employment Provider shall not be liable for any non-compliance associated with any information provided by Service Buyer."
-      },
-      {
-        "t": "h3",
-        "text": "3.5 OWNERSHIP OF PROVIDER WORK PRODUCT"
-      },
-      {
-        "t": "p",
-        "text": "Ownership of all Provider Work Product will be governed by the independent contractor agreement or employee agreement with the Provider, as applicable, both of which will contain a provision that requires a Provider to assign all ownership rights in Provider Work Product to Service Buyer. Panameer will not own any Provider Work Product. In the event that ownership rights in Provider Work Product arising from an Any Hire Work Order accrue to the benefit of Panameer, Panameer hereby assigns such rights to Service Buyer."
-      },
-      {
-        "t": "h2",
-        "text": "4. SERVICE BUYER RESPONSIBILITIES"
-      },
-      {
-        "t": "h3",
-        "text": "4.1 ANY HIRE Work Orders"
-      },
-      {
-        "t": "p",
-        "text": "Service Buyer further agrees to immediately inform Panameer of any complaint or request made by Provider concerning any employment-related matter, such as a request for a leave of absence or disability accommodation or a complaint about harassment or discrimination. Service Buyer further acknowledges and agrees that Service Buyer will not dispute and is responsible for payment for all hours worked on an engagement that uses Panameer Payroll Services."
-      },
-      {
-        "t": "h3",
-        "text": "4.2 PANAMEER PAYROLL AGREEMENTS"
-      },
-      {
-        "t": "p",
-        "text": "Service Buyer will inform Panameer 72 hours in advance, if possible, or as soon as possible thereafter, of the termination of any Any Hire Work Order that uses Panameer Payroll Services. For hourly work performed by Providers classified as employees, (i) Service Buyer will be deemed to have automatically approved all hours worked at the time Service Buyer is invoiced for the work, including overtime and (ii) Service Buyer authorizes and instructs Panameer to make payment to Provider for time reflected on any weekly time sheet, including overtime payments. For Providers engaged by Panameer or Staffing Provider as employees, Service Buyer agrees"
-      },
-      {
-        "t": "p",
-        "text": "to comply with all applicable laws (e.g., not requiring or encouraging any Provider to work without recording time, not discouraging or prohibiting Providers from taking any meal or rest periods authorized by law) and acknowledges and agrees it is responsible to pay that overtime wages."
-      },
-      {
-        "t": "h3",
-        "text": "4.3 NONDISCRIMINATION; COMPLIANCE WITH LAWS"
-      },
-      {
-        "t": "p",
-        "text": "Service Buyer to comply with, and to require any person who may interact with Provider on behalf of Service Buyer to comply with, Panameer’s Nondiscrimination Statement, and with all applicable laws in connection with the engagement of Providers, including without limitation, as applicable, worker safety laws, nondiscrimination laws, accommodation and leave laws, and privacy laws."
-      },
-      {
-        "t": "h3",
-        "text": "4.4 PROVIDER ELIGIBILITY LIMITATIONS"
-      },
-      {
-        "t": "p",
-        "text": "Any Hire Work Orders may only be offered to Providers that do not have a pre-existing relationship with Panameer (e.g., a previously established Provider Account). If a Provider has a pre-existing relationship with Panameer, the Provider can be engaged through one of our other offerings, subject to the fees and other terms and conditions of such offerings."
-      },
-      {
-        "t": "h3",
-        "text": "4.5 SERVICE BUYER ACKNOWLEDGEMENTS"
-      },
-      {
-        "t": "p",
-        "text": "Other than as stated in these Any Hire Terms, Service Buyer expressly acknowledges, agrees, and understands that: (i) except for the agent of record services, Panameer is not a party to the dealings between Service Buyer and Provider, including the substantive terms of posts, the selection of a Provider, the decision to contract with a Provider, and the performance or receipt of Provider Services or provisioning of Provider Work Product; (ii) Panameer does not, in any way, supervise, direct, or control the Provider or Provider Services; (iii) Panameer makes no representations as to the quality, security, or legality of any Provider Services or Provider Work Product, and Panameer disclaims any and all liability relating thereto; (iv) Panameer does not set Provider’s work hours, work schedules, or location of work; (vi) Panameer will not provide Provider with training or any equipment, tools, labor, or materials needed to complete their work; (vii) Panameer does not provide the premises at which the Provider will perform the work; (viii) if there is a dispute between Service Buyer and Provider, that dispute is solely between Service Buyer and the Provider and Panameer will not be responsible or liable with respect to such dispute; (ix) neither Panameer nor its Affiliates is an employer of or joint employer or integrated or single enterprise with any Provider or Service Buyer; and (x) unless otherwise agreed as part of the relevant Any Hire Work Order, independent contractor Provider(s) may hire employees or engage contractors or subcontractors (at his or her sole expense) to assist with providing the Provider Services. Panameer makes no representations about and does not guarantee the truth or accuracy of Provider’s listings on the Site; the ability of Providers to deliver the Provider Services; or that Service Buyer or Provider can or will actually complete a transaction."
-      },
-      {
-        "t": "h2",
-        "text": "5. PROVIDER ACKNOWLEDGEMENTS"
-      },
-      {
-        "t": "p",
-        "text": "Other than as stated in these Any Hire Terms, Provider expressly acknowledges, agrees, and understands that: (i) except for the agent of record services, Panameer is not a party to the dealings between Service Buyer and Provider, including the substantive terms of posts, the selection of a Provider, the decision to contract with a Provider, and the performance or receipt of Provider Services or provisioning of Provider Work Product; (ii) Panameer does not, in any way, supervise, direct, or control the Provider or Provider Services; (iii) Panameer makes no representations as to the quality, security, or legality of any Provider Services or Provider Work Product, and Panameer disclaims any and all liability relating thereto; (iv) Panameer does not set Provider’s work hours, work schedules, or location of work; (vi) Panameer will not provide Provider with training or any equipment, tools, labor, or materials needed to complete their work; (vii) Panameer does not provide the premises at which the Provider will perform the work; (viii) if there is a dispute between Service Buyer and Provider, that dispute is solely between Service Buyer and the Provider and Panameer will not be responsible or liable with respect to such dispute; (ix) neither Panameer nor its Affiliates is an employer of or joint employer or integrated or single enterprise with any"
-      },
-      {
-        "t": "p",
-        "text": "Provider or Service Buyer; and (x) unless otherwise agreed as part of the relevant Any Hire Work Order, independent contractor Provider(s) may hire employees or engage contractors or subcontractors (at his or her sole expense) to assist with providing the Provider Services. Panameer makes no representations about and does not guarantee the truth or accuracy of Service Buyer’s listings on the Site; the ability of Service Buyers to pay for the Provider Services; or that Service Buyer or Provider can or will actually complete a transaction."
-      },
-      {
-        "t": "h2",
-        "text": "6. FEES"
-      },
-      {
-        "t": "h3",
-        "text": "6.1 SERVICE BUYER FEES"
-      },
-      {
-        "t": "p",
-        "text": "Service Buyer agrees to pay a flat fee per Any Hire Work Order (“Any Hire Fee”) per two-week billing period (“Billing Period”) or any portion of a Billing Period as follows: Provider engaged as an independent contractor: $49USD per month, billed each two-week billing period at $22.62USD Provider engaged through Panameer Payroll (International): $49USD per month, billed each two-week billing period at $22.62USD Provider engaged through Panameer Payroll (Domestic): $199USD per month, billed each two-week period at $91.60USD Service Buyer also acknowledges and agrees that Service Buyer is responsible for applicable taxes and any Staffing Provider costs or applicable Payroll Services Fees (to be communicated at the start of the Any Hire Work Order), as well as any payment processing fee. Information on Panameer’s Payroll offering and applicable fees can be found in the Panameer Payroll Agreement."
-      },
-      {
-        "t": "p",
-        "text": "All fees are invoiced on the Monday after the end of the Billing Period. Service Buyer acknowledges and understands that payment is due in full the day the invoice is sent. Service Buyer agrees and authorizes Panameer to charge Service Buyer’s Payment Method the full amount invoiced during a Billing Period on the same day the invoice is issued."
-      },
-      {
-        "t": "h3",
-        "text": "6.2 PROVIDER FEES"
-      },
-      {
-        "t": "p",
-        "text": "Providers engaged on an Any Hire Work Order are not charged Provider Service Fees (see Sections 2.1, 2.2, and 2.3 of the Fee and ACH Agreement) for such Any Hire Work Order. However, Providers will pay any other applicable fees (see Section 2.4 of the Fee and ACH Agreement). If such Provider enters into a Service Work Order other than an Any Hire Work Order, such Service Work Order will be subject to Service Fees as applicable."
-      },
-      {
-        "t": "h2",
-        "text": "7. SERVICE BUYER AND PROVIDER AUTHORIZATION"
-      },
-      {
-        "t": "p",
-        "text": "Service Buyer and Provider represent and warrant that it has the authority to agree to these Any Hire Terms on behalf of themselves and the business entity they represent. Any actions performed by Panameer personnel on the Site at Service Buyer’s direction, express or implied, will be considered to be actions by and at the direction of Service Buyer."
-      },
-      {
-        "t": "h2",
-        "text": "8. INDEMNIFICATION FOR SERVICE BUYER"
-      },
-      {
-        "t": "h3",
-        "text": "8.1 INTERACTION WITH OTHER TERMS OF SERVICE"
-      },
-      {
-        "t": "p",
-        "text": "These Any Hire Terms controls for any express conflicts between the User Agreement or the Panameer Payroll Agreement and these Any Hire Terms concerning indemnification obligations and limitation of liability of Panameer or Service Buyer with respect to Any Hire Services only, except as provided in Section 3.3."
-      },
-      {
-        "t": "h3",
-        "text": "8.2 INDEMNIFICATION BY PANAMEER"
-      },
-      {
-        "t": "p",
-        "text": "Panameer will indemnify, defend, and hold harmless Service Buyer and its directors, officers, agents and employees from and against any and all losses, damages, liabilities, judgments, or settlements awarded for Claims, up to a maximum of $50,000USD per"
-      },
-      {
-        "t": "p",
-        "text": "Provider engaged under an Any Hire Work Order, to the extent caused by: (i) Panameer’s misclassification of a Provider under the Fair Labor Standards Act, the Internal Revenue Code, state wage and hour law or any other law; (ii) the failure of Panameer or Employment Provider to make, when due, a payment to a Provider related to these Any Hire Terms; (iii) Employment Provider’s failure to comply with applicable wage and hour laws or regulations; or (iv) Employment Provider’s violation of any law or regulation related to workplace safety or conduct, including laws related to illegal discrimination or harassment."
-      },
-      {
-        "t": "h3",
-        "text": "8.3 INDEMNIFICATION BY SERVICE BUYER"
-      },
-      {
-        "t": "p",
-        "text": "Service Buyer will indemnify, defend and hold harmless Panameer and its Affiliates and their directors, officers, agents and employees from and against any and all Claims, and/or any and all losses, costs, damages, liabilities, judgments, or settlements awarded for such Claims to the extent arising out of, resulting from or in connection with Service Buyer’s or any director, officer, agent, employee of Service Buyer, or any other person with apparent or actual authority to act on behalf of Service Buyer: (i) in excess of $50,000USD per Provider engaged under an Any Hire Work Order; (ii) violation of any law or regulation, including laws related to illegal discrimination or harassment; (iii) misuse or unauthorized use of the Site; (iv) content posted by or on behalf of Service Buyer or at Service Buyer’s direction; (v) failure to comply with applicable wage and hour laws or regulations or any such failure by Panameer or the Employment Provider based on inaccurate or incomplete information provided by Service Buyer or which Service Buyer failed to update or was caused by Service Buyer; (vi) direction, participation or involvement with the Provider or Provider Services; or (vii) breach of Service Buyer’s obligations in Section 5 (Service Buyer Responsibilities)."
-      },
-      {
-        "t": "h3",
-        "text": "8.4 INDEMNIFICATION REQUIREMENTS"
-      },
-      {
-        "t": "p",
-        "text": "The indemnification obligations of each party (the “Indemnifying Party”) are contingent upon the other party (the “Indemnified Party”) providing the Indemnifying Party with: (i) prompt written notice of any Claim for which indemnification may be sought under these Any Hire Terms; and (ii) proper and full information and assistance, at the Indemnifying Party’s expense and request, to settle or defend any such Claim. Each Indemnified Party will be entitled to participate in, through its own counsel at its own cost and expense, but not to determine or conduct, any defense or settlement of an indemnified Claim."
-      },
-      {
-        "t": "h2",
-        "text": "9. NO INDEMNIFICATION FOR PROVIDER"
-      },
-      {
-        "t": "p",
-        "text": "For the avoidance of doubt, Provider shall have no right to indemnity or any other remedy against Panameer, except as provided in the User Agreement Section 10, Section 11, and Section 12, all three of which shall be deemed to control any conflict with these Panameer Any Hire Terms."
-      },
-      {
-        "t": "h2",
-        "text": "10. LIMITATION OF LIABILITY"
-      },
-      {
-        "t": "p",
-        "text": "THIS SECTION 10 (LIMITATION OF LIABILITY) ONLY APPLIES TO AN ANY HIRE Work Order AND IS NOT CUMULATIVE TO ANY OTHER LIMITATION OF LIABILITY. IN NO EVENT WILL EITHER PARTY BE LIABLE FOR LOST PROFITS OR CONSEQUENTIAL, INCIDENTAL, SPECIAL, INDIRECT, PUNITIVE, OR EXEMPLARY DAMAGES OF ANY KIND ARISING OUT OF OR RELATED TO THIS AGREEMENT, HOWEVER CAUSED AND REGARDLESS OF THE THEORY OF LIABILITY (INCLUDING NEGLIGENCE), EVEN IF THAT PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES. EXCEPT FOR (I) AMOUNTS DUE PANAMEER FROM SERVICE BUYER UNDER THIS AGREEMENT, AND (II) AMOUNTS PAYABLE TO THIRD PARTIES PURSUANT TO INDEMNIFICATION OBLIGATIONS HEREIN. EXCEPT AS PROVIDED IN SECTION 8 WITH RESPECT TO SERVICE BUYERS, IN NO EVENT WILL PANAMEER BE LIABLE FOR AN AMOUNT GREATER THAN $50,000. SERVICE BUYER ACKNOWLEDGES THAT THE AMOUNTS PAYABLE UNDER THIS AGREEMENT ARE BASED IN PART ON THESE LIMITATIONS, AND FURTHER AGREES THAT THESE LIMITATIONS WILL APPLY NOTWITHSTANDING ANY FAILURE OF ESSENTIAL PURPOSE OF ANY LIMITED REMEDY."
-      },
-      {
-        "t": "h2",
-        "text": "11. OTHER TERMS"
-      },
-      {
-        "t": "p",
-        "text": "This Agreement, including these Any Hire Terms along with the Panameer User Agreement and other Terms of Service, represents the entire agreement with Panameer and supersedes all prior agreements and understandings with respect to Any Hire Services. To the extent of an express conflict between these Any Hire Terms and the other Terms of Service, these Any Hire Terms shall govern any matters involving Any Hire Services. Provisions of the User Agreement and other Terms of Service that do not expressly conflict with any provision of the Any Hire Terms or are being applied to any products or services other than the Any Hire Services apply in full force and effect. Without voiding or affecting the applicability of any other provision of the User Agreement to the Any Hire Terms, Service Buyer specifically reiterates its agreement to comply with the DISPUTE PROCESS AND ARBITRATION AND CLASS ACTION WAIVER contained in Panameer’s User Agreement, and agrees that this provision applies with full force and effect to the Any Hire Terms."
-      },
-      {
-        "t": "p",
-        "text": "You agree that you did not accept the Any Hire Terms based on any representations, whether written or oral, other than those contained in these Any Hire Terms along with the Panameer User Agreement and other Terms of Service. No modification of or amendment to the Any Hire Terms, nor any waiver of any rights, will be effective unless in writing signed by you and Panameer."
       }
     ]
   },
@@ -1892,7 +1448,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "12. For Service Work Orders entered through Project Catalog, Service Buyer has failed to respond to a request for project requirements within 48 hours, at which point any funds in escrow will be released to Service Buyer and the Work Order will be closed."
+        "text": "12. For Service Work Orders entered through a service product, Service Buyer has failed to respond to a request for project requirements within 48 hours, at which point any funds in escrow will be released to Service Buyer and the Work Order will be closed."
       },
       {
         "t": "h3",
@@ -3268,15 +2824,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "If you are a Provider who engaged an eligible Service Buyer via Provider Initiated Direct Work Orders, Panameer will charge you a flat 5% of the total Provider Fees you have invoiced to your Direct Work Order Service Buyer for the Engagement Relationship."
-      },
-      {
-        "t": "h3",
-        "text": "2.3 PROVIDERS WORKING ON ENTERPRISE SERVICE BUYER WORK ORDERS"
-      },
-      {
-        "t": "p",
-        "text": "If you are a Provider with a Service Work Order entered into with an Enterprise Service Buyer, the Service Fee rate is 10% of the Provider Fees, unless otherwise provided in the Enterprise Service Buyer contract. If you are a Provider with an active Work Order with a Service Buyer whose Account is being converted to an Enterprise Service Buyer Account, then only on any Service Work Order that is active at the time of the conversion, Panameer will honor the lower of (a) the Service Fee or Legacy Tiered Service Fee in effect at the time of the conversion, or (b) the Service Fee rate in the Enterprise Service Buyer contract for that Account. For purposes of the Terms of Service, “Enterprise Service Buyer ” means a Service Buyer, including a legacy Enterprise Service Buyer or a Panameer Business Service Buyer, whose profile displays the following “Enterprise” badge:"
+        "text": "If you are a Provider who engaged an eligible Service Buyer via Provider Initiated Direct Work Orders, Panameer will charge you a flat 4.99% of the total Provider Fees you have invoiced to your Direct Work Order Service Buyer for the Engagement Relationship."
       },
       {
         "t": "h3",
@@ -3331,50 +2879,6 @@ export const SUPPLEMENTS: Supplement[] = [
         "text": "Panameer offers Service Buyer’s on the marketplace membership to the Service Buyer Basic Plan. The Basic Plan does not require a monthly membership fee. The Service Buyer Basic Plan includes access to the Site and related Site Services such as assisting Users in resolving disputes which may arise in connection with marketplace Service Work Orders, providing access to communication tools, and administrative services related to reporting and facilitating payments."
       },
       {
-        "t": "p",
-        "text": "In return for providing Service Buyers with access to the Site and related Site Services, Panameer charges Service Buyers a “Marketplace Fee” on each transaction related to a marketplace Service Work Order or Project Catalog offering a Service Buyer enters into on the Site or with Providers on the Site. The Marketplace Fee rate fee can vary, learn more about the Marketplace Fee here. In the case of Hourly Service Work Orders, Panameer will charge the Marketplace Fee based on hours and expenses recorded by a Provider as of the Hourly Invoice Deadline (Sunday at 23:59 UTC) each week. For Fixed-Price Work Orders, Panameer will charge the Marketplace Fee on the amount and at the time a Service Buyer funds a milestone or pays a bonus or expense. All other transactions"
-      },
-      {
-        "t": "p",
-        "text": "subject to the Marketplace Fee, such as transactions for bonus or expense payouts, use of Panameer Payroll related to a marketplace Service Work Order, or use of any other service on the Site where displayed on the Site, will be assessed the Marketplace Fee at the time of invoice."
-      },
-      {
-        "t": "p",
-        "text": "At its sole discretion, Panameer may offer Service Buyers a different Marketplace Fee rate, discount or arrangement; any such rate or arrangement must be explicitly communicated or agreed by an authorized representative of Panameer via email or a written agreement. No refunds of fees already paid will be given; for example, if a funded project is canceled, payments made by a Service Buyer are released from the Service Buyer Account for any reason or refunded by a Provider, the Marketplace Fee will not be refunded."
-      },
-      {
-        "t": "p",
-        "text": "Panameer will charge Service Buyers a one-time “Work Order Initiation Fee” for facilitating the formation of each new marketplace Service Work Order formed between Service Buyer and Provider. The Work Order Initiation Fee can vary, depending on a variety of factors, learn more about the Work Order Initiation Fee here. Service Buyers will be charged the Work Order Initiation Fee shown and communicated to the Service Buyer on the Site before the Service Buyer elects to form the Service Work Order. For Hourly Service Work Orders the Work Order Initiation Fee will be charged at the time of the first invoice. For Fixed-Price Work Orders the Work Order Initiation Fee is charged at the time the Service Buyer funds the first milestone. The Marketplace Fee is not assessed on the Work Order Initiation Fee. The Work Order Initiation Fee is not refundable."
-      },
-      {
-        "t": "p",
-        "text": "The Marketplace Fee and the Work Order Initiation Fee detailed above is not assessed on Any Hire, Enterprise, Talent Scout, Panameer Business, or premium services which are subject to the fees and rate(s) as described in the specific Any Hire, Enterprise, Talent Scout, or Panameer Business contract with Service Buyer or on the Site."
-      },
-      {
-        "t": "h3",
-        "text": "3.2 BUSINESS PLUS PLAN AND FEATURES"
-      },
-      {
-        "t": "p",
-        "text": "Panameer may offer Service Buyers membership to the Business Plus Plan. In addition to the access and features included in the Basic Plan, the Business Plus Plan also includes access to expert vetted talent and other premium services, as described on the Site. In return for providing Service Buyers with access to the Site and Business Plus offerings, Panameer will charge Service Buyers enrolled in the Business Plan a “Business Plus Fee” of up to 10% on each transaction related to a Service Work Order or Project Catalog offering a Service Buyer enters into on the Site or with Providers on the Site. Eligible Service Buyers who use ACH as their payment method are offered a reduced Business Plus Fee rate of 8%. In the case of Hourly Service Work Orders, Panameer will charge the Business Plus Fee based on hours and expenses recorded by a Provider as of the Hourly Invoice Deadline (Sunday at 23:59 UTC) each week. For Fixed-Price Work Orders, Panameer will charge the Business Plus Fee on the amount and at the time a Service Buyer funds a milestone or pays a bonus or expense. All other transactions subject to the Business Plus Fee, such as transactions for bonus or expense payouts, use of Panameer Payroll related to a marketplace Service Work Order, or use of any other service on the Site where displayed on the Site, will be assessed the Business Plus Fee at the time of invoice."
-      },
-      {
-        "t": "p",
-        "text": "Panameer may charge a “Work Order Initiation Fee” for facilitating the formation of a new Business Plus Service Work Order between Service Buyer and Provider. The Work Order Initiation Fee can vary, depending on a variety of factors, learn more about the Work Order Initiation Fee here. Service Buyers will be charged the Work Order Initiation Fee shown and communicated to the Service Buyer on the Site before the Service Buyer elects to form the Service Work Order. The Business Plus Fee is not assessed on the Work Order Initiation Fee. The Work Order"
-      },
-      {
-        "t": "h3",
-        "text": "Initiation Fee is not refundable"
-      },
-      {
-        "t": "p",
-        "text": "No refunds of fees already paid will be given; for example, if a funded project is canceled, payments made by a Service Buyer are released from the Service Buyer Escrow Account for any reason or refunded by a Provider, the Business Plus Fee will not be refunded."
-      },
-      {
-        "t": "p",
-        "text": "At its sole discretion, Panameer may offer Service Buyers a different Business Plus Plan rate; any such rate must be explicitly communicated or agreed by an authorized representative of Panameer via email or a written agreement."
-      },
-      {
         "t": "h3",
         "text": "3.3 SERVICE BUYER INITIATED DIRECT Work Orders"
       },
@@ -3384,7 +2888,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Membership plan fees, such as the Marketplace Fee or Business Plus Fee, apply to Service Buyer Initiated Direct Work Order engagements. Eligible Service Buyers may opt out at any time."
+        "text": "Eligible Service Buyers may opt out at any time."
       },
       {
         "t": "h3",
@@ -3392,7 +2896,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Panameer reserves the right to change the the features and services included in the Basic Plan, Business Plus Plan, change the fees applicable to each Service Buyer Membership Plan, change the fees for certain premium services or options, or institute new fees at any time, in each case upon reasonable notice posted in advance on the Site for existing Users. No refunds of fees already paid will be given. If Panameer exercises its right to cancel a Service Buyer's Basic Plan or Business Plus Plan, Panameer will not refund the fees already paid unless otherwise required by law."
+        "text": "Panameer reserves the right to change the the features and services included in the Basic Plan, change the fees applicable to each Service Buyer Membership Plan, change the fees for certain premium services or options, or institute new fees at any time, in each case upon reasonable notice posted in advance on the Site for existing Users. No refunds of fees already paid will be given. If Panameer exercises its right to cancel a Service Buyer's Basic Plan, Panameer will not refund the fees already paid unless otherwise required by law."
       },
       {
         "t": "p",
@@ -3404,7 +2908,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Where applicable, Panameer Global, Panameer International, or Payment Escrow may also collect taxes (such as VAT where applicable) on Marketplace Fee, Business Plus Fee, Work Order Initiation Fee, Direct Work Orders Fee and the cost for premium services or features, as set forth in the User Agreement."
+        "text": "Where applicable, Panameer Global, Panameer International, or Payment Escrow may also collect taxes (such as VAT where applicable) on the Direct Work Orders Fee and the cost for premium services or features, as set forth in the User Agreement."
       },
       {
         "t": "h2",
@@ -3412,7 +2916,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "If and to the extent permitted by Panameer in its sole discretion, Users may pay Provider Fees, Membership Fees, Marketplace Fees, and other fees owed under the Terms of Service from their designated bank accounts. Subject to Panameer’s eligibility requirements, if you elect to pay Provider Fees or any other amounts owed under the Terms of Service via ACH transfers from your designated bank account, you hereby authorize us to electronically debit and, if necessary, electronically credit your designated bank account via ACH for such amounts pursuant to the Terms of Service, and you agree to comply with the ACH rules issued by the National Automated Clearing House (“NACHA”) and all applicable laws, including, but not limited to, the federal Bank Secrecy Act, the U.S.A. Patriot Act, and economic sanctions overseen by the Office of Foreign Assets Control (OFAC). Your authorization for ACH transfers contained in this Section 4 will remain in full force and effect until you notify us that you wish to revoke your authorization by removing your bank account information from your Profile or by contacting Customer Support. You understand that we require at least one (1) business day’s prior notice in order to cancel your authorization for ACH transfers contained in this Section 4."
+        "text": "If and to the extent permitted by Panameer in its sole discretion, Users may pay Provider Fees, Membership Fees, and other fees owed under the Terms of Service from their designated bank accounts. Subject to Panameer’s eligibility requirements, if you elect to pay Provider Fees or any other amounts owed under the Terms of Service via ACH transfers from your designated bank account, you hereby authorize us to electronically debit and, if necessary, electronically credit your designated bank account via ACH for such amounts pursuant to the Terms of Service, and you agree to comply with the ACH rules issued by the National Automated Clearing House (“NACHA”) and all applicable laws, including, but not limited to, the federal Bank Secrecy Act, the U.S.A. Patriot Act, and economic sanctions overseen by the Office of Foreign Assets Control (OFAC). Your authorization for ACH transfers contained in this Section 4 will remain in full force and effect until you notify us that you wish to revoke your authorization by removing your bank account information from your Profile or by contacting Customer Support. You understand that we require at least one (1) business day’s prior notice in order to cancel your authorization for ACH transfers contained in this Section 4."
       },
       {
         "t": "p",
@@ -3680,10 +3184,6 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Service Buyer membership plan service fees, such as the Marketplace Fee or Business Plus Fee apply to Service Work Orders initiated and managed under this Direct Work Orders program. The Work Order Initiation Fee does not apply to Service Work Orders under this program."
-      },
-      {
-        "t": "p",
         "text": "No refunds of fees already paid will be given. Service Buyers may opt out of the Direct Work Order program or cancel a Service Work Order pursuant to the applicable Escow Instructions and terms at any time, however Panameer will not refund any fees for Service Work Orders that were considered active at any time in the month prior to the charge. Where applicable, Panameer will collect taxes (such as VAT) on the Direct Work Orders Fee."
       },
       {
@@ -3692,7 +3192,7 @@ export const SUPPLEMENTS: Supplement[] = [
       },
       {
         "t": "p",
-        "text": "Providers engaged on a Service Buyer Initiated Direct Work Order are not charged Provider Service Fees (see Sections 2.1, 2.2, and 2.3 of the Fee and ACH Authorization Agreement) for such Service Buyer Initiated Direct Work Order. However, Providers will pay any other applicable fees (see Section 2.5 of the Fee and ACH Authorization Agreement). If such Provider enters into a Service Work Order other than a Service Buyer Initiated Direct Work Order, such Service Work Order will be subject to Service Fees as applicable."
+        "text": "Providers engaged on a Service Buyer Initiated Direct Work Order are not charged Provider Service Fees (see Sections 2.1 and 2.2 of the Fee and ACH Authorization Agreement) for such Service Buyer Initiated Direct Work Order. However, Providers will pay any other applicable fees (see Section 2.5 of the Fee and ACH Authorization Agreement). If such Provider enters into a Service Work Order other than a Service Buyer Initiated Direct Work Order, such Service Work Order will be subject to Service Fees as applicable."
       },
       {
         "t": "h2",

@@ -19,9 +19,7 @@ Panameer’s Terms of Service, and you agree that the “Terms of Service” mea
 herein and includes the Fee and ACH Authorization Agreement, Privacy Policy, Terms of Use, applicable
 Escrow Instructions and this User Agreement, including Section 14 which contains an arbitration
 agreement and class action waiver that applies to claims brought against Panameer in the United States.
-You have an opportunity to opt out of arbitration as provided in Section 14. This Agreement also
-incorporates, for any User using the Any Hire Services, the Any Hire Terms and the Any Hire Escrow
-Instructions. You should read all of our terms carefully because you are promising not to break any
+You have an opportunity to opt out of arbitration as provided in Section 14. You should read all of our terms carefully because you are promising not to break any
 agreements in the Terms of Service.
 If you want to use our work marketplace or any of our services (which we refer to altogether as
 Services), whether just by looking around or by registering an account, you must first read and agree to
@@ -54,9 +52,8 @@ Table of Contents
 3.1 Work Orders
 3.2 Disputes Among Users
 3.3 Confidential Information
-4. Worker Classification and Panameer Payroll
+4. Worker Classification
 4.1 Worker Classification
-4.2 Panameer Payroll Services
 5. Panameer Fees
 5.1 Fees For Providers
 5.2 Service Buyer Fees
@@ -419,10 +416,9 @@ Confidential Information will promptly destroy or return the disclosing party’
 and any copies of it contained in or on its premises, systems, or any other equipment otherwise under its
 control. Users specifically agree that this Section 3.3 applies to information exchanged for purposes
 relating to evaluating whether to enter into a Work Order, even if such Work Order is never agreed to.
-4. WORKER CLASSIFICATION AND PANAMEER PAYROLL
+4. WORKER CLASSIFICATION
 
-Users determine whether a Provider is an employee or independent contractor and agree to
-use Panameer Payroll for employment relationships.
+Users determine whether a Provider is an employee or independent contractor.
 4.1 WORKER CLASSIFICATION
 
 Service Buyers, not Panameer, are responsible for deciding whether to engage Providers as employees
@@ -434,21 +430,6 @@ applicable laws, regulations, and rules. Panameer is not responsible for worker 
 Service Buyer and Provider, and nothing in this Agreement is intended to or should be construed to create a
 partnership, joint venture, franchisor/franchisee or employer-employee relationship between Panameer and
 a User.
-4.2 PANAMEER PAYROLL SERVICES
-
-If Service Buyers engage Providers as employees, Service Buyers agree to enroll in Panameer Payroll.
-Service Buyer agrees to enroll in Panameer Payroll if it will receive services from a Provider under terms and
-conditions that would give rise to an employment relationship (unless Service Buyer elects instead to pay the
-Conversion Fee (see Section 7)). When the Service Buyer enrolls in Panameer Payroll, Service Buyer will engage Panameer’s
-third-party staffing vendor (the “Staffing Provider”) through the Site. The Staffing Provider will hire
-Provider at the request of Service Buyer and Provider according to the terms described on the Site and
-otherwise agreed to by the Staffing Provider, Service Buyer and/or Provider, and subject to the Panameer Payroll
-Agreement. The employer of Provider will be the Staffing Provider and not Panameer.
-Provider acknowledges and agrees that Panameer will have no control over and is not responsible for the
-terms and conditions of any employment relationship that may arise between Provider and Staffing
-
-Provider or Service Buyer, including the selection process, pay rate, work hours, employment dates, or working
-conditions.
 5. PANAMEER FEES
 
 Users agree to pay Panameer certain fees in exchange for Panameer providing the Services and
@@ -522,18 +503,11 @@ bound by, and Payment Escrow will follow, the Fixed-Price Escrow Instructions.
 Hourly Projects, Bonus Payments, or Expense Payments. If Users choose hourly compensation or if the
 Service Buyer makes bonus or expense payments, then the Users agree that they will be bound by, and Payment
 Escrow will follow, the Hourly, Bonus and Expense Payment Agreement with Escrow Instructions.
-Any Hire Work Orders. If Users enter into an Any Hire Work Order, then the Users agree that they will be
-bound by, and Payment Escrow will follow, the Any Hire Escrow Instructions.
 Service Buyer Initiated Direct Work Orders. If Users enter into a Service Buyer Initiated Direct Work Order, then Users agree
 they will be bound by, and Payment Escrow will follow, the Service Buyer Initiated Direct Work Orders Escrow
 
 Instructions. Dispute assistance and payment protection are not offered for Service Buyer Initiated Direct
 Work Orders.
-Panameer Payroll Engagements. If Users use Panameer Payroll (see Section 4) for a particular Project, then
-the Staffing Employee is paid directly by the Staffing Provider. A Service Buyer will be invoiced through the Site
-by the Staffing Provider, and the applicable Escrow Instructions will apply. However, the Service Buyer will not be
-able to dispute hours reported by the Staffing Employee and there is no dispute waiting period for the
-disbursement of funds to the Staffing Employee.
 6.1.2 ESCROW ACCOUNTS
 
 Payment Escrow will create and maintain an account to hold funds for you—called an Escrow
@@ -942,7 +916,7 @@ for the Conversion Fee (including interest), which you agree to pay within 30 da
 Account and revoke your authorization to use the Services, and (c) charge you for all losses and costs
 (including any and all time of Panameer’s internal workforce) and reasonable expenses (including
 attorneys’ fees) related to investigating such breach and collecting such fees.
-You agree that the Conversion Fee is 13.5% of the estimated earnings over a twelve (12) month period,
+You agree that the Conversion Fee is 15.9% of the estimated earnings over a twelve (12) month period,
 which is calculated by taking the Hourly Rate (defined below) and multiplying it by 2,080. “Hourly Rate”
 means (a) the highest hourly rate charged by the Provider on any Work Order with the Service Buyer, if
 any; or (b) if there is no hourly rate on a Work Order, the hourly rate in the Provider’s profile when
@@ -1502,9 +1476,6 @@ linked to your Account, a PayPal account, a debit card, or such other method of 
 accept from time to time in our sole discretion.
 “Project” means an engagement for Provider Services that a Provider provides to a Service Buyer under a
 Work Order on the Site.
-“Staffing Employee” means a Provider enrolled in Panameer Payroll, accepted for employment by a
-Staffing Provider, and assigned by the Staffing Provider to provide Provider Services to one or more
-Service Buyer(s).
 “Work Order” means, as applicable, (a) the contractual provisions between a marketplace or Direct
 Work Order Service Buyer and a Provider governing the Provider Services to be performed by a Provider for
 Service Buyer for a Project; (b) an Any Hire Work Order as defined in the Panameer Any Hire Terms; or (c) if you use

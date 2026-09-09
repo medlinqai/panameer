@@ -10,7 +10,7 @@ export const USER_AGREEMENT_DOC: LegalNode[] = [
   },
   {
     "t": "p",
-    "text": "You have an opportunity to opt out of arbitration as provided in Section 14. This Agreement also incorporates, for any User using the Any Hire Services, the Any Hire Terms and the Any Hire Escrow Instructions. You should read all of our terms carefully because you are promising not to break any agreements in the Terms of Service."
+    "text": "You have an opportunity to opt out of arbitration as provided in Section 14. You should read all of our terms carefully because you are promising not to break any agreements in the Terms of Service."
   },
   {
     "t": "p",
@@ -362,11 +362,11 @@ export const USER_AGREEMENT_DOC: LegalNode[] = [
   },
   {
     "t": "h2",
-    "text": "4. WORKER CLASSIFICATION AND PANAMEER PAYROLL"
+    "text": "4. WORKER CLASSIFICATION"
   },
   {
     "t": "p",
-    "text": "Users determine whether a Provider is an employee or independent contractor and agree to use Panameer Payroll for employment relationships."
+    "text": "Users determine whether a Provider is an employee or independent contractor."
   },
   {
     "t": "h3",
@@ -379,26 +379,6 @@ export const USER_AGREEMENT_DOC: LegalNode[] = [
   {
     "t": "p",
     "text": "Service Buyer is solely responsible for and assumes all liability for determining whether Providers should be engaged as independent contractors or employees and engaging them accordingly. Service Buyer warrants its decisions regarding classification are correct and its manner of engaging Providers complies with applicable laws, regulations, and rules. Panameer is not responsible for worker classification as between Service Buyer and Provider, and nothing in this Agreement is intended to or should be construed to create a partnership, joint venture, franchisor/franchisee or employer-employee relationship between Panameer and a User."
-  },
-  {
-    "t": "h3",
-    "text": "4.2 PANAMEER PAYROLL SERVICES"
-  },
-  {
-    "t": "p",
-    "text": "If Service Buyers engage Providers as employees, Service Buyers agree to enroll in Panameer Payroll."
-  },
-  {
-    "t": "p",
-    "text": "Service Buyer agrees to enroll in Panameer Payroll if it will receive services from a Provider under terms and conditions that would give rise to an employment relationship (unless Service Buyer elects instead to pay the Conversion Fee (see Section 7)). When the Service Buyer enrolls in Panameer Payroll, Service Buyer will engage Panameer’s third-party staffing vendor (the “Staffing Provider”) through the Site. The Staffing Provider will hire Provider at the request of Service Buyer and Provider according to the terms described on the Site and otherwise agreed to by the Staffing Provider, Service Buyer and/or Provider, and subject to the Panameer Payroll Agreement. The employer of Provider will be the Staffing Provider and not Panameer."
-  },
-  {
-    "t": "p",
-    "text": "Provider acknowledges and agrees that Panameer will have no control over and is not responsible for the terms and conditions of any employment relationship that may arise between Provider and Staffing"
-  },
-  {
-    "t": "p",
-    "text": "Provider or Service Buyer, including the selection process, pay rate, work hours, employment dates, or working conditions."
   },
   {
     "t": "h2",
@@ -494,19 +474,11 @@ export const USER_AGREEMENT_DOC: LegalNode[] = [
   },
   {
     "t": "p",
-    "text": "Any Hire Work Orders. If Users enter into an Any Hire Work Order, then the Users agree that they will be bound by, and Payment Escrow will follow, the Any Hire Escrow Instructions."
-  },
-  {
-    "t": "p",
     "text": "Service Buyer Initiated Direct Work Orders. If Users enter into a Service Buyer Initiated Direct Work Order, then Users agree they will be bound by, and Payment Escrow will follow, the Service Buyer Initiated Direct Work Orders Escrow"
   },
   {
     "t": "p",
     "text": "Instructions. Dispute assistance and payment protection are not offered for Service Buyer Initiated Direct Work Orders."
-  },
-  {
-    "t": "p",
-    "text": "Panameer Payroll Engagements. If Users use Panameer Payroll (see Section 4) for a particular Project, then the Staffing Employee is paid directly by the Staffing Provider. A Service Buyer will be invoiced through the Site by the Staffing Provider, and the applicable Escrow Instructions will apply. However, the Service Buyer will not be able to dispute hours reported by the Staffing Employee and there is no dispute waiting period for the disbursement of funds to the Staffing Employee."
   },
   {
     "t": "h4",
@@ -858,7 +830,7 @@ export const USER_AGREEMENT_DOC: LegalNode[] = [
   },
   {
     "t": "p",
-    "text": "You agree that the Conversion Fee is 13.5% of the estimated earnings over a twelve (12) month period, which is calculated by taking the Hourly Rate (defined below) and multiplying it by 2,080. “Hourly Rate” means (a) the highest hourly rate charged by the Provider on any Work Order with the Service Buyer, if any; or (b) if there is no hourly rate on a Work Order, the hourly rate in the Provider’s profile when the conversion is requested. The Conversion Fee includes all applicable taxes and is not subject to a Service Buyer service fee. If Service Buyer and Provider have had a Panameer Relationship for at least two (2) years, the Conversion Fee is a nominal $1 USD for administrative purposes. The Conversion Fee is not refundable."
+    "text": "You agree that the Conversion Fee is 15.9% of the estimated earnings over a twelve (12) month period, which is calculated by taking the Hourly Rate (defined below) and multiplying it by 2,080. “Hourly Rate” means (a) the highest hourly rate charged by the Provider on any Work Order with the Service Buyer, if any; or (b) if there is no hourly rate on a Work Order, the hourly rate in the Provider’s profile when the conversion is requested. The Conversion Fee includes all applicable taxes and is not subject to a Service Buyer service fee. If Service Buyer and Provider have had a Panameer Relationship for at least two (2) years, the Conversion Fee is a nominal $1 USD for administrative purposes. The Conversion Fee is not refundable."
   },
   {
     "t": "p",
@@ -1423,10 +1395,6 @@ export const USER_AGREEMENT_DOC: LegalNode[] = [
   {
     "t": "p",
     "text": "“Project” means an engagement for Provider Services that a Provider provides to a Service Buyer under a Work Order on the Site."
-  },
-  {
-    "t": "p",
-    "text": "“Staffing Employee” means a Provider enrolled in Panameer Payroll, accepted for employment by a Staffing Provider, and assigned by the Staffing Provider to provide Provider Services to one or more Service Buyer(s)."
   },
   {
     "t": "p",
