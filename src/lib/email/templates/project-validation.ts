@@ -1,4 +1,5 @@
 import { capitalizeName } from "@/lib/display";
+import { logoBlock } from "@/lib/email/shell";
 
 /**
  * The project-validation request — sent to a CLIENT CONTACT, not to a user.
@@ -34,10 +35,29 @@ export function projectValidationTemplate({
 
   const declineUrl = `${confirmUrl}?decline=1`;
 
-  const logoBlock = logoUrl
-    ? `<img src="${logoUrl}" alt="Panameer" width="180" height="25"
-           style="display:block;border:0;outline:none;text-decoration:none;height:auto;width:180px;max-width:180px;">`
-    : `<div style="font-size:22px;font-weight:800;letter-spacing:-.5px;color:#272334;">Panameer</div>`;
+/*
+  ── ⚠⚠ ONE LOGO BLOCK, NOT FOUR (`P1-ALL-E402` WS-2) ─────────────────────────
+
+  ⚠ SUPERSEDED, quoted not deleted:
+
+      const logoBlock = logoUrl
+        ? `<img src="${logoUrl}" alt="Panameer" width="180" height="25" …>`
+        : `<div style="…">Panameer</div>`;
+
+  ⚠⚠ THE BRIEF FOUND ONE INLINE COPY. THERE WERE THREE — this file,
+  `project-validation.ts` and `project-validated.ts` — each carrying the same
+  wrong `height="25"` for a 524×132 asset, and each branching on the URL being
+  ABSENT rather than UNFETCHABLE. Three copies is three places to fix a rule
+  twice and miss once, which is exactly what happened: `E397` and `E400` both
+  fixed hardcoded dimensions elsewhere and none of them reached here.
+
+  ⚠ THESE TEMPLATES DO NOT USE `emailShell()` — they build their own table
+  scaffold, because they land in a stranger's inbox and are deliberately styled
+  as marketing assets rather than system notifications. That is why they had
+  their own copy at all. ⚠ ONLY THE LOGO BLOCK IS SHARED; their layout, copy and
+  footers are untouched, which is what the brief fences off.
+*/
+  const logo = logoBlock(logoUrl);
 
   const html = `<!doctype html>
 <html>
@@ -52,7 +72,7 @@ export function projectValidationTemplate({
       <tr><td align="center">
         <table role="presentation" width="520" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:14px;border:1px solid #ece9f1;overflow:hidden;">
           <tr><td style="padding:32px 40px 8px;">
-            ${logoBlock}
+            ${logo}
           </td></tr>
 
           <tr><td style="padding:8px 40px 0;">
