@@ -45,25 +45,40 @@ const INSTAGRAM_URL = "https://www.instagram.com/onpanameer";
 /**
  * Postal address. A physical address is a CAN-SPAM requirement for commercial
  * mail, not decoration — and a placeholder that ships is worse than one that is
- * obviously unfinished, which is why it says so.
+ * obviously unfinished, which is why it used to say so.
  *
- * ── ⚠⚠ THIS IS STILL A PLACEHOLDER AND IT IS IN DELIVERED MAIL (`E402` WS-3) ─
+ * ── ⚠ SUPPLIED BY SCOTT 2026-09-09. `E402` WS-3 IS CLOSED ───────────────────
  *
- * It sits in the footer of **every email Panameer sends**, including the
- * verification email — the one message where looking real matters most.
+ * ⚠ SUPERSEDED, quoted not deleted, because the reasoning is what kept the
+ * value honest until it could be real:
  *
- * ⚠⚠ THE VALUE IS SCOTT'S TO SUPPLY AND IS DELIBERATELY NOT INVENTED HERE. A
- * plausible-looking address that is not Panameer's registered one is a worse
- * outcome than an obviously unfinished one: it is a false statement of fact in
- * a legally-required field.
+ *   *"⚠⚠ THIS IS STILL A PLACEHOLDER AND IT IS IN DELIVERED MAIL. It sits in
+ *   the footer of every email Panameer sends, including the verification email
+ *   — the one message where looking real matters most. ⚠⚠ THE VALUE IS SCOTT'S
+ *   TO SUPPLY AND IS DELIBERATELY NOT INVENTED HERE. A plausible-looking
+ *   address that is not Panameer's registered one is a worse outcome than an
+ *   obviously unfinished one: it is a false statement of fact in a
+ *   legally-required field. ⚠ SO `check:email-shell` FAILS ON IT, BY DESIGN,
+ *   and goes green the moment this line becomes a real address."*
  *
- * ⚠ SO `check:email-shell` FAILS ON IT, BY DESIGN, and goes green the moment
- * this line becomes a real address. ⚠ THE GATE IS RED ON PURPOSE — do not
- * "fix" it by deleting the placeholder phrase while leaving a fake address, and
- * do not delete the line: that silently drops a footer element the conventions
- * (and CAN-SPAM) expect, turning a visible gap into an invisible one.
+ * ⚠⚠ THE GUARD DOES NOT RETIRE WITH THE PLACEHOLDER, AND THAT IS THE POINT.
+ * `check:email-shell` §3 still refuses "to be confirmed", "TBD", "TODO", "TBA",
+ * "xxx", "coming soon", "placeholder" and "lorem" in this constant, and still
+ * refuses an empty or trivially-short value. A tripwire that is removed once it
+ * is satisfied protects nothing; this one now has to SURVIVE being satisfied,
+ * which is the only state in which it is worth anything.
+ *
+ * ⚠ THIS IS THE REGISTERED AGENT / PHYSICAL MAILING ADDRESS — what the footer
+ * and CAN-SPAM ask for. It is not a contact route: support is reached through
+ * the footer's Contact Support link, which is a different thing and stays.
+ *
+ * ⚠ NO HTML-SPECIAL CHARACTERS. It is interpolated raw into the HTML footer
+ * (`&`, `<`, `>`, `"` would need escaping) and printed verbatim in the plain
+ * text twin. `#` and `·` are safe in both; a future edit that introduces an
+ * ampersand must escape it here or in `footer()`.
  */
-export const PANAMEER_ADDRESS = "Panameer Inc · address to be confirmed";
+export const PANAMEER_ADDRESS =
+  "Panameer Inc · 120 Palencia Village Dr, C-105 #162, Saint Augustine, FL 32095";
 
 export function escapeHtml(s: string): string {
   return s
