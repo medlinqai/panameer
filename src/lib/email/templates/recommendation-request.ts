@@ -1,4 +1,5 @@
 import { capitalizeName } from "@/lib/display";
+import { logoBlock } from "@/lib/email/shell";
 
 /**
  * "Would you recommend me?" — sent to a CONTACT, not to a user (J2.4 WS-F).
@@ -48,9 +49,29 @@ export function recommendationRequestTemplate({
   const declineUrl = `${respondUrl}?decline=1`;
   const subject = `${provider} asked you for a recommendation`;
 
-  const logoBlock = logoUrl
-    ? `<img src="${logoUrl}" alt="Panameer" width="180" height="25" style="display:block;border:0;height:auto;width:180px;max-width:180px;">`
-    : `<div style="font-size:22px;font-weight:800;letter-spacing:-.5px;color:#272334;">Panameer</div>`;
+/*
+  ── ⚠⚠ ONE LOGO BLOCK, NOT FOUR (`P1-ALL-E402` WS-2) ─────────────────────────
+
+  ⚠ SUPERSEDED, quoted not deleted:
+
+      const logoBlock = logoUrl
+        ? `<img src="${logoUrl}" alt="Panameer" width="180" height="25" …>`
+        : `<div style="…">Panameer</div>`;
+
+  ⚠⚠ THE BRIEF FOUND ONE INLINE COPY. THERE WERE THREE — this file,
+  `project-validation.ts` and `project-validated.ts` — each carrying the same
+  wrong `height="25"` for a 524×132 asset, and each branching on the URL being
+  ABSENT rather than UNFETCHABLE. Three copies is three places to fix a rule
+  twice and miss once, which is exactly what happened: `E397` and `E400` both
+  fixed hardcoded dimensions elsewhere and none of them reached here.
+
+  ⚠ THESE TEMPLATES DO NOT USE `emailShell()` — they build their own table
+  scaffold, because they land in a stranger's inbox and are deliberately styled
+  as marketing assets rather than system notifications. That is why they had
+  their own copy at all. ⚠ ONLY THE LOGO BLOCK IS SHARED; their layout, copy and
+  footers are untouched, which is what the brief fences off.
+*/
+  const logo = logoBlock(logoUrl);
 
   const quoted = escapeHtml(message)
     .split("\n")
@@ -72,7 +93,7 @@ export function recommendationRequestTemplate({
 
   const html = `<!doctype html><html><body style="margin:0;padding:24px;background:#F7F7F5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:14px;overflow:hidden;">
-    <tr><td style="padding:28px 32px 0;">${logoBlock}</td></tr>
+    <tr><td style="padding:28px 32px 0;">${logo}</td></tr>
     <tr><td style="padding:20px 32px 0;">
       <h1 style="margin:0;font-size:21px;line-height:1.3;color:#272334;">Hi ${escapeHtml(contact)}, would you recommend ${escapeHtml(provider)}?</h1>
       <p style="margin:12px 0 0;font-size:15px;line-height:1.6;color:#4A4658;">
