@@ -735,7 +735,7 @@ async function sendPostedConfirmation(
       workRequestTitle: title,
       requesterCompany: person.company?.name ?? "your company",
       viewUrl: `${base}/work-requests/${workRequestId}/share`,
-      logoUrl: `${base}/brand/panameer-new-on-light.png`,
+      logoUrl: `${base}/brand/panameer-lockup-ink.png`,
     });
     await sendEmail({ to, subject, html, text });
   } catch (e) {

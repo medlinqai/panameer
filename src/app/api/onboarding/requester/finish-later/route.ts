@@ -74,7 +74,7 @@ export async function POST(request: Request) {
        stale if they resume elsewhere first. */
     resumeUrl: `${base}/join/requester/steps`,
     audience: "buyer",
-    logoUrl: `${base}/brand/panameer-new-on-light.png`,
+    logoUrl: `${base}/brand/panameer-lockup-ink.png`,
   });
 
   try {

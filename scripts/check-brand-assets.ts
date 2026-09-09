@@ -135,8 +135,18 @@ for (const f of HOTLINKED) {
     `${md5(path)} != ${HOTLINK_MD5[f]} — delivered mail just changed`
   );
 }
-/* ⚠ THE CALL SITES ARE STILL POINTING AT THEM, so the guard above is guarding
-   something live rather than an orphan. */
+/*
+  ── ⚠⚠ NOTHING POINTS AT THEM ANY MORE, AND THE MD5 PINS MATTER MORE FOR IT ──
+
+  ⚠ SUPERSEDED, quoted not deleted: *"⚠ THE CALL SITES ARE STILL POINTING AT
+  THEM, so the guard above is guarding something live rather than an orphan."*
+
+  `P1-ALL-E403` repointed the last seven senders to the v2 lockup, so the two
+  files above are now referenced by **no code at all** — only by mail that has
+  already been delivered. ⚠⚠ THAT MAKES THE MD5 PINS THE ONLY THING PROTECTING
+  THEM: an orphaned file is exactly what a cleanup deletes, and the damage would
+  show up nowhere except in somebody's old inbox. The pins stay forever.
+*/
 function walk(dir: string, out: string[] = []): string[] {
   for (const e of readdirSync(dir)) {
     if (e === "node_modules" || e === ".next" || e.startsWith(".")) continue;
@@ -165,11 +175,28 @@ const SRC = walk("src").map((p) => {
   const text = readFileSync(p, "utf8");
   return { path: p, text, code: stripComments(text) };
 });
-const hotlinkers = SRC.filter((f) => /logoUrl:\s*`\$\{[^`]*\}\/brand\/panameer-new-on-light\.png`/.test(f.text));
+/*
+  ⚠ SUPERSEDED, quoted: the senders were asserted to *"still hotlink the on-light
+  logo (7 call sites)"*. That pinned the status quo on purpose while the swap was
+  Scott's open question. He answered it on 2026-09-09, so the assertion now pins
+  the ANSWER instead: every sender is on the v2 lockup and none is on the old
+  mark. Same tripwire, pointed the other way.
+*/
+const oldMark = SRC.filter((f) =>
+  /logoUrl:\s*`\$\{[^`]*\}\/brand\/panameer-new-on-(light|dark)\.png`/.test(f.text)
+);
 check(
-  "3 — the email senders still hotlink the on-light logo (7 call sites)",
-  hotlinkers.length >= 6,
-  `${hotlinkers.length} files`
+  "3 — ABSENCE: no sender still hotlinks the OLD looped-P mark",
+  oldMark.length === 0,
+  oldMark.map((h) => h.path).join(", ")
+);
+const v2 = SRC.filter((f) =>
+  /logoUrl:\s*`\$\{[^`]*\}\/brand\/panameer-lockup-ink\.png`/.test(f.text)
+);
+check(
+  "3 — the email senders hotlink the v2 lockup (6 files)",
+  v2.length === 6,
+  `${v2.length} files: ${v2.map((h) => h.path).join(", ")}`
 );
 
 /* ═══ 4 · THE LOCKUPS THE APP RENDERS ═════════════════════════════════════

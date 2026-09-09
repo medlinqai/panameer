@@ -239,27 +239,60 @@ const SRC = walk("src");
   check("3 — the text footer prints the address", footerText(2026).includes(PANAMEER_ADDRESS));
 }
 
-/* ═══ 4 · WS-4 — THE SEVEN HOTLINKERS ARE UNCHANGED, PENDING SCOTT ═════════
-   ⚠⚠ NOT REPOINTED. The app renders the E397 lockups; email still renders the
-   old looped-P `panameer-new-on-light.png`. Repointing means mail sent today
-   does not match mail sent last week; not repointing means outgoing mail
-   misrepresents the product. That trade is Scott's and he has not answered.
-   ⚠ THIS PINS THE STATUS QUO so the decision is taken, not drifted into. */
+/* ═══ 4 · THE SEVEN HOTLINKERS ARE REPOINTED (`P1-ALL-E403`) ═══════════════
+
+   ⚠ SUPERSEDED, quoted not deleted, because it is the record of why this
+   waited: *"⚠⚠ NOT REPOINTED. The app renders the E397 lockups; email still
+   renders the old looped-P `panameer-new-on-light.png`. Repointing means mail
+   sent today does not match mail sent last week; not repointing means outgoing
+   mail misrepresents the product. That trade is Scott's and he has not
+   answered. ⚠ THIS PINS THE STATUS QUO so the decision is taken, not drifted
+   into."*
+
+   ⚠⚠ HE ANSWERED IT: repoint to the v2 lockup, NOT to `E397`'s
+   `panameer-lockup-on-light.png`, which `E400` superseded. So the same tripwire
+   now pins the answer — and §2 above is what made the swap safe, because the
+   height is derived from the file rather than carried over. */
 {
-  const hotlinkers = SRC.filter((f) =>
-    /logoUrl:\s*`\$\{[^`]*\}\/brand\/panameer-new-on-light\.png`/.test(f.code)
+  const oldMark = SRC.filter((f) =>
+    /logoUrl:\s*`\$\{[^`]*\}\/brand\/panameer-new-on-(light|dark)\.png`/.test(f.code)
   );
   check(
-    "4 — the email senders still hotlink the OLD mark (6 files / 7 call sites)",
-    hotlinkers.length === 6,
-    `${hotlinkers.length} files: ${hotlinkers.map((h) => h.path).join(", ")}`
+    "4 — ABSENCE: no sender hotlinks the OLD looped-P mark",
+    oldMark.length === 0,
+    oldMark.map((h) => h.path).join(", ")
+  );
+  /* ⚠ AND NOT THE E397 LOCKUP EITHER. It is superseded, it is a different
+     aspect (4.85 vs 5.91), and pointing email at it would be a second wrong
+     mark rather than the current one. */
+  const superseded = SRC.filter((f) =>
+    /logoUrl:\s*`\$\{[^`]*\}\/brand\/panameer-lockup-on-(light|dark)\.png`/.test(f.code)
+  );
+  check(
+    "4 — ABSENCE: no sender hotlinks the superseded E397 lockup",
+    superseded.length === 0,
+    superseded.map((h) => h.path).join(", ")
+  );
+  const v2 = SRC.filter((f) =>
+    /logoUrl:\s*`\$\{[^`]*\}\/brand\/panameer-lockup-ink\.png`/.test(f.code)
+  );
+  check(
+    "4 — the email senders hotlink the v2 lockup (6 files)",
+    v2.length === 6,
+    `${v2.length} files: ${v2.map((h) => h.path).join(", ")}`
   );
   const sites = SRC.reduce(
-    (n, f) =>
-      n + [...f.code.matchAll(/\/brand\/panameer-new-on-light\.png`/g)].length,
+    (n, f) => n + [...f.code.matchAll(/\/brand\/panameer-lockup-ink\.png`/g)].length,
     0
   );
   check("4 — exactly 7 call sites", sites === 7, `${sites}`);
+  /* ⚠⚠ AND THE MARK THE SENDERS NAME MUST BE IN THE INTRINSIC TABLE, or §2's
+     derivation silently drops the height attribute on every email. This is the
+     assertion that ties the repoint to the geometry. */
+  check(
+    "4 — the repointed mark has a measured intrinsic size",
+    "panameer-lockup-ink.png" in EMAIL_LOGO_INTRINSIC
+  );
 }
 
 /* ═══ REPORT ══════════════════════════════════════════════════════════════ */

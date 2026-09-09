@@ -81,7 +81,7 @@ export async function POST(
       processName: PROCESS_NAMES[process] ?? process,
       /* Re-enters the flow at the questions step for THAT process (WS-E). */
       assessUrl: `${appBaseUrl()}/assess?process=${process}&from=${shareToken}`,
-      logoUrl: `${appBaseUrl()}/brand/panameer-new-on-light.png`,
+      logoUrl: `${appBaseUrl()}/brand/panameer-lockup-ink.png`,
     });
     await sendEmail({ to: email, subject: tpl.subject, html: tpl.html, text: tpl.text });
   } catch (e) {

@@ -298,7 +298,7 @@ export async function POST(req: Request) {
         companyName: a.company_name,
         processName: b.process === "P2P" ? "Procurement" : b.process,
         reportUrl: url,
-        logoUrl: `${appBaseUrl()}/brand/panameer-new-on-light.png`,
+        logoUrl: `${appBaseUrl()}/brand/panameer-lockup-ink.png`,
       });
       await sendEmail({ to: email, subject: tpl.subject, html: tpl.html, text: tpl.text });
       emailSent = true;

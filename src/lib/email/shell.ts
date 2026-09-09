@@ -111,6 +111,27 @@ export function escapeHtml(s: string): string {
  * when the aspect changed. Deriving is what stops a fourth.
  */
 export const EMAIL_LOGO_INTRINSIC: Record<string, { w: number; h: number }> = {
+  /*
+    ── ⚠ THE MARK EMAIL RENDERS TODAY (`P1-ALL-E403`) ────────────────────────
+
+    The v2 lockup `E400` shipped to the app. Email was the LAST surface still on
+    the old looped-P, and this is the row that made repointing safe: the height
+    below is derived from these numbers, so the swap could not squash the mark.
+    ⚠⚠ ITS ASPECT IS 5.91, NOT 3.97 — at the same 180px width the mark renders
+    **30px tall instead of 45**, because v2 is a much wider, flatter lockup. That
+    is arithmetic, not a bug; see the report for what it means visually.
+  */
+  "panameer-lockup-ink.png": { w: 1642, h: 278 },
+  /* The white-on-dark twin. Same geometry; no email uses it yet. */
+  "panameer-lockup-white.png": { w: 1642, h: 278 },
+  /*
+    ⚠⚠ THE OLD MARK STAYS IN THIS TABLE, AND IT IS NOT DEAD CODE. Mail ALREADY
+    DELIVERED hotlinks these two URLs and will render them for as long as those
+    messages exist in somebody's inbox. `check:brand-assets` pins both files by
+    MD5 for exactly that reason. Removing the rows would not delete the files —
+    it would only stop the height being derived if anything ever pointed here
+    again.
+  */
   "panameer-new-on-light.png": { w: 524, h: 132 },
   "panameer-new-on-dark.png": { w: 529, h: 134 },
 };
