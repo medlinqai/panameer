@@ -10,6 +10,7 @@ import {
   identityVisibility,
 } from "@/lib/plus";
 import { experienceLabel } from "@/lib/experience";
+import { isRecruiterProfile } from "@/lib/onboarding";
 
 /**
  * The full provider Profile View (brief_S / E037) — the Upwork-style page that
@@ -294,6 +295,27 @@ export async function getProviderProfileView(
       remoteCents: profile.remote_rate_cents,
     },
     serviceFeeBps: profile.service_fee_bps,
+    /*
+      ── ⚠⚠ A RECRUITER DOES NOT BILL AN HOURLY RATE (`P1-A1.3-E401` WS-2) ─────
+
+      SCOTT: *"we are asking recruiters for their rate (they don't bill, they
+      present providers who bill...they make a piece)."*
+
+      ⚠ THE EXISTING TEST, NOT A SECOND ONE. `isRecruiterProfile()` is the
+      discriminator `stepsForProfile()` already uses to keep a recruiter out of
+      the `rate` STEP; the profile VIEW simply never asked it. Before this,
+      NEITHER this file NOR `ProviderProfileView.tsx` contained the string
+      `RECRUITER` or `isRecruiter` anywhere — the wizard knew and the page did
+      not.
+
+      ⚠ THE STORED FIGURES ARE LEFT ALONE. `rates` above still carries whatever
+      the row holds: this is a RENDERING rule, and a profile that is re-typed
+      back to HOURLY must show the rate it always had rather than a column
+      somebody blanked. ⚠⚠ AND NOTHING IS SUBSTITUTED IN ITS PLACE — what a
+      recruiter shows instead (a placement fee, a spread, nothing at all) is
+      Scott's product decision and he has not made it. Reported, not invented.
+    */
+    isRecruiter: isRecruiterProfile(profile),
     rating: profile.rating === null ? null : Number(profile.rating),
 
     verifications: {
