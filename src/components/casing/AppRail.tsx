@@ -323,9 +323,13 @@ export function AppRail() {
 
         ⚠ `alt="Panameer"` IS UNCHANGED — the lockup is still the wordmark and the
         accessible name has not moved.
-        ⚠ THE OLD `panameer-new-on-dark.png` SURVIVES, UNTOUCHED: seven email and
-        API callers hotlink it in ALREADY-DELIVERED MAIL, and overwriting it would
-        silently restyle mail somebody received last month.
+        ⚠ THE OLD `panameer-new-on-dark.png` SURVIVES, UNTOUCHED — and since
+        `P1-ALL-E403` NOTHING IN THE CODE POINTS AT IT ANY MORE. ⚠ SUPERSEDED,
+        quoted: *"seven email and API callers hotlink it"* — those seven were
+        repointed to the v2 lockup. ⚠⚠ THAT MAKES IT **MORE** IMPORTANT, NOT
+        LESS: an asset nothing references is what a cleanup deletes, and the only
+        thing still rendering it is mail somebody already received. Overwriting
+        or removing it silently restyles a message from last month.
       */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img

@@ -136,8 +136,29 @@ export const EMAIL_LOGO_INTRINSIC: Record<string, { w: number; h: number }> = {
   "panameer-new-on-dark.png": { w: 529, h: 134 },
 };
 
-/** The rendered width of the mark in the email header. */
-export const EMAIL_LOGO_WIDTH = 180;
+/**
+ * The rendered width of the mark in the email header.
+ *
+ * ── ⚠⚠ 265, NOT 180 — PRESERVE THE SIZE, NOT THE NUMBER (`P1-ALL-E403`) ────
+ *
+ * ⚠ SUPERSEDED, quoted not deleted: `export const EMAIL_LOGO_WIDTH = 180;`
+ *
+ * 180 was chosen against the OLD mark, whose aspect was 3.97 — it produced a
+ * lockup **45px tall**. The v2 asset is 5.91, so the same 180 renders **30px**:
+ * the number survived the swap and the SIZE somebody actually chose did not.
+ * 265 × 278 ÷ 1642 ≈ 45, which puts the mark back where it was.
+ *
+ * ⚠⚠ THIS IS THE CALL `E400` ALREADY MADE IN THE MARKETING HEADER — `h-10` → `h-8`
+ * when the same aspect change made the lockup too tall there. Same asset, same
+ * reasoning, opposite direction, because email sizes by WIDTH and the header
+ * sizes by HEIGHT.
+ *
+ * ⚠ THE HEIGHT IS STILL DERIVED FROM THE FILE. Nothing here types 45 — it is
+ * arithmetic on `EMAIL_LOGO_INTRINSIC`, which `check:email-shell` pins against
+ * the PNG's IHDR header. Changing this constant moves the height automatically,
+ * which is the whole reason the derivation exists.
+ */
+export const EMAIL_LOGO_WIDTH = 265;
 
 /** The text wordmark shown whenever the image cannot be relied on to load. */
 const WORDMARK = `<div style="font-size:22px;font-weight:800;letter-spacing:-.5px;color:${EMAIL_COLORS.ink};">Panameer</div>`;

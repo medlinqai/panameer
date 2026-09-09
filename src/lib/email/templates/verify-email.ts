@@ -36,8 +36,17 @@ export function verifyEmailTemplate({
   audience?: VerifyAudience;
   /**
    * Absolute URL of the logo. Email clients cannot resolve relative paths, so
-   * the caller passes `${appBaseUrl()}/brand/panameer-new-on-light.png`.
-   * Falls back to the wordmark when absent so the email is never broken.
+   * the caller passes `${appBaseUrl()}/brand/panameer-lockup-ink.png`.
+   *
+   * ⚠ SUPERSEDED, quoted not deleted (`P1-ALL-E403`): this said
+   * `panameer-new-on-light.png` — the old looped-P mark. The senders were
+   * repointed to the v2 lockup and this line was not, which is exactly the kind
+   * of comment that sends the next reader looking for a caller that no longer
+   * exists.
+   *
+   * ⚠ FALLS BACK TO THE TEXT WORDMARK WHEN THE URL IS ABSENT **OR
+   * UNREACHABLE** (`P1-ALL-E402`) — a dev `localhost` URL is present and
+   * unfetchable, which is the case the old "when absent" wording missed.
    */
   logoUrl?: string;
 }): { subject: string; html: string; text: string } {

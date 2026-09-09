@@ -149,9 +149,10 @@ const SRC = walk("src");
   /* ⚠ THE NUMBER THAT SHIPPED WAS 25 AND THE ANSWER IS 45. Pinned as arithmetic
      on the measured file, not as a second typed constant: if the asset changes,
      §2 above fails first and this follows the file. */
-  const light = EMAIL_LOGO_INTRINSIC["panameer-new-on-light.png"];
+  /* ⚠ THE MARK EMAIL ACTUALLY RENDERS — the v2 lockup since `E403`. */
+  const light = EMAIL_LOGO_INTRINSIC["panameer-lockup-ink.png"];
   const expected = Math.round((EMAIL_LOGO_WIDTH * light.h) / light.w);
-  const html = logoBlock("https://panameer.com/brand/panameer-new-on-light.png");
+  const html = logoBlock("https://panameer.com/brand/panameer-lockup-ink.png");
   check(
     `2 — the on-light mark renders height="${expected}"`,
     html.includes(`height="${expected}"`),
@@ -161,15 +162,33 @@ const SRC = walk("src");
     "2 — ABSENCE: the wrong height 25 is gone from the rendered block",
     !html.includes('height="25"')
   );
-  /* ⚠⚠ THE TWO MARKS ARE NOT THE SAME SHAPE (524×132 vs 529×134), so one
-     hardcoded height was always wrong for one of them. This is the assertion
-     that the derivation is PER-ASSET rather than a single shared number. */
-  const darkHtml = logoBlock("https://panameer.com/brand/panameer-new-on-dark.png");
-  const dark = EMAIL_LOGO_INTRINSIC["panameer-new-on-dark.png"];
+  /*
+    ── ⚠⚠ THE DERIVATION IS PER-ASSET, PROVED ON TWO GENUINELY DIFFERENT SHAPES ─
+
+    ⚠ SUPERSEDED, quoted not deleted: this compared `panameer-new-on-dark.png`
+    (529×134) against `panameer-new-on-light.png` (524×132) and required the two
+    heights to DIFFER. ⚠⚠ THOSE ASPECTS ARE 3.948 AND 3.970 — practically the
+    same shape, so the assertion only ever passed because 180px happened to round
+    them to 46 and 45. `E403` moved the width to 265 and both rounded to 67, and
+    a real assertion failed on a coincidence.
+
+    ⚠ SO IT NOW COMPARES SHAPES THAT ARE ACTUALLY DIFFERENT — the v2 lockup
+    (5.91) against the old mark (3.97). That is the property being tested: the
+    height follows the ASSET, not a single shared number. It cannot be satisfied
+    by rounding luck at any width.
+  */
+  const oldMark = EMAIL_LOGO_INTRINSIC["panameer-new-on-light.png"];
+  const oldHeight = Math.round((EMAIL_LOGO_WIDTH * oldMark.h) / oldMark.w);
+  const oldHtml = logoBlock("https://panameer.com/brand/panameer-new-on-light.png");
   check(
-    "2 — the on-dark mark derives its OWN height, and it differs",
-    darkHtml.includes(`height="${Math.round((EMAIL_LOGO_WIDTH * dark.h) / dark.w)}"`) &&
-      Math.round((EMAIL_LOGO_WIDTH * dark.h) / dark.w) !== expected
+    "2 — the old mark derives its OWN height from its OWN aspect",
+    oldHtml.includes(`height="${oldHeight}"`),
+    oldHtml.match(/height="\d+"/)?.[0] ?? "none"
+  );
+  check(
+    "2 — ⚠ the v2 lockup and the old mark render DIFFERENT heights at one width",
+    oldHeight !== expected,
+    `both ${expected}`
   );
   /* ⚠ AN UNRECOGNISED ASSET EMITS NO HEIGHT rather than a guessed one. */
   check(
