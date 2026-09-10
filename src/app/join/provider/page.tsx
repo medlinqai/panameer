@@ -1724,7 +1724,32 @@ setScreen(target);
       NEW answer implies. ⚠ THE ROUTER'S `!workMethod` GUARD IS UNAFFECTED: this
       is a person navigating deliberately, not a URL re-typing them.
     */
-    onBack: stepIndex > 0 ? goBack : () => setScreen("work_method"),
+    /*
+      ── ⚠⚠ BACK HONOURS `returnToReview` FIRST (`P1-A1.4-E411` WS-1) ──────────
+
+      ⚠ SUPERSEDED, quoted not deleted (`E406` WS-3):
+          `onBack: stepIndex > 0 ? goBack : () => setScreen("work_method"),`
+
+      ⚠⚠ THAT WAS RIGHT FOR THE COUNTED STEPS AND WRONG FOR `tell_us`. `tell_us`
+      is UNCOUNTED, so `stepIndex` is -1 and the expression fell through to the
+      `work_method` branch — meaning somebody who reached the editor from the
+      review's Edit link and pressed Back landed on *"How Do You Work?"* instead
+      of the review they came from. ⚠ Before `E406` the same case did NOTHING at
+      all (`goBack` returns early when `stepIndex <= 0`), which is why Scott
+      *"had to refresh to get them back"*.
+
+      ⚠ `goNext` HAS HONOURED THIS FLAG SINCE `E118` — *"an edit that came FROM
+      the review goes back to it, once."* Back simply never learned the same
+      rule, so the two halves of one round trip disagreed.
+    */
+    onBack: returnToReview
+      ? () => {
+          setReturnToReview(false);
+          goTo("finish");
+        }
+      : stepIndex > 0
+        ? goBack
+        : () => setScreen("work_method"),
     canBack: true,
     ...props,
   });
@@ -3687,7 +3712,45 @@ setScreen(target);
         One verb per state, applied everywhere, so the affordance describes what
         the click actually does.
       */
-      const sectionAction = (title: string, step: Step, isEmpty: boolean) => (
+      /*
+        ── ⚠⚠ EDIT HAS TO OPEN EDIT MODE, NOT JUST NAVIGATE (`P1-A1.4-E411`) ────
+
+        ⚠ SUPERSEDED, quoted not deleted — this helper set `returnToReview` and
+        called `goTo(step)` and NOTHING ELSE:
+
+            onClick={() => { setReturnToReview(true); goTo(step); }}
+
+        ⚠⚠ ON `tell_us` THAT LANDS ON THE READ-ONLY SCREEN. That step renders
+        `editingWork ? <EmployersStep …> : <WorkHistoryBody …>`, so an Edit link
+        that never sets `editingWork` shows the read-only body — which draws
+        employers and **no solo-projects surface at all**.
+
+        SCOTT: *"the projects are not attached to the providers, they are solo.
+        so, i wanted to click edit and see if i could link them. then the whole
+        projects thing disappeared… I had to refresh to get them back."* ⚠ They
+        did not disappear; the screen that shows them was never opened.
+
+        ⚠⚠ AND IT BLOCKED `E410`'s DESIGN. That brief routes engagements to
+        Project rows and deliberately invents no parent, on the stated grounds
+        that *"`moveProject` already exists for the person to place it."*
+        `EmployersStep` is the ONLY place that affordance lives — the flat
+        `projects` list, `unplaced`, and the "Pick where each one belongs"
+        section. If it never renders, an unplaced project cannot be attached from
+        anywhere in the wizard.
+
+        ⚠ THE FLAG IS PER-CALL, NOT BLANKET. Of the five callers only two target
+        `tell_us` (Work History and Solo Projects); Skills → `catalog`,
+        Specializations → `specializations` and Education → `education` have no
+        edit mode, and handing them a flag that means nothing there is how a prop
+        starts lying. ⚠ THE SHAPE IS COPIED FROM `AiPassPanel`'s `onManual`,
+        which already does exactly this.
+      */
+      const sectionAction = (
+        title: string,
+        step: Step,
+        isEmpty: boolean,
+        opensEditor = false
+      ) => (
         <EditButton
           title={title}
           label={isEmpty ? `Add ${title}` : "Edit"}
@@ -3695,6 +3758,7 @@ setScreen(target);
           onClick={() => {
             setReturnToReview(true);
             goTo(step);
+            if (opensEditor) setEditingWork(true);
           }}
         />
       );
@@ -3753,7 +3817,16 @@ setScreen(target);
                 one that survives, because it is the one that does something,
                 and the hero's "Edit overview" button already scrolls to it.
               */
-              overview={null}
+              /*
+                ⚠ SUPERSEDED, quoted not deleted (`P1-A1.4-E411` WS-2):
+                    `overview={null}`
+                ⚠⚠ `null` MEANT "HE HAS NONE" TO THE HERO, so it printed *"No
+                overview yet."* directly above the card holding 420 characters of
+                his text. `E205`'s reasoning above is unchanged and still right —
+                the overview is NOT rendered twice. What changed is that the hero
+                is now TOLD which of the two things is meant.
+              */
+              overviewShownElsewhere
               rateMinCents={profile.rateMinCents ?? profile.hourlyRateCents}
               rateMaxCents={profile.rateMaxCents ?? profile.hourlyRateCents}
               youGetCents={youGet}
@@ -3859,10 +3932,13 @@ setScreen(target);
                         if (r.ok) hydrate(await r.json());
                       }}
                     />
+                    {/* ⚠ `true` — `tell_us` renders the read-only body unless
+                        edit mode is on (`E411`). */}
                     {sectionAction(
                       "Work History",
                       "tell_us",
-                      profile.employers.length === 0
+                      profile.employers.length === 0,
+                      true
                     )}
                   </span>
                 }
@@ -3923,7 +3999,13 @@ setScreen(target);
             <div className="mt-5 grid gap-5 lg:grid-cols-2">
               <ProfileCard
                 title="Solo Projects"
-                edit={sectionAction("Solo Projects", "tell_us", soloProjects.length === 0)}
+                /* ⚠ `true` — this is the ONLY route to the placement UI (`E411`). */
+                edit={sectionAction(
+                  "Solo Projects",
+                  "tell_us",
+                  soloProjects.length === 0,
+                  true
+                )}
               >
                 <SoloProjectsBody
                   projects={soloProjects}

@@ -2178,14 +2178,6 @@ model Certification {
    * when that person is erased the attestation has no subject. A credential that
    * outlived its holder would be a public record of someone who asked to be
    * removed.
-   */
-  /**
-   * /**
-   * /**
-   * /**
-   * /**
-   * /**
-   * /**
    * ⚠⚠ REQUIRED, NOT `User?`, AND THE `?` WAS A REAL DEFECT (`P1-J3-E028`).
    * `user_id String @db.Uuid` above is NOT NULL and so is the FK. Prisma accepts an
    * optional relation field over a required scalar without complaint, and then

@@ -18,6 +18,7 @@
     "storage:setup": "ts-node --project tsconfig.seed.json prisma/setup-storage.ts",
     "postinstall": "prisma generate",
     "db:migrate-work-history": "ts-node --project tsconfig.seed.json prisma/migrate-work-history.ts",
+    "check:review-edit": "npx esbuild scripts/check-review-edit.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/review-edit.cjs --log-level=error && node .harness/review-edit.cjs",
     "check:resume-review": "npx esbuild scripts/check-resume-review.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/resume-review.cjs --log-level=error && node .harness/resume-review.cjs",
     "check:resume": "npx esbuild src/lib/resume/check-fixtures.ts --bundle --platform=node --format=cjs --packages=external --outfile=.harness/check-resume.cjs --log-level=error && node .harness/check-resume.cjs",
     "seed:learn": "ts-node --project tsconfig.seed.json prisma/seed-learn-run.ts",

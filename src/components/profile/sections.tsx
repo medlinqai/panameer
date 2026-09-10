@@ -259,6 +259,7 @@ export function ProfileHero({
   photoUrl,
   headline,
   overview,
+  overviewShownElsewhere = false,
   validated = false,
   mentor = null,
   rateMinCents,
@@ -276,6 +277,35 @@ export function ProfileHero({
   photoUrl?: string | null;
   headline?: string | null;
   overview?: string | null;
+  /**
+   * ── ⚠⚠ "NOT SHOWN HERE" IS NOT "HE HASN'T WRITTEN ONE" (`P1-A1.4-E411` WS-2) ─
+   *
+   * SCOTT: *"Why is there still two overviews… image 1 and image two are
+   * overviews."* The review screen's hero read **"No overview yet."** directly
+   * above a card showing **420/600** of his own text.
+   *
+   * ⚠ ONE VALUE CARRIED TWO MEANINGS. `E205` deliberately passes
+   * `overview={null}` on the review page — *"a 600-character paragraph rendered
+   * twice… was the single largest block of duplicated height"* — and the empty
+   * state fires on any falsy value. So a caller saying **don't render it** got a
+   * caller saying **he has none**, and the screen stated the false one.
+   *
+   * ⚠⚠ THIS IS `P1-A1.4-E399`'s DEFECT IN A NEW FORM. That one fixed a field with
+   * two NAMES on screen at once — *"the empty state read 'No overview yet' while
+   * the button beside it read 'Edit bio'."* This is the same field with two
+   * VALUES on screen at once. Same screen, same field, same class of bug.
+   *
+   * ⚠ SO THE CALLER SAYS WHICH IT MEANS. `true` = this surface renders the
+   * overview elsewhere, so draw nothing here — no text AND no empty line.
+   * ⚠⚠ IT DEFAULTS TO `false`, WHICH FAILS SAFE: a caller that forgets it shows
+   * the overview, and the worst case is `E205`'s duplication rather than a
+   * provider's paragraph silently vanishing from their published profile.
+   * ⚠ `undefined`-means-omit WAS THE OTHER CANDIDATE and was rejected for exactly
+   * that reason — a forgotten prop would hide real text.
+   * ⚠ THE "Edit overview" BUTTON IS UNAFFECTED; `E205` says it should scroll to
+   * the editable copy either way.
+   */
+  overviewShownElsewhere?: boolean;
   validated?: boolean;
   /**
    * ⚠ THE MENTOR BADGE, SHIPPED DARK ON PURPOSE (brief_community_signal WS3).
@@ -327,7 +357,9 @@ export function ProfileHero({
           <p className="mt-2 text-[19px] leading-snug text-ink">
             {headline || "Add a professional title"}
           </p>
-          {overview ? (
+          {/* ⚠ THREE STATES, NOT TWO (`E411` WS-2): text · genuinely empty ·
+              rendered elsewhere. The third draws nothing at all. */}
+          {overviewShownElsewhere ? null : overview ? (
             <div className="mt-3">
               <RichText
                 text={overview}
