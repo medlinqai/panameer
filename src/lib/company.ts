@@ -28,7 +28,10 @@ import type { TaxType } from "@prisma/client";
 
 export type DefineInput = {
   name: string;
-  taxType: TaxType;
+  /* ⚠ OPTIONAL SINCE `P1-A1.4-E408` — the company form no longer asks for a
+     business type; `api/settings/tax` collects `classification` at the payment
+     gate instead. ⚠ SUPERSEDED, quoted: `taxType: TaxType;` */
+  taxType?: TaxType | null;
   /** Jurisdiction (`E260`) — a full country name from `COUNTRIES`, not an ISO code. */
   country?: string | null;
   /** `E282` — the US state the company was filed in. Full name, not a code. */
@@ -269,7 +272,8 @@ export async function defineCompany(viewer: Viewer, input: DefineInput) {
     data: {
       name,
       legal_name: name,
-      tax_type: input.taxType,
+      /* ⚠ NULL UNTIL THE PAYMENT GATE (`E408`). The column is already nullable. */
+      tax_type: input.taxType ?? null,
       /* `E260` — jurisdiction, stored as the full country name. */
       country: input.country?.trim() || null,
       /* `E282` — nullable and back-fills nothing; existing companies predate it. */

@@ -257,6 +257,25 @@ export async function getRequesterState(viewer: Viewer) {
       /**
        * The bound company has a `tax_type`, i.e. somebody actually DEFINED it
        * rather than binding to a bare placeholder. Null when unbound.
+       *
+       * ── ⚠⚠ THIS READS `false` FOR EVERY COMPANY CREATED AFTER `P1-A1.4-E408` ─
+       *
+       * `E408` stripped Business Type off the company form, so `tax_type` is
+       * never written at signup and stays null until the payment gate collects
+       * `classification` (`api/settings/tax/route.ts`).
+       *
+       * ⚠ IT IS SAFE **ONLY BECAUSE NOTHING READS IT.** Measured 2026-09-10:
+       * `state.company.defined` has exactly one other occurrence in the repo —
+       * the SUPERSEDED QUOTE at line ~599 of this file, inside the block `E274`
+       * removed. No gate, no screen, no API consumes it. ⚠ `check:company-binding`
+       * asserts the COMPUTATION, not the value, so it stays green.
+       *
+       * ⚠⚠ SO DO NOT START READING IT WITHOUT FIXING IT FIRST. A surface that
+       * showed "your company is incomplete" from this flag would tell every new
+       * company it is missing a field the form no longer asks for — the `E405`
+       * dead-end repeating, and the reason `E408` WS-2b called it the sharpest
+       * edge in the brief. Either drop the `tax_type` dependency or ask the
+       * question again; do not display it as it stands.
        */
       defined: membership ? membership.company.tax_type !== null : false,
       name: membership?.company.name ?? null,
