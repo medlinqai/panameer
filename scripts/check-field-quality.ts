@@ -96,7 +96,25 @@ check(
   "the component imports usZip() now"
 );
 check("1 — the route imports the shared validator", /from ["']@\/lib\/field-formats["']/.test(route));
-check("1 — the component imports the shared validator", /from ["']@\/lib\/field-formats["']/.test(step));
+/*
+  ── ⚠⚠ SUPERSEDED BY `P1-A1.4-E408`, QUOTED NOT DELETED ─────────────────────
+
+  `E408` stripped `CompanyStep` to three fields — company name, country, website
+  — on Scott's instruction (*"Get rid of all that extra requesting"*). The EIN
+  input and the registered address (and with it the US ZIP) left the form, and
+  their code is COMMENTED IN PLACE per `E164`, not deleted.
+
+  ⚠ SO THESE THREE ASSERTIONS NOW GUARD A FIELD THAT IS NOT RENDERED. They were
+  right — one validator, one message, no second copy — and that rule still binds
+  the ROUTE, which still validates both. What changed is that the component no
+  longer asks.
+
+  ⚠⚠ THEY ARE NOT DELETED. When the payment gate takes these questions
+  (`api/settings/tax`), whichever component asks them must import the shared
+  validator and render the shared constants — so the rule is re-pointed, not
+  dropped. ⚠ THE ROUTE-SIDE ASSERTIONS ABOVE ARE UNTOUCHED and still pass.
+*/
+// check("1 — the component imports the shared validator", /from ["']@\/lib\/field-formats["']/.test(step));
 check(
   "1 — the route still refuses a bad ZIP (the check was moved, not dropped)",
   /usZip\s*\(/.test(route)
@@ -140,8 +158,13 @@ for (const [name, body] of [["the route", route], ["the component", step]] as co
     "import US_ZIP_MESSAGE instead"
   );
 }
-check("2 — the component renders the shared ZIP constant", /US_ZIP_MESSAGE/.test(step));
-check("2 — the component renders the shared EIN constant", /EIN_MESSAGE/.test(step));
+/* ⚠ SUPERSEDED BY `P1-A1.4-E408` — see the block above §1. The ZIP and EIN
+   inputs left `CompanyStep` with the registered address and the business type;
+   their code is commented in place (`E164`), and the constants are still
+   asserted on the ROUTE, which still validates both. Quoted, not deleted:
+     check("2 — the component renders the shared ZIP constant", /US_ZIP_MESSAGE/.test(step));
+     check("2 — the component renders the shared EIN constant", /EIN_MESSAGE/.test(step));
+*/
 check("2 — the ZIP message is non-empty and names the format", /ZIP/.test(US_ZIP_MESSAGE) && US_ZIP_MESSAGE.length > 20);
 check("2 — the EIN message names the format", /9 digits/.test(EIN_MESSAGE));
 check(

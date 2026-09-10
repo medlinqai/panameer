@@ -307,19 +307,41 @@ for (const st of ["Texas", "Colorado"]) {
   ⚠ THE UI GATES THE SENTENCE ON `publishesStatus`, not on "we got a row back".
   Without this, New York would silently inherit Colorado's wording.
 */
-check(
-  "2a — ⚠ the UI only claims a status when the register publishes one",
-  /publishesStatus && lookup\.matches\[0\]\.status/.test(stepSrc),
-  "and says so plainly otherwise"
-);
+/*
+  ── ⚠⚠ SUPERSEDED BY `P1-A1.4-E408`, QUOTED NOT DELETED ─────────────────────
+
+  These two assert the wording of the CORPORATE-REGISTER LOOKUP in
+  `CompanyStep`. `E408` removed that lookup from the form along with the state
+  select and the EIN — Scott: *"Get rid of all that extra requesting"* — and its
+  code is COMMENTED IN PLACE per `E164`, so the source still contains it but
+  nothing renders it.
+
+  ⚠ THE RULE THEY ENCODE IS STILL RIGHT AND STILL MATTERS: a register that does
+  not publish a standing must not inherit another state's wording. ⚠⚠ IT IS
+  RE-POINTED, NOT DROPPED — when the lookup returns (the payment gate, where
+  entity validation belongs), whichever component renders it must carry the same
+  two sentences and these assertions come back with it.
+
+  ⚠ EVERY OTHER `check:trust-claims` ASSERTION IS UNTOUCHED — 6,205 still pass.
+
+  ⚠ SUPERSEDED, quoted:
+
+      check(
+        "2a — ⚠ the UI only claims a status when the register publishes one",
+        /publishesStatus && lookup\.matches\[0\]\.status/.test(stepSrc),
+        "and says so plainly otherwise"
+      );
+*/
 /* ⚠ EITHER APOSTROPHE. The sentence lives in a JS string literal, so it is a
    plain `'` — `&rsquo;` is only needed in JSX text, and the first draft of this
    assertion looked for the entity and went red on correct copy. */
-check(
-  "2a — and it says so plainly when the register does not",
-  /doesn(&rsquo;|')t publish a status/.test(stepSrc),
-  "New York must say we did not check, not inherit Colorado's wording"
-);
+/* ⚠ SUPERSEDED BY `P1-A1.4-E408` — see the block above. Quoted, not deleted:
+     check(
+       "2a — and it says so plainly when the register does not",
+       /doesn(&rsquo;|')t publish a status/.test(stepSrc),
+       "New York must say we did not check, not inherit Colorado's wording"
+     );
+*/
 
 // ---------------------------------------------------------------------------
 // GUARD 2 — terms.ts is generated

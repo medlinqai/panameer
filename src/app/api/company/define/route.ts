@@ -38,14 +38,37 @@ const nameOnlySchema = z.object({
 
 const defineSchema = z.object({
   name: z.string().trim().min(2).max(200),
-  taxType: z.enum([
-    "C_CORP",
-    "S_CORP",
-    "LLC",
-    "PARTNERSHIP",
-    "SOLE_PROP_INDIVIDUAL",
-    "NONPROFIT",
-  ]),
+  /*
+    ── ⚠⚠ OPTIONAL SINCE `P1-A1.4-E408` — THE FORM NO LONGER ASKS ────────────
+
+    ⚠ SUPERSEDED, quoted not deleted: this was a bare required `z.enum([...])`,
+    and the docblock above still explains why — *"`taxType` stays REQUIRED for a
+    define… Do not widen `companyValid` to make the existing submit fire."*
+
+    ⚠⚠ THAT REASONING WAS RIGHT WHILE THE FORM ASKED THE QUESTION. `E408`
+    removed Business Type from `CompanyStep` on Scott's instruction (*"Get rid of
+    all that extra requesting"*), so requiring it here does not enforce
+    completeness — it makes the route UNUSABLE. Measured in the browser: every
+    define returned **400** until this changed, which is the `E405` defect class
+    exactly (a client and its server allow-list disagreeing about one field).
+
+    ⚠ THE QUESTION IS NOT DROPPED, IT MOVED. `api/settings/tax/route.ts` collects
+    `classification` — the same six values — before any money moves, which is
+    Scott's *"we will validate it and get the necessary details when and if they
+    are getting paid or paying."*
+    ⚠ AND `Company.tax_type` STAYS NULLABLE, so nothing downstream changes shape;
+    see WS-2b's note on `company.defined` in `lib/requester-onboarding.ts`.
+  */
+  taxType: z
+    .enum([
+      "C_CORP",
+      "S_CORP",
+      "LLC",
+      "PARTNERSHIP",
+      "SOLE_PROP_INDIVIDUAL",
+      "NONPROFIT",
+    ])
+    .nullish(),
   /* `E260`/`E260a` — jurisdiction, derived from the registered address's country. */
   country: z.string().trim().max(80).nullish(),
   /*
