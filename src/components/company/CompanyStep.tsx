@@ -468,7 +468,39 @@ export function CompanyStep({
               : {
                   name: name.trim(),
                   taxType,
-                  /* `E280` — jurisdiction IS the registered address's country. */
+                  /*
+                    `E280` — jurisdiction IS the registered address's country.
+
+                    ── ⚠⚠ THIS FIELD IS A POSTING GATE. DO NOT REMOVE THE ADDRESS
+                       WITHOUT REPLACING IT (`P1-A1.4-E408`, MEASURED 2026-09-10)
+
+                    `E408` proposed stripping this step to a name and a website,
+                    which would delete `regAddress` and leave `Company.country`
+                    NULL on every newly-defined company. ⚠ MEASURED: `country`
+                    is not merely displayed —
+
+                        identity-bar.ts:60   WORK_REQUEST_BAR includes
+                                             "companyCountry"
+                        work-request-identity.ts:360
+                                             companyCountry: company?.country
+                        work-request-identity.ts:269
+                                             "Add your company's country"
+
+                    — so `missingIdentityForPost` REFUSES TO POST A WORK REQUEST
+                    without it. ⚠⚠ A buyer whose company was created after the
+                    strip would be silently unable to post, and the failure would
+                    look like a broken filter rather than a missing field.
+
+                    ⚠ AND THE REMEDIATION LINK IS ALREADY BROKEN: five hrefs —
+                    `identity-bar.ts:265/270/275`, `work-request-identity.ts:260/266`
+                    — point at `/settings/company`, and THERE IS NO SUCH PAGE.
+                    A blocked buyer is sent to a 404 today.
+
+                    ⚠ SO THE COUNTRY QUESTION HAS TO SURVIVE THE STRIP IN SOME
+                    FORM, or the posting bar has to change — and that bar is
+                    `P1-J4-E025`'s decision, not this brief's. STOPPED AND
+                    REPORTED rather than nulling a gate.
+                  */
                   country: regAddress.country || null,
                   ein: ein.trim() || null,
                   /* `E282` — US only; null everywhere else. */
