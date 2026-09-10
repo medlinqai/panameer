@@ -928,6 +928,33 @@ export async function getOnboardingState(viewer: Viewer) {
     // WS1 — the client no longer hard-codes the step list: a recruiter walks a
     // shorter journey, and the server is the only place that knows which.
     steps: stepsForProfile(pp),
+    /*
+      ── ⚠⚠ THE WIZARD'S DISPLAYED TOTAL (`P1-A1.4-E406` WS-1) ────────────────
+
+      `PROVIDER_STEPS.length` counted steps **plus one** for the `work_method`
+      screen, which `P1-A1.3-E401` deliberately made a SCREEN and not a STEP.
+
+      ⚠ IT IS SENT FROM HERE BECAUSE THE WIZARD CANNOT IMPORT IT. `page.tsx` is a
+      `"use client"` component and this module reaches Prisma, so importing
+      `PROVIDER_STEPS` into it pulls `dns`/`fs`/`net`/`tls` into the browser
+      bundle and the route 500s. ⚠⚠ MEASURED — that is exactly what happened on
+      the first attempt, and `tsc`, lint and every gate stayed green; only
+      walking the page found it.
+
+      ⚠ DERIVED, NEVER TYPED, and derived HERE so `PROVIDER_STEPS` stays the one
+      source. A literal in the client would be a third copy of a number that
+      already exists in this array and in the `onboarding_step` enum.
+
+      ⚠ IT IS THE **PROVIDER** TOTAL ON BOTH ITINERARIES — Scott: *"Use the
+      larger number (7), most will be providers."* A denominator computed from
+      the person's own itinerary would flip under them at the moment they chose.
+      ⚠ THE COST, REPORTED NOT HIDDEN: a recruiter finishes at 7 of 8 and the bar
+      never fills.
+
+      ⚠⚠ DISPLAY ONLY. `PROVIDER_STEPS`, `RECRUITER_STEPS` and `onboarding_step`
+      are untouched.
+    */
+    displayTotalSteps: PROVIDER_STEPS.length + 1,
     isRecruiter: isRecruiterProfile(pp),
     totalSteps: stepsForProfile(pp).length,
     status: pp.status,

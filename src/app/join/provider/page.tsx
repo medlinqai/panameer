@@ -13,6 +13,7 @@ import {
 } from "@/components/onboarding/SignUpForm";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 import { ambiguousSkillNames, skillQualifier } from "@/lib/skill-labels";
+
 import {
   OptionCard,
   Chip,
@@ -386,6 +387,14 @@ type StatusPayload = {
   resumeStep: string;
   /** The itinerary for THIS user (recruiters get 8, providers 10) — WS1. */
   steps?: Step[];
+  /**
+   * ⚠ THE DISPLAYED DENOMINATOR, DERIVED SERVER-SIDE (`P1-A1.4-E406` WS-1) —
+   * `PROVIDER_STEPS.length + 1`. ⚠⚠ IT IS SENT RATHER THAN IMPORTED because this
+   * is a `"use client"` file and `lib/onboarding` reaches Prisma: importing the
+   * array pulls `dns`/`fs`/`net`/`tls` into the browser bundle and the route
+   * 500s. Measured — `tsc` and every gate stayed green while the page was dead.
+   */
+  displayTotalSteps?: number;
   isRecruiter?: boolean;
   completeness?: number;
   profile?: ProfilePayload;
@@ -627,6 +636,9 @@ export default function JoinProviderPage() {
    * type chosen at the fork. Falls back to the provider journey.
    */
   const [steps, setSteps] = useState<readonly Step[]>(DEFAULT_STEPS);
+  /* ⚠ FALLS BACK TO THE COUNTED ITINERARY + 1 until `status` answers, so the
+     counter is never absent and never wrong by more than the one screen. */
+  const [wizardTotal, setWizardTotal] = useState<number>(DEFAULT_STEPS.length + 1);
   const [isRecruiter, setIsRecruiter] = useState(false);
 
   const [importOutcome, setImportOutcome] = useState<ImportOutcome | null>(null);
@@ -666,6 +678,7 @@ export default function JoinProviderPage() {
   // we re-seed local form state from it rather than guessing what changed.
   const hydrate = useCallback((s: StatusPayload) => {
     if (s.steps?.length) setSteps(s.steps);
+    if (s.displayTotalSteps) setWizardTotal(s.displayTotalSteps);
     if (typeof s.isRecruiter === "boolean") setIsRecruiter(s.isRecruiter);
     const p = s.profile;
     if (!p) return;
@@ -1590,6 +1603,26 @@ setScreen(target);
     */
     return (
       <WizardShell
+        /*
+          ── ⚠⚠ IT CARRIES A NUMBER NOW (`P1-A1.4-E406` WS-1) ──────────────────
+
+          ⚠ SUPERSEDED, quoted not deleted — `E405` passed NO `step`, reasoning:
+          *"the buyer side has exactly one unnumbered ask… `work_method` is the
+          provider side's equivalent of that ask."*
+
+          ⚠⚠ THAT RESTED ON A FALSE PREMISE AND THE PREMISE WAS THE BRIEF'S.
+          `/join/provider/start` EXISTS — an `OnboardingShell` with a footer and
+          a *"Get Started Now!"* link, the exact mirror of
+          `/join/requester/start`. **That** is the provider's unnumbered ask, and
+          it sits BEFORE this screen. So Scott's rule — *"there is an ask to 'get
+          started' and every page after that is numbered"* — makes this page 1 of
+          the numbered run, not the ask.
+
+          ⚠ THE DENOMINATOR IS THE SHARED CONSTANT, so this screen and the seven
+          counted steps cannot disagree about how long the wizard is.
+        */
+        step={1}
+        totalSteps={wizardTotal}
         title="How Do You Work?"
         /* ⚠ WHY IT IS BEING ASKED, in one line — somebody who arrived by a
            recruiter link and lost the query string has no idea why the wizard
@@ -1652,7 +1685,13 @@ setScreen(target);
     the shell would render a counter for a step that does not exist — the exact
     thing pitfalls.md warns about, one level down. Undefined hides it.
   */
-  const stepNumber = stepIndex >= 0 ? stepIndex + 1 : undefined;
+  /*
+    ⚠ OFFSET BY ONE (`P1-A1.4-E406` WS-1). ⚠ SUPERSEDED, quoted not deleted:
+        `const stepNumber = stepIndex >= 0 ? stepIndex + 1 : undefined;`
+    `work_method` is displayed as step 1, so the first COUNTED step is 2. The
+    itinerary is unchanged — only what the counter prints moved.
+  */
+  const stepNumber = stepIndex >= 0 ? stepIndex + 2 : undefined;
   // Exact stepper heading + "Next: …" label per brief_S's table (E024–E035).
   const labels = STEP_LABELS[screen as Step];
   const nextStep = stepIndex >= 0 ? steps[stepIndex + 1] : undefined;
@@ -1663,12 +1702,30 @@ setScreen(target);
     : "Next: Publish Your Profile";
   const shell = (props: Partial<React.ComponentProps<typeof WizardShell>> & { title: string }) => ({
     step: stepNumber,
-    totalSteps: steps.length,
+    /* ⚠ SUPERSEDED, quoted: `totalSteps: steps.length`. That recomputed the
+       denominator from the CURRENT itinerary, so a recruiter saw /7 and a
+       provider /8 — the flip Scott's "use the larger number" answers. */
+    totalSteps: wizardTotal,
     stepLabel: labels?.stepper,
     continueLabel: nextLabel,
     busy,
-    onBack: stepIndex > 0 ? goBack : undefined,
-    canBack: stepIndex > 0,
+    /*
+      ── ⚠ THE FIRST COUNTED STEP HAS A BACK NOW (`E406` WS-3) ────────────────
+
+      ⚠ SUPERSEDED, quoted not deleted:
+          `onBack: stepIndex > 0 ? goBack : undefined,`
+          `canBack: stepIndex > 0,`
+      Before `E401` there was nowhere for step 1 to go back TO. There is now —
+      the `work_method` screen sits in front of it.
+
+      ⚠⚠ AND RETURNING THERE MUST NOT RE-TYPE ANYBODY. The screen's own
+      `choose()` re-reads `/api/onboarding/status` and resumes from the SERVER's
+      answer, so changing the answer and continuing lands on the itinerary the
+      NEW answer implies. ⚠ THE ROUTER'S `!workMethod` GUARD IS UNAFFECTED: this
+      is a person navigating deliberately, not a URL re-typing them.
+    */
+    onBack: stepIndex > 0 ? goBack : () => setScreen("work_method"),
+    canBack: true,
     ...props,
   });
 
