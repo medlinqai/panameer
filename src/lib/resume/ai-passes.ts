@@ -632,11 +632,28 @@ export async function aiExtractResumeMultiPass(text: string): Promise<MultiPassO
     default to Scott ("REPORT, do not choose"). ⚠⚠ CHANGING IT HERE WOULD CHOOSE
     IT SILENTLY, so it is measured, reported, and left alone.
   */
-  const employers = inv.value.filter((i) => i.kind !== "engagement");
+  /*
+    ⚠ SUPERSEDED, quoted not deleted (`P1-A1.4-E410` WS-1) — the filter above
+    described the defect and this is the line that fixed it:
+
+        const employers = inv.value.filter((i) => i.kind !== "engagement");
+        …
+        employersPass(text, employers.length ? employers : inv.value),
+
+    ⚠⚠ 44 OF 49 SECTIONS WERE HANDED TO `projectsPass` AND NEVER ARRIVED. The
+    employers pass never saw them, so it could not have returned them; the
+    projects pass returned 0 or failed `shape`. **The units were not lost to
+    capacity — they were never asked for.**
+
+    ⚠ SO EVERY SECTION GOES TO THE PASS THAT DEMONSTRABLY HONOURS ITS CHECKLIST.
+    `E409` measured it: pool=5 → 5 entries, pool=49 → 49 entries, `finish=stop`
+    at 31% of a 12,000-token budget. `kind` no longer decides WHETHER a section
+    is extracted; it decides only WHAT THE ROW BECOMES, below.
+  */
   const engagements = inv.value.filter((i) => i.kind === "engagement");
 
   const [emp, proj, certs, skills, prof] = await Promise.all([
-    employersPass(text, employers.length ? employers : inv.value),
+    employersPass(text, inv.value),
     projectsPass(text, engagements),
     certificationsPass(text),
     skillsPass(text),
@@ -648,11 +665,71 @@ export async function aiExtractResumeMultiPass(text: string): Promise<MultiPassO
   tally("skills", skills);
   tally("profile", prof);
 
+  /*
+    ── ⚠⚠ `kind` IS A DEFAULT, NOT A ROUTE (`P1-A1.4-E410` WS-1) ───────────────
+
+    SCOTT: engagement sections become **Project** rows, employer sections become
+    **Employer** rows, and no section is filtered out of extraction.
+
+    ⚠ AND IT IS RIGHT ON THE MERITS, NOT ONLY THE ASYMMETRY: on Scott's CV the 44
+    engagements are client work delivered under StratERP — Ceres, Kamehameha, WSP.
+    StratERP is the employer; those are the work.
+
+    ⚠ ALIGNMENT IS BY INDEX, WHICH IS THE PASS'S OWN CONTRACT — its schema says
+    *"Exactly N entries, one per listed heading, in order."* ⚠⚠ AND IT IS CHECKED,
+    NOT ASSUMED: if the model returns a different count the index no longer means
+    the same section, so the split is ABANDONED and every entry stays an employer
+    — the pre-`E410` shape. A mis-split would file real jobs as projects, which is
+    worse than the row being the wrong type in a way the radio can fix.
+
+    ⚠ NO PARENT IS INVENTED FROM PROXIMITY. A converted engagement carries
+    `employer: null`; `import.ts` then writes it with `employer_id` null and
+    surfaces it as `unplaced` (`P1-J1.4-E296`) for the person to place in one
+    click. An engagement listed under StratERP in the document is not proof that
+    it belongs to StratERP.
+  */
+  const aligned = emp.ok && emp.value.length === inv.value.length;
+  const empRows = emp.ok ? emp.value : [];
+  const sectionEmployers = aligned
+    ? empRows.filter((_, i) => inv.value[i].kind !== "engagement")
+    : empRows;
+  const sectionProjects = aligned
+    ? empRows
+        .map((e, i) => ({ e, item: inv.value[i] }))
+        .filter(({ item }) => item.kind === "engagement")
+        .map(({ e }) => ({
+          /* ⚠ THE ENGAGEMENT IS THE ROLE HALF OF THE HEADING and the client is
+             the company half — `Ceres Insurance — Oracle Cloud Quick Install`
+             parses as name="Ceres Insurance", roleTitle="…Quick Install". */
+          name: e.roleTitle || e.name || "Untitled project",
+          client: e.name ?? null,
+          roleType: null,
+          software: [] as string[],
+          skills: [] as string[],
+          description: e.description ?? null,
+          startDate: e.startDate ?? null,
+          endDate: e.endDate ?? null,
+          employer: null,
+        }))
+    : [];
+  if (emp.ok && !aligned) {
+    console.error(
+      `[resume] the employers pass returned ${emp.value.length} entries for ${inv.value.length} sections — index alignment abandoned, every entry kept as an employer`
+    );
+  }
+  /* ⚠ DEDUPED BY NAME. `projectsPass` still runs and still finds sub-projects the
+     inventory never listed; a section must not arrive twice because two passes
+     both described it. Section rows win — they are the ones `kind` typed. */
+  const seen = new Set(sectionProjects.map((p) => p.name.trim().toLowerCase()));
+  const extraProjects = (proj.ok ? proj.value : []).filter(
+    (p) => !seen.has((p.name ?? "").trim().toLowerCase())
+  );
+
   const data: AiResume = {
     headline: prof.ok ? prof.value.headline ?? null : null,
     overview: prof.ok ? prof.value.overview ?? null : null,
-    employers: emp.ok ? emp.value : [],
-    projects: proj.ok ? proj.value : [],
+    employers: sectionEmployers,
+    projects: [...sectionProjects, ...extraProjects],
     education: prof.ok ? prof.value.education : [],
     skills: skills.ok ? skills.value.skills : [],
     languages: skills.ok ? skills.value.languages : [],
@@ -660,10 +737,21 @@ export async function aiExtractResumeMultiPass(text: string): Promise<MultiPassO
   };
 
   const recall = recallReport({
-    /* ⚠ THE CONTRACT IS THE EMPLOYER SUBSET. Comparing employers returned against
-       every heading in the document would report a shortfall on every CV that has
-       more projects than jobs — which is most of them. */
-    headings: (employers.length ? employers : inv.value).length,
+    /*
+      ⚠ SUPERSEDED, quoted not deleted (`P1-A1.4-E410`):
+          `headings: (employers.length ? employers : inv.value).length,`
+      with the reason *"THE CONTRACT IS THE EMPLOYER SUBSET. Comparing employers
+      returned against every heading in the document would report a shortfall on
+      every CV that has more projects than jobs."*
+
+      ⚠⚠ THAT SUBSET NO LONGER EXISTS. `E410` sends EVERY section to the
+      extraction pass, so the contract is now the whole inventory — and the
+      recall figure counts rows of BOTH kinds against it, which is the number
+      Scott's *"we found 29 and imported 7"* line was trying to be.
+    */
+    headings: inv.value.length,
+    /* ⚠ BOTH KINDS COUNT TOWARD THE SECTIONS FOUND — an engagement section that
+       became a Project row was imported, not missed. */
     employers: data.employers.length,
     projects: data.projects.length,
     certifications: data.certifications.length,
