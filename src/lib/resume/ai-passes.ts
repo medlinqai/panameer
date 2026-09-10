@@ -138,7 +138,18 @@ export type InventoryItem = z.infer<typeof inventoryItem>;
 
 export type PassOutcome<T> =
   | { ok: true; value: T; usage: ModelUsage; ms: number; model: string; provider: ProviderName; tier: ParserTier }
-  | { ok: false; reason: string; message: string };
+  /*
+    ⚠⚠ USAGE TRAVELS ON THE FAILURE PATH TOO (`P1-A1.4-E409` WS-1c).
+
+    A `shape` failure happens AFTER a successful model call, so `finishReason`,
+    `outputTokens` and `reasoningTokens` all exist at that moment — and were
+    being thrown away. ⚠ That is why `runPass` "collapses three different
+    failures into one `{ok:false}`": a provider error, a truncation and a schema
+    mismatch were indistinguishable from the outside, and the only way to tell
+    them apart was to guess. Nothing can be chunked responsibly until the
+    measurement says truncation is or is not the cause.
+  */
+  | { ok: false; reason: string; message: string; usage?: ModelUsage };
 
 async function runPass<T>(
   name: string,
@@ -158,7 +169,15 @@ async function runPass<T>(
   if (!call.ok) return { ok: false, reason: call.reason, message: call.message };
   const value = parse(call.value);
   if (value === null)
-    return { ok: false, reason: "shape", message: `${name}: the model's output did not match the expected shape` };
+    return {
+      ok: false,
+      reason: "shape",
+      message: `${name}: the model's output did not match the expected shape`,
+      /* ⚠ THE CALL SUCCEEDED — only the PARSE failed, so the spend is real and
+         knowable. Reporting it is what distinguishes "the model ran out of room"
+         from "the model answered in the wrong shape". */
+      usage: call.usage,
+    };
   return {
     ok: true,
     value,
@@ -538,6 +557,10 @@ export async function aiExtractResumeMultiPass(text: string): Promise<MultiPassO
     costUsd: number | null;
     reason?: string;
     message?: string;
+    /** ⚠ Present on a `shape` failure — the call ran, so the spend is knowable. */
+    finishReason?: string | null;
+    outputTokens?: number | null;
+    reasoningTokens?: number | null;
   }[] = [];
   const failed: string[] = [];
   let inTok = 0, outTok = 0, cachedTok = 0, reasoningTok = 0, cost = 0, anyCost = false;
@@ -546,7 +569,12 @@ export async function aiExtractResumeMultiPass(text: string): Promise<MultiPassO
 
   const tally = (name: string, r: PassOutcome<unknown>) => {
     if (r.ok) {
-      passes.push({ name, ok: true, ms: r.ms, costUsd: r.usage.costUsd });
+      passes.push({
+        name, ok: true, ms: r.ms, costUsd: r.usage.costUsd,
+        finishReason: r.usage.finishReason,
+        outputTokens: r.usage.outputTokens,
+        reasoningTokens: r.usage.reasoningTokens,
+      });
       inTok += r.usage.inputTokens; outTok += r.usage.outputTokens;
       cachedTok += r.usage.cachedInputTokens; reasoningTok += r.usage.reasoningTokens;
       if (r.usage.costUsd != null) { cost += r.usage.costUsd; anyCost = true; }
@@ -556,7 +584,13 @@ export async function aiExtractResumeMultiPass(text: string): Promise<MultiPassO
         finishReason = r.usage.finishReason;
       else finishReason = finishReason ?? r.usage.finishReason;
     } else {
-      passes.push({ name, ok: false, ms: 0, costUsd: null, reason: r.reason, message: r.message });
+      passes.push({
+        name, ok: false, ms: 0, costUsd: r.usage?.costUsd ?? null,
+        reason: r.reason, message: r.message,
+        finishReason: r.usage?.finishReason ?? null,
+        outputTokens: r.usage?.outputTokens ?? null,
+        reasoningTokens: r.usage?.reasoningTokens ?? null,
+      });
       failed.push(name);
     }
   };
@@ -575,6 +609,28 @@ export async function aiExtractResumeMultiPass(text: string): Promise<MultiPassO
     ⚠ AN INVENTORY THAT CLASSIFIES NOTHING FALLS BACK TO "ALL EMPLOYERS", which is
     the old behaviour and is safe: over-listing employers is visible to the person
     reviewing, where dropping them silently is not.
+  */
+  /*
+    ── ⚠⚠ `kind` IS A ROUTE HERE, AND MEASUREMENT SAYS IT SHOULD BE A DEFAULT ──
+       (`P1-A1.4-E409` WS-1 — MEASURED 2026-09-10, NOT CHANGED. See the report.)
+
+    ⚠ THIS SPLIT IS THE 29→7 DEFECT, AND IT IS **NOT** A CAPACITY PROBLEM.
+    Measured on Scott's CV with the failure-path usage this brief added:
+
+      inventory  ->  49 sections   (kind: 5 employer, 44 engagement)
+      employersPass(pool=5)   ->  5 entries   finish=stop out=  930 / 12,000
+      employersPass(pool=49)  -> 49 entries   finish=stop out=3,675 / 12,000
+
+    ⚠⚠ THE PASS HONOURS ITS CHECKLIST EXACTLY — give it 5 and it returns 5; give
+    it 49 and it returns 49, at THIRTY-ONE PERCENT of its token budget with
+    `finishReason: stop`. Nothing truncates. **The units are not lost to
+    capacity; they are never asked for**, because 44 of them are filtered out
+    here and handed to `projectsPass`, which then returns 0 or fails on `shape`.
+
+    ⚠ SO THE FIX IS THIS FILTER, NOT A FUNNEL AND NOT CHUNKING — but making the
+    change means deciding what type the 44 become, and `E409` WS-2 reserves that
+    default to Scott ("REPORT, do not choose"). ⚠⚠ CHANGING IT HERE WOULD CHOOSE
+    IT SILENTLY, so it is measured, reported, and left alone.
   */
   const employers = inv.value.filter((i) => i.kind !== "engagement");
   const engagements = inv.value.filter((i) => i.kind === "engagement");
