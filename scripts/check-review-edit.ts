@@ -45,25 +45,54 @@ const VIEW = strip(readFileSync(join("src", "components", "profile", "ProviderPr
   check("0 — the superseded `overview={null}` quote is invisible", !/overview=\{null\}/.test(WIZ));
 }
 
-/* ═══ 1 · ⚠⚠ EDIT OPENS EDIT MODE ════════════════════════════════════════ */
+/* ═══ 1 · ⚠⚠ SUPERSEDED IN FULL BY `P1-A1.4-E412` WS-1 ═══════════════════
+   ⚠ SCOTT, VIA `E412`: *"A PERSON ON THE REVIEW SCREEN NEVER LEAVES IT TO
+   EDIT."* ⚠⚠ THIS SECTION ASSERTED THE OPPOSITE MECHANISM — that the trip to
+   `tell_us` LANDS somewhere useful — and `E412` removes the trip. The brief
+   says so in terms: *"E411's WS-1 line is superseded on arrival; delete it with
+   a quote naming this brief."*
+
+   ⚠ THE FINDING BEHIND IT SURVIVES AND IS WHY `E412` EXISTS: an Edit that
+   navigates to a screen rendering `editingWork ? <EmployersStep …> :
+   <WorkHistoryBody …>` shows the READ-ONLY body, with no solo-projects surface
+   at all. `E411` fixed the landing; `E412` removed the journey.
+
+   ⚠ SUPERSEDED, QUOTED NOT DELETED — every assertion that stood here:
+
+       check("1 — sectionAction can be told to open the editor",
+         /opensEditor/.test(WIZ) && /if \(opensEditor\) setEditingWork\(true\)/.test(WIZ),
+         "the helper is shared; the flag must be per-call");
+       const wh = /sectionAction\([\s\S]*?"Work History",[\s\S]*?"tell_us",[\s\S]*?,\s*true\s*\)/.test(WIZ);
+       const sp = /sectionAction\([\s\S]*?"Solo Projects",[\s\S]*?"tell_us",[\s\S]*?,\s*true\s*\)/.test(WIZ);
+       check("1 — ⚠⚠ Work History's Edit opens the editor", wh);
+       check("1 — ⚠⚠ Solo Projects' Edit opens the editor", sp,
+         "the only route to the placement UI");
+       for (const [title, step] of [["Skills", "catalog"], ["Education", "education"]] as const) {
+         check(`1 — ${title} (${step}) is NOT handed the flag`,
+           !new RegExp(`sectionAction\\(\\s*"${title}",\\s*"${step}",[^)]*?,\\s*true`).test(WIZ));
+       }
+
+   ⚠⚠ NOT DELETED TO GO GREEN — REPLACED BY THE STRONGER FORM. `E408`'s rule is
+   that an assertion is never removed to make a gate pass, so what this section
+   was protecting is now asserted in `check:review-screen` §1 and §2 as an
+   ABSENCE over the whole review block: no `goTo(…)` at all, and every card —
+   Work History and Solo Projects included — opening its editor in place. The
+   two replacements below keep the half of this section that is still true. */
 {
+  /* ⚠ THE FLAG AND ITS STEP TRAVEL ARE BOTH GONE. This is the same claim the
+     quoted block made, inverted — the mechanism must NOT come back. */
   check(
-    "1 — sectionAction can be told to open the editor",
-    /opensEditor/.test(WIZ) && /if \(opensEditor\) setEditingWork\(true\)/.test(WIZ),
-    "the helper is shared; the flag must be per-call"
+    "1 — ⚠⚠ SUPERSEDED (E412): `opensEditor` is gone from sectionAction",
+    !/opensEditor/.test(WIZ),
+    "E412 — there is no other screen to open edit mode ON"
   );
-  /* ⚠ BOTH `tell_us` CALLERS PASS IT. Work History and Solo Projects are the
-     only two of five that target a step with an edit mode. */
-  const wh = /sectionAction\([\s\S]*?"Work History",[\s\S]*?"tell_us",[\s\S]*?,\s*true\s*\)/.test(WIZ);
-  const sp = /sectionAction\([\s\S]*?"Solo Projects",[\s\S]*?"tell_us",[\s\S]*?,\s*true\s*\)/.test(WIZ);
-  check("1 — ⚠⚠ Work History's Edit opens the editor", wh);
-  check("1 — ⚠⚠ Solo Projects' Edit opens the editor", sp, "the only route to the placement UI");
-  /* ⚠ AND THE OTHER THREE DO NOT — their steps have no edit mode, and a flag
-     that means nothing there is how a prop starts lying. */
-  for (const [title, step] of [["Skills", "catalog"], ["Education", "education"]] as const) {
+  /* ⚠ AND THE THING IT EXISTED FOR STILL HAPPENS, by a different route: both
+     cards still reach `EmployersStep`, which is still the only placement UI. */
+  for (const title of ["Work History", "Solo Projects"] as const) {
     check(
-      `1 — ${title} (${step}) is NOT handed the flag`,
-      !new RegExp(`sectionAction\\(\\s*"${title}",\\s*"${step}",[^)]*?,\\s*true`).test(WIZ)
+      `1 — ⚠ ${title}'s Edit still reaches EmployersStep (now in place)`,
+      new RegExp(`sectionAction\\(\\s*"${title}",\\s*"work"`).test(WIZ),
+      "E412 — same editor, no journey"
     );
   }
 }

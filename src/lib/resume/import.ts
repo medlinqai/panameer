@@ -1,3 +1,4 @@
+import { splitCertificationName } from "@/lib/resume/certification-names";
 import { prisma } from "@/lib/prisma";
 import { extractText, ExtractError } from "@/lib/resume/extract";
 import { parseResume, type ParsedResume } from "@/lib/resume/parse";
@@ -176,17 +177,18 @@ export async function importProfileDocument({
     nothing is the failure mode this whole track exists to end. Phrased as what
     happened, not as something they must fix.
   */
-  const discarded = applied.skillsUnmatched.length - applied.skillSuggestions.length;
+  const discarded =
+    applied.skillsUnmatched.length - applied.skillSuggestions.length;
   if (discarded > 0) {
     gaps.push(
       `${discarded} line${discarded === 1 ? "" : "s"} from your skills section didn't look like skills, so ${
         discarded === 1 ? "it was" : "they were"
-      } left out.`
+      } left out.`,
     );
   }
   if (applied.experiences === 0 && applied.education === 0) {
     gaps.push(
-      "No work history or education could be imported from this file — please add them manually."
+      "No work history or education could be imported from this file — please add them manually.",
     );
   }
 
@@ -201,7 +203,7 @@ export async function importProfileDocument({
       type: mimeType,
       bytes: bytes.buffer.slice(
         bytes.byteOffset,
-        bytes.byteOffset + bytes.byteLength
+        bytes.byteOffset + bytes.byteLength,
       ) as ArrayBuffer,
     });
   } catch (e) {
@@ -268,7 +270,9 @@ export async function importProfileDocument({
       `employers=${parsed.experiences.length} dated=${confidence.signals.datedEntries} ` +
       `ranges=${confidence.signals.dateRangesInText} unplaced=${confidence.signals.unplacedRatio} ` +
       `import=${row.id}` +
-      (confidence.score === "low" ? ` reasons="${confidence.reasons.join(" | ")}"` : "")
+      (confidence.score === "low"
+        ? ` reasons="${confidence.reasons.join(" | ")}"`
+        : ""),
   );
 
   return {
@@ -331,7 +335,11 @@ async function readDocument(text: string): Promise<{
   if (!resolveProvider()) {
     return {
       parsed: heuristic,
-      path: { reader: "heuristic", reason: "no model configured", configProblem },
+      path: {
+        reader: "heuristic",
+        reason: "no model configured",
+        configProblem,
+      },
     };
   }
 
@@ -352,7 +360,9 @@ async function readDocument(text: string): Promise<{
   */
   const outcome = await aiExtractResumeMultiPass(text);
   if (!outcome.ok) {
-    console.error(`[resume] the model call failed (${outcome.reason}): ${outcome.message}`);
+    console.error(
+      `[resume] the model call failed (${outcome.reason}): ${outcome.message}`,
+    );
     return {
       parsed: heuristic,
       path: { reader: "heuristic", reason: outcome.reason, configProblem },
@@ -392,7 +402,7 @@ async function readDocument(text: string): Promise<{
     parsed.experiences.length === 0 && signals.dateRangesInText >= 3;
   if (employersFailed) {
     console.error(
-      `[resume] the model returned no work history from a document with ${signals.dateRangesInText} date ranges — falling back to the heuristic for EMPLOYERS ONLY; the other sections keep the model's answer`
+      `[resume] the model returned no work history from a document with ${signals.dateRangesInText} date ranges — falling back to the heuristic for EMPLOYERS ONLY; the other sections keep the model's answer`,
     );
   }
 
@@ -459,7 +469,7 @@ function emptyApplied(): ImportResult["applied"] {
 export async function applyParsedResume(
   profileId: string,
   parsed: ParsedResume,
-  source: "RESUME"
+  source: "RESUME",
 ): Promise<ImportResult["applied"]> {
   const applied = emptyApplied();
 
@@ -509,7 +519,9 @@ export async function applyParsedResume(
   // populates it directly instead of the retired flat WorkExperience table.
   // The "Your Employers" step then shows these as cards to confirm and enrich.
   const haveRole = new Set(
-    profile.employers.map((w) => `${w.name}|${w.role_title ?? ""}`.toLowerCase())
+    profile.employers.map((w) =>
+      `${w.name}|${w.role_title ?? ""}`.toLowerCase(),
+    ),
   );
 
   /*
@@ -530,7 +542,9 @@ export async function applyParsedResume(
   const vocabRows = await prisma.skill.findMany({
     where: {
       is_custom: false,
-      roleType: { name: { in: ["Application-Specific", "Technology-Specific"] } },
+      roleType: {
+        name: { in: ["Application-Specific", "Technology-Specific"] },
+      },
     },
     select: {
       id: true,
@@ -542,10 +556,9 @@ export async function applyParsedResume(
   });
   const vocab = buildVocabulary(vocabRows);
   const roleIdByName = new Map(
-    (await prisma.roleType.findMany({ select: { id: true, name: true } })).map((r) => [
-      r.name,
-      r.id,
-    ])
+    (await prisma.roleType.findMany({ select: { id: true, name: true } })).map(
+      (r) => [r.name, r.id],
+    ),
   );
 
   /* `E294` — name -> id for the employers created just below, so a project
@@ -580,7 +593,9 @@ export async function applyParsedResume(
         is_current: Boolean(e.startDate) && !e.endDate,
         sort_order: i * 10,
         software_suite: found.suite,
-        job_role_type_id: found.role ? roleIdByName.get(found.role) ?? null : null,
+        job_role_type_id: found.role
+          ? (roleIdByName.get(found.role) ?? null)
+          : null,
         skills: {
           create: found.skillIds.map((skill_id) => ({ skill_id })),
         },
@@ -622,10 +637,13 @@ export async function applyParsedResume(
   */
   for (const [i, pr] of parsed.projects.entries()) {
     const employerId = pr.employerName
-      ? employerIdByName.get(pr.employerName) ?? null
+      ? (employerIdByName.get(pr.employerName) ?? null)
       : null;
     const description =
-      [pr.description, pr.software.length ? `Software: ${pr.software.join(", ")}` : null]
+      [
+        pr.description,
+        pr.software.length ? `Software: ${pr.software.join(", ")}` : null,
+      ]
         .filter(Boolean)
         .join("\n") || null;
     await prisma.project.create({
@@ -644,7 +662,7 @@ export async function applyParsedResume(
     if (employerId) applied.projectsAttached++;
     else applied.projectsUnattached++;
   }
-  
+
   /*
     ⚠ THE ACCEPTANCE TEST, ASSERTED WHERE IT CAN ACTUALLY FAIL. `E294`'s test is
     extracted === attached + unattached. The mapper already guards its own half;
@@ -657,13 +675,13 @@ export async function applyParsedResume(
   ) {
     throw new Error(
       `resume import lost projects: parsed ${parsed.projects.length}, ` +
-        `attached ${applied.projectsAttached}, unattached ${applied.projectsUnattached}`
+        `attached ${applied.projectsAttached}, unattached ${applied.projectsUnattached}`,
     );
   }
 
   // --- Education -----------------------------------------------------------
   const haveSchool = new Set(
-    profile.education.map((x) => x.institution.toLowerCase())
+    profile.education.map((x) => x.institution.toLowerCase()),
   );
   for (const ed of parsed.education) {
     if (haveSchool.has(ed.institution.toLowerCase())) continue;
@@ -700,32 +718,58 @@ export async function applyParsedResume(
   const ownerUserId = profile.person?.user_id ?? null;
   if (ownerUserId) {
     const haveCert = new Set(
-      profile.certifications.map((c) => c.name.trim().toLowerCase())
+      profile.certifications.map((c) => c.name.trim().toLowerCase()),
     );
     for (const c of parsed.certifications) {
-      const name = c.name?.trim();
-      if (!name) continue;
-      if (haveCert.has(name.toLowerCase())) continue;
-      haveCert.add(name.toLowerCase());
-      const issued = c.issuedOn ? new Date(c.issuedOn) : null;
-      const expires = c.expiresOn ? new Date(c.expiresOn) : null;
-      await prisma.certification.create({
-        data: {
-          user_id: ownerUserId,
-          provider_profile_id: profileId,
-          name: name.slice(0, 200),
-          issuer: c.issuer?.slice(0, 200) ?? null,
-          /* ⚠ `year` mirrors education's convention: the year a reader would
+      /*
+        ── ⚠⚠ ONE ROW PER CREDENTIAL (`P1-A1.4-E412` WS-3a) ──────────────────
+
+        ⚠ MEASURED FIRST, PER THE BRIEF: `certificationsPass` returns Scott's
+        five Oracle credentials as five entries on 2 runs in 5 and as ONE
+        comma-joined entry on 2 runs in 5, from the identical document. The
+        prompt already says *"If there are five, return five"*; the model is not
+        being disobedient, the CV's own line is a single comma-joined sentence.
+        Full measurement and the rule's reasoning: `certification-names.ts`.
+
+        ⚠ SO THE WRITE PATH SPLITS, and it is deliberately timid — a serial
+        `…, and X` is required, so a comma inside one real name never divides
+        it. ⚠ `splitCertificationName` CANNOT LOSE A CREDENTIAL: a name it
+        declines to split comes back whole.
+
+        ⚠ THE DE-DUPE MOVED INSIDE THE LOOP and now runs per PART. Re-importing
+        after a run that already produced five rows must add nothing, and
+        checking the joined string against a list of split names would have
+        missed every one of them.
+      */
+      for (const name of splitCertificationName(c.name ?? "")) {
+        if (!name) continue;
+        if (haveCert.has(name.toLowerCase())) continue;
+        haveCert.add(name.toLowerCase());
+        const issued = c.issuedOn ? new Date(c.issuedOn) : null;
+        const expires = c.expiresOn ? new Date(c.expiresOn) : null;
+        await prisma.certification.create({
+          data: {
+            user_id: ownerUserId,
+            provider_profile_id: profileId,
+            name: name.slice(0, 200),
+            issuer: c.issuer?.slice(0, 200) ?? null,
+            /* ⚠ `year` mirrors education's convention: the year a reader would
              quote, taken from the issue date when there is one. */
-          year: issued && !Number.isNaN(issued.getTime()) ? issued.getFullYear() : null,
-          issued_on: issued && !Number.isNaN(issued.getTime()) ? issued : null,
-          expires_on: expires && !Number.isNaN(expires.getTime()) ? expires : null,
-          /* ⚠ SELF_REPORTED — it came off the provider's own CV. Panameer has not
+            year:
+              issued && !Number.isNaN(issued.getTime())
+                ? issued.getFullYear()
+                : null,
+            issued_on:
+              issued && !Number.isNaN(issued.getTime()) ? issued : null,
+            expires_on:
+              expires && !Number.isNaN(expires.getTime()) ? expires : null,
+            /* ⚠ SELF_REPORTED — it came off the provider's own CV. Panameer has not
              verified it, and `issued_from` is what keeps that distinction. */
-          issued_from: "SELF_REPORTED",
-        },
-      });
-      applied.certifications++;
+            issued_from: "SELF_REPORTED",
+          },
+        });
+        applied.certifications++;
+      }
     }
   }
 
@@ -785,7 +829,7 @@ export async function applyParsedResume(
           where: { provider_profile_id: profileId },
           select: { specialization_id: true },
         })
-      ).map((r) => r.specialization_id)
+      ).map((r) => r.specialization_id),
     );
 
     const hits = new Map<string, string>();

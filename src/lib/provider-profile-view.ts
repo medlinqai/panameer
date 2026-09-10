@@ -1,3 +1,4 @@
+import { formatLocality } from "@/lib/locality";
 import { prisma } from "@/lib/prisma";
 import { isMarketplaceVisible, providerMeetsRequired } from "@/lib/access";
 import { profileEnrichmentGaps, VISIBILITY_THRESHOLD } from "@/lib/completeness";
@@ -183,8 +184,28 @@ export async function getProviderProfileView(
     contactVisibility({ isOwner, isPlus, contactEmail: email });
 
   const addr = profile.person.site?.addresses?.[0] ?? null;
-  const location =
-    [addr?.city, addr?.state, addr?.country].filter(Boolean).join(", ") || null;
+  /*
+    ⚠ SUPERSEDED, quoted not deleted (`P1-A1.4-E412` WS-4):
+        const location =
+          [addr?.city, addr?.state, addr?.country].filter(Boolean).join(", ") || null;
+
+    ⚠⚠ THE COUNTRY WAS IN THE LINE, WHICH SILENCED THE LINE BELOW IT.
+    `LocationBody` prints `country` on its own second line unless the first line
+    already contains it — and this join always put it there, so the second line
+    was dead code on every profile. ⚠ THE SAME JOIN EXISTED VERBATIM ON THE
+    WIZARD'S REVIEW SCREEN; `formatLocality` is now the single copy.
+  */
+  /*
+    ⚠⚠ NO POSTAL CODE IS PASSED, AND THAT IS A DECISION, NOT AN OVERSIGHT.
+    `formatLocality` handles one because the address FORM collects one — but
+    this query does not even select `postal_code`, and putting a provider's
+    postcode on a PUBLIC profile is a privacy change, not a formatting one. The
+    wizard step calls it *"they stay private, and they're how a buyer reaches
+    you."* ⚠ THE REVIEW SCREEN OMITS IT FOR THE SAME REASON AND MUST: its own
+    promise is *"this is exactly what buyers will see."* Reported under `E412`
+    WS-4 rather than decided here.
+  */
+  const location = formatLocality({ city: addr?.city, state: addr?.state });
   // The hero's meta rail (WS3, mockup pg1) shows Country on its own line, and
   // the primary LANGUAGE — the first one listed, which is the order the
   // provider entered them in.

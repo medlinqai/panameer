@@ -68,6 +68,8 @@ import { LocationFields } from "@/components/onboarding/LocationFields";
 import { CompanyStep } from "@/components/company/CompanyStep";
 import { AiPassPanel } from "@/components/onboarding/AiPassPanel";
 import { ResumeImportAction } from "@/components/onboarding/ResumeImportAction";
+import { Modal } from "@/components/Modal";
+import { formatLocality } from "@/lib/locality";
 import {
   reviewItems,
   splitReviewItems,
@@ -144,6 +146,23 @@ type Step = (typeof ALL_STEPS)[number];
   step list, so asking the question does not renumber anybody's itinerary.
 */
 type Screen = "signup" | "check_email" | "work_method" | Step;
+
+/**
+ * The review screen's in-place editors (`P1-A1.4-E412` WS-1). Each value names a
+ * section CARD on the review, not a wizard step — `"work"` covers Work History
+ * and Solo Projects because `EmployersStep` is one editor holding both, and
+ * `"location"` has no wizard step of its own at all (the address is collected on
+ * `picture`, whose `LocationFields` block this reuses).
+ */
+type EditSection =
+  | null
+  | "title"
+  | "rate"
+  | "work"
+  | "skills"
+  | "specializations"
+  | "education"
+  | "location";
 
 /** Provider journey (10). The server sends the real list; this is the fallback. */
 const DEFAULT_STEPS: readonly Step[] = ALL_STEPS;
@@ -658,6 +677,21 @@ export default function JoinProviderPage() {
   /** WS5/E084 — the post-upload review shows work history the way the profile
    *  does, and swaps to the editor in place when you ask to change it. */
   const [editingWork, setEditingWork] = useState(false);
+
+  /*
+    ── ⚠⚠ WHICH SECTION THE REVIEW IS EDITING IN PLACE (`P1-A1.4-E412` WS-1) ──
+
+    `null` means "just reviewing". Anything else means a `Modal` is open over
+    the review screen holding that section's own editor.
+
+    ⚠ IT IS DELIBERATELY NOT A `Screen`. A `Screen` is somewhere you GO, and the
+    whole point of `E412` is that this is somewhere you do not go: `screen`
+    stays `"finish"` the entire time, the review stays mounted and scrolled
+    where it was, and closing the modal reveals it rather than re-rendering it.
+    ⚠ THAT ALSO KEEPS `returnToReview` OUT OF IT — there is no return trip to
+    manage, which is the whole class of defect `E411` had to repair.
+  */
+  const [editSection, setEditSection] = useState<EditSection>(null);
   /** WS-B — which imported-but-unmatched terms the provider has ticked. */
   const [pickedSuggestions, setPickedSuggestions] = useState<string[]>([]);
   const [suggestBusy, setSuggestBusy] = useState(false);
@@ -994,8 +1028,26 @@ setScreen(target);
       Roles step rendering an empty list with no error — the fetch simply never
       ran. Found by walking it; nothing failed, there was just nothing there.
     */
+    /*
+      ── ⚠⚠ THE EDITOR CAN NOW BE OPEN ON A DIFFERENT `screen` (`E412` WS-1) ──
+
+      ⚠ SUPERSEDED, quoted not deleted:
+          `if ((screen === "roles" || screen === "skills" || screen === "catalog") &&`
+
+      ⚠⚠ EVERY ONE OF THESE FETCHES IS GATED ON `screen`, AND `E412` MOUNTS THE
+      SAME PICKERS WHILE `screen === "finish"`. Left alone, the review's Skills
+      Edit opens a modal with an EMPTY catalog and no error — the identical
+      failure the `roles` half of this condition was added to fix: *"nothing
+      failed, there was just nothing there."*
+
+      ⚠ THE MODAL IS ADDED TO THE CONDITION, NOT SUBSTITUTED FOR IT — the steps
+      still load their own data on arrival exactly as before.
+    */
     if (
-      (screen === "roles" || screen === "skills" || screen === "catalog") &&
+      (screen === "roles" ||
+        screen === "skills" ||
+        screen === "catalog" ||
+        editSection === "skills") &&
       fieldRoles.length === 0
     ) {
       fetch("/api/catalog/fields")
@@ -1003,7 +1055,12 @@ setScreen(target);
         .then((d) => setFieldRoles(d.roles ?? []))
         .catch(() => setError("We couldn't load the categories. Please refresh."));
     }
-    if (screen === "specializations" && specGroups.length === 0) {
+    /* ⚠ SUPERSEDED, quoted (`E412` WS-1): `if (screen === "specializations" && …`
+       — same reason as above; the review mounts this picker on `finish`. */
+    if (
+      (screen === "specializations" || editSection === "specializations") &&
+      specGroups.length === 0
+    ) {
       fetch("/api/catalog/specializations")
         .then((r) => r.json())
         .then((d) => setSpecGroups(d.groups ?? []))
@@ -1011,7 +1068,7 @@ setScreen(target);
           setError("We couldn't load specializations. Please refresh.")
         );
     }
-  }, [screen, fieldRoles.length, specGroups.length]);
+  }, [screen, editSection, fieldRoles.length, specGroups.length]);
 
   /*
     WS3 — the skills page shows the UNION across every claimed role.
@@ -1022,12 +1079,16 @@ setScreen(target);
   */
   const roleKey = profile.roleTypeIds.join(",");
   useEffect(() => {
-    if (screen !== "skills" || !roleKey) return;
+    /* ⚠ SUPERSEDED, quoted (`E412` WS-1): `if (screen !== "skills" || !roleKey) return;`
+       The skill OPTIONS are the list the picker is made of; without this the
+       review's Skills modal renders its chips-you-already-have and an otherwise
+       empty box. */
+    if ((screen !== "skills" && editSection !== "skills") || !roleKey) return;
     fetch(`/api/catalog/skills?roleTypeIds=${encodeURIComponent(roleKey)}`)
       .then((r) => r.json())
       .then((d) => setSkillOpts(d.skills ?? []))
       .catch(() => setError("We couldn't load skills. Please refresh."));
-  }, [screen, roleKey]);
+  }, [screen, editSection, roleKey]);
 
   // The retired combined page is still reachable from Settings, and it loads
   // per (role, domain) as it always did.
@@ -1754,37 +1815,123 @@ setScreen(target);
     ...props,
   });
 
-  switch (screen) {
-    // ---- 1/12 — Experience (E003) -------------------------------------
-    case "title":
-      return (
-        <WizardShell
-          {...shell({
-            /* ⚠ SCOTT'S WORDS, VERBATIM (`E292`). ⚠ SUPERSEDED, quoted: *"Got it. Now,
-               add a title to tell the world what you do."*
-               ⚠ `Got it.` WAS AN ANSWERING WORD WHOSE ANTECEDENT IS GONE — after
-               `E290` the screen before this asks nothing, so it answered a
-               question nobody had been asked. A sequencing fix, not a tone
-               preference. ⚠ The sub-copy on the next line is NOT changed. */
-            title: "Let's start by telling the world what you do.",
-            subtitle:
-              "It's the very first thing clients see, so make it count. Stand out by describing your expertise in your own words.",
-            /*
-              ⚠⚠ THE TITLE FORWARDS TO THE RÉSUMÉ SCREEN, NOT TO STEP 2 (`E283`).
-              That is the V3 order and the deck shows it: `1/7` Your Title → "How would
-              you like to tell us about yourself?" (uncounted) → the import review
-              (uncounted) → `2/7` Your Role.
-              ⚠ SUPERSEDED: this passed no `then`, so it used the default `goNext` and
-              went straight to the next COUNTED step, leaving the upload unreachable.
-              ⚠ IT IS AN OFFER, NOT A GATE — the résumé screen's own Skip for Now and
-              Continue both lead on to `2/7`, which can be completed by typing.
-            */
-            onContinue: () =>
-              saveAnd("title", { headline: profile.headline }, () => goTo("tell_us")),
-            continueDisabled: profile.headline.trim() === "",
-          })}
-        >
-          {error && <Notice>{error}</Notice>}
+
+  /*
+    ── ⚠⚠ ONE EDITOR, TWO MOUNTS (`P1-A1.4-E412` WS-1) ────────────────────────
+
+    SCOTT'S RULE, and it is the whole brief: *"a person on the review screen
+    never leaves it to edit."* The review's Edit links used to call `goTo(step)`
+    — the person left the page they were reviewing, edited on a wizard step, and
+    came back through `returnToReview`. Seven of the twelve cards did that.
+
+    ⚠⚠ AND THE FIX IS NOT A SECOND EDITOR. `E412`: *"Build no new editors."* A
+    forked copy of the Skills picker on the review page is how two surfaces that
+    are meant to be the same thing start disagreeing — the exact failure
+    `WorkHistoryBody` was shared to prevent (`E084`), and the one
+    `SettingsNav`/`SettingsHeading` share a definition to avoid.
+
+    ⚠ SO THE STEP BODY IS HOISTED, NOT COPIED. Each helper below returns the
+    SAME JSX the wizard step has always rendered plus the save call that step
+    has always made; the step renders it inside `WizardShell` and the review
+    renders it inside `Modal`. There is one implementation and two mounts, so a
+    change to the picker reaches both by construction.
+
+    ⚠ THEY ARE PLAIN FUNCTIONS, NOT COMPONENTS, and deliberately so — every
+    piece of state they touch (`profile`, `skillOpts`, `specGroups`,
+    `skillQuery`, `setProfile`) already lives in this closure. Making them
+    components would mean plumbing a dozen props through for no gain and would
+    put the pickers behind a second identity in the tree.
+  */
+
+  /*
+    ⚠ THE TITLE FIELD (`E412` WS-1). `case "title"` renders this and so does the
+    review's "Edit title". ⚠ `then: () => goTo("tell_us")` is the STEP's
+    forwarding rule (`E283`) and stays with the step — the modal's save just
+    closes, because there is nowhere to forward TO from a review screen.
+  */
+  /*
+    ── ⚠⚠ SAVE, THEN CLOSE — AND ONLY IF THE SAVE WORKED (`E412` WS-1) ────────
+
+    ⚠ `postStep` RETURNS `false` AND SETS `error` ON A REJECTED WRITE, and this
+    keeps the modal OPEN in that case with the message inside it. Closing first
+    and reporting later is how somebody loses an edit and is told about it on a
+    screen that no longer holds the field — `E090`'s lesson, which the `picture`
+    step already applies to its two-call save.
+
+    ⚠ THE WIZARD STEPS' OWN `saveAnd` FORWARDS TO THE NEXT STEP; THIS DOES NOT.
+    Same write, different sequel: there is nowhere to forward to from a review
+    screen, so the sequel is "the card behind you now shows what you typed".
+  */
+  const saveEditSection = async () => {
+    switch (editSection) {
+      case "title":
+        if (await postStep("title", { headline: profile.headline })) setEditSection(null);
+        return;
+      case "rate":
+        if (
+          await postStep("rate", {
+            hourlyDollars:
+              profile.hourlyRateCents != null ? profile.hourlyRateCents / 100 : "",
+          })
+        )
+          setEditSection(null);
+        return;
+      case "education":
+        if (await postStep("education", { education: profile.education })) setEditSection(null);
+        return;
+      case "skills":
+        if (
+          await postStep("skills", {
+            skillIds: profile.skillIds,
+            customSkills: profile.customSkills,
+            customSkillRoleId: profile.roleTypeId,
+            roleTypeIds: profile.roleTypeIds,
+            roleTypeId: profile.roleTypeId,
+          })
+        )
+          setEditSection(null);
+        return;
+      case "specializations":
+        if (
+          await postStep("specializations", {
+            specializationIds: profile.specializationIds,
+            customSpecializations: profile.customSpecializations,
+          })
+        )
+          setEditSection(null);
+        return;
+      case "location":
+        if (await postStep("finish", { address: profile.address, phone: phoneInput }))
+          setEditSection(null);
+        return;
+      /* `work` has no Save — `EmployersStep` commits as it goes. */
+      default:
+        return;
+    }
+  };
+
+  /*
+    ⚠ THE SAME CONDITION THE STEP'S `continueDisabled` USES, section by section
+    — a Title that is blank or a Rate that is unset cannot be saved from the
+    review either. ⚠ THE OPTIONAL SECTIONS RETURN `true`: Education,
+    Specializations and Location are all skippable in the wizard (Education and
+    Specializations literally carry a "Skip for Now"), so a Save that refused an
+    empty one would be stricter on the review than on the step that owns it.
+  */
+  const sectionEditorCanSave =
+    editSection === "title"
+      ? profile.headline.trim() !== ""
+      : editSection === "rate"
+        ? Boolean(profile.hourlyRateCents)
+        : editSection === "skills"
+          ? profile.skillIds.length + profile.customSkills.length > 0
+          : true;
+
+  const titleEditing = () => ({
+    canSave: profile.headline.trim() !== "",
+    save: () => saveAnd("title", { headline: profile.headline }, () => goTo("tell_us")),
+    body: (
+      <>
           {/*
             WS-4 — CAPPED AT 42 WITH A LIVE COUNTER, fixed at the source.
 
@@ -1823,6 +1970,929 @@ setScreen(target);
           >
             {profile.headline.length} / {HEADLINE_MAX}
           </p>
+      </>
+    ),
+  });
+
+  /* ⚠ THE RATE FIELD + FEE BREAKDOWN (`E412` WS-1), rendered by `case "rate"`
+     and by the review's "Edit rate". */
+  const rateEditing = () => {
+    const { rate, fee, youGet } = rateBreakdown(
+      profile.hourlyRateCents,
+      profile.serviceFeeBps
+    );
+    return {
+      canSave: Boolean(profile.hourlyRateCents),
+      save: () =>
+        saveAnd("rate", {
+          hourlyDollars:
+            profile.hourlyRateCents != null ? profile.hourlyRateCents / 100 : "",
+        }),
+      body: (
+        <>
+          <div className="max-w-md space-y-5">
+            <Field
+              label="Hourly Rate"
+              hint="Total amount the client will see."
+            >
+              <div className="relative">
+                <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[15px] font-bold text-ink-2">
+                  $
+                </span>
+                <TextInput
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  className="pl-8"
+                  value={
+                    profile.hourlyRateCents != null
+                      ? String(profile.hourlyRateCents / 100)
+                      : ""
+                  }
+                  onChange={(e) =>
+                    setProfile((p) => ({
+                      ...p,
+                      hourlyRateCents:
+                        e.target.value === ""
+                          ? null
+                          : Math.round(Number(e.target.value) * 100),
+                    }))
+                  }
+                  placeholder="125.00"
+                />
+                <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[14px] text-ink-2">
+                  /hr
+                </span>
+              </div>
+            </Field>
+
+            <div className="rounded-brand border border-line p-5">
+              <Row
+                label={`Service fee (${bpsToPercentLabel(profile.serviceFeeBps)})`}
+                value={fee != null ? `−${formatCents(fee)}` : "—"}
+              />
+              <p className="mt-2 text-[13px] leading-relaxed text-ink-2">
+                This helps us run the platform and provide services like payment
+                protection and customer support. Fees vary and are shown before
+                contract acceptance.{" "}
+                <span className="font-semibold text-magenta">Learn More</span>
+              </p>
+              <div className="mt-4 border-t border-line pt-4">
+                <Row
+                  label="You'll Get"
+                  value={youGet != null ? `${formatCents(youGet)}/hr` : "—"}
+                  strong
+                />
+                <p className="mt-1 text-[13px] text-ink-2">
+                  The estimated amount you&apos;ll receive after service fees.
+                </p>
+              </div>
+              {rate != null && (
+                <p className="mt-3 text-[13px] text-ink-2">
+                  Clients see {formatCents(rate)}/hr.
+                </p>
+              )}
+            </div>
+          </div>
+        </>
+      ),
+    };
+  };
+
+  /*
+    ⚠⚠ PHONE + ADDRESS, ONE BLOCK (`E412` WS-1/WS-4).
+
+    ⚠ THE REVIEW'S `Location` CARD HAD NO EDIT AT ALL — `E412` WS-4 — and the
+    only place the address is collected is the `picture` step. This is that
+    step's own `Your Details` block, hoisted so both mount it.
+
+    ⚠ PHONE RIDES WITH IT ON PURPOSE, and it is not scope creep: `LocationFields`
+    has always promised that country *"sets how we format your phone number"*
+    (`E203`), and `Verify Identity` on the review pointed at the `picture` step
+    to change a phone — the last remaining "leave the page to edit" on this
+    screen. Splitting the block would have meant either a second editor for the
+    phone (forbidden) or a link that still navigates away.
+  */
+  const contactEditing = () => ({
+    save: () =>
+      postStep("finish", { address: profile.address, phone: phoneInput }),
+    body: (
+      <>
+              <div className="space-y-3">
+                {/*
+                  DATE OF BIRTH IS GONE (WS7). It was required here and gated
+                  both publish and marketplace visibility, and nothing in the
+                  marketplace ever used it: a buyer needs to reach a provider,
+                  not know their age. If age or legal capacity is ever needed it
+                  rides the tax/payout gate, where there is a reason to ask.
+                  The column stays nullable — no destructive drop.
+                */}
+                {/*
+                  E203 — masked, digits-only, validated on blur. The country
+                  comes from the address block below, whose hint has always
+                  promised it "sets how we format your phone number"; this is
+                  the first version where that is true.
+                */}
+                <PhoneField
+                  id="review-phone"
+                  value={phoneInput}
+                  onChange={setPhoneInput}
+                  country={addr.country}
+                />
+                {/*
+                  E126 — COUNTRY FIRST, above the street line. It decides what
+                  the fields under it even mean ("State" here, "Province" in
+                  Canada, "County" in Ireland), so asking it last meant asking
+                  the rest before knowing what they were. Same shared block as
+                  the employer modal (E123), which is what stops one provider
+                  meeting two different location forms in one sitting.
+                */}
+                <LocationFields
+                  withStreet
+                  countryHint="Also sets how we format your phone number."
+                  value={{
+                    country: addr.country,
+                    line1: addr.line1,
+                    city: addr.city,
+                    state: addr.state,
+                    postalCode: addr.postalCode,
+                  }}
+                  onChange={(patch) =>
+                    setAddr({
+                      ...(patch.country !== undefined
+                        ? { country: patch.country ?? "" }
+                        : {}),
+                      ...(patch.line1 !== undefined
+                        ? { line1: patch.line1 ?? "" }
+                        : {}),
+                      ...(patch.city !== undefined ? { city: patch.city ?? "" } : {}),
+                      ...(patch.state !== undefined
+                        ? { state: patch.state ?? "" }
+                        : {}),
+                      ...(patch.postalCode !== undefined
+                        ? { postalCode: patch.postalCode ?? "" }
+                        : {}),
+                    })
+                  }
+                />
+              </div>
+      </>
+    ),
+  });
+
+  const skillsEditing = () => {
+      const chosenSkills = new Set(profile.skillIds);
+      const totalPicked = profile.skillIds.length + profile.customSkills.length;
+
+      const q = skillQuery.trim().toLowerCase();
+      // Already-picked skills are chips above, so they stop being suggestions —
+      // filtering them out BEFORE the cap keeps a full set of usable options as
+      // picks accumulate rather than quietly thinning it (E053).
+      const matchingSkills = (
+        q ? skillOpts.filter((sk) => sk.name.toLowerCase().includes(q)) : skillOpts
+      ).filter((sk) => !chosenSkills.has(sk.id));
+      const shownSkills = matchingSkills.slice(0, MAX_SKILL_SUGGESTIONS);
+      const hiddenSkillCount = matchingSkills.length - shownSkills.length;
+
+      /*
+        ── ⚠⚠ WHICH LABELS ARE NOT UNIQUE HERE (`P1-A1.3-E401` WS-3) ───────────
+
+        Computed over `skillOpts` — EVERY option for this provider's roles, not
+        just the ones currently on screen. ⚠ THE SEARCH BOX WOULD OTHERWISE HIDE
+        THE COLLISION: typing "recr" narrows the list, and if ambiguity were
+        judged on `shownSkills` a name could gain and lose its qualifier as the
+        provider types. The set is a property of what they may pick, not of what
+        is visible this keystroke.
+        ⚠ AND IT DRIVES THE PICKED CHIPS BELOW TOO, so a chip reads the same
+        after it is clicked as it did before.
+      */
+      const ambiguousSkills = ambiguousSkillNames(
+        skillOpts.map((sk) => ({ name: sk.name, area: sk.pillar?.name ?? null }))
+      );
+
+      const toggleSkill = (id: string) =>
+        setProfile((p) => {
+          const has = p.skillIds.includes(id);
+          const opt = skillOpts.find((x) => x.id === id);
+          return {
+            ...p,
+            skillIds: has ? p.skillIds.filter((x) => x !== id) : [...p.skillIds, id],
+            skillNames: has
+              ? p.skillNames.filter((x) => x.id !== id)
+              : [
+                  ...p.skillNames,
+                  // The DOMAIN still rides along on every chip — it is what
+                  // tells two identically-named skills apart ("Project Manager"
+                  // exists under two domains), which is exactly why the FK
+                  // stays even though the tier is gone.
+                  { id, name: opt?.name ?? "", area: opt?.pillar?.name ?? null },
+                ],
+          };
+        });
+
+      const addCustomSkill = () => {
+        /*
+          ⚠⚠ TITLE-CASED ON SAVE (`P1-J1.4-E298`, 2026-08-31). Scott's own chip read
+          `purchase requisitons` — lower-case, and the page prints the stakes right
+          below it: *"each one is another search a buyer can find you in."*
+      
+          ⚠ `titleCase` IS THE SHARED HELPER (`lib/title-case.ts`) and this is its
+          first caller. ⚠ THE BRIEF SAID TO REUSE THE ONE FROM THE `e96cd2e` SWEEP —
+          THERE WASN'T ONE. That pass was a static rewrite of 60 literals by an
+          uncommitted scanner, so no runtime function existed. Reported; the helper
+          is created ONCE so the instruction's real intent — never two
+          implementations — holds from here.
+      
+          ⚠⚠ CAPITALISATION IS THE SMALL HALF AND IT SHIPS ALONE, DELIBERATELY.
+          `purchase requisitons` becomes `Purchase Requisitons` — still misspelled,
+          still unmatchable, now looking deliberate. The fuzzy-match-before-create
+          that would actually fix it ("Did you mean Purchase Requisitions?") is
+          CHAT'S ADDITION, not Scott's ask, and `E298` says capitalisation ships
+          alone unless he says yes. Surfaced in the report; NOT BUILT HERE.
+        */
+        void addSkillMatched(titleCase(skillQuery.trim()));
+      };
+
+      /*
+        ── ⚠⚠ MATCH BEFORE CREATE (`P1-J1.4-E298`) ─────────────────────────────
+
+        SCOTT: *"i added a new skill - purchase requisitions… but that is as i
+        typed it… that means we will get misspellings and non-capitalizations."*
+
+        ⚠ SUPERSEDED, quoted: `addCustomSkill` used to title-case the text and push
+        it straight into `customSkills`, and its own comment admitted the gap —
+        *"still misspelled, still unmatchable, now looking deliberate"*. It now
+        asks `api/onboarding/provider/skill-match`, which runs THE SAME
+        `matchSkill` the save path runs, against the WHOLE catalog rather than the
+        current role's `skillOpts`.
+
+        ⚠⚠ EXACT-ISH LINKS SILENTLY. NEAR ASKS. `Purchase Requisitions` typed by
+        hand now selects the catalog row; `purchase requisitons` offers *"Did you
+        mean Purchase Requisitions?"* and CHANGES NOTHING until answered. A skill
+        is a claim about what somebody can do — auto-correcting it would put words
+        in their mouth, and if the guess is wrong it is a false claim with their
+        name on it.
+
+        ⚠ THE DEDUPE WITHIN THEIR OWN LIST IS KEPT AND RUNS FIRST — it is cheap,
+        local, and stops a round trip for something already on screen.
+        ⚠ AND IF THE LOOKUP FAILS FOR ANY REASON THE OLD BEHAVIOUR STANDS: the
+        custom skill is added as typed. A network blip must not silently swallow
+        a skill somebody just asked for.
+      */
+      const addSkillMatched = async (name: string) => {
+        if (!name) return;
+        if (
+          profile.customSkills.some((c) => c.toLowerCase() === name.toLowerCase()) ||
+          profile.skillNames.some((c) => c.name.toLowerCase() === name.toLowerCase())
+        ) {
+          setSkillQuery("");
+          return;
+        }
+        setSkillMatch(null);
+        try {
+          const r = await fetch(
+            `/api/onboarding/provider/skill-match?q=${encodeURIComponent(name)}`
+          );
+          const m = r.ok ? await r.json() : { kind: "none" };
+          if (m.kind === "exact" && m.skill?.id) {
+            /* Already in the catalog — link the real row, create nothing. */
+            if (!profile.skillIds.includes(m.skill.id)) {
+              setProfile((p) => ({
+                ...p,
+                skillIds: [...p.skillIds, m.skill.id],
+                skillNames: [...p.skillNames, { id: m.skill.id, name: m.skill.name, area: null }],
+              }));
+            }
+            setSkillQuery("");
+            return;
+          }
+          if (m.kind === "near" && m.skill?.id) {
+            /* ⚠ ASK. Nothing is added yet — both options stay on screen. */
+            setSkillMatch({ typed: name, prompt: m.prompt, skill: m.skill });
+            return;
+          }
+        } catch {
+          /* fall through to adding it as typed */
+        }
+        setProfile((p) => ({ ...p, customSkills: [...p.customSkills, name] }));
+        setSkillQuery("");
+      };
+
+      /** Take the suggestion — link the catalog row instead of the typed text. */
+      const acceptSkillMatch = () => {
+        if (!skillMatch) return;
+        const { skill } = skillMatch;
+        if (!profile.skillIds.includes(skill.id)) {
+          setProfile((p) => ({
+            ...p,
+            skillIds: [...p.skillIds, skill.id],
+            skillNames: [...p.skillNames, { id: skill.id, name: skill.name, area: null }],
+          }));
+        }
+        setSkillMatch(null);
+        setSkillQuery("");
+      };
+
+      /** Keep what they typed. ⚠ A REAL, SUPPORTED OUTCOME — Scott types real ones. */
+      const keepTypedSkill = () => {
+        if (!skillMatch) return;
+        setProfile((p) => ({ ...p, customSkills: [...p.customSkills, skillMatch.typed] }));
+        setSkillMatch(null);
+        setSkillQuery("");
+      };
+
+      /*
+        WHICH PICKED SKILLS CAME OFF THE RÉSUMÉ (E187).
+
+        This used to be computed from `importOutcome` — client state from the
+        upload that just happened — with `hasImport && skillNames.length > 0` as
+        the fallback when that state was gone. Both were wrong, in opposite
+        directions and at the same time. On ARRIVAL at a freshly-hydrated Skills
+        step there is no `importOutcome`, and if the import matched nothing the
+        fallback is false too: no card, nothing pre-ticked, exactly what the walk
+        saw. Then the provider clicks any skill by hand, `skillNames.length`
+        becomes 1, and the fallback flips true — so the card finally appears,
+        crediting AI for the skill they just typed.
+
+        `resumeSkillIds` is the server's answer to the actual question, present
+        on the first render and after any reload, and it never counts a manual
+        pick. The pre-selection itself was always server-side (the import writes
+        ProviderSkill rows); what was missing was skills worth selecting, which
+        is WS-A's job, and an honest way to say where they came from, which is
+        this.
+      */
+      const fromResume = new Set(profile.resumeSkillIds);
+      const aiMatchedCount = profile.skillIds.filter((id) =>
+        fromResume.has(id)
+      ).length;
+      const cameFromResume = aiMatchedCount > 0;
+
+      const roleNames = profile.roleTypeIds
+        .map((id) => fieldRoles.find((r) => r.id === id)?.name)
+        .filter(Boolean);
+    return {
+      roleNames,
+      canSave: totalPicked > 0,
+      save: () =>
+        saveAnd("skills", {
+          skillIds: profile.skillIds,
+          customSkills: profile.customSkills,
+          customSkillRoleId: profile.roleTypeId,
+          roleTypeIds: profile.roleTypeIds,
+          roleTypeId: profile.roleTypeId,
+        }),
+      body: (
+        <>
+          {error && <Notice>{error}</Notice>}
+
+          {/*
+            WS4 / E174 — NAME THE AI.
+
+            The résumé→skills hunt is one of the few places the product does
+            something visibly clever, and the copy didn't mention it at all: the
+            skills simply appeared, pre-ticked, as if they had always been
+            there. AI-native is a stated selling point; a feature nobody
+            attributes is a selling point nobody hears.
+
+            Shown only when an import actually produced matches, so it never
+            claims credit for skills the provider typed themselves — and, since
+            E187, shown on ARRIVAL rather than after the first manual click.
+          */}
+          {cameFromResume && (
+            <div className="mb-4 rounded-brand border border-magenta/25 bg-magenta/[0.04] p-4">
+              <p className="flex flex-wrap items-center gap-2 text-[15px] font-bold">
+                <SparkIcon />
+                AI scanned your résumé against the ERP Service Catalog
+              </p>
+              <p className="mt-1.5 text-[14.5px] leading-relaxed text-ink-2">
+                It pulled{" "}
+                <b className="text-ink">
+                  {aiMatchedCount} skill{aiMatchedCount === 1 ? "" : "s"}
+                </b>{" "}
+                and pre-selected them below. Remove anything that isn&apos;t
+                yours, and add what it missed — buyers match on these.
+              </p>
+            </div>
+          )}
+
+          {/* The basket is always on screen and always removable. */}
+          {(profile.skillNames.length > 0 || profile.customSkills.length > 0) && (
+            <div className="mb-4">
+              <p className="mb-1.5 text-[13px] font-bold">
+                {/* E202 — a count, not a quota. "12/15" turned a list of what
+                    you can do into a budget you were spending. */}
+                Your Skills{" "}
+                <span className="font-normal text-ink-2">({totalPicked})</span>
+              </p>
+              <div className={`flex flex-wrap gap-2 ${PICKED_REGION}`}>
+                {profile.skillNames.map((sk) => (
+                  <Chip key={sk.id} selected onClick={() => toggleSkill(sk.id)}>
+                    {sk.name}
+                    {/*
+                      ⚠ SUPERSEDED, quoted not deleted (`P1-A1.3-E401` WS-3):
+                      `{sk.area && roleNames.length > 1 && (…)}`.
+
+                      ⚠⚠ THAT CONDITION ASKED THE WRONG QUESTION. It qualified a
+                      chip when the provider held MORE THAN ONE ROLE — but the
+                      collision Scott hit was two `Recruiting` skills inside ONE
+                      role (Oracle Fusion Cloud and Workday, both
+                      Application-Specific), so the test was false exactly when
+                      the qualifier was needed. It also qualified chips that
+                      needed nothing, whenever a second role happened to be
+                      claimed. Wrong in both directions.
+                    */}
+                    {skillQualifier(sk, ambiguousSkills) && (
+                      <span className="ml-1 text-[12px] font-normal opacity-75">
+                        · {skillQualifier(sk, ambiguousSkills)}
+                      </span>
+                    )}
+                  </Chip>
+                ))}
+                {profile.customSkills.map((name) => (
+                  <Chip
+                    key={`custom:${name}`}
+                    selected
+                    onClick={() =>
+                      setProfile((p) => ({
+                        ...p,
+                        customSkills: p.customSkills.filter((c) => c !== name),
+                      }))
+                    }
+                  >
+                    {name}
+                  </Chip>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* SEARCH-FIRST. The catalog is meant to grow without limit, so the
+              page must never grow with it: a capped suggestion set inside a
+              fixed-height scroll region (E053/E054). */}
+          <div className="flex flex-wrap items-center gap-2">
+            <TextInput
+              value={skillQuery}
+              onChange={(e) => setSkillQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  addCustomSkill();
+                }
+              }}
+              placeholder="Search skills — or type your own and press Add"
+              className="max-w-md"
+            />
+            <button
+              type="button"
+              onClick={addCustomSkill}
+              disabled={!skillQuery.trim()}
+              className="rounded-full border-[1.5px] border-line px-5 py-2.5 font-bold transition-colors hover:border-magenta hover:text-magenta disabled:opacity-40"
+            >
+              + Add
+            </button>
+          </div>
+
+          {/*
+            ── ⚠⚠ A NEAR MATCH ASKS (`P1-J1.4-E298`) ────────────────────────────
+
+            ⚠ BOTH ANSWERS ARE REAL AND BOTH ARE ONE CLICK. The suggestion is
+            offered first because it is usually right, and KEEPING WHAT THEY TYPED
+            IS NOT A PENALTY — Scott types genuinely new skills and this must not
+            make that feel like a mistake.
+            ⚠ THE TYPED TEXT STAYS ON SCREEN, quoted, so the member can compare
+            the two rather than trusting a guess about what they meant.
+            ⚠ NOTHING HAS BEEN ADDED AT THIS POINT. No auto-correct, no silent
+            write — a skill is a claim about what somebody can do.
+          */}
+          {skillMatch && (
+            <div className="mt-3 max-w-md rounded-brand border border-line bg-bg-soft p-4">
+              <p className="text-[14px] font-bold">{skillMatch.prompt}</p>
+              <p className="mt-1 text-[13px] leading-relaxed text-ink-2">
+                It&apos;s already in the catalog, so buyers already search for it.
+                You typed &ldquo;{skillMatch.typed}&rdquo;.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={acceptSkillMatch}
+                  className="rounded-full bg-magenta px-4 py-2 text-[13.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
+                >
+                  Use {skillMatch.skill.name}
+                </button>
+                <button
+                  type="button"
+                  onClick={keepTypedSkill}
+                  className="rounded-full border-[1.5px] border-line px-4 py-2 text-[13.5px] font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
+                >
+                  Keep &ldquo;{skillMatch.typed}&rdquo;
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className={`mt-3 max-h-[220px] ${SCROLL_REGION}`}>
+            <div className="flex flex-wrap gap-2">
+              {shownSkills.map((sk) => (
+                <Chip key={sk.id} selected={false} onClick={() => toggleSkill(sk.id)}>
+                  {sk.name}
+                  {/* ⚠⚠ THE CHIP SCOTT ACTUALLY SAW. This list carried the bare
+                      name and nothing else, so the two `Recruiting` options were
+                      indistinguishable AT THE MOMENT OF CHOOSING — which is the
+                      only moment that matters. */}
+                  {skillQualifier({ name: sk.name, area: sk.pillar?.name ?? null }, ambiguousSkills) && (
+                    <span className="ml-1 text-[12px] font-normal opacity-75">
+                      · {sk.pillar?.name}
+                    </span>
+                  )}
+                </Chip>
+              ))}
+              {shownSkills.length === 0 && (
+                <p className="text-[14px] text-ink-2">
+                  {matchingSkills.length === 0 && q
+                    ? "No matches — use “+ Add” to create it."
+                    : "You've picked every skill we list here."}
+                </p>
+              )}
+            </div>
+          </div>
+          {hiddenSkillCount > 0 && (
+            <p className="mt-2 text-[13px] text-ink-2">
+              +{hiddenSkillCount} more — keep typing to narrow the list.
+            </p>
+          )}
+        </>
+      ),
+    };
+  };
+
+  const specializationsEditing = () => {
+      const chosenSpecs = new Set(profile.specializationIds);
+
+      // Every loaded specialization, by id — so a SELECTED chip can be named
+      // even when the search or the per-group cap has hidden its source row.
+      const specById = new Map<string, string>();
+      specGroups.forEach((g) =>
+        g.items.forEach((i) => specById.set(i.id, i.name))
+      );
+      profile.specializationNames.forEach((s) => {
+        if (!specById.has(s.id)) specById.set(s.id, s.name);
+      });
+
+      const sq = specQuery.trim().toLowerCase();
+      // TWO MODES, one for each job (PJv2 WS9). Browsing is a cascade — one open
+      // tier at a time. Searching is a flat lookup ACROSS the tiers, because
+      // someone typing "Workday" should not have to know whether we filed it
+      // under a product, a methodology or an industry.
+      const searching = sq.length > 0;
+
+      // Which tier each catalog item belongs to — the cascade needs it to count
+      // and label a collapsed tier, and to pin the open one on a pick.
+      const kindById = new Map<string, string>();
+      specGroups.forEach((g) => g.items.forEach((i) => kindById.set(i.id, g.kind)));
+      const pickedNames = (kind: string) =>
+        profile.specializationIds
+          .filter((id) => kindById.get(id) === kind)
+          .map((id) => specById.get(id) ?? "Specialization");
+
+      /**
+       * E054 — search results stay capped PER GROUP and inside ONE bounded
+       * region. A single overall cap would spend its whole budget on the first
+       * group and hide the later ones; three separate regions would let the page
+       * (and so the Continue button) grow as you type, which is the thing E053
+       * was filed about.
+       *
+       * Chosen items are excluded because they are already chips above — the same
+       * rule the Skills tier uses, so the suggestion area only ever holds things
+       * you can still act on.
+       */
+      const groups = specGroups
+        .map((g) => {
+          const matches = g.items.filter(
+            (i) =>
+              !chosenSpecs.has(i.id) && (!sq || i.name.toLowerCase().includes(sq))
+          );
+          return {
+            ...g,
+            shown: matches.slice(0, MAX_SPECS_PER_GROUP),
+            hidden: Math.max(0, matches.length - MAX_SPECS_PER_GROUP),
+          };
+        })
+        .filter((g) => g.shown.length > 0);
+
+      const hiddenSpecCount = groups.reduce((n, g) => n + g.hidden, 0);
+      const totalSpecs =
+        profile.specializationIds.length + profile.customSpecializations.length;
+
+      /**
+       * The open tier: the provider's last pick if they have one, else the first
+       * tier still empty, so the step opens on work to be done rather than on a
+       * tier that is already answered. All three collapse once all three have
+       * something — the step is optional, and a wall of open pickers is what WS9
+       * was filed to remove.
+       */
+      const openSpecKind =
+        openSpecTier ??
+        specGroups.find((g) => pickedNames(g.kind).length === 0)?.kind ??
+        null;
+
+      const addCustomSpec = () => {
+        const name = specQuery.trim();
+        if (!name) return;
+        const dup =
+          profile.customSpecializations.some(
+            (c) => c.toLowerCase() === name.toLowerCase()
+          ) ||
+          [...specById.entries()].some(
+            ([id, n]) => n.toLowerCase() === name.toLowerCase() && chosenSpecs.has(id)
+          );
+        if (!dup) {
+          setProfile((p) => ({
+            ...p,
+            customSpecializations: [...p.customSpecializations, name],
+          }));
+        }
+        setSpecQuery("");
+      };
+
+      const toggleSpec = (id: string) => {
+        // Pin the tier this item lives in. Without this, picking the first item
+        // in tier 2 makes tier 2 no-longer-the-first-empty-tier, and the cascade
+        // would collapse it and jump to tier 3 mid-selection.
+        const kind = kindById.get(id);
+        if (kind) setOpenSpecTier(kind);
+        setProfile((p) => {
+          const has = p.specializationIds.includes(id);
+          const name = specById.get(id) ?? "";
+          return {
+            ...p,
+            specializationIds: has
+              ? p.specializationIds.filter((x) => x !== id)
+              : [...p.specializationIds, id],
+            // Keep the display names in step with the ids. The server resends
+            // both on save, but until then the Review page reads these — and a
+            // name list that lags its id list renders the wrong chips.
+            specializationNames: has
+              ? p.specializationNames.filter((x) => x.id !== id)
+              : [...p.specializationNames, { id, name }],
+          };
+        });
+      };
+
+    return {
+      save: () =>
+        saveAnd("specializations", {
+          specializationIds: profile.specializationIds,
+          customSpecializations: profile.customSpecializations,
+        }),
+      body: (
+        <>
+          {error && <Notice>{error}</Notice>}
+          {specGroups.length === 0 ? (
+            <p className="text-ink-2">Loading specializations…</p>
+          ) : (
+            <div>
+              {/* Picked, always visible and always removable — it sits OUTSIDE
+                  the scroll region so a selection can never be scrolled or
+                  filtered out of reach. */}
+              {totalSpecs > 0 && (
+                <div className="mb-4">
+                  <p className="mb-2 text-[13px] font-bold">
+                    Your Specializations{" "}
+                    <span className="font-normal text-ink-2">({totalSpecs})</span>
+                  </p>
+                  <div className={`flex flex-wrap gap-2 ${PICKED_REGION}`}>
+                    {profile.specializationIds.map((id) => (
+                      <Chip key={id} selected onClick={() => toggleSpec(id)}>
+                        {specById.get(id) ?? "Specialization"}
+                      </Chip>
+                    ))}
+                    {profile.customSpecializations.map((name) => (
+                      <Chip
+                        key={`custom:${name}`}
+                        selected
+                        onClick={() =>
+                          setProfile((p) => ({
+                            ...p,
+                            customSpecializations: p.customSpecializations.filter(
+                              (c) => c !== name
+                            ),
+                          }))
+                        }
+                      >
+                        {name}
+                      </Chip>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* One control for both jobs, matching the Skills tier: type to
+                  narrow, or type something we don't have and add it (E031). */}
+              <div className="flex items-end gap-2">
+                <div className="flex-1">
+                  <Field label="Search or Add a Specialization">
+                    <TextInput
+                      value={specQuery}
+                      onChange={(e) => setSpecQuery(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          addCustomSpec();
+                        }
+                      }}
+                      placeholder="Start typing… e.g. Workday"
+                    />
+                  </Field>
+                </div>
+                <button
+                  type="button"
+                  onClick={addCustomSpec}
+                  disabled={!specQuery.trim()}
+                  className="mb-[2px] rounded-full border-[1.5px] border-line px-5 py-3 font-bold text-ink transition-colors hover:border-magenta hover:text-magenta disabled:opacity-40"
+                >
+                  + Add
+                </button>
+              </div>
+
+              {searching ? (
+                /* SEARCH MODE — flat results across all three tiers, grouped so
+                   you can still see WHICH tier a match came from, inside one
+                   fixed-height region so typing never moves the footer. */
+                <>
+                  <div className={`mt-3 max-h-[320px] ${SCROLL_REGION}`}>
+                    {groups.length === 0 ? (
+                      <p className="text-[14px] text-ink-2">
+                        No matches — use “+ Add” to create it.
+                      </p>
+                    ) : (
+                      <div className="space-y-4">
+                        {groups.map((g) => (
+                          <div key={g.kind}>
+                            <h2 className="mb-2 text-[13px] font-bold uppercase tracking-wide text-ink-2">
+                              {g.label}
+                              {g.hidden > 0 && (
+                                <span className="ml-2 font-normal normal-case tracking-normal">
+                                  +{g.hidden} more
+                                </span>
+                              )}
+                            </h2>
+                            <div className="flex flex-wrap gap-2">
+                              {g.shown.map((item) => (
+                                <Chip
+                                  key={item.id}
+                                  selected={false}
+                                  onClick={() => toggleSpec(item.id)}
+                                >
+                                  {item.name}
+                                </Chip>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  {hiddenSpecCount > 0 && (
+                    <p className="mt-2 text-[13px] text-ink-2">
+                      +{hiddenSpecCount} more — keep typing to narrow the list.
+                    </p>
+                  )}
+                </>
+              ) : (
+                /*
+                  BROWSE MODE — the RDS collapsing-cascade (WS9 / E073), now with
+                  INDUSTRIES AS ITS OWN TIER rather than a third heading inside a
+                  shared scroll box. Industry is a different KIND of claim from a
+                  product or a method — "I know Workday" and "I know utilities"
+                  are answers to different buyer questions — and burying it third
+                  in one list made it the section people scrolled past.
+
+                  Unlike Role → Domain → Skill, these tiers are INDEPENDENT: none
+                  gates the next, because a provider with no product to name still
+                  has an industry. So the cascade here is only the disclosure
+                  shape — one tier open, the others one line each.
+                */
+                <div className="mt-3 space-y-2.5">
+                  {specGroups.map((g, gi) => {
+                    const picked = pickedNames(g.kind);
+                    const summary =
+                      picked.length === 0
+                        ? "None yet"
+                        : picked.slice(0, 2).join(", ") +
+                          (picked.length > 2 ? ` +${picked.length - 2}` : "");
+                    const chosenHere = g.items.filter((i) => chosenSpecs.has(i.id));
+                    const avail = g.items.filter((i) => !chosenSpecs.has(i.id));
+                    const hidden = Math.max(0, avail.length - MAX_SPECS_PER_TIER);
+
+                    return (
+                      <CascadeTier
+                        key={g.kind}
+                        index={gi + 1}
+                        label={g.label}
+                        // Open tier → null, which is what makes CascadeTier
+                        // render the picker instead of the summary row.
+                        chosen={openSpecKind === g.kind ? null : summary}
+                        changeLabel={picked.length === 0 ? "Add" : "Change"}
+                        onChange={() => setOpenSpecTier(g.kind)}
+                      >
+                        {/* Exactly THREE chip rows (38px chip + 48px pitch +
+                            the region's own 12px padding). A round number like
+                            132px lands mid-chip, and a chip sliced through the
+                            middle reads as a rendering bug rather than as "there
+                            is more below" — the tinted, bordered, scrolling box
+                            already says that. */}
+                        <div className={`max-h-[176px] ${SCROLL_REGION}`}>
+                          <div className="flex flex-wrap gap-2">
+                            {/*
+                              E086 — this tier's OWN picks, first and removable.
+                              An expanded section used to show only what you could
+                              still add, so Industries could read "Retail +" while
+                              saying nothing about the two industries you had
+                              already chosen; the only evidence was the aggregate
+                              row at the top and the collapsed summary you had just
+                              opened. The skills tier has always shown its picks
+                              in place, and this is the same rule.
+                            */}
+                            {chosenHere.map((item) => (
+                              <Chip
+                                key={item.id}
+                                selected
+                                onClick={() => toggleSpec(item.id)}
+                              >
+                                {item.name}
+                              </Chip>
+                            ))}
+                            {avail.slice(0, MAX_SPECS_PER_TIER).map((item) => (
+                              <Chip
+                                key={item.id}
+                                selected={false}
+                                onClick={() => toggleSpec(item.id)}
+                              >
+                                {item.name}
+                              </Chip>
+                            ))}
+                            {avail.length === 0 && chosenHere.length === 0 && (
+                              <p className="text-[14px] text-ink-2">
+                                Nothing listed here yet — use the search above to
+                                add one.
+                              </p>
+                            )}
+                            {avail.length === 0 && chosenHere.length > 0 && (
+                              <p className="w-full text-[13px] text-ink-2">
+                                You&apos;ve picked everything we list here.
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        {hidden > 0 && (
+                          <p className="mt-2 text-[13px] text-ink-2">
+                            +{hidden} more — search above to find them.
+                          </p>
+                        )}
+                      </CascadeTier>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+        </>
+      ),
+    };
+  };
+
+  switch (screen) {
+    // ---- 1/12 — Experience (E003) -------------------------------------
+    case "title":
+      return (
+        <WizardShell
+          {...shell({
+            /* ⚠ SCOTT'S WORDS, VERBATIM (`E292`). ⚠ SUPERSEDED, quoted: *"Got it. Now,
+               add a title to tell the world what you do."*
+               ⚠ `Got it.` WAS AN ANSWERING WORD WHOSE ANTECEDENT IS GONE — after
+               `E290` the screen before this asks nothing, so it answered a
+               question nobody had been asked. A sequencing fix, not a tone
+               preference. ⚠ The sub-copy on the next line is NOT changed. */
+            title: "Let's start by telling the world what you do.",
+            subtitle:
+              "It's the very first thing clients see, so make it count. Stand out by describing your expertise in your own words.",
+            /*
+              ⚠⚠ THE TITLE FORWARDS TO THE RÉSUMÉ SCREEN, NOT TO STEP 2 (`E283`).
+              That is the V3 order and the deck shows it: `1/7` Your Title → "How would
+              you like to tell us about yourself?" (uncounted) → the import review
+              (uncounted) → `2/7` Your Role.
+              ⚠ SUPERSEDED: this passed no `then`, so it used the default `goNext` and
+              went straight to the next COUNTED step, leaving the upload unreachable.
+              ⚠ IT IS AN OFFER, NOT A GATE — the résumé screen's own Skip for Now and
+              Continue both lead on to `2/7`, which can be completed by typing.
+            */
+            onContinue: () =>
+              saveAnd("title", { headline: profile.headline }, () => goTo("tell_us")),
+            continueDisabled: profile.headline.trim() === "",
+          })}
+        >
+          {error && <Notice>{error}</Notice>}
+          {titleEditing().body}
         </WizardShell>
       );
 
@@ -2258,196 +3328,7 @@ setScreen(target);
 
     // ---- SKILLS — WS3 step 3, filtered by the chosen role(s) -----------
     case "skills": {
-      const chosenSkills = new Set(profile.skillIds);
-      const totalPicked = profile.skillIds.length + profile.customSkills.length;
-
-      const q = skillQuery.trim().toLowerCase();
-      // Already-picked skills are chips above, so they stop being suggestions —
-      // filtering them out BEFORE the cap keeps a full set of usable options as
-      // picks accumulate rather than quietly thinning it (E053).
-      const matchingSkills = (
-        q ? skillOpts.filter((sk) => sk.name.toLowerCase().includes(q)) : skillOpts
-      ).filter((sk) => !chosenSkills.has(sk.id));
-      const shownSkills = matchingSkills.slice(0, MAX_SKILL_SUGGESTIONS);
-      const hiddenSkillCount = matchingSkills.length - shownSkills.length;
-
-      /*
-        ── ⚠⚠ WHICH LABELS ARE NOT UNIQUE HERE (`P1-A1.3-E401` WS-3) ───────────
-
-        Computed over `skillOpts` — EVERY option for this provider's roles, not
-        just the ones currently on screen. ⚠ THE SEARCH BOX WOULD OTHERWISE HIDE
-        THE COLLISION: typing "recr" narrows the list, and if ambiguity were
-        judged on `shownSkills` a name could gain and lose its qualifier as the
-        provider types. The set is a property of what they may pick, not of what
-        is visible this keystroke.
-        ⚠ AND IT DRIVES THE PICKED CHIPS BELOW TOO, so a chip reads the same
-        after it is clicked as it did before.
-      */
-      const ambiguousSkills = ambiguousSkillNames(
-        skillOpts.map((sk) => ({ name: sk.name, area: sk.pillar?.name ?? null }))
-      );
-
-      const toggleSkill = (id: string) =>
-        setProfile((p) => {
-          const has = p.skillIds.includes(id);
-          const opt = skillOpts.find((x) => x.id === id);
-          return {
-            ...p,
-            skillIds: has ? p.skillIds.filter((x) => x !== id) : [...p.skillIds, id],
-            skillNames: has
-              ? p.skillNames.filter((x) => x.id !== id)
-              : [
-                  ...p.skillNames,
-                  // The DOMAIN still rides along on every chip — it is what
-                  // tells two identically-named skills apart ("Project Manager"
-                  // exists under two domains), which is exactly why the FK
-                  // stays even though the tier is gone.
-                  { id, name: opt?.name ?? "", area: opt?.pillar?.name ?? null },
-                ],
-          };
-        });
-
-      const addCustomSkill = () => {
-        /*
-          ⚠⚠ TITLE-CASED ON SAVE (`P1-J1.4-E298`, 2026-08-31). Scott's own chip read
-          `purchase requisitons` — lower-case, and the page prints the stakes right
-          below it: *"each one is another search a buyer can find you in."*
-      
-          ⚠ `titleCase` IS THE SHARED HELPER (`lib/title-case.ts`) and this is its
-          first caller. ⚠ THE BRIEF SAID TO REUSE THE ONE FROM THE `e96cd2e` SWEEP —
-          THERE WASN'T ONE. That pass was a static rewrite of 60 literals by an
-          uncommitted scanner, so no runtime function existed. Reported; the helper
-          is created ONCE so the instruction's real intent — never two
-          implementations — holds from here.
-      
-          ⚠⚠ CAPITALISATION IS THE SMALL HALF AND IT SHIPS ALONE, DELIBERATELY.
-          `purchase requisitons` becomes `Purchase Requisitons` — still misspelled,
-          still unmatchable, now looking deliberate. The fuzzy-match-before-create
-          that would actually fix it ("Did you mean Purchase Requisitions?") is
-          CHAT'S ADDITION, not Scott's ask, and `E298` says capitalisation ships
-          alone unless he says yes. Surfaced in the report; NOT BUILT HERE.
-        */
-        void addSkillMatched(titleCase(skillQuery.trim()));
-      };
-
-      /*
-        ── ⚠⚠ MATCH BEFORE CREATE (`P1-J1.4-E298`) ─────────────────────────────
-
-        SCOTT: *"i added a new skill - purchase requisitions… but that is as i
-        typed it… that means we will get misspellings and non-capitalizations."*
-
-        ⚠ SUPERSEDED, quoted: `addCustomSkill` used to title-case the text and push
-        it straight into `customSkills`, and its own comment admitted the gap —
-        *"still misspelled, still unmatchable, now looking deliberate"*. It now
-        asks `api/onboarding/provider/skill-match`, which runs THE SAME
-        `matchSkill` the save path runs, against the WHOLE catalog rather than the
-        current role's `skillOpts`.
-
-        ⚠⚠ EXACT-ISH LINKS SILENTLY. NEAR ASKS. `Purchase Requisitions` typed by
-        hand now selects the catalog row; `purchase requisitons` offers *"Did you
-        mean Purchase Requisitions?"* and CHANGES NOTHING until answered. A skill
-        is a claim about what somebody can do — auto-correcting it would put words
-        in their mouth, and if the guess is wrong it is a false claim with their
-        name on it.
-
-        ⚠ THE DEDUPE WITHIN THEIR OWN LIST IS KEPT AND RUNS FIRST — it is cheap,
-        local, and stops a round trip for something already on screen.
-        ⚠ AND IF THE LOOKUP FAILS FOR ANY REASON THE OLD BEHAVIOUR STANDS: the
-        custom skill is added as typed. A network blip must not silently swallow
-        a skill somebody just asked for.
-      */
-      const addSkillMatched = async (name: string) => {
-        if (!name) return;
-        if (
-          profile.customSkills.some((c) => c.toLowerCase() === name.toLowerCase()) ||
-          profile.skillNames.some((c) => c.name.toLowerCase() === name.toLowerCase())
-        ) {
-          setSkillQuery("");
-          return;
-        }
-        setSkillMatch(null);
-        try {
-          const r = await fetch(
-            `/api/onboarding/provider/skill-match?q=${encodeURIComponent(name)}`
-          );
-          const m = r.ok ? await r.json() : { kind: "none" };
-          if (m.kind === "exact" && m.skill?.id) {
-            /* Already in the catalog — link the real row, create nothing. */
-            if (!profile.skillIds.includes(m.skill.id)) {
-              setProfile((p) => ({
-                ...p,
-                skillIds: [...p.skillIds, m.skill.id],
-                skillNames: [...p.skillNames, { id: m.skill.id, name: m.skill.name, area: null }],
-              }));
-            }
-            setSkillQuery("");
-            return;
-          }
-          if (m.kind === "near" && m.skill?.id) {
-            /* ⚠ ASK. Nothing is added yet — both options stay on screen. */
-            setSkillMatch({ typed: name, prompt: m.prompt, skill: m.skill });
-            return;
-          }
-        } catch {
-          /* fall through to adding it as typed */
-        }
-        setProfile((p) => ({ ...p, customSkills: [...p.customSkills, name] }));
-        setSkillQuery("");
-      };
-
-      /** Take the suggestion — link the catalog row instead of the typed text. */
-      const acceptSkillMatch = () => {
-        if (!skillMatch) return;
-        const { skill } = skillMatch;
-        if (!profile.skillIds.includes(skill.id)) {
-          setProfile((p) => ({
-            ...p,
-            skillIds: [...p.skillIds, skill.id],
-            skillNames: [...p.skillNames, { id: skill.id, name: skill.name, area: null }],
-          }));
-        }
-        setSkillMatch(null);
-        setSkillQuery("");
-      };
-
-      /** Keep what they typed. ⚠ A REAL, SUPPORTED OUTCOME — Scott types real ones. */
-      const keepTypedSkill = () => {
-        if (!skillMatch) return;
-        setProfile((p) => ({ ...p, customSkills: [...p.customSkills, skillMatch.typed] }));
-        setSkillMatch(null);
-        setSkillQuery("");
-      };
-
-      /*
-        WHICH PICKED SKILLS CAME OFF THE RÉSUMÉ (E187).
-
-        This used to be computed from `importOutcome` — client state from the
-        upload that just happened — with `hasImport && skillNames.length > 0` as
-        the fallback when that state was gone. Both were wrong, in opposite
-        directions and at the same time. On ARRIVAL at a freshly-hydrated Skills
-        step there is no `importOutcome`, and if the import matched nothing the
-        fallback is false too: no card, nothing pre-ticked, exactly what the walk
-        saw. Then the provider clicks any skill by hand, `skillNames.length`
-        becomes 1, and the fallback flips true — so the card finally appears,
-        crediting AI for the skill they just typed.
-
-        `resumeSkillIds` is the server's answer to the actual question, present
-        on the first render and after any reload, and it never counts a manual
-        pick. The pre-selection itself was always server-side (the import writes
-        ProviderSkill rows); what was missing was skills worth selecting, which
-        is WS-A's job, and an honest way to say where they came from, which is
-        this.
-      */
-      const fromResume = new Set(profile.resumeSkillIds);
-      const aiMatchedCount = profile.skillIds.filter((id) =>
-        fromResume.has(id)
-      ).length;
-      const cameFromResume = aiMatchedCount > 0;
-
-      const roleNames = profile.roleTypeIds
-        .map((id) => fieldRoles.find((r) => r.id === id)?.name)
-        .filter(Boolean);
-
+      const ed = skillsEditing();
       return (
         <WizardShell
           {...shell({
@@ -2462,197 +3343,15 @@ setScreen(target);
             */
             title: "Which Skills Do You Want to Be Found For?",
             subtitle:
-              roleNames.length > 0
-                ? `Add every skill you have across ${roleNames.join(" and ")} — there's no limit, and each one is another search a buyer can find you in. Search the catalog or add your own.`
+              ed.roleNames.length > 0
+                ? `Add every skill you have across ${ed.roleNames.join(" and ")} — there's no limit, and each one is another search a buyer can find you in. Search the catalog or add your own.`
                 : "Add every skill you have — there's no limit, and each one is another search a buyer can find you in. Search the catalog or add your own.",
-            onContinue: () =>
-              saveAnd("skills", {
-                skillIds: profile.skillIds,
-                customSkills: profile.customSkills,
-                customSkillRoleId: profile.roleTypeId,
-                roleTypeIds: profile.roleTypeIds,
-                roleTypeId: profile.roleTypeId,
-              }),
-            continueDisabled: totalPicked === 0,
+            onContinue: ed.save,
+            continueDisabled: !ed.canSave,
           })}
         >
           {error && <Notice>{error}</Notice>}
-
-          {/*
-            WS4 / E174 — NAME THE AI.
-
-            The résumé→skills hunt is one of the few places the product does
-            something visibly clever, and the copy didn't mention it at all: the
-            skills simply appeared, pre-ticked, as if they had always been
-            there. AI-native is a stated selling point; a feature nobody
-            attributes is a selling point nobody hears.
-
-            Shown only when an import actually produced matches, so it never
-            claims credit for skills the provider typed themselves — and, since
-            E187, shown on ARRIVAL rather than after the first manual click.
-          */}
-          {cameFromResume && (
-            <div className="mb-4 rounded-brand border border-magenta/25 bg-magenta/[0.04] p-4">
-              <p className="flex flex-wrap items-center gap-2 text-[15px] font-bold">
-                <SparkIcon />
-                AI scanned your résumé against the ERP Service Catalog
-              </p>
-              <p className="mt-1.5 text-[14.5px] leading-relaxed text-ink-2">
-                It pulled{" "}
-                <b className="text-ink">
-                  {aiMatchedCount} skill{aiMatchedCount === 1 ? "" : "s"}
-                </b>{" "}
-                and pre-selected them below. Remove anything that isn&apos;t
-                yours, and add what it missed — buyers match on these.
-              </p>
-            </div>
-          )}
-
-          {/* The basket is always on screen and always removable. */}
-          {(profile.skillNames.length > 0 || profile.customSkills.length > 0) && (
-            <div className="mb-4">
-              <p className="mb-1.5 text-[13px] font-bold">
-                {/* E202 — a count, not a quota. "12/15" turned a list of what
-                    you can do into a budget you were spending. */}
-                Your Skills{" "}
-                <span className="font-normal text-ink-2">({totalPicked})</span>
-              </p>
-              <div className={`flex flex-wrap gap-2 ${PICKED_REGION}`}>
-                {profile.skillNames.map((sk) => (
-                  <Chip key={sk.id} selected onClick={() => toggleSkill(sk.id)}>
-                    {sk.name}
-                    {/*
-                      ⚠ SUPERSEDED, quoted not deleted (`P1-A1.3-E401` WS-3):
-                      `{sk.area && roleNames.length > 1 && (…)}`.
-
-                      ⚠⚠ THAT CONDITION ASKED THE WRONG QUESTION. It qualified a
-                      chip when the provider held MORE THAN ONE ROLE — but the
-                      collision Scott hit was two `Recruiting` skills inside ONE
-                      role (Oracle Fusion Cloud and Workday, both
-                      Application-Specific), so the test was false exactly when
-                      the qualifier was needed. It also qualified chips that
-                      needed nothing, whenever a second role happened to be
-                      claimed. Wrong in both directions.
-                    */}
-                    {skillQualifier(sk, ambiguousSkills) && (
-                      <span className="ml-1 text-[12px] font-normal opacity-75">
-                        · {skillQualifier(sk, ambiguousSkills)}
-                      </span>
-                    )}
-                  </Chip>
-                ))}
-                {profile.customSkills.map((name) => (
-                  <Chip
-                    key={`custom:${name}`}
-                    selected
-                    onClick={() =>
-                      setProfile((p) => ({
-                        ...p,
-                        customSkills: p.customSkills.filter((c) => c !== name),
-                      }))
-                    }
-                  >
-                    {name}
-                  </Chip>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* SEARCH-FIRST. The catalog is meant to grow without limit, so the
-              page must never grow with it: a capped suggestion set inside a
-              fixed-height scroll region (E053/E054). */}
-          <div className="flex flex-wrap items-center gap-2">
-            <TextInput
-              value={skillQuery}
-              onChange={(e) => setSkillQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  addCustomSkill();
-                }
-              }}
-              placeholder="Search skills — or type your own and press Add"
-              className="max-w-md"
-            />
-            <button
-              type="button"
-              onClick={addCustomSkill}
-              disabled={!skillQuery.trim()}
-              className="rounded-full border-[1.5px] border-line px-5 py-2.5 font-bold transition-colors hover:border-magenta hover:text-magenta disabled:opacity-40"
-            >
-              + Add
-            </button>
-          </div>
-
-          {/*
-            ── ⚠⚠ A NEAR MATCH ASKS (`P1-J1.4-E298`) ────────────────────────────
-
-            ⚠ BOTH ANSWERS ARE REAL AND BOTH ARE ONE CLICK. The suggestion is
-            offered first because it is usually right, and KEEPING WHAT THEY TYPED
-            IS NOT A PENALTY — Scott types genuinely new skills and this must not
-            make that feel like a mistake.
-            ⚠ THE TYPED TEXT STAYS ON SCREEN, quoted, so the member can compare
-            the two rather than trusting a guess about what they meant.
-            ⚠ NOTHING HAS BEEN ADDED AT THIS POINT. No auto-correct, no silent
-            write — a skill is a claim about what somebody can do.
-          */}
-          {skillMatch && (
-            <div className="mt-3 max-w-md rounded-brand border border-line bg-bg-soft p-4">
-              <p className="text-[14px] font-bold">{skillMatch.prompt}</p>
-              <p className="mt-1 text-[13px] leading-relaxed text-ink-2">
-                It&apos;s already in the catalog, so buyers already search for it.
-                You typed &ldquo;{skillMatch.typed}&rdquo;.
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={acceptSkillMatch}
-                  className="rounded-full bg-magenta px-4 py-2 text-[13.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
-                >
-                  Use {skillMatch.skill.name}
-                </button>
-                <button
-                  type="button"
-                  onClick={keepTypedSkill}
-                  className="rounded-full border-[1.5px] border-line px-4 py-2 text-[13.5px] font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
-                >
-                  Keep &ldquo;{skillMatch.typed}&rdquo;
-                </button>
-              </div>
-            </div>
-          )}
-
-          <div className={`mt-3 max-h-[220px] ${SCROLL_REGION}`}>
-            <div className="flex flex-wrap gap-2">
-              {shownSkills.map((sk) => (
-                <Chip key={sk.id} selected={false} onClick={() => toggleSkill(sk.id)}>
-                  {sk.name}
-                  {/* ⚠⚠ THE CHIP SCOTT ACTUALLY SAW. This list carried the bare
-                      name and nothing else, so the two `Recruiting` options were
-                      indistinguishable AT THE MOMENT OF CHOOSING — which is the
-                      only moment that matters. */}
-                  {skillQualifier({ name: sk.name, area: sk.pillar?.name ?? null }, ambiguousSkills) && (
-                    <span className="ml-1 text-[12px] font-normal opacity-75">
-                      · {sk.pillar?.name}
-                    </span>
-                  )}
-                </Chip>
-              ))}
-              {shownSkills.length === 0 && (
-                <p className="text-[14px] text-ink-2">
-                  {matchingSkills.length === 0 && q
-                    ? "No matches — use “+ Add” to create it."
-                    : "You've picked every skill we list here."}
-                </p>
-              )}
-            </div>
-          </div>
-          {hiddenSkillCount > 0 && (
-            <p className="mt-2 text-[13px] text-ink-2">
-              +{hiddenSkillCount} more — keep typing to narrow the list.
-            </p>
-          )}
+          {ed.body}
         </WizardShell>
       );
     }
@@ -2703,118 +3402,7 @@ setScreen(target);
     }
 
     case "specializations": {
-      const chosenSpecs = new Set(profile.specializationIds);
-
-      // Every loaded specialization, by id — so a SELECTED chip can be named
-      // even when the search or the per-group cap has hidden its source row.
-      const specById = new Map<string, string>();
-      specGroups.forEach((g) =>
-        g.items.forEach((i) => specById.set(i.id, i.name))
-      );
-      profile.specializationNames.forEach((s) => {
-        if (!specById.has(s.id)) specById.set(s.id, s.name);
-      });
-
-      const sq = specQuery.trim().toLowerCase();
-      // TWO MODES, one for each job (PJv2 WS9). Browsing is a cascade — one open
-      // tier at a time. Searching is a flat lookup ACROSS the tiers, because
-      // someone typing "Workday" should not have to know whether we filed it
-      // under a product, a methodology or an industry.
-      const searching = sq.length > 0;
-
-      // Which tier each catalog item belongs to — the cascade needs it to count
-      // and label a collapsed tier, and to pin the open one on a pick.
-      const kindById = new Map<string, string>();
-      specGroups.forEach((g) => g.items.forEach((i) => kindById.set(i.id, g.kind)));
-      const pickedNames = (kind: string) =>
-        profile.specializationIds
-          .filter((id) => kindById.get(id) === kind)
-          .map((id) => specById.get(id) ?? "Specialization");
-
-      /**
-       * E054 — search results stay capped PER GROUP and inside ONE bounded
-       * region. A single overall cap would spend its whole budget on the first
-       * group and hide the later ones; three separate regions would let the page
-       * (and so the Continue button) grow as you type, which is the thing E053
-       * was filed about.
-       *
-       * Chosen items are excluded because they are already chips above — the same
-       * rule the Skills tier uses, so the suggestion area only ever holds things
-       * you can still act on.
-       */
-      const groups = specGroups
-        .map((g) => {
-          const matches = g.items.filter(
-            (i) =>
-              !chosenSpecs.has(i.id) && (!sq || i.name.toLowerCase().includes(sq))
-          );
-          return {
-            ...g,
-            shown: matches.slice(0, MAX_SPECS_PER_GROUP),
-            hidden: Math.max(0, matches.length - MAX_SPECS_PER_GROUP),
-          };
-        })
-        .filter((g) => g.shown.length > 0);
-
-      const hiddenSpecCount = groups.reduce((n, g) => n + g.hidden, 0);
-      const totalSpecs =
-        profile.specializationIds.length + profile.customSpecializations.length;
-
-      /**
-       * The open tier: the provider's last pick if they have one, else the first
-       * tier still empty, so the step opens on work to be done rather than on a
-       * tier that is already answered. All three collapse once all three have
-       * something — the step is optional, and a wall of open pickers is what WS9
-       * was filed to remove.
-       */
-      const openSpecKind =
-        openSpecTier ??
-        specGroups.find((g) => pickedNames(g.kind).length === 0)?.kind ??
-        null;
-
-      const addCustomSpec = () => {
-        const name = specQuery.trim();
-        if (!name) return;
-        const dup =
-          profile.customSpecializations.some(
-            (c) => c.toLowerCase() === name.toLowerCase()
-          ) ||
-          [...specById.entries()].some(
-            ([id, n]) => n.toLowerCase() === name.toLowerCase() && chosenSpecs.has(id)
-          );
-        if (!dup) {
-          setProfile((p) => ({
-            ...p,
-            customSpecializations: [...p.customSpecializations, name],
-          }));
-        }
-        setSpecQuery("");
-      };
-
-      const toggleSpec = (id: string) => {
-        // Pin the tier this item lives in. Without this, picking the first item
-        // in tier 2 makes tier 2 no-longer-the-first-empty-tier, and the cascade
-        // would collapse it and jump to tier 3 mid-selection.
-        const kind = kindById.get(id);
-        if (kind) setOpenSpecTier(kind);
-        setProfile((p) => {
-          const has = p.specializationIds.includes(id);
-          const name = specById.get(id) ?? "";
-          return {
-            ...p,
-            specializationIds: has
-              ? p.specializationIds.filter((x) => x !== id)
-              : [...p.specializationIds, id],
-            // Keep the display names in step with the ids. The server resends
-            // both on save, but until then the Review page reads these — and a
-            // name list that lags its id list renders the wrong chips.
-            specializationNames: has
-              ? p.specializationNames.filter((x) => x.id !== id)
-              : [...p.specializationNames, { id, name }],
-          };
-        });
-      };
-
+      const ed = specializationsEditing();
       return (
         <WizardShell
           {...shell({
@@ -2824,223 +3412,11 @@ setScreen(target);
             subtitle: "The systems, processes and industries you've worked in.",
             secondaryLabel: "Skip for Now",
             onSecondary: goNext,
-            onContinue: () =>
-              saveAnd("specializations", {
-                specializationIds: profile.specializationIds,
-                customSpecializations: profile.customSpecializations,
-              }),
+            onContinue: ed.save,
           })}
         >
           {error && <Notice>{error}</Notice>}
-          {specGroups.length === 0 ? (
-            <p className="text-ink-2">Loading specializations…</p>
-          ) : (
-            <div>
-              {/* Picked, always visible and always removable — it sits OUTSIDE
-                  the scroll region so a selection can never be scrolled or
-                  filtered out of reach. */}
-              {totalSpecs > 0 && (
-                <div className="mb-4">
-                  <p className="mb-2 text-[13px] font-bold">
-                    Your Specializations{" "}
-                    <span className="font-normal text-ink-2">({totalSpecs})</span>
-                  </p>
-                  <div className={`flex flex-wrap gap-2 ${PICKED_REGION}`}>
-                    {profile.specializationIds.map((id) => (
-                      <Chip key={id} selected onClick={() => toggleSpec(id)}>
-                        {specById.get(id) ?? "Specialization"}
-                      </Chip>
-                    ))}
-                    {profile.customSpecializations.map((name) => (
-                      <Chip
-                        key={`custom:${name}`}
-                        selected
-                        onClick={() =>
-                          setProfile((p) => ({
-                            ...p,
-                            customSpecializations: p.customSpecializations.filter(
-                              (c) => c !== name
-                            ),
-                          }))
-                        }
-                      >
-                        {name}
-                      </Chip>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* One control for both jobs, matching the Skills tier: type to
-                  narrow, or type something we don't have and add it (E031). */}
-              <div className="flex items-end gap-2">
-                <div className="flex-1">
-                  <Field label="Search or Add a Specialization">
-                    <TextInput
-                      value={specQuery}
-                      onChange={(e) => setSpecQuery(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          addCustomSpec();
-                        }
-                      }}
-                      placeholder="Start typing… e.g. Workday"
-                    />
-                  </Field>
-                </div>
-                <button
-                  type="button"
-                  onClick={addCustomSpec}
-                  disabled={!specQuery.trim()}
-                  className="mb-[2px] rounded-full border-[1.5px] border-line px-5 py-3 font-bold text-ink transition-colors hover:border-magenta hover:text-magenta disabled:opacity-40"
-                >
-                  + Add
-                </button>
-              </div>
-
-              {searching ? (
-                /* SEARCH MODE — flat results across all three tiers, grouped so
-                   you can still see WHICH tier a match came from, inside one
-                   fixed-height region so typing never moves the footer. */
-                <>
-                  <div className={`mt-3 max-h-[320px] ${SCROLL_REGION}`}>
-                    {groups.length === 0 ? (
-                      <p className="text-[14px] text-ink-2">
-                        No matches — use “+ Add” to create it.
-                      </p>
-                    ) : (
-                      <div className="space-y-4">
-                        {groups.map((g) => (
-                          <div key={g.kind}>
-                            <h2 className="mb-2 text-[13px] font-bold uppercase tracking-wide text-ink-2">
-                              {g.label}
-                              {g.hidden > 0 && (
-                                <span className="ml-2 font-normal normal-case tracking-normal">
-                                  +{g.hidden} more
-                                </span>
-                              )}
-                            </h2>
-                            <div className="flex flex-wrap gap-2">
-                              {g.shown.map((item) => (
-                                <Chip
-                                  key={item.id}
-                                  selected={false}
-                                  onClick={() => toggleSpec(item.id)}
-                                >
-                                  {item.name}
-                                </Chip>
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  {hiddenSpecCount > 0 && (
-                    <p className="mt-2 text-[13px] text-ink-2">
-                      +{hiddenSpecCount} more — keep typing to narrow the list.
-                    </p>
-                  )}
-                </>
-              ) : (
-                /*
-                  BROWSE MODE — the RDS collapsing-cascade (WS9 / E073), now with
-                  INDUSTRIES AS ITS OWN TIER rather than a third heading inside a
-                  shared scroll box. Industry is a different KIND of claim from a
-                  product or a method — "I know Workday" and "I know utilities"
-                  are answers to different buyer questions — and burying it third
-                  in one list made it the section people scrolled past.
-
-                  Unlike Role → Domain → Skill, these tiers are INDEPENDENT: none
-                  gates the next, because a provider with no product to name still
-                  has an industry. So the cascade here is only the disclosure
-                  shape — one tier open, the others one line each.
-                */
-                <div className="mt-3 space-y-2.5">
-                  {specGroups.map((g, gi) => {
-                    const picked = pickedNames(g.kind);
-                    const summary =
-                      picked.length === 0
-                        ? "None yet"
-                        : picked.slice(0, 2).join(", ") +
-                          (picked.length > 2 ? ` +${picked.length - 2}` : "");
-                    const chosenHere = g.items.filter((i) => chosenSpecs.has(i.id));
-                    const avail = g.items.filter((i) => !chosenSpecs.has(i.id));
-                    const hidden = Math.max(0, avail.length - MAX_SPECS_PER_TIER);
-
-                    return (
-                      <CascadeTier
-                        key={g.kind}
-                        index={gi + 1}
-                        label={g.label}
-                        // Open tier → null, which is what makes CascadeTier
-                        // render the picker instead of the summary row.
-                        chosen={openSpecKind === g.kind ? null : summary}
-                        changeLabel={picked.length === 0 ? "Add" : "Change"}
-                        onChange={() => setOpenSpecTier(g.kind)}
-                      >
-                        {/* Exactly THREE chip rows (38px chip + 48px pitch +
-                            the region's own 12px padding). A round number like
-                            132px lands mid-chip, and a chip sliced through the
-                            middle reads as a rendering bug rather than as "there
-                            is more below" — the tinted, bordered, scrolling box
-                            already says that. */}
-                        <div className={`max-h-[176px] ${SCROLL_REGION}`}>
-                          <div className="flex flex-wrap gap-2">
-                            {/*
-                              E086 — this tier's OWN picks, first and removable.
-                              An expanded section used to show only what you could
-                              still add, so Industries could read "Retail +" while
-                              saying nothing about the two industries you had
-                              already chosen; the only evidence was the aggregate
-                              row at the top and the collapsed summary you had just
-                              opened. The skills tier has always shown its picks
-                              in place, and this is the same rule.
-                            */}
-                            {chosenHere.map((item) => (
-                              <Chip
-                                key={item.id}
-                                selected
-                                onClick={() => toggleSpec(item.id)}
-                              >
-                                {item.name}
-                              </Chip>
-                            ))}
-                            {avail.slice(0, MAX_SPECS_PER_TIER).map((item) => (
-                              <Chip
-                                key={item.id}
-                                selected={false}
-                                onClick={() => toggleSpec(item.id)}
-                              >
-                                {item.name}
-                              </Chip>
-                            ))}
-                            {avail.length === 0 && chosenHere.length === 0 && (
-                              <p className="text-[14px] text-ink-2">
-                                Nothing listed here yet — use the search above to
-                                add one.
-                              </p>
-                            )}
-                            {avail.length === 0 && chosenHere.length > 0 && (
-                              <p className="w-full text-[13px] text-ink-2">
-                                You&apos;ve picked everything we list here.
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                        {hidden > 0 && (
-                          <p className="mt-2 text-[13px] text-ink-2">
-                            +{hidden} more — search above to find them.
-                          </p>
-                        )}
-                      </CascadeTier>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
+          {ed.body}
         </WizardShell>
       );
     }
@@ -3247,91 +3623,21 @@ setScreen(target);
 
     // ---- 11/12 — Rate (E018, "You'll Get") -----------------------------
     case "rate": {
-      const { rate, fee, youGet } = rateBreakdown(
-        profile.hourlyRateCents,
-        profile.serviceFeeBps
-      );
       return (
         <WizardShell
           {...shell({
             title: "Tell Clients What You Charge",
             subtitle: "You can change your rate any time.",
-            onContinue: () =>
-              saveAnd("rate", {
-                hourlyDollars:
-                  profile.hourlyRateCents != null ? profile.hourlyRateCents / 100 : "",
-              }),
-            continueDisabled: !profile.hourlyRateCents,
+            onContinue: rateEditing().save,
+            continueDisabled: !rateEditing().canSave,
           })}
         >
           {error && <Notice>{error}</Notice>}
-          <div className="max-w-md space-y-5">
-            <Field
-              label="Hourly Rate"
-              hint="Total amount the client will see."
-            >
-              <div className="relative">
-                <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[15px] font-bold text-ink-2">
-                  $
-                </span>
-                <TextInput
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  className="pl-8"
-                  value={
-                    profile.hourlyRateCents != null
-                      ? String(profile.hourlyRateCents / 100)
-                      : ""
-                  }
-                  onChange={(e) =>
-                    setProfile((p) => ({
-                      ...p,
-                      hourlyRateCents:
-                        e.target.value === ""
-                          ? null
-                          : Math.round(Number(e.target.value) * 100),
-                    }))
-                  }
-                  placeholder="125.00"
-                />
-                <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[14px] text-ink-2">
-                  /hr
-                </span>
-              </div>
-            </Field>
-
-            <div className="rounded-brand border border-line p-5">
-              <Row
-                label={`Service fee (${bpsToPercentLabel(profile.serviceFeeBps)})`}
-                value={fee != null ? `−${formatCents(fee)}` : "—"}
-              />
-              <p className="mt-2 text-[13px] leading-relaxed text-ink-2">
-                This helps us run the platform and provide services like payment
-                protection and customer support. Fees vary and are shown before
-                contract acceptance.{" "}
-                <span className="font-semibold text-magenta">Learn More</span>
-              </p>
-              <div className="mt-4 border-t border-line pt-4">
-                <Row
-                  label="You'll Get"
-                  value={youGet != null ? `${formatCents(youGet)}/hr` : "—"}
-                  strong
-                />
-                <p className="mt-1 text-[13px] text-ink-2">
-                  The estimated amount you&apos;ll receive after service fees.
-                </p>
-              </div>
-              {rate != null && (
-                <p className="mt-3 text-[13px] text-ink-2">
-                  Clients see {formatCents(rate)}/hr.
-                </p>
-              )}
-            </div>
-          </div>
+          {rateEditing().body}
         </WizardShell>
       );
     }
+
 
     // ---- Picture (PJv2 WS1) --------------------------------------------
     //
@@ -3438,64 +3744,7 @@ setScreen(target);
           */}
           <div className="mt-6">
             <ProfileCard title="Your Details">
-              <div className="space-y-3">
-                {/*
-                  DATE OF BIRTH IS GONE (WS7). It was required here and gated
-                  both publish and marketplace visibility, and nothing in the
-                  marketplace ever used it: a buyer needs to reach a provider,
-                  not know their age. If age or legal capacity is ever needed it
-                  rides the tax/payout gate, where there is a reason to ask.
-                  The column stays nullable — no destructive drop.
-                */}
-                {/*
-                  E203 — masked, digits-only, validated on blur. The country
-                  comes from the address block below, whose hint has always
-                  promised it "sets how we format your phone number"; this is
-                  the first version where that is true.
-                */}
-                <PhoneField
-                  id="review-phone"
-                  value={phoneInput}
-                  onChange={setPhoneInput}
-                  country={addr.country}
-                />
-                {/*
-                  E126 — COUNTRY FIRST, above the street line. It decides what
-                  the fields under it even mean ("State" here, "Province" in
-                  Canada, "County" in Ireland), so asking it last meant asking
-                  the rest before knowing what they were. Same shared block as
-                  the employer modal (E123), which is what stops one provider
-                  meeting two different location forms in one sitting.
-                */}
-                <LocationFields
-                  withStreet
-                  countryHint="Also sets how we format your phone number."
-                  value={{
-                    country: addr.country,
-                    line1: addr.line1,
-                    city: addr.city,
-                    state: addr.state,
-                    postalCode: addr.postalCode,
-                  }}
-                  onChange={(patch) =>
-                    setAddr({
-                      ...(patch.country !== undefined
-                        ? { country: patch.country ?? "" }
-                        : {}),
-                      ...(patch.line1 !== undefined
-                        ? { line1: patch.line1 ?? "" }
-                        : {}),
-                      ...(patch.city !== undefined ? { city: patch.city ?? "" } : {}),
-                      ...(patch.state !== undefined
-                        ? { state: patch.state ?? "" }
-                        : {}),
-                      ...(patch.postalCode !== undefined
-                        ? { postalCode: patch.postalCode ?? "" }
-                        : {}),
-                    })
-                  }
-                />
-              </div>
+              {contactEditing().body}
             </ProfileCard>
           </div>
 
@@ -3637,12 +3886,58 @@ setScreen(target);
         );
       };
 
-      /** Click-to-fix: jump to the step, focus the field, or open the modal. */
+      /*
+        ── ⚠⚠ CLICK-TO-FIX IS AN EDIT AFFORDANCE TOO (`P1-A1.4-E412` WS-1) ─────
+
+        ⚠ SUPERSEDED, quoted not deleted — two of its four branches navigated:
+
+            case "step":  goTo(fix.step as Step); break;
+            case "field": …
+              // WS8 — these inputs live on the Photo & Details step now, so the
+              // click-to-fix has to travel there before it can focus anything.
+              goTo("picture");
+
+        ⚠⚠ IT IS THE MOST PROMINENT CONTROL ON THE PAGE — `ReviewChecklist` sits
+        at the very top and its button is what somebody with an error clicks
+        FIRST. A rule that every card's Edit stays put, while the checklist above
+        them all still jumped to another screen, would be a rule about the
+        quiet half of the page.
+
+        ⚠ EVERY TARGET NOW HAS AN IN-PLACE EDITOR, so this is a complete map and
+        not a partial one — checked against `review-validation.ts`, which emits
+        exactly these six steps and two fields:
+            title · rate · catalog · education · specializations · tell_us
+            overview · phone
+        ⚠⚠ AND THERE IS NO NAVIGATING FALLBACK — the first version kept
+        `else goTo(fix.step as Step)` for a target this map had not learned, and
+        `check:review-screen` §1 went RED on it, correctly: *"the review screen
+        contains no `goTo(…)` at all"* is the rule, and a branch that is only
+        taken by a bug is still a branch that leaves the page.
+
+        ⚠ AN UNMAPPED TARGET IS CAUGHT AT BUILD TIME INSTEAD. That gate reads
+        `review-validation.ts` and fails if it emits a step this map lacks, so
+        the omission surfaces in CI rather than as a silent click. ⚠ AT RUNTIME
+        IT SAYS SO OUT LOUD rather than doing nothing — a button that appears
+        dead is the failure the fallback was there to avoid.
+      */
+      const FIX_STEP_TO_SECTION: Record<string, Exclude<EditSection, null>> = {
+        title: "title",
+        rate: "rate",
+        catalog: "skills",
+        education: "education",
+        specializations: "specializations",
+        tell_us: "work",
+      };
+
+      /** Click-to-fix: open the section's editor, focus the field, or open the modal. */
       const applyFix = (fix: ReviewFix) => {
         switch (fix.kind) {
-          case "step":
-            goTo(fix.step as Step);
+          case "step": {
+            const section = FIX_STEP_TO_SECTION[fix.step];
+            if (section) setEditSection(section);
+            else setError("We couldn't open that section — please refresh.");
             break;
+          }
           case "photo":
             setPhotoModal(true);
             break;
@@ -3653,8 +3948,7 @@ setScreen(target);
             /*
               WS5 — the BIO is edited on THIS page. It has no step to travel to
               any more, so sending the fix to the photo step would scroll past
-              the very field it is about. Everything else still lives on the
-              photo step.
+              the very field it is about.
             */
             if (fix.field === "overview") {
               const bio = document.getElementById("review-overview");
@@ -3665,9 +3959,15 @@ setScreen(target);
               );
               break;
             }
-            // WS8 — these inputs live on the Photo & Details step now, so the
-            // click-to-fix has to travel there before it can focus anything.
-            goTo("picture");
+            /*
+              ⚠ `phone` LIVES IN THE CONTACT EDITOR, which is the same block the
+              `picture` step renders — so opening it here reaches the identical
+              field the old `goTo("picture")` was travelling for. ⚠ THE FOCUS
+              SURVIVES: `PhoneField` still carries `id="review-phone"`, and it
+              is now inside the dialog rather than on another screen, so the
+              delayed focus below finds it exactly as before.
+            */
+            setEditSection("location");
             const el = document.getElementById(`review-${fix.field}`);
             el?.scrollIntoView({ behavior: "smooth", block: "center" });
             // The scroll is what makes the fix findable; the focus is what
@@ -3698,6 +3998,21 @@ setScreen(target);
 
       // E074 — Solo Projects is null-employer ONLY.
       const soloProjects = projects.filter((pr) => !employerNameById.has(pr.id));
+
+      /*
+        ⚠⚠ CITY AND REGION ONLY — NO POSTAL CODE, AND THAT IS THE WHOLE POINT
+        OF PASSING IT EXPLICITLY (`E412` WS-4). ⚠ `formatLocality(addr)` would
+        have picked `addr.postalCode` up, because the wizard HAS it: this page
+        is the owner looking at their own address. ⚠ THE PUBLISHED PROFILE DOES
+        NOT — `provider-profile-view.ts` does not even select the column, and
+        putting a postcode on a public profile is a privacy decision nobody has
+        made. ⚠⚠ THIS SCREEN'S OWN PROMISE IS *"This is exactly what buyers
+        will see"*, so it must show the buyer's version, not the owner's.
+        ⚠ FOUND BY WALKING IT: the first version passed `addr` whole and the
+        card read *"Ponte Vedra Beach, England 32081"* against the profile's
+        *"Ponte Vedra Beach, England"*. Nothing in the type system objected.
+      */
+      const reviewLocality = formatLocality({ city: addr.city, state: addr.state });
 
       /*
         E130 — ONE affordance rule for every section.
@@ -3745,25 +4060,46 @@ setScreen(target);
         starts lying. ⚠ THE SHAPE IS COPIED FROM `AiPassPanel`'s `onManual`,
         which already does exactly this.
       */
+      /*
+        ── ⚠⚠ SUPERSEDED ON ARRIVAL BY `P1-A1.4-E412` WS-1 ──────────────────────
+
+        ⚠ SCOTT'S RULE: *"A PERSON ON THE REVIEW SCREEN NEVER LEAVES IT TO
+        EDIT."* ⚠ THE WHOLE `E411` MECHANISM ABOVE IS THE RIGHT FIX TO THE WRONG
+        PROBLEM — it made the trip to `tell_us` land somewhere useful, and
+        `E412` removes the trip. ⚠ SUPERSEDED, quoted not deleted, per that
+        brief's instruction to delete `E411`'s WS-1 line with a quote naming
+        this one:
+
+            const sectionAction = (title, step, isEmpty, opensEditor = false) => (
+              <EditButton … onClick={() => {
+                setReturnToReview(true);
+                goTo(step);
+                if (opensEditor) setEditingWork(true);
+              }} />
+            );
+
+        ⚠ `E411`'s REASONING SURVIVES INTACT AND IS WHY `"work"` IS ONE VALUE
+        RATHER THAN TWO: `EmployersStep` is still the only surface carrying the
+        flat project list, `unplaced` and the placement UI, so Work History and
+        Solo Projects open the SAME editor. What changed is only where it opens.
+
+        ⚠ `step` IS GONE FROM THE SIGNATURE. Keeping it would have left a
+        parameter that names a place nobody goes — the way a prop starts lying,
+        which is the objection `E411` raised against `opensEditor` being
+        blanket. ⚠ AND `returnToReview` IS NOT SET: there is no return trip.
+      */
       const sectionAction = (
         title: string,
-        step: Step,
-        isEmpty: boolean,
-        opensEditor = false
+        section: Exclude<EditSection, null>,
+        isEmpty: boolean
       ) => (
         <EditButton
           title={title}
           label={isEmpty ? `Add ${title}` : "Edit"}
           icon={isEmpty ? "+" : "✏️"}
-          onClick={() => {
-            setReturnToReview(true);
-            goTo(step);
-            if (opensEditor) setEditingWork(true);
-          }}
+          onClick={() => setEditSection(section)}
         />
       );
-      const editBtn = (title: string, step: Step) =>
-        sectionAction(title, step, false);
 
       return (
         <WizardShell
@@ -3841,7 +4177,12 @@ setScreen(target);
                   >
                     {profile.photoUrl ? "Change Photo" : "+ Add Photo"}
                   </button>
-                  <EditButton title="Title" onClick={() => goTo("title")} label="Edit title" />
+                  {/* ⚠ SUPERSEDED, quoted (`E412` WS-1): `onClick={() => goTo("title")}` */}
+                  <EditButton
+                    title="Title"
+                    onClick={() => setEditSection("title")}
+                    label="Edit title"
+                  />
                   {/* WS5 — the bio is edited on THIS page; there is no bio
                       step to travel to any more. */}
                   <EditButton
@@ -3856,7 +4197,12 @@ setScreen(target);
                     }}
                     label="Edit overview"
                   />
-                  <EditButton title="Rate" onClick={() => goTo("rate")} label="Edit rate" />
+                  {/* ⚠ SUPERSEDED, quoted (`E412` WS-1): `onClick={() => goTo("rate")}` */}
+                  <EditButton
+                    title="Rate"
+                    onClick={() => setEditSection("rate")}
+                    label="Edit rate"
+                  />
                 </div>
               }
             />
@@ -3932,13 +4278,14 @@ setScreen(target);
                         if (r.ok) hydrate(await r.json());
                       }}
                     />
-                    {/* ⚠ `true` — `tell_us` renders the read-only body unless
-                        edit mode is on (`E411`). */}
+                    {/* ⚠ SUPERSEDED, quoted (`E412` WS-1):
+                        `sectionAction("Work History", "tell_us", …, true)` — the
+                        `true` meant "and turn edit mode on once you get there".
+                        There is no getting there now. */}
                     {sectionAction(
                       "Work History",
-                      "tell_us",
-                      profile.employers.length === 0,
-                      true
+                      "work",
+                      profile.employers.length === 0
                     )}
                   </span>
                 }
@@ -3962,16 +4309,23 @@ setScreen(target);
                     reasons={[
                       "Your profile has no jobs or projects on it. If you uploaded a résumé, our reader may have missed a layout it couldn't follow.",
                     ]}
+                    /* ⚠ SUPERSEDED, quoted (`E412` WS-1) — both handlers began
+                       `goTo("tell_us")`:
+                           onUpload: goTo("tell_us"); setUploadModal(true);
+                           onManual: setReturnToReview(true); goTo("tell_us");
+                                     setEditingWork(true);
+                       ⚠ THESE ARE EDIT AFFORDANCES TOO. They sit inside the Work
+                       History card and are the only thing in it when it is empty,
+                       so leaving them navigating would have satisfied the gate's
+                       letter on an empty profile and broken its rule. The upload
+                       modal is mounted on this screen for the same reason. */
                     onUpload={() => {
                       void logResumePath("reupload");
-                      goTo("tell_us");
                       setUploadModal(true);
                     }}
                     onManual={() => {
                       void logResumePath("manual");
-                      setReturnToReview(true);
-                      goTo("tell_us");
-                      setEditingWork(true);
+                      setEditSection("work");
                     }}
                     onApplied={(body) => {
                       if (body.state) hydrate(body.state as StatusPayload);
@@ -3988,23 +4342,42 @@ setScreen(target);
             </div>
 
             {/*
-              ---- pg2: the 2-column grid -------------------------------
+              ---- pg1b: Solo Projects, FULL WIDTH ------------------------
 
-              E205 — SOLO PROJECTS JOINED THE GRID. It was full-width below Work
-              History, and for most providers it is empty or two lines — a whole
-              screen-width band carrying one sentence, directly above a grid of
-              cards the same size as its content. Bio and Work History stay full
-              width because they genuinely fill it.
+              ⚠ SUPERSEDED, quoted not deleted (`P1-A1.4-E412` WS-2). This card
+              was the first cell of the two-column grid below, under this
+              heading:
+
+                  ---- pg2: the 2-column grid -------------------------------
+                  E205 — SOLO PROJECTS JOINED THE GRID. It was full-width below
+                  Work History, and for most providers it is empty or two lines —
+                  a whole screen-width band carrying one sentence, directly above
+                  a grid of cards the same size as its content. Bio and Work
+                  History stay full width because they genuinely fill it.
+
+              ⚠⚠ `E205` WAS RIGHT WHEN IT WAS WRITTEN AND IS WRONG NOW, and the
+              reason is `E410`: engagement sections became **Project** rows, so
+              a real import lands 22–25 projects with employer-length names
+              instead of "empty or two lines". ⚠ MEASURED: at half width the
+              card nests a further two-up grid inside itself, putting each
+              project at roughly a QUARTER of the page — which is how *"Kamehameha
+              Schools (via Elire) — Oracle Cloud P2P with OBN"* came to stack five
+              lines deep.
+
+              ⚠ SAME WEIGHT, SAME WIDTH: it sits with Work History now, because
+              after `E410` it carries the same kind of content.
             */}
-            <div className="mt-5 grid gap-5 lg:grid-cols-2">
+            <div className="mt-5">
               <ProfileCard
                 title="Solo Projects"
-                /* ⚠ `true` — this is the ONLY route to the placement UI (`E411`). */
+                /* ⚠ THE SAME EDITOR AS WORK HISTORY, and that is `E411`'s finding
+                   standing unchanged: `EmployersStep` is the ONLY surface holding
+                   the flat project list, `unplaced` and the placement UI. Two
+                   cards, one editor. */
                 edit={sectionAction(
                   "Solo Projects",
-                  "tell_us",
-                  soloProjects.length === 0,
-                  true
+                  "work",
+                  soloProjects.length === 0
                 )}
               >
                 <SoloProjectsBody
@@ -4012,9 +4385,24 @@ setScreen(target);
                   empty="No solo projects yet — work you delivered outside a job goes here."
                 />
               </ProfileCard>
+            </div>
+
+            {/*
+              ---- pg2: the 2-column grid -------------------------------
+
+              ⚠ SIX CARDS, THREE EVEN ROWS, and Skills keeps a partner (`E412`
+              WS-2 asks what happens to it). It pairs with **Specializations**
+              rather than going full width: both are chip clouds answering "what
+              can this person do", they are the two shortest cards on the page,
+              and a chip cloud run to 1100px wraps into a band of loose text with
+              a lot of white to its right. ⚠ NOTHING ELSE MOVED — the brief says
+              not to restructure the page around it, and removing one cell from
+              a six-cell grid needed no restructuring at all.
+            */}
+            <div className="mt-5 grid gap-5 lg:grid-cols-2">
               <ProfileCard
                 title="Skills"
-                edit={sectionAction("Skills", "catalog", profile.skillNames.length === 0)}
+                edit={sectionAction("Skills", "skills", profile.skillNames.length === 0)}
               >
                 <SkillsBody
                   skills={profile.skillNames}
@@ -4053,15 +4441,37 @@ setScreen(target);
                   // Certifications opens a modal rather than a step, so its
                   // action bumps the modal signal — but it LOOKS and reads
                   // exactly like every other section's.
+                  /*
+                    ── ⚠⚠ THE DOUBLE EDIT (`P1-A1.4-E412` WS-3b) ───────────────
+
+                    ⚠ SUPERSEDED, quoted not deleted:
+
+                        label={profile.certifications.length === 0
+                          ? "Add Certification" : "Edit"}
+                        icon={profile.certifications.length === 0 ? "+" : "✏️"}
+
+                    ⚠ WHAT EACH OF THE TWO LINKS DID, since `E412` asks: this
+                    header one bumps `certSignal`, which `CertificationCards`
+                    reads as `setEditing(-1)` — **the ADD modal, every time.**
+                    The row's own `Edit` calls `openEdit(i)` — that row's modal.
+                    ⚠⚠ SO THEY WERE NEVER REDUNDANT; THE HEADER ONE WAS
+                    MISLABELLED. With one certification on the page it said
+                    "✏️ Edit" twice, a few pixels apart, and the two did
+                    different things — which is precisely why it *"reads as a
+                    rendering fault"*.
+
+                    ⚠ IT NOW ALWAYS SAYS WHAT IT DOES. The per-row `Edit` is the
+                    only Edit, and Add stays exactly where `E144` put it after
+                    Scott's directive — *"the header link is the one that
+                    stays"*. ⚠ `E130`'s empty/populated rule is NOT re-broken
+                    here: `E144` already reversed it for this section, and this
+                    keeps that reversal while dropping the false verb.
+                  */
                   edit={
                     <EditButton
                       title="Certifications"
-                      label={
-                        profile.certifications.length === 0
-                          ? "Add Certification"
-                          : "Edit"
-                      }
-                      icon={profile.certifications.length === 0 ? "+" : "✏️"}
+                      label="Add Certification"
+                      icon="+"
                       onClick={() => setCertSignal((n) => n + 1)}
                     />
                   }
@@ -4082,13 +4492,36 @@ setScreen(target);
                 </ProfileCard>
 
 
-              <ProfileCard title="Location">
+              {/*
+                ⚠⚠ IT HAD NO EDIT AT ALL (`E412` WS-1 measured it, WS-4 names it).
+                Every other card on this page offered one; this one was read-only
+                with no way to reach the fields behind it from here. The editor is
+                the `picture` step's own `Your Details` block — see
+                `contactEditing()`.
+
+                ⚠ SUPERSEDED, quoted not deleted (`E412` WS-4) — the flat join:
+
+                    location={[addr.city, addr.state, addr.country]
+                      .filter((x) => x && x.trim()).join(", ") || null}
+
+                ⚠⚠ THE COUNTRY BEING INSIDE THAT STRING IS WHAT MADE IT FLAT.
+                `LocationBody` prints `country` on its own second line unless the
+                first line already contains it — and it always did. Same join,
+                same defect, in `provider-profile-view.ts:186`; `formatLocality`
+                is now the one copy. ⚠ THE `.filter()` WAS ALREADY DOING THE
+                DANGLING-COMMA JOB and the helper keeps that property by
+                construction: parts are dropped BEFORE the join, never after.
+              */}
+              <ProfileCard
+                title="Location"
+                edit={sectionAction(
+                  "Location",
+                  "location",
+                  !reviewLocality && !addr.country?.trim()
+                )}
+              >
                 <LocationBody
-                  location={
-                    [addr.city, addr.state, addr.country]
-                      .filter((x) => x && x.trim())
-                      .join(", ") || null
-                  }
+                  location={reviewLocality}
                   country={addr.country?.trim() || null}
                 />
               </ProfileCard>
@@ -4121,16 +4554,29 @@ setScreen(target);
                   phoneOnFile={Boolean(phoneInput.trim())}
                   phoneVerified={profile.phoneVerified}
                 />
+                {/*
+                  ⚠ SUPERSEDED, quoted not deleted (`E412` WS-1) — the last
+                  `goTo` left on this screen:
+
+                      Phone and address are collected on the
+                      <button onClick={() => goTo("picture")}>Photo & Details</button>
+                      step.
+
+                  ⚠⚠ IT NAMED A STEP AND SENT YOU THERE, which is the exact thing
+                  the brief's rule forbids — and it was the only route to change a
+                  phone number from the review. It now opens the SAME block that
+                  step renders, in place. ⚠ The sentence stops naming a step
+                  because there is no longer a step to name.
+                */}
                 <p className="mt-3 text-[13.5px] text-ink-2">
-                  Phone and address are collected on the{" "}
                   <button
                     type="button"
-                    onClick={() => goTo("picture")}
+                    onClick={() => setEditSection("location")}
                     className="font-bold text-magenta underline underline-offset-4 hover:text-magenta-dark"
                   >
-                    Photo &amp; Details
+                    Update your phone or address
                   </button>{" "}
-                  step.
+                  — they stay private.
                 </p>
               </ProfileCard>
             </div>
@@ -4141,6 +4587,111 @@ setScreen(target);
             onClose={() => setPhotoModal(false)}
             onUploaded={(photoUrl) => setProfile((p) => ({ ...p, photoUrl }))}
           />
+
+          {/*
+            ⚠ MOUNTED HERE TOO (`E412` WS-1). The résumé upload modal lives in
+            `case "tell_us"`, so the review's *"want us to read your résumé
+            again?"* offer had to travel there for it to appear. One extra mount
+            of the SAME component is what lets the offer stay put.
+          */}
+          <ResumeUploadModal
+            open={uploadModal}
+            onClose={() => setUploadModal(false)}
+            onImported={(outcome) => {
+              setImportOutcome(outcome);
+              if (outcome.state) hydrate(outcome.state as StatusPayload);
+            }}
+          />
+
+          {/*
+            ── ⚠⚠ THE IN-PLACE SECTION EDITOR (`P1-A1.4-E412` WS-1) ────────────
+
+            ⚠ ONE `Modal`, SWITCHED ON `editSection` — not one modal per section.
+            Seven near-identical dialogs is how six of them drift.
+
+            ⚠⚠ THE RETURN PATH IS `postStep`, AND IT WAS ALREADY CORRECT.
+            Every save here goes through `postStep`, which `hydrate`s the
+            server's response into `profile` — so the card behind the modal shows
+            what was STORED, not a local patch, the moment the modal closes. That
+            is why there is no refresh, no `router.refresh()`, and no optimistic
+            copy to get out of step. ⚠ `EmployersStep` is the exception and does
+            not need one: it writes through its own endpoints and reports back
+            via `onChanged`, which is the same state.
+
+            ⚠ THE MODAL IS WIDE FOR THE PICKERS AND NARROW FOR THE FIELDS.
+            Skills, Specializations and Work History are browse-and-choose
+            surfaces that were designed at page width; Title, Rate and Location
+            are three fields and would look absurd in a 4xl dialog.
+          */}
+          <Modal
+            open={editSection !== null}
+            onClose={() => setEditSection(null)}
+            title={editSection ? EDIT_SECTION_TITLES[editSection] : ""}
+            width={
+              editSection === "work" ||
+              editSection === "skills" ||
+              editSection === "specializations"
+                ? "max-w-4xl"
+                : "max-w-lg"
+            }
+          >
+            {error && <Notice>{error}</Notice>}
+
+            {editSection === "title" && titleEditing().body}
+            {editSection === "rate" && rateEditing().body}
+            {editSection === "location" && contactEditing().body}
+            {editSection === "education" && (
+              <EducationCards
+                items={profile.education}
+                onChange={(education) => setProfile((p) => ({ ...p, education }))}
+              />
+            )}
+            {editSection === "skills" && skillsEditing().body}
+            {editSection === "specializations" && specializationsEditing().body}
+            {editSection === "work" && (
+              /*
+                ⚠ THE SAME COMPONENT `case "tell_us"` MOUNTS, with the same four
+                props. ⚠ `projects` IS THE FLAT LIST (`E296`) — without it a
+                project with `employer_id: null` never reaches the editor, which
+                is exactly what `E411` found and is the whole reason Solo
+                Projects' Edit opens THIS.
+              */
+              <EmployersStep
+                employers={profile.employers}
+                projects={profile.projects}
+                onChanged={(employers) => setProfile((p) => ({ ...p, employers }))}
+                onError={setError}
+              />
+            )}
+
+            {/*
+              ⚠⚠ `EmployersStep` GETS `Done`, NOT `Save`, AND THE DIFFERENCE IS
+              REAL. It commits each employer and project through its own
+              endpoints as you go — there is nothing left to submit, and a Save
+              button implying otherwise would suggest that closing without it
+              loses work. Every other section here holds its edit in `profile`
+              until the button is pressed.
+            */}
+            <div className="mt-6 flex items-center justify-end gap-3 border-t border-line pt-4">
+              <button
+                type="button"
+                onClick={() => setEditSection(null)}
+                className="rounded-full border-[1.5px] border-line px-5 py-2.5 text-[14px] font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
+              >
+                {editSection === "work" ? "Done" : "Cancel"}
+              </button>
+              {editSection !== "work" && (
+                <button
+                  type="button"
+                  disabled={busy || !sectionEditorCanSave}
+                  onClick={saveEditSection}
+                  className="rounded-full bg-magenta px-5 py-2.5 text-[14px] font-bold text-white transition-colors hover:bg-magenta-dark disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {busy ? "Saving…" : "Save"}
+                </button>
+              )}
+            </div>
+          </Modal>
         </WizardShell>
       );
     }
@@ -4148,6 +4699,24 @@ setScreen(target);
 
   return null;
 }
+
+/**
+ * What the in-place editor calls itself (`P1-A1.4-E412` WS-1).
+ *
+ * ⚠ THESE NAME THE CARD, NOT THE WIZARD STEP. Somebody who clicked Edit on
+ * "Solo Projects" and landed in a dialog headed "Tell Us About Yourself" would
+ * reasonably think they had gone somewhere — the thing this brief exists to
+ * stop. ⚠ `work` says both, because it genuinely is both.
+ */
+const EDIT_SECTION_TITLES: Record<Exclude<EditSection, null>, string> = {
+  title: "Your Title",
+  rate: "Your Rate",
+  work: "Work History & Projects",
+  skills: "Your Skills",
+  specializations: "Your Specializations",
+  education: "Your Education",
+  location: "Contact & Location",
+};
 
 /**
  * Pre-verification chrome: logo only, deliberately NO stepper (E001).

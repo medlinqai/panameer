@@ -65,12 +65,65 @@ const AGENCIES = [
   "Workday",
 ];
 
+/*
+  ── ⚠⚠ SHOW WHAT IS ALREADY THERE (`P1-A1.4-E412` WS-3b) ────────────────────
+
+  SCOTT: *"these guys work hard for these… let's make them look AWESOME."*
+
+  ⚠ SUPERSEDED, quoted not deleted:
+
+      function certMeta(c: CertificationDraft): string {
+        return [
+          c.issuer,
+          c.issuedOn ? `issued ${c.issuedOn.slice(0, 4)}` : c.year,
+          c.expiresOn ? `expires ${c.expiresOn.slice(0, 4)}` : null,
+        ].filter(Boolean).join(" · ");
+      }
+
+  ⚠⚠ ONE PREMISE IN THE BRIEF DOES NOT HOLD, AND IT CHANGES WHAT THE FIX IS.
+  `E412` says the card *"renders name and issuer only"* and that `issued_on` /
+  `expires_on` are *"material sitting unused"*. They were not unused — the
+  function above already joined all four. ⚠ THE REASON THE SCREENSHOT SHOWED
+  NAME AND ISSUER IS THAT THE OTHER COLUMNS ARE **NULL ON THAT ROW**: measured,
+  `certificationsPass` returns `issuedOn: null, expiresOn: null` on 5 runs out
+  of 5, because the CV states no dates at all. Rendering was never the gap.
+
+  ⚠ WHAT WAS ACTUALLY WRONG WITH IT is smaller and real: a year-only smear
+  (`issued 2021 · expires 2026`) that reads like a range nobody chose, a
+  four-digit truncation that throws away the month the editor collects, and —
+  ⚠⚠ THE ONE THAT MATTERS — **an expired credential printed identically to a
+  live one.** Of the 8 rows on this database today, THREE are already past
+  their expiry date and the card said nothing.
+*/
+
+/** `2026-06-29` → `Jun 2026`. ⚠ UTC, so a date-only string cannot slip a month
+ *  backwards for anyone west of Greenwich. */
+function monthYear(iso: string): string {
+  const d = new Date(`${iso.slice(0, 10)}T00:00:00Z`);
+  if (Number.isNaN(d.getTime())) return iso.slice(0, 4);
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
+/**
+ * ⚠ EXPIRY IS A THREE-STATE, NOT A BOOLEAN: no expiry date (most credentials —
+ * say nothing), expires in the future, expired. ⚠ AN UNPARSEABLE DATE IS
+ * TREATED AS "NOT EXPIRED" on purpose — telling somebody their credential has
+ * lapsed because a string failed to parse is the worse error of the two.
+ */
+function expiryState(c: CertificationDraft): "none" | "current" | "expired" {
+  if (!c.expiresOn) return "none";
+  const d = new Date(`${c.expiresOn.slice(0, 10)}T00:00:00Z`);
+  if (Number.isNaN(d.getTime())) return "none";
+  return d.getTime() < Date.now() ? "expired" : "current";
+}
+
+/** Issuer and issue date — the part that reads the same whatever the state. */
 function certMeta(c: CertificationDraft): string {
-  return [
-    c.issuer,
-    c.issuedOn ? `issued ${c.issuedOn.slice(0, 4)}` : c.year,
-    c.expiresOn ? `expires ${c.expiresOn.slice(0, 4)}` : null,
-  ]
+  return [c.issuer, c.issuedOn ? monthYear(c.issuedOn) : c.year]
     .filter(Boolean)
     .join(" · ");
 }
@@ -179,9 +232,50 @@ export function CertificationCards({
               className="flex items-start justify-between gap-4"
             >
               <div className="min-w-0">
-                <p className="font-semibold">{c.name}</p>
-                {certMeta(c) && (
-                  <p className="text-ink-2">{certMeta(c)}</p>
+                {/*
+                  ⚠ THE NAME KEEPS ITS WEIGHT AND THE LIST KEEPS ITS SHAPE.
+                  `E109` made this a LIST matching Education — *"semibold name,
+                  meta in ink-2, no per-item border"* — after a walk called the
+                  bordered version "comical". ⚠ NOTHING HERE RE-ADDS A BOX:
+                  what changed is the meta LINE, and one chip. ⚠ No new colour,
+                  font or component (`E412`): the chip is the same
+                  `rounded-full` + `border-line` shape the app's chips already
+                  use, and `red-700` is the tone `Notice` and the over-limit bio
+                  warning already carry.
+                */}
+                <p className="flex flex-wrap items-baseline gap-2 font-semibold">
+                  {c.name}
+                  {expiryState(c) === "expired" && (
+                    <span className="rounded-full border border-red-700/30 bg-red-700/[0.06] px-2 py-0.5 text-[11.5px] font-bold uppercase tracking-[0.4px] text-red-700">
+                      Expired
+                    </span>
+                  )}
+                </p>
+                {(certMeta(c) || expiryState(c) !== "none") && (
+                  <p className="text-ink-2">
+                    {certMeta(c)}
+                    {/*
+                      ⚠⚠ HOW AN EXPIRED CREDENTIAL READS DIFFERENTLY, which is
+                      what `E412` asks to be reported — TWO signals, not one:
+                      the chip above states it in a word, and the date below
+                      changes both its VERB and its colour. *"Valid to Jun 2027"*
+                      in ink-2 versus *"Expired Jun 2026"* in red. ⚠ Colour alone
+                      would carry none of this to a screen reader or to anyone
+                      who cannot separate the two hues.
+                    */}
+                    {expiryState(c) === "current" && (
+                      <span>
+                        {certMeta(c) ? " · " : ""}
+                        Valid to {monthYear(c.expiresOn!)}
+                      </span>
+                    )}
+                    {expiryState(c) === "expired" && (
+                      <span className="font-semibold text-red-700">
+                        {certMeta(c) ? " · " : ""}
+                        Expired {monthYear(c.expiresOn!)}
+                      </span>
+                    )}
+                  </p>
                 )}
                 {c.credentialId && (
                   <p className="text-[13px] text-ink-2">
