@@ -4319,6 +4319,29 @@ function ReaderLine({
   path: NonNullable<ImportOutcome["path"]>;
 }) {
   if (path.reader === "ai") {
+    /*
+      ── ⚠⚠ SAY WHICH SECTION FELL BACK, NOT "AI DIDN'T READ THIS" (`E407`) ────
+
+      The page used to contradict itself: this banner said *"AI didn't read this
+      one"* while the skills card further down said *"AI read these off your
+      document"*. Both could not be true, and after `E407` WS-1 neither is — the
+      model reads most of the document and one PASS can fail on its own.
+      ⚠ MEASURED: on four runs of the same CV a DIFFERENT pass failed each time
+      (`reason: "shape"`, never truncation), so "the AI failed" was always too
+      broad a claim to put on the page.
+    */
+    if (path.employersFromHeuristic) {
+      return (
+        <p className="mb-6 flex flex-wrap items-center gap-2 rounded-[10px] border border-dashed border-line px-3 py-2 text-[13.5px] text-ink-2">
+          <SparkIcon />
+          <span>
+            <b className="text-ink">Panameer AI read this</b> — but it couldn&apos;t
+            make out your work history, so those jobs came from pattern-matching.
+            Everything else below is what the AI read. Check the jobs closely.
+          </span>
+        </p>
+      );
+    }
     return (
       <p className="mb-6 flex flex-wrap items-center gap-2 text-[13.5px] text-ink-2">
         <SparkIcon />
@@ -4330,9 +4353,25 @@ function ReaderLine({
     <p className="mb-6 rounded-[10px] border border-dashed border-line px-3 py-2 text-[13.5px] text-ink-2">
       <b className="text-ink">AI didn&apos;t read this one</b> — {path.reason}.
       What&apos;s below came from pattern-matching, so check it closely.
-      {path.configProblem && (
-        <span className="mt-1 block text-[12.5px]">{path.configProblem}</span>
-      )}
+      {/*
+        ── ⚠⚠ `configProblem` IS NOT SHOWN TO A PROVIDER (`E407` WS-7) ─────────
+
+        ⚠ SUPERSEDED, quoted not deleted:
+            {path.configProblem && (
+              <span className="mt-1 block text-[12.5px]">{path.configProblem}</span>
+            )}
+
+        ⚠⚠ IT PRINTED AN ENVIRONMENT VARIABLE NAME ON A SIGNUP PAGE. Scott, reading
+        his own: *"What is this? `$/parse can t be computed…`"* — the sentence names
+        `RESUME_PARSER_PRICE_IN_PER_M`. A provider cannot act on it, it is not their
+        problem, and it reads as a broken app at the moment they are deciding
+        whether to trust one with their CV.
+
+        ⚠ THE FIELD STAYS ON THE OBJECT — `parserConfigProblem()`'s own docblock
+        says where it belongs, *"for the admin health card and the eval script"*,
+        and `ParserHealth.tsx` still reads it. What changes is that no
+        provider-facing surface renders it; `check:resume-review` asserts that.
+      */}
     </p>
   );
 }

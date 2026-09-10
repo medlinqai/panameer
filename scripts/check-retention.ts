@@ -80,11 +80,29 @@ const SRC = walk("src").concat(walk("scripts")).filter((f) => f.path !== SELF);
 
 /* ═══ 3 · ⚠⚠ NOTHING PURGES YET ═══════════════════════════════════════════ */
 {
+  /*
+    ── ⚠⚠ A DEV TOOL IS NOT A PURGE, AND THE DIFFERENCE IS THE WHOLE RULE ──────
+
+    ⚠ THIS ASSERTION FIRED ON `scripts/dev-reset-resume.ts` (`P1-A1.4-E407` WS-8)
+    and it was RIGHT to — it found a new deletion path the moment one appeared.
+    But what `E404` forbids is a purge that runs ON A SCHEDULE AGAINST A WINDOW
+    NOBODY SET: *"an implementer picks 30 or 90 days because the code needs a
+    number, a purge runs, and afterwards there is no way to tell a decision from
+    a placeholder."*
+
+    ⚠ `dev-reset-resume` has no window, no schedule and no default. A person
+    invokes it against ONE email they type, and it refuses to delete without
+    `--yes`. ⚠⚠ THE EXEMPTION IS NARROW AND POLICED: `dev-*` scripts are skipped
+    HERE, and §3b asserts every one of them still demands explicit confirmation,
+    so the exemption cannot be used to smuggle in a silent purge.
+  */
+  const isDevTool = (p: string) => /(^|[\\/])scripts[\\/]dev-[a-z-]+\.ts$/.test(p);
   /* The shape of a purge: a bulk delete over the two kinds of retained data. */
   const purges = SRC.filter(
     (f) =>
-      /profileImport\.deleteMany|taxProfile\.deleteMany/.test(f.code) ||
-      /raw_text\s*:\s*null/.test(f.code)
+      !isDevTool(f.path) &&
+      (/profileImport\.deleteMany|taxProfile\.deleteMany/.test(f.code) ||
+        /raw_text\s*:\s*null/.test(f.code))
   );
   check("3 — ⚠⚠ ABSENCE: nothing deletes or blanks retained data",
     purges.length === 0, purges.map((p) => p.path).join(", "));
@@ -95,6 +113,31 @@ const SRC = walk("src").concat(walk("scripts")).filter((f) => f.path !== SELF);
   );
   check("3 — ABSENCE: nothing calls retentionCutoff while it throws",
     callers.length === 0, callers.map((c) => c.path).join(", "));
+
+  /* ═══ 3b · ⚠ THE DEV EXEMPTION IS POLICED ═══════════════════════════════
+     Any `scripts/dev-*.ts` that deletes must require explicit confirmation.
+     Without this, §3's exemption is a hole rather than a distinction. */
+  const devDeleters = SRC.filter((f) => isDevTool(f.path) && /\.deleteMany\(/.test(f.code));
+  check("3b — the guard can see the dev tools it exempts", devDeleters.length >= 1,
+    `${devDeleters.length} found`);
+  for (const d of devDeleters) {
+    /*
+      ⚠⚠ THE GUARD MUST STAND **BEFORE** THE FIRST DELETE, not merely exist in
+      the file. My first version tested that the words `--yes` and `confirmed`
+      appeared anywhere, and mutation-testing walked straight through it: turning
+      `if (!confirmed)` into `if (false)` left both words in place and the gate
+      stayed green. A word is not a guard; a position is.
+    */
+    const guard = d.code.search(/if\s*\(\s*!\s*confirmed\s*\)/);
+    const firstDelete = d.code.search(/\.deleteMany\(/);
+    check(
+      `3b — ⚠ ${d.path} refuses to delete without explicit confirmation`,
+      /--yes/.test(d.code) && guard > -1 && guard < firstDelete,
+      guard === -1
+        ? "no `if (!confirmed)` guard at all"
+        : `the guard is at ${guard} but the first delete is at ${firstDelete}`
+    );
+  }
 }
 
 /* ═══ 4 · THE MECHANISM STILL WORKS ONCE A NUMBER EXISTS ══════════════════

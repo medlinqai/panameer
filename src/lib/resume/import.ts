@@ -46,8 +46,22 @@ export type ImportPath = {
   model?: string;
   /** Present only on `heuristic`: why the model didn't produce this parse. */
   reason?: string;
-  /** A half-set or absent RESUME_PARSER_* config, in one sentence. */
+  /**
+   * ⚠⚠ ADMIN / EVAL ONLY — NEVER RENDERED TO A PROVIDER (`E407` WS-7).
+   *
+   * A half-set or absent RESUME_PARSER_* config, in one sentence. `ParserHealth`
+   * (the console health card) and the eval script read it. ⚠ IT NAMES
+   * ENVIRONMENT VARIABLES: a provider cannot act on it, and reading
+   * `RESUME_PARSER_PRICE_IN_PER_M` at the moment they are deciding whether to
+   * trust this app with their CV reads as a broken product.
+   */
   configProblem?: string | null;
+  /**
+   * ⚠ `reader: "ai"` WITH THE EMPLOYERS SECTION TAKEN FROM THE HEURISTIC
+   * (`E407` WS-1). The read did not fail — ONE PASS did — and the review banner
+   * needs to say which, instead of claiming the AI read nothing.
+   */
+  employersFromHeuristic?: boolean;
 };
 
 export type ImportResult = {
@@ -347,24 +361,59 @@ async function readDocument(text: string): Promise<{
 
   const parsed = aiToParsedResume(outcome.data);
   const signals = assessParse(text, parsed, { source: "ai" }).signals;
-  if (parsed.experiences.length === 0 && signals.dateRangesInText >= 3) {
+
+  /*
+    ── ⚠⚠ THE FALLBACK IS PER-SECTION NOW (`P1-A1.4-E407` WS-1) ───────────────
+
+    ⚠ SUPERSEDED, quoted not deleted — the whole-result discard this replaces:
+
+        if (parsed.experiences.length === 0 && signals.dateRangesInText >= 3) {
+          console.error(`[resume] the model returned no work history …`);
+          return { parsed: heuristic, path: { reader: "heuristic",
+            reason: "the model returned no work history", configProblem } };
+        }
+
+    ⚠⚠ IT THREW AWAY `parsed` ENTIRELY — NOT JUST THE EMPLOYERS. Projects,
+    certifications, skills, education, headline and overview all went with it,
+    and the heuristic's versions were shown instead. Everything Scott reviewed
+    came from pattern-matching, INCLUDING the parts the model got right.
+
+    ⚠ AND IT CONTRADICTED THE DESIGN IT SAT ON. `E399` split extraction into five
+    INDEPENDENT passes precisely so that no one call holds the whole document —
+    `ai-passes.ts` degrades per pass already (`projects: proj.ok ? proj.value :
+    []`). This single guard re-coupled all five at the last step.
+
+    ⚠ THE GUARD ITSELF IS SOUND AND IS KEPT. A document with date ranges and no
+    work history IS a failed employers extraction. What changes is the BLAST
+    RADIUS: the heuristic supplies `experiences` only, and every other section
+    stays as the model read it.
+  */
+  const employersFailed =
+    parsed.experiences.length === 0 && signals.dateRangesInText >= 3;
+  if (employersFailed) {
     console.error(
-      `[resume] the model returned no work history from a document with ${signals.dateRangesInText} date ranges — keeping the heuristic parse`
+      `[resume] the model returned no work history from a document with ${signals.dateRangesInText} date ranges — falling back to the heuristic for EMPLOYERS ONLY; the other sections keep the model's answer`
     );
-    return {
-      parsed: heuristic,
-      path: { reader: "heuristic", reason: "the model returned no work history", configProblem },
-    };
   }
 
+  /* ⚠ ONE FIELD SWAPPED, NOT ONE OBJECT REPLACED. Spreading `parsed` and
+     overriding a single key is what keeps the other five sections AI-sourced —
+     and is why the gate can assert it by forcing `experiences: []`. */
+  const merged = employersFailed
+    ? { ...parsed, experiences: heuristic.experiences }
+    : parsed;
+
   return {
-    parsed,
+    parsed: merged,
     path: {
       reader: "ai",
       tier: outcome.tier,
       provider: outcome.provider,
       model: outcome.model,
       configProblem,
+      /* ⚠ WHICH SECTION FELL BACK, so the review banner can say what actually
+         happened instead of "AI didn't read this one". */
+      employersFromHeuristic: employersFailed,
     },
     recall: outcome.recall,
     usage: {

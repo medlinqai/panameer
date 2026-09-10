@@ -49,7 +49,10 @@ export type ImportOutcome = {
     provider?: string;
     model?: string;
     reason?: string;
+    /** ⚠ ADMIN / EVAL ONLY — no provider-facing surface may render it (`E407` WS-7). */
     configProblem?: string | null;
+    /** ⚠ `reader: "ai"` with the EMPLOYERS section from the heuristic (`E407` WS-1). */
+    employersFromHeuristic?: boolean;
   };
   error?: string;
   state?: unknown;

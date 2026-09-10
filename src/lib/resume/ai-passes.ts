@@ -231,8 +231,33 @@ If the document says nothing about a field, use null — never invent one.`;
         description: `Exactly ${inventory.length} entries, one per listed heading, in order.`,
         items: sub(
           {
-            name: { type: ["string", "null"] },
-            roleTitle: { type: ["string", "null"] },
+            /*
+              ── ⚠⚠ THE DESCRIPTIONS ARE BACK (`P1-A1.4-E407` WS-3) ────────────
+
+              ⚠ `E399` SPLIT THE PROMPT INTO PASSES AND DROPPED THEM. The
+              superseded single-pass schema (`ai-extract.ts`) carries
+              `P1-J1.4-E373`'s instruction, and E373's own comment says why it is
+              load-bearing: *"Making the Zod field nullable without telling the
+              model changes nothing: the model answers the DESCRIPTION, not the
+              schema."* These two fields went BARE when the passes were written.
+
+              ⚠⚠ CARRIED BACK EVEN THOUGH THE AI PATH IS NOT WHAT SWAPPED SCOTT'S
+              ROWS — the heuristic did that (`parse.ts`, fixed in this brief).
+              This is the same defect latent on the other path, waiting for the
+              AI to be the one answering. Measured: the AI's own orientation is
+              currently CORRECT (`employer:"StratERP Inc."`), which is exactly
+              when it is cheap to protect.
+            */
+            name: {
+              type: ["string", "null"],
+              description:
+                "The employing company, or null if the résumé names none — do not substitute a job title. A self-employed or contracting line often names no company at all; null is the correct answer there.",
+            },
+            roleTitle: {
+              type: ["string", "null"],
+              description:
+                "The person's job title at that company — not the company name, and not a client or project name.",
+            },
             description: { type: ["string", "null"] },
             startDate: { type: ["string", "null"] },
             endDate: { type: ["string", "null"] },
@@ -498,7 +523,22 @@ export type MultiPassOutcome =
  */
 export async function aiExtractResumeMultiPass(text: string): Promise<MultiPassOutcome> {
   const started = Date.now();
-  const passes: { name: string; ok: boolean; ms: number; costUsd: number | null }[] = [];
+  /*
+    ⚠ `reason` AND `message` ARE CARRIED NOW (`P1-A1.4-E407` WS-2). They used to
+    be dropped on the failure branch, so a provider error, a truncation and a
+    SHAPE mismatch all arrived as one indistinguishable `{ok:false}` — and the
+    next person to diagnose it would be guessing between a budget problem and a
+    schema problem. Measured 2026-09-09: the failures are `shape`, on runs whose
+    `finishReason` is `stop`, which rules truncation out entirely.
+  */
+  const passes: {
+    name: string;
+    ok: boolean;
+    ms: number;
+    costUsd: number | null;
+    reason?: string;
+    message?: string;
+  }[] = [];
   const failed: string[] = [];
   let inTok = 0, outTok = 0, cachedTok = 0, reasoningTok = 0, cost = 0, anyCost = false;
   let model = "", provider: ProviderName = "openai", tier: ParserTier = "economy";
@@ -516,7 +556,7 @@ export async function aiExtractResumeMultiPass(text: string): Promise<MultiPassO
         finishReason = r.usage.finishReason;
       else finishReason = finishReason ?? r.usage.finishReason;
     } else {
-      passes.push({ name, ok: false, ms: 0, costUsd: null });
+      passes.push({ name, ok: false, ms: 0, costUsd: null, reason: r.reason, message: r.message });
       failed.push(name);
     }
   };

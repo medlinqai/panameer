@@ -216,8 +216,31 @@ function parseMonthYear(raw: string): string | null {
  * double space or a dangling separator that would look like a missing field.
  */
 function findDateRange(line: string): { start: string | null; end: string | null; matched: string } | null {
+  /*
+    ── ⚠⚠ NUMERIC `MM/YYYY` IS A DATE TOO (`P1-A1.4-E407` WS-4) ───────────────
+
+    ⚠ SUPERSEDED, quoted not deleted — the token this widens:
+        `((?:${MONTH_RE})?(?:19|20)\d{2})`
+    It accepted "Jan 2019" and a bare "2019" and NOTHING ELSE, so a range written
+    `(06/2025 – 10/2026)` did not register as a date at all.
+
+    ⚠⚠ THAT IS WHY ONE DESCRIPTION SWALLOWED THE REST OF SCOTT'S CV. His client
+    engagements are all written `Client — Engagement (MM/YYYY – MM/YYYY)`. With
+    no range detected, `range && !isBullet` is false, `flush()` never runs, and
+    every one of those lines appends to the employer still in hand. MEASURED: the
+    Medlinq.ai description reached **5,815 characters against a median of 359 —
+    16.2x** — and it contained fourteen engagements that should have been their
+    own entries. The 8 experiences that DID parse are exactly the ones whose
+    dates are written as bare years.
+
+    ⚠ `parseMonthYear` ALREADY UNDERSTOOD `MM/YYYY` (see above) — only the
+    DETECTOR did not, so this is one alternation, not a new date parser.
+    ⚠ THE DAY IS NOT ACCEPTED (`06/01/2025`): a third number changes what the
+    fields mean and this fix has no evidence about that form.
+  */
+  const YEAR_TOKEN = `(?:(?:${MONTH_RE})|(?:\\d{1,2}\\/))?(?:19|20)\\d{2}`;
   const re = new RegExp(
-    `\\b((?:${MONTH_RE})?(?:19|20)\\d{2})\\s*(?:[–—\\-]{1,2}|to|until|through)\\s*((?:${MONTH_RE})?(?:19|20)\\d{2}|present|current|now|date)\\b`,
+    `\\b(${YEAR_TOKEN})\\s*(?:[–—\\-]{1,2}|to|until|through)\\s*(${YEAR_TOKEN}|present|current|now|date)\\b`,
     "i"
   );
   const m = line.match(re);
@@ -350,6 +373,37 @@ export function isPlausibleSkillTerm(t: string): boolean {
 /** Clause fragments start with a connective; real skills don't. */
 export const STOPWORD_START =
   /^(and|or|but|with|within|across|for|from|into|onto|to|of|in|on|at|by|as|the|a|an|plus|including|many|several|various|over|about)\b/i;
+
+/**
+ * ── ⚠ TELLING A COMPANY FROM A ROLE (`P1-A1.4-E407` WS-3) ───────────────────
+ *
+ * Used ONLY to decide which half of a `X — Y` heading is which. ⚠ NEITHER IS A
+ * CLASSIFIER: both are deliberately narrow, and where they disagree or say
+ * nothing the parser keeps the order it already had.
+ *
+ * ⚠ THE CORPORATE-SUFFIX LIST IS THE ONE ALREADY IN THIS FILE (`looksLikeCompany`
+ * on the two-line header path), plus the dotted internet forms a modern company
+ * name uses — `Medlinq.ai` carries no suffix at all and is still obviously a
+ * company.
+ */
+function looksLikeCompanyName(s: string): boolean {
+  return (
+    /\b(llc|inc\.?|ltd\.?|llp|plc|gmbh|corp(oration)?|pty|group|technologies|solutions|consulting|systems|services|partners|associates|holdings|labs|studios|university|school|hospital)\b/i.test(
+      s
+    ) || /\.(ai|io|com|co|net|org)\b/i.test(s)
+  );
+}
+
+/**
+ * ⚠ ROLE NOUNS, NOT VERBS. A title is named by what the person IS — the words
+ * below are the ones that actually appear in the heading half of a CV line.
+ * ⚠ WORD-BOUNDED: "Designer" must not match inside a company called "Designs".
+ */
+function looksLikeRoleTitle(s: string): boolean {
+  return /\b(founder|co-?founder|owner|principal|partner|consultant|manager|director|engineer|developer|designer|builder|architect|analyst|specialist|administrator|lead|head|chief|officer|president|vp|vice\s+president|associate|advisor|adviser|strategist|scientist|coordinator|supervisor|intern|contractor|freelancer|writer|creator|instructor|trainer|executive)\b/i.test(
+    s
+  );
+}
 
 export function parseResume(text: string): ParsedResume {
   const rawLines = text
@@ -514,11 +568,40 @@ export function parseResume(text: string): ParsedResume {
       flush();
       const rest = stripRange(line, range.matched);
       const parts = rest.split(/\s+(?:at|@|—|–|\||,)\s+/).map((s) => s.trim()).filter(Boolean);
+      /*
+        ── ⚠⚠ WHICH SIDE IS THE COMPANY? ASK, DO NOT ASSUME (`E407` WS-3) ───────
+
+        ⚠ SUPERSEDED, quoted not deleted:
+            roleTitle: parts[0] ?? "",
+            employer:  parts[1] ?? (companyHeader ? companyFromHeader(companyHeader) : ""),
+
+        ⚠⚠ THAT HARDCODED ONE ORDER — "Title — Employer" — AND SCOTT'S CV USES THE
+        OTHER. His lines read `StratERP Inc. — Founder & Principal Consultant`, so
+        the COMPANY landed in `roleTitle` and the ROLE landed in `employer`, on
+        every single row. MEASURED before the fix: `employer:"Founder & Principal
+        Consultant" roleTitle:"StratERP Inc."`, and the `"(Company not detected)"`
+        sentinel sitting in `employer` while `"Oracle Corporation"` sat in
+        `roleTitle` — which is what put a role where the company belongs on the
+        review card.
+
+        ⚠ IT IS NOT FLIPPED — BOTH ORDERS ARE COMMON AND BOTH MUST WORK. The swap
+        happens only on POSITIVE EVIDENCE from both halves: the left looks like a
+        company AND the right looks like a role. With no evidence the original
+        order stands, so every document that parsed correctly before still does.
+        ⚠ THE fin-rajesh CASE THE COMMENT BELOW WARNS ABOUT IS SAFE: its left half
+        ("Senior Associate Financial Functional") reads as a ROLE, so nothing swaps.
+      */
+      const left = parts[0] ?? "";
+      const right = parts[1] ?? "";
+      const swap = right !== "" && looksLikeCompanyName(left) && looksLikeRoleTitle(right)
+        && !looksLikeRoleTitle(left);
       pending = {
-        roleTitle: parts[0] ?? "",
+        roleTitle: (swap ? right : left) ?? "",
         // The company header one line up, when this line names no employer of
         // its own — the two-line layout this fix exists for.
-        employer: parts[1] ?? (companyHeader ? companyFromHeader(companyHeader) : ""),
+        employer:
+          (swap ? left : parts[1]) ??
+          (companyHeader ? companyFromHeader(companyHeader) : ""),
         description: null,
         startDate: range.start,
         endDate: range.end,
