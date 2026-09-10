@@ -105,7 +105,30 @@ const VIEW = strip(readFileSync(join("src", "components", "profile", "ProviderPr
     "listEmployers nests projects, so employer_id:null rows arrive only through this"
   );
   const step = strip(readFileSync(join("src", "components", "onboarding", "EmployersStep.tsx"), "utf8"));
-  check("2 — the step computes `unplaced` from that list", /const unplaced = projects\.filter/.test(step));
+  /*
+    ⚠ SUPERSEDED, quoted not deleted (`P1-A1.4-E413` WS-1):
+
+        /const unplaced = projects\.filter/
+
+    ⚠⚠ THE LINE MOVED, THE PROPERTY DID NOT. `E413` gave a placed project a way
+    back OUT, and a row detached in the same session is in neither the wizard's
+    `projects` prop nor the employers endpoint's nested list — so it would have
+    vanished. `unplaced` is now derived from `knownProjects`, which merges the
+    prop with the rows this session detached. ⚠ WHAT THIS ASSERTION PROTECTS —
+    that the placement surface is still fed from the FLAT list rather than from
+    the nested one — is unchanged and asserted below in its new shape.
+  */
+  check(
+    "2 — `unplaced` is still derived from the flat list, not the nested one",
+    /const unplaced = \[\.\.\.knownProjects\.values\(\)\]\.filter\(\(p\) => !nested\.has\(p\.id\)\)/.test(
+      step
+    ),
+    "E413 WS-1 — plus any row detached in this session"
+  );
+  check(
+    "2 — ⚠ and the flat `projects` prop still feeds it",
+    /for \(const p of projects\) knownProjects\.set\(p\.id, p\);/.test(step)
+  );
   check("2 — and renders the placement section", /Projects not yet under a job/.test(step));
   /* ⚠ `+ Add Project` ALREADY EXISTS — `E411`'s survey found it inside an
      expanded employer card. It is a findability problem, not a missing control,

@@ -6,9 +6,96 @@ import { employerDisplayName } from "@/lib/employer-display";
 import { useCallback, useEffect, useState } from "react";
 import { Modal } from "@/components/Modal";
 /* ⚠ THE LOSS SENTENCE IS THE LIB'S, NOT RE-TYPED HERE (`E296`). */
-import { describeProjectLoss as describeLoss } from "@/lib/reclassify";
+import { describeProjectLoss as describeLoss, clean } from "@/lib/reclassify";
 import { Field, TextInput, TextArea, Notice } from "@/components/onboarding/controls";
 import { LocationFields } from "@/components/onboarding/LocationFields";
+
+/** The "no job" option's wording. ⚠ A STATE, NOT AN ERROR (`E413` WS-1). */
+export const NO_PARENT_LABEL = "Not under a job yet";
+
+/*
+  ── ⚠⚠ THE PARENT PICKER — ONE CONTROL, PLACED AND UNPLACED (`E413` WS-1) ─────
+
+  ⚠ THE UNPLACED PANEL'S PICKER WAS `value=""` WITH A *"Put it under…"*
+  PLACEHOLDER. That is right for a row with no parent and ⚠ **wrong for one that
+  has one**, where a control displaying nothing reads as "not set" and invites a
+  blind change. ⚠ SO THIS ONE IS ALWAYS BOUND TO THE CURRENT PARENT — the same
+  component serves both, and a placed row shows where it actually is.
+
+  ⚠ DETACH IS ALWAYS OFFERED. `employerId: null` is legal, `unplaced` is a real
+  state (`E296`), and before this there was no route back into it: the only way
+  out of a misplacement was ✕ and retype.
+*/
+function ParentPicker({
+  project,
+  employers,
+  currentEmployerId = "",
+  disabled,
+  onMove,
+  className = "",
+}: {
+  project: EmployerProject;
+  employers: EmployerCard[];
+  /** The row's current parent, "" when it has none. */
+  currentEmployerId?: string;
+  disabled: boolean;
+  onMove: (pr: EmployerProject, employerId: string | null) => void;
+  className?: string;
+}) {
+  return (
+    <label className={`flex items-center gap-2 text-[13px] text-ink-2 ${className}`}>
+      <span className="sr-only">Which job is {project.name} under?</span>
+      <select
+        value={currentEmployerId}
+        disabled={disabled || employers.length === 0}
+        onChange={(ev) => onMove(project, ev.target.value || null)}
+        className="rounded-[8px] border border-line bg-white px-2.5 py-1.5 text-[13.5px]"
+      >
+        {/*
+          ⚠⚠ THE EMPTY OPTION IS "DETACH", NOT A PLACEHOLDER. On an unplaced row
+          it is the current value and reads as a state; on a placed row it is the
+          way back out. ⚠ THE WORDING IS A STATE, NOT AN ERROR — "Not under a job
+          yet" describes where the row is, where "No job" or "None" would read as
+          something missing that ought to be filled in. `unplaced` is a
+          first-class concept (`E296`) and after `E410` it is the NORMAL arrival
+          state for 22–24 rows.
+          ⚠ "Add a job first" survives for the genuinely empty case.
+        */}
+        <option value="">
+          {employers.length === 0 ? "Add a job first" : NO_PARENT_LABEL}
+        </option>
+        {employers.map((e) => (
+          <option key={e.id} value={e.id}>
+            {employerDisplayName(e.name)}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+/*
+  ── ⚠ THE EMPLOYER CARD'S TWO LINES, AS FUNCTIONS (`P1-A1.4-E413` WS-3) ───────
+
+  ⚠ PURE AND MODULE-LEVEL so `check:project-parent` can call them with a row
+  shaped like Scott's and assert the OUTPUT, rather than pattern-matching the
+  JSX. An assertion about a regex over markup goes green the moment somebody
+  reformats it; an assertion about a value does not.
+*/
+
+/** The heading: the work if the row names any, otherwise the company. */
+export function cardTitle(e: { roleTitle?: string | null; name?: string | null }): string {
+  return clean(e.roleTitle, 200) ?? employerDisplayName(e.name);
+}
+
+/**
+ * The company line — ⚠ `""` WHEN THE HEADING IS ALREADY THE COMPANY, which is
+ * the whole defect. Callers render it only when it is non-empty.
+ */
+export function cardCompany(e: { roleTitle?: string | null; name?: string | null }): string {
+  const company = employerDisplayName(e.name);
+  return cardTitle(e) === company ? "" : company;
+}
 
 /** Matches `TextInput` so a select doesn't read as a different control. */
 const SELECT =
@@ -205,7 +292,30 @@ export function EmployersStep({
     employer is filtered out by id so a row never appears twice on one screen.
   */
   const nested = new Set(employers.flatMap((e) => (e.projects ?? []).map((p) => p.id)));
-  const unplaced = projects.filter((p) => !nested.has(p.id));
+
+  /*
+    ── ⚠⚠ A ROW DETACHED IN THIS SESSION MUST NOT VANISH (`P1-A1.4-E413` WS-1) ──
+
+    ⚠ `unplaced` was derived from the `projects` PROP, which is the wizard's
+    status payload — fetched once, on load. ⚠⚠ AND `/api/provider/employers`
+    RETURNS ONLY `employers`, with projects NESTED: a project with no employer is
+    reachable through neither. So the moment detach existed, a project CREATED
+    this session and then detached would leave `nested`, fail to appear in
+    `projects`, and disappear from the screen entirely — the appearance of data
+    loss, introduced by the very control meant to make placement reversible.
+
+    ⚠ SO THE DETACHED ROW IS REMEMBERED CLIENT-SIDE, with the object already in
+    hand at the call site. ⚠ IT IS FORGOTTEN THE MOMENT IT FINDS A HOME or is
+    deleted, so this can never resurrect a row the server no longer has.
+    ⚠ NO SERVER CHANGE: the brief is explicit that `moveProject` stays the only
+    writer and that this is a UI omission with a finished endpoint behind it.
+    Widening the response shape is a job for whoever needs it on the server.
+  */
+  const [detached, setDetached] = useState<EmployerProject[]>([]);
+  const knownProjects = new Map<string, EmployerProject>();
+  for (const p of projects) knownProjects.set(p.id, p);
+  for (const p of detached) knownProjects.set(p.id, p);
+  const unplaced = [...knownProjects.values()].filter((p) => !nested.has(p.id));
 
   /*
     ⚠ IT RETURNS THE PAYLOAD, NOT A BOOLEAN (`P1-J1.4-E296`).
@@ -238,6 +348,56 @@ export function EmployersStep({
     } finally {
       setBusy(false);
     }
+  };
+
+  /*
+    ── ⚠⚠ ONE MOVE, THREE SURFACES (`P1-A1.4-E413` WS-1 + WS-2) ────────────────
+
+    ⚠ WS-1 AND WS-2 ARE THE SAME MISSING IDEA FROM OPPOSITE ENDS: **the parent
+    link is data, and data is editable from either end.** WS-1 is "this project
+    is under the wrong job"; WS-2 is "I am in this job and want that project".
+    ⚠ SO THERE IS ONE IMPLEMENTATION AND IT IS THIS FUNCTION — every surface that
+    changes a parent calls it, and it is the ONLY place in this component that
+    posts `moveProject`.
+
+    ⚠⚠ `employers.ts` SAYS `moveProject` IS *"the only code path that can set
+    `Project.employer_id`"* AND THAT SENTENCE HAS TO STAY TRUE — it is what makes
+    the double ownership re-check unskippable. ⚠ NOTHING HERE TEACHES
+    `updateProject` about `employerId`; the brief's STOP condition is not reached
+    because the server already does all of this, unchanged. The endpoint has
+    handled re-attach and detach since `E296`; it simply never had a button.
+
+    ⚠ `employerId: null` IS DETACH and is a legal, meaningful value — the route
+    reads it with `?? null` precisely so it is not stringified into `"null"`.
+  */
+  const moveTo = async (pr: EmployerProject, employerId: string | null) => {
+    const ok = await post({ action: "moveProject", projectId: pr.id, employerId });
+    if (!ok) return;
+    setDetached((d) =>
+      employerId === null
+        ? [...d.filter((x) => x.id !== pr.id), pr]
+        : d.filter((x) => x.id !== pr.id)
+    );
+    /*
+      ── ⚠⚠ FOLLOW THE ROW TO ITS NEW HOME (`P1-A1.4-E413` WS-1) ──────────────
+
+      ⚠ FOUND BY WALKING IT, NOT BY READING IT. A project row only renders
+      inside an EXPANDED employer card. Move one from the open card to a closed
+      one and the move succeeds, the server is right, every gate stays green —
+      and on screen the row simply DISAPPEARS.
+
+      ⚠⚠ THAT IS THE EXACT COMPLAINT THIS TRACK ALREADY ANSWERED ONCE. Scott, on
+      `E411`: *"then the whole projects thing disappeared… I had to refresh to
+      get them back."* A control whose success looks identical to a deletion is
+      not a fixed control. ⚠ SO THE DESTINATION CARD OPENS: the person sees the
+      row arrive where they sent it, which is the confirmation the move
+      otherwise has none of.
+
+      ⚠ ON DETACH THE OPEN CARD IS LEFT ALONE — the row's destination is the
+      "Projects not yet under a job" panel below, which is always visible when
+      it is non-empty, so there is nothing to open and nothing to scroll past.
+    */
+    if (employerId) setOpenId(employerId);
   };
 
   /*
@@ -700,13 +860,56 @@ export function EmployersStep({
                       </span>
                     )}
                     <div className="min-w-0">
-                      <p className="font-bold leading-snug">
-                        {e.roleTitle || e.name}
-                      </p>
-                      <p className="mt-1 text-[13.5px] text-ink-2">
-                        <b className="text-ink">{employerDisplayName(e.name)}</b>
-                        {e.description ? ` — ${e.description}` : ""}
-                      </p>
+                      {/*
+                        ── ⚠⚠ NEVER PRINT ONE FIELD TWICE (`P1-A1.4-E413` WS-3) ──
+
+                        ⚠ SUPERSEDED, quoted not deleted:
+
+                            <p className="font-bold leading-snug">{e.roleTitle || e.name}</p>
+                            <p className="mt-1 text-[13.5px] text-ink-2">
+                              <b className="text-ink">{employerDisplayName(e.name)}</b>
+                              {e.description ? ` — ${e.description}` : ""}
+                            </p>
+
+                        SCOTT: *"When i go into edit, looks like the company an
+                        description are mixed here."*
+
+                        ⚠⚠ WITH A ROLE TITLE the card read `Role` / **`Company`**
+                        — description. WITHOUT ONE it read `Company` /
+                        **`Company`** — description: the same string twice, and
+                        no line that was only the company. That is exactly what
+                        *"mixed"* describes.
+
+                        ⚠ MEASURED ON SCOTT'S OWN ROWS BEFORE ANY EDIT, per the
+                        brief. `test15@panameer.com` employer `[20]`:
+                            name        = "Oracle Cloud Content & AI-Native Application Developer"
+                            role_title  = ""      ← EMPTY STRING, not null
+                            description = (byte-identical to the "Panameer" row above it)
+                        ⚠⚠ SO IT IS A LIVE STATE, NOT AN EDGE CASE — and note the
+                        empty string: `{e.roleTitle || e.name}` fell through on
+                        `""` while a `??` would not have. Same disagreement WS-4
+                        fixes in `employerToProjectData`.
+
+                        ⚠ THE SHAPE CHOSEN: the heading is the WORK when there is
+                        one and the COMPANY otherwise; the line under it carries
+                        the company ONLY when the heading is not already it.
+                        ⚠ THE SEPARATOR MOVES WITH IT — a description promoted to
+                        the start of its line must not begin with a dangling
+                        " — ".
+                      */}
+                      <p className="font-bold leading-snug">{cardTitle(e)}</p>
+                      {(cardCompany(e) || e.description) && (
+                        <p className="mt-1 text-[13.5px] text-ink-2">
+                          {cardCompany(e) && (
+                            <b className="text-ink">{cardCompany(e)}</b>
+                          )}
+                          {e.description
+                            ? cardCompany(e)
+                              ? ` — ${e.description}`
+                              : e.description
+                            : ""}
+                        </p>
+                      )}
                       {dateRange(e.startDate, e.endDate, e.isCurrent) && (
                         <p className="mt-1 text-[12.5px] text-ink-2">
                           {dateRange(e.startDate, e.endDate, e.isCurrent)}
@@ -802,27 +1005,130 @@ export function EmployersStep({
                               </button>
                               <button
                                 type="button"
-                                onClick={() =>
+                                onClick={() => {
+                                  /* ⚠ FORGET A DELETED ROW so the client-side
+                                     detach registry can never resurrect it. */
+                                  setDetached((d) => d.filter((x) => x.id !== pr.id));
                                   void post({
                                     action: "deleteProject",
                                     projectId: pr.id,
-                                  })
-                                }
+                                  });
+                                }}
                                 className="font-bold text-ink-2 hover:text-red-600"
                               >
                                 ✕
                               </button>
                             </div>
                           </div>
+                          {/*
+                            ── ⚠⚠ THE DOOR THAT ONLY OPENED OUTWARD (`E413` WS-1) ──
+
+                            SCOTT: *"I added Medlinq to StratERP and it should be
+                            under Panameer… but there is no way to edit the add
+                            once you added the project to the wrong company."*
+
+                            ⚠⚠ HE WAS RIGHT AND IT WAS STRUCTURAL. `moveProject`
+                            was reachable from the "Projects not yet under a job"
+                            panel and NOWHERE ELSE — and the instant it
+                            succeeded the row entered `nested`, left `unplaced`,
+                            and the only control that could call it unmounted
+                            itself. A one-way door that closed behind the row.
+                            ⚠ This row's other controls are Artifacts · Edit · ⇄ ·
+                            ✕ and not one of them could change its parent;
+                            `updateProject` never sends `employerId` at all. The
+                            only way out of a mistake was ✕ and retype.
+
+                            ⚠⚠ AND IT UNDERMINED `E410`. That brief routed 44
+                            engagement sections to Project rows and invented no
+                            parent, on the stated ground that *"`moveProject`
+                            already exists for the person to place it."* Place,
+                            yes — re-place, no. With 22–24 rows arriving
+                            unplaced, a wrong pick is arithmetic, not an edge
+                            case.
+
+                            ⚠ THE SHAPE CHOSEN: a picker on the row, over an
+                            employer field in the project modal. It is the
+                            control Scott already found and used in the unplaced
+                            panel, it is one click rather than open-change-save,
+                            and it puts the affordance on the thing being moved.
+                            ⚠ IT SHOWS THE CURRENT PARENT — `currentEmployerId`
+                            is this card's employer, so it never reads as "not
+                            set".
+                          */}
+                          <div className="mt-2 flex justify-end">
+                            <ParentPicker
+                              project={pr}
+                              employers={employers}
+                              currentEmployerId={e.id}
+                              disabled={busy}
+                              onMove={(project, employerId) => void moveTo(project, employerId)}
+                            />
+                          </div>
                         </div>
                       ))}
-                      <button
-                        type="button"
-                        onClick={() => openProject(e.id)}
-                        className="text-[13px] font-bold text-magenta hover:text-magenta-dark"
-                      >
-                        + Add Project
-                      </button>
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                        <button
+                          type="button"
+                          onClick={() => openProject(e.id)}
+                          className="text-[13px] font-bold text-magenta hover:text-magenta-dark"
+                        >
+                          + Add Project
+                        </button>
+                        {/*
+                          ── ⚠⚠ CREATE WAS THE ONLY VERB ON OFFER (`E413` WS-2) ──
+
+                          SCOTT: *"when I go to edit the first one an add
+                          projects - i haev to type them in."*
+
+                          ⚠ MEASURED: `+ Add Project` calls `openProject(e.id)`
+                          with no project, which loads `emptyProject()` and
+                          prefills only `clientName` (`E113`). ⚠ It can CREATE.
+                          It cannot ATTACH.
+
+                          ⚠⚠ AND AFTER `E410` THAT IS BACKWARDS. A real import
+                          lands 22–24 projects already extracted and sitting
+                          unplaced. Somebody standing in StratERP wanting to add
+                          projects almost certainly means *those* — and the only
+                          thing on offer was a blank form asking them to retype
+                          work the parser had already read.
+
+                          ⚠ ONE CLICK, NO MODAL, NO RETYPING: the picker fires
+                          the same `moveTo` the row picker does, with this card's
+                          employer id.
+
+                          ⚠⚠ RENDERED ONLY WHEN THERE IS SOMETHING TO ATTACH.
+                          `E125`'s rule — colour and presence carry state — and
+                          the brief is explicit that *"an empty picker beside
+                          `+ Add Project` is worse than no picker."* An empty
+                          dropdown reads as a broken control; its absence reads
+                          as "nothing is waiting", which is the truth.
+                        */}
+                        {unplaced.length > 0 && (
+                          <label className="flex items-center gap-2 text-[13px] text-ink-2">
+                            <span className="sr-only">
+                              Attach an existing project to {employerDisplayName(e.name)}
+                            </span>
+                            <select
+                              value=""
+                              disabled={busy}
+                              onChange={(ev) => {
+                                const pick = unplaced.find((u) => u.id === ev.target.value);
+                                if (pick) void moveTo(pick, e.id);
+                              }}
+                              className="rounded-[8px] border border-line bg-white px-2.5 py-1.5 text-[13.5px]"
+                            >
+                              <option value="">
+                                Attach an existing project ({unplaced.length})
+                              </option>
+                              {unplaced.map((u) => (
+                                <option key={u.id} value={u.id}>
+                                  {u.name}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                        )}
+                      </div>
                     </div>
                   )}
                   {openId !== e.id && (
@@ -892,28 +1198,22 @@ export function EmployersStep({
                 className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-[10px] border border-line bg-bg-soft px-3 py-2.5"
               >
                 <span className="min-w-0 flex-1 text-[14px] font-semibold">{pr.name}</span>
-                <label className="flex items-center gap-2 text-[13px] text-ink-2">
-                  <span className="sr-only">Put {pr.name} under a job</span>
-                  <select
-                    value=""
-                    disabled={busy || employers.length === 0}
-                    onChange={(ev) => {
-                      const employerId = ev.target.value;
-                      if (!employerId) return;
-                      void post({ action: "moveProject", projectId: pr.id, employerId });
-                    }}
-                    className="rounded-[8px] border border-line bg-white px-2.5 py-1.5 text-[13.5px]"
-                  >
-                    <option value="">
-                      {employers.length === 0 ? "Add a job first" : "Put it under…"}
-                    </option>
-                    {employers.map((e) => (
-                      <option key={e.id} value={e.id}>
-                        {employerDisplayName(e.name)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                {/*
+                  ⚠ SUPERSEDED, quoted not deleted (`E413` WS-1) — this panel
+                  held its own inline `<select value="">` with a *"Put it
+                  under…"* placeholder and an `if (!employerId) return;` that
+                  made the empty option INERT. That guard is what made detach
+                  unreachable even here. The shared `ParentPicker` replaces it;
+                  on an unplaced row `currentEmployerId` is "", so it renders
+                  exactly as before except that the empty option now means
+                  something.
+                */}
+                <ParentPicker
+                  project={pr}
+                  employers={employers}
+                  disabled={busy}
+                  onMove={(project, employerId) => void moveTo(project, employerId)}
+                />
               </li>
             ))}
           </ul>

@@ -265,6 +265,37 @@ export async function uploadResumeFile(
   return objectPath;
 }
 
+/**
+ * Remove a résumé object from the private bucket (`P1-A1.4-E413` WS-7).
+ *
+ * ⚠⚠ A MISSING OBJECT IS A SUCCESS, NOT A FAILURE. This runs when a NEW résumé
+ * supersedes an old one, and the new upload has already happened by then — so a
+ * stale `storage_path`, a hand-deleted object or a bucket that never received
+ * the file must not fail the import that triggered the cleanup. ⚠ Supabase's
+ * `remove()` does not error on an absent key, and the `catch` covers the
+ * transport failing outright.
+ *
+ * ⚠ IT RETURNS A BOOLEAN AND NEVER THROWS. The caller logs; nothing upstream
+ * branches on it, because "the old file could not be removed" is not a reason
+ * to refuse somebody their new résumé.
+ */
+export async function deleteResumeFile(objectPath: string): Promise<boolean> {
+  if (!objectPath.trim()) return true;
+  try {
+    const { error } = await getStorageClient()
+      .from(RESUME_BUCKET)
+      .remove([objectPath]);
+    if (error) {
+      console.error("[storage] résumé delete failed:", error);
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.error("[storage] résumé delete threw:", e);
+    return false;
+  }
+}
+
 /** Store a certificate file; returns its object PATH (the bucket is private). */
 /**
  * ⚠ THE FOLDER IS THE OWNER'S USER ID SINCE `P1-J3-E019` — a credential belongs

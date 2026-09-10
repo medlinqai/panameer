@@ -98,7 +98,45 @@ export function employerToProjectData(
        says about the work, and then the SAME label the display helper uses — not
        a second invented string. `Independent` comes from
        `NO_EMPLOYER_LABEL`, so there is still exactly one word for this state. */
-    name: e.name ?? e.role_title ?? NO_EMPLOYER_LABEL,
+    /*
+      ── ⚠⚠ THE WORK NAMES THE ROW, NOT THE COMPANY (`P1-A1.4-E413` WS-4) ──────
+
+      ⚠ SUPERSEDED, quoted not deleted:
+
+          name: e.name ?? e.role_title ?? NO_EMPLOYER_LABEL,
+
+      SCOTT, walking it: *"i changed what was a job and listed it under the
+      employer — this is GREAT, but the output is not correct."*
+
+      ⚠⚠ TWO DEFECTS IN ONE LINE, AND THEY ARE INDEPENDENT.
+
+      ⚠ ONE — THE PRECEDENCE. Converting *"Founder & Principal Consultant @
+      Panameer"* into a project under Panameer produced a project called
+      **"Panameer"**, whose `client_name` is ALSO "Panameer" (`E043` suggests the
+      target's name and the person confirms it). ⚠ THE ROW STATED THE COMPANY
+      TWICE AND THE WORK NOT ONCE. `role_title` — the only field that says what
+      was actually done — was carried across and then rendered nowhere.
+      ⚠ SO THE ROLE TITLE LEADS. A project's identity in a list is the work;
+      the company it was for is what `client_name` is. Falling back to the
+      company name keeps a bare parser-created row nameable, which is the case
+      `check:reclassify`'s `BARE` fixture pins.
+
+      ⚠ TWO — THE OPERATOR. `??` falls through on null and undefined ONLY, and
+      the parser writes **`""`** on a line that names no company. ⚠⚠
+      `employerDisplayName` treats `""` as NO NAME; this function treated `""` as
+      A NAME — two functions disagreeing about the same value, with the
+      round-trip running through both. ⚠ MEASURED ON SCOTT'S OWN DATA: an
+      employer row carrying `role_title: ""` renders its name twice (WS-3), so
+      the empty string is a live value here, not a hypothetical.
+      ⚠ `clean()` IS WHAT EVERY OTHER FIELD IN THIS MAP ALREADY USES, and it
+      collapses `""` to null — so the two functions now agree by construction
+      rather than by coincidence.
+
+      ⚠ THE INVERSE IS UNAFFECTED. `projectToEmployerData` takes the employer
+      name as an ARGUMENT (the client remembers it for Undo), so nothing here
+      feeds it — `check:reclassify` §2's round trip holds unchanged.
+    */
+    name: clean(e.role_title, 200) ?? clean(e.name, 200) ?? NO_EMPLOYER_LABEL,
     description: e.description,
     role_title: e.role_title,
     location: place,

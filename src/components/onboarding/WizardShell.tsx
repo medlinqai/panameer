@@ -56,6 +56,8 @@ export function WizardShell({
   canBack = true,
   secondaryLabel,
   onSecondary,
+  leaveLabel,
+  onLeave,
   hideFooter = false,
   banner,
   aside,
@@ -106,6 +108,38 @@ export function WizardShell({
   canBack?: boolean;
   secondaryLabel?: string;
   onSecondary?: () => void;
+  /*
+    ── ⚠⚠ TWO EXITS, ONE SLOT (`P1-A1.4-E413` WS-6) ──────────────────────────
+
+    SCOTT, 2026-09-10, asked directly and answered directly: *"'Finish Later' —
+    do it."* `E406` WS-2 stopped on this; the stop is released.
+
+    ⚠⚠ BUT THE REASON IT STOPPED IS A REAL CONSTRAINT AND IT IS WRITTEN DOWN:
+    *"`WizardShell` has ONE secondary slot and the counted provider steps
+    already spend it on 'Skip for Now'; putting 'Finish later' on them would
+    take that away."* ⚠ THEY ARE DIFFERENT VERBS AND BOTH ARE NEEDED —
+    **Skip for Now** moves past *this question*, **Finish later** leaves *the
+    whole wizard*. Replacing one with the other is not a fix, it is a swap.
+
+    ⚠ SO THE CENTRE SLOT RENDERS BOTH, rather than a fourth column being added.
+    ⚠⚠ THE THREE-COLUMN GEOMETRY IS LOAD-BEARING and this shell says why a few
+    lines down: each slot is `flex-1` so the centre is *"a real centre of the
+    band and stays centred when a slot is empty"*. A fourth column moves that
+    centre on every wizard in the product, including the two that are not asking
+    for anything.
+
+    ⚠ NAMED FOR WHAT IT DOES, NOT ITS RANK. `tertiary` would say where it sits;
+    `leave` says what it is — the exit from the wizard, as against the secondary,
+    which is the exit from the question.
+
+    ⚠⚠ AND IT IS INERT FOR EVERY EXISTING CALLER. Omit it and this renders
+    exactly what it rendered before: the divider is conditional on BOTH being
+    present, and the `gap` added to the row has no effect on a single child. The
+    requester wizard passes `secondaryLabel="Finish later"` and nothing else, so
+    its footer is unchanged — asserted as an absence in `check:project-parent`.
+  */
+  leaveLabel?: string;
+  onLeave?: () => void;
   hideFooter?: boolean;
   /** Optional slot rendered between the title block and step content. */
   banner?: ReactNode;
@@ -194,7 +228,7 @@ export function WizardShell({
         )}
       </div>
 
-      <div className="flex flex-1 items-center justify-center">
+      <div className="flex flex-1 items-center justify-center gap-4">
         {secondaryLabel && onSecondary && (
           <button
             onClick={onSecondary}
@@ -202,6 +236,23 @@ export function WizardShell({
             className="text-[15px] font-semibold text-ink-2 underline underline-offset-4 transition-colors hover:text-magenta disabled:opacity-50"
           >
             {secondaryLabel}
+          </button>
+        )}
+        {/* ⚠ THE DIVIDER EXISTS ONLY WHEN BOTH DO — one verb must not gain a
+            stray separator, which is what would leak this change onto the
+            requester's footer. `aria-hidden`: it is punctuation, not content. */}
+        {secondaryLabel && onSecondary && leaveLabel && onLeave && (
+          <span aria-hidden className="text-[15px] text-ink-2/40">
+            ·
+          </span>
+        )}
+        {leaveLabel && onLeave && (
+          <button
+            onClick={onLeave}
+            disabled={busy}
+            className="text-[15px] font-semibold text-ink-2 underline underline-offset-4 transition-colors hover:text-magenta disabled:opacity-50"
+          >
+            {leaveLabel}
           </button>
         )}
       </div>

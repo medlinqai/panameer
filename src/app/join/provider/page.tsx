@@ -1812,6 +1812,38 @@ setScreen(target);
         ? goBack
         : () => setScreen("work_method"),
     canBack: true,
+    /*
+      ── ⚠⚠ "FINISH LATER" ON EVERY COUNTED STEP (`P1-A1.4-E413` WS-6) ─────────
+
+      SCOTT, 2026-09-10: *"'Finish Later' — do it."* ⚠ `E406` WS-2 stopped here
+      and the stop is released.
+
+      ⚠ SUPERSEDED, quoted not deleted — the note at the `work_method` screen
+      that scoped it to that one screen:
+
+          ⚠ SCOPED TO THIS SCREEN. `WizardShell` has ONE secondary slot and the
+          counted provider steps already spend it on "Skip for Now"; putting
+          "Finish later" on them would take that away.
+
+      ⚠⚠ IT NO LONGER TAKES ANYTHING AWAY. `WizardShell` now renders the
+      secondary and the leave verb in the SAME centre slot, so "Skip for Now"
+      keeps its place on the three steps that use it and every counted step
+      gains the exit. ⚠ Neither verb replaced the other — that was the whole
+      constraint, and it is why this is a shell change and not a label change.
+
+      ⚠ IT GOES IN `shell()` RATHER THAN ON EACH STEP so a step added later
+      cannot forget it — the failure mode `E406` fixed for the step counter.
+      ⚠ `...props` STILL WINS, so a screen that needs a different exit can say so.
+
+      ⚠⚠ IT NAVIGATES AND NOTHING ELSE, AND THAT IS THE HONEST HALF. The
+      requester's "Finish later" also posts
+      `/api/onboarding/requester/finish-later`; there is no provider equivalent
+      and this brief does not build one. Shipping the button on seven more
+      screens does not make the missing mail worse — it does make it worth
+      answering, and it is reported rather than invented.
+    */
+    leaveLabel: "Finish later",
+    onLeave: () => router.push("/dashboard"),
     ...props,
   });
 

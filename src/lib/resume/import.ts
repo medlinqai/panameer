@@ -4,7 +4,7 @@ import { extractText, ExtractError } from "@/lib/resume/extract";
 import { parseResume, type ParsedResume } from "@/lib/resume/parse";
 import { recomputeCompleteness } from "@/lib/onboarding";
 import { recomputeProviderRollup } from "@/lib/provider-rollup";
-import { uploadResumeFile } from "@/lib/storage";
+import { uploadResumeFile, deleteResumeFile } from "@/lib/storage";
 import { buildVocabulary, extractJobSkills } from "./job-skills";
 import { matchSkills, suggestableSkills } from "@/lib/resume/match";
 import { assessParse } from "@/lib/resume/confidence";
@@ -102,6 +102,61 @@ export type ImportResult = {
   path?: ImportPath;
   error?: string;
 };
+
+/**
+ * Destroy every EARLIER résumé this profile holds — both copies.
+ *
+ * ⚠⚠ TWO COPIES, AND SCOTT'S RULE HAS TO REACH BOTH. `raw_text` is the
+ * extracted text; `storage_path` is the ORIGINAL FILE in the private `resumes`
+ * bucket. ⚠ Nulling the column and leaving the object is the appearance of
+ * deletion, which is worse than none.
+ *
+ * ⚠ WHAT SURVIVES AND WHY is `SUPERSEDED_RESUME_PAYLOAD` in `lib/retention.ts`
+ * — the row, its cost and audit columns, and `parsed`/`gaps`, which are derived
+ * structure the review screen still reads rather than the document itself.
+ *
+ * ⚠ SCOPED BY `provider_profile_id` AND EXCLUDING THE ROW JUST WRITTEN. The
+ * `id: { not: keepId }` is what stops a purge eating the import that triggered
+ * it; the profile scope is what stops it reaching anybody else's.
+ */
+export async function purgeSupersededResumes(
+  profileId: string,
+  keepId: string
+): Promise<{ rows: number; objects: number; objectsFailed: number }> {
+  const stale = await prisma.profileImport.findMany({
+    where: {
+      provider_profile_id: profileId,
+      id: { not: keepId },
+      OR: [{ raw_text: { not: null } }, { storage_path: { not: null } }],
+    },
+    select: { id: true, storage_path: true },
+  });
+  if (stale.length === 0) return { rows: 0, objects: 0, objectsFailed: 0 };
+
+  let objects = 0;
+  let objectsFailed = 0;
+  for (const row of stale) {
+    if (!row.storage_path) continue;
+    /* ⚠ THE BUCKET FIRST, THE COLUMN SECOND. If the process dies between them
+       the row still points at the (now absent) object, and the next purge is a
+       no-op that reports the object gone — recoverable. The other order strands
+       a file nothing references, which nothing will ever clean up. */
+    if (await deleteResumeFile(row.storage_path)) objects += 1;
+    else objectsFailed += 1;
+  }
+
+  const { count } = await prisma.profileImport.updateMany({
+    where: { id: { in: stale.map((r) => r.id) } },
+    data: { raw_text: null, storage_path: null },
+  });
+
+  console.info(
+    `[resume] superseded ${count} earlier import${count === 1 ? "" : "s"}: ` +
+      `raw_text nulled, ${objects} bucket object${objects === 1 ? "" : "s"} removed` +
+      (objectsFailed ? `, ⚠ ${objectsFailed} could not be removed` : "")
+  );
+  return { rows: count, objects, objectsFailed };
+}
 
 export async function importProfileDocument({
   profileId,
@@ -245,6 +300,31 @@ export async function importProfileDocument({
       ai_input_chars: read.usage?.inputChars ?? null,
     },
   });
+
+  /*
+    ── ⚠⚠ THE NEW RÉSUMÉ SUPERSEDES THE OLD (`P1-A1.4-E413` WS-7) ─────────────
+
+    SCOTT, 2026-09-10: *"keep for the life of the account OR if a new resume is
+    uploaded."* ⚠ `E404`'s stop is released and this is the second half of his
+    sentence; the first half — life of the account — is already enforced by
+    `ProfileImport`'s cascade from `ProviderProfile` and needed no code.
+
+    ⚠⚠ ITS POSITION IN THIS FUNCTION IS THE CORRECTNESS ARGUMENT, NOT A STYLE
+    CHOICE. Everything that can fail has already happened: the text extracted,
+    the model answered, the new file reached the bucket, and the new row exists
+    with `status: "PARSED"`. ⚠ ONLY THEN is the previous document destroyed.
+    ⚠ THE FAILURE PATHS RETURN BEFORE THIS LINE — the `ExtractError` branch
+    creates a `FAILED` row and returns at the top of the function, so a résumé
+    the reader cannot open purges nothing at all. ⚠ MEASURED REASON: `E410`
+    WS-3 puts a `shape` failure on 2 of 5 runs over one document, and a retry
+    reproduces it as often as it clears it. A delete-then-parse order would cost
+    somebody their only copy on a coin flip.
+
+    ⚠ IT NEVER THROWS. A cleanup that fails must not fail the import that
+    triggered it — the person has their new résumé either way, and a stranded
+    object is a smaller problem than a refused upload.
+  */
+  await purgeSupersededResumes(profileId, row.id);
 
   await recomputeCompleteness(profileId);
   /*

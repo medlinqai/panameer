@@ -328,7 +328,30 @@ const SWITCH = WIZ.slice(WIZ.indexOf("switch (screen) {"));
   );
   check("7 — `+ Add Company` still sits at list level", /\+ Add Company/.test(STEP));
   check("7 — the placement surface still exists", /Projects not yet under a job/.test(STEP));
-  check("7 — and `unplaced` still feeds it", /const unplaced = projects\.filter/.test(STEP));
+  /*
+    ⚠ SUPERSEDED, quoted not deleted (`P1-A1.4-E413` WS-1):
+
+        /const unplaced = projects\.filter/
+
+    ⚠⚠ THE LINE MOVED, THE PROPERTY DID NOT. `E413` gave a placed project a way
+    back OUT, and a row detached in the same session is in neither the wizard's
+    `projects` prop nor the employers endpoint's nested list — so it would have
+    vanished. `unplaced` is now derived from `knownProjects`, which merges the
+    prop with the rows this session detached. ⚠ WHAT THIS ASSERTION PROTECTS —
+    that the placement surface is still fed from the FLAT list rather than from
+    the nested one — is unchanged and asserted below in its new shape.
+  */
+  check(
+    "7 — `unplaced` is still derived from the flat list, not the nested one",
+    /const unplaced = \[\.\.\.knownProjects\.values\(\)\]\.filter\(\(p\) => !nested\.has\(p\.id\)\)/.test(
+      STEP
+    ),
+    "E413 WS-1 — plus any row detached in this session"
+  );
+  check(
+    "7 — ⚠ and the flat `projects` prop still feeds it",
+    /for \(const p of projects\) knownProjects\.set\(p\.id, p\);/.test(STEP)
+  );
   /* ⚠⚠ ABSENCE: NO THIRD ROUTE. `E412` says a list-level `+ Add Project` has
      to answer "which employer?" and that the choice must be REPORTED, not made
      silently — so this brief adds none. */
