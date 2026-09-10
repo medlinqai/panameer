@@ -28,6 +28,7 @@
     "admin:reset-password": "ts-node --project tsconfig.seed.json prisma/reset-admin-password.ts",
     "learn:thumbnails": "ts-node --project tsconfig.seed.json prisma/apply-learn-thumbnails.ts",
     "check:gate": "npx esbuild scripts/check-onboarding-gate.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/gate.cjs --log-level=error && node .harness/gate.cjs",
+    "check:section-routing": "npx esbuild scripts/check-section-routing.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/section-routing.cjs --log-level=error && node .harness/section-routing.cjs",
     "check:section-endpoint": "npx esbuild scripts/check-section-endpoint.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/section-endpoint.cjs --log-level=error && node .harness/section-endpoint.cjs",
     "check:sections": "npx esbuild src/lib/section-schemas.test.ts --bundle --platform=node --format=cjs --packages=external --outfile=.harness/sections.cjs --log-level=error && node .harness/sections.cjs",
     "check:ai-extract": "npx esbuild src/lib/resume/ai-extract.test.ts --bundle --platform=node --format=cjs --packages=external --outfile=.harness/ai.cjs --log-level=error && node .harness/ai.cjs",
