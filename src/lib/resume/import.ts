@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { extractText, ExtractError } from "@/lib/resume/extract";
 import { parseResume, type ParsedResume } from "@/lib/resume/parse";
 import { recomputeCompleteness } from "@/lib/onboarding";
-import { recomputeProviderRollup } from "@/lib/provider-rollup";
+import { recomputeProviderRollup, SELF_ADDED_WEIGHT } from "@/lib/provider-rollup";
 import { uploadResumeFile, deleteResumeFile } from "@/lib/storage";
 import { buildVocabulary, extractJobSkills } from "./job-skills";
 import { matchSkills, suggestableSkills } from "@/lib/resume/match";
@@ -870,10 +870,60 @@ export async function applyParsedResume(
     const have = new Set(profile.skills.map((s) => s.skill_id));
     const toAdd = matched.filter((m) => !have.has(m.id));
     if (toAdd.length > 0) {
+      /*
+        ── ⚠⚠ SELF_ADDED, OR THE NEXT LINE DELETES THEM (`P1-A1.4-E416` WS-2) ──
+
+        ⚠ SUPERSEDED, quoted not deleted — these rows carried NO `source`:
+
+            data: toAdd.map((m) => ({
+              provider_profile_id: profileId,
+              skill_id: m.id,
+            })),
+
+        ⚠⚠ `ProviderSkill.source` DEFAULTS TO `DERIVED`, and
+        `importProfileDocument` calls `recomputeProviderRollup` a few lines
+        after this one — which deletes **every** `DERIVED` row and rebuilds only
+        the ones a job with a `software_suite` can account for. ⚠ SO THE IMPORT
+        WROTE THE PROVIDER'S SKILLS AND DESTROYED THEM IN THE SAME REQUEST.
+
+        ⚠ MEASURED BEFORE THE FIX (`E416` WS-1): `test22@panameer.com` had FIVE
+        parsed imports reporting 40, 41, 58, 77 and 90 skills and **zero**
+        `provider_skills` rows. Proven live by writing one row in exactly the
+        old shape and calling exactly what the import calls next — 1 row in, 0
+        rows out. ⚠ Four profiles in the database were in that state.
+
+        ⚠⚠ AND IT BLOCKED THE WALK. Step 4/8 renders chips from these rows, so a
+        provider whose résumé supplied skills arrived with none and could not
+        pass the at-least-one rule. SCOTT: *"it says it got skills, so i don't
+        have any to add. BUT yes, it should show the ones i added."*
+
+        ── ⚠ WHY `SELF_ADDED` AND NOT A ROLLUP CHANGE ──────────────────────────
+
+        ⚠ SCOTT'S DECISION, 2026-09-11: write them `SELF_ADDED`, and **do not
+        touch the rollup — its deletion is correct and the escape hatch depends
+        on it.** `DERIVED` means "a job proves this"; nothing here is proved by
+        a job, so `DERIVED` was never the honest value. A résumé is a CLAIM THE
+        PROVIDER MADE, which is precisely what `SELF_ADDED` means — and it is
+        the same pair the skills STEP already writes (`onboarding.ts:1759`).
+
+        ⚠ `SELF_ADDED_WEIGHT` TRAVELS WITH IT, for the reason that constant's
+        own comment gives: left at the `0` default these rows are hidden by
+        `getOnboardingState`'s rollup filter (`weight > 0 || source ===
+        "SELF_ADDED"`) and misreport depth. One constant, already tuned, in one
+        place.
+
+        ⚠⚠ THE ROLLUP STILL OUTRANKS THEM, AND THAT IS KEPT ON PURPOSE. Its
+        delete also clears `SELF_ADDED` rows whose skill a job later derives —
+        *"a skill that gains a job stops being self-added because the job is now
+        the better evidence."* An imported skill that turns out to be backed by
+        real work is upgraded to `DERIVED`, not duplicated.
+      */
       await prisma.providerSkill.createMany({
         data: toAdd.map((m) => ({
           provider_profile_id: profileId,
           skill_id: m.id,
+          source: "SELF_ADDED" as const,
+          weight: SELF_ADDED_WEIGHT,
         })),
         skipDuplicates: true,
       });
