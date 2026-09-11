@@ -165,6 +165,87 @@ async function runPass<T>(
     schemaName: `resume_${name}`,
     text,
     maxOutputTokens,
+    /*
+      ── ⚠⚠ CONSTRAINED DECODING FOR THE SIX PASSES (`P1-A1.4-E414` WS-1) ─────
+
+      ⚠ ONE SITE, SIX SCHEMAS. `runPass` is the only funnel every multi-pass
+      schema goes through — `resume_inventory`, `resume_employers`,
+      `resume_projects`, `resume_certifications`, `resume_skills` and
+      `resume_profile` — so opting in here opts in exactly those and cannot
+      reach anything else. ⚠ `record_resume` calls `callExtractionModel`
+      DIRECTLY from `ai-extract.ts` and the job importer from
+      `work-request/job-import.ts`; neither passes the flag, so both keep the
+      default of `false`. That is structural, not a convention.
+
+      ⚠ WHY IT WAS SAFE HERE AND NOWHERE ELSE. `sub()` below builds every one of
+      these schemas with `additionalProperties: false` and every property named
+      in `required`, with optionality as `type: ["string","null"]` — which is
+      exactly strict mode's contract. `record_resume` does not: `E413`'s audit
+      counted ten blockers on it. ⚠ `check:strict-schema` §3 re-derives this
+      from the REQUEST BODIES rather than trusting the claim, so a field added
+      to one of these schemas without a `required` entry fails a gate instead of
+      a live call.
+
+      ── ⚠ MEASURED, BOTH SIDES, SAME DOCUMENTS (`E414` WS-3) ──────────────
+
+      60 pass calls each side — 5 rounds x 6 passes x 2 documents:
+
+          shape failures   13/60 (21.7%)  ->  0/60 (0.0%)
+            projects 6->0 · certifications 4->0 · inventory 2->0 · employers 1->0
+          finishReason     `stop` on all 60, BOTH sides
+
+      ⚠⚠ `stop` ON EVERY CALL IS THE POINT. The model was always answering
+      completely and always within budget; it was simply free to answer in
+      another shape. Nothing about capacity or truncation changed here.
+
+      ⚠⚠ AND ONE RESULT CONTRADICTS THE EXPECTATION — output tokens rose
+      **+18.8%** (115,349 -> 137,007), concentrated in the two passes with the
+      most nullable fields:
+
+          employers  2590 -> 3738 mean output tokens  (+1148)
+          projects   2555 -> 3497                     (+942)
+          inventory / certifications / skills / profile   ~flat
+
+      ⚠ THAT IS INHERENT TO STRICT, NOT A REGRESSION: every property must appear
+      in `required`, so the model now emits `"client": null, "employer": null`
+      where it previously omitted them. ⚠ COSTED AT THE PUBLISHED `gpt-5-nano`
+      RATE, the output side of a full parse goes **$0.00461 -> $0.00548**, about
+      **+$0.0009 per parse.** ⚠ The brief expected zero difference; it is not
+      zero, it is small and explainable, and it is recorded here rather than
+      left to surprise somebody reading a bill.
+
+      ⚠ NO WARMUP WAS MEASURABLE. Structured outputs are documented to carry a
+      one-time schema-processing cost on first use. First-call deltas came back
+      MIXED IN SIGN on both sides and well inside the run-to-run spread (the
+      `projects` pass alone ranged 4,192–31,865ms), so at this sample size there
+      is no warmup signal above the noise. Reported as not-detected rather than
+      as absent.
+
+      ── ⚠⚠ WHAT THIS DOES **NOT** FIX (`E414` WS-5) ────────────────────────
+
+      ⚠⚠ STRICT CONSTRAINS SHAPE, NOT CONTENT. **29, 30 and 51 sections on the
+      same document were every one of them SCHEMA-VALID** (`E410` WS-2, measured
+      again by `E413`). Constrained decoding would not have prevented a single
+      one of those, and a green shape-failure rate must not be read as a fixed
+      parser.
+
+      ⚠⚠ AND `E414`'s OWN AFTER-RUN PROVES IT, WITH STRICT ON: the long CV
+      returned **30, 29, 52, 29, 31** sections across five rounds and the short
+      one **30, 50, 32, 32, 29**. Zero shape failures, and a 29-to-52 spread on
+      one unchanged document. ⚠ THE PARSER IS WELL-FORMED NOW; IT IS NOT
+      CORRECT.
+
+      ⚠ SEGMENTATION INSTABILITY REMAINS OPEN AND IS SCOTT'S DECISION. After
+      this brief it is the only parser defect left standing.
+
+      ⚠ AND THE LINK `E413` FOUND, RECORDED HERE BECAUSE THIS IS WHERE SOMEBODY
+      WILL COME LOOKING: the extra section in the high run is *"Oracle Cloud
+      Content & AI-Native Application Developer"* — the SAME row that sits in
+      the database as the duplicate-description employer (`E413` WS-3 candidate
+      B, whose `role_title` is the empty string). ⚠ They are one defect wearing
+      two names. Not fixed here.
+    */
+    strict: true,
   });
   if (!call.ok) return { ok: false, reason: call.reason, message: call.message };
   const value = parse(call.value);
@@ -533,7 +614,7 @@ export type MultiPassOutcome =
       /** ⚠ Per-pass wall time and cost, so the claim can be checked. */
       passes: { name: string; ok: boolean; ms: number; costUsd: number | null }[];
     }
-  | { ok: false; reason: "no_key" | "error"; message: string };
+  | { ok: false; reason: "no_key" | "error" | "refusal"; message: string };
 
 /**
  * ⚠ EVERY PASS IS INDEPENDENT AND PARTIAL SUCCESS IS THE NORMAL OUTCOME. Only a
@@ -598,7 +679,13 @@ export async function aiExtractResumeMultiPass(text: string): Promise<MultiPassO
   const inv = await inventoryPass(text);
   tally("inventory", inv);
   if (!inv.ok) {
-    return { ok: false, reason: inv.reason === "no_key" ? "no_key" : "error", message: inv.message };
+    /* ⚠ SUPERSEDED, quoted (`E414` WS-2): `inv.reason === "no_key" ? "no_key" : "error"`. */
+    return {
+      ok: false,
+      reason:
+        inv.reason === "no_key" || inv.reason === "refusal" ? inv.reason : "error",
+      message: inv.message,
+    };
   }
 
   /* ⚠ THE DETAIL PASSES RUN TOGETHER — they are independent, and running them in

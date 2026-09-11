@@ -101,7 +101,8 @@
     "measure:rate-search": "npx esbuild scripts/measure-rate-search.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/measure-rate-search.cjs --log-level=error && node -r dotenv/config .harness/measure-rate-search.cjs dotenv_config_path=.env.local",
     "measure:resume-recall": "npx esbuild scripts/measure-resume-recall.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/measure-resume-recall.cjs --log-level=error && node -r dotenv/config .harness/measure-resume-recall.cjs dotenv_config_path=.env.local",
     "check:review-screen": "npx esbuild scripts/check-review-screen.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/review-screen.cjs --log-level=error && node .harness/review-screen.cjs",
-    "check:project-parent": "npx esbuild scripts/check-project-parent.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/project-parent.cjs --log-level=error && node .harness/project-parent.cjs"
+    "check:project-parent": "npx esbuild scripts/check-project-parent.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/project-parent.cjs --log-level=error && node .harness/project-parent.cjs",
+    "check:strict-schema": "npx esbuild scripts/check-strict-schema.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/strict-schema.cjs --log-level=error && RESUME_PARSER_API_KEY=gate-stub-no-network RESUME_PARSER_MODEL=gpt-5-nano DATABASE_URL=postgres://gate/none NEXTAUTH_SECRET=gate-stub node .harness/strict-schema.cjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",

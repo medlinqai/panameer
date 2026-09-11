@@ -127,7 +127,17 @@ export type JobImportOutcome =
       ms: number;
       usage: ModelUsage;
     }
-  | { ok: false; reason: "no_key" | "truncated" | "error"; message: string };
+  /*
+    ⚠ `"refusal"` ARRIVES HERE ONLY BECAUSE THE TYPE IS SHARED (`P1-A1.4-E414`).
+    ⚠⚠ NOTHING ABOUT THE JOB IMPORTER CHANGED — `E414` is explicit that this path
+    is out of scope, and it still calls `callExtractionModel` WITHOUT `strict`,
+    so it keeps the default of `false`. What changed is the provider's return
+    union, which this function forwards verbatim (`if (!call.ok) return call;`).
+    ⚠ THE UNION IS WIDENED RATHER THAN THE VALUE FLATTENED: mapping a refusal to
+    `"error"` at this boundary would put back exactly the conflation WS-2 exists
+    to remove, one file over.
+  */
+  | { ok: false; reason: "no_key" | "truncated" | "error" | "refusal"; message: string };
 
 /**
  * Extract a Work Request from pasted text.

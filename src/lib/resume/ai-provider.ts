@@ -98,7 +98,14 @@ export type ModelCall =
       usage: ModelUsage;
       ms: number;
     }
-  | { ok: false; reason: "no_key" | "truncated" | "error"; message: string };
+  /*
+    ⚠ `"refusal"` IS ITS OWN REASON (`P1-A1.4-E414` WS-2). A refusal is a DECISION
+    the model made about the content it was handed; an error is a failure of the
+    machinery. Collapsing them means nobody can count how often the first
+    happens — and `import.ts` records this string on `ImportPath.reason`, so the
+    distinction survives into the row rather than living only in a log line.
+  */
+  | { ok: false; reason: "no_key" | "truncated" | "error" | "refusal"; message: string };
 
 /** Which provider will actually run, given what's configured. */
 export function resolveProvider(): {
@@ -227,6 +234,7 @@ export async function callExtractionModel({
   instruction = "Extract this résumé.",
   tag = "resume",
   toolDescription = "Record the structured contents of this résumé.",
+  strict = false,
 }: {
   system: string;
   schema: Record<string, unknown>;
@@ -236,6 +244,39 @@ export async function callExtractionModel({
   instruction?: string;
   tag?: string;
   toolDescription?: string;
+  /*
+    ── ⚠⚠ CONSTRAINED DECODING, OPTED INTO PER CALL SITE (`P1-A1.4-E414`) ────
+
+    ⚠⚠ THE DEFAULT IS `false` AND THAT IS THE WHOLE DESIGN, not caution.
+    `record_resume` — the legacy single-call schema in `ai-extract.ts` — shares
+    this function and is NOT strict-ready: `E413`'s audit counted **10
+    blockers**, five objects with no `additionalProperties: false` and five
+    `required` lists omitting ~22 already-nullable properties. Under
+    `strict: true` OpenAI REJECTS a non-conforming schema outright, so a
+    blanket flip would take that path from "sometimes the wrong shape" to
+    "always a 400". ⚠ OPT IN; NEVER OPT OUT.
+
+    ⚠ WHAT IT ACTUALLY CHANGES. With `strict: false` the JSON schema is
+    transmitted as part of the PROMPT — the model reads it and may answer in
+    another shape. With `strict: true` the vendor constrains the sampler: a
+    token that would depart from the schema cannot be emitted at all.
+    ⚠ `ai-extract.ts:66` said this in writing long before it was acted on —
+    *"the json_schema is a request, not a contract"* — and `:371` named
+    `strict: true` as *"the durable fix … flagged in the report."* ⚠ THIS IS
+    THAT FLAG COMING DUE.
+
+    ⚠ THE SCHEMA MUST EARN IT. Every object needs `additionalProperties:
+    false` and every property named in `required`, with optionality expressed
+    as `type: ["string","null"]`. The six multi-pass schemas already satisfy
+    this because `sub()` builds them that way; `check:strict-schema` §3
+    asserts it for every schema sent with this flag, so a field added next
+    month fails a gate rather than a live call.
+
+    ⚠⚠ AND IT CONSTRAINS SHAPE, NOT CONTENT — see the note at the six call
+    sites in `ai-passes.ts`. It does not make the parser correct; it makes the
+    answer well-formed.
+  */
+  strict?: boolean;
 }): Promise<ModelCall> {
   const cfg = resolveProvider();
   if (!cfg) {
@@ -368,11 +409,17 @@ export async function callExtractionModel({
           { role: "system", content: system },
           { role: "user", content: userContent },
         ],
+        /* ⚠ SUPERSEDED, quoted not deleted (`P1-A1.4-E414` WS-1) — this was a
+           hardcoded `strict: false`, which made the schema a suggestion on every
+           path in the product:
+
+               json_schema: { name: schemaName, strict: false, schema },
+        */
         response_format: {
           type: "json_schema",
           json_schema: {
             name: schemaName,
-            strict: false,
+            strict,
             schema,
           },
         },
@@ -433,6 +480,45 @@ export async function callExtractionModel({
           : "Your document is long enough that the reader ran out of room. Try again, or add your work history manually.",
       };
     }
+    /*
+      ── ⚠⚠ A REFUSAL IS NOT AN EMPTY RESPONSE (`P1-A1.4-E414` WS-2) ──────────
+
+      ⚠ SUPERSEDED, quoted not deleted — the whole branch that stood here:
+
+          const content = choice?.message?.content;
+          if (!content) {
+            return { ok: false, reason: "error", message: "The model returned no content." };
+          }
+
+      ⚠⚠ `refusal` APPEARED NOWHERE IN THIS FILE. Under structured outputs
+      OpenAI may answer with `message.refusal` set and `message.content` NULL —
+      so a refusal fell into the branch above and surfaced as *"The model
+      returned no content."*: indistinguishable from a timeout, a network fault
+      or an empty body, and a log line that sends the next reader hunting the
+      wrong thing.
+
+      ⚠⚠ WS-1 IS WHAT MAKES THIS REACHABLE. The refusal field is part of the
+      structured-outputs contract, so enabling `strict` is what creates the
+      exposure — which is why `E414` ships the two together and why this is not
+      a pre-existing bug that could be left for later.
+
+      ⚠ IT GETS ITS OWN `reason`, NOT `"error"`. A refusal is a DECISION by the
+      model about the content it was given; an error is a failure of the
+      machinery. Collapsing them means nobody can ever count how often the first
+      happens. ⚠ The message says who decided and that nothing was changed —
+      the person's next move is different in each case.
+    */
+    const refusal = (choice?.message as { refusal?: string } | undefined)?.refusal;
+    if (refusal) {
+      console.warn(`[resume] the model REFUSED: ${refusal.slice(0, 200)}`);
+      return {
+        ok: false,
+        reason: "refusal",
+        message:
+          "The reader declined to process this document. Nothing was changed — you can add your work history manually.",
+      };
+    }
+
     const content = choice?.message?.content;
     if (!content) {
       return { ok: false, reason: "error", message: "The model returned no content." };

@@ -63,14 +63,29 @@ const maybe = <T extends z.ZodTypeAny>(schema: T) =>
  * Scott's résumé came back with eight employers, two degrees and forty skills,
  * and the whole thing was thrown away over the shape of `skills[0]`.
  *
- * `strict: false` is what makes this possible — the json_schema is a request,
- * not a contract, and every OpenAI-compatible vendor honours it a little
- * differently. Given a choice between arguing shape with the model and reading
- * what it sent, read what it sent: an object with an obvious label field IS the
- * skill, and dropping the extraction over its wrapper serves nobody.
+ * ⚠ SUPERSEDED, quoted not deleted (`P1-A1.4-E414` WS-4):
  *
- * Anything genuinely unreadable is dropped from the list rather than failing the
- * parse, for the same reason.
+ *     `strict: false` is what makes this possible — the json_schema is a
+ *     request, not a contract, and every OpenAI-compatible vendor honours it a
+ *     little differently.
+ *
+ * ⚠⚠ THAT NOW DESCRIBES HALF THE WORLD, AND THIS READER IS KEPT FOR THE OTHER
+ * HALF. `E414` turned on constrained decoding for the SIX MULTI-PASS schemas
+ * (`ai-passes.ts` `runPass`), where `items: { type: "string" }` is now enforced
+ * by the sampler — a wrapped `{"name": "Payables"}` is literally unemittable
+ * there, and on that path this transform is belt-and-braces.
+ *
+ * ⚠ IT IS STILL LOAD-BEARING ON `record_resume`, the legacy single-call schema
+ * a few lines below, which `E414` deliberately did NOT make strict: it carries
+ * ten strict-mode blockers and fixing them is a separate job. On that path the
+ * json_schema is still only a request, and the behaviour this was written for
+ * is still live.
+ *
+ * ⚠ SO IT STAYS, AND THE REASONING STANDS UNCHANGED FOR THAT PATH: given a
+ * choice between arguing shape with the model and reading what it sent, read
+ * what it sent — an object with an obvious label field IS the skill, and
+ * dropping the extraction over its wrapper serves nobody. Anything genuinely
+ * unreadable is dropped from the list rather than failing the parse.
  */
 const looseStringArray = z
   .array(z.unknown())
@@ -310,7 +325,7 @@ export type AiExtractOutcome =
       /** Real token counts + $/parse when prices are configured (WS-A). */
       usage: ModelUsage;
     }
-  | { ok: false; reason: "no_key" | "error"; message: string };
+  | { ok: false; reason: "no_key" | "error" | "refusal"; message: string };
 
 /** Is the AI tier available at all? Drives whether WS3 offers the button. */
 export function aiExtractionAvailable(): boolean {
@@ -368,12 +383,25 @@ export async function aiExtractResume(text: string): Promise<AiExtractOutcome> {
     error, which repeating would not fix. One extra call at ~12s sits well
     inside the 55s deadline; a loop would not.
 
-    The durable fix is `strict: true`, which would make the vendor enforce the
-    shape instead of us hoping for it. That is a schema rewrite — strict mode
-    requires every property listed in `required` and additionalProperties false
-    throughout — on a schema shared with the Anthropic path and the job-posting
-    importer, and this prompt is documented as change-only-with-a-harness-run.
-    Out of scope for a bug fix; flagged in the report.
+    ⚠ SUPERSEDED, quoted not deleted (`P1-A1.4-E414` WS-4):
+
+        The durable fix is `strict: true`, which would make the vendor enforce
+        the shape instead of us hoping for it. … Out of scope for a bug fix;
+        flagged in the report.
+
+    ⚠⚠ THE FLAG CAME DUE, AND IT DID NOT COME DUE HERE. `E414` enabled
+    `strict: true` on the SIX MULTI-PASS schemas only. ⚠ THIS FUNCTION IS THE
+    ONE PATH IT COULD NOT COVER: `record_resume` carries ten strict-mode
+    blockers — five objects with no `additionalProperties: false` and five
+    `required` lists omitting ~22 already-nullable properties — and under strict
+    a non-conforming schema is REJECTED outright, so flipping it here would turn
+    "sometimes the wrong shape" into "always a 400".
+
+    ⚠ SO THIS RETRY STAYS, AND IT IS NOW THE ONLY THING PROTECTING THIS PATH.
+    Everything the old note said about the failure mode is still true here and
+    only here. ⚠ Fixing the ten blockers is the follow-on ("Option B"); it lands
+    on a prompt documented as change-only-with-a-harness-run and is reported
+    rather than started.
   */
   if (call.ok && declaredKeyCount(call.value) === 0) {
     console.warn("[resume] model returned no schema keys — retrying once");
@@ -383,7 +411,10 @@ export async function aiExtractResume(text: string): Promise<AiExtractOutcome> {
   if (!call.ok) {
     return {
       ok: false,
-      reason: call.reason === "no_key" ? "no_key" : "error",
+      /* ⚠ SUPERSEDED, quoted (`E414` WS-2): `call.reason === "no_key" ? "no_key" : "error"`
+         — which flattened a refusal into a generic error on its way out. */
+      reason:
+        call.reason === "no_key" || call.reason === "refusal" ? call.reason : "error",
       message: call.message,
     };
   }
