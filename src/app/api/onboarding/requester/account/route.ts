@@ -14,6 +14,16 @@ const schema = z.object({
   tosAccepted: z.literal(true, {
     message: "You must accept the Terms of Service to continue",
   }),
+  /*
+    ── ⚠ WHICH JOB REGISTERED (`P1-A1.2-E421`) ────────────────────────────────
+
+    ⚠ OPTIONAL AND DEFAULTED, so the requester path posts exactly the body it
+    always posted and behaves exactly as it always did. ⚠ A `USER_CLASS`/
+    `USER_JOB` enum does not exist yet (`brief_user_class_job_model`); until it
+    does, the JOB is carried the way `requester-onboarding.ts:107` already
+    describes — by WHICH PROFILE THE PERSON OWNS.
+  */
+  job: z.enum(["requester", "buyer"]).optional().default("requester"),
 });
 
 /**

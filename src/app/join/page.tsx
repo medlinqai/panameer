@@ -234,16 +234,41 @@ function JoinRouter() {
       case "requester":
         router.push(withCtx("/join/requester"));
         break;
-      /* Buyer (the one who SUPPORTS the buying) is still the stub — its own
-         journey, deliberately not in this brief.
+      /*
+        ── ⚠⚠ THE BUYER WALKS THE REQUESTER WIZARD (`P1-A1.2-E421`) ────────────
 
-         ⚠ LEFT EXACTLY AS IT WAS, INCLUDING NOT CARRYING THE CONTEXT.
-         `P1-J1.2-E005` is out of scope: a fully written `/join/buyer` sits
-         unreachable behind this line, and wiring it up would mint the orphan
-         `brief_company_binding_trap` just fixed, because it has no company step.
-         Reported, not touched. */
+        ⚠ SUPERSEDED, quoted not deleted:
+
+            /* Buyer (the one who SUPPORTS the buying) is still the stub — its own
+               journey, deliberately not in this brief.
+               ⚠ LEFT EXACTLY AS IT WAS, INCLUDING NOT CARRYING THE CONTEXT.
+               `P1-J1.2-E005` is out of scope: a fully written `/join/buyer` sits
+               unreachable behind this line, and wiring it up would mint the orphan
+               `brief_company_binding_trap` just fixed, because it has no company
+               step. Reported, not touched. *\/
+            router.push("/join/coming-soon?job=buyer");
+
+        SCOTT, 2026-09-11: *"Lets use the same pathway pages as we used on
+        requester for the buyer here. We get the same information just a
+        different type of user."* And: *"i want them to both collect the same
+        data. this cant be hard."*
+
+        ⚠⚠ AND THE OLD COMMENT'S OBJECTION IS ANSWERED RATHER THAN IGNORED. It
+        declined to wire up `/join/buyer` because that flow *"has no company
+        step"* and would strand people unbound — measured, and true: two real
+        accounts sit with a `BuyerProfile` and no `CompanyMembership`. ⚠ THIS
+        LINE DOES NOT GO THERE. It enters the REQUESTER wizard, which has the
+        company step, so the trap it warned about is not re-created — it is
+        routed around.
+
+        ⚠ ONE WIZARD, NO FORK. `?job=buyer` is the ONLY difference between this
+        push and the `requester` case below it; every screen, step and question
+        after it is the same code. ⚠ `withCtx` IS CARRIED NOW — the superseded
+        line deliberately dropped `blocked`/`from`, so a buyer sent here by the
+        transact gate lost the reason they came.
+      */
       case "buyer-admin":
-        router.push("/join/coming-soon?job=buyer");
+        router.push(withCtx("/join/requester?job=buyer"));
         break;
     }
   };

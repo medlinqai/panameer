@@ -44,6 +44,12 @@ export type CreateRequesterAccountInput = {
   country?: string;
   marketingOptIn?: boolean;
   tosAccepted: boolean;
+  /*
+    ⚠ WHICH JOB REGISTERED (`P1-A1.2-E421`). Optional and defaulting to
+    `"requester"`, so every existing caller and the whole requester journey are
+    byte-for-byte unchanged — the buyer path is the only one that sets it.
+  */
+  job?: "requester" | "buyer";
 };
 
 /**
@@ -116,6 +122,43 @@ export async function createRequesterAccount(
       },
     });
     await tx.requesterProfile.create({ data: { person_id: person.id } });
+
+    /*
+      ── ⚠⚠ USER_JOB = BUYER, IN THE MODEL THAT EXISTS TODAY (`P1-A1.2-E421`) ──
+
+      SCOTT: *"i want them to both collect the same data. this cant be hard."*
+      ⚠ IT IS NOT: a buyer now walks THIS wizard, answers THESE questions and
+      lands in the same tables. The only thing that differs is this row.
+
+      ⚠⚠ AND IT IS THE SAME MECHANISM THE COMMENT ABOVE ALREADY DESCRIBES —
+      *"the JOB is carried by owning a RequesterProfile"*. A `BuyerProfile` is
+      the other half of that sentence, and it is a MARKER, not a form:
+      `person_id`, `subscription_tier` and two timestamps. There is nothing in
+      it to ask anybody, which is exactly why the two journeys can collect
+      identical data.
+
+      ⚠ NO SCHEMA CHANGE AND NO NEW COLUMN. `E421` forbids inventing one, and
+      none is needed: both tables exist and `createBuyerAccount` already writes
+      this row on the retired path.
+
+      ⚠⚠ THE `RequesterProfile` IS STILL WRITTEN, AND THAT IS DELIBERATE, NOT
+      LEFTOVER. It is what `onboarding_step` and `completed_at` live on, so it
+      is what makes the wizard resumable — and `/api/me` derives `isRequester`
+      from it (`lib/me.ts:106`), which is what routes a half-finished
+      registration back into this wizard at `join/page.tsx:198`. Dropping it
+      would break resume for the very people this brief is unblocking.
+
+      ⚠ SO A BUYER OWNS BOTH ROWS, AND THAT IS READABLE: `RequesterProfile` =
+      "walked this wizard", `BuyerProfile` = "registered as a buyer". ⚠ WHEN THE
+      `USER_JOB` ENUM LANDS this is the one place that changes — the same
+      sentence the comment above already commits to.
+
+      ⚠ `subscription_tier` DEFAULTS TO `BASIC` AND NOBODY IS ASKED (`E421`
+      WS-2): tier is an upsell, not registration, and no payment is collected.
+    */
+    if (input.job === "buyer") {
+      await tx.buyerProfile.create({ data: { person_id: person.id } });
+    }
 
     // Sign-up country seeds the requester's address, so step 2 pre-fills the
     // one field they have already answered.

@@ -41,6 +41,22 @@ export default function JoinRequesterPage() {
     blocked: null,
     from: null,
   });
+  /*
+    ── ⚠⚠ THE ONLY THING THAT DIFFERS BETWEEN THE TWO (`P1-A1.2-E421`) ────────
+
+    SCOTT: *"We get the same information just a different type of user."*
+
+    ⚠ `?job=buyer` FROM `/join`, AND NOTHING ELSE. Every screen, field, step and
+    string below is the same code for both — this value is not read by any of
+    them. It travels to `createRequesterAccount` and stops there.
+
+    ⚠ READ THE SAME WAY `blocked`/`from` ARE READ (`readBlockedParams`), off
+    `window.location` in an effect, rather than with `useSearchParams` — that
+    hook forces a Suspense boundary on this page and the file does not have one.
+    ⚠ ANYTHING BUT `"buyer"` IS A REQUESTER, so a typo, a stale bookmark or a
+    hand-edited URL degrades to the existing journey rather than to an error.
+  */
+  const [job, setJob] = useState<"buyer" | "requester">("requester");
   const [email, setEmail] = useState("");
   const [devLink, setDevLink] = useState<string | null>(null);
 
@@ -60,6 +76,11 @@ export default function JoinRequesterPage() {
   useEffect(() => {
     (async () => {
       setBlockedParams(readBlockedParams());
+      setJob(
+        new URLSearchParams(window.location.search).get("job") === "buyer"
+          ? "buyer"
+          : "requester"
+      );
       const r = await fetch("/api/onboarding/requester/status");
       if (r.status === 401) {
         setScreen("signup");
@@ -93,6 +114,9 @@ export default function JoinRequesterPage() {
           country: acct.country,
           marketingOptIn: acct.marketingOptIn,
           tosAccepted: acct.tosAccepted,
+          /* ⚠ `E421` — the one field that differs. Omitted for a requester by
+             the default above, so that path posts exactly what it always did. */
+          job,
         }),
       });
       const body = await r.json().catch(() => ({}));
