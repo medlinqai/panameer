@@ -196,9 +196,20 @@ async function main() {
       "4 — ⚠ ai-extract forwards it instead of flattening",
       /call\.reason === "no_key" \|\| call\.reason === "refusal" \? call\.reason : "error"/.test(EXTRACT)
     );
+    /*
+      ⚠ SUPERSEDED, quoted not deleted (`P1-A1.4-E415`):
+
+          /inv\.reason === "no_key" \|\| inv\.reason === "refusal" \? inv\.reason : "error"/
+
+      ⚠ `E415` ADDED A THIRD REASON THAT MUST SURVIVE THE SAME BOUNDARY —
+      `"deadline"`, meaning the route ran out of room — so the expression this
+      pinned is now a three-way. ⚠ WHAT THE ASSERTION PROTECTS IS UNCHANGED:
+      a refusal must not be flattened into a generic error on its way out.
+    */
     check(
       "4 — ⚠ the multi-pass path forwards it too",
-      /inv\.reason === "no_key" \|\| inv\.reason === "refusal" \? inv\.reason : "error"/.test(PASSES)
+      /inv\.reason === "refusal"/.test(PASSES) && /\? inv\.reason\s*\n?\s*: "error"/.test(PASSES),
+      "a refusal must still reach ImportPath.reason unflattened"
     );
   }
 

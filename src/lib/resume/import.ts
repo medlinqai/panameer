@@ -1,3 +1,4 @@
+import { readTimeRemaining, READ_BUDGET_MS } from "@/lib/resume/budget";
 import { splitCertificationName } from "@/lib/resume/certification-names";
 import { prisma } from "@/lib/prisma";
 import { extractText, ExtractError } from "@/lib/resume/extract";
@@ -164,12 +165,23 @@ export async function importProfileDocument({
   fileName,
   mimeType,
   bytes,
+  startedAt = null,
 }: {
   profileId: string;
   source: "RESUME";
   fileName: string;
   mimeType: string;
   bytes: Buffer;
+  /*
+    ── ⚠⚠ WHEN THE REQUEST BEGAN (`P1-A1.4-E415` WS-2) ───────────────────────
+
+    ⚠ THE ROUTE PASSES `Date.now()` FROM ITS FIRST LINE, so every model call
+    below can ask how much of the route's 60 seconds is actually left rather
+    than assuming it has them all. ⚠ DEFAULTS TO `null` — `dev:reset-resume`,
+    the re-read endpoint and the measurement harnesses have no route around
+    them and correctly keep the per-call ceiling as their only limit.
+  */
+  startedAt?: number | null;
 }): Promise<ImportResult> {
   // 1. Text out of the document.
   let text: string;
@@ -200,7 +212,7 @@ export async function importProfileDocument({
   }
 
   // 2. Text → structure. The model reads it when one is configured (E184).
-  const read = await readDocument(text);
+  const read = await readDocument(text, startedAt);
   const parsed = read.parsed;
 
   // 3. Structure → profile, non-destructively.
@@ -220,6 +232,36 @@ export async function importProfileDocument({
     their data, while the import still lands. A hard stop mid-signup loses them.
   */
   if (read.recall) gaps.push(...read.recall.warnings);
+  /*
+    ── ⚠⚠ THE FAILURE HAS TO SAY SOMETHING (`P1-A1.4-E415` WS-3) ─────────────
+
+    SCOTT, 2026-09-11: *"it stopped and told me it did not work."* ⚠ HE LEARNED
+    NOTHING — not whether his file was too big, not whether the reader had
+    broken, not whether anything had been saved.
+
+    ⚠⚠ AND THE GOOD MESSAGE ALREADY EXISTED WHERE HE COULD NEVER SEE IT.
+    `ai-provider.ts` has said *"The reader took longer than Ns and was stopped.
+    Nothing was changed"* since `E184` — but on Vercel a function that overruns
+    `maxDuration` is KILLED BY THE PLATFORM, and code that has been killed
+    cannot return a message. ⚠ The only way the app can speak is to finish
+    FIRST, which is what `budget.ts` now guarantees.
+
+    ⚠ SO WHEN THE CLOCK IS WHAT STOPPED THE READ, THE PERSON IS TOLD. It lands
+    in `gaps`, which the review screen already renders beside their data — the
+    import still completes on the heuristic parse, so this is an explanation
+    standing next to a result, not an error page instead of one.
+
+    ⚠ `NOTHING WAS CHANGED` IS NOT SAID HERE, BECAUSE IT WOULD BE FALSE: the
+    heuristic parse DID land. The honest sentence is that the fast reader ran
+    and the careful one did not.
+  */
+  if (read.path.reader === "heuristic" && read.path.reason === "deadline") {
+    gaps.push(
+      "Your document took longer to read than we allow for one upload, so we used our " +
+        "faster reader and it will have found less. Everything below was still saved — " +
+        "try uploading again, or fill in anything missing by hand.",
+    );
+  }
   /*
     WS-B — the unmatched count is NOT a gap any more, because we can now do
     something about it. "34 skills aren't in the Panameer catalog and were not
@@ -391,7 +433,11 @@ function describePath(p: ImportPath): string {
  * "1 role / Employer not detected" is exactly that failure — so entry count is
  * not a quality measure and is deliberately not used as one.
  */
-async function readDocument(text: string): Promise<{
+async function readDocument(
+  text: string,
+  /* ⚠ The containing request's clock (`P1-A1.4-E415`). Null off-route. */
+  startedAt: number | null
+): Promise<{
   parsed: ParsedResume;
   path: ImportPath;
   /** ⚠ `P1-A1.4-E399` WS-3 — what the inventory promised vs what arrived. */
@@ -438,7 +484,19 @@ async function readDocument(text: string): Promise<{
     measurement `check:resume-recall` reports, and deleting it would remove the
     only baseline the change can be judged against.
   */
-  const outcome = await aiExtractResumeMultiPass(text);
+  const readStarted = Date.now();
+  const outcome = await aiExtractResumeMultiPass(text, startedAt);
+  /*
+    ⚠⚠ HOW LONG THE READ TOOK, SAID OUT LOUD (`P1-A1.4-E415` WS-3). Until this
+    line the only record of a slow read was `ai_latency_ms` on a row that a
+    killed function never got to write — so the one number that would have
+    explained Scott's failure existed nowhere a person could reach it.
+  */
+  console.info(
+    `[resume] read=${Date.now() - readStarted}ms budget=${
+      startedAt === null ? "none" : `${Math.max(0, readTimeRemaining(startedAt))}ms left of ${READ_BUDGET_MS}ms`
+    } ok=${outcome.ok}`
+  );
   if (!outcome.ok) {
     console.error(
       `[resume] the model call failed (${outcome.reason}): ${outcome.message}`,
