@@ -1,5 +1,20 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import {
+  InteractiveListing,
+  type RowMeta,
+} from "@/components/console/InteractiveListing";
+import {
+  CARD,
+  CARD_HEADER,
+  CARD_TITLE,
+  ROW,
+  TABLE,
+  TD,
+  TD_EMPTY,
+  TH,
+  THEAD,
+} from "@/components/console/listing-shared";
 
 /**
  * THE CONSOLE PAGE PATTERN (WS1, Scott's template; Medlinq /medlinq is the
@@ -49,10 +64,28 @@ export function TileRow({ tiles }: { tiles: Tile[] }) {
                 metric to be defined
               </p>
             ) : (
+              /*
+                ── ⚠ THE COUNTS ARE INK, NOT MAGENTA (`P1-A1.5-E430` WS-5a) ──
+
+                **SCOTT, 2026-09-12:** *"the numbers on the tiles… not good pink.
+                it is too much. lets change those to black."*
+
+                ⚠ SUPERSEDED, quoted not deleted: `(known ? "text-magenta" : …)`.
+                At 26px, repeated across the top of every console page, the
+                accent stopped being an accent. ⚠ MAGENTA STAYS FOR INTERACTIVE
+                THINGS — links, the active rail item, buttons. A COUNT IS NOT
+                INTERACTIVE.
+                ⚠ `TileRow` IS SHARED: eight admin pages import it directly and
+                `StubConsolePage`/`SpecPage` carry it to nine more, so this lands
+                on every console page that draws tiles. Reported before shipping,
+                not discovered after.
+                ⚠ THE UNKNOWN STATE IS UNCHANGED — `text-ink-2/30` on "—", so a
+                real count and a placeholder still look different.
+              */
               <p
                 className={
                   "mt-1 font-display text-[26px] font-bold leading-none " +
-                  (known ? "text-magenta" : "text-ink-2/30")
+                  (known ? "text-ink" : "text-ink-2/30")
                 }
               >
                 {known ? t.value : "—"}
@@ -82,50 +115,110 @@ export function TileRow({ tiles }: { tiles: Tile[] }) {
 }
 
 /** M1 — the page's main listing. Full width, per the template. */
+/**
+ * ── ⚠⚠ INTERACTIVITY IS OPT-IN (`P1-A1.5-E430` WS-0) ────────────────────────
+ *
+ * **SCOTT CHOSE OPTION (c), 2026-09-12:** *"Listing stays a server component and
+ * delegates to a client child only when searchable/sortable/paginated props are
+ * passed."*
+ *
+ * ⚠ THE REASON IS THE BLAST RADIUS. `Listing` is rendered by THIRTEEN admin
+ * pages — `/admin`, `/admin/learn`, `/admin/messages` and `/admin/buyers-sellers`
+ * directly, plus nine more through `SpecPage` and `StubConsolePage`. Twelve of
+ * them are stubs with no rows to search, and making them all client components
+ * would buy nothing. ⚠ PASS NO INTERACTIVE PROP AND THIS RENDERS EXACTLY WHAT IT
+ * RENDERED BEFORE, still on the server.
+ *
+ * ⚠ THE LOOK IS SHARED EITHER WAY. Both paths import their class strings from
+ * `listing-shared.ts`, so WS-5's quieter header and tighter rows reach every
+ * console page while the BEHAVIOUR stays on the one page that asked for it.
+ */
 export function Listing({
   title,
   columns,
   rows,
+  rowMeta,
   empty,
   action,
   search,
+  searchPlaceholder,
+  sortable,
+  pageSize,
 }: {
   title: string;
   columns: string[];
   /** Cells per row. Empty array renders the honest empty state. */
   rows?: ReactNode[][];
+  /**
+   * ⚠ THE OPT-IN SWITCH. One entry per row — `text` for the search, `sort` for
+   * the comparator — because a `ReactNode` cell can be neither searched nor
+   * compared. Supplying it (with a placeholder or a page size) is what promotes
+   * this listing to the interactive renderer.
+   */
+  rowMeta?: RowMeta[];
   empty: ReactNode;
   action?: ReactNode;
   /** Set false to omit the search box (pages the deck draws without one). */
   search?: boolean;
+  /** ⚠ Names what is searched, per WS-4b. Implies the interactive renderer. */
+  searchPlaceholder?: string;
+  sortable?: boolean;
+  pageSize?: number;
 }) {
   const hasRows = rows && rows.length > 0;
+
+  /*
+    ⚠ ONE CONDITION, STATED ONCE. Interactive only when the caller supplied the
+    metadata that makes interaction possible — anything else would promote a
+    listing whose search box cannot search and whose headers cannot sort.
+  */
+  if (rowMeta && rows) {
+    return (
+      <InteractiveListing
+        title={title}
+        columns={columns}
+        rows={rows}
+        rowMeta={rowMeta}
+        empty={empty}
+        action={action}
+        searchPlaceholder={search === false ? undefined : searchPlaceholder}
+        sortable={sortable}
+        pageSize={pageSize}
+      />
+    );
+  }
+
   return (
-    <section className="mt-6 overflow-hidden rounded-brand border border-line bg-white">
-      <header className="flex flex-wrap items-center gap-3 px-6 py-4">
-        <h2 className="font-display text-[18px] font-bold">{title}</h2>
+    <section className={CARD}>
+      <header className={CARD_HEADER}>
+        <h2 className={CARD_TITLE}>{title}</h2>
         <span className="ml-auto flex items-center gap-3">
           {search !== false && (
             /* Every deck slide draws a Search box. DISABLED while the listing
                is empty: a live box over no rows invites a query that cannot be
-               answered, which reads as broken rather than unbuilt. */
+               answered, which reads as broken rather than unbuilt.
+               ⚠ THAT REASONING STILL HOLDS **HERE ONLY** (`E430`): on a page
+               that passed no `rowMeta` the box genuinely cannot search, so it is
+               decoration and says so by being disabled. The page that CAN search
+               takes the interactive branch above, where the box is never
+               disabled. */
             <input
               type="search"
               placeholder="Search"
               disabled={!hasRows}
               title={hasRows ? undefined : "Search opens when there is data"}
-              className="w-[200px] rounded-[8px] border border-line px-3 py-1.5 text-[13.5px] outline-none focus:border-magenta disabled:bg-black/[0.02] disabled:text-ink-2/60"
+              className="w-[200px] rounded-full border border-line px-3 py-1.5 text-[13.5px] outline-none focus:border-magenta disabled:bg-black/[0.02] disabled:text-ink-2/60"
             />
           )}
           {action}
         </span>
       </header>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[720px] text-left text-[14px]">
-          <thead className="border-y border-line bg-bg-soft text-[12.5px] text-ink-2">
+        <table className={TABLE}>
+          <thead className={THEAD}>
             <tr>
               {columns.map((c) => (
-                <th key={c} className="px-6 py-3 font-semibold">
+                <th key={c} className={TH}>
                   {c}
                 </th>
               ))}
@@ -134,9 +227,9 @@ export function Listing({
           <tbody>
             {hasRows ? (
               rows!.map((cells, i) => (
-                <tr key={i} className="border-b border-line last:border-0">
+                <tr key={i} className={ROW}>
                   {cells.map((cell, j) => (
-                    <td key={j} className="px-6 py-3">
+                    <td key={j} className={TD}>
                       {cell}
                     </td>
                   ))}
@@ -144,7 +237,7 @@ export function Listing({
               ))
             ) : (
               <tr>
-                <td colSpan={columns.length} className="px-6 py-12 text-center">
+                <td colSpan={columns.length} className={TD_EMPTY}>
                   {empty}
                 </td>
               </tr>

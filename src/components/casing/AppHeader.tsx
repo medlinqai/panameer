@@ -12,7 +12,7 @@ import { useSession } from "next-auth/react";
 import { useSyncExternalStore } from "react";
 import { useMe } from "@/components/MeProvider";
 import { AccountMenu } from "@/components/casing/AccountMenu";
-import { HOME_NAV, NOTIFICATIONS_NAV, SEARCH_NAV } from "@/lib/nav";
+import { HOME_NAV, NOTIFICATIONS_NAV, SEARCH_NAV, pageTitleFor } from "@/lib/nav";
 import { greetingFor } from "@/lib/greeting";
 /* ⚠⚠ COMMUNITY CREDITS PARKED 2026-09-03 (`P1-ALL-E375`, amendment A2). Scott:
    *"just comment it out... it is just too much rn. we NEED to move faster. that
@@ -74,6 +74,16 @@ export function AppHeader() {
   */
   const now = useSyncExternalStore(subscribeNothing, clientNow, serverNow);
   const greeting = now ? greetingFor(now) : null;
+  /*
+    ⚠ COMPUTED FROM THE PATHNAME ON EVERY RENDER, never held in state — the same
+    rule the block above follows for the greeting and the date.
+    ⚠ `"Panameer Dashboard"` IS THE RAIL'S OWN LABEL for `/admin` (`lib/nav.ts`),
+    not a new string invented here.
+  */
+  const isConsole = pathname === "/admin" || pathname.startsWith("/admin/");
+  const consoleTitle = isConsole
+    ? (pageTitleFor(pathname) ?? "Panameer Dashboard")
+    : null;
   /*
     DAY/DATE, RESTORED (CASING_SPEC_LOCKED 2026-08-13). E210-revised removed it
     as ambient decoration; Scott wants it back, in the right cluster this time
@@ -138,8 +148,34 @@ export function AppHeader() {
         reachable. It is the one thing here that is decoration rather than a
         control, so it is the one thing allowed to truncate.
       */}
+      {/*
+        ── ⚠⚠ THE CONSOLE SHOWS THE PAGE NAME; THE APP KEEPS THE GREETING ─────
+           (`P1-A1.5-E430` WS-1)
+
+        **SCOTT, 2026-09-12:** *"the page name is not in the upper left hand
+        corner… like medlinq."* And, asked how far it should reach, he chose
+        ADMIN ONLY — the console gets the page name, the buyer/seller app keeps
+        *"Good morning, {first}"*.
+
+        ⚠ THAT DISTINCTION IS THE WHOLE POINT OF ASKING. `AppShell` renders this
+        header for BOTH `/admin/layout.tsx` AND `(app)/layout.tsx`, so an
+        unscoped change would have retitled every logged-in buyer and seller
+        page too. Medlinq's pattern is a CONSOLE pattern.
+
+        ⚠ THE TITLE IS DERIVED, NOT PLUMBED. `pageTitleFor` already resolves a
+        pathname to its nav label (longest href wins, journey name over rail
+        verb) and its own docblock says *"If a header ever wants a derived title
+        again, it works on the day it is called."* This is that day — no page
+        passes a prop, so no admin page can forget to.
+        ⚠ IT RETURNS NULL FOR `/admin` BY DESIGN, so the dashboard falls back to
+        its own rail label rather than rendering blank.
+      */}
       <p className="min-w-0 flex-1 truncate text-[16px] font-bold sm:flex-none sm:shrink">
-        {greeting ? `${greeting}, ${first || "there"}` : "\u00a0"}
+        {isConsole
+          ? consoleTitle
+          : greeting
+            ? `${greeting}, ${first || "there"}`
+            : "\u00a0"}
       </p>
 
       {/*
