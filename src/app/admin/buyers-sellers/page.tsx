@@ -16,11 +16,14 @@ import {
 } from "@/lib/onboarding-status";
 import {
   LEVEL_TILES,
+  USER_LEVELS,
   levelCounts,
   levelFor,
   blockingFor,
   type LevelSubject,
 } from "@/lib/user-levels";
+import { Avatar } from "@/components/Avatar";
+import { LevelPill } from "@/components/console/LevelPill";
 import { REGISTERED_SITE_NAME } from "@/lib/company";
 
 export const dynamic = "force-dynamic";
@@ -130,6 +133,8 @@ export default async function Page() {
       },
       providerProfile: {
         select: {
+          /* ⚠ `E430` — the id is what `/providers/[id]` links to. */
+          id: true,
           status: true,
           validation_status: true,
           validation_requested_at: true,
@@ -215,71 +220,22 @@ export default async function Page() {
   /* Read at the moment the query returned, printed by the SERVER — see BoardRefresh. */
   const readAt = new Date().toLocaleTimeString("en-GB");
 
-  const rows = people.slice(0, 50).map((p) => {
-    const sides = sidesFor(p);
+  /*
+    ── ⚠⚠ NO MORE `slice(0, 50)` (`P1-A1.5-E430` WS-2) ────────────────────────
+
+    ⚠ SUPERSEDED, quoted not deleted: `people.slice(0, 50).map(...)`.
+    That single expression is why Scott *"could not see half of them"* — 199
+    people, 50 rendered, no pager and no total. Every row is handed to the grid
+    now and the pager decides what is on screen, so NO RECORD IS UNREACHABLE.
+  */
+  const rows = people.map((p) => {
     const u = p.user;
+    const name = `${p.first_name ?? ""} ${p.last_name ?? ""}`.trim() || "(unnamed)";
+    const subject = levelByPerson.get(p.id)!;
+    const level = levelFor(subject);
+    const blocking = blockingFor(subject);
 
-    /*
-      ⚠ ONE CELL PER SIDE, JOINED. "Buyer: In-Process · Seller: Complete" is the
-      honest rendering of a dual-role account; a single badge would be a guess.
-    */
-    const statusCell =
-      sides
-        .map((side) => {
-          const st =
-            side === "BUYER"
-              ? buyerStatus(p.requesterProfile)
-              : sellerStatus(p.providerProfile);
-          /* `E253` — the STEP only matters while they are stuck on one. */
-          const step =
-            side === "BUYER" && st === "In-Process" && p.requesterProfile
-              ? ` (${p.requesterProfile.onboarding_step})`
-              : "";
-          return `${side === "BUYER" ? "Buyer" : "Seller"}: ${st}${step}`;
-        })
-        .join(" · ") || "—";
-
-    /*
-      ⚠ THE LOCK CELL CARRIES THE ATTEMPT COUNT AND THE EXPIRY (`E252a`), because
-      "locked" alone does not tell an admin whether to intervene: a lock that
-      lifts by itself in 20 minutes and an indefinite admin lock look identical
-      without it.
-    */
-    const lockCell = u?.locked
-      ? u.locked_until
-        ? `Locked until ${u.locked_until.toLocaleTimeString("en-GB")} (${u.failed_login_attempts})`
-        : `Locked — indefinite (${u.failed_login_attempts})`
-      : u?.failed_login_attempts
-        ? `${u.failed_login_attempts} failed`
-        : "—";
-
-    /*
-      ⚠ `E270` / `E255` — validation, and `validation_requested_at` so Scott can
-      see WHO HAS BEEN WAITING. The buyer side prints its status too, and it will
-      read NOT_REQUESTED for everybody because nothing sets it. That is the point:
-      the status is rendered, the mechanism is not built.
-    */
-    const validationCell = p.providerProfile
-      ? `${p.providerProfile.validation_status}${
-          p.providerProfile.validation_requested_at
-            ? ` — asked ${d(p.providerProfile.validation_requested_at)}`
-            : ""
-        }`
-      : p.requesterProfile
-        ? p.requesterProfile.validation_status
-        : "—";
-
-    return [
-      <span key="n">
-        <span className="font-semibold">
-          {`${p.first_name ?? ""} ${p.last_name ?? ""}`.trim() || "(unnamed)"}
-        </span>
-        {p.company?.name && (
-          <span className="block text-[12.5px] text-ink-2">{p.company.name}</span>
-        )}
-      </span>,
-      u?.email ?? "—",
-      /* `E255` — Requester is now a real row value, not "unknown". */
+    const roles =
       [
         p.is_service_coordinator && "Recruiter",
         p.is_service_provider && "Provider",
@@ -287,13 +243,120 @@ export default async function Page() {
         p.is_service_buyer && !p.requesterProfile && "Buyer",
       ]
         .filter(Boolean)
-        .join(" · ") || "—",
-      statusCell,
+        .join(" · ") || "—";
+
+    /*
+      ⚠ THE LOCK CELL LOST ITS SENTENCE AND KEPT ITS FACTS (`E252a`). Scott's
+      spec says LOCKED is *"a checkbox"*, so the state is the checkbox and the
+      attempt count and expiry — which are what tell an admin whether to
+      intervene — move into its title. A lock that lifts itself in 20 minutes
+      and an indefinite admin lock still have to be distinguishable.
+      ⚠ IT IS `disabled`, DELIBERATELY: locking and unlocking is an ACTION and
+      this brief builds none. A live checkbox would promise one.
+    */
+    const lockTitle = u?.locked
+      ? u.locked_until
+        ? `Locked until ${u.locked_until.toLocaleTimeString("en-GB")} — ${u.failed_login_attempts} failed attempts`
+        : `Locked indefinitely — ${u.failed_login_attempts} failed attempts`
+      : u?.failed_login_attempts
+        ? `Not locked — ${u.failed_login_attempts} failed attempts`
+        : "Not locked";
+
+    /*
+      ⚠ `E270` / `E255` — validation stays its OWN column, on Scott's
+      instruction 2026-09-12: *"Validation stays where it is, as its own grid
+      column."* It will read NOT_REQUESTED for every buyer because nothing sets
+      it; the status is rendered, the mechanism is not built.
+    */
+    const validation = p.providerProfile
+      ? p.providerProfile.validation_status
+      : p.requesterProfile
+        ? p.requesterProfile.validation_status
+        : "—";
+    const validationAsked =
+      p.providerProfile?.validation_requested_at
+        ? ` — asked ${d(p.providerProfile.validation_requested_at)}`
+        : "";
+
+    /*
+      ⚠⚠ THE NAME LINKS ONLY WHERE THERE IS A PAGE TO LINK TO. Scott's spec says
+      *"a hyperlink to that person's profile"*, and `/providers/[id]` is a real
+      route — but ONLY providers have one. There is no per-person page for a
+      requester or a buyer anywhere in the app, so their name renders as text
+      rather than as a link to a 404. ⚠ REPORTED, not papered over.
+    */
+    const profileHref = p.providerProfile ? `/providers/${p.providerProfile.id}` : null;
+
+    const cells = [
+      <Avatar
+        key="pic"
+        firstName={p.first_name ?? ""}
+        lastName={p.last_name ?? ""}
+        photoUrl={p.photo_url}
+        size={32}
+      />,
+      profileHref ? (
+        <Link
+          key="name"
+          href={profileHref}
+          className="font-semibold text-ink hover:text-magenta hover:underline"
+        >
+          {name}
+        </Link>
+      ) : (
+        <span key="name" className="font-semibold">
+          {name}
+        </span>
+      ),
+      roles,
+      u?.email ?? "—",
       u?.email_verified ? d(u.email_verified) : "No",
-      lockCell,
-      d(u?.last_login),
-      validationCell,
+      <LevelPill key="level" level={level} blocking={blocking} />,
+      <input
+        key="lock"
+        type="checkbox"
+        checked={!!u?.locked}
+        disabled
+        aria-label={lockTitle}
+        title={lockTitle}
+        className="h-4 w-4 accent-magenta"
+      />,
+      <span key="val" title={`${validation}${validationAsked}`}>
+        {validation}
+      </span>,
     ] as React.ReactNode[];
+
+    /*
+      ── ⚠⚠ THE SEARCH AND SORT METADATA (WS-2) ────────────────────────────────
+
+      ⚠ A `ReactNode` CELL CANNOT BE SEARCHED OR COMPARED — `String(<Link/>)` is
+      "[object Object]". So the row's searchable text and its per-column sort
+      values are built HERE, from the same data the cells came from, and travel
+      alongside them. One entry per column, in the same order.
+      ⚠ `text` CARRIES MORE THAN THE VISIBLE CELLS: the company and the email are
+      both searchable even when the company column scrolls out of view, because
+      Scott's actual task was finding which test email ids were free.
+    */
+    const meta = {
+      text: [name, roles, u?.email ?? "", level, validation, p.company?.name ?? ""]
+        .join(" ")
+        .toLowerCase(),
+      sort: [
+        /* PICTURE — sorts by whether there IS one, which is a real question. */
+        p.photo_url ? 1 : 0,
+        name.toLowerCase(),
+        roles,
+        u?.email ?? null,
+        u?.email_verified ? u.email_verified.getTime() : null,
+        /* ⚠ THE LEVEL SORTS BY PROGRESSION, NOT ALPHABETICALLY — "Company"
+           before "Verified" would be nonsense on a lifecycle column. */
+        USER_LEVELS.indexOf(level),
+        u?.locked ? 1 : 0,
+        validation,
+      ],
+    };
+
+    return { cells, meta };
   });
 
   return (
@@ -347,19 +410,65 @@ export default async function Page() {
         .
       </p>
 
+      {/*
+        ── ⚠⚠ SCOTT'S COLUMN ORDER, VERBATIM (WS-3) ───────────────────────────
+
+        ⚠ SUPERSEDED, quoted not deleted — the eight columns this replaces, three
+        of which wrapped to two lines and drove the row height to 144px:
+          "Person - Company" · "Email" · "Onboarding Status" · "Lock / Failed" ·
+          "Last Login" · "Validation"
+
+        ⚠ WHAT CHANGED AND WHY, beyond the order:
+        · PICTURE is new — the avatar Medlinq leads with.
+        · `Person - Company` SPLIT: NAME is its own column (a link where there is
+          a page to link to) and COMPANY moved to the end, which is what Scott
+          asked for — *"Add COMPANY if there is room."* Measured: with `nowrap`
+          cells the nine columns need more than the card's width, so the pager
+          and the horizontal scroller carry it; nothing is clipped.
+        · `Last Login` IS GONE. Scott's spec does not include it, and it was the
+          column being pushed off the right edge. ⚠ THE DATA IS STILL QUERIED and
+          nothing is dropped from the read — restoring the column is one line.
+        · LOCKED is a checkbox, per the spec; its attempt count and expiry moved
+          into the checkbox's title so no fact was lost.
+        · STATUS is the lifecycle pill, and VALIDATION keeps its own column on
+          Scott's instruction.
+
+        ⚠ EVERY HEADER IS ONE WORD OR TWO AND NONE WRAPS — `listing-shared.ts`
+        sets `whitespace-nowrap`, which is also what makes the scroller engage
+        visibly instead of the table silently shrinking to fit.
+      */}
       <Listing
         title="Buyers / Sellers"
         columns={[
-          "Person - Company",
-          "Email",
+          "Picture",
+          "Name",
           "Role",
-          "Onboarding Status",
+          "User-ID",
           "Verified",
-          "Lock / Failed",
-          "Last Login",
+          "Status",
+          "Locked",
           "Validation",
+          /*
+            ⚠⚠ "Company" IS NOT HERE, AND THAT IS SCOTT'S OWN CONDITION MET
+            HONESTLY: *"Add COMPANY if there is room."* MEASURED at a 1440px
+            viewport — the nine columns needed 1428px against a 1058px card, and
+            even the eight without Company need 1243px. There is no room, so the
+            column that was explicitly conditional is the one that goes.
+            ⚠ IT IS STILL SEARCHABLE. `rowMeta.text` carries the company name, so
+            typing a company still finds its people — the data did not leave, the
+            column did. ⚠ AND THE SORT KEY IS STILL BUILT for it, so restoring
+            the column is one line in each of two arrays.
+          */
         ]}
-        rows={rows}
+        rows={rows.map((r) => r.cells)}
+        /*
+          ⚠ THE OPT-IN. `rowMeta` is what promotes this one listing to the
+          interactive renderer; the other twelve pages pass none and stay
+          server-rendered (WS-0, option (c)).
+        */
+        rowMeta={rows.map((r) => r.meta)}
+        searchPlaceholder="Search people, email or company…"
+        pageSize={25}
         empty={<StubEmpty what="people" why="Nobody has signed up yet." />}
       />
 
