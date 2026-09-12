@@ -84,7 +84,7 @@ import {
   DEFAULT_SERVICE_FEE_BPS,
 } from "@/lib/display";
 import { PhoneField } from "@/components/onboarding/PhoneField";
-import { formatPhone, isPhoneComplete } from "@/lib/phone";
+import { formatPhone, isPhoneComplete, parseStoredPhone, toE164 } from "@/lib/phone";
 
 /**
  * Provider (Seller) onboarding — journey P1-J1 (brief_P, extended by brief_R).
@@ -708,6 +708,32 @@ export default function JoinProviderPage() {
    * the client-side code entry is retired while the stub is in place.
    */
   const [phoneInput, setPhoneInput] = useState("");
+  /*
+    ── ⚠⚠ THE PHONE'S OWN COUNTRY (`P1-ALL-E417` WS-2a) ───────────────────────
+
+    On THIS journey the address block sits on the same screen, so the old
+    `country={addr.country}` was not the hard block it was on the requester
+    wizard. It is still replaced, on Scott's instruction: *"Same control on the
+    provider journey so both pathways use one component."*
+
+    ⚠⚠ AND THE TWO ARE INDEPENDENT ON PURPOSE — *"do not overwrite one from the
+    other."* Seeded from the stored number (E.164 carries its own country), then
+    the sign-up/address country, and after that only the person moves it. It is
+    NOT re-derived from `addr.country` on every render, which is what would
+    silently rewrite a British mobile the moment somebody set their address to
+    the United Arab Emirates.
+  */
+  const [phoneCountry, setPhoneCountry] = useState<string | null>(null);
+  /*
+    ⚠⚠ WHAT GETS PERSISTED IS E.164 (`P1-ALL-E417`), so the country travels with
+    the number: `+919876543210`. There is no `phone_country` column and the brief
+    forbids a `db:push`, so the value carries its own country — and every save
+    path below uses this one derived string rather than re-deriving it five times.
+    ⚠ THE INPUT STILL SHOWS THE NATIONAL FORM; only what is stored changes.
+    ⚠ FALLS BACK TO THE TYPED STRING when it cannot be made E.164 — a save is
+    never the place to silently drop what somebody typed.
+  */
+  const phoneToSave = toE164(phoneInput, phoneCountry) ?? phoneInput;
 
   const stepIndex = steps.indexOf(screen as Step);
 
@@ -792,7 +818,19 @@ export default function JoinProviderPage() {
     });
     // Masked on load as well, so a number stored before E203 displays the same
     // way a freshly typed one does.
-    if (p.phone) setPhoneInput(formatPhone(p.phone, p.address?.country ?? null));
+    /*
+      ⚠ THE STORED NUMBER NAMES ITS OWN COUNTRY (`E417`). A number this field
+      saved is E.164; a legacy national string is not, and falls back to the
+      address/sign-up country exactly as before.
+    */
+    if (p.phone) {
+      const stored = parseStoredPhone(p.phone);
+      const seeded = stored.country ?? p.address?.country ?? null;
+      setPhoneCountry((prev) => prev ?? seeded);
+      setPhoneInput(stored.country ? stored.display : formatPhone(p.phone, seeded));
+    } else {
+      setPhoneCountry((prev) => prev ?? p.address?.country ?? null);
+    }
   }, []);
 
   /**
@@ -1421,7 +1459,7 @@ setScreen(target);
         address: profile.address,
         // E036 — phone verification is stubbed: the number is saved with the
         // rest of the details and publishing no longer waits on an SMS code.
-        phone: phoneInput,
+        phone: phoneToSave,
       });
       // postStep has already put the server's message in `error`. Returning
       // here is what stops it being replaced by the publish call's message.
@@ -1937,7 +1975,7 @@ setScreen(target);
           setEditSection(null);
         return;
       case "location":
-        if (await postStep("finish", { address: profile.address, phone: phoneInput }))
+        if (await postStep("finish", { address: profile.address, phone: phoneToSave }))
           setEditSection(null);
         return;
       /* `work` has no Save — `EmployersStep` commits as it goes. */
@@ -2111,7 +2149,7 @@ setScreen(target);
   */
   const contactEditing = () => ({
     save: () =>
-      postStep("finish", { address: profile.address, phone: phoneInput }),
+      postStep("finish", { address: profile.address, phone: phoneToSave }),
     body: (
       <>
               <div className="space-y-3">
@@ -2133,7 +2171,8 @@ setScreen(target);
                   id="review-phone"
                   value={phoneInput}
                   onChange={setPhoneInput}
-                  country={addr.country}
+                  country={phoneCountry}
+                  onCountryChange={setPhoneCountry}
                 />
                 {/*
                   E126 — COUNTRY FIRST, above the street line. It decides what
@@ -3688,7 +3727,8 @@ setScreen(target);
         "abc". Continue now needs a phone that could actually be dialled.
       */
       const wrapupReady =
-        Boolean(profile.photoUrl) && isPhoneComplete(phoneInput, addr.country);
+        /* ⚠ `E417` — judged against the PHONE's country, not the address's. */
+        Boolean(profile.photoUrl) && isPhoneComplete(phoneInput, phoneCountry);
 
       /**
        * Saves BOTH halves. The photo is its own step payload; phone and
@@ -3706,7 +3746,7 @@ setScreen(target);
         if (
           !(await postStep("finish", {
             address: profile.address,
-            phone: phoneInput,
+            phone: phoneToSave,
           }))
         ) {
           return;
@@ -3902,7 +3942,7 @@ setScreen(target);
           roleTypeId: profile.roleTypeId,
           skillIds: profile.skillIds,
           languages: profile.languages,
-            phone: phoneInput,
+            phone: phoneToSave,
           photoUrl: profile.photoUrl,
           address: profile.address,
           employers: profile.employers,

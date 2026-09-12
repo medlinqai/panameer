@@ -9,7 +9,7 @@ import { Field, TextInput, Notice } from "@/components/onboarding/controls";
 import { PhoneField } from "@/components/onboarding/PhoneField";
 import { Avatar } from "@/components/Avatar";
 import { PhotoCropModal } from "@/components/onboarding/PhotoCropModal";
-import { isPhoneComplete } from "@/lib/phone";
+import { isPhoneComplete, parseStoredPhone, toE164 } from "@/lib/phone";
 import { REQUESTER_STEPS, type RequesterStep } from "@/lib/requester-steps";
 
 /**
@@ -116,6 +116,31 @@ export default function RequesterStepsPage() {
   /* `E281` — drives the SHARED `PhotoCropModal`, the provider wizard's own uploader. */
   const [photoModal, setPhotoModal] = useState(false);
 
+  /*
+    ── ⚠⚠ THE PHONE'S OWN COUNTRY, AND IT IS NOT THE ADDRESS'S (`P1-ALL-E417`) ─
+
+    ⚠ SUPERSEDED, quoted not deleted: `const phoneCountry = draft.address.country;`
+    with the note that *"it reads the SIGN-UP country instead… ⚠ UNDEFINED IS A
+    LEGAL ANSWER: `ruleFor(null)` returns null and `validatePhone` falls back to
+    a generic length check."*
+
+    ⚠⚠ THAT FALLBACK WAS THE DEFECT, NOT THE SAFETY NET. The sign-up form's
+    country select DEFAULTS to "United States" and step 1 never shows it, so an
+    Indian or Saudi requester who left the default was silently judged by the US
+    ten-digit rule — a nine-digit Saudi mobile came back *"too short"* and
+    `Continue` stayed dead, with nothing on screen naming the country it assumed.
+
+    SCOTT, 2026-09-12: *"The phone value validates against the SELECTED country
+    in that control, not the sign-up country and not `draft.address.country`."*
+
+    ⚠ SEEDED ONCE, THEN OWNED BY THE PICKER. `hydrate` sets it from the STORED
+    number first (E.164 carries its own country) and falls back to the sign-up
+    country; after that only the person moves it. ⚠ IT IS NEVER RE-POINTED AT
+    `draft.address.country` — Scott: *"do not overwrite one from the other."* A
+    consultant in Dubai with a British mobile is not a data-entry error.
+  */
+  const [phoneCountry, setPhoneCountry] = useState<string | null>(null);
+
   const hydrate = useCallback((s: {
     emailVerified: boolean;
     completed: boolean;
@@ -155,12 +180,20 @@ export default function RequesterStepsPage() {
       "answered" to infer. The trap cannot re-open, because the screen it
       re-opened on no longer exists.
     */
+    /*
+      ⚠ THE STORED NUMBER IS THE FIRST SOURCE OF TRUTH (`E417`). A number saved
+      by this field is E.164, so it names its own country; only a legacy national
+      string or an empty field falls back to the sign-up country.
+    */
+    const stored = parseStoredPhone(p.phone);
+    setPhoneCountry(stored.country ?? p.address?.country ?? null);
+
     setDraft({
       firstName: p.firstName ?? "",
       lastName: p.lastName ?? "",
       photoUrl: p.photoUrl ?? null,
       title: p.title ?? "",
-      phone: p.phone ?? "",
+      phone: stored.display,
       employeeId: p.employeeId ?? "",
       address: p.address ?? {},
       buyerName: p.buyerName ?? "",
@@ -230,20 +263,6 @@ export default function RequesterStepsPage() {
 
   const idx = REQUESTER_STEPS.indexOf(step);
 
-  /*
-    THE PHONE MASK'S COUNTRY, NOW THAT STEP 2 HAS NO ADDRESS BLOCK (`E262`).
-
-    `PhoneField` picks its rule from a country, and on `/join/provider` that
-    comes from the address fields directly above it. Those are gone here, so it
-    reads the SIGN-UP country instead — the country-only `Address` that
-    `requester-onboarding.ts:120` seeds at account creation and that `hydrate`
-    still loads into `draft.address`.
-    ⚠ UNDEFINED IS A LEGAL ANSWER: `ruleFor(null)` returns null and
-    `validatePhone` falls back to a generic length check, so a requester who
-    signed up without a country still gets a usable field rather than a broken
-    one.
-  */
-  const phoneCountry = draft.address.country;
 
   const save = async (payload: Record<string, unknown>, next?: RequesterStep) => {
     setBusy(true);
@@ -416,7 +435,18 @@ export default function RequesterStepsPage() {
             lastName: draft.lastName,
             /* `E281`. ⚠ NO `photoUrl` — `/api/profile/photo` already wrote it. */
             title: draft.title,
-            phone: draft.phone,
+            /*
+              ⚠⚠ SAVED IN E.164 SO THE COUNTRY TRAVELS WITH THE NUMBER (`E417`).
+              Scott: *"The selected phone country is stored with the phone,
+              independent of the address country."* There is no `phone_country`
+              column and this brief forbids a `db:push`, so the country lives
+              inside the value — `+966512345678`. ⚠ THE BOX STILL SHOWS THE
+              NATIONAL FORM; only what is persisted changes.
+              ⚠ FALLS BACK TO THE TYPED STRING if it cannot be made E.164, which
+              `continueDisabled` has already ruled out — a save is never the
+              place to silently drop what somebody typed.
+            */
+            phone: toE164(draft.phone, phoneCountry) ?? draft.phone,
             employeeId: draft.employeeId,
             /*
               ⚠ `address` IS NO LONGER POSTED (`E262`). The block that collected
@@ -525,7 +555,14 @@ export default function RequesterStepsPage() {
             </Field>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
+          {/*
+            ⚠ FULL WIDTH SINCE `P1-ALL-E417`, and measured in the walk rather
+            than guessed: this row was a two-column grid holding ONE field, a
+            leftover from when a second field sat beside it. With the country
+            picker now inside the phone field, half a row left the number itself
+            clipped to "98765 43…". Nothing sits next to it, so the row is a row.
+          */}
+          <div className="grid gap-3">
             {/*
               ⚠ THE BUILT VALIDATOR, NOT A RAW INPUT (`E241`). This was a plain
               `TextInput` while `PhoneField` — masking on change, validating on
@@ -537,6 +574,7 @@ export default function RequesterStepsPage() {
               value={draft.phone}
               onChange={(next) => setDraft((d) => ({ ...d, phone: next }))}
               country={phoneCountry}
+              onCountryChange={setPhoneCountry}
             />
           </div>
 

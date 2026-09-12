@@ -114,6 +114,7 @@
     "@supabase/supabase-js": "^2.110.8",
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.4.2",
+    "libphonenumber-js": "^1.13.13",
     "lucide-react": "^1.28.0",
     "mammoth": "^1.12.0",
     "next": "16.2.11",
