@@ -151,10 +151,30 @@ const CODE = strip(RAW);
   const bar = strip(readFileSync(join("src", "lib", "identity-bar.ts"), "utf8"));
   const arr = bar.match(/WORK_REQUEST_BAR:\s*IdentityField\[\]\s*=\s*\[([\s\S]*?)\]/)?.[1] ?? "";
   check("5 — the guard can see WORK_REQUEST_BAR", arr.length > 0);
+  /*
+    ── ⚠⚠ THE BAR STOPPED DEMANDING IT, SO THE FORM WAS REVISITED (`E418`) ────
+
+    ⚠ SUPERSEDED, quoted not deleted:
+        check("5 — ⚠⚠ WORK_REQUEST_BAR still requires companyCountry",
+          /companyCountry/.test(arr),
+          "if this bar stops demanding it, the form's country field is what to revisit");
+
+    That instruction was followed rather than deleted. `P1-A1.4-E418` removed the
+    company from `WORK_REQUEST_BAR` — posting a work request asks only for the
+    person — and the form's country field STAYS, because `CompanyStep` is now
+    the work-order-acceptance form (`E164`) and acceptance is exactly where a
+    country is needed. ⚠ SO THE TWO ARE STILL ASSERTED TOGETHER, inverted: the
+    bar must NOT demand it, and the payload must STILL send it.
+  */
   check(
-    "5 — ⚠⚠ WORK_REQUEST_BAR still requires companyCountry",
-    /companyCountry/.test(arr),
-    "if this bar stops demanding it, the form's country field is what to revisit"
+    "5 — ⚠⚠ WORK_REQUEST_BAR no longer requires companyCountry (E418)",
+    !/companyCountry/.test(arr),
+    "the company is captured at work order acceptance, not at a work request"
+  );
+  check(
+    "5 — ⚠ and the form still collects it for that later capture",
+    /country:\s*country \|\| null/.test(CODE),
+    "CompanyStep is the acceptance form now — dropping country would cost the capture"
   );
 }
 
@@ -164,11 +184,41 @@ const CODE = strip(RAW);
   check("6 — ⚠⚠ /settings/company resolves", existsSync(page), "six hrefs pointed at a 404");
   const src = existsSync(page) ? readFileSync(page, "utf8") : "";
   check("6 — it redirects to /company rather than forking a second form", /redirect\("\/company"\)/.test(strip(src)));
-  /* ⚠ EVERY href THAT POINTED AT THE 404 IS COVERED BY THAT ONE ROUTE. */
-  const hrefs = ["src/lib/identity-bar.ts", "src/lib/work-request-identity.ts"]
-    .map((f) => (readFileSync(f, "utf8").match(/"\/settings\/company"/g) ?? []).length)
-    .reduce((a, b) => a + b, 0);
-  check("6 — all six hrefs still point at the now-real route", hrefs === 6, `${hrefs} found`);
+  /*
+    ── ⚠⚠ RE-POINTED, AND THE OLD FORM COULD NO LONGER FAIL (`E418`) ──────────
+
+    ⚠ SUPERSEDED, quoted not deleted:
+        const hrefs = [...].map((f) => (readFileSync(f, "utf8").match(/"\/settings\/company"/g) ?? []).length)…
+        check("6 — all six hrefs still point at the now-real route", hrefs === 6, …);
+
+    ⚠⚠ IT READ THE **RAW** FILE, so once `E418` moved the six gate fields into
+    SUPERSEDED comment blocks it kept counting six and stayed green while ZERO
+    live hrefs remained — a harness that can no longer fail, which is the exact
+    defect `E421` caught in `check:buyer-reuse` §7. MEASURED: raw 6, live 0.
+
+    ⚠ THE REPLACEMENT ASSERTS BOTH HALVES HONESTLY — no live href points there
+    any more (the fields that carried them are gone), and the copy IS preserved
+    for work order acceptance to restore.
+  */
+  const counts = ["src/lib/identity-bar.ts", "src/lib/work-request-identity.ts"].map((f) => {
+    const raw = readFileSync(f, "utf8");
+    return {
+      raw: (raw.match(/"\/settings\/company"/g) ?? []).length,
+      live: (strip(raw).match(/"\/settings\/company"/g) ?? []).length,
+    };
+  });
+  const live = counts.reduce((a, c) => a + c.live, 0);
+  const raw = counts.reduce((a, c) => a + c.raw, 0);
+  check(
+    "6 — ⚠⚠ no LIVE href points at it — the company gate fields are gone (E418)",
+    live === 0,
+    `${live} live`
+  );
+  check(
+    "6 — ⚠ all six are preserved, quoted, for work order acceptance",
+    raw === 6,
+    `${raw} in source`
+  );
 }
 
 if (failures.length) {

@@ -53,10 +53,13 @@ export async function learnGaps(userId: string): Promise<GateGap[]> {
 
 /**
  * `SELL` — `SEARCHABLE` (via `missingRequired()`) plus a payout method.
+ * ⚠ NO COMPANY (`E418`): the entity is captured at work order acceptance.
  *
- * ⚠ THE COLUMN LIST IS THE ONE `lib/onboarding.ts:2374` ALREADY BUILDS for the
- * provider publish gate, deliberately identical: publishing a profile and
+ * ⚠ THE COLUMN LIST IS THE ONE the provider publish gate ALREADY BUILDS in
+ * `lib/onboarding.ts`, deliberately identical: publishing a profile and
  * publishing a product must not disagree about what "searchable" means.
+ * ⚠ BOTH LOST THE COMPANY MEMBERSHIP IN `P1-A1.4-E418`, in one change, for that
+ * same reason.
  */
 export async function sellGaps(viewerUserId: string): Promise<GateGap[]> {
   const pp = await prisma.providerProfile.findFirst({
@@ -74,7 +77,10 @@ export async function sellGaps(viewerUserId: string): Promise<GateGap[]> {
         select: {
           photo_url: true,
           phone: true,
-          companyMemberships: { where: { status: "APPROVED" }, select: { id: true }, take: 1 },
+          /* ⚠ SUPERSEDED, quoted not deleted (`P1-A1.4-E418`):
+               `companyMemberships: { where: { status: "APPROVED" }, … }`
+             SELL no longer asks for a company — nothing collects one before a
+             work order — so the column it fed is gone from `missingForSell`. */
           payoutMethods: { select: { id: true }, take: 1 },
           site: { select: { addresses: { select: { line1: true }, take: 1 } } },
         },
@@ -84,7 +90,7 @@ export async function sellGaps(viewerUserId: string): Promise<GateGap[]> {
   if (!pp) {
     return missingForSell({
       headline: null, role_type_id: null, skills: [], photoUrl: null,
-      hasCompany: false, hasAddress: false, hasPhone: false, payoutMethodCount: 0,
+      hasAddress: false, hasPhone: false, payoutMethodCount: 0,
     });
   }
   return missingForSell({
@@ -97,7 +103,6 @@ export async function sellGaps(viewerUserId: string): Promise<GateGap[]> {
     rate_max_cents: pp.rate_max_cents,
     onsite_rate_cents: pp.onsite_rate_cents,
     remote_rate_cents: pp.remote_rate_cents,
-    hasCompany: pp.person.companyMemberships.length > 0,
     hasAddress: Boolean(pp.person.site?.addresses?.[0]?.line1?.trim()),
     hasPhone: Boolean(pp.person.phone?.trim()),
     payoutMethodCount: pp.person.payoutMethods.length,

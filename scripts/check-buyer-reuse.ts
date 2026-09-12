@@ -149,10 +149,29 @@ const SCHEMA = readFileSync(join("prisma", "schema.prisma"), "utf8");
 
 /* ═══ 6 · ⚠⚠ NO SCHEMA CHANGE ═══════════════════════════════════════════ */
 {
-  const e = /enum RequesterOnboardingStep \{\s*company\s*requester_info\s*work_location\s*review\s*\}/.test(
+  /*
+    ── ⚠⚠ RE-POINTED BY `P1-A1.4-E418`, NOT LOOSENED (2026-09-11) ────────────
+
+    ⚠ SUPERSEDED, quoted not deleted:
+        const e = /enum RequesterOnboardingStep \{\s*company\s*requester_info\s*work_location\s*review\s*\}/
+        check("6 — ⚠⚠ RequesterOnboardingStep is unchanged", e, "reuse needs no enum change");
+
+    `E421` pinned the enum so that reuse could not quietly change it and so that
+    `E418` — which owns the change — could not land twice or half-land. `E418`
+    has now landed: `company` is gone from the enum and from `REQUESTER_STEPS`.
+    ⚠ THE ASSERTION IS STILL LITERAL AND STILL EXACT, naming all three values in
+    order. Deleting it, or relaxing it to "contains requester_info", would give
+    up the mirror this exists to protect — see `E421`'s own note below about a
+    harness that could no longer fail.
+  */
+  const e = /enum RequesterOnboardingStep \{\s*requester_info\s*work_location\s*review\s*\}/.test(
     SCHEMA.replace(/\r/g, "")
   );
-  check("6 — ⚠⚠ RequesterOnboardingStep is unchanged", e, "reuse needs no enum change");
+  check(
+    "6 — ⚠⚠ RequesterOnboardingStep mirrors REQUESTER_STEPS (E418: no `company`)",
+    e,
+    "requester_info · work_location · review — the enum and the list must stay in step"
+  );
   check(
     "6 — ⚠ ABSENCE: no USER_JOB / USER_CLASS enum was invented",
     !/enum UserJob|enum UserClass|user_job\s+/.test(SCHEMA),
@@ -161,12 +180,23 @@ const SCHEMA = readFileSync(join("prisma", "schema.prisma"), "utf8");
   check("6 — BuyerProfile already existed", /model BuyerProfile \{/.test(SCHEMA));
 }
 
-/* ═══ 7 · ⚠⚠ THE COMPANY STEP IS UNTOUCHED — `E418` OWNS IT ═════════════ */
+/* ═══ 7 · ⚠⚠ THE COMPANY STEP IS GONE — `E418` REMOVED IT ═══════════════ */
 {
+  /*
+    ⚠ SUPERSEDED, quoted not deleted — the tripwire `E421` left for `E418`:
+
+        check("7 — ⚠⚠ `company` is still the first requester step",
+          /export const REQUESTER_STEPS = \[\s*"company",/.test(…),
+          "E418 removes it from every pathway; doing it twice is the risk");
+
+    It fired exactly as designed the moment `E418` removed the step, and `E418`
+    re-pointed it rather than deleting it. ⚠ THE REPLACEMENT IS THE SAME
+    ASSERTION FROM THE OTHER SIDE: `company` must now be ABSENT from the list.
+  */
   check(
-    "7 — ⚠⚠ `company` is still the first requester step",
-    /export const REQUESTER_STEPS = \[\s*"company",/.test(read("src", "lib", "requester-steps.ts")),
-    "E418 removes it from every pathway; doing it twice is the risk"
+    "7 — ⚠⚠ `company` is no longer a requester step (E418)",
+    !/export const REQUESTER_STEPS = \[[^\]]*"company"/.test(read("src", "lib", "requester-steps.ts")),
+    "Scott 2026-09-11: strip it all out — company is captured at work order acceptance"
   );
   /*
     ⚠ SUPERSEDED, quoted not deleted — this was decorative and the mutation test
@@ -180,12 +210,34 @@ const SCHEMA = readFileSync(join("prisma", "schema.prisma"), "utf8");
     STEP LIST ITSELF: `E418` changes it, this brief must not, and the two
     landing in either order must not silently merge.
   */
+  /*
+    ⚠ SUPERSEDED, quoted not deleted:
+        check("7 — ⚠⚠ the four steps are exactly as E418 will find them",
+          /export const REQUESTER_STEPS = \[\s*"company",\s*"requester_info",\s*"work_location",\s*"review",\s*\]/.test(…),
+          "company · requester_info · work_location · review — E418 owns any change");
+
+    ⚠⚠ PINNED JUST AS LITERALLY, TO THE NEW LIST. This is the assertion that
+    keeps the enum mirror honest from the TypeScript side, and it is the one
+    `E421` said must not be deleted or loosened when `E418` moved it.
+  */
   check(
-    "7 — ⚠⚠ the four steps are exactly as E418 will find them",
-    /export const REQUESTER_STEPS = \[\s*"company",\s*"requester_info",\s*"work_location",\s*"review",\s*\]/.test(
+    "7 — ⚠⚠ the three steps are exactly what E418 left",
+    /export const REQUESTER_STEPS = \[\s*"requester_info",\s*"work_location",\s*"review",\s*\]/.test(
       read("src", "lib", "requester-steps.ts")
     ),
-    "company · requester_info · work_location · review — E418 owns any change"
+    "requester_info · work_location · review"
+  );
+  /*
+    ⚠⚠ AND THE BUYER STILL WALKS IT. `E421`'s whole claim is that a buyer enters
+    the REQUESTER wizard; `E418` removed a step from that wizard, so this asserts
+    the reuse survived the removal rather than assuming it did.
+  */
+  check(
+    "7 — ⚠ the buyer still routes into the requester wizard",
+    /case "buyer-admin":\s*router\.push\(withCtx\("\/join\/requester\?job=buyer"\)\)/.test(
+      read("src", "app", "join", "page.tsx")
+    ),
+    "E421 — one wizard, no fork"
   );
 }
 

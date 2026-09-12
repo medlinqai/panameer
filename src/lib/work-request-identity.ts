@@ -253,24 +253,25 @@ export const POST_REQUIREMENTS: {
     reason: "It tells a provider whether they are talking to the person who decides.",
     href: "/settings/profile",
   },
-  {
-    key: "approvedCompany",
-    field: "Get your company membership approved",
-    reason: "A work order is between companies, so a provider cannot be contracted by a person alone.",
-    href: "/settings/company",
-  },
-  {
-    key: "companyName",
-    field: "Add your company name",
-    reason: "A provider needs to know which company would be hiring them, even if you post confidentially.",
-    href: "/settings/company",
-  },
-  {
-    key: "companyCountry",
-    field: "Add your company's country",
-    reason: "Providers filter by where the work is, and it decides how they would be paid.",
-    href: "/settings/company",
-  },
+  /*
+    ⚠⚠ THE THREE COMPANY REQUIREMENTS, PRESERVED FOR WORK ORDER ACCEPTANCE
+    (`P1-A1.4-E418`). ⚠ SUPERSEDED, quoted not deleted — restore them verbatim
+    when acceptance asks for the company, together with the fields in
+    `lib/identity-bar.ts` and a bar that reaches them:
+
+      { key: "approvedCompany",
+        field: "Get your company membership approved",
+        reason: "A work order is between companies, so a provider cannot be contracted by a person alone.",
+        href: "/settings/company" },
+      { key: "companyName",
+        field: "Add your company name",
+        reason: "A provider needs to know which company would be hiring them, even if you post confidentially.",
+        href: "/settings/company" },
+      { key: "companyCountry",
+        field: "Add your company's country",
+        reason: "Providers filter by where the work is, and it decides how they would be paid.",
+        href: "/settings/company" },
+  */
 ];
 
 export type PostIdentityInput = IdentitySubject;

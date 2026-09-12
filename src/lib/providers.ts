@@ -28,7 +28,9 @@ export async function getPublicProviderProfile(
           // missing relation is a compile error rather than a provider quietly
           // hidden from the marketplace.
           phone: true,
-          companyMemberships: { select: { status: true } },
+          /* ⚠ `companyMemberships: { select: { status: true } }` REMOVED
+             (`P1-A1.4-E418`) — `providerMeetsRequired` no longer has a company
+             clause, so this was a read with no reader. */
           site: { select: { addresses: { select: { id: true } } } },
         },
       },

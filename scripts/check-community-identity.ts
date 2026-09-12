@@ -36,7 +36,8 @@ import {
   WORK_REQUEST_BAR,
   missingIdentity,
   subjectFromPerson,
-  type IdentityField,
+  /* ⚠ `type IdentityField` LEFT WITH THE COMPANY ASSERTION (`E418`) — its only
+     use was casting the three company field names it checked for. */
 } from "@/lib/identity-bar";
 import { COMMUNITY_REQUIREMENTS } from "@/lib/community-identity";
 import { missingIdentityForPost, POST_REQUIREMENTS } from "@/lib/work-request-identity";
@@ -216,9 +217,31 @@ check(
 
 /* The bars themselves — the difference is the point, not an oversight. */
 check("4 — the community bar is exactly name, photo, job title", JSON.stringify(COMMUNITY_BAR) === JSON.stringify(["name", "photo", "jobTitle"]));
-check("4 — ⚠ community requires NO company", !COMMUNITY_BAR.some((f) => f.startsWith("company") || f === "approvedCompany"));
+check("4 — ⚠ community requires NO company", !COMMUNITY_BAR.some((f: string) => f.startsWith("company") || f === "approvedCompany"));
 check("4 — the work-request bar contains every community field", COMMUNITY_BAR.every((f) => WORK_REQUEST_BAR.includes(f)));
-check("4 — the work-request bar adds the company on top", ["approvedCompany", "companyName", "companyCountry"].every((f) => WORK_REQUEST_BAR.includes(f as IdentityField)));
+/*
+  ── ⚠⚠ THE BARS NOW AGREE, AND THEY ARE STILL TWO RULES (`P1-A1.4-E418`) ────
+
+  ⚠ SUPERSEDED, quoted not deleted:
+      check("4 — the work-request bar adds the company on top",
+        ["approvedCompany", "companyName", "companyCountry"]
+          .every((f) => WORK_REQUEST_BAR.includes(f as IdentityField)));
+
+  SCOTT, 2026-09-11: posting a work request needs ONLY the person's details —
+  the company is captured at work order acceptance. ⚠ THE ASSERTION IS INVERTED,
+  NOT DROPPED: the work-request bar must now name NO company field, which is the
+  mutation test for putting one back.
+*/
+check(
+  "4 — ⚠⚠ the work-request bar adds NO company (E418)",
+  !WORK_REQUEST_BAR.some((f: string) => f.startsWith("company") || f === "approvedCompany"),
+  `WORK_REQUEST_BAR = ${JSON.stringify(WORK_REQUEST_BAR)}`
+);
+check(
+  "4 — ⚠ the two bars are still separate constants, not one alias",
+  /export const COMMUNITY_BAR/.test(read(BAR)) && /export const WORK_REQUEST_BAR/.test(read(BAR)),
+  "they agree today; collapsing them would make one change move both"
+);
 
 /* Behaviour, driven through the shared predicate itself. */
 const EMPTY = {
@@ -233,9 +256,17 @@ check(
   missingIdentity(PERSON_OK, COMMUNITY_BAR).length === 0,
   "a student or someone between roles belongs here"
 );
+/*
+  ⚠ SUPERSEDED, quoted not deleted (`E418`):
+      check("4 — the same person still cannot POST A WORK REQUEST without a company",
+        missingIdentityForPost(PERSON_OK).length === 3);
+  ⚠⚠ THE OPPOSITE IS THE RULE NOW — and it is the same person, so the pair of
+  assertions still says exactly what separates the two bars: nothing.
+*/
 check(
-  "4 — the same person still cannot POST A WORK REQUEST without a company",
-  missingIdentityForPost(PERSON_OK).length === 3
+  "4 — ⚠⚠ that same person CAN post a work request with no company (E418)",
+  missingIdentityForPost(PERSON_OK).length === 0,
+  `got ${JSON.stringify(missingIdentityForPost(PERSON_OK))}`
 );
 check("4 — whitespace is not a name", missingIdentity({ ...PERSON_OK, firstName: "  " }, COMMUNITY_BAR).includes("name"));
 check("4 — whitespace is not a job title", missingIdentity({ ...PERSON_OK, jobTitle: " " }, COMMUNITY_BAR).includes("jobTitle"));

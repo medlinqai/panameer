@@ -199,7 +199,7 @@ check(
   JSON.stringify(LEARN_BAR) !== JSON.stringify(COMMUNITY_BAR),
   "if these converge again, one of the two surfaces has the wrong bar"
 );
-check("2 — ⚠ LEARN asks for NO company", !LEARN_BAR.some((f) => f === "approvedCompany" || f.startsWith("company")));
+check("2 — ⚠ LEARN asks for NO company", !LEARN_BAR.some((f: string) => f === "approvedCompany" || f.startsWith("company")));
 check("2 — ⚠ LEARN asks for NO address and NO phone", !LEARN_BAR.includes("address") && !LEARN_BAR.includes("phone"));
 check("2 — SELL contains everything SEARCHABLE does", GATE_SETS.SEARCHABLE.every((f) => GATE_SETS.SELL.includes(f)));
 check("2 — SELL adds the payout method", GATE_SETS.SELL.includes("payoutMethod"));

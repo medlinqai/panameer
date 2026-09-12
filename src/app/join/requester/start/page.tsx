@@ -19,9 +19,14 @@ import {
  * `E259` report so Scott can overwrite it.
  * ⚠ TYPED TO THE STEP UNION, so a new step fails the build here rather than
  * rendering a card with no description.
+ * ⚠⚠ AND A REMOVED STEP FAILS IT TOO — `P1-A1.4-E418` deleted the `company`
+ * step and this map stopped compiling on the spot, which is the tripwire working
+ * in the other direction. ⚠ SUPERSEDED, quoted not deleted:
+ * `company: "Join the company you work for, or add it."`
+ * ⚠ THE CARDS THEMSELVES ARE DERIVED from `REQUESTER_WORK_STEPS`, so the count
+ * went three → two with NO hand-editing. Do not hardcode them again.
  */
 const CARD_BLURBS: Record<(typeof REQUESTER_WORK_STEPS)[number], string> = {
-  company: "Join the company you work for, or add it.",
   requester_info: "Who you are, and how a provider reaches you.",
   work_location: "The location providers deliver to.",
 };

@@ -46,7 +46,9 @@ export async function getProviderProfileView(
           // WS6 — the required-set gate reads these. Loaded explicitly so a
           // missing relation is a compile error rather than a provider quietly
           // hidden from the marketplace.
-          companyMemberships: { select: { status: true } },
+          /* ⚠ `companyMemberships: { select: { status: true } }` REMOVED
+             (`P1-A1.4-E418`) — the company clause left `providerMeetsRequired`
+             with the company step. */
           site: {
             select: {
               addresses: {

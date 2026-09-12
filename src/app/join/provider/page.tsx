@@ -130,6 +130,10 @@ const ALL_STEPS = [
   "bio",
   "rate",
   "picture",
+  /* ⚠ RENDERABLE, NOT COUNTED (`P1-A1.4-E418`). No server itinerary contains
+     `company` any more — provider or recruiter — so its `case` below is
+     unreachable. It stays in this union for the same reason `work_history`
+     does: the screen still exists on disk for work order acceptance. */
   "company",
   "finish",
 ] as const;
@@ -3807,6 +3811,17 @@ setScreen(target);
     // branch, because the tax type is what the payout gate reads later for
     // SSN-vs-EIN and 1099-reportability — a second path would have to answer
     // the same question anyway, in a place nobody would think to look.
+    //
+    // ── ⚠⚠ UNREACHABLE SINCE `P1-A1.4-E418` (2026-09-11) ──────────────────
+    //
+    // `company` is in neither `PROVIDER_STEPS` nor `RECRUITER_STEPS` any more,
+    // and the itinerary comes from the SERVER (`status.steps`) — so nothing
+    // navigates here on either journey. ⚠ THE CASE STAYS ON DISK (`E164`),
+    // exactly like `work_history` above it: it is the screen work order
+    // acceptance will reuse, and deleting it would delete the ability to
+    // collect a company at all. ⚠ DO NOT PUT IT BACK ON AN ITINERARY — Scott,
+    // 2026-09-11: *"we will get their company information during the work
+    // order acceptance."* See the TODO on `acceptOrder` in `lib/orders.ts`.
     case "company": {
       if (companyPending) {
         return (

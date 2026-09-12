@@ -2337,10 +2337,19 @@ model ProfileImport {
 /// (`E256`) cannot be trusted to count buckets that are not enumerable.
 ///
 /// ⚠ `buyer_approver` IS GONE (`E263` removed the step). The values are the
-/// four `REQUESTER_STEPS` in `lib/requester-steps.ts` and the two lists must
+/// `REQUESTER_STEPS` in `lib/requester-steps.ts` and the two lists must
 /// stay in step — that file is the client-safe mirror of this enum.
+///
+/// ⚠⚠ `company` IS GONE TOO (`P1-A1.4-E418`, 2026-09-11). The requester is never
+/// asked for a company at registration — it is captured once, at work order
+/// acceptance. Removing the VALUE (rather than orphaning it) is deliberate: a
+/// stored resume point the wizard cannot render is a blank screen, because
+/// `REQUESTER_STEPS.indexOf` returns -1 and no branch matches.
+///
+/// ⚠ THE NINE ROWS THAT SAT ON `company` WERE MOVED FORWARD TO `requester_info`
+/// before the enum changed — a RESUME POINTER, not a record. No company, no
+/// membership and no person was altered, and none was deleted (`E164`).
 enum RequesterOnboardingStep {
-  company
   requester_info
   work_location
   review
@@ -2366,7 +2375,9 @@ model RequesterProfile {
 
   /// Resume point for the wizard — same save-as-you-go contract the provider
   /// wizard uses, so a half-finished requester lands back where they stopped.
-  onboarding_step RequesterOnboardingStep @default(company)
+  /// ⚠ THE DEFAULT MOVED WITH THE STEP LIST (`E418`) — it was `company`, which
+  /// is no longer a member of the enum. A new requester starts on step 1.
+  onboarding_step RequesterOnboardingStep @default(requester_info)
   /// Set when the wizard finishes — the "Ready to Post Work Request" state.
   completed_at    DateTime?
 

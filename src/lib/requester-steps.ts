@@ -8,10 +8,40 @@
  * 'dns'`. Client-safe constants live apart from the server logic that uses them.
  */
 /*
-  ── ⚠⚠ FOUR STEPS, NOT FIVE (`P1-J1.1-E263`, 2026-08-30) ────────────────────
+  ── ⚠⚠ THREE STEPS, NOT FOUR (`P1-A1.4-E418`, 2026-09-11) ───────────────────
 
-  ⚠ SUPERSEDED, quoted not deleted: this list used to read
-  `company · requester_info · buyer_approver · work_location · review`.
+  ⚠ SUPERSEDED, quoted not deleted: this list read
+  `company · requester_info · work_location · review` until `E418`, and
+  `company · requester_info · buyer_approver · work_location · review` before
+  `E263` removed the approver step.
+
+  SCOTT, 2026-09-11: *"Regarding the company… strip it all out."* And on WHY it
+  cannot be asked here even as a label: *"For ALL users (buyers and sellers) we
+  will get their company information during the work order acceptance. IF you
+  are going to accept the WO... on behalf of whom?"*
+
+  ⚠⚠ THE PO IS THE FIRST TIME A COMPANY NAME EXISTS FOR AN ERP CLIENT, so the
+  web path must not demand one earlier — the two paths have to agree on when a
+  buyer becomes a company. To register, read communities, search talent and
+  service products, connect, learn, post a work request, create a service
+  product, interview and request a test, Panameer needs ONLY the person's
+  details.
+
+  ⚠ THE COMPANY IS CAPTURED EXACTLY ONCE, AT WORK ORDER ACCEPTANCE. That gate is
+  NOT BUILT — see the TODO on `acceptOrder` in `lib/orders.ts`, which is the
+  single capture point. A gate written anywhere earlier is the defect this
+  removed.
+
+  ⚠ `Person.company_id` STILL EXISTS AND IS STILL SEEDED at signup — it is the
+  P-Account → Company → Site → Address → Person backbone, not an answer the
+  requester gave. `E418` removed the QUESTION, not the column.
+
+  ⚠⚠ THIS LIST IS MIRRORED BY THE `RequesterOnboardingStep` ENUM in
+  `schema.prisma` (`E271`) — it stopped being a free String so the admin
+  progression strip could count buckets that are actually enumerable. THE TWO
+  MUST STAY IN STEP. Adding a value here without adding it there means a resume
+  point the database will refuse to store. ⚠ `E418` moved BOTH, and moved the
+  column's `@default` off `company` with them.
 
   Scott: *"we can leave it in the first onboarding page (for now), but it is
   likely to come out at some point."* So the SCREEN is gone and the MODEL is
@@ -26,7 +56,6 @@
   point the database will refuse to store.
 */
 export const REQUESTER_STEPS = [
-  "company",
   "requester_info",
   "work_location",
   "review",
@@ -48,6 +77,11 @@ export type RequesterStep = (typeof REQUESTER_STEPS)[number];
  * *"Your Company · You · Work Location"*, and the hardcoded cards before that
  * read *"Your company · You and your approver · Where the work happens"*.
  *
+ * ⚠ `company: "Company Details"` LEFT THIS MAP WITH THE STEP (`E418`). The cards
+ * derive from `REQUESTER_WORK_STEPS`, so the intro page went from three tiles to
+ * two WITHOUT ANY HAND-EDITING — which is the property `E243`/`E259` built and
+ * the one the acceptance criteria re-assert.
+ *
  * ⚠ `review` IS DELIBERATELY ABSENT. It is not work the requester does; it is
  * the wizard showing back what they already answered. The start page filters it
  * out rather than this map carrying a name nobody should render.
@@ -57,7 +91,6 @@ export type RequesterStep = (typeof REQUESTER_STEPS)[number];
  * stepper, and the difference is reported rather than silently unified.
  */
 export const REQUESTER_STEP_LABELS: Record<RequesterStep, string> = {
-  company: "Company Details",
   requester_info: "Requester Details",
   work_location: "Location Details",
   review: "Review",
