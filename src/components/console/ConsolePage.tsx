@@ -49,10 +49,28 @@ export function TileRow({ tiles }: { tiles: Tile[] }) {
                 metric to be defined
               </p>
             ) : (
+              /*
+                ── ⚠ THE COUNTS ARE INK, NOT MAGENTA (`P1-A1.5-E430` WS-5a) ──
+
+                **SCOTT, 2026-09-12:** *"the numbers on the tiles… not good pink.
+                it is too much. lets change those to black."*
+
+                ⚠ SUPERSEDED, quoted not deleted: `(known ? "text-magenta" : …)`.
+                At 26px, repeated across the top of every console page, the
+                accent stopped being an accent. ⚠ MAGENTA STAYS FOR INTERACTIVE
+                THINGS — links, the active rail item, buttons. A COUNT IS NOT
+                INTERACTIVE.
+                ⚠ `TileRow` IS SHARED: eight admin pages import it directly and
+                `StubConsolePage`/`SpecPage` carry it to nine more, so this lands
+                on every console page that draws tiles. Reported before shipping,
+                not discovered after.
+                ⚠ THE UNKNOWN STATE IS UNCHANGED — `text-ink-2/30` on "—", so a
+                real count and a placeholder still look different.
+              */
               <p
                 className={
                   "mt-1 font-display text-[26px] font-bold leading-none " +
-                  (known ? "text-magenta" : "text-ink-2/30")
+                  (known ? "text-ink" : "text-ink-2/30")
                 }
               >
                 {known ? t.value : "—"}

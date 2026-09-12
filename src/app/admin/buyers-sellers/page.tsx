@@ -14,6 +14,14 @@ import {
   sidesFor,
   type OnboardingStatus,
 } from "@/lib/onboarding-status";
+import {
+  LEVEL_TILES,
+  levelCounts,
+  levelFor,
+  blockingFor,
+  type LevelSubject,
+} from "@/lib/user-levels";
+import { REGISTERED_SITE_NAME } from "@/lib/company";
 
 export const dynamic = "force-dynamic";
 
@@ -78,11 +86,35 @@ export default async function Page() {
       is_service_provider: true,
       is_service_coordinator: true,
       is_support: true,
-      company: { select: { name: true } },
+      /*
+        ⚠ THE COLUMNS THE LIFECYCLE LEVELS NEED (`P1-A1.5-E430` WS-4), loaded in
+        the SAME single read as everything else — `lib/user-levels.ts` takes a
+        total shape on purpose, so a caller cannot forget one and have a level
+        silently fail. ⚠ `Company.name` IS NOT A LEVEL SIGNAL: every account is
+        given a placeholder company named after the person (`E418`).
+      */
+      phone: true,
+      title: true,
+      photo_url: true,
+      company: {
+        select: {
+          name: true,
+          tax_type: true,
+          tin: true,
+          /* The `Registered` site's address is Level 2's address (`E280`). */
+          sites: {
+            where: { name: REGISTERED_SITE_NAME },
+            select: { addresses: { select: { id: true }, take: 1 } },
+            take: 1,
+          },
+        },
+      },
+      payoutMethods: { select: { id: true }, take: 1 },
       user: {
         select: {
           email: true,
           email_verified: true,
+          tos_accepted_at: true,
           locked: true,
           locked_until: true,
           failed_login_attempts: true,
@@ -129,6 +161,40 @@ export default async function Page() {
       sideTotal++;
     }
   }
+
+  /*
+    ── ⚠⚠ THE LIFECYCLE FUNNEL, CUMULATIVE (`P1-A1.5-E430` WS-4 / WS-5b) ──────
+
+    **SCOTT, 2026-09-12:** *"replace the four wizard-status tiles with FIVE
+    lifecycle tiles (verified -> user -> company -> payee, plus total). Counts
+    cumulative so the drop-off between stages is visible."*
+
+    ⚠⚠ COUNTED PER **PERSON**, WHERE THE OLD TILES COUNTED PER **SIDE**, and the
+    caption under the strip had to change with them. A level is a capability the
+    PERSON holds; a wizard status belongs to a side. Counting levels per side
+    would double every dual-role account and make the funnel wider than the
+    headcount.
+
+    ⚠ NEITHER MODEL IS RENAMED, on Scott's instruction. `ONBOARDING_STATUSES`
+    still exists, still means what it meant, and still drives the trend
+    sub-page and the Validation column.
+  */
+  const subjects: LevelSubject[] = people.map((p) => ({
+    firstName: p.first_name,
+    lastName: p.last_name,
+    emailVerified: p.user?.email_verified ?? null,
+    tosAcceptedAt: p.user?.tos_accepted_at ?? null,
+    phone: p.phone,
+    title: p.title,
+    hasProfile: !!p.requesterProfile || !!p.providerProfile,
+    companyTaxType: p.company?.tax_type ?? null,
+    companyTin: p.company?.tin ?? null,
+    companyRegisteredAddress: (p.company?.sites?.[0]?.addresses?.length ?? 0) > 0,
+    payoutMethodCount: p.payoutMethods.length,
+  }));
+  const levelTotals = levelCounts(subjects);
+  /** Per-person level, by row, so the grid and the tiles cannot disagree. */
+  const levelByPerson = new Map(people.map((p, i) => [p.id, subjects[i]]));
 
   const buyers = people.filter((p) => p.is_service_buyer).length;
   const providers = people.filter((p) => p.is_service_provider).length;
@@ -235,38 +301,48 @@ export default async function Page() {
       <BoardRefresh readAt={readAt} />
 
       {/*
-        THE PROGRESSION STRIP (`E256`) — one tile per status, in Scott's order,
-        with a live count. ⚠ NOT CLICKABLE: see the `E257` note in the docblock.
+        ── ⚠⚠ FIVE LIFECYCLE TILES, NOT FOUR WIZARD STATUSES (WS-5b) ──────────
+
+        **SCOTT, 2026-09-12:** *"replace the four wizard-status tiles with FIVE
+        lifecycle tiles (verified -> user -> company -> payee, plus total).
+        Counts cumulative so the drop-off between stages is visible."*
+
+        ⚠ SUPERSEDED, quoted not deleted — the strip this replaces, which mapped
+        `ONBOARDING_STATUSES` and linked each tile to the trend sub-page:
+          THE PROGRESSION STRIP (`E256`) — one tile per status, in Scott's order,
+          with a live count.
+          <TileRow tiles={ONBOARDING_STATUSES.map((s) => ({ label: s,
+            value: counts.get(s) ?? 0,
+            href: `…/trend?status=${encodeURIComponent(s)}&period=month`,
+            hint: s === "Created" ? "No profile yet" : … }))} />
+
+        ⚠⚠ THE NEW TILES CARRY NO `href`, AND THAT IS DELIBERATE. The trend page
+        takes `?status=` from `ONBOARDING_STATUSES`; a Level 2 tile pointing at
+        it would ask for a status that does not exist and quietly render the
+        wrong series. The trend sub-page is out of scope here, so the link stays
+        in the caption below, where it is still true.
+        ⚠ THE PER-SIDE COUNTS ARE NOT DELETED — `counts` and `sideTotal` still
+        feed that caption, and the Validation column still reads the per-side
+        statuses. Neither model is renamed.
       */}
       <TileRow
-        tiles={ONBOARDING_STATUSES.map((s) => ({
-          label: s,
-          value: counts.get(s) ?? 0,
-          /*
-            ⚠ CLICKABLE NOW (`E257`). `Tile` already carried an optional `href`,
-            so the shared primitive did not need changing — the tiles simply
-            stopped declining to use it.
-          */
-          href: `/admin/buyers-sellers/trend?status=${encodeURIComponent(s)}&period=month`,
-          hint:
-            s === "Created"
-              ? "No profile yet"
-              : s === "In-Process"
-                ? "Started, not finished"
-                : s === "Complete"
-                  ? "Finished onboarding"
-                  : "Granted validation",
+        tiles={LEVEL_TILES.map((t) => ({
+          label: t.label,
+          value: levelTotals[t.level] ?? 0,
+          hint: t.hint,
         }))}
       />
       <p className="mt-2 mb-6 text-[12.5px] text-ink-2">
-        Derived from existing state — there is no status column. Counted per SIDE,
-        so a dual-role account appears once as a buyer and once as a seller:{" "}
-        {sideTotal} sides across {people.length} people.{" "}
+        The lifecycle, counted per PERSON and cumulative — each stage includes
+        everyone past it, so the drop-off between two stages is the gap between
+        two tiles. Levels 2 and 3 are unbuilt, so a low count there is an honest
+        gap rather than a bug. <b>{people.length}</b> people. The wizard statuses
+        are a different model, counted per SIDE ({sideTotal} sides), and{" "}
         <Link
           href="/admin/buyers-sellers/trend?status=all&period=month"
           className="font-semibold text-magenta hover:underline"
         >
-          Click any tile for its trend, or see all four steps
+          they keep their own trend
         </Link>
         .
       </p>
