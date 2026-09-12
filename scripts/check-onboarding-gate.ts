@@ -1,5 +1,6 @@
 import {
   computeProviderCompleteness,
+  COMPLETENESS_WEIGHTS,
   VISIBILITY_THRESHOLD,
   type CompletenessInput,
 } from "../src/lib/completeness";
@@ -49,7 +50,8 @@ function requiredOnly(over: Partial<CompletenessInput> = {}): CompletenessInput 
     skills: ["skill-1"], //                     3 Skills   (>= 1)
     hourly_rate_cents: 12500, //                4 Rate
     photoUrl: "https://example.test/p.png", //  5 Photo
-    hasCompany: true, //                        6 Company (approved membership)
+    /* ⚠ `hasCompany: true` REMOVED (`E418`) — company is no longer in the
+       required set, so the fixture cannot claim it. */
     hasAddress: true, //                        contact
     hasPhone: true, //                          contact
     // --- everything the slimdown REMOVED as a prompted step ---------------
@@ -125,7 +127,16 @@ for (const [label, over] of [
   ["no skills", { skills: [] }],
   ["no rate", { hourly_rate_cents: null }],
   ["no photo", { photoUrl: null }],
-  ["no company", { hasCompany: false }],
+  /*
+    ⚠ SUPERSEDED, quoted not deleted (`P1-A1.4-E418`):
+        ["no company", { hasCompany: false }],
+
+    Company left the required set with the company step — no journey collects
+    one, so this case asserted that a provider who answered every question they
+    were shown is invisible. ⚠ THE CASE IS NOT REPLACED BY A WEAKER ONE: the
+    seven remaining required fields are each still asserted here, and `E418`'s
+    own assertion that company is ABSENT from the set lives below.
+  */
   ["no address", { hasAddress: false }],
   ["no phone", { hasPhone: false }],
 ] as [string, Partial<CompletenessInput>][]) {
@@ -145,6 +156,40 @@ for (const [label, over] of [
     visible,
     missing: missingRequired(p),
   });
+}
+
+console.log("=== ⚠⚠ COMPANY IS NOT IN THE REQUIRED SET (P1-A1.4-E418) ===");
+{
+  /*
+    SCOTT, 2026-09-11: *"Regarding the company… strip it all out."* The company
+    is captured ONCE, at work order acceptance — never at registration and never
+    as a condition of being visible or publishable.
+
+    ⚠ THIS IS THE MUTATION TEST THE BRIEF ASKS FOR, as an assertion: put the
+    requirement back and this goes red.
+  */
+  const full = requiredOnly();
+  check(
+    "⚠⚠ a provider with NO company is still complete and visible",
+    missingRequired(full).length === 0 &&
+      isMarketplaceVisible({
+        status: "ACTIVE",
+        completeness: computeProviderCompleteness(full),
+        paused_at: null,
+        meetsRequired: meetsRequiredSet(full),
+      }),
+    { missing: missingRequired(full) }
+  );
+  check(
+    "⚠ the refusal never names a company",
+    !missingRequired({ ...full, headline: null }).some((m) => /company/i.test(m)),
+    { missing: missingRequired({ ...full, headline: null }) }
+  );
+  check(
+    "⚠ the weights table carries no company weight",
+    !Object.keys(COMPLETENESS_WEIGHTS).includes("company"),
+    { keys: Object.keys(COMPLETENESS_WEIGHTS) }
+  );
 }
 
 console.log("=== a full profile still reaches 100 ===");

@@ -64,12 +64,20 @@ export type CompletenessInput = {
   specializations: unknown[];
   /** Person.photo_url (lives on the Person, not the profile). */
   photoUrl: string | null;
-  /**
-   * An APPROVED company membership (brief_company_model). Part of the required
-   * set: a work order is between COMPANIES, so a provider without one cannot be
-   * contracted, which makes showing them to buyers a promise we can't keep.
-   */
-  hasCompany: boolean;
+  /*
+    ⚠⚠ `hasCompany` IS GONE (`P1-A1.4-E418`, 2026-09-11).
+
+    ⚠ SUPERSEDED, quoted not deleted: *"An APPROVED company membership
+    (brief_company_model). Part of the required set: a work order is between
+    COMPANIES, so a provider without one cannot be contracted, which makes
+    showing them to buyers a promise we can't keep."*
+
+    A provider is never asked for a company, so the weight was unreachable and
+    the requirement unsatisfiable — every new provider would have been held
+    below the bar by a question the wizard does not ask. The company is captured
+    once, at work order acceptance (`lib/orders.ts`), which is the moment the
+    superseded sentence was really describing.
+  */
   /**
    * ⚠ NO LONGER SCORED (WS7). Kept on the type — and nullable in the schema —
    * because the column still exists and old rows still carry a value; nothing
@@ -103,18 +111,43 @@ export type CompletenessInput = {
  * Missing BOTH still caps at 95, which is the honest floor: at that point two
  * described things really are absent.
  */
+/*
+  ── ⚠⚠ REBALANCED AGAIN IN `P1-A1.4-E418` (2026-09-11) ──────────────────────
+
+  ⚠ SUPERSEDED, quoted not deleted: `company: 10, //    6  Company  (an APPROVED
+  membership)`, with the others at `headline: 12 · field: 12 · skills: 16 ·
+  rate: 12 · identity: 12`.
+
+  The company weight was removed with the company step, and REMOVING TEN POINTS
+  WITHOUT REDISTRIBUTING THEM WOULD HAVE CAPPED A PERFECT PROFILE AT 96 — the
+  precise trap the PJv2 WS7 note below records, where the table summed to 95 and
+  a flawless provider sat five points under its own 100. So the ten points go
+  back onto the fields that survive, and the table still sums to 106.
+
+  ⚠ MEASURED, not assumed — the three invariants below, before and after:
+      full profile        106 → capped 100   (unchanged)
+      NO LANGUAGE         102 → capped 100   (unchanged)
+      no photo             96                (unchanged — see the ⚠ below)
+      neither              92                (unchanged)
+
+  ⚠⚠ THE DOCBLOCK'S INVARIANT (3) IS STALE AND `E418` DID NOT SILENTLY "FIX" IT.
+  It claims a photo-less profile reaches 100. It reaches 96 and did so before
+  this change too — the `110 → cap` arithmetic it quotes belongs to a table that
+  no longer exists (the numbers sum to 106, as line 124 itself says). `E418`
+  deliberately holds that number EXACTLY where it found it rather than changing
+  behaviour nobody asked to change. ⚠ REPORTED, not resolved by choosing.
+*/
 export const COMPLETENESS_WEIGHTS = {
   // --- THE REQUIRED SET — every one of these is a prompted step ------------
-  headline: 12, //   1  Title
-  field: 12, //      2  Role(s)
-  skills: 16, //     3  Skills   (>= 1, the step's own rule)
-  rate: 12, //       4  Rate
-  photo: 10, //      5  Photo
-  company: 10, //    6  Company  (an APPROVED membership)
-  identity: 12, //      address + phone — collected on the photo step
-  // Required subtotal: 84. Above the 80 threshold with four points of margin,
-  // and deliberately NOT 100 — a provider who did the minimum is Visible, not
-  // Complete, and the meter has to have somewhere left to go.
+  headline: 14, //   1  Title
+  field: 14, //      2  Role(s)
+  skills: 18, //     3  Skills   (>= 1, the step's own rule)
+  rate: 14, //       4  Rate
+  photo: 10, //      5  Photo    (⚠ HELD AT 10 — see the invariants above)
+  identity: 14, //      address + phone — collected on the photo step
+  // Required subtotal: 84, unchanged. Above the 80 threshold with four points of
+  // margin, and deliberately NOT 100 — a provider who did the minimum is
+  // Visible, not Complete, and the meter has to have somewhere left to go.
 
   // --- ENRICHMENT — no longer prompted, still worth points ----------------
   overview: 8, //    a bio (>= BIO_MIN_CHARS)
@@ -146,8 +179,9 @@ export type RequiredSetInput = Pick<
   rate_max_cents?: number | null;
   onsite_rate_cents?: number | null;
   remote_rate_cents?: number | null;
-  /** An APPROVED company membership exists (brief_company_model). */
-  hasCompany: boolean;
+  /* ⚠ `hasCompany: boolean` REMOVED (`E418`) — see `CompletenessInput` above.
+     Removing it from the TYPE is the point: a caller that still computed one
+     would otherwise pass it silently into a set that ignores it. */
 };
 
 /** Which required items are still missing. Empty means publishable + Visible. */
@@ -158,7 +192,12 @@ export function missingRequired(p: RequiredSetInput): string[] {
   if (p.skills.length < 1) missing.push("at least one skill");
   if (!hasAnyRate(p)) missing.push("your rate");
   if (!p.photoUrl) missing.push("a photo");
-  if (!p.hasCompany) missing.push("your company");
+  /* ⚠ SUPERSEDED, quoted not deleted (`E418`):
+       `if (!p.hasCompany) missing.push("your company");`
+     ⚠ THE STRING MATTERED: `identity-bar.ts` maps "your company" to the
+     `approvedCompany` gate field, so this line was the provider half of the
+     same requirement the work-request bar carried on the buyer half. Both went
+     in one change — a gate is not removed until every layer of it is. */
   if (!p.hasAddress) missing.push("your address");
   if (!p.hasPhone) missing.push("your phone number");
   return missing;
@@ -198,7 +237,7 @@ export function computeProviderCompleteness(p: CompletenessInput): number {
   if (p.skills.length >= 1) score += W.skills;
   if (hasAnyRate(p)) score += W.rate;
   if (p.photoUrl) score += W.photo;
-  if (p.hasCompany) score += W.company;
+  /* ⚠ `if (p.hasCompany) score += W.company;` — removed with the weight (`E418`). */
 
   /*
     IDENTITY IS ADDRESS + PHONE. Date of birth left the wizard entirely (WS7),

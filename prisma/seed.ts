@@ -693,8 +693,10 @@ async function main() {
         certifications: full.certifications,
         specializations: full.specializations,
         photoUrl: full.person.photo_url,
-        // WS6 — the demo provider is bound to the seeded company.
-        hasCompany: true,
+        /* ⚠ `hasCompany: true` REMOVED (`P1-A1.4-E418`) — *"WS6 — the demo
+           provider is bound to the seeded company"*. The field left
+           `CompletenessInput` with the company step; the seeded MEMBERSHIP row
+           is untouched and nothing is back-filled or deleted. */
         date_of_birth: full.date_of_birth,
         hasAddress: Boolean(full.person.site?.addresses?.[0]?.line1?.trim()),
         hasPhone: Boolean(full.person.phone?.trim()),

@@ -680,6 +680,42 @@ async function loadParty(viewer: Viewer, id: string) {
 /**
  * ⚠⚠ THE PROVIDER ACCEPTS. THE BOUNDARY, NOT THE BUTTON.
  *
+ * ── ⚠⚠ TODO (`P1-A1.4-E418`): THIS IS THE SINGLE COMPANY CAPTURE POINT ───────
+ *
+ * **SCOTT, 2026-09-11:** *"For ALL users (buyers and sellers) we will get their
+ * company information during the work order acceptance. IF you are going to
+ * accept the WO... on behalf of whom?"* And: *"Regarding the company… strip it
+ * all out."*
+ *
+ * ⚠ `E418` REMOVED THE COMPANY FROM EVERY REGISTRATION PATHWAY — provider,
+ * recruiter, requester and buyer — and from every gate that stood in front of
+ * community, learning, search, connecting, work requests and service products.
+ * A company is asked for EXACTLY ONCE, HERE, and this function does not ask for
+ * it yet. ⚠⚠ THE GATE IS NOT BUILT. That is deliberate, not an oversight:
+ * `WorkRequest` rows numbered ZERO when `E418` shipped and nothing issues a work
+ * order, so a gate written now would guard an event that never fires while
+ * looking like an enforced rule — the failure mode `requester-onboarding.ts`
+ * records at length. ⚠ DO NOT PUT IT ANYWHERE EARLIER TO MAKE IT REACHABLE.
+ *
+ * WHY HERE AND NOT AT THE WORK REQUEST: a seller's first sight of a buyer is the
+ * request, but a request is a QUESTION. Acceptance is where a counterparty
+ * obligation begins, and it is the moment the ERP path already has a company
+ * name — the PO. The two paths have to agree on when a buyer becomes a company.
+ *
+ * WHAT IT SHOULD COLLECT, and what is already on disk to do it with (`E164`):
+ *   · `components/company/CompanyStep.tsx` — the whole form, unrouted since
+ *     `E418`: name, the define/join outcome, the attestation, the company ToS.
+ *   · `defineCompany` / `joinCompany` (`lib/company.ts`) — the only writers of
+ *     `CompanyMembership`, untouched.
+ *   · `verifyTransactAbility` (`lib/access.ts`) + `TRANSACT_MESSAGE` — the gate
+ *     itself, with `NO_COMPANY` / `PENDING_APPROVAL` / `REJECTED` /
+ *     `COMPANY_TOS`, now called by nothing. Re-point `checkTransact` at it, or
+ *     call it directly from this function.
+ *   · `Company.tin` (EIN, `E273`) and the registered `Site`/`Address` (`E280`) —
+ *     the columns `P1-J1.1-E274` says a work order needs before it is a legal
+ *     document. ⚠ BOTH SIDES: the buyer accepts on behalf of someone too, so the
+ *     buyer's capture belongs on the ISSUE/RELEASE half, not only here.
+ *
  * ⚠ IT ASKS `availableActions` RATHER THAN RE-TESTING THE PARTY AND THE STATUS.
  * Re-testing here would be a second definition of the rule, and the second
  * definition is the one that gets a special case added to it six months later.

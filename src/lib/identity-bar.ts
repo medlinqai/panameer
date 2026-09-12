@@ -25,14 +25,19 @@
  * **Scott's rule: the bar rises with what the platform must do next.**
  *
  *   COMMUNITY_BAR      name · photo · job title
- *   WORK_REQUEST_BAR   those THREE, plus an approved company membership and a
- *                      company name and country
+ *   WORK_REQUEST_BAR   the same three (`P1-A1.4-E418`)
  *
- * ⚠ COMMUNITY DELIBERATELY HAS NO COMPANY REQUIREMENT. A learner with no
- * employer — a student, someone between roles — belongs in the community.
- * Community involves no money and no counterparty obligation; a work order is
- * between companies (`lib/onboarding.ts:2360`), which is why that one asks for
- * more. ⚠ DO NOT "TIDY" THESE INTO ONE BAR.
+ * ⚠ SUPERSEDED, quoted not deleted: *"WORK_REQUEST_BAR — those THREE, plus an
+ * approved company membership and a company name and country"*, and the reason
+ * given for the difference: *"Community involves no money and no counterparty
+ * obligation; a work order is between companies, which is why that one asks for
+ * more."*
+ *
+ * ⚠⚠ THAT REASONING WAS ABOUT A WORK **ORDER**, AND IT WAS ATTACHED TO THE WRONG
+ * EVENT. A work request is a question, not a contract — the counterparty
+ * obligation begins at work order acceptance, which is exactly where `E418`
+ * moved the company capture. Neither bar asks for a company now, and both still
+ * exist as separate rules. ⚠ STILL DO NOT "TIDY" THESE INTO ONE BAR.
  *
  * ── ⚠ WHAT THIS IS NOT ───────────────────────────────────────────────────────
  *
@@ -45,24 +50,56 @@
 
 import { missingRequired, type RequiredSetInput } from "@/lib/completeness";
 
-export type IdentityField =
-  | "name"
-  | "photo"
-  | "jobTitle"
-  | "approvedCompany"
-  | "companyName"
-  | "companyCountry";
+/*
+  ── ⚠⚠ THE THREE COMPANY FIELDS LEFT THE FIELD SPACE (`P1-A1.4-E418`) ───────
+
+  ⚠ SUPERSEDED, quoted not deleted, so work order acceptance can restore them
+  verbatim: `| "approvedCompany" | "companyName" | "companyCountry"`.
+
+  They are not merely absent from every bar — they are GONE, because
+  `check:transaction-gates` holds the rule that a declared reason reachable from
+  no bar is DEAD COPY: *"an unused reason is dead copy — delete it or put the
+  field in a set."* With `E418` removing the company from every registration
+  pathway, no bar can reach them, so the honest move is the one that guard names
+  rather than an orphaned string nobody renders.
+
+  ⚠ THE COPY ITSELF IS PRESERVED IN `GATE_REASONS` BELOW, quoted. See the TODO on
+  `acceptOrder` in `lib/orders.ts` — that is where these three come back, with
+  their sets, their reasons and their links intact.
+*/
+export type IdentityField = "name" | "photo" | "jobTitle";
 
 /** Community: three fields, no company. */
 export const COMMUNITY_BAR: IdentityField[] = ["name", "photo", "jobTitle"];
 
-/** Posting a work request: the same three, plus the company (`P1-J4-E025`). */
-export const WORK_REQUEST_BAR: IdentityField[] = [
-  ...COMMUNITY_BAR,
-  "approvedCompany",
-  "companyName",
-  "companyCountry",
-];
+/*
+  ── ⚠⚠ POSTING A WORK REQUEST ASKS FOR THE PERSON, NOTHING MORE (`E418`) ─────
+
+  ⚠ SUPERSEDED, quoted not deleted (`P1-J4-E025`):
+      export const WORK_REQUEST_BAR: IdentityField[] = [
+        ...COMMUNITY_BAR, "approvedCompany", "companyName", "companyCountry",
+      ];
+
+  SCOTT, 2026-09-11: to register, read communities, search talent and service
+  products, connect, learn, POST A WORK REQUEST, create a service product,
+  interview and request a test, Panameer needs ONLY the person's details.
+
+  ⚠⚠ AND THE ERP PATH IS WHY, not convenience: the PO is the first time a
+  company name exists for an ERP client, so the web path must not demand one
+  earlier — the two paths have to agree on when a buyer becomes a company. The
+  company is captured ONCE, at work order acceptance (`lib/orders.ts`).
+
+  ⚠ ALL THREE FIELDS WERE UNSATISFIABLE BY THE TIME THEY WERE REMOVED. Nothing
+  collects a company at registration any longer, so this bar would have refused
+  every buyer in the product — measured before the change: 9 of 26 buyer-side
+  people held an approved membership and only 3 had a company country.
+
+  ⚠ THE BAR IS A SEPARATE CONSTANT AND STAYS ONE even though it now equals
+  `COMMUNITY_BAR`. They are two rules that happen to agree today; collapsing
+  them into one name would make the next change to either silently change both,
+  and the docblock above is explicit that the difference is the point.
+*/
+export const WORK_REQUEST_BAR: IdentityField[] = [...COMMUNITY_BAR];
 
 /**
  * Everything either bar can ask about. ⚠ A CALLER SUPPLIES THE WHOLE SHAPE even
@@ -90,9 +127,11 @@ const SATISFIED: Record<IdentityField, (s: IdentitySubject) => boolean> = {
   name: (s) => filled(s.firstName) && filled(s.lastName),
   photo: (s) => filled(s.photoUrl),
   jobTitle: (s) => filled(s.jobTitle),
-  approvedCompany: (s) => s.hasApprovedCompanyMembership,
-  companyName: (s) => filled(s.companyName),
-  companyCountry: (s) => filled(s.companyCountry),
+  /* ⚠ SUPERSEDED, quoted not deleted (`E418`) — the three tests that went with
+     the fields:
+       `approvedCompany: (s) => s.hasApprovedCompanyMembership,`
+       `companyName: (s) => filled(s.companyName),`
+       `companyCountry: (s) => filled(s.companyCountry),` */
 };
 
 /**
@@ -259,21 +298,28 @@ export const GATE_REASONS: Record<GateField, { field: string; reason: string; hr
     reason: "Buyers filter by rate, and without one you won't appear in search.",
     href: "/settings/profile",
   },
-  approvedCompany: {
-    field: "Get your company membership approved",
-    reason: "A work order is between companies, so nobody can contract you as a person alone.",
-    href: "/settings/company",
-  },
-  companyName: {
-    field: "Add your company name",
-    reason: "A buyer needs to know which company they'd be contracting with.",
-    href: "/settings/company",
-  },
-  companyCountry: {
-    field: "Add your company's country",
-    reason: "It decides which buyers can hire you and how you'd get paid.",
-    href: "/settings/company",
-  },
+  /*
+    ⚠⚠ THE THREE COMPANY REASONS, PRESERVED FOR WORK ORDER ACCEPTANCE (`E418`).
+    ⚠ SUPERSEDED, quoted not deleted — restore these verbatim when the company is
+    asked for at acceptance, and put the fields back in a bar at the same time
+    (a reason with no bar is what `check:transaction-gates` calls dead copy):
+
+      approvedCompany: {
+        field: "Get your company membership approved",
+        reason: "A work order is between companies, so nobody can contract you as a person alone.",
+        href: "/settings/company",
+      },
+      companyName: {
+        field: "Add your company name",
+        reason: "A buyer needs to know which company they'd be contracting with.",
+        href: "/settings/company",
+      },
+      companyCountry: {
+        field: "Add your company's country",
+        reason: "It decides which buyers can hire you and how you'd get paid.",
+        href: "/settings/company",
+      },
+  */
   address: {
     field: "Add your address",
     reason: "Buyers filter by where you are, and on-site work needs to know you're reachable.",
@@ -433,7 +479,10 @@ export const REQUIRED_PHRASE_TO_FIELD: Record<string, GateField> = {
   "at least one skill": "skill",
   "your rate": "rate",
   "a photo": "photo",
-  "your company": "approvedCompany",
+  /* ⚠ SUPERSEDED, quoted not deleted (`P1-A1.4-E418`):
+       `"your company": "approvedCompany",`
+     `missingRequired` no longer returns "your company" — the phrase and the
+     field went together, which is what keeps this map TOTAL. */
   "your address": "address",
   "your phone number": "phone",
 };

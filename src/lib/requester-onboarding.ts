@@ -447,38 +447,21 @@ export async function saveRequesterStep(
   const p = await loadRequester(viewer);
   const rp = p.requesterProfile!;
 
-  if (step === "company") {
-    /*
-      THE COMPANY IS WRITTEN BY src/lib/company.ts, not here
-      (brief_company_model WS2).
+  /*
+    ⚠⚠ THERE IS NO `company` STEP TO HANDLE (`P1-A1.4-E418`, 2026-09-11).
 
-      This step used to rename the placeholder or re-point the person straight
-      from wizard input — an unverified attach with no attestation, no company
-      ToS and no admin approval. Define/join now goes through the shared company
-      building block, which records a real membership decision; all this step
-      does is confirm the binding exists and advance the resume point.
-    */
-    /*
-      ⚠⚠ NO BINDING CHECK ANY MORE (`P1-J1.1-E274`). The company is OPTIONAL at
-      onboarding — see the block on `requesterGaps` above for the rule and for
-      where it IS enforced.
+    ⚠ SUPERSEDED, quoted not deleted: an `if (step === "company") { }` block
+    stood here. It was already a NO-OP — `E274` had removed the last thing it
+    did, an APPROVED-membership lookup that threw
+    `OnboardingError("Choose or add your company before continuing", "INVALID")`
+    — and it survived only to document that the binding is written by
+    `lib/company.ts`, never by this module. With `company` gone from
+    `RequesterStep` the branch is unreachable by type, so the documentation moved
+    here and the dead branch went.
 
-      ⚠ SUPERSEDED, quoted not deleted: this step used to look up an APPROVED
-      `CompanyMembership` and throw
-      `OnboardingError("Choose or add your company before continuing", "INVALID")`
-      when there was none.
-
-      ⚠⚠ THIS WAS THE THIRD OF THREE GATES and the only SERVER-SIDE one, which
-      makes it the dangerous one: removing the two client gates and leaving this
-      would have produced a Continue button that posts, fails, and shows an error
-      the user cannot act on — a worse defect than the block it replaced.
-
-      ⚠ THE STEP STILL ADVANCES THE RESUME POINT, which is the whole of what it
-      does now. Somebody who DOES bind a company still gets the membership
-      written by `/api/company/define` or `/join`; this step never wrote it.
-    */
-  }
-
+    ⚠ `lib/company.ts` IS UNCHANGED AND STILL OWNS THE WRITE (`E164`). Work order
+    acceptance is where it gets called from next — see `acceptOrder`.
+  */
   if (step === "requester_info") {
     await prisma.person.update({
       where: { id: p.id },

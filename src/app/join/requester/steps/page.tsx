@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+/* ⚠ `useRef` LEFT WITH THE COMPANY STEP (`E418`) — it held `companySubmit`. */
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { WizardShell } from "@/components/onboarding/WizardShell";
 import { LocationFields, type LocationValue } from "@/components/onboarding/LocationFields";
@@ -9,13 +10,23 @@ import { PhoneField } from "@/components/onboarding/PhoneField";
 import { Avatar } from "@/components/Avatar";
 import { PhotoCropModal } from "@/components/onboarding/PhotoCropModal";
 import { isPhoneComplete } from "@/lib/phone";
-import { CompanyStep, type CompanyOutcome } from "@/components/company/CompanyStep";
 import { REQUESTER_STEPS, type RequesterStep } from "@/lib/requester-steps";
 
 /**
- * The REQUESTER wizard — FOUR steps on the provider's shell (P1-J1.2 WS2).
+ * The REQUESTER wizard — THREE steps on the provider's shell (P1-J1.2 WS2).
  *
- * ⚠ IT WAS FIVE UNTIL `P1-J1.1-E263` (2026-08-30) removed `buyer_approver`.
+ * ⚠⚠ THE COMPANY STEP IS GONE (`P1-A1.4-E418`, 2026-09-11) — the whole screen,
+ * not just its requirement. Scott: *"Regarding the company… strip it all out."*
+ * A company is captured ONCE, at work order acceptance (`lib/orders.ts`), so
+ * that the web path and the ERP path agree on when a buyer becomes a company:
+ * the PO is the first time a company name exists for an ERP client.
+ *
+ * ⚠ `CompanyStep` IS NOT DELETED (`E164`) — it is unimported HERE and lives on
+ * for the work-order-acceptance capture. This file no longer references it, its
+ * outcome type, or any company state.
+ *
+ * ⚠ IT WAS FOUR UNTIL `E418`, and FIVE UNTIL `P1-J1.1-E263` removed
+ * `buyer_approver`.
  * The columns behind that screen are still on `RequesterProfile` and still in
  * the step route's zod schema — see `lib/requester-steps.ts` for why.
  *
@@ -33,22 +44,26 @@ import { REQUESTER_STEPS, type RequesterStep } from "@/lib/requester-steps";
   THE IN-WIZARD STEPPER'S LABELS — deliberately NOT the pre-flight card names.
 
   `REQUESTER_STEP_LABELS` in `lib/requester-steps.ts` carries Scott's tile names
-  ("Company Details" / "Requester Details" / "Location Details"). He named the
-  TILES on the intro page (`E259`), not this stepper, so the two are reported as
-  different rather than silently unified into one string.
+  ("Requester Details" / "Location Details"). He named the TILES on the intro
+  page (`E259`), not this stepper, so the two are reported as different rather
+  than silently unified into one string. ⚠ DO NOT UNIFY THEM.
   ⚠ SUPERSEDED, quoted: this map also held `buyer_approver: "Buyer & Approver"`
-  before `E263` removed that step.
+  before `E263` removed that step, and `company: "Your Company"` before `E418`
+  removed the company step from every journey.
 */
 const LABELS: Record<RequesterStep, string> = {
-  company: "Your Company",
   requester_info: "Requester Information",
   work_location: "Work Location",
   review: "Review",
 };
 
+/*
+  ⚠ NO `companyId` / `companyName` (`E418`). The wizard collects no company at
+  all, so carrying either would be a field with no question behind it — and
+  `companyName` in particular was the signup placeholder, which is how a
+  requester ended up "working for a company named after themselves".
+*/
 type Draft = {
-  companyId: string | null;
-  companyName: string;
   firstName: string;
   lastName: string;
   /* `E281` — both already columns on `Person`; the wizard just never asked. */
@@ -67,8 +82,6 @@ type Draft = {
 };
 
 const EMPTY: Draft = {
-  companyId: null,
-  companyName: "",
   firstName: "",
   lastName: "",
   photoUrl: null,
@@ -87,27 +100,19 @@ const EMPTY: Draft = {
 export default function RequesterStepsPage() {
   const router = useRouter();
   const [ready, setReady] = useState(false);
-  const [step, setStep] = useState<RequesterStep>("company");
+  const [step, setStep] = useState<RequesterStep>(REQUESTER_STEPS[0]);
   const [draft, setDraft] = useState<Draft>(EMPTY);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   /*
-    THE COMPANY STEP IS NOW THE SHARED BUILDING BLOCK (brief_company_model WS2).
-
-    It owns its own define-or-join state and posts to /api/company/*, so this
-    wizard no longer carries a picker, a typeahead or a companyName field. What
-    it keeps is the Continue button — the step reports validity and hands back a
-    submit function, because two primary actions on one screen is the confusion
-    the shared footer band exists to prevent.
+    ⚠ SUPERSEDED, quoted not deleted (`E418`): this wizard held five pieces of
+    company state — `companySubmit`, `companyValid`, `companyHasName`,
+    `companyBusy` and `pendingCompany` — to drive the embedded `CompanyStep` and
+    its define-or-join outcome. With no company question there is nothing to
+    submit, nothing to validate and no PENDING approval to wait on, because
+    nobody is claiming a company at registration any more.
   */
-  const companySubmit = useRef<null | (() => void)>(null);
-  const [companyValid, setCompanyValid] = useState(false);
-  /* `P2-J1.1-E025` — "there is a name worth keeping", which is NOT the same
-     question as "this company can be defined". See the branch below. */
-  const [companyHasName, setCompanyHasName] = useState(false);
-  const [companyBusy, setCompanyBusy] = useState(false);
-  const [pendingCompany, setPendingCompany] = useState<CompanyOutcome | null>(null);
   /* `E281` — drives the SHARED `PhotoCropModal`, the provider wizard's own uploader. */
   const [photoModal, setPhotoModal] = useState(false);
 
@@ -116,16 +121,17 @@ export default function RequesterStepsPage() {
     completed: boolean;
     resumeStep: string;
     /*
-      ⚠ THE REAL BINDING, from `/api/onboarding/requester/status`. Added to this
-      type by `E274` so the Review row can ask whether a company EXISTS rather
-      than inferring it from the resume point — see `companyAnswered` below.
-      Optional because the same endpoint shape is used before the lookup runs.
+      ⚠ STILL ON THE PAYLOAD, NO LONGER READ HERE (`E418`). The status endpoint
+      keeps returning the binding — `/company` and the admin surfaces read it —
+      but this wizard asks no company question, so it consumes none of it.
+      ⚠ SUPERSEDED, quoted not deleted: `E274` added it so the Review row could
+      ask whether a company EXISTS rather than infer it from the resume point.
     */
     company?: { bound?: boolean } | null;
     profile: {
       firstName: string; lastName: string; phone: string | null;
       photoUrl: string | null; title: string | null;
-      employeeId: string | null; companyName: string;
+      employeeId: string | null;
       buyerName: string | null; buyerEmail: string | null;
       approverName: string | null; approverEmail: string | null;
       address: LocationValue | null; workLocation: LocationValue | null;
@@ -133,47 +139,23 @@ export default function RequesterStepsPage() {
   }) => {
     const p = s.profile;
     /*
-      THE SIGNUP PLACEHOLDER IS NOT AN ANSWER.
+      ⚠⚠ THE WHOLE "IS THE PLACEHOLDER AN ANSWER?" PROBLEM IS GONE (`E418`).
 
-      Every account is created with a company named after the person, so the
-      company on the record before step 1 is saved reads "Nora Requester". Seeded
-      into this field it becomes a pre-filled, valid-looking answer, and a
-      requester who clicks straight through ends up working for a company named
-      after themselves. Caught walking the wizard: the review page said COMPANY:
-      Nora Requester.
-
-      The step is answered once the server's resume point has moved past it.
-    */
-    /*
-      ⚠⚠ "ANSWERED" NOW MEANS **BOUND**, NOT "PAST THAT STEP" (`P1-J1.1-E274`).
-
-      ⚠ SUPERSEDED, quoted not deleted:
+      ⚠ SUPERSEDED, quoted not deleted — two successive fixes to one defect:
         `const companyAnswered =
            REQUESTER_STEPS.indexOf(s.resumeStep) > REQUESTER_STEPS.indexOf("company");`
+        `const companyAnswered = !!s.company?.bound;`
+        `const companyName = companyAnswered ? (p.companyName ?? "") : "";`
 
-      That heuristic was correct while the company step was MANDATORY — being
-      past it proved you had answered it. `E274` made the step SKIPPABLE, and the
-      moment it did, "past it" stopped implying "answered" and this line started
-      reporting the signup placeholder as a real company.
-
-      ⚠ CAUGHT BY WALKING GATE 7, NOT BY READING: a requester who skipped the
-      step reached Review and saw `COMPANY: Test User 5` — the placeholder named
-      after themselves — which is EXACTLY the defect the block above warns about
-      ("a requester who clicks straight through ends up working for a company
-      named after themselves. Caught walking the wizard: the review page said
-      COMPANY: Nora Requester"). Making the step optional re-opened it.
-
-      ⚠ THE SERVER ALREADY KNOWS THE ANSWER. `s.company.bound` is a real
-      `CompanyMembership` lookup, so this asks the question directly instead of
-      inferring it from a resume point — which is also why it cannot drift again
-      the next time the step order changes.
+      Every account is still created with a company named after the person
+      (the P-Account → Company → Site → Address → Person backbone), and that
+      placeholder is still not an answer — which is why the review card showed
+      `COMPANY: Nora Requester` twice in this journey's history. `E418` removes
+      the QUESTION, so there is no field for a placeholder to leak into and no
+      "answered" to infer. The trap cannot re-open, because the screen it
+      re-opened on no longer exists.
     */
-    const companyAnswered = !!s.company?.bound;
-    const companyName = companyAnswered ? (p.companyName ?? "") : "";
-
     setDraft({
-      companyId: null,
-      companyName,
       firstName: p.firstName ?? "",
       lastName: p.lastName ?? "",
       photoUrl: p.photoUrl ?? null,
@@ -208,30 +190,40 @@ export default function RequesterStepsPage() {
         return;
       }
       /*
-        ── ⚠ DO NOT THROW OUT SOMEBODY THIS WIZARD IS THE ONLY CURE FOR ────────
-        (P1-J1.2-E005)
+        ── ⚠⚠ THE UNBOUND BOUNCE IS GONE (`P1-A1.4-E418`) ──────────────────────
 
-        A completed requester WITH a company binding belongs on /ready and that
-        redirect is right, unchanged. A completed requester with NO binding is the
-        orphan this brief exists for: `requesterGaps` used to pass them on the
-        strength of the signup placeholder's NAME, so `completed_at` got written
-        while `Person.companyMemberships` stayed empty. They cannot transact, and
-        `CompanyStep` — the only UI in the codebase that can create the
-        membership they are missing — lives on the other side of this line.
+        ⚠ SUPERSEDED, quoted not deleted (`P1-J1.2-E005`):
+          `const unbound = s.completed && !s.company?.bound;`
+          `if (s.completed && !unbound) { router.replace(".../ready"); return; }`
+          `setStep(unbound ? "company" : ((s.resumeStep as RequesterStep) ?? "company"));`
 
-        ⚠ THE NARROWEST CHANGE, DELIBERATELY. The brief suggested letting
-        `?step=company` through; this page reads no query parameters at all, so
-        adding that plumbing would be the WIDER change. Gating the bounce on the
-        binding and opening on the company step achieves the same thing and
-        touches the resume logic in one condition.
+        That branch existed to send a COMPLETED requester who had no
+        `CompanyMembership` back into the wizard, because `CompanyStep` was the
+        only UI in the codebase that could create one and it lived behind this
+        line. ⚠ IT NOW POINTS AT A STEP THAT DOES NOT EXIST, and keeping it would
+        strand exactly the people it was written to rescue: `indexOf` returns -1,
+        no branch matches, and the wizard renders a blank screen.
+
+        ⚠⚠ AND THE CONDITION IS NO LONGER A DEFECT TO CURE. Nobody gets a
+        membership at registration any more, so "completed with no binding" is
+        the NORMAL state of every requester — see `E418` on the transact gate,
+        which no longer reads a membership either. A completed requester belongs
+        on /ready, full stop.
       */
-      const unbound = s.completed && !s.company?.bound;
-      if (s.completed && !unbound) {
+      if (s.completed) {
         router.replace("/join/requester/ready");
         return;
       }
       hydrate(s);
-      setStep(unbound ? "company" : ((s.resumeStep as RequesterStep) ?? "company"));
+      /*
+        ⚠ AN UNKNOWN STORED STEP FALLS BACK TO STEP 1 rather than rendering
+        nothing. The nine rows stored on `company` were moved forward before the
+        enum changed, so this should never fire — it is here because a resume
+        point the wizard cannot match is a blank screen, and that failure mode
+        should not depend on a data migration having been perfect.
+      */
+      const resume = s.resumeStep as RequesterStep;
+      setStep(REQUESTER_STEPS.includes(resume) ? resume : REQUESTER_STEPS[0]);
       setReady(true);
     })();
   }, [router, hydrate]);
@@ -356,161 +348,27 @@ export default function RequesterStepsPage() {
   };
   const nextLabel = `Next: ${LABELS[REQUESTER_STEPS[idx + 1] ?? "review"]}`;
 
-  // ---- 1/4 — Company ----------------------------------------------------
-  if (step === "company") {
-    /*
-      A PENDING join is a STOP, not a step you continue past. The requester has
-      asked to join a company and nobody has approved it, so there is no company
-      to attach an address or a deliver-to to yet — carrying on would collect
-      four screens of answers against a binding that may be rejected.
-    */
-    if (pendingCompany?.status === "PENDING") {
-      return (
-        <WizardShell
-          {...shell}
-          title={`Waiting on ${pendingCompany.name}.`}
-          subtitle="Your request went to that company's admin. You'll be able to finish setting up as soon as they approve it."
-          hideFooter
-        >
-          <div className="mx-auto w-full max-w-xl space-y-4">
-            <Notice tone="info">
-              We couldn&apos;t confirm you automatically because your work email
-              isn&apos;t on that company&apos;s domain. That&apos;s normal — it
-              just needs a person to say yes.
-            </Notice>
-            <button
-              type="button"
-              onClick={() => setPendingCompany(null)}
-              className="text-[14.5px] font-bold text-magenta hover:underline"
-            >
-              Pick a different company instead
-            </button>
-          </div>
-        </WizardShell>
-      );
-    }
+  /*
+    ── ⚠⚠ STEP 1 WAS `Which Company Do You Buy For?` AND IT IS GONE (`E418`) ───
 
-    return (
-      <WizardShell
-        {...shell}
-        title="Which Company Do You Buy For?"
-        subtitle="Your company is the legal entity every work order and settlement is between. Join it if it's already here, or add it and become its admin."
-        continueLabel={nextLabel}
-        /*
-          ── ⚠⚠ NO `continueDisabled` — THE COMPANY IS OPTIONAL (`E274`) ────────
+    ⚠ SUPERSEDED, quoted not deleted — the screen removed here was 153 lines and
+    carried, in its own words:
+      · title *"Which Company Do You Buy For?"*, subtitle *"Your company is the
+        legal entity every work order and settlement is between. Join it if it's
+        already here, or add it and become its admin."*
+      · an embedded `<CompanyStep bounded nameLabel="Employer Name *">` — the
+        Find/Add tabs, the company search and the domain auto-attach;
+      · a PENDING branch, *"Waiting on {company}."*, for a join awaiting a
+        company admin's approval;
+      · `if (companyValid || companyHasName) companySubmit.current?.();` — the
+        three-state Continue that `P2-J1.1-E025` added after a part-answered
+        company was silently thrown away.
 
-          Scott: *"we still probably want to make the company optional at this
-          point. We will need it before a work order could become a legal
-          document."*
+    ⚠ ALL OF IT STAYS ON DISK IN `components/company/CompanyStep.tsx` (`E164`),
+    unimported by this wizard, for work order acceptance to use.
+  */
 
-          ⚠ SUPERSEDED, quoted not deleted: `continueDisabled={!companyValid}`.
-
-          ⚠⚠ THIS IS ONE OF THREE GATES THAT HAD TO GO TOGETHER, and the other two
-          are in `lib/requester-onboarding.ts` — the two `requesterGaps` checks
-          and the server-side throw in `saveRequesterStep`. Removing this one
-          alone would have let somebody press Continue and hit a 400 they could
-          do nothing about. See the block on `requesterGaps` for the full list
-          and for where the requirement IS enforced (before HIRE).
-
-          ⚠ OPTIONAL MEANS SKIPPABLE, NOT REMOVED. The step still renders, still
-          binds a company when one is chosen, and still writes the membership
-          through `/api/company/*`. `onContinue` below branches on whether the
-          embedded form is actually answered.
-        */
-        busy={busy || companyBusy}
-        onContinue={() => {
-          /*
-            ⚠ TWO PATHS, ONE BUTTON, AND THE BRANCH IS ON THE FORM'S OWN
-            VALIDITY — not on a second control. A "Skip" button beside Continue
-            was the alternative and was rejected: `WizardShell` already spends
-            its one secondary slot on `Finish later` (`E245`), and a third
-            action on a two-action footer is how people end up leaving by
-            accident.
-            · answered  -> submit it; `onDone` binds the company and advances.
-            · untouched -> advance with no company at all. `save({})` posts the
-              step so the SERVER moves `onboarding_step`; the wizard never owns
-              the resume point.
-
-            ── ⚠⚠ THERE WAS A THIRD STATE AND IT FELL DOWN THE CRACK (`E025`) ──
-
-            ⚠ SUPERSEDED, quoted not deleted: `if (companyValid) { … } void
-            save({});`. The two bullets above are a BINARY — answered or
-            untouched — and PART-ANSWERED is neither. A requester who typed
-            `Seattle Gas Company`, failed verification and pressed Continue took
-            the `save({})` branch: no POST to /api/company/define, no company
-            row, no membership, and no error. `select … from companies where
-            name ilike '%seattle%'` returned ZERO ROWS.
-
-            ⚠⚠ AND IT SILENTLY RE-CREATED THE STATE `/company` WAS BUILT TO
-            RESCUE PEOPLE FROM — Scott, earlier walk: *"I was forced to do
-            something with my company details and I couldn't, so it kept me from
-            doing anything."*
-
-            `companyHasName` is the missing bit. `E274` keeps the step OPTIONAL —
-            typing nothing still advances with no company — but optional means
-            "you may skip it", NOT "what you typed is thrown away".
-          */
-          if (companyValid || companyHasName) {
-            companySubmit.current?.();
-            return;
-          }
-          void save({});
-        }}
-      >
-        <div className="mx-auto w-full max-w-xl">
-          {error && (
-            <div className="mb-4">
-              <Notice>{error}</Notice>
-            </div>
-          )}
-          <CompanyStep
-            bounded
-            /*
-              ⚠ `Employer Name *` HERE, `Company Name *` EVERYWHERE ELSE
-              (`P2-J1.1-E012`). A requester is an EMPLOYEE of the buying
-              organisation; a provider is a contractor and has no employer. One
-              prop on the shared step — see its `nameLabel` docblock for the
-              rule and why the default is the other way round.
-            */
-            nameLabel="Employer Name *"
-            submitRef={companySubmit}
-            onValidityChange={setCompanyValid}
-            onHasNameChange={setCompanyHasName}
-            onBusyChange={setCompanyBusy}
-            onDone={(outcome) => {
-              if (outcome.status === "PENDING") {
-                setPendingCompany(outcome);
-                return;
-              }
-              /*
-                ⚠⚠ NAME STORED, COMPANY NOT BOUND (`P2-J1.1-E025`). The typed
-                name is now on the person's company row, so the review card and
-                every other `state.profile.companyName` reader show it. But
-                `companyBound` stays FALSE, deliberately: `getCompanyBinding`
-                reads MEMBERSHIPS, and `saveCompanyName` creates none — one
-                against a tax_type-NULL company is precisely the `test2`-`test6`
-                corruption. Claiming `companyBound: true` here would be the
-                two-sources-of-truth defect that `P1-J1.2-E003` cost the buyer
-                side.
-              */
-              if (outcome.status === "NAME_ONLY") {
-                setDraft((d) => ({ ...d, companyName: outcome.name }));
-                void save({});
-                return;
-              }
-              // Approved (defined, or joined on a domain match) — record it on
-              // the wizard and move on. The company itself is already written;
-              // this only advances the resume point.
-              setDraft((d) => ({ ...d, companyName: outcome.name }));
-              void save({ companyBound: true });
-            }}
-          />
-        </div>
-      </WizardShell>
-    );
-  }
-
-  // ---- 2/4 — Requester Information --------------------------------------
+  // ---- 1/3 — Requester Information --------------------------------------
   if (step === "requester_info") {
     return (
       <WizardShell
@@ -727,7 +585,7 @@ export default function RequesterStepsPage() {
     `RequesterProfile` and nothing gates on them.
   */
 
-  // ---- 3/4 — Work Location ----------------------------------------------
+  // ---- 2/3 — Work Location ----------------------------------------------
   if (step === "work_location") {
     /*
       ⚠⚠ THIS FALLBACK IS NOT A PRE-FILL ANY MORE (`P1-J1.1-E278`, 2026-08-30).
@@ -797,7 +655,7 @@ export default function RequesterStepsPage() {
     );
   }
 
-  // ---- 4/4 — Review ------------------------------------------------------
+  // ---- 3/3 — Review ------------------------------------------------------
   const addr = (a: LocationValue) =>
     [a.line1, a.city, a.state, a.postalCode, a.country].filter(Boolean).join(", ") ||
     "—";
@@ -860,7 +718,19 @@ export default function RequesterStepsPage() {
        stays on the card on its own merits — it is required and it is what a
        provider reads next to a name. */
     { label: "Title", value: draft.title || "—", step: "requester_info" },
-    { label: "Employer", value: draft.companyName || "—", step: "company" },
+    /*
+      ⚠⚠ THE `Employer` ROW IS GONE (`P1-A1.4-E418`, 2026-09-11).
+
+      ⚠ SUPERSEDED, quoted not deleted:
+        `{ label: "Employer", value: draft.companyName || "—", step: "company" }`
+
+      Its VALUE came from a question this wizard no longer asks and its EDIT LINK
+      pointed at a step that no longer exists — the same two failures that
+      retired the `Your Address` row below, and a row whose Edit goes nowhere is
+      worse than no row. ⚠ THE `Company` RECORD IS NOT DELETED: the signup
+      placeholder still exists on `Person.company_id`. Only the row is gone,
+      because a provider learns who is asking at work order acceptance.
+    */
     /*
       ⚠⚠ THE `Your Address` ROW IS GONE (`P1-J1.1-E279`, 2026-08-30).
 

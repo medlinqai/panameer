@@ -139,6 +139,16 @@ export function hasCapability(viewer: Viewer, cap: Capability): boolean {
 // PANAMEER STAFF ARE EXEMPT. They are employees performing setup, not a party
 // to any contract, and gating them on a customer company would lock the
 // operator out of their own console.
+//
+// ── ⚠⚠ NOTHING CALLS THIS TODAY (`P1-A1.4-E418`, 2026-09-11) ────────────────
+//
+// `checkTransact` in `lib/guard.ts` passed everyone as of `E418`, because the
+// company left registration entirely: no journey asks for one, so no buyer
+// could ever have satisfied this, and it would have refused every work request
+// in the product. ⚠ THE FUNCTION, ITS FOUR DENIAL REASONS AND `TRANSACT_MESSAGE`
+// ARE KEPT DELIBERATELY (`E164`) — they are the WORK ORDER ACCEPTANCE gate
+// waiting for its event. See the TODO on `acceptOrder` in `lib/orders.ts`, the
+// single capture point. ⚠ DO NOT RE-POINT IT AT REGISTRATION.
 // ---------------------------------------------------------------------------
 
 export type TransactDenial =
@@ -344,8 +354,10 @@ export function isMarketplaceVisible(p: {
    * questions. With six it is an indirect way of stating something the product
    * can now state directly, and an indirect gate is how "I answered everything
    * and I'm still invisible" happens — the arithmetic is silent. The set is
-   * Title · Role · Skill · Rate · Photo · Company · address · phone; bio,
-   * education, specializations, languages and date of birth are not in it.
+   * Title · Role · Skill · Rate · Photo · address · phone; bio, education,
+   * specializations, languages and date of birth are not in it.
+   * ⚠ `Company` LEFT THE SET IN `P1-A1.4-E418` — no journey asks for one, and a
+   * requirement the wizard cannot satisfy is the invisible-profile bug itself.
    *
    * Optional so a caller that only has the three scalar columns still compiles
    * and behaves as before rather than silently refusing everyone.
@@ -385,15 +397,25 @@ export function hasIdentityBlock(p: {
  *
  * The in-memory gate and `marketplaceVisibleWhere` have to agree, and the
  * completeness score alone cannot carry that agreement: optional points can
- * compensate for a missing required item. A profile with every enrichment but
- * no company scores 96 — comfortably over any threshold — while the DB
- * predicate correctly excludes it. That disagreement is the listing-shows-what-
- * the-detail-page-refuses inversion, so the callers compute this instead.
+ * compensate for a missing required item. The two predicates are kept clause
+ * for clause, and that is the whole reason this exists rather than a threshold.
  *
- * DELIBERATELY DEMANDING ABOUT ITS INPUT: every field is required, because a
- * caller that simply didn't load `companyMemberships` would otherwise get
- * "no company" and hide a perfectly valid provider. Missing data must be a
- * compile error, not a silent refusal.
+ * ⚠ THE COMPANY CLAUSE CAME OUT OF BOTH IN ONE CHANGE (`P1-A1.4-E418`).
+ * ⚠ SUPERSEDED, quoted not deleted:
+ *     `p.person.companyMemberships.some((m) => m.status === "APPROVED")`
+ * and the example that justified the whole function: *"A profile with every
+ * enrichment but no company scores 96 — comfortably over any threshold — while
+ * the DB predicate correctly excludes it."* ⚠ THAT EXAMPLE IS SPENT, not wrong:
+ * with no company step, EVERY provider is the profile it describes, so the
+ * clause stopped separating the complete from the incomplete and started hiding
+ * all of them. The agreement between the two predicates is what matters and it
+ * is preserved — both lost the same clause.
+ *
+ * DELIBERATELY DEMANDING ABOUT ITS INPUT: every field is required, so a caller
+ * that simply didn't load one gets a compile error rather than a silent refusal.
+ * ⚠ `companyMemberships` IS NO LONGER ON THE INPUT — it is removed from the type
+ * ON PURPOSE, so a caller still loading it for this gate fails to compile
+ * instead of quietly passing data nothing reads.
  */
 export function providerMeetsRequired(p: {
   headline: string | null;
@@ -408,7 +430,6 @@ export function providerMeetsRequired(p: {
     photo_url: string | null;
     phone: string | null;
     site?: { addresses?: unknown[] | null } | null;
-    companyMemberships: { status: string }[];
   };
 }): boolean {
   return Boolean(
@@ -422,8 +443,7 @@ export function providerMeetsRequired(p: {
         p.remote_rate_cents != null) &&
       p.person.photo_url &&
       p.person.phone?.trim() &&
-      (p.person.site?.addresses?.length ?? 0) > 0 &&
-      p.person.companyMemberships.some((m) => m.status === "APPROVED")
+      (p.person.site?.addresses?.length ?? 0) > 0
   );
 }
 
@@ -452,12 +472,17 @@ export function marketplaceVisibleWhere() {
       { onsite_rate_cents: { not: null } },
       { remote_rate_cents: { not: null } },
     ],
-    // Photo · Company · address · phone all live on the Person.
+    /* Photo · address · phone all live on the Person.
+       ⚠ SUPERSEDED, quoted not deleted (`E418`):
+         `companyMemberships: { some: { status: "APPROVED" as const } },`
+       and the label above it, which read `Photo · Company · address · phone`.
+       It went with the clause in `providerMeetsRequired` — the two must agree,
+       and a listing that hides every provider is not a stricter gate, it is an
+       empty marketplace. */
     person: {
       photo_url: { not: null },
       phone: { not: null },
       site: { addresses: { some: {} } },
-      companyMemberships: { some: { status: "APPROVED" as const } },
     },
   };
 }

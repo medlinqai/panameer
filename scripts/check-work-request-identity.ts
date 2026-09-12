@@ -33,6 +33,9 @@ import {
   POST_REQUIREMENTS,
   type PostRequirementKey,
 } from "@/lib/work-request-identity";
+/* ⚠ `E418` — asserted directly, so the harness reads the BAR and not only its
+   effect through `missingIdentityForPost`. */
+import { WORK_REQUEST_BAR } from "@/lib/identity-bar";
 
 let pass = 0;
 const failures: string[] = [];
@@ -68,16 +71,20 @@ const block = read(BLOCK);
 
 /* ⚠ RENAMED, NOT REDUCED (`P1-ALL-E033` WS-0). The three person keys moved to
    the shared vocabulary in `lib/identity-bar.ts` — `personName` -> `name`,
-   `personPhoto` -> `photo`, `personTitle` -> `jobTitle`. All six are still
-   asserted and no assertion below was dropped or loosened. */
-const ALL_KEYS: PostRequirementKey[] = [
-  "name",
-  "photo",
-  "jobTitle",
-  "approvedCompany",
-  "companyName",
-  "companyCountry",
-];
+   `personPhoto` -> `photo`, `personTitle` -> `jobTitle`.
+
+   ── ⚠⚠ THE THREE COMPANY KEYS ARE GONE (`P1-A1.4-E418`, 2026-09-11) ────────
+
+   ⚠ SUPERSEDED, quoted not deleted: `"approvedCompany", "companyName",
+   "companyCountry"` stood in this list, and the bar demanded all six.
+
+   SCOTT, 2026-09-11: posting a work request needs ONLY the person's details.
+   The company is captured once, at work order acceptance — the PO is the first
+   time a company name exists for an ERP client, so the web path must not demand
+   one earlier. ⚠ THE PERSON KEYS ARE ASSERTED EXACTLY AS BEFORE, and `E418`
+   adds a positive assertion below that the company keys are ABSENT, so this is
+   re-pointed rather than reduced. */
+const ALL_KEYS: PostRequirementKey[] = ["name", "photo", "jobTitle"];
 
 const EMPTY = {
   firstName: "", lastName: "", photoUrl: null, jobTitle: null,
@@ -111,9 +118,30 @@ check(
   "1 — whitespace is not a name",
   missingIdentityForPost({ ...COMPLETE, firstName: "   " }).includes("name")
 );
+/*
+  ⚠ SUPERSEDED, quoted not deleted (`E418`):
+      check("1 — a PENDING membership is not an approved one",
+        missingIdentityForPost({ ...COMPLETE, hasApprovedCompanyMembership: false })
+          .includes("approvedCompany"));
+
+  ⚠⚠ REPLACED BY ITS OPPOSITE, WHICH IS NOW THE RULE: no company state of any
+  kind can refuse a post. This is the mutation test — put `approvedCompany` back
+  into `WORK_REQUEST_BAR` and this goes red.
+*/
 check(
-  "1 — a PENDING membership is not an approved one",
-  missingIdentityForPost({ ...COMPLETE, hasApprovedCompanyMembership: false }).includes("approvedCompany")
+  "1 — ⚠⚠ NO company state can block a post: no membership, no name, no country",
+  missingIdentityForPost({
+    ...COMPLETE,
+    hasApprovedCompanyMembership: false,
+    companyName: null,
+    companyCountry: null,
+  }).length === 0,
+  `got ${JSON.stringify(missingIdentityForPost({ ...COMPLETE, hasApprovedCompanyMembership: false, companyName: null, companyCountry: null }))}`
+);
+check(
+  "1 — ⚠ the bar itself names no company field",
+  !WORK_REQUEST_BAR.some((f) => /company/i.test(f)),
+  `WORK_REQUEST_BAR = ${JSON.stringify(WORK_REQUEST_BAR)}`
 );
 
 check(

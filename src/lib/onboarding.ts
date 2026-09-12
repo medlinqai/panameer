@@ -121,14 +121,31 @@ import { matchSkill } from "@/lib/skill-match";
   is not unwound. `work_history` leaves the itinerary and keeps its file, its
   `case` block and its type membership (`E164`).
 */
+/*
+  ── ⚠⚠ SIX, NOT SEVEN — `company` IS GONE (`P1-A1.4-E418`, 2026-09-11) ───────
+
+  ⚠ SUPERSEDED, quoted not deleted, the seventh step:
+      `"company", //  6 — the entity a work order is with (brief_company_model)`
+
+  SCOTT, 2026-09-11: *"Regarding the company… strip it all out."* A provider
+  sells as a PERSON; the entity a work order is with is captured ONCE, at work
+  order acceptance — *"IF you are going to accept the WO... on behalf of whom?"*
+  — which is also the moment an ERP client first has a company name, on the PO.
+  ⚠ SO THE GATE MOVED, IT DID NOT VANISH: see the TODO on `acceptOrder` in
+  `lib/orders.ts`, the single capture point.
+
+  ⚠⚠ AND IT CAME OUT OF THE PUBLISH GATE AND THE MARKETPLACE PREDICATE WITH THE
+  STEP. Leaving either would have been the invisible-profile bug class this file
+  keeps warning about, in its purest form: a provider who completed every step
+  they were shown, refused publication for a question nobody asked them.
+*/
 export const PROVIDER_STEPS = [
   "title", //    1 — what you do
   "roles", //    2 — typed, or pre-filled by the résumé
   "skills", //   3 — typed, or pre-filled by the résumé
   "rate", //     4 — provider only; the match needs a price
   "picture", //  5 — required to publish (WS7 addendum, unchanged)
-  "company", //  6 — the entity a work order is with (brief_company_model)
-  "finish", //   7 — Review + publish
+  "finish", //   6 — Review + publish
 ] as const;
 export type ProviderStep =
   | (typeof PROVIDER_STEPS)[number]
@@ -161,6 +178,17 @@ export type ProviderStep =
     numbered stop.
   */
   | "work_history"
+  /*
+    ⚠⚠ `company` LEFT THE ITINERARY AND STAYS IN THE CODEBASE (`E418`), exactly
+    as `work_history` did above and for the same house rule (`E164`).
+
+    It keeps its place in this union, its `case` in the save switch and its entry
+    in `PROVIDER_STEP_LABELS` so that `CompanyStep` — which work order acceptance
+    will use — still has a step name to post under, and so that a client tab left
+    open mid-flow posts a no-op instead of a 400. ⚠ IT IS NO LONGER A PROMPT ON
+    ANY JOURNEY: not the provider's, not the recruiter's, not the requester's.
+  */
+  | "company"
   | "specializations"
   | "education"
   | "languages"
@@ -185,6 +213,9 @@ export const SAVEABLE_STEPS: readonly ProviderStep[] = [
   ...PROVIDER_STEPS,
   "roles",
   "skills",
+  /* ⚠ LISTED EXPLICITLY SINCE `E418` — it used to arrive through
+     `PROVIDER_STEPS`. The endpoint still accepts it; nothing prompts it. */
+  "company",
   "catalog",
   "tell_us",
   "specializations",
@@ -205,14 +236,23 @@ export const SAVEABLE_STEPS: readonly ProviderStep[] = [
  * so every OTHER counted step belongs to both journeys. Excluding Role and Skills
  * here would have been inventing a third rule — and a recruiter who cannot say
  * what kind of work they place, or which skills, is not searchable.
- * ⚠ SIX, NOT SEVEN — Rate is the one difference, exactly as before.
+ *
+ * ⚠⚠ FIVE, NOT SIX (`P1-A1.4-E418`) — Rate is still the one difference.
+ * ⚠ SUPERSEDED, quoted not deleted: `title · roles · skills · picture · company
+ * · finish`.
+ *
+ * ⚠⚠ THE RECRUITER IS NAMED EXPLICITLY AND WALKED, NOT LEFT TO THE COMPILER.
+ * SCOTT, 2026-09-11: *"that changes ALL pathways. Just keep that in mind. ALL of
+ * them have company."* Dropping `"company"` from `ProviderStep` would have
+ * FORCED its removal here via `satisfies` — but a type error is a safety net,
+ * not a plan, and `company` deliberately stays in that union (see above), so
+ * nothing would have forced it at all.
  */
 export const RECRUITER_STEPS = [
   "title",
   "roles",
   "skills",
   "picture",
-  "company",
   "finish",
 ] as const satisfies readonly ProviderStep[];
 
@@ -237,7 +277,7 @@ export function stepsForProfile(p: {
 /* ⚠ SEVEN (`E283`). The comment said `10 (PJv2 WS1)` while the array held six —
    two restructures had moved past it. Derived from the array either way, but a
    false comment is how the next reader gets the count wrong. */
-export const TOTAL_PROVIDER_STEPS = PROVIDER_STEPS.length; // 7 (E283, V3 restored)
+export const TOTAL_PROVIDER_STEPS = PROVIDER_STEPS.length; // 6 (E418 removed company)
 
 /** 1-based position within the caller's own step list. */
 export function providerStepNumber(
@@ -271,8 +311,13 @@ export const PROVIDER_STEP_LABELS: Record<
   skills: { stepper: "Your Skills", next: "Next: Your Rate" },
   catalog: { stepper: "Your Role & Skills", next: "Next: Your Rate" },
   rate: { stepper: "Your Rate", next: "Next: Your Photo" },
-  picture: { stepper: "Your Photo", next: "Next: Your Company" },
-  company: { stepper: "Your Company", next: "Next: Review Your Profile" },
+  /* ⚠ `E418` — Photo is now the last question before Review on BOTH journeys,
+     so the fallback label names Review. `nextLabelFor` still derives the real
+     one from the live itinerary; this only matters when it cannot. */
+  picture: { stepper: "Your Photo", next: "Next: Review Your Profile" },
+  /* ⚠ UNCOUNTED SINCE `E418`. Kept for `CompanyStep`'s eventual caller at work
+     order acceptance; `next` is unused because nothing forwards to it. */
+  company: { stepper: "Your Company", next: "" },
   finish: {
     stepper: "Review Your Profile",
     next: "Next: Publish Your Profile",
@@ -893,10 +938,23 @@ function computeResumeStep(p: Awaited<ReturnType<typeof loadDraft>>): ProviderSt
       that outlives the question it was checking.
     */
     picture: p.photo_url != null && p.phone != null,
-    // Done when a company binding EXISTS AND IS APPROVED. A pending join is not
-    // done — the provider is waiting on somebody, and resuming them past it
-    // would let them publish with no entity behind the profile.
-    company: p.companyMemberships.some((m) => m.status === "APPROVED"),
+    /*
+      ⚠⚠ SATISFIED UNCONDITIONALLY SINCE `E418`, like `catalog` above it.
+
+      ⚠ SUPERSEDED, quoted not deleted:
+        `company: p.companyMemberships.some((m) => m.status === "APPROVED"),`
+        *"Done when a company binding EXISTS AND IS APPROVED. A pending join is
+        not done — the provider is waiting on somebody, and resuming them past it
+        would let them publish with no entity behind the profile."*
+
+      Nobody is asked for a company at registration, so nobody can satisfy that
+      condition — and it is consulted by `stepsForProfile`, which no longer
+      contains `company` on either journey. Leaving the membership read here
+      would be a condition that outlives the question it was checking: the exact
+      failure the `picture`/DOB note above records, which stranded providers
+      forever on a step they could not pass.
+    */
+    company: true,
     finish: pp.onboarding_completed_at != null,
   };
   // Walk the list THIS profile actually has, so a recruiter is never parked on
@@ -948,8 +1006,14 @@ export async function getOnboardingState(viewer: Viewer) {
       ⚠ IT IS THE **PROVIDER** TOTAL ON BOTH ITINERARIES — Scott: *"Use the
       larger number (7), most will be providers."* A denominator computed from
       the person's own itinerary would flip under them at the moment they chose.
-      ⚠ THE COST, REPORTED NOT HIDDEN: a recruiter finishes at 7 of 8 and the bar
+      ⚠ THE COST, REPORTED NOT HIDDEN: a recruiter finishes one short and the bar
       never fills.
+
+      ⚠ THE NUMBERS MOVED IN `P1-A1.4-E418` and the ARITHMETIC DID NOT — company
+      left both itineraries, so this is 6 + 1 = **7** where it was 7 + 1 = 8, and
+      a recruiter now finishes at 6 of 7 where it read 7 of 8. Scott's "(7)" was
+      the provider step count of the day; the rule he stated — use the larger,
+      most will be providers — is what survives, and it is still derived.
 
       ⚠⚠ DISPLAY ONLY. `PROVIDER_STEPS`, `RECRUITER_STEPS` and `onboarding_step`
       are untouched.
@@ -2128,20 +2192,29 @@ export async function applyProviderSection(
       The binding is created by /api/company/define or /api/company/join, which
       own the attestation, the company ToS and the approval decision. This case
       exists so the wizard's save-as-you-go call for the step is a no-op rather
-      than an "Unknown step" error — and it re-checks the membership, so a
-      client that skipped the company screen can't advance past it.
+      than an "Unknown step" error.
+
+      ── ⚠⚠ IT IS A PURE NO-OP NOW (`P1-A1.4-E418`, 2026-09-11) ────────────────
+
+      ⚠ SUPERSEDED, quoted not deleted — the membership re-check this case used
+      to perform, *"so a client that skipped the company screen can't advance
+      past it"*:
+
+          const bound = await prisma.companyMembership.findFirst({
+            where: { person_id: personId, status: "APPROVED" },
+            select: { id: true },
+          });
+          if (!bound) {
+            throw new OnboardingError(
+              "Add or join your company before continuing", "INVALID");
+          }
+
+      No journey shows a company screen any more, so there is no screen to skip
+      — and the throw would now refuse a step the provider was never offered.
+      ⚠ THE CASE STAYS so an open tab from before the change posts a no-op
+      instead of a 400 (`E164`, and `SAVEABLE_STEPS` still lists it).
     */
     case "company": {
-      const bound = await prisma.companyMembership.findFirst({
-        where: { person_id: personId, status: "APPROVED" },
-        select: { id: true },
-      });
-      if (!bound) {
-        throw new OnboardingError(
-          "Add or join your company before continuing",
-          "INVALID"
-        );
-      }
       break;
     }
 
@@ -2367,14 +2440,13 @@ export async function recomputeCompleteness(profileId: string): Promise<number> 
           phone: true,
           phone_verified_at: true,
           site: { select: { addresses: { select: { line1: true }, take: 1 } } },
-          // WS6 — company is part of the required set now, so the meter has to
-          // be able to see it. pitfalls.md: add the field to CompletenessInput
-          // AND to every caller that builds one, or the weight is unreachable.
-          companyMemberships: {
-            where: { status: "APPROVED" as const },
-            select: { id: true },
-            take: 1,
-          },
+          /*
+            ⚠ THE MEMBERSHIP SELECT LEFT WITH THE WEIGHT (`E418`). ⚠ SUPERSEDED,
+            quoted not deleted: *"WS6 — company is part of the required set now,
+            so the meter has to be able to see it. pitfalls.md: add the field to
+            CompletenessInput AND to every caller that builds one, or the weight
+            is unreachable."* There is no `company` weight to reach any more.
+          */
         },
       },
     },
@@ -2396,7 +2468,6 @@ export async function recomputeCompleteness(profileId: string): Promise<number> 
     certifications: profile.certifications,
     specializations: profile.specializations,
     photoUrl: profile.person.photo_url,
-    hasCompany: profile.person.companyMemberships.length > 0,
     // An address row exists only once a street line has been entered.
     hasAddress: Boolean(profile.person.site?.addresses?.[0]?.line1?.trim()),
     hasPhone: Boolean(profile.person.phone?.trim()),
@@ -2461,20 +2532,22 @@ export async function publishProfile(viewer: Viewer) {
     keeping them would refuse to publish a provider who completed every step
     they were shown — a dead end with no way out from inside the product.
 
-    Company is new here: a work order is between companies, so a provider
-    without an approved membership cannot be contracted.
-  */
-  const person = await prisma.person.findUnique({
-    where: { id: p.id },
-    select: {
-      companyMemberships: {
-        where: { status: "APPROVED" as const },
-        select: { id: true },
-        take: 1,
-      },
-    },
-  });
+    ── ⚠⚠ AND COMPANY IS GONE FOR EXACTLY THAT REASON (`P1-A1.4-E418`) ────────
 
+    ⚠ SUPERSEDED, quoted not deleted: *"Company is new here: a work order is
+    between companies, so a provider without an approved membership cannot be
+    contracted."* The premise still holds and the PLACE was wrong — the company
+    is captured at work order acceptance, which is the moment that sentence is
+    actually about. Asking for it at publish refused a provider a question
+    nobody had asked them, which is the dead end this very block warns about.
+
+    ⚠ THE MEMBERSHIP LOOKUP THAT FED IT WENT WITH IT:
+        const person = await prisma.person.findUnique({
+          where: { id: p.id },
+          select: { companyMemberships: { where: { status: "APPROVED" },
+                    select: { id: true }, take: 1 } },
+        });
+  */
   const missing = missingRequired({
     headline: pp.headline,
     role_type_id: pp.role_type_id,
@@ -2485,7 +2558,6 @@ export async function publishProfile(viewer: Viewer) {
     rate_max_cents: pp.rate_max_cents,
     onsite_rate_cents: pp.onsite_rate_cents,
     remote_rate_cents: pp.remote_rate_cents,
-    hasCompany: (person?.companyMemberships.length ?? 0) > 0,
     hasAddress: Boolean(p.site?.addresses?.[0]?.line1?.trim()),
     hasPhone: Boolean(p.phone?.trim()),
   });

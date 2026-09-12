@@ -434,9 +434,38 @@ check(
   /\^\\\/\(\?!\\\/\)/.test(bodies.get(INLINE) ?? ""),
   "a bare startsWith('/') lets //evil.com through"
 );
+/*
+  ── ⚠⚠ RE-POINTED BY `P1-A1.4-E418` (2026-09-11) ────────────────────────────
+
+  ⚠ SUPERSEDED, quoted not deleted:
+      check("GUARD 3 — the wizard no longer bounces a completed, UNBOUND requester",
+        /s\.completed && !s\.company\?\.bound/.test(steps));
+
+  ⚠ THE NAME SAID THE OPPOSITE OF WHAT IT TESTED: it asserted the bounce EXISTS
+  — `E005` sent a completed requester with no `CompanyMembership` back into the
+  wizard, because `CompanyStep` was the only UI that could create one.
+
+  ⚠⚠ THAT BOUNCE IS NOW A TRAP, WHICH IS WHY THE ASSERTION INVERTS RATHER THAN
+  DISAPPEARING. `E418` removed the company step, so the bounce's destination no
+  longer exists: `REQUESTER_STEPS.indexOf("company")` is -1, no branch matches,
+  and the wizard renders a blank screen for exactly the people it was meant to
+  rescue. And the condition no longer describes a defect — nobody gets a
+  membership at registration, so "completed and unbound" is now every requester.
+
+  ⚠ THIS IS THE `check:company-binding` LESSON APPLIED, NOT REPEATED. CLAUDE.md
+  records that this harness once demanded a line whose removal was deliberate,
+  and that restoring it to go green would have re-broken the buyer journey. The
+  guard is taught the new truth; the gate is not weakened and not skipped.
+*/
 check(
-  "GUARD 3 — the wizard no longer bounces a completed, UNBOUND requester",
-  /s\.completed && !s\.company\?\.bound/.test(steps)
+  "GUARD 3 — ⚠⚠ the wizard does NOT bounce on a company binding any more (E418)",
+  !/!s\.company\?\.bound/.test(steps),
+  "the company step is gone — bouncing there is a blank screen"
+);
+check(
+  "GUARD 3 — ⚠ a completed requester goes to /ready, unconditionally",
+  /if \(s\.completed\)[\s\S]{0,200}\/join\/requester\/ready/.test(steps),
+  "no binding condition may stand between a finished requester and their ready state"
 );
 
 // ---------------------------------------------------------------------------
