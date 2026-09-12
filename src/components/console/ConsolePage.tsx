@@ -225,6 +225,8 @@ export function Listing({
   searchPlaceholder,
   sortable,
   pageSize,
+  pageSizeOptions,
+  pageSizeKey,
 }: {
   title: string;
   columns: string[];
@@ -245,6 +247,9 @@ export function Listing({
   searchPlaceholder?: string;
   sortable?: boolean;
   pageSize?: number;
+  /** ⚠ `E458` — opt-in, like `TileRow`'s `icon`. See `InteractiveListing`. */
+  pageSizeOptions?: number[];
+  pageSizeKey?: string;
 }) {
   const hasRows = rows && rows.length > 0;
 
@@ -265,6 +270,8 @@ export function Listing({
         searchPlaceholder={search === false ? undefined : searchPlaceholder}
         sortable={sortable}
         pageSize={pageSize}
+        pageSizeOptions={pageSizeOptions}
+        pageSizeKey={pageSizeKey}
       />
     );
   }

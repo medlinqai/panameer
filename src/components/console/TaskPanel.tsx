@@ -25,12 +25,41 @@ import { recordRecent, readRecentForDisplay, type Recent } from "@/lib/admin-rec
  * it offers is reachable from the page's own volume tiles.
  */
 
-type TabKey = "reports" | "recent" | "analytics";
+/*
+  ── ⚠⚠ TASKS · ACTIVITY · REPORTS (`P1-A1.5-E459`) ──────────────────────────
+
+  **SCOTT, 2026-09-12:** *"Oracle uses the clipboard for TASKS. I just called it
+  actions. we can use tasks. the icon is right, the name is wrong."*
+  ⚠ NOT "Actions" — he corrected himself minutes later. **Tasks.**
+
+  ⚠ SUPERSEDED, quoted not deleted:
+    { key: "reports",   label: "Reports",   Icon: ClipboardList },
+    { key: "recent",    label: "Recent",    Icon: History },
+    { key: "analytics", label: "Analytics", Icon: BarChart3 },
+
+  ⚠⚠ THIS IS A COLLISION BEING FIXED, NOT A PREFERENCE. TWO panels were about
+  reports: the clipboard one was literally called Reports, and the bar-chart
+  one's own empty state reads *"Reports follow this page's Volume-Over-Time
+  metrics."* Two panels called Reports is why neither was obvious. After the
+  rename, `Reports` means one thing.
+
+  ⚠ THE TRIO IS THE ORACLE CONVENTION AND IS SETTLED NAMING. Panameer's users
+  are Oracle practitioners; if the clipboard means Tasks for the rest of their
+  working day, calling it anything else makes them learn something for no reason.
+
+  ⚠ THE KEYS MOVED WITH THE LABELS, deliberately. Leaving `key: "reports"` on the
+  panel now called Tasks would mean `active === "tasks"` renders Tasks — the
+  exact ambiguity this rename removes, just relocated into the code. The keys are
+  used in four comparisons in this file and NOWHERE else (checked), so the rename
+  is contained.
+  ⚠ THE ICONS ARE UNTOUCHED: clipboard, history, bar chart, in that order.
+*/
+type TabKey = "tasks" | "activity" | "reports";
 
 const TABS: { key: TabKey; label: string; Icon: typeof BarChart3 }[] = [
-  { key: "reports", label: "Reports", Icon: ClipboardList },
-  { key: "recent", label: "Recent", Icon: History },
-  { key: "analytics", label: "Analytics", Icon: BarChart3 },
+  { key: "tasks", label: "Tasks", Icon: ClipboardList },
+  { key: "activity", label: "Activity", Icon: History },
+  { key: "reports", label: "Reports", Icon: BarChart3 },
 ];
 
 export function TaskPanel() {
@@ -109,7 +138,7 @@ export function TaskPanel() {
           </div>
 
           <div className="flex-1 overflow-y-auto p-3">
-            {active === "reports" &&
+            {active === "tasks" &&
               (reports.length === 0
                 ? emptyState(
                     ClipboardList,
@@ -118,7 +147,7 @@ export function TaskPanel() {
                   )
                 : reports.map((r) => row(r.href, r.label, r.href, ClipboardList)))}
 
-            {active === "recent" &&
+            {active === "activity" &&
               (recent.length === 0
                 ? emptyState(
                     History,
@@ -127,7 +156,7 @@ export function TaskPanel() {
                   )
                 : recent.map((r) => row(r.href, r.label, r.href, History)))}
 
-            {active === "analytics" &&
+            {active === "reports" &&
               emptyState(
                 BarChart3,
                 "Analytics isn't built",
@@ -137,7 +166,15 @@ export function TaskPanel() {
         </div>
       )}
 
-      <div className="flex w-12 flex-col items-center gap-1 self-center rounded-[16px] border border-line bg-white py-2 shadow-lg">
+      {/*
+        ⚠⚠ ALL THREE ARE LABELLED IN THE STRIP (`E459`). **SCOTT, twice:**
+        *"Label all three"* — an unlabeled icon goes unused. The strip was
+        `w-12` and icon-only, with the name available only as a `title` tooltip,
+        which is invisible on first read and unreachable by touch.
+        ⚠ THE TOOLTIP AND `aria-label` STAY: the visible label is 10px, and the
+        title is what a screen reader and a hover both still get.
+      */}
+      <div className="flex w-[62px] flex-col items-center gap-1 self-center rounded-[16px] border border-line bg-white py-2 shadow-lg">
         {TABS.map((t) => {
           const on = active === t.key;
           return (
@@ -149,13 +186,14 @@ export function TaskPanel() {
               aria-label={t.label}
               aria-pressed={on}
               className={
-                "rounded-[10px] p-2 transition-colors " +
+                "flex w-[54px] flex-col items-center gap-0.5 rounded-[10px] px-1 py-1.5 transition-colors " +
                 (on
                   ? "bg-magenta text-white"
                   : "text-ink-2 hover:bg-magenta/[0.08] hover:text-magenta")
               }
             >
               <t.Icon className="h-[18px] w-[18px]" strokeWidth={1.9} />
+              <span className="text-[10px] font-semibold leading-none">{t.label}</span>
             </button>
           );
         })}

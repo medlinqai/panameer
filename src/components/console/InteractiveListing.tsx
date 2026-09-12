@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
 import {
   CARD,
   CARD_HEADER,
@@ -55,6 +55,36 @@ export type RowMeta = {
 
 type SortState = { col: number; dir: "asc" | "desc" } | null;
 
+/*
+  ── THE PAGE-SIZE STORE (`P1-A1.5-E458`) ────────────────────────────────────
+
+  A module-level subscriber set plus the `storage` event, which is the minimum a
+  `useSyncExternalStore` needs. ⚠ EVERY ACCESS IS WRAPPED: a private window,
+  cleared site data or a blocked store must fall back to the default rather than
+  throw inside a render.
+*/
+const storageListeners = new Set<() => void>();
+
+function subscribeToStorage(onChange: () => void): () => void {
+  storageListeners.add(onChange);
+  /* ⚠ OTHER TABS ONLY — the writing tab notifies `storageListeners` itself. */
+  window.addEventListener("storage", onChange);
+  return () => {
+    storageListeners.delete(onChange);
+    window.removeEventListener("storage", onChange);
+  };
+}
+
+function readStoredSize(key: string): number | null {
+  try {
+    const raw = window.localStorage.getItem(key);
+    const n = raw ? Number(raw) : NaN;
+    return Number.isFinite(n) ? n : null;
+  } catch {
+    return null;
+  }
+}
+
 export function InteractiveListing({
   title,
   columns,
@@ -65,6 +95,8 @@ export function InteractiveListing({
   searchPlaceholder,
   sortable = true,
   pageSize = 25,
+  pageSizeOptions,
+  pageSizeKey,
 }: {
   title: string;
   columns: string[];
@@ -76,10 +108,78 @@ export function InteractiveListing({
   searchPlaceholder?: string;
   sortable?: boolean;
   pageSize?: number;
+  /**
+   * ── ⚠ THE PICKER IS OPT-IN (`P1-A1.5-E458`) ────────────────────────────────
+   *
+   * Supplying the options is what renders the control; a listing that passes
+   * none keeps its fixed `pageSize` and shows nothing. ⚠ THE PRECEDENT IS
+   * `TileRow`'s `icon` in Part A — `Listing` is shared by thirteen pages and
+   * eleven of them pass no rows at all, so a control they cannot use should not
+   * appear on them.
+   */
+  pageSizeOptions?: number[];
+  /** Where the viewer's choice is remembered. Omit and nothing is stored. */
+  pageSizeKey?: string;
 }) {
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortState>(null);
   const [page, setPage] = useState(0);
+
+  /*
+    ── ⚠⚠ THE PAGE SIZE, REMEMBERED PER VIEWER (`P1-A1.5-E458`) ───────────────
+
+    **SCOTT:** *"looks like we need to take the display rows down to 7 with the
+    option to change how many return (to show the footer is there)."*
+
+    ⚠ THE DEFAULT COMES FROM THE SERVER AND THE STORED CHOICE ARRIVES AFTER
+    MOUNT, deliberately. Reading `localStorage` in the initial state would make
+    the client's first render disagree with the server's HTML — a hydration
+    mismatch — so the stored size is applied in an effect instead. The cost is
+    one re-render for somebody who has chosen a non-default; the alternative is
+    a React error.
+    ⚠ BOTH THE READ AND THE WRITE ARE WRAPPED. A private window, cleared site
+    data or a blocked store must not break the grid — it falls back to the
+    server's default and simply forgets the preference.
+    ⚠ PER VIEWER, NOT SHARED. This is a convenience on one person's machine; it
+    is not state anybody else can see, which is exactly why `localStorage` is
+    enough and a column on `Person` would be wrong.
+  */
+  /*
+    ⚠⚠ `useSyncExternalStore`, NOT `useState` + `useEffect`. The first version of
+    this read `localStorage` in an effect and called `setSize`, which is a
+    CASCADING RENDER and `react-hooks/set-state-in-effect` says so — it was a NEW
+    lint error and the rule on this repo is 0 new.
+
+    ⚠ THIS IS THE RIGHT HOOK FOR THE JOB, not a workaround: `localStorage` IS an
+    external store, and this hook exists to read one without a hydration
+    mismatch. The SERVER snapshot is `null`, so the server renders the default
+    page size; the CLIENT snapshot is the stored value, applied on hydration.
+    ⚠ `AppHeader` ALREADY USES THIS HOOK for the same class of problem.
+    ⚠ THE STORE IS THE SOURCE OF TRUTH — there is no local copy of the size to
+    drift from what is written, which is what made the effect version awkward.
+  */
+  const stored = useSyncExternalStore(
+    subscribeToStorage,
+    () => (pageSizeKey ? readStoredSize(pageSizeKey) : null),
+    /* ⚠ SERVER SNAPSHOT — the default, so SSR and the first client paint agree. */
+    () => null
+  );
+  const size =
+    stored !== null && pageSizeOptions?.includes(stored) ? stored : pageSize;
+
+  const chooseSize = (n: number) => {
+    setPage(0);
+    if (!pageSizeKey) return;
+    try {
+      window.localStorage.setItem(pageSizeKey, String(n));
+    } catch {
+      /* ⚠ SILENT ON PURPOSE — a blocked store is not an error the admin can act
+         on, and the grid must keep working with the default. */
+    }
+    /* ⚠ `localStorage` FIRES NO EVENT IN THE TAB THAT WROTE IT, so subscribers
+       are told directly; the `storage` event only covers OTHER tabs. */
+    for (const l of storageListeners) l();
+  };
 
   /* Index the rows with their meta so filtering and sorting move them together. */
   const indexed = useMemo(
@@ -122,12 +222,12 @@ export function InteractiveListing({
   }, [filtered, sort]);
 
   const total = sorted.length;
-  const pages = Math.max(1, Math.ceil(total / pageSize));
+  const pages = Math.max(1, Math.ceil(total / size));
   /* ⚠ CLAMPED, NOT TRUSTED: filtering can strand the viewer past the last page. */
   const current = Math.min(page, pages - 1);
-  const from = total === 0 ? 0 : current * pageSize + 1;
-  const to = Math.min(total, (current + 1) * pageSize);
-  const visible = sorted.slice(current * pageSize, (current + 1) * pageSize);
+  const from = total === 0 ? 0 : current * size + 1;
+  const to = Math.min(total, (current + 1) * size);
+  const visible = sorted.slice(current * size, (current + 1) * size);
 
   const toggle = (col: number) => {
     setPage(0);
@@ -257,6 +357,40 @@ export function InteractiveListing({
           {total === 0 ? "No rows" : <>Showing <b className="text-ink">{from}–{to}</b> of <b className="text-ink">{total}</b></>}
           {query.trim() && total !== rows.length && <> (filtered from {rows.length})</>}
         </span>
+        {/*
+          ── ⚠ THE PAGE-SIZE PICKER (`P1-A1.5-E458`) ──────────────────────────
+
+          ⚠⚠ MAGENTA IS CORRECT HERE, and it is the opposite of the tile counts.
+          `E433` reserves magenta for INTERACTIVE things; this is something you
+          click, where a count is not. The selected value is filled magenta; the
+          rest hover into it.
+          ⚠ IT IS A ROW OF BUTTONS, NOT A `<select>`: four values, always
+          visible, one tap each — and it matches the pager's own pill buttons
+          beside it rather than introducing a second control idiom.
+        */}
+        {pageSizeOptions?.length ? (
+          <span className="flex items-center gap-1.5">
+            <span className="text-ink-2">Rows</span>
+            {pageSizeOptions.map((n) => (
+              <button
+                key={n}
+                type="button"
+                onClick={() => chooseSize(n)}
+                aria-pressed={size === n}
+                aria-label={`Show ${n} rows per page`}
+                className={
+                  "rounded-full border px-2.5 py-1 font-semibold transition-colors " +
+                  (size === n
+                    ? "border-magenta bg-magenta text-white"
+                    : "border-line text-ink-2 hover:border-magenta hover:text-magenta focus-visible:border-magenta")
+                }
+              >
+                {n}
+              </button>
+            ))}
+          </span>
+        ) : null}
+
         <span className="ml-auto flex items-center gap-2">
           <button
             type="button"

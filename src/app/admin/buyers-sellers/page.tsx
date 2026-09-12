@@ -24,6 +24,7 @@ import {
 } from "@/lib/user-levels";
 import { Users, MailCheck, UserCheck, Building2, Wallet } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
+import { jobLabel } from "@/lib/user-jobs";
 import { LevelPill } from "@/components/console/LevelPill";
 import { REGISTERED_SITE_NAME } from "@/lib/company";
 
@@ -243,30 +244,14 @@ export default async function Page() {
     const level = levelFor(subject);
     const blocking = blockingFor(subject);
 
-    const roles =
-      [
-        p.is_service_coordinator && "Recruiter",
-        p.is_service_provider && "Provider",
-        /*
-          ── ⚠⚠ BUYER FIRST, THEN REQUESTER (`P1-A1.5-E444`) ──────────────────
-
-          ⚠ SUPERSEDED, quoted not deleted:
-            `!!p.requesterProfile && "Requester",`
-            `p.is_service_buyer && !p.requesterProfile && "Buyer",`
-
-          ⚠ THE SECOND LINE WAS NEVER TRUE FOR A REAL BUYER. Since `E421` every
-          buyer owns a `RequesterProfile` for wizard resume, so `!requesterProfile`
-          excluded exactly the people it was meant to name — "Bobby Da Buyer (21)"
-          rendered as Requester. MEASURED before the fix: 45 rows read Requester,
-          12 read Buyer; the honest split is 38 and 11.
-          ⚠ NEITHER PROFILE → NEITHER WORD. The remaining 10 carry
-          `is_service_buyer` and have answered nothing yet; naming them would be
-          the guess this fix removes.
-        */
-        p.buyerProfile ? "Buyer" : p.requesterProfile ? "Requester" : false,
-      ]
-        .filter(Boolean)
-        .join(" · ") || "—";
+    /*
+      ⚠ THE RULE MOVED TO `lib/user-jobs.ts` (`E460`), UNCHANGED. A second
+      surface — `/admin/users/[id]` — needs the same answer, and the brief is
+      explicit: *"Do not re-derive this. Import the grid's rule or the grid and
+      the page will drift."* Two copies of "is this person a Buyer?" is exactly
+      how the badge and this grid disagreed before `E444`.
+    */
+    const roles = jobLabel(p);
 
     /*
       ⚠ THE LOCK CELL LOST ITS SENTENCE AND KEPT ITS FACTS (`E252a`). Scott's
@@ -307,7 +292,24 @@ export default async function Page() {
       requester or a buyer anywhere in the app, so their name renders as text
       rather than as a link to a 404. ⚠ REPORTED, not papered over.
     */
-    const profileHref = p.providerProfile ? `/providers/${p.providerProfile.id}` : null;
+    /*
+      ── ⚠⚠ EVERY NAME LINKS NOW (`P1-A1.5-E460`) ──────────────────────────────
+
+      ⚠ SUPERSEDED, quoted not deleted:
+        `const profileHref = p.providerProfile ? `/providers/${p.providerProfile.id}` : null;`
+      with the reasoning *"THE NAME LINKS ONLY WHERE THERE IS A PAGE TO LINK TO…
+      ONLY providers have one… so their name renders as text rather than as a
+      link to a 404."*
+
+      ⚠⚠ THAT WAS RIGHT ABOUT THE REPO AND WRONG ABOUT THE PRODUCT. **SCOTT:**
+      *"Everyone has a profile...just sellers have more info on theirs, no?"* —
+      and Level 1 proves it: name · email · phone · title · profile · ToS,
+      identical on both sides of the marketplace. The answer was not to withhold
+      94 links; it was to build the page that was missing. ⚠ ALL 199 ROWS LINK.
+      ⚠ `/providers/[id]` IS NOT REPLACED — it is the PUBLIC page, and it now
+      hangs off this admin page's Seller detail section.
+    */
+    const profileHref = `/admin/users/${p.id}`;
 
     const cells = [
       <Avatar
@@ -317,7 +319,7 @@ export default async function Page() {
         photoUrl={p.photo_url}
         size={32}
       />,
-      profileHref ? (
+      (
         /*
           ── ⚠ IT LOOKED EXACTLY LIKE THE PLAIN TEXT (`P1-A1.5-E443`) ──────────
 
@@ -340,10 +342,6 @@ export default async function Page() {
         >
           {name}
         </Link>
-      ) : (
-        <span key="name" className="font-semibold">
-          {name}
-        </span>
       ),
       roles,
       /*
@@ -549,11 +547,26 @@ export default async function Page() {
         rowMeta={rows.map((r) => r.meta)}
         searchPlaceholder="Search people, email or company…"
         /*
-          ⚠ FIFTEEN, NOT TWENTY-FIVE (`E454`). **SCOTT:** *"I am trying to get
-          everything to fit on one page so you can see the footer tiles."* At 199
-          rows that is 14 pages where 25 gave 8 — the trade is deliberate and his.
+          ── ⚠⚠ SEVEN, AND THE POINT IS THE FOLD (`P1-A1.5-E458`) ──────────────
+
+          **SCOTT:** *"looks like we need to take the display rows down to 7 with
+          the option to change how many return (to show the footer is there)."*
+
+          ⚠ SUPERSEDED, quoted not deleted: `pageSize={15}` — *"I am trying to get
+          everything to fit on one page so you can see the footer tiles."* Fifteen
+          was the right instruction and the wrong number: MEASURED at 1440×900
+          with the banner dismissed, it still pushed the footer below the fold.
+          ⚠ THE NUMBER IS NOT THE POINT AND MUST NOT BE TUNED BLIND — it is
+          whatever makes the header tiles, the grid and the footer all visible at
+          once. The measurement is in the report.
+          ⚠ AND IT IS NOW THE VIEWER'S TO CHANGE: the picker remembers 7/15/25/50
+          per person, so an admin who would rather scan 50 is one click away.
         */
-        pageSize={15}
+        pageSize={7}
+        pageSizeOptions={[7, 15, 25, 50]}
+        /* ⚠ SCOPED TO THIS GRID. A second listing that opts in later gets its own
+           key rather than inheriting a size chosen for a different table. */
+        pageSizeKey="panameer.admin.users.pageSize"
         empty={<StubEmpty what="people" why="Nobody has signed up yet." />}
       />
 
