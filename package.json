@@ -104,7 +104,8 @@
     "check:project-parent": "npx esbuild scripts/check-project-parent.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/project-parent.cjs --log-level=error && node .harness/project-parent.cjs",
     "check:strict-schema": "npx esbuild scripts/check-strict-schema.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/strict-schema.cjs --log-level=error && RESUME_PARSER_API_KEY=gate-stub-no-network RESUME_PARSER_MODEL=gpt-5-nano DATABASE_URL=postgres://gate/none NEXTAUTH_SECRET=gate-stub node .harness/strict-schema.cjs",
     "check:buyer-reuse": "npx esbuild scripts/check-buyer-reuse.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/buyer-reuse.cjs --log-level=error && node .harness/buyer-reuse.cjs",
-    "check:skills-visible": "npx esbuild scripts/check-skills-visible.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/skills-visible.cjs --log-level=error && node .harness/skills-visible.cjs"
+    "check:skills-visible": "npx esbuild scripts/check-skills-visible.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/skills-visible.cjs --log-level=error && node .harness/skills-visible.cjs",
+    "check:import-deadline": "npx esbuild scripts/check-import-deadline.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/import-deadline.cjs --log-level=error && node .harness/import-deadline.cjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",

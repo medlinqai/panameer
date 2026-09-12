@@ -1,3 +1,4 @@
+import { MODEL_TIMEOUT_MS } from "@/lib/resume/budget";
 import { env } from "@/lib/env";
 
 /**
@@ -34,7 +35,17 @@ export type ProviderName = "openai" | "anthropic";
  * platform timeout produces a 504 with no body — no message for the UI, nothing
  * in the logs. Losing the race to our own deadline produces a sentence instead.
  */
-const MODEL_TIMEOUT_MS = 55_000;
+/*
+  ⚠ SUPERSEDED, quoted not deleted (`P1-A1.4-E415` WS-2):
+
+      const MODEL_TIMEOUT_MS = 55_000;
+
+  ⚠⚠ FIFTY-FIVE SECONDS INSIDE A ROUTE THAT HAS SIXTY, with a mandatory serial
+  pass in front of it. That is not a tight budget, it is an impossible one — and
+  it was impossible because two literals in two files had no way to know about
+  each other. ⚠ IT IS NOW DERIVED: see `lib/resume/budget.ts`, which states the
+  relationship and the measurements behind it.
+*/
 
 /**
  * Does this model treat `max_completion_tokens` as a budget it can spend
@@ -235,6 +246,7 @@ export async function callExtractionModel({
   tag = "resume",
   toolDescription = "Record the structured contents of this résumé.",
   strict = false,
+  timeoutMs,
 }: {
   system: string;
   schema: Record<string, unknown>;
@@ -277,6 +289,17 @@ export async function callExtractionModel({
     answer well-formed.
   */
   strict?: boolean;
+  /*
+    ── ⚠⚠ WHAT THE ROUTE HAS LEFT, NOT WHAT THIS CALL WOULD LIKE (`E415` WS-2) ──
+
+    ⚠ OMITTED MEANS "no route around me" — the default `MODEL_TIMEOUT_MS` is
+    used, which is what a script or a gate wants. ⚠ THE IMPORT ROUTE ALWAYS
+    PASSES IT, computed by `callTimeoutMs()` from the moment the request began,
+    so a call late in the chain is granted only the time that actually remains.
+    ⚠⚠ THE INVARIANT HOLDS BY CONSTRUCTION: the value can never exceed
+    `READ_BUDGET_MS`, which is strictly smaller than the route's `maxDuration`.
+  */
+  timeoutMs?: number;
 }): Promise<ModelCall> {
   const cfg = resolveProvider();
   if (!cfg) {
@@ -284,6 +307,9 @@ export async function callExtractionModel({
   }
 
   const started = Date.now();
+  /* ⚠ ONE RESOLUTION FOR THE WHOLE CALL, so the message below quotes the number
+     that was actually enforced rather than the constant. */
+  const budgetMs = timeoutMs ?? MODEL_TIMEOUT_MS;
   const userContent = `${instruction}\n\n<${tag}>\n${text.slice(0, 120_000)}\n</${tag}>`;
 
   try {
@@ -430,7 +456,7 @@ export async function callExtractionModel({
         hosting platform's function timeout, which arrives as a 504 with no body
         — nothing for the UI to show and nothing in the logs to read.
       */
-      signal: AbortSignal.timeout(MODEL_TIMEOUT_MS),
+      signal: AbortSignal.timeout(budgetMs),
     });
 
     if (!res.ok) {
@@ -567,7 +593,7 @@ export async function callExtractionModel({
       return {
         ok: false,
         reason: "error",
-        message: `The reader took longer than ${Math.round(MODEL_TIMEOUT_MS / 1000)}s and was stopped. Nothing was changed — try again, or add your work history manually.`,
+        message: `The reader took longer than ${Math.round(budgetMs / 1000)}s and was stopped. Nothing was changed — try again, or add your work history manually.`,
       };
     }
     return {

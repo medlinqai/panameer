@@ -1,3 +1,4 @@
+import { callTimeoutMs, MIN_CALL_MS } from "@/lib/resume/budget";
 import { z } from "zod";
 import {
   callExtractionModel,
@@ -157,14 +158,38 @@ async function runPass<T>(
   schema: Record<string, unknown>,
   text: string,
   parse: (v: unknown) => T | null,
-  maxOutputTokens = 8_000
+  maxOutputTokens = 8_000,
+  /*
+    ── ⚠ WHEN THE CONTAINING REQUEST BEGAN (`P1-A1.4-E415` WS-2) ─────────────
+    ⚠ `null` MEANS "no route around me" — a script, a gate or the re-read
+    button, where the per-call ceiling is the only limit that applies. The
+    import route always supplies it.
+  */
+  startedAt: number | null = null
 ): Promise<PassOutcome<T>> {
+  /*
+    ⚠⚠ DON'T START A CALL THERE IS NO TIME FOR. A model call granted three
+    seconds will spend them and fail, which reaches the same answer as not
+    calling — but later, and for money. ⚠ AND IT REPORTS A DIFFERENT, TRUER
+    REASON: `deadline` says the route ran out of room, where `error` would have
+    blamed the model for a decision the clock made.
+  */
+  const budget = callTimeoutMs(startedAt);
+  if (startedAt !== null && budget < MIN_CALL_MS) {
+    return {
+      ok: false,
+      reason: "deadline",
+      message: `${name}: not enough of the request's time was left to read this document`,
+    };
+  }
   const call = await callExtractionModel({
     system,
     schema,
     schemaName: `resume_${name}`,
     text,
     maxOutputTokens,
+    /* ⚠ `E415` — the smaller of this pass's ceiling and what the route has left. */
+    timeoutMs: budget,
     /*
       ── ⚠⚠ CONSTRAINED DECODING FOR THE SIX PASSES (`P1-A1.4-E414` WS-1) ─────
 
@@ -271,7 +296,11 @@ async function runPass<T>(
 }
 
 /** ⚠ PASS 1. The contract every later pass is measured against. */
-export function inventoryPass(text: string): Promise<PassOutcome<InventoryItem[]>> {
+export function inventoryPass(
+  text: string,
+  /* ⚠ `startedAt` — the containing request's clock (`E415`). Null off-route. */
+  startedAt: number | null = null
+): Promise<PassOutcome<InventoryItem[]>> {
   return runPass(
     "inventory",
     INVENTORY_SYSTEM,
@@ -291,7 +320,8 @@ export function inventoryPass(text: string): Promise<PassOutcome<InventoryItem[]
       every other pass is measured against and a failure here drops the import to
       the heuristic parse.
     */
-    12_000
+    12_000,
+    startedAt
   );
 }
 
@@ -311,7 +341,12 @@ function sub(properties: Record<string, unknown>, required: string[]) {
  * to the model as a checklist, so "return one of five" stops being an option it
  * can take silently — and when it does anyway, `recallReport` sees it.
  */
-export function employersPass(text: string, inventory: InventoryItem[]) {
+export function employersPass(
+  text: string,
+  inventory: InventoryItem[],
+  /* ⚠ `startedAt` — the containing request's clock (`E415`). Null off-route. */
+  startedAt: number | null = null
+) {
   const list = inventory.map((i, n) => `${n + 1}. ${i.heading}${i.dateRange ? ` (${i.dateRange})` : ""}`).join("\n");
   const system = `You are transcribing a résumé's work history.
 
@@ -371,10 +406,15 @@ If the document says nothing about a field, use null — never invent one.`;
   return runPass("employers", system, schema as unknown as Record<string, unknown>, text, (v) => {
     const r = partial(["employers"]).safeParse(v);
     return r.success ? r.data.employers : null;
-  }, 12_000);
+  }, 12_000, startedAt);
 }
 
-export function projectsPass(text: string, engagements: InventoryItem[] = []) {
+export function projectsPass(
+  text: string,
+  engagements: InventoryItem[] = [],
+  /* ⚠ `startedAt` — the containing request's clock (`E415`). Null off-route. */
+  startedAt: number | null = null
+) {
   /* ⚠ THE ENGAGEMENTS FROM PASS 1 ARE HANDED BACK AS A CHECKLIST, the same way
      the employers pass gets its own — so the count is a contract here too. */
   const list = engagements.length
@@ -412,11 +452,11 @@ If the document says nothing about a field, use null — never invent one.${list
   return runPass("projects", system, schema as unknown as Record<string, unknown>, text, (v) => {
     const r = partial(["projects"]).safeParse(v);
     return r.success ? r.data.projects : null;
-  }, 12_000);
+  }, 12_000, startedAt);
 }
 
 /** ⚠ ON ITS OWN PASS BECAUSE IT WAS THE WORST HIT — 0 of 5 (`E399`). */
-export function certificationsPass(text: string) {
+export function certificationsPass(text: string, startedAt: number | null = null) {
   const system = `You are transcribing, not summarising.
 
 List EVERY certification, credential, licence or accreditation named in this
@@ -446,10 +486,10 @@ If the document says nothing about a field, use null — never invent one.`;
     const r = partial(["certifications"]).safeParse(v);
     return r.success ? r.data.certifications : null;
     /* ⚠ Same reasoning-budget trap as the inventory — see `inventoryPass`. */
-  }, 8_000);
+  }, 8_000, startedAt);
 }
 
-export function skillsPass(text: string) {
+export function skillsPass(text: string, startedAt: number | null = null) {
   const system = `You are transcribing, not summarising.
 
 List EVERY distinct technical skill, tool, platform, module and language named in
@@ -466,10 +506,10 @@ Put human languages in "languages" and everything else in "skills".`;
   return runPass("skills", system, schema as unknown as Record<string, unknown>, text, (v) => {
     const r = partial(["skills", "languages"]).safeParse(v);
     return r.success ? { skills: r.data.skills, languages: r.data.languages } : null;
-  }, 8_000);
+  }, 8_000, startedAt);
 }
 
-export function profilePass(text: string) {
+export function profilePass(text: string, startedAt: number | null = null) {
   const system = `Read this résumé and return three things:
 - headline: their professional title, as the document presents it.
 - overview: their professional summary, IN THEIR OWN WORDS from the document. If
@@ -499,7 +539,7 @@ If the document says nothing about a field, use null — never invent one.`;
   return runPass("profile", system, schema as unknown as Record<string, unknown>, text, (v) => {
     const r = partial(["headline", "overview", "education"]).safeParse(v);
     return r.success ? r.data : null;
-  }, 8_000);
+  }, 8_000, startedAt);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -528,8 +568,14 @@ export type RecallReport = {
   certificationsReturned: number;
   /** Countable from the raw text, no model involved. */
   dateRangesInSource: number;
-  /** ⚠ Passes that failed. The others still landed. */
-  failedPasses: string[];
+  /*
+    ⚠ Passes that failed, AND WHY (`P1-A1.4-E415` WS-3). ⚠ SUPERSEDED, quoted:
+    `failedPasses: string[]` — the name alone. ⚠⚠ "We couldn't read the projects
+    section" is true whether the model errored or the REQUEST RAN OUT OF TIME,
+    and those are different problems with different next steps: one is worth
+    retrying immediately, the other will happen again on the same document.
+  */
+  failedPasses: { name: string; reason: string }[];
   /** ⚠⚠ True when the contract was not met — a DETECTED failure, not a result. */
   shortfall: boolean;
   /** Plain sentences for the review screen. Empty when nothing is wrong. */
@@ -553,7 +599,7 @@ export function recallReport(input: {
   projects: number;
   certifications: number;
   dateRanges: number;
-  failedPasses: string[];
+  failedPasses: { name: string; reason: string }[];
   /** Every heading pass 1 saw, employers and engagements together. */
   headingsTotal?: number;
 }): RecallReport {
@@ -582,10 +628,21 @@ export function recallReport(input: {
     );
   }
   for (const p of input.failedPasses) {
+    /*
+      ⚠⚠ THE CLOCK IS NAMED WHEN THE CLOCK IS THE CAUSE (`E415` WS-3). Scott's
+      complaint was that the failure *"told me it did not work"* and nothing
+      else. A section dropped because the upload ran out of time will be dropped
+      again on the same document — saying so is the difference between "try
+      again" and "try again and expect the same".
+    */
+    const outOfTime = p.reason === "deadline" || p.reason === "truncated";
+    const why = outOfTime
+      ? " — your document took longer to read than we allow for one upload"
+      : "";
     warnings.push(
-      p === "certifications"
-        ? "We couldn't read your certifications — everything else imported. Add them manually or try again."
-        : `We couldn't read the ${p} section — everything else imported.`
+      p.name === "certifications"
+        ? `We couldn't read your certifications${why}. Everything else imported — add them manually or try again.`
+        : `We couldn't read the ${p.name} section${why}. Everything else imported.`
     );
   }
   return {
@@ -614,14 +671,23 @@ export type MultiPassOutcome =
       /** ⚠ Per-pass wall time and cost, so the claim can be checked. */
       passes: { name: string; ok: boolean; ms: number; costUsd: number | null }[];
     }
-  | { ok: false; reason: "no_key" | "error" | "refusal"; message: string };
+  | { ok: false; reason: "no_key" | "error" | "refusal" | "deadline"; message: string };
 
 /**
  * ⚠ EVERY PASS IS INDEPENDENT AND PARTIAL SUCCESS IS THE NORMAL OUTCOME. Only a
  * failed INVENTORY is fatal — without it there is no contract to measure against,
  * and an unmeasured import is the state this brief exists to end.
  */
-export async function aiExtractResumeMultiPass(text: string): Promise<MultiPassOutcome> {
+export async function aiExtractResumeMultiPass(
+  text: string,
+  /*
+    ⚠ THE CONTAINING REQUEST'S CLOCK (`P1-A1.4-E415` WS-2). Every pass below
+    receives it, so each asks how much of the ROUTE is left rather than how much
+    it would like. ⚠ `null` off-route — scripts and gates keep the per-call
+    ceiling and nothing else.
+  */
+  startedAt: number | null = null
+): Promise<MultiPassOutcome> {
   const started = Date.now();
   /*
     ⚠ `reason` AND `message` ARE CARRIED NOW (`P1-A1.4-E407` WS-2). They used to
@@ -643,7 +709,7 @@ export async function aiExtractResumeMultiPass(text: string): Promise<MultiPassO
     outputTokens?: number | null;
     reasoningTokens?: number | null;
   }[] = [];
-  const failed: string[] = [];
+  const failed: { name: string; reason: string }[] = [];
   let inTok = 0, outTok = 0, cachedTok = 0, reasoningTok = 0, cost = 0, anyCost = false;
   let model = "", provider: ProviderName = "openai", tier: ParserTier = "economy";
   let finishReason: string | null = null;
@@ -672,18 +738,23 @@ export async function aiExtractResumeMultiPass(text: string): Promise<MultiPassO
         outputTokens: r.usage?.outputTokens ?? null,
         reasoningTokens: r.usage?.reasoningTokens ?? null,
       });
-      failed.push(name);
+      failed.push({ name, reason: r.reason });
     }
   };
 
-  const inv = await inventoryPass(text);
+  const inv = await inventoryPass(text, startedAt);
   tally("inventory", inv);
   if (!inv.ok) {
     /* ⚠ SUPERSEDED, quoted (`E414` WS-2): `inv.reason === "no_key" ? "no_key" : "error"`. */
     return {
       ok: false,
+        /* ⚠ `deadline` joins them (`E415`): the route ran out of room, which is
+         neither a model error nor a refusal, and `import.ts` records the string
+         on `ImportPath.reason`. */
       reason:
-        inv.reason === "no_key" || inv.reason === "refusal" ? inv.reason : "error",
+        inv.reason === "no_key" || inv.reason === "refusal" || inv.reason === "deadline"
+          ? inv.reason
+          : "error",
       message: inv.message,
     };
   }
@@ -740,11 +811,11 @@ export async function aiExtractResumeMultiPass(text: string): Promise<MultiPassO
   const engagements = inv.value.filter((i) => i.kind === "engagement");
 
   const [emp, proj, certs, skills, prof] = await Promise.all([
-    employersPass(text, inv.value),
-    projectsPass(text, engagements),
-    certificationsPass(text),
-    skillsPass(text),
-    profilePass(text),
+    employersPass(text, inv.value, startedAt),
+    projectsPass(text, engagements, startedAt),
+    certificationsPass(text, startedAt),
+    skillsPass(text, startedAt),
+    profilePass(text, startedAt),
   ]);
   tally("employers", emp);
   tally("projects", proj);

@@ -48,9 +48,24 @@ const CODE = strip(RAW);
 
 /* ═══ 1 · ⚠⚠ NO SECTION IS DROPPED BEFORE EXTRACTION ═════════════════════ */
 {
+  /*
+    ⚠ SUPERSEDED, quoted not deleted (`P1-A1.4-E415` WS-2):
+
+        /employersPass\(text,\s*inv\.value\)/
+
+    ⚠ `E415` ADDED A THIRD ARGUMENT — the containing request's clock — so the
+    call is now `employersPass(text, inv.value, startedAt)` and a pattern that
+    required the closing paren right after `inv.value` went red on a change
+    that has nothing to do with routing.
+
+    ⚠⚠ WHAT THIS ASSERTION PROTECTS IS UNCHANGED AND IS RE-PINNED BELOW: the
+    SECOND argument must be the whole `inv.value`, never a filtered subset.
+    `E410`'s defect was `inv.value.filter((i) => i.kind !== "engagement")` in
+    that position, and §1's next assertion still forbids exactly that.
+  */
   check(
     "1 — ⚠⚠ the extraction pass receives the WHOLE inventory",
-    /employersPass\(text,\s*inv\.value\)/.test(CODE),
+    /employersPass\(text,\s*inv\.value[,)]/.test(CODE),
     "it must not be handed a filtered subset"
   );
   /* ⚠ THE EXACT SHAPE THAT CAUSED THE DEFECT. A `kind` filter feeding the

@@ -468,7 +468,37 @@ export function parseResume(text: string): ParsedResume {
       /* ⚠ THE VALUE IS SHOWN TO A PERSON after an import, which is why this one
          line is in scope while the rest of this file's `employer` naming — field
          keys and internals bound to `model Employer` — is not (WS-3). */
-      if (!pending.employer) pending.employer = "(Company not detected)";
+      /*
+        ── ⚠⚠ THE SENTINEL WAS STORED, NOT JUST SHOWN (`P1-A1.4-E415` WS-4) ────
+
+        ⚠ SUPERSEDED, quoted not deleted:
+
+            if (!pending.employer) pending.employer = "(Company not detected)";
+
+        ⚠⚠ NOTHING STRIPPED IT BEFORE STORAGE. `import.ts` already writes
+        `name: e.employer ? … : null` — the null branch simply could never be
+        reached, because this line had filled the field first. So a heuristic
+        import put the literal `(Company not detected)` into `Employer.name`,
+        and the provider's profile read it back as their company.
+
+        ⚠ `E373` MADE `Employer.name` NULLABLE PRECISELY SO THIS STRING WOULD
+        NOT EXIST. SCOTT: *"I was a contractor for 20+ years… Legally I HAVE to
+        have a company… so no one tends to mention it."* ⚠ `null` is the honest
+        value and `employerDisplayName` renders it as **Independent** — one
+        word, in one place, already used by every other surface.
+
+        ⚠⚠ AND THE COUNT SURVIVES THE NULL, which is the whole difficulty. The
+        *"N companies imported with a missing company or job title"* gap is what
+        tells somebody to fill it in, so it could not simply go with the
+        sentinel. It now counts the ABSENCE instead of a magic string — see the
+        `unnamed` filter below. ⚠ THE ROLE-TITLE SENTINEL IS UNTOUCHED: it is a
+        different column (`role_title`), it is not what `E373` made nullable,
+        and `check:field-quality`'s write/compare pairing still holds for it.
+
+        ⚠ THE HEURISTIC PATH RUNS WHEN THE MODEL IS UNAVAILABLE OR OUT OF TIME —
+        which `E415`'s own deadline makes considerably more common. That is why
+        this sits in this brief and not a later one.
+      */
       if (!pending.roleTitle) pending.roleTitle = "(Role not detected)";
       experiences.push(pending);
     }
@@ -687,8 +717,17 @@ export function parseResume(text: string): ParsedResume {
      which made the comparison dead: an un-named row stopped counting and this
      gap silently stopped firing. `check:field-quality` now asserts every
      `(… not detected)` sentinel COMPARED in this file is one this file WRITES. */
+  /* ⚠ SUPERSEDED, quoted not deleted (`E415` WS-4) — the company half compared
+     a sentinel this file no longer writes:
+
+         (e) => e.employer === "(Company not detected)" || e.roleTitle === "(Role not detected)"
+
+     ⚠⚠ COUNTING THE ABSENCE IS STRICTLY BETTER THAN COUNTING THE MARKER: it
+     cannot fall out of step with a string somewhere else, which is exactly the
+     drift the comment above records (`Employer` vs `Company`) and exactly what
+     `check:field-quality` was added to catch. */
   const unnamed = experiences.filter(
-    (e) => e.employer === "(Company not detected)" || e.roleTitle === "(Role not detected)"
+    (e) => !e.employer?.trim() || e.roleTitle === "(Role not detected)"
   ).length;
   if (unnamed > 0) {
     gaps.push(
