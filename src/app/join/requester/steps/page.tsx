@@ -555,7 +555,14 @@ export default function RequesterStepsPage() {
             </Field>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
+          {/*
+            ⚠ FULL WIDTH SINCE `P1-ALL-E417`, and measured in the walk rather
+            than guessed: this row was a two-column grid holding ONE field, a
+            leftover from when a second field sat beside it. With the country
+            picker now inside the phone field, half a row left the number itself
+            clipped to "98765 43…". Nothing sits next to it, so the row is a row.
+          */}
+          <div className="grid gap-3">
             {/*
               ⚠ THE BUILT VALIDATOR, NOT A RAW INPUT (`E241`). This was a plain
               `TextInput` while `PhoneField` — masking on change, validating on
