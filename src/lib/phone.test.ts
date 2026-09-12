@@ -5,7 +5,16 @@
  * are for: the failures worth catching here are off-by-one digit counts and a
  * mask that emits a trailing separator, and neither shows up by clicking once.
  */
-import { formatPhone, validatePhone, isPhoneComplete, digitsOf, isoFor } from "@/lib/phone";
+import { readFileSync } from "node:fs";
+import {
+  formatPhone,
+  validatePhone,
+  isPhoneComplete,
+  digitsOf,
+  isoFor,
+  toE164,
+  parseStoredPhone,
+} from "@/lib/phone";
 import { COUNTRIES } from "@/lib/countries";
 
 let passed = 0;
@@ -129,6 +138,84 @@ eq("\"Other\": 6 digits too short", validatePhone("123456", "Other").ok, false);
 eq("\"Other\": 16 digits too long", validatePhone("1234567890123456", "Other").ok, false);
 eq("\"Other\" is left as digits", formatPhone("+49 30 123456", "Other"), "4930123456");
 eq("no country behaves generically", validatePhone("1234567", null).ok, true);
+
+/* ---- ⚠⚠ E.164: THE COUNTRY TRAVELS WITH THE NUMBER (`E417` WS-2a) ------- */
+/* Scott: "The selected phone country is stored with the phone, independent of
+   the address country." There is no `phone_country` column and the brief forbids
+   a db:push, so the country lives INSIDE the stored value. */
+eq("India saves as E.164", toE164("98765 43210", "India"), "+919876543210");
+eq("Saudi saves as E.164, leading 0 dropped", toE164("0512345678", "Saudi Arabia"), "+966512345678");
+eq("US saves as E.164", toE164("(212) 559-9999", "United States"), "+12125599999");
+eq("an invalid number has no E.164 form", toE164("12345", "India"), null);
+eq("no country, no E.164", toE164("9876543210", null), null);
+
+eq("a stored E.164 names its own country", parseStoredPhone("+919876543210"), {
+  country: "India",
+  display: "98765 43210",
+});
+eq("…and a Saudi one", parseStoredPhone("+966512345678").country, "Saudi Arabia");
+/* ⚠ LEGACY ROWS ARE NOT MIGRATED (`E164`): a national string saved before this
+   brief gives no country, and the caller falls back to the sign-up country. */
+eq("a legacy national string yields no country", parseStoredPhone("(212) 559-9999"), {
+  country: null,
+  display: "(212) 559-9999",
+});
+eq("empty is empty", parseStoredPhone(null), { country: null, display: "" });
+/* ⚠ ROUND TRIP — what is saved comes back as what was typed. */
+eq(
+  "round trip: type → save → reload → same display",
+  parseStoredPhone(toE164("98765 43210", "India")).display,
+  "98765 43210"
+);
+
+/* ---- ⚠⚠ THE FIELD IS NEVER JUDGED AGAINST AN UNKNOWN COUNTRY ------------ */
+/*
+  The brief's mutation: "make the country unavailable at type time → red". The
+  country now comes from a control INSIDE the field, seeded from sign-up, so
+  these assertions read the wiring — a pure unit test cannot see a prop.
+  ⚠ THE REQUESTER WIZARD IS THE ONE THAT WAS BROKEN: phone is step 1, the
+  address is step 2, and it validated against `draft.address.country`.
+*/
+const FIELD = readFileSync("src/components/onboarding/PhoneField.tsx", "utf8");
+const REQ = readFileSync("src/app/join/requester/steps/page.tsx", "utf8");
+const PROV = readFileSync("src/app/join/provider/page.tsx", "utf8");
+const live = (src: string) =>
+  src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
+
+eq("the field carries its own country picker", /aria-label="Phone country"/.test(live(FIELD)), true);
+eq("the picker is a select over COUNTRIES", /COUNTRIES\.filter/.test(live(FIELD)), true);
+eq("changing country re-masks the number", /onChange\(formatPhone\(value, next\)\)/.test(live(FIELD)), true);
+eq(
+  "with no country selected the field says so rather than guessing",
+  /Pick your country so we check the number/.test(FIELD),
+  true
+);
+eq(
+  "⚠⚠ the requester phone no longer reads the ADDRESS country",
+  /phoneCountry\s*=\s*draft\.address\.country/.test(live(REQ)),
+  false
+);
+eq("the requester field owns its country", /onCountryChange=\{setPhoneCountry\}/.test(live(REQ)), true);
+eq("the requester saves E.164", /toE164\(draft\.phone, phoneCountry\)/.test(live(REQ)), true);
+eq("the provider field owns its country too", /onCountryChange=\{setPhoneCountry\}/.test(live(PROV)), true);
+eq(
+  "the provider gate reads the PHONE's country, not the address's",
+  /isPhoneComplete\(phoneInput, phoneCountry\)/.test(live(PROV)),
+  true
+);
+eq("the provider saves E.164", /toE164\(phoneInput, phoneCountry\)/.test(live(PROV)), true);
+eq(
+  "⚠ no save path posts the raw input any more",
+  /phone: phoneInput[,\s}]/.test(live(PROV)),
+  false
+);
+/* ⚠ AND THE TWO COUNTRIES STAY INDEPENDENT — Scott: "do not overwrite one from
+   the other." Nothing may re-point the phone country at the address country. */
+eq(
+  "⚠⚠ nothing overwrites the phone country from the address",
+  /setPhoneCountry\((?!\(prev\) => prev \?\?)[^)]*addr\.country/.test(live(PROV)),
+  false
+);
 
 /* ---- the gate the wizard actually calls --------------------------------- */
 eq("isPhoneComplete mirrors validate", isPhoneComplete("(212) 559-9999", "United States"), true);

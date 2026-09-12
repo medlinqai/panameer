@@ -50,6 +50,7 @@ import {
   isValidPhoneNumber,
   validatePhoneNumberLength,
   getCountryCallingCode,
+  parsePhoneNumberFromString,
   type CountryCode,
 } from "libphonenumber-js";
 
@@ -228,6 +229,63 @@ export function formatPhone(value: string, country: string | null | undefined): 
   if (!iso) return digits.slice(0, GENERIC.max);
   const typed = new AsYouType(iso).input(digits.slice(0, GENERIC.max));
   return (typed || digits.slice(0, GENERIC.max)).replace(/[\s(-]+$/, "");
+}
+
+/**
+ * ── ⚠⚠ HOW THE PHONE'S OWN COUNTRY IS PERSISTED (`P1-ALL-E417` WS-2a) ────────
+ *
+ * **SCOTT, 2026-09-12:** *"The selected phone country is stored with the phone,
+ * independent of the address country — do not overwrite one from the other."*
+ *
+ * ⚠⚠ THERE IS NO `phone_country` COLUMN AND THIS BRIEF FORBIDS A `db:push`
+ * (*"no `db:push` — if you think you need one, STOP"*). So the country is stored
+ * INSIDE the number, in E.164: `+919876543210`. That satisfies the requirement
+ * literally — the country travels with the phone, nothing derives it from the
+ * address, and no schema moves. It is also what an international phone column
+ * should hold.
+ *
+ * ⚠ THE INPUT STILL SHOWS THE NATIONAL FORM. `+91` lives in the picker beside
+ * the field; the box reads `98765 43210`. Only the SAVED string is E.164.
+ *
+ * ⚠ LEGACY ROWS ARE NOT MIGRATED AND NOT REWRITTEN (`E164`). Numbers saved
+ * before this brief are national text like `(212) 559-9999`; `parseStoredPhone`
+ * returns `country: null` for them and the caller falls back to the sign-up
+ * country, exactly as it did before. Nothing is back-filled.
+ */
+export function toE164(value: string, country: string | null | undefined): string | null {
+  const digits = digitsOf(value);
+  if (!digits) return null;
+  const iso = isoFor(country);
+  if (!iso) return null;
+  const parsed = parsePhoneNumberFromString(digits, iso);
+  return parsed?.isValid() ? parsed.number : null;
+}
+
+/**
+ * Read a stored value back into the two things the field needs: which country
+ * it belongs to, and what to show in the box.
+ *
+ * ⚠ TOLERANT BY DESIGN. A stored E.164 gives both answers; anything else — a
+ * legacy national string, or a number typed before this field existed — gives
+ * the digits back and `null` for the country, so the caller can fall back
+ * rather than guess.
+ */
+export function parseStoredPhone(
+  stored: string | null | undefined
+): { country: string | null; display: string } {
+  const raw = (stored ?? "").trim();
+  if (!raw) return { country: null, display: "" };
+  if (raw.startsWith("+")) {
+    const parsed = parsePhoneNumberFromString(raw);
+    if (parsed?.country) {
+      const name = Object.keys(ISO).find((k) => ISO[k] === parsed.country && k.length > 2);
+      return {
+        country: name ?? null,
+        display: formatPhone(parsed.nationalNumber, name ?? null),
+      };
+    }
+  }
+  return { country: null, display: raw };
 }
 
 export type PhoneCheck = { ok: boolean; reason?: string };
