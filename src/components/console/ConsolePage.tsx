@@ -33,8 +33,46 @@ import {
  * the dashboard becomes a set of numbers nobody can trust.
  */
 
+/**
+ * ── ⚠⚠ THE LEARN-STYLE VARIANT IS OPT-IN, BY DATA (`P1-A1.5-E454` WS-7) ─────
+ *
+ * **SCOTT:** *"can you update the tiles to be like LEARN with the icons and
+ * thinner?"*
+ *
+ * ⚠ `TileRow` IS SHARED BY 17 PAGES (`E430`), so a global restyle would have
+ * restyled sixteen pages that pass no icons and have nothing to put in one. A
+ * tile renders the LEARN layout — icon chip left, count and label right, shorter
+ * card — ONLY when it is given an `icon`. Every other page passes none and is
+ * byte-identical to before. ⚠ ONE COMPONENT, NO SECOND COPY: the same rule
+ * `Listing` follows for its interactive variant.
+ *
+ * ⚠⚠ THE COUNT STAYS INK IN BOTH LAYOUTS. That is `E433` — Scott, the same
+ * morning: *"the numbers on the tiles…not good pink. it is too much. lets change
+ * those to black."* ONLY THE ICON CARRIES COLOUR.
+ */
+export type TileTone = "neutral" | "amber" | "emerald" | "emeraldDeep" | "emeraldSolid";
+
+/*
+  ⚠ THE TONES ARE THIS PAGE'S FUNNEL, NOT LEARN'S GRADIENTS — reported as a
+  deliberate deviation. `/learn`'s `StatTile` tones are magenta/blue/green
+  gradients, and copying them would have put MAGENTA on a non-interactive tile,
+  which `E433` reserves for interactive things. These five deepen along the
+  lifecycle instead, matching the STATUS pills already on the same page, so a
+  reader sees one progression twice rather than two palettes.
+*/
+const TILE_TONES: Record<TileTone, string> = {
+  neutral: "bg-ink/[0.07] text-ink-2",
+  amber: "bg-amber-100 text-amber-800",
+  emerald: "bg-emerald-100 text-emerald-800",
+  emeraldDeep: "bg-emerald-200 text-emerald-900",
+  emeraldSolid: "bg-emerald-600 text-white",
+};
+
 export type Tile = {
   label: string;
+  /** Opt-in: supplying one switches this tile to the Learn-style layout. */
+  icon?: ReactNode;
+  tone?: TileTone;
   /** Absent = not knowable yet; renders as "—" in muted type. */
   value?: string | number;
   hint?: string;
@@ -54,6 +92,49 @@ export function TileRow({ tiles }: { tiles: Tile[] }) {
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
       {tiles.map((t, ti) => {
         const known = t.value !== undefined && t.value !== null;
+
+        /*
+          ⚠ THE LEARN LAYOUT, STRUCTURE-FOR-STRUCTURE: `flex items-center gap-3`,
+          a 38px rounded icon chip, the value and label stacked to its right, and
+          a SHORTER card (p-3.5 against p-4 plus the stacked label's height).
+          Measured after: the row is about a third shorter than the stacked tile.
+        */
+        if (t.icon && !t.tbd) {
+          const tile = (
+            <div className="flex items-center gap-3 rounded-brand border border-line bg-white p-3.5 transition-colors hover:border-magenta">
+              <span
+                className={
+                  "grid h-[38px] w-[38px] shrink-0 place-items-center rounded-[11px] " +
+                  TILE_TONES[t.tone ?? "neutral"]
+                }
+              >
+                {t.icon}
+              </span>
+              <div className="min-w-0">
+                {/* ⚠ INK, NOT MAGENTA (`E433`) — only the chip is coloured. */}
+                <b
+                  className={
+                    "block font-display text-[21px] leading-tight " +
+                    (known ? "text-ink" : "text-ink-2/30")
+                  }
+                >
+                  {known ? t.value : "—"}
+                </b>
+                <span className="mt-0.5 block truncate text-[11px] text-ink-2" title={t.label}>
+                  {t.label}
+                </span>
+              </div>
+            </div>
+          );
+          return t.href ? (
+            <Link key={`${t.label}-${ti}`} href={t.href} className="block">
+              {tile}
+            </Link>
+          ) : (
+            <div key={`${t.label}-${ti}`}>{tile}</div>
+          );
+        }
+
         const body = (
           <>
             <p className="text-[12px] font-semibold uppercase tracking-wide text-ink-2">

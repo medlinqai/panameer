@@ -310,8 +310,27 @@ export function AppHeader() {
           the rail also appears and nothing could shrink, and its 125px was the
           difference between 912 and 1043 required against 776 available.
         */}
+        {/*
+          ── ⚠⚠ THE DATE CHIP JOINS THE NEUTRAL RAMP (`P1-A1.5-E445`) ──────────
+
+          ⚠ SUPERSEDED, quoted not deleted: `bg-[#f1faff]` with
+          `text-[#1f7ab8]` — a pale blue on a blue, both HARD-CODED HEX and
+          neither in the token set `E432` settled. It was the only blue on a
+          logged-in page.
+
+          ⚠ IT MATCHES THE "AI on" CHIP BESIDE IT EXACTLY NOW — same
+          `bg-ink/[0.05]`, same `text-ink-2` — because they are the same KIND of
+          thing: a status nobody can act on.
+          ⚠⚠ NOT MAGENTA. `E433` reserves magenta for interactive things, and
+          this header's own note calls the date *"on every clock the person
+          owns"*.
+          ⚠ BLAST RADIUS, REPORTED NOT HIDDEN: `AppShell` renders this header for
+          BOTH `/admin` and `(app)`, so this lands on every logged-in page — and
+          the brief forbids special-casing `/admin`, correctly: two different
+          date chips would be worse than one neutral one.
+        */}
         {dateLabel && (
-          <span className="hidden items-center gap-1.5 rounded-full bg-[#f1faff] px-3 py-1.5 text-[13px] font-semibold text-[#1f7ab8] 2xl:inline-flex">
+          <span className="hidden items-center gap-1.5 rounded-full bg-ink/[0.05] px-3 py-1.5 text-[13px] font-semibold text-ink-2 2xl:inline-flex">
             <CalendarIcon />
             {dateLabel}
           </span>
@@ -330,7 +349,15 @@ export function AppHeader() {
           nothing to a walk and it is the cheapest thing on the row to lose.
         */}
         <span className="hidden items-center gap-1.5 rounded-full bg-black/[0.05] px-3 py-1.5 text-[12.5px] font-semibold text-ink-2 2xl:inline-flex">
-          <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+          {/*
+            ⚠ THE DOT WAS THE ONLY GREEN ON THE ROW (`E445`). ⚠ SUPERSEDED:
+            `bg-emerald-500`. The chip around it was already neutral, so the dot
+            was a semantic colour attached to a thing with no semantics — the
+            note above says it plainly: *"a status nobody can change."*
+            ⚠ IT STAYS A DOT. Removing it would change the chip's shape, and the
+            spec draws one; only its hue leaves.
+          */}
+          <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-ink-2/45" />
           AI on
         </span>
 

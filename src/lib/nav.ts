@@ -940,7 +940,20 @@ export const ADMIN_NAV: NavGroup[] = [
   {
     title: "Configuration Data",
     items: [
-      { label: "Buyers/Sellers", href: "/admin/buyers-sellers", icon: "ArrowLeftRight" },
+      /*
+        ── ⚠⚠ THE LABEL IS "Users"; THE ROUTE STAYS (`P1-A1.5-E454`) ───────────
+
+        **SCOTT:** *"change Buyers/Sellers to Users."*
+
+        ⚠ THE HREF IS DELIBERATELY UNCHANGED. Renaming `/admin/buyers-sellers`
+        would touch the nav map, `route-access.ts`, the trend sub-page's links and
+        `check:nav-reachable` (73 assertions) for no visible gain — the URL is not
+        on screen. ⚠ RECORDED AS A DECISION, not an oversight.
+        ⚠ AND THIS ONE LINE RENAMES THREE THINGS, because `pageTitleFor` reads
+        this label: the rail item, the page name top-left (`E430` WS-1), and the
+        browser tab.
+      */
+      { label: "Users", href: "/admin/buyers-sellers", icon: "ArrowLeftRight" },
       { label: "Roles>Domains>Skills", href: "/admin/skill-catalog", icon: "FolderTree" },
       { label: "Specializations", href: "/admin/specializations", icon: "Award" },
       { label: "Industries", href: "/admin/industries", icon: "Building2" },
