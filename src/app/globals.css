@@ -45,8 +45,77 @@
   --color-magenta-ink-hover: #8e138d;
   --color-ink: #272334;
   --color-ink-2: #4a4658;
-  --color-line: #ece9f1;
-  --color-bg-soft: #f0f7f8;
+  /*
+    ── ⚠⚠ ONE NEUTRAL FAMILY (`P1-A1.5-E432`, 2026-09-12) ─────────────────────
+
+    **SCOTT:** *"i like the grey in the medlinq pages better…softer."* → *"change
+    the brand neutrals."* → after reviewing a rendered three-way comparison,
+    *"go with option 2."* Option 2 is the Medlinq neutral values, adopted
+    unchanged. ⚠ He also reviewed and REJECTED a faint-violet-bias variant: the
+    largest channel difference was 3/255, below what the eye resolves.
+    ⚠ DO NOT REINTRODUCE A HUE BIAS INTO THESE THREE TOKENS.
+
+    ⚠ SUPERSEDED, quoted not deleted: `--color-line: #ece9f1` · `--color-bg-soft:
+    #f0f7f8` · `--color-canvas: #f7f7f5` (below, at the canvas token).
+
+    ── FINDING 1 — THE LINE TOKEN WAS TOO FAINT ───────────────────────────────
+
+    ⚠⚠ THE BRIEF'S ARITHMETIC FOR THIS FINDING WAS WRONG AND IS CORRECTED HERE.
+    ⚠ SUPERSEDED, quoted not deleted: *"Relative luminance of `#ece9f1` is
+    0.9322; of the old canvas `#f7f7f5`, 0.9289. THE BORDER WAS BRIGHTER THAN THE
+    PAGE IT WAS DRAWN ON — contrast 1.004:1, so every rule landing on the page
+    ground was not faint, it was ABSENT. Even on a white card it reached only
+    1.036:1."*
+
+    Re-measured with WCAG relative luminance, twice — once through
+    `lib/themeRecipes.contrast` in `check:theme` and once with an independent
+    implementation, agreeing to three decimals:
+
+        L(#ece9f1) = 0.8246   (the brief said 0.9322)
+        L(#f7f7f5) = 0.9289   (agrees)
+
+    ⚠ SO THE BORDER WAS **DARKER** THAN THE PAGE ALL ALONG, not brighter — 0.9322
+    is what you get by skipping the sRGB gamma linearisation, and it inverted the
+    comparison. The real figures: line-on-canvas was **1.119:1** and line-on-card
+    **1.201:1**. Faint, not absent.
+
+    ⚠⚠ THE DECISION IS UNAFFECTED AND THE DIRECTION STILL HOLDS. Scott chose
+    these values by LOOKING at rendered comparisons, not from this arithmetic,
+    and the ramp still does what it claims — see the principle below. Only the
+    magnitude of the complaint was overstated. REPORTED, not resolved by quietly
+    adjusting a colour to fit a number.
+
+    ── FINDING 2 — FOUR SURFACE FILLS, THREE OF THEM TINTED ───────────────────
+
+    Measured pixel-wise from Scott's screenshots: white cards 46.0% (neutral),
+    canvas 20.8% (WARM), bg-soft 4.0% (TEAL), tile fill 3.3% (MAGENTA), rules
+    (VIOLET). **SCOTT:** *"i am noticing that the tiles and sections have a
+    different shading as well."* ⚠ It is a HUE difference, not a lightness one,
+    and four disagreeing tints read as grubbiness rather than as colour.
+
+    ── ⚠⚠ THE PRINCIPLE: STRUCTURE COMES FROM THE RULE, NOT THE FILL ──────────
+
+    MEASURED, not quoted — `check:theme` prints these on every run:
+
+    ground-to-card separation  1.073:1 → 1.044:1   (SOFTER, on purpose)
+    line-on-canvas separation  1.119:1 → 1.186:1   (FIRMER, on purpose)
+
+    ⚠ The brief predicted 1.023 and 1.187 for the "after" pair; the second is
+    right, the first is not — `#fafafa` against white is 1.044:1. Both still move
+    in OPPOSITE directions, which is the claim that matters.
+
+    ⚠ Both move in OPPOSITE directions and that is the whole point. Softer
+    fills, firmer rules. ⚠ IF A CHANGE HERE MAKES THE CARD STAND OUT MORE, IT
+    HAS BEEN APPLIED WRONG.
+
+    ⚠ `--color-ink` and `--color-ink-2` DO NOT MOVE. Their contrast on the new
+    canvas is computed and asserted by `check:theme`: **14.619:1** and
+    **8.717:1**, both AA and AAA. ⚠ The brief said 14.77 and 8.72; the second
+    agrees, the first is out by 1% — again the brief's arithmetic, not the
+    colour. No value was adjusted to make a number match.
+  */
+  --color-line: #e5e7eb;
+  --color-bg-soft: #f9fafb;
 
   /*
    * LEARN / HOME PALETTE — measured out of the design PNG, not eyeballed.
@@ -155,7 +224,9 @@
    * where it was measured.
    */
   --color-rail-active: #b02aae;
-  --color-canvas: #f7f7f5;
+  /* ⚠ `E432` — the third of the three neutrals; see the block above for the
+     measurements and Scott's decision. ⚠ SUPERSEDED: `#f7f7f5` (warm). */
+  --color-canvas: #fafafa;
 
   --radius-brand: 14px;
   --shadow-brand: 0 10px 30px rgba(20, 10, 40, 0.08);
@@ -384,11 +455,24 @@ body {
 }
 
 .marketing-surface {
+  /*
+    ── ⚠⚠ THIS IS NOT A DUPLICATE OF `@theme` — IT IS A LIGHT-PALETTE PIN ─────
+
+    `:root[data-theme="dark"]` repoints ink/ink-2/line/canvas for the console.
+    The marketing surface stays LIGHT in either theme, so it re-declares the
+    light values at a more specific scope to win over that override — which is
+    why the rules below also have to undo the dark theme's white-card repaint.
+
+    ⚠⚠ SO IT MUST MOVE WITH `@theme`, EVERY TIME. If these three drift from the
+    tokens above, the public pages keep the old neutrals while the app gets the
+    new ones — and nothing would fail. `check:theme` asserts the two blocks
+    agree exactly (`E432`); mutate one and the gate goes red.
+  */
   --color-ink: #272334;
   --color-ink-2: #4a4658;
-  --color-line: #ece9f1;
-  --color-bg-soft: #f0f7f8;
-  --color-canvas: #f7f7f5;
+  --color-line: #e5e7eb;
+  --color-bg-soft: #f9fafb;
+  --color-canvas: #fafafa;
   /* ⚠ MIRRORED so `.marketing-surface` resolves them too — light surfaces only;
      see the note in `@theme`. */
   --color-magenta-ink: #a61aa5;
