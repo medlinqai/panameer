@@ -9,7 +9,7 @@ import {
   providersCell,
 } from "@/lib/catalog";
 import { TileRow, Listing, VolumeFooter } from "@/components/console/ConsolePage";
-import { CatalogTree, CatalogEditBar, type CatalogNode } from "@/components/console/CatalogTree";
+import { CatalogTree, type CatalogNode } from "@/components/console/CatalogTree";
 import { CatalogCard } from "@/components/console/CatalogCard";
 import { RDS_DOMAIN_MARKS, RDS_ROLE_MARKS } from "@/lib/catalog-marks";
 
@@ -212,9 +212,46 @@ export default async function Page({
         .sort((a, b) => b.providers - a.providers || a.name.localeCompare(b.name))
     : [];
 
+  /*
+    ── ⚠⚠ A DRILL-IN TAKES OVER THE PAGE (`P1-A1.5-E485`) ────────────────────
+
+    > **SCOTT, 2026-09-13:** *"none of these link to reports"*
+
+    ⚠⚠ THEY DO LINK, AND THEY ALWAYS DID. The bug is WHERE THE RESULT APPEARS:
+    the footer tiles sit at the bottom of a long page and the ranked listing
+    rendered in the page BODY, above them — outside the viewport being looked at.
+    Nothing visibly happened, so the tile read as dead.
+
+    ⚠ THE BRIEF'S PREMISE WAS HALF RIGHT, AND THE HALF IT MISSED IS THE CAUSE.
+    It says to hide the tree and the tile row *"as `?view=` already does"*.
+    ⚠⚠ MEASURED: `?view=` HID THE TREE AND NOTHING ELSE. The tile row and the
+    footer strip rendered on EVERY drill-in, so `?claimed=` put its listing
+    between two strips instead of replacing them — and `?view=` had the same
+    flaw, just less visibly because its tiles are at the top.
+
+    ⚠ SO ONE FLAG COVERS BOTH, and both drill-ins now behave identically: tiles
+    out, tree out, footer out, the listing IS the page. Same shape as the Users
+    page's `?stage=` drill-in, which is the pattern Scott approved.
+    ⚠ ZEROES STAY, AT THE BOTTOM — `E465b`'s rule holds: a category nobody has
+    claimed is the most actionable row on the page. Moving the listing does not
+    filter it.
+  */
+  const isDrillIn = !!view || !!claimedRole;
+
+  /*
+    ⚠ `E486` — ONE LINK COLOUR ON THE PAGE. `BackLink` does NOT render here
+    (reported: the brief expected it to), so this is the catalog's own back
+    affordance and it takes the same `--color-magenta-ink` token rather than
+    saturated `#d72cd6`. ⚠ SUPERSEDED, quoted not deleted: `text-magenta`.
+    ⚠ IT STAYS IN THE LISTING'S `action` SLOT, not above the title — the card
+    header is where it already sits and `E485` says to keep it wired as-is.
+  */
   const clearLink = (
-    <Link href="/admin/skill-catalog" className="text-[13px] font-bold text-magenta">
-      ← Back to the catalog
+    <Link
+      href="/admin/skill-catalog"
+      className="text-[14px] font-bold text-magenta-ink transition-colors hover:text-magenta-ink-hover hover:underline"
+    >
+      ‹ Back to the catalog
     </Link>
   );
 
@@ -236,6 +273,7 @@ export default async function Page({
         ⚠ `hint` IS DROPPED (S-1): the Learn tile is two lines and a third undoes
         the "thinner" this is copying.
       */}
+      {!isDrillIn && (
       <TileRow
         tiles={[
           {
@@ -261,12 +299,15 @@ export default async function Page({
           },
         ]}
       />
+      )}
+      {!isDrillIn && (
       <p className="mt-2 mb-6 text-[12.5px] text-ink-2">
         {domainPairs} role-domain pairs across {pillarCount} distinct domains —
         five vendor suites sit under both Application-Specific and
         Technology-Specific, so they are counted once per role. The tree below
         shows the same {domainPairs}.
       </p>
+      )}
 
       {/*
         ── ⚠ THE CATALOG MOVES INTO THE CONSOLE'S LISTING SLOT (`E470`) ────────
@@ -358,7 +399,23 @@ export default async function Page({
           />
         </CatalogCard>
       )}
-      <CatalogEditBar sticky />
+      {/*
+        ── ⚠ THE EDIT BAR IS NOT RENDERED (`P1-A1.5-E479`) ────────────────────
+
+        > **SCOTT, 2026-09-13, on the bar:** *"What does this mean?"*
+
+        ⚠ SUPERSEDED, quoted not deleted (`E164`): `<CatalogEditBar sticky />` — a
+        sticky footer reading *"Editing this catalog needs write endpoints that
+        aren't built yet — it's read-only for now"* beside a dead Save button.
+
+        ⚠⚠ THIS IS THE THIRD INSTANCE OF A PATTERN SCOTT HAS DELETED TWICE
+        ALREADY — the `TBD / metric to be defined` tiles (`E470c`) and the
+        explanatory paragraph (`E457`). A page that explains why part of itself
+        does not work is a page apologising for itself, and these two pages are
+        ones he is considering showing buyers.
+        ⚠⚠ THE COMPONENT IS NOT DELETED. Part 3 brings it back with a Save that
+        works; `E164`, and it is five lines. Only the call site goes.
+      */}
 
       {/*
         ── ⚠⚠ THE FOOTER STOPS BEING A TREND AND BECOMES "MOST CLAIMED" ───────
@@ -381,6 +438,8 @@ export default async function Page({
         scannable, and the numbers sit side by side anyway. THE RANKING LIVES
         INSIDE THE DRILL-IN.
       */}
+      {!isDrillIn && (
+      <>
       <VolumeFooter
         title="Most claimed"
         tiles={roleClaims.map((c) => ({
@@ -397,6 +456,8 @@ export default async function Page({
         skills is one person. ⚠ A provider working across two roles counts in
         both, so these do not sum to the provider total.
       </p>
+      </>
+      )}
     </div>
   );
 }

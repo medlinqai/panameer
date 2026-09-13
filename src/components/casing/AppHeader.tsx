@@ -331,16 +331,34 @@ export function AppHeader() {
           ⚠ IT MATCHES THE "AI on" CHIP BESIDE IT EXACTLY NOW — same
           `bg-ink/[0.05]`, same `text-ink-2` — because they are the same KIND of
           thing: a status nobody can act on.
-          ⚠⚠ NOT MAGENTA. `E433` reserves magenta for interactive things, and
-          this header's own note calls the date *"on every clock the person
-          owns"*.
+
+          ⚠⚠ SUPERSEDED AGAIN 2026-09-13 (`P1-A1.5-E445b`) — THIS LINE WAS THE
+          MISS, quoted not deleted (`E164`):
+            *"⚠⚠ NOT MAGENTA. `E433` reserves magenta for interactive things."*
+
+          > **SCOTT, 2026-09-12:** *"this was a blue, thought it was being changed
+          > to a pink hue like the 'Panameer is in active development' ribbon."*
+          > **AND 2026-09-13:** *"thought we were putting some color in these"*
+
+          ⚠⚠ THE BRIEF THAT SHIPPED THIS CARRIED BOTH THE WRONG INSTRUCTION AND
+          ITS CORRECTION, AND THE WRONG ONE WAS FOLLOWED. `E433` governs
+          SATURATED magenta (`--color-magenta` `#d72cd6`) marking things you can
+          CLICK. ⚠ A PALE MAGENTA WASH IS A SURFACE TINT, NOT AN INTERACTIVE
+          MARKER — the dev-development ribbon and the status pills both use one
+          and neither is clickable.
+
+          ⚠ THE TOKEN IS THE RIBBON'S OWN, REUSED NOT RE-EYEBALLED:
+          `DevBanner.tsx:49` is `border-b border-magenta/20 bg-magenta/8`. This
+          chip takes the same `bg-magenta/8` + `border-magenta/20`, with
+          `--color-magenta-ink` (`#a61aa5`) for the text and icon.
+          ⚠ STILL NOT SATURATED `#d72cd6`. Wash + ink, exactly like the pills.
           ⚠ BLAST RADIUS, REPORTED NOT HIDDEN: `AppShell` renders this header for
           BOTH `/admin` and `(app)`, so this lands on every logged-in page — and
           the brief forbids special-casing `/admin`, correctly: two different
           date chips would be worse than one neutral one.
         */}
         {dateLabel && (
-          <span className="hidden items-center gap-1.5 rounded-full bg-ink/[0.05] px-3 py-1.5 text-[13px] font-semibold text-ink-2 2xl:inline-flex">
+          <span className="hidden items-center gap-1.5 rounded-full border border-magenta/20 bg-magenta/8 px-3 py-1.5 text-[13px] font-semibold text-magenta-ink 2xl:inline-flex">
             <CalendarIcon />
             {dateLabel}
           </span>
@@ -358,16 +376,26 @@ export function AppHeader() {
           sm would have inverted the ranking against credits at xl. It costs
           nothing to a walk and it is the cheapest thing on the row to lose.
         */}
-        <span className="hidden items-center gap-1.5 rounded-full bg-black/[0.05] px-3 py-1.5 text-[12.5px] font-semibold text-ink-2 2xl:inline-flex">
+        {/* ⚠ `E445b` — the same ribbon wash as the date chip beside it. */}
+        <span className="hidden items-center gap-1.5 rounded-full border border-magenta/20 bg-magenta/8 px-3 py-1.5 text-[12.5px] font-semibold text-magenta-ink 2xl:inline-flex">
           {/*
-            ⚠ THE DOT WAS THE ONLY GREEN ON THE ROW (`E445`). ⚠ SUPERSEDED:
-            `bg-emerald-500`. The chip around it was already neutral, so the dot
-            was a semantic colour attached to a thing with no semantics — the
-            note above says it plainly: *"a status nobody can change."*
-            ⚠ IT STAYS A DOT. Removing it would change the chip's shape, and the
-            spec draws one; only its hue leaves.
+            ── ⚠⚠ THE GREEN COMES BACK (`P1-A1.5-E445b`) ─────────────────────
+
+            ⚠ SUPERSEDED, quoted not deleted (`E164`) — the reasoning that took
+            it out, and the line it produced:
+              *"THE DOT WAS THE ONLY GREEN ON THE ROW (`E445`). The chip around
+               it was already neutral, so the dot was a semantic colour attached
+               to a thing with no semantics."*
+              <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-ink-2/45" />
+
+            ⚠⚠ THAT LEFT "AI on" WITH NOTHING SAYING IT WAS ON. The chip reads
+            "AI on" and the only thing carrying that meaning is the dot; a grey
+            dot beside the word "on" contradicts the word.
+            ⚠ AND THE PREMISE IS GONE ANYWAY — the chip around it is no longer
+            neutral, so "a semantic colour attached to a thing with no
+            semantics" no longer describes it.
           */}
-          <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-ink-2/45" />
+          <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
           AI on
         </span>
 
