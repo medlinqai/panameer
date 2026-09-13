@@ -314,3 +314,135 @@ export function profileEnrichmentGaps(p: EnrichmentGapInput): string[] {
   if (p.specializations === 0) out.push("No specializations");
   return out;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE CHECKLIST (`P1-A1.5-E489`) — A READING OF THE SCORE, NOT A SECOND SCORE
+   ═══════════════════════════════════════════════════════════════════════════
+
+   > **Scott:** *"is it possible to show a percentage complete for each profile —
+   > we have 10 objects that can be completed, you have content in 7 of those…
+   > your profile is estimated to be at 70%"*
+
+   ⚠⚠ A SECOND PERCENTAGE WOULD CONTRADICT THE FIRST, AND THAT IS `E462` AGAIN.
+   `computeProviderCompleteness` is WEIGHTED, not counted: `skills` is 18 points
+   and `overview` is 8, so a required-only profile scores 88 while "7 of 10"
+   would read 70. Both numbers on one screen, disagreeing, is the Domains tile
+   saying 24 beside a tree saying 29.
+
+   ⚠ SO THERE IS NO NEW NUMBER HERE. The existing `completeness` stays the
+   number and stays the gate; this adds the BREAKDOWN underneath it, which is
+   what Scott actually wanted — not a second score but *which sections are
+   empty*, and a list cannot contradict anything.
+
+   ⚠⚠ EVERY PREDICATE BELOW MIRRORS `computeProviderCompleteness` LINE FOR LINE
+   AND THE WEIGHTS ARE READ FROM `COMPLETENESS_WEIGHTS`, never retyped. If the
+   two ever disagree the checklist is lying about the number beside it.
+   ⚠ NOTHING IN THIS BLOCK MUTATES THE SCORER, THE WEIGHTS OR THE THRESHOLD —
+   91 providers are gated on that number.
+*/
+
+export type ChecklistRow = {
+  key: string;
+  label: string;
+  done: boolean;
+  /** ⚠ Its own weight, so a missing row can say which action pays most. */
+  points: number;
+  /** Filled rows carry a count where they have one — `Employers (4)`. */
+  count?: number;
+  /** What to do about it, when it is missing. */
+  hint?: string;
+};
+
+/**
+ * The checklist, in the order a provider should act on it.
+ *
+ * ⚠ SORTED BY POINTS DESCENDING AMONG THE MISSING at the call site, because
+ * "which action pays most" is the one thing a percentage can never tell them.
+ */
+export function completenessChecklist(p: CompletenessInput): ChecklistRow[] {
+  const W = COMPLETENESS_WEIGHTS;
+  const rows: ChecklistRow[] = [
+    {
+      key: "headline",
+      label: "Headline",
+      done: !!(p.headline && p.headline.trim() !== ""),
+      points: W.headline,
+      hint: "Add a title — the one line buyers scan first.",
+    },
+    {
+      key: "field",
+      label: "Role & domain",
+      done: !!p.role_type_id,
+      points: W.field,
+      hint: "Pick your role.",
+    },
+    {
+      key: "skills",
+      label: "Skills",
+      done: p.skills.length >= 1,
+      points: W.skills,
+      count: p.skills.length,
+      hint: "Add at least one skill.",
+    },
+    { key: "rate", label: "Rate", done: hasAnyRate(p), points: W.rate, hint: "Add a rate range." },
+    { key: "photo", label: "Photo", done: !!p.photoUrl, points: W.photo, hint: "Add a photo." },
+    {
+      /* ⚠ ONE ROW, because the scorer awards ONE weight for address + phone
+         together. Two rows would imply two separately-scored things. */
+      key: "identity",
+      label: "Contact details",
+      done: !!(p.hasAddress && p.hasPhone),
+      points: W.identity,
+      hint: "Add your address and phone number.",
+    },
+    {
+      key: "workMethod",
+      label: "How you work",
+      done: !!p.work_method,
+      points: W.workMethod,
+      hint: "Say whether you deliver the work yourself.",
+    },
+    {
+      key: "overview",
+      label: "Bio",
+      done: !!(p.overview && p.overview.trim().length >= BIO_MIN_CHARS),
+      points: W.overview,
+      hint: `Write at least ${BIO_MIN_CHARS} characters.`,
+    },
+    {
+      key: "languages",
+      label: "Languages",
+      done: p.languages.length >= 1,
+      points: W.languages,
+      count: p.languages.length,
+      hint: "Add one language.",
+    },
+    {
+      /*
+        ── ⚠⚠ ONE WEIGHT, ONE ROW, ANY OF FOUR THINGS ─────────────────────────
+
+        The scorer awards `enrichment` once if the provider has ANY of work
+        history, education, certifications or specializations.
+        ⚠ RENDERING IT AS FOUR ROWS WOULD BE A LIE — it would imply four
+        requirements worth four weights, when it is one weight satisfied by any
+        one of them. The count below is the TOTAL across all four, so a provider
+        with four employers and nothing else still reads as satisfied.
+      */
+      key: "enrichment",
+      label: "Experience",
+      done:
+        p.employers.length >= 1 ||
+        p.education.length >= 1 ||
+        p.certifications.length >= 1 ||
+        p.specializations.length >= 1,
+      points: W.enrichment,
+      count:
+        p.employers.length +
+        p.education.length +
+        p.certifications.length +
+        p.specializations.length,
+      hint: "Add a job, a qualification, a certification or a specialization — any one counts.",
+    },
+  ];
+  return rows;
+}

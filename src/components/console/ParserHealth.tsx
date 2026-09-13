@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { parserHealth } from "@/lib/resume/audit";
+import { parserHealth, parserVariants } from "@/lib/resume/audit";
 import { resolveProvider, parserConfigProblem } from "@/lib/resume/ai-provider";
 
 /**
@@ -17,6 +17,7 @@ import { resolveProvider, parserConfigProblem } from "@/lib/resume/ai-provider";
  */
 export async function ParserHealth() {
   const h = await parserHealth();
+  const variants = await parserVariants();
   const cfg = resolveProvider();
   const problem = parserConfigProblem();
 
@@ -93,6 +94,101 @@ export async function ParserHealth() {
         <p className="mt-3 rounded-[10px] border border-dashed border-line px-3 py-2 text-[13px] text-ink-2">
           {problem}
         </p>
+      )}
+
+      {/*
+        ── ⚠⚠ BY MODEL + PROMPT, NEVER ONE BLENDED LINE (`P1-A1.5-E488`) ──────
+
+        ⚠ THIS EXTENDS THE CARD, IT DOES NOT REPLACE IT — everything above is
+        untouched. A single blended average cannot show that a change made
+        things worse, which is the whole reason Scott wants this screen.
+
+        ⚠⚠ NO CHART LIBRARY. package.json carries no recharts/chart.js/d3/visx,
+        and a bar per variant is a `<div>` with a width. Adding a dependency to
+        draw a handful of rectangles is not a trade worth making.
+      */}
+      {variants.length > 0 && (
+        <div className="mt-5 border-t border-line pt-4">
+          <h3 className="text-[12.5px] font-bold uppercase tracking-wide text-ink-2">
+            By model and prompt
+          </h3>
+          <p className="mt-1 text-[12px] text-ink-2">
+            Yield is objects per 1,000 source characters — it exists the moment a
+            run finishes and is what falls first when a model degrades. ⚠ Accuracy
+            only exists once a provider has reviewed, so an unreviewed run shows a
+            yield and no accuracy. Neither is ever imputed.
+          </p>
+
+          <div className="mt-3 space-y-3">
+            {variants.map((v) => {
+              /* Scale each bar against the widest yield on screen, so the
+                 comparison is between variants rather than against an
+                 arbitrary ceiling. */
+              const max = Math.max(...variants.map((x) => x.yieldPer1k ?? 0), 0.0001);
+              const pct = v.yieldPer1k ? Math.max(2, (v.yieldPer1k / max) * 100) : 0;
+              return (
+                <div key={v.key} className="rounded-[10px] border border-line p-3">
+                  <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                    <b className="text-[13.5px] text-ink">{v.model}</b>
+                    <span className="rounded-full bg-ink/[0.06] px-2 py-0.5 text-[11px] font-semibold text-ink-2">
+                      {v.promptVersion}
+                    </span>
+                    {/* ⚠ THE SAMPLE SIZE SITS BESIDE EVERY AVERAGE. */}
+                    <span className="text-[12px] text-ink-2">
+                      {v.runs} run{v.runs === 1 ? "" : "s"} · {v.objects} objects
+                    </span>
+                  </div>
+
+                  <div className="mt-2 flex items-center gap-3">
+                    <span className="w-[112px] shrink-0 text-[12px] text-ink-2">Yield</span>
+                    <span className="h-2 flex-1 overflow-hidden rounded-full bg-ink/[0.06]">
+                      {pct > 0 && (
+                        /* ⚠ INK, NOT MAGENTA — a bar is not interactive (`E433`). */
+                        <span
+                          className="block h-full rounded-full bg-ink-2/70"
+                          style={{ width: `${pct}%` }}
+                        />
+                      )}
+                    </span>
+                    <span className="w-[132px] shrink-0 text-right text-[12px] tabular-nums text-ink">
+                      {v.yieldPer1k === null
+                        ? "— no denominator"
+                        : `${v.yieldPer1k.toFixed(2)} / 1k (n=${v.yieldRuns})`}
+                    </span>
+                  </div>
+
+                  <div className="mt-1.5 flex items-center gap-3">
+                    <span className="w-[112px] shrink-0 text-[12px] text-ink-2">Accuracy</span>
+                    <span className="h-2 flex-1 overflow-hidden rounded-full bg-ink/[0.06]">
+                      {v.accuracy !== null && (
+                        <span
+                          className="block h-full rounded-full bg-emerald-500/70"
+                          style={{ width: `${Math.max(2, v.accuracy * 100)}%` }}
+                        />
+                      )}
+                    </span>
+                    <span className="w-[132px] shrink-0 text-right text-[12px] tabular-nums text-ink">
+                      {/* ⚠⚠ NEVER IMPUTED. "Not reviewed yet" is the honest answer. */}
+                      {v.accuracy === null
+                        ? "— not reviewed yet"
+                        : `${Math.round(v.accuracy * 100)}% (n=${v.reviewedRuns})`}
+                    </span>
+                  </div>
+
+                  {Object.keys(v.byType).length > 0 && (
+                    <p className="mt-2 text-[12px] text-ink-2">
+                      {Object.entries(v.byType)
+                        .filter(([, n]) => n > 0)
+                        .sort((a, b) => b[1] - a[1])
+                        .map(([k, n]) => `${k} ${n}`)
+                        .join(" · ")}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
       )}
 
       <p className="mt-3 text-[12.5px] text-ink-2">

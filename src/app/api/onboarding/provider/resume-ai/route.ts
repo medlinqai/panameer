@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
 import { getSessionViewer } from "@/lib/session";
 import { ownedProviderProfile } from "@/lib/access";
-import { aiExtractResume, aiToParsedResume, aiExtractionAvailable } from "@/lib/resume/ai-extract";
+import { aiExtractResume, aiToParsedResume, aiExtractionAvailable, PROMPT_VERSION } from "@/lib/resume/ai-extract";
 import { applyParsedResume } from "@/lib/resume/import";
 import { getOnboardingState } from "@/lib/onboarding";
 import { assessParse } from "@/lib/resume/confidence";
@@ -128,6 +128,10 @@ export async function POST() {
     where: { id: row.id },
     data: {
       parsed: parsed as unknown as Prisma.InputJsonValue,
+      /* ⚠ CAPTURED AT PARSE TIME (`P1-A1.5-E487`) — the audit is written later,
+         at review-save, and a prompt edited in between would otherwise be
+         recorded against a run it never touched. */
+      ai_prompt_version: PROMPT_VERSION,
       ai_model: outcome.model,
       ai_provider: outcome.provider,
       ai_input_tokens: outcome.usage.inputTokens,

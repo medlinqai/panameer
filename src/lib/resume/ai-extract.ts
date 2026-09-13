@@ -276,6 +276,24 @@ const TOOL_SCHEMA = {
   `education`, so the separation between buckets is now stated explicitly rather
   than left to inference.
 */
+/**
+ * ── ⚠⚠ BUMP THIS WHEN YOU EDIT `SYSTEM` (`P1-A1.5-E487`) ────────────────────
+ *
+ * ⚠ THE AUDIT TABLE RECORDED WHICH MODEL RAN BUT NEVER WHICH PROMPT, so a drop
+ * in accuracy could not distinguish a model regression from an edit made right
+ * here — and those have opposite fixes. A prompt is edited far more often than a
+ * model is swapped, which is why this is the field that makes the health card
+ * diagnostic rather than merely interesting.
+ *
+ * ⚠⚠ IT IS A HAND-MAINTAINED CONSTANT, ON PURPOSE. Hashing `SYSTEM` would make
+ * every whitespace fix a new "version" and fill the chart with lines that mean
+ * nothing. A version is a claim that the BEHAVIOUR changed, and only a person
+ * can make that claim.
+ * ⚠ Rows written before this existed read `pre-versioning`, never `v1` — see
+ * `ResumeParseAudit.prompt_version`.
+ */
+export const PROMPT_VERSION = "2026-09-13.a";
+
 const SYSTEM = `You extract structured data from résumés for a services marketplace.
 
 Rules:

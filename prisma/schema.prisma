@@ -2332,6 +2332,17 @@ model ProfileImport {
    */
   ai_model            String?
   ai_provider         String?
+  /**
+   * ── ⚠⚠ WHICH PROMPT RAN (`P1-A1.5-E487`) ─────────────────────────────────
+   *
+   * ⚠ IT LIVES HERE AND NOT ONLY ON THE AUDIT, FOR THE REASON THE COMMENT
+   * ABOVE ALREADY GIVES: the audit is written later, at review-save, and by
+   * then the call is long gone. A prompt edited between the parse and the save
+   * would be recorded against a run it never touched — which is the exact
+   * confusion this column exists to remove.
+   * ⚠ Null for heuristic parses, which use no prompt.
+   */
+  ai_prompt_version   String?
   ai_input_tokens     Int?
   ai_output_tokens    Int?
   ai_cost_usd         Decimal?            @db.Decimal(10, 6)
@@ -2518,6 +2529,42 @@ model ResumeParseAudit {
   /// Share of compared fields kept exactly as parsed, 0–1. Denormalised so the
   /// health card doesn't recompute every row on every render.
   accuracy            Float?
+  /**
+   * ── ⚠ WHAT THIS RUN ACTUALLY BUILT (`P1-A1.5-E487`) ──────────────────────
+   *
+   * `{ employers: 4, projects: 10, certifications: 2, education: 1, ... }`
+   *
+   * ⚠⚠ COUNTED FROM THE MODEL'S OWN OUTPUT AT WRITE TIME, NOT DERIVED FROM
+   * `changed` AT READ TIME. `kept + changed` looks like the same number and is
+   * not: it only covers the four field types the diff compares, and it does not
+   * exist at all until a human reviews. A run nobody has looked at still built
+   * things, and this is the column that says how many.
+   */
+  built               Json?
+  /// Denormalised sum of `built`, so the health card can chart it without
+  /// unpacking a JSON column on every row.
+  built_total         Int?
+  /**
+   * ⚠⚠ THE DENOMINATOR. Length of the extracted résumé text.
+   *
+   * ⚠ WITHOUT IT, YIELD IS UNMEASURABLE and a raw object count is not a quality
+   * signal: a one-page CV should yield fewer objects than a four-page one, so a
+   * run of short résumés would look exactly like model degradation.
+   */
+  source_chars        Int?
+  /**
+   * ── ⚠⚠ THE MOST IMPORTANT FIELD IN THIS DESIGN (`P1-A1.5-E487`) ──────────
+   *
+   * ⚠ The table recorded WHICH MODEL ran but never WHICH PROMPT. So when
+   * accuracy drops you cannot tell a model regression from your own prompt
+   * edit — and those have opposite fixes.
+   * ⚠ A prompt is edited far more often than a model is swapped. This is the
+   * field that turns the health card from interesting into diagnostic.
+   * ⚠ Copied from `ProfileImport.ai_prompt_version`, which captured it at PARSE
+   * time. ⚠ Rows that predate this column read `pre-versioning`, never `v1` —
+   * calling them v1 would claim they ran a prompt we cannot actually identify.
+   */
+  prompt_version      String?
   created_at          DateTime @default(now())
 
   providerProfile ProviderProfile @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)

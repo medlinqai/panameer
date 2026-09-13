@@ -4,6 +4,11 @@ import { getProfileSettings, SettingsError } from "@/lib/settings";
 import { membershipBadge } from "@/lib/membership";
 import { getMe } from "@/lib/me";
 import { ProfileSettingsForm } from "@/components/settings/ProfileSettingsForm";
+import { CompletenessChecklist } from "@/components/console/CompletenessChecklist";
+import { completenessChecklist, VISIBILITY_THRESHOLD } from "@/lib/completeness";
+import { buildCompletenessInput } from "@/lib/onboarding";
+import { ownedProviderProfile } from "@/lib/access";
+import { prisma } from "@/lib/prisma";
 
 /**
  * PROFILE SETTINGS (J2.4 WS-H / E015).
@@ -95,5 +100,40 @@ export default async function ProfileSettingsPage() {
   const badge = membershipBadge(me);
   const isPlus = !!badge && !badge.endsWith("Basic");
 
-  return <ProfileSettingsForm settings={settings} isPlus={isPlus} />;
+  /*
+    ── ⚠ THE BREAKDOWN, NOT A SECOND NUMBER (`P1-A1.5-E489`) ─────────────────
+
+    > **Scott:** *"we have 10 objects that can be completed, you have content in
+    > 7 of those… your profile is estimated to be at 70%"*
+
+    ⚠⚠ `settings.completeness` IS THE ONLY PERCENTAGE ON THIS PAGE. The existing
+    score is WEIGHTED (skills 18, overview 8), so a required-only profile is 88
+    while "7 of 10" would read 70 — both on screen, disagreeing, which is `E462`
+    rebuilt. What Scott wanted is not a second number but WHICH SECTIONS ARE
+    EMPTY, and a list cannot contradict anything.
+    ⚠ The checklist reads the SAME input the scorer reads, from
+    `buildCompletenessInput`, so the rows cannot drift from the number above them.
+  */
+  /* ⚠ OWNER-SCOPED: the profile is resolved FROM THE SESSION via
+     `ownedProviderProfile`, never taken from client input. */
+  const owned = await prisma.providerProfile.findFirst({
+    where: ownedProviderProfile(viewer),
+    select: { id: true },
+  });
+  const input = owned ? await buildCompletenessInput(owned.id) : null;
+
+  return (
+    <>
+      {input && (
+        <div className="mb-5">
+          <CompletenessChecklist
+            completeness={settings.completeness}
+            rows={completenessChecklist(input)}
+            threshold={VISIBILITY_THRESHOLD}
+          />
+        </div>
+      )}
+      <ProfileSettingsForm settings={settings} isPlus={isPlus} />
+    </>
+  );
 }
