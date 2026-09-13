@@ -24,14 +24,39 @@ import type { TrendSeries } from "@/lib/onboarding-trend";
  * ⚠ THE EMPTY STATE IS A SENTENCE, NEVER AN EMPTY FRAME. An axis with no line
  * looks like a broken chart; the words say which it is.
  */
-export function StatusTrendChart({ series }: { series: TrendSeries }) {
+/**
+ * ── ⚠ BARS AND A NOUN ARE OPT-IN (`P1-A1.5-E456`) ───────────────────────────
+ *
+ * **THE BRIEF:** *"DO NOT WRITE A NEW CHART"* — and, separately, *"a weekly BAR
+ * chart"* in *"ink or a single neutral… not magenta — a bar is not interactive
+ * (`E433`)"*. This component was a MAGENTA LINE, so both had to be honoured at
+ * once: the axes, the tick-stride rule, the inward-anchored end labels, the
+ * `role="img"` summary and the readable table are all reused as they stand, and
+ * only the marks change.
+ *
+ * ⚠⚠ PASS NEITHER PROP AND THIS RENDERS EXACTLY WHAT IT RENDERED BEFORE — the
+ * `/trend?status=` page is byte-identical, still a magenta line. Same opt-in
+ * discipline as `TileRow`'s `icon` and `Listing`'s `rowMeta`.
+ * ⚠ `series.status` IS WIDENED TO `string` so a JOB name can label the chart.
+ * `OnboardingStatus` is a string union, so every existing caller still fits.
+ */
+export function StatusTrendChart({
+  series,
+  variant = "line",
+  /** The word for what is being counted — "entering" reads wrong for a join. */
+  verb = "entering",
+}: {
+  series: Omit<TrendSeries, "status"> & { status: string };
+  variant?: "line" | "bar";
+  verb?: string;
+}) {
   const { points, period, status, total, sources } = series;
 
   if (points.length === 0 || total === 0) {
     return (
       <div className="rounded-brand border border-line bg-white p-8 text-center">
         <p className="text-[15px] font-semibold text-ink">
-          No users entered {status} in this period.
+          No users {verb === "entering" ? "entered" : "joined"} {status} in this period.
         </p>
         <p className="mt-1 text-[13px] text-ink-2">
           Nothing has been recorded on {sources.join(" or ")} yet.
@@ -46,9 +71,13 @@ export function StatusTrendChart({ series }: { series: TrendSeries }) {
   const iw = W - PAD.left - PAD.right;
   const ih = H - PAD.top - PAD.bottom;
   const max = Math.max(...points.map((p) => p.count), 1);
-  /* A single bucket has no width to draw a line across — pin it mid-axis. */
+  /* A single bucket has no width to draw a line across — pin it mid-axis.
+     ⚠ BARS CENTRE ON THEIR SLOT, points sit on the axis: a bar's tick label
+     under a line-chart x would drift half a slot off its own bar at 13 weeks. */
   const x = (i: number) =>
-    PAD.left + (points.length === 1 ? iw / 2 : (i / (points.length - 1)) * iw);
+    variant === "bar"
+      ? PAD.left + (iw / points.length) * (i + 0.5)
+      : PAD.left + (points.length === 1 ? iw / 2 : (i / (points.length - 1)) * iw);
   const y = (v: number) => PAD.top + ih - (v / max) * ih;
 
   const line = points.map((p, i) => `${i === 0 ? "M" : "L"}${x(i)},${y(p.count)}`).join(" ");
@@ -64,7 +93,7 @@ export function StatusTrendChart({ series }: { series: TrendSeries }) {
         viewBox={`0 0 ${W} ${H}`}
         className="h-auto w-full text-ink-2"
         role="img"
-        aria-label={`Users entering ${status} per ${period}. ${total} in total across ${points.length} ${period}s. Peak ${max}.`}
+        aria-label={`Users ${verb} ${status} per ${period}. ${total} in total across ${points.length} ${period}s. Peak ${max}.`}
       >
         {/* gridlines + y axis — currentColor, so the theme owns the neutral */}
         {yTicks.map((v, i) => (
@@ -90,18 +119,48 @@ export function StatusTrendChart({ series }: { series: TrendSeries }) {
           </g>
         ))}
 
-        <path d={area} fill="var(--color-magenta)" fillOpacity="0.12" />
-        <path
-          d={line}
-          fill="none"
-          stroke="var(--color-magenta)"
-          strokeWidth="2.5"
-          strokeLinejoin="round"
-          strokeLinecap="round"
-        />
-        {points.map((p, i) => (
-          <circle key={p.key} cx={x(i)} cy={y(p.count)} r="3" fill="var(--color-magenta)" />
-        ))}
+        {variant === "bar" ? (
+          /*
+            ⚠ INK, NOT MAGENTA (`E433`) — a bar is not interactive. `currentColor`
+            is inherited from `text-ink-2` on the `<svg>`, so it is a token that
+            already flips with the theme rather than a new hex.
+            ⚠ THE BAR IS PINNED TO THE BASELINE and a ZERO WEEK DRAWS NOTHING —
+            no minimum height, no placeholder stub. A week with no joins must
+            look like a week with no joins.
+          */
+          points.map((p, i) => {
+            const slot = iw / points.length;
+            const w = Math.max(2, slot * 0.62);
+            const h = (p.count / max) * ih;
+            return p.count === 0 ? null : (
+              <rect
+                key={p.key}
+                x={PAD.left + slot * i + (slot - w) / 2}
+                y={PAD.top + ih - h}
+                width={w}
+                height={h}
+                fill="currentColor"
+                fillOpacity="0.75"
+                rx="2"
+              />
+            );
+          })
+        ) : (
+          <>
+            <path d={area} fill="var(--color-magenta)" fillOpacity="0.12" />
+            <path
+              d={line}
+              fill="none"
+              stroke="var(--color-magenta)"
+              strokeWidth="2.5"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+            {points.map((p, i) => (
+              <circle key={p.key} cx={x(i)} cy={y(p.count)} r="3" fill="var(--color-magenta)" />
+            ))}
+          </>
+        )}
 
         {/*
           ⚠ THE END LABELS ANCHOR INWARD, they do not centre. A centred label on
@@ -139,7 +198,7 @@ export function StatusTrendChart({ series }: { series: TrendSeries }) {
           fill="currentColor"
           fontWeight="600"
         >
-          Users entering
+          Users {verb === "entering" ? "entering" : "joining"}
         </text>
       </svg>
 
@@ -154,7 +213,7 @@ export function StatusTrendChart({ series }: { series: TrendSeries }) {
               <th scope="col" className="py-1 pr-4 font-semibold">
                 {period === "day" ? "Day" : period === "week" ? "Week commencing" : "Month"}
               </th>
-              <th scope="col" className="py-1 font-semibold">Users entering {status}</th>
+              <th scope="col" className="py-1 font-semibold">Users {verb} {status}</th>
             </tr>
           </thead>
           <tbody>

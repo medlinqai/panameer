@@ -7,25 +7,42 @@ import {
   StubEmpty,
 } from "@/components/console/ConsolePage";
 import { BoardRefresh } from "@/components/admin/BoardRefresh";
-import {
-  ONBOARDING_STATUSES,
-  buyerStatus,
-  sellerStatus,
-  sidesFor,
-  type OnboardingStatus,
-} from "@/lib/onboarding-status";
+/*
+  ── ⚠⚠ THE PER-SIDE ONBOARDING IMPORTS WENT WITH THE PARAGRAPH (`E457`) ──────
+
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    import { ONBOARDING_STATUSES, buyerStatus, sellerStatus, sidesFor,
+             type OnboardingStatus } from "@/lib/onboarding-status";
+
+  ⚠⚠ THIS IS WHAT MADE `E457` NOT A ONE-LINE DELETE, and it is bigger than the
+  brief expected. The deleted paragraph was the ONLY reader of `sideTotal`, and
+  `sideTotal` was the only reason the per-side counting loop ran at all — the
+  `counts` Map it filled was read nowhere else on this page (its one other
+  mention is inside a SUPERSEDED comment). So the sentence, the loop and these
+  five imports all die together; leaving any of them would be a new lint warning
+  and the rule is 0 new.
+  ⚠ `lib/onboarding-status.ts` ITSELF IS UNTOUCHED and still has 86 references
+  across the app, including the `?status=` trend view. Only THIS page stopped
+  importing it.
+*/
 import {
   LEVEL_TILES,
   USER_LEVELS,
   levelCounts,
   levelFor,
+  hasReached,
+  type UserLevel,
   blockingFor,
   type LevelSubject,
 } from "@/lib/user-levels";
-import { Users, MailCheck, UserCheck, Building2, Wallet } from "lucide-react";
+import {
+  Users, MailCheck, UserCheck, Building2, Wallet,
+  ClipboardList, ShoppingCart, UserSearch, Briefcase, ShieldCheck,
+} from "lucide-react";
 import { Avatar } from "@/components/Avatar";
-import { jobLabel } from "@/lib/user-jobs";
+import { JOB_TILES, holdsJob, jobLabel } from "@/lib/user-jobs";
 import { LevelPill } from "@/components/console/LevelPill";
+import { BackLink } from "@/components/console/BackLink";
 import { REGISTERED_SITE_NAME } from "@/lib/company";
 
 export const dynamic = "force-dynamic";
@@ -72,7 +89,12 @@ export const dynamic = "force-dynamic";
  *
  * Tiles now link to `/admin/buyers-sellers/trend`.
  */
-export default async function Page() {
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ stage?: string }>;
+}) {
+  const sp = await searchParams;
   /*
     ONE READ, ALL PEOPLE. 123 users today, so counting in JS from a single query
     is cheaper than four round-trips per status per side to Supabase — and it
@@ -119,6 +141,10 @@ export default async function Page() {
         select: {
           email: true,
           email_verified: true,
+          /* ⚠ `E456` — the Administrators tile's flag. A DIFFERENT AXIS from
+             the four marketplace jobs: an access flag, not a job, so somebody
+             can be an Administrator AND a Provider. */
+          is_system_admin: true,
           tos_accepted_at: true,
           locked: true,
           locked_until: true,
@@ -154,27 +180,26 @@ export default async function Page() {
   });
 
   /*
-    THE PROGRESSION COUNTS (`E256`).
+    ⚠⚠ SUPERSEDED, QUOTED NOT DELETED (`E164` / `E457`) — the per-side counting
+    loop, which existed only to feed the sentence `E457` removed:
 
-    ⚠ COUNTED PER SIDE, NOT PER PERSON. A dual-role account holds a status on
-    each side, so the tiles total more than the headcount — that is correct and
-    the caption under the strip says so. Collapsing to one status per person
-    would have to pick a winner and would hide the other half.
+      THE PROGRESSION COUNTS (`E256`).
+      ⚠ COUNTED PER SIDE, NOT PER PERSON. A dual-role account holds a status on
+      each side, so the tiles total more than the headcount...
+      const counts = new Map<OnboardingStatus, number>(
+        ONBOARDING_STATUSES.map((s) => [s, 0]));
+      let sideTotal = 0;
+      for (const p of people) {
+        for (const side of sidesFor(p)) {
+          const st = side === "BUYER" ? buyerStatus(p.requesterProfile)
+                                      : sellerStatus(p.providerProfile);
+          counts.set(st, (counts.get(st) ?? 0) + 1);
+          sideTotal++; } }
+
+    ⚠ THE PER-SIDE MODEL IS NOT DEAD — it still drives `/trend?status=` and the
+    per-side statuses in `onboarding-status.ts`. It simply has no reader on THIS
+    page any more, and an unread loop over 199 people is work nobody asked for.
   */
-  const counts = new Map<OnboardingStatus, number>(
-    ONBOARDING_STATUSES.map((s) => [s, 0])
-  );
-  let sideTotal = 0;
-  for (const p of people) {
-    for (const side of sidesFor(p)) {
-      const st =
-        side === "BUYER"
-          ? buyerStatus(p.requesterProfile)
-          : sellerStatus(p.providerProfile);
-      counts.set(st, (counts.get(st) ?? 0) + 1);
-      sideTotal++;
-    }
-  }
 
   /*
     ── ⚠⚠ THE LIFECYCLE FUNNEL, CUMULATIVE (`P1-A1.5-E430` WS-4 / WS-5b) ──────
@@ -210,12 +235,67 @@ export default async function Page() {
   /** Per-person level, by row, so the grid and the tiles cannot disagree. */
   const levelByPerson = new Map(people.map((p, i) => [p.id, subjects[i]]));
 
-  const buyers = people.filter((p) => p.is_service_buyer).length;
-  const providers = people.filter((p) => p.is_service_provider).length;
-  const coordinators = people.filter((p) => p.is_service_coordinator).length;
-  const support = people.filter((p) => p.is_support).length;
-  /* `E255` — Requester = owns a RequesterProfile, per `lib/me.ts`. */
-  const requesters = people.filter((p) => !!p.requesterProfile).length;
+  /*
+    ── ⚠⚠ EVERY HEADER TILE OPENS A LISTING (`P1-A1.5-E455`) ──────────────────
+
+    > **SCOTT:** *"can you make it so every tile clicks into a report listing all
+    > of the users for that status?"* → *"Like medlinq — notice that the sub page
+    > has a header in the upper left that allows the user to go back."*
+
+    ⚠ SAME ROUTE + A QUERY PARAM, which is the whole reason search, sort and the
+    pager keep working without being rebuilt. `/admin/buyers-sellers?stage=User`.
+
+    ⚠⚠ `?stage=` IS A NEW PARAMETER AND IT DOES NOT TOUCH `?status=`. They are
+    different models: `?status=` on `/trend` reads `ONBOARDING_STATUSES` (a
+    per-SIDE wizard state) while `?stage=` reads `USER_LEVELS` (a per-PERSON
+    capability). Part A left the tiles unlinked precisely because pointing a
+    Level 2 tile at `?status=` would have asked for a status that does not exist
+    and silently rendered the wrong series. Two axes, two parameters, no overlap.
+
+    ⚠ CUMULATIVE, MATCHING THE TILES. `hasReached` is the SAME expression
+    `levelCounts` uses for the tile numbers, so a tile reading 176 opens a list
+    of 176 — a second filter here is how a count and its list start disagreeing.
+  */
+  const stageTile =
+    LEVEL_TILES.find((t) => t.level === sp.stage) ?? null;
+  const isDrillIn = !!stageTile;
+
+  const visible = stageTile
+    ? stageTile.level === "TOTAL"
+      ? people
+      : people.filter((p) =>
+          hasReached(levelByPerson.get(p.id)!, stageTile.level as UserLevel)
+        )
+    : people;
+
+  /*
+    ── ⚠⚠ THE FIVE JOBS (`P1-A1.5-E456`) ─────────────────────────────────────
+
+    ⚠ COUNTED WITH `holdsJob`, WHICH ASKS EACH TILE'S QUESTION INDEPENDENTLY.
+    A dual-role person answers yes twice and IS COUNTED TWICE — no first-match,
+    which is the exact defect `E444` existed to remove. The caption says so.
+    ⚠ `Requesters` NOW USES THE GRID'S OWN RULE (`jobsFor`), not "owns a
+    RequesterProfile". ⚠ SUPERSEDED, quoted not deleted:
+      const requesters = people.filter((p) => !!p.requesterProfile).length;
+    That counted 45 because `E421` gives a BUYER both profiles; the job rule
+    counts 38, which is the number the brief measured and the number the Role
+    column in the grid below already prints. One rule, two surfaces.
+  */
+  const adminFlagsFor = (p: (typeof people)[number]) => ({
+    isSystemAdmin: p.user?.is_system_admin ?? false,
+    isSupport: p.is_support,
+  });
+  const jobCounts = Object.fromEntries(
+    JOB_TILES.map((t) => [
+      t.key,
+      people.filter((p) => holdsJob(t.key, p, adminFlagsFor(p))).length,
+    ])
+  ) as Record<string, number>;
+  /* For the caption: these do NOT partition the population. */
+  const dualRole = people.filter(
+    (p) => jobLabel(p).includes(" · ")
+  ).length;
+  const noJob = people.filter((p) => jobLabel(p) === "—").length;
 
   const d = (v: Date | null | undefined) =>
     v
@@ -237,7 +317,7 @@ export default async function Page() {
     people, 50 rendered, no pager and no total. Every row is handed to the grid
     now and the pager decides what is on screen, so NO RECORD IS UNREACHABLE.
   */
-  const rows = people.map((p) => {
+  const rows = visible.map((p) => {
     const u = p.user;
     const name = `${p.first_name ?? ""} ${p.last_name ?? ""}`.trim() || "(unnamed)";
     const subject = levelByPerson.get(p.id)!;
@@ -413,6 +493,24 @@ export default async function Page() {
       <BoardRefresh readAt={readAt} />
 
       {/*
+        ⚠ THE SUB-PAGE HEADER (`E455`), the Medlinq pattern Scott pointed at.
+        ⚠ SAME COMPONENT AS `E460`'s user page — the brief asks for one
+        `BackLink` in both *"or they will diverge"*.
+      */}
+      {stageTile && (
+        <div className="mb-4">
+          <BackLink href="/admin/buyers-sellers" label="Users" />
+          <h1 className="mt-1 font-display text-[26px] font-bold text-ink">
+            {stageTile.label}
+          </h1>
+          <p className="mt-1 text-[13px] text-ink-2">
+            {stageTile.hint}. ⚠ Cumulative — everyone who has reached this stage
+            or gone past it, which is exactly what the tile counts.
+          </p>
+        </div>
+      )}
+
+      {/*
         ── ⚠⚠ FIVE LIFECYCLE TILES, NOT FOUR WIZARD STATUSES (WS-5b) ──────────
 
         **SCOTT, 2026-09-12:** *"replace the four wizard-status tiles with FIVE
@@ -444,11 +542,21 @@ export default async function Page() {
         Learn tile is two lines, and a third would undo the "thinner" Scott asked
         for. It survives as the label's `title`.
       */}
+      {/*
+        ⚠ THE TILE ROW DISAPPEARS ON THE DRILL-IN (`E455`) — Medlinq shows no
+        tiles on the sub-page, and a strip of five counts above a list of one of
+        them invites the reader to compare a number with itself.
+      */}
+      {!isDrillIn && (
       <TileRow
         tiles={LEVEL_TILES.map((t, i) => ({
           label: t.label,
           value: levelTotals[t.level] ?? 0,
           tone: t.tone,
+          /* ⚠ `E455` — every tile opens its own listing. SUPERSEDED, quoted not
+             deleted: *"THE NEW TILES CARRY NO `href`, AND THAT IS DELIBERATE."*
+             That held only while `?stage=` did not exist. It does now. */
+          href: `/admin/buyers-sellers?stage=${encodeURIComponent(t.level)}`,
           icon: [
             <Users key="i" className="h-[19px] w-[19px]" aria-hidden />,
             <MailCheck key="i" className="h-[19px] w-[19px]" aria-hidden />,
@@ -458,21 +566,33 @@ export default async function Page() {
           ][i],
         }))}
       />
-      <p className="mt-2 mb-6 text-[12.5px] text-ink-2">
-        The lifecycle, counted per PERSON and cumulative — each stage includes
-        everyone past it, so the drop-off between two stages is the gap between
-        two tiles. Levels 2 and 3 are unbuilt, so a low count there is an honest
-        gap rather than a bug. <b>{people.length}</b> people. The wizard statuses
-        are a different model, counted per SIDE ({sideTotal} sides), and{" "}
-        <Link
-          href="/admin/buyers-sellers/trend?status=all&period=month"
-          className="font-semibold text-magenta hover:underline"
-        >
-          they keep their own trend
-        </Link>
-        .
-      </p>
+      )}
+      {/*
+        ── ⚠⚠ `E457` · THE EXPLANATORY PARAGRAPH IS GONE ──────────────────────
 
+        > **SCOTT, 2026-09-12:** *"don't need this."*
+
+        ⚠ SUPERSEDED, quoted not deleted (`E164`) — the whole block, because the
+        link inside it is the part that mattered:
+
+          <p className="mt-2 mb-6 text-[12.5px] text-ink-2">
+            The lifecycle, counted per PERSON and cumulative — each stage
+            includes everyone past it... <b>{people.length}</b> people. The
+            wizard statuses are a different model, counted per SIDE
+            ({sideTotal} sides), and{" "}
+            <Link href="/admin/buyers-sellers/trend?status=all&period=month">
+              they keep their own trend</Link>.
+          </p>
+
+        ⚠⚠ THE PRECONDITION IS ANSWERED. Part 1 STOPPED here rather than delete:
+        grepping the tree showed this paragraph was the ONLY entry point to
+        `/admin/buyers-sellers/trend`, and stranding a live route to remove a
+        sentence was not a call to make unasked. ⚠ SCOTT'S ANSWER: the trend
+        hangs off the FOOTER. Each of the five job tiles below now opens
+        `/trend?job=<JOB>`, so the route is reachable from FIVE places instead
+        of one, and by a link that says what it opens.
+        ⚠ NOT a stopgap link, NOT the Reports panel — see `E456` below.
+      */}
       {/*
         ── ⚠⚠ SCOTT'S COLUMN ORDER, VERBATIM (WS-3) ───────────────────────────
 
@@ -503,7 +623,9 @@ export default async function Page() {
       <Listing
         /* ⚠ `E454` — Scott: *"change Buyers/Sellers to Users."* The route keeps
            its name; see the note in `lib/nav.ts`. */
-        title="Users"
+        /* ⚠ `E455` — the card heading repeats the tile's label with its count,
+           so the sub-page says what it is listing and how many. */
+        title={stageTile ? `${stageTile.label} (${visible.length})` : "Users"}
         columns={[
           "Picture",
           "Name",
@@ -570,23 +692,73 @@ export default async function Page() {
         empty={<StubEmpty what="people" why="Nobody has signed up yet." />}
       />
 
-      <VolumeFooter
-        tiles={[
-          { label: "Service Requesters", value: requesters },
-          { label: "Buyers", value: buyers },
-          { label: "Coordinators", value: coordinators },
-          { label: "Providers", value: providers },
-          { label: "Total", value: people.length },
-        ]}
-      />
-      <p className="mt-3 text-[12.5px] text-ink-2">
-        Service Requesters is a real count now — derived as &quot;owns a
-        RequesterProfile&quot;, the same expression <code>lib/me.ts</code> uses
-        for <code>roles.isRequester</code>. <code>USER_CLASS</code> /{" "}
-        <code>USER_JOB</code> are still not in the schema. Support accounts:{" "}
-        {support}. Showing the {Math.min(50, people.length)} most recent of{" "}
-        {people.length}.
-      </p>
+      {/*
+        ── ⚠⚠ FIVE JOBS, AND ONE OF THE LABELS WAS A LOCK VIOLATION (`E456`) ──
+
+        ⚠ SUPERSEDED, quoted not deleted (`E164`):
+          { label: "Service Requesters", value: requesters }   // 45, wrong rule
+          { label: "Buyers",  value: buyers }                  // is_service_buyer
+          { label: "Coordinators", value: coordinators }       // ⚠⚠ LOCK BREACH
+          { label: "Providers", value: providers }
+          { label: "Total", value: people.length }             // not a job
+
+        ⚠⚠ `Coordinators` PUT THE DATABASE COLUMN `is_service_coordinator` ON
+        SCREEN. `USER_JOB` has been RECRUITER since the naming was locked
+        2026-08-02, so this was a violation of that lock rather than a rename.
+        ⚠ THE COLUMN IS NOT RENAMED — no schema change, no `db:push`. That is
+        `brief_user_class_job_model`'s job and this must not pre-empt it.
+
+        ⚠ `Service Requesters` (45) BECAME `Requesters` (38) because it now uses
+        the GRID'S OWN RULE. `E421` gives a buyer BOTH profiles, so "owns a
+        RequesterProfile" counted buyers as requesters too. One rule, two
+        surfaces — the same reason `E460` moved it into `lib/user-jobs.ts`.
+        ⚠ `Total` BECAME `Administrators`: a headcount is not a job, and the
+        number it printed is already the `Total Users` tile at the top.
+
+        ⚠ THE `VolumeFooter` COMPONENT IS NOT DELETED OR FORKED — it is the same
+        shared component, given five different tiles. It reaches nine other
+        pages through `SpecPage`/`StubConsolePage` and none of them change.
+        ⚠ IT WAS NOT EMPTY HERE: it already held these five slots. The labels,
+        the counts and the links changed; the region did not move.
+      */}
+      {!isDrillIn && (
+        <>
+          <VolumeFooter
+            title="By job"
+            tiles={JOB_TILES.map((t, i) => ({
+              label: t.label,
+              value: jobCounts[t.key] ?? 0,
+              /* ⚠ FIVE HUES, NOT A RAMP — five different jobs, not one funnel. */
+              tone: t.tone,
+              icon: [
+                <ClipboardList key="i" className="h-[16px] w-[16px]" aria-hidden />,
+                <ShoppingCart key="i" className="h-[16px] w-[16px]" aria-hidden />,
+                <UserSearch key="i" className="h-[16px] w-[16px]" aria-hidden />,
+                <Briefcase key="i" className="h-[16px] w-[16px]" aria-hidden />,
+                <ShieldCheck key="i" className="h-[16px] w-[16px]" aria-hidden />,
+              ][i],
+              /* ⚠ `E456` WS-7 — THIS IS WHERE THE TREND LINK WENT. A new
+                 parameter on the EXISTING trend route: `?job=`, never
+                 `?status=`, because a job handed to the status reader renders
+                 the wrong series silently. */
+              href: `/admin/buyers-sellers/trend?job=${t.key}`,
+              hint: "90-day weekly trend →",
+            }))}
+          />
+          <p className="mt-3 text-[12.5px] text-ink-2">
+            ⚠ These five are <b>not a breakdown</b> and do not partition the{" "}
+            {people.length} people. A person holding two jobs is counted in{" "}
+            <b>both</b> tiles — measured, {dualRole} people do, all of them
+            Recruiter · Provider — and {noJob} people hold no job at all because
+            they are mid-signup and have not answered the fork yet. ⚠ Naming one
+            of them would be the guess <code>E444</code> exists to remove.
+            Administrators is a different axis again —{" "}
+            <code>is_system_admin</code> / <code>is_support</code>, an access
+            flag rather than a marketplace job — so an admin can appear here and
+            in another tile too.
+          </p>
+        </>
+      )}
     </div>
   );
 }
