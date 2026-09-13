@@ -263,6 +263,34 @@ export default function RequesterStepsPage() {
 
   const idx = REQUESTER_STEPS.indexOf(step);
 
+  /*
+    ── ⚠⚠ THIS STEP WAS ENTERED FROM REVIEW (`P2-J1.1-E504`) ─────────────────
+
+    > **SCOTT, 2026-09-13:** *"When I edited the title, it took me to the title
+    > page… AND forcing the user back thru the remaining registration steps
+    > again when this edit is done."* ⚠ ONE FIELD CHANGED, THREE SCREENS WALKED.
+
+    ⚠ ONE PIECE OF CLIENT STATE AND THREE THINGS READ IT: Continue returns to
+    Review instead of falling through to `idx + 1`, Back returns to Review
+    instead of `idx - 1`, and the button says so.
+
+    ⚠⚠ THIS IS A CLIENT NAVIGATION DEFECT ONLY — THERE IS NO DATA BUG.
+    `requester-onboarding.ts:534` already moves the resume point FORWARD ONLY,
+    in its own words: *"Stepping back to fix an answer and saving it shouldn't
+    rewind where a returning user lands."* ⚠ THE SERVER ALREADY KNEW WHAT THE
+    CLIENT DID NOT: that an edit is not a step backwards. Nothing on the server
+    is touched.
+
+    ⚠ IT IS NOT CLEARED ON ARRIVAL AT REVIEW, AND THAT IS DELIBERATE. The
+    Review step reads NONE of the three things below — it has no `nextLabel`, no
+    `back` and no `save()` — so a value left `true` there cannot mislead
+    anything, and the next `Edit` sets it again. ⚠ THE ALTERNATIVE WAS WORSE:
+    clearing it optimistically in `onContinue` would flip the button back to
+    `Next: …` on a FAILED save, while the user is still standing on the step
+    they were editing.
+  */
+  const [fromReview, setFromReview] = useState(false);
+
 
   const save = async (payload: Record<string, unknown>, next?: RequesterStep) => {
     setBusy(true);
@@ -309,7 +337,23 @@ export default function RequesterStepsPage() {
     );
   }
 
-  const back = idx > 0 ? () => setStep(REQUESTER_STEPS[idx - 1]) : undefined;
+  /*
+    ⚠⚠ BACK MUST ALSO RETURN TO REVIEW — the same defect in the other direction.
+    ⚠ SUPERSEDED, quoted not deleted: `idx > 0 ? () => setStep(REQUESTER_STEPS[idx - 1])`.
+    Editing `Work Location` (idx 1) and pressing Back landed on `Requester
+    Information`. ⚠ IT IS INVISIBLE ON THE TITLE EDIT because idx 0 has no Back
+    at all, which is why Scott's screenshot does not show it.
+    ⚠ HERE THE FLAG IS CLEARED, because this navigation is synchronous and
+    cannot fail — unlike the save path above.
+  */
+  const back = fromReview
+    ? () => {
+        setFromReview(false);
+        setStep("review");
+      }
+    : idx > 0
+      ? () => setStep(REQUESTER_STEPS[idx - 1])
+      : undefined;
   /*
     ── ⚠⚠ `Finish later` ON EVERY STEP (`P1-J1.1-E245`, 2026-08-30) ───────────
 
@@ -333,12 +377,39 @@ export default function RequesterStepsPage() {
     to abandon the tab to do it.
   */
   const shell = {
-    step: idx + 1,
+    /*
+      ── ⚠⚠ THE STEPPER LIES DURING AN EDIT (`E504`) — REPORTED, NOT DECIDED ──
+
+      ⚠ Scott's screenshot shows `REQUESTER INFORMATION · 1/3` and a one-third
+      progress bar ON A PROFILE THAT IS ALREADY COMPLETE. `1/3` tells a finished
+      user they are a third of the way through signing up — the same class of
+      defect as a row whose Edit went nowhere (`E279`): the chrome making a
+      promise the state contradicts.
+
+      ⚠ SO DURING A RETURN-TO-REVIEW EDIT THE COUNTER AND THE BAR ARE
+      SUPPRESSED. They measure a journey the user is no longer on.
+      ⚠⚠ NO COMPONENT CHANGE — `WizardShell.step` is already optional and its
+      own comment says omitting it hides the stepper. The mechanism existed.
+      ⚠⚠ THIS IS CHAT'S RECOMMENDATION, SHOWN NOT SHIPPED-BY-FIAT. Scott owns
+      the visual; the screenshot is in the report and he can say otherwise.
+      ⚠ WHAT IS NOT NEGOTIABLE EITHER WAY: `3/3` must not silently become `1/3`
+      for a completed profile.
+
+      ⚠⚠ AND THE `step !== "review"` GUARD IS LOAD-BEARING — A WALK CAUGHT IT.
+      The first cut read `fromReview ? undefined : idx + 1`, and because `shell`
+      is built for EVERY step including Review, saving an edit returned the user
+      to a Review screen with NO `3/3` at all. ⚠ That is the same defect as the
+      one being fixed, pointed the other way: the counter disappearing on the
+      one screen where it is true. ⚠ The suppression belongs to the STEP being
+      edited, never to Review itself.
+    */
+    step: fromReview && step !== "review" ? undefined : idx + 1,
     totalSteps: REQUESTER_STEPS.length,
     stepLabel: LABELS[step],
     busy,
     onBack: back,
-    canBack: idx > 0,
+    /* ⚠ An edit always has a way back — to Review, not to idx - 1. */
+    canBack: fromReview || idx > 0,
     secondaryLabel: "Finish later",
     /*
       ⚠⚠ IT NOW SENDS THE WAY BACK (`P2-J1.1-E034`). ⚠ SUPERSEDED, quoted not
@@ -365,7 +436,16 @@ export default function RequesterStepsPage() {
       router.push("/dashboard");
     },
   };
-  const nextLabel = `Next: ${LABELS[REQUESTER_STEPS[idx + 1] ?? "review"]}`;
+  /*
+    ⚠⚠ NOT `Next: Work Location` ON AN EDIT. The button has to describe what the
+    click does, and on an edit it does not go to the next step at all.
+    ⚠ `Save & Return to Review` was chosen over `Done` / `Save`: it names BOTH
+    halves — the change is written AND you land back where you were — which is
+    exactly the promise Scott found broken.
+  */
+  const nextLabel = fromReview
+    ? "Save & Return to Review"
+    : `Next: ${LABELS[REQUESTER_STEPS[idx + 1] ?? "review"]}`;
 
   /*
     ── ⚠⚠ STEP 1 WAS `Which Company Do You Buy For?` AND IT IS GONE (`E418`) ───
@@ -429,6 +509,10 @@ export default function RequesterStepsPage() {
           !draft.title.trim() ||
           !isPhoneComplete(draft.phone, phoneCountry)
         }
+        /* ⚠⚠ `save()` ALREADY TOOK THIS PARAMETER AND NO CALLER EVER PASSED IT
+           (`E504`). `save(payload, "review")` is the entire behaviour Scott
+           asked for. ⚠ `save` ITSELF IS UNCHANGED — there is no second save
+           path and no rewrite. */
         onContinue={() =>
           save({
             firstName: draft.firstName,
@@ -455,7 +539,7 @@ export default function RequesterStepsPage() {
               screen can change. The record stays exactly as
               `requester-onboarding.ts:120` wrote it.
             */
-          })
+          }, fromReview ? "review" : undefined)
         }
       >
         <div className="mx-auto w-full max-w-xl space-y-4">
@@ -657,7 +741,7 @@ export default function RequesterStepsPage() {
         */
         continueLabel={nextLabel}
         continueDisabled={!wl.country}
-        onContinue={() => save({ workLocation: wl })}
+        onContinue={() => save({ workLocation: wl }, fromReview ? "review" : undefined)}
       >
         <div className="mx-auto w-full max-w-xl space-y-4">
           {error && <Notice>{error}</Notice>}
@@ -819,9 +903,18 @@ export default function RequesterStepsPage() {
                 {r.label}
               </dt>
               <dd className="min-w-0 flex-1 text-[15.5px]">{r.value}</dd>
+              {/*
+                ⚠⚠ THE EDIT JUMPED TO THE STEP AND REMEMBERED NOTHING (`E504`).
+                ⚠ SUPERSEDED, quoted not deleted: `onClick={() => setStep(r.step)}`.
+                That single line is why one field change walked three screens:
+                the step had no way to know it had been entered from here.
+              */}
               <button
                 type="button"
-                onClick={() => setStep(r.step)}
+                onClick={() => {
+                  setFromReview(true);
+                  setStep(r.step);
+                }}
                 className="text-[13.5px] font-bold text-magenta hover:underline"
               >
                 Edit
