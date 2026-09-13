@@ -332,6 +332,17 @@ export async function getCatalogTree(code: string) {
    claimed is honest, not broken — and it is the most actionable row on the page.
 */
 
+/**
+ * The `N providers` cell, in ONE place because both catalog pages print it.
+ *
+ * ⚠ `—` NEVER `0` — an unclaimed row is honest, not broken, and it is the most
+ * actionable row on either page.
+ * ⚠ AND `1 provider`, NOT `1 providers`. Measured on screen: Enterprise
+ * Business Suite (EBS) read *"1 providers"* in the first walk.
+ */
+export const providersCell = (n: number | undefined) =>
+  n ? `${n} provider${n === 1 ? "" : "s"}` : "—";
+
 export type ClaimCount = {
   key: string;
   label: string;

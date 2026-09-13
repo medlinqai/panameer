@@ -6,6 +6,7 @@ import {
   getSkillProviderCounts,
   getRoleClaims,
   getRoleDomainProviderCounts,
+  providersCell,
 } from "@/lib/catalog";
 import { TileRow, Listing, VolumeFooter } from "@/components/console/ConsolePage";
 import { CatalogTree, CatalogEditBar, type CatalogNode } from "@/components/console/CatalogTree";
@@ -13,8 +14,6 @@ import { CatalogCard } from "@/components/console/CatalogCard";
 
 export const dynamic = "force-dynamic";
 
-/** `—` never `0`: an unclaimed row is honest, and the most actionable one here. */
-const providersCell = (n: number | undefined) => (n ? `${n} providers` : "—");
 
 /**
  * Roles > Domains > Skills (WS6 / E016) on the Medlinq catalog UX.
@@ -111,7 +110,7 @@ export default async function Page({
           label: s.name,
           /* ⚠ `N providers` (S-3) — DISTINCT people, never link rows. Zero
              renders as an em-dash: nobody has claimed it, which is honest. */
-          meta: skillProviders.get(s.id) ? `${skillProviders.get(s.id)} providers` : "—",
+          meta: providersCell(skillProviders.get(s.id)),
           /* ⚠ `E470b` — the provider-typed rows the admin is meant to review. */
           custom: s.is_custom,
         }));

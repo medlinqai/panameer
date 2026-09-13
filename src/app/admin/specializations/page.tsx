@@ -4,6 +4,7 @@ import {
   getSpecializations,
   getSpecializationProviderCounts,
   getSpecializationClaims,
+  providersCell,
 } from "@/lib/catalog";
 import { TileRow, Listing, VolumeFooter } from "@/components/console/ConsolePage";
 import { CatalogTree, CatalogEditBar, type CatalogNode } from "@/components/console/CatalogTree";
@@ -68,7 +69,7 @@ export default async function Page({
          claimed twelve is one person. ⚠ ZERO RENDERS `—`, never `0`: a
          specialization nobody has claimed is honest, and it is the most
          actionable row on the page. */
-      meta: providerCounts.get(i.id) ? `${providerCounts.get(i.id)} providers` : "—",
+      meta: providersCell(providerCounts.get(i.id)),
       /* ⚠ `E470b` — the flag that existed and was never selected, let alone shown. */
       custom: i.is_custom,
     })),
