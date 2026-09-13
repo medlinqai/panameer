@@ -25,8 +25,28 @@
 
 export type MarkKind = "vendor" | "chip" | "icon";
 
+/**
+ * ── ⚠ COLOUR ON THE MARKS (`P1-A1.5-E465b`) ─────────────────────────────────
+ *
+ * > **SCOTT, 2026-09-13:** *"also thinking it would be good to have some color
+ * > in those other tiles"*
+ *
+ * ⚠ THE PAIRING IS THE ONE THE TILES ALREADY USE — Tailwind's `-100` fill with
+ * `-800` text (`ConsolePage.tsx:63`), so this introduces no new colour system
+ * and every hue is measured rather than eyeballed.
+ *
+ * ⚠⚠ NO MAGENTA, FUCHSIA, PINK OR ROSE ON ANY OF THEM. `E433` reserves magenta
+ * for interactive things and a mark is not clickable; rose and fuchsia are close
+ * enough to read as brand magenta at 34px, so the whole family is excluded.
+ */
+export type MarkTone =
+  | "neutral" | "sky" | "violet" | "amber" | "emerald" | "teal"
+  | "indigo" | "cyan" | "orange" | "lime" | "blue";
+
 export type Mark = {
   kind: MarkKind;
+  /** ⚠ `E465b`. Absent = neutral, which is what every vendor stays. */
+  tone?: MarkTone;
   /** Chip text, e.g. `P2P`. Two to four characters or it stops being a label. */
   chip?: string;
   /** A lucide icon name, resolved by `CatalogMark`. */
@@ -80,14 +100,14 @@ export const RDS_DOMAIN_MARKS: Record<string, Mark> = {
      ⚠ Scott's own project files are `question_bank_p2p.md` and
      `question_bank_o2c_r2r_h2r.md`, so `P2P` is the row's name shortened, not a
      graphic. Four of the nine already carry the abbreviation in the label.    */
-  CUSTOMER_EXPERIENCE_CX: { kind: "chip", chip: "CX" },
-  ENTERPRISE_PERFORMANCE_MGMT_EPM: { kind: "chip", chip: "EPM" },
-  GOVERNANCE_RISK_COMPLIANCE_GRC: { kind: "chip", chip: "GRC" },
+  CUSTOMER_EXPERIENCE_CX: { tone: "sky", kind: "chip", chip: "CX" },
+  ENTERPRISE_PERFORMANCE_MGMT_EPM: { tone: "indigo", kind: "chip", chip: "EPM" },
+  GOVERNANCE_RISK_COMPLIANCE_GRC: { tone: "amber", kind: "chip", chip: "GRC" },
   /* ⚠⚠ H2R IS SETTLED (Scott, 2026-09-13: *"hire to retire is better."* / *"H2R"*).
      The RDS domain is already named Hire-to-Retire; the specialization row was
      renamed by this brief's WS-0. `H2F` appears nowhere and never ships. */
-  HIRE_TO_RETIRE: { kind: "chip", chip: "H2R" },
-  ORDER_TO_CASH: { kind: "chip", chip: "O2C" },
+  HIRE_TO_RETIRE: { tone: "violet", kind: "chip", chip: "H2R" },
+  ORDER_TO_CASH: { tone: "emerald", kind: "chip", chip: "O2C" },
   /*
     ── ⚠⚠ THE P2P COLLISION, AND HOW IT WAS RESOLVED ────────────────────────
 
@@ -105,10 +125,10 @@ export const RDS_DOMAIN_MARKS: Record<string, Mark> = {
     Applying that rule to industries and breaking it here would be inconsistent.
     ⚠ A factory glyph reads instantly and claims nothing false.
   */
-  PLAN_TO_PRODUCE: { kind: "icon", icon: "Factory" },
-  PROCURE_TO_PAY: { kind: "chip", chip: "P2P" },
-  PROJECT_PORTFOLIO_MGMT_PPM: { kind: "chip", chip: "PPM" },
-  RECORD_TO_REPORT: { kind: "chip", chip: "R2R" },
+  PLAN_TO_PRODUCE: { tone: "orange", kind: "icon", icon: "Factory" },
+  PROCURE_TO_PAY: { tone: "teal", kind: "chip", chip: "P2P" },
+  PROJECT_PORTFOLIO_MGMT_PPM: { tone: "cyan", kind: "chip", chip: "PPM" },
+  RECORD_TO_REPORT: { tone: "lime", kind: "chip", chip: "R2R" },
 
   /* ── Project / AI / Cross-Vendor: icons, muted ─────────────────────────── */
   CROSS_VENDOR_PLATFORM_NEUTRAL: { kind: "icon", icon: "Shuffle" },
@@ -125,11 +145,11 @@ export const RDS_DOMAIN_MARKS: Record<string, Mark> = {
 
 /** Keyed on `RoleType.code` — the five top-level rows on RDS. */
 export const RDS_ROLE_MARKS: Record<string, Mark> = {
-  APPLICATION_SPECIFIC: { kind: "icon", icon: "LayoutGrid" },
-  TECHNOLOGY_SPECIFIC: { kind: "icon", icon: "Cpu" },
-  PROJECT_SPECIFIC: { kind: "icon", icon: "Flag" },
-  OPERATIONS_SPECIFIC: { kind: "icon", icon: "Workflow" },
-  AI_SPECIALIST: { kind: "icon", icon: "Sparkles" },
+  APPLICATION_SPECIFIC: { tone: "sky", kind: "icon", icon: "LayoutGrid" },
+  TECHNOLOGY_SPECIFIC: { tone: "violet", kind: "icon", icon: "Cpu" },
+  PROJECT_SPECIFIC: { tone: "amber", kind: "icon", icon: "Flag" },
+  OPERATIONS_SPECIFIC: { tone: "emerald", kind: "icon", icon: "Workflow" },
+  AI_SPECIALIST: { tone: "teal", kind: "icon", icon: "Sparkles" },
 };
 
 /**
@@ -155,12 +175,12 @@ export const SPECIALIZATION_MARKS: Record<string, Mark> = {
   Workday: vendor("WD"),
 
   /* ── 6 processes ──────────────────────────────────────────────────────── */
-  "Procure-to-Pay": { kind: "chip", chip: "P2P" },
-  "Record-to-Report": { kind: "chip", chip: "R2R" },
-  "Order-to-Cash": { kind: "chip", chip: "O2C" },
-  "Hire-to-Retire": { kind: "chip", chip: "H2R" },
-  "Source-to-Pay": { kind: "chip", chip: "S2P" },
-  "Putaway-to-Issue": { kind: "chip", chip: "P2I" },
+  "Procure-to-Pay": { tone: "teal", kind: "chip", chip: "P2P" },
+  "Record-to-Report": { tone: "lime", kind: "chip", chip: "R2R" },
+  "Order-to-Cash": { tone: "emerald", kind: "chip", chip: "O2C" },
+  "Hire-to-Retire": { tone: "violet", kind: "chip", chip: "H2R" },
+  "Source-to-Pay": { tone: "sky", kind: "chip", chip: "S2P" },
+  "Putaway-to-Issue": { tone: "orange", kind: "chip", chip: "P2I" },
 
   /*
     ── ⚠ 10 industries: ICONS, NOT CHIPS ───────────────────────────────────
@@ -170,16 +190,16 @@ export const SPECIALIZATION_MARKS: Record<string, Mark> = {
     what `P2P` does. ⚠ ALL TEN MAP TO A NATURAL GLYPH; none needed the muted
     generic fallback, which is reported rather than assumed.
   */
-  "Public Sector & Government": { kind: "icon", icon: "Landmark" },
-  "Healthcare & Life Sciences": { kind: "icon", icon: "HeartPulse" },
-  "Financial Services & Fintech": { kind: "icon", icon: "Banknote" },
-  "Energy, Utilities, & Resources": { kind: "icon", icon: "Zap" },
-  "Education Services": { kind: "icon", icon: "GraduationCap" },
-  "Consumer Products & Retail": { kind: "icon", icon: "ShoppingBag" },
-  "Technology, Media, & Telecommunications": { kind: "icon", icon: "RadioTower" },
-  "Real Estate & Infrastructure": { kind: "icon", icon: "Building2" },
-  "Transportation, Travel, & Logistics": { kind: "icon", icon: "Truck" },
-  "Industry Products & Manufacturing": { kind: "icon", icon: "Factory" },
+  "Public Sector & Government": { tone: "indigo", kind: "icon", icon: "Landmark" },
+  "Healthcare & Life Sciences": { tone: "emerald", kind: "icon", icon: "HeartPulse" },
+  "Financial Services & Fintech": { tone: "teal", kind: "icon", icon: "Banknote" },
+  "Energy, Utilities, & Resources": { tone: "amber", kind: "icon", icon: "Zap" },
+  "Education Services": { tone: "violet", kind: "icon", icon: "GraduationCap" },
+  "Consumer Products & Retail": { tone: "orange", kind: "icon", icon: "ShoppingBag" },
+  "Technology, Media, & Telecommunications": { tone: "sky", kind: "icon", icon: "RadioTower" },
+  "Real Estate & Infrastructure": { tone: "cyan", kind: "icon", icon: "Building2" },
+  "Transportation, Travel, & Logistics": { tone: "blue", kind: "icon", icon: "Truck" },
+  "Industry Products & Manufacturing": { tone: "lime", kind: "icon", icon: "Factory" },
 };
 
 /** The three group-level fallbacks, by specialization kind. */
