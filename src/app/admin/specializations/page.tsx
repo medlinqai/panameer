@@ -1,9 +1,11 @@
+import Link from "next/link";
 import { Tags, Boxes, Workflow, Building2, Inbox } from "lucide-react";
 import {
   getSpecializations,
   getSpecializationProviderCounts,
+  getSpecializationClaims,
 } from "@/lib/catalog";
-import { TileRow } from "@/components/console/ConsolePage";
+import { TileRow, Listing, VolumeFooter } from "@/components/console/ConsolePage";
 import { CatalogTree, CatalogEditBar, type CatalogNode } from "@/components/console/CatalogTree";
 import { CatalogCard } from "@/components/console/CatalogCard";
 
@@ -34,12 +36,26 @@ export const dynamic = "force-dynamic";
  * `admin-pages.ts` keeps its `specializations` entry: it is the shape the
  * moderation queue is built to in Part 3.
  */
-export default async function Page() {
-  const [groups, providerCounts] = await Promise.all([
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ kind?: string; claimed?: string }>;
+}) {
+  const sp = await searchParams;
+
+  const [groups, providerCounts, kindClaims] = await Promise.all([
     getSpecializations(),
     getSpecializationProviderCounts(),
+    getSpecializationClaims(),
   ]);
   const total = groups.reduce((n, g) => n + g.items.length, 0);
+
+  /* ⚠ WHITELIST AGAINST THE DATA, not against a literal list — `getSpecializations`
+     already groups by kind, so an unknown `?kind=` simply finds nothing and falls
+     back to the tree rather than rendering an empty listing that looks broken.
+     ⚠⚠ THIS IS WHAT WS-10 REPOINTS THE INDUSTRIES RAIL ITEM AT. */
+  const filtered = sp.kind ? groups.find((g) => g.kind === sp.kind) ?? null : null;
+  const claimedKind = sp.claimed ? groups.find((g) => g.kind === sp.claimed) ?? null : null;
 
   const nodes: CatalogNode[] = groups.map((g) => ({
     id: g.kind,
@@ -57,6 +73,12 @@ export default async function Page() {
       custom: i.is_custom,
     })),
   }));
+
+  const clearLink = (
+    <Link href="/admin/specializations" className="text-[13px] font-bold text-magenta">
+      ← All specializations
+    </Link>
+  );
 
   return (
     <div className="mx-auto w-full max-w-5xl">
@@ -79,12 +101,16 @@ export default async function Page() {
             label: "Specializations",
             value: total,
             tone: "neutral",
+            /* ⚠ TILE 1 CLEARS THE FILTER (`E469`) — no `?kind=`, so it is the
+               way back to the full tree from any drill-in. */
+            href: "/admin/specializations",
             icon: <Tags className="h-[19px] w-[19px]" aria-hidden />,
           },
           ...groups.map((g, i) => ({
             label: g.label,
             value: g.items.length,
             tone: (["amber", "emerald", "emeraldDeep"] as const)[i] ?? "neutral",
+            href: `/admin/specializations?kind=${g.kind}`,
             icon: [
               <Boxes key="i" className="h-[19px] w-[19px]" aria-hidden />,
               <Workflow key="i" className="h-[19px] w-[19px]" aria-hidden />,
@@ -94,7 +120,10 @@ export default async function Page() {
           {
             label: "Suggested",
             /* ⚠ NO `value` — `TileRow` renders "—" in muted type for an absent
-               one, which is exactly the honest state until Part 3. */
+               one, which is exactly the honest state until Part 3.
+               ⚠⚠ AND NO `href`: the moderation queue does not exist yet, and a
+               tile that opens an empty page is worse than one that does not
+               open at all. */
             tone: "neutral" as const,
             icon: <Inbox className="h-[19px] w-[19px]" aria-hidden />,
           },
@@ -112,11 +141,105 @@ export default async function Page() {
         ⚠ THE ROWS STAY EXPANDABLE — the three kinds are the top level and the
         hierarchy is not flattened.
       */}
-      <CatalogCard title={`Specializations (${total})`}>
-        <CatalogTree nodes={nodes} emptyLabel="No specializations yet." />
-      </CatalogCard>
+      {/*
+        ── ⚠ EVERY TILE OPENS A LISTING (`P1-A1.5-E469`) ──────────────────────
+
+        **SCOTT, on both pages:** *"the tiles do not link to lists of their
+        contents."*
+
+        ⚠ FLAT, NO ACCORDION — one kind is one level, so there is nothing to
+        nest. ⚠ THE DRILL-IN REPLACES THE TREE rather than sitting beside it:
+        two data containers stacked is exactly what WS-4a just removed.
+      */}
+      {filtered && (
+        <Listing
+          title={`${filtered.label} (${filtered.items.length})`}
+          columns={["Specialization", "Providers", "Source"]}
+          rows={filtered.items.map((i) => [
+            i.name,
+            providerCounts.get(i.id) ? `${providerCounts.get(i.id)}` : "—",
+            i.is_custom ? "Custom" : "Baseline",
+          ])}
+          rowMeta={filtered.items.map((i) => ({
+            text: i.name.toLowerCase(),
+            sort: [i.name, providerCounts.get(i.id) ?? 0, i.is_custom ? 1 : 0] as (
+              | string
+              | number
+              | null
+            )[],
+          }))}
+          searchPlaceholder={`Search ${filtered.items.length} ${filtered.label.toLowerCase()}`}
+          sortable
+          action={clearLink}
+          empty="Nothing in this kind yet."
+        />
+      )}
+
+      {claimedKind && (
+        /* ⚠⚠ RANKED BY DISTINCT PROVIDERS, ZEROES INCLUDED AT THE BOTTOM —
+           a specialization nobody has claimed is the most actionable row here,
+           and dropping it would hide exactly that. */
+        <Listing
+          title={`Most claimed — ${claimedKind.label}`}
+          columns={["Specialization", "Providers", "Source"]}
+          rows={[...claimedKind.items]
+            .sort(
+              (a, b) =>
+                (providerCounts.get(b.id) ?? 0) - (providerCounts.get(a.id) ?? 0) ||
+                a.name.localeCompare(b.name)
+            )
+            .map((i) => [
+              i.name,
+              providerCounts.get(i.id) ? `${providerCounts.get(i.id)}` : "—",
+              i.is_custom ? "Custom" : "Baseline",
+            ])}
+          rowMeta={[...claimedKind.items]
+            .sort(
+              (a, b) =>
+                (providerCounts.get(b.id) ?? 0) - (providerCounts.get(a.id) ?? 0) ||
+                a.name.localeCompare(b.name)
+            )
+            .map((i) => ({
+              text: i.name.toLowerCase(),
+              sort: [i.name, providerCounts.get(i.id) ?? 0, i.is_custom ? 1 : 0] as (
+                | string
+                | number
+                | null
+              )[],
+            }))}
+          searchPlaceholder={`Search ${claimedKind.items.length} ${claimedKind.label.toLowerCase()}`}
+          sortable
+          action={clearLink}
+          empty="Nothing in this kind yet."
+        />
+      )}
+
+      {!filtered && !claimedKind && (
+        <CatalogCard title={`Specializations (${total})`}>
+          <CatalogTree nodes={nodes} emptyLabel="No specializations yet." />
+        </CatalogCard>
+      )}
       {/* ⚠ STAYS — it is the right home for Discard/Save in Part 3. */}
       <CatalogEditBar />
+
+      {/*
+        ── ⚠⚠ "Most claimed", NOT "Volume Last 90 Days" (`P1-A1.5-E470c`) ─────
+
+        ⚠⚠ FIXED CATALOG ORDER — `getSpecializationClaims` returns the three
+        kinds in catalog order and this does NOT re-sort by count. The ranking
+        lives inside the drill-in.
+      */}
+      <VolumeFooter
+        title="Most claimed"
+        tiles={kindClaims.map((c) => ({
+          label: c.label,
+          value: c.providers || undefined,
+          href: `/admin/specializations?claimed=${c.key}`,
+          hint: c.top
+            ? `top: ${c.top.name} (${c.top.providers})`
+            : "nobody has claimed this kind yet",
+        }))}
+      />
     </div>
   );
 }

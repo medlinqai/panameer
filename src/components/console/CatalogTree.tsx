@@ -34,17 +34,36 @@ export type CatalogNode = {
    */
   custom?: boolean;
   children?: CatalogNode[];
+  /**
+   * ⚠ HOW MANY CHILDREN THIS NODE HAD BEFORE THE SEARCH PRUNED IT (`E464`).
+   * Set by the filter, never by a caller — it is what turns a domain's meta
+   * from `71 skills` into `15 of 71 match` while a query is live.
+   */
+  total?: number;
 };
 
 export function CatalogTree({
   nodes,
   emptyLabel = "Nothing in this catalog yet.",
   toolbar = false,
+  searchPlaceholder = "Search the catalog",
+  leafLabel = "items",
+  groupLabel = "groups",
 }: {
   nodes: CatalogNode[];
   emptyLabel?: string;
   /** Medlinq's catalog-detail toolbar: Search + Expand All (2.5 slide 12). */
   toolbar?: boolean;
+  /**
+   * ⚠ SAY WHAT IS SEARCHED (`E464`). **SCOTT:** *"I am not sure what the SEARCH
+   * the catalog box does."* ⚠ THE CALLER PASSES THE REAL COUNT from the same
+   * query the tile uses — never a hard-coded one, which would go stale the next
+   * time a skill is added.
+   */
+  searchPlaceholder?: string;
+  /** Nouns for the match summary: `47 skills in 12 domains match "pro"`. */
+  leafLabel?: string;
+  groupLabel?: string;
 }) {
   const [open, setOpen] = useState<Set<string>>(new Set());
   const [q, setQ] = useState("");
@@ -61,13 +80,58 @@ export function CatalogTree({
     const hit = n.label.toLowerCase().includes(needle);
     const kids = (n.children ?? []).map(filter).filter(Boolean) as CatalogNode[];
     if (!hit && kids.length === 0) return null;
-    return { ...n, children: hit && kids.length === 0 ? n.children : kids };
+    return {
+      ...n,
+      children: hit && kids.length === 0 ? n.children : kids,
+      /* ⚠ CARRY THE PRE-FILTER SIZE so the row can say `15 of 71 match`. */
+      total: n.children?.length,
+    };
   };
   const shown = needle ? (nodes.map(filter).filter(Boolean) as CatalogNode[]) : nodes;
 
   const allIds = (ns: CatalogNode[]): string[] =>
     ns.flatMap((n) => [n.id, ...allIds(n.children ?? [])]);
   const expandedAll = open.size > 0;
+
+  /*
+    ── ⚠⚠ WHILE SEARCHING, OPEN DOWN TO THE DOMAIN LEVEL ONLY (`E464`) ─────────
+
+    **SCOTT:** *"when i type in the search, all options are forced open."*
+
+    ⚠ SUPERSEDED, quoted not deleted (`E164`) — the line that caused it, at what
+    was `CatalogTree.tsx:109`:
+
+        open={needle ? new Set(allIds(shown)) : open}
+
+    ⚠ `allIds` walks EVERY depth, so a live query opened roles, domains AND every
+    matching skill at once — the wall in Scott's screenshot. Opening only the
+    top level shows which domains hold matches and how many, and leaves the skill
+    lists closed until clicked.
+
+    ⚠⚠ THE FILTER IS NOT TOUCHED. It already prunes non-matching branches
+    correctly; what was wrong was only what got OPENED.
+    ⚠ `Expand All` STILL EXPANDS EVERYTHING — the search set is UNIONED with the
+    user's own `open`, so the button keeps working mid-query rather than being
+    overridden by it.
+  */
+  const openNow = needle
+    ? new Set([...shown.map((n) => n.id), ...open])
+    : open;
+
+  /* The summary counts LEAVES, not top-level groups: `5 of 5 match` counted
+     roles, which is why it read 5 of 5 on nearly any query. */
+  const countLeaves = (ns: CatalogNode[]): number =>
+    ns.reduce(
+      (n, x) => n + ((x.children?.length ?? 0) === 0 ? 1 : countLeaves(x.children!)),
+      0
+    );
+  const countGroupsWithLeaves = (ns: CatalogNode[]): number =>
+    ns.reduce((n, x) => {
+      const kids = x.children ?? [];
+      if (kids.length === 0) return n;
+      const leafKids = kids.filter((k) => (k.children?.length ?? 0) === 0).length;
+      return n + (leafKids > 0 ? 1 : 0) + countGroupsWithLeaves(kids);
+    }, 0);
 
   if (nodes.length === 0) {
     return (
@@ -92,8 +156,8 @@ export function CatalogTree({
             type="search"
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search the catalog"
-            className="w-[260px] rounded-[8px] border border-line bg-white px-3 py-1.5 text-[13.5px] outline-none focus:border-magenta"
+            placeholder={searchPlaceholder}
+            className="w-[320px] max-w-full rounded-[8px] border border-line bg-white px-3 py-1.5 text-[13.5px] outline-none focus:border-magenta"
           />
           <button
             type="button"
@@ -103,8 +167,12 @@ export function CatalogTree({
             {expandedAll ? "Collapse All" : "Expand All"}
           </button>
           {needle && (
+            /* ⚠ SUPERSEDED, quoted not deleted (`E164`): `{shown.length} of
+               {nodes.length} match` — that counted ROLES, which is why it read
+               `5 of 5` on nearly any query. ⚠ COUNT THE LEAVES. */
             <span className="text-[13px] text-ink-2">
-              {shown.length} of {nodes.length} match
+              {countLeaves(shown)} {leafLabel} in {countGroupsWithLeaves(shown)}{" "}
+              {groupLabel} match &ldquo;{q.trim()}&rdquo;
             </span>
           )}
         </div>
@@ -115,9 +183,10 @@ export function CatalogTree({
           <Group
             key={n.id}
             node={n}
-            open={needle ? new Set(allIds(shown)) : open}
+            open={openNow}
             toggle={toggle}
             depth={0}
+            searching={!!needle}
           />
         ))}
         {shown.length === 0 && (
@@ -135,11 +204,13 @@ function Group({
   open,
   toggle,
   depth,
+  searching = false,
 }: {
   node: CatalogNode;
   open: Set<string>;
   toggle: (id: string) => void;
   depth: number;
+  searching?: boolean;
 }) {
   const kids = node.children ?? [];
   const isOpen = open.has(node.id);
@@ -190,14 +261,26 @@ function Group({
           </span>
         )}
         <span className="shrink-0 text-[12.5px] text-ink-2">
-          {node.meta ?? `${kids.length}`}
+          {/* ⚠ `E464` — while a query is live a group says how much of it
+              survived the filter, so a CLOSED domain still tells you whether
+              it is worth opening. Outside search it keeps its own meta. */}
+          {searching && node.total !== undefined
+            ? `${kids.length} of ${node.total} match`
+            : (node.meta ?? `${kids.length}`)}
         </span>
       </button>
 
       {isOpen && (
         <div className={depth === 0 ? "border-t border-line pb-2" : ""}>
           {kids.map((k) => (
-            <Group key={k.id} node={k} open={open} toggle={toggle} depth={depth + 1} />
+            <Group
+              key={k.id}
+              node={k}
+              open={open}
+              toggle={toggle}
+              depth={depth + 1}
+              searching={searching}
+            />
           ))}
         </div>
       )}

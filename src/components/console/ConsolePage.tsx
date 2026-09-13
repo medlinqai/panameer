@@ -380,14 +380,24 @@ export function VolumeFooter({
               >
                 {known ? t.value : "—"}
               </p>
+              {/*
+                ⚠ THE LEADER LINE IS OPT-IN (`P1-A1.5-E465b`/`E470c`), exactly
+                like `TileRow`'s `icon`. **A footer tile that says
+                `Application-Specific · 142 providers · top: Oracle Fusion Cloud
+                (88)` is worth looking at; `Total to date` is not.**
+                ⚠ PASS NO `hint` AND THIS RENDERS WHAT IT ALWAYS RENDERED —
+                `VolumeFooter` reaches nine stub pages through `SpecPage` and
+                `StubConsolePage`, and none of them change.
+              */}
               <p className="mt-1 text-[11px] text-ink-2/70">
                 {t.tbd
                   ? "metric to be defined"
-                  : t.href
-                    ? "Open report →"
-                    : known
-                      ? "Total to date"
-                      : "No series yet"}
+                  : (t.hint ??
+                    (t.href
+                      ? "Open report →"
+                      : known
+                        ? "Total to date"
+                        : "No series yet"))}
               </p>
             </>
           );

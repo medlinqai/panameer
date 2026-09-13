@@ -430,6 +430,34 @@ export async function getSpecializationProviderCounts(): Promise<Map<string, num
 }
 
 /**
+ * Distinct providers per ROLE-DOMAIN PAIR — the ranked drill-in behind a
+ * `Most claimed` role tile. Keyed `${role_type_id}::${pillar_id}`.
+ *
+ * ⚠ THE KEY IS THE PAIR, NOT THE PILLAR (`E462`). Five vendor suites sit under
+ * two roles each, and Oracle Fusion Cloud's functional providers are not its
+ * technical ones — keying on `pillar_id` alone would merge two genuinely
+ * different branches and inflate both.
+ * ⚠ ONE QUERY. The caller supplies the full domain list, so pairs nobody has
+ * claimed are absent here and render as zero rows at the bottom of the ranking.
+ */
+export async function getRoleDomainProviderCounts(): Promise<Map<string, number>> {
+  const links = await prisma.providerSkill.findMany({
+    select: {
+      provider_profile_id: true,
+      skill: { select: { role_type_id: true, pillar_id: true } },
+    },
+  });
+  const by = new Map<string, Set<string>>();
+  for (const l of links) {
+    if (!l.skill?.role_type_id || !l.skill?.pillar_id) continue;
+    const key = `${l.skill.role_type_id}::${l.skill.pillar_id}`;
+    if (!by.has(key)) by.set(key, new Set());
+    by.get(key)!.add(l.provider_profile_id);
+  }
+  return new Map([...by].map(([k, v]) => [k, v.size]));
+}
+
+/**
  * Distinct providers per SKILL — the `N providers` column on RDS.
  * ⚠ ONE QUERY for the whole tree.
  */
