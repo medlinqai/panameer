@@ -121,8 +121,23 @@ export async function getSkillsForPillar(pillarId: string) {
  */
 export async function getSpecializations() {
   const rows = await prisma.specialization.findMany({
-    orderBy: [{ sort_order: "asc" }, { name: "asc" }],
-    select: { id: true, name: true, kind: true },
+    /*
+      ── ⚠ BASELINE FIRST, PROVIDER-TYPED ROWS AFTER (`P1-A1.5-E470b`) ────────
+
+      ⚠ SUPERSEDED, quoted not deleted: `orderBy: [{ sort_order: "asc" }, { name: "asc" }]`.
+      ⚠ `getApplications()` BELOW ALREADY DOES EXACTLY THIS — `[{ is_custom:
+      "asc" }, { name: "asc" }]` — so this is the file's own pattern applied to
+      the one function that did not use it, not a new idea.
+    */
+    orderBy: [{ is_custom: "asc" }, { sort_order: "asc" }, { name: "asc" }],
+    /*
+      ⚠⚠ `is_custom` WAS MISSING FROM THIS SELECT, so the page could not render
+      it even if it wanted to. The schema's own contract for the flag is
+      *"FLAGGED FOR ADMIN REVIEW so recurring entries can be promoted to
+      baseline later"* — and the review it exists for could not happen, because
+      nothing surfaced it.
+    */
+    select: { id: true, name: true, kind: true, is_custom: true },
   });
 
   const groups: { kind: string; label: string; items: typeof rows }[] = [
@@ -291,4 +306,141 @@ export async function getCatalogTree(code: string) {
     regions,
     engagementTypes,
   };
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⚠⚠ COUNTING PEOPLE — THE RULE BOTH CATALOG PAGES OBEY (`P1-A1.5-E465b`/`E470c`)
+   ═══════════════════════════════════════════════════════════════════════════
+
+   ⚠⚠ COUNT DISTINCT PROVIDERS, NEVER JOIN ROWS. A provider holding twelve
+   Oracle Fusion skills is ONE person in Application-Specific. Counting rows
+   instead of people inflates every number on both pages, and it is the easiest
+   mistake here to make.
+
+   ⚠ A PROVIDER WHO SPANS TWO CATEGORIES COUNTS IN BOTH. These are NOT a
+   partition and they do NOT sum to the provider total — every caller captions
+   that so nobody "fixes" it later.
+   ⚠⚠ THIS IS THE SAME TRAP AS `E444`, where a dual-role person was silently
+   resolved to whichever test fired first. Do not first-match. Count both.
+
+   ⚠ ONE QUERY PER STRIP, NEVER ONE PER ROW. Each function below issues exactly
+   ONE `findMany` and does the grouping in memory — the link tables are small
+   (hundreds of rows) and a per-row query would turn a 3-query page into a
+   30-query one.
+   ⚠ ZERO RENDERS `—`, NEVER `0`, at the call site: a category nobody has
+   claimed is honest, not broken — and it is the most actionable row on the page.
+*/
+
+export type ClaimCount = {
+  key: string;
+  label: string;
+  /** DISTINCT providers, not links. */
+  providers: number;
+  /** The most-claimed child, for the leader line. Null when nobody claimed any. */
+  top: { name: string; providers: number } | null;
+};
+
+/** Distinct providers per ROLE, with the most-claimed DOMAIN inside it. */
+export async function getRoleClaims(): Promise<ClaimCount[]> {
+  const [roles, links] = await Promise.all([
+    prisma.roleType.findMany({
+      orderBy: { sort_order: "asc" },
+      select: { id: true, name: true, display: true },
+    }),
+    /* ⚠ ONE QUERY. Every provider-skill link with the two ids that place it. */
+    prisma.providerSkill.findMany({
+      select: {
+        provider_profile_id: true,
+        skill: { select: { role_type_id: true, pillar: { select: { name: true } } } },
+      },
+    }),
+  ]);
+
+  return roles.map((r) => {
+    const mine = links.filter((l) => l.skill?.role_type_id === r.id);
+    /* ⚠ DISTINCT PEOPLE — a Set, not `mine.length`. */
+    const providers = new Set(mine.map((l) => l.provider_profile_id)).size;
+
+    const byDomain = new Map<string, Set<string>>();
+    for (const l of mine) {
+      const name = l.skill?.pillar?.name;
+      if (!name) continue;
+      if (!byDomain.has(name)) byDomain.set(name, new Set());
+      byDomain.get(name)!.add(l.provider_profile_id);
+    }
+    /* ⚠ TIES BREAK ON NAME so a leader line does not flicker between equals. */
+    const top =
+      [...byDomain.entries()]
+        .map(([name, set]) => ({ name, providers: set.size }))
+        .sort((a, b) => b.providers - a.providers || a.name.localeCompare(b.name))[0] ?? null;
+
+    return { key: r.id, label: r.display || r.name, providers, top };
+  });
+}
+
+/** Distinct providers per specialization KIND, with the most-claimed row in it. */
+export async function getSpecializationClaims(): Promise<ClaimCount[]> {
+  /* ⚠ ONE QUERY. */
+  const links = await prisma.providerProfileSpecialization.findMany({
+    select: {
+      provider_profile_id: true,
+      specialization: { select: { name: true, kind: true } },
+    },
+  });
+
+  const KINDS: { kind: string; label: string }[] = [
+    { kind: "PRODUCT", label: "Products & Platforms" },
+    { kind: "METHODOLOGY", label: "Processes & Methodologies" },
+    { kind: "INDUSTRY", label: "Industries" },
+  ];
+
+  return KINDS.map(({ kind, label }) => {
+    const mine = links.filter((l) => l.specialization?.kind === kind);
+    const providers = new Set(mine.map((l) => l.provider_profile_id)).size;
+    const byItem = new Map<string, Set<string>>();
+    for (const l of mine) {
+      const name = l.specialization?.name;
+      if (!name) continue;
+      if (!byItem.has(name)) byItem.set(name, new Set());
+      byItem.get(name)!.add(l.provider_profile_id);
+    }
+    const top =
+      [...byItem.entries()]
+        .map(([name, set]) => ({ name, providers: set.size }))
+        .sort((a, b) => b.providers - a.providers || a.name.localeCompare(b.name))[0] ?? null;
+    return { key: kind, label, providers, top };
+  });
+}
+
+/**
+ * Distinct providers per SPECIALIZATION row — the `N providers` column.
+ * ⚠ ONE QUERY for the whole grid, keyed by specialization id.
+ */
+export async function getSpecializationProviderCounts(): Promise<Map<string, number>> {
+  const links = await prisma.providerProfileSpecialization.findMany({
+    select: { provider_profile_id: true, specialization_id: true },
+  });
+  const by = new Map<string, Set<string>>();
+  for (const l of links) {
+    if (!by.has(l.specialization_id)) by.set(l.specialization_id, new Set());
+    by.get(l.specialization_id)!.add(l.provider_profile_id);
+  }
+  return new Map([...by].map(([k, v]) => [k, v.size]));
+}
+
+/**
+ * Distinct providers per SKILL — the `N providers` column on RDS.
+ * ⚠ ONE QUERY for the whole tree.
+ */
+export async function getSkillProviderCounts(): Promise<Map<string, number>> {
+  const links = await prisma.providerSkill.findMany({
+    select: { provider_profile_id: true, skill_id: true },
+  });
+  const by = new Map<string, Set<string>>();
+  for (const l of links) {
+    if (!by.has(l.skill_id)) by.set(l.skill_id, new Set());
+    by.get(l.skill_id)!.add(l.provider_profile_id);
+  }
+  return new Map([...by].map(([k, v]) => [k, v.size]));
 }

@@ -24,6 +24,15 @@ export type CatalogNode = {
   label: string;
   /** Right-aligned meta — a count, a status, a price. */
   meta?: string;
+  /**
+   * ⚠ A PROVIDER TYPED THIS ROW IN (`P1-A1.5-E470b`).
+   *
+   * `Specialization.is_custom` and `Skill.is_custom` have existed since the
+   * add-on-the-fly path shipped, and the schema's contract for them is *"FLAGGED
+   * FOR ADMIN REVIEW so recurring entries can be promoted to baseline later"* —
+   * but nothing rendered the flag, so the review it exists for could not happen.
+   */
+  custom?: boolean;
   children?: CatalogNode[];
 };
 
@@ -143,7 +152,14 @@ function Group({
         style={{ paddingLeft: 16 + depth * 18 }}
       >
         <span className="min-w-0 flex-1 truncate">{node.label}</span>
-        {node.meta && <span className="text-[12.5px] text-ink-2">{node.meta}</span>}
+        {node.custom && (
+          /* ⚠ `E470b` — a quiet marker, not an alarm. These rows are legitimate
+             provider answers awaiting promotion to baseline, not errors. */
+          <span className="shrink-0 rounded-full bg-ink/[0.06] px-2 py-0.5 text-[10.5px] font-semibold text-ink-2">
+            Custom
+          </span>
+        )}
+        {node.meta && <span className="shrink-0 text-[12.5px] text-ink-2">{node.meta}</span>}
       </div>
     );
   }
@@ -166,6 +182,13 @@ function Group({
         >
           {node.label}
         </span>
+        {node.custom && (
+          /* ⚠ `E470b` — a quiet marker, not an alarm. These rows are legitimate
+             provider answers awaiting promotion to baseline, not errors. */
+          <span className="shrink-0 rounded-full bg-ink/[0.06] px-2 py-0.5 text-[10.5px] font-semibold text-ink-2">
+            Custom
+          </span>
+        )}
         <span className="shrink-0 text-[12.5px] text-ink-2">
           {node.meta ?? `${kids.length}`}
         </span>
