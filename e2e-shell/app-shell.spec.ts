@@ -815,3 +815,158 @@ test.describe("the PUBLIC hero", () => {
     });
   }
 });
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⚠⚠ A RAIL LABEL THAT OVERFLOWS MUST FAIL LOUDLY (`P1-A1.5-E477`)
+   ═══════════════════════════════════════════════════════════════════════════
+
+   `AppRail.tsx` states a HARD REQUIREMENT — *"labels never wrap"* — and `E475`
+   measured the rail to its longest label on purpose (248px → 240px).
+
+   ⚠⚠ BUT `railLink`'s LABEL CARRIES `truncate`, so the next person who narrows
+   the rail gets an ellipsis instead of a failure. That is the exact bug in
+   Scott's screenshot (`Setup & Maintenan…`), arriving silently.
+
+   ⚠ `truncate` IS DELIBERATELY NOT REMOVED. Without it an overflowing label
+   spills out of the rail, which is uglier and no more informative. ⚠ THE FIX IS
+   AN ASSERTION, WHICH IS THE HOUSE PATTERN: the styling stays, and the thing it
+   could hide becomes a red gate.
+
+   ⚠ THE LABELS COME FROM `src/lib/nav.ts` ON DISK, not from a signed-in DOM, so
+   this covers BOTH nav trees with ONE account. An admin-only label like
+   `Roles>Domains>Skills` never renders for the seeded test user, and it is
+   precisely the one that binds the width. ⚠ Reading a source file is the same
+   technique `public-allowlist.spec.ts` already uses.
+*/
+test.describe("⚠ THE RAIL NEVER TRUNCATES — P1-A1.5-E477", () => {
+  /** The rail's real geometry, read from `AppRail.tsx` rather than assumed. */
+  const RAIL_SRC = readFileSync(join(process.cwd(), "src/components/casing/AppRail.tsx"), "utf8");
+
+  function railWidth(): number {
+    const m = RAIL_SRC.match(/<aside className="hidden w-\[(\d+)px\]/);
+    if (!m) throw new Error("E477: could not read the rail width from AppRail.tsx");
+    return Number(m[1]);
+  }
+
+  /*
+    ⚠⚠ ONLY THE EXPORTS THE RAIL ACTUALLY RENDERS. The first cut of this scraped
+    every `label:` in `nav.ts` and went red on `"Invitations to Propose My Rate"`
+    — a `PAGE_TABS` entry, which is a TAB ROW inside a page and never appears in
+    the rail at all. ⚠ THAT WAS A HARNESS BUG, NOT A PRODUCT ONE, and the fix is
+    to scope the harness rather than to weaken the assertion or widen the rail.
+
+    `AppRail` renders: `ADMIN_SETUP` + `ADMIN_HOME` as the two top buttons and
+    `ADMIN_NAV`'s groups for the admin tree, and `PROVIDER_NAV` / `REQUESTER_NAV`
+    for the app tree. Nothing else reaches a rail row.
+  */
+  const RAIL_EXPORTS = [
+    "ADMIN_NAV",
+    "ADMIN_SETUP",
+    "ADMIN_HOME",
+    "PROVIDER_NAV",
+    "REQUESTER_NAV",
+  ];
+
+  function navLabels(): { label: string; from: string }[] {
+    const src = readFileSync(join(process.cwd(), "src/lib/nav.ts"), "utf8");
+    /* ⚠ A label quoted inside a SUPERSEDED comment must not be asserted, or
+       `E164`'s own quoted history would fail the build. */
+    const live = src
+      .split("\n")
+      .filter((l) => {
+        const t = l.trimStart();
+        return !t.startsWith("*") && !t.startsWith("//") && !t.startsWith("/*");
+      })
+      .join("\n");
+
+    const starts = [...live.matchAll(/^export const (\w+)/gm)].map((m) => ({
+      name: m[1],
+      at: m.index ?? 0,
+    }));
+    const out: { label: string; from: string }[] = [];
+    const seen = new Set<string>();
+    for (let i = 0; i < starts.length; i++) {
+      if (!RAIL_EXPORTS.includes(starts[i].name)) continue;
+      const body = live.slice(starts[i].at, starts[i + 1]?.at ?? live.length);
+      for (const m of body.matchAll(/\blabel:\s*"([^"]+)"/g)) {
+        if (seen.has(m[1])) continue;
+        seen.add(m[1]);
+        out.push({ label: m[1], from: starts[i].name });
+      }
+    }
+    if (out.length < 15)
+      throw new Error(`E477: only found ${out.length} rail labels — the parse broke`);
+    return out;
+  }
+
+  test("no rail label would truncate at the shipped rail width", async () => {
+    const width = railWidth();
+    const items = navLabels();
+    const labels = items.map((i) => i.label);
+
+    const results = await page.evaluate(
+      ({ width, labels }) => {
+        /* ⚠ THE REAL CHROME, taken from the rail's own classes: the aside's
+           inner `px-3` (24), the link's `px-2.5` (20), an 18px icon and the
+           `gap-3` (12) beside it. */
+        const CHROME = 24 + 20 + 18 + 12;
+        const host = document.createElement("div");
+        host.style.cssText = `position:fixed;left:-9999px;top:0;width:${width}px`;
+        document.body.appendChild(host);
+
+        const out: { label: string; scroll: number; client: number; text: number }[] = [];
+        for (const label of labels) {
+          const row = document.createElement("div");
+          row.style.cssText = `width:${width - CHROME}px`;
+          const span = document.createElement("span");
+          /* ⚠ THE RAIL'S OWN TYPOGRAPHY — 14px/20px, `font-medium`, and the
+             `truncate` that makes the failure silent in the product. */
+          span.className = "truncate";
+          span.style.cssText =
+            "display:block;font:500 14px/20px Montserrat,'Montserrat Fallback',sans-serif;" +
+            "white-space:nowrap;overflow:hidden;text-overflow:ellipsis";
+          span.textContent = label;
+          row.appendChild(span);
+          host.appendChild(row);
+          /* ⚠⚠ `scrollWidth` ANSWERS "DID IT OVERFLOW" AND NOTHING ELSE. On a
+             block span that does NOT overflow it returns the CONTAINER width,
+             so using it to rank labels reported `"Learn"` as needing 166 of
+             166px. A Range around the text node gives the real inked width,
+             which is what the headroom number has to be built from. */
+          const range = document.createRange();
+          range.selectNodeContents(span);
+          out.push({
+            label,
+            scroll: span.scrollWidth,
+            client: span.clientWidth,
+            text: Math.round(range.getBoundingClientRect().width * 10) / 10,
+          });
+        }
+        host.remove();
+        return out;
+      },
+      { width, labels }
+    );
+
+    const overflowing = results.filter((r) => r.scroll > r.client);
+    /* ⚠ RANKED ON THE REAL TEXT WIDTH, not on scrollWidth — see the note above. */
+    const tightest = [...results].sort((a, b) => b.text - a.text)[0];
+    const CHROME = 24 + 20 + 18 + 12;
+
+    /* Printed on every run so the headroom is visible even when green. */
+    console.log(
+      `E477 — rail ${width}px · ${items.length} rail labels across ` +
+        `${RAIL_EXPORTS.length} exports · tightest ${JSON.stringify(tightest.label)} ` +
+        `needs ${tightest.text}px of ${tightest.client}px available ` +
+        `→ rail minimum ${Math.ceil(tightest.text + CHROME)}px, ` +
+        `headroom ${Math.round((tightest.client - tightest.text) * 10) / 10}px`
+    );
+
+    expect(
+      overflowing.map((o) => `${o.label} (${o.scroll} > ${o.client})`),
+      `⚠ A rail label would TRUNCATE at ${width}px. Do NOT widen the rail to ` +
+        `silence this and do NOT remove \`truncate\` — the label is the thing ` +
+        `to shorten, and that is Scott's call (E475 WS-1b reported it).`
+    ).toEqual([]);
+  });
+});
