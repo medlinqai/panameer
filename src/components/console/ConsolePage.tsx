@@ -367,6 +367,61 @@ export function VolumeFooter({
           const cls =
             "block rounded-brand border border-line bg-white p-4 " +
             (t.href ? "transition-colors hover:border-magenta" : "");
+
+          /*
+            ── ⚠ THE LEARN-STYLE CHIP IS OPT-IN HERE TOO (`P1-A1.5-E456`) ──────
+
+            ⚠ `Tile` ALREADY CARRIED `icon` AND `tone` — `TileRow` has rendered
+            them since `E454`, and this component simply ignored them. So this
+            is the same opt-in reaching the footer, NOT a new prop and NOT a
+            second tile component.
+
+            ⚠⚠ FIVE DIFFERENT HUES, DELIBERATELY UNLIKE THE HEADER STRIP. The
+            header tiles deepen ONE hue because they are a progression through a
+            single funnel; these are five genuinely different JOBS, so a ramp
+            would imply an order that does not exist.
+            ⚠ PASS NO `icon` AND THIS RENDERS EXACTLY WHAT IT RENDERED BEFORE —
+            `VolumeFooter` reaches nine pages through `SpecPage` and
+            `StubConsolePage`, and none of them change.
+          */
+          if (t.icon && !t.tbd) {
+            const inner = (
+              <>
+                <span className="flex items-center gap-2.5">
+                  <span
+                    className={
+                      "grid h-[30px] w-[30px] shrink-0 place-items-center rounded-[9px] " +
+                      TILE_TONES[t.tone ?? "neutral"]
+                    }
+                  >
+                    {t.icon}
+                  </span>
+                  <span className="min-w-0 truncate text-[12px] font-semibold text-ink-2" title={t.label}>
+                    {t.label}
+                  </span>
+                </span>
+                {/* ⚠ INK, NOT MAGENTA (`E433`) — a count is not interactive. */}
+                <p
+                  className={
+                    "mt-1.5 font-display text-[22px] font-bold leading-none " +
+                    (known ? "text-ink" : "text-ink-2/30")
+                  }
+                >
+                  {known ? t.value : "—"}
+                </p>
+                {t.hint && <p className="mt-1 text-[11px] text-ink-2/70">{t.hint}</p>}
+              </>
+            );
+            return t.href ? (
+              <Link key={`${t.label}-${ti}`} href={t.href} className={cls}>
+                {inner}
+              </Link>
+            ) : (
+              <div key={`${t.label}-${ti}`} className={cls}>
+                {inner}
+              </div>
+            );
+          }
           const inner = (
             <>
               <p className="text-[12px] font-semibold text-ink-2">

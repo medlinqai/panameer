@@ -182,3 +182,72 @@ export async function getStatusTrend(
 export async function getAllTrends(period: Period): Promise<TrendSeries[]> {
   return Promise.all(ONBOARDING_STATUSES.map((s) => getStatusTrend(s, period)));
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE PER-JOB TREND (`P1-A1.5-E456`)
+   ═══════════════════════════════════════════════════════════════════════════
+
+   > **SCOTT:** *"please create reports for each of the footer tiles (like
+   > medlinq) showing how many were added each week over the last 90 days."*
+
+   ⚠⚠ THIS REUSES `bucket()` AND THE WEEK RULE ABOVE RATHER THAN RESTATING THEM.
+   `E257` already decided that a week starts Monday so a bucket never straddles
+   two labels, and a second definition of "a week" in the same app is how two
+   charts start disagreeing about the same fortnight.
+
+   ⚠⚠ AND IT DOES NOT TOUCH `?status=`. `getStatusTrend` reads
+   `ONBOARDING_STATUSES`; a JOB value handed to it would fall through to the
+   `else` branch and silently render the Validated series under a Providers
+   heading. ⚠ A JOB IS A DIFFERENT AXIS, SO IT GETS A DIFFERENT PARAMETER —
+   `?job=`, never `?status=`. The two never mix.
+
+   ⚠ COUNTED ON `Person.created_at` — the brief's instruction, and the only
+   timestamp every row reliably carries. A job flag has no timestamp of its own,
+   so this is "people who hold this job today, by when they JOINED", not "when
+   they acquired the job". ⚠ SAID ON THE PAGE, not hidden here.
+*/
+
+/** Exactly `weeks` buckets ending this week — a window, not a span of the data. */
+function fillWindow(counts: Map<string, number>, weeks: number): TrendPoint[] {
+  const out: TrendPoint[] = [];
+  const now = new Date();
+  const cur = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+  );
+  /* Walk back to this week's Monday, then back again to the first bucket. */
+  cur.setUTCDate(cur.getUTCDate() - ((cur.getUTCDay() + 6) % 7));
+  cur.setUTCDate(cur.getUTCDate() - (weeks - 1) * 7);
+  for (let i = 0; i < weeks; i++) {
+    const b = bucket(cur, "week");
+    out.push({ key: b.key, label: b.label, count: counts.get(b.key) ?? 0 });
+    cur.setUTCDate(cur.getUTCDate() + 7);
+  }
+  return out;
+}
+
+/**
+ * Weekly joins over the last `weeks` weeks for the people in `stamps`.
+ *
+ * ⚠⚠ THE WINDOW IS FIXED AND EMPTY WEEKS ARE KEPT. `fill()` above spans first
+ * observed bucket to last, which is right for "when did this status happen" and
+ * WRONG here: a 13-week report that silently becomes a 2-week report because
+ * nothing landed in the other eleven is not the report Scott asked for.
+ * ⚠ EXPECT IT LUMPY AND DO NOT SMOOTH IT — most of these rows were seeded in a
+ * few bursts, so most weeks are legitimately zero.
+ */
+export function weeklyJoins(
+  stamps: Date[],
+  weeks = 13
+): { points: TrendPoint[]; total: number; inWindow: number } {
+  const counts = new Map<string, number>();
+  for (const d of stamps) {
+    const b = bucket(d, "week");
+    counts.set(b.key, (counts.get(b.key) ?? 0) + 1);
+  }
+  const points = fillWindow(counts, weeks);
+  return {
+    points,
+    total: stamps.length,
+    inWindow: points.reduce((n, p) => n + p.count, 0),
+  };
+}

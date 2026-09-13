@@ -63,3 +63,78 @@ export function jobsFor(p: UserJobInput): string[] {
 export function jobLabel(p: UserJobInput): string {
   return jobsFor(p).join(" · ") || "—";
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE FOOTER STRIP (`P1-A1.5-E456`)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * ⚠⚠ `Coordinators` WAS A NAMING-LOCK VIOLATION, NOT A RENAME.
+ *
+ * ⚠ SUPERSEDED, quoted not deleted (`E164`) — the five labels this replaces:
+ *   `Service Requesters` · `Buyers` · `Coordinators` · `Providers` · `Total`
+ *
+ * ⚠⚠ `Coordinators` LEAKED THE DATABASE COLUMN `is_service_coordinator` STRAIGHT
+ * ONTO THE SCREEN. `security_architecture.md` locked `USER_JOB` on 2026-08-02 and
+ * the value has been **RECRUITER** ever since — so the rail was showing an admin
+ * a name the model does not use. That is a violation of the lock, which is why
+ * this is not filed as a preference.
+ * ⚠ THE COLUMN IS NOT RENAMED. No schema change, no `db:push` — the column keeps
+ * its name and the LABEL stops repeating it. Renaming the column is
+ * `brief_user_class_job_model`'s job and this must not pre-empt it.
+ *
+ * ⚠ `Total` → `Administrators`, because a headcount was never a JOB. It sat in a
+ * strip of four jobs pretending to be a fifth, and the count it showed is already
+ * on the `Total Users` tile at the top of the same page.
+ *
+ * ⚠ FIVE DIFFERENT HUES, NOT ONE DEEPENING RAMP. These are five genuinely
+ * different jobs; the HEADER tiles deepen one hue because they are a progression
+ * through a single funnel. Opposite data, opposite treatment.
+ */
+export const JOB_TILES: {
+  key: string;
+  label: string;
+  tone: "neutral" | "amber" | "emerald" | "emeraldDeep" | "emeraldSolid";
+}[] = [
+  { key: "REQUESTER", label: "Requesters", tone: "amber" },
+  { key: "BUYER", label: "Buyers", tone: "emerald" },
+  { key: "RECRUITER", label: "Recruiters", tone: "emeraldDeep" },
+  { key: "PROVIDER", label: "Providers", tone: "emeraldSolid" },
+  { key: "ADMINISTRATOR", label: "Administrators", tone: "neutral" },
+];
+
+/** What `jobsFor` returns, keyed the way `JOB_TILES` and `?job=` spell it. */
+const JOB_BY_KEY: Record<string, string> = {
+  REQUESTER: "Requester",
+  BUYER: "Buyer",
+  RECRUITER: "Recruiter",
+  PROVIDER: "Provider",
+};
+
+export type AdminFlags = { isSystemAdmin: boolean; isSupport: boolean };
+
+/**
+ * Does this person hold `key`?
+ *
+ * ⚠⚠ A DUAL-ROLE PERSON ANSWERS TRUE TWICE AND IS COUNTED TWICE. `jobsFor`
+ * returns EVERY job, and this asks each tile's question independently — no
+ * first-match, which is the precise defect `E444` existed to remove. Measured:
+ * 8 people hold two jobs, all of them `Recruiter · Provider`.
+ * ⚠ SO THE FIVE TILES DO NOT PARTITION THE POPULATION AND MUST NOT BE READ AS A
+ * BREAKDOWN. They happen to sum to 199 against 199 people, and ⚠⚠ THAT IS A
+ * COINCIDENCE: +8 double-counted holders and −10 people holding no job at all
+ * cancel exactly. The caption says so on the page.
+ *
+ * ⚠ `ADMINISTRATOR` IS A DIFFERENT AXIS and is deliberately not in `jobsFor`.
+ * It reads `User.is_system_admin` / `Person.is_support` — an access flag, not a
+ * marketplace job — so somebody can be an Administrator AND a Provider.
+ */
+export function holdsJob(
+  key: string,
+  p: UserJobInput,
+  admin: AdminFlags
+): boolean {
+  if (key === "ADMINISTRATOR") return admin.isSystemAdmin || admin.isSupport;
+  const want = JOB_BY_KEY[key];
+  return want ? jobsFor(p).includes(want) : false;
+}
