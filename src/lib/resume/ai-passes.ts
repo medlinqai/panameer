@@ -605,8 +605,36 @@ export function recallReport(input: {
 }): RecallReport {
   const warnings: string[] = [];
   if (input.headings > 0 && input.employers < input.headings) {
+    /*
+      ── ⚠⚠ IT SAID "employers" ABOUT THINGS THAT ARE NOT EMPLOYERS (`E508`) ──
+
+      ⚠ SUPERSEDED, quoted not deleted (`E164`):
+        `We found ${input.headings} employers in your document and imported
+         ${input.employers} — check your work history.`
+
+      > **`E506` flagged this as possible silent data loss.** ⚠⚠ COUNTING THE
+      > FILE SAYS OTHERWISE, AND THAT FLAG IS STOOD DOWN.
+
+      ⚠ CONFIRMED AGAINST SCOTT'S ACTUAL STORED RUN of
+      `PPM_FIN - Srilakshmi Kundanala.docx`, not against the brief's arithmetic:
+      the run recorded `headings: 11`, imported 5, and the five it imported are
+      the five real employers. The document's OTHER six company names —
+      PureCS · Emaar · Hackett · Oracle SSI · E&Y India · Capgemini — are the
+      CLIENT COLUMNS of the "Key Projects" matrix. ⚠⚠ 5 + 6 = 11. NOTHING WAS
+      LOST.
+
+      ⚠ THE DEFECT IS THE WORD "employers". `headings` is pass 1's inventory of
+      COMPANY NAMES, and calling them employers made a true number tell a false
+      story — it read as "we dropped six of your jobs".
+      ⚠ SO THE SENTENCE NAMES WHAT THE OTHERS PROBABLY ARE and stops implying
+      loss. ⚠⚠ "look like" IS DELIBERATE HEDGING: the pipeline does not actually
+      classify them, and claiming it did would be the opposite lie.
+    */
+    const others = input.headings - input.employers;
     warnings.push(
-      `We found ${input.headings} employers in your document and imported ${input.employers} — check your work history.`
+      `We found ${input.headings} company names in your document and imported ` +
+        `${input.employers} as employers — the other ${others} look like project ` +
+        `clients rather than jobs. Check your work history.`
     );
   }
   /* ⚠ THE SECOND OPINION. A source with many more date ranges than imported

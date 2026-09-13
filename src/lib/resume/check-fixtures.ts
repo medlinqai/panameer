@@ -44,6 +44,19 @@ type Check = {
    * paragraphs around the tables.
    */
   mustContain?: { text: string; atLeast: number }[];
+  /**
+   * ── ⚠⚠ THE DUPLICATION GUARD (`P2-J1.4-E508`) ─────────────────────────────
+   *
+   * > **SCOTT, 2026-09-13:** *"Duplicated the employer and the project?"*
+   *
+   * ⚠ `mustContain` PROVES A CELL SURVIVED; THIS PROVES IT SURVIVED ONCE. A
+   * merged table cell emitted once per column it spans would hand the model the
+   * same sentence twice and no prompt change could fix that — so the guard has
+   * to live at extraction, where the text is made.
+   * ⚠⚠ COUNTED IN THE EXTRACTED TEXT, NOT IN THE PARSE. This is a statement
+   * about what the model is HANDED, which is the thing that was in question.
+   */
+  mustAppearAtMost?: { text: string; atMost: number }[];
   /** WS0 — the confidence gate's verdict for this fixture. */
   expectConfidence?: "high" | "low";
 };
@@ -114,11 +127,39 @@ const CHECKS: Check[] = [
     maxEducation: 12,
   },
   {
+    /*
+      ── ⚠⚠ ALSO THE `E508` REGRESSION FIXTURE ─────────────────────────────
+
+      Scott's report was *"Duplicated the employer and the project?"* on this
+      exact file — 34 paragraphs, 10 tables, and table 6 carries merged cells
+      (`gridSpan=2`) around both `Oracle Pvt. Ltd.` and `Ernst & Young LLC.,`.
+
+      ⚠⚠ MEASURED: THE DUPLICATION DOES NOT REPRODUCE, AT ANY LAYER. mammoth's
+      `extractRawText` emits each of those strings ONCE (5,897 chars), and the
+      STORED RUN OF THIS VERY FILE returned five employers with no repeats. The
+      brief's "a naive row-walk returns three cells" describes a walker this
+      codebase does not use — `docx.ts` exists but nothing in the production
+      path imports it.
+      ⚠ SO THESE ASSERTIONS LOCK IN CORRECT BEHAVIOUR RATHER THAN FIXING A
+      DEFECT. They are what would have caught the bug if it were real, and what
+      will catch it if the extractor is ever swapped.
+      ⚠ ONE ENTRY, NOT TWO — the file was already a fixture here and a second
+      entry would run the same document twice under two names.
+    */
     file: "ppm-fin-srilakshmi.docx",
-    note: "TABLE résumé — WS-A's acceptance case",
+    note: "TABLE résumé — WS-A's acceptance case; E508 duplication guard",
     minChars: 4000,
     maxSkills: 40,
     maxEducation: 12,
+    mustContain: [
+      /* The cells must survive — otherwise `atMost` passes vacuously. */
+      { text: "Ernst & Young LLC.", atLeast: 1 },
+      { text: "Job Synopsis", atLeast: 1 },
+    ],
+    mustAppearAtMost: [
+      { text: "Ernst & Young LLC.,", atMost: 1 },
+      { text: "Implementation of PPM for SLK Technologies", atMost: 1 },
+    ],
   },
   {
     file: "epm-ashok.doc",
@@ -231,6 +272,15 @@ async function run() {
       assert(
         n >= need.atLeast,
         `${c.file}: "${need.text}" appears ${n}× in the extracted text, want ≥${need.atLeast}`
+      );
+    }
+    for (const cap of c.mustAppearAtMost ?? []) {
+      /* ⚠ LITERAL COUNT — the probe strings carry `&`, `.` and `,`, so the
+         needle is escaped rather than treated as a pattern. */
+      const n = text.split(cap.text).length - 1;
+      assert(
+        n <= cap.atMost,
+        `${c.file}: "${cap.text}" appears ${n}× in the extracted text, want ≤${cap.atMost} — a merged table cell is being emitted once per column it spans`
       );
     }
     if (c.expectConfidence) {
