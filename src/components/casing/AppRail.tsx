@@ -128,26 +128,95 @@ export function AppRail() {
     icon gutter is tightened before the text, which is the order the brief asks
     for.
 
-    All 15 items + 2 buttons + 3 group headers fit a 768px viewport without
-    scrolling at these metrics, so the collapsible-group fallback is not needed.
+    ⚠⚠ SUPERSEDED 2026-09-13, QUOTED NOT DELETED (`E164` / `P1-A1.5-E475`):
+
+      "All 15 items + 2 buttons + 3 group headers fit a 768px viewport without
+       scrolling at these metrics, so the collapsible-group fallback is not
+       needed."
+
+    ⚠ THAT GUARANTEE WAS REAL AND IT HAS BEEN TRADED AWAY ON PURPOSE. Do not
+    "fix" it back — read why first.
   */
   /*
     TWO DENSITIES, ONE RAIL (E191).
 
-    The app rail carries nine items and Scott's image-1 spacing; the admin rail
-    carries fifteen plus two buttons and three group headers, and the comment
-    above is the reason it must stay tight — that budget is what keeps "Platform
-    Admins" on screen at 768px without scrolling. Giving both the roomier metrics
-    would have bought the provider the design and cost the admin the property the
-    density was measured for, so density is a parameter rather than a re-tune.
+    ⚠⚠ SUPERSEDED 2026-09-13, QUOTED NOT DELETED (`E164`):
 
-    At 9 items × 36px + 8px gaps the app rail comes to ~316px of nav, which
-    clears 768px with the brand, company chip and signed-in card in place.
+      "…the comment above is the reason it must stay tight — that budget is what
+       keeps 'Platform Admins' on screen at 768px without scrolling. Giving both
+       the roomier metrics would have bought the provider the design and cost the
+       admin the property the density was measured for, so density is a parameter
+       rather than a re-tune."
+
+    ⚠ THE MECHANISM SURVIVES — `dense` IS STILL A PARAMETER and the app rail is
+    untouched. What changed is only what the ADMIN branch passes.
+
+    ── WHY THE 768px BUDGET WAS GIVEN UP ───────────────────────────────────────
+
+    1. ⚠ THE ADMIN CONSOLE IS DESKTOP WORK, decided after that budget was set —
+       `2. Claude Sub-Files/work_surface_model.md`: *"the admins are not likely
+       to be managing users on their mobile."* A 768px-tall viewport was a fair
+       worst case while nobody had decided. It is not the case to optimise for.
+    2. ⚠⚠ MEDLINQ'S OWN RAIL SCROLLS. *"Signed in As / Paul Ingrao"* is cut off
+       at the bottom of the screenshot Scott sent as the thing that *"looks so
+       much nicer"*. The look and the no-scroll rule were never both true in the
+       reference either.
+
+    ── ⚠ THE MEASURED NUMBERS THAT REPLACE THE CLAIM ───────────────────────────
+
+    Chromium, signed in as admin at /admin, ⚠ DEV BANNER DISMISSED, 1440 wide.
+    18 links (16 nav + 2 buttons), 4 headers (persona + 3 groups):
+
+                              BEFORE (dense)      AFTER
+      label                   15px / 22px         14px / 20px
+      row height              28px                36px
+      pitch                   29px                ⚠ 38px  (Medlinq exactly)
+      rail width              248px               240px
+      nav CONTENT height      636px               ⚠ 839px   (+203px)
+      last item on screen
+      without scrolling       ⚠ down to 730px     ⚠ down to 940px
+
+    ⚠⚠ SO THE REPLACEMENT FOR THE 768px CLAIM IS: THE ADMIN RAIL NOW NEEDS A
+    940px-TALL VIEWPORT TO SHOW "Platform Admins" WITHOUT SCROLLING. Below that
+    it scrolls, and that is accepted, not a regression to fix.
+
+    ⚠ THE BRIEF ESTIMATED +145px. It is +203px — chat's arithmetic was low by
+    58px, which is exactly why the brief said to measure rather than quote it.
+
+    ⚠ ONLY THE `<nav>` SCROLLS, VERIFIED AT A 600px-TALL VIEWPORT: the `<aside>`
+    itself does not scroll (`scrollHeight === clientHeight`) and the brand block
+    stays pinned at top 0 with the nav scrolled to its end. The logo never
+    leaves the screen — that was the brief's stop condition and it does not fire.
+  */
+  /*
+    ── ⚠⚠ THE ADMIN RAIL TAKES MEDLINQ'S METRICS (`P1-A1.5-E475`) ─────────────
+
+    **SCOTT, 2026-09-13:** *"the medlinq menu looks so much nicer then the
+    panameer menu… It would be great if the panameer menu looked more like the
+    medlinq menu (fonts, spacing)."* **AND, side by side at the same zoom:**
+    *"Looks like size of rail and font."*
+
+    ⚠⚠ MEASURED FROM MEDLINQ'S OWN SOURCE, NOT FROM A SCREENSHOT:
+    `Medlinq/medlinq-app/src/components/Sidebar.tsx:153` is
+    `gap-3 rounded-xl px-3 py-2 text-sm font-medium`, its icon is `h-[18px]`
+    (`:174`), and its rows are wrapped in `space-y-0.5` (`:301`).
+    ⚠ `text-sm` IS 14px/20px — so the brief's ~14px estimate was RIGHT, and this
+    is now a measurement rather than a guess. Row = 20 + 8 + 8 = 36px, gap 2px,
+    ⚠ PITCH 38px.
+
+    ⚠⚠ THE FONT SIZE AND THE ICON GAP MOVED INSIDE THE `dense` TERNARY, and that
+    is the whole reason this is safe. They were on the SHARED line, so the brief's
+    "label 15px → 14px" and "gap-2 → gap-3" would have silently re-typed the APP
+    rail too — the one Scott has already approved and the brief says twice not to
+    touch. ⚠ THE NON-DENSE BRANCH IS THE OLD STRING, UNCHANGED: `gap-2 py-[7px]
+    text-[15px] leading-[22px]`.
   */
   const link = (active: boolean, dense: boolean) =>
-    "flex items-center gap-2 whitespace-nowrap rounded-[8px] px-2.5 " +
-    (dense ? "py-[3px] " : "py-[7px] ") +
-    "text-[15px] font-medium leading-[22px] transition-colors " +
+    "flex items-center whitespace-nowrap rounded-[8px] px-2.5 " +
+    (dense
+      ? "gap-3 py-2 text-[14px] leading-[20px] "
+      : "gap-2 py-[7px] text-[15px] leading-[22px] ") +
+    "font-medium transition-colors " +
     /*
       E217 — ONE RULE. Active is a SOLID fill; the translucent wash is reserved
       for hover and nothing else. Before this, hover and active were both
@@ -188,8 +257,22 @@ export function AppRail() {
       onClick={() => setOpen(false)}
       aria-current={isActive(item.href) ? "page" : undefined}
       className={
-        "flex items-center gap-2 whitespace-nowrap rounded-[8px] border px-2.5 py-[5px] " +
-        "text-[15px] font-medium leading-[22px] transition-colors " +
+        /*
+          ⚠ THE TYPE MATCHES THE NAV ROWS (`E475`), THE TREATMENT DOES NOT.
+          ⚠⚠ NOT IN THE BRIEF'S LIST, AND ADDED ON EVIDENCE: measured after the
+          first pass, these two buttons were still `text-[15px] gap-2` while
+          every row below them had become 14px — and being the widest thing left
+          in the rail, "Panameer Dashboard" was setting the minimum rail width
+          at the OLD font size. Medlinq settles it: its equivalent top button
+          (`Sidebar.tsx:354`) is `gap-3 px-3 py-2 text-sm` — byte-for-byte the
+          metrics of its nav rows (`:153`).
+          ⚠ THE OUTLINE/FILL RULE IS UNTOUCHED — border + faint wash, never
+          solid unless active, so exactly one thing in the rail is ever filled.
+          `py-[5px]` also stays: these sit closer together than nav rows by
+          design.
+        */
+        "flex items-center gap-3 whitespace-nowrap rounded-[8px] border px-2.5 py-[5px] " +
+        "text-[14px] font-medium leading-[20px] transition-colors " +
         (isActive(item.href)
           ? "border-rail-active bg-rail-active text-white"
           : "border-white/15 bg-white/[0.06] text-white/90 hover:bg-white/[0.12] hover:text-white")
@@ -236,14 +319,37 @@ export function AppRail() {
         {adminButton(ADMIN_HOME)}
       </div>
 
+      {/*
+        ── ⚠ THE GROUP HEADERS ARE THE OTHER HALF OF IT (`E475` WS-2) ──────────
+
+        ⚠⚠ THE BRIEF SAID MEDLINQ'S HEADERS HAVE "sentence case, NO TRACKING".
+        ⚠ HALF OF THAT IS WRONG, AND THE SOURCE SETTLES IT. `Sidebar.tsx:183` is
+        `mb-2 px-3 text-[10px] font-semibold tracking-widest` — `tracking-widest`
+        is 0.1em, which is MORE letter-spacing than Panameer's 0.09em, not none.
+        ⚠⚠ WHAT ACTUALLY DIFFERS IS THE CASE: Medlinq renders `Applications`,
+        `Setup`, `Support` as written; Panameer shouted `TRANSACTION DATA` through
+        a CSS `uppercase`.
+        ⚠ SO `uppercase` GOES AND THE TRACKING STAYS. Dropping both would have
+        walked past the reference design on the strength of a screenshot.
+        ⚠ `nav.ts` ALREADY STORES THEM TITLE-CASED (`title: "Transaction Data"`),
+        so no string changes — the CSS was doing the shouting.
+
+        ⚠ AIR ABOVE THE HEADER: `mt-2` (8px) → `mt-6` (24px), because Medlinq
+        wraps its groups in `space-y-6` (`:300`), and `pb-0.5` → `pb-2` to match
+        its `mb-2`. ⚠ THE BRIEF ESTIMATED `mt-4`; 24px is what the reference
+        actually uses, and the brief's own rule is to measure rather than trust
+        its table.
+        ⚠ `space-y-px` → `space-y-0.5`, Medlinq's 2px, so the 38px pitch is
+        36px of row plus 2px of gap exactly as the reference builds it.
+      */}
       {ADMIN_NAV.map((group) => (
-        <div key={group.title ?? "x"} className="mt-2">
+        <div key={group.title ?? "x"} className="mt-6">
           {group.title && (
-            <p className="px-2.5 pb-0.5 text-[10.5px] font-semibold uppercase tracking-[0.09em] text-white/40">
+            <p className="px-2.5 pb-2 text-[10.5px] font-semibold tracking-[0.09em] text-white/40">
               {group.title}
             </p>
           )}
-          <div className="space-y-px">{group.items.map((i) => railLink(i))}</div>
+          <div className="space-y-0.5">{group.items.map((i) => railLink(i))}</div>
         </div>
       ))}
     </>
@@ -346,7 +452,37 @@ export function AppRail() {
   return (
     <>
       {/* Desktop rail */}
-      <aside className="hidden w-[248px] shrink-0 bg-rail lg:block">
+      {/*
+        ── ⚠ RAIL WIDTH: 248px → 240px, AND THAT IS THE FLOOR (`E475` WS-1b) ───
+
+        **SCOTT:** *"Looks like size of rail and font."* ⚠ Medlinq's is 220px
+        (`Sidebar.tsx:253`, `w-[220px]` — measured from source, not a screenshot).
+
+        ⚠⚠ MEASURED IN THE RUNNING APP AT 14px, SIGNED IN, BANNER DISMISSED.
+        Required width = label + 18 icon + 12 gap + 20 link px-2.5 + 24 wrapper:
+
+          Panameer Dashboard     154.4  →  228.4px   ⚠ THE BINDING CONSTRAINT
+          Roles>Domains>Skills   152.7  →  226.7px
+          Setup & Maintenance    150.5  →  224.5px
+
+        ⚠⚠ THE BRIEF EXPECTED `Roles>Domains>Skills` TO BE THE CONSTRAINT. IT IS
+        NOT — `Panameer Dashboard` is wider, by 1.7px. Both matter; neither alone.
+
+        ⚠ THE MARGIN IS SIZED, NOT GUESSED. Montserrat loads at 400/600 but the
+        label asks for `font-medium` (500), so the rendered face can legitimately
+        be either. Worst case across 500/600 is 157.7 → ⚠ 231.7px. At 240 that
+        leaves 8.3px of headroom against the widest label in the worst weight.
+        ⚠ THE HARD REQUIREMENT AT THE TOP OF THIS FILE STILL HOLDS: nothing wraps
+        and nothing clips — verified, zero labels overflow at 240px.
+        ⚠⚠ 220px IS UNREACHABLE while these three labels exist at this size. That
+        is a LABEL question, not a width question — see the report.
+
+        ⚠ SAFE FOR `AppHeader`: its breakpoint derivation subtracts the rail from
+        the viewport, so every available width A GROWS by 8px while the required
+        R is unchanged. Narrowing can only loosen that arithmetic, never tighten
+        it. ⚠ Its comment's totals are superseded in place there.
+      */}
+      <aside className="hidden w-[240px] shrink-0 bg-rail lg:block">
         <div className="sticky top-0 flex h-screen flex-col px-3 py-4">
           {brand}
 
