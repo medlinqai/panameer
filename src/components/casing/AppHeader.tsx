@@ -208,6 +208,16 @@ export function AppHeader() {
         This row overflowed EVERY authenticated page between 760 and 1180, and
         the defect was being filed against whatever page was being walked.
 
+        ⚠⚠ SUPERSEDED IN PART 2026-09-13 (`E164` / `P1-A1.5-E475`): THE RAIL IS
+        NOW 240px, NOT 248. Every "248" below reads 240, so the document's
+        min-content is 1251 not 1259, and the ceiling is 1043 + 240 = 1283 not
+        1291. ⚠ NO BREAKPOINT MOVES AND NO CODE CHANGES: this derivation
+        SUBTRACTS the rail from the viewport, so each available width A grew by
+        8px while every required R is unchanged — `credits → xl` now has
+        A = 1040 against R = 912, `AI on → 2xl` A = 1296 against R = 1043.
+        ⚠ NARROWING THE RAIL CAN ONLY LOOSEN THIS ARITHMETIC. The reasoning is
+        kept verbatim because it is the reason the breakpoints are what they are.
+
         ⚠ THE 248px NOBODY COULD ACCOUNT FOR IS THE RAIL, NOT THE HEADER.
         `documentElement.scrollWidth` measured 1259 at viewports of both 1100 and
         1180 — wider than the header's own 1011 min-content, which looked like
