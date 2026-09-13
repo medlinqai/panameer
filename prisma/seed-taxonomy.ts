@@ -327,7 +327,25 @@ const METHODOLOGIES = new Set([
   "Procure-to-Pay",
   "Record-to-Report",
   "Order-to-Cash",
+  /*
+    ── ⚠⚠ BOTH NAMES, AND THE OLD ONE IS LOAD-BEARING (`P1-A1.5-E461` WS-0) ───
+
+    **SCOTT, 2026-09-13:** *"hire to retire is better."* / *"H2R"*. The
+    specialization said `Hire-to-Fire` while the RDS Operations domain for the
+    same process already said `Hire-to-Retire` — two names for one thing, both
+    live, on two pages a provider can see.
+
+    ⚠ `Hire-to-Fire` STAYS IN THIS SET. `specializationKind()` buckets by name,
+    and the rename pass runs INSIDE the same seed — so for the part of the run
+    before the rename lands, a row still called `Hire-to-Fire` must still resolve
+    to METHODOLOGY. ⚠ DROP IT AND THE ROW FALLS THROUGH TO `PRODUCT` MID-RUN,
+    which is the same trap the `INDUSTRIES` set below documents in its own
+    comment: *"Superseded names, kept in the set so a row that has not yet been
+    renamed is still bucketed as an INDUSTRY rather than silently falling through
+    to PRODUCT while the rename pass runs."*
+  */
   "Hire-to-Fire",
+  "Hire-to-Retire",
   "Source-to-Pay",
   "Putaway-to-Issue", // E104
 ]);
@@ -381,6 +399,14 @@ const EXTRA_SPECIALIZATIONS = [
  * rather than a duplicate-key error.
  */
 const SPECIALIZATION_RENAMES: Record<string, string> = {
+  /*
+    ⚠ `E461` WS-0 — Scott, 2026-09-13: *"hire to retire is better."*
+    ⚠⚠ THIS PASS IS AN `UPDATE` AND KEEPS THE ROW ID, which is the whole reason
+    it goes here rather than being renamed in the JSON alone: every provider who
+    picked this specialization keeps it. The `E105` industry renames below are
+    the precedent and were added for exactly this.
+  */
+  "Hire-to-Fire": "Hire-to-Retire",
   Healthcare: "Healthcare & Life Sciences",
   "Financial Services": "Financial Services & Fintech",
   "Energy Services": "Energy, Utilities, & Resources",

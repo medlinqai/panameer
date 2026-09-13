@@ -6,6 +6,32 @@ import { CatalogTree, CatalogEditBar, type CatalogNode } from "@/components/cons
 export const dynamic = "force-dynamic";
 
 /**
+ * ── ⚠⚠ RETIRED. THIS FILE NO LONGER RENDERS A ROUTE (`P1-A1.5-E470d`) ───────
+ *
+ * **SCOTT, 2026-09-13:** *"On industries, that content is a specialization...it
+ * should be managed on the specialization page."*
+ *
+ * ⚠ THE FOLDER IS `_industries`, NOT `industries`. Next.js App Router treats an
+ * underscore-prefixed folder as PRIVATE and does not route it, so
+ * `/admin/industries` is gone while the file survives.
+ *
+ * ⚠⚠ WHY NOT DELETED, WHEN THE BRIEF SAID "DELETE": `E164` — *"never delete a
+ * file"* — is a HOUSE RULE and a brief does not override one. Its established
+ * form on this repo is the file staying on disk, unmounted: `SettingsHeading`
+ * (`settings/layout.tsx:70`), the seventeen unimported marketing sections
+ * (`app/page.tsx:263`), and Scott's own instruction in `E418` to keep *"the
+ * company routes on disk, unrouted (E164)."* ⚠ UNROUTING IS THE SAME OUTCOME
+ * THE BRIEF ASKED FOR — the second PAGE is gone — and it is reversible.
+ * ⚠ REPORTED AS A DEVIATION, not done quietly.
+ *
+ * ⚠ THE RAIL ITEM SURVIVES, repointed to
+ * `/admin/specializations?kind=INDUSTRY` (`nav.ts`), which reads the same ten
+ * rows from the same table. ⚠ `admin-pages.ts` KEEPS its `industries` entry:
+ * `SpecPage` is shared by eight pages and pruning its spec table as tidy-up
+ * would break the other seven.
+ *
+ * ── the original header, kept verbatim ──────────────────────────────────────
+ *
  * Industries (WS6 / E017) — REAL data, and a FLAT list, unlike its neighbour.
  *
  * Industries are one `kind` of Specialization in this schema, not a dimension

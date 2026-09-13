@@ -54,14 +54,29 @@ function roleWord(me: Me): string | null {
   if (r.isServiceCoordinator) return "Recruiter";
   if (r.isServiceProvider) return "Provider";
   /*
-    REQUESTER BEFORE BUYER (brief_requester_home_v1 WS-A). Both carry
-    `is_service_buyer`; owning a RequesterProfile is what separates the person
-    who ASKS for work from the one who administers the company's buying. The
-    requester rail says "Requester Basic", and labelling them "Buyer" would name
-    a job they do not have.
+    ── ⚠⚠ BUYER BEFORE REQUESTER (`P1-A1.5-E444`) ─────────────────────────────
+
+    ⚠ SUPERSEDED, quoted not deleted: *"REQUESTER BEFORE BUYER
+    (brief_requester_home_v1 WS-A). Both carry `is_service_buyer`; owning a
+    RequesterProfile is what separates the person who ASKS for work from the one
+    who administers the company's buying."*
+
+    ⚠ THAT PREMISE DIED WITH `E421`, WHICH GAVE A BUYER BOTH PROFILES — a
+    `RequesterProfile` for wizard resume AND a `BuyerProfile`. From that day
+    "owns a RequesterProfile" was true of every buyer, so this line badged all of
+    them "Requester". Seen on screen: *"Bobby Da Buyer (21)"* rendering as
+    Requester. ⚠ MEASURED: 45 rows read Requester and 12 read Buyer; the honest
+    split is 38 and 11.
+
+    ⚠ THE ORDER IS THE FIX, not a new flag: `BuyerProfile` is the narrower,
+    deliberately-created record (only written when the person answered "buyer" at
+    the fork), so it is tested FIRST and `RequesterProfile` is what remains.
+    ⚠ NEITHER PROFILE → NEITHER JOB. `is_service_buyer` alone is somebody
+    mid-signup who has not answered yet (10 rows), and naming them would be a
+    guess — which is the defect this brief exists to remove.
   */
+  if (r.isBuyer) return "Buyer";
   if (r.isRequester) return "Requester";
-  if (r.isServiceBuyer) return "Buyer";
   if (r.isSupport) return "Support";
   return null;
 }

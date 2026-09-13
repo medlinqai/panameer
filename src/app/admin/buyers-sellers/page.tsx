@@ -22,7 +22,9 @@ import {
   blockingFor,
   type LevelSubject,
 } from "@/lib/user-levels";
+import { Users, MailCheck, UserCheck, Building2, Wallet } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
+import { jobLabel } from "@/lib/user-jobs";
 import { LevelPill } from "@/components/console/LevelPill";
 import { REGISTERED_SITE_NAME } from "@/lib/company";
 
@@ -131,6 +133,13 @@ export default async function Page() {
           validation_status: true,
         },
       },
+      /*
+        ⚠⚠ THE RECORD THAT SEPARATES A BUYER FROM A REQUESTER (`P1-A1.5-E444`).
+        `E421` gave a buyer BOTH profiles, so `requesterProfile` alone stopped
+        answering "which job is this?". `requester-onboarding.ts` writes this one
+        ONLY when the person answered "buyer" at the fork.
+      */
+      buyerProfile: { select: { id: true } },
       providerProfile: {
         select: {
           /* ⚠ `E430` — the id is what `/providers/[id]` links to. */
@@ -235,15 +244,14 @@ export default async function Page() {
     const level = levelFor(subject);
     const blocking = blockingFor(subject);
 
-    const roles =
-      [
-        p.is_service_coordinator && "Recruiter",
-        p.is_service_provider && "Provider",
-        !!p.requesterProfile && "Requester",
-        p.is_service_buyer && !p.requesterProfile && "Buyer",
-      ]
-        .filter(Boolean)
-        .join(" · ") || "—";
+    /*
+      ⚠ THE RULE MOVED TO `lib/user-jobs.ts` (`E460`), UNCHANGED. A second
+      surface — `/admin/users/[id]` — needs the same answer, and the brief is
+      explicit: *"Do not re-derive this. Import the grid's rule or the grid and
+      the page will drift."* Two copies of "is this person a Buyer?" is exactly
+      how the badge and this grid disagreed before `E444`.
+    */
+    const roles = jobLabel(p);
 
     /*
       ⚠ THE LOCK CELL LOST ITS SENTENCE AND KEPT ITS FACTS (`E252a`). Scott's
@@ -263,20 +271,19 @@ export default async function Page() {
         : "Not locked";
 
     /*
-      ⚠ `E270` / `E255` — validation stays its OWN column, on Scott's
-      instruction 2026-09-12: *"Validation stays where it is, as its own grid
-      column."* It will read NOT_REQUESTED for every buyer because nothing sets
-      it; the status is rendered, the mechanism is not built.
+      ⚠ SUPERSEDED, quoted not deleted (`E446`) — the two locals that fed the
+      Validation cell, and the note that came with them:
+        *"`E270` / `E255` — validation stays its OWN column, on Scott's
+        instruction 2026-09-12."*
+        const validation = p.providerProfile ? p.providerProfile.validation_status
+          : p.requesterProfile ? p.requesterProfile.validation_status : "—";
+        const validationAsked = p.providerProfile?.validation_requested_at
+          ? ` — asked ${d(p.providerProfile.validation_requested_at)}` : "";
+      ⚠ THAT INSTRUCTION WAS REVERSED THE SAME DAY: *"i did not ask for
+      validation."* The columns they fed are gone, so the locals go with them —
+      an unused local is a new lint warning, and the rule is 0 new.
+      ⚠ THE QUERY STILL SELECTS `validation_status`; 31 other files read it.
     */
-    const validation = p.providerProfile
-      ? p.providerProfile.validation_status
-      : p.requesterProfile
-        ? p.requesterProfile.validation_status
-        : "—";
-    const validationAsked =
-      p.providerProfile?.validation_requested_at
-        ? ` — asked ${d(p.providerProfile.validation_requested_at)}`
-        : "";
 
     /*
       ⚠⚠ THE NAME LINKS ONLY WHERE THERE IS A PAGE TO LINK TO. Scott's spec says
@@ -285,7 +292,24 @@ export default async function Page() {
       requester or a buyer anywhere in the app, so their name renders as text
       rather than as a link to a 404. ⚠ REPORTED, not papered over.
     */
-    const profileHref = p.providerProfile ? `/providers/${p.providerProfile.id}` : null;
+    /*
+      ── ⚠⚠ EVERY NAME LINKS NOW (`P1-A1.5-E460`) ──────────────────────────────
+
+      ⚠ SUPERSEDED, quoted not deleted:
+        `const profileHref = p.providerProfile ? `/providers/${p.providerProfile.id}` : null;`
+      with the reasoning *"THE NAME LINKS ONLY WHERE THERE IS A PAGE TO LINK TO…
+      ONLY providers have one… so their name renders as text rather than as a
+      link to a 404."*
+
+      ⚠⚠ THAT WAS RIGHT ABOUT THE REPO AND WRONG ABOUT THE PRODUCT. **SCOTT:**
+      *"Everyone has a profile...just sellers have more info on theirs, no?"* —
+      and Level 1 proves it: name · email · phone · title · profile · ToS,
+      identical on both sides of the marketplace. The answer was not to withhold
+      94 links; it was to build the page that was missing. ⚠ ALL 199 ROWS LINK.
+      ⚠ `/providers/[id]` IS NOT REPLACED — it is the PUBLIC page, and it now
+      hangs off this admin page's Seller detail section.
+    */
+    const profileHref = `/admin/users/${p.id}`;
 
     const cells = [
       <Avatar
@@ -295,21 +319,50 @@ export default async function Page() {
         photoUrl={p.photo_url}
         size={32}
       />,
-      profileHref ? (
+      (
+        /*
+          ── ⚠ IT LOOKED EXACTLY LIKE THE PLAIN TEXT (`P1-A1.5-E443`) ──────────
+
+          ⚠ SUPERSEDED, quoted not deleted:
+            className="font-semibold text-ink hover:text-magenta hover:underline"
+          At REST that is `font-semibold text-ink` — character for character the
+          non-linked `<span>` beside it. The link existed and was invisible.
+
+          ⚠ `--color-magenta-ink` (#a61aa5) IS THE TEXT MAGENTA, not the brand
+          fill: `globals.css` measures it at 6.34:1 on white where `#d72cd6` is
+          4.02:1 and "large & UI only". A grid cell is small text.
+          ⚠ AND IT IS STILL MAGENTA-FAMILY ON PURPOSE — `E433` reserves magenta
+          for INTERACTIVE things, and this is the one genuinely interactive cell
+          in the row.
+        */
         <Link
           key="name"
           href={profileHref}
-          className="font-semibold text-ink hover:text-magenta hover:underline"
+          className="font-semibold text-magenta-ink underline decoration-magenta-ink/30 underline-offset-2 hover:text-magenta-ink-hover hover:decoration-magenta-ink"
         >
           {name}
         </Link>
-      ) : (
-        <span key="name" className="font-semibold">
-          {name}
-        </span>
       ),
       roles,
-      u?.email ?? "—",
+      /*
+        ── ⚠ USER-ID IS TRUNCATED, DISPLAY ONLY (`P1-A1.5-E442`) ───────────────
+
+        MEASURED in `E430`: this column alone took 350px of the 1243px the eight
+        columns wanted against a 1058px card, because the test addresses are long
+        (`e417.saudi.1789224772447@example.com`).
+        ⚠ THE FULL VALUE IS ON HOVER — `title` is enough here: this is an admin
+        page on a pointer device, not a touch surface.
+        ⚠⚠ SEARCH STILL MATCHES THE WHOLE ADDRESS. `rowMeta.text` below carries
+        the untruncated email, so typing any fragment still finds the row — the
+        truncation is CSS, never the data.
+      */
+      <span
+        key="email"
+        title={u?.email ?? undefined}
+        className="block max-w-[230px] truncate"
+      >
+        {u?.email ?? "—"}
+      </span>,
       u?.email_verified ? d(u.email_verified) : "No",
       <LevelPill key="level" level={level} blocking={blocking} />,
       <input
@@ -321,9 +374,6 @@ export default async function Page() {
         title={lockTitle}
         className="h-4 w-4 accent-magenta"
       />,
-      <span key="val" title={`${validation}${validationAsked}`}>
-        {validation}
-      </span>,
     ] as React.ReactNode[];
 
     /*
@@ -338,7 +388,7 @@ export default async function Page() {
       Scott's actual task was finding which test email ids were free.
     */
     const meta = {
-      text: [name, roles, u?.email ?? "", level, validation, p.company?.name ?? ""]
+      text: [name, roles, u?.email ?? "", level, p.company?.name ?? ""]
         .join(" ")
         .toLowerCase(),
       sort: [
@@ -352,7 +402,6 @@ export default async function Page() {
            before "Verified" would be nonsense on a lifecycle column. */
         USER_LEVELS.indexOf(level),
         u?.locked ? 1 : 0,
-        validation,
       ],
     };
 
@@ -388,11 +437,25 @@ export default async function Page() {
         feed that caption, and the Validation column still reads the per-side
         statuses. Neither model is renamed.
       */}
+      {/*
+        ⚠ WS-7 — the icons are supplied HERE, which is what opts this one page
+        into the Learn-style layout; the other sixteen `TileRow` pages pass none
+        and render exactly as before. ⚠ THE HINT IS DROPPED in this layout: the
+        Learn tile is two lines, and a third would undo the "thinner" Scott asked
+        for. It survives as the label's `title`.
+      */}
       <TileRow
-        tiles={LEVEL_TILES.map((t) => ({
+        tiles={LEVEL_TILES.map((t, i) => ({
           label: t.label,
           value: levelTotals[t.level] ?? 0,
-          hint: t.hint,
+          tone: t.tone,
+          icon: [
+            <Users key="i" className="h-[19px] w-[19px]" aria-hidden />,
+            <MailCheck key="i" className="h-[19px] w-[19px]" aria-hidden />,
+            <UserCheck key="i" className="h-[19px] w-[19px]" aria-hidden />,
+            <Building2 key="i" className="h-[19px] w-[19px]" aria-hidden />,
+            <Wallet key="i" className="h-[19px] w-[19px]" aria-hidden />,
+          ][i],
         }))}
       />
       <p className="mt-2 mb-6 text-[12.5px] text-ink-2">
@@ -438,7 +501,9 @@ export default async function Page() {
         visibly instead of the table silently shrinking to fit.
       */}
       <Listing
-        title="Buyers / Sellers"
+        /* ⚠ `E454` — Scott: *"change Buyers/Sellers to Users."* The route keeps
+           its name; see the note in `lib/nav.ts`. */
+        title="Users"
         columns={[
           "Picture",
           "Name",
@@ -447,7 +512,20 @@ export default async function Page() {
           "Verified",
           "Status",
           "Locked",
-          "Validation",
+          /*
+            ── ⚠⚠ "Validation" IS GONE (`P1-A1.5-E446`) ─────────────────────────
+
+            **SCOTT:** *"i did not ask for validation."* And on the walk:
+            *"validation still showing."* His column spec was PICTURE · NAME ·
+            ROLE · USER-ID · VERIFIED · STATUS · LOCKED (+ COMPANY if room);
+            Validation was chat's addition and `E430` carried it forward.
+
+            ⚠ `validation_status` STAYS IN THE QUERY, deliberately — it has 86
+            references across 31 files, including `/account-health`, the
+            marketplace card, the admin validate/reject routes and
+            `onboarding-status.ts`'s per-side statuses, which still drive the
+            trend sub-page. The COLUMN went; the DATA did not.
+          */
           /*
             ⚠⚠ "Company" IS NOT HERE, AND THAT IS SCOTT'S OWN CONDITION MET
             HONESTLY: *"Add COMPANY if there is room."* MEASURED at a 1440px
@@ -468,7 +546,27 @@ export default async function Page() {
         */
         rowMeta={rows.map((r) => r.meta)}
         searchPlaceholder="Search people, email or company…"
-        pageSize={25}
+        /*
+          ── ⚠⚠ SEVEN, AND THE POINT IS THE FOLD (`P1-A1.5-E458`) ──────────────
+
+          **SCOTT:** *"looks like we need to take the display rows down to 7 with
+          the option to change how many return (to show the footer is there)."*
+
+          ⚠ SUPERSEDED, quoted not deleted: `pageSize={15}` — *"I am trying to get
+          everything to fit on one page so you can see the footer tiles."* Fifteen
+          was the right instruction and the wrong number: MEASURED at 1440×900
+          with the banner dismissed, it still pushed the footer below the fold.
+          ⚠ THE NUMBER IS NOT THE POINT AND MUST NOT BE TUNED BLIND — it is
+          whatever makes the header tiles, the grid and the footer all visible at
+          once. The measurement is in the report.
+          ⚠ AND IT IS NOW THE VIEWER'S TO CHANGE: the picker remembers 7/15/25/50
+          per person, so an admin who would rather scan 50 is one click away.
+        */
+        pageSize={7}
+        pageSizeOptions={[7, 15, 25, 50]}
+        /* ⚠ SCOPED TO THIS GRID. A second listing that opts in later gets its own
+           key rather than inheriting a size chosen for a different table. */
+        pageSizeKey="panameer.admin.users.pageSize"
         empty={<StubEmpty what="people" why="Nobody has signed up yet." />}
       />
 

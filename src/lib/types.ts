@@ -45,6 +45,12 @@ export type Me = {
        * from the one who administers the company's buying.
        */
       isRequester: boolean;
+      /**
+       * USER_JOB Buyer — owns a `BuyerProfile` (`P1-A1.5-E444`). ⚠ DECLARED, not
+       * merely sent: `isRequester` was sent for weeks while the type omitted it,
+       * and a flag the type does not admit is a flag nobody reads.
+       */
+      isBuyer: boolean;
       isServiceProvider: boolean;
       isServiceCoordinator: boolean;
       isSupport: boolean;

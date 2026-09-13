@@ -56,12 +56,28 @@ export const USER_LEVELS = ["Registered", "Verified", "User", "Company", "Payee"
 export type UserLevel = (typeof USER_LEVELS)[number];
 
 /** Scott's labels for the funnel tiles, with the level they count. */
-export const LEVEL_TILES: { label: string; level: UserLevel | "TOTAL"; hint: string }[] = [
-  { label: "Total", level: "TOTAL", hint: "Accounts on the board" },
-  { label: "Verified", level: "Verified", hint: "Email confirmed" },
-  { label: "Level 1 · User", level: "User", hint: "Can learn, connect, search, post" },
-  { label: "Level 2 · Company", level: "Company", hint: "Company details on file" },
-  { label: "Level 3 · Payee", level: "Payee", hint: "Can be paid" },
+/*
+  ── ⚠ SCOTT'S TILE LABELS, VERBATIM (`P1-A1.5-E454` WS-6) ────────────────────
+
+  ⚠ SUPERSEDED, quoted not deleted: `"Total"` · `"Verified"` · `"Level 1 · User"`
+  · `"Level 2 · Company"` · `"Level 3 · Payee"`.
+
+  ⚠⚠ THE ORDER DOES NOT CHANGE. Total → Verified → L1 → L2 → L3 is the order a
+  person passes through them, and Scott confirmed it is correct. The labels moved;
+  the sequence did not, and neither did what each one counts.
+*/
+export const LEVEL_TILES: {
+  label: string;
+  level: UserLevel | "TOTAL";
+  hint: string;
+  /** ⚠ `E454` WS-7 — the Learn-style chip's hue. Deepens along the funnel. */
+  tone: "neutral" | "amber" | "emerald" | "emeraldDeep" | "emeraldSolid";
+}[] = [
+  { label: "Total Users", level: "TOTAL", hint: "Accounts on the board", tone: "neutral" },
+  { label: "Verified Users", level: "Verified", hint: "Email confirmed", tone: "amber" },
+  { label: "L1 Users (Profiles)", level: "User", hint: "Can learn, connect, search, post", tone: "emerald" },
+  { label: "L2 Users (Companies)", level: "Company", hint: "Company details on file", tone: "emeraldDeep" },
+  { label: "L3 Users (Payees)", level: "Payee", hint: "Can be paid", tone: "emeraldSolid" },
 ];
 
 /**

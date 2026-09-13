@@ -104,6 +104,19 @@ export async function getMe(viewer: Viewer) {
         isServiceBuyer: person.is_service_buyer,
         /** USER_JOB Requester, expressed as "owns a RequesterProfile". */
         isRequester: !!person.requesterProfile,
+        /*
+          ── ⚠⚠ USER_JOB Buyer, AND IT HAD TO BE ITS OWN FLAG (`P1-A1.5-E444`) ──
+
+          `E421` gave a BUYER both profiles — `RequesterProfile` for wizard
+          resume AND `BuyerProfile` — so "owns a RequesterProfile" stopped
+          separating the two jobs and every buyer read as a Requester.
+          ⚠ `requester-onboarding.ts` creates `BuyerProfile` ONLY when
+          `input.job === "buyer"`, so this is the persisted record of the
+          person's own answer at the fork, not an inference.
+          ⚠ THE PAYLOAD ALREADY CARRIED `buyerProfile`; only `roles` was blind
+          to it, which is exactly how the badge went wrong.
+        */
+        isBuyer: !!person.buyerProfile,
         isServiceProvider: person.is_service_provider,
         isServiceCoordinator: person.is_service_coordinator,
         isSupport: person.is_support,
