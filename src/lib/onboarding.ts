@@ -1,4 +1,4 @@
-import { OFFERABLE } from "@/lib/catalog";
+import { OFFERABLE, activeCatalogId } from "@/lib/catalog";
 import { prisma } from "@/lib/prisma";
 import { notify } from "@/lib/notifications";
 import {
@@ -1589,15 +1589,51 @@ export async function applyProviderSection(
           if (!ids.includes(existing.id)) ids.push(existing.id);
           continue;
         }
-        const catalog = await prisma.serviceCatalog.findFirst({
-          select: { id: true },
-        });
-        if (!catalog) break;
+        /* ⚠⚠ BY CODE, NEVER `findFirst()` (`P1-A1.5-E483`). Two ServiceCatalog
+           rows exist and this line used to pick between them arbitrarily —
+           which is how a provider-typed `Workday` landed in the legacy ERP
+           catalog, invisible to the seed and to every picker. See
+           `activeCatalogId`. */
+        const catalogId = await activeCatalogId();
+        if (!catalogId) break;
+        /*
+          ── ⚠⚠ A PROVIDER TYPING A TERM IS NOW A SUGGESTION (`P1-A1.5-E482`) ──
+
+          > **SCOTT:** *"I do think i said to add the skills people suggest...i
+          > want to take that back. only the ADMIN should add/update/delete."*
+
+          ⚠ SUPERSEDED, quoted not deleted (`E164`) — `E031`, and ONLY its last
+          sentence is what Scott reversed:
+            *"Custom entries join the SAME vocabulary (deduped
+             case-insensitively) so the next provider can pick it from the list
+             rather than retyping it."*
+          ⚠ THE FIRST HALF STANDS AND HE RESTATED IT HIMSELF: THE SIGNAL IS
+          STILL WANTED. A provider must still be able to type what they actually
+          do, and still see it on their own profile. What changed is that typing
+          it no longer publishes it to everyone else.
+
+          ⚠⚠ AND `kind: "PRODUCT"` IS GONE — quoted SUPERSEDED here because it
+          was a real defect, not a style choice: a provider typing an INDUSTRY
+          (`Utilities`) or a PROCESS (`Quote-to-Cash`) had it filed under
+          Products & Platforms, in everyone's picker, under the wrong heading.
+          `Workday` was the live proof.
+          ⚠ THE QUEUE FIXES IT BY CONSTRUCTION: a suggestion has NO KIND until
+          an admin gives it one at promotion. The column is non-nullable and its
+          schema default still applies, so ⚠⚠ THE STORED `kind` IS MEANINGLESS
+          WHILE `status` IS `SUGGESTED` — the queue never reads it and the
+          promote action requires the admin to choose.
+        */
         const created = await prisma.specialization.create({
           data: {
-            catalog_id: catalog.id,
+            catalog_id: catalogId,
             name,
-            kind: "PRODUCT",
+            /* ⚠ NO `kind` — see above. Whatever the column defaults to is not
+               a claim about what this row is. */
+            /* ⚠⚠ NOT OFFERED TO ANYONE ELSE. `status: SUGGESTED` is excluded by
+               `OFFERABLE`, which every picker defaults to (`E481`). The author
+               still sees it on their own profile, because a profile renders the
+               links a provider holds and does not re-filter the catalog. */
+            status: "SUGGESTED",
             // Sorts after the seeded vocabulary.
             sort_order: 900,
             /* ⚠⚠ `origin` IS THE SHIELD NOW (`P1-A1.5-E480`), NOT `is_custom`.
@@ -1692,9 +1728,13 @@ export async function applyProviderSection(
           : profileRow?.pillar_id) ?? null;
 
       if (customSkills.length > 0 && customRoleId && customPillarId) {
-        const catalogRow = await prisma.serviceCatalog.findFirst({
-          select: { id: true },
-        });
+        /* ⚠⚠ BY CODE, NEVER `findFirst()` (`P1-A1.5-E483`). Two ServiceCatalog
+           rows exist and this line used to pick between them arbitrarily —
+           which is how a provider-typed `Workday` landed in the legacy ERP
+           catalog, invisible to the seed and to every picker. See
+           `activeCatalogId`. */
+        const catalogId2 = await activeCatalogId();
+        const catalogRow = catalogId2 ? { id: catalogId2 } : null;
         /*
           ── ⚠⚠ MATCH THE WHOLE CATALOG BEFORE CREATING ANYTHING (`E298`) ──────
 
