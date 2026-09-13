@@ -1,3 +1,4 @@
+import { OFFERABLE } from "@/lib/catalog";
 import { readTimeRemaining, READ_BUDGET_MS } from "@/lib/resume/budget";
 import { splitCertificationName } from "@/lib/resume/certification-names";
 import { prisma } from "@/lib/prisma";
@@ -680,6 +681,8 @@ export async function applyParsedResume(
   const vocabRows = await prisma.skill.findMany({
     where: {
       is_custom: false,
+      /* ⚠ `E481` — the parser's vocabulary never contains a retired row. */
+      ...OFFERABLE,
       roleType: {
         name: { in: ["Application-Specific", "Technology-Specific"] },
       },
@@ -917,6 +920,8 @@ export async function applyParsedResume(
   // as a gap rather than silently invented as a new Skill row.
   if (parsed.skills.length > 0) {
     const catalog = await prisma.skill.findMany({
+      /* ⚠ `E481` — never match a parsed skill onto a retired row. */
+      where: OFFERABLE,
       select: { id: true, name: true },
     });
     const { matched, unmatched } = matchSkills(parsed.skills, catalog);
@@ -1007,6 +1012,8 @@ export async function applyParsedResume(
   */
   if (parsed.skills.length > 0) {
     const vocabulary = await prisma.specialization.findMany({
+      /* ⚠ `E481` — same rule on the specialization vocabulary. */
+      where: OFFERABLE,
       select: { id: true, name: true },
     });
     const key = (x: string) => x.toLowerCase().replace(/[^a-z0-9]/g, "");

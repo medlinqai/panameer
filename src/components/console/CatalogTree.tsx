@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { CatalogMark } from "@/components/console/CatalogMark";
 import type { Mark } from "@/lib/catalog-marks";
+import { CatalogEditor, type EditTarget } from "@/components/console/CatalogEditor";
 
 /**
  * The hierarchical catalog editor (WS6, ported from Medlinq's
@@ -57,6 +58,16 @@ export type CatalogNode = {
    * this is simply absent there and is NOT flagged as missing data.
    */
   sub?: string;
+  /**
+   * ⚠ `E481` — a RETIRED row still renders in the ADMIN tree, MARKED, so an
+   * admin can bring it back. It is filtered out of every provider-facing picker
+   * by `lib/catalog.ts`'s ACTIVE default, not by hiding it here.
+   */
+  retired?: boolean;
+  /** Supplying this puts an Edit affordance on the row (admin surfaces only). */
+  edit?: EditTarget;
+  /** Destinations for a skill move, passed straight to the editor. */
+  moveTo?: { roleTypeId: string; pillarId: string; label: string }[];
 };
 
 export function CatalogTree({
@@ -232,16 +243,22 @@ function Group({
   const kids = node.children ?? [];
   const isOpen = open.has(node.id);
   const isLeaf = kids.length === 0;
+  /* ⚠ `E481` — each row owns its own editor state. Threading one "which row is
+     open" through the whole tree would re-render every branch on every click. */
+  const [editing, setEditing] = useState<string | null>(null);
 
   if (isLeaf) {
     return (
+      <div style={{ paddingLeft: 0 }}>
       <div
         className="flex items-center gap-3 rounded-[10px] px-4 py-2 text-[14px]"
         style={{ paddingLeft: 16 + depth * 18 }}
       >
         {node.mark !== undefined && <CatalogMark mark={node.mark} />}
         <span className="min-w-0 flex-1">
-          <span className="block truncate">{node.label}</span>
+          <span className={"block truncate " + (node.retired ? "text-ink-2 line-through" : "")}>
+            {node.label}
+          </span>
           {node.sub && (
             /* ⚠ MUTED AND SMALL, UNDER THE NAME — the most useful thing an
                admin can see here, because aliases are what the résumé parser
@@ -249,6 +266,13 @@ function Group({
             <span className="block truncate text-[11.5px] text-ink-2">{node.sub}</span>
           )}
         </span>
+        {node.retired && (
+          /* ⚠ `E481` — marked, never hidden. The admin has to be able to see it
+             to reactivate it. */
+          <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10.5px] font-semibold text-amber-800">
+            Retired
+          </span>
+        )}
         {node.custom && (
           /* ⚠ `E470b` — a quiet marker, not an alarm. These rows are legitimate
              provider answers awaiting promotion to baseline, not errors. */
@@ -257,6 +281,25 @@ function Group({
           </span>
         )}
         {node.meta && <span className="shrink-0 text-[12.5px] text-ink-2">{node.meta}</span>}
+        {node.edit && (
+          <button
+            type="button"
+            onClick={() => setEditing(editing === node.id ? null : node.id)}
+            className="shrink-0 rounded-full border-[1.5px] border-line px-2.5 py-0.5 text-[11.5px] font-bold text-ink-2 transition-colors hover:border-magenta hover:text-magenta-ink"
+          >
+            {editing === node.id ? "Close" : "Edit"}
+          </button>
+        )}
+      </div>
+      {node.edit && editing === node.id && (
+        <div style={{ paddingLeft: 16 + depth * 18 }} className="pr-4">
+          <CatalogEditor
+            target={node.edit}
+            destinations={node.moveTo}
+            onClose={() => setEditing(null)}
+          />
+        </div>
+      )}
       </div>
     );
   }

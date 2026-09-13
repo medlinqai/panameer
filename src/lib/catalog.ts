@@ -1,5 +1,33 @@
 import { prisma } from "@/lib/prisma";
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⚠⚠ WHAT A PICKER IS ALLOWED TO OFFER (`P1-A1.5-E481`)
+   ═══════════════════════════════════════════════════════════════════════════
+
+   ⚠ A RETIRED ROW STAYS IN THE DATABASE AND KEEPS ITS ID, so every provider who
+   already picked it keeps their selection. `RETIRED` is not a delete — that is
+   the whole reason "inactivate" is always safe and "delete" is not.
+
+   ⚠⚠ BUT IT MUST NEVER BE OFFERED AGAIN. The brief is blunt about the failure
+   mode: *"A picker you miss keeps offering a retired row, which is the whole
+   point of this brief, silently undone."*
+
+   ⚠⚠ SO ACTIVE IS THE DEFAULT AND RETIRED IS OPT-IN — the polarity matters. A
+   caller that forgets to think about `status` gets the SAFE answer; only the
+   ADMIN tree, which must show retired rows so an admin can bring them back,
+   asks for them explicitly. A default of "everything" would mean every future
+   picker is one forgotten filter away from re-offering a retired row.
+
+   ⚠ GREP `OFFERABLE` TO AUDIT THE COVERAGE — it is one exported constant rather
+   than a `status: "ACTIVE"` literal repeated at thirteen call sites, so the
+   surface is countable.
+*/
+export const OFFERABLE = { status: "ACTIVE" } as const;
+
+/** Admin surfaces pass `{ includeRetired: true }`; nothing else should. */
+export type CatalogScope = { includeRetired?: boolean };
+const scope = (o?: CatalogScope) => (o?.includeRetired ? {} : OFFERABLE);
+
 /**
  * Role types (global lookup) — the "one main category" a provider picks.
  *
@@ -34,15 +62,18 @@ export async function getRoleTypes() {
  * A (role, domain) pair with no skills would dead-end the next step, so only
  * pairs that actually have skills are returned.
  */
-export async function getProviderFieldTree() {
+export async function getProviderFieldTree(opts?: CatalogScope) {
   const roles = await prisma.roleType.findMany({
     orderBy: [{ sort_order: "asc" }, { name: "asc" }],
     select: { id: true, code: true, name: true, display: true },
   });
 
   // One grouped count instead of a query per role.
+  /* ⚠ `E481` — a domain whose only skills are RETIRED must not appear in the
+     picker at all, so the filter belongs on the COUNT, not just on the leaves. */
   const grouped = await prisma.skill.groupBy({
     by: ["role_type_id", "pillar_id"],
+    where: scope(opts),
     _count: { _all: true },
   });
 
@@ -87,9 +118,13 @@ export async function getProviderFieldTree() {
  * mix Application-Specific "Payables" with Operations-Specific "Payables
  * Specialist" under the same Finance & Accounting heading.
  */
-export async function getSkillsForField(roleTypeId: string, pillarId: string) {
+export async function getSkillsForField(
+  roleTypeId: string,
+  pillarId: string,
+  opts?: CatalogScope
+) {
   return prisma.skill.findMany({
-    where: { role_type_id: roleTypeId, pillar_id: pillarId },
+    where: { role_type_id: roleTypeId, pillar_id: pillarId, ...scope(opts) },
     orderBy: { name: "asc" },
     select: {
       id: true,
@@ -102,9 +137,9 @@ export async function getSkillsForField(roleTypeId: string, pillarId: string) {
 
 /** Skills across a whole domain, regardless of role. Kept for Settings, which
  *  predates the pair model and scopes by RoleType. */
-export async function getSkillsForPillar(pillarId: string) {
+export async function getSkillsForPillar(pillarId: string, opts?: CatalogScope) {
   return prisma.skill.findMany({
-    where: { pillar_id: pillarId },
+    where: { pillar_id: pillarId, ...scope(opts) },
     orderBy: { name: "asc" },
     select: {
       id: true,
@@ -119,8 +154,9 @@ export async function getSkillsForPillar(pillarId: string) {
  * The Specialization vocabulary (brief_R) — a cross-cutting axis, grouped for
  * the picker into products, methodologies and industries.
  */
-export async function getSpecializations() {
+export async function getSpecializations(opts?: CatalogScope) {
   const rows = await prisma.specialization.findMany({
+    where: scope(opts),
     /*
       ── ⚠ BASELINE FIRST, PROVIDER-TYPED ROWS AFTER (`P1-A1.5-E470b`) ────────
 
@@ -137,7 +173,7 @@ export async function getSpecializations() {
       baseline later"* — and the review it exists for could not happen, because
       nothing surfaced it.
     */
-    select: { id: true, name: true, kind: true, is_custom: true },
+    select: { id: true, name: true, kind: true, is_custom: true, status: true, origin: true },
   });
 
   const groups: { kind: string; label: string; items: typeof rows }[] = [
@@ -206,10 +242,10 @@ export async function getRegions() {
  * identity is its (role, domain) pair, and the picker uses it to group and to
  * disambiguate the same label appearing under two domains.
  */
-export async function getSkillsForRoleTypes(roleTypeIds: string[]) {
+export async function getSkillsForRoleTypes(roleTypeIds: string[], opts?: CatalogScope) {
   if (roleTypeIds.length === 0) return [];
   return prisma.skill.findMany({
-    where: { role_type_id: { in: roleTypeIds } },
+    where: { role_type_id: { in: roleTypeIds }, ...scope(opts) },
     orderBy: [{ name: "asc" }],
     select: {
       id: true,
@@ -222,9 +258,9 @@ export async function getSkillsForRoleTypes(roleTypeIds: string[]) {
   });
 }
 
-export async function getSkillsForRoleType(roleTypeId: string) {
+export async function getSkillsForRoleType(roleTypeId: string, opts?: CatalogScope) {
   return prisma.skill.findMany({
-    where: { role_type_id: roleTypeId },
+    where: { role_type_id: roleTypeId, ...scope(opts) },
     orderBy: { name: "asc" },
     select: {
       id: true,

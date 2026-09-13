@@ -10,6 +10,7 @@ import { TileRow, Listing, VolumeFooter } from "@/components/console/ConsolePage
 import { CatalogTree, type CatalogNode } from "@/components/console/CatalogTree";
 import { CatalogCard } from "@/components/console/CatalogCard";
 import { CatalogMark } from "@/components/console/CatalogMark";
+import { CatalogAddBar } from "@/components/console/CatalogEditor";
 import { SPECIALIZATION_MARKS, KIND_FALLBACK } from "@/lib/catalog-marks";
 
 export const dynamic = "force-dynamic";
@@ -44,10 +45,17 @@ export default async function Page({
 }: {
   searchParams: Promise<{ kind?: string; claimed?: string }>;
 }) {
+  /*
+    ⚠⚠ THE ADMIN TREE ASKS FOR RETIRED ROWS EXPLICITLY (`P1-A1.5-E481`).
+    `lib/catalog.ts` defaults every read to `status: ACTIVE`, so a picker that
+    forgets to think about status gets the SAFE answer. ⚠ THIS PAGE IS THE ONE
+    SURFACE THAT MUST SEE RETIRED ROWS — an admin cannot bring a row back if the
+    page it lives on hides it. They render MARKED, never silently.
+  */
   const sp = await searchParams;
 
   const [groups, providerCounts, kindClaims] = await Promise.all([
-    getSpecializations(),
+    getSpecializations({ includeRetired: true }),
     getSpecializationProviderCounts(),
     getSpecializationClaims(),
   ]);
@@ -85,6 +93,17 @@ export default async function Page({
          falls back to its kind's muted icon — permanent, not a gap to fill. */
       mark: SPECIALIZATION_MARKS[i.name] ?? KIND_FALLBACK[g.kind] ?? null,
       custom: i.is_custom,
+      /* ⚠ `E481` — retired rows render here, MARKED. They are filtered out of
+         every provider-facing picker by lib/catalog.ts's ACTIVE default. */
+      retired: i.status === "RETIRED",
+      edit: {
+        table: "specialization" as const,
+        id: i.id,
+        name: i.name,
+        kind: g.kind as "PRODUCT" | "METHODOLOGY" | "INDUSTRY",
+        status: i.status,
+        origin: i.origin,
+      },
     })),
   }));
 
@@ -282,8 +301,14 @@ export default async function Page({
           <CatalogTree nodes={nodes} emptyLabel="No specializations yet." />
         </CatalogCard>
       )}
+      {/* ⚠⚠ `E479` STOPPED RENDERING THE OLD BAR PRECISELY SO IT COULD COME BACK
+          MEANING SOMETHING (`E481`). It used to say "editing needs write
+          endpoints that aren't built yet"; they are built now, so the same slot
+          carries a live Add. */}
+      {!isDrillIn && <CatalogAddBar table="specialization" label="specialization" />}
+
       {/*
-        ── ⚠ THE EDIT BAR IS NOT RENDERED (`P1-A1.5-E479`) ────────────────────
+        ── ⚠ THE OLD EDIT BAR, SUPERSEDED (`P1-A1.5-E479`) ────────────────────
 
         > **SCOTT, 2026-09-13, on the bar:** *"What does this mean?"*
 

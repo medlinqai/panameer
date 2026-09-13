@@ -461,6 +461,11 @@ export async function saveSection(
         answer given one screen earlier.
       */
       const skills = await prisma.skill.findMany({
+        /* ⚠⚠ NO `status` FILTER HERE, DELIBERATELY (`P1-A1.5-E481`). This
+           VALIDATES IDS THE CALLER ALREADY HOLDS — it does not OFFER anything.
+           Filtering it would silently drop a provider's existing selection the
+           moment an admin retired that row, which is the exact data loss this
+           brief exists to prevent. ⚠ FILTER WHAT IS OFFERED, NEVER WHAT IS HELD. */
         where: { id: { in: skillIds } },
         select: { id: true, role_type_id: true, pillar_id: true },
       });

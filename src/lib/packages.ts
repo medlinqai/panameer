@@ -226,6 +226,11 @@ async function validSkillIds(ids?: string[]): Promise<string[]> {
   const wanted = (ids ?? []).slice(0, 20);
   if (wanted.length === 0) return [];
   const found = await prisma.skill.findMany({
+    /* ⚠⚠ NO `status` FILTER HERE, DELIBERATELY (`P1-A1.5-E481`). This
+       VALIDATES IDS THE CALLER ALREADY HOLDS — it does not OFFER anything.
+       Filtering it would silently drop a provider's existing selection the
+       moment an admin retired that row, which is the exact data loss this
+       brief exists to prevent. ⚠ FILTER WHAT IS OFFERED, NEVER WHAT IS HELD. */
     where: { id: { in: wanted } },
     select: { id: true },
   });

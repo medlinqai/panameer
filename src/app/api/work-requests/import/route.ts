@@ -1,3 +1,4 @@
+import { OFFERABLE } from "@/lib/catalog";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkTransact, guardApi } from "@/lib/guard";
@@ -107,7 +108,7 @@ export async function POST(request: Request) {
       those yet. The wizard holds them and applies them on the skills step.
     */
     const catalog = await prisma.skill.findMany({
-      where: { is_custom: false },
+      where: { is_custom: false, ...OFFERABLE },
       select: { id: true, name: true },
     });
     const { matched, unmatched } = matchSkills(ai.skills, catalog);

@@ -11,6 +11,7 @@ import {
 import { TileRow, Listing, VolumeFooter } from "@/components/console/ConsolePage";
 import { CatalogTree, type CatalogNode } from "@/components/console/CatalogTree";
 import { CatalogCard } from "@/components/console/CatalogCard";
+import { CatalogAddBar } from "@/components/console/CatalogEditor";
 import { RDS_DOMAIN_MARKS, RDS_ROLE_MARKS } from "@/lib/catalog-marks";
 
 export const dynamic = "force-dynamic";
@@ -36,6 +37,13 @@ export default async function Page({
 }: {
   searchParams: Promise<{ view?: string; claimed?: string }>;
 }) {
+  /*
+    ⚠⚠ THE ADMIN TREE ASKS FOR RETIRED ROWS EXPLICITLY (`P1-A1.5-E481`).
+    `lib/catalog.ts` defaults every read to `status: ACTIVE`, so a picker that
+    forgets to think about status gets the SAFE answer. ⚠ THIS PAGE IS THE ONE
+    SURFACE THAT MUST SEE RETIRED ROWS — an admin cannot bring a row back if the
+    page it lives on hides it. They render MARKED, never silently.
+  */
   const sp = await searchParams;
   /* ⚠ WHITELIST, NOT PASS-THROUGH — an unknown `?view=` falls back to the tree
      rather than rendering an empty listing that looks broken. */
@@ -45,7 +53,7 @@ export default async function Page({
 
   const [roles, skillCount, pillarCount, skillProviders, roleClaims, domainProviders] =
     await Promise.all([
-      getProviderFieldTree(),
+      getProviderFieldTree({ includeRetired: true }),
       prisma.skill.count(),
       prisma.pillar.count(),
       getSkillProviderCounts(),
@@ -78,6 +86,17 @@ export default async function Page({
   */
   const domainPairs = roles.reduce((n, r) => n + r.domains.length, 0);
 
+  /* ⚠ `E481` — every (role, domain) pair a skill can be MOVED to. Built once
+     here rather than per-row: 710 skills × 29 pairs would otherwise be 20,590
+     array allocations for one dropdown. */
+  const flatPairs = roles.flatMap((r) =>
+    r.domains.map((d) => ({
+      roleTypeId: r.id,
+      pillarId: d.id,
+      label: `${r.display || r.name} › ${d.name}`,
+    }))
+  );
+
   const nodes: CatalogNode[] = await Promise.all(
     roles.map(async (r) => ({
       id: r.id,
@@ -102,9 +121,11 @@ export default async function Page({
 
   // Fill the leaf level in one query rather than per-domain.
   const skills = await prisma.skill.findMany({
+    /* ⚠ `E481` — the admin tree shows retired skills, marked. */
     orderBy: { name: "asc" },
     select: {
       id: true, name: true, role_type_id: true, pillar_id: true, is_custom: true,
+      status: true, origin: true,
       /* ⚠ `E465` — the parser's controlled vocabulary, and Panameer's exact
          equivalent of the CDT codes Medlinq shows on its child rows. Measured:
          515 of 710 skills carry at least one. */
@@ -124,6 +145,18 @@ export default async function Page({
           /* ⚠ `N providers` (S-3) — DISTINCT people, never link rows. Zero
              renders as an em-dash: nobody has claimed it, which is honest. */
           meta: providersCell(skillProviders.get(s.id)),
+          /* ⚠ `E481` — marked here, filtered out of every picker elsewhere. */
+          retired: s.status === "RETIRED",
+          edit: {
+            table: "skill" as const,
+            id: s.id,
+            name: s.name,
+            status: s.status,
+            origin: s.origin,
+          },
+          /* ⚠ MOVE IS AN UPDATE — the id never changes, so a provider who
+             picked this skill keeps it wherever it lands. */
+          moveTo: flatPairs,
           /* ⚠⚠ NO `mark` ON A SKILL, AND THAT IS THE WHOLE POINT (`E465`).
              `Skill.image_url` exists and is the trap: 710 rows, nobody sources
              710 images, and a few percent filled renders a ragged mix of
@@ -399,8 +432,11 @@ export default async function Page({
           />
         </CatalogCard>
       )}
+      {/* ⚠ `E481` — the bar returns, live. See the note on the Specializations page. */}
+      {!isDrillIn && <CatalogAddBar table="skill" label="skill" />}
+
       {/*
-        ── ⚠ THE EDIT BAR IS NOT RENDERED (`P1-A1.5-E479`) ────────────────────
+        ── ⚠ THE OLD EDIT BAR, SUPERSEDED (`P1-A1.5-E479`) ────────────────────
 
         > **SCOTT, 2026-09-13, on the bar:** *"What does this mean?"*
 
