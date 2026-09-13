@@ -11,6 +11,7 @@ import {
 import { TileRow, Listing, VolumeFooter } from "@/components/console/ConsolePage";
 import { CatalogTree, CatalogEditBar, type CatalogNode } from "@/components/console/CatalogTree";
 import { CatalogCard } from "@/components/console/CatalogCard";
+import { RDS_DOMAIN_MARKS, RDS_ROLE_MARKS } from "@/lib/catalog-marks";
 
 export const dynamic = "force-dynamic";
 
@@ -82,10 +83,16 @@ export default async function Page({
       id: r.id,
       label: r.display || r.name,
       meta: `${r.domains.length} domains`,
+      /* ⚠ `E465` — one 34px square on every row so the left column stays
+         straight. Unmapped falls back to the muted generic, never a blank. */
+      mark: RDS_ROLE_MARKS[r.code] ?? null,
       children: r.domains.map((d) => ({
         id: `${r.id}-${d.id}`,
         label: d.name,
         meta: `${d.skillCount} skills`,
+        /* ⚠ Keyed on `Pillar.code`: vendor monogram for the 5 suites, chip for
+           the 9 Operations domains, muted icon for Project/AI/Cross-Vendor. */
+        mark: RDS_DOMAIN_MARKS[d.code] ?? null,
         // Skills load with the page: the whole catalog is a few hundred rows,
         // and a fetch-on-expand would add a spinner to every click for no gain.
         children: [] as CatalogNode[],
@@ -96,7 +103,13 @@ export default async function Page({
   // Fill the leaf level in one query rather than per-domain.
   const skills = await prisma.skill.findMany({
     orderBy: { name: "asc" },
-    select: { id: true, name: true, role_type_id: true, pillar_id: true, is_custom: true },
+    select: {
+      id: true, name: true, role_type_id: true, pillar_id: true, is_custom: true,
+      /* ⚠ `E465` — the parser's controlled vocabulary, and Panameer's exact
+         equivalent of the CDT codes Medlinq shows on its child rows. Measured:
+         515 of 710 skills carry at least one. */
+      aliases: true,
+    },
   });
   for (const role of nodes) {
     for (const domain of role.children ?? []) {
@@ -111,7 +124,17 @@ export default async function Page({
           /* ⚠ `N providers` (S-3) — DISTINCT people, never link rows. Zero
              renders as an em-dash: nobody has claimed it, which is honest. */
           meta: providersCell(skillProviders.get(s.id)),
-          /* ⚠ `E470b` — the provider-typed rows the admin is meant to review. */
+          /* ⚠⚠ NO `mark` ON A SKILL, AND THAT IS THE WHOLE POINT (`E465`).
+             `Skill.image_url` exists and is the trap: 710 rows, nobody sources
+             710 images, and a few percent filled renders a ragged mix of
+             pictures and blanks — worse than none. ⚠ `mark` is left UNDEFINED
+             rather than null, which is what tells `CatalogTree` to render no
+             box at all here instead of a fallback one. */
+          /* ⚠ THE ALIASES CARRY INSTEAD — real content, already in the DB, and
+             the single most useful thing an admin can see: aliases are what the
+             résumé parser matches on. ⚠ Operations/Project/AI skills carry none
+             deliberately, so this is simply absent there and is NOT flagged. */
+          sub: s.aliases.length ? s.aliases.join(" · ") : undefined,
           custom: s.is_custom,
         }));
     }

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { CatalogMark } from "@/components/console/CatalogMark";
+import type { Mark } from "@/lib/catalog-marks";
 
 /**
  * The hierarchical catalog editor (WS6, ported from Medlinq's
@@ -40,6 +42,21 @@ export type CatalogNode = {
    * from `71 skills` into `15 of 71 match` while a query is live.
    */
   total?: number;
+  /**
+   * ⚠ THE ROW'S MARK (`E465`/`E471`) — one 34px rounded square, whatever is in
+   * it. Absent on SKILL rows by design: there are 710 of them and `image_url`
+   * is the trap. See `CatalogMark`.
+   */
+  mark?: Mark | null;
+  /**
+   * ⚠ THE ALIAS LINE (`E465`) — `Skill.aliases`, the parser's controlled
+   * vocabulary, rendered muted under the name. Medlinq's child rows show CDT
+   * codes; this is Panameer's exact equivalent and it was already in the
+   * database, unrendered. ⚠ Operations/Project/AI skills carry NO aliases
+   * deliberately (`schema.prisma:639`) — a capability is not a CV word — so
+   * this is simply absent there and is NOT flagged as missing data.
+   */
+  sub?: string;
 };
 
 export function CatalogTree({
@@ -222,7 +239,16 @@ function Group({
         className="flex items-center gap-3 rounded-[10px] px-4 py-2 text-[14px]"
         style={{ paddingLeft: 16 + depth * 18 }}
       >
-        <span className="min-w-0 flex-1 truncate">{node.label}</span>
+        {node.mark !== undefined && <CatalogMark mark={node.mark} />}
+        <span className="min-w-0 flex-1">
+          <span className="block truncate">{node.label}</span>
+          {node.sub && (
+            /* ⚠ MUTED AND SMALL, UNDER THE NAME — the most useful thing an
+               admin can see here, because aliases are what the résumé parser
+               matches on. */
+            <span className="block truncate text-[11.5px] text-ink-2">{node.sub}</span>
+          )}
+        </span>
         {node.custom && (
           /* ⚠ `E470b` — a quiet marker, not an alarm. These rows are legitimate
              provider answers awaiting promotion to baseline, not errors. */
@@ -245,6 +271,7 @@ function Group({
         style={{ paddingLeft: 16 + depth * 18 }}
       >
         <span className="w-4 shrink-0 text-ink-2">{isOpen ? "▾" : "▸"}</span>
+        {node.mark !== undefined && <CatalogMark mark={node.mark} />}
         <span
           className={
             "min-w-0 flex-1 truncate " +
