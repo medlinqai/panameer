@@ -1,3 +1,4 @@
+import { OFFERABLE } from "@/lib/catalog";
 import { prisma } from "@/lib/prisma";
 import { notify } from "@/lib/notifications";
 import {
@@ -1394,7 +1395,8 @@ export async function applyProviderSection(
       if (!pillarId) {
         const grouped = await prisma.skill.groupBy({
           by: ["pillar_id"],
-          where: { role_type_id: primaryRoleId, pillar_id: { not: null } },
+          /* ⚠ `E481` — a domain whose skills are all retired is not suggested. */
+          where: { role_type_id: primaryRoleId, pillar_id: { not: null }, ...OFFERABLE },
           _count: { _all: true },
           orderBy: { _count: { id: "desc" } },
           take: 1,
@@ -1510,6 +1512,11 @@ export async function applyProviderSection(
           if (wanted.length > 0) {
             // Only real catalog rows — a client-supplied id is not a skill.
             const real = await prisma.skill.findMany({
+              /* ⚠⚠ NO `status` FILTER HERE, DELIBERATELY (`P1-A1.5-E481`). This
+                 VALIDATES IDS THE CALLER ALREADY HOLDS — it does not OFFER anything.
+                 Filtering it would silently drop a provider's existing selection the
+                 moment an admin retired that row, which is the exact data loss this
+                 brief exists to prevent. ⚠ FILTER WHAT IS OFFERED, NEVER WHAT IS HELD. */
               where: { id: { in: wanted } },
               select: { id: true },
             });
@@ -1717,6 +1724,8 @@ export async function applyProviderSection(
           catalog rather than a query per typed term.
         */
         const catalogRows = await prisma.skill.findMany({
+          /* ⚠ `E481` — a retired row is never matched onto a typed skill. */
+          where: OFFERABLE,
           select: { id: true, name: true, is_custom: true },
         });
         /* ⚠ `is_custom` -> `isCustom`: the matcher prefers a BASELINE row over a
@@ -1797,6 +1806,11 @@ export async function applyProviderSection(
         Skill, so a client cannot invent one.
       */
       const skills = await prisma.skill.findMany({
+        /* ⚠⚠ NO `status` FILTER HERE, DELIBERATELY (`P1-A1.5-E481`). This
+           VALIDATES IDS THE CALLER ALREADY HOLDS — it does not OFFER anything.
+           Filtering it would silently drop a provider's existing selection the
+           moment an admin retired that row, which is the exact data loss this
+           brief exists to prevent. ⚠ FILTER WHAT IS OFFERED, NEVER WHAT IS HELD. */
         where: { id: { in: skillIds } },
         select: { id: true },
       });

@@ -1,3 +1,4 @@
+import { OFFERABLE } from "@/lib/catalog";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionViewer } from "@/lib/session";
@@ -33,6 +34,8 @@ export async function GET(request: Request) {
   if (!q) return NextResponse.json({ kind: "none" });
 
   const rows = await prisma.skill.findMany({
+    /* ⚠ `E481` — a retired skill is never suggested. */
+    where: OFFERABLE,
     select: { id: true, name: true, is_custom: true },
   });
   /* ⚠ `is_custom` -> `isCustom`. A BASELINE catalog row outranks a
