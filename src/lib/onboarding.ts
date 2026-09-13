@@ -2490,7 +2490,15 @@ async function saveProviderAddress(personId: string, addr: StepData): Promise<vo
  * Recompute + persist a provider's `completeness` (0–100) from the single
  * `computeProviderCompleteness` helper. Called after every section save.
  */
-export async function recomputeCompleteness(profileId: string): Promise<number> {
+/**
+ * ⚠ `E489` — THE SCORER'S INPUT, BUILT ONCE AND READ TWICE.
+ *
+ * ⚠⚠ IT RETURNS THE INPUT, NOT A SECOND SCORE. `providerProfile.completeness`
+ * stays the one number and stays the gate; this exists so the checklist beside
+ * it is computed from IDENTICAL FACTS. Assembling this shape twice is exactly
+ * how a number and its own breakdown start disagreeing.
+ */
+export async function buildCompletenessInput(profileId: string) {
   const profile = await prisma.providerProfile.findUnique({
     where: { id: profileId },
     include: {
@@ -2517,8 +2525,11 @@ export async function recomputeCompleteness(profileId: string): Promise<number> 
       },
     },
   });
-  if (!profile) return 0;
-  const completeness = computeProviderCompleteness({
+  if (!profile) return null;
+  /* ⚠ `E489` — the shape is built ONCE and handed to both readers. The
+     checklist mirrors this scorer predicate for predicate, so assembling the
+     input twice is how the number and its breakdown would start disagreeing. */
+  const input = {
     headline: profile.headline,
     overview: profile.overview,
     work_method: profile.work_method,
@@ -2538,7 +2549,18 @@ export async function recomputeCompleteness(profileId: string): Promise<number> 
     hasAddress: Boolean(profile.person.site?.addresses?.[0]?.line1?.trim()),
     hasPhone: Boolean(profile.person.phone?.trim()),
     phoneVerified: profile.person.phone_verified_at != null,
-  });
+  };
+  return input;
+}
+
+/**
+ * Recompute + persist a provider's `completeness` (0–100).
+ * ⚠ Unchanged behaviour — it now reads its input from `buildCompletenessInput`.
+ */
+export async function recomputeCompleteness(profileId: string): Promise<number> {
+  const input = await buildCompletenessInput(profileId);
+  if (!input) return 0;
+  const completeness = computeProviderCompleteness(input);
   await prisma.providerProfile.update({
     where: { id: profileId },
     data: { completeness },
