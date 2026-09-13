@@ -956,7 +956,38 @@ export const ADMIN_NAV: NavGroup[] = [
       { label: "Users", href: "/admin/buyers-sellers", icon: "ArrowLeftRight" },
       { label: "Roles>Domains>Skills", href: "/admin/skill-catalog", icon: "FolderTree" },
       { label: "Specializations", href: "/admin/specializations", icon: "Award" },
-      { label: "Industries", href: "/admin/industries", icon: "Building2" },
+      /*
+        ── ⚠⚠ THE INDUSTRIES PAGE FOLDS INTO SPECIALIZATIONS (`P1-A1.5-E470d`) ─
+
+        **SCOTT, 2026-09-12:** *"Now I am confused...why is there a separate page
+        for industries?"* **AND 2026-09-13:** *"On industries, that content is a
+        specialization...it should be managed on the specialization page."*
+
+        ⚠ SUPERSEDED, quoted not deleted (`E164`):
+        `{ label: "Industries", href: "/admin/industries", icon: "Building2" }`
+
+        ⚠⚠ THE OLD PAGE ANSWERED HIM IN ITS OWN COPY, ON SCREEN: *"Industries are
+        a KIND of Specialization in this schema, not a separate dimension — so
+        this reads the same table, filtered."* Same table, same ten rows;
+        `industries/page.tsx:21` was literally
+        `groups.find((g) => g.kind === "INDUSTRY")?.items ?? []`.
+        ⚠ IT WAS NOT A DESIGN DECISION THAT WAS MADE — it is a deck slide that
+        became a route, because `SpecPage` renders fourteen slides from one spec.
+
+        ⚠ THE RAIL ITEM, ITS LABEL AND ITS ICON ALL STAY. Scott uses it as a
+        shortcut and it costs nothing; what was wrong was the second PAGE, not
+        the second ENTRY.
+        ⚠ VERIFIED BEFORE REPOINTING, per the brief's hard precondition: the
+        drill-in returns 10 rows under the heading `Industries (10)`.
+        ⚠ `check:nav-reachable` strips the query string before resolving access
+        (`check-nav-reachable.ts:68`), so this resolves to `/admin/specializations`
+        — already admin-gated. No assertion was touched.
+      */
+      {
+        label: "Industries",
+        href: "/admin/specializations?kind=INDUSTRY",
+        icon: "Building2",
+      },
       /*
         THE ASSESSMENT'S FUNDING RATE (brief_assessment_p2p_phase1). Configuration
         Data, not Support Data: it is a value the platform computes with, like the
