@@ -24,6 +24,44 @@ import { prisma } from "@/lib/prisma";
 */
 export const OFFERABLE = { status: "ACTIVE" } as const;
 
+/**
+ * ── ⚠⚠ WHICH CATALOG A WRITE BELONGS TO (`P1-A1.5-E483`) ────────────────────
+ *
+ * ⚠⚠ THERE ARE TWO `ServiceCatalog` ROWS IN THE DATABASE, and until now every
+ * write path picked between them with `findFirst()` and NO `where` — which
+ * returns whichever row Postgres hands back first.
+ *
+ *   `PANAMEER_V1`  the real seeded catalog — 27 specializations, every skill
+ *   `ERP`          a legacy row holding ONE specialization
+ *
+ * ⚠ THE DAMAGE WAS REAL AND MEASURED, not hypothetical. A provider typed
+ * `Workday` on the fly, `onboarding.ts` resolved the ERP catalog, and the row
+ * landed where the seed never looks — invisible to `getSpecializations()` and
+ * immune to every catalog pass. ⚠⚠ WHEN `E483` ADDED `Workday` TO THE SEED, THE
+ * `catalog_id_name` UPSERT DID NOT MATCH IT (different catalog), so a SECOND
+ * Workday was created and two providers' selections were stranded on the first.
+ *
+ * ⚠ `@@unique([catalog_id, name])` IS WHY THIS HID FOR SO LONG — two rows with
+ * the same name are perfectly legal as long as they sit in different catalogs.
+ *
+ * ⚠ SO EVERY WRITE PATH RESOLVES THE CATALOG BY CODE NOW. `seed-taxonomy.ts`
+ * upserts `where: { code: CATALOG.code }`, so this is the seed's own rule,
+ * applied to the paths that were guessing.
+ */
+export const CATALOG_CODE = "PANAMEER_V1";
+
+export async function activeCatalogId(): Promise<string | null> {
+  const row = await prisma.serviceCatalog.findUnique({
+    where: { code: CATALOG_CODE },
+    select: { id: true },
+  });
+  /* ⚠ FALL BACK RATHER THAN THROW: a fresh database that has never been seeded
+     has no PANAMEER_V1 row, and an onboarding step must not 500 because of it. */
+  if (row) return row.id;
+  const any = await prisma.serviceCatalog.findFirst({ select: { id: true } });
+  return any?.id ?? null;
+}
+
 /** Admin surfaces pass `{ includeRetired: true }`; nothing else should. */
 export type CatalogScope = { includeRetired?: boolean };
 const scope = (o?: CatalogScope) => (o?.includeRetired ? {} : OFFERABLE);

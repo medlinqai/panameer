@@ -12,6 +12,8 @@ import {
   renameSpecialization,
   setSpecializationKind,
   setStatus,
+  promoteSuggestion,
+  rejectSuggestion,
   skillLinks,
   specializationLinks,
 } from "@/lib/catalog-write";
@@ -58,6 +60,10 @@ const Body = z.discriminatedUnion("action", [
      `hardDelete` refuses at a non-zero link count and the only way past it is
      to remove the links first — a confirm dialog is not consent from the
      provider whose profile would lose the row. */
+  /* ⚠ `E482` — promotion is where a suggestion ACQUIRES its kind, so `kind` is
+     required here. There is no default: the admin makes the judgement call. */
+  z.object({ action: z.literal("spec.promote"), id: Id, kind: Kind }),
+  z.object({ action: z.literal("spec.reject"), id: Id }),
   z.object({
     action: z.literal("delete"),
     table: z.enum(["skill", "specialization"]),
@@ -93,6 +99,10 @@ export async function POST(req: Request) {
         return renamePillar(b.id, b.name);
       case "role.rename":
         return renameRoleType(b.id, b.name);
+      case "spec.promote":
+        return promoteSuggestion(b.id, b.kind);
+      case "spec.reject":
+        return rejectSuggestion(b.id);
       case "status":
         return setStatus(b.table, b.id, b.status);
       case "delete":

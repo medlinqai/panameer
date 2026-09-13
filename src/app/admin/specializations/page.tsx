@@ -11,6 +11,8 @@ import { CatalogTree, type CatalogNode } from "@/components/console/CatalogTree"
 import { CatalogCard } from "@/components/console/CatalogCard";
 import { CatalogMark } from "@/components/console/CatalogMark";
 import { CatalogAddBar } from "@/components/console/CatalogEditor";
+import { SuggestionRow } from "@/components/console/SuggestionRow";
+import { suggestionQueue } from "@/lib/catalog-write";
 import { SPECIALIZATION_MARKS, KIND_FALLBACK } from "@/lib/catalog-marks";
 
 export const dynamic = "force-dynamic";
@@ -43,7 +45,7 @@ export const dynamic = "force-dynamic";
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ kind?: string; claimed?: string }>;
+  searchParams: Promise<{ kind?: string; claimed?: string; view?: string }>;
 }) {
   /*
     ⚠⚠ THE ADMIN TREE ASKS FOR RETIRED ROWS EXPLICITLY (`P1-A1.5-E481`).
@@ -53,6 +55,9 @@ export default async function Page({
     page it lives on hides it. They render MARKED, never silently.
   */
   const sp = await searchParams;
+
+  const queue = await suggestionQueue();
+  const showQueue = sp.view === "suggested";
 
   const [groups, providerCounts, kindClaims] = await Promise.all([
     getSpecializations({ includeRetired: true }),
@@ -131,7 +136,7 @@ export default async function Page({
     claimed is the most actionable row on the page. Moving the listing does not
     filter it.
   */
-  const isDrillIn = !!filtered || !!claimedKind;
+  const isDrillIn = !!filtered || !!claimedKind || showQueue;
 
   /*
     ⚠ `E486` — ONE LINK COLOUR ON THE PAGE. `BackLink` does NOT render here
@@ -190,6 +195,11 @@ export default async function Page({
           })),
           {
             label: "Suggested",
+            /* ⚠⚠ `E468` SHIPPED THIS TILE SHOWING "—" BECAUSE THE QUEUE DID NOT
+               EXIST. IT LIGHTS UP HERE. ⚠ SUPERSEDED, quoted not deleted: the
+               tile carried NO `value` and NO `href`. */
+            value: queue.length || undefined,
+            href: "/admin/specializations?view=suggested",
             /* ⚠ NO `value` — `TileRow` renders "—" in muted type for an absent
                one, which is exactly the honest state until Part 3.
                ⚠⚠ AND NO `href`: the moderation queue does not exist yet, and a
@@ -296,7 +306,69 @@ export default async function Page({
         />
       )}
 
-      {!filtered && !claimedKind && (
+      {/*
+        ── ⚠ THE MODERATION QUEUE (`P1-A1.5-E482`) ────────────────────────────
+
+        ⚠⚠ SCOTT'S OWN COLUMNS, FROM `admin-pages.ts`, NOT A NEW SHAPE:
+        `Provider - Company · Title · Status · Posted Date · Message`. That
+        file's comment said they *"describe a moderation queue that has no model
+        behind it"* — Part A's `origin`/`status` ARE that model.
+
+        ⚠⚠ ORDERED BY HOW MANY ASKED, NOT BY DATE (Scott: *"the most commonly
+        requested"*). `suggestionQueue()` sorts on the count; Posted Date is
+        information, not the sort key.
+
+        ⚠ THE `Message` COLUMN RENDERS THE ACTIONS, and that is reported rather
+        than invented: there is NO message field. A provider types a TERM during
+        onboarding, not a note, so there is no sentence to show. The column is
+        Scott's design and is kept; it carries the admin's judgement call —
+        choose a kind, Promote, or Reject — which is what the queue is for.
+      */}
+      {showQueue && (
+        <Listing
+          title={`Suggested (${queue.length})`}
+          columns={["Provider - Company", "Title", "Status", "Posted Date", "Message"]}
+          rows={queue.map((q) => [
+            /* ⚠ EVERY ASKER, not just the first — the count IS the signal. */
+            <span key="p" className="block">
+              {q.providers.slice(0, 3).map((pv, i) => (
+                <span key={i} className="block text-[13px]">
+                  {pv.name}
+                  {pv.company ? ` — ${pv.company}` : ""}
+                </span>
+              ))}
+              {q.providers.length > 3 && (
+                <span className="text-[12px] text-ink-2">+{q.providers.length - 3} more</span>
+              )}
+              {q.providers.length === 0 && <span className="text-ink-2">—</span>}
+            </span>,
+            <b key="t">{q.name}</b>,
+            q.status === "SUGGESTED" ? (
+              <span key="s" className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
+                Suggested
+              </span>
+            ) : (
+              /* ⚠ REJECTED ROWS STAY HERE, MARKED — a term asked for again
+                 climbs back up the queue on its count alone. */
+              <span key="s" className="rounded-full bg-ink/[0.06] px-2 py-0.5 text-[11px] font-semibold text-ink-2">
+                Rejected
+              </span>
+            ),
+            <span key="d">
+              {q.postedAt.toLocaleDateString("en-GB", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              })}
+            </span>,
+            <SuggestionRow key="a" id={q.id} name={q.name} status={q.status} askedBy={q.askedBy} />,
+          ])}
+          action={clearLink}
+          empty="Nobody has suggested anything yet."
+        />
+      )}
+
+      {!isDrillIn && (
         <CatalogCard title={`Specializations (${total})`}>
           <CatalogTree nodes={nodes} emptyLabel="No specializations yet." />
         </CatalogCard>

@@ -407,6 +407,25 @@ const SPECIALIZATION_RENAMES: Record<string, string> = {
     the precedent and were added for exactly this.
   */
   "Hire-to-Fire": "Hire-to-Retire",
+  /*
+    ── ⚠ `E484` — THE PRODUCT'S REAL NAME, AND THE ID SURVIVES ───────────────
+
+    ⚠⚠ THE DB ROW READS `Enterprise Business Suite (EBS)`, NOT THE MALFORMED
+    JSON SPELLING. `TYPO_FIXES` above already repaired the stray paren on the way
+    in, so the row that exists to be renamed carries the CLEAN name — keying this
+    on the JSON's `()EBS)` would have matched nothing and silently done nothing.
+    ⚠ Both spellings are mapped anyway: the malformed one costs a line and covers
+    any database seeded before `TYPO_FIXES` existed.
+
+    ⚠⚠ IT IS A RENAME, NOT A MERGE — VERIFIED. There is no specialization called
+    `Oracle E-Business Suite`; the only row by that name is an RDS `Pillar`, a
+    different table entirely. So the merge pass is not involved and this row
+    keeps its id, which is what keeps every provider who picked it.
+    ⚠ AND THE PRODUCT IS ORACLE'S: it is `Oracle E-Business Suite`, never
+    `Enterprise Business Suite`.
+  */
+  "Enterprise Business Suite (EBS)": "Oracle E-Business Suite",
+  "Enterprise Business Suite ()EBS)": "Oracle E-Business Suite",
   Healthcare: "Healthcare & Life Sciences",
   "Financial Services": "Financial Services & Fintech",
   "Energy Services": "Energy, Utilities, & Resources",

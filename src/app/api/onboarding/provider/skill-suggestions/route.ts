@@ -4,6 +4,7 @@ import { getSessionViewer } from "@/lib/session";
 import { ownedProviderProfile } from "@/lib/access";
 import { suggestableSkills } from "@/lib/resume/match";
 import { getOnboardingState } from "@/lib/onboarding";
+import { activeCatalogId } from "@/lib/catalog";
 
 /**
  * Confirm imported skill terms the catalog didn't recognise (WS-B / E051-5).
@@ -60,7 +61,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Nothing to add" }, { status: 400 });
   }
 
-  const catalogRow = await prisma.serviceCatalog.findFirst({ select: { id: true } });
+  /* ⚠⚠ BY CODE, NEVER `findFirst()` (`P1-A1.5-E483`) — see `activeCatalogId`. */
+  const catalogId = await activeCatalogId();
+  const catalogRow = catalogId ? { id: catalogId } : null;
   if (!catalogRow) {
     return NextResponse.json({ error: "Catalog unavailable" }, { status: 500 });
   }

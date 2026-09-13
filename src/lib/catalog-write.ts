@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { activeCatalogId } from "@/lib/catalog";
 
 /**
  * THE CATALOG WRITE PATH (`P1-A1.5-E481`).
@@ -86,13 +87,15 @@ export async function specializationLinks(id: string) {
 export type SpecKind = "PRODUCT" | "METHODOLOGY" | "INDUSTRY";
 
 export async function addSpecialization(name: string, kind: SpecKind): Promise<WriteResult> {
-  const catalog = await prisma.serviceCatalog.findFirst({ select: { id: true } });
-  if (!catalog) return refuse("There is no service catalog to add to.");
+  /* ⚠ BY CODE, NEVER `findFirst()` — see `activeCatalogId`. Two catalogs
+     exist and guessing between them is how Workday ended up duplicated. */
+  const catalogId = await activeCatalogId();
+  if (!catalogId) return refuse("There is no service catalog to add to.");
 
   /* ⚠ DEDUPED CASE-INSENSITIVELY, like the provider add-on-the-fly path — two
      rows differing only in case are two rows a picker offers twice. */
   const existing = await prisma.specialization.findFirst({
-    where: { catalog_id: catalog.id, name: { equals: name, mode: "insensitive" } },
+    where: { catalog_id: catalogId, name: { equals: name, mode: "insensitive" } },
     select: { id: true, name: true, status: true },
   });
   if (existing) {
@@ -106,7 +109,7 @@ export async function addSpecialization(name: string, kind: SpecKind): Promise<W
   const row = await prisma.specialization.create({
     /* ⚠⚠ `origin: ADMIN` IS LOAD-BEARING, NOT BOOKKEEPING. Without it the row
        defaults to SEED and the next reseed is entitled to delete it. */
-    data: { catalog_id: catalog.id, name, kind, sort_order: 900, origin: "ADMIN" },
+    data: { catalog_id: catalogId, name, kind, sort_order: 900, origin: "ADMIN" },
     select: { id: true, name: true },
   });
   return { ok: true, id: row.id, message: `Added "${row.name}".` };
@@ -158,12 +161,14 @@ export async function addSkill(
   roleTypeId: string,
   pillarId: string
 ): Promise<WriteResult> {
-  const catalog = await prisma.serviceCatalog.findFirst({ select: { id: true } });
-  if (!catalog) return refuse("There is no service catalog to add to.");
+  /* ⚠ BY CODE, NEVER `findFirst()` — see `activeCatalogId`. Two catalogs
+     exist and guessing between them is how Workday ended up duplicated. */
+  const catalogId = await activeCatalogId();
+  if (!catalogId) return refuse("There is no service catalog to add to.");
 
   const existing = await prisma.skill.findFirst({
     where: {
-      catalog_id: catalog.id,
+      catalog_id: catalogId,
       role_type_id: roleTypeId,
       pillar_id: pillarId,
       name: { equals: name, mode: "insensitive" },
@@ -180,7 +185,7 @@ export async function addSkill(
 
   const row = await prisma.skill.create({
     data: {
-      catalog_id: catalog.id,
+      catalog_id: catalogId,
       role_type_id: roleTypeId,
       pillar_id: pillarId,
       name,
@@ -361,4 +366,176 @@ export async function hardDelete(
   if (!row) return refuse("That specialization no longer exists.");
   await prisma.specialization.delete({ where: { id } });
   return { ok: true, id, message: `Deleted "${row.name}".` };
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE SUGGESTION QUEUE (`P1-A1.5-E482`)
+   ═══════════════════════════════════════════════════════════════════════════
+
+   > **SCOTT:** *"we will need a way (T?) to see the most commonly requested
+   > platforms, processes, industries that are not in our listing. The admin
+   > will make a judgement call."*
+
+   ⚠ NO NEW TABLE. A suggestion is `status: SUGGESTED` + `origin: PROVIDER` —
+   Part A's two fields already carry it, and the links a provider made when they
+   typed the term ARE the record of who asked.
+*/
+
+export type Suggestion = {
+  id: string;
+  name: string;
+  /** `SUGGESTED` = waiting · `RETIRED` = already rejected, still accumulating. */
+  status: "SUGGESTED" | "RETIRED";
+  askedBy: number;
+  /** Who asked, newest first — the queue's "Provider - Company" column. */
+  providers: { name: string; company: string | null }[];
+  postedAt: Date;
+};
+
+/**
+ * The queue, ⚠⚠ ORDERED BY HOW MANY PEOPLE ASKED, NOT BY DATE.
+ *
+ * ⚠ Scott's words: *"the most commonly requested."* A term three providers
+ * asked for outranks yesterday's single request, which is the whole point of
+ * showing him this list rather than a chronological log.
+ * ⚠ TIES BREAK ON THE OLDEST REQUEST, so a thing that has been waiting longer
+ * wins a tie rather than the order flickering between equals.
+ */
+export async function suggestionQueue(): Promise<Suggestion[]> {
+  /*
+    ⚠⚠ REJECTED ROWS STAY IN THE QUEUE, MARKED. The brief: *"Reject keeps the
+    record — the same suggestion arriving five more times is itself the signal."*
+    ⚠ SHOWING ONLY `SUGGESTED` WOULD HAVE BROKEN THAT. `onboarding.ts` dedupes a
+    typed term onto the EXISTING row whatever its status, so a rejected term
+    that six more providers ask for gains six links and never changes status —
+    it would have accumulated the exact signal Scott asked for, invisibly.
+    ⚠ So the queue reads both, and the count sorts a re-asked reject back to
+    the top on its own.
+  */
+  const rows = await prisma.specialization.findMany({
+    where: {
+      origin: "PROVIDER",
+      status: { in: ["SUGGESTED", "RETIRED"] },
+    },
+    select: {
+      id: true,
+      name: true,
+      status: true,
+      created_at: true,
+      providerProfiles: {
+        select: {
+          created_at: true,
+          providerProfile: {
+            select: {
+              person: {
+                select: {
+                  first_name: true,
+                  last_name: true,
+                  company: { select: { name: true } },
+                },
+              },
+            },
+          },
+        },
+        orderBy: { created_at: "desc" },
+      },
+    },
+  });
+
+  return rows
+    .map((r) => ({
+      id: r.id,
+      name: r.name,
+      status: r.status as "SUGGESTED" | "RETIRED",
+      askedBy: r.providerProfiles.length,
+      providers: r.providerProfiles.map((l) => ({
+        name:
+          `${l.providerProfile.person.first_name ?? ""} ${l.providerProfile.person.last_name ?? ""}`.trim() ||
+          "(unnamed)",
+        company: l.providerProfile.person.company?.name ?? null,
+      })),
+      postedAt: r.created_at,
+    }))
+    /* ⚠ MOST-ASKED FIRST; a tie goes to whoever has waited longest. ⚠ Anything
+       still waiting outranks anything already rejected at the same count. */
+    .sort(
+      (a, b) =>
+        Number(b.status === "SUGGESTED") - Number(a.status === "SUGGESTED") ||
+        b.askedBy - a.askedBy ||
+        a.postedAt.getTime() - b.postedAt.getTime()
+    );
+}
+
+/**
+ * ⚠⚠ PROMOTE — THE ADMIN CHOOSES THE KIND. THAT IS THE WHOLE POINT.
+ *
+ * A suggestion has no meaningful `kind` (see `onboarding.ts` — the column's
+ * default is not a claim), so promotion is the moment it acquires one.
+ * ⚠ THE ROW KEEPS ITS ID, so every provider who suggested it is ALREADY
+ * attached and stays attached — there is nothing to re-link, which is exactly
+ * why this is an UPDATE and not a create. Trap 1, again.
+ */
+export async function promoteSuggestion(id: string, kind: SpecKind): Promise<WriteResult> {
+  const row = await prisma.specialization.findUnique({
+    where: { id },
+    select: { name: true, status: true, catalog_id: true },
+  });
+  if (!row) return refuse("That suggestion no longer exists.");
+  /* ⚠ A REJECTED ROW CAN STILL BE PROMOTED — that is the point of keeping it.
+     Only an already-ACTIVE row is refused, because promoting it is a no-op. */
+  if (row.status === "ACTIVE") return refuse(`"${row.name}" is already live.`);
+
+  /* ⚠ A SUGGESTION THAT DUPLICATES A LIVE ROW IS A MERGE, NOT A PROMOTE, and
+     merging is not built — say so rather than creating a second live row. */
+  const clash = await prisma.specialization.findFirst({
+    where: {
+      catalog_id: row.catalog_id,
+      name: { equals: row.name, mode: "insensitive" },
+      status: "ACTIVE",
+      NOT: { id },
+    },
+    select: { name: true },
+  });
+  if (clash) {
+    return refuse(
+      `"${clash.name}" is already live. Promoting this would create a second ` +
+        `row with the same name — reject the suggestion instead.`
+    );
+  }
+
+  const links = await prisma.providerProfileSpecialization.count({
+    where: { specialization_id: id },
+  });
+  await prisma.specialization.update({ where: { id }, data: { status: "ACTIVE", kind } });
+  return {
+    ok: true,
+    id,
+    message:
+      `Promoted "${row.name}" to ${kind}. ` +
+      `${links} provider${links === 1 ? "" : "s"} already had it and keep it.`,
+  };
+}
+
+/**
+ * ⚠ REJECT KEEPS THE RECORD. The same suggestion arriving five more times is
+ * itself the signal, and a deleted row cannot accumulate a count.
+ * ⚠⚠ IT ALSO KEEPS THE AUTHOR'S LINK — they typed a true thing about themselves
+ * and still see it on their own profile. Rejecting means "not in the shared
+ * vocabulary", never "you were wrong".
+ */
+export async function rejectSuggestion(id: string): Promise<WriteResult> {
+  const row = await prisma.specialization.findUnique({
+    where: { id },
+    select: { name: true, status: true },
+  });
+  if (!row) return refuse("That suggestion no longer exists.");
+  if (row.status !== "SUGGESTED") return refuse(`"${row.name}" is not waiting in the queue.`);
+  /* ⚠ `RETIRED`, NOT DELETED — the row, its name and every link that voted for
+     it survive, which is what lets a re-asked term climb back up the queue. */
+  await prisma.specialization.update({ where: { id }, data: { status: "RETIRED" } });
+  return {
+    ok: true,
+    id,
+    message: `Rejected "${row.name}". The record is kept — if it is asked for again it comes back up the queue.`,
+  };
 }
