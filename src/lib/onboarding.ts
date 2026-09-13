@@ -1593,7 +1593,13 @@ export async function applyProviderSection(
             kind: "PRODUCT",
             // Sorts after the seeded vocabulary.
             sort_order: 900,
+            /* ⚠⚠ `origin` IS THE SHIELD NOW (`P1-A1.5-E480`), NOT `is_custom`.
+               The seed's retirement pass reads `origin` and may only delete
+               `SEED` rows. ⚠ WITHOUT THIS LINE THIS ROW DEFAULTS TO `SEED` AND
+               THE NEXT RESEED DELETES IT SILENTLY. Both are written while
+               `is_custom` survives as the superseded ancestor. */
             is_custom: true,
+            origin: "PROVIDER",
           },
         });
         ids.push(created.id);
@@ -1750,10 +1756,16 @@ export async function applyProviderSection(
               role_type_id: customRoleId,
               pillar_id: customPillarId,
               name,
-              // Preserved deliberately — `is_custom` is the seed-retirement
-              // shield: the taxonomy reseed removes catalog rows it no longer
-              // ships, and a provider-authored skill must survive that.
+              /* ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                   "`is_custom` is the seed-retirement shield: the taxonomy
+                    reseed removes catalog rows it no longer ships, and a
+                    provider-authored skill must survive that."
+                 ⚠⚠ `origin` IS THE SHIELD NOW (`P1-A1.5-E480`) — the retirement
+                 pass reads it and may only delete `SEED` rows. The reasoning is
+                 unchanged; the field carrying it is wider. WITHOUT `origin` THIS
+                 ROW WOULD DEFAULT TO `SEED` AND BE DELETED ON THE NEXT RESEED. */
               is_custom: true,
+              origin: "PROVIDER",
             },
           });
           if (!skillIds.includes(skill.id)) skillIds.push(skill.id);
