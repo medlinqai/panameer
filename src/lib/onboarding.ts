@@ -980,6 +980,10 @@ export async function getOnboardingState(viewer: Viewer) {
 
   const address = p.site?.addresses?.[0] ?? null;
 
+  /* ⚠ `E509` WS-A — what THIS provider's own skills imply. Computed for the
+     role page's PREFILL; it writes nothing. Empty when there is no evidence. */
+  const derived = await deriveRolesFromSkills(pp.id);
+
   return {
     email: p.user?.email ?? "",
     emailVerified,
@@ -1057,6 +1061,17 @@ export async function getOnboardingState(viewer: Viewer) {
         : pp.role_type_id
           ? [pp.role_type_id]
           : [],
+      /*
+        ⚠⚠ THE PREFILL, NEVER AN ASSIGNMENT (`E509` WS-A). The role page reads
+        this to PRE-TICK what the résumé's skills imply; the provider can change
+        it, and nothing is written until they continue.
+        ⚠ EMPTY WHEN THERE IS NO EVIDENCE — "Pick your role", not a guess.
+        ⚠ IT NEVER OVERWRITES A ROLE ALREADY CHOSEN: `roleTypeIds` above is the
+        stored answer and the page prefers it whenever it is non-empty.
+      */
+      derivedRoleTypeIds: derived.roleTypeIds,
+      derivedPillarId: derived.pillarId,
+      derivedFromSkills: derived.evidence,
       roleTypes: pp.roles.length
         ? pp.roles.map((r) => ({
             id: r.roleType.id,
@@ -1393,15 +1408,49 @@ export async function applyProviderSection(
         if (!ok) pillarId = null;
       }
       if (!pillarId) {
-        const grouped = await prisma.skill.groupBy({
-          by: ["pillar_id"],
-          /* ⚠ `E481` — a domain whose skills are all retired is not suggested. */
-          where: { role_type_id: primaryRoleId, pillar_id: { not: null }, ...OFFERABLE },
-          _count: { _all: true },
-          orderBy: { _count: { id: "desc" } },
-          take: 1,
-        });
-        pillarId = grouped[0]?.pillar_id ?? null;
+        /*
+          ── ⚠⚠ THE PROVIDER'S OWN SKILLS DECIDE THE DOMAIN (`E509` WS-A) ─────
+
+          ⚠ SUPERSEDED, quoted not deleted (`E164`) — and the comment above it,
+          which explains what it was FOR and why that was the wrong target:
+            *"take the primary role's first domain by skill count so the
+             (role, domain) pair on the profile is always a real pair"*
+            const grouped = await prisma.skill.groupBy({
+              by: ["pillar_id"],
+              where: { role_type_id: primaryRoleId, pillar_id: { not: null }, ...OFFERABLE },
+              _count: { _all: true },
+              orderBy: { _count: { id: "desc" } },   // ⚠⚠ the biggest CATALOG domain
+              take: 1 });
+
+          ⚠⚠ IT COUNTED CATALOG ROWS, SO IT WAS PROVIDER-INDEPENDENT — measured
+          today, `Technology-Specific` returns Salesforce 60 · Oracle EBS 51 ·
+          Oracle Fusion 49, so EVERY Technology-Specific provider was handed
+          Salesforce. It optimised for "a real pair", not "the right pair", and
+          CATALOG SIZE IS NOT RELEVANCE TO THIS PROVIDER.
+
+          ⚠ NOW: this provider's own matched skills within the primary role.
+          ⚠ THE CATALOG COUNT SURVIVES AS THE FALLBACK, DELIBERATELY, and that
+          is a reading of the brief worth stating: a provider who picks a role
+          MANUALLY has no skills yet, and the original comment's guarantee — that
+          the stored pair is always a REAL pair — is still worth keeping for
+          them. Evidence wins when there is evidence; the catalog only answers
+          when there is none.
+        */
+        const mine = await deriveRolesFromSkills(profileId);
+        pillarId =
+          mine.roleTypeIds[0] === primaryRoleId && mine.pillarId ? mine.pillarId : null;
+
+        if (!pillarId) {
+          const grouped = await prisma.skill.groupBy({
+            by: ["pillar_id"],
+            /* ⚠ `E481` — a domain whose skills are all retired is not suggested. */
+            where: { role_type_id: primaryRoleId, pillar_id: { not: null }, ...OFFERABLE },
+            _count: { _all: true },
+            orderBy: { _count: { id: "desc" } },
+            take: 1,
+          });
+          pillarId = grouped[0]?.pillar_id ?? null;
+        }
       }
 
       await prisma.$transaction([
@@ -2498,6 +2547,103 @@ async function saveProviderAddress(personId: string, addr: StepData): Promise<vo
  * it is computed from IDENTICAL FACTS. Assembling this shape twice is exactly
  * how a number and its own breakdown start disagreeing.
  */
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⚠⚠ THE ROLE IS DERIVED FROM THE PROVIDER'S OWN SKILLS (`P2-J1.4-E509` WS-A)
+   ═══════════════════════════════════════════════════════════════════════════
+
+   > **SCOTT, 2026-09-13:** *"i think we show the resume parser first. I think it
+   > parses and we use the skills to derive the role(s). For those who do not or
+   > their resume cannot use the parser… they will need to add their RDS
+   > manually."*
+
+   ⚠ NOT A NEW IDEA — IT IS THIS PROJECT'S OWN MODEL, FROM AUGUST.
+   `provider_skill_model_decision.md`: *"Role is derived from the skills (a skill
+   belongs to exactly one role)… a provider can span roles across jobs."* The
+   wizard diverged from the model doc; this puts it back.
+
+   ── ⚠⚠ THE BUG THIS REPLACES, MEASURED NOT ASSUMED ──────────────────────────
+
+   The domain was chosen by COUNTING CATALOG ROWS under the picked role:
+       orderBy: { _count: { id: "desc" } }, take: 1   // the biggest domain wins
+   ⚠ THAT IS PROVIDER-INDEPENDENT. Run today, per role:
+       Technology-Specific → Salesforce 60 · Oracle EBS 51 · Oracle Fusion 49
+   ⚠⚠ SO EVERY Technology-Specific PROVIDER WAS HANDED SALESFORCE, FOREVER —
+   which is exactly how a twelve-year Oracle Financials consultant was filed as
+   `Technology-Specific · Salesforce`. ⚠ IT WAS NEVER AN AI FAILURE. It is a
+   deterministic count, and it optimised for "a real pair", not "the right pair".
+
+   ⚠ A SKILL BELONGS TO EXACTLY ONE ROLE, so this needs no model call and no
+   confidence score: count the provider's matched skills by role, rank, done.
+*/
+
+export type DerivedRoles = {
+  /** Ordered by THIS provider's skill count, desc. `[0]` is the primary. */
+  roleTypeIds: string[];
+  /** The primary role's top domain BY THIS PROVIDER'S SKILLS. */
+  pillarId: string | null;
+  /** How many matched skills backed the answer — 0 means nothing was derived. */
+  evidence: number;
+};
+
+/**
+ * What this provider's own skills say their role(s) are.
+ *
+ * ⚠⚠ IT DERIVES, IT NEVER WRITES. The caller uses it as a PREFILL on the role
+ * page. A derived role is a SUGGESTION the provider can change — never a silent
+ * assignment, because a silent assignment is precisely how
+ * `Technology-Specific · Salesforce` survived unnoticed.
+ *
+ * ⚠ NO RÉSUMÉ MEANS NO SKILLS MEANS NOTHING TO DERIVE. The answer is then an
+ * EMPTY SET AND A NULL DOMAIN — NOT A GUESS. Same rule as `LearningPath.pillar`:
+ * *"a path whose group is not in the mapping keeps `null` rather than being
+ * guessed into a family… the null is what makes that visible instead of
+ * invented."*
+ */
+export async function deriveRolesFromSkills(profileId: string): Promise<DerivedRoles> {
+  const held = await prisma.providerSkill.findMany({
+    where: { provider_profile_id: profileId },
+    select: {
+      skill: {
+        select: { role_type_id: true, pillar_id: true, status: true },
+      },
+    },
+  });
+
+  /* ⚠ `E481` — a RETIRED skill still counts as evidence of what this person
+     does, but it must not steer them into a role via a row nobody may pick.
+     Only ACTIVE rows vote. */
+  const rows = held
+    .map((h) => h.skill)
+    .filter((sk): sk is NonNullable<typeof sk> => !!sk && sk.status === "ACTIVE");
+
+  if (rows.length === 0) return { roleTypeIds: [], pillarId: null, evidence: 0 };
+
+  const byRole = new Map<string, number>();
+  for (const r of rows) {
+    if (!r.role_type_id) continue;
+    byRole.set(r.role_type_id, (byRole.get(r.role_type_id) ?? 0) + 1);
+  }
+  /* ⚠ TIES BREAK ON THE ROLE ID so the order cannot flicker between equals. */
+  const roleTypeIds = [...byRole.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([id]) => id);
+
+  if (roleTypeIds.length === 0) return { roleTypeIds: [], pillarId: null, evidence: 0 };
+
+  /* ⚠ THE DOMAIN, SAME RULE: this provider's skills WITHIN the primary role. */
+  const primary = roleTypeIds[0];
+  const byPillar = new Map<string, number>();
+  for (const r of rows) {
+    if (r.role_type_id !== primary || !r.pillar_id) continue;
+    byPillar.set(r.pillar_id, (byPillar.get(r.pillar_id) ?? 0) + 1);
+  }
+  const pillarId =
+    [...byPillar.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0]?.[0] ??
+    null;
+
+  return { roleTypeIds, pillarId, evidence: rows.length };
+}
+
 export async function buildCompletenessInput(profileId: string) {
   const profile = await prisma.providerProfile.findUnique({
     where: { id: profileId },

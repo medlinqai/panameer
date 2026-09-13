@@ -339,6 +339,13 @@ type ProfilePayload = {
   roleTypeName?: string | null;
   roleTypeIds?: string[];
   roleTypes?: { id: string; name: string; display: string }[];
+  /**
+   * ⚠⚠ THE RÉSUMÉ'S OPINION, NOT THE PROVIDER'S ANSWER (`P2-J1.4-E509` WS-A).
+   * Derived server-side by counting THIS provider's matched skills by role.
+   * ⚠ A PREFILL ONLY — `roleTypeIds` above is the stored answer and always wins.
+   */
+  derivedRoleTypeIds?: string[];
+  derivedFromSkills?: number;
   specializationIds?: string[];
   specializations?: { id: string; name: string; kind: string }[];
   employers?: EmployerCard[];
@@ -458,6 +465,10 @@ type AddressDraft = {
 type Profile = {
   workMethod: string | null;
   profileMethod: string | null;
+  /** ⚠ `E509` WS-A — the résumé's suggestion, kept alongside the answer so the
+   *  page can say the role was PREFILLED rather than silently assigning it. */
+  derivedRoleTypeIds: string[];
+  derivedFromSkills: number;
   pillarId: string | null;
   pillarName: string | null;
   roleTypeId: string | null;
@@ -498,6 +509,8 @@ type Profile = {
 const emptyProfile = (): Profile => ({
   workMethod: null,
   profileMethod: null,
+  derivedRoleTypeIds: [],
+  derivedFromSkills: 0,
   pillarId: null,
   pillarName: null,
   roleTypeId: null,
@@ -752,7 +765,28 @@ export default function JoinProviderPage() {
       pillarId: p.pillarId ?? null,
       pillarName: p.pillarName ?? null,
       roleTypeId: p.roleTypeId ?? null,
-      roleTypeIds: p.roleTypeIds ?? (p.roleTypeId ? [p.roleTypeId] : []),
+      /*
+        ── ⚠⚠ PREFILLED, NEVER REPLACED (`E509` WS-A) ────────────────────────
+
+        > **SCOTT:** *"we use the skills to derive the role(s). For those who do
+        > not or their resume cannot use the parser… they will need to add their
+        > RDS manually."*
+
+        ⚠ THE STORED ANSWER WINS WHENEVER THERE IS ONE. The derivation only
+        fills an EMPTY selection, so it can never overwrite a role the provider
+        chose — which is the whole reason `Technology-Specific · Salesforce`
+        survived unnoticed: it was assigned, not suggested.
+        ⚠⚠ NO RÉSUMÉ MEANS NO SKILLS MEANS NOTHING TO DERIVE. The answer is then
+        an EMPTY SET and the page asks, rather than guessing.
+      */
+      roleTypeIds:
+        p.roleTypeIds && p.roleTypeIds.length
+          ? p.roleTypeIds
+          : p.roleTypeId
+            ? [p.roleTypeId]
+            : (p.derivedRoleTypeIds ?? []),
+      derivedRoleTypeIds: p.derivedRoleTypeIds ?? [],
+      derivedFromSkills: p.derivedFromSkills ?? 0,
       roleTypeName: p.roleTypeName ?? null,
       specializationIds: p.specializationIds ?? [],
       specializationNames: (p.specializations ?? []).map((x) => ({
@@ -3319,6 +3353,32 @@ setScreen(target);
           })}
         >
           {error && <Notice>{error}</Notice>}
+
+          {/*
+            ── ⚠⚠ A DERIVED ROLE IS A SUGGESTION, AND IT SAYS SO (`E509` WS-A) ──
+
+            > **SCOTT:** *"we use the skills to derive the role(s)."*
+
+            ⚠ THE STEP DOES NOT MOVE AND THE PAGE STILL ASKS. What changed is
+            that the answer arrives PRE-TICKED when the résumé's own skills imply
+            one — and this line is what stops that being a SILENT assignment.
+            ⚠⚠ SILENCE IS HOW `Technology-Specific · Salesforce` SURVIVED: the
+            provider was never told a choice had been made for them, so they
+            never knew to correct it.
+            ⚠ NOTHING RENDERS WITH NO RÉSUMÉ — no evidence, no claim, and the
+            page reads exactly as it always did.
+          */}
+          {profile.derivedFromSkills > 0 && profile.derivedRoleTypeIds.length > 0 && (
+            <p className="mb-3 rounded-[10px] border border-line bg-ink/[0.03] px-3 py-2 text-[13px] text-ink-2">
+              We pre-selected{" "}
+              <b className="text-ink">
+                {profile.derivedRoleTypeIds.length === 1 ? "this role" : "these roles"}
+              </b>{" "}
+              from the {profile.derivedFromSkills} skill
+              {profile.derivedFromSkills === 1 ? "" : "s"} we matched in your résumé.{" "}
+              Change it if it is wrong — you decide.
+            </p>
+          )}
 
           {fieldRoles.length === 0 ? (
             <p className="text-ink-2">Loading roles…</p>
