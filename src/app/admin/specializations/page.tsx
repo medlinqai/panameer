@@ -9,6 +9,8 @@ import {
 import { TileRow, Listing, VolumeFooter } from "@/components/console/ConsolePage";
 import { CatalogTree, CatalogEditBar, type CatalogNode } from "@/components/console/CatalogTree";
 import { CatalogCard } from "@/components/console/CatalogCard";
+import { CatalogMark } from "@/components/console/CatalogMark";
+import { SPECIALIZATION_MARKS, KIND_FALLBACK } from "@/lib/catalog-marks";
 
 export const dynamic = "force-dynamic";
 
@@ -62,6 +64,9 @@ export default async function Page({
     id: g.kind,
     label: g.label,
     meta: `${g.items.length}`,
+    /* ⚠ `E465` — the group's own mark, so the left column is straight at both
+       levels rather than starting one indent in. */
+    mark: KIND_FALLBACK[g.kind] ?? null,
     children: g.items.map((i) => ({
       id: i.id,
       label: i.name,
@@ -70,7 +75,15 @@ export default async function Page({
          specialization nobody has claimed is honest, and it is the most
          actionable row on the page. */
       meta: providersCell(providerCounts.get(i.id)),
-      /* ⚠ `E470b` — the flag that existed and was never selected, let alone shown. */
+      /* ⚠ `E471` — 11 vendor monograms, 6 process chips, 10 industry icons.
+         ⚠⚠ KEYED ON THE NAME because `Specialization` has no `code`, and mapped
+         against the LIVE rows rather than the seed JSON: the JSON still carries
+         the malformed `Enterprise Business Suite ()EBS)` and the seed's
+         `fixTypo` repairs it on the way in, so a JSON-keyed map would have
+         missed that row entirely.
+         ⚠ A provider-authored `is_custom` row is unmapped BY DEFINITION and
+         falls back to its kind's muted icon — permanent, not a gap to fill. */
+      mark: SPECIALIZATION_MARKS[i.name] ?? KIND_FALLBACK[g.kind] ?? null,
       custom: i.is_custom,
     })),
   }));
@@ -157,7 +170,12 @@ export default async function Page({
           title={`${filtered.label} (${filtered.items.length})`}
           columns={["Specialization", "Providers", "Source"]}
           rows={filtered.items.map((i) => [
-            i.name,
+            /* ⚠ THE SAME MARK AS THE TREE — a row must not change identity
+               between the accordion and its drill-in. */
+            <span key={i.id} className="flex items-center gap-2.5">
+              <CatalogMark mark={SPECIALIZATION_MARKS[i.name] ?? KIND_FALLBACK[filtered.kind]} />
+              {i.name}
+            </span>,
             providerCounts.get(i.id) ? `${providerCounts.get(i.id)}` : "—",
             i.is_custom ? "Custom" : "Baseline",
           ])}
@@ -190,7 +208,10 @@ export default async function Page({
                 a.name.localeCompare(b.name)
             )
             .map((i) => [
-              i.name,
+              <span key={i.id} className="flex items-center gap-2.5">
+                <CatalogMark mark={SPECIALIZATION_MARKS[i.name] ?? KIND_FALLBACK[claimedKind.kind]} />
+                {i.name}
+              </span>,
               providerCounts.get(i.id) ? `${providerCounts.get(i.id)}` : "—",
               i.is_custom ? "Custom" : "Baseline",
             ])}
