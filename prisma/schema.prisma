@@ -648,7 +648,15 @@ model Skill {
   /// the authoritative Service Catalog. The seed's retirement pass SKIPS these
   /// — otherwise re-seeding would silently delete skills providers had entered
   /// and selected.
+  /// ⚠⚠ SUPERSEDED BY `origin` (`P1-A1.5-E480`), KEPT AND STILL WRITTEN (`E164`).
+  /// `true` ≡ `origin: PROVIDER`, `false` ≡ `origin: SEED`. ⚠ THE SEED'S
+  /// RETIREMENT PASS NOW READS `origin`, not this. Not dropped in this pass —
+  /// see the matching note on `Specialization.is_custom`.
   is_custom      Boolean  @default(false)
+  /// ⚠ WHO CREATED THIS ROW (`P1-A1.5-E480`). See `CatalogOrigin`.
+  origin         CatalogOrigin @default(SEED)
+  /// ⚠ WHAT STATE THIS ROW IS IN (`P1-A1.5-E480`). See `CatalogStatus`.
+  status         CatalogStatus @default(ACTIVE)
   /// THE PARSER'S CONTROLLED VOCABULARY for this skill (v5 catalog): legacy
   /// names, acronyms and product renames — "GL", "iProcurement (POR)", "Fixed
   /// Assets". A résumé says "AP", the catalog says "Payables"; this is the join.
@@ -1162,8 +1170,18 @@ model Specialization {
   kind       SpecializationKind @default(PRODUCT)
   /// Display order within a kind; ties break on name.
   sort_order Int                @default(100)
-  /// Added by a provider on the fly (brief_S / E031). Never retired by the seed.
+  /// ⚠⚠ SUPERSEDED BY `origin` (`P1-A1.5-E480`), KEPT AND STILL WRITTEN (`E164`).
+  /// It is `origin`'s crude two-value ancestor: `true` ≡ `origin: PROVIDER`,
+  /// `false` ≡ `origin: SEED`. ⚠ IT IS NOT THE AUTHORITY ANY MORE — the seed's
+  /// retirement pass reads `origin`. ⚠ NOT DROPPED IN THIS PASS: `db push` would
+  /// destroy the column, several call sites still read it, and Part B/C land on
+  /// top of this schema. Dropping it is its own change once nothing reads it.
   is_custom  Boolean            @default(false)
+  /// ⚠ WHO CREATED THIS ROW (`P1-A1.5-E480`). Backfilled losslessly from
+  /// `is_custom`: true → PROVIDER, false → SEED. See `CatalogOrigin`.
+  origin     CatalogOrigin      @default(SEED)
+  /// ⚠ WHAT STATE THIS ROW IS IN (`P1-A1.5-E480`). See `CatalogStatus`.
+  status     CatalogStatus      @default(ACTIVE)
   created_at DateTime           @default(now())
   updated_at DateTime           @updatedAt
 
@@ -1182,6 +1200,43 @@ model Specialization {
 
 /// Grouping for the picker — the xlsx lists products, then methodologies, then
 /// industries, and the step renders them in those groups.
+/// ── ⚠⚠ WHO CREATED A CATALOG ROW (`P1-A1.5-E480`) ──────────────────────────
+///
+/// ⚠ IT GOVERNS WHETHER THE SEED MAY RETIRE THE ROW, and nothing else.
+/// `seed-taxonomy.ts`'s retirement pass may delete `SEED` rows only; `ADMIN` and
+/// `PROVIDER` rows are never touched by a reseed, ever.
+///
+/// ⚠⚠ THIS IS WHY IT IS A SECOND FIELD AND NOT A `status` VALUE. A single state
+/// column cannot express *"an admin added this, so the seed must not retire it"*
+/// — that is a fact about ORIGIN, not about state. A row can be
+/// `ADMIN` + `RETIRED`, or `PROVIDER` + `SUGGESTED`; collapsing them loses one.
+///
+/// ⚠ AND IT IS WHY `is_custom` COULD NOT CARRY IT. If admin-added rows also set
+/// `is_custom`, then "custom" means BOTH *"a provider typed it"* AND *"an admin
+/// added it"*, and the review queue can no longer tell them apart — which is the
+/// one thing that queue exists to do.
+enum CatalogOrigin {
+  SEED
+  ADMIN
+  PROVIDER
+}
+
+/// ── WHAT STATE A CATALOG ROW IS IN (`P1-A1.5-E480`) ────────────────────────
+///
+/// ⚠ IT GOVERNS WHETHER THE ROW IS OFFERED. `ACTIVE` is the only state a picker
+/// shows. ⚠ DEFAULTS TO `ACTIVE`, so every existing row is unchanged on deploy.
+///
+/// ⚠⚠ `RETIRED` IS NOT A DELETE. A retired row keeps its id and therefore keeps
+/// every `ProviderSkill` / `ProviderProfileSpecialization` pointing at it — which
+/// is the whole reason "inactivate" is always safe and "delete" is not.
+/// ⚠ `SUGGESTED` is a provider's proposal: it appears on its author's own
+/// profile and in NOBODY else's picker until an admin promotes it.
+enum CatalogStatus {
+  ACTIVE
+  RETIRED
+  SUGGESTED
+}
+
 enum SpecializationKind {
   PRODUCT
   METHODOLOGY

@@ -83,7 +83,13 @@ export async function POST(request: Request) {
         role_type_id: profile.role_type_id,
         pillar_id: profile.pillar_id,
         name,
+        /* ⚠⚠ `origin` IS THE SHIELD NOW (`P1-A1.5-E480`), NOT `is_custom`.
+           The seed's retirement pass reads `origin` and may only delete
+           `SEED` rows. ⚠ WITHOUT THIS LINE THIS ROW DEFAULTS TO `SEED` AND
+           THE NEXT RESEED DELETES IT SILENTLY. Both are written while
+           `is_custom` survives as the superseded ancestor. */
         is_custom: true,
+        origin: "PROVIDER",
       },
       select: { id: true, name: true },
     });

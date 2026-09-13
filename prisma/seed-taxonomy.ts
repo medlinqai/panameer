@@ -831,12 +831,30 @@ export async function seedTaxonomy(
   // Provider selections pointing at a retired skill are removed FIRST: the FK
   // cascades anyway, but doing it explicitly means the count is reportable
   // rather than silent — a provider losing a skill should be visible.
+  /*
+    ── ⚠⚠ THE RETIREMENT PASS READS `origin` NOW (`P1-A1.5-E480`) ────────────
+
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+        // Provider-authored skills (brief_S / E031) are NOT stale — they were
+        // never in the JSON and re-seeding must not delete a provider's data.
+        is_custom: false,
+
+    ⚠ THE REASONING WAS RIGHT AND THE FIELD WAS TOO NARROW. `is_custom` has
+    exactly two values, so it can say "a provider typed this" and nothing else.
+    ⚠⚠ AN ADMIN-ADDED ROW WOULD HAVE HAD `is_custom: false` AND THIS PASS WOULD
+    HAVE DELETED IT ON THE NEXT RESEED, SILENTLY — which is precisely the trap
+    Part B's add button would have walked into.
+
+    ⚠⚠ THE SEED MAY RETIRE `SEED` ROWS AND NOTHING ELSE. `ADMIN` and `PROVIDER`
+    rows are never touched by a reseed, ever. That is the whole contract, and it
+    is enforced here rather than remembered.
+    ⚠ SETTING `origin` ON AN ADMIN-ADDED ROW IS THEREFORE LOAD-BEARING, not
+    bookkeeping — Part B's write path must set it or the row is not protected.
+  */
   const staleSkills = await prisma.skill.findMany({
     where: {
       id: { notIn: [...keptSkillIds] },
-      // Provider-authored skills (brief_S / E031) are NOT stale — they were
-      // never in the JSON and re-seeding must not delete a provider's data.
-      is_custom: false,
+      origin: "SEED",
     },
     select: { id: true, name: true, role_type_id: true },
   });
