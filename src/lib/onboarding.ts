@@ -2747,6 +2747,8 @@ async function recordPublishAudit(profileId: string): Promise<void> {
         parsed: true,
         ai_model: true,
         ai_provider: true,
+        /* ⚠ `E487` — the prompt that RAN. */
+        ai_prompt_version: true,
         ai_input_tokens: true,
         ai_output_tokens: true,
         ai_cost_usd: true,
@@ -2773,6 +2775,8 @@ async function recordPublishAudit(profileId: string): Promise<void> {
       costUsd: imp.ai_cost_usd ? Number(imp.ai_cost_usd) : null,
       latencyMs: imp.ai_latency_ms,
       parsed: imp.parsed as unknown as ParsedResume,
+      /* ⚠ `E487` — the version that RAN, carried forward from the parse. */
+      promptVersion: imp.ai_prompt_version,
       final,
     });
   } catch (e) {

@@ -10,7 +10,7 @@ import { uploadResumeFile, deleteResumeFile } from "@/lib/storage";
 import { buildVocabulary, extractJobSkills } from "./job-skills";
 import { matchSkills, suggestableSkills } from "@/lib/resume/match";
 import { assessParse } from "@/lib/resume/confidence";
-import { aiToParsedResume } from "@/lib/resume/ai-extract";
+import { aiToParsedResume, PROMPT_VERSION } from "@/lib/resume/ai-extract";
 import {
   aiExtractResumeMultiPass,
   type RecallReport,
@@ -323,6 +323,10 @@ export async function importProfileDocument({
       // WS-G provenance, now written on the FIRST parse rather than only when
       // somebody pressed the re-read button. Null on a heuristic parse, which
       // is what "no model produced this" has always meant on these columns.
+      /* ⚠ CAPTURED AT PARSE TIME (`P1-A1.5-E487`) — the audit is written later,
+         at review-save, and a prompt edited in between would otherwise be
+         recorded against a run it never touched. */
+      ai_prompt_version: PROMPT_VERSION,
       ai_model: read.usage?.model ?? null,
       ai_provider: read.usage?.provider ?? null,
       ai_input_tokens: read.usage?.inputTokens ?? null,

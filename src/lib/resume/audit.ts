@@ -63,6 +63,8 @@ export type ParseAuditInput = {
   latencyMs?: number | null;
   parsed: ParsedResume;
   final: ParsedResume;
+  /** ⚠ Read off `ProfileImport.ai_prompt_version`, captured at PARSE time. */
+  promptVersion?: string | null;
 };
 
 /** Field-level comparison of a parse against what was saved. */
@@ -94,10 +96,44 @@ export function diffParse(parsed: ParsedResume, final: ParsedResume) {
   return { changed, accuracy: total > 0 ? kept / total : null };
 }
 
+/**
+ * ── ⚠⚠ WHAT THE RUN BUILT, COUNTED FROM THE MODEL'S OWN OUTPUT (`E487`) ─────
+ *
+ * ⚠ NOT `kept + changed`. That looks like the same number and is not: the diff
+ * compares FOUR field types, and it does not exist at all until a human
+ * reviews. A run nobody has looked at still built things.
+ * ⚠ ONE TAXONOMY, READ TWICE — these are the same object types the completeness
+ * checklist reads on the provider's side. Two lists that drift is how "27
+ * objects" and "7 of 10" start disagreeing on the same screen.
+ */
+export function countBuilt(parsed: ParsedResume): Record<string, number> {
+  const n = (a: unknown[] | null | undefined) => (Array.isArray(a) ? a.length : 0);
+  const built: Record<string, number> = {
+    employers: n(parsed.experiences),
+    projects: n(
+      (parsed.experiences ?? []).flatMap(
+        (e) => (e as { projects?: unknown[] }).projects ?? []
+      )
+    ),
+    education: n(parsed.education),
+    certifications: n(parsed.certifications),
+    skills: n(parsed.skills),
+    languages: n(parsed.languages),
+    /* ⚠ SCALARS COUNT AS ONE OR ZERO — "did the model produce a headline" is a
+       real object in Scott's count and omitting it would undercount every run. */
+    headline: parsed.headline ? 1 : 0,
+    overview: (parsed as { overview?: string | null }).overview ? 1 : 0,
+  };
+  return built;
+}
+
 /** Write one audit row. Silent on failure by design. */
 export async function recordParseAudit(input: ParseAuditInput): Promise<void> {
   try {
     const { changed, accuracy } = diffParse(input.parsed, input.final);
+    /* ⚠ COMPUTED HERE, STORED AS A COLUMN — never re-derived at read time. */
+    const built = countBuilt(input.parsed);
+    const builtTotal = Object.values(built).reduce((a, b) => a + b, 0);
     await prisma.resumeParseAudit.create({
       data: {
         provider_profile_id: input.providerProfileId,
@@ -112,6 +148,12 @@ export async function recordParseAudit(input: ParseAuditInput): Promise<void> {
         final: input.final as unknown as object,
         changed: changed as unknown as object,
         accuracy,
+        built: built as unknown as object,
+        built_total: builtTotal,
+        /* ⚠ THE DENOMINATOR — yield is meaningless without it. */
+        source_chars: input.resumeText.length,
+        /* ⚠ FROM THE RUN, not from whatever the constant says at save time. */
+        prompt_version: input.promptVersion ?? null,
       },
     });
   } catch (e) {
