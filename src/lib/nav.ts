@@ -983,11 +983,36 @@ export const ADMIN_NAV: NavGroup[] = [
         (`check-nav-reachable.ts:68`), so this resolves to `/admin/specializations`
         — already admin-gated. No assertion was touched.
       */
-      {
-        label: "Industries",
-        href: "/admin/specializations?kind=INDUSTRY",
-        icon: "Building2",
-      },
+      /*
+        ── ⚠⚠ AND NOW THE RAIL ITEM IS GONE TOO (`P1-A1.5-E476`) ──────────────
+
+        > **SCOTT, 2026-09-13, twice in one evening:** *"industries points to
+        > specializations"* · *"confused to see industries by itself"*
+
+        ⚠ SUPERSEDED, quoted not deleted (`E164`) — BOTH the entry and `E470d`'s
+        reasoning for keeping it:
+          { label: "Industries", href: "/admin/specializations?kind=INDUSTRY",
+            icon: "Building2" },
+          *"KEEP the rail item, its label and its icon. Scott uses it as a
+           shortcut and it costs nothing; what was wrong was the second PAGE,
+           not the second ENTRY."*
+
+        ⚠⚠ IT DID NOT COST NOTHING. Clicking Industries lit up SPECIALIZATIONS,
+        because `isActive` (`AppRail.tsx:118`) reads `pathname` and nothing else
+        — two rail items sharing one path are indistinguishable and the first
+        one wins.
+
+        ⚠⚠ `isActive` IS DELIBERATELY NOT TOUCHED. Making it query-aware would
+        put new shared logic on the one function EVERY item in BOTH nav trees
+        depends on, to preserve a shortcut that is actively confusing. ⚠ DELETING
+        THE DUPLICATE REMOVES THE BUG CLASS: with one item per path the existing
+        function is correct again and needs no change at all.
+
+        ⚠ `/admin/specializations?kind=INDUSTRY` STAYS AND STILL WORKS — it is
+        reached from the Industries TILE on the Specializations page, which is
+        the natural route. ⚠ `src/app/admin/_industries/page.tsx` stays unrouted
+        on disk (`E470d` settled that; `E164` is a house rule).
+      */
       /*
         THE ASSESSMENT'S FUNDING RATE (brief_assessment_p2p_phase1). Configuration
         Data, not Support Data: it is a value the platform computes with, like the
