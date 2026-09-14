@@ -457,6 +457,8 @@ model Person {
   // invites they've sent (brief_I).
   repProviderProfiles ProviderProfile[]   @relation("CoordinatorProviders")
   coordinatorInvites  CoordinatorInvite[] @relation("CoordinatorInvitesSent")
+  /// ⚠ `E493` — colleague invitations this person sent. No roster, no relation.
+  colleagueInvites    ColleagueInvite[]   @relation("ColleagueInvitesSent")
   // As a BUYER: the work requests this Person created (brief_L).
   workRequests        WorkRequest[]
   // SMS verification challenges for this person's phone (brief_P).
@@ -2624,6 +2626,77 @@ model CoordinatorInvite {
   @@index([inviter_person_id])
   @@index([invitee_email])
   @@map("coordinator_invites")
+}
+
+
+/// ── ⚠⚠ A COLLEAGUE INVITE IS NOT A ROSTER INVITE (`P2-J3-E493`) ────────────
+///
+/// > **SCOTT, 2026-09-13:** *"can we add an 'Invite a Colleague' page… requesting
+/// > the person being emailed to connect to panameer?"*
+///
+/// ⚠⚠ IT IS A SEPARATE MODEL, AND `CoordinatorInvite` WAS MEASURED BEFORE THIS
+/// WAS WRITTEN. Accepting one of those does two things that are simply WRONG for
+/// a colleague:
+///   · `providerProfile.coordinator_person_id = inviter.id` — it ATTACHES THE
+///     INVITEE TO THE INVITER'S ROSTER.
+///   · it refuses with `not_a_provider` when the invitee has no ProviderProfile.
+/// ⚠ A colleague may be a buyer, a requester, or nobody yet, and the invitation
+/// confers NO relationship — it is "come and look at this". Overloading a roster
+/// invite with that meaning is how `is_custom` ended up meaning two things.
+///
+/// ⚠ NO `accepted_provider_id` AND NO ROSTER WRITE, DELIBERATELY. Accepting this
+/// means one thing: they signed up. `accepted_at` records that and nothing else.
+model ColleagueInvite {
+  id                 String                @id @default(uuid()) @db.Uuid
+  /**
+   * ⚠⚠ NULLABLE, AND THAT IS THE POINT (`E493`). Scott: store it, attribute
+   * nothing, build no referral programme — *"it is there so the option
+   * survives."*
+   *
+   * ⚠ `/legal/referral-program-terms` is a legal DOCUMENT, not a live programme,
+   * and its own text says Panameer *"may"* offer one. But it contemplates
+   * Referrer → Referee attribution, and ⚠⚠ ATTRIBUTION CANNOT BE RETROFITTED TO
+   * INVITES ALREADY SENT. Recording the inviter now costs a column; not
+   * recording it would cost every invitation sent before the decision.
+   * ⚠ Nothing reads this field today. It is deliberately inert.
+   */
+  inviter_person_id  String?               @db.Uuid
+  invitee_email      String
+  invitee_first_name String?
+  invitee_last_name  String?
+  /// The inviter's own words, shown in the email. Optional.
+  message            String?
+  /// SHA-256 of the raw token; the raw token lives only in the emailed link.
+  /// ⚠ Same discipline as `CoordinatorInvite` — the DB never holds the secret.
+  token_hash         String                @unique
+  status             ColleagueInviteStatus @default(PENDING)
+  expires_at         DateTime
+  /// ⚠ Set when they sign up. NO provider id, NO roster row — see the note above.
+  accepted_at        DateTime?
+  created_at         DateTime              @default(now())
+  updated_at         DateTime              @updatedAt
+
+  /// ⚠ `SetNull`, not Cascade: an invitation that was genuinely sent is a fact,
+  /// and deleting the inviter must not rewrite history. It only loses its
+  /// attribution, which nothing reads yet anyway.
+  inviter Person? @relation("ColleagueInvitesSent", fields: [inviter_person_id], references: [id], onDelete: SetNull)
+
+  @@index([inviter_person_id])
+  @@index([invitee_email])
+  /// ⚠ The rate limit counts this inviter's recent rows — see `lib/colleague-invite.ts`.
+  @@index([inviter_person_id, created_at])
+  @@map("colleague_invites")
+}
+
+/// ⚠ ITS OWN ENUM, not `CoordinatorInviteStatus`. The VALUES are identical and
+/// the MEANING is identical — an invite's lifecycle — but putting a
+/// coordinator-named type on a colleague model is the naming half of the same
+/// confusion this model exists to avoid.
+enum ColleagueInviteStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
 }
 
 enum CoordinatorInviteStatus {

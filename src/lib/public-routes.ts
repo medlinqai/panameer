@@ -207,6 +207,12 @@ export const PUBLIC_ROUTES: PublicRoute[] = [
   */
   { route: "/verify/[credentialId]", category: 4 },
   { route: "/invite/accept", category: 4 },
+  /* ⚠ `E493` — the COLLEAGUE invitation, which is a different surface from the
+     line above it: `/invite/accept` is the coordinator's roster invite. Both are
+     mailed to people with no account, so both are category 4 for the same
+     reason. ⚠ THE DEFAULT IS DENY — without this line the invitation 302s to
+     /login and the email is a dead end. */
+  { route: "/invite/colleague/[token]", category: 4 },
   { route: "/validate/[token]", category: 4 },
   { route: "/recommend/[token]", category: 4 },
   { route: "/verify-email", category: 4 },

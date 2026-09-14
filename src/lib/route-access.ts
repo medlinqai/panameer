@@ -147,6 +147,12 @@ export const ROUTE_ACCESS: { prefix: string; requires: RouteRequirement }[] = [
   { prefix: "/stats", requires: "authenticated" },
   { prefix: "/account-health", requires: "authenticated" },
   { prefix: "/recommendations", requires: "authenticated" },
+  /* ⚠ `E493` — the Account menu's next item down, and `authenticated` for the
+     same reason as the line above it: anyone with an account has colleagues, and
+     `canProvideServices` would turn a visible menu item into a bounce for every
+     buyer. ⚠ The page self-guards too; this puts the edge in front of it, the
+     way `/recommendations` already has it. */
+  { prefix: "/invite-colleague", requires: "authenticated" },
   { prefix: "/hire", requires: "canHireTalent" },
   /*
     ⚠ REGISTERED BY `P1-J4-E392`. The three pages under `/work-requests/[id]`

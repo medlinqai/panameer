@@ -676,6 +676,14 @@ export const PERSONA_NAV_PRIMARY: NavItem[] = [
 export const PERSONA_NAV_SECONDARY: NavItem[] = [
   { label: "Request Recommendations", href: "/recommendations" },
   /*
+    ⚠ `P2-J3-E493` — DIRECTLY UNDER Request Recommendations, where Scott put it:
+    *"This would be under the request recommendation option on the Setting menu."*
+    ⚠⚠ THE TWO ASKS ARE DIFFERENT AND THE ADJACENCY IS THE POINT — one asks
+    somebody to VOUCH for you, the other asks them to JOIN. Sitting together is
+    what makes the difference legible.
+  */
+  { label: "Invite a Colleague", href: "/invite-colleague" },
+  /*
     E225 — "MY COMPANY" IS GONE FROM HERE. The three-zone rule is that the
     top-left chip owns the company and this menu owns the person; an entry that
     opened /company from the personal popover was the last thing crossing that
