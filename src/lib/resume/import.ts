@@ -922,16 +922,84 @@ export async function applyParsedResume(
   // A résumé's free-text skills are not the taxonomy. Matching against the
   // catalog keeps the marketplace searchable; anything unmatched is reported
   // as a gap rather than silently invented as a new Skill row.
-  if (parsed.skills.length > 0) {
+  /*
+    ── ⚠⚠ A CERTIFICATION IMPLIES A SKILL (`P2-J1.4-E509` WS-B) ───────────────
+
+    > **SCOTT:** *"if you have a certification you definitely have a skill."*
+
+    ⚠ HE IS RIGHT, AND THE EVIDENCE WAS ON HIS OWN SCREEN: three certifications
+    parsed PERFECTLY and contributed NOTHING to skills. The certifications
+    section is the most reliable thing on that page and it was the one signal
+    the matcher never read.
+
+    ⚠⚠ THE SAME `matchSkills`, NOT A SECOND MATCHER. One rule, one place — `E444`
+    and the two-catalog bug are both what happens when there are two. The titles
+    are simply appended to the terms already being matched.
+
+    ⚠⚠ NO EXPANSION, NO INFERENCE BEYOND THE WORDS IN THE TITLE. A certificate
+    implies the skill it NAMES and nothing adjacent: *Projects Certified* does
+    not make somebody a Grants expert. Because this is the ordinary matcher over
+    the ordinary catalog, that restraint is structural rather than a rule anyone
+    has to remember.
+
+    ⚠ MEASURED ON THE FIXTURE, and the result is honest rather than flattering:
+      "Oracle Fusion Projects Certified Implementation Specialist" → `Projects` ✓
+      "Oracle Fusion Apps"  → no match
+      "PPM (Certified)"     → no match
+    ⚠⚠ THE TWO MISSES ARE A CATALOG FINDING, NOT A MATCHER FINDING. `PPM` is a
+    DOMAIN (`Project Portfolio Mgmt (PPM)`) with zero skill rows carrying the
+    string, and `Oracle Fusion` is the DOMAIN `Oracle Fusion Cloud`. Both name
+    domains, and the matcher only ever matches SKILLS. Nothing to fix here.
+  */
+  const certTerms = (parsed.certifications ?? [])
+    .map((c) => String((c as { name?: string }).name ?? "").trim())
+    .filter(Boolean);
+
+  if (parsed.skills.length > 0 || certTerms.length > 0) {
     const catalog = await prisma.skill.findMany({
       /* ⚠ `E481` — never match a parsed skill onto a retired row. */
       where: OFFERABLE,
       select: { id: true, name: true },
     });
-    const { matched, unmatched } = matchSkills(parsed.skills, catalog);
+    /*
+      ⚠⚠ DEDUPED BEFORE MATCHING — A WALK CAUGHT THIS TOO. `PPM (Certified)` and
+      `Oracle Fusion Apps` appear in BOTH the skills section and the
+      certifications section of the fixture, so passing the two lists
+      concatenated fed the matcher the same term twice and `unmatched` came back
+      with duplicate rows (19 → 21). ⚠ `suggestableSkills` happens to dedupe, so
+      the queue looked fine while `applied.skillsUnmatched` — the provider's own
+      gap list — did not.
+    */
+    const seenTerm = new Set<string>();
+    const terms = [...parsed.skills, ...certTerms].filter((t) => {
+      const k = t.trim().toLowerCase();
+      if (!k || seenTerm.has(k)) return false;
+      seenTerm.add(k);
+      return true;
+    });
+    const { matched, unmatched } = matchSkills(terms, catalog);
 
-    applied.skillsUnmatched = unmatched;
-    applied.skillSuggestions = suggestableSkills(unmatched);
+    /*
+      ⚠ AN UNMATCHED CERTIFICATE TITLE IS NOT A SUGGESTED SKILL. "Oracle Fusion
+      Projects Certified Implementation Specialist" is a credential, and offering
+      it to the admin as a candidate skill row would pollute `E482`'s queue with
+      sentences. ⚠⚠ SO THE GAP LIST AND THE SUGGESTIONS STAY SCOPED TO THE
+      SKILLS SECTION — only the MATCHING half sees the certificates.
+
+      ⚠⚠ CERT-**ONLY**, NOT EVERY CERT TERM — A WALK CAUGHT THIS. On the fixture
+      `PPM (Certified)` appears in BOTH the skills section AND the certificates
+      section, so filtering on "is a certificate title" silently removed a term
+      the provider really did list as a skill: suggestions fell 18 → 17 and the
+      gap list lost a row it had earned. ⚠ SUBTRACTING THE SKILLS SECTION FIRST
+      is what makes this additive-only, which is the whole contract of WS-B.
+    */
+    const norm = (x: string) => x.trim().toLowerCase();
+    const fromSkills = new Set(parsed.skills.map(norm));
+    const certOnly = new Set(certTerms.map(norm).filter((t) => !fromSkills.has(t)));
+    const skillUnmatched = unmatched.filter((u) => !certOnly.has(norm(u)));
+
+    applied.skillsUnmatched = skillUnmatched;
+    applied.skillSuggestions = suggestableSkills(skillUnmatched);
     applied.skillsMatchedNames = matched.map((m) => m.name);
 
     const have = new Set(profile.skills.map((s) => s.skill_id));
