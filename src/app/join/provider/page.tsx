@@ -713,6 +713,9 @@ export default function JoinProviderPage() {
   const [pickedSuggestions, setPickedSuggestions] = useState<string[]>([]);
   const [suggestBusy, setSuggestBusy] = useState(false);
   const [suggestDone, setSuggestDone] = useState<string[] | null>(null);
+  /* ⚠ `E511` PART 1 — this card's own error, because the page-level Notice is a
+     screen and a half above it. See `confirmSuggestions`. */
+  const [suggestError, setSuggestError] = useState<string | null>(null);
   const [photoModal, setPhotoModal] = useState(false);
 
   /**
@@ -1442,6 +1445,8 @@ setScreen(target);
     if (pickedSuggestions.length === 0) return;
     setSuggestBusy(true);
     setError(null);
+    /* ⚠ `E511` PART 1 — the card's OWN error slot, cleared on every attempt. */
+    setSuggestError(null);
     try {
       const r = await fetch("/api/onboarding/provider/skill-suggestions", {
         method: "POST",
@@ -1450,12 +1455,45 @@ setScreen(target);
       });
       const body = await r.json().catch(() => ({}));
       if (!r.ok) {
-        setError(body.error ?? "Could not add those skills.");
+        /*
+          ── ⚠⚠ THE FAILURE RENDERS ON THE CARD (`P2-J1.4-E511` PART 1) ───────
+
+          > **SCOTT:** *"Clicking the 'ADD 13 SELECTED' button and nothing is
+          > happening."*
+
+          ⚠ THE ERROR WAS ALWAYS BEING SET — `setError` ran correctly. But
+          `{error && <Notice>}` renders at the TOP of the `WizardShell`, and
+          this card is at the FOOT of a very long review page: the message
+          appeared roughly a screen and a half above where he was looking.
+          ⚠⚠ A CORRECT ERROR, RENDERED WHERE NOBODY CAN SEE IT, IS
+          INDISTINGUISHABLE FROM A DEAD BUTTON.
+          ⚠ THE SUCCESS MESSAGE ALREADY LIVES ON THIS CARD (`✓ Added …`); the
+          failure had no reason to live somewhere else.
+          ⚠ BOTH ARE SET, NOT ONE: the page-level Notice is untouched, so a
+          reader who IS at the top still sees it. This ADDS a local one.
+        */
+        const msg = body.error ?? "Could not add those skills.";
+        setError(msg);
+        setSuggestError(msg);
         return;
       }
       if (body.state) hydrate(body.state as StatusPayload);
       setSuggestDone(body.added ?? []);
       setPickedSuggestions([]);
+    } catch {
+      /*
+        ── ⚠⚠ THERE WAS NO `catch` (`E511` PART 2) ──────────────────────────
+
+        ⚠ `try`/`finally` with no `catch`: a THROWN fetch — offline, DNS, a
+        dropped connection — produced an unhandled rejection, `setError` never
+        ran, the spinner cleared, and ⚠⚠ THE USER SAW EXACTLY WHAT SCOTT SAW:
+        nothing. That is a second, independent route to the same silence.
+        ⚠ A HUMAN SENTENCE, NEVER THE RAW EXCEPTION. `err.message` here is
+        "Failed to fetch", which tells a provider nothing they can act on.
+      */
+      const msg = "Couldn't reach Panameer to add those. Check your connection and try again.";
+      setError(msg);
+      setSuggestError(msg);
     } finally {
       setSuggestBusy(false);
     }
@@ -3277,11 +3315,33 @@ setScreen(target);
                         );
                       })}
                     </div>
+                    {/*
+                      ── ⚠⚠ IT SAYS WHY IT CANNOT RUN, BEFORE IT IS CLICKED (`E511`) ──
+
+                      ⚠ THE ROUTE'S GUARD IS CORRECT AND STAYS: the upsert's
+                      composite key is `catalog_id + role_type_id + pillar_id +
+                      name`, so without a role there is literally no row to
+                      write. ⚠⚠ THE ROUTE WAS NEVER THE BUG — the card was
+                      rendered six steps before the answer it requires existed.
+
+                      ⚠ `E509` WS-A NOW DERIVES THE ROLE AND DOMAIN FROM THE
+                      PROVIDER'S OWN MATCHED SKILLS, so by the time this review
+                      renders both are usually populated and the 400 cannot
+                      happen. ⚠⚠ BUT THE MANUAL PATH IS STILL REAL: a provider
+                      whose résumé matched nothing has no derivation, so the role
+                      is null and the button is back in its original state.
+                      ⚠ A BUTTON THAT LOOKS LIVE AND CANNOT BE IS THE DEFECT. A
+                      disabled one that explains itself is honest.
+                    */}
                     <div className="mt-4 flex flex-wrap items-center gap-4">
                       <button
                         type="button"
                         onClick={confirmSuggestions}
-                        disabled={pickedSuggestions.length === 0 || suggestBusy}
+                        disabled={
+                          pickedSuggestions.length === 0 ||
+                          suggestBusy ||
+                          !profile.roleTypeIds.length
+                        }
                         className="rounded-full bg-magenta px-6 py-2.5 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-40"
                       >
                         {suggestBusy
@@ -3296,7 +3356,19 @@ setScreen(target);
                           ✓ Added {suggestDone.join(", ")}
                         </span>
                       )}
+                      {/* ⚠ THE REASON, BEFORE THE CLICK — not an error after it. */}
+                      {!profile.roleTypeIds.length && (
+                        <span className="text-[13.5px] text-ink-2">
+                          Available once you choose your role.
+                        </span>
+                      )}
                     </div>
+                    {/* ⚠⚠ THE FAILURE, ON THE CARD (`E511` PART 1). */}
+                    {suggestError && (
+                      <p className="mt-3 rounded-[10px] border border-line bg-ink/[0.03] px-3 py-2 text-[13.5px] text-ink">
+                        {suggestError}
+                      </p>
+                    )}
                   </ProfileCard>
                 </div>
               )}
