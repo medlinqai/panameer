@@ -2431,6 +2431,46 @@ export async function applyProviderSection(
 
   }
 
+  /*
+    ── ⚠⚠ THE DOMAIN IS SELF-CORRECTING, NOT PERMANENT (`P2-J1.4-E507` PART D) ─
+
+    `E509` WS-A left a CATALOG-COUNT FALLBACK in the role step, and deliberately:
+    a provider who picks a role MANUALLY has no skills yet, and the stored
+    (role, domain) pair still has to be a REAL pair or `E511`'s button 400s.
+    ⚠⚠ BUT THAT FALLBACK MUST NOT OUTLIVE THE EVIDENCE. Once the provider HAS
+    skills — parsed or typed — the domain chosen by catalog size is simply wrong,
+    and nothing was recomputing it: it was written once at the role step and
+    never revisited.
+
+    ⚠ SO IT RECOMPUTES WHENEVER THE SKILL SET CHANGES. `deriveRolesFromSkills`
+    is CALLED, never copied — one derivation, one place, so the role page's
+    prefill and this correction can never disagree.
+    ⚠ IT ONLY EVER MOVES THE DOMAIN **WITHIN THE ROLE THE PROVIDER CHOSE**: the
+    derivation's primary must match the stored role, or nothing happens. A
+    provider's ROLE is their answer and this must never overwrite it — that is
+    `E509`'s whole rule, and it applies to its own follow-up.
+    ⚠ AND IT NEVER NULLS A DOMAIN. No evidence means no change, not a blank.
+  */
+  if (section === "skills") {
+    const stored = await prisma.providerProfile.findUnique({
+      where: { id: profileId },
+      select: { role_type_id: true, pillar_id: true },
+    });
+    if (stored?.role_type_id) {
+      const derived = await deriveRolesFromSkills(profileId);
+      if (
+        derived.roleTypeIds[0] === stored.role_type_id &&
+        derived.pillarId &&
+        derived.pillarId !== stored.pillar_id
+      ) {
+        await prisma.providerProfile.update({
+          where: { id: profileId },
+          data: { pillar_id: derived.pillarId },
+        });
+      }
+    }
+  }
+
   // Every save recomputes stored completeness (brief_K) — the marketplace
   // visibility gate reads this column, so it must stay current on every write.
   await recomputeCompleteness(profileId);
