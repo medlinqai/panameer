@@ -305,9 +305,38 @@ export function AppRail() {
     10.5px/0.09em, which is the app's own equivalent and already on screen two
     inches below on every admin page.
   */
+  /*
+    ── ⚠⚠ THE RAIL IS THE "MAIN MENU" (`P2-J3-E491`) ─────────────────────────
+
+    > **SCOTT, 2026-09-13:** *"this is now going to be called the 'Main Menu'.
+    > Replace 'SELLER' with MAIN MENU (the word 'rail' means nothing to the
+    > average person)."*
+
+    ⚠ HE IS RIGHT ABOUT THE WORD. *Rail* is a house term. It STAYS IN THE CODE —
+    the component is `AppRail`, the file is `AppRail.tsx` — and leaves the copy.
+
+    ⚠⚠ `persona` IS A VALUE, NOT A LABEL, AND THAT IS THE TRAP. `railPersona()`
+    returns `"PANAMEER"` / `"SELLER"` / `"BUYER"` and `isAdmin` above BRANCHES ON
+    `persona === "PANAMEER"`. Changing what the function RETURNS would make that
+    comparison silently stop matching and the admin rail would quietly take the
+    wrong branch with nothing failing. ⚠ SO THE DERIVATION IS UNTOUCHED AND ONLY
+    THE RENDER CHANGES. ⚠ SUPERSEDED, quoted not deleted: `{persona}`.
+
+    ⚠⚠ ALL THREE PERSONAS, NOT ONLY THE SELLER — REPORTED, NOT ASSUMED. Scott
+    spoke about the seller rail; chat's view is all three and the code agrees:
+    `consoleLabel` a few lines above ALREADY renders `Platform Console` /
+    `Provider Console` / `Buyer Console` directly under the logo, so the persona
+    word was saying which side you are on TWICE. One of the two had to go, and
+    the one that reads as a house term is the one to lose.
+
+    ⚠ THE STYLING IS UNTOUCHED — 10.5px / uppercase / tracking-[0.09em] /
+    white/40. `E475` deliberately kept THIS caption's treatment while the GROUP
+    headers went sentence-case; tidying it to match them would undo that.
+    ⚠ `uppercase` is why this reads `MAIN MENU` from `Main Menu`.
+  */
   const personaCaption = persona && (
     <p className="px-2.5 pb-1 text-[10.5px] font-semibold uppercase tracking-[0.09em] text-white/40">
-      {persona}
+      Main Menu
     </p>
   );
 

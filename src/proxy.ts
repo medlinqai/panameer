@@ -109,6 +109,9 @@ export const config = {
     "/stats/:path*",
     "/account-health/:path*",
     "/recommendations/:path*",
+    /* ⚠ `P2-J3-E493`. Paired with `route-access.ts`'s entry — the spec parses
+       this literal and fails if the two disagree in either direction. */
+    "/invite-colleague/:path*",
     "/hire/:path*",
     /* ⚠ `P1-J4-E392`. Paired with `route-access.ts`'s entry — the spec parses
        this literal and fails if the two disagree in either direction. */
