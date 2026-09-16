@@ -7,6 +7,7 @@ import { signIn } from "next-auth/react";
 import { WizardShell } from "@/components/onboarding/WizardShell";
 import { VerifyGate } from "@/components/onboarding/VerifyGate";
 import { OptionCard, Field, TextInput, Notice } from "@/components/onboarding/controls";
+import { PasswordReveal } from "@/components/PasswordReveal";
 import { LegalLink } from "@/components/legal/LegalLink";
 import { NoProfileYet, readBlockedParams } from "@/components/onboarding/NoProfileYet";
 
@@ -201,21 +202,36 @@ export default function JoinBuyerPage() {
             />
           </Field>
           <div className="grid gap-4 sm:grid-cols-2">
+            {/* ⚠ `E528` — the same reveal `SignUpForm` has had since `E047`.
+                ⚠⚠ BOTH FIELDS GET THEIR OWN, because a person who mistypes the
+                confirmation needs to see the confirmation. */}
             <Field label="Password" hint="At least 8 characters">
-              <TextInput
-                type="password"
-                value={acct.password}
-                onChange={(e) => setAcct({ ...acct, password: e.target.value })}
-                autoComplete="new-password"
-              />
+              <PasswordReveal id="join-buyer-password">
+                {({ type, className }) => (
+                  <TextInput
+                    id="join-buyer-password"
+                    type={type}
+                    className={className}
+                    value={acct.password}
+                    onChange={(e) => setAcct({ ...acct, password: e.target.value })}
+                    autoComplete="new-password"
+                  />
+                )}
+              </PasswordReveal>
             </Field>
             <Field label="Confirm Password">
-              <TextInput
-                type="password"
-                value={acct.confirm}
-                onChange={(e) => setAcct({ ...acct, confirm: e.target.value })}
-                autoComplete="new-password"
-              />
+              <PasswordReveal id="join-buyer-confirm">
+                {({ type, className }) => (
+                  <TextInput
+                    id="join-buyer-confirm"
+                    type={type}
+                    className={className}
+                    value={acct.confirm}
+                    onChange={(e) => setAcct({ ...acct, confirm: e.target.value })}
+                    autoComplete="new-password"
+                  />
+                )}
+              </PasswordReveal>
             </Field>
           </div>
 

@@ -3,6 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Card, Input, Select, postSetting } from "@/components/settings/controls";
+import {
+  RevealButton,
+  useRevealState,
+  PASSWORD_INPUT_PAD,
+} from "@/components/PasswordReveal";
 
 /**
  * Password & Security (J2.4 WS-H / E018).
@@ -50,6 +55,10 @@ function PasswordCard({ hasPassword }: { hasPassword: boolean }) {
   const [next, setNext] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  /* ⚠ ABOVE THE `hasPassword` EARLY RETURN BELOW — hooks cannot sit after a
+     conditional return, and this component has one. */
+  const currentReveal = useRevealState();
+  const nextReveal = useRevealState();
 
   if (!hasPassword) {
     return (
@@ -68,20 +77,30 @@ function PasswordCard({ hasPassword }: { hasPassword: boolean }) {
       description="Your current password is required — a change form that doesn't ask for it hands the account to whoever is sitting at an open laptop."
     >
       <div className="grid max-w-xl gap-3 sm:grid-cols-2">
+        {/* ⚠ `E528` — a change-password form is the other place a mistype is
+            invisible, and here it costs the person their CURRENT password too.
+            ⚠⚠ EACH FIELD REVEALS INDEPENDENTLY: these hold two different
+            secrets, and one toggle showing both is a worse default. */}
         <Input
           label="Current password"
-          type="password"
+          type={currentReveal.type}
+          className={PASSWORD_INPUT_PAD}
           value={current}
           onChange={(e) => setCurrent(e.target.value)}
           autoComplete="current-password"
+          trailing={
+            <RevealButton shown={currentReveal.shown} onToggle={currentReveal.toggle} />
+          }
         />
         <Input
           label="New password"
-          type="password"
+          type={nextReveal.type}
+          className={PASSWORD_INPUT_PAD}
           value={next}
           onChange={(e) => setNext(e.target.value)}
           autoComplete="new-password"
           hint="At least 10 characters."
+          trailing={<RevealButton shown={nextReveal.shown} onToggle={nextReveal.toggle} />}
         />
       </div>
       <div className="mt-4 flex flex-wrap items-center gap-3">

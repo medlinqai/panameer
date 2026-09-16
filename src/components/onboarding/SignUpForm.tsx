@@ -1,8 +1,11 @@
 "use client";
 
-import { useState } from "react";
+/* ⚠ `useState` CAME OUT WITH THE REVEAL STATE (`E528`). Its only consumer here
+   was `showPassword`, which now lives inside `PasswordReveal`; leaving the
+   import would be an unused-import lint error against a 0-new baseline. */
 import Link from "next/link";
 import { Field, TextInput, Notice } from "@/components/onboarding/controls";
+import { PasswordReveal } from "@/components/PasswordReveal";
 import { LegalLink } from "@/components/legal/LegalLink";
 import { SocialSignIn } from "@/components/auth/SocialSignIn";
 
@@ -141,8 +144,6 @@ export function SignUpForm({
   /** The "wrong side of the marketplace?" link under the form. */
   altPrompt?: { label: string; href: string; cta: string };
 }) {
-  const [showPassword, setShowPassword] = useState(false);
-
   const passwordTooShort =
     values.password.length > 0 && values.password.length < 8;
   /**
@@ -223,30 +224,29 @@ export function SignUpForm({
           />
         </Field>
 
+        {/* ⚠⚠ `E528` — THIS CONTROL DID NOT CHANGE, IT MOVED. The eye, its
+            `aria-label`/`aria-pressed`, the single flipping input and the
+            `pr-12` are the ones this form has had since `E047`; they now live in
+            `@/components/PasswordReveal` so sign-in, `/join/buyer` and Settings
+            get the same one rather than a second convention.
+            ⚠ THE ONE BEHAVIOUR CHANGE IS DELIBERATE AND IS REPORTED: Confirm
+            used to have NO button of its own and silently followed this field's
+            toggle. It now reveals independently — a person who mistypes the
+            confirmation needs to see the confirmation. */}
         <Field label="Password">
-          <div className="relative">
-            <TextInput
-              type={showPassword ? "text" : "password"}
-              value={values.password}
-              onChange={(e) => onChange({ password: e.target.value })}
-              autoComplete="new-password"
-              placeholder="Password (8 or more characters)"
-              className="pr-12"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword((s) => !s)}
-              // The control is icon-only now, so the accessible name has to
-              // come from aria-label — the eye alone says nothing to a screen
-              // reader, and this is the field people most need told.
-              aria-label={showPassword ? "Hide password" : "Show password"}
-              aria-pressed={showPassword}
-              title={showPassword ? "Hide password" : "Show password"}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-2 transition-colors hover:text-magenta"
-            >
-              {showPassword ? <EyeOffIcon /> : <EyeIcon />}
-            </button>
-          </div>
+          <PasswordReveal id="signup-password">
+            {({ type, className }) => (
+              <TextInput
+                id="signup-password"
+                type={type}
+                className={className}
+                value={values.password}
+                onChange={(e) => onChange({ password: e.target.value })}
+                autoComplete="new-password"
+                placeholder="Password (8 or more characters)"
+              />
+            )}
+          </PasswordReveal>
           {passwordTooShort && (
             <span className="mt-1 block text-[13px] text-red-700">
               Use at least 8 characters.
@@ -255,16 +255,19 @@ export function SignUpForm({
         </Field>
 
         <Field label="Confirm Password">
-          <div className="relative">
-            <TextInput
-              type={showPassword ? "text" : "password"}
-              value={values.confirmPassword}
-              onChange={(e) => onChange({ confirmPassword: e.target.value })}
-              autoComplete="new-password"
-              placeholder="Type it again"
-              className="pr-12"
-            />
-          </div>
+          <PasswordReveal id="signup-confirm">
+            {({ type, className }) => (
+              <TextInput
+                id="signup-confirm"
+                type={type}
+                className={className}
+                value={values.confirmPassword}
+                onChange={(e) => onChange({ confirmPassword: e.target.value })}
+                autoComplete="new-password"
+                placeholder="Type it again"
+              />
+            )}
+          </PasswordReveal>
           {passwordsMismatch && (
             <span className="mt-1 block text-[13px] text-red-700">
               These don&apos;t match.
@@ -378,44 +381,3 @@ export function SignUpForm({
     </div>
   );
 }
-
-/** Eye / eye-off toggle for the password field (brief_W / E047). */
-function EyeIcon() {
-  return (
-    <svg
-      className="h-[18px] w-[18px]"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-      focusable="false"
-    >
-      <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z" />
-      <circle cx="12" cy="12" r="3" />
-    </svg>
-  );
-}
-
-function EyeOffIcon() {
-  return (
-    <svg
-      className="h-[18px] w-[18px]"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-      focusable="false"
-    >
-      <path d="M10.6 5.2A8.9 8.9 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.1 4.05M6.2 6.2A17.7 17.7 0 0 0 2 12s3.6 7 10 7a9 9 0 0 0 4.3-1.05" />
-      <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" />
-      <path d="m3 3 18 18" />
-    </svg>
-  );
-}
-
