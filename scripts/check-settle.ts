@@ -287,7 +287,9 @@ check(
     !!lib && /without one the provider cannot answer it/.test(lib.text)
   );
   /* ⚠ AND THE REASON IS SHOWN BACK, prominently — otherwise requiring it is wasted. */
-  const detail = fileAt("src/app/(app)/finances/payment-requests/[id]/page.tsx");
+  /* ⚠ `P1-ALL-E533` — the tree moved to `/payments`; `/finances` is now three
+     `permanentRedirect` stubs. */
+  const detail = fileAt("src/app/(app)/payments/payment-requests/[id]/page.tsx");
   check(
     "3 — a rejected request shows its reason",
     !!detail && /s\.status === "REJECTED"/.test(detail.code) && /decisionNote/.test(detail.code)
@@ -472,17 +474,27 @@ check(
 
 const gated = new Map(ROUTE_ACCESS.map((e) => [e.prefix, e.requires]));
 check("6 — /pay is gated canHireTalent", gated.get("/pay") === "canHireTalent");
-check("6 — /finances is gated authenticated", gated.get("/finances") === "authenticated");
+/* ⚠⚠ `P1-ALL-E533` — BOTH are asserted, and deliberately. `/payments` is where
+   the pages live now; `/finances` still resolves to the retired redirects, and a
+   redirect anyone could hit would leak that a payment request exists. */
+check("6 — /payments is gated authenticated", gated.get("/payments") === "authenticated");
+check("6 — /finances (retired, still redirecting) stays gated", gated.get("/finances") === "authenticated");
 check("6 — /orders is gated authenticated (covers /orders/[id]/settle)", gated.get("/orders") === "authenticated");
 {
   const proxy = fileAt("src/proxy.ts");
-  for (const p of ["/pay", "/finances", "/orders"])
+  for (const p of ["/pay", "/payments", "/finances", "/orders"])
     check(`6 — proxy.ts runs the edge on ${p}`, !!proxy && proxy.text.includes(`"${p}/:path*"`));
 }
+/* ⚠⚠ `P1-ALL-E533` — THESE ARE THE `/payments` PATHS NOW. ⚠ SUPERSEDED, quoted
+   not deleted (`E164`): they read `src/app/(app)/finances/payment-requests/...`.
+   ⚠ THE OLD PATHS STILL EXIST but hold `permanentRedirect` stubs, which call no
+   `guardPage` — so left unchanged this block asserted the guard against a file
+   that no longer renders anything, and passed for the wrong reason or failed for
+   the wrong one. It failed, which is the better of the two. */
 for (const p of [
   "src/app/(app)/pay/page.tsx",
-  "src/app/(app)/finances/payment-requests/page.tsx",
-  "src/app/(app)/finances/payment-requests/[id]/page.tsx",
+  "src/app/(app)/payments/payment-requests/page.tsx",
+  "src/app/(app)/payments/payment-requests/[id]/page.tsx",
   "src/app/(app)/orders/[id]/settle/page.tsx",
 ]) {
   const f = fileAt(p);
@@ -506,7 +518,7 @@ for (const p of [
 }
 /* ⚠ AND THE PROVIDER IS TOLD WHY WHEN NOTHING IS RELEASED — not an empty form. */
 {
-  const list = fileAt("src/app/(app)/finances/payment-requests/page.tsx");
+  const list = fileAt("src/app/(app)/payments/payment-requests/page.tsx");
   check(
     "6 — the provider is told when no order is ready to bill against",
     !!list && /No work order is ready to bill against/.test(list.text)

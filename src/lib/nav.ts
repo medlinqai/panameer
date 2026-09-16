@@ -435,9 +435,9 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
     { label: "Work Requests", href: "/hire", requires: "canHireTalent" },
     { label: "Create a Request", href: "/create-work", requires: "canHireTalent" },
   ],
-  "/finances": [
-    { label: "Payments", href: "/finances" },
-    { label: "Payment Requests", href: "/finances/payment-requests" },
+  "/payments": [
+    { label: "Payments", href: "/payments" },
+    { label: "Payment Requests", href: "/payments/payment-requests" },
   ],
   /*
     ⚠⚠ `/community` — MODE `suggested`, AND THE NUMBERS ARE A RECOMMENDED ORDER
@@ -638,7 +638,7 @@ export const PROVIDER_NAV: NavItem[] = [
     requires: "canProvideServices",
   },
   { label: "Orders", heading: "Work Orders", href: "/orders", icon: "ClipboardCheck" },
-  { label: "Payments", heading: "Payments", href: "/finances", icon: "Wallet" },
+  { label: "Payments", heading: "Payments", href: "/payments", icon: "Wallet" },
   { label: "Connect", heading: "My Community", href: "/community", icon: "MessagesSquare" },
 ];
 
@@ -1158,7 +1158,7 @@ export const TAB_SEQUENCE: Record<string, "process" | "suggested" | "none"> = {
                               role-crossing Scott named. */
   "/learn": "none",
   "/settings/packages": "none",
-  "/finances": "none",
+  "/payments": "none",
   /*
     ⚠⚠ `/settings` — CLASSIFIED HERE, DEFINED ELSEWHERE (`P2-J1.1-E046`).
 
