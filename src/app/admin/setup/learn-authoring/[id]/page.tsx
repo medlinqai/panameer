@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { use, useState } from "react";
 import { useAdminFetch, AdminState } from "@/components/admin/primitives";
 import { Button, StatusPill } from "@/components/admin/learn/primitives";
@@ -18,6 +17,7 @@ import {
   SectionUrlTable,
 } from "@/components/admin/learn/LessonEditor";
 import { PublishControls } from "@/components/admin/learn/PublishControls";
+import { BackLink } from "@/components/console/BackLink";
 
 /**
  * One Learning Path — its details and its whole outline (WS2).
@@ -45,12 +45,7 @@ export default function AdminLearnPathPage({
 
   return (
     <div>
-      <Link
-        href="/admin/setup/learn-authoring"
-        className="text-[13.5px] font-bold text-ink-2 hover:text-magenta"
-      >
-        ← All Learning Paths
-      </Link>
+      <BackLink href="/admin/setup/learn-authoring" label="Learning Paths" />
 
       <AdminState loading={loading} error={error} />
 

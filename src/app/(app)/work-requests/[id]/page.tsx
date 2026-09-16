@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { checkTransact, guardPage } from "@/lib/guard";
 import { getSessionViewer } from "@/lib/session";
@@ -10,6 +9,7 @@ import { getWorkRequestDetail } from "@/lib/work-request-lines";
 import { invitedOn } from "@/lib/work-request-invite";
 import { matchProvidersFor } from "@/lib/work-request-match";
 import { WorkRequestError } from "@/lib/work-request";
+import { BackLink } from "@/components/console/BackLink";
 
 /**
  * `/work-requests/[id]` — THE DETAIL PAGE (`P1-J4-E392` WS-2).
@@ -85,12 +85,7 @@ export default async function Page({
 
   return (
     <div className="mx-auto w-full max-w-4xl">
-      <Link
-        href="/hire"
-        className="text-[13.5px] font-semibold text-ink-2 hover:text-magenta"
-      >
-        ← Work Requests
-      </Link>
+      <BackLink href="/hire" label="Work Requests" />
 
       <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">

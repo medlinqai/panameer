@@ -1,10 +1,10 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { guardPage } from "@/lib/guard";
 import { getSessionViewer } from "@/lib/session";
 import { Button } from "@/components/casing/Button";
 import { RaiseSettlement } from "@/components/settle/RaiseSettlement";
 import { settleFormFor, SettlementError } from "@/lib/settlements";
+import { BackLink } from "@/components/console/BackLink";
 
 /**
  * `/orders/[id]/settle` — RAISE A PAYMENT REQUEST (`P1-J4-E394` WS-1 + WS-2).
@@ -41,9 +41,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       */
       return (
         <div className="mx-auto w-full max-w-3xl">
-          <Link href={`/orders/${id}`} className="text-[13.5px] font-semibold text-ink-2 hover:text-magenta">
-            ← Back to the work order
-          </Link>
+          <BackLink href={`/orders/${id}`} label="the Work Order" />
           <div className="mt-5 rounded-brand border border-dashed border-line px-6 py-12 text-center">
             <p className="text-[16px] font-bold">This order cannot be settled yet</p>
             <p className="mx-auto mt-2 max-w-md text-[14.5px] leading-relaxed text-ink-2">
@@ -62,9 +60,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 
   return (
     <div className="mx-auto w-full max-w-3xl">
-      <Link href={`/orders/${form.orderId}`} className="text-[13.5px] font-semibold text-ink-2 hover:text-magenta">
-        ← {form.orderNumber}
-      </Link>
+      <BackLink href={`/orders/${form.orderId}`} label={form.orderNumber} />
       <h1 className="mt-2 font-display text-[28px] font-bold tracking-[-0.5px]">
         Raise a payment request
       </h1>

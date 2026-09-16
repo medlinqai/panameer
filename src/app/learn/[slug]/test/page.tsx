@@ -4,6 +4,7 @@ import { getLearnPath } from "@/lib/learn-home";
 import { getSessionViewer } from "@/lib/session";
 import { getTestState } from "@/lib/learn-assessment";
 import { TestRunner } from "@/components/learn/TestRunner";
+import { BackLink } from "@/components/console/BackLink";
 
 /**
  * The path test (brief_learn_experience WS5).
@@ -66,12 +67,7 @@ export default async function TestPage({
             Best score {state.best}%. Your certificate is on your profile under
             Certifications.
           </p>
-          <Link
-            href={`/learn/${path.slug}`}
-            className="mt-4 inline-block text-[14px] font-bold text-magenta hover:underline"
-          >
-            ← Back to {path.title}
-          </Link>
+          <BackLink href={`/learn/${path.slug}`} label={path.title} />
         </div>
       ) : !state.ready ? (
         /*

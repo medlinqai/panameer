@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { guardPage } from "@/lib/guard";
 import { getThread, viewerPersonId } from "@/lib/forums";
@@ -7,6 +6,7 @@ import { Avatar } from "@/components/Avatar";
 import { ForumComposer } from "@/components/community/ForumComposer";
 import { communityIdentityGaps } from "@/lib/community-identity";
 import { HelpfulButton } from "@/components/community/HelpfulButton";
+import { BackLink } from "@/components/console/BackLink";
 
 /** One thread: the question, every reply oldest-first, and the reply box. */
 export default async function ThreadPage({
@@ -47,12 +47,7 @@ export default async function ThreadPage({
   return (
     <div className="mx-auto max-w-3xl space-y-4">
       <header>
-        <Link
-          href={`/community/forums/${thread.board.slug}`}
-          className="text-[13.5px] font-semibold text-ink-2 hover:text-magenta"
-        >
-          ← {thread.board.title}
-        </Link>
+        <BackLink href={`/community/forums/${thread.board.slug}`} label={thread.board.title} />
         <h1 className="mt-2 font-display text-[24px] font-bold tracking-[-0.4px]">
           {thread.title}
         </h1>

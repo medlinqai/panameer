@@ -6,6 +6,7 @@ import { formatCents } from "@/lib/display";
 import { SettlementStatusPill } from "@/components/settle/SettlementRows";
 import { SettlementDecision } from "@/components/settle/SettlementDecision";
 import { getSettlement, SettlementError } from "@/lib/settlements";
+import { BackLink } from "@/components/console/BackLink";
 
 /**
  * `/payments/payment-requests/[id]` — ONE PAYMENT REQUEST (`P1-J4-E394`).
@@ -48,12 +49,10 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 
   return (
     <div className="mx-auto w-full max-w-4xl">
-      <Link
+      <BackLink
         href={s.party === "BUYER" ? "/pay" : "/payments/payment-requests"}
-        className="text-[13.5px] font-semibold text-ink-2 hover:text-magenta"
-      >
-        ← {s.party === "BUYER" ? "Payments" : "Payment Requests"}
-      </Link>
+        label={s.party === "BUYER" ? "Payments" : "Payment Requests"}
+      />
 
       <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">

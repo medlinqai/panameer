@@ -1,9 +1,9 @@
 "use client";
 
 import { use } from "react";
-import Link from "next/link";
 import { Badge } from "@/components/Badge";
 import { AdminHeading, useAdminFetch, AdminState } from "@/components/admin/primitives";
+import { BackLink } from "@/components/console/BackLink";
 
 type Person = {
   id: string;
@@ -51,12 +51,7 @@ export default function AdminCompanyDetailPage({
 
   return (
     <div>
-      <Link
-        href="/admin/companies"
-        className="mb-4 inline-block text-[14px] font-bold text-ink-2 hover:text-magenta"
-      >
-        ← All Companies
-      </Link>
+      <BackLink href="/admin/companies" label="Companies" />
       <AdminState loading={loading} error={error} />
 
       {data && (

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Layers, FolderTree, Wrench } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import {
@@ -13,6 +12,7 @@ import { CatalogTree, type CatalogNode } from "@/components/console/CatalogTree"
 import { CatalogCard } from "@/components/console/CatalogCard";
 import { CatalogAddBar } from "@/components/console/CatalogEditor";
 import { RDS_DOMAIN_MARKS, RDS_ROLE_MARKS } from "@/lib/catalog-marks";
+import { BackLink } from "@/components/console/BackLink";
 
 export const dynamic = "force-dynamic";
 
@@ -280,12 +280,7 @@ export default async function Page({
     header is where it already sits and `E485` says to keep it wired as-is.
   */
   const clearLink = (
-    <Link
-      href="/admin/skill-catalog"
-      className="text-[14px] font-bold text-magenta-ink transition-colors hover:text-magenta-ink-hover hover:underline"
-    >
-      ‹ Back to the catalog
-    </Link>
+    <BackLink href="/admin/skill-catalog" label="the Catalog" />
   );
 
   return (

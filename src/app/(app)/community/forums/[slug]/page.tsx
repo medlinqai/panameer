@@ -6,6 +6,7 @@ import { relativeDay } from "@/lib/relative-day";
 import { Avatar } from "@/components/Avatar";
 import { ForumComposer } from "@/components/community/ForumComposer";
 import { communityIdentityGaps } from "@/lib/community-identity";
+import { BackLink } from "@/components/console/BackLink";
 
 /** One board: its threads, newest activity first, plus the composer (WS2-C). */
 export default async function BoardPage({
@@ -40,19 +41,9 @@ export default async function BoardPage({
           ⚠ THE FOUR GENERAL BOARDS KEEP THEIRS EXACTLY AS IT WAS.
         */}
         {board.learningPath ? (
-          <Link
-            href={`/learn/${board.learningPath.slug}`}
-            className="text-[13.5px] font-semibold text-ink-2 hover:text-magenta"
-          >
-            ← {board.learningPath.title}
-          </Link>
+          <BackLink href={`/learn/${board.learningPath.slug}`} label={board.learningPath.title} />
         ) : (
-          <Link
-            href="/community/forums"
-            className="text-[13.5px] font-semibold text-ink-2 hover:text-magenta"
-          >
-            ← All forums
-          </Link>
+          <BackLink href="/community/forums" label="Forums" />
         )}
         <h1 className="mt-2 font-display text-[26px] font-bold tracking-[-0.5px]">
           {board.title}

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { guardPage } from "@/lib/guard";
 import { getTicket, TICKET_STATUSES, TICKET_PRIORITIES } from "@/lib/support";
@@ -6,6 +5,7 @@ import { supportApplicationLabel } from "@/lib/support-applications";
 import { signedSupportScreenshotUrl } from "@/lib/storage";
 import { TicketAdminPanel } from "@/components/admin/TicketAdminPanel";
 import { TicketThread } from "@/components/support/TicketThread";
+import { BackLink } from "@/components/console/BackLink";
 
 /**
  * One ticket, its thread, and the admin's controls (`P2-J1.1-E032` WS-4).
@@ -36,9 +36,7 @@ export default async function AdminTicketPage({
 
   return (
     <div className="max-w-3xl">
-      <Link href="/admin/support" className="text-[14px] font-semibold text-magenta hover:underline">
-        ← All tickets
-      </Link>
+      <BackLink href="/admin/support" label="Tickets" />
 
       <h1 className="mt-3 font-display text-[24px] font-bold tracking-[-0.4px]">{ticket.title}</h1>
       <p className="mt-1 font-mono text-[13px] text-ink-2">{ticket.ticket_code}</p>

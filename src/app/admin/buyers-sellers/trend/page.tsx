@@ -94,12 +94,7 @@ export default async function TrendPage({
   return (
     <div className="mx-auto w-full max-w-5xl">
       <div className="mb-5 flex flex-wrap items-center gap-3">
-        <Link
-          href="/admin/buyers-sellers"
-          className="text-[13.5px] font-bold text-magenta hover:underline"
-        >
-          ← Back to the Board
-        </Link>
+        <BackLink href="/admin/buyers-sellers" label="Users" />
       </div>
 
       <h1 className="font-display text-[26px] font-bold text-ink">

@@ -1,9 +1,10 @@
 "use client";
-
 import Link from "next/link";
+
 import { useRef, useState } from "react";
 import { AdminHeading } from "@/components/admin/primitives";
 import { Button } from "@/components/admin/learn/primitives";
+import { BackLink } from "@/components/console/BackLink";
 
 type Match = {
   row: { line: number; identifier: string; url: string };
@@ -90,12 +91,7 @@ export default function BulkUrlsPage() {
 
   return (
     <div>
-      <Link
-        href="/admin/setup/learn-authoring"
-        className="text-[13.5px] font-bold text-ink-2 hover:text-magenta"
-      >
-        ← Learn
-      </Link>
+      <BackLink href="/admin/setup/learn-authoring" label="Learn Authoring" />
 
       <div className="mt-3">
         <AdminHeading

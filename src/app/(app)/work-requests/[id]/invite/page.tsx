@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { checkTransact, guardPage } from "@/lib/guard";
 import { getSessionViewer } from "@/lib/session";
@@ -8,6 +7,7 @@ import { getWorkRequestDetail } from "@/lib/work-request-lines";
 import { invitedOn } from "@/lib/work-request-invite";
 import { matchProvidersFor } from "@/lib/work-request-match";
 import { WorkRequestError } from "@/lib/work-request";
+import { BackLink } from "@/components/console/BackLink";
 
 /**
  * Invite providers to bid (`P1-J4-E392` WS-3).
@@ -92,12 +92,7 @@ export default async function Page({
 
   return (
     <div className="mx-auto w-full max-w-4xl">
-      <Link
-        href={`/work-requests/${id}`}
-        className="text-[13.5px] font-semibold text-ink-2 hover:text-magenta"
-      >
-        ← {detail.title.trim() || "Work Request"}
-      </Link>
+      <BackLink href={`/work-requests/${id}`} label={detail.title.trim() || "Work Request"} />
       <h1 className="mt-2 font-display text-[28px] font-bold tracking-[-0.5px]">
         Invite providers to bid
       </h1>

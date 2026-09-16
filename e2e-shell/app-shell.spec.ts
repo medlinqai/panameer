@@ -285,6 +285,113 @@ for (const url of PAGES) {
 }
 
 // ---------------------------------------------------------------------------
+// ⚠⚠ GUARD — THE WAY BACK IS ONE COMPONENT (`P1-A1.5-E530`)
+// ---------------------------------------------------------------------------
+
+/**
+ * > **SCOTT, 2026-09-16:** *"the return link is wrong based on the last week's
+ * > standards (driven from Medlinq)."*
+ *
+ * ⚠ HE HAD ALREADY SET THE STANDARD. `E486` settled it and
+ * `components/console/BackLink.tsx` encodes it: `‹ Back to {label}`, magenta-ink,
+ * a real `<Link>` rather than `router.back()`, sitting above the page title.
+ *
+ * ⚠⚠ THE DEFECT WAS ADOPTION, NOT THE RULE. Measured 2026-09-16: THREE pages used
+ * the component and EIGHTEEN hand-rolled their own, across FOUR glyphs (`‹`, `←`,
+ * none, and a trailing `→`) and three casings. `E529` reported that inventory;
+ * this guard is what stops it growing back.
+ *
+ * ⚠ IT SCANS FOR THE SHAPE, NOT THE WORDS: a `<Link>` whose visible text opens
+ * with a back-pointing glyph, or reads `Back to …`. That is what every one of the
+ * eighteen had in common.
+ *
+ * ⚠⚠ WHAT IS DELIBERATELY NOT AN OFFENCE, because none of these is a way back to
+ * a parent page — each was checked individually, not waved through:
+ *   · a FORWARD link (`Back to the Learn console →`) — a completion CTA
+ *   · `‹ All` in `messages` — a mobile-only pane toggle inside a conversation
+ *     header, not a page-level back link
+ *   · the two magenta pill BUTTONS on `learn/[slug]/test` — primary CTAs in a
+ *     blocked state
+ *   · `Back to home` in `settings/profile` — a secondary escape under a primary
+ *     CTA in an empty state
+ * ⚠ These are listed by FILE below. A new one has to be added deliberately, which
+ * is the point: the exemption is a decision someone signs, not a pattern that
+ * spreads.
+ */
+const BACKLINK_EXEMPT = new Set([
+  /* mobile-only pane toggle inside a conversation header, not a page back link */
+  "src/app/(app)/messages/page.tsx",
+  /* two magenta pill CTAs in a blocked state */
+  "src/app/learn/[slug]/test/page.tsx",
+  /* a forward completion CTA: "Back to the Learn console →" */
+  "src/app/admin/setup/learn-authoring/bulk-urls/page.tsx",
+  /* secondary escape under a primary CTA in an empty state */
+  "src/app/(app)/settings/profile/page.tsx",
+
+  /*
+    ⚠⚠ THE SECOND TRANCHE — PUBLIC SURFACES AND IN-FLOW RETURNS, EXEMPT PENDING
+    SCOTT'S CALL. `BackLink` is a CONSOLE component (`components/console/`) and
+    carries console chrome — magenta-ink, sitting above a page title. These sit
+    on public pages with their own chrome, or mid-flow rather than above a title,
+    and adopting it would change how those pages LOOK rather than just what they
+    share. ⚠ `E530` reported them; they were not in the inventory Scott approved.
+  */
+  "src/app/assess/r/[token]/deck/page.tsx", // public token page, own chrome
+  "src/app/legal/page.tsx", // "Back to Panameer" leaves the section for /
+  "src/components/legal/LegalPlaceholder.tsx", // same, shared
+  "src/app/explore/page.tsx", // a ghost CTA button
+  "src/app/verify-email/page.tsx", // a pill button inside the verify flow
+  "src/components/work/InviteToBid.tsx", // in-flow returns under a form
+  "src/components/learn/TestRunner.tsx", // in-test controls, one a pill
+]);
+
+test("⚠ THE WAY BACK — no page hand-rolls a back link (P1-A1.5-E530)", () => {
+  const walk = (dir: string, out: string[] = []): string[] => {
+    for (const e of readdirSync(dir)) {
+      const full = join(dir, e);
+      if (statSync(full).isDirectory()) walk(full, out);
+      else if (/\.tsx$/.test(full)) out.push(full);
+    }
+    return out;
+  };
+  const strip = (src: string) =>
+    src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
+
+  const offences: string[] = [];
+  for (const file of walk("src")) {
+    const rel = file.replace(/\\/g, "/");
+    if (rel.endsWith("components/console/BackLink.tsx")) continue; // the component itself
+    if (BACKLINK_EXEMPT.has(rel)) continue;
+    const src = strip(readFileSync(file, "utf8"));
+    /* Every <Link …>…</Link>, including multi-line openings. */
+    for (const m of src.matchAll(/<Link\b[^>]*>([\s\S]*?)<\/Link>/g)) {
+      const text = m[1].replace(/\s+/g, " ").trim();
+      if (!text) continue;
+      /* ⚠ A TRAILING → IS A FORWARD LINK, never a way back. Checked first so a
+         "Back to the console →" CTA is not mistaken for one. */
+      if (/[→›»]\s*$/.test(text)) continue;
+      /* ⚠ `<` IS NOT A BACK GLYPH. It was, in the first draft, and it matched
+         every NESTED JSX ELEMENT inside a link — `<div`, `<span` — turning a
+         card into an offence. Measured: 13 false positives out of 25. */
+      const backGlyph = /^[‹←«]/.test(text);
+      const backWords = /^back to\b/i.test(text);
+      if (backGlyph || backWords) {
+        offences.push(`${rel} — ${JSON.stringify(text.slice(0, 60))}`);
+      }
+    }
+  }
+
+  expect(
+    offences,
+    "Use <BackLink href label /> from @/components/console/BackLink. " +
+      "E486 set the standard and E530 adopted it across the app; a new hand-rolled " +
+      "back link re-opens the four-glyph drift this guard exists to stop. If the link " +
+      "is genuinely not a way back to a parent page, add the file to BACKLINK_EXEMPT " +
+      "with a reason."
+  ).toEqual([]);
+});
+
+// ---------------------------------------------------------------------------
 // GUARD 3 — arbitrary variants must not compete with named ones
 // ---------------------------------------------------------------------------
 

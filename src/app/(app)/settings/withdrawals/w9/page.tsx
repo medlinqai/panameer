@@ -1,7 +1,7 @@
 import { guardPage } from "@/lib/guard";
 import { getWithdrawals, logTaxFormAccess } from "@/lib/settings";
 import { FORM_LABEL } from "@/lib/tax";
-import Link from "next/link";
+import { BackLink } from "@/components/console/BackLink";
 
 /**
  * THE HARD COPY (`P1-ALL-E404` WS-3).
@@ -44,9 +44,7 @@ export default async function W9HardCopyPage() {
             ? `This account's tax form is ${FORM_LABEL[tax.form]}, not a Form W-9.`
             : "Nothing has been signed yet."}
         </p>
-        <Link href="/settings/withdrawals" className="mt-4 inline-block font-bold text-magenta">
-          ← Back to Withdrawals
-        </Link>
+        <BackLink href="/settings/withdrawals" label="Withdrawals" />
       </div>
     );
   }
@@ -61,9 +59,7 @@ export default async function W9HardCopyPage() {
   return (
     <div className="mx-auto max-w-3xl px-1 py-6">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3 print:hidden">
-        <Link href="/settings/withdrawals" className="font-bold text-magenta">
-          ← Back to Withdrawals
-        </Link>
+        <BackLink href="/settings/withdrawals" label="Withdrawals" />
         <p className="text-[13px] text-ink-2">Use your browser&apos;s Print to save a copy.</p>
       </div>
 

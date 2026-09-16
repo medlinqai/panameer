@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { guardPage } from "@/lib/guard";
 import { getSessionViewer } from "@/lib/session";
@@ -7,6 +6,7 @@ import { Button } from "@/components/casing/Button";
 import { OriginBadge, StatusPill } from "@/components/orders/OrderChrome";
 import { OrderActivation } from "@/components/orders/OrderActivation";
 import { getOrderDetail, OrderError, type OrderLineView } from "@/lib/orders";
+import { BackLink } from "@/components/console/BackLink";
 
 /**
  * `/orders/[id]` — THE WORK ORDER (`P1-J4-E393` WS-2 + WS-3).
@@ -47,9 +47,7 @@ export default async function Page({
 
   return (
     <div className="mx-auto w-full max-w-4xl">
-      <Link href="/orders" className="text-[13.5px] font-semibold text-ink-2 hover:text-magenta">
-        ← Work Orders
-      </Link>
+      <BackLink href="/orders" label="Work Orders" />
 
       <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">

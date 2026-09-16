@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { guardPage } from "@/lib/guard";
@@ -7,6 +6,7 @@ import {
   readQuestions,
 } from "@/lib/learn-assessment";
 import { AssessmentReview } from "@/components/admin/AssessmentReview";
+import { BackLink } from "@/components/console/BackLink";
 
 export const dynamic = "force-dynamic";
 
@@ -127,11 +127,7 @@ export default async function Page({
 
   return (
     <div className="mx-auto w-full max-w-5xl">
-      <p className="text-[13px]">
-        <Link href="/admin/learn" className="font-semibold text-magenta hover:underline">
-          ← Learn
-        </Link>
-      </p>
+      <BackLink href="/admin/learn" label="Learn" />
       <AssessmentReview
         pathId={path.id}
         pathTitle={path.title}

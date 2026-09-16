@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Tags, Boxes, Workflow, Building2, Inbox } from "lucide-react";
 import {
   getSpecializations,
@@ -14,6 +13,7 @@ import { CatalogAddBar } from "@/components/console/CatalogEditor";
 import { SuggestionRow } from "@/components/console/SuggestionRow";
 import { suggestionQueue } from "@/lib/catalog-write";
 import { SPECIALIZATION_MARKS, KIND_FALLBACK } from "@/lib/catalog-marks";
+import { BackLink } from "@/components/console/BackLink";
 
 export const dynamic = "force-dynamic";
 
@@ -147,12 +147,7 @@ export default async function Page({
     header is where it already sits and `E485` says to keep it wired as-is.
   */
   const clearLink = (
-    <Link
-      href="/admin/specializations"
-      className="text-[14px] font-bold text-magenta-ink transition-colors hover:text-magenta-ink-hover hover:underline"
-    >
-      ‹ Back to Specializations
-    </Link>
+    <BackLink href="/admin/specializations" label="Specializations" />
   );
 
   return (

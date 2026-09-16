@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { REPORT_INDEX, reportsFor } from "@/lib/admin-reports";
+import { BackLink } from "@/components/console/BackLink";
 
 /**
  * A REPORT SHELL (WS3).
@@ -55,12 +56,10 @@ export default async function Page({
         </div>
 
         <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-line pt-4">
-          <Link
+          <BackLink
             href={entry.from}
-            className="text-[13.5px] font-bold text-magenta hover:underline"
-          >
-            ← Back to {entry.from === "/admin" ? "the dashboard" : "the page"}
-          </Link>
+            label={entry.from === "/admin" ? "the Dashboard" : "the Page"}
+          />
           {siblings.length > 0 && (
             <span className="ml-auto flex flex-wrap gap-2">
               {siblings.map((s) => (

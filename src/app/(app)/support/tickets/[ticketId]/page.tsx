@@ -5,6 +5,7 @@ import { getTicket } from "@/lib/support";
 import { supportApplicationLabel } from "@/lib/support-applications";
 import { TicketThread } from "@/components/support/TicketThread";
 import { TicketReplyBox } from "@/components/support/TicketReplyBox";
+import { BackLink } from "@/components/console/BackLink";
 
 /**
  * The reporter's view of one ticket, including Panameer's replies
@@ -35,9 +36,7 @@ export default async function MyTicketPage({
 
   return (
     <div className="mx-auto max-w-3xl">
-      <Link href="/support/tickets" className="text-[14px] font-semibold text-magenta hover:underline">
-        ← My tickets
-      </Link>
+      <BackLink href="/support/tickets" label="My Tickets" />
 
       <h1 className="mt-3 font-display text-[26px] font-bold tracking-[-0.5px]">{ticket.title}</h1>
       <p className="mt-1 text-[13.5px] text-ink-2">
