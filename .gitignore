@@ -67,3 +67,8 @@ e2e-shell/.artifacts/
 
 # ⚠ P1-ALL-E371 WS-A2 — captured mail. NOTHING captured goes in the repo.
 .mail-capture/
+
+# ⚠ The seeded connection graph's manifest — DB row ids, so it is per-database
+# state, not source. `npm run wipe:connection-graph` rebuilds the same target set
+# from `prisma/connection-graph-spec.ts` when it is absent.
+prisma/seed-data/connection-graph-manifest.json
