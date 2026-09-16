@@ -1240,10 +1240,64 @@ export function pageTitleFor(pathname: string): string | null {
      `Connect`; the page is still `My Community`. */
   if (best) return best.heading ?? best.label;
 
-  // Not a nav destination — title-case the last meaningful segment.
-  const seg = pathname.split("/").filter(Boolean).pop();
-  if (!seg) return null;
-  return seg
-    .replace(/-/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+  /*
+    ── ⚠⚠ NOT A NAV DESTINATION (`P1-A1.5-E529` FINDING 2) ───────────────────
+
+    ⚠ SUPERSEDED, quoted not deleted (`E164`): this read *"title-case the last
+    meaningful segment"* and did exactly that to ANYTHING, including a uuid.
+    ⚠⚠ SCOTT SAW THE RESULT AT THE TOP OF `/admin/users/<uuid>`:
+    `88292688 82e4 4ba8 A84e C1ed59a648a9`. The de-hyphenation and the capital
+    letters were this rule's fingerprints.
+
+    ⚠ THE DEFECT WAS GENERIC, NOT THIS PAGE'S. **14 of the app's 29 dynamic
+    routes** printed a title-cased id — `/providers/[id]`, `/work-requests/[id]`,
+    `/admin/companies/[id]`, `/support/tickets/[ticketId]`, every `[token]` page,
+    and the rest. Fixing the page would have left thirteen.
+
+    ⚠⚠ THE RULE: AN OPAQUE ID IS NOT A HEADING. A segment that is not a
+    human-readable slug is dropped, and the PARENT SECTION answers instead —
+    `/admin/users/<uuid>` becomes `Users`, which is the section the reader is in
+    and the word the rail already uses. ⚠ The page's own `<h1>` still names the
+    person, so the name is not lost; it simply is not repeated in the one line
+    the shell has.
+  */
+  const segs = pathname.split("/").filter(Boolean);
+  while (segs.length) {
+    const seg = segs[segs.length - 1];
+    if (!isOpaqueSegment(seg)) return titleCaseSegment(seg);
+    /* ⚠ Drop the id and ask the NAV again for the parent — a match there is a
+       real heading (`Users`), not another guess from the URL. */
+    segs.pop();
+    const parent = "/" + segs.join("/");
+    const inherited = segs.length ? pageTitleFor(parent) : null;
+    if (inherited) return inherited;
+  }
+  return null;
+}
+
+/**
+ * ⚠⚠ IS THIS SEGMENT AN OPAQUE ID RATHER THAN A WORD? (`P1-A1.5-E529`)
+ *
+ * ⚠ THE TEST IS POSITIVE FOR SLUGS, NOT NEGATIVE FOR IDS, because the set of id
+ * FORMATS is open — uuid, cuid, nanoid, a signed token, a bare integer — and a
+ * blocklist would miss the next one. A SLUG is the narrow, closed thing: lower
+ * or mixed-case words joined by hyphens, each part alphabetic.
+ *
+ *   `terms-of-use`        -> slug, title-cased to `Terms Of Use`
+ *   `payment-requests`    -> slug
+ *   `88292688-82e4-4ba8…` -> parts contain digits -> OPAQUE
+ *   `V1StGXR8_Z5jdHi6B`   -> contains digits -> OPAQUE
+ *
+ * ⚠ A slug carrying a digit (`oracle-cloud-2024`) is treated as opaque and
+ * inherits the parent heading. That is the conservative direction: a correct
+ * section name beats a mangled id, and the reverse is the defect being fixed.
+ */
+export function isOpaqueSegment(seg: string): boolean {
+  if (!seg) return true;
+  return !seg.split(/[-_]/).every((part) => part.length > 0 && /^[A-Za-z]+$/.test(part));
+}
+
+/** The old behaviour, kept for the segments that genuinely are words. */
+function titleCaseSegment(seg: string): string {
+  return seg.replace(/[-_]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
