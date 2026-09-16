@@ -158,7 +158,7 @@ export function ConnectControls({
   if (rel === null) {
     colleagueControl = (
       <button type="button" className={PRIMARY} disabled={busy} onClick={connectColleague}>
-        Connect as colleague
+        Connect as Colleague
       </button>
     );
   } else if (rel === "PENDING" && incomingConnectionId) {
@@ -210,11 +210,24 @@ export function ConnectControls({
           </button>
         )}
         <button type="button" className={mentor ? QUIET : GHOST} disabled={busy} onClick={toggleMentor}>
-          {mentor ? "Disconnect" : "Connect as mentor"}
+          {mentor ? "Disconnect" : "Connect as Mentor"}
         </button>
       </div>
+      {/*
+        ⚠⚠ `P1-A3-E531` PART E — THIS IS A STATUS, NOT A CONTROL. It was
+        `text-magenta` on the page background, which `E433` reserves for
+        SATURATED INTERACTIVE things; a label you cannot click wearing the
+        colour of the button beside it reads as a second button.
+        ⚠ PROPOSED TREATMENT, SCOTT NAMES AND RULES ON WEIGHT: a pale magenta
+        wash with ink-2 text — the same "surface, not control" move `E433` made
+        elsewhere. It stays a chip so it still reads as a badge.
+        ⚠⚠ IT IS NOT REMOVED. It is the only thing on the card that says the
+        mentor relation exists.
+      */}
       {mentor && !busy && (
-        <span className="text-[12px] font-semibold text-magenta">Mentor</span>
+        <span className="rounded-full bg-magenta/[0.08] px-2 py-0.5 text-[12px] font-semibold text-ink-2">
+          Mentor
+        </span>
       )}
       {error && <span className="text-[12px] text-red-600">{error}</span>}
     </div>

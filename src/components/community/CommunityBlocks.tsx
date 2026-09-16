@@ -106,6 +106,9 @@ export async function CommunityBlocks({ viewer }: { viewer: Viewer }) {
   const outgoing = mine.outgoing.filter((r) => r.person);
   const colleagues = mine.colleagues.filter((c) => c.person);
   const following = mine.following.filter((f) => f.person);
+  /* ⚠ `E531` PART C — the same set `SearchResults` builds, so a colleague who is
+     ALSO a mentor shows `Disconnect` rather than being offered a second follow. */
+  const mentorUserIds = new Set(following.map((f) => f.person!.userId));
 
   return (
     <>
@@ -157,7 +160,23 @@ export async function CommunityBlocks({ viewer }: { viewer: Viewer }) {
                 key={c.connectionId}
                 person={c.person as PersonCard}
                 profileId={colleagueFacts.get(c.person!.personId)?.profileId}
-              />
+              >
+                {/* ⚠⚠ `P1-A3-E531` PART C — THIS BLOCK HAD NO CONTROL AT ALL.
+                    Seven colleague rows rendered name, title, company and
+                    nothing to do. ⚠ NOT BROKEN — NEVER MOUNTED.
+                    ⚠⚠ `relation="ACCEPTED"` IS A FACT HERE, NOT A GUESS:
+                    `getMyCommunity` builds `colleagues` by filtering
+                    `kind === "COLLEAGUE" && status === "ACCEPTED"`, so the row
+                    cannot be in this list in any other state.
+                    ⚠ `E525` already put `Message` on that branch against the
+                    `/messages?with=` deep link — so mounting the existing
+                    control is the whole fix. NO SECOND BUTTON WAS WRITTEN. */}
+                <ConnectControls
+                  toUserId={c.person!.userId}
+                  relation="ACCEPTED"
+                  isMentor={mentorUserIds.has(c.person!.userId)}
+                />
+              </MemberRow>
             ))}
           </div>
         )}
