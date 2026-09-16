@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 /**
@@ -174,10 +175,25 @@ export function ConnectControls({
       </button>
     );
   } else if (rel === "ACCEPTED") {
+    /*
+      ⚠⚠ `P2-J3-E525` — AN ACCEPTED COLLEAGUE GETS `Message`, NOT A DISABLED
+      BADGE. SCOTT, 2026-09-15: *"CONNECT if the user/card exists and you are not
+      connected...MESAGE if you are."*
+
+      ⚠ THIS REPLACED A `disabled` BUTTON READING `Colleague` — a control that
+      stated a fact and could not be pressed, in the one state where there is
+      something worth doing. ⚠⚠ THE STATE IS STILL LEGIBLE: `Message` is only
+      ever offered to a colleague, because `canMessage` is COLLEAGUE-ONLY.
+
+      ⚠ `?with=` IS THE PAGE'S OWN DEEP LINK (`P1-ALL-E379`), not a new route —
+      `/messages` reads it from `searchParams` and opens that conversation. ⚠⚠ IT
+      IS A LINK, NOT A FETCH, so it stays outside `send()` and cannot disturb the
+      optimistic-then-revert path.
+    */
     colleagueControl = (
-      <button type="button" className={PRIMARY} disabled>
-        Colleague
-      </button>
+      <Link href={`/messages?with=${toUserId}`} className={PRIMARY}>
+        Message
+      </Link>
     );
   }
   /* ⚠ `DECLINED` FALLS THROUGH TO NOTHING, AND THAT IS THE DESIGN. `E372` keeps

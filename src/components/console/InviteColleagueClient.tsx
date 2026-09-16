@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { MemberRow } from "@/components/community/MemberRow";
+import { ConnectControls, type Relation } from "@/components/community/ConnectControls";
+import type { PersonCard } from "@/lib/connections";
 
 /**
  * INVITE A COLLEAGUE — composer + the record of who has been asked (`P2-J3-E493`).
@@ -33,6 +36,26 @@ export type SentInvite = {
   expired: boolean;
 };
 
+/**
+ * ⚠⚠ THE ADDRESS BELONGED TO A MEMBER (`P2-J3-E525`).
+ *
+ * SCOTT, 2026-09-15: *"I put the email in and it exists...show the card for that
+ * email and the CONNECT or MESSAGE buttons."*
+ *
+ * ⚠ THIS IS NOT AN ERROR SHAPE. It arrives on a 200 with no `error` key, and it
+ * is rendered in the page's own voice — no red, no amber, no "couldn't". ⚠⚠ THE
+ * SERVER COMPUTED EVERY FIELD; the client picks no button and knows no rule.
+ */
+type AlreadyMember = PersonCard & {
+  relation: Relation;
+  incomingConnectionId: string | null;
+  isMentor: boolean;
+  isSelf: boolean;
+  /** ⚠ `null` for a member with no ProviderProfile — the name is then not a
+      link, rather than a link to a 404. `MemberRow` owns that rule. */
+  profileId: string | null;
+};
+
 const STATUS: Record<SentInvite["status"], { label: string; tone: string }> = {
   PENDING: { label: "Invited", tone: "bg-amber-100 text-amber-800" },
   ACCEPTED: { label: "Joined", tone: "bg-emerald-100 text-emerald-800" },
@@ -57,12 +80,14 @@ export function InviteColleagueClient({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<{ devLink?: string } | null>(null);
+  const [member, setMember] = useState<AlreadyMember | null>(null);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
     setError(null);
     setDone(null);
+    setMember(null);
     try {
       const r = await fetch("/api/invite-colleague", {
         method: "POST",
@@ -71,12 +96,28 @@ export function InviteColleagueClient({
       });
       const data = await r.json().catch(() => ({}));
       if (!r.ok) {
-        /* ⚠ THE SERVER'S OWN SENTENCE IS SHOWN. "Already a member", "already
-           invited" and "slow down" are three different answers and collapsing
-           them into "couldn't send" would leave someone retrying forever. */
+        /* ⚠ THE SERVER'S OWN SENTENCE IS SHOWN. "Already invited" and "slow
+           down" are different answers and collapsing them into "couldn't send"
+           would leave someone retrying forever.
+           ⚠⚠ `E525` — "already a member" IS NO LONGER ONE OF THESE. It arrives
+           on a 200 and is handled below. */
         setError(data.error ?? "We couldn't send that.");
         return;
       }
+
+      /*
+        ⚠⚠ `E525` — THEY ARE ALREADY HERE, SO THE FORM STAYS EXACTLY AS TYPED.
+        ⚠ Nothing failed, but nothing was sent either: clearing the fields after
+        a non-failure reads as a failure, and a member who meant to invite
+        SOMEBODY ELSE should not have to retype the note they just wrote.
+        ⚠⚠ AND NO `router.refresh()` — "Invitations Sent" did not change, because
+        no invitation was written.
+      */
+      if (data.alreadyMember) {
+        setMember(data.alreadyMember as AlreadyMember);
+        return;
+      }
+
       setDone({ devLink: data.devLink });
       setFirstName("");
       setLastName("");
@@ -102,6 +143,37 @@ export function InviteColleagueClient({
           <p className="mt-3 rounded-[10px] bg-red-50 px-3 py-2 text-[13.5px] text-red-700">
             {error}
           </p>
+        )}
+        {/*
+          ⚠⚠ `E525` — THE ANSWER, NOT A WARNING. No red, no amber, no tinted
+          panel at all: those are the page's vocabulary for "something went
+          wrong", and nothing did. ⚠ The line is plain body copy and the card
+          below it is the same `MemberRow` `/community` draws.
+        */}
+        {member && (
+          <div className="mt-3">
+            <p className="text-[13.5px] leading-relaxed text-ink-2">
+              {member.isSelf
+                ? "That's your own address."
+                : `${member.name.split(" ")[0] || member.name} is already on Panameer.`}
+            </p>
+            <div className="mt-2">
+              <MemberRow person={member as PersonCard} profileId={member.profileId}>
+                {/* ⚠⚠ ONE CONTROL, AND IT PICKS ITS OWN BUTTON. `Connect as
+                    colleague` / `Requested` / `Accept` / `Message` are all
+                    `ConnectControls` switching on the relation the SERVER
+                    computed. ⚠ No second Connect button was written here, and
+                    this surface decides nothing. */}
+                <ConnectControls
+                  toUserId={member.userId}
+                  relation={member.relation}
+                  incomingConnectionId={member.incomingConnectionId}
+                  isMentor={member.isMentor}
+                  isSelf={member.isSelf}
+                />
+              </MemberRow>
+            </div>
+          </div>
         )}
         {done && (
           <div className="mt-3 rounded-[10px] border border-emerald-500/30 bg-emerald-50/60 px-3 py-2.5 text-[13.5px]">

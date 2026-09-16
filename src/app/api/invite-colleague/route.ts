@@ -3,6 +3,7 @@ import { z } from "zod";
 import { guardApi } from "@/lib/guard";
 import { prisma } from "@/lib/prisma";
 import { inviteColleague } from "@/lib/colleague-invite";
+import { ratesByPersonId } from "@/lib/provider-rates";
 
 /**
  * SEND ONE COLLEAGUE INVITATION (`P2-J3-E493`).
@@ -40,6 +41,7 @@ export async function POST(req: Request) {
 
   const res = await inviteColleague({
     inviterPersonId: person.id,
+    viewer,
     email: parsed.data.email,
     firstName: parsed.data.firstName,
     lastName: parsed.data.lastName,
@@ -55,12 +57,33 @@ export async function POST(req: Request) {
         msg: "You've sent a lot of invitations recently. Try again in an hour.",
         status: 429,
       },
+      /* ⚠⚠ `E525` — REACHED ONLY BY AN ADDRESS WHOSE `User` HAS NO `Person`.
+         The ordinary already-a-member answer is a 200 below, with their card. */
       already_member: { msg: "They're already on Panameer — no invitation needed.", status: 409 },
       already_invited: { msg: "You've already invited them and it hasn't expired yet.", status: 409 },
       invalid: { msg: "That didn't look like an email address.", status: 400 },
     };
     const m = map[res.reason];
     return NextResponse.json({ error: m.msg }, { status: m.status });
+  }
+
+  /*
+    ⚠⚠ `E525` — THEY ARE ALREADY HERE, SO THE ANSWER IS THEIR CARD, AT 200.
+    Not a 409, not an `error` key, nothing the client can paint red. ⚠ NOTHING
+    WAS WRITTEN getting here — no `ColleagueInvite` row, no email.
+
+    ⚠ `profileId` IS RESOLVED THE WAY `/community`'s SEARCH RESOLVES IT, via
+    `ratesByPersonId`, because `MemberRow` links the name ONLY when one exists.
+    ⚠⚠ A MEMBER WITH NO ProviderProfile — every buyer — GETS A PLAIN NAME
+    RATHER THAN A LINK TO A 404. The rate is deliberately not passed: an
+    invitation card is not a shelf.
+  */
+  if (res.outcome === "already_member") {
+    const facts = await ratesByPersonId([res.member.personId]);
+    return NextResponse.json({
+      ok: true,
+      alreadyMember: { ...res.member, profileId: facts.get(res.member.personId)?.profileId ?? null },
+    });
   }
 
   /* ⚠ `devLink` ONLY EXISTS WITH NO RESEND KEY — the same dev affordance

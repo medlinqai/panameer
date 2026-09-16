@@ -258,6 +258,48 @@ const toCard = (p: PersonRow): PersonCard => ({
 });
 
 /**
+ * ⚠⚠ ONE RELATION CALCULATION, AND THIS IS IT (`P2-J3-E525`).
+ *
+ * Extracted from `searchMembers`, which is still its only other caller, so that
+ * `memberByEmail` below cannot drift from it. ⚠ A SECOND COPY OF THIS IS THE
+ * DEFECT — `E525` exists because `/invite-colleague` answered "is there a row"
+ * with its own lookup instead of asking the question this file already answers.
+ *
+ * ⚠ `incomingConnectionId` IS THE HALF `relation` CANNOT CARRY. `relation` is
+ * `"PENDING"` whether I sent it or they did, and `ConnectControls` renders
+ * `Accept` rather than a disabled `Requested` only when it has the id. The
+ * direction is read here, from `to_user_id`, not guessed by the caller.
+ */
+type ConnectionRow = {
+  id: string;
+  from_user_id: string;
+  to_user_id: string;
+  kind: string;
+  status: string;
+};
+
+function relationFor(me: string, userId: string, rows: ConnectionRow[]) {
+  const rel = rows.find(
+    (c) => (c.from_user_id === userId || c.to_user_id === userId) && c.kind === "COLLEAGUE"
+  );
+  const follows = rows.find(
+    (c) => c.kind === "MENTOR" && c.from_user_id === me && c.to_user_id === userId
+  );
+  return {
+    /* ⚠ THE ROW'S LABEL COMES FROM THE DATA, so it can read "Requested" rather
+       than offering an add that would be a no-op. */
+    relation: rel
+      ? (rel.status as ConnectionStatusValue)
+      : follows
+        ? ("FOLLOWING" as const)
+        : null,
+    incomingConnectionId:
+      rel && rel.status === "PENDING" && rel.to_user_id === me ? rel.id : null,
+    isMentor: Boolean(follows),
+  };
+}
+
+/**
  * Search members by name, company or title.
  *
  * ⚠ ONLY PEOPLE WITH A LOGIN. A `Person` with no `user_id` cannot receive a
@@ -301,21 +343,64 @@ export async function searchMembers(
 
   return rows.map((r) => {
     const card = toCard(r);
-    const rel = mine.find(
-      (c) =>
-        (c.from_user_id === card.userId || c.to_user_id === card.userId) &&
-        c.kind === "COLLEAGUE"
-    );
-    const follows = mine.find(
-      (c) => c.kind === "MENTOR" && c.from_user_id === me && c.to_user_id === card.userId
-    );
-    /* ⚠ THE ROW'S LABEL COMES FROM THE DATA, so it can read "Requested" rather
-       than offering an add that would be a no-op. */
-    return {
-      ...card,
-      relation: rel ? (rel.status as ConnectionStatusValue) : follows ? "FOLLOWING" : null,
-    };
+    return { ...card, relation: relationFor(me, card.userId, mine).relation };
   });
+}
+
+/**
+ * ⚠⚠ ONE MEMBER, RESOLVED BY EMAIL ADDRESS (`P2-J3-E525`).
+ *
+ * SCOTT, 2026-09-15: *"I put the email in and it exists...show the card for that
+ * email and the CONNECT or MESSAGE buttons."*
+ *
+ * ⚠⚠ THIS IS `searchMembers`' ANSWER FOR ONE PERSON, NOT A SECOND CARD TYPE.
+ * Same `personSelect`, same `toCard`, same `relationFor`. The only thing that
+ * differs is the question — an exact address rather than a name fragment — which
+ * is why it cannot simply call `searchMembers`: that one searches name, title and
+ * company, and never email.
+ *
+ * ⚠⚠ IT DOES NOT EXCLUDE YOURSELF, AND THAT IS DELIBERATE. `searchMembers` drops
+ * your own row because a search result you cannot act on is noise; here you typed
+ * the address, so the honest answer is "that is you". ⚠ `isSelf` carries it and
+ * `ConnectControls` renders nothing for it — the rule stays in the control.
+ *
+ * ⚠ RETURNS `null` FOR AN ADDRESS WITH NO `Person`. A `User` can exist without
+ * one, and there is no card to draw for it — the caller keeps its old refusal for
+ * that case rather than inventing a blank card.
+ */
+export type MemberWithRelation = PersonCard & {
+  relation: ConnectionStatusValue | "FOLLOWING" | null;
+  incomingConnectionId: string | null;
+  isMentor: boolean;
+  isSelf: boolean;
+};
+
+export async function memberByEmail(
+  viewer: Viewer,
+  email: string
+): Promise<MemberWithRelation | null> {
+  const me = await ownUserId(viewer);
+
+  /* ⚠ THE ADDRESS IS MATCHED AS THE CALLER NORMALISED IT. `normalizeEmail` runs
+     at every write and a `lower(email)` unique index backs it, so an exact match
+     is the same lookup the old `findFirst({ where: { email } })` did. */
+  const row = await prisma.person.findFirst({
+    where: { user: { is: { email } } },
+    select: personSelect,
+  });
+  if (!row?.user) return null;
+
+  const card = toCard(row);
+  const rows = await prisma.connection.findMany({
+    where: {
+      OR: [
+        { from_user_id: me, to_user_id: card.userId },
+        { to_user_id: me, from_user_id: card.userId },
+      ],
+    },
+  });
+
+  return { ...card, ...relationFor(me, card.userId, rows), isSelf: card.userId === me };
 }
 
 /** My colleagues, my pending requests in both directions, and who I follow. */
