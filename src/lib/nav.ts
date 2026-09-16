@@ -637,8 +637,22 @@ export const PROVIDER_NAV: NavItem[] = [
     icon: "Tag",
     requires: "canProvideServices",
   },
-  { label: "Orders", heading: "Work Orders", href: "/orders", icon: "ClipboardCheck" },
-  { label: "Payments", heading: "Payments", href: "/payments", icon: "Wallet" },
+  /* ⚠⚠ `P1-ALL-E533` PART B — EVERY RAIL ITEM IS A VERB PHRASE. Scott,
+     2026-09-16: *"These are all verbs. Should read Manage Orders and Get
+     Paid."* ⚠ SUPERSEDED, quoted not deleted (`E164`): `Orders` and
+     `Payments`.
+     ⚠⚠ `Get Paid` IS THE POINT OF THE RULE — it names the OUTCOME a provider
+     wants, not the screen it lives on.
+     ⚠ MIXED LENGTHS ARE FINE AND DELIBERATE: the consistency asked for is
+     GRAMMATICAL, not character count. Do NOT shorten `Manage Orders` to make
+     the rail even.
+     ⚠⚠ `Learn` AND `Work` ARE NOT TOUCHED — the verb and the noun are the
+     same word and Scott ruled them exceptions.
+     ⚠ THE `heading` VALUES ARE UNCHANGED ON PURPOSE. They now disagree with
+     their labels (`Manage Orders` -> `Work Orders`, `Get Paid` -> `Payments`)
+     and that is REPORTED for Scott to name, not fixed here. */
+  { label: "Manage Orders", heading: "Work Orders", href: "/orders", icon: "ClipboardCheck" },
+  { label: "Get Paid", heading: "Payments", href: "/payments", icon: "Wallet" },
   { label: "Connect", heading: "My Community", href: "/community", icon: "MessagesSquare" },
 ];
 
