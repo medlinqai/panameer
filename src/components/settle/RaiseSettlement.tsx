@@ -115,7 +115,7 @@ export function RaiseSettlement({ form }: { form: SettleForm }) {
         setError(out.error ?? "That didn't work.");
         return;
       }
-      router.push(`/finances/payment-requests/${out.id}`);
+      router.push(`/payments/payment-requests/${out.id}`);
     } finally {
       setBusy(false);
     }

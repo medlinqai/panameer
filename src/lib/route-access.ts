@@ -220,6 +220,12 @@ export const ROUTE_ACCESS: { prefix: string; requires: RouteRequirement }[] = [
   { prefix: "/pay", requires: "canHireTalent" },
   /* ⚠ SUPERSEDED, quoted not deleted: this line read `// rail stub (E134)`. It is
      no longer a stub — `/finances/payment-requests` and its detail are built. */
+  /* ⚠ `P1-ALL-E533` — MOVED WITH THE PAGE. `/finances` became `/payments`;
+     ROUTE_ACCESS is keyed by prefix and longest match wins, so a page that
+     moves without its entry loses its guard. ⚠⚠ The retired `/finances`
+     redirect pages below still need their own entry — a redirect that anyone
+     can hit would leak the fact that a payment request exists. */
+  { prefix: "/payments", requires: "authenticated" },
   { prefix: "/finances", requires: "authenticated" },
   { prefix: "/messages", requires: "authenticated" }, // shared buyer ↔ provider
   /*

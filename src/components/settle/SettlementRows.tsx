@@ -40,7 +40,7 @@ export function SettlementRowCard({ row }: { row: SettlementRow }) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <Link
-            href={`/finances/payment-requests/${row.id}`}
+            href={`/payments/payment-requests/${row.id}`}
             className="font-mono text-[15px] font-bold hover:text-magenta"
           >
             {row.settlementNumber}

@@ -954,7 +954,8 @@ for (const href of [
   "/learn", "/create-work", "/find-work", "/packages", "/settings/packages",
   /* ⚠ WAS `/contracts` UNTIL `P1-ALL-E380` — the ToS is the MSA and the Work
      Order is the SOW, so there is no Contract record for a route to name. */
-  "/orders", "/pay", "/finances", "/community", "/community/forums",
+  /* ⚠ `/finances` -> `/payments` (`P1-ALL-E533`). */
+  "/orders", "/pay", "/payments", "/community", "/community/forums",
   "/community/teams", "/community/mentors", "/messages",
 ]) {
   check(`E378/5 — route ${href} still exists in the nav`, navLib.includes(`"${href}"`));
