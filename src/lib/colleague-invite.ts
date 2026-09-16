@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/resend";
 import { normalizeEmail } from "@/lib/normalizeEmail";
 import { colleagueInviteTemplate } from "@/lib/email/templates/colleague-invite";
+import { memberByEmail, type MemberWithRelation } from "@/lib/connections";
+import type { Viewer } from "@/lib/access";
 
 /**
  * INVITE A COLLEAGUE (`P2-J3-E493`).
@@ -43,8 +45,24 @@ export const INVITE_TTL_DAYS = 30;
 export const INVITE_LIMIT_PER_HOUR = 10;
 export const INVITE_LIMIT_PER_DAY = 40;
 
+/**
+ * ⚠⚠ "ALREADY A MEMBER" IS A SUCCESS WITH A DIFFERENT PAYLOAD (`P2-J3-E525`).
+ *
+ * SCOTT, 2026-09-15: *"I put the email in and it exists...show the card for that
+ * email and the CONNECT or MESSAGE buttons."*
+ *
+ * ⚠ IT IS NOT IN THE REFUSAL UNION ANY MORE, and that is the whole change: the
+ * comment below said *"It is not an error; it is a different answer"* while the
+ * code returned `ok: false` and the route painted it red. ⚠⚠ THE OTHER THREE
+ * REFUSALS ARE STILL ERRORS AND STAY WHERE THEY ARE.
+ *
+ * ⚠ `already_member` SURVIVES AS A REFUSAL FOR EXACTLY ONE CASE — an address
+ * whose `User` has no `Person`, so there is no card to draw. Rare, but a blank
+ * card would be worse than the old sentence.
+ */
 export type InviteResult =
-  | { ok: true; sent: boolean; devLink?: string }
+  | { ok: true; outcome: "sent"; sent: boolean; devLink?: string }
+  | { ok: true; outcome: "already_member"; member: MemberWithRelation }
   | { ok: false; reason: "rate_limited" | "already_member" | "already_invited" | "invalid"; retryAfterMs?: number };
 
 const hash = (raw: string) => createHash("sha256").update(raw).digest("hex");
@@ -74,6 +92,9 @@ export async function inviteAllowance(inviterPersonId: string) {
  */
 export async function inviteColleague(input: {
   inviterPersonId: string;
+  /** ⚠ The session viewer, so the member card below carries YOUR relation to
+      them. Owner-scoped like `inviterPersonId` — never from client input. */
+  viewer: Viewer;
   email: string;
   firstName?: string | null;
   lastName?: string | null;
@@ -93,9 +114,24 @@ export async function inviteColleague(input: {
     ⚠ INVITING SOMEBODY WHO IS ALREADY HERE READS AS A PRODUCT THAT DOES NOT
     KNOW ITS OWN USERS — the same reasoning `recommendation-request`'s `invite`
     footer already applies. It is not an error; it is a different answer.
+
+    ⚠⚠ `E525` — AND NOW THE CODE DOES WHAT THE COMMENT SAYS. This lookup used to
+    be `select: { id: true }`, which is the tell: it was written to answer *"does
+    a row exist"* when the useful question is *"who is it"*. It found the person
+    and threw them away, and the route turned that into a 409 painted red.
+
+    ⚠ NO `ColleagueInvite` ROW IS WRITTEN ON THIS PATH, and that part was always
+    right — there is nobody to invite. The return below is the only thing that
+    changed.
   */
   const existing = await prisma.user.findFirst({ where: { email }, select: { id: true } });
-  if (existing) return { ok: false, reason: "already_member" };
+  if (existing) {
+    const member = await memberByEmail(input.viewer, email);
+    /* ⚠ A `User` WITH NO `Person` HAS NO CARD. Falling back to the old sentence
+       beats drawing a member row with no name in it. */
+    if (!member) return { ok: false, reason: "already_member" };
+    return { ok: true, outcome: "already_member", member };
+  }
 
   /* ⚠ ONE LIVE INVITATION PER ADDRESS PER INVITER. Re-inviting the same person
      repeatedly is the abuse case the rate limit above cannot see on its own. */
@@ -151,10 +187,10 @@ export async function inviteColleague(input: {
   */
   try {
     await sendEmail({ to: email, subject, html, text });
-    return { ok: true, sent: true };
+    return { ok: true, outcome: "sent", sent: true };
   } catch {
     void row;
-    return { ok: true, sent: false, devLink: url };
+    return { ok: true, outcome: "sent", sent: false, devLink: url };
   }
 }
 
