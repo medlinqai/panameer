@@ -119,18 +119,38 @@ export function ToggleRow({
 export function Input({
   label,
   hint,
+  trailing,
   ...rest
 }: {
   label: string;
   hint?: string;
+  /**
+   * ⚠ `P1-ALL-E528` — an absolutely-positioned control sitting inside the
+   * input's right edge, for the password reveal. ⚠⚠ THE WRAPPER IS ONLY ADDED
+   * WHEN SOMETHING IS PASSED, so every existing caller renders byte-identical
+   * markup to before. The caller adds its own right padding (`pr-12`) via
+   * `className`, because only it knows how wide its control is.
+   */
+  trailing?: ReactNode;
 } & React.InputHTMLAttributes<HTMLInputElement>) {
+  const { className = "", ...inputProps } = rest;
+  const field = (
+    <input
+      {...inputProps}
+      className={`w-full rounded-[10px] border border-line px-3 py-2.5 text-[15px] outline-none focus:border-magenta disabled:bg-black/[0.03] disabled:text-ink-2 ${className}`}
+    />
+  );
   return (
     <label className="block">
       <span className="mb-1 block text-[13px] font-bold">{label}</span>
-      <input
-        {...rest}
-        className="w-full rounded-[10px] border border-line px-3 py-2.5 text-[15px] outline-none focus:border-magenta disabled:bg-black/[0.03] disabled:text-ink-2"
-      />
+      {trailing ? (
+        <span className="relative block">
+          {field}
+          {trailing}
+        </span>
+      ) : (
+        field
+      )}
       {hint && <span className="mt-1 block text-[12.5px] text-ink-2">{hint}</span>}
     </label>
   );

@@ -7,6 +7,7 @@ import { Logo } from "@/components/Logo";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { SocialSignIn } from "@/components/auth/SocialSignIn";
+import { PasswordReveal } from "@/components/PasswordReveal";
 
 /** Reasons the OAuth signIn callback can refuse a sign-in (brief_Q). */
 const OAUTH_ERRORS: Record<string, string> = {
@@ -126,16 +127,29 @@ function LoginForm() {
             />
           </label>
 
+          {/* ⚠⚠ `E528` — THE REVEAL BELONGS HERE MOST OF ALL. This is the field
+              that locked Scott out of his own app: masked, it cannot tell him
+              whether the password is wrong or whether he mistyped it, and those
+              need completely different responses. The control is
+              `SignUpForm`'s, extracted to `PasswordReveal` so there is one. */}
+          {/* ⚠ THE LABEL STILL WRAPS THE FIELD, exactly as Email above does.
+              Splitting it would hand the form's `space-y` a gap between the word
+              and the box, and the two fields would stop matching. */}
           <label className="block text-sm font-medium">
             Password
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              autoComplete="current-password"
-              className="mt-1 w-full rounded-[12px] border border-line bg-white px-3 py-2.5 text-ink outline-none transition-colors focus:border-magenta"
-            />
+            <PasswordReveal id="login-password">
+              {({ type, className }) => (
+                <input
+                  id="login-password"
+                  type={type}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  autoComplete="current-password"
+                  className={`mt-1 w-full rounded-[12px] border border-line bg-white px-3 py-2.5 text-ink outline-none transition-colors focus:border-magenta ${className}`}
+                />
+              )}
+            </PasswordReveal>
           </label>
 
           {error && <p className="text-sm text-red-600">{error}</p>}

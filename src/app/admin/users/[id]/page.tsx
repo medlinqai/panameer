@@ -8,6 +8,7 @@ import { LevelPill } from "@/components/console/LevelPill";
 import { jobsFor } from "@/lib/user-jobs";
 import { blockingFor, levelFor, type LevelSubject } from "@/lib/user-levels";
 import { REGISTERED_SITE_NAME } from "@/lib/company";
+import { LockControl } from "@/components/admin/LockControl";
 
 export const dynamic = "force-dynamic";
 
@@ -39,11 +40,19 @@ export const dynamic = "force-dynamic";
  * only when the underlying model does not exist for that person at all — there
  * is no honest empty rendering of a profile they were never offered.
  *
- * ── ⚠⚠ READ ONLY ────────────────────────────────────────────────────────────
+ * ── ⚠⚠ READ ONLY, WITH ONE EXCEPTION: UNLOCK (`P1-ALL-E528`) ────────────────
  *
- * No unlock, no edit, no delete, and the lock state renders as a disabled
- * checkbox exactly as it does on the grid. An action needs its own brief, and a
- * button that looks live but is not is worse than no button.
+ * ⚠ SUPERSEDED, quoted not deleted (`E164`): *"No unlock, no edit, no delete,
+ * and the lock state renders as a disabled checkbox exactly as it does on the
+ * grid. An action needs its own brief, and a button that looks live but is not
+ * is worse than no button."*
+ *
+ * ⚠⚠ THAT BRIEF ARRIVED, AND ITS ARGUMENT WAS SCOTT LOCKED OUT OF HIS OWN APP
+ * WITH NO WAY BACK IN EXCEPT A DEVELOPER WITH DATABASE ACCESS. The checkbox was
+ * right that a dead control is worse than none — so it is now live.
+ * ⚠ EVERYTHING ELSE ON THIS PAGE IS STILL READ ONLY. Unlock is the only write,
+ * it clears all three lock fields, and locking somebody is NOT offered — that is
+ * a new power over a member and it is Scott's call.
  *
  * ⚠ NO ROUTE REGISTRATION WAS NEEDED: `route-access.ts` already gates the whole
  * `/admin` prefix on `canAdminister`, and `admin/layout.tsx` guards above this.
@@ -185,13 +194,11 @@ export default async function AdminUserPage({
   const level = levelFor(subject);
   const blocking = blockingFor(subject);
 
-  const lockTitle = u?.locked
-    ? u.locked_until
-      ? `Locked until ${u.locked_until.toLocaleTimeString("en-GB")} — ${u.failed_login_attempts} failed attempts`
-      : `Locked indefinitely — ${u.failed_login_attempts} failed attempts`
-    : u?.failed_login_attempts
-      ? `Not locked — ${u.failed_login_attempts} failed attempts`
-      : "Not locked";
+  /* ⚠⚠ `lockTitle` IS GONE (`E528`). It rendered on the SERVER, so a timed
+     lock's release time was formatted in the server's timezone and hard-coded to
+     `en-GB` — an admin in Eastern Time read somebody else's clock. `LockControl`
+     is a client component and formats it in the VIEWER's locale, and it is also
+     the only place the three states are now described. */
 
   return (
     <div className="mx-auto w-full max-w-4xl">
@@ -236,17 +243,21 @@ export default async function AdminUserPage({
           <Row
             label="Locked"
             value={
-              <span className="inline-flex items-center gap-2">
-                {/* ⚠ DISABLED, exactly as on the grid. This page is READ ONLY. */}
-                <input
-                  type="checkbox"
-                  checked={!!u?.locked}
-                  disabled
-                  aria-label={lockTitle}
-                  className="h-4 w-4 accent-magenta"
+              u ? (
+                /* ⚠⚠ `E528` — THE CHECKBOX IS LIVE. It used to be `disabled`
+                   with no endpoint behind it anywhere in `src/app/api`.
+                   ⚠ It says WHICH KIND of lock it is and when a timed one
+                   releases, because an admin who does not know it self-releases
+                   will unlock something that did not need it. */
+                <LockControl
+                  personId={person.id}
+                  locked={u.locked}
+                  lockedUntil={u.locked_until ? u.locked_until.toISOString() : null}
+                  failedAttempts={u.failed_login_attempts ?? 0}
                 />
-                <span className="text-[13px] text-ink-2">{lockTitle}</span>
-              </span>
+              ) : (
+                <span className="text-[13px] text-ink-2">No login on this record</span>
+              )
             }
           />
         </Section>
