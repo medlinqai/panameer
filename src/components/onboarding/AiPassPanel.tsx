@@ -141,7 +141,7 @@ export function AiPassPanel({
               disabled={info === null}
               className="rounded-full bg-magenta px-6 py-2.5 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
             >
-              Upload your résumé for an AI pass
+              Upload Your Résumé for an AI Pass
             </button>
           ))}
 
@@ -151,7 +151,7 @@ export function AiPassPanel({
             onClick={onUpload}
             className="rounded-full border-[1.5px] border-line px-5 py-2.5 font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
           >
-            Upload a different file
+            Upload a Different File
           </button>
         )}
 
@@ -161,7 +161,7 @@ export function AiPassPanel({
             onClick={onManual}
             className="text-[14px] font-semibold text-ink-2 underline underline-offset-4 hover:text-magenta"
           >
-            Fill it in manually
+            Fill It In Manually
           </button>
         )}
       </div>
