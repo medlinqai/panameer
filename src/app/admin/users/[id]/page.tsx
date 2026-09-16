@@ -221,7 +221,44 @@ export default async function AdminUserPage({
             </span>
           </div>
           <Row label="Name" value={name} />
-          <Row label="Title" value={person.title || <span className="text-ink-2">No title on file</span>} />
+          {/*
+            ⚠⚠ `P1-A1.5-E529` FINDING 1 — THIS ROW WAS LYING ABOUT MOST OF THE
+            PLATFORM. Scott, 2026-09-16: *"i noticed that phil has no title...
+            that is an error. I am sure I aded one."* He had: Phil's
+            `ProviderProfile.headline` is *"Oracle Cloud Supply Chain Expert"*
+            and his `Person.title` is null.
+
+            ⚠ MEASURED: **87 of 111 providers (78.4%)** have an empty
+            `Person.title` AND a real `headline`. Only **2** have a title. So
+            the console said *"No title on file"* about four-fifths of the
+            platform while their profiles read fine.
+
+            ⚠⚠ THE FIELDS ARE NOT MERGED AND NOTHING IS BACKFILLED. A headline
+            is provider MARKETING COPY; a title is IDENTITY, and collapsing them
+            is a model decision Scott has not been asked. This row keeps reading
+            `Person.title` FIRST and only falls through — and when it falls
+            through it SAYS SO, because two different fields under one word is
+            exactly how this defect happened.
+            ⚠ `Headline` also still has its own row under Seller detail; this
+            does not replace it.
+          */}
+          <Row
+            label="Title"
+            value={
+              person.title ? (
+                person.title
+              ) : person.providerProfile?.headline ? (
+                <span className="inline-flex flex-wrap items-baseline gap-2">
+                  <span>{person.providerProfile.headline}</span>
+                  <span className="rounded-full bg-black/[0.06] px-2 py-0.5 text-[11.5px] font-semibold text-ink-2">
+                    from Headline · no title on file
+                  </span>
+                </span>
+              ) : (
+                <span className="text-ink-2">No title on file</span>
+              )
+            }
+          />
           <Row
             label="Email"
             value={u?.email ?? <span className="text-ink-2">No login on this record</span>}
