@@ -565,12 +565,19 @@ check(
   /"FOLLOWING"/.test(connections)
 );
 /* ⚠ THE REPLACEMENT VERB ACTUALLY SHIPS. Deleting the word without shipping
-   `Connect as mentor` would also pass the scan. */
+   `Connect as Mentor` would also pass the scan.
+   ⚠⚠ THE CASE CHANGED, THE RULE DID NOT (`P1-A3-E531` PART D). Scott,
+   2026-09-16: *"yes, make the capitals a rule"* — BUTTON LABELS ARE TITLE CASE,
+   now standing rule 11 in `CLAUDE.md`. ⚠ SUPERSEDED, quoted not deleted
+   (`E164`): this asserted `/Connect as colleague/` and `/Connect as mentor/`.
+   ⚠ THE GUARD IS TAUGHT THE NEW TRUTH RATHER THAN THE COPY BEING REVERTED TO
+   SATISFY IT — the same call `CLAUDE.md` records for `check:company-binding`.
+   ⚠⚠ THE CAPITAL IS ASSERTED, so lower-casing these labels again fails here. */
 const controls = bodies.get(join("src", "components", "community", "ConnectControls.tsx")) ?? "";
 check("E374/1 — ConnectControls is on disk", controls.length > 0);
 check(
   "E374/1 — one verb, two capacities: both labels ship",
-  /Connect as colleague/.test(controls) && /Connect as mentor/.test(controls)
+  /Connect as Colleague/.test(controls) && /Connect as Mentor/.test(controls)
 );
 check(
   "E374/1 — Decline is a real button, not a hidden menu item",
