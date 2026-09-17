@@ -87,6 +87,50 @@ export default async function InviteColleaguePage() {
       : []
   );
 
+  /*
+    ── ⚠⚠ DID THE INVITATION ACTUALLY ARRIVE (`P2-J3-E522` PART A) ────────────
+
+    ⚠ THE DEFECT THIS CLOSES, AND IT IS THE ONE THAT STARTED THE BRIEF: a send
+    that never arrived left no trace, so the row said "Invited" forever. Scott's
+    own `straterp.cpm` typo survived three attempts and the product never said
+    otherwise.
+
+    ⚠⚠ READ, NOT DENORMALISED. `SentEmail` already carries the outcome and
+    points back with `subject_type`/`subject_id`, so a column on
+    `ColleagueInvite` would duplicate it and could disagree with it. ⚠ Scott,
+    2026-09-17, confirming his earlier ruling was about `status` and not a new
+    column: *"bounce is derivable from SentEmail and a denormalised column would
+    duplicate it… Read it."*
+
+    ⚠⚠⚠ `complained` IS NOT IN THIS SET, AND THAT IS THE WHOLE CARE OF IT. A
+    complaint means the mail ARRIVED and the person pressed "spam". Showing
+    "Not delivered" there would be a FLAT LIE to the sender, and it would send
+    them chasing a typo that does not exist. ⚠ `bounced`, `failed` and
+    `suppressed` all mean it did not land; only those three.
+  */
+  const undelivered = new Map<string, string>();
+  if (sent.length > 0) {
+    const receipts = await prisma.sentEmail.findMany({
+      where: {
+        subject_type: "ColleagueInvite",
+        subject_id: { in: sent.map((s) => s.id) },
+        status: { in: ["bounced", "failed", "suppressed"] },
+      },
+      /* ⚠ NEWEST FIRST: a resend that succeeded must not be overruled by an
+         older failure, so the most recent receipt is the one that counts. */
+      orderBy: { created_at: "desc" },
+      select: { subject_id: true, status: true, created_at: true },
+    });
+    const latest = new Map<string, Date>();
+    for (const r of receipts) {
+      if (!r.subject_id) continue;
+      const seen = latest.get(r.subject_id);
+      if (seen && seen >= r.created_at) continue;
+      latest.set(r.subject_id, r.created_at);
+      undelivered.set(r.subject_id, r.status);
+    }
+  }
+
   const now = new Date();
   return (
     <div className="mx-auto max-w-3xl">
@@ -108,6 +152,9 @@ export default async function InviteColleaguePage() {
           joined: joined.has(s.invitee_email),
           sentAt: s.created_at.toISOString(),
           expired: s.expires_at < now,
+          /* ⚠ The receipt's own word (`bounced` / `failed` / `suppressed`), so
+             the CLIENT never has to re-derive what "did not arrive" means. */
+          undelivered: undelivered.get(s.id) ?? null,
         }))}
       />
     </div>
