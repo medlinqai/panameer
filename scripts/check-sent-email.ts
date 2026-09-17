@@ -198,6 +198,55 @@ console.log("\ncheck:sent-email — every send leaves a receipt\n");
      "otherwise a suppressed address is a permanent, unexplained lockout");
 }
 
+/* ═══ 9 · THE READ SIDE — THE BADGE THE BRIEF EXISTS FOR ════════════════ */
+{
+  const PAGE = strip(readFileSync("src/app/(app)/invite-colleague/page.tsx", "utf8"));
+  const CLIENT = strip(readFileSync("src/components/console/InviteColleagueClient.tsx", "utf8"));
+
+  ok("9 — the page reads SentEmail for the invitation", /subject_type: "ColleagueInvite"/.test(PAGE));
+  /* ⚠ THE MODEL BLOCK IS EXTRACTED FIRST. A lazy `[\s\S]*?` from the model name
+     to the next `\n}` does NOT stop at this model's closing brace — it runs on
+     into `SentEmail`, finds `bounce_type` there and reports a column that does
+     not exist. ⚠⚠ Measured: this assertion was RED for exactly that reason. */
+  const inviteModel = /model ColleagueInvite \{[\s\S]*?\n\}/.exec(
+    readFileSync("prisma/schema.prisma", "utf8")
+  )?.[0] ?? "";
+  ok("9 — the ColleagueInvite model was found", inviteModel.length > 0);
+  ok(
+    "9 — ⚠⚠ DERIVED, NOT DENORMALISED — no bounce column on ColleagueInvite",
+    !/bounce/i.test(inviteModel),
+    "a column would duplicate the receipt and could disagree with it"
+  );
+  ok(
+    "9 — ⚠⚠⚠ `complained` IS NOT TREATED AS UNDELIVERED",
+    /status: \{ in: \["bounced", "failed", "suppressed"\] \}/.test(PAGE) &&
+      !/in: \[[^\]]*complained[^\]]*\][\s\S]{0,80}undelivered/.test(PAGE),
+    "a complaint means the mail ARRIVED and the person pressed spam; saying " +
+      "'Not delivered' would send the sender chasing a typo that does not exist"
+  );
+  ok(
+    "9 — ⚠ the newest receipt wins, so a successful resend is not overruled",
+    /orderBy: \{ created_at: "desc" \}/.test(PAGE)
+  );
+  ok('9 — the badge reads "Not delivered"', /label: "Not delivered"/.test(CLIENT));
+  ok(
+    "9 — ⚠ it is RED, not grey — grey is the colour of nothing-to-do",
+    /UNDELIVERED = \{ label: "Not delivered", tone: "bg-red-/.test(CLIENT)
+  );
+  ok(
+    "9 — ⚠ Joined overrides it",
+    /row\.undelivered && !row\.joined \? UNDELIVERED/.test(CLIENT),
+    "if they are on the platform the mail reached them, whatever a stale receipt says"
+  );
+  /* ⚠⚠ SCOTT: "DO NOT BUILD A RE-INVITE ACTION YET… letting them correct it in
+     place is a journey change and I will rule on it separately." */
+  ok(
+    "9 — ⚠⚠ NO RE-INVITE ACTION WAS BUILT",
+    !/(Resend|Re-invite|Try again)</i.test(CLIENT),
+    "Scott rules on correcting an address in place separately"
+  );
+}
+
 if (failures.length > 0) {
   console.error(`\ncheck:sent-email — ${failures.length} FAILED, ${pass} passed\n`);
   for (const f of failures) console.error(`  ✗ ${f}`);

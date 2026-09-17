@@ -34,6 +34,15 @@ export type SentInvite = {
   joined: boolean;
   sentAt: string;
   expired: boolean;
+  /**
+   * ⚠⚠ `P2-J3-E522` — the receipt's word when the mail DID NOT ARRIVE
+   * (`bounced` / `failed` / `suppressed`), else null. ⚠ SERVER-DERIVED from
+   * `SentEmail`; there is no column on `ColleagueInvite` and there must not be
+   * one — it would duplicate the receipt and could disagree with it.
+   * ⚠⚠ `complained` IS DELIBERATELY NOT HERE: a complaint means the mail
+   * ARRIVED and the person pressed "spam".
+   */
+  undelivered: string | null;
 };
 
 /**
@@ -62,6 +71,23 @@ const STATUS: Record<SentInvite["status"], { label: string; tone: string }> = {
   EXPIRED: { label: "Expired", tone: "bg-black/[0.06] text-ink-2" },
   REVOKED: { label: "Withdrawn", tone: "bg-black/[0.06] text-ink-2" },
 };
+
+/*
+  ── ⚠⚠ THE BADGE THE WHOLE BRIEF EXISTS FOR (`P2-J3-E522`) ─────────────────
+
+  ⚠ WORDING NAMED BY SCOTT, 2026-09-17, from three: *"2 says what happened in
+  words anyone knows. 3 is our vocabulary. 1 sounds like the app is apologising
+  for itself."*
+  ⚠ SUPERSEDED, quoted not deleted (`E164`): "Couldn't deliver" · "Email bounced".
+
+  ⚠⚠ RED, NOT GREY. `Expired` and `Withdrawn` are grey because nothing is wrong
+  — a thing ran its course. ⚠ THIS ONE NEEDS ACTING ON: the address is probably
+  a typo, and grey is the colour of "no action needed".
+  ⚠ It OVERRIDES every other state except `Joined`, because a delivery failure
+  is the more useful fact than "still pending" — and if they somehow joined
+  anyway, the mail plainly reached them.
+*/
+const UNDELIVERED = { label: "Not delivered", tone: "bg-red-100 text-red-800" };
 
 export function InviteColleagueClient({
   dayRemaining,
@@ -362,7 +388,11 @@ export function InviteColleagueClient({
                 : row.status === "PENDING" && row.expired
                   ? "EXPIRED"
                   : row.status;
-              const status = STATUS[key];
+              /* ⚠ `Joined` wins: if they are on the platform, the mail reached
+                 them whatever a stale receipt says. Otherwise a failure to
+                 deliver is the more useful fact than "still pending". */
+              const status =
+                row.undelivered && !row.joined ? UNDELIVERED : STATUS[key];
               return (
                 <li key={row.id} className="flex flex-wrap items-baseline gap-2 py-3.5">
                   {row.name && (
