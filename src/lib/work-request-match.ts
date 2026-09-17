@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { shownSkills, selectedRoleIds } from "@/lib/shown-skills";
 import { marketplaceVisibleWhere, type Viewer } from "@/lib/access";
 import { getWorkRequest } from "@/lib/work-request";
 import { suiteFromPillar } from "@/lib/suite";
@@ -140,13 +141,16 @@ export async function matchProvidersFor(
         skills and filtering in memory would work and would also pull a hundred
         rows per provider to count three.
       */
+      /* ⚠ `E517` — the provider's role selection, so matching can read SHOWN. */
+      roles: { select: { role_type_id: true } },
+      role_type_id: true,
       skills: {
         where: { skill_id: { in: skillIds } },
         select: {
           weight: true,
           months_total: true,
           last_used: true,
-          skill: { select: { name: true } },
+          skill: { select: { name: true, role_type_id: true } },
         },
       },
       suiteProfiles: {
@@ -169,7 +173,25 @@ export async function matchProvidersFor(
   const SUITE_BOOST = 0.5;
 
   const providers = rows
-    .map((p) => {
+    .map((row) => {
+      /*
+        ── ⚠⚠ MATCHING READS SHOWN, NOT HELD (`P2-J1.4-E517`) ─────────────────
+
+        ⚠⚠ SCOTT, 2026-09-17: *"Matching puts someone in front of a buyer, so it
+        is an OFFER surface. If a buyer searches Payables, matches a provider,
+        clicks through and finds no Payables on the profile, that reads as a
+        broken app — and the provider may have narrowed precisely because they no
+        longer want that work."*
+        ⚠ *"THE CONSEQUENCE IS HONEST AND I ACCEPT IT: narrowing your roles
+        removes you from those searches. That is what narrowing MEANS."*
+
+        ⚠ THIS IS A DIFFERENT AXIS FROM `E515`'s NOTE that matching reads what a
+        provider HOLDS. That was CATALOG scope and it still stands: a skill is not
+        disqualified by which catalog it came from. ROLE scope is the provider's
+        own statement about what they offer.
+      */
+      const shown = shownSkills(selectedRoleIds(row), row.skills, (s) => s.skill.role_type_id);
+      const p = { ...row, skills: shown };
       const base = p.skills.reduce((n, s) => n + s.weight, 0);
       const share = requestedSuite
         ? (p.suiteProfiles.find((s) => s.suite === requestedSuite)?.weight_pct ?? 0) / 100
@@ -196,6 +218,15 @@ export async function matchProvidersFor(
         suiteMix: p.suiteProfiles.map((s) => ({ suite: s.suite, pct: s.weight_pct })),
       };
     })
+    /*
+      ⚠⚠ `P2-J1.4-E517` — A PROVIDER WHOSE MATCHING SKILLS ARE ALL HIDDEN DROPS
+      OUT. The `where` above guarantees at least one of the request's skills is
+      HELD; the role filter can take that to zero, and a row with no shown
+      overlap would otherwise be ranked at weight 0 with an empty skill list.
+      ⚠ Scott, 2026-09-17: *"narrowing your roles removes you from those searches.
+      That is what narrowing MEANS."*
+    */
+    .filter((p) => p.relevantSkills > 0)
     /*
       Weighted depth first; overlap breaks ties. Overlap survives as the
       tie-break rather than the ranking because two providers of equal depth,

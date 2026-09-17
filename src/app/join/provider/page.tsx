@@ -13,6 +13,7 @@ import {
 } from "@/components/onboarding/SignUpForm";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 import { ambiguousSkillNames, skillQualifier } from "@/lib/skill-labels";
+import { isSkillShown } from "@/lib/shown-skills";
 
 import {
   OptionCard,
@@ -299,6 +300,31 @@ const MAX_VISIBLE_OPTIONS = 15;
  * of nodes the provider will never scroll through.
  */
 const MAX_SKILL_SUGGESTIONS = 12;
+
+/*
+  ── ⚠⚠ PROPOSED WORDING, AWAITING SCOTT (`P2-J1.4-E517`) ────────────────────
+
+  ⚠ Scott, 2026-09-17: *"PROPOSE THE HEADING AND THE ONE-LINE EXPLANATION. Do
+  not ship wording — I name things."* ⚠⚠ THE MECHANISM IS BUILT AND GATED; THESE
+  TWO STRINGS ARE PLACEHOLDERS SO HIS RULING IS A ONE-LINE SWAP, not a rebuild.
+
+  ⚠ The alternatives reported with this build, so the reasoning is not lost:
+    heading      — 1. "Skills your roles don't show"  ← in place
+                   2. "Held, but not shown"
+                   3. "Not on your profile right now"
+    explanation  — 1. the line below  ← in place
+                   2. "You still hold these. Your current roles just don't
+                      offer them to buyers."
+                   3. "Widen your roles to show these again, or remove any you
+                      no longer want."
+
+  ⚠⚠ WHAT THE WORDING MUST NOT SAY, whichever he picks: that the skill is gone,
+  expired, wrong or unverified. It is held, it is his, and nothing about it has
+  been judged — saying otherwise re-creates the harm `E517` fixed in copy.
+*/
+const HELD_NOT_SHOWN_HEADING = "Skills your roles don't show";
+const HELD_NOT_SHOWN_EXPLANATION =
+  "You still hold these — your current roles just don't put them in front of buyers. Widen your roles to show them again, or remove any you no longer want.";
 /** Per GROUP, so every specialization section stays represented (E054). */
 /** Per-group cap while SEARCHING — three groups have to share one window. */
 const MAX_SPECS_PER_GROUP = 6;
@@ -375,7 +401,8 @@ type ProfilePayload = {
     notes: string | null;
   }[];
   skillIds?: string[];
-  skillNames?: { id: string; name: string; area?: string | null }[];
+  /** ⚠ `roleTypeId` — E517, so the step can name what the roles do not show. */
+  skillNames?: { id: string; name: string; area?: string | null; roleTypeId?: string | null }[];
   /** E187 — the subset of `skillIds` the résumé produced. Server-derived. */
   resumeSkillIds?: string[];
   headline?: string | null;
@@ -485,7 +512,7 @@ type Profile = {
   suggestedCompanyName: string | null;
   projects: EmployerProject[];
   skillIds: string[];
-  skillNames: { id: string; name: string; area?: string | null }[];
+  skillNames: { id: string; name: string; area?: string | null; roleTypeId?: string | null }[];
   /** E187 — which of `skillIds` the résumé produced, straight from the server. */
   resumeSkillIds: string[];
   /** Typed-in skills not yet in the catalog (E031). */
@@ -2398,6 +2425,36 @@ setScreen(target);
       const chosenSkills = new Set(profile.skillIds);
       const totalPicked = profile.skillIds.length + profile.customSkills.length;
 
+      /*
+        ── ⚠⚠ HELD, BUT NOT SHOWN (`P2-J1.4-E517`) ─────────────────────────────
+
+        ⚠⚠ THE STEP READS WHAT IS HELD. `E517` stopped the role step DELETING
+        out-of-role skills and moved the filter to the offer-side reads, which
+        means a provider can now hold a skill that appears on no surface they
+        can see. ⚠ THE ONLY PLACE TO REMOVE IT IS HERE, so this is the one list
+        that must not filter.
+
+        ⚠ Split, not hidden: every held skill appears EXACTLY ONCE — in the
+        basket if their roles show it, in the block below the picker if they do
+        not. Listing it twice would make one chip look like two skills.
+
+        ⚠⚠ COMPUTED AGAINST `profile.roleTypeIds` — the roles IN THE WIZARD, not
+        the roles last saved — so unticking a role on the previous step moves
+        skills into this block immediately, which is the whole point: the
+        provider sees the consequence before it reaches their profile.
+
+        ⚠ `isSkillShown` is the same function the profile, the provider cards
+        and the matcher read. One rule, gated by `check:shown-skills`.
+      */
+      const isHiddenSkill = (sk: { roleTypeId?: string | null }) =>
+        !isSkillShown(profile.roleTypeIds, sk.roleTypeId);
+      const basketSkills = profile.skillNames.filter((sk) => !isHiddenSkill(sk));
+      const heldNotShown = profile.skillNames.filter(isHiddenSkill);
+      /* ⚠ The basket counts what it lists. `canSave` still counts everything
+         HELD (`totalPicked`), so a provider whose skills are all out-of-role is
+         never trapped on this step by a number they cannot see. */
+      const basketCount = basketSkills.length + profile.customSkills.length;
+
       const q = skillQuery.trim().toLowerCase();
       // Already-picked skills are chips above, so they stop being suggestions —
       // filtering them out BEFORE the cap keeps a full set of usable options as
@@ -2630,16 +2687,18 @@ setScreen(target);
           )}
 
           {/* The basket is always on screen and always removable. */}
-          {(profile.skillNames.length > 0 || profile.customSkills.length > 0) && (
+          {(basketSkills.length > 0 || profile.customSkills.length > 0) && (
             <div className="mb-4">
               <p className="mb-1.5 text-[13px] font-bold">
                 {/* E202 — a count, not a quota. "12/15" turned a list of what
                     you can do into a budget you were spending. */}
                 Your Skills{" "}
-                <span className="font-normal text-ink-2">({totalPicked})</span>
+                {/* ⚠ E517 — counts what this list SHOWS. Out-of-role skills are
+                    still held and are counted in their own block below. */}
+                <span className="font-normal text-ink-2">({basketCount})</span>
               </p>
               <div className={`flex flex-wrap gap-2 ${PICKED_REGION}`}>
-                {profile.skillNames.map((sk) => (
+                {basketSkills.map((sk) => (
                   <Chip key={sk.id} selected onClick={() => toggleSkill(sk.id)}>
                     {sk.name}
                     {/*
@@ -2773,6 +2832,60 @@ setScreen(target);
             <p className="mt-2 text-[13px] text-ink-2">
               +{hiddenSkillCount} more — keep typing to narrow the list.
             </p>
+          )}
+
+          {/*
+            ── ⚠⚠ THE REMOVAL GAP (`P2-J1.4-E517`) ──────────────────────────────
+
+            ⚠ SCOTT, 2026-09-17: *"a section in the skills step, below the
+            picker, listing skills the provider holds that their current roles
+            do not show, each with a remove control."*
+
+            ⚠⚠ WHY IT HAS TO EXIST. Before `E517` a narrowed role DELETED these
+            rows, so there was nothing to remove. Now they survive — and every
+            other surface filters them out, so without this block a provider who
+            genuinely wants a skill gone has no way to say so. ⚠ THAT WOULD MAKE
+            "we never delete what you hold" read as "you can never remove it."
+
+            ⚠ THE REMOVE IS REAL AND IT IS THE PROVIDER'S OWN INSTRUCTION — it
+            drops the id from `skillIds`, and `applyProviderSection`'s scoped
+            delete (`source: "SELF_ADDED"`, `skill_id: { notIn: skillIds }`,
+            `E552`) then removes the row. ⚠⚠ THAT IS NOT THE DEFECT `E517`
+            FIXED: the harm was a SAVE destroying data nobody asked it to
+            destroy. A provider clicking Remove asked.
+
+            ⚠ It reuses `toggleSkill`, so removal behaves identically here and
+            in the basket — and because the row leaves `skillNames`, the chip
+            leaves this block with no extra state to keep in step.
+
+            ⚠⚠ WORDING IS PROPOSED, NOT NAMED. Scott names things; these two
+            strings are placed in constants so his ruling is a one-line swap.
+          */}
+          {heldNotShown.length > 0 && (
+            <div className="mt-6 rounded-brand border border-line bg-bg-soft p-4">
+              <p className="text-[14px] font-bold">{HELD_NOT_SHOWN_HEADING}</p>
+              <p className="mt-1 text-[13px] leading-relaxed text-ink-2">
+                {HELD_NOT_SHOWN_EXPLANATION}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {heldNotShown.map((sk) => (
+                  <span
+                    key={sk.id}
+                    className="inline-flex items-center gap-1.5 rounded-full border-[1.5px] border-line bg-white px-3.5 py-1.5 text-[13.5px] font-bold text-ink-2"
+                  >
+                    {sk.name}
+                    <button
+                      type="button"
+                      onClick={() => toggleSkill(sk.id)}
+                      aria-label={`Remove ${sk.name}`}
+                      className="text-[15px] leading-none text-ink-2 transition-colors hover:text-magenta"
+                    >
+                      &times;
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
           )}
         </>
       ),

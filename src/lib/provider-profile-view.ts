@@ -2,6 +2,7 @@ import { formatLocality } from "@/lib/locality";
 import { prisma } from "@/lib/prisma";
 import { isMarketplaceVisible, providerMeetsRequired } from "@/lib/access";
 import { profileEnrichmentGaps, VISIBILITY_THRESHOLD } from "@/lib/completeness";
+import { shownSkills, selectedRoleIds } from "@/lib/shown-skills";
 import { listPublishedPackages } from "@/lib/packages";
 import { toView as toArtifactView } from "@/lib/artifacts";
 import {
@@ -64,8 +65,11 @@ export async function getProviderProfileView(
       pillar: { select: { name: true } },
       region: { select: { id: true, name: true } },
       skills: {
-        include: { skill: { select: { id: true, name: true } } },
+        include: { skill: { select: { id: true, name: true, role_type_id: true } } },
       },
+      /* ⚠ `E517` — the provider's role selection, so the view can show only
+         what they present. */
+      roles: { select: { role_type_id: true } },
       specializations: {
         include: { specialization: { select: { id: true, name: true, kind: true } } },
       },
@@ -349,7 +353,13 @@ export async function getProviderProfileView(
       phoneVerified: profile.person.phone_verified_at != null,
     },
 
-    skills: profile.skills.map((s) => ({
+    /* ⚠⚠ `P2-J1.4-E517` — AN OFFER SURFACE SHOWS ONLY IN-ROLE SKILLS. The rows are
+   kept (the prune is gone); the role selection decides what is PRESENTED. */
+    skills: shownSkills(
+      selectedRoleIds(profile),
+      profile.skills,
+      (s) => s.skill.role_type_id
+    ).map((s) => ({
       id: s.skill.id,
       name: s.skill.name,
     })),

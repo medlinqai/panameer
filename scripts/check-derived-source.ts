@@ -141,9 +141,15 @@ console.log("\ncheck:derived-source — only the rollup may write DERIVED\n");
    The skills step deleted EVERY ProviderSkill row for the profile — including
    the rollup's, with their months. Any `deleteMany` outside the rollup must be
    scoped by `source`, so it can only remove what that writer created.
-   ⚠ ONE EXEMPTION, AND IT IS DELIBERATE: `E517`'s ROLE PRUNE deletes by
-   `role_type_id` regardless of source. Scott ruled that deletion correct on
-   2026-09-11 — its defect is that it is SILENT, which is `E517`, not this.     */
+   ⚠⚠ THE EXEMPTION IS GONE (`P2-J1.4-E517`, 2026-09-17). ⚠ SUPERSEDED, quoted
+   not deleted (`E164`): *"ONE EXEMPTION, AND IT IS DELIBERATE: `E517`'s ROLE
+   PRUNE deletes by `role_type_id` regardless of source. Scott ruled that
+   deletion correct on 2026-09-11."*
+   ⚠ THAT PRUNE NO LONGER DELETES ANYTHING — the role filter moved to the READ
+   (`lib/shown-skills.ts`), so there is nothing left to exempt. ⚠⚠ Scott:
+   *"REMOVING it is a tightening and I want it."* Every `providerSkill.deleteMany`
+   in `src/` is now scoped by `source`, with no exceptions. ⚠ A new unscoped
+   delete is a STOP AND REPORT, never a quiet re-exemption.                     */
 {
   const offenders: string[] = [];
   /* ⚠ APP CODE ONLY. A gate or a dev script deleting its own throwaway probe
@@ -163,14 +169,13 @@ console.log("\ncheck:derived-source — only the rollup may write DERIVED\n");
         else if (src[i] === ")") { depth--; if (depth === 0) break; }
       }
       const call = src.slice(start, i + 1);
-      const isRolePrune = /role_type_id:\s*\{\s*notIn/.test(call);
-      if (!/\bsource\s*:/.test(call) && !isRolePrune) {
+      if (!/\bsource\s*:/.test(call)) {
         offenders.push(`${f}:${src.slice(0, m.index).split("\n").length}`);
       }
     }
   }
   check(
-    "4 — ⚠⚠ every providerSkill deleteMany outside the rollup is scoped by `source` (or is E517's role prune)",
+    "4 — ⚠⚠ every providerSkill deleteMany outside the rollup is scoped by `source`, with NO exemption (E517)",
     offenders.length === 0,
     offenders.join(" · ")
   );

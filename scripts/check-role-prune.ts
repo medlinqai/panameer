@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { applyParsedResume, } from "@/lib/resume/import";
 import { deriveRolesFromSkills, saveProviderStep } from "@/lib/onboarding";
+import { getProviderProfileView } from "@/lib/provider-profile-view";
 import type { ParsedResume } from "@/lib/resume/parse";
 
 /**
@@ -131,14 +132,51 @@ async function main() {
       console.log("skip  — no distinct second domain under this role to stale-test with");
     }
 
-    /* ⚠ AND THE COUNTER-CASE: a WRONG role really would prune them, which is why
-       the derivation is the fix and the prune is not the bug. */
+    /*
+      ── ⚠⚠ THE ROUND TRIP: HIDDEN, NOT DELETED (`P2-J1.4-E517`) ───────────────
+
+      ⚠ SUPERSEDED, quoted not deleted (`E164`):
+          const afterWrong = await prisma.providerSkill.count({ … });
+          assert(
+            afterWrong < afterImport,
+            `a WRONG role prunes them (${afterImport} → ${afterWrong}) — the prune
+             is correct, the role was not`
+          );
+
+      ⚠⚠ THAT ASSERTION ENCODED THE MECHANISM, NOT THE RULE — it counted ROWS IN
+      THE DATABASE. The rule underneath is *"a skill from a role the provider
+      never claimed must not be PRESENTED as theirs"*, and Scott's ruling of
+      2026-09-17 changed how it is enforced: the rows stay and the profile filters
+      them. ⚠ This is `check:rollup`'s case, not `check:cert-skills`' — the RULING
+      changed, so the test follows it. The other five assertions here encode rules
+      and are untouched.
+    */
     const wrongRole = roles.find((r) => (r.display ?? r.name).startsWith("Technology"));
     await saveProviderStep(viewer, "roles", { roleTypeIds: [wrongRole!.id] } as never);
+
     const afterWrong = await prisma.providerSkill.count({ where: { provider_profile_id: profile.id } });
     assert(
-      afterWrong < afterImport,
-      `a WRONG role prunes them (${afterImport} → ${afterWrong}) — the prune is correct, the role was not`
+      afterWrong === afterImport,
+      `⚠⚠ A WRONG ROLE KEEPS THE ROWS — ${afterImport} before, ${afterWrong} after (E517: a save deletes nothing)`
+    );
+
+    /* ⚠ …and the profile stops showing them. This is the half that used to be a
+       delete. */
+    /* ⚠ As the OWNER — the view refuses a profile that is not marketplace-visible,
+       and the probe is neither ACTIVE nor complete. The owner sees the same
+       FILTERED list a buyer would; the hidden rows live in the skills step. */
+    const hiddenView = await getProviderProfileView(profile.id, { viewerUserId: user.id });
+    assert(
+      (hiddenView?.skills.length ?? -1) === 0,
+      `and the PROFILE shows none of them (${hiddenView?.skills.length ?? "no view"} shown)`
+    );
+
+    /* ⚠⚠ RE-WIDENING BRINGS THEM BACK. That round trip IS the ruling. */
+    await saveProviderStep(viewer, "roles", { roleTypeIds: derived.roleTypeIds } as never);
+    const restored = await getProviderProfileView(profile.id, { viewerUserId: user.id });
+    assert(
+      (restored?.skills.length ?? 0) === afterImport,
+      `⚠⚠ RE-WIDENING RESTORES THE PROFILE — ${restored?.skills.length ?? 0} of ${afterImport} shown again`
     );
   } finally {
     await prisma.providerSkill.deleteMany({ where: { provider_profile_id: profile.id } });
