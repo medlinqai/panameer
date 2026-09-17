@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ValidationAnswers } from "@/components/validate/ValidationAnswers";
 import type { ValidationRequestView } from "@/lib/project-validation";
+import { dateRangeLabel } from "@/lib/date-range-label";
 
 /**
  * The Confirm / Decline control for the public validation page.
@@ -51,12 +52,10 @@ export function ValidateActions({
     }
   };
 
-  const dates =
-    request.startDate || request.endDate
-      ? `${request.startDate?.slice(0, 4) ?? "?"} – ${
-          request.isCurrent ? "Present" : (request.endDate?.slice(0, 4) ?? "Present")
-        }`
-      : null;
+  /* ⚠ `P2-J1.4-E549` — a colleague is asked to vouch for these dates, so they
+     must not claim "Present" for a job that is not current. SUPERSEDED, quoted
+     (`E164`): `request.isCurrent ? "Present" : (request.endDate?.slice(0, 4) ?? "Present")` */
+  const dates = dateRangeLabel(request.startDate, request.endDate, request.isCurrent) || null;
 
   if (done) {
     /*

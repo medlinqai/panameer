@@ -20,6 +20,20 @@ export type ParsedExperience = {
   description: string | null;
   startDate: string | null; // YYYY-MM-DD
   endDate: string | null;
+  /**
+   * ⚠⚠ AFFIRMATIVE ONLY (`P2-J1.4-E549`). `true` ONLY when the document says the
+   * role is ongoing ("Present", "Current"…) or the model says so. ⚠ A null
+   * `endDate` is NOT evidence of a current role: Scott, 2026-09-17 — *"TEXT WE
+   * COULD NOT READ IS EVIDENCE THE JOB ENDED, NOT EVIDENCE IT IS CURRENT."*
+   * `import.ts` writes `is_current` from this, and the rollup counts to today
+   * only when it is set.
+   */
+  isCurrent?: boolean;
+  /**
+   * ⚠ An end-date string WAS present and could not be read. The job ended; we do
+   * not know when. It contributes no months (`E549`).
+   */
+  endUnreadable?: boolean;
 };
 
 /**
@@ -65,6 +79,20 @@ export type ParsedProject = {
   description: string | null;
   startDate: string | null;
   endDate: string | null;
+  /**
+   * ⚠⚠ AFFIRMATIVE ONLY (`P2-J1.4-E549`). `true` ONLY when the document says the
+   * role is ongoing ("Present", "Current"…) or the model says so. ⚠ A null
+   * `endDate` is NOT evidence of a current role: Scott, 2026-09-17 — *"TEXT WE
+   * COULD NOT READ IS EVIDENCE THE JOB ENDED, NOT EVIDENCE IT IS CURRENT."*
+   * `import.ts` writes `is_current` from this, and the rollup counts to today
+   * only when it is set.
+   */
+  isCurrent?: boolean;
+  /**
+   * ⚠ An end-date string WAS present and could not be read. The job ended; we do
+   * not know when. It contributes no months (`E549`).
+   */
+  endUnreadable?: boolean;
   client: string | null;
   software: string[];
   /**
@@ -186,8 +214,15 @@ const MONTHS: Record<string, number> = {
 const MONTH_RE =
   "(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\\.?\\s+";
 
-/** "Jan 2019", "January 2019", "2019/01", "2019" → YYYY-MM-DD (day 1). */
-function parseMonthYear(raw: string): string | null {
+/**
+ * "Jan 2019", "January 2019", "01/2019", "2019" → YYYY-MM-DD (day 1).
+ *
+ * ⚠ EXPORTED (`P2-J1.4-E549`) — the AI mapper's `iso()` reuses it, so the model
+ * path reads the same real-world date strings this parser always has.
+ * ⚠ SUPERSEDED, quoted not deleted (`E164`): the doc said `"2019/01"`; no branch
+ * below ever accepted that form — `MM/YYYY` is what it reads.
+ */
+export function parseMonthYear(raw: string): string | null {
   const s = raw.trim().toLowerCase();
   const withMonth = s.match(/^([a-z]{3,9})\.?\s+(\d{4})$/);
   if (withMonth) {
@@ -199,6 +234,14 @@ function parseMonthYear(raw: string): string | null {
   const numeric = s.match(/^(\d{1,2})\/(\d{4})$/);
   if (numeric) return `${numeric[2]}-${String(Number(numeric[1])).padStart(2, "0")}-01`;
   return null;
+}
+
+/**
+ * ⚠ `P2-J1.4-E549` — the words a document uses for an ongoing role. The same
+ * vocabulary `findDateRange` has always matched, now shared with the AI mapper.
+ */
+export function isCurrentWord(raw: string): boolean {
+  return /^(present|current|currently|now|to date|date|ongoing|today)\.?$/i.test(raw.trim());
 }
 
 /**
@@ -215,7 +258,9 @@ function parseMonthYear(raw: string): string | null {
  * `stripRange` then repairs the seam left behind, rather than leaving a
  * double space or a dangling separator that would look like a missing field.
  */
-function findDateRange(line: string): { start: string | null; end: string | null; matched: string } | null {
+function findDateRange(
+  line: string
+): { start: string | null; end: string | null; isCurrent: boolean; matched: string } | null {
   /*
     ── ⚠⚠ NUMERIC `MM/YYYY` IS A DATE TOO (`P1-A1.4-E407` WS-4) ───────────────
 
@@ -252,7 +297,7 @@ function findDateRange(line: string): { start: string | null; end: string | null
   // A "range" whose start we can't actually read is not a usable match — better
   // to leave the text intact than to delete it and lose the words.
   if (!start && !isCurrent && !end) return null;
-  return { start, end, matched: m[0] };
+  return { start, end, isCurrent, matched: m[0] };
 }
 
 /**
@@ -286,7 +331,11 @@ export function inferExperienceLevel(
 
   const firstStart = new Date(starts[0]);
   const ends = experiences.map((e) => e.endDate).filter((d): d is string => !!d);
-  const hasCurrentRole = experiences.some((e) => e.startDate && !e.endDate);
+  /* ⚠ `E549` — affirmative, not inferred from a missing end. SUPERSEDED, quoted
+     (`E164`): `experiences.some((e) => e.startDate && !e.endDate)`. On this
+     parser the two agree (a range without a readable end is not a range), so
+     the level is unchanged; the rule is what changed. */
+  const hasCurrentRole = experiences.some((e) => e.startDate && e.isCurrent === true);
   const lastEnd = hasCurrentRole
     ? new Date()
     : ends.length > 0
@@ -635,6 +684,8 @@ export function parseResume(text: string): ParsedResume {
         description: null,
         startDate: range.start,
         endDate: range.end,
+        /* ⚠ `E549` — the range already knew; now the row does too. */
+        isCurrent: range.isCurrent,
       };
       companyHeader = null;
       continue;

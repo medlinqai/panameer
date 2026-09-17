@@ -29,10 +29,28 @@ function toInterval(s: Span, now: number): Interval | null {
   const start = new Date(s.start).getTime();
   if (Number.isNaN(start)) return null;
 
-  // A current role has no end date by design; anything else without one is
-  // treated as ongoing too, which is the reading most CVs intend.
-  const rawEnd = s.isCurrent || !s.end ? now : new Date(s.end).getTime();
-  const end = Number.isNaN(rawEnd) ? now : rawEnd;
+  /*
+    ── ⚠⚠ ONLY A CURRENT ROLE RUNS TO TODAY (`P2-J1.4-E549`) ─────────────────
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+        // …anything else without one is treated as ongoing too, which is the
+        // reading most CVs intend.
+        const rawEnd = s.isCurrent || !s.end ? now : new Date(s.end).getTime();
+        const end = Number.isNaN(rawEnd) ? now : rawEnd;
+    ⚠⚠ TWO WAYS TO OVERSTATE A CAREER: a missing end ran to today, and an end
+    that could not even be PARSED ran to today. Scott, 2026-09-17: *"TEXT WE
+    COULD NOT READ IS EVIDENCE THE JOB ENDED, NOT EVIDENCE IT IS CURRENT."*
+    This feeds the profile hero's "N years" — the number a buyer reads.
+    ⚠ Now: current → today · an end → that end · anything else → not measured.
+  */
+  let end: number;
+  if (s.end) {
+    end = new Date(s.end).getTime();
+    if (Number.isNaN(end)) return null; // unreadable end: no span, never "now"
+  } else if (s.isCurrent) {
+    end = now;
+  } else {
+    return null; // no end and not current: we do not know when it ended
+  }
 
   // Ignore inverted or future-only spans rather than letting them subtract.
   if (end <= start) return null;

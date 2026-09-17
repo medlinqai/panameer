@@ -52,6 +52,9 @@ const experienceItem = z
     description: z.string().nullable().optional(),
     startDate: dateish,
     endDate: dateish,
+    /* ⚠ `P2-J1.4-E549` — the only way this section can say a role is current.
+       A blank end is no longer read as "current". */
+    isCurrent: z.boolean().optional(),
     projects: z
       .array(
         z.object({

@@ -58,9 +58,37 @@ const MS_PER_MONTH = 1000 * 60 * 60 * 24 * 365.25 / 12;
 
 // ---------------------------------------------------------------------------
 
-/** Whole months between two dates, minimum 1 — a job is never worth zero. */
-export function monthsBetween(start: Date | null, end: Date | null, now: Date): number {
+/**
+ * Whole months a job is worth, minimum 1 once it can be measured at all.
+ *
+ * ── ⚠⚠ A MISSING END IS NOT "TODAY" UNLESS THE JOB IS CURRENT (`P2-J1.4-E549`) ──
+ *
+ * ⚠ SUPERSEDED, quoted not deleted (`E164`):
+ *     export function monthsBetween(start, end, now) {
+ *       if (!start) return 0;
+ *       const finish = end ?? now;
+ * ⚠⚠ EVERY NULL END RAN TO TODAY — including an end date the importer could
+ * not READ. Scott, 2026-09-17: *"TEXT WE COULD NOT READ IS EVIDENCE THE JOB
+ * ENDED, NOT EVIDENCE IT IS CURRENT… A parse failure must NEVER silently extend
+ * a job to today."* And: *"THE SAME FAMILY AS E537's BRUCE DICKINSON — 28 years
+ * for a 23-year span."*
+ *
+ *   no start                   → 0
+ *   an end date                → start … end
+ *   no end, `isCurrent` TRUE   → start … today
+ *   no end, NOT current        → 0 — the job is skipped, not run to today
+ *
+ * ⚠ Existing rows are unaffected: on 2026-09-17 every stored job with a start
+ * and no end (81 employers, 23 projects) was already `is_current`.
+ */
+export function monthsBetween(
+  start: Date | null,
+  end: Date | null,
+  isCurrent: boolean,
+  now: Date
+): number {
   if (!start) return 0;
+  if (!end && !isCurrent) return 0;
   const finish = end ?? now;
   const months = Math.round((finish.getTime() - start.getTime()) / MS_PER_MONTH);
   /*
@@ -90,6 +118,8 @@ export function recency(end: Date | null, now: Date): number {
 type JobRow = {
   start_date: Date | null;
   end_date: Date | null;
+  /* ⚠ `E549` — the only thing that may run a job to today. */
+  is_current: boolean;
   suite: SoftwareSuite | null;
   skillIds: string[];
 };
@@ -127,6 +157,7 @@ export async function recomputeProviderRollup(
       id: true,
       start_date: true,
       end_date: true,
+      is_current: true,
       software_suite: true,
       job_role_type_id: true,
       skills: { select: { skill_id: true } },
@@ -137,6 +168,7 @@ export async function recomputeProviderRollup(
     select: {
       start_date: true,
       end_date: true,
+      is_current: true,
       software_suite: true,
       employer_id: true,
       skills: { select: { skill_id: true } },
@@ -149,12 +181,14 @@ export async function recomputeProviderRollup(
     ...employers.map((e) => ({
       start_date: e.start_date,
       end_date: e.end_date,
+      is_current: e.is_current,
       suite: e.software_suite,
       skillIds: e.skills.map((s) => s.skill_id),
     })),
     ...projects.map((p) => ({
       start_date: p.start_date,
       end_date: p.end_date,
+      is_current: p.is_current,
       /*
         A project without its own suite INHERITS its employer's. Null on a
         project means "same as the job it sat inside", which is the normal
@@ -176,7 +210,9 @@ export async function recomputeProviderRollup(
   const bySuite = new Map<SoftwareSuite, { weight: number; last: Date | null }>();
 
   for (const job of jobs) {
-    const months = monthsBetween(job.start_date, job.end_date, now);
+    const months = monthsBetween(job.start_date, job.end_date, job.is_current, now);
+    /* ⚠ `E549` — past this line a null `end_date` means CURRENT, never unknown,
+       so `recency(null)` and `end_date ?? now` below are both honest. */
     if (!months || job.skillIds.length === 0) continue;
     const weight = months * recency(job.end_date, now);
     const ended = job.end_date ?? now;
@@ -285,7 +321,7 @@ export async function recomputeProviderRollup(
   const roleWeight = new Map<string, number>();
   for (const e of employers) {
     if (!e.job_role_type_id) continue;
-    const months = monthsBetween(e.start_date, e.end_date, now);
+    const months = monthsBetween(e.start_date, e.end_date, e.is_current, now);
     if (!months) continue;
     roleWeight.set(
       e.job_role_type_id,
