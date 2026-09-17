@@ -186,7 +186,15 @@ export async function inviteColleague(input: {
     affordance verify-email and recommendations use, so the loop stays walkable.
   */
   try {
-    await sendEmail({ to: email, subject, html, text });
+    await sendEmail({
+      to: email,
+      subject,
+      html,
+      text,
+      template: "colleague-invite",
+      subjectType: "ColleagueInvite",
+      subjectId: row.id,
+    });
     return { ok: true, outcome: "sent", sent: true };
   } catch {
     void row;

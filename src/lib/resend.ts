@@ -2,6 +2,10 @@ import { Resend } from "resend";
 /* ⚠ `P1-ALL-E386` — suppression and the signed unsubscribe link both live in the
    transport, so a new sender cannot forget either. */
 import { isSuppressed, unsubscribeUrl } from "@/lib/unsubscribe";
+/* `P2-J3-E522` Part A — the receipt is written in the transport, for the same
+   reason suppression is checked here: a new sender cannot forget. */
+import { prisma } from "@/lib/prisma";
+import { normalizeEmail } from "@/lib/normalizeEmail";
 import { PANAMEER_URL, UNSUBSCRIBE_PLACEHOLDER } from "@/lib/email/shell";
 
 /**
@@ -54,6 +58,33 @@ type SendEmailArgs = {
   html: string;
   text?: string;
   replyTo?: string;
+  /*
+    ── ⚠⚠ THE RECEIPT (`P2-J3-E522` PART A) ──────────────────────────────────
+
+    ⚠ `template` IS REQUIRED, AND THAT IS THE ENFORCEMENT. `E386` put suppression
+    in the transport so a new sender could not forget; a runtime check cannot do
+    the same job here, because the transport CANNOT KNOW which template produced
+    the html it was handed. ⚠⚠ MAKING IT REQUIRED MOVES THE FORGETTING TO COMPILE
+    TIME — a new sender does not build until it names itself.
+
+    ⚠⚠ I TOLD SCOTT "no sender changes at all" WHEN I PROPOSED THIS TABLE AND
+    THAT WAS WRONG. It was true only while `subject_type`/`subject_id` were
+    optional. He ruled them in — correctly, because without them a webhook event
+    cannot say WHICH invitation bounced — and only the sender knows what a mail
+    is about. ⚠ So all eleven senders change. The claim is corrected here rather
+    than left standing in a report.
+  */
+  template: string;
+  /*
+    ⚠ WHAT THE MAIL IS ABOUT. Optional in the TYPE because a few sends genuinely
+    have no subject row (`finish-later` is a nudge about nothing), NOT because a
+    sender may skip it when one exists. ⚠⚠ `check:sent-email` names the senders
+    allowed to omit it, so the decision is auditable rather than per-caller.
+  */
+  subjectType?: string | null;
+  subjectId?: string | null;
+  /** The recipient's account, when the mail goes to one. Drives the cascade. */
+  userId?: string | null;
 };
 
 /**
@@ -90,7 +121,10 @@ export function mailCaptureEnabled(): boolean {
 /** Where captured mail lands. ⚠ Gitignored — see `.gitignore`. */
 export const MAIL_CAPTURE_DIR = ".mail-capture";
 
-async function captureEmail(args: SendEmailArgs) {
+/* ⚠ CAPTURE WRITES A FILE, NOT A RECEIPT — it needs only the envelope, so it
+   takes the subset rather than the full `SendEmailArgs`. Widening it to the
+   whole type would force every caller here to restate `template`. */
+async function captureEmail(args: Pick<SendEmailArgs, "to" | "subject" | "html" | "text" | "replyTo">) {
   /* ⚠ IMPORTED LAZILY so `node:fs` never enters a bundle that does not use
      capture — this module is imported by route handlers. */
   const { mkdir, writeFile } = await import("node:fs/promises");
@@ -132,6 +166,10 @@ export async function sendEmail({
   text,
   replyTo,
   category,
+  template,
+  subjectType,
+  subjectId,
+  userId,
 }: SendEmailArgs) {
   /*
     ── ⚠⚠ SUPPRESSION IS CHECKED IN THE TRANSPORT (`P1-ALL-E386`) ────────────
@@ -152,14 +190,61 @@ export async function sendEmail({
     ⚠ MULTI-RECIPIENT SENDS ARE FILTERED, NOT ALL-OR-NOTHING. One suppressed
     address in a list of three must not silence the other two.
   */
+  /*
+    ── ⚠⚠ ONE ROW PER RECIPIENT, AND IT NEVER FAILS A SEND ────────────────────
+
+    ⚠ PER RECIPIENT, NOT PER SEND: Resend returns ONE message id for a batch, so
+    a bounce for one address would otherwise implicate all three. The webhook
+    matches on (resend_message_id, to_email) — its payload carries the recipient.
+    ⚠⚠ THAT IS WHY `resend_message_id` IS NOT UNIQUE. A unique there would reject
+    the second recipient of every batch send.
+
+    ⚠⚠ A FAILED RECEIPT MUST NEVER FAIL A SEND. This is bookkeeping; the mail has
+    already gone. Throwing here would turn a logging outage into a signup outage,
+    which is a worse defect than the one the table exists to fix.
+  */
+  const record = async (
+    rows: { email: string; status: string; messageId?: string | null }[]
+  ) => {
+    try {
+      await prisma.sentEmail.createMany({
+        data: rows.map((r) => ({
+          resend_message_id: r.messageId ?? null,
+          to_email: normalizeEmail(r.email),
+          template,
+          category: category ?? null,
+          subject_type: subjectType ?? null,
+          subject_id: subjectId ?? null,
+          status: r.status,
+          user_id: userId ?? null,
+        })),
+      });
+    } catch (e) {
+      console.error(`[mail] receipt write failed for ${template}:`, e);
+    }
+  };
+
   const recipients = (Array.isArray(to) ? to : [to]).filter(Boolean);
   const allowed: string[] = [];
+  const skipped: string[] = [];
   for (const r of recipients) {
     if (await isSuppressed(r, category ?? undefined)) {
       console.log(`[mail] SKIPPED (suppressed) ${subject} -> ${r}`);
+      skipped.push(r);
       continue;
     }
     allowed.push(r);
+  }
+  /*
+    ⚠⚠ A SUPPRESSED SKIP GETS A ROW, AND IT IS THE MOST IMPORTANT ONE HERE.
+    Scott, 2026-09-17, on including `suppressed` in the event set: *"A send that
+    never happened and never bounced is the exact invisible failure this brief
+    exists to kill."* ⚠ The skip returns SUCCESS to the caller by design
+    (`E386`), so without this row nothing anywhere records that the mail did not
+    go. ⚠ `resend_message_id` is null because Resend never saw it.
+  */
+  if (skipped.length > 0) {
+    await record(skipped.map((email) => ({ email, status: "suppressed" })));
   }
   if (allowed.length === 0) {
     /* ⚠ SEND-SHAPED SUCCESS, so every caller's success path still runs. */
@@ -186,6 +271,10 @@ export async function sendEmail({
   /* ⚠⚠ THE CAPTURE BRANCH IS THE ONLY OTHER EARLY RETURN. It must come before
      `getResend()`, which throws without a key. */
   if (mailCaptureEnabled()) {
+    /* ⚠ CAPTURED, NOT SENT — a distinct status so a test run can never be read
+       as delivery. ⚠ The row is still written: capture is how the receipt path
+       is exercised without spending a real send. */
+    await record(allowed.map((email) => ({ email, status: "captured" })));
     return captureEmail({ to: allowed, subject, html: withUnsubscribe, text, replyTo });
   }
 
@@ -199,8 +288,14 @@ export async function sendEmail({
   });
 
   if (error) {
+    /* ⚠⚠ A REFUSED SEND IS RECORDED BEFORE THE THROW. The caller still sees the
+       error; what changes is that the failure stops being invisible the moment
+       the stack trace scrolls away. */
+    await record(allowed.map((email) => ({ email, status: "failed" })));
     throw new Error(`Resend failed to send email: ${error.message}`);
   }
+
+  await record(allowed.map((email) => ({ email, status: "sent", messageId: data?.id })));
 
   return data;
 }

@@ -103,6 +103,8 @@ model User {
   /// model — Prisma cannot disambiguate them otherwise.
   messagesSent        Message[]         @relation("MessagesSent")
   messagesReceived    Message[]         @relation("MessagesReceived")
+  /// `P2-J3-E522` — cascade-deleted with the user. See `SentEmail.user_id`.
+  sentEmails          SentEmail[]
 
   @@map("users")
 }
@@ -655,11 +657,11 @@ model Application {
 /// the freelancer mapping's normalized `panameerSkill` names. Deduped by
 /// (catalog, name); functional (APPLICATION) sources win the role type.
 model Skill {
-  id             String   @id @default(uuid()) @db.Uuid
-  catalog_id     String   @db.Uuid
-  role_type_id   String   @db.Uuid
-  pillar_id      String?  @db.Uuid
-  application_id String?  @db.Uuid
+  id             String        @id @default(uuid()) @db.Uuid
+  catalog_id     String        @db.Uuid
+  role_type_id   String        @db.Uuid
+  pillar_id      String?       @db.Uuid
+  application_id String?       @db.Uuid
   name           String
   image_url      String?
   /// Added by a provider on the fly (brief_S / E031) rather than coming from
@@ -670,7 +672,7 @@ model Skill {
   /// `true` ≡ `origin: PROVIDER`, `false` ≡ `origin: SEED`. ⚠ THE SEED'S
   /// RETIREMENT PASS NOW READS `origin`, not this. Not dropped in this pass —
   /// see the matching note on `Specialization.is_custom`.
-  is_custom      Boolean  @default(false)
+  is_custom      Boolean       @default(false)
   /// ⚠ WHO CREATED THIS ROW (`P1-A1.5-E480`). See `CatalogOrigin`.
   origin         CatalogOrigin @default(SEED)
   /// ⚠ WHAT STATE THIS ROW IS IN (`P1-A1.5-E480`). See `CatalogStatus`.
@@ -688,8 +690,8 @@ model Skill {
   /// Tech Category for Technology-Specific tools ("Development & Extensibility",
   /// "Integration & APIs"). Null for application modules and agnostic roles.
   category       String?
-  created_at     DateTime @default(now())
-  updated_at     DateTime @updatedAt
+  created_at     DateTime      @default(now())
+  updated_at     DateTime      @updatedAt
 
   catalog           ServiceCatalog           @relation(fields: [catalog_id], references: [id], onDelete: Cascade)
   roleType          RoleType                 @relation(fields: [role_type_id], references: [id])
@@ -2352,7 +2354,6 @@ model ProfileImport {
   ai_provider         String?
   /**
    * ── ⚠⚠ WHICH PROMPT RAN (`P1-A1.5-E487`) ─────────────────────────────────
-   *
    * ⚠ IT LIVES HERE AND NOT ONLY ON THE AUDIT, FOR THE REASON THE COMMENT
    * ABOVE ALREADY GIVES: the audit is written later, at review-save, and by
    * then the call is long gone. A prompt edited between the parse and the save
@@ -2394,22 +2395,20 @@ model ProfileImport {
   ai_input_chars      Int?
   /**
    * ── ⚠⚠ HOW LONG THE READ ACTUALLY TOOK (`P2-J1.4-E546`) ────────────────────
-   *
    * ⚠ Every ceiling in `budget.ts` was set from THREE FIXTURES AND A HAND-RUN.
    * These three columns are the real distribution, across every upload, so the
    * ceiling can be re-derived from traffic and `E547` (the background job)
    * becomes due from DATA rather than from somebody hitting the limit.
    * ⚠ OPERATIONAL, NEVER SENT TO THE BROWSER — the route spreads the import
    * result into its response, so these travel only to the row.
-   *
    * `read_ms`     wall time of the whole AI read, SUCCESS OR FAILURE (unlike
-   *               `ai_latency_ms`, which is null on a fallback). Null when no
-   *               read was attempted (`[ai:no_model]`) or off the model path.
+   * `ai_latency_ms`, which is null on a fallback). Null when no
+   * read was attempted (`[ai:no_model]`) or off the model path.
    * `read_passes` per call: `[{ name, ok, ms, reason? }]` — inventory first,
-   *               then the five detail passes.
+   * then the five detail passes.
    * `route_ms`    the whole upload request, written as the route returns.
-   *               ⚠ `route_ms − read_ms` IS THE WRITE TAIL `ROUTE_TAIL_RESERVE_MS`
-   *               has to cover. Null where no route surrounds the import.
+   * ⚠ `route_ms − read_ms` IS THE WRITE TAIL `ROUTE_TAIL_RESERVE_MS`
+   * has to cover. Null where no route surrounds the import.
    */
   read_ms             Int?
   read_passes         Json?
@@ -2571,9 +2570,7 @@ model ResumeParseAudit {
   accuracy            Float?
   /**
    * ── ⚠ WHAT THIS RUN ACTUALLY BUILT (`P1-A1.5-E487`) ──────────────────────
-   *
    * `{ employers: 4, projects: 10, certifications: 2, education: 1, ... }`
-   *
    * ⚠⚠ COUNTED FROM THE MODEL'S OWN OUTPUT AT WRITE TIME, NOT DERIVED FROM
    * `changed` AT READ TIME. `kept + changed` looks like the same number and is
    * not: it only covers the four field types the diff compares, and it does not
@@ -2586,7 +2583,6 @@ model ResumeParseAudit {
   built_total         Int?
   /**
    * ⚠⚠ THE DENOMINATOR. Length of the extracted résumé text.
-   *
    * ⚠ WITHOUT IT, YIELD IS UNMEASURABLE and a raw object count is not a quality
    * signal: a one-page CV should yield fewer objects than a four-page one, so a
    * run of short résumés would look exactly like model degradation.
@@ -2594,7 +2590,6 @@ model ResumeParseAudit {
   source_chars        Int?
   /**
    * ── ⚠⚠ THE MOST IMPORTANT FIELD IN THIS DESIGN (`P1-A1.5-E487`) ──────────
-   *
    * ⚠ The table recorded WHICH MODEL ran but never WHICH PROMPT. So when
    * accuracy drops you cannot tell a model regression from your own prompt
    * edit — and those have opposite fixes.
@@ -2666,7 +2661,6 @@ model CoordinatorInvite {
   @@map("coordinator_invites")
 }
 
-
 /// ── ⚠⚠ A COLLEAGUE INVITE IS NOT A ROSTER INVITE (`P2-J3-E493`) ────────────
 ///
 /// > **SCOTT, 2026-09-13:** *"can we add an 'Invite a Colleague' page… requesting
@@ -2690,7 +2684,6 @@ model ColleagueInvite {
    * ⚠⚠ NULLABLE, AND THAT IS THE POINT (`E493`). Scott: store it, attribute
    * nothing, build no referral programme — *"it is there so the option
    * survives."*
-   *
    * ⚠ `/legal/referral-program-terms` is a legal DOCUMENT, not a live programme,
    * and its own text says Panameer *"may"* offer one. But it contemplates
    * Referrer → Referee attribution, and ⚠⚠ ATTRIBUTION CANNOT BE RETROFITTED TO
@@ -3775,6 +3768,71 @@ model TwoFactorSetting {
 /// ⚠ A SIGNED-IN PERSON UNSUBSCRIBING WRITES BOTH THIS **AND**
 /// `NotificationPreference`, so the settings screen and the email footer cannot
 /// disagree about what somebody chose.
+model SentEmail {
+  id String @id @default(uuid()) @db.Uuid
+
+  /// ⚠⚠ RESEND'S OWN MESSAGE ID — the join key the webhook arrives with.
+  /// ⚠ NOT UNIQUE, AND THAT IS DELIBERATE: a multi-recipient send returns ONE
+  /// id for the whole batch, and this table stores ONE ROW PER RECIPIENT so a
+  /// bounce for one address does not implicate the other two.
+  /// ⚠ The webhook must therefore match on (resend_message_id, to_email) —
+  /// Resend's payload carries the recipient, so that pair is unambiguous.
+  /// ⚠ NULL when the send never reached Resend: a suppressed skip or a capture.
+  resend_message_id String?
+  /// ⚠ Normalised lower-case, like `EmailSuppression.email`.
+  to_email          String
+
+  /// Which template produced it — REQUIRED in `SendEmailArgs`, so TypeScript
+  /// refuses a new sender that does not name itself.
+  template String
+  /// ⚠ NULL = a transactional mail with no notification category, the same
+  /// meaning it has in `SendEmailArgs`.
+  category String?
+
+  /// ── ⚠⚠ WHAT THE MAIL IS ABOUT (Scott, 2026-09-17: "NOT OPTIONAL") ────────
+  /// ⚠ Without these the webhook can only match back by email + template,
+  /// which is AMBIGUOUS THE MOMENT TWO INVITATIONS GO TO THE SAME ADDRESS —
+  /// and updating the invitation's badge, the visible lie this brief exists to
+  /// kill, needs to know WHICH invitation.
+  /// ⚠ NULLABLE IN THE COLUMN, REQUIRED IN PRACTICE: a few sends genuinely have
+  /// no subject row (`finish-later` is a nudge about nothing). The gate names
+  /// which senders may leave them null rather than letting any sender decide.
+  /// ⚠ `subject_id` is a plain String, NOT `@db.Uuid` — it must be able to hold
+  /// a key from any model without a cast, and it is never joined in SQL.
+  subject_type String?
+  subject_id   String?
+
+  /// `sent` · `captured` · `suppressed` · `bounced` · `complained` · `failed`.
+  /// ⚠ Written `sent` by the transport; the webhook moves it. ⚠ NOT AN ENUM —
+  /// Resend owns this vocabulary and a new event must not need a migration.
+  status      String  @default("sent")
+  /// ⚠ SEPARATE FROM `status`, the same ruling Scott made for `ColleagueInvite`:
+  /// `Permanent` vs `Transient`. A hard bounce suppresses; a soft one does not.
+  bounce_type String?
+
+  /// ⚠⚠ CASCADE, DELIBERATELY (Scott, 2026-09-17: "DELETING A USER MUST DELETE
+  /// THEIR SentEmail ROWS… I want it made deliberately now").
+  /// ⚠ NULLABLE because MOST MAIL GOES TO PEOPLE WHO ARE NOT USERS — an
+  /// invitation, a project-validation contact. Those rows have no owner to
+  /// cascade from and survive, which is correct: they are not "their" rows.
+  /// ⚠⚠ THE RESIDUE, NAMED SO IT IS NOT DISCOVERED LATER: mail sent to an
+  /// address BEFORE it had an account keeps `user_id = null`, so deleting that
+  /// user later leaves those rows behind. Closing that needs a delete-by-email
+  /// sweep in the deletion path, which is NOT built here.
+  user_id String? @db.Uuid
+  user    User?   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@index([resend_message_id, to_email])
+  @@index([to_email])
+  @@index([subject_type, subject_id])
+  @@index([status])
+  @@index([created_at])
+  @@map("sent_emails")
+}
+
 model EmailSuppression {
   id         String   @id @default(uuid()) @db.Uuid
   /// ⚠ Normalised lower-case. One row per address per scope.

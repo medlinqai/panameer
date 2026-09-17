@@ -78,7 +78,21 @@ export async function POST(request: Request) {
   });
 
   try {
-    await sendEmail({ to: person.user.email, subject, html, text });
+    /* ⚠⚠ NO SUBJECT — AND THIS IS THE SENDER THAT PROVES THE COLUMNS ARE NULLABLE
+       FOR A REASON. `finish-later` is a nudge about nothing; there is no row it
+       is about. ⚠ `check:sent-email` names it, so the omission is auditable
+       rather than a caller's private decision.
+       ⚠ NO `userId` EITHER: the query selects only `{ email }`, and widening a
+       select purely to populate a receipt is the wrong trade. The row still
+       carries `to_email`, which is what the webhook matches on. */
+    await sendEmail({
+      to: person.user.email,
+      subject,
+      html,
+      text,
+      template: "finish-later",
+      userId: undefined,
+    });
   } catch (e) {
     /* ⚠ A REFUSED SEND MUST NOT BE RECORDED AS ONE. Returning here leaves the
        dedupe row unwritten, so the next click genuinely retries rather than

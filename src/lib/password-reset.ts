@@ -107,7 +107,7 @@ export async function requestPasswordReset(
   if (recent >= RESET_LIMIT_PER_EMAIL_PER_HOUR) return {};
 
   const raw = randomBytes(32).toString("base64url");
-  await prisma.$transaction([
+  const tx = await prisma.$transaction([
     /*
       ⚠⚠ SUPERSEDED TOKENS ARE CONSUMED, NOT DELETED — AND THE PROOF RUN IS WHY.
       ⚠ SUPERSEDED, quoted not deleted (`E164`):
@@ -136,6 +136,9 @@ export async function requestPasswordReset(
       },
     }),
   ]);
+  /* ⚠ The transaction returns [updateMany, create]; the second is the new token,
+     whose id the receipt records as its subject (`P2-J3-E522` Part A). */
+  const token = tx[1];
 
   const base = appBaseUrl(opts.origin);
   const resetUrl = `${base}/reset-password?token=${encodeURIComponent(raw)}`;
@@ -154,7 +157,20 @@ export async function requestPasswordReset(
     get back into their account — but bypassing is a change to the TRANSPORT and
     it is Scott's call.
   */
-  await sendEmail({ to: user.email, subject: mail.subject, html: mail.html, text: mail.text });
+  /* ⚠ SUBJECT IS THE TOKEN, AND THE TOKEN IS CONSUMED-NOT-DELETED (`E528B`), so
+     the receipt still points at a real row after the reset is used. ⚠⚠ THAT IS
+     ONE OF THE THREE "LOSSY" SENDERS THIS TABLE EXISTS FOR — a reset that never
+     arrives IS an account lockout. */
+  await sendEmail({
+    to: user.email,
+    subject: mail.subject,
+    html: mail.html,
+    text: mail.text,
+    template: "password-reset",
+    subjectType: "VerificationToken",
+    subjectId: token.id,
+    userId: user.id,
+  });
 
   return process.env.NODE_ENV === "production" ? {} : { devLink: resetUrl };
 }

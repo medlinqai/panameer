@@ -59,7 +59,11 @@ export async function POST(
     return NextResponse.json({ error: "All three are already sent." }, { status: 400 });
   }
 
-  await prisma.assessmentInvite.upsert({
+  /* ⚠⚠ UPSERT, SO ONE ROW SERVES EVERY RESEND. The receipt still points at it,
+     but a second invitation to the same address OVERWRITES nothing here — the
+     SentEmail rows accumulate, which is exactly why the id lives on the receipt
+     and not on the invite (`P2-J3-E522` Part A). */
+  const invite = await prisma.assessmentInvite.upsert({
     where: {
       assessment_id_process_email: { assessment_id: a.id, process, email },
     },
@@ -83,7 +87,15 @@ export async function POST(
       assessUrl: `${appBaseUrl()}/assess?process=${process}&from=${shareToken}`,
       logoUrl: `${appBaseUrl()}/brand/panameer-lockup-ink.png`,
     });
-    await sendEmail({ to: email, subject: tpl.subject, html: tpl.html, text: tpl.text });
+    await sendEmail({
+      to: email,
+      subject: tpl.subject,
+      html: tpl.html,
+      text: tpl.text,
+      template: "invite-provider",
+      subjectType: "AssessmentInvite",
+      subjectId: invite.id,
+    });
   } catch (e) {
     // Same rule as the report email: the invite row is the record, the send is
     // best-effort. Losing the row because Resend blipped is the worse failure.

@@ -159,7 +159,15 @@ export async function requestRecommendation(
     walkable locally rather than silently doing nothing.
   */
   try {
-    await sendEmail({ to: email, subject, html, text });
+    await sendEmail({
+      to: email,
+      subject,
+      html,
+      text,
+      template: "recommendation-request",
+      subjectType: "RecommendationRequest",
+      subjectId: row.id,
+    });
     return { sent: true, offPlatform };
   } catch {
     await prisma.recommendationRequest.update({

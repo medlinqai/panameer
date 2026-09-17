@@ -78,7 +78,8 @@ export async function issueEmailVerification(
   });
 
   const raw = randomBytes(32).toString("base64url");
-  await prisma.verificationToken.create({
+  /* ⚠ CAPTURED for the receipt's `subject_id` (`P2-J3-E522` Part A). */
+  const token = await prisma.verificationToken.create({
     data: {
       user_id: userId,
       token_hash: hashToken(raw),
@@ -100,7 +101,16 @@ export async function issueEmailVerification(
   // Real send when configured (prod/Vercel). Dev fallback: log the link so the
   // flow is testable without a Resend key.
   if (process.env.RESEND_API_KEY) {
-    await sendEmail({ to: user.email, subject, html, text });
+    await sendEmail({
+      to: user.email,
+      subject,
+      html,
+      text,
+      template: "verify-email",
+      subjectType: "VerificationToken",
+      subjectId: token.id,
+      userId: user.id,
+    });
     return { ok: true, sent: true };
   }
 
