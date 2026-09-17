@@ -326,7 +326,17 @@ export async function importProfileDocument({
       /* ⚠ CAPTURED AT PARSE TIME (`P1-A1.5-E487`) — the audit is written later,
          at review-save, and a prompt edited in between would otherwise be
          recorded against a run it never touched. */
-      ai_prompt_version: PROMPT_VERSION,
+      /*
+        ⚠⚠ NULL WHEN NO PROMPT RAN (`P2-J1.4-E519`). ⚠ SUPERSEDED, quoted not
+        deleted (`E164`): `ai_prompt_version: PROMPT_VERSION,` — written
+        unconditionally, so the Thomas fallback row (2026-09-14) claims prompt
+        `2026-09-13.a` ran when the model never answered, and a health card
+        grouped by prompt would count a FAILURE as a PROMPT RUN. The schema
+        already says "Null for heuristic parses"; the code now agrees.
+        ⚠ A PARTIAL fallback (`employersFromHeuristic`) keeps it — the reader
+        is `ai` there and the prompt DID run.
+      */
+      ai_prompt_version: read.path.reader === "ai" ? PROMPT_VERSION : null,
       ai_model: read.usage?.model ?? null,
       ai_provider: read.usage?.provider ?? null,
       ai_input_tokens: read.usage?.inputTokens ?? null,
@@ -345,6 +355,16 @@ export async function importProfileDocument({
       ai_finish_reason: read.usage?.finishReason ?? null,
       ai_reasoning_tokens: read.usage?.reasoningTokens ?? null,
       ai_input_chars: read.usage?.inputChars ?? null,
+      /*
+        ⚠⚠ `P2-J1.4-E519` — MEASUREMENT BEFORE REPAIR. Until this line a failed
+        AI read left NO TRACE: every `ai_*` column null, `error` null, and the
+        reason only in `console.error`. So nobody could count AI failures, and
+        nobody could tell whether a capacity fix (`E546`) worked.
+        ⚠ SAFE ON A `PARSED` ROW: nothing renders `error` except for `FAILED`
+        extractions, and the value here is a tagged diagnostic, not copy.
+        ⚠ Count them with `error LIKE '[ai:%'`; `[ai:no_model]` is NOT a failure.
+      */
+      error: read.failure ?? null,
     },
   });
 
@@ -447,6 +467,13 @@ async function readDocument(
   path: ImportPath;
   /** ⚠ `P1-A1.4-E399` WS-3 — what the inventory promised vs what arrived. */
   recall?: RecallReport;
+  /**
+   * ⚠⚠ WHY THE MODEL DID NOT PRODUCE THIS PARSE (`P2-J1.4-E519`). Present only
+   * when the WHOLE read fell back. Written to `ProfileImport.error` and nowhere
+   * a provider sees — ⚠ it is deliberately NOT on `ImportPath`, which is sent to
+   * the browser, because `message` can carry a raw exception string.
+   */
+  failure?: string;
   usage?: {
     provider: ProviderName;
     model: string;
@@ -471,6 +498,10 @@ async function readDocument(
         reason: "no model configured",
         configProblem,
       },
+      /* ⚠ `E519` — its own tag, so "not configured" can never be counted as an
+         AI failure. That confusion is exactly what made the 2026-09-17 count a
+         proxy: 3 of 4 fallbacks could have been either. */
+      failure: "[ai:no_model] no model configured",
     };
   }
 
@@ -509,6 +540,10 @@ async function readDocument(
     return {
       parsed: heuristic,
       path: { reader: "heuristic", reason: outcome.reason, configProblem },
+      /* ⚠ `E519` — `[ai:<reason>] <message>`. ⚠ `reason` alone is NOT enough:
+         a per-call TIMEOUT arrives as `error`, the same word as a crash, and
+         only `message` ("The reader took longer than 22s…") tells them apart. */
+      failure: `[ai:${outcome.reason}] ${outcome.message}`.slice(0, 1000),
     };
   }
 
