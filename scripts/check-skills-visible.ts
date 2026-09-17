@@ -131,9 +131,27 @@ const WIZ = read("src", "app", "join", "provider", "page.tsx");
    defect would come back wearing a different hat.                          */
 {
   check("4 — skillIds maps every row", /skillIds: pp\.skills\.map\(\(s\) => s\.skill_id\),/.test(ONBOARD));
+  /*
+    ⚠⚠ LOOSENED FOR `P2-J1.4-E517`, AND THE RULE IS UNCHANGED.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+      /skillNames: pp\.skills\.map\(\(s\) => \(\{ id: s\.skill_id, name: s\.skill\.name \}\)\),/
+
+    ⚠ THIS SECTION'S RULE IS "UNFILTERED" — the heading says so. The old regex
+    also pinned the exact FIELD LIST on one line, so `E517` adding `roleTypeId`
+    (which the skills step needs to say which held skills the provider's roles
+    do not show) failed a gate about filtering for a reason that has nothing to
+    do with filtering.
+    ⚠⚠ THIS IS `check:rollup`'S CASE, NOT `check:cert-skills`': there the gate
+    was right and the code had drifted, so the code was fixed. Here the code
+    still maps EVERY row and adds no filter — the assertion was over-specified.
+    ⚠ It still pins `pp.skills.map` with no `.filter`, id and name both present,
+    and the ABSENCE check below is untouched and is the real protection.
+  */
   check(
     "4 — skillNames maps every row",
-    /skillNames: pp\.skills\.map\(\(s\) => \(\{ id: s\.skill_id, name: s\.skill\.name \}\)\),/.test(ONBOARD)
+    /skillNames: pp\.skills\.map\(\(s\) => \(\{[^}]*\bid: s\.skill_id\b[^}]*\bname: s\.skill\.name\b/.test(
+      ONBOARD
+    )
   );
   /* ⚠ THE `weight > 0 || SELF_ADDED` FILTER IS ON `rollup.skills` ONLY — a
      different field, and it must stay off this path. */

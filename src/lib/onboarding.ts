@@ -9,6 +9,7 @@ import { projectToCard } from "@/lib/project-card";
 import { toView as toArtifactView } from "@/lib/artifacts";
 import { hashPassword } from "@/lib/password";
 import { acceptInviteForUser } from "@/lib/coordinator";
+import { shownSkills, selectedRoleIds } from "@/lib/shown-skills";
 import {
   computeProviderCompleteness,
   missingRequired,
@@ -1095,7 +1096,22 @@ export async function getOnboardingState(viewer: Viewer) {
         kind: s.specialization.kind,
       })),
       skillIds: pp.skills.map((s) => s.skill_id),
-      skillNames: pp.skills.map((s) => ({ id: s.skill_id, name: s.skill.name })),
+      /*
+        ⚠⚠ `roleTypeId` RIDES ALONG SO THE SKILLS STEP CAN SEE WHAT IS HIDDEN
+        (`P2-J1.4-E517`). ⚠ SUPERSEDED, quoted not deleted (`E164`):
+        `skillNames: pp.skills.map((s) => ({ id: s.skill_id, name: s.skill.name })),`
+
+        ⚠ THE STEP READS WHAT IS HELD — every row, hidden ones included — because
+        the only place a provider can REMOVE a skill is the place that lists it.
+        The role is what lets the step say WHICH of them their current roles do
+        not show, live, against `profile.roleTypeIds` in the wizard rather than
+        the roles last saved.
+      */
+      skillNames: pp.skills.map((s) => ({
+        id: s.skill_id,
+        name: s.skill.name,
+        roleTypeId: s.skill.role_type_id,
+      })),
       /*
         WHICH OF THOSE SKILLS CAME OFF THE RÉSUMÉ (E187).
 
@@ -1470,26 +1486,45 @@ export async function applyProviderSection(
       ]);
 
       /*
-        PRUNE BY ROLE, NOT BY THE (role, domain) PAIR.
+        ── ⚠⚠ THE PRUNE IS GONE. THE FILTER MOVED TO THE READ (`P2-J1.4-E517`) ──
 
-        This used to delete every skill whose role OR domain differed from the
-        single chosen pair. Under multi-role that is data loss by construction:
-        choosing a second role would wipe the skills you picked under the first,
-        and with domain gone from the UI the domain half of the test now
-        matches skills the provider can legitimately see and pick.
+        ⚠ SUPERSEDED, quoted not deleted (`E164`):
 
-        The prune still earns its place — a résumé import matches across the
-        whole catalog, so a skill can arrive from a role the provider never
-        claimed, and the skills step would neither show it nor accept it on
-        save. Scoped to the ROLES they actually chose, it removes exactly those
-        strandable rows and nothing else.
+            await prisma.providerSkill.deleteMany({
+              where: {
+                provider_profile_id: profileId,
+                skill: { role_type_id: { notIn: roleTypeIds } },
+              },
+            });
+
+          with the reason *"The prune still earns its place — a résumé import
+          matches across the whole catalog, so a skill can arrive from a role the
+          provider never claimed, and the skills step would neither show it nor
+          accept it on save. Scoped to the ROLES they actually chose, it removes
+          exactly those strandable rows and nothing else."*
+
+        ⚠⚠ IT DELETED TEN OF SCOTT'S OWN SKILLS FROM A RADIO BUTTON, silently,
+        with no undo (`E517`, 2026-09-14). The reasoning above is right about what
+        to SHOW and wrong about what to DESTROY.
+
+        ⚠⚠ SCOTT'S RULING, 2026-09-17 — `E481` ON A NEW AXIS: *"FILTER WHAT IS
+        OFFERED, NEVER WHAT IS HELD. A role selection is an offer-side statement —
+        'present me as an Application-Specific consultant'. It is not evidence
+        that the other skills are false, so it must not delete them."*
+        ⚠ *"THE ESCAPE HATCH BECOMES EXPLICIT, NOT A SIDE EFFECT… If a provider
+        wants a skill gone, they remove that skill. Changing roles changes what is
+        SHOWN."*
+
+        ⚠ WHAT REPLACED IT: `lib/shown-skills.ts`, read by every offer-side
+        surface — the profile, search cards, matching, completeness. The rows stay
+        in `ProviderSkill`; re-widening the roles brings them back.
+        ⚠⚠ AND THE SKILLS STEP LISTS THE HIDDEN ONES with a remove control, because
+        a row nobody can see or touch is worse than a deleted one.
+
+        ⚠ Option A (warn, then delete anyway) was rejected on measurement: a
+        warning fires on CHANGE, and 5 profiles already held 14 out-of-role rows
+        that the next save would have deleted with no change at all.
       */
-      await prisma.providerSkill.deleteMany({
-        where: {
-          provider_profile_id: profileId,
-          skill: { role_type_id: { notIn: roleTypeIds } },
-        },
-      });
       break;
     }
 
@@ -2747,7 +2782,9 @@ export async function buildCompletenessInput(profileId: string) {
   const profile = await prisma.providerProfile.findUnique({
     where: { id: profileId },
     include: {
-      skills: true,
+      skills: { include: { skill: { select: { role_type_id: true } } } },
+      /* ⚠ `E517` — the selection the filter reads. */
+      roles: { select: { role_type_id: true } },
       specializations: true,
       employers: true,
       education: true,
@@ -2783,7 +2820,19 @@ export async function buildCompletenessInput(profileId: string) {
     onsite_rate_cents: profile.onsite_rate_cents,
     remote_rate_cents: profile.remote_rate_cents,
     hourly_rate_cents: profile.hourly_rate_cents,
-    skills: profile.skills,
+    /*
+      ── ⚠⚠ COMPLETENESS COUNTS SHOWN, NOT HELD (`P2-J1.4-E517`) ──────────────
+      ⚠ SUPERSEDED, quoted not deleted (`E164`): `skills: profile.skills,`
+      ⚠⚠ Scott, 2026-09-17: *"A gate that counts invisible skills lets a provider
+      pass it and then show a buyer an empty profile. That defeats the gate's only
+      purpose."* ⚠ This is the ONE write path for the stored `completeness`
+      column, so every downstream reader — `access.ts`, the admin board, the
+      profile — inherits it.
+      ⚠ MEASURED BEFORE FLIPPING (Scott's condition): **ZERO providers fall below
+      `VISIBILITY_THRESHOLD`.** The skills points are awarded at >= 1 and no
+      provider holds ALL their skills out-of-role, so no score moves today.
+    */
+    skills: shownSkills(selectedRoleIds(profile), profile.skills, (s) => s.skill.role_type_id),
     languages: profile.languages,
     employers: profile.employers,
     education: profile.education,

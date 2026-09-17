@@ -6,6 +6,7 @@ import { WorkHistoryEntry } from "@/components/profile/WorkHistoryEntry";
 import { CappedList } from "@/components/profile/CappedList";
 import type { MentorState } from "@/lib/community-signal";
 import { dateRangeLabel } from "@/lib/date-range-label";
+import { projectMonogram } from "@/lib/project-monogram";
 
 /**
  * The Profile-View section vocabulary (brief_X / E056).
@@ -773,9 +774,37 @@ export function ProjectCard({
         ) : (
           <span
             aria-hidden
-            className="grid h-10 w-10 flex-none place-items-center rounded-[8px] bg-magenta/10 text-[17px]"
+            /*
+              ── ⚠⚠ A MONOGRAM, NOT AN EMOJI (`P2-J1.4-E512`) ──────────────────
+
+              ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                  className="… bg-magenta/10 text-[17px]"
+                  {redacted ? "🔒" : "📁"}
+              ⚠⚠ `📁` IS A SYSTEM FONT GLYPH: macOS paints a grey-lavender folder
+              onto this pale magenta wash — two soft things stacked, no contrast —
+              and every operating system draws it differently. A project HAS a
+              name; its initials say more and render identically everywhere.
+              ⚠ The precedent is `E453b`'s avatar (initials behind the photo) and
+              the vendor tiles (`EBS` · `OFC` · `PS`), which shipped monograms
+              rather than wait on licensed logos.
+
+              ⚠ `E433` — THE TILE IS A SURFACE, NOT AN INTERACTIVE THING. The wash
+              stays `bg-magenta/10` and the letters are INK. It must never become
+              saturated magenta.
+
+              ⚠⚠ `🔒` IS UNTOUCHED AND STAYS A GLYPH. It is a STATE, not an
+              identity — and a monogram there would leak the very initial the
+              redaction exists to hide.
+            */
+            className="grid h-10 w-10 flex-none place-items-center rounded-[8px] bg-magenta/10 text-ink"
           >
-            {redacted ? "🔒" : "📁"}
+            {redacted ? (
+              <span className="text-[17px]">🔒</span>
+            ) : (
+              <span className="text-[14px] font-bold tracking-[0.02em]">
+                {projectMonogram(p.name)}
+              </span>
+            )}
           </span>
         )}
 

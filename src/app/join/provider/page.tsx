@@ -13,6 +13,7 @@ import {
 } from "@/components/onboarding/SignUpForm";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 import { ambiguousSkillNames, skillQualifier } from "@/lib/skill-labels";
+import { isSkillShown } from "@/lib/shown-skills";
 
 import {
   OptionCard,
@@ -299,6 +300,54 @@ const MAX_VISIBLE_OPTIONS = 15;
  * of nodes the provider will never scroll through.
  */
 const MAX_SKILL_SUGGESTIONS = 12;
+
+/*
+  ── ⚠⚠ NAMED BY SCOTT, 2026-09-17 (`P2-J1.4-E517`) ─────────────────────────
+
+  ⚠ Scott names things. These were proposed, he ruled, and the alternatives are
+  kept so nobody re-opens a settled choice (`E164`).
+
+  ⚠ HEADING — chosen: "Not on your profile right now".
+    ⚠ SUPERSEDED, quoted not deleted: "Skills your roles don't show" · "Held,
+    but not shown".
+    ⚠⚠ THE CHOSEN ONE IS THE ONLY ONE THAT NAMES A STATE RATHER THAN A CAUSE,
+    and "right now" is what says it is reversible.
+
+  ⚠ EXPLANATION — chosen: the line below, with "You still hold these" →
+    "These are still yours".
+    ⚠ SUPERSEDED, quoted not deleted: "You still hold these — your current roles
+    just don't put them in front of buyers. …" · "You still hold these. Your
+    current roles just don't offer them to buyers." · "Widen your roles to show
+    these again, or remove any you no longer want."
+
+  ⚠⚠ WHAT THE WORDING MUST NOT SAY, and this still binds if anyone edits it:
+  that the skill is gone, expired, wrong or unverified. It is held, it is
+  theirs, and nothing about it has been judged — saying otherwise re-creates the
+  harm `E517` fixed, in copy.
+*/
+const HELD_NOT_SHOWN_HEADING = "Not on your profile right now";
+const HELD_NOT_SHOWN_EXPLANATION =
+  "These are still yours — your current roles just don't put them in front of buyers. Widen your roles to show them again, or remove any you no longer want.";
+
+/*
+  ⚠⚠ NAMED BY SCOTT, 2026-09-17 (`P2-J1.4-E517`) — the roles step's one-liner.
+  ⚠ He took the alternative, not the first draft.
+
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    · "{n} skills you hold aren't shown by the roles you've picked. They're
+      still yours — re-tick the role to show them again."
+    · "Buyers won't see {n} of your skills with these roles selected. Nothing
+      is deleted."
+
+  ⚠⚠ NO SINGULAR/PLURAL BRANCHING, AND THAT IS A PROPERTY OF THE CHOSEN STRING,
+  not an omission: "{n} of your skills" reads correctly at every n >= 1, and the
+  line does not render at 0.
+
+  ⚠ IT SAYS THE SKILLS ARE KEPT. That is not decoration — it is the fact the old
+  prune got wrong. A bare count reads as a loss.
+*/
+const ROLE_STEP_HIDDEN_NOTE = (n: number) =>
+  `${n} of your skills sit under roles you haven't picked. They stay on your record — they just won't be offered to buyers.`;
 /** Per GROUP, so every specialization section stays represented (E054). */
 /** Per-group cap while SEARCHING — three groups have to share one window. */
 const MAX_SPECS_PER_GROUP = 6;
@@ -375,7 +424,8 @@ type ProfilePayload = {
     notes: string | null;
   }[];
   skillIds?: string[];
-  skillNames?: { id: string; name: string; area?: string | null }[];
+  /** ⚠ `roleTypeId` — E517, so the step can name what the roles do not show. */
+  skillNames?: { id: string; name: string; area?: string | null; roleTypeId?: string | null }[];
   /** E187 — the subset of `skillIds` the résumé produced. Server-derived. */
   resumeSkillIds?: string[];
   headline?: string | null;
@@ -485,7 +535,7 @@ type Profile = {
   suggestedCompanyName: string | null;
   projects: EmployerProject[];
   skillIds: string[];
-  skillNames: { id: string; name: string; area?: string | null }[];
+  skillNames: { id: string; name: string; area?: string | null; roleTypeId?: string | null }[];
   /** E187 — which of `skillIds` the résumé produced, straight from the server. */
   resumeSkillIds: string[];
   /** Typed-in skills not yet in the catalog (E031). */
@@ -1292,6 +1342,26 @@ setScreen(target);
       };
     });
   };
+
+  /*
+    ── ⚠⚠ SHOWN vs HELD, ONCE, FOR THE WHOLE WIZARD (`P2-J1.4-E517`) ──────────
+
+    ⚠ Hoisted to component scope because THREE surfaces need the same split and
+    they must not disagree: the Skills step's basket, its held-but-not-shown
+    block, and ⚠⚠ THE REVIEW CARD — a screen headed "here is your profile" must
+    not list skills the profile does not show (Scott, 2026-09-17).
+
+    ⚠ Computed against `profile.roleTypeIds` — the roles IN THE WIZARD, not the
+    roles last saved — so unticking a role updates all three immediately.
+    ⚠⚠ `profile.skillNames` STAYS THE FULL HELD SET. Nothing here filters what
+    is HELD; this only decides what each surface SHOWS.
+  */
+  const shownSkillNames = profile.skillNames.filter((sk) =>
+    isSkillShown(profile.roleTypeIds, sk.roleTypeId)
+  );
+  const heldNotShownSkillNames = profile.skillNames.filter(
+    (sk) => !isSkillShown(profile.roleTypeIds, sk.roleTypeId)
+  );
 
   const goNext = () => {
     // E118 — an edit that came FROM the review goes back to it, once. The flag
@@ -2398,6 +2468,34 @@ setScreen(target);
       const chosenSkills = new Set(profile.skillIds);
       const totalPicked = profile.skillIds.length + profile.customSkills.length;
 
+      /*
+        ── ⚠⚠ HELD, BUT NOT SHOWN (`P2-J1.4-E517`) ─────────────────────────────
+
+        ⚠⚠ THE STEP READS WHAT IS HELD. `E517` stopped the role step DELETING
+        out-of-role skills and moved the filter to the offer-side reads, which
+        means a provider can now hold a skill that appears on no surface they
+        can see. ⚠ THE ONLY PLACE TO REMOVE IT IS HERE, so this is the one list
+        that must not filter.
+
+        ⚠ Split, not hidden: every held skill appears EXACTLY ONCE — in the
+        basket if their roles show it, in the block below the picker if they do
+        not. Listing it twice would make one chip look like two skills.
+
+        ⚠⚠ COMPUTED AGAINST `profile.roleTypeIds` — the roles IN THE WIZARD, not
+        the roles last saved — so unticking a role on the previous step moves
+        skills into this block immediately, which is the whole point: the
+        provider sees the consequence before it reaches their profile.
+
+        ⚠ `isSkillShown` is the same function the profile, the provider cards
+        and the matcher read. One rule, gated by `check:shown-skills`.
+      */
+      const basketSkills = shownSkillNames;
+      const heldNotShown = heldNotShownSkillNames;
+      /* ⚠ The basket counts what it lists. `canSave` still counts everything
+         HELD (`totalPicked`), so a provider whose skills are all out-of-role is
+         never trapped on this step by a number they cannot see. */
+      const basketCount = basketSkills.length + profile.customSkills.length;
+
       const q = skillQuery.trim().toLowerCase();
       // Already-picked skills are chips above, so they stop being suggestions —
       // filtering them out BEFORE the cap keeps a full set of usable options as
@@ -2630,16 +2728,18 @@ setScreen(target);
           )}
 
           {/* The basket is always on screen and always removable. */}
-          {(profile.skillNames.length > 0 || profile.customSkills.length > 0) && (
+          {(basketSkills.length > 0 || profile.customSkills.length > 0) && (
             <div className="mb-4">
               <p className="mb-1.5 text-[13px] font-bold">
                 {/* E202 — a count, not a quota. "12/15" turned a list of what
                     you can do into a budget you were spending. */}
                 Your Skills{" "}
-                <span className="font-normal text-ink-2">({totalPicked})</span>
+                {/* ⚠ E517 — counts what this list SHOWS. Out-of-role skills are
+                    still held and are counted in their own block below. */}
+                <span className="font-normal text-ink-2">({basketCount})</span>
               </p>
               <div className={`flex flex-wrap gap-2 ${PICKED_REGION}`}>
-                {profile.skillNames.map((sk) => (
+                {basketSkills.map((sk) => (
                   <Chip key={sk.id} selected onClick={() => toggleSkill(sk.id)}>
                     {sk.name}
                     {/*
@@ -2773,6 +2873,60 @@ setScreen(target);
             <p className="mt-2 text-[13px] text-ink-2">
               +{hiddenSkillCount} more — keep typing to narrow the list.
             </p>
+          )}
+
+          {/*
+            ── ⚠⚠ THE REMOVAL GAP (`P2-J1.4-E517`) ──────────────────────────────
+
+            ⚠ SCOTT, 2026-09-17: *"a section in the skills step, below the
+            picker, listing skills the provider holds that their current roles
+            do not show, each with a remove control."*
+
+            ⚠⚠ WHY IT HAS TO EXIST. Before `E517` a narrowed role DELETED these
+            rows, so there was nothing to remove. Now they survive — and every
+            other surface filters them out, so without this block a provider who
+            genuinely wants a skill gone has no way to say so. ⚠ THAT WOULD MAKE
+            "we never delete what you hold" read as "you can never remove it."
+
+            ⚠ THE REMOVE IS REAL AND IT IS THE PROVIDER'S OWN INSTRUCTION — it
+            drops the id from `skillIds`, and `applyProviderSection`'s scoped
+            delete (`source: "SELF_ADDED"`, `skill_id: { notIn: skillIds }`,
+            `E552`) then removes the row. ⚠⚠ THAT IS NOT THE DEFECT `E517`
+            FIXED: the harm was a SAVE destroying data nobody asked it to
+            destroy. A provider clicking Remove asked.
+
+            ⚠ It reuses `toggleSkill`, so removal behaves identically here and
+            in the basket — and because the row leaves `skillNames`, the chip
+            leaves this block with no extra state to keep in step.
+
+            ⚠⚠ WORDING IS PROPOSED, NOT NAMED. Scott names things; these two
+            strings are placed in constants so his ruling is a one-line swap.
+          */}
+          {heldNotShown.length > 0 && (
+            <div className="mt-6 rounded-brand border border-line bg-bg-soft p-4">
+              <p className="text-[14px] font-bold">{HELD_NOT_SHOWN_HEADING}</p>
+              <p className="mt-1 text-[13px] leading-relaxed text-ink-2">
+                {HELD_NOT_SHOWN_EXPLANATION}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {heldNotShown.map((sk) => (
+                  <span
+                    key={sk.id}
+                    className="inline-flex items-center gap-1.5 rounded-full border-[1.5px] border-line bg-white px-3.5 py-1.5 text-[13.5px] font-bold text-ink-2"
+                  >
+                    {sk.name}
+                    <button
+                      type="button"
+                      onClick={() => toggleSkill(sk.id)}
+                      aria-label={`Remove ${sk.name}`}
+                      className="text-[15px] leading-none text-ink-2 transition-colors hover:text-magenta"
+                    >
+                      &times;
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
           )}
         </>
       ),
@@ -3634,6 +3788,43 @@ setScreen(target);
                   is what your profile leads with.
                 </p>
               )}
+
+              {/*
+                ── ⚠⚠ THE WARNING, BACK AS INFORMATION (`P2-J1.4-E517`) ────────
+
+                ⚠ SCOTT, 2026-09-17: *"BRING THE WARNING BACK — AS INFORMATION,
+                NOT PROTECTION."*
+
+                ⚠⚠ THE OLD WARNING WAS NEVER BUILT, AND IT WOULD HAVE BEEN THE
+                WRONG SHAPE ANYWAY. Option A — warn, then delete — was rejected
+                on measurement: a warning fires on CHANGE, and 5 profiles already
+                held 14 out-of-role rows that the next save would have deleted
+                with NO CHANGE AT ALL. A confirm dialog protects nobody from a
+                deletion that needs no interaction to happen.
+
+                ⚠ NOW NOTHING IS AT RISK, so this line is not a warning at all:
+                it tells the provider what their selection DOES, at the moment
+                they make it. ⚠⚠ NO CONFIRM, NO BLOCK, NO "Are you sure" — the
+                choice is theirs and it is reversible by re-ticking the role.
+
+                ⚠ SAYS "still yours" ON PURPOSE. The single most important fact
+                is the one the old prune got wrong, and a count with no
+                reassurance reads as a loss.
+
+                ⚠ Free: `skillNames` already carries `roleTypeId` (the skills
+                step needed it), so this is a client-side count against state
+                already in hand — no fetch, no server change.
+              */}
+              {(() => {
+                const n = profile.skillNames.filter(
+                  (sk) => !isSkillShown(profile.roleTypeIds, sk.roleTypeId)
+                ).length;
+                return n > 0 ? (
+                  <p className="mt-3 text-[14px] text-ink-2">
+                    {ROLE_STEP_HIDDEN_NOTE(n)}
+                  </p>
+                ) : null;
+              })()}
             </>
           )}
         </WizardShell>
@@ -4777,12 +4968,27 @@ setScreen(target);
               a six-cell grid needed no restructuring at all.
             */}
             <div className="mt-5 grid gap-5 lg:grid-cols-2">
+              {/*
+                ⚠⚠ THE REVIEW CARD SHOWS WHAT THE PROFILE SHOWS (`P2-J1.4-E517`).
+                ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                  `edit={sectionAction("Skills", "skills", profile.skillNames.length === 0)}`
+                  `skills={profile.skillNames}`
+
+                ⚠ Scott, 2026-09-17: *"a screen headed 'here is your profile'
+                must not list skills the profile does not show."* ⚠⚠ THIS CARD
+                IS THE SAME MISMATCH THE SKILLS BASKET HAD — a chip claiming to
+                be on the profile when every offer-side read filters it out.
+                ⚠ The button label follows the card, so "Add Skills" appears
+                when the card is empty rather than "Edit" over nothing.
+                ⚠⚠ THE ROWS ARE UNTOUCHED. The Skills step still lists every
+                held skill, which is where they can be seen and removed.
+              */}
               <ProfileCard
                 title="Skills"
-                edit={sectionAction("Skills", "skills", profile.skillNames.length === 0)}
+                edit={sectionAction("Skills", "skills", shownSkillNames.length === 0)}
               >
                 <SkillsBody
-                  skills={profile.skillNames}
+                  skills={shownSkillNames}
                   field={
                     profile.roleTypeName && profile.pillarName
                       ? { role: profile.roleTypeName, domain: profile.pillarName }

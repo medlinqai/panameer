@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { shownSkills, selectedRoleIds } from "@/lib/shown-skills";
 import { isMarketplaceVisible, providerMeetsRequired } from "@/lib/access";
 
 /**
@@ -38,10 +39,13 @@ export async function getPublicProviderProfile(
       specializations: {
         include: { specialization: { select: { id: true, name: true, kind: true } } },
       },
+      /* ⚠ `E517` — the role selection this card's skill list is filtered by. */
+      roles: { select: { role_type_id: true } },
       skills: {
         include: {
           skill: {
             select: {
+              role_type_id: true,
               id: true,
               name: true,
               roleType: { select: { code: true, display: true } },
@@ -113,7 +117,13 @@ export async function getPublicProviderProfile(
       title: profile.person.title,
       photoUrl: profile.person.photo_url,
     },
-    skills: profile.skills.map((ps) => ({
+    /* ⚠⚠ `P2-J1.4-E517` — A PROVIDER CARD IS AN OFFER SURFACE. Out-of-role
+       skills are kept in the database and simply not presented here. */
+    skills: shownSkills(
+      selectedRoleIds(profile),
+      profile.skills,
+      (ps) => ps.skill.role_type_id
+    ).map((ps) => ({
       id: ps.skill.id,
       name: ps.skill.name,
       roleType: ps.skill.roleType.display,
