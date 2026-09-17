@@ -325,6 +325,24 @@ const MAX_SKILL_SUGGESTIONS = 12;
 const HELD_NOT_SHOWN_HEADING = "Skills your roles don't show";
 const HELD_NOT_SHOWN_EXPLANATION =
   "You still hold these — your current roles just don't put them in front of buyers. Widen your roles to show them again, or remove any you no longer want.";
+
+/*
+  ⚠⚠ PROPOSED, NOT NAMED (`P2-J1.4-E517`) — the roles step's one-liner.
+  ⚠ Scott: *"REPORT THE WORDING, do not ship it."* Same treatment as the two
+  strings above: a one-line swap when he names it.
+
+  ⚠ The alternatives reported with this build:
+    1. the line below  ← in place
+    2. "{n} of your skills sit under roles you haven't picked. They stay on your
+       record — they just won't be offered to buyers."
+    3. "Buyers won't see {n} of your skills with these roles selected. Nothing
+       is deleted."
+
+  ⚠⚠ ALL THREE SAY THE SKILLS ARE KEPT, and that is not decoration — it is the
+  fact the old prune got wrong. A bare count reads as a loss.
+*/
+const ROLE_STEP_HIDDEN_NOTE = (n: number) =>
+  `${n} skill${n === 1 ? "" : "s"} you hold ${n === 1 ? "isn't" : "aren't"} shown by the roles you've picked. ${n === 1 ? "It's" : "They're"} still yours — re-tick the role to show ${n === 1 ? "it" : "them"} again.`;
 /** Per GROUP, so every specialization section stays represented (E054). */
 /** Per-group cap while SEARCHING — three groups have to share one window. */
 const MAX_SPECS_PER_GROUP = 6;
@@ -3747,6 +3765,43 @@ setScreen(target);
                   is what your profile leads with.
                 </p>
               )}
+
+              {/*
+                ── ⚠⚠ THE WARNING, BACK AS INFORMATION (`P2-J1.4-E517`) ────────
+
+                ⚠ SCOTT, 2026-09-17: *"BRING THE WARNING BACK — AS INFORMATION,
+                NOT PROTECTION."*
+
+                ⚠⚠ THE OLD WARNING WAS NEVER BUILT, AND IT WOULD HAVE BEEN THE
+                WRONG SHAPE ANYWAY. Option A — warn, then delete — was rejected
+                on measurement: a warning fires on CHANGE, and 5 profiles already
+                held 14 out-of-role rows that the next save would have deleted
+                with NO CHANGE AT ALL. A confirm dialog protects nobody from a
+                deletion that needs no interaction to happen.
+
+                ⚠ NOW NOTHING IS AT RISK, so this line is not a warning at all:
+                it tells the provider what their selection DOES, at the moment
+                they make it. ⚠⚠ NO CONFIRM, NO BLOCK, NO "Are you sure" — the
+                choice is theirs and it is reversible by re-ticking the role.
+
+                ⚠ SAYS "still yours" ON PURPOSE. The single most important fact
+                is the one the old prune got wrong, and a count with no
+                reassurance reads as a loss.
+
+                ⚠ Free: `skillNames` already carries `roleTypeId` (the skills
+                step needed it), so this is a client-side count against state
+                already in hand — no fetch, no server change.
+              */}
+              {(() => {
+                const n = profile.skillNames.filter(
+                  (sk) => !isSkillShown(profile.roleTypeIds, sk.roleTypeId)
+                ).length;
+                return n > 0 ? (
+                  <p className="mt-3 text-[14px] text-ink-2">
+                    {ROLE_STEP_HIDDEN_NOTE(n)}
+                  </p>
+                ) : null;
+              })()}
             </>
           )}
         </WizardShell>
