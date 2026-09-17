@@ -58,7 +58,11 @@ export async function GET(request: Request) {
   // `parsed` blob: that way the inspector shows what the parser does TODAY, so a
   // fix can be checked against a real document without re-uploading it.
   const parsed = parseResume(text);
-  const catalog = await prisma.skill.findMany({ select: { id: true, name: true } });
+  /* ⚠ `role_type_id` feeds `E515`'s role anchor — without it the inspector
+     would resolve the six role-spanning names differently from the real import. */
+  const catalog = await prisma.skill.findMany({
+    select: { id: true, name: true, role_type_id: true },
+  });
   const { matched, unmatched } = matchSkills(parsed.skills, catalog);
 
   return NextResponse.json({

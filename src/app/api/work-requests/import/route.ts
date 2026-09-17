@@ -109,7 +109,9 @@ export async function POST(request: Request) {
     */
     const catalog = await prisma.skill.findMany({
       where: { is_custom: false, ...OFFERABLE },
-      select: { id: true, name: true },
+      /* ⚠ `role_type_id` feeds `E515`'s role anchor — a posting's terms hit the
+         same six role-spanning names a résumé's do. */
+      select: { id: true, name: true, role_type_id: true },
     });
     const { matched, unmatched } = matchSkills(ai.skills, catalog);
 
