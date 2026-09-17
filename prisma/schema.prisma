@@ -3822,9 +3822,27 @@ model SentEmail {
   user_id String? @db.Uuid
   user    User?   @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
+  /// ── ⚠⚠ RETENTION — RULED 2026-09-17, DELIBERATELY NOT BUILT ──────────────
+  /// ⚠ SCOTT: keep `bounced` / `complained` / `failed` / `suppressed` FOREVER —
+  /// they are the evidence, and they are the point. ⚠ Age out `sent` and
+  /// `captured` rows that never reached a terminal event after 90 DAYS.
+  /// ⚠ WHY 90 AND NOT 7: a row's MATCHING job is done in hours (bounces rarely
+  /// exceed 72h), so 7 days would serve the webhook. The longer window serves
+  /// the SUPPORT question — "I never got the email" — which arrives days or
+  /// weeks later.
+  /// ⚠⚠ NO PRUNE JOB EXISTS AND THAT IS THE RULING, NOT AN OMISSION. Scott:
+  /// *"nothing is near the limit and an untested delete job is a worse risk
+  /// than a large table."* ⚠ Measured: ~20 rows per fully-engaged provider
+  /// signup, ~2,200 rows at today's 111 providers, ~200,000 at 10,000.
+  /// ⚠ `@@index([created_at])` below is what a prune would sweep on when one is
+  /// finally written.
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
+  /// ⚠⚠ THE WEBHOOK'S LOOKUP, ON EVERY EVENT. Scott asked it be confirmed:
+  /// verified present in the live database as
+  /// `sent_emails_resend_message_id_to_email_idx`. An unindexed scan here is a
+  /// slow fuse on a table that only grows.
   @@index([resend_message_id, to_email])
   @@index([to_email])
   @@index([subject_type, subject_id])

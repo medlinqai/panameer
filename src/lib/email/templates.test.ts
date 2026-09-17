@@ -62,10 +62,17 @@ const failures: string[] = [];
   COMMENTED OUT, AND NOT NARROWED. If somebody fixes the underlying question,
   this entry goes green and the list is what tells them to remove it.
 */
-const KNOWN_OPEN: { label: string; id: string; why: string }[] = [
+/*
+  ⚠⚠ `opened` IS NOT DECORATION (Scott, 2026-09-17): *"The stale check catches
+  accidental fixes; it does not catch an entry sitting there for six months. A
+  visible age is what stops this becoming a parking lot."*
+  ⚠ The age is printed with every entry, on every run.
+*/
+const KNOWN_OPEN: { label: string; id: string; opened: string; why: string }[] = [
   {
     label: 'project-validation: no "project" in visible copy',
     id: "P2-J3-E523",
+    opened: "2026-09-17",
     why:
       "THE VOCABULARY RULE MEETS THE APP'S OWN NOUN. `Project` is a live model " +
       "that renders on the profile, so the APP says a word the EMAILS ban. " +
@@ -75,6 +82,7 @@ const KNOWN_OPEN: { label: string; id: string; why: string }[] = [
   {
     label: "recommendation-request: declares utf-8",
     id: "E555",
+    opened: "2026-09-17",
     why:
       "NOT COPY — the template emits NO <meta charset=\"utf-8\"> at all. It " +
       "hand-builds its html instead of using emailShell(). Accented names and " +
@@ -90,7 +98,12 @@ const ok = (label: string, cond: boolean, detail = "") => {
   }
   const known = KNOWN_OPEN.find((k) => k.label === label);
   if (known) {
-    opened.push(`${known.id} — ${label}\n     ${known.why}${detail ? `\n     seen: ${detail}` : ""}`);
+    const days = Math.floor((Date.now() - Date.parse(known.opened)) / 86_400_000);
+    const age = days <= 0 ? "opened today" : `OPEN ${days} day${days === 1 ? "" : "s"}`;
+    opened.push(
+      `${known.id} — ${label}\n     ⚠ ${age} (since ${known.opened})\n     ${known.why}` +
+        (detail ? `\n     seen: ${detail}` : "")
+    );
     return;
   }
   failures.push(`${label}${detail ? `\n     ${detail}` : ""}`);
