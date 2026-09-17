@@ -5030,7 +5030,42 @@ setScreen(target);
                 : "max-w-lg"
             }
           >
-            {error && <Notice>{error}</Notice>}
+            {/*
+              ── ⚠⚠ THE ERROR STICKS TO THE TOP OF THE MODAL (`P2-J1.4-E539`) ──
+
+              ⚠ SUPERSEDED, quoted not deleted (`E164`): `{error && <Notice>…}`,
+              a plain block at the top of the modal body.
+
+              ⚠⚠ THE CLAIM THAT THIS RENDERED *BEHIND* THE MODAL WAS WRONG, AND
+              IT IS CORRECTED HERE RATHER THAN QUIETLY FIXED. The modal has
+              always re-rendered the same `error` state at its own top, so the
+              message was inside the dialog all along. ⚠ THE REAL DEFECT IS
+              DISTANCE, AND IT IS MEASURED: `Modal` is
+              `max-h-[calc(100dvh-2rem)] overflow-y-auto`, and at 1280×800 the
+              `Work History & Projects` editor is **2454px of body in a 766px
+              window** — so a `Notice` pinned to the top of that body sits
+              roughly 1,700px above whatever the provider is actually editing.
+              ⚠ The other three editors measured 750 / 648 / 352 and do NOT
+              scroll at that height, so this bites ONE section today — but it
+              bites it hard, and it is the section most likely to fail because
+              `EmployersStep` commits through its own endpoints AS YOU GO.
+
+              ⚠⚠ STICKY, NOT MOVED, AND THAT IS THE PROPOSAL. Anchoring the
+              message to the action row instead was considered and REJECTED:
+              Work History's errors arrive from `EmployersStep`'s `onError`
+              while you edit, not when you press a button — and its button says
+              `Done`, not `Save`, because there is nothing left to submit. An
+              error parked by that button would be furthest from the row that
+              actually failed. Sticking it to the top keeps it adjacent to the
+              content wherever you have scrolled to.
+              ⚠ `z-10` so the sticky bar sits over the scrolling content rather
+              than being painted through by it.
+            */}
+            {error && (
+              <div className="sticky top-0 z-10 -mx-6 mb-2 bg-white px-6 pb-2 sm:-mx-7 sm:px-7">
+                <Notice>{error}</Notice>
+              </div>
+            )}
 
             {editSection === "title" && titleEditing().body}
             {editSection === "rate" && rateEditing().body}
