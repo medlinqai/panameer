@@ -167,6 +167,11 @@ export async function requestPasswordReset(
     html: mail.html,
     text: mail.text,
     template: "password-reset",
+    /* ⚠⚠ THE EXEMPTION. Scott ruled it 2026-09-17: a reset is mail the person
+       asked for thirty seconds ago, about their own account, and the silent
+       response means a suppressed address would be a PERMANENT LOCKOUT WITH NO
+       EXPLANATION. ⚠ It never overrides a hard bounce. */
+    bypassSuppressionFor: "password-reset",
     subjectType: "VerificationToken",
     subjectId: token.id,
     userId: user.id,

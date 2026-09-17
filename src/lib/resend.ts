@@ -54,6 +54,12 @@ type SendEmailArgs = {
    * unsubscribe-from-everything.
    */
   category?: string | null;
+  /*
+    ⚠⚠ ONE SENDER MAY OVERRIDE SUPPRESSION, AND ONLY ONE (`P2-J3-E522` Part A).
+    ⚠ `check:sent-email` fails if any template other than `password-reset`
+    passes this. ⚠⚠ IT NEVER OVERRIDES A HARD BOUNCE — see `isSuppressed`.
+  */
+  bypassSuppressionFor?: "password-reset";
   subject: string;
   html: string;
   text?: string;
@@ -170,6 +176,7 @@ export async function sendEmail({
   subjectType,
   subjectId,
   userId,
+  bypassSuppressionFor,
 }: SendEmailArgs) {
   /*
     ── ⚠⚠ SUPPRESSION IS CHECKED IN THE TRANSPORT (`P1-ALL-E386`) ────────────
@@ -228,7 +235,7 @@ export async function sendEmail({
   const allowed: string[] = [];
   const skipped: string[] = [];
   for (const r of recipients) {
-    if (await isSuppressed(r, category ?? undefined)) {
+    if (await isSuppressed(r, category ?? undefined, bypassSuppressionFor)) {
       console.log(`[mail] SKIPPED (suppressed) ${subject} -> ${r}`);
       skipped.push(r);
       continue;

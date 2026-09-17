@@ -125,6 +125,79 @@ console.log("\ncheck:sent-email — every send leaves a receipt\n");
   ok("6 — ⚠ capture is recorded as `captured`, never as sent", /status:\s*"captured"/.test(TRANSPORT));
 }
 
+/* ═══ 7 · THE WEBHOOK (`P2-J3-E522` PART A, 2 of 2) ══════════════════════ */
+{
+  const ROUTE = "src/app/api/webhooks/resend/route.ts";
+  const W = strip(readFileSync(ROUTE, "utf8"));
+  ok("7 — the route exists at /api/webhooks/resend", W.length > 0);
+  ok("7 — ⚠⚠ THE SIGNATURE IS VERIFIED", /webhooks\.verify\(/.test(W));
+  ok(
+    "7 — ⚠⚠ OVER THE RAW BODY, NEVER request.json()",
+    /await request\.text\(\)/.test(W) && !/request\.json\(\)/.test(W),
+    "the signature covers the exact bytes Resend sent; re-serialising breaks it"
+  );
+  ok("7 — ⚠ no secret means REFUSE, not trust", /if \(!secret\)[\s\S]{0,200}?503/.test(W));
+  ok("7 — ⚠ a bad signature is 401 and leaks no reason", /status: 401/.test(W));
+  for (const e of ["email.bounced", "email.complained", "email.failed", "email.suppressed"])
+    ok(`7 — handles ${e}`, W.includes(`"${e}"`));
+  ok(
+    "7 — ⚠⚠ email.delivered IS NOT HANDLED (high volume, nothing actionable)",
+    !/"email\.delivered"/.test(W)
+  );
+  ok(
+    "7 — ⚠⚠ AN UNHANDLED EVENT RETURNS 200, so Resend does not retry it forever",
+    /ignored: type/.test(W)
+  );
+  ok(
+    "7 — ⚠⚠ MATCHED ON THE PAIR, NOT THE ID ALONE",
+    /resend_message_id: messageId[\s\S]{0,120}?to_email: \{ in: recipients \}/.test(W),
+    "a batch shares one id; matching on it alone marks every recipient bounced"
+  );
+  ok("7 — ⚠ bounce_type is written from the event", /bounce_type: bounceType/.test(W));
+  ok(
+    "7 — ⚠⚠ ONLY A `Permanent` BOUNCE SUPPRESSES",
+    /bounceType === "Permanent"[\s\S]{0,200}?suppress\(email, null, "bounce"\)/.test(W),
+    "a Transient bounce is a full mailbox; suppressing on it locks people out"
+  );
+  ok("7 — ⚠ a complaint always suppresses", /suppress\(email, null, "complaint"\)/.test(W));
+}
+
+/* ═══ 8 · THE SUPPRESSION BYPASS — ONE SENDER, NAMED ═════════════════════
+   ⚠⚠ Scott, 2026-09-17: "ONE named, auditable exemption for PASSWORD_RESET,
+   and a check that FAILS if any other sender claims it."                     */
+{
+  const U = strip(readFileSync("src/lib/unsubscribe.ts", "utf8"));
+  ok("8 — isSuppressed takes a named bypass", /bypassFor\?: "password-reset"/.test(U));
+  ok(
+    "8 — ⚠⚠⚠ A HARD BOUNCE IS NEVER BYPASSED",
+    /OVERRIDABLE_REASONS = \["unsubscribe_link", "complaint"\]/.test(U) &&
+      !/OVERRIDABLE_REASONS = \[[^\]]*bounce/.test(U),
+    "re-sending to a dead address achieves nothing and damages the sending domain"
+  );
+  ok(
+    "8 — ⚠ the reasons are matched EXPLICITLY, not as `not a bounce`",
+    /OVERRIDABLE_REASONS\.includes\(row\.reason\)/.test(U),
+    "so a NEW reason added later is respected by default rather than bypassed"
+  );
+
+  const claimants: string[] = [];
+  for (const f of FILES.filter((x) => x !== "src/lib/resend.ts")) {
+    const src = strip(readFileSync(f, "utf8"));
+    for (const c of src.match(/\bsendEmail\(\{[\s\S]*?\n\s*\}\)/g) ?? []) {
+      if (!/bypassSuppressionFor/.test(c)) continue;
+      const name = /template:\s*"([a-z0-9-]+)"/.exec(c)?.[1];
+      if (name !== "password-reset") claimants.push(`${name ?? "?"} (${f})`);
+    }
+  }
+  ok("8 — ⚠⚠ NO OTHER SENDER CLAIMS THE EXEMPTION", claimants.length === 0, claimants.join(", "));
+
+  const resetClaims = /bypassSuppressionFor: "password-reset"/.test(
+    strip(readFileSync("src/lib/password-reset.ts", "utf8"))
+  );
+  ok("8 — ⚠ and the reset sender DOES claim it", resetClaims,
+     "otherwise a suppressed address is a permanent, unexplained lockout");
+}
+
 if (failures.length > 0) {
   console.error(`\ncheck:sent-email — ${failures.length} FAILED, ${pass} passed\n`);
   for (const f of failures) console.error(`  ✗ ${f}`);
