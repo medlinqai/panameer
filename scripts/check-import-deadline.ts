@@ -41,6 +41,9 @@ const PROVIDER = read("src", "lib", "resume", "ai-provider.ts");
 const PASSES = read("src", "lib", "resume", "ai-passes.ts");
 const IMPORT = read("src", "lib", "resume", "import.ts");
 const ROUTE = read("src", "app", "api", "onboarding", "provider", "import", "route.ts");
+/* ⚠ `P2-J1.4-E546` — the RE-READ route calls the model too, under the same
+   per-call ceiling, and its `maxDuration` was a hand copy nobody checked. */
+const REREAD_ROUTE = read("src", "app", "api", "onboarding", "provider", "resume-ai", "route.ts");
 const PARSE = read("src", "lib", "resume", "parse.ts");
 
 /* ═══ 0 · PROVE THE STRIP ═════════════════════════════════════════════════ */
@@ -124,6 +127,17 @@ const PARSE = read("src", "lib", "resume", "parse.ts");
     declared !== undefined && Number(declared) === ROUTE_MAX_DURATION_S,
     `route says ${declared}, budget.ts says ${ROUTE_MAX_DURATION_S}`
   );
+  const rereadDeclared = /export const maxDuration = (\d+);/.exec(REREAD_ROUTE)?.[1];
+  check(
+    "2 — ⚠⚠ the RE-READ route's `maxDuration` matches too (E546)",
+    rereadDeclared !== undefined && Number(rereadDeclared) === ROUTE_MAX_DURATION_S,
+    `resume-ai says ${rereadDeclared}, budget.ts says ${ROUTE_MAX_DURATION_S}`
+  );
+  check(
+    "2 — ⚠ and its single call fits inside it",
+    rereadDeclared !== undefined && MODEL_TIMEOUT_MS < Number(rereadDeclared) * 1000,
+    `${MODEL_TIMEOUT_MS}ms vs ${rereadDeclared}s`
+  );
   check("2 — ABSENCE: the provider declares no timeout of its own", !/const MODEL_TIMEOUT_MS =/.test(PROVIDER));
   check("2 — it imports the derived one", /import \{ MODEL_TIMEOUT_MS \} from "@\/lib\/resume\/budget";/.test(PROVIDER));
 }
@@ -165,7 +179,14 @@ const PARSE = read("src", "lib", "resume", "parse.ts");
     /took longer than \$\{Math\.round\(budgetMs \/ 1000\)\}s/.test(PROVIDER)
   );
   /* ⚠ AND THE ROUTE REPORTS ITS OWN SPEND, which is the number nobody had. */
-  check("4 — the route logs what it spent", /\[resume\] route=\$\{Date\.now\(\) - startedAt\}ms/.test(ROUTE));
+  /* ⚠ SUPERSEDED, quoted not deleted (`E164`): the pattern matched
+     `route=${Date.now() - startedAt}ms` literally. `E546` names the value once
+     so it can be both logged AND stored. */
+  check(
+    "4 — the route logs what it spent",
+    /const routeMs = Date\.now\(\) - startedAt;/.test(ROUTE) && /\[resume\] route=\$\{routeMs\}ms/.test(ROUTE)
+  );
+  check("4 — ⚠ and STORES it on the import row (E546)", /data: \{ route_ms: routeMs \}/.test(ROUTE));
   check("4 — the reader logs what IT spent", /\[resume\] read=\$\{Date\.now\(\) - readStarted\}ms/.test(IMPORT));
 }
 

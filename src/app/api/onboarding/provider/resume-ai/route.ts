@@ -36,7 +36,20 @@ export const runtime = "nodejs";
  * The pair now agree, and `MODEL_TIMEOUT_MS` in ai-provider.ts sits just under
  * this so our own deadline wins the race and produces a message.
  */
-export const maxDuration = 60;
+/*
+  ⚠⚠ 180, NOT 60 (`P2-J1.4-E546`). ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  `export const maxDuration = 60;`
+  ⚠⚠ THE 60 WAS NEVER VERCEL'S. It came from `E184` (2026-08-04), which assumed
+  *"the platform default cuts off well before"* a 20–30 s read. Scott confirmed
+  2026-09-17: the project is HOBBY WITH FLUID COMPUTE, whose default AND maximum
+  are 300 s. ⚠ THIS ROUTE MOVES WITH THE UPLOAD ROUTE: its single call is granted
+  `MODEL_TIMEOUT_MS` (82 s), which a 60 s function would have killed mid-call.
+  ⚠ 180 fits a whole read of marelise's CV (121 sections, 75.0 s) with
+  margin, plus the write tail, inside 300.
+  ⚠⚠ DO NOT LOWER IT TO SHORTEN THE WAIT — a lower ceiling brings back the silent
+  fallback. The wait is `E547`'s problem (the background job).
+*/
+export const maxDuration = 180;
 
 export async function POST() {
   const viewer = await getSessionViewer();

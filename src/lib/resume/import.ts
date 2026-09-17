@@ -17,6 +17,7 @@ import {
 } from "@/lib/resume/ai-passes";
 import { parserConfigProblem, redactSecrets, resolveProvider } from "@/lib/resume/ai-provider";
 import type { ParserTier, ProviderName } from "@/lib/resume/ai-provider";
+import type { PassTiming } from "@/lib/resume/ai-passes";
 import type { Prisma } from "@prisma/client";
 
 /**
@@ -365,6 +366,11 @@ export async function importProfileDocument({
         ⚠ Count them with `error LIKE '[ai:%'`; `[ai:no_model]` is NOT a failure.
       */
       error: read.failure ?? null,
+      /* ⚠ `P2-J1.4-E546` — the measured read. See the schema comment. */
+      read_ms: read.timing?.readMs ?? null,
+      read_passes: read.timing
+        ? (read.timing.passes as unknown as Prisma.InputJsonValue)
+        : undefined,
     },
   });
 
@@ -474,6 +480,13 @@ async function readDocument(
    * the browser, because `message` can carry a raw exception string.
    */
   failure?: string;
+  /**
+   * ⚠⚠ HOW LONG THE READ TOOK (`P2-J1.4-E546`) — total and per call, on
+   * success AND on failure. Written to `ProfileImport.read_ms`/`read_passes`
+   * and nowhere else; ⚠ NOT on `ImportPath` or `ImportResult`, both of which
+   * the route sends to the browser.
+   */
+  timing?: { readMs: number; passes: PassTiming[] };
   usage?: {
     provider: ProviderName;
     model: string;
@@ -549,6 +562,7 @@ async function readDocument(
       /* ⚠ REDACTED AGAIN HERE, not only at the HTTP branch: a thrown exception's
          own `message` reaches this line unfiltered. */
       failure: redactSecrets(`[ai:${outcome.reason}] ${outcome.message}`).slice(0, 1000),
+      timing: { readMs: Date.now() - readStarted, passes: outcome.passes },
     };
   }
 
@@ -609,6 +623,17 @@ async function readDocument(
       employersFromHeuristic: employersFailed,
     },
     recall: outcome.recall,
+    timing: {
+      readMs: Date.now() - readStarted,
+      /* ⚠ Projected: the stored record is duration only, not cost or tokens,
+         which already live in their own columns. */
+      passes: outcome.passes.map((p) => ({
+        name: p.name,
+        ok: p.ok,
+        ms: p.ms,
+        ...((p as { reason?: string }).reason ? { reason: (p as { reason?: string }).reason } : {}),
+      })),
+    },
     usage: {
       provider: outcome.provider,
       model: outcome.model,
