@@ -540,9 +540,12 @@ async function readDocument(
     return {
       parsed: heuristic,
       path: { reader: "heuristic", reason: outcome.reason, configProblem },
-      /* ⚠ `E519` — `[ai:<reason>] <message>`. ⚠ `reason` alone is NOT enough:
-         a per-call TIMEOUT arrives as `error`, the same word as a crash, and
-         only `message` ("The reader took longer than 22s…") tells them apart. */
+      /* ⚠ `E519` — `[ai:<reason>] <message>`. ⚠ `message` is kept because
+         `error` still covers several machinery failures (HTTP status, empty
+         body, network) that only the text tells apart.
+         ⚠ SUPERSEDED, quoted not deleted (`E164`): *"a per-call TIMEOUT arrives
+         as `error`, the same word as a crash"* — `E546` now reports it as
+         `deadline`, so a timeout is `[ai:deadline]`. */
       /* ⚠ REDACTED AGAIN HERE, not only at the HTTP branch: a thrown exception's
          own `message` reaches this line unfiltered. */
       failure: redactSecrets(`[ai:${outcome.reason}] ${outcome.message}`).slice(0, 1000),

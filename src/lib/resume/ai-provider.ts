@@ -133,7 +133,12 @@ export type ModelCall =
     happens — and `import.ts` records this string on `ImportPath.reason`, so the
     distinction survives into the row rather than living only in a log line.
   */
-  | { ok: false; reason: "no_key" | "truncated" | "error" | "refusal"; message: string };
+  /*
+    ⚠ `"deadline"` JOINS THEM (`P2-J1.4-E546`) — a per-call TIMEOUT. It was
+    reported as `"error"`, so the provider who hit it saw *"AI didn't read this
+    one — error"* (a crash) and never the sentence written for exactly this case.
+  */
+  | { ok: false; reason: "no_key" | "truncated" | "error" | "refusal" | "deadline"; message: string };
 
 /** Which provider will actually run, given what's configured. */
 export function resolveProvider(): {
@@ -610,7 +615,14 @@ export async function callExtractionModel({
     if (e instanceof Error && e.name === "TimeoutError") {
       return {
         ok: false,
-        reason: "error",
+        /*
+          ⚠⚠ `deadline`, NOT `error` (`P2-J1.4-E546`). ⚠ SUPERSEDED, quoted not
+          deleted (`E164`): `reason: "error",`. The clock stopped this call, not
+          the model — the same cause `runPass` already reports as `deadline` when
+          the ROUTE runs out. ⚠ Only this branch changes: a real provider failure
+          below still reports `error`.
+        */
+        reason: "deadline",
         message: `The reader took longer than ${Math.round(budgetMs / 1000)}s and was stopped. Nothing was changed — try again, or add your work history manually.`,
       };
     }

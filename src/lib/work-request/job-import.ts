@@ -137,7 +137,10 @@ export type JobImportOutcome =
     `"error"` at this boundary would put back exactly the conflation WS-2 exists
     to remove, one file over.
   */
-  | { ok: false; reason: "no_key" | "truncated" | "error" | "refusal"; message: string };
+  /* ⚠ `"deadline"` ARRIVES THE SAME WAY (`P2-J1.4-E546`): a per-call timeout,
+     widened here for the reason given above rather than flattened. The route's
+     copy is unchanged — a timeout still reads "We couldn't read that posting". */
+  | { ok: false; reason: "no_key" | "truncated" | "error" | "refusal" | "deadline"; message: string };
 
 /**
  * Extract a Work Request from pasted text.
