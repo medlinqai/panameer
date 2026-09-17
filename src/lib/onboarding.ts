@@ -1899,7 +1899,18 @@ export async function applyProviderSection(
            VALIDATES IDS THE CALLER ALREADY HOLDS — it does not OFFER anything.
            Filtering it would silently drop a provider's existing selection the
            moment an admin retired that row, which is the exact data loss this
-           brief exists to prevent. ⚠ FILTER WHAT IS OFFERED, NEVER WHAT IS HELD. */
+           brief exists to prevent. ⚠ FILTER WHAT IS OFFERED, NEVER WHAT IS HELD.
+
+           ⚠⚠ AND NO CATALOG FILTER EITHER — DELIBERATELY (`P2-J1.4-E541`).
+           ⚠ DO NOT "TIDY" THIS. `E541` scoped SIX reads in `lib/catalog.ts` to
+           the active catalog, and a future pass will see an unscoped `findMany`
+           two lines from six scoped ones and assume it was missed. It was not.
+           ⚠⚠ SCOTT RULED IT, 2026-09-16: *"The defect is the offer, not the
+           check."* Scoping this would make a provider who ALREADY HOLDS a legacy
+           `ERP` skill fail validation, and the skills step would refuse a
+           selection they can see on their own profile — `E517`'s standing lesson
+           and the exact loss `E481` exists to prevent. ⚠ 16 such rows exist
+           across 7 profiles today (`E540`), so this is live, not theoretical. */
         where: { id: { in: skillIds } },
         select: { id: true },
       });

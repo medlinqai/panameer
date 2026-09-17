@@ -60,7 +60,9 @@ export default async function Page({
   const showQueue = sp.view === "suggested";
 
   const [groups, providerCounts, kindClaims] = await Promise.all([
-    getSpecializations({ includeRetired: true }),
+    /* ⚠⚠ `E541` — see `admin/skill-catalog`. The admin console keeps sight of
+       every catalog; only the OFFER-side reads are narrowed. */
+    getSpecializations({ includeRetired: true, includeAllCatalogs: true }),
     getSpecializationProviderCounts(),
     getSpecializationClaims(),
   ]);
