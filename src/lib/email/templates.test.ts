@@ -22,6 +22,13 @@ import { identityVerifiedTemplate } from "@/lib/email/templates/identity-verifie
 import { identityVerificationRequestTemplate } from "@/lib/email/templates/identity-verification-request";
 import { verifyEmailTemplate } from "@/lib/email/templates/verify-email";
 import { passwordResetTemplate } from "@/lib/email/templates/password-reset";
+/* ⚠⚠ `P2-J3-E523` — THE INVITATION WAS NOT IN THIS SUITE AT ALL. Its copy was
+   rewritten with nothing asserting it; `check:email` passed either way. */
+import { colleagueInviteTemplate } from "@/lib/email/templates/colleague-invite";
+/* ⚠ `P2-J3-E523` — two of the four unasserted templates added; the other two
+   FAIL and are reported, not fixed. See the block beside them below. */
+import { assessmentReadyTemplate } from "@/lib/email/templates/assessment-ready";
+import { projectValidatedTemplate } from "@/lib/email/templates/project-validated";
 import { finishLaterTemplate } from "@/lib/email/templates/finish-later";
 import { inviteProviderTemplate } from "@/lib/email/templates/invite-provider";
 import { EMAIL_COLORS } from "@/lib/email/shell";
@@ -117,6 +124,51 @@ const SUITE: { name: string; out: Rendered; inSuite: boolean }[] = [
     inSuite: false,
     out: passwordResetTemplate({ firstName: "scott", resetUrl: "https://panameer.com/reset-password?token=x" }),
   },
+  /* ⚠⚠ `P2-J3-E523` — THE INVITATION WAS NOT IN THIS SUITE AT ALL. Its copy was
+     rewritten end to end with NOTHING asserting it; `check:email` passed either
+     way, and the vocabulary rule that bans "project" never saw the sentence that
+     broke it. ⚠ That is how the word reached an APPROVED draft.
+     ⚠ `inSuite: false` — an invitation goes to somebody who has opted into
+     nothing, like `verify-email` below it. */
+  {
+    name: "colleague-invite",
+    inSuite: false,
+    out: colleagueInviteTemplate({
+      inviterName: "phil",
+      inviteeName: "dana",
+      joinUrl: "https://panameer.com/invite/colleague/abc",
+      message: "Thought of you for this.",
+    }),
+  },
+  /*
+    ── ⚠⚠ THE FOUR TEMPLATES NOTHING ASSERTED (`P2-J3-E523`) ──────────────────
+
+    ⚠ 16 templates on disk, 12 in this suite. The missing four were
+    `assessment-ready`, `project-validated`, `project-validation` and
+    `recommendation-request`. ⚠⚠ TWO ARE ADDED HERE. THE OTHER TWO GO RED AND
+    ARE REPORTED, NOT FIXED — Scott, 2026-09-17: *"if it surfaces more copy
+    collisions, STOP and list them rather than fixing copy on your own."*
+
+    ⚠ `project-validation` — FAILS `no "project" in visible copy`. ⚠⚠ ITS COPY
+    IS ABOUT THE `Project` MODEL, so this is the vocabulary rule meeting the
+    app's own noun head-on. ⚠ It is the SAME open question Scott parked when he
+    ruled this brief's sentence: the APP says a word the EMAILS ban. ⚠⚠ DO NOT
+    REWRITE THE COPY TO GET THE GATE GREEN — that decides the open question by
+    the back door.
+    ⚠ `project-validated` PASSES because its only "project" is the interpolated
+    `projectName` VALUE, not the literal word in the copy.
+
+    ⚠ `recommendation-request` — FAILS `declares utf-8`, and that is NOT a copy
+    problem: ⚠⚠ THE TEMPLATE EMITS NO `<meta charset="utf-8">` AT ALL. It builds
+    its own table rather than using `emailShell()`, and unlike the other
+    hand-built ones it omits the charset. ⚠ A REAL DEFECT (accented names and
+    typographic dashes can mojibake), reported for its own id — not fixed inside
+    a gate-coverage change.
+  */
+  { name: "assessment-ready", inSuite: false,
+    out: assessmentReadyTemplate({ companyName: "Acme", processName: "Procure-to-Pay", reportUrl: "https://panameer.com/r/x" }) },
+  { name: "project-validated", inSuite: false,
+    out: projectValidatedTemplate({ firstName: "scott", projectName: "Cloud Rollout", clientName: "Acme", profileUrl: "https://panameer.com/p/x" }) },
   // Refactored onto the shell by WS-A — same shell rules apply.
   {
     name: "verify-email",
