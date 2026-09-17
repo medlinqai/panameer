@@ -5,6 +5,7 @@ import { RichText } from "@/components/profile/RichText";
 import { WorkHistoryEntry } from "@/components/profile/WorkHistoryEntry";
 import { CappedList } from "@/components/profile/CappedList";
 import type { MentorState } from "@/lib/community-signal";
+import { dateRangeLabel } from "@/lib/date-range-label";
 
 /**
  * The Profile-View section vocabulary (brief_X / E056).
@@ -111,15 +112,21 @@ export function EditButton({
 
 export { EDIT_CLASS };
 
-/** "2019 – Present" from ISO dates. Empty when the role carries no dates. */
+/**
+ * "2019 – Present" from ISO dates. Empty when the role carries no dates.
+ *
+ * ⚠⚠ `P2-J1.4-E549` — THE WORST INSTANCE, NOT THE SMALLEST. SUPERSEDED, quoted
+ * not deleted (`E164`):
+ *     return `${y(start) ?? "?"} – ${isCurrent ? "Present" : end ? y(end) : "Present"}`;
+ * ⚠ The final `"Present"` printed a NON-current job as ongoing on the profile a
+ * buyer reads. The rule now lives in `lib/date-range-label.ts`.
+ */
 export function dateRange(
   start: string | null,
   end: string | null,
   isCurrent = false
 ): string {
-  if (!start && !end) return "";
-  const y = (d: string | null) => (d ? d.slice(0, 4) : null);
-  return `${y(start) ?? "?"} – ${isCurrent ? "Present" : end ? y(end) : "Present"}`;
+  return dateRangeLabel(start, end, isCurrent);
 }
 
 // ---------------------------------------------------------------------------

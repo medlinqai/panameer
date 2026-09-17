@@ -5,6 +5,8 @@ import {
   RECENCY_HALF_LIFE_YEARS,
   SELF_ADDED_WEIGHT,
 } from "./provider-rollup";
+import { experienceMonths } from "./experience";
+import { dateRangeLabel } from "./date-range-label";
 
 /**
  * The weighting arithmetic (brief_per_job_skill_model WS-2).
@@ -36,19 +38,71 @@ const yearsAgo = (n: number) => new Date(NOW.getTime() - n * 365.25 * 24 * 3600 
 console.log("\nprovider-rollup.ts\n");
 
 // --- months -----------------------------------------------------------------
-ok("a 12-month job is 12 months", monthsBetween(at("2020-01-01"), at("2021-01-01"), NOW) === 12);
+ok("a 12-month job is 12 months", monthsBetween(at("2020-01-01"), at("2021-01-01"), false, NOW) === 12);
+/*
+  ── ⚠⚠ THIS CASE CHANGED BECAUSE THE RULING CHANGED (`P2-J1.4-E549`) ─────────
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+      ok("an open job runs to today", monthsBetween(at("2025-08-11"), null, NOW) === 12, …)
+  ⚠⚠ Scott overturned that rule on 2026-09-17: a missing end runs to today ONLY
+  when the job is affirmatively current. ⚠ This is NOT `check:cert-skills`, where
+  the gate encoded a standing product rule and the BUILD was wrong. Here the
+  test encoded the OLD rule, which was explicitly overturned.
+*/
 ok(
-  "an open job runs to today",
-  monthsBetween(at("2025-08-11"), null, NOW) === 12,
-  String(monthsBetween(at("2025-08-11"), null, NOW))
+  "a CURRENT open job runs to today",
+  monthsBetween(at("2025-08-11"), null, true, NOW) === 12,
+  String(monthsBetween(at("2025-08-11"), null, true, NOW))
 );
-ok("no start date scores nothing", monthsBetween(null, at("2021-01-01"), NOW) === 0);
+ok(
+  "⚠⚠ an open job that is NOT current scores NOTHING — never runs to today (E549)",
+  monthsBetween(at("2003-01-01"), null, false, NOW) === 0,
+  String(monthsBetween(at("2003-01-01"), null, false, NOW))
+);
+ok(
+  "⚠ a job with an end date ignores the current flag",
+  monthsBetween(at("2020-01-01"), at("2021-01-01"), true, NOW) === 12
+);
+ok("no start date scores nothing", monthsBetween(null, at("2021-01-01"), false, NOW) === 0);
+ok("no start date scores nothing, even when current", monthsBetween(null, null, true, NOW) === 0);
 /*
   A same-day or reversed range is a typo or a parser slip, not a claim of zero
   experience. Scoring it 0 would silently drop the skill off the profile.
 */
-ok("a same-day range still counts as a month", monthsBetween(at("2020-01-01"), at("2020-01-01"), NOW) === 1);
-ok("a reversed range still counts as a month", monthsBetween(at("2021-01-01"), at("2020-01-01"), NOW) === 1);
+ok("a same-day range still counts as a month", monthsBetween(at("2020-01-01"), at("2020-01-01"), false, NOW) === 1);
+ok("a reversed range still counts as a month", monthsBetween(at("2021-01-01"), at("2020-01-01"), false, NOW) === 1);
+
+// --- ⚠⚠ the profile's "N years" follows the same rule (`E549`) ---------------
+const T = NOW.getTime();
+ok(
+  "experience: a CURRENT open role counts to today",
+  experienceMonths([{ start: "2025-08-11", end: null, isCurrent: true }], T) === 12
+);
+ok(
+  "⚠⚠ experience: an open role that is NOT current counts NOTHING",
+  experienceMonths([{ start: "2003-01-01", end: null, isCurrent: false }], T) === 0
+);
+ok(
+  "⚠⚠ experience: an UNREADABLE end counts NOTHING — never today",
+  experienceMonths([{ start: "2003-01-01", end: "not a date", isCurrent: false }], T) === 0
+);
+ok(
+  "experience: a dated role still counts",
+  experienceMonths([{ start: "2020-01-01", end: "2021-01-01" }], T) === 12,
+  String(experienceMonths([{ start: "2020-01-01", end: "2021-01-01" }], T))
+);
+
+// --- ⚠⚠ what the PAGE says about the same rows (`E549`) ----------------------
+const L = (s: string | null, e: string | null, c: boolean) => dateRangeLabel(s, e, c);
+ok("label: an ended job reads as a span", L("2019-01-01", "2021-06-01", false) === "2019 – 2021", L("2019-01-01", "2021-06-01", false));
+ok("label: a current job reads Present", L("2019-01-01", null, true) === "2019 – Present", L("2019-01-01", null, true));
+ok(
+  "⚠⚠ label: a job with no end that is NOT current never reads Present",
+  L("2019-01-01", null, false) === "Started 2019",
+  L("2019-01-01", null, false)
+);
+ok("label: no start, ended", L(null, "2021-06-01", false) === "? – 2021", L(null, "2021-06-01", false));
+ok("label: no start, current", L(null, null, true) === "? – Present", L(null, null, true));
+ok("label: no dates at all is empty", L(null, null, false) === "", L(null, null, false));
 
 // --- recency ----------------------------------------------------------------
 ok("current work is undecayed", recency(null, NOW) === 1);

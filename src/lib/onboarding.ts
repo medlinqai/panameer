@@ -1977,6 +1977,8 @@ export async function applyProviderSection(
           description: e.description?.trim() || null,
           startDate: e.startDate ? new Date(e.startDate) : null,
           endDate: e.endDate ? new Date(e.endDate) : null,
+          /* ⚠ `E549` — affirmative only; see the write below. */
+          isCurrent: e.isCurrent === true,
           projects: (Array.isArray(e.projects) ? e.projects : [])
             .map((pr: StepData) => ({
               name: (pr.name ?? "").trim(),
@@ -2009,8 +2011,22 @@ export async function applyProviderSection(
               role_title: e.roleTitle,
               description: e.description,
               start_date: e.startDate,
-              end_date: e.endDate,
-              is_current: Boolean(e.startDate) && !e.endDate,
+              /* ⚠ A current role carries no end date. */
+              end_date: e.isCurrent ? null : e.endDate,
+              /*
+                ⚠⚠ AFFIRMATIVE ONLY (`P2-J1.4-E549`) — THE THIRD PLACE. SUPERSEDED,
+                quoted not deleted (`E164`):
+                  `is_current: Boolean(e.startDate) && !e.endDate,`
+                ⚠ This writer's only form, `ExperienceEditor`, has NO current box —
+                just the hint "Leave blank if current" — so a blank end was
+                recorded as a running job whether or not the person meant it.
+                Scott, 2026-09-17: *"If it does NOT [have the box], it is the same
+                defect in a third place and I want it fixed in this pass."*
+                ⚠ `ExperienceEditor` is imported nowhere today; the section is still
+                reachable through the Settings and legacy-step endpoints, so the
+                payload may now say `isCurrent: true` explicitly.
+              */
+              is_current: Boolean(e.startDate) && e.isCurrent,
               sort_order: i * 10,
               projects: {
                 create: e.projects.map(

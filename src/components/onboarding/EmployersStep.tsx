@@ -3,6 +3,7 @@
 /* ⚠ PURE MODULE — no prisma, so a client component may import it. That is why
    the helper lives in `lib/employer-display.ts` and not beside the DB reads. */
 import { employerDisplayName } from "@/lib/employer-display";
+import { dateRangeLabel } from "@/lib/date-range-label";
 import { useCallback, useEffect, useState } from "react";
 import { Modal } from "@/components/Modal";
 /* ⚠ THE LOSS SENTENCE IS THE LIB'S, NOT RE-TYPED HERE (`E296`). */
@@ -201,10 +202,11 @@ type EmployerForm = ReturnType<typeof emptyEmployerForm>;
 
 
 
+/* ⚠ `P2-J1.4-E549` — the provider's own list follows the profile's rule.
+   SUPERSEDED, quoted (`E164`):
+     return `${y(a)} – ${current ? "Present" : b ? y(b) : "Present"}`; */
 function dateRange(a: string | null, b: string | null, current: boolean) {
-  if (!a && !b) return "";
-  const y = (d: string | null) => (d ? d.slice(0, 4) : "?");
-  return `${y(a)} – ${current ? "Present" : b ? y(b) : "Present"}`;
+  return dateRangeLabel(a, b, current);
 }
 
 export function EmployersStep({

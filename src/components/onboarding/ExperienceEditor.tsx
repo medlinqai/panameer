@@ -23,7 +23,15 @@ export function emptyExperience(): ExperienceDraft {
   };
 }
 
-/** Add / edit / remove employers, each with its own projects. */
+/**
+ * Add / edit / remove employers, each with its own projects.
+ *
+ * ⚠⚠ `P2-J1.4-E549` — IMPORTED NOWHERE TODAY, AND ITS END-DATE HINT IS NO LONGER
+ * TRUE. *"Leave blank if current"* relied on the writer treating a blank end as a
+ * running job; since `E549` a role is current only when `isCurrent: true` is
+ * sent. ⚠ IF THIS COMPONENT IS EVER MOUNTED AGAIN, give it a real current box
+ * (as `EmployersStep` has) before it ships — a blank end now means "not current".
+ */
 export function ExperienceEditor({
   value,
   onChange,
