@@ -366,7 +366,9 @@ async function main() {
       await prisma.providerSkill.upsert({
         where: { provider_profile_id_skill_id: { provider_profile_id: profile.id, skill_id: s.id } },
         update: {},
-        create: { provider_profile_id: profile.id, skill_id: s.id },
+        /* ⚠ `P1-A1.4-E553` — SELF_ADDED, not the DERIVED default: no job backs a
+           seeded skill, so a rollup would delete it and never rebuild it. */
+        create: { provider_profile_id: profile.id, skill_id: s.id, source: "SELF_ADDED" },
       });
     }
   }
