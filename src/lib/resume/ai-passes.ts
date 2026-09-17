@@ -150,7 +150,10 @@ export type PassOutcome<T> =
     them apart was to guess. Nothing can be chunked responsibly until the
     measurement says truncation is or is not the cause.
   */
-  | { ok: false; reason: string; message: string; usage?: ModelUsage };
+  /* ⚠ `ms` on the failure path too (`P2-J1.4-E546`) — a call that TIMED OUT
+     spent its whole ceiling, and recording it as 0 hid exactly the number the
+     ceiling is set from. */
+  | { ok: false; reason: string; message: string; usage?: ModelUsage; ms?: number };
 
 async function runPass<T>(
   name: string,
@@ -182,6 +185,7 @@ async function runPass<T>(
       message: `${name}: not enough of the request's time was left to read this document`,
     };
   }
+  const callStarted = Date.now();
   const call = await callExtractionModel({
     system,
     schema,
@@ -272,13 +276,15 @@ async function runPass<T>(
     */
     strict: true,
   });
-  if (!call.ok) return { ok: false, reason: call.reason, message: call.message };
+  if (!call.ok)
+    return { ok: false, reason: call.reason, message: call.message, ms: Date.now() - callStarted };
   const value = parse(call.value);
   if (value === null)
     return {
       ok: false,
       reason: "shape",
       message: `${name}: the model's output did not match the expected shape`,
+      ms: Date.now() - callStarted,
       /* ⚠ THE CALL SUCCEEDED — only the PARSE failed, so the spend is real and
          knowable. Reporting it is what distinguishes "the model ran out of room"
          from "the model answered in the wrong shape". */
@@ -699,7 +705,18 @@ export type MultiPassOutcome =
       /** ⚠ Per-pass wall time and cost, so the claim can be checked. */
       passes: { name: string; ok: boolean; ms: number; costUsd: number | null }[];
     }
-  | { ok: false; reason: "no_key" | "error" | "refusal" | "deadline"; message: string };
+  | {
+      ok: false;
+      reason: "no_key" | "error" | "refusal" | "deadline";
+      message: string;
+      /* ⚠ `P2-J1.4-E546` — the time spent before failing, and the per-call
+         record, so a FAILED read is measured as well as a successful one. */
+      ms: number;
+      passes: PassTiming[];
+    };
+
+/** ⚠ `P2-J1.4-E546` — one call's duration, as stored on `ProfileImport.read_passes`. */
+export type PassTiming = { name: string; ok: boolean; ms: number; reason?: string };
 
 /**
  * ⚠ EVERY PASS IS INDEPENDENT AND PARTIAL SUCCESS IS THE NORMAL OUTCOME. Only a
@@ -760,7 +777,9 @@ export async function aiExtractResumeMultiPass(
       else finishReason = finishReason ?? r.usage.finishReason;
     } else {
       passes.push({
-        name, ok: false, ms: 0, costUsd: r.usage?.costUsd ?? null,
+        /* ⚠ SUPERSEDED, quoted not deleted (`E164`): `ms: 0` — a timed-out call
+           spent its whole ceiling and was recorded as instant (`E546`). */
+        name, ok: false, ms: r.ms ?? 0, costUsd: r.usage?.costUsd ?? null,
         reason: r.reason, message: r.message,
         finishReason: r.usage?.finishReason ?? null,
         outputTokens: r.usage?.outputTokens ?? null,
@@ -784,6 +803,8 @@ export async function aiExtractResumeMultiPass(
           ? inv.reason
           : "error",
       message: inv.message,
+      ms: Date.now() - started,
+      passes: passes.map((p) => ({ name: p.name, ok: p.ok, ms: p.ms, reason: p.reason })),
     };
   }
 

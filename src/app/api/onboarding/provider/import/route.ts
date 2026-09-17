@@ -32,7 +32,18 @@ export const runtime = "nodejs";
   `MODEL_TIMEOUT_MS` in the first place. ⚠ `check:import-deadline` §2 asserts
   the two agree, so the pair is checked rather than remembered.
 */
-export const maxDuration = 60;
+/*
+  ⚠⚠ 180, NOT 60 (`P2-J1.4-E546`). ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  `export const maxDuration = 60;`
+  ⚠⚠ THE 60 WAS NEVER VERCEL'S. It came from `E184` (2026-08-04), which assumed
+  *"the platform default cuts off well before"* a 20–30 s read. Scott confirmed
+  2026-09-17: the project is HOBBY WITH FLUID COMPUTE, whose default AND maximum
+  are 300 s. ⚠ 180 fits a whole read of marelise's CV (121 sections, 75.0 s) with
+  margin, plus the write tail, inside 300.
+  ⚠⚠ DO NOT LOWER IT TO SHORTEN THE WAIT — a lower ceiling brings back the silent
+  fallback. The wait is `E547`'s problem (the background job).
+*/
+export const maxDuration = 180;
 
 export async function POST(request: Request) {
   /*
@@ -100,9 +111,18 @@ export async function POST(request: Request) {
       `ROUTE_TAIL_RESERVE_MS` has to cover. ⚠ Logged on every import so the
       reserve can be re-derived from real traffic instead of one measurement.
     */
+    const routeMs = Date.now() - startedAt;
     console.info(
-      `[resume] route=${Date.now() - startedAt}ms of ${maxDuration}s status=${result.status}`
+      `[resume] route=${routeMs}ms of ${maxDuration}s status=${result.status}`
     );
+    /*
+      ⚠⚠ STORED, NOT ONLY LOGGED (`P2-J1.4-E546`). A log line is gone tomorrow;
+      `route_ms − read_ms` on every row is the real write tail, which is what
+      `ROUTE_TAIL_RESERVE_MS` must cover. ⚠ It never fails the upload.
+    */
+    await prisma.profileImport
+      .update({ where: { id: result.importId }, data: { route_ms: routeMs } })
+      .catch((e) => console.error("[resume] could not record route_ms:", e));
     return NextResponse.json({ ...result, state }, { status });
   } catch (e) {
     console.error("[onboarding] résumé import failed:", e);

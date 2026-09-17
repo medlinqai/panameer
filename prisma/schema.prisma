@@ -2376,6 +2376,28 @@ model ProfileImport {
   ai_finish_reason    String?
   ai_reasoning_tokens Int?
   ai_input_chars      Int?
+  /**
+   * ── ⚠⚠ HOW LONG THE READ ACTUALLY TOOK (`P2-J1.4-E546`) ────────────────────
+   *
+   * ⚠ Every ceiling in `budget.ts` was set from THREE FIXTURES AND A HAND-RUN.
+   * These three columns are the real distribution, across every upload, so the
+   * ceiling can be re-derived from traffic and `E547` (the background job)
+   * becomes due from DATA rather than from somebody hitting the limit.
+   * ⚠ OPERATIONAL, NEVER SENT TO THE BROWSER — the route spreads the import
+   * result into its response, so these travel only to the row.
+   *
+   * `read_ms`     wall time of the whole AI read, SUCCESS OR FAILURE (unlike
+   *               `ai_latency_ms`, which is null on a fallback). Null when no
+   *               read was attempted (`[ai:no_model]`) or off the model path.
+   * `read_passes` per call: `[{ name, ok, ms, reason? }]` — inventory first,
+   *               then the five detail passes.
+   * `route_ms`    the whole upload request, written as the route returns.
+   *               ⚠ `route_ms − read_ms` IS THE WRITE TAIL `ROUTE_TAIL_RESERVE_MS`
+   *               has to cover. Null where no route surrounds the import.
+   */
+  read_ms             Int?
+  read_passes         Json?
+  route_ms            Int?
   error               String?
   created_at          DateTime            @default(now())
   updated_at          DateTime            @updatedAt
