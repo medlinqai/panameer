@@ -1,0 +1,2682 @@
+{
+  "id": "P1-A1.4-E553",
+  "written_at": "2026-09-17T20:14:17.016Z",
+  "what": "ProviderSkill rows mislabelled source=DERIVED that the rollup could never rebuild. Backfill sets source=SELF_ADDED (+ SELF_ADDED_WEIGHT). To UNDO: restore each id to the source and weight recorded here.",
+  "criteria": "source=DERIVED AND months_total=0 AND weight=0 AND no dated, skill-linked job on the profile could rebuild the row",
+  "count": 297,
+  "rows": [
+    {
+      "id": "c8eb904b-8d36-4ef2-8cd6-25df0f5d08b2",
+      "provider_profile_id": "96f3d88f-3af8-419d-b41e-6383da15edea",
+      "skill_id": "838381ff-9bac-419c-9b90-8eef8ddeb039",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-26T19:43:25.649Z"
+    },
+    {
+      "id": "b991c464-b6e6-4f56-9368-38a711b7b1c5",
+      "provider_profile_id": "35c6a82b-cdda-4f49-b76e-19ad6c945820",
+      "skill_id": "0bc8e121-322b-4d7c-9ef0-6c8b4b5db462",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-31T18:30:13.290Z"
+    },
+    {
+      "id": "a31f0e04-a2a9-4d59-98f2-2993410a42e9",
+      "provider_profile_id": "7db9ca38-e8cd-4d1a-8e09-a4762bfce51e",
+      "skill_id": "838381ff-9bac-419c-9b90-8eef8ddeb039",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-26T19:44:46.351Z"
+    },
+    {
+      "id": "94ffaf94-e705-43f3-b0d1-ef940d1fb415",
+      "provider_profile_id": "35c6a82b-cdda-4f49-b76e-19ad6c945820",
+      "skill_id": "fb1a45fd-8697-40e1-a870-0f2729a3ebfe",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-31T18:30:13.290Z"
+    },
+    {
+      "id": "78009cd6-ad21-4b42-bf60-4a2a3997ca35",
+      "provider_profile_id": "35c6a82b-cdda-4f49-b76e-19ad6c945820",
+      "skill_id": "ea892d50-54fc-4b4b-a586-e655976a8fdc",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-31T18:30:13.290Z"
+    },
+    {
+      "id": "04c4e5d8-6183-469c-8ee4-8af4488ce2d5",
+      "provider_profile_id": "bf131c22-2ef0-4582-b600-f40a6d1910c4",
+      "skill_id": "77d0567f-5d5d-49ce-a668-3c95c97f8cc8",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-31T19:02:16.927Z"
+    },
+    {
+      "id": "2771a705-bc4a-4c02-91bb-213c65f01937",
+      "provider_profile_id": "bf131c22-2ef0-4582-b600-f40a6d1910c4",
+      "skill_id": "7b45e74e-edeb-4625-987e-54c2bfda3b2a",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-31T19:02:16.927Z"
+    },
+    {
+      "id": "3b0f21f0-7694-4aa9-936c-19b4e20113ad",
+      "provider_profile_id": "d2aee23e-d4e8-4f79-a5f2-7b6a7d1d398f",
+      "skill_id": "838381ff-9bac-419c-9b90-8eef8ddeb039",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-27T12:41:41.025Z"
+    },
+    {
+      "id": "c7818465-c2a4-4b65-80a9-0c4beddbc0a0",
+      "provider_profile_id": "f585acc8-599d-4652-b3b0-ba79d18b4602",
+      "skill_id": "0571f0d4-8719-4459-8e45-976c0ce03300",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-27T21:37:08.001Z"
+    },
+    {
+      "id": "96993081-eec9-4c9c-a86d-afdf2dd8b060",
+      "provider_profile_id": "bf131c22-2ef0-4582-b600-f40a6d1910c4",
+      "skill_id": "50f5bba0-21ba-4227-aa8d-0d5400de3349",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-31T19:02:16.927Z"
+    },
+    {
+      "id": "5282a80a-7b52-49bf-b187-da72d8de96d6",
+      "provider_profile_id": "bf131c22-2ef0-4582-b600-f40a6d1910c4",
+      "skill_id": "687be7b6-5e40-483f-9019-83d509ab5caa",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-31T19:02:16.927Z"
+    },
+    {
+      "id": "208205ed-a267-4d16-9fd6-d30cbf61d2f2",
+      "provider_profile_id": "bf131c22-2ef0-4582-b600-f40a6d1910c4",
+      "skill_id": "94346646-c5c9-4443-9652-b12787e59c4e",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-31T19:02:16.927Z"
+    },
+    {
+      "id": "9f54f96a-62d0-4e3e-9454-a1c6bc9ad6a8",
+      "provider_profile_id": "bf131c22-2ef0-4582-b600-f40a6d1910c4",
+      "skill_id": "f5c197ea-89a2-4bc9-86a6-bd952323ec22",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-31T19:02:16.927Z"
+    },
+    {
+      "id": "7e5cd4c7-a74b-4ada-8325-f803b84e04aa",
+      "provider_profile_id": "bf131c22-2ef0-4582-b600-f40a6d1910c4",
+      "skill_id": "e8bde5f5-aa8e-4a49-95ec-d20d467f155e",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-31T19:02:16.927Z"
+    },
+    {
+      "id": "805bdbb4-793d-49aa-9f84-11d084d973cd",
+      "provider_profile_id": "9d0ce00d-fe47-4029-bfbd-e585b3e99ce5",
+      "skill_id": "b75941e9-4db0-4d03-abf1-49294f6ff13f",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:43.682Z"
+    },
+    {
+      "id": "85313d72-9d6c-4ba8-9338-d9f4ce7f469e",
+      "provider_profile_id": "9d0ce00d-fe47-4029-bfbd-e585b3e99ce5",
+      "skill_id": "b7dbf3e3-4097-4031-a490-477827c1ca5c",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:44.062Z"
+    },
+    {
+      "id": "31f39ed9-40e5-48ba-a3d4-3e9d446bfdc7",
+      "provider_profile_id": "9d0ce00d-fe47-4029-bfbd-e585b3e99ce5",
+      "skill_id": "e723b823-7d14-4044-9a85-dc2fb60135d1",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:44.436Z"
+    },
+    {
+      "id": "383c4901-49b6-4814-982c-af1b0d81d190",
+      "provider_profile_id": "f10488ad-8004-4bcf-ba97-160565a5daa7",
+      "skill_id": "b7dbf3e3-4097-4031-a490-477827c1ca5c",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:45.447Z"
+    },
+    {
+      "id": "0a577564-bb0b-4e8d-8999-fcf873c837db",
+      "provider_profile_id": "f10488ad-8004-4bcf-ba97-160565a5daa7",
+      "skill_id": "e723b823-7d14-4044-9a85-dc2fb60135d1",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:45.771Z"
+    },
+    {
+      "id": "3b6d5c05-14f8-47da-ab69-ab3f871ee6a9",
+      "provider_profile_id": "64cb477a-9756-4a97-ba08-7b0e7073edc5",
+      "skill_id": "245ed82c-cd0a-40b4-ad46-df47bf00b7cd",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:46.868Z"
+    },
+    {
+      "id": "0e33c3f4-8b4b-4480-bcb4-81fd24dddaa3",
+      "provider_profile_id": "64cb477a-9756-4a97-ba08-7b0e7073edc5",
+      "skill_id": "3a80bbc4-894b-48e4-9465-796ab21a1219",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:47.264Z"
+    },
+    {
+      "id": "31933f67-f042-45d2-80dd-3d03e4141d3f",
+      "provider_profile_id": "64cb477a-9756-4a97-ba08-7b0e7073edc5",
+      "skill_id": "6f5ed1dc-8a49-4777-becb-21db9d4e5a59",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:47.561Z"
+    },
+    {
+      "id": "d094101a-3baa-4296-8704-2306396e2ae8",
+      "provider_profile_id": "7f6156c9-e335-4229-b4ea-dcb16bc9d7a6",
+      "skill_id": "a59be5ed-8953-49e2-a097-40750064c13c",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-28T14:25:05.437Z"
+    },
+    {
+      "id": "11c1935c-46db-4a9c-829d-fbc0c1fc9482",
+      "provider_profile_id": "7f6156c9-e335-4229-b4ea-dcb16bc9d7a6",
+      "skill_id": "3f1671f0-8d35-47bc-80c2-c680e938df76",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-28T14:25:05.437Z"
+    },
+    {
+      "id": "d1da3c03-aa21-48c8-afa4-ba6094e27ac6",
+      "provider_profile_id": "7f6156c9-e335-4229-b4ea-dcb16bc9d7a6",
+      "skill_id": "3e97785f-1cd8-42bc-9f4a-44fd46394b44",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-28T14:25:05.437Z"
+    },
+    {
+      "id": "084f55e1-f847-4991-a218-2bbd9143221b",
+      "provider_profile_id": "64cb477a-9756-4a97-ba08-7b0e7073edc5",
+      "skill_id": "70f287f0-439d-4656-90d3-46b13b49523b",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:47.906Z"
+    },
+    {
+      "id": "6d456023-bf6b-4e14-8cfe-916929a5b7b1",
+      "provider_profile_id": "64cb477a-9756-4a97-ba08-7b0e7073edc5",
+      "skill_id": "88ad33cd-793b-4d73-a61c-692c5430c857",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:48.298Z"
+    },
+    {
+      "id": "03561eb0-78b0-43e4-9fa5-a6ad572780b4",
+      "provider_profile_id": "7b6d81e1-8acb-4115-9bcb-93d482337fee",
+      "skill_id": "1d33f482-2335-4a91-8f30-1072c81862cf",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:49.047Z"
+    },
+    {
+      "id": "58d5fc67-b9e5-4d7e-bc7b-a226f4f0ef5b",
+      "provider_profile_id": "35c6a82b-cdda-4f49-b76e-19ad6c945820",
+      "skill_id": "06035184-d62b-42e7-851f-6c4a32f70c84",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-31T21:19:43.635Z"
+    },
+    {
+      "id": "50a9fef8-4388-4e7f-acdf-69c3a6f8dbbb",
+      "provider_profile_id": "35c6a82b-cdda-4f49-b76e-19ad6c945820",
+      "skill_id": "e8bde5f5-aa8e-4a49-95ec-d20d467f155e",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-31T21:19:43.635Z"
+    },
+    {
+      "id": "28524a22-0e3e-43cb-9a9c-f1ce3cb56106",
+      "provider_profile_id": "7b6d81e1-8acb-4115-9bcb-93d482337fee",
+      "skill_id": "49378bb3-d8fa-47ce-8775-d66804a57ce9",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:49.465Z"
+    },
+    {
+      "id": "e14bb8cc-a61e-4b2c-9334-2f5f26bf4ac4",
+      "provider_profile_id": "35c6a82b-cdda-4f49-b76e-19ad6c945820",
+      "skill_id": "3f1671f0-8d35-47bc-80c2-c680e938df76",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-31T21:19:43.635Z"
+    },
+    {
+      "id": "ec50da98-6ed4-495a-82e0-e70c06165381",
+      "provider_profile_id": "7b6d81e1-8acb-4115-9bcb-93d482337fee",
+      "skill_id": "651e18d3-e13a-4f27-8391-069e4ebd0ef9",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:49.818Z"
+    },
+    {
+      "id": "20073d71-e688-4399-90bb-c098f124c741",
+      "provider_profile_id": "35c6a82b-cdda-4f49-b76e-19ad6c945820",
+      "skill_id": "3e97785f-1cd8-42bc-9f4a-44fd46394b44",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-31T21:19:43.635Z"
+    },
+    {
+      "id": "bd118432-f4ba-4c1e-84b4-77264c67023e",
+      "provider_profile_id": "7b6d81e1-8acb-4115-9bcb-93d482337fee",
+      "skill_id": "69d46dd5-d778-4e11-8d53-9135fe1ea9c9",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:50.130Z"
+    },
+    {
+      "id": "3d94be40-8bb0-4cba-8e9f-b5c86915ce4f",
+      "provider_profile_id": "4880892b-4453-4b71-ae02-7acc2c5053ed",
+      "skill_id": "a59be5ed-8953-49e2-a097-40750064c13c",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-30T13:58:41.481Z"
+    },
+    {
+      "id": "486ceddd-b3e0-4707-9091-6c1fca03fa00",
+      "provider_profile_id": "7b6d81e1-8acb-4115-9bcb-93d482337fee",
+      "skill_id": "764b5c3a-07fa-447c-8c3c-72dd95c46150",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:50.475Z"
+    },
+    {
+      "id": "1c4a1e60-8f70-4c9d-b0f4-f5f10a919c10",
+      "provider_profile_id": "4880892b-4453-4b71-ae02-7acc2c5053ed",
+      "skill_id": "838381ff-9bac-419c-9b90-8eef8ddeb039",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-30T13:58:41.481Z"
+    },
+    {
+      "id": "9d068ad8-381d-43e8-94a2-c16dd7580509",
+      "provider_profile_id": "fce6def4-6dee-4d6c-89bd-1a1860e95887",
+      "skill_id": "01e18964-0c8b-49d6-9c0e-d57725b6a38b",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:51.100Z"
+    },
+    {
+      "id": "3fc46d6b-6ace-457d-8343-598308f76ae5",
+      "provider_profile_id": "4880892b-4453-4b71-ae02-7acc2c5053ed",
+      "skill_id": "3e97785f-1cd8-42bc-9f4a-44fd46394b44",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-30T13:58:41.481Z"
+    },
+    {
+      "id": "0ebed996-45f3-413a-bac4-10aca0dfbc8f",
+      "provider_profile_id": "4880892b-4453-4b71-ae02-7acc2c5053ed",
+      "skill_id": "3f1671f0-8d35-47bc-80c2-c680e938df76",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-30T13:58:41.481Z"
+    },
+    {
+      "id": "751445f5-8b31-4bb7-a267-019e52e97426",
+      "provider_profile_id": "fce6def4-6dee-4d6c-89bd-1a1860e95887",
+      "skill_id": "049abdd7-4818-4b4a-ab2b-ab671d48ee43",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:51.409Z"
+    },
+    {
+      "id": "7de2b405-580d-4ddb-b9b7-375dbdc1798d",
+      "provider_profile_id": "35c6a82b-cdda-4f49-b76e-19ad6c945820",
+      "skill_id": "369bfbdd-940a-4ecd-89e3-5f153abd71c6",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-31T21:19:43.635Z"
+    },
+    {
+      "id": "55874ee4-fc5d-45bc-a108-a9f8cf3f014b",
+      "provider_profile_id": "fce6def4-6dee-4d6c-89bd-1a1860e95887",
+      "skill_id": "052949d8-2e66-47ff-bc40-d4863b080e29",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:51.689Z"
+    },
+    {
+      "id": "72aa9cad-d89c-4f5c-8ebc-1b0d84f13972",
+      "provider_profile_id": "fce6def4-6dee-4d6c-89bd-1a1860e95887",
+      "skill_id": "0850c52a-2da8-4ef7-89d4-1036981f210e",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:52.013Z"
+    },
+    {
+      "id": "064841d3-aecb-46a9-9178-29c77d1cab4c",
+      "provider_profile_id": "fce6def4-6dee-4d6c-89bd-1a1860e95887",
+      "skill_id": "08d59e87-c9fa-4775-8119-a0d649468ba5",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:52.314Z"
+    },
+    {
+      "id": "5d9ebd6c-d857-4390-b725-d488541effe3",
+      "provider_profile_id": "ba5ec5fd-c7ab-450f-9bca-acd6239c0098",
+      "skill_id": "060fb9d7-2b89-4539-a7eb-a372c71d34f6",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:52.929Z"
+    },
+    {
+      "id": "80b18690-85a3-4de5-a0e9-409e8feaccd9",
+      "provider_profile_id": "d91c63b2-b921-4391-9731-8b5f0ac1a39b",
+      "skill_id": "838381ff-9bac-419c-9b90-8eef8ddeb039",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-26T15:00:28.367Z"
+    },
+    {
+      "id": "7dbb4636-d025-4c49-8a05-08264ce5700f",
+      "provider_profile_id": "ba5ec5fd-c7ab-450f-9bca-acd6239c0098",
+      "skill_id": "069508bb-ac3e-4c79-9f79-76ec3aa41bdc",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:53.229Z"
+    },
+    {
+      "id": "0c91fe81-a045-4a6f-93e6-1cb594f48969",
+      "provider_profile_id": "ba5ec5fd-c7ab-450f-9bca-acd6239c0098",
+      "skill_id": "103efb05-c3ca-4a6b-8c4b-416282ae1cc2",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:53.582Z"
+    },
+    {
+      "id": "52124906-98fd-4b34-b118-8a744367fb8f",
+      "provider_profile_id": "ba5ec5fd-c7ab-450f-9bca-acd6239c0098",
+      "skill_id": "137b7a05-330b-45f0-ab1d-26ebba2832df",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:53.867Z"
+    },
+    {
+      "id": "ac7cf0cc-a40d-43d6-b3cf-31f2579f0377",
+      "provider_profile_id": "ba5ec5fd-c7ab-450f-9bca-acd6239c0098",
+      "skill_id": "177a4838-71e4-4a1d-a278-b123f459a9a2",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:54.189Z"
+    },
+    {
+      "id": "3ca6d518-f02f-420b-ab98-6df52cdf827a",
+      "provider_profile_id": "4880892b-4453-4b71-ae02-7acc2c5053ed",
+      "skill_id": "d8201e76-a200-4411-9367-327966a20171",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-30T14:17:47.698Z"
+    },
+    {
+      "id": "78316419-8347-480e-a85b-1b01e8a7659d",
+      "provider_profile_id": "bf131c22-2ef0-4582-b600-f40a6d1910c4",
+      "skill_id": "838381ff-9bac-419c-9b90-8eef8ddeb039",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-30T17:20:10.340Z"
+    },
+    {
+      "id": "75af9ae0-ef88-44f6-b451-12b8691e0af9",
+      "provider_profile_id": "bf131c22-2ef0-4582-b600-f40a6d1910c4",
+      "skill_id": "3e97785f-1cd8-42bc-9f4a-44fd46394b44",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-30T17:20:16.638Z"
+    },
+    {
+      "id": "8edd403d-24ff-4482-aa05-294d022499df",
+      "provider_profile_id": "bf131c22-2ef0-4582-b600-f40a6d1910c4",
+      "skill_id": "d8201e76-a200-4411-9367-327966a20171",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-30T17:20:16.638Z"
+    },
+    {
+      "id": "e4543fc9-bdf0-407b-82b7-5d1bf35fd150",
+      "provider_profile_id": "bf131c22-2ef0-4582-b600-f40a6d1910c4",
+      "skill_id": "3f1671f0-8d35-47bc-80c2-c680e938df76",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-30T17:20:16.638Z"
+    },
+    {
+      "id": "877cb97b-4038-411c-8679-eb56f9530bfd",
+      "provider_profile_id": "bf131c22-2ef0-4582-b600-f40a6d1910c4",
+      "skill_id": "5860c602-fab5-4612-b097-f097bc8e7e4d",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-30T17:20:28.448Z"
+    },
+    {
+      "id": "4dfcee81-695e-47a7-85aa-1319aaeb2cf5",
+      "provider_profile_id": "bf131c22-2ef0-4582-b600-f40a6d1910c4",
+      "skill_id": "06035184-d62b-42e7-851f-6c4a32f70c84",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-30T17:20:28.899Z"
+    },
+    {
+      "id": "96773caa-10a8-4642-9c15-6bc04bd10ac4",
+      "provider_profile_id": "2915ae8d-787d-4384-a7d8-abbd8dd0438e",
+      "skill_id": "0571f0d4-8719-4459-8e45-976c0ce03300",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-30T19:58:13.619Z"
+    },
+    {
+      "id": "7856c3bc-e440-4c4c-9ccd-73e27743e06f",
+      "provider_profile_id": "2915ae8d-787d-4384-a7d8-abbd8dd0438e",
+      "skill_id": "497be5a7-98b1-4784-8a31-52cdeac3e9cb",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-30T19:58:13.619Z"
+    },
+    {
+      "id": "5af080de-7538-42bd-a7f8-1aa28cd30a42",
+      "provider_profile_id": "2915ae8d-787d-4384-a7d8-abbd8dd0438e",
+      "skill_id": "396bac8a-395e-4646-92eb-a6daf81ed353",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-30T19:58:13.619Z"
+    },
+    {
+      "id": "5d6adb30-b5ad-4c14-bd7a-10bd9a442256",
+      "provider_profile_id": "3c350aff-a53f-4a75-8c55-27848b9b2b0d",
+      "skill_id": "0571f0d4-8719-4459-8e45-976c0ce03300",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-31T13:01:58.321Z"
+    },
+    {
+      "id": "586e47c6-72df-41a9-be61-e2f7dc93154c",
+      "provider_profile_id": "3c350aff-a53f-4a75-8c55-27848b9b2b0d",
+      "skill_id": "369bfbdd-940a-4ecd-89e3-5f153abd71c6",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-31T13:33:31.613Z"
+    },
+    {
+      "id": "3f0159aa-4ab0-44f2-9910-a61be2d6f59c",
+      "provider_profile_id": "3c350aff-a53f-4a75-8c55-27848b9b2b0d",
+      "skill_id": "2264b3ed-7bfa-4ba0-ba97-8e93dcfc1488",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-31T13:33:32.199Z"
+    },
+    {
+      "id": "6862e87f-6544-4a2a-b708-571a4e2c2456",
+      "provider_profile_id": "3c350aff-a53f-4a75-8c55-27848b9b2b0d",
+      "skill_id": "98d8afdb-7808-4e8e-a3e4-124bb3bceef3",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-31T13:33:32.663Z"
+    },
+    {
+      "id": "b8db13ff-41ec-4087-9cfa-01076dd7cb8f",
+      "provider_profile_id": "3c350aff-a53f-4a75-8c55-27848b9b2b0d",
+      "skill_id": "77d0567f-5d5d-49ce-a668-3c95c97f8cc8",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-31T13:33:33.222Z"
+    },
+    {
+      "id": "d3da737e-b32d-4766-858d-f51cc190c965",
+      "provider_profile_id": "3c350aff-a53f-4a75-8c55-27848b9b2b0d",
+      "skill_id": "e8bde5f5-aa8e-4a49-95ec-d20d467f155e",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-31T13:33:33.682Z"
+    },
+    {
+      "id": "737449f0-7e40-4445-a3d6-4bc480e91310",
+      "provider_profile_id": "3c350aff-a53f-4a75-8c55-27848b9b2b0d",
+      "skill_id": "703b137d-4fad-4819-8e7c-991159bbfbb0",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-31T13:33:34.123Z"
+    },
+    {
+      "id": "ee53bec7-db87-40c8-9aaf-113e6fd7a1f3",
+      "provider_profile_id": "3c350aff-a53f-4a75-8c55-27848b9b2b0d",
+      "skill_id": "014aa7b5-57b8-476b-ad0c-abe2cac7105b",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-31T13:33:34.577Z"
+    },
+    {
+      "id": "6e73665a-16fd-43b1-8485-42d00ccedad7",
+      "provider_profile_id": "3c350aff-a53f-4a75-8c55-27848b9b2b0d",
+      "skill_id": "f5c197ea-89a2-4bc9-86a6-bd952323ec22",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-31T13:33:35.022Z"
+    },
+    {
+      "id": "79d27dc5-0300-44c6-bbf9-685f0f414e1b",
+      "provider_profile_id": "3c350aff-a53f-4a75-8c55-27848b9b2b0d",
+      "skill_id": "be237a83-c7f6-4833-bc7c-b02ef2c5dec1",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-31T13:33:35.472Z"
+    },
+    {
+      "id": "7c307d5d-32f8-408e-87b9-2e7ab52dd69b",
+      "provider_profile_id": "3c350aff-a53f-4a75-8c55-27848b9b2b0d",
+      "skill_id": "7b45e74e-edeb-4625-987e-54c2bfda3b2a",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-31T13:33:35.922Z"
+    },
+    {
+      "id": "d73b9b71-ff76-4bf2-9295-06822e9697b8",
+      "provider_profile_id": "3c350aff-a53f-4a75-8c55-27848b9b2b0d",
+      "skill_id": "50f5bba0-21ba-4227-aa8d-0d5400de3349",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-31T13:33:36.388Z"
+    },
+    {
+      "id": "d67c1cb7-4e9b-4874-98f0-5839c4c4dd99",
+      "provider_profile_id": "3c350aff-a53f-4a75-8c55-27848b9b2b0d",
+      "skill_id": "687be7b6-5e40-483f-9019-83d509ab5caa",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-31T13:33:36.822Z"
+    },
+    {
+      "id": "edac1388-5120-44bf-b5d5-a9d282fff255",
+      "provider_profile_id": "3c350aff-a53f-4a75-8c55-27848b9b2b0d",
+      "skill_id": "061f97dd-a0ca-45bc-9b6e-b976ebff12ba",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-31T13:33:37.287Z"
+    },
+    {
+      "id": "9c0ee9ce-55d1-4c16-a667-a816245caae8",
+      "provider_profile_id": "3c350aff-a53f-4a75-8c55-27848b9b2b0d",
+      "skill_id": "94346646-c5c9-4443-9652-b12787e59c4e",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-31T13:33:37.733Z"
+    },
+    {
+      "id": "849be606-668b-447c-bbd6-3fe9f59633a0",
+      "provider_profile_id": "4110728e-7bc6-483a-b27f-cf0ee123d770",
+      "skill_id": "838381ff-9bac-419c-9b90-8eef8ddeb039",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-31T14:58:11.166Z"
+    },
+    {
+      "id": "416729b9-83d3-4547-91bc-dad71b11a111",
+      "provider_profile_id": "4110728e-7bc6-483a-b27f-cf0ee123d770",
+      "skill_id": "a59be5ed-8953-49e2-a097-40750064c13c",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-31T14:58:11.166Z"
+    },
+    {
+      "id": "d27277f5-1efb-4368-84e5-8415bf997d6d",
+      "provider_profile_id": "4110728e-7bc6-483a-b27f-cf0ee123d770",
+      "skill_id": "3f1671f0-8d35-47bc-80c2-c680e938df76",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-31T14:58:11.166Z"
+    },
+    {
+      "id": "d0302303-52a5-47ff-919e-63ea7879ae04",
+      "provider_profile_id": "4110728e-7bc6-483a-b27f-cf0ee123d770",
+      "skill_id": "ae42ac79-26df-4ca9-9e74-6338a0017af2",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-31T14:58:11.166Z"
+    },
+    {
+      "id": "a46e0c7e-57c8-4c33-95d1-59364f38158e",
+      "provider_profile_id": "35c6a82b-cdda-4f49-b76e-19ad6c945820",
+      "skill_id": "77d0567f-5d5d-49ce-a668-3c95c97f8cc8",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-31T21:19:43.635Z"
+    },
+    {
+      "id": "d264d31b-a650-4f32-ac0c-eab75d5c0053",
+      "provider_profile_id": "35c6a82b-cdda-4f49-b76e-19ad6c945820",
+      "skill_id": "7b45e74e-edeb-4625-987e-54c2bfda3b2a",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-31T21:19:43.635Z"
+    },
+    {
+      "id": "f39ee9e7-5b54-4c21-a295-83e7cf77e580",
+      "provider_profile_id": "35c6a82b-cdda-4f49-b76e-19ad6c945820",
+      "skill_id": "50f5bba0-21ba-4227-aa8d-0d5400de3349",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-31T21:19:43.635Z"
+    },
+    {
+      "id": "dd7c3ba8-3600-44c2-aec6-08a4dc24d8c4",
+      "provider_profile_id": "35c6a82b-cdda-4f49-b76e-19ad6c945820",
+      "skill_id": "2264b3ed-7bfa-4ba0-ba97-8e93dcfc1488",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-31T21:19:43.635Z"
+    },
+    {
+      "id": "16ed601b-95c4-4b4f-839f-2675a272f9c0",
+      "provider_profile_id": "35c6a82b-cdda-4f49-b76e-19ad6c945820",
+      "skill_id": "061f97dd-a0ca-45bc-9b6e-b976ebff12ba",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-31T21:19:43.635Z"
+    },
+    {
+      "id": "bb082824-b9e7-4569-b6a5-2c5640bb3ba7",
+      "provider_profile_id": "35c6a82b-cdda-4f49-b76e-19ad6c945820",
+      "skill_id": "94346646-c5c9-4443-9652-b12787e59c4e",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-31T21:19:43.635Z"
+    },
+    {
+      "id": "fad84b71-0573-4b69-be50-22f88096d081",
+      "provider_profile_id": "35c6a82b-cdda-4f49-b76e-19ad6c945820",
+      "skill_id": "be237a83-c7f6-4833-bc7c-b02ef2c5dec1",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-31T21:19:43.635Z"
+    },
+    {
+      "id": "840df745-8a6f-4cfe-a7d7-481c31189fd0",
+      "provider_profile_id": "35c6a82b-cdda-4f49-b76e-19ad6c945820",
+      "skill_id": "687be7b6-5e40-483f-9019-83d509ab5caa",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-07-31T21:19:43.635Z"
+    },
+    {
+      "id": "752d9a78-b857-4620-8389-c90f8a4e0e56",
+      "provider_profile_id": "f73e5bdf-e0cf-470f-b7b0-278a782da8ad",
+      "skill_id": "d8201e76-a200-4411-9367-327966a20171",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-01T12:49:32.309Z"
+    },
+    {
+      "id": "87c08687-de38-4c6b-8378-a4403bd1a4b5",
+      "provider_profile_id": "f73e5bdf-e0cf-470f-b7b0-278a782da8ad",
+      "skill_id": "fb1a45fd-8697-40e1-a870-0f2729a3ebfe",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-01T12:49:32.309Z"
+    },
+    {
+      "id": "c46dc160-bba2-495f-bfe0-31357af6f19e",
+      "provider_profile_id": "f73e5bdf-e0cf-470f-b7b0-278a782da8ad",
+      "skill_id": "0bc8e121-322b-4d7c-9ef0-6c8b4b5db462",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-01T12:49:32.309Z"
+    },
+    {
+      "id": "05efa6c3-7eab-4b05-8e9f-451d6de7c935",
+      "provider_profile_id": "f73e5bdf-e0cf-470f-b7b0-278a782da8ad",
+      "skill_id": "e8bde5f5-aa8e-4a49-95ec-d20d467f155e",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-01T12:55:37.654Z"
+    },
+    {
+      "id": "3e68e93d-a50a-4b20-b220-54035498207b",
+      "provider_profile_id": "f73e5bdf-e0cf-470f-b7b0-278a782da8ad",
+      "skill_id": "98d8afdb-7808-4e8e-a3e4-124bb3bceef3",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-01T12:55:37.654Z"
+    },
+    {
+      "id": "41853a7b-12dd-47f9-91aa-555e03813d1b",
+      "provider_profile_id": "f73e5bdf-e0cf-470f-b7b0-278a782da8ad",
+      "skill_id": "06035184-d62b-42e7-851f-6c4a32f70c84",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-01T12:55:37.654Z"
+    },
+    {
+      "id": "1deec3c3-7b57-4d81-8400-59a0d24a45d8",
+      "provider_profile_id": "f73e5bdf-e0cf-470f-b7b0-278a782da8ad",
+      "skill_id": "7b45e74e-edeb-4625-987e-54c2bfda3b2a",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-01T12:55:37.654Z"
+    },
+    {
+      "id": "ff41ecb5-d6ab-448c-9fca-037641117fee",
+      "provider_profile_id": "f73e5bdf-e0cf-470f-b7b0-278a782da8ad",
+      "skill_id": "77d0567f-5d5d-49ce-a668-3c95c97f8cc8",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-01T12:55:37.654Z"
+    },
+    {
+      "id": "792de4cc-f82d-4342-9a4c-b234d9236ed9",
+      "provider_profile_id": "f73e5bdf-e0cf-470f-b7b0-278a782da8ad",
+      "skill_id": "50f5bba0-21ba-4227-aa8d-0d5400de3349",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-01T12:55:37.654Z"
+    },
+    {
+      "id": "9fb77a27-cad2-41d6-b13b-9603fa04d5cb",
+      "provider_profile_id": "f73e5bdf-e0cf-470f-b7b0-278a782da8ad",
+      "skill_id": "687be7b6-5e40-483f-9019-83d509ab5caa",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-01T12:55:37.654Z"
+    },
+    {
+      "id": "5cf166b9-7392-4e4e-8011-a14f177ed753",
+      "provider_profile_id": "f73e5bdf-e0cf-470f-b7b0-278a782da8ad",
+      "skill_id": "94346646-c5c9-4443-9652-b12787e59c4e",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-01T12:55:37.654Z"
+    },
+    {
+      "id": "e1b35608-ed72-456d-a3a7-66bae9d838e2",
+      "provider_profile_id": "f73e5bdf-e0cf-470f-b7b0-278a782da8ad",
+      "skill_id": "3e97785f-1cd8-42bc-9f4a-44fd46394b44",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-01T12:55:37.654Z"
+    },
+    {
+      "id": "dde5e030-8a7e-4a5c-acad-d976bad75ff9",
+      "provider_profile_id": "f73e5bdf-e0cf-470f-b7b0-278a782da8ad",
+      "skill_id": "2264b3ed-7bfa-4ba0-ba97-8e93dcfc1488",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-01T12:57:33.073Z"
+    },
+    {
+      "id": "7e376dc8-c8da-40d4-bfb4-c5c9f334d4ba",
+      "provider_profile_id": "f73e5bdf-e0cf-470f-b7b0-278a782da8ad",
+      "skill_id": "061f97dd-a0ca-45bc-9b6e-b976ebff12ba",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-01T12:57:33.073Z"
+    },
+    {
+      "id": "44723e9b-595e-4f9e-a017-2381a429e605",
+      "provider_profile_id": "af8a29bf-cbf6-4932-9471-dd076f102a1e",
+      "skill_id": "3e97785f-1cd8-42bc-9f4a-44fd46394b44",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-01T14:07:48.155Z"
+    },
+    {
+      "id": "c3d0e435-f0aa-4b71-942e-1b3ff803709e",
+      "provider_profile_id": "af8a29bf-cbf6-4932-9471-dd076f102a1e",
+      "skill_id": "e8bde5f5-aa8e-4a49-95ec-d20d467f155e",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-01T14:08:09.644Z"
+    },
+    {
+      "id": "ee271be8-d00d-4d11-bacd-c1b8fb45e192",
+      "provider_profile_id": "af8a29bf-cbf6-4932-9471-dd076f102a1e",
+      "skill_id": "98d8afdb-7808-4e8e-a3e4-124bb3bceef3",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-01T14:08:09.644Z"
+    },
+    {
+      "id": "96afb84d-45ca-47f0-985f-2b068c241b39",
+      "provider_profile_id": "af8a29bf-cbf6-4932-9471-dd076f102a1e",
+      "skill_id": "06035184-d62b-42e7-851f-6c4a32f70c84",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-01T14:08:09.644Z"
+    },
+    {
+      "id": "8063fb31-497e-4aa4-8db8-a67958c62a74",
+      "provider_profile_id": "af8a29bf-cbf6-4932-9471-dd076f102a1e",
+      "skill_id": "7b45e74e-edeb-4625-987e-54c2bfda3b2a",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-01T14:08:09.644Z"
+    },
+    {
+      "id": "4640b4fc-7d1a-4f6f-ad43-63ed5ecdc80f",
+      "provider_profile_id": "af8a29bf-cbf6-4932-9471-dd076f102a1e",
+      "skill_id": "77d0567f-5d5d-49ce-a668-3c95c97f8cc8",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-01T14:08:09.644Z"
+    },
+    {
+      "id": "8a15bfae-8965-4903-a980-39383c8f90de",
+      "provider_profile_id": "af8a29bf-cbf6-4932-9471-dd076f102a1e",
+      "skill_id": "50f5bba0-21ba-4227-aa8d-0d5400de3349",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-01T14:08:09.644Z"
+    },
+    {
+      "id": "b1bc93f3-3b9a-4fa4-b0ec-26aae4f73a67",
+      "provider_profile_id": "af8a29bf-cbf6-4932-9471-dd076f102a1e",
+      "skill_id": "687be7b6-5e40-483f-9019-83d509ab5caa",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-01T14:08:09.644Z"
+    },
+    {
+      "id": "00ef875e-12d3-4704-9791-6377a334537b",
+      "provider_profile_id": "af8a29bf-cbf6-4932-9471-dd076f102a1e",
+      "skill_id": "94346646-c5c9-4443-9652-b12787e59c4e",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-01T14:08:09.644Z"
+    },
+    {
+      "id": "d3254884-7088-4bdc-8870-6a31d7011e9e",
+      "provider_profile_id": "0ffb90cf-c79c-49ad-bd69-08a5f2d7f975",
+      "skill_id": "ae42ac79-26df-4ca9-9e74-6338a0017af2",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-01T16:28:27.010Z"
+    },
+    {
+      "id": "e8a8c45f-35b7-4b04-a56f-7d861047a013",
+      "provider_profile_id": "0ffb90cf-c79c-49ad-bd69-08a5f2d7f975",
+      "skill_id": "3e97785f-1cd8-42bc-9f4a-44fd46394b44",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-01T16:28:43.215Z"
+    },
+    {
+      "id": "27710b1a-c981-4b7d-85ec-f2c1651b056d",
+      "provider_profile_id": "0ffb90cf-c79c-49ad-bd69-08a5f2d7f975",
+      "skill_id": "5860c602-fab5-4612-b097-f097bc8e7e4d",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-01T16:28:43.215Z"
+    },
+    {
+      "id": "8842b0d9-b064-4276-b6ba-2d8ce7a468dd",
+      "provider_profile_id": "0ffb90cf-c79c-49ad-bd69-08a5f2d7f975",
+      "skill_id": "06035184-d62b-42e7-851f-6c4a32f70c84",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-01T16:28:43.215Z"
+    },
+    {
+      "id": "c838cb86-9f14-419a-81ac-394b860d2e1b",
+      "provider_profile_id": "0ffb90cf-c79c-49ad-bd69-08a5f2d7f975",
+      "skill_id": "77d0567f-5d5d-49ce-a668-3c95c97f8cc8",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-01T16:28:43.215Z"
+    },
+    {
+      "id": "bf3ee06a-8fad-4667-8359-39a54e8279fb",
+      "provider_profile_id": "0ffb90cf-c79c-49ad-bd69-08a5f2d7f975",
+      "skill_id": "7b45e74e-edeb-4625-987e-54c2bfda3b2a",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-01T16:28:43.215Z"
+    },
+    {
+      "id": "538c3090-e06c-40a5-b644-6d12dcf2158c",
+      "provider_profile_id": "0ffb90cf-c79c-49ad-bd69-08a5f2d7f975",
+      "skill_id": "50f5bba0-21ba-4227-aa8d-0d5400de3349",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-01T16:28:43.215Z"
+    },
+    {
+      "id": "727d590e-6d22-4550-b57d-4de23f8a2369",
+      "provider_profile_id": "0ffb90cf-c79c-49ad-bd69-08a5f2d7f975",
+      "skill_id": "687be7b6-5e40-483f-9019-83d509ab5caa",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-01T16:28:43.215Z"
+    },
+    {
+      "id": "84a23ab1-2e06-4ec1-b25d-90742094885f",
+      "provider_profile_id": "0ffb90cf-c79c-49ad-bd69-08a5f2d7f975",
+      "skill_id": "d8201e76-a200-4411-9367-327966a20171",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-01T16:28:43.215Z"
+    },
+    {
+      "id": "b2bf9fb6-9ee2-4d8b-bfe8-97e4ae174984",
+      "provider_profile_id": "0ffb90cf-c79c-49ad-bd69-08a5f2d7f975",
+      "skill_id": "94346646-c5c9-4443-9652-b12787e59c4e",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-01T16:28:43.215Z"
+    },
+    {
+      "id": "c7300c4a-2f4c-44aa-9911-2610e0f8e07b",
+      "provider_profile_id": "0ffb90cf-c79c-49ad-bd69-08a5f2d7f975",
+      "skill_id": "f5c197ea-89a2-4bc9-86a6-bd952323ec22",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-01T16:28:43.215Z"
+    },
+    {
+      "id": "dc71c572-a8fd-4803-9ffc-d71f56f0e444",
+      "provider_profile_id": "0ffb90cf-c79c-49ad-bd69-08a5f2d7f975",
+      "skill_id": "3f1671f0-8d35-47bc-80c2-c680e938df76",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-01T16:28:43.215Z"
+    },
+    {
+      "id": "f070f3bf-f85e-4e79-bab2-d1f5b2cf2e61",
+      "provider_profile_id": "54978bb3-a788-4ff9-9a70-6696be8a75cb",
+      "skill_id": "014aa7b5-57b8-476b-ad0c-abe2cac7105b",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-02T00:05:00.412Z"
+    },
+    {
+      "id": "e0681963-304d-487e-aa09-d727f842522f",
+      "provider_profile_id": "54978bb3-a788-4ff9-9a70-6696be8a75cb",
+      "skill_id": "0571f0d4-8719-4459-8e45-976c0ce03300",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-02T00:05:00.412Z"
+    },
+    {
+      "id": "b320079a-2b31-4f63-956a-a954df3ded37",
+      "provider_profile_id": "54978bb3-a788-4ff9-9a70-6696be8a75cb",
+      "skill_id": "94346646-c5c9-4443-9652-b12787e59c4e",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-02T00:05:00.412Z"
+    },
+    {
+      "id": "c221796b-1ea4-43eb-9d4e-c53f9c7ae38e",
+      "provider_profile_id": "54978bb3-a788-4ff9-9a70-6696be8a75cb",
+      "skill_id": "98c997f9-4dd9-4a70-a403-899e35b0371b",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-02T00:05:00.412Z"
+    },
+    {
+      "id": "0d0f0d20-7861-45e2-9546-61d6fd42defe",
+      "provider_profile_id": "54978bb3-a788-4ff9-9a70-6696be8a75cb",
+      "skill_id": "0bc8e121-322b-4d7c-9ef0-6c8b4b5db462",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-02T00:05:00.412Z"
+    },
+    {
+      "id": "0fc96166-001b-4bb5-aeb1-02c69b0c2855",
+      "provider_profile_id": "54978bb3-a788-4ff9-9a70-6696be8a75cb",
+      "skill_id": "98d8afdb-7808-4e8e-a3e4-124bb3bceef3",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-02T00:07:58.944Z"
+    },
+    {
+      "id": "c4086881-732b-439d-bb00-ebabd205bd04",
+      "provider_profile_id": "54978bb3-a788-4ff9-9a70-6696be8a75cb",
+      "skill_id": "77d0567f-5d5d-49ce-a668-3c95c97f8cc8",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-02T00:07:58.944Z"
+    },
+    {
+      "id": "0a3ec9e6-c214-4d3e-9f5e-de92e91e0d41",
+      "provider_profile_id": "54978bb3-a788-4ff9-9a70-6696be8a75cb",
+      "skill_id": "06035184-d62b-42e7-851f-6c4a32f70c84",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-02T00:07:58.944Z"
+    },
+    {
+      "id": "2a02b376-b617-43fc-b954-69307144f7b4",
+      "provider_profile_id": "54978bb3-a788-4ff9-9a70-6696be8a75cb",
+      "skill_id": "e8bde5f5-aa8e-4a49-95ec-d20d467f155e",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-02T00:07:58.944Z"
+    },
+    {
+      "id": "3555a445-494f-48c4-956f-60479dceccda",
+      "provider_profile_id": "54978bb3-a788-4ff9-9a70-6696be8a75cb",
+      "skill_id": "7b45e74e-edeb-4625-987e-54c2bfda3b2a",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-02T00:07:58.944Z"
+    },
+    {
+      "id": "fa0ee7f6-13e5-4911-9c49-c5676373bda9",
+      "provider_profile_id": "54978bb3-a788-4ff9-9a70-6696be8a75cb",
+      "skill_id": "50f5bba0-21ba-4227-aa8d-0d5400de3349",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-02T00:07:58.944Z"
+    },
+    {
+      "id": "2c00de59-9f88-4f39-8c3c-d594e1cd483f",
+      "provider_profile_id": "54978bb3-a788-4ff9-9a70-6696be8a75cb",
+      "skill_id": "369bfbdd-940a-4ecd-89e3-5f153abd71c6",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-02T00:07:58.944Z"
+    },
+    {
+      "id": "d8e52b1d-ca6e-46aa-a819-22cabf518d1a",
+      "provider_profile_id": "54978bb3-a788-4ff9-9a70-6696be8a75cb",
+      "skill_id": "687be7b6-5e40-483f-9019-83d509ab5caa",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-02T00:07:58.944Z"
+    },
+    {
+      "id": "19a0c658-5a3f-4a40-a8e7-7bbf46b58b5f",
+      "provider_profile_id": "b7d5f84a-e8fa-410d-a3a6-910a86b035aa",
+      "skill_id": "23abc536-05a7-4927-b257-a81814bde019",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:12.375Z"
+    },
+    {
+      "id": "1f74ffe3-a019-490f-bffa-5a3f3bb622bd",
+      "provider_profile_id": "b7d5f84a-e8fa-410d-a3a6-910a86b035aa",
+      "skill_id": "3c78f941-9fdc-495d-a60a-ff1af5cdf527",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:12.672Z"
+    },
+    {
+      "id": "91555de0-b199-430a-9642-d7ec2cc8964a",
+      "provider_profile_id": "b7d5f84a-e8fa-410d-a3a6-910a86b035aa",
+      "skill_id": "ba375af6-e49f-47aa-a92c-e94f5a26fe95",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:12.971Z"
+    },
+    {
+      "id": "64f5d964-b004-4261-a988-1c16b19fdace",
+      "provider_profile_id": "9d6ce7ae-ae1e-4f32-aa72-32cf05e45435",
+      "skill_id": "2b45f1c3-9532-4151-a778-d67286df968d",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:13.563Z"
+    },
+    {
+      "id": "17ff1bec-3bb3-4cfd-82e7-ccfd8fa43871",
+      "provider_profile_id": "9d6ce7ae-ae1e-4f32-aa72-32cf05e45435",
+      "skill_id": "476fb1ff-fcf1-495d-b142-2e45ef1d572a",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:13.851Z"
+    },
+    {
+      "id": "86d9bf83-0d1a-4f50-aa9e-35ede8f57732",
+      "provider_profile_id": "9d6ce7ae-ae1e-4f32-aa72-32cf05e45435",
+      "skill_id": "8ea5f880-6eee-4147-b762-ef6fc38c966e",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:14.153Z"
+    },
+    {
+      "id": "25a4216e-8ee0-4659-8950-019adbda4dbb",
+      "provider_profile_id": "cd35f9b4-80db-4105-b267-f44c11359ee9",
+      "skill_id": "49f2de8a-c21e-43ee-965e-35a8b080cf42",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:14.712Z"
+    },
+    {
+      "id": "8d75c8b5-2c48-4aa9-b6ea-0f6f2c187eba",
+      "provider_profile_id": "cd35f9b4-80db-4105-b267-f44c11359ee9",
+      "skill_id": "57a0c2c9-9026-4d2a-bb1e-6da6501c6bcd",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:15.013Z"
+    },
+    {
+      "id": "81a04b3b-17bb-426f-ae0d-059bf8dd732f",
+      "provider_profile_id": "cd35f9b4-80db-4105-b267-f44c11359ee9",
+      "skill_id": "7c8dde1b-cee1-4930-ab7b-45b23f0dfc07",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:15.296Z"
+    },
+    {
+      "id": "7973d322-7057-4cde-823e-fc21821a51f2",
+      "provider_profile_id": "cd35f9b4-80db-4105-b267-f44c11359ee9",
+      "skill_id": "bc92257b-220d-43c2-99f8-d188414e8c35",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:15.592Z"
+    },
+    {
+      "id": "183045db-6b0b-4288-8776-fdbb22b413fd",
+      "provider_profile_id": "cd35f9b4-80db-4105-b267-f44c11359ee9",
+      "skill_id": "ee46fc1e-44d9-4ec5-b33d-40eb107387cc",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:15.958Z"
+    },
+    {
+      "id": "37a812c2-a27e-4598-a1b9-bdc2d2cd747d",
+      "provider_profile_id": "331a9cd3-4468-4d83-a3b4-fb9f1a7271c4",
+      "skill_id": "3663d5cd-f3e2-4cba-9782-da1fa563bb11",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:16.572Z"
+    },
+    {
+      "id": "d2ddb759-1070-49e3-8c1a-bdd6b0dc2abb",
+      "provider_profile_id": "4d1e2d9a-1b82-4d35-94de-a06e5e3b07fd",
+      "skill_id": "7b2c186a-5235-4024-bff4-b24bf30addad",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-03T17:01:53.113Z"
+    },
+    {
+      "id": "2ef4258a-10cd-4626-9d8d-abbdbc6fbc0d",
+      "provider_profile_id": "331a9cd3-4468-4d83-a3b4-fb9f1a7271c4",
+      "skill_id": "759d6e5a-c420-4f5a-9eb3-72ca41e61f1f",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:16.886Z"
+    },
+    {
+      "id": "8ad3de54-3a8b-4693-a3e5-b935aee66964",
+      "provider_profile_id": "331a9cd3-4468-4d83-a3b4-fb9f1a7271c4",
+      "skill_id": "8ac21f72-cb62-4d48-b68b-5a67234e38ef",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:17.172Z"
+    },
+    {
+      "id": "7e42b3e4-5a35-461f-a5d5-dff81ecdb3c9",
+      "provider_profile_id": "331a9cd3-4468-4d83-a3b4-fb9f1a7271c4",
+      "skill_id": "d5e6e03b-b6ea-408c-ae34-23c72a046d57",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:17.456Z"
+    },
+    {
+      "id": "5f5da53c-ee85-475e-b91e-c9758c120b75",
+      "provider_profile_id": "d19e6ed8-50c6-406a-b7df-5b88cbb1fc82",
+      "skill_id": "51ebc58c-272c-4956-bda6-690d2e8214ec",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:18.057Z"
+    },
+    {
+      "id": "224d4d97-e8a0-4bcb-bb77-f6d5b08b45e4",
+      "provider_profile_id": "d19e6ed8-50c6-406a-b7df-5b88cbb1fc82",
+      "skill_id": "6ce4fe2c-311e-462d-9494-9a5e68cd02af",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:18.352Z"
+    },
+    {
+      "id": "aa89d03b-0f90-4412-bad9-2f283d6b5cd3",
+      "provider_profile_id": "622af1ed-72ec-498b-aa38-1d176f273589",
+      "skill_id": "ae42ac79-26df-4ca9-9e74-6338a0017af2",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-03T19:47:23.997Z"
+    },
+    {
+      "id": "ff4e6212-63e1-4e62-ae9f-4ffe62d81173",
+      "provider_profile_id": "622af1ed-72ec-498b-aa38-1d176f273589",
+      "skill_id": "3e97785f-1cd8-42bc-9f4a-44fd46394b44",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-03T19:51:55.935Z"
+    },
+    {
+      "id": "32a513c3-d7c7-4d5e-a9e5-3ec16b17186f",
+      "provider_profile_id": "622af1ed-72ec-498b-aa38-1d176f273589",
+      "skill_id": "5860c602-fab5-4612-b097-f097bc8e7e4d",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-03T19:51:55.935Z"
+    },
+    {
+      "id": "8bc9a3cb-f6f1-46a7-ac6b-affef45abf24",
+      "provider_profile_id": "d19e6ed8-50c6-406a-b7df-5b88cbb1fc82",
+      "skill_id": "837dfb16-e64c-40f0-b563-a7b681fe79cc",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:18.616Z"
+    },
+    {
+      "id": "c50963b4-c54c-4522-a45d-0127ac45b940",
+      "provider_profile_id": "622af1ed-72ec-498b-aa38-1d176f273589",
+      "skill_id": "06035184-d62b-42e7-851f-6c4a32f70c84",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-03T19:51:55.935Z"
+    },
+    {
+      "id": "341ab07e-8ca2-409a-a63c-dec784b6926a",
+      "provider_profile_id": "d19e6ed8-50c6-406a-b7df-5b88cbb1fc82",
+      "skill_id": "d3c8964e-c0e6-4313-964a-a352525d9b0d",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:18.891Z"
+    },
+    {
+      "id": "54c50007-4289-480f-9a43-8bee3f24ff54",
+      "provider_profile_id": "622af1ed-72ec-498b-aa38-1d176f273589",
+      "skill_id": "77d0567f-5d5d-49ce-a668-3c95c97f8cc8",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-03T19:51:55.935Z"
+    },
+    {
+      "id": "7425e91c-59c1-4eb3-8875-4bb639a7d5c8",
+      "provider_profile_id": "622af1ed-72ec-498b-aa38-1d176f273589",
+      "skill_id": "7b45e74e-edeb-4625-987e-54c2bfda3b2a",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-03T19:51:55.935Z"
+    },
+    {
+      "id": "85627e6c-871a-4452-81aa-9b12e5a44f1e",
+      "provider_profile_id": "622af1ed-72ec-498b-aa38-1d176f273589",
+      "skill_id": "50f5bba0-21ba-4227-aa8d-0d5400de3349",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-03T19:51:55.935Z"
+    },
+    {
+      "id": "581753a4-047f-43f2-8402-39b7d84ee396",
+      "provider_profile_id": "622af1ed-72ec-498b-aa38-1d176f273589",
+      "skill_id": "687be7b6-5e40-483f-9019-83d509ab5caa",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-03T19:51:55.935Z"
+    },
+    {
+      "id": "6ad346cc-4494-4ff2-9567-feaecb6f0d65",
+      "provider_profile_id": "d19e6ed8-50c6-406a-b7df-5b88cbb1fc82",
+      "skill_id": "d612623f-334a-482b-8cb1-cfd84b4b94b7",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:19.172Z"
+    },
+    {
+      "id": "1cae5141-57e6-4500-b2ed-4242c8a12859",
+      "provider_profile_id": "622af1ed-72ec-498b-aa38-1d176f273589",
+      "skill_id": "e8bde5f5-aa8e-4a49-95ec-d20d467f155e",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-03T19:51:55.935Z"
+    },
+    {
+      "id": "f24ab6e8-5ca4-4ac9-a014-c9d29454bbc7",
+      "provider_profile_id": "622af1ed-72ec-498b-aa38-1d176f273589",
+      "skill_id": "94346646-c5c9-4443-9652-b12787e59c4e",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-03T19:51:55.935Z"
+    },
+    {
+      "id": "b1721342-2f0e-42c2-a115-c14faf7bc19d",
+      "provider_profile_id": "622af1ed-72ec-498b-aa38-1d176f273589",
+      "skill_id": "f5c197ea-89a2-4bc9-86a6-bd952323ec22",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-03T19:51:55.935Z"
+    },
+    {
+      "id": "17f92e01-1e18-41b0-b400-a02ca8f6da93",
+      "provider_profile_id": "36fdbc34-d279-43ad-b116-bd917cea02f1",
+      "skill_id": "0a53427a-6380-4532-9fc7-9ef5b03e888c",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:19.772Z"
+    },
+    {
+      "id": "7e249605-1acc-422b-a8c6-ac992fe5e54f",
+      "provider_profile_id": "36fdbc34-d279-43ad-b116-bd917cea02f1",
+      "skill_id": "45a65412-564b-4c3f-97d0-be65db525143",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:20.042Z"
+    },
+    {
+      "id": "ce2dd451-348c-4c06-9ac8-720406cdb029",
+      "provider_profile_id": "36fdbc34-d279-43ad-b116-bd917cea02f1",
+      "skill_id": "54655d64-e875-41fb-a8ac-e3f730db8311",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:20.352Z"
+    },
+    {
+      "id": "6fbfcc40-1f75-4f40-b607-ce30bb51ecea",
+      "provider_profile_id": "36fdbc34-d279-43ad-b116-bd917cea02f1",
+      "skill_id": "58b370d7-575c-4981-ba06-57a518566448",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:20.657Z"
+    },
+    {
+      "id": "6c6a33fd-3c05-4552-b9dd-3d0613303ec9",
+      "provider_profile_id": "36fdbc34-d279-43ad-b116-bd917cea02f1",
+      "skill_id": "62dce72e-20fb-4ba9-ac1c-7ffa3d0a2ffa",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:20.938Z"
+    },
+    {
+      "id": "a079388e-a3a9-45ba-b40f-7b8b1686e576",
+      "provider_profile_id": "8a69f201-cb64-415b-862a-95909814dfdd",
+      "skill_id": "3e97785f-1cd8-42bc-9f4a-44fd46394b44",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:01:32.440Z"
+    },
+    {
+      "id": "f5d6fada-ff01-4914-b415-4aacf2ceca19",
+      "provider_profile_id": "8a69f201-cb64-415b-862a-95909814dfdd",
+      "skill_id": "5860c602-fab5-4612-b097-f097bc8e7e4d",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:01:32.440Z"
+    },
+    {
+      "id": "8f1abde3-b88d-4756-abb4-502f420d54c9",
+      "provider_profile_id": "8a69f201-cb64-415b-862a-95909814dfdd",
+      "skill_id": "06035184-d62b-42e7-851f-6c4a32f70c84",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:01:32.440Z"
+    },
+    {
+      "id": "9a6cf850-ee95-4965-9387-15f7273ef469",
+      "provider_profile_id": "8a69f201-cb64-415b-862a-95909814dfdd",
+      "skill_id": "77d0567f-5d5d-49ce-a668-3c95c97f8cc8",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:01:32.440Z"
+    },
+    {
+      "id": "6f359153-d542-4862-b94e-4827b4c9b1e6",
+      "provider_profile_id": "8a69f201-cb64-415b-862a-95909814dfdd",
+      "skill_id": "7b45e74e-edeb-4625-987e-54c2bfda3b2a",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:01:32.440Z"
+    },
+    {
+      "id": "411dd163-be23-458a-95e0-2fde45ab3390",
+      "provider_profile_id": "8a69f201-cb64-415b-862a-95909814dfdd",
+      "skill_id": "50f5bba0-21ba-4227-aa8d-0d5400de3349",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:01:32.440Z"
+    },
+    {
+      "id": "16fccc42-b3b7-4b9d-9e77-c5a837f7d899",
+      "provider_profile_id": "8a69f201-cb64-415b-862a-95909814dfdd",
+      "skill_id": "687be7b6-5e40-483f-9019-83d509ab5caa",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:01:32.440Z"
+    },
+    {
+      "id": "d4216bc4-4847-4f25-b9da-3c581cce4b0a",
+      "provider_profile_id": "8a69f201-cb64-415b-862a-95909814dfdd",
+      "skill_id": "d8201e76-a200-4411-9367-327966a20171",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:01:32.440Z"
+    },
+    {
+      "id": "0d96a80e-e995-44ea-a6ca-82f6337d58cf",
+      "provider_profile_id": "8a69f201-cb64-415b-862a-95909814dfdd",
+      "skill_id": "94346646-c5c9-4443-9652-b12787e59c4e",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:01:32.440Z"
+    },
+    {
+      "id": "b4d9aa2a-d86c-4c49-ba8a-4de5dedba8fa",
+      "provider_profile_id": "8a69f201-cb64-415b-862a-95909814dfdd",
+      "skill_id": "f5c197ea-89a2-4bc9-86a6-bd952323ec22",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:01:32.440Z"
+    },
+    {
+      "id": "d55a015c-a36a-421a-b0a6-c80d7fc6b94e",
+      "provider_profile_id": "8a69f201-cb64-415b-862a-95909814dfdd",
+      "skill_id": "3f1671f0-8d35-47bc-80c2-c680e938df76",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:01:32.440Z"
+    },
+    {
+      "id": "a40a51e5-87d1-4063-8fb4-e394fa5856ad",
+      "provider_profile_id": "6af829e3-5d1a-477c-b46f-dbfe37bd8beb",
+      "skill_id": "3e97785f-1cd8-42bc-9f4a-44fd46394b44",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:02:07.082Z"
+    },
+    {
+      "id": "30fc4490-45e3-461c-963a-9f22575c6385",
+      "provider_profile_id": "6af829e3-5d1a-477c-b46f-dbfe37bd8beb",
+      "skill_id": "5860c602-fab5-4612-b097-f097bc8e7e4d",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:02:07.082Z"
+    },
+    {
+      "id": "58b1c9ac-f91e-42ab-9161-f64c89173335",
+      "provider_profile_id": "6af829e3-5d1a-477c-b46f-dbfe37bd8beb",
+      "skill_id": "06035184-d62b-42e7-851f-6c4a32f70c84",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:02:07.082Z"
+    },
+    {
+      "id": "6aa0f542-2774-4923-bc40-961cc6397d08",
+      "provider_profile_id": "6af829e3-5d1a-477c-b46f-dbfe37bd8beb",
+      "skill_id": "77d0567f-5d5d-49ce-a668-3c95c97f8cc8",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:02:07.082Z"
+    },
+    {
+      "id": "af631240-419e-4f77-95af-12138a4b45ff",
+      "provider_profile_id": "6af829e3-5d1a-477c-b46f-dbfe37bd8beb",
+      "skill_id": "7b45e74e-edeb-4625-987e-54c2bfda3b2a",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:02:07.082Z"
+    },
+    {
+      "id": "ed5b3b39-70f3-4ad6-acc3-ddd976745e0e",
+      "provider_profile_id": "6af829e3-5d1a-477c-b46f-dbfe37bd8beb",
+      "skill_id": "50f5bba0-21ba-4227-aa8d-0d5400de3349",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:02:07.082Z"
+    },
+    {
+      "id": "ebaed1d8-ea7b-4e21-a0bd-aa1f2c194efa",
+      "provider_profile_id": "6af829e3-5d1a-477c-b46f-dbfe37bd8beb",
+      "skill_id": "687be7b6-5e40-483f-9019-83d509ab5caa",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:02:07.082Z"
+    },
+    {
+      "id": "82ba5f90-5008-4fa7-9c5f-7566d5b82d2a",
+      "provider_profile_id": "6af829e3-5d1a-477c-b46f-dbfe37bd8beb",
+      "skill_id": "d8201e76-a200-4411-9367-327966a20171",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:02:07.082Z"
+    },
+    {
+      "id": "817a8fbf-5a31-48da-b22e-c655cd6143c7",
+      "provider_profile_id": "6af829e3-5d1a-477c-b46f-dbfe37bd8beb",
+      "skill_id": "94346646-c5c9-4443-9652-b12787e59c4e",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:02:07.082Z"
+    },
+    {
+      "id": "24e55d8c-aca2-4780-b053-d3c63d6e92cf",
+      "provider_profile_id": "6af829e3-5d1a-477c-b46f-dbfe37bd8beb",
+      "skill_id": "f5c197ea-89a2-4bc9-86a6-bd952323ec22",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:02:07.082Z"
+    },
+    {
+      "id": "743b76d0-8fcb-414b-86ee-711c17562247",
+      "provider_profile_id": "6af829e3-5d1a-477c-b46f-dbfe37bd8beb",
+      "skill_id": "3f1671f0-8d35-47bc-80c2-c680e938df76",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:02:07.082Z"
+    },
+    {
+      "id": "135aa4ec-ca9a-4c1d-8d00-bef1afa90cbe",
+      "provider_profile_id": "0ecc1ed1-e7a0-4b0d-b4e9-151592a72865",
+      "skill_id": "3e97785f-1cd8-42bc-9f4a-44fd46394b44",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:04:21.887Z"
+    },
+    {
+      "id": "5fbb1a31-d26c-4e48-a836-21fd4ab024c3",
+      "provider_profile_id": "0ecc1ed1-e7a0-4b0d-b4e9-151592a72865",
+      "skill_id": "5860c602-fab5-4612-b097-f097bc8e7e4d",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:04:21.887Z"
+    },
+    {
+      "id": "4e1ddac5-15fd-4530-9c6e-46ee815f9a53",
+      "provider_profile_id": "0ecc1ed1-e7a0-4b0d-b4e9-151592a72865",
+      "skill_id": "06035184-d62b-42e7-851f-6c4a32f70c84",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:04:21.887Z"
+    },
+    {
+      "id": "d76fefe3-db54-48d7-aed8-77b370b2f75f",
+      "provider_profile_id": "0ecc1ed1-e7a0-4b0d-b4e9-151592a72865",
+      "skill_id": "77d0567f-5d5d-49ce-a668-3c95c97f8cc8",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:04:21.887Z"
+    },
+    {
+      "id": "957849ad-bb6e-44c7-8812-e34f648a7c65",
+      "provider_profile_id": "0ecc1ed1-e7a0-4b0d-b4e9-151592a72865",
+      "skill_id": "7b45e74e-edeb-4625-987e-54c2bfda3b2a",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:04:21.887Z"
+    },
+    {
+      "id": "afa6ad2c-363f-4019-b47f-00f98af36094",
+      "provider_profile_id": "0ecc1ed1-e7a0-4b0d-b4e9-151592a72865",
+      "skill_id": "50f5bba0-21ba-4227-aa8d-0d5400de3349",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:04:21.887Z"
+    },
+    {
+      "id": "18827883-72f8-4674-aebc-df88a18eab33",
+      "provider_profile_id": "0ecc1ed1-e7a0-4b0d-b4e9-151592a72865",
+      "skill_id": "687be7b6-5e40-483f-9019-83d509ab5caa",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:04:21.887Z"
+    },
+    {
+      "id": "47a7c58c-abda-417f-8982-e0adf05907cc",
+      "provider_profile_id": "0ecc1ed1-e7a0-4b0d-b4e9-151592a72865",
+      "skill_id": "d8201e76-a200-4411-9367-327966a20171",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:04:21.887Z"
+    },
+    {
+      "id": "e6f51f86-41e7-4d78-8604-8e961f6daad3",
+      "provider_profile_id": "0ecc1ed1-e7a0-4b0d-b4e9-151592a72865",
+      "skill_id": "94346646-c5c9-4443-9652-b12787e59c4e",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:04:21.887Z"
+    },
+    {
+      "id": "1bff6fad-7a8f-4456-939a-c7f6134e2550",
+      "provider_profile_id": "0ecc1ed1-e7a0-4b0d-b4e9-151592a72865",
+      "skill_id": "f5c197ea-89a2-4bc9-86a6-bd952323ec22",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:04:21.887Z"
+    },
+    {
+      "id": "4724097f-ae1f-4bc5-82ae-b44b5226289b",
+      "provider_profile_id": "0ecc1ed1-e7a0-4b0d-b4e9-151592a72865",
+      "skill_id": "3f1671f0-8d35-47bc-80c2-c680e938df76",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:04:21.887Z"
+    },
+    {
+      "id": "0a12d975-3947-4200-a0e6-09ad8e42ed08",
+      "provider_profile_id": "f1574bb0-3245-4287-bb0c-05adfa496edd",
+      "skill_id": "3e97785f-1cd8-42bc-9f4a-44fd46394b44",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:10:33.064Z"
+    },
+    {
+      "id": "41d51f93-4f8d-4f41-899d-62eb71303129",
+      "provider_profile_id": "f1574bb0-3245-4287-bb0c-05adfa496edd",
+      "skill_id": "5860c602-fab5-4612-b097-f097bc8e7e4d",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:10:33.064Z"
+    },
+    {
+      "id": "059385bc-9703-4fca-9e4c-de9d1b45b2aa",
+      "provider_profile_id": "f1574bb0-3245-4287-bb0c-05adfa496edd",
+      "skill_id": "06035184-d62b-42e7-851f-6c4a32f70c84",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:10:33.064Z"
+    },
+    {
+      "id": "3d92ce9a-46ef-484d-94e5-6908411c8803",
+      "provider_profile_id": "f1574bb0-3245-4287-bb0c-05adfa496edd",
+      "skill_id": "77d0567f-5d5d-49ce-a668-3c95c97f8cc8",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:10:33.064Z"
+    },
+    {
+      "id": "98b0fcc9-339e-4ee9-b37e-6c7a685708a9",
+      "provider_profile_id": "f1574bb0-3245-4287-bb0c-05adfa496edd",
+      "skill_id": "7b45e74e-edeb-4625-987e-54c2bfda3b2a",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:10:33.064Z"
+    },
+    {
+      "id": "c0ba51bd-fcb6-44f4-b86b-cfc34cfda76d",
+      "provider_profile_id": "f1574bb0-3245-4287-bb0c-05adfa496edd",
+      "skill_id": "50f5bba0-21ba-4227-aa8d-0d5400de3349",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:10:33.064Z"
+    },
+    {
+      "id": "daf94b12-4884-4b80-a26a-b896f0dd26f5",
+      "provider_profile_id": "f1574bb0-3245-4287-bb0c-05adfa496edd",
+      "skill_id": "687be7b6-5e40-483f-9019-83d509ab5caa",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:10:33.064Z"
+    },
+    {
+      "id": "d1ac205b-218e-4293-bfe7-89680052611d",
+      "provider_profile_id": "f1574bb0-3245-4287-bb0c-05adfa496edd",
+      "skill_id": "d8201e76-a200-4411-9367-327966a20171",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:10:33.064Z"
+    },
+    {
+      "id": "184b6b75-ee0c-4183-b397-15c4569a0349",
+      "provider_profile_id": "f1574bb0-3245-4287-bb0c-05adfa496edd",
+      "skill_id": "94346646-c5c9-4443-9652-b12787e59c4e",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:10:33.064Z"
+    },
+    {
+      "id": "599779d3-4a7a-4f6b-bd4b-9021506405ab",
+      "provider_profile_id": "f1574bb0-3245-4287-bb0c-05adfa496edd",
+      "skill_id": "f5c197ea-89a2-4bc9-86a6-bd952323ec22",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:10:33.064Z"
+    },
+    {
+      "id": "e7c7c3b9-e5ba-48bd-b8bd-e2a23a70fdd2",
+      "provider_profile_id": "f1574bb0-3245-4287-bb0c-05adfa496edd",
+      "skill_id": "3f1671f0-8d35-47bc-80c2-c680e938df76",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:10:33.064Z"
+    },
+    {
+      "id": "f75aabf2-263a-495c-9e70-486c94a119e9",
+      "provider_profile_id": "edd7f1de-4308-4871-b0dc-1eaa1a882604",
+      "skill_id": "fb1a45fd-8697-40e1-a870-0f2729a3ebfe",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:14:34.718Z"
+    },
+    {
+      "id": "02552bdf-95f8-47aa-be10-6e0ebd524dc0",
+      "provider_profile_id": "789e6c5a-bc3b-42b3-9813-cacb68ffbdb0",
+      "skill_id": "fb1a45fd-8697-40e1-a870-0f2729a3ebfe",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:15:13.012Z"
+    },
+    {
+      "id": "cc093efe-3b68-4710-b10e-43e0d6b9cdf8",
+      "provider_profile_id": "789e6c5a-bc3b-42b3-9813-cacb68ffbdb0",
+      "skill_id": "ae42ac79-26df-4ca9-9e74-6338a0017af2",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T17:15:13.012Z"
+    },
+    {
+      "id": "36a64125-615b-4917-9bd0-292a1b63cc88",
+      "provider_profile_id": "6bc1b564-3dda-4368-b5d4-6d9ba09e4d37",
+      "skill_id": "0bc8e121-322b-4d7c-9ef0-6c8b4b5db462",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T18:01:25.013Z"
+    },
+    {
+      "id": "fbd31f71-2cd5-4a21-8bac-64d62cf67245",
+      "provider_profile_id": "6bc1b564-3dda-4368-b5d4-6d9ba09e4d37",
+      "skill_id": "98c997f9-4dd9-4a70-a403-899e35b0371b",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-04T18:01:25.013Z"
+    },
+    {
+      "id": "71abf314-4446-440e-adec-09c84cee3529",
+      "provider_profile_id": "6b70f0e1-37fc-40d4-82aa-7b8d3eb36f72",
+      "skill_id": "5a7b322b-d928-4fdb-b7c8-2d1fcb54e2a4",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:21.513Z"
+    },
+    {
+      "id": "1a3256ab-3bf8-4e91-9336-ac5880177fca",
+      "provider_profile_id": "6b70f0e1-37fc-40d4-82aa-7b8d3eb36f72",
+      "skill_id": "5e94dccd-9df3-46f0-9c2a-5243d561a85e",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:21.811Z"
+    },
+    {
+      "id": "42640459-74c0-48a7-8230-185b695a4202",
+      "provider_profile_id": "6b70f0e1-37fc-40d4-82aa-7b8d3eb36f72",
+      "skill_id": "60601ab3-c8fc-4e2b-82e6-74fe9a76c243",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:22.101Z"
+    },
+    {
+      "id": "560fca98-bdcc-47fd-92ac-9e056ff11718",
+      "provider_profile_id": "6b70f0e1-37fc-40d4-82aa-7b8d3eb36f72",
+      "skill_id": "66742d2c-38db-454e-ad1d-00ef238b5d9b",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:22.372Z"
+    },
+    {
+      "id": "10945c0c-ea55-471b-92d3-23a1f6c4467e",
+      "provider_profile_id": "6b70f0e1-37fc-40d4-82aa-7b8d3eb36f72",
+      "skill_id": "941e70b4-979f-4dc8-9d1a-d3b1e0db3921",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:22.636Z"
+    },
+    {
+      "id": "fa5a7ccc-97b6-41c7-84e4-0f464a853178",
+      "provider_profile_id": "35d9e819-9576-4f4b-a515-4294247ea152",
+      "skill_id": "04e28de3-e28f-465d-b903-bced03ce3cc3",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:23.227Z"
+    },
+    {
+      "id": "61059989-86c7-4ebc-9c56-3222f248c87f",
+      "provider_profile_id": "35d9e819-9576-4f4b-a515-4294247ea152",
+      "skill_id": "0f9906d4-d2cf-42bd-a6bd-79624041b446",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:23.514Z"
+    },
+    {
+      "id": "69db0031-5f10-4250-9b96-63c222ce1e4e",
+      "provider_profile_id": "f2086cc7-b41c-4b82-a681-a2ac65b32ae3",
+      "skill_id": "0571f0d4-8719-4459-8e45-976c0ce03300",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-06T03:25:38.803Z"
+    },
+    {
+      "id": "fa496076-ed8e-4b0a-bb27-bb5c1ae1be43",
+      "provider_profile_id": "f2086cc7-b41c-4b82-a681-a2ac65b32ae3",
+      "skill_id": "be237a83-c7f6-4833-bc7c-b02ef2c5dec1",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-06T03:25:38.803Z"
+    },
+    {
+      "id": "8cf3dd95-e1df-4a09-836d-b86616537a98",
+      "provider_profile_id": "f2086cc7-b41c-4b82-a681-a2ac65b32ae3",
+      "skill_id": "e8bde5f5-aa8e-4a49-95ec-d20d467f155e",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-06T03:25:38.803Z"
+    },
+    {
+      "id": "c608b7e2-3a6c-48cc-a5f6-ce6d03b82737",
+      "provider_profile_id": "35d9e819-9576-4f4b-a515-4294247ea152",
+      "skill_id": "183eb001-9a42-4fbd-b288-de209b524fd4",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:23.811Z"
+    },
+    {
+      "id": "a0b14687-c529-4b51-ad7c-9506fd1b9f88",
+      "provider_profile_id": "f2086cc7-b41c-4b82-a681-a2ac65b32ae3",
+      "skill_id": "014aa7b5-57b8-476b-ad0c-abe2cac7105b",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-06T03:25:38.803Z"
+    },
+    {
+      "id": "f43a339d-7950-47ba-8e84-83c0022aacad",
+      "provider_profile_id": "f2086cc7-b41c-4b82-a681-a2ac65b32ae3",
+      "skill_id": "369bfbdd-940a-4ecd-89e3-5f153abd71c6",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-06T03:25:38.803Z"
+    },
+    {
+      "id": "b94f31f1-3199-4e05-b2e5-5c21d1f3bc05",
+      "provider_profile_id": "f2086cc7-b41c-4b82-a681-a2ac65b32ae3",
+      "skill_id": "7b45e74e-edeb-4625-987e-54c2bfda3b2a",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-06T03:25:38.803Z"
+    },
+    {
+      "id": "897800fa-4e84-44e7-836a-23c334a6e74c",
+      "provider_profile_id": "f2086cc7-b41c-4b82-a681-a2ac65b32ae3",
+      "skill_id": "50f5bba0-21ba-4227-aa8d-0d5400de3349",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-06T03:25:38.803Z"
+    },
+    {
+      "id": "0c93f12c-bd42-4ea4-9ec7-7de19cbb44a7",
+      "provider_profile_id": "f2086cc7-b41c-4b82-a681-a2ac65b32ae3",
+      "skill_id": "687be7b6-5e40-483f-9019-83d509ab5caa",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-06T03:25:38.803Z"
+    },
+    {
+      "id": "0883d89d-4704-482f-a7fc-1524438a3bdc",
+      "provider_profile_id": "f2086cc7-b41c-4b82-a681-a2ac65b32ae3",
+      "skill_id": "77d0567f-5d5d-49ce-a668-3c95c97f8cc8",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-06T03:25:38.803Z"
+    },
+    {
+      "id": "45f267d6-38f6-48fa-a9a1-ede6697cd271",
+      "provider_profile_id": "35d9e819-9576-4f4b-a515-4294247ea152",
+      "skill_id": "92b51380-2645-45ad-a998-1e5508a949b8",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:24.146Z"
+    },
+    {
+      "id": "f0927087-80ce-4b3d-aae7-2d6570f20931",
+      "provider_profile_id": "150032ee-2040-4a48-8508-ad2f8d9b6c19",
+      "skill_id": "295d7805-6ae9-4d92-bfe6-2dda88ce6374",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:24.752Z"
+    },
+    {
+      "id": "24bf976c-159d-42aa-a06b-2713f4911ced",
+      "provider_profile_id": "f2086cc7-b41c-4b82-a681-a2ac65b32ae3",
+      "skill_id": "d8201e76-a200-4411-9367-327966a20171",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-06T03:25:38.803Z"
+    },
+    {
+      "id": "c2e3ebeb-e8bf-40b1-abd1-bf77d8b0ca74",
+      "provider_profile_id": "f2086cc7-b41c-4b82-a681-a2ac65b32ae3",
+      "skill_id": "061f97dd-a0ca-45bc-9b6e-b976ebff12ba",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-06T03:25:38.803Z"
+    },
+    {
+      "id": "188e38eb-ac84-4146-aeba-bb84db783818",
+      "provider_profile_id": "f2086cc7-b41c-4b82-a681-a2ac65b32ae3",
+      "skill_id": "94346646-c5c9-4443-9652-b12787e59c4e",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-06T03:25:38.803Z"
+    },
+    {
+      "id": "0a8a6d49-602b-4895-b449-55f602182463",
+      "provider_profile_id": "150032ee-2040-4a48-8508-ad2f8d9b6c19",
+      "skill_id": "3e71b718-545b-47c0-9512-02f8556780af",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:25.063Z"
+    },
+    {
+      "id": "bb3daaf8-36c3-4f06-a161-e01b2d32419c",
+      "provider_profile_id": "74c0df8a-c74f-45fd-a84a-8d1e43f34924",
+      "skill_id": "d8201e76-a200-4411-9367-327966a20171",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-10T13:46:21.992Z"
+    },
+    {
+      "id": "a3df44c1-e91c-46ba-abca-4990067eba41",
+      "provider_profile_id": "74c0df8a-c74f-45fd-a84a-8d1e43f34924",
+      "skill_id": "053e36cc-1698-4d30-81e0-e55fb1d296a1",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-10T13:46:21.992Z"
+    },
+    {
+      "id": "f20306b0-dd99-4314-aeae-3bbe45becb09",
+      "provider_profile_id": "150032ee-2040-4a48-8508-ad2f8d9b6c19",
+      "skill_id": "a0bcdad7-3e57-4b2b-8986-440515f5e1fd",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:25.371Z"
+    },
+    {
+      "id": "3121ebdd-20eb-4603-b103-8e11c0a45bee",
+      "provider_profile_id": "150032ee-2040-4a48-8508-ad2f8d9b6c19",
+      "skill_id": "dbfecf83-5c92-470c-8e00-f31368b1018c",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:25.723Z"
+    },
+    {
+      "id": "a0b81ec1-3512-478c-a9f8-780dfc0d765b",
+      "provider_profile_id": "3b016369-f8c3-4a41-855b-3181e4a7c61a",
+      "skill_id": "2762f60b-dd19-4815-88a1-8794896c7303",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:26.337Z"
+    },
+    {
+      "id": "4651ef6d-a3c2-4848-a2fd-62ad572ecab6",
+      "provider_profile_id": "3b016369-f8c3-4a41-855b-3181e4a7c61a",
+      "skill_id": "34a2a8d2-c202-42fb-ac60-10e32806a7ae",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:26.605Z"
+    },
+    {
+      "id": "42dea7c7-1bae-4243-85ab-803242b87269",
+      "provider_profile_id": "3b016369-f8c3-4a41-855b-3181e4a7c61a",
+      "skill_id": "5edd8b27-df8c-4c9b-9399-46b82522edfd",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:26.872Z"
+    },
+    {
+      "id": "dd5ce634-e8cb-43c3-accf-654cb3602af4",
+      "provider_profile_id": "3b016369-f8c3-4a41-855b-3181e4a7c61a",
+      "skill_id": "6b532bd9-56eb-46e2-ace9-b3d65d403909",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:27.127Z"
+    },
+    {
+      "id": "81653297-e098-46d2-ad54-c974ff07e284",
+      "provider_profile_id": "3b016369-f8c3-4a41-855b-3181e4a7c61a",
+      "skill_id": "80ca8959-fd02-4add-9c59-98d784b0c5d8",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:27.432Z"
+    },
+    {
+      "id": "8c33c92d-1237-45db-8f96-01695c47a85d",
+      "provider_profile_id": "119ba6fa-4f1b-4f18-b58b-9c8e2cd7e9d8",
+      "skill_id": "3401046b-48e0-4661-9a77-bbb6cc24b490",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:28.041Z"
+    },
+    {
+      "id": "414089df-175c-44eb-8463-055155b849c1",
+      "provider_profile_id": "119ba6fa-4f1b-4f18-b58b-9c8e2cd7e9d8",
+      "skill_id": "39ed356e-ffbf-47b8-8020-8786ee354b30",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:28.317Z"
+    },
+    {
+      "id": "37d18ee0-0759-4fed-86bb-e5804bb62bfb",
+      "provider_profile_id": "119ba6fa-4f1b-4f18-b58b-9c8e2cd7e9d8",
+      "skill_id": "3e7e5305-6fea-44b9-a91d-1f6449018fe5",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:28.596Z"
+    },
+    {
+      "id": "1b3994fd-fa42-4546-8120-e4e859a272a1",
+      "provider_profile_id": "119ba6fa-4f1b-4f18-b58b-9c8e2cd7e9d8",
+      "skill_id": "40774188-11a8-423a-82e3-72981b11fed1",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:28.877Z"
+    },
+    {
+      "id": "25ffb65b-fbfe-4ddb-872b-18305e5b917d",
+      "provider_profile_id": "119ba6fa-4f1b-4f18-b58b-9c8e2cd7e9d8",
+      "skill_id": "45eb11e4-c891-41f2-8921-16698561b2d2",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:29.131Z"
+    },
+    {
+      "id": "2d6a817f-e149-4952-a126-31403979d72f",
+      "provider_profile_id": "5311a161-a0b2-4458-b9a1-f73c28123677",
+      "skill_id": "2c67b572-11e3-46c3-9d3a-d6523e5c620d",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:29.737Z"
+    },
+    {
+      "id": "29303643-409d-4893-93bc-9dd5542a810b",
+      "provider_profile_id": "5311a161-a0b2-4458-b9a1-f73c28123677",
+      "skill_id": "2e73ae2e-892d-4c1c-89a9-4432588f32de",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:30.058Z"
+    },
+    {
+      "id": "d08f1e0a-1f91-469e-b026-65013c71bae2",
+      "provider_profile_id": "5311a161-a0b2-4458-b9a1-f73c28123677",
+      "skill_id": "33d9da4c-5531-459e-8056-d50d36d12c2e",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:30.357Z"
+    },
+    {
+      "id": "bce32a3c-d1a9-42df-9fa3-9b9562cda8dd",
+      "provider_profile_id": "5311a161-a0b2-4458-b9a1-f73c28123677",
+      "skill_id": "6c7ac850-1cfc-4159-9b55-66740c0e40ae",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:30.656Z"
+    },
+    {
+      "id": "8520c057-f85c-4df1-8304-119a9ddc0f2e",
+      "provider_profile_id": "5311a161-a0b2-4458-b9a1-f73c28123677",
+      "skill_id": "6f4c4b48-7530-4bcb-b9cd-a7b1dca08ea4",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:30.955Z"
+    },
+    {
+      "id": "c2e73aff-479f-41e3-b098-b1f394c450de",
+      "provider_profile_id": "56c66f94-c2fa-4144-8f4e-0b0146d7e0ac",
+      "skill_id": "003002ea-a885-4903-91e8-555b3f2189ee",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:31.582Z"
+    },
+    {
+      "id": "a8069950-35a5-4a42-a6fb-25ad7a8efb9b",
+      "provider_profile_id": "56c66f94-c2fa-4144-8f4e-0b0146d7e0ac",
+      "skill_id": "0044b46e-0dca-4e7a-8e95-79ebc58b53ab",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:31.893Z"
+    },
+    {
+      "id": "9773b4c0-ee88-42f7-acdc-617806e5844a",
+      "provider_profile_id": "56c66f94-c2fa-4144-8f4e-0b0146d7e0ac",
+      "skill_id": "0104fdc4-f010-4d64-81f8-49f7223b4889",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:32.188Z"
+    },
+    {
+      "id": "df0b86ce-c65d-4881-9543-ee0efc54eaa2",
+      "provider_profile_id": "56c66f94-c2fa-4144-8f4e-0b0146d7e0ac",
+      "skill_id": "02be7e6d-39c8-46cf-86ac-b0792eb9a404",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:32.492Z"
+    },
+    {
+      "id": "c768e60b-c2c7-4cac-9143-ab7c6d195ce1",
+      "provider_profile_id": "56c66f94-c2fa-4144-8f4e-0b0146d7e0ac",
+      "skill_id": "050d0b69-fcbe-4ae0-bc90-d98e42157c74",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:32.796Z"
+    },
+    {
+      "id": "3c11e63e-4c44-4913-a35d-356683747682",
+      "provider_profile_id": "54e8e111-ec37-4c1b-8b2c-732cf3ae9884",
+      "skill_id": "00491e57-25e8-4cc8-bece-b284af516ddf",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:33.372Z"
+    },
+    {
+      "id": "dd179851-56f1-4aee-afb0-643608b9f6e2",
+      "provider_profile_id": "54e8e111-ec37-4c1b-8b2c-732cf3ae9884",
+      "skill_id": "00ce3c22-8b43-4a39-9043-dd790d59882f",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:33.652Z"
+    },
+    {
+      "id": "6a4532f1-71bc-41c6-a484-89d911a0d8a8",
+      "provider_profile_id": "54e8e111-ec37-4c1b-8b2c-732cf3ae9884",
+      "skill_id": "014607b5-6ee4-4f31-ba76-adc78d4665b8",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:33.952Z"
+    },
+    {
+      "id": "f97825f3-6abd-41bb-bdd0-00041c063403",
+      "provider_profile_id": "54e8e111-ec37-4c1b-8b2c-732cf3ae9884",
+      "skill_id": "017ef644-cfe4-41a6-82fc-deabe991df46",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:34.221Z"
+    },
+    {
+      "id": "f6f31ebd-37c0-4105-9b55-1d64364fb9cf",
+      "provider_profile_id": "54e8e111-ec37-4c1b-8b2c-732cf3ae9884",
+      "skill_id": "01e31dc5-5b1f-4166-a951-4323ad7ece12",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:34.552Z"
+    },
+    {
+      "id": "cbac074e-60ae-4c15-863d-c04e127dac29",
+      "provider_profile_id": "9f71e23f-5af6-4def-8293-437f8d10538e",
+      "skill_id": "0c05141f-cae6-4952-8de5-b7a9b99e6f95",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:35.160Z"
+    },
+    {
+      "id": "ce5f57e9-0b0d-4bc0-8779-c74557add5a9",
+      "provider_profile_id": "9f71e23f-5af6-4def-8293-437f8d10538e",
+      "skill_id": "0cda6666-8bbf-4400-910d-e22c6c518306",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:35.482Z"
+    },
+    {
+      "id": "d076112b-1355-45fb-af7e-6a77874755a6",
+      "provider_profile_id": "9f71e23f-5af6-4def-8293-437f8d10538e",
+      "skill_id": "14bcf687-dfca-4a8e-8c65-4ffde753b8fb",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:35.781Z"
+    },
+    {
+      "id": "73bb3836-6dbc-4dd7-bb15-597672b57134",
+      "provider_profile_id": "9f71e23f-5af6-4def-8293-437f8d10538e",
+      "skill_id": "1e99b316-1fa9-419e-82a2-260f3ffec99e",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:36.077Z"
+    },
+    {
+      "id": "f54c04d0-5453-474c-be98-6c65cea45243",
+      "provider_profile_id": "9f71e23f-5af6-4def-8293-437f8d10538e",
+      "skill_id": "413a2837-8147-41b1-979d-4bee921b98e3",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:36.362Z"
+    },
+    {
+      "id": "9210f3c1-753c-40dc-b0a8-1c0aedc79025",
+      "provider_profile_id": "9db1aaa0-d023-416c-a025-ea13616c3217",
+      "skill_id": "04add3c7-f3c1-4223-bdd2-b605da41b46b",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:36.986Z"
+    },
+    {
+      "id": "701545cd-e6d6-4ca7-821e-47b4db245592",
+      "provider_profile_id": "9db1aaa0-d023-416c-a025-ea13616c3217",
+      "skill_id": "059a322b-a590-4411-82c6-ebcfc0b07440",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:37.277Z"
+    },
+    {
+      "id": "092f2803-3a8b-42c9-8fb6-11b06706c4a7",
+      "provider_profile_id": "9db1aaa0-d023-416c-a025-ea13616c3217",
+      "skill_id": "06147d2f-05f0-472b-bbbf-f84b9f871da5",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:37.556Z"
+    },
+    {
+      "id": "7dbf263c-6567-4c51-b90b-72ff221c2484",
+      "provider_profile_id": "9db1aaa0-d023-416c-a025-ea13616c3217",
+      "skill_id": "08274fa8-70da-47a7-a9fe-9f0c8944aaa5",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:37.912Z"
+    },
+    {
+      "id": "1f27b865-33b8-4abb-b76e-f1de9bc00e8e",
+      "provider_profile_id": "9db1aaa0-d023-416c-a025-ea13616c3217",
+      "skill_id": "0bc8e121-322b-4d7c-9ef0-6c8b4b5db462",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:38.291Z"
+    },
+    {
+      "id": "97ff5ff8-6cc4-4555-afad-2080c571b521",
+      "provider_profile_id": "a66fa130-7d72-4aaa-82d4-b63a7d5b0945",
+      "skill_id": "0d0b129c-61df-4773-8987-9a76af0b02b2",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:38.958Z"
+    },
+    {
+      "id": "4fc2804e-2a97-43f0-9282-befc7af4a7b6",
+      "provider_profile_id": "a66fa130-7d72-4aaa-82d4-b63a7d5b0945",
+      "skill_id": "6166c386-2c30-407b-9916-9f9cf15bbe57",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:39.261Z"
+    },
+    {
+      "id": "0f86b5f6-8910-4054-a39f-430f5a5643b6",
+      "provider_profile_id": "a66fa130-7d72-4aaa-82d4-b63a7d5b0945",
+      "skill_id": "6e46f15b-a020-4b03-8ad2-7d91051b8a49",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:39.597Z"
+    },
+    {
+      "id": "cf870bbe-0edb-404b-b6e6-49deab5c07a5",
+      "provider_profile_id": "a66fa130-7d72-4aaa-82d4-b63a7d5b0945",
+      "skill_id": "6fc20e07-4069-44a1-84c6-b01995916e3c",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:39.892Z"
+    },
+    {
+      "id": "23b3d259-6990-45cd-b2a4-52a7c9d12db7",
+      "provider_profile_id": "a66fa130-7d72-4aaa-82d4-b63a7d5b0945",
+      "skill_id": "a0bc10db-72d4-462e-a26c-8b313b5b6324",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:40.237Z"
+    },
+    {
+      "id": "e7ffcaa3-87ce-485f-bf9a-0a3681d8a5a2",
+      "provider_profile_id": "840289c9-863b-4573-90dd-2db7b6bc068f",
+      "skill_id": "138f8523-26e7-4364-8f1d-42db90eeb933",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:40.920Z"
+    },
+    {
+      "id": "3482a477-4e37-49e8-b9f8-55ba25c26940",
+      "provider_profile_id": "840289c9-863b-4573-90dd-2db7b6bc068f",
+      "skill_id": "206189a8-d17a-46d0-aa7e-bafc31c2c054",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:41.251Z"
+    },
+    {
+      "id": "5cdebc9b-e0f8-4187-99e6-9f17418ba2d1",
+      "provider_profile_id": "840289c9-863b-4573-90dd-2db7b6bc068f",
+      "skill_id": "26fe34b2-2ad9-44fb-b17e-b1ceed74663d",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:41.536Z"
+    },
+    {
+      "id": "3df8ad04-57bf-4d12-80e4-bac6ba645532",
+      "provider_profile_id": "840289c9-863b-4573-90dd-2db7b6bc068f",
+      "skill_id": "7391b5c6-08fd-485f-8be6-4478492fa462",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:41.867Z"
+    },
+    {
+      "id": "0c26e6c7-b6c5-4669-ab14-8d35a9ca3a1b",
+      "provider_profile_id": "840289c9-863b-4573-90dd-2db7b6bc068f",
+      "skill_id": "a523c81d-4a1f-45c9-84b1-8c5a628e6a73",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:42.167Z"
+    },
+    {
+      "id": "8e84b372-67d0-45e9-969a-e79b068a997c",
+      "provider_profile_id": "9d0ce00d-fe47-4029-bfbd-e585b3e99ce5",
+      "skill_id": "7391b5c6-08fd-485f-8be6-4478492fa462",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:42.842Z"
+    },
+    {
+      "id": "dd567a71-706b-4bac-8216-31774b81d496",
+      "provider_profile_id": "9d0ce00d-fe47-4029-bfbd-e585b3e99ce5",
+      "skill_id": "a523c81d-4a1f-45c9-84b1-8c5a628e6a73",
+      "source": "DERIVED",
+      "months_total": 0,
+      "weight": 0,
+      "created_at": "2026-08-13T23:44:43.197Z"
+    }
+  ]
+}
