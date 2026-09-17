@@ -203,7 +203,17 @@ export function matchSkills(
     const rows = spanning.get(hit.name.toLowerCase());
     if (!rows) return hit;
     const narrowed = rows.filter((r) => r.role_type_id === anchor);
-    return narrowed.length === 1 ? narrowed[0] : hit;
+    /* ⚠⚠ ANY ROW UNDER THE ANCHORED ROLE — NOT "exactly one or give up".
+       `Project Costing` (4 rows) and `Grants Management` (3) carry SEVERAL rows
+       under Application-Specific, differing only by DOMAIN. Requiring a unique
+       survivor made those two fall back to an Operations-Specific row, which is
+       ⚠ STRICTLY WORSE THAN THE COIN FLIP THE 46 GET: `E509`'s prune deletes by
+       `role_type_id`, so an Application-Specific provider did not get the skill
+       MISFILED — they got it DELETED.
+       ⚠⚠ SCOTT, 2026-09-16: *"A wrong domain is a bad label. A wrong role is a
+       missing skill."* The domain here is the same coin flip the 46 already
+       carry, and the role is now right. */
+    return narrowed.length > 0 ? narrowed[0] : hit;
   };
 
   const matched = new Map<string, CatalogSkill>();
