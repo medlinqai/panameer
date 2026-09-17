@@ -302,47 +302,52 @@ const MAX_VISIBLE_OPTIONS = 15;
 const MAX_SKILL_SUGGESTIONS = 12;
 
 /*
-  ── ⚠⚠ PROPOSED WORDING, AWAITING SCOTT (`P2-J1.4-E517`) ────────────────────
+  ── ⚠⚠ NAMED BY SCOTT, 2026-09-17 (`P2-J1.4-E517`) ─────────────────────────
 
-  ⚠ Scott, 2026-09-17: *"PROPOSE THE HEADING AND THE ONE-LINE EXPLANATION. Do
-  not ship wording — I name things."* ⚠⚠ THE MECHANISM IS BUILT AND GATED; THESE
-  TWO STRINGS ARE PLACEHOLDERS SO HIS RULING IS A ONE-LINE SWAP, not a rebuild.
+  ⚠ Scott names things. These were proposed, he ruled, and the alternatives are
+  kept so nobody re-opens a settled choice (`E164`).
 
-  ⚠ The alternatives reported with this build, so the reasoning is not lost:
-    heading      — 1. "Skills your roles don't show"  ← in place
-                   2. "Held, but not shown"
-                   3. "Not on your profile right now"
-    explanation  — 1. the line below  ← in place
-                   2. "You still hold these. Your current roles just don't
-                      offer them to buyers."
-                   3. "Widen your roles to show these again, or remove any you
-                      no longer want."
+  ⚠ HEADING — chosen: "Not on your profile right now".
+    ⚠ SUPERSEDED, quoted not deleted: "Skills your roles don't show" · "Held,
+    but not shown".
+    ⚠⚠ THE CHOSEN ONE IS THE ONLY ONE THAT NAMES A STATE RATHER THAN A CAUSE,
+    and "right now" is what says it is reversible.
 
-  ⚠⚠ WHAT THE WORDING MUST NOT SAY, whichever he picks: that the skill is gone,
-  expired, wrong or unverified. It is held, it is his, and nothing about it has
-  been judged — saying otherwise re-creates the harm `E517` fixed in copy.
+  ⚠ EXPLANATION — chosen: the line below, with "You still hold these" →
+    "These are still yours".
+    ⚠ SUPERSEDED, quoted not deleted: "You still hold these — your current roles
+    just don't put them in front of buyers. …" · "You still hold these. Your
+    current roles just don't offer them to buyers." · "Widen your roles to show
+    these again, or remove any you no longer want."
+
+  ⚠⚠ WHAT THE WORDING MUST NOT SAY, and this still binds if anyone edits it:
+  that the skill is gone, expired, wrong or unverified. It is held, it is
+  theirs, and nothing about it has been judged — saying otherwise re-creates the
+  harm `E517` fixed, in copy.
 */
-const HELD_NOT_SHOWN_HEADING = "Skills your roles don't show";
+const HELD_NOT_SHOWN_HEADING = "Not on your profile right now";
 const HELD_NOT_SHOWN_EXPLANATION =
-  "You still hold these — your current roles just don't put them in front of buyers. Widen your roles to show them again, or remove any you no longer want.";
+  "These are still yours — your current roles just don't put them in front of buyers. Widen your roles to show them again, or remove any you no longer want.";
 
 /*
-  ⚠⚠ PROPOSED, NOT NAMED (`P2-J1.4-E517`) — the roles step's one-liner.
-  ⚠ Scott: *"REPORT THE WORDING, do not ship it."* Same treatment as the two
-  strings above: a one-line swap when he names it.
+  ⚠⚠ NAMED BY SCOTT, 2026-09-17 (`P2-J1.4-E517`) — the roles step's one-liner.
+  ⚠ He took the alternative, not the first draft.
 
-  ⚠ The alternatives reported with this build:
-    1. the line below  ← in place
-    2. "{n} of your skills sit under roles you haven't picked. They stay on your
-       record — they just won't be offered to buyers."
-    3. "Buyers won't see {n} of your skills with these roles selected. Nothing
-       is deleted."
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    · "{n} skills you hold aren't shown by the roles you've picked. They're
+      still yours — re-tick the role to show them again."
+    · "Buyers won't see {n} of your skills with these roles selected. Nothing
+      is deleted."
 
-  ⚠⚠ ALL THREE SAY THE SKILLS ARE KEPT, and that is not decoration — it is the
-  fact the old prune got wrong. A bare count reads as a loss.
+  ⚠⚠ NO SINGULAR/PLURAL BRANCHING, AND THAT IS A PROPERTY OF THE CHOSEN STRING,
+  not an omission: "{n} of your skills" reads correctly at every n >= 1, and the
+  line does not render at 0.
+
+  ⚠ IT SAYS THE SKILLS ARE KEPT. That is not decoration — it is the fact the old
+  prune got wrong. A bare count reads as a loss.
 */
 const ROLE_STEP_HIDDEN_NOTE = (n: number) =>
-  `${n} skill${n === 1 ? "" : "s"} you hold ${n === 1 ? "isn't" : "aren't"} shown by the roles you've picked. ${n === 1 ? "It's" : "They're"} still yours — re-tick the role to show ${n === 1 ? "it" : "them"} again.`;
+  `${n} of your skills sit under roles you haven't picked. They stay on your record — they just won't be offered to buyers.`;
 /** Per GROUP, so every specialization section stays represented (E054). */
 /** Per-group cap while SEARCHING — three groups have to share one window. */
 const MAX_SPECS_PER_GROUP = 6;
@@ -1337,6 +1342,26 @@ setScreen(target);
       };
     });
   };
+
+  /*
+    ── ⚠⚠ SHOWN vs HELD, ONCE, FOR THE WHOLE WIZARD (`P2-J1.4-E517`) ──────────
+
+    ⚠ Hoisted to component scope because THREE surfaces need the same split and
+    they must not disagree: the Skills step's basket, its held-but-not-shown
+    block, and ⚠⚠ THE REVIEW CARD — a screen headed "here is your profile" must
+    not list skills the profile does not show (Scott, 2026-09-17).
+
+    ⚠ Computed against `profile.roleTypeIds` — the roles IN THE WIZARD, not the
+    roles last saved — so unticking a role updates all three immediately.
+    ⚠⚠ `profile.skillNames` STAYS THE FULL HELD SET. Nothing here filters what
+    is HELD; this only decides what each surface SHOWS.
+  */
+  const shownSkillNames = profile.skillNames.filter((sk) =>
+    isSkillShown(profile.roleTypeIds, sk.roleTypeId)
+  );
+  const heldNotShownSkillNames = profile.skillNames.filter(
+    (sk) => !isSkillShown(profile.roleTypeIds, sk.roleTypeId)
+  );
 
   const goNext = () => {
     // E118 — an edit that came FROM the review goes back to it, once. The flag
@@ -2464,10 +2489,8 @@ setScreen(target);
         ⚠ `isSkillShown` is the same function the profile, the provider cards
         and the matcher read. One rule, gated by `check:shown-skills`.
       */
-      const isHiddenSkill = (sk: { roleTypeId?: string | null }) =>
-        !isSkillShown(profile.roleTypeIds, sk.roleTypeId);
-      const basketSkills = profile.skillNames.filter((sk) => !isHiddenSkill(sk));
-      const heldNotShown = profile.skillNames.filter(isHiddenSkill);
+      const basketSkills = shownSkillNames;
+      const heldNotShown = heldNotShownSkillNames;
       /* ⚠ The basket counts what it lists. `canSave` still counts everything
          HELD (`totalPicked`), so a provider whose skills are all out-of-role is
          never trapped on this step by a number they cannot see. */
@@ -4945,12 +4968,27 @@ setScreen(target);
               a six-cell grid needed no restructuring at all.
             */}
             <div className="mt-5 grid gap-5 lg:grid-cols-2">
+              {/*
+                ⚠⚠ THE REVIEW CARD SHOWS WHAT THE PROFILE SHOWS (`P2-J1.4-E517`).
+                ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                  `edit={sectionAction("Skills", "skills", profile.skillNames.length === 0)}`
+                  `skills={profile.skillNames}`
+
+                ⚠ Scott, 2026-09-17: *"a screen headed 'here is your profile'
+                must not list skills the profile does not show."* ⚠⚠ THIS CARD
+                IS THE SAME MISMATCH THE SKILLS BASKET HAD — a chip claiming to
+                be on the profile when every offer-side read filters it out.
+                ⚠ The button label follows the card, so "Add Skills" appears
+                when the card is empty rather than "Edit" over nothing.
+                ⚠⚠ THE ROWS ARE UNTOUCHED. The Skills step still lists every
+                held skill, which is where they can be seen and removed.
+              */}
               <ProfileCard
                 title="Skills"
-                edit={sectionAction("Skills", "skills", profile.skillNames.length === 0)}
+                edit={sectionAction("Skills", "skills", shownSkillNames.length === 0)}
               >
                 <SkillsBody
-                  skills={profile.skillNames}
+                  skills={shownSkillNames}
                   field={
                     profile.roleTypeName && profile.pillarName
                       ? { role: profile.roleTypeName, domain: profile.pillarName }
