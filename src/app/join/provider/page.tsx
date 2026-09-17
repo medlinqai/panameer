@@ -716,6 +716,25 @@ export default function JoinProviderPage() {
   /* ⚠ `E511` PART 1 — this card's own error, because the page-level Notice is a
      screen and a half above it. See `confirmSuggestions`. */
   const [suggestError, setSuggestError] = useState<string | null>(null);
+  /*
+    ── ⚠⚠ THE REVIEW STEP'S PER-CARD ERRORS (`P2-J1.4-E516` PART 2) ──────────
+
+    ⚠ THE DEFECT NAMES ITSELF: A CONTROL BELOW THE FOLD WHOSE FAILURE RENDERS
+    ABOVE IT. The page-level `Notice` is at the top of the `WizardShell`; the
+    review step is the longest page in the product, so a card near its foot puts
+    the message a screen or more out of view. ⚠⚠ A CORRECT ERROR RENDERED WHERE
+    NOBODY CAN SEE IT IS INDISTINGUISHABLE FROM A DEAD BUTTON — `E511` proved
+    that on the suggestions card and this applies the same fix to the other
+    three cards that can fail.
+    ⚠ THIS IS NOT A SWEEP OF ALL 22 `setError` SITES. On a short step the
+    top-of-page Notice is IN VIEW and correct; changing it there would be churn
+    with a regression risk and no gain.
+    ⚠⚠ BOTH ARE SET, NEVER ONE. The page-level Notice is untouched, so a reader
+    who IS at the top still sees it. These ADD a local copy.
+  */
+  const [bioError, setBioError] = useState<string | null>(null);
+  const [workImportError, setWorkImportError] = useState<string | null>(null);
+  const [certError, setCertError] = useState<string | null>(null);
   const [photoModal, setPhotoModal] = useState(false);
 
   /**
@@ -4543,9 +4562,24 @@ setScreen(target);
                   onChange={(e) =>
                     setProfile((pp) => ({ ...pp, overview: e.target.value }))
                   }
-                  onBlur={() => {
-                    if (profile.overview.trim().length <= MAX_BIO) {
-                      void postStep("bio", { overview: profile.overview });
+                  onBlur={async () => {
+                    if (profile.overview.trim().length > MAX_BIO) return;
+                    /*
+                      ⚠⚠ `void` DISCARDED THE ANSWER (`E516` PART 2). `postStep`
+                      returns whether the save worked, and this threw it away —
+                      so a failed bio save was silent even once `postStep` had a
+                      `catch`, because nothing here ever read the result. ⚠ It is
+                      awaited now, and the failure lands ON THIS CARD.
+                      ⚠ A BLUR, NOT A BUTTON: there is no control to disable and
+                      nothing for the provider to re-click, which is exactly why
+                      the message has to appear where they are typing.
+                    */
+                    setBioError(null);
+                    const saved = await postStep("bio", { overview: profile.overview });
+                    if (!saved) {
+                      setBioError(
+                        "That didn't save. Check your connection — your text is still here."
+                      );
                     }
                   }}
                   placeholder="A few lines about what you do best."
@@ -4555,6 +4589,12 @@ setScreen(target);
                       : ""
                   }
                 />
+                {/* ⚠⚠ THE FAILURE, ON THE CARD (`E516` PART 2). */}
+                {bioError && (
+                  <p className="mt-3 rounded-[10px] border border-line bg-ink/[0.03] px-3 py-2 text-[13.5px] text-ink">
+                    {bioError}
+                  </p>
+                )}
                 {noteFor("overview-empty")}
                 {profile.overview.trim().length > MAX_BIO ? (
                   <p role="alert" className="mt-2 text-[13.5px] font-semibold text-red-700">
@@ -4581,8 +4621,30 @@ setScreen(target);
                       onApplied={async () => {
                         // Re-read the profile so the section shows what was just
                         // imported, rather than trusting a local patch.
-                        const r = await fetch("/api/onboarding/status");
-                        if (r.ok) hydrate(await r.json());
+                        /*
+                          ⚠⚠ THIS `fetch` HAD NO `catch` AT ALL (`E516` PART 2) —
+                          a bare call in an async handler, so a thrown request
+                          was an unhandled rejection and the section simply never
+                          refreshed. ⚠ THE IMPORT ITSELF HAD ALREADY SUCCEEDED,
+                          which makes the silence worse than usual: the work was
+                          saved and the page kept showing the old, empty section.
+                          ⚠ So the sentence says exactly that.
+                        */
+                        setWorkImportError(null);
+                        try {
+                          const r = await fetch("/api/onboarding/status");
+                          if (r.ok) {
+                            hydrate(await r.json());
+                            return;
+                          }
+                          setWorkImportError(
+                            "Your résumé was imported, but this section couldn't refresh. Reload the page to see it."
+                          );
+                        } catch {
+                          setWorkImportError(
+                            "Your résumé was imported, but this section couldn't refresh. Check your connection and reload."
+                          );
+                        }
                       }}
                     />
                     {/* ⚠ SUPERSEDED, quoted (`E412` WS-1):
@@ -4597,6 +4659,14 @@ setScreen(target);
                   </span>
                 }
               >
+                {/* ⚠⚠ THE FAILURE, ON THE CARD (`E516` PART 2). It sits at the
+                    TOP of the body, directly under the import control that
+                    failed, rather than at the foot below the employer list. */}
+                {workImportError && (
+                  <p className="mb-3 rounded-[10px] border border-line bg-ink/[0.03] px-3 py-2 text-[13.5px] text-ink">
+                    {workImportError}
+                  </p>
+                )}
                 {/*
                   E129 — THE REACHABLE OFFER. An empty work history on the review
                   used to be a dead end: the AI pass only existed on the import
@@ -4793,9 +4863,27 @@ setScreen(target);
                       // server immediately after, so a rejected write cannot
                       // leave the page showing something that wasn't stored.
                       setProfile((pp) => ({ ...pp, certifications: next }));
-                      return saveCertifications(next);
+                      /* ⚠⚠ `E516` PART 2 — the failure lands ON THIS CARD. The
+                         optimistic update above is exactly why: on a failed save
+                         the list already shows the new certification, so a
+                         message a screen away would leave the provider believing
+                         it was stored. */
+                      setCertError(null);
+                      const saved = await saveCertifications(next);
+                      if (!saved) {
+                        setCertError(
+                          "That didn't save. Check your connection and try again."
+                        );
+                      }
+                      return saved;
                     }}
                   />
+                  {/* ⚠⚠ THE FAILURE, ON THE CARD (`E516` PART 2). */}
+                  {certError && (
+                    <p className="mt-3 rounded-[10px] border border-line bg-ink/[0.03] px-3 py-2 text-[13.5px] text-ink">
+                      {certError}
+                    </p>
+                  )}
                 </ProfileCard>
 
 
