@@ -4,6 +4,7 @@ import { getSessionViewer } from "@/lib/session";
 import { ownedProviderProfile } from "@/lib/access";
 import { suggestableSkills } from "@/lib/resume/match";
 import { getOnboardingState } from "@/lib/onboarding";
+import { SELF_ADDED_WEIGHT } from "@/lib/provider-rollup";
 import { activeCatalogId } from "@/lib/catalog";
 
 /**
@@ -98,8 +99,27 @@ export async function POST(request: Request) {
     });
     // createMany + skipDuplicates: re-confirming a term must not 500 on the
     // composite unique.
+    /*
+      ⚠⚠ `source` AND `weight` ARE NAMED, AND THAT IS THE WHOLE POINT
+      (`P1-A1.4-E553`). ⚠ SUPERSEDED, quoted not deleted (`E164`):
+          data: [{ provider_profile_id: profile.id, skill_id: skill.id }],
+      ⚠⚠ `ProviderSkill.source` DEFAULTS TO `DERIVED`, so this minted a row the
+      ROLLUP believes it wrote — and `recomputeProviderRollup` deletes every
+      DERIVED row before rebuilding from dated jobs. A term the provider
+      confirmed has no job behind it, so the rebuild could never recreate it and
+      the next import silently destroyed it. ⚠ A CONFIRMED SUGGESTION IS
+      `SELF_ADDED` — *"claimed on the profile with no job behind it"* — which the
+      rollup preserves and upgrades if a job ever derives it.
+      ⚠ `SELF_ADDED_WEIGHT` travels with it or `getOnboardingState`'s
+      `weight > 0 || source === "SELF_ADDED"` filter hides the row.
+    */
     await prisma.providerSkill.createMany({
-      data: [{ provider_profile_id: profile.id, skill_id: skill.id }],
+      data: [{
+        provider_profile_id: profile.id,
+        skill_id: skill.id,
+        source: "SELF_ADDED" as const,
+        weight: SELF_ADDED_WEIGHT,
+      }],
       skipDuplicates: true,
     });
     added.push(skill.name);

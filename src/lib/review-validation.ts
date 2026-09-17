@@ -229,8 +229,11 @@ export function reviewItems(p: ReviewInput): ReviewItem[] {
     chg(
       "employer-dates",
       undated.length === 1
-        ? `${undated[0].name} has no start date — the profile can't show how long you were there.`
-        : `${undated.length} employers have no start date — the profile can't show how long you were there.`,
+        /* ⚠ "how long this role lasted", not "how long you were there" — the
+           entry may be a CURRENT role, where the past tense reads wrong
+           (Scott, 2026-09-17). */
+        ? `${undated[0].name} has no start date — the profile can't show how long this role lasted.`
+        : `${undated.length} employers have no start date — the profile can't show how long these roles lasted.`,
       "Add dates",
       { kind: "step", step: "tell_us" }
     );

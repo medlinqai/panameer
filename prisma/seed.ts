@@ -597,6 +597,10 @@ async function main() {
       },
       update: {},
       create: {
+        /* ⚠ `P1-A1.4-E553` — a seeded skill has no job behind it, so it is
+           SELF_ADDED. Left unset it defaulted to DERIVED, and the first rollup
+           on the profile deleted it and could never rebuild it. */
+        source: "SELF_ADDED",
         provider_profile_id: providerProfile.id,
         skill_id: skill.id,
       },
