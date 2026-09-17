@@ -742,7 +742,18 @@ async function sendPostedConfirmation(
       viewUrl: `${base}/work-requests/${workRequestId}/share`,
       logoUrl: `${base}/brand/panameer-lockup-ink.png`,
     });
-    await sendEmail({ to, subject, html, text });
+    /* ⚠ NO SUBJECT ROW PER MESSAGE: `WorkRequest` is what the mail is ABOUT, and
+       one request produces many sends to many recipients. The request id is
+       still the most useful pointer, so it is recorded as the subject. */
+    await sendEmail({
+      to,
+      subject,
+      html,
+      text,
+      template: "work-request-posted",
+      subjectType: "WorkRequest",
+      subjectId: workRequestId,
+    });
   } catch (e) {
     console.error("[work-request] posted confirmation failed to send:", e);
   }

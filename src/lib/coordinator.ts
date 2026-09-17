@@ -42,6 +42,8 @@ const coordinatorName = (p: { first_name: string; last_name: string }) =>
 
 /** Send (or dev-log) an invite email for an existing invite row. */
 async function sendInviteEmail(invite: {
+  /* ⚠ `P2-J3-E522` Part A — the receipt needs to say WHICH invite. */
+  id: string;
   invitee_email: string;
   invitee_first_name: string | null;
   message: string | null;
@@ -56,7 +58,15 @@ async function sendInviteEmail(invite: {
     message: invite.message,
   });
   if (process.env.RESEND_API_KEY) {
-    await sendEmail({ to: invite.invitee_email, subject, html, text });
+    await sendEmail({
+      to: invite.invitee_email,
+      subject,
+      html,
+      text,
+      template: "invite-provider",
+      subjectType: "CoordinatorInvite",
+      subjectId: invite.id,
+    });
     return { sent: true };
   }
   console.warn(
@@ -104,6 +114,7 @@ export async function createInvite(
   });
 
   const res = await sendInviteEmail({
+    id: invite.id,
     invitee_email: email,
     invitee_first_name: invite.invitee_first_name,
     message: invite.message,
@@ -133,6 +144,7 @@ export async function resendInvite(viewer: Viewer, inviteId: string) {
     },
   });
   const res = await sendInviteEmail({
+    id: invite.id,
     invitee_email: invite.invitee_email,
     invitee_first_name: invite.invitee_first_name,
     message: invite.message,

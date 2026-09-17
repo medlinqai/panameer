@@ -122,7 +122,9 @@ export async function requestProjectValidation(
 
   const raw = randomBytes(32).toString("base64url");
 
-  await prisma.$transaction([
+  /* ⚠ `tx[1]` is the new ProjectValidation row — the receipt's subject
+     (`P2-J3-E522` Part A). */
+  const tx = await prisma.$transaction([
     // A resend SUPERSEDES: only the newest link may work. Marked EXPIRED rather
     // than deleted so the history of what was sent survives.
     prisma.projectValidation.updateMany({
@@ -159,7 +161,15 @@ export async function requestProjectValidation(
   });
 
   if (process.env.RESEND_API_KEY) {
-    await sendEmail({ to: contactEmail, subject, html, text });
+    await sendEmail({
+      to: contactEmail,
+      subject,
+      html,
+      text,
+      template: "project-validation",
+      subjectType: "ProjectValidation",
+      subjectId: tx[1].id,
+    });
     return { sent: true, contactEmail };
   }
 
@@ -327,7 +337,17 @@ async function notifyProviderValidated(projectId: string) {
   });
 
   if (process.env.RESEND_API_KEY) {
-    await sendEmail({ to: email, subject, html, text });
+    /* ⚠ THE CONFIRMATION BACK TO THE PROVIDER. There is no row per MESSAGE here
+       — the send follows a `project.update` — so the PROJECT is the subject. */
+    await sendEmail({
+      to: email,
+      subject,
+      html,
+      text,
+      template: "project-validated",
+      subjectType: "Project",
+      subjectId: projectId,
+    });
     return;
   }
   console.warn(

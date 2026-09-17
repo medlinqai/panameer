@@ -300,7 +300,15 @@ export async function POST(req: Request) {
         reportUrl: url,
         logoUrl: `${appBaseUrl()}/brand/panameer-lockup-ink.png`,
       });
-      await sendEmail({ to: email, subject: tpl.subject, html: tpl.html, text: tpl.text });
+      await sendEmail({
+        to: email,
+        subject: tpl.subject,
+        html: tpl.html,
+        text: tpl.text,
+        template: "assessment-ready",
+        subjectType: "Assessment",
+        subjectId: a.id,
+      });
       emailSent = true;
     } catch (e) {
       /* A REAL FAILURE: the key is present and the provider refused. */
