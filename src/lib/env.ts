@@ -80,6 +80,13 @@ const schema = z.object({
 
   // Email (Resend)
   RESEND_API_KEY: z.string().min(1).optional(),
+  /*
+    ⚠ `P2-J3-E522` Part A — the Resend webhook's signing secret, from the
+    webhook's own page in the Resend dashboard. ⚠⚠ OPTIONAL BY DESIGN: without
+    it the webhook route REFUSES EVERY REQUEST rather than trusting an unsigned
+    one, so a missing secret is a closed door, never an open one.
+  */
+  RESEND_WEBHOOK_SECRET: z.string().min(1).optional(),
   EMAIL_FROM: z.string().min(1).optional(),
 
   // OAuth (brief_Q) — all optional; a provider's button is live only when both

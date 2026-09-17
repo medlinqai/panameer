@@ -83,17 +83,52 @@ export function verifyUnsubscribeToken(
  * Two ways to be suppressed: a row for the exact category, or a row with a NULL
  * category, which means everything.
  */
-export async function isSuppressed(email: string, category?: string | null): Promise<boolean> {
+export async function isSuppressed(
+  email: string,
+  category?: string | null,
+  /*
+    ── ⚠⚠ THE ONE EXEMPTION, NAMED (`P2-J3-E522` PART A) ──────────────────────
+
+    ⚠ SCOTT, 2026-09-17: *"`EmailSuppression` exists to stop UNWANTED mail. A
+    password reset is mail the person asked for thirty seconds ago, about their
+    own account. Respecting suppression here means somebody who once
+    unsubscribed can never get back into their account, and the response is
+    deliberately silent, so they never learn why. That is a permanent lockout
+    with no explanation."*
+
+    ⚠⚠ BUT NO HOLE IN THE TRANSPORT. `E386` centralised this so a sender cannot
+    forget; an `if (template !== "password-reset")` inside `sendEmail` would be
+    exactly that hole. ⚠ So the bypass is a NAMED PARAMETER that only the reset
+    sender passes, and `check:sent-email` FAILS IF ANY OTHER SENDER PASSES IT —
+    the `check:derived-source` pattern Scott asked for.
+
+    ⚠⚠⚠ AND IT IS NARROW: a HARD BOUNCE IS NEVER BYPASSED. A bounce means the
+    address does not exist, so re-sending achieves nothing and damages a young
+    sending domain — the whole subject of `E522`. ⚠ Only `unsubscribe_link` and
+    `complaint` are overridden, and the reasons are matched EXPLICITLY rather
+    than by "anything that is not a bounce", so a new reason added later is
+    RESPECTED by default instead of silently bypassed.
+  */
+  bypassFor?: "password-reset"
+): Promise<boolean> {
   const normalized = normalizeEmail(email);
   const row = await prisma.emailSuppression.findFirst({
     where: {
       email: normalized,
       OR: [{ category: null }, ...(category ? [{ category }] : [])],
     },
-    select: { id: true },
+    select: { id: true, reason: true },
   });
-  return Boolean(row);
+  if (!row) return false;
+  if (bypassFor === "password-reset" && OVERRIDABLE_REASONS.includes(row.reason)) {
+    console.log(`[mail] suppression BYPASSED for password-reset (${row.reason}) -> ${normalized}`);
+    return false;
+  }
+  return true;
 }
+
+/** ⚠ The reasons a password reset may override. ⚠⚠ `bounce` IS NOT ONE. */
+export const OVERRIDABLE_REASONS = ["unsubscribe_link", "complaint"];
 
 /**
  * Record a suppression. ⚠ IDEMPOTENT — clicking unsubscribe twice is not an
