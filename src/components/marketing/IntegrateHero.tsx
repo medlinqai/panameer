@@ -145,8 +145,9 @@ export async function IntegrateHero() {
                   ⚠ SCOTT'S SUB-COPY, VERBATIM, with the curly apostrophe in
                   `Panameer’s`. ⚠ `in minutes` IS TESTABLE AND NOTHING BEHIND IT IS
                   BUILT — no `Integration` model, no punchout endpoint, no cXML
-                  handler. Unlike `/talent`'s `in under one minute`, this one cannot
-                  even be timed, because there is nothing to time. PRE-LAUNCH LIST.
+                  handler. Unlike `/talent`'s former `in under one minute` (retired
+                  by `E546`, 2026-09-17, because it no longer timed true), this one
+                  cannot even be timed, because there is nothing to time. PRE-LAUNCH LIST.
                 */}
                 {/*
                   ── ⚠⚠ SCOTT-APPROVED DESCRIPTION (`P1-ALL-E031` amendment §3) ──

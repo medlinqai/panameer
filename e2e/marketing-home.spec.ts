@@ -3164,7 +3164,10 @@ test.describe("hero clips — the -hero cuts, and only those", () => {
   }) => {
     for (const [url, needle] of [
       ["/learn", "courses to certification"],
-      ["/talent", "in under one minute"],
+      /* ⚠ `E546` — the headline no longer makes a time claim. SUPERSEDED, quoted
+         (`E164`): `["/talent", "in under one minute"]`. Lowercase: the probe
+         lower-cases the heading text before matching. */
+      ["/talent", "let it build your panameer profile for you"],
     ] as const) {
       await page.goto(url);
       const got = await page.evaluate((n) => {
