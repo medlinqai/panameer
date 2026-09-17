@@ -4,6 +4,7 @@
    the helper lives in `lib/employer-display.ts` and not beside the DB reads. */
 import { employerDisplayName } from "@/lib/employer-display";
 import { dateRangeLabel } from "@/lib/date-range-label";
+import { projectMonogram } from "@/lib/project-monogram";
 import { useCallback, useEffect, useState } from "react";
 import { Modal } from "@/components/Modal";
 /* ⚠ THE LOSS SENTENCE IS THE LIB'S, NOT RE-TYPED HERE (`E296`). */
@@ -856,9 +857,26 @@ export function EmployersStep({
                     ) : (
                       <span
                         aria-hidden
-                        className="grid h-10 w-10 flex-none place-items-center rounded-[8px] bg-magenta/10 text-[18px]"
+                        /*
+                          ⚠⚠ THE SECOND `📁`, AND THE BRIEF DID NOT KNOW ABOUT IT
+                          (`P2-J1.4-E512`). `E512` names `ProjectCard`'s fallback;
+                          this is the WIZARD's employer tile — same emoji, same
+                          wash, same 10×10 square. ⚠ Fixing one and not the other
+                          would make the wizard and the published profile disagree
+                          about what a logo-less row looks like.
+                          ⚠ SUPERSEDED, quoted not deleted (`E164`): `📁`.
+
+                          ⚠ ONE DIFFERENCE FROM THE PROJECT TILE: the RAW name is
+                          passed, never `employerDisplayName(e.name)`. An unnamed
+                          employer renders as "Independent" — a word WE supply
+                          (`E373`) — and a monogram of it would put `I` on a tile
+                          as if the person had typed it. ⚠⚠ No name, no letter.
+                        */
+                        className="grid h-10 w-10 flex-none place-items-center rounded-[8px] bg-magenta/10 text-ink"
                       >
-                        📁
+                        <span className="text-[14px] font-bold tracking-[0.02em]">
+                          {projectMonogram(e.name)}
+                        </span>
                       </span>
                     )}
                     <div className="min-w-0">
