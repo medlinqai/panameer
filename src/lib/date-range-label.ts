@@ -14,13 +14,14 @@
  *   start + current        → "2019 – Present"
  *   start, no end, NOT current → "Started 2019"   ⚠ states what is known, claims
  *                                                   nothing about the end
- *   no start + end         → "? – 2021"
- *   no start + current     → "? – Present"
+ *   no start + end         → "Ended 2021"
+ *   no start + current     → "Ongoing"
  *   nothing                → ""
  *
- * ⚠ "Started 2019" is option 1 of three Scott offered (his stated preference):
- * *"the only one that reads like a sentence rather than a missing value."*
- * ⚠ HE CONFIRMS OR CHANGES IT — this is the one line to edit.
+ * ⚠ "Started 2019" — CONFIRMED by Scott, 2026-09-17.
+ * ⚠⚠ AND THE MIRROR CASES ARE SENTENCES TOO (Scott, 2026-09-17): *"I am not
+ * showing a buyer a question mark."* SUPERSEDED, quoted not deleted (`E164`):
+ * `"? – 2021"` and `"? – Present"`.
  */
 export function dateRangeLabel(
   start: string | null | undefined,
@@ -31,7 +32,7 @@ export function dateRangeLabel(
   const s = y(start);
   const e = y(end);
   if (!s && !e && !isCurrent) return "";
-  if (e) return `${s ?? "?"} – ${e}`;
-  if (isCurrent) return `${s ?? "?"} – Present`;
+  if (e) return s ? `${s} – ${e}` : `Ended ${e}`;
+  if (isCurrent) return s ? `${s} – Present` : "Ongoing";
   return s ? `Started ${s}` : "";
 }
