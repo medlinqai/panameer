@@ -817,7 +817,11 @@ export async function applyParsedResume(
         description: e.description?.slice(0, 4000) ?? null,
         start_date: e.startDate ? new Date(e.startDate) : null,
         end_date: e.endDate ? new Date(e.endDate) : null,
-        is_current: Boolean(e.startDate) && !e.endDate,
+        /* ⚠⚠ AFFIRMATIVE ONLY (`P2-J1.4-E549`). SUPERSEDED, quoted (`E164`):
+           `is_current: Boolean(e.startDate) && !e.endDate,` — which made an end
+           date we could not READ into a role that is still running. Scott: *"A
+           parse failure must NEVER silently extend a job to today."* */
+        is_current: Boolean(e.startDate) && e.isCurrent === true,
         sort_order: i * 10,
         software_suite: found.suite,
         job_role_type_id: found.role
@@ -882,7 +886,9 @@ export async function applyParsedResume(
         client_name: (pr.client ?? "").slice(0, 200),
         start_date: pr.startDate ? new Date(pr.startDate) : null,
         end_date: pr.endDate ? new Date(pr.endDate) : null,
-        is_current: Boolean(pr.startDate) && !pr.endDate,
+        /* ⚠ `E549` — same rule as the employer write above. SUPERSEDED, quoted:
+           `is_current: Boolean(pr.startDate) && !pr.endDate,` */
+        is_current: Boolean(pr.startDate) && pr.isCurrent === true,
         sort_order: i * 10,
       },
     });

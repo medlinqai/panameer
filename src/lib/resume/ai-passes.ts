@@ -402,8 +402,18 @@ If the document says nothing about a field, use null — never invent one.`;
             description: { type: ["string", "null"] },
             startDate: { type: ["string", "null"] },
             endDate: { type: ["string", "null"] },
+            /*
+              ⚠⚠ RESTORED (`P2-J1.4-E549`, Scott authorised 2026-09-17) — exactly
+              as the single-call schema carried it, and NOTHING ELSE from that
+              prompt (no date format). ⚠ It is the only way the model can tell
+              "Current" from "unknown", which is the distinction the rollup now
+              turns on. ⚠ SUPERSEDED, quoted (`E164`): the property list ended at
+              `endDate`, and `required` read
+              `["name", "roleTitle", "description", "startDate", "endDate"]`.
+            */
+            isCurrent: { type: ["boolean", "null"] },
           },
-          ["name", "roleTitle", "description", "startDate", "endDate"]
+          ["name", "roleTitle", "description", "startDate", "endDate", "isCurrent"]
         ),
       },
     },
@@ -916,6 +926,9 @@ export async function aiExtractResumeMultiPass(
           description: e.description ?? null,
           startDate: e.startDate ?? null,
           endDate: e.endDate ?? null,
+          /* ⚠ `E549` — the employers pass read this section, so its current flag
+             travels with it when the section is filed as a project. */
+          isCurrent: e.isCurrent ?? null,
           employer: null,
         }))
     : [];

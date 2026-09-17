@@ -6,7 +6,7 @@ import {
   type ParserTier,
   type ProviderName,
 } from "./ai-provider";
-import type { ParsedResume } from "./parse";
+import { isCurrentWord, parseMonthYear, type ParsedResume } from "./parse";
 
 /**
  * LLM résumé extraction (brief_resume_parser_ai WS2 / E128).
@@ -144,6 +144,11 @@ const aiProject = z.object({
   startDate: maybe(z.string()),
   endDate: maybe(z.string()),
   employer: maybe(z.string()),
+  /* ⚠ `P2-J1.4-E549` — carried INTERNALLY from the employers pass for sections
+     typed `engagement`. ⚠ NOT added to any project schema the model is shown:
+     the single-call schema never had it on projects, and only a RESTORE was
+     authorised. */
+  isCurrent: maybe(z.boolean()),
 });
 
 const aiEducation = z.object({
@@ -292,7 +297,12 @@ const TOOL_SCHEMA = {
  * ⚠ Rows written before this existed read `pre-versioning`, never `v1` — see
  * `ResumeParseAudit.prompt_version`.
  */
-export const PROMPT_VERSION = "2026-09-13.a";
+/*
+  ⚠ `2026-09-17.a` — `P2-J1.4-E549` restored `isCurrent` to the per-call EMPLOYERS
+  schema (the single-call schema had it; the passes dropped it). ⚠ SUPERSEDED,
+  quoted not deleted (`E164`): `export const PROMPT_VERSION = "2026-09-13.a";`
+*/
+export const PROMPT_VERSION = "2026-09-17.a";
 
 const SYSTEM = `You extract structured data from résumés for a services marketplace.
 
@@ -700,13 +710,58 @@ export function isPlausibleEducationRow(e: {
   return true;
 }
 
+/**
+ * ── ⚠⚠ A DATE STRING AS A RÉSUMÉ ACTUALLY WRITES IT (`P2-J1.4-E549`) ────────
+ *
+ * ⚠ SUPERSEDED, quoted not deleted (`E164`) — the whole of the old `iso()`:
+ *     if (!v) return null;
+ *     const m = /^(\d{4})(?:-(\d{2}))?(?:-(\d{2}))?/.exec(v.trim());
+ *     if (!m) return null;
+ * ⚠⚠ IT ACCEPTED ONLY A LEADING YEAR. The per-call passes carry no date format,
+ * so the model returns the document faithfully — `"09/2024"`, `"May 2023"`,
+ * `"Current"` — and every one became null. Measured 2026-09-17: **38 employers and
+ * 185 projects** carry a document date that this threw away.
+ * ⚠ SCOTT: *"THE FIX IS iso(), NOT THE PROMPT… A parser must handle real-world
+ * date strings whatever the prompt says."* So the year-first form is kept and
+ * the pattern-matcher's own `parseMonthYear` handles the rest.
+ */
+export function isoDate(v: string | null | undefined): string | null {
+  if (!v) return null;
+  const t = v.trim();
+  const m = /^(\d{4})(?:-(\d{2}))?(?:-(\d{2}))?/.exec(t);
+  if (m) return `${m[1]}-${m[2] ?? "01"}-${m[3] ?? "01"}`;
+  return parseMonthYear(t);
+}
+
+/**
+ * ── ⚠⚠ AN END DATE HAS THREE STATES, NOT TWO (`P2-J1.4-E549`) ─────────────
+ *
+ * ⚠⚠ SCOTT, 2026-09-17: *"TEXT WE COULD NOT READ IS EVIDENCE THE JOB ENDED, NOT
+ * EVIDENCE IT IS CURRENT. An unparseable end string is the OPPOSITE of an absent
+ * one. A parse failure must NEVER silently extend a job to today."*
+ *
+ *   · a current word ("Present", "Current"…)  → no date, CURRENT
+ *   · a readable date                          → that date, not current
+ *   · present but UNREADABLE                   → no date, NOT current, unreadable
+ *   · absent                                   → no date; current ONLY if the
+ *                                                model said so (`isCurrent`)
+ * ⚠ AFFIRMATIVE ONLY. An absent end with `isCurrent` false or null is not a
+ * current role — it is an end nobody wrote down, and it earns no months.
+ */
+export function readEndDate(
+  v: string | null | undefined,
+  modelSaysCurrent: boolean | null | undefined
+): { endDate: string | null; isCurrent: boolean; endUnreadable: boolean } {
+  const t = (v ?? "").trim();
+  if (!t) return { endDate: null, isCurrent: modelSaysCurrent === true, endUnreadable: false };
+  if (isCurrentWord(t)) return { endDate: null, isCurrent: true, endUnreadable: false };
+  const d = isoDate(t);
+  if (d) return { endDate: d, isCurrent: false, endUnreadable: false };
+  return { endDate: null, isCurrent: false, endUnreadable: true };
+}
+
 export function aiToParsedResume(ai: AiResume): ParsedResume {
-  const iso = (v: string | null): string | null => {
-    if (!v) return null;
-    const m = /^(\d{4})(?:-(\d{2}))?(?:-(\d{2}))?/.exec(v.trim());
-    if (!m) return null;
-    return `${m[1]}-${m[2] ?? "01"}-${m[3] ?? "01"}`;
-  };
+  const iso = isoDate;
 
   const experiences = ai.employers.map((e) => ({
     /* ⚠ `null` FLOWS THROUGH AS `null` (`P1-J1.4-E373`) — it is not coerced to
@@ -716,7 +771,8 @@ export function aiToParsedResume(ai: AiResume): ParsedResume {
     roleTitle: e.roleTitle ?? "",
     description: e.description ?? null,
     startDate: iso(e.startDate),
-    endDate: iso(e.endDate),
+    /* ⚠ `E549` — end date, current flag and unreadable flag decided together. */
+    ...readEndDate(e.endDate, e.isCurrent),
   }));
 
   /*
@@ -805,7 +861,7 @@ export function aiToParsedResume(ai: AiResume): ParsedResume {
     name: p.name,
     description: p.description ?? null,
     startDate: iso(p.startDate),
-    endDate: iso(p.endDate),
+    ...readEndDate(p.endDate, p.isCurrent),
     client: p.client ?? null,
     software: p.software ?? [],
     /* `p.employer` is the model's answer to "delivered under whom"; `p.client` is
