@@ -1341,6 +1341,23 @@ setScreen(target);
       }
       hydrate(body);
       return true;
+    } catch {
+      /*
+        ── ⚠⚠ THERE WAS NO `catch` (`P2-J1.4-E516`) ─────────────────────────
+
+        ⚠ `try`/`finally` with no `catch`: a THROWN fetch — offline, DNS, a
+        dropped connection, a sleeping laptop — produced an unhandled rejection,
+        `setError` never ran, and `finally` cleared the spinner. ⚠⚠ THE USER SAW
+        NOTHING AT ALL, and the button looked idle and ready.
+        ⚠ A HUMAN SENTENCE, NEVER `err.message` — the raw value is
+        "Failed to fetch", which tells a provider nothing they can act on.
+        ⚠ SHOWN, NOT SWALLOWED. `E511`'s `confirmSuggestions` is the reference.
+      */
+      /* ⚠⚠ THIS IS THE WIZARD'S GENERIC SAVE, so it is EVERY STEP. ⚠ It returns
+         `false` exactly as a non-OK response does, which is what lets `publish`
+         stop on a thrown save instead of carrying on past it (`E090`). */
+      setError("Couldn't reach Panameer to save that. Check your connection and try again.");
+      return false;
     } finally {
       setBusy(false);
     }
@@ -1385,6 +1402,22 @@ setScreen(target);
       const status = await fetch("/api/onboarding/status");
       if (status.ok) hydrate(await status.json());
       return true;
+    } catch {
+      /*
+        ── ⚠⚠ THERE WAS NO `catch` (`P2-J1.4-E516`) ─────────────────────────
+
+        ⚠ `try`/`finally` with no `catch`: a THROWN fetch — offline, DNS, a
+        dropped connection, a sleeping laptop — produced an unhandled rejection,
+        `setError` never ran, and `finally` cleared the spinner. ⚠⚠ THE USER SAW
+        NOTHING AT ALL, and the button looked idle and ready.
+        ⚠ A HUMAN SENTENCE, NEVER `err.message` — the raw value is
+        "Failed to fetch", which tells a provider nothing they can act on.
+        ⚠ SHOWN, NOT SWALLOWED. `E511`'s `confirmSuggestions` is the reference.
+      */
+      setError(
+        "Couldn't reach Panameer to save your certifications. Check your connection and try again."
+      );
+      return false;
     } finally {
       setBusy(false);
     }
@@ -1432,6 +1465,23 @@ setScreen(target);
         address: emptyAddress(acct.country),
       }));
       goTo("check_email");
+    } catch {
+      /*
+        ── ⚠⚠ THERE WAS NO `catch` (`P2-J1.4-E516`) ─────────────────────────
+
+        ⚠ `try`/`finally` with no `catch`: a THROWN fetch — offline, DNS, a
+        dropped connection, a sleeping laptop — produced an unhandled rejection,
+        `setError` never ran, and `finally` cleared the spinner. ⚠⚠ THE USER SAW
+        NOTHING AT ALL, and the button looked idle and ready.
+        ⚠ A HUMAN SENTENCE, NEVER `err.message` — the raw value is
+        "Failed to fetch", which tells a provider nothing they can act on.
+        ⚠ SHOWN, NOT SWALLOWED. `E511`'s `confirmSuggestions` is the reference.
+      */
+      /* ⚠⚠ THIS ONE IS SIGNUP. A silent failure here is A REGISTRATION WALL —
+         the single class of defect the whole walk exists to find. */
+      setError(
+        "Couldn't reach Panameer to create your account. Check your connection and try again."
+      );
     } finally {
       setBusy(false);
     }
@@ -1554,6 +1604,29 @@ setScreen(target);
         what makes its instruction ("click your image in the upper right") true.
       */
       router.push("/dashboard?published=1");
+    } catch {
+      /*
+        ── ⚠⚠ THERE WAS NO `catch` (`P2-J1.4-E516`) ─────────────────────────
+
+        ⚠ `try`/`finally` with no `catch`: a THROWN fetch — offline, DNS, a
+        dropped connection, a sleeping laptop — produced an unhandled rejection,
+        `setError` never ran, and `finally` cleared the spinner. ⚠⚠ THE USER SAW
+        NOTHING AT ALL, and the button looked idle and ready.
+        ⚠ A HUMAN SENTENCE, NEVER `err.message` — the raw value is
+        "Failed to fetch", which tells a provider nothing they can act on.
+        ⚠ SHOWN, NOT SWALLOWED. `E511`'s `confirmSuggestions` is the reference.
+      */
+      /* ⚠⚠ `E090`'s RESULT CHECK IS UNTOUCHED AND IS A DIFFERENT FAILURE. Above,
+         `if (!saved) return` still stops the flow when the save SUCCEEDED as a
+         request but FAILED as an operation, and `postStep`'s message still
+         stands. ⚠ This `catch` only covers the third case — the request never
+         completing at all. ⚠⚠ BOTH ARE CAUGHT; neither replaces the other.
+         ⚠ A thrown save inside `postStep` is caught THERE and returns `false`,
+         so it lands on `E090`'s early return and never reaches this block —
+         which is why this sentence names publishing, not saving. */
+      setError(
+        "Couldn't reach Panameer to publish your profile. Check your connection and try again."
+      );
     } finally {
       setBusy(false);
     }
@@ -1732,6 +1805,21 @@ setScreen(target);
         const s2 = await again.json();
         hydrate(s2);
         resumeInto(s2);
+      } catch {
+      /*
+          ── ⚠⚠ THERE WAS NO `catch` (`P2-J1.4-E516`) ─────────────────────────
+
+          ⚠ `try`/`finally` with no `catch`: a THROWN fetch — offline, DNS, a
+          dropped connection, a sleeping laptop — produced an unhandled rejection,
+          `setError` never ran, and `finally` cleared the spinner. ⚠⚠ THE USER SAW
+          NOTHING AT ALL, and the button looked idle and ready.
+          ⚠ A HUMAN SENTENCE, NEVER `err.message` — the raw value is
+          "Failed to fetch", which tells a provider nothing they can act on.
+          ⚠ SHOWN, NOT SWALLOWED. `E511`'s `confirmSuggestions` is the reference.
+        */
+        setError(
+          "Couldn't reach Panameer to save that. Check your connection and try again."
+        );
       } finally {
         setBusy(false);
       }
