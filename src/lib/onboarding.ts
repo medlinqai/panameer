@@ -1096,7 +1096,22 @@ export async function getOnboardingState(viewer: Viewer) {
         kind: s.specialization.kind,
       })),
       skillIds: pp.skills.map((s) => s.skill_id),
-      skillNames: pp.skills.map((s) => ({ id: s.skill_id, name: s.skill.name })),
+      /*
+        ⚠⚠ `roleTypeId` RIDES ALONG SO THE SKILLS STEP CAN SEE WHAT IS HIDDEN
+        (`P2-J1.4-E517`). ⚠ SUPERSEDED, quoted not deleted (`E164`):
+        `skillNames: pp.skills.map((s) => ({ id: s.skill_id, name: s.skill.name })),`
+
+        ⚠ THE STEP READS WHAT IS HELD — every row, hidden ones included — because
+        the only place a provider can REMOVE a skill is the place that lists it.
+        The role is what lets the step say WHICH of them their current roles do
+        not show, live, against `profile.roleTypeIds` in the wizard rather than
+        the roles last saved.
+      */
+      skillNames: pp.skills.map((s) => ({
+        id: s.skill_id,
+        name: s.skill.name,
+        roleTypeId: s.skill.role_type_id,
+      })),
       /*
         WHICH OF THOSE SKILLS CAME OFF THE RÉSUMÉ (E187).
 
