@@ -51,10 +51,11 @@
   ⚠⚠ 180 (`P2-J1.4-E546`). ⚠ SUPERSEDED, quoted not deleted (`E164`):
   `export const ROUTE_MAX_DURATION_S = 60;` — an assumed platform limit that
   never existed (Hobby + Fluid compute allows 300 s). Everything below derives:
-  route 180 s → read 164 s → per call 82 s.
-    ⚠ slowest single call on record   44.6 s (marelise inventory, E415)  → 1.8×
+  route 180 s → read 154 s → per call 77 s (with the 24 s write reserve below;
+  164 / 82 before that reserve was raised).
+    ⚠ slowest single call on record   44.6 s (marelise inventory, E415)  → 1.73× at 77 s
     ⚠ slowest whole read on record    88.5 s (Aug 05) · 75.0 s (marelise)
-                                      · 59.9 s (Scott, 2026-09-17)       → 1.85× / 2.2× / 2.7×
+                                      · 59.9 s (Scott, 2026-09-17)       → 1.74× / 2.05× / 2.57× at 154 s
   ⚠⚠ A CEILING RAISE, NOT A FIX. A longer CV re-hits it; `E547` is the fix.
   ⚠ `read_ms` / `route_ms` on `ProfileImport` are the numbers to re-derive this from.
 */
@@ -84,7 +85,17 @@ export const ROUTE_BUDGET_MS = ROUTE_MAX_DURATION_S * 1000;
  * (a plan question) or taking the work off the request path (WS-2, Scott's
  * call).
  */
-export const ROUTE_TAIL_RESERVE_MS = 14_000;
+/*
+  ⚠⚠ 24 s, NOT 14 (`P2-J1.4-E546`, Scott, 2026-09-17). ⚠ SUPERSEDED, quoted not
+  deleted (`E164`): `export const ROUTE_TAIL_RESERVE_MS = 14_000;`
+  ⚠ The heaviest tail on record is ~18 s (above), which is ABOVE the old 14 s +
+  2 s. Measured again on the real route, marelise ×3: 8.0 · 7.2 · 11.3 s — but
+  that run did not reproduce the heavy case, so it cannot lower the bar.
+  ⚠ 24 s costs nothing that matters: read 164 → 154 s, per call 82 → 77 s, still
+  1.74× the slowest whole read on record (88.5 s).
+  ⚠ Re-derive it from `ProfileImport.route_ms − read_ms`, not from these runs.
+*/
+export const ROUTE_TAIL_RESERVE_MS = 24_000;
 
 /**
  * ⚠ A little room to serialise and send the response after the deadline trips.

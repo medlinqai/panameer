@@ -43,7 +43,7 @@ export const runtime = "nodejs";
   *"the platform default cuts off well before"* a 20–30 s read. Scott confirmed
   2026-09-17: the project is HOBBY WITH FLUID COMPUTE, whose default AND maximum
   are 300 s. ⚠ THIS ROUTE MOVES WITH THE UPLOAD ROUTE: its single call is granted
-  `MODEL_TIMEOUT_MS` (82 s), which a 60 s function would have killed mid-call.
+  `MODEL_TIMEOUT_MS` (77 s since the 24 s write reserve; 82 s before it), which a 60 s function would have killed mid-call.
   ⚠ 180 fits a whole read of marelise's CV (121 sections, 75.0 s) with
   margin, plus the write tail, inside 300.
   ⚠⚠ DO NOT LOWER IT TO SHORTEN THE WAIT — a lower ceiling brings back the silent
