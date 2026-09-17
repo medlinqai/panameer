@@ -216,6 +216,18 @@ export const PUBLIC_ROUTES: PublicRoute[] = [
   { route: "/validate/[token]", category: 4 },
   { route: "/recommend/[token]", category: 4 },
   { route: "/verify-email", category: 4 },
+  /*
+    ⚠⚠ `P1-ALL-E528` Part B — FORGOT PASSWORD, BOTH HALVES.
+    ⚠ `/forgot-password` is the one page a person who CANNOT SIGN IN has to be
+    able to reach; gating it behind a session is a closed loop.
+    ⚠ `/reset-password` is the tokenized landing page, the same shape as
+    `/verify-email` directly above: the TOKEN is the access control — single-use,
+    one hour, SHA-256-hashed in the database, mailed to the address on the
+    account. ⚠⚠ THE DEFAULT IS DENY: without these two lines both 302 to /login
+    and the email is a dead end.
+  */
+  { route: "/forgot-password", category: 4 },
+  { route: "/reset-password", category: 4 },
   { route: "/assess/claim/[token]", category: 4 },
   { route: "/assess/r/[token]", category: 4 },
   { route: "/assess/r/[token]/deck", category: 4 },

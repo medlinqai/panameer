@@ -138,6 +138,22 @@ enum VerificationTokenType {
   /// so clicking the link in the email signs the provider in and drops them
   /// straight into onboarding instead of a login screen.
   SIGNIN
+  /// ── ⚠⚠ FORGOT PASSWORD (`P1-ALL-E528` Part B) ─────────────────────────────
+  ///
+  /// ⚠ NO NEW MODEL AND NO NEW COLUMN. `VerificationToken` already stores a
+  /// SHA-256 `token_hash` (unique), an `expires_at`, a `consumed_at` and the
+  /// user — which is the entire shape the brief specifies, and the one
+  /// `verify-email` already proves.
+  ///
+  /// ⚠⚠ THE `type` DISCRIMINATOR IS WHY REUSE IS SAFE HERE. The brief's warning
+  /// — *"reusing a model for two purposes is how a bug in one becomes a bug in
+  /// both"* — bites when two purposes share one undifferentiated row. Every
+  /// query in `verification.ts` is already scoped by `type`, so a reset token
+  /// can never satisfy an email-verification lookup or a sign-in handoff.
+  ///
+  /// ⚠ IT IS A CREDENTIAL, SO IT IS THE SHORTEST-LIVED OF THE THREE: one hour,
+  /// against EMAIL's 24 and SIGNIN's five minutes.
+  PASSWORD_RESET
 }
 
 // ---------------------------------------------------------------------------

@@ -21,6 +21,7 @@ import { paymentMethodAddedTemplate } from "@/lib/email/templates/payment-method
 import { identityVerifiedTemplate } from "@/lib/email/templates/identity-verified";
 import { identityVerificationRequestTemplate } from "@/lib/email/templates/identity-verification-request";
 import { verifyEmailTemplate } from "@/lib/email/templates/verify-email";
+import { passwordResetTemplate } from "@/lib/email/templates/password-reset";
 import { finishLaterTemplate } from "@/lib/email/templates/finish-later";
 import { inviteProviderTemplate } from "@/lib/email/templates/invite-provider";
 import { EMAIL_COLORS } from "@/lib/email/shell";
@@ -106,6 +107,15 @@ const SUITE: { name: string; out: Rendered; inSuite: boolean }[] = [
       startUrl: "https://panameer.com/settings/identity",
       learnMoreUrl: "https://panameer.com/legal/accessibility-statement",
     }),
+  },
+  /* ⚠ `P1-ALL-E528` Part B — the reset mail is transactional and carries NO
+     category, so the suppression footer offers unsubscribe-from-everything.
+     ⚠⚠ `inSuite: false` for the same reason `verify-email` is: it is sent to an
+     address that has not opted into anything. */
+  {
+    name: "password-reset",
+    inSuite: false,
+    out: passwordResetTemplate({ firstName: "scott", resetUrl: "https://panameer.com/reset-password?token=x" }),
   },
   // Refactored onto the shell by WS-A — same shell rules apply.
   {
@@ -198,6 +208,22 @@ const SUITE: { name: string; out: Rendered; inSuite: boolean }[] = [
 
 /* ---- `P2-J1.1-E015`/`E018` — the verification pair --------------------------- */
 {
+  /* ── ⚠⚠ `P1-ALL-E528` Part B — the reset mail's three load-bearing lines ── */
+  {
+    const r = passwordResetTemplate({ firstName: "scott", resetUrl: "https://x/r?token=abc" });
+    ok("password-reset: subject is Title Case", r.subject === "Reset Your Panameer Password");
+    ok("password-reset: the link is in both halves", r.html.includes("https://x/r?token=abc") && r.text.includes("https://x/r?token=abc"));
+    /* ⚠ THE EXPIRY IS A FACT IN TWO PLACES — the constant and this sentence. */
+    ok("password-reset: says it expires in 1 hour, in both halves", r.html.includes("expires in 1 hour") && r.text.includes("expires in 1 hour"));
+    ok("password-reset: says it is single use", r.html.includes("used once") && r.text.includes("used once"));
+    /* ⚠⚠ THE LINE THAT STOPS A ROUTINE EMAIL READING LIKE A BREAK-IN. */
+    ok(
+      "password-reset: tells an unexpecting reader nothing has changed",
+      r.html.includes("your password has not changed") && r.text.includes("your password has not changed")
+    );
+    ok("password-reset: never contains the word password twice in the subject", (r.subject.match(/password/gi) ?? []).length === 1);
+  }
+
   const b = verifyEmailTemplate({ firstName: "scott", verifyUrl: "https://x/v", audience: "buyer" });
   const s2 = verifyEmailTemplate({ firstName: "scott", verifyUrl: "https://x/v", audience: "seller" });
   ok("verify-email: buyer subject is Title Case", b.subject === "New Service Buyer — Verify Your Email to Continue on Panameer");

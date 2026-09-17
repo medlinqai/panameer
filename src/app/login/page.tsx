@@ -152,6 +152,26 @@ function LoginForm() {
             </PasswordReveal>
           </label>
 
+          {/*
+            ── ⚠⚠ THE OTHER WAY OUT (`P1-ALL-E528` Part B) ────────────────────
+
+            ⚠ There was NO forgot-password link anywhere in the app — measured.
+            Scott was locked out of his own app at midnight with no way back in
+            except a developer with database access; this link is the half of
+            that fix a member can reach on their own.
+
+            ⚠ SAME SHAPE AS `Sign up` BELOW: a text link inheriting `text-ink-2`,
+            underline carrying the affordance, INSIDE the card — a sibling after
+            `</form>` lands on the dark video backdrop.
+            ⚠ Placed under the password field, where a person discovers the
+            problem, not under the button.
+          */}
+          <p className="text-right text-[13px] text-ink-2">
+            <a href="/forgot-password" className="underline transition-colors hover:text-ink">
+              Forgot password?
+            </a>
+          </p>
+
           {error && <p className="text-sm text-red-600">{error}</p>}
 
           <button
