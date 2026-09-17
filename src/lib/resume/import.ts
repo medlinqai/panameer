@@ -984,7 +984,16 @@ export async function applyParsedResume(
          ⚠ 148 such rows across 23 profiles already exist; they are inventoried
          in this brief and deliberately NOT repaired here. */
       where: { ...OFFERABLE, ...inActiveCatalog },
-      select: { id: true, name: true },
+      /* ⚠⚠ `role_type_id` IS THE ROLE ANCHOR'S INPUT (`E515`). Without it the
+         six ROLE-SPANNING names resolve to whichever row Postgres returned
+         last, and `E509`'s role prune then deletes every skill outside that
+         role. ⚠ IT IS NOT DISPLAY DATA; do not "tidy" it out because nothing
+         renders it.
+         ⚠ NO `pillar_id` — THE DOMAIN ANCHOR WAS BUILT, MEASURED AND REVERTED.
+         It cost 21 of 126 matched terms and 32% of distinct skills to resolve a
+         fact the résumé does not contain. See `matchSkills`' own note and
+         `E545`. ⚠ `E543` widens this same select again, for `aliases`. */
+      select: { id: true, name: true, role_type_id: true },
     });
     /*
       ⚠⚠ DEDUPED BEFORE MATCHING — A WALK CAUGHT THIS TOO. `PPM (Certified)` and
