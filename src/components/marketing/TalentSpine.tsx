@@ -146,7 +146,20 @@ export function TalentSpine() {
             Platform (AIP)` (`P1-J0-E275`). Same expansion, same shape, his voice on
             his page — SHIPPED AS HIS WORD, divergence reported.
 
-            ── ⚠⚠ `in under one minute` WAS MEASURED BEFORE IT SHIPPED ───────────
+            ── ⚠⚠ THE TIME CLAIM IS RETIRED (`P2-J1.4-E546`, Scott, 2026-09-17) ───
+
+            ⚠ SUPERSEDED, quoted not deleted (`E164`): *"…and create your Panameer
+            profile in under one minute."* ⚠ NOW: *"…and let it build your Panameer
+            profile for you."* — Scott's choice of three proposals.
+            ⚠⚠ WHY: re-timed 2026-09-17 on the current multi-pass reader, the claim
+            was NOT RELIABLY TRUE — Scott's own CV read for 43–60 s before 7–11 s of
+            writes, and his long CV for 65–69 s on production. ⚠ The 60 s route it
+            was timed against no longer exists (180 s since `E546`), and a higher
+            ceiling does not make reads faster. ⚠⚠ THE NEW LINE MAKES NO TIME CLAIM,
+            SO `E547` (moving the read to a background job) CANNOT FALSIFY IT.
+            ⚠ DO NOT PUT A NUMBER BACK without re-timing on production.
+
+            ── ⚠ SUPERSEDED — `in under one minute` WAS MEASURED BEFORE IT SHIPPED ─
 
             It is a stopwatch claim, so it was timed end to end on the real path —
             file read, text extract, live Anthropic parse, shape, per-job skill
@@ -164,8 +177,8 @@ export function TalentSpine() {
             ⚠ IF THE MODEL OR THE PROMPT CHANGES, RE-TIME THIS SENTENCE.
           */}
           <h2 className="mt-6 max-w-[1040px] text-wrap font-display text-[28px] font-bold leading-[1.14] tracking-[-0.5px] text-[#272334] min-[900px]:text-[34px] min-[900px]:leading-[38.76px]">
-            Upload your resume to our AI Platform (AIP) and create your Panameer
-            profile in under one minute.
+            Upload your resume to our AI Platform (AIP) and let it build your
+            Panameer profile for you.
           </h2>
         </div>
       </section>

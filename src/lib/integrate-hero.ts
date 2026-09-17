@@ -77,8 +77,8 @@ export const INTEGRATION_METHODS = ["cXML", "APIs", "email"] as const;
  *
  * ⚠⚠ `in minutes` IS A TESTABLE CLAIM AND NOTHING BEHIND IT IS BUILT — no
  * `Integration` model, no punchout endpoint, no cXML handler. Unlike `/talent`'s
- * `in under one minute`, this one cannot even be timed, because there is nothing to
- * time. ⚠ SHIPPED AS WRITTEN AND ON THE PRE-LAUNCH LIST.
+ * former `in under one minute` (retired by `E546`, 2026-09-17, because it no longer
+ * timed true), this one cannot even be timed, because there is nothing to time. ⚠ SHIPPED AS WRITTEN AND ON THE PRE-LAUNCH LIST.
  */
 export const INTEGRATE_SUB =
   "Integrate seamlessly with Panameer’s AI Platform in minutes using mature technologies like cXML, APIs, and email";
