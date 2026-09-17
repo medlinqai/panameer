@@ -57,6 +57,23 @@ export type ProviderName = "openai" | "anthropic";
  * is a 400 on an unknown parameter, so the patterns stay narrow and explicit
  * rather than clever.
  */
+/**
+ * ⚠⚠ STRIP ANYTHING THAT LOOKS LIKE A CREDENTIAL (`P2-J1.4-E519`).
+ *
+ * A provider's error body can quote the key it was given — OpenAI's 401 reads
+ * *"Incorrect API key provided: sk-e519-****…alid"*. ⚠ MASKED IS STILL A
+ * FRAGMENT OF A SECRET, and this text goes to `ProfileImport.error` AND to the
+ * provider's browser (the re-read route returns `message` verbatim). ⚠ Scott,
+ * 2026-09-17: it "does not belong in a database column, whoever masked it."
+ * ⚠ Deliberately broad: a false positive costs a word of diagnostics; a miss
+ * costs part of a key.
+ */
+export function redactSecrets(text: string): string {
+  return text
+    .replace(/\b(?:sk|pk|rk)-[A-Za-z0-9_\-*.…]{4,}/gi, "[key redacted]")
+    .replace(/\bBearer\s+[A-Za-z0-9_\-*.…]+/gi, "Bearer [key redacted]");
+}
+
 function isReasoningModel(model: string): boolean {
   const m = model.toLowerCase();
   return /^(gpt-5|o1|o3|o4)/.test(m);
@@ -464,7 +481,8 @@ export async function callExtractionModel({
       return {
         ok: false,
         reason: "error",
-        message: `The model endpoint returned ${res.status}. ${body.slice(0, 300)}`,
+        /* ⚠ `E519` — redacted: the body can quote the key (see `redactSecrets`). */
+        message: redactSecrets(`The model endpoint returned ${res.status}. ${body.slice(0, 300)}`),
       };
     }
 
