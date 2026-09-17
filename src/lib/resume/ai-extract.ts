@@ -399,7 +399,12 @@ export async function aiExtractResume(text: string): Promise<AiExtractOutcome> {
     read the document and found nothing (that is a real answer, and the branch
     below is careful to tell the two apart), and not for a refusal or a network
     error, which repeating would not fix. One extra call at ~12s sits well
-    inside the 55s deadline; a loop would not.
+    inside the route; a loop would not.
+    ⚠ `P2-J1.4-E546` — SUPERSEDED, quoted not deleted (`E164`): *"sits well
+    inside the 55s deadline"*. There has been no 55 s deadline since `E415`.
+    ⚠ The re-read route is 180 s and each call is capped at `MODEL_TIMEOUT_MS`
+    (77 s), so even two FULL-LENGTH calls (154 s) fit — that is the half-the-
+    read-budget rule in `budget.ts`, and why this may retry once and never loop.
 
     ⚠ SUPERSEDED, quoted not deleted (`P1-A1.4-E414` WS-4):
 

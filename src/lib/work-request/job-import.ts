@@ -149,8 +149,23 @@ export type JobImportOutcome =
  * network failure, a refusal or a malformed response all return `{ ok: false }`.
  * The fallback is the wizard the requester was already going to fill in.
  */
+/**
+ * ⚠⚠ PINNED AT ITS PRE-`E546` VALUE, DELIBERATELY (`P2-J1.4-E546`).
+ *
+ * ⚠ This reader never had a clock of its own: it inherited `MODEL_TIMEOUT_MS`,
+ * which is derived from the RÉSUMÉ route's budget. When `E546` raised that route
+ * from 60 s to 180 s, this call went from 22 s to 82 s (77 s once the write reserve became 24 s) — on a route
+ * (`/api/work-requests/import`) that declares NO duration and so already had
+ * Vercel's 300 s. ⚠⚠ NOBODY BRIEFED THAT. Scott, 2026-09-17: *"I do not want it
+ * moving by accident."* So it is held where it was.
+ * ⚠ CHANGING IT IS A DECISION ABOUT THE BUYER'S POSTING READER, not a side
+ * effect of the résumé budget — brief it on its own.
+ */
+export const JOB_POSTING_TIMEOUT_MS = 22_000;
+
 export async function aiExtractJobPosting(text: string): Promise<JobImportOutcome> {
   const call = await callExtractionModel({
+    timeoutMs: JOB_POSTING_TIMEOUT_MS,
     system: SYSTEM,
     schema: TOOL_SCHEMA as unknown as Record<string, unknown>,
     schemaName: "record_work_request",
