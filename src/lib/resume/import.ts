@@ -1,4 +1,4 @@
-import { OFFERABLE } from "@/lib/catalog";
+import { OFFERABLE, activeCatalogId } from "@/lib/catalog";
 import { readTimeRemaining, READ_BUDGET_MS } from "@/lib/resume/budget";
 import { splitCertificationName } from "@/lib/resume/certification-names";
 import { prisma } from "@/lib/prisma";
@@ -682,11 +682,28 @@ export async function applyParsedResume(
     The vocabulary is loaded once for the whole résumé rather than per job — 566
     vendor rows, one query.
   */
+  /*
+    ⚠⚠ THE ACTIVE CATALOG, RESOLVED ONCE FOR THE WHOLE IMPORT (`P2-J1.4-E514`).
+    ⚠ BY CODE, NEVER `findFirst()` — `catalog.ts` says exactly this, and the six
+    `E483` sites already do it. `import.ts` was the SEVENTH such site and the
+    only one still unscoped.
+    ⚠ `null` is possible on a never-seeded database, and every use below is
+    written to degrade to the old unscoped behaviour rather than match nothing —
+    an empty vocabulary would silently import a résumé with zero skills.
+  */
+  const catalogId = await activeCatalogId();
+  const inActiveCatalog = catalogId ? { catalog_id: catalogId } : {};
+
   const vocabRows = await prisma.skill.findMany({
     where: {
       is_custom: false,
-      /* ⚠ `E481` — the parser's vocabulary never contains a retired row. */
+      /* ⚠ `E481` — the parser's vocabulary never contains a retired row.
+         ⚠⚠ `E514` — AND IT NEVER CONTAINS A LEGACY-CATALOG ROW. These ids are
+         written as `JobSkill` rows on the employers created below, so a match
+         out of the `ERP` catalog would attach a skill to a job that no picker
+         can ever show — and it would cast a role vote in `E509`'s derivation. */
       ...OFFERABLE,
+      ...inActiveCatalog,
       roleType: {
         name: { in: ["Application-Specific", "Technology-Specific"] },
       },
@@ -957,8 +974,16 @@ export async function applyParsedResume(
 
   if (parsed.skills.length > 0 || certTerms.length > 0) {
     const catalog = await prisma.skill.findMany({
-      /* ⚠ `E481` — never match a parsed skill onto a retired row. */
-      where: OFFERABLE,
+      /* ⚠ `E481` — never match a parsed skill onto a retired row.
+         ⚠⚠ `E514` — AND NEVER OUT OF THE LEGACY CATALOG. `OFFERABLE` is
+         `{ status: "ACTIVE" }` AND NOTHING ELSE: it carries no catalog scope, so
+         this matched against BOTH `PANAMEER_V1` and the legacy `ERP` rows. A
+         skill matched out of `ERP` is written to `ProviderSkill` below and then
+         appears in NO picker, because every picker is catalog-scoped — the
+         provider holds a skill they cannot see, edit or remove.
+         ⚠ 148 such rows across 23 profiles already exist; they are inventoried
+         in this brief and deliberately NOT repaired here. */
+      where: { ...OFFERABLE, ...inActiveCatalog },
       select: { id: true, name: true },
     });
     /*
@@ -1084,8 +1109,12 @@ export async function applyParsedResume(
   */
   if (parsed.skills.length > 0) {
     const vocabulary = await prisma.specialization.findMany({
-      /* ⚠ `E481` — same rule on the specialization vocabulary. */
-      where: OFFERABLE,
+      /* ⚠ `E481` — same rule on the specialization vocabulary.
+         ⚠⚠ `E514` — and the same catalog scope. `Specialization` is
+         `@@unique([catalog_id, name])`, so the legacy catalog can hold a
+         same-named twin; matching unscoped could attach the `ERP` one to a
+         profile. ⚠ The brief measured `ERP` as holding ONE specialization. */
+      where: { ...OFFERABLE, ...inActiveCatalog },
       select: { id: true, name: true },
     });
     const key = (x: string) => x.toLowerCase().replace(/[^a-z0-9]/g, "");
