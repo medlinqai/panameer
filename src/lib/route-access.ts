@@ -106,6 +106,12 @@ export const ROUTE_ACCESS: { prefix: string; requires: RouteRequirement }[] = [
     ⚠ NO PAGE OR COMPONENT IS DELETED. All three keep working for providers; this
     is a GATE change only.
   */
+  /* ⚠ `P1-ALL-E533` — MOVED OUT OF SETTINGS. At `/settings/packages` it
+     inherited whatever gated `/settings`; at `/my-services` it inherits NOTHING
+     without this entry, so the capability moves WITH the page. ⚠ The retired
+     path keeps its own entry below — a redirect anyone could hit is still a
+     door. */
+  { prefix: "/my-services", requires: "canProvideServices" },
   { prefix: "/settings/packages", requires: "canProvideServices" },
   { prefix: "/settings/profile", requires: "canProvideServices" },
   { prefix: "/settings/withdrawals", requires: "canProvideServices" },

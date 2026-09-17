@@ -302,7 +302,17 @@ export const REQUESTER_NAV: NavItem[] = [
        works."* SUPERSEDED, QUOTED NOT DELETED — his draft read `Order | Settle`.
        As a bare verb `Order` reads as a command (order something) rather than as
        a place. The row loses all-verb symmetry and gains legibility. */
-    label: "Orders",
+    /* ⚠⚠ `P1-ALL-E533` PART C — SCOTT, 2026-09-16, APPROVED AS PROPOSED.
+       ⚠ SUPERSEDED, quoted not deleted (`E164`): `Orders` and `Payments`.
+       ⚠⚠ THE BUYER IS NOT THE SELLER. A buyer is WATCHING something arrive,
+       so `Track Orders`; a provider is working a queue, so the seller rail
+       says `Manage Orders`. ⚠ AND `Get Paid` IS WRONG ON THIS SIDE — a buyer
+       PAYS, so the verb is `Pay`.
+       ⚠ THE BUYER URLs ARE UNTOUCHED: `/pay` and `/packages` are already
+       nouns and already clean. ⚠⚠ THE `heading` VALUES ARE UNTOUCHED TOO —
+       Scott ruled them not in conflict: the rail is a VERB (what you are
+       about to do), the heading is a NOUN (what you are looking at). */
+    label: "Track Orders",
     heading: "Work Orders",
     href: "/orders",
     icon: "ClipboardCheck",
@@ -313,7 +323,7 @@ export const REQUESTER_NAV: NavItem[] = [
        nobody arrives already understanding, in the ONE SECTION WHERE MONEY
        LIVES. ⚠ The href is `/pay` on this side and `/finances` on the
        provider's — mirrored routes, unchanged by this brief. */
-    label: "Payments",
+    label: "Pay",
     heading: "Payments",
     href: "/pay",
     icon: "CreditCard",
@@ -401,14 +411,18 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
     { label: "All Courses", href: "/learn/courses" },
     { label: "My learning", href: "/learn/paths?tab=mine" },
   ],
-  "/settings/packages": [
+  /* ⚠ `P1-ALL-E533` — rekeyed with the page; `/settings/packages` is now
+     `/my-services`. This set exists to TITLE its destinations (`pageTitleFor`
+     reads `Object.values(PAGE_TABS).flat()`), which is how `/services/offers`
+     gets a page title; it is not rendered as a tab row. */
+  "/my-services": [
     /* ⚠ `requires` ADDED (`P2-J1.1-E050`). `/settings/packages` narrowed to
        `canProvideServices`, and this tab declared nothing — which reads as
        "everyone signed in". ⚠⚠ THE SIBLING BELOW ALREADY CARRIED IT since
        `E046`; this one did not, because the ROUTE was still open then. Narrowing
        the route is what made it a live fourth layer, and `check:nav-reachable`
        caught it the same run. */
-    { label: "Service Products", href: "/settings/packages", requires: "canProvideServices" },
+    { label: "Service Products", href: "/my-services", requires: "canProvideServices" },
     /* ⚠ `requires` ADDED (`P2-J1.1-E046` WS-4). `/services/offers` is gated
        `canProvideServices`, and this entry declared nothing — which reads as
        "everyone signed in". It was harmless only while `/settings/packages` was
@@ -633,7 +647,7 @@ export const PROVIDER_NAV: NavItem[] = [
     /* ⚠ MIRRORED — the provider SELLS where the buyer SHOPS. */
     label: "Sell",
     heading: "Service Products",
-    href: "/settings/packages",
+    href: "/my-services",
     icon: "Tag",
     requires: "canProvideServices",
   },
@@ -1171,7 +1185,7 @@ export const TAB_SEQUENCE: Record<string, "process" | "suggested" | "none"> = {
                               provider is paid — which is exactly the
                               role-crossing Scott named. */
   "/learn": "none",
-  "/settings/packages": "none",
+  "/my-services": "none",
   "/payments": "none",
   /*
     ⚠⚠ `/settings` — CLASSIFIED HERE, DEFINED ELSEWHERE (`P2-J1.1-E046`).

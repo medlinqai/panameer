@@ -435,7 +435,7 @@ export function ProviderProfileViewPage({
             {(p.packages.length > 0 || p.isOwner) && (
               <ProfileCard
                 title="Service Products"
-                edit={edit("Service Products", "/settings/packages")}
+                edit={edit("Service Products", "/my-services")}
               >
                 {p.packages.length > 0 ? (
                   <div className="grid gap-4 sm:grid-cols-2">

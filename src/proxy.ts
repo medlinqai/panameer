@@ -104,6 +104,7 @@ export const config = {
     "/",
     "/admin/:path*",
     "/coordinator/:path*",
+    "/my-services/:path*",
     "/settings/:path*",
     "/profile/:path*",
     "/stats/:path*",

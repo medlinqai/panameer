@@ -131,7 +131,9 @@ export function AiPassPanel({
               className="inline-flex items-center gap-2.5 rounded-full bg-magenta px-6 py-2.5 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-60"
             >
               {busy && <Spinner />}
-              {busy ? "Reading your document…" : "Let AI take a pass"}
+              {/* ⚠ `P1-ALL-E533` — the LABEL is Title Case (rule 11); the BUSY string is a
+                  STATUS SENTENCE and stays a sentence. Scott, 2026-09-16. */}
+              {busy ? "Reading your document…" : "Let AI Take a Pass"}
             </button>
           ) : (
             // No stored document: the same offer, but it needs a file first.

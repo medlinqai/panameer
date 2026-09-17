@@ -872,7 +872,16 @@ for (const [verb, journey] of [
   ["Work", "Work Requests"],
   ["Shop", "Service Products"],
   ["Sell", "Service Products"],
-  ["Orders", "Work Orders"],
+  /* ⚠⚠ `P1-ALL-E533` — `Orders` IS NO LONGER A RAIL LABEL ON EITHER SIDE. Scott,
+     2026-09-16: *"These are all verbs. Should read Manage Orders and Get Paid."*
+     and then the buyer half: `Track Orders` / `Pay`. ⚠ SUPERSEDED, quoted not
+     deleted (`E164`): `["Orders", "Work Orders"]`.
+     ⚠⚠ THE JOURNEY NAME IS WHAT THIS LOOP GUARDS AND IT IS UNCHANGED — both
+     sides still carry `heading: "Work Orders"`. Scott ruled the rail/heading
+     split is not a conflict: the rail is a VERB (what you are about to do), the
+     heading is a NOUN (what you are looking at). */
+  ["Manage Orders", "Work Orders"],
+  ["Track Orders", "Work Orders"],
   ["Connect", "My Community"],
 ] as const) {
   check(
@@ -881,12 +890,46 @@ for (const [verb, journey] of [
     "the rail says the journey in one word; the name moves to the heading"
   );
 }
-/* ⚠ SLOTS 4 AND 5 ARE PLURAL NOUNS BY SCOTT'S DECISION — `Order`/`Settle` were
-   his draft and were superseded. A revert to the bare verbs is a regression. */
+/*
+  ⚠⚠ THE MONEY SLOTS ARE VERB PHRASES NOW, AND THEY DIFFER BY SIDE (`P1-ALL-E533`).
+  ⚠ SUPERSEDED, quoted not deleted (`E164`): this asserted `label: "Orders"` and
+  `label: "Payments"` — Scott's earlier plural nouns, which themselves superseded
+  his `Order`/`Settle` draft.
+  ⚠⚠ IT WAS ALSO PASSING FOR THE WRONG REASON. `E533` Part B changed the SELLER
+  rail to `Manage Orders`/`Get Paid` and this check stayed green, because the
+  BUYER rail still carried the bare `Orders`/`Payments` it was matching. It only
+  failed once both sides moved — so a half-done rename would not have been caught.
+  It now asserts BOTH sides by name.
+  ⚠ `Get Paid` is the seller's and `Pay` is the buyer's: a buyer PAYS.
+*/
 check(
-  "E378/4 — the money slots ship as Orders | Payments, not Order | Settle",
-  /label: "Orders"/.test(navLib) && /label: "Payments"/.test(navLib) &&
-    !/label: "Settle"/.test(navLib) && !/label: "Order"[,\s]/.test(navLib)
+  "E378/4 — the seller money slots are Manage Orders | Get Paid",
+  /label: "Manage Orders"/.test(navLib) && /label: "Get Paid"/.test(navLib)
+);
+check(
+  "E378/4 — the buyer money slots are Track Orders | Pay",
+  /label: "Track Orders"/.test(navLib) && /label: "Pay"/.test(navLib)
+);
+/*
+  ⚠⚠ SCOPED TO THE TWO RAIL ARRAYS, NOT THE WHOLE FILE. The first draft of this
+  check scanned `navLib` entire and failed on `PAGE_TABS`, which legitimately has
+  a TAB called `Payments` pointing at `/payments`. ⚠ A tab label and a rail label
+  are different things; only the rail carries the verb rule.
+*/
+const railsOnly = (() => {
+  const grab = (name: string) => {
+    const i = navLib.indexOf(`export const ${name}`);
+    if (i < 0) return "";
+    const j = navLib.indexOf("\n];", i);
+    return j < 0 ? "" : navLib.slice(i, j);
+  };
+  return grab("PROVIDER_NAV") + grab("REQUESTER_NAV");
+})();
+check(
+  "E378/4 — no RAIL label reverts to a bare noun or to the Order | Settle draft",
+  railsOnly.length > 0 &&
+    !/label: "Settle"/.test(railsOnly) && !/label: "Order"[,\s]/.test(railsOnly) &&
+    !/label: "Orders"/.test(railsOnly) && !/label: "Payments"/.test(railsOnly)
 );
 check(
   "E378/4 — pageTitleFor returns the journey name over the rail verb",
@@ -951,7 +994,11 @@ check(
   changing in the same commit, that is a different brief.
 */
 for (const href of [
-  "/learn", "/create-work", "/find-work", "/packages", "/settings/packages",
+  /* ⚠ `/settings/packages` -> `/my-services` (`P1-ALL-E533`): the seller surface
+     left Settings so it would stop wearing the SETTINGS eyebrow and tab row.
+     ⚠⚠ `/find-work` STAYS — Scott ruled it accurate and already a verb phrase,
+     so it does NOT move to `/work` (which the public Seller page holds). */
+  "/learn", "/create-work", "/find-work", "/packages", "/my-services",
   /* ⚠ WAS `/contracts` UNTIL `P1-ALL-E380` — the ToS is the MSA and the Work
      Order is the SOW, so there is no Contract record for a route to name. */
   /* ⚠ `/finances` -> `/payments` (`P1-ALL-E533`). */

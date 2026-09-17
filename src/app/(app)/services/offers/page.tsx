@@ -17,7 +17,7 @@ export default async function Page() {
   return (
     <div className="mx-auto w-full max-w-6xl">
       <PageTabs
-        sequence={tabSequenceFor("/settings/packages")} tabs={PAGE_TABS["/settings/packages"]} current="/services/offers" />
+        sequence={tabSequenceFor("/my-services")} tabs={PAGE_TABS["/my-services"]} current="/services/offers" />
       <ComingSoon title="Offers for My Services" />
     </div>
   );

@@ -73,24 +73,21 @@ export const SETTINGS_NAV: SettingsNavItem[] = [
     href: "/settings/withdrawals",
     blurb: "How Panameer pays you, and the tax details required first.",
   },
-  {
-    /*
-      ⚠⚠ ADDED (`P1-J2.1-E025`, 2026-09-02). `/settings/packages` HAS ALWAYS
-      EXISTED AND WAS NEVER IN THIS LIST, and `SettingsNav` highlights on
-      `pathname === item.href` — so a user standing on that page had NOTHING lit
-      in the settings nav. Inside Settings with no "you are here".
+  /*
+    ⚠⚠ `Service Products` LEFT THIS LIST (`P1-ALL-E533`, 2026-09-16). It is no
+    longer a settings page: the surface moved to `/my-services`, out of
+    `(app)/settings/` entirely, so it no longer inherits the `Settings` eyebrow
+    or the settings tab row. ⚠ Scott: *"The point is getting it OUT of
+    Settings."*
 
-      ⚠ PLACED WITH THE SELLER-FACING MONEY ITEMS — after Billing & Payments and
-      Withdrawals, before the account-security block. A service product is a thing
-      you SELL, so it belongs beside the pages about being paid rather than beside
-      the ones about your password.
-    */
-    label: "Service Products",
-    /* ⚠ SELLER-ONLY (`P2-J1.1-E050`): where a PROVIDER publishes offerings — its own checklist reads *"Add a withdrawal method — Panameer can't pay you for a sale"*. Every line addresses a seller. */
-    requires: "canProvideServices",
-    href: "/settings/packages",
-    blurb: "The fixed offerings buyers can buy outright, and their prices.",
-  },
+    ⚠ SUPERSEDED, quoted not deleted (`E164`): this held a `Service Products`
+    entry at `href: "/settings/packages"`, added by `P1-J2.1-E025` so that a user
+    standing on that page had something lit in the settings nav. ⚠⚠ THAT REASON
+    DIED WITH THE MOVE — the page is not in Settings any more, so an entry here
+    would light the settings nav for a page that is not one of its children, and
+    `SettingsNav` highlights on `pathname === item.href`, which can no longer
+    match. The rail's `Sell` item is how the page is reached now.
+  */
   {
     label: "Password & Security",
     href: "/settings/security",
