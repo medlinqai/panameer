@@ -100,8 +100,11 @@ ok(
   L("2019-01-01", null, false) === "Started 2019",
   L("2019-01-01", null, false)
 );
-ok("label: no start, ended", L(null, "2021-06-01", false) === "? – 2021", L(null, "2021-06-01", false));
-ok("label: no start, current", L(null, null, true) === "? – Present", L(null, null, true));
+/* ⚠ SUPERSEDED, quoted (`E164`): expected `"? – 2021"` and `"? – Present"` — Scott,
+   2026-09-17: "I am not showing a buyer a question mark." */
+ok("label: no start, ended", L(null, "2021-06-01", false) === "Ended 2021", L(null, "2021-06-01", false));
+ok("label: no start, current", L(null, null, true) === "Ongoing", L(null, null, true));
+ok("⚠ label: no label ever contains a question mark", ![L(null, "2021-06-01", false), L(null, null, true), L("2019-01-01", null, false), L("2019-01-01", "2021-01-01", false), L("2019-01-01", null, true)].some((x) => x.includes("?")));
 ok("label: no dates at all is empty", L(null, null, false) === "", L(null, null, false));
 
 // --- recency ----------------------------------------------------------------

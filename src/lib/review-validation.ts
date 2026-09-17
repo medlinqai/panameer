@@ -210,8 +210,15 @@ export function reviewItems(p: ReviewInput): ReviewItem[] {
     );
   }
 
-  // A work-history entry with no start date renders as "? – Present" on the
-  // live profile, which reads as broken data.
+  // A work-history entry with no start date cannot show a span on the live
+  // profile — the reader sees when it ENDED, or nothing at all.
+  //
+  // ⚠ `P2-J1.4-E549` — SUPERSEDED, quoted not deleted (`E164`): this said the
+  // entry *"renders as '? – Present' on the live profile, which reads as broken
+  // data"*, and the copy below quoted that string. Both stopped being true when
+  // the labels became sentences: an undated entry now reads "Ended 2021",
+  // "Ongoing", or nothing — never "? – Present". ⚠⚠ The copy no longer quotes a
+  // rendering that varies by case; it says what the provider loses.
   //
   // EMPLOYERS, never "roles" (WS4). "Role" is reserved twice over — security
   // roles, and the catalog's Role -> Domain -> Skill — so using it for a job
@@ -222,8 +229,8 @@ export function reviewItems(p: ReviewInput): ReviewItem[] {
     chg(
       "employer-dates",
       undated.length === 1
-        ? `${undated[0].name} has no start date — it will show as "? – Present".`
-        : `${undated.length} employers have no start date — they will show as "? – Present".`,
+        ? `${undated[0].name} has no start date — the profile can't show how long you were there.`
+        : `${undated.length} employers have no start date — the profile can't show how long you were there.`,
       "Add dates",
       { kind: "step", step: "tell_us" }
     );
