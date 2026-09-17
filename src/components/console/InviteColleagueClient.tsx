@@ -81,9 +81,38 @@ export function InviteColleagueClient({
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<{ devLink?: string } | null>(null);
   const [member, setMember] = useState<AlreadyMember | null>(null);
+  /*
+    ── ⚠⚠ CONFIRM THE ADDRESS BEFORE SENDING (`P2-J3-E522` PART B) ────────────
+
+    ⚠ Validation today is `z.string().email()` at the route and
+    `email.includes("@")` in the lib. ⚠⚠ NEITHER VALIDATES THE TLD — Zod's
+    `.email()` accepts `.cpm` happily, and so does `a@b`.
+    ⚠⚠ AND THE BRIEF FORBIDS BUILDING TLD VALIDATION: *"It is a losing game and
+    it would reject legitimate new TLDs."*
+
+    ⚠ SO THE FIX IS A HUMAN ONE. Scott's own slip (`straterp.cpm`) survived
+    THREE attempts and would not have survived one confirm step — a typo is
+    obvious the moment somebody is asked to look at it.
+
+    ⚠⚠ ONE EXTRA CLICK, ON AN ACTION PEOPLE TAKE RARELY. Acceptable here and NOT
+    acceptable on a high-frequency action — DO NOT GENERALISE THIS PATTERN.
+
+    ⚠ NOTHING IS WRITTEN UNTIL THE SECOND CLICK: the first click only sets this
+    flag, so `submit`'s fetch is unreachable until the address has been read
+    back.
+  */
+  const [confirming, setConfirming] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    /* ⚠⚠ THE GATE (`E522` Part B). The form's submit is the ASK, not the send;
+       only the confirm button below clears this flag. */
+    if (!confirming) {
+      setError(null);
+      setConfirming(true);
+      return;
+    }
+    setConfirming(false);
     setBusy(true);
     setError(null);
     setDone(null);
@@ -225,7 +254,15 @@ export function InviteColleagueClient({
           <input
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            /* ⚠⚠ EDITING THE ADDRESS RETRACTS THE CONFIRMATION (`E522` Part B).
+               Without this, a member could confirm address A, correct it to B,
+               and the second click would send B — an address NOBODY READ BACK.
+               That is the exact failure the step exists to prevent, so the ask
+               must be re-answered for the new address. */
+            onChange={(e) => {
+              setEmail(e.target.value);
+              setConfirming(false);
+            }}
             required
             maxLength={320}
             placeholder="dana@example.com"
@@ -247,6 +284,33 @@ export function InviteColleagueClient({
           />
         </label>
 
+        {/*
+          ⚠⚠ THE CONFIRM STEP (`P2-J3-E522` PART B). WORDING APPROVED AS WRITTEN
+          BY SCOTT, 2026-09-17, including *"`Back` rather than `Cancel` is
+          right"* — nothing has happened yet, so there is nothing to cancel.
+
+          ⚠ THE ADDRESS IS BOLD AND ON ITS OWN LINE. The entire point is to make
+          the reader LOOK AT IT; a sentence with the address buried mid-line is
+          the thing that already failed three times.
+
+          ⚠⚠ "just disappears" IS A CLAIM WITH AN EXPIRY, AND SCOTT REQUIRED IT
+          RECORDED AS ONE: it is true TODAY and becomes FALSE the day `E522`
+          Part A ships, because the bounce webhook is precisely what stops an
+          invitation to a wrong address disappearing silently. ⚠ NOTED AGAINST
+          PART A — whoever builds the webhook updates this sentence.
+        */}
+        {confirming && (
+          <div className="mt-4 rounded-brand border border-magenta/30 bg-magenta/[0.04] p-4">
+            <p className="text-[15px] font-bold">Send this invitation?</p>
+            <p className="mt-2 text-[14px] leading-relaxed text-ink-2">
+              We&rsquo;ll email{" "}
+              <span className="block break-all py-1 font-bold text-ink">{email}</span>
+              Check the spelling &mdash; an invitation to the wrong address just
+              disappears.
+            </p>
+          </div>
+        )}
+
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <button
             type="submit"
@@ -255,6 +319,17 @@ export function InviteColleagueClient({
           >
             {busy ? "Sending…" : "Send Invitation"}
           </button>
+          {/* ⚠ `Back` UNSENDS NOTHING — it returns to the form so the address can
+              be corrected. It only appears once the ask is on screen. */}
+          {confirming && !busy && (
+            <button
+              type="button"
+              onClick={() => setConfirming(false)}
+              className="rounded-full border-[1.5px] border-line px-6 py-2.5 font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
+            >
+              Back
+            </button>
+          )}
           {/* ⚠ THE ALLOWANCE IS SHOWN ONLY WHEN IT IS NEARLY GONE. Printing
               "36 of 40 left" on a page where nobody will ever send four would
               make a limit that exists for abuse look like a quota on the user. */}
