@@ -15,7 +15,7 @@ import {
   aiExtractResumeMultiPass,
   type RecallReport,
 } from "@/lib/resume/ai-passes";
-import { parserConfigProblem, resolveProvider } from "@/lib/resume/ai-provider";
+import { parserConfigProblem, redactSecrets, resolveProvider } from "@/lib/resume/ai-provider";
 import type { ParserTier, ProviderName } from "@/lib/resume/ai-provider";
 import type { Prisma } from "@prisma/client";
 
@@ -543,7 +543,9 @@ async function readDocument(
       /* ⚠ `E519` — `[ai:<reason>] <message>`. ⚠ `reason` alone is NOT enough:
          a per-call TIMEOUT arrives as `error`, the same word as a crash, and
          only `message` ("The reader took longer than 22s…") tells them apart. */
-      failure: `[ai:${outcome.reason}] ${outcome.message}`.slice(0, 1000),
+      /* ⚠ REDACTED AGAIN HERE, not only at the HTTP branch: a thrown exception's
+         own `message` reaches this line unfiltered. */
+      failure: redactSecrets(`[ai:${outcome.reason}] ${outcome.message}`).slice(0, 1000),
     };
   }
 
