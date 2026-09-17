@@ -25,8 +25,18 @@
  * ⚠ MUTATION TEST: delete `source: "SELF_ADDED"` from any writer below, or write
  * `source: "DERIVED"` anywhere outside `provider-rollup.ts`, and this goes red.
  */
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { readFileSync as rawRead, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
+
+/*
+  ⚠⚠ COMMENTS ARE STRIPPED BEFORE SCANNING, AND THAT IS LOAD-BEARING HERE.
+  This codebase quotes superseded code in comments by house rule (`E164`) — the
+  skills step carries the exact `deleteMany` this gate forbids, as a quote of what
+  it replaced. Scanning raw text flagged the QUOTE and not the code, which is the
+  same trap `check:company-binding` documents.
+*/
+const readFileSync = (p: string): string =>
+  rawRead(p, "utf8").replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
 
 const ROOT = process.cwd();
 const ROLLUP = join("src", "lib", "provider-rollup.ts");
@@ -73,7 +83,7 @@ console.log("\ncheck:derived-source — only the rollup may write DERIVED\n");
   const offenders: string[] = [];
   for (const f of files) {
     if (f === ROLLUP || EXEMPT.has(f)) continue;
-    const src = readFileSync(join(ROOT, f), "utf8");
+    const src = readFileSync(join(ROOT, f));
     const re = /providerSkill\s*\.\s*(create|createMany|upsert)\s*\(/g;
     let m: RegExpExecArray | null;
     while ((m = re.exec(src))) {
@@ -104,7 +114,7 @@ console.log("\ncheck:derived-source — only the rollup may write DERIVED\n");
 /* ═══ 2 · THE LITERAL IS THE ROLLUP'S ALONE ════════════════════════════════ */
 {
   const offenders = files.filter(
-    (f) => f !== ROLLUP && !EXEMPT.has(f) && /source\s*:\s*"DERIVED"/.test(readFileSync(join(ROOT, f), "utf8"))
+    (f) => f !== ROLLUP && !EXEMPT.has(f) && /source\s*:\s*"DERIVED"/.test(readFileSync(join(ROOT, f)))
   );
   check(
     '2 — ⚠⚠ `source: "DERIVED"` is written ONLY by provider-rollup.ts',
@@ -116,7 +126,7 @@ console.log("\ncheck:derived-source — only the rollup may write DERIVED\n");
 /* ═══ 3 · AND THE ROLLUP STILL DOES IT ═════════════════════════════════════
    ⚠ Without this, deleting the feature would satisfy §2.                     */
 {
-  const rollup = readFileSync(join(ROOT, ROLLUP), "utf8");
+  const rollup = readFileSync(join(ROOT, ROLLUP));
   check(
     "3 — the rollup still writes DERIVED rows",
     /source:\s*"DERIVED"/.test(rollup)
@@ -124,6 +134,45 @@ console.log("\ncheck:derived-source — only the rollup may write DERIVED\n");
   check(
     "3 — ⚠ and still clears only DERIVED (plus upgraded SELF_ADDED) rows",
     /\{ source: "DERIVED" \}/.test(rollup) && /source: "SELF_ADDED", skill_id: \{ in: derivedIds \}/.test(rollup)
+  );
+}
+
+/* ═══ 4 · ⚠⚠ A SAVE MUST NOT DELETE ROWS IT DOES NOT OWN (`P1-A1.4-E552`) ══
+   The skills step deleted EVERY ProviderSkill row for the profile — including
+   the rollup's, with their months. Any `deleteMany` outside the rollup must be
+   scoped by `source`, so it can only remove what that writer created.
+   ⚠ ONE EXEMPTION, AND IT IS DELIBERATE: `E517`'s ROLE PRUNE deletes by
+   `role_type_id` regardless of source. Scott ruled that deletion correct on
+   2026-09-11 — its defect is that it is SILENT, which is `E517`, not this.     */
+{
+  const offenders: string[] = [];
+  /* ⚠ APP CODE ONLY. A gate or a dev script deleting its own throwaway probe
+     profile owns every row on it — `check:cert-skills`, `check:role-prune` and
+     `dev-reset-resume` all do exactly that. */
+  for (const f of files.filter((x) => x.startsWith("src"))) {
+    if (f === ROLLUP || EXEMPT.has(f)) continue;
+    const src = readFileSync(join(ROOT, f));
+    const re = /providerSkill\s*\.\s*deleteMany\s*\(/g;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(src))) {
+      let depth = 0;
+      let i = m.index + m[0].length - 1;
+      const start = i;
+      for (; i < src.length; i++) {
+        if (src[i] === "(") depth++;
+        else if (src[i] === ")") { depth--; if (depth === 0) break; }
+      }
+      const call = src.slice(start, i + 1);
+      const isRolePrune = /role_type_id:\s*\{\s*notIn/.test(call);
+      if (!/\bsource\s*:/.test(call) && !isRolePrune) {
+        offenders.push(`${f}:${src.slice(0, m.index).split("\n").length}`);
+      }
+    }
+  }
+  check(
+    "4 — ⚠⚠ every providerSkill deleteMany outside the rollup is scoped by `source` (or is E517's role prune)",
+    offenders.length === 0,
+    offenders.join(" · ")
   );
 }
 

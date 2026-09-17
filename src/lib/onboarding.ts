@@ -1942,9 +1942,38 @@ export async function applyProviderSection(
         `s.weight > 0 || s.source === "SELF_ADDED"`, and would misreport depth.
         One constant, already tuned, in one place (`provider-rollup.ts:55`).
       */
+      /*
+        ── ⚠⚠ THIS STEP REPLACES THE PROVIDER'S OWN PICKS AND NOTHING ELSE
+           (`P1-A1.4-E552`) ────────────────────────────────────────────────────
+
+        ⚠ SUPERSEDED, quoted not deleted (`E164`):
+            prisma.providerSkill.deleteMany({
+              where: { provider_profile_id: profileId },
+            }),
+        ⚠⚠ IT DELETED EVERY SKILL ROW ON THE PROFILE — INCLUDING THE ROLLUP'S,
+        WITH THEIR `months_total` — and rewrote the picks with 0 months. So every
+        save of this step erased the computed depth until something triggered a
+        recompute. ⚠ MEASURED 2026-09-17: **all 27 "dated job, zero months" rows
+        were this**, across 6 profiles.
+
+        ⚠ Scott, 2026-09-17: *"A SAVE DELETES DATA IT DID NOT CREATE."* Same rule
+        `E553` broke from the other side.
+
+        ⚠ SO THE DELETE IS SCOPED TWICE: to `SELF_ADDED` (the rows this step owns)
+        and to skills the provider has DROPPED. ⚠⚠ A `DERIVED` row is the
+        ROLLUP'S, backed by a dated job, and only the rollup may remove it.
+        ⚠ `skipDuplicates` then protects a pick that is ALREADY `DERIVED`: the job
+        is the better evidence, exactly as `recomputeProviderRollup` treats it.
+        ⚠ AND AN EMPTY LIST STILL CLEARS THE PICKS — `notIn: []` is not a reliable
+        "match everything", so the no-picks case is its own branch.
+      */
       await prisma.$transaction([
         prisma.providerSkill.deleteMany({
-          where: { provider_profile_id: profileId },
+          where: {
+            provider_profile_id: profileId,
+            source: "SELF_ADDED",
+            ...(skillIds.length > 0 ? { skill_id: { notIn: skillIds } } : {}),
+          },
         }),
         prisma.providerSkill.createMany({
           data: skillIds.map((skill_id) => ({
@@ -1953,6 +1982,9 @@ export async function applyProviderSection(
             source: "SELF_ADDED" as const,
             weight: SELF_ADDED_WEIGHT,
           })),
+          /* ⚠ `E552` — a pick the provider already holds must not be re-inserted
+             (the composite unique) and a DERIVED row must not be downgraded. */
+          skipDuplicates: true,
         }),
       ]);
       break;
