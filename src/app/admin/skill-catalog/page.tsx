@@ -53,7 +53,12 @@ export default async function Page({
 
   const [roles, skillCount, pillarCount, skillProviders, roleClaims, domainProviders] =
     await Promise.all([
-      getProviderFieldTree({ includeRetired: true }),
+      /* ⚠⚠ `E541` — `includeAllCatalogs` TOO, AND IT IS NOT DECORATION. The six
+         offer-side reads are now scoped to `PANAMEER_V1`; without this flag this
+         page would stop showing the 23 legacy `ERP` skills — and THIS IS THE
+         PAGE WHERE `E540`'s re-point repair gets done. ⚠ Two flags, because
+         "show retired" and "show other catalogs" are different questions. */
+      getProviderFieldTree({ includeRetired: true, includeAllCatalogs: true }),
       prisma.skill.count(),
       prisma.pillar.count(),
       getSkillProviderCounts(),

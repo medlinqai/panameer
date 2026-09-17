@@ -62,9 +62,48 @@ export async function activeCatalogId(): Promise<string | null> {
   return any?.id ?? null;
 }
 
-/** Admin surfaces pass `{ includeRetired: true }`; nothing else should. */
-export type CatalogScope = { includeRetired?: boolean };
+/**
+ * ── ⚠⚠ TWO DIFFERENT QUESTIONS, TWO DIFFERENT FLAGS (`P2-J1.4-E541`) ────────
+ *
+ * ⚠ `includeRetired` — "show me rows an admin retired". Admin surfaces pass it.
+ * ⚠⚠ `includeAllCatalogs` — "show me rows from the LEGACY `ERP` catalog too".
+ *
+ * ⚠ SCOTT, 2026-09-16: *"do NOT overload `includeRetired`. 'Show retired' and
+ * 'show other catalogs' are different questions."* ⚠⚠ AND THE REASON IS
+ * CONCRETE: `admin/skill-catalog` and `admin/specializations` are where `E540`'s
+ * re-point repair gets done, so those two pages MUST keep seeing the 23 legacy
+ * skills. One flag would have tied that visibility to a status decision that has
+ * nothing to do with it.
+ */
+export type CatalogScope = { includeRetired?: boolean; includeAllCatalogs?: boolean };
 const scope = (o?: CatalogScope) => (o?.includeRetired ? {} : OFFERABLE);
+
+/**
+ * ── ⚠⚠ WHAT AN OFFER-SIDE READ MAY SHOW (`P2-J1.4-E541`) ───────────────────
+ *
+ * ⚠ THE DEFECT THIS CLOSES: `scope()` is `OFFERABLE` — `{ status: "ACTIVE" }`
+ * AND NOTHING ELSE. It carries NO catalog scope, so six reads in this file
+ * returned rows from BOTH `PANAMEER_V1` (687 skills) and the legacy `ERP` (23).
+ * ⚠⚠ `getSkillsForRoleTypes` FEEDS THE SKILLS STEP'S PICKER, so a provider could
+ * be OFFERED a legacy skill and select it — measured 2026-09-16 as **16
+ * `SELF_ADDED` `provider_skill` rows across 7 profiles** pointing at `ERP`.
+ * ⚠ `E514` scoped the IMPORT side; this is the OFFER side, and it was the half
+ * still creating rows.
+ *
+ * ⚠⚠ ASYNC BECAUSE THE ACTIVE CATALOG IS A LOOKUP, NOT A CONSTANT. `scope()`
+ * stays synchronous and is still the status half — this COMPOSES it rather than
+ * replacing it, so `OFFERABLE` remains the one greppable status surface.
+ * ⚠ BY CODE, NEVER `findFirst()` — `activeCatalogId()` above, the same call
+ * `E483`'s six write paths and `E514`'s three import reads use.
+ * ⚠ A `null` id (a never-seeded database) DEGRADES TO THE OLD BEHAVIOUR rather
+ * than matching nothing: an empty picker is a worse failure than a wide one.
+ */
+async function offerScope(o?: CatalogScope) {
+  const base = scope(o);
+  if (o?.includeAllCatalogs) return base;
+  const id = await activeCatalogId();
+  return id ? { ...base, catalog_id: id } : base;
+}
 
 /**
  * Role types (global lookup) — the "one main category" a provider picks.
@@ -111,7 +150,7 @@ export async function getProviderFieldTree(opts?: CatalogScope) {
      picker at all, so the filter belongs on the COUNT, not just on the leaves. */
   const grouped = await prisma.skill.groupBy({
     by: ["role_type_id", "pillar_id"],
-    where: scope(opts),
+    where: await offerScope(opts),
     _count: { _all: true },
   });
 
@@ -162,7 +201,7 @@ export async function getSkillsForField(
   opts?: CatalogScope
 ) {
   return prisma.skill.findMany({
-    where: { role_type_id: roleTypeId, pillar_id: pillarId, ...scope(opts) },
+    where: { role_type_id: roleTypeId, pillar_id: pillarId, ...(await offerScope(opts)) },
     orderBy: { name: "asc" },
     select: {
       id: true,
@@ -177,7 +216,7 @@ export async function getSkillsForField(
  *  predates the pair model and scopes by RoleType. */
 export async function getSkillsForPillar(pillarId: string, opts?: CatalogScope) {
   return prisma.skill.findMany({
-    where: { pillar_id: pillarId, ...scope(opts) },
+    where: { pillar_id: pillarId, ...(await offerScope(opts)) },
     orderBy: { name: "asc" },
     select: {
       id: true,
@@ -194,7 +233,7 @@ export async function getSkillsForPillar(pillarId: string, opts?: CatalogScope) 
  */
 export async function getSpecializations(opts?: CatalogScope) {
   const rows = await prisma.specialization.findMany({
-    where: scope(opts),
+    where: await offerScope(opts),
     /*
       ── ⚠ BASELINE FIRST, PROVIDER-TYPED ROWS AFTER (`P1-A1.5-E470b`) ────────
 
@@ -283,7 +322,7 @@ export async function getRegions() {
 export async function getSkillsForRoleTypes(roleTypeIds: string[], opts?: CatalogScope) {
   if (roleTypeIds.length === 0) return [];
   return prisma.skill.findMany({
-    where: { role_type_id: { in: roleTypeIds }, ...scope(opts) },
+    where: { role_type_id: { in: roleTypeIds }, ...(await offerScope(opts)) },
     orderBy: [{ name: "asc" }],
     select: {
       id: true,
@@ -298,7 +337,7 @@ export async function getSkillsForRoleTypes(roleTypeIds: string[], opts?: Catalo
 
 export async function getSkillsForRoleType(roleTypeId: string, opts?: CatalogScope) {
   return prisma.skill.findMany({
-    where: { role_type_id: roleTypeId, ...scope(opts) },
+    where: { role_type_id: roleTypeId, ...(await offerScope(opts)) },
     orderBy: { name: "asc" },
     select: {
       id: true,
