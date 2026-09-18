@@ -268,6 +268,157 @@ async function main() {
     "reuse pathHasPlayableLessons; do not re-derive playability"
   );
 
+  /* ── 8 · ⚠⚠ EVERY PATH GROUP HAS A PERSON OWNER (`P2-J3-E572`) ──────────── */
+  /* ⚠⚠ `learning_path_id` SAYS WHAT A GROUP IS ABOUT; IT DOES NOT SAY WHO OWNS
+     IT. The column is NULLABLE because the four general boards have no owner
+     until they are retired — so THIS GUARD, not the column, is what requires
+     every PATH group to have one. */
+  check(
+    "8 — ForumBoard carries host_person_id",
+    /host_person_id\s+String\?/.test(schema)
+  );
+  check("8 — and it is indexed", /@@index\(\[host_person_id\]\)/.test(schema));
+  /* ⚠⚠ SetNull, NEVER Cascade. Deleting a person must not delete the room and
+     everything said in it. An ownerless group is repairable; a deleted
+     conversation is not. */
+  check(
+    "8 — the host FK is SetNull, so deleting a person never deletes the room",
+    /hostPerson\s+Person\?\s+@relation\("ForumBoardHost"[^\n]*onDelete: SetNull/.test(schema),
+    "Cascade here would delete a whole conversation with its owner"
+  );
+  const ownerless = await prisma.forumBoard.count({
+    where: { learning_path_id: { not: null }, host_person_id: null },
+  });
+  check(
+    "8 — every path group has an owner",
+    ownerless === 0,
+    `${ownerless} ownerless path group(s) — four ownerless general boards with zero threads between them is what an association-without-an-owner produces`
+  );
+  /* ⚠⚠⚠ DERIVED ONCE, THEN FROZEN — AND THIS IS THE ASSERTION THAT KEEPS IT
+     FROZEN. A live derivation changes owner whenever someone authors more
+     lessons; write 20 lessons into a path and you take it over. Tolerable while
+     ownership means "you may confirm answers", NOT tolerable once an owner can
+     set a price and collect. ⚠ AN OWNER THAT SILENTLY CHANGES IS A BUG WITH A
+     BANK ACCOUNT ATTACHED.
+     ⚠ A READ is fine — `host_person_id: true` in a select, or a where-clause on
+     it. What must stay unique is a WRITE. */
+  const BACKFILL = join("prisma", "backfill-path-group-owner.ts");
+  check("8 — the one-time backfill script is on disk", (bodies.get(BACKFILL) ?? "").length > 0);
+  const writers = [...bodies.entries()]
+    .filter(([f, b]) => f !== BACKFILL && /host_person_id:\s*(?!true\b)/.test(b))
+    .map(([f]) => f);
+  check(
+    "8 — only the one-time backfill writes an owner",
+    writers.length === 0,
+    `${writers.join(", ")} — the owner is derived ONCE and frozen; a helper the app calls is how it starts drifting`
+  );
+
+  /* ── 9 · ⚠⚠⚠ THE ACCESS RULE IS EXACTLY TWO CONDITIONS (`P2-J3-E572` WS-B) ──
+     `canAccessPathForum` is ALREADY the rule Scott asked for. This section does
+     not change it — it stops it drifting.
+     ⚠⚠ THE RULE: a `LearnEnrollment` for THIS viewer and path, **OR**
+     `teachesPathWhere`. NOTHING ELSE — no third OR, no role check, no
+     capability shortcut, no admin bypass.
+     ⚠ ASSERTED ON THE FUNCTION BODY WITH COMMENTS STRIPPED. Rule 12: the house
+     style quotes superseded code (`E164`), and a quote is not live code. */
+  const accessFnRaw = /export async function canAccessPathForum[\s\S]*?\n}/.exec(forumsRaw)?.[0] ?? "";
+  check("9 — canAccessPathForum was found by the scan", accessFnRaw.length > 0);
+  const accessFn = strip(accessFnRaw);
+
+  /* ⚠⚠ THE SIGNED-OUT CASE IS AN ACCESS BOUNDARY, NOT A CONVENIENCE. The rule
+     is "a signed-out visitor sees THAT the forum exists and never its content."
+     It must not be loosened by accident. */
+  check(
+    "9 — a signed-out viewer is refused before anything else",
+    /^\s*if \(!viewer\) return false;/m.test(accessFn),
+    "a stranger sees THAT the forum exists and never its content"
+  );
+
+  /* ⚠ CONDITION 1 — enrolment, scoped to THIS viewer and THIS path. */
+  check(
+    "9 — condition 1 is a LearnEnrollment for this viewer and this path",
+    /learnEnrollment\.findFirst\(\{\s*where: \{ user_id: viewer\.userId, learning_path_id: learningPathId \}/.test(
+      accessFn
+    ),
+    "an enrolment lookup that is not scoped to the viewer is not a gate"
+  );
+
+  /* ⚠ CONDITION 2 — teaching, via the ONE extracted predicate. */
+  check(
+    "9 — condition 2 is teachesPathWhere, the one definition",
+    /where: \{ id: learningPathId, \.\.\.teachesPathWhere\(person\.id\) \}/.test(accessFn),
+    "expert_person_id alone is the known-wrong answer and has already cost once"
+  );
+
+  /* ⚠⚠⚠ AND EXACTLY TWO WAYS TO SAY YES. This is the assertion that makes
+     "nothing else" enforceable rather than aspirational: one `return true`
+     (enrolment) and one `return Boolean(taught)` (teaching). A third grant of
+     any shape — an admin bypass, an owner shortcut, a role check — has to add a
+     way to return true, and adding one fails here. */
+  const trueReturns = (accessFn.match(/return true;/g) ?? []).length;
+  check(
+    "9 — exactly one unconditional grant (enrolment)",
+    trueReturns === 1,
+    `${trueReturns} \`return true\` — a third OR has to add a way to say yes, and this is where it shows`
+  );
+  check(
+    "9 — the only other grant is the teaching lookup",
+    (accessFn.match(/return Boolean\(taught\);/g) ?? []).length === 1
+  );
+  /* ⚠ THREE QUERIES, NO MORE: the enrolment, the person, the taught path. A
+     fourth query is a third condition wearing a different hat. */
+  const queries = (accessFn.match(/await prisma\./g) ?? []).length;
+  check(
+    "9 — the rule asks the database exactly three things",
+    queries === 3,
+    `${queries} queries — a fourth is a third condition wearing a different hat`
+  );
+
+  /* ⚠⚠ NO ROLE CHECK, NO CAPABILITY SHORTCUT, NO ADMIN BYPASS. */
+  for (const forbidden of [
+    "is_system_admin",
+    "is_support",
+    "isAdmin",
+    "hasCapability",
+    "userClass",
+    "USER_CLASS",
+    "is_service_provider",
+    "is_service_coordinator",
+  ]) {
+    check(
+      `9 — no ${forbidden} shortcut in the access rule`,
+      !new RegExp(forbidden).test(accessFn),
+      "access is enrolment or teaching; a role is neither"
+    );
+  }
+
+  /* ⚠⚠⚠ AND THE ONE `E572` CREATED: OWNERSHIP IS NOT ACCESS. WS-A gave every
+     path group a `host_person_id`, which is exactly the object a future change
+     would be tempted to add as a third OR — "the owner can always get in".
+     ⚠ The owner is ALREADY covered: they are the declared lead or the largest
+     lesson contributor, so `teachesPathWhere` lets them in on the merits. A
+     shortcut on the column would grant access to a person whose teaching claim
+     had since gone away, and it would make OWNERSHIP grant ACCESS — the same
+     collapse the brief refused for CONFIRM authority. */
+  check(
+    "9 — ownership is not an access condition",
+    !/host_person_id|hostPerson/.test(accessFn),
+    "the owner already qualifies through teachesPathWhere; a shortcut makes ownership grant access"
+  );
+
+  /* ⚠⚠ THE `OR` IS DELIBERATE AND ITS REMOVAL IS A PRODUCT DECISION, NOT A
+     TIDY-UP. Teaching grants access WITHOUT enrolling: an instructor must reach
+     the forum of a DRAFT path they are still recording. Read strictly, "someone
+     would have to enrol to gain access" would make an instructor enrol in their
+     own path to enter its group. ⚠ The scope difference from `getPathsTaughtBy`
+     is deliberate too — that one filters to PUBLISHED because it feeds a public
+     profile; this one must not. */
+  check(
+    "9 — the teaching lookup is NOT filtered to PUBLISHED",
+    !/status: "PUBLISHED"/.test(accessFn),
+    "an instructor must reach the forum of a draft path they are still recording"
+  );
+
   if (failures.length > 0) {
     console.error(`check:forums — ${failures.length} FAILED, ${pass} passed\n`);
     for (const f of failures) console.error(`  ✗ ${f}`);
