@@ -74,12 +74,42 @@ export function AppBand() {
 
   /* ⚠⚠ UNCHANGED DERIVATION (`E491`). The caption is gone; the value is not. */
   const persona = railPersona(me, isAdmin);
+  /*
+    ── ⚠⚠⚠ NOTHING RENDERS HERE UNTIL `me` RESOLVES (`P2-ALL-E560`, 2026-09-18)
+
+    ⚠⚠ A PROVIDER WAS SEEING `Buyer Console` ON EVERY LOGGED-IN PAGE LOAD.
+    `AppBand` is a client component: before `useMe()` resolves, `me` is null,
+    `railPersona` correctly returns `null` — and the old ternary's FINAL ELSE
+    swallowed that null into `"Buyer Console"`. ⚠ So the band told a seller they
+    were a buyer, briefly, constantly, everywhere.
+
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    // const consoleLabel =
+    //   persona === "PANAMEER" ? "Platform Console"
+    //     : persona === "SELLER" ? "Provider Console"
+    //       : "Buyer Console";
+
+    ⚠⚠ THE HOUSE ALREADY HELD THE PRINCIPLE — `casing_spec_LOCKED.md` on the
+    bell: *"NO count/badge until the notifications feed backend exists — a '0' or
+    fake number is worse than none."* ⚠ **A WRONG CONSOLE NAME IS WORSE THAN NO
+    CONSOLE NAME.**
+
+    ⚠ `null` IS NOW ITS OWN BRANCH rather than a fall-through. `BUYER` still maps
+    to `Buyer Console`; what changed is that UNRESOLVED no longer borrows it.
+    ⚠⚠ `railPersona()`'s BUYER FALLBACK IS NOT TOUCHED — it is deliberate and
+    documented, and `E491` is why nothing here may change what that function
+    returns. ⚠ ONLY WHAT THE BAND RENDERS WHILE `me` IS NULL CHANGED.
+    ⚠ AN ADMIN NEVER FLASHES: `railPersona` short-circuits on the `isSystemAdmin`
+    SESSION bit, which resolves without `/api/me`.
+  */
   const consoleLabel =
     persona === "PANAMEER"
       ? "Platform Console"
       : persona === "SELLER"
         ? "Provider Console"
-        : "Buyer Console";
+        : persona === "BUYER"
+          ? "Buyer Console"
+          : null;
 
   /*
     ⚠ THE CLOCK IS AN EXTERNAL STORE, carried over from `AppHeader` unchanged.
@@ -137,8 +167,19 @@ export function AppBand() {
           describes a rail zone 2 chip and has been wrong since `E099`; that is
           corrected there, not papered over here.
         */}
+        {/*
+          ⚠⚠ THE SLOT KEEPS ITS LINE BOX AND SAYS NOTHING. `" "` holds the
+          height so the wordmark does not jump vertically when the label arrives
+          — the band is `align-items: center`, so a shorter brand block would
+          re-centre the logo and trade one flicker for another.
+          ⚠ A NON-BREAKING SPACE IS NOT A PLACEHOLDER: it names nothing, claims
+          nothing and reads as nothing. ⚠⚠ IT IS THE HOUSE PRECEDENT, not a new
+          idea — `AppHeader` used exactly this for the greeting before the clock
+          resolved (`: " "`).
+          ⚠ NO SKELETON, NO "Loading…", NO GUESSED LABEL.
+        */}
         <span className="mt-0.5 block text-[11px] font-medium tracking-wide text-white/45">
-          {consoleLabel}
+          {consoleLabel ?? " "}
         </span>
       </Link>
 
