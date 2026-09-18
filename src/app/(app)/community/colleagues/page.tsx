@@ -1,334 +1,101 @@
-/* ⚠ `Link` PARKED WITH THE SECTION CARDS (`P1-ALL-E378` WS-4) — they were its
-   only live consumer. Its remaining occurrences on this page are all inside the
-   Credits block that `E375` commented out, so nothing renders one now. */
-// import Link from "next/link";
+import Link from "next/link";
 import { guardPage } from "@/lib/guard";
-/* ⚠ PARKED WITH COMMUNITY CREDITS (`P1-ALL-E375`) — its only consumer on this
-   page was the Credits person-id lookup. */
-// import { getSessionViewer } from "@/lib/session";
-/* ⚠⚠ COMMUNITY CREDITS PARKED 2026-09-03 (`P1-ALL-E375`, amendment A2). Scott:
-   *"just comment it out. we can come back to it if we want, but it is just too
-   much rn. we NEED to move faster. that has no real value."*
-   ⚠ THE OBJECTION IS TO THE STANDING FRIDAY COMMITMENT, NOT THE CURRENCY: *"no
-   one wants to hold sessions every friday...unless that is all they do."*
-   PARKED DELIBERATELY, NOT ABANDONED — three unbuilt things were stacked behind
-   it: no ledger, no scheduling, and no mentor asking for it. The decision and
-   every parked call site are listed in `src/lib/credits.ts`.
-   ⚠ `prisma` AND `getSessionViewer` CAME OUT WITH IT, and that is not overreach:
-   the ONLY thing this page used either one for was resolving the person id for
-   the Credits seam. Leaving them would be an unused-import lint error against a
-   baseline of 43 that allows 0 new. */
-// import { prisma } from "@/lib/prisma";
-// import { getCreditsSummary, formatCredits } from "@/lib/credits";
-import { BRAND_MONEY_LINE } from "@/lib/brand";
-/* ⚠ THE EARN/SPEND TABLES ARE PARKED IN `lib/community.ts` TOO (`P1-ALL-E375`),
-   so these two imports go with them. `communitySections` is NOT credits work and
-   stays live. */
-import {
-  // CREDIT_EARN_ACTIONS,
-  // CREDIT_SPEND_ACTIONS,
-  // communitySections,
-} from "@/lib/community";
+import { getSessionViewer } from "@/lib/session";
 import { PageTabs } from "@/components/casing/PageTabs";
 import { PAGE_TABS, tabSequenceFor } from "@/lib/nav";
-/* ⚠ `P1-ALL-E379` — the unread badge rides on the shared tab row. */
 import { tabsWithUnread, unreadCount } from "@/lib/messages";
-/* ⚠ `P1-ALL-E374` — the screen over `E372`'s engine. The blocks and the search
-   results are server components so `searchMembers`, `getMyCommunity` and
-   `getColleagueSuggestions` never leave the server. */
-import { getSessionViewer } from "@/lib/session";
-import { CommunityBlocks, SearchResults } from "@/components/community/CommunityBlocks";
-import { MemberSearchBox } from "@/components/community/MemberSearchBox";
+import { getColleagueRoster } from "@/lib/colleague-roster";
+import { ColleagueRoster } from "@/components/community/ColleagueRoster";
+import { INVITE_LIMIT_PER_HOUR, INVITE_LIMIT_PER_DAY } from "@/lib/colleague-invite";
 
 /**
- * THE COMMUNITY HUB (PHASE 2 / WS2-A).
+ * ── ⚠⚠ `/community/colleagues` — A ROSTER, NOT A DIRECTORY (`P2-J3-E558` WS-A)
  *
- * The front door to the whole community-and-earning story: the four sections,
- * what Community Credits are and how the earned door works, and the
- * group-session strip.
+ * ⚠ SCOTT, 2026-09-17: *"the search has to be throttled based on class."*
+ * ⚠⚠ THE MEMBER-WIDE SEARCH IS GONE FROM THIS PAGE. It is the route 145
+ * providers take to reach 13 buyers. `getColleagueRoster` reads only the
+ * viewer's own ACCEPTED colleagues, and the search filters that list in memory
+ * — there is no endpoint behind the box that could be widened later.
  *
- * REAL: the section cards (read from the same nav definition the rail uses, so
- * the hub cannot list a different set than the menu you came from) and the
- * Credits summary (through the `getCreditsSummary` seam, which returns a true
- * zero and a `pending` flag until PHASE 3's ledger lands).
- * PLACEHOLDER: the sessions strip — `GroupSession` is a PHASE 4 model and does
- * not exist, so the strip says what will be there rather than inventing a
- * Friday.
- *
- * THE EXPLAINER IS NOT DECORATION. Seats are earned rather than given, and an
- * earned currency only changes behaviour if the rule is legible — a currency
- * nobody understands is a currency nobody chases. So the earn actions and the
- * spend are stated before anyone has a balance worth looking at.
+ * ⚠⚠ NO REQUESTS ON THIS PAGE. Accept/Decline live on Home (`E557`). A roster
+ * that also handles requests is two jobs in one list.
  */
-/* ⚠ `My Community` (`P1-ALL-E372` WS-5) — Scott: *"something you have"*. */
-export const metadata = { title: "My Community · Panameer" };
-
-/**
- * ── ⚠⚠ `/community/colleagues` (`P2-J3-E557` WS-B) ─────────────────────────
- *
- * ⚠ THIS IS THE BODY THAT USED TO BE `/community`. Workstream A gave Colleagues
- * its own route so the new tab would not 404; Workstream B makes `/community`
- * the Connect HOME, so this body now lives here and only here.
- *
- * ⚠⚠ IT IS A MOVE, NOT A REWRITE. `E558` owns the real Colleagues page — the
- * search box, the blocks and the copy below are unchanged from the landing, so
- * nothing a member could do yesterday is missing today.
- */
-export default async function ColleaguesPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ q?: string }>;
-}) {
-  const current = "/community/colleagues";
+export default async function ColleaguesPage() {
   await guardPage("authenticated");
-  /* ⚠ `P1-ALL-E379` — the Messages tab carries the unread count on every
-     page that renders this tab row. Zero renders nothing. */
-  const unreadViewer = await getSessionViewer();
-  const unread = unreadViewer ? await unreadCount(unreadViewer) : 0;
-  /* ⚠ SEARCH LIVES ON THIS PAGE — there is no `/community/people` route. While a
-     query is live the results REPLACE the blocks; clearing `?q=` restores them.
-     `E374`: *"One page is one thing to walk."* */
-  const { q } = await searchParams;
-  const query = (q ?? "").trim();
   const viewer = await getSessionViewer();
-  /* ⚠⚠ THE WHOLE viewer -> person -> credits CHAIN IS PARKED (`P1-ALL-E375`).
-     ⚠ ITS ORIGINAL REASONING IS PRESERVED VERBATIM rather than deleted, because
-     it explains why the seam took a person id it never used: *"The person id,
-     for the Credits seam. PHASE 1's implementation ignores it; PHASE 3 reads the
-     ledger with it. Resolved here so the call site is already correct when the
-     body behind it changes."*
-     ⚠ `guardPage("authenticated")` ABOVE IS UNTOUCHED — the page is still gated.
-     Only the Credits read went quiet, never the access check. */
-  // const viewer = await getSessionViewer();
-  // const person = viewer
-  //   ? await prisma.person.findUnique({
-  //       where: { user_id: viewer.userId },
-  //       select: { id: true },
-  //     })
-  //   : null;
-  // const credits = await getCreditsSummary(person?.id ?? null);
-  /* ⚠ PARKED WITH THE CARDS (`P1-ALL-E378` WS-4) — nothing renders it now. */
-  // const sections = communitySections();
+  const unread = viewer ? await unreadCount(viewer) : 0;
+  const rows = viewer ? await getColleagueRoster(viewer) : [];
 
   return (
     <>
-      {/* E216 — the Community rail flyout's children are this section's tab row now. */}
       <PageTabs
-        eyebrow="CONNECT" sequence={tabSequenceFor("/community")} tabs={tabsWithUnread(PAGE_TABS["/community"], unread)} current={current} />
-      <div className="mx-auto max-w-5xl space-y-5">
-      <header>
-        {/*
-          ⚠ `My Community` (`P1-ALL-E372` WS-5). ⚠ SUPERSEDED, QUOTED NOT DELETED:
-          this `<h1>` read *"The Panameer Community"* until `E372`. Scott's
-          terminology table renamed the surface — a place you visit became
-          something you have. ⚠ THE ROUTE IS STILL `/community`; renaming the
-          folder was NOT in the brief and is not chat's call.
-        */}
-        <h1 className="font-display text-[26px] font-bold tracking-[-0.5px]">
-          My Community
-        </h1>
-        {/*
-          THE MONEY LINE IS THE HUB'S INTRO (brief_brand_tagline_rollout WS-C).
-          This is the crossover surface from content into the marketplace, and
-          the four verbs ARE what the community is for — learn, join, connect,
-          get paid — so the brand line does the job the hand-written sentence
-          was approximating. From lib/brand.ts, same string the hero uses.
-        */}
-        <p className="mt-1.5 max-w-2xl text-[16px] font-semibold leading-relaxed">
-          {BRAND_MONEY_LINE}
-        </p>
-        <p className="mt-1.5 max-w-2xl text-[15px] leading-relaxed text-ink-2">
-          Where practitioners answer each other&apos;s questions, teams find each
-          other, and the people who have done the work make time for the people
-          learning it.
-        </p>
-      </header>
+        eyebrow="CONNECT"
+        sequence={tabSequenceFor("/community")}
+        tabs={tabsWithUnread(PAGE_TABS["/community"], unread)}
+        current="/community/colleagues"
+      />
+      <div className="mx-auto max-w-5xl">
+        <header className="mb-5">
+          <h1 className="font-display text-[26px] font-bold tracking-[-0.5px]">
+            Colleagues
+          </h1>
+        </header>
 
-      {/* ⚠ THE SEARCH BOX SITS AT THE TOP (`E374` WS-2). */}
-      {viewer && <MemberSearchBox initial={query} />}
+        <div className="grid gap-5 lg:grid-cols-[1fr_280px]">
+          <ColleagueRoster
+            rows={rows.map((r) => ({
+              connectionId: r.connectionId,
+              userId: r.userId,
+              name: r.name,
+              title: r.title,
+              company: r.company,
+              photoUrl: r.photoUrl,
+              reason: r.reason,
+              reasonKind: r.reasonKind,
+              buySide: r.buySide,
+            }))}
+          />
 
-      {/* ⚠⚠ RESULTS REPLACE THE BLOCKS WHILE A QUERY IS LIVE — they do not stack
-          under them. */}
-      {viewer && query ? (
-        <SearchResults viewer={viewer} query={query} />
-      ) : (
-        viewer && <CommunityBlocks viewer={viewer} />
-      )}
-
-      {/* ⚠⚠ THE DUPLICATE SECTION CARDS — REMOVED 2026-09-04 (`P1-ALL-E378`
-          WS-4). ⚠ COMMENTED OUT, NOT DELETED.
-
-          They linked to THE SAME FOUR DESTINATIONS THE TAB ROW ABOVE THEM
-          ALREADY LISTS. `/community` offered every sub-page twice: once as tabs
-          at the top, once as cards below.
-
-          ⚠ THEY WERE A SYMPTOM, NOT THE DISEASE. The cards existed BECAUSE the
-          tab row did not read as navigation — and `E378` WS-2a fixed the cause,
-          so the symptom goes with it. Removing them before fixing the tabs
-          would have taken navigation away rather than de-duplicated it.
-
-          ⚠ THE `live` / `early` PILLS WERE THE ONE THING WORTH KEEPING and they
-          were NOT dropped: they moved ONTO THE TAB, as `PageTabItem.state` in
-          `nav.ts`. A destination that is not ready says so on the tab, which is
-          the control people actually use — not on a second set of cards.
-          ⚠ ONLY `early` IS DRAWN. A `live` pill on everything that works is
-          noise; the absence of a pill already means ready.
-
-          ⚠ THE SECTION LABEL IS ABSORBED HERE rather than kept inline, because a
-          nested comment delimiter terminates this wrapper early: *"---- The four
-          sections ----"*.
-
-          ⚠ `communitySections()` ITSELF IS COMMENTED OUT IN `lib/community.ts`,
-          NOT DELETED, per house rule — its blurbs and states are the record of
-          what each destination is for. */}
-      {/*
-      <div className="grid gap-4 sm:grid-cols-2">
-        {sections.map((s) => (
-          <Link
-            key={s.href}
-            href={s.href}
-            className="group rounded-brand border border-line bg-white p-5 transition-colors hover:border-magenta/40"
-          >
-            <div className="flex items-baseline gap-2">
-              <h2 className="font-display text-[17px] font-bold group-hover:text-magenta">
-                {s.label}
-              </h2>
-              {s.state === "early" && (
-                <span className="rounded-full bg-black/[0.06] px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-ink-2">
-                  Early
-                </span>
-              )}
-            </div>
-            <p className="mt-1.5 text-[14px] leading-relaxed text-ink-2">
-              {s.blurb}
-            </p>
-          </Link>
-        ))}
-      </div>
-      */}
-
-      {/* ⚠⚠ COMMUNITY CREDITS AND UPCOMING GROUP SESSIONS — BOTH PARKED
-          2026-09-03 (`P1-ALL-E375`, brief amendment A2).
-
-          SCOTT, 2026-09-03: *"just comment it out. we can come back to it if we
-          want, but it is just too much rn. we NEED to move faster. that has no
-          real value."*
-
-          ⚠ PARKED DELIBERATELY, NOT ABANDONED. Three unbuilt things were stacked
-          behind these two sections and the page itself admitted the middle one:
-          *"Mentors publish their Friday sessions here once scheduling is
-          switched on."* No ledger, no scheduling, and no mentor wanting the
-          weekly commitment — Scott: *"no one wants to hold sessions every
-          friday...unless that is all they do."*
-
-          ⚠ THE OBJECTION IS TO THE FRIDAY COMMITMENT, NOT THE CURRENCY. The copy
-          below was already honest about its boundary — *"One-to-one time with a
-          mentor is paid for in cash, not Credits"* — so nothing here was
-          misleading. It was simply three features from working.
-
-          ⚠ THIS IS A BUILT SECTION FROM `brief_MASTER_rails_and_community`, NOT A
-          LABEL: a card with five earn rules, a "what they unlock" column, and the
-          sessions block. DELETING IT WOULD UNDO A PRIOR BRIEF'S WORK as a side
-          effect of an amendment. It stays on disk in full.
-
-          ⚠ THE TWO SECTION LABELS ARE ABSORBED HERE rather than kept inline,
-          because a nested comment delimiter terminates this wrapper early:
-          *"---- Credits: the balance, then the rule in plain language ----"* and
-          *"---- Group sessions: honestly empty until PHASE 4 ----"*.
-
-          To bring it back: uncomment `src/lib/credits.ts`, then the two consts in
-          `src/lib/community.ts`, then this block and the imports above. */}
-      {/*
-      <section className="rounded-brand border border-magenta/25 bg-magenta/[0.04] p-5">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <h2 className="font-display text-[17px] font-bold">
-              Community Credits
-            </h2>
-            <p className="mt-1 max-w-xl text-[14px] leading-relaxed text-ink-2">
-              The currency you earn by taking part. Credits buy a seat at a
-              Friday group session — they can&apos;t be bought with money, only
-              earned.
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="font-display text-[32px] font-bold leading-none text-magenta">
-              {formatCredits(credits.balance)}
-            </p>
-            <p className="mt-1 text-[13px] text-ink-2">
-              {formatCredits(credits.earnedThisWeek)} earned this week
-            </p>
-          </div>
-        </div>
-
-        {credits.pending && (
-          <p className="mt-3 rounded-[10px] border border-dashed border-magenta/30 px-3 py-2 text-[13px] leading-relaxed text-ink-2">
-            The Credits ledger isn&apos;t switched on yet, so everyone reads
-            zero. Nothing you do now is being missed — earning starts when it
-            goes live, and the rules below are what it will count.
-          </p>
-        )}
-
-        <div className="mt-5 grid gap-5 sm:grid-cols-2">
-          <div>
-            <h3 className="text-[12px] font-bold uppercase tracking-[0.08em] text-ink-2">
-              How You Earn
-            </h3>
-            <ul className="mt-2 space-y-2">
-              {CREDIT_EARN_ACTIONS.map((a) => (
-                <li key={a.action} className="text-[14px] leading-relaxed">
-                  <span className="font-semibold">{a.action}</span>
-                  <span className="text-ink-2"> — {a.detail}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <h3 className="text-[12px] font-bold uppercase tracking-[0.08em] text-ink-2">
-              What They Unlock
-            </h3>
-            <ul className="mt-2 space-y-2">
-              {CREDIT_SPEND_ACTIONS.map((a) => (
-                <li key={a.action} className="text-[14px] leading-relaxed">
-                  <span className="font-semibold">{a.action}</span>
-                  <span className="text-ink-2"> — {a.detail}</span>
-                </li>
-              ))}
-            </ul>
-            <p className="mt-3 text-[13px] leading-relaxed text-ink-2">
-              One-to-one time with a mentor is paid for in cash, not Credits —
-              see{" "}
+          {/* ── ⚠ INVITE A COLLEAGUE — THE RIGHT RAIL CARD ──────────────────
+              ⚠⚠ THE ACCOUNT-MENU REMOVAL IS `E559` WS-D, NOT THIS BRIEF —
+              one brief owns `PERSONA_NAV_SECONDARY`. This adds the card; it
+              does not take the menu item away. */}
+          <aside className="space-y-3">
+            <div className="rounded-brand border border-line bg-white p-5">
+              <h2 className="font-display text-[15px] font-bold">Invite a colleague</h2>
+              {/*
+                ⚠⚠⚠ NO COPY HERE CLAIMS THE INVITEE "ARRIVES ALREADY CONNECTED".
+                ⚠ MEASURED 2026-09-17: ACCEPTING CREATES NOTHING.
+                `app/invite/colleague/[token]/page.tsx` says so in as many words
+                — *"Nothing has been created for you, and {inviter} can't see…"*.
+                ⚠ An early draft of the mockup claimed otherwise and was wrong.
+                This states what the invitation IS: an invitation from a named
+                person, nothing more.
+              */}
+              <p className="mt-2 text-[13.5px] leading-relaxed text-ink-2">
+                Send someone an invitation from you by name. It is an invitation,
+                not a connection — if they join, you still send a colleague
+                request like anyone else.
+              </p>
               <Link
-                href="/community/mentors"
-                className="font-semibold text-magenta hover:underline"
+                href="/invite-colleague"
+                className="mt-3 inline-block rounded-full bg-magenta px-4 py-2 text-[13.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
               >
-                Find a Mentor
+                Invite a Colleague
               </Link>
-              .
-            </p>
-          </div>
+              {/* ⚠ THE REAL LIMITS, BOTH COUNTED IN THE DATABASE. An in-process
+                  counter resets every deploy and is per-instance, which on
+                  serverless is no limit at all — so the numbers shown here are
+                  the ones actually enforced.
+                  ⚠ `E433` — figures, so ink rather than magenta. */}
+              <p className="mt-3 text-[12.5px] leading-relaxed text-ink-2">
+                Up to {INVITE_LIMIT_PER_HOUR} an hour and {INVITE_LIMIT_PER_DAY} a
+                day.
+              </p>
+            </div>
+          </aside>
         </div>
-      </section>
-
-      <section className="rounded-brand border border-line bg-white p-5">
-        <h2 className="font-display text-[17px] font-bold">
-          Upcoming Group Sessions
-        </h2>
-        <p className="mt-1.5 max-w-2xl text-[14px] leading-relaxed text-ink-2">
-          Thirty minutes on a Friday with a senior practitioner, one-to-many. A
-          seat costs Credits.
-        </p>
-        <div className="mt-4 rounded-[10px] border border-dashed border-line px-4 py-6 text-center">
-          <p className="text-[14.5px] font-semibold">No sessions scheduled yet.</p>
-          <p className="mx-auto mt-1 max-w-md text-[13.5px] leading-relaxed text-ink-2">
-            Mentors publish their Friday sessions here once scheduling is
-            switched on. Nothing is being hidden from you — there is genuinely
-            nothing on the calendar.
-          </p>
-        </div>
-      </section>
-      */}
-    </div>
+      </div>
     </>
   );
 }
