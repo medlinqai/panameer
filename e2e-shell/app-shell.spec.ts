@@ -31,9 +31,25 @@ import { join } from "node:path";
 
 const WIDTHS = [360, 375, 640, 760, 900, 1000, 1100, 1180, 1282, 1440, 1562];
 
-/** The five things that may never disappear, whatever the width. */
+/**
+ * The things that may never disappear, whatever the width.
+ *
+ * ── ⚠⚠ SEARCH LEFT THE SHELL (`P2-ALL-E559` WS-A 4) ─────────────────────────
+ *
+ * ⚠ SUPERSEDED, quoted not deleted (`E164`):
+ * //   { label: "Search", how: "either" as const },
+ *
+ * ⚠⚠ THIS IS `check:rollup`'S CASE, NOT `check:cert-skills`' — THE RULING
+ * CHANGED, THE CODE DID NOT DRIFT. Scott removed Search from the band
+ * deliberately: it was a LINK shaped like a field pointing at a Coming-Soon
+ * stub, and removing it plus the greeting is what made room for the role menu.
+ * ⚠ The gate was RIGHT until 2026-09-18 and is being taught the new truth, not
+ * weakened — the four remaining entries are untouched and still assert presence,
+ * render and hit-testability at all eleven widths.
+ * ⚠ `SEARCH_NAV` still exists in `nav.ts` and `/search` still resolves; only the
+ * shell affordance is gone, so this is a CHROME change, not a route removal.
+ */
 const UNIVERSAL = [
-  { label: "Search", how: "either" as const },
   { label: "Home", how: "icon" as const },
   { label: "Notifications", how: "icon" as const },
   { label: "Account menu", how: "button" as const },
@@ -199,18 +215,15 @@ async function measure(p: Page) {
       };
     };
 
-    /* Search is a centre pill above sm and an icon below — either satisfies it. */
-    const searchPill = header.querySelector('a[href="/search"]:not([aria-label])');
-    const searchPillVisible =
-      !!searchPill &&
-      getComputedStyle(searchPill).display !== "none" &&
-      searchPill.getBoundingClientRect().width > 0;
-    const searchPillHit = (() => {
-      if (!searchPillVisible || !searchPill) return false;
-      const b = searchPill.getBoundingClientRect();
-      const at = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2);
-      return Boolean(at && (at === searchPill || searchPill.contains(at)));
-    })();
+    /* ⚠ SEARCH LEFT THE SHELL (`P2-ALL-E559` WS-A 4) — see the note on
+       `UNIVERSAL` above for why this is the ruling changing, not code drifting.
+       ⚠ SUPERSEDED, quoted not deleted (`E164`), using LINE comments per rule 12
+       because the quoted body itself contains a comment:
+       // Search is a centre pill above sm and an icon below - either satisfies it.
+       // const searchPill = header.querySelector('a[href="/search"]:not([aria-label])');
+       // const searchPillVisible = !!searchPill && getComputedStyle(searchPill).display !== "none"
+       //   && searchPill.getBoundingClientRect().width > 0;
+       // const searchPillHit = ... elementFromPoint at the pill's centre ... */
 
     return {
       innerWidth: iw,
@@ -227,7 +240,6 @@ async function measure(p: Page) {
       offLeft,
       wrapped,
       controls: {
-        Search: searchPillVisible ? { found: true, w: Math.round(searchPill!.getBoundingClientRect().width), h: 36, hit: searchPillHit } : control("Search"),
         Home: control("Home"),
         Notifications: control("Notifications"),
         "Account menu": control("Account menu"),

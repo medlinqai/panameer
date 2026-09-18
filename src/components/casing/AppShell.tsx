@@ -1,7 +1,19 @@
 import { MarketingFooter } from "@/components/marketing/MarketingFooter";
 import type { ReactNode } from "react";
-import { AppRail } from "@/components/casing/AppRail";
-import { AppHeader } from "@/components/casing/AppHeader";
+/*
+  ── ⚠⚠ THE RAIL AND THE OLD HEADER ARE NO LONGER RENDERED (`P2-ALL-E559`) ────
+
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  // import { AppRail } from "@/components/casing/AppRail";
+  // import { AppHeader } from "@/components/casing/AppHeader";
+
+  ⚠⚠ BOTH FILES STAY ON DISK AND ARE NOT DELETED — the brief says so explicitly
+  and `E164` says so generally. Nothing imports them now.
+  ⚠ Rule 12: the two lines above are LINE comments. A block comment around an
+  import list is fine today, but the moment a quoted body contains `*／` it
+  closes the comment early — the trap that has bitten twice.
+*/
+import { AppBand } from "@/components/casing/AppBand";
 import { getSessionViewer } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { resolveTheme } from "@/lib/themeRecipes";
@@ -64,14 +76,21 @@ export async function AppShell({ children }: { children: ReactNode }) {
       sideways while the pages whose content could shrink merely looked cramped.
       Stacking below lg puts the bar above the content where it belongs.
     */
+    /*
+      ⚠⚠ ONE COLUMN AT EVERY WIDTH NOW (`P2-ALL-E559`). ⚠ SUPERSEDED, quoted not
+      deleted (`E164`): `flex min-h-screen flex-col bg-canvas … lg:flex-row`,
+      with `<AppRail />` as the first flex item.
+      ⚠ The `lg:flex-row` existed because the rail was a SIBLING COLUMN. With the
+      rail gone there is no second column, so the band, the main and the footer
+      simply stack — and the 240px the rail reserved returns to the page at every
+      width above `lg`.
+    */
     <div
       style={themeVars}
-      className="flex min-h-screen flex-col bg-canvas font-body text-ink lg:flex-row"
+      className="flex min-h-screen flex-col bg-canvas font-body text-ink"
     >
-      <AppRail />
-
       <div className="flex min-w-0 flex-1 flex-col">
-        <AppHeader />
+        <AppBand />
 
         <main className="flex-1 px-5 py-6 sm:px-8">{children}</main>
 

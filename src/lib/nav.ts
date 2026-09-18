@@ -707,7 +707,38 @@ export const PROVIDER_NAV: NavItem[] = [
      ⚠ THE `heading` VALUES ARE UNCHANGED ON PURPOSE. They now disagree with
      their labels (`Manage Orders` -> `Work Orders`, `Get Paid` -> `Payments`)
      and that is REPORTED for Scott to name, not fixed here. */
-  { label: "Manage Orders", heading: "Work Orders", href: "/orders", icon: "ClipboardCheck" },
+  /* ⚠⚠ `P2-ALL-E559` WS-A — SCOTT, 2026-09-17. ⚠ SUPERSEDED, quoted not
+     deleted (`E164`): `{ label: "Manage Orders", … }`.
+     ⚠ THIS NARROWS `E533` PART B ON THIS ONE ITEM ONLY. That rule was *"every
+     rail item is a verb phrase"*; the band puts a LABEL UNDER AN ICON, where a
+     two-word verb phrase is the widest thing in the row. ⚠⚠ Rule 13 — Scott's
+     newer word wins, and `E533`'s reasoning is kept because it still governs
+     every item this brief did not name. ⚠ THE BUYER SIDE IS UNTOUCHED: it still
+     reads `Track Orders`, because a buyer WATCHES and a provider WORKS a queue. */
+  { label: "Orders", heading: "Work Orders", href: "/orders", icon: "ClipboardCheck" },
+  /*
+    ── ⚠⚠⚠ `Get Paid` IS RETAINED, AND THAT IS A DEPARTURE FROM THE BRIEF ──────
+
+    WS-A 3 says to REMOVE it — *"I will make payments available from orders"* —
+    with an explicit precondition: *"Removing the entry must leave `/payments`
+    reachable from Orders, or payments become unreachable."*
+
+    ⚠⚠ MEASURED 2026-09-18, AND THE PRECONDITION IS NOT MET:
+      · `/orders` has NO `PAGE_TABS` entry at all — there is no tab row on it.
+      · No orders page links `/payments`. The only match under
+        `app/(app)/orders/` is the WORD "payments" inside prose.
+      · `/payments`' other doors are `attention.ts` (conditional — it only
+        surfaces when something needs attention), a back-link from INSIDE
+        payments, and the legacy `/finances` 308.
+    ⚠ So removing this entry buries a provider's money surface behind a
+    conditional notification — the same shape as `E559`'s own `/recommendations`
+    finding, which Scott ruled on the same day: KEEP THE ENTRY UNTIL THE DOOR
+    EXISTS.
+
+    ⚠⚠ REPORTED AT THE WS-A GATE, NOT DECIDED HERE. Building the Orders→payments
+    door is an Orders-surface change this brief does not scope. ⚠ One line to
+    remove once that door exists.
+  */
   { label: "Get Paid", heading: "Payments", href: "/payments", icon: "Wallet" },
   { label: "Connect", heading: "My Community", href: "/community", icon: "MessagesSquare" },
 ];

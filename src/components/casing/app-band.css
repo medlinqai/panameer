@@ -1,0 +1,146 @@
+/*
+ * ── ⚠⚠ THE APP BAND — THE THREE ANCHORS (`P2-ALL-E559` WS-B) ─────────────────
+ *
+ * SCOTT, 2026-09-17: *"once you remove the Panameer logo, the icons with the
+ * text under them should be centered between the right side icons and the left
+ * side."*
+ *
+ * ⚠⚠ PLAIN CSS, NOT TAILWIND ARBITRARY VARIANTS, AND THAT IS DELIBERATE.
+ * `pitfalls.md` 2026-08-19 and `check:app-shell` both forbid an arbitrary
+ * variant (`min-[930px]:`) competing with a named one — both media queries match
+ * and SOURCE ORDER decides, which is how `sm:` beat `min-[1100px]:`. The band
+ * needs breakpoints that are not in the named scale, so it takes a stylesheet.
+ *
+ * ── ⚠⚠⚠ THE GRID RULE, AND IT IS NOT WHAT THE BRIEF PRESCRIBED ───────────────
+ *
+ * THE ANCHOR: the menu's centre must equal `(logo.right + cluster.left) / 2`,
+ * where `logo.right` is 0 when the logo is hidden.
+ *
+ * ⚠ THE THREE COLUMNS STAY AT EVERY WIDTH. Only `.pm-band-brand` hides.
+ * With `grid-template-columns: auto minmax(0,1fr) auto` and a symmetric gap G,
+ * the middle column runs from `logo.right + G` to `cluster.left - G`, so its
+ * centre is `(logo.right + cluster.left) / 2` — the two gaps CANCEL. That holds
+ * when the logo collapses to zero width too.
+ *
+ * ⚠⚠ THE BRIEF SAID TO DROP THE COLUMN AT 930 AND RE-NUMBER THE OTHER TWO.
+ * MEASURED, THAT IS THE VERSION THAT IS OFF-CENTRE: with two columns the menu
+ * column runs `0 → cluster.left - G`, whose centre is `cluster.left/2 - G/2` —
+ * ⚠ 10px LEFT at a 20px gap. The brief attributes that 10px to KEEPING the
+ * column; the arithmetic and the measurement both put it on DROPPING it.
+ * ⚠ Reported with the five numbers rather than silently switched.
+ *
+ * ⚠ THE BRIEF'S TRAP 1 IS REAL AND IS GUARDED HERE: `display:none` removes a
+ * grid ITEM from auto-placement, so without an explicit `grid-column` on each
+ * child the menu would fall into column 1 when the logo hides. Every child
+ * below names its own column.
+ */
+
+.pm-band {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 20px;
+  align-items: center;
+}
+
+/* ⚠ EXPLICIT COLUMNS — the guard against trap 1. Never remove these. */
+.pm-band-brand {
+  grid-column: 1;
+  justify-self: start;
+}
+.pm-band-menu {
+  grid-column: 2;
+  justify-self: center;
+  min-width: 0;
+}
+.pm-band-right {
+  grid-column: 3;
+  justify-self: end;
+}
+
+/*
+ * ── ⚠ THE SHRINK ORDER IS SCOTT'S (`E559` WS-C) ──────────────────────────────
+ * 1. the date chip   2. `AI on`   3. the Panameer logo block
+ * Below that the menu goes icon-only. It must never wrap and never push the
+ * utility cluster off-screen.
+ */
+
+/* 1 — the date chip goes first. */
+@media (max-width: 1400px) {
+  .pm-band-date {
+    display: none;
+  }
+}
+
+/* 2 — then `AI on`. */
+@media (max-width: 1180px) {
+  .pm-band-ai {
+    display: none;
+  }
+}
+
+/*
+ * 3 — then the whole logo block. ⚠ THE COLUMN STAYS; only the item hides.
+ *
+ * ── ⚠⚠⚠ AND THE AVAILABLE SPACE MUST THEN START AT THE LEFT EDGE ────────────
+ *
+ * SCOTT'S RULE: *"once you remove the Panameer logo, the icons with the text
+ * under them should be centered between the right side icons and the left
+ * side"* — and the brief makes it arithmetic: the menu's centre equals
+ * `(logo.right + cluster.left) / 2` with `logo.right = 0`.
+ *
+ * ⚠⚠ MEASURED 2026-09-18, FIRST ATTEMPT: hiding only the logo left the menu
+ * ⚠ +12.0px RIGHT of centre at BOTH 900 and 700. The cause is not the grid —
+ * it is that `logo.right = 0` means the VIEWPORT EDGE, while the menu column
+ * still began after the band's 24px left padding AND the 20px column gap. The
+ * column ran `[44, cluster.left − 20]`, whose centre is 12px right of
+ * `cluster.left / 2`. ⚠ `(44 + (cluster.left − 20) − cluster.left) / 2 = 12`.
+ *
+ * ⚠ SO BOTH ARE ZEROED ON THIS SIDE ONLY: the left padding and the column gap.
+ * The menu column then spans `[0, cluster.left]` exactly and its centre is
+ * `cluster.left / 2` — off by 0. ⚠⚠ THE RIGHT PADDING IS UNTOUCHED, so the
+ * cluster keeps its inset from the right edge.
+ * ⚠ `.pm-band-menu` takes the gap back as PADDING, which keeps the menu's
+ * content clear of the cluster without moving its box's centre — padding is
+ * inside the box being centred, so it cancels.
+ */
+@media (max-width: 930px) {
+  .pm-band-brand {
+    display: none;
+  }
+  .pm-band {
+    padding-left: 0;
+    column-gap: 0;
+  }
+  .pm-band-menu {
+    padding: 0 20px;
+  }
+}
+
+/* Below that the menu is icons only — the label is what costs the width. */
+@media (max-width: 780px) {
+  .pm-band-label {
+    display: none;
+  }
+  .pm-band-item {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+}
+
+/* ⚠ THE MENU NEVER WRAPS, AT ANY WIDTH. It scrolls sideways before it wraps —
+   a second line would change the band's height on every logged-in page. */
+.pm-band-menu-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-wrap: nowrap;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.pm-band-menu-row::-webkit-scrollbar {
+  display: none;
+}
+.pm-band-item {
+  flex-shrink: 0;
+}
