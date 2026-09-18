@@ -754,10 +754,35 @@ check(
   tickLines.length === 1 && /done \?/.test(tickLines[0]),
   tickLines.join(" || ")
 );
-/* ⚠ AND THE SET THAT IS ACTUALLY SUGGESTED IS DECLARED AS SUCH. */
+/* ── ⚠⚠ THE MODE `/community` DECLARES (`P2-J3-E557` WS-A) ─────────────────
+   ⚠ CONNECT IS A ROOM A MEMBER RE-ENTERS, NOT A PATH THEY WALK ONCE, so the row
+   carries no numbers. ⚠⚠ THIS ASSERTION IS INVERTED, NOT DELETED — the rule was
+   never "this set is suggested", it was "this set declares the mode somebody
+   actually decided", and the decision changed.
+
+   ── ⚠ FOOTNOTE: THE SUPERSEDED ASSERTIONS (`E164`) ────────────────────────
+   ⚠ Live until `E557`, quoted not deleted:
+
+       check(
+         "E378/1 — /community is declared suggested in nav.ts",
+         /"\/community":\s*"suggested"/.test(navLib)
+       );
+
+   ⚠⚠ AND A SECOND ONE SAYING THE SAME THING, folded in here on Scott's ruling
+   rather than inverted twice — *"this becomes a duplicate of #1 once inverted"*:
+
+       // ⚠ THE MODE IS STILL `suggested`. You never finish checking your
+       // messages, so step 1 must never acquire a done state.
+       check(
+         "E378/5 — /community is still suggested, not process",
+         /"\/community":\s*"suggested"/.test(navLib)
+       );
+
+   ⚠ TWO ASSERTIONS OF ONE FACT IS NOT TWICE THE PROTECTION — it is two places
+   to update and one of them gets missed. */
 check(
-  "E378/1 — /community is declared suggested in nav.ts",
-  /"\/community":\s*"suggested"/.test(navLib)
+  "E557/1 — /community declares `none`, so the row carries no step numbers",
+  /"\/community":\s*"none"/.test(navLib)
 );
 /* ── ⚠⚠ EVERY TAB SET IS DELIBERATELY CLASSIFIED (`P1-ALL-E384` WS-3) ──────
    Scott: *"we could define each menu sequential or parallel, then number the
@@ -953,10 +978,31 @@ check(
    dropped: the rule was never "Messages must be unnumbered", it was "a suggested
    sequence must not open on a dead end". Messages is now step 1, which is
    Scott's own order: *"1. Check Your Messages. 2. Search for Colleagues."* */
+/* ── ⚠⚠ NO STEP NUMBERS IN THE SET AT ALL (`P2-J3-E557` WS-A) ──────────────
+   ⚠⚠ THIS IS DELIBERATELY *NOT* AN INVERSION OF THE OLD ASSERTION. Scott,
+   2026-09-18: *"Messages leaves /community entirely under `E560`, so asserting
+   its position is asserting something with weeks to live."*
+   ⚠ So the rule asserted is the one that OUTLIVES the move: the set carries no
+   `n:` values, whatever order its members end up in. ⚠⚠ Under `none` a number
+   would never RENDER — this catches the stale DATA, which is what would
+   contradict itself the moment anybody flipped the mode back.
+
+   ── ⚠ FOOTNOTE: THE SUPERSEDED ASSERTION (`E164`) ─────────────────────────
+   ⚠ Live until `E557`, quoted not deleted:
+
+       check(
+         "E378/5 — Messages is step 1 now that it has a model",
+         /\{ n: 1, label: "Messages", href: "\/messages" \}/.test(navLib),
+         "E379 built the Message model, so the sequence no longer opens on a dead end"
+       );
+
+   ⚠ Its reasoning was right for its moment and is kept above this block. */
 check(
-  "E378/5 — Messages is step 1 now that it has a model",
-  /\{ n: 1, label: "Messages", href: "\/messages" \}/.test(navLib),
-  "E379 built the Message model, so the sequence no longer opens on a dead end"
+  "E557/2 — the /community set carries no `n:` values",
+  !/\bn:\s*\d+/.test(
+    /"\/community": \[[\s\S]*?\n  \],/.exec(navLib)?.[0]?.replace(/\/\*[\s\S]*?\*\//g, "") ?? "FAIL"
+  ),
+  "a number under `none` is stale data waiting to contradict the order"
 );
 /* ⚠ AND IT LOST ITS `early` PILL — a readiness pill on a working feature is the
    same lie in the other direction. */
@@ -964,12 +1010,9 @@ check(
   "E378/5 — Messages no longer carries an `early` pill",
   !/label: "Messages", href: "\/messages", state:/.test(navLib)
 );
-/* ⚠ THE MODE IS STILL `suggested`. You never finish checking your messages, so
-   step 1 must never acquire a done state. */
-check(
-  "E378/5 — /community is still suggested, not process",
-  /"\/community":\s*"suggested"/.test(navLib)
-);
+/* ⚠ THE `/community` MODE ASSERTION MOVED — it is `E557/1`, beside the other
+   mode check, and its superseded text is quoted there. Two assertions of one
+   fact was the thing being removed, so nothing is re-stated here. */
 check(
   "E378/5 — Find a Mentor is gone from every label and title",
   !/label: "Find a Mentor"/.test(navLib) &&
