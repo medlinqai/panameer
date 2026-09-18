@@ -50,7 +50,7 @@ export function FindAMentor({
   return (
     <section className="space-y-4">
       <div>
-        <h2 className="font-display text-[17px] font-bold">Find a mentor</h2>
+        <h2 className="font-display text-[17px] font-bold">Find a Mentor</h2>
         <p className="mt-1 text-[13.5px] leading-relaxed text-ink-2">
           {/* ⚠ SAYS THE GATE OUT LOUD. A search that silently omits most of the
               directory teaches people the directory is small; saying "opted in"

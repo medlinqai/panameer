@@ -68,7 +68,7 @@ export async function SearchResults({ viewer, query }: { viewer: Viewer; query: 
 
   return (
     <section className="space-y-3">
-      <SectionHeading count={results.length}>Search results</SectionHeading>
+      <SectionHeading count={results.length}>Search Results</SectionHeading>
       <div className="space-y-2">
         {results.map((r) => {
           const f = facts.get(r.personId);
@@ -115,7 +115,7 @@ export async function CommunityBlocks({ viewer }: { viewer: Viewer }) {
       {/* ── 1 · REQUESTS WAITING ON YOU — first, and only when there are any ── */}
       {incoming.length > 0 && (
         <section className="space-y-3">
-          <SectionHeading count={incoming.length}>Requests waiting on you</SectionHeading>
+          <SectionHeading count={incoming.length}>Requests Waiting on You</SectionHeading>
           <div className="space-y-2">
             {incoming.map((r) => (
               <MemberRow
@@ -144,7 +144,7 @@ export async function CommunityBlocks({ viewer }: { viewer: Viewer }) {
 
       {/* ── 2 · YOUR COLLEAGUES ───────────────────────────────────────────── */}
       <section className="space-y-3">
-        <SectionHeading count={colleagues.length}>Your colleagues</SectionHeading>
+        <SectionHeading count={colleagues.length}>Your Colleagues</SectionHeading>
         {colleagues.length === 0 ? (
           /* ⚠ THE EMPTY STATE SAYS WHAT A COLLEAGUE IS AND POINTS AT SEARCH. It
              does not apologise — there is nothing wrong with a new account. */
@@ -196,7 +196,7 @@ export async function CommunityBlocks({ viewer }: { viewer: Viewer }) {
       {/* ── 3 · PEOPLE YOU MAY KNOW ───────────────────────────────────────── */}
       {suggestions.length > 0 && (
         <section className="space-y-3">
-          <SectionHeading count={suggestions.length}>People you may know</SectionHeading>
+          <SectionHeading count={suggestions.length}>People You May Know</SectionHeading>
           {/* ⚠⚠ EVERY CARD CARRIES ITS REASON, RENDERED VERBATIM, AND SOME OF
               THEM READ AS NONSENSE — *"You were both at Founder & Principal
               Consultant"*. THAT IS EXPECTED AND THEY SHIP ANYWAY.
@@ -227,7 +227,7 @@ export async function CommunityBlocks({ viewer }: { viewer: Viewer }) {
       {/* ── 4 · YOUR MENTORS ──────────────────────────────────────────────── */}
       {following.length > 0 && (
         <section className="space-y-3">
-          <SectionHeading count={following.length}>Your mentors</SectionHeading>
+          <SectionHeading count={following.length}>Your Mentors</SectionHeading>
           <div className="space-y-2">
             {following.map((f) => {
               const facts = mentorFacts.get(f.person!.personId);

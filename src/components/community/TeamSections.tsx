@@ -96,7 +96,7 @@ export function ProviderTeamSections({
   return (
     <div className="space-y-6">
       <section className="space-y-3">
-        <h2 className="font-display text-[17px] font-bold">The team you&rsquo;re on</h2>
+        <h2 className="font-display text-[17px] font-bold">The Team You&rsquo;re On</h2>
         {representedBy ? (
           <PersonLine
             row={{
@@ -180,7 +180,7 @@ export function ProviderTeamSections({
       </section>
 
       <section className="space-y-3">
-        <h2 className="font-display text-[17px] font-bold">Recruiters you know</h2>
+        <h2 className="font-display text-[17px] font-bold">Recruiters You Know</h2>
         {recruitersKnown.length === 0 ? (
           <Empty>None yet.</Empty>
         ) : (
@@ -215,7 +215,7 @@ export function RecruiterTeamSections({
   return (
     <div className="space-y-6">
       <section className="space-y-3">
-        <h2 className="font-display text-[17px] font-bold">Your team</h2>
+        <h2 className="font-display text-[17px] font-bold">Your Team</h2>
         {roster.length === 0 ? (
           <Empty>
             Nobody is on your roster yet. Invite a provider — they join only when
@@ -231,7 +231,7 @@ export function RecruiterTeamSections({
       </section>
 
       <section className="space-y-3">
-        <h2 className="font-display text-[17px] font-bold">Your team&rsquo;s coverage</h2>
+        <h2 className="font-display text-[17px] font-bold">Your Team&rsquo;s Coverage</h2>
         <div className="rounded-brand border border-line bg-white p-5">
           {/* ⚠⚠ THIS IS THE RECRUITER'S PROFILE, NOT A STATISTIC. A recruiter's
               skills roll up from their team the way a provider's roll up from
@@ -253,7 +253,7 @@ export function RecruiterTeamSections({
       </section>
 
       <section className="space-y-3">
-        <h2 className="font-display text-[17px] font-bold">Open work you could field</h2>
+        <h2 className="font-display text-[17px] font-bold">Open Work You Could Field</h2>
         <div className="rounded-brand border border-line bg-white p-5">
           {/*
             ⚠⚠⚠ THE STATED REASON IS THE ACCURATE ONE, AND THAT MATTERS BECAUSE

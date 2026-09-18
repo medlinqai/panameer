@@ -52,7 +52,7 @@ export function ForumRooms({ rooms }: { rooms: RoomView[] }) {
 
   return (
     <div className="rounded-brand border border-line bg-white p-5">
-      <h2 className="font-display text-[15px] font-bold">Your forums</h2>
+      <h2 className="font-display text-[15px] font-bold">Your Forums</h2>
 
       {rooms.length === 0 ? (
         <p className="mt-2 text-[13.5px] leading-relaxed text-ink-2">

@@ -63,7 +63,7 @@ export function MentoringPanels({
       {/* ── 1 · DEMAND ────────────────────────────────────────────────────── */}
       <section className="space-y-3">
         <h2 className="font-display text-[17px] font-bold">
-          Members following you as a mentor
+          Members Following You as a Mentor
         </h2>
         {followers.length === 0 ? (
           <p className="text-[14px] leading-relaxed text-ink-2">
@@ -87,7 +87,7 @@ export function MentoringPanels({
       {/* ── 2 · WHO I FOLLOW ──────────────────────────────────────────────── */}
       {followingMentors.length > 0 && (
         <section className="space-y-3">
-          <h2 className="font-display text-[17px] font-bold">Mentors you follow</h2>
+          <h2 className="font-display text-[17px] font-bold">Mentors You Follow</h2>
           <div className="space-y-2">
             {followingMentors.map((r) => (
               <PersonRow key={r.connectionId} r={r}>
@@ -103,7 +103,7 @@ export function MentoringPanels({
 
       {/* ── 3 · THE SIGNAL ────────────────────────────────────────────────── */}
       <section className="space-y-3">
-        <h2 className="font-display text-[17px] font-bold">Your mentor signal</h2>
+        <h2 className="font-display text-[17px] font-bold">Your Mentor Signal</h2>
         <div className="rounded-brand border border-line bg-white p-5">
           {/* ⚠⚠ RENDERED EVEN AT 0. Nobody buys time with a mentor they cannot
               evaluate, and hiding a zero is how a page starts flattering people.
@@ -136,7 +136,7 @@ export function MentoringPanels({
 
       {/* ── 4 · PAID SESSIONS — THE STATE TABLE ───────────────────────────── */}
       <section className="space-y-3">
-        <h2 className="font-display text-[17px] font-bold">Paid sessions</h2>
+        <h2 className="font-display text-[17px] font-bold">Paid Sessions</h2>
         {/*
           ⚠⚠⚠ A STATE TABLE, NOT A BOOK BUTTON. This is the brief's instruction
           and the reason is specific: the public Learn page already sells

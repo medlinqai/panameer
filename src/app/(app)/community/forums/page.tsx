@@ -54,7 +54,7 @@ export default async function ForumsPage() {
                 nothing should not be shown an empty instructor panel. */}
             {home.teaches && (
               <section className="space-y-3">
-                <h2 className="font-display text-[17px] font-bold">In paths you teach</h2>
+                <h2 className="font-display text-[17px] font-bold">In Paths You Teach</h2>
 
                 {bothEmpty ? (
                   <div className="rounded-brand border border-line bg-white p-5">
@@ -69,7 +69,7 @@ export default async function ForumsPage() {
                         instructor qualifier (Scott, 2026-09-17). */}
                     {home.noReplies.length > 0 && (
                       <ThreadGroup
-                        heading="No replies yet"
+                        heading="No Replies Yet"
                         threads={home.noReplies}
                         action="Answer"
                       />
@@ -80,9 +80,9 @@ export default async function ForumsPage() {
                         instructors stop reviewing. */}
                     {home.unweighed.length > 0 && (
                       <ThreadGroup
-                        heading="Answered by someone else — you haven't weighed in"
+                        heading="Answered by Someone Else — You Haven't Weighed In"
                         threads={home.unweighed}
-                        action="Add to it"
+                        action="Add to It"
                         confirmable
                       />
                     )}
@@ -93,7 +93,7 @@ export default async function ForumsPage() {
 
             {/* ── 2 · RECENT IN YOUR FORUMS ─────────────────────────────── */}
             <section className="space-y-3">
-              <h2 className="font-display text-[17px] font-bold">Recent in your forums</h2>
+              <h2 className="font-display text-[17px] font-bold">Recent in Your Forums</h2>
               {home.recent.length === 0 ? (
                 <p className="text-[14px] leading-relaxed text-ink-2">
                   Nothing has been posted in your rooms yet.
