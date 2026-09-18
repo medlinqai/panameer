@@ -170,9 +170,9 @@ test("E567/4 — with zero threads the two groups collapse to ONE panel", async 
   /* ⚠ The two group headings exist only when there is something in them. With
      zero threads NEITHER may render — two empty bordered boxes read as
      something that failed to load, which is the house pattern this replaced. */
-  await expect(page.getByText("No replies yet")).toHaveCount(0);
+  await expect(page.getByText("No Replies Yet")).toHaveCount(0);
   await expect(
-    page.getByText("Answered by someone else — you haven't weighed in")
+    page.getByText("Answered by Someone Else — You Haven't Weighed In")
   ).toHaveCount(0);
 });
 
@@ -180,11 +180,11 @@ test("E567/4 — the rail still lists rooms", async () => {
   await open(ROUTES.forums);
   /* ⚠ THE PAGE IS NEVER BLANK. The rail says the rooms exist and nothing has
      been asked yet, which is true. */
-  /* ⚠ `exact` — "Your forums" also matches "Recent in your forums" on this
+  /* ⚠ `exact` — "Your Forums" also matches "Recent in Your Forums" on this
      page, and a strict-mode violation reports as a failure of the thing being
      tested rather than of the selector. */
   await expect(
-    page.getByRole("heading", { name: "Your forums", exact: true })
+    page.getByRole("heading", { name: "Your Forums", exact: true })
   ).toBeVisible();
 });
 
@@ -194,7 +194,7 @@ test("E567/4 — the rail still lists rooms", async () => {
  * TEST GOT IT WRONG.
  *
  * ⚠ It scanned rendered text for `Book|Booking|Purchase|Buy|Pay` and FAILED on
- * the `Paid sessions` state-table row *"Booking a block of time" -> "Not built —
+ * the `Paid Sessions` state-table row *"Booking a block of time" -> "Not built —
  * no scheduling exists"* — which is EXACTLY WHAT THE BRIEF ASKED FOR. Naming a
  * thing that does not exist, and saying it does not exist, is the opposite of
  * promising it.
@@ -226,11 +226,11 @@ test("E567/5 — Mentoring shows no rate, price or currency", async () => {
   expect(/\bper hour\b|\bhourly\b/i.test(body), "an hourly rate appears").toBe(false);
 });
 
-test("E567/5 — Paid sessions renders as a state table, not a button", async () => {
+test("E567/5 — Paid Sessions renders as a state table, not a button", async () => {
   await open(ROUTES.mentors);
   const section = page
     .locator("section")
-    .filter({ has: page.getByRole("heading", { name: "Paid sessions" }) });
+    .filter({ has: page.getByRole("heading", { name: "Paid Sessions" }) });
   await expect(section).toBeVisible();
   /* ⚠ A TABLE OF FACTS ABOUT THE BUILD. ⚠⚠ AND NO CONTROL INSIDE IT — the
      brief's rule is that nothing here may promise a session. */
@@ -242,14 +242,14 @@ test("E567/5 — the mentor signal renders even at 0", async () => {
   await open(ROUTES.mentors);
   /* ⚠ RENDERED AT 0, NOT HIDDEN — nobody buys time with a mentor they cannot
      evaluate, and hiding a zero is how a page starts flattering people. */
-  await expect(page.getByRole("heading", { name: "Your mentor signal" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Your Mentor Signal" })).toBeVisible();
   await expect(page.getByText("answers marked helpful").first()).toBeVisible();
 });
 
 /* ── 6 · FIND A MENTOR — THE EMPTY STATE RECRUITS ───────────────────────── */
 test("E567/6 — Find a Mentor's empty state states the mechanism", async () => {
   await open(ROUTES.mentors);
-  await expect(page.getByRole("heading", { name: "Find a mentor" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Find a Mentor" })).toBeVisible();
   /* ⚠⚠ IT SAYS WHY IT IS EMPTY — opt-in, nobody has chosen — rather than
      "nothing found", which teaches nobody anything. ⚠ And it must NOT be papered
      over by widening the gate. */
@@ -271,7 +271,7 @@ test("E567/7 — Teams headings are SINGULAR", async () => {
      `ProviderProfile.coordinator_person_id`, a nullable FK, so a provider
      belongs to at most ONE coordinator. ⚠ Plural headings would label something
      the schema forbids. RENAME WHEN THE MODEL BECOMES ONE-TO-MANY. */
-  await expect(page.getByRole("heading", { name: "The team you’re on" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "The Team You’re On" })).toBeVisible();
   const body = (await page.locator("body").innerText()).replace(/\s+/g, " ");
   expect(/\bTeams you(’|')re on\b/i.test(body), "a plural heading returned").toBe(false);
   expect(/\bTeams you manage\b/i.test(body), "a plural heading returned").toBe(false);
@@ -289,13 +289,97 @@ test("E567/7 — a provider-only viewer sees the PROVIDER set and NOT the recrui
     other gates quote. ⚠⚠ IT IS PROVED STATICALLY in `check:community`'s Teams
     block instead.
   */
-  await expect(page.getByRole("heading", { name: "The team you’re on" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "The Team You’re On" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Invitations" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Recruiters you know" })).toBeVisible();
 
-  await expect(page.getByRole("heading", { name: "Your team", exact: true })).toHaveCount(0);
-  await expect(page.getByRole("heading", { name: "Your team’s coverage" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Your Team", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Your Team’s Coverage" })).toHaveCount(0);
   await expect(
-    page.getByRole("heading", { name: "Open work you could field" })
+    page.getByRole("heading", { name: "Open Work You Could Field" })
   ).toHaveCount(0);
+});
+
+/* ── 8 · TITLE CASE, LOCKED AT THE LITERAL (`P2-J3-E568`) ────────────────────
+   ⚠⚠ THE CORRECTED STRINGS, ASSERTED EXACTLY — NOT A TITLE-CASE ALGORITHM. A
+   test that re-implements the rule is the `titleCase()` helper the brief forbids,
+   wearing a different hat: a second definition of the house style that will
+   eventually disagree with the house style.
+   ⚠ THE RULE, for a reader: Title Case for card titles, section headings and
+   buttons; articles and short prepositions lowercase unless first or last word
+   (`on`, `to`, `by`, `a`); ⚠⚠ PRONOUNS ALWAYS CAPITALIZE — `You`, `Your`, `My`,
+   `It`, `This`. That last one is what a naive library gets wrong.
+
+   ⚠⚠ NOTHING IN THE DO-NOT-TOUCH TABLE IS ASSERTED HERE — no error copy, no
+   empty-state sentence, no placeholder, no state-table value, no data. Guarding
+   those would forbid a legitimate future copy edit to an error message. */
+/*
+  ⚠⚠ ONLY STRINGS THAT RENDER AGAINST TODAY'S EMPTY DATA. Four corrected strings
+  are DELIBERATELY ABSENT from this list because their sections are CONDITIONAL
+  and do not render for this account:
+    · `People You May Know`  — renders only when there are suggestions
+    · `In Paths You Teach`   — renders only for a path instructor
+    · `Mentors You Follow`   — renders only when following someone
+    · `Turn On`              — the toggle reads `You're open` once opted in
+  ⚠ MEASURED, NOT ASSUMED: the first version of this list included
+  `People You May Know` and FAILED on `/community`.
+  ⚠⚠ AN ASSERTION THAT NEEDS ROWS IS AN ASSERTION THAT FORCES SEEDING (`E564`),
+  and seeding to make a guard pass is how a suite starts being satisfied by fake
+  data. ⚠ Those four are still covered by the "originals are gone" test below,
+  which passes whether or not the section renders.
+*/
+const TITLE_CASE: { route: string; strings: string[] }[] = [
+  { route: ROUTES.home, strings: ["Waiting on You"] },
+  { route: ROUTES.colleagues, strings: ["Invite a Colleague", "Shared Skills"] },
+  { route: ROUTES.forums, strings: ["Recent in Your Forums", "Your Forums"] },
+  {
+    route: ROUTES.mentors,
+    strings: [
+      "Members Following You as a Mentor",
+      "Your Mentor Signal",
+      "Paid Sessions",
+      "Find a Mentor",
+    ],
+  },
+  {
+    route: ROUTES.teams,
+    strings: ["The Team You’re On", "Recruiters You Know", "Invitations"],
+  },
+];
+
+for (const { route, strings } of TITLE_CASE) {
+  test(`E568 — Title Case survives on ${route}`, async () => {
+    await open(route);
+    const body = (await page.locator("body").innerText()).replace(/\s+/g, " ");
+    const missing = strings.filter((t) => !body.includes(t));
+    expect(
+      missing,
+      `these exact strings were not found on ${route}: ${missing.join(" | ")}`
+    ).toEqual([]);
+  });
+}
+
+test("E568 — the lower-case originals are gone", async () => {
+  /* ⚠ THE OTHER HALF: asserting the corrected string is present does not prove
+     the old one left — a page could render both. ⚠⚠ ONLY THE STRINGS THIS BRIEF
+     CHANGED are listed; nothing here constrains copy it did not touch. */
+  const GONE: { route: string; strings: string[] }[] = [
+    { route: ROUTES.home, strings: ["Waiting on you", "People you may know"] },
+    { route: ROUTES.colleagues, strings: ["Shared skills"] },
+    { route: ROUTES.forums, strings: ["In paths you teach", "Recent in your forums"] },
+    {
+      route: ROUTES.mentors,
+      strings: ["Mentors you follow", "Your mentor signal", "Paid sessions", "Find a mentor"],
+    },
+    { route: ROUTES.teams, strings: ["Recruiters you know", "Open work you could field"] },
+  ];
+  const offenders: string[] = [];
+  for (const { route, strings } of GONE) {
+    await open(route);
+    const body = (await page.locator("body").innerText()).replace(/\s+/g, " ");
+    for (const t of strings) if (body.includes(t)) offenders.push(`${route}: "${t}"`);
+  }
+  expect(offenders, `lower-case originals still rendering: ${offenders.join(" | ")}`).toEqual(
+    []
+  );
 });

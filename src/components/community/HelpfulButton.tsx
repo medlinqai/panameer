@@ -63,7 +63,7 @@ export function HelpfulButton({
             : "border-line text-ink-2 hover:border-magenta hover:text-magenta")
         }
       >
-        {busy ? "…" : marked ? "✓ Marked helpful — undo" : "This answered my question"}
+        {busy ? "…" : marked ? "✓ Marked helpful — undo" : "This Answered My Question"}
       </button>
       {error && <span className="mt-1 text-[12px] text-red-700">{error}</span>}
     </span>

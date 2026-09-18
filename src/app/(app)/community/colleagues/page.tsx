@@ -62,7 +62,7 @@ export default async function ColleaguesPage() {
               does not take the menu item away. */}
           <aside className="space-y-3">
             <div className="rounded-brand border border-line bg-white p-5">
-              <h2 className="font-display text-[15px] font-bold">Invite a colleague</h2>
+              <h2 className="font-display text-[15px] font-bold">Invite a Colleague</h2>
               {/*
                 ⚠⚠⚠ NO COPY HERE CLAIMS THE INVITEE "ARRIVES ALREADY CONNECTED".
                 ⚠ MEASURED 2026-09-17: ACCEPTING CREATES NOTHING.

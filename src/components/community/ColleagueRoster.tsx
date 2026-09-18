@@ -38,7 +38,7 @@ type Filter = "all" | "skills" | "learn" | "worked";
    at 0 tells the truth about what the product can prove today. */
 const FILTERS: { key: Filter; label: string }[] = [
   { key: "all", label: "All" },
-  { key: "skills", label: "Shared skills" },
+  { key: "skills", label: "Shared Skills" },
   { key: "learn", label: "From Learn" },
   { key: "worked", label: "Worked together" },
 ];

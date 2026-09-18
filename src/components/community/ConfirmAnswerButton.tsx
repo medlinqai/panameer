@@ -67,7 +67,7 @@ export function ConfirmAnswerButton({
             : "border-line text-ink-2 hover:border-magenta hover:text-magenta")
         }
       >
-        {busy ? "…" : confirmed ? "✓ Confirmed — undo" : "Confirm this answer"}
+        {busy ? "…" : confirmed ? "✓ Confirmed — undo" : "Confirm This Answer"}
       </button>
       {error && <span className="mt-1 text-[12px] text-red-700">{error}</span>}
     </span>

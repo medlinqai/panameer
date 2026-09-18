@@ -77,7 +77,7 @@ export function OpenForMentoringToggle({ initial }: { initial: boolean }) {
               : "border-line text-ink hover:border-magenta hover:text-magenta")
           }
         >
-          {busy ? "…" : open ? "You're open" : "Turn on"}
+          {busy ? "…" : open ? "You're open" : "Turn On"}
         </button>
       </div>
       {error && <p className="mt-2 text-[13px] font-semibold text-red-700">{error}</p>}

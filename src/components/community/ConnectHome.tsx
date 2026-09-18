@@ -76,7 +76,7 @@ export async function ConnectHome({ viewer }: { viewer: Viewer }) {
           ⚠⚠ FIRST, BECAUSE IT IS THE ONLY BLOCK WHERE SOMEBODY ELSE IS BLOCKED
           ON THIS MEMBER. Everything below is an invitation; this is a debt. */}
       <section className="space-y-3">
-        <Heading>Waiting on you</Heading>
+        <Heading>Waiting on You</Heading>
         {incoming.length === 0 ? (
           /*
             ⚠⚠ THE EMPTY STATE MATTERS MORE THAN THE FULL ONE, and it is ONE
@@ -128,7 +128,7 @@ export async function ConnectHome({ viewer }: { viewer: Viewer }) {
                 : undefined
             }
           >
-            Your colleagues
+            Your Colleagues
           </Heading>
           <div className="space-y-2">
             {shownColleagues.map((c) => (
@@ -150,7 +150,7 @@ export async function ConnectHome({ viewer }: { viewer: Viewer }) {
       {/* ── 3 · PEOPLE YOU MAY KNOW ─────────────────────────────────────── */}
       {shownSuggestions.length > 0 && (
         <section className="space-y-3">
-          <Heading>People you may know</Heading>
+          <Heading>People You May Know</Heading>
           {/* ⚠⚠ EVERY CARD CARRIES ITS REASON VERBATIM, and some read as
               nonsense — *"You were both at Founder & Principal Consultant"*.
               THAT IS EXPECTED AND THEY SHIP ANYWAY (`P1-J1.4-E373`):

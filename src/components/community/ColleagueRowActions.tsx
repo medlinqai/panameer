@@ -86,7 +86,7 @@ export function ColleagueRowActions({
                 href={`/community/mentors?ask=${toUserId}`}
                 className="block px-4 py-2.5 text-left text-[14px] text-ink transition-colors hover:bg-bg-soft"
               >
-                Ask them to mentor me
+                Ask Them to Mentor Me
               </Link>
             )}
             <button
@@ -98,7 +98,7 @@ export function ColleagueRowActions({
               }}
               className="block w-full px-4 py-2.5 text-left text-[14px] text-ink transition-colors hover:bg-bg-soft"
             >
-              Request a recommendation
+              Request a Recommendation
             </button>
           </div>
         )}
