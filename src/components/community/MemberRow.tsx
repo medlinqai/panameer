@@ -1,3 +1,4 @@
+import "./member-row.css";
 import Link from "next/link";
 import { Avatar } from "@/components/Avatar";
 import { NO_RATE_PUBLISHED } from "@/lib/rate-display";
@@ -35,7 +36,10 @@ export function MemberRow({
   const meta = [person.title, person.company].filter(Boolean).join(" · ");
 
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-brand border border-line bg-white p-4">
+    /* ⚠ `pm-member-row` IS THE CONTAINER (`P2-J3-E557`). The reflow is driven by
+       THIS card's width — see member-row.css for why a viewport breakpoint is
+       the wrong tool here. */
+    <div className="pm-member-row flex flex-wrap items-center gap-3 rounded-brand border border-line bg-white p-4">
       {/* ⚠ `Avatar` takes first/last, NOT a display name — checked against
           `components/Avatar.tsx:6` rather than guessed. `PersonCard` carries only
           the joined `name`, so it is split here for the initials fallback. */}
@@ -65,7 +69,14 @@ export function MemberRow({
           </p>
         )}
       </div>
-      {children}
+      {/* ⚠ THE ACTIONS SLOT IS WRAPPED so the container query has something to
+          move. Wrapping is what lets three buttons drop together beneath the
+          name while one stays inline. */}
+      {children && (
+        <div className="pm-member-row-actions flex flex-wrap items-center gap-2">
+          {children}
+        </div>
+      )}
     </div>
   );
 }

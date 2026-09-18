@@ -1,0 +1,47 @@
+/*
+  ── ⚠⚠ THE ROW REFLOWS ON ITS OWN WIDTH, NOT THE VIEWPORT'S (`P2-J3-E557`) ──
+
+  ⚠⚠ A VIEWPORT BREAKPOINT GETS THIS WRONG, and that is not a preference — the
+  column's width depends on WHICH OTHER COLUMNS ARE RENDERED. The same row is
+  wide on Home and narrow inside a two-column page at the identical viewport.
+
+  ⚠ THE BUG THIS FIXES WAS REAL. Three action buttons that refused to shrink,
+  against a name column with no floor, collapsed the text to ~55px and wrapped
+  it one word per line. Scott: *"wants to connect is too squished."*
+
+  ⚠⚠ WRITTEN AS PLAIN CSS ON PURPOSE. Tailwind v4 scans source text for whole
+  class tokens and never evaluates JavaScript; a container-query variant built
+  from an arbitrary value is exactly the shape that emits no CSS and fails
+  SILENTLY (`E338` shipped a dead class on seven public pages for two days).
+  A stylesheet is legible and cannot go quiet.
+*/
+
+.pm-member-row {
+  container-type: inline-size;
+  /* ⚠ NAMED, so a future nested container cannot capture these queries. */
+  container-name: memberrow;
+}
+
+/*
+  ⚠ UNDER 600px OF CARD WIDTH the actions drop BENEATH the name. `flex-basis:
+  100%` rather than `display: block` so the buttons keep their own row layout
+  and stay side by side under the name.
+*/
+@container memberrow (max-width: 600px) {
+  .pm-member-row-actions {
+    flex-basis: 100%;
+  }
+}
+
+/*
+  ⚠⚠ A SINGLE SMALL BUTTON STAYS INLINE DOWN TO 360px. `Message` on a colleague
+  row is one short word; dropping it to its own line at 599px wastes a whole
+  row of height to solve a problem that does not exist yet.
+  ⚠ The rule is scoped by `:only-child`, so it applies exactly when there IS one
+  control and never when there are three.
+*/
+@container memberrow (min-width: 360px) {
+  .pm-member-row-actions:has(> :only-child) {
+    flex-basis: auto;
+  }
+}
