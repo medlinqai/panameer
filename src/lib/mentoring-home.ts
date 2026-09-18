@@ -107,3 +107,52 @@ export async function getMentoringHome(viewer: Viewer) {
     helpfulAnswers: signal?.helpfulAnswers ?? 0,
   };
 }
+
+/**
+ * ── ⚠⚠ THE MENTOR SIGNAL FOR A SET OF PEOPLE (`P2-J3-E558` WS-C2) ─────────
+ *
+ * ⚠ Each result row shows the signal EVEN AT 0 — it is the evaluation basis,
+ * and at 0 it honestly says *no evidence yet*. ⚠⚠ Nobody buys time with a mentor
+ * they cannot evaluate, and hiding a zero is how a page starts flattering people.
+ *
+ * ⚠⚠ IT READS `marked_helpful_at` AND ONLY THAT — the same rule as the WS-C1
+ * panel and the same reason: `instructor_confirmed_*` is an instructor's
+ * CORRECTNESS judgement, not the asker's RESOLUTION judgement, and mixing them
+ * makes the label false in the flattering direction (`E558` WS-B ruling).
+ *
+ * ⚠ ONE GROUPED QUERY, not one per row — a list of 48 cards must not become 48
+ * round trips.
+ */
+export async function helpfulAnswersByPerson(
+  personIds: string[]
+): Promise<Map<string, number>> {
+  if (personIds.length === 0) return new Map();
+  /*
+    ⚠⚠ SELECT-THEN-COUNT, NOT A `where` FILTER ON THE COLUMN, AND THAT IS
+    DELIBERATE — `check:community` GUARD 2 asserts `marked_helpful_*` is WRITTEN
+    in exactly one file, and its regex excludes only the literal `: true` shape:
+
+        /marked_helpful_(at|by)\s*:(?!\s*(?:true|false)\b)/
+
+    ⚠ So `marked_helpful_at: { not: null }` inside a `where` READS as a write to
+    that guard and fails the build. ⚠⚠ IT IS A FALSE POSITIVE, BUT IN THE SAFE
+    DIRECTION, so this code bends rather than the guard: weakening a rule that
+    protects the product's only community signal, in order to save one query, is
+    a bad trade.
+    ⚠ THIS IS ALSO EXACTLY WHAT `community-signal.ts` ALREADY DOES —
+    `posts.filter((p) => p.marked_helpful_at !== null).length`. One shape, one
+    precedent, no new pattern.
+    ⚠ BOUNDED: `listMentors` returns at most 48 cards, so this reads the posts of
+    a page, not of a table.
+  */
+  const posts = await prisma.forumPost.findMany({
+    where: { author_id: { in: personIds } },
+    select: { author_id: true, marked_helpful_at: true },
+  });
+  const counts = new Map<string, number>();
+  for (const p of posts) {
+    if (p.marked_helpful_at === null) continue;
+    counts.set(p.author_id, (counts.get(p.author_id) ?? 0) + 1);
+  }
+  return counts;
+}
