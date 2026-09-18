@@ -268,6 +268,51 @@ async function main() {
     "reuse pathHasPlayableLessons; do not re-derive playability"
   );
 
+  /* ── 8 · ⚠⚠ EVERY PATH GROUP HAS A PERSON OWNER (`P2-J3-E572`) ──────────── */
+  /* ⚠⚠ `learning_path_id` SAYS WHAT A GROUP IS ABOUT; IT DOES NOT SAY WHO OWNS
+     IT. The column is NULLABLE because the four general boards have no owner
+     until they are retired — so THIS GUARD, not the column, is what requires
+     every PATH group to have one. */
+  check(
+    "8 — ForumBoard carries host_person_id",
+    /host_person_id\s+String\?/.test(schema)
+  );
+  check("8 — and it is indexed", /@@index\(\[host_person_id\]\)/.test(schema));
+  /* ⚠⚠ SetNull, NEVER Cascade. Deleting a person must not delete the room and
+     everything said in it. An ownerless group is repairable; a deleted
+     conversation is not. */
+  check(
+    "8 — the host FK is SetNull, so deleting a person never deletes the room",
+    /hostPerson\s+Person\?\s+@relation\("ForumBoardHost"[^\n]*onDelete: SetNull/.test(schema),
+    "Cascade here would delete a whole conversation with its owner"
+  );
+  const ownerless = await prisma.forumBoard.count({
+    where: { learning_path_id: { not: null }, host_person_id: null },
+  });
+  check(
+    "8 — every path group has an owner",
+    ownerless === 0,
+    `${ownerless} ownerless path group(s) — four ownerless general boards with zero threads between them is what an association-without-an-owner produces`
+  );
+  /* ⚠⚠⚠ DERIVED ONCE, THEN FROZEN — AND THIS IS THE ASSERTION THAT KEEPS IT
+     FROZEN. A live derivation changes owner whenever someone authors more
+     lessons; write 20 lessons into a path and you take it over. Tolerable while
+     ownership means "you may confirm answers", NOT tolerable once an owner can
+     set a price and collect. ⚠ AN OWNER THAT SILENTLY CHANGES IS A BUG WITH A
+     BANK ACCOUNT ATTACHED.
+     ⚠ A READ is fine — `host_person_id: true` in a select, or a where-clause on
+     it. What must stay unique is a WRITE. */
+  const BACKFILL = join("prisma", "backfill-path-group-owner.ts");
+  check("8 — the one-time backfill script is on disk", (bodies.get(BACKFILL) ?? "").length > 0);
+  const writers = [...bodies.entries()]
+    .filter(([f, b]) => f !== BACKFILL && /host_person_id:\s*(?!true\b)/.test(b))
+    .map(([f]) => f);
+  check(
+    "8 — only the one-time backfill writes an owner",
+    writers.length === 0,
+    `${writers.join(", ")} — the owner is derived ONCE and frozen; a helper the app calls is how it starts drifting`
+  );
+
   if (failures.length > 0) {
     console.error(`check:forums — ${failures.length} FAILED, ${pass} passed\n`);
     for (const f of failures) console.error(`  ✗ ${f}`);

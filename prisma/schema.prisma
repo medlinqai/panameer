@@ -486,6 +486,9 @@ model Person {
   /// not a ProviderProfile, so an instructor needn't be a marketplace provider.
   learnPaths   LearningPath[] @relation("LearnExpertPaths")
   learnLessons Lesson[]       @relation("LearnExpertLessons")
+  /// `P2-J3-E572` — the path groups this person OWNS. ⚠ Ownership, not
+  /// authority: confirming an answer stays `teachesPathWhere`-wide.
+  hostedForumBoards ForumBoard[] @relation("ForumBoardHost")
 
   // J2.4 WS-H — the payee-side records. On Person, not ProviderProfile: one
   // login can hold several memberships, and a bank account or a tax form
@@ -3945,9 +3948,44 @@ model ForumBoard {
   learning_path_id String?       @db.Uuid
   learningPath     LearningPath? @relation(fields: [learning_path_id], references: [id], onDelete: Cascade)
 
+  /// ── ⚠⚠ WHO OWNS THE GROUP (`P2-J3-E572`) ────────────────────────────────
+  ///
+  /// SCOTT, 2026-09-18: *"The owner of that group will be the creator of the
+  /// learn content."*
+  ///
+  /// ⚠⚠ `learning_path_id` SAYS WHAT A GROUP IS ABOUT. IT DOES NOT SAY WHO OWNS
+  /// IT. An association is not an owner — that confusion is what produced four
+  /// ownerless general boards with zero threads between them.
+  ///
+  /// ⚠⚠ DERIVED ONCE, AT BACKFILL, THEN FROZEN. It is NOT a live predicate and
+  /// there is deliberately no helper that recomputes it. A live derivation
+  /// changes owner whenever someone authors more lessons — write 20 lessons
+  /// into a path and you take it over. Tolerable while ownership means "you may
+  /// confirm answers"; NOT tolerable once an owner can set a price and collect.
+  /// ⚠ AN OWNER THAT SILENTLY CHANGES IS A BUG WITH A BANK ACCOUNT ATTACHED.
+  /// Same shape as `WorkOrder.fee_bps`: derived at the moment, frozen after.
+  ///
+  /// ⚠ NULLABLE IN THE SCHEMA because the four general boards have no path and
+  /// no owner until they are retired (their own brief). ⚠⚠ THE GUARD, NOT THE
+  /// COLUMN, IS WHAT REQUIRES EVERY PATH GROUP TO HAVE ONE — `check:forums`
+  /// asserts that no board with a `learning_path_id` has a null host.
+  ///
+  /// ⚠⚠ `onDelete: SetNull`, NOT `Cascade`. Deleting a person must never delete
+  /// the room and everything said in it. An ownerless group is a state someone
+  /// can repair; a deleted conversation is not.
+  ///
+  /// ⚠⚠ OWNERSHIP IS NOT AUTHORITY. Who may CONFIRM an answer stays
+  /// `teachesPathWhere`-wide — the owner is ONE person, but everyone who
+  /// teaches in that path may still confirm. Collapsing the two re-creates the
+  /// `E558` lockout, where `expert_person_id` alone would have locked Scott out
+  /// of all 16 paths he teaches.
+  host_person_id   String?       @db.Uuid
+  hostPerson       Person?       @relation("ForumBoardHost", fields: [host_person_id], references: [id], onDelete: SetNull)
+
   threads ForumThread[]
 
   @@index([learning_path_id])
+  @@index([host_person_id])
   @@map("forum_boards")
 }
 
