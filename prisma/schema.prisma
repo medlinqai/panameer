@@ -3777,7 +3777,8 @@ model SentEmail {
   /// bounce for one address does not implicate the other two.
   /// ⚠ The webhook must therefore match on (resend_message_id, to_email) —
   /// Resend's payload carries the recipient, so that pair is unambiguous.
-  /// ⚠ NULL when the send never reached Resend: a suppressed skip or a capture.
+  /// ⚠ NULL when the send never reached Resend: a suppressed skip, a capture, or
+  /// a REFUSED undeliverable domain.
   resend_message_id String?
   /// ⚠ Normalised lower-case, like `EmailSuppression.email`.
   to_email          String
@@ -3802,7 +3803,18 @@ model SentEmail {
   subject_type String?
   subject_id   String?
 
-  /// `sent` · `captured` · `suppressed` · `bounced` · `complained` · `failed`.
+  /// ── ⚠⚠ WHERE THIS SEND CAME FROM — A NARROW SLICE OF `E548` ──────────────
+  /// ⚠⚠ THIS DOES NOT CLOSE `E548`. That is the general defect: ONE database is
+  /// shared by localhost, every Preview and Production, and NO row anywhere says
+  /// which wrote it. ⚠ This column answers that question FOR EMAIL ONLY.
+  /// ⚠ Scott, 2026-09-17: *"the table is one day old with no real data — this is
+  /// the cheapest it will ever be."* ⚠⚠ `E548` HAS NOW COST A MEASUREMENT TWICE
+  /// IN TWO DAYS — 2026-09-16 (no way to tell a localhost AI read from a
+  /// production one) and 2026-09-17 (no way to tell whether production can send
+  /// real mail). ⚠ `localhost` · `production` · `preview` · `unknown`.
+  environment String @default("unknown")
+
+  /// `sent` · `captured` · `suppressed` · `refused` · `bounced` · `complained` · `failed`.
   /// ⚠ Written `sent` by the transport; the webhook moves it. ⚠ NOT AN ENUM —
   /// Resend owns this vocabulary and a new event must not need a migration.
   status      String  @default("sent")
@@ -3847,6 +3859,7 @@ model SentEmail {
   @@index([to_email])
   @@index([subject_type, subject_id])
   @@index([status])
+  @@index([environment])
   @@index([created_at])
   @@map("sent_emails")
 }
