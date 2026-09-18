@@ -1029,6 +1029,30 @@ model ProviderProfile {
   /// Explicit OPT-IN (never a default) to Panameer using this profile's content
   /// to improve its models. Off unless the person turned it on.
   ai_training_opt_in      Boolean            @default(false)
+  /// ── ⚠⚠ OPEN FOR MENTORING — THE CHECKBOX IS THE CONSENT (`P2-J3-E558` WS-C1)
+  ///
+  /// ⚠⚠ SCOTT, 2026-09-18, settling the model: *"I can connect to somebody as a
+  /// colleague and we can text back and forth, but it's a lateral move between
+  /// two sellers, period. The whole point of connecting to somebody as a mentor
+  /// is to set up the finance required to then have the requester of the
+  /// mentoring pay for a block of time with the mentor."*
+  /// ⚠ COLLEAGUE IS LATERAL AND FREE. MENTOR IS COMMERCIAL.
+  ///
+  /// ⚠⚠⚠ THIS FLAG IS WHY `ConnectionKind.MENTOR` NEEDS NO PENDING STATE. A
+  /// provider declares themselves open ONCE, here; being followed as a mentor
+  /// afterwards is DEMAND, not an unconsented claim about the person. ⚠ An
+  /// earlier draft of this brief demanded a mentor-side request/accept cycle —
+  /// SUPERSEDED. `followMentor`/`unfollowMentor` is a coherent designed model
+  /// and `ACCEPTED` at creation is documented there as *"There was a response —
+  /// it is 'none needed'."* ⚠⚠ NO SCHEMA ON `Connection`, AND NONE WAS ADDED.
+  ///
+  /// ⚠ EXPLICIT OPT-IN, NEVER A DEFAULT — the same shape as
+  /// `ai_training_opt_in` directly above, and for the same reason: it is a
+  /// claim about what the person will do, so only the person may make it.
+  /// ⚠⚠ IT PROMISES NO SESSION AND NO PAYMENT. No processor is chosen and
+  /// `MICRO_SESSION_PRICE` is commented out (`mentors.ts:141`). The honest end
+  /// of the flow today is *follow as a mentor* → the mentor sees demand.
+  open_for_mentoring      Boolean            @default(false)
   /// Linked developer accounts (E015). Usernames, not OAuth — these are shown
   /// on the profile as evidence, and asking for repo scopes to display a
   /// handle would be a wildly disproportionate permission grab.

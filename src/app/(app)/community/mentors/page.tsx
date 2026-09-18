@@ -6,6 +6,9 @@ import { listMentors } from "@/lib/mentors";
 import { rateDisplay, NO_RATE_PUBLISHED } from "@/lib/rate-display";
 import { getSessionViewer } from "@/lib/session";
 import { getMyCommunity } from "@/lib/connections";
+import { getMentoringHome } from "@/lib/mentoring-home";
+import { OpenForMentoringToggle } from "@/components/community/OpenForMentoringToggle";
+import { MentoringPanels } from "@/components/community/MentoringPanels";
 import { ConnectControls } from "@/components/community/ConnectControls";
 import { Avatar } from "@/components/Avatar";
 /* ⚠ `formatCents` IS NO LONGER IMPORTED HERE (`P1-ALL-E374`). This page used to
@@ -71,6 +74,10 @@ export default async function MentorsPage({
   );
   const viewerUserId = viewer?.userId ?? null;
 
+  /* ⚠ `P2-J3-E558` WS-C1 — the panels: demand, who I follow, my signal, and the
+     paid-sessions STATE TABLE. */
+  const home = viewer ? await getMentoringHome(viewer) : null;
+
   return (
     <>
       {/* E216 — the Community rail flyout's children are this section's tab row now. */}
@@ -116,6 +123,27 @@ export default async function MentorsPage({
           then you arrange it between yourselves.
         </p>
       </section>
+
+      {/* ── ⚠⚠ `P2-J3-E558` WS-C1 — THE CONSENT AND THE PANELS ─────────────
+          ⚠ The toggle renders only for someone who HAS a provider profile: it
+          is a declaration about what THEY will do, so it cannot be offered to
+          somebody with nothing to declare it about. */}
+      {home?.openForMentoring !== null && home !== null && (
+        <OpenForMentoringToggle initial={home.openForMentoring} />
+      )}
+      {home && (
+        <MentoringPanels
+          followers={home.followers.map((f) => ({
+            connectionId: f.connectionId,
+            userId: f.userId,
+            name: f.name,
+            title: f.title,
+            photoUrl: f.photoUrl,
+          }))}
+          followingMentors={home.followingMentors}
+          helpfulAnswers={home.helpfulAnswers}
+        />
+      )}
 
       {mentors.length === 0 ? (
         <section className="rounded-brand border border-dashed border-line px-5 py-10 text-center">
