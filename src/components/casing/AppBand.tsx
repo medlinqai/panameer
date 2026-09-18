@@ -209,8 +209,40 @@ export function AppBand() {
           <BugIcon />
         </BandIcon>
 
-        {/* ⚠⚠ MESSAGES BELONGS HERE AND IS OMITTED — `E560` has not landed.
-            See the docblock. Do not render a dead icon. */}
+        {/*
+          ── ⚠⚠ MESSAGES (`P2-ALL-E560` STAGE 1, 2026-09-18) ──────────────────
+
+          ⚠ SUPERSEDED, quoted not deleted (`E164`) — `E559` left this hole on
+          purpose and this is what fills it:
+          // MESSAGES BELONGS HERE AND IS OMITTED - `E560` has not landed.
+          // See the docblock. Do not render a dead icon.
+
+          ⚠ SCOTT, 2026-09-18: *"make it like linkedin. in notification
+          bell...icon...and it opens on the right."* ⚠⚠ THE PANEL IS STAGE 2.
+
+          ⚠⚠⚠ THIS ICON NAVIGATES TO `/messages` TODAY. THAT IS AN INTERIM AND IT
+          IS DELIBERATE, NOT THE FINISHED DESIGN — Stage 2 replaces the
+          navigation with a right-side overlay. ⚠ Stage 1 ships first so the band
+          stops having a hole in it, and a link that WORKS is not a dead icon.
+
+          ⚠⚠ NO UNREAD DOT, AND THAT IS MEASURED RATHER THAN FORGOTTEN:
+          `Message` holds ZERO ROWS (measured 2026-09-18), so no unread can
+          exist and a dot could only ever be decoration. ⚠ Scott's ruling was
+          *"measure the Message row count first — if it is zero, ship without the
+          dot and record it as deferred."* ⚠ RECORDED AS DEFERRED.
+          ⚠⚠ WHEN IT IS BUILT IT IS A BOOLEAN EXISTENCE CHECK, NEVER A COUNT —
+          a dot is not a number, and `me.ts` already runs one count per
+          authenticated request. ⚠ THE BELL'S "no badge" RULE IS UNCHANGED and
+          is a different rule: a fake NUMBER is worse than none.
+        */}
+        <BandIcon
+          href="/messages"
+          label="Messages"
+          active={pathname.startsWith("/messages")}
+        >
+          <MessagesIcon />
+        </BandIcon>
+
 
         <BandIcon
           href={NOTIFICATIONS_NAV.href}
@@ -294,6 +326,16 @@ function HomeIcon() {
     <svg {...S}>
       <path d="M3 10.5 12 3l9 7.5" />
       <path d="M5.5 9.5V20h13V9.5" />
+    </svg>
+  );
+}
+
+/* ⚠ `P2-ALL-E560` — a speech bubble, distinct from the bell beside it at 18px.
+   Same `S` metrics as every other cluster glyph so the row keeps one weight. */
+function MessagesIcon() {
+  return (
+    <svg {...S}>
+      <path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9.9 9.9 0 0 1-2.8-.4L4 21l1.4-4.1A8.1 8.1 0 0 1 4 11.5a8.4 8.4 0 0 1 9-8.4 8.4 8.4 0 0 1 8 8.4Z" />
     </svg>
   );
 }

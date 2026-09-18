@@ -101,23 +101,39 @@ test("E567/2 — the CONNECT tab row renders with Home first", async () => {
   await expect(tabs.filter({ hasText: "Home" }).first()).toBeVisible();
 });
 
-test("E567/2 — Messages is still LAST in the row (it leaves under E560)", async () => {
+/*
+  ── ⚠⚠ MESSAGES HAS LEFT THE ROW (`P2-ALL-E560` STAGE 1, 2026-09-18) ────────
+
+  ⚠ THIS ASSERTION NAMED ITS OWN EXPIRY — *"it leaves under `E560`"* — AND THIS
+  IS `E560`. ⚠⚠ IT IS INVERTED, NOT DELETED: the rule was never *"Messages must
+  be last"*, it was *"the row must never leave messages unreachable"*. That rule
+  still holds; the door moved to the band's utility cluster.
+
+  ⚠ SUPERSEDED, quoted not deleted (`E164`), as LINE comments per rule 12 because
+  the quoted body carries its own block comment:
+  // test("E567/2 - Messages is still LAST in the row (it leaves under E560)", async () => {
+  //   await open(ROUTES.home);
+  //   ASSERTED ON THE TAB HREFS IN DOM ORDER, not by walking up from one link to
+  //   a guessed container. THE FIRST VERSION DID THE LATTER
+  //   (closest("div")?.parentElement) AND FAILED - a layout change it was not
+  //   testing would have broken it, which is a test that reports the wrong thing.
+  //   const TAB_HREFS = ["/community", "/community/colleagues", "/community/forums",
+  //     "/community/mentors", "/community/teams", "/messages"];
+  //   ... collects those hrefs in DOM order ...
+  //   expect(order).toContain("/messages");
+  //   expect(order[order.length - 1]).toBe("/messages");
+  // });
+*/
+test("E560/2 — Messages is GONE from the CONNECT row, and still reachable", async () => {
   await open(ROUTES.home);
-  /*
-    ⚠ ASSERTED ON THE TAB HREFS IN DOM ORDER, not by walking up from one link to
-    a guessed container. ⚠⚠ THE FIRST VERSION DID THE LATTER
-    (`closest("div")?.parentElement`) AND FAILED — a layout change it was not
-    testing would have broken it, which is a test that reports the wrong thing.
-    ⚠ `E560` REMOVES MESSAGES FROM THIS ROW; until it does, the brief requires it
-    stay reachable and LAST.
-  */
+
+  /* ⚠ The five that remain, in order — the row did not lose anything else. */
   const TAB_HREFS = [
     "/community",
     "/community/colleagues",
     "/community/forums",
     "/community/mentors",
     "/community/teams",
-    "/messages",
   ];
   const order = await page.evaluate((hrefs) => {
     const seen: string[] = [];
@@ -127,12 +143,21 @@ test("E567/2 — Messages is still LAST in the row (it leaves under E560)", asyn
     }
     return seen;
   }, TAB_HREFS);
+  expect(order, `tab hrefs found: ${order.join(" | ")}`).toEqual(TAB_HREFS);
 
-  expect(order, `tab hrefs found: ${order.join(" | ")}`).toContain("/messages");
-  expect(
-    order[order.length - 1],
-    `Messages should be the LAST tab; order was: ${order.join(" | ")}`
-  ).toBe("/messages");
+  /*
+    ⚠⚠ AND THE DOOR DID NOT CLOSE — THIS HALF IS THE POINT.
+    ⚠ Removing a tab without proving the replacement exists is exactly how
+    `E493`'s invite and `E519`'s résumé re-run got buried. The cluster link is
+    asserted BY ITS aria-label inside the band, not by counting links on the page.
+  */
+  const clusterLink = page.locator('.pm-band-right a[aria-label="Messages"]');
+  await expect(clusterLink).toHaveCount(1);
+  await expect(clusterLink).toHaveAttribute("href", "/messages");
+
+  /* ⚠ NO DIGIT ON IT, EVER — `Message` holds zero rows so no dot ships yet, and
+     when one does it is a DOT, never a number (Scott, 2026-09-18). */
+  await expect(clusterLink).not.toHaveText(/\d/);
 });
 
 /* ── 3 · COLLEAGUES — NO MEMBER-WIDE SEARCH ─────────────────────────────── */
