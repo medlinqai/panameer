@@ -298,6 +298,62 @@ console.log("\ncheck:sent-email — every send leaves a receipt\n");
   );
 }
 
+/* ═══ 12 · THE RUNTIME TRIPWIRE ═════════════════════════════════════════
+   ⚠⚠ A STATIC CHECK CANNOT SEE AN ENVIRONMENT IT DOES NOT RUN IN — that is why
+   check:email stayed green while localhost sent real mail for six days and
+   Vercel for two months. ⚠ So THIS gate only asserts the surface EXISTS and is
+   honest; the answer itself is produced at runtime, where it can be true.     */
+{
+  const ST = strip(readFileSync("src/lib/email/sending-state.ts", "utf8"));
+  const CARD = strip(readFileSync("src/components/console/MailHealth.tsx", "utf8"));
+  const ADMIN = strip(readFileSync("src/app/admin/page.tsx", "utf8"));
+  const pkg = JSON.parse(readFileSync("package.json", "utf8")) as { scripts: Record<string, string> };
+
+  ok("12 — the sending-state module exists", ST.length > 0);
+  /* ⚠ THE RULE IS ABOUT THE VALUE, NOT THE WORD. The card may NAME `EMAIL_FROM`
+     in its explanation; what it must never do is IMPORT it, because then the
+     full value — display name and local part — is one interpolation away. */
+  const importsValue = (src: string) =>
+    /import\s*\{[^}]*\bEMAIL_FROM\b[^}]*\}\s*from/.test(src);
+  ok(
+    "12 — ⚠⚠⚠ DOMAIN ONLY — only sending-state.ts may import the raw EMAIL_FROM",
+    importsValue(ST) && !importsValue(CARD),
+    "EMAIL_FROM is a Vercel secret and the card is a screen people screenshot"
+  );
+  ok(
+    "12 — ⚠ and it is split to a domain before anything can render it",
+    /lastIndexOf\("@"\)/.test(ST) && /s\.domain/.test(CARD)
+  );
+  {
+    const leaks = FILES.filter(
+      (f) => f !== "src/lib/resend.ts" && f !== "src/lib/email/sending-state.ts"
+    ).filter((f) => importsValue(strip(readFileSync(f, "utf8"))));
+    ok("12 — ⚠⚠ NO OTHER MODULE IMPORTS THE RAW VALUE", leaks.length === 0, leaks.join(", "));
+  }
+  ok(
+    "12 — ⚠⚠ LOUD WHEN WRONG: live + preview is flagged",
+    /alarming: live && environment === "preview"/.test(ST),
+    "previews share the ONE production database"
+  );
+  ok("12 — the card renders on /admin", /<MailHealth \/>/.test(ADMIN));
+  ok("12 — ⚠ and the alarming case is visually distinct, not just worded",
+     /s\.alarming[\s\S]{0,80}border-red/.test(CARD));
+
+  ok("12 — ⚠ the deploy-time line runs BEFORE next build",
+     /mail:state[\s\S]*?next build/.test(pkg.scripts.build ?? ""),
+     "the answer belongs in the build output, not only behind a login");
+  ok(
+    "12 — ⚠⚠ THE BUILD LINE LOADS .env.local, OR IT LIES",
+    /dotenv_config_path=\.env\.local/.test(pkg.scripts["mail:state"] ?? ""),
+    "it runs before Next loads env and reported SANDBOX on a machine sending for real"
+  );
+  ok(
+    "12 — ⚠ it can never fail a build",
+    /process\.exit\(0\)/.test(strip(readFileSync("scripts/print-mail-state.ts", "utf8"))),
+    "a line in a log is worth nothing next to a deploy"
+  );
+}
+
 if (failures.length > 0) {
   console.error(`\ncheck:sent-email — ${failures.length} FAILED, ${pass} passed\n`);
   for (const f of failures) console.error(`  ✗ ${f}`);

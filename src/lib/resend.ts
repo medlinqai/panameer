@@ -55,7 +55,7 @@ export const EMAIL_FROM =
  * ⚠ `VERCEL_ENV` is set by Vercel to `production` / `preview` / `development`;
  * off Vercel it is absent, which is a developer machine.
  */
-function sendingEnvironment(): string {
+export function sendingEnvironment(): string {
   const v = process.env.VERCEL_ENV;
   if (v === "production" || v === "preview") return v;
   if (v === "development") return "localhost";
