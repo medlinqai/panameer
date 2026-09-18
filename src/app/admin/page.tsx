@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { TileRow, Listing, VolumeFooter, StubEmpty } from "@/components/console/ConsolePage";
 import { linkVolume } from "@/lib/admin-reports";
 import { ParserHealth } from "@/components/console/ParserHealth";
+import { MailHealth } from "@/components/console/MailHealth";
 
 export const dynamic = "force-dynamic";
 
@@ -83,6 +84,14 @@ export default async function AdminDashboardPage() {
       */}
       <div className="mt-6">
         <ParserHealth />
+      </div>
+
+      {/* ⚠⚠ `P2-J3-E522` — the mail tripwire. Same gating as ParserHealth: /admin
+          is covered by its layout's canAdminister guard and by the edge proxy.
+          ⚠ It answers, from INSIDE this environment, the question that cost
+          hours on 2026-09-17: does this deployment send real mail, and as whom. */}
+      <div className="mt-6">
+        <MailHealth />
       </div>
 
       <VolumeFooter

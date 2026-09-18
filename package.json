@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3100",
-    "build": "prisma generate && next build",
+    "build": "prisma generate && npm run -s mail:state && next build",
     "seed": "ts-node --project tsconfig.seed.json prisma/seed.ts",
     "start": "next start -p 3100",
     "lint": "eslint",
@@ -113,7 +113,8 @@
     "check:buyer-reuse": "npx esbuild scripts/check-buyer-reuse.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/buyer-reuse.cjs --log-level=error && node .harness/buyer-reuse.cjs",
     "check:skills-visible": "npx esbuild scripts/check-skills-visible.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/skills-visible.cjs --log-level=error && node .harness/skills-visible.cjs",
     "check:import-deadline": "npx esbuild scripts/check-import-deadline.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/import-deadline.cjs --log-level=error && node .harness/import-deadline.cjs",
-    "check:sent-email": "npx esbuild scripts/check-sent-email.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/sent-email.cjs --log-level=error && node .harness/sent-email.cjs"
+    "check:sent-email": "npx esbuild scripts/check-sent-email.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/sent-email.cjs --log-level=error && node .harness/sent-email.cjs",
+    "mail:state": "npx esbuild scripts/print-mail-state.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/mail-state.cjs --log-level=error && node -r dotenv/config .harness/mail-state.cjs dotenv_config_path=.env.local"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
