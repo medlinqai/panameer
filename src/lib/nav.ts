@@ -771,19 +771,59 @@ export const PROVIDER_NAV: NavItem[] = [
 export const PERSONA_NAV_PRIMARY: NavItem[] = [
   { label: "My Profile", href: "/profile" },
   { label: "My Stats", href: "/stats" },
-  { label: "Account Health Checklist", href: "/account-health" },
+  /* ⚠⚠ `P2-ALL-E559` WS-D — SCOTT, 2026-09-17. ⚠ SUPERSEDED, quoted not
+     deleted (`E164`): `{ label: "Account Health Checklist", href: "/account-health" }`.
+     ⚠⚠ A RENAME, NOT A DELETION — THE ROUTE IS UNCHANGED and the page is not
+     touched. `E563` folds only its DUPLICATED marketplace-visibility checks into
+     the stats Profile tile; what stays here is what is genuinely account — plan,
+     account status, email verified. ⚠ DO NOT EMPTY THE PAGE.
+     ⚠ THIS LIST IS `PERSONA_NAV_PRIMARY`, and the brief said the rename lived in
+     `PERSONA_NAV_SECONDARY`. It does not; measured at the premise check and
+     corrected in the brief. */
+  { label: "My Account", href: "/account-health" },
 ];
 
 export const PERSONA_NAV_SECONDARY: NavItem[] = [
+  /*
+    ── ⚠⚠ `Request Recommendations` STAYS (`P2-ALL-E559` WS-D, ruling 2026-09-18)
+
+    The brief said to remove it alongside `Invite a Colleague` — *"these are now
+    options within the CONNECT application"*. ⚠⚠ MEASURED AT THE PREMISE CHECK,
+    AND IT IS NOT TRUE OF THIS ONE: `E558` gave the ACTION a home on Connect
+    (`ColleagueRowActions.tsx` POSTs to `/api/recommendations` inline) but it
+    NEVER LINKS THE `/recommendations` PAGE.
+    ⚠ Every inbound link to that page, measured: THIS ENTRY, and
+    `ProviderProfileView.tsx` — which is doubly conditional on
+    `testimonials.length === 0` AND `p.isOwner`, so ⚠⚠ IT CLOSES ITSELF the
+    moment a provider receives their first recommendation.
+    ⚠⚠⚠ REMOVING THIS ENTRY WOULD ORPHAN THE PAGE FOR EVERY PROVIDER WHO ALREADY
+    HAS A RECOMMENDATION — this brief's own named failure: *"a feature whose only
+    door is closed is how `E493`'s invite and `E519`'s résumé re-run got buried."*
+    ⚠ SO THE MENU HAS SEVEN ITEMS, NOT THE SIX THE BRIEF SPECIFIES. Deliberate,
+    and reversible in ONE LINE once something on Connect links the page.
+    ⚠ DO NOT ADD THAT LINK HERE — Connect surfaces are `E557`/`E558`.
+  */
   { label: "Request Recommendations", href: "/recommendations" },
   /*
-    ⚠ `P2-J3-E493` — DIRECTLY UNDER Request Recommendations, where Scott put it:
-    *"This would be under the request recommendation option on the Setting menu."*
-    ⚠⚠ THE TWO ASKS ARE DIFFERENT AND THE ADJACENCY IS THE POINT — one asks
-    somebody to VOUCH for you, the other asks them to JOIN. Sitting together is
-    what makes the difference legible.
+    ── ⚠ `Invite a Colleague` REMOVED (`P2-ALL-E559` WS-D) ─────────────────────
+
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    // `P2-J3-E493` - DIRECTLY UNDER Request Recommendations, where Scott put it:
+    //   "This would be under the request recommendation option on the Setting menu."
+    // THE TWO ASKS ARE DIFFERENT AND THE ADJACENCY IS THE POINT - one asks
+    // somebody to VOUCH for you, the other asks them to JOIN. Sitting together is
+    // what makes the difference legible.
+    // { label: "Invite a Colleague", href: "/invite-colleague" },
+
+    ⚠⚠ THE ROUTE STAYS LIVE; ONLY THE MENU ENTRY GOES. ⚠ VERIFIED BEFORE
+    REMOVING, which is the whole reason `Request Recommendations` above did NOT
+    go: `/community/colleagues` carries a STANDING right-rail card linking
+    `/invite-colleague` — ⚠ no capability gate on the page, no conditional
+    wrapper around the card, same route. `E558` even left a comment there saying
+    this removal is `E559` WS-D.
+    ⚠ THE `E493` ADJACENCY ARGUMENT IS WHAT IS LOST, and it was real. The two
+    asks now live in different places: vouching here, inviting on Connect.
   */
-  { label: "Invite a Colleague", href: "/invite-colleague" },
   /*
     E225 — "MY COMPANY" IS GONE FROM HERE. The three-zone rule is that the
     top-left chip owns the company and this menu owns the person; an entry that
@@ -795,7 +835,11 @@ export const PERSONA_NAV_SECONDARY: NavItem[] = [
     ordinary member with no way to reach their own company page. The chip is a
     plain link for them now — same zone, same destination, read-only.
   */
-  { label: "Settings", href: "/settings" },
+  /* ⚠ `P2-ALL-E559` WS-D — SCOTT, 2026-09-17. ⚠ SUPERSEDED, quoted not deleted
+     (`E164`): `{ label: "Settings", href: "/settings" }`. ⚠⚠ A RENAME ONLY —
+     the route is unchanged, and `settings-nav.ts` (the `/settings` SUB-NAV) is a
+     DIFFERENT list and is not in scope. */
+  { label: "My Settings", href: "/settings" },
 ];
 
 /** The whole persona list, for `pageTitleFor` and anything that wants it flat. */

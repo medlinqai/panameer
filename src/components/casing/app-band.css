@@ -51,6 +51,19 @@
   grid-column: 2;
   justify-self: center;
   min-width: 0;
+  /*
+    ⚠⚠ `max-width` IS LOAD-BEARING AT 360px, AND IT IS NOT COSMETIC.
+    `justify-self: center` sizes this item to MAX-CONTENT and centres it — so
+    once the six icons are wider than the column it overflows EQUALLY ON BOTH
+    SIDES, and the left half goes off-screen. ⚠ `check:app-shell` caught exactly
+    that: *"/dashboard @360: header content clipped off the LEFT"* — and note it
+    caught the LEFT, which `scrollWidth` alone never sees (`E168`).
+    ⚠ Capped at the grid area, the inner row scrolls instead (see below).
+    ⚠⚠ IT DOES NOT MOVE THE ANCHOR: below the cap the item is still centred in
+    its column, and at the cap its box IS the column, whose centre is the same
+    number either way.
+  */
+  max-width: 100%;
 }
 .pm-band-right {
   grid-column: 3;
