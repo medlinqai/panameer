@@ -54,8 +54,17 @@ import {
 export function AccountMenu({
   isAdmin,
   variant = "header",
+  onDark = false,
 }: {
   isAdmin: boolean;
+  /**
+   * ⚠ STYLING ONLY (`P2-ALL-E559`) — the `header` trigger's hover is
+   * `bg-black/[0.04]`, which is invisible on the dark app band. This swaps that
+   * ONE class for a light wash. ⚠⚠ IT CHANGES NO MENU CONTENT: the item list,
+   * the ordering and `My Company`'s admin popover are untouched, so this is not
+   * a WS-D edit wearing a styling hat.
+   */
+  onDark?: boolean;
   /**
    * WHERE THE TRIGGER LIVES (WS1-A).
    *
@@ -197,7 +206,10 @@ export function AccountMenu({
           aria-haspopup="menu"
           aria-expanded={open}
           aria-label="Account menu"
-          className="flex items-center gap-1.5 rounded-full p-0.5 transition-colors hover:bg-black/[0.04]"
+          className={
+            "flex items-center gap-1.5 rounded-full p-0.5 transition-colors " +
+            (onDark ? "hover:bg-white/10" : "hover:bg-black/[0.04]")
+          }
         >
           <Avatar
             firstName={first}

@@ -987,7 +987,14 @@ for (const [verb, journey] of [
      sides still carry `heading: "Work Orders"`. Scott ruled the rail/heading
      split is not a conflict: the rail is a VERB (what you are about to do), the
      heading is a NOUN (what you are looking at). */
-  ["Manage Orders", "Work Orders"],
+  /* ⚠⚠ `P2-ALL-E559` WS-A — THE SELLER SLOT IS `Orders` AGAIN. Scott,
+     2026-09-17, for the BAND. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     `["Manage Orders", "Work Orders"]`.
+     ⚠⚠ THIS NARROWS `E533` PART B, IT DOES NOT REPEAL IT — rule 13, Scott's
+     newest dated word wins. The band puts a LABEL UNDER AN ICON, where a
+     two-word verb phrase is the widest thing in the row. ⚠ Every other slot
+     still carries the verb rule, and the BUYER side below is untouched. */
+  ["Orders", "Work Orders"],
   ["Track Orders", "Work Orders"],
   ["Connect", "My Community"],
 ] as const) {
@@ -1009,9 +1016,17 @@ for (const [verb, journey] of [
   It now asserts BOTH sides by name.
   ⚠ `Get Paid` is the seller's and `Pay` is the buyer's: a buyer PAYS.
 */
+/* ⚠⚠ `P2-ALL-E559` WS-A. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   // "E378/4 - the seller money slots are Manage Orders | Get Paid",
+   // /label: "Manage Orders"/.test(navLib) && /label: "Get Paid"/.test(navLib)
+   ⚠ `Manage Orders` became `Orders` for the band. ⚠⚠ `Get Paid` IS RETAINED and
+   is still asserted — the brief said to remove it, and it was NOT removed
+   because `/payments` is not reachable from Orders (no `PAGE_TABS` entry, no
+   link). Reported at the WS-A gate; this assertion is what fails if it is
+   dropped before that door exists. */
 check(
-  "E378/4 — the seller money slots are Manage Orders | Get Paid",
-  /label: "Manage Orders"/.test(navLib) && /label: "Get Paid"/.test(navLib)
+  "E378/4 — the seller money slots are Orders | Get Paid",
+  /label: "Orders"/.test(navLib) && /label: "Get Paid"/.test(navLib)
 );
 check(
   "E378/4 — the buyer money slots are Track Orders | Pay",
@@ -1036,7 +1051,13 @@ check(
   "E378/4 — no RAIL label reverts to a bare noun or to the Order | Settle draft",
   railsOnly.length > 0 &&
     !/label: "Settle"/.test(railsOnly) && !/label: "Order"[,\s]/.test(railsOnly) &&
-    !/label: "Orders"/.test(railsOnly) && !/label: "Payments"/.test(railsOnly)
+    /* ⚠⚠ `label: "Orders"` IS NO LONGER FORBIDDEN (`P2-ALL-E559`) — it is the
+       seller's slot again, by Scott's 2026-09-17 ruling for the band. ⚠
+       SUPERSEDED, quoted not deleted (`E164`):
+       // !/label: "Orders"/.test(railsOnly) &&
+       ⚠ THE OTHER THREE STAY: `Settle`, a bare `Order`, and `Payments` are all
+       still the drafts Scott overturned, and nothing since has revived them. */
+    !/label: "Payments"/.test(railsOnly)
 );
 check(
   "E378/4 — pageTitleFor returns the journey name over the rail verb",

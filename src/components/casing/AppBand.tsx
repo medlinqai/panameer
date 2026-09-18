@@ -1,0 +1,332 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { useSyncExternalStore } from "react";
+import { useMe } from "@/components/MeProvider";
+import { AccountMenu } from "@/components/casing/AccountMenu";
+import { RailIcon } from "@/components/casing/RailIcon";
+import {
+  navForRoles,
+  railPersona,
+  ADMIN_NAV,
+  ADMIN_HOME,
+  HOME_NAV,
+  NOTIFICATIONS_NAV,
+} from "@/lib/nav";
+import "./app-band.css";
+
+/**
+ * ── ⚠⚠ THE APP BAND (`P2-ALL-E559`) — ONE DARK BAND, NO LEFT RAIL ───────────
+ *
+ * SCOTT, 2026-09-17: the left rail becomes top icons.
+ *
+ * ⚠⚠ BLAST RADIUS: EVERY LOGGED-IN PAGE. One `AppShell` serves `(app)/**`,
+ * `/admin/**` and logged-in `/learn`, so this replaces the chrome on all of them
+ * at once.
+ *
+ * ⚠⚠ `casing_spec_LOCKED.md` IS INCORPORATED, NOT SUPERSEDED. Scott: *"No, it
+ * incorporates it."* The header's nine elements stay; what moved is the RAIL'S
+ * CONTENTS into this band. Every divergence is written back into that doc with
+ * the `E164` treatment — it ends *"if any logged-in page chrome diverges from
+ * this, this doc wins"*, so a divergence left unrecorded makes the doc lie.
+ *
+ * ⚠ `AppRail.tsx` AND `AppHeader.tsx` STAY ON DISK (`E164`). Neither is deleted
+ * and neither is rendered by `AppShell` any more.
+ *
+ * ── WHAT IS DELIBERATELY ABSENT ──────────────────────────────────────────────
+ *
+ * ⚠ SEARCH — removed (WS-A 4). It was a LINK shaped like a field pointing at a
+ *   Coming-Soon stub, and removing it plus the greeting is what makes room for
+ *   the menu. `SEARCH_NAV` is untouched in `nav.ts`.
+ * ⚠ THE GREETING (*"Good {morning}, {first}"*) — removed (WS-A 4).
+ * ⚠⚠ MESSAGES — OMITTED, NOT FORGOTTEN. It is an icon in this cluster per
+ *   WS-A 5, but it belongs to `E560`, and `E560` HAS NOT LANDED (verified: no
+ *   commit on any branch). ⚠ The brief's instruction is explicit — *"do not
+ *   render a dead one."*
+ * ⚠ COMMUNITY CREDITS — out. Scott, 2026-09-18: *"community credits is out for
+ *   now."* `E375` parked it commented-not-deleted and that stays true; the pill
+ *   simply has no home here. Recorded in `casing_spec_LOCKED.md`, which still
+ *   listed a Credits pill in the header cluster.
+ * ⚠⚠ THE PERSONA CAPTION (`MAIN MENU` / `SELLER`) — dropped (ruling 3,
+ *   2026-09-18). With the rail gone, `Provider Console` under the wordmark and a
+ *   persona word inches away are two labels for one fact from the same
+ *   predicate — `P1-J1.1-E248` in reverse, and a horizontal band has less room
+ *   for it than a vertical rail did.
+ *   ⚠⚠⚠ `railPersona()` IS NOT DELETED AND ITS RETURN VALUES ARE UNCHANGED.
+ *   It still returns `"PANAMEER"` / `"SELLER"` / `"BUYER"` and `consoleLabel`
+ *   below still branches on it. `E491` is the standing warning: change what that
+ *   function RETURNS and the admin branch silently takes the wrong path with
+ *   nothing failing. ONLY THE RENDERED CAPTION LEFT THE BAND.
+ */
+export function AppBand() {
+  const { me } = useMe();
+  const pathname = usePathname();
+
+  /* ⚠ ADMIN IS A SESSION BIT, NOT AN ACTOR FLAG — the same read `AppRail` and
+     `AppHeader` both used. `Me` carries actor flags and the admin bit is
+     deliberately not one of them. */
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.isSystemAdmin === true;
+
+  const unreadCount = me?.notificationsUnread ?? 0;
+
+  /* ⚠⚠ UNCHANGED DERIVATION (`E491`). The caption is gone; the value is not. */
+  const persona = railPersona(me, isAdmin);
+  const consoleLabel =
+    persona === "PANAMEER"
+      ? "Platform Console"
+      : persona === "SELLER"
+        ? "Provider Console"
+        : "Buyer Console";
+
+  /*
+    ⚠ THE CLOCK IS AN EXTERNAL STORE, carried over from `AppHeader` unchanged.
+    The viewer's wall clock is not the server's — providers in Sydney, buyers in
+    Chicago — so the server snapshot is null and the client snapshot is real.
+    Same answer an effect would give, without setting state during mount.
+  */
+  const now = useSyncExternalStore(subscribeNothing, clientNow, serverNow);
+  const dateLabel = now
+    ? new Intl.DateTimeFormat(undefined, {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+      }).format(now)
+    : null;
+
+  /*
+    ⚠ THE MENU IS `nav.ts`'S, NOT A LIST HERE. That rule survived the reskin
+    deliberately and it survives this one: hard-coding the labels is exactly the
+    drift one definition exists to prevent.
+    ⚠⚠ THIS BRIEF DOES NOT CHANGE WHO SEES WHICH MENU. `navForRoles` already
+    gates on `hasCapability`-equivalent flags; the admin branch is a different
+    LIST, flattened here because a band has no room for group headers.
+  */
+  const items = isAdmin ? ADMIN_NAV.flatMap((g) => g.items) : navForRoles(me);
+
+  /* ⚠ EXACT MATCH for the two landing routes. `/admin` is a prefix of every
+     admin page and a startsWith test lit fifteen pills at once — the rail
+     learned that the hard way (`E475`). */
+  const EXACT = new Set(["/dashboard", "/admin"]);
+  const isActive = (href: string) =>
+    EXACT.has(href) ? pathname === href : pathname.startsWith(href);
+
+  return (
+    <header className="pm-band border-b border-white/10 bg-rail px-5 py-2.5 sm:px-6">
+      {/* ── LEFT: the brand, always left-justified while visible ──────────── */}
+      <Link
+        href={isAdmin ? ADMIN_HOME.href : "/dashboard"}
+        aria-label="Panameer home"
+        className="pm-band-brand block"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/brand/panameer-lockup-white.png"
+          alt="Panameer"
+          className="h-6 w-auto"
+        />
+        {/*
+          ⚠ THE CONSOLE LABEL SITS UNDER THE WORDMARK (WS-A 6), as it did in the
+          rail. ⚠⚠ THE COMPANY NAME IS NOT HERE — and it was not in the rail
+          either: `E099` removed the company chip and moved BOTH its behaviours
+          into `AccountMenu`'s `My Company` block (a popover for company admins,
+          a plain link for everyone else). `CompanyMenu.tsx` is deleted.
+          ⚠ So no control is dropped by this band. `casing_spec_LOCKED.md` still
+          describes a rail zone 2 chip and has been wrong since `E099`; that is
+          corrected there, not papered over here.
+        */}
+        <span className="mt-0.5 block text-[11px] font-medium tracking-wide text-white/45">
+          {consoleLabel}
+        </span>
+      </Link>
+
+      {/* ── CENTRE: the role menu, icon over text ─────────────────────────── */}
+      <nav className="pm-band-menu" aria-label="Main menu">
+        <div className="pm-band-menu-row">
+          {items.map((item) => {
+            const active = isActive(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={active ? "page" : undefined}
+                title={item.label}
+                className={
+                  "pm-band-item flex flex-col items-center gap-0.5 rounded-[8px] px-3 py-1.5 " +
+                  "text-[11.5px] font-medium leading-[14px] whitespace-nowrap transition-colors " +
+                  /* ⚠ `E217` — ONE RULE: active is a SOLID fill, the translucent
+                     wash is hover and nothing else. Carried over from the rail so
+                     the band does not invent a second selection language. */
+                  (active
+                    ? "bg-rail-active text-white"
+                    : "text-white/75 hover:bg-white/10 hover:text-white")
+                }
+              >
+                <RailIcon name={item.icon} />
+                <span className="pm-band-label">{item.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+
+      {/* ── RIGHT: the utility cluster, always right-justified ────────────── */}
+      <div className="pm-band-right flex items-center gap-1.5">
+        {/*
+          ⚠ DATE AND `AI on` KEEP THEIR RIBBON WASH (`P1-A1.5-E445b`) — same
+          `bg-magenta/8` + `border-magenta/20` the header used, re-toned for a
+          DARK band. ⚠⚠ `E433` still holds: this is a surface TINT on a status
+          nobody can act on, not the saturated magenta that marks something
+          clickable.
+        */}
+        {dateLabel && (
+          <span className="pm-band-date inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.06] px-3 py-1 text-[12.5px] font-semibold text-white/75">
+            <CalendarIcon />
+            {dateLabel}
+          </span>
+        )}
+
+        {/* ⚠ `AI on` IS DECORATION — no toggle, no backend, nothing reads it
+            (locked spec, 2026-08-13). Styled as a status precisely so nobody
+            tries to click it, and carrying no aria-live: announcing a state that
+            never changes is noise to a screen reader. */}
+        <span className="pm-band-ai inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.06] px-3 py-1 text-[12px] font-semibold text-white/75">
+          <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+          AI on
+        </span>
+
+        <BandIcon
+          href={HOME_NAV.href}
+          label={HOME_NAV.label}
+          active={pathname === HOME_NAV.href}
+        >
+          <HomeIcon />
+        </BandIcon>
+
+        <BandIcon href="/support/bug" label="Report a bug">
+          <BugIcon />
+        </BandIcon>
+
+        {/* ⚠⚠ MESSAGES BELONGS HERE AND IS OMITTED — `E560` has not landed.
+            See the docblock. Do not render a dead icon. */}
+
+        <BandIcon
+          href={NOTIFICATIONS_NAV.href}
+          label={NOTIFICATIONS_NAV.label}
+          active={pathname.startsWith(NOTIFICATIONS_NAV.href)}
+        >
+          <span className="relative inline-flex">
+            <BellIcon />
+            {/* ⚠ ABSENT AT ZERO, NEVER A `0` BADGE — and it counts unread AND
+                DELIVERED only, so a DIGEST row nobody was sent cannot badge. */}
+            {unreadCount > 0 && (
+              <span
+                aria-label={`${unreadCount} unread notifications`}
+                className="absolute -right-1.5 -top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-magenta px-1 text-[10px] font-bold text-white"
+              >
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
+          </span>
+        </BandIcon>
+
+        {/* ⚠ THE ACCOUNT MENU — still the ONE home for Sign Out (locked spec),
+            and still where `My Company` lives since `E099`. */}
+        <AccountMenu isAdmin={isAdmin} onDark />
+      </div>
+    </header>
+  );
+}
+
+function BandIcon({
+  href,
+  label,
+  children,
+  active = false,
+}: {
+  href: string;
+  label: string;
+  children: React.ReactNode;
+  active?: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      aria-label={label}
+      title={label}
+      aria-current={active ? "page" : undefined}
+      className={
+        "grid h-9 w-9 shrink-0 place-items-center rounded-full transition-colors " +
+        (active
+          ? "bg-rail-active text-white"
+          : "text-white/75 hover:bg-white/10 hover:text-white")
+      }
+    >
+      {children}
+    </Link>
+  );
+}
+
+const S = {
+  width: 18,
+  height: 18,
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: 1.8,
+  strokeLinecap: "round" as const,
+  strokeLinejoin: "round" as const,
+};
+
+function CalendarIcon() {
+  return (
+    <svg {...S} width={14} height={14}>
+      <rect x="3" y="4.5" width="18" height="16" rx="2" />
+      <path d="M3 9.5h18M8 2.5v4M16 2.5v4" />
+    </svg>
+  );
+}
+
+function HomeIcon() {
+  return (
+    <svg {...S}>
+      <path d="M3 10.5 12 3l9 7.5" />
+      <path d="M5.5 9.5V20h13V9.5" />
+    </svg>
+  );
+}
+
+function BellIcon() {
+  return (
+    <svg {...S}>
+      <path d="M18 9a6 6 0 1 0-12 0c0 5-2 6-2 6h16s-2-1-2-6" />
+      <path d="M13.7 20a2 2 0 0 1-3.4 0" />
+    </svg>
+  );
+}
+
+function BugIcon() {
+  return (
+    <svg {...S}>
+      <rect x="8" y="6" width="8" height="14" rx="4" />
+      <path d="M3 12h5M16 12h5M5 6l3 2M19 6l-3 2M5 18l3-2M19 18l-3-2M9 3l1.5 2M15 3l-1.5 2" />
+    </svg>
+  );
+}
+
+/* The clock as an external store — carried over from `AppHeader` unchanged. */
+function subscribeNothing() {
+  return () => {};
+}
+let cachedNow: Date | null = null;
+function clientNow(): Date {
+  /* Cached so the snapshot is referentially stable — a fresh Date every call
+     makes React think the store changed and re-render forever. */
+  if (!cachedNow) cachedNow = new Date();
+  return cachedNow;
+}
+function serverNow(): null {
+  return null;
+}
