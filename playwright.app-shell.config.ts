@@ -14,6 +14,26 @@ import { defineConfig, devices } from "@playwright/test";
  */
 export default defineConfig({
   testDir: "./e2e-shell",
+  /*
+    ── ⚠⚠ PINNED TO ITS OWN SPEC (`P2-J3-E567` WS-B) ─────────────────────────
+
+    ⚠ `E567` ADDS A SECOND SPEC TO THIS DIRECTORY (`connect-walk.spec.ts`), and
+    without this line `testDir` would absorb it — silently moving the 29 that
+    briefs are checked against. ⚠⚠ THAT IS THE EXACT FAILURE THE DOCBLOCK ABOVE
+    DESCRIBES, one level down: *"Two configs, two numbers, neither able to hide a
+    regression in the other."*
+    ⚠ ADDED, NOT SUPERSEDED — nothing here changed meaning; the file simply had
+    no need to say which specs it owned while it owned all of them.
+    ⚠ The walk has its own config and its own script, `check:connect-walk`.
+
+    ⚠⚠ `testIgnore`, NOT `testMatch`, AND THE DIFFERENCE WAS MEASURED. The 29 is
+    NOT all from `app-shell.spec.ts` — this directory holds THREE specs
+    (`app-shell` 22, plus `public-allowlist` and `unbuilt-counters`). Pinning to
+    one spec reported 22 and would have silently dropped seven assertions,
+    including the public allowlist. ⚠ EXCLUDING THE NEW FILE KEEPS EVERY
+    EXISTING ONE, which is what "29 must stay 29" actually protects.
+  */
+  testIgnore: "connect-walk.spec.ts",
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   use: {
     baseURL: "http://localhost:3100",
