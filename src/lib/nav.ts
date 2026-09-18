@@ -478,24 +478,66 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
     teaches people the numbers are decorative. ⚠ MESSAGES TAKES 1 THE DAY IT HAS
     A MODEL.
   */
+  /*
+    ⚠⚠ CONNECT IS A ROOM, NOT A PATH (`P2-J3-E557` WS-A). The numbers are gone,
+    the row is labelled `CONNECT`, and `Home` is the landing. ⚠ The superseded
+    `E378`/`E379` sequence reasoning is FOOTNOTED BELOW THIS SET, not above it.
+  */
   "/community": [
-    /* ⚠⚠ MESSAGES IS STEP 1 AS OF `P1-ALL-E379`, AND THIS IS THE FLIP `E378`
-       WAS WAITING FOR. SCOTT'S ORDER, 2026-09-04: *"1. Check Your Messages.
-       2. Search for Colleagues. 3. Check Out Our Forums. 4. Search for a
-       Mentor."*
-       ⚠ SUPERSEDED, QUOTED NOT DELETED — `E378` shipped this entry LAST and
-       UNNUMBERED with the note *"⚠ NO `n` — see the block above"*, because
-       there was no `Message` model and a suggested sequence whose step 1 is a
-       dead end teaches people the numbers are decorative. `E379` built the
-       model, so the dead end is gone and the number is honest.
-       ⚠ THE `early` PILL GOES WITH IT. Messaging is real now; a readiness pill
-       on a working feature is the same lie in the other direction. */
-    { n: 1, label: "Messages", href: "/messages" },
-    { n: 2, label: "Colleagues", href: "/community" },
-    { n: 3, label: "Forums", href: "/community/forums", state: "live" },
-    { n: 4, label: "Mentoring", href: "/community/mentors", state: "early" },
-    { n: 5, label: "Teams", href: "/community/teams", state: "live" },
+    { label: "Home", href: "/community" },
+    { label: "Colleagues", href: "/community/colleagues" },
+    { label: "Forums", href: "/community/forums", state: "live" },
+    { label: "Mentoring", href: "/community/mentors", state: "early" },
+    { label: "Teams", href: "/community/teams", state: "live" },
+    /* ⚠⚠ MESSAGES IS LAST, AND ONLY UNTIL `E560` (`P2-J3-E557` WS-A). It leaves
+       this row entirely when Messages becomes its own application. ⚠ The brief
+       is explicit that it stays until then: *"Do not leave the row in a state
+       where messages are unreachable."* ⚠ It was step 1; it is now last and
+       unnumbered, which is the honest interim. */
+    { label: "Messages", href: "/messages" },
   ],
+  /*
+    ── ⚠⚠ THE `n` VALUES ARE GONE, NOT JUST UNRENDERED (`P2-J3-E557` WS-A) ────
+
+    ⚠ `tabSequenceFor("/community")` is now `none`, so `PageTabs` would never
+    render a number anyway. ⚠⚠ THEY ARE REMOVED BECAUSE LEAVING THEM WOULD BE
+    STALE DATA WAITING TO BE RE-ENABLED: `Messages` carried `n: 1` and now sits
+    LAST, so the number and the position would contradict each other the moment
+    anybody flipped the mode back.
+    ⚠ SUPERSEDED, QUOTED NOT DELETED (`E164`) — the numbered set as `E379` left it:
+
+        { n: 1, label: "Messages", href: "/messages" },
+        { n: 2, label: "Colleagues", href: "/community" },
+        { n: 3, label: "Forums", href: "/community/forums", state: "live" },
+        { n: 4, label: "Mentoring", href: "/community/mentors", state: "early" },
+        { n: 5, label: "Teams", href: "/community/teams", state: "live" },
+
+    ⚠ `Colleagues` MOVED FROM `/community` TO `/community/colleagues`, because
+    `/community` is now Home. ⚠⚠ THE `EARLY` PILL ON MENTORING STAYS — it states
+    READINESS, not order, and removing numbers is not removing honesty markers.
+
+    ── ⚠ THE FOOTNOTE: THE `E378`/`E379` SEQUENCE BLOCK, SUPERSEDED (`E164`) ───
+
+    ⚠ It sat ABOVE this set until `E557`. It is kept because it records WHY the
+    numbers were right at the time, which is the part a future reader needs
+    before proposing them again:
+
+        ⚠⚠ MESSAGES IS STEP 1 AS OF `P1-ALL-E379`, AND THIS IS THE FLIP `E378`
+        WAS WAITING FOR. SCOTT'S ORDER, 2026-09-04: *"1. Check Your Messages.
+        2. Search for Colleagues. 3. Check Out Our Forums. 4. Search for a
+        Mentor."*
+        ⚠ SUPERSEDED, QUOTED NOT DELETED — `E378` shipped this entry LAST and
+        UNNUMBERED with the note *"⚠ NO `n` — see the block above"*, because
+        there was no `Message` model and a suggested sequence whose step 1 is a
+        dead end teaches people the numbers are decorative. `E379` built the
+        model, so the dead end is gone and the number is honest.
+        ⚠ THE `early` PILL GOES WITH IT. Messaging is real now; a readiness pill
+        on a working feature is the same lie in the other direction.
+
+    ⚠⚠ WHAT CHANGED IS NOT THAT THE ORDER WAS WRONG — it is that a tab row is a
+    ROOM a member re-enters, and a numbered room teaches people they are walking
+    a path they have already finished.
+  */
   /*
     Manage Work had ONE child pointing at the page it already opened, so it has
     no tab row at all — a single tab is a label wearing a control's clothes.
@@ -1170,7 +1212,31 @@ export const TAB_SEQUENCE: Record<string, "process" | "suggested" | "none"> = {
     built and asserted, and the first set that genuinely has a REQUIRED order
     declares it in one line.
   */
-  "/community": "suggested",
+  /*
+    ⚠⚠ `none` AS OF `P2-J3-E557` WS-A. Scott has asked for the numbers off this
+    row repeatedly. ⚠ CONNECT IS A ROOM A MEMBER RE-ENTERS, NOT A PATH THEY WALK
+    ONCE — and a numbered row tells somebody on their fortieth visit that they
+    are partway through something.
+    ⚠ THE `EARLY` PILL ON MENTORING IS UNAFFECTED and is meant to be: `state`
+    lives on the tab, not on the sequence, so readiness survives the numbers
+    going. Removing numbers is not removing honesty markers.
+  */
+  "/community": "none",
+  /*
+    ── ⚠ FOOTNOTE: THE SUPERSEDED `/community` CLASSIFICATION (`E164`) ─────────
+
+    ⚠ SUPERSEDED, QUOTED NOT DELETED — the live entry read:
+
+        "/community": "suggested",
+
+    ⚠⚠ AND IT WAS NOT WRONG WHEN IT WAS WRITTEN. `E378`/`E379` classified this
+    set `suggested` on Scott's own stated order, and `E384` then made every set
+    declare a mode so none could default silently. ⚠ THE CLASSIFICATION MACHINERY
+    IS UNTOUCHED BY `E557`; only THIS set's answer changed.
+    ⚠ `process` and `suggested` both still exist and are still asserted — see the
+    block above. `check:community` still fails the build for any `PAGE_TABS` key
+    that declares no mode at all.
+  */
   /* ⚠ ALL THREE ARE `none` BY EVIDENCE, NOT BY DEFAULT.
      · `/learn`             — 3 tabs against a 5-step spine, 2 of which are
                               Community's. See the mapping above.

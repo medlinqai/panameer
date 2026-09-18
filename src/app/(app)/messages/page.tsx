@@ -91,7 +91,7 @@ export default async function MessagesPage({
     <>
       {/* E216 — the Community rail flyout's children are this section's tab row now. */}
       <PageTabs
-        sequence={tabSequenceFor("/community")}
+        eyebrow="CONNECT" sequence={tabSequenceFor("/community")}
         tabs={tabsWithUnread(PAGE_TABS["/community"], unread)}
         current="/messages"
       />

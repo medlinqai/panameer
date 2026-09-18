@@ -63,10 +63,26 @@ import { MemberSearchBox } from "@/components/community/MemberSearchBox";
 /* ⚠ `My Community` (`P1-ALL-E372` WS-5) — Scott: *"something you have"*. */
 export const metadata = { title: "My Community · Panameer" };
 
+/**
+ * ⚠⚠ RENDERED AT TWO ROUTES UNTIL `E558` (`P2-J3-E557` WS-A).
+ *
+ * ⚠ `E557` adds a `Home` tab at `/community` and moves `Colleagues` to
+ * `/community/colleagues`. ⚠⚠ THE COLLEAGUES ROUTE HAD TO EXIST IN THE SAME
+ * WORKSTREAM OR THE NEW TAB WOULD 404 — the brief's own rule, written about
+ * Messages, is that the row must never be left pointing at nothing.
+ *
+ * ⚠ SO THIS BODY IS RENDERED FROM BOTH ROUTES FOR NOW, rather than copied:
+ * `/community` keeps showing it until Workstream B replaces it with Home, and
+ * `/community/colleagues` shows it at its own address. ⚠⚠ `current` IS THE ONLY
+ * DIFFERENCE, so the correct tab underlines at each.
+ * ⚠ `E558` owns the real Colleagues page body; this is a MOVE, not that build.
+ */
 export default async function CommunityPage({
   searchParams,
+  current = "/community",
 }: {
   searchParams: Promise<{ q?: string }>;
+  current?: string;
 }) {
   await guardPage("authenticated");
   /* ⚠ `P1-ALL-E379` — the Messages tab carries the unread count on every
@@ -102,7 +118,7 @@ export default async function CommunityPage({
     <>
       {/* E216 — the Community rail flyout's children are this section's tab row now. */}
       <PageTabs
-        sequence={tabSequenceFor("/community")} tabs={tabsWithUnread(PAGE_TABS["/community"], unread)} current="/community" />
+        eyebrow="CONNECT" sequence={tabSequenceFor("/community")} tabs={tabsWithUnread(PAGE_TABS["/community"], unread)} current={current} />
       <div className="mx-auto max-w-5xl space-y-5">
       <header>
         {/*

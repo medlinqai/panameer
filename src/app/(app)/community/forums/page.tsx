@@ -35,7 +35,7 @@ export default async function ForumsPage() {
     <>
       {/* E216 — the Community rail flyout's children are this section's tab row now. */}
       <PageTabs
-        sequence={tabSequenceFor("/community")} tabs={tabsWithUnread(PAGE_TABS["/community"], unread)} current="/community/forums" />
+        eyebrow="CONNECT" sequence={tabSequenceFor("/community")} tabs={tabsWithUnread(PAGE_TABS["/community"], unread)} current="/community/forums" />
       <div className="mx-auto max-w-4xl">
       <header className="mb-5">
         <h1 className="font-display text-[26px] font-bold tracking-[-0.5px]">

@@ -108,6 +108,7 @@ export function PageTabs({
   sequence = "none",
   className = "",
   children,
+  eyebrow,
 }: {
   tabs: PageTab[];
   /** The active tab's `match` (or href). Resolved by the page, which knows its
@@ -118,6 +119,18 @@ export function PageTabs({
   className?: string;
   /** Trailing controls — a Filters button, a count. Sits after the tabs. */
   children?: React.ReactNode;
+  /**
+   * ── ⚠⚠ THE EYEBROW (`P2-J3-E557` WS-A) ──────────────────────────────────
+   *
+   * ⚠ A short label at the LEFT of the row, separated by a rule.
+   * ⚠⚠ IT IS WHAT STOPS THE TABS READING AS A PAGE-LEVEL SEQUENCE. Once the
+   * numbers come off a set, a bare row of words is ambiguous — it could be
+   * steps, filters, or siblings. Naming the ROOM at the left makes them
+   * obviously siblings within it.
+   * ⚠ OPTIONAL, and every other row omits it: this is a room label, not a
+   * decoration, and a row that does not name a room must not grow one.
+   */
+  eyebrow?: string;
 }) {
   const numbered = sequence === "process" || sequence === "suggested";
 
@@ -125,6 +138,17 @@ export function PageTabs({
     /* ⚠ `relative` carries the fade; the scroller keeps the hairline. */
     <div className={"relative " + className}>
       <div className="-mx-1 mb-4 flex items-center gap-0.5 overflow-x-auto border-b border-line px-1">
+        {/* ⚠ THE EYEBROW AND ITS RULE (`P2-J3-E557`). `shrink-0` so it survives
+            the horizontal scroll that the row relies on at narrow widths, and
+            `aria-hidden` on the rule because it is a separator, not content. */}
+        {eyebrow && (
+          <>
+            <span className="shrink-0 whitespace-nowrap py-2.5 pl-2 pr-3 text-[12px] font-bold uppercase tracking-[0.08em] text-ink-2">
+              {eyebrow}
+            </span>
+            <span aria-hidden className="mr-2 h-5 w-px shrink-0 self-center bg-line" />
+          </>
+        )}
         {tabs.map((t, i) => {
           const active = (t.match ?? t.href) === current;
 
