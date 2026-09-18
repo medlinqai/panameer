@@ -1,13 +1,30 @@
-import Link from "next/link";
 import { guardPage } from "@/lib/guard";
 import { listMentors } from "@/lib/mentors";
-/* ⚠ `P1-ALL-E374` — the platform anchor is parked in `lib/mentors.ts`. The rate
-   shown here is the provider's own, through the one decided rule. */
-import { rateDisplay, NO_RATE_PUBLISHED } from "@/lib/rate-display";
+/*
+  ⚠⚠ FIVE IMPORTS CAME OUT WITH THE UNGATED LIST (`P2-J3-E558` WS-C2), and that
+  is not tidying — they were its ONLY consumers on this page.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+
+      import Link from "next/link";
+      /* ⚠ `P1-ALL-E374` — the platform anchor is parked in `lib/mentors.ts`. The
+         rate shown here is the provider's own, through the one decided rule. *\/
+      import { rateDisplay, NO_RATE_PUBLISHED } from "@/lib/rate-display";
+      import { ConnectControls } from "@/components/community/ConnectControls";
+      import { Avatar } from "@/components/Avatar";
+
+  ⚠ `ConnectControls` and `Avatar` still render — inside `FindAMentor`, which
+  imports them itself. ⚠⚠ `rateDisplay` DOES NOT, and that is a deliberate
+  consequence: the mentor rows no longer print a rate, because a rate beside a
+  `Follow as a Mentor` button reads as a price for a session nobody can buy.
+  ⚠ `check:community` asserts this file never calls `formatCents`; it still
+  does not, and now it does not format money at all.
+*/
 import { getSessionViewer } from "@/lib/session";
 import { getMyCommunity } from "@/lib/connections";
-import { ConnectControls } from "@/components/community/ConnectControls";
-import { Avatar } from "@/components/Avatar";
+import { getMentoringHome, helpfulAnswersByPerson } from "@/lib/mentoring-home";
+import { OpenForMentoringToggle } from "@/components/community/OpenForMentoringToggle";
+import { MentoringPanels } from "@/components/community/MentoringPanels";
+import { FindAMentor } from "@/components/community/FindAMentor";
 /* ⚠ `formatCents` IS NO LONGER IMPORTED HERE (`P1-ALL-E374`). This page used to
    format money itself — a half-range printed as "Their project rate". That is
    now `rateDisplay`'s job, and `check:community` asserts this file does NOT
@@ -58,7 +75,14 @@ export default async function MentorsPage({
   const unreadViewer = await getSessionViewer();
   const unread = unreadViewer ? await unreadCount(unreadViewer) : 0;
   const { skill } = await searchParams;
-  const mentors = await listMentors({ skill: skill?.trim() || undefined });
+  /* ⚠⚠ `P2-J3-E558` WS-C2 — `openOnly` IS THE GATE. Only providers who chose to
+     be found as a mentor appear, ever. It defaults to FALSE on the column, so
+     this returns nothing until somebody opts in — correct, and the empty state
+     recruits rather than the gate widening. */
+  const mentors = await listMentors({
+    skill: skill?.trim() || undefined,
+    openOnly: true,
+  });
 
   /* ⚠ WHO I HAVE ALREADY CONNECTED TO AS A MENTOR, so a card that is already
      connected reads `Disconnect` rather than offering the same action twice.
@@ -70,6 +94,20 @@ export default async function MentorsPage({
     (mine?.following ?? []).filter((f) => f.person).map((f) => f.person!.userId)
   );
   const viewerUserId = viewer?.userId ?? null;
+
+  /* ⚠ `P2-J3-E558` WS-C1 — the panels: demand, who I follow, my signal, and the
+     paid-sessions STATE TABLE. */
+  const home = viewer ? await getMentoringHome(viewer) : null;
+
+  /*
+    ⚠ WS-C2 — the signal for each result row, ONE GROUPED QUERY rather than one
+    per card. ⚠⚠ Reads `marked_helpful_at` and only that, the same rule as the
+    WS-C1 panel.
+    ⚠ SELF IS EXCLUDED: you cannot follow yourself as a mentor, and a row with
+    no action on it reads as broken. The empty state says so out loud.
+  */
+  const visible = mentors.filter((m) => m.userId && m.userId !== viewerUserId);
+  const signals = await helpfulAnswersByPerson(visible.map((m) => m.personId));
 
   return (
     <>
@@ -117,120 +155,65 @@ export default async function MentorsPage({
         </p>
       </section>
 
-      {mentors.length === 0 ? (
-        <section className="rounded-brand border border-dashed border-line px-5 py-10 text-center">
-          <p className="text-[15px] font-semibold">
-            {skill ? `Nobody matches “${skill}” yet.` : "No profiles are complete enough yet."}
-          </p>
-          <p className="mx-auto mt-1.5 max-w-lg text-[14px] leading-relaxed text-ink-2">
-            A provider appears here once their profile is visible in the
-            marketplace — title, role, skills, rate and photo. That gate is the
-            same one buyers search against.
-          </p>
-        </section>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {mentors.map((m) => (
-            <article
-              key={m.profileId}
-              className="flex flex-col rounded-brand border border-line bg-white p-5"
-            >
-              <div className="flex items-start gap-3">
-                <Avatar
-                  firstName={m.firstName}
-                  lastName={m.lastName}
-                  photoUrl={m.photoUrl}
-                  size={48}
-                />
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <p className="truncate text-[15px] font-bold">{m.name}</p>
-                    {m.validated && (
-                      <span
-                        title="Validated by Panameer"
-                        className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-emerald-800"
-                      >
-                        Validated
-                      </span>
-                    )}
-                  </div>
-                  <p className="mt-0.5 line-clamp-2 text-[13.5px] leading-snug text-ink-2">
-                    {m.headline}
-                  </p>
-                </div>
-              </div>
-
-              {m.skills.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {m.skills.map((s) => (
-                    <span
-                      key={s}
-                      className="rounded-full border border-line px-2.5 py-0.5 text-[12px] text-ink-2"
-                    >
-                      {s}
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              <dl className="mt-4 flex-1 space-y-1.5 text-[13px]">
-                {/* ⚠⚠ THEIR OWN RATE, THROUGH THE ONE DECIDED RULE — never a
-                    platform constant, and NEVER a `$0` or a placeholder when
-                    absent. ⚠ SUPERSEDED: this row used to print
-                    `MICRO_SESSION_PRICE / MICRO_SESSION_MINUTES min`, a fixed
-                    platform anchor no provider had agreed to. A second row
-                    printed a half-range as "Their project rate" — that is now
-                    the ONLY rate, and it reads `hourly_rate_cents` too, which
-                    carries 19 of 25 live providers. */}
-                <div className="flex items-baseline justify-between gap-3">
-                  <dt className="text-ink-2">Their rate</dt>
-                  <dd className="font-semibold">
-                    {rateDisplay({
-                      hourlyRateCents: m.hourlyRateCents,
-                      rateMinCents: m.rateMinCents,
-                      rateMaxCents: m.rateMaxCents,
-                      currency: m.currency,
-                    }) ?? <span className="font-normal text-ink-2">{NO_RATE_PUBLISHED}</span>}
-                  </dd>
-                </div>
-                {m.teaches > 0 && (
-                  <div className="flex items-baseline justify-between gap-3">
-                    <dt className="text-ink-2">Teaches on Learn</dt>
-                    <dd className="font-semibold">Yes</dd>
-                  </div>
-                )}
-              </dl>
-
-              <div className="mt-4 flex flex-wrap gap-2">
-                {/* ⚠⚠ THERE IS NO BUY BUTTON, AND THE DISABLED ONE IS GONE TOO.
-                    ⚠ SUPERSEDED, QUOTED NOT DELETED: *"BOOK IS DISABLED, not a
-                    link to nowhere. Booking is PHASE 4; a live-looking button
-                    that opened a placeholder would waste a click and teach that
-                    buttons here don't work."* PHASE 4 IS CANCELLED, so a button
-                    waiting for it is waiting for nothing. Paying runs on
-                    WorkRequest -> WorkOrder -> Settlement when that lands; it does
-                    not get its own path and it does not get a stub.
-                    ⚠ WHAT REPLACES IT WORKS TODAY: connecting is free, instant,
-                    and needs nobody's permission. */}
-                {m.userId && (
-                  <ConnectControls
-                    toUserId={m.userId}
-                    relation={null}
-                    isMentor={mentorUserIds.has(m.userId)}
-                    isSelf={m.userId === viewerUserId}
-                  />
-                )}
-                <Link
-                  href={`/providers/${m.profileId}`}
-                  className="rounded-full border-[1.5px] border-line px-4 py-2 text-[13.5px] font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
-                >
-                  View Profile
-                </Link>
-              </div>
-            </article>
-          ))}
-        </div>
+      {/* ── ⚠⚠ `P2-J3-E558` WS-C1 — THE CONSENT AND THE PANELS ─────────────
+          ⚠ The toggle renders only for someone who HAS a provider profile: it
+          is a declaration about what THEY will do, so it cannot be offered to
+          somebody with nothing to declare it about. */}
+      {home?.openForMentoring !== null && home !== null && (
+        <OpenForMentoringToggle initial={home.openForMentoring} />
       )}
+      {home && (
+        <MentoringPanels
+          followers={home.followers.map((f) => ({
+            connectionId: f.connectionId,
+            userId: f.userId,
+            name: f.name,
+            title: f.title,
+            photoUrl: f.photoUrl,
+          }))}
+          followingMentors={home.followingMentors}
+          helpfulAnswers={home.helpfulAnswers}
+        />
+      )}
+
+      {/*
+        ── ⚠⚠ FIND A MENTOR (`P2-J3-E558` WS-C2) ────────────────────────────
+
+        ⚠ SUPERSEDED, QUOTED NOT DELETED (`E164`) — this page used to render an
+        UNGATED list of every marketplace-visible provider as mentor candidates,
+        with its own empty state:
+
+            {mentors.length === 0 ? (
+              <section …>
+                {skill ? `Nobody matches “${skill}” yet.` : "No profiles are complete enough yet."}
+                A provider appears here once their profile is visible in the
+                marketplace — title, role, skills, rate and photo. That gate is
+                the same one buyers search against.
+              </section>
+            ) : ( …the two carousels… )}
+
+        ⚠⚠ THAT LIST PRESENTED PEOPLE AS ASKABLE WHO HAD NEVER AGREED TO BE, which
+        is exactly the harm `open_for_mentoring` exists to prevent. The gate is
+        now `openOnly: true` and the completeness sentence is gone with it — the
+        reason a profile is absent is no longer completeness, it is CONSENT, and
+        the empty state says so.
+      */}
+      <FindAMentor
+        skill={skill?.trim() ?? ""}
+        openForMentoring={home?.openForMentoring ?? null}
+        viewerUserId={viewerUserId}
+        results={visible.map((m) => ({
+          profileId: m.profileId,
+          userId: m.userId,
+          personId: m.personId,
+          name: m.name,
+          headline: m.headline,
+          photoUrl: m.photoUrl,
+          skills: m.skills,
+          helpfulAnswers: signals.get(m.personId) ?? 0,
+          alreadyFollowing: mentorUserIds.has(m.userId ?? ""),
+        }))}
+      />
     </div>
     </>
   );

@@ -281,12 +281,28 @@ export async function getThread(
      in a closed room, and it is the one a URL guesser finds first. */
   const gate = await prisma.forumThread.findUnique({
     where: { id },
-    select: { board: { select: { learning_path_id: true } } },
+    select: {
+      board: { select: { learning_path_id: true } },
+    },
   });
   if (gate?.board?.learning_path_id) {
     const allowed = await canAccessPathForum(viewer, gate.board.learning_path_id);
     if (!allowed) return null;
   }
+  /* ⚠ `P2-J3-E558` WS-B — may THIS viewer confirm here? Same predicate as
+     `loadForConfirming` and as `canAccessPathForum`, so authority and access
+     agree and nobody is shown a thread they cannot act on. */
+  const gatePathId = gate?.board?.learning_path_id ?? null;
+  const viewerTeachesPath =
+    gatePathId && viewerPersonId
+      ? Boolean(
+          await prisma.learningPath.findFirst({
+            where: { id: gatePathId, ...teachesPathWhere(viewerPersonId) },
+            select: { id: true },
+          })
+        )
+      : false;
+
   const thread = await prisma.forumThread.findUnique({
     where: { id },
     select: {
@@ -303,6 +319,14 @@ export async function getThread(
           body: true,
           created_at: true,
           marked_helpful_at: true,
+          instructor_confirmed_at: true,
+          /* ⚠⚠ WHO CONFIRMED, NOT JUST THAT IT WAS CONFIRMED (`P2-J3-E558` WS-B).
+             ⚠ Scott, 2026-09-18: *"Wide authority needs visible attribution as
+             its counterweight."* The predicate is `teachesPathWhere`, which
+             includes lesson-level experts, so "the instructor said so" is too
+             vague to be checkable — a NAME is what makes it answerable.
+             ⚠ Already stored; this only renders it. */
+          instructorConfirmer: { select: { first_name: true, last_name: true } },
           author: { select: authorSelect },
         },
       },
@@ -332,6 +356,24 @@ export async function getThread(
          be able to mark themselves helpful — that is the one shape of this
          mechanic that would be farmable by a single account. */
       canMarkHelpful: viewerIsThreadAuthor && p.author.id !== viewerPersonId,
+      instructorConfirmedAt: p.instructor_confirmed_at
+        ? p.instructor_confirmed_at.toISOString()
+        : null,
+      /* ⚠ NULL when the confirmer's account is gone — `SetNull` leaves the
+         timestamp standing. Read that as "confirmed, by someone no longer
+         here", never as "not confirmed". */
+      instructorConfirmedBy: p.instructorConfirmer
+        ? `${p.instructorConfirmer.first_name} ${p.instructorConfirmer.last_name}`.trim()
+        : null,
+      /*
+        ⚠⚠ A DIFFERENT AUTHORITY FROM `canMarkHelpful`, NOT A WIDER ONE. That
+        one is the ASKER; this is the PATH'S INSTRUCTOR.
+        ⚠ AND NOT ON THEIR OWN REPLY — an instructor who answers in a path they
+        teach must not close the loop on their own correctness. That refusal is
+        enforced in `loadForConfirming`; this flag only hides the button, and a
+        hidden control is not a permission.
+      */
+      canConfirm: viewerTeachesPath && p.author.id !== viewerPersonId,
     })),
   };
 }
@@ -517,6 +559,98 @@ export async function markHelpful(viewer: Viewer, postId: string) {
     id: updated.id,
     markedHelpfulAt: updated.marked_helpful_at ? updated.marked_helpful_at.toISOString() : null,
   };
+}
+
+/**
+ * ── ⚠⚠ THE INSTRUCTOR'S CONFIRMATION (`P2-J3-E558` WS-B) ──────────────────
+ *
+ * ⚠⚠ A DIFFERENT QUESTION FROM A DIFFERENT AUTHORITY. `markHelpful` asks *did
+ * this answer my question* and belongs to the ASKER. This asks *is this answer
+ * correct* and belongs to the INSTRUCTOR OF THE PATH. They can disagree in both
+ * directions, which is why they are two columns.
+ *
+ * ⚠⚠⚠ TWO REFUSALS, AND THE SECOND IS THE FARMABLE SHAPE. `canMarkHelpful`
+ * already refuses the viewer's own reply; it applies HARDER here, because an
+ * instructor who answers in a path they TEACH could otherwise confirm
+ * themselves — a single account closing the loop on its own correctness.
+ *
+ * ⚠ AUTHORITY IS DERIVED FROM THE BOARD, NOT ASSERTED BY THE CALLER:
+ * `ForumPost -> ForumThread -> ForumBoard.learning_path_id ->
+ * LearningPath.expert_person_id`. ⚠⚠ A GENERAL BOARD HAS NO PATH AND THEREFORE
+ * HAS NO INSTRUCTOR — nobody can confirm there, and that is correct rather than
+ * a gap: there is no one whose subject-matter authority the board represents.
+ */
+async function loadForConfirming(viewer: Viewer, postId: string) {
+  const person = await ownPerson(viewer);
+  const post = await prisma.forumPost.findUnique({
+    where: { id: postId },
+    select: {
+      id: true,
+      author_id: true,
+      instructor_confirmed_at: true,
+      thread: { select: { id: true, board: { select: { learning_path_id: true } } } },
+    },
+  });
+  if (!post) throw new ForumError("That reply no longer exists.", "NOT_FOUND");
+
+  const pathId = post.thread.board.learning_path_id;
+  if (!pathId) {
+    throw new ForumError(
+      "This board has no path, so answers here can't be confirmed.",
+      "INVALID"
+    );
+  }
+  /* ⚠⚠ `teachesPathWhere`, NEVER `expert_person_id`. Measured 2026-09-18: only
+     10 of 23 paths HAVE a path-level expert, and the narrow field would have
+     locked Scott out of all 16 paths he teaches across 338 lessons, and
+     Marelise out of 1 of her 5. `check:forums` bans the narrow field in this
+     file for exactly that reason, and it was right. */
+  const teaches = await prisma.learningPath.findFirst({
+    where: { id: pathId, ...teachesPathWhere(person.id) },
+    select: { id: true },
+  });
+  if (!teaches) {
+    throw new ForumError(
+      "Only someone who teaches this path can confirm an answer.",
+      "INVALID"
+    );
+  }
+  /* ⚠⚠ THE FARMABLE SHAPE, REFUSED. An instructor answering in their own path
+     must not be able to confirm themselves. */
+  if (post.author_id === person.id) {
+    throw new ForumError("You can't confirm your own reply.", "INVALID");
+  }
+  return { person, post };
+}
+
+export async function confirmAnswer(viewer: Viewer, postId: string) {
+  const { person, post } = await loadForConfirming(viewer, postId);
+  /* Idempotent, like `markHelpful` — double-clicks happen and must not move the
+     timestamp. */
+  if (post.instructor_confirmed_at) {
+    return { id: post.id, instructorConfirmedAt: post.instructor_confirmed_at.toISOString() };
+  }
+  const updated = await prisma.forumPost.update({
+    where: { id: post.id },
+    data: { instructor_confirmed_at: new Date(), instructor_confirmed_by: person.id },
+    select: { id: true, instructor_confirmed_at: true },
+  });
+  return {
+    id: updated.id,
+    instructorConfirmedAt: updated.instructor_confirmed_at
+      ? updated.instructor_confirmed_at.toISOString()
+      : null,
+  };
+}
+
+/** Undo it. ⚠ Same authority — an instructor who mis-clicks has to reverse it. */
+export async function unconfirmAnswer(viewer: Viewer, postId: string) {
+  const { post } = await loadForConfirming(viewer, postId);
+  await prisma.forumPost.update({
+    where: { id: post.id },
+    data: { instructor_confirmed_at: null, instructor_confirmed_by: null },
+  });
+  return { id: post.id, instructorConfirmedAt: null };
 }
 
 /** Undo it. Same two rules — an author who mis-clicks has to be able to reverse. */
@@ -716,4 +850,148 @@ export async function ensurePathBoard(
     },
     select: { id: true, slug: true },
   });
+}
+
+/**
+ * ── ⚠⚠ THE FORUMS LANDING (`P2-J3-E558` WS-B) ─────────────────────────────
+ *
+ * ⚠ THE VIEWER IS IN MANY ROOMS AND MOST ARE EMPTY. A page that lists them all
+ * is a wall of empty rooms, so ACTIVITY LEADS AND ROOMS GO IN THE RAIL.
+ *
+ * ⚠⚠ THE JOIN ALREADY EXISTED AND NOTHING HERE INVENTS IT:
+ * `ForumBoard.learning_path_id` (`P1-J3-E383`) × `teachesPathWhere`.
+ *
+ * ⚠⚠⚠ ONE DEFINITION OF "TEACH", USED EVERYWHERE: `teachesPathWhere`
+ * (`learn-home.ts:567`). The panel, `loadForConfirming`, `getThread`'s
+ * `canConfirm` and `canAccessPathForum` all read it, so ACCESS AND AUTHORITY
+ * AGREE and nobody is shown a thread they cannot act on.
+ *
+ * ⚠ SUPERSEDED, quoted not deleted (`E164`) — the first version of this block
+ * claimed TWO definitions were used deliberately, the narrow
+ * `LearningPath.expert_person_id` for the panel and authority, the broad one for
+ * the rail:
+ *
+ *     ⚠⚠⚠ TWO DEFINITIONS OF "TEACH" EXIST AND THIS FUNCTION USES BOTH, ON
+ *     PURPOSE … ⚠ So a lesson-level expert sees the room, marked `Teach`, and
+ *     does NOT see it in the instructor panel — correct, because they cannot
+ *     confirm in it.
+ *
+ * ⚠⚠ THAT WAS THE RIGHT INSTINCT POINTED AT THE WRONG CAUSE, AND IT IS RECORDED
+ * SO NOBODY RECONSTRUCTS THE WORKAROUND. The inconsistency it was designing
+ * around existed ONLY because the narrow field was the wrong predicate. Using
+ * the right one does not SOLVE the mismatch — the mismatch DISAPPEARS.
+ * ⚠ MEASURED 2026-09-18, which is why: only 10 of 23 paths have a path-level
+ * expert, and `expert_person_id` would have locked SCOTT out of all 16 paths he
+ * teaches across 338 lessons, and Marelise out of 1 of her 5. `check:forums`
+ * bans the narrow field in this file and has four assertions guarding the
+ * single definition.
+ */
+export async function getForumsHome(viewer: Viewer) {
+  const person = await prisma.person.findUnique({
+    where: { user_id: viewer.userId },
+    select: { id: true },
+  });
+
+  const [enrolments, taughtBroad] = await Promise.all([
+    prisma.learnEnrollment.findMany({
+      where: { user_id: viewer.userId },
+      select: { learning_path_id: true },
+    }),
+    person
+      ? prisma.learningPath.findMany({
+          where: teachesPathWhere(person.id),
+          select: { id: true },
+        })
+      : Promise.resolve([]),
+  ]);
+
+  const enrolledPathIds = new Set(enrolments.map((e) => e.learning_path_id));
+  const taughtPathIds = new Set(taughtBroad.map((p) => p.id));
+  const myPathIds = [...new Set([...enrolledPathIds, ...taughtPathIds])];
+
+  /* ⚠ THE FOUR GENERAL BOARDS ARE OPEN TO EVERYONE — `learning_path_id` NULL.
+     They belong in the rail beside the path rooms. */
+  const boards = await prisma.forumBoard.findMany({
+    where: {
+      OR: [{ learning_path_id: null }, { learning_path_id: { in: myPathIds } }],
+    },
+    orderBy: [{ sort_order: "asc" }, { title: "asc" }],
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      learning_path_id: true,
+      _count: { select: { threads: true } },
+    },
+  });
+
+  const rooms = boards.map((b) => ({
+    slug: b.slug,
+    title: b.title,
+    threadCount: b._count.threads,
+    /* ⚠ `Teach` vs enrolled — DIFFERENT RELATIONSHIPS, and the mark is what
+       explains why the instructor panel applies to some rooms and not others. */
+    relation: (b.learning_path_id && taughtPathIds.has(b.learning_path_id)
+      ? "teach"
+      : b.learning_path_id
+        ? "enrolled"
+        : "general") as "teach" | "enrolled" | "general",
+  }));
+
+  const expertBoardIds = boards
+    .filter((b) => b.learning_path_id && taughtPathIds.has(b.learning_path_id))
+    .map((b) => b.id);
+
+  const threadSelect = {
+    id: true,
+    title: true,
+    created_at: true,
+    board: { select: { slug: true, title: true } },
+    posts: { select: { author_id: true } },
+  } as const;
+
+  const [instructorThreads, recent] = await Promise.all([
+    expertBoardIds.length
+      ? prisma.forumThread.findMany({
+          where: { board_id: { in: expertBoardIds } },
+          orderBy: { created_at: "desc" },
+          take: 50,
+          select: threadSelect,
+        })
+      : Promise.resolve([]),
+    boards.length
+      ? prisma.forumThread.findMany({
+          where: { board_id: { in: boards.map((b) => b.id) } },
+          orderBy: { created_at: "desc" },
+          take: 10,
+          select: threadSelect,
+        })
+      : Promise.resolve([]),
+  ]);
+
+  const shape = (t: (typeof instructorThreads)[number]) => ({
+    id: t.id,
+    title: t.title,
+    boardSlug: t.board.slug,
+    boardTitle: t.board.title,
+    replies: t.posts.length,
+  });
+
+  /* ⚠⚠ SCOTT, 2026-09-17: UNANSWERED MEANS ZERO REPLIES. Literally that — no
+     instructor qualifier, no "no expert reply" reading. */
+  const noReplies = instructorThreads.filter((t) => t.posts.length === 0).map(shape);
+  /* ⚠ Replies exist, NONE of them from the viewer. */
+  const unweighed = instructorThreads
+    .filter((t) => t.posts.length > 0 && !t.posts.some((p) => p.author_id === person?.id))
+    .map(shape);
+
+  return {
+    noReplies,
+    unweighed,
+    recent: recent.map(shape),
+    rooms,
+    /* ⚠ `teaches` DRIVES WHETHER THE PANEL RENDERS AT ALL — somebody who teaches
+       nothing should not be shown an empty instructor panel. */
+    teaches: expertBoardIds.length > 0,
+  };
 }

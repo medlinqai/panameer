@@ -1,9 +1,24 @@
-import Link from "next/link";
+/*
+  ⚠⚠ THREE IMPORTS CAME OUT WITH THE OLD SINGLE-VIEW BODY (`P2-J3-E558` WS-D) —
+  they were its only consumers here. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+
+      import Link from "next/link";
+            
+  ⚠ `Avatar` still renders — inside `TeamSections`, which imports it itself.
+  ⚠⚠ `relativeDay` DOES NOT, and that is a consequence worth naming: the roster
+  rows show CONSENT STATE rather than a date. "Awaiting" is the fact that
+  matters; "invited 3 days ago" invites a reader to judge somebody for being
+  slow to answer, which is not a judgement this page should prompt.
+*/
 import { guardPage } from "@/lib/guard";
 import { getSessionViewer } from "@/lib/session";
-import { getMyTeams } from "@/lib/teams";
-import { Avatar } from "@/components/Avatar";
-import { relativeDay } from "@/lib/relative-day";
+import { getMyTeams, incomingRosterInvites, rosterCoverage } from "@/lib/teams";
+import { hasCapability } from "@/lib/access";
+import { prisma } from "@/lib/prisma";
+import {
+  ProviderTeamSections,
+  RecruiterTeamSections,
+} from "@/components/community/TeamSections";
 import { PageTabs } from "@/components/casing/PageTabs";
 import { PAGE_TABS, tabSequenceFor } from "@/lib/nav";
 /* ⚠ `P1-ALL-E379` — the unread badge rides on the shared tab row. */
@@ -35,10 +50,53 @@ export default async function MyTeamsPage() {
     ? await getMyTeams(viewer)
     : { represents: [], pendingInvites: [], representedBy: null, isCoordinator: false };
 
-  const nothingAtAll =
-    teams.represents.length === 0 &&
-    teams.pendingInvites.length === 0 &&
-    !teams.representedBy;
+  /* ⚠⚠ GATED ON CAPABILITIES, INDEPENDENTLY — never on `roleWord()`. */
+  const canProvide = viewer ? hasCapability(viewer, "canProvideServices") : false;
+  const canCoordinateTeams = viewer ? hasCapability(viewer, "canCoordinate") : false;
+
+  const invites = viewer ? await incomingRosterInvites(viewer) : [];
+
+  /* ⚠ THE RECRUITER'S OWN PERSON ID, so coverage rolls up their roster. */
+  const mePerson = viewer
+    ? await prisma.person.findUnique({
+        where: { user_id: viewer.userId },
+        select: { id: true },
+      })
+    : null;
+  const coverage =
+    canCoordinateTeams && mePerson ? await rosterCoverage(mePerson.id) : [];
+
+  /*
+    ⚠⚠ ONE ROSTER LIST WITH ITS CONSENT STATE, not two lists side by side.
+    Accepted members come from `represents` (they set `coordinator_person_id`,
+    so acceptance is a fact); awaiting ones are the PENDING invites this person
+    sent. ⚠ "Nobody is added silently" is only checkable if both states appear in
+    the SAME list — two separate lists let a reader miss one.
+  */
+  const roster = [
+    ...teams.represents.map((m) => ({
+      key: m.profileId,
+      name: m.name,
+      headline: m.headline,
+      photoUrl: m.photoUrl,
+      consent: "accepted" as const,
+    })),
+    ...teams.pendingInvites.map((i) => ({
+      key: i.id,
+      name: i.name ?? i.email,
+      headline: null,
+      photoUrl: null,
+      consent: "awaiting" as const,
+    })),
+  ];
+
+  /* ⚠ `Recruiters you know` — the coordinator representing me, plus anyone who
+     has asked. ⚠⚠ NOT A DIRECTORY: it is people with an actual relation to this
+     viewer, which is the same scoping rule the Colleagues roster follows. */
+  const recruitersKnown = [
+    ...(teams.representedBy ? [teams.representedBy] : []),
+    ...invites.map((i) => i.recruiter),
+  ];
 
   return (
     <>
@@ -55,128 +113,43 @@ export default async function MyTeamsPage() {
         </p>
       </header>
 
-      {nothingAtAll && (
-        <section className="rounded-brand border border-dashed border-line px-5 py-8 text-center">
-          <p className="text-[15px] font-semibold">You&apos;re not on a team yet.</p>
-          <p className="mx-auto mt-1.5 max-w-lg text-[14px] leading-relaxed text-ink-2">
-            A recruiter can represent several providers and bid on their behalf;
-            a provider can be represented by one. Neither applies to you at the
-            moment — if a recruiter invites you, accepting puts them here.
-          </p>
-          {teams.isCoordinator && (
-            <Link
-              href="/coordinator"
-              className="mt-4 inline-block rounded-full bg-magenta px-5 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
-            >
-              Invite A Provider
-            </Link>
-          )}
-        </section>
+      {/*
+        ── ⚠⚠ TWO SECTION SETS, GATED INDEPENDENTLY (`P2-J3-E558` WS-D) ──────
+
+        ⚠⚠⚠ NOT AN EITHER/OR. 10 PEOPLE HOLD BOTH A COORDINATOR AND A PROVIDER
+        JOB (measured 2026-09-18; the brief said 8). Each set is gated on its own
+        `hasCapability()` call, so a dual-role person sees BOTH in one render.
+        ⚠ NEVER `roleWord()` — it is the one-word header badge, single-valued on
+        purpose, and gating on it would force the either/or the data says is
+        wrong for 10 people.
+
+        ⚠ SUPERSEDED, quoted not deleted (`E164`) — this page rendered ONE
+        undifferentiated view with a combined "You're not on a team yet" empty
+        state and an `isCoordinator` boolean deciding a single CTA:
+
+            {nothingAtAll && ( …"You're not on a team yet."… )}
+            {teams.representedBy && ( …UP: who represents me… )}
+            {teams.represents.length > 0 && ( …DOWN: who I represent… )}
+
+        ⚠⚠ THAT SHAPE COULD NOT SHOW BOTH SETS, which is the whole point of WS-D.
+      */}
+      {canProvide && (
+        <ProviderTeamSections
+          representedBy={teams.representedBy}
+          invites={invites}
+          recruitersKnown={recruitersKnown}
+        />
       )}
 
-      {/* ---- UP: who represents me --------------------------------------- */}
-      {teams.representedBy && (
-        <section className="rounded-brand border border-line bg-white p-5">
-          <h2 className="font-display text-[16px] font-bold">
-            Represented By
-          </h2>
-          <div className="mt-3 flex items-center gap-3">
-            <Avatar
-              firstName={teams.representedBy.name.split(" ")[0] ?? ""}
-              lastName={teams.representedBy.name.split(" ").slice(1).join(" ")}
-              photoUrl={teams.representedBy.photoUrl}
-              size={40}
-            />
-            <div className="min-w-0">
-              <p className="text-[15px] font-bold">{teams.representedBy.name}</p>
-              <p className="text-[13px] text-ink-2">
-                {teams.representedBy.title ?? "Recruiter"}
-              </p>
-            </div>
-          </div>
-          <p className="mt-3 text-[13px] leading-relaxed text-ink-2">
-            They can put you forward for work. Your profile, rates and history
-            stay yours — representation doesn&apos;t transfer ownership of
-            anything.
-          </p>
-        </section>
+      {canCoordinateTeams && (
+        <RecruiterTeamSections roster={roster} coverage={coverage} />
       )}
 
-      {/* ---- DOWN: who I represent --------------------------------------- */}
-      {teams.represents.length > 0 && (
-        <section className="rounded-brand border border-line bg-white p-5">
-          <div className="flex flex-wrap items-baseline justify-between gap-3">
-            <h2 className="font-display text-[16px] font-bold">
-              Providers You Represent
-            </h2>
-            <Link
-              href="/coordinator"
-              className="text-[13.5px] font-semibold text-magenta hover:underline"
-            >
-              Manage roster →
-            </Link>
-          </div>
-          <ul className="mt-3 divide-y divide-line">
-            {teams.represents.map((m) => (
-              <li key={m.profileId} className="flex items-center gap-3 py-3">
-                <Avatar
-                  firstName={m.name.split(" ")[0] ?? ""}
-                  lastName={m.name.split(" ").slice(1).join(" ")}
-                  photoUrl={m.photoUrl}
-                  size={36}
-                />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[14.5px] font-bold">{m.name}</p>
-                  <p className="truncate text-[13px] text-ink-2">
-                    {m.headline || "No title yet"}
-                  </p>
-                </div>
-                <div className="flex shrink-0 items-center gap-2">
-                  {m.validated && (
-                    <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11.5px] font-bold text-emerald-800">
-                      Validated
-                    </span>
-                  )}
-                  <span
-                    className={
-                      "rounded-full px-2.5 py-0.5 text-[11.5px] font-bold " +
-                      (m.visible
-                        ? "bg-magenta/10 text-magenta"
-                        : "bg-black/[0.06] text-ink-2")
-                    }
-                    title={
-                      m.visible
-                        ? "Live in the marketplace"
-                        : `${m.completeness}% complete — not yet visible to buyers`
-                    }
-                  >
-                    {m.visible ? "Live" : `${m.completeness}%`}
-                  </span>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {/* ---- Pending invites --------------------------------------------- */}
-      {teams.pendingInvites.length > 0 && (
-        <section className="rounded-brand border border-line bg-white p-5">
-          <h2 className="font-display text-[16px] font-bold">Invited, Not Yet Joined</h2>
-          <ul className="mt-3 divide-y divide-line">
-            {teams.pendingInvites.map((i) => (
-              <li key={i.id} className="flex flex-wrap items-baseline gap-x-3 py-2.5">
-                <span className="text-[14px] font-semibold">
-                  {i.name ?? i.email}
-                </span>
-                {i.name && <span className="text-[13px] text-ink-2">{i.email}</span>}
-                <span className="ml-auto text-[13px] text-ink-2">
-                  invited {relativeDay(i.invitedAt)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
+      {!canProvide && !canCoordinateTeams && (
+        <p className="text-[14px] leading-relaxed text-ink-2">
+          Teams are for providers and recruiters. Your account is neither, so
+          there is nothing here for you yet.
+        </p>
       )}
     </div>
     </>

@@ -189,10 +189,37 @@ export type MentorCard = {
  * ⚠ `rating` LEAVES THE ORDERING: it is not on the card, so under Scott's rule
  * it cannot rank. Nothing has been rated yet either.
  */
-export async function listMentors(opts: { skill?: string } = {}): Promise<MentorCard[]> {
+export async function listMentors(
+  opts: { skill?: string; openOnly?: boolean } = {}
+): Promise<MentorCard[]> {
   const rows = await prisma.providerProfile.findMany({
     where: {
       ...marketplaceVisibleWhere(),
+      /*
+        ── ⚠⚠⚠ THE OPT-IN GATE (`P2-J3-E558` WS-C2) ───────────────────────────
+
+        ⚠ SCOTT, 2026-09-18: *"ONLY those who have checked the box to be open for
+        mentoring will appear."* ⚠⚠ THIS IS THE WHOLE GATE. A PROVIDER WHO HAS
+        NOT OPTED IN IS NOT FINDABLE HERE, EVER.
+        ⚠ `open_for_mentoring` defaults to FALSE, so this surface returns NOTHING
+        on day one. ⚠⚠ THAT IS CORRECT, NOT A DEFECT, AND IT MUST NEVER BE PAPERED
+        OVER BY WIDENING THE GATE — the empty state recruits instead.
+
+        ⚠ IT IS AN OPTION, NOT THE DEFAULT, because `listMentors` has an existing
+        caller and silently narrowing every caller's results from underneath them
+        is how a filter becomes a bug somewhere else.
+      */
+      ...(opts.openOnly ? { open_for_mentoring: true } : {}),
+      /*
+        ⚠⚠ THE PRODUCT'S ONE DEFINITION OF "FIND PROVIDERS BY SKILL", AND `E558`
+        WS-C2 ADDED NO SECOND COPY. ⚠ `skill-match.ts` is NOT a rival — it
+        answers *what skill did you mean* (typed text -> catalog entry) and its
+        three consumers are all onboarding. The two are SEQUENTIAL, not
+        alternatives: a fuzzy search composes them in that order, and that is its
+        own brief. ⚠ `explore.ts`'s `providerTextFilter` is free text across SIX
+        fields, a marketplace teaser — skill is one input there, not the axis.
+        ⚠ `contains`/`insensitive`, so it is NOT fuzzy: `Payabels` finds nothing.
+      */
       ...(opts.skill
         ? { skills: { some: { skill: { name: { contains: opts.skill, mode: "insensitive" } } } } }
         : {}),
