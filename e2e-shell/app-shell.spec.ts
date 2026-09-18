@@ -1,4 +1,6 @@
 import { test, expect, type Page, type Browser } from "@playwright/test";
+/* ⚠ `P2-J3-E567` WS-A — ONE sign-in, two callers. See `_auth.ts`. */
+import { signIn } from "./_auth";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
@@ -47,38 +49,49 @@ const PAGES = [
   "/learn/end-user-procurement-advanced-procurement",
 ];
 
-function seededAccount(): { email: string; password: string } {
-  const raw = JSON.parse(
-    readFileSync(join(process.cwd(), "prisma", "seed-data", "test-users.json"), "utf8")
-  ) as Record<string, unknown>;
-  const groups = Object.values(raw).filter(Array.isArray) as {
-    email: string;
-    password: string;
-  }[][];
-  const all = groups.flat();
-  const chosen = all.find((u) => u.email === "test3@panameer.com");
-  if (!chosen) throw new Error("test3@panameer.com is not in prisma/seed-data/test-users.json");
-  return { email: chosen.email, password: chosen.password };
-}
-
-async function signIn(page: Page) {
-  const { email, password } = seededAccount();
-  await page.goto("/login", { waitUntil: "domcontentloaded" });
-  await page.waitForSelector('input[type="email"]');
-  /* Hydration: an unhydrated React input takes the value and loses it on the
-     first client render, which posts an empty email and 401s in 5ms. */
-  await page.waitForTimeout(1200);
-  await page.click('input[type="email"]');
-  await page.type('input[type="email"]', email, { delay: 5 });
-  await page.click('input[type="password"]');
-  await page.type('input[type="password"]', password, { delay: 5 });
-  const [res] = await Promise.all([
-    page.waitForResponse((r) => r.url().includes("/api/auth/callback/credentials")),
-    page.click('button[type="submit"]'),
-  ]);
-  expect(res.ok(), `sign-in as ${email} returned ${res.status()}`).toBe(true);
-  await page.waitForTimeout(1500);
-}
+// ── ⚠⚠ MOVED TO `e2e-shell/_auth.ts` (`P2-J3-E567` WS-A) ─────────────────────
+//
+// ⚠ `e2e-shell/` now holds a SECOND spec (the Connect walk), and both need to
+// sign in. ⚠⚠ A SECOND COPY OF THE SIGN-IN IS THE `teachesPathWhere` MISTAKE
+// APPLIED TO TEST CODE — one definition, imported by both, never two that drift.
+// ⚠ THIS IS AN EXTRACTION: the moved code is byte-identical, including the two
+// `waitForTimeout` calls, whose tension with WS-3's no-`waitForTimeout` rule is
+// recorded in the new file rather than resolved here.
+//
+// ⚠ SUPERSEDED, QUOTED NOT DELETED (`E164`) — what stood here:
+//
+//     function seededAccount(): { email: string; password: string } {
+//       const raw = JSON.parse(
+//         readFileSync(join(process.cwd(), "prisma", "seed-data", "test-users.json"), "utf8")
+//       ) as Record<string, unknown>;
+//       const groups = Object.values(raw).filter(Array.isArray) as {
+//         email: string;
+//         password: string;
+//       }[][];
+//       const all = groups.flat();
+//       const chosen = all.find((u) => u.email === "test3@panameer.com");
+//       if (!chosen) throw new Error("test3@panameer.com is not in prisma/seed-data/test-users.json");
+//       return { email: chosen.email, password: chosen.password };
+//     }
+//
+//     async function signIn(page: Page) {
+//       const { email, password } = seededAccount();
+//       await page.goto("/login", { waitUntil: "domcontentloaded" });
+//       await page.waitForSelector('input[type="email"]');
+//       (Hydration comment: an unhydrated React input takes the value and loses it
+//        on the first client render, which posts an empty email and 401s in 5ms.)
+//       await page.waitForTimeout(1200);
+//       ... types email and password, awaits the credentials callback, asserts ok ...
+//       await page.waitForTimeout(1500);
+//     }
+//
+// ⚠⚠ QUOTED AS LINE COMMENTS, AND THE HYDRATION COMMENT IS PARAPHRASED RATHER
+// THAN COPIED. The moved code contains its own `/* … */`, which closes an
+// enclosing block comment EARLY and breaks the parse — measured here, and the
+// same trap `check:community` hit quoting an assertion. ⚠ `E164` makes this
+// recur, so the shape to reach for when quoting code is `//`, never a block.
+// ⚠ The live copy in `_auth.ts` is the authority; this is the record of where
+// it came from.
 
 let browserRef: Browser;
 let page: Page;

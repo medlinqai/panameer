@@ -114,7 +114,8 @@
     "check:skills-visible": "npx esbuild scripts/check-skills-visible.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/skills-visible.cjs --log-level=error && node .harness/skills-visible.cjs",
     "check:import-deadline": "npx esbuild scripts/check-import-deadline.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/import-deadline.cjs --log-level=error && node .harness/import-deadline.cjs",
     "check:sent-email": "npx esbuild scripts/check-sent-email.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/sent-email.cjs --log-level=error && node .harness/sent-email.cjs",
-    "mail:state": "npx esbuild scripts/print-mail-state.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/mail-state.cjs --log-level=error && node -r dotenv/config .harness/mail-state.cjs dotenv_config_path=.env.local"
+    "mail:state": "npx esbuild scripts/print-mail-state.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/mail-state.cjs --log-level=error && node -r dotenv/config .harness/mail-state.cjs dotenv_config_path=.env.local",
+    "check:connect-walk": "playwright test --config=playwright.connect-walk.config.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",

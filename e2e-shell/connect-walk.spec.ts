@@ -1,0 +1,301 @@
+import { test, expect, type Page, type Browser } from "@playwright/test";
+import { signIn } from "./_auth";
+
+/**
+ * ── ⚠⚠ THE CONNECT WALK (`P2-J3-E567` WS-B) ───────────────────────────────
+ *
+ * `P2-J3-E558` shipped five surfaces and NOT ONE was rendered by any automated
+ * gate. They are auth-gated, so `check:ui` cannot reach them; `check:app-shell`
+ * can, but its `PAGES` list does not include them.
+ *
+ * ⚠⚠ ITS OWN SPEC FILE, NOT AN ADDITION TO `app-shell.spec.ts`'s `PAGES`. That
+ * array feeds the shell contract and its count (29) is quoted in briefs. The
+ * config's own docblock sets the pattern one level up: *"Two configs, two
+ * numbers, neither able to hide a regression in the other."* Same reasoning
+ * here — new spec, own count.
+ *
+ * ⚠⚠⚠ THIS SUITE ASSERTS THE EMPTY STATE IS THE DESIGNED ONE. IT DOES NOT
+ * ASSERT ROWS. Every surface renders empty on every account today —
+ * `ForumThread` 0, `CoordinatorInvite` 0, providers-with-coordinator 0,
+ * `open_for_mentoring` 0. ⚠ AN ASSERTION THAT NEEDED DATA WOULD BE AN ASSERTION
+ * THAT FORCES SEEDING, and seeding to make a surface demonstrable is `E564`.
+ * ⚠ The honest empty states cost four stop gates to get right. This is what
+ * stops them regressing.
+ *
+ * ⚠ ROUTES CONFIRMED AGAINST `PAGE_TABS["/community"]` IN `nav.ts`, not taken
+ * from the brief. ⚠⚠ `Find a Mentor` IS NOT A SIXTH ROUTE — it is a section on
+ * `/community/mentors`, which is why it is asserted there.
+ *
+ * ⚠ THE DUAL-ROLE HALF IS NOT HERE AND CANNOT BE. `test3@panameer.com` is
+ * provider-only (measured — see `_auth.ts`), and the seed has no dual-role
+ * account. ⚠⚠ THE SHAPE IS PROVED STATICALLY INSTEAD, in `check:community`'s
+ * Teams block: two independent `hasCapability()` calls and no either/or branch.
+ * A shape is catchable in Node; it needs no account, no browser and no seed.
+ */
+
+const ROUTES = {
+  home: "/community",
+  colleagues: "/community/colleagues",
+  forums: "/community/forums",
+  mentors: "/community/mentors",
+  teams: "/community/teams",
+} as const;
+
+let browserRef: Browser;
+let page: Page;
+/** ⚠ Collected per navigation so a failure names the page that logged it. */
+let consoleErrors: string[] = [];
+
+test.describe.configure({ mode: "serial" });
+
+test.beforeAll(async ({ browser }) => {
+  browserRef = browser;
+  const ctx = await browserRef.newContext({ viewport: { width: 1440, height: 900 } });
+  page = await ctx.newPage();
+  page.on("console", (m) => {
+    if (m.type() === "error") consoleErrors.push(m.text());
+  });
+  page.on("pageerror", (e) => consoleErrors.push(`pageerror: ${e.message}`));
+  await signIn(page);
+});
+
+test.afterAll(async () => {
+  await page?.context().close();
+});
+
+/**
+ * ⚠⚠ THE FLOOR, ASSERTED BEFORE ANYTHING ELSE: it rendered, and it did not
+ * bounce to `/login`.
+ * ⚠ A REDIRECT TO `/login` MEANS THE FIXTURE IS BROKEN, NOT THE PAGE, and the
+ * message says which — otherwise a dead session reads as five page failures.
+ */
+async function open(path: string) {
+  consoleErrors = [];
+  const res = await page.goto(path, { waitUntil: "domcontentloaded" });
+  expect(res?.status(), `${path} returned ${res?.status()}`).toBeLessThan(400);
+  await page.waitForLoadState("networkidle");
+  expect(
+    new URL(page.url()).pathname,
+    `${path} redirected to ${new URL(page.url()).pathname} — the SIGN-IN FIXTURE is broken, not the page`
+  ).not.toBe("/login");
+}
+
+/* ── 1 · EVERY PAGE RENDERS, SIGNED IN, WITH NO CONSOLE ERROR ───────────── */
+for (const [name, path] of Object.entries(ROUTES)) {
+  test(`E567/1 — ${name} (${path}) renders signed in`, async () => {
+    await open(path);
+    await expect(page.locator("h1").first()).toBeVisible();
+  });
+
+  test(`E567/1 — ${name} logs no console error`, async () => {
+    await open(path);
+    expect(consoleErrors, `${path} logged: ${consoleErrors.join(" | ")}`).toEqual([]);
+  });
+}
+
+/* ── 2 · CONNECT HOME — THE TAB ROW, AND MESSAGES STILL LAST ────────────── */
+test("E567/2 — the CONNECT tab row renders with Home first", async () => {
+  await open(ROUTES.home);
+  await expect(page.getByText("CONNECT", { exact: true }).first()).toBeVisible();
+  const tabs = page.locator('a[href^="/community"], a[href="/messages"]');
+  await expect(tabs.filter({ hasText: "Home" }).first()).toBeVisible();
+});
+
+test("E567/2 — Messages is still LAST in the row (it leaves under E560)", async () => {
+  await open(ROUTES.home);
+  /*
+    ⚠ ASSERTED ON THE TAB HREFS IN DOM ORDER, not by walking up from one link to
+    a guessed container. ⚠⚠ THE FIRST VERSION DID THE LATTER
+    (`closest("div")?.parentElement`) AND FAILED — a layout change it was not
+    testing would have broken it, which is a test that reports the wrong thing.
+    ⚠ `E560` REMOVES MESSAGES FROM THIS ROW; until it does, the brief requires it
+    stay reachable and LAST.
+  */
+  const TAB_HREFS = [
+    "/community",
+    "/community/colleagues",
+    "/community/forums",
+    "/community/mentors",
+    "/community/teams",
+    "/messages",
+  ];
+  const order = await page.evaluate((hrefs) => {
+    const seen: string[] = [];
+    for (const a of Array.from(document.querySelectorAll("a"))) {
+      const href = a.getAttribute("href") ?? "";
+      if (hrefs.includes(href) && !seen.includes(href)) seen.push(href);
+    }
+    return seen;
+  }, TAB_HREFS);
+
+  expect(order, `tab hrefs found: ${order.join(" | ")}`).toContain("/messages");
+  expect(
+    order[order.length - 1],
+    `Messages should be the LAST tab; order was: ${order.join(" | ")}`
+  ).toBe("/messages");
+});
+
+/* ── 3 · COLLEAGUES — NO MEMBER-WIDE SEARCH ─────────────────────────────── */
+test("E567/3 — typing in Colleagues search fires NO request", async () => {
+  await open(ROUTES.colleagues);
+  /*
+    ⚠⚠ THE `E558` WS-A RULING, MADE MECHANICAL. The box filters a list already on
+    the page, in memory — there is no endpoint behind it. ⚠ THIS IS THE EASIEST
+    THING IN THE BRIEF TO REGRESS BY "IMPROVING" THE SEARCH, and the member-wide
+    query it replaced is the route 145 providers take to reach 13 buyers.
+    ⚠ ASSERTED ON *ANY* REQUEST, not on a named endpoint — a future search would
+    not necessarily reuse the old URL, and naming one would let a differently
+    named one through.
+  */
+  const requests: string[] = [];
+  const record = (r: { url: () => string }) => {
+    const u = r.url();
+    if (!/\.(js|css|woff2?|png|jpg|svg|ico|map)(\?|$)/.test(u)) requests.push(u);
+  };
+  page.on("request", record);
+  const box = page.getByLabel("Search your colleagues");
+  await expect(box).toBeVisible();
+  await box.type("payab", { delay: 30 });
+  await page.waitForTimeout(700);
+  page.off("request", record);
+  expect(
+    requests,
+    `typing fired ${requests.length} request(s): ${requests.join(" | ")}`
+  ).toEqual([]);
+});
+
+/* ── 4 · FORUMS — ZERO THREADS COLLAPSES TO ONE PANEL ───────────────────── */
+test("E567/4 — with zero threads the two groups collapse to ONE panel", async () => {
+  await open(ROUTES.forums);
+  /* ⚠ The two group headings exist only when there is something in them. With
+     zero threads NEITHER may render — two empty bordered boxes read as
+     something that failed to load, which is the house pattern this replaced. */
+  await expect(page.getByText("No replies yet")).toHaveCount(0);
+  await expect(
+    page.getByText("Answered by someone else — you haven't weighed in")
+  ).toHaveCount(0);
+});
+
+test("E567/4 — the rail still lists rooms", async () => {
+  await open(ROUTES.forums);
+  /* ⚠ THE PAGE IS NEVER BLANK. The rail says the rooms exist and nothing has
+     been asked yet, which is true. */
+  /* ⚠ `exact` — "Your forums" also matches "Recent in your forums" on this
+     page, and a strict-mode violation reports as a failure of the thing being
+     tested rather than of the selector. */
+  await expect(
+    page.getByRole("heading", { name: "Your forums", exact: true })
+  ).toBeVisible();
+});
+
+/* ── 5 · MENTORING — THE NO-PROMISE RULE, MADE MECHANICAL ───────────────── */
+/**
+ * ⚠⚠ THE RULE IS ABOUT PROMISES, NOT VOCABULARY, AND THE FIRST VERSION OF THIS
+ * TEST GOT IT WRONG.
+ *
+ * ⚠ It scanned rendered text for `Book|Booking|Purchase|Buy|Pay` and FAILED on
+ * the `Paid sessions` state-table row *"Booking a block of time" -> "Not built —
+ * no scheduling exists"* — which is EXACTLY WHAT THE BRIEF ASKED FOR. Naming a
+ * thing that does not exist, and saying it does not exist, is the opposite of
+ * promising it.
+ * ⚠⚠ SO THE ASSERTION TESTS THE PROMISE: an INTERACTIVE CONTROL offering to
+ * book, buy or pay. A word in a table nobody can click is not a promise; a
+ * button is.
+ */
+const PROMISE_VERBS = /\b(book|booking|purchase|buy|pay|checkout|subscribe)\b/i;
+
+test("E567/5 — no control on Mentoring offers a booking or a payment", async () => {
+  await open(ROUTES.mentors);
+  const controls = await page.locator("button, a").allInnerTexts();
+  const offenders = controls
+    .map((t) => t.replace(/\s+/g, " ").trim())
+    .filter((t) => t && PROMISE_VERBS.test(t));
+  expect(
+    offenders,
+    `these clickable controls offer a booking or payment: ${offenders.join(" | ")}`
+  ).toEqual([]);
+});
+
+test("E567/5 — Mentoring shows no rate, price or currency", async () => {
+  await open(ROUTES.mentors);
+  const body = (await page.locator("body").innerText()).replace(/\s+/g, " ");
+  /* ⚠⚠ A RATE BESIDE A "Follow as a Mentor" BUTTON READS AS A PRICE FOR A
+     SESSION NOBODY CAN BUY. `rateDisplay` was deliberately removed from this
+     page in `E558` WS-C2 and nothing currently stops it coming back. */
+  expect(/\$\d/.test(body), `a currency amount appears: ${body.slice(0, 200)}`).toBe(false);
+  expect(/\bper hour\b|\bhourly\b/i.test(body), "an hourly rate appears").toBe(false);
+});
+
+test("E567/5 — Paid sessions renders as a state table, not a button", async () => {
+  await open(ROUTES.mentors);
+  const section = page
+    .locator("section")
+    .filter({ has: page.getByRole("heading", { name: "Paid sessions" }) });
+  await expect(section).toBeVisible();
+  /* ⚠ A TABLE OF FACTS ABOUT THE BUILD. ⚠⚠ AND NO CONTROL INSIDE IT — the
+     brief's rule is that nothing here may promise a session. */
+  await expect(section.locator("table")).toBeVisible();
+  await expect(section.locator("button, a")).toHaveCount(0);
+});
+
+test("E567/5 — the mentor signal renders even at 0", async () => {
+  await open(ROUTES.mentors);
+  /* ⚠ RENDERED AT 0, NOT HIDDEN — nobody buys time with a mentor they cannot
+     evaluate, and hiding a zero is how a page starts flattering people. */
+  await expect(page.getByRole("heading", { name: "Your mentor signal" })).toBeVisible();
+  await expect(page.getByText("answers marked helpful").first()).toBeVisible();
+});
+
+/* ── 6 · FIND A MENTOR — THE EMPTY STATE RECRUITS ───────────────────────── */
+test("E567/6 — Find a Mentor's empty state states the mechanism", async () => {
+  await open(ROUTES.mentors);
+  await expect(page.getByRole("heading", { name: "Find a mentor" })).toBeVisible();
+  /* ⚠⚠ IT SAYS WHY IT IS EMPTY — opt-in, nobody has chosen — rather than
+     "nothing found", which teaches nobody anything. ⚠ And it must NOT be papered
+     over by widening the gate. */
+  await expect(page.getByText(/Mentoring is opt-in/i)).toBeVisible();
+});
+
+test("E567/6 — it offers the toggle to a viewer with a provider profile", async () => {
+  await open(ROUTES.mentors);
+  /* ⚠ `test3@panameer.com` HAS a provider profile (measured — see `_auth.ts`),
+     so the toggle is offered. ⚠⚠ THE SAME COMPONENT AND ENDPOINT AS WS-C1 — no
+     second endpoint was built. */
+  await expect(page.getByText("Open for mentoring").first()).toBeVisible();
+});
+
+/* ── 7 · TEAMS — SINGULAR HEADINGS, CONSENT LANGUAGE, PROVIDER SET ONLY ── */
+test("E567/7 — Teams headings are SINGULAR", async () => {
+  await open(ROUTES.teams);
+  /* ⚠⚠ THERE IS NO `Team` MODEL. The relationship is
+     `ProviderProfile.coordinator_person_id`, a nullable FK, so a provider
+     belongs to at most ONE coordinator. ⚠ Plural headings would label something
+     the schema forbids. RENAME WHEN THE MODEL BECOMES ONE-TO-MANY. */
+  await expect(page.getByRole("heading", { name: "The team you’re on" })).toBeVisible();
+  const body = (await page.locator("body").innerText()).replace(/\s+/g, " ");
+  expect(/\bTeams you(’|')re on\b/i.test(body), "a plural heading returned").toBe(false);
+  expect(/\bTeams you manage\b/i.test(body), "a plural heading returned").toBe(false);
+});
+
+test("E567/7 — a provider-only viewer sees the PROVIDER set and NOT the recruiter set", async () => {
+  await open(ROUTES.teams);
+  /*
+    ⚠⚠ THIS IS HALF THE CAPABILITY RULING, AND IT IS THE HALF A BROWSER CAN
+    PROVE. `test3@panameer.com` holds `canProvideServices` and NOT
+    `canCoordinate` (measured — see `_auth.ts`), so the provider set renders and
+    the recruiter set must be absent. That proves the gate EXCLUDES correctly.
+    ⚠ THE OTHER HALF — that someone holding BOTH sees BOTH — cannot be proved
+    here: the seed has no dual-role account, and adding one changes row counts
+    other gates quote. ⚠⚠ IT IS PROVED STATICALLY in `check:community`'s Teams
+    block instead.
+  */
+  await expect(page.getByRole("heading", { name: "The team you’re on" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Invitations" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Recruiters you know" })).toBeVisible();
+
+  await expect(page.getByRole("heading", { name: "Your team", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Your team’s coverage" })).toHaveCount(0);
+  await expect(
+    page.getByRole("heading", { name: "Open work you could field" })
+  ).toHaveCount(0);
+});

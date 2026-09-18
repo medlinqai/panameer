@@ -49,6 +49,9 @@ const bodies = new Map(files.map((f) => [f, strip(readFileSync(f, "utf8"))]));
 
 const SIGNAL_LIB = join("src", "lib", "community-signal.ts");
 const FORUMS = join("src", "lib", "forums.ts");
+/* `P2-J3-E567` WS-C — the Teams page and the component holding its two sets. */
+const TEAMS_PAGE = join("src", "app", "(app)", "community", "teams", "page.tsx");
+const TEAM_SECTIONS = join("src", "components", "community", "TeamSections.tsx");
 const BLOCK = join("src", "components", "profile", "CommunitySignal.tsx");
 const schema = readFileSync(join("prisma", "schema.prisma"), "utf8");
 
@@ -1174,6 +1177,88 @@ check(
 );
 
 // ---------------------------------------------------------------------------
+
+/* ══ GUARD 4 · TEAMS RENDERS BOTH SETS, OR IT IS BROKEN (`P2-J3-E567` WS-C) ══
+
+   ⚠⚠ THE REGRESSION TO FEAR IS A SHAPE, NOT A RENDER — and a shape is catchable
+   in Node. It needs no account, no browser and no seed, which is what makes this
+   guard possible at all: THE SEED HAS NO DUAL-ROLE ACCOUNT, so no browser test
+   can sign in as somebody holding both capabilities.
+   ⚠ Measured 2026-09-18: `test3@panameer.com` is provider-only, and 10 real
+   people hold BOTH a coordinator and a provider job (`E456`).
+
+   ⚠⚠⚠ THE ANTI-PATTERN THIS EXISTS TO CATCH IS NAMED IN `E558` WS-D's OWN
+   COMMIT: "one undifferentiated view with a single isCoordinator boolean
+   choosing one CTA — a shape that structurally could not show both sets."
+   ⚠ A dual-role person must see BOTH section sets in ONE render.
+
+   ⚠ WHAT THIS GUARD DOES NOT PROVE: that a dual-role person actually SEES both
+   sets. It proves the code is SHAPED to allow it. The render half stays
+   unverifiable until the seed has such an account — recorded in the matrix, and
+   deliberately NOT fixed by adding one, because seed row counts are quoted by
+   other gates and briefs including the "10 dual-role" figure itself.
+
+   ⚠ COMMENTS ARE STRIPPED — `bodies` holds stripped sources — so a quoted
+   anti-pattern in a docblock can neither satisfy nor trip these. */
+{
+  const teamsPage = bodies.get(TEAMS_PAGE) ?? "";
+  const teamSections = bodies.get(TEAM_SECTIONS) ?? "";
+  check("GUARD 4 — the Teams page was found by the scan", teamsPage.length > 0, TEAMS_PAGE);
+  check(
+    "GUARD 4 — the Teams sections component was found",
+    teamSections.length > 0,
+    TEAM_SECTIONS
+  );
+
+  /* ⚠ TWO INDEPENDENT CALLS, ONE PER CAPABILITY. */
+  check(
+    "GUARD 4 — Teams gates on canProvideServices via hasCapability()",
+    /hasCapability\(\s*viewer\s*,\s*"canProvideServices"\s*\)/.test(teamsPage)
+  );
+  check(
+    "GUARD 4 — Teams gates on canCoordinate via hasCapability()",
+    /hasCapability\(\s*viewer\s*,\s*"canCoordinate"\s*\)/.test(teamsPage)
+  );
+
+  /* ⚠⚠ NEVER `roleWord()` — it is the one-word header badge and it is
+     SINGLE-VALUED ON PURPOSE. Gating on it would force the either/or the data
+     says is wrong for 10 people. */
+  check(
+    "GUARD 4 — ⚠⚠ roleWord() appears nowhere in the Teams path",
+    !/\broleWord\b/.test(teamsPage) && !/\broleWord\b/.test(teamSections),
+    "roleWord is single-valued; gating on it cannot show both sets"
+  );
+
+  /* ⚠⚠⚠ NO EITHER/OR BETWEEN THE TWO SETS. They must be INDEPENDENT statements
+     — `{a && <X/>}` and `{b && <Y/>}` — never one expression choosing between
+     them. A ternary whose branches are the two components, either way round, is
+     the exact shape `E558` WS-D removed. */
+  const ternaryBetweenSets =
+    /\?[\s\S]{0,400}<ProviderTeamSections[\s\S]{0,400}:[\s\S]{0,400}<RecruiterTeamSections|\?[\s\S]{0,400}<RecruiterTeamSections[\s\S]{0,400}:[\s\S]{0,400}<ProviderTeamSections/;
+  check(
+    "GUARD 4 — ⚠⚠ NO TERNARY CHOOSES BETWEEN THE TWO SECTION SETS",
+    !ternaryBetweenSets.test(teamsPage),
+    "a dual-role person must see BOTH, so neither may be the other's else-branch"
+  );
+
+  /* ⚠ AND EACH RENDERS FROM ITS OWN GUARD EXPRESSION. */
+  check(
+    "GUARD 4 — the provider set renders from its own capability check",
+    /\{\s*canProvide\s*&&\s*\(?[\s\S]{0,200}<ProviderTeamSections/.test(teamsPage)
+  );
+  check(
+    "GUARD 4 — the recruiter set renders from its own capability check",
+    /\{\s*canCoordinateTeams\s*&&\s*\(?[\s\S]{0,200}<RecruiterTeamSections/.test(teamsPage)
+  );
+
+  /* ⚠ THE TWO FLAGS ARE COMPUTED SEPARATELY, not derived from one another — a
+     single boolean with a negation is an either/or wearing two names. */
+  check(
+    "GUARD 4 — ⚠ the two capability flags are independent, not one negated",
+    !/canCoordinateTeams\s*=\s*!\s*canProvide/.test(teamsPage) &&
+      !/canProvide\s*=\s*!\s*canCoordinateTeams/.test(teamsPage)
+  );
+}
 
 if (failures.length > 0) {
   console.error(`check:community — ${failures.length} FAILED, ${pass} passed\n`);
