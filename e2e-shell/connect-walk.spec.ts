@@ -160,6 +160,64 @@ test("E560/2 — Messages is GONE from the CONNECT row, and still reachable", as
   await expect(clusterLink).not.toHaveText(/\d/);
 });
 
+/*
+  ── ⚠⚠⚠ 2b · THE BAND NEVER NAMES THE WRONG CONSOLE (`P2-ALL-E560`) ─────────
+
+  ⚠⚠ THIS GUARDS A CLASS, NOT A STRING. The class is: A CLIENT COMPONENT WHOSE
+  FALLBACK SWALLOWS "NOT LOADED YET" INTO A REAL-LOOKING VALUE. `AppBand` reads
+  `useMe()`, which is null on first paint; `railPersona()` correctly returns
+  `null` there, and the label ternary's FINAL ELSE turned that null into
+  `"Buyer Console"` — so a PROVIDER was told they were a buyer on every
+  logged-in page load. ⚠ The same shape would produce a wrong plan name, a wrong
+  company, a wrong role badge, or a `0` where no number is known.
+  ⚠⚠ THE RULE IT ENCODES IS THE HOUSE'S OWN, from `casing_spec_LOCKED.md` on the
+  notification bell — *"a '0' or fake number is worse than none"*. A WRONG
+  CONSOLE NAME IS WORSE THAN NO CONSOLE NAME. ⚠ An unresolved value renders
+  NOTHING; it never borrows a real one.
+
+  ⚠⚠⚠ IT ASSERTS THE TRANSIENT, NOT THE END STATE, AND THAT IS THE WHOLE POINT:
+  A SINGLE POST-LOAD READ NEVER SEES THIS. By the time the menu has populated the
+  label is already correct, so the bug is invisible to every other assertion in
+  this suite. ⚠ This samples from FIRST PAINT (`waitUntil: "commit"`) until the
+  menu populates, and fails if the wrong word was EVER on screen.
+
+  ⚠ NEGATIVE-TESTED 2026-09-18: with the old ternary reinstated this sampler
+  observed `["Buyer Console", "Provider Console"]` and FAILED; with the fix it
+  observes `["", "Provider Console"]`. Reverted.
+  ⚠ `test3@panameer.com` is PROVIDER-ONLY (`_auth.ts`), so `Buyer Console` is
+  unambiguously wrong for this viewer — that is what makes the assertion sound.
+*/
+test("E560/3 — a provider is NEVER shown the wrong console, even for one frame", async () => {
+  const seen = new Set<string>();
+  await page.goto(ROUTES.home, { waitUntil: "commit" });
+
+  /* ⚠ BOUNDED SAMPLING — 120 × 25ms ceiling so a hang fails the test rather
+     than spinning. The loop exits as soon as the menu has populated. */
+  for (let i = 0; i < 120; i++) {
+    const label = await page
+      .locator(".pm-band-brand span")
+      .textContent()
+      .catch(() => null);
+    if (label !== null) seen.add(label.trim());
+    const ready = await page
+      .evaluate(() => document.querySelectorAll(".pm-band-item").length >= 5)
+      .catch(() => false);
+    if (ready) break;
+    await page.waitForTimeout(25);
+  }
+  const settled = await page.locator(".pm-band-brand span").textContent();
+  if (settled) seen.add(settled.trim());
+
+  const observed = [...seen];
+  expect(
+    observed,
+    `the band showed a console name this viewer is not in. Observed across the load: ${observed.join(" | ")}`
+  ).not.toContain("Buyer Console");
+  /* ⚠ AND IT MUST STILL ARRIVE AT THE RIGHT ONE — otherwise "render nothing"
+     would pass by rendering nothing forever. */
+  expect(observed, `observed: ${observed.join(" | ")}`).toContain("Provider Console");
+});
+
 /* ── 3 · COLLEAGUES — NO MEMBER-WIDE SEARCH ─────────────────────────────── */
 test("E567/3 — typing in Colleagues search fires NO request", async () => {
   await open(ROUTES.colleagues);
