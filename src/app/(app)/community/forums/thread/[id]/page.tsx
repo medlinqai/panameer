@@ -6,6 +6,7 @@ import { Avatar } from "@/components/Avatar";
 import { ForumComposer } from "@/components/community/ForumComposer";
 import { communityIdentityGaps } from "@/lib/community-identity";
 import { HelpfulButton } from "@/components/community/HelpfulButton";
+import { ConfirmAnswerButton } from "@/components/community/ConfirmAnswerButton";
 import { BackLink } from "@/components/console/BackLink";
 
 /** One thread: the question, every reply oldest-first, and the reply box. */
@@ -40,6 +41,10 @@ export default async function ThreadPage({
       opening: true,
       markedHelpfulAt: null as string | null,
       canMarkHelpful: false,
+      /* ⚠ The opening post is the QUESTION — there is nothing to confirm. */
+      instructorConfirmedAt: null as string | null,
+      instructorConfirmedBy: null as string | null,
+      canConfirm: false,
     },
     ...thread.posts.map((p) => ({ ...p, opening: false })),
   ];
@@ -99,6 +104,36 @@ export default async function ThreadPage({
                 )}
                 {e.canMarkHelpful && (
                   <HelpfulButton postId={e.id} marked={Boolean(e.markedHelpfulAt)} />
+                )}
+              </div>
+            )}
+
+            {/*
+              ⚠⚠ THE INSTRUCTOR'S SIGNAL, SEPARATE FROM THE ASKER'S
+              (`P2-J3-E558` WS-B). A reader needs to see BOTH: an answer the
+              asker found helpful and an answer the instructor says is CORRECT
+              are different claims, and an answer can carry one without the other.
+            */}
+            {(e.instructorConfirmedAt || e.canConfirm) && (
+              <div className="mt-2 flex flex-wrap items-center gap-3" id="confirm">
+                {e.instructorConfirmedAt && !e.canConfirm && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-bg-soft px-3 py-1.5 text-[12.5px] font-semibold text-ink-2">
+                    {/* ⚠⚠ THE NAME, NOT JUST THE FACT. Authority here is
+                        `teachesPathWhere`, which is wide on purpose — a
+                        lesson-level expert qualifies. ⚠ Attribution is the
+                        counterweight: "confirmed by the instructor" is not
+                        checkable, "confirmed by Marelise Steenkamp" is.
+                        ⚠ `E433` — the NAME is a fact, so ink; nothing here is
+                        interactive, so nothing here is magenta. */}
+                    ✓ Confirmed
+                    {e.instructorConfirmedBy ? ` by ${e.instructorConfirmedBy}` : ""}
+                  </span>
+                )}
+                {e.canConfirm && (
+                  <ConfirmAnswerButton
+                    postId={e.id}
+                    confirmed={Boolean(e.instructorConfirmedAt)}
+                  />
                 )}
               </div>
             )}

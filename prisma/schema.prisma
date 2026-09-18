@@ -496,6 +496,8 @@ model Person {
   forumThreads             ForumThread[]            @relation("ForumThreadAuthor")
   forumPosts               ForumPost[]              @relation("ForumPostAuthor")
   forumPostsMarkedHelpful  ForumPost[]              @relation("ForumPostHelpfulMarker")
+  /// `P2-J3-E558` WS-B — the instructor correctness signal. See ForumPost.
+  forumPostsConfirmed      ForumPost[]              @relation("ForumPostInstructorConfirmer")
   /// Assessments this person REVIEWED and published — see LearnAssessment.status.
   learnAssessmentsReviewed LearnAssessment[]        @relation("LearnAssessmentReviewer")
   taxProfile               TaxProfile?
@@ -3989,14 +3991,51 @@ model ForumPost {
    */
   marked_helpful_by String?   @db.Uuid
 
-  thread        ForumThread @relation(fields: [thread_id], references: [id], onDelete: Cascade)
-  author        Person      @relation("ForumPostAuthor", fields: [author_id], references: [id], onDelete: Cascade)
-  helpfulMarker Person?     @relation("ForumPostHelpfulMarker", fields: [marked_helpful_by], references: [id], onDelete: SetNull)
+  /**
+   * ── ⚠⚠ THE INSTRUCTOR'S CORRECTNESS SIGNAL (`P2-J3-E558` WS-B) ────────────
+   * ⚠⚠⚠ A SEPARATE COLUMN FROM `marked_helpful_*`, AND THAT IS THE RULING, NOT
+   * AN IMPLEMENTATION CHOICE. Scott, 2026-09-18: *"marked_helpful is DID THIS
+   * ANSWER MY QUESTION, owned by the asker, a RESOLUTION signal; Confirm is IS
+   * THIS ANSWER CORRECT, owned by the path's instructor, a CORRECTNESS signal.
+   * They can disagree in both directions."*
+   * ⚠⚠ REUSING `marked_helpful_at` WOULD HAVE MADE `Your Mentor Signal`'S LABEL
+   * FALSE IN THE FLATTERING DIRECTION. `community-signal.ts:82` counts
+   * `marked_helpful_at !== null` as "answers marked helpful"; an instructor
+   * confirming answers in their own paths would inflate somebody else's mentor
+   * standing with a judgement the asker never made.
+   * ⚠ `instructor_confirmed_*` DOES NOT FEED THE MENTOR SIGNAL. `community-signal.ts`
+   * counts `marked_helpful_at` and only that.
+   * ⚠⚠ OPEN, AND DELIBERATELY NOT ANSWERED HERE: whether a confirmation is worth
+   * MORE than a helpful-mark on a profile. ⚠ `ForumThread` has ZERO rows, so
+   * there is no data to answer it with. Revisit when forums have traffic; do not
+   * settle it inside `E558`.
+   * ⚠ AUTHORITY: the INSTRUCTOR OF THE PATH THIS THREAD'S BOARD BELONGS TO —
+   * `ForumBoard.learning_path_id` -> `LearningPath.expert_person_id`.
+   * ⚠⚠ AND NEVER THE POST'S OWN AUTHOR. `canMarkHelpful` already refuses the
+   * viewer's own reply as the one farmable shape; it applies HARDER here,
+   * because an instructor who answers in a path they teach could otherwise
+   * confirm themselves.
+   * ⚠ A NULLABLE TIMESTAMP, like its neighbour, so it is reversible and "when"
+   * survives. ⚠ `check:community` GUARD 3 fails the build if this column is
+   * written anywhere but `lib/forums.ts` — a SEPARATE guard from GUARD 2, so a
+   * failure names WHICH signal broke.
+   */
+  instructor_confirmed_at DateTime?
+  /// The instructor who confirmed. `SetNull` on delete for the same reason as
+  /// `marked_helpful_by`: the judgement stands even if the account is removed.
+  instructor_confirmed_by String?   @db.Uuid
+
+  thread              ForumThread @relation(fields: [thread_id], references: [id], onDelete: Cascade)
+  author              Person      @relation("ForumPostAuthor", fields: [author_id], references: [id], onDelete: Cascade)
+  helpfulMarker       Person?     @relation("ForumPostHelpfulMarker", fields: [marked_helpful_by], references: [id], onDelete: SetNull)
+  instructorConfirmer Person?     @relation("ForumPostInstructorConfirmer", fields: [instructor_confirmed_by], references: [id], onDelete: SetNull)
 
   @@index([thread_id, created_at])
   @@index([author_id])
   /// The profile signal counts helpful answers per author, so it filters on this.
   @@index([marked_helpful_at])
+  /// ⚠ Its own index — the instructor panel filters threads on it.
+  @@index([instructor_confirmed_at])
   @@map("forum_posts")
 }
 

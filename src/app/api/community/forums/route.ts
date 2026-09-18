@@ -1,7 +1,15 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { guardApi } from "@/lib/guard";
-import { ForumError, createPost, createThread, markHelpful, unmarkHelpful } from "@/lib/forums";
+import {
+  ForumError,
+  confirmAnswer,
+  createPost,
+  createThread,
+  markHelpful,
+  unconfirmAnswer,
+  unmarkHelpful,
+} from "@/lib/forums";
 
 /**
  * POST /api/community/forums — start a thread or reply to one (WS2-C).
@@ -44,6 +52,17 @@ const Body = z.discriminatedUnion("action", [
   */
   z.object({ action: z.literal("helpful"), postId: z.string().uuid() }),
   z.object({ action: z.literal("unhelpful"), postId: z.string().uuid() }),
+  /*
+    ⚠⚠ `confirm` IS A DIFFERENT SIGNAL FROM `helpful`, NOT A SYNONYM
+    (`P2-J3-E558` WS-B). `helpful` is the ASKER saying *this answered me*;
+    `confirm` is the PATH'S INSTRUCTOR saying *this is correct*. They can
+    disagree in both directions and they write different columns.
+    ⚠ SAME RULE AS ABOVE: no actor in the body. Who is confirming is the
+    session's business, and the authority is DERIVED from the board's path in
+    `lib/forums.ts` — never asserted by the caller.
+  */
+  z.object({ action: z.literal("confirm"), postId: z.string().uuid() }),
+  z.object({ action: z.literal("unconfirm"), postId: z.string().uuid() }),
 ]);
 
 export async function POST(request: Request) {
@@ -66,6 +85,17 @@ export async function POST(request: Request) {
           ? await markHelpful(gate, d.postId)
           : await unmarkHelpful(gate, d.postId);
       return NextResponse.json({ ok: true, id: r.id, markedHelpfulAt: r.markedHelpfulAt });
+    }
+    if (d.action === "confirm" || d.action === "unconfirm") {
+      const r =
+        d.action === "confirm"
+          ? await confirmAnswer(gate, d.postId)
+          : await unconfirmAnswer(gate, d.postId);
+      return NextResponse.json({
+        ok: true,
+        id: r.id,
+        instructorConfirmedAt: r.instructorConfirmedAt,
+      });
     }
     const result =
       d.action === "thread" ? await createThread(gate, d) : await createPost(gate, d);

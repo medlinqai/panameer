@@ -178,6 +178,85 @@ check(
   "GUARD 2 — the gate refuses marking your OWN reply",
   /post\.author_id\s*===\s*person\.id[\s\S]{0,160}throw new ForumError/.test(forums)
 );
+
+/* ══ GUARD 3 · THE INSTRUCTOR CORRECTNESS SIGNAL (`P2-J3-E558` WS-B) ═══════
+   ⚠⚠ A SEPARATE GUARD FROM GUARD 2, ON SCOTT'S RULING, SO A FAILURE NAMES WHICH
+   SIGNAL BROKE. ⚠ `marked_helpful_*` answers *did this answer my question*
+   (the asker); `instructor_confirmed_*` answers *is this answer correct* (the
+   path's instructor). Folding them into one guard would report a break in one
+   as a break in "the forum signals", which is the sentence nobody can act on.
+   ⚠ THE REGEX IS DELIBERATELY DISTINCT — `instructor_confirmed_` shares no
+   prefix with `marked_helpful_`, so neither guard can match the other's column.
+*/
+const CONFIRM_WRITE = /instructor_confirmed_(at|by)\s*:(?!\s*(?:true|false)\b)/;
+const confirmWriters = [...bodies.entries()]
+  .filter(([, b]) => CONFIRM_WRITE.test(b))
+  .map(([f]) => f);
+check(
+  "GUARD 3 — `instructor_confirmed_*` is written in exactly one file",
+  confirmWriters.length === 1 && confirmWriters[0] === FORUMS,
+  confirmWriters.join(", ") || "nowhere at all"
+);
+
+const confirmLeaks = [...bodies.entries()]
+  .filter(([f]) => f.startsWith(join("src", "components")))
+  .filter(([, b]) => /instructor_confirmed/.test(b))
+  .map(([f]) => f);
+check(
+  "GUARD 3 — no component touches the column",
+  confirmLeaks.length === 0,
+  confirmLeaks.join(", ")
+);
+
+/* ⚠ AUTHORITY IS DERIVED FROM THE BOARD'S PATH, never asserted by the caller.
+   ⚠⚠ AND IT IS `teachesPathWhere`, THE ONE DEFINITION — NOT `expert_person_id`.
+   Measured 2026-09-18: only 10 of 23 paths have a path-level expert, and the
+   narrow field would have locked Scott out of all 16 paths he teaches across 338
+   lessons. `check:forums` bans that field in `forums.ts` outright.
+   ⚠ SUPERSEDED, quoted not deleted (`E164`) — this assertion first matched the
+   narrow shape, because the first version of the code used it:
+
+       check(
+         "GUARD 3 — the gate refuses a caller who is not the path's instructor",
+         /expertId\s*!==\s*person\.id[\s\S]{0,200}throw new ForumError/.test(forums)
+       );
+
+   ⚠ THE RULE IS UNCHANGED — refuse a caller who does not teach the path. Only
+   the expression it matches changed, because the predicate was corrected. */
+check(
+  "GUARD 3 — authority is `teachesPathWhere`, the one definition",
+  /teachesPathWhere\(person\.id\)[\s\S]{0,400}if \(!teaches\)/.test(forums),
+  "expert_person_id alone silences a lesson-level expert in their own path"
+);
+check(
+  "GUARD 3 — the gate refuses a caller who does not teach the path",
+  /if \(!teaches\)[\s\S]{0,200}throw new ForumError/.test(forums)
+);
+/* ⚠⚠ THE FARMABLE SHAPE — an instructor answering in a path they teach. */
+check(
+  "GUARD 3 — the gate refuses confirming your OWN reply",
+  /loadForConfirming[\s\S]{0,2000}post\.author_id\s*===\s*person\.id[\s\S]{0,160}throw new ForumError/.test(forums)
+);
+/* ⚠ A GENERAL BOARD HAS NO PATH, so nothing there is confirmable — there is
+   nobody whose subject-matter authority the board represents.
+   ⚠ SUPERSEDED (`E164`): `/!post\.thread\.board\.learning_path_id[\s\S]{0,200}throw new ForumError/` */
+check(
+  "GUARD 3 — a board with no path cannot be confirmed in",
+  /if \(!pathId\)[\s\S]{0,200}throw new ForumError/.test(forums)
+);
+
+/* ══ ⚠⚠ THE SIGNALS DO NOT CROSS ══════════════════════════════════════════
+   ⚠ Scott, 2026-09-18: *"instructor_confirmed_* does NOT feed Your Mentor
+   Signal. community-signal.ts keeps counting marked_helpful_at and only that."*
+   ⚠⚠ REUSING THE COLUMN WOULD HAVE MADE THE MENTOR SIGNAL'S LABEL FALSE IN THE
+   FLATTERING DIRECTION — an instructor could inflate somebody's standing with a
+   judgement the asker never made. */
+const signalBody = bodies.get(SIGNAL_LIB) ?? "";
+check(
+  "E558 — the mentor signal never reads the instructor column",
+  !/instructor_confirmed/.test(signalBody),
+  "community-signal.ts counts marked_helpful_at and only that"
+);
 check(
   "GUARD 2 — markHelpful goes through the gate",
   /export async function markHelpful\([\s\S]{0,200}loadForMarking\(viewer, postId\)/.test(forums)
