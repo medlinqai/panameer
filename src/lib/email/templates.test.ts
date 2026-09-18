@@ -528,14 +528,35 @@ ok(
   readFileSync(".gitignore", "utf8").includes(".mail-capture"),
   "a captured file holds a real address and a rendered body"
 );
-/* ⚠ AND THE SAFETY NET FOR WS-A: the default sender is Resend's test domain,
-   which only delivers to the account's own address. ⚠⚠ WHEN THIS DEFAULT
-   CHANGES TO A VERIFIED PANAMEER DOMAIN, MAIL GOES WHEREVER THE CODE SAYS —
-   this assertion is the tripwire for that moment. */
+/*
+  ── ⚠⚠⚠ THIS ASSERTION WAS RENAMED BECAUSE IT WAS READ AS A LIE ────────────
+
+  ⚠ SUPERSEDED, quoted not deleted (`E164`) — the old label and its comment:
+      "WS-A — EMAIL_FROM still defaults to the Resend test domain"
+      "⚠ AND THE SAFETY NET FOR WS-A: the default sender is Resend's test domain,
+       which only delivers to the account's own address. ⚠⚠ WHEN THIS DEFAULT
+       CHANGES TO A VERIFIED PANAMEER DOMAIN, MAIL GOES WHEREVER THE CODE SAYS —
+       this assertion is the tripwire for that moment."
+
+  ⚠⚠ IT CALLED ITSELF A TRIPWIRE AND IT CANNOT BE ONE. It greps the SOURCE of
+  `lib/resend.ts` for the literal `onboarding@resend.dev` — it NEVER READS
+  `process.env.EMAIL_FROM`, and a static check cannot see an environment it does
+  not run in. ⚠ The statement it makes is TRUE (the code's FALLBACK is still the
+  sandbox) and it was READ as a different, FALSE statement: that mail cannot
+  reach real addresses.
+  ⚠⚠ THE REAL STATE: `EMAIL_FROM` has pointed at a verified `mail.panameer.com`
+  sender since 2026-09-11 with `MAIL_CAPTURE` off, so localhost has been able to
+  send to anyone for six days — and this assertion stayed green throughout.
+  ⚠ PROVEN: `EMAIL_FROM='Panameer <anything@whatever.com>' npm run check:email`
+  passes, unchanged.
+
+  ⚠⚠⚠ THE TRIPWIRE HAS TO BE A RUNTIME SURFACE, NOT A CHECK. Reported to Scott;
+  not built here. ⚠ DO NOT re-word this back into a claim about reach.
+*/
 ok(
-  "WS-A — EMAIL_FROM still defaults to the Resend test domain",
+  "WS-A — the FALLBACK sender in the code is still the Resend sandbox (⚠ says NOTHING about EMAIL_FROM at runtime)",
   /onboarding@resend\.dev/.test(resendSrc),
-  "on a verified domain a stray send reaches a real member; capture stops being a convenience"
+  "if the fallback itself changes, a machine with no EMAIL_FROM starts sending for real"
 );
 
 if (failures.length) {

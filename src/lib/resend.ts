@@ -6,6 +6,7 @@ import { isSuppressed, unsubscribeUrl } from "@/lib/unsubscribe";
    reason suppression is checked here: a new sender cannot forget. */
 import { prisma } from "@/lib/prisma";
 import { normalizeEmail } from "@/lib/normalizeEmail";
+import { undeliverableRule } from "@/lib/email/undeliverable-domains";
 import { PANAMEER_URL, UNSUBSCRIBE_PLACEHOLDER } from "@/lib/email/shell";
 
 /**
@@ -43,6 +44,23 @@ export function mailConfigured(): boolean {
 /** Verified sender. Uses Resend's shared sandbox address until you verify a domain. */
 export const EMAIL_FROM =
   process.env.EMAIL_FROM ?? "Panameer <onboarding@resend.dev>";
+
+/**
+ * ⚠⚠ WHICH ENVIRONMENT SENT THIS (`P2-J3-E522`, a narrow slice of `E548`).
+ *
+ * ⚠ ONE DATABASE IS SHARED by localhost, every Preview and Production, and until
+ * now NO ROW ANYWHERE SAID WHICH WROTE IT. ⚠⚠ That blindness has cost a
+ * measurement TWICE IN TWO DAYS: 2026-09-16, whether any AI résumé read had ever
+ * run in production; 2026-09-17, whether production can send real mail.
+ * ⚠ `VERCEL_ENV` is set by Vercel to `production` / `preview` / `development`;
+ * off Vercel it is absent, which is a developer machine.
+ */
+function sendingEnvironment(): string {
+  const v = process.env.VERCEL_ENV;
+  if (v === "production" || v === "preview") return v;
+  if (v === "development") return "localhost";
+  return process.env.VERCEL ? "unknown" : "localhost";
+}
 
 type SendEmailArgs = {
   to: string | string[];
@@ -223,6 +241,7 @@ export async function sendEmail({
           subject_type: subjectType ?? null,
           subject_id: subjectId ?? null,
           status: r.status,
+          environment: sendingEnvironment(),
           user_id: userId ?? null,
         })),
       });
@@ -232,9 +251,53 @@ export async function sendEmail({
   };
 
   const recipients = (Array.isArray(to) ? to : [to]).filter(Boolean);
+
+  /*
+    ── ⚠⚠⚠ UNDELIVERABLE DOMAINS ARE REFUSED HERE, IN THE TRANSPORT ───────────
+
+    ⚠ SCOTT, 2026-09-17: *"In the transport, so it cannot be forgotten on a
+    machine."* ⚠⚠ THAT IS THE WHOLE POINT — `MAIL_CAPTURE` is a real rail and it
+    is OFF, because it is a per-machine env var nobody is reminded about. A rail
+    that lives in the code cannot be left off.
+
+    ⚠⚠ REFUSED, NOT SILENTLY DROPPED. Scott: *"You just built the thing that
+    makes a refusal visible — use it. A skip that records nothing is the defect
+    this whole brief existed to kill."* ⚠ So a refusal writes a `SentEmail` row
+    with `status: "refused"` and no `resend_message_id`, because Resend never saw
+    it. ⚠ The matched RULE is logged rather than stored: it is derivable from the
+    address plus the list, and Scott's own ruling an hour ago was not to
+    denormalise what a join already answers.
+
+    ⚠ WHY IT RUNS BEFORE SUPPRESSION: an address at `example.com` can never
+    receive mail whatever its suppression state, and asking the database about a
+    domain that cannot exist is a query for nothing.
+    ⚠⚠ MEASURED: ~89 of 207 `User` addresses sit on these domains. Without this,
+    `E526`'s bulk invite is ~89 hard bounces in one run against a sending domain
+    days old.
+  */
+  const deliverable: string[] = [];
+  const refused: string[] = [];
+  for (const r of recipients) {
+    const rule = undeliverableRule(r);
+    if (rule) {
+      console.warn(`[mail] REFUSED (undeliverable domain, matched "${rule}") ${subject} -> ${r}`);
+      refused.push(r);
+      continue;
+    }
+    deliverable.push(r);
+  }
+  if (refused.length > 0) {
+    await record(refused.map((email) => ({ email, status: "refused" })));
+  }
+  if (deliverable.length === 0) {
+    /* ⚠ SEND-SHAPED SUCCESS, like the suppressed branch — a caller's flow must
+       not break because a seeded fixture had a fake address. */
+    return { id: "refused" };
+  }
+
   const allowed: string[] = [];
   const skipped: string[] = [];
-  for (const r of recipients) {
+  for (const r of deliverable) {
     if (await isSuppressed(r, category ?? undefined, bypassSuppressionFor)) {
       console.log(`[mail] SKIPPED (suppressed) ${subject} -> ${r}`);
       skipped.push(r);

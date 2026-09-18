@@ -247,6 +247,57 @@ console.log("\ncheck:sent-email — every send leaves a receipt\n");
   );
 }
 
+/* ═══ 10 · UNDELIVERABLE DOMAINS ARE REFUSED, AND RECORDED ══════════════
+   ⚠⚠ The rail that replaces "the sandbox refuses everything". It lives in the
+   TRANSPORT so it cannot be forgotten on a machine — MAIL_CAPTURE is a real rail
+   and it is OFF for exactly that reason.                                     */
+{
+  const LIST = "src/lib/email/undeliverable-domains.ts";
+  const L = strip(readFileSync(LIST, "utf8"));
+  ok("10 — the domain list is its own module", L.length > 0);
+  ok(
+    "10 — ⚠ IT IS A LIST, NOT A REGEX — adding a domain is a one-line diff",
+    /UNDELIVERABLE_DOMAINS: readonly string\[\] = \[/.test(L),
+    "Scott: adding a domain should be something somebody can see in review"
+  );
+  for (const d of ["example.com", "example.seed", '".test"', '".invalid"', '".example"'])
+    ok(`10 — refuses ${d.replace(/"/g, "")}`, L.includes(d.replace(/"/g, "")));
+
+  ok("10 — ⚠ the transport consults it", /undeliverableRule\(/.test(TRANSPORT));
+  ok(
+    "10 — ⚠⚠ A REFUSAL IS RECORDED, NOT SILENTLY DROPPED",
+    /status: "refused"/.test(TRANSPORT),
+    "a skip that records nothing is the defect this whole brief existed to kill"
+  );
+  ok(
+    "10 — ⚠ and it is refused BEFORE the send, not after",
+    TRANSPORT.indexOf('status: "refused"') < TRANSPORT.indexOf("emails.send("),
+  );
+  ok(
+    "10 — ⚠ no OTHER module filters recipients by domain",
+    /* ⚠ The transport CALLS it and the list module DEFINES it; a third file
+       would be a second copy of the rail. */
+    FILES.filter((f) => f !== "src/lib/resend.ts" && f !== LIST)
+      .filter((f) => /undeliverableRule\(/.test(strip(readFileSync(f, "utf8"))))
+      .length === 0,
+    "one rail, in the transport — a second copy is a second thing to forget"
+  );
+}
+
+/* ═══ 11 · EVERY RECEIPT SAYS WHERE IT CAME FROM (slice of `E548`) ═══════ */
+{
+  const model = /model SentEmail \{[\s\S]*?\n\}/.exec(
+    readFileSync("prisma/schema.prisma", "utf8")
+  )?.[0] ?? "";
+  ok("11 — the environment column exists", /\benvironment\s+String\s+@default\("unknown"\)/.test(model));
+  ok("11 — ⚠ and it is indexed", /@@index\(\[environment\]\)/.test(model));
+  ok("11 — the transport stamps it", /environment: sendingEnvironment\(\)/.test(TRANSPORT));
+  ok(
+    "11 — ⚠ it reads VERCEL_ENV, so preview and production are distinguishable",
+    /process\.env\.VERCEL_ENV/.test(TRANSPORT)
+  );
+}
+
 if (failures.length > 0) {
   console.error(`\ncheck:sent-email — ${failures.length} FAILED, ${pass} passed\n`);
   for (const f of failures) console.error(`  ✗ ${f}`);
