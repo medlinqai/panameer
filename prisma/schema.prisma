@@ -1100,12 +1100,71 @@ model ProviderProfile {
   resumeParseAudits ResumeParseAudit[]
   profileGapFlags   ProfileGapFlags?
   recommendations   RecommendationRequest[]
+  /// `P2-J2-E563` WS-B — the 3-year experience attestation, one row per
+  /// category the provider claims. See `ProviderExperienceAttestation`.
+  experienceAttestations ProviderExperienceAttestation[]
 
   @@index([region_id])
   @@index([coordinator_person_id])
   @@index([pillar_id])
   @@index([role_type_id])
   @@map("provider_profiles")
+}
+
+/// ⚠⚠ THE FOUR SERVICE-PRODUCT CATEGORIES. THE LIST IS CLOSED AND IT IS
+/// SCOTT'S (2026-09-17): *"The categories are Scott's and the list is closed:
+/// Pre-Project Consultation · Training · Testing · Mentoring. DO NOT ADD TO IT
+/// — he names things."*
+///
+/// ⚠ An enum rather than a free string precisely so a fifth category cannot be
+/// added by a caller — it takes a schema change and a `db push`, which is a
+/// decision, not a typo.
+enum ServiceProductCategory {
+  PRE_PROJECT_CONSULTATION
+  TRAINING
+  TESTING
+  MENTORING
+}
+
+/// ⚠⚠ THE 3-YEAR ATTESTATION (`P2-J2-E563` WS-B). ONE ROW PER (PROFILE,
+/// CATEGORY) — a SPECIFIC claim, never one global boolean.
+///
+/// ⚠ Scott, 2026-09-17, on what he wants providers to do: *"TWO — check their
+/// 'have you done this for > 3 years' related to auto-service product
+/// creation."*
+///
+/// ⚠⚠ WHY YEARS AND NOT A TICK: the brief requires a claim that *"can later be
+/// cross-checked against the résumé"*, and *"a tick everyone ticks is
+/// worthless."* A number per category is the smallest thing that can be
+/// checked against `Employer`/`Project` dates later. The 3-year threshold is
+/// DERIVED from it (`years >= 3`), never stored separately — two columns that
+/// can disagree about one fact is how a gate goes wrong.
+///
+/// ⚠⚠⚠ THIS BRIEF CAPTURES THE CLAIM AND NOTHING ELSE. NO SERVICE PRODUCT IS
+/// AUTO-CREATED FROM IT. The four open decisions in
+/// `service_products_and_provider_quality.md` are unruled — whether the generic
+/// categories extend `Package` or are a new model, whether `validated` is the
+/// hook for the rungs, where a retainer sits, and whether a team is an object.
+/// ⚠ DO NOT INVENT THE MODEL BY BUILDING AGAINST THIS TABLE.
+model ProviderExperienceAttestation {
+  id                  String                 @id @default(uuid()) @db.Uuid
+  provider_profile_id String                 @db.Uuid
+  category            ServiceProductCategory
+  /// The provider's own claim, in whole years. ⚠ SELF-REPORTED AND UNVERIFIED —
+  /// nothing cross-checks it yet, so no surface may present it as a fact about
+  /// the provider. It is what they SAID, with a date attached.
+  years               Int
+  /// ⚠ A SIGNATURE, not a row timestamp: the moment the person made the claim.
+  attested_at         DateTime               @default(now())
+  updated_at          DateTime               @updatedAt
+
+  profile ProviderProfile @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
+
+  /// ⚠⚠ ONE CLAIM PER CATEGORY. The upsert relies on this; without it a
+  /// provider could hold two contradictory claims about the same category.
+  @@unique([provider_profile_id, category])
+  @@index([provider_profile_id])
+  @@map("provider_experience_attestations")
 }
 
 enum ExperienceLevel {

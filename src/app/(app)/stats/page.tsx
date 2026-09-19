@@ -3,7 +3,10 @@ import { prisma } from "@/lib/prisma";
 import { guardPage } from "@/lib/guard";
 import { ownedProviderProfile } from "@/lib/access";
 import { isMarketplaceVisible } from "@/lib/access";
-import { VISIBILITY_THRESHOLD } from "@/lib/completeness";
+import { missingRequired, VISIBILITY_THRESHOLD } from "@/lib/completeness";
+import { readAttestations } from "@/lib/experience-attestation";
+import { ConfirmExperience } from "@/components/console/ConfirmExperience";
+import { RequestValidationAction } from "@/components/console/RequestValidationAction";
 /* ⚠ `StatValue` IS NO LONGER IMPORTED (`E563` WS-A). Both of its callers —
    `Profile Metrics`'s headline and the `Rising Talent` count — are superseded
    above; the merged meter is written out because `StatValue` renders MAGENTA and
@@ -52,6 +55,29 @@ export default async function MyStatsPage() {
       updated_at: true,
       created_at: true,
       onboarding_completed_at: true,
+      /*
+        ⚠⚠ WIDENED BY `E563` WS-B item 7 — the fields `missingRequired` needs to
+        NAME the gaps rather than merely count them.
+        ⚠ THE SHAPE MIRRORS `provider-profile-view.ts:254` FIELD FOR FIELD, and
+        that is deliberate: the profile's status strip and this card answer the
+        same question, and two surfaces that compute one answer from two
+        different inputs is how they start disagreeing.
+      */
+      headline: true,
+      role_type_id: true,
+      hourly_rate_cents: true,
+      rate_min_cents: true,
+      rate_max_cents: true,
+      onsite_rate_cents: true,
+      remote_rate_cents: true,
+      skills: { select: { id: true } },
+      person: {
+        select: {
+          phone: true,
+          photo_url: true,
+          site: { select: { addresses: { select: { id: true } } } },
+        },
+      },
       _count: {
         select: {
           skills: true,
@@ -71,6 +97,10 @@ export default async function MyStatsPage() {
     where: { user_id: viewer.userId },
   });
 
+  /* ⚠ OWNER-SCOPED INSIDE THE HELPER — the profile is resolved from the
+     session, never from a parameter (`E563` WS-B item 8). */
+  const attestations = await readAttestations(viewer);
+
   if (!profile) {
     return (
       <p className="text-ink-2">
@@ -85,6 +115,27 @@ export default async function MyStatsPage() {
     paused_at: profile.paused_at,
   });
   const validated = profile.validation_status === "VALIDATED";
+  /*
+    ⚠⚠ `REQUESTED` IS ITS OWN STATE, NOT A FLAVOUR OF UNMET (Scott's ruling,
+    2026-09-19). A provider who has asked must not be told again to ask.
+  */
+  const validationRequested = profile.validation_status === "REQUESTED";
+
+  /* ⚠ NAMES THE GAPS. `E562` WS-B's strip does the same from the same fields —
+     see the note on the widened select above. */
+  const gaps = missingRequired({
+    headline: profile.headline,
+    role_type_id: profile.role_type_id,
+    skills: profile.skills,
+    photoUrl: profile.person.photo_url,
+    hasAddress: (profile.person.site?.addresses?.length ?? 0) > 0,
+    hasPhone: Boolean(profile.person.phone?.trim()),
+    hourly_rate_cents: profile.hourly_rate_cents,
+    rate_min_cents: profile.rate_min_cents,
+    rate_max_cents: profile.rate_max_cents,
+    onsite_rate_cents: profile.onsite_rate_cents,
+    remote_rate_cents: profile.remote_rate_cents,
+  });
 
   /*
     ── ⚠⚠ THE FOUR CRITERIA, NOW THE ONLY COPY OF THEM (`P2-J2-E563` WS-A) ─────
@@ -118,6 +169,13 @@ export default async function MyStatsPage() {
     met: boolean;
     note: string;
     action: { label: string; href: string } | null;
+    /* ⚠⚠ A THIRD STATE, NOT A SECOND BOOLEAN FOR "MET". `pending` means the
+       provider has done the only thing they can do and is waiting on somebody
+       else. ⚠ Rendering that as an unmet `!` would blame them for a queue. */
+    pending?: boolean;
+    /* ⚠ A POSTING CONTROL rather than a link. `null` means no door is offered
+       from this state. */
+    control?: "request-validation" | null;
   }[] = [
     {
       label: "Profile complete enough to be visible",
@@ -168,25 +226,43 @@ export default async function MyStatsPage() {
       label: "Identity validated by Panameer",
       met: validated,
       /*
-        ⚠⚠⚠ THE ONE CRITERION WITH NO DOOR, AND IT IS A MEASURED DEFECT, NOT A
-        DESIGN CHOICE. `POST /api/settings/request-validation` EXISTS, is
-        owner-scoped and works — and NOTHING IN THE APPLICATION CALLS IT.
-        ⚠ Measured at this brief's premise check, 2026-09-19: zero UI callers.
-        ⚠⚠ `ProjectModal.tsx`'s `Request Validation` button is a DIFFERENT
-        THING — it POSTs `/api/provider/project-validation`, which validates ONE
-        PROJECT with a named contact, not the profile's merit badge.
-        ⚠ So a provider CANNOT move themselves to `REQUESTED`. The only writer
-        of `VALIDATED` is an admin on `/admin/providers`.
-        ⚠⚠ THE PAGE THIS FOLDS FROM WAS WORSE THAN SILENT — `/account-health`
-        told providers *"Ask for it from your profile once your work history is
-        complete"*, pointing at a button that has never existed.
-        ⚠⚠⚠ SO THIS ROW STATES THE TRUTH AND OFFERS NOTHING. Recorded for
-        Scott's ruling at the WS-A gate; DO NOT invent a door here.
+        ── ⚠⚠ THE DOOR IS WIRED (Scott's ruling, 2026-09-19) ─────────────────
+
+        ⚠⚠⚠ SCOTT: *"Panameer is the ONLY one that can validate profiles. AND,
+        there is a subscription level for the buyers that allows them to ONLY
+        see validated profiles."* ⚠ VALIDATION IS A REVENUE MECHANISM, NOT A
+        BADGE — which is why it earns a control rather than a note.
+
+        ⚠ SUPERSEDED, quoted not deleted (`E164`) — true at the WS-A gate, and
+        no longer true:
+        // note: validated
+        //   ? "Granted by Panameer on the quality of your work."
+        //   : "Granted by Panameer on the quality of your work. It is never sold, and there is nothing to apply for yet.",
+        // action: null,
+
+        ⚠⚠ WHAT WS-A MEASURED AND THIS FIXES: `POST
+        /api/settings/request-validation` existed, was owner-scoped, worked —
+        and NOTHING CALLED IT. ⚠ The route is REUSED, not replaced (Scott: *"Do
+        not write a new route."*).
+        ⚠ `ProjectModal.tsx`'s identically-named button is a DIFFERENT THING —
+        it POSTs `/api/provider/project-validation`, one project, one named
+        contact. Do not merge the two.
+
+        ⚠⚠⚠ THE `brief_K` INVARIANT, AND IT BINDS ANY LATER EDIT: VALIDATION
+        GATES WHICH BUYERS SEE A PROVIDER, NEVER WHETHER THE PROVIDER IS
+        VISIBLE. `isMarketplaceVisible` does not read `validation_status` and
+        must not learn to.
       */
       note: validated
         ? "Granted by Panameer on the quality of your work."
-        : "Granted by Panameer on the quality of your work. It is never sold, and there is nothing to apply for yet.",
+        : validationRequested
+          ? "You've asked for validation. Panameer reviews it — we'll let you know."
+          : "Only Panameer can grant this, and it is never sold. Some buyers choose to see validated providers only.",
       action: null,
+      pending: validationRequested,
+      /* ⚠ A BUTTON, NOT A LINK — it POSTs. The component decides whether to
+         render at all, mirroring `requestValidation`'s own state guard. */
+      control: validated || validationRequested ? null : ("request-validation" as const),
     },
   ];
   const metCount = criteria.filter((c) => c.met).length;
@@ -197,6 +273,44 @@ export default async function MyStatsPage() {
         How your profile is performing. Anything marked “—” isn&apos;t being
         counted yet — those tiles fill in once transactions go live on Panameer.
       </p>
+
+      {/*
+        ── ⚠⚠ THE TWO ACTIONS, AT THE TOP (`P2-J2-E563` WS-B) ────────────────
+
+        ⚠ Scott, 2026-09-17, on what he wants providers to do: *"ONE — complete
+        their profile. TWO — check their 'have you done this for > 3 years'
+        related to auto-service product creation."* ⚠⚠ THEY SIT ABOVE THE TILES
+        BECAUSE THAT IS THE ORDER HE NAMED THEM IN — the measurements are what
+        you read after you have done the two things.
+
+        ⚠ `Finish Your Profile` RENDERS ONLY WHEN THERE IS SOMETHING TO FINISH.
+        A permanent card telling a complete provider to complete their profile
+        is the "states its absences twice" defect `E562` removed from the
+        profile page.
+      */}
+      {gaps.length > 0 && (
+        <section className="mb-4 rounded-brand border border-line bg-white p-5">
+          <h2 className="font-display text-[16px] font-bold">
+            Finish Your Profile
+          </h2>
+          <p className="mt-2 text-[14px] leading-relaxed text-ink-2">
+            {/* ⚠⚠ IT NAMES THEM. A card that says "something is missing"
+                without saying WHAT is the invisible-profile bug itself — the
+                same sentence `E562` WS-B's strip carries, for the same reason. */}
+            Still needed: {gaps.join(" · ")}.
+          </p>
+          <Link
+            href="/join/provider?step=finish"
+            className="mt-4 inline-block rounded-full bg-magenta px-5 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
+          >
+            Finish Your Profile
+          </Link>
+        </section>
+      )}
+
+      <div className="mb-4">
+        <ConfirmExperience initial={attestations} />
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatTile label="Earnings (12 Months)">
@@ -262,14 +376,24 @@ export default async function MyStatsPage() {
           <ul className="mt-4 space-y-3">
             {criteria.map((c) => (
               <li key={c.label} className="flex items-start gap-2.5">
+                {/*
+                  ⚠⚠ THREE STATES, AND THE MIDDLE ONE IS THE POINT. A provider
+                  waiting on Panameer's review has done everything they can, so
+                  the mark must not read as a fault. ⚠ The glyph carries the
+                  state as well as the colour — colour is not a label.
+                */}
                 <span
                   aria-hidden
                   className={
                     "mt-[3px] grid h-[18px] w-[18px] flex-none place-items-center rounded-full text-[11px] font-black text-white " +
-                    (c.met ? "bg-emerald-500" : "bg-ink-2/30")
+                    (c.met
+                      ? "bg-emerald-500"
+                      : c.pending
+                        ? "bg-ink-2"
+                        : "bg-ink-2/30")
                   }
                 >
-                  {c.met ? "✓" : "!"}
+                  {c.met ? "✓" : c.pending ? "…" : "!"}
                 </span>
                 <span className="min-w-0">
                   <span className="block text-[14px] font-semibold">
@@ -288,6 +412,11 @@ export default async function MyStatsPage() {
                     >
                       {c.action.label}
                     </Link>
+                  )}
+                  {/* ⚠ THE ONE CRITERION WHOSE ACTION IS A POST, NOT A
+                      NAVIGATION (Scott's ruling, 2026-09-19). */}
+                  {c.control === "request-validation" && (
+                    <RequestValidationAction status={profile.validation_status} />
                   )}
                 </span>
               </li>
