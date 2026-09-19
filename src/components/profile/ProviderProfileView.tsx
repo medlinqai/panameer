@@ -21,7 +21,11 @@ import {
   EducationBody,
   SpecializationsBody,
   OverviewBody,
-  SkillsBody,
+  /* ⚠ `SkillsBody` REMOVED FROM THIS IMPORT (`P2-J2-E562` WS-C 8) — the
+     standalone Skills card it rendered is retired and the hero renders the
+     chips itself. ⚠ Leaving it imported is a NEW unused-var warning against a
+     0-new baseline. ⚠⚠ THE EXPORT IS UNTOUCHED: the onboarding review still
+     imports and renders `SkillsBody` in its own editable card. */
   ProjectsBody,
   WorkHistoryBody,
   CertificationsBody,
@@ -438,6 +442,11 @@ export function ProviderProfileViewPage({
           language={p.primaryLanguage}
           experience={p.experience}
           country={p.country}
+          /* ⚠⚠ WS-C item 8 — skills render IN THE HERO now, capped at eight.
+             ⚠ `p.skills` is already the SHOWN set (`E517`'s offer-side filter
+             applies in the view model), so this does not widen what a buyer
+             sees by one row. */
+          skills={p.skills}
         />
 
         {/* ⚠ NEAR THE TOP, WHERE A VIEWER DECIDES — directly under the identity
@@ -656,12 +665,31 @@ export function ProviderProfileViewPage({
 
         {/* ---- pg2: the 2-column grid ----------------------------------- */}
         <div className="mt-5 grid gap-5 lg:grid-cols-2">
-          <ProfileCard
-            title="Skills"
-            edit={edit("Skills", "/join/provider?step=catalog&return=review")}
-          >
-            <SkillsBody skills={p.skills} field={p.field} />
-          </ProfileCard>
+          {/*
+            ── ⚠⚠ THE STANDALONE SKILLS CARD IS RETIRED (`P2-J2-E562` WS-C 8) ──
+
+            ⚠ SUPERSEDED, quoted not deleted (`E164`):
+            // <ProfileCard
+            //   title="Skills"
+            //   edit={edit("Skills", "/join/provider?step=catalog&return=review")}
+            // >
+            //   <SkillsBody skills={p.skills} field={p.field} />
+            // </ProfileCard>
+
+            ⚠⚠ RETIRED ONLY BECAUSE THE HERO NOW RENDERS THEM. Removing this
+            before the hero took `skills` would have deleted skills from the
+            page — which is why the prop landed first.
+
+            ⚠⚠⚠ ONE THING WENT WITH IT AND IT IS REPORTED, NOT HIDDEN: the
+            `field` line — *"Role · Domain"* — had no home in the hero and is no
+            longer rendered on this surface. ⚠ `E515` measured that the DERIVED
+            DOMAIN IS NOT TRUSTWORTHY for a multi-ERP consultant (*"do not
+            present it as fact"*), so losing it from a buyer-facing page is
+            arguably right — ⚠⚠ BUT THAT IS SCOTT'S CALL, NOT A SIDE EFFECT TO
+            SWALLOW. Raised at the WS-C gate.
+            ⚠ `p.field` IS STILL ON THE VIEW MODEL and the review still renders
+            it in its own editable Skills card; only this card went.
+          */}
 
           {!hidden.has("Specializations") && (
           <ProfileCard
