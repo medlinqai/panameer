@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { OwnerAiPass, OwnerResumeImport } from "@/components/profile/OwnerAiPass";
+import { OwnerAiPass, OwnerResumeRerun } from "@/components/profile/OwnerAiPass";
 import { formatCents, rateBreakdown } from "@/lib/display";
 import type { ProviderProfileView } from "@/lib/provider-profile-view";
 import type { TaughtPath } from "@/lib/learn-home";
@@ -385,16 +385,26 @@ export function ProviderProfileViewPage({
           fabricated — the same defect class as a `0` badge or a fake console
           name. The panel says WHAT is missing and WHERE to add it. Nothing else.
         */}
-        {gaps.length > 0 && (
+        {/* ⚠⚠ `|| p.resumeRerun.available` (`E561` WS-A) — WITHOUT IT THE OFFER
+            VANISHES FOR THE PROVIDER THIS BRIEF IS FOR. A provider who filled
+            every section has NO gaps, and they are exactly the "registered a
+            year ago, new skills" case. ⚠ The panel's HEADING and its intro still
+            describe gaps, so both are made conditional below rather than
+            asserting gaps that do not exist. */}
+        {(gaps.length > 0 || p.resumeRerun.available) && (
           <section className="mb-6 rounded-brand border border-amber-400/40 bg-amber-50/60 p-5">
-            <h2 className="font-display text-[15px] font-bold">
-              Worth adding to your profile
-            </h2>
-            {/* ⚠ STATES THE FACT, MAKES NO PROMISE. */}
-            <p className="mt-1 text-[13.5px] leading-relaxed text-ink-2">
-              None of these affect whether buyers can find you. They give a buyer
-              more to go on.
-            </p>
+            {gaps.length > 0 && (
+              <>
+                <h2 className="font-display text-[15px] font-bold">
+                  Worth adding to your profile
+                </h2>
+                {/* ⚠ STATES THE FACT, MAKES NO PROMISE. */}
+                <p className="mt-1 text-[13.5px] leading-relaxed text-ink-2">
+                  None of these affect whether buyers can find you. They give a
+                  buyer more to go on.
+                </p>
+              </>
+            )}
             <ul className="mt-3 divide-y divide-amber-400/25">
               {gaps.map((g) => (
                 <li
@@ -415,13 +425,21 @@ export function ProviderProfileViewPage({
               ))}
             </ul>
             {/*
-              ⚠⚠ `E561` HAS NOT LANDED — THE SEAM, NOT THE BUTTON.
-              WS-D item 15 puts `Update from my résumé` here, with the gaps it
-              would fill. ⚠ The brief is explicit: *"If `E561` has not landed, do
-              not render the button."* ⚠⚠ A button that cannot do its job is the
-              dead-icon defect `E560` Stage 1 refused for Messages, in a new
-              place. It goes here, below the list, when `E561` ships.
+              ── ⚠⚠ `E561` HAS LANDED. THE SEAM IS FILLED. ───────────────────
+
+              ⚠ SUPERSEDED, quoted not deleted (`E164`):
+              // `E561` HAS NOT LANDED - THE SEAM, NOT THE BUTTON. WS-D item 15
+              // puts `Update from my résumé` here, with the gaps it would fill.
+              // A button that cannot do its job is the dead-icon defect `E560`
+              // Stage 1 refused for Messages, in a new place. It goes here,
+              // below the list, when `E561` ships.
+
+              ⚠⚠ IT IS THE SAME ACTION THAT WAS IN THE WORK HISTORY HEADER, MOVED
+              — NOT A SECOND ONE. Two buttons re-reading one résumé on one page
+              was forbidden, and the one that already existed applied without
+              showing what it would change.
             */}
+            {p.resumeRerun.available && <OwnerResumeRerun />}
           </section>
         )}
 
@@ -478,10 +496,30 @@ export function ProviderProfileViewPage({
           <ProfileCard
             title="Work History"
             edit={
-              // E132 — always reachable, not only when the section is empty.
+              /*
+                ── ⚠⚠ THE IMPORT OFFER MOVED (`P2-J14-E561` WS-A) ────────────
+
+                ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                // E132 - always reachable, not only when the section is empty.
+                //   <OwnerResumeImport />
+
+                ⚠⚠ MOVED, NOT DELETED — it is now `<OwnerResumeRerun />` in the
+                gaps panel above, where `E562` built the seam for it, with the
+                date of the last read beside it. ⚠ ONE ACTION ON THIS PAGE:
+                leaving this one here and adding another at the seam is the
+                second entry point the ruling forbade.
+
+                ⚠⚠⚠ `E132`'s REASONING IS NOT OVERTURNED AND IS THE THING TO
+                WEIGH IF ANYONE MOVES IT BACK: *"a thin or wrong work history is
+                exactly when you most want the résumé re-read, so the offer can't
+                be conditioned on there being nothing there."* ⚠ THAT PROPERTY IS
+                PRESERVED — the panel now renders whenever a re-run is available,
+                gaps or none, precisely so the offer is never conditioned away.
+                ⚠ THE WIZARD'S OWN Work History header (`join/provider:4817`) is
+                UNTOUCHED and still carries `ResumeImportAction`.
+              */
               p.isOwner ? (
                 <span className="flex flex-wrap items-center gap-4">
-                  <OwnerResumeImport />
                   {edit(
                     "Work History",
                     "/join/provider?step=tell_us&return=review",

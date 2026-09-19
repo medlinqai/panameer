@@ -22,11 +22,28 @@ import { useEffect, useState } from "react";
 export function ResumeImportAction({
   onApplied,
   label = "Import from résumé",
+  showContext = false,
 }: {
   onApplied: (body: { applied?: { experiences?: number } }) => void;
   label?: string;
+  /**
+   * ── ⚠ `P2-J14-E561` WS-A — THE CONTEXT LINE ─────────────────────────────
+   *
+   * ⚠ Off by default, so the WIZARD's Work History header (`join/provider:4817`)
+   * and every other caller render EXACTLY as before. Only the profile's gaps
+   * panel turns it on, where the offer needs to explain itself to someone who
+   * has not thought about their profile in a year.
+   * ⚠⚠ A PRESENTATIONAL PROP, LIKE `label` — it does not tell the component
+   * which surface it is on, and it must not become that.
+   */
+  showContext?: boolean;
 }) {
-  const [info, setInfo] = useState<{ available: boolean; hasDocument: boolean; documentName: string | null } | null>(null);
+  const [info, setInfo] = useState<{
+    available: boolean;
+    hasDocument: boolean;
+    documentName: string | null;
+    lastParseAt: string | null;
+  } | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<string | null>(null);
@@ -108,7 +125,7 @@ export function ResumeImportAction({
     );
   }
 
-  return (
+  const trigger = (
     <button
       type="button"
       onClick={() => setConfirming(true)}
@@ -117,4 +134,49 @@ export function ResumeImportAction({
       ↻ {label}
     </button>
   );
+
+  if (!showContext) return trigger;
+
+  /*
+    ── ⚠⚠ THE CONTEXTUAL FORM (`P2-J14-E561` WS-A) ─────────────────────────
+
+    ⚠ THE SUB-LINE DESCRIBES WHAT HAPPENS TODAY, NOT WHAT WS-B WILL MAKE TRUE.
+    ⚠⚠ The brief's wording is *"you approve every change"* — and that is NOT yet
+    true: the confirm step is a single blind yes, the provider is not shown WHAT
+    will change, and the receipt reports only work-history entries while the
+    import also writes skills, specializations, education, certifications and
+    languages. ⚠⚠⚠ SHIPPING THAT SENTENCE NOW WOULD BE A PROMISE THE CODE DOES
+    NOT KEEP — the same defect class as a dead icon or a fabricated count.
+    ⚠ IT BECOMES THE BRIEF'S SENTENCE IN WS-B, when the diff makes it true.
+
+    ⚠ `E433` — the date is a FIGURE, so ink. The action is the only interactive
+    thing here and it carries the magenta.
+  */
+  return (
+    <div className="mt-4 border-t border-amber-400/25 pt-3">
+      <p className="text-[13.5px] font-semibold text-ink">
+        Read your résumé again
+      </p>
+      <p className="mt-0.5 text-[13px] leading-relaxed text-ink-2">
+        We&apos;ll add what&apos;s missing and leave what you have.
+        {info.lastParseAt && (
+          <> Last read {formatWhen(info.lastParseAt)}.</>
+        )}
+      </p>
+      <div className="mt-2">{trigger}</div>
+    </div>
+  );
+}
+
+/** ⚠ A date, not a countdown — "8 months ago" is what makes the offer land. */
+function formatWhen(iso: string): string {
+  const then = new Date(iso);
+  if (Number.isNaN(then.getTime())) return "";
+  const days = Math.floor((Date.now() - then.getTime()) / 86_400_000);
+  if (days <= 0) return "today";
+  if (days === 1) return "yesterday";
+  if (days < 30) return `${days} days ago`;
+  const months = Math.round(days / 30);
+  if (months < 18) return `${months} month${months === 1 ? "" : "s"} ago`;
+  return `${Math.round(months / 12)} years ago`;
 }
