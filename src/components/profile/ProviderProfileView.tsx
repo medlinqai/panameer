@@ -164,6 +164,37 @@ export function ProviderProfileViewPage({
     `/settings/*` links are left alone: those are real destinations, not a
     detour, and Certifications opens its own modal.
   */
+  /*
+    ── ⚠⚠ WS-A (`P2-J2-E562`) — THE EMPTY CARDS COLLAPSE INTO ONE PANEL ───────
+
+    ⚠ MEASURED: six sections each rendered a FULL-WEIGHT CARD saying "No X yet",
+    while the banner above listed the same gaps. ⚠⚠ THE PAGE STATED ITS ABSENCES
+    TWICE AND ITS STRENGTHS ONCE.
+
+    ⚠⚠⚠ OWNER-ONLY, AND THAT IS THE WHOLE SAFETY ARGUMENT. `gaps` is empty when
+    `p.isOwner` is false, so `hidden` is empty, so EVERY card renders exactly as
+    it did before for a buyer on `/providers/[id]`. There is no second code path
+    for the buyer — the buyer takes the SAME path with an empty set.
+
+    ⚠ A SECTION WITH CONTENT STILL RENDERS AS ITS OWN CARD. Only the empty ones
+    fold, and only for the person who can act on them.
+
+    ⚠ `Work History`, `Skills` and `Location` ARE DELIBERATELY NOT IN THIS SET.
+    Work History carries the résumé importer and is the page's spine; Skills is
+    retired into the hero by WS-C, not folded here; Location is never truly
+    empty. ⚠⚠ Adding one later means adding it HERE, not forking a second list.
+  */
+  const gapSections = [
+    { key: "Solo Projects", empty: soloProjects.length === 0, href: "/join/provider?step=tell_us&return=review" },
+    { key: "Service Products", empty: p.packages.length === 0, href: "/my-services" },
+    { key: "Specializations", empty: p.specializations.length === 0, href: "/join/provider?step=specializations&return=review" },
+    { key: "Education", empty: p.education.length === 0, href: "/join/provider?step=education&return=review" },
+    { key: "Certifications", empty: p.certifications.length === 0, href: "/join/provider?step=finish" },
+    { key: "Recommendations", empty: testimonials.length === 0, href: "/recommendations" },
+  ] as const;
+  const gaps = p.isOwner ? gapSections.filter((g) => g.empty) : [];
+  const hidden = new Set<string>(gaps.map((g) => g.key));
+
   const edit = (title: string, href: string, isEmpty = false) =>
     p.isOwner ? (
       <EditLink
@@ -271,6 +302,69 @@ export function ProviderProfileViewPage({
               </Link>
             </div>
           </div>
+        )}
+
+        {/*
+          ── ⚠⚠ WS-A (`P2-J2-E562`) — ONE PANEL, NOT SIX EMPTY CARDS ──────────
+
+          ⚠⚠⚠ RENDERS ONLY FOR THE OWNER. `gaps` is empty when `p.isOwner` is
+          false, so this block does not exist on `/providers/[id]`. A buyer never
+          sees a list of what this provider lacks — ⚠ **the gaps panel tells the
+          owner privately; a buyer reads the same page.**
+
+          ⚠⚠ AMBER, NOT MAGENTA, AND THE DISTINCTION IS THE RULE NOT THE PALETTE.
+          `profile_tiers.md` §2d reserves magenta for what BLOCKS a buyer seeing
+          you. ⚠ NOTHING HERE BLOCKS — every one of these is already met or the
+          profile would not be visible. These only STRENGTHEN. Colouring them
+          magenta would say "you are broken" to a provider who is live.
+          ⚠ `E433` is not in tension with that: magenta marks INTERACTIVE things,
+          and the `Add` links below ARE interactive — so they carry it, while the
+          panel's frame and its prose do not.
+
+          ⚠⚠ NO INVENTED STATISTICS (§2e). No multiplier, no "3× more likely",
+          no "profiles with certifications get hired sooner". ⚠ There are no
+          conversion numbers in this product yet, so any such sentence would be
+          fabricated — the same defect class as a `0` badge or a fake console
+          name. The panel says WHAT is missing and WHERE to add it. Nothing else.
+        */}
+        {gaps.length > 0 && (
+          <section className="mb-6 rounded-brand border border-amber-400/40 bg-amber-50/60 p-5">
+            <h2 className="font-display text-[15px] font-bold">
+              Worth adding to your profile
+            </h2>
+            {/* ⚠ STATES THE FACT, MAKES NO PROMISE. */}
+            <p className="mt-1 text-[13.5px] leading-relaxed text-ink-2">
+              None of these affect whether buyers can find you. They give a buyer
+              more to go on.
+            </p>
+            <ul className="mt-3 divide-y divide-amber-400/25">
+              {gaps.map((g) => (
+                <li
+                  key={g.key}
+                  className="flex items-center justify-between gap-4 py-2"
+                >
+                  <span className="text-[14px] font-semibold text-ink">
+                    {g.key}
+                  </span>
+                  {/* ⚠ `E433` — the ACTION is interactive, so it is magenta. */}
+                  <Link
+                    href={g.href}
+                    className="shrink-0 text-[13.5px] font-bold text-magenta hover:underline"
+                  >
+                    Add
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            {/*
+              ⚠⚠ `E561` HAS NOT LANDED — THE SEAM, NOT THE BUTTON.
+              WS-D item 15 puts `Update from my résumé` here, with the gaps it
+              would fill. ⚠ The brief is explicit: *"If `E561` has not landed, do
+              not render the button."* ⚠⚠ A button that cannot do its job is the
+              dead-icon defect `E560` Stage 1 refused for Messages, in a new
+              place. It goes here, below the list, when `E561` ships.
+            */}
+          </section>
         )}
 
         {/* ---- pg1: full-width hero — photo · name/tagline/bio · meta ---- */}
@@ -395,6 +489,7 @@ export function ProviderProfileViewPage({
         </div>
 
         {/* ---- pg2: Solo Projects, full width (E074) -------------------- */}
+        {!hidden.has("Solo Projects") && (
         <div className="mt-5">
           <ProfileCard
             title="Solo Projects"
@@ -411,6 +506,7 @@ export function ProviderProfileViewPage({
             />
           </ProfileCard>
         </div>
+        )}
 
         {/* Packages (brief_V / E045) — NOT in the pg1/pg2 mockup, kept
             full-width here so the shipped sellable catalog isn't dropped by a
@@ -432,7 +528,9 @@ export function ProviderProfileViewPage({
                 `Packages` here on E045's authority. `Packages` stays user-facing in ~18
                 other places Scott did NOT name — listed in the report, untouched.
               */}
-            {(p.packages.length > 0 || p.isOwner) && (
+            {/* ⚠ WS-A: `!hidden` folds it for an OWNER with none. The original
+                `|| p.isOwner` is kept so a buyer's behaviour is byte-identical. */}
+            {(p.packages.length > 0 || p.isOwner) && !hidden.has("Service Products") && (
               <ProfileCard
                 title="Service Products"
                 edit={edit("Service Products", "/my-services")}
@@ -524,20 +622,25 @@ export function ProviderProfileViewPage({
             <SkillsBody skills={p.skills} field={p.field} />
           </ProfileCard>
 
+          {!hidden.has("Specializations") && (
           <ProfileCard
             title="Specializations"
             edit={edit("Specializations", "/join/provider?step=specializations&return=review")}
           >
             <SpecializationsBody specializations={p.specializations} />
           </ProfileCard>
+          )}
 
+          {!hidden.has("Education") && (
           <ProfileCard
             title="Education"
             edit={edit("Education", "/join/provider?step=education&return=review")}
           >
             <EducationBody education={p.education} />
           </ProfileCard>
+          )}
 
+          {!hidden.has("Certifications") && (
           <ProfileCard
             title="Certifications"
             // "certifications" is not a wizard STEP, so this resolved to the
@@ -554,6 +657,7 @@ export function ProviderProfileViewPage({
               }
             />
           </ProfileCard>
+          )}
 
           <ProfileCard title="Location">
             <LocationBody location={p.location} country={p.country} />
@@ -590,6 +694,7 @@ export function ProviderProfileViewPage({
             ⚠ NO PROVENANCE BADGE, AND THAT IS A FINDING RATHER THAN AN OMISSION
             — see the note above `publicTestimonials()` in `lib/recommendations.ts`.
           */}
+          {!hidden.has("Recommendations") && (
           <ProfileCard title="Recommendations">
             {testimonials.length === 0 ? (
               <Empty>
@@ -629,6 +734,7 @@ export function ProviderProfileViewPage({
               </ul>
             )}
           </ProfileCard>
+          )}
         </div>
 
         {/*
