@@ -313,8 +313,21 @@ export function ProviderProfileViewPage({
                       batching workstreams is what the brief forbids. ⚠ The
                       FIGURE below is ink as of WS-B, per `E433`.
                     */}
+                    {/*
+                      ⚠⚠ `P2-J2-E562` WS-D 14 — THE BAR RENDERS IN INK.
+                      ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                      // className="h-full bg-magenta transition-[width] duration-500"
+                      ⚠⚠ `E433` — MAGENTA MARKS INTERACTIVE THINGS. A progress
+                      bar is a FIGURE drawn as a rectangle; nobody clicks it.
+                      The same rule already put the tile counts and this meter's
+                      own percentage in ink, so the bar was the last piece of it
+                      still saying "click me".
+                      ⚠ THE `Edit Profile` BUTTON BESIDE IT STAYS MAGENTA — it is
+                      the one interactive thing in this strip, which is exactly
+                      what the rule reserves the colour for.
+                    */}
                     <div
-                      className="h-full bg-magenta transition-[width] duration-500"
+                      className="h-full bg-ink transition-[width] duration-500"
                       style={{ width: `${Math.min(100, p.completeness)}%` }}
                     />
                   </div>
@@ -538,6 +551,36 @@ export function ProviderProfileViewPage({
           </ProfileCard>
         </div>
 
+        {/*
+          ── ⚠⚠ `Courses You Teach` MOVES UP (`P2-J2-E562` WS-D 13) ──────────
+
+          ⚠ SUPERSEDED, quoted not deleted (`E164`) — it sat at the BOTTOM of the
+          page, below every section card:
+          // E137 - the courses half of the profile<->courses loop, on the
+          // provider's own profile too so they can see what a buyer sees.
+          // Renders nothing when they teach nothing.
+
+          ⚠⚠ 14 PATHS AND 128 LESSONS IS THE STRONGEST EVIDENCE ON THE PAGE AND
+          IT SAT UNDER SIX EMPTY CARDS. That is the whole defect `E562` exists to
+          fix, in one block: the page led with what was missing and buried what
+          was there.
+          ⚠ `E137`'s reasoning is UNCHANGED and still right — it renders on the
+          owner's own profile too, so they see what a buyer sees, and it renders
+          NOTHING when they teach nothing. Only its POSITION moved.
+          ⚠ EVERY COURSE TITLE IS ALREADY A LINK (`TaughtPaths.tsx:55` wraps the
+          title in `<Link href={`/learn/${slug}`}>`), so item 13's second half
+          needed no change — CONFIRMED, not assumed.
+        */}
+        {taughtPaths.length > 0 && (
+          <div className="mt-5">
+            <TaughtPaths
+              paths={taughtPaths}
+              name={`${p.person.firstName ?? ""} ${p.person.lastName ?? ""}`.trim()}
+              isOwner={p.isOwner}
+            />
+          </div>
+        )}
+
         {/* ---- pg2: Solo Projects, full width (E074) -------------------- */}
         {!hidden.has("Solo Projects") && (
         <div className="mt-5">
@@ -652,9 +695,20 @@ export function ProviderProfileViewPage({
                   </div>
                 ) : (
                   <Empty>
-                    No packages published yet. A package is a fixed scope, a
-                    timeline and a price — the simplest thing for a buyer to say
-                    yes to.
+                    {/* ⚠⚠ `P2-J2-E562` WS-D 11 — THE WORD "PACKAGE" DOES NOT
+                        REACH A SCREEN. ⚠ SUPERSEDED, quoted not deleted
+                        (`E164`): *"No packages published yet. A package is a
+                        fixed scope, a timeline and a price — the simplest thing
+                        for a buyer to say yes to."*
+                        ⚠ THE MODEL IS STILL `Package` AND THAT IS FINE — the
+                        COPY may not say so (`E301`). ⚠⚠ THIS BRANCH IS CURRENTLY
+                        UNREACHABLE: WS-A folds the empty card for an owner and a
+                        buyer never sees it empty. It is corrected anyway, because
+                        a string nobody can reach today is a string somebody
+                        resurfaces tomorrow. */}
+                    No service products published yet. A service product is a
+                    fixed scope, a fixed price and a fixed timeline — the
+                    simplest thing for a buyer to say yes to.
                   </Empty>
                 )}
               </ProfileCard>
@@ -680,13 +734,19 @@ export function ProviderProfileViewPage({
             before the hero took `skills` would have deleted skills from the
             page — which is why the prop landed first.
 
-            ⚠⚠⚠ ONE THING WENT WITH IT AND IT IS REPORTED, NOT HIDDEN: the
-            `field` line — *"Role · Domain"* — had no home in the hero and is no
-            longer rendered on this surface. ⚠ `E515` measured that the DERIVED
-            DOMAIN IS NOT TRUSTWORTHY for a multi-ERP consultant (*"do not
-            present it as fact"*), so losing it from a buyer-facing page is
-            arguably right — ⚠⚠ BUT THAT IS SCOTT'S CALL, NOT A SIDE EFFECT TO
-            SWALLOW. Raised at the WS-C gate.
+            ⚠⚠⚠ THE `field` LINE — *"Role · Domain"* — IS DELIBERATELY GONE
+            FROM THIS SURFACE. RULED BY SCOTT, 2026-09-19. ⚠ IT IS NOT A SIDE
+            EFFECT OF RETIRING THE CARD, AND IT MUST NOT BE RESTORED ON THAT
+            READING.
+            ⚠⚠ `E515` MEASURED THAT THE DERIVED DOMAIN IS NOT TRUSTWORTHY for a
+            multi-ERP consultant — the résumé does not state which product line,
+            so no matcher can resolve it — and ruled *"do not present it as
+            fact, do not gate on it."* ⚠⚠⚠ A BUYER-FACING PAGE IS EXACTLY WHERE
+            PRESENTING IT AS FACT DOES HARM.
+            ⚠ THE OWNER LOSES NOTHING: `p.field` is still on the view model, and
+            the onboarding review still renders it in its own editable Skills
+            card, where it is the provider's own working value rather than a
+            claim made to a buyer.
             ⚠ `p.field` IS STILL ON THE VIEW MODEL and the review still renders
             it in its own editable Skills card; only this card went.
           */}
@@ -774,7 +834,15 @@ export function ProviderProfileViewPage({
                       href="/recommendations"
                       className="font-semibold text-magenta hover:underline"
                     >
-                      Ask someone you&apos;ve worked with
+                      {/* ⚠ `P2-J2-E562` WS-D 12 — Title Case, named in the
+                          brief. ⚠⚠ THIS IS A TENSION WITH `E568` AND IT IS
+                          RECORDED, NOT HIDDEN: `E568` ruled that INLINE LINK
+                          TEXT INSIDE A PROSE SENTENCE stays sentence case, and
+                          this link sits inside one. ⚠ The brief names this
+                          string explicitly and is the newer instruction (rule
+                          13), so it wins here. ⚠ SUPERSEDED (`E164`):
+                          *"Ask someone you've worked with"*. */}
+                      Ask Someone You&apos;ve Worked With
                     </Link>{" "}
                     — it takes a minute and buyers read them.
                   </>
@@ -806,20 +874,7 @@ export function ProviderProfileViewPage({
           )}
         </div>
 
-        {/*
-          E137 — the courses half of the profile↔courses loop, on the provider's
-          own profile too so they can see what a buyer sees. Renders nothing
-          when they teach nothing.
-        */}
-        {taughtPaths.length > 0 && (
-          <div className="mt-6">
-            <TaughtPaths
-              paths={taughtPaths}
-              name={`${p.person.firstName ?? ""} ${p.person.lastName ?? ""}`.trim()}
-              isOwner={p.isOwner}
-            />
-          </div>
-        )}
+
 
         {/*
           Community involvement, below the courses strip and above the footer.
