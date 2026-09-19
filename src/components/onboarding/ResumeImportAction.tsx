@@ -74,6 +74,10 @@ export function ResumeImportAction({
   const [diff, setDiff] = useState<RerunDiff | null>(null);
   const [ticked, setTicked] = useState<Set<string>>(new Set());
   const [tickedSpecs, setTickedSpecs] = useState<Set<string>>(new Set());
+  /* ⚠⚠ THE OTHER SEVEN, AS ONE TICK, PRE-TICKED. Pre-ticked because today's
+     button already writes them: leaving it off would make the safer flow
+     silently do less, which is the regression this part exists to undo. */
+  const [tickedRest, setTickedRest] = useState(true);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -112,6 +116,7 @@ export function ResumeImportAction({
          mentioning a skill is not evidence the provider lost it (`E549`). */
       setTicked(new Set(d.skills.added.map((s) => s.id)));
       setTickedSpecs(new Set(d.specializations.added.map((s) => s.id)));
+      setTickedRest(true);
       setStage("review");
     } catch {
       setError("That didn't work — nothing was changed.");
@@ -128,6 +133,7 @@ export function ResumeImportAction({
         body: JSON.stringify({
           skillIds: [...ticked],
           specializationIds: [...tickedSpecs],
+          rest: tickedRest,
         }),
       });
       const body = await r.json().catch(() => ({}));
@@ -139,13 +145,31 @@ export function ResumeImportAction({
       /* ⚠ THE RECEIPT IS WHAT WAS WRITTEN, from the server — never the local
          tick count, which would report a wish rather than a fact. */
       const a = body.added ?? { skills: 0, specializations: 0 };
+      /* ⚠⚠ THE RECEIPT NAMES ALL NINE, not one. `applied` carries the writer's
+         own counts and the contract now admits them — before `E561` WS-B this
+         object was typed down to `experiences` and eight fields were discarded
+         at the boundary while being written to the database. */
+      const ap = (body.applied ?? {}) as Record<string, number | boolean>;
+      const n = (k: string) => (typeof ap[k] === "number" ? (ap[k] as number) : 0);
       const parts: string[] = [];
       if (a.skills > 0) parts.push(`${a.skills} skill${a.skills === 1 ? "" : "s"}`);
       if (a.specializations > 0)
         parts.push(
           `${a.specializations} specialization${a.specializations === 1 ? "" : "s"}`
         );
-      setResult(parts.length > 0 ? `Added ${parts.join(" and ")}.` : "Nothing added.");
+      const extraSkills = n("skillsMatched");
+      if (extraSkills > 0)
+        parts.push(`${extraSkills} from your certificates`);
+      if (n("experiences") > 0) parts.push(`${n("experiences")} work entries`);
+      const projects = n("projectsAttached") + n("projectsUnattached");
+      if (projects > 0) parts.push(`${projects} projects`);
+      if (n("education") > 0) parts.push(`${n("education")} education entries`);
+      if (n("certifications") > 0)
+        parts.push(`${n("certifications")} certifications`);
+      if (n("languages") > 0) parts.push(`${n("languages")} languages`);
+      if (ap.headline === true) parts.push("a title");
+      if (ap.overview === true) parts.push("an overview");
+      setResult(parts.length > 0 ? `Added ${parts.join(" · ")}.` : "Nothing added.");
       setStage("idle");
       onApplied(body);
     } catch {
@@ -272,10 +296,27 @@ export function ResumeImportAction({
           d.other.education > 0 ||
           d.other.certifications > 0) && (
           <div className="mt-3 border-t border-line pt-3">
-            <p className="text-[12px] font-bold uppercase tracking-wide text-ink-2">
-              Also in the résumé — not applied here
-            </p>
-            <p className="mt-1 text-[12.5px] leading-relaxed text-ink-2">
+            {/*
+              ⚠⚠ IT IS APPLIED NOW, AND IT IS ONE TICK. ⚠ SUPERSEDED, quoted not
+              deleted (`E164`): *"Also in the résumé — not applied here"* and
+              *"This update covers skills and specializations only."*
+              ⚠⚠⚠ GROUPED BECAUSE THE DATA IS COUPLED, not to save a checkbox:
+              projects attach to employers created in the same write, and a
+              certificate's title feeds the skill match. Splitting the tick would
+              mean editing the writer, which the brief forbids.
+            */}
+            <label className="flex items-start gap-2">
+              <input
+                type="checkbox"
+                checked={tickedRest}
+                onChange={() => setTickedRest((v) => !v)}
+                className="mt-0.5"
+              />
+              <span>
+                <span className="text-[12px] font-bold uppercase tracking-wide text-ink-2">
+                  Also add the rest
+                </span>
+                <span className="mt-1 block text-[12.5px] leading-relaxed text-ink-2">
               {[
                 d.other.headlineWillFill && "a title (yours is empty)",
                 d.other.overviewWillFill && "an overview (yours is empty)",
@@ -286,8 +327,10 @@ export function ResumeImportAction({
               ]
                 .filter(Boolean)
                 .join(" · ")}
-              . This update covers skills and specializations only.
-            </p>
+                  . Untick to add only the skills above.
+                </span>
+              </span>
+            </label>
           </div>
         )}
 
