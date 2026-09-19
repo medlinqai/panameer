@@ -1149,10 +1149,38 @@ for (const href of [
      Order is the SOW, so there is no Contract record for a route to name. */
   /* ⚠ `/finances` -> `/payments` (`P1-ALL-E533`). */
   "/orders", "/pay", "/payments", "/community", "/community/forums",
-  "/community/teams", "/community/mentors", "/messages",
+  "/community/teams", "/community/mentors",
+  /* ⚠⚠ `/messages` LEFT THIS LIST (`P2-ALL-E560` STAGE 1, 2026-09-18).
+     ⚠ SUPERSEDED, quoted not deleted (`E164`): `"/messages",` was the last entry.
+     ⚠⚠ THE ROUTE DID NOT GO ANYWHERE — Messages became its own surface, reached
+     from the BAND'S UTILITY CLUSTER instead of from a nav list, so `nav.ts` is
+     simply no longer where its survival is guaranteed. ⚠ THE ASSERTION IS MOVED,
+     NOT DROPPED — see the pair directly below, which checks the two files that
+     DO guarantee it. ⚠ Deleting it outright would have lost the guard that this
+     loop exists to provide. */
 ]) {
   check(`E378/5 — route ${href} still exists in the nav`, navLib.includes(`"${href}"`));
 }
+/*
+  ── ⚠⚠ `/messages` SURVIVES WHERE IT ACTUALLY LIVES (`P2-ALL-E560` STAGE 1) ───
+
+  ⚠ A route reached from the utility cluster is guaranteed by its ACCESS RULE and
+  its PROXY MATCHER, not by a nav array. ⚠⚠ ASSERTED AS A PAIR AND IN BOTH
+  DIRECTIONS, because the two files disagreeing is the failure mode the public
+  allowlist spec already exists to catch.
+*/
+check(
+  "E560/1 — /messages is still access-gated",
+  /\{ prefix: "\/messages", requires: "authenticated" \}/.test(
+    readFileSync(join("src", "lib", "route-access.ts"), "utf8")
+  ),
+  "the cluster icon points at it, so losing the gate would expose it"
+);
+check(
+  "E560/1 — /messages is still in the proxy matcher",
+  /"\/messages\/:path\*"/.test(readFileSync(join("src", "proxy.ts"), "utf8")),
+  "route-access and proxy must agree in both directions"
+);
 /* ⚠⚠ AND THE OLD NAME IS NOW BANNED FROM THE MEMBER-FACING NAV, so nobody
    re-adds it from a stale link or a URL segment the way `9ae05d7` did.
    ⚠ `/admin/contracts` IS DELIBERATELY EXEMPT — see the `E380` report: it was

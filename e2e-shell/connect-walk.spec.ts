@@ -101,23 +101,39 @@ test("E567/2 — the CONNECT tab row renders with Home first", async () => {
   await expect(tabs.filter({ hasText: "Home" }).first()).toBeVisible();
 });
 
-test("E567/2 — Messages is still LAST in the row (it leaves under E560)", async () => {
+/*
+  ── ⚠⚠ MESSAGES HAS LEFT THE ROW (`P2-ALL-E560` STAGE 1, 2026-09-18) ────────
+
+  ⚠ THIS ASSERTION NAMED ITS OWN EXPIRY — *"it leaves under `E560`"* — AND THIS
+  IS `E560`. ⚠⚠ IT IS INVERTED, NOT DELETED: the rule was never *"Messages must
+  be last"*, it was *"the row must never leave messages unreachable"*. That rule
+  still holds; the door moved to the band's utility cluster.
+
+  ⚠ SUPERSEDED, quoted not deleted (`E164`), as LINE comments per rule 12 because
+  the quoted body carries its own block comment:
+  // test("E567/2 - Messages is still LAST in the row (it leaves under E560)", async () => {
+  //   await open(ROUTES.home);
+  //   ASSERTED ON THE TAB HREFS IN DOM ORDER, not by walking up from one link to
+  //   a guessed container. THE FIRST VERSION DID THE LATTER
+  //   (closest("div")?.parentElement) AND FAILED - a layout change it was not
+  //   testing would have broken it, which is a test that reports the wrong thing.
+  //   const TAB_HREFS = ["/community", "/community/colleagues", "/community/forums",
+  //     "/community/mentors", "/community/teams", "/messages"];
+  //   ... collects those hrefs in DOM order ...
+  //   expect(order).toContain("/messages");
+  //   expect(order[order.length - 1]).toBe("/messages");
+  // });
+*/
+test("E560/2 — Messages is GONE from the CONNECT row, and still reachable", async () => {
   await open(ROUTES.home);
-  /*
-    ⚠ ASSERTED ON THE TAB HREFS IN DOM ORDER, not by walking up from one link to
-    a guessed container. ⚠⚠ THE FIRST VERSION DID THE LATTER
-    (`closest("div")?.parentElement`) AND FAILED — a layout change it was not
-    testing would have broken it, which is a test that reports the wrong thing.
-    ⚠ `E560` REMOVES MESSAGES FROM THIS ROW; until it does, the brief requires it
-    stay reachable and LAST.
-  */
+
+  /* ⚠ The five that remain, in order — the row did not lose anything else. */
   const TAB_HREFS = [
     "/community",
     "/community/colleagues",
     "/community/forums",
     "/community/mentors",
     "/community/teams",
-    "/messages",
   ];
   const order = await page.evaluate((hrefs) => {
     const seen: string[] = [];
@@ -127,12 +143,79 @@ test("E567/2 — Messages is still LAST in the row (it leaves under E560)", asyn
     }
     return seen;
   }, TAB_HREFS);
+  expect(order, `tab hrefs found: ${order.join(" | ")}`).toEqual(TAB_HREFS);
 
-  expect(order, `tab hrefs found: ${order.join(" | ")}`).toContain("/messages");
+  /*
+    ⚠⚠ AND THE DOOR DID NOT CLOSE — THIS HALF IS THE POINT.
+    ⚠ Removing a tab without proving the replacement exists is exactly how
+    `E493`'s invite and `E519`'s résumé re-run got buried. The cluster link is
+    asserted BY ITS aria-label inside the band, not by counting links on the page.
+  */
+  const clusterLink = page.locator('.pm-band-right a[aria-label="Messages"]');
+  await expect(clusterLink).toHaveCount(1);
+  await expect(clusterLink).toHaveAttribute("href", "/messages");
+
+  /* ⚠ NO DIGIT ON IT, EVER — `Message` holds zero rows so no dot ships yet, and
+     when one does it is a DOT, never a number (Scott, 2026-09-18). */
+  await expect(clusterLink).not.toHaveText(/\d/);
+});
+
+/*
+  ── ⚠⚠⚠ 2b · THE BAND NEVER NAMES THE WRONG CONSOLE (`P2-ALL-E560`) ─────────
+
+  ⚠⚠ THIS GUARDS A CLASS, NOT A STRING. The class is: A CLIENT COMPONENT WHOSE
+  FALLBACK SWALLOWS "NOT LOADED YET" INTO A REAL-LOOKING VALUE. `AppBand` reads
+  `useMe()`, which is null on first paint; `railPersona()` correctly returns
+  `null` there, and the label ternary's FINAL ELSE turned that null into
+  `"Buyer Console"` — so a PROVIDER was told they were a buyer on every
+  logged-in page load. ⚠ The same shape would produce a wrong plan name, a wrong
+  company, a wrong role badge, or a `0` where no number is known.
+  ⚠⚠ THE RULE IT ENCODES IS THE HOUSE'S OWN, from `casing_spec_LOCKED.md` on the
+  notification bell — *"a '0' or fake number is worse than none"*. A WRONG
+  CONSOLE NAME IS WORSE THAN NO CONSOLE NAME. ⚠ An unresolved value renders
+  NOTHING; it never borrows a real one.
+
+  ⚠⚠⚠ IT ASSERTS THE TRANSIENT, NOT THE END STATE, AND THAT IS THE WHOLE POINT:
+  A SINGLE POST-LOAD READ NEVER SEES THIS. By the time the menu has populated the
+  label is already correct, so the bug is invisible to every other assertion in
+  this suite. ⚠ This samples from FIRST PAINT (`waitUntil: "commit"`) until the
+  menu populates, and fails if the wrong word was EVER on screen.
+
+  ⚠ NEGATIVE-TESTED 2026-09-18: with the old ternary reinstated this sampler
+  observed `["Buyer Console", "Provider Console"]` and FAILED; with the fix it
+  observes `["", "Provider Console"]`. Reverted.
+  ⚠ `test3@panameer.com` is PROVIDER-ONLY (`_auth.ts`), so `Buyer Console` is
+  unambiguously wrong for this viewer — that is what makes the assertion sound.
+*/
+test("E560/3 — a provider is NEVER shown the wrong console, even for one frame", async () => {
+  const seen = new Set<string>();
+  await page.goto(ROUTES.home, { waitUntil: "commit" });
+
+  /* ⚠ BOUNDED SAMPLING — 120 × 25ms ceiling so a hang fails the test rather
+     than spinning. The loop exits as soon as the menu has populated. */
+  for (let i = 0; i < 120; i++) {
+    const label = await page
+      .locator(".pm-band-brand span")
+      .textContent()
+      .catch(() => null);
+    if (label !== null) seen.add(label.trim());
+    const ready = await page
+      .evaluate(() => document.querySelectorAll(".pm-band-item").length >= 5)
+      .catch(() => false);
+    if (ready) break;
+    await page.waitForTimeout(25);
+  }
+  const settled = await page.locator(".pm-band-brand span").textContent();
+  if (settled) seen.add(settled.trim());
+
+  const observed = [...seen];
   expect(
-    order[order.length - 1],
-    `Messages should be the LAST tab; order was: ${order.join(" | ")}`
-  ).toBe("/messages");
+    observed,
+    `the band showed a console name this viewer is not in. Observed across the load: ${observed.join(" | ")}`
+  ).not.toContain("Buyer Console");
+  /* ⚠ AND IT MUST STILL ARRIVE AT THE RIGHT ONE — otherwise "render nothing"
+     would pass by rendering nothing forever. */
+  expect(observed, `observed: ${observed.join(" | ")}`).toContain("Provider Console");
 });
 
 /* ── 3 · COLLEAGUES — NO MEMBER-WIDE SEARCH ─────────────────────────────── */

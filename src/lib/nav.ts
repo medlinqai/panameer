@@ -489,12 +489,31 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
     { label: "Forums", href: "/community/forums", state: "live" },
     { label: "Mentoring", href: "/community/mentors", state: "early" },
     { label: "Teams", href: "/community/teams", state: "live" },
-    /* ⚠⚠ MESSAGES IS LAST, AND ONLY UNTIL `E560` (`P2-J3-E557` WS-A). It leaves
-       this row entirely when Messages becomes its own application. ⚠ The brief
-       is explicit that it stays until then: *"Do not leave the row in a state
-       where messages are unreachable."* ⚠ It was step 1; it is now last and
-       unnumbered, which is the honest interim. */
-    { label: "Messages", href: "/messages" },
+    /*
+      ── ⚠⚠ MESSAGES HAS LEFT THIS ROW (`P2-ALL-E560` STAGE 1, 2026-09-18) ─────
+
+      ⚠ SUPERSEDED, quoted not deleted (`E164`) — the interim `E557` left here,
+      and the promise it made:
+      // MESSAGES IS LAST, AND ONLY UNTIL `E560` (`P2-J3-E557` WS-A). It leaves
+      // this row entirely when Messages becomes its own application. The brief
+      // is explicit that it stays until then: "Do not leave the row in a state
+      // where messages are unreachable." It was step 1; it is now last and
+      // unnumbered, which is the honest interim.
+      // { label: "Messages", href: "/messages" },
+
+      ⚠⚠ THE PROMISE IS KEPT, NOT BROKEN: messages are still reachable, from the
+      BAND'S UTILITY CLUSTER beside the notification bell. ⚠ SCOTT, 2026-09-18:
+      *"make it like linkedin. in notification bell...icon...and it opens on the
+      right."*
+      ⚠ THE RULE THIS EXPRESSES: the band holds places you GO; the cluster holds
+      things you CHECK.
+
+      ⚠⚠ A STRAIGHT REMOVAL — THERE WAS NO `n:` TO UNPICK. `E557` already ruled
+      that `/community`'s set carries NO `n:` values at all, so nothing renumbers
+      and no other tab moves.
+      ⚠ `/messages` THE ROUTE IS UNTOUCHED and still resolves; `route-access.ts`
+      and `proxy.ts` are unchanged and still paired.
+    */
   ],
   /*
     ── ⚠⚠ THE `n` VALUES ARE GONE, NOT JUST UNRENDERED (`P2-J3-E557` WS-A) ────

@@ -74,12 +74,42 @@ export function AppBand() {
 
   /* ⚠⚠ UNCHANGED DERIVATION (`E491`). The caption is gone; the value is not. */
   const persona = railPersona(me, isAdmin);
+  /*
+    ── ⚠⚠⚠ NOTHING RENDERS HERE UNTIL `me` RESOLVES (`P2-ALL-E560`, 2026-09-18)
+
+    ⚠⚠ A PROVIDER WAS SEEING `Buyer Console` ON EVERY LOGGED-IN PAGE LOAD.
+    `AppBand` is a client component: before `useMe()` resolves, `me` is null,
+    `railPersona` correctly returns `null` — and the old ternary's FINAL ELSE
+    swallowed that null into `"Buyer Console"`. ⚠ So the band told a seller they
+    were a buyer, briefly, constantly, everywhere.
+
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    // const consoleLabel =
+    //   persona === "PANAMEER" ? "Platform Console"
+    //     : persona === "SELLER" ? "Provider Console"
+    //       : "Buyer Console";
+
+    ⚠⚠ THE HOUSE ALREADY HELD THE PRINCIPLE — `casing_spec_LOCKED.md` on the
+    bell: *"NO count/badge until the notifications feed backend exists — a '0' or
+    fake number is worse than none."* ⚠ **A WRONG CONSOLE NAME IS WORSE THAN NO
+    CONSOLE NAME.**
+
+    ⚠ `null` IS NOW ITS OWN BRANCH rather than a fall-through. `BUYER` still maps
+    to `Buyer Console`; what changed is that UNRESOLVED no longer borrows it.
+    ⚠⚠ `railPersona()`'s BUYER FALLBACK IS NOT TOUCHED — it is deliberate and
+    documented, and `E491` is why nothing here may change what that function
+    returns. ⚠ ONLY WHAT THE BAND RENDERS WHILE `me` IS NULL CHANGED.
+    ⚠ AN ADMIN NEVER FLASHES: `railPersona` short-circuits on the `isSystemAdmin`
+    SESSION bit, which resolves without `/api/me`.
+  */
   const consoleLabel =
     persona === "PANAMEER"
       ? "Platform Console"
       : persona === "SELLER"
         ? "Provider Console"
-        : "Buyer Console";
+        : persona === "BUYER"
+          ? "Buyer Console"
+          : null;
 
   /*
     ⚠ THE CLOCK IS AN EXTERNAL STORE, carried over from `AppHeader` unchanged.
@@ -137,8 +167,19 @@ export function AppBand() {
           describes a rail zone 2 chip and has been wrong since `E099`; that is
           corrected there, not papered over here.
         */}
+        {/*
+          ⚠⚠ THE SLOT KEEPS ITS LINE BOX AND SAYS NOTHING. `" "` holds the
+          height so the wordmark does not jump vertically when the label arrives
+          — the band is `align-items: center`, so a shorter brand block would
+          re-centre the logo and trade one flicker for another.
+          ⚠ A NON-BREAKING SPACE IS NOT A PLACEHOLDER: it names nothing, claims
+          nothing and reads as nothing. ⚠⚠ IT IS THE HOUSE PRECEDENT, not a new
+          idea — `AppHeader` used exactly this for the greeting before the clock
+          resolved (`: " "`).
+          ⚠ NO SKELETON, NO "Loading…", NO GUESSED LABEL.
+        */}
         <span className="mt-0.5 block text-[11px] font-medium tracking-wide text-white/45">
-          {consoleLabel}
+          {consoleLabel ?? " "}
         </span>
       </Link>
 
@@ -209,8 +250,40 @@ export function AppBand() {
           <BugIcon />
         </BandIcon>
 
-        {/* ⚠⚠ MESSAGES BELONGS HERE AND IS OMITTED — `E560` has not landed.
-            See the docblock. Do not render a dead icon. */}
+        {/*
+          ── ⚠⚠ MESSAGES (`P2-ALL-E560` STAGE 1, 2026-09-18) ──────────────────
+
+          ⚠ SUPERSEDED, quoted not deleted (`E164`) — `E559` left this hole on
+          purpose and this is what fills it:
+          // MESSAGES BELONGS HERE AND IS OMITTED - `E560` has not landed.
+          // See the docblock. Do not render a dead icon.
+
+          ⚠ SCOTT, 2026-09-18: *"make it like linkedin. in notification
+          bell...icon...and it opens on the right."* ⚠⚠ THE PANEL IS STAGE 2.
+
+          ⚠⚠⚠ THIS ICON NAVIGATES TO `/messages` TODAY. THAT IS AN INTERIM AND IT
+          IS DELIBERATE, NOT THE FINISHED DESIGN — Stage 2 replaces the
+          navigation with a right-side overlay. ⚠ Stage 1 ships first so the band
+          stops having a hole in it, and a link that WORKS is not a dead icon.
+
+          ⚠⚠ NO UNREAD DOT, AND THAT IS MEASURED RATHER THAN FORGOTTEN:
+          `Message` holds ZERO ROWS (measured 2026-09-18), so no unread can
+          exist and a dot could only ever be decoration. ⚠ Scott's ruling was
+          *"measure the Message row count first — if it is zero, ship without the
+          dot and record it as deferred."* ⚠ RECORDED AS DEFERRED.
+          ⚠⚠ WHEN IT IS BUILT IT IS A BOOLEAN EXISTENCE CHECK, NEVER A COUNT —
+          a dot is not a number, and `me.ts` already runs one count per
+          authenticated request. ⚠ THE BELL'S "no badge" RULE IS UNCHANGED and
+          is a different rule: a fake NUMBER is worse than none.
+        */}
+        <BandIcon
+          href="/messages"
+          label="Messages"
+          active={pathname.startsWith("/messages")}
+        >
+          <MessagesIcon />
+        </BandIcon>
+
 
         <BandIcon
           href={NOTIFICATIONS_NAV.href}
@@ -294,6 +367,16 @@ function HomeIcon() {
     <svg {...S}>
       <path d="M3 10.5 12 3l9 7.5" />
       <path d="M5.5 9.5V20h13V9.5" />
+    </svg>
+  );
+}
+
+/* ⚠ `P2-ALL-E560` — a speech bubble, distinct from the bell beside it at 18px.
+   Same `S` metrics as every other cluster glyph so the row keeps one weight. */
+function MessagesIcon() {
+  return (
+    <svg {...S}>
+      <path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9.9 9.9 0 0 1-2.8-.4L4 21l1.4-4.1A8.1 8.1 0 0 1 4 11.5a8.4 8.4 0 0 1 9-8.4 8.4 8.4 0 0 1 8 8.4Z" />
     </svg>
   );
 }
