@@ -47,10 +47,15 @@ export default async function MyStatsPage() {
   const profile = await prisma.providerProfile.findFirst({
     where: ownedProviderProfile(viewer),
     select: {
+      id: true,
       completeness: true,
       status: true,
       paused_at: true,
       validation_status: true,
+      /* ⚠ `E563` WS-C — the sourcing documents key on the PERSON, not the
+         profile. `BidRequest.provider_person_id` and
+         `InterviewRequest.provider_person_id` are both person ids. */
+      person_id: true,
       rating: true,
       updated_at: true,
       created_at: true,
@@ -93,6 +98,20 @@ export default async function MyStatsPage() {
   /* ⚠ COUNTED ON THE USER, NOT THE PROFILE (`P1-J3-E019`). A credential belongs to
      the person, so a seller's own stats include a `LEARN` credential they earned
      before they were a seller — which has no `provider_profile_id` at all. */
+  /*
+    ⚠⚠ THE GUARD MOVED UP (`E563` WS-C). It used to sit below the queries that
+    follow; the WS-C counts need `profile.id` and `profile.person_id`, so the
+    null case has to be settled BEFORE them rather than after. ⚠ Behaviour is
+    unchanged for a provider — only the order of a check that already existed.
+  */
+  if (!profile) {
+    return (
+      <p className="text-ink-2">
+        This account has no provider profile, so there is nothing to measure yet.
+      </p>
+    );
+  }
+
   const certificationCount = await prisma.certification.count({
     where: { user_id: viewer.userId },
   });
@@ -101,13 +120,86 @@ export default async function MyStatsPage() {
      session, never from a parameter (`E563` WS-B item 8). */
   const attestations = await readAttestations(viewer);
 
-  if (!profile) {
-    return (
-      <p className="text-ink-2">
-        This account has no provider profile, so there is nothing to measure yet.
-      </p>
-    );
-  }
+  /*
+    ── ⚠⚠ THE WS-C COUNTS (`P2-J2-E563`) ─────────────────────────────────────
+
+    ⚠⚠ THESE ARE REAL COUNTS OF REAL ROWS, and today every sourcing one is
+    ZERO — measured 2026-09-19: `BidRequest` 0, `ProviderBid` 0,
+    `InterviewRequest` 0, across the WHOLE database. ⚠ That is a TRUE zero, not
+    an untracked one, and the distinction decides how each tile renders:
+      · a model exists and the count is 0 → PRINT 0. The Counters decision is
+        LOCKED: *"a real count of what is in the database… Count it and print
+        it."* ⚠⚠ A provider who has sent no proposals has sent no proposals.
+      · nothing counts it at all → `NotTrackedYet` and a dash. That is
+        `Earnings` and `Job Success Score`, and item 13 keeps them that way.
+    ⚠ DO NOT convert these to dashes when they read 0; that hides a real answer.
+
+    ── ⚠⚠⚠ THE `E366` AGGREGATION BAN APPLIES HERE AND IT IS ENFORCED ────────
+
+    ⚠⚠ *"A recorded refusal becomes a scarlet letter on a marketplace."*
+    `check:sourcing` FAILS THE BUILD on a named decline counter in any file that
+    also handles a sourcing document — and this file now does.
+    ⚠ SO: no `prisma.bidRequest.count()` filtered to `DECLINED`, no `groupBy`
+    over a bid document, and NO IDENTIFIER matching `declineCount` /
+    `declineRate` / `responsivenessScore` / `acceptanceRate` and friends.
+    ⚠⚠ THE INVITATION COUNT IS DELIBERATELY BLIND TO THE ANSWER — it counts what
+    was ISSUED. The brief: *"An invitation counts even when declined — a buyer
+    asking directly is the signal, not the answer."* ⚠ That is the opposite of a
+    decline counter and stays that way.
+  */
+  const [
+    publishedProducts,
+    draftProducts,
+    invitationsToPropose,
+    proposalsSent,
+    interviewsOffered,
+    interviewsTaken,
+    interviewsClosed,
+  ] = await Promise.all([
+    prisma.package.count({
+      where: { provider_profile_id: profile.id, status: "PUBLISHED" },
+    }),
+    prisma.package.count({
+      where: { provider_profile_id: profile.id, status: "DRAFT" },
+    }),
+    /* ⚠ `issued_at: { not: null }` RATHER THAN A STATUS LIST. A DRAFT ITB was
+       never sent, so it is not an invitation anybody received; and keying on the
+       timestamp instead of a status keeps the answer out of this query
+       entirely. */
+    prisma.bidRequest.count({
+      where: { provider_person_id: profile.person_id, issued_at: { not: null } },
+    }),
+    prisma.providerBid.count({
+      where: {
+        provider_person_id: profile.person_id,
+        submitted_at: { not: null },
+      },
+    }),
+    /* ⚠ OFFERED IS EVERY REQUEST AIMED AT THIS PROVIDER, whatever became of it —
+       the denominator the brief wants beside `taken`. */
+    prisma.interviewRequest.count({
+      where: { provider_person_id: profile.person_id },
+    }),
+    prisma.interviewRequest.count({
+      where: { provider_person_id: profile.person_id, status: "COMPLETED" },
+    }),
+    /*
+      ⚠⚠ THE BRIEF SAYS *"declined or expired"* AND THE SCHEMA HAS NO `EXPIRED`.
+      `InterviewStatus` is REQUESTED · SLOTS_OFFERED · SCHEDULED · COMPLETED ·
+      DECLINED · CANCELLED. ⚠ So this counts DECLINED + CANCELLED and the label
+      says so. Rendering the word "expired" would name a state that cannot
+      occur — reported at the WS-C gate rather than invented here.
+      ⚠ This is `interviewRequest`, NOT a bid document: `E366`'s ban covers the
+      ITB and the bid, and says nothing about interviews. The name avoids every
+      banned token regardless.
+    */
+    prisma.interviewRequest.count({
+      where: {
+        provider_person_id: profile.person_id,
+        status: { in: ["DECLINED", "CANCELLED"] },
+      },
+    }),
+  ]);
 
   const visible = isMarketplaceVisible({
     status: profile.status,
@@ -313,6 +405,49 @@ export default async function MyStatsPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {/*
+          ── ⚠⚠ `Service Products` (`E563` WS-C item 9) ─────────────────────
+
+          ⚠⚠⚠ TWO OF THIS ITEM'S THREE PARTS HAVE NO DATA BEHIND THEM, AND
+          NEITHER IS BUILT HERE. Measured 2026-09-19:
+
+          1. ⚠ THE `Generic` / `Custom` SPLIT CANNOT BE COMPUTED. `Package` has
+             no column that distinguishes a product Panameer generated from one
+             the provider wrote — `kind` is DELIVERABLE/DEPLOYABLE/HOURS, a
+             different axis. ⚠⚠ ADDING THAT COLUMN IS PART OF THE AUTO-CREATION
+             MODEL, AND THIS BRIEF FORBIDS INVENTING IT: *"REPORT WHAT
+             AUTO-CREATION WOULD NEED. DO NOT INVENT THE MODEL."*
+             ⚠ Rendering `Generic 0 · Custom N` would be true only by accident —
+             true today because nothing auto-creates, and SILENTLY WRONG the
+             first day something does. That is the `HERO_SCRIM` failure shape:
+             correct-looking and dead.
+          2. ⚠ THERE IS NO VIEW TRACKING ANYWHERE. No `view_count`, no
+             `PackageView`, nothing. So views take the dash convention.
+
+          ⚠ `Published` and `Drafts` ARE real counts and render as numbers.
+        */}
+        <StatTile label="Service Products">
+          <p className="font-display text-[30px] font-bold leading-none text-ink">
+            {publishedProducts}
+          </p>
+          <p className="mt-1.5 text-[13px] text-ink-2">Published</p>
+          <div className="mt-4">
+            <StatRow label="Drafts" value={String(draftProducts)} />
+          </div>
+          {/* ⚠ THE DASH CONVENTION, APPLIED TO A SUB-FACT: a sentence saying
+              what would start it beats a fabricated `0` views. */}
+          <p className="mt-3 text-[12.5px] leading-relaxed text-ink-2">
+            Views aren&rsquo;t counted yet. Products Panameer builds for you from
+            your experience will be listed here separately once we build them.
+          </p>
+          <Link
+            href="/my-services"
+            className="mt-3 inline-block text-[13.5px] font-bold text-magenta hover:underline"
+          >
+            Manage Service Products
+          </Link>
+        </StatTile>
+
         <StatTile label="Earnings (12 Months)">
           <NotTrackedYet unlocks="you complete your first paid work order" />
         </StatTile>
@@ -321,8 +456,41 @@ export default async function MyStatsPage() {
           <NotTrackedYet unlocks="buyers rate completed work orders" />
         </StatTile>
 
+        {/*
+          ── ⚠⚠ `Proposals` (`E563` WS-C item 10) ───────────────────────────
+
+          ⚠ SUPERSEDED, quoted not deleted (`E164`):
+          // <StatTile label="Proposals">
+          //   <NotTrackedYet unlocks="you start bidding on work requests" />
+          // </StatTile>
+
+          ⚠⚠ IT IS NO LONGER UNTRACKED — `BidRequest` and `ProviderBid` are in
+          the schema and `lib/sourcing.ts` writes them, so these are real counts.
+          ⚠ They read 0 today because the marketplace holds zero of both, and a
+          TRUE zero is printed, not hidden behind a dash (the Counters decision
+          is LOCKED: *"Count it and print it."*).
+
+          ⚠⚠⚠ INVITATIONS COUNT EVEN WHEN DECLINED. The brief: *"a buyer asking
+          directly is the signal, not the answer."* ⚠ This is NOT a decline
+          counter and must never become one — `E366`, enforced by
+          `check:sourcing`.
+        */}
         <StatTile label="Proposals">
-          <NotTrackedYet unlocks="you start bidding on work requests" />
+          {/* ⚠ `E433` — a count is a figure, so INK. */}
+          <p className="font-display text-[30px] font-bold leading-none text-ink">
+            {proposalsSent}
+          </p>
+          <p className="mt-1.5 text-[13px] text-ink-2">Sent</p>
+          <div className="mt-4">
+            <StatRow
+              label="Invitations to propose"
+              value={String(invitationsToPropose)}
+            />
+          </div>
+          <p className="mt-3 text-[12.5px] leading-relaxed text-ink-2">
+            An invitation counts whether or not you bid — a buyer asking you
+            directly is the signal.
+          </p>
         </StatTile>
 
         {/*
@@ -466,8 +634,41 @@ export default async function MyStatsPage() {
           </div>
         </StatTile>
 
-        <StatTile label="Client Relationships">
-          <NotTrackedYet unlocks="you work with your first buyer" />
+        {/*
+          ── ⚠⚠ `Client Relationships` IS DELETED (`E563` WS-C item 12) ──────
+
+          ⚠ Scott, 2026-09-17. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+          // <StatTile label="Client Relationships">
+          //   <NotTrackedYet unlocks="you work with your first buyer" />
+          // </StatTile>
+          ⚠⚠ NOTHING REPLACES IT AND NOTHING IS LOST — it counted nothing, and
+          the thing it would have counted has no model.
+        */}
+
+        {/*
+          ── ⚠⚠ `Interviews` (`E563` WS-C item 11) ──────────────────────────
+
+          ⚠ *"The gap between offered and taken is the only part a provider
+          controls; that is why both render."*
+
+          ⚠⚠ THE THIRD ROW SAYS `Declined or cancelled`, NOT *"declined or
+          expired"* AS THE BRIEF ASKS. `InterviewStatus` HAS NO `EXPIRED` —
+          it is REQUESTED · SLOTS_OFFERED · SCHEDULED · COMPLETED · DECLINED ·
+          CANCELLED. ⚠ Naming a state that cannot occur would be a fabricated
+          fact; reported at the WS-C gate instead.
+        */}
+        <StatTile label="Interviews">
+          <p className="font-display text-[30px] font-bold leading-none text-ink">
+            {interviewsOffered}
+          </p>
+          <p className="mt-1.5 text-[13px] text-ink-2">Offered</p>
+          <div className="mt-4">
+            <StatRow label="Taken" value={String(interviewsTaken)} />
+            <StatRow
+              label="Declined or cancelled"
+              value={String(interviewsClosed)}
+            />
+          </div>
         </StatTile>
 
         {/*
