@@ -1,7 +1,7 @@
 import { formatLocality } from "@/lib/locality";
 import { prisma } from "@/lib/prisma";
 import { isMarketplaceVisible, providerMeetsRequired } from "@/lib/access";
-import { profileEnrichmentGaps, VISIBILITY_THRESHOLD } from "@/lib/completeness";
+import { missingRequired, profileEnrichmentGaps, VISIBILITY_THRESHOLD } from "@/lib/completeness";
 import { shownSkills, selectedRoleIds } from "@/lib/shown-skills";
 import { listPublishedPackages } from "@/lib/packages";
 import { toView as toArtifactView } from "@/lib/artifacts";
@@ -229,6 +229,41 @@ export async function getProviderProfileView(
     viewerIsPlus: isPlus,
     completeness: profile.completeness,
     visibilityThreshold: VISIBILITY_THRESHOLD,
+    /*
+      ── ⚠⚠ WHAT THE GATE IS STILL WAITING FOR, IN WORDS (`P2-J2-E562` WS-B) ──
+
+      ⚠ THE GATE SENTENCE MAY NOT CONTAIN A PERCENTAGE. The strip used to read
+      *"You're at 62% — reach 80% to go live"*, which put TWO percentages in the
+      gate and a THIRD, different, number in the meter beside it. This is what
+      replaces them: the seven required items, named.
+
+      ⚠⚠ `visible` ABOVE REMAINS THE AUTHORITY. This list is DETAIL, never the
+      verdict — the strip reads the boolean for what it SAYS and this only for
+      what it NAMES. If the two ever disagreed the sentence would still be
+      right, which is the failure mode worth designing against.
+
+      ⚠ TWO SHAPES FOR ONE CONCEPT, AND IT IS PRE-EXISTING: `providerMeetsRequired`
+      (`access.ts`) takes the PRISMA row, `missingRequired` (`completeness.ts`)
+      takes a normalised one. Their own comment says they are *"KEPT IN
+      LOCKSTEP"*. ⚠⚠ RECORDED AS A RISK, NOT FIXED HERE — merging them is a
+      change to the visibility gate itself, which gates 91 live providers.
+
+      ⚠ Owner-agnostic data. Nothing renders it for a buyer; the strip that
+      consumes it is `p.isOwner`-gated.
+    */
+    missingRequired: missingRequired({
+      headline: profile.headline,
+      role_type_id: profile.role_type_id,
+      skills: profile.skills,
+      photoUrl: profile.person.photo_url,
+      hasAddress: (profile.person.site?.addresses?.length ?? 0) > 0,
+      hasPhone: Boolean(profile.person.phone?.trim()),
+      hourly_rate_cents: profile.hourly_rate_cents,
+      rate_min_cents: profile.rate_min_cents,
+      rate_max_cents: profile.rate_max_cents,
+      onsite_rate_cents: profile.onsite_rate_cents,
+      remote_rate_cents: profile.remote_rate_cents,
+    }),
     /*
       ⚠⚠ UNSCORED, AND NOT THE SAME QUESTION AS `completeness` (`P1-A1.4-E399`).
 

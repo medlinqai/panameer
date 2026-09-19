@@ -215,93 +215,134 @@ export function ProviderProfileViewPage({
             dashboard card used to carry. A caller can replace it (the "You're
             live" page supplies its own). */}
         {banner}
+        {/*
+          ── ⚠⚠⚠ THE STATUS STRIP (`P2-J2-E562` WS-B) — TWO FACTS, NOT ONE BLUR
+
+          ⚠ SUPERSEDED, quoted not deleted (`E164`) — the green banner this
+          replaces, as LINE comments per rule 12 because the quoted body carries
+          its own block comments:
+          // {!banner && p.isOwner && (
+          //   <div className={... p.visible ? emerald : magenta ...}>
+          //     <p className="font-bold">
+          //       {p.paused ? "Your profile is paused"
+          //         : p.visible ? "You're live - buyers can find you"
+          //         : `You're at ${p.completeness}% - reach ${p.visibilityThreshold}% to go live`}
+          //     </p>
+          //     (the freshness nudge: "Last updated N days ago ...")
+          //     {p.enrichmentGaps.length > 0 && (
+          //       <p>Worth adding: {p.enrichmentGaps.join(" . ")}</p>
+          //     )}
+          //     (a magenta meter + "{p.completeness}% of required details")
+          //     <Link href="/join/provider?step=finish">Edit Profile</Link>
+          //   </div>
+          // )}
+
+          ⚠⚠ THE DEFECT, AND IT IS REAL: the gate sentence carried TWO
+          percentages and the meter beside it carried a THIRD, different number.
+          One figure contradicting itself. `profile_tiers.md`: *"the UI must
+          never imply hit a % -> you're visible."*
+
+          ⚠⚠ SO THEY ARE NOW TWO SEPARATE FACTS:
+            · THE GATE — a yes/no, stated in WORDS. No percentage, ever.
+            · THE METER — the ONLY percentage on the page, labelled for what it
+              actually measures.
+
+          ⚠ `p.visible` IS THE AUTHORITY for what the gate SAYS; `missingRequired`
+          only NAMES what is outstanding. They cannot contradict, because the
+          sentence never reads the list.
+
+          ⚠ THE "Worth adding" LINE IS GONE FROM HERE — it duplicated the WS-A
+          gaps panel directly below it, which is the exact defect WS-A exists to
+          kill. ⚠⚠ `p.enrichmentGaps` IS NO LONGER RENDERED ON THIS SURFACE; the
+          field stays on the view model, unused here, because other surfaces
+          read it.
+
+          ⚠ OWNER-ONLY, unchanged: `!banner && p.isOwner`.
+          ⚠ A MET gate stays EMERALD (a fact, earned); an UNMET one is AMBER (a
+          thing to do), never magenta — magenta would say "broken", and §2d
+          reserves it for what BLOCKS.
+        */}
         {!banner && p.isOwner && (
-          <div
+          <section
             className={
-              "mb-6 flex flex-wrap items-center justify-between gap-4 rounded-brand border p-5 " +
-              (p.visible
+              "mb-6 rounded-brand border p-5 " +
+              (!p.paused && p.visible
                 ? "border-emerald-500/30 bg-emerald-50/60"
-                : "border-magenta/25 bg-magenta/[0.05]")
+                : "border-amber-400/40 bg-amber-50/60")
             }
           >
-            <div>
-              <p className="font-bold">
-                {p.paused
-                  ? "Your profile is paused"
-                  : p.visible
-                    ? "🎉 You're live — buyers can find you"
-                    : `You're at ${p.completeness}% — reach ${p.visibilityThreshold}% to go live`}
-              </p>
-              {/*
-                THE FRESHNESS NUDGE (J2.4 WS-C / E009).
-
-                The line here used to be the same sentence every day — "keep
-                your profile fresh" — which is advice, not a nudge: it never
-                changed, so it never prompted anything. It now says how long it
-                has actually been, and only asks for an update once that number
-                is worth acting on. Under the threshold the profile is fine and
-                the banner says so rather than manufacturing a chore.
-              */}
-              <p className="mt-1 text-[14px] text-ink-2">
-                {!p.visible || p.paused
-                  ? "Complete the remaining details to become visible to service buyers."
-                  : p.daysSinceUpdate !== null && p.daysSinceUpdate >= STALE_AFTER_DAYS
-                    ? `Last updated ${p.daysSinceUpdate} days ago — buyers see recently-updated profiles first, so a quick pass through pays.`
-                    : "Your profile is up to date. Buyers see recently-updated profiles first."}
-              </p>
-              {/*
-                ⚠⚠ WHAT'S MISSING — SEPARATE FROM THE SCORE, AND UNSCORED.
-                A provider at 98% with one employer and no certifications was
-                told they were finished. This says the quiet part, without moving
-                the gate: nothing here affects visibility, and a provider who
-                genuinely has one employer can ignore it.
-              */}
-              {p.enrichmentGaps.length > 0 && (
-                <p className="mt-2 text-[13.5px] text-ink-2">
-                  <span className="font-semibold text-ink">Worth adding:</span>{" "}
-                  {p.enrichmentGaps.join(" · ")}
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="min-w-0">
+                {/* ── FACT 1 — THE GATE. Words only. No percentage. ────────── */}
+                <p className="font-bold">
+                  {p.paused
+                    ? "Your profile is paused"
+                    : p.visible
+                      ? "Photo, identity and the required details — all met."
+                      : "Not visible yet — some required details are missing."}
                 </p>
-              )}
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="hidden w-40 sm:block">
-                <div className="h-2 w-full overflow-hidden rounded-full bg-line">
-                  <div
-                    className="h-full bg-magenta transition-[width] duration-500"
-                    style={{ width: `${Math.min(100, p.completeness)}%` }}
-                  />
+                {!p.paused && !p.visible && p.missingRequired.length > 0 && (
+                  /* ⚠ NAMES THEM. A gate that says "something is missing"
+                     without saying WHAT is the invisible-profile bug itself. */
+                  <p className="mt-1 text-[13.5px] leading-relaxed text-ink-2">
+                    Still needed: {p.missingRequired.join(" · ")}
+                  </p>
+                )}
+                {!p.paused && p.visible && (
+                  <p className="mt-1 text-[14px] text-ink-2">
+                    Buyers can find you.
+                    {p.daysSinceUpdate !== null &&
+                    p.daysSinceUpdate >= STALE_AFTER_DAYS
+                      ? ` Last updated ${p.daysSinceUpdate} days ago — buyers see recently-updated profiles first, so a quick pass through pays.`
+                      : " Buyers see recently-updated profiles first."}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex items-center gap-3">
+                {/* ── FACT 2 — THE METER. The only percentage on the page. ─── */}
+                <div className="hidden w-40 sm:block">
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-line">
+                    {/*
+                      ⚠ THE BAR IS STILL MAGENTA AND THAT IS DELIBERATE HERE —
+                      recolouring progress bars to ink is WS-D item 14, and
+                      batching workstreams is what the brief forbids. ⚠ The
+                      FIGURE below is ink as of WS-B, per `E433`.
+                    */}
+                    <div
+                      className="h-full bg-magenta transition-[width] duration-500"
+                      style={{ width: `${Math.min(100, p.completeness)}%` }}
+                    />
+                  </div>
+                  {/*
+                    ⚠⚠ LABELLED FOR WHAT IT MEASURES, NOT FOR WHAT IT LOOKS LIKE.
+                    `completeness.ts` RETURNS 100 WHILE SECTIONS ARE EMPTY
+                    because it counts the REQUIRED SET only. ⚠ THE FIGURE IS
+                    RIGHT; the word `Complete` is what would mislead — so the
+                    label names the denominator and that word is not used.
+                    ⚠ `completeness.ts` IS NOT CHANGED BY THIS BRIEF; what it
+                    would take is in the WS-B report.
+                    ⚠ `E433` — a figure, so INK. Superseded: `text-magenta`.
+                  */}
+                  <p className="mt-1 text-right text-[12px] font-bold text-ink">
+                    {p.completeness}% of required details
+                  </p>
                 </div>
                 {/*
-                  ⚠⚠ THE METER IS NAMED FOR WHAT IT MEASURES (`P1-A1.4-E399`
-                  WS-5b). It read a bare `98%`, which anybody would take to mean
-                  *"your profile is 98% of the way to being finished"* — and it
-                  said that for a profile missing four employers and all five
-                  certifications. It measures the REQUIRED SET plus a flat
-                  enrichment point, and `VISIBILITY_THRESHOLD` gates on it, so the
-                  honest label is what it gates.
-                  ⚠ THE NUMBER AND THE GATE ARE UNCHANGED — re-weighting would
-                  silently change which of 91 live providers stay findable.
+                  E133 — `/join/provider` with no step resolves to the RESUME
+                  point, so a published provider clicking the button below was
+                  dropped at the start of the onboarding train. `step=finish` is
+                  the review — the profile-shaped editor.
                 */}
-                <p className="mt-1 text-right text-[12px] font-bold text-magenta">
-                  {p.completeness}% of required details
-                </p>
+                <Link
+                  href="/join/provider?step=finish"
+                  className="rounded-full bg-magenta px-5 py-2.5 font-bold text-white transition-colors hover:bg-magenta-dark"
+                >
+                  Edit Profile
+                </Link>
               </div>
-              {/*
-                E133 — "/join/provider" with no step resolves to the RESUME
-                point, so a published provider clicking Edit Profile was dropped
-                at the start of the onboarding train and walked forward through
-                steps they had finished months ago. `step=finish` is the review —
-                the profile-shaped editor — and being the last step there is no
-                train left to walk.
-              */}
-              <Link
-                href="/join/provider?step=finish"
-                className="rounded-full bg-magenta px-5 py-2.5 font-bold text-white transition-colors hover:bg-magenta-dark"
-              >
-                Edit Profile
-              </Link>
             </div>
-          </div>
+          </section>
         )}
 
         {/*
