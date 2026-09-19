@@ -1,8 +1,12 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { guardPage } from "@/lib/guard";
-import { isMarketplaceVisible, ownedProviderProfile } from "@/lib/access";
-import { VISIBILITY_THRESHOLD } from "@/lib/completeness";
+/* ⚠ `isMarketplaceVisible` AND `VISIBILITY_THRESHOLD` ARE NO LONGER IMPORTED
+   (`E563` WS-A) — the three checks that read them folded into `/stats`.
+   ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   // import { isMarketplaceVisible, ownedProviderProfile } from "@/lib/access";
+   // import { VISIBILITY_THRESHOLD } from "@/lib/completeness"; */
+import { ownedProviderProfile } from "@/lib/access";
 import { EnforcementHistory } from "@/components/console/EnforcementHistory";
 import { POLICIES } from "@/lib/policies";
 
@@ -52,16 +56,56 @@ export default async function AccountHealthPage() {
     );
   }
 
-  const visible = isMarketplaceVisible({
-    status: profile.status,
-    completeness: profile.completeness,
-    paused_at: profile.paused_at,
-  });
+  /*
+    ⚠⚠ `visible` IS NO LONGER DERIVED HERE (`P2-J2-E563` WS-A). Marketplace
+    visibility is the `/stats` `Profile` tile's question; this page's questions
+    are all answered by `status`, `email_verified` and `available_for_messages`.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    // const visible = isMarketplaceVisible({
+    //   status: profile.status,
+    //   completeness: profile.completeness,
+    //   paused_at: profile.paused_at,
+    // });
+    ⚠ `completeness`, `paused_at` and `validation_status` STAY IN THE SELECT
+    above on purpose — they are three columns on a row this page already reads,
+    they cost nothing, and WS-B/WS-C may want them back. Removing them would be
+    the only irreversible part of a fold that is otherwise all copy.
+  */
 
   /*
     PLATFORM ACCESS — what this account can do today, each line stating the
     consequence rather than the flag. "Email verified ✓" tells a provider
     nothing; "you can be contacted about work" tells them what it buys.
+  */
+  /*
+    ── ⚠⚠ THE MARKETPLACE-VISIBILITY CHECKS FOLDED OUT (`P2-J2-E563` WS-A) ────
+
+    ⚠ SUPERSEDED, quoted not deleted (`E164`). Both rows read the SAME boolean —
+    `visible` — and both are now the `Profile` tile's first criterion on
+    `/stats`, which is the only place the four criteria live:
+    // {
+    //   label: "Appear in buyer searches",
+    //   ok: visible,
+    //   note: visible
+    //     ? "Your profile is live in the marketplace."
+    //     : profile.paused_at
+    //       ? "Paused by you - resume from Settings when you're ready."
+    //       : `Reach ${VISIBILITY_THRESHOLD}% profile completeness to switch this on.`,
+    // },
+    // {
+    //   label: "Sell service packages",
+    //   ok: visible,
+    //   note: visible
+    //     ? "Your packages are purchasable."
+    //     : "Service products go on sale when your profile is visible.",
+    // },
+
+    ⚠⚠ NOTHING IS DROPPED — the meaning of BOTH notes is carried by that
+    criterion's own note, which names buyer discovery AND service products in
+    one sentence, because one flag governs both.
+    ⚠⚠⚠ THE SPLIT, AND IT IS THE RULE FOR ANY LATER ROW: `/stats` answers
+    *"can buyers find me"*; THIS PAGE answers *"what is my account"*.
+    ⚠ WHAT STAYS BELOW IS WHAT IS GENUINELY ACCOUNT. DO NOT EMPTY THIS PAGE.
   */
   const access = [
     {
@@ -70,27 +114,11 @@ export default async function AccountHealthPage() {
       note: "Available on every account.",
     },
     {
-      label: "Appear in buyer searches",
-      ok: visible,
-      note: visible
-        ? "Your profile is live in the marketplace."
-        : profile.paused_at
-          ? "Paused by you — resume from Settings when you're ready."
-          : `Reach ${VISIBILITY_THRESHOLD}% profile completeness to switch this on.`,
-    },
-    {
       label: "Receive messages from buyers",
       ok: profile.available_for_messages,
       note: profile.available_for_messages
         ? "You're marked online for messages."
         : "You've switched off 'Online for messages' in the account menu.",
-    },
-    {
-      label: "Sell service packages",
-      ok: visible,
-      note: visible
-        ? "Your packages are purchasable."
-        : "Service products go on sale when your profile is visible.",
     },
   ];
 
@@ -111,16 +139,21 @@ export default async function AccountHealthPage() {
       value: profile.person.user?.email_verified ? "Yes" : "Not yet",
       ok: !!profile.person.user?.email_verified,
     },
-    {
-      label: "Panameer validation",
-      value:
-        profile.validation_status === "VALIDATED"
-          ? "Validated"
-          : profile.validation_status === "REQUESTED"
-            ? "Under review"
-            : "Not requested",
-      ok: profile.validation_status === "VALIDATED",
-    },
+    /*
+      ⚠⚠ `Panameer validation` FOLDED OUT (`P2-J2-E563` WS-A) — it is the fourth
+      criterion on `/stats`, and this was the THIRD copy of it.
+      ⚠ SUPERSEDED, quoted not deleted (`E164`):
+      // {
+      //   label: "Panameer validation",
+      //   value:
+      //     profile.validation_status === "VALIDATED"
+      //       ? "Validated"
+      //       : profile.validation_status === "REQUESTED"
+      //         ? "Under review"
+      //         : "Not requested",
+      //   ok: profile.validation_status === "VALIDATED",
+      // },
+    */
   ];
 
   return (
@@ -143,14 +176,24 @@ export default async function AccountHealthPage() {
               </li>
             ))}
           </ul>
-          {!visible && (
-            <Link
-              href="/join/provider?step=finish"
-              className="mt-4 inline-block rounded-full bg-magenta px-5 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
-            >
-              Finish Your Profile
-            </Link>
-          )}
+          {/*
+            ⚠⚠ THE `Finish Your Profile` BUTTON GOES WITH THE CHECK IT SERVED
+            (`P2-J2-E563` WS-A). It was conditional on `!visible`, and `visible`
+            is no longer read on this page — the criterion it fixed now lives on
+            `/stats`, WHERE THE SAME BUTTON RENDERS BESIDE IT.
+            ⚠ SUPERSEDED, quoted not deleted (`E164`):
+            // {!visible && (
+            //   <Link
+            //     href="/join/provider?step=finish"
+            //     className="mt-4 inline-block rounded-full bg-magenta px-5 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
+            //   >
+            //     Finish Your Profile
+            //   </Link>
+            // )}
+            ⚠ LEAVING IT HERE WOULD HAVE BEEN THE DUPLICATION THIS BRIEF EXISTS
+            TO REMOVE, one level down: the same action offered from two pages for
+            a gate that only one of them still states.
+          */}
         </section>
 
         <section className="rounded-brand border border-line bg-white p-5">
@@ -168,12 +211,22 @@ export default async function AccountHealthPage() {
               </li>
             ))}
           </ul>
-          {profile.validation_status === "NOT_REQUESTED" && (
-            <p className="mt-4 text-[13px] leading-relaxed text-ink-2">
-              Validation is granted on merit and never sold. Ask for it from your
-              profile once your work history is complete.
-            </p>
-          )}
+          {/*
+            ⚠⚠ THE VALIDATION NOTE GOES WITH ITS ROW (`P2-J2-E563` WS-A).
+            ⚠ SUPERSEDED, quoted not deleted (`E164`):
+            // {profile.validation_status === "NOT_REQUESTED" && (
+            //   <p className="mt-4 text-[13px] leading-relaxed text-ink-2">
+            //     Validation is granted on merit and never sold. Ask for it from your
+            //     profile once your work history is complete.
+            //   </p>
+            // )}
+            ⚠⚠⚠ AND THE SECOND SENTENCE WAS FALSE — *"Ask for it from your
+            profile"* POINTED AT A BUTTON THAT HAS NEVER EXISTED. Measured
+            2026-09-19: `POST /api/settings/request-validation` has ZERO UI
+            callers. ⚠ The merit half of the sentence is kept, and the
+            instruction to do something impossible is not carried over.
+            ⚠ Recorded for Scott at the WS-A gate.
+          */}
         </section>
       </div>
 
