@@ -277,6 +277,8 @@ export function ProfileHero({
   language,
   country,
   experience,
+  skills = [],
+  skillsCap = 8,
   aside,
   headingAs: HeadingTag = "h1",
 }: {
@@ -333,6 +335,26 @@ export function ProfileHero({
   country?: string | null;
   /** WS6 — DERIVED from work-history spans, never self-reported. */
   experience?: string | null;
+  /**
+   * ── ⚠⚠ SKILLS IN THE HERO (`P2-J2-E562` WS-C item 8) ──────────────────────
+   *
+   * ⚠ SAME PROP, SAME RENDERER, DIFFERENT SOURCE — the pattern this file
+   * already uses for every other field. The published profile passes the
+   * server view-model's shown skills; the review passes the wizard's DRAFT.
+   * ⚠⚠ NEITHER SURFACE KNOWS WHICH IT IS, and that is the point: the moment
+   * this component can tell, it has forked.
+   *
+   * ⚠ Defaults to `[]` so any existing caller compiles and renders nothing,
+   * rather than a caller silently losing skills it never knew to pass.
+   */
+  skills?: SkillItem[];
+  /**
+   * ⚠⚠ CAPPED AT EIGHT. A provider with thirty chips pushes everything below
+   * off the first screen — the hero stops being a summary and becomes the page.
+   * ⚠ A PROP, not a literal, so the cap is stated once and can be read by a
+   * caller that genuinely needs a different one. Nobody passes it today.
+   */
+  skillsCap?: number;
   aside?: ReactNode;
   headingAs?: "h1" | "h2";
 }) {
@@ -348,97 +370,189 @@ export function ProfileHero({
       : `${formatCents(lo, currency)} – ${formatCents(hi, currency)}`;
   })();
 
+  /* ⚠ Capped for the hero; the count of what is NOT shown drives "+N more". */
+  const shownSkills = skills.slice(0, skillsCap);
+  const moreSkills = Math.max(0, skills.length - shownSkills.length);
+
   return (
     <header className={CARD}>
-      <div className="flex flex-col gap-6 sm:flex-row">
-        <Avatar
-          firstName={firstName}
-          lastName={lastName}
-          photoUrl={photoUrl}
-          size={120}
-        />
+      {/*
+        ── ⚠⚠ TWO COLUMNS (`P2-J2-E562` WS-C item 7) ────────────────────────
 
-        <div className="min-w-0 flex-1">
-          <Heading className="text-[30px] leading-[1.1] tracking-[-0.6px] sm:text-[38px]">
-            {displayFullName(firstName, lastName)}
-          </Heading>
-          <p className="mt-2 text-[19px] leading-snug text-ink">
-            {headline || "Add a professional title"}
-          </p>
-          {/* ⚠ THREE STATES, NOT TWO (`E411` WS-2): text · genuinely empty ·
-              rendered elsewhere. The third draws nothing at all. */}
-          {overviewShownElsewhere ? null : overview ? (
-            <div className="mt-3">
-              <RichText
-                text={overview}
-                clampLines={6}
-                className="text-[15px] leading-relaxed text-ink-2"
-              />
+        ⚠ SUPERSEDED, quoted not deleted (`E164`) — the three-zone hero this
+        replaces, as LINE comments per rule 12:
+        // <div className="flex flex-col gap-6 sm:flex-row">
+        //   <Avatar ... size={120} />
+        //   <div className="min-w-0 flex-1">   name · headline · overview · aside
+        //   <dl className="w-full flex-none ... sm:w-[190px]">   the META RAIL:
+        //       Validated · Mentor · Hourly Rate · Experience · Language · Country
+        //   </dl>
+        // </div>
+
+        ⚠⚠ LEFT IS IDENTITY, RIGHT IS WHAT YOU SAY ABOUT YOURSELF. The old
+        layout put the OVERVIEW in the middle and the RATE on the right, so the
+        two halves of "who is this" were split by a paragraph.
+        ⚠ NOTHING IS DELETED — every meta-rail row moved into the left column,
+        beneath the identity, in the same order.
+
+        ⚠⚠⚠ NO SURFACE-AWARE BRANCH. This component does not know whether it is
+        the published profile or the onboarding review, and it must never learn:
+        the moment it can tell, it has forked, and forking is the failure this
+        file exists to prevent (`E056`). ⚠ The review suppresses Overview via
+        `overviewShownElsewhere` and passes no `mentor` — BOTH are ordinary
+        props, not surface checks.
+
+        ⚠ WHEN THE RIGHT COLUMN IS EMPTY (review, no overview, no draft skills)
+        it renders nothing and the flex row collapses to the left column alone —
+        ordinary responsive behaviour, no special case.
+      */}
+      <div className="flex flex-col gap-8 sm:flex-row">
+        {/* ── LEFT — IDENTITY ────────────────────────────────────────────── */}
+        <div className="w-full flex-none sm:w-[300px]">
+          <div className="flex items-start gap-4">
+            <Avatar
+              firstName={firstName}
+              lastName={lastName}
+              photoUrl={photoUrl}
+              size={96}
+            />
+            <div className="min-w-0 flex-1">
+              <Heading className="text-[24px] leading-[1.15] tracking-[-0.5px]">
+                {displayFullName(firstName, lastName)}
+              </Heading>
+              <p className="mt-1 text-[15.5px] leading-snug text-ink-2">
+                {headline || "Add a professional title"}
+              </p>
+              {country && (
+                <p className="mt-1 text-[13.5px] text-ink-2">{country}</p>
+              )}
             </div>
-          ) : (
-            <p className="mt-3 text-[14px] text-ink-2">No overview yet.</p>
-          )}
+          </div>
+
+          {/*
+            ── STATUS PILLS ────────────────────────────────────────────────
+            ⚠⚠ DIM UNTIL EARNED — unchanged from the meta rail, byte for byte.
+            `E562` WS-C item 9 asked for this and it was ALREADY BUILT; it is
+            MOVED here, not rewritten. ⚠ Emerald = a fact earned; the unearned
+            state is ink at 60%, never amber and never magenta — it is not a
+            to-do and it does not block.
+          */}
+          <dl className="mt-4 space-y-2 text-[14.5px]">
+            <div>
+              <dd
+                className={
+                  validated
+                    ? "font-bold text-emerald-600"
+                    : "text-ink-2/60"
+                }
+              >
+                {validated ? "✓ Validated" : "Validated"}
+              </dd>
+            </div>
+            {/*
+              MENTOR — same treatment as Validated: dim until earned. It cannot
+              be earned yet by construction (no threshold), so the sub-line
+              carries what it is FOR, which is the point of shipping it dark
+              rather than hiding it.
+              ⚠ `null` RENDERS NO ROW — that is the onboarding review, which
+              knows nothing about forums. A prop, not a surface check.
+            */}
+            {mentor && (
+              <div>
+                <dd className={mentor.earned ? "font-bold text-emerald-600" : "text-ink-2/60"}>
+                  {mentor.earned ? "✓ Mentor" : "Mentor"}
+                </dd>
+                <p className="text-[12.5px] text-ink-2/60">{mentor.detail}</p>
+              </div>
+            )}
+
+            {/* ── THE RATE ROWS, BENEATH THE IDENTITY (item 7) ───────────────
+                ⚠ `E433` — figures, so INK. They are facts, not controls. */}
+            {rateLabel && (
+              <div>
+                <dt className="inline font-bold">Hourly Rate: </dt>
+                <dd className="inline">{rateLabel}</dd>
+                {youGetCents != null && (
+                  <p className="text-[12.5px] text-ink-2">
+                    You&apos;ll Get {formatCents(youGetCents, currency)}/hr
+                  </p>
+                )}
+              </div>
+            )}
+            {experience && (
+              <div>
+                <dt className="inline font-bold">Experience: </dt>
+                <dd className="inline">{experience}</dd>
+              </div>
+            )}
+            {language && (
+              <div>
+                <dt className="inline font-bold">Language: </dt>
+                <dd className="inline">{language}</dd>
+              </div>
+            )}
+          </dl>
+
           {aside}
         </div>
 
-        {/* Meta rail — right side of the hero (mockup pg1). */}
-        <dl className="w-full flex-none space-y-2 text-[14.5px] sm:w-[190px]">
-          <div>
-            <dd
-              className={
-                validated
-                  ? "font-bold text-emerald-600"
-                  : "text-ink-2/60"
-              }
-            >
-              {validated ? "✓ Validated" : "Validated"}
-            </dd>
-          </div>
+        {/*
+          ── RIGHT — OVERVIEW, THEN SKILLS ────────────────────────────────
+
+          ⚠⚠ `empty:hidden` IS WHAT MAKES THE ONE-COLUMN CASE REAL, AND IT IS
+          MEASURED, NOT ASSUMED. Without it an EMPTY `flex-1` still claims the
+          free space — measured 2026-09-19: emptying this column left it 722px
+          wide, so the hero did not collapse, it grew a 722px gutter.
+          ⚠ The case is the REVIEW with no overview (`E205`) and a draft with no
+          skills yet; it cannot occur on a published profile, because a
+          marketplace-visible provider must hold at least one skill.
+          ⚠⚠⚠ IT KEYS ON EMPTINESS, NOT ON WHICH SURFACE THIS IS. The component
+          still cannot tell where it is rendering, which is the rule: the moment
+          it can, it has forked (`E056`).
+        */}
+        <div className="min-w-0 flex-1 empty:hidden">
+          {/* ⚠ THREE STATES, NOT TWO (`E411` WS-2): text · genuinely empty ·
+              rendered elsewhere. The third draws nothing at all. */}
+          {overviewShownElsewhere ? null : overview ? (
+            <RichText
+              text={overview}
+              clampLines={6}
+              className="text-[15px] leading-relaxed text-ink-2"
+            />
+          ) : (
+            <p className="text-[14px] text-ink-2">No overview yet.</p>
+          )}
+
           {/*
-            MENTOR — same treatment as Validated: dim until earned. It cannot be
-            earned yet by construction (no threshold), so the sub-line carries
-            what it is FOR, which is the point of shipping it dark rather than
-            hiding it: Scott can see the mechanic and the live number before
-            choosing a bar.
+            ── SKILLS, UNDER OVERVIEW (item 8) ─────────────────────────────
+            ⚠⚠ CAPPED AT EIGHT PLUS "+N more". ⚠ `E433` — the chips are facts,
+            not controls, so they carry the same neutral border the standalone
+            Skills card used; the "+N more" is INK for the same reason, and is
+            deliberately NOT a link: there is nowhere to send a buyer that shows
+            the rest, and a link that goes nowhere is the dead-affordance defect.
+            ⚠ NO COUNT TAG ANYWHERE (item 10) — "+N more" states what is hidden,
+            which is the opposite of advertising how few there are.
           */}
-          {mentor && (
-            <div>
-              <dd className={mentor.earned ? "font-bold text-emerald-600" : "text-ink-2/60"}>
-                {mentor.earned ? "✓ Mentor" : "Mentor"}
-              </dd>
-              <p className="text-[12.5px] text-ink-2/60">{mentor.detail}</p>
+          {shownSkills.length > 0 && (
+            <div className={overviewShownElsewhere ? "" : "mt-4"}>
+              <div className="flex flex-wrap gap-2">
+                {shownSkills.map((sk) => (
+                  <span
+                    key={sk.id}
+                    className="rounded-full border border-line px-3 py-1 text-[13.5px] font-semibold text-ink-2"
+                  >
+                    {sk.name}
+                  </span>
+                ))}
+                {moreSkills > 0 && (
+                  <span className="self-center text-[13px] font-semibold text-ink-2">
+                    +{moreSkills} more
+                  </span>
+                )}
+              </div>
             </div>
           )}
-          {rateLabel && (
-            <div>
-              <dt className="inline font-bold">Hourly Rate: </dt>
-              <dd className="inline">{rateLabel}</dd>
-              {youGetCents != null && (
-                <p className="text-[12.5px] text-ink-2">
-                  You&apos;ll Get {formatCents(youGetCents, currency)}/hr
-                </p>
-              )}
-            </div>
-          )}
-          {experience && (
-            <div>
-              <dt className="inline font-bold">Experience: </dt>
-              <dd className="inline">{experience}</dd>
-            </div>
-          )}
-          {language && (
-            <div>
-              <dt className="inline font-bold">Language: </dt>
-              <dd className="inline">{language}</dd>
-            </div>
-          )}
-          {country && (
-            <div>
-              <dt className="inline font-bold">Country: </dt>
-              <dd className="inline">{country}</dd>
-            </div>
-          )}
-        </dl>
+        </div>
       </div>
     </header>
   );

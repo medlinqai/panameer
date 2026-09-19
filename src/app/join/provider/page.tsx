@@ -4685,6 +4685,12 @@ setScreen(target);
               youGetCents={youGet}
               language={profile.languages[0]?.name ?? null}
               country={addr.country?.trim() || null}
+              /* ⚠⚠ THE REVIEW PASSES ITS OWN DRAFT SKILLS (`P2-J2-E562` WS-C
+                 item 8). ⚠ SAME PROP, SAME RENDERER, DIFFERENT SOURCE — the
+                 pattern this page already uses for every other hero field.
+                 ⚠⚠ THE HERO DOES NOT KNOW WHICH SURFACE IT IS; if it ever needs
+                 to, it has forked (`E056`). */
+              skills={shownSkillNames}
               aside={
                 <div className="mt-3 flex flex-wrap items-center gap-4">
                   <button
