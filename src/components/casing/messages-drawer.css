@@ -1,0 +1,102 @@
+/*
+ * ── ⚠⚠ THE MESSAGES DRAWER (`P2-ALL-E560` STAGE 2) ──────────────────────────
+ *
+ * ⚠ PLAIN CSS, NOT TAILWIND ARBITRARY VARIANTS — same reason as `app-band.css`:
+ * `check:app-shell` GUARD 3 forbids a `min-[…]` variant competing with a named
+ * one, and an overlay needs viewport units the named scale does not express.
+ */
+
+.pm-drawer-root {
+  position: fixed;
+  inset: 0;
+  /* ⚠ ABOVE THE BAND. The band is the only sticky chrome; a drawer that slid
+     under it would look like a rendering fault. */
+  z-index: 60;
+}
+
+/* ⚠ THE PAGE DIMS BEHIND IT — Scott's wording. Also the click-outside target. */
+.pm-drawer-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / 0.38);
+}
+
+/*
+ * ── ⚠⚠⚠ MOBILE IS NOT A NARROWER DRAWER, AND THIS NEEDS NO BREAKPOINT ───────
+ *
+ * SCOTT: *"at 360px a right drawer is FULL-SCREEN, not a 400px panel."*
+ *
+ * ⚠ `min(400px, 100vw)` ALONE GETS 360 RIGHT — the panel becomes 360 and covers
+ * the viewport. ⚠⚠ BUT MEASURING THE WHOLE RANGE FOUND THE CASE BETWEEN:
+ *
+ *     MEASURED 2026-09-19, settled (not mid-animation):
+ *       1440 -> panel 400, scrim strip 1040
+ *        768 -> panel 400, scrim strip  368
+ *     ⚠⚠  414 -> panel 400, scrim strip   14   <-- a HAIRLINE
+ *        390 -> panel 390, strip 0, FULL-SCREEN
+ *        360 -> panel 360, strip 0, FULL-SCREEN
+ *
+ * ⚠⚠⚠ A 14px SCRIM STRIP IS NOT A DESIGN, IT IS A RENDERING FAULT — and worse,
+ * **THE SCRIM IS THE CLICK-OUTSIDE TARGET**, so it is also a 14px tap target for
+ * "close" on precisely the devices that are touch-only.
+ *
+ * ⚠ SO THE THRESHOLD IS DERIVED FROM THE AFFORDANCE, NOT GUESSED FROM A DEVICE:
+ * the strip must be a usable tap target or not exist at all. Taking 48px as the
+ * floor, the panel goes FULL-WIDTH below `400 + 48 = 448px`. ⚠⚠ At 448 the strip
+ * is exactly 48; below it there is no strip, because a strip nobody can hit is
+ * worse than none.
+ *
+ * ⚠ THIS IS THE `E559` LESSON APPLIED, NOT IGNORED: that brief's prescribed
+ * breakpoint was wrong because it was guessed from a symptom. This one is
+ * computed from the panel width plus a stated minimum, so it moves when the
+ * panel width moves and can be re-derived rather than re-guessed.
+ */
+.pm-drawer-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(400px, 100vw);
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  box-shadow: -18px 0 46px rgb(0 0 0 / 0.18);
+  animation: pm-drawer-in 160ms ease-out;
+}
+
+/* ⚠ ONLY THE LIST SCROLLS. The header and the footer link stay reachable, so
+   "Open Messages" never scrolls off on a long list. */
+.pm-drawer-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+@keyframes pm-drawer-in {
+  from {
+    transform: translateX(16px);
+    opacity: 0.6;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* ⚠ A viewer who asks for less motion gets the drawer without the slide. */
+@media (prefers-reduced-motion: reduce) {
+  .pm-drawer-panel {
+    animation: none;
+  }
+}
+
+/*
+ * ⚠⚠ FULL-SCREEN BELOW 448px = 400 (panel) + 48 (the tap-target floor for the
+ * scrim). ⚠ Derived, not picked — see the block above. `100vw` rather than 100%
+ * so it is the VIEWPORT, independent of the containing block.
+ */
+@media (max-width: 447px) {
+  .pm-drawer-panel {
+    width: 100vw;
+  }
+}

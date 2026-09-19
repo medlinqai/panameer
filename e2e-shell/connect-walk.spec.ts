@@ -151,13 +151,25 @@ test("E560/2 — Messages is GONE from the CONNECT row, and still reachable", as
     `E493`'s invite and `E519`'s résumé re-run got buried. The cluster link is
     asserted BY ITS aria-label inside the band, not by counting links on the page.
   */
-  const clusterLink = page.locator('.pm-band-right a[aria-label="Messages"]');
-  await expect(clusterLink).toHaveCount(1);
-  await expect(clusterLink).toHaveAttribute("href", "/messages");
+  /*
+    ⚠⚠ THE DOOR IS A BUTTON AS OF STAGE 2 (`E560`, 2026-09-19), NOT A LINK.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`) — Stage 1, when the icon navigated:
+    // const clusterLink = page.locator('.pm-band-right a[aria-label="Messages"]');
+    // await expect(clusterLink).toHaveCount(1);
+    // await expect(clusterLink).toHaveAttribute("href", "/messages");
+
+    ⚠⚠ THE ASSERTION'S INTENT IS UNCHANGED AND IS THE POINT: the tab was removed
+    from the CONNECT row, so SOMETHING must still open messages. What changed is
+    only the element — a thing that opens an overlay is a button, not a link.
+    ⚠ `/messages` the ROUTE still exists and is linked from inside the drawer;
+    that is asserted where the drawer is tested (`E560/4`), not here.
+  */
+  const clusterDoor = page.locator('.pm-band-right button[aria-label="Messages"]');
+  await expect(clusterDoor).toHaveCount(1);
 
   /* ⚠ NO DIGIT ON IT, EVER — `Message` holds zero rows so no dot ships yet, and
      when one does it is a DOT, never a number (Scott, 2026-09-18). */
-  await expect(clusterLink).not.toHaveText(/\d/);
+  await expect(clusterDoor).not.toHaveText(/\d/);
 });
 
 /*
@@ -216,6 +228,57 @@ test("E560/3 — a provider is NEVER shown the wrong console, even for one frame
   /* ⚠ AND IT MUST STILL ARRIVE AT THE RIGHT ONE — otherwise "render nothing"
      would pass by rendering nothing forever. */
   expect(observed, `observed: ${observed.join(" | ")}`).toContain("Provider Console");
+});
+
+/*
+  ── ⚠⚠⚠ 2c · THE MESSAGES DRAWER (`P2-ALL-E560` STAGE 2) ───────────────────
+
+  ⚠⚠ AN OVERLAY IS AN INTERACTION SURFACE, AND THE FAILURE THAT MATTERS IS ONE
+  THAT WILL NOT CLOSE. A drawer that opens is obvious in a screenshot; a drawer
+  that strands a keyboard user is invisible in one — which is why this is in the
+  suite that caught the console flash rather than in a static check.
+
+  ⚠ THREE THINGS, THE MINIMUM THE BRIEF NAMES: the icon OPENS it, Escape CLOSES
+  it, and focus RETURNS TO THE ICON. ⚠⚠ THE THIRD IS THE ONE THAT IS EASY TO
+  SKIP AND THE ONE THAT STRANDS SOMEBODY — focus dropped to `<body>` means the
+  next Tab starts from the top of the document, not from where they were.
+
+  ⚠ THE ICON IS A BUTTON, NOT A LINK (`E560` Stage 2): a thing that opens an
+  overlay must not claim to navigate. Asserted by role, so turning it back into
+  an `<a>` fails here rather than silently regressing the semantics.
+*/
+test("E560/4 — the Messages drawer opens, closes on Escape, and returns focus", async () => {
+  await open(ROUTES.home);
+
+  const icon = page.locator('.pm-band-right button[aria-label="Messages"]');
+  await expect(icon, "the cluster icon must be a BUTTON — it opens an overlay, it does not navigate").toHaveCount(1);
+  await expect(icon).toHaveAttribute("aria-haspopup", "dialog");
+
+  /* ⚠ CLOSED TO BEGIN WITH — otherwise "it opens" could pass on a drawer that
+     was never shut. */
+  await expect(page.locator(".pm-drawer-panel")).toHaveCount(0);
+  await expect(icon).toHaveAttribute("aria-expanded", "false");
+
+  await icon.click();
+  const panel = page.locator(".pm-drawer-panel");
+  await expect(panel).toBeVisible();
+  await expect(icon).toHaveAttribute("aria-expanded", "true");
+  /* ⚠ AND THE PAGE IS STILL THE PAGE — the drawer overlays, it does not route. */
+  expect(new URL(page.url()).pathname).toBe(ROUTES.home);
+
+  await page.keyboard.press("Escape");
+  await expect(panel).toHaveCount(0);
+  await expect(icon).toHaveAttribute("aria-expanded", "false");
+
+  /* ⚠⚠ FOCUS IS BACK ON THE ICON, NOT ON `<body>`. */
+  const landed = await page.evaluate(() => {
+    const a = document.activeElement as HTMLElement | null;
+    return { tag: a?.tagName ?? null, label: a?.getAttribute("aria-label") ?? null };
+  });
+  expect(
+    landed,
+    `focus went to ${landed.tag}/${landed.label} instead of back to the Messages icon`
+  ).toEqual({ tag: "BUTTON", label: "Messages" });
 });
 
 /* ── 3 · COLLEAGUES — NO MEMBER-WIDE SEARCH ─────────────────────────────── */

@@ -245,6 +245,29 @@ export type ConversationSummary = {
  * ⚠ NOT PAGINATED, AND THAT IS A KNOWN LIMIT rather than an oversight: messaging
  * is colleague-only, so the list is bounded by how many colleagues somebody has.
  * It needs paging the day that stops being true.
+ *
+ * ── ⚠⚠⚠ THE DERIVATION IS A DELIBERATE INTERIM (`P2-ALL-E560`, 2026-09-18) ──
+ *
+ * SCOTT RULED THIS, AND IT WAS CHOSEN RATHER THAN SETTLED FOR. The `E560` drawer
+ * lists conversations, which is exactly what a `Conversation` model would serve —
+ * so the question "why is there no model?" WILL be asked again. The answer:
+ *
+ *   · ⚠ `E379` CHOSE *"One table. No Thread, no Participant"* DELIBERATELY. It
+ *     was a decision, not an omission.
+ *   · ⚠⚠ `Message` HELD **ZERO ROWS** when the drawer was built (measured
+ *     2026-09-18). **A model designed now would be designed against no data and
+ *     backfilled from nothing** — every shape choice a guess.
+ *   · ⚠ `@@index([from_user_id, to_user_id, created_at])` ALREADY EXISTS and is
+ *     what makes folding the pairs in memory reasonable.
+ *
+ * ⚠⚠ THE NAMED CONDITION THAT UNBLOCKS THE MODEL — do not add one before it:
+ * **"IF THE DERIVATION GETS SLOW, THAT IS THE SIGNAL TO ADD IT — WITH REAL
+ * MESSAGES TO SHAPE IT."** ⚠ Slow means measured, on real rows, not suspected.
+ *
+ * ⚠ ONE DEFINITION, TWO CALLERS: the `/messages` page and `GET /api/messages`
+ * (the drawer) both come here. ⚠⚠ A SECOND DERIVATION IS THE FAILURE TO AVOID —
+ * two surfaces listing conversations by different rules is the `teachesPathWhere`
+ * mistake in a new place.
  */
 export async function listConversations(viewer: Viewer): Promise<ConversationSummary[]> {
   const rows = await prisma.message.findMany({

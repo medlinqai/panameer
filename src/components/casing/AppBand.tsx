@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { useSyncExternalStore } from "react";
+import { useRef, useState, useSyncExternalStore } from "react";
 import { useMe } from "@/components/MeProvider";
 import { AccountMenu } from "@/components/casing/AccountMenu";
 import { RailIcon } from "@/components/casing/RailIcon";
+import { MessagesDrawer } from "@/components/casing/MessagesDrawer";
 import {
   navForRoles,
   railPersona,
@@ -71,6 +72,11 @@ export function AppBand() {
   const isAdmin = session?.user?.isSystemAdmin === true;
 
   const unreadCount = me?.notificationsUnread ?? 0;
+
+  /* ⚠ `P2-ALL-E560` STAGE 2 — the drawer's open state and the element focus
+     returns to when it closes. ⚠⚠ THE REF IS THE ICON ITSELF, never `<body>`. */
+  const [messagesOpen, setMessagesOpen] = useState(false);
+  const messagesButtonRef = useRef<HTMLButtonElement>(null);
 
   /* ⚠⚠ UNCHANGED DERIVATION (`E491`). The caption is gone; the value is not. */
   const persona = railPersona(me, isAdmin);
@@ -276,13 +282,38 @@ export function AppBand() {
           authenticated request. ⚠ THE BELL'S "no badge" RULE IS UNCHANGED and
           is a different rule: a fake NUMBER is worse than none.
         */}
-        <BandIcon
-          href="/messages"
-          label="Messages"
-          active={pathname.startsWith("/messages")}
+        {/*
+          ⚠⚠ A BUTTON, NOT A LINK (`P2-ALL-E560` STAGE 2). ⚠ SUPERSEDED, quoted
+          not deleted (`E164`) — Stage 1's stated interim:
+          // <BandIcon href="/messages" label="Messages"
+          //   active={pathname.startsWith("/messages")}>
+          //   <MessagesIcon />
+          // </BandIcon>
+
+          ⚠ THE ELEMENT HAD TO CHANGE WITH THE BEHAVIOUR. A thing that opens an
+          overlay is a BUTTON; a link that does not navigate lies to the
+          keyboard, to the middle-click and to the status bar.
+          ⚠ `aria-expanded` and `aria-haspopup` say what it does, the same way
+          `AccountMenu`'s trigger does.
+          ⚠⚠ `/messages` THE ROUTE STAYS — the drawer's footer links it.
+        */}
+        <button
+          ref={messagesButtonRef}
+          type="button"
+          onClick={() => setMessagesOpen((v) => !v)}
+          aria-label="Messages"
+          title="Messages"
+          aria-haspopup="dialog"
+          aria-expanded={messagesOpen}
+          className={
+            "grid h-9 w-9 shrink-0 place-items-center rounded-full transition-colors " +
+            (messagesOpen
+              ? "bg-rail-active text-white"
+              : "text-white/75 hover:bg-white/10 hover:text-white")
+          }
         >
           <MessagesIcon />
-        </BandIcon>
+        </button>
 
 
         <BandIcon
@@ -309,6 +340,15 @@ export function AppBand() {
             and still where `My Company` lives since `E099`. */}
         <AccountMenu isAdmin={isAdmin} onDark />
       </div>
+
+      {/* ⚠ RENDERED BY THE BAND, which every logged-in page already has — so the
+          drawer is reachable from all of them without any page opting in. */}
+      {messagesOpen && (
+        <MessagesDrawer
+          onClose={() => setMessagesOpen(false)}
+          returnFocusRef={messagesButtonRef}
+        />
+      )}
     </header>
   );
 }
