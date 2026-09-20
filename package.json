@@ -121,7 +121,9 @@
     "check:comment-quotes": "npx esbuild scripts/check-comment-quotes.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/comment-quotes.cjs --log-level=error && node .harness/comment-quotes.cjs",
     "backfill:completeness": "npx esbuild scripts/backfill-completeness.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/backfill-completeness.cjs --log-level=error && node -r dotenv/config .harness/backfill-completeness.cjs dotenv_config_path=.env.local",
     "check:community-web": "npx esbuild scripts/check-community-web.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/community-web.cjs --log-level=error && node .harness/community-web.cjs",
-    "check:community-web-ui": "playwright test --config=playwright.community-web.config.ts"
+    "check:community-web-ui": "playwright test --config=playwright.community-web.config.ts",
+    "seed:test3-community": "npx esbuild prisma/seed-test3-community.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/seed-test3-community.cjs --log-level=error && node -r dotenv/config .harness/seed-test3-community.cjs dotenv_config_path=.env.local",
+    "wipe:test3-community": "npx esbuild prisma/wipe-test3-community.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/wipe-test3-community.cjs --log-level=error && node -r dotenv/config .harness/wipe-test3-community.cjs dotenv_config_path=.env.local"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
