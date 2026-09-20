@@ -1,11 +1,15 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Avatar } from "@/components/Avatar";
-import { CompletionRing } from "@/components/community/CompletionRing";
+import {
+  CompletionRing,
+  completionHook,
+} from "@/components/community/CompletionRing";
 import type { ProviderProfileView } from "@/lib/provider-profile-view";
 import type { TaughtPath } from "@/lib/learn-home";
 import type { Testimonial } from "@/lib/recommendations";
 import type { CommunitySignal } from "@/lib/community-signal";
+import type { ProfileScore } from "@/lib/completeness";
 import type { MessagePermission } from "@/lib/messages";
 import { CommunitySignalBlock } from "@/components/profile/CommunitySignal";
 import {
@@ -56,6 +60,7 @@ export function ConnectProfile({
   taughtPaths = [],
   testimonials = [],
   community = null,
+  score = null,
   colleagueCount,
   youBothKnow = null,
   messagePermission = null,
@@ -80,6 +85,14 @@ export function ConnectProfile({
    * Scott wants it on the new page is his call, not a silent deletion.**
    */
   community?: CommunitySignal | null;
+  /**
+   * ⚠⚠ THE PER-LINE BREAKDOWN, for the completion card (`P2-J3-E590` WS-C).
+   * ⚠ OPTIONAL AND OWNER-ONLY BY CONSTRUCTION: the card is inside the
+   * `owner` branch, and `/providers/[id]` does not compute or pass it — a
+   * visitor's payload never contains somebody else's score.
+   * ⚠ `null` renders no card at all rather than a ring of zeroes.
+   */
+  score?: ProfileScore | null;
   /** ⚠ A REAL COUNT of accepted COLLEAGUE connections. The Counters decision is
    *  locked — *"count it and print it, seeded rows included."* The seeded graph
    *  is small, so the number is small. That is correct, not a bug. */
@@ -596,36 +609,58 @@ export function ConnectProfile({
               A LAYOUT CHOICE: **never show a stranger how incomplete someone
               is.** A percentage on somebody else's profile is a score a buyer
               did not ask for and a provider cannot answer.
+
+              ── ⚠⚠ THE WHOLE CARD IS A LINK (`P2-J3-E590` WS-C) ─────────────
+
+              ⚠ Scott, 2026-09-20: *"The image is the thing that will show on the
+              main profile...the baiot to have the user click it."*
+              ⚠⚠⚠ A REAL ANCHOR, NEVER AN `onClick` ON A DIV. An anchor opens in
+              a new tab on middle-click, offers "copy link", takes focus from the
+              keyboard and is announced as a link. A div with a handler does none
+              of those and looks identical until somebody needs one of them.
+              ⚠ It is also why this stays a SERVER component: there is no state
+              and no handler here, only a link.
+
+              ── ⚠⚠ IT REPLACES THE OLD BLOCK. IT DOES NOT SIT BESIDE IT. ────
+
+              ⚠ `E588` WS-A ruled ONE summary of completeness per page and that
+              ruling stands. ⚠ SUPERSEDED, quoted not deleted (`E164`) — the
+              `enrichmentGaps` list that used to live under the ring:
+              //  {p.enrichmentGaps.length > 0 && (
+              //    <>
+              //      <p …>What To Do Next:</p>
+              //      <ul …>{p.enrichmentGaps.map((g) => <li key={g}>{g}</li>)}</ul>
+              //    </>
+              //  )}
+              ⚠⚠ IT WAS A SECOND, WEAKER COMPLETENESS SUMMARY — five fixed
+              prompts from `profileEnrichmentGaps`, with no points, no "I have
+              none" and no way to finish. `/community/score` is that list done
+              properly, so the hook links to it instead of half-repeating it here.
+              ⚠ **`profileEnrichmentGaps` IS STILL EXPORTED AND STILL USED
+              ELSEWHERE — this removes a RENDER, not the function.**
             */}
-            <section className="rounded-brand border border-line bg-white px-[18px] py-4">
-              <CompletionRing percent={p.completeness} />
+            {score && (
+            <Link
+              href="/community/score"
+              className="group block rounded-brand border border-line bg-white px-[18px] py-4 transition-colors hover:border-magenta/40"
+            >
+              <CompletionRing score={score} />
               <p className="mt-2 text-center text-[12.5px] font-bold text-ink-2">
                 Complete Profiles Sell Services
               </p>
-              {/*
-                ⚠⚠ `What To Do Next` IS `profileEnrichmentGaps`, THE REAL LIST —
-                not the mockup's fixed five. It renders only what is actually
-                missing, so a provider who has done all of it is not handed a
-                to-do list of things they have already done.
-              */}
-              {p.enrichmentGaps.length > 0 && (
-                <>
-                  <p className="mt-3.5 text-[12.5px] font-bold text-ink-2">
-                    What To Do Next:
-                  </p>
-                  <ul className="mt-1 list-none p-0">
-                    {p.enrichmentGaps.map((g) => (
-                      <li
-                        key={g}
-                        className="relative py-1 pl-3.5 text-[13px] text-ink-2 before:absolute before:left-0 before:text-ink-3 before:content-['–']"
-                      >
-                        {g}
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              )}
-            </section>
+              {/* ⚠⚠ COMPUTED, NOT HARD-CODED, and it says something else at
+                  100% rather than printing "0 lines left". */}
+              <p className="mt-1.5 text-center text-[12px] leading-snug text-ink-3">
+                {completionHook(score)}
+              </p>
+              {/* ⚠ `E433` — the one magenta thing in the card is the affordance
+                  that says it is a link. The ring is magenta too, and that is
+                  the same rule: both are interactive now. */}
+              <p className="mt-2.5 text-center text-[12.5px] font-bold text-magenta group-hover:underline">
+                See your score
+              </p>
+            </Link>
+            )}
 
             <ActionCard
               title="Invite a Colleague"

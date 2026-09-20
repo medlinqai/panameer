@@ -10,6 +10,11 @@ import { getPathsTaughtByProfile } from "@/lib/learn-home";
 import { publicTestimonials } from "@/lib/recommendations";
 import { getCommunitySignalForProfile } from "@/lib/community-signal";
 import { getMyCommunity } from "@/lib/connections";
+/* ⚠ `P2-J3-E590` WS-C — the completion card needs the per-line breakdown, which
+   the stored column cannot carry. Computed from `buildCompletenessInput`, the
+   one write path, so the card and the score page cannot disagree. */
+import { buildCompletenessInput } from "@/lib/onboarding";
+import { computeProfileScore } from "@/lib/completeness";
 
 /**
  * ── ⚠⚠ `/community` IS CONNECT HOME (`P2-J3-E557` WS-B) ────────────────────
@@ -64,6 +69,7 @@ export default async function ConnectHomePage() {
           testimonials={await publicTestimonials(profile.id)}
           community={await getCommunitySignalForProfile(profile.id)}
           colleagueCount={(await getMyCommunity(viewer)).colleagues.length}
+          score={await ownerScore(profile.id)}
         />
       ) : (
         /*
@@ -86,4 +92,14 @@ export default async function ConnectHomePage() {
       )}
     </>
   );
+}
+
+/**
+ * ⚠ The owner's score breakdown, or `null` when the input cannot be built.
+ * ⚠⚠ NULL RENDERS NO CARD — better than a ring of zeroes that asserts a
+ * provider has answered nothing.
+ */
+async function ownerScore(profileId: string) {
+  const input = await buildCompletenessInput(profileId);
+  return input ? computeProfileScore(input) : null;
 }
