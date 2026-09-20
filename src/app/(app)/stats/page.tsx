@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { guardPage } from "@/lib/guard";
-import { ownedProviderProfile } from "@/lib/access";
+import { ownedProviderProfile, providerMeetsRequired } from "@/lib/access";
 import { isMarketplaceVisible } from "@/lib/access";
 import { missingRequired, VISIBILITY_THRESHOLD } from "@/lib/completeness";
 import { readAttestations } from "@/lib/experience-attestation";
@@ -201,10 +201,24 @@ export default async function MyStatsPage() {
     }),
   ]);
 
+  /*
+    ⚠⚠ `meetsRequired` IS NOW REQUIRED (`P2-J3-E590` WS-A0). This call site was
+    one of the five that fell back to `completeness >= 80` — the second gate
+    `E585` recorded. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    // const visible = isMarketplaceVisible({
+    //   status: profile.status,
+    //   completeness: profile.completeness,
+    //   paused_at: profile.paused_at,
+    // });
+    ⚠ NO QUERY CHANGE WAS NEEDED HERE — `E563` WS-B already widened this select
+    for `missingRequired`, so every field the predicate reads was in memory and
+    this page was answering the wrong question with the right data.
+  */
   const visible = isMarketplaceVisible({
     status: profile.status,
     completeness: profile.completeness,
     paused_at: profile.paused_at,
+    meetsRequired: providerMeetsRequired(profile),
   });
   const validated = profile.validation_status === "VALIDATED";
   /*

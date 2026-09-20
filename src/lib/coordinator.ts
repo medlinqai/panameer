@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/resend";
 import { hashToken, appBaseUrl } from "@/lib/verification";
 import { inviteProviderTemplate } from "@/lib/email/templates/invite-provider";
-import { isMarketplaceVisible, type Viewer } from "@/lib/access";
+import { isMarketplaceVisible, providerMeetsRequired, type Viewer } from "@/lib/access";
 import { normalizeEmail, sameEmail } from "@/lib/normalizeEmail";
 
 /**
@@ -177,7 +177,24 @@ export async function getRoster(viewer: Viewer) {
   const reps = await prisma.providerProfile.findMany({
     where: { coordinator_person_id: coordinator.id },
     include: {
-      person: { select: { first_name: true, last_name: true } },
+      /*
+        ⚠⚠ WIDENED FOR THE ONE GATE (`P2-J3-E590` WS-A0). ⚠ SUPERSEDED, quoted
+        not deleted (`E164`):
+        // person: { select: { first_name: true, last_name: true } },
+        ⚠ `include` already brings every SCALAR on the profile, so the rate
+        columns, `headline` and `role_type_id` were here all along — what was
+        missing is the PERSON side of the required set and the skills relation.
+      */
+      person: {
+        select: {
+          first_name: true,
+          last_name: true,
+          photo_url: true,
+          phone: true,
+          site: { select: { addresses: { select: { id: true } } } },
+        },
+      },
+      skills: { select: { id: true } },
     },
     orderBy: { updated_at: "desc" },
   });
@@ -206,7 +223,7 @@ export async function getRoster(viewer: Viewer) {
       status: p.status,
       validationStatus: p.validation_status,
       completeness: p.completeness,
-      visible: isMarketplaceVisible(p),
+      visible: isMarketplaceVisible({ ...p, meetsRequired: providerMeetsRequired(p) }),
     })),
     pendingInvites: pending.map((i) => ({
       id: i.id,
