@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { useRef, useState, useSyncExternalStore } from "react";
+// ⚠ `useSyncExternalStore` LEFT WITH THE CLOCK (`P2-ALL-E587` WS-B2).
+// ⚠ SUPERSEDED, quoted not deleted (`E164`):
+//   import { useRef, useState, useSyncExternalStore } from "react";
+import { useRef, useState } from "react";
 import { useMe } from "@/components/MeProvider";
 import { AccountMenu } from "@/components/casing/AccountMenu";
 import { RailIcon } from "@/components/casing/RailIcon";
@@ -117,20 +120,26 @@ export function AppBand() {
           ? "Buyer Console"
           : null;
 
-  /*
-    ⚠ THE CLOCK IS AN EXTERNAL STORE, carried over from `AppHeader` unchanged.
-    The viewer's wall clock is not the server's — providers in Sydney, buyers in
-    Chicago — so the server snapshot is null and the client snapshot is real.
-    Same answer an effect would give, without setting state during mount.
-  */
-  const now = useSyncExternalStore(subscribeNothing, clientNow, serverNow);
-  const dateLabel = now
-    ? new Intl.DateTimeFormat(undefined, {
-        weekday: "short",
-        month: "short",
-        day: "numeric",
-      }).format(now)
-    : null;
+  // ── ⚠ THE CLOCK GOES WITH THE CHIP IT FED (`P2-ALL-E587` WS-B2) ─────────
+  //
+  // ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //
+  //   [comment, paraphrased: the clock was an external store carried over from
+  //    `AppHeader` unchanged, because the viewer's wall clock is not the
+  //    server's — providers in Sydney, buyers in Chicago — so the server
+  //    snapshot was null and the client snapshot real, giving the same answer
+  //    an effect would without setting state during mount]
+  //   const now = useSyncExternalStore(subscribeNothing, clientNow, serverNow);
+  //   const dateLabel = now
+  //     ? new Intl.DateTimeFormat(undefined, {
+  //         weekday: "short", month: "short", day: "numeric",
+  //       }).format(now)
+  //     : null;
+  //
+  // ⚠⚠ ITS ONLY READER WAS THE DATE CHIP. `AppHeader.tsx` carries its OWN copy
+  // of the same clock and its own `CalendarIcon`; that file is dead code kept
+  // on disk (`E559` replaced it with the band and nothing imports it), so this
+  // removal cannot reach it. MEASURED with comments stripped, not grepped.
 
   /*
     ⚠ THE MENU IS `nav.ts`'S, NOT A LIST HERE. That rule survived the reskin
@@ -221,28 +230,47 @@ export function AppBand() {
 
       {/* ── RIGHT: the utility cluster, always right-justified ────────────── */}
       <div className="pm-band-right flex items-center gap-1.5">
-        {/*
-          ⚠ DATE AND `AI on` KEEP THEIR RIBBON WASH (`P1-A1.5-E445b`) — same
-          `bg-magenta/8` + `border-magenta/20` the header used, re-toned for a
-          DARK band. ⚠⚠ `E433` still holds: this is a surface TINT on a status
-          nobody can act on, not the saturated magenta that marks something
-          clickable.
-        */}
-        {dateLabel && (
-          <span className="pm-band-date inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.06] px-3 py-1 text-[12.5px] font-semibold text-white/75">
-            <CalendarIcon />
-            {dateLabel}
-          </span>
-        )}
-
-        {/* ⚠ `AI on` IS DECORATION — no toggle, no backend, nothing reads it
-            (locked spec, 2026-08-13). Styled as a status precisely so nobody
-            tries to click it, and carrying no aria-live: announcing a state that
-            never changes is noise to a screen reader. */}
-        <span className="pm-band-ai inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.06] px-3 py-1 text-[12px] font-semibold text-white/75">
-          <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-          AI on
-        </span>
+        {
+          // ── ⚠⚠⚠ THE DATE CHIP AND THE `AI on` CHIP ARE REMOVED (`P2-ALL-E587`
+          //    WS-B2, 2026-09-20) ────────────────────────────────────────────
+          //
+          // ⚠⚠ SCOTT, 2026-09-20: *"the date chip and the AI on chip will get
+          // REMOVED. They are not functional and I really want to simplify."*
+          // ⚠ RULED: *"RMOVE both. TY."*
+          //
+          // ⚠⚠⚠ NEITHER DID ANYTHING WHEN CLICKED, and the `AI on` comment below
+          // said so in its own words — *"no toggle, no backend, nothing reads
+          // it"*. A control that looks interactive and is not is worse than no
+          // control: it teaches people that things in the band do not respond,
+          // and that lesson then applies to the controls that DO.
+          //
+          // ⚠ SUPERSEDED, quoted not deleted (`E164`), with `//` line comments
+          // per rule 12 and `check:comment-quotes`:
+          //
+          //   [comment, paraphrased: date and `AI on` kept the ribbon wash from
+          //    `P1-A1.5-E445b`, re-toned for a dark band, and noted `E433` still
+          //    held because a surface tint on an unactionable status is not the
+          //    saturated magenta that marks something clickable]
+          //   {dateLabel && (
+          //     <span className="pm-band-date inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.06] px-3 py-1 text-[12.5px] font-semibold text-white/75">
+          //       <CalendarIcon />
+          //       {dateLabel}
+          //     </span>
+          //   )}
+          //
+          //   [comment, paraphrased: `AI on` was decoration — no toggle, no
+          //    backend, nothing read it, locked spec 2026-08-13 — styled as a
+          //    status so nobody would click it, and deliberately carrying no
+          //    aria-live because announcing a state that never changes is noise]
+          //   <span className="pm-band-ai inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.06] px-3 py-1 text-[12px] font-semibold text-white/75">
+          //     <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+          //     AI on
+          //   </span>
+          //
+          // ⚠⚠ THE FREED WIDTH IS NOT REDISTRIBUTED. Scott's stated goal is
+          // simplification, so the band gets QUIETER, not refilled. Measured at
+          // the WS-B2 gate and reported, not spent.
+        }
 
         <BandIcon
           href={HOME_NAV.href}
@@ -393,14 +421,23 @@ const S = {
   strokeLinejoin: "round" as const,
 };
 
-function CalendarIcon() {
-  return (
-    <svg {...S} width={14} height={14}>
-      <rect x="3" y="4.5" width="18" height="16" rx="2" />
-      <path d="M3 9.5h18M8 2.5v4M16 2.5v4" />
-    </svg>
-  );
-}
+// ── ⚠ `CalendarIcon` GOES WITH THE DATE CHIP (`P2-ALL-E587` WS-B2) ────────
+//
+// ⚠ It was defined here and used exactly once — by the chip. ⚠ SUPERSEDED,
+// quoted not deleted (`E164`):
+//
+//   function CalendarIcon() {
+//     return (
+//       <svg {...S} width={14} height={14}>
+//         <rect x="3" y="4.5" width="18" height="16" rx="2" />
+//         <path d="M3 9.5h18M8 2.5v4M16 2.5v4" />
+//       </svg>
+//     );
+//   }
+//
+// ⚠⚠ `AppHeader.tsx` HAS ITS OWN `CalendarIcon` AND KEEPS IT. That file is dead
+// code on disk (`E559`), and the two were never shared — measured with comments
+// stripped before removing this one.
 
 function HomeIcon() {
   return (
@@ -439,17 +476,23 @@ function BugIcon() {
   );
 }
 
-/* The clock as an external store — carried over from `AppHeader` unchanged. */
-function subscribeNothing() {
-  return () => {};
-}
-let cachedNow: Date | null = null;
-function clientNow(): Date {
-  /* Cached so the snapshot is referentially stable — a fresh Date every call
-     makes React think the store changed and re-render forever. */
-  if (!cachedNow) cachedNow = new Date();
-  return cachedNow;
-}
-function serverNow(): null {
-  return null;
-}
+// ── ⚠ THE CLOCK'S THREE HELPERS GO WITH IT (`P2-ALL-E587` WS-B2) ──────────
+//
+// ⚠ All three existed to feed `useSyncExternalStore` for the date chip, and
+// nothing else called them. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+//
+//   [comment, paraphrased: the clock was an external store carried over from
+//    `AppHeader` unchanged]
+//   function subscribeNothing() { return () => {}; }
+//   let cachedNow: Date | null = null;
+//   function clientNow(): Date {
+//     [comment, paraphrased: cached so the snapshot is referentially stable —
+//      a fresh Date every call makes React think the store changed and
+//      re-render forever]
+//     if (!cachedNow) cachedNow = new Date();
+//     return cachedNow;
+//   }
+//   function serverNow(): null { return null; }
+//
+// ⚠⚠ THE REFERENTIAL-STABILITY NOTE IS THE PART WORTH KEEPING IN WORDS: if a
+// clock ever returns to this band, a fresh `Date` per call re-renders forever.

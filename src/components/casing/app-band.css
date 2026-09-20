@@ -131,19 +131,30 @@
  * utility cluster off-screen.
  */
 
-/* 1 — the date chip goes first. */
-@media (max-width: 1400px) {
-  .pm-band-date {
-    display: none;
-  }
-}
-
-/* 2 — then `AI on`. */
-@media (max-width: 1180px) {
-  .pm-band-ai {
-    display: none;
-  }
-}
+/*
+ * ── ⚠⚠ STEPS 1 AND 2 ARE GONE WITH THEIR CHIPS (`P2-ALL-E587` WS-B2) ────────
+ *
+ * ⚠ SCOTT, 2026-09-20: the date chip and `AI on` are REMOVED — *"They are not
+ * functional and I really want to simplify."* ⚠⚠ A shrink step for an element
+ * that no longer exists is a rule nothing can match: it reads as live, and the
+ * next person maintaining the shrink order has to discover by hand that two of
+ * its three steps are dead.
+ *
+ * ⚠ SUPERSEDED, quoted not deleted (`E164`), with line comments per rule 12:
+ *
+ *   // 1 - the date chip goes first.
+ *   // @media (max-width: 1400px) {
+ *   //   .pm-band-date { display: none; }
+ *   // }
+ *   // 2 - then `AI on`.
+ *   // @media (max-width: 1180px) {
+ *   //   .pm-band-ai { display: none; }
+ *   // }
+ *
+ * ⚠⚠ THE SHRINK ORDER ABOVE IS NOW A ONE-STEP ORDER: the logo block. ⚠ THAT
+ * STEP IS UNTOUCHED, and so is the rule that the menu must never wrap and never
+ * push the utility cluster off-screen.
+ */
 
 /*
  * 3 — then the whole logo block. ⚠ THE COLUMN STAYS; only the item hides.
