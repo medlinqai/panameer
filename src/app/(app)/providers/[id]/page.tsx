@@ -1,12 +1,23 @@
 import { notFound, redirect } from "next/navigation";
-import { ProviderProfileViewPage } from "@/components/profile/ProviderProfileView";
+import { prisma } from "@/lib/prisma";
+/*
+  ⚠⚠ THE TWO PROFILE COMPONENTS CONVERGE HERE (`P2-J3-E588` WS-B). This page
+  now renders the SAME `ConnectProfile` the owner sees at `/community`, in
+  visitor mode. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  // import { ProviderProfileViewPage } from "@/components/profile/ProviderProfileView";
+  ⚠ `ProviderProfileView.tsx` STAYS ON DISK, unimported — every removed
+  component does. `check:community` GUARD 3 still reads its source for the
+  `community?: CommunitySignal | null` prop contract.
+*/
+import { ConnectProfile } from "@/components/community/ConnectProfile";
 import { getProviderProfileView } from "@/lib/provider-profile-view";
-import { getMyCommunity } from "@/lib/connections";
+import { getMyCommunity, mutualColleagueCount } from "@/lib/connections";
 import { ConnectControls } from "@/components/community/ConnectControls";
 import { getSessionViewer } from "@/lib/session";
 import { getPathsTaughtByProfile } from "@/lib/learn-home";
 import { publicTestimonials } from "@/lib/recommendations";
 import { getCommunitySignalForProfile } from "@/lib/community-signal";
+import { canMessage } from "@/lib/messages";
 
 /**
  * Provider profile — a marketplace surface, BEHIND LOGIN as of E049.
@@ -86,6 +97,23 @@ async function connectSlot(
   };
 }
 
+/**
+ * ⚠ HOW MANY ACCEPTED COLLEAGUES **THIS PROVIDER** HAS. ⚠⚠ NOT
+ * `getMyCommunity`, WHICH ANSWERS FOR THE VIEWER — asking the viewer's graph
+ * about somebody else's profile is how a count ends up describing the wrong
+ * person. ⚠ A `COLLEAGUE` row is undirected, so both columns are read.
+ */
+async function providerColleagueCount(userId: string | null): Promise<number> {
+  if (!userId) return 0;
+  return prisma.connection.count({
+    where: {
+      kind: "COLLEAGUE",
+      status: "ACCEPTED",
+      OR: [{ from_user_id: userId }, { to_user_id: userId }],
+    },
+  });
+}
+
 export default async function PublicProviderPage({
   params,
 }: {
@@ -127,6 +155,28 @@ export default async function PublicProviderPage({
     getPathsTaughtByProfile(profile.id),
     publicTestimonials(profile.id),
   ]);
+
+  /*
+    ── ⚠⚠ THE THREE VISITOR FACTS (`P2-J3-E588` WS-B) ────────────────────────
+
+    ⚠ `colleagueCount` is THIS PROVIDER'S accepted colleagues — the same real
+    count the owner sees of their own, asked about somebody else.
+    ⚠ `youBothKnow` is the shared set, and it is a REAL QUERY (the owner's
+    `Viewing Me` is the one with no data behind it).
+    ⚠⚠ `messagePermission` COMES FROM `canMessage`, WHICH IS BYTE-UNCHANGED.
+    The button reads the verdict; it does not re-derive the colleague rule.
+    ⚠ All three are skipped on the owner's own page, where they are meaningless
+    — and `getMyCommunity` is the viewer's own graph, so asking it about
+    themselves would answer a different question.
+  */
+  const ownerUserId = profile.person.userId;
+  const [colleagueCount, youBothKnow, messagePermission] = profile.isOwner
+    ? [(await getMyCommunity(viewer)).colleagues.length, null, null]
+    : await Promise.all([
+        providerColleagueCount(ownerUserId),
+        ownerUserId ? mutualColleagueCount(viewer, ownerUserId) : null,
+        ownerUserId ? canMessage(viewer, ownerUserId) : null,
+      ]);
 
   return (
     <div className="flex min-h-full flex-col">
@@ -175,11 +225,14 @@ export default async function PublicProviderPage({
         here as well would print it twice.
       */}
       <main className="flex-1">
-        <ProviderProfileViewPage
+        <ConnectProfile
           p={profile}
           taughtPaths={taughtPaths}
           testimonials={testimonials}
           community={await getCommunitySignalForProfile(profile.id)}
+          colleagueCount={colleagueCount}
+          youBothKnow={youBothKnow}
+          messagePermission={messagePermission}
           {...(await connectSlot(viewer, profile.person.userId, profile.isOwner))}
         />
       </main>

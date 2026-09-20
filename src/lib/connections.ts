@@ -480,3 +480,62 @@ export async function getMyCommunity(viewer: Viewer) {
     ).length,
   };
 }
+
+/**
+ * ── ⚠⚠ `You Both Know` — MUTUAL COLLEAGUES (`P2-J3-E588` WS-B) ─────────────
+ *
+ * ⚠ THE VISITOR'S SIDE OF THE LEFT RAIL. Where an owner sees `Viewing Me` —
+ * which has no data and renders a dash — a visitor sees this, and this IS a
+ * real query. The brief: *"`You Both Know` IS computable from `Connection` —
+ * build that one, it is a real query."*
+ *
+ * ⚠⚠ ACCEPTED COLLEAGUE EDGES ONLY, ON BOTH SIDES. A pending request is not a
+ * colleague, and counting one would tell a visitor they share a connection that
+ * neither person has agreed to. ⚠ `DECLINED` is excluded for the same reason it
+ * is never listed anywhere: it is the other person's business (`E372`).
+ *
+ * ⚠ A connection is UNDIRECTED for `COLLEAGUE` — the row exists once, with
+ * whoever asked as `from`. So "who are X's colleagues" has to read both columns,
+ * which is why this cannot be a single `where` on one field.
+ *
+ * ⚠⚠ MENTOR ROWS ARE EXCLUDED. A `MENTOR` row is created `ACCEPTED`
+ * unilaterally — `followMentor` writes it without the other person agreeing —
+ * so counting them would let anyone inflate a shared-connection number by
+ * following people. That is the same reasoning that keeps messaging
+ * colleague-only.
+ */
+export async function mutualColleagueCount(
+  viewer: Viewer,
+  otherUserId: string
+): Promise<number> {
+  const me = await ownUserId(viewer);
+  if (me === otherUserId) return 0;
+
+  const colleagueIdsOf = async (userId: string): Promise<Set<string>> => {
+    const rows = await prisma.connection.findMany({
+      where: {
+        kind: "COLLEAGUE",
+        status: "ACCEPTED",
+        OR: [{ from_user_id: userId }, { to_user_id: userId }],
+      },
+      select: { from_user_id: true, to_user_id: true },
+    });
+    return new Set(
+      rows.map((r) => (r.from_user_id === userId ? r.to_user_id : r.from_user_id))
+    );
+  };
+
+  const [mine, theirs] = await Promise.all([
+    colleagueIdsOf(me),
+    colleagueIdsOf(otherUserId),
+  ]);
+
+  let shared = 0;
+  for (const id of mine) {
+    /* ⚠ THE TWO PEOPLE THEMSELVES ARE NOT "SHARED". If they are already
+       colleagues with each other, each appears in the other's set, and counting
+       that would report a mutual connection that is just the pair. */
+    if (id !== otherUserId && id !== me && theirs.has(id)) shared += 1;
+  }
+  return shared;
+}

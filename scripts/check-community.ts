@@ -410,9 +410,29 @@ check("E372 — lib/colleague-suggestions.ts is on disk", suggestions.length > 0
       acceptance IS the timestamp; an accepted row with a null one cannot say when
       it was accepted, and the mutual half of the model rests on that. Every write
       that sets `ACCEPTED` is required to set `responded_at` in the SAME object. */
-const acceptedWrites = [...connections.matchAll(/status\s*:\s*"ACCEPTED"[\s\S]{0,200}?\}/g)].map(
-  (m) => m[0]
-);
+/*
+  ⚠⚠ A `where` CLAUSE IS A READ FILTER, NEVER A WRITE (`P2-J3-E588` WS-B).
+
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  // const acceptedWrites = [...connections.matchAll(/status\s*:\s*"ACCEPTED"[\s\S]{0,200}?\}/g)].map((m) => m[0]);
+
+  ⚠⚠ THE OLD PATTERN COULD NOT TELL A READ FROM A WRITE, and `E588`'s
+  `mutualColleagueCount` reads `status: "ACCEPTED"` in a `where` to count
+  colleagues. The guard reported that read as *"an ACCEPTED write without
+  responded_at"* — a write it is not, and a column a `findMany` has no business
+  setting.
+
+  ⚠⚠⚠ THIS IS A TIGHTENING, NOT A WEAKENING: all three genuine writes sit in
+  `data:` blocks and are still matched, and the count assertion below still
+  requires at least three. ⚠ A NEW WRITE CANNOT HIDE IN A `where` — Prisma has
+  no way to set a column from one.
+*/
+const acceptedWrites = [...connections.matchAll(/status\s*:\s*"ACCEPTED"[\s\S]{0,200}?\}/g)]
+  .filter((m) => {
+    const before = connections.slice(Math.max(0, (m.index ?? 0) - 200), m.index ?? 0);
+    return before.lastIndexOf("where:") <= before.lastIndexOf("data:");
+  })
+  .map((m) => m[0]);
 check(
   "E372/1 — every ACCEPTED write exists (the pattern still matches the source)",
   acceptedWrites.length >= 3,

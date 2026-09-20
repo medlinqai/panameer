@@ -1,10 +1,12 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { Avatar } from "@/components/Avatar";
 import { CompletionRing } from "@/components/community/CompletionRing";
 import type { ProviderProfileView } from "@/lib/provider-profile-view";
 import type { TaughtPath } from "@/lib/learn-home";
 import type { Testimonial } from "@/lib/recommendations";
 import type { CommunitySignal } from "@/lib/community-signal";
+import type { MessagePermission } from "@/lib/messages";
 import { CommunitySignalBlock } from "@/components/profile/CommunitySignal";
 import {
   CertificationsBody,
@@ -55,6 +57,9 @@ export function ConnectProfile({
   testimonials = [],
   community = null,
   colleagueCount,
+  youBothKnow = null,
+  messagePermission = null,
+  connect,
 }: {
   p: ProviderProfileView;
   taughtPaths?: TaughtPath[];
@@ -79,7 +84,35 @@ export function ConnectProfile({
    *  locked — *"count it and print it, seeded rows included."* The seeded graph
    *  is small, so the number is small. That is correct, not a bug. */
   colleagueCount: number;
+  /**
+   * ⚠ VISITOR ONLY — accepted colleagues the viewer and this provider share.
+   * A REAL QUERY (`mutualColleagueCount`), unlike `Viewing Me`, which has no
+   * data at all. ⚠ `null` on the owner's own page, where the question is
+   * meaningless.
+   */
+  youBothKnow?: number | null;
+  /**
+   * ⚠⚠ THE MESSAGE VERDICT, READ FROM `canMessage` — THE BUTTON READS THE RULE
+   * AND DOES NOT RESTATE IT. ⚠ `canMessage` is BYTE-UNCHANGED by this brief.
+   */
+  messagePermission?: MessagePermission | null;
+  /** ⚠ `ConnectControls`, resolved by the page that knows it is showing
+   *  somebody else. Carried over unchanged from `/providers/[id]`. */
+  connect?: ReactNode;
 }) {
+  /*
+    ── ⚠⚠⚠ THE SINGLE `isOwner` POINT (`P2-J3-E588` WS-B) ────────────────────
+
+    ⚠⚠ `p.isOwner` IS READ EXACTLY ONCE IN THIS COMPONENT, HERE. Everything
+    owner-only downstream keys off `owner`, and everything visitor-only off
+    `!owner`. ⚠ That is `E562` WS-A's discipline: one gate, so "is every owner
+    affordance absent for a visitor" is answerable by reading one line instead
+    of auditing thirty.
+    ⚠ **A future edit that reaches for `p.isOwner` again has broken the
+    guarantee.** Add to this block instead.
+  */
+  const owner = p.isOwner;
+
   const fullName = [p.person.firstName, p.person.lastName]
     .filter(Boolean)
     .join(" ");
@@ -112,6 +145,95 @@ export function ConnectProfile({
         .filter((n): n is string => Boolean(n && n.trim()))
     )
   ).slice(0, 6);
+
+  /*
+    ── ⚠⚠ ONE SERVICE-PRODUCTS CARD, TWO POSITIONS AND TWO AFFORDANCES ───────
+
+    ⚠ OWNER sees an inventory with prices and a link to manage them.
+    ⚠ VISITOR sees the same rows priced WITH A BUY AFFORDANCE, moved up.
+
+    ⚠⚠⚠ NO PURCHASE FLOW IS BUILT IN THIS BRIEF, AND THE BUTTON SAYS SO RATHER
+    THAN PRETENDING. There is no checkout, no cart and no order for a `Package`
+    — `WorkOrder` holds zero rows. ⚠ A `Buy` button that silently did nothing
+    would be the worst kind of dead control: it looks like the product works.
+  */
+  const serviceProducts = (
+    <ProfileCard title="Service Products">
+      {p.packages.length === 0 ? (
+        <p className="text-[13.5px] leading-relaxed text-ink-2">
+          {owner ? (
+            <>
+              Nothing listed yet. A service product is what a buyer actually
+              buys.{" "}
+              <Link
+                href="/my-services"
+                className="font-bold text-magenta hover:underline"
+              >
+                Add a Service Product
+              </Link>
+            </>
+          ) : (
+            "This provider hasn't listed any service products yet."
+          )}
+        </p>
+      ) : (
+        <>
+          {!owner && (
+            <p className="-mt-1.5 mb-3 text-[13.5px] leading-relaxed text-ink-2">
+              Fixed scope, fixed fee.
+            </p>
+          )}
+          <div className="flex flex-col">
+            {p.packages.map((pk, i) => (
+              <div
+                key={pk.id}
+                className={
+                  "flex items-center justify-between gap-3.5 py-3" +
+                  (i > 0 ? " border-t border-line-2" : "")
+                }
+              >
+                <div className="min-w-0">
+                  <span className="text-[14.5px] font-bold">{pk.title}</span>
+                  {pk.summary && (
+                    <p className="mt-1 text-[12.5px] leading-relaxed text-ink-2">
+                      {pk.summary}
+                    </p>
+                  )}
+                </div>
+                <div className="shrink-0 whitespace-nowrap text-right">
+                  {/* ⚠ `E433` — a price is a figure, so ink. */}
+                  {pk.priceCents != null && (
+                    <b className="text-[14px] tabular-nums text-ink">
+                      {money(pk.priceCents, pk.currency)}
+                    </b>
+                  )}
+                  {/* ⚠⚠ THE BUY AFFORDANCE IS DISABLED AND NAMED. Nobody buys
+                      their own product, so it is visitor-only; and there is no
+                      purchase flow yet, so it refuses rather than misleads. */}
+                  {!owner && (
+                    <button
+                      type="button"
+                      disabled
+                      title="Buying isn't open yet"
+                      className="mt-1.5 block cursor-not-allowed rounded-full bg-line px-4 py-1.5 text-[13px] font-bold text-ink-3"
+                    >
+                      Buy
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+          {!owner && (
+            <p className="mt-3 text-[12.5px] leading-relaxed text-ink-2">
+              Buying isn&rsquo;t open yet. Connect as a colleague to talk to this
+              provider about the work.
+            </p>
+          )}
+        </>
+      )}
+    </ProfileCard>
+  );
 
   return (
     <div className="pm-cp">
@@ -166,12 +288,19 @@ export function ConnectProfile({
         {/* ── colleagues / viewing me ── */}
         <section className="rounded-brand border border-line bg-white px-[18px] py-4">
           <div className="flex items-center justify-between gap-2.5 py-2 text-[13.5px]">
-            <Link
-              href="/community/colleagues"
-              className="font-bold text-magenta hover:underline"
-            >
-              My Colleagues
-            </Link>
+            {owner ? (
+              <Link
+                href="/community/colleagues"
+                className="font-bold text-magenta hover:underline"
+              >
+                My Colleagues
+              </Link>
+            ) : (
+              /* ⚠ NOT A LINK FOR A VISITOR — `/community/colleagues` is the
+                 viewer's OWN colleague list, so linking it from somebody else's
+                 profile would promise their list and deliver yours. */
+              <span className="font-bold text-ink">Colleagues</span>
+            )}
             {/* ⚠ `E433` — a count is a figure, so ink. */}
             <b className="text-ink">{colleagueCount}</b>
           </div>
@@ -183,13 +312,25 @@ export function ConnectProfile({
             fact about a real person's profile.
             ⚠ So it takes the dash convention, with a sentence saying what it is.
           */}
-          <div className="flex items-center justify-between gap-2.5 border-t border-line-2 py-2 text-[13.5px]">
-            <span className="text-ink-2">Viewing Me</span>
-            <b className="text-ink-2/40">—</b>
-          </div>
-          <p className="text-[12px] leading-relaxed text-ink-2">
-            Profile views aren&rsquo;t counted yet.
-          </p>
+          {owner ? (
+            <>
+              <div className="flex items-center justify-between gap-2.5 border-t border-line-2 py-2 text-[13.5px]">
+                <span className="text-ink-2">Viewing Me</span>
+                <b className="text-ink-2/40">—</b>
+              </div>
+              <p className="text-[12px] leading-relaxed text-ink-2">
+                Profile views aren&rsquo;t counted yet.
+              </p>
+            </>
+          ) : (
+            /* ⚠⚠ THE VISITOR'S SECOND ROW IS A REAL QUERY, unlike `Viewing Me`.
+               Accepted colleague edges on both sides — see
+               `mutualColleagueCount`. */
+            <div className="flex items-center justify-between gap-2.5 border-t border-line-2 py-2 text-[13.5px]">
+              <span className="text-ink-2">You Both Know</span>
+              <b className="text-ink">{youBothKnow ?? 0}</b>
+            </div>
+          )}
         </section>
 
         {/* ── companies & projects ── */}
@@ -215,58 +356,72 @@ export function ConnectProfile({
           )}
         </section>
 
-        {/* ── grow your business faster ── */}
-        <section className="rounded-brand border border-line bg-white px-[18px] py-4">
-          <p className="mb-2.5 text-[11.5px] font-bold uppercase tracking-[0.07em] text-ink-3">
-            Grow your business faster
-          </p>
-          <div className="flex flex-col">
-            <Link
-              href="/my-services"
-              className="py-2 text-[13.5px] font-bold text-magenta hover:underline"
-            >
-              Sell Service Products
-            </Link>
-            {/*
-              ⚠⚠ `Sell Paid Groups` IS PLAIN TEXT, NOT A LINK — the footer rule.
-              ⚠ THERE IS NO SUCH PAGE. A link to a route that does not exist is
-              a 404 with a promise attached; the words stay so the intent is
-              recorded, and they become a link the day the page ships.
-            */}
-            <span className="border-t border-line-2 py-2 text-[13.5px] text-ink-2">
-              Sell Paid Groups
-            </span>
-          </div>
-        </section>
-
-        {/* ── owner utility links ── */}
-        <section className="rounded-brand border border-line bg-white px-[18px] py-4">
-          <div className="flex flex-col">
-            {[
-              { label: "My Stats", href: "/stats" },
-              { label: "My Account Health", href: "/account-health" },
-              { label: "My Groups", href: "/community/teams" },
-              { label: "My Settings", href: "/settings" },
-            ].map((l, i) => (
+        {/*
+          ⚠⚠⚠ OWNER-ONLY, AND THIS IS THE WHOLE VISITOR GUARANTEE IN THE LEFT
+          RAIL. Selling links and the account utilities are things only the
+          person whose profile this is can act on. ⚠ A visitor sees the identity
+          card, the two counts and the public clients — and nothing else.
+        */}
+        {owner && (
+          <>
+          {/* ── grow your business faster ── */}
+          <section className="rounded-brand border border-line bg-white px-[18px] py-4">
+            <p className="mb-2.5 text-[11.5px] font-bold uppercase tracking-[0.07em] text-ink-3">
+              Grow your business faster
+            </p>
+            <div className="flex flex-col">
               <Link
-                key={l.href}
-                href={l.href}
-                className={
-                  "py-2 text-[13.5px] font-bold text-magenta hover:underline" +
-                  (i > 0 ? " border-t border-line-2" : "")
-                }
+                href="/my-services"
+                className="py-2 text-[13.5px] font-bold text-magenta hover:underline"
               >
-                {l.label}
+                Sell Service Products
               </Link>
-            ))}
-          </div>
-        </section>
+              {/*
+                ⚠⚠ `Sell Paid Groups` IS PLAIN TEXT, NOT A LINK — the footer rule.
+                ⚠ THERE IS NO SUCH PAGE. A link to a route that does not exist is
+                a 404 with a promise attached; the words stay so the intent is
+                recorded, and they become a link the day the page ships.
+              */}
+              <span className="border-t border-line-2 py-2 text-[13.5px] text-ink-2">
+                Sell Paid Groups
+              </span>
+            </div>
+          </section>
+
+          {/* ── owner utility links ── */}
+          <section className="rounded-brand border border-line bg-white px-[18px] py-4">
+            <div className="flex flex-col">
+              {[
+                { label: "My Stats", href: "/stats" },
+                { label: "My Account Health", href: "/account-health" },
+                { label: "My Groups", href: "/community/teams" },
+                { label: "My Settings", href: "/settings" },
+              ].map((l, i) => (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  className={
+                    "py-2 text-[13.5px] font-bold text-magenta hover:underline" +
+                    (i > 0 ? " border-t border-line-2" : "")
+                  }
+                >
+                  {l.label}
+                </Link>
+              ))}
+            </div>
+          </section>
+          </>
+        )}
+
       </aside>
 
       {/* ═══════════ CENTRE ═══════════ */}
       <main>
+        {/* ⚠⚠ THE HEADING NAMES WHOSE PAGE THIS IS. `My Profile` on somebody
+            else's profile is the same class of error as an owner affordance
+            leaking — it tells the reader the record is theirs. */}
         <h1 className="mb-3.5 mt-0.5 font-display text-[25px] font-bold">
-          My Profile
+          {owner ? "My Profile" : fullName}
         </h1>
 
         <div className="flex flex-col gap-4">
@@ -296,6 +451,9 @@ export function ConnectProfile({
             </ProfileCard>
           </div>
 
+          {/* ⚠ THE VISITOR'S BUYING SURFACE, DIRECTLY UNDER BIO AND RATES. */}
+          {!owner && serviceProducts}
+
           <div className="pm-cp-three">
             <ProfileCard title="Specializations">
               <SpecializationsBody specializations={p.specializations} />
@@ -315,7 +473,7 @@ export function ConnectProfile({
             <WorkHistoryBody
               employers={p.employers}
               projects={p.projects}
-              isOwner={p.isOwner}
+              isOwner={owner}
               empty="No work history yet."
             />
           </ProfileCard>
@@ -323,54 +481,20 @@ export function ConnectProfile({
           <ProfileCard title="Solo Projects">
             <SoloProjectsBody
               projects={soloProjects}
-              isOwner={p.isOwner}
+              isOwner={owner}
               empty="No solo projects yet."
             />
           </ProfileCard>
 
-          <ProfileCard title="Service Products">
-            {p.packages.length === 0 ? (
-              <p className="text-[13.5px] leading-relaxed text-ink-2">
-                Nothing listed yet. A service product is what a buyer actually
-                buys.{" "}
-                <Link
-                  href="/my-services"
-                  className="font-bold text-magenta hover:underline"
-                >
-                  Add a Service Product
-                </Link>
-              </p>
-            ) : (
-              <div className="flex flex-col">
-                {p.packages.map((pk, i) => (
-                  <div
-                    key={pk.id}
-                    className={
-                      "flex items-center justify-between gap-3.5 py-3" +
-                      (i > 0 ? " border-t border-line-2" : "")
-                    }
-                  >
-                    <div className="min-w-0">
-                      <span className="text-[14.5px] font-bold">{pk.title}</span>
-                      {pk.summary && (
-                        <p className="mt-1 text-[12.5px] leading-relaxed text-ink-2">
-                          {pk.summary}
-                        </p>
-                      )}
-                    </div>
-                    {/* ⚠ `E433` — a price is a figure, so ink. ⚠⚠ NO BUY
-                        AFFORDANCE IN OWNER MODE: nobody buys their own product.
-                        The visitor's priced, buyable version is WS-B. */}
-                    {pk.priceCents != null && (
-                      <b className="shrink-0 text-[14px] tabular-nums text-ink">
-                        {money(pk.priceCents, pk.currency)}
-                      </b>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </ProfileCard>
+          {/*
+            ⚠⚠ SERVICE PRODUCTS SITS HERE FOR AN OWNER — an inventory item in
+            the natural reading order, after the work. ⚠ FOR A VISITOR IT MOVED
+            UP, beneath Bio/Rates: a buyer is here to buy, and the thing that
+            can be bought should not be below eleven cards of history.
+            ⚠ ONE `serviceProducts` NODE, RENDERED IN ONE OF TWO PLACES — not
+            two copies that can drift.
+          */}
+          {owner && serviceProducts}
 
           {/*
             ⚠ `Learning Paths` RENDERS THE PATHS THIS PERSON TEACHES
@@ -401,13 +525,21 @@ export function ConnectProfile({
           <ProfileCard title="Recommendations">
             {testimonials.length === 0 ? (
               <p className="text-[13.5px] leading-relaxed text-ink-2">
-                No recommendations yet.{" "}
-                <Link
-                  href="/recommendations"
-                  className="font-bold text-magenta hover:underline"
-                >
-                  Request a Recommendation
-                </Link>
+                {owner ? (
+                  <>
+                    No recommendations yet.{" "}
+                    {/* ⚠ OWNER-ONLY — a visitor cannot request recommendations
+                        on somebody else's behalf. */}
+                    <Link
+                      href="/recommendations"
+                      className="font-bold text-magenta hover:underline"
+                    >
+                      Request a Recommendation
+                    </Link>
+                  </>
+                ) : (
+                  "No recommendations yet."
+                )}
               </p>
             ) : (
               <div className="flex flex-col">
@@ -450,58 +582,185 @@ export function ConnectProfile({
           <CommunitySignalBlock
             signal={community}
             firstName={p.person.firstName ?? ""}
-            isOwner={p.isOwner}
+            isOwner={owner}
           />
         </div>
       </main>
 
       {/* ═══════════ RIGHT RAIL ═══════════ */}
       <aside className="pm-cp-rail-r">
-        <section className="rounded-brand border border-line bg-white px-[18px] py-4">
-          <CompletionRing percent={p.completeness} />
-          <p className="mt-2 text-center text-[12.5px] font-bold text-ink-2">
-            Complete Profiles Sell Services
-          </p>
-          {/*
-            ⚠⚠ `What To Do Next` IS `profileEnrichmentGaps`, THE REAL LIST —
-            not the mockup's fixed five. It renders only what is actually
-            missing, so a provider who has done all of it is not handed a
-            to-do list of things they have already done.
-          */}
-          {p.enrichmentGaps.length > 0 && (
-            <>
-              <p className="mt-3.5 text-[12.5px] font-bold text-ink-2">
-                What To Do Next:
+        {owner ? (
+          <>
+            {/*
+              ⚠⚠⚠ THE COMPLETION RING IS OWNER-ONLY AND THAT IS A JUDGEMENT, NOT
+              A LAYOUT CHOICE: **never show a stranger how incomplete someone
+              is.** A percentage on somebody else's profile is a score a buyer
+              did not ask for and a provider cannot answer.
+            */}
+            <section className="rounded-brand border border-line bg-white px-[18px] py-4">
+              <CompletionRing percent={p.completeness} />
+              <p className="mt-2 text-center text-[12.5px] font-bold text-ink-2">
+                Complete Profiles Sell Services
               </p>
-              <ul className="mt-1 list-none p-0">
-                {p.enrichmentGaps.map((g) => (
-                  <li
-                    key={g}
-                    className="relative py-1 pl-3.5 text-[13px] text-ink-2 before:absolute before:left-0 before:text-ink-3 before:content-['–']"
-                  >
-                    {g}
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
-        </section>
+              {/*
+                ⚠⚠ `What To Do Next` IS `profileEnrichmentGaps`, THE REAL LIST —
+                not the mockup's fixed five. It renders only what is actually
+                missing, so a provider who has done all of it is not handed a
+                to-do list of things they have already done.
+              */}
+              {p.enrichmentGaps.length > 0 && (
+                <>
+                  <p className="mt-3.5 text-[12.5px] font-bold text-ink-2">
+                    What To Do Next:
+                  </p>
+                  <ul className="mt-1 list-none p-0">
+                    {p.enrichmentGaps.map((g) => (
+                      <li
+                        key={g}
+                        className="relative py-1 pl-3.5 text-[13px] text-ink-2 before:absolute before:left-0 before:text-ink-3 before:content-['–']"
+                      >
+                        {g}
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </section>
 
-        <ActionCard
-          title="Invite a Colleague"
-          label="Invite Colleague to Register"
-          href="/invite-colleague"
-        />
-        <ActionCard
-          title="Request Recommendation"
-          label="Request a Recommendation"
-          href="/recommendations"
-        />
-        <ActionCard
-          title="Request a Mentor"
-          label="Request a Mentor"
-          href="/community/mentors"
-        />
+            <ActionCard
+              title="Invite a Colleague"
+              label="Invite Colleague to Register"
+              href="/invite-colleague"
+            />
+            <ActionCard
+              title="Request Recommendation"
+              label="Request a Recommendation"
+              href="/recommendations"
+            />
+            <ActionCard
+              title="Request a Mentor"
+              label="Request a Mentor"
+              href="/community/mentors"
+            />
+          </>
+        ) : (
+          <>
+            {/*
+              ── ⚠⚠ THE TRUST CARD. FACTS THE RECORD HOLDS, NOTHING DERIVED. ──
+              ⚠ Every row renders only when its value exists. A missing rate is
+              absent, never `$0`; a missing language is absent, never "English"
+              as a default — that would be a fact about a person nobody stated.
+            */}
+            <section className="rounded-brand border border-line bg-white px-[18px] py-4">
+              {p.validated ? (
+                <>
+                  <div className="flex items-center gap-2">
+                    <span className="text-magenta">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" role="img" aria-label="Validated by Panameer">
+                        <path d="M12 2l2.4 1.8 3-.3 1 2.8 2.6 1.5-.9 2.9.9 2.9-2.6 1.5-1 2.8-3-.3L12 22l-2.4-1.8-3 .3-1-2.8L3 16.2l.9-2.9L3 10.4l2.6-1.5 1-2.8 3 .3z" />
+                        <path d="M10.6 15.2l-2.8-2.8 1.1-1.1 1.7 1.7 4-4 1.1 1.1z" fill="#fff" />
+                      </svg>
+                    </span>
+                    <b className="text-[14px]">Validated by Panameer</b>
+                  </div>
+                  <p className="mt-2 text-[12.5px] leading-relaxed text-ink-2">
+                    Panameer has confirmed this provider&rsquo;s identity and
+                    work history.
+                  </p>
+                </>
+              ) : (
+                /* ⚠⚠ NOT VALIDATED SAYS NOTHING BAD. `validation_status` is
+                   granted on merit and most providers have never requested it
+                   — 13 of 111 are validated. An "unvalidated" badge would read
+                   as a mark against 98 people for a process they were never
+                   offered (the door only shipped in `E563`). So the card simply
+                   leads with the facts instead. */
+                <b className="text-[14px]">About this provider</b>
+              )}
+
+              <TrustRow label="Experience" value={p.experience} />
+              <TrustRow label="Rate" value={rateRange(p)} />
+              <TrustRow
+                label={p.languages.length > 1 ? "Languages" : "Language"}
+                value={
+                  p.languages.length > 0
+                    ? p.languages.map((l) => l.name).join(", ")
+                    : null
+                }
+              />
+            </section>
+
+            {/*
+              ⚠ `Connect as a Colleague` IS `ConnectControls`, PASSED IN. It
+              already knows the four relation states (none / pending / accepted
+              / mentor) and posts through the same rules the server re-checks.
+              ⚠⚠ REBUILDING IT HERE WOULD BE A SECOND COPY OF THE CONNECT RULE.
+            */}
+            {connect && (
+              <section className="rounded-brand border border-line bg-white px-[18px] py-4">
+                <h3 className="mb-2.5 font-display text-[14.5px] font-bold leading-tight">
+                  Connect as a Colleague
+                </h3>
+                {connect}
+                <p className="mt-2.5 text-[12px] leading-relaxed text-ink-2">
+                  Colleagues can message each other.
+                </p>
+              </section>
+            )}
+
+            {/* ⚠ ONLY WHEN THE PROVIDER SAID SO. `open_for_mentoring` is the
+                provider's own statement; absent it, the card does not render. */}
+            {p.openForMentoring && (
+              <ActionCard
+                title="Request Mentoring"
+                label="Request Mentoring"
+                href="/community/mentors"
+                note="Open to mentoring."
+              />
+            )}
+
+            {/*
+              ── ⚠⚠⚠ `Message` READS THE RULE, IT DOES NOT RESTATE IT ─────────
+              ⚠ The verdict comes from `canMessage`, which is BYTE-UNCHANGED by
+              this brief. The button is disabled exactly when the lib says no,
+              and the caption is THE LIB'S OWN STRING.
+              ⚠⚠ THE MOCKUP'S SINGLE SENTENCE — *"Available once you are
+              colleagues."* — WOULD BE WRONG IN THREE OF THE FIVE DENIAL STATES:
+              a pending request, a member who turned messages off, and someone
+              with no account are all different answers, and telling all three
+              "become colleagues" sends people to do something that will not
+              help. ⚠ **Reported at the WS-B gate.**
+            */}
+            <section className="rounded-brand border border-line bg-white px-[18px] py-4 text-center">
+              <h3 className="mb-2.5 font-display text-[14.5px] font-bold leading-tight">
+                Message
+              </h3>
+              {messagePermission?.ok ? (
+                <Link
+                  href={`/messages?with=${p.person.userId ?? ""}`}
+                  className="block w-full rounded-full bg-magenta px-3.5 py-2.5 text-[13.5px] font-bold leading-tight text-white transition-colors hover:bg-magenta-dark"
+                >
+                  Message
+                </Link>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    disabled
+                    className="block w-full cursor-not-allowed rounded-full bg-line px-3.5 py-2.5 text-[13.5px] font-bold leading-tight text-ink-3"
+                  >
+                    Message
+                  </button>
+                  {messagePermission && !messagePermission.ok && (
+                    <p className="mt-2.5 text-[12px] leading-relaxed text-ink-2">
+                      {messagePermission.message}
+                    </p>
+                  )}
+                </>
+              )}
+            </section>
+          </>
+        )}
       </aside>
     </div>
   );
@@ -550,10 +809,13 @@ function ActionCard({
   title,
   label,
   href,
+  note,
 }: {
   title: string;
   label: string;
   href: string;
+  /** ⚠ One line under the button saying why it is offered. Optional. */
+  note?: string;
 }) {
   return (
     <section className="rounded-brand border border-line bg-white px-[18px] py-4 text-center">
@@ -568,8 +830,41 @@ function ActionCard({
       >
         {label}
       </Link>
+      {note && (
+        <p className="mt-2.5 text-[12px] leading-relaxed text-ink-2">{note}</p>
+      )}
     </section>
   );
+}
+
+/**
+ * ⚠ ONE FACT PER ROW, AND A ROW WITH NO VALUE DOES NOT RENDER. An empty row on
+ * a trust card is worse than a missing one — it reads as a fact we checked and
+ * could not confirm.
+ */
+function TrustRow({ label, value }: { label: string; value: string | null }) {
+  if (!value) return null;
+  return (
+    <div className="flex items-center justify-between gap-2.5 border-t border-line-2 py-2 text-[13.5px]">
+      <span className="text-ink-2">{label}</span>
+      {/* ⚠ `E433` — a figure, so ink. */}
+      <b className="text-ink">{value}</b>
+    </div>
+  );
+}
+
+/**
+ * ⚠ THE ADVERTISED RANGE, exactly as `E078c` stores it. Returns null when no
+ * rate is set — the row then does not render, rather than printing `$0`.
+ */
+function rateRange(p: ProviderProfileView): string | null {
+  const { minCents, maxCents, currency } = p.rates;
+  if (minCents == null && maxCents == null) return null;
+  const lo = minCents ?? maxCents!;
+  const hi = maxCents ?? minCents!;
+  return lo === hi
+    ? money(lo, currency)
+    : `${money(lo, currency)} – ${money(hi, currency)}`;
 }
 
 /** ⚠ Integer cents, like every other money value in the app. */

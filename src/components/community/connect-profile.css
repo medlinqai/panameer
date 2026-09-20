@@ -55,10 +55,22 @@
 }
 
 /*
-  ⚠⚠ STEP 1 — THE RIGHT RAIL DROPS BENEATH THE CENTRE. It does not disappear:
-  the completion ring and the three actions are the point of the page for an
-  owner. It becomes a ROW of cards under the centre so it keeps its prominence
-  instead of being buried at the bottom of a single column.
+  ── ⚠⚠ STEP 1 — THE RIGHT RAIL MOVES **ABOVE** THE CENTRE ───────────────────
+
+  ⚠⚠⚠ SCOTT'S RULING AT THE WS-A GATE, 2026-09-19, CORRECTING THE BRIEF. The
+  brief said *"the right rail drops BENEATH the centre"*, and WS-A built that —
+  ⚠ MEASURED, IT PUT THE COMPLETION RING ROUGHLY 5,000px DOWN on a real profile,
+  because the centre is eleven cards of work history. ⚠⚠ The ring and the three
+  actions are the POINT of the page for an owner; burying them under the whole
+  record is the opposite of what the rail is for.
+
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  // .pm-cp-rail-r { grid-column: 1 / -1; position: static; … }   // no `order`
+
+  ⚠⚠ `order: -1` IS WHAT LIFTS IT, and it works because the rail is a direct
+  grid item. ⚠ THE DOM ORDER IS UNCHANGED — the rail still comes last in the
+  markup, so a screen reader and the keyboard still reach the profile before the
+  actions on it. Only the painted position moves.
 */
 @media (max-width: 1060px) {
   .pm-cp {
@@ -66,6 +78,7 @@
   }
   .pm-cp-rail-r {
     grid-column: 1 / -1;
+    order: -1;
     position: static;
     flex-direction: row;
     flex-wrap: wrap;
