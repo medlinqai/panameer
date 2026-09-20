@@ -307,10 +307,38 @@ export async function getAdminProviders(viewer: Viewer) {
     }),
   ]);
 
-  const registered = profiles.filter(
+  /*
+    ── ⚠⚠⚠ RENAMED, BECAUSE IT NOW COUNTS A DIFFERENT THING (`P2-J3-E590` WS-C)
+
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //  const registered = profiles.filter((p) => p.completeness < VISIBILITY_THRESHOLD).length;
+    //  const eightyComplete = profiles.filter(
+    //    (p) => p.status === "ACTIVE" && p.completeness >= VISIBILITY_THRESHOLD &&
+    //           p.validation_status !== "VALIDATED"
+    //  ).length;
+
+    ⚠⚠ THE PREDICATE IS UNCHANGED. THE NUMBER MOVED ANYWAY — 43 to 24 on
+    2026-09-20, WITH NO PROVIDER DOING ANYTHING. `E590` WS-A re-weighted
+    `completeness.ts` so the score means *"you answered every line"* instead of
+    *"you cleared a 106-point table capped at 100"*, and the backfill recomputed
+    111 stored scores. A count over a threshold moved because the scale under it
+    did.
+
+    ⚠⚠⚠ SO THE NAME HAD TO GO. `eightyComplete` reads as *"80% of the way
+    through onboarding"*, which it never quite meant and now means something
+    materially harder. ⚠ `scoredOver80` says only what it measures: a SCORE,
+    over a threshold. ⚠ **It is not a visibility count — `live` above is, and
+    the two are deliberately different numbers.**
+
+    ⚠ Scott's rider, 2026-09-20: *"Either re-baseline it with the change dated
+    on the board, or rename it to say what it measures now."* ⚠⚠ BOTH WERE
+    DONE — the rename is the durable half; the dated note on the board is what
+    stops the step change reading as lost providers.
+  */
+  const scoredUnder80 = profiles.filter(
     (p) => p.completeness < VISIBILITY_THRESHOLD
   ).length;
-  const eightyComplete = profiles.filter(
+  const scoredOver80 = profiles.filter(
     (p) =>
       p.status === "ACTIVE" &&
       p.completeness >= VISIBILITY_THRESHOLD &&
@@ -342,7 +370,7 @@ export async function getAdminProviders(viewer: Viewer) {
     });
 
   return {
-    stages: { invited, registered, eightyComplete, validated },
+    stages: { invited, scoredUnder80, scoredOver80, validated },
     providers: rows,
   };
 }
