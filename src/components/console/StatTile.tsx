@@ -18,13 +18,32 @@ export function StatTile({
   label,
   children,
   hint,
+  span,
 }: {
   label: string;
   children: ReactNode;
   hint?: string;
+  /**
+   * ⚠ Column span inside the parent grid (`P2-J2-E563` WS-A). `2` is the only
+   * value any caller needs today — the merged `Profile` tile carries what two
+   * tiles used to carry, so it earns two columns.
+   *
+   * ⚠⚠ THE CLASSES ARE WHOLE TOKENS AND MUST STAY THAT WAY. Tailwind v4 scans
+   * source TEXT and never evaluates JavaScript, so a class built by
+   * concatenation or interpolation emits no CSS and fails SILENTLY — the
+   * `HERO_SCRIM` defect (`E338`), which shipped dead on seven public pages for
+   * two days behind a warm cache. ⚠ Hence a literal per branch, never
+   * `` `sm:col-span-${span}` ``.
+   */
+  span?: 2;
 }) {
   return (
-    <section className="rounded-brand border border-line bg-white p-5">
+    <section
+      className={
+        "rounded-brand border border-line bg-white p-5" +
+        (span === 2 ? " sm:col-span-2" : "")
+      }
+    >
       <h2 className="font-display text-[15px] font-bold">{label}</h2>
       <div className="mt-3">{children}</div>
       {hint && <p className="mt-3 text-[12.5px] leading-relaxed text-ink-2">{hint}</p>}
