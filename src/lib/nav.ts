@@ -166,6 +166,27 @@ export const UTILITY_NAV: NavItem[] = [SEARCH_NAV, HOME_NAV, NOTIFICATIONS_NAV];
   had them. Relabelling is not re-permissioning.
 */
 export const REQUESTER_NAV: NavItem[] = [
+  /*
+    ── ⚠⚠⚠ `Connect` IS FIRST ON THE BUYER MENU TOO (`P2-J3-E588` WS-C) ──────
+
+    ⚠ Scott, 2026-09-19, ruled the move for BOTH menus. ⚠⚠ The buyer menu now
+    reads `Connect · Learn · Hire · Shop · Track Orders · Pay`.
+
+    ⚠ SUPERSEDED, quoted not deleted (`E164`) — it sat LAST, after `Pay`, with
+    these two notes attached:
+    // ⚠ `My Community` (`P1-ALL-E372` WS-5). Scott: "'Community' sounds like a
+    //   place you visit; 'My Community' sounds like something you have."
+    // ⚠ `Connect` REPLACES `My Community` IN THE RAIL ONLY. The journey keeps
+    //   its name on the page `<h1>`, which still reads `My Community`.
+    ⚠⚠ BOTH NOTES ARE STILL TRUE AND STILL BIND: the `heading` below is
+    `My Community`, and the page `<h1>` is unchanged by this brief.
+
+    ⚠⚠ A BUYER HAS NO PROVIDER PROFILE, so `/community` renders the Connect
+    LANDING for them, not a profile — see the fallback in
+    `(app)/community/page.tsx`. ⚠ Putting `Connect` first on the buyer side is
+    Scott's ruling and is deliberate even though the surface behind it differs.
+  */
+  { label: "Connect", heading: "My Community", href: "/community", icon: "MessagesSquare" },
   { label: "Learn", heading: "Learning Paths", href: "/learn", icon: "GraduationCap" },
   {
     /* ⚠ MIRRORED SLOT. `nav.ts` already documents why: the rails point the SAME
@@ -329,11 +350,8 @@ export const REQUESTER_NAV: NavItem[] = [
     icon: "CreditCard",
     requires: "canHireTalent",
   },
-  /* ⚠ `My Community` (`P1-ALL-E372` WS-5). Scott: *"'Community' sounds like a
-     place you visit; 'My Community' sounds like something you have."* */
-  /* ⚠ `Connect` REPLACES `My Community` IN THE RAIL ONLY. The journey keeps its
-     name on the page `<h1>`, which still reads `My Community`. */
-  { label: "Connect", heading: "My Community", href: "/community", icon: "MessagesSquare" },
+  /* ⚠ `Connect` MOVED TO THE TOP OF THIS LIST (`P2-J3-E588` WS-C). Its entry
+     and the reasoning are at the head of the array. */
 ];
 
 /**
@@ -694,6 +712,31 @@ export const COMPANY_NAV: NavItem[] = [
   REFERENCE LIST EITHER — found by grepping rather than trusting the brief.
 */
 export const PROVIDER_NAV: NavItem[] = [
+  /*
+    ── ⚠⚠⚠ `Connect` IS FIRST (`P2-J3-E588` WS-C, SCOTT 2026-09-19) ──────────
+
+    ⚠⚠ IT MOVED FROM LAST TO FIRST ON BOTH MENUS. Scott, 2026-09-19: *"connect
+    is now 'build your profile and connect to other profiles'."* ⚠ Connect
+    stopped being a place you visit after the work and became the thing the
+    work hangs off — `/community` IS the provider's profile as of WS-A, so the
+    first icon in the band is now "you", and everything after it is what you do.
+
+    ⚠⚠⚠ THIS CHANGES EVERY LOGGED-IN PAGE. One `AppBand` serves `(app)/**`,
+    `/admin/**` and signed-in `/learn`, and the band reads these arrays in
+    order.
+
+    ⚠ SUPERSEDED, quoted not deleted (`E164`) — it sat LAST, after `Get Paid`
+    on the seller side and after `Pay` on the buyer side:
+    // { label: "Connect", heading: "My Community", href: "/community", icon: "MessagesSquare" },
+
+    ⚠ THE ENTRY ITSELF IS BYTE-IDENTICAL — same label, same heading, same href,
+    same icon. ONLY ITS POSITION MOVED. ⚠⚠ `railPersona()` IS UNTOUCHED
+    (`E491`): it returns `PANAMEER`/`SELLER`/`BUYER`, which are VALUES the band
+    branches on, never labels, and reordering a menu cannot reach it.
+    ⚠ The Connect TAB ROW is unchanged — `Home · Colleagues · Forums ·
+    Mentoring (early) · Teams`, with `Home` active on `/community`.
+  */
+  { label: "Connect", heading: "My Community", href: "/community", icon: "MessagesSquare" },
   { label: "Learn", heading: "Learning Paths", href: "/learn", icon: "GraduationCap" },
   {
     /* ⚠ MIRRORED — the provider WORKS where the buyer HIRES. Same slot, same
@@ -759,7 +802,8 @@ export const PROVIDER_NAV: NavItem[] = [
     remove once that door exists.
   */
   { label: "Get Paid", heading: "Payments", href: "/payments", icon: "Wallet" },
-  { label: "Connect", heading: "My Community", href: "/community", icon: "MessagesSquare" },
+  /* ⚠ `Connect` MOVED TO THE TOP OF THIS LIST (`P2-J3-E588` WS-C). Its entry
+     and the reasoning are at the head of the array. */
 ];
 
 

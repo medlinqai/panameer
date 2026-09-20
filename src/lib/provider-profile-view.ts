@@ -234,6 +234,17 @@ export async function getProviderProfileView(
     id: profile.id,
     isOwner,
     validated: profile.validation_status === "VALIDATED",
+    /*
+      ⚠ `P2-J3-E588` WS-B — the visitor's `Request Mentoring` card renders ONLY
+      when this is true. ⚠⚠ THE COLUMN WAS ALREADY LOADED: this query uses
+      `include`, so every scalar on `ProviderProfile` is already in memory —
+      this exposes one, it does not widen the read.
+      ⚠ Scott, 2026-09-03, on what makes someone a mentor: *"everyone CAN be.
+      the determining factor is if anyone wants you to be."* This flag is the
+      provider SAYING they are open to it, which is a different fact from
+      `lib/connections.ts`'s mentor count and must not be conflated with it.
+    */
+    openForMentoring: profile.open_for_mentoring,
     visible: isMarketplaceVisible({
       ...profile,
       meetsRequired: providerMeetsRequired(profile),

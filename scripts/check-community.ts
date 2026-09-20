@@ -309,9 +309,28 @@ check(
     bodies.get(join("src", "components", "profile", "ProviderProfileView.tsx")) ?? ""
   )
 );
-/* Both profile surfaces actually supply it, or the block can never appear. */
+/*
+  Both profile surfaces actually supply it, or the block can never appear.
+
+  ── ⚠⚠ THE OWNER'S PROFILE SURFACE MOVED (`P2-J3-E588` WS-A, 2026-09-19) ─────
+
+  ⚠⚠⚠ THIS IS `check:rollup`'S CASE, NOT `check:cert-skills`' CASE — THE RULING
+  CHANGED, THE CODE DID NOT DRIFT. Scott, 2026-09-19: *"connect is now 'build
+  your profile and connect to other profiles'."* `/community` IS the owner's
+  profile now and `(app)/profile/page.tsx` is a REDIRECT to it, so it supplies
+  nothing and never can.
+
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  // join("src", "app", "(app)", "profile", "page.tsx"),
+
+  ⚠⚠ THE RULE IS UNCHANGED AND IS DELIBERATELY NOT WEAKENED: every surface that
+  renders a profile still has to supply the signal. Only the list of which pages
+  those ARE has moved. ⚠ `/community` was ADDED in the same edit that removed
+  `/profile` — if it had only been removed, the owner would have silently lost
+  the block and this guard would have gone green on the loss it exists to catch.
+*/
 for (const page of [
-  join("src", "app", "(app)", "profile", "page.tsx"),
+  join("src", "app", "(app)", "community", "page.tsx"),
   join("src", "app", "(app)", "providers", "[id]", "page.tsx"),
 ]) {
   check(
@@ -391,9 +410,29 @@ check("E372 — lib/colleague-suggestions.ts is on disk", suggestions.length > 0
       acceptance IS the timestamp; an accepted row with a null one cannot say when
       it was accepted, and the mutual half of the model rests on that. Every write
       that sets `ACCEPTED` is required to set `responded_at` in the SAME object. */
-const acceptedWrites = [...connections.matchAll(/status\s*:\s*"ACCEPTED"[\s\S]{0,200}?\}/g)].map(
-  (m) => m[0]
-);
+/*
+  ⚠⚠ A `where` CLAUSE IS A READ FILTER, NEVER A WRITE (`P2-J3-E588` WS-B).
+
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  // const acceptedWrites = [...connections.matchAll(/status\s*:\s*"ACCEPTED"[\s\S]{0,200}?\}/g)].map((m) => m[0]);
+
+  ⚠⚠ THE OLD PATTERN COULD NOT TELL A READ FROM A WRITE, and `E588`'s
+  `mutualColleagueCount` reads `status: "ACCEPTED"` in a `where` to count
+  colleagues. The guard reported that read as *"an ACCEPTED write without
+  responded_at"* — a write it is not, and a column a `findMany` has no business
+  setting.
+
+  ⚠⚠⚠ THIS IS A TIGHTENING, NOT A WEAKENING: all three genuine writes sit in
+  `data:` blocks and are still matched, and the count assertion below still
+  requires at least three. ⚠ A NEW WRITE CANNOT HIDE IN A `where` — Prisma has
+  no way to set a column from one.
+*/
+const acceptedWrites = [...connections.matchAll(/status\s*:\s*"ACCEPTED"[\s\S]{0,200}?\}/g)]
+  .filter((m) => {
+    const before = connections.slice(Math.max(0, (m.index ?? 0) - 200), m.index ?? 0);
+    return before.lastIndexOf("where:") <= before.lastIndexOf("data:");
+  })
+  .map((m) => m[0]);
 check(
   "E372/1 — every ACCEPTED write exists (the pattern still matches the source)",
   acceptedWrites.length >= 3,
