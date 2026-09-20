@@ -149,10 +149,18 @@ export default async function LessonPage({
           cannot drift when the band changes: `--pm-band-h` is declared once in
           `app-band.css` and is 67px or 57px depending on the menu's shape.
           ⚠ The `1.5rem` is `top-6`'s own value, kept.
+          ⚠⚠⚠ NO FALLBACK IN THE `var()`, DELIBERATELY. It read
+          `var(--pm-band-h, 67px)` until `WS-C` caught it: a literal fallback is
+          the hard-coded height this brief exists to remove, and 67 is WRONG
+          below 780px where the band is 57. ⚠ With no fallback, a missing
+          property makes `top` invalid and the aside simply does not stick —
+          visible and debuggable, rather than silently off by ten pixels.
+          ⚠ It cannot fire in practice: `app-band.css` is imported by `AppBand`,
+          so anywhere the band renders, the property is declared.
         */}
         <aside
           className="lg:sticky lg:self-start"
-          style={{ top: "calc(var(--pm-band-h, 67px) + 1.5rem)" }}
+          style={{ top: "calc(var(--pm-band-h) + 1.5rem)" }}
         >
           <div className="rounded-brand border border-line">
             <div className="border-b border-line p-4">
