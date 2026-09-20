@@ -309,9 +309,28 @@ check(
     bodies.get(join("src", "components", "profile", "ProviderProfileView.tsx")) ?? ""
   )
 );
-/* Both profile surfaces actually supply it, or the block can never appear. */
+/*
+  Both profile surfaces actually supply it, or the block can never appear.
+
+  ── ⚠⚠ THE OWNER'S PROFILE SURFACE MOVED (`P2-J3-E588` WS-A, 2026-09-19) ─────
+
+  ⚠⚠⚠ THIS IS `check:rollup`'S CASE, NOT `check:cert-skills`' CASE — THE RULING
+  CHANGED, THE CODE DID NOT DRIFT. Scott, 2026-09-19: *"connect is now 'build
+  your profile and connect to other profiles'."* `/community` IS the owner's
+  profile now and `(app)/profile/page.tsx` is a REDIRECT to it, so it supplies
+  nothing and never can.
+
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  // join("src", "app", "(app)", "profile", "page.tsx"),
+
+  ⚠⚠ THE RULE IS UNCHANGED AND IS DELIBERATELY NOT WEAKENED: every surface that
+  renders a profile still has to supply the signal. Only the list of which pages
+  those ARE has moved. ⚠ `/community` was ADDED in the same edit that removed
+  `/profile` — if it had only been removed, the owner would have silently lost
+  the block and this guard would have gone green on the loss it exists to catch.
+*/
 for (const page of [
-  join("src", "app", "(app)", "profile", "page.tsx"),
+  join("src", "app", "(app)", "community", "page.tsx"),
   join("src", "app", "(app)", "providers", "[id]", "page.tsx"),
 ]) {
   check(

@@ -4,6 +4,12 @@ import { PageTabs } from "@/components/casing/PageTabs";
 import { PAGE_TABS, tabSequenceFor } from "@/lib/nav";
 import { tabsWithUnread, unreadCount } from "@/lib/messages";
 import { ConnectHome } from "@/components/community/ConnectHome";
+import { ConnectProfile } from "@/components/community/ConnectProfile";
+import { getOwnProviderProfileView } from "@/lib/provider-profile-view";
+import { getPathsTaughtByProfile } from "@/lib/learn-home";
+import { publicTestimonials } from "@/lib/recommendations";
+import { getCommunitySignalForProfile } from "@/lib/community-signal";
+import { getMyCommunity } from "@/lib/connections";
 
 /**
  * ── ⚠⚠ `/community` IS CONNECT HOME (`P2-J3-E557` WS-B) ────────────────────
@@ -26,6 +32,23 @@ export default async function ConnectHomePage() {
      in this row, so the number is the same wherever you are standing. */
   const unread = viewer ? await unreadCount(viewer) : 0;
 
+  /*
+    ── ⚠⚠ CONNECT HOME IS NOW THE PROFILE (`P2-J3-E588` WS-A) ────────────────
+
+    ⚠⚠⚠ SCOTT, 2026-09-19: *"connect is now 'build your profile and connect to
+    other profiles'."*
+
+    ⚠⚠ THE NON-PROVIDER FALLBACK IS NOT A HEDGE, IT IS REQUIRED. `Connect` is in
+    the BUYER menu too (`REQUESTER_NAV`), and a requester has no
+    `ProviderProfile` — so there is no profile to render for them. They keep the
+    landing page. ⚠ A provider gets their profile; everyone else gets what they
+    had yesterday, which is also what `ConnectHome`'s own header promises.
+
+    ⚠ `ConnectHome` IS NOT DELETED AND IS STILL IMPORTED (`E164` — every removed
+    component stays on disk). It simply stops being what a PROVIDER sees here.
+  */
+  const profile = viewer ? await getOwnProviderProfileView(viewer.userId, viewer) : null;
+
   return (
     <>
       <PageTabs
@@ -34,14 +57,33 @@ export default async function ConnectHomePage() {
         tabs={tabsWithUnread(PAGE_TABS["/community"], unread)}
         current="/community"
       />
-      <div className="mx-auto max-w-5xl space-y-5">
-        <header>
-          <h1 className="font-display text-[26px] font-bold tracking-[-0.5px]">
-            My Community
-          </h1>
-        </header>
-        {viewer && <ConnectHome viewer={viewer} />}
-      </div>
+      {viewer && profile ? (
+        <ConnectProfile
+          p={profile}
+          taughtPaths={await getPathsTaughtByProfile(profile.id)}
+          testimonials={await publicTestimonials(profile.id)}
+          community={await getCommunitySignalForProfile(profile.id)}
+          colleagueCount={(await getMyCommunity(viewer)).colleagues.length}
+        />
+      ) : (
+        /*
+          ⚠ SUPERSEDED FOR PROVIDERS, quoted not deleted (`E164`) — this is what
+          `/community` rendered for everybody before WS-A, and it is still what a
+          buyer or a member with no provider profile sees:
+          // <div className="mx-auto max-w-5xl space-y-5">
+          //   <header><h1 …>My Community</h1></header>
+          //   {viewer && <ConnectHome viewer={viewer} />}
+          // </div>
+        */
+        <div className="mx-auto max-w-5xl space-y-5">
+          <header>
+            <h1 className="font-display text-[26px] font-bold tracking-[-0.5px]">
+              My Community
+            </h1>
+          </header>
+          {viewer && <ConnectHome viewer={viewer} />}
+        </div>
+      )}
     </>
   );
 }

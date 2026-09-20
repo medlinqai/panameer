@@ -1,0 +1,117 @@
+/*
+ * ── ⚠⚠ CONNECT HOME IS THE PROFILE — THE THREE-COLUMN GEOMETRY (`P2-J3-E588`) ─
+ *
+ * ⚠ Scott, 2026-09-19: *"connect is now 'build your profile and connect to other
+ * profiles'"* and *"these are all cards. responsive."*
+ *
+ * ⚠⚠ THE GEOMETRY LIVES HERE, NOT IN TAILWIND CLASSES ON THE JSX — the same rule
+ * `app-band.css` follows. A grid whose columns are declared in one place and
+ * whose breakpoints are declared in another is how those two drift apart.
+ *
+ * ── ⚠⚠⚠ THE BREAKPOINTS ARE MEASURED, NOT COPIED FROM THE MOCKUP ────────────
+ *
+ * ⚠ The mockup says 1150 and 860. **Those are its numbers, not this app's** —
+ * the mockup has no app shell. `AppShell`'s `<main>` carries `px-5 py-6 sm:px-8`,
+ * so the usable width is the viewport MINUS 64px at `sm` and above.
+ *
+ * ⚠⚠ THE ARITHMETIC THE FIRST BREAKPOINT COMES FROM:
+ *   272 (left) + 20 (gap) + centre + 20 (gap) + 248 (right) = 560 + centre
+ *   a centre below ~420px starts wrapping the two-up Rates row, so
+ *   560 + 420 = 980 of CONTENT → 980 + 64 of shell padding = 1044 viewport.
+ * ⚠ Rounded UP to 1060 so the step happens just before the centre gets tight,
+ * never just after. **Re-measured in the running app — see the WS-A report.**
+ *
+ * ⚠ THE SECOND STEP, to one column, is where the left rail plus a usable centre
+ * stops fitting: 272 + 20 + 420 = 712 content → 776 viewport. Rounded to 800.
+ */
+
+.pm-cp {
+  display: grid;
+  grid-template-columns: 272px minmax(0, 1fr) 248px;
+  gap: 20px;
+  align-items: start;
+  /* ⚠ The mockup's own max-width. The shell supplies the outer padding. */
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+/*
+  ⚠⚠ BOTH RAILS STICK, THE CENTRE SCROLLS — the brief's requirement.
+  ⚠ `align-items: start` above is what makes this possible: a stretched grid
+  item is as tall as the row, and a sticky element inside a full-height box has
+  nothing to stick against. Without it the rails simply do not stick, silently.
+  ⚠ `top: 16px` and not 0 — the band is NOT sticky today (`E587` is unbuilt), so
+  this is breathing room below the tab row rather than clearance for the band.
+  ⚠⚠ IF `E587` LANDS, THIS BECOMES `calc(var(--pm-band-h) + 16px)` — that brief
+  owns the custom property and this is the second consumer of it.
+*/
+.pm-cp-rail-l,
+.pm-cp-rail-r {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  position: sticky;
+  top: 16px;
+}
+
+/*
+  ⚠⚠ STEP 1 — THE RIGHT RAIL DROPS BENEATH THE CENTRE. It does not disappear:
+  the completion ring and the three actions are the point of the page for an
+  owner. It becomes a ROW of cards under the centre so it keeps its prominence
+  instead of being buried at the bottom of a single column.
+*/
+@media (max-width: 1060px) {
+  .pm-cp {
+    grid-template-columns: 272px minmax(0, 1fr);
+  }
+  .pm-cp-rail-r {
+    grid-column: 1 / -1;
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  /* ⚠ 220px basis, so three action cards sit in a row on a wide tablet and
+     wrap to two, then one, without a third breakpoint. */
+  .pm-cp-rail-r > * {
+    flex: 1 1 220px;
+  }
+}
+
+/* ⚠⚠ STEP 2 — ONE COLUMN. The left rail stops sticking because a rail taller
+   than the viewport that sticks on a phone traps the centre behind it. */
+@media (max-width: 800px) {
+  .pm-cp {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .pm-cp-rail-l {
+    position: static;
+  }
+}
+
+/*
+  ── ⚠ THE CENTRE'S OWN TWO-UP AND THREE-UP ROWS ──────────────────────────────
+  ⚠⚠ THEY COLLAPSE AT THE SAME WIDTHS AS THE PAGE, not at widths of their own.
+  A card row that collapses on a different schedule from the grid around it is
+  how a layout ends up with one orphaned column at some middle width.
+*/
+.pm-cp-two {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+  gap: 16px;
+}
+.pm-cp-three {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+@media (max-width: 1060px) {
+  .pm-cp-three {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 800px) {
+  .pm-cp-two,
+  .pm-cp-three {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
