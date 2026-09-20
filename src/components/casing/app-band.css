@@ -40,6 +40,60 @@
   grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 20px;
   align-items: center;
+
+  /*
+    ── ⚠⚠⚠ THE BAND IS PINNED (`P2-ALL-E587` WS-A) ─────────────────────────
+
+    ⚠ SCOTT, 2026-09-19: *"The dark app bar at the top scrolls away when you
+    scroll down. I ruled it should stay pinned."* ⚠⚠ He had ruled it before and
+    it was never written down and never built, which is why it is an id.
+
+    ⚠⚠ IT LIVES HERE, NOT AS A TAILWIND CLASS ON THE JSX. The element's grid,
+    its columns and its gap are already declared in this file; splitting its
+    geometry across two places is how those two drift apart. `AppBand.tsx`'s
+    `className` stays byte-unchanged.
+
+    ── ⚠⚠ WHY `sticky` HOLDS HERE, MEASURED ────────────────────────────────
+
+    ⚠ `position: sticky` fails silently if ANY ancestor sets `overflow`.
+    MEASURED on `aae84f2`: `AppShell.tsx` sets none — its root is
+    `flex min-h-screen flex-col`, the band's parent is
+    `flex min-w-0 flex-1 flex-col`, and neither carries an overflow rule.
+    ⚠⚠ THAT PARENT IS THE CONTAINING BLOCK, and it spans band + main + footer —
+    i.e. the whole page — so the band stays pinned for the entire scroll rather
+    than un-sticking at the end of a short ancestor.
+
+    ── ⚠⚠⚠ THE Z-INDEX IS NOT A FREE CHOICE. THE STACK, RE-MEASURED ────────
+
+    ⚠ Live code only, `E164` quotes and comments stripped, on `aae84f2`:
+
+      z-10 / z-20 ordinary page content        → UNDER the band
+      z-40        **the band**                 → above content
+      z-50        modals and overlays          → OVER the band
+      z-[60]      `Popover.tsx` (account menu) → OVER the band
+      z-index 60  `messages-drawer.css`        → OVER the band
+      z-[70]      `ReviewWorkRequest.tsx`      → OVER the band
+
+    ⚠⚠ **A BAND THAT COVERS THE ACCOUNT MENU OR THE MESSAGES DRAWER IS A WORSE
+    BUG THAN A BAND THAT SCROLLS.** Both sit at 60 and both are proved to open
+    over it at the WS-A gate.
+
+    ⚠ ONE OTHER THING SITS AT 40 AND IT IS A DELIBERATE TIE:
+    `console/TaskPanel.tsx` is `fixed right-2 top-1/2 … hidden lg:flex`. It is
+    LATER IN THE DOM than the band, so at an equal z-index it paints over —
+    which is the right answer for a floating panel, and they only meet at all on
+    a very short viewport. Recorded rather than nudged, because moving either
+    number to avoid a tie nobody can see is how a stack becomes folklore.
+
+    ── ⚠ PINNED, NOT RESTYLED ──────────────────────────────────────────────
+
+    ⚠⚠ NO SHADOW, NO BLUR, NO BACKGROUND CHANGE ON SCROLL. The brief is explicit
+    and so is the ruling: *"Pinned is not 'clever.'"* The band looks identical
+    scrolled and unscrolled; only its position changed.
+  */
+  position: sticky;
+  top: 0;
+  z-index: 40;
 }
 
 /* ⚠ EXPLICIT COLUMNS — the guard against trap 1. Never remove these. */
