@@ -1,7 +1,11 @@
+// ⚠ `VISIBILITY_THRESHOLD` IS NO LONGER IMPORTED (`P2-J3-E590` WS-A). ⚠
+// SUPERSEDED, quoted not deleted (`E164`):
+//   VISIBILITY_THRESHOLD,
+// ⚠⚠ THIS HARNESS NO LONGER KNOWS THE NUMBER, and that is the point: it asserts
+// VISIBILITY against `isMarketplaceVisible`, never a score against a threshold.
 import {
   computeProviderCompleteness,
   COMPLETENESS_WEIGHTS,
-  VISIBILITY_THRESHOLD,
   type CompletenessInput,
 } from "../src/lib/completeness";
 import { isMarketplaceVisible, hasIdentityBlock } from "../src/lib/access";
@@ -77,10 +81,36 @@ console.log("=== the REQUIRED-ONLY path must publish AND be visible ===");
 {
   const p = requiredOnly();
   const score = computeProviderCompleteness(p);
+  /*
+    ── ⚠⚠⚠ RE-TAUGHT BY `P2-J3-E590` — THE RULING CHANGED, THE CODE DID NOT DRIFT
+
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //  check(
+    //    `required-only scores >= ${VISIBILITY_THRESHOLD} (got ${score})`,
+    //    score >= VISIBILITY_THRESHOLD,
+    //    { score, threshold: VISIBILITY_THRESHOLD }
+    //  );
+
+    ⚠⚠ THAT ASSERTION ENCODED THE SCORE AS THE GATE, and `WS-A0` removed the
+    score from the gate entirely. Keeping it would mean the harness demanding
+    the very coupling the brief was written to delete.
+    ⚠ THE FACT IT WAS REALLY PROTECTING — *"a provider who did the minimum is
+    visible"* — is asserted below against `isMarketplaceVisible`, which is where
+    it belonged all along. ⚠⚠ THIS IS `check:rollup`'S CASE, NOT
+    `check:cert-skills`': the product rule moved, so the gate moves with it.
+
+    ⚠ The required set is now 50 of 100 by design — half the score is what you
+    must have, half is what you can answer. A required-only provider is VISIBLE
+    and half-scored, and those are deliberately different statements.
+  */
+  /* ⚠ 55, NOT 50: the fixture also carries `work_method`, which the up-front
+     provider-vs-recruiter fork always sets, so it is part of the minimum a real
+     provider actually reaches. The required SIX are 50; `How You Work` is the
+     fifth point-bearing line every wizard walker gets for free. */
   check(
-    `required-only scores >= ${VISIBILITY_THRESHOLD} (got ${score})`,
-    score >= VISIBILITY_THRESHOLD,
-    { score, threshold: VISIBILITY_THRESHOLD }
+    `required-only + work_method scores exactly 55 (got ${score})`,
+    score === 55,
+    { score }
   );
 
   const identity = hasIdentityBlock({
@@ -104,6 +134,17 @@ console.log("=== the REQUIRED-ONLY path must publish AND be visible ===");
 }
 
 console.log("=== the removed sections must NOT gate ===");
+/*
+  ⚠⚠ RE-POINTED FROM THE SCORE TO THE GATE (`P2-J3-E590`). ⚠ SUPERSEDED, quoted
+  not deleted (`E164`):
+  //  const score = computeProviderCompleteness(requiredOnly(over));
+  //  check(`${label} still reaches the bar (${score})`, score >= VISIBILITY_THRESHOLD, { score });
+
+  ⚠⚠⚠ THE CLAIM IS STRONGER NOW, NOT WEAKER. It used to say an optional section
+  could not push you under a threshold; it now says an optional section CANNOT
+  AFFECT VISIBILITY AT ALL. ⚠ That is the invariant `E590` buys, and it is the
+  one that makes re-weighting safe forever.
+*/
 for (const [label, over] of [
   ["no bio", { overview: null }],
   ["no education", { education: [] }],
@@ -112,11 +153,16 @@ for (const [label, over] of [
   ["no languages", { languages: [] }],
   ["no work history", { employers: [] }],
 ] as [string, Partial<CompletenessInput>][]) {
-  const score = computeProviderCompleteness(requiredOnly(over));
+  const p = requiredOnly(over);
   check(
-    `${label} still reaches the bar (${score})`,
-    score >= VISIBILITY_THRESHOLD,
-    { score }
+    `${label} does not affect VISIBILITY`,
+    isMarketplaceVisible({
+      status: "ACTIVE",
+      completeness: computeProviderCompleteness(p),
+      paused_at: null,
+      meetsRequired: meetsRequiredSet(p),
+    }),
+    { score: computeProviderCompleteness(p) }
   );
 }
 
@@ -202,6 +248,12 @@ console.log("=== a full profile still reaches 100 ===");
       employers: [{}],
       certifications: [{}],
       languages: [{}],
+      /* ⚠⚠ THE THREE LINES `E590` ADDED. Without them this fixture reached 90
+         and the harness was right to say so — a "complete" profile that is
+         missing three answerable lines is not complete. */
+      hasLocation: true,
+      hasExperienceYears: true,
+      soloProjects: [{}],
     })
   );
   check(`complete profile reaches 100 (got ${score})`, score === 100, { score });

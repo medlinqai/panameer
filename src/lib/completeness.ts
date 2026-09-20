@@ -110,6 +110,31 @@ export type CompletenessInput = {
   hasPhone: boolean;
   /** Phone passed SMS verification. STUBBED by brief_S/E036 — see below. */
   phoneVerified: boolean;
+
+  /* ── ⚠⚠ ADDED BY `P2-J3-E590` WS-A — the lines the old table could not see ──
+     ⚠ Every one is OPTIONAL so a caller built before this brief still compiles.
+     ⚠⚠ BUT AN ABSENT FIELD SCORES ZERO, which is the honest reading: a caller
+     that does not supply solo projects has not told us the provider has any.
+     `buildCompletenessInput` — the ONE write path for the stored column —
+     supplies all of them. */
+
+  /** A city/state/country to show buyers. Distinct from `hasAddress`, which is
+   *  a street line and belongs to the required set. */
+  hasLocation?: boolean;
+  /** Projects with no employer — the profile's `Solo Projects` card. */
+  soloProjects?: unknown[];
+  /** At least one employer or project carrying a start date, so a span can be
+   *  derived. ⚠ NOT a self-reported number — `E068` retired that. */
+  hasExperienceYears?: boolean;
+
+  /* ── ⚠⚠⚠ THE FIVE DECLARATIONS. `null`/absent = UNANSWERED, ALWAYS. ───────
+     ⚠ A date means the provider said "I have none" and when. See the column
+     comments on `ProviderProfile` — the reasoning lives there. */
+  declaredNoWorkHistoryAt?: Date | null;
+  declaredNoEducationAt?: Date | null;
+  declaredNoSpecializationsAt?: Date | null;
+  declaredNoCertificationsAt?: Date | null;
+  declaredNoSoloProjectsAt?: Date | null;
 };
 
 /**
@@ -158,26 +183,77 @@ export type CompletenessInput = {
   deliberately holds that number EXACTLY where it found it rather than changing
   behaviour nobody asked to change. ⚠ REPORTED, not resolved by choosing.
 */
+// ── ⚠⚠⚠ THE WEIGHT TABLE (`P2-J3-E590` WS-A). SUMS TO EXACTLY 100. ────────
+//
+// ⚠⚠ SCOTT, 2026-09-20: *"Yes, I want everyone to be able to get to 100%... i
+// should eb able to go down that list and get to 100%."*
+//
+// ⚠⚠⚠ NOT 106-CAPPED-AT-100 ANY MORE, AND THE CAP WAS THE DEFECT. A capped
+// table cannot express *"answer everything and you are at 100"*: two profiles
+// reached 100 by different routes, so the checklist could not say what was
+// left without lying. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+//
+//   export const COMPLETENESS_WEIGHTS = {
+//     headline: 14,   field: 14,   skills: 18,   rate: 14,
+//     photo: 10,      identity: 14,                       // required subtotal 84
+//     overview: 8,    languages: 4,
+//     enrichment: 6,  // any one of work history / education / certs / specs
+//     workMethod: 4,                                      // enrichment subtotal 22
+//   } as const;                                           // 106, capped at 100
+//
+// ⚠⚠ `enrichment: 6` IS SPLIT INTO FIVE REAL LINES. One weight satisfied by ANY
+// ONE of work history / education / certifications / specializations is the
+// single reason the score could not express a checklist: one employer scored
+// exactly what five scored, and zero certifications cost nothing because
+// education had already paid for the line.
+//
+// ⚠⚠⚠ RE-WEIGHTING IS ONLY SAFE BECAUSE `WS-A0` LANDED FIRST. Marketplace
+// visibility reads `providerMeetsRequired`, never this table, so moving a
+// number here cannot make anyone invisible. ⚠ **DO NOT REINTRODUCE A SCORE
+// GATE.**
 export const COMPLETENESS_WEIGHTS = {
-  // --- THE REQUIRED SET — every one of these is a prompted step ------------
-  headline: 14, //   1  Title
-  field: 14, //      2  Role(s)
-  skills: 18, //     3  Skills   (>= 1, the step's own rule)
-  rate: 14, //       4  Rate
-  photo: 10, //      5  Photo    (⚠ HELD AT 10 — see the invariants above)
-  identity: 14, //      address + phone — collected on the photo step
-  // Required subtotal: 84, unchanged. Above the 80 threshold with four points of
-  // margin, and deliberately NOT 100 — a provider who did the minimum is
-  // Visible, not Complete, and the meter has to have somewhere left to go.
+  // ── SO BUYERS CAN FIND YOU — 50 ──────────────────────────────────────────
+  // ⚠ These six are the REQUIRED SET and carry NO "I have none" option: an
+  // opt-out here would let a provider declare their way to invisible.
+  headline: 8, //   Title
+  field: 8, //      Field
+  skills: 10, //    Skills
+  rate: 8, //       Hourly Rate
+  photo: 8, //      Photo
+  identity: 8, //   Identity Verified — address + phone
 
-  // --- ENRICHMENT — no longer prompted, still worth points ----------------
-  overview: 8, //    a bio (>= BIO_MIN_CHARS)
-  languages: 4,
-  enrichment: 6, //  any one of work history / education / certs / specs
-  workMethod: 4, //  set by the up-front provider-vs-recruiter fork
-  // Total 106, capped at 100: a full profile reaches 100 with headroom, so no
-  // single optional section can hold anyone under it.
+  // ── WHO YOU ARE — 24 ─────────────────────────────────────────────────────
+  overview: 8, //       Bio (>= BIO_MIN_CHARS)
+  location: 4, //       Location — a city/state/country to show
+  languages: 4, //      Languages
+  experienceYears: 3, // Years of Experience — a dated job or project
+  workMethod: 5, //     How You Work
+
+  // ── WHAT YOU'VE DONE — 26 ────────────────────────────────────────────────
+  // ⚠⚠ ALL FIVE ARE DECLARABLE. Each can be answered with "I have none" and
+  // still scores — that is the whole feature.
+  workHistory: 8,
+  education: 5,
+  specializations: 4,
+  certifications: 6,
+  soloProjects: 3,
 } as const;
+
+/*
+  ⚠⚠⚠ THE ARITHMETIC IS VERIFIED IN CODE, NOT BY READING THE TABLE. The brief
+  says so explicitly, and a table that drifts from 100 breaks the one promise
+  this whole surface makes. ⚠ A wrong total throws at import — loudly, at boot,
+  rather than as a quietly wrong percentage on a real profile.
+*/
+export const COMPLETENESS_TOTAL = Object.values(COMPLETENESS_WEIGHTS).reduce(
+  (a, b) => a + b,
+  0
+);
+if (COMPLETENESS_TOTAL !== 100) {
+  throw new Error(
+    `COMPLETENESS_WEIGHTS must sum to 100, got ${COMPLETENESS_TOTAL}`
+  );
+}
 
 /**
  * THE REQUIRED SET, as a predicate.
@@ -246,41 +322,143 @@ function hasAnyRate(p: {
 }
 
 /** Compute a provider's completeness score (0–100). */
-export function computeProviderCompleteness(p: CompletenessInput): number {
-  let score = 0;
+// ── ⚠⚠⚠ ONE FUNCTION COMPUTES THE TOTAL **AND** THE BREAKDOWN ─────────────
+//
+// ⚠⚠ THE BRIEF'S RULE, AND THE REASON FOR IT: *"a second function that
+// recomputes the total is how the ring and the list come to disagree."*
+// Everything downstream — the ring, the What's-left steps, the What-you've-done
+// list, the stored column — reads THIS.
+//
+// ⚠ SUPERSEDED, quoted not deleted (`E164`) — the old scorer returned a bare
+// number and the checklist mirrored its predicates by hand, one file away:
+//
+//   export function computeProviderCompleteness(p: CompletenessInput): number {
+//     let score = 0;
+//     const W = COMPLETENESS_WEIGHTS;
+//     if (p.headline && p.headline.trim() !== "") score += W.headline;
+//     if (p.role_type_id) score += W.field;
+//     if (p.skills.length >= 1) score += W.skills;
+//     if (hasAnyRate(p)) score += W.rate;
+//     if (p.photoUrl) score += W.photo;
+//     if (p.hasAddress && p.hasPhone) score += W.identity;
+//     if (p.work_method) score += W.workMethod;
+//     if (p.overview && p.overview.trim().length >= BIO_MIN_CHARS) score += W.overview;
+//     if (p.languages.length >= 1) score += W.languages;
+//     if (p.employers.length >= 1 || p.education.length >= 1 ||
+//         p.certifications.length >= 1 || p.specializations.length >= 1) {
+//       score += W.enrichment;
+//     }
+//     return Math.min(100, score);
+//   }
+//
+// ⚠⚠ NOTE WHAT IS GONE: `Math.min(100, …)`. The table sums to exactly 100 and
+// is asserted at import, so a cap would only ever hide an arithmetic error.
+
+/** ⚠ `filled` beats `declared_none`. Rows existing is the stronger fact. */
+export type ScoreLineState = "filled" | "declared_none" | "unanswered";
+
+/** The three groups, in the order they render. */
+export type ScoreGroup = "find" | "who" | "done";
+
+export const SCORE_GROUP_LABELS: Record<ScoreGroup, string> = {
+  find: "So Buyers Can Find You",
+  who: "Who You Are",
+  done: "What You've Done",
+};
+
+export type ScoreLine = {
+  key: keyof typeof COMPLETENESS_WEIGHTS;
+  label: string;
+  points: number;
+  state: ScoreLineState;
+  group: ScoreGroup;
+  /** ⚠ Can this line be answered with "I have none"? */
+  declarable: boolean;
+};
+
+export type ProfileScore = {
+  /** 0–100. The sum of the points on every line that is not `unanswered`. */
+  total: number;
+  lines: ScoreLine[];
+};
+
+/**
+ * ⚠⚠ A LINE COUNTS WHEN IT IS ANSWERED, NOT WHEN IT IS FULL. That is the whole
+ * brief: `declared_none` earns its points exactly like `filled`.
+ */
+export function lineCounts(state: ScoreLineState): boolean {
+  return state !== "unanswered";
+}
+
+/** ⚠ `filled` wins over a declaration — see the schema comment. */
+function state(filled: boolean, declaredAt?: Date | null): ScoreLineState {
+  if (filled) return "filled";
+  if (declaredAt != null) return "declared_none";
+  return "unanswered";
+}
+
+export function computeProfileScore(p: CompletenessInput): ProfileScore {
   const W = COMPLETENESS_WEIGHTS;
+  const has = (x: unknown[] | undefined) => (x?.length ?? 0) >= 1;
 
-  if (p.headline && p.headline.trim() !== "") score += W.headline;
-  // The ROLE is the answer now. `pillar_id` (the domain) is derived server-side
-  // from it and is no longer asked, so requiring the pair here would score zero
-  // for a step the provider completed — the invisible-profile bug, again.
-  if (p.role_type_id) score += W.field;
-  if (p.skills.length >= 1) score += W.skills;
-  if (hasAnyRate(p)) score += W.rate;
-  if (p.photoUrl) score += W.photo;
-  /* ⚠ `if (p.hasCompany) score += W.company;` — removed with the weight (`E418`). */
+  const lines: ScoreLine[] = [
+    // ── SO BUYERS CAN FIND YOU — the required set. No "I have none". ───────
+    L("headline", "Title", W.headline, "find", state(!!p.headline?.trim())),
+    // ⚠ THE ROLE IS THE ANSWER. `pillar_id` is derived server-side and is no
+    // longer asked, so requiring the pair would score zero for a completed step.
+    L("field", "Field", W.field, "find", state(!!p.role_type_id)),
+    L("skills", "Skills", W.skills, "find", state(has(p.skills))),
+    L("rate", "Hourly Rate", W.rate, "find", state(hasAnyRate(p))),
+    L("photo", "Photo", W.photo, "find", state(!!p.photoUrl)),
+    // ⚠ IDENTITY IS ADDRESS + PHONE (`WS7`). Date of birth left the wizard
+    // entirely; if legal capacity is ever needed it rides the payout gate.
+    L("identity", "Identity Verified", W.identity, "find",
+      state(!!p.hasAddress && !!p.hasPhone)),
 
-  /*
-    IDENTITY IS ADDRESS + PHONE. Date of birth left the wizard entirely (WS7),
-    so scoring it here would cap every provider who walked the new flow at 88
-    and — under the old gate — hold them below 80 outright. If age or legal
-    capacity is ever needed it rides the tax/payout gate, never the profile.
-  */
-  if (p.hasAddress && p.hasPhone) score += W.identity;
+    // ── WHO YOU ARE ───────────────────────────────────────────────────────
+    L("overview", "Bio", W.overview, "who",
+      state((p.overview?.trim().length ?? 0) >= BIO_MIN_CHARS)),
+    L("location", "Location", W.location, "who", state(!!p.hasLocation)),
+    L("languages", "Languages", W.languages, "who", state(has(p.languages))),
+    L("experienceYears", "Years of Experience", W.experienceYears, "who",
+      state(!!p.hasExperienceYears)),
+    L("workMethod", "How You Work", W.workMethod, "who", state(!!p.work_method)),
 
-  if (p.work_method) score += W.workMethod;
-  if (p.overview && p.overview.trim().length >= BIO_MIN_CHARS) score += W.overview;
-  if (p.languages.length >= 1) score += W.languages;
-  if (
-    p.employers.length >= 1 ||
-    p.education.length >= 1 ||
-    p.certifications.length >= 1 ||
-    p.specializations.length >= 1
-  ) {
-    score += W.enrichment;
-  }
+    // ── WHAT YOU'VE DONE — every line declarable ──────────────────────────
+    L("workHistory", "Work History", W.workHistory, "done",
+      state(has(p.employers), p.declaredNoWorkHistoryAt), true),
+    L("education", "Education", W.education, "done",
+      state(has(p.education), p.declaredNoEducationAt), true),
+    L("specializations", "Specializations", W.specializations, "done",
+      state(has(p.specializations), p.declaredNoSpecializationsAt), true),
+    L("certifications", "Certifications", W.certifications, "done",
+      state(has(p.certifications), p.declaredNoCertificationsAt), true),
+    L("soloProjects", "Solo Projects", W.soloProjects, "done",
+      state(has(p.soloProjects), p.declaredNoSoloProjectsAt), true),
+  ];
 
-  return Math.min(100, score);
+  const total = lines.reduce((a, l) => a + (lineCounts(l.state) ? l.points : 0), 0);
+  return { total, lines };
+}
+
+function L(
+  key: ScoreLine["key"],
+  label: string,
+  points: number,
+  group: ScoreGroup,
+  st: ScoreLineState,
+  declarable = false
+): ScoreLine {
+  return { key, label, points, state: st, group, declarable };
+}
+
+/**
+ * The stored `completeness` column, 0–100.
+ * ⚠⚠ A THIN WRAPPER ON `computeProfileScore` BY DESIGN — one arithmetic, two
+ * callers. Do not reimplement the sum here.
+ */
+export function computeProviderCompleteness(p: CompletenessInput): number {
+  return computeProfileScore(p).total;
 }
 
 // ── ⚠⚠ `meetsCompletenessThreshold` IS REMOVED (`P2-J3-E590` WS-A0) ────────
@@ -392,90 +570,65 @@ export type ChecklistRow = {
  * ⚠ SORTED BY POINTS DESCENDING AMONG THE MISSING at the call site, because
  * "which action pays most" is the one thing a percentage can never tell them.
  */
+// ── ⚠⚠ `completenessChecklist` NOW DELEGATES (`P2-J3-E590` WS-A) ──────────
+//
+// ⚠⚠⚠ IT USED TO MIRROR THE SCORER PREDICATE FOR PREDICATE, BY HAND, IN THIS
+// FILE — a second arithmetic over the same weights. The brief bans exactly
+// that: *"a second function that recomputes the total is how the ring and the
+// list come to disagree."* ⚠ It is now a thin ADAPTER over
+// `computeProfileScore`, so there is one source of truth for both the number
+// and the breakdown.
+//
+// ⚠ THE OLD BODY IS NOT QUOTED HERE IN FULL — it was ~150 lines of per-row
+// literals, and the rows it built are reproduced below from the same data.
+// What matters is the rule it broke, which is stated above. Its most important
+// row is worth keeping in words: `enrichment` was ONE weight satisfied by ANY
+// ONE of work history / education / certifications / specializations, rendered
+// as a single `Experience` row with a combined count, because four rows would
+// have implied four weights. ⚠⚠ `E590` SPLIT THAT WEIGHT INTO FIVE REAL LINES,
+// which is what makes a per-line checklist expressible at all.
+//
+// ⚠ THIS FUNCTION AND `CompletenessChecklist.tsx` ARE BOTH RETIRED WHEN
+// `/community/score` SHIPS (WS-B). They are kept working until then so
+// `/settings/profile` is not left with a hole and nowhere to link.
 export function completenessChecklist(p: CompletenessInput): ChecklistRow[] {
-  const W = COMPLETENESS_WEIGHTS;
-  const rows: ChecklistRow[] = [
-    {
-      key: "headline",
-      label: "Headline",
-      done: !!(p.headline && p.headline.trim() !== ""),
-      points: W.headline,
-      hint: "Add a title — the one line buyers scan first.",
-    },
-    {
-      key: "field",
-      label: "Role & domain",
-      done: !!p.role_type_id,
-      points: W.field,
-      hint: "Pick your role.",
-    },
-    {
-      key: "skills",
-      label: "Skills",
-      done: p.skills.length >= 1,
-      points: W.skills,
-      count: p.skills.length,
-      hint: "Add at least one skill.",
-    },
-    { key: "rate", label: "Rate", done: hasAnyRate(p), points: W.rate, hint: "Add a rate range." },
-    { key: "photo", label: "Photo", done: !!p.photoUrl, points: W.photo, hint: "Add a photo." },
-    {
-      /* ⚠ ONE ROW, because the scorer awards ONE weight for address + phone
-         together. Two rows would imply two separately-scored things. */
-      key: "identity",
-      label: "Contact details",
-      done: !!(p.hasAddress && p.hasPhone),
-      points: W.identity,
-      hint: "Add your address and phone number.",
-    },
-    {
-      key: "workMethod",
-      label: "How you work",
-      done: !!p.work_method,
-      points: W.workMethod,
-      hint: "Say whether you deliver the work yourself.",
-    },
-    {
-      key: "overview",
-      label: "Bio",
-      done: !!(p.overview && p.overview.trim().length >= BIO_MIN_CHARS),
-      points: W.overview,
-      hint: `Write at least ${BIO_MIN_CHARS} characters.`,
-    },
-    {
-      key: "languages",
-      label: "Languages",
-      done: p.languages.length >= 1,
-      points: W.languages,
-      count: p.languages.length,
-      hint: "Add one language.",
-    },
-    {
-      /*
-        ── ⚠⚠ ONE WEIGHT, ONE ROW, ANY OF FOUR THINGS ─────────────────────────
+  const counts: Partial<Record<ScoreLine["key"], number>> = {
+    skills: p.skills.length,
+    languages: p.languages.length,
+    workHistory: p.employers.length,
+    education: p.education.length,
+    certifications: p.certifications.length,
+    specializations: p.specializations.length,
+    soloProjects: p.soloProjects?.length ?? 0,
+  };
+  const hints: Partial<Record<ScoreLine["key"], string>> = {
+    headline: "Add a title — the one line buyers scan first.",
+    field: "Pick your role.",
+    skills: "Add at least one skill.",
+    rate: "Set a rate so buyers can filter you in.",
+    photo: "Add a photo.",
+    identity: "Add your address and phone number.",
+    overview: `Write at least ${BIO_MIN_CHARS} characters.`,
+    location: "Say where you are based.",
+    languages: "Add one language.",
+    experienceYears: "Date a job or a project so we can show your years.",
+    workMethod: "Say whether you deliver the work yourself.",
+    workHistory: "Add a job — or tell us you have none.",
+    education: "Add a qualification — or tell us you have none.",
+    specializations: "Pick your specializations — or tell us you have none.",
+    certifications: "Add a certification — or tell us you have none.",
+    soloProjects: "Add a solo project — or tell us you have none.",
+  };
 
-        The scorer awards `enrichment` once if the provider has ANY of work
-        history, education, certifications or specializations.
-        ⚠ RENDERING IT AS FOUR ROWS WOULD BE A LIE — it would imply four
-        requirements worth four weights, when it is one weight satisfied by any
-        one of them. The count below is the TOTAL across all four, so a provider
-        with four employers and nothing else still reads as satisfied.
-      */
-      key: "enrichment",
-      label: "Experience",
-      done:
-        p.employers.length >= 1 ||
-        p.education.length >= 1 ||
-        p.certifications.length >= 1 ||
-        p.specializations.length >= 1,
-      points: W.enrichment,
-      count:
-        p.employers.length +
-        p.education.length +
-        p.certifications.length +
-        p.specializations.length,
-      hint: "Add a job, a qualification, a certification or a specialization — any one counts.",
-    },
-  ];
-  return rows;
+  return computeProfileScore(p).lines.map((l) => ({
+    key: l.key,
+    label: l.label,
+    /* ⚠⚠ `done` MEANS ANSWERED, NOT FULL. A declared "I have none" is done —
+       that is the point of the third state, and a checklist that kept nagging
+       after the answer would be the defect this brief exists to remove. */
+    done: lineCounts(l.state),
+    points: l.points,
+    count: counts[l.key],
+    hint: hints[l.key],
+  }));
 }
