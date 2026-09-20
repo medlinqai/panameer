@@ -1,8 +1,9 @@
 import { guardPage } from "@/lib/guard";
 import { getSessionViewer } from "@/lib/session";
 import { PageTabs } from "@/components/casing/PageTabs";
-import { PAGE_TABS, tabSequenceFor } from "@/lib/nav";
-import { tabsWithUnread, unreadCount } from "@/lib/messages";
+import { tabSequenceFor } from "@/lib/nav";
+import { connectTabs } from "@/lib/connect-tabs";
+import { unreadCount } from "@/lib/messages";
 import Link from "next/link";
 /* ⚠ `ConnectHome` IS NO LONGER RENDERED BY THIS PAGE (`E591` WS-C) and is
    NOT deleted (`E164`). It is still the body nothing else imports; see the
@@ -69,7 +70,7 @@ export default async function CommunityPage() {
       <PageTabs
         eyebrow="CONNECT"
         sequence={tabSequenceFor("/connect")}
-        tabs={tabsWithUnread(PAGE_TABS["/connect"], unread)}
+        tabs={connectTabs(viewer, unread)}
         current="/community"
       />
       <div className="mx-auto max-w-5xl space-y-5">

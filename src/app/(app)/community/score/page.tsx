@@ -2,8 +2,9 @@ import { redirect } from "next/navigation";
 import { guardPage } from "@/lib/guard";
 import { getSessionViewer } from "@/lib/session";
 import { PageTabs } from "@/components/casing/PageTabs";
-import { PAGE_TABS, tabSequenceFor } from "@/lib/nav";
-import { tabsWithUnread, unreadCount } from "@/lib/messages";
+import { tabSequenceFor } from "@/lib/nav";
+import { connectTabs } from "@/lib/connect-tabs";
+import { unreadCount } from "@/lib/messages";
 import { ownedProviderProfile } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { buildCompletenessInput } from "@/lib/onboarding";
@@ -69,7 +70,7 @@ export default async function ProfileScorePage() {
       <PageTabs
         eyebrow="CONNECT"
         sequence={tabSequenceFor("/connect")}
-        tabs={tabsWithUnread(PAGE_TABS["/connect"], unread)}
+        tabs={connectTabs(viewer, unread)}
         /* ⚠ THE SCORE IS THE PROFILE'S, so `Home` (`/connect`) is the active
            tab, not `Community` (`E591` WS-A). ⚠ SUPERSEDED (`E164`):
            //   current="/community" */

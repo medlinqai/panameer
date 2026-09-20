@@ -3,12 +3,15 @@ import { guardPage } from "@/lib/guard";
 import { getSessionViewer } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { PageTabs } from "@/components/casing/PageTabs";
-import { PAGE_TABS, tabSequenceFor } from "@/lib/nav";
+import { tabSequenceFor } from "@/lib/nav";
+import { connectTabs } from "@/lib/connect-tabs";
 import { Avatar } from "@/components/Avatar";
 import { Composer } from "@/components/messages/Composer";
 import {
   MAX_BODY,
-  tabsWithUnread,
+  /* ⚠ `tabsWithUnread` LEFT THIS IMPORT (`P2-J3-E593` WS-A): the Connect row
+     now goes through `connectTabs`, which applies the badge itself after
+     filtering. ⚠ The helper is untouched and still used by every other row. */
   canMessage,
   getConversation,
   listConversations,
@@ -92,7 +95,7 @@ export default async function MessagesPage({
       {/* E216 — the Community rail flyout's children are this section's tab row now. */}
       <PageTabs
         eyebrow="CONNECT" sequence={tabSequenceFor("/connect")}
-        tabs={tabsWithUnread(PAGE_TABS["/connect"], unread)}
+        tabs={connectTabs(viewer, unread)}
         current="/messages"
       />
       <div className="mx-auto max-w-5xl">
