@@ -329,8 +329,22 @@ check(
   `/profile` — if it had only been removed, the owner would have silently lost
   the block and this guard would have gone green on the loss it exists to catch.
 */
+/*
+  ── ⚠⚠ `/community` → `/connect` (`P2-J3-E591` WS-A) ────────────────────────
+
+  ⚠ THE RULE IS STILL NOT WEAKENED. `E591` split one route into two: the PROFILE
+  is `/connect`, the PEOPLE are `/community`. ⚠⚠ `/community` NO LONGER RENDERS
+  A PROFILE AT ALL, so asserting it supplies the signal would assert a call that
+  should not be there — and leaving it would have failed the gate for the one
+  reason that is not a defect.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   join("src", "app", "(app)", "community", "page.tsx"),
+  ⚠⚠ THE SWAP IS DONE IN ONE EDIT, exactly as the paragraph above requires of
+  the `/profile` → `/community` move: `/connect` is ADDED in the same change
+  that removes `/community`, so the owner cannot silently lose the block.
+*/
 for (const page of [
-  join("src", "app", "(app)", "community", "page.tsx"),
+  join("src", "app", "(app)", "connect", "page.tsx"),
   join("src", "app", "(app)", "providers", "[id]", "page.tsx"),
 ]) {
   check(
@@ -901,9 +915,15 @@ check(
 
    ⚠ TWO ASSERTIONS OF ONE FACT IS NOT TWICE THE PROTECTION — it is two places
    to update and one of them gets missed. */
+/* ⚠ RE-KEYED `/community` → `/connect` (`P2-J3-E591` WS-A). ⚠⚠ THE RULING IS
+   UNTOUCHED — Connect is still a room and still declares `none`; only the key
+   moved, because the band's Connect entry now lands on `/connect`.
+   ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   "E557/1 - /community declares `none` …",
+   //   /"\/community":\s*"none"/.test(navLib) */
 check(
-  "E557/1 — /community declares `none`, so the row carries no step numbers",
-  /"\/community":\s*"none"/.test(navLib)
+  "E557/1 — /connect declares `none`, so the row carries no step numbers",
+  /"\/connect":\s*"none"/.test(navLib)
 );
 /* ── ⚠⚠ EVERY TAB SET IS DELIBERATELY CLASSIFIED (`P1-ALL-E384` WS-3) ──────
    Scott: *"we could define each menu sequential or parallel, then number the
@@ -1035,7 +1055,23 @@ for (const [verb, journey] of [
      still carries the verb rule, and the BUYER side below is untouched. */
   ["Orders", "Work Orders"],
   ["Track Orders", "Work Orders"],
-  ["Connect", "My Community"],
+  /*
+    ── ⚠⚠ `Connect`'s JOURNEY NAME IS `My Profile` NOW (`P2-J3-E591` WS-A) ───
+
+    ⚠⚠⚠ THIS IS `check:rollup`'S CASE, NOT `check:cert-skills`' — THE RULING
+    CHANGED, THE CODE DID NOT DRIFT. The gate encoded a pairing that was correct
+    while `/community` was Connect's landing; `E591` moved that landing to the
+    member's own PROFILE, and Scott named the defect himself: the profile page
+    was headed *"My Community"* because one route rendered two pages.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   ["Connect", "My Community"],
+    ⚠⚠ THE RULE ITSELF IS UNWEAKENED AND STILL BITES: the rail still says the
+    journey in ONE WORD and the full name still lives on `heading`. Only this
+    slot's name changed, and it changed because the route behind it did.
+    ⚠ `My Community` survives as the `<h1>` of `/community`, where it is now
+    true — see `(app)/community/page.tsx`.
+  */
+  ["Connect", "My Profile"],
 ] as const) {
   check(
     `E378/4 — rail slot "${verb}" keeps its journey name "${journey}"`,
@@ -1189,6 +1225,12 @@ for (const href of [
   /* ⚠ `/finances` -> `/payments` (`P1-ALL-E533`). */
   "/orders", "/pay", "/payments", "/community", "/community/forums",
   "/community/teams", "/community/mentors",
+  /* ⚠⚠ `/connect` IS ADDED, NOT SUBSTITUTED (`P2-J3-E591` WS-A). The route
+     SPLIT — the profile became `/connect` and `/community` kept the people — so
+     BOTH are live nav destinations and both are frozen. ⚠ `/community` is
+     unchanged in this list on purpose: it did not move, it stopped carrying a
+     second page. ⚠ The count is now fourteen. */
+  "/connect",
   /* ⚠⚠ `/messages` LEFT THIS LIST (`P2-ALL-E560` STAGE 1, 2026-09-18).
      ⚠ SUPERSEDED, quoted not deleted (`E164`): `"/messages",` was the last entry.
      ⚠⚠ THE ROUTE DID NOT GO ANYWHERE — Messages became its own surface, reached

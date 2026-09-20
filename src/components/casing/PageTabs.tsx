@@ -137,7 +137,20 @@ export function PageTabs({
   return (
     /* ⚠ `relative` carries the fade; the scroller keeps the hairline. */
     <div className={"relative " + className}>
-      <div className="-mx-1 mb-4 flex items-center gap-0.5 overflow-x-auto border-b border-line px-1">
+      {/*
+          ⚠⚠ `data-testid` IS DELIBERATE, NOT DEBRIS (`P2-J3-E591` WS-A item 9).
+          ⚠ `connect-walk.spec.ts` asserted the tab row with
+          `a[href^="/community"]` — a PREFIX ON A ROUTE — so the `E591` split
+          would have emptied the locator and the test would have gone
+          GREEN-BY-ABSENCE. ⚠⚠ A LOCATOR KEYED TO A ROUTE BREAKS ON EVERY ROUTE
+          CHANGE, and the row is not a `<nav>` and has no heading, so there is
+          nothing else stable to hold. ⚠ Walking up from a link to a guessed
+          container is the approach `E560` already recorded as failing.
+      */}
+      <div
+        data-testid="page-tabs"
+        className="-mx-1 mb-4 flex items-center gap-0.5 overflow-x-auto border-b border-line px-1"
+      >
         {/* ⚠ THE EYEBROW AND ITS RULE (`P2-J3-E557`). `shrink-0` so it survives
             the horizontal scroll that the row relies on at narrow widths, and
             `aria-hidden` on the rule because it is a separator, not content. */}

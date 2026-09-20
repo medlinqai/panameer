@@ -102,7 +102,7 @@ export default async function MyTeamsPage() {
     <>
       {/* E216 — the Community rail flyout's children are this section's tab row now. */}
       <PageTabs
-        eyebrow="CONNECT" sequence={tabSequenceFor("/community")} tabs={tabsWithUnread(PAGE_TABS["/community"], unread)} current="/community/teams" />
+        eyebrow="CONNECT" sequence={tabSequenceFor("/connect")} tabs={tabsWithUnread(PAGE_TABS["/connect"], unread)} current="/community/teams" />
       <div className="mx-auto max-w-4xl space-y-4">
       <header>
         <h1 className="font-display text-[26px] font-bold tracking-[-0.5px]">

@@ -186,7 +186,15 @@ export const REQUESTER_NAV: NavItem[] = [
     `(app)/community/page.tsx`. ⚠ Putting `Connect` first on the buyer side is
     Scott's ruling and is deliberate even though the surface behind it differs.
   */
-  { label: "Connect", heading: "My Community", href: "/community", icon: "MessagesSquare" },
+  /* ⚠⚠ `Connect` LANDS ON THE PROFILE NOW (`P2-J3-E591` WS-A). ⚠ Scott,
+     2026-09-19: *"connect is now 'build your profile and connect to other
+     profiles'."* ⚠⚠ AND IT FIXES A TITLE SCOTT SPOTTED: this entry headed the
+     PROFILE page *"My Community"*, because one route rendered both.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   { label: "Connect", heading: "My Community", href: "/community", icon: "MessagesSquare" },
+     ⚠ `heading` IS READ BY `pageTitleFor`, WHICH HAS NO CALLER — it is the
+     record of what the journey is called, not a rendered string. */
+  { label: "Connect", heading: "My Profile", href: "/connect", icon: "MessagesSquare" },
   { label: "Learn", heading: "Learning Paths", href: "/learn", icon: "GraduationCap" },
   {
     /* ⚠ MIRRORED SLOT. `nav.ts` already documents why: the rails point the SAME
@@ -501,8 +509,44 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
     the row is labelled `CONNECT`, and `Home` is the landing. ⚠ The superseded
     `E378`/`E379` sequence reasoning is FOOTNOTED BELOW THIS SET, not above it.
   */
-  "/community": [
-    { label: "Home", href: "/community" },
+  /*
+    ── ⚠⚠ THE KEY IS `/connect`, AND IT MOVED WITH THE FRONT DOOR (`E591` WS-A)
+
+    ⚠⚠⚠ THE KEY NAMES THE APPLICATION, NOT A PAGE. `E591` split one route into
+    two — the PROFILE is `/connect`, the PEOPLE are `/community` — and the band
+    entry now points at `/connect`, so a row keyed `/community` would have named
+    a SECTION of Connect as the owner of Connect's own tab row.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`) — the key and the Home tab as
+    `E557` WS-A left them, when `/community` was the landing:
+    //   "/community": [
+    //     { label: "Home", href: "/community" },
+
+    ⚠⚠ THE KEY IS A LOOKUP TOKEN, NEVER MATCHED AGAINST A URL. `PageTabs` picks
+    the active tab from its own `current` prop against `t.match ?? t.href`, and
+    `check:nav-reachable` uses the key only as a label in its output. ⚠ It is
+    spelled as a route because every other key is, and because the route it
+    names is the one the band lands on.
+    ⚠⚠⚠ `PAGE_TABS` IS A `Record<string, …>`, SO A MISSED CALL SITE RETURNS
+    `undefined` RATHER THAN FAILING TO COMPILE. All eight were changed together;
+    `check:nav-reachable` and `check:community` are what hold it.
+
+    ── ⚠ `Community` IS A NEW TAB, AND WS-A COULD NOT SHIP WITHOUT IT ─────────
+
+    ⚠⚠ `Home` FOLLOWED THE PROFILE TO `/connect`, WHICH WOULD HAVE LEFT THE
+    COMMUNITY PAGE WITH NO DOOR IN THE NAV AT ALL. ⚠ A route split is complete
+    only when both halves are reachable; the alternative was shipping a page
+    reachable solely from an empty-state link in `/messages`.
+    ⚠ ONE WORD FOR PEOPLE: `Community`. `Network` is not a second name for it
+    (`E591` WS-A item 6) — and it never was in live code: the eight surviving
+    occurrences are *"Network error"*, `Oracle Business Network` (a real Oracle
+    product) and privacy-policy text. ⚠ Nothing was retired because nothing had
+    drifted.
+    ⚠⚠ `Colleagues` IS UNCHANGED AND DELIBERATELY SO — it already pointed at
+    `/community/colleagues`.
+  */
+  "/connect": [
+    { label: "Home", href: "/connect" },
+    { label: "Community", href: "/community" },
     { label: "Colleagues", href: "/community/colleagues" },
     { label: "Forums", href: "/community/forums", state: "live" },
     { label: "Mentoring", href: "/community/mentors", state: "early" },
@@ -736,7 +780,15 @@ export const PROVIDER_NAV: NavItem[] = [
     ⚠ The Connect TAB ROW is unchanged — `Home · Colleagues · Forums ·
     Mentoring (early) · Teams`, with `Home` active on `/community`.
   */
-  { label: "Connect", heading: "My Community", href: "/community", icon: "MessagesSquare" },
+  /* ⚠⚠ `Connect` LANDS ON THE PROFILE NOW (`P2-J3-E591` WS-A). ⚠ Scott,
+     2026-09-19: *"connect is now 'build your profile and connect to other
+     profiles'."* ⚠⚠ AND IT FIXES A TITLE SCOTT SPOTTED: this entry headed the
+     PROFILE page *"My Community"*, because one route rendered both.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   { label: "Connect", heading: "My Community", href: "/community", icon: "MessagesSquare" },
+     ⚠ `heading` IS READ BY `pageTitleFor`, WHICH HAS NO CALLER — it is the
+     record of what the journey is called, not a rendered string. */
+  { label: "Connect", heading: "My Profile", href: "/connect", icon: "MessagesSquare" },
   { label: "Learn", heading: "Learning Paths", href: "/learn", icon: "GraduationCap" },
   {
     /* ⚠ MIRRORED — the provider WORKS where the buyer HIRES. Same slot, same
@@ -1359,7 +1411,11 @@ export const TAB_SEQUENCE: Record<string, "process" | "suggested" | "none"> = {
     lives on the tab, not on the sequence, so readiness survives the numbers
     going. Removing numbers is not removing honesty markers.
   */
-  "/community": "none",
+  /* ⚠ RE-KEYED `/community` → `/connect` WITH `PAGE_TABS` (`E591` WS-A). ⚠ The
+     CLASSIFICATION IS UNCHANGED — Connect is still a room, not a path. ⚠
+     SUPERSEDED, quoted not deleted (`E164`):
+     //   "/community": "none", */
+  "/connect": "none",
   /*
     ── ⚠ FOOTNOTE: THE SUPERSEDED `/community` CLASSIFICATION (`E164`) ─────────
 

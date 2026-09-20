@@ -22,7 +22,7 @@ import { signIn } from "./_auth";
  * ⚠ The honest empty states cost four stop gates to get right. This is what
  * stops them regressing.
  *
- * ⚠ ROUTES CONFIRMED AGAINST `PAGE_TABS["/community"]` IN `nav.ts`, not taken
+ * ⚠ ROUTES CONFIRMED AGAINST `PAGE_TABS["/connect"]` IN `nav.ts`, not taken
  * from the brief. ⚠⚠ `Find a Mentor` IS NOT A SIXTH ROUTE — it is a section on
  * `/community/mentors`, which is why it is asserted there.
  *
@@ -33,8 +33,20 @@ import { signIn } from "./_auth";
  * A shape is catchable in Node; it needs no account, no browser and no seed.
  */
 
+/*
+  ── ⚠⚠ `home` IS `/connect` NOW (`P2-J3-E591` WS-A) ────────────────────────
+
+  ⚠ The route split moved the member's own profile to `/connect` and left the
+  PEOPLE at `/community`. ⚠⚠ `home` HERE MEANS "THE TAB LABELLED Home", which
+  followed the profile — so the walk still opens what the first tab opens.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   home: "/community",
+  ⚠ `community` IS A NEW ENTRY, not a rename of `home`: the Community page is a
+  real destination with its own tab and it needs its own console-error walk.
+*/
 const ROUTES = {
-  home: "/community",
+  home: "/connect",
+  community: "/community",
   colleagues: "/community/colleagues",
   forums: "/community/forums",
   mentors: "/community/mentors",
@@ -97,8 +109,32 @@ for (const [name, path] of Object.entries(ROUTES)) {
 test("E567/2 — the CONNECT tab row renders with Home first", async () => {
   await open(ROUTES.home);
   await expect(page.getByText("CONNECT", { exact: true }).first()).toBeVisible();
-  const tabs = page.locator('a[href^="/community"], a[href="/messages"]');
-  await expect(tabs.filter({ hasText: "Home" }).first()).toBeVisible();
+  /*
+    ── ⚠⚠ ASSERTED BY LABEL, NOT BY HREF PREFIX (`P2-J3-E591` WS-A item 9) ───
+
+    ⚠⚠⚠ THE OLD LOCATOR WAS `a[href^="/community"]` — A PREFIX ON A ROUTE. The
+    `E591` split moved `Home` to `/connect`, and the tab would have fallen
+    straight out of the locator: the test goes GREEN-BY-ABSENCE rather than
+    failing, because `.first()` on an empty set with a `hasText` filter finds
+    nothing to be visible about. ⚠ It would have reported a working tab row.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   const tabs = page.locator('a[href^="/community"], a[href="/messages"]');
+    //   await expect(tabs.filter({ hasText: "Home" }).first()).toBeVisible();
+
+    ⚠⚠ A LOCATOR KEYED TO A ROUTE BREAKS ON EVERY ROUTE CHANGE. This is `E587`'s
+    *assert the shape, not the incidental* applied to a spec: the RULE is "the
+    CONNECT row renders, and Home is first in it". Neither half of that rule
+    mentions a URL, so neither half of the assertion should.
+    ⚠ The row is found by its own eyebrow, and the tab by its LABEL.
+  */
+  const row = page.getByTestId("page-tabs");
+  await expect(row).toHaveCount(1);
+  const labels = (await row.getByRole("link").allInnerTexts()).map((s) => s.trim());
+  /* ⚠⚠ AN EMPTY ROW IS A FAILURE, NOT A PASS — the defect the old prefix
+     locator would have produced is precisely a row that measures as fine
+     because nothing was found in it. */
+  expect(labels.length, "the CONNECT row rendered no tabs").toBeGreaterThan(0);
+  expect(labels[0]).toBe("Home");
 });
 
 /*
@@ -127,8 +163,20 @@ test("E567/2 — the CONNECT tab row renders with Home first", async () => {
 test("E560/2 — Messages is GONE from the CONNECT row, and still reachable", async () => {
   await open(ROUTES.home);
 
-  /* ⚠ The five that remain, in order — the row did not lose anything else. */
+  /*
+    ⚠ The tabs that remain, in order — the row did not lose anything else.
+    ⚠⚠ SIX, NOT FIVE, SINCE `P2-J3-E591` WS-A: `Home` followed the profile to
+    `/connect` and a `Community` tab took over `/community`. ⚠ THE ROW DID NOT
+    LOSE A TAB — a route that was carrying two pages became two routes.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`) — the five as `E560` left them:
+    //   const TAB_HREFS = ["/community", "/community/colleagues",
+    //     "/community/forums", "/community/mentors", "/community/teams"];
+    ⚠⚠ THIS LIST IS DELIBERATELY STILL HREF-BASED, unlike the label assertion in
+    `E567/2` above. It is asserting ORDER of DESTINATIONS — which is what the
+    hrefs ARE — not the presence of a tab, so a route is the right key here.
+  */
   const TAB_HREFS = [
+    "/connect",
     "/community",
     "/community/colleagues",
     "/community/forums",
@@ -475,7 +523,15 @@ test("E567/7 — a provider-only viewer sees the PROVIDER set and NOT the recrui
   which passes whether or not the section renders.
 */
 const TITLE_CASE: { route: string; strings: string[] }[] = [
-  { route: ROUTES.home, strings: ["Waiting on You"] },
+  /* ⚠⚠ `Waiting on You` IS A `ConnectHome` HEADING, AND `ConnectHome` IS NOW
+     `/community` (`P2-J3-E591` WS-A). ⚠ The string did not change and the rule
+     did not change — the PAGE it renders on did, because `E591` split the
+     profile off `/community`. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   { route: ROUTES.home, strings: ["Waiting on You"] },
+     ⚠⚠ THE GATE CAUGHT THIS MOVE BY FAILING, which is the gate working: an
+     assertion that had followed `home` blindly would have gone looking for
+     Connect Home's copy on the profile and found none. */
+  { route: ROUTES.community, strings: ["Waiting on You"] },
   { route: ROUTES.colleagues, strings: ["Invite a Colleague", "Shared Skills"] },
   { route: ROUTES.forums, strings: ["Recent in Your Forums", "Your Forums"] },
   {
@@ -510,7 +566,10 @@ test("E568 — the lower-case originals are gone", async () => {
      the old one left — a page could render both. ⚠⚠ ONLY THE STRINGS THIS BRIEF
      CHANGED are listed; nothing here constrains copy it did not touch. */
   const GONE: { route: string; strings: string[] }[] = [
-    { route: ROUTES.home, strings: ["Waiting on you", "People you may know"] },
+    /* ⚠ MOVED WITH `ConnectHome` TO `/community` (`E591` WS-A), same reason as
+       the `TITLE_CASE` entry above. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+       //   { route: ROUTES.home, strings: ["Waiting on you", "People you may know"] }, */
+    { route: ROUTES.community, strings: ["Waiting on you", "People you may know"] },
     { route: ROUTES.colleagues, strings: ["Shared skills"] },
     { route: ROUTES.forums, strings: ["In paths you teach", "Recent in your forums"] },
     {
