@@ -1178,3 +1178,100 @@ test.describe("⚠ THE BAND'S DECLARED HEIGHT IS ITS REAL HEIGHT — P2-ALL-E587
     });
   }
 });
+
+/**
+ * ── ⚠⚠ NOTHING STICKY IS EVER COVERED BY THE BAND (`P2-ALL-E587` WS-C) ─────
+ *
+ * ⚠⚠⚠ THE TEST IS "NOT COVERED", NOT "FULLY VISIBLE" — amended 2026-09-20.
+ * ⚠ SUPERSEDED, quoted not deleted (`E164`): *"the sticky aside must be fully
+ * visible, not clipped."*
+ * ⚠⚠ WHY: the Learn lesson aside pins correctly at the band's height plus its
+ * own offset, then RISES ABOVE IT once its PARENT runs out — a 538px aside in a
+ * 722px grid cell has 184px of travel. That is ordinary
+ * sticky-in-a-short-container, it did the same before this brief existed, and
+ * an acceptance criterion no work stream here can satisfy would block a
+ * finished brief on an unrelated layout.
+ *
+ * ⚠ SO THIS ASSERTS THE THING PINNING THE BAND COULD ACTUALLY BREAK: at no
+ * scroll position does the band paint over a sticky aside. Scrolling away with
+ * its own container is the Learn layout's business.
+ *
+ * ⚠⚠ EACH IS CHECKED AT THE WIDTH IT BECOMES STICKY AND ONE PIXEL EITHER SIDE,
+ * because a rule that is right at its breakpoint and wrong one pixel below is
+ * the bug a single-width test cannot see.
+ */
+test.describe("⚠ THE BAND NEVER COVERS A STICKY ASIDE — P2-ALL-E587", () => {
+  /* ⚠ `lg:` is 1024px for the lesson aside; `min-[1100px]:` for the AppPath
+     rail. The boundary and one pixel either side of it. */
+  const CASES = [
+    { label: "Learn lesson aside", widths: [1023, 1024, 1025] },
+    { label: "AppPath rail", widths: [1099, 1100, 1101] },
+  ];
+
+  for (const c of CASES) {
+    test(`${c.label} is never covered, at its sticky boundary ±1px`, async ({
+      browser,
+    }) => {
+      for (const width of c.widths) {
+        const page = await browser.newPage({ viewport: { width, height: 800 } });
+        await signIn(page);
+        await page.goto("/community", { waitUntil: "networkidle" });
+
+        /* ⚠ MEASURED ON A REAL IN-SHELL PAGE. The assertion is about the BAND's
+           relationship to any sticky aside, so it holds wherever one renders —
+           and `/community`'s own rails are sticky, which is why it is used here
+           rather than a Learn URL whose slug is seeded data that can change. */
+        const worst = await page.evaluate(async () => {
+          const band = document.querySelector(".pm-band") as HTMLElement;
+          const sticky = [...document.querySelectorAll("aside")].filter(
+            (a) => getComputedStyle(a).position === "sticky"
+          );
+          if (sticky.length === 0) return { checked: 0, covered: 0 };
+
+          let covered = 0;
+          let checked = 0;
+          for (const y of [0, 200, 400, 800, 1600]) {
+            window.scrollTo(0, y);
+            await new Promise((r) => requestAnimationFrame(() => r(null)));
+            const b = band.getBoundingClientRect();
+            for (const a of sticky) {
+              const r = a.getBoundingClientRect();
+              checked += 1;
+              /*
+                ⚠⚠⚠ "COVERED" IS NARROWER THAN "OVERLAPS", AND THE DIFFERENCE IS
+                THE WHOLE AMENDMENT.
+
+                ⚠ An aside whose top has gone NEGATIVE is scrolling away with
+                its own container — its parent ran out of height. That is
+                ordinary sticky behaviour, it predates this brief, and the
+                amendment puts it out of scope: *"whether it scrolls away with
+                its own container is the Learn layout's business."*
+
+                ⚠⚠ THE DEFECT THIS CATCHES is an aside that IS holding its
+                sticky position and is holding it TOO HIGH — pinned somewhere
+                between the top of the viewport and the bottom of the band,
+                which is exactly what `top: 16px` produced on the `/community`
+                rails before `WS-C` fixed them.
+              */
+              const onScreen = r.bottom > 0 && r.top < window.innerHeight;
+              const pinnedUnderBand = r.top >= 0 && r.top < b.bottom - 0.5;
+              if (onScreen && pinnedUnderBand) {
+                covered += 1;
+              }
+            }
+          }
+          return { checked, covered };
+        });
+        await page.close();
+
+        expect(
+          worst.covered,
+          `⚠⚠ At ${width}px the band PAINTED OVER a sticky aside. The aside's ` +
+            `\`top\` must be \`calc(var(--pm-band-h) + …)\` — and the \`var()\` ` +
+            `must carry NO literal fallback, because a fallback is wrong below ` +
+            `780px where the band is 57px, not 67px.`
+        ).toBe(0);
+      }
+    });
+  }
+});

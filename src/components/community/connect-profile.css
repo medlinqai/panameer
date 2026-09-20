@@ -40,10 +40,27 @@
   ⚠ `align-items: start` above is what makes this possible: a stretched grid
   item is as tall as the row, and a sticky element inside a full-height box has
   nothing to stick against. Without it the rails simply do not stick, silently.
-  ⚠ `top: 16px` and not 0 — the band is NOT sticky today (`E587` is unbuilt), so
-  this is breathing room below the tab row rather than clearance for the band.
-  ⚠⚠ IF `E587` LANDS, THIS BECOMES `calc(var(--pm-band-h) + 16px)` — that brief
-  owns the custom property and this is the second consumer of it.
+  ── ⚠⚠⚠ THEY CLEAR THE PINNED BAND (`P2-ALL-E587` WS-C) ──────────────────
+
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //  ⚠ `top: 16px` and not 0 — the band is NOT sticky today (`E587` is
+  //  unbuilt), so this is breathing room below the tab row rather than
+  //  clearance for the band.
+  //  ⚠⚠ IF `E587` LANDS, THIS BECOMES `calc(var(--pm-band-h) + 16px)` — that
+  //  brief owns the custom property and this is the second consumer of it.
+  //  top: 16px;
+
+  ⚠⚠ `E587` HAS LANDED AND THIS IS THAT CHANGE. ⚠ The prediction was written in
+  `E588` WS-A and it was right: with the band pinned, `top: 16px` put both rails
+  UNDERNEATH it.
+  ⚠⚠⚠ AND IT WAS NOT ON `E587`'s LIST — that brief named the Learn lesson
+  aside, the `AppPath` rail and `scroll-mt` anchors, because these rails did not
+  exist when it was written. **A new sticky element added after a brief is
+  written is invisible to that brief's list.** ⚠ It was caught by the `WS-C`
+  assertion `THE BAND NEVER COVERS A STICKY ASIDE`, which looks for the
+  PROPERTY rather than for named files — which is why that test is written that
+  way.
+  ⚠ The `16px` is the original breathing room, kept.
 */
 .pm-cp-rail-l,
 .pm-cp-rail-r {
@@ -51,7 +68,7 @@
   flex-direction: column;
   gap: 14px;
   position: sticky;
-  top: 16px;
+  top: calc(var(--pm-band-h) + 16px);
 }
 
 /*

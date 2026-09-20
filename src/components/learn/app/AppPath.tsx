@@ -330,10 +330,13 @@ export function AppPath({
           page, and a pinned band sits over it. `0.875rem` is `top-3.5`'s own
           value. ⚠⚠ THE `top` APPLIES AT EVERY WIDTH AND IS HARMLESS BELOW
           1100px, where `position` is `static` and `top` does nothing.
+          ⚠⚠⚠ NO FALLBACK IN THE `var()` — see the lesson aside. A literal 67px
+          fallback is the hard-coded height this brief removes, and it is wrong
+          below 780px.
         */}
         <aside
           className="flex flex-col gap-3.5 min-[1100px]:sticky"
-          style={{ top: "calc(var(--pm-band-h, 67px) + 0.875rem)" }}
+          style={{ top: "calc(var(--pm-band-h) + 0.875rem)" }}
         >
           {path.instructors.length > 0 && (
             <Card title="Your Instructors">
