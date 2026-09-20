@@ -42,11 +42,25 @@ export default async function ProfileScorePage() {
     ⚠ A MEMBER WITH NO PROVIDER PROFILE HAS NO SCORE — there is nothing to
     measure, so they go back to Connect rather than meeting an empty dial.
     ⚠⚠ `Connect` IS IN THE BUYER MENU TOO, so this is reachable by a buyer.
+
+    ⚠⚠⚠ THIS ONE STAYS `/community` AFTER THE `E591` SPLIT, AND THAT IS A
+    DEVIATION FROM THE BRIEF, MADE ON PURPOSE. WS-A item 8 sends BOTH of these
+    redirects to `/connect`. ⚠ This branch fires when the viewer has NO PROVIDER
+    PROFILE — and `/connect` redirects exactly that member straight back to
+    `/community`. Sending them there would be a bounce through a route whose
+    only job would be to return them here. ⚠⚠ The brief's stated intent — *"left
+    alone, a user with no profile lands on the Community page instead"* — is the
+    correct destination for someone who has no profile; it is the OTHER branch
+    that meant "go to your profile".
   */
   if (!profile) redirect("/community");
 
+  /* ⚠ THE VIEWER HAS A PROFILE, so this genuinely means *"go to your profile"*
+     and it follows the profile to `/connect` (`E591` WS-A item 8).
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   if (!input) redirect("/community"); */
   const input = await buildCompletenessInput(profile.id);
-  if (!input) redirect("/community");
+  if (!input) redirect("/connect");
 
   const unread = await unreadCount(viewer);
 
@@ -54,9 +68,12 @@ export default async function ProfileScorePage() {
     <>
       <PageTabs
         eyebrow="CONNECT"
-        sequence={tabSequenceFor("/community")}
-        tabs={tabsWithUnread(PAGE_TABS["/community"], unread)}
-        current="/community"
+        sequence={tabSequenceFor("/connect")}
+        tabs={tabsWithUnread(PAGE_TABS["/connect"], unread)}
+        /* ⚠ THE SCORE IS THE PROFILE'S, so `Home` (`/connect`) is the active
+           tab, not `Community` (`E591` WS-A). ⚠ SUPERSEDED (`E164`):
+           //   current="/community" */
+        current="/connect"
       />
       <ProfileScoreView score={computeProfileScore(input)} />
     </>

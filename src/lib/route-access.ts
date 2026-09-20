@@ -243,6 +243,24 @@ export const ROUTE_ACCESS: { prefix: string; requires: RouteRequirement }[] = [
   */
   { prefix: "/community", requires: "authenticated" },
   /*
+    ── ⚠⚠⚠ `/connect` NEEDS ITS OWN RULE (`P2-J3-E591` WS-A item 7) ──────────
+
+    ⚠⚠ THE `/community` PREFIX ABOVE DOES NOT REACH IT. `E591` moved the
+    member's own provider profile from `/community` to `/connect`, and a NEW
+    ROUTE IS COVERED BY NOTHING UNTIL A RULE NAMES IT — the map is default-deny
+    at the edge only for paths it knows about, and `requirementFor` returns
+    `"public"` for an unmatched path.
+    ⚠ `authenticated`, matching what `/community` carried and what the page's own
+    `guardPage("authenticated")` asserts. ⚠⚠ THE TWO MUST AGREE OR
+    `check:nav-reachable` FAILS — that gate exists to catch a nav entry and its
+    page disagreeing about who may stand there.
+    ⚠ NOT `canProvideServices`, even though the page renders a provider profile:
+    `Connect` is in the BUYER menu (`REQUESTER_NAV`) too, and a buyer reaching
+    this route is redirected to `/community` by the page, not bounced to
+    `/login` by the edge.
+  */
+  { prefix: "/connect", requires: "authenticated" },
+  /*
     ⚠ "/services/offers", NOT "/services".
 
     The prefix used to be bare "/services", which was correct while the only

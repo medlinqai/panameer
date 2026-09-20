@@ -1215,12 +1215,26 @@ test.describe("⚠ THE BAND NEVER COVERS A STICKY ASIDE — P2-ALL-E587", () => 
       for (const width of c.widths) {
         const page = await browser.newPage({ viewport: { width, height: 800 } });
         await signIn(page);
-        await page.goto("/community", { waitUntil: "networkidle" });
+        await page.goto("/connect", { waitUntil: "networkidle" });
 
         /* ⚠ MEASURED ON A REAL IN-SHELL PAGE. The assertion is about the BAND's
            relationship to any sticky aside, so it holds wherever one renders —
-           and `/community`'s own rails are sticky, which is why it is used here
-           rather than a Learn URL whose slug is seeded data that can change. */
+           and the PROFILE's own rails are sticky, which is why it is used here
+           rather than a Learn URL whose slug is seeded data that can change.
+
+           ── ⚠⚠⚠ THE URL MOVED WITH THE RAILS (`P2-J3-E591` WS-A) ───────────
+
+           ⚠ SUPERSEDED, quoted not deleted (`E164`):
+           //   await page.goto("/community", { waitUntil: "networkidle" });
+           ⚠⚠ THIS IS NOT A COSMETIC UPDATE. `E591` moved the profile — AND ITS
+           STICKY RAILS — to `/connect`, so `/community` now renders NO sticky
+           aside at all. ⚠⚠⚠ THE ASSERTION WOULD HAVE PASSED VACUOUSLY: it
+           collects `aside` elements whose position is sticky, and an empty set
+           has no worst case to fail on. ⚠ That is `E586`'s defect exactly — a
+           gate with no inputs reporting success — and it would have gone on
+           reporting green while nothing was measured.
+           ⚠ THE EMPTINESS IS NOW AN EXPLICIT FAILURE BELOW, so a future move
+           cannot hollow this out silently again. */
         const worst = await page.evaluate(async () => {
           const band = document.querySelector(".pm-band") as HTMLElement;
           const sticky = [...document.querySelectorAll("aside")].filter(
@@ -1271,6 +1285,22 @@ test.describe("⚠ THE BAND NEVER COVERS A STICKY ASIDE — P2-ALL-E587", () => 
             `must carry NO literal fallback, because a fallback is wrong below ` +
             `780px where the band is 57px, not 67px.`
         ).toBe(0);
+
+        /*
+          ── ⚠⚠⚠ AN EMPTY SET IS A FAILURE, NOT A PASS (`P2-J3-E591` WS-A) ────
+
+          ⚠⚠ WITHOUT THIS THE TEST ABOVE PASSES ON A PAGE WITH NO STICKY ASIDE
+          AT ALL — `covered` is 0 because nothing was looked at. ⚠ `E591` moved
+          the profile's rails off `/community` and would have hollowed this out
+          in exactly that way, silently, while the gate still read green.
+          ⚠ It is `E586`'s rule applied here: A GATE WITH NO INPUTS MUST FAIL.
+        */
+        expect(
+          worst.checked,
+          `⚠⚠ At ${width}px NO STICKY ASIDE RENDERED on /connect, so nothing ` +
+            `was measured. This assertion needs a page that actually has one — ` +
+            `it did not fail, it had no inputs, which is the E586 defect.`
+        ).toBeGreaterThan(0);
       }
     });
   }

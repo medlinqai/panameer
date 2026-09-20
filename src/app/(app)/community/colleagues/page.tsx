@@ -30,8 +30,8 @@ export default async function ColleaguesPage() {
     <>
       <PageTabs
         eyebrow="CONNECT"
-        sequence={tabSequenceFor("/community")}
-        tabs={tabsWithUnread(PAGE_TABS["/community"], unread)}
+        sequence={tabSequenceFor("/connect")}
+        tabs={tabsWithUnread(PAGE_TABS["/connect"], unread)}
         current="/community/colleagues"
       />
       <div className="mx-auto max-w-5xl">

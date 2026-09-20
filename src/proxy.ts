@@ -129,6 +129,11 @@ export const config = {
     "/finances/:path*",
     "/messages/:path*",
     "/community/:path*",
+    /* ⚠⚠ `P2-J3-E591` WS-A — the member's own profile moved from `/community`
+       to `/connect`, and `/community/:path*` DOES NOT MATCH IT. Paired with
+       `route-access.ts`'s `{ prefix: "/connect" }` entry; a route in neither is
+       one the edge silently never runs on. */
+    "/connect/:path*",
     /*
       Only the seller sub-route is guarded; the bare prefix is not. See the note
       in route-access.ts.

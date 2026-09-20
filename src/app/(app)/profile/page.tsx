@@ -71,6 +71,19 @@ export default async function MyProfilePage() {
     ⚠⚠ `/community` CARRIES THE SAME NON-PROVIDER FALLBACK, so a member with no
     provider profile is not redirected into an empty page — it renders the
     Connect landing for them, exactly as `EmployeeProfile` did here.
+
+    ── ⚠⚠ THE DESTINATION MOVED TO `/connect` (`P2-J3-E591` WS-A) ────────────
+
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   redirect("/community");
+    ⚠⚠ THE PARAGRAPH ABOVE IS STILL TRUE, IT JUST DESCRIBES A DIFFERENT ROUTE:
+    `/connect` now carries the non-provider case and sends those members to
+    `/community`, so nobody meets an empty page — it costs one extra hop and
+    nothing else.
+    ⚠⚠⚠ `/profile` IS THE STABLE PATH AND STAYS. `E591` WS-A item 10 keeps all
+    five user-facing `/profile` links exactly as they are; pointing this one
+    redirect at the new route IS the whole fix, and rewriting five call sites to
+    save a hop would be risk without benefit.
   */
-  redirect("/community");
+  redirect("/connect");
 }
