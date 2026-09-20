@@ -33,7 +33,12 @@ export default defineConfig({
     including the public allowlist. ⚠ EXCLUDING THE NEW FILE KEEPS EVERY
     EXISTING ONE, which is what "29 must stay 29" actually protects.
   */
-  testIgnore: "connect-walk.spec.ts",
+  /* ⚠⚠ EVERY SIBLING SUITE MUST BE NAMED HERE. `testIgnore` collects any
+     spec it does NOT list, so a new file in this directory joins the shell
+     contract silently and moves its count — measured on `E562`, which read
+     30 for a session because of a scratch spec. ⚠ `community-web.spec.ts`
+     added by `P2-J3-E591` WS-B. */
+  testIgnore: ["connect-walk.spec.ts", "community-web.spec.ts"],
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   use: {
     baseURL: "http://localhost:3100",

@@ -1,0 +1,209 @@
+/*
+  ── ⚠⚠ THE LIVING WEB (`P2-J3-E591` WS-B) ──────────────────────────────────
+
+  ⚠ The `<svg>` carries a `viewBox` and is sized `width: 100%; height: auto`, so
+  it scales to whatever column it lands in. ⚠⚠ THAT IS WHY THE LAYOUT MATH IS
+  SCALE-FREE: a clearance expressed in viewBox units holds at every rendered
+  width, which is what makes `check:community-web`'s sweep a proof about the
+  PAGE and not only about the arithmetic.
+
+  ⚠ WHAT THE WIDTH STILL DECIDES is how SMALL a node gets, which is why the node
+  counts are capped in `community-web.ts` and why the narrow widths are
+  screenshotted at the stop gate rather than reasoned about.
+*/
+.pm-web {
+  margin: 0 0 18px;
+}
+
+.pm-web-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  /*
+    ── ⚠⚠ A CEILING, AND IT CAME FROM THE MEASUREMENT, NOT FROM TASTE ────────
+
+    ⚠ `E591` WS-B measured the rendered box before setting this: in the
+    `max-w-5xl` column at a 1440px viewport the web came out **1024 × 731px**.
+    ⚠⚠ 731px TALL IS MOST OF A LAPTOP SCREEN — the web is the page's hero, not
+    the whole page, and at that size the colleague list below it was entirely
+    below the fold.
+    ⚠ The viewBox is 560 × 400 (a 1.4 ratio), so 620px wide is 443px tall, which
+    keeps the first colleague card visible on a 900px-high window.
+    ⚠⚠ IT IS A `max-width`, NOT A FIXED ONE: below 620px the web still fills its
+    container, which is the phone and tablet case and the `WS-C` rail case.
+  */
+  max-width: 620px;
+  margin-inline: auto;
+  /* ⚠ A floor, so the web does not become a stripe in a narrow rail. Below
+     this the caps are what keep it legible. */
+  min-height: 200px;
+}
+
+/* ── the links ───────────────────────────────────────────────────────────── */
+.pm-web-link {
+  fill: none;
+}
+.pm-web-link-joined {
+  stroke: var(--color-magenta, #d72cd6);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  opacity: 0.55;
+}
+.pm-web-link-invited {
+  stroke: var(--color-magenta, #d72cd6);
+  stroke-width: 1.6;
+  stroke-dasharray: 4 4;
+  opacity: 0.4;
+}
+.pm-web-link-reachable {
+  stroke: var(--color-line, #d9d5e0);
+  stroke-width: 1.4;
+  stroke-dasharray: 2 5;
+}
+
+/* ── the three node states ───────────────────────────────────────────────── */
+
+/*
+  ⚠⚠ THE HALO IS A RING **BEHIND** THE PHOTO (WS-B item 2). The blur filter is
+  applied to THIS circle — a plain magenta disc under the portrait — and never
+  to the `<image>`, which would blur the person's face.
+  ⚠ `check:community-web` §8 fails the build on a `filter=` on an `<image>`.
+*/
+.pm-web-halo {
+  fill: var(--color-magenta, #d72cd6);
+  opacity: 0.55;
+}
+.pm-web-joined-ring {
+  fill: none;
+  stroke: var(--color-magenta, #d72cd6);
+  stroke-width: 2.2;
+}
+
+/* ⚠ Hollow and dashed: an invitation is an open question, and it has no face
+   because the row holds name and email only. */
+.pm-web-invited {
+  fill: #fff;
+  stroke: var(--color-magenta, #d72cd6);
+  stroke-width: 2;
+  stroke-dasharray: 3.4 3;
+}
+
+/* ⚠ Fainter still — nobody has been asked yet, so it must not read as a
+   relationship that exists. */
+.pm-web-reachable {
+  fill: #fff;
+  stroke: var(--color-line, #b9b3c4);
+  stroke-width: 1.4;
+  stroke-dasharray: 2.6 2.6;
+  opacity: 0.6;
+}
+
+.pm-web-me-bg {
+  fill: var(--color-ink, #1b1226);
+}
+.pm-web-me-ring {
+  fill: none;
+  stroke: var(--color-magenta, #d72cd6);
+  stroke-width: 2.4;
+  opacity: 0.6;
+}
+
+/* ⚠ Grey and colourless on purpose — it must read as "no photo yet", never as
+   a photo, and never as initials. */
+.pm-web-sil {
+  fill: #9a93a6;
+}
+.pm-web-sil .pm-web-sil-bg {
+  fill: #e8e5ec;
+}
+.pm-web-sil-on-dark {
+  fill: #6f6780;
+}
+.pm-web-sil-on-dark .pm-web-sil-bg {
+  fill: #2c2338;
+}
+
+/*
+  ── ⚠⚠ THE RE-SETTLE ────────────────────────────────────────────────────────
+
+  ⚠⚠⚠ THE CLASS IS ADDED ONLY AFTER A SUCCESSFUL REFRESH. It is not on the
+  first paint and it is never added when a fetch fails — so a page whose
+  endpoint is down holds still, which is the ruling: *"if the endpoint fails, it
+  must NOT animate."*
+
+  ⚠ A CSS transition rather than a JS tween: the layout is recomputed to its new
+  coordinates and the browser glides the attributes. ⚠⚠ NO `requestAnimationFrame`
+  LOOP — the mockup's hand-rolled tween re-rendered the whole tree ~60 times a
+  second for 2.6 seconds, which is a lot of work to move twenty circles.
+*/
+.pm-web-move circle,
+.pm-web-move image,
+.pm-web-move line,
+.pm-web-move g {
+  transition:
+    cx 2.4s cubic-bezier(0.22, 0.61, 0.36, 1),
+    cy 2.4s cubic-bezier(0.22, 0.61, 0.36, 1),
+    x 2.4s cubic-bezier(0.22, 0.61, 0.36, 1),
+    y 2.4s cubic-bezier(0.22, 0.61, 0.36, 1),
+    x1 2.4s cubic-bezier(0.22, 0.61, 0.36, 1),
+    y1 2.4s cubic-bezier(0.22, 0.61, 0.36, 1),
+    x2 2.4s cubic-bezier(0.22, 0.61, 0.36, 1),
+    y2 2.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+/*
+  ⚠⚠ THE SECOND HALF OF `prefers-reduced-motion`, AND IT IS BELT AND BRACES.
+  The component already withholds the class when the media query matches; this
+  stops the transition even if a future edit forgets. ⚠ THE REBUILD STILL
+  HAPPENS — this suppresses the glide, not the update.
+*/
+@media (prefers-reduced-motion: reduce) {
+  .pm-web-move circle,
+  .pm-web-move image,
+  .pm-web-move line,
+  .pm-web-move g {
+    transition: none;
+  }
+}
+
+/* ── the key and the notes ───────────────────────────────────────────────── */
+.pm-web-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12.5px;
+  color: var(--color-ink-2, #6b6478);
+}
+.pm-web-key li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.pm-web-key i {
+  width: 11px;
+  height: 11px;
+  border-radius: 999px;
+  flex: none;
+}
+.pm-web-key-joined {
+  background: var(--color-magenta, #d72cd6);
+}
+.pm-web-key-invited {
+  border: 2px dashed var(--color-magenta, #d72cd6);
+}
+.pm-web-key-reachable {
+  border: 1.5px dashed #b9b3c4;
+}
+
+.pm-web-more,
+.pm-web-empty {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  color: var(--color-ink-2, #6b6478);
+}
+.pm-web-empty {
+  max-width: 44ch;
+}

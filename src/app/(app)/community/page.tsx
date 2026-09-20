@@ -4,6 +4,9 @@ import { PageTabs } from "@/components/casing/PageTabs";
 import { PAGE_TABS, tabSequenceFor } from "@/lib/nav";
 import { tabsWithUnread, unreadCount } from "@/lib/messages";
 import { ConnectHome } from "@/components/community/ConnectHome";
+import { CommunityWeb } from "@/components/community/CommunityWeb";
+import { getCommunityWeb } from "@/lib/community-web";
+import "@/components/community/community-web.css";
 
 /**
  * ── ⚠⚠ `/community` IS THE COMMUNITY PAGE — THE PEOPLE (`P2-J3-E591` WS-A) ──
@@ -63,6 +66,15 @@ export default async function CommunityPage() {
             My Community
           </h1>
         </header>
+        {/*
+          ⚠⚠ THE WEB IS THE PAGE'S HERO (`P2-J3-E591` WS-B). ⚠ The FIRST
+          picture is server-rendered and handed down as a prop — every later
+          cycle is built from `/api/community/web`, so the rebuild is tied to
+          re-fetched data rather than to a clock.
+          ⚠ WS-C moves it into a two-column layout; WS-B only puts it on the
+          page so it can be walked and screenshotted.
+        */}
+        {viewer && <CommunityWeb initial={await getCommunityWeb(viewer)} />}
         {viewer && <ConnectHome viewer={viewer} />}
       </div>
     </>
