@@ -1,0 +1,202 @@
+import { test, expect } from "@playwright/test";
+import { signIn } from "./_auth";
+
+/**
+ * ── ⚠⚠ THE COMMUNITY PAGE, WALKED SIGNED IN (`P2-J3-E591` WS-C) ───────────
+ *
+ * ⚠⚠⚠ AGAINST THE SEEDED COMMUNITY, NOT A DOUBLED ROUTE. `test3@panameer.com`
+ * now has 6 colleagues, 1 live invitation and 6 reachable people (seeded
+ * 2026-09-20 as an authorised `E564` exception). ⚠ A route double proves the
+ * RENDER; only real rows prove the QUERIES, the joins and the second degree.
+ *
+ * ⚠ `check:community-page` proves the RULES statically. This proves they are
+ * true of the DOM the browser actually built.
+ */
+test.describe("⚠ THE COMMUNITY PAGE — P2-J3-E591 WS-C", () => {
+  for (const { label, w } of [
+    { label: "desktop", w: 1440 },
+    { label: "tablet", w: 834 },
+    { label: "phone", w: 390 },
+  ]) {
+    test(`${label} (${w}px) — two columns, cards, rail, no overflow`, async ({ browser }) => {
+      const page = await browser.newPage({ viewport: { width: w, height: 1000 } });
+      await signIn(page);
+      await page.goto("/community", { waitUntil: "networkidle" });
+
+      const cards = page.locator(".pm-cm-card");
+      const invited = page.locator(".pm-cm-card-invited");
+      const n = await cards.count();
+      const nInv = await invited.count();
+      console.log(
+        `E591/WS-C  ${label.padEnd(7)} ${n} cards (${nInv} invited), ` +
+          `rail ${(await page.locator(".pm-cm-rail").count()) ? "present" : "MISSING"}`
+      );
+      /* ⚠ The seed guarantees these, so a zero here is a broken query, not an
+         empty account — which is the whole reason the seed exists. */
+      expect(n, "no colleague cards rendered").toBeGreaterThan(0);
+      expect(nInv, "the live invitation did not render").toBe(1);
+
+      /* ⚠⚠ THE LAPSED INVITATION MUST NOT APPEAR. Two were seeded; one expired
+         three days ago and `status` still reads PENDING. */
+      await expect(page.getByText("marcus.oyelaran@example.com")).toHaveCount(0);
+      await expect(page.getByText("dana.whitfield@example.com")).toHaveCount(1);
+
+      const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth
+      );
+      expect(overflow, `${label}: page scrolls sideways by ${overflow}px`).toBeLessThanOrEqual(0);
+
+      await page.screenshot({ path: `e2e-shell/.artifacts/e591-community-${label}.png` });
+      await page.close();
+    });
+  }
+
+  /*
+    ⚠⚠⚠ NO RATE IN THE DOM, AND NONE IN THE PAYLOAD EITHER. The static gate
+    proves the source asks for none; this proves none arrived — including in the
+    RSC flight data, which is where a value omitted from the render still lands.
+  */
+  test("⚠⚠ no rate reaches the page — DOM or payload", async ({ browser }) => {
+    const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+    await signIn(page);
+    await page.goto("/community", { waitUntil: "networkidle" });
+
+    const body = await page.locator("body").innerText();
+    for (const needle of ["/hr", "per hour", "hourly", "$"]) {
+      expect(body.includes(needle), `"${needle}" appears in the rendered page`).toBe(false);
+    }
+    /* ⚠ The whole served document, not just the visible text. */
+    const html = await page.content();
+    for (const needle of ["hourly_rate_cents", "rate_min_cents", "rate_max_cents"]) {
+      expect(html.includes(needle), `"${needle}" is in the payload`).toBe(false);
+    }
+    await page.close();
+  });
+
+  /*
+    ⚠⚠ THE STRETCHED LINK: the whole card opens the profile, and there is no
+    anchor inside an anchor. ⚠ Nested anchors are invalid HTML and break
+    keyboard order — the browser is the only thing that can prove it did not
+    happen, because the parser silently repairs it.
+  */
+  test("⚠⚠ a joined card opens the profile, with no nested anchor", async ({ browser }) => {
+    const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+    await signIn(page);
+    await page.goto("/community", { waitUntil: "networkidle" });
+
+    const nested = await page.evaluate(
+      () => document.querySelectorAll(".pm-cm-card a a").length
+    );
+    expect(nested, "an anchor is nested inside another anchor").toBe(0);
+
+    const href = await page.locator(".pm-cm-card .pm-cm-open").first().getAttribute("href");
+    console.log(`E591/WS-C  first card opens ${href}`);
+    expect(href).toMatch(/^\/providers\//);
+
+    /* ⚠ An INVITED card opens nothing — there is no profile to open. */
+    const invitedLinks = await page.evaluate(
+      () => document.querySelectorAll(".pm-cm-card-invited a").length
+    );
+    expect(invitedLinks, "the invited card is a link").toBe(0);
+    await page.close();
+  });
+
+  /* ⚠⚠ NEVER INITIALS. The placeholder is the grey silhouette, everywhere. */
+  test("⚠ a missing photo is the silhouette, never initials", async ({ browser }) => {
+    const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+    await signIn(page);
+    await page.goto("/community", { waitUntil: "networkidle" });
+    const counts = await page.evaluate(() => ({
+      sil: document.querySelectorAll(".pm-cm-card .pm-sil, .pm-cm-rail .pm-sil").length,
+      faces: document.querySelectorAll(".pm-cm-card .pm-face, .pm-cm-rail .pm-face").length,
+      initials: document.querySelectorAll(".pm-cm-card .pm-avatar, .pm-cm-rail .pm-avatar").length,
+    }));
+    console.log(
+      `E591/WS-C  faces: ${counts.faces} photos, ${counts.sil} silhouettes, ${counts.initials} initials`
+    );
+    expect(counts.initials, "an initials avatar rendered").toBe(0);
+    /* ⚠ The invited card has no photo by definition, so there is always one. */
+    expect(counts.sil, "no silhouette rendered at all").toBeGreaterThan(0);
+    await page.close();
+  });
+
+  /*
+    ── ⚠⚠ IT RENDERS CLEAN, AND EVERY IMAGE IT ASKS FOR ARRIVES ─────────────
+
+    ⚠⚠⚠ THIS EXISTS BECAUSE OF A DEFECT THE SCREENSHOT FOUND AND EVERY OTHER
+    ASSERTION MISSED: `Test User 5` has a non-null `photo_url` whose image does
+    not load, and the card rendered as a bare magenta circle. ⚠ Counting
+    `.pm-face` elements said "7 photos" and was TRUE — the `<img>` existed. It
+    just had nothing in it.
+    ⚠⚠ SO THE COUNT WAS NOT THE MEASUREMENT. The fallback layer is now asserted
+    directly, and the failed requests are printed so a broken photo is visible
+    as a broken photo rather than as a design choice.
+  */
+  test("⚠⚠ no console error, and every face has a fallback underneath", async ({
+    browser,
+  }) => {
+    const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+    const errors: string[] = [];
+    page.on("console", (m) => {
+      if (m.type() === "error") errors.push(m.text().slice(0, 300));
+    });
+    page.on("pageerror", (e) => errors.push(`pageerror: ${e.message.slice(0, 200)}`));
+    const failed: string[] = [];
+    page.on("response", (r) => {
+      if (r.status() >= 400) failed.push(`${r.status()} ${r.url().slice(0, 90)}`);
+    });
+
+    await signIn(page);
+    /*
+      ⚠⚠ COLLECTED FROM THE NAVIGATION ONWARDS, NOT FROM SIGN-IN. The login
+      page requests `/brand/login-bg.mp4`, which IS NOT IN `public/brand/` —
+      a PRE-EXISTING 404 on every sign-in in this repo, and `login/page.tsx`
+      treats the video as optional (`NEXT_PUBLIC_LOGIN_VIDEO_URL` overrides it).
+      ⚠ Attributing somebody else's missing asset to this page would make the
+      gate fail for a reason it is not about — and a gate that fails for the
+      wrong reason gets waived, which is how a real error later gets ignored.
+      ⚠ Reported at the `E591` gate rather than fixed inside this brief.
+      ⚠ The same shape as `connect-walk.spec.ts`'s `open()`, deliberately.
+    */
+    errors.length = 0;
+    failed.length = 0;
+    await page.goto("/community", { waitUntil: "networkidle" });
+
+    if (failed.length) console.log(`E591/WS-C  ⚠ failed requests: ${failed.join(" | ")}`);
+    expect(errors, `console errors: ${errors.join(" | ")}`).toEqual([]);
+
+    /*
+      ⚠⚠ EVERY PHOTO SITS ON A SILHOUETTE. A photo without one is a card that
+      renders as a hole the day that URL stops resolving — which is not a
+      hypothetical, it is what `Test User 5` already does.
+    */
+    const unbacked = await page.evaluate(
+      () =>
+        [...document.querySelectorAll(".pm-cm-card .pm-face, .pm-cm-rail .pm-face")].filter(
+          (img) => !img.parentElement?.querySelector(".pm-sil")
+        ).length
+    );
+    expect(unbacked, "a photo has no silhouette behind it").toBe(0);
+
+    /* ⚠ And a broken one is genuinely covered: naturalWidth is 0 when the
+       image did not decode, and the glyph underneath is what shows. */
+    const broken = await page.evaluate(
+      () =>
+        [...document.querySelectorAll<HTMLImageElement>(".pm-cm-card .pm-face")].filter(
+          (i) => i.complete && i.naturalWidth === 0
+        ).length
+    );
+    console.log(`E591/WS-C  ${broken} photo(s) failed to decode — each falls back to the glyph`);
+    await page.close();
+  });
+
+  /* ⚠⚠ PROFILE COMPLETION DOES NOT APPEAR ON THIS PAGE (item 2). */
+  test("⚠⚠ no completion ring and no completeness figure", async ({ browser }) => {
+    const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+    await signIn(page);
+    await page.goto("/community", { waitUntil: "networkidle" });
+    await expect(page.getByText("Profile Completion")).toHaveCount(0);
+    await expect(page.getByText("of 100")).toHaveCount(0);
+    await page.close();
+  });
+});

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getMyCommunity, type PersonCard } from "@/lib/connections";
 import { getColleagueSuggestions } from "@/lib/colleague-suggestions";
-import { ratesByPersonId } from "@/lib/provider-rates";
+import { profileIdsByPersonId } from "@/lib/provider-rates";
 import { ConnectControls } from "@/components/community/ConnectControls";
 import { MemberRow } from "@/components/community/MemberRow";
 import type { Viewer } from "@/lib/access";
@@ -62,12 +62,31 @@ export async function ConnectHome({ viewer }: { viewer: Viewer }) {
   const shownColleagues = colleagues.slice(0, CAP);
   const shownSuggestions = suggestions.slice(0, CAP);
 
-  /* ⚠ Rates are fetched only for the rows actually rendered — a capped list
-     that queries the whole set is a cap in the UI and not in the work. */
+  /*
+    ── ⚠⚠⚠ IT ASKS FOR THE LINK, NOT THE RATE (`P2-J3-E591` WS-C item 7) ────
+
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   Rates are fetched only for the rows actually rendered — a capped list
+    //   that queries the whole set is a cap in the UI and not in the work.
+    //   const [colleagueFacts, suggestionFacts, incomingFacts] = await Promise.all([
+    //     ratesByPersonId(shownColleagues.map((c) => c.person!.personId)),
+    //     ratesByPersonId(shownSuggestions.map((s) => s.person.personId)),
+    //     ratesByPersonId(incoming.map((r) => r.person!.personId)),
+    //   ]);
+
+    ⚠⚠ THE CAPPING REASONING ABOVE IS STILL TRUE AND STILL APPLIES — only the
+    QUESTION changed. ⚠⚠⚠ THESE THREE CALLS READ `hourly_rate_cents`,
+    `rate_min_cents`, `rate_max_cents` AND `currency` OFF EVERY PERSON SHOWN,
+    formatted them, and then used ONLY `.profileId`. No rate string ever reached
+    the DOM — ⚠ but Scott's rule is about the QUERY, because a rate omitted from
+    a render and present in a payload is still disclosed, and the formatted
+    string was sitting one prop away from `MemberRow`'s `rate`.
+    ⚠ `profileIdsByPersonId` selects two columns and cannot carry one.
+  */
   const [colleagueFacts, suggestionFacts, incomingFacts] = await Promise.all([
-    ratesByPersonId(shownColleagues.map((c) => c.person!.personId)),
-    ratesByPersonId(shownSuggestions.map((s) => s.person.personId)),
-    ratesByPersonId(incoming.map((r) => r.person!.personId)),
+    profileIdsByPersonId(shownColleagues.map((c) => c.person!.personId)),
+    profileIdsByPersonId(shownSuggestions.map((s) => s.person.personId)),
+    profileIdsByPersonId(incoming.map((r) => r.person!.personId)),
   ]);
 
   return (
@@ -101,7 +120,7 @@ export async function ConnectHome({ viewer }: { viewer: Viewer }) {
               <MemberRow
                 key={r.connectionId}
                 person={r.person as PersonCard}
-                profileId={incomingFacts.get(r.person!.personId)?.profileId}
+                profileId={incomingFacts.get(r.person!.personId)}
               >
                 {/* ⚠ `showDecline` — `Decline` IS A REAL BUTTON (`E374`), not a
                     hidden menu item, and it is single-click with no confirm.
@@ -135,7 +154,7 @@ export async function ConnectHome({ viewer }: { viewer: Viewer }) {
               <MemberRow
                 key={c.connectionId}
                 person={c.person as PersonCard}
-                profileId={colleagueFacts.get(c.person!.personId)?.profileId}
+                profileId={colleagueFacts.get(c.person!.personId)}
               >
                 {/* ⚠ `relation="ACCEPTED"` IS A FACT, NOT A GUESS —
                     `getMyCommunity` builds `colleagues` by filtering
@@ -162,7 +181,7 @@ export async function ConnectHome({ viewer }: { viewer: Viewer }) {
                 key={s.person.userId}
                 person={s.person}
                 reason={s.reason}
-                profileId={suggestionFacts.get(s.person.personId)?.profileId}
+                profileId={suggestionFacts.get(s.person.personId)}
               >
                 <ConnectControls toUserId={s.person.userId} relation={null} />
               </MemberRow>

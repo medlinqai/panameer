@@ -235,6 +235,45 @@ check(
   comment renumbers every line after it — which would have turned one wrong
   count into a wrong count AND a wrong citation.
 */
+/*
+  ⚠⚠⚠ THE REGRESSION TEST FOR THE BUG THE STRIPPER SHIPPED WITH (`E591` WS-C).
+
+  ⚠ The first version let the opening brace match ANY brace — a function's
+  included — and its lazy body then ran forward to the next block terminator
+  that happened to be followed by a closing brace. (The terminator is described
+  rather than written: writing it here would close THIS comment, which is the
+  very trap rule 12 is about and the fifth time it has bitten.)
+  ⚠⚠ ON A REAL FILE THAT ERASED FORTY LINES OF LIVE CODE, and
+  `check:community-page` reported 43/43 while scanning a page with a hole in it.
+  ⚠⚠⚠ A GATE GREEN ABOUT NOTHING IS `E586`, reproduced by the helper written to
+  stop a measurement error.
+*/
+check(
+  "STRIPPER: ⚠⚠⚠ a function brace + a docblock does NOT swallow the body",
+  stripComments(
+    [
+      "function f() {",
+      "  /* a docblock */",
+      "  const live = 1;",
+      "  return (",
+      "    <div className=\"keep-me\">",
+      "      {/* a jsx comment */}",
+      "    </div>",
+      "  );",
+      "}",
+    ].join("\n")
+  ).includes("keep-me") &&
+    stripComments(
+      ["function f() {", "  /* d */", "  const live = 1;", "  {/* x */}", "}"].join("\n")
+    ).includes("const live")
+);
+check(
+  "STRIPPER: blankComments has the same fix, not just the same intent",
+  blankComments(
+    ["function f() {", "  /* d */", "  const live = 1;", "  {/* x */}", "}"].join("\n")
+  ).includes("const live")
+);
+
 check(
   "STRIPPER: blankComments preserves the line count exactly",
   blankComments(["const a = 1;", "/*", " x", "*/", "const b = 2;"].join("\n")).split("\n")

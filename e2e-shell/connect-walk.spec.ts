@@ -531,7 +531,25 @@ const TITLE_CASE: { route: string; strings: string[] }[] = [
      ⚠⚠ THE GATE CAUGHT THIS MOVE BY FAILING, which is the gate working: an
      assertion that had followed `home` blindly would have gone looking for
      Connect Home's copy on the profile and found none. */
-  { route: ROUTES.community, strings: ["Waiting on You"] },
+  /*
+    ⚠⚠⚠ `Waiting on You` LEFT THIS LIST, AND THE RULE DID NOT MOVE WITH IT —
+    IT CHANGED TOOL.
+
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   { route: ROUTES.community, strings: ["Waiting on You"] },
+
+    ⚠⚠ `E591` WS-C's block RENDERS NOTHING WHEN NOTHING IS PENDING — a debt
+    block with no debt is an empty container, which is the shape this suite
+    exists to prevent. `ConnectHome`'s version always drew its heading plus an
+    empty-state line; at the top of the new page that is a sentence saying
+    nothing, above the hero, for almost every member almost always.
+    ⚠⚠⚠ SO THE BROWSER CANNOT SEE THE STRING ON A CLEAN ACCOUNT, and asserting
+    it here would only pass if somebody seeded a pending request — which is
+    `E564`, and is seeding to make a gate green.
+    ⚠ THE CASING IS ASSERTED IN `check:community-page` INSTEAD, against the
+    SOURCE, where it is visible whatever the data says. The rule is unweakened;
+    it is checked by the tool that can actually see it.
+  */
   { route: ROUTES.colleagues, strings: ["Invite a Colleague", "Shared Skills"] },
   { route: ROUTES.forums, strings: ["Recent in Your Forums", "Your Forums"] },
   {

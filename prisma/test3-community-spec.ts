@@ -49,6 +49,24 @@ export const COLLEAGUES = [
   "test10@panameer.com", // Layne Staley (10) — Rockstar of Oracle HCM
   "test_user8@medlinq.ai", // Tommy Lee (8) — Head of Sourcing
   "test_user5@medlinq.ai", // Test User 5 — Director of Procurement
+  /*
+    ── ⚠⚠⚠ THE ONLY PERSON WHO CAN MAKE A CARD A LINK ────────────────────
+
+    ⚠ MEASURED 2026-09-20, AND IT IS A FINDING IN ITS OWN RIGHT: **exactly ONE
+    person in the entire database has a `ProviderProfile` AND a photo AND a
+    title** — this one. ⚠⚠ The six above have photos and titles and NO provider
+    profile, so their cards render UNLINKED, which is correct behaviour (a name
+    is better than a link to a 404) but leaves `E591` WS-C item 5 — *"a joined
+    colleague's whole card opens their profile"* — with nothing to prove it on.
+    ⚠ This is the same population `E581` describes from the other side.
+
+    ⚠⚠ ADDING THEM IS BETTER COVERAGE THAN SWAPPING SOMEBODY OUT: the page now
+    renders BOTH branches at once — one card that opens a profile and six that
+    correctly do not.
+    ⚠ It also widens the second degree for free, because their own colleagues
+    become reachable through them.
+  */
+  "iamscottwalls@outlook.com", // Scott Walls — Oracle Cloud Procurement Lead
 ] as const;
 
 /**
@@ -69,7 +87,15 @@ export const SECOND_DEGREE: readonly (readonly [string, string])[] = [
   ["test26@panameer.com", "test21@panameer.com"],
   ["test26@panameer.com", "test24@panameer.com"],
   ["test29@panameer.com", "test30@panameer.com"],
-  ["test10@panameer.com", "iamscottwalls@outlook.com"],
+  /*
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   ["test10@panameer.com", "iamscottwalls@outlook.com"],
+    ⚠⚠ `iamscottwalls` IS A FIRST-DEGREE COLLEAGUE NOW, so this pair can no
+    longer make anybody reachable — a node cannot be both, and the code puts
+    first degree first. ⚠ THE ROW ITSELF IS LEFT EXACTLY WHERE IT IS: the dry
+    run found it ALREADY PRESENT before this seed ever ran, so it belongs to the
+    graph seeded around that account and is not this spec's to define or remove.
+  */
   ["test_user8@medlinq.ai", "test11@panameer.com"], // ⚠ the shared one
 ] as const;
 

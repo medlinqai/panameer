@@ -69,6 +69,29 @@ function noise(seed: number): number {
   return x - Math.floor(x);
 }
 
+/**
+ * ── ⚠⚠⚠ DETERMINISTIC MUST MEAN *BYTE-IDENTICAL OUTPUT*, NOT *SAME ALGORITHM*
+ *
+ * ⚠⚠ MEASURED 2026-09-20, AS A REAL HYDRATION MISMATCH ON `/community`:
+ * *"A tree hydrated but some attributes of the server rendered HTML didn't
+ * match the client properties"*, pointing straight at this layout's `<svg>`.
+ *
+ * ⚠ THE ALGORITHM WAS ALREADY DETERMINISTIC — same inputs, same steps, no
+ * `Math.random()`, no `Date.now()`. ⚠⚠ THAT WAS NOT ENOUGH. `Math.sin` is
+ * IMPLEMENTATION-DEFINED IN ITS LAST BITS, and the server renders in Node's
+ * engine while hydration happens in the browser's. A difference of one ULP
+ * becomes `cx="280.00000000000006"` against `cx="280.0000000000001"` — two
+ * strings, one mismatch, and React refuses to patch attributes.
+ *
+ * ⚠⚠ ROUNDING TO TWO DECIMALS IS THE FIX, AND IT IS FREE: the viewBox is 560
+ * units wide, so a hundredth of a unit is far below one device pixel at any
+ * width this renders at. ⚠ It also shortens every coordinate in the markup.
+ *
+ * ⚠ `+ 0` NORMALISES `-0` TO `0`, because `Math.round(-0.001)` is `-0` and
+ * `String(-0)` is `"0"` on one side and can be `"-0"` on the other.
+ */
+const q = (n: number): number => Math.round(n * 100) / 100 + 0;
+
 type Input = {
   joined: { id: string }[];
   invited: { id: string }[];
@@ -100,9 +123,12 @@ export function layoutWeb({ joined, invited, reachable, cycle }: Input): PlacedN
     seed: number
   ): { x: number; y: number } => {
     const k = 1 + (noise(seed) - 0.5) * 2 * BREATHE;
+    /* ⚠⚠ QUANTISED HERE, AT THE ONE PLACE COORDINATES ARE BORN — so every
+       consumer (the nodes, the line endpoints, the gate) sees the same
+       numbers and no caller can reintroduce the mismatch. */
     return {
-      x: VIEW.cx + Math.cos(angle) * ring.rx * k,
-      y: VIEW.cy + Math.sin(angle) * ring.ry * k,
+      x: q(VIEW.cx + Math.cos(angle) * ring.rx * k),
+      y: q(VIEW.cy + Math.sin(angle) * ring.ry * k),
     };
   };
 
