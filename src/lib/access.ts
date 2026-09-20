@@ -7,8 +7,12 @@
  * helpers as roles are defined in `claude/architecture.md`.
  */
 
-// Single source of the marketplace visibility threshold (pure, seed-safe).
-import { VISIBILITY_THRESHOLD } from "@/lib/completeness";
+// ⚠⚠ THE THRESHOLD IMPORT IS GONE (`P2-J3-E590` WS-A0). ⚠ SUPERSEDED, quoted
+// not deleted (`E164`):
+//   // Single source of the marketplace visibility threshold (pure, seed-safe).
+//   import { VISIBILITY_THRESHOLD } from "@/lib/completeness";
+// ⚠ THIS FILE NO LONGER KNOWS THE NUMBER, and that is the proof the gate moved:
+// `isMarketplaceVisible` cannot fall back to a score it cannot see.
 
 export type Role = "ADMIN" | "MEMBER";
 
@@ -359,16 +363,42 @@ export function isMarketplaceVisible(p: {
    * ⚠ `Company` LEFT THE SET IN `P1-A1.4-E418` — no journey asks for one, and a
    * requirement the wizard cannot satisfy is the invisible-profile bug itself.
    *
-   * Optional so a caller that only has the three scalar columns still compiles
-   * and behaves as before rather than silently refusing everyone.
+   * ── ⚠⚠⚠ REQUIRED AS OF `P2-J3-E590` WS-A0. THERE IS ONE GATE NOW. ────────
+   *
+   * ⚠ SUPERSEDED, quoted not deleted (`E164`) — the optionality and the reason
+   * given for it:
+   * // Optional so a caller that only has the three scalar columns still compiles
+   * // and behaves as before rather than silently refusing everyone.
+   * // meetsRequired?: boolean;
+   *
+   * ⚠⚠ THAT COMFORT WAS THE DEFECT (`E585`). "Behaves as before" meant falling
+   * back to `completeness >= VISIBILITY_THRESHOLD`, so the app carried TWO
+   * gates: 3 call sites asked whether the required set was met, and 5 asked
+   * whether a SCORE cleared 80. ⚠ MEASURED 2026-09-20: the two disagreed on
+   * **6 real profiles** — visible on five surfaces, invisible on three, at the
+   * same moment.
+   *
+   * ⚠⚠ MAKING IT REQUIRED IS THE POINT, NOT A TIDY-UP. Scott's standing
+   * pattern: *"A forgetful sender being a compile error rather than a silent
+   * gap is worth more than any check we could write after the fact."* The type
+   * checker found all five sites; this brief had already miscounted by hand
+   * twice.
    */
-  meetsRequired?: boolean;
+  meetsRequired: boolean;
 }): boolean {
-  return (
-    p.status === "ACTIVE" &&
-    p.paused_at == null &&
-    (p.meetsRequired ?? p.completeness >= VISIBILITY_THRESHOLD)
-  );
+  /*
+    ⚠⚠⚠ THE PERCENTAGE FALLBACK IS GONE. ⚠ SUPERSEDED, quoted not deleted
+    (`E164`):
+    // return (
+    //   p.status === "ACTIVE" &&
+    //   p.paused_at == null &&
+    //   (p.meetsRequired ?? p.completeness >= VISIBILITY_THRESHOLD)
+    // );
+    ⚠⚠ WHILE THAT `??` EXISTED THE SCORE WAS STILL A GATE, and every reassurance
+    that a weight change is safe was false. `E590` re-weights `completeness.ts`;
+    it can only do that once nothing gates on the number.
+  */
+  return p.status === "ACTIVE" && p.paused_at == null && p.meetsRequired;
 }
 
 /**

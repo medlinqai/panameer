@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import {
   ownedProviderProfile,
-  isMarketplaceVisible,
+  isMarketplaceVisible, providerMeetsRequired,
   type Viewer,
 } from "@/lib/access";
 import { VISIBILITY_THRESHOLD } from "@/lib/completeness";
@@ -81,8 +81,22 @@ export async function getProviderSettings(viewer: Viewer) {
   const profile = await prisma.providerProfile.findFirst({
     where: ownedProviderProfile(viewer),
     include: {
+      /*
+        ⚠⚠ WIDENED FOR THE ONE GATE (`P2-J3-E590` WS-A0). ⚠ SUPERSEDED, quoted
+        not deleted (`E164`):
+        // person: { select: { first_name: true, last_name: true, photo_url: true } },
+        ⚠ `include` already carries every scalar on the profile, so `headline`,
+        `role_type_id` and the five rate columns were present — only the PERSON
+        half of the required set was missing.
+      */
       person: {
-        select: { first_name: true, last_name: true, photo_url: true },
+        select: {
+          first_name: true,
+          last_name: true,
+          photo_url: true,
+          phone: true,
+          site: { select: { addresses: { select: { id: true } } } },
+        },
       },
       region: { select: { id: true, name: true } },
       skills: {
@@ -122,7 +136,10 @@ export async function getProviderSettings(viewer: Viewer) {
     completeness: profile.completeness,
     visibilityThreshold: VISIBILITY_THRESHOLD,
     paused: profile.paused_at != null,
-    visible: isMarketplaceVisible(profile),
+    visible: isMarketplaceVisible({
+      ...profile,
+      meetsRequired: providerMeetsRequired(profile),
+    }),
     rating: profile.rating === null ? null : Number(profile.rating),
     preferences: {
       notifyEmail: profile.notify_email,

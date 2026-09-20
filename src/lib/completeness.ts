@@ -30,6 +30,27 @@
  */
 
 /** Completeness at/above which a provider becomes marketplace-visible. */
+/*
+  ── ⚠⚠⚠ THIS IS NO LONGER A GATE (`P2-J3-E590` WS-A0). READ THIS BEFORE USING IT.
+
+  ⚠⚠ **MARKETPLACE VISIBILITY DOES NOT READ THIS NUMBER.** It reads
+  `providerMeetsRequired` through `isMarketplaceVisible`, whose `meetsRequired`
+  argument is REQUIRED — there is no percentage fallback any more, and
+  `onboarding.ts` no longer hand-rolls one either.
+
+  ⚠ WHAT STILL READS IT, AND ALL OF IT IS REPORTING OR COPY:
+    · `admin.ts` — the funnel counts (`live`, `registered`, `eightyComplete`).
+      ⚠⚠ THOSE ARE ADMIN STATISTICS, NOT A GATE, and `eightyComplete` is a
+      funnel STAGE NAMED AFTER THIS NUMBER. Reported at the WS-A0 gate, not
+      changed — they are Scott's board.
+    · `visibilityThreshold:` exposed to three surfaces, and the copy on
+      `/stats`. Both describe the number; neither decides anything.
+
+  ⚠⚠ **DO NOT REINTRODUCE `completeness >= VISIBILITY_THRESHOLD` AS A
+  CONDITION.** `E590` re-weights the score so that answering every line reaches
+  100; any surface gating on the figure would move underneath that change, which
+  is the bug this workstream exists to make impossible.
+*/
 export const VISIBILITY_THRESHOLD = 80;
 
 /** Minimum bio length — must match `MIN_BIO_CHARS` in onboarding.ts (E017). */
@@ -262,10 +283,22 @@ export function computeProviderCompleteness(p: CompletenessInput): number {
   return Math.min(100, score);
 }
 
-/** True when a provider is marketplace-visible (brief_K predicate inputs). */
-export function meetsCompletenessThreshold(completeness: number): boolean {
-  return completeness >= VISIBILITY_THRESHOLD;
-}
+// ── ⚠⚠ `meetsCompletenessThreshold` IS REMOVED (`P2-J3-E590` WS-A0) ────────
+//
+// ⚠ SUPERSEDED, quoted not deleted (`E164`). ⚠⚠ QUOTED WITH LINE COMMENTS AND
+// ITS DOC COMMENT PARAPHRASED, per rule 12 — the original carried a `*/` that
+// closes an enclosing block comment early. That trap bit here on first write.
+//
+//   [doc comment, paraphrased: it claimed the function returned whether a
+//    provider was marketplace-visible, citing the brief_K predicate inputs]
+//   export function meetsCompletenessThreshold(completeness: number): boolean {
+//     return completeness >= VISIBILITY_THRESHOLD;
+//   }
+//
+// ⚠⚠ IT HAD ZERO CALLERS AND ITS DOC COMMENT WAS FALSE — it said "marketplace
+// visible", which has not been true since `meetsRequired` arrived. ⚠ A dead
+// function that states a rule is worse than no function: the next reader takes
+// the sentence as the rule, which is precisely how `E585` survived this long.
 
 /* ═══════════════════════════════════════════════════════════════════════════
    ⚠⚠ WHAT'S MISSING — UNSCORED, AND DELIBERATELY SO (`P1-A1.4-E399` WS-5b)

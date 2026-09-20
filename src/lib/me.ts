@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import {
   scopedToPAccount,
   withPAccount,
-  isMarketplaceVisible,
+  isMarketplaceVisible, providerMeetsRequired,
   type Viewer,
 } from "@/lib/access";
 
@@ -24,7 +24,13 @@ export async function getMe(viewer: Viewer) {
       company: {
         include: { pAccount: { select: { id: true, name: true, kind: true } } },
       },
-      site: { select: { id: true, name: true } },
+      /* ⚠ `addresses` ADDED FOR THE ONE GATE (`P2-J3-E590` WS-A0) — the
+         required set includes an address, and `providerMeetsRequired` reads it
+         through the person's site. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+         // site: { select: { id: true, name: true } }, */
+      site: {
+        select: { id: true, name: true, addresses: { select: { id: true } } },
+      },
       /*
         IS THIS PERSON THEIR COMPANY'S ADMIN? (E214)
 
@@ -49,6 +55,15 @@ export async function getMe(viewer: Viewer) {
           validation_status: true,
           completeness: true,
           paused_at: true,
+          /* ⚠⚠ THE REQUIRED SET (`P2-J3-E590` WS-A0). This block previously fell
+             back to `completeness >= 80`, so `/api/me` could tell the shell a
+             provider was visible while the marketplace disagreed. */
+          headline: true,
+          role_type_id: true,
+          hourly_rate_cents: true,
+          rate_min_cents: true,
+          rate_max_cents: true,
+          skills: { select: { id: true } },
           /* `E306` — the marketing header needs to know whether the nav is gated.
              A READ of an existing column, not a new flag and not a migration. */
           onboarding_completed_at: true,
@@ -145,7 +160,20 @@ export async function getMe(viewer: Viewer) {
              onboarding state of its own. */
           published: provider.onboarding_completed_at != null,
           availableForMessages: provider.available_for_messages,
-          visible: isMarketplaceVisible(provider),
+          /* ⚠ THE PERSON HALF IS REASSEMBLED HERE because the required set
+             spans BOTH tables and this query is rooted at `Person`, not at the
+             profile. Same predicate, same fields, one gate. */
+          visible: isMarketplaceVisible({
+            ...provider,
+            meetsRequired: providerMeetsRequired({
+              ...provider,
+              person: {
+                photo_url: person.photo_url,
+                phone: person.phone,
+                site: person.site,
+              },
+            }),
+          }),
           rating: provider.rating === null ? null : Number(provider.rating),
           rates: {
             currency: provider.currency,

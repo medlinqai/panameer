@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { isMarketplaceVisible, type Viewer } from "@/lib/access";
+import { isMarketplaceVisible, providerMeetsRequired, type Viewer } from "@/lib/access";
 /* `P2-J3-E558` WS-D — coverage rolls up through E517's offer-side filter. */
 import { shownSkills, selectedRoleIds } from "@/lib/shown-skills";
 import { normalizeEmail } from "@/lib/normalizeEmail";
@@ -84,7 +84,32 @@ export async function getMyTeams(viewer: Viewer): Promise<MyTeams> {
       paused_at: true,
       completeness: true,
       validation_status: true,
-      person: { select: { first_name: true, last_name: true, photo_url: true } },
+      /*
+        ⚠⚠ WIDENED FOR THE ONE GATE (`P2-J3-E590` WS-A0). `isMarketplaceVisible`
+        now REQUIRES `meetsRequired`, and `providerMeetsRequired` reads the
+        required set — so the fields it needs have to be in the query.
+        ⚠ SUPERSEDED, quoted not deleted (`E164`):
+        // person: { select: { first_name: true, last_name: true, photo_url: true } },
+        ⚠ This row previously fell back to `completeness >= 80`, which is why it
+        could show a coordinator a rep as VISIBLE while the profile page 404'd
+        for the same person.
+      */
+      role_type_id: true,
+      hourly_rate_cents: true,
+      rate_min_cents: true,
+      rate_max_cents: true,
+      onsite_rate_cents: true,
+      remote_rate_cents: true,
+      skills: { select: { id: true } },
+      person: {
+        select: {
+          first_name: true,
+          last_name: true,
+          photo_url: true,
+          phone: true,
+          site: { select: { addresses: { select: { id: true } } } },
+        },
+      },
     },
   });
 
@@ -109,7 +134,7 @@ export async function getMyTeams(viewer: Viewer): Promise<MyTeams> {
       name: `${p.person.first_name} ${p.person.last_name}`.trim(),
       headline: p.headline || null,
       photoUrl: p.person.photo_url,
-      visible: isMarketplaceVisible(p),
+      visible: isMarketplaceVisible({ ...p, meetsRequired: providerMeetsRequired(p) }),
       validated: p.validation_status === "VALIDATED",
       completeness: p.completeness,
     })),

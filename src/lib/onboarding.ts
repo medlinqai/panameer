@@ -16,6 +16,8 @@ import {
   VISIBILITY_THRESHOLD,
 } from "@/lib/completeness";
 import type { Viewer } from "@/lib/access";
+/* ⚠ `P2-J3-E590` WS-A0 — the ONE gate. This file used to hand-roll it. */
+import { isMarketplaceVisible, providerMeetsRequired } from "@/lib/access";
 import { normalizeEmail } from "@/lib/normalizeEmail";
 import { createHash } from "node:crypto";
 import { recordParseAudit } from "@/lib/resume/audit";
@@ -973,11 +975,36 @@ export async function getOnboardingState(viewer: Viewer) {
   const p = await loadDraft(viewer);
   const pp = p.providerProfile!;
   const emailVerified = p.user?.email_verified != null;
-  // Marketplace visibility is completeness-gated (brief_K), no submit step.
-  const visible =
-    pp.status === "ACTIVE" &&
-    pp.completeness >= VISIBILITY_THRESHOLD &&
-    pp.paused_at == null;
+  /*
+    ── ⚠⚠⚠ A THIRD COPY OF THE GATE, FOUND AND CLOSED (`P2-J3-E590` WS-A0) ────
+
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    // Marketplace visibility is completeness-gated (brief_K), no submit step.
+    // const visible =
+    //   pp.status === "ACTIVE" &&
+    //   pp.completeness >= VISIBILITY_THRESHOLD &&
+    //   pp.paused_at == null;
+
+    ⚠⚠ THIS WAS NOT ONE OF THE FIVE CALL SITES THE COMPILER FOUND, BECAUSE IT
+    NEVER CALLED `isMarketplaceVisible` — it re-implemented it by hand against
+    the percentage. ⚠ A hand-rolled copy of a rule is invisible to a type
+    change, which is exactly why it survived while the other five were caught.
+
+    ⚠⚠⚠ AND IT IS THE WORST PLACE TO BE WRONG: this is what the ONBOARDING
+    SCREEN tells a provider about their own visibility. With the marketplace on
+    the predicate and this on the score, a provider could be told *"you are
+    live"* by the wizard while every buyer surface hid them — the
+    invisible-profile bug wearing a reassurance.
+  */
+  const visible = isMarketplaceVisible({
+    status: pp.status,
+    completeness: pp.completeness,
+    paused_at: pp.paused_at,
+    meetsRequired: providerMeetsRequired({
+      ...pp,
+      person: { photo_url: p.photo_url, phone: p.phone, site: p.site },
+    }),
+  });
 
   const address = p.site?.addresses?.[0] ?? null;
 
