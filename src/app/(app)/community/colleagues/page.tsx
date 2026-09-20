@@ -2,8 +2,9 @@ import Link from "next/link";
 import { guardPage } from "@/lib/guard";
 import { getSessionViewer } from "@/lib/session";
 import { PageTabs } from "@/components/casing/PageTabs";
-import { PAGE_TABS, tabSequenceFor } from "@/lib/nav";
-import { tabsWithUnread, unreadCount } from "@/lib/messages";
+import { tabSequenceFor } from "@/lib/nav";
+import { connectTabs } from "@/lib/connect-tabs";
+import { unreadCount } from "@/lib/messages";
 import { getColleagueRoster } from "@/lib/colleague-roster";
 import { ColleagueRoster } from "@/components/community/ColleagueRoster";
 import { INVITE_LIMIT_PER_HOUR, INVITE_LIMIT_PER_DAY } from "@/lib/colleague-invite";
@@ -31,8 +32,14 @@ export default async function ColleaguesPage() {
       <PageTabs
         eyebrow="CONNECT"
         sequence={tabSequenceFor("/connect")}
-        tabs={tabsWithUnread(PAGE_TABS["/connect"], unread)}
-        current="/community/colleagues"
+        tabs={connectTabs(viewer, unread)}
+        /* ⚠⚠ THE ACTIVE TAB IS `Community`, BECAUSE THIS PAGE IS NOW A SECTION OF
+           IT (`P2-J3-E593` WS-A). ⚠ The tab it used to light no longer exists,
+           and `PageTabs` matches `current` against a tab's href — an unmatched
+           value lights NOTHING, so the row would silently lose its "you are
+           here". ⚠ SUPERSEDED, quoted not deleted (`E164`):
+           //   current="/community/colleagues" */
+        current="/community"
       />
       <div className="mx-auto max-w-5xl">
         <header className="mb-5">

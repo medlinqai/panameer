@@ -106,7 +106,13 @@ for (const [name, path] of Object.entries(ROUTES)) {
 }
 
 /* ── 2 · CONNECT HOME — THE TAB ROW, AND MESSAGES STILL LAST ────────────── */
-test("E567/2 — the CONNECT tab row renders with Home first", async () => {
+/*
+  ⚠⚠ `Home` IS `Profile` NOW (`P2-J3-E593` WS-A) — a RENAME, not a move: the
+  first tab still lands on `/connect`, which is still the member's own profile.
+  ⚠ SUPERSEDED (`E164`): this test was named *"renders with Home first"* and
+  asserted the first label was `Home`.
+*/
+test("E567/2 — the CONNECT tab row renders with Profile first", async () => {
   await open(ROUTES.home);
   await expect(page.getByText("CONNECT", { exact: true }).first()).toBeVisible();
   /*
@@ -134,7 +140,16 @@ test("E567/2 — the CONNECT tab row renders with Home first", async () => {
      locator would have produced is precisely a row that measures as fine
      because nothing was found in it. */
   expect(labels.length, "the CONNECT row rendered no tabs").toBeGreaterThan(0);
-  expect(labels[0]).toBe("Home");
+  expect(labels[0]).toBe("Profile");
+  /*
+    ⚠⚠⚠ FIVE TABS, ASSERTED AS A LIST. Scott's ruling was *"less tabs…simple"*,
+    so the COUNT is the thing being held — an appended sixth must fail here
+    rather than pass because the first one is still right.
+    ⚠ `test3@panameer.com` is provider-only (measured, see `_auth.ts`), so it
+    sees `Service Products`. ⚠⚠ A BUYER SEES FOUR, and that difference is the
+    entire reason `lib/connect-tabs.ts` exists.
+  */
+  expect(labels).toEqual(["Profile", "Community", "Groups", "Service Products", "Settings"]);
 });
 
 /*
@@ -175,17 +190,42 @@ test("E560/2 — Messages is GONE from the CONNECT row, and still reachable", as
     `E567/2` above. It is asserting ORDER of DESTINATIONS — which is what the
     hrefs ARE — not the presence of a tab, so a route is the right key here.
   */
+  /*
+    ⚠⚠ THREE HREFS LEFT THE ROW (`P2-J3-E593` WS-A) AND NOT ONE PAGE DID.
+    ⚠ SUPERSEDED (`E164`), described rather than re-listed so this quote cannot
+    be mistaken for the live array: the row was `/connect`, `/community`,
+    `/community/colleagues`, `/community/forums`, `/community/mentors`,
+    `/community/teams`.
+    ⚠⚠⚠ COLLEAGUES, MENTORS AND TEAMS ARE SECTIONS OF COMMUNITY NOW. Their
+    survival is asserted where it now lives — `check:community`'s `E593/5` block
+    checks the Community surface LINKS to all three, in every branch, which is a
+    stronger guard than appearing in this row ever was.
+  */
   const TAB_HREFS = [
     "/connect",
     "/community",
-    "/community/colleagues",
     "/community/forums",
-    "/community/mentors",
-    "/community/teams",
+    "/my-services",
+    "/settings",
   ];
+  /*
+    ── ⚠⚠⚠ SCOPED TO THE TAB ROW, AND `E593` IS WHY ───────────────────────
+
+    ⚠ SUPERSEDED (`E164`): this scanned `document.querySelectorAll("a")` — EVERY
+    anchor on the page — and filtered to the known hrefs.
+    ⚠⚠ THAT BROKE THE MOMENT A TAB POINTED AT A ROUTE THE BAND ALSO LINKS.
+    `E593`'s `Service Products` tab is `/my-services`, and the seller band's
+    `Sell` item is the same route — so the band's copy was collected FIRST and
+    the order read `/connect · /my-services · /community · …`.
+    ⚠⚠⚠ THE TEST WAS NEVER MEASURING THE ROW; it was measuring the page and
+    getting away with it because no tab had ever shared an href with the band.
+    ⚠ `data-testid="page-tabs"` exists since `E591` WS-A for exactly this class
+    of problem — a locator keyed to a route breaks on every route change.
+  */
   const order = await page.evaluate((hrefs) => {
+    const row = document.querySelector('[data-testid="page-tabs"]');
     const seen: string[] = [];
-    for (const a of Array.from(document.querySelectorAll("a"))) {
+    for (const a of Array.from(row?.querySelectorAll("a") ?? [])) {
       const href = a.getAttribute("href") ?? "";
       if (hrefs.includes(href) && !seen.includes(href)) seen.push(href);
     }

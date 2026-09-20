@@ -20,9 +20,10 @@ import {
   RecruiterTeamSections,
 } from "@/components/community/TeamSections";
 import { PageTabs } from "@/components/casing/PageTabs";
-import { PAGE_TABS, tabSequenceFor } from "@/lib/nav";
+import { tabSequenceFor } from "@/lib/nav";
+import { connectTabs } from "@/lib/connect-tabs";
 /* ⚠ `P1-ALL-E379` — the unread badge rides on the shared tab row. */
-import { tabsWithUnread, unreadCount } from "@/lib/messages";
+import { unreadCount } from "@/lib/messages";
 
 /**
  * MY TEAMS (PHASE 2 / WS2-D) — REAL, reading data that already existed.
@@ -101,8 +102,11 @@ export default async function MyTeamsPage() {
   return (
     <>
       {/* E216 — the Community rail flyout's children are this section's tab row now. */}
+      {/* ⚠⚠ ACTIVE TAB = `Community`: this page is a SECTION of it since
+          `E593` WS-A. An unmatched `current` lights nothing. ⚠ SUPERSEDED
+          (`E164`): current="/community/teams" */}
       <PageTabs
-        eyebrow="CONNECT" sequence={tabSequenceFor("/connect")} tabs={tabsWithUnread(PAGE_TABS["/connect"], unread)} current="/community/teams" />
+        eyebrow="CONNECT" sequence={tabSequenceFor("/connect")} tabs={connectTabs(viewer, unread)} current="/community" />
       <div className="mx-auto max-w-4xl space-y-4">
       <header>
         <h1 className="font-display text-[26px] font-bold tracking-[-0.5px]">

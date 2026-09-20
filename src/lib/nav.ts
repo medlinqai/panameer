@@ -544,13 +544,66 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
     ⚠⚠ `Colleagues` IS UNCHANGED AND DELIBERATELY SO — it already pointed at
     `/community/colleagues`.
   */
+  /*
+    ── ⚠⚠ FIVE TABS (`P2-J3-E593` WS-A) ─────────────────────────────────────
+
+    ⚠ SCOTT, 2026-09-20: *"less tabs…simple. simple is easier to use."*
+    ⚠⚠ THE ROW'S LOGIC IS HIS: `Profile` (who you are) · `Community` (who you
+    know — FREE) · `Groups` (money) · `Service Products` (money) · `Settings`.
+    ⚠ THE TWO REVENUE TABS ARE ADJACENT, so the earning surfaces read as a pair.
+
+    ⚠ SUPERSEDED, quoted not deleted (`E164`) — the six as `E591` WS-A left them:
+    //   { label: "Home", href: "/connect" },
+    //   { label: "Community", href: "/community" },
+    //   { label: "Colleagues", href: "/community/colleagues" },
+    //   { label: "Forums", href: "/community/forums", state: "live" },
+    //   { label: "Mentoring", href: "/community/mentors", state: "early" },
+    //   { label: "Teams", href: "/community/teams", state: "live" },
+
+    ⚠⚠⚠ THREE TABS WENT AND NOT ONE PAGE DID. `/community/colleagues`,
+    `/community/mentors` and `/community/teams` all still resolve; `/community`
+    absorbed them as SECTIONS and links to each. ⚠ `check:nav-reachable` is the
+    gate, and the Community page's links are what make the folding honest —
+    ⚠⚠ two of them were MISSING and are fixed in the same commit (`CommunityRail`).
+
+    ⚠ `Groups` IS A LABEL OVER THE EXISTING FORUMS ROUTE. No redirect, no link
+    rewrite — `forums` is already a noun, so `E533` does not force the URL to
+    move. ⚠⚠ THE PAID HALF OF GROUPS DOES NOT EXIST (`/community/forums` is the
+    free forum-per-learning-path of `E383`). The tab names the surface; the
+    money in it is unbuilt, and that is the right order — name it, then build
+    into it. ⚠ DO NOT FABRICATE A PAID STATE.
+  */
   "/connect": [
-    { label: "Home", href: "/connect" },
+    { label: "Profile", href: "/connect" },
     { label: "Community", href: "/community" },
-    { label: "Colleagues", href: "/community/colleagues" },
-    { label: "Forums", href: "/community/forums", state: "live" },
-    { label: "Mentoring", href: "/community/mentors", state: "early" },
-    { label: "Teams", href: "/community/teams", state: "live" },
+    { label: "Groups", href: "/community/forums", state: "live" },
+    /*
+      ── ⚠⚠⚠ `Service Products` IS PROVIDER-ONLY TODAY, AND THAT IS MEASURED ──
+
+      ⚠ Scott's reason for the tab is that *"it is where a BUYER goes"*, so the
+      buyer half is wanted. ⚠⚠ MEASURED 2026-09-20 AT THE PREMISE GATE: **no
+      buyer-facing surface LISTS a service product.** `/services` 308s to
+      `/shop`; `/shop` is the PUBLIC marketing section (`ErpPackages`) and
+      `check:ui` §65 asserts its CTA is `aria-disabled` with no href because
+      *"there is no public catalogue"*; `/search` is a rail stub (`E134`); and
+      ⚠ **`/packages` — the buyer-gated route the requester rail already names —
+      is a 17-line `ComingSoon`.**
+      ⚠⚠ SO THE BUYER HALF IS UNBUILT, EXACTLY LIKE THE PAID HALF OF GROUPS.
+      ⚠ It is pointed at the provider's management surface and carries the
+      capability that surface demands. ⚠⚠⚠ THE ONE-LINE OVERRIDE, IF SCOTT WANTS
+      THE BUYER DOOR NOW, IS A SECOND ENTRY AT `/packages` WITH
+      `requires: "canHireTalent"` — the route, its title and its gate are all
+      real already; only its content is pending.
+
+      ⚠⚠ `requires` IS LOAD-BEARING HERE, NOT DECORATION: `check:nav-reachable`
+      §1 fails if an item's declared capability does not match its route's, and
+      `connect-tabs.ts` reads this field to decide who is shown the tab at all.
+    */
+    { label: "Service Products", href: "/my-services", requires: "canProvideServices" },
+    /* ⚠ `/settings` POINTS AT `/settings` FOR NOW. Scott ruled that Settings is
+       ABSORBED into Connect — it renders inside, the row persists, `/settings`
+       redirects in — but that is its own id and is far too large to ride here. */
+    { label: "Settings", href: "/settings" },
     /*
       ── ⚠⚠ MESSAGES HAS LEFT THIS ROW (`P2-ALL-E560` STAGE 1, 2026-09-18) ─────
 

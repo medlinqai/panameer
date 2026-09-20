@@ -1140,9 +1140,44 @@ check(
 );
 
 /* ── 5 · THE SLICE NAMES, AND NO ROUTE MOVED ──────────────────────────────── */
-for (const label of ["Colleagues", "Forums", "Mentoring", "Teams"]) {
-  check(`E378/5 — /community tab "${label}" ships`, new RegExp(`label: "${label}"`).test(navLib));
+/*
+  ── ⚠⚠ FIVE TABS, RENAMED AND FOLDED (`P2-J3-E593` WS-A) ──────────────────
+
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   for (const label of ["Colleagues", "Forums", "Mentoring", "Teams"]) {
+  //     check(`E378/5 - /community tab "${label}" ships`, …);
+  //   }
+
+  ⚠⚠ THIS IS `check:rollup`'S CASE — THE RULING CHANGED, THE CODE DID NOT DRIFT.
+  Scott, 2026-09-20: *"less tabs…simple. simple is easier to use."* `Colleagues`,
+  `Mentoring` and `Teams` are SECTIONS of Community now; `Forums` is labelled
+  `Groups`. ⚠ THE RULE ITSELF IS UNWEAKENED: the set is still asserted by exact
+  label, and the count is asserted too, so a tab cannot quietly appear or vanish.
+  ⚠⚠⚠ AND THE THREE FOLDED ROUTES DID NOT LOSE THEIR GUARD — it MOVED to the
+  pair below, which checks the file that now guarantees them.
+*/
+const CONNECT_TABS = ["Profile", "Community", "Groups", "Service Products", "Settings"];
+for (const label of CONNECT_TABS) {
+  check(`E593/5 — Connect tab "${label}" ships`, new RegExp(`label: "${label}"`).test(navLib));
 }
+/* ⚠ FIVE, NOT "at least five" — Scott asked for fewer tabs, so the COUNT is the
+   thing being held, and an appended sixth must fail rather than pass quietly. */
+const connectSet = /"\/connect": \[[\s\S]*?\n  \],/.exec(navLib)?.[0] ?? "";
+check(
+  "E593/5 — the Connect row is exactly five tabs",
+  (connectSet.match(/^\s*\{ label:/gm) ?? []).length === 5,
+  `${(connectSet.match(/^\s*\{ label:/gm) ?? []).length} live entries`
+);
+/* ⚠⚠ THE REVENUE TABS ARE ADJACENT — Scott's own grouping: who you are · who
+   you know (free) · GROUPS (money) · SERVICE PRODUCTS (money) · settings. */
+check(
+  "E593/5 — ⚠ the two revenue tabs sit next to each other",
+  connectSet.indexOf('label: "Service Products"') - connectSet.indexOf('label: "Groups"') > 0 &&
+    !connectSet.slice(
+      connectSet.indexOf('label: "Groups"'),
+      connectSet.indexOf('label: "Service Products"')
+    ).includes('label: "Settings"')
+);
 check(
   "E378/5 — no tab repeats the journey name or says My",
   !/\{ n: \d+, label: "My /.test(navLib) && !/label: "My Community", href: "\/community" \}/.test(navLib)
@@ -1224,7 +1259,16 @@ for (const href of [
      Order is the SOW, so there is no Contract record for a route to name. */
   /* ⚠ `/finances` -> `/payments` (`P1-ALL-E533`). */
   "/orders", "/pay", "/payments", "/community", "/community/forums",
-  "/community/teams", "/community/mentors",
+  /*
+    ⚠⚠ `/community/teams` AND `/community/mentors` LEFT THIS LIST (`E593` WS-A).
+    ⚠ SUPERSEDED, quoted not deleted (`E164`): `"/community/teams", "/community/mentors",`
+    ⚠⚠⚠ THE ROUTES DID NOT GO ANYWHERE. `E593` folded them into Community as
+    SECTIONS, so `nav.ts` is simply no longer where their survival is guaranteed
+    — exactly what `E560` did for `/messages`, two entries above.
+    ⚠ THE ASSERTION IS MOVED, NOT DROPPED: see the block directly below, which
+    checks the file that DOES guarantee them. Deleting it outright would have
+    lost the guard this loop exists to provide.
+  */
   /* ⚠⚠ `/connect` IS ADDED, NOT SUBSTITUTED (`P2-J3-E591` WS-A). The route
      SPLIT — the profile became `/connect` and `/community` kept the people — so
      BOTH are live nav destinations and both are frozen. ⚠ `/community` is
@@ -1242,6 +1286,120 @@ for (const href of [
 ]) {
   check(`E378/5 — route ${href} still exists in the nav`, navLib.includes(`"${href}"`));
 }
+
+/*
+  ── ⚠⚠⚠ THE FOLDED PAGES ARE STILL REACHABLE (`P2-J3-E593` WS-A) ──────────
+
+  ⚠ `E593` removed the `Colleagues`, `Mentoring` and `Teams` TABS and kept every
+  page. ⚠⚠ THE BRIEF'S OWN CONDITION IS *"NOTHING MAY BECOME UNREACHABLE"*, and
+  this is where that is held: the Community surface must LINK to all three.
+
+  ⚠⚠⚠ THIS IS A STRONGER GUARD THAN THE ONE IT REPLACES, AND THAT IS THE POINT.
+  The route freeze above only asked whether a string appeared in `nav.ts`. A
+  route can sit in `nav.ts` and be reachable from nowhere — which is `E579`
+  exactly, and is why `/payments` kept a menu entry it was told to delete.
+  ⚠ This asks the question that matters: **is there a link to it?**
+
+  ⚠⚠ AND IT IS CHECKED IN EVERY BRANCH, not just the happy one. Two of these
+  links did not exist when `E593` began — Mentors rendered one only above four
+  follows, and a member of somebody else's team had none at all. ⚠ Both were
+  found at `E593`'s premise gate, in CC's own `E591` work, and both are fixed.
+  ⚠ A link inside a conditional that a real viewer can fail is not a door.
+*/
+const COMMUNITY_SURFACE = [
+  join("src", "app", "(app)", "community", "page.tsx"),
+  join("src", "components", "community", "CommunityRail.tsx"),
+]
+  .map((f) => bodies.get(f) ?? "")
+  .join("\n");
+
+check(
+  "E593/5 — the Community surface was found by the scan",
+  COMMUNITY_SURFACE.length > 500,
+  `${COMMUNITY_SURFACE.length} chars`
+);
+for (const href of ["/community/colleagues", "/community/mentors", "/community/teams"]) {
+  check(
+    `E593/5 — ⚠⚠ ${href} is LINKED from Community, not merely in the nav`,
+    COMMUNITY_SURFACE.includes(`"${href}"`)
+  );
+}
+/*
+  ⚠⚠ AND THE TWO LINKS THAT WERE CONDITIONAL ARE NOW UNCONDITIONAL. Asserting
+  only that the href appears would pass on the exact code that was broken —
+  the string was present both times, inside a branch a real viewer could miss.
+  ⚠ So the SHAPE is asserted: neither link sits behind a count threshold.
+*/
+const RAIL = bodies.get(join("src", "components", "community", "CommunityRail.tsx")) ?? "";
+check(
+  "E593/5 — ⚠ the Mentors link is not gated on a follow count",
+  !/following\.length > 4 &&[\s\S]{0,120}\/community\/mentors/.test(RAIL)
+);
+/*
+  ── ⚠⚠⚠ THE CONNECT ROW RESPECTS CAPABILITY (`P2-J3-E593` WS-A) ───────────
+
+  ⚠ `Service Products` points at `/my-services`, which requires
+  `canProvideServices` — and **Connect is in the BUYER menu** (`REQUESTER_NAV`,
+  Scott's `E588` WS-C ruling). ⚠⚠ WITHOUT A FILTER A BUYER SEES A TAB THAT
+  BOUNCES THEM TO `/dashboard?noaccess=1`. That is the `E579` family: an entry
+  that looks like a door and is not.
+
+  ⚠⚠⚠ `check:nav-reachable` CANNOT CATCH THIS. Its §1 asks whether an item's
+  DECLARED capability matches its ROUTE'S — never whether the VIEWER can open
+  it. Both are true here and the door would still be dead. So it is asserted
+  here instead.
+
+  ⚠ NOT PROVEN IN A BROWSER, AND THE REASON IS RECORDED RATHER THAN WORKED
+  AROUND: `_auth.ts` signs in as `test3@panameer.com`, which is provider-only
+  (measured), and `E580` means no buyer seed password can be signed in with.
+  ⚠⚠ SEEDING OR RESETTING A PASSWORD TO MAKE THIS WALKABLE IS `E564` AND `E580`
+  RESPECTIVELY — both forbidden by name. The shape is asserted in Node instead,
+  which is `E569`'s precedent exactly.
+*/
+const CONNECT_TABS_LIB = bodies.get(join("src", "lib", "connect-tabs.ts")) ?? "";
+check("E593/5 — the Connect tab filter exists", CONNECT_TABS_LIB.length > 200);
+check(
+  "E593/5 — ⚠⚠ it filters on the VIEWER's capability, not on the route",
+  /hasCapability\(viewer, t\.requires\)/.test(CONNECT_TABS_LIB)
+);
+check(
+  "E593/5 — ⚠ a tab with no `requires` is shown to everyone signed in",
+  /!t\.requires \|\|/.test(CONNECT_TABS_LIB)
+);
+/*
+  ⚠⚠ IT REMOVES, IT DOES NOT GREY. `PageTabs` records the rule it is keeping
+  faith with — *"UPCOMING STEPS STAY CLICKABLE. GREYING IS A STATE, NOT A
+  LOCK."* A greyed tab says *"not yet"*, and a buyer will never have
+  `canProvideServices`, so *"not yet"* would be a lie.
+*/
+check(
+  "E593/5 — ⚠ it filters rather than disabling",
+  /\.filter\(/.test(CONNECT_TABS_LIB) && !/disabled|aria-disabled/.test(CONNECT_TABS_LIB)
+);
+/*
+  ⚠⚠⚠ EVERY PAGE THAT DRAWS THE ROW GOES THROUGH IT. One page left on the raw
+  set would show a buyer the dead tab on that page only — the hardest kind of
+  bug to see, because the row looks right everywhere else.
+*/
+const CONNECT_PAGES = [
+  ["community", "page.tsx"], ["community", "colleagues", "page.tsx"],
+  ["community", "forums", "page.tsx"], ["community", "mentors", "page.tsx"],
+  ["community", "score", "page.tsx"], ["community", "teams", "page.tsx"],
+  ["connect", "page.tsx"], ["messages", "page.tsx"],
+].map((seg) => join("src", "app", "(app)", ...seg));
+for (const f of CONNECT_PAGES) {
+  const body = bodies.get(f) ?? "";
+  check(
+    `E593/5 — ⚠ ${f.split(join("(app)", ""))[1] ?? f} draws the row through the filter`,
+    /connectTabs\(viewer, unread\)/.test(body) && !/PAGE_TABS\["\/connect"\]/.test(body)
+  );
+}
+
+check(
+  "E593/5 — ⚠ every Teams branch links out",
+  (RAIL.match(/\/community\/teams/g) ?? []).length >= 3,
+  `${(RAIL.match(/\/community\/teams/g) ?? []).length} link(s) — owner, member and neither each need one`
+);
 /*
   ── ⚠⚠ `/messages` SURVIVES WHERE IT ACTUALLY LIVES (`P2-ALL-E560` STAGE 1) ───
 

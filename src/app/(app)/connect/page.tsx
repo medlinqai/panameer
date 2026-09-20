@@ -2,8 +2,9 @@ import { guardPage } from "@/lib/guard";
 import { getSessionViewer } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { PageTabs } from "@/components/casing/PageTabs";
-import { PAGE_TABS, tabSequenceFor } from "@/lib/nav";
-import { tabsWithUnread, unreadCount } from "@/lib/messages";
+import { tabSequenceFor } from "@/lib/nav";
+import { connectTabs } from "@/lib/connect-tabs";
+import { unreadCount } from "@/lib/messages";
 import { ConnectProfile } from "@/components/community/ConnectProfile";
 import { getOwnProviderProfileView } from "@/lib/provider-profile-view";
 import { getPathsTaughtByProfile } from "@/lib/learn-home";
@@ -67,7 +68,7 @@ export default async function ConnectPage() {
       <PageTabs
         eyebrow="CONNECT"
         sequence={tabSequenceFor("/connect")}
-        tabs={tabsWithUnread(PAGE_TABS["/connect"], unread)}
+        tabs={connectTabs(viewer, unread)}
         current="/connect"
       />
       <ConnectProfile

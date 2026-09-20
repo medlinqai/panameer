@@ -64,13 +64,25 @@ export async function CommunityRail({
                 </div>
               </div>
             ))}
-            {mine.following.length > 4 && (
-              <p className="pm-cm-count">
-                <Link href="/community/mentors" className="font-semibold text-magenta hover:underline">
-                  See All {mine.following.length}
-                </Link>
-              </p>
-            )}
+            {/*
+              ── ⚠⚠⚠ THE LINK IS UNCONDITIONAL NOW (`P2-J3-E593` WS-A) ──────
+
+              ⚠ SUPERSEDED, quoted not deleted (`E164`):
+              //   {mine.following.length > 4 && (
+              //     <Link …>See All {mine.following.length}</Link>
+              //   )}
+              ⚠⚠ IT ONLY RENDERED ABOVE FOUR, SO FOLLOWING 1–4 HAD NO LINK TO
+              `/community/mentors` AT ALL. That was survivable while `Mentoring`
+              was its own tab. ⚠⚠⚠ `E593` REMOVES THAT TAB, so this link is now
+              the ONLY door to that page from here — and a door that appears
+              only above a threshold is not a door.
+              ⚠ Found in CC's own `E591` WS-C work, at `E593`'s premise gate.
+            */}
+            <p className="pm-cm-count">
+              <Link href="/community/mentors" className="font-semibold text-magenta hover:underline">
+                {mine.following.length > 4 ? `See All ${mine.following.length}` : "Browse Mentors"}
+              </Link>
+            </p>
           </>
         )}
         {/* ⚠⚠ HIDDEN AT ZERO, ON `getMyCommunity`'s OWN INSTRUCTION. "0 people
@@ -128,16 +140,31 @@ export async function CommunityRail({
             not a web; it is a card with extra steps. So this is a card, and the
             missing model is REPORTED at the gate rather than invented.
           */
-          <div className="pm-cm-row">
-            <Face photoUrl={teams.representedBy.photoUrl} size={36} />
-            <div className="min-w-0">
-              <p className="pm-cm-name">{teams.representedBy.name}</p>
-              {teams.representedBy.title && (
-                <p className="pm-cm-title">{teams.representedBy.title}</p>
-              )}
-              <p className="pm-cm-count">Represents you</p>
+          <>
+            <div className="pm-cm-row">
+              <Face photoUrl={teams.representedBy.photoUrl} size={36} />
+              <div className="min-w-0">
+                <p className="pm-cm-name">{teams.representedBy.name}</p>
+                {teams.representedBy.title && (
+                  <p className="pm-cm-title">{teams.representedBy.title}</p>
+                )}
+                <p className="pm-cm-count">Represents you</p>
+              </div>
             </div>
-          </div>
+            {/*
+              ⚠⚠⚠ THIS LINK WAS MISSING ENTIRELY (`P2-J3-E593` WS-A). The owner
+              branch above links and the no-team branch below links; ⚠ **a
+              MEMBER of somebody else's team had no route to `/community/teams`
+              at all.** Survivable while `Teams` was its own tab; `E593` removes
+              that tab, so this is now the only door.
+              ⚠ Found in CC's own `E591` WS-C work, at `E593`'s premise gate.
+            */}
+            <p className="pm-cm-count mt-2">
+              <Link href="/community/teams" className="font-semibold text-magenta hover:underline">
+                See Your Team
+              </Link>
+            </p>
+          </>
         ) : (
           /*
             ⚠⚠ NO "CREATE A TEAM" PROMPT. Open question 2's recommendation, which

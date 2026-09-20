@@ -2,9 +2,10 @@ import Link from "next/link";
 import { guardPage } from "@/lib/guard";
 import { getForumsHome } from "@/lib/forums";
 import { PageTabs } from "@/components/casing/PageTabs";
-import { PAGE_TABS, tabSequenceFor } from "@/lib/nav";
+import { tabSequenceFor } from "@/lib/nav";
+import { connectTabs } from "@/lib/connect-tabs";
 import { getSessionViewer } from "@/lib/session";
-import { tabsWithUnread, unreadCount } from "@/lib/messages";
+import { unreadCount } from "@/lib/messages";
 import { ForumRooms } from "@/components/community/ForumRooms";
 
 /**
@@ -39,7 +40,7 @@ export default async function ForumsPage() {
       <PageTabs
         eyebrow="CONNECT"
         sequence={tabSequenceFor("/connect")}
-        tabs={tabsWithUnread(PAGE_TABS["/connect"], unread)}
+        tabs={connectTabs(viewer, unread)}
         current="/community/forums"
       />
       <div className="mx-auto max-w-5xl">
