@@ -38,9 +38,19 @@ export async function GET() {
       })
     : null;
 
+  /*
+    ⚠⚠ `lastParseAt` ADDED (`P2-J14-E561` WS-A). The query ALREADY selected
+    `created_at` and threw it away — the offer could say WHEN the document was
+    last read and did not.
+    ⚠ THE DATE IS WHAT MAKES THE OFFER LEGIBLE to the provider this brief exists
+    for: someone who registered a year ago needs to see that it HAS been a year.
+    ⚠ ISO string, not a `Date` — it crosses the wire as JSON and the client must
+    not assume otherwise.
+  */
   return NextResponse.json({
     available: aiExtractionAvailable(),
     hasDocument: Boolean(doc),
     documentName: doc?.file_name ?? null,
+    lastParseAt: doc?.created_at ? doc.created_at.toISOString() : null,
   });
 }

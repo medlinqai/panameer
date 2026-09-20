@@ -1,6 +1,7 @@
 import { formatLocality } from "@/lib/locality";
 import { prisma } from "@/lib/prisma";
 import { isMarketplaceVisible, providerMeetsRequired } from "@/lib/access";
+import { aiExtractionAvailable } from "@/lib/resume/ai-extract";
 import { missingRequired, profileEnrichmentGaps, VISIBILITY_THRESHOLD } from "@/lib/completeness";
 import { shownSkills, selectedRoleIds } from "@/lib/shown-skills";
 import { listPublishedPackages } from "@/lib/packages";
@@ -215,6 +216,17 @@ export async function getProviderProfileView(
   // The hero's meta rail (WS3, mockup pg1) shows Country on its own line, and
   // the primary LANGUAGE — the first one listed, which is the order the
   // provider entered them in.
+  /* ⚠ `P2-J14-E561` — the most recent parse WITH A DOCUMENT still on file.
+     `raw_text: { not: null }` is the same predicate `/available` uses, so the
+     server and the client cannot disagree about whether a re-run is possible. */
+  const lastImport = isOwner
+    ? await prisma.profileImport.findFirst({
+        where: { provider_profile_id: profile.id, raw_text: { not: null } },
+        orderBy: { created_at: "desc" },
+        select: { created_at: true },
+      })
+    : null;
+
   const country = addr?.country?.trim() || null;
   const primaryLanguage = profile.languages[0]?.name ?? null;
 
@@ -251,6 +263,27 @@ export async function getProviderProfileView(
       ⚠ Owner-agnostic data. Nothing renders it for a buyer; the strip that
       consumes it is `p.isOwner`-gated.
     */
+    /*
+      ── ⚠⚠ CAN THIS PROVIDER RE-READ THEIR RÉSUMÉ? (`P2-J14-E561` WS-A) ──────
+
+      ⚠ SERVER-SIDE, AND THAT IS THE POINT. `ResumeImportAction` already asks
+      `/available` for itself, but the PANEL that now hosts it is server-rendered
+      and has to decide whether to exist at all.
+      ⚠⚠ WITHOUT THIS THE OFFER WOULD VANISH FOR EXACTLY THE PROVIDER THIS BRIEF
+      IS FOR. `E562`'s gaps panel renders only when `gaps.length > 0`; a provider
+      who registered a year ago and filled every section has NO gaps — and they
+      are the textbook case for *"new skills and no way to re-run the parse."*
+      Hosting the action in a panel keyed on gaps alone would hide it from them.
+
+      ⚠ BOTH CONDITIONS, because both are what the client checks: a model must be
+      configured AND a document must be on file. Computing only one here would
+      render a panel whose button then declines to appear.
+      ⚠ Owner-agnostic data; the panel that reads it is `p.isOwner`-gated.
+    */
+    resumeRerun: {
+      available: aiExtractionAvailable() && Boolean(lastImport),
+      lastParseAt: lastImport?.created_at?.toISOString() ?? null,
+    },
     missingRequired: missingRequired({
       headline: profile.headline,
       role_type_id: profile.role_type_id,

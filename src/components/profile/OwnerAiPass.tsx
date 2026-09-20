@@ -41,3 +41,22 @@ export function OwnerResumeImport() {
   const router = useRouter();
   return <ResumeImportAction onApplied={() => router.refresh()} />;
 }
+
+/**
+ * ── ⚠⚠ THE RE-RUN OFFER, IN THE GAPS PANEL (`P2-J14-E561` WS-A) ────────────
+ *
+ * ⚠ SAME COMPONENT, SAME ROUTE, SAME CONFIRM — only the presentation differs.
+ * ⚠⚠ THERE IS NO SECOND BUTTON AND NO SECOND ENTRY POINT: this REPLACES the
+ * `Import from résumé` that sat in the profile's Work History header. The
+ * WIZARD's copy of that header is untouched.
+ */
+export function OwnerResumeRerun() {
+  const router = useRouter();
+  return (
+    <ResumeImportAction
+      label="Update from my résumé"
+      showContext
+      onApplied={() => router.refresh()}
+    />
+  );
+}

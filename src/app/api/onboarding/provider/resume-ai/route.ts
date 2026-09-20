@@ -5,6 +5,7 @@ import { getSessionViewer } from "@/lib/session";
 import { ownedProviderProfile } from "@/lib/access";
 import { aiExtractResume, aiToParsedResume, aiExtractionAvailable, PROMPT_VERSION } from "@/lib/resume/ai-extract";
 import { applyParsedResume } from "@/lib/resume/import";
+import { computeRerunDiff } from "@/lib/resume/rerun-diff";
 import { getOnboardingState } from "@/lib/onboarding";
 import { assessParse } from "@/lib/resume/confidence";
 
@@ -51,7 +52,22 @@ export const runtime = "nodejs";
 */
 export const maxDuration = 180;
 
-export async function POST() {
+/**
+ * ── ⚠⚠ `mode: "preview"` — PROPOSE, WRITE NOTHING (`P2-J14-E561` WS-B) ──────
+ *
+ * ⚠⚠⚠ THE DEFAULT IS UNCHANGED. No body, or any body without `mode:"preview"`,
+ * behaves EXACTLY as before — the wizard's review step and every existing caller
+ * keep applying on POST. ⚠ A re-run that silently stopped writing would be a
+ * worse defect than the one this brief fixes.
+ * ⚠ THE HANDLER NOW TAKES `req` ONLY TO READ THAT FLAG; it took none before.
+ *
+ * ⚠⚠ PREVIEW PARSES AND STORES `parsed` ON THE IMPORT ROW, THEN RETURNS A DIFF.
+ * It never calls `applyParsedResume`, so no profile row is touched.
+ * ⚠⚠⚠ STORING THE PARSE IS WHAT STOPS THE PROVIDER PAYING FOR TWO READS: `E546`
+ * measured 25–70 s and $0.004–0.008 per read, so apply MUST reuse this result
+ * rather than parse again. The row is where it lives.
+ */
+export async function POST(req: Request) {
   const viewer = await getSessionViewer();
   if (!viewer) {
     return NextResponse.json({ error: "Not signed in" }, { status: 401 });
@@ -124,6 +140,27 @@ export async function POST() {
       },
       { status: 502 }
     );
+  }
+
+  /*
+    ⚠ THE MODE IS READ AFTER THE PARSE, DELIBERATELY. The parse is the expensive
+    half and BOTH modes need it; branching earlier would duplicate it.
+    ⚠⚠ A malformed or absent body means APPLY — the historical behaviour.
+  */
+  const body = await req.json().catch(() => null);
+  const preview = (body as { mode?: string } | null)?.mode === "preview";
+
+  if (preview) {
+    /* ⚠ Bank the parse so a later apply reuses it without a second model call. */
+    await prisma.profileImport.update({
+      where: { id: row.id },
+      data: { parsed: parsed as unknown as Prisma.InputJsonValue },
+    });
+    const diff = await computeRerunDiff(profile.id, parsed);
+    /* ⚠⚠ NO `applied`, NO `state` — nothing changed, and returning an `applied`
+       shape here would invite a caller to render a receipt for a write that
+       never happened. */
+    return NextResponse.json({ ok: true, preview: true, diff });
   }
 
   const applied = await applyParsedResume(profile.id, parsed, "RESUME");
