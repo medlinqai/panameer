@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getColleagueRoster } from "@/lib/colleague-roster";
 import { profileIdsByPersonId } from "@/lib/provider-rates";
+import { formatPlace } from "@/lib/location";
 import type { Viewer } from "@/lib/access";
 
 /**
@@ -51,12 +52,19 @@ export type InvitedCard = {
  * *"where is this person"*, and using one because it is closer to hand is how a
  * card ends up stating a fact nobody entered.
  */
+/*
+  ⚠⚠ IT DELEGATES TO THE SHARED HELPER (`E591` rider). ⚠ SUPERSEDED, quoted not
+  deleted (`E164`) — this file's own copy, which rendered the stored value
+  verbatim and so printed `saint augustine, FL` on a real card:
+  //   const clean = (v: string | null) =>
+  //     v && v.trim() && v.trim().toLowerCase() !== "null" ? v.trim() : null;
+  //   const parts = [clean(city), clean(state)].filter(Boolean);
+  //   return parts.length ? parts.join(", ") : null;
+  ⚠⚠⚠ ONE HELPER, TWO PAGES — so a city cannot render one way here and another
+  way in buyer search, which is exactly what was happening.
+*/
 function formatWhere(city: string | null, state: string | null): string | null {
-  /* ⚠ The string "null" appears in this data — guarded, because it renders. */
-  const clean = (v: string | null) =>
-    v && v.trim() && v.trim().toLowerCase() !== "null" ? v.trim() : null;
-  const parts = [clean(city), clean(state)].filter(Boolean);
-  return parts.length ? parts.join(", ") : null;
+  return formatPlace(city, state);
 }
 
 export async function getCommunityPage(viewer: Viewer): Promise<{

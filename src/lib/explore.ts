@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { marketplaceVisibleWhere } from "@/lib/access";
 import { capitalizeName } from "@/lib/display";
+import { formatPlace } from "@/lib/location";
 import { formatRate } from "@/lib/types";
 
 /**
@@ -305,15 +306,27 @@ export async function searchWorkTeaser(
  * "Chicago, United States" — and null rather than ", United States" when the
  * city is missing, which several seeded addresses are. A dangling comma is how
  * a page announces it is rendering a hole.
+ *
+ * ── ⚠⚠ IT DELEGATES NOW, SO A CITY CANNOT RENDER TWO WAYS (`E591` rider) ──
+ *
+ * ⚠ SUPERSEDED, quoted not deleted (`E164`) — this module's private copy:
+ * //   const parts = [city?.trim(), country?.trim()].filter(
+ * //     (s): s is string => Boolean(s) && s !== "null"
+ * //   );
+ * //   return parts.length ? parts.map(capitalizeName).join(", ") : null;
+ *
+ * ⚠⚠ THE RULE CHANGED IN ONE RESPECT AND IT IS DELIBERATE: `capitalizeName`
+ * normalises ALL-UPPER input as well as all-lower, which would render `FL` as
+ * `Fl`. Scott, 2026-09-20: *"State/country code stays uppercase."*
+ * ⚠ MEASURED BEFORE THE SWAP: **zero stored cities are all-uppercase**, so this
+ * changes nothing this page renders today. It removes the FUTURE divergence,
+ * which is the whole point of sharing the helper.
  */
 function formatLocation(
   city: string | null | undefined,
   country: string | null | undefined
 ): string | null {
-  const parts = [city?.trim(), country?.trim()].filter(
-    (s): s is string => Boolean(s) && s !== "null"
-  );
-  return parts.length ? parts.map(capitalizeName).join(", ") : null;
+  return formatPlace(city, country);
 }
 
 /** A range where one exists, a single figure otherwise, null if neither. */
