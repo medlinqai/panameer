@@ -90,12 +90,71 @@ export function scanSource(src: string): number[] {
           ⚠⚠ That is precisely the `completeness.ts` shape: a quoted doc comment
           carried `*​/`, and the rest of the quoted function fell out into code.
         */
+        /*
+          ── ⚠⚠⚠ WIDENED TO PROSE (`P2-J3-E591` rider, 2026-09-20) ──────────
+
+          ⚠ SUPERSEDED, quoted not deleted (`E164`) — it looked only at QUOTED
+          CODE, i.e. lines beginning with a line-comment marker:
+          //   if (trimmed.startsWith("//")) {
+          //     ... next non-blank line also starts with the marker -> hit
+          //   }
+
+          ⚠⚠ OCCURRENCES SIX AND SEVEN WERE PROSE, NOT QUOTED CODE, AND THIS
+          GATE COULD NOT SEE EITHER. Both were sentences DESCRIBING the
+          terminator inside a docblock — one in `strip-comments.ts`, one in this
+          very file — and both closed their comment early. ⚠ The compiler caught
+          them, which is the backstop working; but the gate exists so the
+          compiler is not the first to know.
+
+          ⚠⚠ THE RULE IS UNCHANGED AND IS STILL NARROW: a block comment that was
+          MEANT TO CONTINUE. What widened is the definition of "meant to
+          continue" — it now covers any CONTINUATION LINE, prose (`*`) as well
+          as quoted code (`//`).
+
+          ⚠⚠⚠ TWO INDEPENDENT SIGNALS, EITHER IS ENOUGH:
+            1  there is still content AFTER the terminator on the same line —
+               a real closing line has nothing after it;
+            2  the next non-blank line is another CONTINUATION line, so the
+               author was still writing when the comment ended underneath them.
+          ⚠ A legitimate closing line satisfies NEITHER, which is what keeps
+          this from firing forty times the way its first draft did.
+        */
+        const after = line.slice(line.indexOf("*/") + 2).trim();
+
+        /*
+          ── ⚠⚠ SIGNAL 1 · QUOTED CODE, AS BEFORE — UNCHANGED ───────────────
+          A line-comment marker closed the block and the next non-blank line is
+          ALSO quoted, so the author was still writing the quote.
+        */
         if (trimmed.startsWith("//")) {
           let j = i + 1;
           while (j < lines.length && lines[j].trim() === "") j++;
-          if (j < lines.length && lines[j].trim().startsWith("//")) {
-            hits.push(i + 1);
-          }
+          if (j < lines.length && lines[j].trim().startsWith("//")) hits.push(i + 1);
+        } else if (trimmed.startsWith("*") && /[A-Za-z0-9`]/.test(after)) {
+          /*
+            ── ⚠⚠⚠ SIGNAL 2 · PROSE — THE ONE THAT WAS MISSING ──────────────
+
+            ⚠ A DOCBLOCK LINE WITH REAL TEXT ON BOTH SIDES OF THE TERMINATOR.
+            That is occurrences six and seven exactly: a sentence describing the
+            terminator, mid-paragraph, which ended the comment underneath itself.
+
+            ⚠⚠ "REAL TEXT" IS WHY THIS IS A CHARACTER CLASS AND NOT
+            `after.length > 0`, AND THE DIFFERENCE WAS MEASURED, NOT GUESSED:
+            the loose version fired on **hundreds** of lines, because a JSX
+            comment legitimately closes with the terminator followed by a brace
+            and every one of those has `after === "}"`.
+            ⚠⚠⚠ A GATE THAT CRIES WOLF IS A GATE SOMEBODY DELETES — this file's
+            own header records its first draft failing exactly that way, and the
+            widening reproduced it before the class was narrowed.
+            ⚠ A closing brace, a paren or a semicolon is punctuation finishing a
+            construct. A LETTER after the terminator is a sentence carrying on.
+
+            ⚠ AND THE "next line is also a continuation" SIGNAL IS DELIBERATELY
+            NOT APPLIED TO PROSE: a docblock that ends and is followed by an
+            ordinary `//` comment is completely normal, and treating that as a
+            defect flagged `access.ts`, `completeness.ts` and four others.
+          */
+          hits.push(i + 1);
         }
         inBlock = false;
       }
@@ -185,6 +244,40 @@ check(
   "MUTATION: a `//` before a `/*` on the same line opens no block",
   scanText(["// /**", "//  * parked module text", "//  */", "// const x = 1;"].join("\n")) === 0
 );
+/*
+  ── ⚠⚠⚠ THE TWO OCCURRENCES THE OLD DETECTOR MISSED, AS TESTS ─────────────
+
+  ⚠ Both were PROSE inside a docblock, describing the terminator rather than
+  quoting code. ⚠⚠ THE TERMINATOR IS BUILT FROM ITS TWO CHARACTERS RATHER THAN
+  WRITTEN, because writing it in this file would close THIS comment — which is
+  the defect under test, and a gate that cannot describe its own subject is a
+  gate somebody rewrites wrongly later.
+*/
+const STAR_SLASH = "*" + "/";
+check(
+  "MUTATION: ⚠⚠ it FIRES on prose that closes its own block early",
+  scanText(
+    [
+      "/**",
+      ` * it ran forward until it found a ${STAR_SLASH} that happened to be`,
+      " * followed by a brace. On a real file that erased forty lines.",
+      " */",
+    ].join("\n")
+  ) === 1
+);
+check(
+  "MUTATION: ⚠ it FIRES when content follows the terminator on a prose line",
+  scanText(["/**", ` * see ${STAR_SLASH} for why`, " */"].join("\n")) === 1
+);
+check(
+  "MUTATION: it does NOT fire on an ordinary docblock that simply ends",
+  scanText(["/**", " * prose", " * more prose", " */", "const x = 1;"].join("\n")) === 0
+);
+check(
+  "MUTATION: it does NOT fire on a docblock whose last line carries text",
+  scanText(["/**", " * prose", " */", "export function f() {}"].join("\n")) === 0
+);
+
 check(
   "MUTATION: it does NOT fire on a QUOTED line with no terminator",
   scanText(["/*", "  // const a = 1;", "*/"].join("\n")) === 0
