@@ -139,7 +139,21 @@ export default async function LessonPage({
         </div>
 
         {/* In-course nav — where you are, and what's on either side. */}
-        <aside className="lg:sticky lg:top-6 lg:self-start">
+        {/*
+          ⚠⚠ IT CLEARS THE PINNED BAND (`P2-ALL-E587` WS-B). ⚠ SUPERSEDED,
+          quoted not deleted (`E164`):
+          // <aside className="lg:sticky lg:top-6 lg:self-start">
+          ⚠⚠⚠ `top-6` WAS MEASURED AGAINST THE TOP OF THE PAGE. With the band
+          pinned (`WS-A`) that puts the aside UNDERNEATH it — the defect this
+          workstream exists to fix. ⚠ It now reads the band's own height, so it
+          cannot drift when the band changes: `--pm-band-h` is declared once in
+          `app-band.css` and is 67px or 57px depending on the menu's shape.
+          ⚠ The `1.5rem` is `top-6`'s own value, kept.
+        */}
+        <aside
+          className="lg:sticky lg:self-start"
+          style={{ top: "calc(var(--pm-band-h, 67px) + 1.5rem)" }}
+        >
           <div className="rounded-brand border border-line">
             <div className="border-b border-line p-4">
               <p className="text-[12.5px] font-bold uppercase tracking-wide text-ink-2">

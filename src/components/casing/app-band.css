@@ -94,7 +94,91 @@
   position: sticky;
   top: 0;
   z-index: 40;
+
+  /*
+    ── ⚠⚠⚠ THE HEIGHT IS DECLARED, AND THE BAND IS HELD TO IT ───────────────
+
+    ⚠⚠ `--pm-band-h` IS THE ONE SOURCE OF TRUTH, and `height` below is what
+    makes it TRUE BY CONSTRUCTION rather than a number somebody copied off a
+    screenshot. ⚠ A custom property holding a literal that the band merely
+    happens to match is a hard-coded height with extra steps: it is wrong the
+    moment the band's real height differs, and nothing says so.
+
+    ⚠⚠⚠ THERE ARE TWO HEIGHTS, AND THAT IS MEASURED, NOT A HEDGE. The band is
+    67px while the menu carries labels and 57px once it goes icons-only — the
+    menu's own box is 46px vs 30px, and `padding: 10px` top and bottom is
+    constant. MEASURED 2026-09-20 on seven widths: 67 at 1440/1100/930/860,
+    57 at 480/390/360.
+    ⚠ **ONE VALUE WOULD BREAK ONE REGIME.** Forcing 57 everywhere overflows a
+    46px menu inside a 57px band; forcing 67 everywhere steals 10px from a phone,
+    where the space is scarcest. ⚠⚠ So the property is RESPONSIVE and the
+    override below shares the 780px breakpoint with the rule that hides the
+    labels — the two cannot drift, because the thing that changes the height IS
+    the thing that changes at 780px.
+
+    ⚠ THE RIGHT-HAND GROUP SHRINKS, IT DOES NOT WRAP: it is a `flex` row, which
+    is `nowrap` by default, and the menu column carries `min-width: 0`. A fixed
+    height is only safe because nothing in here can reflow to a second row.
+    ⚠⚠ `check:app-shell` ASSERTS THE RENDERED HEIGHT EQUALS THE DECLARED ONE at
+    both regimes, so this comment cannot quietly become false.
+  */
+  height: var(--pm-band-h);
 }
+
+/*
+  ── ⚠⚠⚠ THE PROPERTY LIVES ON `:root`, NOT ON `.pm-band` ───────────────────
+
+  ⚠⚠ CUSTOM PROPERTIES INHERIT DOWN, NEVER ACROSS. The two things that have to
+  clear the band — the Learn lesson aside and the `AppPath` rail — are SIBLINGS
+  of the band inside `AppShell`, not descendants of it. Declared on `.pm-band`
+  they would read nothing, silently fall back, and be wrong at exactly the width
+  where the band is shorter.
+  ⚠ MEASURED AND CAUGHT DURING `WS-B`, before it shipped.
+
+  ⚠ IT IS STILL ONE SOURCE OF TRUTH: `.pm-band` sets its own `height` FROM this
+  property, so the declared value and the rendered one cannot disagree.
+  ⚠⚠ AND IT IS SCOPED WITHOUT A SELECTOR TRICK: this stylesheet is imported by
+  `AppBand`, so it only loads on pages that render the band. A marketing page
+  never sees the property, and the `scroll-padding-top` below is simply invalid
+  there — which is the correct behaviour, not a bug.
+*/
+:root {
+  --pm-band-h: 67px;
+}
+
+/*
+  ⚠⚠ EVERY IN-SHELL ANCHOR CLEARS THE BAND IN ONE DECLARATION. `scroll-mt-*`
+  utilities are scattered across `company`, `WorkFeed`, `sections.tsx` and
+  others; editing each is how one gets missed. ⚠ `scroll-padding-top` on the
+  SCROLL CONTAINER covers all of them, including anchors nobody has written yet.
+  ⚠ A page's own `scroll-mt` still adds on top of this, which is what those
+  values were for — breathing room, not band clearance.
+*/
+html {
+  scroll-padding-top: var(--pm-band-h);
+}
+
+/*
+  ── ⚠⚠ THE MENU'S OFFSET IS A CONSEQUENCE OF THE SIDE COLUMNS ──────────────
+
+  ⚠ Recorded at Scott's instruction, 2026-09-20, after `WS-B2` removed two chips
+  from the right-hand group and the menu moved RIGHT by 101.44px — exactly half
+  the freed width.
+  ⚠⚠ THE MENU IS CENTRED IN THE MIDDLE COLUMN, NOT IN THE BAND. With `auto`
+  side columns of unequal width, the middle column's centre sits
+  `(leftWidth − rightWidth) / 2` away from the band's centre, so the menu
+  inherits that offset. MEASURED after `WS-B2`: −31.13px, constant at every
+  width from 1000 to 1440 (it was −132.57px before).
+
+  ⚠ **RULED TO STAND** (Scott, 2026-09-20): it moved CLOSER to true centre, and
+  rewriting a collision-safe grid for 31px is not worth re-opening a layout that
+  `check:app-shell` asserts 29 things about.
+  ⚠⚠ **THE FIX, IF IT IS EVER WANTED, IS ONE LINE:**
+        grid-template-columns: minmax(max-content, 1fr) auto minmax(max-content, 1fr);
+  That makes the side columns share the slack equally, so the middle column — and
+  the menu in it — centres on the band. ⚠ It changes how the band collapses at
+  narrow widths, so it needs its own measurement pass, not a quick swap.
+*/
 
 /* ⚠ EXPLICIT COLUMNS — the guard against trap 1. Never remove these. */
 .pm-band-brand {
@@ -196,6 +280,16 @@
 
 /* Below that the menu is icons only — the label is what costs the width. */
 @media (max-width: 780px) {
+  /*
+    ⚠⚠ THE BAND GETS SHORTER HERE, AND FOR EXACTLY THIS REASON: losing the
+    labels takes the menu's box from 46px to 30px. ⚠ The override lives in the
+    SAME media query as the cause so the two cannot drift apart — if this
+    breakpoint ever moves, the height moves with it.
+    ⚠ MEASURED: 57px at 480/390/360.
+  */
+  :root {
+    --pm-band-h: 57px;
+  }
   .pm-band-label {
     display: none;
   }
