@@ -118,7 +118,8 @@
     "check:sent-email": "npx esbuild scripts/check-sent-email.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/sent-email.cjs --log-level=error && node .harness/sent-email.cjs",
     "mail:state": "npx esbuild scripts/print-mail-state.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/mail-state.cjs --log-level=error && node -r dotenv/config .harness/mail-state.cjs dotenv_config_path=.env.local",
     "check:connect-walk": "playwright test --config=playwright.connect-walk.config.ts",
-    "check:comment-quotes": "npx esbuild scripts/check-comment-quotes.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/comment-quotes.cjs --log-level=error && node .harness/comment-quotes.cjs"
+    "check:comment-quotes": "npx esbuild scripts/check-comment-quotes.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/comment-quotes.cjs --log-level=error && node .harness/comment-quotes.cjs",
+    "backfill:completeness": "npx esbuild scripts/backfill-completeness.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/backfill-completeness.cjs --log-level=error && node -r dotenv/config .harness/backfill-completeness.cjs dotenv_config_path=.env.local"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",

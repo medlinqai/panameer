@@ -1,0 +1,99 @@
+/*
+ * ── ⚠⚠ THE SCORE PAGE'S GEOMETRY (`P2-J3-E590` WS-B) ──────────────────────
+ *
+ * ⚠ Geometry lives in a stylesheet, the same rule `app-band.css` and
+ * `connect-profile.css` follow. A grid declared in one place and broken at a
+ * breakpoint declared in another is how those two drift apart.
+ */
+
+/* ⚠⚠ 50/50. Scott: *"split. 50/50"*. Equal columns, not a golden ratio —
+   the left is a to-do list and the right is a record, and neither outranks
+   the other. */
+.pm-score-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+/*
+  ⚠⚠ ONE COLUMN WHEN THE SPLIT STOPS FITTING. ⚠ MEASURED IN THE APP, not taken
+  from the mockup's 880: `AppShell`'s `<main>` carries `px-5 py-6 sm:px-8`, so
+  the usable width is the viewport MINUS 64px at `sm` and above. A column below
+  ~400px starts wrapping the step rows (a number, a label, two actions and a
+  points badge), so 2 × 400 + 20 = 820 of content → 884 viewport.
+  ⚠ Rounded to 900 so the step happens just BEFORE the rows get tight.
+*/
+@media (max-width: 900px) {
+  .pm-score-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ── the dial ───────────────────────────────────────────────────────────── */
+.pm-score-dial {
+  position: relative;
+  width: 100%;
+  max-width: 340px;
+  aspect-ratio: 1 / 1;
+  margin: 0 auto;
+}
+
+/* ⚠ `-90deg` starts the first segment at twelve o'clock. Without it the arc
+   begins at three o'clock and the group order reads as arbitrary. */
+.pm-score-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.pm-score-core {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  /* ⚠⚠ THE CENTRE MUST NOT EAT THE HOVER. It sits on top of the ring, so
+     without this every pointer event over the middle is swallowed and the
+     slices nearest the centre stop responding. */
+  pointer-events: none;
+  padding: 0 21%;
+}
+
+/*
+  ⚠⚠⚠ THE RING IS MAGENTA, AND THAT REVERSES `E588` ON PURPOSE (`E590`
+  ruling 1, confirmed by Scott 2026-09-20: *"good on the ring color."*).
+  ⚠ SUPERSEDED, quoted not deleted (`E164`) — `CompletionRing.tsx`:
+  //   THE RING IS INK. `E433` — MAGENTA MARKS INTERACTIVE THINGS, and a ring
+  //   is a figure nobody clicks.
+  ⚠⚠ THE PREMISE OF THAT RULING NO LONGER HOLDS: every slice here is a hover
+  target wired to a row, and on the profile card the ring is the link to this
+  page. `E433` is not being broken — it is being applied to a ring that changed
+  category. ⚠ THE FIGURE IN THE CENTRE STAYS INK: it is still a number.
+*/
+.pm-score-seg {
+  cursor: pointer;
+  transition:
+    stroke-width 0.16s ease,
+    opacity 0.16s ease;
+}
+.pm-score-dim {
+  opacity: 0.28;
+}
+
+/* ⚠ Three paints, in the brand's own tokens — there is no blue in the brand. */
+.pm-score-filled {
+  stroke: var(--magenta, #d72cd6);
+}
+/* ⚠⚠ A SOLID GREY, NOT A TINT OF THE EMPTY COLOUR. `declared_none` COUNTS
+   toward the figure; painting it like the unanswered track would tell the
+   provider their answer did not register. */
+.pm-score-declared {
+  stroke: #b7b1c6;
+}
+.pm-score-empty {
+  stroke: #ece9f2;
+}
