@@ -21,6 +21,11 @@ import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
   testDir: "./e2e",
 
+  /* ⚠⚠ ONE REQUEST BEFORE ANY TEST: is this a DEV server? A production
+     server left on 3100 is reused by `reuseExistingServer` below and turns
+     this suite into five unexplained 30s timeouts. See the file. */
+  globalSetup: "./e2e/_dev-server-guard.ts",
+
   /*
     CHROMIUM ONLY. A marketing page does not justify tripling the run across
     Firefox and WebKit — and the things this asserts (focus order, dialog roles,

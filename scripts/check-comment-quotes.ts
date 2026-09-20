@@ -1,5 +1,6 @@
 import { execSync } from "node:child_process";
 import { readFileSync } from "node:fs";
+import { stripComments, blankComments } from "./lib/strip-comments";
 
 /**
  * ── ⚠⚠⚠ RULE 12, AS A TEST (`P2-J3-E590` WS-A) ────────────────────────────
@@ -187,6 +188,63 @@ check(
 check(
   "MUTATION: it does NOT fire on a QUOTED line with no terminator",
   scanText(["/*", "  // const a = 1;", "*/"].join("\n")) === 0
+);
+
+/*
+  ── ⚠⚠ THE SHARED STRIPPER, ASSERTED HERE (`P2-J3-E591` WS-B rider) ─────────
+
+  ⚠⚠⚠ FIVE MISCOUNTS OF ONE SHAPE, THE FIFTH BEING A **JSX** COMMENT —
+  `AttentionStrip.tsx:224`, a `<Link href="/community">` inside `{​/* … *​/}`,
+  reported as a live link in `E591` WS-A's own link inventory. ⚠ Scott:
+  *"the stripper is the fix."*
+
+  ⚠ THIS GATE IS THE RIGHT HOME because it is already the COMMENT gate: rule 12
+  lives here, and `E164` is why both defects exist. ⚠⚠ THE SCAN ABOVE AND THE
+  STRIPPER BELOW ARE DIFFERENT JOBS — the scan finds a comment that ENDS too
+  early, the stripper decides whether a grep hit is LIVE. Same rule, two costs.
+*/
+check(
+  "STRIPPER: a JSX comment is removed whole, braces and all",
+  stripComments('{/* <Link href="/community" /> */}').trim() === ""
+);
+check(
+  "STRIPPER: the exact E591 miscount — a link inside a JSX comment is not live",
+  !stripComments(['{/*', '  <Link href="/community">', "  Community Credits", "*/}"].join("\n"))
+    .includes("/community")
+);
+check(
+  "STRIPPER: a multi-line JSX comment leaves no stray brace behind",
+  !/[{}]/.test(stripComments(["{/*", "  prose", "*/}"].join("\n")))
+);
+check(
+  "STRIPPER: block and line comments still go",
+  stripComments(["/* block */", "// line", "const live = 1;"].join("\n")).includes("const live") &&
+    !stripComments(["/* block */", "// line", "const live = 1;"].join("\n")).includes("block")
+);
+check(
+  "STRIPPER: a URL in live code survives — `//` after `:` is not a comment",
+  stripComments('const u = "https://panameer.com";').includes("https://panameer.com")
+);
+check(
+  "STRIPPER: MUTATION — it does NOT strip live code that merely looks adjacent",
+  stripComments('const o = { a: 1 }; // note').includes("{ a: 1 }")
+);
+/*
+  ⚠⚠ `blankComments` IS THE ONE AN INVENTORY ACTUALLY WANTS, because a report
+  that says `file:line` has to have the right line. ⚠ A stripper that DELETES a
+  comment renumbers every line after it — which would have turned one wrong
+  count into a wrong count AND a wrong citation.
+*/
+check(
+  "STRIPPER: blankComments preserves the line count exactly",
+  blankComments(["const a = 1;", "/*", " x", "*/", "const b = 2;"].join("\n")).split("\n")
+    .length === 5
+);
+check(
+  "STRIPPER: blankComments keeps live code on its ORIGINAL line number",
+  blankComments(["{/*", '  <Link href="/community">', "*/}", "const live = 1;"].join("\n"))
+    .split("\n")[3]
+    .includes("const live")
 );
 
 check(
