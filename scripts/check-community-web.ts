@@ -153,6 +153,34 @@ check(
   "5 — a different cycle actually MOVES the nodes",
   JSON.stringify(layoutWeb(shape)) !== JSON.stringify(layoutWeb({ ...shape, cycle: 8 }))
 );
+/*
+  ⚠⚠⚠ AND EVERY COORDINATE IS QUANTISED, WHICH IS A STRONGER CLAIM THAN
+  "deterministic" AND IS THE ONE THAT ACTUALLY MATTERED.
+
+  ⚠ MEASURED 2026-09-20: the layout WAS deterministic — same inputs, same
+  steps, no randomness — and `/community` still threw a REAL HYDRATION MISMATCH,
+  because `Math.sin` is implementation-defined in its last bits and the server
+  renders in Node's engine while hydration runs in the browser's. One ULP of
+  difference is two different attribute STRINGS.
+  ⚠⚠ SO THE TEST IS NOT "does it compute the same way" — IT IS "can the number
+  be written down the same way anywhere". A coordinate with more than two
+  decimals is a coordinate that can disagree with itself across engines.
+*/
+const quantised = layoutWeb({
+  joined: Array.from({ length: 9 }, (_, i) => ({ id: `j${i}` })),
+  invited: [{ id: "i0" }],
+  reachable: Array.from({ length: 7 }, (_, i) => ({ id: `r${i}`, viaId: `j${i % 9}` })),
+  cycle: 41,
+}).flatMap((n) => [n.x, n.y, n.fromX, n.fromY]);
+check(
+  "5 — ⚠⚠ every coordinate survives a round trip through 2dp",
+  quantised.every((v) => Math.abs(v * 100 - Math.round(v * 100)) < 1e-9),
+  quantised.filter((v) => Math.abs(v * 100 - Math.round(v * 100)) >= 1e-9).slice(0, 3).join(", ")
+);
+check(
+  "5 — ⚠ no coordinate is negative zero",
+  quantised.every((v) => !Object.is(v, -0))
+);
 
 /* ── 6 · A REACHABLE NODE HANGS OFF ITS `via`, NOT THE CENTRE ───────────── */
 const linked = layoutWeb({

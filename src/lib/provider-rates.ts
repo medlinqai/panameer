@@ -33,6 +33,46 @@ import { rateDisplay, type RateFields } from "@/lib/rate-display";
  */
 export type ProviderCardFacts = { rate: string | null; profileId: string };
 
+/**
+ * ── ⚠⚠⚠ THE SAME LINK, WITHOUT ASKING FOR THE RATE (`P2-J3-E591` WS-C 7) ──
+ *
+ * ⚠⚠ SCOTT, 2026-09-20: *"I do nto think providers should see other provider's
+ * rates."* — *"Not on a colleague card, not on a team roster, not in a tooltip,
+ * not in an aria-label, and not in the JSON the page ships to the client. A
+ * rate omitted from the render but present in the payload is still disclosed —
+ * omit it from the query."*
+ *
+ * ⚠ MEASURED AT `E591` WS-B: `ConnectHome.tsx` called `ratesByPersonId` THREE
+ * TIMES and read only `.profileId` off the result. ⚠⚠ NO RATE STRING EVER
+ * REACHED THE DOM — but the rate columns were read on every render of
+ * `/community`, and the formatted string sat in a map one prop away from being
+ * rendered. ⚠ *"Currently clean but fragile"* is not a state to leave a rule in.
+ *
+ * ⚠⚠ THIS IS THE WHOLE FIX: callers that want the profile LINK now ask for the
+ * link. `ratesByPersonId` is UNTOUCHED and still correct for the surfaces that
+ * legitimately show a rate — this is not a narrowing of that function, it is a
+ * second, smaller question that most callers were only ever asking by accident.
+ *
+ * ⚠ ABSENCE MEANS NO PROVIDER PROFILE, exactly as above: the caller renders the
+ * name unlinked rather than a link to a 404.
+ */
+export async function profileIdsByPersonId(
+  personIds: string[]
+): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  if (personIds.length === 0) return out;
+
+  const rows = await prisma.providerProfile.findMany({
+    where: { person_id: { in: personIds } },
+    /* ⚠⚠ TWO COLUMNS. Adding a rate field here re-creates the exact defect this
+       function exists to remove, and `check:community-page` fails the build. */
+    select: { id: true, person_id: true },
+  });
+
+  for (const r of rows) out.set(r.person_id, r.id);
+  return out;
+}
+
 export async function ratesByPersonId(
   personIds: string[]
 ): Promise<Map<string, ProviderCardFacts>> {

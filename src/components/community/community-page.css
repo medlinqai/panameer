@@ -1,0 +1,202 @@
+/*
+  ── ⚠⚠ THE COMMUNITY PAGE — TWO COLUMNS (`P2-J3-E591` WS-C) ────────────────
+
+  ⚠ Colleagues in the main column, small things in a rail. ⚠⚠ MENTORS AND TEAMS
+  ARE IN THE RAIL BECAUSE THEY ARE 0–2 ROWS FOR ALMOST EVERYBODY, and a
+  full-width section holding one row reads as a half-built page.
+*/
+.pm-cm {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 22px;
+  align-items: start;
+}
+
+/*
+  ── ⚠⚠⚠ THE RAIL CLEARS THE PINNED BAND, FROM THE VERY FIRST COMMIT ───────
+
+  ⚠ `E587` pinned the app band, and `E587` WS-C then found `/community`'s
+  profile rails tucked UNDERNEATH it at `top: 16px`. ⚠⚠ THAT FIX MOVED TO
+  `/connect` WITH THE PROFILE (`E591` WS-A), so this page's rail is a NEW sticky
+  element created after the band was pinned — which is the exact case that broke
+  once already.
+  ⚠ `check:app-shell`'s assertion looks for the PROPERTY (any sticky `aside`)
+  rather than for named files, so a rail added without this fails the gate —
+  which is the gate working.
+
+  ⚠⚠ NO LITERAL FALLBACK IN THE `var()`. `var(--pm-band-h, 67px)` is a
+  hard-coded height with extra steps, and it is WRONG below 780px where the band
+  is 57px. The variable is declared on `:root`, so it is always there.
+*/
+.pm-cm-rail {
+  position: sticky;
+  top: calc(var(--pm-band-h) + 16px);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ⚠ ONE COLUMN. The rail stops sticking, because a rail taller than the
+   viewport that sticks on a phone traps the content behind it — the same
+   reasoning `connect-profile.css` records for the profile's left rail. */
+@media (max-width: 1060px) {
+  .pm-cm {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .pm-cm-rail {
+    position: static;
+  }
+}
+
+/* ── the colleague cards ─────────────────────────────────────────────────── */
+.pm-cm-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(258px, 1fr));
+  gap: 12px;
+}
+
+/*
+  ⚠⚠ `position: relative` IS WHAT MAKES THE STRETCHED LINK WORK (WS-C item 5).
+  A joined colleague's WHOLE CARD opens their profile — but an `<a>` inside an
+  `<a>` is invalid HTML and destroys keyboard order, so the card is not an
+  anchor. ⚠ One anchor inside it is stretched over the card with `::after`, and
+  `Message` sits ABOVE it on the z-axis so it stays its own control.
+*/
+.pm-cm-card {
+  position: relative;
+  display: flex;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--color-line, #e7e3ed);
+  border-radius: 14px;
+  background: #fff;
+  transition: border-color 0.15s ease;
+}
+.pm-cm-card:has(.pm-cm-open:hover),
+.pm-cm-card:has(.pm-cm-open:focus-visible) {
+  border-color: var(--color-magenta, #d72cd6);
+}
+
+.pm-cm-open::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+}
+/* ⚠ The real controls float above the stretched overlay. Without this the
+   overlay eats the click and `Message` stops working. */
+.pm-cm-actions {
+  position: relative;
+  z-index: 1;
+}
+
+.pm-cm-name {
+  font-weight: 700;
+  font-size: 14.5px;
+  line-height: 1.25;
+}
+/*
+  ⚠⚠ A PERSON'S TITLE IS DATA AND IS NEVER RE-CASED (`E568`, WS-C item 4).
+  ⚠ Recorded in the CSS as well as the TSX because `text-transform` is exactly
+  how a title gets re-cased by accident, invisibly to a grep for copy changes.
+  ⚠⚠ DO NOT ADD `text-transform` TO THIS RULE OR ANY ANCESTOR OF IT.
+*/
+.pm-cm-title {
+  font-size: 12.5px;
+  color: var(--color-ink-2, #6b6478);
+  text-transform: none;
+}
+.pm-cm-where {
+  font-size: 12px;
+  color: var(--color-ink-3, #8a8396);
+}
+
+/*
+  ── ⚠⚠ THE INVITED CARD IS A DIFFERENT SHAPE, NOT A DIMMER ONE ────────────
+
+  ⚠ It carries NAME, EMAIL and WHEN IT WAS SENT. Nothing else — no title, no
+  location, no face. ⚠⚠ THERE IS NO PROFILE TO OPEN, so the whole card is not a
+  link and must not look like one.
+*/
+.pm-cm-card-invited {
+  border-style: dashed;
+  background: #fcfbfd;
+}
+.pm-cm-email {
+  font-size: 12.5px;
+  color: var(--color-ink-2, #6b6478);
+  word-break: break-word;
+}
+.pm-cm-sent {
+  font-size: 12px;
+  color: var(--color-ink-3, #8a8396);
+}
+
+/* ── the shared placeholder face ─────────────────────────────────────────── */
+.pm-face,
+.pm-sil {
+  flex: none;
+  border-radius: 999px;
+  object-fit: cover;
+  display: block;
+}
+.pm-sil {
+  overflow: hidden;
+}
+
+/*
+  ⚠⚠ THE PHOTO IS PAINTED **ON TOP OF** THE SILHOUETTE, so a broken image
+  reveals the glyph rather than a hole. ⚠ Measured: a seeded `photo_url` that
+  404s rendered as a bare magenta circle before this existed.
+  ⚠⚠⚠ NO `onError` — this is a server component, and a handler would drag every
+  card into the client bundle to solve what one layer solves for free.
+*/
+.pm-face-wrap {
+  position: relative;
+  flex: none;
+  display: block;
+}
+.pm-face-wrap .pm-sil,
+.pm-face-wrap .pm-face {
+  position: absolute;
+  inset: 0;
+}
+/* ⚠ Grey and colourless on purpose — it reads as "no photo yet", never as a
+   photo, and never as initials. */
+.pm-sil-bg {
+  fill: #e8e5ec;
+}
+.pm-sil-ink {
+  fill: #9a93a6;
+}
+
+/* ── the rail cards ──────────────────────────────────────────────────────── */
+.pm-cm-panel {
+  border: 1px solid var(--color-line, #e7e3ed);
+  border-radius: 14px;
+  background: #fff;
+  padding: 14px;
+}
+.pm-cm-panel h2 {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+.pm-cm-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 0;
+}
+.pm-cm-row + .pm-cm-row {
+  border-top: 1px solid var(--color-line-2, #f1eef5);
+}
+.pm-cm-note {
+  font-size: 12.5px;
+  color: var(--color-ink-2, #6b6478);
+  margin: 0;
+}
+.pm-cm-count {
+  font-size: 12px;
+  color: var(--color-ink-3, #8a8396);
+}

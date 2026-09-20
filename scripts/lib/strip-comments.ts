@@ -48,9 +48,36 @@
  * expression container into what looks like an empty object literal. Removing
  * `{​/* … *​/}` whole leaves nothing at all, which is what it is.
  */
+/**
+ * ── ⚠⚠⚠ THE JSX PATTERN, AND THE BUG IT SHIPPED WITH ──────────────────────
+ *
+ * ⚠ SUPERSEDED, quoted not deleted (`E164`) — what `E591` WS-B shipped: the
+ * same pattern as below, but with a LAZY body and no lookahead guarding it.
+ *
+ * ⚠⚠⚠ IT ATE WHOLE FUNCTION BODIES, AND IT DID IT SILENTLY. The opening brace
+ * was free to match ANY brace — including the one that opens a function body —
+ * and the lazy body then ran forward until it found a block terminator that
+ * happened to be followed by a closing brace. (Both are described rather than
+ * written: writing the terminator here would close THIS comment, which is rule
+ * 12's trap and has now bitten six times.)
+ * ⚠ On `(app)/community/page.tsx` that landed on the next JSX comment, forty
+ * lines down, so everything between the two vanished from the scan.
+ * ⚠⚠ MEASURED 2026-09-20: `check:community-page` reported `43/43 passed` while
+ * half the page was invisible to it. ⚠ THE GATE WAS GREEN ABOUT NOTHING —
+ * `E586`'s defect, reproduced by the very helper written to prevent a
+ * measurement error.
+ *
+ * ⚠⚠ THE FIX IS THAT THE BODY MAY NOT CONTAIN A TERMINATOR — the negative
+ * lookahead below forces the match to end at the FIRST one, so the closing
+ * brace must follow it immediately or there is no match at that position.
+ * ⚠ A lazy quantifier was never enough, because lazy means *"stop at the first
+ * one that lets the REST of the pattern match"*, not *"stop at the first one"*.
+ */
+const JSX_COMMENT = /\{\s*\/\*(?:(?!\*\/)[\s\S])*\*\/\s*\}/g;
+
 export function stripComments(src: string): string {
   return src
-    .replace(/\{\s*\/\*[\s\S]*?\*\/\s*\}/g, " ")
+    .replace(JSX_COMMENT, " ")
     .replace(/\/\*[\s\S]*?\*\//g, " ")
     .replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
 }
@@ -62,8 +89,9 @@ export function stripComments(src: string): string {
  */
 export function blankComments(src: string): string {
   const keepNewlines = (m: string) => m.replace(/[^\n]/g, " ");
+  /* ⚠ THE SAME CORRECTED PATTERN — this variant had the identical bug. */
   return src
-    .replace(/\{\s*\/\*[\s\S]*?\*\/\s*\}/g, keepNewlines)
+    .replace(JSX_COMMENT, keepNewlines)
     .replace(/\/\*[\s\S]*?\*\//g, keepNewlines)
     .replace(/(^|[^:])\/\/[^\n]*/g, (_m, p1: string) => p1);
 }
