@@ -1056,6 +1056,41 @@ model ProviderProfile {
   /// `MICRO_SESSION_PRICE` is commented out (`mentors.ts:141`). The honest end
   /// of the flow today is *follow as a mentor* → the mentor sees demand.
   open_for_mentoring      Boolean            @default(false)
+
+  /// ── ⚠⚠⚠ "I HAVE NONE" — THE THIRD STATE (`P2-J3-E590` WS-A) ──────────────
+  ///
+  /// ⚠⚠ SCOTT, 2026-09-20: *"not everyone has a everything (I do not have any
+  /// Oracle certifications). If Panameer provided a field that says 'I do not
+  /// have any of these'. It is empty...but complete."*
+  ///
+  /// ⚠⚠⚠ AN EMPTY RELATION AND A DECLARED "I HAVE NONE" ARE DIFFERENT FACTS AND
+  /// MUST BE DIFFERENT VALUES. Without this, the checklist cannot tell "never
+  /// answered" from "answered, and the answer is none" — so it nags a provider
+  /// who has already done the thing, forever, and 100% becomes unreachable for
+  /// anyone whose career genuinely lacks a line.
+  ///
+  /// ⚠⚠ NULL MEANS **UNANSWERED**, EVERYWHERE, WITHOUT EXCEPTION. A timestamp
+  /// rather than a boolean precisely so there is no third reading: `null` is
+  /// unanswered, a date is a declaration and says WHEN it was made. A nullable
+  /// boolean would carry `false`, which nobody can distinguish from `null` in
+  /// meaning and everybody distinguishes in code.
+  ///
+  /// ⚠ THE LINE IS "FILLED" WHEN ITS RELATION HAS ROWS — that is derived, never
+  /// stored. These columns record ONLY the declaration.
+  /// ⚠⚠ A DECLARATION IS NOT A DELETION: rows may exist AND a declaration may
+  /// be set (a provider who added a certification after declaring none). The
+  /// scorer treats `filled` as the stronger state and ignores the declaration.
+  ///
+  /// ⚠ SCALAR COLUMNS ON THE PROFILE, DELIBERATELY, NOT A JOIN TABLE.
+  /// `buildCompletenessInput` is the one write path and loads the profile with
+  /// `include`, so every scalar arrives for free. A relation would be absent
+  /// from any `select` that forgot it and the score would come out WRONG AND
+  /// SILENT — the failure mode this file's own header documents twice.
+  declared_no_work_history_at    DateTime?
+  declared_no_education_at       DateTime?
+  declared_no_specializations_at DateTime?
+  declared_no_certifications_at  DateTime?
+  declared_no_solo_projects_at   DateTime?
   /// Linked developer accounts (E015). Usernames, not OAuth — these are shown
   /// on the profile as evidence, and asking for repo scopes to display a
   /// handle would be a wildly disproportionate permission grab.

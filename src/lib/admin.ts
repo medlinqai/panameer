@@ -1,5 +1,10 @@
 import { prisma } from "@/lib/prisma";
-import { requireAdmin, type Viewer } from "@/lib/access";
+import {
+  requireAdmin,
+  isMarketplaceVisible,
+  providerMeetsRequired,
+  type Viewer,
+} from "@/lib/access";
 import { VISIBILITY_THRESHOLD } from "@/lib/completeness";
 
 /**
@@ -84,12 +89,35 @@ export async function getAdminDashboard(viewer: Viewer) {
   const people = await prisma.person.findMany({
     select: {
       company: { select: { p_account_id: true } },
+      /* ⚠ The PERSON half of the required set — photo, phone and an address.
+         `providerMeetsRequired` spans both tables. */
+      photo_url: true,
+      phone: true,
+      site: { select: { addresses: { select: { id: true } } } },
       is_service_buyer: true,
       is_service_provider: true,
       is_service_coordinator: true,
       is_support: true,
       providerProfile: {
-        select: { status: true, completeness: true, validation_status: true },
+        /* ⚠⚠ WIDENED FOR THE REAL GATE (`P2-J3-E590` WS-A, Scott's ruling
+           2026-09-20): *"recompute `live` from the required-set predicate so
+           the admin board cannot disagree with real visibility."*
+           ⚠ SUPERSEDED, quoted not deleted (`E164`):
+           // select: { status: true, completeness: true, validation_status: true }, */
+        select: {
+          status: true,
+          completeness: true,
+          validation_status: true,
+          paused_at: true,
+          headline: true,
+          role_type_id: true,
+          hourly_rate_cents: true,
+          rate_min_cents: true,
+          rate_max_cents: true,
+          onsite_rate_cents: true,
+          remote_rate_cents: true,
+          skills: { select: { id: true } },
+        },
       },
     },
   });
@@ -106,8 +134,30 @@ export async function getAdminDashboard(viewer: Viewer) {
       .map((p) => p.providerProfile)
       .filter((pp): pp is NonNullable<typeof pp> => pp != null);
     const validated = provs.filter((p) => p.validation_status === "VALIDATED").length;
-    const live = provs.filter(
-      (p) => p.status === "ACTIVE" && p.completeness >= VISIBILITY_THRESHOLD
+    /*
+      ── ⚠⚠⚠ `live` READS THE REAL GATE NOW (`P2-J3-E590` WS-A) ──────────────
+
+      ⚠ SUPERSEDED, quoted not deleted (`E164`):
+      // const live = provs.filter(
+      //   (p) => p.status === "ACTIVE" && p.completeness >= VISIBILITY_THRESHOLD
+      // ).length;
+
+      ⚠⚠ IT CLAIMED VISIBILITY WHILE READING A SCORE. After `WS-A0` the
+      marketplace gate is `providerMeetsRequired`, so a board counting `live`
+      off the percentage would report a number no buyer surface agrees with —
+      the same split `E585` was, moved onto Scott's own console.
+      ⚠ MEASURED 2026-09-20: the two answers differed on 6 profiles.
+    */
+    const live = ppl.filter(
+      (p) =>
+        p.providerProfile != null &&
+        isMarketplaceVisible({
+          ...p.providerProfile,
+          meetsRequired: providerMeetsRequired({
+            ...p.providerProfile,
+            person: { photo_url: p.photo_url, phone: p.phone, site: p.site },
+          }),
+        })
     ).length;
     return {
       id: a.id,

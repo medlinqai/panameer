@@ -2817,12 +2817,26 @@ export async function buildCompletenessInput(profileId: string) {
       education: true,
       languages: true,
       certifications: true,
+      /* ⚠⚠ `P2-J3-E590` WS-A — Solo Projects is its own scored line now, and a
+         solo project is one no employer claims. ⚠ Dates come with the row and
+         feed the `Years of Experience` line. */
+      projects: { select: { employer_id: true, start_date: true } },
       person: {
         select: {
           photo_url: true,
           phone: true,
           phone_verified_at: true,
-          site: { select: { addresses: { select: { line1: true }, take: 1 } } },
+          /* ⚠ `city`/`state`/`country` ADDED (`E590` WS-A) — `Location` is a
+             scored line and is NOT the same fact as `hasAddress`, which is a
+             street line and belongs to the required set. */
+          site: {
+            select: {
+              addresses: {
+                select: { line1: true, city: true, state: true, country: true },
+                take: 1,
+              },
+            },
+          },
           /*
             ⚠ THE MEMBERSHIP SELECT LEFT WITH THE WEIGHT (`E418`). ⚠ SUPERSEDED,
             quoted not deleted: *"WS6 — company is part of the required set now,
@@ -2870,6 +2884,29 @@ export async function buildCompletenessInput(profileId: string) {
     hasAddress: Boolean(profile.person.site?.addresses?.[0]?.line1?.trim()),
     hasPhone: Boolean(profile.person.phone?.trim()),
     phoneVerified: profile.person.phone_verified_at != null,
+
+    /* ── ⚠⚠ THE `E590` LINES. ⚠ ALL SUPPLIED HERE, THE ONE WRITE PATH. ────── */
+    hasLocation: Boolean(
+      profile.person.site?.addresses?.[0]?.city?.trim() ||
+        profile.person.site?.addresses?.[0]?.state?.trim() ||
+        profile.person.site?.addresses?.[0]?.country?.trim()
+    ),
+    /* ⚠ A SOLO PROJECT IS ONE NO EMPLOYER CLAIMS — the same derivation the
+       profile uses, kept identical so the score and the page cannot disagree
+       about which projects are solo. */
+    soloProjects: profile.projects.filter((pr) => pr.employer_id == null),
+    /* ⚠⚠ DERIVED, NEVER SELF-REPORTED (`E068` retired the self-reported level).
+       One dated job or project is enough to draw a span from. */
+    hasExperienceYears:
+      profile.employers.some((e) => e.start_date != null) ||
+      profile.projects.some((pr) => pr.start_date != null),
+
+    /* ⚠ `null` MEANS UNANSWERED. See the column comments on `ProviderProfile`. */
+    declaredNoWorkHistoryAt: profile.declared_no_work_history_at,
+    declaredNoEducationAt: profile.declared_no_education_at,
+    declaredNoSpecializationsAt: profile.declared_no_specializations_at,
+    declaredNoCertificationsAt: profile.declared_no_certifications_at,
+    declaredNoSoloProjectsAt: profile.declared_no_solo_projects_at,
   };
   return input;
 }
