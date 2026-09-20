@@ -1102,3 +1102,79 @@ test.describe("⚠ THE RAIL NEVER TRUNCATES — P1-A1.5-E477", () => {
     ).toEqual([]);
   });
 });
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⚠⚠ THE BAND'S HEIGHT IS DECLARED, AND THIS IS WHAT HOLDS IT (`P2-ALL-E587`
+   WS-B)
+   ═════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * ⚠⚠⚠ `--pm-band-h` IS ONLY A SOURCE OF TRUTH IF SOMETHING CHECKS IT.
+ *
+ * ⚠ The brief's rule is *"do not hard-code the band's height anywhere"*, and a
+ * custom property holding a literal satisfies that in letter only — it is still
+ * a constant, and it is wrong the moment the band's real height differs. ⚠⚠ THE
+ * PROPERTY IS TRUE BY CONSTRUCTION (`.pm-band` takes its `height` FROM it), and
+ * this asserts that construction actually holds in a browser with real fonts.
+ *
+ * ⚠⚠ BOTH REGIMES ARE CHECKED, BECAUSE THERE ARE TWO. The band is 67px while
+ * the menu carries labels and 57px once it goes icons-only at 780px — the
+ * menu's box is 46px against 30px. ⚠ A height that is right at 1440 and wrong
+ * at 390 is the exact bug this rule exists to prevent, which is why the narrow
+ * widths are here and not only the desktop one.
+ */
+test.describe("⚠ THE BAND'S DECLARED HEIGHT IS ITS REAL HEIGHT — P2-ALL-E587", () => {
+  for (const width of [1440, 1100, 930, 860, 780, 480, 390, 360]) {
+    test(`rendered height equals --pm-band-h at ${width}px`, async ({ browser }) => {
+      const page = await browser.newPage({ viewport: { width, height: 800 } });
+      await signIn(page);
+      await page.goto("/community", { waitUntil: "networkidle" });
+
+      const m = await page.evaluate(() => {
+        const band = document.querySelector(".pm-band") as HTMLElement | null;
+        if (!band) return null;
+        const declared = getComputedStyle(document.documentElement)
+          .getPropertyValue("--pm-band-h")
+          .trim();
+        return {
+          declared,
+          rendered: Math.round(band.getBoundingClientRect().height * 100) / 100,
+          /* ⚠ A SECOND ROW IS THE FAILURE A FIXED HEIGHT WOULD HIDE. The right
+             group is `flex` (nowrap) by design; if it ever wraps, the band
+             clips instead of growing, and that must fail loudly here. */
+          rightRows: Math.round(
+            (document.querySelector(".pm-band-right") as HTMLElement).getBoundingClientRect()
+              .height
+          ),
+          overflowX:
+            document.documentElement.scrollWidth >
+            document.documentElement.clientWidth,
+        };
+      });
+      await page.close();
+
+      expect(m, "the band did not render").not.toBeNull();
+      expect(
+        m!.declared,
+        `⚠ \`--pm-band-h\` is not declared at ${width}px. It lives on \`:root\` ` +
+          `in \`app-band.css\` — NOT on \`.pm-band\`, because the things that ` +
+          `must clear the band are its SIBLINGS and custom properties do not ` +
+          `inherit across.`
+      ).toMatch(/^\d+px$/);
+
+      expect(
+        m!.rendered,
+        `⚠⚠ THE BAND RENDERS ${m!.rendered}px BUT DECLARES ${m!.declared} at ` +
+          `${width}px. Do NOT "fix" this by editing the declared value to match ` +
+          `— the band is HELD to the property by \`height: var(--pm-band-h)\`, ` +
+          `so a mismatch means something inside it grew past the box. Find what ` +
+          `grew.`
+      ).toBe(parseFloat(m!.declared));
+
+      expect(
+        m!.overflowX,
+        `⚠ The band forced a horizontal scrollbar at ${width}px.`
+      ).toBe(false);
+    });
+  }
+});

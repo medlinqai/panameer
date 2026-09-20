@@ -322,7 +322,19 @@ export function AppPath({
           that the rail is stacked under the spine, and a sticky card in a single
           column pins itself over whatever follows.
         */}
-        <aside className="flex flex-col gap-3.5 min-[1100px]:sticky min-[1100px]:top-3.5">
+        {/*
+          ⚠⚠ IT CLEARS THE PINNED BAND (`P2-ALL-E587` WS-B). ⚠ SUPERSEDED,
+          quoted not deleted (`E164`):
+          // <aside className="flex flex-col gap-3.5 min-[1100px]:sticky min-[1100px]:top-3.5">
+          ⚠ Same reason as the lesson aside: `top-3.5` was measured against the
+          page, and a pinned band sits over it. `0.875rem` is `top-3.5`'s own
+          value. ⚠⚠ THE `top` APPLIES AT EVERY WIDTH AND IS HARMLESS BELOW
+          1100px, where `position` is `static` and `top` does nothing.
+        */}
+        <aside
+          className="flex flex-col gap-3.5 min-[1100px]:sticky"
+          style={{ top: "calc(var(--pm-band-h, 67px) + 0.875rem)" }}
+        >
           {path.instructors.length > 0 && (
             <Card title="Your Instructors">
               {path.instructors.map((ins, i) => (
