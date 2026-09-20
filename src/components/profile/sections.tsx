@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 import { Avatar } from "@/components/Avatar";
 import { formatCents, displayFullName } from "@/lib/display";
@@ -108,6 +109,46 @@ export function EditButton({
     >
       {icon} {label}
     </button>
+  );
+}
+
+/**
+ * ── ⚠⚠ THE SAME AFFORDANCE AS A LINK (`P2-J3-E593` WS-B item 6) ───────────
+ *
+ * ⚠ `EditButton` is the CLIENT-side version — it takes an `onClick` and opens a
+ * modal. This is the SERVER-side one: a navigation to a wizard step.
+ * ⚠⚠ THEY SHARE `EDIT_CLASS` SO THE TWO RENDER IDENTICALLY, which is the whole
+ * reason that constant exists and what the brief means by *"do not invent a
+ * second pattern."*
+ *
+ * ── ⚠⚠⚠ THIS IS A REVIVAL, NOT A NEW COMPONENT ───────────────────────────
+ *
+ * ⚠ An `EditLink` existed inside `ProviderProfileView.tsx` and was DEAD: that
+ * component is rendered by no page since `E588` WS-B, and the function had
+ * **zero live references** (measured at `E593`'s premise gate, comments
+ * stripped). ⚠⚠ IT IS MOVED HERE RATHER THAN COPIED, so there is one of it —
+ * beside the button it has to match, in the file that owns the constant.
+ * ⚠ The original is quoted at its old site under `E164`.
+ *
+ * ⚠ `aria-label` NAMES THE THING BEING EDITED, because half a dozen identical
+ * *"Edit"* links on one page are indistinguishable to a screen reader.
+ */
+export function EditLink({
+  href,
+  title,
+  label = "Edit",
+  /** ⚠ "✏️" to edit, "+" to add — `E130`'s one rule, two states. */
+  icon = "✏️",
+}: {
+  href: string;
+  title: string;
+  label?: string;
+  icon?: string;
+}) {
+  return (
+    <Link href={href} aria-label={`${label} ${title}`} className={EDIT_CLASS}>
+      {icon} {label}
+    </Link>
   );
 }
 

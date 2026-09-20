@@ -424,6 +424,28 @@ export async function getProviderProfileView(
     isRecruiter: isRecruiterProfile(profile),
     rating: profile.rating === null ? null : Number(profile.rating),
 
+    /*
+      ── ⚠⚠ ACCOUNT HEALTH, SUMMARISED (`P2-J3-E593` WS-B item 12) ──────────
+
+      ⚠ Scott wants a card *"to let someone manage the strikes against their
+      user account"*. ⚠⚠ THE BRIEF IS EXPLICIT THAT IT IS **A CARD SUMMARY OF
+      `/account-health`, NOT A NEW SUBSYSTEM** — so these are the SAME FOUR
+      CHECKS that page runs, read from the same columns, and nothing is
+      computed here that is not computed there.
+      ⚠ NO NEW QUERY: this loader uses `include`, so every scalar on
+      `ProviderProfile` is already in memory. Exposing them costs one object.
+      ⚠⚠⚠ THE CARD LINKS TO `/account-health` AND THAT PAGE REMAINS THE
+      AUTHORITY. If the two ever disagree, the page is right and this is stale —
+      which is why the card shows no count, no score and no verdict of its own.
+    */
+    accountHealth: {
+      /* ⚠ Always true by construction: they are signed in, reading this. */
+      canSignIn: true,
+      receivesMessages: profile.available_for_messages,
+      statusActive: profile.status === "ACTIVE",
+      emailVerified: profile.person.user?.email_verified != null,
+    },
+
     verifications: {
       emailVerified: profile.person.user?.email_verified != null,
       // brief_S/E036 stubbed SMS; a number on file shows as "on file", not

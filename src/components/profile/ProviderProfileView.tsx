@@ -15,7 +15,9 @@ import {
   ContactBody,
   LocationBody,
   Empty,
-  EDIT_CLASS,
+  /* ⚠ `EDIT_CLASS` LEFT THIS IMPORT (`E593` WS-B item 6): its only consumer
+     here was `EditLink`, which moved to `sections.tsx`. ⚠ The constant is
+     unchanged and still exported — this file simply stopped needing it. */
   VerificationsBody,
   LanguagesBody,
   EducationBody,
@@ -64,23 +66,25 @@ import {
  */
 const STALE_AFTER_DAYS = 30;
 
-function EditLink({
-  href,
-  title,
-  label = "Edit",
-  icon = "✏️",
-}: {
-  href: string;
-  title: string;
-  label?: string;
-  icon?: string;
-}) {
-  return (
-    <Link href={href} aria-label={`${label} ${title}`} className={EDIT_CLASS}>
-      {icon} {label}
-    </Link>
-  );
-}
+/*
+  ── ⚠⚠ `EditLink` MOVED TO `sections.tsx` (`P2-J3-E593` WS-B item 6) ───────
+
+  ⚠ SUPERSEDED, quoted not deleted (`E164`) — it lived here and was PRIVATE:
+  //   function EditLink({ href, title, label = "Edit", icon = "✏️" }) {
+  //     return (
+  //       <Link href={href} aria-label={`${label} ${title}`} className={EDIT_CLASS}>
+  //         {icon} {label}
+  //       </Link>
+  //     );
+  //   }
+  ⚠⚠ THIS COMPONENT IS RENDERED BY NO PAGE since `E588` WS-B, so the function
+  had ZERO live references — dead code inside dead code. ⚠ `E593` WS-B needs the
+  same affordance on the live profile, and the brief's instruction is ONE
+  pattern, so it MOVED rather than being copied: it now sits in `sections.tsx`
+  beside `EditButton`, in the file that owns `EDIT_CLASS`.
+  ⚠ The import below is what keeps this file compiling and is re-pointed.
+*/
+import { EditLink } from "@/components/profile/sections";
 
 export function ProviderProfileViewPage({
   p,
