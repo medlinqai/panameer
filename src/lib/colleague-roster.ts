@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { Viewer } from "@/lib/access";
+import { shownSkills, selectedRoleIds } from "@/lib/shown-skills";
 
 /**
  * ── ⚠⚠ THE COLLEAGUES ROSTER (`P2-J3-E558` WS-A) ───────────────────────────
@@ -41,6 +42,18 @@ export type RosterRow = {
    * axis, and marking them would say something the data does not support.
    */
   buySide: boolean;
+  /**
+   * ⚠⚠ THE SKILL NAMES THIS COLLEAGUE OFFERS (`P2-A3-E596` WS-E item 3).
+   * ⚠ SEARCH-ONLY — nothing renders them. A roster row is a name, a title and
+   * ONE reason; a list of chips per row would make it the directory it is
+   * deliberately not.
+   * ⚠⚠⚠ IT IS THE **SHOWN** SET, NOT THE HELD SET. `E517`'s rule is that an
+   * offer surface shows only in-role skills — *"filter what is OFFERED, never
+   * what is HELD"* — and a colleague list is an offer surface. Searching a
+   * skill the person's own profile will not display would find somebody a
+   * buyer then cannot verify.
+   */
+  skillNames: string[];
   connectedAt: Date;
 };
 
@@ -87,8 +100,13 @@ export async function getColleagueRoster(viewer: Viewer): Promise<RosterRow[]> {
       user: { select: { id: true } },
       providerProfile: {
         select: {
-          skills: { select: { skill_id: true } },
+          /* ⚠ `skill_id` FEEDS THE SHARED-SKILL COUNT; the NAME and the role
+             feed WS-E's search. ⚠⚠ `role_type_id` IS REQUIRED HERE — `E517`'s
+             `shownSkills` needs it to decide what this person actually offers. */
+          skills: { select: { skill_id: true, skill: { select: { name: true, role_type_id: true } } } },
           employers: { select: { name: true } },
+          role_type_id: true,
+          roles: { select: { role_type_id: true } },
         },
       },
     },
@@ -175,6 +193,16 @@ export async function getColleagueRoster(viewer: Viewer): Promise<RosterRow[]> {
       title: p.title,
       company: p.company?.name ?? null,
       photoUrl: p.photo_url,
+      /* ⚠⚠ THE SHOWN SET, VIA `E517`'s ONE RULE — asked, never re-derived, which
+         is the mistake `E585` records. ⚠ No selection shows everything, so a
+         colleague with no role recorded is searchable on all of their skills. */
+      skillNames: p.providerProfile
+        ? shownSkills(
+            selectedRoleIds(p.providerProfile),
+            p.providerProfile.skills,
+            (s) => s.skill.role_type_id
+          ).map((s) => s.skill.name)
+        : [],
       reason,
       reasonKind,
       buySide: p.is_service_buyer && !p.is_service_provider,

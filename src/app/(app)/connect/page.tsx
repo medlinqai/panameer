@@ -96,6 +96,21 @@ export default async function ConnectPage() {
            window nobody ruled on. ⚠ This is the OWNER's own page, which is the
            only place the figure is shown. */
         profileViews={await countProfileViews(profile.id)}
+        /* ⚠⚠ SEVEN, NOT ALL OF THEM (`P2-A3-E596` WS-D). The card is a summary
+           with a door; `/community/colleagues` is the list. ⚠ Sliced from the
+           SAME `mine.colleagues` the count above comes from, so the faces and
+           the number can never describe different sets. */
+        colleagueFaces={mine.colleagues
+          /* ⚠ A colleague row whose `person` could not be resolved has no face
+             and no name — it is dropped rather than drawn as an anonymous
+             silhouette, which would imply a person we cannot identify. */
+          .filter((c) => c.person)
+          .slice(0, 7)
+          .map((c) => ({
+            personId: c.person!.personId,
+            name: c.person!.name,
+            photoUrl: c.person!.photoUrl,
+          }))}
         taughtPaths={taughtPathsList}
         takenPaths={takenPaths}
         usage={await getUsageStats(

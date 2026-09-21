@@ -56,6 +56,9 @@ export default async function ColleaguesPage() {
               name: r.name,
               title: r.title,
               company: r.company,
+              /* ⚠ SEARCH-ONLY, and resolved on the SERVER via `E517`'s
+                 `shownSkills` (`P2-A3-E596` WS-E). */
+              skillNames: r.skillNames,
               photoUrl: r.photoUrl,
               reason: r.reason,
               reasonKind: r.reasonKind,
