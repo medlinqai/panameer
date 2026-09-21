@@ -92,6 +92,8 @@ async function load(email: string): Promise<Row> {
       id: true,
       first_name: true,
       last_name: true,
+      /* ⚠ `title` — the profile's title lives on the PERSON since `E595` WS-B. */
+      title: true,
       photo_url: true,
       status: true,
       providerProfile: { select: { id: true, paused_at: true } },

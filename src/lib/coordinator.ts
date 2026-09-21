@@ -189,6 +189,8 @@ export async function getRoster(viewer: Viewer) {
         select: {
           first_name: true,
           last_name: true,
+          /* ⚠ `title` — the profile's title lives on the PERSON since `E595` WS-B. */
+          title: true,
           photo_url: true,
           phone: true,
           site: { select: { addresses: { select: { id: true } } } },
@@ -218,7 +220,9 @@ export async function getRoster(viewer: Viewer) {
     providers: reps.map((p) => ({
       id: p.id,
       name: `${p.person.first_name} ${p.person.last_name}`.trim(),
-      headline: p.headline || null,
+      /* ⚠ THE DTO KEY STAYS `headline`; the SOURCE is `Person.title` since
+       `E595` WS-B collapsed the two columns into one. */
+      headline: p.person.title || null,
       // brief_K: status + derived visibility + validation (no approval/publish).
       status: p.status,
       validationStatus: p.validation_status,

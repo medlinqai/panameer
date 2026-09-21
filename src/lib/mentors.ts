@@ -234,7 +234,7 @@ export async function listMentors(
     take: 48,
     select: {
       id: true,
-      headline: true,
+      /* ⚠ `headline` COLUMN IS GONE (`E595` WS-B) — the title is on the person. */
       hourly_rate_cents: true,
       rate_min_cents: true,
       rate_max_cents: true,
@@ -252,6 +252,8 @@ export async function listMentors(
           user_id: true,
           first_name: true,
           last_name: true,
+          /* ⚠ `title` — the profile's title lives on the PERSON since `E595` WS-B. */
+          title: true,
           photo_url: true,
           learnLessons: { select: { id: true }, take: 1 },
         },
@@ -268,7 +270,9 @@ export async function listMentors(
     name: `${p.person.first_name} ${p.person.last_name}`.trim(),
     firstName: p.person.first_name,
     lastName: p.person.last_name,
-    headline: p.headline,
+    /* ⚠ THE DTO KEY STAYS `headline`; the SOURCE is `Person.title` since
+       `E595` WS-B collapsed the two columns into one. */
+    headline: p.person.title ?? "",
     photoUrl: p.person.photo_url,
     validated: p.validation_status === "VALIDATED",
     skills: p.skills.map((s) => s.skill.name),

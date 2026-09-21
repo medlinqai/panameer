@@ -217,7 +217,13 @@ async function main() {
       role_type_id: demoRole?.id ?? null,
       pillar_id: demoDomain?.id ?? null,
       hourly_rate_cents: 12500,
-      headline: "Oracle Cloud P2P / Procurement Cloud Expert",
+      /* ⚠ `headline` COLUMN REMOVED (`P0-E595` WS-B). ⚠ SUPERSEDED, quoted not
+         deleted (`E164`):
+         //   headline: "Oracle Cloud P2P / Procurement Cloud Expert",
+         ⚠⚠ THE TITLE IS SEEDED ONTO `Person.title` WITH THE PERSON. A seed that
+         still wrote it here would be writing to a column that no longer exists,
+         and a provider seeded without a title fails the visibility gate — which
+         is `E581`'s whole population. */
       overview:
         "15+ years implementing Oracle Cloud Procurement and Payables. " +
         "Led P2P transformations across manufacturing and retail — " +
@@ -672,6 +678,8 @@ async function main() {
         certifications: true,
         person: {
           select: {
+            /* ⚠ `title` — the profile's title lives on the PERSON since `E595` WS-B. */
+            title: true,
             photo_url: true,
             phone: true,
             phone_verified_at: true,
@@ -682,7 +690,8 @@ async function main() {
     });
     if (full) {
       const completeness = computeProviderCompleteness({
-        headline: full.headline,
+        /* SOURCE IS Person.title SINCE E595 WS-B. */
+    headline: full.person.title ?? "",
         overview: full.overview,
         work_method: full.work_method,
         pillar_id: full.pillar_id,

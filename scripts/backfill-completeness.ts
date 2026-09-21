@@ -49,7 +49,7 @@ async function main() {
       status: true,
       paused_at: true,
       completeness: true,
-      headline: true,
+      /* ⚠ `headline` COLUMN IS GONE (`E595` WS-B) — the title is on the person. */
       role_type_id: true,
       hourly_rate_cents: true,
       rate_min_cents: true,
@@ -59,6 +59,8 @@ async function main() {
       skills: { select: { id: true } },
       person: {
         select: {
+          /* ⚠ `title` — the profile's title lives on the PERSON since `E595` WS-B. */
+          title: true,
           photo_url: true,
           phone: true,
           site: { select: { addresses: { select: { id: true } } } },

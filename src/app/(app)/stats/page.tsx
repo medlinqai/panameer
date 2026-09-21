@@ -68,7 +68,7 @@ export default async function MyStatsPage() {
         same question, and two surfaces that compute one answer from two
         different inputs is how they start disagreeing.
       */
-      headline: true,
+      /* ⚠ `headline` COLUMN IS GONE (`E595` WS-B) — the title is on the person. */
       role_type_id: true,
       hourly_rate_cents: true,
       rate_min_cents: true,
@@ -79,6 +79,8 @@ export default async function MyStatsPage() {
       person: {
         select: {
           phone: true,
+          /* ⚠ `title` — the profile's title lives on the PERSON since `E595` WS-B. */
+          title: true,
           photo_url: true,
           site: { select: { addresses: { select: { id: true } } } },
         },
@@ -230,7 +232,8 @@ export default async function MyStatsPage() {
   /* ⚠ NAMES THE GAPS. `E562` WS-B's strip does the same from the same fields —
      see the note on the widened select above. */
   const gaps = missingRequired({
-    headline: profile.headline,
+    /* SOURCE IS Person.title SINCE E595 WS-B. */
+    headline: profile.person.title,
     role_type_id: profile.role_type_id,
     skills: profile.skills,
     photoUrl: profile.person.photo_url,

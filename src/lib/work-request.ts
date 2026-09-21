@@ -637,6 +637,8 @@ export async function missingIdentityForPerson(buyerPersonId: string): Promise<P
     select: {
       first_name: true,
       last_name: true,
+      /* ⚠ Already selected before `E595` — the buyer's identity gate has always
+         read `Person.title`. That is half of why the collapse landed here. */
       title: true,
       photo_url: true,
       company: { select: { name: true, country: true } },

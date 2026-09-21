@@ -925,7 +925,29 @@ model ProviderProfile {
   id                      String             @id @default(uuid()) @db.Uuid
   person_id               String             @unique @db.Uuid
   region_id               String?            @db.Uuid
-  headline                String
+  /// ── ⚠⚠⚠ `headline` IS GONE (`P0-E595` WS-B) ───────────────────────────
+  ///
+  /// ⚠ SUPERSEDED, quoted not deleted (`E164`): `headline String` — the
+  /// provider's own one-line title, REQUIRED, so every profile had one.
+  ///
+  /// ⚠⚠ TWO WIZARDS ASKED THE SAME QUESTION AND STORED IT IN TWO COLUMNS.
+  /// The PROVIDER step was literally named *"Title"* and wrote this field;
+  /// the REQUESTER step wrote `Person.title`. That is why two titles
+  /// rendered on one card, and why no rule could pick between them — the
+  /// answer depended on which door the person came in.
+  ///
+  /// ⚠⚠⚠ COLLAPSED TO `Person.title`. Every class has it — requesters,
+  /// buyers and recruiters never had a `headline` — so one field means one
+  /// search index and one renderer. ⚠ The identity gate already read
+  /// `Person.title`, so nothing had to move on that side.
+  /// ⚠ **NO TAGLINE.** Scott ruled it out: `headline` does not survive as
+  /// an optional second line. One title, one place.
+  ///
+  /// ⚠⚠ THE SURVIVORS' TITLES WERE WRITTEN TO `Person.title` BEFORE THIS
+  /// COLUMN WAS DROPPED. Three of the four Learn experts had no
+  /// `Person.title` at all — their title existed ONLY here — so the reverse
+  /// order would have erased the three most visible profiles' titles with
+  /// nothing to restore them from.
   overview                String?
   // PJv2 WS7 — `experience_level` and `goal` are GONE.
   //   experience_level: self-graded, and now DERIVED from work-history spans

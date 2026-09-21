@@ -72,7 +72,7 @@ async function main() {
     isSupport: false, pAccountId: null,
   } as Parameters<typeof saveProviderStep>[0];
   const profile = await prisma.providerProfile.create({
-    data: { person_id: person.id, headline: "E507 prune probe" },
+    data: { person_id: person.id },
     select: { id: true },
   });
 

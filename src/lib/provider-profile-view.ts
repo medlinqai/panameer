@@ -298,7 +298,8 @@ export async function getProviderProfileView(
       lastParseAt: lastImport?.created_at?.toISOString() ?? null,
     },
     missingRequired: missingRequired({
-      headline: profile.headline,
+      /* SOURCE IS Person.title SINCE E595 WS-B. */
+      headline: profile.person.title,
       role_type_id: profile.role_type_id,
       skills: profile.skills,
       photoUrl: profile.person.photo_url,
@@ -383,7 +384,8 @@ export async function getProviderProfileView(
     country,
     primaryLanguage,
     experience,
-    headline: profile.headline,
+    /* SOURCE IS Person.title SINCE E595 WS-B. */
+    headline: profile.person.title ?? "",
     overview: profile.overview,
     field:
       profile.roleType && profile.pillar

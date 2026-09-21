@@ -36,6 +36,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
 import { readFileSync } from "fs";
 import { join } from "path";
+import { SURVIVORS, EXPLICIT_DELETES } from "./reset/survivors-spec";
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
@@ -71,6 +72,40 @@ const splitName = (n: string): [string, string] => {
 
 /** Headline suffix that marks a row as ours. Never shown — stripped on render? No: it is not appended to the headline, it is the note field. */
 const SEED_TAG = "[seed:wide]";
+
+/**
+ * ── ⚠⚠⚠ TWO SECURITY GUARDS, ADDED AT `P0-E595` WS-B. READ BEFORE EDITING ──
+ *
+ * ⚠⚠ THIS SEED IS HOW `sw_user33@straterp.com` BECAME A SYSTEM ADMIN, AND IT
+ * DID IT AGAIN ON 2026-09-21. Scott's reset deleted that account by name as
+ * *"the stray system admin"*; forty minutes later this file re-created it with
+ * `is_system_admin: true`, because `prisma/seed-data/test-users.json` lists it
+ * in `admins` and the loop wrote `is_system_admin: a.admin` with no check on
+ * WHICH account was claiming the flag.
+ * ⚠ Scott, 2026-09-20: *"confirm the new seed does not grant `is_system_admin`
+ * to any test persona. A test account ending up as system admin is how
+ * sw_user33 happened."* It happened the same way a second time.
+ *
+ * ── GUARD 1 — AN ACCOUNT SCOTT DELETED IS NEVER RE-CREATED ─────────────────
+ *
+ * `EXPLICIT_DELETES` is the list Scott named at the reset, and it is the SAME
+ * constant the wipe deleted from — not a copy. A seed that resurrects what a
+ * reset removed makes the reset meaningless.
+ *
+ * ── GUARD 2 — ONLY A CONFIRMED SURVIVOR MAY HOLD `is_system_admin` ─────────
+ *
+ * ⚠⚠ THIS IS A THROW, NOT A SKIP, AND THAT IS DELIBERATE. The roster is
+ * REGENERATED from `Users.xlsx` (`scripts/build-test-users.py`), so a new
+ * `Panameer Admin` row can appear in it without anybody reading this file. A
+ * skip would grant nothing and say nothing; a throw stops the seed and names
+ * the address. ⚠ The allowed set is DERIVED from `SURVIVORS` — the five
+ * accounts Scott confirmed by name on 2026-09-20 — not from a list invented
+ * here (load-bearing rule 10's shape: derive, never re-type).
+ * ⚠ `E574` records separately that `is_system_admin` is not the right flag for
+ * support staff at all (`is_support` is). That is a different job.
+ */
+const NEVER_RECREATE = new Set(EXPLICIT_DELETES.map((e) => e.trim().toLowerCase()));
+const MAY_BE_SYSTEM_ADMIN = new Set(SURVIVORS.map((s) => s.email.trim().toLowerCase()));
 
 async function main() {
   const log: string[] = [];
@@ -206,10 +241,36 @@ async function main() {
     }
   }
 
-  let created = 0, updated = 0, skipped = 0;
+  /*
+    ⚠⚠⚠ GUARD 2, RUN BEFORE A SINGLE ROW IS WRITTEN — see the block at the top
+    of this file. A roster row claiming admin that Scott never confirmed stops
+    the seed rather than quietly minting a system administrator.
+    ⚠ It runs on a DRY RUN too: the point is to catch the roster changing, and a
+    dry run is where somebody would look first.
+  */
+  const unauthorisedAdmins = accounts
+    .filter((a) => a.admin && !NEVER_RECREATE.has(norm(a.email)))
+    .filter((a) => !MAY_BE_SYSTEM_ADMIN.has(norm(a.email)))
+    .map((a) => norm(a.email));
+  if (unauthorisedAdmins.length) {
+    throw new Error(
+      `REFUSING TO SEED: ${unauthorisedAdmins.length} roster account(s) claim is_system_admin ` +
+        `without being one of the survivors Scott confirmed — ${unauthorisedAdmins.join(", ")}. ` +
+        `Either add the address to SURVIVORS in prisma/reset/survivors-spec.ts (a decision, not a fix) ` +
+        `or take the row out of the admins block in prisma/seed-data/test-users.json.`
+    );
+  }
+
+  let created = 0, updated = 0, skipped = 0, refused = 0;
   for (const a of accounts) {
     const email = norm(a.email);
     if (!email.includes("@")) continue;
+    /* ⚠⚠⚠ GUARD 1 — an account the reset deleted is never re-created here. */
+    if (NEVER_RECREATE.has(email)) {
+      refused++;
+      say(`   REFUSED (deleted at the E595 reset, must not return): ${email}`);
+      continue;
+    }
     if (protectedEmails.has(email)) { skipped++; continue; }
     const [first, last] = splitName(a.name || email.split("@")[0]);
 
@@ -243,7 +304,7 @@ async function main() {
       });
     }
   }
-  say(`\nWS-1 accounts: ${APPLY ? `${created} created, ${updated} updated` : `${created} would be written`}, ${skipped} protected-skipped`);
+  say(`\nWS-1 accounts: ${APPLY ? `${created} created, ${updated} updated` : `${created} would be written`}, ${skipped} protected-skipped, ${refused} refused`);
 
   // ---- WS-2 — WIDE PROVIDER SET -------------------------------------------
   /*
@@ -256,7 +317,11 @@ async function main() {
     Work Request.
   */
   const pillars = await prisma.pillar.findMany({
-    select: { id: true, name: true, skills: { select: { id: true, name: true }, take: 40 } },
+    /* ⚠ `role_type_id` IS READ HERE BECAUSE THE VISIBILITY GATE REQUIRES IT
+       (`access.ts:providerMeetsRequired`). It is DERIVED from the skills this
+       persona actually gets — the rule `deriveRolesFromSkills` already uses —
+       never typed, so a catalog change moves it without an edit here. */
+    select: { id: true, name: true, skills: { select: { id: true, name: true, role_type_id: true }, take: 40 } },
     orderBy: { name: "asc" },
   });
 
@@ -295,13 +360,22 @@ async function main() {
     const key = `${SEED_TAG} ${t.pillar.name}#${t.idx}`;
 
     /*
-      HEADLINE <= 42 CHARS, matching the card's soft cap. These exist to fill
-      the search, and a seeded headline that truncates on every card would make
+      TITLE <= 42 CHARS, matching the card's soft cap. These exist to fill
+      the search, and a seeded title that truncates on every card would make
       the cap look broken during the walk.
+
+      ⚠⚠ IT IS WRITTEN TO `Person.title` NOW, NOT TO `ProviderProfile.headline`
+      (`P0-E595` WS-B collapsed the two into one field and DROPPED the column).
+      ⚠ SUPERSEDED, quoted not deleted (`E164`): the variable was named
+      `headline` and went into the profile's create as `headline,`.
+      ⚠⚠⚠ REMOVING THE COLUMN WITHOUT MOVING THE WRITE LEFT 25 OF 30 SEEDED
+      PROVIDERS WITH NO TITLE AT ALL — measured 2026-09-21, after the reseed.
+      A title is in the REQUIRED set, so that alone made every one of them
+      invisible to the marketplace. The write moved; the cap did not.
     */
     const base = t.pillar.name.replace(/\s*\(.*\)$/, "");
-    let headline = `${base} Consultant`;
-    if (headline.length > 42) headline = `${base} Lead`.slice(0, 42);
+    let title = `${base} Consultant`;
+    if (title.length > 42) title = `${base} Lead`.slice(0, 42);
 
     // ~half validated, deterministically (every other one).
     const isValidated = pi % 2 === 0;
@@ -346,12 +420,73 @@ async function main() {
       });
     }
 
+    /*
+      ── ⚠⚠ THE REQUIRED SET, WRITTEN HERE — Scott: *"Seed providers complete"* ──
+
+      ⚠ `providerMeetsRequired` (`access.ts`) takes SEVEN facts: title, role,
+      ≥1 skill, a rate, photo, phone, ≥1 address. This seed supplied the rate
+      and the skills and NOTHING ELSE, so a seeded provider has never once been
+      marketplace-visible — measured 2026-09-21, and it is a large part of what
+      `E581` is counting.
+      ⚠⚠⚠ THE PHOTO IS THE ONE FIELD DELIBERATELY LEFT NULL, AND IT IS NOT AN
+      OVERSIGHT. *"Photo REQUIRED to publish"* is a LOCKED decision, `Avatar.tsx`
+      already renders initials when there is none, and the repo holds four face
+      images in total. Pointing 25 personas at a borrowed face — or at an
+      external avatar service, from a seed that writes to the ONE shared
+      production database — is a product call, not an implementation detail.
+      ⚠ So the gap is now exactly one field wide and it is reported, not guessed.
+      `E564`'s rule stands: do not seed to make a surface demonstrable.
+    */
+    await prisma.person.update({
+      where: { id: person.id },
+      data: {
+        title,
+        /* ⚠ A RESERVED-RANGE NUMBER (555-01xx), for the same reason the emails
+           are `@example.seed`: it can never reach a real handset. */
+        phone: `+1555010${String(1000 + pi).slice(-4)}`,
+      },
+    });
+
+    /* ⚠ ONE ADDRESS ON THEIR OWN SITE, idempotent — `orgFor` creates the Site
+       but no Address, and the gate counts addresses, not sites. */
+    const personSite = await prisma.person.findUnique({
+      where: { id: person.id },
+      select: { site_id: true, site: { select: { addresses: { select: { id: true }, take: 1 } } } },
+    });
+    if (personSite?.site_id && !personSite.site?.addresses.length) {
+      await prisma.address.create({
+        data: {
+          site_id: personSite.site_id,
+          line1: `${100 + pi} Example Way`,
+          city: "Jacksonville",
+          state: "FL",
+          postal_code: "32256",
+          country: "US",
+        },
+      });
+    }
+
+    /*
+      ⚠ THE ROLE IS DERIVED FROM THE SKILLS THIS PERSONA HOLDS — the modal
+      `role_type_id` among them — never typed. That is the rule
+      `provider_skill_model_decision.md` states and `deriveRolesFromSkills`
+      implements: *"a skill belongs to exactly one role"*. A tie breaks on the
+      first skill, deterministically, because the skill list is ordered.
+    */
+    const roleVotes = new Map<string, number>();
+    for (const s of skills) {
+      if (s.role_type_id) roleVotes.set(s.role_type_id, (roleVotes.get(s.role_type_id) ?? 0) + 1);
+    }
+    const derivedRole =
+      [...roleVotes.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+
     const existing = await prisma.providerProfile.findFirst({ where: { person_id: person.id }, select: { id: true } });
     const data: Prisma.ProviderProfileUncheckedCreateInput = {
       person_id: person.id,
-      headline,
+      /* headline COLUMN REMOVED (E595 WS-B) - written to Person.title above. */
       overview: `Seeded coverage for ${t.pillar.name}. ${key}`,
       pillar_id: t.pillar.id,
+      role_type_id: derivedRole,
       status: "ACTIVE",
       validation_status: isValidated ? "VALIDATED" : "NOT_REQUESTED",
       rate_min_cents: 12_000_00 + (pi % 8) * 1_500_00,

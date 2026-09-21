@@ -244,6 +244,8 @@ export async function listExperts(query?: string): Promise<
       id: true,
       first_name: true,
       last_name: true,
+      /* ⚠ `title` — the profile's title lives on the PERSON since `E595` WS-B. */
+      title: true,
       photo_url: true,
       user: { select: { email: true } },
     },

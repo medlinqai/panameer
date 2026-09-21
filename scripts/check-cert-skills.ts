@@ -75,7 +75,7 @@ async function main() {
   const profile = await prisma.providerProfile.create({
     /* ⚠ `headline` is NOT NULL on ProviderProfile — supplied so the probe does
        not depend on a default that does not exist. */
-    data: { person_id: person.id, headline: "E509 cert probe" },
+    data: { person_id: person.id },
     select: { id: true },
   });
 
