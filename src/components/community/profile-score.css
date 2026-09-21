@@ -31,10 +31,21 @@
 }
 
 /* ── the dial ───────────────────────────────────────────────────────────── */
+/*
+  ⚠⚠ 290, NOT 340 (`P2-A3-E596` WS-B item 2). ⚠ SUPERSEDED, quoted not deleted
+  (`E164`):
+  //   max-width: 340px;
+  ⚠ The dial sits ABOVE "What's left" in the left column, so every pixel it
+  gives back moves the to-do list up by the same amount. MEASURED at 1440×900
+  before the change: the dial rendered at exactly 340px and the card below it
+  started at y=652 and ended at y=1511 — 611px below the fold.
+  ⚠⚠ THE RING IS STILL THE PAGE'S SUBJECT and 290 keeps it so; this is a trim,
+  not a demotion.
+*/
 .pm-score-dial {
   position: relative;
   width: 100%;
-  max-width: 340px;
+  max-width: 290px;
   aspect-ratio: 1 / 1;
   margin: 0 auto;
 }

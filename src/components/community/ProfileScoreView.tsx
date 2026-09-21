@@ -221,7 +221,27 @@ export function ProfileScoreView({ score }: { score: ProfileScore }) {
                 return (
                   <div
                     key={l.key}
-                    className="flex items-start gap-3 border-t border-line-2 py-3 first:border-t-0"
+                    /*
+                      ── ⚠⚠ TWO LINES, NOT THREE (`P2-A3-E596` WS-B item 2) ──
+
+                      ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                      //   className="flex items-start gap-3 border-t border-line-2 py-3 first:border-t-0"
+                      //   <b className="block text-[14px]">{l.label}</b>
+                      //   <span className="mt-0.5 block …">{copy.why}</span>
+                      //   <span className="mt-1.5 flex …">   ← actions on their OWN third line
+
+                      ⚠⚠ MEASURED AT 1440×900 BEFORE THE CHANGE: eight rows at
+                      **88.6px each** — not the ~70px the brief estimated — for a
+                      card 859px tall whose bottom sat 611px BELOW THE FOLD.
+                      ⚠ Scott rejected swapping the columns (*"shit you need to
+                      do (under the circle) and shit you haev done (off to the
+                      right)"*), so the fix is compression, not rearrangement.
+
+                      ⚠ THE TITLE AND THE ACTIONS SHARE LINE ONE; the "why" is
+                      line two. Nothing is removed — the action, the optional
+                      *"or I have none"* and the points badge all survive.
+                    */
+                    className="flex items-start gap-3 border-t border-line-2 py-1.5 first:border-t-0"
                     onMouseEnter={() => setHover(l.key)}
                     onMouseLeave={() => setHover(null)}
                   >
@@ -229,11 +249,9 @@ export function ProfileScoreView({ score }: { score: ProfileScore }) {
                       {i + 1}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <b className="block text-[14px]">{l.label}</b>
-                      <span className="mt-0.5 block text-[11.5px] leading-snug text-ink-3">
-                        {copy.why}
-                      </span>
-                      <span className="mt-1.5 flex flex-wrap items-center gap-2 text-[12.5px]">
+                      <span className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                        <b className="text-[14px]">{l.label}</b>
+                        <span className="flex flex-wrap items-center gap-2 text-[12.5px]">
                         <Link
                           href={copy.href}
                           className="font-bold text-magenta hover:underline"
@@ -259,6 +277,11 @@ export function ProfileScoreView({ score }: { score: ProfileScore }) {
                             </button>
                           </>
                         )}
+                        </span>
+                      </span>
+                      {/* ⚠ LINE TWO — the reason, under the title and its actions. */}
+                      <span className="mt-0.5 block text-[11.5px] leading-snug text-ink-3">
+                        {copy.why}
                       </span>
                     </span>
                     <span className="flex-none font-display text-[13px] font-bold text-magenta-dark">
