@@ -234,8 +234,20 @@ test.describe("⚠ THE COMMUNITY WEB — P2-J3-E591 WS-B", () => {
     /* ⚠ A SUCCESSFUL refresh DOES animate — the other half of item 3. */
     expect(await page.locator(".pm-web-move").count(), "a good refresh did not animate").toBe(1);
 
-    /* ⚠ And the overflow is told rather than swallowed. */
-    await expect(page.locator(".pm-web-more")).toHaveText("+3 more not shown");
+    /*
+      ⚠ And the overflow is told rather than swallowed.
+      ⚠⚠ THE COPY CHANGED AT `P2-A3-E596` WS-C item 3 AND THIS GATE CAUGHT IT,
+      which is the gate working. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+      //   await expect(page.locator(".pm-web-more")).toHaveText("+3 more not shown");
+      ⚠⚠⚠ THE RULE CHANGED, NOT THE CODE DRIFTING — Scott asked the web to say
+      it is a SAMPLE: *"12 of 25,431 shown"*, selection most recent. `+N more`
+      named the remainder and never the whole, so a reader could not tell
+      whether they were seeing most of their network or a fraction of it.
+      ⚠ This is `check:rollup`'s case (the ruling moved), not
+      `check:cert-skills`' (the build lost).
+      ⚠ 36 drawn of 39 — the same three that `+3 more` described.
+    */
+    await expect(page.locator(".pm-web-more")).toHaveText("36 of 39 shown · most recent");
 
     await page.screenshot({ path: "e2e-shell/.artifacts/e591-web-populated.png" });
     await page.close();

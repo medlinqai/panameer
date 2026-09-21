@@ -239,7 +239,24 @@ check(
   make a gate green is `E564`.
 */
 check("8 — the Waiting on You block exists", /export function WaitingOnYou/.test(CARDS));
-check("8 — ⚠⚠ the page renders it", /<WaitingOnYou/.test(PAGE));
+/*
+  ⚠⚠ IT MOVED TO THE RAIL (`P2-A3-E596` WS-C item 1), ABOVE MENTORS.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   check("8 — ⚠⚠ the page renders it", /<WaitingOnYou/.test(PAGE));
+  ⚠⚠⚠ THE INVARIANT IS UNCHANGED AND IS THE WHOLE POINT OF THIS BLOCK: the
+  community surface must render the ONLY door to an incoming request. What
+  changed is WHICH file mounts it, so the assertion follows the component
+  instead of pinning a location.
+  ⚠ THE GATE ALREADY STRIPPED COMMENTS, AND IT MATTERED HERE: the page keeps the
+  old `<WaitingOnYou rows={incoming} />` line as an `E164` quote, and an
+  unstripped scan would have read that quote as live code and passed while the
+  block rendered nowhere. Rule 12's second trap, caught by the gate working.
+*/
+check("8 — ⚠⚠ the rail renders it", /<WaitingOnYou/.test(RAIL));
+check(
+  "8 — ⚠ and the page still supplies the incoming requests",
+  /incoming=\{incoming\}/.test(PAGE)
+);
 check(
   "8 — ⚠⚠⚠ it offers accept AND decline, so a request can be answered",
   /relation="PENDING"/.test(CARDS) && /showDecline/.test(CARDS) && /incomingConnectionId/.test(CARDS)
