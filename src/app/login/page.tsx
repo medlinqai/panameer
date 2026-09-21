@@ -237,14 +237,48 @@ function LoginForm() {
  * its labels stay readable whatever the footage is doing.
  */
 function LoginBackdrop() {
-  const videoUrl =
-    process.env.NEXT_PUBLIC_LOGIN_VIDEO_URL ?? "/brand/login-bg.mp4";
+  /*
+    ── ⚠⚠⚠ NO REQUEST UNTIL ONE IS CONFIGURED (`P2-ALL-E592`) ───────────────
+
+    ⚠ SCOTT RULED 2026-09-20: render the `<video>` only when
+    `NEXT_PUBLIC_LOGIN_VIDEO_URL` is set.
+
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   const videoUrl =
+    //     process.env.NEXT_PUBLIC_LOGIN_VIDEO_URL ?? "/brand/login-bg.mp4";
+
+    ⚠⚠ THE DEFAULT PATH WAS A 404 ON EVERY SIGN-IN, ON THE FIRST PAGE ANYONE
+    SEES. `public/brand/login-bg.mp4` does not exist and the variable is set in
+    neither `.env.local` nor `.env.example` — measured 2026-09-20 in a browser,
+    once per visit, for every prospect.
+    ⚠ NOTHING EVER LOOKED BROKEN, and that is why it survived: the `onError`
+    below hides the element and the gradient is the designed fallback. **The
+    cost was the request and the red console line, not the render.**
+    ⚠⚠ IT ALSO COST A GATE: `E593`'s console-error assertion has to blank its
+    buffer after the sign-in fixture to avoid attributing this to the page under
+    test. **A pre-existing error that every future gate learns to ignore is how
+    a real one later gets ignored too.**
+
+    ⚠⚠⚠ THE THIRD OPTION, AND WHY IT BEATS BOTH OF SCOTT'S FIRST TWO: shipping
+    the asset needs a file nobody has; dropping the reference would have thrown
+    away the affordance the docblock above describes — *"no layout shift when
+    the asset lands."* ⚠ Setting the variable is ALREADY the documented way to
+    point at a file, so the asset can still land later **with no code change**.
+    ⚠ WHAT IS LOST is the conventional-path half: dropping a file at
+    `public/brand/login-bg.mp4` no longer picks it up on its own. That was the
+    trade Scott took.
+  */
+  const videoUrl = process.env.NEXT_PUBLIC_LOGIN_VIDEO_URL;
 
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0">
       {/* Base colour — also the fallback when there is no video. */}
       <div className="absolute inset-0 bg-ink" />
 
+      {/* ⚠⚠ THE ELEMENT ITSELF IS CONDITIONAL NOW. A `<source>` with an empty
+          `src` is still a request in some engines, so the gate is on the
+          `<video>`, not on the URL it would carry. */}
+      {videoUrl && (
       <video
         className="absolute inset-0 h-full w-full object-cover opacity-60"
         autoPlay
@@ -259,6 +293,7 @@ function LoginBackdrop() {
       >
         <source src={videoUrl} type="video/mp4" />
       </video>
+      )}
 
       {/* Brand wash: ink navy → magenta, plus a vignette for card contrast. */}
       <div className="absolute inset-0 bg-gradient-to-br from-ink/95 via-ink/80 to-magenta/50" />
