@@ -7,6 +7,7 @@ import {
 } from "@/components/community/CompletionRing";
 import type { ProviderProfileView } from "@/lib/provider-profile-view";
 import type { TaughtPath, TakenPath } from "@/lib/learn-home";
+import type { UsageStats } from "@/lib/usage-stats";
 import type { Testimonial } from "@/lib/recommendations";
 import type { CommunitySignal } from "@/lib/community-signal";
 import type { ProfileScore } from "@/lib/completeness";
@@ -77,6 +78,7 @@ export function ConnectProfile({
   p,
   taughtPaths = [],
   takenPaths = [],
+  usage = null,
   testimonials = [],
   community = null,
   score = null,
@@ -89,6 +91,9 @@ export function ConnectProfile({
   taughtPaths?: TaughtPath[];
   /** ⚠ `LearnEnrollment` rows — paths TAKEN, not taught (`E593` WS-B 17). */
   takenPaths?: TakenPath[];
+  /** ⚠ The six applications, counted. Owner-only — a visitor is passed none
+   *  and the comb does not render (`E593`). */
+  usage?: UsageStats | null;
   testimonials?: Testimonial[];
   /**
    * ⚠⚠ FORUM INVOLVEMENT — CARRIED OVER DELIBERATELY, NOT IN THE MOCKUP.
@@ -146,6 +151,34 @@ export function ConnectProfile({
     guarantee.** Add to this block instead.
   */
   const owner = p.isOwner;
+
+  /* ⚠ The groups this profile belongs to — see the card in the right rail.
+     ⚠⚠ DERIVED FROM PROPS THIS COMPONENT ALREADY RECEIVES; no new read, and no
+     group model is invented. A path taught AND taken is one group. */
+  /*
+    ⚠⚠ IT LISTS `LearningPath.group`, NOT `title`, AND THE CHOICE IS MEASURED.
+
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   new Set([...taughtPaths, ...takenPaths].map((t) => t.title))
+
+    ⚠⚠ BOTH READINGS OF *"the groups this profile belongs to"* ARE DEFENSIBLE:
+    `E383` creates ONE FORUM PER LEARNING PATH, so a path IS a group and its
+    TITLE is that group's name. ⚠⚠⚠ BUT THE TITLES MEASURE BADLY — the live
+    catalogue holds paths called `1. Background`, `2. Overview` and
+    `4. How to Login & Get Started`, so a card headed **Groups** rendered a list
+    of numbered steps. ⚠ `group` holds the real names: `Procurement`, `Payroll`,
+    `Finance & Accounting`, `Supply Chain Execution`.
+    ⚠ SHORTER AND TRUER FOR A VISITOR SUMMARY, which is what this card is — not
+    a directory. ⚠⚠ THE STEP-LIKE TITLES ARE A CATALOGUE DATA OBSERVATION, NOT
+    A DEFECT HERE, and are reported at the gate rather than papered over.
+    ⚠ Falls back to the title when a path carries no group — one live row has an
+    empty string, and dropping it would silently under-report a membership.
+  */
+  const visitorGroups = Array.from(
+    new Set(
+      [...taughtPaths, ...takenPaths].map((t) => (t.group?.trim() ? t.group : t.title))
+    )
+  );
 
   const fullName = [p.person.firstName, p.person.lastName]
     .filter(Boolean)
@@ -431,28 +464,32 @@ export function ConnectProfile({
             </div>
           </section>
 
-          {/* ── owner utility links ── */}
-          <section className="rounded-brand border border-line bg-white px-[18px] py-4">
-            <div className="flex flex-col">
-              {[
-                { label: "My Stats", href: "/stats" },
-                { label: "My Account Health", href: "/account-health" },
-                { label: "My Groups", href: "/community/teams" },
-                { label: "My Settings", href: "/settings" },
-              ].map((l) => (
-                <Link
-                  key={l.href}
-                  href={l.href}
-                  className={
-                    "py-2 text-[13.5px] font-bold text-magenta hover:underline" +
-                    ""
-                  }
-                >
-                  {l.label}
-                </Link>
-              ))}
-            </div>
-          </section>
+          {/*
+            ── ⚠⚠⚠ THE PLAIN-LINK CARD IS GONE. EVERY ITEM HAS A BETTER HOME ──
+
+            ⚠ Scott, 2026-09-20. ⚠⚠ NOTHING BECAME UNREACHABLE, AND THAT IS THE
+            CONDITION THIS REPLACEMENT HAD TO MEET — each of the four moved to a
+            surface that says more than a link ever did:
+              `My Stats`          -> the comb below, which shows the figures
+                                     rather than promising them, and still links
+                                     out with `See your stats`.
+              `My Account Health` -> the card `E593` WS-B built, which shows a
+                                     tick or a cross per item.
+              `My Groups`         -> a TAB since `E593` WS-A.
+              `My Settings`       -> a TAB since `E593` WS-A.
+            ⚠ `check:nav-reachable` is the gate and the count is in the report.
+
+            ⚠ SUPERSEDED, quoted not deleted (`E164`):
+            //   { label: "My Stats", href: "/stats" },
+            //   { label: "My Account Health", href: "/account-health" },
+            //   { label: "My Groups", href: "/community/teams" },
+            //   { label: "My Settings", href: "/settings" },
+            ⚠⚠ NOTE `My Groups` POINTED AT `/community/teams`, NOT AT THE FORUMS
+            ROUTE `E593` WS-A NAMED `Groups`. Two different things wore one word.
+            The tab row now carries `Groups` (forums) and `Community` (which
+            holds teams), so the collision is gone rather than inherited.
+          */}
+          {usage && <UsageComb usage={usage} />}
           </>
         )}
 
@@ -473,10 +510,16 @@ export function ConnectProfile({
 
             ⚠ Scott, 2026-09-20: *"Rates moves from the centre to a SIDE card,
             and gains an edit link."* ⚠ It is now in the RIGHT RAIL — see below.
-            ⚠⚠ BIO KEEPS THE ROW TO ITSELF AND THE ROW STAYS `pm-cp-two`: the
-            grid collapses a single child to full width on its own, and changing
-            the class would change the breakpoint behaviour for a card that is
-            not moving.
+            ⚠⚠ BIO KEEPS THE ROW TO ITSELF AND THE ROW STAYS `pm-cp-two`,
+            **and the claim that used to sit here was wrong.**
+            ⚠ SUPERSEDED, quoted not deleted (`E164`): *"the grid collapses a
+            single child to full width on its own."*
+            ⚠⚠⚠ IT DOES NOT. A lone child of a two-column grid fills column ONE
+            and leaves column two empty — `1.55fr` of the centre, with a third
+            of it blank. `connect-profile.css` now carries
+            `.pm-cp-two > :only-child { grid-column: 1 / -1; }`, which fixes it
+            without touching the breakpoint schedule the rest of that comment is
+            right about.
             ⚠ SUPERSEDED, quoted not deleted (`E164`) — the pair as it stood,
             and the two facts the Rates comment carried, which MOVED WITH THE
             CARD rather than being dropped:
@@ -511,16 +554,48 @@ export function ConnectProfile({
             title="Certifications"
             edit={owner ? <EditLink href="/join/provider?step=finish" title="Certifications" /> : undefined}
           >
+              {/*
+                ── ⚠⚠ AN EMPTY SECTION OFFERS A ROUTE (`E593` WS-C item 16) ──
+
+                ⚠ Owner-only: a visitor cannot act on it, and *"Browse Learning
+                Paths"* on somebody else's profile is an instruction aimed at
+                the wrong person.
+                ⚠⚠ IT SAYS WHERE TO GET ONE, NOT WHAT IS MISSING. `/community/score`
+                owns the second sentence — see the ruling recorded on
+                `CertificationsBody`.
+              */}
               <CertificationsBody
                 certifications={p.certifications}
                 empty="No certifications yet."
+                emptyAction={
+                  owner ? (
+                    <Link
+                      href="/learn"
+                      className="mt-2 inline-block text-[13.5px] font-bold text-magenta hover:underline"
+                    >
+                      Earn One in Learn
+                    </Link>
+                  ) : undefined
+                }
               />
             </ProfileCard>
             <ProfileCard
             title="Education"
             edit={owner ? <EditLink href="/join/provider?step=education&return=review" title="Education" /> : undefined}
           >
-              <EducationBody education={p.education} />
+              <EducationBody
+                education={p.education}
+                emptyAction={
+                  owner ? (
+                    <Link
+                      href="/learn"
+                      className="mt-2 inline-block text-[13.5px] font-bold text-magenta hover:underline"
+                    >
+                      Browse Learning Paths
+                    </Link>
+                  ) : undefined
+                }
+              />
             </ProfileCard>
           </div>
 
@@ -831,6 +906,55 @@ export function ConnectProfile({
               / mentor) and posts through the same rules the server re-checks.
               ⚠⚠ REBUILDING IT HERE WOULD BE A SECOND COPY OF THE CONNECT RULE.
             */}
+            {/*
+              ── ⚠⚠ THE GROUPS THIS PROFILE BELONGS TO (`E593` WS-C item 13) ──
+
+              ⚠ Scott's *"360"*: a visitor should see which groups this person
+              is in. ⚠⚠ `E593` WS-A NAMED THE FORUMS SURFACE `Groups`, and
+              `E383` creates ONE FORUM PER LEARNING PATH with the path — so the
+              groups somebody belongs to ARE the paths they teach or take.
+              ⚠⚠⚠ SO THIS INVENTS NOTHING AND ADDS NO QUERY: both lists are
+              already props on this component, for the Learning Paths card.
+              **A group model does not exist and is not being modelled here.**
+
+              ⚠ DEDUPED — a path can be both taught and taken, and it is still
+              one group. ⚠ Capped at six, with the rest counted rather than
+              listed: a visitor card is a summary, and the row is not a
+              directory.
+              ⚠⚠ IT LINKS TO `/community/forums`, THE SURFACE — not to a
+              specific board, because board access is gated on enrolment or
+              teaching (`canAccessPathForum`) and this viewer may have neither.
+              **A link that 403s is a dead door with a nicer sign.**
+            */}
+            {visitorGroups.length > 0 && (
+              <section className="rounded-brand border border-line bg-white px-[18px] py-4">
+                <h3 className="mb-2.5 font-display text-[14.5px] font-bold leading-tight">
+                  Groups
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {visitorGroups.slice(0, 6).map((g) => (
+                    <span
+                      key={g}
+                      className="rounded-full border border-line bg-white px-3 py-1 text-[12.5px] text-ink-2"
+                    >
+                      {g}
+                    </span>
+                  ))}
+                </div>
+                {visitorGroups.length > 6 && (
+                  <p className="mt-2 text-[12px] text-ink-3">
+                    +{visitorGroups.length - 6} more
+                  </p>
+                )}
+                <Link
+                  href="/community/forums"
+                  className="mt-2.5 inline-block text-[13px] font-bold text-magenta hover:underline"
+                >
+                  Browse Groups
+                </Link>
+              </section>
+            )}
+
             {connect && (
               <section className="rounded-brand border border-line bg-white px-[18px] py-4">
                 <h3 className="mb-2.5 font-display text-[14.5px] font-bold leading-tight">
@@ -931,12 +1055,23 @@ export function ConnectProfile({
           in the schema is a `WorksiteType` on a WORK REQUEST, a different
           model.) ⚠ So the mockup's three rows are two. **Reported, not invented.**
         */}
-        <ProfileCard
-          title="Rates"
-          edit={owner ? <EditLink href="/join/provider?step=finish" title="Rates" /> : undefined}
-        >
-          <RateRows p={p} />
-        </ProfileCard>
+        {/*
+          ⚠⚠⚠ THE WHOLE CARD IS GATED, NOT JUST ITS BODY. `RateRows` returning
+          `null` still left `ProfileCard` rendering the HEADING — so the visitor
+          page said **"Rates"** over an empty box. ⚠ Caught by the WS-C walk,
+          which asserts the word is absent from the visitor's DOM.
+          ⚠⚠ AN EMPTY CARD TITLED `Rates` IS WORSE THAN NO CARD: it tells a
+          visitor a rate exists and is being withheld, when the rule is simply
+          that this is not their business.
+        */}
+        {p.rates && (
+          <ProfileCard
+            title="Rates"
+            edit={owner ? <EditLink href="/join/provider?step=finish" title="Rates" /> : undefined}
+          >
+            <RateRows p={p} />
+          </ProfileCard>
+        )}
 
         {/*
           ── ⚠⚠ ACCOUNT HEALTH, AS A CARD (`P2-J3-E593` WS-B item 12) ───────
@@ -999,14 +1134,110 @@ export function ConnectProfile({
   );
 }
 
+
+/**
+ * ── ⚠⚠ THE USAGE COMB — SIX APPLICATIONS, SIX FIGURES (`P2-J3-E593`) ──────
+ *
+ * ⚠ Scott, 2026-09-20: *"six cells, ink, Get Paid the only magenta one, $0
+ * earned footer and See your stats →"*, and — ⚠⚠ THE PART THAT SHAPES IT —
+ * *"Add a one-word label under each figure. Six unlabelled numbers can't be
+ * read — you can't tell which application owns which."*
+ *
+ * ⚠⚠⚠ THE SIX ARE THE SIX APPLICATIONS IN THE BAND, IN BAND ORDER. That is
+ * what makes the labels readable at one word: the reader has already seen
+ * `Connect · Learn · Work · Sell · Orders · Get Paid` across the top of every
+ * page, so the comb is the same row of names with this member's numbers under
+ * them. ⚠ A different order, or different words, would make six one-word labels
+ * a puzzle rather than a key.
+ *
+ * ── ⚠⚠ INK, AND ONE DELIBERATE EXCEPTION ──────────────────────────────────
+ *
+ * ⚠ `E433` — MAGENTA MARKS INTERACTIVE THINGS; counts and figures stay ink. All
+ * six are figures, so all six are ink. ⚠⚠ `Get Paid` IS MAGENTA ON SCOTT'S
+ * EXPLICIT RULING, twice: *"focus on the pay and make it look like they are
+ * making money"*, and the WS-B ruling that `Pay` is *"visually dominant by
+ * DESIGN WEIGHT: size, position, colour and label."*
+ * ⚠⚠⚠ RULE 13 — the newest dated statement is the live one, and this is a
+ * DELIBERATE EXCEPTION rather than a drift. **It is recorded here so the next
+ * reader does not "fix" it back to ink**, and so the exception cannot spread:
+ * it applies to this one cell, for the reason Scott gave, and nowhere else.
+ */
+function UsageComb({ usage }: { usage: UsageStats }) {
+  /* ⚠ BAND ORDER, and the labels are the band's own words. */
+  const cells: { label: string; value: string; pay?: boolean }[] = [
+    { label: "Connect", value: String(usage.connect) },
+    { label: "Learn", value: String(usage.learn) },
+    { label: "Work", value: String(usage.work) },
+    { label: "Sell", value: String(usage.sell) },
+    { label: "Orders", value: String(usage.orders) },
+    {
+      label: "Get Paid",
+      /*
+        ⚠⚠⚠ THE DASH CONVENTION WHEN IT IS NOT MEASURABLE, exactly as
+        `Viewing Me` does. `earnedCents` is `null` the moment a work order
+        exists, because earnings are not modelled and a number would then be a
+        guess. ⚠ Until then `$0` is not a placeholder — it is entailed by having
+        zero orders. See `lib/usage-stats.ts`.
+      */
+      value: usage.earnedCents === null ? "—" : money(usage.earnedCents, "USD"),
+      pay: true,
+    },
+  ];
+
+  return (
+    <section className="rounded-brand border border-line bg-white px-[18px] py-4">
+      <p className="mb-3 text-[11.5px] font-bold uppercase tracking-[0.07em] text-ink-3">
+        Usage Stats
+      </p>
+      <div className="grid grid-cols-3 gap-y-3">
+        {cells.map((c) => (
+          <div key={c.label} className="text-center">
+            <p
+              className={
+                "font-display text-[19px] font-bold leading-none tabular-nums " +
+                (c.pay ? "text-magenta" : "text-ink")
+              }
+            >
+              {c.value}
+            </p>
+            {/* ⚠ SMALL ON PURPOSE — Scott: *"Keep it small; the full Stats page
+                carries the detail."* The label names the application, it does
+                not explain the figure. */}
+            <p className="mt-1 text-[10.5px] leading-tight text-ink-3">{c.label}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* ⚠⚠ THE LINE NAMES WHAT WOULD FILL IT (Scott's WS-B stats ruling), so a
+          row of zeroes reads as a beginning rather than a failure. ⚠ NO
+          projected, estimated, potential or example figure — anywhere. */}
+      <p className="mt-3.5 text-[12px] leading-relaxed text-ink-2">
+        This is where your earnings land.
+      </p>
+      <Link
+        href="/stats"
+        className="mt-1 inline-block text-[13px] font-bold text-magenta hover:underline"
+      >
+        See your stats &rarr;
+      </Link>
+    </section>
+  );
+}
+
 /**
  * ⚠ ENGAGEMENT RATES ONLY. A row renders only when its column holds a value —
  * a rate nobody set is absent, never `$0.00`, which would be a price.
  */
 function RateRows({ p }: { p: ProviderProfileView }) {
+  /* ⚠⚠ `p.rates` IS `null` FOR A NON-OWNER (`E593` WS-C item 13) — the rate is
+     absent from the PAYLOAD, not merely unrendered. ⚠ This returns nothing
+     rather than an empty state: "no rates set" would be a claim about the
+     provider, and the truth is that this viewer is not being shown them. */
+  if (!p.rates) return null;
+  const rates = p.rates;
   const rows = [
-    { label: "Onsite", cents: p.rates.onsiteCents },
-    { label: "Fully Remote", cents: p.rates.remoteCents },
+    { label: "Onsite", cents: rates.onsiteCents },
+    { label: "Fully Remote", cents: rates.remoteCents },
   ].filter((r) => r.cents != null);
 
   if (rows.length === 0) {
@@ -1030,7 +1261,7 @@ function RateRows({ p }: { p: ProviderProfileView }) {
           <dt className="text-ink-2">{r.label}</dt>
           {/* ⚠ `E433` — a rate is a figure, so ink. */}
           <dd className="m-0 font-bold tabular-nums text-ink">
-            {money(r.cents!, p.rates.currency)}
+            {money(r.cents!, rates.currency)}
           </dd>
         </div>
       ))}
@@ -1091,6 +1322,9 @@ function TrustRow({ label, value }: { label: string; value: string | null }) {
  * rate is set — the row then does not render, rather than printing `$0`.
  */
 function rateRange(p: ProviderProfileView): string | null {
+  /* ⚠ `null` for a non-owner (`E593` WS-C 13) — the `TrustRow` that calls this
+     renders nothing on a null, so the Rate row simply is not there. */
+  if (!p.rates) return null;
   const { minCents, maxCents, currency } = p.rates;
   if (minCents == null && maxCents == null) return null;
   const lo = minCents ?? maxCents!;

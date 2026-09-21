@@ -1,6 +1,6 @@
 import { formatLocality } from "@/lib/locality";
 import { prisma } from "@/lib/prisma";
-import { isMarketplaceVisible, providerMeetsRequired } from "@/lib/access";
+import { hasCapability, isMarketplaceVisible, providerMeetsRequired } from "@/lib/access";
 import { aiExtractionAvailable } from "@/lib/resume/ai-extract";
 import { missingRequired, profileEnrichmentGaps, VISIBILITY_THRESHOLD } from "@/lib/completeness";
 import { shownSkills, selectedRoleIds } from "@/lib/shown-skills";
@@ -38,6 +38,8 @@ export async function getProviderProfileView(
     include: {
       person: {
         select: {
+          /* ⚠ The transaction models key on the PERSON id (`E593`). */
+          id: true,
           user_id: true,
           first_name: true,
           last_name: true,
@@ -371,6 +373,11 @@ export async function getProviderProfileView(
         connected to. The view renders no control rather than a broken one.
       */
       userId: profile.person.user_id,
+      /* ⚠ The PERSON id. ⚠⚠ THE TRANSACTION MODELS ARE KEYED ON IT, NOT ON THE
+         PROFILE — `BidRequest.provider_person_id`, `WorkOrder.provider_person_id`
+         — so the usage comb cannot be counted without it (`E593`). It is not
+         new data: the row is already loaded. */
+      personId: profile.person.id,
     },
     location,
     country,
@@ -390,7 +397,54 @@ export async function getProviderProfileView(
       distinct rate tuples (8500, 9900, 10000, 10500, 12000, 12500, 13000,
       14000), which a hardcode could not produce.
     */
-    rates: {
+    /*
+      ── ⚠⚠⚠ NO RATE THAT IS NOT THE VIEWER'S OWN (`P2-J3-E593` WS-C 13) ────
+
+      ⚠ Scott, 2026-09-20: *"I do nto think providers should see other
+      provider's rates"*, and the brief generalises it: *"no rate that is not
+      the viewer's own… omit it from the QUERY, not just the render: a field
+      absent from the DOM but present in the payload is still disclosed."*
+
+      ⚠⚠ THIS OBJECT **IS** THE PAYLOAD BOUNDARY, WHICH IS WHY THE GATE IS
+      HERE. The Prisma row never leaves the server; the RSC flight data carries
+      THIS view model. ⚠ So `null` here is the strong version of the rule —
+      there is no rate field for a non-owner to find in devtools, in the DOM, or
+      in the serialised props.
+      ⚠ The loader uses `include`, so the COLUMNS are still read from the
+      database. That read never crosses the wire, and narrowing it to an
+      explicit select would be a rewrite of a 600-line loader for no disclosure
+      benefit. **Stated plainly rather than claimed as "omitted from the query".**
+
+      ── ⚠⚠⚠ OVERRULED AT THE WS-C GATE, 2026-09-20 — A BUYER SEES THE RATE ──
+
+      ⚠ SUPERSEDED, quoted not deleted (`E164`) — what WS-C shipped for one gate:
+      //   rates: !isOwner ? null : { … }
+      //   …raised at the gate: "a buyer also loses the rate under this reading."
+
+      ⚠⚠ SCOTT'S RULING IS PROVIDER→PROVIDER AND ALWAYS WAS: *"I do nto think
+      providers should see other provider's rates."* ⚠⚠⚠ THE BRIEF'S *"no rate
+      that is not the viewer's own"* WAS CHAT'S OVER-GENERALISATION, MADE TWICE
+      — and it is exactly the failure `CLAUDE.md` opens with: a premise nobody
+      verified, repeated until it read as settled.
+      ⚠ **A RATE IS IN THE REQUIRED SET PRECISELY SO BUYERS CAN FILTER ON IT**
+      (`E581`). Hiding it from buyers breaks what the marketplace is for.
+
+      ⚠ SO THE PREDICATE IS THE VIEWER'S CAPABILITY, NOT THEIR IDENTITY: the
+      owner always sees their own, anyone who can HIRE sees it because that is
+      what they are here to do, and a provider looking at another provider does
+      not. ⚠⚠ `canHireTalent` IS THE RIGHT TEST rather than "is not a provider":
+      a DUAL-ROLE member who both hires and provides is a buyer when they are
+      buying, and refusing them the rate would be refusing them the marketplace.
+    */
+    rates: !(
+      isOwner ||
+      /* ⚠ A SIGNED-OUT VISITOR IS NOT A BUYER. `viewer` is null then, and a
+         null cannot hold a capability — so the rate is withheld, which is the
+         safe direction for a public page. */
+      (opts.viewer != null && hasCapability(opts.viewer, "canHireTalent"))
+    )
+      ? null
+      : {
       currency: profile.currency,
       hourlyCents: profile.hourly_rate_cents,
       // WS0/E078c — the advertised RANGE. Falls back to the legacy single rate

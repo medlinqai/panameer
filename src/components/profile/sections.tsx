@@ -736,8 +736,23 @@ export function LanguagesBody({ languages }: { languages: LanguageItem[] }) {
   );
 }
 
-export function EducationBody({ education }: { education: EducationItem[] }) {
-  if (education.length === 0) return <Empty>No education listed.</Empty>;
+/** ⚠ Same rule as `CertificationsBody` above — an empty section offers a door
+ *  (`E593` WS-C item 16), and `emptyAction` is optional so other callers are
+ *  unchanged. */
+export function EducationBody({
+  education,
+  emptyAction,
+}: {
+  education: EducationItem[];
+  emptyAction?: ReactNode;
+}) {
+  if (education.length === 0)
+    return (
+      <>
+        <Empty>No education listed.</Empty>
+        {emptyAction}
+      </>
+    );
   return (
     <ul className="space-y-2.5 text-[14px]">
       {education.map((e, i) => (
@@ -1310,14 +1325,36 @@ export function LocationBody({
   );
 }
 
+/**
+ * ── ⚠⚠ AN EMPTY SECTION OFFERS A DOOR (`P2-J3-E593` WS-C item 16) ─────────
+ *
+ * ⚠ Scott's anti-dead-end rule applied to empty states: *"No certifications →
+ * link to LEARN. No education → link to LEARN."*
+ * ⚠⚠ `emptyAction` IS OPTIONAL AND DEFAULTS TO NOTHING, so the wizard review
+ * and `CertificationCards` — the other callers — are byte-unchanged.
+ *
+ * ⚠⚠⚠ AND IT IS A DOOR, NOT A GAP. `E593` WS-C settles who owns which
+ * sentence: **the SCORE PAGE owns *"what is missing"*; an empty SECTION owns
+ * *"here is where to get one."*** ⚠ So this renders a route, never a count, a
+ * percentage or a list of what else is absent — that would be the score page
+ * said twice, which is the duplication `E588` WS-A ruled against.
+ */
 export function CertificationsBody({
   certifications,
   empty,
+  emptyAction,
 }: {
   certifications: CertificationItem[];
   empty: string;
+  emptyAction?: ReactNode;
 }) {
-  if (certifications.length === 0) return <Empty>{empty}</Empty>;
+  if (certifications.length === 0)
+    return (
+      <>
+        <Empty>{empty}</Empty>
+        {emptyAction}
+      </>
+    );
   return (
     <ul className="space-y-2">
       {certifications.map((c, i) => {

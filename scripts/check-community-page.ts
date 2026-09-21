@@ -39,6 +39,7 @@ const CARDS = code("src", "components", "community", "ColleagueCards.tsx");
 const RAIL = code("src", "components", "community", "CommunityRail.tsx");
 const SIL = code("src", "components", "community", "Silhouette.tsx");
 const RATES = code("src", "lib", "provider-rates.ts");
+const CARDS_PROFILE = code("src", "components", "community", "ConnectProfile.tsx");
 const HOME = code("src", "components", "community", "ConnectHome.tsx");
 
 const SURFACE: [string, string][] = [
@@ -249,6 +250,148 @@ check(
   /Waiting on You/.test(CARDS) && !/Waiting on you/.test(CARDS)
 );
 check("8 — ⚠ it renders nothing at zero rather than an empty container", /rows\.length === 0\) return null/.test(CARDS));
+
+/* ── 9 · ⚠⚠⚠ NO RATE THAT IS NOT THE VIEWER'S OWN (`E593` WS-C item 13) ── */
+/*
+  ⚠ Scott, 2026-09-20: *"no rate that is not the viewer's own."*
+  ⚠⚠ THIS IS THE STRUCTURAL HALF, AND IT IS HERE BECAUSE THE BROWSER HALF
+  CANNOT CARRY IT. Measured at the WS-C gate: the rate FIELD NAMES appear in
+  NEITHER page's payload — not the visitor's, and not the owner's — because
+  `ConnectProfile` and everything under it are SERVER components, so `p` is
+  never serialised. ⚠⚠⚠ AN ABSENCE ASSERTION IN A SPEC THEREFORE COULD NEVER
+  FAIL, which is `E586`. **The claim that CAN fail is this one: the view model
+  does not build the object at all for a non-owner.**
+*/
+const PVIEW = code("src", "lib", "provider-profile-view.ts");
+/*
+  ── ⚠⚠⚠ OVERRULED 2026-09-20 — THE RULE IS PROVIDER→PROVIDER ──────────────
+
+  ⚠ SUPERSEDED, quoted not deleted (`E164`) — what WS-C asserted for one gate:
+  //   check("the view model withholds `rates` from a NON-OWNER",
+  //     /rates:\s*!isOwner \? null :/.test(PVIEW));
+
+  ⚠⚠ SCOTT'S RULING WAS ALWAYS *"providers should not see other provider's
+  rates"*. The brief's *"no rate that is not the viewer's own"* was chat's
+  over-generalisation, made twice, and it read as settled because it was
+  repeated — the failure mode `CLAUDE.md` opens with.
+  ⚠⚠⚠ THE BLANKET VERSION BROKE THE MARKETPLACE: a rate is in the REQUIRED set
+  precisely so BUYERS CAN FILTER ON IT (`E581`), and hiding it from them removes
+  the reason the field is mandatory.
+
+  ⚠ THIS GATE NOW ASSERTS THE BUYER CASE, WHICH IS THE ONE THAT WOULD REGRESS
+  SILENTLY: a future tightening back to `!isOwner` passes every visitor test —
+  a provider still cannot see another provider's rate — while quietly taking it
+  from every buyer. **The old assertion could not tell those two apart.**
+*/
+check(
+  "9 — ⚠⚠ a BUYER sees the rate — the predicate is capability, not identity",
+  /hasCapability\(opts\.viewer, "canHireTalent"\)/.test(PVIEW)
+);
+check(
+  "9 — ⚠ the owner always sees their own",
+  /isOwner \|\|/.test(PVIEW)
+);
+/* ⚠ A signed-out visitor is not a buyer: `viewer` is null and a null holds no
+   capability, so the rate is withheld — the safe direction on a public page. */
+check(
+  "9 — ⚠ a signed-out viewer is not treated as a buyer",
+  /opts\.viewer != null && hasCapability/.test(PVIEW)
+);
+/* ⚠⚠ AND THE BLANKET FORM MUST NOT COME BACK. This is the shape that hides the
+   rate from buyers, and it is the one thing this section exists to prevent. */
+check(
+  "9 — ⚠⚠⚠ the blanket `!isOwner` form is gone and stays gone",
+  !/rates:\s*!isOwner \?/.test(PVIEW)
+);
+/* ⚠ And the CARD is gated, not just its body — `RateRows` returning null still
+   left `ProfileCard` printing the heading `Rates` over an empty box, which told
+   a visitor a rate existed and was being withheld. Caught by the WS-C walk. */
+check(
+  "9 — ⚠ the Rates CARD is gated, not only its rows",
+  /\{p\.rates && \(\s*<ProfileCard/.test(CARDS_PROFILE)
+);
+check(
+  "9 — ⚠ both rate consumers handle the null",
+  (CARDS_PROFILE.match(/if \(!p\.rates\) return null;/g) ?? []).length === 2
+);
+
+/* ── 10 · ⚠⚠ THE RAIL'S COMB, AND WHAT IT REPLACED (`E593`) ─────────────── */
+/*
+  ⚠ Scott, 2026-09-20: remove the plain-link card, put the Usage Stats comb in
+  that slot. ⚠⚠ THE CONDITION WAS *"prove nothing becomes unreachable"*, so the
+  four destinations it used to carry are each asserted to have another door.
+*/
+const USAGE = code("src", "lib", "usage-stats.ts");
+const RAIL_L = CARDS_PROFILE;
+
+check(
+  "10 — the plain-link card is gone",
+  !/label: "My Stats"/.test(RAIL_L) && !/label: "My Settings"/.test(RAIL_L)
+);
+check("10 — the comb is in its slot", /<UsageComb usage=\{usage\} \/>/.test(RAIL_L));
+/*
+  ⚠⚠ SIX CELLS, IN BAND ORDER, EACH WITH A ONE-WORD LABEL. Scott: *"Six
+  unlabelled numbers can't be read — you can't tell which application owns
+  which."* ⚠ The labels ARE the band's words, which is what makes one word
+  enough.
+*/
+for (const label of ["Connect", "Learn", "Work", "Sell", "Orders", "Get Paid"]) {
+  check(`10 — the comb labels "${label}"`, new RegExp(`label: "${label}"`).test(RAIL_L));
+}
+/*
+  ⚠⚠⚠ INK, WITH ONE DELIBERATE EXCEPTION. `E433` reserves magenta for
+  interactive things and these are figures — but Scott ruled `Get Paid`
+  dominant *"by DESIGN WEIGHT: size, position, colour and label."* ⚠ The gate
+  holds the exception to ONE cell so it cannot spread: exactly one `pay: true`.
+*/
+check(
+  "10 — ⚠ exactly one cell is magenta, and it is Get Paid",
+  (RAIL_L.match(/pay: true/g) ?? []).length === 1 &&
+    /label: "Get Paid",[\s\S]{0,400}pay: true/.test(RAIL_L)
+);
+check(
+  "10 — the figures are ink except that one",
+  /c\.pay \? "text-magenta" : "text-ink"/.test(RAIL_L)
+);
+/*
+  ⚠⚠⚠ AND THE `$0` IS DERIVED, NOT TYPED. Earnings are not modelled — `Payment`
+  is scoped by `p_account_id`, the buyer's money arriving, and there is no
+  payout model. ⚠ A typed `$0` would be the `Viewing Me` mistake: a plausible
+  number that does not exist. ⚠⚠ IT IS ENTAILED BY HAVING ZERO WORK ORDERS, and
+  it INVALIDATES ITSELF — the moment there is an order the function returns
+  `null` and the card renders the dash convention instead.
+*/
+check(
+  "10 — ⚠⚠ the earnings figure is derived from the order count",
+  /const earnedCents = orders === 0 \? 0 : null;/.test(USAGE)
+);
+check(
+  "10 — ⚠ and the card renders a dash when it is not measurable",
+  /earnedCents === null \? "—"/.test(RAIL_L)
+);
+/* ⚠ Every figure is a real count — the LOCKED Counters decision. No literal
+   may stand in for one. */
+check(
+  "10 — every cell but earnings comes from a count",
+  /prisma\.bidRequest\.count/.test(USAGE) &&
+    /prisma\.package\.count/.test(USAGE) &&
+    /prisma\.workOrder\.count/.test(USAGE)
+);
+/*
+  ⚠⚠ NOTHING BECAME UNREACHABLE. Each of the four links the removed card
+  carried now has another door, and this asserts the door rather than trusting
+  the note that says so.
+*/
+const NAV = code("src", "lib", "nav.ts");
+const RAIL_C = code("src", "components", "community", "CommunityRail.tsx");
+for (const [href, where, body] of [
+  ["/stats", "the comb's own link", RAIL_L + NAV],
+  ["/account-health", "the Account Health card", RAIL_L + NAV],
+  ["/community/teams", "the Community rail", RAIL_C],
+  ["/settings", "the Connect tab row", NAV],
+] as const) {
+  check(`10 — ⚠ ${href} is still reachable, via ${where}`, body.includes(`"${href}"`));
+}
 
 console.log(
   `\ncheck:community-page — ${failed === 0 ? `${passed}/${passed} passed` : `${failed} FAILED, ${passed} passed`}`

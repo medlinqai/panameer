@@ -25,6 +25,7 @@
  * imported `lib/onboarding` and dragged `dns`/`fs`/`net`/`tls` into the browser
  * bundle.
  */
+import { displayPlacePart } from "@/lib/location";
 
 /** The address parts this formatter reads. All optional, all possibly blank. */
 export type LocalityParts = {
@@ -33,10 +34,28 @@ export type LocalityParts = {
   postalCode?: string | null;
 };
 
-const trimmed = (v: string | null | undefined) => {
-  const t = (v ?? "").trim();
-  return t === "" ? null : t;
-};
+/*
+  ── ⚠⚠⚠ THE CASING RULE APPLIES HERE TOO, AND IT REACHED THIS FILE LAST ────
+
+  ⚠ Scott's rule (`E591` rider): title-case only when the stored value is
+  entirely lowercase; otherwise render as stored, so a code like `FL` survives.
+  ⚠⚠ THE RIDER WAS APPLIED TO `explore.ts` AND `community-page.ts` — the two
+  callers an inventory of `formatLocation` pointed at — AND MISSED THIS ONE
+  ENTIRELY, because this is a DIFFERENT FORMATTER with a different name.
+  ⚠⚠⚠ SO THE PROFILE'S IDENTITY CARD WENT ON RENDERING `saint augustine, FL`
+  for another day. **An inventory of CALLERS cannot find a second
+  IMPLEMENTATION** — that is the lesson, and it is the same shape as the
+  grep-inside-a-comment family: the measurement answered the question asked,
+  and the question was too narrow.
+
+  ⚠ `p.location` is built here, so fixing it here fixes every consumer at once —
+  the identity card, the wizard review, and anything that later reads either.
+  ⚠⚠ STILL PRESENTATION ONLY. `E412` bars validation in this file and that
+  stands: nothing here rejects, corrects or questions a value. Casing is how the
+  parts are WRITTEN OUT, which is exactly what this module already decides.
+  ⚠ AND THE STORED VALUE IS NEVER REWRITTEN.
+*/
+const trimmed = (v: string | null | undefined) => displayPlacePart(v);
 
 /**
  * The city/region line, without the country.
