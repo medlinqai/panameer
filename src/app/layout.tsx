@@ -110,10 +110,15 @@ export default function RootLayout({
           component. `suppressHydrationWarning` on <html> is the price: the
           server renders no attribute and the client has already added one.
 
-          ── ⚠⚠ WHY `next/script` AND NOT A RAW TAG (`P0-E595` WS-C) ──────────
+          ── ⚠⚠⚠ THIS IS A RAW `<script>` ON PURPOSE. DO NOT "FIX" IT. ─────
 
-          ⚠ SUPERSEDED, quoted not deleted (`E164`):
-          //   <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
+          ⚠ SCOTT RULED IT, 2026-09-21, ON THE `P0-E595` WS-C GATE: *"keep the
+          raw <script> at layout.tsx:113. Your measurement settles it: next/script
+          brings back the E021 theme flash."* ⚠⚠ AND: *"Don't suppress the
+          warning."* — no `eslint-disable`, no console filter, no `type` attribute
+          chosen to dodge React's check. The warning is the honest cost and it is
+          paid deliberately.
+
 
           ⚠⚠ A RAW `<script>` INSIDE A COMPONENT MAKES REACT LOG, ON THE CLIENT:
           *"Encountered a script tag while rendering React component. Scripts
@@ -153,7 +158,7 @@ export default function RootLayout({
           **Trading a real theme flash for a clean dev console would be the wrong
           way round.** ⚠ React offers no exemption that keeps execution —
           `isScriptDataBlock` suppresses the warning only for a NON-executable
-          `type`. ⚠ Raised for Scott rather than decided quietly (rule 13).
+          `type`. ⚠ RAISED FOR SCOTT RATHER THAN DECIDED QUIETLY (rule 13), AND HE RULED — see the top of this block.
         */}
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
       </head>
