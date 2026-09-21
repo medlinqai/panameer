@@ -88,6 +88,9 @@ import { PhoneField } from "@/components/onboarding/PhoneField";
 /* ⚠ EDITOR 1 OF 5 (`P2-A2-E597` WS-B). One component, mounted by the step and
    the review modal — and by `/connect/edit/title` when WS-C lands. */
 import { TitleEditor, titleCanSave, HEADLINE_MAX } from "@/components/onboarding/editors/TitleEditor";
+/* ⚠ EDITOR 2 OF 5 (`P2-A2-E597` WS-B). Both fields it mounts were already
+   shared; what moved out is the wiring between them. */
+import { ContactEditor } from "@/components/onboarding/editors/ContactEditor";
 import { formatPhone, isPhoneComplete, parseStoredPhone, toE164 } from "@/lib/phone";
 
 /**
@@ -2381,71 +2384,41 @@ setScreen(target);
     screen. Splitting the block would have meant either a second editor for the
     phone (forbidden) or a link that still navigates away.
   */
+  /*
+    ── ⚠⚠ EXTRACTED (`P2-A2-E597` WS-B, editor 2 of 5) ──────────────────────
+
+    ⚠ THE FIELDS NOW LIVE IN `components/onboarding/editors/ContactEditor.tsx`.
+    This helper stays because it is the ONE SAVE PATH — `postStep("finish", …)`
+    writes `Person.phone` and hands the address to `saveProviderAddress`.
+    ⚠⚠ THE `patch.x !== undefined` NORMALISATION MOVED WITH THE FIELDS: telling
+    "not touched" from "cleared" is part of how those inputs report a change,
+    not part of what this caller does with it.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`) — the closure held `PhoneField`,
+    `LocationFields` and that whole patch spread inline:
+    //   const contactEditing = () => ({
+    //     save: () => postStep("finish", { address: profile.address, phone: phoneToSave }),
+    //     body: (<><div className="space-y-3"><PhoneField id="review-phone" … />
+    //       <LocationFields withStreet … onChange={(patch) => setAddr({ …spread… })} /></div></>),
+    //   });
+  */
   const contactEditing = () => ({
     save: () =>
       postStep("finish", { address: profile.address, phone: phoneToSave }),
     body: (
-      <>
-              <div className="space-y-3">
-                {/*
-                  DATE OF BIRTH IS GONE (WS7). It was required here and gated
-                  both publish and marketplace visibility, and nothing in the
-                  marketplace ever used it: a buyer needs to reach a provider,
-                  not know their age. If age or legal capacity is ever needed it
-                  rides the tax/payout gate, where there is a reason to ask.
-                  The column stays nullable — no destructive drop.
-                */}
-                {/*
-                  E203 — masked, digits-only, validated on blur. The country
-                  comes from the address block below, whose hint has always
-                  promised it "sets how we format your phone number"; this is
-                  the first version where that is true.
-                */}
-                <PhoneField
-                  id="review-phone"
-                  value={phoneInput}
-                  onChange={setPhoneInput}
-                  country={phoneCountry}
-                  onCountryChange={setPhoneCountry}
-                />
-                {/*
-                  E126 — COUNTRY FIRST, above the street line. It decides what
-                  the fields under it even mean ("State" here, "Province" in
-                  Canada, "County" in Ireland), so asking it last meant asking
-                  the rest before knowing what they were. Same shared block as
-                  the employer modal (E123), which is what stops one provider
-                  meeting two different location forms in one sitting.
-                */}
-                <LocationFields
-                  withStreet
-                  countryHint="Also sets how we format your phone number."
-                  value={{
-                    country: addr.country,
-                    line1: addr.line1,
-                    city: addr.city,
-                    state: addr.state,
-                    postalCode: addr.postalCode,
-                  }}
-                  onChange={(patch) =>
-                    setAddr({
-                      ...(patch.country !== undefined
-                        ? { country: patch.country ?? "" }
-                        : {}),
-                      ...(patch.line1 !== undefined
-                        ? { line1: patch.line1 ?? "" }
-                        : {}),
-                      ...(patch.city !== undefined ? { city: patch.city ?? "" } : {}),
-                      ...(patch.state !== undefined
-                        ? { state: patch.state ?? "" }
-                        : {}),
-                      ...(patch.postalCode !== undefined
-                        ? { postalCode: patch.postalCode ?? "" }
-                        : {}),
-                    })
-                  }
-                />
-              </div>
-      </>
+      <ContactEditor
+        address={{
+          country: addr.country,
+          line1: addr.line1,
+          city: addr.city,
+          state: addr.state,
+          postalCode: addr.postalCode,
+        }}
+        onAddressChange={(patch) => setAddr(patch)}
+        phone={phoneInput}
+        onPhoneChange={setPhoneInput}
+        phoneCountry={phoneCountry}
+        onPhoneCountryChange={setPhoneCountry}
+      />
     ),
   });
 
