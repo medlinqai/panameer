@@ -163,43 +163,10 @@
   color: var(--color-ink-3, #8a8396);
 }
 
-/* ── the shared placeholder face ─────────────────────────────────────────── */
-.pm-face,
-.pm-sil {
-  flex: none;
-  border-radius: 999px;
-  object-fit: cover;
-  display: block;
-}
-.pm-sil {
-  overflow: hidden;
-}
-
-/*
-  ⚠⚠ THE PHOTO IS PAINTED **ON TOP OF** THE SILHOUETTE, so a broken image
-  reveals the glyph rather than a hole. ⚠ Measured: a seeded `photo_url` that
-  404s rendered as a bare magenta circle before this existed.
-  ⚠⚠⚠ NO `onError` — this is a server component, and a handler would drag every
-  card into the client bundle to solve what one layer solves for free.
-*/
-.pm-face-wrap {
-  position: relative;
-  flex: none;
-  display: block;
-}
-.pm-face-wrap .pm-sil,
-.pm-face-wrap .pm-face {
-  position: absolute;
-  inset: 0;
-}
-/* ⚠ Grey and colourless on purpose — it reads as "no photo yet", never as a
-   photo, and never as initials. */
-.pm-sil-bg {
-  fill: #e8e5ec;
-}
-.pm-sil-ink {
-  fill: #9a93a6;
-}
+/* ⚠ THE FACE RULES MOVED TO `face.css` (`P2-A3-E596` WS-D) and are imported by
+   `Silhouette.tsx`, so they reach every surface that renders a face — not only
+   this page. ⚠⚠ THEY WERE HERE, AND `/connect` DID NOT IMPORT THIS FILE, so the
+   faces row painted black circles. Styles travel with the component. */
 
 /* ── the rail cards ──────────────────────────────────────────────────────── */
 .pm-cm-panel {

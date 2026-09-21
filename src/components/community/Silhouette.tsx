@@ -1,3 +1,4 @@
+import "./face.css";
 /**
  * ── ⚠⚠ ONE PLACEHOLDER FACE, USED EVERYWHERE A FACE IS MISSING ────────────
  *

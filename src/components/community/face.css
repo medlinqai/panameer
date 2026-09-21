@@ -1,0 +1,54 @@
+/*
+ * ── ⚠⚠⚠ THE FACE'S OWN STYLESHEET (`P2-A3-E596` WS-D) ─────────────────────
+ *
+ * ⚠⚠ THESE RULES USED TO LIVE IN `community-page.css`, AND THAT WAS A LATENT
+ * BUG THAT WS-D DETONATED. `Silhouette`/`Face` are shared components, but their
+ * styles were imported only by the COMMUNITY page — so the moment the faces row
+ * put them on `/connect`, which imports `connect-profile.css` instead, the
+ * `<svg>` painted with its DEFAULT fill and the row rendered as a line of BLACK
+ * CIRCLES above the photos.
+ * ⚠ MEASURED ON A PHONE, not reasoned about: the first screenshot showed it.
+ *
+ * ⚠⚠ THE RULE THIS RESTORES: a component's styles travel WITH the component.
+ * `Silhouette.tsx` imports this file, so every surface that renders a face gets
+ * the fills, wherever it lives. ⚠ Next dedupes a stylesheet imported from
+ * several modules, so the community page pays nothing for the move.
+ */
+/* ── the shared placeholder face ─────────────────────────────────────────── */
+.pm-face,
+.pm-sil {
+  flex: none;
+  border-radius: 999px;
+  object-fit: cover;
+  display: block;
+}
+.pm-sil {
+  overflow: hidden;
+}
+
+/*
+  ⚠⚠ THE PHOTO IS PAINTED **ON TOP OF** THE SILHOUETTE, so a broken image
+  reveals the glyph rather than a hole. ⚠ Measured: a seeded `photo_url` that
+  404s rendered as a bare magenta circle before this existed.
+  ⚠⚠⚠ NO `onError` — this is a server component, and a handler would drag every
+  card into the client bundle to solve what one layer solves for free.
+*/
+.pm-face-wrap {
+  position: relative;
+  flex: none;
+  display: block;
+}
+.pm-face-wrap .pm-sil,
+.pm-face-wrap .pm-face {
+  position: absolute;
+  inset: 0;
+}
+/* ⚠ Grey and colourless on purpose — it reads as "no photo yet", never as a
+   photo, and never as initials. */
+.pm-sil-bg {
+  fill: #e8e5ec;
+}
+.pm-sil-ink {
+  fill: #9a93a6;
+}
+

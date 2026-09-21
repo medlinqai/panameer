@@ -29,6 +29,10 @@ export type RosterRowView = {
   reason: string;
   reasonKind: "skills" | "learn" | "employer" | "worked" | "date";
   buySide: boolean;
+  /** ⚠ SEARCH-ONLY (`P2-A3-E596` WS-E). Nothing renders these — a roster row is
+   *  a name, a title and ONE reason, and chips per row would make it the
+   *  directory this page is deliberately not. */
+  skillNames: string[];
 };
 
 type Filter = "all" | "skills" | "learn" | "worked";
@@ -62,10 +66,28 @@ export function ColleagueRoster({ rows }: { rows: RosterRowView[] }) {
     const needle = q.trim().toLowerCase();
     return rows
       .filter((r) => (filter === "all" ? true : r.reasonKind === filter))
+      /*
+        ── ⚠⚠ NAME · TITLE · COMPANY · SKILL (`P2-A3-E596` WS-E item 3) ──────
+
+        ⚠ SCOTT: search *"the fields a person actually remembers someone by"*.
+        ⚠ SUPERSEDED, quoted not deleted (`E164`) — skill was the one missing:
+        //   [r.name, r.title, r.company].some((f) => f?.toLowerCase().includes(needle))
+
+        ⚠⚠ MEASURED AT THE GATE BEFORE BUILDING: three of the four were already
+        here, so WS-E was WIRING, not building — exactly what item 1 asked to be
+        checked first. ⚠ `searchMembers` in `connections.ts` is a DIFFERENT
+        search over the WHOLE member directory, and it was left alone; this one
+        is scoped to the viewer's own accepted colleagues by construction.
+        ⚠⚠⚠ THE SKILL NAMES ARE THE **SHOWN** SET (`E517`), resolved on the
+        server. A skill the colleague's own profile will not display must not
+        be a way to find them, or a buyer reaches a page that cannot confirm it.
+      */
       .filter((r) =>
         !needle
           ? true
-          : [r.name, r.title, r.company].some((f) => f?.toLowerCase().includes(needle))
+          : [r.name, r.title, r.company, ...r.skillNames].some((f) =>
+              f?.toLowerCase().includes(needle)
+            )
       );
   }, [rows, q, filter]);
 
@@ -74,7 +96,11 @@ export function ColleagueRoster({ rows }: { rows: RosterRowView[] }) {
       <input
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        placeholder="Search your colleagues by name, title or company"
+        /* ⚠ THE PLACEHOLDER NAMES EVERY FIELD IT SEARCHES. A box that quietly
+           matches more than it claims is a box people stop trusting. ⚠ SUPERSEDED,
+           quoted not deleted (`E164`):
+           //   placeholder="Search your colleagues by name, title or company" */
+        placeholder="Search your colleagues by name, title, company or skill"
         aria-label="Search your colleagues"
         className="w-full rounded-[10px] border border-line px-3 py-2.5 text-[14.5px] outline-none focus:border-magenta"
       />

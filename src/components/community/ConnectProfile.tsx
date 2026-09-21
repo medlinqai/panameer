@@ -1,6 +1,9 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Avatar } from "@/components/Avatar";
+/* ⚠ `Face` OWNS THE "no photo -> grey silhouette" RULE (`E591`), so the faces
+   row asks it rather than deciding the fallback a second time. */
+import { Face } from "@/components/community/Silhouette";
 import {
   CompletionRing,
   completionHook,
@@ -83,6 +86,7 @@ export function ConnectProfile({
   community = null,
   score = null,
   colleagueCount,
+  colleagueFaces = [],
   profileViews = null,
   youBothKnow = null,
   messagePermission = null,
@@ -124,6 +128,16 @@ export function ConnectProfile({
    *  locked — *"count it and print it, seeded rows included."* The seeded graph
    *  is small, so the number is small. That is correct, not a bug. */
   colleagueCount: number;
+  /**
+   * ⚠⚠ OWNER ONLY — up to seven colleague faces for the row under the count
+   * (`P2-A3-E596` WS-D). ⚠ The CARD is the summary; `/community/colleagues` is
+   * the list. This never grows into a directory.
+   * ⚠⚠⚠ NOT THE WEB. Scott asked whether the web belonged here and the answer
+   * was no: repeated as a thumbnail in a rail it becomes a small tangle, sits
+   * directly under the completion ring and competes with it near the top on a
+   * phone. The web is Community's hero and stays there.
+   */
+  colleagueFaces?: { personId: string; name: string; photoUrl: string | null }[];
   /**
    * ⚠⚠ OWNER ONLY — how many people have looked at this profile, one per viewer
    * per day, all time (`P0-E595` A2). ⚠ `null` on a visitor's view, where the
@@ -381,6 +395,55 @@ export function ConnectProfile({
             {/* ⚠ `E433` — a count is a figure, so ink. */}
             <b className="text-ink">{colleagueCount}</b>
           </div>
+
+          {/*
+            ── ⚠⚠ THE FACES (`P2-A3-E596` WS-D item 1) ───────────────────────
+
+            ⚠ Six or seven overlapping avatars, then the count and the door.
+            ⚠⚠ A GREY SILHOUETTE WHERE THERE IS NO PHOTO — `E591`'s rule, and
+            `Face` already applies it, so nothing decides it twice here.
+            ⚠⚠⚠ THEY ARE `aria-hidden` AND THE ROW CARRIES ONE ACCESSIBLE
+            SENTENCE. Seven avatars announced one after another is noise; the
+            count above already states the fact, and the link states the
+            destination. ⚠ `Silhouette` is already `aria-hidden`; the wrapper
+            covers the photographed ones.
+            ⚠ NEGATIVE MARGIN OVERLAP, with a ring in the card's own background
+            colour so each face reads as separate rather than smeared.
+          */}
+          {owner && colleagueFaces.length > 0 && (
+            <div className="flex items-center gap-2.5 pb-1 pt-1.5">
+              <span aria-hidden className="flex items-center">
+                {colleagueFaces.map((c, i) => (
+                  <span
+                    key={c.personId}
+                    /*
+                      ⚠⚠ `inline-flex`, NOT A BARE `span` — MEASURED, IT BROKE.
+                      `Face` renders `.pm-face-wrap`, which is `position:
+                      relative` with its layers at `inset: 0`. An inline wrapper
+                      has NO HEIGHT, so those layers resolved against the line
+                      box and the row rendered as a black band with the photos
+                      spilling below it.
+                      ⚠ `inline-flex` shrink-wraps the 30px child, which gives
+                      the ring something to trace and the layers something to
+                      fill. ⚠⚠ `relative` + `zIndex` is what makes the overlap
+                      stack left-over-right rather than in DOM order.
+                    */
+                    className="relative inline-flex rounded-full ring-2 ring-white"
+                    style={{ marginLeft: i === 0 ? 0 : -9, zIndex: colleagueFaces.length - i }}
+                    title={c.name}
+                  >
+                    <Face photoUrl={c.photoUrl} size={30} />
+                  </span>
+                ))}
+              </span>
+              <Link
+                href="/community/colleagues"
+                className="text-[12.5px] font-bold text-magenta hover:underline"
+              >
+                See your community &rarr;
+              </Link>
+            </div>
+          )}
           {/*
             ── ⚠⚠ `Viewing Me` NOW HAS DATA BEHIND IT (`P0-E595` A2 / WS-C) ───
 
