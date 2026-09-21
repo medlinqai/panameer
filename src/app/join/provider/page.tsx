@@ -65,7 +65,9 @@ import {
   WorkHistoryBody,
 } from "@/components/profile/sections";
 import { LANGUAGES } from "@/lib/countries";
-import { LocationFields } from "@/components/onboarding/LocationFields";
+/* ⚠ `LocationFields` MOVED WITH `ContactEditor` (`P2-A2-E597` WS-B) and is no
+   longer mounted here. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   import { LocationFields } from "@/components/onboarding/LocationFields"; */
 import { CompanyStep } from "@/components/company/CompanyStep";
 import { AiPassPanel } from "@/components/onboarding/AiPassPanel";
 import { ResumeImportAction } from "@/components/onboarding/ResumeImportAction";
@@ -78,19 +80,30 @@ import {
   type ReviewFix,
 } from "@/lib/review-validation";
 import {
-  formatCents,
-  bpsToPercentLabel,
+  /* ⚠ `formatCents` and `bpsToPercentLabel` MOVED WITH `RateEditor`
+     (`P2-A2-E597` WS-B) — the fee panel that used them is there now.
+     ⚠ `rateBreakdown` STAYS: the wizard still computes the breakdown and passes
+     it in, so the fee maths keeps its single home in `lib/display.ts`.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):  formatCents, bpsToPercentLabel, */
   rateBreakdown,
   displayFirstName,
   DEFAULT_SERVICE_FEE_BPS,
 } from "@/lib/display";
-import { PhoneField } from "@/components/onboarding/PhoneField";
+/* ⚠ `PhoneField` MOVED WITH `ContactEditor` (`P2-A2-E597` WS-B).
+   ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   import { PhoneField } from "@/components/onboarding/PhoneField"; */
 /* ⚠ EDITOR 1 OF 5 (`P2-A2-E597` WS-B). One component, mounted by the step and
    the review modal — and by `/connect/edit/title` when WS-C lands. */
-import { TitleEditor, titleCanSave, HEADLINE_MAX } from "@/components/onboarding/editors/TitleEditor";
+/* ⚠ `HEADLINE_MAX` IS NOT RE-IMPORTED HERE. It moved to `TitleEditor.tsx` with
+   the field that enforces it, and nothing left in this file reads it — an
+   import kept "for completeness" is an unused symbol and one new lint warning
+   against a baseline whose rule is zero. */
+import { TitleEditor, titleCanSave } from "@/components/onboarding/editors/TitleEditor";
 /* ⚠ EDITOR 2 OF 5 (`P2-A2-E597` WS-B). Both fields it mounts were already
    shared; what moved out is the wiring between them. */
 import { ContactEditor } from "@/components/onboarding/editors/ContactEditor";
+/* ⚠ EDITOR 3 OF 5 (`P2-A2-E597` WS-B). The wizard's local `Row` moved with it. */
+import { RateEditor, rateCanSave } from "@/components/onboarding/editors/RateEditor";
 import { formatPhone, isPhoneComplete, parseStoredPhone, toE164 } from "@/lib/phone";
 
 /**
@@ -2287,88 +2300,43 @@ setScreen(target);
     ),
   });
 
-  const rateEditing = () => {
-    const { rate, fee, youGet } = rateBreakdown(
-      profile.hourlyRateCents,
-      profile.serviceFeeBps
-    );
-    return {
-      canSave: Boolean(profile.hourlyRateCents),
-      save: () =>
-        saveAnd("rate", {
-          hourlyDollars:
-            profile.hourlyRateCents != null ? profile.hourlyRateCents / 100 : "",
-        }),
-      body: (
-        <>
-          <div className="max-w-md space-y-5">
-            <Field
-              label="Hourly Rate"
-              hint="Total amount the client will see."
-            >
-              <div className="relative">
-                <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[15px] font-bold text-ink-2">
-                  $
-                </span>
-                <TextInput
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  className="pl-8"
-                  value={
-                    profile.hourlyRateCents != null
-                      ? String(profile.hourlyRateCents / 100)
-                      : ""
-                  }
-                  onChange={(e) =>
-                    setProfile((p) => ({
-                      ...p,
-                      hourlyRateCents:
-                        e.target.value === ""
-                          ? null
-                          : Math.round(Number(e.target.value) * 100),
-                    }))
-                  }
-                  placeholder="125.00"
-                />
-                <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[14px] text-ink-2">
-                  /hr
-                </span>
-              </div>
-            </Field>
+  /*
+    ── ⚠⚠ EXTRACTED (`P2-A2-E597` WS-B, editor 3 of 5) ──────────────────────
 
-            <div className="rounded-brand border border-line p-5">
-              <Row
-                label={`Service fee (${bpsToPercentLabel(profile.serviceFeeBps)})`}
-                value={fee != null ? `−${formatCents(fee)}` : "—"}
-              />
-              <p className="mt-2 text-[13px] leading-relaxed text-ink-2">
-                This helps us run the platform and provide services like payment
-                protection and customer support. Fees vary and are shown before
-                contract acceptance.{" "}
-                <span className="font-semibold text-magenta">Learn More</span>
-              </p>
-              <div className="mt-4 border-t border-line pt-4">
-                <Row
-                  label="You'll Get"
-                  value={youGet != null ? `${formatCents(youGet)}/hr` : "—"}
-                  strong
-                />
-                <p className="mt-1 text-[13px] text-ink-2">
-                  The estimated amount you&apos;ll receive after service fees.
-                </p>
-              </div>
-              {rate != null && (
-                <p className="mt-3 text-[13px] text-ink-2">
-                  Clients see {formatCents(rate)}/hr.
-                </p>
-              )}
-            </div>
-          </div>
-        </>
-      ),
-    };
-  };
+    ⚠ THE FIELDS AND THE FEE PANEL NOW LIVE IN
+    `components/onboarding/editors/RateEditor.tsx`, and the wizard's LOCAL `Row`
+    helper moved with them — WS-A's order said it would.
+    ⚠⚠ `rateBreakdown` IS STILL CALLED HERE, not inside the component: the fee
+    maths is `lib/display.ts`'s and has ONE home. Re-deriving it in a component
+    is how two screens start quoting different take-home figures.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`) — the closure held the $-prefixed
+    number field, the dollars/cents conversion and the whole fee panel inline:
+    //   const rateEditing = () => {
+    //     const { rate, fee, youGet } = rateBreakdown(profile.hourlyRateCents, profile.serviceFeeBps);
+    //     return {
+    //       canSave: Boolean(profile.hourlyRateCents),
+    //       save: () => saveAnd("rate", { hourlyDollars: … }),
+    //       body: (<>…<Field label="Hourly Rate" …><TextInput type="number" …/></Field>
+    //         <div className="rounded-brand …"><Row label={`Service fee (…)`} …/>…</div>…</>),
+    //     };
+    //   };
+  */
+  const rateEditing = () => ({
+    canSave: rateCanSave(profile.hourlyRateCents),
+    save: () =>
+      saveAnd("rate", {
+        hourlyDollars:
+          profile.hourlyRateCents != null ? profile.hourlyRateCents / 100 : "",
+      }),
+    body: (
+      <RateEditor
+        hourlyRateCents={profile.hourlyRateCents}
+        onChange={(hourlyRateCents) => setProfile((p) => ({ ...p, hourlyRateCents }))}
+        serviceFeeBps={profile.serviceFeeBps}
+        breakdown={rateBreakdown(profile.hourlyRateCents, profile.serviceFeeBps)}
+      />
+    ),
+  });
 
   /*
     ⚠⚠ PHONE + ADDRESS, ONE BLOCK (`E412` WS-1/WS-4).
@@ -5702,24 +5670,12 @@ function gapsFor(
   return where === "work" ? gaps.filter(isWork) : gaps.filter((g) => !isWork(g));
 }
 
-function Row({
-  label,
-  value,
-  strong,
-}: {
-  label: string;
-  value: string;
-  strong?: boolean;
-}) {
-  return (
-    <div className="flex items-baseline justify-between gap-4">
-      <span className={strong ? "font-bold" : "text-ink-2"}>{label}</span>
-      <span className={strong ? "text-[18px] font-extrabold" : "font-semibold"}>
-        {value}
-      </span>
-    </div>
-  );
-}
+/* ⚠ `Row` MOVED TO `RateEditor.tsx` (`P2-A2-E597` WS-B) — it was local to this
+   file and the rate panel was its only remaining caller. ⚠ SUPERSEDED, quoted
+   not deleted (`E164`):
+   //   function Row({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
+   //     return (<div className="flex items-baseline justify-between gap-4">…</div>);
+   //   } */
 
 /** The AI mark used wherever the product attributes work to AI (WS4/E174). */
 function SparkIcon() {

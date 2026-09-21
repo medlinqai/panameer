@@ -158,14 +158,33 @@ check(
 /* ⚠ THE DISCLOSURE IS A LABEL, SO IT FOLLOWS THE CONSTANT — verified, not
    assumed. If somebody ever types the percentage into that string, this fires. */
 {
-  const page = fileAt("src/app/join/provider/page.tsx");
+  /*
+    ⚠⚠ THE FEE PANEL MOVED TO `RateEditor.tsx` (`P2-A2-E597` WS-B), and the
+    wizard now passes `serviceFeeBps` in as a prop rather than reading
+    `profile.serviceFeeBps` at the label.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   const page = fileAt("src/app/join/provider/page.tsx");
+    //   /label=\{`Service fee \(\$\{bpsToPercentLabel\(profile\.serviceFeeBps\)\}\)`\}/
+    ⚠⚠⚠ THE RULE IS UNCHANGED AND IS THE WHOLE POINT: the disclosure is
+    COMPUTED from the constant, never typed. What changed is which file holds
+    the label and what the expression is called there — so the assertion reads
+    the editor, and still fails if anybody types a percentage into that string.
+  */
+  const page = fileAt("src/components/onboarding/editors/RateEditor.tsx");
   check(
     "2 — the provider's fee disclosure is computed, not typed",
-    !!page && /label=\{`Service fee \(\$\{bpsToPercentLabel\(profile\.serviceFeeBps\)\}\)`\}/.test(page.code)
+    !!page && /label=\{`Service fee \(\$\{bpsToPercentLabel\(serviceFeeBps\)\}\)`\}/.test(page.code)
   );
   check(
     "2 — ABSENCE: no fee percentage is hardcoded into the disclosure",
     !!page && !/Service fee \(1[0-9]/.test(page.code)
+  );
+  /* ⚠ AND THE WIZARD NO LONGER CARRIES ITS OWN COPY. If the panel is ever
+     duplicated back into the page, this fires. */
+  const wiz = fileAt("src/app/join/provider/page.tsx");
+  check(
+    "2 — ABSENCE: the wizard does not re-render the fee disclosure itself",
+    !!wiz && !/Service fee \(/.test(wiz.code)
   );
 }
 
