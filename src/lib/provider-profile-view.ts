@@ -68,7 +68,19 @@ export async function getProviderProfileView(
       pillar: { select: { name: true } },
       region: { select: { id: true, name: true } },
       skills: {
-        include: { skill: { select: { id: true, name: true, role_type_id: true } } },
+        include: {
+          skill: {
+            select: {
+              id: true,
+              name: true,
+              role_type_id: true,
+              /* ⚠ THE PILLAR IS THE GROUPING (`P2-A3-E596` WS-G item 1). It is
+                 the catalog's own DOMAIN level — Role → Domain → Skill — so the
+                 grouping is the taxonomy's, not one invented for the page. */
+              pillar: { select: { id: true, name: true } },
+            },
+          },
+        },
       },
       /* ⚠ `E517` — the provider's role selection, so the view can show only
          what they present. */
@@ -455,6 +467,32 @@ export async function getProviderProfileView(
       maxCents: profile.rate_max_cents ?? profile.hourly_rate_cents,
       onsiteCents: profile.onsite_rate_cents,
       remoteCents: profile.remote_rate_cents,
+      /*
+        ── ⚠⚠⚠ EVERY COLUMN THE VISIBILITY GATE COUNTS (`P2-A3-E596` WS-G 2) ──
+
+        ⚠ SCOTT: *"A rate the gate counts must be a rate the page shows."*
+        MEASURED: `providerMeetsRequired` accepts ANY of five rate columns, and
+        the Rates card rendered only `onsite` and `remote`. Priya Nair passes
+        the gate on `hourly_rate_cents` and her page said *"No rates set yet."*
+
+        ⚠⚠ THESE ARE THE **RAW** COLUMNS, WITH NO FALLBACK. `minCents` and
+        `maxCents` above fall back to `hourly_rate_cents` so an old profile
+        still shows a range — correct there, and WRONG here: it would print the
+        same number three times as "Hourly", "From" and "To".
+        ⚠ ORDERED, and the order is the reading order on the card: what you
+        charge, then the band, then the two engagement shapes.
+        ⚠⚠ THE LIST IS THE CONTRACT. The card maps it and renders each entry
+        that is set, so adding a rate column means adding one line HERE and the
+        card follows — which is what lets a gate assert by shape rather than by
+        a list it keeps in step by hand.
+      */
+      columns: [
+        { key: "hourly", label: "Hourly", cents: profile.hourly_rate_cents },
+        { key: "min", label: "From", cents: profile.rate_min_cents },
+        { key: "max", label: "To", cents: profile.rate_max_cents },
+        { key: "onsite", label: "Onsite", cents: profile.onsite_rate_cents },
+        { key: "remote", label: "Fully Remote", cents: profile.remote_rate_cents },
+      ] as { key: string; label: string; cents: number | null }[],
     },
     serviceFeeBps: profile.service_fee_bps,
     /*
@@ -519,6 +557,10 @@ export async function getProviderProfileView(
     ).map((s) => ({
       id: s.skill.id,
       name: s.skill.name,
+      /* ⚠ `null` IS A REAL STATE — `Skill.pillar_id` is nullable and
+         `onDelete: SetNull`. The page groups those under one honest heading
+         rather than inventing a domain for them. */
+      pillar: s.skill.pillar?.name ?? null,
     })),
     specializations: profile.specializations.map((s) => ({
       id: s.specialization.id,

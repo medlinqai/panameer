@@ -26,6 +26,9 @@ import {
   EditLink,
   OverviewBody,
   ProfileCard,
+  /* ⚠ THE SAME CHIPS THE OWNER'S HERO USES (`P2-A3-E596` WS-G item 1) — reused,
+     never re-implemented. */
+  SkillsBody,
   SoloProjectsBody,
   SpecializationsBody,
   WorkHistoryBody,
@@ -376,6 +379,31 @@ export function ConnectProfile({
           </div>
         </section>
 
+        {/*
+          ── ⚠⚠ RATES, DIRECTLY UNDER THE IDENTITY CARD (`P2-A3-E596` WS-G 4) ──
+
+          ⚠ SCOTT, 2026-09-21: *"Rate sits with who you are, not with the action
+          cards."* Owner's profile and a buyer's view of a provider, both.
+
+          ⚠⚠⚠ THE WHOLE CARD IS GATED, NOT JUST ITS BODY — carried over from its
+          old site and still true. `RateRows` returning `null` still left
+          `ProfileCard` rendering the HEADING, so the visitor page said
+          **"Rates"** over an empty box.
+          ⚠⚠ AN EMPTY CARD TITLED `Rates` IS WORSE THAN NO CARD: it tells a
+          visitor a rate exists and is being withheld, when the rule is simply
+          that this is not their business.
+          ⚠ `p.rates` IS `null` FOR A VIEWER WHO MAY NOT SEE IT — the view model
+          withholds it from the PAYLOAD, not merely from the render.
+        */}
+        {p.rates && (
+          <ProfileCard
+            title="Rates"
+            edit={owner ? <EditLink href="/join/provider?step=finish" title="Rates" /> : undefined}
+          >
+            <RateRows p={p} />
+          </ProfileCard>
+        )}
+
         {/* ── colleagues / viewing me ── */}
         <section className="rounded-brand border border-line bg-white px-[18px] py-4">
           <div className="flex items-center justify-between gap-2.5 py-2 text-[13.5px]">
@@ -652,6 +680,48 @@ export function ConnectProfile({
               />
             </ProfileCard>
           </div>
+
+          {/*
+            ── ⚠⚠⚠ SKILLS, WHICH THIS PAGE SHOWED TO NOBODY (`WS-G` item 1) ───
+
+            ⚠ MEASURED AT `E595` WS-B AND REPORTED THEN: the word "skills"
+            appeared ZERO times in this file. `/providers/[id]` renders this
+            component, so **a buyer looking at a provider could not see what
+            that provider can do** — on the one page they are there to read.
+
+            ⚠⚠ THE CHIP PATTERN IS `sections.tsx`'s, NOT A NEW ONE. Scott: *"first
+            measure how the owner's own view renders skills, and REUSE THAT."*
+            `ProviderProfileView` puts `p.skills` in its hero as chips; the same
+            `SkillsBody` renders them here, once per pillar.
+            ⚠ GROUPED BY PILLAR — the catalog's own DOMAIN level (Role → Domain →
+            Skill), so the grouping is the taxonomy's rather than the page's.
+            ⚠⚠ `p.skills` IS ALREADY THE **SHOWN** SET (`E517`'s offer-side filter
+            runs in the view model), so this widens what a buyer sees by nothing
+            — it stops hiding what they were always entitled to see.
+            ⚠⚠⚠ NO EMPTY CARD. A provider with no skills renders nothing here
+            rather than a heading over a blank box — the `Rates` lesson, applied
+            before it could bite a second time.
+          */}
+          {p.skills.length > 0 && (
+            <div className="pm-cp-two">
+              <ProfileCard
+                title="Skills"
+                edit={owner ? <EditLink href="/join/provider?step=skills&return=review" title="Skills" /> : undefined}
+              >
+                {groupSkillsByPillar(p.skills).map((g) => (
+                  <div key={g.pillar ?? "__none"} className="mb-3 last:mb-0">
+                    {/* ⚠ THE HEADING IS THE PILLAR'S NAME VERBATIM — catalog data
+                        is never re-cased (`E568`). ⚠ A skill whose pillar is null
+                        gets one honest heading rather than an invented domain. */}
+                    <p className="mb-1.5 font-display text-[11px] font-bold uppercase tracking-[0.1em] text-ink-3">
+                      {g.pillar ?? "Other"}
+                    </p>
+                    <SkillsBody skills={g.skills} />
+                  </div>
+                ))}
+              </ProfileCard>
+            </div>
+          )}
 
           {/* ⚠ THE VISITOR'S BUYING SURFACE, DIRECTLY UNDER BIO AND RATES. */}
           {!owner && serviceProducts}
@@ -1168,23 +1238,16 @@ export function ConnectProfile({
           in the schema is a `WorksiteType` on a WORK REQUEST, a different
           model.) ⚠ So the mockup's three rows are two. **Reported, not invented.**
         */}
-        {/*
-          ⚠⚠⚠ THE WHOLE CARD IS GATED, NOT JUST ITS BODY. `RateRows` returning
-          `null` still left `ProfileCard` rendering the HEADING — so the visitor
-          page said **"Rates"** over an empty box. ⚠ Caught by the WS-C walk,
-          which asserts the word is absent from the visitor's DOM.
-          ⚠⚠ AN EMPTY CARD TITLED `Rates` IS WORSE THAN NO CARD: it tells a
-          visitor a rate exists and is being withheld, when the rule is simply
-          that this is not their business.
-        */}
-        {p.rates && (
-          <ProfileCard
-            title="Rates"
-            edit={owner ? <EditLink href="/join/provider?step=finish" title="Rates" /> : undefined}
-          >
-            <RateRows p={p} />
-          </ProfileCard>
-        )}
+        {/* ⚠ THE RATES CARD MOVED TO THE LEFT RAIL (`P2-A3-E596` WS-G item 4).
+            Scott, 2026-09-21: *"Rate sits with who you are, not with the action
+            cards."* ⚠ SUPERSEDED, quoted not deleted (`E164`) — `E593` item 14
+            put it in a SIDE card on the right:
+            //   {p.rates && (
+            //     <ProfileCard title="Rates" edit={…}><RateRows p={p} /></ProfileCard>
+            //   )}
+            ⚠⚠ THE TWO FACTS THE OLD COMMENT CARRIED MOVED WITH THE CARD and are
+            restated at its new site: the WHOLE card is gated, not just its body,
+            and an empty card titled `Rates` is worse than no card. */}
 
         {/*
           ── ⚠⚠ ACCOUNT HEALTH, AS A CARD (`P2-J3-E593` WS-B item 12) ───────
@@ -1338,6 +1401,28 @@ function UsageComb({ usage }: { usage: UsageStats }) {
 }
 
 /**
+ * ⚠⚠ GROUPED BY THE CATALOG'S OWN DOMAIN LEVEL (`P2-A3-E596` WS-G item 1).
+ *
+ * ⚠ ORDER IS FIRST-APPEARANCE, which is the view model's order, which is
+ * `shownSkills`' order — so the grouping re-arranges nothing and adds no second
+ * ranking rule. ⚠⚠ THE NULL PILLAR SORTS LAST because "Other" is a remainder,
+ * not a domain.
+ */
+function groupSkillsByPillar(
+  skills: { id: string; name: string; pillar: string | null }[]
+): { pillar: string | null; skills: { id: string; name: string }[] }[] {
+  const groups = new Map<string, { pillar: string | null; skills: { id: string; name: string }[] }>();
+  for (const s of skills) {
+    const key = s.pillar ?? "__none";
+    if (!groups.has(key)) groups.set(key, { pillar: s.pillar, skills: [] });
+    groups.get(key)!.skills.push({ id: s.id, name: s.name });
+  }
+  return [...groups.values()].sort((a, b) =>
+    a.pillar === null ? 1 : b.pillar === null ? -1 : 0
+  );
+}
+
+/**
  * ⚠ ENGAGEMENT RATES ONLY. A row renders only when its column holds a value —
  * a rate nobody set is absent, never `$0.00`, which would be a price.
  */
@@ -1348,10 +1433,23 @@ function RateRows({ p }: { p: ProviderProfileView }) {
      provider, and the truth is that this viewer is not being shown them. */
   if (!p.rates) return null;
   const rates = p.rates;
-  const rows = [
-    { label: "Onsite", cents: rates.onsiteCents },
-    { label: "Fully Remote", cents: rates.remoteCents },
-  ].filter((r) => r.cents != null);
+  /*
+    ── ⚠⚠ EVERY RATE THE GATE COUNTS (`P2-A3-E596` WS-G item 2) ─────────────
+
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   const rows = [
+    //     { label: "Onsite", cents: rates.onsiteCents },
+    //     { label: "Fully Remote", cents: rates.remoteCents },
+    //   ].filter((r) => r.cents != null);
+
+    ⚠⚠⚠ THE CARD SHOWED TWO OF THE FIVE COLUMNS `providerMeetsRequired`
+    ACCEPTS, so a provider could pass the visibility gate on `hourly_rate_cents`
+    and still be told *"No rates set yet"* on their own page. Priya Nair was
+    exactly that.
+    ⚠ THE LIST IS NOT REBUILT HERE — it comes from the view model, so the card
+    cannot drift from the columns the gate reads.
+  */
+  const rows = rates.columns.filter((r) => r.cents != null);
 
   if (rows.length === 0) {
     return (

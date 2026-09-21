@@ -127,9 +127,37 @@ test.describe("⚠ THE COMMUNITY PAGE — P2-J3-E591 WS-C", () => {
     );
     expect(nested, "an anchor is nested inside another anchor").toBe(0);
 
-    const href = await page.locator(".pm-cm-card .pm-cm-open").first().getAttribute("href");
-    console.log(`E591/WS-C  first card opens ${href}`);
-    expect(href).toMatch(/^\/providers\//);
+    /*
+      ── ⚠⚠ EVERY CARD'S LINK WORKS, NOT JUST THE FIRST (`P2-A3-E596` WS-G 5) ──
+
+      ⚠ SUPERSEDED, quoted not deleted (`E164`):
+      //   const href = await page.locator(".pm-cm-card .pm-cm-open").first().getAttribute("href");
+      //   expect(href).toMatch(/^\/providers\//);
+
+      ⚠⚠ `E591` WS-C item 5's COUNTER-CASE IS RETIRED — a card that "correctly
+      does not link" no longer has a subject. Measured at `E595` WS-B: every
+      colleague now has a provider profile, so every card links.
+      ⚠⚠⚠ SO THE ASSERTION BECOMES THE STRONGER ONE Scott asked for: each link
+      RETURNS 200 AND RENDERS A NAME. A card pointing at a 404 is the failure
+      that matters, and checking one card could never find it.
+    */
+    const hrefs = await page.evaluate(() =>
+      [...document.querySelectorAll(".pm-cm-card .pm-cm-open")].map((a) =>
+        a.getAttribute("href")
+      )
+    );
+    expect(hrefs.length, "no colleague card rendered a link").toBeGreaterThan(0);
+    for (const href of hrefs) {
+      expect(href).toMatch(/^\/providers\//);
+      const res = await page.goto(href!, { waitUntil: "domcontentloaded" });
+      expect(res?.status(), `${href} returned ${res?.status()}`).toBeLessThan(400);
+      const name = await page.evaluate(
+        () => document.querySelector("h2")?.textContent?.trim() ?? ""
+      );
+      expect(name.length, `${href} rendered no name`).toBeGreaterThan(1);
+    }
+    console.log(`E596/WS-G  ${hrefs.length} colleague cards, every link 200 with a name`);
+    await page.goto("/community", { waitUntil: "networkidle" });
 
     /* ⚠ An INVITED card opens nothing — there is no profile to open. */
     const invitedLinks = await page.evaluate(
