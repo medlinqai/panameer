@@ -390,7 +390,33 @@ export async function getProviderProfileView(
       distinct rate tuples (8500, 9900, 10000, 10500, 12000, 12500, 13000,
       14000), which a hardcode could not produce.
     */
-    rates: {
+    /*
+      ── ⚠⚠⚠ NO RATE THAT IS NOT THE VIEWER'S OWN (`P2-J3-E593` WS-C 13) ────
+
+      ⚠ Scott, 2026-09-20: *"I do nto think providers should see other
+      provider's rates"*, and the brief generalises it: *"no rate that is not
+      the viewer's own… omit it from the QUERY, not just the render: a field
+      absent from the DOM but present in the payload is still disclosed."*
+
+      ⚠⚠ THIS OBJECT **IS** THE PAYLOAD BOUNDARY, WHICH IS WHY THE GATE IS
+      HERE. The Prisma row never leaves the server; the RSC flight data carries
+      THIS view model. ⚠ So `null` here is the strong version of the rule —
+      there is no rate field for a non-owner to find in devtools, in the DOM, or
+      in the serialised props.
+      ⚠ The loader uses `include`, so the COLUMNS are still read from the
+      database. That read never crosses the wire, and narrowing it to an
+      explicit select would be a rewrite of a 600-line loader for no disclosure
+      benefit. **Stated plainly rather than claimed as "omitted from the query".**
+
+      ⚠⚠⚠ ONE PREDICATE, ONE PLACE — deliberately, because it is the thing most
+      likely to need narrowing. **A BUYER ALSO LOSES THE RATE UNDER THIS
+      READING**, and a buyer is who the marketplace exists for: `E581` records
+      that a rate is part of the REQUIRED set precisely so buyers can filter on
+      it. ⚠ If Scott means provider→provider only, the change is
+      `isOwner || hasCapability(viewer, "canHireTalent")` on this line and
+      nothing else moves. **Raised at the WS-C gate rather than decided here.**
+    */
+    rates: !isOwner ? null : {
       currency: profile.currency,
       hourlyCents: profile.hourly_rate_cents,
       // WS0/E078c — the advertised RANGE. Falls back to the legacy single rate

@@ -39,6 +39,7 @@ const CARDS = code("src", "components", "community", "ColleagueCards.tsx");
 const RAIL = code("src", "components", "community", "CommunityRail.tsx");
 const SIL = code("src", "components", "community", "Silhouette.tsx");
 const RATES = code("src", "lib", "provider-rates.ts");
+const CARDS_PROFILE = code("src", "components", "community", "ConnectProfile.tsx");
 const HOME = code("src", "components", "community", "ConnectHome.tsx");
 
 const SURFACE: [string, string][] = [
@@ -249,6 +250,34 @@ check(
   /Waiting on You/.test(CARDS) && !/Waiting on you/.test(CARDS)
 );
 check("8 — ⚠ it renders nothing at zero rather than an empty container", /rows\.length === 0\) return null/.test(CARDS));
+
+/* ── 9 · ⚠⚠⚠ NO RATE THAT IS NOT THE VIEWER'S OWN (`E593` WS-C item 13) ── */
+/*
+  ⚠ Scott, 2026-09-20: *"no rate that is not the viewer's own."*
+  ⚠⚠ THIS IS THE STRUCTURAL HALF, AND IT IS HERE BECAUSE THE BROWSER HALF
+  CANNOT CARRY IT. Measured at the WS-C gate: the rate FIELD NAMES appear in
+  NEITHER page's payload — not the visitor's, and not the owner's — because
+  `ConnectProfile` and everything under it are SERVER components, so `p` is
+  never serialised. ⚠⚠⚠ AN ABSENCE ASSERTION IN A SPEC THEREFORE COULD NEVER
+  FAIL, which is `E586`. **The claim that CAN fail is this one: the view model
+  does not build the object at all for a non-owner.**
+*/
+const PVIEW = code("src", "lib", "provider-profile-view.ts");
+check(
+  "9 — ⚠⚠ the view model withholds `rates` from a non-owner",
+  /rates:\s*!isOwner \? null :/.test(PVIEW)
+);
+/* ⚠ And the CARD is gated, not just its body — `RateRows` returning null still
+   left `ProfileCard` printing the heading `Rates` over an empty box, which told
+   a visitor a rate existed and was being withheld. Caught by the WS-C walk. */
+check(
+  "9 — ⚠ the Rates CARD is gated, not only its rows",
+  /\{p\.rates && \(\s*<ProfileCard/.test(CARDS_PROFILE)
+);
+check(
+  "9 — ⚠ both rate consumers handle the null",
+  (CARDS_PROFILE.match(/if \(!p\.rates\) return null;/g) ?? []).length === 2
+);
 
 console.log(
   `\ncheck:community-page — ${failed === 0 ? `${passed}/${passed} passed` : `${failed} FAILED, ${passed} passed`}`

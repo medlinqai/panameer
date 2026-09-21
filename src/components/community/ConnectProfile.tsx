@@ -147,6 +147,34 @@ export function ConnectProfile({
   */
   const owner = p.isOwner;
 
+  /* ⚠ The groups this profile belongs to — see the card in the right rail.
+     ⚠⚠ DERIVED FROM PROPS THIS COMPONENT ALREADY RECEIVES; no new read, and no
+     group model is invented. A path taught AND taken is one group. */
+  /*
+    ⚠⚠ IT LISTS `LearningPath.group`, NOT `title`, AND THE CHOICE IS MEASURED.
+
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   new Set([...taughtPaths, ...takenPaths].map((t) => t.title))
+
+    ⚠⚠ BOTH READINGS OF *"the groups this profile belongs to"* ARE DEFENSIBLE:
+    `E383` creates ONE FORUM PER LEARNING PATH, so a path IS a group and its
+    TITLE is that group's name. ⚠⚠⚠ BUT THE TITLES MEASURE BADLY — the live
+    catalogue holds paths called `1. Background`, `2. Overview` and
+    `4. How to Login & Get Started`, so a card headed **Groups** rendered a list
+    of numbered steps. ⚠ `group` holds the real names: `Procurement`, `Payroll`,
+    `Finance & Accounting`, `Supply Chain Execution`.
+    ⚠ SHORTER AND TRUER FOR A VISITOR SUMMARY, which is what this card is — not
+    a directory. ⚠⚠ THE STEP-LIKE TITLES ARE A CATALOGUE DATA OBSERVATION, NOT
+    A DEFECT HERE, and are reported at the gate rather than papered over.
+    ⚠ Falls back to the title when a path carries no group — one live row has an
+    empty string, and dropping it would silently under-report a membership.
+  */
+  const visitorGroups = Array.from(
+    new Set(
+      [...taughtPaths, ...takenPaths].map((t) => (t.group?.trim() ? t.group : t.title))
+    )
+  );
+
   const fullName = [p.person.firstName, p.person.lastName]
     .filter(Boolean)
     .join(" ");
@@ -511,16 +539,48 @@ export function ConnectProfile({
             title="Certifications"
             edit={owner ? <EditLink href="/join/provider?step=finish" title="Certifications" /> : undefined}
           >
+              {/*
+                ── ⚠⚠ AN EMPTY SECTION OFFERS A ROUTE (`E593` WS-C item 16) ──
+
+                ⚠ Owner-only: a visitor cannot act on it, and *"Browse Learning
+                Paths"* on somebody else's profile is an instruction aimed at
+                the wrong person.
+                ⚠⚠ IT SAYS WHERE TO GET ONE, NOT WHAT IS MISSING. `/community/score`
+                owns the second sentence — see the ruling recorded on
+                `CertificationsBody`.
+              */}
               <CertificationsBody
                 certifications={p.certifications}
                 empty="No certifications yet."
+                emptyAction={
+                  owner ? (
+                    <Link
+                      href="/learn"
+                      className="mt-2 inline-block text-[13.5px] font-bold text-magenta hover:underline"
+                    >
+                      Earn One in Learn
+                    </Link>
+                  ) : undefined
+                }
               />
             </ProfileCard>
             <ProfileCard
             title="Education"
             edit={owner ? <EditLink href="/join/provider?step=education&return=review" title="Education" /> : undefined}
           >
-              <EducationBody education={p.education} />
+              <EducationBody
+                education={p.education}
+                emptyAction={
+                  owner ? (
+                    <Link
+                      href="/learn"
+                      className="mt-2 inline-block text-[13.5px] font-bold text-magenta hover:underline"
+                    >
+                      Browse Learning Paths
+                    </Link>
+                  ) : undefined
+                }
+              />
             </ProfileCard>
           </div>
 
@@ -831,6 +891,55 @@ export function ConnectProfile({
               / mentor) and posts through the same rules the server re-checks.
               ⚠⚠ REBUILDING IT HERE WOULD BE A SECOND COPY OF THE CONNECT RULE.
             */}
+            {/*
+              ── ⚠⚠ THE GROUPS THIS PROFILE BELONGS TO (`E593` WS-C item 13) ──
+
+              ⚠ Scott's *"360"*: a visitor should see which groups this person
+              is in. ⚠⚠ `E593` WS-A NAMED THE FORUMS SURFACE `Groups`, and
+              `E383` creates ONE FORUM PER LEARNING PATH with the path — so the
+              groups somebody belongs to ARE the paths they teach or take.
+              ⚠⚠⚠ SO THIS INVENTS NOTHING AND ADDS NO QUERY: both lists are
+              already props on this component, for the Learning Paths card.
+              **A group model does not exist and is not being modelled here.**
+
+              ⚠ DEDUPED — a path can be both taught and taken, and it is still
+              one group. ⚠ Capped at six, with the rest counted rather than
+              listed: a visitor card is a summary, and the row is not a
+              directory.
+              ⚠⚠ IT LINKS TO `/community/forums`, THE SURFACE — not to a
+              specific board, because board access is gated on enrolment or
+              teaching (`canAccessPathForum`) and this viewer may have neither.
+              **A link that 403s is a dead door with a nicer sign.**
+            */}
+            {visitorGroups.length > 0 && (
+              <section className="rounded-brand border border-line bg-white px-[18px] py-4">
+                <h3 className="mb-2.5 font-display text-[14.5px] font-bold leading-tight">
+                  Groups
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {visitorGroups.slice(0, 6).map((g) => (
+                    <span
+                      key={g}
+                      className="rounded-full border border-line bg-white px-3 py-1 text-[12.5px] text-ink-2"
+                    >
+                      {g}
+                    </span>
+                  ))}
+                </div>
+                {visitorGroups.length > 6 && (
+                  <p className="mt-2 text-[12px] text-ink-3">
+                    +{visitorGroups.length - 6} more
+                  </p>
+                )}
+                <Link
+                  href="/community/forums"
+                  className="mt-2.5 inline-block text-[13px] font-bold text-magenta hover:underline"
+                >
+                  Browse Groups
+                </Link>
+              </section>
+            )}
+
             {connect && (
               <section className="rounded-brand border border-line bg-white px-[18px] py-4">
                 <h3 className="mb-2.5 font-display text-[14.5px] font-bold leading-tight">
@@ -931,12 +1040,23 @@ export function ConnectProfile({
           in the schema is a `WorksiteType` on a WORK REQUEST, a different
           model.) ⚠ So the mockup's three rows are two. **Reported, not invented.**
         */}
-        <ProfileCard
-          title="Rates"
-          edit={owner ? <EditLink href="/join/provider?step=finish" title="Rates" /> : undefined}
-        >
-          <RateRows p={p} />
-        </ProfileCard>
+        {/*
+          ⚠⚠⚠ THE WHOLE CARD IS GATED, NOT JUST ITS BODY. `RateRows` returning
+          `null` still left `ProfileCard` rendering the HEADING — so the visitor
+          page said **"Rates"** over an empty box. ⚠ Caught by the WS-C walk,
+          which asserts the word is absent from the visitor's DOM.
+          ⚠⚠ AN EMPTY CARD TITLED `Rates` IS WORSE THAN NO CARD: it tells a
+          visitor a rate exists and is being withheld, when the rule is simply
+          that this is not their business.
+        */}
+        {p.rates && (
+          <ProfileCard
+            title="Rates"
+            edit={owner ? <EditLink href="/join/provider?step=finish" title="Rates" /> : undefined}
+          >
+            <RateRows p={p} />
+          </ProfileCard>
+        )}
 
         {/*
           ── ⚠⚠ ACCOUNT HEALTH, AS A CARD (`P2-J3-E593` WS-B item 12) ───────
@@ -1004,9 +1124,15 @@ export function ConnectProfile({
  * a rate nobody set is absent, never `$0.00`, which would be a price.
  */
 function RateRows({ p }: { p: ProviderProfileView }) {
+  /* ⚠⚠ `p.rates` IS `null` FOR A NON-OWNER (`E593` WS-C item 13) — the rate is
+     absent from the PAYLOAD, not merely unrendered. ⚠ This returns nothing
+     rather than an empty state: "no rates set" would be a claim about the
+     provider, and the truth is that this viewer is not being shown them. */
+  if (!p.rates) return null;
+  const rates = p.rates;
   const rows = [
-    { label: "Onsite", cents: p.rates.onsiteCents },
-    { label: "Fully Remote", cents: p.rates.remoteCents },
+    { label: "Onsite", cents: rates.onsiteCents },
+    { label: "Fully Remote", cents: rates.remoteCents },
   ].filter((r) => r.cents != null);
 
   if (rows.length === 0) {
@@ -1030,7 +1156,7 @@ function RateRows({ p }: { p: ProviderProfileView }) {
           <dt className="text-ink-2">{r.label}</dt>
           {/* ⚠ `E433` — a rate is a figure, so ink. */}
           <dd className="m-0 font-bold tabular-nums text-ink">
-            {money(r.cents!, p.rates.currency)}
+            {money(r.cents!, rates.currency)}
           </dd>
         </div>
       ))}
@@ -1091,6 +1217,9 @@ function TrustRow({ label, value }: { label: string; value: string | null }) {
  * rate is set — the row then does not render, rather than printing `$0`.
  */
 function rateRange(p: ProviderProfileView): string | null {
+  /* ⚠ `null` for a non-owner (`E593` WS-C 13) — the `TrustRow` that calls this
+     renders nothing on a null, so the Rate row simply is not there. */
+  if (!p.rates) return null;
   const { minCents, maxCents, currency } = p.rates;
   if (minCents == null && maxCents == null) return null;
   const lo = minCents ?? maxCents!;

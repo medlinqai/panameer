@@ -1,4 +1,4 @@
-import { test } from "@playwright/test";
+import { test, expect } from "@playwright/test";
 import { signIn } from "./_auth";
 
 /**
@@ -15,11 +15,25 @@ import { signIn } from "./_auth";
 for (const [label, path] of [
   ["/connect (owner)", "/connect"],
   ["/community", "/community"],
+  /*
+    ⚠⚠ THE VISITOR PAGE IS MEASURED TOO (`E593` WS-C). It renders the SAME
+    component as the owner's, so its height is the other half of the same
+    question — and `visitor` is resolved from a real colleague card rather than
+    a hardcoded id, which rots.
+  */
+  ["/providers/[id] (visitor)", "__visitor__"],
 ] as const) {
   test(`height ${label}`, async ({ browser }) => {
     const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
     await signIn(page);
-    await page.goto(path, { waitUntil: "networkidle" });
+    let target = path as string;
+    if (target === "__visitor__") {
+      await page.goto("/community", { waitUntil: "networkidle" });
+      const href = await page.locator(".pm-cm-card .pm-cm-open").first().getAttribute("href");
+      expect(href, "no colleague card links to a profile").toBeTruthy();
+      target = href!;
+    }
+    await page.goto(target, { waitUntil: "networkidle" });
     const m = await page.evaluate(() => ({
       scroll: document.documentElement.scrollHeight,
       viewport: window.innerHeight,

@@ -152,7 +152,10 @@ export function ProviderProfileViewPage({
     unrendered would be a live wrong number one prop away from a page.
     ⚠⚠ NOTHING REPLACES IT — see the note in `provider-profile-view.ts`.
   */
-  const { youGet } = p.isRecruiter
+  /* ⚠ `p.rates` IS NULL FOR A NON-OWNER since `E593` WS-C item 13. ⚠⚠ THIS
+     COMPONENT IS RENDERED BY NO PAGE (`E588` WS-B), so this is about keeping it
+     COMPILING, not about what it shows — it is kept on disk under `E164`. */
+  const { youGet } = p.isRecruiter || !p.rates
     ? { youGet: null }
     : rateBreakdown(p.rates.hourlyCents, p.serviceFeeBps);
   // E074 — Solo Projects is null-employer ONLY; everything else belongs to its
@@ -470,9 +473,9 @@ export function ProviderProfileViewPage({
           /* ⚠ ABSENT, NOT ZEROED (`E401` WS-2). `IdentityBlock` renders the
              whole `Hourly Rate:` row only when it has a figure, so passing null
              removes the line rather than printing an empty one. */
-          rateMinCents={p.isRecruiter ? null : p.rates.minCents}
-          rateMaxCents={p.isRecruiter ? null : p.rates.maxCents}
-          currency={p.rates.currency}
+          rateMinCents={p.isRecruiter ? null : (p.rates?.minCents ?? null)}
+          rateMaxCents={p.isRecruiter ? null : (p.rates?.maxCents ?? null)}
+          currency={p.rates?.currency ?? "USD"}
           youGetCents={p.isOwner ? youGet : null}
           language={p.primaryLanguage}
           experience={p.experience}
