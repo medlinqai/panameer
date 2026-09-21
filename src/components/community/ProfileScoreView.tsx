@@ -221,7 +221,27 @@ export function ProfileScoreView({ score }: { score: ProfileScore }) {
                 return (
                   <div
                     key={l.key}
-                    className="flex items-start gap-3 border-t border-line-2 py-3 first:border-t-0"
+                    /*
+                      ── ⚠⚠ TWO LINES, NOT THREE (`P2-A3-E596` WS-B item 2) ──
+
+                      ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                      //   className="flex items-start gap-3 border-t border-line-2 py-3 first:border-t-0"
+                      //   <b className="block text-[14px]">{l.label}</b>
+                      //   <span className="mt-0.5 block …">{copy.why}</span>
+                      //   <span className="mt-1.5 flex …">   ← actions on their OWN third line
+
+                      ⚠⚠ MEASURED AT 1440×900 BEFORE THE CHANGE: eight rows at
+                      **88.6px each** — not the ~70px the brief estimated — for a
+                      card 859px tall whose bottom sat 611px BELOW THE FOLD.
+                      ⚠ Scott rejected swapping the columns (*"shit you need to
+                      do (under the circle) and shit you haev done (off to the
+                      right)"*), so the fix is compression, not rearrangement.
+
+                      ⚠ THE TITLE AND THE ACTIONS SHARE LINE ONE; the "why" is
+                      line two. Nothing is removed — the action, the optional
+                      *"or I have none"* and the points badge all survive.
+                    */
+                    className="flex items-start gap-3 border-t border-line-2 py-1.5 first:border-t-0"
                     onMouseEnter={() => setHover(l.key)}
                     onMouseLeave={() => setHover(null)}
                   >
@@ -229,11 +249,9 @@ export function ProfileScoreView({ score }: { score: ProfileScore }) {
                       {i + 1}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <b className="block text-[14px]">{l.label}</b>
-                      <span className="mt-0.5 block text-[11.5px] leading-snug text-ink-3">
-                        {copy.why}
-                      </span>
-                      <span className="mt-1.5 flex flex-wrap items-center gap-2 text-[12.5px]">
+                      <span className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                        <b className="text-[14px]">{l.label}</b>
+                        <span className="flex flex-wrap items-center gap-2 text-[12.5px]">
                         <Link
                           href={copy.href}
                           className="font-bold text-magenta hover:underline"
@@ -259,6 +277,11 @@ export function ProfileScoreView({ score }: { score: ProfileScore }) {
                             </button>
                           </>
                         )}
+                        </span>
+                      </span>
+                      {/* ⚠ LINE TWO — the reason, under the title and its actions. */}
+                      <span className="mt-0.5 block text-[11.5px] leading-snug text-ink-3">
+                        {copy.why}
                       </span>
                     </span>
                     <span className="flex-none font-display text-[13px] font-bold text-magenta-dark">
@@ -339,14 +362,21 @@ export function ProfileScoreView({ score }: { score: ProfileScore }) {
             );
           })}
 
-          {/* ⚠⚠ THE KEY. The grey is a FILLED state and counts toward the
-              figure — it must not read as a gap, so the legend says so. */}
+          {/* ⚠⚠ THE KEY. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+              //   The grey is a FILLED state and counts toward the figure — it
+              //   must not read as a gap, so the legend says so.
+              ⚠⚠⚠ THERE IS NO GREY ANY MORE. Two of these three swatches are now
+              MAGENTA and that is the point: both states COUNT, and the ring
+              paints them alike so it can never disagree with the number. ⚠ THE
+              LABELS ARE WHAT STILL DISTINGUISH THEM, which is Scott's ruling in
+              terms: *"the legend still says which lines are 'I have none'."* */}
           <div className="mt-5 flex flex-wrap gap-4 border-t border-line-2 pt-3 text-[11.5px] text-ink-3">
             <span className="flex items-center gap-1.5">
               <i className="block h-2.5 w-2.5 rounded-full bg-magenta" /> Filled in
             </span>
             <span className="flex items-center gap-1.5">
-              <i className="block h-2.5 w-2.5 rounded-full bg-ink-2/40" /> You have
+              {/* ⚠ SUPERSEDED (`E164`): `bg-ink-2/40`. */}
+              <i className="block h-2.5 w-2.5 rounded-full bg-magenta" /> You have
               none — still counts
             </span>
             <span className="flex items-center gap-1.5">
@@ -360,9 +390,15 @@ export function ProfileScoreView({ score }: { score: ProfileScore }) {
   );
 }
 
-/* ⚠⚠ THREE PAINTS, AND THE MIDDLE ONE IS NOT A GAP. `declared_none` counts
-   toward the figure, so it is a solid grey — a paler shade of "answered", never
-   the same colour as "nothing here". */
+/* ⚠⚠ TWO PAINTS NOW, NOT THREE (`P2-A3-E596`, Scott 2026-09-21): a line either
+   COUNTS toward the figure or it does not, and the ring says exactly that.
+   ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   ⚠⚠ THREE PAINTS, AND THE MIDDLE ONE IS NOT A GAP. `declared_none` counts
+   //   toward the figure, so it is a solid grey — a paler shade of "answered",
+   //   never the same colour as "nothing here".
+   ⚠⚠ THE CLASS IS KEPT rather than folded into `pm-score-filled`. The DOM still
+   distinguishes a declared line, which is what lets a gate — and a reader
+   inspecting the page — tell the two apart even though they paint alike. */
 function paintClass(state: ScoreLine["state"]): string {
   if (state === "filled") return "pm-score-filled";
   if (state === "declared_none") return "pm-score-declared";
@@ -371,6 +407,11 @@ function paintClass(state: ScoreLine["state"]): string {
 
 function dotClass(state: ScoreLine["state"]): string {
   if (state === "filled") return "bg-magenta";
-  if (state === "declared_none") return "bg-ink-2/40";
+  /* ⚠ MAGENTA, matching the ring (`P2-A3-E596`). ⚠ SUPERSEDED, quoted not
+     deleted (`E164`):  if (state === "declared_none") return "bg-ink-2/40";
+     ⚠⚠ A GREY DOT BESIDE A MAGENTA SLICE FOR THE SAME LINE would be the
+     contradiction moved rather than fixed — the legend sits under this list and
+     explains both. The words carry the distinction; the colour carries "counts". */
+  if (state === "declared_none") return "bg-magenta";
   return "bg-line-2";
 }
