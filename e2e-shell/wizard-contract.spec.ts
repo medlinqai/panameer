@@ -300,7 +300,14 @@ test("⚠⚠⚠ CONTACT — the editor saves Person.phone and the address", asyn
     SITE. An assertion on the phone alone would pass while every address was
     silently dropped.
   */
-  const phone = "+15550107777";
+  /*
+    ⚠⚠ TEN DIGITS, NO `+1`. MEASURED: the field is a MASK and caps at ten
+    digits, so `+15550107777` was stored as `1555010777` — the country code ate
+    the first slot and the last digit fell off the end.
+    ⚠ The test was wrong, not the editor. Recorded because the next person to
+    add a phone assertion will reach for `+1` too.
+  */
+  const phone = "5550107777";
   await page.locator("#review-phone").fill(phone);
 
   const line1 = `${STAMP} 42 Extraction Way`;
