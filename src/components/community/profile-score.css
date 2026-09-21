@@ -99,11 +99,32 @@
 .pm-score-filled {
   stroke: var(--magenta, #d72cd6);
 }
-/* ⚠⚠ A SOLID GREY, NOT A TINT OF THE EMPTY COLOUR. `declared_none` COUNTS
-   toward the figure; painting it like the unanswered track would tell the
-   provider their answer did not register. */
+/*
+  ── ⚠⚠⚠ `declared_none` PAINTS MAGENTA, THE SAME AS FILLED (`P2-A3-E596`) ──
+
+  ⚠ SCOTT, 2026-09-21, ruling at WS-B's gate: *"lines answered 'I have none'
+  paint MAGENTA, the same as filled. If a line counts toward the score, the ring
+  shows it as filled, so the ring always agrees with the number."*
+
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   ⚠⚠ A SOLID GREY, NOT A TINT OF THE EMPTY COLOUR. `declared_none` COUNTS
+  //   toward the figure; painting it like the unanswered track would tell the
+  //   provider their answer did not register.
+  //   .pm-score-declared { stroke: #b7b1c6; }
+
+  ⚠⚠ THE OLD RULE WAS HALF RIGHT AND THAT IS WHY IT LASTED: it correctly refused
+  to paint a declared line like the empty track. ⚠⚠⚠ BUT A THIRD COLOUR STILL
+  BROKE THE ONE THING THE RING IS FOR — a profile at 78 with several *"I have
+  none"* answers showed a mostly-grey ring beside a high number, so the picture
+  contradicted the figure. **The ring is a picture of the SCORE, and the score
+  counts these.**
+  ⚠ THE DISTINCTION IS NOT LOST, IT MOVED TO WORDS: the legend still reads
+  *"You have none — still counts"*, and every declared line carries its rider in
+  the "What you've done" list. ⚠⚠ A reader who wants to know WHICH lines were
+  declared can still find out; a reader glancing at the ring is no longer misled.
+*/
 .pm-score-declared {
-  stroke: #b7b1c6;
+  stroke: var(--magenta, #d72cd6);
 }
 .pm-score-empty {
   stroke: #ece9f2;

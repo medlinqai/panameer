@@ -362,14 +362,21 @@ export function ProfileScoreView({ score }: { score: ProfileScore }) {
             );
           })}
 
-          {/* ⚠⚠ THE KEY. The grey is a FILLED state and counts toward the
-              figure — it must not read as a gap, so the legend says so. */}
+          {/* ⚠⚠ THE KEY. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+              //   The grey is a FILLED state and counts toward the figure — it
+              //   must not read as a gap, so the legend says so.
+              ⚠⚠⚠ THERE IS NO GREY ANY MORE. Two of these three swatches are now
+              MAGENTA and that is the point: both states COUNT, and the ring
+              paints them alike so it can never disagree with the number. ⚠ THE
+              LABELS ARE WHAT STILL DISTINGUISH THEM, which is Scott's ruling in
+              terms: *"the legend still says which lines are 'I have none'."* */}
           <div className="mt-5 flex flex-wrap gap-4 border-t border-line-2 pt-3 text-[11.5px] text-ink-3">
             <span className="flex items-center gap-1.5">
               <i className="block h-2.5 w-2.5 rounded-full bg-magenta" /> Filled in
             </span>
             <span className="flex items-center gap-1.5">
-              <i className="block h-2.5 w-2.5 rounded-full bg-ink-2/40" /> You have
+              {/* ⚠ SUPERSEDED (`E164`): `bg-ink-2/40`. */}
+              <i className="block h-2.5 w-2.5 rounded-full bg-magenta" /> You have
               none — still counts
             </span>
             <span className="flex items-center gap-1.5">
@@ -383,9 +390,15 @@ export function ProfileScoreView({ score }: { score: ProfileScore }) {
   );
 }
 
-/* ⚠⚠ THREE PAINTS, AND THE MIDDLE ONE IS NOT A GAP. `declared_none` counts
-   toward the figure, so it is a solid grey — a paler shade of "answered", never
-   the same colour as "nothing here". */
+/* ⚠⚠ TWO PAINTS NOW, NOT THREE (`P2-A3-E596`, Scott 2026-09-21): a line either
+   COUNTS toward the figure or it does not, and the ring says exactly that.
+   ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   ⚠⚠ THREE PAINTS, AND THE MIDDLE ONE IS NOT A GAP. `declared_none` counts
+   //   toward the figure, so it is a solid grey — a paler shade of "answered",
+   //   never the same colour as "nothing here".
+   ⚠⚠ THE CLASS IS KEPT rather than folded into `pm-score-filled`. The DOM still
+   distinguishes a declared line, which is what lets a gate — and a reader
+   inspecting the page — tell the two apart even though they paint alike. */
 function paintClass(state: ScoreLine["state"]): string {
   if (state === "filled") return "pm-score-filled";
   if (state === "declared_none") return "pm-score-declared";
@@ -394,6 +407,11 @@ function paintClass(state: ScoreLine["state"]): string {
 
 function dotClass(state: ScoreLine["state"]): string {
   if (state === "filled") return "bg-magenta";
-  if (state === "declared_none") return "bg-ink-2/40";
+  /* ⚠ MAGENTA, matching the ring (`P2-A3-E596`). ⚠ SUPERSEDED, quoted not
+     deleted (`E164`):  if (state === "declared_none") return "bg-ink-2/40";
+     ⚠⚠ A GREY DOT BESIDE A MAGENTA SLICE FOR THE SAME LINE would be the
+     contradiction moved rather than fixed — the legend sits under this list and
+     explains both. The words carry the distinction; the colour carries "counts". */
+  if (state === "declared_none") return "bg-magenta";
   return "bg-line-2";
 }
