@@ -1,5 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import { signIn } from "./_auth";
+import { requireCompleteProvider } from "./_persona";
 
 /**
  * ── ⚠⚠ THE VISITOR PAGE, AND THE OWNER'S UNCHANGED (`E593` WS-C item 13) ──
@@ -23,6 +24,31 @@ async function firstColleagueProfile(page: Page): Promise<string> {
   expect(href, "no colleague card links to a profile").toBeTruthy();
   return href!;
 }
+
+/**
+ * ── ⚠⚠⚠ THE PRECONDITION. IT RUNS FIRST AND IT FAILS LOUDLY (`P0-E595` WS-B) ─
+ *
+ * ⚠ SCOTT, 2026-09-21: *"The gate must fail loudly if that persona isn't a
+ * complete provider. A gate that passes on nothing isn't a gate (E586)."*
+ *
+ * ⚠⚠ `E586` IS `check:resume` REPORTING `0 passed, 0 failed, 16 skipped` WITH
+ * EXIT CODE 0 because its fixtures did not exist, and it was quoted as green in
+ * gate tables for weeks. ⚠⚠⚠ THE SAME HOLE OPENED HERE THE MOMENT THE `E595`
+ * RESET EMPTIED THE SEED: the account every spec signs in as lost its provider
+ * profile, and several assertions in this suite are ABSENCE checks — *"no rate
+ * reaches the visitor"* — which a blank page satisfies perfectly.
+ * ⚠ So the suite would have gone greener, not redder, on no data at all.
+ *
+ * ⚠ It asserts the persona as a BUYER sees them: on `/talent`, which only lists
+ * providers who pass every clause of `providerMeetsRequired`.
+ */
+test("⚠⚠⚠ PRECONDITION — the gate persona is a complete, visible provider", async ({ browser }) => {
+  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+  await signIn(page);
+  const href = await requireCompleteProvider(page);
+  console.log(`E595/WS-B  gate persona OK — ${href}`);
+  await page.close();
+});
 
 test.describe("⚠ THE VISITOR PROFILE — P2-J3-E593 WS-C", () => {
   test("⚠⚠⚠ no rate reaches the visitor — DOM or RSC payload", async ({ browser }) => {

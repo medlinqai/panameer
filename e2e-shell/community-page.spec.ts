@@ -1,5 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { signIn } from "./_auth";
+import { requireCompleteProvider } from "./_persona";
+import { INVITES } from "../prisma/test3-community-spec";
 
 /**
  * ── ⚠⚠ THE COMMUNITY PAGE, WALKED SIGNED IN (`P2-J3-E591` WS-C) ───────────
@@ -12,6 +14,31 @@ import { signIn } from "./_auth";
  * ⚠ `check:community-page` proves the RULES statically. This proves they are
  * true of the DOM the browser actually built.
  */
+/**
+ * ── ⚠⚠⚠ THE PRECONDITION. IT RUNS FIRST AND IT FAILS LOUDLY (`P0-E595` WS-B) ─
+ *
+ * ⚠ SCOTT, 2026-09-21: *"The gate must fail loudly if that persona isn't a
+ * complete provider. A gate that passes on nothing isn't a gate (E586)."*
+ *
+ * ⚠⚠ `E586` IS `check:resume` REPORTING `0 passed, 0 failed, 16 skipped` WITH
+ * EXIT CODE 0 because its fixtures did not exist, and it was quoted as green in
+ * gate tables for weeks. ⚠⚠⚠ THE SAME HOLE OPENED HERE THE MOMENT THE `E595`
+ * RESET EMPTIED THE SEED: the account every spec signs in as lost its provider
+ * profile, and several assertions in this suite are ABSENCE checks — *"no rate
+ * reaches the visitor"* — which a blank page satisfies perfectly.
+ * ⚠ So the suite would have gone greener, not redder, on no data at all.
+ *
+ * ⚠ It asserts the persona as a BUYER sees them: on `/talent`, which only lists
+ * providers who pass every clause of `providerMeetsRequired`.
+ */
+test("⚠⚠⚠ PRECONDITION — the gate persona is a complete, visible provider", async ({ browser }) => {
+  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+  await signIn(page);
+  const href = await requireCompleteProvider(page);
+  console.log(`E595/WS-B  gate persona OK — ${href}`);
+  await page.close();
+});
+
 test.describe("⚠ THE COMMUNITY PAGE — P2-J3-E591 WS-C", () => {
   for (const { label, w } of [
     { label: "desktop", w: 1440 },
@@ -37,9 +64,20 @@ test.describe("⚠ THE COMMUNITY PAGE — P2-J3-E591 WS-C", () => {
       expect(nInv, "the live invitation did not render").toBe(1);
 
       /* ⚠⚠ THE LAPSED INVITATION MUST NOT APPEAR. Two were seeded; one expired
-         three days ago and `status` still reads PENDING. */
-      await expect(page.getByText("marcus.oyelaran@example.com")).toHaveCount(0);
-      await expect(page.getByText("dana.whitfield@example.com")).toHaveCount(1);
+         three days ago and `status` still reads PENDING.
+         ⚠⚠⚠ THE ADDRESSES ARE READ FROM THE SEED SPEC, NOT TYPED. SUPERSEDED,
+         quoted not deleted (`E164`):
+         //   await expect(page.getByText("marcus.oyelaran@example.com")).toHaveCount(0);
+         //   await expect(page.getByText("dana.whitfield@example.com")).toHaveCount(1);
+         ⚠ `E595` WS-B renamed the live invitee — `sw_user23@straterp.com` IS Dana
+         Whitfield and is now a first-degree COLLEAGUE, so an invitation in the
+         same name put one person in two states on one screen. The gate went red
+         on the rename rather than on a defect, which is a gate encoding a
+         LITERAL where the seed owns the fact. */
+      const live = INVITES.find((i) => i.expiresInDays > 0)!;
+      const lapsed = INVITES.find((i) => i.expiresInDays < 0)!;
+      await expect(page.getByText(lapsed.email)).toHaveCount(0);
+      await expect(page.getByText(live.email)).toHaveCount(1);
 
       const overflow = await page.evaluate(
         () => document.documentElement.scrollWidth - document.documentElement.clientWidth

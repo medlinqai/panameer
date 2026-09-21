@@ -34,9 +34,11 @@
 import { PrismaClient, type Prisma } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
-import { readFileSync } from "fs";
+import { readFileSync, writeFileSync, mkdirSync } from "fs";
 import { join } from "path";
 import { SURVIVORS, EXPLICIT_DELETES } from "./reset/survivors-spec";
+import { avatarPath, avatarSvg } from "./seed-avatar";
+import { GATE_PROVIDER_EMAIL } from "./gate-persona";
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
@@ -106,6 +108,88 @@ const SEED_TAG = "[seed:wide]";
  */
 const NEVER_RECREATE = new Set(EXPLICIT_DELETES.map((e) => e.trim().toLowerCase()));
 const MAY_BE_SYSTEM_ADMIN = new Set(SURVIVORS.map((s) => s.email.trim().toLowerCase()));
+
+/**
+ * ── ⚠ THE AVATARS ARE WRITTEN TO `public/`, AND THAT IS ON PURPOSE ─────────
+ *
+ * ⚠⚠ THE SEED IS THE ONLY PLACE THAT KNOWS THE WHOLE CAST. The roster half
+ * comes from a JSON file, the wide half is computed from the CATALOG at run
+ * time — so a standalone generator script would need the database anyway and
+ * would be a second list that drifts from this one. ⚠ `E558`'s lesson, applied:
+ * one definition, never two.
+ *
+ * ⚠ IT IS IDEMPOTENT. Every byte derives from the email, so a re-run rewrites
+ * identical files and `git status` stays quiet. ⚠⚠ THEY MUST BE COMMITTED —
+ * `public/` is what Vercel serves, and an uncommitted avatar is a 404 on
+ * preview and production while working perfectly on the machine that seeded.
+ */
+const AVATAR_DIR = join(process.cwd(), "public", "seed-avatars");
+let avatarsWritten = 0;
+function writeAvatar(email: string, displayName: string): string {
+  const path = avatarPath(email);
+  mkdirSync(AVATAR_DIR, { recursive: true });
+  writeFileSync(join(AVATAR_DIR, path.split("/").pop()!), avatarSvg(email, displayName), "utf8");
+  avatarsWritten++;
+  return path;
+}
+
+/**
+ * ── ⚠⚠ THE REQUIRED SET, IN ONE PLACE (`P0-E595` WS-B) ────────────────────
+ *
+ * ⚠ `providerMeetsRequired` (`access.ts`) takes SEVEN facts: title, role, ≥1
+ * skill, a rate, photo, phone, ≥1 address. This seed used to supply the rate
+ * and the skills and NOTHING ELSE, so a seeded provider had never once been
+ * marketplace-visible — which is a large part of what `E581` has been counting.
+ *
+ * ⚠⚠ THE PERSON-SIDE FOUR LIVE HERE so the roster half and the wide half cannot
+ * disagree about what "complete" means. The profile-side three stay at their
+ * call sites, because the rate and the role genuinely differ between a roster
+ * persona (the spreadsheet states them) and a synthetic one (they are derived).
+ */
+async function completePerson(opts: {
+  personId: string;
+  email: string;
+  displayName: string;
+  title: string;
+  /** `"New York, NY"` from the roster, or undefined for a synthetic persona. */
+  location?: string;
+  /** Deterministic, so two personas never share a number. */
+  phoneSeq: number;
+}): Promise<void> {
+  await prisma.person.update({
+    where: { id: opts.personId },
+    data: {
+      title: opts.title,
+      /* ⚠ A RESERVED-RANGE NUMBER (555-01xx), for the same reason the synthetic
+         emails are `@example.seed`: it can never reach a real handset. */
+      phone: `+1555010${String(1000 + opts.phoneSeq).slice(-4)}`,
+      photo_url: writeAvatar(opts.email, opts.displayName),
+    },
+  });
+
+  /* ⚠ ONE ADDRESS ON THEIR OWN SITE, idempotent — `orgFor` creates the Site but
+     no Address, and the gate counts ADDRESSES, not sites. */
+  const ps = await prisma.person.findUnique({
+    where: { id: opts.personId },
+    select: { site_id: true, site: { select: { addresses: { select: { id: true }, take: 1 } } } },
+  });
+  if (ps?.site_id && !ps.site?.addresses.length) {
+    /* ⚠ THE ROSTER'S OWN `location` COLUMN, when it has one — `"New York, NY"`.
+       ⚠⚠ IT WAS DECLARED IN THE `Sheet` TYPE AND NEVER READ, the same defect
+       the `team` / `company` columns carried before `E591`. */
+    const m = opts.location?.match(/^\s*([^,]+?)\s*,\s*([A-Za-z]{2})\s*$/);
+    await prisma.address.create({
+      data: {
+        site_id: ps.site_id,
+        line1: `${100 + opts.phoneSeq} Example Way`,
+        city: m ? m[1] : "Jacksonville",
+        state: m ? m[2].toUpperCase() : "FL",
+        postal_code: m ? null : "32256",
+        country: "US",
+      },
+    });
+  }
+}
 
 async function main() {
   const log: string[] = [];
@@ -381,7 +465,23 @@ async function main() {
     const isValidated = pi % 2 === 0;
     if (isValidated) validated++;
 
-    const skills = t.pillar.skills.slice(t.idx * 3, t.idx * 3 + 5);
+    /*
+      ⚠⚠ THE WINDOW WRAPS, AND IT DID NOT BEFORE. `slice(idx*3, idx*3+5)` runs
+      off the end of a SMALL pillar: `Procure-to-Pay` holds 8 skills and is the
+      HERO with 3 extra personas, so persona #3's window was `slice(9, 14)` —
+      ⚠⚠⚠ EMPTY. That persona got ZERO skills, which fails both the required set
+      and the role derivation, and it is why one seeded provider was invisible
+      for a reason that had nothing to do with the photo.
+      ⚠ SUPERSEDED, quoted not deleted (`E164`):
+        const skills = t.pillar.skills.slice(t.idx * 3, t.idx * 3 + 5);
+    */
+    const pool = t.pillar.skills;
+    const skills = pool.length
+      ? [...new Map(
+          Array.from({ length: Math.min(5, pool.length) }, (_, k) => pool[(t.idx * 3 + k) % pool.length])
+            .map((s) => [s.id, s])
+        ).values()]
+      : [];
     plan.push({ name: `${first} ${last}`, pillar: t.pillar.name, skills: skills.length, validated: isValidated });
     if (!APPLY) { provCreated++; continue; }
 
@@ -420,51 +520,15 @@ async function main() {
       });
     }
 
-    /*
-      ── ⚠⚠ THE REQUIRED SET, WRITTEN HERE — Scott: *"Seed providers complete"* ──
-
-      ⚠ `providerMeetsRequired` (`access.ts`) takes SEVEN facts: title, role,
-      ≥1 skill, a rate, photo, phone, ≥1 address. This seed supplied the rate
-      and the skills and NOTHING ELSE, so a seeded provider has never once been
-      marketplace-visible — measured 2026-09-21, and it is a large part of what
-      `E581` is counting.
-      ⚠⚠⚠ THE PHOTO IS THE ONE FIELD DELIBERATELY LEFT NULL, AND IT IS NOT AN
-      OVERSIGHT. *"Photo REQUIRED to publish"* is a LOCKED decision, `Avatar.tsx`
-      already renders initials when there is none, and the repo holds four face
-      images in total. Pointing 25 personas at a borrowed face — or at an
-      external avatar service, from a seed that writes to the ONE shared
-      production database — is a product call, not an implementation detail.
-      ⚠ So the gap is now exactly one field wide and it is reported, not guessed.
-      `E564`'s rule stands: do not seed to make a surface demonstrable.
-    */
-    await prisma.person.update({
-      where: { id: person.id },
-      data: {
-        title,
-        /* ⚠ A RESERVED-RANGE NUMBER (555-01xx), for the same reason the emails
-           are `@example.seed`: it can never reach a real handset. */
-        phone: `+1555010${String(1000 + pi).slice(-4)}`,
-      },
+    /* ⚠ THE PERSON-SIDE FOUR — title, phone, ILLUSTRATED AVATAR, address. One
+       helper, shared with the roster half, so "complete" means one thing. */
+    await completePerson({
+      personId: person.id,
+      email,
+      displayName: `${first} ${last}`,
+      title,
+      phoneSeq: pi,
     });
-
-    /* ⚠ ONE ADDRESS ON THEIR OWN SITE, idempotent — `orgFor` creates the Site
-       but no Address, and the gate counts addresses, not sites. */
-    const personSite = await prisma.person.findUnique({
-      where: { id: person.id },
-      select: { site_id: true, site: { select: { addresses: { select: { id: true }, take: 1 } } } },
-    });
-    if (personSite?.site_id && !personSite.site?.addresses.length) {
-      await prisma.address.create({
-        data: {
-          site_id: personSite.site_id,
-          line1: `${100 + pi} Example Way`,
-          city: "Jacksonville",
-          state: "FL",
-          postal_code: "32256",
-          country: "US",
-        },
-      });
-    }
 
     /*
       ⚠ THE ROLE IS DERIVED FROM THE SKILLS THIS PERSONA HOLDS — the modal
@@ -513,6 +577,256 @@ async function main() {
   say(`   pillars covered: ${new Set(plan.map((p) => p.pillar)).size} of ${pillars.length}`);
   say(`   left empty on purpose: ${[...LEAVE_EMPTY].join(", ")}`);
   say(`   overlaps on "${HERO}": ${plan.filter((p) => p.pillar === HERO).length}`);
+
+  // ---- WS-3 — EVERY ROSTER PROVIDER GETS A PROFILE ------------------------
+  /*
+    ── ⚠⚠⚠ A ROSTER "PROVIDER" WITH NO `ProviderProfile` IS NOT A PROVIDER ───
+
+    ⚠ SCOTT, 2026-09-21: *"The seed must create a provider profile for every
+    roster provider. 29 roster providers have no profile, and that's a seed
+    bug."* ⚠⚠ MEASURED: 33 sellers in `Users.xlsx`, 4 of them protected lesson
+    holders who already have profiles — and the other 29 had a login, a Person
+    and the `is_service_provider` flag with NOTHING BEHIND IT. Every app-shell
+    gate that walked one of them was walking an empty page.
+
+    ── ⚠⚠ THE ROSTER'S OWN COLUMNS, FINALLY READ ─────────────────────────────
+
+    ⚠ The `spec` block carries `headline`, `lens`, `rate`, `location` and
+    `validated` for ten named providers and NONE of them was ever read — the
+    same defect the `team` / `company` columns carried. Where the spreadsheet
+    states a fact, the spreadsheet wins; where it is silent (`"—"`, or a seller
+    with no `spec` row at all) the value is DERIVED from the roster's `role` and
+    `team`, never invented from nothing.
+
+    ── ⚠⚠⚠ RECRUITERS GET NO RATE, AND THAT IS NOT AN OMISSION ───────────────
+
+    ⚠ `WorkMethod.RECRUITER` is the user-type fork: *"a recruiter sells the
+    services of OTHERS"*, and the schema says it *"suppresses the rate"*. ⚠⚠ SO A
+    RECRUITER CANNOT MEET `providerMeetsRequired`, WHICH REQUIRES A RATE — they
+    are marketplace-hidden BY THE MODEL, not by incomplete data. That is an
+    `E581` residual with a reason, and it must be reported as one rather than
+    papered over with a rate a recruiter does not have.
+  */
+  const roleTypes = await prisma.roleType.findMany({ select: { id: true, name: true } });
+  const roleByName = new Map(roleTypes.map((r) => [r.name.toLowerCase(), r.id]));
+
+  /* ⚠ ONE POOL, BUILT FROM THE CATALOG ALREADY FETCHED ABOVE — not a second
+     query with a second set of filters that could disagree with WS-2's. */
+  const skillsByRole = new Map<string, { id: string; name: string }[]>();
+  for (const p of pillars) {
+    for (const s of p.skills) {
+      if (!s.role_type_id) continue;
+      if (!skillsByRole.has(s.role_type_id)) skillsByRole.set(s.role_type_id, []);
+      skillsByRole.get(s.role_type_id)!.push({ id: s.id, name: s.name });
+    }
+  }
+  for (const list of skillsByRole.values()) list.sort((a, b) => a.id.localeCompare(b.id));
+
+  type SpecRow = Sheet["spec"][number];
+  const specByEmail = new Map<string, SpecRow>(sheet.spec.map((s) => [norm(s.email), s]));
+  const stated = (v: string | undefined) => {
+    const t = (v ?? "").trim();
+    return t && t !== "—" && t !== "-" ? t : null;
+  };
+
+  let rosterCreated = 0, rosterUpdated = 0, rosterSkipped = 0, recruiters = 0;
+  let si = 0;
+  for (const seller of sheet.sellers) {
+    const email = norm(seller.email);
+    si++;
+    if (NEVER_RECREATE.has(email)) continue;
+    if (protectedEmails.has(email)) { rosterSkipped++; continue; }
+    if (!APPLY) { rosterCreated++; continue; }
+
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: { id: true, first_name: true, last_name: true, person: { select: { id: true } } },
+    });
+    if (!user?.person) { rosterSkipped++; continue; }
+
+    const spec = specByEmail.get(email);
+    const isRecruiter = /recruiter/i.test(seller.job ?? "");
+    if (isRecruiter) recruiters++;
+
+    /* ⚠ THE LENS IS THE ROLE. `spec.lens` first (the richer sheet), then the
+       seller row's own `role`, then whatever the skills end up voting for. A
+       comma-separated `role` takes its FIRST entry — `"Application-Specific, AI
+       Consulting & Enablement"` names a role and then a pillar. */
+    const lens = stated(spec?.lens) ?? stated(seller.role)?.split(",")[0].trim() ?? null;
+    const roleTypeId = lens ? roleByName.get(lens.toLowerCase()) ?? null : null;
+
+    const rolePool = roleTypeId ? skillsByRole.get(roleTypeId) ?? [] : [];
+    /* ⚠ 16 of the 33 sellers name NO role, and the spreadsheet is silent for
+       them. Rather than leave the role null — which fails the required set on
+       its own — the skills come from a stable pool and the ROLE IS DERIVED FROM
+       THEM, exactly as WS-2 does. ⚠⚠ THE POOL IS CHOSEN BY `si`, NOT "the
+       biggest": picking the largest pool put all six Def Leppard personas on one
+       role and, worse, left `role_type_id` null because nothing derived it. */
+    const roleIdsOrdered = [...skillsByRole.keys()].sort();
+    const fallbackRoleId = roleIdsOrdered[si % roleIdsOrdered.length];
+    const chosenRoleId = rolePool.length >= 5 ? roleTypeId : fallbackRoleId;
+    const src = rolePool.length >= 5 ? rolePool : skillsByRole.get(fallbackRoleId) ?? [];
+    const picked = src.length ? Array.from({ length: Math.min(5, src.length) }, (_, k) => src[(si * 7 + k) % src.length]) : [];
+    const uniquePicked = [...new Map(picked.map((s) => [s.id, s])).values()];
+
+    /* ⚠ THE SPREADSHEET'S HEADLINE IS THE TITLE WHERE IT HAS ONE. Otherwise it
+       is derived from the roster's own words, capped at the card's 42.
+       ⚠⚠ IT NAMES THE ROLE THE PROFILE ACTUALLY CARRIES, not the one the
+       spreadsheet failed to state — a title reading "ERP Consultant" above an
+       `AI-Specialist` role is two facts disagreeing on one card. */
+    const roleName = roleTypes.find((r) => r.id === chosenRoleId)?.name ?? null;
+    const team = (seller.team ?? "").trim();
+    let title =
+      stated(spec?.headline) ??
+      (isRecruiter
+        ? `${team || "Independent"} Recruiter`
+        : `${lens ?? roleName ?? "ERP"} Consultant`);
+    if (title.length > 42) title = title.slice(0, 42).trimEnd();
+
+    await completePerson({
+      personId: user.person.id,
+      email,
+      displayName: `${user.first_name ?? ""} ${user.last_name ?? ""}`.trim() || seller.name,
+      title,
+      location: stated(spec?.location) ?? undefined,
+      /* ⚠ OFFSET PAST WS-2's RANGE so no two personas share a phone number. */
+      phoneSeq: 500 + si,
+    });
+
+
+    /* ⚠ THE RATE: the spreadsheet's number when it states one, as an HOURLY
+       rate — that is the field that means "one number", and inventing a range
+       around it would be a fabricated fact. Otherwise a deterministic range. */
+    const statedRate = Number(stated(spec?.rate) ?? "");
+    const rate: Pick<
+      Prisma.ProviderProfileUncheckedCreateInput,
+      "hourly_rate_cents" | "rate_min_cents" | "rate_max_cents"
+    > = isRecruiter
+      ? { hourly_rate_cents: null, rate_min_cents: null, rate_max_cents: null }
+      : Number.isFinite(statedRate) && statedRate > 0
+        ? { hourly_rate_cents: Math.round(statedRate * 100), rate_min_cents: null, rate_max_cents: null }
+        : { hourly_rate_cents: null, rate_min_cents: 14_000_00 + (si % 7) * 1_000_00, rate_max_cents: 20_000_00 + (si % 7) * 1_500_00 };
+
+    const existingProfile = await prisma.providerProfile.findFirst({
+      where: { person_id: user.person.id },
+      select: { id: true },
+    });
+    const pdata: Prisma.ProviderProfileUncheckedCreateInput = {
+      person_id: user.person.id,
+      overview:
+        `${title}. ${stated(spec?.domain) ? `Focus: ${spec!.domain}. ` : ""}` +
+        `Roster persona from Users.xlsx (${seller.pid}). ${SEED_TAG}`,
+      role_type_id: chosenRoleId,
+      work_method: isRecruiter ? "RECRUITER" : "SERVICES",
+      status: "ACTIVE",
+      validation_status: /^yes$/i.test(stated(spec?.validated) ?? "") ? "VALIDATED" : "NOT_REQUESTED",
+      currency: "USD",
+      ...rate,
+    };
+    const profile = existingProfile
+      ? (rosterUpdated++, await prisma.providerProfile.update({ where: { id: existingProfile.id }, data: pdata, select: { id: true } }))
+      : (rosterCreated++, await prisma.providerProfile.create({ data: pdata, select: { id: true } }));
+
+    for (const s of uniquePicked) {
+      await prisma.providerSkill.upsert({
+        where: { provider_profile_id_skill_id: { provider_profile_id: profile.id, skill_id: s.id } },
+        update: {},
+        /* ⚠ `P1-A1.4-E553` — SELF_ADDED, not the DERIVED default. */
+        create: { provider_profile_id: profile.id, skill_id: s.id, source: "SELF_ADDED" },
+      });
+    }
+  }
+
+  /*
+    ── ⚠⚠⚠ THE GATE PERSONA'S CARD, WRITTEN FOR THE SUITE (`P0-E595` WS-B) ───
+
+    ⚠ SCOTT, 2026-09-21: *"The gate must fail loudly if that persona isn't a
+    complete provider. A gate that passes on nothing isn't a gate (E586)."*
+
+    ⚠⚠ THE SUITE CANNOT SEARCH ITS WAY TO THIS PERSON AND SHOULD NOT TRY.
+    `/talent` is a MARKETING page with a search hero and no list; `/explore`
+    takes FOUR and MASKS the names — *"a search-results surface with masked
+    people on it"*. ⚠ A gate that greps a masked, truncated, relevance-ordered
+    list for a name is a gate that goes red for reasons that have nothing to do
+    with the thing it is asserting.
+
+    ⚠⚠ SO THE SEED PUBLISHES THE ID AND THE MEASURED COMPLETENESS, and the suite
+    reads it. The file is written on EVERY apply run, so it cannot describe a
+    persona the seed did not just build. ⚠⚠⚠ AND `complete` IS COMPUTED FROM THE
+    ROW THAT WAS JUST WRITTEN, not asserted by hand — if the required set gains a
+    clause in `access.ts`, this goes false and every app-shell gate says so.
+  */
+  if (APPLY) {
+    const gate = await prisma.providerProfile.findFirst({
+      where: { person: { user: { email: GATE_PROVIDER_EMAIL } } },
+      select: {
+        id: true, role_type_id: true,
+        hourly_rate_cents: true, rate_min_cents: true, rate_max_cents: true,
+        onsite_rate_cents: true, remote_rate_cents: true,
+        skills: { select: { skill_id: true, skill: { select: { name: true } } } },
+        person: {
+          select: {
+            first_name: true, last_name: true, title: true, photo_url: true, phone: true,
+            site: { select: { addresses: { select: { id: true } } } },
+          },
+        },
+      },
+    });
+    if (!gate) {
+      throw new Error(
+        `THE GATE PERSONA HAS NO PROVIDER PROFILE: ${GATE_PROVIDER_EMAIL}. ` +
+          `Every app-shell gate signs in as this account — see prisma/gate-persona.ts.`
+      );
+    }
+    const missing = [
+      !gate.person.title?.trim() && "title",
+      !gate.role_type_id && "role",
+      !gate.skills.length && "skills",
+      gate.hourly_rate_cents == null && gate.rate_min_cents == null && gate.rate_max_cents == null &&
+        gate.onsite_rate_cents == null && gate.remote_rate_cents == null && "rate",
+      !gate.person.photo_url && "photo",
+      !gate.person.phone?.trim() && "phone",
+      !gate.person.site?.addresses.length && "address",
+    ].filter(Boolean) as string[];
+
+    writeFileSync(
+      join(process.cwd(), "prisma", "seed-data", "gate-persona.json"),
+      JSON.stringify(
+        {
+          _note:
+            "Written by prisma/seed-test-data.ts on every --apply run. Read by " +
+            "e2e-shell/_persona.ts. Do not hand-edit: it describes the row the seed " +
+            "just wrote, and a hand-edit would make the gates assert against fiction.",
+          email: GATE_PROVIDER_EMAIL,
+          name: `${gate.person.first_name ?? ""} ${gate.person.last_name ?? ""}`.trim(),
+          title: gate.person.title,
+          /* ⚠⚠ THE SUITE ASSERTS ON THESE STRINGS RATHER THAN ON A HEADING.
+             `E562` RETIRED THE STANDALONE SKILLS CARD — skills render as chips in
+             the hero with no "Skills" label — so a gate greping for the WORD
+             "skill" fails on a page that is perfectly correct. ⚠ Asserting the
+             persona's OWN data cannot rot that way. */
+          skillNames: gate.skills.map((s) => s.skill.name).filter(Boolean),
+          providerProfileId: gate.id,
+          publicPath: `/providers/${gate.id}`,
+          complete: missing.length === 0,
+          missing,
+          writtenAt: new Date().toISOString(),
+        },
+        null,
+        2
+      ) + "\n",
+      "utf8"
+    );
+    say(
+      `\nGate persona (${GATE_PROVIDER_EMAIL}): ` +
+        (missing.length ? `⚠⚠⚠ INCOMPLETE — missing ${missing.join(", ")}` : `complete ✓ /providers/${gate.id}`)
+    );
+  }
+
+  say(`\nWS-3 roster providers: ${APPLY ? `${rosterCreated} created, ${rosterUpdated} updated` : `${rosterCreated} would be written`}, ${rosterSkipped} skipped (protected or no person)`);
+  say(`   recruiters (work_method=RECRUITER, no rate by the model): ${recruiters}`);
+  say(`\nIllustrated seed avatars written to public/seed-avatars/: ${avatarsWritten}`);
+  if (APPLY && avatarsWritten) say("   ⚠ COMMIT THEM — public/ is what Vercel serves.");
 
   if (!APPLY) say("\nDRY RUN — nothing written. Re-run with --apply.");
   await prisma.$disconnect();

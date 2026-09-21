@@ -1,0 +1,18 @@
+{
+  "_note": "Written by prisma/seed-test-data.ts on every --apply run. Read by e2e-shell/_persona.ts. Do not hand-edit: it describes the row the seed just wrote, and a hand-edit would make the gates assert against fiction.",
+  "email": "sw_user21@straterp.com",
+  "name": "Priya Nair",
+  "title": "Oracle Cloud Procurement Expert",
+  "skillNames": [
+    "Sales",
+    "E-Business Tax",
+    "Education Cloud",
+    "Extend",
+    "Channel Revenue Management"
+  ],
+  "providerProfileId": "80a8ff03-0bb1-4171-b858-1d94fa8a56a9",
+  "publicPath": "/providers/80a8ff03-0bb1-4171-b858-1d94fa8a56a9",
+  "complete": true,
+  "missing": [],
+  "writtenAt": "2026-09-21T12:01:14.257Z"
+}

@@ -1,6 +1,7 @@
 import { expect, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { GATE_PROVIDER_EMAIL } from "../prisma/gate-persona";
 
 /**
  * ── ⚠⚠ ONE SIGN-IN, TWO CALLERS (`P2-J3-E567` WS-A) ───────────────────────
@@ -18,8 +19,10 @@ import { join } from "node:path";
  * so a password rotation there changes this helper too, instead of breaking the
  * suite a month later for a reason nobody connects.
  *
- * ⚠⚠ MEASURED 2026-09-18 AND RECORDED HERE BECAUSE IT SHAPES WHAT THE SUITES CAN
- * PROVE: `test3@panameer.com` is Michael Star — `is_service_provider: true`,
+ * ⚠⚠ SUPERSEDED 2026-09-21 — THE ACCOUNT IS NO LONGER test3; see the block at
+ * `seededAccount` and `prisma/gate-persona.ts`. Quoted not deleted (`E164`), and
+ * the DUAL-ROLE POINT BELOW STILL STANDS for the new persona too:
+ * `test3@panameer.com` is Michael Star — `is_service_provider: true`,
  * `is_service_coordinator: FALSE`. ⚠ THE SEED HAS NO DUAL-ROLE ACCOUNT, so no
  * browser test here can prove that a person holding BOTH capabilities sees both
  * of Teams' section sets. ⚠ That half is proved STATICALLY instead — see
@@ -58,8 +61,26 @@ export function seededAccount(): { email: string; password: string } {
     password: string;
   }[][];
   const all = groups.flat();
-  const chosen = all.find((u) => u.email === "test3@panameer.com");
-  if (!chosen) throw new Error("test3@panameer.com is not in prisma/seed-data/test-users.json");
+  /*
+    ── ⚠⚠⚠ THE ACCOUNT MOVED OFF test3 (`P0-E595` WS-B, Scott 2026-09-21) ─────
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   const chosen = all.find((u) => u.email === "test3@panameer.com");
+    //   if (!chosen) throw new Error("test3@panameer.com is not in prisma/seed-data/test-users.json");
+    ⚠⚠ `test3@panameer.com` IS A RECRUITER IN `Users.xlsx`, and `WorkMethod.
+    RECRUITER` suppresses the rate — so it can never satisfy
+    `providerMeetsRequired`. Scott: *"the roster wins."* ⚠ The address now comes
+    from ONE constant, `prisma/gate-persona.ts`, which the community seed reads
+    too; the whole reasoning lives there.
+  */
+  const chosen = all.find(
+    (u) => u.email?.toLowerCase() === GATE_PROVIDER_EMAIL.toLowerCase() && u.password
+  );
+  if (!chosen) {
+    throw new Error(
+      `${GATE_PROVIDER_EMAIL} is not in prisma/seed-data/test-users.json with a password ` +
+        `— see prisma/gate-persona.ts`
+    );
+  }
   return { email: chosen.email, password: chosen.password };
 }
 
