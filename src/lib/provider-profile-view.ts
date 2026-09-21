@@ -38,6 +38,8 @@ export async function getProviderProfileView(
     include: {
       person: {
         select: {
+          /* ⚠ The transaction models key on the PERSON id (`E593`). */
+          id: true,
           user_id: true,
           first_name: true,
           last_name: true,
@@ -371,6 +373,11 @@ export async function getProviderProfileView(
         connected to. The view renders no control rather than a broken one.
       */
       userId: profile.person.user_id,
+      /* ⚠ The PERSON id. ⚠⚠ THE TRANSACTION MODELS ARE KEYED ON IT, NOT ON THE
+         PROFILE — `BidRequest.provider_person_id`, `WorkOrder.provider_person_id`
+         — so the usage comb cannot be counted without it (`E593`). It is not
+         new data: the row is already loaded. */
+      personId: profile.person.id,
     },
     location,
     country,

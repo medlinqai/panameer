@@ -279,6 +279,84 @@ check(
   (CARDS_PROFILE.match(/if \(!p\.rates\) return null;/g) ?? []).length === 2
 );
 
+/* ── 10 · ⚠⚠ THE RAIL'S COMB, AND WHAT IT REPLACED (`E593`) ─────────────── */
+/*
+  ⚠ Scott, 2026-09-20: remove the plain-link card, put the Usage Stats comb in
+  that slot. ⚠⚠ THE CONDITION WAS *"prove nothing becomes unreachable"*, so the
+  four destinations it used to carry are each asserted to have another door.
+*/
+const USAGE = code("src", "lib", "usage-stats.ts");
+const RAIL_L = CARDS_PROFILE;
+
+check(
+  "10 — the plain-link card is gone",
+  !/label: "My Stats"/.test(RAIL_L) && !/label: "My Settings"/.test(RAIL_L)
+);
+check("10 — the comb is in its slot", /<UsageComb usage=\{usage\} \/>/.test(RAIL_L));
+/*
+  ⚠⚠ SIX CELLS, IN BAND ORDER, EACH WITH A ONE-WORD LABEL. Scott: *"Six
+  unlabelled numbers can't be read — you can't tell which application owns
+  which."* ⚠ The labels ARE the band's words, which is what makes one word
+  enough.
+*/
+for (const label of ["Connect", "Learn", "Work", "Sell", "Orders", "Get Paid"]) {
+  check(`10 — the comb labels "${label}"`, new RegExp(`label: "${label}"`).test(RAIL_L));
+}
+/*
+  ⚠⚠⚠ INK, WITH ONE DELIBERATE EXCEPTION. `E433` reserves magenta for
+  interactive things and these are figures — but Scott ruled `Get Paid`
+  dominant *"by DESIGN WEIGHT: size, position, colour and label."* ⚠ The gate
+  holds the exception to ONE cell so it cannot spread: exactly one `pay: true`.
+*/
+check(
+  "10 — ⚠ exactly one cell is magenta, and it is Get Paid",
+  (RAIL_L.match(/pay: true/g) ?? []).length === 1 &&
+    /label: "Get Paid",[\s\S]{0,400}pay: true/.test(RAIL_L)
+);
+check(
+  "10 — the figures are ink except that one",
+  /c\.pay \? "text-magenta" : "text-ink"/.test(RAIL_L)
+);
+/*
+  ⚠⚠⚠ AND THE `$0` IS DERIVED, NOT TYPED. Earnings are not modelled — `Payment`
+  is scoped by `p_account_id`, the buyer's money arriving, and there is no
+  payout model. ⚠ A typed `$0` would be the `Viewing Me` mistake: a plausible
+  number that does not exist. ⚠⚠ IT IS ENTAILED BY HAVING ZERO WORK ORDERS, and
+  it INVALIDATES ITSELF — the moment there is an order the function returns
+  `null` and the card renders the dash convention instead.
+*/
+check(
+  "10 — ⚠⚠ the earnings figure is derived from the order count",
+  /const earnedCents = orders === 0 \? 0 : null;/.test(USAGE)
+);
+check(
+  "10 — ⚠ and the card renders a dash when it is not measurable",
+  /earnedCents === null \? "—"/.test(RAIL_L)
+);
+/* ⚠ Every figure is a real count — the LOCKED Counters decision. No literal
+   may stand in for one. */
+check(
+  "10 — every cell but earnings comes from a count",
+  /prisma\.bidRequest\.count/.test(USAGE) &&
+    /prisma\.package\.count/.test(USAGE) &&
+    /prisma\.workOrder\.count/.test(USAGE)
+);
+/*
+  ⚠⚠ NOTHING BECAME UNREACHABLE. Each of the four links the removed card
+  carried now has another door, and this asserts the door rather than trusting
+  the note that says so.
+*/
+const NAV = code("src", "lib", "nav.ts");
+const RAIL_C = code("src", "components", "community", "CommunityRail.tsx");
+for (const [href, where, body] of [
+  ["/stats", "the comb's own link", RAIL_L + NAV],
+  ["/account-health", "the Account Health card", RAIL_L + NAV],
+  ["/community/teams", "the Community rail", RAIL_C],
+  ["/settings", "the Connect tab row", NAV],
+] as const) {
+  check(`10 — ⚠ ${href} is still reachable, via ${where}`, body.includes(`"${href}"`));
+}
+
 console.log(
   `\ncheck:community-page — ${failed === 0 ? `${passed}/${passed} passed` : `${failed} FAILED, ${passed} passed`}`
 );

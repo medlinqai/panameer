@@ -8,6 +8,7 @@ import { unreadCount } from "@/lib/messages";
 import { ConnectProfile } from "@/components/community/ConnectProfile";
 import { getOwnProviderProfileView } from "@/lib/provider-profile-view";
 import { getPathsTaughtByProfile, getPathsTakenBy } from "@/lib/learn-home";
+import { getUsageStats } from "@/lib/usage-stats";
 import { publicTestimonials } from "@/lib/recommendations";
 import { getCommunitySignalForProfile } from "@/lib/community-signal";
 import { getMyCommunity } from "@/lib/connections";
@@ -63,6 +64,16 @@ export default async function ConnectPage() {
   */
   if (!viewer || !profile) redirect("/community");
 
+  /* ⚠ Fetched once and reused: the comb needs the same colleague count and the
+     same path lists the cards render, and asking twice for one answer is two
+     round trips for nothing. */
+  const [taughtPathsList, takenPaths, mine] = await Promise.all([
+    getPathsTaughtByProfile(profile.id),
+    getPathsTakenBy(viewer.userId),
+    getMyCommunity(viewer),
+  ]);
+  const colleagues = mine.colleagues.length;
+
   return (
     <>
       <PageTabs
@@ -75,13 +86,21 @@ export default async function ConnectPage() {
           `LearnEnrollment.user_id` (`E593` WS-B item 17). ⚠⚠ A JSX comment
           is only legal in CHILDREN position, never between attributes, which
           is why this note sits here rather than beside the prop. */}
+      {/* ⚠ The comb is OWNER-ONLY, so it is computed here — on the owner's own
+          page — and never passed to `/providers/[id]` (`E593`). */}
       <ConnectProfile
         p={profile}
-        taughtPaths={await getPathsTaughtByProfile(profile.id)}
-        takenPaths={await getPathsTakenBy(viewer.userId)}
+        taughtPaths={taughtPathsList}
+        takenPaths={takenPaths}
+        usage={await getUsageStats(
+          profile.person.personId,
+          profile.id,
+          taughtPathsList.length + takenPaths.length,
+          colleagues
+        )}
         testimonials={await publicTestimonials(profile.id)}
         community={await getCommunitySignalForProfile(profile.id)}
-        colleagueCount={(await getMyCommunity(viewer)).colleagues.length}
+        colleagueCount={colleagues}
         score={await ownerScore(profile.id)}
       />
     </>

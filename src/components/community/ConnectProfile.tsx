@@ -7,6 +7,7 @@ import {
 } from "@/components/community/CompletionRing";
 import type { ProviderProfileView } from "@/lib/provider-profile-view";
 import type { TaughtPath, TakenPath } from "@/lib/learn-home";
+import type { UsageStats } from "@/lib/usage-stats";
 import type { Testimonial } from "@/lib/recommendations";
 import type { CommunitySignal } from "@/lib/community-signal";
 import type { ProfileScore } from "@/lib/completeness";
@@ -77,6 +78,7 @@ export function ConnectProfile({
   p,
   taughtPaths = [],
   takenPaths = [],
+  usage = null,
   testimonials = [],
   community = null,
   score = null,
@@ -89,6 +91,9 @@ export function ConnectProfile({
   taughtPaths?: TaughtPath[];
   /** ⚠ `LearnEnrollment` rows — paths TAKEN, not taught (`E593` WS-B 17). */
   takenPaths?: TakenPath[];
+  /** ⚠ The six applications, counted. Owner-only — a visitor is passed none
+   *  and the comb does not render (`E593`). */
+  usage?: UsageStats | null;
   testimonials?: Testimonial[];
   /**
    * ⚠⚠ FORUM INVOLVEMENT — CARRIED OVER DELIBERATELY, NOT IN THE MOCKUP.
@@ -459,28 +464,32 @@ export function ConnectProfile({
             </div>
           </section>
 
-          {/* ── owner utility links ── */}
-          <section className="rounded-brand border border-line bg-white px-[18px] py-4">
-            <div className="flex flex-col">
-              {[
-                { label: "My Stats", href: "/stats" },
-                { label: "My Account Health", href: "/account-health" },
-                { label: "My Groups", href: "/community/teams" },
-                { label: "My Settings", href: "/settings" },
-              ].map((l) => (
-                <Link
-                  key={l.href}
-                  href={l.href}
-                  className={
-                    "py-2 text-[13.5px] font-bold text-magenta hover:underline" +
-                    ""
-                  }
-                >
-                  {l.label}
-                </Link>
-              ))}
-            </div>
-          </section>
+          {/*
+            ── ⚠⚠⚠ THE PLAIN-LINK CARD IS GONE. EVERY ITEM HAS A BETTER HOME ──
+
+            ⚠ Scott, 2026-09-20. ⚠⚠ NOTHING BECAME UNREACHABLE, AND THAT IS THE
+            CONDITION THIS REPLACEMENT HAD TO MEET — each of the four moved to a
+            surface that says more than a link ever did:
+              `My Stats`          -> the comb below, which shows the figures
+                                     rather than promising them, and still links
+                                     out with `See your stats`.
+              `My Account Health` -> the card `E593` WS-B built, which shows a
+                                     tick or a cross per item.
+              `My Groups`         -> a TAB since `E593` WS-A.
+              `My Settings`       -> a TAB since `E593` WS-A.
+            ⚠ `check:nav-reachable` is the gate and the count is in the report.
+
+            ⚠ SUPERSEDED, quoted not deleted (`E164`):
+            //   { label: "My Stats", href: "/stats" },
+            //   { label: "My Account Health", href: "/account-health" },
+            //   { label: "My Groups", href: "/community/teams" },
+            //   { label: "My Settings", href: "/settings" },
+            ⚠⚠ NOTE `My Groups` POINTED AT `/community/teams`, NOT AT THE FORUMS
+            ROUTE `E593` WS-A NAMED `Groups`. Two different things wore one word.
+            The tab row now carries `Groups` (forums) and `Community` (which
+            holds teams), so the collision is gone rather than inherited.
+          */}
+          {usage && <UsageComb usage={usage} />}
           </>
         )}
 
@@ -1116,6 +1125,96 @@ export function ConnectProfile({
         )}
       </aside>
     </div>
+  );
+}
+
+
+/**
+ * ── ⚠⚠ THE USAGE COMB — SIX APPLICATIONS, SIX FIGURES (`P2-J3-E593`) ──────
+ *
+ * ⚠ Scott, 2026-09-20: *"six cells, ink, Get Paid the only magenta one, $0
+ * earned footer and See your stats →"*, and — ⚠⚠ THE PART THAT SHAPES IT —
+ * *"Add a one-word label under each figure. Six unlabelled numbers can't be
+ * read — you can't tell which application owns which."*
+ *
+ * ⚠⚠⚠ THE SIX ARE THE SIX APPLICATIONS IN THE BAND, IN BAND ORDER. That is
+ * what makes the labels readable at one word: the reader has already seen
+ * `Connect · Learn · Work · Sell · Orders · Get Paid` across the top of every
+ * page, so the comb is the same row of names with this member's numbers under
+ * them. ⚠ A different order, or different words, would make six one-word labels
+ * a puzzle rather than a key.
+ *
+ * ── ⚠⚠ INK, AND ONE DELIBERATE EXCEPTION ──────────────────────────────────
+ *
+ * ⚠ `E433` — MAGENTA MARKS INTERACTIVE THINGS; counts and figures stay ink. All
+ * six are figures, so all six are ink. ⚠⚠ `Get Paid` IS MAGENTA ON SCOTT'S
+ * EXPLICIT RULING, twice: *"focus on the pay and make it look like they are
+ * making money"*, and the WS-B ruling that `Pay` is *"visually dominant by
+ * DESIGN WEIGHT: size, position, colour and label."*
+ * ⚠⚠⚠ RULE 13 — the newest dated statement is the live one, and this is a
+ * DELIBERATE EXCEPTION rather than a drift. **It is recorded here so the next
+ * reader does not "fix" it back to ink**, and so the exception cannot spread:
+ * it applies to this one cell, for the reason Scott gave, and nowhere else.
+ */
+function UsageComb({ usage }: { usage: UsageStats }) {
+  /* ⚠ BAND ORDER, and the labels are the band's own words. */
+  const cells: { label: string; value: string; pay?: boolean }[] = [
+    { label: "Connect", value: String(usage.connect) },
+    { label: "Learn", value: String(usage.learn) },
+    { label: "Work", value: String(usage.work) },
+    { label: "Sell", value: String(usage.sell) },
+    { label: "Orders", value: String(usage.orders) },
+    {
+      label: "Get Paid",
+      /*
+        ⚠⚠⚠ THE DASH CONVENTION WHEN IT IS NOT MEASURABLE, exactly as
+        `Viewing Me` does. `earnedCents` is `null` the moment a work order
+        exists, because earnings are not modelled and a number would then be a
+        guess. ⚠ Until then `$0` is not a placeholder — it is entailed by having
+        zero orders. See `lib/usage-stats.ts`.
+      */
+      value: usage.earnedCents === null ? "—" : money(usage.earnedCents, "USD"),
+      pay: true,
+    },
+  ];
+
+  return (
+    <section className="rounded-brand border border-line bg-white px-[18px] py-4">
+      <p className="mb-3 text-[11.5px] font-bold uppercase tracking-[0.07em] text-ink-3">
+        Usage Stats
+      </p>
+      <div className="grid grid-cols-3 gap-y-3">
+        {cells.map((c) => (
+          <div key={c.label} className="text-center">
+            <p
+              className={
+                "font-display text-[19px] font-bold leading-none tabular-nums " +
+                (c.pay ? "text-magenta" : "text-ink")
+              }
+            >
+              {c.value}
+            </p>
+            {/* ⚠ SMALL ON PURPOSE — Scott: *"Keep it small; the full Stats page
+                carries the detail."* The label names the application, it does
+                not explain the figure. */}
+            <p className="mt-1 text-[10.5px] leading-tight text-ink-3">{c.label}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* ⚠⚠ THE LINE NAMES WHAT WOULD FILL IT (Scott's WS-B stats ruling), so a
+          row of zeroes reads as a beginning rather than a failure. ⚠ NO
+          projected, estimated, potential or example figure — anywhere. */}
+      <p className="mt-3.5 text-[12px] leading-relaxed text-ink-2">
+        This is where your earnings land.
+      </p>
+      <Link
+        href="/stats"
+        className="mt-1 inline-block text-[13px] font-bold text-magenta hover:underline"
+      >
+        See your stats &rarr;
+      </Link>
+    </section>
   );
 }
 
