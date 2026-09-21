@@ -7,7 +7,7 @@ import { connectTabs } from "@/lib/connect-tabs";
 import { unreadCount } from "@/lib/messages";
 import { ConnectProfile } from "@/components/community/ConnectProfile";
 import { getOwnProviderProfileView } from "@/lib/provider-profile-view";
-import { getPathsTaughtByProfile } from "@/lib/learn-home";
+import { getPathsTaughtByProfile, getPathsTakenBy } from "@/lib/learn-home";
 import { publicTestimonials } from "@/lib/recommendations";
 import { getCommunitySignalForProfile } from "@/lib/community-signal";
 import { getMyCommunity } from "@/lib/connections";
@@ -71,9 +71,14 @@ export default async function ConnectPage() {
         tabs={connectTabs(viewer, unread)}
         current="/connect"
       />
+      {/* ⚠ `takenPaths` IS KEYED ON THE **USER**, not the person —
+          `LearnEnrollment.user_id` (`E593` WS-B item 17). ⚠⚠ A JSX comment
+          is only legal in CHILDREN position, never between attributes, which
+          is why this note sits here rather than beside the prop. */}
       <ConnectProfile
         p={profile}
         taughtPaths={await getPathsTaughtByProfile(profile.id)}
+        takenPaths={await getPathsTakenBy(viewer.userId)}
         testimonials={await publicTestimonials(profile.id)}
         community={await getCommunitySignalForProfile(profile.id)}
         colleagueCount={(await getMyCommunity(viewer)).colleagues.length}

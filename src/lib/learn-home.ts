@@ -581,6 +581,52 @@ export function teachesPathWhere(personId: string) {
   };
 }
 
+/**
+ * ── ⚠⚠ PATHS THIS MEMBER IS TAKING, NOT TEACHING (`P2-J3-E593` WS-B 17) ───
+ *
+ * ⚠ Scott, 2026-09-20: *"Distinguish learning paths CREATED from paths TAKEN."*
+ * ⚠⚠ THE TWO ARE DIFFERENT TABLES, WHICH IS WHY THEY ARE DIFFERENT FUNCTIONS:
+ * teaching is `teachesPathWhere` over `LearningPath` (authorship and lesson
+ * contribution); taking is a row in `LearnEnrollment`, keyed on `user_id`.
+ * ⚠ **A path can be BOTH** — an author may enrol in their own path — and the
+ * profile card shows each in its own group rather than picking a winner.
+ *
+ * ⚠⚠ `PUBLISHED` ONLY, matching `getPathsTaughtBy`. A draft path is not a thing
+ * to advertise on a profile, and the two lists must agree about what counts.
+ * ⚠ Takes a USER id, not a person id — `LearnEnrollment` is keyed on the user.
+ */
+export type TakenPath = {
+  id: string;
+  title: string;
+  slug: string;
+  group: string | null;
+  coverImage: string | null;
+};
+
+export async function getPathsTakenBy(userId: string | null): Promise<TakenPath[]> {
+  if (!userId) return [];
+  const rows = await prisma.learnEnrollment.findMany({
+    where: { user_id: userId, learningPath: { status: "PUBLISHED" } },
+    orderBy: { created_at: "desc" },
+    select: {
+      learningPath: {
+        select: { id: true, title: true, slug: true, group: true, cover_image: true },
+      },
+    },
+  });
+  /* ⚠⚠ ITS OWN TYPE, NOT `TaughtPath`. That shape carries `taughtByThem`,
+     `playable` and `lessons` — three facts about AUTHORSHIP that an enrolment
+     does not have. ⚠ Reusing it would have meant inventing a `0` for each, and
+     a zero nobody measured is the `E433` fabricated-figure problem in a type. */
+  return rows.map((r) => ({
+    id: r.learningPath.id,
+    title: r.learningPath.title,
+    slug: r.learningPath.slug,
+    group: r.learningPath.group,
+    coverImage: r.learningPath.cover_image,
+  }));
+}
+
 export async function getPathsTaughtBy(personId: string): Promise<TaughtPath[]> {
   const paths = await prisma.learningPath.findMany({
     /* ⚠ THE PREDICATE IS `teachesPathWhere` — see its docblock for why

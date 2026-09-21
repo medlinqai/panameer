@@ -14,7 +14,7 @@ import { getProviderProfileView } from "@/lib/provider-profile-view";
 import { getMyCommunity, mutualColleagueCount } from "@/lib/connections";
 import { ConnectControls } from "@/components/community/ConnectControls";
 import { getSessionViewer } from "@/lib/session";
-import { getPathsTaughtByProfile } from "@/lib/learn-home";
+import { getPathsTaughtByProfile, getPathsTakenBy } from "@/lib/learn-home";
 import { publicTestimonials } from "@/lib/recommendations";
 import { getCommunitySignalForProfile } from "@/lib/community-signal";
 import { canMessage } from "@/lib/messages";
@@ -151,8 +151,16 @@ export default async function PublicProviderPage({
   });
   if (!profile) notFound();
 
-  const [taughtPaths, testimonials] = await Promise.all([
+  /*
+    ⚠ `takenPaths` IS THE PROFILE OWNER'S ENROLMENTS, NOT THE VIEWER'S
+    (`E593` WS-B item 17). ⚠⚠ `LearnEnrollment` is keyed on `user_id`, and the
+    user whose paths belong on this page is the one the page is ABOUT —
+    `p.userId`, never the session. Reading the viewer's would show a stranger
+    their own courses under somebody else's name.
+  */
+  const [taughtPaths, takenPaths, testimonials] = await Promise.all([
     getPathsTaughtByProfile(profile.id),
+    getPathsTakenBy(profile.person.userId ?? null),
     publicTestimonials(profile.id),
   ]);
 
@@ -228,6 +236,7 @@ export default async function PublicProviderPage({
         <ConnectProfile
           p={profile}
           taughtPaths={taughtPaths}
+          takenPaths={takenPaths}
           testimonials={testimonials}
           community={await getCommunitySignalForProfile(profile.id)}
           colleagueCount={colleagueCount}
