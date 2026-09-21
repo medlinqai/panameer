@@ -148,7 +148,7 @@ export async function searchProvidersTeaser(
       orderBy: [{ completeness: "desc" }, { updated_at: "desc" }],
       select: {
         id: true,
-        headline: true,
+        /* ⚠ `headline` COLUMN IS GONE (`E595` WS-B) — the title is on the person. */
         hourly_rate_cents: true,
         rate_min_cents: true,
         rate_max_cents: true,
@@ -169,6 +169,8 @@ export async function searchProvidersTeaser(
         person: {
           select: {
             first_name: true,
+            /* ⚠ `title` — the profile's title lives on the PERSON since `E595` WS-B. */
+            title: true,
             photo_url: true,
             site: {
               select: {
@@ -204,8 +206,10 @@ export async function searchProvidersTeaser(
       return {
         id: p.id,
         firstName: capitalizeName(p.person.first_name),
-        title: cardTitle(p.headline),
-        headline: p.headline,
+        /* ⚠ THE DTO KEY STAYS `headline`; the SOURCE is `Person.title` since
+       `E595` WS-B collapsed the two columns into one. */
+        title: cardTitle(p.person.title ?? ""),
+        headline: p.person.title ?? "",
         university: headlineSchool(p.education.map((e) => e.institution)),
         employerCount: p._count.employers,
         projectCount: p._count.projects,

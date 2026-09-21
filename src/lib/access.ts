@@ -448,7 +448,17 @@ export function hasIdentityBlock(p: {
  * instead of quietly passing data nothing reads.
  */
 export function providerMeetsRequired(p: {
-  headline: string | null;
+  /*
+    ⚠⚠⚠ THE TITLE MOVED TO `Person.title` (`P0-E595` WS-B). ⚠ SUPERSEDED,
+    quoted not deleted (`E164`): this took `headline: string | null` at the top
+    level, off the provider profile.
+    ⚠⚠ IT IS PART OF THE REQUIRED SET AND STAYS PART OF IT — `E581` records
+    that a title is required precisely so a buyer can find somebody. Only the
+    column it lives in changed.
+    ⚠ Removing it from the top level is deliberate: a caller still passing
+    `headline` now fails to compile rather than quietly satisfying a gate with a
+    field nothing reads.
+  */
   role_type_id: string | null;
   skills: unknown[];
   hourly_rate_cents: number | null;
@@ -457,13 +467,15 @@ export function providerMeetsRequired(p: {
   onsite_rate_cents: number | null;
   remote_rate_cents: number | null;
   person: {
+    /* ⚠ The TITLE, where it now lives (`E595` WS-B). */
+    title: string | null;
     photo_url: string | null;
     phone: string | null;
     site?: { addresses?: unknown[] | null } | null;
   };
 }): boolean {
   return Boolean(
-    p.headline?.trim() &&
+    p.person.title?.trim() &&
       p.role_type_id &&
       p.skills.length > 0 &&
       (p.hourly_rate_cents != null ||
@@ -492,7 +504,15 @@ export function marketplaceVisibleWhere() {
     status: "ACTIVE" as const,
     paused_at: null,
     // Title · Role · Skill · Rate
-    headline: { not: "" },
+    /*
+      ⚠⚠ THE TITLE CLAUSE FOLLOWED THE COLUMN (`P0-E595` WS-B). ⚠ SUPERSEDED,
+      quoted not deleted (`E164`): `headline: { not: "" },`
+      ⚠⚠⚠ THE MIRROR AND THE PREDICATE MUST AGREE OR A PROFILE IS VISIBLE TO ONE
+      AND NOT THE OTHER — `E585` records that risk in terms. `providerMeetsRequired`
+      now reads `p.person.title?.trim()`, so this reads the same field on the
+      same table, and `null` is excluded along with the empty string because a
+      person who never set one has `null`, not `""`.
+    */
     role_type_id: { not: null },
     skills: { some: {} },
     OR: [
@@ -510,6 +530,12 @@ export function marketplaceVisibleWhere() {
        and a listing that hides every provider is not a stricter gate, it is an
        empty marketplace. */
     person: {
+      /* ⚠⚠ THE TITLE MOVED INTO THIS BLOCK (`P0-E595` WS-B), not beside it: a
+         second `person` key in the same object literal is a duplicate property,
+         and the later one silently wins. ⚠ It would have dropped the photo,
+         phone and address clauses from the gate entirely — a marketplace that
+         showed everybody. */
+      title: { not: null },
       photo_url: { not: null },
       phone: { not: null },
       site: { addresses: { some: {} } },

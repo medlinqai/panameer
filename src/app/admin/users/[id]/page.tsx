@@ -158,7 +158,7 @@ export default async function AdminUserPage({
         select: {
           id: true,
           status: true,
-          headline: true,
+          /* ⚠ `headline` COLUMN IS GONE (`E595` WS-B) — the title is on the person. */
           work_method: true,
           validation_status: true,
           validation_requested_at: true,
@@ -254,9 +254,9 @@ export default async function AdminUserPage({
             value={
               person.title ? (
                 person.title
-              ) : person.providerProfile?.headline ? (
+              ) : person.title ? (
                 <span className="inline-flex flex-wrap items-baseline gap-2">
-                  <span>{person.providerProfile.headline}</span>
+                  <span>{person.title}</span>
                   <span className="rounded-full bg-black/[0.06] px-2 py-0.5 text-[11.5px] font-semibold text-ink-2">
                     from Headline · no title on file
                   </span>
@@ -404,7 +404,8 @@ export default async function AdminUserPage({
             title="Seller detail"
             note="What a seller has and a buyer does not — the longer profile."
           >
-            <Row label="Headline" value={person.providerProfile.headline || <span className="text-ink-2">No headline</span>} />
+            {/* Headline -> Title (E595 WS-B): one field, one name. */}
+            <Row label="Title" value={person.title || <span className="text-ink-2">No title</span>} />
             <Row label="Status" value={person.providerProfile.status} />
             <Row
               label="Work method"

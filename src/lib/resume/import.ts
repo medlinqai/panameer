@@ -693,15 +693,25 @@ export async function applyParsedResume(
       /* ⚠⚠ `Certification.user_id` IS NOT NULL and is the OWNER — a credential
          belongs to the PERSON, not to the seller profile, so a provider who stops
          selling keeps it. Selected here because the writer below cannot invent it. */
-      person: { select: { user_id: true } },
+      /* title: the imported title lands on the PERSON now (E595 WS-B). */
+      person: { select: { id: true, user_id: true, title: true } },
     },
   });
   if (!profile) return applied;
 
   // --- Headline + bio: fill only when empty (never overwrite typed text) ---
   const data: Prisma.ProviderProfileUpdateInput = {};
-  if (!profile.headline.trim() && parsed.headline) {
-    data.headline = parsed.headline.slice(0, 200);
+  /* TWO TARGETS NOW: the profile keeps overview and method; the TITLE goes
+     to the person. Kept as a separate object so an empty one writes nothing. */
+  const personData: Prisma.PersonUpdateInput = {};
+  /* THE IMPORTED TITLE GOES TO Person.title (E595 WS-B). SUPERSEDED (E164):
+     //   if (!profile.headline.trim() && parsed.headline) {
+     //     data.headline = parsed.headline.slice(0, 200);
+     //     applied.headline = true;
+     //   }
+     FILL-ONLY-WHEN-EMPTY IS UNCHANGED - an import never overwrites typed text. */
+  if (!(profile.person.title ?? "").trim() && parsed.headline) {
+    personData.title = parsed.headline.slice(0, 200);
     applied.headline = true;
   }
   if (!profile.overview?.trim() && parsed.overview) {
@@ -720,6 +730,10 @@ export async function applyParsedResume(
   // work history instead (E068).
   if (Object.keys(data).length > 0) {
     await prisma.providerProfile.update({ where: { id: profileId }, data });
+  }
+  /* The title write, owner-scoped through the profile's own person. */
+  if (Object.keys(personData).length > 0) {
+    await prisma.person.update({ where: { id: profile.person.id }, data: personData });
   }
 
   // --- Work history: append EMPLOYERS we don't already hold -----------------

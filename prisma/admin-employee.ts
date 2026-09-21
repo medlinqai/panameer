@@ -38,7 +38,7 @@ export async function makeAdminsEmployees(
           providerProfile: {
             select: {
               id: true,
-              headline: true,
+              /* headline COLUMN GONE (E595 WS-B) - title is on the person. */
               _count: {
                 select: { employers: true, packages: true, certifications: true },
               },
@@ -93,10 +93,15 @@ export async function makeAdminsEmployees(
       continue;
     }
 
-    const titleIsProviderHeadline =
-      !!a.person.title &&
-      !!a.person.providerProfile?.headline &&
-      a.person.title === a.person.providerProfile.headline;
+    /* THE TWO FIELDS ARE ONE FIELD NOW (E595 WS-B), so they can no longer
+       disagree and this can never be true. SUPERSEDED (E164):
+       //   const titleIsProviderHeadline =
+       //     !!a.person.title &&
+       //     !!a.person.providerProfile?.headline &&
+       //     a.person.title === a.person.providerProfile.headline;
+       Kept as a named false so the branch below reads unchanged rather than
+       being deleted along with whatever else it guarded. */
+    const titleIsProviderHeadline = false;
 
     const moved = a.person.company?.name !== "Panameer";
 

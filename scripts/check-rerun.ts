@@ -81,7 +81,7 @@ async function main() {
     select: { id: true },
   });
   const profile = await prisma.providerProfile.create({
-    data: { person_id: person.id, headline: "E561 rerun probe" },
+    data: { person_id: person.id },
     select: { id: true },
   });
 
@@ -181,7 +181,7 @@ async function main() {
       select: { id: true },
     });
     const twin = await prisma.providerProfile.create({
-      data: { person_id: twinPerson.id, headline: "E561 rerun twin" },
+      data: { person_id: twinPerson.id },
       select: { id: true },
     });
     try {

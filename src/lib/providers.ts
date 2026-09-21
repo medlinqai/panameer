@@ -98,7 +98,9 @@ export async function getPublicProviderProfile(
     // Validated is a public badge (brief_K) — visible to everyone; does NOT
     // affect base visibility.
     validated: profile.validation_status === "VALIDATED",
-    headline: profile.headline,
+    /* ⚠ THE DTO KEY STAYS `headline`; the SOURCE is `Person.title` since
+       `E595` WS-B collapsed the two columns into one. */
+    headline: profile.person.title ?? "",
     overview: profile.overview,
     workTypes: profile.work_types,
     // Money stays in integer cents; the client formats it.

@@ -58,7 +58,7 @@ export async function getMe(viewer: Viewer) {
           /* ⚠⚠ THE REQUIRED SET (`P2-J3-E590` WS-A0). This block previously fell
              back to `completeness >= 80`, so `/api/me` could tell the shell a
              provider was visible while the marketplace disagreed. */
-          headline: true,
+          /* ⚠ `headline` COLUMN IS GONE (`E595` WS-B) — the title is on the person. */
           role_type_id: true,
           hourly_rate_cents: true,
           rate_min_cents: true,
@@ -168,6 +168,7 @@ export async function getMe(viewer: Viewer) {
             meetsRequired: providerMeetsRequired({
               ...provider,
               person: {
+                title: person.title,
                 photo_url: person.photo_url,
                 phone: person.phone,
                 site: person.site,

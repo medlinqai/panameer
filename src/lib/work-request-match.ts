@@ -130,12 +130,13 @@ export async function matchProvidersFor(
     take: 100,
     select: {
       id: true,
-      headline: true,
+      /* ⚠ `headline` COLUMN IS GONE (`E595` WS-B) — the title is on the person. */
       rate_min_cents: true,
       rate_max_cents: true,
       currency: true,
       validation_status: true,
-      person: { select: { first_name: true, last_name: true, photo_url: true } },
+      /* title: the provider's title lives on the PERSON since E595 WS-B. */
+      person: { select: { first_name: true, last_name: true, title: true, photo_url: true } },
       /*
         Only the skills THIS request asked for. Selecting all of a provider's
         skills and filtering in memory would work and would also pull a hundred
@@ -201,7 +202,9 @@ export async function matchProvidersFor(
         firstName: p.person.first_name,
         lastName: p.person.last_name,
         name: `${p.person.first_name} ${p.person.last_name}`.trim(),
-        headline: p.headline,
+        /* ⚠ THE DTO KEY STAYS `headline`; the SOURCE is `Person.title` since
+       `E595` WS-B collapsed the two columns into one. */
+        headline: p.person.title ?? "",
         photoUrl: p.person.photo_url,
         validated: p.validation_status === "VALIDATED",
         relevantSkills: p.skills.length,

@@ -91,6 +91,8 @@ export async function getAdminDashboard(viewer: Viewer) {
       company: { select: { p_account_id: true } },
       /* ⚠ The PERSON half of the required set — photo, phone and an address.
          `providerMeetsRequired` spans both tables. */
+      /* ⚠ `title` — the profile's title lives on the PERSON since `E595` WS-B. */
+      title: true,
       photo_url: true,
       phone: true,
       site: { select: { addresses: { select: { id: true } } } },
@@ -109,7 +111,7 @@ export async function getAdminDashboard(viewer: Viewer) {
           completeness: true,
           validation_status: true,
           paused_at: true,
-          headline: true,
+          /* ⚠ `headline` COLUMN IS GONE (`E595` WS-B) — the title is on the person. */
           role_type_id: true,
           hourly_rate_cents: true,
           rate_min_cents: true,
@@ -155,7 +157,7 @@ export async function getAdminDashboard(viewer: Viewer) {
           ...p.providerProfile,
           meetsRequired: providerMeetsRequired({
             ...p.providerProfile,
-            person: { photo_url: p.photo_url, phone: p.phone, site: p.site },
+            person: { title: p.title, photo_url: p.photo_url, phone: p.phone, site: p.site },
           }),
         })
     ).length;

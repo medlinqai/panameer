@@ -572,7 +572,8 @@ export async function createProviderAccount(
     await tx.providerProfile.create({
       data: {
         person_id: person.id,
-        headline: "", // set at the Title step
+        /* ⚠ `headline: ""` REMOVED (`E595` WS-B) — the column is gone. The Title
+           step now writes `Person.title`, which needs no placeholder row. */
         // Both default in the schema; brief_P collects them at steps 1–2.
         // The deck's "send me helpful emails" opt-in (E001) maps onto the
         // preference store brief_H already created — no new column needed.
@@ -705,7 +706,7 @@ export async function ensureProviderBackbone(
     await tx.providerProfile.create({
       data: {
         person_id: personId,
-        headline: "",
+        /* ⚠ `headline: ""` REMOVED (`E595` WS-B) — see the sibling create above. */
         notify_product_updates: opts.marketingOptIn === true,
       },
     });
@@ -887,7 +888,9 @@ async function loadDraft(viewer: Viewer) {
 function computeResumeStep(p: Awaited<ReturnType<typeof loadDraft>>): ProviderStep {
   const pp = p.providerProfile!;
   const done: Record<ProviderStep, boolean> = {
-    title: pp.headline.trim() !== "",
+    /* ⚠ READS `Person.title` (`E595` WS-B). ⚠ SUPERSEDED (`E164`):
+       //   title: pp.headline.trim() !== "", */
+    title: (p.title ?? "").trim() !== "",
     /*
       WS3 — two steps, two conditions. A provider who claimed a role and then
       closed the tab resumes onto SKILLS, not back onto the role they already
@@ -1002,7 +1005,7 @@ export async function getOnboardingState(viewer: Viewer) {
     paused_at: pp.paused_at,
     meetsRequired: providerMeetsRequired({
       ...pp,
-      person: { photo_url: p.photo_url, phone: p.phone, site: p.site },
+      person: { title: p.title, photo_url: p.photo_url, phone: p.phone, site: p.site },
     }),
   });
 
@@ -1150,7 +1153,9 @@ export async function getOnboardingState(viewer: Viewer) {
         typed themselves. This is the server-side answer, and it survives both.
       */
       resumeSkillIds: resumeSkillIds(pp.imports, pp.skills),
-      headline: pp.headline,
+      /* ⚠ THE WIRE KEY STAYS `headline`; the SOURCE is now `Person.title`
+         (`E595` WS-B). ⚠ SUPERSEDED (`E164`): `headline: pp.headline,` */
+      headline: p.title ?? "",
       overview: pp.overview ?? "",
       hourlyRateCents: pp.hourly_rate_cents,
       // WS0/E078c — the advertised range; the hero renders this.
@@ -2053,11 +2058,42 @@ export async function applyProviderSection(
     }
 
     case "title": {
-      const headline: string = (data.headline ?? "").trim();
-      if (!headline) throw new OnboardingError("Title is required", "INVALID");
-      await prisma.providerProfile.update({
+      /*
+        ── ⚠⚠⚠ THE TITLE STEP WRITES `Person.title` NOW (`P0-E595` WS-B) ─────
+
+        ⚠ SUPERSEDED, quoted not deleted (`E164`):
+        //   const headline: string = (data.headline ?? "").trim();
+        //   if (!headline) throw new OnboardingError("Title is required", "INVALID");
+        //   await prisma.providerProfile.update({
+        //     where: { id: profileId },
+        //     data: { headline },
+        //   });
+
+        ⚠⚠ THIS STEP WAS ALREADY CALLED *"Title"* AND ALREADY THREW *"Title is
+        required"* — it simply wrote the wrong column. The REQUESTER wizard has
+        always written `Person.title`, and `requester-onboarding.ts`'s own
+        comment claimed *"Same `Person.title` column both sides write"*, which
+        was false for this side. ⚠⚠⚠ THAT IS THE WHOLE BUG: two wizards asking
+        one question and storing it in two places, which is why two titles
+        rendered on one card.
+
+        ⚠ THE PAYLOAD KEY IS STILL `headline` and that is DELIBERATE for now —
+        the wizard's client state and `section-schemas.ts` name it that, and
+        re-keying the wire format is a separate change with its own risk. **The
+        COLUMN is what collapsed.**
+      */
+      const title: string = (data.headline ?? "").trim();
+      if (!title) throw new OnboardingError("Title is required", "INVALID");
+      /* ⚠ Owner-scoped through the profile, exactly as before: the person is
+         resolved FROM the profile id, never accepted from input. */
+      const owner = await prisma.providerProfile.findUnique({
         where: { id: profileId },
-        data: { headline },
+        select: { person_id: true },
+      });
+      if (!owner) throw new OnboardingError("No provider profile", "NOT_A_PROVIDER");
+      await prisma.person.update({
+        where: { id: owner.person_id },
+        data: { title },
       });
       break;
     }
@@ -2823,6 +2859,9 @@ export async function buildCompletenessInput(profileId: string) {
       projects: { select: { employer_id: true, start_date: true } },
       person: {
         select: {
+          /* ⚠ THE TITLE LIVES HERE NOW (`E595` WS-B) — the scorer's `headline`
+             input is fed from `Person.title`. */
+          title: true,
           photo_url: true,
           phone: true,
           phone_verified_at: true,
@@ -2853,7 +2892,10 @@ export async function buildCompletenessInput(profileId: string) {
      checklist mirrors this scorer predicate for predicate, so assembling the
      input twice is how the number and its breakdown would start disagreeing. */
   const input = {
-    headline: profile.headline,
+    /* ⚠ `completeness.ts`'s input keeps the key `headline`; its SOURCE is now
+       `Person.title` (`E595` WS-B). ⚠ SUPERSEDED (`E164`):
+       //   headline: profile.headline, */
+    headline: profile.person.title,
     overview: profile.overview,
     work_method: profile.work_method,
     pillar_id: profile.pillar_id,
@@ -2995,7 +3037,9 @@ export async function publishProfile(viewer: Viewer) {
         });
   */
   const missing = missingRequired({
-    headline: pp.headline,
+    /* ⚠ Source is `Person.title` (`E595` WS-B). ⚠ SUPERSEDED (`E164`):
+       //   headline: pp.headline, */
+    headline: p.title,
     role_type_id: pp.role_type_id,
     skills: pp.skills,
     photoUrl: p.photo_url,
@@ -3169,7 +3213,9 @@ async function currentProfileAsParsed(profileId: string): Promise<ParsedResume> 
   const pp = await prisma.providerProfile.findUnique({
     where: { id: profileId },
     select: {
-      headline: true,
+      /* ⚠ `headline` COLUMN IS GONE (`E595` WS-B) — the title comes off the
+         person now. ⚠ SUPERSEDED (`E164`): `headline: true,` */
+      person: { select: { title: true } },
       overview: true,
       employers: {
         select: {
@@ -3196,7 +3242,9 @@ async function currentProfileAsParsed(profileId: string): Promise<ParsedResume> 
   });
   const iso = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : null);
   return {
-    headline: pp?.headline ?? null,
+    /* ⚠ `ParsedResume` keeps the key `headline`; the SOURCE is `Person.title`
+       (`E595` WS-B). ⚠ SUPERSEDED (`E164`): `headline: pp?.headline ?? null,` */
+    headline: pp?.person?.title ?? null,
     overview: pp?.overview ?? null,
     /* ⚠ Built from what is already STORED, not from a document — this shape feeds
        a re-read comparison, and certifications are not part of that comparison

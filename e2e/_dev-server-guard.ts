@@ -1,3 +1,5 @@
+import { assertServerFresh } from "./_server-freshness";
+
 /**
  * ── ⚠⚠⚠ THE SERVER THESE GATES REUSE MUST BE A **DEV** SERVER ─────────────
  *
@@ -37,6 +39,15 @@
  * server"*.
  */
 export default async function guardDevServer() {
+  /*
+    ⚠⚠ FRESHNESS FIRST (`P0-E595` WS-B, Scott 2026-09-21). This guard caught a
+    PRODUCTION server on the port; it could not see a STALE one — a `next dev`
+    older than the generated Prisma client passes every check below and then
+    serves 500s. ⚠ `assertServerFresh` is shared with the six app-shell configs
+    so all seven suites refuse the same server for the same reason.
+  */
+  await assertServerFresh(3100);
+
   const base = "http://localhost:3100";
 
   let res: Response;

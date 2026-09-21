@@ -65,7 +65,7 @@ export async function sellGaps(viewerUserId: string): Promise<GateGap[]> {
   const pp = await prisma.providerProfile.findFirst({
     where: { person: { user_id: viewerUserId } },
     select: {
-      headline: true,
+      /* ⚠ `headline` COLUMN IS GONE (`E595` WS-B) — the title is on the person. */
       role_type_id: true,
       hourly_rate_cents: true,
       rate_min_cents: true,
@@ -75,6 +75,8 @@ export async function sellGaps(viewerUserId: string): Promise<GateGap[]> {
       skills: { select: { id: true } },
       person: {
         select: {
+          /* ⚠ `title` — the profile's title lives on the PERSON since `E595` WS-B. */
+          title: true,
           photo_url: true,
           phone: true,
           /* ⚠ SUPERSEDED, quoted not deleted (`P1-A1.4-E418`):
@@ -94,7 +96,9 @@ export async function sellGaps(viewerUserId: string): Promise<GateGap[]> {
     });
   }
   return missingForSell({
-    headline: pp.headline,
+    /* ⚠ THE DTO KEY STAYS `headline`; the SOURCE is `Person.title` since
+       `E595` WS-B collapsed the two columns into one. */
+    headline: pp.person.title,
     role_type_id: pp.role_type_id,
     skills: pp.skills,
     photoUrl: pp.person.photo_url,

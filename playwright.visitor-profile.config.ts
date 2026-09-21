@@ -3,6 +3,12 @@ import { defineConfig, devices } from "@playwright/test";
  *  ⚠ app-shell.config uses `testIgnore`, so a new spec here is absorbed and
  *  moves its count — the `E562` defect. Pinned AND named there. */
 export default defineConfig({
+  /* ⚠⚠⚠ REFUSES A SERVER OLDER THAN THE GENERATED PRISMA CLIENT OR THE BUILD
+     (`P0-E595` WS-B). `reuseExistingServer` below is what makes that possible:
+     a `next dev` left running since before `prisma generate` serves 500s from a
+     cached client, and two of three red gates on 2026-09-21 were exactly that,
+     attributed to the branch under test. */
+  globalSetup: "./e2e-shell/_app-server-guard.ts",
   testDir: "./e2e-shell",
   testMatch: "visitor-profile.spec.ts",
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],

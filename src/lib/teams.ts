@@ -79,7 +79,7 @@ export async function getMyTeams(viewer: Viewer): Promise<MyTeams> {
     orderBy: { updated_at: "desc" },
     select: {
       id: true,
-      headline: true,
+      /* ⚠ `headline` COLUMN IS GONE (`E595` WS-B) — the title is on the person. */
       status: true,
       paused_at: true,
       completeness: true,
@@ -105,6 +105,8 @@ export async function getMyTeams(viewer: Viewer): Promise<MyTeams> {
         select: {
           first_name: true,
           last_name: true,
+          /* ⚠ `title` — the profile's title lives on the PERSON since `E595` WS-B. */
+          title: true,
           photo_url: true,
           phone: true,
           site: { select: { addresses: { select: { id: true } } } },
@@ -132,7 +134,9 @@ export async function getMyTeams(viewer: Viewer): Promise<MyTeams> {
     represents: reps.map((p) => ({
       profileId: p.id,
       name: `${p.person.first_name} ${p.person.last_name}`.trim(),
-      headline: p.headline || null,
+      /* ⚠ THE DTO KEY STAYS `headline`; the SOURCE is `Person.title` since
+       `E595` WS-B collapsed the two columns into one. */
+      headline: p.person.title || null,
       photoUrl: p.person.photo_url,
       visible: isMarketplaceVisible({ ...p, meetsRequired: providerMeetsRequired(p) }),
       validated: p.validation_status === "VALIDATED",

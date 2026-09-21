@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- PANAMEER SEED DATA — generated illustration, not a photograph of a real
+     person. Written by prisma/seed-avatar.ts, deterministically from the
+     persona's email address. Do not hand-edit: the next seed run overwrites it
+     byte for byte. See P0-E595 WS-B. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img"
+     data-panameer-seed="avatar">
+  <title>Illustrated seed avatar for Hassan Almeida</title>
+  <desc>Panameer seed data. A flat geometric illustration generated locally from
+  the persona's email address. It is not a photograph and does not depict a real
+  person.</desc>
+  <defs>
+    <linearGradient id="bg-seed-hassan-almeida-24-19tfku" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="hsl(214 62% 88%)"/>
+      <stop offset="1" stop-color="hsl(214 52% 72%)"/>
+    </linearGradient>
+    <clipPath id="clip-seed-hassan-almeida-24-19tfku"><circle cx="128" cy="128" r="128"/></clipPath>
+  </defs>
+  <g clip-path="url(#clip-seed-hassan-almeida-24-19tfku)">
+    <rect width="256" height="256" fill="url(#bg-seed-hassan-almeida-24-19tfku)"/>
+    <path d="M40 256c0-60 38-94 88-94s88 34 88 94Z" fill="hsl(19 42% 42%)"/>
+    <rect x="114" y="140" width="28" height="34" rx="14" fill="#9C6340"/>
+    <circle cx="128" cy="112" r="46" fill="#9C6340"/>
+    <path d="M78 116c0-40 22-60 50-60s50 20 50 60v40h-14v-46c-12 8-24 12-36 12s-24-4-36-12v46H78Z" fill="#5C3A6E"/>
+    <circle cx="112" cy="110" r="4.5" fill="#2B2118"/>
+    <circle cx="144" cy="110" r="4.5" fill="#2B2118"/>
+    <path d="M116 132c7 6 17 6 24 0" stroke="#2B2118" stroke-width="4"
+          stroke-linecap="round" fill="none"/>
+  </g>
+</svg>

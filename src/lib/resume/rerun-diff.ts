@@ -97,6 +97,9 @@ export async function computeRerunDiff(
     where: { id: profileId },
     include: {
       employers: { select: { name: true, role_title: true } },
+      /* The TITLE lives on the person since E595 WS-B — the diff asks whether
+         an import would FILL it, so it has to read where it now is. */
+      person: { select: { title: true } },
       education: { select: { institution: true } },
       languages: { select: { name: true } },
       certifications: { select: { name: true } },
@@ -208,7 +211,9 @@ export async function computeRerunDiff(
     other: {
       /* ⚠ FILL, NEVER REPLACE — the writer guards both on the profile's value
          being empty, so a curated headline or overview is untouchable here. */
-      headlineWillFill: !profile.headline?.trim() && Boolean(parsed.headline),
+      /* SOURCE IS Person.title SINCE E595 WS-B; the FILL-NEVER-REPLACE rule
+         above is unchanged. */
+      headlineWillFill: !profile.person?.title?.trim() && Boolean(parsed.headline),
       overviewWillFill: !profile.overview?.trim() && Boolean(parsed.overview),
       employers: (parsed.experiences ?? []).filter(
         (e) =>

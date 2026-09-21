@@ -93,6 +93,8 @@ export async function getProviderSettings(viewer: Viewer) {
         select: {
           first_name: true,
           last_name: true,
+          /* ⚠ `title` — the profile's title lives on the PERSON since `E595` WS-B. */
+          title: true,
           photo_url: true,
           phone: true,
           site: { select: { addresses: { select: { id: true } } } },
@@ -119,7 +121,9 @@ export async function getProviderSettings(viewer: Viewer) {
     firstName: profile.person.first_name,
     lastName: profile.person.last_name,
     photoUrl: profile.person.photo_url,
-    headline: profile.headline,
+    /* ⚠ THE DTO KEY STAYS `headline`; the SOURCE is `Person.title` since
+       `E595` WS-B collapsed the two columns into one. */
+    headline: profile.person.title ?? "",
     overview: profile.overview ?? "",
     workTypes: profile.work_types,
     roleTypeId: profile.skills[0]?.skill.role_type_id ?? null,
