@@ -65,7 +65,9 @@ import {
   WorkHistoryBody,
 } from "@/components/profile/sections";
 import { LANGUAGES } from "@/lib/countries";
-import { LocationFields } from "@/components/onboarding/LocationFields";
+/* ⚠ `LocationFields` MOVED WITH `ContactEditor` (`P2-A2-E597` WS-B) and is no
+   longer mounted here. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   import { LocationFields } from "@/components/onboarding/LocationFields"; */
 import { CompanyStep } from "@/components/company/CompanyStep";
 import { AiPassPanel } from "@/components/onboarding/AiPassPanel";
 import { ResumeImportAction } from "@/components/onboarding/ResumeImportAction";
@@ -78,13 +80,30 @@ import {
   type ReviewFix,
 } from "@/lib/review-validation";
 import {
-  formatCents,
-  bpsToPercentLabel,
+  /* ⚠ `formatCents` and `bpsToPercentLabel` MOVED WITH `RateEditor`
+     (`P2-A2-E597` WS-B) — the fee panel that used them is there now.
+     ⚠ `rateBreakdown` STAYS: the wizard still computes the breakdown and passes
+     it in, so the fee maths keeps its single home in `lib/display.ts`.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):  formatCents, bpsToPercentLabel, */
   rateBreakdown,
   displayFirstName,
   DEFAULT_SERVICE_FEE_BPS,
 } from "@/lib/display";
-import { PhoneField } from "@/components/onboarding/PhoneField";
+/* ⚠ `PhoneField` MOVED WITH `ContactEditor` (`P2-A2-E597` WS-B).
+   ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   import { PhoneField } from "@/components/onboarding/PhoneField"; */
+/* ⚠ EDITOR 1 OF 5 (`P2-A2-E597` WS-B). One component, mounted by the step and
+   the review modal — and by `/connect/edit/title` when WS-C lands. */
+/* ⚠ `HEADLINE_MAX` IS NOT RE-IMPORTED HERE. It moved to `TitleEditor.tsx` with
+   the field that enforces it, and nothing left in this file reads it — an
+   import kept "for completeness" is an unused symbol and one new lint warning
+   against a baseline whose rule is zero. */
+import { TitleEditor, titleCanSave } from "@/components/onboarding/editors/TitleEditor";
+/* ⚠ EDITOR 2 OF 5 (`P2-A2-E597` WS-B). Both fields it mounts were already
+   shared; what moved out is the wiring between them. */
+import { ContactEditor } from "@/components/onboarding/editors/ContactEditor";
+/* ⚠ EDITOR 3 OF 5 (`P2-A2-E597` WS-B). The wizard's local `Row` moved with it. */
+import { RateEditor, rateCanSave } from "@/components/onboarding/editors/RateEditor";
 import { formatPhone, isPhoneComplete, parseStoredPhone, toE164 } from "@/lib/phone";
 
 /**
@@ -608,7 +627,10 @@ const emptyAddress = (country = "United States"): AddressDraft => ({
  * `lib/explore.ts` — the two must agree, or the field promises a length the
  * card will not honour.
  */
-const HEADLINE_MAX = 42;
+/* ⚠ `HEADLINE_MAX` MOVED TO `TitleEditor.tsx` (`P2-A2-E597` WS-B) and is
+   re-exported through the import below — the cap and the input that enforces it
+   belong together. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   const HEADLINE_MAX = 42; */
 
 export default function JoinProviderPage() {
   const router = useRouter();
@@ -2250,137 +2272,71 @@ setScreen(target);
           ? profile.skillIds.length + profile.customSkills.length > 0
           : true;
 
+  /*
+    ── ⚠⚠ EXTRACTED (`P2-A2-E597` WS-B, editor 1 of 5) ──────────────────────
+
+    ⚠ THE BODY NOW LIVES IN `components/onboarding/editors/TitleEditor.tsx`.
+    This helper stays, and stays thin, because it is the ONE SAVE PATH: the
+    step's Continue and the review modal's Save both come through here.
+    ⚠⚠ WHAT MOVED IS PRESENTATION. What did NOT move is `saveAnd("title", …)` —
+    two save paths for one field is how the two titles happened (`E595`).
+    ⚠ SUPERSEDED, quoted not deleted (`E164`) — the closure held the whole field,
+    its 42-character cap and its counter inline; the cap constant lived at
+    `page.tsx:611`:
+    //   const titleEditing = () => ({
+    //     canSave: profile.headline.trim() !== "",
+    //     save: () => saveAnd("title", { headline: profile.headline }, () => goTo("tell_us")),
+    //     body: (<> …<Field label="Your Title" …><TextInput … maxLength={HEADLINE_MAX} /></Field>… </>),
+    //   });
+  */
   const titleEditing = () => ({
-    canSave: profile.headline.trim() !== "",
+    canSave: titleCanSave(profile.headline),
     save: () => saveAnd("title", { headline: profile.headline }, () => goTo("tell_us")),
     body: (
-      <>
-          {/*
-            WS-4 — CAPPED AT 42 WITH A LIVE COUNTER, fixed at the source.
-
-            This field IS the talent card's title, and the card renders it on
-            ONE line with a 42-character soft cap (lib/assessment aside, see
-            `cardTitle` in lib/explore.ts). It allowed 200, so a provider could
-            write a title that the card would silently cut — the truncation
-            being the first time anyone found out, on a page the provider never
-            looks at.
-
-            Capping the INPUT rather than widening the card is the right end:
-            the constraint is real (one line, in a 380px card) and the person
-            best placed to choose what survives it is the one writing it.
-
-            The counter turns magenta over 36 so it warns before it blocks —
-            a field that just stops accepting keystrokes reads as broken.
-          */}
-          <Field
-            label="Your Title"
-            hint="This is the title buyers see on your profile — one line, so keep it tight."
-          >
-            <TextInput
-              value={profile.headline}
-              onChange={(e) =>
-                setProfile((p) => ({ ...p, headline: e.target.value.slice(0, HEADLINE_MAX) }))
-              }
-              placeholder="e.g. Oracle Cloud P2P / Procurement Expert"
-              maxLength={HEADLINE_MAX}
-            />
-          </Field>
-          <p
-            className={
-              "mt-1.5 text-right text-[13px] font-semibold tabular-nums " +
-              (profile.headline.length > HEADLINE_MAX - 6 ? "text-magenta" : "text-ink-2")
-            }
-          >
-            {profile.headline.length} / {HEADLINE_MAX}
-          </p>
-      </>
+      <TitleEditor
+        value={profile.headline}
+        onChange={(headline) => setProfile((p) => ({ ...p, headline }))}
+      />
     ),
   });
 
-  /* ⚠ THE RATE FIELD + FEE BREAKDOWN (`E412` WS-1), rendered by `case "rate"`
-     and by the review's "Edit rate". */
-  const rateEditing = () => {
-    const { rate, fee, youGet } = rateBreakdown(
-      profile.hourlyRateCents,
-      profile.serviceFeeBps
-    );
-    return {
-      canSave: Boolean(profile.hourlyRateCents),
-      save: () =>
-        saveAnd("rate", {
-          hourlyDollars:
-            profile.hourlyRateCents != null ? profile.hourlyRateCents / 100 : "",
-        }),
-      body: (
-        <>
-          <div className="max-w-md space-y-5">
-            <Field
-              label="Hourly Rate"
-              hint="Total amount the client will see."
-            >
-              <div className="relative">
-                <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[15px] font-bold text-ink-2">
-                  $
-                </span>
-                <TextInput
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  className="pl-8"
-                  value={
-                    profile.hourlyRateCents != null
-                      ? String(profile.hourlyRateCents / 100)
-                      : ""
-                  }
-                  onChange={(e) =>
-                    setProfile((p) => ({
-                      ...p,
-                      hourlyRateCents:
-                        e.target.value === ""
-                          ? null
-                          : Math.round(Number(e.target.value) * 100),
-                    }))
-                  }
-                  placeholder="125.00"
-                />
-                <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[14px] text-ink-2">
-                  /hr
-                </span>
-              </div>
-            </Field>
+  /*
+    ── ⚠⚠ EXTRACTED (`P2-A2-E597` WS-B, editor 3 of 5) ──────────────────────
 
-            <div className="rounded-brand border border-line p-5">
-              <Row
-                label={`Service fee (${bpsToPercentLabel(profile.serviceFeeBps)})`}
-                value={fee != null ? `−${formatCents(fee)}` : "—"}
-              />
-              <p className="mt-2 text-[13px] leading-relaxed text-ink-2">
-                This helps us run the platform and provide services like payment
-                protection and customer support. Fees vary and are shown before
-                contract acceptance.{" "}
-                <span className="font-semibold text-magenta">Learn More</span>
-              </p>
-              <div className="mt-4 border-t border-line pt-4">
-                <Row
-                  label="You'll Get"
-                  value={youGet != null ? `${formatCents(youGet)}/hr` : "—"}
-                  strong
-                />
-                <p className="mt-1 text-[13px] text-ink-2">
-                  The estimated amount you&apos;ll receive after service fees.
-                </p>
-              </div>
-              {rate != null && (
-                <p className="mt-3 text-[13px] text-ink-2">
-                  Clients see {formatCents(rate)}/hr.
-                </p>
-              )}
-            </div>
-          </div>
-        </>
-      ),
-    };
-  };
+    ⚠ THE FIELDS AND THE FEE PANEL NOW LIVE IN
+    `components/onboarding/editors/RateEditor.tsx`, and the wizard's LOCAL `Row`
+    helper moved with them — WS-A's order said it would.
+    ⚠⚠ `rateBreakdown` IS STILL CALLED HERE, not inside the component: the fee
+    maths is `lib/display.ts`'s and has ONE home. Re-deriving it in a component
+    is how two screens start quoting different take-home figures.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`) — the closure held the $-prefixed
+    number field, the dollars/cents conversion and the whole fee panel inline:
+    //   const rateEditing = () => {
+    //     const { rate, fee, youGet } = rateBreakdown(profile.hourlyRateCents, profile.serviceFeeBps);
+    //     return {
+    //       canSave: Boolean(profile.hourlyRateCents),
+    //       save: () => saveAnd("rate", { hourlyDollars: … }),
+    //       body: (<>…<Field label="Hourly Rate" …><TextInput type="number" …/></Field>
+    //         <div className="rounded-brand …"><Row label={`Service fee (…)`} …/>…</div>…</>),
+    //     };
+    //   };
+  */
+  const rateEditing = () => ({
+    canSave: rateCanSave(profile.hourlyRateCents),
+    save: () =>
+      saveAnd("rate", {
+        hourlyDollars:
+          profile.hourlyRateCents != null ? profile.hourlyRateCents / 100 : "",
+      }),
+    body: (
+      <RateEditor
+        hourlyRateCents={profile.hourlyRateCents}
+        onChange={(hourlyRateCents) => setProfile((p) => ({ ...p, hourlyRateCents }))}
+        serviceFeeBps={profile.serviceFeeBps}
+        breakdown={rateBreakdown(profile.hourlyRateCents, profile.serviceFeeBps)}
+      />
+    ),
+  });
 
   /*
     ⚠⚠ PHONE + ADDRESS, ONE BLOCK (`E412` WS-1/WS-4).
@@ -2396,71 +2352,41 @@ setScreen(target);
     screen. Splitting the block would have meant either a second editor for the
     phone (forbidden) or a link that still navigates away.
   */
+  /*
+    ── ⚠⚠ EXTRACTED (`P2-A2-E597` WS-B, editor 2 of 5) ──────────────────────
+
+    ⚠ THE FIELDS NOW LIVE IN `components/onboarding/editors/ContactEditor.tsx`.
+    This helper stays because it is the ONE SAVE PATH — `postStep("finish", …)`
+    writes `Person.phone` and hands the address to `saveProviderAddress`.
+    ⚠⚠ THE `patch.x !== undefined` NORMALISATION MOVED WITH THE FIELDS: telling
+    "not touched" from "cleared" is part of how those inputs report a change,
+    not part of what this caller does with it.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`) — the closure held `PhoneField`,
+    `LocationFields` and that whole patch spread inline:
+    //   const contactEditing = () => ({
+    //     save: () => postStep("finish", { address: profile.address, phone: phoneToSave }),
+    //     body: (<><div className="space-y-3"><PhoneField id="review-phone" … />
+    //       <LocationFields withStreet … onChange={(patch) => setAddr({ …spread… })} /></div></>),
+    //   });
+  */
   const contactEditing = () => ({
     save: () =>
       postStep("finish", { address: profile.address, phone: phoneToSave }),
     body: (
-      <>
-              <div className="space-y-3">
-                {/*
-                  DATE OF BIRTH IS GONE (WS7). It was required here and gated
-                  both publish and marketplace visibility, and nothing in the
-                  marketplace ever used it: a buyer needs to reach a provider,
-                  not know their age. If age or legal capacity is ever needed it
-                  rides the tax/payout gate, where there is a reason to ask.
-                  The column stays nullable — no destructive drop.
-                */}
-                {/*
-                  E203 — masked, digits-only, validated on blur. The country
-                  comes from the address block below, whose hint has always
-                  promised it "sets how we format your phone number"; this is
-                  the first version where that is true.
-                */}
-                <PhoneField
-                  id="review-phone"
-                  value={phoneInput}
-                  onChange={setPhoneInput}
-                  country={phoneCountry}
-                  onCountryChange={setPhoneCountry}
-                />
-                {/*
-                  E126 — COUNTRY FIRST, above the street line. It decides what
-                  the fields under it even mean ("State" here, "Province" in
-                  Canada, "County" in Ireland), so asking it last meant asking
-                  the rest before knowing what they were. Same shared block as
-                  the employer modal (E123), which is what stops one provider
-                  meeting two different location forms in one sitting.
-                */}
-                <LocationFields
-                  withStreet
-                  countryHint="Also sets how we format your phone number."
-                  value={{
-                    country: addr.country,
-                    line1: addr.line1,
-                    city: addr.city,
-                    state: addr.state,
-                    postalCode: addr.postalCode,
-                  }}
-                  onChange={(patch) =>
-                    setAddr({
-                      ...(patch.country !== undefined
-                        ? { country: patch.country ?? "" }
-                        : {}),
-                      ...(patch.line1 !== undefined
-                        ? { line1: patch.line1 ?? "" }
-                        : {}),
-                      ...(patch.city !== undefined ? { city: patch.city ?? "" } : {}),
-                      ...(patch.state !== undefined
-                        ? { state: patch.state ?? "" }
-                        : {}),
-                      ...(patch.postalCode !== undefined
-                        ? { postalCode: patch.postalCode ?? "" }
-                        : {}),
-                    })
-                  }
-                />
-              </div>
-      </>
+      <ContactEditor
+        address={{
+          country: addr.country,
+          line1: addr.line1,
+          city: addr.city,
+          state: addr.state,
+          postalCode: addr.postalCode,
+        }}
+        onAddressChange={(patch) => setAddr(patch)}
+        phone={phoneInput}
+        onPhoneChange={setPhoneInput}
+        phoneCountry={phoneCountry}
+        onPhoneCountryChange={setPhoneCountry}
+      />
     ),
   });
 
@@ -5744,24 +5670,12 @@ function gapsFor(
   return where === "work" ? gaps.filter(isWork) : gaps.filter((g) => !isWork(g));
 }
 
-function Row({
-  label,
-  value,
-  strong,
-}: {
-  label: string;
-  value: string;
-  strong?: boolean;
-}) {
-  return (
-    <div className="flex items-baseline justify-between gap-4">
-      <span className={strong ? "font-bold" : "text-ink-2"}>{label}</span>
-      <span className={strong ? "text-[18px] font-extrabold" : "font-semibold"}>
-        {value}
-      </span>
-    </div>
-  );
-}
+/* ⚠ `Row` MOVED TO `RateEditor.tsx` (`P2-A2-E597` WS-B) — it was local to this
+   file and the rate panel was its only remaining caller. ⚠ SUPERSEDED, quoted
+   not deleted (`E164`):
+   //   function Row({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
+   //     return (<div className="flex items-baseline justify-between gap-4">…</div>);
+   //   } */
 
 /** The AI mark used wherever the product attributes work to AI (WS4/E174). */
 function SparkIcon() {

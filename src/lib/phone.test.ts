@@ -178,7 +178,22 @@ eq(
 */
 const FIELD = readFileSync("src/components/onboarding/PhoneField.tsx", "utf8");
 const REQ = readFileSync("src/app/join/requester/steps/page.tsx", "utf8");
-const PROV = readFileSync("src/app/join/provider/page.tsx", "utf8");
+/*
+  ⚠⚠ THE PROVIDER'S PHONE FIELD MOVED OUT OF THE WIZARD (`P2-A2-E597` WS-B).
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   const PROV = readFileSync("src/app/join/provider/page.tsx", "utf8");
+  ⚠⚠⚠ A GATE THAT READS ONE NAMED FILE GOES BLIND THE DAY A COMPONENT MOVES —
+  which is `check:review-edit`'s defect exactly, still reading
+  `ProviderProfileView.tsx` two months after `E588` stopped rendering it.
+  ⚠ SO THE PROVIDER SOURCE IS THE WIZARD **PLUS ITS EXTRACTED EDITORS**,
+  concatenated: the assertion follows the component rather than the path.
+*/
+const PROV = [
+  "src/app/join/provider/page.tsx",
+  "src/components/onboarding/editors/ContactEditor.tsx",
+]
+  .map((f) => readFileSync(f, "utf8"))
+  .join("\n");
 const live = (src: string) =>
   src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
 
@@ -197,7 +212,28 @@ eq(
 );
 eq("the requester field owns its country", /onCountryChange=\{setPhoneCountry\}/.test(live(REQ)), true);
 eq("the requester saves E.164", /toE164\(draft\.phone, phoneCountry\)/.test(live(REQ)), true);
-eq("the provider field owns its country too", /onCountryChange=\{setPhoneCountry\}/.test(live(PROV)), true);
+/*
+  ⚠⚠ THE RULE, NOT ONE FILE'S SPELLING (`P2-A2-E597` WS-B). ⚠ SUPERSEDED,
+  quoted not deleted (`E164`):
+  //   eq("the provider field owns its country too", /onCountryChange=\{setPhoneCountry\}/.test(live(PROV)), true);
+  ⚠⚠⚠ THE WIRING IS NOW SPLIT ACROSS TWO FILES — `ContactEditor` passes its own
+  prop to `PhoneField`, and the wizard passes `setPhoneCountry` into that prop.
+  Concatenating the sources is not enough: the old one-line pattern exists in
+  NEITHER half. ⚠ So both halves are asserted, which is strictly stronger than
+  the single regex was — it now fails if EITHER end is rewired.
+  ⚠ `E126`'s invariant is unchanged: the country comes from the field's own
+  control, never from the address.
+*/
+eq(
+  "the provider field owns its country too — the editor wires its own prop",
+  /onCountryChange=\{onPhoneCountryChange\}/.test(live(PROV)),
+  true
+);
+eq(
+  "the provider field owns its country too — the wizard passes the phone state in",
+  /onPhoneCountryChange=\{setPhoneCountry\}/.test(live(PROV)),
+  true
+);
 eq(
   "the provider gate reads the PHONE's country, not the address's",
   /isPhoneComplete\(phoneInput, phoneCountry\)/.test(live(PROV)),

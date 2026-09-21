@@ -279,6 +279,63 @@ test("⚠⚠⚠ RATE — the editor saves the rate columns", async ({ browser })
   await page.close();
 });
 
+test("⚠⚠⚠ CONTACT — the editor saves Person.phone and the address", async ({ browser }) => {
+  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+  await signInAs(page);
+  await openEditor(page, "Location");
+
+  /*
+    ── ⚠⚠ ADDED BEFORE THE EXTRACTION, NOT AFTER (`P2-A2-E597` WS-B) ────────
+
+    ⚠ SCOTT, 2026-09-21: *"Before extracting each editor, extend
+    check:wizard-contract to assert that editor's save in the database... A net
+    that doesn't read a field can't catch a broken save of it."*
+    ⚠⚠ TITLE AND RATE WERE ALREADY COVERED; CONTACT WAS NOT. So this assertion
+    exists, and passes, on the UNEXTRACTED editor first — which is the only way
+    it can prove the extraction changed nothing.
+
+    ⚠⚠⚠ IT SAVES TWO DIFFERENT TABLES AND BOTH ARE READ. `postStep("finish", …)`
+    writes `Person.phone` directly and hands the address to
+    `saveProviderAddress`, which writes an `Address` row under the person's
+    SITE. An assertion on the phone alone would pass while every address was
+    silently dropped.
+  */
+  /*
+    ⚠⚠ TEN DIGITS, NO `+1`. MEASURED: the field is a MASK and caps at ten
+    digits, so `+15550107777` was stored as `1555010777` — the country code ate
+    the first slot and the last digit fell off the end.
+    ⚠ The test was wrong, not the editor. Recorded because the next person to
+    add a phone assertion will reach for `+1` too.
+  */
+  const phone = "5550107777";
+  await page.locator("#review-phone").fill(phone);
+
+  const line1 = `${STAMP} 42 Extraction Way`;
+  await page.locator("dialog[open] input").nth(1).fill(line1);
+
+  await page.getByRole("button", { name: /^Save$/ }).first().click();
+  await page.waitForTimeout(2200);
+
+  const person = await db().person.findUnique({
+    where: { id: ids.personId },
+    select: {
+      phone: true,
+      site: { select: { addresses: { select: { line1: true }, orderBy: { created_at: "desc" }, take: 1 } } },
+    },
+  });
+  /* ⚠ The field MASKS as you type, so the stored value is compared on digits —
+     the assertion is that the number arrived, not how it was displayed. */
+  expect(
+    (person?.phone ?? "").replace(/\D/g, ""),
+    "the contact editor did not save Person.phone"
+  ).toContain("5550107777");
+  expect(
+    person?.site?.addresses[0]?.line1,
+    "the contact editor did not save the address"
+  ).toBe(line1);
+  await page.close();
+});
+
 test("⚠⚠ EVERY SECTION THE REVIEW OFFERS OPENS AN EDITOR", async ({ browser }) => {
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
   await signInAs(page);

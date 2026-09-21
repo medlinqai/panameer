@@ -46,10 +46,27 @@ import { join } from "node:path";
 function listeningSince(port: number): { pid: number; started: Date } | null {
   let pid: number;
   try {
-    /* ⚠ `lsof` IS macOS-AND-LINUX AND THIS REPO IS mac-only (`darwin`). A
-       failure here is treated as "cannot tell", never as "stale" — a guard that
-       blocks the suite on its own inability to measure is worse than no guard. */
-    const out = execFileSync("lsof", ["-ti", `tcp:${port}`], { encoding: "utf8" }).trim();
+    /*
+      ⚠ `lsof` IS macOS-AND-LINUX AND THIS REPO IS mac-only (`darwin`). A
+      failure here is treated as "cannot tell", never as "stale" — a guard that
+      blocks the suite on its own inability to measure is worse than no guard.
+
+      ── ⚠⚠⚠ `-sTCP:LISTEN`, AND LEAVING IT OUT MADE THIS GUARD CRY WOLF ─────
+
+      ⚠ `lsof -ti tcp:3100` RETURNS EVERY SOCKET ON THE PORT, not just the
+      server: an open browser tab holding an ESTABLISHED connection is in that
+      list too. ⚠⚠ MEASURED 2026-09-21, and it blocked a real gate run: the
+      guard picked up a **Google Chrome Helper** (pid 48747, started the
+      previous day), compared its age against a build from thirty seconds
+      earlier, and refused the suite while the only actual server was the one
+      Playwright was about to start.
+      ⚠⚠⚠ THE FAILURE MODE OF A GUARD IS THE THING TO GET RIGHT. This one
+      aborts a whole run, so a false positive costs more than the confusion it
+      prevents — and it told the developer to `kill` their own browser.
+    */
+    const out = execFileSync("lsof", ["-ti", `tcp:${port}`, "-sTCP:LISTEN"], {
+      encoding: "utf8",
+    }).trim();
     const first = out.split(/\s+/).filter(Boolean)[0];
     if (!first) return null;
     pid = Number(first);
@@ -107,10 +124,25 @@ export async function assertServerFresh(port = 3100): Promise<void> {
       fix: "npx prisma generate",
     });
   }
-  const buildId = newestMtime(join(root, ".next", "BUILD_ID"));
-  if (buildId) {
-    artefacts.push({ label: "the Next build (.next/BUILD_ID)", at: buildId, fix: "npm run build" });
-  }
+  /*
+    ── ⚠⚠⚠ `.next/BUILD_ID` IS NOT COMPARED, AND THAT IS A CORRECTION ───────
+
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   const buildId = newestMtime(join(root, ".next", "BUILD_ID"));
+    //   if (buildId) artefacts.push({ label: "the Next build (.next/BUILD_ID)", … });
+
+    ⚠⚠ EVERY SUITE BEHIND THIS GUARD RUNS `npm run dev`, AND A DEV SERVER DOES
+    NOT SERVE `.next/BUILD_ID` — that file is the PRODUCTION build's output.
+    Comparing the two is a category error, and it has a cost: running
+    `npm run build` (an ordinary thing to do before a gate sweep) wrote a newer
+    BUILD_ID and the guard then refused a dev server that was perfectly current.
+    ⚠ MEASURED 2026-09-21 — server 20:49:02, build 20:50:02, suite blocked.
+
+    ⚠⚠⚠ THE PRISMA CLIENT CHECK IS THE ONE THAT MATTERS AND IT STAYS. That is
+    the artefact a RUNNING server genuinely cannot pick up — a node_modules
+    require resolved once and cached in the process — and it is the one that
+    produced the 500s this guard was written for.
+  */
 
   const stale = artefacts.filter((a) => a.at > live.started);
   if (stale.length === 0) return;
