@@ -477,6 +477,9 @@ model Person {
   coordinatorInvites  CoordinatorInvite[] @relation("CoordinatorInvitesSent")
   /// ⚠ `E493` — colleague invitations this person sent. No roster, no relation.
   colleagueInvites    ColleagueInvite[]   @relation("ColleagueInvitesSent")
+  /// Profiles THIS person has viewed (`P0-E595` A2). ⚠ The attribution half
+  /// of *"who is searching who"* — recorded now, displayed by a later ruling.
+  profileViewsMade    ProfileView[]       @relation("ProfileViewer")
   // As a BUYER: the work requests this Person created (brief_L).
   workRequests        WorkRequest[]
   // SMS verification challenges for this person's phone (brief_P).
@@ -1131,6 +1134,8 @@ model ProviderProfile {
   education         Education[]
   languages         Language[]
   certifications    Certification[]
+  /// Views of THIS profile (`P0-E595` A2). See `model ProfileView`.
+  profileViews      ProfileView[]     @relation("ProfileViewed")
   imports           ProfileImport[]
   resumeParseAudits ResumeParseAudit[]
   profileGapFlags   ProfileGapFlags?
@@ -5800,4 +5805,87 @@ model ShortlistLine {
   @@index([shortlist_id])
   @@index([provider_person_id])
   @@map("shortlist_lines")
+}
+
+
+/// ── ⚠⚠ WHO LOOKED AT A PROFILE (`P0-E595` A2) ──────────────────────────────
+///
+/// ⚠ SCOTT, 2026-09-20: *"who is searching who… we are giving something free
+/// that LI charges for."*
+///
+/// ⚠⚠ MEASURED BEFORE BUILDING: **no view tracking existed anywhere.** Grepping
+/// this file for `view_count`, `ProfileView`, `PageView` and `viewed_at`
+/// returned exactly two hits, both `reviewed_at`, both unrelated. So this is a
+/// new model, a write path and a read — not a display change.
+/// ⚠ It is what unblocks `Viewing Me`, which renders a dash today and is named
+/// in the code as *"the one with no data behind it"*.
+///
+/// ── ⚠⚠⚠ A VIEW IS NOT AN IMPRESSION: THE DE-DUP IS A DATABASE INVARIANT ───
+///
+/// ⚠ `@@unique([profile_id, viewer_person_id, viewed_on])` — ONE ROW PER VIEWER
+/// PER PROFILE PER DAY. ⚠⚠ THE WINDOW IS A CALENDAR DAY, AND IT IS ENFORCED BY
+/// THE DATABASE RATHER THAN BY APPLICATION DISCIPLINE, which is the only
+/// version that survives two tabs racing each other.
+///
+/// ⚠ WHY A DAY, and not an hour or a week:
+///   · a REFRESH must never add a view — Scott: otherwise *"the number becomes
+///     a lie the product tells its own users"*;
+///   · an HOUR still inflates across a day of repeated checking, which is
+///     exactly how somebody browses a shortlist;
+///   · a WEEK under-reports genuine repeat interest, and repeat interest is
+///     the signal a provider most wants;
+///   · a day is also the coarsest unit a person can reason about without being
+///     told the rule — *"somebody looked at you today"* needs no explanation.
+/// ⚠ `viewed_on` IS A `@db.Date`, NOT A TIMESTAMP TRUNCATED IN CODE. A unique
+/// constraint cannot be built on a value the application computes differently
+/// in two places.
+///
+/// ── ⚠⚠ THE VIEWER IS RECORDED, EVEN THOUGH THE FIRST RELEASE SHOWS A COUNT ─
+///
+/// ⚠⚠⚠ ATTRIBUTION CANNOT BE RETROFITTED TO VIEWS ALREADY RECORDED. Same
+/// decision and the same reason as `ColleagueInvite.inviter_person_id`
+/// (`E493`): recording it now costs a column; not recording it costs every view
+/// logged before somebody decides to show them.
+/// ⚠ **WHAT IS DISPLAYED IS A SEPARATE RULING AND LIKELY A PAID TIER.** Record
+/// the viewer; show the count.
+///
+/// ── ⚠ NOT NULL, AND THE PAGE IS WHY ───────────────────────────────────────
+///
+/// ⚠⚠ `/providers/[id]` SELF-GUARDS — it redirects a viewerless request to
+/// `/login` — so **every view of a profile has a signed-in viewer** and there
+/// is no anonymous case to model. ⚠⚠⚠ THAT IS WHAT MAKES THE UNIQUE CONSTRAINT
+/// WORK: Postgres treats NULLs as distinct, so a nullable viewer would make
+/// every anonymous refresh a new row and defeat the de-dup this model exists
+/// to guarantee.
+///
+/// ⚠ THE OWNER IS NEVER COUNTED. That rule lives in the WRITE PATH, not here —
+/// a constraint cannot express *"these two ids must differ"* across tables, and
+/// the write is the one place that knows who is asking.
+///
+/// ⚠⚠ `onDelete: Cascade` ON BOTH SIDES, AND THE TRADE IS STATED: deleting a
+/// person removes the views they made, so a provider's count is *"views by
+/// current members"* rather than an all-time total. ⚠ That is the right
+/// direction — `E556` records the opposite mistake, rows surviving a deletion
+/// with their subject still identifiable — but it does mean the number can go
+/// down, and nothing should present it as monotonic.
+model ProfileView {
+  id               String   @id @default(uuid()) @db.Uuid
+  profile_id       String   @db.Uuid
+  viewer_person_id String   @db.Uuid
+  /// ⚠ The de-dup key. A DATE, so the constraint is exact.
+  viewed_on        DateTime @db.Date
+  /// ⚠ The full instant, for a future "recently" read. Never the de-dup key.
+  viewed_at        DateTime @default(now())
+  created_at       DateTime @default(now())
+
+  profile ProviderProfile @relation("ProfileViewed", fields: [profile_id], references: [id], onDelete: Cascade)
+  viewer  Person          @relation("ProfileViewer", fields: [viewer_person_id], references: [id], onDelete: Cascade)
+
+  /// ⚠⚠ THE DE-DUP, AS AN INVARIANT.
+  @@unique([profile_id, viewer_person_id, viewed_on])
+  /// ⚠ The count read: views of one profile, optionally windowed by date.
+  @@index([profile_id, viewed_on])
+  /// ⚠ The future "who did I look at" read, and the cascade's own lookup.
+  @@index([viewer_person_id, viewed_on])
+  @@map("profile_views")
 }
