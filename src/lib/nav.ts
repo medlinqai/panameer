@@ -125,6 +125,66 @@ export const NOTIFICATIONS_NAV: NavItem = {
 export const UTILITY_NAV: NavItem[] = [SEARCH_NAV, HOME_NAV, NOTIFICATIONS_NAV];
 
 /**
+ * ── ⚠⚠⚠ A BAND ITEM MAY OWN MORE THAN ONE PREFIX (`P2-A3-E596` WS-A) ──────
+ *
+ * ⚠ SCOTT'S SECOND CONNECT WALK, 2026-09-20: he opened `/community/score` and
+ * **the band lit nothing.** The tab row above said `CONNECT · Profile` while
+ * the band said he was nowhere — two navigation layers on one page
+ * disagreeing about which application he was in.
+ *
+ * ── WHY IT HAPPENS ────────────────────────────────────────────────────────
+ *
+ * ⚠⚠ CONNECT'S BAND ENTRY IS `/connect`, BUT CONNECT'S PAGES MOSTLY LIVE UNDER
+ * `/community` — Community, Colleagues, Forums, Mentors, Teams and Score, eight
+ * routes on disk. `AppBand`'s test is `pathname.startsWith(href)`, ONE PREFIX
+ * PER ITEM, so none of them matches `/connect` and the pill stays dark.
+ *
+ * ── ⚠⚠⚠ AN EXPLICIT LIST, NEVER A LOOSER MATCH ───────────────────────────
+ *
+ * ⚠ The obvious "fix" is to relax the test. `AppBand.tsx`'s own comment records
+ * why that is wrong: `/admin` is a prefix of every admin page and a `startsWith`
+ * test once **lit fifteen pills at once** (`E475`).
+ * ⚠⚠ AN EXPLICIT LIST CANNOT DO THAT. It adds exactly the prefixes somebody
+ * wrote down, and every addition is a one-line diff in review.
+ *
+ * ⚠ IT LIVES HERE, NOT ON THE `NavItem`s, BECAUSE THE SAME ITEM IS DECLARED
+ * TWICE — `Connect` appears in `PROVIDER_NAV` and in `REQUESTER_NAV`, and a
+ * property set on one and forgotten on the other is precisely the drift one
+ * definition exists to prevent. Keyed by `href`, it covers both.
+ *
+ * ⚠⚠ THE SETTINGS ABSORPTION BRIEF ADDS A THIRD PREFIX HERE and is blocked on
+ * this landing. Add the prefix; change nothing else.
+ */
+const BAND_EXTRA_PREFIXES: Readonly<Record<string, readonly string[]>> = {
+  /* ⚠ Connect's pages live under `/community` — Community, Colleagues, Forums,
+     Mentors, Teams and Score, eight routes. This is the one Scott caught. */
+  "/connect": ["/community"],
+  /*
+    ⚠⚠ FOUND BY THE NEW GATE, NOT BY THE BRIEF. Enumerating `PAGE_TABS` turned
+    up two more dark-band routes of exactly the same shape, both tab
+    destinations that leave their own prefix:
+      · `Sell`'s second tab goes to `/services/offers` — the ONLY route under
+        `/services`, verified on disk, so the prefix cannot over-match.
+      · `Hire`'s second tab goes to `/create-work`, a single route.
+    ⚠ They are fixed here rather than reported and left, because the assertion
+    Scott asked for goes red on them and a gate that ships red is not a gate.
+  */
+  "/my-services": ["/services"],
+  "/hire": ["/create-work"],
+};
+
+/**
+ * Every path prefix a band item owns — its own `href` first, then any extras.
+ *
+ * ⚠ The single source of truth for "which application is this page in", read by
+ * `AppBand` and by the gate that proves the two navigation layers agree.
+ */
+export function bandPrefixesFor(href: string): readonly string[] {
+  return [href, ...(BAND_EXTRA_PREFIXES[href] ?? [])];
+}
+
+
+/**
  * THE REQUESTER RAIL (brief_requester_home_v1 WS-A).
  *
  * Same six-slot shape as the provider's, pointed at the buying side: you learn,

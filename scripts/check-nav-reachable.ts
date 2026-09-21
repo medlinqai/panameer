@@ -48,6 +48,7 @@ import {
   PERSONA_NAV_SECONDARY,
   PROVIDER_NAV,
   REQUESTER_NAV,
+  bandPrefixesFor,
   type NavItem,
 } from "@/lib/nav";
 import { SETTINGS_NAV } from "@/lib/settings-nav";
@@ -165,6 +166,138 @@ check(
   "3 — the menus were actually loaded",
   MENUS.reduce((n, m) => n + m.items.length, 0) > 40,
   `${MENUS.reduce((n, m) => n + m.items.length, 0)} item(s)`
+);
+
+/*
+  ── ⚠⚠⚠ 4 · THE BAND KNOWS WHERE YOU ARE (`P2-A3-E596` WS-A) ──────────────
+
+  ⚠ SCOTT, 2026-09-20, on `/community/score`: the tab row said `CONNECT ·
+  Profile` and the band lit NOTHING. ⚠⚠ TWO NAVIGATION LAYERS ON ONE PAGE
+  DISAGREEING ABOUT WHICH APPLICATION YOU ARE IN.
+
+  ⚠⚠ THIS GATE PROVED A PAGE COULD BE *REACHED* AND NOTHING PROVED THE CHROME
+  KNEW WHERE YOU HAD ARRIVED. That is the assertion that was missing.
+
+  ── ⚠ ENUMERATED, NOT LISTED (`E587`'s lesson) ───────────────────────────
+
+  ⚠⚠ THE ROUTES COME FROM `PAGE_TABS` AT RUNTIME — every key, and every tab
+  destination under it. A page added to a tab row later is caught by this gate
+  rather than by Scott. ⚠ A hard-coded list of `/community/*` would have gone
+  stale the first time somebody added a tab, which is the whole point.
+
+  ── ⚠⚠ WHAT IS ASSERTED, AND WHAT DELIBERATELY IS NOT ────────────────────
+
+  ⚠ THE RULE IS *"the band lights SOMETHING"*, not *"the band lights the item
+  this tab row belongs to"*. A Connect tab legitimately points at
+  `/my-services`, which is SELL's — cross-links between applications are
+  correct, and asserting otherwise would encode a bug as a rule.
+  ⚠⚠ THE DEFECT IS A DARK BAND, and that is what this catches.
+*/
+const BAND_ITEMS: NavItem[] = [
+  ...flatten(REQUESTER_NAV),
+  ...flatten(PROVIDER_NAV),
+  ...flatten(ADMIN_NAV.flatMap((g) => g.items)),
+];
+/** ⚠ `AppBand`'s own rule, reproduced: EXACT for the landing routes, prefixes
+ *  otherwise. The prefixes themselves come from `bandPrefixesFor`, so this
+ *  cannot drift from the component — it asks the same function. */
+const BAND_EXACT = new Set(["/dashboard", "/admin"]);
+function bandLights(pathname: string): NavItem[] {
+  return BAND_ITEMS.filter((i) =>
+    BAND_EXACT.has(i.href)
+      ? pathname === i.href
+      : bandPrefixesFor(i.href).some((pre) => pathname.startsWith(pre))
+  );
+}
+
+/* ⚠ Every route a tab row can put you on: the PAGE_TABS keys and their tab
+   destinations, de-duplicated, query strings stripped. */
+const TAB_ROUTES = [
+  ...new Set(
+    Object.entries(PAGE_TABS).flatMap(([key, items]) => [
+      key,
+      ...items.map((t) => t.href),
+    ])
+  ),
+].map((h) => h.split("?")[0]);
+
+/*
+  ── ⚠⚠ ONE KNOWN-OPEN ROUTE, AND IT IS NOT A LOOPHOLE ─────────────────────
+
+  ⚠ `/settings` IS NOT A BAND APPLICATION TODAY. It is reached from the ACCOUNT
+  menu (`PERSONA_NAV`'s *"My Settings"*), so the band is correctly dark there —
+  and the Connect tab row nonetheless offers it, which is the same disagreement
+  in a third shape. ⚠⚠ THE FIX IS THE SETTINGS ABSORPTION BRIEF, which this
+  work stream unblocks and which the brief says *"adds a third prefix here"*.
+  Pre-empting that decision inside a band fix would be drift.
+
+  ⚠⚠⚠ THE `KNOWN_OPEN` MECHANISM IS `check:email`'S, AND BOTH ITS SAFEGUARDS
+  ARE KEPT, because Scott approved it only with them:
+    1 AN ENTRY THAT STARTS *PASSING* FAILS THE GATE, so it cannot rot silently.
+    2 IT CARRIES THE DATE IT WAS OPENED AND ITS AGE IS PRINTED EVERY RUN —
+      *"a visible age is what stops this becoming a parking lot."*
+*/
+const BAND_KNOWN_OPEN: Readonly<Record<string, { since: string; why: string }>> = {
+  "/settings": {
+    since: "2026-09-21",
+    why: "Settings is an ACCOUNT-menu destination, not a band application. Resolved by the Settings absorption brief, which P2-A3-E596 WS-A unblocks.",
+  },
+};
+
+for (const route of TAB_ROUTES) {
+  const lit = bandLights(route);
+  const open = BAND_KNOWN_OPEN[route];
+  if (open) {
+    const days = Math.floor((Date.now() - Date.parse(open.since)) / 86_400_000);
+    /* ⚠ SAFEGUARD 1 — a known-open entry that starts passing FAILS. */
+    check(
+      `4 — KNOWN OPEN (${days}d, since ${open.since}) ${route} — ${open.why}`,
+      lit.length === 0,
+      lit.length > 0
+        ? `it now lights ${lit.map((i) => i.href).join(", ")} — REMOVE the known-open entry`
+        : undefined
+    );
+    continue;
+  }
+  check(
+    `4 — the band lights an application on ${route}`,
+    lit.length > 0,
+    lit.length === 0 ? "band is DARK — the tab row says one thing, the band says nowhere" : undefined
+  );
+}
+
+/* ⚠ And the known-open list cannot grow silently: every entry must name a real
+   tab route, so deleting a route without clearing its entry is caught. */
+for (const route of Object.keys(BAND_KNOWN_OPEN)) {
+  check(
+    `4 — known-open route ${route} is still a real tab destination`,
+    TAB_ROUTES.includes(route)
+  );
+}
+
+/* ⚠⚠⚠ `E586` — A GATE WITH NO INPUTS MUST FAIL. If `PAGE_TABS` were empty, or
+   the import silently resolved to nothing, every assertion above would simply
+   not run and this section would report success by saying nothing. */
+check(
+  "4 — TAB_ROUTES was actually enumerated",
+  TAB_ROUTES.length >= 10,
+  `${TAB_ROUTES.length} route(s)`
+);
+check(
+  "4 — the band menus were actually loaded",
+  BAND_ITEMS.length > 5,
+  `${BAND_ITEMS.length} item(s)`
+);
+/* ⚠ And the multi-prefix mechanism itself is asserted, so deleting
+   `BAND_EXTRA_PREFIXES` cannot quietly satisfy the rule above. */
+check(
+  "4 — Connect owns /community as well as /connect",
+  bandPrefixesFor("/connect").includes("/community"),
+  bandPrefixesFor("/connect").join(", ")
+);
+check(
+  "4 — an exact landing route gains no extra prefixes",
+  bandPrefixesFor("/dashboard").length === 1
 );
 
 if (failures.length > 0) {

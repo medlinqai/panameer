@@ -18,6 +18,7 @@ import {
   ADMIN_HOME,
   HOME_NAV,
   NOTIFICATIONS_NAV,
+  bandPrefixesFor,
 } from "@/lib/nav";
 import "./app-band.css";
 
@@ -155,8 +156,27 @@ export function AppBand() {
      admin page and a startsWith test lit fifteen pills at once — the rail
      learned that the hard way (`E475`). */
   const EXACT = new Set(["/dashboard", "/admin"]);
+  /*
+    ── ⚠⚠ AN ITEM MAY OWN MORE THAN ONE PREFIX (`P2-A3-E596` WS-A) ──────────
+
+    ⚠ SUPERSEDED, quoted not deleted (`E164`) — one prefix per item:
+    //   const isActive = (href: string) =>
+    //     EXACT.has(href) ? pathname === href : pathname.startsWith(href);
+
+    ⚠⚠ CONNECT'S PAGES LIVE UNDER `/community`, NOT UNDER `/connect` — eight
+    routes — so the old test left the pill dark on every one of them. Scott
+    caught it on `/community/score`, where the tab row said `CONNECT · Profile`
+    and the band said he was nowhere.
+    ⚠⚠⚠ THE LIST IS EXPLICIT AND LIVES IN `nav.ts`. Relaxing the match instead
+    is the `E475` trap this very comment records — fifteen pills at once. An
+    explicit list adds exactly what somebody wrote down.
+    ⚠ `EXACT` still wins for `/dashboard` and `/admin`: they own no extras, and
+    an exact landing route must not become a prefix.
+  */
   const isActive = (href: string) =>
-    EXACT.has(href) ? pathname === href : pathname.startsWith(href);
+    EXACT.has(href)
+      ? pathname === href
+      : bandPrefixesFor(href).some((p) => pathname.startsWith(p));
 
   return (
     <header className="pm-band border-b border-white/10 bg-rail px-5 py-2.5 sm:px-6">
