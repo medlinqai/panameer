@@ -390,6 +390,59 @@ test("⚠⚠⚠ SPECIALIZATIONS — the editor saves the join rows", async ({ br
   await page.close();
 });
 
+test("⚠⚠⚠ SKILLS — the editor saves the ProviderSkill rows", async ({ browser }) => {
+  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+  await signInAs(page);
+  await openEditor(page, "Skills");
+
+  /*
+    ── ⚠⚠ ROWS, NOT A COUNT (`P2-A2-E597` WS-B) ────────────────────────────
+
+    ⚠ SCOTT: *"Specializations and skills each write their own join tables, so
+    assert the rows, not just the page."*
+    ⚠⚠⚠ AND THE ASSERTION IS DELIBERATELY NOT `count + 1`. `E552` records that
+    the skills step DELETES every `ProviderSkill` row for the profile and
+    rewrites the picks — so the total after a save is not the total before plus
+    one, and a count assertion would fail for a reason that is not a defect.
+    ⚠ What must be true is that THE SKILL THAT WAS CLICKED IS THERE afterwards.
+    That survives the delete-and-rewrite, and it is the thing a provider cares
+    about.
+  */
+  const unpicked = page.locator('dialog[open] button[aria-pressed="false"]');
+  const n = await unpicked.count();
+  expect(n, "the skills editor offered nothing to pick").toBeGreaterThan(0);
+  const chip = unpicked.first();
+  /*
+    ⚠⚠ A SKILL CHIP CARRIES ITS DOMAIN, A SPECIALIZATION CHIP DOES NOT.
+    MEASURED at this gate: `textContent` reads "Absence Management· PeopleSoft"
+    for a skill named "Absence Management" — the picker appends `· <domain>` so
+    two identically-named skills from different product lines can be told apart,
+    which is `E515`'s whole subject.
+    ⚠ So the NAME is the part before the separator, and the `+`/`×` glyph is
+    stripped as in the specializations test.
+  */
+  const chipText = ((await chip.textContent()) ?? "")
+    .split("·")[0]
+    .trim()
+    .replace(/\s*[+×]\s*$/, "");
+  await chip.click();
+  await page.waitForTimeout(400);
+
+  await page.getByRole("button", { name: /^Save$/ }).first().click();
+  await page.waitForTimeout(2500);
+
+  const rows = await db().providerSkill.findMany({
+    where: { provider_profile_id: ids.profileId },
+    select: { skill: { select: { name: true } } },
+  });
+  expect(rows.length, "the skills editor saved no ProviderSkill rows").toBeGreaterThan(0);
+  expect(
+    rows.map((r) => r.skill.name),
+    `the saved skills do not include the chip that was clicked ("${chipText}")`
+  ).toContain(chipText);
+  await page.close();
+});
+
 test("⚠⚠ EVERY SECTION THE REVIEW OFFERS OPENS AN EDITOR", async ({ browser }) => {
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
   await signInAs(page);
