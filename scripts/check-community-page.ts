@@ -263,9 +263,45 @@ check("8 — ⚠ it renders nothing at zero rather than an empty container", /ro
   does not build the object at all for a non-owner.**
 */
 const PVIEW = code("src", "lib", "provider-profile-view.ts");
+/*
+  ── ⚠⚠⚠ OVERRULED 2026-09-20 — THE RULE IS PROVIDER→PROVIDER ──────────────
+
+  ⚠ SUPERSEDED, quoted not deleted (`E164`) — what WS-C asserted for one gate:
+  //   check("the view model withholds `rates` from a NON-OWNER",
+  //     /rates:\s*!isOwner \? null :/.test(PVIEW));
+
+  ⚠⚠ SCOTT'S RULING WAS ALWAYS *"providers should not see other provider's
+  rates"*. The brief's *"no rate that is not the viewer's own"* was chat's
+  over-generalisation, made twice, and it read as settled because it was
+  repeated — the failure mode `CLAUDE.md` opens with.
+  ⚠⚠⚠ THE BLANKET VERSION BROKE THE MARKETPLACE: a rate is in the REQUIRED set
+  precisely so BUYERS CAN FILTER ON IT (`E581`), and hiding it from them removes
+  the reason the field is mandatory.
+
+  ⚠ THIS GATE NOW ASSERTS THE BUYER CASE, WHICH IS THE ONE THAT WOULD REGRESS
+  SILENTLY: a future tightening back to `!isOwner` passes every visitor test —
+  a provider still cannot see another provider's rate — while quietly taking it
+  from every buyer. **The old assertion could not tell those two apart.**
+*/
 check(
-  "9 — ⚠⚠ the view model withholds `rates` from a non-owner",
-  /rates:\s*!isOwner \? null :/.test(PVIEW)
+  "9 — ⚠⚠ a BUYER sees the rate — the predicate is capability, not identity",
+  /hasCapability\(opts\.viewer, "canHireTalent"\)/.test(PVIEW)
+);
+check(
+  "9 — ⚠ the owner always sees their own",
+  /isOwner \|\|/.test(PVIEW)
+);
+/* ⚠ A signed-out visitor is not a buyer: `viewer` is null and a null holds no
+   capability, so the rate is withheld — the safe direction on a public page. */
+check(
+  "9 — ⚠ a signed-out viewer is not treated as a buyer",
+  /opts\.viewer != null && hasCapability/.test(PVIEW)
+);
+/* ⚠⚠ AND THE BLANKET FORM MUST NOT COME BACK. This is the shape that hides the
+   rate from buyers, and it is the one thing this section exists to prevent. */
+check(
+  "9 — ⚠⚠⚠ the blanket `!isOwner` form is gone and stays gone",
+  !/rates:\s*!isOwner \?/.test(PVIEW)
 );
 /* ⚠ And the CARD is gated, not just its body — `RateRows` returning null still
    left `ProfileCard` printing the heading `Rates` over an empty box, which told

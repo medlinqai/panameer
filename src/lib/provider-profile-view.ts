@@ -1,6 +1,6 @@
 import { formatLocality } from "@/lib/locality";
 import { prisma } from "@/lib/prisma";
-import { isMarketplaceVisible, providerMeetsRequired } from "@/lib/access";
+import { hasCapability, isMarketplaceVisible, providerMeetsRequired } from "@/lib/access";
 import { aiExtractionAvailable } from "@/lib/resume/ai-extract";
 import { missingRequired, profileEnrichmentGaps, VISIBILITY_THRESHOLD } from "@/lib/completeness";
 import { shownSkills, selectedRoleIds } from "@/lib/shown-skills";
@@ -415,15 +415,36 @@ export async function getProviderProfileView(
       explicit select would be a rewrite of a 600-line loader for no disclosure
       benefit. **Stated plainly rather than claimed as "omitted from the query".**
 
-      ⚠⚠⚠ ONE PREDICATE, ONE PLACE — deliberately, because it is the thing most
-      likely to need narrowing. **A BUYER ALSO LOSES THE RATE UNDER THIS
-      READING**, and a buyer is who the marketplace exists for: `E581` records
-      that a rate is part of the REQUIRED set precisely so buyers can filter on
-      it. ⚠ If Scott means provider→provider only, the change is
-      `isOwner || hasCapability(viewer, "canHireTalent")` on this line and
-      nothing else moves. **Raised at the WS-C gate rather than decided here.**
+      ── ⚠⚠⚠ OVERRULED AT THE WS-C GATE, 2026-09-20 — A BUYER SEES THE RATE ──
+
+      ⚠ SUPERSEDED, quoted not deleted (`E164`) — what WS-C shipped for one gate:
+      //   rates: !isOwner ? null : { … }
+      //   …raised at the gate: "a buyer also loses the rate under this reading."
+
+      ⚠⚠ SCOTT'S RULING IS PROVIDER→PROVIDER AND ALWAYS WAS: *"I do nto think
+      providers should see other provider's rates."* ⚠⚠⚠ THE BRIEF'S *"no rate
+      that is not the viewer's own"* WAS CHAT'S OVER-GENERALISATION, MADE TWICE
+      — and it is exactly the failure `CLAUDE.md` opens with: a premise nobody
+      verified, repeated until it read as settled.
+      ⚠ **A RATE IS IN THE REQUIRED SET PRECISELY SO BUYERS CAN FILTER ON IT**
+      (`E581`). Hiding it from buyers breaks what the marketplace is for.
+
+      ⚠ SO THE PREDICATE IS THE VIEWER'S CAPABILITY, NOT THEIR IDENTITY: the
+      owner always sees their own, anyone who can HIRE sees it because that is
+      what they are here to do, and a provider looking at another provider does
+      not. ⚠⚠ `canHireTalent` IS THE RIGHT TEST rather than "is not a provider":
+      a DUAL-ROLE member who both hires and provides is a buyer when they are
+      buying, and refusing them the rate would be refusing them the marketplace.
     */
-    rates: !isOwner ? null : {
+    rates: !(
+      isOwner ||
+      /* ⚠ A SIGNED-OUT VISITOR IS NOT A BUYER. `viewer` is null then, and a
+         null cannot hold a capability — so the rate is withheld, which is the
+         safe direction for a public page. */
+      (opts.viewer != null && hasCapability(opts.viewer, "canHireTalent"))
+    )
+      ? null
+      : {
       currency: profile.currency,
       hourlyCents: profile.hourly_rate_cents,
       // WS0/E078c — the advertised RANGE. Falls back to the legacy single rate

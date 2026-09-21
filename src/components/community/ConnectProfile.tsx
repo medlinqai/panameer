@@ -510,10 +510,16 @@ export function ConnectProfile({
 
             ⚠ Scott, 2026-09-20: *"Rates moves from the centre to a SIDE card,
             and gains an edit link."* ⚠ It is now in the RIGHT RAIL — see below.
-            ⚠⚠ BIO KEEPS THE ROW TO ITSELF AND THE ROW STAYS `pm-cp-two`: the
-            grid collapses a single child to full width on its own, and changing
-            the class would change the breakpoint behaviour for a card that is
-            not moving.
+            ⚠⚠ BIO KEEPS THE ROW TO ITSELF AND THE ROW STAYS `pm-cp-two`,
+            **and the claim that used to sit here was wrong.**
+            ⚠ SUPERSEDED, quoted not deleted (`E164`): *"the grid collapses a
+            single child to full width on its own."*
+            ⚠⚠⚠ IT DOES NOT. A lone child of a two-column grid fills column ONE
+            and leaves column two empty — `1.55fr` of the centre, with a third
+            of it blank. `connect-profile.css` now carries
+            `.pm-cp-two > :only-child { grid-column: 1 / -1; }`, which fixes it
+            without touching the breakpoint schedule the rest of that comment is
+            right about.
             ⚠ SUPERSEDED, quoted not deleted (`E164`) — the pair as it stood,
             and the two facts the Rates comment carried, which MOVED WITH THE
             CARD rather than being dropped:
