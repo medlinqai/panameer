@@ -83,6 +83,7 @@ export function ConnectProfile({
   community = null,
   score = null,
   colleagueCount,
+  profileViews = null,
   youBothKnow = null,
   messagePermission = null,
   connect,
@@ -123,6 +124,15 @@ export function ConnectProfile({
    *  locked — *"count it and print it, seeded rows included."* The seeded graph
    *  is small, so the number is small. That is correct, not a bug. */
   colleagueCount: number;
+  /**
+   * ⚠⚠ OWNER ONLY — how many people have looked at this profile, one per viewer
+   * per day, all time (`P0-E595` A2). ⚠ `null` on a visitor's view, where the
+   * question is about somebody else's audience and is nobody's business.
+   * ⚠⚠⚠ IT IS A REAL COUNT OF ROWS IN `profile_views`, NOT A WINDOW: the
+   * `Counters` decision is locked — *"count it and print it"* — and a trailing
+   * 30-day window is a product choice nobody has made.
+   */
+  profileViews?: number | null;
   /**
    * ⚠ VISITOR ONLY — accepted colleagues the viewer and this provider share.
    * A REAL QUERY (`mutualColleagueCount`), unlike `Viewing Me`, which has no
@@ -325,11 +335,30 @@ export function ConnectProfile({
             {p.location && (
               <p className="mt-1 text-[12.5px] text-ink-3">{p.location}</p>
             )}
-            {p.person.title && (
-              <div className="mt-3 text-[13.5px] font-bold">
-                {p.person.title}
-              </div>
-            )}
+            {/*
+              ── ⚠⚠⚠ THE SECOND TITLE IS GONE (`P0-E595` WS-C item 2) ────────
+
+              ⚠ SUPERSEDED, quoted not deleted (`E164`):
+              //   {p.person.title && (
+              //     <div className="mt-3 text-[13.5px] font-bold">
+              //       {p.person.title}
+              //     </div>
+              //   )}
+
+              ⚠⚠ THIS CARD RENDERED THE SAME STRING TWICE. It was correct while
+              `headline` and `Person.title` were DIFFERENT COLUMNS holding
+              different answers — a sales headline above, a job title below,
+              which is the two-titles-on-one-card bug `E595` existed to end.
+              ⚠⚠⚠ WS-B COLLAPSED THEM: `provider-profile-view.ts` now feeds
+              `headline` FROM `profile.person.title`, so both branches read one
+              column and the card printed it twice — measured on the walk, the
+              title appeared 3x on the page.
+              ⚠ The remaining render is `p.headline` above, which IS the title.
+              ⚠⚠ THE VIEW-MODEL FIELD KEEPS ITS NAME ON PURPOSE — the wire key
+              stayed `headline` through WS-B as well; the COLUMN collapsed, not
+              the contract, and renaming it is a separate job with its own blast
+              radius.
+            */}
           </div>
         </section>
 
@@ -353,22 +382,43 @@ export function ConnectProfile({
             <b className="text-ink">{colleagueCount}</b>
           </div>
           {/*
-            ⚠⚠⚠ `Viewing Me` HAS NO DATA AND IS NOT INVENTED. There is NO view
-            tracking anywhere in this codebase — no `view_count`, no
-            `ProfileView` model, nothing writes one. ⚠ The mockup shows `201`;
-            that number does not exist and a plausible one would be a fabricated
-            fact about a real person's profile.
-            ⚠ So it takes the dash convention, with a sentence saying what it is.
+            ── ⚠⚠ `Viewing Me` NOW HAS DATA BEHIND IT (`P0-E595` A2 / WS-C) ───
+
+            ⚠ SUPERSEDED, quoted not deleted (`E164`) — true until the write
+            path shipped, and the reason the dash was right at the time:
+            //   ⚠⚠⚠ `Viewing Me` HAS NO DATA AND IS NOT INVENTED. There is NO
+            //   view tracking anywhere in this codebase — no `view_count`, no
+            //   `ProfileView` model, nothing writes one. ⚠ The mockup shows
+            //   `201`; that number does not exist and a plausible one would be
+            //   a fabricated fact about a real person's profile.
+            //   ⚠ So it takes the dash convention, with a sentence saying what
+            //   it is.
+            //   <b className="text-ink-2/40">—</b>
+            //   <p …>Profile views aren&rsquo;t counted yet.</p>
+
+            ⚠⚠ THE DASH CONVENTION IS KEPT FOR `null`, NOT DELETED. `null` means
+            *"not measurable"* and is still the honest answer for a viewer who
+            is not the owner — it is `usage-stats.ts`'s rule, where `earnedCents`
+            returns `null` rather than a number it cannot stand behind.
+            ⚠⚠⚠ A ZERO IS A MEASUREMENT AND RENDERS AS `0`. A provider nobody has
+            looked at yet is a fact about the marketplace, not a gap in the data.
           */}
           {owner ? (
             <>
               <div className="flex items-center justify-between gap-2.5 py-2 text-[13.5px]">
                 <span className="text-ink-2">Viewing Me</span>
-                <b className="text-ink-2/40">—</b>
+                {/* ⚠ `E433` — a count is a figure, so ink. */}
+                {profileViews == null ? (
+                  <b className="text-ink-2/40">&mdash;</b>
+                ) : (
+                  <b className="text-ink">{profileViews}</b>
+                )}
               </div>
-              <p className="text-[12px] leading-relaxed text-ink-2">
-                Profile views aren&rsquo;t counted yet.
-              </p>
+              {profileViews === 0 && (
+                <p className="text-[12px] leading-relaxed text-ink-2">
+                  No one has viewed your profile yet.
+                </p>
+              )}
             </>
           ) : (
             /* ⚠⚠ THE VISITOR'S SECOND ROW IS A REAL QUERY, unlike `Viewing Me`.

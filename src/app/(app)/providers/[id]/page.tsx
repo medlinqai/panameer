@@ -18,6 +18,7 @@ import { getPathsTaughtByProfile, getPathsTakenBy } from "@/lib/learn-home";
 import { publicTestimonials } from "@/lib/recommendations";
 import { getCommunitySignalForProfile } from "@/lib/community-signal";
 import { canMessage } from "@/lib/messages";
+import { recordProfileView } from "@/lib/profile-views";
 
 /**
  * Provider profile — a marketplace surface, BEHIND LOGIN as of E049.
@@ -177,6 +178,24 @@ export default async function PublicProviderPage({
     — and `getMyCommunity` is the viewer's own graph, so asking it about
     themselves would answer a different question.
   */
+  /*
+    ── ⚠⚠ RECORD THE VIEW (`P0-E595` A2) ────────────────────────────────────
+
+    ⚠ THIS IS THE ONLY WRITE PATH. It is here rather than in a client effect
+    because a view is *"a deliberate visit to a profile"*, and the server render
+    of this page IS that visit — an effect would also miss anyone with
+    JavaScript disabled and fire twice under StrictMode.
+    ⚠⚠ SAFE TO CALL DURING RENDER: `@@unique([profile_id, viewer_person_id,
+    viewed_on])` makes it idempotent, so a re-render, a refresh or a back-button
+    all collapse onto the row that already exists. ⚠ `isOwner` is passed so the
+    owner's own visit is never counted, and the helper never throws into the page.
+  */
+  await recordProfileView({
+    profileId: profile.id,
+    viewerUserId: viewer?.userId,
+    isOwner: profile.isOwner,
+  });
+
   const ownerUserId = profile.person.userId;
   const [colleagueCount, youBothKnow, messagePermission] = profile.isOwner
     ? [(await getMyCommunity(viewer)).colleagues.length, null, null]

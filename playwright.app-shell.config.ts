@@ -44,7 +44,7 @@ export default defineConfig({
      contract silently and moves its count — measured on `E562`, which read
      30 for a session because of a scratch spec. ⚠ `community-web.spec.ts`
      added by `P2-J3-E591` WS-B. */
-  testIgnore: ["connect-walk.spec.ts", "community-web.spec.ts", "community-page.spec.ts", "profile-height.spec.ts", "visitor-profile.spec.ts"],
+  testIgnore: ["connect-walk.spec.ts", "community-web.spec.ts", "community-page.spec.ts", "profile-height.spec.ts", "visitor-profile.spec.ts", "console-errors.spec.ts"],
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   use: {
     baseURL: "http://localhost:3100",

@@ -129,7 +129,8 @@
     "check:profile-height": "playwright test --config=playwright.profile-height.config.ts",
     "check:visitor-profile": "playwright test --config=playwright.visitor-profile.config.ts",
     "reset:titles": "npx esbuild prisma/reset/01-titles.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/reset-titles.cjs --log-level=error && node -r dotenv/config .harness/reset-titles.cjs dotenv_config_path=.env.local",
-    "reset:wipe": "npx esbuild prisma/reset/02-wipe.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/reset-wipe.cjs --log-level=error && node -r dotenv/config .harness/reset-wipe.cjs dotenv_config_path=.env.local"
+    "reset:wipe": "npx esbuild prisma/reset/02-wipe.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/reset-wipe.cjs --log-level=error && node -r dotenv/config .harness/reset-wipe.cjs dotenv_config_path=.env.local",
+    "check:console": "playwright test --config=playwright.console.config.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",

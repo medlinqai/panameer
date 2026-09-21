@@ -713,8 +713,13 @@ async function main() {
     });
     const pdata: Prisma.ProviderProfileUncheckedCreateInput = {
       person_id: user.person.id,
+      /* ⚠ THE OVERVIEW DOES NOT REPEAT THE TITLE. It did, and the WS-C walk
+         counted the title THREE times on one page — twice from the card (a real
+         defect, now fixed) and once from this string. ⚠⚠ A seed that echoes the
+         title into the bio makes "one title, everywhere" unprovable by reading
+         the page, which is exactly how the gate is meant to be checked. */
       overview:
-        `${title}. ${stated(spec?.domain) ? `Focus: ${spec!.domain}. ` : ""}` +
+        `${stated(spec?.domain) ? `Focus: ${spec!.domain}. ` : ""}` +
         `Roster persona from Users.xlsx (${seller.pid}). ${SEED_TAG}`,
       role_type_id: chosenRoleId,
       work_method: isRecruiter ? "RECRUITER" : "SERVICES",
