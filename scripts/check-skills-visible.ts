@@ -38,7 +38,17 @@ const read = (...p: string[]) => strip(readFileSync(join(...p), "utf8"));
 const IMPORT = read("src", "lib", "resume", "import.ts");
 const ROLLUP = read("src", "lib", "provider-rollup.ts");
 const ONBOARD = read("src", "lib", "onboarding.ts");
-const WIZ = read("src", "app", "join", "provider", "page.tsx");
+/*
+  ⚠⚠⚠ "THE WIZARD" IS NOW THE PAGE **PLUS ITS EXTRACTED EDITORS**
+  (`P2-A2-E597` WS-B). ⚠ A gate that reads one named file goes blind the day a
+  component moves — `check:review-edit`'s defect, still reading
+  `ProviderProfileView.tsx` months after `E588` stopped rendering it.
+  ⚠ The RULES below are unchanged; only where the code lives moved.
+*/
+const WIZ = [
+  read("src", "app", "join", "provider", "page.tsx"),
+  read("src", "components", "onboarding", "editors", "SkillsEditor.tsx"),
+].join("\n");
 
 /* ═══ 0 · PROVE THE STRIP ═════════════════════════════════════════════════ */
 {
@@ -109,9 +119,20 @@ const WIZ = read("src", "app", "join", "provider", "page.tsx");
     "3 — ⚠⚠ SERVER: the step handler still throws on an empty payload",
     /if \(skillIds\.length === 0\) \{\s*throw new OnboardingError\("Pick at least one skill", "INVALID"\);/.test(ONBOARD)
   );
+  /*
+    ⚠⚠ THE SPELLING MOVED, THE RULE DID NOT (`P2-A2-E597` WS-B). `totalPicked`
+    was a local inside the skills closure; the closure's BODY is now
+    `SkillsEditor` and `canSave` stayed with the caller, where it is written out
+    in full. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   /canSave: totalPicked > 0,/.test(WIZ)
+    ⚠⚠⚠ AND THE NEW FORM IS STRICTLY STRONGER: the step's gate and the review's
+    now read the SAME EXPRESSION CHARACTER FOR CHARACTER, so "neither stricter
+    nor looser" is provable by comparison rather than by two regexes that happen
+    to agree.
+  */
   check(
     "3 — ⚠⚠ STEP: Continue is gated on something being picked",
-    /canSave: totalPicked > 0,/.test(WIZ)
+    /canSave: profile\.skillIds\.length \+ profile\.customSkills\.length > 0,/.test(WIZ)
   );
   check("3 — and the shell consumes it", /continueDisabled: !ed\.canSave,/.test(WIZ));
   check(
@@ -119,10 +140,14 @@ const WIZ = read("src", "app", "join", "provider", "page.tsx");
     /editSection === "skills"\s*\?\s*profile\.skillIds\.length \+ profile\.customSkills\.length > 0/.test(WIZ),
     "the step and the review must not disagree about who may continue"
   );
-  /* ⚠ THE TWO CLIENT LAYERS COUNT THE SAME TWO THINGS. */
+  /* ⚠ THE TWO CLIENT LAYERS COUNT THE SAME TWO THINGS — asserted as an
+     IDENTITY now rather than as two separate patterns. ⚠ SUPERSEDED, quoted not
+     deleted (`E164`):
+     //   /const totalPicked = profile\.skillIds\.length \+ profile\.customSkills\.length;/ */
   check(
-    "3 — ⚠ the step counts skillIds + customSkills",
-    /const totalPicked = profile\.skillIds\.length \+ profile\.customSkills\.length;/.test(WIZ)
+    "3 — ⚠ the step and the review count the same two things",
+    (WIZ.match(/profile\.skillIds\.length \+ profile\.customSkills\.length > 0/g) ?? []).length >= 2,
+    "the step's canSave and the review's sectionEditorCanSave must be the same expression"
   );
 }
 

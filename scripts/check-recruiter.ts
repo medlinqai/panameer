@@ -34,7 +34,20 @@ const stripComments = (s: string) =>
   s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
 
 const read = (p: string) => readFileSync(p, "utf8");
-const WIZARD = read("src/app/join/provider/page.tsx");
+/*
+  ⚠⚠⚠ "THE WIZARD" IS NOW THE PAGE **PLUS ITS EXTRACTED EDITORS**
+  (`P2-A2-E597` WS-B). ⚠ A gate that reads one named file goes blind the day a
+  component moves — `check:review-edit`'s defect, still reading
+  `ProviderProfileView.tsx` months after `E588` stopped rendering it.
+  ⚠ The RULES below are unchanged; only where the code lives moved.
+*/
+const WIZARD = [
+  "src/app/join/provider/page.tsx",
+  "src/components/onboarding/editors/SkillsEditor.tsx",
+  "src/components/onboarding/editors/SpecializationsEditor.tsx",
+]
+  .map((f) => read(f))
+  .join("\n");
 const WIZARD_CODE = stripComments(WIZARD);
 const VIEW_TSX = read("src/components/profile/ProviderProfileView.tsx");
 const VIEW_TS = read("src/lib/provider-profile-view.ts");
