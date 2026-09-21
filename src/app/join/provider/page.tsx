@@ -12,7 +12,10 @@ import {
   type SignUpValues,
 } from "@/components/onboarding/SignUpForm";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
-import { ambiguousSkillNames, skillQualifier } from "@/lib/skill-labels";
+/* ⚠ `ambiguousSkillNames` and `skillQualifier` MOVED WITH `SkillsEditor`
+   (`P2-A2-E597` WS-B) — `E515`'s disambiguation belongs with the picker that
+   shows it. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   import { ambiguousSkillNames, skillQualifier } from "@/lib/skill-labels"; */
 import { isSkillShown } from "@/lib/shown-skills";
 
 import {
@@ -45,7 +48,9 @@ import {
   type JobPatch,
 } from "@/components/onboarding/WorkHistoryReview";
 import { SUITES, SUITE_ORDER } from "@/lib/suite";
-import { titleCase } from "@/lib/title-case";
+/* ⚠ `titleCase` MOVED WITH `SkillsEditor` — `E298`'s rule lives with the field
+   that applies it. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   import { titleCase } from "@/lib/title-case"; */
 import type { SoftwareSuite } from "@prisma/client";
 import { TestimonialCard, DECK_TESTIMONIALS } from "@/components/onboarding/TestimonialCarousel";
 import {
@@ -104,6 +109,12 @@ import { TitleEditor, titleCanSave } from "@/components/onboarding/editors/Title
 import { ContactEditor } from "@/components/onboarding/editors/ContactEditor";
 /* ⚠ EDITOR 3 OF 5 (`P2-A2-E597` WS-B). The wizard's local `Row` moved with it. */
 import { RateEditor, rateCanSave } from "@/components/onboarding/editors/RateEditor";
+/* ⚠ EDITOR 4 OF 5 (`P2-A2-E597` WS-B). `CascadeTier` moved with it; every
+   piece of state stayed here. */
+import { SpecializationsEditor } from "@/components/onboarding/editors/SpecializationsEditor";
+/* ⚠ EDITOR 5 OF 5 (`P2-A2-E597` WS-B). `SparkIcon` moved with it; the three
+   data-loading effects did NOT — they are this page's and serve other screens. */
+import { SkillsEditor, SparkIcon } from "@/components/onboarding/editors/SkillsEditor";
 import { formatPhone, isPhoneComplete, parseStoredPhone, toE164 } from "@/lib/phone";
 
 /**
@@ -2390,810 +2401,140 @@ setScreen(target);
     ),
   });
 
-  const skillsEditing = () => {
-      const chosenSkills = new Set(profile.skillIds);
-      const totalPicked = profile.skillIds.length + profile.customSkills.length;
+  /*
+    ── ⚠⚠ EXTRACTED (`P2-A2-E597` WS-B, editor 5 of 5) ──────────────────────
 
-      /*
-        ── ⚠⚠ HELD, BUT NOT SHOWN (`P2-J1.4-E517`) ─────────────────────────────
+    ⚠ 468 lines moved to `components/onboarding/editors/SkillsEditor.tsx`, and
+    the wizard's local `SparkIcon` moved with it.
 
-        ⚠⚠ THE STEP READS WHAT IS HELD. `E517` stopped the role step DELETING
-        out-of-role skills and moved the filter to the offer-side reads, which
-        means a provider can now hold a skill that appears on no surface they
-        can see. ⚠ THE ONLY PLACE TO REMOVE IT IS HERE, so this is the one list
-        that must not filter.
+    ── ⚠⚠⚠ THE THREE `useEffect`s DID NOT MOVE, AND DID NOT NEED TO ─────────
 
-        ⚠ Split, not hidden: every held skill appears EXACTLY ONCE — in the
-        basket if their roles show it, in the block below the picker if they do
-        not. Listing it twice would make one chip look like two skills.
+    ⚠ The brief flagged them as the stop condition. MEASURED: `skillsEditing`
+    CONTAINED NO `useEffect` AT ALL. The three are THIS component's data
+    loaders — `fieldRoles`, `specGroups`, `skillOpts` — and two of them serve
+    screens the skills editor has nothing to do with: the `fieldRoles` fetch
+    fires for `screen === "roles"` and `screen === "catalog"` as well, and the
+    specializations fetch shares the same effect body.
+    ⚠⚠ MOVING THEM WOULD HAVE BEEN EXACTLY THE CHANGE SCOTT WARNED ABOUT — a
+    component that only mounts for skills cannot fire for `roles` or `catalog`.
+    ⚠ SO NOTHING MOVED AND NOTHING FIRES DIFFERENTLY. `skillOpts` and
+    `fieldRoles` are passed in, the same shape `specGroups` is.
 
-        ⚠⚠ COMPUTED AGAINST `profile.roleTypeIds` — the roles IN THE WIZARD, not
-        the roles last saved — so unticking a role on the previous step moves
-        skills into this block immediately, which is the whole point: the
-        provider sees the consequence before it reaches their profile.
-
-        ⚠ `isSkillShown` is the same function the profile, the provider cards
-        and the matcher read. One rule, gated by `check:shown-skills`.
-      */
-      const basketSkills = shownSkillNames;
-      const heldNotShown = heldNotShownSkillNames;
-      /* ⚠ The basket counts what it lists. `canSave` still counts everything
-         HELD (`totalPicked`), so a provider whose skills are all out-of-role is
-         never trapped on this step by a number they cannot see. */
-      const basketCount = basketSkills.length + profile.customSkills.length;
-
-      const q = skillQuery.trim().toLowerCase();
-      // Already-picked skills are chips above, so they stop being suggestions —
-      // filtering them out BEFORE the cap keeps a full set of usable options as
-      // picks accumulate rather than quietly thinning it (E053).
-      const matchingSkills = (
-        q ? skillOpts.filter((sk) => sk.name.toLowerCase().includes(q)) : skillOpts
-      ).filter((sk) => !chosenSkills.has(sk.id));
-      const shownSkills = matchingSkills.slice(0, MAX_SKILL_SUGGESTIONS);
-      const hiddenSkillCount = matchingSkills.length - shownSkills.length;
-
-      /*
-        ── ⚠⚠ WHICH LABELS ARE NOT UNIQUE HERE (`P1-A1.3-E401` WS-3) ───────────
-
-        Computed over `skillOpts` — EVERY option for this provider's roles, not
-        just the ones currently on screen. ⚠ THE SEARCH BOX WOULD OTHERWISE HIDE
-        THE COLLISION: typing "recr" narrows the list, and if ambiguity were
-        judged on `shownSkills` a name could gain and lose its qualifier as the
-        provider types. The set is a property of what they may pick, not of what
-        is visible this keystroke.
-        ⚠ AND IT DRIVES THE PICKED CHIPS BELOW TOO, so a chip reads the same
-        after it is clicked as it did before.
-      */
-      const ambiguousSkills = ambiguousSkillNames(
-        skillOpts.map((sk) => ({ name: sk.name, area: sk.pillar?.name ?? null }))
-      );
-
-      const toggleSkill = (id: string) =>
-        setProfile((p) => {
-          const has = p.skillIds.includes(id);
-          const opt = skillOpts.find((x) => x.id === id);
-          return {
-            ...p,
-            skillIds: has ? p.skillIds.filter((x) => x !== id) : [...p.skillIds, id],
-            skillNames: has
-              ? p.skillNames.filter((x) => x.id !== id)
-              : [
-                  ...p.skillNames,
-                  // The DOMAIN still rides along on every chip — it is what
-                  // tells two identically-named skills apart ("Project Manager"
-                  // exists under two domains), which is exactly why the FK
-                  // stays even though the tier is gone.
-                  { id, name: opt?.name ?? "", area: opt?.pillar?.name ?? null },
-                ],
-          };
-        });
-
-      const addCustomSkill = () => {
-        /*
-          ⚠⚠ TITLE-CASED ON SAVE (`P1-J1.4-E298`, 2026-08-31). Scott's own chip read
-          `purchase requisitons` — lower-case, and the page prints the stakes right
-          below it: *"each one is another search a buyer can find you in."*
-      
-          ⚠ `titleCase` IS THE SHARED HELPER (`lib/title-case.ts`) and this is its
-          first caller. ⚠ THE BRIEF SAID TO REUSE THE ONE FROM THE `e96cd2e` SWEEP —
-          THERE WASN'T ONE. That pass was a static rewrite of 60 literals by an
-          uncommitted scanner, so no runtime function existed. Reported; the helper
-          is created ONCE so the instruction's real intent — never two
-          implementations — holds from here.
-      
-          ⚠⚠ CAPITALISATION IS THE SMALL HALF AND IT SHIPS ALONE, DELIBERATELY.
-          `purchase requisitons` becomes `Purchase Requisitons` — still misspelled,
-          still unmatchable, now looking deliberate. The fuzzy-match-before-create
-          that would actually fix it ("Did you mean Purchase Requisitions?") is
-          CHAT'S ADDITION, not Scott's ask, and `E298` says capitalisation ships
-          alone unless he says yes. Surfaced in the report; NOT BUILT HERE.
-        */
-        void addSkillMatched(titleCase(skillQuery.trim()));
-      };
-
-      /*
-        ── ⚠⚠ MATCH BEFORE CREATE (`P1-J1.4-E298`) ─────────────────────────────
-
-        SCOTT: *"i added a new skill - purchase requisitions… but that is as i
-        typed it… that means we will get misspellings and non-capitalizations."*
-
-        ⚠ SUPERSEDED, quoted: `addCustomSkill` used to title-case the text and push
-        it straight into `customSkills`, and its own comment admitted the gap —
-        *"still misspelled, still unmatchable, now looking deliberate"*. It now
-        asks `api/onboarding/provider/skill-match`, which runs THE SAME
-        `matchSkill` the save path runs, against the WHOLE catalog rather than the
-        current role's `skillOpts`.
-
-        ⚠⚠ EXACT-ISH LINKS SILENTLY. NEAR ASKS. `Purchase Requisitions` typed by
-        hand now selects the catalog row; `purchase requisitons` offers *"Did you
-        mean Purchase Requisitions?"* and CHANGES NOTHING until answered. A skill
-        is a claim about what somebody can do — auto-correcting it would put words
-        in their mouth, and if the guess is wrong it is a false claim with their
-        name on it.
-
-        ⚠ THE DEDUPE WITHIN THEIR OWN LIST IS KEPT AND RUNS FIRST — it is cheap,
-        local, and stops a round trip for something already on screen.
-        ⚠ AND IF THE LOOKUP FAILS FOR ANY REASON THE OLD BEHAVIOUR STANDS: the
-        custom skill is added as typed. A network blip must not silently swallow
-        a skill somebody just asked for.
-      */
-      const addSkillMatched = async (name: string) => {
-        if (!name) return;
-        if (
-          profile.customSkills.some((c) => c.toLowerCase() === name.toLowerCase()) ||
-          profile.skillNames.some((c) => c.name.toLowerCase() === name.toLowerCase())
-        ) {
-          setSkillQuery("");
-          return;
-        }
-        setSkillMatch(null);
-        try {
-          const r = await fetch(
-            `/api/onboarding/provider/skill-match?q=${encodeURIComponent(name)}`
-          );
-          const m = r.ok ? await r.json() : { kind: "none" };
-          if (m.kind === "exact" && m.skill?.id) {
-            /* Already in the catalog — link the real row, create nothing. */
-            if (!profile.skillIds.includes(m.skill.id)) {
-              setProfile((p) => ({
-                ...p,
-                skillIds: [...p.skillIds, m.skill.id],
-                skillNames: [...p.skillNames, { id: m.skill.id, name: m.skill.name, area: null }],
-              }));
-            }
-            setSkillQuery("");
-            return;
-          }
-          if (m.kind === "near" && m.skill?.id) {
-            /* ⚠ ASK. Nothing is added yet — both options stay on screen. */
-            setSkillMatch({ typed: name, prompt: m.prompt, skill: m.skill });
-            return;
-          }
-        } catch {
-          /* fall through to adding it as typed */
-        }
-        setProfile((p) => ({ ...p, customSkills: [...p.customSkills, name] }));
-        setSkillQuery("");
-      };
-
-      /** Take the suggestion — link the catalog row instead of the typed text. */
-      const acceptSkillMatch = () => {
-        if (!skillMatch) return;
-        const { skill } = skillMatch;
-        if (!profile.skillIds.includes(skill.id)) {
+    ⚠ `E517`'s TWO NAMED STRINGS ARE PASSED IN, NOT COPIED. Scott named them and
+    their rejected alternatives are quoted beside them here under `E164`; a
+    second copy in the component would be a second place to edit settled wording.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`) — the closure derived
+    `basketSkills`, `heldNotShown`, `matchingSkills`, `ambiguousSkills`,
+    `toggleSkill`, `addCustomSkill`, `acceptSkillMatch` and `keepTypedSkill`
+    inline, then rendered the basket, the search box, the suggestions and the
+    held-but-not-shown block.
+  */
+  const skillsEditing = () => ({
+    /* ⚠ `roleNames` AND `canSave` ARE PART OF THIS HELPER'S CONTRACT, not the
+       component's: the STEP's header prints the role names and its Continue
+       reads `canSave`. Both derive from the same `profile` the component
+       renders, so there is still one source. */
+    roleNames: profile.roleTypeIds
+      .map((id) => fieldRoles.find((r) => r.id === id)?.name)
+      .filter(Boolean) as string[],
+    canSave: profile.skillIds.length + profile.customSkills.length > 0,
+    /* ⚠⚠ THE FULL PAYLOAD, RESTORED. An earlier pass of this extraction reduced
+       it to `saveAnd("skills", {})` — the five fields the server needs were
+       silently dropped. `tsc` did not care (the object is untyped at that call)
+       and the SAVE would have appeared to work. ⚠ Caught because `roleNames`
+       and `canSave` went missing at the same time and forced a second look. */
+    save: () =>
+      saveAnd("skills", {
+        skillIds: profile.skillIds,
+        customSkills: profile.customSkills,
+        customSkillRoleId: profile.roleTypeId,
+        roleTypeIds: profile.roleTypeIds,
+        roleTypeId: profile.roleTypeId,
+      }),
+    body: (
+      <SkillsEditor
+        selectedIds={profile.skillIds}
+        selectedNames={profile.skillNames}
+        customs={profile.customSkills}
+        resumeSkillIds={profile.resumeSkillIds}
+        skillOpts={skillOpts}
+        query={skillQuery}
+        onQueryChange={setSkillQuery}
+        match={skillMatch}
+        onMatchChange={setSkillMatch}
+        shownSkillNames={shownSkillNames}
+        heldNotShownSkillNames={heldNotShownSkillNames}
+        maxSuggestions={MAX_SKILL_SUGGESTIONS}
+        onChange={(patch) => setProfile((p) => ({ ...p, ...patch }))}
+        onRemoveCustom={(name) =>
           setProfile((p) => ({
             ...p,
-            skillIds: [...p.skillIds, skill.id],
-            skillNames: [...p.skillNames, { id: skill.id, name: skill.name, area: null }],
-          }));
+            customSkills: p.customSkills.filter((c) => c !== name),
+          }))
         }
-        setSkillMatch(null);
-        setSkillQuery("");
-      };
+        scrollRegionClass={SCROLL_REGION}
+        pickedRegionClass={PICKED_REGION}
+        error={error}
+        heldNotShownHeading={HELD_NOT_SHOWN_HEADING}
+        heldNotShownExplanation={HELD_NOT_SHOWN_EXPLANATION}
+      />
+    ),
+  });
 
-      /** Keep what they typed. ⚠ A REAL, SUPPORTED OUTCOME — Scott types real ones. */
-      const keepTypedSkill = () => {
-        if (!skillMatch) return;
-        setProfile((p) => ({ ...p, customSkills: [...p.customSkills, skillMatch.typed] }));
-        setSkillMatch(null);
-        setSkillQuery("");
-      };
+  /*
+    ── ⚠⚠ EXTRACTED (`P2-A2-E597` WS-B, editor 4 of 5) ──────────────────────
 
-      /*
-        WHICH PICKED SKILLS CAME OFF THE RÉSUMÉ (E187).
-
-        This used to be computed from `importOutcome` — client state from the
-        upload that just happened — with `hasImport && skillNames.length > 0` as
-        the fallback when that state was gone. Both were wrong, in opposite
-        directions and at the same time. On ARRIVAL at a freshly-hydrated Skills
-        step there is no `importOutcome`, and if the import matched nothing the
-        fallback is false too: no card, nothing pre-ticked, exactly what the walk
-        saw. Then the provider clicks any skill by hand, `skillNames.length`
-        becomes 1, and the fallback flips true — so the card finally appears,
-        crediting AI for the skill they just typed.
-
-        `resumeSkillIds` is the server's answer to the actual question, present
-        on the first render and after any reload, and it never counts a manual
-        pick. The pre-selection itself was always server-side (the import writes
-        ProviderSkill rows); what was missing was skills worth selecting, which
-        is WS-A's job, and an honest way to say where they came from, which is
-        this.
-      */
-      const fromResume = new Set(profile.resumeSkillIds);
-      const aiMatchedCount = profile.skillIds.filter((id) =>
-        fromResume.has(id)
-      ).length;
-      const cameFromResume = aiMatchedCount > 0;
-
-      const roleNames = profile.roleTypeIds
-        .map((id) => fieldRoles.find((r) => r.id === id)?.name)
-        .filter(Boolean);
-    return {
-      roleNames,
-      canSave: totalPicked > 0,
-      save: () =>
-        saveAnd("skills", {
-          skillIds: profile.skillIds,
-          customSkills: profile.customSkills,
-          customSkillRoleId: profile.roleTypeId,
-          roleTypeIds: profile.roleTypeIds,
-          roleTypeId: profile.roleTypeId,
-        }),
-      body: (
-        <>
-          {error && <Notice>{error}</Notice>}
-
-          {/*
-            WS4 / E174 — NAME THE AI.
-
-            The résumé→skills hunt is one of the few places the product does
-            something visibly clever, and the copy didn't mention it at all: the
-            skills simply appeared, pre-ticked, as if they had always been
-            there. AI-native is a stated selling point; a feature nobody
-            attributes is a selling point nobody hears.
-
-            Shown only when an import actually produced matches, so it never
-            claims credit for skills the provider typed themselves — and, since
-            E187, shown on ARRIVAL rather than after the first manual click.
-          */}
-          {cameFromResume && (
-            <div className="mb-4 rounded-brand border border-magenta/25 bg-magenta/[0.04] p-4">
-              <p className="flex flex-wrap items-center gap-2 text-[15px] font-bold">
-                <SparkIcon />
-                AI scanned your résumé against the ERP Service Catalog
-              </p>
-              <p className="mt-1.5 text-[14.5px] leading-relaxed text-ink-2">
-                It pulled{" "}
-                <b className="text-ink">
-                  {aiMatchedCount} skill{aiMatchedCount === 1 ? "" : "s"}
-                </b>{" "}
-                and pre-selected them below. Remove anything that isn&apos;t
-                yours, and add what it missed — buyers match on these.
-              </p>
-            </div>
-          )}
-
-          {/* The basket is always on screen and always removable. */}
-          {(basketSkills.length > 0 || profile.customSkills.length > 0) && (
-            <div className="mb-4">
-              <p className="mb-1.5 text-[13px] font-bold">
-                {/* E202 — a count, not a quota. "12/15" turned a list of what
-                    you can do into a budget you were spending. */}
-                Your Skills{" "}
-                {/* ⚠ E517 — counts what this list SHOWS. Out-of-role skills are
-                    still held and are counted in their own block below. */}
-                <span className="font-normal text-ink-2">({basketCount})</span>
-              </p>
-              <div className={`flex flex-wrap gap-2 ${PICKED_REGION}`}>
-                {basketSkills.map((sk) => (
-                  <Chip key={sk.id} selected onClick={() => toggleSkill(sk.id)}>
-                    {sk.name}
-                    {/*
-                      ⚠ SUPERSEDED, quoted not deleted (`P1-A1.3-E401` WS-3):
-                      `{sk.area && roleNames.length > 1 && (…)}`.
-
-                      ⚠⚠ THAT CONDITION ASKED THE WRONG QUESTION. It qualified a
-                      chip when the provider held MORE THAN ONE ROLE — but the
-                      collision Scott hit was two `Recruiting` skills inside ONE
-                      role (Oracle Fusion Cloud and Workday, both
-                      Application-Specific), so the test was false exactly when
-                      the qualifier was needed. It also qualified chips that
-                      needed nothing, whenever a second role happened to be
-                      claimed. Wrong in both directions.
-                    */}
-                    {skillQualifier(sk, ambiguousSkills) && (
-                      <span className="ml-1 text-[12px] font-normal opacity-75">
-                        · {skillQualifier(sk, ambiguousSkills)}
-                      </span>
-                    )}
-                  </Chip>
-                ))}
-                {profile.customSkills.map((name) => (
-                  <Chip
-                    key={`custom:${name}`}
-                    selected
-                    onClick={() =>
-                      setProfile((p) => ({
-                        ...p,
-                        customSkills: p.customSkills.filter((c) => c !== name),
-                      }))
-                    }
-                  >
-                    {name}
-                  </Chip>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* SEARCH-FIRST. The catalog is meant to grow without limit, so the
-              page must never grow with it: a capped suggestion set inside a
-              fixed-height scroll region (E053/E054). */}
-          <div className="flex flex-wrap items-center gap-2">
-            <TextInput
-              value={skillQuery}
-              onChange={(e) => setSkillQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  addCustomSkill();
-                }
-              }}
-              placeholder="Search skills — or type your own and press Add"
-              className="max-w-md"
-            />
-            <button
-              type="button"
-              onClick={addCustomSkill}
-              disabled={!skillQuery.trim()}
-              className="rounded-full border-[1.5px] border-line px-5 py-2.5 font-bold transition-colors hover:border-magenta hover:text-magenta disabled:opacity-40"
-            >
-              + Add
-            </button>
-          </div>
-
-          {/*
-            ── ⚠⚠ A NEAR MATCH ASKS (`P1-J1.4-E298`) ────────────────────────────
-
-            ⚠ BOTH ANSWERS ARE REAL AND BOTH ARE ONE CLICK. The suggestion is
-            offered first because it is usually right, and KEEPING WHAT THEY TYPED
-            IS NOT A PENALTY — Scott types genuinely new skills and this must not
-            make that feel like a mistake.
-            ⚠ THE TYPED TEXT STAYS ON SCREEN, quoted, so the member can compare
-            the two rather than trusting a guess about what they meant.
-            ⚠ NOTHING HAS BEEN ADDED AT THIS POINT. No auto-correct, no silent
-            write — a skill is a claim about what somebody can do.
-          */}
-          {skillMatch && (
-            <div className="mt-3 max-w-md rounded-brand border border-line bg-bg-soft p-4">
-              <p className="text-[14px] font-bold">{skillMatch.prompt}</p>
-              <p className="mt-1 text-[13px] leading-relaxed text-ink-2">
-                It&apos;s already in the catalog, so buyers already search for it.
-                You typed &ldquo;{skillMatch.typed}&rdquo;.
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={acceptSkillMatch}
-                  className="rounded-full bg-magenta px-4 py-2 text-[13.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
-                >
-                  Use {skillMatch.skill.name}
-                </button>
-                <button
-                  type="button"
-                  onClick={keepTypedSkill}
-                  className="rounded-full border-[1.5px] border-line px-4 py-2 text-[13.5px] font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
-                >
-                  Keep &ldquo;{skillMatch.typed}&rdquo;
-                </button>
-              </div>
-            </div>
-          )}
-
-          <div className={`mt-3 max-h-[220px] ${SCROLL_REGION}`}>
-            <div className="flex flex-wrap gap-2">
-              {shownSkills.map((sk) => (
-                <Chip key={sk.id} selected={false} onClick={() => toggleSkill(sk.id)}>
-                  {sk.name}
-                  {/* ⚠⚠ THE CHIP SCOTT ACTUALLY SAW. This list carried the bare
-                      name and nothing else, so the two `Recruiting` options were
-                      indistinguishable AT THE MOMENT OF CHOOSING — which is the
-                      only moment that matters. */}
-                  {skillQualifier({ name: sk.name, area: sk.pillar?.name ?? null }, ambiguousSkills) && (
-                    <span className="ml-1 text-[12px] font-normal opacity-75">
-                      · {sk.pillar?.name}
-                    </span>
-                  )}
-                </Chip>
-              ))}
-              {shownSkills.length === 0 && (
-                <p className="text-[14px] text-ink-2">
-                  {matchingSkills.length === 0 && q
-                    ? "No matches — use “+ Add” to create it."
-                    : "You've picked every skill we list here."}
-                </p>
-              )}
-            </div>
-          </div>
-          {hiddenSkillCount > 0 && (
-            <p className="mt-2 text-[13px] text-ink-2">
-              +{hiddenSkillCount} more — keep typing to narrow the list.
-            </p>
-          )}
-
-          {/*
-            ── ⚠⚠ THE REMOVAL GAP (`P2-J1.4-E517`) ──────────────────────────────
-
-            ⚠ SCOTT, 2026-09-17: *"a section in the skills step, below the
-            picker, listing skills the provider holds that their current roles
-            do not show, each with a remove control."*
-
-            ⚠⚠ WHY IT HAS TO EXIST. Before `E517` a narrowed role DELETED these
-            rows, so there was nothing to remove. Now they survive — and every
-            other surface filters them out, so without this block a provider who
-            genuinely wants a skill gone has no way to say so. ⚠ THAT WOULD MAKE
-            "we never delete what you hold" read as "you can never remove it."
-
-            ⚠ THE REMOVE IS REAL AND IT IS THE PROVIDER'S OWN INSTRUCTION — it
-            drops the id from `skillIds`, and `applyProviderSection`'s scoped
-            delete (`source: "SELF_ADDED"`, `skill_id: { notIn: skillIds }`,
-            `E552`) then removes the row. ⚠⚠ THAT IS NOT THE DEFECT `E517`
-            FIXED: the harm was a SAVE destroying data nobody asked it to
-            destroy. A provider clicking Remove asked.
-
-            ⚠ It reuses `toggleSkill`, so removal behaves identically here and
-            in the basket — and because the row leaves `skillNames`, the chip
-            leaves this block with no extra state to keep in step.
-
-            ⚠⚠ WORDING IS PROPOSED, NOT NAMED. Scott names things; these two
-            strings are placed in constants so his ruling is a one-line swap.
-          */}
-          {heldNotShown.length > 0 && (
-            <div className="mt-6 rounded-brand border border-line bg-bg-soft p-4">
-              <p className="text-[14px] font-bold">{HELD_NOT_SHOWN_HEADING}</p>
-              <p className="mt-1 text-[13px] leading-relaxed text-ink-2">
-                {HELD_NOT_SHOWN_EXPLANATION}
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {heldNotShown.map((sk) => (
-                  <span
-                    key={sk.id}
-                    className="inline-flex items-center gap-1.5 rounded-full border-[1.5px] border-line bg-white px-3.5 py-1.5 text-[13.5px] font-bold text-ink-2"
-                  >
-                    {sk.name}
-                    <button
-                      type="button"
-                      onClick={() => toggleSkill(sk.id)}
-                      aria-label={`Remove ${sk.name}`}
-                      className="text-[15px] leading-none text-ink-2 transition-colors hover:text-magenta"
-                    >
-                      &times;
-                    </button>
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-        </>
-      ),
-    };
-  };
-
-  const specializationsEditing = () => {
-      const chosenSpecs = new Set(profile.specializationIds);
-
-      // Every loaded specialization, by id — so a SELECTED chip can be named
-      // even when the search or the per-group cap has hidden its source row.
-      const specById = new Map<string, string>();
-      specGroups.forEach((g) =>
-        g.items.forEach((i) => specById.set(i.id, i.name))
-      );
-      profile.specializationNames.forEach((s) => {
-        if (!specById.has(s.id)) specById.set(s.id, s.name);
-      });
-
-      const sq = specQuery.trim().toLowerCase();
-      // TWO MODES, one for each job (PJv2 WS9). Browsing is a cascade — one open
-      // tier at a time. Searching is a flat lookup ACROSS the tiers, because
-      // someone typing "Workday" should not have to know whether we filed it
-      // under a product, a methodology or an industry.
-      const searching = sq.length > 0;
-
-      // Which tier each catalog item belongs to — the cascade needs it to count
-      // and label a collapsed tier, and to pin the open one on a pick.
-      const kindById = new Map<string, string>();
-      specGroups.forEach((g) => g.items.forEach((i) => kindById.set(i.id, g.kind)));
-      const pickedNames = (kind: string) =>
-        profile.specializationIds
-          .filter((id) => kindById.get(id) === kind)
-          .map((id) => specById.get(id) ?? "Specialization");
-
-      /**
-       * E054 — search results stay capped PER GROUP and inside ONE bounded
-       * region. A single overall cap would spend its whole budget on the first
-       * group and hide the later ones; three separate regions would let the page
-       * (and so the Continue button) grow as you type, which is the thing E053
-       * was filed about.
-       *
-       * Chosen items are excluded because they are already chips above — the same
-       * rule the Skills tier uses, so the suggestion area only ever holds things
-       * you can still act on.
-       */
-      const groups = specGroups
-        .map((g) => {
-          const matches = g.items.filter(
-            (i) =>
-              !chosenSpecs.has(i.id) && (!sq || i.name.toLowerCase().includes(sq))
-          );
-          return {
-            ...g,
-            shown: matches.slice(0, MAX_SPECS_PER_GROUP),
-            hidden: Math.max(0, matches.length - MAX_SPECS_PER_GROUP),
-          };
-        })
-        .filter((g) => g.shown.length > 0);
-
-      const hiddenSpecCount = groups.reduce((n, g) => n + g.hidden, 0);
-      const totalSpecs =
-        profile.specializationIds.length + profile.customSpecializations.length;
-
-      /**
-       * The open tier: the provider's last pick if they have one, else the first
-       * tier still empty, so the step opens on work to be done rather than on a
-       * tier that is already answered. All three collapse once all three have
-       * something — the step is optional, and a wall of open pickers is what WS9
-       * was filed to remove.
-       */
-      const openSpecKind =
-        openSpecTier ??
-        specGroups.find((g) => pickedNames(g.kind).length === 0)?.kind ??
-        null;
-
-      const addCustomSpec = () => {
-        const name = specQuery.trim();
-        if (!name) return;
-        const dup =
-          profile.customSpecializations.some(
-            (c) => c.toLowerCase() === name.toLowerCase()
-          ) ||
-          [...specById.entries()].some(
-            ([id, n]) => n.toLowerCase() === name.toLowerCase() && chosenSpecs.has(id)
-          );
-        if (!dup) {
+    ⚠ 335 lines of derivation and JSX moved to
+    `components/onboarding/editors/SpecializationsEditor.tsx`, and the wizard's
+    local `CascadeTier` (70 lines) moved with it — WS-A's order said it would.
+    ⚠⚠⚠ EVERY PIECE OF STATE STAYED HERE. `specQuery` and `openSpecTier` are
+    passed IN, not owned by the component: the modal unmounts on close, so
+    component-owned state would reset the search and the open tier on every
+    reopen. That is arguably nicer and it is NOT this brief's job — `E597` moves
+    editors, it does not redesign them.
+    ⚠ `onChange` hands back a PARTIAL and this caller merges it, so there is
+    still exactly one `setProfile` and one `saveAnd("specializations", …)`.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`) — the closure derived
+    `chosenSpecs`, `specById`, `kindById`, `groups`, `openSpecKind`,
+    `addCustomSpec` and `toggleSpec` inline, then rendered the picked chips, the
+    search box and the three cascade tiers:
+    //   const specializationsEditing = () => {
+    //     const chosenSpecs = new Set(profile.specializationIds);
+    //     … const toggleSpec = (id) => { setOpenSpecTier(kind); setProfile(…); };
+    //     return { save: () => saveAnd("specializations", {…}), body: (<>…</>) };
+    //   };
+  */
+  const specializationsEditing = () => ({
+    save: () =>
+      saveAnd("specializations", {
+        specializationIds: profile.specializationIds,
+        customSpecializations: profile.customSpecializations,
+      }),
+    body: (
+      <SpecializationsEditor
+        groups0={specGroups}
+        selectedIds={profile.specializationIds}
+        selectedNames={profile.specializationNames}
+        customs={profile.customSpecializations}
+        query={specQuery}
+        onQueryChange={setSpecQuery}
+        openTier={openSpecTier}
+        onOpenTierChange={setOpenSpecTier}
+        onChange={(patch) => setProfile((p) => ({ ...p, ...patch }))}
+        onRemoveCustom={(name) =>
           setProfile((p) => ({
             ...p,
-            customSpecializations: [...p.customSpecializations, name],
-          }));
+            customSpecializations: p.customSpecializations.filter((c) => c !== name),
+          }))
         }
-        setSpecQuery("");
-      };
-
-      const toggleSpec = (id: string) => {
-        // Pin the tier this item lives in. Without this, picking the first item
-        // in tier 2 makes tier 2 no-longer-the-first-empty-tier, and the cascade
-        // would collapse it and jump to tier 3 mid-selection.
-        const kind = kindById.get(id);
-        if (kind) setOpenSpecTier(kind);
-        setProfile((p) => {
-          const has = p.specializationIds.includes(id);
-          const name = specById.get(id) ?? "";
-          return {
-            ...p,
-            specializationIds: has
-              ? p.specializationIds.filter((x) => x !== id)
-              : [...p.specializationIds, id],
-            // Keep the display names in step with the ids. The server resends
-            // both on save, but until then the Review page reads these — and a
-            // name list that lags its id list renders the wrong chips.
-            specializationNames: has
-              ? p.specializationNames.filter((x) => x.id !== id)
-              : [...p.specializationNames, { id, name }],
-          };
-        });
-      };
-
-    return {
-      save: () =>
-        saveAnd("specializations", {
-          specializationIds: profile.specializationIds,
-          customSpecializations: profile.customSpecializations,
-        }),
-      body: (
-        <>
-          {error && <Notice>{error}</Notice>}
-          {specGroups.length === 0 ? (
-            <p className="text-ink-2">Loading specializations…</p>
-          ) : (
-            <div>
-              {/* Picked, always visible and always removable — it sits OUTSIDE
-                  the scroll region so a selection can never be scrolled or
-                  filtered out of reach. */}
-              {totalSpecs > 0 && (
-                <div className="mb-4">
-                  <p className="mb-2 text-[13px] font-bold">
-                    Your Specializations{" "}
-                    <span className="font-normal text-ink-2">({totalSpecs})</span>
-                  </p>
-                  <div className={`flex flex-wrap gap-2 ${PICKED_REGION}`}>
-                    {profile.specializationIds.map((id) => (
-                      <Chip key={id} selected onClick={() => toggleSpec(id)}>
-                        {specById.get(id) ?? "Specialization"}
-                      </Chip>
-                    ))}
-                    {profile.customSpecializations.map((name) => (
-                      <Chip
-                        key={`custom:${name}`}
-                        selected
-                        onClick={() =>
-                          setProfile((p) => ({
-                            ...p,
-                            customSpecializations: p.customSpecializations.filter(
-                              (c) => c !== name
-                            ),
-                          }))
-                        }
-                      >
-                        {name}
-                      </Chip>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* One control for both jobs, matching the Skills tier: type to
-                  narrow, or type something we don't have and add it (E031). */}
-              <div className="flex items-end gap-2">
-                <div className="flex-1">
-                  <Field label="Search or Add a Specialization">
-                    <TextInput
-                      value={specQuery}
-                      onChange={(e) => setSpecQuery(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          addCustomSpec();
-                        }
-                      }}
-                      placeholder="Start typing… e.g. Workday"
-                    />
-                  </Field>
-                </div>
-                <button
-                  type="button"
-                  onClick={addCustomSpec}
-                  disabled={!specQuery.trim()}
-                  className="mb-[2px] rounded-full border-[1.5px] border-line px-5 py-3 font-bold text-ink transition-colors hover:border-magenta hover:text-magenta disabled:opacity-40"
-                >
-                  + Add
-                </button>
-              </div>
-
-              {searching ? (
-                /* SEARCH MODE — flat results across all three tiers, grouped so
-                   you can still see WHICH tier a match came from, inside one
-                   fixed-height region so typing never moves the footer. */
-                <>
-                  <div className={`mt-3 max-h-[320px] ${SCROLL_REGION}`}>
-                    {groups.length === 0 ? (
-                      <p className="text-[14px] text-ink-2">
-                        No matches — use “+ Add” to create it.
-                      </p>
-                    ) : (
-                      <div className="space-y-4">
-                        {groups.map((g) => (
-                          <div key={g.kind}>
-                            <h2 className="mb-2 text-[13px] font-bold uppercase tracking-wide text-ink-2">
-                              {g.label}
-                              {g.hidden > 0 && (
-                                <span className="ml-2 font-normal normal-case tracking-normal">
-                                  +{g.hidden} more
-                                </span>
-                              )}
-                            </h2>
-                            <div className="flex flex-wrap gap-2">
-                              {g.shown.map((item) => (
-                                <Chip
-                                  key={item.id}
-                                  selected={false}
-                                  onClick={() => toggleSpec(item.id)}
-                                >
-                                  {item.name}
-                                </Chip>
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  {hiddenSpecCount > 0 && (
-                    <p className="mt-2 text-[13px] text-ink-2">
-                      +{hiddenSpecCount} more — keep typing to narrow the list.
-                    </p>
-                  )}
-                </>
-              ) : (
-                /*
-                  BROWSE MODE — the RDS collapsing-cascade (WS9 / E073), now with
-                  INDUSTRIES AS ITS OWN TIER rather than a third heading inside a
-                  shared scroll box. Industry is a different KIND of claim from a
-                  product or a method — "I know Workday" and "I know utilities"
-                  are answers to different buyer questions — and burying it third
-                  in one list made it the section people scrolled past.
-
-                  Unlike Role → Domain → Skill, these tiers are INDEPENDENT: none
-                  gates the next, because a provider with no product to name still
-                  has an industry. So the cascade here is only the disclosure
-                  shape — one tier open, the others one line each.
-                */
-                <div className="mt-3 space-y-2.5">
-                  {specGroups.map((g, gi) => {
-                    const picked = pickedNames(g.kind);
-                    const summary =
-                      picked.length === 0
-                        ? "None yet"
-                        : picked.slice(0, 2).join(", ") +
-                          (picked.length > 2 ? ` +${picked.length - 2}` : "");
-                    const chosenHere = g.items.filter((i) => chosenSpecs.has(i.id));
-                    const avail = g.items.filter((i) => !chosenSpecs.has(i.id));
-                    const hidden = Math.max(0, avail.length - MAX_SPECS_PER_TIER);
-
-                    return (
-                      <CascadeTier
-                        key={g.kind}
-                        index={gi + 1}
-                        label={g.label}
-                        // Open tier → null, which is what makes CascadeTier
-                        // render the picker instead of the summary row.
-                        chosen={openSpecKind === g.kind ? null : summary}
-                        changeLabel={picked.length === 0 ? "Add" : "Change"}
-                        onChange={() => setOpenSpecTier(g.kind)}
-                      >
-                        {/* Exactly THREE chip rows (38px chip + 48px pitch +
-                            the region's own 12px padding). A round number like
-                            132px lands mid-chip, and a chip sliced through the
-                            middle reads as a rendering bug rather than as "there
-                            is more below" — the tinted, bordered, scrolling box
-                            already says that. */}
-                        <div className={`max-h-[176px] ${SCROLL_REGION}`}>
-                          <div className="flex flex-wrap gap-2">
-                            {/*
-                              E086 — this tier's OWN picks, first and removable.
-                              An expanded section used to show only what you could
-                              still add, so Industries could read "Retail +" while
-                              saying nothing about the two industries you had
-                              already chosen; the only evidence was the aggregate
-                              row at the top and the collapsed summary you had just
-                              opened. The skills tier has always shown its picks
-                              in place, and this is the same rule.
-                            */}
-                            {chosenHere.map((item) => (
-                              <Chip
-                                key={item.id}
-                                selected
-                                onClick={() => toggleSpec(item.id)}
-                              >
-                                {item.name}
-                              </Chip>
-                            ))}
-                            {avail.slice(0, MAX_SPECS_PER_TIER).map((item) => (
-                              <Chip
-                                key={item.id}
-                                selected={false}
-                                onClick={() => toggleSpec(item.id)}
-                              >
-                                {item.name}
-                              </Chip>
-                            ))}
-                            {avail.length === 0 && chosenHere.length === 0 && (
-                              <p className="text-[14px] text-ink-2">
-                                Nothing listed here yet — use the search above to
-                                add one.
-                              </p>
-                            )}
-                            {avail.length === 0 && chosenHere.length > 0 && (
-                              <p className="w-full text-[13px] text-ink-2">
-                                You&apos;ve picked everything we list here.
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                        {hidden > 0 && (
-                          <p className="mt-2 text-[13px] text-ink-2">
-                            +{hidden} more — search above to find them.
-                          </p>
-                        )}
-                      </CascadeTier>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-        </>
-      ),
-    };
-  };
+        error={error}
+        maxPerGroup={MAX_SPECS_PER_GROUP}
+        pickedRegionClass={PICKED_REGION}
+        maxPerTier={MAX_SPECS_PER_TIER}
+        scrollRegionClass={SCROLL_REGION}
+      />
+    ),
+  });
 
   switch (screen) {
     // ---- 1/12 — Experience (E003) -------------------------------------
@@ -5333,76 +4674,11 @@ function PlainShell({
  * only the tier the provider is actually working on is expanded — that is what
  * keeps the page short instead of three stacked lists.
  */
-function CascadeTier({
-  index,
-  label,
-  chosen,
-  onChange,
-  changeLabel = "Change",
-  children,
-}: {
-  index: number;
-  label: string;
-  chosen: string | null;
-  onChange?: () => void;
-  /**
-   * The reopen affordance. "Change" is right for a single-pick tier that already
-   * has an answer; a MULTI-pick tier that is empty needs "Add", because there is
-   * nothing there to change (PJv2 WS9).
-   */
-  changeLabel?: string;
-  children: React.ReactNode;
-}) {
-  // brief_Y / E053 — a COLLAPSED tier is genuinely one line now. It used to be
-  // a three-line box (heading row, then the value on its own line) that spent
-  // ~100px to recap a single word; two of those ate a quarter of the viewport
-  // before the step's actual work began, which is most of why the footer sat
-  // below the fold. Expanded tiers are unchanged.
-  if (chosen) {
-    return (
-      <section className="flex items-center gap-3 rounded-brand border border-line px-4 py-2.5">
-        <span
-          aria-hidden
-          className="grid h-6 w-6 flex-none place-items-center rounded-full bg-magenta text-[12px] font-black text-white"
-        >
-          {index}
-        </span>
-        <span className="text-[13px] font-bold uppercase tracking-wide text-ink-2">
-          {label}
-        </span>
-        <span className="min-w-0 flex-1 truncate text-[16px] font-bold">
-          {chosen}
-        </span>
-        {onChange && (
-          <button
-            type="button"
-            onClick={onChange}
-            className="flex-none text-[14px] font-bold text-magenta hover:text-magenta-dark"
-          >
-            {changeLabel}
-          </button>
-        )}
-      </section>
-    );
-  }
+/* ⚠ `CascadeTier` MOVED TO `SpecializationsEditor.tsx` (`P2-A2-E597` WS-B) —
+   it was local to this file and the specializations picker was its only caller.
+   ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   function CascadeTier({ index, label, chosen, onChange, changeLabel = "Change", children }) { … } */
 
-  return (
-    <section className="rounded-brand border border-line p-4">
-      <div className="mb-2 flex items-center justify-between gap-4">
-        <h2 className="flex items-center gap-2.5 text-[13px] font-bold uppercase tracking-wide text-ink-2">
-          <span
-            aria-hidden
-            className="grid h-6 w-6 place-items-center rounded-full bg-bg-soft text-[12px] font-black text-ink-2"
-          >
-            {index}
-          </span>
-          {label}
-        </h2>
-      </div>
-      {children}
-    </section>
-  );
-}
 
 /**
  * The review page's validation surface (brief_X / E056) — Scott's framing:
@@ -5678,16 +4954,16 @@ function gapsFor(
    //   } */
 
 /** The AI mark used wherever the product attributes work to AI (WS4/E174). */
-function SparkIcon() {
-  return (
-    <span
-      aria-hidden
-      className="grid h-6 w-6 flex-none place-items-center rounded-full bg-magenta/15 text-magenta"
-    >
-      <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor">
-        <path d="M12 2l1.8 5.2L19 9l-5.2 1.8L12 16l-1.8-5.2L5 9l5.2-1.8L12 2z" />
-        <path d="M18.5 14l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9.9-2.6z" />
-      </svg>
-    </span>
-  );
-}
+/* ⚠⚠ `SparkIcon` MOVED TO `SkillsEditor.tsx` (`P2-A2-E597` WS-B) AND IS
+   IMPORTED BACK — it has TWO OTHER CALLERS in this file (the AI-pass panel),
+   which the extraction surfaced. ⚠ MEASURED, not assumed: `tsc` named both the
+   moment the definition left. ⚠⚠ ONE DEFINITION, TWO CONSUMERS is the point;
+   leaving a copy here would have been the duplication this brief removes.
+   ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   function SparkIcon() { … }
+   ⚠⚠ ITS DOCBLOCK IS PARAPHRASED, NOT COPIED — rule 12. It said the mark is
+   used wherever the product attributes work to AI (WS4/E174), and quoting it
+   verbatim would put a comment terminator inside this one and close it early.
+   ⚠⚠⚠ THAT IS THE 8TH OCCURRENCE OF THAT TRAP, and `check:comment-quotes`
+   caught it — the gate working. */
+

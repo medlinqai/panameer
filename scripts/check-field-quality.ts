@@ -79,7 +79,18 @@ for (const f of [FORMATS, PHONE, MATCH, ROUTE, STEP, ONBOARDING, MATCH_ROUTE, WI
 const route = read(ROUTE);
 const step = read(STEP);
 const onboarding = read(ONBOARDING);
-const wizard = read(WIZARD);
+/*
+  ⚠⚠⚠ "THE WIZARD" IS THE PAGE **PLUS ITS EXTRACTED EDITORS** (`P2-A2-E597`
+  WS-B). The skill matcher's call and its two-answer prompt moved into
+  `SkillsEditor` with the picker that shows them.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):  const wizard = read(WIZARD);
+  ⚠⚠ A GATE THAT READS ONE NAMED FILE GOES BLIND THE DAY A COMPONENT MOVES —
+  `check:review-edit`'s defect. The RULES below are unchanged.
+*/
+const wizard = [
+  read(WIZARD),
+  read(join("src", "components", "onboarding", "editors", "SkillsEditor.tsx")),
+].join("\n");
 
 // ---------------------------------------------------------------------------
 // GUARD 1 — one home per format
@@ -307,7 +318,14 @@ check(
 );
 check(
   "4 — ⚠ the wizard NEVER auto-applies a near match",
-  /setSkillMatch\s*\(\s*\{/.test(wizard) && /keepTypedSkill/.test(wizard),
+  /*
+     ⚠ THE SETTER IS NAMED `onMatchChange` INSIDE `SkillsEditor` and
+     `setSkillMatch` at the call site — the state stayed with the wizard, the
+     prompt moved with the picker. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   /setSkillMatch\s*\(\s*\{/.test(wizard) && /keepTypedSkill/.test(wizard)
+     ⚠⚠ THE RULE IS UNCHANGED: a near match is OFFERED and never applied for
+     you, and `keepTypedSkill` is the other answer being reachable. */
+  /(setSkillMatch|onMatchChange)\s*\(\s*\{/.test(wizard) && /keepTypedSkill/.test(wizard),
   "both answers must be reachable — keeping what you typed is a real outcome"
 );
 
