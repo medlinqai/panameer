@@ -106,9 +106,59 @@ export default function RootLayout({
           The attribute this writes is what every dark rule keys off, and it has
           to be on the element before the browser paints or the user sees the
           light theme flash to dark on every navigation. That rules out doing it
-          in an effect, which is why this is a raw script tag rather than a
+          in an effect, which is why this is an inline script rather than a
           component. `suppressHydrationWarning` on <html> is the price: the
           server renders no attribute and the client has already added one.
+
+          ── ⚠⚠⚠ THIS IS A RAW `<script>` ON PURPOSE. DO NOT "FIX" IT. ─────
+
+          ⚠ SCOTT RULED IT, 2026-09-21, ON THE `P0-E595` WS-C GATE: *"keep the
+          raw <script> at layout.tsx:113. Your measurement settles it: next/script
+          brings back the E021 theme flash."* ⚠⚠ AND: *"Don't suppress the
+          warning."* — no `eslint-disable`, no console filter, no `type` attribute
+          chosen to dodge React's check. The warning is the honest cost and it is
+          paid deliberately.
+
+
+          ⚠⚠ A RAW `<script>` INSIDE A COMPONENT MAKES REACT LOG, ON THE CLIENT:
+          *"Encountered a script tag while rendering React component. Scripts
+          inside React components are never executed when rendering on the
+          client."* — `react-dom-client.development.js`, which `console.error`s
+          whenever it has to CREATE a `script` element during a client commit.
+
+          ⚠⚠⚠ MEASURED BEFORE CHANGING ANYTHING, BECAUSE THE WARNING READS WORSE
+          THAN IT IS: the script WAS running and the theme WAS being applied.
+          `curl` of the SSR'd HTML puts it in `<head>` at byte 3079 with `<body>`
+          at 3424 — i.e. before first paint — and `<html data-theme>` reads
+          `light` in a real browser. ⚠ What never executed is the COPY React
+          re-creates on the client from the flight payload, and that copy is
+          redundant: the attribute is already on `<html>` and survives client
+          navigation. **So there was no user-visible defect, and "fix the
+          warning" must not become "break the thing that works."**
+
+          ── ⚠⚠⚠ `next/script` WAS TRIED, MEASURED, AND REVERTED ─────────────
+
+          ⚠ `<Script id="panameer-theme-boot" strategy="beforeInteractive" …>`
+          is the documented Next way to declare an inline script, and it DOES
+          silence the warning — React never owns the node.
+          ⚠⚠ IT ALSO BREAKS THE ONE THING THIS SCRIPT EXISTS FOR. `beforeInteractive`
+          does not emit a synchronous tag; it pushes the source into
+          `self.__next_s` for the Next runtime to execute. MEASURED, same page,
+          `localStorage` pinned to `dark`:
+
+              data-theme at commit : null      ← paints in the WRONG theme
+              data-theme at DCL    : null
+              data-theme settled   : dark      ← after first paint
+
+          ⚠ With the raw tag the attribute is set during HTML parse, before the
+          first paint, which is the entire requirement.
+          ⚠⚠⚠ SO THE WARNING STAYS, DELIBERATELY, AND IT IS COSMETIC: React is
+          telling us a client-created COPY of this script would not execute, and
+          that copy is redundant because the attribute is already on `<html>`.
+          **Trading a real theme flash for a clean dev console would be the wrong
+          way round.** ⚠ React offers no exemption that keeps execution —
+          `isScriptDataBlock` suppresses the warning only for a NON-executable
+          `type`. ⚠ RAISED FOR SCOTT RATHER THAN DECIDED QUIETLY (rule 13), AND HE RULED — see the top of this block.
         */}
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
       </head>

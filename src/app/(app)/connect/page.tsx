@@ -9,6 +9,7 @@ import { ConnectProfile } from "@/components/community/ConnectProfile";
 import { getOwnProviderProfileView } from "@/lib/provider-profile-view";
 import { getPathsTaughtByProfile, getPathsTakenBy } from "@/lib/learn-home";
 import { getUsageStats } from "@/lib/usage-stats";
+import { countProfileViews } from "@/lib/profile-views";
 import { publicTestimonials } from "@/lib/recommendations";
 import { getCommunitySignalForProfile } from "@/lib/community-signal";
 import { getMyCommunity } from "@/lib/connections";
@@ -90,6 +91,11 @@ export default async function ConnectPage() {
           page — and never passed to `/providers/[id]` (`E593`). */}
       <ConnectProfile
         p={profile}
+        /* ⚠⚠ `Viewing Me`, WITH DATA BEHIND IT AT LAST (`P0-E595` A2). One row
+           per viewer per day, counted all time — the `Counters` decision, not a
+           window nobody ruled on. ⚠ This is the OWNER's own page, which is the
+           only place the figure is shown. */
+        profileViews={await countProfileViews(profile.id)}
         taughtPaths={taughtPathsList}
         takenPaths={takenPaths}
         usage={await getUsageStats(
