@@ -85,6 +85,9 @@ import {
   DEFAULT_SERVICE_FEE_BPS,
 } from "@/lib/display";
 import { PhoneField } from "@/components/onboarding/PhoneField";
+/* ⚠ EDITOR 1 OF 5 (`P2-A2-E597` WS-B). One component, mounted by the step and
+   the review modal — and by `/connect/edit/title` when WS-C lands. */
+import { TitleEditor, titleCanSave, HEADLINE_MAX } from "@/components/onboarding/editors/TitleEditor";
 import { formatPhone, isPhoneComplete, parseStoredPhone, toE164 } from "@/lib/phone";
 
 /**
@@ -608,7 +611,10 @@ const emptyAddress = (country = "United States"): AddressDraft => ({
  * `lib/explore.ts` — the two must agree, or the field promises a length the
  * card will not honour.
  */
-const HEADLINE_MAX = 42;
+/* ⚠ `HEADLINE_MAX` MOVED TO `TitleEditor.tsx` (`P2-A2-E597` WS-B) and is
+   re-exported through the import below — the cap and the input that enforces it
+   belong together. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   const HEADLINE_MAX = 42; */
 
 export default function JoinProviderPage() {
   const router = useRouter();
@@ -2250,55 +2256,34 @@ setScreen(target);
           ? profile.skillIds.length + profile.customSkills.length > 0
           : true;
 
+  /*
+    ── ⚠⚠ EXTRACTED (`P2-A2-E597` WS-B, editor 1 of 5) ──────────────────────
+
+    ⚠ THE BODY NOW LIVES IN `components/onboarding/editors/TitleEditor.tsx`.
+    This helper stays, and stays thin, because it is the ONE SAVE PATH: the
+    step's Continue and the review modal's Save both come through here.
+    ⚠⚠ WHAT MOVED IS PRESENTATION. What did NOT move is `saveAnd("title", …)` —
+    two save paths for one field is how the two titles happened (`E595`).
+    ⚠ SUPERSEDED, quoted not deleted (`E164`) — the closure held the whole field,
+    its 42-character cap and its counter inline; the cap constant lived at
+    `page.tsx:611`:
+    //   const titleEditing = () => ({
+    //     canSave: profile.headline.trim() !== "",
+    //     save: () => saveAnd("title", { headline: profile.headline }, () => goTo("tell_us")),
+    //     body: (<> …<Field label="Your Title" …><TextInput … maxLength={HEADLINE_MAX} /></Field>… </>),
+    //   });
+  */
   const titleEditing = () => ({
-    canSave: profile.headline.trim() !== "",
+    canSave: titleCanSave(profile.headline),
     save: () => saveAnd("title", { headline: profile.headline }, () => goTo("tell_us")),
     body: (
-      <>
-          {/*
-            WS-4 — CAPPED AT 42 WITH A LIVE COUNTER, fixed at the source.
-
-            This field IS the talent card's title, and the card renders it on
-            ONE line with a 42-character soft cap (lib/assessment aside, see
-            `cardTitle` in lib/explore.ts). It allowed 200, so a provider could
-            write a title that the card would silently cut — the truncation
-            being the first time anyone found out, on a page the provider never
-            looks at.
-
-            Capping the INPUT rather than widening the card is the right end:
-            the constraint is real (one line, in a 380px card) and the person
-            best placed to choose what survives it is the one writing it.
-
-            The counter turns magenta over 36 so it warns before it blocks —
-            a field that just stops accepting keystrokes reads as broken.
-          */}
-          <Field
-            label="Your Title"
-            hint="This is the title buyers see on your profile — one line, so keep it tight."
-          >
-            <TextInput
-              value={profile.headline}
-              onChange={(e) =>
-                setProfile((p) => ({ ...p, headline: e.target.value.slice(0, HEADLINE_MAX) }))
-              }
-              placeholder="e.g. Oracle Cloud P2P / Procurement Expert"
-              maxLength={HEADLINE_MAX}
-            />
-          </Field>
-          <p
-            className={
-              "mt-1.5 text-right text-[13px] font-semibold tabular-nums " +
-              (profile.headline.length > HEADLINE_MAX - 6 ? "text-magenta" : "text-ink-2")
-            }
-          >
-            {profile.headline.length} / {HEADLINE_MAX}
-          </p>
-      </>
+      <TitleEditor
+        value={profile.headline}
+        onChange={(headline) => setProfile((p) => ({ ...p, headline }))}
+      />
     ),
   });
 
-  /* ⚠ THE RATE FIELD + FEE BREAKDOWN (`E412` WS-1), rendered by `case "rate"`
-     and by the review's "Edit rate". */
   const rateEditing = () => {
     const { rate, fee, youGet } = rateBreakdown(
       profile.hourlyRateCents,
