@@ -17,6 +17,12 @@ import { defineConfig, devices } from "@playwright/test";
  * which is why `check:ui` cannot reach them and this exists at all.
  */
 export default defineConfig({
+  /* ⚠⚠⚠ REFUSES A SERVER OLDER THAN THE GENERATED PRISMA CLIENT OR THE BUILD
+     (`P0-E595` WS-B). `reuseExistingServer` below is what makes that possible:
+     a `next dev` left running since before `prisma generate` serves 500s from a
+     cached client, and two of three red gates on 2026-09-21 were exactly that,
+     attributed to the branch under test. */
+  globalSetup: "./e2e-shell/_app-server-guard.ts",
   testDir: "./e2e-shell",
   testMatch: "connect-walk.spec.ts",
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],

@@ -203,8 +203,33 @@ async function main() {
     where: { person_id: adminPerson.id },
     // Re-assert the brief_K demo state on existing rows (the schema rename reset
     // status/validation to their defaults).
+    /*
+      ── ⚠⚠⚠ THE ADMIN'S DEMO PROFILE IS `PENDING`, NOT `ACTIVE` (`P0-E595` WS-B)
+
+      ⚠ SCOTT, 2026-09-21, ruling on the WS-B gate: *"Set admin@panameer.com's
+      provider profile to not-ACTIVE. Don't delete it, and don't touch the
+      account."* ⚠ `ProviderStatus` holds exactly two values — `PENDING` and
+      `ACTIVE` — so not-ACTIVE is `PENDING`.
+
+      ⚠⚠ IT HAD TO CHANGE HERE AND NOT ONLY IN THE DATABASE. This `update`
+      branch RE-ASSERTS the demo state on every run, so a row set to `PENDING`
+      by hand would be flipped back to `ACTIVE` by the next `npm run seed` — and
+      the E581 count would silently regress with nothing to point at.
+
+      ⚠ WHY: `admin@panameer.com` is the Panameer ADMINISTRATOR. It is not a
+      person selling consulting hours, and it was the last provider counted
+      `ACTIVE` while failing the visibility gate on skills, photo AND address —
+      i.e. it was inflating the "unreachable providers" figure `E581` exists to
+      measure with a row that should never have been offered to a buyer.
+      ⚠⚠ THE PROFILE IS KEPT, and so is everything on it: the rate, the
+      overview, the specializations and the `VALIDATED` badge all still seed, so
+      brief_K's demo data is intact and one flag reverses it.
+
+      ⚠ SUPERSEDED, quoted not deleted (`E164`) — both branches carried it:
+      //   status: "ACTIVE",
+    */
     update: {
-      status: "ACTIVE",
+      status: "PENDING",
       validation_status: "VALIDATED",
       validated_at: new Date(),
       role_type_id: demoRole?.id ?? null,
@@ -233,10 +258,14 @@ async function main() {
       remote_rate_cents: 9000,
       currency: "USD",
       rating: "4.90",
-      // brief_K: active-on-verify (admin email is verified below), and a
-      // Validated demo so the badge is visible in the running app. Completeness
-      // is recomputed at the end of this block from the actual data.
-      status: "ACTIVE",
+      // brief_K: a Validated demo so the badge is visible in the running app.
+      // Completeness is recomputed at the end of this block from the actual data.
+      /* ⚠ `PENDING`, NOT `ACTIVE` — see the block on the `update` branch above.
+         ⚠ SUPERSEDED, quoted not deleted (`E164`), with its own note:
+         //   // brief_K: active-on-verify (admin email is verified below), and a
+         //   // Validated demo so the badge is visible in the running app.
+         //   status: "ACTIVE", */
+      status: "PENDING",
       validation_status: "VALIDATED",
       validated_at: new Date(),
     },
