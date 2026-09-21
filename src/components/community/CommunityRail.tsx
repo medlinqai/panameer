@@ -3,6 +3,7 @@ import { Face } from "@/components/community/Silhouette";
 import { getMyTeams } from "@/lib/teams";
 import type { getMyCommunity } from "@/lib/connections";
 import type { Viewer } from "@/lib/access";
+import { WaitingOnYou } from "@/components/community/ColleagueCards";
 
 /**
  * ── ⚠⚠ THE RAIL — MENTORS AND TEAMS (`P2-J3-E591` WS-C items 1, 6) ────────
@@ -17,12 +18,23 @@ import type { Viewer } from "@/lib/access";
  */
 export async function CommunityRail({
   viewer,
+  /* ⚠⚠ INCOMING COLLEAGUE REQUESTS (`P2-A3-E596` WS-C item 1). Computed by the
+     page from the SAME `getMyCommunity` read the rail already receives — passed
+     rather than re-derived, for the reason the `mine` prop records. */
+  incoming,
   /* ⚠ PASSED IN, NOT RE-FETCHED. The main column already read it; asking the
      database the same question twice in one render is work nobody needs. */
   mine,
 }: {
   viewer: Viewer;
   mine: Awaited<ReturnType<typeof getMyCommunity>>;
+  incoming: {
+    connectionId: string;
+    userId: string;
+    name: string;
+    title: string | null;
+    photoUrl: string | null;
+  }[];
 }) {
   const teams = await getMyTeams(viewer);
 
@@ -38,7 +50,21 @@ export async function CommunityRail({
   const owns = teams.represents.length > 0;
 
   return (
-    <aside className="pm-cm-rail">
+    /*
+      ⚠⚠ `pm-cm-rail-urgent` LIFTS THE RAIL ABOVE THE MAIN COLUMN ON A PHONE,
+      and ONLY when somebody is actually waiting (`P2-A3-E596` WS-C item 1).
+      ⚠ Measured: with the rail unconditionally first, a member with nothing
+      pending met two empty-state panels before the web. The ordering follows
+      the data, not the breakpoint.
+    */
+    <aside className={"pm-cm-rail" + (incoming.length > 0 ? " pm-cm-rail-urgent" : "")}>
+      {/* ── ⚠⚠ WAITING ON YOU — ABOVE MENTORS, AND FIRST ON A PHONE ───────
+          ⚠ `WaitingOnYou` RETURNS NULL ON AN EMPTY LIST, so the rail starts at
+          Mentors for everybody with nothing pending. That is why it is mounted
+          unconditionally here rather than wrapped in a check that would say the
+          same thing twice. */}
+      <WaitingOnYou rows={incoming} />
+
       {/* ── MENTORS ───────────────────────────────────────────────────────── */}
       <section className="pm-cm-panel">
         <h2>Mentors</h2>

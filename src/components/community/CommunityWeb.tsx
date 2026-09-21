@@ -54,6 +54,46 @@ export function CommunityWeb({ initial }: { initial: WebData }) {
     return () => mq.removeEventListener("change", onChange);
   }, []);
 
+  /*
+    ── ⚠⚠⚠ ACCEPTING A REQUEST MOVES THE WEB (`P2-A3-E596` WS-C item 2) ─────
+
+    ⚠ SCOTT: *"the moment a dotted ghost becomes a lit node is the most
+    satisfying thing this feature does, and right now nobody sees it."*
+
+    ⚠⚠ THE MECHANISM, MEASURED: `ConnectControls` ALREADY CALLS
+    `router.refresh()` after an accept (`ConnectControls.tsx:115`), so the
+    SERVER re-renders and hands this component a NEW `initial`. ⚠⚠⚠ AND
+    `useState(initial)` IGNORED IT — a `useState` initialiser runs once, so the
+    fresh prop was dropped on the floor and the picture waited up to 60 seconds
+    for the interval. That is why two counts on one screen disagreed: the card
+    list came from the refreshed server render and the web from a minute ago.
+
+    ⚠ SO THE FIX IS TO STOP IGNORING THE PROP, not to add a second fetch. A
+    bespoke event between the two components would be a second channel carrying
+    what React already delivers.
+    ⚠⚠ IT ADVANCES `cycle` AND ANIMATES, exactly as a successful poll does — the
+    ghost-to-node transition is the same transition, so there is one animation
+    path and not two.
+    ⚠ GUARDED BY IDENTITY: `initial` is a fresh object on every server render,
+    so this compares the DATA, not the reference. Without that guard an
+    unrelated re-render would re-animate the web for no reason.
+  */
+  const lastInitial = useRef<string>("");
+  useEffect(() => {
+    const sig = JSON.stringify(initial);
+    /* ⚠ The first run records the server's own picture and moves nothing — it
+       is already on screen. */
+    if (lastInitial.current === "") {
+      lastInitial.current = sig;
+      return;
+    }
+    if (lastInitial.current === sig) return;
+    lastInitial.current = sig;
+    setData(initial);
+    setAnimate(!calm.current);
+    setCycle((c) => c + 1);
+  }, [initial]);
+
   useEffect(() => {
     let alive = true;
 
@@ -208,10 +248,40 @@ function plural(n: number, one: string, many = ""): string {
   return `${n} ${n === 1 ? one : many || one + "s"}`;
 }
 
+/**
+ * ── ⚠⚠⚠ THE WEB SAYS IT IS A SAMPLE (`P2-A3-E596` WS-C item 3) ────────────
+ *
+ * ⚠ SCOTT: *"Scott will have 25,000+ colleagues; the web must never try to draw
+ * them. It already caps — what is missing is saying so."*
+ * ⚠⚠ THE WEB IS AN EMOTIONAL DEVICE, NOT A DIRECTORY. Its job is to make the
+ * network feel alive and show unexplored territory; the colleague list is the
+ * directory. A label that says *"12 of 25,431 shown"* keeps it honest without
+ * asking it to be something else.
+ *
+ * ⚠ SUPERSEDED, quoted not deleted (`E164`):
+ * //   const n = o.joined + o.invited + o.reachable;
+ * //   return n > 0 ? `+${n} more not shown` : null;
+ * ⚠⚠ `+N more not shown` NAMED THE REMAINDER AND NEVER THE WHOLE, so a reader
+ * could not tell whether they were looking at most of their network or a
+ * fraction of it. **Shown-of-total answers the question that was actually being
+ * asked.**
+ *
+ * ⚠ SELECTION IS **MOST RECENT**, and `community-web.ts` WAS CHANGED TO MAKE
+ * THAT TRUE rather than having the label assert it. ⚠⚠ MEASURED FIRST: neither
+ * the connection query nor the person query carried an `orderBy`, so the cap
+ * took an ARBITRARY sixteen that could differ between two renders. **A label
+ * naming a selection the code does not make is worse than no label.**
+ */
 function overflowText(d: WebData): string | null {
   const o = d.overflow;
-  const n = o.joined + o.invited + o.reachable;
-  return n > 0 ? `+${n} more not shown` : null;
+  const hidden = o.joined + o.invited + o.reachable;
+  if (hidden <= 0) return null;
+  const shown = d.joined.length + d.invited.length + d.reachable.length;
+  /* ⚠ `toLocaleString` with NO locale argument would format differently on the
+     server and in the browser and hydrate mismatched. `en-US` is pinned for the
+     same reason `date-range-label.ts` refuses `toLocaleDateString`. */
+  const total = (shown + hidden).toLocaleString("en-US");
+  return `${shown} of ${total} shown · most recent`;
 }
 
 /** ⚠ `invited` has no person and therefore never a face. That is the model. */

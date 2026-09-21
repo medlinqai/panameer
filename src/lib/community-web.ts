@@ -74,6 +74,21 @@ async function colleagueUserIds(userId: string): Promise<string[]> {
       OR: [{ from_user_id: userId }, { to_user_id: userId }],
     },
     select: { from_user_id: true, to_user_id: true },
+    /*
+      ── ⚠⚠⚠ NEWEST FIRST, AND IT WAS UNORDERED (`P2-A3-E596` WS-C item 3) ──
+
+      ⚠ SCOTT asked the web to say what it is showing: *"12 of 25,431 shown"*,
+      selection **most recent**. ⚠⚠ A LABEL THAT NAMES A SELECTION THE CODE DOES
+      NOT MAKE IS WORSE THAN NO LABEL — so the selection is made here.
+
+      ⚠⚠⚠ MEASURED BEFORE WRITING THE LABEL: there was NO `orderBy` on this
+      query or on the `person.findMany` that follows it, so Postgres returned
+      whatever the planner picked and `slice(0, 16)` took an ARBITRARY sixteen —
+      an arbitrary set that could differ between two renders of the same page.
+      ⚠ That is the same defect `seed-test-data.ts` records against its own
+      `findFirst`, where the undefined order was MEASURED to have drifted.
+    */
+    orderBy: { created_at: "desc" },
   });
   /* ⚠⚠ A COLLEAGUE EDGE IS UNDIRECTED AND IS STORED ONCE, with whoever asked as
      `from`. Reading one column would return half the graph — and would return a
@@ -117,11 +132,25 @@ export async function getCommunityWeb(viewer: Viewer): Promise<CommunityWeb> {
   /* ⚠ user id -> person id, needed to resolve a second-degree node's `via`. */
   const personIdByUser = new Map(joinedPeople.map((p) => [p.user_id ?? "", p.id]));
 
-  const joinedAll: WebPerson[] = joinedPeople.map((p) => ({
-    id: p.id,
-    name: `${p.first_name} ${p.last_name}`.trim(),
-    photoUrl: p.photo_url,
-  }));
+  /*
+    ⚠⚠ `findMany` DOES NOT PRESERVE THE ORDER OF AN `in` LIST — SQL has no such
+    guarantee — so the newest-first order established by `colleagueUserIds` is
+    re-applied here rather than assumed. ⚠ Without this the label's *"most
+    recent"* would be a claim about a set nothing had sorted.
+  */
+  const rankByUser = new Map(firstDegree.map((u, i) => [u, i]));
+  const joinedAll: WebPerson[] = joinedPeople
+    .slice()
+    .sort(
+      (a, b) =>
+        (rankByUser.get(a.user_id ?? "") ?? Number.MAX_SAFE_INTEGER) -
+        (rankByUser.get(b.user_id ?? "") ?? Number.MAX_SAFE_INTEGER)
+    )
+    .map((p) => ({
+      id: p.id,
+      name: `${p.first_name} ${p.last_name}`.trim(),
+      photoUrl: p.photo_url,
+    }));
 
   /* ── 2 · invited ─────────────────────────────────────────────────────── */
   /*

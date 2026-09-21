@@ -11,7 +11,14 @@ import Link from "next/link";
    // import { ConnectHome } from "@/components/community/ConnectHome"; */
 import { CommunityWeb } from "@/components/community/CommunityWeb";
 import { CommunityRail } from "@/components/community/CommunityRail";
-import { JoinedCard, InvitedCardView, WaitingOnYou } from "@/components/community/ColleagueCards";
+/* ⚠ `WaitingOnYou` IS NO LONGER IMPORTED HERE — it moved to the rail
+   (`P2-A3-E596` WS-C item 1) and an unused import is a lint warning, i.e.
+   one NEW problem against a baseline whose rule is zero. ⚠ SUPERSEDED,
+   quoted not deleted (`E164`):
+   //   import { JoinedCard, InvitedCardView, WaitingOnYou } from "@/components/community/ColleagueCards";
+   ⚠⚠ THE MOVE IS STILL RECORDED where the component used to render, a few
+   lines down — that quote is the one a reader needs. */
+import { JoinedCard, InvitedCardView } from "@/components/community/ColleagueCards";
 import { getMyCommunity } from "@/lib/connections";
 import { getCommunityWeb } from "@/lib/community-web";
 import { getCommunityPage } from "@/lib/community-page";
@@ -131,10 +138,21 @@ async function CommunityBody({ viewer }: { viewer: Viewer }) {
   return (
     <div className="pm-cm">
       <div className="min-w-0 space-y-5">
-        {/* ⚠⚠⚠ FIRST, BECAUSE IT IS THE ONLY BLOCK WHERE SOMEBODY ELSE IS
-            BLOCKED ON THIS MEMBER — and because without it an incoming
-            colleague request has NO DOOR IN THE APP AT ALL. See the component. */}
-        <WaitingOnYou rows={incoming} />
+        {/*
+          ── ⚠⚠ `Waiting on You` MOVED TO THE RAIL (`P2-A3-E596` WS-C item 1) ──
+
+          ⚠ SUPERSEDED, quoted not deleted (`E164`):
+          //   {/* ⚠⚠⚠ FIRST, BECAUSE IT IS THE ONLY BLOCK WHERE SOMEBODY ELSE IS
+          //       BLOCKED ON THIS MEMBER — and because without it an incoming
+          //       colleague request has NO DOOR IN THE APP AT ALL. * /}
+          //   <WaitingOnYou rows={incoming} />
+
+          ⚠⚠ THE REASON IT WAS FIRST STILL STANDS — it is still the only door to
+          an incoming request in the whole app — which is why it moved to the TOP
+          OF THE RAIL rather than down the page. Scott: it *"returns the web to
+          the top"*, and on a phone the rail now leads (`order: -1`), so the
+          block gets MORE prominent there, not less.
+        */}
         {/*
           ⚠⚠ THE WEB IS THE PAGE'S HERO (`E591` WS-B). ⚠ The FIRST picture is
           server-rendered and handed down as a prop — every later cycle is built
@@ -186,7 +204,7 @@ async function CommunityBody({ viewer }: { viewer: Viewer }) {
         </section>
       </div>
 
-      <CommunityRail viewer={viewer} mine={mine} />
+      <CommunityRail viewer={viewer} mine={mine} incoming={incoming} />
     </div>
   );
 }

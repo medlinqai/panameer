@@ -45,6 +45,37 @@
   }
   .pm-cm-rail {
     position: static;
+    /*
+      ── ⚠⚠⚠ THE RAIL LEADS ON A PHONE (`P2-A3-E596` WS-C item 1) ──────────
+
+      ⚠ The brief asserted this was ALREADY TRUE — *"the rail is `order: -1`
+      below 1060px, so it lands first there"*. ⚠⚠ IT WAS NOT. There was no
+      `order` anywhere in this file, so the rail stacked SECOND and `Waiting on
+      You` would have moved from the top of the page to below the web and every
+      colleague card — **less prominent on a phone, which is the opposite of
+      what that item asks for.** Measured before moving anything.
+
+      ⚠ `Waiting on You` is the only block where somebody else is blocked on
+      this member, so it leads on the smallest screen.
+
+      ⚠⚠⚠ BUT ONLY WHEN SOMETHING IS ACTUALLY WAITING — see `.pm-cm-rail-urgent`
+      below. MEASURED ON A PHONE with the rail unconditionally first: with no
+      pending request the page opened with TWO EMPTY-STATE PANELS (*"You're not
+      following anyone yet"*, *"A team is a group of providers…"*) above the web.
+      ⚠ That is a worse phone for the common case, and it is not what the item
+      asked for: the item promotes `Waiting on You`, not Mentors and Teams.
+    */
+  }
+
+  /*
+    ⚠⚠ THE RAIL LEADS ONLY WHEN IT CARRIES SOMETHING URGENT. The class is set by
+    `CommunityRail` when there is at least one incoming request, so the ordering
+    follows the DATA rather than the breakpoint alone.
+    ⚠ Without a pending request the web stays the first thing on a phone, which
+    is what it was before this work stream and what it should be.
+  */
+  .pm-cm-rail-urgent {
+    order: -1;
   }
 }
 
