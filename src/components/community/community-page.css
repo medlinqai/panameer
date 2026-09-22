@@ -16,6 +16,26 @@
   `#8a8396`. Two greys a few pixels apart on one card is not a decision anybody
   made. ⚠ Aligned to the file's value, and screenshotted before and after.
 */
+
+/*
+  ── ⚠⚠⚠ `#8a8396` STAYS A LITERAL, AND THIS COMMENT IS THE REASON (`E601` WS-D)
+
+  ⚠ SCOTT, 2026-09-22: *"Map each use to the nearest existing token… If none
+  matches within a shade, keep the literal with a comment naming the problem."*
+  ⚠⚠ MEASURED AGAINST THE WHOLE DEFINED PALETTE, and NOTHING IS CLOSE:
+      `--color-ink-2`     `#4a4658`  distance **108**
+      `--color-learn-slate` `#6b7280`  distance 42 — ⚠⚠ AND IT IS A **LEARN**
+      TOKEN, a cooler slate for a different surface; borrowing it would tie this
+      card's muted text to the Learn palette, which is a worse bug than a
+      literal because it would look right until Learn is re-themed.
+      `--color-ink` / `--color-line` / `--color-bg-soft`  distance 160+
+  ⚠⚠⚠ **THE PROBLEM, NAMED: THERE IS NO THIRD INK.** The palette stops at
+  `--color-ink-2`, and this file wants a muted tone below it — which is what the
+  author who wrote `var(--color-ink-3, …)` was reaching for.
+  ⚠ **OPEN FOR SCOTT** (recorded in `brief_community_and_grow_2026-09-22.md`):
+  promoting `--color-ink-3` means choosing its DARK-MODE value, and `check:theme`
+  pins a named token list it would need to join. Neither is guessable from here.
+*/
 /*
   ── ⚠⚠ THE COMMUNITY PAGE — TWO COLUMNS (`P2-J3-E591` WS-C) ────────────────
 
@@ -205,7 +225,11 @@
   padding: 7px 0;
 }
 .pm-cm-row + .pm-cm-row {
-  border-top: 1px solid #f1eef5;
+  /* ⚠ WAS `var(--color-line-2, #f1eef5)` — an undefined token. ⚠⚠ MAPPED TO
+     `--color-line` (`#e5e7eb`): distance 17 from the old literal, i.e. WITHIN
+     A SHADE, and it is semantically exactly what this is — a hairline rule.
+     ⚠ It now themes with every other border instead of being frozen. */
+  border-top: 1px solid var(--color-line);
 }
 .pm-cm-note {
   font-size: 12.5px;

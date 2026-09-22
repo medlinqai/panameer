@@ -60,9 +60,23 @@ import {
 const TABS: { key: string; label: string; window: GrowthWindow }[] = [
   { key: "month", label: "This Month", window: "month" },
   { key: "all", label: "All Time", window: "all" },
-  /* ⚠ `My Network` IS NOT A WINDOW — it lists invitations, not scores. Its
-     `window` is unused and set to `all` so the type stays honest. */
-  { key: "network", label: "My Network", window: "all" },
+  /*
+    ⚠ NOT A WINDOW — it lists invitations, not scores. Its `window` is unused
+    and set to `all` so the type stays honest.
+
+    ── ⚠⚠⚠ `People I Brought In`, NOT `My Network` (`E601` WS-D) ─────────────
+    ⚠ SCOTT, 2026-09-22: *"it says what the list is, and it keeps 'Network'
+    retired."* ⚠⚠ The same ruling that renamed the page — **one word for people,
+    and it is Community; 'Network' is not kept as a second name for the same
+    thing.** ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   { key: "network", label: "My Network", window: "all" },
+
+    ⚠⚠ THE URL KEY STAYS `network`, DELIBERATELY. Scott: *"a query key isn't
+    copy people read."* ⚠⚠⚠ AND CHANGING IT WOULD BREAK EVERY `?tab=network`
+    LINK ALREADY SHARED, to rename something nobody sees — the cost is real and
+    the benefit is zero.
+  */
+  { key: "network", label: "People I Brought In", window: "all" },
 ];
 
 export default async function GrowPage({
