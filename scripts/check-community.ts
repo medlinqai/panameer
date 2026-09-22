@@ -1455,6 +1455,12 @@ const CONNECT_PAGES = [
     than fixed — and its absence is asserted positively below.
   */
   ["messages", "page.tsx"],
+  /* ⚠ `P2-A3-E599` WS-A — `/community/grow` is a Connect page and draws the
+     row through the same filter. ⚠⚠ ADDED WITH THE PAGE, not after it: this
+     list is how the rule *"every Connect page draws the row through
+     `connectTabs`"* is enforced, and a page that joins the tree without joining
+     the list is unguarded from birth. */
+  ["community", "grow", "page.tsx"],
 ].map((seg) => join("src", "app", "(app)", ...seg));
 for (const f of CONNECT_PAGES) {
   const body = bodies.get(f) ?? "";

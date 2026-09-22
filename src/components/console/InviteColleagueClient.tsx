@@ -23,6 +23,30 @@ import type { PersonCard } from "@/lib/connections";
  * blank page does not get written, whereas "look at this" is a sentence people
  * already know how to say, and a templated invitation reads like bulk mail.
  */
+
+/**
+ * ── ⚠⚠ THE STARTING COPY (`P2-A3-E599` WS-C 1) ───────────────────────────
+ *
+ * ⚠ SCOTT MAY REWRITE THIS — the brief says so in terms (*"Starting copy (Scott
+ * may rewrite)"*), which is why it is one exported constant and not prose
+ * threaded through the form.
+ * ⚠⚠ IT SAYS WHAT THE READER GETS, NOT WHAT PANAMEER WANTS. The invitation
+ * arrives COLD, from a stranger's point of view, and `E526`'s measurement is
+ * the reason that matters: an unexpected invitation is exactly where a bad
+ * first line reads as phishing.
+ * ⚠⚠⚠ THE `[Inviter]` SUBSTITUTION IS THE EMAIL TEMPLATE'S JOB, NOT THIS
+ * FORM'S. `colleagueInviteTemplate` already receives `inviterName` and renders
+ * it; putting a name into the editable note would let the sender edit somebody
+ * else's name into it.
+ */
+export const DEFAULT_INVITE_NOTE = [
+  "You already built this once. Get paid for it twice.",
+  "",
+  "Every configuration you designed, every requirement doc you wrote, every course you taught internally is still worth something. Panameer is where Oracle practitioners sell that work as a product instead of rebuilding it for a new client at an hourly rate.",
+  "",
+  "Free to join. You keep what you build.",
+].join("\n");
+
 export type SentInvite = {
   id: string;
   email: string;
@@ -102,7 +126,20 @@ export function InviteColleagueClient({
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
+  /*
+    ── ⚠⚠⚠ THE NOTE IS PRE-WRITTEN AND EDITABLE (`P2-A3-E599` WS-C 1) ────────
+
+    ⚠ The brief: *"the note, pre-filled and **editable**, from the inviter to
+    their contacts."* ⚠⚠ PRE-FILLED, NOT LOCKED — Scott may rewrite the copy,
+    and so may the person sending it. It is a starting point, which is why it
+    lives in `DEFAULT_INVITE_NOTE` rather than being typed into this state.
+    ⚠⚠⚠ THE FIELD IS NO LONGER "(optional)" IN PRACTICE BUT STAYS OPTIONAL IN
+    THE CONTRACT: clearing it sends an invitation with no note, exactly as
+    before. Nothing was made required.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   const [message, setMessage] = useState("");
+  */
+  const [message, setMessage] = useState(DEFAULT_INVITE_NOTE);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<{ devLink?: string } | null>(null);
@@ -298,7 +335,8 @@ export function InviteColleagueClient({
 
         <label className="mt-3 block">
           <span className="mb-1 block text-[13px] font-bold">
-            Add a note <span className="font-semibold text-ink-2">(optional)</span>
+            Your Note{" "}
+            <span className="font-semibold text-ink-2">(edit it or clear it)</span>
           </span>
           <textarea
             value={message}
@@ -306,6 +344,7 @@ export function InviteColleagueClient({
             rows={4}
             maxLength={600}
             placeholder="A line about why you thought of them."
+            aria-label="Your note to them"
             className="w-full rounded-[10px] border border-line px-3 py-2.5 text-[14.5px] leading-relaxed outline-none focus:border-magenta"
           />
         </label>

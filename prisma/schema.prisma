@@ -477,6 +477,11 @@ model Person {
   coordinatorInvites  CoordinatorInvite[] @relation("CoordinatorInvitesSent")
   /// ⚠ `E493` — colleague invitations this person sent. No roster, no relation.
   colleagueInvites    ColleagueInvite[]   @relation("ColleagueInvitesSent")
+  /// ⚠ The invitation that brought this person in, if one did (`E599` WS-C).
+  /// ⚠⚠ A LIST because the relation is one-to-many at the schema level; in
+  /// practice it holds at most one — `creditColleagueInvite` credits the
+  /// FIRST invite and never a second ("one credit per joined person").
+  colleagueInviteAccepted ColleagueInvite[] @relation("ColleagueInviteAccepted")
   /// Profiles THIS person has viewed (`P0-E595` A2). ⚠ The attribution half
   /// of *"who is searching who"* — recorded now, displayed by a later ruling.
   profileViewsMade    ProfileView[]       @relation("ProfileViewer")
@@ -2854,6 +2859,25 @@ model ColleagueInvite {
   expires_at         DateTime
   /// ⚠ Set when they sign up. NO provider id, NO roster row — see the note above.
   accepted_at        DateTime?
+  /**
+   * ⚠⚠⚠ THE PERSON THE ACCEPTED INVITE CREATED (`P2-A3-E599` WS-C).
+   *
+   * ⚠ MEASURED AT WS-A's PREMISE CHECK: `accepted_at` had **no writer anywhere
+   * in `src/`**, and `invite-colleague/page.tsx` recorded why in terms —
+   * *"ACCEPTED/`accepted_at` are there for the day an account-create hook
+   * writes them. ⚠ THIS PAGE DOES NOT INVENT THAT HOOK."* This brief is that
+   * hook.
+   * ⚠⚠ `accepted_at` ALONE CANNOT NAME WHO JOINED. The invite carries an
+   * EMAIL; without this column `My Network` can only say *"this invitation was
+   * accepted"* and can never link to the colleague it produced.
+   * ⚠⚠⚠ NULLABLE, AND NOTHING IS BACKFILLED. Scott: *"Don't backfill the 6 old
+   * invites with a guessed inviter."* The same rule binds here — the six
+   * pre-`E493` rows have no recorded inviter and no recorded joiner, and a
+   * guessed value would survive the reset as a fake answer.
+   * ⚠ `SetNull` for the same reason `inviter` is: an invitation that was
+   * genuinely accepted is a fact, and deleting the person must not rewrite it.
+   */
+  accepted_person_id String?               @db.Uuid
   created_at         DateTime              @default(now())
   updated_at         DateTime              @updatedAt
 
@@ -2861,11 +2885,15 @@ model ColleagueInvite {
   /// and deleting the inviter must not rewrite history. It only loses its
   /// attribution, which nothing reads yet anyway.
   inviter Person? @relation("ColleagueInvitesSent", fields: [inviter_person_id], references: [id], onDelete: SetNull)
+  /// ⚠ The colleague this invitation actually produced. See the column note.
+  acceptedPerson Person? @relation("ColleagueInviteAccepted", fields: [accepted_person_id], references: [id], onDelete: SetNull)
 
   @@index([inviter_person_id])
   @@index([invitee_email])
   /// ⚠ The rate limit counts this inviter's recent rows — see `lib/colleague-invite.ts`.
   @@index([inviter_person_id, created_at])
+  /// ⚠ The credit lookup: the oldest PENDING invite for an address.
+  @@index([invitee_email, status, created_at])
   @@map("colleague_invites")
 }
 

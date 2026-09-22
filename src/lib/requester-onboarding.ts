@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { creditInviteForNewUser } from "@/lib/colleague-invite";
 import { hashPassword } from "@/lib/password";
 import { normalizeEmail } from "@/lib/normalizeEmail";
 import { OnboardingError } from "@/lib/onboarding";
@@ -175,6 +176,19 @@ export async function createRequesterAccount(
     return user.id;
   });
 
+
+  /*
+    ── ⚠⚠⚠ CREDIT THE INVITATION THAT BROUGHT THEM IN (`P2-A3-E599` WS-C) ────
+
+    ⚠ Scott: *"acceptance link the joined person to the invite, so Joined can
+    count."* ⚠⚠ MEASURED: `accepted_at` HAD NO WRITER ANYWHERE IN `src/`, so
+    `Joined` was structurally 0 for every member.
+    ⚠⚠⚠ AFTER THE TRANSACTION, NEVER INSIDE IT — a locked `colleague_invites`
+    row must not be able to roll back a new member. It cannot throw, cannot fail
+    a signup, and returns `null` when there is nothing to credit, which is the
+    ordinary case.
+  */
+  await creditInviteForNewUser(userId, email);
   return { userId, email };
 }
 

@@ -229,3 +229,103 @@ export async function lookupColleagueInvite(rawToken: string) {
       `${row.inviter?.first_name ?? ""} ${row.inviter?.last_name ?? ""}`.trim() || "A colleague",
   };
 }
+
+/**
+ * ── ⚠⚠⚠ CREDIT THE INVITATION THAT BROUGHT THIS PERSON IN (`E599` WS-C) ───
+ *
+ * ⚠ SCOTT, 2026-09-22: *"acceptance link the joined person to the invite, so
+ * Joined can count."*
+ *
+ * ⚠⚠ MEASURED AT WS-A's PREMISE CHECK: **`accepted_at` had no writer anywhere
+ * in `src/`.** `invite-colleague/page.tsx` recorded the gap in terms —
+ * *"ACCEPTED/`accepted_at` are there for the day an account-create hook writes
+ * them. ⚠ THIS PAGE DOES NOT INVENT THAT HOOK; that would be a change to
+ * signup, which this brief does not open."* ⚠⚠⚠ THIS BRIEF OPENS IT, AND THIS
+ * IS THE HOOK. Until it existed, `Joined` was structurally 0 for every member
+ * and the whole scoring half of `E599` could never move off zero.
+ *
+ * ── ⚠⚠ ONE CREDIT PER JOINED PERSON, FIRST INVITE WINS (WS-C 3) ──────────
+ *
+ * ⚠ `orderBy: created_at asc` IS THE RULE, not a tidy default: two people can
+ * invite the same address, and the one who got there first earns it.
+ * ⚠⚠ `status: "PENDING"` IS WHAT MAKES IT IDEMPOTENT — a second call for the
+ * same person finds nothing, because the first call moved the row to ACCEPTED.
+ * ⚠⚠⚠ SO A SIGNUP PATH THAT RETRIES, OR A PERSON WHO SOMEHOW SIGNS UP TWICE,
+ * CANNOT PAY THE INVITER TWICE.
+ *
+ * ── ⚠ IT CAN NEVER FAIL A SIGNUP ────────────────────────────────────────
+ *
+ * ⚠⚠ THE ACCOUNT HAS ALREADY BEEN CREATED WHEN THIS RUNS. A throw here would
+ * turn a crediting outage into a REGISTRATION outage — the same rule `E522`'s
+ * `SentEmail` receipt follows (*"a receipt can never fail a send"*). Caught,
+ * logged, not rethrown.
+ * ⚠ IT IS DELIBERATELY NOT IN THE SIGNUP TRANSACTION for the same reason: a
+ * locked `colleague_invites` row must not be able to roll back a new member.
+ *
+ * @returns the credited invite's id, or `null` when there was nothing to credit
+ *          (which is the ordinary case — most people are not invited).
+ */
+export async function creditColleagueInvite(
+  email: string,
+  personId: string
+): Promise<string | null> {
+  try {
+    const normalized = normalizeEmail(email);
+    /* ⚠ The FIRST still-pending invitation to this address. */
+    const invite = await prisma.colleagueInvite.findFirst({
+      where: { invitee_email: normalized, status: "PENDING" },
+      orderBy: { created_at: "asc" },
+      select: { id: true },
+    });
+    if (!invite) return null;
+
+    /*
+      ⚠⚠ THE `status` FILTER IS REPEATED IN THE **UPDATE**, not just the read.
+      Two signups racing the same address would both pass the read; only one can
+      pass this, because the first flips the row out of PENDING.
+      ⚠⚠⚠ `updateMany` RATHER THAN `update` SO A LOST RACE IS `count: 0`
+      INSTEAD OF A THROW — the loser records nothing and the signup is untouched.
+    */
+    const done = await prisma.colleagueInvite.updateMany({
+      where: { id: invite.id, status: "PENDING" },
+      data: {
+        status: "ACCEPTED",
+        accepted_at: new Date(),
+        accepted_person_id: personId,
+      },
+    });
+    return done.count === 1 ? invite.id : null;
+  } catch (err) {
+    /* ⚠ The member exists; this is bookkeeping. Never rethrow. */
+    console.error("[colleague-invite] credit failed", err);
+    return null;
+  }
+}
+
+/**
+ * ⚠⚠ THE SIGNUP-SIDE WRAPPER. The four account-creation paths all end holding a
+ * `userId` and an email; only some of them hold a `Person` id in scope, and
+ * `oauth.ts` creates no `Person` at all.
+ *
+ * ⚠⚠⚠ CALL IT **AFTER** THE TRANSACTION COMMITS, NEVER INSIDE ONE. A locked
+ * `colleague_invites` row must not be able to roll back a new member, and this
+ * is bookkeeping about an account that already exists.
+ * ⚠ NO PERSON MEANS NO CREDIT, SILENTLY — an OAuth account with no `Person` has
+ * nobody to attribute, and that is a real state, not an error.
+ */
+export async function creditInviteForNewUser(
+  userId: string,
+  email: string
+): Promise<string | null> {
+  try {
+    const person = await prisma.person.findFirst({
+      where: { user_id: userId },
+      select: { id: true },
+    });
+    if (!person) return null;
+    return await creditColleagueInvite(email, person.id);
+  } catch (err) {
+    console.error("[colleague-invite] credit lookup failed", err);
+    return null;
+  }
+}

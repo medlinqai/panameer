@@ -1061,6 +1061,25 @@ export const PERSONA_NAV_PRIMARY: NavItem[] = [
      `/api/me/menu-summary`), never on every page render. */
   { label: "Profile Score", href: "/community/score" },
   { label: "Usage Stats", href: "/stats" },
+  /*
+    ── ⚠⚠⚠ `Invite a Colleague`, AND IT IS **ONE** ENTRY (`P2-A3-E599` WS-C) ──
+
+    ⚠ SCOTT RULED THE LABEL AT THE WS-B GATE, 2026-09-22: *"add 'Invite a
+    Colleague' (opens the invite panel on `/community/grow`), not 'Grow the
+    Network'. It's one entry."*
+    ⚠⚠ `E598` WS-A LEFT THIS SLOT EMPTY ON PURPOSE — the brief asked for `Grow
+    Your Network` and MEASURED IT HAD NO PAGE (`/grow` and `/community/grow`
+    both 404), so Scott ruled it omitted rather than linked nowhere.
+    ⚠⚠⚠ `E599` WS-A BUILT THE PAGE, SO THE DOOR CAN EXIST NOW. This is that
+    ruling being closed, not reversed.
+    ⚠ THE LABEL NAMES THE ACTION, NOT THE SURFACE: *"Invite a Colleague"* is
+    what a person wants to do; *"Grow the Network"* is what Panameer wants them
+    to do, and the menu is theirs.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`) — `E598` WS-A's note:
+    //   ⚠⚠ `Grow Your Network` IS SPECIFIED AND IS **NOT** HERE … `/grow` and
+    //   `/community/grow` both 404 … omitted until a page exists.
+  */
+  { label: "Invite a Colleague", href: "/community/grow" },
 ];
 
 export const PERSONA_NAV_SECONDARY: NavItem[] = [

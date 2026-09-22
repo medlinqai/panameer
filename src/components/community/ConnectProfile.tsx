@@ -30,6 +30,7 @@ import { Avatar } from "@/components/Avatar";
 */
 import { editHref } from "@/lib/profile-sections";
 import { SCORE_LINE_COPY } from "@/lib/profile-score-copy";
+import { GROWTH_WEIGHTS } from "@/lib/growth-score";
 import { lineCounts } from "@/lib/completeness";
 import {
   CompletionRing,
@@ -124,6 +125,9 @@ export function ConnectProfile({
      left being computed for nobody — `(app)/profile/page.tsx` no longer slices
      `mine.colleagues`. */
   profileViews = null,
+  /* ⚠ The owner's growth score and rank, for the `Grow` card's one-liner
+     (`P2-A3-E599` WS-C 4). `null` for a visitor and for a member with none. */
+  growth = null,
   youBothKnow = null,
   messagePermission = null,
   connect,
@@ -190,6 +194,14 @@ export function ConnectProfile({
    * data at all. ⚠ `null` on the owner's own page, where the question is
    * meaningless.
    */
+  /**
+   * ⚠⚠ COMPUTED BY THE PAGE, NOT HERE. `growthScore` is a DATABASE read and
+   * this is a shared component — `/providers/[id]` renders it too, and a
+   * visitor has no business triggering the owner's scoring query.
+   * ⚠ `rank` is `null` when they are not on this month's board, which is not
+   * the same as rank 0.
+   */
+  growth?: { points: number; rank: number | null } | null;
   youBothKnow?: number | null;
   /**
    * ⚠⚠ THE MESSAGE VERDICT, READ FROM `canMessage` — THE BUTTON READS THE RULE
@@ -939,9 +951,37 @@ export function ConnectProfile({
                 never has none.
               */}
               <section className="rounded-brand border border-line bg-white px-[18px] py-4">
+                {/*
+                  ⚠⚠ THE TITLE STAYS `Grow` FOR NOW (Scott, 2026-09-22, at the
+                  `E599` WS-B gate): *"keep its title 'Grow' for now. The
+                  profile-pages brief renames it once search ranking makes the
+                  new title true."* ⚠ A title that promises ranking before
+                  ranking exists is the `E579` shape in copy.
+                */}
                 <h2 className="mb-2 font-display text-[15px] font-bold">Grow</h2>
                 <div className="flex flex-col">
                   {[
+                    /*
+                      ⚠⚠⚠ THE ONE-LINER IS **ADDED**, NOT SWAPPED IN (`E599`
+                      WS-C 4): *"the profile's Grow card gets its one-liner:
+                      your score and rank, linking here."*
+                      ⚠⚠ THE FIRST BUILD REPLACED `Invite a Colleague` WITH IT
+                      AND LOST A DOOR. `check:visitor-profile` caught it —
+                      *"'Invite a Colleague' vanished from the OWNER's page"* —
+                      which is exactly the assertion `E598` WS-C added for this
+                      class of removal. ⚠ Both rows stand: one invites, the
+                      other reports.
+                      ⚠ The hint is the SCORE, computed by `growthScore`, not a
+                      canned number, and the weight it quotes comes from
+                      `GROWTH_WEIGHTS` — a tuning change moves this line too.
+                    */
+                    {
+                      label: "Grow the Network",
+                      href: "/community/grow",
+                      hint: growth
+                        ? `${growth.points} points${growth.rank ? ` · #${growth.rank} this month` : ""}`
+                        : `A colleague who joins is worth ${GROWTH_WEIGHTS.JOINED} points`,
+                    },
                     { label: "Invite a Colleague", href: "/invite-colleague", hint: "Join = 50 points" },
                     { label: "Request a Recommendation", href: "/recommendations", hint: null },
                     { label: "Request a Mentor", href: "/community/mentors", hint: null },

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { creditInviteForNewUser } from "@/lib/colleague-invite";
 /* ⚠ `P1-ALL-E384` — the ToS is the MSA (`E380`); every account-creating path
    records acceptance in the same transaction. */
 import { USER_TOS_VERSION } from "@/lib/tos";
@@ -150,6 +151,19 @@ export async function linkOAuthUser(
     },
   });
 
+
+  /*
+    ── ⚠⚠⚠ CREDIT THE INVITATION THAT BROUGHT THEM IN (`P2-A3-E599` WS-C) ────
+
+    ⚠ Scott: *"acceptance link the joined person to the invite, so Joined can
+    count."* ⚠⚠ MEASURED: `accepted_at` HAD NO WRITER ANYWHERE IN `src/`, so
+    `Joined` was structurally 0 for every member.
+    ⚠⚠⚠ AFTER THE TRANSACTION, NEVER INSIDE IT — a locked `colleague_invites`
+    row must not be able to roll back a new member. It cannot throw, cannot fail
+    a signup, and returns `null` when there is nothing to credit, which is the
+    ordinary case.
+  */
+  await creditInviteForNewUser(created.id, email);
   return { ok: true, userId: created.id, created: true };
 }
 

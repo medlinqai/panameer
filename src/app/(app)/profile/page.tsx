@@ -11,6 +11,10 @@ import { getCommunitySignalForProfile } from "@/lib/community-signal";
 import { getMyCommunity } from "@/lib/connections";
 import { buildCompletenessInput } from "@/lib/onboarding";
 import { computeProfileScore } from "@/lib/completeness";
+/* ⚠ `P2-A3-E599` WS-C 4 — the `Grow` card's one-liner shows the owner's own
+   score and rank. Computed HERE, on the owner's page, and never passed to
+   `/providers/[id]` — the same rule the usage comb followed. */
+import { growthBoard, growthScore, rankFor } from "@/lib/growth-score";
 
 /**
  * ── ⚠⚠⚠ `/profile` IS THE OWNER'S PROFILE (`P2-A2-E598` WS-B) ─────────────
@@ -85,6 +89,13 @@ export default async function MyProfilePage() {
   ]);
   const colleagues = mine.colleagues.length;
 
+  /* ⚠⚠ ONE SCORE, ONE BOARD — the same two calls `/community/grow` makes, so
+     the card and the page cannot quote different figures (`E585`). */
+  const [growthMe, growthRows] = await Promise.all([
+    growthScore(profile.person.personId, "month"),
+    growthBoard("month"),
+  ]);
+
   return (
     <>
       {/*
@@ -154,6 +165,18 @@ export default async function MyProfilePage() {
         testimonials={await publicTestimonials(profile.id)}
         community={await getCommunitySignalForProfile(profile.id)}
         colleagueCount={colleagues}
+        growth={{
+          points: growthMe.points,
+          /*
+            ⚠⚠⚠ `rankFor` APPLIES RULING 6 — no rank while the board is hidden.
+            ⚠ SUPERSEDED, quoted not deleted (`E164`):
+            //   rank: growthRows.find((r) => r.personId === profile.person.personId)?.rank ?? null,
+            ⚠⚠ THAT PRINTED `#1 this month` ON A ONE-PERSON BOARD nobody is
+            shown. `null` covers both "board hidden" and "not on it", and
+            neither is rank 0.
+          */
+          rank: rankFor(growthRows, profile.person.personId),
+        }}
         score={await ownerScore(profile.id)}
       />
     </>
