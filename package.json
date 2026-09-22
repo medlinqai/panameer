@@ -129,6 +129,7 @@
     "check:community-page": "npx esbuild scripts/check-community-page.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/community-page.cjs --log-level=error && node .harness/community-page.cjs",
     "check:community-page-ui": "playwright test --config=playwright.community-page.config.ts",
     "check:community-figures": "playwright test --config=playwright.community-figures.config.ts",
+    "check:css-vars": "npx esbuild scripts/check-css-vars.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/css-vars.cjs --log-level=error && node .harness/css-vars.cjs",
     "sweep": "bash scripts/sweep-gates.sh",
     "check:profile-height": "playwright test --config=playwright.profile-height.config.ts",
     "check:visitor-profile": "playwright test --config=playwright.visitor-profile.config.ts",

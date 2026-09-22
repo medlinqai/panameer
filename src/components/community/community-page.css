@@ -1,4 +1,22 @@
 /*
+  ── ⚠⚠⚠ `--color-ink-3` AND `--color-line-2` ARE NOT DECLARED (`E601` WS-D) ──
+
+  ⚠ Both were written as `var(--color-ink-3, #8a8396)` / `var(--color-line-2,
+  #f1eef5)`, and NEITHER TOKEN EXISTS in `globals.css`. ⚠⚠ The fallback is what
+  has always rendered, in light mode and in dark, so inlining it changes NOTHING
+  — it is what the browser was already doing.
+  ⚠⚠⚠ THEY ARE **NOT** PROMOTED TO REAL TOKENS HERE, AND THAT IS DELIBERATE:
+  declaring `--color-ink-3` means choosing its DARK-MODE value, and there is no
+  evidence what that should be. Scott's rule for this workstream — *"if a rule
+  looks wrong once it is live, report it rather than guessing at the intent"* —
+  applies to the token itself. ⚠ Reported at the WS-D gate; his call.
+
+  ⚠⚠ ONE COLOUR DID MOVE, AND IT IS MINE: the `E601` WS-B hero block hardcoded
+  `#77728c` (the 9/20 mockup's muted ink) where the REST OF THIS FILE uses
+  `#8a8396`. Two greys a few pixels apart on one card is not a decision anybody
+  made. ⚠ Aligned to the file's value, and screenshotted before and after.
+*/
+/*
   ── ⚠⚠ THE COMMUNITY PAGE — TWO COLUMNS (`P2-J3-E591` WS-C) ────────────────
 
   ⚠ Colleagues in the main column, small things in a rail. ⚠⚠ MENTORS AND TEAMS
@@ -139,7 +157,7 @@
 }
 .pm-cm-where {
   font-size: 12px;
-  color: var(--color-ink-3, #8a8396);
+  color: #8a8396;
 }
 
 /*
@@ -160,7 +178,7 @@
 }
 .pm-cm-sent {
   font-size: 12px;
-  color: var(--color-ink-3, #8a8396);
+  color: #8a8396;
 }
 
 /* ⚠ THE FACE RULES MOVED TO `face.css` (`P2-A3-E596` WS-D) and are imported by
@@ -187,7 +205,7 @@
   padding: 7px 0;
 }
 .pm-cm-row + .pm-cm-row {
-  border-top: 1px solid var(--color-line-2, #f1eef5);
+  border-top: 1px solid #f1eef5;
 }
 .pm-cm-note {
   font-size: 12.5px;
@@ -196,7 +214,7 @@
 }
 .pm-cm-count {
   font-size: 12px;
-  color: var(--color-ink-3, #8a8396);
+  color: #8a8396;
 }
 
 /*
@@ -269,7 +287,7 @@
 }
 .pm-hero-score-k {
   font-size: 12px;
-  color: #77728c;
+  color: #8a8396;
   font-weight: 600;
 }
 .pm-hero-rank {
@@ -283,7 +301,7 @@
   margin: 10px 0 0;
   font-size: 12.5px;
   line-height: 1.45;
-  color: #77728c;
+  color: #8a8396;
 }
 /* ⚠ The next move is an instruction, so it carries weight the rank line does
    not — but it is still ink, not magenta: it is not a link (`E433`). */
