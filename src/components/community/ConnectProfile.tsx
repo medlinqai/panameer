@@ -510,7 +510,18 @@ export function ConnectProfile({
                   href="/community/score"
                   className="rounded-full border border-line px-3.5 py-2 text-[13px] font-bold transition-colors hover:border-magenta/50"
                 >
-                  Edit Profile
+                  {/* ⚠ RENAMED BY SCOTT AT THE WS-C GATE, 2026-09-22: *"The
+                      'Edit Profile' button becomes 'Complete Your Profile',
+                      still pointing to /community/score."*
+                      ⚠⚠ IT NAMES WHAT THE PAGE ACTUALLY DOES — lists every line
+                      you have not answered, with a door to each editor — rather
+                      than promising a global editor that does not exist.
+                      ⚠ TITLE CASE WITH THE PRONOUN CAPITALISED (`E568`) —
+                      `Your` is a pronoun, the half of that rule most often
+                      missed.
+                      ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                      //   Edit Profile */}
+                  Complete Your Profile
                 </Link>
                 {/* ⚠ YOUR OWN PUBLIC PAGE. `/providers/[id]` renders THIS
                     component in visitor mode, so the button is a real preview

@@ -206,7 +206,9 @@ test.describe("⚠ THE VISITOR PROFILE — P2-J3-E593 WS-C", () => {
       "Request a Mentor",
       /* ⚠⚠ AND THE HERO'S TWO ACTIONS. `See What Buyers See` is the owner's
          preview of their own `/providers/[id]` page. */
-      "Edit Profile",
+      /* ⚠ RENAMED AT THE WS-C GATE (`E598`). ⚠ SUPERSEDED, quoted (`E164`):
+         //   "Edit Profile", */
+      "Complete Your Profile",
       "See What Buyers See",
     ]) {
       expect(body.includes(needle.toLowerCase()), `"${needle}" vanished from the OWNER's page`).toBe(true);
