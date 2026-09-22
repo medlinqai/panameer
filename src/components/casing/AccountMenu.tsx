@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { signOut } from "next-auth/react";
 import { Avatar } from "@/components/Avatar";
 import { Popover } from "@/components/casing/Popover";
@@ -105,7 +105,69 @@ export function AccountMenu({
   const serverAvailable = me?.providerProfile?.availableForMessages ?? null;
   const available = pending ?? serverAvailable;
 
+  /*
+    ── ⚠⚠⚠ THE TWO LIVE VALUES, FETCHED ON OPEN (`P2-A2-E598` WS-A) ─────────
+
+    ⚠ SCOTT, 2026-09-21: *"Load the two values only when the menu is opened, not
+    on every page. The menu renders on every page, but only someone who clicks
+    their avatar needs '78%' and 'All good'. Show the labels immediately and
+    fill the values in when the fetch returns."*
+
+    ⚠⚠ THIS COMPONENT MOUNTS IN `AppBand`, `AppHeader` AND `MarketingHeader`, so
+    it is on essentially every signed-in render. A profile-score computation
+    here would have put a completeness read on the path of every page.
+    ⚠⚠⚠ EVERY ROW WORKS BEFORE THE FETCH RETURNS — the values are decoration on
+    rows that already navigate, which is what makes deferring them safe and not
+    merely cheap.
+    ⚠ A `useRef` GUARD, NOT `useState`: this repo's lint forbids setting state
+    in an effect (`react-hooks/set-state-in-effect`, 11 pre-existing errors), and
+    a `setLoaded(true)` here would have added a twelfth.
+    ⚠⚠ ONE FETCH PER MOUNT. Re-opening does not re-read; the values move slowly
+    and a menu is not a dashboard.
+  */
+  const [summary, setSummary] = useState<MenuSummary | null>(null);
+  const fetched = useRef(false);
+  useEffect(() => {
+    if (!open || fetched.current) return;
+    fetched.current = true;
+    let live = true;
+    fetch("/api/me/menu-summary")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        /* ⚠ The menu can close, or unmount, before this lands. */
+        if (live && j) setSummary(j as MenuSummary);
+      })
+      /* ⚠⚠ A FAILED READ LEAVES THE LABELS BARE AND SAYS NOTHING. There is no
+         error state because there is no error to act on: the rows still work,
+         and an alarm about a decoration would be noise. */
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [open]);
+
   const close = useCallback(() => {
+    /*
+      ── ⚠⚠⚠ FOCUS GOES BACK TO THE AVATAR (`P2-A2-E598` WS-A item 2) ────────
+
+      ⚠⚠ THIS IS A REGRESSION THE ARROW KEYS CREATED, AND IT WAS CAUGHT BY
+      MEASURING RATHER THAN BY READING. On trunk, "focus returns to the avatar"
+      passed TRIVIALLY — focus never left the trigger, because nothing could
+      move it into the menu. ⚠⚠⚠ THE MOMENT ArrowDown WORKED, Escape started
+      dropping focus onto `<body>`, which strands a keyboard user at the top of
+      the document with no idea where they are.
+      ⚠ MEASURED: `focus back on avatar` went `false` on the first keyboard walk
+      after the arrows landed.
+
+      ⚠⚠ ONLY WHEN FOCUS IS INSIDE THE PANEL. A click elsewhere on the page also
+      closes this menu, and yanking focus to the avatar then would steal it from
+      whatever the person just clicked.
+      ⚠ The panel is portalled, so `contains` is asking about the portal's
+      subtree, not about this component's position in the DOM.
+    */
+    if (panelRef.current?.contains(document.activeElement)) {
+      triggerRef.current?.focus();
+    }
     setOpen(false);
     // The submenus collapse with the menu. Leaving one expanded means the next
     // open shows it mid-interaction, which reads as a stuck control.
@@ -165,6 +227,75 @@ export function AccountMenu({
 
   const rowClass =
     "block w-full px-4 py-2.5 text-left text-[14.5px] hover:bg-black/[0.04]";
+
+  /*
+    ── ⚠⚠⚠ ARROW KEYS (`P2-A2-E598` WS-A item 2) ───────────────────────────
+
+    ⚠ MEASURED BEFORE BUILDING, and only ONE of the four requirements was
+    missing. On trunk: Enter opens ✓, Space opens ✓, Escape closes ✓ and focus
+    returns to the avatar ✓ — all four are native `<button>` behaviour plus
+    `Popover`'s Escape handler, and focus "returns" because it never left.
+    ⚠⚠ ARROW KEYS DID NOTHING: focus stayed on the trigger, so a keyboard user
+    could open the menu and not be in it. That is what this adds, and nothing
+    else was rebuilt on the assumption the brief implied it was.
+
+    ⚠ A DOCUMENT LISTENER, NOT `onKeyDown` ON THE PANEL. The panel is PORTALLED
+    to `document.body`, and until the first arrow press focus is still on the
+    trigger — outside it — so a container handler would never fire the one time
+    it is most needed.
+    ⚠⚠ `[data-menu-item]` IS THE LIST, so the order the reader tabs through is
+    the order they SEE, including the availability toggle and the two submenu
+    triggers. Querying `a,button` instead would also collect the submenu's
+    contents while collapsed.
+    ⚠⚠⚠ `preventDefault` ONLY ON THE FOUR KEYS WE HANDLE — swallowing anything
+    else would break typing in a future field and page-scroll everywhere else.
+  */
+  const panelRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(e.key)) return;
+      const items = Array.from(
+        panelRef.current?.querySelectorAll<HTMLElement>("[data-menu-item]") ?? []
+      );
+      if (!items.length) return;
+      e.preventDefault();
+      const at = items.indexOf(document.activeElement as HTMLElement);
+      /* ⚠ WRAPS, and an unfocused start enters at the right end: ArrowDown from
+         the trigger lands on the FIRST item, ArrowUp on the LAST. */
+      const next =
+        e.key === "Home"
+          ? 0
+          : e.key === "End"
+            ? items.length - 1
+            : e.key === "ArrowDown"
+              ? at < 0
+                ? 0
+                : (at + 1) % items.length
+              : at < 0
+                ? items.length - 1
+                : (at - 1 + items.length) % items.length;
+      items[next]?.focus();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  /*
+    ⚠ THE VALUE FOR A ROW, KEYED BY `href` AND NEVER BY LABEL. `nav.ts` records
+    why the component must not match on labels: the lists are split so this file
+    *"never has to match on a label to know where the submenu goes"*, and a
+    rename would silently drop the value.
+  */
+  const valueFor = (href: string): { text: string; ok?: boolean } | null => {
+    if (href === "/community/score" && summary?.scorePercent != null) {
+      return { text: `${summary.scorePercent}%` };
+    }
+    if (href === "/account-health" && summary?.account) {
+      return { text: summary.account.label, ok: summary.account.ok };
+    }
+    return null;
+  };
 
   return (
     <>
@@ -233,7 +364,7 @@ export function AccountMenu({
         width={304}
         label="Account menu"
       >
-        <div className="-my-1.5">
+        <div ref={panelRef} className="-my-1.5">
           {/* ---- Section 1: who you are ---------------------------------- */}
           <div className="border-b border-line px-4 py-3.5">
             <div className="flex items-center gap-3">
@@ -247,6 +378,23 @@ export function AccountMenu({
                 <p className="truncate text-[15px] font-bold">
                   {`${first} ${last}`.trim() || "Signed in"}
                 </p>
+                {/*
+                  ── ⚠⚠ THE TITLE, NEW IN `P2-A2-E598` WS-A (option B) ────────
+
+                  ⚠ The mockup's header is photo, name, TITLE. It is what makes
+                  the block read as your profile rather than as a login receipt.
+                  ⚠⚠ `me.person.title` IS THE ONE TITLE COLUMN — `E595` WS-B
+                  collapsed `ProviderProfile.headline` into `Person.title`, and
+                  `me.ts:61` carries the note. There is no second field to pick
+                  the wrong one of any more.
+                  ⚠ Absent for a member who has not set one; the row simply does
+                  not render rather than showing a placeholder.
+                */}
+                {me?.person?.title && (
+                  <p className="truncate text-[12.5px] text-ink-2">
+                    {me.person.title}
+                  </p>
+                )}
                 {badge && (
                   <p className="mt-0.5 inline-block rounded-full bg-magenta/10 px-2 py-0.5 text-[11.5px] font-bold uppercase tracking-wide text-magenta">
                     {badge}
@@ -254,6 +402,28 @@ export function AccountMenu({
                 )}
               </div>
             </div>
+
+            {/*
+              ── ⚠⚠⚠ `View Profile` IS A BUTTON IN THE HEADER, NOT A ROW ──────
+
+              ⚠ Option B puts it beside your photo because the profile is the
+              menu's SUBJECT, not one of its errands.
+              ⚠⚠ IT REPLACES THE `My Profile` ROW, which left `PERSONA_NAV_
+              PRIMARY` — quoted, not deleted, in `nav.ts`. ⚠ The href is
+              UNCHANGED (`/profile`), so nothing that linked there has moved.
+              ⚠⚠⚠ `/profile` STILL REDIRECTS TO `/connect` TODAY. WS-B is what
+              makes it the profile itself; pointing at the stable route now
+              means this button does not change when that lands (`E591`).
+            */}
+            <Link
+              href="/profile"
+              role="menuitem"
+              data-menu-item
+              onClick={close}
+              className="mt-3 block w-full rounded-[10px] border border-magenta px-3 py-2 text-center text-[13.5px] font-bold text-magenta transition-colors hover:bg-magenta/[0.06]"
+            >
+              View Profile
+            </Link>
 
             {/*
               The availability toggle sits WITH the identity, not in the list
@@ -265,6 +435,7 @@ export function AccountMenu({
               <button
                 type="button"
                 role="switch"
+                data-menu-item
                 aria-checked={available}
                 onClick={toggleAvailable}
                 className="mt-3 flex w-full items-center gap-2.5 rounded-[10px] border border-line px-3 py-2 text-left transition-colors hover:border-magenta/40"
@@ -298,16 +469,20 @@ export function AccountMenu({
           </div>
 
           {/* ---- Your surfaces, then Theme, then the rest ---------------- */}
+          {/*
+            ⚠⚠ ONE ROW RENDERER FOR BOTH LISTS. The value (`78%`, `All good`) is
+            looked up by `href`, so a row without one is byte-identical to what
+            shipped before this brief — the label is never waiting on a fetch.
+          */}
           {primary.map((item) => (
-            <Link
+            <MenuRow
               key={item.href}
               href={item.href}
-              role="menuitem"
+              label={item.label}
+              value={valueFor(item.href)}
               onClick={close}
               className={rowClass}
-            >
-              {item.label}
-            </Link>
+            />
           ))}
 
           {/*
@@ -342,6 +517,7 @@ export function AccountMenu({
                 <button
                   type="button"
                   aria-expanded={companyOpen}
+                  data-menu-item
                   onClick={() => setCompanyOpen((v) => !v)}
                   className={`${rowClass} flex items-center justify-between`}
                 >
@@ -363,6 +539,7 @@ export function AccountMenu({
                         key={item.href}
                         href={item.href}
                         role="menuitem"
+                        data-menu-item
                         onClick={close}
                         className="block w-full px-4 py-2 pl-7 text-left text-[14px] hover:bg-black/[0.04]"
                       >
@@ -373,7 +550,7 @@ export function AccountMenu({
                 )}
               </>
             ) : (
-              <Link href="/company" role="menuitem" onClick={close} className={rowClass}>
+              <Link href="/company" role="menuitem" data-menu-item onClick={close} className={rowClass}>
                 My Company
               </Link>
             ))}
@@ -387,6 +564,7 @@ export function AccountMenu({
           <button
             type="button"
             aria-expanded={themeOpen}
+            data-menu-item
             onClick={() => setThemeOpen((v) => !v)}
             className={`${rowClass} flex items-center justify-between`}
           >
@@ -413,6 +591,7 @@ export function AccountMenu({
                   key={option.value}
                   type="button"
                   role="radio"
+                  data-menu-item
                   aria-checked={theme === option.value}
                   onClick={() => applyThemeChoice(option.value)}
                   className="flex w-full items-center gap-2.5 px-4 py-2 pl-7 text-left text-[14px] hover:bg-black/[0.04]"
@@ -436,21 +615,21 @@ export function AccountMenu({
           )}
 
           {secondary.map((item) => (
-            <Link
+            <MenuRow
               key={item.href}
               href={item.href}
-              role="menuitem"
+              label={item.label}
+              value={valueFor(item.href)}
               onClick={close}
               className={rowClass}
-            >
-              {item.label}
-            </Link>
+            />
           ))}
 
           {/* ---- Sign out ----------------------------------------------- */}
           <div className="border-t border-line">
             <button
               role="menuitem"
+              data-menu-item
               onClick={() => signOut({ callbackUrl: "/login" })}
               className={`${rowClass} font-semibold text-red-600`}
             >
@@ -460,6 +639,80 @@ export function AccountMenu({
         </div>
       </Popover>
     </>
+  );
+}
+
+/**
+ * ⚠⚠ THE SHAPE `/api/me/menu-summary` RETURNS. Both fields are NULLABLE and
+ * that is meaningful, not defensive: a member with no provider profile has no
+ * score and no seller standing, and rendering `0%` or *"All good"* at them
+ * would be a claim about an account that does not exist.
+ */
+type MenuSummary = {
+  scorePercent: number | null;
+  account: { ok: boolean; label: string } | null;
+};
+
+/**
+ * One navigating row, with an optional value on the right.
+ *
+ * ⚠ THE LABEL RENDERS IMMEDIATELY AND THE VALUE ARRIVES LATER — Scott's
+ * instruction in terms. ⚠⚠ THERE IS NO SKELETON OR SPINNER: a row that works
+ * has nothing to wait for, and a placeholder would advertise a delay the reader
+ * has no reason to care about.
+ */
+function MenuRow({
+  href,
+  label,
+  value,
+  onClick,
+  className,
+}: {
+  href: string;
+  label: string;
+  value: { text: string; ok?: boolean } | null;
+  onClick: () => void;
+  className: string;
+}) {
+  return (
+    <Link
+      href={href}
+      role="menuitem"
+      data-menu-item
+      onClick={onClick}
+      className={`${className} flex items-center justify-between gap-3`}
+    >
+      <span className="min-w-0 truncate">{label}</span>
+      {value && (
+        <span
+          className={
+            "shrink-0 text-[13px] font-bold tabular-nums " +
+            /*
+              ── ⚠⚠⚠ `E433` — A FIGURE IS INK. MAGENTA MEANS INTERACTIVE ──────
+
+              ⚠ CAUGHT AT THE GATE BY LOOKING AT THE SCREENSHOT: `67%` first
+              shipped MAGENTA, which reads as a link inside a row that is
+              already a link — and `E433` is explicit that *"figures, so ink
+              rather than magenta"* and *"nothing here is interactive, so
+              nothing here is magenta."*
+              ⚠⚠ `67%` IS A FIGURE, so it is ink.
+
+              ⚠ `All good` IS A STATUS, NOT A FIGURE, and the mockup marks it
+              with its own `ok` class — green when everything passes, ink when
+              something does not. ⚠⚠ NEVER RED: the row reports standing, and a
+              pending email verification is a to-do, not an alarm.
+            */
+            (value.ok === undefined
+              ? "text-ink"
+              : value.ok
+                ? "text-emerald-600"
+                : "text-ink-2")
+          }
+        >
+          {value.text}
+        </span>
+      )}
+    </Link>
   );
 }
 

@@ -9,6 +9,7 @@ import { guardPage } from "@/lib/guard";
 import { ownedProviderProfile } from "@/lib/access";
 import { EnforcementHistory } from "@/components/console/EnforcementHistory";
 import { POLICIES } from "@/lib/policies";
+import { accountStandingLines } from "@/lib/account-standing";
 
 /**
  * ACCOUNT HEALTH CHECKLIST (J2.4 WS-E / E011).
@@ -128,33 +129,17 @@ export default async function AccountHealthPage() {
     different things, which is the sort of number My Stats is careful not to
     invent either.
   */
-  const standing = [
-    {
-      label: "Account status",
-      value: profile.status === "ACTIVE" ? "Active" : "Pending email verification",
-      ok: profile.status === "ACTIVE",
-    },
-    {
-      label: "Email verified",
-      value: profile.person.user?.email_verified ? "Yes" : "Not yet",
-      ok: !!profile.person.user?.email_verified,
-    },
-    /*
-      ⚠⚠ `Panameer validation` FOLDED OUT (`P2-J2-E563` WS-A) — it is the fourth
-      criterion on `/stats`, and this was the THIRD copy of it.
-      ⚠ SUPERSEDED, quoted not deleted (`E164`):
-      // {
-      //   label: "Panameer validation",
-      //   value:
-      //     profile.validation_status === "VALIDATED"
-      //       ? "Validated"
-      //       : profile.validation_status === "REQUESTED"
-      //         ? "Under review"
-      //         : "Not requested",
-      //   ok: profile.validation_status === "VALIDATED",
-      // },
-    */
-  ];
+  /*
+    ⚠⚠ MOVED TO `lib/account-standing.ts` (`P2-A2-E598` WS-A). The avatar menu's
+    `Account Health` row shows *"All good"* or the problem, and computing that
+    beside this list would be `E585` — two computations of one concept kept in
+    step by hand. ⚠ THE LINES AND THE ORDER ARE UNCHANGED; the superseded inline
+    array is quoted there, with the folded-out `Panameer validation` line.
+  */
+  const standing = accountStandingLines({
+    status: profile.status,
+    emailVerified: !!profile.person.user?.email_verified,
+  });
 
   return (
     <div className="mx-auto max-w-4xl space-y-4">
