@@ -9,7 +9,7 @@ import Link from "next/link";
    NOT deleted (`E164`). It is still the body nothing else imports; see the
    note on `CommunityBody` below.
    // import { ConnectHome } from "@/components/community/ConnectHome"; */
-import { CommunityWeb } from "@/components/community/CommunityWeb";
+import { CommunityHero } from "@/components/community/CommunityHero";
 import { CommunityRail } from "@/components/community/CommunityRail";
 /* ⚠ `WaitingOnYou` IS NO LONGER IMPORTED HERE — it moved to the rail
    (`P2-A3-E596` WS-C item 1) and an unused import is a lint warning, i.e.
@@ -21,6 +21,7 @@ import { CommunityRail } from "@/components/community/CommunityRail";
 import { JoinedCard, InvitedCardView } from "@/components/community/ColleagueCards";
 import { getMyCommunity } from "@/lib/connections";
 import { getCommunityWeb } from "@/lib/community-web";
+import { getCommunityHero } from "@/lib/community-hero";
 import { getCommunityPage } from "@/lib/community-page";
 import type { Viewer } from "@/lib/access";
 import "@/components/community/community-web.css";
@@ -120,10 +121,13 @@ async function CommunityBody({ viewer }: { viewer: Viewer }) {
   /* ⚠ `getMyCommunity` IS FETCHED ONCE AND PASSED DOWN. The rail wants the
      mentor half and this column wants the incoming half — two calls would be
      two identical round trips for one answer. */
-  const [web, page, mine] = await Promise.all([
+  const [web, page, mine, hero] = await Promise.all([
     getCommunityWeb(viewer),
     getCommunityPage(viewer),
     getMyCommunity(viewer),
+    /* ⚠ Fetched alongside the rest, not in a nested await — four independent
+       reads for one screen. */
+    getCommunityHero(viewer),
   ]);
   const incoming = mine.incoming
     .filter((r) => r.person)
@@ -136,9 +140,22 @@ async function CommunityBody({ viewer }: { viewer: Viewer }) {
     }));
 
   return (
-    <div className="pm-cm">
-      <div className="min-w-0 space-y-5">
-        {/*
+    <>
+      {/*
+        ⚠⚠⚠ THE HERO SPANS THE FULL WIDTH, **ABOVE** THE TWO-COLUMN BODY
+        (`P2-A3-E601` WS-B). ⚠ That is the approved mockup's structure — a
+        split card across the top, then `Colleagues` and the rail underneath —
+        and Scott's WS-B item 2 says the rail comes *"underneath"*.
+        ⚠⚠ IT WAS FIRST BUILT INSIDE THE MAIN COLUMN, WHICH PUT THE RAIL BESIDE
+        THE HERO and squeezed the picture to 403px on a 1440px screen. ⚠ Caught
+        by rendering it at desktop width and comparing against the mockup, not
+        by any gate — the markup was valid and typechecked either way.
+      */}
+      <CommunityHero web={web} hero={hero} />
+
+      <div className="pm-cm">
+        <div className="min-w-0 space-y-5">
+          {/*
           ── ⚠⚠ `Waiting on You` MOVED TO THE RAIL (`P2-A3-E596` WS-C item 1) ──
 
           ⚠ SUPERSEDED, quoted not deleted (`E164`):
@@ -158,10 +175,16 @@ async function CommunityBody({ viewer }: { viewer: Viewer }) {
           server-rendered and handed down as a prop — every later cycle is built
           from `/api/community/web`, so the rebuild is tied to re-fetched data
           rather than to a clock.
-        */}
-        <CommunityWeb initial={web} />
 
-        <section className="space-y-3">
+          ⚠⚠⚠ IT IS NOW THE LEFT HALF OF A SPLIT CARD (`P2-A3-E601` WS-B item 1).
+          Scott: *"Split-card at the top, cleanly structured underneath."* The
+          picture keeps every behaviour it had — its legend, its drawn-line and
+          `E600` WS-D's 15-second rebuild badge all live inside `CommunityWeb`
+          and are untouched. ⚠ ONLY THE FRAME AROUND IT IS NEW.
+          ⚠ SUPERSEDED, quoted not deleted (`E164`):
+          //   <CommunityWeb initial={web} />
+        */}
+          <section className="space-y-3">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h2 className="font-display text-[17px] font-bold">Your Colleagues</h2>
             {page.colleagues.length > 0 && (
@@ -204,7 +227,8 @@ async function CommunityBody({ viewer }: { viewer: Viewer }) {
         </section>
       </div>
 
-      <CommunityRail viewer={viewer} mine={mine} incoming={incoming} />
-    </div>
+        <CommunityRail viewer={viewer} mine={mine} incoming={incoming} />
+      </div>
+    </>
   );
 }

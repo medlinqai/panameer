@@ -198,3 +198,126 @@
   font-size: 12px;
   color: var(--color-ink-3, #8a8396);
 }
+
+/*
+  ── ⚠⚠⚠ THE SPLIT HERO (`P2-A3-E601` WS-B item 1) ─────────────────────────
+
+  ⚠ SCOTT, 2026-09-22: *"Split-card at the top, cleanly structured underneath."*
+  Picture left, story and counts right, in ONE card.
+
+  ⚠⚠ PHONE FIRST, AND THE STACK ORDER IS THE POINT: below 860px the side falls
+  BELOW the picture, because the picture is what the page is about and the
+  counts explain it. ⚠ The mockup's own breakpoint, kept.
+*/
+.pm-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  background: #fff;
+  border: 1px solid var(--color-line, #e7e3ed);
+  border-radius: 18px;
+  overflow: hidden;
+}
+.pm-hero-stage {
+  padding: 14px 12px 10px;
+  min-width: 0;
+}
+/* ⚠ The divider becomes a TOP border when the columns stack — a left border on
+   a full-width block reads as a stray rule down the side of the page. */
+.pm-hero-side {
+  border-left: 1px solid var(--color-line, #e7e3ed);
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+@media (max-width: 860px) {
+  .pm-hero {
+    grid-template-columns: 1fr;
+  }
+  .pm-hero-side {
+    border-left: 0;
+    border-top: 1px solid var(--color-line, #e7e3ed);
+  }
+}
+.pm-hero-title {
+  font-family: var(--font-display, inherit);
+  font-size: 19px;
+  font-weight: 700;
+  margin: 0;
+}
+.pm-hero-lede {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--color-ink-2, #4a4658);
+}
+/* ⚠⚠ THE SCORE IS A FIGURE, SO IT IS INK, NOT MAGENTA (`E433`) — magenta means
+   interactive, and this number is not a link. */
+.pm-hero-score {
+  margin-top: 16px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.pm-hero-score-n {
+  font-family: var(--font-display, inherit);
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.pm-hero-score-k {
+  font-size: 12px;
+  color: #77728c;
+  font-weight: 600;
+}
+.pm-hero-rank {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--color-ink-2, #4a4658);
+}
+/* ⚠ The "nothing here yet" voice: it says what WILL appear, so an empty panel
+   never reads as a thing that failed to load (WS-B item 4). */
+.pm-hero-none {
+  margin: 10px 0 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: #77728c;
+}
+.pm-hero-feed {
+  margin: 12px 0 0;
+  padding-top: 11px;
+  border-top: 1px solid var(--color-line, #efecf4);
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--color-ink-2, #4a4658);
+}
+/* ⚠ `margin-top: auto` pins the button to the bottom of the side column so the
+   two columns end level on desktop, whatever the middle holds. */
+.pm-hero-cta {
+  /* ⚠ `margin-top: auto` pins it to the bottom so the two columns end level on
+     desktop, whatever the middle holds. */
+  margin-top: auto;
+  align-self: flex-start;
+  display: inline-block;
+  background: var(--color-magenta, #d72cd6);
+  color: #fff;
+  border-radius: 10px;
+  padding: 10px 17px;
+  font-size: 13.5px;
+  font-weight: 700;
+}
+.pm-hero-cta:hover {
+  background: var(--color-magenta-dark, #b324b2);
+  text-decoration: none;
+}
+/* ⚠⚠ ON A PHONE THE COLUMNS ARE STACKED, so there is no second column to end
+   level with — `margin-top: auto` would only push the button to the bottom of a
+   box it already fills. A plain gap reads better and keeps the tap target where
+   the eye left off. */
+@media (max-width: 860px) {
+  .pm-hero-cta {
+    margin-top: 18px;
+  }
+}
