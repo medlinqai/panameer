@@ -62,13 +62,33 @@ export function CommunityHero({ web, hero }: { web: WebData; hero: HeroData | nu
                 nothing and leaving a reader wondering if it failed. */}
             {hero.rank !== null ? (
               <p className="pm-hero-rank">
-                Ranked <strong>#{hero.rank}</strong> this month
+                <strong>#{hero.rank}</strong> of {hero.boardSize}{" "}
+                {hero.boardSize === 1 ? "member" : "members"} with a score this
+                month
+              </p>
+            ) : hero.boardShown ? (
+              /* ⚠⚠ NOT RANKED IS NOT RANK ZERO. Somebody with no points has not
+                 come last — they are not on the board at all, and saying so is
+                 what makes the invite button the obvious next thing. */
+              <p className="pm-hero-none">
+                You&rsquo;re not on this month&rsquo;s board yet. Invite a
+                colleague to get on it.
               </p>
             ) : (
+              /* ⚠⚠⚠ THE BOARD IS HIDDEN, SO THERE IS NO RANK TO REPORT. *"You're
+                 not on the board"* would be wrong — there is no board — and a
+                 `#1` would be a standing earned against nobody. ⚠ The threshold
+                 is the lib's; this component never restates the number. */
               <p className="pm-hero-none">
-                Ranking starts once three members have a score this month.
+                Ranking starts once {hero.minScorers} members have a score this
+                month.
               </p>
             )}
+
+            {/* ⚠⚠ THE ONE MOVE, COMPUTED FROM THE BOARD AND NEVER CANNED. It is
+                absent when nobody is above you — leading and an empty board are
+                both honest non-answers, not a motivational line. */}
+            {hero.move && <p className="pm-hero-move">{hero.move}</p>}
 
             {/* ⚠⚠⚠ THE ACTIVITY LINE, AND NOTHING AT ALL WHEN THERE IS NONE.
                 ⚠ MEASURED: zero accepted invites exist today, so this is the

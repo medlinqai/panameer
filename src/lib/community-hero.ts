@@ -1,10 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import type { Viewer } from "@/lib/access";
 import {
+  BOARD_MIN_SCORERS,
   boardIsShown,
   daysLeftInMonth,
   growthBoard,
   growthScore,
+  nextMove,
   rankFor,
   type GrowthScore,
 } from "@/lib/growth-score";
@@ -35,8 +37,28 @@ export type CommunityHero = {
    * against nobody."* ⚠ Fewer than `BOARD_MIN_SCORERS` scorers → no rank.
    */
   rank: number | null;
+  /**
+   * ⚠⚠⚠ THE THREE RANK STATES ARE NOT TWO. `rank === null` covers BOTH *"there
+   * is no board"* and *"there is a board and you are not on it"*, and those
+   * need different sentences: saying *"you're not on the board"* when no board
+   * exists is wrong, and *"ranking starts once three members…"* to somebody
+   * looking at a live board is wrong the other way.
+   * ⚠ `/community/grow` already made this distinction; carrying it into the
+   * shared component is what lets Grow drop its duplicate rank card.
+   */
+  boardShown: boolean;
+  /** ⚠ How many members have a score — the *"of N"* in `#2 of 7`. Counted. */
+  boardSize: number;
+  /**
+   * ⚠⚠ THE ONE MOVE THAT CHANGES YOUR STANDING, computed from the board and
+   * never canned (`E599` WS-A 1). `null` when nobody is above you — which is
+   * either leading or an empty board, both honest non-answers.
+   */
+  move: string | null;
   /** ⚠ Days remaining in the scoring month. Counted from the calendar. */
   daysLeft: number;
+  /** ⚠ The threshold, from the lib — no page or component restates it. */
+  minScorers: number;
   /**
    * ⚠⚠⚠ THE MOST RECENT **REAL** EVENT, OR `null` — AND `null` IS THE LIVE CASE.
    * ⚠ MEASURED 2026-09-22: **zero accepted invites exist in the database**, so
@@ -97,10 +119,17 @@ export async function getCommunityHero(viewer: Viewer): Promise<CommunityHero | 
     ? `${joined.acceptedPerson.first_name ?? ""} ${joined.acceptedPerson.last_name ?? ""}`.trim()
     : "";
 
+  const shown = boardIsShown(board);
   return {
     score,
-    rank: boardIsShown(board) ? rankFor(board, personId) : null,
+    /* ⚠ `rankFor` ALREADY returns null while the board is hidden — the guard is
+       the lib's, and this reads it rather than re-deriving the threshold. */
+    rank: shown ? rankFor(board, personId) : null,
+    boardShown: shown,
+    boardSize: board.length,
+    move: nextMove(board, score)?.text ?? null,
     daysLeft: daysLeftInMonth(now),
+    minScorers: BOARD_MIN_SCORERS,
     /* ⚠ A person with no readable name is not a story — better nothing than
        *"joined from your invite"* with a blank where the name goes. */
     latestJoin: name && joined?.accepted_at ? { name, at: joined.accepted_at } : null,
