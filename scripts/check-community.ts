@@ -1479,6 +1479,40 @@ for (const f of CONNECT_PAGES) {
 }
 
 /*
+  ── ⚠⚠⚠ AND THE PAGES THAT DRAW THE **PROFILE** ROW (`P2-A2-E600` WS-F) ─────
+
+  ⚠ THE SAME RULE AS THE BLOCK BELOW, APPLIED TO THE MOVE WS-A MADE. WS-A took
+  `/community/score` out of `CONNECT_PAGES` — correctly, and with its `E164`
+  quote — because the page stopped drawing Connect's row.
+  ⚠⚠ BUT A REMOVAL ON ITS OWN IS AN ABSENCE OF EVIDENCE: the page joined no
+  other list, so from WS-A to WS-F NOTHING asserted which row it draws. A page
+  that quietly stopped drawing any row at all would have been green.
+  ⚠⚠⚠ FOUND BY DIFFING THIS GATE'S PASS COUNT AGAINST TRUNK — 186 on `a19e1c3`,
+  185 on the branch — NOT by reading the diff, which looks complete and correct.
+  ⚠ A LOST ASSERTION DOES NOT FAIL; IT VANISHES. The count is the only thing
+  that says so, which is `E586`'s shape one level up: the gate had no input for
+  that page and reported success.
+
+  ⚠⚠ `E586`: `body.length > 0` is FIRST, so a renamed or deleted file fails
+  loudly here instead of passing on an empty string.
+*/
+const PROFILE_ROW_PAGES = [
+  ["profile", "page.tsx"],
+  ["community", "score", "page.tsx"],
+].map((seg) => join("src", "app", "(app)", ...seg));
+for (const f of PROFILE_ROW_PAGES) {
+  const body = bodies.get(f) ?? "";
+  check(
+    `E600/WS-F — ⚠⚠ ${f.split(join("(app)", ""))[1] ?? f} draws the PROFILE row through profileTabs`,
+    body.length > 0 &&
+      /profileTabs\(viewer\)/.test(body) &&
+      /* ⚠ AND NOT CONNECT'S. The two rows are the whole point of the move, so
+         drawing both would be the failure this replaces. */
+      !/connectTabs\(/.test(body)
+  );
+}
+
+/*
   ── ⚠⚠⚠ AND THE TWO ROUTES THAT MUST DRAW NO ROW (`P2-A2-E598` WS-B) ────────
 
   ⚠ REMOVING A PAGE FROM A LIST IS AN ABSENCE OF EVIDENCE, NOT EVIDENCE. Taking

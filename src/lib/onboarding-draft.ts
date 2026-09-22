@@ -352,3 +352,28 @@ export function draftFromStatus(p: NonNullable<StatusPayload["profile"]>): Provi
       })),
     };
 }
+
+/**
+ * ── ⚠⚠ THE WORK-METHOD CHOICES, SHARED (`P2-A2-E600` WS-F) ────────────────
+ *
+ * ⚠ They were a `const` inside `join/provider/page.tsx`, reachable only by the
+ * wizard. `E600` WS-F gives `/profile/edit/work-method` the same question, and
+ * ⚠⚠ TWO COPIES OF A CHOICE LIST IS HOW ONE SCREEN STARTS OFFERING AN OPTION
+ * THE OTHER DOES NOT. ⚠ The wizard imports this now; the strings are byte-identical.
+ * ⚠⚠⚠ `RECRUITER` IS LOAD-BEARING AND IS NOT A LABEL: `onboarding.ts`'s
+ * `work_method` case grants the coordinator flag on it, and `RECRUITER_STEPS`
+ * forks the wizard. Do not re-word the VALUE.
+ */
+export const WORK_METHOD_OPTIONS = [
+  {
+    value: "SERVICES",
+    title: "I Sell Services and/or Service Products",
+    description:
+      "You sell your time by the hour/month or pre-defined deliverables.",
+  },
+  {
+    value: "RECRUITER",
+    title: "I Sell the Services of Others (Recruiter)",
+    description: "You represent other providers and place them on work.",
+  },
+];

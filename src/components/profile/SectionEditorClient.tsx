@@ -13,6 +13,15 @@ import { CertificationCards } from "@/components/onboarding/CertificationCards";
    mounts `TitleEditor`. ⚠ Adding a slug for it here would be a door the profile
    does not have. */
 import { RateEditor, rateCanSave } from "@/components/onboarding/editors/RateEditor";
+/* ⚠⚠⚠ `E597` WS-B EXTRACTED THESE TWO AND THIS ROUTE NEVER MOUNTED THEM.
+   `SectionEditorClient` recorded why: the profile rendered no `Edit Title`
+   link, so there was nothing to open them from. ⚠ `E600` WS-F gives both a
+   section and an Edit control, which is what they were extracted for. */
+import { TitleEditor, titleCanSave } from "@/components/onboarding/editors/TitleEditor";
+import { ContactEditor } from "@/components/onboarding/editors/ContactEditor";
+import { WORK_METHOD_OPTIONS } from "@/lib/onboarding-draft";
+import { PhotoUpload } from "@/components/PhotoUpload";
+import { EducationLanguagesEditor } from "@/components/onboarding/EducationLanguagesEditor";
 import { SkillsEditor } from "@/components/onboarding/editors/SkillsEditor";
 import { SpecializationsEditor } from "@/components/onboarding/editors/SpecializationsEditor";
 import {
@@ -63,6 +72,24 @@ export function SectionEditorClient({ slug }: { slug: SectionSlug }) {
   const section = sectionFor(slug)!;
   const router = useRouter();
   const [draft, setDraft] = useState<ProviderDraft>(emptyDraft());
+  /* ⚠⚠⚠ THE ROLE PICKER NEEDS THE CATALOG, AND THE STATUS PAYLOAD IS NOT IT.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`) — the premise was WRONG:
+     //  ⚠⚠ THE ROLE PICKER NEEDS THE CATALOG'S ROLE TYPES, and they live on the
+     //  STATUS payload, not on the draft — `draftFromStatus` maps what a provider
+     //  HAS, not what they can choose from. ⚠ Kept alongside rather than widened
+     //  into `ProviderDraft`, which every other caller shares.
+     ⚠⚠ `status.profile.roleTypes` IS `pp.roles` — THE ROLES THE PROVIDER ALREADY
+     HOLDS (`onboarding.ts`, the `roleTypes:` key). Rendering the picker from it
+     offered Priya exactly ONE option, the one she was already on: a control that
+     looks like a choice and cannot change anything, which is `E579`.
+     ⚠ MEASURED AT THE WS-F GATE from the rendered page, not from the type — the
+     field name is identical either way, so nothing but a render could catch it.
+     ⚠⚠⚠ THE CATALOG COMES FROM `/api/catalog/role-types`, the same endpoint
+     `ProjectModal` already uses. The HELD roles stay where they were — they are
+     the DRAFT's pre-selection (`draft.roleTypeIds`), not the option list. */
+  const [roleTypes, setRoleTypes] = useState<
+    { id: string; name: string; display: string }[]
+  >([]);
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -110,6 +137,17 @@ export function SectionEditorClient({ slug }: { slug: SectionSlug }) {
       alive = false;
     };
   }, []);
+
+  /* ⚠⚠ THE ROLE CATALOG — the list to CHOOSE FROM, not the list already held.
+     ⚠ Same endpoint `ProjectModal` uses, so there is one source of role types
+     rather than a second that can drift. */
+  useEffect(() => {
+    if (section.slug !== "role") return;
+    fetch("/api/catalog/role-types")
+      .then((r) => r.json())
+      .then((d) => setRoleTypes(d.roleTypes ?? []))
+      .catch(() => setError("We couldn't load roles. Please refresh."));
+  }, [section.slug]);
 
   useEffect(() => {
     if (section.slug !== "specializations") return;
@@ -209,6 +247,202 @@ export function SectionEditorClient({ slug }: { slug: SectionSlug }) {
         />
       );
       canSave = draft.overview.trim().length > 0;
+      break;
+    /*
+      ── ⚠⚠⚠ THE SIX `E600` WS-F EDITORS ─────────────────────────────────────
+
+      ⚠ Each mounts a component that ALREADY EXISTS and saves through the step
+      its field already uses. ⚠⚠ NO NEW EDITORS AND NO SECOND SAVE PATH (`E595`)
+      — `TitleEditor` and `ContactEditor` were extracted by `E597` WS-B and were
+      unused by this route until now; `PhotoUpload` and
+      `EducationLanguagesEditor` are the wizard's own.
+    */
+    case "title":
+      body = (
+        <TitleEditor
+          value={draft.headline}
+          onChange={(next) => patch({ headline: next })}
+        />
+      );
+      canSave = titleCanSave(draft.headline);
+      break;
+    case "contact":
+      /* ⚠⚠ ONE EDITOR, TWO SCORE LINES — `identity` (address + phone) and
+         `location` (the address's city/state/country). One address, one save. */
+      body = (
+        <ContactEditor
+          address={
+            draft.address ?? { country: "", line1: "", line2: "", city: "", state: "", postalCode: "" }
+          }
+          onAddressChange={(p2) =>
+            patch({
+              address: {
+                ...(draft.address ?? {
+                  country: "", line1: "", line2: "", city: "", state: "", postalCode: "",
+                }),
+                ...p2,
+              },
+            })
+          }
+          phone={draft.phone ?? ""}
+          onPhoneChange={(next) => patch({ phone: next })}
+          /* ⚠ NULLABLE ON PURPOSE (`E126`): `PhoneField` refuses to validate
+             against a country it has not been told. */
+          phoneCountry={draft.address?.country || null}
+          onPhoneCountryChange={(next) =>
+            patch({
+              address: {
+                ...(draft.address ?? {
+                  country: "", line1: "", line2: "", city: "", state: "", postalCode: "",
+                }),
+                country: next ?? "",
+              },
+            })
+          }
+        />
+      );
+      /* ⚠ THE ADDRESS IS THE SCORED FACT. A phone with no address answers
+         neither line, and the server's `finish` case persists both. */
+      canSave = Boolean(draft.address?.country?.trim());
+      break;
+    case "photo":
+      /* ⚠⚠⚠ `PhotoUpload` TALKS TO `POST /api/profile/photo` ITSELF and hands
+         back a URL once the server confirms. This step then persists that URL
+         onto the profile — the same two-step shape the wizard uses, not a
+         second save path. */
+      body = (
+        <PhotoUpload
+          firstName={draft.firstName}
+          lastName={draft.lastName}
+          photoUrl={draft.photoUrl}
+          onChange={(next) => patch({ photoUrl: next })}
+          size={120}
+        />
+      );
+      /* ⚠ A PHOTO CAN BE CLEARED BACK TO INITIALS, so `null` is a legitimate
+         save — the gate is that the step can run, not that a photo exists. */
+      canSave = true;
+      break;
+    case "languages":
+      /* ⚠ `EducationLanguagesEditor` OWNS BOTH LISTS and this section edits only
+         the languages half — `education` is passed straight back unchanged, so
+         nothing this editor touches can write the other list. */
+      body = (
+        <EducationLanguagesEditor
+          /* ⚠ CAST, AND DELIBERATELY SO. `EducationCards` and
+             `EducationLanguagesEditor` each declare their own `EducationDraft`;
+             this section never touches education — `onEducation` is a no-op and
+             the payload carries only `languages` — so the list is passed
+             straight through. ⚠⚠ UNIFYING THE TWO TYPES IS A REAL TIDY-UP WITH
+             ITS OWN BLAST RADIUS and is not this brief. */
+          education={draft.education as never}
+          /*
+            ⚠⚠ TWO `LanguageDraft` SHAPES, AND THE DIFFERENCE IS HISTORICAL.
+            `onboarding-draft.ts` has `{ name, level }`; the editor's has
+            `{ name, proficiency, level? }`, whose own comment records that
+            `level` is canonical since `E016` and `proficiency` is *"the
+            pre-brief_P free text"*.
+            ⚠⚠⚠ SO `level` IS THE FIELD THAT MATTERS and it is carried both
+            ways; `proficiency` is filled from it on the way in and dropped on
+            the way out. ⚠ Unifying the two types is a real tidy-up with its own
+            blast radius and is not this brief.
+          */
+          languages={draft.languages.map((l) => ({
+            name: l.name,
+            proficiency: l.level ?? null,
+            level: l.level,
+          }))}
+          /* ⚠ THE EDUCATION HALF IS HIDDEN — this section saves languages only,
+             and an `+ Add Education` button here would add a row nothing saves. */
+          showEducation={false}
+          onEducation={() => {}}
+          onLanguages={(next) =>
+            patch({
+              languages: next.map((l) => ({
+                name: l.name,
+                level: l.level ?? l.proficiency ?? null,
+              })),
+            })
+          }
+        />
+      );
+      canSave = draft.languages.some((l) => l.name.trim() !== "");
+      break;
+    case "role":
+      /*
+        ⚠⚠ MULTIPLE ROLES, NOT ONE (`WS2` / `E172`, `E173`). A techno-functional
+        consultant genuinely works as both, and forcing one meant the skills
+        step could only ever offer half their catalog.
+        ⚠⚠⚠ `roleTypeId` IS KEPT IN STEP WITH THE LIST — the server's `category`
+        case reads both, and leaving the single id stale would make the primary
+        role disagree with the set. The wizard does the same.
+      */
+      body = (
+        <div className="flex flex-col gap-2">
+          {roleTypes.length === 0 ? (
+            <p className="text-[13.5px] text-ink-2">Loading roles…</p>
+          ) : (
+            roleTypes.map((r) => {
+              const on = draft.roleTypeIds.includes(r.id);
+              return (
+                <button
+                  key={r.id}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => {
+                    const next = on
+                      ? draft.roleTypeIds.filter((x) => x !== r.id)
+                      : [...draft.roleTypeIds, r.id];
+                    patch({ roleTypeIds: next, roleTypeId: next[0] ?? null });
+                  }}
+                  className={
+                    "rounded-[12px] border px-4 py-3 text-left text-[14px] font-semibold transition-colors " +
+                    (on ? "border-magenta bg-magenta/[0.06] text-magenta-dark" : "border-line hover:border-magenta/40")
+                  }
+                >
+                  {r.display || r.name}
+                </button>
+              );
+            })
+          )}
+        </div>
+      );
+      /* ⚠ AT LEAST ONE — the same floor the wizard's Continue enforces. */
+      canSave = draft.roleTypeIds.length > 0;
+      break;
+    case "work-method":
+      /*
+        ⚠⚠⚠ `RECRUITER` IS NOT JUST A LABEL. The server's `work_method` case
+        grants the COORDINATOR actor flag on it and `RECRUITER_STEPS` forks the
+        wizard — so this is a real capability change made from a small screen.
+        ⚠ The options come from `WORK_METHOD_OPTIONS`, the wizard's own list,
+        shared rather than copied.
+      */
+      body = (
+        <div className="flex flex-col gap-2">
+          {WORK_METHOD_OPTIONS.map((o) => {
+            const on = draft.workMethod === o.value;
+            return (
+              <button
+                key={o.value}
+                type="button"
+                aria-pressed={on}
+                onClick={() => patch({ workMethod: o.value })}
+                className={
+                  "rounded-[12px] border px-4 py-3 text-left transition-colors " +
+                  (on ? "border-magenta bg-magenta/[0.06]" : "border-line hover:border-magenta/40")
+                }
+              >
+                <span className="block text-[14px] font-bold">{o.title}</span>
+                <span className="mt-0.5 block text-[12.5px] text-ink-2">
+                  {o.description}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      );
+      canSave = Boolean(draft.workMethod);
       break;
     case "rates":
       body = (

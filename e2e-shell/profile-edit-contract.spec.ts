@@ -214,4 +214,48 @@ test.describe("⚠⚠⚠ E597 WS-D — every Edit control on the owner's profile
     }
     expect(bad, `one-section editors that did not show exactly their own section:\n  ${bad.join("\n  ")}`).toEqual([]);
   });
+
+  /*
+    ── ⚠⚠⚠ NO LINK ON EITHER PAGE REACHES THE WIZARD (`P2-A2-E600` WS-F) ─────
+
+    ⚠ SCOTT: *"every link on the profile and the Score page, none matching
+    /join, count > 0."*
+    ⚠⚠ THE TEST ABOVE COLLECTS ONLY **EDIT CONTROLS**. This collects **EVERY
+    ANCHOR** on both pages — `E597`'s complaint was never limited to links that
+    happen to start with the word "Edit", and the Score page proved it: all 16
+    of its action links pointed into `/join/provider` while every Edit control
+    on the profile was already correct.
+    ⚠⚠⚠ THE COUNT IS ASSERTED FIRST (`E586`). A page that rendered no links at
+    all would satisfy "none match /join" perfectly.
+  */
+  test("⚠⚠⚠ no link on the profile or the Score page reaches /join", async ({ page }) => {
+    await signIn(page);
+    const offenders: string[] = [];
+    let total = 0;
+    for (const route of [PROFILE, "/community/score"]) {
+      await page.goto(route, { waitUntil: "domcontentloaded" });
+      await page.waitForSelector("a[href]");
+      await page.waitForTimeout(1200);
+      const links = await page.evaluate(() =>
+        [...document.querySelectorAll("a[href]")].map((a) => ({
+          name: (a.getAttribute("aria-label") || a.textContent || "").replace(/\s+/g, " ").trim(),
+          href: a.getAttribute("href") ?? "",
+        }))
+      );
+      total += links.length;
+      for (const l of links) {
+        if (/^\/join(\/|$|\?)/.test(l.href)) offenders.push(`${route}: ${l.name} → ${l.href}`);
+      }
+    }
+    /* ⚠⚠ COUNT FIRST — the absence check below is worthless on an empty page. */
+    expect(
+      total,
+      "neither page rendered any links — the persona, the routes or the selector is broken (E586)"
+    ).toBeGreaterThan(0);
+    expect(
+      offenders,
+      `links still reaching the registration wizard:\n  ${offenders.join("\n  ")}`
+    ).toEqual([]);
+    console.log(`E600/WS-F  ${total} links across /profile and /community/score, 0 into /join`);
+  });
 });

@@ -156,6 +156,30 @@ export async function matchProvidersFor(
       ...marketplaceVisibleWhere(),
       skills: { some: { skill_id: { in: skillIds } } },
     },
+    /*
+      ── ⚠⚠⚠ THE CUT IS A LIMIT, NOT A RANKING (`P2-A2-E600` WS-E addendum) ────
+
+      ⚠ SCOTT, 2026-09-22: *"give that query an `orderBy` (most recently updated
+      first, then id as the tie-break) so the same providers survive the cut on
+      every run. ⚠ Don't rank by growth or completeness at the query level — the
+      cut is a limit, not a ranking."*
+      ⚠⚠ IT HAD **NO `orderBy` AT ALL**, so Postgres returned an arbitrary 100 —
+      physical order, free to change after any write or vacuum. Two identical
+      requests could score two different sets of people and nothing would say so.
+      ⚠⚠⚠ `updated_at` THEN `id` IS DELIBERATELY NOT A QUALITY SIGNAL. Ordering
+      the cut by completeness or growth would make the LIMIT into a second,
+      hidden ranking that the real comparator below never sees — and a provider
+      would be dropped for being incomplete rather than for being a worse match.
+      ⚠ `id` is the tie-break because `updated_at` is not unique; without it the
+      determinism this exists to give would stop at the first collision.
+
+      ⚠⚠ KNOWN-OPEN, AND THIS ONLY MAKES IT HONEST RATHER THAN FIXING IT:
+      **a provider outside the take is never scored.** The real fix is to rank
+      over EVERY qualifying provider. ⚠ MEASURED 2026-09-22: **58 of them hold
+      any skill and are marketplace-visible, so the 100 does not bind today** —
+      it becomes a live defect the day it does.
+    */
+    orderBy: [{ updated_at: "desc" }, { id: "asc" }],
     take: 100,
     select: {
       id: true,

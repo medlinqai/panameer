@@ -48,12 +48,14 @@ export const SCORE_LINE_COPY: Record<ScoreLine["key"], LineCopy> = {
     action: "Add a Title",
     href: "/join/provider?step=finish",
     minutes: 1,
+    editorSlug: "title",
   },
   field: {
     why: "It decides which searches you appear in",
     action: "Pick Your Role",
     href: "/join/provider?step=finish",
     minutes: 1,
+    editorSlug: "role",
   },
   skills: {
     why: "Buyers filter on skills more than on any other field",
@@ -74,12 +76,14 @@ export const SCORE_LINE_COPY: Record<ScoreLine["key"], LineCopy> = {
     action: "Add a Photo",
     href: "/join/provider?step=finish",
     minutes: 1,
+    editorSlug: "photo",
   },
   identity: {
     why: "Your address and phone — how work reaches you",
     action: "Add Your Contact Details",
     href: "/join/provider?step=finish",
     minutes: 2,
+    editorSlug: "contact",
   },
 
   // ── Who You Are ──────────────────────────────────────────────────────────
@@ -95,12 +99,14 @@ export const SCORE_LINE_COPY: Record<ScoreLine["key"], LineCopy> = {
     action: "Say Where You're Based",
     href: "/join/provider?step=finish",
     minutes: 1,
+    editorSlug: "contact",
   },
   languages: {
     why: "It decides which buyers can work with you",
     action: "Add a Language",
     href: "/join/provider?step=education&return=review",
     minutes: 1,
+    editorSlug: "languages",
   },
   experienceYears: {
     why: "Dates on your work are what turn a list into a career",
@@ -114,6 +120,7 @@ export const SCORE_LINE_COPY: Record<ScoreLine["key"], LineCopy> = {
     action: "Say How You Work",
     href: "/join/provider?step=finish",
     minutes: 1,
+    editorSlug: "work-method",
   },
 
   // ── What You've Done — every line declarable ─────────────────────────────

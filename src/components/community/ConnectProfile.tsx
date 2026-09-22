@@ -473,6 +473,30 @@ export function ConnectProfile({
               <p className="mt-1 text-[13px] leading-snug text-ink-2">{p.headline}</p>
             )}
             {p.location && <p className="mt-1 text-[12.5px] text-ink-3">{p.location}</p>}
+            {/*
+              ── ⚠⚠⚠ THE IDENTITY CARD GROWS ITS EDIT CONTROLS (`E600` WS-F) ──
+
+              ⚠ Scott: *"The profile grows an Edit control for each of these
+              where one is missing."* ⚠⚠ THESE FOUR FACTS ARE ALL RENDERED IN
+              THIS CARD — photo, name/title, location and how you work — and
+              none of them had a way to edit from the profile. `E597` WS-C
+              measured exactly that: *"No Edit Title link exists."*
+              ⚠⚠⚠ `check:profile-edit` COLLECTS THEM BY SHAPE, so each one's
+              destination is asserted to render in the profile's frame and to
+              show the section its label names.
+              ⚠ `Contact` COVERS TWO SCORE LINES — identity and location — one
+              address, one editor, one save (`E595`).
+            */}
+            {owner && (
+              <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1">
+                <EditLink href={editHref("title")} title="Title" />
+                <EditLink href={editHref("photo")} title="Photo" />
+                <EditLink href={editHref("contact")} title="Contact Details" />
+                <EditLink href={editHref("role")} title="Role" />
+                <EditLink href={editHref("languages")} title="Languages" />
+                <EditLink href={editHref("work-method")} title="How You Work" />
+              </div>
+            )}
             {owner && (
               <div className="mt-3 flex flex-col gap-2">
                 <Link
