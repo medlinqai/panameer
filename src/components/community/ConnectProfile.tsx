@@ -659,12 +659,31 @@ export function ConnectProfile({
 
       {/* ═══════════ CENTRE ═══════════ */}
       <main>
-        {/* ⚠⚠ THE HEADING NAMES WHOSE PAGE THIS IS. `My Profile` on somebody
-            else's profile is the same class of error as an owner affordance
-            leaking — it tells the reader the record is theirs. */}
-        <h1 className="mb-3.5 mt-0.5 font-display text-[25px] font-bold">
-          {owner ? "My Profile" : fullName}
-        </h1>
+        {/*
+          ── ⚠⚠ THE OWNER'S HEADING MOVED TO THE CRUMB (`P2-A2-E598` WS-B) ────
+
+          ⚠ WS-B puts a `My Profile` crumb where the Connect tab row used to be.
+          ⚠⚠ MEASURED AT THE GATE, ON THE SCREENSHOT: that shipped the words
+          TWICE — an eyebrow reading `MY PROFILE` directly above an `<h1>`
+          reading `My Profile`. ⚠⚠⚠ TWO HEADINGS FOR ONE PAGE IS ALSO TWO `<h1>`
+          CANDIDATES, so it was a screen-reader defect and not only a visual one.
+          ⚠ The crumb is the owner's `<h1>` now; this renders for VISITORS only,
+          where it is the person's NAME and genuinely the page's title.
+
+          ⚠⚠ THE ORIGINAL RULE STILL BINDS AND IS WHY THIS IS A BRANCH RATHER
+          THAN A DELETION: *"`My Profile` on somebody else's profile is the same
+          class of error as an owner affordance leaking — it tells the reader the
+          record is theirs."*
+          ⚠ SUPERSEDED, quoted not deleted (`E164`):
+          //   <h1 className="mb-3.5 mt-0.5 font-display text-[25px] font-bold">
+          //     {owner ? "My Profile" : fullName}
+          //   </h1>
+        */}
+        {!owner && (
+          <h1 className="mb-3.5 mt-0.5 font-display text-[25px] font-bold">
+            {fullName}
+          </h1>
+        )}
 
         <div className="flex flex-col gap-4">
           {/*

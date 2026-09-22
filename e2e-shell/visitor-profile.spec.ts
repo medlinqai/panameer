@@ -157,7 +157,14 @@ test.describe("⚠ THE VISITOR PROFILE — P2-J3-E593 WS-C", () => {
   }) => {
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
     await signIn(page);
-    await page.goto("/connect", { waitUntil: "networkidle" });
+    /* ⚠⚠ THE OWNER'S PAGE IS `/profile` (`P2-A2-E598` WS-B). `/connect` now
+       redirects to `/community`, which is the PEOPLE page and carries none of
+       the owner surfaces this asserts — so it reported them "vanished".
+       ⚠ SUPERSEDED, quoted not deleted (`E164`):
+       //   await page.goto("/connect", { waitUntil: "networkidle" });
+       ⚠⚠⚠ THE RULE IS UNCHANGED — *"the OWNER's view is unchanged"* — only the
+       URL the owner's view lives at moved. */
+    await page.goto("/profile", { waitUntil: "networkidle" });
     /*
       ⚠⚠⚠ LOWER-CASED, AND THIS WAS A REAL FALSE PASS. `innerText` returns the
       RENDERED text, so a heading with `text-transform: uppercase` — which the
@@ -200,7 +207,14 @@ test.describe("⚠ THE VISITOR PROFILE — P2-J3-E593 WS-C", () => {
   }) => {
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
     await signIn(page);
-    await page.goto("/connect", { waitUntil: "networkidle" });
+    /* ⚠⚠ THE OWNER'S PAGE IS `/profile` (`P2-A2-E598` WS-B). `/connect` now
+       redirects to `/community`, which is the PEOPLE page and carries none of
+       the owner surfaces this asserts — so it reported them "vanished".
+       ⚠ SUPERSEDED, quoted not deleted (`E164`):
+       //   await page.goto("/connect", { waitUntil: "networkidle" });
+       ⚠⚠⚠ THE RULE IS UNCHANGED — *"the OWNER's view is unchanged"* — only the
+       URL the owner's view lives at moved. */
+    await page.goto("/profile", { waitUntil: "networkidle" });
     /*
       ⚠⚠⚠ LOWER-CASED, AND THIS WAS A REAL FALSE PASS. `innerText` returns the
       RENDERED text, so a heading with `text-transform: uppercase` — which the

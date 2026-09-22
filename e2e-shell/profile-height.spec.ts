@@ -39,7 +39,22 @@ test("⚠⚠⚠ PRECONDITION — the gate persona is a complete, visible provide
 });
 
 for (const [label, path] of [
-  ["/connect (owner)", "/connect"],
+  /*
+    ── ⚠⚠⚠ THE OWNER'S PAGE IS `/profile` (`P2-A2-E598` WS-B) ────────────────
+
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   ["/connect (owner)", "/connect"],
+    ⚠⚠ THIS IS THE `E586` FAILURE MODE THAT DOES **NOT** ANNOUNCE ITSELF. The
+    profile moved to `/profile` and `/connect` began redirecting to
+    `/community` — so this case kept measuring something, kept passing, and
+    silently reported COMMUNITY's height under the owner profile's name.
+    ⚠⚠⚠ MEASURED: both rows read an identical 3,642px, which is the tell. A
+    gate with no inputs fails loudly; a gate pointed at the WRONG inputs does
+    not, and that is worse.
+    ⚠ Caught because `E598` WS-C's whole target is the owner profile's height,
+    and two rows agreeing to the pixel is not a coincidence.
+  */
+  ["/profile (owner)", "/profile"],
   ["/community", "/community"],
   /*
     ⚠⚠ THE VISITOR PAGE IS MEASURED TOO (`E593` WS-C). It renders the SAME
