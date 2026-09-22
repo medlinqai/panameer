@@ -24,6 +24,9 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { publishedProfileCode } from "./_profile-surface";
 import { MENTOR_HELPFUL_THRESHOLD, mentorState } from "@/lib/community-signal";
+/* ⚠ `P2-A2-E598` WS-B — the row is asserted from the DEFINITION as well as from
+   the pages, so a tab cannot be removed from one and left in the other. */
+import { PAGE_TABS } from "@/lib/nav";
 
 let pass = 0;
 const failures: string[] = [];
@@ -350,8 +353,25 @@ check(
   the `/profile` → `/community` move: `/connect` is ADDED in the same change
   that removes `/community`, so the owner cannot silently lose the block.
 */
+/*
+  ── ⚠⚠ `/connect` → `/profile` (`P2-A2-E598` WS-B) ─────────────────────────
+
+  ⚠ THE RULE IS STILL NOT WEAKENED, AND THIS IS THE THIRD TIME THE LIST HAS
+  MOVED WHILE THE RULE HAS NOT — which is the argument for the rule being
+  written as "every surface that renders a profile supplies the signal" rather
+  than as a list of files.
+  ⚠⚠ Scott, 2026-09-21: the profile is an ACCOUNT-MENU destination, so
+  `(app)/profile/page.tsx` renders it and `/connect` redirects to `/community`.
+  A redirect supplies nothing and never can.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   join("src", "app", "(app)", "connect", "page.tsx"),
+  ⚠⚠⚠ THE SWAP IS ONE EDIT, as both paragraphs above require: `/profile` is
+  ADDED in the same change that removes `/connect`. Removing alone would let the
+  owner silently lose the block while this guard went green on the loss it
+  exists to catch.
+*/
 for (const page of [
-  join("src", "app", "(app)", "connect", "page.tsx"),
+  join("src", "app", "(app)", "profile", "page.tsx"),
   join("src", "app", "(app)", "providers", "[id]", "page.tsx"),
 ]) {
   check(
@@ -1078,7 +1098,21 @@ for (const [verb, journey] of [
     ⚠ `My Community` survives as the `<h1>` of `/community`, where it is now
     true — see `(app)/community/page.tsx`.
   */
-  ["Connect", "My Profile"],
+  /*
+    ⚠⚠⚠ `Connect`'s JOURNEY NAME IS `Community` AGAIN (`P2-A2-E598` WS-B) ────
+    ⚠ The profile left Connect for the account menu, so the application's home
+    is `/community` and its heading names that. ⚠ SUPERSEDED, quoted not deleted
+    (`E164`):
+    //   ["Connect", "My Profile"],
+    ⚠⚠ THE RULE IS UNWEAKENED AND STILL BITES: the rail says the journey in ONE
+    WORD and the full name lives on `heading`. This slot's name changed because
+    the route behind it changed — twice now, in both directions, which is
+    exactly what the rule is for.
+    ⚠ MEASURED: `heading` is read only by `pageTitleFor`, whose only caller
+    `AppHeader.tsx` is imported by nothing since `E559`. It is inert today and
+    asserted anyway, so it cannot rot before someone wakes it.
+  */
+  ["Connect", "Community"],
 ] as const) {
   check(
     `E378/4 — rail slot "${verb}" keeps its journey name "${journey}"`,
@@ -1163,7 +1197,17 @@ check(
   ⚠⚠⚠ AND THE THREE FOLDED ROUTES DID NOT LOSE THEIR GUARD — it MOVED to the
   pair below, which checks the file that now guarantees them.
 */
-const CONNECT_TABS = ["Profile", "Community", "Groups", "Service Products", "Settings"];
+/*
+  ⚠⚠⚠ `Profile` LEFT THE ROW (`P2-A2-E598` WS-B). Scott: *"The Profile tab
+  leaves Connect's row. Connect lands on Community."*
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   const CONNECT_TABS = ["Profile", "Community", "Groups", "Service Products", "Settings"];
+  ⚠⚠ THE RULE IS UNWEAKENED: the set is still asserted by exact label and the
+  COUNT is asserted below, so a tab cannot quietly appear or vanish. ⚠ Its
+  ABSENCE is asserted positively too — see the `E598/B` block further down,
+  because dropping a name from a list proves nothing on its own.
+*/
+const CONNECT_TABS = ["Community", "Groups", "Service Products", "Settings"];
 for (const label of CONNECT_TABS) {
   check(`E593/5 — Connect tab "${label}" ships`, new RegExp(`label: "${label}"`).test(navLib));
 }
@@ -1392,13 +1436,67 @@ const CONNECT_PAGES = [
   ["community", "page.tsx"], ["community", "colleagues", "page.tsx"],
   ["community", "forums", "page.tsx"], ["community", "mentors", "page.tsx"],
   ["community", "score", "page.tsx"], ["community", "teams", "page.tsx"],
-  ["connect", "page.tsx"], ["messages", "page.tsx"],
+  /*
+    ── ⚠⚠⚠ `connect/page.tsx` LEFT THIS LIST (`P2-A2-E598` WS-B) ─────────────
+
+    ⚠ SCOTT, 2026-09-21: *"The Profile tab leaves Connect's row. Connect lands
+    on Community."* `/connect` is a bare `redirect("/community")` now — it draws
+    NO tab row, so asserting it draws one through the filter fails on a page
+    that correctly renders nothing.
+    ⚠⚠ THIS IS `check:rollup`'S CASE — THE RULING CHANGED, THE CODE DID NOT
+    DRIFT. The rule *"every Connect page that draws the row draws it through
+    `connectTabs`"* is intact and still guards the seven pages that do.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   ["connect", "page.tsx"], ["messages", "page.tsx"],
+
+    ⚠⚠ `profile/page.tsx` IS DELIBERATELY NOT ADDED HERE EITHER. It draws no
+    Connect row BY DESIGN — a row reading `CONNECT · Community · Groups · …`
+    above your own profile is the *"not the right menu"* complaint moved rather
+    than fixed — and its absence is asserted positively below.
+  */
+  ["messages", "page.tsx"],
 ].map((seg) => join("src", "app", "(app)", ...seg));
 for (const f of CONNECT_PAGES) {
   const body = bodies.get(f) ?? "";
   check(
     `E593/5 — ⚠ ${f.split(join("(app)", ""))[1] ?? f} draws the row through the filter`,
     /connectTabs\(viewer, unread\)/.test(body) && !/PAGE_TABS\["\/connect"\]/.test(body)
+  );
+}
+
+/*
+  ── ⚠⚠⚠ AND THE TWO ROUTES THAT MUST DRAW NO ROW (`P2-A2-E598` WS-B) ────────
+
+  ⚠ REMOVING A PAGE FROM A LIST IS AN ABSENCE OF EVIDENCE, NOT EVIDENCE. Taking
+  `connect/page.tsx` out of `CONNECT_PAGES` stops the gate failing, and stops it
+  saying anything at all — so what replaced the old rule is asserted here.
+  ⚠⚠ `E586`: these fail loudly if either file stops existing.
+*/
+{
+  const connectPage = bodies.get(join("src", "app", "(app)", "connect", "page.tsx")) ?? "";
+  check(
+    "E598/B — ⚠ /connect draws no tab row: it redirects to /community",
+    connectPage.length > 0 && /redirect\(\s*["']\/community["']\s*\)/.test(connectPage) &&
+      !/connectTabs\(/.test(connectPage),
+    connectPage.length === 0 ? "connect/page.tsx not found" : "it still draws a row"
+  );
+  const profilePage = bodies.get(join("src", "app", "(app)", "profile", "page.tsx")) ?? "";
+  check(
+    "E598/B — ⚠⚠ /profile renders the owner profile and draws NO Connect tab row",
+    profilePage.length > 0 && /<ConnectProfile/.test(profilePage) && !/connectTabs\(/.test(profilePage),
+    profilePage.length === 0 ? "profile/page.tsx not found" : "it draws a Connect row"
+  );
+  /* ⚠ AND THE PROFILE TAB IS GONE FROM THE ROW ITSELF, not merely unrendered. */
+  check(
+    "E598/B — ⚠⚠⚠ `Profile` is not a Connect tab",
+    !(PAGE_TABS["/connect"] ?? []).some((t) => t.label === "Profile"),
+    (PAGE_TABS["/connect"] ?? []).map((t) => t.label).join(" · ")
+  );
+  check(
+    "E598/B — ⚠ Connect's row still has its four tabs",
+    (PAGE_TABS["/connect"] ?? []).map((t) => t.label).join(" · ") ===
+      "Community · Groups · Service Products · Settings",
+    (PAGE_TABS["/connect"] ?? []).map((t) => t.label).join(" · ")
   );
 }
 

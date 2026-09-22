@@ -254,7 +254,15 @@ export const REQUESTER_NAV: NavItem[] = [
      //   { label: "Connect", heading: "My Community", href: "/community", icon: "MessagesSquare" },
      ⚠ `heading` IS READ BY `pageTitleFor`, WHICH HAS NO CALLER — it is the
      record of what the journey is called, not a rendered string. */
-  { label: "Connect", heading: "My Profile", href: "/connect", icon: "MessagesSquare" },
+  /* ⚠⚠ `heading` CORRECTED (`P2-A2-E598` WS-B): Connect's home is `/community`
+     now, so titling the application *"My Profile"* names a page it no longer
+     shows. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   { label: "Connect", heading: "My Profile", href: "/connect", … },
+     ⚠⚠⚠ IT IS INERT TODAY AND IS FIXED ANYWAY. `heading` is read only by
+     `pageTitleFor`, whose only caller is `AppHeader.tsx` — and MEASURED
+     2026-09-22: nothing imports `AppHeader` (`E559` replaced it with the band).
+     ⚠ A dormant value that says the wrong thing is a trap for whoever wakes it. */
+  { label: "Connect", heading: "Community", href: "/connect", icon: "MessagesSquare" },
   { label: "Learn", heading: "Learning Paths", href: "/learn", icon: "GraduationCap" },
   {
     /* ⚠ MIRRORED SLOT. `nav.ts` already documents why: the rails point the SAME
@@ -634,7 +642,20 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
     into it. ⚠ DO NOT FABRICATE A PAID STATE.
   */
   "/connect": [
-    { label: "Profile", href: "/connect" },
+    /*
+      ── ⚠⚠⚠ `Profile` LEFT THIS ROW (`P2-A2-E598` WS-B item 2) ──────────────
+
+      ⚠ SCOTT, 2026-09-21: *"The Profile tab leaves Connect's row. Connect lands
+      on Community."* The profile is an ACCOUNT-MENU destination now, reached
+      from your own picture — not a slice of an application.
+      ⚠ SUPERSEDED, quoted not deleted (`E164`) — `E593`'s five tabs:
+      //   { label: "Profile", href: "/connect" },
+      ⚠⚠ THE KEY `/connect` STAYS, and so does the route: it is the band's
+      application href, `PAGE_TABS` is keyed on it, and `bandPrefixesFor`
+      resolves `/community` through it. ⚠⚠⚠ REMOVING THE TAB IS NOT REMOVING THE
+      ROUTE — `/connect` now redirects to `/community`, so the band still lights
+      Connect and all 31 live references still resolve.
+    */
     { label: "Community", href: "/community" },
     { label: "Groups", href: "/community/forums", state: "live" },
     /*
@@ -901,7 +922,15 @@ export const PROVIDER_NAV: NavItem[] = [
      //   { label: "Connect", heading: "My Community", href: "/community", icon: "MessagesSquare" },
      ⚠ `heading` IS READ BY `pageTitleFor`, WHICH HAS NO CALLER — it is the
      record of what the journey is called, not a rendered string. */
-  { label: "Connect", heading: "My Profile", href: "/connect", icon: "MessagesSquare" },
+  /* ⚠⚠ `heading` CORRECTED (`P2-A2-E598` WS-B): Connect's home is `/community`
+     now, so titling the application *"My Profile"* names a page it no longer
+     shows. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   { label: "Connect", heading: "My Profile", href: "/connect", … },
+     ⚠⚠⚠ IT IS INERT TODAY AND IS FIXED ANYWAY. `heading` is read only by
+     `pageTitleFor`, whose only caller is `AppHeader.tsx` — and MEASURED
+     2026-09-22: nothing imports `AppHeader` (`E559` replaced it with the band).
+     ⚠ A dormant value that says the wrong thing is a trap for whoever wakes it. */
+  { label: "Connect", heading: "Community", href: "/connect", icon: "MessagesSquare" },
   { label: "Learn", heading: "Learning Paths", href: "/learn", icon: "GraduationCap" },
   {
     /* ⚠ MIRRORED — the provider WORKS where the buyer HIRES. Same slot, same
@@ -1054,7 +1083,28 @@ export const PERSONA_NAV_SECONDARY: NavItem[] = [
     and reversible in ONE LINE once something on Connect links the page.
     ⚠ DO NOT ADD THAT LINK HERE — Connect surfaces are `E557`/`E558`.
   */
-  { label: "Request Recommendations", href: "/recommendations" },
+  /*
+    ── ⚠⚠⚠ `Request Recommendations` LEFT THE MENU FOR THE PROFILE'S `Grow`
+       CARD (`P2-A2-E598` WS-C) ──────────────────────────────────────────────
+
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   { label: "Request Recommendations", href: "/recommendations" },
+
+    ⚠⚠ IT LEAVES AND ARRIVES IN THE SAME COMMIT, WHICH IS THE WHOLE POINT.
+    `E598` WS-A deliberately KEPT it here — Scott: *"Keep it until WS-C rehomes
+    it"* — so the page never had two doors to `/recommendations` and never had
+    none. WS-C builds the `Grow` card; this line goes in that same change.
+
+    ⚠⚠⚠ THE REASON IT SURVIVED `E559` WS-D IS NOW ANSWERED, NOT IGNORED. That
+    brief tried to remove it and the premise check refused: *"`E558` gave the
+    ACTION a home on Connect… but it NEVER LINKS THE `/recommendations` PAGE"*,
+    and the only two inbound links were this entry and the (since deleted)
+    `ProviderProfileView`. ⚠ The owner profile's `Grow` card is that missing
+    link, so the condition `E559` named is finally met.
+    ⚠ MEASURED BEFORE REMOVING, exactly as `E559` did: the `Grow` card renders
+    it for every owner, unconditionally, in the same file that renders the
+    profile.
+  */
   /*
     ── ⚠ `Invite a Colleague` REMOVED (`P2-ALL-E559` WS-D) ─────────────────────
 

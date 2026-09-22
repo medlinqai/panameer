@@ -1,95 +1,171 @@
 import { redirect } from "next/navigation";
 import { getSessionViewer } from "@/lib/session";
 import { EmployeeProfile } from "@/components/profile/EmployeeProfile";
-/*
-  ⚠ FIVE IMPORTS LEFT WITH THE PROVIDER BRANCH (`P2-J3-E588` WS-A) — this page
-  is a REDIRECT now and fetches nothing. ⚠ SUPERSEDED, quoted not deleted
-  (`E164`):
-  // import { getOwnProviderProfileView } from "@/lib/provider-profile-view";
-  // import { getPathsTaughtByProfile } from "@/lib/learn-home";
-  // import { publicTestimonials } from "@/lib/recommendations";
-  // import { getCommunitySignalForProfile } from "@/lib/community-signal";
-  // import { ProviderProfileViewPage } from "@/components/profile/ProviderProfileView";
-  ⚠⚠⚠ THAT COMPONENT NO LONGER EXISTS — `src/components/profile/ProviderProfileView.tsx`
-  was DELETED on 2026-09-21 (Scott's ruling, closing `E597` WS-D) after being
-  measured at ZERO live imports since `E588`. ⚠ GIT HOLDS THE HISTORY: it is
-  recoverable at any commit up to `d7a9c94`. ⚠⚠ The quote above is kept so the
-  page's history still reads, but it names a file that is gone — do not read it
-  as a restore target.
-  ⚠⚠ `/community/page.tsx` NOW MAKES THE SAME FOUR CALLS. They moved with the
-  surface; they were not dropped.
-*/
+import { ConnectProfile } from "@/components/community/ConnectProfile";
+import { getOwnProviderProfileView } from "@/lib/provider-profile-view";
+import { getPathsTaughtByProfile, getPathsTakenBy } from "@/lib/learn-home";
+import { getUsageStats } from "@/lib/usage-stats";
+import { countProfileViews } from "@/lib/profile-views";
+import { publicTestimonials } from "@/lib/recommendations";
+import { getCommunitySignalForProfile } from "@/lib/community-signal";
+import { getMyCommunity } from "@/lib/connections";
+import { buildCompletenessInput } from "@/lib/onboarding";
+import { computeProfileScore } from "@/lib/completeness";
 
 /**
- * MY PROFILE (WS7 / WS8, E004 / E006 / E155).
+ * ── ⚠⚠⚠ `/profile` IS THE OWNER'S PROFILE (`P2-A2-E598` WS-B) ─────────────
  *
- * TWO PROFILE TYPES, chosen by who is asking:
+ * ⚠ SCOTT, 2026-09-21, on the option-B mockup: *"Yeah...that is much better. It
+ * belongs back there."* Earlier the same day: *"way too much on this page… I may
+ * just go back to putting my profile under the avatar in the upper right (with
+ * the picture)."*
  *
- *   Panameer employee  → EmployeeProfile: name, title, contact, company. No
- *                        résumé, rates, skills or work history, because an
- *                        admin performing setup has none of those in the
- *                        marketplace sense. Patterned after Medlinq's
- *                        MEDLINQ_ADMIN.
- *   Provider           → the BRANDED ProviderProfileView.
+ * ⚠⚠ THE PROFILE IS NOW AN ACCOUNT-MENU DESTINATION, LIKE LINKEDIN'S "ME" — not
+ * a Connect tab. So this page renders **without the Connect tab row**, and a
+ * small `My Profile` crumb sits where that row was.
  *
- * E155 is fixed by that second line. This page used to render
- * `@/components/ProfileView` — the older greyscale component whose text is
- * white on white in the app shell, so the content was present but invisible.
- * ProviderProfileView is the branded one every other surface already uses, so
- * "my profile" and "what buyers see" stop being two different renderings of
- * the same record.
+ * ── ⚠⚠ THE SWAP, AND WHY THIS DIRECTION ─────────────────────────────────
  *
- * Server-rendered now rather than fetching client-side: it already knows who is
- * asking, and the old version's loading skeleton existed only because it didn't.
+ * ⚠ `/connect` USED TO RENDER THIS and `/profile` was a redirect INTO it. That
+ * is reversed: the body below moved here verbatim, and `/connect` now lands on
+ * `/community`.
+ * ⚠⚠⚠ `/profile` WAS ALREADY THE STABLE ROUTE (`E591`) — every user-facing link,
+ * the account menu, `/stats`, onboarding and `E597`'s eight one-section editors
+ * all point here. ⚠ MEASURED AT THE WS-B GATE: **31 live `/connect` references
+ * across 17 files**, and not one of them is a link a member follows to their own
+ * profile. Moving the RENDER to the route everything already names is what makes
+ * this a swap rather than a migration.
+ *
+ * ── ⚠ SUPERSEDED, quoted not deleted (`E164`) ───────────────────────────
+ *
+ * ⚠ This whole page was one line:
+ * //   redirect("/connect");
+ * ⚠ and before that:
+ * //   redirect("/community");
+ * ⚠⚠ THE REASONING BEHIND THOSE REDIRECTS IS NOT SUPERSEDED, only their
+ * destination: *"`/profile` is linked from the band's account menu, from
+ * `/stats`, from onboarding and from older briefs; deleting the route would 404
+ * every one of them."* ⚠⚠⚠ THAT IS NOW AN ARGUMENT FOR RENDERING HERE rather
+ * than for redirecting away.
+ *
+ * ── ⚠⚠ THE TWO NON-PROVIDER CASES ARE DIFFERENT AND BOTH ARE KEPT ────────
+ *
+ * ⚠ A Panameer employee gets `EmployeeProfile` — unchanged, and it was always
+ * this page's branch. ⚠⚠ A MEMBER WITH NO PROVIDER PROFILE goes to
+ * `/community`, which is the behaviour `/connect` carried; it moved with the
+ * render so nobody meets an empty profile.
  */
 export default async function MyProfilePage() {
   const viewer = await getSessionViewer();
+  /* ⚠ ACCESS: `route-access.ts` line 131, `{ prefix: "/profile", requires:
+     "authenticated" }` — applied at the edge by `proxy.ts`, and it covers
+     `/profile/edit/*` by longest-prefix match too (`E597` WS-C). This redirect
+     is the belt to that braces. */
   if (!viewer) redirect("/login?callbackUrl=%2Fprofile");
 
   // A Panameer employee gets the employee profile even if a seeded provider row
   // still exists behind them — the row is demo noise, not their identity.
   if (viewer.isSystemAdmin) return <EmployeeProfile userId={viewer.userId} />;
 
+  const profile = await getOwnProviderProfileView(viewer.userId, viewer);
   /*
-    ── ⚠⚠ THE PROFILE MOVED OUT OF SETTINGS (`P2-J3-E588` WS-A) ──────────────
-
-    ⚠⚠⚠ SCOTT RULED THE OPPOSITE ON 2026-09-17 — *"profile and profile strength
-    move under Settings"* — and it was built that way. **Rule 13: the newest
-    dated statement from Scott is the live one.** 2026-09-19: *"connect is now
-    'build your profile and connect to other profiles'."*
-
-    ⚠⚠ A REDIRECT, NOT A DELETION. `/profile` is linked from the band's account
-    menu, from `/stats`, from onboarding and from older briefs; deleting the
-    route would 404 every one of them. ⚠ ONE SURFACE, NO SECOND COPY — which is
-    the acceptance criterion this satisfies.
-
-    ⚠ SUPERSEDED, quoted not deleted (`E164`) — the provider branch of this page:
-    // const profile = await getOwnProviderProfileView(viewer.userId, viewer);
-    // if (!profile) return <EmployeeProfile userId={viewer.userId} />;
-    // return (
-    //   <ProviderProfileViewPage        (deleted 2026-09-21 — see above)
-    //     p={profile}
-    //     taughtPaths={await getPathsTaughtByProfile(profile.id)}
-    //     testimonials={await publicTestimonials(profile.id)}
-    //     community={await getCommunitySignalForProfile(profile.id)}
-    //   />
-    // );
-    ⚠⚠ `/community` CARRIES THE SAME NON-PROVIDER FALLBACK, so a member with no
-    provider profile is not redirected into an empty page — it renders the
-    Connect landing for them, exactly as `EmployeeProfile` did here.
-
-    ── ⚠⚠ THE DESTINATION MOVED TO `/connect` (`P2-J3-E591` WS-A) ────────────
-
-    ⚠ SUPERSEDED, quoted not deleted (`E164`):
-    //   redirect("/community");
-    ⚠⚠ THE PARAGRAPH ABOVE IS STILL TRUE, IT JUST DESCRIBES A DIFFERENT ROUTE:
-    `/connect` now carries the non-provider case and sends those members to
-    `/community`, so nobody meets an empty page — it costs one extra hop and
-    nothing else.
-    ⚠⚠⚠ `/profile` IS THE STABLE PATH AND STAYS. `E591` WS-A item 10 keeps all
-    five user-facing `/profile` links exactly as they are; pointing this one
-    redirect at the new route IS the whole fix, and rewriting five call sites to
-    save a hop would be risk without benefit.
+    ⚠⚠ A MEMBER WITH NO PROVIDER PROFILE GETS THE COMMUNITY PAGE, NOT AN EMPTY
+    PROFILE. ⚠ `redirect` throws, so nothing below it runs and no profile query
+    is attempted against a profile that does not exist.
   */
-  redirect("/connect");
+  if (!profile) redirect("/community");
+
+  /* ⚠ Fetched once and reused: the comb needs the same colleague count and the
+     same path lists the cards render, and asking twice for one answer is two
+     round trips for nothing. */
+  const [taughtPathsList, takenPaths, mine] = await Promise.all([
+    getPathsTaughtByProfile(profile.id),
+    getPathsTakenBy(viewer.userId),
+    getMyCommunity(viewer),
+  ]);
+  const colleagues = mine.colleagues.length;
+
+  return (
+    <>
+      {/*
+        ── ⚠⚠ THE CRUMB REPLACES THE TAB ROW (`P2-A2-E598` WS-B item 1) ──────
+
+        ⚠ SUPERSEDED, quoted not deleted (`E164`) — what stood here while the
+        profile was a Connect tab:
+        //   <PageTabs
+        //     eyebrow="CONNECT"
+        //     sequence={tabSequenceFor("/connect")}
+        //     tabs={connectTabs(viewer, unread)}
+        //     current="/connect"
+        //   />
+        ⚠⚠⚠ THE TAB ROW HAD TO GO, NOT JUST LOSE ITS `Profile` ENTRY. A row
+        reading `CONNECT · Community · Groups · …` above your own profile is the
+        *"not the right menu"* half of Scott's original complaint, moved rather
+        than fixed. ⚠ The crumb says where you are without claiming you are
+        inside an application.
+        ⚠⚠ `unreadCount` WENT WITH THE ROW — it existed only to put the number on
+        the Messages tab. One fewer query on this page.
+      */}
+      {/* ⚠⚠ IT IS THE PAGE'S `<h1>`, NOT A DECORATIVE `<p>`. Shipping it as a
+          paragraph left the page with `ConnectProfile`'s own `My Profile`
+          heading as well — the same words twice, and two `<h1>` candidates for
+          one page. ⚠ That heading is now visitor-only; this is the owner's. */}
+      <h1 className="mb-3 text-[13px] font-bold uppercase tracking-[0.08em] text-ink-2">
+        My Profile
+      </h1>
+      {/* ⚠ `takenPaths` IS KEYED ON THE **USER**, not the person —
+          `LearnEnrollment.user_id` (`E593` WS-B item 17). ⚠⚠ A JSX comment
+          is only legal in CHILDREN position, never between attributes, which
+          is why this note sits here rather than beside the prop. */}
+      {/* ⚠ The comb is OWNER-ONLY, so it is computed here — on the owner's own
+          page — and never passed to `/providers/[id]` (`E593`). */}
+      {/* ⚠ `colleagueFaces` IS NO LONGER PASSED (`P2-A2-E598` WS-C) — the hero
+          line carries the colleague COUNT and nothing renders avatars.
+          ⚠ SUPERSEDED, quoted not deleted (`E164`) — the seven faces, sliced
+          from the SAME `mine.colleagues` the count comes from:
+          //   colleagueFaces={mine.colleagues
+          //     .filter((c) => c.person)
+          //     .slice(0, 7)
+          //     .map((c) => ({ personId: c.person!.personId, name: …, photoUrl: … }))}
+          ⚠⚠ A JSX COMMENT IS ONLY LEGAL IN CHILDREN POSITION, NEVER BETWEEN
+          ATTRIBUTES — this file already carried that warning and I put one
+          among the props anyway; `tsc` caught it.
+          ⚠ `getMyCommunity` STILL RUNS — `colleagueCount` is its length. */}
+      <ConnectProfile
+        p={profile}
+        /* ⚠⚠ `Viewing Me`, WITH DATA BEHIND IT AT LAST (`P0-E595` A2). One row
+           per viewer per day, counted all time — the `Counters` decision, not a
+           window nobody ruled on. ⚠ This is the OWNER's own page, which is the
+           only place the figure is shown. */
+        profileViews={await countProfileViews(profile.id)}
+        /* ⚠⚠ SEVEN, NOT ALL OF THEM (`P2-A3-E596` WS-D). The card is a summary
+           with a door; `/community/colleagues` is the list. ⚠ Sliced from the
+           SAME `mine.colleagues` the count above comes from, so the faces and
+           the number can never describe different sets. */
+
+        taughtPaths={taughtPathsList}
+        takenPaths={takenPaths}
+        usage={await getUsageStats(
+          profile.person.personId,
+          profile.id,
+          taughtPathsList.length + takenPaths.length,
+          colleagues
+        )}
+        testimonials={await publicTestimonials(profile.id)}
+        community={await getCommunitySignalForProfile(profile.id)}
+        colleagueCount={colleagues}
+        score={await ownerScore(profile.id)}
+      />
+    </>
+  );
+}
+
+/**
+ * ⚠ The owner's score breakdown, or `null` when the input cannot be built.
+ * ⚠⚠ NULL RENDERS NO CARD — better than a ring of zeroes that asserts a
+ * provider has answered nothing.
+ */
+async function ownerScore(profileId: string) {
+  const input = await buildCompletenessInput(profileId);
+  return input ? computeProfileScore(input) : null;
 }

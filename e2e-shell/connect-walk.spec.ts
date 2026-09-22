@@ -138,8 +138,31 @@ for (const [name, path] of Object.entries(ROUTES)) {
   ⚠ SUPERSEDED (`E164`): this test was named *"renders with Home first"* and
   asserted the first label was `Home`.
 */
-test("E567/2 — the CONNECT tab row renders with Profile first", async () => {
-  await open(ROUTES.home);
+/*
+  ── ⚠⚠⚠ `Profile` HAS LEFT THE ROW (`P2-A2-E598` WS-B, 2026-09-21) ──────────
+
+  ⚠ SCOTT: *"The Profile tab leaves Connect's row. Connect lands on Community."*
+  The profile is an ACCOUNT-MENU destination now, reached from your own picture.
+  ⚠⚠ THIS IS `check:rollup`'S CASE, NOT `check:cert-skills`' — THE RULING
+  CHANGED, THE CODE DID NOT DRIFT. The assertion below encoded a ruling that has
+  since been superseded, so it is rewritten rather than worked around.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   test("E567/2 — the CONNECT tab row renders with Profile first", …)
+  //   expect(labels[0]).toBe("Profile");
+  //   expect(labels).toEqual(["Profile", "Community", "Groups", "Service Products", "Settings"]);
+
+  ⚠⚠ THE ROW IS NOW READ ON `/community`, NOT ON `ROUTES.home`. `/connect`
+  redirects there, so opening `home` still ARRIVES here — but naming the page
+  the row actually belongs to is what stops the next route change reading as a
+  tab-row failure.
+  ⚠⚠⚠ EVERYTHING THE OLD TEST PROTECTED IS KEPT: the row is still found by its
+  eyebrow and its tabs by LABEL (never by href prefix — that is how a tab falls
+  out of a locator and the test goes green-by-absence); an EMPTY row is still a
+  failure, not a pass; and the COUNT is still asserted as a list so an appended
+  tab fails here.
+*/
+test("E567/2 — the CONNECT tab row renders, and Profile is NOT in it", async () => {
+  await open(ROUTES.community);
   await expect(page.getByText("CONNECT", { exact: true }).first()).toBeVisible();
   /*
     ── ⚠⚠ ASSERTED BY LABEL, NOT BY HREF PREFIX (`P2-J3-E591` WS-A item 9) ───
@@ -166,16 +189,22 @@ test("E567/2 — the CONNECT tab row renders with Profile first", async () => {
      locator would have produced is precisely a row that measures as fine
      because nothing was found in it. */
   expect(labels.length, "the CONNECT row rendered no tabs").toBeGreaterThan(0);
-  expect(labels[0]).toBe("Profile");
+  /* ⚠⚠ ABSENCE, ASSERTED EXPLICITLY. Without this the list check below could be
+     satisfied by a future row that reintroduces Profile somewhere else. */
+  expect(labels, "Profile is an account-menu destination and must not be a Connect tab")
+    .not.toContain("Profile");
+  expect(labels[0]).toBe("Community");
   /*
-    ⚠⚠⚠ FIVE TABS, ASSERTED AS A LIST. Scott's ruling was *"less tabs…simple"*,
-    so the COUNT is the thing being held — an appended sixth must fail here
+    ⚠⚠⚠ FOUR TABS, ASSERTED AS A LIST. Scott's ruling was *"less tabs…simple"*,
+    so the COUNT is the thing being held — an appended fifth must fail here
     rather than pass because the first one is still right.
-    ⚠ `test3@panameer.com` is provider-only (measured, see `_auth.ts`), so it
-    sees `Service Products`. ⚠⚠ A BUYER SEES FOUR, and that difference is the
-    entire reason `lib/connect-tabs.ts` exists.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`): *"FIVE TABS"*, when `Profile` was
+    the first of them (`P2-A2-E598` WS-B took it to the account menu).
+    ⚠ The gate persona is provider-only (measured, see `_auth.ts`), so it sees
+    `Service Products`. ⚠⚠ A BUYER SEES THREE, and that difference is the entire
+    reason `lib/connect-tabs.ts` exists.
   */
-  expect(labels).toEqual(["Profile", "Community", "Groups", "Service Products", "Settings"]);
+  expect(labels).toEqual(["Community", "Groups", "Service Products", "Settings"]);
 });
 
 /*
@@ -202,7 +231,9 @@ test("E567/2 — the CONNECT tab row renders with Profile first", async () => {
   // });
 */
 test("E560/2 — Messages is GONE from the CONNECT row, and still reachable", async () => {
-  await open(ROUTES.home);
+  /* ⚠ READ ON `/community`, THE ROW'S OWN PAGE (`P2-A2-E598` WS-B). `home`
+     redirects here, so this arrives in the same place either way. */
+  await open(ROUTES.community);
 
   /*
     ⚠ The tabs that remain, in order — the row did not lose anything else.
@@ -227,8 +258,17 @@ test("E560/2 — Messages is GONE from the CONNECT row, and still reachable", as
     checks the Community surface LINKS to all three, in every branch, which is a
     stronger guard than appearing in this row ever was.
   */
+  /*
+    ⚠⚠⚠ `/connect` LEFT THE ROW (`P2-A2-E598` WS-B) — it was the `Profile` tab's
+    destination, and the profile is an account-menu surface now.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   const TAB_HREFS = ["/connect", "/community", "/community/forums",
+    //     "/my-services", "/settings"];
+    ⚠⚠ THE ROUTE ITSELF IS NOT GONE — `/connect` still exists and redirects to
+    `/community`. It simply is not a TAB any more, which is what this list is
+    about. ⚠ The rule — ORDER of destinations, scoped to the row — is unchanged.
+  */
   const TAB_HREFS = [
-    "/connect",
     "/community",
     "/community/forums",
     "/my-services",
@@ -363,6 +403,17 @@ test("E560/3 — a provider is NEVER shown the wrong console, even for one frame
 */
 test("E560/4 — the Messages drawer opens, closes on Escape, and returns focus", async () => {
   await open(ROUTES.home);
+  /*
+    ⚠⚠ THE LANDING PATH IS CAPTURED, NOT NAMED (`P2-A2-E598` WS-B). `ROUTES.home`
+    is `/connect`, which now REDIRECTS to `/community`, so asserting the URL
+    equals `ROUTES.home` failed on a redirect the drawer had nothing to do with.
+    ⚠⚠⚠ THE RULE IS *"the drawer overlays, it does not route"* — a statement
+    about CHANGE, not about a particular URL. Comparing the page to ITSELF is
+    what that rule actually says, and it survives the next route change too.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   expect(new URL(page.url()).pathname).toBe(ROUTES.home);
+  */
+  const landedPath = new URL(page.url()).pathname;
 
   const icon = page.locator('.pm-band-right button[aria-label="Messages"]');
   await expect(icon, "the cluster icon must be a BUTTON — it opens an overlay, it does not navigate").toHaveCount(1);
@@ -378,7 +429,7 @@ test("E560/4 — the Messages drawer opens, closes on Escape, and returns focus"
   await expect(panel).toBeVisible();
   await expect(icon).toHaveAttribute("aria-expanded", "true");
   /* ⚠ AND THE PAGE IS STILL THE PAGE — the drawer overlays, it does not route. */
-  expect(new URL(page.url()).pathname).toBe(ROUTES.home);
+  expect(new URL(page.url()).pathname).toBe(landedPath);
 
   await page.keyboard.press("Escape");
   await expect(panel).toHaveCount(0);

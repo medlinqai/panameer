@@ -323,9 +323,19 @@ check(
 /* ⚠ And the CARD is gated, not just its body — `RateRows` returning null still
    left `ProfileCard` printing the heading `Rates` over an empty box, which told
    a visitor a rate existed and was being withheld. Caught by the WS-C walk. */
+/*
+  ⚠⚠ RATES MOVED INTO THE HERO (`P2-A2-E598` WS-C item 1) — *"Rates … sit side
+  by side on the right, with an Edit link."* It is no longer a `ProfileCard`.
+  ⚠⚠⚠ THE RULE IS UNCHANGED AND IS THE WHOLE POINT OF THIS ASSERTION: the
+  WHOLE BLOCK is gated on `p.rates`, not just its rows, because a heading
+  reading `Rates` over an empty box tells a visitor a rate exists and is being
+  withheld. ⚠ Only the element it gates changed.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   /\{p\.rates && \(\s*<ProfileCard/.test(CARDS_PROFILE)
+*/
 check(
-  "9 — ⚠ the Rates CARD is gated, not only its rows",
-  /\{p\.rates && \(\s*<ProfileCard/.test(CARDS_PROFILE)
+  "9 — ⚠ the Rates BLOCK is gated, not only its rows",
+  /\{p\.rates && \(\s*<div className="pm-cp2-rates"/.test(CARDS_PROFILE)
 );
 check(
   "9 — ⚠ both rate consumers handle the null",
@@ -345,46 +355,54 @@ check(
   "10 — the plain-link card is gone",
   !/label: "My Stats"/.test(RAIL_L) && !/label: "My Settings"/.test(RAIL_L)
 );
-check("10 — the comb is in its slot", /<UsageComb usage=\{usage\} \/>/.test(RAIL_L));
 /*
-  ⚠⚠ SIX CELLS, IN BAND ORDER, EACH WITH A ONE-WORD LABEL. Scott: *"Six
-  unlabelled numbers can't be read — you can't tell which application owns
-  which."* ⚠ The labels ARE the band's words, which is what makes one word
-  enough.
-*/
-for (const label of ["Connect", "Learn", "Work", "Sell", "Orders", "Get Paid"]) {
-  check(`10 — the comb labels "${label}"`, new RegExp(`label: "${label}"`).test(RAIL_L));
-}
-/*
-  ⚠⚠⚠ INK, WITH ONE DELIBERATE EXCEPTION. `E433` reserves magenta for
-  interactive things and these are figures — but Scott ruled `Get Paid`
-  dominant *"by DESIGN WEIGHT: size, position, colour and label."* ⚠ The gate
-  holds the exception to ONE cell so it cannot spread: exactly one `pay: true`.
+  ── ⚠⚠⚠ THE COMB IS GONE FROM THE PROFILE (`P2-A2-E598` WS-C item 3) ────────
+
+  ⚠ SCOTT'S BRIEF: *"Removed from the profile: … The Usage Stats comb."* It is
+  ONE LINE in the rail now — *"Usage · N lessons · Stats →"* — because `/stats`
+  already owns that surface, and the mockup's note says why: *"Network, Usage
+  Stats and Account Health are one line each with a link, because each already
+  has its own page."*
+  ⚠⚠ THIS IS `check:rollup`'S CASE — THE RULING CHANGED, THE CODE DID NOT
+  DRIFT. Eleven assertions here described a component the profile no longer
+  renders.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`) — all of them, as LINE comments per
+  rule 12 because the quoted body carries its own block comments:
+  //   check("10 — the comb is in its slot", /<UsageComb usage=\{usage\} \/>/.test(RAIL_L));
+  //   for (const label of ["Connect","Learn","Work","Sell","Orders","Get Paid"]) {
+  //     check(`10 — the comb labels "${label}"`, new RegExp(`label: "${label}"`).test(RAIL_L));
+  //   }
+  //   check("10 — ⚠ exactly one cell is magenta, and it is Get Paid",
+  //     (RAIL_L.match(/pay: true/g) ?? []).length === 1 && …);
+  //   check("10 — the figures are ink except that one",
+  //     /c\.pay \? "text-magenta" : "text-ink"/.test(RAIL_L));
+  //   check("10 — ⚠ and the card renders a dash when it is not measurable",
+  //     /earnedCents === null \? "—"/.test(RAIL_L));
+
+  ⚠⚠⚠ WHAT REPLACED THEM IS ASSERTED, NOT ASSUMED. Deleting eleven assertions
+  would stop the gate failing and stop it saying anything — so the one-liner and
+  its door are held here instead. ⚠ `UsageComb` ITSELF IS PRESERVED IN FULL,
+  quoted out inside `ConnectProfile.tsx`, and `getUsageStats` is untouched: the
+  assertions below on `usage-stats.ts` still bite.
 */
 check(
-  "10 — ⚠ exactly one cell is magenta, and it is Get Paid",
-  (RAIL_L.match(/pay: true/g) ?? []).length === 1 &&
-    /label: "Get Paid",[\s\S]{0,400}pay: true/.test(RAIL_L)
+  "10 — ⚠⚠ the comb no longer renders on the profile",
+  !/<UsageComb usage=\{usage\} \/>/.test(RAIL_L)
 );
 check(
-  "10 — the figures are ink except that one",
-  /c\.pay \? "text-magenta" : "text-ink"/.test(RAIL_L)
+  "10 — ⚠ the Usage one-liner replaced it, and names the Learn count",
+  /<b className="font-bold">Usage<\/b>/.test(RAIL_L) && /usage\?\.learn/.test(RAIL_L)
 );
 /*
-  ⚠⚠⚠ AND THE `$0` IS DERIVED, NOT TYPED. Earnings are not modelled — `Payment`
-  is scoped by `p_account_id`, the buyer's money arriving, and there is no
-  payout model. ⚠ A typed `$0` would be the `Viewing Me` mistake: a plausible
-  number that does not exist. ⚠⚠ IT IS ENTAILED BY HAVING ZERO WORK ORDERS, and
-  it INVALIDATES ITSELF — the moment there is an order the function returns
-  `null` and the card renders the dash convention instead.
+  ⚠⚠ AND THE EARNINGS RULE SURVIVES WHERE IT ACTUALLY LIVES. The `$0` was never
+  the card's — it is `getUsageStats`' derivation, and `E593` recorded why: *"a
+  typed `$0` would be the `Viewing Me` mistake: a plausible number that does not
+  exist."* ⚠ The card that rendered the dash is gone; the function that makes
+  the claim is not, so the assertion moves to it rather than being dropped.
 */
 check(
   "10 — ⚠⚠ the earnings figure is derived from the order count",
   /const earnedCents = orders === 0 \? 0 : null;/.test(USAGE)
-);
-check(
-  "10 — ⚠ and the card renders a dash when it is not measurable",
-  /earnedCents === null \? "—"/.test(RAIL_L)
 );
 /* ⚠ Every figure is a real count — the LOCKED Counters decision. No literal
    may stand in for one. */

@@ -157,7 +157,14 @@ test.describe("⚠ THE VISITOR PROFILE — P2-J3-E593 WS-C", () => {
   }) => {
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
     await signIn(page);
-    await page.goto("/connect", { waitUntil: "networkidle" });
+    /* ⚠⚠ THE OWNER'S PAGE IS `/profile` (`P2-A2-E598` WS-B). `/connect` now
+       redirects to `/community`, which is the PEOPLE page and carries none of
+       the owner surfaces this asserts — so it reported them "vanished".
+       ⚠ SUPERSEDED, quoted not deleted (`E164`):
+       //   await page.goto("/connect", { waitUntil: "networkidle" });
+       ⚠⚠⚠ THE RULE IS UNCHANGED — *"the OWNER's view is unchanged"* — only the
+       URL the owner's view lives at moved. */
+    await page.goto("/profile", { waitUntil: "networkidle" });
     /*
       ⚠⚠⚠ LOWER-CASED, AND THIS WAS A REAL FALSE PASS. `innerText` returns the
       RENDERED text, so a heading with `text-transform: uppercase` — which the
@@ -173,15 +180,56 @@ test.describe("⚠ THE VISITOR PROFILE — P2-J3-E593 WS-C", () => {
       card on `owner` is one character away from gating it on `!owner`, and the
       visitor assertions above would pass either way.
     */
+    /*
+      ── ⚠⚠⚠ TWO NEEDLES RETIRED BY `P2-A2-E598` WS-C ────────────────────────
+
+      ⚠ SUPERSEDED, quoted not deleted (`E164`):
+      //   "Account Health",
+      //   "Grow Your Income Faster",
+      ⚠⚠ BOTH WERE REMOVED ON PURPOSE AND THE BRIEF NAMES THEM: *"Removed from
+      the profile: … the full Account Health card … Grow Your Income Faster. Its
+      links move to the Service Products empty state."*
+      ⚠⚠⚠ REMOVING A NEEDLE IS NOT ENOUGH — that would stop the gate failing and
+      stop it saying anything. What REPLACED each one is asserted below, so the
+      rule (*"every owner surface still renders"*) survives the redesign.
+    */
     for (const needle of [
       "Rates",
-      "Account Health",
       "Profile Completion",
-      "Grow Your Income Faster",
       "Learning Paths",
+      /* ⚠ THE `Grow` CARD is the new home of Invite, Recommendation and Mentor
+         — three separate cards became three rows, and all three destinations
+         are unchanged. */
+      "Grow",
+      "Invite a Colleague",
+      "Request a Recommendation",
+      "Request a Mentor",
+      /* ⚠⚠ AND THE HERO'S TWO ACTIONS. `See What Buyers See` is the owner's
+         preview of their own `/providers/[id]` page. */
+      /* ⚠ RENAMED AT THE WS-C GATE (`E598`). ⚠ SUPERSEDED, quoted (`E164`):
+         //   "Edit Profile", */
+      "Complete Your Profile",
+      "See What Buyers See",
     ]) {
       expect(body.includes(needle.toLowerCase()), `"${needle}" vanished from the OWNER's page`).toBe(true);
     }
+    /*
+      ⚠⚠ ACCOUNT HEALTH IS A ONE-LINER NOW, NOT A CARD — *"one line each with a
+      link, because each already has its own page."* ⚠⚠⚠ THE DOOR IS WHAT
+      MATTERS AND IT IS ASSERTED AS A LINK, not as a word: the card's four
+      ticked rows went, `/account-health` remains the authority, and a reader
+      must still be able to reach it.
+    */
+    await expect(
+      page.locator('a[href="/account-health"]'),
+      "the owner lost their door to /account-health"
+    ).toHaveCount(1);
+    /* ⚠ AND THE USAGE ONE-LINER'S DOOR TO `/stats`. The comb is gone (WS-C item
+       3); the page it summarised is not. */
+    await expect(
+      page.locator('a[href="/stats"]'),
+      "the owner lost their door to /stats"
+    ).toHaveCount(1);
     /*
       ⚠ AND THE OWNER STILL HAS THEIR OWN RATES CARD — the rule is *"not the
       viewer's own"*, not *"never"*. ⚠⚠ ASSERTED ON THE CARD, NOT ON A FIELD
@@ -200,7 +248,14 @@ test.describe("⚠ THE VISITOR PROFILE — P2-J3-E593 WS-C", () => {
   }) => {
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
     await signIn(page);
-    await page.goto("/connect", { waitUntil: "networkidle" });
+    /* ⚠⚠ THE OWNER'S PAGE IS `/profile` (`P2-A2-E598` WS-B). `/connect` now
+       redirects to `/community`, which is the PEOPLE page and carries none of
+       the owner surfaces this asserts — so it reported them "vanished".
+       ⚠ SUPERSEDED, quoted not deleted (`E164`):
+       //   await page.goto("/connect", { waitUntil: "networkidle" });
+       ⚠⚠⚠ THE RULE IS UNCHANGED — *"the OWNER's view is unchanged"* — only the
+       URL the owner's view lives at moved. */
+    await page.goto("/profile", { waitUntil: "networkidle" });
     /*
       ⚠⚠⚠ LOWER-CASED, AND THIS WAS A REAL FALSE PASS. `innerText` returns the
       RENDERED text, so a heading with `text-transform: uppercase` — which the

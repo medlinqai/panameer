@@ -1241,7 +1241,19 @@ test.describe("⚠ THE BAND NEVER COVERS A STICKY ASIDE — P2-ALL-E587", () => 
       for (const width of c.widths) {
         const page = await browser.newPage({ viewport: { width, height: 800 } });
         await signIn(page);
-        await page.goto("/connect", { waitUntil: "networkidle" });
+        /*
+          ⚠⚠⚠ `/profile`, NOT `/connect` (`P2-A2-E598` WS-B). The owner profile
+          moved to `/profile` and `/connect` now REDIRECTS to `/community`,
+          which has no sticky aside — so this measured NOTHING and said so.
+          ⚠ SUPERSEDED, quoted not deleted (`E164`):
+          //   await page.goto("/connect", { waitUntil: "networkidle" });
+          ⚠⚠ IT FAILED RATHER THAN PASSING ON AN EMPTY MEASUREMENT, which is
+          `E586` working exactly as intended: *"At 1023px NO STICKY ASIDE
+          RENDERED on /connect, so nothing was measured… it did not fail, it had
+          no inputs."* ⚠⚠⚠ THAT GUARD IS WHY THIS WAS A ONE-LINE FIX INSTEAD OF
+          A SILENTLY DEAD ASSERTION.
+        */
+        await page.goto("/profile", { waitUntil: "networkidle" });
 
         /* ⚠ MEASURED ON A REAL IN-SHELL PAGE. The assertion is about the BAND's
            relationship to any sticky aside, so it holds wherever one renders —
