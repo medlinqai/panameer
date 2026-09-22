@@ -561,7 +561,28 @@ export function ConnectProfile({
                               new title true."* ⚠ A title that promises ranking before
                               ranking exists is the `E579` shape in copy.
                             */}
-                            <h2 className="mb-2 font-display text-[15px] font-bold">Grow</h2>
+                            {/*
+                  ── ⚠⚠⚠ `Rank Higher in Search Results` (`E013`) ─────────────
+
+                  ⚠ `E598` WS-C and `E600` WS-B both kept the title `Grow`
+                  DELIBERATELY, because the new one promised something the
+                  product did not do. ⚠⚠ `E600` WS-E MAKES IT TRUE and ships the
+                  rename in the same merge, which is the condition Scott set.
+                  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                  //   <h2 …>Grow</h2>
+
+                  ⚠⚠⚠ IT IS TRUE ON ONE SURFACE TODAY — `Invite More` on a work
+                  request, where `growthScore` breaks the tie below match weight
+                  and skill overlap. ⚠ Scott, 2026-09-22: *"it is mostly
+                  marketing… but it is important to give the younger users a
+                  fighting chance to rank."*
+                  ⚠ KNOWN-OPEN, recorded in the brief: the title is FULLY true
+                  once Shop and Work search exist, and both must use growth the
+                  same way — after relevance.
+                */}
+                <h2 className="mb-2 font-display text-[15px] font-bold">
+                  Rank Higher in Search Results
+                </h2>
                             <div className="flex flex-col">
                               {[
                                 /*

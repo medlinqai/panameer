@@ -3,6 +3,8 @@ import { shownSkills, selectedRoleIds } from "@/lib/shown-skills";
 import { marketplaceVisibleWhere, type Viewer } from "@/lib/access";
 import { getWorkRequest } from "@/lib/work-request";
 import { suiteFromPillar } from "@/lib/suite";
+/* ⚠ `P2-A2-E600` WS-E — growth breaks the tie below the match terms. */
+import { growthScore } from "@/lib/growth-score";
 import type { SoftwareSuite } from "@prisma/client";
 
 /**
@@ -93,6 +95,33 @@ async function widenThroughBridge(
   return [...widened];
 }
 
+/**
+ * ── ⚠⚠ THE ORDERING RULE, EXPORTED SO A GATE CAN ASSERT **IT** ───────────
+ *
+ * ⚠ `check:match-rank` imports this rather than re-writing the comparator. ⚠⚠ A
+ * gate holding its own copy agrees with a stale duplicate the moment the real
+ * sort changes — which is the failure mode `E585` names.
+ * ⚠⚠⚠ IT IS PURE AND TAKES THE GROWTH MAP AS AN ARGUMENT, so the gate can prove
+ * the precedence with three plain objects and no database at all.
+ *
+ * ⚠ MATCH FIRST, THEN OVERLAP, THEN GROWTH, THEN NAME. Growth replaced NAME and
+ * nothing else (Scott, 2026-09-22) — it can only order people the ranking
+ * already calls equal, so inviting colleagues cannot buy relevance.
+ * ⚠⚠ IT SORTS A COPY. `Array.prototype.sort` mutates, and a caller handing in a
+ * list it still holds should not find it reordered underneath.
+ */
+export function rankMatchedProviders<
+  T extends { personId: string; name: string; matchWeight: number; relevantSkills: number }
+>(rows: T[], growth: Map<string, number>): T[] {
+  return [...rows].sort(
+    (a, b) =>
+      b.matchWeight - a.matchWeight ||
+      b.relevantSkills - a.relevantSkills ||
+      (growth.get(b.personId) ?? 0) - (growth.get(a.personId) ?? 0) ||
+      a.name.localeCompare(b.name)
+  );
+}
+
 export async function matchProvidersFor(
   viewer: Viewer,
   workRequestId: string
@@ -136,6 +165,10 @@ export async function matchProvidersFor(
       currency: true,
       validation_status: true,
       /* title: the provider's title lives on the PERSON since E595 WS-B. */
+      /* ⚠ `person_id` IS SELECTED FOR THE GROWTH TIE-BREAK (`P2-A2-E600`
+         WS-E). `growthScore` is keyed on the PERSON — `ColleagueInvite.
+         inviter_person_id` — not on the provider profile. */
+      person_id: true,
       person: { select: { first_name: true, last_name: true, title: true, photo_url: true } },
       /*
         Only the skills THIS request asked for. Selecting all of a provider's
@@ -173,7 +206,7 @@ export async function matchProvidersFor(
    */
   const SUITE_BOOST = 0.5;
 
-  const providers = rows
+  const candidates = rows
     .map((row) => {
       /*
         ── ⚠⚠ MATCHING READS SHOWN, NOT HELD (`P2-J1.4-E517`) ─────────────────
@@ -199,6 +232,9 @@ export async function matchProvidersFor(
         : 0;
       return {
         profileId: p.id,
+        /* ⚠ Carried for the growth tie-break only; it is stripped below and is
+           NOT part of `MatchedProvider`. A buyer's payload gains nothing. */
+        personId: p.person_id,
         firstName: p.person.first_name,
         lastName: p.person.last_name,
         name: `${p.person.first_name} ${p.person.last_name}`.trim(),
@@ -229,20 +265,64 @@ export async function matchProvidersFor(
       ⚠ Scott, 2026-09-17: *"narrowing your roles removes you from those searches.
       That is what narrowing MEANS."*
     */
-    .filter((p) => p.relevantSkills > 0)
-    /*
-      Weighted depth first; overlap breaks ties. Overlap survives as the
-      tie-break rather than the ranking because two providers of equal depth,
-      one covering four of the asked-for skills and one covering two, are
-      genuinely ordered that way.
-    */
-    .sort(
-      (a, b) =>
-        b.matchWeight - a.matchWeight ||
-        b.relevantSkills - a.relevantSkills ||
-        a.name.localeCompare(b.name)
+    .filter((p) => p.relevantSkills > 0);
+
+  /*
+    ── ⚠⚠⚠ GROWTH BREAKS THE TIE (`P2-A2-E600` WS-E) ─────────────────────────
+
+    ⚠ SCOTT, 2026-09-22: *"it is mostly marketing… but it is important to give
+    the younger users a fighting chance to rank."*
+    ⚠⚠ **MATCH STAYS STRICTLY FIRST.** A better-matched provider is never pushed
+    below a worse one — growth replaces the NAME tie-break and nothing else, so
+    it can only order people the ranking already calls equal.
+    ⚠⚠⚠ THAT IS WHAT MAKES THE `Rank Higher in Search Results` CARD TRUE WITHOUT
+    MAKING IT A LEVER: inviting colleagues cannot buy relevance, only the
+    alphabet.
+
+    ⚠ ALL-TIME, NOT THIS MONTH. A buyer's shortlist should not reshuffle on the
+    1st, and a provider who did the work last quarter has still done it.
+    ⚠⚠ ONE QUERY PER CANDIDATE IS ACCEPTED HERE and nowhere else: the list is
+    already bounded at 100 by the `take` above and typically ~24 after the
+    filter. ⚠ If that ceiling ever rises, this becomes one grouped query —
+    recorded so the next reader does not have to rediscover it.
+  */
+  const growth = new Map<string, number>(
+    await Promise.all(
+      candidates.map(
+        async (c) =>
+          [c.personId, (await growthScore(c.personId, "all")).points] as const
+      )
     )
-    .slice(0, 24);
+  );
+
+  /*
+    Weighted depth first; overlap breaks ties. Overlap survives as the
+    tie-break rather than the ranking because two providers of equal depth,
+    one covering four of the asked-for skills and one covering two, are
+    genuinely ordered that way.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`) — name was the last tie-break:
+    //   b.matchWeight - a.matchWeight ||
+    //   b.relevantSkills - a.relevantSkills ||
+    //   a.name.localeCompare(b.name)
+    ⚠⚠ NAME IS STILL THE FINAL TERM, below growth — two providers with equal
+    match, equal overlap and equal growth must still have a STABLE order, or
+    the list reshuffles between renders.
+  */
+  const providers = rankMatchedProviders(candidates, growth)
+    .slice(0, 24)
+    /*
+      ⚠⚠ `personId` IS STRIPPED. It was carried only to key the growth lookup;
+      `MatchedProvider` never had it, and a buyer's payload does not gain a
+      person id it has no use for.
+      ⚠ WRITTEN AS A `delete` ON A COPY rather than a destructured rest, because
+      the rest form leaves an unused binding and this repo's lint counts those —
+      the rule is 0 NEW against the baseline.
+    */
+    .map((c) => {
+      const copy: Omit<typeof c, "personId"> & { personId?: string } = { ...c };
+      delete copy.personId;
+      return copy as Omit<typeof c, "personId">;
+    });
 
   return { skillIds, providers };
 }
