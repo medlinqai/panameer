@@ -242,6 +242,38 @@ const BAND_KNOWN_OPEN: Readonly<Record<string, { since: string; why: string }>> 
     since: "2026-09-21",
     why: "Settings is an ACCOUNT-menu destination, not a band application. Resolved by the Settings absorption brief, which P2-A3-E596 WS-A unblocks.",
   },
+  /*
+    ── ⚠⚠⚠ THE PROFILE TAB ROW IS ACCOUNT-MENU TERRITORY (`P2-A2-E600` WS-A) ──
+
+    ⚠ `E600` gives six pages under the avatar one tab row, which puts them all
+    in `TAB_ROUTES`. ⚠⚠ FIVE OF THE SIX LIGHT NO BAND APPLICATION, AND THAT IS
+    CORRECT — they are reached from your own picture, not from Connect, Learn,
+    Work, Sell, Orders or Get Paid. The brief says so: *"Account-menu routes
+    light no band app (E596 rule). Extend the named list to any new route
+    here."*
+    ⚠⚠⚠ `/community/score` IS DELIBERATELY **NOT** LISTED. Measured: it lights
+    `Connect`, because it lives under `/community` and `bandPrefixesFor`
+    resolves that through Connect. An entry for it would START PASSING and
+    therefore FAIL — the first of this mechanism's two safeguards, working.
+    ⚠ Each carries its own date and prints its age every run, the second
+    safeguard: *"a visible age is what stops this becoming a parking lot."*
+  */
+  "/profile": {
+    since: "2026-09-22",
+    why: "The owner's profile is an ACCOUNT-menu destination since P2-A2-E598 WS-B — it left Connect's tab row and lights no band application by design.",
+  },
+  "/stats": {
+    since: "2026-09-22",
+    why: "Statistics is an ACCOUNT-menu destination. Its own header and page are Scott's to design; this brief only gives it a tab.",
+  },
+  "/account-health": {
+    since: "2026-09-22",
+    why: "Account standing is between a member and Panameer, not an application in the band.",
+  },
+  "/company": {
+    since: "2026-09-22",
+    why: "My Company is reached from the avatar menu (E099, reversing E225). It is the org you belong to, not a band application.",
+  },
 };
 
 for (const route of TAB_ROUTES) {

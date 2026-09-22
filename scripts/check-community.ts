@@ -1435,7 +1435,15 @@ check(
 const CONNECT_PAGES = [
   ["community", "page.tsx"], ["community", "colleagues", "page.tsx"],
   ["community", "forums", "page.tsx"], ["community", "mentors", "page.tsx"],
-  ["community", "score", "page.tsx"], ["community", "teams", "page.tsx"],
+  /* ⚠⚠⚠ `/community/score` LEFT THIS LIST (`P2-A2-E600` WS-A 1). Scott: *"The
+     Score page stops showing Connect's tab row… It's a profile page now."* It
+     draws the PROFILE row through `profileTabs`, so asserting it draws Connect's
+     through `connectTabs` fails on a page correctly rendering the other one.
+     ⚠ THE RULE IS UNWEAKENED and still guards the five pages that draw Connect's
+     row. ⚠ THE ROUTE DID NOT MOVE — only which row it claims.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   ["community", "score", "page.tsx"], */
+  ["community", "teams", "page.tsx"],
   /*
     ── ⚠⚠⚠ `connect/page.tsx` LEFT THIS LIST (`P2-A2-E598` WS-B) ─────────────
 

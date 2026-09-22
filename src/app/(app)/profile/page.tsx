@@ -1,6 +1,9 @@
 import { redirect } from "next/navigation";
 import { getSessionViewer } from "@/lib/session";
 import { EmployeeProfile } from "@/components/profile/EmployeeProfile";
+import { PageTabs } from "@/components/casing/PageTabs";
+import { tabSequenceFor } from "@/lib/nav";
+import { profileTabs } from "@/lib/profile-tabs";
 import { ConnectProfile } from "@/components/community/ConnectProfile";
 import { getOwnProviderProfileView } from "@/lib/provider-profile-view";
 import { getPathsTaughtByProfile, getPathsTakenBy } from "@/lib/learn-home";
@@ -121,9 +124,26 @@ export default async function MyProfilePage() {
           paragraph left the page with `ConnectProfile`'s own `My Profile`
           heading as well — the same words twice, and two `<h1>` candidates for
           one page. ⚠ That heading is now visitor-only; this is the owner's. */}
-      <h1 className="mb-3 text-[13px] font-bold uppercase tracking-[0.08em] text-ink-2">
-        My Profile
-      </h1>
+      {/*
+        ── ⚠⚠⚠ THE CRUMB BECAME THE TAB ROW (`P2-A2-E600` WS-A) ───────────────
+
+        ⚠ `E598` WS-B put a `My Profile` crumb where Connect's tab row had been,
+        because the page had no row of its own and needed to say where it was.
+        ⚠⚠ IT NOW HAS ONE, AND THE ROW SAYS IT TWICE OVER — an eyebrow reading
+        `MY PROFILE` above a tab reading `My Profile`. ⚠⚠⚠ KEEPING THE CRUMB
+        WOULD REPEAT THE `E598` WS-B DEFECT EXACTLY: the same words twice, and
+        two `<h1>` candidates for one page. `PageTabs` supplies the heading now.
+        ⚠ SUPERSEDED, quoted not deleted (`E164`):
+        //   <h1 className="mb-3 text-[13px] font-bold uppercase tracking-[0.08em] text-ink-2">
+        //     My Profile
+        //   </h1>
+      */}
+      <PageTabs
+        eyebrow="MY PROFILE"
+        sequence={tabSequenceFor("/profile")}
+        tabs={profileTabs(viewer)}
+        current="/profile"
+      />
       {/* ⚠ `takenPaths` IS KEYED ON THE **USER**, not the person —
           `LearnEnrollment.user_id` (`E593` WS-B item 17). ⚠⚠ A JSX comment
           is only legal in CHILDREN position, never between attributes, which

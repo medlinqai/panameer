@@ -641,6 +641,39 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
     money in it is unbuilt, and that is the right order — name it, then build
     into it. ⚠ DO NOT FABRICATE A PAID STATE.
   */
+  /*
+    ── ⚠⚠⚠ THE PROFILE TAB ROW — EVERY PAGE UNDER THE AVATAR (`P2-A2-E600` WS-A)
+
+    ⚠ SCOTT, 2026-09-22: *"One tab row for every page under the avatar: My
+    Profile · Score · Statistics · Account Health · My Company · Account
+    Settings. It matches the avatar menu."*
+
+    ⚠⚠ THE ROW AND THE MENU USE THE SAME WORDS, WHICH IS THE POINT — `Score`
+    not `Profile Score`, `Statistics` not `Usage Stats`, `Account Settings` not
+    `Settings`. ⚠ `PERSONA_NAV_PRIMARY`/`SECONDARY` are renamed to match in the
+    same commit; two vocabularies for one set of pages is the `E459` defect
+    (*"a `Reports` panel beside `Reports` copy and neither was obvious"*).
+
+    ⚠⚠⚠ ALL SIX ROUTES EXIST — MEASURED, because the brief says *"a tab whose
+    page doesn't exist yet: leave it out and report it. Never a tab that 404s."*
+    `/profile`, `/community/score`, `/stats`, `/account-health`, `/company` and
+    `/settings` all have a `page.tsx`. **Nothing was left out.**
+
+    ⚠ `Usage` IS FOLDED INTO `Statistics` (Scott): one tab, one menu item, one
+    route — `/stats`.
+    ⚠⚠ THE KEY IS `/profile` because that is the row's home, and
+    `bandPrefixesFor` is NOT extended to cover the others: these are
+    ACCOUNT-MENU destinations and must light no band application (`E596`), which
+    is what the `BAND_KNOWN_OPEN` entries below record.
+  */
+  "/profile": [
+    { label: "My Profile", href: "/profile" },
+    { label: "Score", href: "/community/score" },
+    { label: "Statistics", href: "/stats" },
+    { label: "Account Health", href: "/account-health" },
+    { label: "My Company", href: "/company" },
+    { label: "Account Settings", href: "/settings" },
+  ],
   "/connect": [
     /*
       ── ⚠⚠⚠ `Profile` LEFT THIS ROW (`P2-A2-E598` WS-B item 2) ──────────────
@@ -684,6 +717,14 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
     /* ⚠ `/settings` POINTS AT `/settings` FOR NOW. Scott ruled that Settings is
        ABSORBED into Connect — it renders inside, the row persists, `/settings`
        redirects in — but that is its own id and is far too large to ride here. */
+    /* ⚠⚠⚠ CONNECT'S `Settings` TAB IS **NOT** RENAMED, AND THAT IS MEASURED.
+       ⚠ `P2-A2-E600` WS-A renames the ACCOUNT MENU's item to `Account
+       Settings`; a blind replace hit THIS tab first and `check:community`'s
+       `E598/B` assertion caught it by name — *"Connect's row still has its four
+       tabs — Community · Groups · Service Products · Account Settings"*.
+       ⚠⚠ THEY ARE DIFFERENT ROWS WITH DIFFERENT JOBS: this one is a slice of
+       CONNECT; the profile row's `Account Settings` is a page under the avatar.
+       ⚠ Absorbing Settings into Connect is its own brief and is out of scope. */
     { label: "Settings", href: "/settings" },
     /*
       ── ⚠⚠ MESSAGES HAS LEFT THIS ROW (`P2-ALL-E560` STAGE 1, 2026-09-18) ─────
@@ -1059,8 +1100,14 @@ export const PERSONA_NAV_PRIMARY: NavItem[] = [
   /* ⚠ `/community/score` — shipped by `P2-J3-E590` WS-B. The menu shows the
      percentage beside it, fetched when the menu OPENS (see
      `/api/me/menu-summary`), never on every page render. */
-  { label: "Profile Score", href: "/community/score" },
-  { label: "Usage Stats", href: "/stats" },
+  /* ⚠ RENAMED TO MATCH THE TAB ROW (`P2-A2-E600` WS-A 2). ⚠ SUPERSEDED,
+     quoted not deleted (`E164`): `{ label: "Profile Score", href: … }` */
+  { label: "Score", href: "/community/score" },
+  /* ⚠⚠ `Usage` IS FOLDED INTO `Statistics` (Scott, 2026-09-22) — one tab, one
+     menu item, one route. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   { label: "Usage Stats", href: "/stats" },
+     ⚠ and before it, `E559` WS-D's `{ label: "My Stats", href: "/stats" }`. */
+  { label: "Statistics", href: "/stats" },
   /*
     ── ⚠⚠⚠ `Invite a Colleague`, AND IT IS **ONE** ENTRY (`P2-A3-E599` WS-C) ──
 
@@ -1158,8 +1205,13 @@ export const PERSONA_NAV_SECONDARY: NavItem[] = [
   /* ⚠ `P2-ALL-E559` WS-D — SCOTT, 2026-09-17. ⚠ SUPERSEDED, quoted not deleted
      (`E164`): `{ label: "Settings", href: "/settings" }`. ⚠⚠ A RENAME ONLY —
      the route is unchanged, and `settings-nav.ts` (the `/settings` SUB-NAV) is a
-     DIFFERENT list and is not in scope. */
-  { label: "Settings", href: "/settings" },
+     DIFFERENT list and is not in scope.
+     ⚠⚠⚠ RENAMED AGAIN BY `P2-A2-E600` WS-A so the MENU and the PROFILE TAB ROW
+     use the same word. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   { label: "Settings", href: "/settings" },
+     ⚠ It is the third name for this item (`Settings` → `My Settings` → `Settings`
+     → `Account Settings`), and each time the ROUTE was unchanged. */
+  { label: "Account Settings", href: "/settings" },
   /* ⚠⚠ MOVED DOWN FROM `PERSONA_NAV_PRIMARY` (`P2-A2-E598` WS-A) — option B
      groups it with Settings and Help, because all three are about the ACCOUNT
      rather than about how you are doing. ⚠ The route is unchanged. */
@@ -1175,6 +1227,24 @@ export const PERSONA_NAV_SECONDARY: NavItem[] = [
     right long-run answer — a real help surface would list "Report a Bug"
     alongside "My Tickets", and `/support/bug` currently has no menu door at all.
   */
+  /*
+    ── ⚠⚠⚠ `Request a Recommendation` IS BACK, AND IT IS IN **BOTH** PLACES ──
+
+    ⚠ SCOTT, 2026-09-22: *"Add back 'Request a Recommendation' (E598 moved it to
+    the Grow card; it's now in **both**)."*
+    ⚠⚠ THAT IS A DELIBERATE SECOND DOOR, NOT A DUPLICATE. `E598` WS-C moved it
+    OUT of this menu in the same commit that gave it a home on the profile,
+    precisely so the page never had two doors or none — ⚠⚠⚠ AND SCOTT HAS NOW
+    RULED THAT TWO IS RIGHT FOR THIS ONE: it is an errand you think of from
+    anywhere, not only while looking at your profile.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`) — `E598` WS-C's removal note:
+    //   ⚠⚠ IT LEAVES AND ARRIVES IN THE SAME COMMIT, WHICH IS THE WHOLE POINT.
+    //   `E598` WS-A deliberately KEPT it here … so the page never had two doors
+    //   to `/recommendations` and never had none.
+    ⚠⚠ THE REASONING IS NOT WRONG, IT IS SUPERSEDED: it argued against a GAP,
+    and this is not a gap.
+  */
+  { label: "Request a Recommendation", href: "/recommendations" },
   { label: "Help", href: "/support/tickets" },
 ];
 
@@ -1587,6 +1657,14 @@ export const RETIRED_ADMIN_ROUTES: Record<string, string> = {
  * genuinely has a required order can declare it in one line.
  */
 export const TAB_SEQUENCE: Record<string, "process" | "suggested" | "none"> = {
+  /* ⚠⚠ `none` — THE PROFILE TABS ARE SLICES OF YOU, NOT STEPS (`P2-A2-E600`).
+     ⚠ `E378`'s rule: *"a PUBLIC SPINE crosses roles and pages; a TAB SET is
+     slices within one page for one role — where they disagree the set is
+     `none`."* Nobody completes `My Company` and moves on to `Account Health`.
+     ⚠⚠⚠ IT IS DECLARED RATHER THAN LEFT TO DEFAULT: `check:community`'s
+     `E384/3` fails an unlisted set, because *"unlisted defaults to none, hiding
+     a decision nobody made."* */
+  "/profile": "none",
   /*
     ── ⚠⚠ EVERY SET IS CLASSIFIED, AND `check:community` NOW ENFORCES THAT
        (`P1-ALL-E384` WS-3) ──────────────────────────────────────────────────
