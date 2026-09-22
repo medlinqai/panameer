@@ -47,7 +47,10 @@ export default defineConfig({
   /* ⚠ `profile-edit-contract.spec.ts` added by `P2-A2-E597` WS-D — it has its
      own config and its own count, so leaving it out would move THIS suite's
      number instead, which is exactly `E562`. */
-  testIgnore: ["connect-walk.spec.ts", "community-web.spec.ts", "community-page.spec.ts", "profile-height.spec.ts", "visitor-profile.spec.ts", "console-errors.spec.ts", "wizard-contract.spec.ts", "profile-edit-contract.spec.ts"],
+  /* ⚠ `community-figures.spec.ts` added by `P2-A3-E601` WS-A — its own config,
+     its own count, so leaving it out would move THIS suite's number instead,
+     which is exactly `E562`. */
+  testIgnore: ["connect-walk.spec.ts", "community-web.spec.ts", "community-page.spec.ts", "profile-height.spec.ts", "visitor-profile.spec.ts", "console-errors.spec.ts", "wizard-contract.spec.ts", "profile-edit-contract.spec.ts", "community-figures.spec.ts"],
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   use: {
     baseURL: "http://localhost:3100",

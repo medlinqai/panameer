@@ -246,8 +246,35 @@ test.describe("⚠ THE COMMUNITY WEB — P2-J3-E591 WS-B", () => {
       ⚠ This is `check:rollup`'s case (the ruling moved), not
       `check:cert-skills`' (the build lost).
       ⚠ 36 drawn of 39 — the same three that `+3 more` described.
+
+      ⚠⚠⚠ AND IT CHANGED AGAIN AT `P2-A3-E601` WS-A — THE THIRD TIME, AND STILL
+      `check:rollup`'S CASE. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+      //   await expect(page.locator(".pm-web-more")).toHaveText("36 of 39 shown · most recent");
+      ⚠ Scott: *"the hero's three numerals become the totals, and the picture's
+      own line says how many of them it drew."* ⚠⚠ `shown` → `drawn`, because
+      the LEGEND now states the network and this line states the DRAWING — one
+      verb per fact, so the two can never be read as the same number again.
     */
-    await expect(page.locator(".pm-web-more")).toHaveText("36 of 39 shown · most recent");
+    await expect(page.locator(".pm-web-more")).toHaveText("36 of 39 drawn · most recent");
+
+    /*
+      ⚠⚠⚠ AND THE LEGEND NOW STATES THE **TOTALS**, NOT THE DRAWN SUBSET — the
+      defect `E601` WS-A exists to fix. ⚠ This payload is capped (36 of 39), so
+      it is the ONE fixture where the two numbers genuinely differ: before this
+      change the legend read the drawn counts and silently under-reported.
+      ⚠⚠ THE FIXTURE: 14 joined DRAWN + `overflow.joined: 3` = 17 TOTAL, with
+      invited 2 and reachable 20 unclipped. So the legend must read 17/2/20
+      while the picture draws 36 — and before this change it read 14, which is
+      the under-report in one number.
+      ⚠⚠⚠ `joined` IS THE ONLY KIND WITH OVERFLOW HERE, WHICH IS WHAT MAKES THIS
+      A REAL TEST: the other two are identical either way, so a change that
+      fixed only some of the three would still fail on this one.
+    */
+    const legend = (await page.locator(".pm-web-key").innerText()).replace(/\s+/g, " ").trim();
+    console.log(`E601/WS-A  legend reads: ${legend}`);
+    expect(legend, "the legend must state the TOTALS, not the drawn subset").toBe(
+      "17 joined 2 invited 20 reachable"
+    );
 
     await page.screenshot({ path: "e2e-shell/.artifacts/e591-web-populated.png" });
     await page.close();

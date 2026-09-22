@@ -1,5 +1,12 @@
 import Link from "next/link";
 import { Avatar } from "@/components/Avatar";
+/* ⚠ The shared header (`E601` WS-C 1) and its data — the same component and
+   the same rebuild as `/community`. */
+import { CommunityHero } from "@/components/community/CommunityHero";
+import { getCommunityHero } from "@/lib/community-hero";
+import { getCommunityWeb } from "@/lib/community-web";
+import "@/components/community/community-web.css";
+import "@/components/community/community-page.css";
 import { redirect } from "next/navigation";
 import { guardPage } from "@/lib/guard";
 import { prisma } from "@/lib/prisma";
@@ -11,15 +18,12 @@ import { unreadCount } from "@/lib/messages";
 import {
   BOARD_MIN_SCORERS,
   GROWTH_WEIGHTS,
-  daysLeftInMonth,
   growthBoard,
   growthScore,
   boardIsShown,
   movementFor,
   myNetwork,
-  nextMove,
   providerHrefs,
-  rankFor,
   type GrowthWindow,
 } from "@/lib/growth-score";
 
@@ -56,9 +60,23 @@ import {
 const TABS: { key: string; label: string; window: GrowthWindow }[] = [
   { key: "month", label: "This Month", window: "month" },
   { key: "all", label: "All Time", window: "all" },
-  /* ⚠ `My Network` IS NOT A WINDOW — it lists invitations, not scores. Its
-     `window` is unused and set to `all` so the type stays honest. */
-  { key: "network", label: "My Network", window: "all" },
+  /*
+    ⚠ NOT A WINDOW — it lists invitations, not scores. Its `window` is unused
+    and set to `all` so the type stays honest.
+
+    ── ⚠⚠⚠ `People I Brought In`, NOT `My Network` (`E601` WS-D) ─────────────
+    ⚠ SCOTT, 2026-09-22: *"it says what the list is, and it keeps 'Network'
+    retired."* ⚠⚠ The same ruling that renamed the page — **one word for people,
+    and it is Community; 'Network' is not kept as a second name for the same
+    thing.** ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   { key: "network", label: "My Network", window: "all" },
+
+    ⚠⚠ THE URL KEY STAYS `network`, DELIBERATELY. Scott: *"a query key isn't
+    copy people read."* ⚠⚠⚠ AND CHANGING IT WOULD BREAK EVERY `?tab=network`
+    LINK ALREADY SHARED, to rename something nobody sees — the cost is real and
+    the benefit is zero.
+  */
+  { key: "network", label: "People I Brought In", window: "all" },
 ];
 
 export default async function GrowPage({
@@ -93,16 +111,28 @@ export default async function GrowPage({
   /* ⚠ The SCORE CARD is always THIS MONTH — it is "what you have done this
      month", and it does not follow the board's tab. The rank line below it
      does, because that is what the tab is about. */
-  const [me, board, network] = await Promise.all([
+  const [me, board, network, web, hero] = await Promise.all([
     growthScore(personId, "month"),
     growthBoard(tab.window),
     tab.key === "network" ? myNetwork(personId) : Promise.resolve([]),
+    /* ⚠⚠ THE HERO'S OWN DATA, fetched the same way `/community` fetches it, so
+       the two pages cannot drift: both call `getCommunityHero`, which is the
+       single place the score, the rank and the board threshold are decided. */
+    getCommunityWeb(viewer),
+    getCommunityHero(viewer),
   ]);
-  /* ⚠⚠ RULING 6 APPLIES TO THE RANK, NOT ONLY TO THE BOARD (Scott, at the WS-C
-     gate). `rankFor` returns `null` while the board is hidden, so the line
-     below shows points without a standing earned against nobody. */
-  const myRank = rankFor(board, personId);
-  const move = nextMove(board, me);
+  /* ⚠⚠ `myRank`, `move`, `BOARD_MIN_SCORERS` and `daysLeftInMonth` MOVED INTO
+     THE HERO WITH THE CARD THAT USED THEM (`E601` WS-C). ⚠ They are removed
+     here rather than left behind: an unused import is a lint warning, and the
+     baseline's rule is ZERO NEW — this is exactly how four appeared.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   ⚠⚠ RULING 6 APPLIES TO THE RANK, NOT ONLY TO THE BOARD (Scott, at the
+     //   WS-C gate). `rankFor` returns `null` while the board is hidden, so the
+     //   line below shows points without a standing earned against nobody.
+     //   const myRank = rankFor(board, personId);
+     //   const move = nextMove(board, me);
+     ⚠⚠ THE RULE ITSELF IS UNCHANGED AND STILL ENFORCED — it now lives in
+     `getCommunityHero`, which is why both pages obey it with one decision. */
   /*
     ⚠⚠ MOVEMENT ONLY ON `This Month`. Comparing an ALL-TIME board to last month
     is a comparison of two different questions, and it would draw an arrow that
@@ -133,22 +163,65 @@ export default async function GrowPage({
         current="/community"
       />
       <div className="mx-auto w-full max-w-3xl">
+        {/*
+          ── ⚠⚠⚠ `Grow Your Community`, NOT `Grow the Network` (`E601` WS-C) ──
+
+          ⚠ SCOTT, 2026-09-22: *"'Grow Your Community' wins. 'Network' is
+          retired, not kept as a second name for the same thing."*
+          ⚠⚠⚠ THIS IS A RULING AGAINST A RULING, NOT DRIFT (rule 13). `E599`
+          shipped this heading as `Grow the Network` deliberately, AFTER the
+          9/20 mockup had already argued the other way — the mockup's note
+          reads *"the card is Grow Your Community, not 'Network' — 'Network' is
+          retired rather than kept as a second name for the same thing."*
+          ⚠ So the code did not wander off a decision; a decision was remade,
+          and the newest dated statement from Scott is the live one.
+          ⚠ SUPERSEDED, quoted not deleted (`E164`) — what `E599` shipped:
+          //   <h1 className="mb-1 font-display text-[26px] font-bold tracking-[-0.5px]">
+          //     Grow the Network
+          //   </h1>
+          ⚠⚠ THE HEADING NOW MATCHES THE HERO CARD BELOW IT, which is the whole
+          point: two names for one thing on one screen is what was wrong.
+        */}
         <h1 className="mb-1 font-display text-[26px] font-bold tracking-[-0.5px]">
-          Grow the Network
+          Grow Your Community
         </h1>
-        <p className="mb-5 text-[13.5px] text-ink-2">
-          Every Oracle practitioner you bring in makes this a better place to buy
-          and sell. Resets on the 1st &middot; {daysLeftInMonth()}{" "}
-          {daysLeftInMonth() === 1 ? "day" : "days"} left this month.
-        </p>
+        {/*
+          ── ⚠⚠⚠ THE SHARED HEADER (`P2-A3-E601` WS-C item 1) ────────────────
+
+          ⚠ SCOTT: *"`/community/grow` uses the same header component and the
+          same 15-second rebuild."* ⚠⚠ `CommunityHero` IS THAT COMPONENT, and
+          the rebuild comes with it — `CommunityWeb` owns `E600` WS-D's
+          `useRebuild` + `RebuildBadge`, so neither page re-implements a clock.
+
+          ⚠⚠⚠ ADDING IT MADE FOUR THINGS DUPLICATES ON THIS PAGE, and they are
+          removed rather than left to disagree: this lede (the hero says it,
+          days-left included), the score card's HEADLINE NUMBER, the whole
+          `Your Rank This Month` card, and the score-card title.
+          ⚠ WHAT STAYED IS WHAT THE HERO DOES NOT SAY: the ARITHMETIC (each
+          count × its weight), the invite panel's explanation of the weights,
+          and the board itself.
+          ⚠ SUPERSEDED, quoted not deleted (`E164`):
+          //   <p className="mb-5 text-[13.5px] text-ink-2">
+          //     Every Oracle practitioner you bring in makes this a better place to buy
+          //     and sell. Resets on the 1st &middot; {daysLeftInMonth()}{" "}
+          //     {daysLeftInMonth() === 1 ? "day" : "days"} left this month.
+          //   </p>
+        */}
+        <div className="mb-5">
+          <CommunityHero web={web} hero={hero} />
+        </div>
 
         {/* ── your score ─────────────────────────────────────────────── */}
         <section className="rounded-brand border border-line bg-white px-[18px] py-4">
-          <div className="flex items-baseline justify-between gap-3">
-            <h2 className="font-display text-[15px] font-bold">Your Score</h2>
-            {/* ⚠ `E433` — a figure is INK, never magenta. */}
-            <span className="text-[26px] font-extrabold tabular-nums">{me.points}</span>
-          </div>
+          {/* ⚠⚠ THE TOTAL MOVED TO THE HERO (`E601` WS-C). This card is now the
+              ARITHMETIC — how the number is reached — and printing the total
+              twice on one page is how two figures start to disagree.
+              ⚠ SUPERSEDED, quoted not deleted (`E164`):
+              //   <div className="flex items-baseline justify-between gap-3">
+              //     <h2 className="font-display text-[15px] font-bold">Your Score</h2>
+              //     <span className="text-[26px] font-extrabold tabular-nums">{me.points}</span>
+              //   </div> */}
+          <h2 className="font-display text-[15px] font-bold">How Your Score Adds Up</h2>
 
           <div className="mt-3 flex flex-col border-t border-line pt-1">
             {/*
@@ -190,38 +263,55 @@ export default async function GrowPage({
           </div>
         </section>
 
-        {/* ── rank and the one move ──────────────────────────────────── */}
-        <section className="mt-3.5 rounded-brand border border-line bg-white px-[18px] py-4">
-          <h2 className="font-display text-[15px] font-bold">Your Rank This Month</h2>
-          {myRank != null ? (
-            <p className="mt-1.5 text-[13.5px]">
-              <span className="text-[22px] font-extrabold tabular-nums">#{myRank}</span>
-              <span className="ml-2 text-ink-2">
-                of {board.length} {board.length === 1 ? "member" : "members"} with a
-                score this month
-              </span>
-            </p>
-          ) : boardIsShown(board) ? (
-            /* ⚠ NOT RANKED IS NOT RANK ZERO. Somebody with no points has not
-               come last; they are not on the board at all, and saying so is
-               what makes the invite panel the obvious next thing. */
-            <p className="mt-1.5 text-[13.5px] text-ink-2">
-              You&rsquo;re not on this month&rsquo;s board yet. Invite a colleague to
-              get on it.
-            </p>
-          ) : (
-            /* ⚠⚠⚠ THE BOARD IS HIDDEN, SO THERE IS NO RANK TO REPORT. Saying
-               *"you're not on the board"* would be wrong — there is no board —
-               and `#1` would be a standing earned against nobody. */
-            <p className="mt-1.5 text-[13.5px] text-ink-2">
-              Ranking starts once {BOARD_MIN_SCORERS} members have a score this
-              month.
-            </p>
-          )}
-          {/* ⚠⚠ COMPUTED FROM THE BOARD, NEVER CANNED (WS-A 1). */}
-          {move && <p className="mt-2 text-[13.5px] font-semibold">{move.text}</p>}
-        </section>
+        {/*
+          ── ⚠⚠⚠ `Your Rank This Month` IS GONE — THE HERO SAYS ALL OF IT ────
 
+          ⚠ Its three rank states moved into `CommunityHero` unchanged, which is
+          what makes the hero shareable between Community and Grow rather than a
+          Community-only card: `#N of M`, *"you're not on the board yet"* and
+          *"ranking starts once N members…"* are the same three sentences, now
+          rendered once. ⚠⚠ The next move moved with them, still computed from
+          the board and never canned.
+          ⚠⚠⚠ THE DISTINCTION THIS PAGE INVENTED IS THE PART THAT HAD TO SURVIVE:
+          *no board* and *a board you are not on* are DIFFERENT, and collapsing
+          them would make one of the two sentences a lie.
+          ⚠ SUPERSEDED, quoted not deleted (`E164`) — the card this page drew:
+          ⚠⚠ RULE 12, TENTH OCCURRENCE: the quoted body carries its own JSX
+          comments, and their `* /` terminators would CLOSE THIS COMMENT EARLY.
+          JSX children admit no `//` line comments, so every terminator below is
+          written `* /` on purpose. ⚠ It is a quote, not code.
+          //         {/* ── rank and the one move ──────────────────────────────────── * /}
+          //         <section className="mt-3.5 rounded-brand border border-line bg-white px-[18px] py-4">
+          //           <h2 className="font-display text-[15px] font-bold">Your Rank This Month</h2>
+          //           {myRank != null ? (
+          //             <p className="mt-1.5 text-[13.5px]">
+          //               <span className="text-[22px] font-extrabold tabular-nums">#{myRank}</span>
+          //               <span className="ml-2 text-ink-2">
+          //                 of {board.length} {board.length === 1 ? "member" : "members"} with a
+          //                 score this month
+          //               </span>
+          //             </p>
+          //           ) : boardIsShown(board) ? (
+          //             /* ⚠ NOT RANKED IS NOT RANK ZERO. Somebody with no points has not
+          //                come last; they are not on the board at all, and saying so is
+          //                what makes the invite panel the obvious next thing. * /
+          //             <p className="mt-1.5 text-[13.5px] text-ink-2">
+          //               You&rsquo;re not on this month&rsquo;s board yet. Invite a colleague to
+          //               get on it.
+          //             </p>
+          //           ) : (
+          //             /* ⚠⚠⚠ THE BOARD IS HIDDEN, SO THERE IS NO RANK TO REPORT. Saying
+          //                *"you're not on the board"* would be wrong — there is no board —
+          //                and `#1` would be a standing earned against nobody. * /
+          //             <p className="mt-1.5 text-[13.5px] text-ink-2">
+          //               Ranking starts once {BOARD_MIN_SCORERS} members have a score this
+          //               month.
+          //             </p>
+          //           )}
+          //           {/* ⚠⚠ COMPUTED FROM THE BOARD, NEVER CANNED (WS-A 1). * /}
+          //           {move && <p className="mt-2 text-[13.5px] font-semibold">{move.text}</p>}
+          //         </section>
+        */}
         {/* ── invite ─────────────────────────────────────────────────── */}
         <section className="mt-3.5 rounded-brand border border-line bg-white px-[18px] py-4">
           <h2 className="font-display text-[15px] font-bold">Invite Someone</h2>
@@ -238,12 +328,23 @@ export default async function GrowPage({
             workstream. This is a door to what exists, not a stub of what is
             coming.
           */}
-          <Link
-            href="/invite-colleague"
-            className="mt-3 inline-block rounded-full bg-magenta px-4 py-2 text-[13.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
-          >
-            Invite a Colleague
-          </Link>
+          {/*
+            ── ⚠⚠⚠ THE BUTTON IS GONE. ONE `Invite a Colleague` PER PAGE ──────
+
+            ⚠ SCOTT, 2026-09-22: *"The Invite panel keeps its explanation of the
+            weights and loses its button. One Invite a Colleague on the page, in
+            the hero."*
+            ⚠⚠ THIS PANEL EARNS ITS PLACE ON THE EXPLANATION, NOT ON THE ACTION —
+            it is the only thing that says what an invitation is WORTH, and the
+            hero's button is a few hundred pixels above it.
+            ⚠ SUPERSEDED, quoted not deleted (`E164`):
+            //   <Link
+            //     href="/invite-colleague"
+            //     className="mt-3 inline-block rounded-full bg-magenta px-4 py-2 …"
+            //   >
+            //     Invite a Colleague
+            //   </Link>
+          */}
         </section>
 
         {/* ── the board ──────────────────────────────────────────────── */}
@@ -415,8 +516,19 @@ export default async function GrowPage({
           </section>
         ) : (
           <p className="mt-3.5 text-[13px] text-ink-3">
-            {/* ⚠ RULING 6, SAID OUT LOUD RATHER THAN RENDERED AS AN EMPTY BOX. */}
-            No board yet — it appears once three members have a score
+            {/*
+              ⚠ RULING 6, SAID OUT LOUD RATHER THAN RENDERED AS AN EMPTY BOX.
+              ⚠⚠⚠ AND IT IS ABOUT **THE BOARD**, NOT ABOUT YOUR RANK. The hero
+              above says *"Ranking starts once N members have a score"* — that
+              is a sentence about the reader's standing. This one is about
+              whether the LIST exists. ⚠ Scott, 2026-09-22: *"Keep both"*, but
+              reworded so it does not echo.
+              ⚠ SUPERSEDED, quoted not deleted (`E164`):
+              //   No board yet — it appears once three members have a score
+              //   {tab.key === "month" ? " this month" : ""}.
+              ⚠ The threshold is still the lib's, never a literal.
+            */}
+            The board appears once {BOARD_MIN_SCORERS} members have a score
             {tab.key === "month" ? " this month" : ""}.
           </p>
         )}

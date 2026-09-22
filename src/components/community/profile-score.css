@@ -1,3 +1,7 @@
+/* ⚠⚠ `--magenta` IS NOT A TOKEN — THIS IS TAILWIND v4 AND IT IS
+   `--color-magenta` (`E601` WS-D). ⚠ The fallback `#d72cd6` is EXACTLY
+   `--color-magenta`'s value, so the stroke never looked wrong and the bug
+   was invisible; now the variable actually resolves and themes with it. */
 /*
  * ── ⚠⚠ THE SCORE PAGE'S GEOMETRY (`P2-J3-E590` WS-B) ──────────────────────
  *
@@ -97,7 +101,7 @@
 
 /* ⚠ Three paints, in the brand's own tokens — there is no blue in the brand. */
 .pm-score-filled {
-  stroke: var(--magenta, #d72cd6);
+  stroke: var(--color-magenta, #d72cd6);
 }
 /*
   ── ⚠⚠⚠ `declared_none` PAINTS MAGENTA, THE SAME AS FILLED (`P2-A3-E596`) ──
@@ -124,7 +128,7 @@
   declared can still find out; a reader glancing at the ring is no longer misled.
 */
 .pm-score-declared {
-  stroke: var(--magenta, #d72cd6);
+  stroke: var(--color-magenta, #d72cd6);
 }
 .pm-score-empty {
   stroke: #ece9f2;

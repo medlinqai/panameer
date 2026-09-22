@@ -1,4 +1,42 @@
 /*
+  ── ⚠⚠⚠ `--color-ink-3` AND `--color-line-2` ARE NOT DECLARED (`E601` WS-D) ──
+
+  ⚠ Both were written as `var(--color-ink-3, #8a8396)` / `var(--color-line-2,
+  #f1eef5)`, and NEITHER TOKEN EXISTS in `globals.css`. ⚠⚠ The fallback is what
+  has always rendered, in light mode and in dark, so inlining it changes NOTHING
+  — it is what the browser was already doing.
+  ⚠⚠⚠ THEY ARE **NOT** PROMOTED TO REAL TOKENS HERE, AND THAT IS DELIBERATE:
+  declaring `--color-ink-3` means choosing its DARK-MODE value, and there is no
+  evidence what that should be. Scott's rule for this workstream — *"if a rule
+  looks wrong once it is live, report it rather than guessing at the intent"* —
+  applies to the token itself. ⚠ Reported at the WS-D gate; his call.
+
+  ⚠⚠ ONE COLOUR DID MOVE, AND IT IS MINE: the `E601` WS-B hero block hardcoded
+  `#77728c` (the 9/20 mockup's muted ink) where the REST OF THIS FILE uses
+  `#8a8396`. Two greys a few pixels apart on one card is not a decision anybody
+  made. ⚠ Aligned to the file's value, and screenshotted before and after.
+*/
+
+/*
+  ── ⚠⚠⚠ `#8a8396` STAYS A LITERAL, AND THIS COMMENT IS THE REASON (`E601` WS-D)
+
+  ⚠ SCOTT, 2026-09-22: *"Map each use to the nearest existing token… If none
+  matches within a shade, keep the literal with a comment naming the problem."*
+  ⚠⚠ MEASURED AGAINST THE WHOLE DEFINED PALETTE, and NOTHING IS CLOSE:
+      `--color-ink-2`     `#4a4658`  distance **108**
+      `--color-learn-slate` `#6b7280`  distance 42 — ⚠⚠ AND IT IS A **LEARN**
+      TOKEN, a cooler slate for a different surface; borrowing it would tie this
+      card's muted text to the Learn palette, which is a worse bug than a
+      literal because it would look right until Learn is re-themed.
+      `--color-ink` / `--color-line` / `--color-bg-soft`  distance 160+
+  ⚠⚠⚠ **THE PROBLEM, NAMED: THERE IS NO THIRD INK.** The palette stops at
+  `--color-ink-2`, and this file wants a muted tone below it — which is what the
+  author who wrote `var(--color-ink-3, …)` was reaching for.
+  ⚠ **OPEN FOR SCOTT** (recorded in `brief_community_and_grow_2026-09-22.md`):
+  promoting `--color-ink-3` means choosing its DARK-MODE value, and `check:theme`
+  pins a named token list it would need to join. Neither is guessable from here.
+*/
+/*
   ── ⚠⚠ THE COMMUNITY PAGE — TWO COLUMNS (`P2-J3-E591` WS-C) ────────────────
 
   ⚠ Colleagues in the main column, small things in a rail. ⚠⚠ MENTORS AND TEAMS
@@ -139,7 +177,7 @@
 }
 .pm-cm-where {
   font-size: 12px;
-  color: var(--color-ink-3, #8a8396);
+  color: #8a8396;
 }
 
 /*
@@ -160,7 +198,7 @@
 }
 .pm-cm-sent {
   font-size: 12px;
-  color: var(--color-ink-3, #8a8396);
+  color: #8a8396;
 }
 
 /* ⚠ THE FACE RULES MOVED TO `face.css` (`P2-A3-E596` WS-D) and are imported by
@@ -187,7 +225,11 @@
   padding: 7px 0;
 }
 .pm-cm-row + .pm-cm-row {
-  border-top: 1px solid var(--color-line-2, #f1eef5);
+  /* ⚠ WAS `var(--color-line-2, #f1eef5)` — an undefined token. ⚠⚠ MAPPED TO
+     `--color-line` (`#e5e7eb`): distance 17 from the old literal, i.e. WITHIN
+     A SHADE, and it is semantically exactly what this is — a hairline rule.
+     ⚠ It now themes with every other border instead of being frozen. */
+  border-top: 1px solid var(--color-line);
 }
 .pm-cm-note {
   font-size: 12.5px;
@@ -196,5 +238,135 @@
 }
 .pm-cm-count {
   font-size: 12px;
-  color: var(--color-ink-3, #8a8396);
+  color: #8a8396;
+}
+
+/*
+  ── ⚠⚠⚠ THE SPLIT HERO (`P2-A3-E601` WS-B item 1) ─────────────────────────
+
+  ⚠ SCOTT, 2026-09-22: *"Split-card at the top, cleanly structured underneath."*
+  Picture left, story and counts right, in ONE card.
+
+  ⚠⚠ PHONE FIRST, AND THE STACK ORDER IS THE POINT: below 860px the side falls
+  BELOW the picture, because the picture is what the page is about and the
+  counts explain it. ⚠ The mockup's own breakpoint, kept.
+*/
+.pm-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  background: #fff;
+  border: 1px solid var(--color-line, #e7e3ed);
+  border-radius: 18px;
+  overflow: hidden;
+}
+.pm-hero-stage {
+  padding: 14px 12px 10px;
+  min-width: 0;
+}
+/* ⚠ The divider becomes a TOP border when the columns stack — a left border on
+   a full-width block reads as a stray rule down the side of the page. */
+.pm-hero-side {
+  border-left: 1px solid var(--color-line, #e7e3ed);
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+@media (max-width: 860px) {
+  .pm-hero {
+    grid-template-columns: 1fr;
+  }
+  .pm-hero-side {
+    border-left: 0;
+    border-top: 1px solid var(--color-line, #e7e3ed);
+  }
+}
+.pm-hero-title {
+  font-family: var(--font-display, inherit);
+  font-size: 19px;
+  font-weight: 700;
+  margin: 0;
+}
+.pm-hero-lede {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--color-ink-2, #4a4658);
+}
+/* ⚠⚠ THE SCORE IS A FIGURE, SO IT IS INK, NOT MAGENTA (`E433`) — magenta means
+   interactive, and this number is not a link. */
+.pm-hero-score {
+  margin-top: 16px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.pm-hero-score-n {
+  font-family: var(--font-display, inherit);
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.pm-hero-score-k {
+  font-size: 12px;
+  color: #8a8396;
+  font-weight: 600;
+}
+.pm-hero-rank {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--color-ink-2, #4a4658);
+}
+/* ⚠ The "nothing here yet" voice: it says what WILL appear, so an empty panel
+   never reads as a thing that failed to load (WS-B item 4). */
+.pm-hero-none {
+  margin: 10px 0 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: #8a8396;
+}
+/* ⚠ The next move is an instruction, so it carries weight the rank line does
+   not — but it is still ink, not magenta: it is not a link (`E433`). */
+.pm-hero-move {
+  margin: 8px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+.pm-hero-feed {
+  margin: 12px 0 0;
+  padding-top: 11px;
+  border-top: 1px solid var(--color-line, #efecf4);
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--color-ink-2, #4a4658);
+}
+/* ⚠ `margin-top: auto` pins the button to the bottom of the side column so the
+   two columns end level on desktop, whatever the middle holds. */
+.pm-hero-cta {
+  /* ⚠ `margin-top: auto` pins it to the bottom so the two columns end level on
+     desktop, whatever the middle holds. */
+  margin-top: auto;
+  align-self: flex-start;
+  display: inline-block;
+  background: var(--color-magenta, #d72cd6);
+  color: #fff;
+  border-radius: 10px;
+  padding: 10px 17px;
+  font-size: 13.5px;
+  font-weight: 700;
+}
+.pm-hero-cta:hover {
+  background: var(--color-magenta-dark, #b324b2);
+  text-decoration: none;
+}
+/* ⚠⚠ ON A PHONE THE COLUMNS ARE STACKED, so there is no second column to end
+   level with — `margin-top: auto` would only push the button to the bottom of a
+   box it already fills. A plain gap reads better and keeps the tap target where
+   the eye left off. */
+@media (max-width: 860px) {
+  .pm-hero-cta {
+    margin-top: 18px;
+  }
 }
