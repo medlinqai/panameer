@@ -3,11 +3,28 @@ import { prisma } from "@/lib/prisma";
 /*
   ⚠⚠ THE TWO PROFILE COMPONENTS CONVERGE HERE (`P2-J3-E588` WS-B). This page
   now renders the SAME `ConnectProfile` the owner sees at `/community`, in
-  visitor mode. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  visitor mode.
+
+  ── ⚠⚠⚠ `ProviderProfileView.tsx` WAS DELETED ON 2026-09-21 ────────────────
+
+  ⚠ SCOTT RULED THE DELETION (`P2-A2-E598` premise work, closing out `E597`
+  WS-D): it had **zero live imports since `E588`** — measured, not assumed —
+  and 46KB of unrendered code was still attracting assertions.
+  ⚠⚠ THIS IS A NARROW, NAMED EXCEPTION TO `E164`, NOT A NEW HABIT. Rule 13
+  applies: the newest dated statement from Scott is the live one, and he gave
+  the replacement wording himself. ⚠⚠⚠ **GIT HOLDS THE HISTORY** — the file is
+  recoverable at any commit up to `d7a9c94`.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`) — the import, and the note that
+  used to promise the file would stay:
   // import { ProviderProfileViewPage } from "@/components/profile/ProviderProfileView";
-  ⚠ `ProviderProfileView.tsx` STAYS ON DISK, unimported — every removed
-  component does. `check:community` GUARD 3 still reads its source for the
-  `community?: CommunitySignal | null` prop contract.
+  // ⚠ `ProviderProfileView.tsx` STAYS ON DISK, unimported — every removed
+  //   component does. `check:community` GUARD 3 still reads its source for the
+  //   `community?: CommunitySignal | null` prop contract.
+  ⚠⚠ THAT SECOND CLAIM IS ALSO SUPERSEDED: `E597` WS-D re-pointed GUARD 3 —
+  and `check:review-edit` and `check:recruiter` — off the dead file and onto
+  the profile the route actually renders, via `scripts/_profile-surface.ts`.
+  ⚠⚠⚠ RE-POINTING THOSE GATES IS WHAT MADE THE DELETION SAFE; doing it in the
+  other order would have taken three assertions down with the file.
 */
 import { ConnectProfile } from "@/components/community/ConnectProfile";
 import { getProviderProfileView } from "@/lib/provider-profile-view";
