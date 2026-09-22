@@ -624,7 +624,14 @@ export function ConnectProfile({
                                   `GROWTH_WEIGHTS` — a tuning change moves this line too.
                                 */
                                 {
-                                  label: "Grow the Network",
+                                  /* ⚠⚠⚠ `Grow Your Community` (`E601` WS-C). Scott, 2026-09-22:
+                                     *"'Grow Your Community' wins. 'Network' is retired, not kept
+                                     as a second name for the same thing."*
+                                     ⚠ A RULING AGAINST A RULING, NOT DRIFT (rule 13) — `E599`
+                                     shipped this label deliberately. ⚠ SUPERSEDED, quoted not
+                                     deleted (`E164`):
+                                     //   label: "Grow the Network", */
+                                  label: "Grow Your Community",
                                   href: "/community/grow",
                                   hint: growth
                                     ? `${growth.points} points${growth.rank ? ` · #${growth.rank} this month` : ""}`

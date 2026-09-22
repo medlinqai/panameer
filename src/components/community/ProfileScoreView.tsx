@@ -31,7 +31,8 @@ import "./profile-score.css";
  * ⚠ Recommendations, mentoring and service products are DELIBERATELY ABSENT.
  * They cannot be finished alone — they need somebody else to act — and a score
  * that includes them stops being *"answer every line"* and becomes a ranking.
- * ⚠⚠ They belong to `Grow the Network` and `Usage Stats`, which are separate
+ * ⚠⚠ They belong to `Grow Your Community` (renamed from `Grow the Network` by
+ * `E601` WS-C) and `Usage Stats`, which are separate
  * surfaces and separate briefs. **If any of the three appears here, the brief
  * has been misread.**
  *

@@ -16,6 +16,7 @@ import { tabSequenceFor } from "@/lib/nav";
 import { connectTabs } from "@/lib/connect-tabs";
 import { unreadCount } from "@/lib/messages";
 import {
+  BOARD_MIN_SCORERS,
   GROWTH_WEIGHTS,
   growthBoard,
   growthScore,
@@ -148,8 +149,27 @@ export default async function GrowPage({
         current="/community"
       />
       <div className="mx-auto w-full max-w-3xl">
+        {/*
+          ── ⚠⚠⚠ `Grow Your Community`, NOT `Grow the Network` (`E601` WS-C) ──
+
+          ⚠ SCOTT, 2026-09-22: *"'Grow Your Community' wins. 'Network' is
+          retired, not kept as a second name for the same thing."*
+          ⚠⚠⚠ THIS IS A RULING AGAINST A RULING, NOT DRIFT (rule 13). `E599`
+          shipped this heading as `Grow the Network` deliberately, AFTER the
+          9/20 mockup had already argued the other way — the mockup's note
+          reads *"the card is Grow Your Community, not 'Network' — 'Network' is
+          retired rather than kept as a second name for the same thing."*
+          ⚠ So the code did not wander off a decision; a decision was remade,
+          and the newest dated statement from Scott is the live one.
+          ⚠ SUPERSEDED, quoted not deleted (`E164`) — what `E599` shipped:
+          //   <h1 className="mb-1 font-display text-[26px] font-bold tracking-[-0.5px]">
+          //     Grow the Network
+          //   </h1>
+          ⚠⚠ THE HEADING NOW MATCHES THE HERO CARD BELOW IT, which is the whole
+          point: two names for one thing on one screen is what was wrong.
+        */}
         <h1 className="mb-1 font-display text-[26px] font-bold tracking-[-0.5px]">
-          Grow the Network
+          Grow Your Community
         </h1>
         {/*
           ── ⚠⚠⚠ THE SHARED HEADER (`P2-A3-E601` WS-C item 1) ────────────────
@@ -294,12 +314,23 @@ export default async function GrowPage({
             workstream. This is a door to what exists, not a stub of what is
             coming.
           */}
-          <Link
-            href="/invite-colleague"
-            className="mt-3 inline-block rounded-full bg-magenta px-4 py-2 text-[13.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
-          >
-            Invite a Colleague
-          </Link>
+          {/*
+            ── ⚠⚠⚠ THE BUTTON IS GONE. ONE `Invite a Colleague` PER PAGE ──────
+
+            ⚠ SCOTT, 2026-09-22: *"The Invite panel keeps its explanation of the
+            weights and loses its button. One Invite a Colleague on the page, in
+            the hero."*
+            ⚠⚠ THIS PANEL EARNS ITS PLACE ON THE EXPLANATION, NOT ON THE ACTION —
+            it is the only thing that says what an invitation is WORTH, and the
+            hero's button is a few hundred pixels above it.
+            ⚠ SUPERSEDED, quoted not deleted (`E164`):
+            //   <Link
+            //     href="/invite-colleague"
+            //     className="mt-3 inline-block rounded-full bg-magenta px-4 py-2 …"
+            //   >
+            //     Invite a Colleague
+            //   </Link>
+          */}
         </section>
 
         {/* ── the board ──────────────────────────────────────────────── */}
@@ -471,8 +502,19 @@ export default async function GrowPage({
           </section>
         ) : (
           <p className="mt-3.5 text-[13px] text-ink-3">
-            {/* ⚠ RULING 6, SAID OUT LOUD RATHER THAN RENDERED AS AN EMPTY BOX. */}
-            No board yet — it appears once three members have a score
+            {/*
+              ⚠ RULING 6, SAID OUT LOUD RATHER THAN RENDERED AS AN EMPTY BOX.
+              ⚠⚠⚠ AND IT IS ABOUT **THE BOARD**, NOT ABOUT YOUR RANK. The hero
+              above says *"Ranking starts once N members have a score"* — that
+              is a sentence about the reader's standing. This one is about
+              whether the LIST exists. ⚠ Scott, 2026-09-22: *"Keep both"*, but
+              reworded so it does not echo.
+              ⚠ SUPERSEDED, quoted not deleted (`E164`):
+              //   No board yet — it appears once three members have a score
+              //   {tab.key === "month" ? " this month" : ""}.
+              ⚠ The threshold is still the lib's, never a literal.
+            */}
+            The board appears once {BOARD_MIN_SCORERS} members have a score
             {tab.key === "month" ? " this month" : ""}.
           </p>
         )}
