@@ -19,6 +19,7 @@
     "postinstall": "prisma generate",
     "db:migrate-work-history": "ts-node --project tsconfig.seed.json prisma/migrate-work-history.ts",
     "check:review-edit": "npx esbuild scripts/check-review-edit.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/review-edit.cjs --log-level=error && node .harness/review-edit.cjs",
+    "check:pool-retry": "npx esbuild scripts/check-pool-retry.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/pool-retry.cjs --log-level=error && node .harness/pool-retry.cjs",
     "check:resume-review": "npx esbuild scripts/check-resume-review.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/resume-review.cjs --log-level=error && node .harness/resume-review.cjs",
     "check:rerun": "npx esbuild scripts/check-rerun.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/rerun.cjs --log-level=error && node -r dotenv/config .harness/rerun.cjs dotenv_config_path=.env.local",
     "check:role-prune": "npx esbuild scripts/check-role-prune.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/role-prune.cjs --log-level=error && node -r dotenv/config .harness/role-prune.cjs dotenv_config_path=.env.local",
@@ -131,7 +132,8 @@
     "reset:titles": "npx esbuild prisma/reset/01-titles.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/reset-titles.cjs --log-level=error && node -r dotenv/config .harness/reset-titles.cjs dotenv_config_path=.env.local",
     "reset:wipe": "npx esbuild prisma/reset/02-wipe.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/reset-wipe.cjs --log-level=error && node -r dotenv/config .harness/reset-wipe.cjs dotenv_config_path=.env.local",
     "check:console": "playwright test --config=playwright.console.config.ts",
-    "check:wizard-contract": "playwright test --config=playwright.wizard-contract.config.ts"
+    "check:wizard-contract": "playwright test --config=playwright.wizard-contract.config.ts",
+    "check:profile-edit": "playwright test --config=playwright.profile-edit.config.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",

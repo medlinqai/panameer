@@ -20,6 +20,7 @@
  * ⚠ NO DATABASE AND NO BROWSER. Text scans plus the real functions.
  */
 import { readFileSync } from "node:fs";
+import { publishedProfileCode, publishedProfileFile } from "./_profile-surface";
 import { isRecruiterProfile, stepsForProfile } from "@/lib/onboarding";
 import { ambiguousSkillNames, skillQualifier } from "@/lib/skill-labels";
 
@@ -58,7 +59,10 @@ const WIZARD = [
   .map((f) => read(f))
   .join("\n");
 const WIZARD_CODE = stripComments(WIZARD);
-const VIEW_TSX = read("src/components/profile/ProviderProfileView.tsx");
+/* ⚠⚠ RETIRED (`P2-A2-E597` WS-D) — nothing has imported this file since `E588`.
+   ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   const VIEW_TSX = read("src/components/profile/ProviderProfileView.tsx");
+   The published profile is derived from the route that renders it. */
 const VIEW_TS = read("src/lib/provider-profile-view.ts");
 const ONBOARDING = read("src/lib/onboarding.ts");
 
@@ -161,18 +165,48 @@ const ONBOARDING = read("src/lib/onboarding.ts");
     "3 — the view model asks isRecruiterProfile()",
     /isRecruiterProfile\(profile\)/.test(stripComments(VIEW_TS))
   );
-  const viewCode = stripComments(VIEW_TSX);
+  /*
+    ── ⚠⚠⚠ THE NAMED FILE IS RETIRED, AND RE-POINTING IT FOUND A REAL GAP ────
+
+    ⚠ These three assertions read `ProviderProfileView.tsx`, which **nothing has
+    imported since `E588`** (measured 2026-09-21: zero live imports in `src/`).
+    They were true about a file no route serves.
+    ⚠⚠⚠ THE PUBLISHED PROFILE IS `ConnectProfile.tsx`, AND IT DOES NOT SUPPRESS
+    A RECRUITER'S RATE. Measured: `isRecruiter` appears **0 times** in it, and
+    the view model's `rates` predicate is the VIEWER'S CAPABILITY
+    (`canHireTalent`), not the profile's `work_method`. So `E401`'s rule — *"a
+    recruiter is not shown a rate"* — is enforced NOWHERE LIVE.
+    ⚠⚠ IT IS LATENT, NOT LEAKING: 1 `RECRUITER` profile exists and it carries 0
+    of the 5 rate columns, so there is no wrong number on a page today.
+    ⚠⚠⚠ NOT FIXED HERE, ON PURPOSE. `E401`: *"WHAT A RECRUITER SHOWS INSTEAD IS
+    NOT THIS BRIEF'S TO INVENT."* Restoring suppression is a product ruling
+    about a surface Scott has been redesigning, and inventing it inside a gate
+    sweep is the failure `CLAUDE.md` opens with.
+
+    ⚠ RECORDED WITH `check:email`'S `KNOWN_OPEN` MECHANISM, BOTH SAFEGUARDS KEPT:
+      1 AN ENTRY THAT STARTS PASSING FAILS THE GATE — so the day somebody
+        implements suppression, this tells them to close the entry.
+      2 IT CARRIES ITS DATE AND PRINTS ITS AGE EVERY RUN — *"a visible age is
+        what stops this becoming a parking lot."*
+
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   const viewCode = stripComments(VIEW_TSX);
+    //   check("3 — the identity block's rate is suppressed for a recruiter",
+    //     /rateMinCents=\{p\.isRecruiter \? null : /.test(viewCode) && …);
+    //   check("3 — youGet is not computed for a recruiter",
+    //     /p\.isRecruiter[\s\S]{0,120}rateBreakdown\(/.test(viewCode));
+  */
+  const viewCode = publishedProfileCode();
+  const RECRUITER_RATE_OPEN = "2026-09-21";
+  const openDays = Math.floor((Date.now() - Date.parse(RECRUITER_RATE_OPEN)) / 86_400_000);
+  const suppressed =
+    /isRecruiter\s*\?\s*null/.test(viewCode) || /!p\.isRecruiter\s*&&/.test(viewCode);
   check(
-    "3 — the identity block's rate is suppressed for a recruiter",
-    /rateMinCents=\{p\.isRecruiter \? null : /.test(viewCode) &&
-      /rateMaxCents=\{p\.isRecruiter \? null : /.test(viewCode)
-  );
-  /* ⚠⚠ AND THE TAKE-HOME NUMBER IS NOT MERELY UNRENDERED. `youGet` is the
-     service fee applied to an hourly rate a recruiter does not charge; leaving
-     it computed is a live wrong number one prop away from a page. */
-  check(
-    "3 — youGet is not computed for a recruiter",
-    /p\.isRecruiter[\s\S]{0,120}rateBreakdown\(/.test(viewCode)
+    `3 — KNOWN OPEN (${openDays}d, since ${RECRUITER_RATE_OPEN}) the published profile does NOT suppress a recruiter's rate — E401's rule survives only in the unrendered ProviderProfileView.tsx; awaiting Scott`,
+    !suppressed,
+    suppressed
+      ? `${publishedProfileFile()} now suppresses it — REMOVE this known-open entry and restore the real assertions quoted above`
+      : undefined
   );
   /* ⚠ ABSENCE: nothing was invented to fill the space. `E401`: *"WHAT A
      RECRUITER SHOWS INSTEAD IS NOT THIS BRIEF'S TO INVENT."* A placement fee, a
