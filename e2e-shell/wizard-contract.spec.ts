@@ -142,9 +142,16 @@ async function signInAs(page: Page) {
   ]);
   /*
     ⚠⚠⚠ `res.ok()` IS NOT PROOF OF SIGN-IN, AND IT COST AN HOUR HERE.
-    NextAuth's credentials callback answers **200 with an error URL** when the
-    password is wrong or the user does not exist — so a failed sign-in and a
-    successful one are the same status code. ⚠ MEASURED: a probe against a
+    ⚠⚠ CORRECTED AT `E597` WS-D, 2026-09-21 — the ORIGINAL EXPLANATION HERE WAS
+    WRONG AND IS QUOTED NOT DELETED (`E164`):
+    //   NextAuth's credentials callback answers **200 with an error URL** when
+    //   the password is wrong or the user does not exist — so a failed sign-in
+    //   and a successful one are the same status code.
+    ⚠ RE-MEASURED: both failure modes answer **401** on this build (wrong
+    password → 401, no such account → 401); only a real sign-in returned 200.
+    ⚠⚠⚠ THE ASSERTION STILL BELONGS HERE — `res.ok()` asks whether the callback
+    ANSWERED, not whether a SESSION EXISTS — but it is defence in depth, not a
+    hole that can be demonstrated today. ⚠ MEASURED: a probe against a
     persona that had already been torn down reported `res.ok() === true` and sat
     on `/login`, and every downstream assertion failed describing the wizard
     instead of the session.

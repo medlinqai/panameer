@@ -100,5 +100,53 @@ export async function signIn(page: Page) {
     page.click('button[type="submit"]'),
   ]);
   expect(res.ok(), `sign-in as ${email} returned ${res.status()}`).toBe(true);
-  await page.waitForTimeout(1500);
+  /*
+    ── ⚠⚠⚠ `res.ok()` IS NOT PROOF OF SIGN-IN (`P2-A2-E597` WS-D) ────────────
+
+    ⚠ `res.ok()` asks whether the CALLBACK ANSWERED. It does not ask whether a
+    SESSION EXISTS, and those are different questions. ⚠⚠ MEASURED AT `E597`
+    WS-A: a probe against a torn-down persona reported `res.ok() === true` and
+    sat on `/login`, and every downstream assertion then failed describing the
+    WIZARD instead of the SESSION — which is the hour this costs.
+
+    ⚠⚠⚠ AND A CORRECTION TO MY OWN EARLIER CLAIM, BECAUSE IT DID NOT SURVIVE
+    MEASUREMENT (`E597` WS-D, 2026-09-21). WS-A recorded the mechanism as
+    *"NextAuth answers 200 with an error URL, so a failed sign-in and a
+    successful one are the same status code."* ⚠ RE-MEASURED AGAINST THIS
+    BUILD, BOTH FAILURE MODES ANSWER **401**: a real account with a wrong
+    password → 401, an address with no account → 401. Only a genuine sign-in
+    returned 200, and it reached `/dashboard`.
+    ⚠⚠ SO ON TODAY'S BUILD `res.ok()` WOULD HAVE CAUGHT BOTH, AND THE 200 CASE
+    IS NOT REPRODUCIBLE HERE. The assertion below is kept anyway — it is free,
+    it asks the question we actually mean, and WS-A's observation was real even
+    though its explanation was not. ⚠⚠⚠ IT IS DEFENCE IN DEPTH, NOT A HOLE THIS
+    BRIEF CAN DEMONSTRATE, and saying otherwise would be the kind of unverified
+    premise `CLAUDE.md` opens with.
+    ⚠⚠⚠ THIS HELPER IS EIGHT SUITES' CONTRACT, and it carried the weakness while
+    `wizard-contract.spec.ts` had already been hardened against it. It worked
+    only because its persona always exists — a property of the seed, not of the
+    helper.
+
+    ⚠ AND THE WAIT IS NO LONGER A SLEEP. `waitForTimeout(1500)` raced the
+    post-sign-in redirect: the callback answering is not the moment the client
+    finishes navigating, and against a DEV server compiling the destination on
+    demand that gap runs past 1.5s.
+    ⚠⚠ THE `catch` IS DELIBERATE — a timeout must fall through to the `expect`
+    below, whose message names the real failure. Playwright's own timeout would
+    say *"waitForURL exceeded"*, which is the sentence that misdirects.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   await page.waitForTimeout(1500);
+
+    ⚠⚠ THIS IS THE "OWN CHANGE" THE BLOCK ABOVE ASKED FOR. `E567` declined to
+    touch these waits inside an extraction, on the grounds that a behaviour
+    change inside a move makes "the count did not change" unprovable. This is
+    not a move, and all eight suites are run on both sides of it.
+  */
+  await page
+    .waitForURL((u) => new URL(u).pathname !== "/login", { timeout: 20_000 })
+    .catch(() => {});
+  expect(
+    new URL(page.url()).pathname,
+    `sign-in as ${email} did not leave /login — the session was never created`
+  ).not.toBe("/login");
 }

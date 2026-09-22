@@ -22,6 +22,7 @@
 
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
+import { publishedProfileCode } from "./_profile-surface";
 import { MENTOR_HELPFUL_THRESHOLD, mentorState } from "@/lib/community-signal";
 
 let pass = 0;
@@ -305,9 +306,15 @@ check(
 );
 check(
   "GUARD 3 — the profile passes the signal in rather than the block fetching it",
-  /community\?\s*:\s*CommunitySignal \| null/.test(
-    bodies.get(join("src", "components", "profile", "ProviderProfileView.tsx")) ?? ""
-  )
+  /* ⚠⚠⚠ THE NAMED FILE IS RETIRED (`P2-A2-E597` WS-D). This read
+     `ProviderProfileView.tsx`, which **nothing has imported since `E588`** —
+     measured 2026-09-21, zero live imports in `src/`. The assertion was true
+     about a file no route serves, which is coverage on paper only.
+     ⚠ The published profile is derived from the route that renders it now.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   bodies.get(join("src", "components", "profile", "ProviderProfileView.tsx")) ?? ""
+  */
+  /community\?\s*:\s*CommunitySignal \| null/.test(publishedProfileCode())
 );
 /*
   Both profile surfaces actually supply it, or the block can never appear.

@@ -17,6 +17,7 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { publishedProfileCode, publishedProfileFile } from "./_profile-surface";
 
 let pass = 0;
 const failures: string[] = [];
@@ -32,7 +33,19 @@ const strip = (s: string) =>
 
 const WIZ = strip(readFileSync(join("src", "app", "join", "provider", "page.tsx"), "utf8"));
 const SECTIONS = strip(readFileSync(join("src", "components", "profile", "sections.tsx"), "utf8"));
-const VIEW = strip(readFileSync(join("src", "components", "profile", "ProviderProfileView.tsx"), "utf8"));
+/*
+  ── ⚠⚠⚠ THE NAMED FILE IS RETIRED (`P2-A2-E597` WS-D) ──────────────────────
+
+  ⚠ SCOTT: *"Retire `check:review-edit`'s named-file list."*
+  ⚠⚠ THIS GATE READ `ProviderProfileView.tsx` FOR MONTHS AFTER `E588` STOPPED
+  RENDERING IT. Measured 2026-09-21: **zero live imports of that file anywhere
+  in `src/`.** Both §4 assertions were true — about code no route serves.
+  ⚠⚠⚠ THE PUBLISHED PROFILE IS NOW DERIVED FROM THE ROUTE THAT RENDERS IT, so
+  the next move is followed instead of silently left behind.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   const VIEW = strip(readFileSync(join("src", "components", "profile", "ProviderProfileView.tsx"), "utf8"));
+*/
+const VIEW = publishedProfileCode();
 
 /* ═══ 0 · PROVE THE STRIP ═════════════════════════════════════════════════ */
 {
@@ -170,4 +183,5 @@ if (failures.length) {
   for (const f of failures) console.error(`  ✗ ${f}`);
   process.exit(1);
 }
+console.log(`check:review-edit — published profile resolved to ${publishedProfileFile()}`);
 console.log(`check:review-edit — ${pass}/${pass} passed`);
