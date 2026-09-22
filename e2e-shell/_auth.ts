@@ -150,3 +150,50 @@ export async function signIn(page: Page) {
     `sign-in as ${email} did not leave /login — the session was never created`
   ).not.toBe("/login");
 }
+
+/**
+ * ── ⚠⚠ SIGN IN AS A NAMED SEEDED ACCOUNT (`P2-A2-E598` WS-D) ──────────────
+ *
+ * ⚠ `signIn` above is the GATE PERSONA and is eight suites' contract. WS-D
+ * needs three DIFFERENT viewers of one profile — an owner, a buyer and another
+ * provider — to prove the rate rule, and that cannot be done with one account.
+ *
+ * ⚠⚠ THE PASSWORD STILL COMES FROM THE SEED FILE, never from a literal: a
+ * rotation there changes this too, instead of breaking a suite a month later
+ * for a reason nobody connects. ⚠⚠⚠ IT THROWS IF THE ADDRESS IS NOT IN THE SEED
+ * WITH A PASSWORD, so a renamed persona fails loudly rather than signing in as
+ * nobody (`E586`).
+ *
+ * ⚠ IT SHARES `signIn`'S HARDENING — the session must actually leave `/login`,
+ * and the redirect is waited for rather than slept through.
+ */
+export async function signInAsSeeded(page: Page, email: string) {
+  const raw = JSON.parse(
+    readFileSync(join(process.cwd(), "prisma", "seed-data", "test-users.json"), "utf8")
+  ) as Record<string, unknown>;
+  const all = (Object.values(raw).filter(Array.isArray) as { email: string; password: string }[][]).flat();
+  const chosen = all.find((u) => u.email?.toLowerCase() === email.toLowerCase() && u.password);
+  if (!chosen) {
+    throw new Error(`${email} is not in prisma/seed-data/test-users.json with a password`);
+  }
+  await page.goto("/login", { waitUntil: "domcontentloaded" });
+  await page.waitForSelector('input[type="email"]');
+  /* ⚠ Hydration — the same race `signIn` records. */
+  await page.waitForTimeout(1200);
+  await page.click('input[type="email"]');
+  await page.type('input[type="email"]', chosen.email, { delay: 5 });
+  await page.click('input[type="password"]');
+  await page.type('input[type="password"]', chosen.password, { delay: 5 });
+  const [res] = await Promise.all([
+    page.waitForResponse((r) => r.url().includes("/api/auth/callback/credentials")),
+    page.click('button[type="submit"]'),
+  ]);
+  expect(res.ok(), `sign-in as ${chosen.email} returned ${res.status()}`).toBe(true);
+  await page
+    .waitForURL((u) => new URL(u).pathname !== "/login", { timeout: 20_000 })
+    .catch(() => {});
+  expect(
+    new URL(page.url()).pathname,
+    `sign-in as ${chosen.email} did not leave /login — the session was never created`
+  ).not.toBe("/login");
+}
