@@ -9,14 +9,17 @@ import { tabSequenceFor } from "@/lib/nav";
 import { connectTabs } from "@/lib/connect-tabs";
 import { unreadCount } from "@/lib/messages";
 import {
+  BOARD_MIN_SCORERS,
   GROWTH_WEIGHTS,
   daysLeftInMonth,
   growthBoard,
   growthScore,
+  boardIsShown,
   movementFor,
   myNetwork,
   nextMove,
   providerHrefs,
+  rankFor,
   type GrowthWindow,
 } from "@/lib/growth-score";
 
@@ -95,7 +98,10 @@ export default async function GrowPage({
     growthBoard(tab.window),
     tab.key === "network" ? myNetwork(personId) : Promise.resolve([]),
   ]);
-  const myRow = board.find((r) => r.personId === personId) ?? null;
+  /* ⚠⚠ RULING 6 APPLIES TO THE RANK, NOT ONLY TO THE BOARD (Scott, at the WS-C
+     gate). `rankFor` returns `null` while the board is hidden, so the line
+     below shows points without a standing earned against nobody. */
+  const myRank = rankFor(board, personId);
   const move = nextMove(board, me);
   /*
     ⚠⚠ MOVEMENT ONLY ON `This Month`. Comparing an ALL-TIME board to last month
@@ -115,7 +121,8 @@ export default async function GrowPage({
     RATHER THAN SEEDED — the board appears the day three people have earned a
     place on it.
   */
-  const showBoard = board.length >= 3;
+  /* ⚠ ONE RULE, from the lib — the page never restates the threshold. */
+  const showBoard = boardIsShown(board);
 
   return (
     <>
@@ -186,21 +193,29 @@ export default async function GrowPage({
         {/* ── rank and the one move ──────────────────────────────────── */}
         <section className="mt-3.5 rounded-brand border border-line bg-white px-[18px] py-4">
           <h2 className="font-display text-[15px] font-bold">Your Rank This Month</h2>
-          {myRow ? (
+          {myRank != null ? (
             <p className="mt-1.5 text-[13.5px]">
-              <span className="text-[22px] font-extrabold tabular-nums">#{myRow.rank}</span>
+              <span className="text-[22px] font-extrabold tabular-nums">#{myRank}</span>
               <span className="ml-2 text-ink-2">
                 of {board.length} {board.length === 1 ? "member" : "members"} with a
                 score this month
               </span>
             </p>
-          ) : (
+          ) : boardIsShown(board) ? (
             /* ⚠ NOT RANKED IS NOT RANK ZERO. Somebody with no points has not
                come last; they are not on the board at all, and saying so is
                what makes the invite panel the obvious next thing. */
             <p className="mt-1.5 text-[13.5px] text-ink-2">
               You&rsquo;re not on this month&rsquo;s board yet. Invite a colleague to
               get on it.
+            </p>
+          ) : (
+            /* ⚠⚠⚠ THE BOARD IS HIDDEN, SO THERE IS NO RANK TO REPORT. Saying
+               *"you're not on the board"* would be wrong — there is no board —
+               and `#1` would be a standing earned against nobody. */
+            <p className="mt-1.5 text-[13.5px] text-ink-2">
+              Ranking starts once {BOARD_MIN_SCORERS} members have a score this
+              month.
             </p>
           )}
           {/* ⚠⚠ COMPUTED FROM THE BOARD, NEVER CANNED (WS-A 1). */}

@@ -198,6 +198,39 @@ export async function growthScore(
 export type GrowthRow = GrowthScore & { rank: number; name: string; photoUrl: string | null };
 
 /**
+ * ── ⚠⚠⚠ RULING 6 — FEWER THAN THREE SCORERS MEANS NO BOARD ───────────────
+ *
+ * ⚠ Scott: *"If the board has fewer than three people with a score, don't show
+ * a board; show your own score and the invite panel."*
+ */
+export const BOARD_MIN_SCORERS = 3;
+
+/**
+ * ⚠⚠ ONE RULE, EVERY SURFACE. The board, the rank line and the profile's `Grow`
+ * one-liner all ask THIS, so they cannot disagree about whether a rank exists.
+ */
+export function boardIsShown(board: GrowthRow[]): boolean {
+  return board.length >= BOARD_MIN_SCORERS;
+}
+
+/**
+ * ── ⚠⚠⚠ A RANK EXISTS ONLY WHEN THE BOARD DOES (Scott, 2026-09-22) ────────
+ *
+ * ⚠ AT THE WS-C GATE: *"the rank follows ruling 6. When the board is hidden…
+ * the Grow card one-liner and the Grow page show no rank."*
+ * ⚠⚠ THE REASON IS THAT `#1` IS A CLAIM ABOUT A FIELD. Being first of two, on a
+ * board nobody is shown, is not a standing — and printing it would be the
+ * loudest number on the card, earned against nobody.
+ * ⚠⚠⚠ `null` MEANS "NO RANK TO SHOW", AND IT COVERS BOTH CASES: the board is
+ * hidden, or the person is not on it. Neither is rank 0, and the surfaces
+ * render the points alone rather than a zero.
+ */
+export function rankFor(board: GrowthRow[], personId: string): number | null {
+  if (!boardIsShown(board)) return null;
+  return board.find((r) => r.personId === personId)?.rank ?? null;
+}
+
+/**
  * The board, highest first.
  *
  * ── ⚠⚠ WHO IS RANKED (premise 7) ─────────────────────────────────────────

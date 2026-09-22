@@ -14,7 +14,7 @@ import { computeProfileScore } from "@/lib/completeness";
 /* ⚠ `P2-A3-E599` WS-C 4 — the `Grow` card's one-liner shows the owner's own
    score and rank. Computed HERE, on the owner's page, and never passed to
    `/providers/[id]` — the same rule the usage comb followed. */
-import { growthBoard, growthScore } from "@/lib/growth-score";
+import { growthBoard, growthScore, rankFor } from "@/lib/growth-score";
 
 /**
  * ── ⚠⚠⚠ `/profile` IS THE OWNER'S PROFILE (`P2-A2-E598` WS-B) ─────────────
@@ -167,9 +167,15 @@ export default async function MyProfilePage() {
         colleagueCount={colleagues}
         growth={{
           points: growthMe.points,
-          /* ⚠ `null` WHEN NOT ON THE BOARD — not rank 0. Somebody with no
-             points has not come last; they are not ranked at all. */
-          rank: growthRows.find((r) => r.personId === profile.person.personId)?.rank ?? null,
+          /*
+            ⚠⚠⚠ `rankFor` APPLIES RULING 6 — no rank while the board is hidden.
+            ⚠ SUPERSEDED, quoted not deleted (`E164`):
+            //   rank: growthRows.find((r) => r.personId === profile.person.personId)?.rank ?? null,
+            ⚠⚠ THAT PRINTED `#1 this month` ON A ONE-PERSON BOARD nobody is
+            shown. `null` covers both "board hidden" and "not on it", and
+            neither is rank 0.
+          */
+          rank: rankFor(growthRows, profile.person.personId),
         }}
         score={await ownerScore(profile.id)}
       />

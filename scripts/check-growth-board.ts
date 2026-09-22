@@ -26,7 +26,15 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { createHash, randomUUID } from "node:crypto";
-import { GROWTH_WEIGHTS, growthBoard, growthScore, windowRange } from "@/lib/growth-score";
+import {
+  BOARD_MIN_SCORERS,
+  GROWTH_WEIGHTS,
+  boardIsShown,
+  growthBoard,
+  growthScore,
+  rankFor,
+  windowRange,
+} from "@/lib/growth-score";
 
 let pass = 0;
 const failures: string[] = [];
@@ -165,6 +173,44 @@ async function main() {
       plan.every(([id]) => !prev.some((r) => r.personId === id)),
       prev.map((r) => r.personId.slice(0, 8)).join(", ")
     );
+    /* ═══ 5 · ⚠⚠⚠ A RANK EXISTS ONLY WHEN THE BOARD DOES (ruling 6) ═══════
+       ⚠ SCOTT, AT THE WS-C GATE: *"When the board is hidden (fewer than 3
+       people with a score), the Grow card one-liner and the Grow page show no
+       rank… Assert both cases."*
+       ⚠⚠ BOTH CASES ARE ASSERTED AGAINST THE SAME BOARD, by slicing it — a
+       fixture that could only produce one of them would prove half the rule. */
+    {
+      const top = board[0];
+      check(
+        "5 — the seeded board is shown (3 or more scorers)",
+        boardIsShown(board) && board.length >= BOARD_MIN_SCORERS,
+        `${board.length} scorers`
+      );
+      /* ⚠ CASE A — BOARD SHOWN: the leader has a rank, and it is 1. */
+      check(
+        "5 — ⚠⚠ SHOWN: the top scorer has a rank",
+        rankFor(board, top.personId) === 1,
+        String(rankFor(board, top.personId))
+      );
+      /* ⚠⚠⚠ CASE B — BOARD HIDDEN: the SAME person, on a board of two, has
+         NO rank. `#1 of 2` on a board nobody is shown is a standing earned
+         against nobody, which is the whole point of the ruling. */
+      const tooFew = board.slice(0, BOARD_MIN_SCORERS - 1);
+      check(
+        "5 — ⚠⚠⚠ HIDDEN: the same top scorer has NO rank on a short board",
+        !boardIsShown(tooFew) && rankFor(tooFew, top.personId) === null,
+        `shown=${boardIsShown(tooFew)} rank=${rankFor(tooFew, top.personId)}`
+      );
+      /* ⚠ AND AN EMPTY BOARD IS HIDDEN TOO — the live case on real data. */
+      check(
+        "5 — HIDDEN: an empty board shows nothing and ranks nobody",
+        !boardIsShown([]) && rankFor([], top.personId) === null
+      );
+      /* ⚠⚠ THE THRESHOLD IS THE LIB'S, NOT THE GATE'S — a page that restated
+         `>= 3` could drift from the rule without failing here. */
+      check("5 — the threshold is three", BOARD_MIN_SCORERS === 3, String(BOARD_MIN_SCORERS));
+    }
+
   } finally {
     /* ⚠⚠⚠ SCOPED TO THE IDS THIS RUN CREATED, and in a `finally` so a failed
        assertion still leaves the database as it found it. */
