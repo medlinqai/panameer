@@ -4,6 +4,26 @@ import { Avatar } from "@/components/Avatar";
 /* ⚠ `Face` OWNS THE "no photo -> grey silhouette" RULE (`E591`), so the faces
    row asks it rather than deciding the fallback a second time. */
 import { Face } from "@/components/community/Silhouette";
+/*
+  ⚠⚠⚠ EVERY EDIT LINK NOW OPENS ONE SECTION (`P2-A2-E597` WS-C). ⚠ SUPERSEDED,
+  quoted not deleted (`E164`) — all eight pointed into the REGISTRATION WIZARD,
+  which is what Scott filed: *"it takes me back to the registration walk. This
+  is wrong… not the right page, not the right menu."*
+  //   Bio            /join/provider?step=finish
+  //   Skills         /join/provider?step=skills&return=review
+  //   Specializations /join/provider?step=specializations&return=review
+  //   Certifications /join/provider?step=finish
+  //   Education      /join/provider?step=education&return=review
+  //   Work History   /join/provider?step=tell_us&return=review
+  //   Solo Projects  /join/provider?step=tell_us&return=review
+  //   Rates          /join/provider?step=finish
+  ⚠⚠ `&return=review` RETURNED TO THE WIZARD'S REVIEW, NOT THE PROFILE — so it
+  also re-broke `E131`/`E133`, whose whole subject was that an edit from the
+  live profile comes back to the live profile.
+  ⚠ `editHref` IS ONE SPELLING for all eight, so a slug cannot drift between a
+  link and the route that answers it.
+*/
+import { editHref } from "@/lib/profile-sections";
 import {
   CompletionRing,
   completionHook,
@@ -397,8 +417,9 @@ export function ConnectProfile({
         */}
         {p.rates && (
           <ProfileCard
+            id="rates"
             title="Rates"
-            edit={owner ? <EditLink href="/join/provider?step=finish" title="Rates" /> : undefined}
+            edit={owner ? <EditLink href={editHref("rates")} title="Rates" /> : undefined}
           >
             <RateRows p={p} />
           </ProfileCard>
@@ -671,8 +692,9 @@ export function ConnectProfile({
           */}
           <div className="pm-cp-two">
             <ProfileCard
+              id="bio"
               title="Bio"
-              edit={owner ? <EditLink href="/join/provider?step=finish" title="Bio" /> : undefined}
+              edit={owner ? <EditLink href={editHref("bio")} title="Bio" /> : undefined}
             >
               <OverviewBody
                 overview={p.overview}
@@ -705,8 +727,9 @@ export function ConnectProfile({
           {p.skills.length > 0 && (
             <div className="pm-cp-two">
               <ProfileCard
+                id="skills"
                 title="Skills"
-                edit={owner ? <EditLink href="/join/provider?step=skills&return=review" title="Skills" /> : undefined}
+                edit={owner ? <EditLink href={editHref("skills")} title="Skills" /> : undefined}
               >
                 {groupSkillsByPillar(p.skills).map((g) => (
                   <div key={g.pillar ?? "__none"} className="mb-3 last:mb-0">
@@ -728,14 +751,16 @@ export function ConnectProfile({
 
           <div className="pm-cp-three">
             <ProfileCard
+            id="specializations"
             title="Specializations"
-            edit={owner ? <EditLink href="/join/provider?step=specializations&return=review" title="Specializations" /> : undefined}
+            edit={owner ? <EditLink href={editHref("specializations")} title="Specializations" /> : undefined}
           >
               <SpecializationsBody specializations={p.specializations} />
             </ProfileCard>
             <ProfileCard
+            id="certifications"
             title="Certifications"
-            edit={owner ? <EditLink href="/join/provider?step=finish" title="Certifications" /> : undefined}
+            edit={owner ? <EditLink href={editHref("certifications")} title="Certifications" /> : undefined}
           >
               {/*
                 ── ⚠⚠ AN EMPTY SECTION OFFERS A ROUTE (`E593` WS-C item 16) ──
@@ -763,8 +788,9 @@ export function ConnectProfile({
               />
             </ProfileCard>
             <ProfileCard
+            id="education"
             title="Education"
-            edit={owner ? <EditLink href="/join/provider?step=education&return=review" title="Education" /> : undefined}
+            edit={owner ? <EditLink href={editHref("education")} title="Education" /> : undefined}
           >
               <EducationBody
                 education={p.education}
@@ -783,8 +809,9 @@ export function ConnectProfile({
           </div>
 
           <ProfileCard
+            id="work-history"
             title="Work History"
-            edit={owner ? <EditLink href="/join/provider?step=tell_us&return=review" title="Work History" /> : undefined}
+            edit={owner ? <EditLink href={editHref("work-history")} title="Work History" /> : undefined}
           >
             <WorkHistoryBody
               employers={p.employers}
@@ -795,8 +822,9 @@ export function ConnectProfile({
           </ProfileCard>
 
           <ProfileCard
+            id="solo-projects"
             title="Solo Projects"
-            edit={owner ? <EditLink href="/join/provider?step=tell_us&return=review" title="Solo Projects" /> : undefined}
+            edit={owner ? <EditLink href={editHref("solo-projects")} title="Solo Projects" /> : undefined}
           >
             <SoloProjectsBody
               projects={soloProjects}

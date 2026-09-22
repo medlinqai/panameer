@@ -153,7 +153,25 @@ async function signInAs(page: Page) {
     gate, not fixed here, because that helper is eight other suites' contract.
   */
   expect(res.ok(), `sign-in as ${EMAIL} returned ${res.status()}`).toBe(true);
-  await page.waitForTimeout(1500);
+  /*
+    ⚠⚠ WAIT FOR THE REDIRECT, DO NOT SLEEP THROUGH IT. This was a fixed
+    `waitForTimeout(1500)` and it FLAKED — measured at `E597` WS-C's gate, twice
+    in five runs, always here and never in a save assertion.
+    ⚠ The credentials callback answering is not the same moment as the client
+    finishing its redirect, and against a DEV server (which compiles the
+    destination route on demand) that gap runs past 1.5s.
+    ⚠⚠⚠ THE ASSERTION IS UNCHANGED — still "we left `/login`". Only the waiting
+    is, so a slow machine reports a slow redirect rather than a missing session.
+    ⚠ The `catch` is deliberate: a timeout here must fall through to the
+    `expect` below, whose message names the real failure. Throwing Playwright's
+    own timeout would say "waitForURL exceeded", which is the sentence that sent
+    an hour after `res.ok()` the first time.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   await page.waitForTimeout(1500);
+  */
+  await page
+    .waitForURL((u) => new URL(u).pathname !== "/login", { timeout: 20_000 })
+    .catch(() => {});
   expect(
     new URL(page.url()).pathname,
     `sign-in as ${EMAIL} did not leave /login — the session was never created`
