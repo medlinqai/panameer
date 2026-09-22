@@ -30,11 +30,11 @@ import { Avatar } from "@/components/Avatar";
 */
 import { editHref } from "@/lib/profile-sections";
 import { SCORE_LINE_COPY } from "@/lib/profile-score-copy";
+import { completionHook } from "@/lib/completion-hook";
 import { GROWTH_WEIGHTS } from "@/lib/growth-score";
 import { lineCounts } from "@/lib/completeness";
 import {
   CompletionRing,
-  completionHook,
 } from "@/components/community/CompletionRing";
 import type { ProviderProfileView } from "@/lib/provider-profile-view";
 import type { TaughtPath, TakenPath } from "@/lib/learn-home";

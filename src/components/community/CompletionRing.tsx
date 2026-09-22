@@ -1,5 +1,12 @@
-import { lineCounts, type ProfileScore, type ScoreLine } from "@/lib/completeness";
-import { SCORE_LINE_COPY } from "@/lib/profile-score-copy";
+"use client";
+
+import { type ProfileScore, type ScoreLine } from "@/lib/completeness";
+/* ⚠⚠ THE SHARED REBUILD (`P2-A2-E600` WS-D). ⚠ ADDING IT MADE THIS A CLIENT
+   COMPONENT — it was a server one, and the hook needs a browser. ⚠⚠⚠ THAT IS A
+   REAL COST AND IT IS ACCEPTED: the ring is a small leaf with no data access of
+   its own, so the boundary moves by a few hundred bytes and `p` never crosses
+   it (`ConnectProfile` still passes only the computed `score`). */
+import { RebuildBadge, useRebuild } from "@/components/motion/Rebuild";
 import "./profile-score.css";
 
 /**
@@ -30,6 +37,9 @@ import "./profile-score.css";
  * which is why `computeProfileScore` returns both the total and the lines.
  */
 export function CompletionRing({ score }: { score: ProfileScore }) {
+  /* ⚠⚠ THE SHARED REBUILD — a `cycle` and a countdown, nothing else. `score` is
+     untouched: only the drawing moves (WS-D rule 3). */
+  const { cycle, secondsLeft } = useRebuild();
   const R = 50;
   const C = 2 * Math.PI * R;
   /* ⚠ A SMALLER GAP THAN THE SCORE PAGE'S. This ring is 118px across, not 340 —
@@ -63,6 +73,9 @@ export function CompletionRing({ score }: { score: ProfileScore }) {
           aria-label={`${score.total} of 100`}
         >
           <circle cx="59" cy="59" r={R} fill="none" className="stroke-line-2" strokeWidth="11" />
+          {/* ⚠ Re-keyed on `cycle` so the CSS replays — same mechanism as the
+              Score ring, same stylesheet, no second animation path. */}
+          <g key={cycle} className="pm-rebuild-draw">
           {segments.map((s) => (
             <circle
               key={s.line.key}
@@ -77,6 +90,7 @@ export function CompletionRing({ score }: { score: ProfileScore }) {
               className={paintClass(s.line.state)}
             />
           ))}
+          </g>
         </svg>
         <span className="absolute inset-0 grid place-items-center font-display text-[22px] font-bold text-ink">
           {score.total}
@@ -84,33 +98,23 @@ export function CompletionRing({ score }: { score: ProfileScore }) {
       </div>
 
       <p className="text-[12px] text-ink-2">of 100</p>
+      {/* ⚠ The same caption as the Score page's ring, from the same component —
+          one wording, three pictures. */}
+      <RebuildBadge secondsLeft={secondsLeft} />
     </div>
   );
 }
 
-/**
- * ── ⚠⚠ THE HOOK, COMPUTED — NEVER HARD-CODED (`E590` WS-C item 3) ─────────
- *
- * ⚠⚠⚠ AT 100% IT SAYS SOMETHING ELSE AND DOES NOT PRINT *"0 lines left"*. A
- * to-do count of zero is not an encouragement, it is a sentence that reads as
- * broken — and it is the same class of defect as a `0` on an untracked stat
- * tile: a number nobody meant.
- *
- * ⚠ The minutes come from `SCORE_LINE_COPY`, which labels them an ESTIMATE, and
- * the copy always says *"about"*.
- */
-export function completionHook(score: ProfileScore): string {
-  const open = score.lines.filter((l) => !lineCounts(l.state));
-  if (open.length === 0) {
-    /* ⚠ NOT "Complete" — `E562` retired the word and `E590` did not bring it
-       back. This states what was done, not a verdict on the person. */
-    return "Every line answered. Nothing left to do here.";
-  }
-  const minutes = open.reduce((a, l) => a + SCORE_LINE_COPY[l.key].minutes, 0);
-  return `${open.length} line${open.length === 1 ? "" : "s"} left. About ${minutes} minute${
-    minutes === 1 ? "" : "s"
-  } to 100%.`;
-}
+/* ⚠⚠⚠ `completionHook` MOVED TO `lib/completion-hook.ts` (`P2-A2-E600` WS-D).
+   ⚠ ADDING `"use client"` TO THIS FILE MADE IT A CLIENT FUNCTION, and
+   `ConnectProfile` — a SERVER component — calls it. The page 500ed with
+   *"Attempted to call completionHook() from the server but completionHook is on
+   the client."*
+   ⚠⚠ `npm run build` AND `tsc` BOTH PASSED. Only rendering caught it — the same
+   class as `E597` WS-C's `SectionSpec` across the boundary, and the second time
+   this session that a boundary error was invisible to both.
+   ⚠ SUPERSEDED, quoted not deleted (`E164`): the function lived here, directly
+   below the component that shares its stylesheet. */
 
 function paintClass(state: ScoreLine["state"]): string {
   if (state === "filled") return "pm-score-filled";

@@ -12,6 +12,7 @@ import {
 } from "@/lib/completeness";
 import { SCORE_LINE_COPY, DECLARED_NONE_RIDER } from "@/lib/profile-score-copy";
 import { editHref } from "@/lib/profile-sections";
+import { RebuildBadge, useRebuild } from "@/components/motion/Rebuild";
 import "./profile-score.css";
 
 /**
@@ -42,6 +43,10 @@ import "./profile-score.css";
  */
 export function ProfileScoreView({ score }: { score: ProfileScore }) {
   const router = useRouter();
+  /* ⚠⚠ THE SHARED REBUILD (`P2-A2-E600` WS-D). It supplies a `cycle` and a
+     countdown and NOTHING ELSE — `score` is untouched by it, which is rule 3:
+     only the drawing moves. */
+  const { cycle, secondsLeft } = useRebuild();
   const [hover, setHover] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -212,7 +217,13 @@ export function ProfileScoreView({ score }: { score: ProfileScore }) {
           <div className="pm-score-dial">
             <svg viewBox="0 0 300 300" className="pm-score-svg" role="img" aria-label={`${score.total} of 100`}>
               <circle cx="150" cy="150" r={R} fill="none" className="stroke-line-2" strokeWidth="22" />
-              {segments.map((s) => (
+              {/* ⚠⚠⚠ THE `key` IS THE WHOLE ANIMATION MECHANISM. Re-keying the
+                  group remounts the circles, which restarts the CSS animation
+                  from zero — no JS loop, no per-frame state, and each segment
+                  carries its own delay so they fill in turn.
+                  ⚠ `score` IS NOT IN THE KEY: the numbers do not change here. */}
+              <g key={cycle} className="pm-rebuild-draw">
+              {segments.map((s, i) => (
                 <circle
                   key={s.line.key}
                   cx="150"
@@ -228,10 +239,14 @@ export function ProfileScoreView({ score }: { score: ProfileScore }) {
                     paintClass(s.line.state) +
                     (hover && hover !== s.line.key ? " pm-score-dim" : "")
                   }
+                  /* ⚠ EACH SEGMENT WAITS ITS TURN — 70ms apart keeps the whole
+                     sweep inside about a second on a 16-line ring. */
+                  style={{ animationDelay: `${i * 70}ms` }}
                   onMouseEnter={() => setHover(s.line.key)}
                   onMouseLeave={() => setHover(null)}
                 />
               ))}
+              </g>
             </svg>
             <div className="pm-score-core">
               {/* ⚠ `E433` — the FIGURE is a figure, so ink. The ring itself is
@@ -247,6 +262,8 @@ export function ProfileScoreView({ score }: { score: ProfileScore }) {
               </p>
             </div>
           </div>
+          {/* ⚠ The countdown sits under the picture it describes. */}
+          <RebuildBadge secondsLeft={secondsLeft} />
         </div>
         <div className="pm-score-hero-right flex flex-col justify-center gap-3 p-6">
           {/*

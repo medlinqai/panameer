@@ -171,3 +171,40 @@
     border-bottom: 1px solid var(--line, #e7e5ea);
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⚠⚠⚠ THE REBUILD DRAW (`P2-A2-E600` WS-D)
+   ═══════════════════════════════════════════════════════════════════════════
+
+   ⚠ SCOTT: *"every 15 seconds the picture redraws (the ring's segments fill in
+   turn)"*.
+   ⚠⚠ IT IS CSS, NOT A JS ANIMATION LOOP. React re-keys the group, the browser
+   remounts the circles, and this replays — so there is no per-frame state, no
+   `requestAnimationFrame`, and nothing to leak when the tab is hidden.
+   ⚠⚠⚠ **ONLY THE DRAWING MOVES.** The segments' lengths and offsets are
+   untouched; this animates OPACITY and stroke width, so a rebuild cannot
+   change what the ring says.
+*/
+@keyframes pm-rebuild-seg {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.pm-rebuild-draw > circle {
+  animation: pm-rebuild-seg 420ms ease-out both;
+}
+
+/*
+  ⚠⚠ REDUCED MOTION STOPS IT HERE TOO, NOT ONLY IN JS. `useRebuild` already
+  stops the clock, but a reader who changes the setting mid-animation should see
+  it stop immediately rather than after the current pass. ⚠ Belt and braces on
+  an accessibility preference is the right amount.
+*/
+@media (prefers-reduced-motion: reduce) {
+  .pm-rebuild-draw > circle {
+    animation: none;
+  }
+}
