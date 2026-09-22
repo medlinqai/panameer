@@ -1,6 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
-import { signIn } from "./_auth";
+import { signIn, signInAsSeeded } from "./_auth";
 import { requireCompleteProvider } from "./_persona";
+import { db } from "./_db";
 
 /**
  * ── ⚠⚠ THE VISITOR PAGE, AND THE OWNER'S UNCHANGED (`E593` WS-C item 13) ──
@@ -279,5 +280,110 @@ test.describe("⚠ THE VISITOR PROFILE — P2-J3-E593 WS-C", () => {
        it unconditionally would force a seed (`E564`). The SHAPE is gated in
        `check:community-page`; this reports what the walk saw. */
     await page.close();
+  });
+
+  /*
+    ── ⚠⚠⚠ THE RATE RULE, PROVED BY THE FIGURE (`P2-A2-E598` WS-D) ───────────
+
+    ⚠ SCOTT, 2026-09-22: *"The rate rule: `isOwner || hasCapability(viewer,
+    'canHireTalent')`. Prove it by the figure (the `E596` WS-G method), not by
+    the HTML field name."*
+
+    ⚠⚠ THE TEST ABOVE PROVES ONLY HALF OF IT. It signs in as the gate persona —
+    a PROVIDER — and asserts the rate LABELS are absent. That is the withholding
+    half. ⚠⚠⚠ NOTHING ASSERTED THAT A BUYER STILL SEES THE RATE, and a
+    predicate that hid it from everyone would have passed every assertion in
+    this file. `E581` is why that matters: *"a rate is in the required set
+    precisely so buyers can filter on it."*
+
+    ── ⚠⚠⚠ `210.00`, NOT `$210`, AND THE DIFFERENCE IS A REAL TRAP ──────────
+
+    ⚠ MEASURED 2026-09-22: `$210` MATCHES THE PROVIDER'S PAGE — in
+    `$20c`, `$210`, `$211`, `$215`, which are **Next flight REFERENCE IDS**, not
+    prices. ⚠⚠ This file already recorded that trap for a blanket money scan;
+    it bites a specific figure too, and it read as a disclosure on first
+    measurement.
+    ⚠⚠⚠ A DECIMAL CANNOT BE A FLIGHT ID, so the figure is matched WITH its
+    cents. ⚠ Asserted against the RAW SERVER HTML as well as the rendered text,
+    because a figure absent from the DOM but present in the payload is still
+    disclosed.
+  */
+  test("⚠⚠⚠ the rate figure reaches a buyer and the owner, and NOT another provider", async ({
+    browser,
+  }) => {
+    /* ⚠ The gate persona's own rate, read from the seed rather than typed:
+       `hourly_rate_cents` 21000. ⚠⚠ THE PROFILE IS RESOLVED FROM THE PAGE, not
+       from a hardcoded id — `requireCompleteProvider` returns her href and
+       fails loudly if she is not complete (`E586`). */
+    const owner = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    await signIn(owner);
+    const href = await requireCompleteProvider(owner);
+    const money = /210\.00/;
+
+    const ownerText = await owner.locator("body").innerText();
+    await owner.close();
+
+    /*
+      ⚠⚠ THREE VIEWERS, ONE URL. `sw_user31` is a seeded BUYER
+      (`is_service_buyer`, no provider profile); `sw_user10` is a seeded
+      PROVIDER-ONLY account. ⚠ NEITHER IS `sw_user3`/`sw_user4` — those hold
+      `learn_lessons.expert_person_id` and are protected (load-bearing rule 10).
+      ⚠⚠⚠ NOTHING IS WRITTEN. Both accounts are read-only here, and the gate
+      persona is untouched.
+    */
+    const buyer = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    await signInAsSeeded(buyer, "sw_user31@straterp.com");
+    await buyer.goto(href, { waitUntil: "networkidle" });
+    const buyerText = await buyer.locator("body").innerText();
+    const buyerRaw = await (await buyer.request.get(href)).text();
+    await buyer.close();
+
+    const provider = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    await signInAsSeeded(provider, "sw_user10@straterp.com");
+    await provider.goto(href, { waitUntil: "networkidle" });
+    const providerText = await provider.locator("body").innerText();
+    const providerRaw = await (await provider.request.get(href)).text();
+    await provider.close();
+
+    /* ⚠ THE OWNER SEES THEIR OWN — `isOwner` is the first clause. */
+    expect(money.test(ownerText), "the owner cannot see their own rate").toBe(true);
+    /* ⚠⚠ A BUYER SEES IT — `canHireTalent`. This is the half that was unasserted. */
+    expect(money.test(buyerText), "a buyer cannot see the rate they are here to filter on").toBe(true);
+    expect(money.test(buyerRaw), "the rate is rendered but not served to a buyer").toBe(true);
+    /* ⚠⚠⚠ ANOTHER PROVIDER DOES NOT — Scott: *"I do nto think providers should
+       see other provider's rates."* ⚠ ABSENT FROM THE PAYLOAD, not merely
+       unrendered: the view model withholds `p.rates` itself. */
+    expect(money.test(providerText), "another provider can SEE the rate figure").toBe(false);
+    expect(money.test(providerRaw), "the rate figure is in the payload served to another provider").toBe(false);
+    console.log(
+      `E598/WS-D  rate figure 210.00 — owner ${money.test(ownerText)} · buyer ${money.test(buyerText)} · provider ${money.test(providerText)}`
+    );
+
+    /*
+      ── ⚠⚠⚠ THE WALK LEAVES NOTHING BEHIND (`P2-A2-E598` WS-D) ──────────────
+
+      ⚠ SCOTT, 2026-09-22: *"Priya (`sw_user21`) stays exactly as the seed
+      defines her. Remove any test writes."*
+      ⚠⚠ VIEWING A PROFILE IS A WRITE. `/providers/[id]` calls
+      `recordProfileView` on every non-owner render — one row per viewer per day
+      — so this test increments the gate persona's *"N profile views"* EVERY RUN
+      unless it cleans up. ⚠⚠⚠ MEASURED: four rows had accumulated on her before
+      this teardown existed, and the seed writes NONE — `prisma/reset/02-wipe.ts`
+      wipes `profileView`, so **0 is her seeded state.**
+      ⚠ SCOPED TO THE TWO VIEWERS THIS TEST SIGNS IN AS, never `deleteMany` by
+      profile: a blanket delete would erase rows some other run legitimately
+      created, which is the *"a save deletes data it did not create"* rule
+      (`E517`/`E552`/`E553`) applied to a teardown.
+    */
+    const prisma = db();
+    const viewers = await prisma.person.findMany({
+      where: { user: { email: { in: ["sw_user31@straterp.com", "sw_user10@straterp.com"] } } },
+      select: { id: true },
+    });
+    const profileId = href.split("/").pop()!;
+    const removed = await prisma.profileView.deleteMany({
+      where: { profile_id: profileId, viewer_person_id: { in: viewers.map((v) => v.id) } },
+    });
+    console.log(`E598/WS-D  teardown — removed ${removed.count} ProfileView row(s) this test created`);
   });
 });
