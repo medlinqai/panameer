@@ -157,10 +157,42 @@ for (const [name, files] of [...sent.entries()].sort()) {
 
 /* ═══ 6 · THE SCREEN ITSELF (WS-4.3–4.8) ══════════════════════════════════ */
 {
-  const wizard = APP.find((f) => f.path.endsWith(join("join", "provider", "page.tsx")));
-  const body = wizard?.code ?? "";
-  const optionsBlock = body.match(/const WORK_METHOD_OPTIONS = \[([\s\S]*?)\n\];/)?.[1] ?? "";
+  /*
+    ── ⚠⚠ `WORK_METHOD_OPTIONS` MOVED TO `lib/onboarding-draft.ts` (`E600` WS-F)
+
+    ⚠ The wizard no longer DECLARES it — it imports it, because the one-section
+    editor at `/profile/edit/work-method` needs the same two cards and a second
+    copy of Scott's exact strings is how the two screens drift apart.
+    ⚠⚠⚠ THIS IS `check:rollup`'S CASE, NOT `check:cert-skills`': THE RULE DID NOT
+    CHANGE AND THE CODE DID NOT DRIFT — only the constant's address did. The
+    screen still offers exactly two options, still SERVICES and RECRUITER, still
+    in Scott's exact words. ⚠ So the guard is taught the new location; the five
+    assertions below are otherwise untouched.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   const wizard = APP.find((f) => f.path.endsWith(join("join", "provider", "page.tsx")));
+    //   const body = wizard?.code ?? "";
+    //   const optionsBlock = body.match(/const WORK_METHOD_OPTIONS = \[([\s\S]*?)\n\];/)?.[1] ?? "";
+
+    ⚠⚠ `APP` WALKS `src/app` ONLY, so the constant is now outside everything this
+    block had in hand — which is exactly why it read as five failures rather than
+    as a move.
+  */
+  const draftSrc = strip(readFileSync(join("src", "lib", "onboarding-draft.ts"), "utf8"));
+  const optionsBlock =
+    draftSrc.match(/const WORK_METHOD_OPTIONS = \[([\s\S]*?)\n\];/)?.[1] ?? "";
   check("6 — the guard can see WORK_METHOD_OPTIONS", optionsBlock.length > 0);
+  /* ⚠⚠ AND THE WIZARD STILL USES IT. Teaching the guard a new address would
+     otherwise let the screen stop rendering these cards entirely while every
+     assertion below stayed green against an unread constant. */
+  const wizard = APP.find((f) => f.path.endsWith(join("join", "provider", "page.tsx")));
+  /* ⚠ `body` IS STILL THE WIZARD'S SOURCE — the assertions further down this
+     block read the screen itself, and only the OPTIONS moved. */
+  const body = wizard?.code ?? "";
+  check(
+    "6 — ⚠⚠ the wizard imports WORK_METHOD_OPTIONS from the shared module",
+    /WORK_METHOD_OPTIONS/.test(body) && /from "@\/lib\/onboarding-draft"/.test(body),
+    "the constant moved but the screen must still read it"
+  );
 
   /* ⚠ EXACTLY TWO. A third card returning is how this grows back — the screen
      used to force a choice between HOURLY and PACKAGES that nothing branched on. */
