@@ -10,6 +10,12 @@ import { EmployeeProfile } from "@/components/profile/EmployeeProfile";
   // import { publicTestimonials } from "@/lib/recommendations";
   // import { getCommunitySignalForProfile } from "@/lib/community-signal";
   // import { ProviderProfileViewPage } from "@/components/profile/ProviderProfileView";
+  ⚠⚠⚠ THAT COMPONENT NO LONGER EXISTS — `src/components/profile/ProviderProfileView.tsx`
+  was DELETED on 2026-09-21 (Scott's ruling, closing `E597` WS-D) after being
+  measured at ZERO live imports since `E588`. ⚠ GIT HOLDS THE HISTORY: it is
+  recoverable at any commit up to `d7a9c94`. ⚠⚠ The quote above is kept so the
+  page's history still reads, but it names a file that is gone — do not read it
+  as a restore target.
   ⚠⚠ `/community/page.tsx` NOW MAKES THE SAME FOUR CALLS. They moved with the
   surface; they were not dropped.
 */
@@ -61,7 +67,7 @@ export default async function MyProfilePage() {
     // const profile = await getOwnProviderProfileView(viewer.userId, viewer);
     // if (!profile) return <EmployeeProfile userId={viewer.userId} />;
     // return (
-    //   <ProviderProfileViewPage
+    //   <ProviderProfileViewPage        (deleted 2026-09-21 — see above)
     //     p={profile}
     //     taughtPaths={await getPathsTaughtByProfile(profile.id)}
     //     testimonials={await publicTestimonials(profile.id)}
