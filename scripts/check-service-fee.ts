@@ -123,13 +123,24 @@ check(
     "1 — MUTATION: the scan catches `p.serviceFeeBps ?? 1000`",
     feeLiteral.test("const x = p.serviceFeeBps ?? 1000;")
   );
-  /* ⚠ AND THE TWO CALL SITES GO THROUGH THE CONSTANT. */
-  const page = fileAt("src/app/join/provider/page.tsx");
-  check("1 — the onboarding page imports the constant", !!page && /DEFAULT_SERVICE_FEE_BPS/.test(page.code));
+  /* ⚠ AND THE TWO CALL SITES GO THROUGH THE CONSTANT.
+     ⚠⚠ THEY LIVE IN `lib/onboarding-draft.ts` NOW (`P2-A2-E597` WS-C) — both
+     defaults belong to `emptyDraft` and `draftFromStatus`, which moved out of
+     the page so the one-section editors could hydrate the same shape.
+     ⚠⚠⚠ THE COUNT IS UNCHANGED — 1 import + 2 uses — SO THE RULE IS INTACT AND
+     ONLY THE FILE MOVED. Reading both is what stops the gate asserting against
+     a page that no longer holds the thing it is guarding.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   const page = fileAt("src/app/join/provider/page.tsx");
+     //   check("1 — the onboarding page imports the constant", !!page && ...); */
+  const wizardFee = ["src/app/join/provider/page.tsx", "src/lib/onboarding-draft.ts"]
+    .map((p) => fileAt(p)?.code ?? "")
+    .join("\n");
+  check("1 — the onboarding wizard imports the constant", /DEFAULT_SERVICE_FEE_BPS/.test(wizardFee));
   check(
     "1 — and uses it in both places it needs a default",
-    (page?.code.match(/DEFAULT_SERVICE_FEE_BPS/g) ?? []).length >= 3,
-    `${(page?.code.match(/DEFAULT_SERVICE_FEE_BPS/g) ?? []).length} references (1 import + 2 uses)`
+    (wizardFee.match(/DEFAULT_SERVICE_FEE_BPS/g) ?? []).length >= 3,
+    `${(wizardFee.match(/DEFAULT_SERVICE_FEE_BPS/g) ?? []).length} references (1 import + 2 uses)`
   );
 }
 

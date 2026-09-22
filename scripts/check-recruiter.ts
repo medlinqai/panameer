@@ -45,6 +45,15 @@ const WIZARD = [
   "src/app/join/provider/page.tsx",
   "src/components/onboarding/editors/SkillsEditor.tsx",
   "src/components/onboarding/editors/SpecializationsEditor.tsx",
+  /* ⚠⚠ AND ITS DRAFT (`P2-A2-E597` WS-C). `ALL_STEPS`, `Step` and the shape the
+     wizard hydrates into moved to `lib/onboarding-draft.ts` so the one-section
+     editors could import them without pulling in a 4,700-line page.
+     ⚠ ASSERTION 2 WENT BLIND THE MOMENT IT MOVED — it reported *"ALL_STEPS not
+     found"*, which reads as "work_method is absent" when it means "the gate
+     cannot see the list at all". ⚠⚠⚠ AN ABSENCE TEST THAT CANNOT FIND ITS
+     HAYSTACK PASSES FOR THE WRONG REASON, and this one only failed loudly
+     because it demands the match be non-empty first. */
+  "src/lib/onboarding-draft.ts",
 ]
   .map((f) => read(f))
   .join("\n");

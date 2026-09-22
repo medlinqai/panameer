@@ -26,16 +26,35 @@ import {
   TextArea,
   Notice,
 } from "@/components/onboarding/controls";
-import {
-  EducationCards,
-  type EducationDraft,
-} from "@/components/onboarding/EducationCards";
+/* ⚠ `EducationDraft` MOVED WITH THE DRAFT — `lib/onboarding-draft.ts` imports
+   it now. ⚠ SUPERSEDED, quoted not deleted (`E164`):  type EducationDraft, */
+import { EducationCards } from "@/components/onboarding/EducationCards";
 import { type CertificationDraft } from "@/components/onboarding/CertificationsEditor";
+/*
+  ⚠⚠ THE DRAFT, ITS SHAPE AND ITS ONE MAPPING MOVED TO `lib/onboarding-draft.ts`
+  (`P2-A2-E597` WS-C) — `/profile/edit/[section]` mounts the same editors and
+  needs the same draft, and a second mapping would be `E585` in a new place.
+  ⚠ `Profile` KEEPS ITS LOCAL NAME HERE via the alias, so nothing else in this
+  5,000-line file had to be renamed to move a type.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`): `type ProfilePayload`,
+  `type Profile`, `type StatusPayload`, `type AddressDraft`,
+  `type LanguageDraft`, `const ALL_STEPS`, `type Step` and `const emptyProfile`
+  were all declared in this file.
+*/
+import {
+  type ProviderDraft as Profile,
+  type StatusPayload,
+  type AddressDraft,
+  type LanguageDraft,
+  type Step,
+  ALL_STEPS,
+  emptyDraft as emptyProfile,
+  draftFromStatus,
+} from "@/lib/onboarding-draft";
 import { CertificationCards } from "@/components/onboarding/CertificationCards";
 import {
   EmployersStep,
-  type EmployerCard,
-  type EmployerProject,
+  /* ⚠ `EmployerCard` and `EmployerProject` moved with the draft (`E164`). */
 } from "@/components/onboarding/EmployersStep";
 import {
   ResumeUploadModal,
@@ -92,7 +111,7 @@ import {
      ⚠ SUPERSEDED, quoted not deleted (`E164`):  formatCents, bpsToPercentLabel, */
   rateBreakdown,
   displayFirstName,
-  DEFAULT_SERVICE_FEE_BPS,
+  /* ⚠ `DEFAULT_SERVICE_FEE_BPS` moved with `emptyDraft` (`E164`). */
 } from "@/lib/display";
 /* ⚠ `PhoneField` MOVED WITH `ContactEditor` (`P2-A2-E597` WS-B).
    ⚠ SUPERSEDED, quoted not deleted (`E164`):
@@ -147,28 +166,9 @@ import { formatPhone, isPhoneComplete, parseStoredPhone, toE164 } from "@/lib/ph
   this list: they still render as review-page sections and Settings targets. The
   slimdown removes them as PROMPTS, not as data.
 */
-const ALL_STEPS = [
-  "title",
-  // WS-4 — the review that replaced the Role and Skills prompts.
-  "work_history",
-  "roles",
-  "skills",
-  "catalog",
-  "tell_us",
-  "specializations",
-  "education",
-  "languages",
-  "bio",
-  "rate",
-  "picture",
-  /* ⚠ RENDERABLE, NOT COUNTED (`P1-A1.4-E418`). No server itinerary contains
-     `company` any more — provider or recruiter — so its `case` below is
-     unreachable. It stays in this union for the same reason `work_history`
-     does: the screen still exists on disk for work order acceptance. */
-  "company",
-  "finish",
-] as const;
-type Step = (typeof ALL_STEPS)[number];
+/* ⚠ `ALL_STEPS` and `type Step` MOVED to `lib/onboarding-draft.ts` and are
+   imported above — the section route names the same steps when it saves, so the
+   list has one home. */
 /*
   ── ⚠⚠ `work_method` IS A SCREEN, NOT A STEP (`P1-A1.3-E401` WS-1) ───────────
 
@@ -409,106 +409,9 @@ const SCROLL_REGION =
 const PICKED_REGION = "max-h-[132px] overflow-y-auto overscroll-contain pr-1";
 
 /** The shape `/api/onboarding/status` returns. Only what this page reads. */
-type ProfilePayload = {
-  workMethod?: string | null;
-  profileMethod?: string | null;
-  pillarId?: string | null;
-  pillarName?: string | null;
-  roleTypeId?: string | null;
-  roleTypeName?: string | null;
-  roleTypeIds?: string[];
-  roleTypes?: { id: string; name: string; display: string }[];
-  /**
-   * ⚠⚠ THE RÉSUMÉ'S OPINION, NOT THE PROVIDER'S ANSWER (`P2-J1.4-E509` WS-A).
-   * Derived server-side by counting THIS provider's matched skills by role.
-   * ⚠ A PREFILL ONLY — `roleTypeIds` above is the stored answer and always wins.
-   */
-  derivedRoleTypeIds?: string[];
-  derivedFromSkills?: number;
-  specializationIds?: string[];
-  specializations?: { id: string; name: string; kind: string }[];
-  employers?: EmployerCard[];
-  /** WS-4 — the résumé's most-recent employer, to seed the company search. */
-  suggestedCompanyName?: string | null;
-  /** ALL projects, including any not attached to an employer. */
-  projects?: EmployerProject[];
-  /**
-   * The FULL certification row. brief_X / E057 — this used to list only half
-   * the columns the server sends, so `hydrate` re-seeded the draft without
-   * `issuedOn`, `notes` or the attachment. Because certifications save by
-   * replacing the whole collection, the next save then wrote those columns back
-   * as null: attach a certificate, edit anything else, and the attachment was
-   * gone. Every column the server returns is mirrored here.
-   */
-  certifications?: {
-    id: string;
-    name: string;
-    issuer: string | null;
-    year: number | null;
-    issuedOn: string | null;
-    credentialId: string | null;
-    url: string | null;
-    expiresOn: string | null;
-    attachmentPath: string | null;
-    attachmentName: string | null;
-    notes: string | null;
-  }[];
-  skillIds?: string[];
-  /** ⚠ `roleTypeId` — E517, so the step can name what the roles do not show. */
-  skillNames?: { id: string; name: string; area?: string | null; roleTypeId?: string | null }[];
-  /** E187 — the subset of `skillIds` the résumé produced. Server-derived. */
-  resumeSkillIds?: string[];
-  headline?: string | null;
-  overview?: string | null;
-  hourlyRateCents?: number | null;
-  rateMinCents?: number | null;
-  rateMaxCents?: number | null;
-  serviceFeeBps?: number | null;
-  photoUrl?: string | null;
-  firstName?: string | null;
-  lastName?: string | null;
-  phone?: string | null;
-  phoneVerified?: boolean;
-  address?: {
-    line1?: string | null;
-    line2?: string | null;
-    city?: string | null;
-    state?: string | null;
-    postalCode?: string | null;
-    country?: string | null;
-  } | null;
-  education?: {
-    institution: string;
-    degree: string | null;
-    field: string | null;
-    startYear?: number | null;
-    endYear?: number | null;
-    year?: number | null;
-    description?: string | null;
-  }[];
-  languages?: { name: string; level?: string | null }[];
-};
+;
 
-type StatusPayload = {
-  email: string;
-  /** WS4 — an import on the server outlives the client's upload state. */
-  imports?: { id: string; status: string }[];
-  emailVerified: boolean;
-  resumeStep: string;
-  /** The itinerary for THIS user (recruiters get 8, providers 10) — WS1. */
-  steps?: Step[];
-  /**
-   * ⚠ THE DISPLAYED DENOMINATOR, DERIVED SERVER-SIDE (`P1-A1.4-E406` WS-1) —
-   * `PROVIDER_STEPS.length + 1`. ⚠⚠ IT IS SENT RATHER THAN IMPORTED because this
-   * is a `"use client"` file and `lib/onboarding` reaches Prisma: importing the
-   * array pulls `dns`/`fs`/`net`/`tls` into the browser bundle and the route
-   * 500s. Measured — `tsc` and every gate stayed green while the page was dead.
-   */
-  displayTotalSteps?: number;
-  isRecruiter?: boolean;
-  completeness?: number;
-  profile?: ProfilePayload;
-};
+;
 
 /** The Role → Domain tree behind step 6 (brief_R). */
 type FieldDomain = { id: string; code: string; name: string; skillCount: number };
@@ -532,97 +435,12 @@ type SkillOpt = {
    *  a label under different domains — even though it left the UI as a tier. */
   pillar?: { id: string; name: string } | null;
 };
-type LanguageDraft = { name: string; level: string | null };
-type AddressDraft = {
-  line1: string;
-  line2: string;
-  city: string;
-  state: string;
-  postalCode: string;
-  country: string;
-};
+;
 
-type Profile = {
-  workMethod: string | null;
-  profileMethod: string | null;
-  /** ⚠ `E509` WS-A — the résumé's suggestion, kept alongside the answer so the
-   *  page can say the role was PREFILLED rather than silently assigning it. */
-  derivedRoleTypeIds: string[];
-  derivedFromSkills: number;
-  pillarId: string | null;
-  pillarName: string | null;
-  roleTypeId: string | null;
-  /** WS2 — every role claimed; `roleTypeId` is the first of these (primary). */
-  roleTypeIds: string[];
-  roleTypeName: string | null;
-  specializationIds: string[];
-  /** Names of the selected specializations, for chip rendering (E038). */
-  specializationNames: { id: string; name: string }[];
-  /** Typed-in specializations not yet in the vocabulary (E031). */
-  customSpecializations: string[];
-  certifications: CertificationDraft[];
-  employers: EmployerCard[];
-  suggestedCompanyName: string | null;
-  projects: EmployerProject[];
-  skillIds: string[];
-  skillNames: { id: string; name: string; area?: string | null; roleTypeId?: string | null }[];
-  /** E187 — which of `skillIds` the résumé produced, straight from the server. */
-  resumeSkillIds: string[];
-  /** Typed-in skills not yet in the catalog (E031). */
-  customSkills: string[];
-  headline: string;
-  overview: string;
-  hourlyRateCents: number | null;
-  rateMinCents: number | null;
-  rateMaxCents: number | null;
-  serviceFeeBps: number;
-  photoUrl: string | null;
-  firstName: string;
-  lastName: string;
-  phone: string | null;
-  phoneVerified: boolean;
-  address: AddressDraft | null;
-  education: EducationDraft[];
-  languages: LanguageDraft[];
-};
+;
 
-const emptyProfile = (): Profile => ({
-  workMethod: null,
-  profileMethod: null,
-  derivedRoleTypeIds: [],
-  derivedFromSkills: 0,
-  pillarId: null,
-  pillarName: null,
-  roleTypeId: null,
-  roleTypeIds: [],
-  roleTypeName: null,
-  specializationIds: [],
-  specializationNames: [],
-  customSpecializations: [],
-  certifications: [],
-  skillIds: [],
-  skillNames: [],
-  resumeSkillIds: [],
-  customSkills: [],
-  headline: "",
-  overview: "",
-  hourlyRateCents: null,
-  rateMinCents: null,
-  rateMaxCents: null,
-  /* ⚠ ONE CONSTANT, NOT A LITERAL (`P1-J4-E388`) — see its docblock. */
-  serviceFeeBps: DEFAULT_SERVICE_FEE_BPS,
-  photoUrl: null,
-  firstName: "",
-  lastName: "",
-  phone: null,
-  phoneVerified: false,
-  address: null,
-  education: [],
-  languages: [],
-  employers: [],
-  suggestedCompanyName: null,
-  projects: [],
-});
+/* ⚠ `emptyProfile` MOVED to `lib/onboarding-draft.ts` as `emptyDraft` and is
+   imported above under its old name. */
 
 const emptyAddress = (country = "United States"): AddressDraft => ({
   line1: "",
@@ -864,97 +682,15 @@ export default function JoinProviderPage() {
     if (typeof s.isRecruiter === "boolean") setIsRecruiter(s.isRecruiter);
     const p = s.profile;
     if (!p) return;
-    setProfile({
-      workMethod: p.workMethod ?? null,
-      profileMethod: p.profileMethod ?? null,
-      pillarId: p.pillarId ?? null,
-      pillarName: p.pillarName ?? null,
-      roleTypeId: p.roleTypeId ?? null,
-      /*
-        ── ⚠⚠ PREFILLED, NEVER REPLACED (`E509` WS-A) ────────────────────────
-
-        > **SCOTT:** *"we use the skills to derive the role(s). For those who do
-        > not or their resume cannot use the parser… they will need to add their
-        > RDS manually."*
-
-        ⚠ THE STORED ANSWER WINS WHENEVER THERE IS ONE. The derivation only
-        fills an EMPTY selection, so it can never overwrite a role the provider
-        chose — which is the whole reason `Technology-Specific · Salesforce`
-        survived unnoticed: it was assigned, not suggested.
-        ⚠⚠ NO RÉSUMÉ MEANS NO SKILLS MEANS NOTHING TO DERIVE. The answer is then
-        an EMPTY SET and the page asks, rather than guessing.
-      */
-      roleTypeIds:
-        p.roleTypeIds && p.roleTypeIds.length
-          ? p.roleTypeIds
-          : p.roleTypeId
-            ? [p.roleTypeId]
-            : (p.derivedRoleTypeIds ?? []),
-      derivedRoleTypeIds: p.derivedRoleTypeIds ?? [],
-      derivedFromSkills: p.derivedFromSkills ?? 0,
-      roleTypeName: p.roleTypeName ?? null,
-      specializationIds: p.specializationIds ?? [],
-      specializationNames: (p.specializations ?? []).map((x) => ({
-        id: x.id,
-        name: x.name,
-      })),
-      // Server-side these have been folded into the real vocabularies.
-      customSpecializations: [],
-      customSkills: [],
-      employers: (p.employers ?? []) as EmployerCard[],
-      suggestedCompanyName: p.suggestedCompanyName ?? null,
-      projects: (p.projects ?? []) as EmployerProject[],
-      // E057 — carry EVERY column through. See the payload type above: a
-      // partial map here is a silent delete on the next save.
-      certifications: (p.certifications ?? []).map((c) => ({
-        name: c.name,
-        issuer: c.issuer,
-        year: c.year,
-        issuedOn: c.issuedOn,
-        credentialId: c.credentialId,
-        url: c.url,
-        expiresOn: c.expiresOn,
-        attachmentPath: c.attachmentPath,
-        attachmentName: c.attachmentName,
-        notes: c.notes,
-      })),
-      skillIds: p.skillIds ?? [],
-      skillNames: p.skillNames ?? [],
-      resumeSkillIds: p.resumeSkillIds ?? [],
-      headline: p.headline ?? "",
-      overview: p.overview ?? "",
-      hourlyRateCents: p.hourlyRateCents ?? null,
-      rateMinCents: p.rateMinCents ?? null,
-      rateMaxCents: p.rateMaxCents ?? null,
-      serviceFeeBps: p.serviceFeeBps ?? DEFAULT_SERVICE_FEE_BPS,
-      photoUrl: p.photoUrl ?? null,
-      firstName: p.firstName ?? "",
-      lastName: p.lastName ?? "",
-      phone: p.phone ?? null,
-      phoneVerified: !!p.phoneVerified,
-      address: p.address
-        ? {
-            line1: p.address.line1 ?? "",
-            line2: p.address.line2 ?? "",
-            city: p.address.city ?? "",
-            state: p.address.state ?? "",
-            postalCode: p.address.postalCode ?? "",
-            country: p.address.country ?? "United States",
-          }
-        : null,
-      education: (p.education ?? []).map((e) => ({
-        institution: e.institution,
-        degree: e.degree,
-        field: e.field,
-        startYear: e.startYear ?? null,
-        endYear: e.endYear ?? e.year ?? null,
-        description: e.description ?? null,
-      })),
-      languages: (p.languages ?? []).map((l) => ({
-        name: l.name,
-        level: l.level ?? null,
-      })),
-    });
+    /*
+      ⚠⚠ ONE MAPPING, IMPORTED (`P2-A2-E597` WS-C). The 90-line object literal
+      that used to be here is `draftFromStatus` in `lib/onboarding-draft.ts`,
+      because `/profile/edit/[section]` hydrates the same draft and a second
+      copy would drift the day either changed.
+      ⚠ SUPERSEDED, quoted not deleted (`E164`): `setProfile({ workMethod:
+      p.workMethod ?? null, … languages: (p.languages ?? []).map(…) });`
+    */
+    setProfile(draftFromStatus(p));
     // Masked on load as well, so a number stored before E203 displays the same
     // way a freshly typed one does.
     /*
