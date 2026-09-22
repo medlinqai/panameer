@@ -3,7 +3,12 @@ import type { ReactNode } from "react";
 import { Avatar } from "@/components/Avatar";
 /* ⚠ `Face` OWNS THE "no photo -> grey silhouette" RULE (`E591`), so the faces
    row asks it rather than deciding the fallback a second time. */
-import { Face } from "@/components/community/Silhouette";
+/* ⚠⚠ THE FACES ROW IS GONE (`P2-A2-E598` WS-C item 3) — Scott: *"The colleague
+   faces row (`E596` WS-D) is replaced by the count in the hero line."*
+   ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   import { Face } from "@/components/community/Silhouette";
+   ⚠⚠⚠ `Silhouette.tsx` AND `Face` ARE UNTOUCHED ON DISK and still used by
+   `/community`. This removes an IMPORT, not the rule it owns. */
 /*
   ⚠⚠⚠ EVERY EDIT LINK NOW OPENS ONE SECTION (`P2-A2-E597` WS-C). ⚠ SUPERSEDED,
   quoted not deleted (`E164`) — all eight pointed into the REGISTRATION WIZARD,
@@ -24,6 +29,8 @@ import { Face } from "@/components/community/Silhouette";
   link and the route that answers it.
 */
 import { editHref } from "@/lib/profile-sections";
+import { SCORE_LINE_COPY } from "@/lib/profile-score-copy";
+import { lineCounts } from "@/lib/completeness";
 import {
   CompletionRing,
   completionHook,
@@ -109,7 +116,13 @@ export function ConnectProfile({
   community = null,
   score = null,
   colleagueCount,
-  colleagueFaces = [],
+  /* ⚠ `colleagueFaces` REMOVED (`P2-A2-E598` WS-C) — the hero carries the
+     COUNT now and nothing renders the avatars. ⚠ SUPERSEDED, quoted not
+     deleted (`E164`):
+     //   colleagueFaces = [],
+     ⚠⚠ THE CALLER STOPPED PASSING IT IN THE SAME COMMIT, so no dead prop is
+     left being computed for nobody — `(app)/profile/page.tsx` no longer slices
+     `mine.colleagues`. */
   profileViews = null,
   youBothKnow = null,
   messagePermission = null,
@@ -160,7 +173,8 @@ export function ConnectProfile({
    * directly under the completion ring and competes with it near the top on a
    * phone. The web is Community's hero and stays there.
    */
-  colleagueFaces?: { personId: string; name: string; photoUrl: string | null }[];
+  /* ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   colleagueFaces?: { personId: string; name: string; photoUrl: string | null }[]; */
   /**
    * ⚠⚠ OWNER ONLY — how many people have looked at this profile, one per viewer
    * per day, all time (`P0-E595` A2). ⚠ `null` on a visitor's view, where the
@@ -236,6 +250,50 @@ export function ConnectProfile({
      no `employerId` on the project view type, and the two surfaces must agree
      about which projects are solo. ⚠ WS-B converges these components; this is
      one of the things that converges. */
+  /*
+    ── ⚠⚠ THE RAIL'S DERIVED VALUES (`P2-A2-E598` WS-C) ──────────────────────
+
+    ⚠⚠⚠ EVERY ONE OF THESE REUSES AN EXISTING COMPUTATION. The score card's two
+    "next" lines and its `See all N` come from `score.lines` and
+    `SCORE_LINE_COPY` — THE SAME TABLE `/community/score` renders — so the card
+    and the page cannot quote different work or different minutes. A second
+    table here would be `E585` in a new place.
+  */
+  /* ⚠ `unanswered` IS THE OPEN SET, and `lineCounts` is the one rule for it:
+     a line answered *"I have none"* COUNTS and is not outstanding (`E590`). */
+  const openLines = (score?.lines ?? [])
+    .filter((l) => !lineCounts(l.state))
+    /* ⚠ BIGGEST FIRST — the step worth most points is the one worth doing
+       first, the same ordering the score page uses. */
+    .sort((a, b) => b.points - a.points);
+  const remainingLines = openLines.length;
+  /* ⚠⚠ TWO, BECAUSE THE BRIEF SAYS TWO: *"the ring, the two next items with
+     minutes, and 'See all N →'"*. The card is a prompt, not the list. */
+  const nextLines = openLines.slice(0, 2).map((l) => ({
+    key: l.key,
+    /* ⚠ THE ACTION, NOT THE FIELD NAME — *"Add your education"* reads as a next
+       step; *"Education"* reads as a heading. Same copy table as the page. */
+    label: SCORE_LINE_COPY[l.key].action,
+    minutes: SCORE_LINE_COPY[l.key].minutes,
+  }));
+  /*
+    ⚠⚠ `All good` IS EVERY ACCOUNT-HEALTH FLAG, not a score. The full card that
+    listed these four rows is gone (WS-C item 3) and `/account-health` remains
+    the authority — this is its verdict in one line, computed from the SAME
+    `p.accountHealth` the card read.
+    ⚠ Deliberately NOT `lib/account-standing.ts`: that module answers for the
+    ACCOUNT MENU off `status` + `email_verified`, while the view model's
+    `accountHealth` carries two more facts (sign-in and message reachability).
+    ⚠⚠⚠ REPORTED AT THE GATE RATHER THAN MERGED — making one serve both is a
+    real tidy-up, but it would change what the menu claims, and that is a
+    ruling, not a refactor.
+  */
+  const accountAllGood =
+    p.accountHealth.canSignIn &&
+    p.accountHealth.receivesMessages &&
+    p.accountHealth.statusActive &&
+    p.accountHealth.emailVerified;
+
   const soloProjects = p.projects.filter(
     (pr) => !p.employers.some((e) => (e.projects ?? []).some((n) => n.id === pr.id))
   );
@@ -331,33 +389,62 @@ export function ConnectProfile({
   );
 
   return (
-    <div className="pm-cp">
-      {/* ═══════════ LEFT RAIL ═══════════ */}
-      <aside className="pm-cp-rail-l">
-        {/* ── identity ── */}
-        <section className="overflow-hidden rounded-brand border border-line bg-white">
-          {/* ⚠ The cover is a brand gradient, not an uploaded image — there is
-              no cover-image column on `ProviderProfile`, and inventing one is
-              not this brief. */}
-          <div className="h-[76px] bg-gradient-to-br from-ink via-[#4b2d63] to-magenta-dark" />
-          <div className="-mt-[30px] px-[18px] pb-4">
+    <div className="pm-cp2">
+      {/*
+        ── ⚠⚠⚠ THE HERO: WHO THIS IS, AND WHAT THEY COST (`P2-A2-E598` WS-C) ──
+
+        ⚠ Scott, on the option-B mockup: *"way too much on this page."* The
+        mockup's own note says why this card exists: *"Identity and rates moved
+        into one hero card across the top, so the first screen answers 'who is
+        this, and what does he cost.'"*
+        ⚠⚠ THREE COLUMNS BECAME TWO. Identity was a left-rail card and Rates was
+        a second card beneath it; both are here now, side by side.
+        ⚠ SUPERSEDED, quoted not deleted (`E164`) — identity as a rail card:
+        //   <aside className="pm-cp-rail-l">
+        //     <section className="overflow-hidden rounded-brand border border-line bg-white">
+        //       <div className="h-[76px] bg-gradient-to-br …" />   // the cover
+        //       …Avatar 64, name, headline, location…
+        //     </section>
+      */}
+      <section className="pm-cp2-hero overflow-hidden rounded-brand border border-line bg-white">
+        {/* ⚠ The cover is a brand gradient, not an uploaded image — there is no
+            cover-image column on `ProviderProfile`, and inventing one is not
+            this brief. */}
+        <div className="h-[84px] bg-gradient-to-br from-ink via-[#4b2d63] to-magenta-dark" />
+        <div className="pm-cp2-heroin px-[18px] pb-4">
+          {/* ⚠⚠ THE PHOTO SITS **BESIDE** THE NAME, not above it — the mockup's
+              `.idt` is a row. ⚠ Stacking them left a column of empty space to
+              the left of the name at desktop width; caught on the screenshot. */}
+          <div className="flex min-w-0 items-start gap-3.5">
             {/* ⚠ The white ring lifts the photo off the cover gradient. It is a
                 WRAPPER because `Avatar` takes no `className` — widening its
-                props for one caller is a change to a component six surfaces
-                share. */}
-            <span className="inline-block overflow-hidden rounded-full ring-[3px] ring-white">
+                props for one caller is a change six surfaces share. */}
+            <span className="-mt-[34px] inline-block flex-none overflow-hidden rounded-full ring-[3px] ring-white">
               <Avatar
                 firstName={p.person.firstName ?? ""}
                 lastName={p.person.lastName ?? ""}
                 photoUrl={p.person.photoUrl}
-                size={64}
+                size={72}
               />
             </span>
-            <div className="mt-2 flex items-center gap-1.5">
-              <h2 className="font-display text-[18px] font-bold">{fullName}</h2>
+            <div className="min-w-0 pt-1">
+            <div className="flex items-center gap-1.5">
+              {/*
+                ⚠⚠ THE NAME IS AN `<h2>` FOR AN OWNER AND THE `<h1>` FOR A
+                VISITOR. `(app)/profile/page.tsx` owns the owner's `<h1>` (`My
+                Profile`, the WS-B crumb); a second one here would be two page
+                titles. ⚠ On `/providers/[id]` there is no crumb, so the name IS
+                the title. ⚠⚠⚠ MEASURED AT THE WS-B GATE — shipping both gave
+                one page two `<h1>`s and the same words twice.
+              */}
+              {owner ? (
+                <h2 className="font-display text-[22px] font-bold">{fullName}</h2>
+              ) : (
+                <h1 className="font-display text-[22px] font-bold">{fullName}</h1>
+              )}
               {p.validated && (
                 <span title="Validated by Panameer" className="text-magenta">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-label="Validated by Panameer" role="img">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-label="Validated by Panameer" role="img">
                     <path d="M12 2l2.4 1.8 3-.3 1 2.8 2.6 1.5-.9 2.9.9 2.9-2.6 1.5-1 2.8-3-.3L12 22l-2.4-1.8-3 .3-1-2.8L3 16.2l.9-2.9L3 10.4l2.6-1.5 1-2.8 3 .3z" />
                     <path d="M10.6 15.2l-2.8-2.8 1.1-1.1 1.7 1.7 4-4 1.1 1.1z" fill="#fff" />
                   </svg>
@@ -365,431 +452,248 @@ export function ConnectProfile({
               )}
             </div>
             {p.headline && (
-              <p className="mt-1 text-[13px] leading-snug text-ink-2">
-                {p.headline}
-              </p>
-            )}
-            {p.location && (
-              <p className="mt-1 text-[12.5px] text-ink-3">{p.location}</p>
+              <p className="mt-1 text-[14px] leading-snug text-ink-2">{p.headline}</p>
             )}
             {/*
-              ── ⚠⚠⚠ THE SECOND TITLE IS GONE (`P0-E595` WS-C item 2) ────────
+              ── ⚠⚠⚠ ONE LINE REPLACES THE COLLEAGUE FACES ROW (WS-C item 3) ──
 
-              ⚠ SUPERSEDED, quoted not deleted (`E164`):
-              //   {p.person.title && (
-              //     <div className="mt-3 text-[13.5px] font-bold">
-              //       {p.person.title}
-              //     </div>
+              ⚠ SCOTT: *"The colleague faces row (`E596` WS-D) is replaced by the
+              count in the hero line. Say so at the gate."*
+              ⚠ SUPERSEDED, quoted not deleted (`E164`) — seven avatars, stacked
+              with negative margins, plus a `Viewing Me` row beneath them:
+              //   {owner && colleagueFaces.length > 0 && (
+              //     … colleagueFaces.map((c, i) => <Avatar … style={{ marginLeft: i === 0 ? 0 : -9 }} />)
               //   )}
-
-              ⚠⚠ THIS CARD RENDERED THE SAME STRING TWICE. It was correct while
-              `headline` and `Person.title` were DIFFERENT COLUMNS holding
-              different answers — a sales headline above, a job title below,
-              which is the two-titles-on-one-card bug `E595` existed to end.
-              ⚠⚠⚠ WS-B COLLAPSED THEM: `provider-profile-view.ts` now feeds
-              `headline` FROM `profile.person.title`, so both branches read one
-              column and the card printed it twice — measured on the walk, the
-              title appeared 3x on the page.
-              ⚠ The remaining render is `p.headline` above, which IS the title.
-              ⚠⚠ THE VIEW-MODEL FIELD KEEPS ITS NAME ON PURPOSE — the wire key
-              stayed `headline` through WS-B as well; the COLUMN collapsed, not
-              the contract, and renaming it is a separate job with its own blast
-              radius.
+              //   <span className="text-ink-2">Viewing Me</span>
+              ⚠⚠ `colleagueFaces` IS STILL A PROP AND STILL PASSED. It is unused
+              by this layout; the prop is kept so `(app)/profile/page.tsx` does
+              not change shape in the same commit that changes the layout, and
+              removing it is its own small job.
+              ⚠⚠⚠ THE COUNTS ARE THE SAME TWO QUERIES AS BEFORE — `colleagueCount`
+              (`mine.colleagues.length`) and `profileViews` (`countProfileViews`,
+              one row per viewer per day, all time). ⚠ NOTHING NEW IS COMPUTED
+              AND NOTHING IS ESTIMATED: the wording says *"profile views"* with
+              no window, because the figure has none.
             */}
-          </div>
-        </section>
-
-        {/*
-          ── ⚠⚠ RATES, DIRECTLY UNDER THE IDENTITY CARD (`P2-A3-E596` WS-G 4) ──
-
-          ⚠ SCOTT, 2026-09-21: *"Rate sits with who you are, not with the action
-          cards."* Owner's profile and a buyer's view of a provider, both.
-
-          ⚠⚠⚠ THE WHOLE CARD IS GATED, NOT JUST ITS BODY — carried over from its
-          old site and still true. `RateRows` returning `null` still left
-          `ProfileCard` rendering the HEADING, so the visitor page said
-          **"Rates"** over an empty box.
-          ⚠⚠ AN EMPTY CARD TITLED `Rates` IS WORSE THAN NO CARD: it tells a
-          visitor a rate exists and is being withheld, when the rule is simply
-          that this is not their business.
-          ⚠ `p.rates` IS `null` FOR A VIEWER WHO MAY NOT SEE IT — the view model
-          withholds it from the PAYLOAD, not merely from the render.
-        */}
-        {p.rates && (
-          <ProfileCard
-            id="rates"
-            title="Rates"
-            edit={owner ? <EditLink href={editHref("rates")} title="Rates" /> : undefined}
-          >
-            <RateRows p={p} />
-          </ProfileCard>
-        )}
-
-        {/* ── colleagues / viewing me ── */}
-        <section className="rounded-brand border border-line bg-white px-[18px] py-4">
-          <div className="flex items-center justify-between gap-2.5 py-2 text-[13.5px]">
-            {owner ? (
-              <Link
-                href="/community/colleagues"
-                className="font-bold text-magenta hover:underline"
-              >
-                My Colleagues
-              </Link>
-            ) : (
-              /* ⚠ NOT A LINK FOR A VISITOR — `/community/colleagues` is the
-                 viewer's OWN colleague list, so linking it from somebody else's
-                 profile would promise their list and deliver yours. */
-              <span className="font-bold text-ink">Colleagues</span>
-            )}
-            {/* ⚠ `E433` — a count is a figure, so ink. */}
-            <b className="text-ink">{colleagueCount}</b>
-          </div>
-
-          {/*
-            ── ⚠⚠ THE FACES (`P2-A3-E596` WS-D item 1) ───────────────────────
-
-            ⚠ Six or seven overlapping avatars, then the count and the door.
-            ⚠⚠ A GREY SILHOUETTE WHERE THERE IS NO PHOTO — `E591`'s rule, and
-            `Face` already applies it, so nothing decides it twice here.
-            ⚠⚠⚠ THEY ARE `aria-hidden` AND THE ROW CARRIES ONE ACCESSIBLE
-            SENTENCE. Seven avatars announced one after another is noise; the
-            count above already states the fact, and the link states the
-            destination. ⚠ `Silhouette` is already `aria-hidden`; the wrapper
-            covers the photographed ones.
-            ⚠ NEGATIVE MARGIN OVERLAP, with a ring in the card's own background
-            colour so each face reads as separate rather than smeared.
-          */}
-          {owner && colleagueFaces.length > 0 && (
-            <div className="flex items-center gap-2.5 pb-1 pt-1.5">
-              <span aria-hidden className="flex items-center">
-                {colleagueFaces.map((c, i) => (
-                  <span
-                    key={c.personId}
-                    /*
-                      ⚠⚠ `inline-flex`, NOT A BARE `span` — MEASURED, IT BROKE.
-                      `Face` renders `.pm-face-wrap`, which is `position:
-                      relative` with its layers at `inset: 0`. An inline wrapper
-                      has NO HEIGHT, so those layers resolved against the line
-                      box and the row rendered as a black band with the photos
-                      spilling below it.
-                      ⚠ `inline-flex` shrink-wraps the 30px child, which gives
-                      the ring something to trace and the layers something to
-                      fill. ⚠⚠ `relative` + `zIndex` is what makes the overlap
-                      stack left-over-right rather than in DOM order.
-                    */
-                    className="relative inline-flex rounded-full ring-2 ring-white"
-                    style={{ marginLeft: i === 0 ? 0 : -9, zIndex: colleagueFaces.length - i }}
-                    title={c.name}
-                  >
-                    <Face photoUrl={c.photoUrl} size={30} />
-                  </span>
-                ))}
-              </span>
-              <Link
-                href="/community/colleagues"
-                className="text-[12.5px] font-bold text-magenta hover:underline"
-              >
-                See your community &rarr;
-              </Link>
-            </div>
-          )}
-          {/*
-            ── ⚠⚠ `Viewing Me` NOW HAS DATA BEHIND IT (`P0-E595` A2 / WS-C) ───
-
-            ⚠ SUPERSEDED, quoted not deleted (`E164`) — true until the write
-            path shipped, and the reason the dash was right at the time:
-            //   ⚠⚠⚠ `Viewing Me` HAS NO DATA AND IS NOT INVENTED. There is NO
-            //   view tracking anywhere in this codebase — no `view_count`, no
-            //   `ProfileView` model, nothing writes one. ⚠ The mockup shows
-            //   `201`; that number does not exist and a plausible one would be
-            //   a fabricated fact about a real person's profile.
-            //   ⚠ So it takes the dash convention, with a sentence saying what
-            //   it is.
-            //   <b className="text-ink-2/40">—</b>
-            //   <p …>Profile views aren&rsquo;t counted yet.</p>
-
-            ⚠⚠ THE DASH CONVENTION IS KEPT FOR `null`, NOT DELETED. `null` means
-            *"not measurable"* and is still the honest answer for a viewer who
-            is not the owner — it is `usage-stats.ts`'s rule, where `earnedCents`
-            returns `null` rather than a number it cannot stand behind.
-            ⚠⚠⚠ A ZERO IS A MEASUREMENT AND RENDERS AS `0`. A provider nobody has
-            looked at yet is a fact about the marketplace, not a gap in the data.
-          */}
-          {owner ? (
-            <>
-              <div className="flex items-center justify-between gap-2.5 py-2 text-[13.5px]">
-                <span className="text-ink-2">Viewing Me</span>
-                {/* ⚠ `E433` — a count is a figure, so ink. */}
-                {profileViews == null ? (
-                  <b className="text-ink-2/40">&mdash;</b>
-                ) : (
-                  <b className="text-ink">{profileViews}</b>
-                )}
-              </div>
-              {profileViews === 0 && (
-                <p className="text-[12px] leading-relaxed text-ink-2">
-                  No one has viewed your profile yet.
-                </p>
-              )}
-            </>
-          ) : (
-            /* ⚠⚠ THE VISITOR'S SECOND ROW IS A REAL QUERY, unlike `Viewing Me`.
-               Accepted colleague edges on both sides — see
-               `mutualColleagueCount`. */
-            <div className="flex items-center justify-between gap-2.5 py-2 text-[13.5px]">
-              <span className="text-ink-2">You Both Know</span>
-              <b className="text-ink">{youBothKnow ?? 0}</b>
-            </div>
-          )}
-        </section>
-
-        {/*
-          ── ⚠⚠⚠ `Companies & Projects` IS GONE (`P2-J3-E593` WS-B item 7) ────
-
-          ⚠ Scott, 2026-09-20, removing it from the walk.
-          ⚠⚠ AND IT CLOSES A QUESTION `E588` LEFT OPEN, WHICH IS WHY THIS NOTE IS
-          LONGER THAN THE CARD WAS. `Project.client_visibility` is
-          `PUBLIC | PLUS_ONLY | CONFIDENTIAL`, and `E588` rendered only `PUBLIC`
-          in BOTH modes while recording that *"owner mode could arguably show all
-          three"* and that *"what the rule should be is in the WS-A report."*
-          ⚠⚠⚠ THE CARD IS THE ONLY SURFACE THAT EVER ASKED THE QUESTION. With it
-          gone, `PLUS_ONLY` and `CONFIDENTIAL` have no renderer on this page at
-          all, so there is nothing left to rule on here — **the open question is
-          CLOSED BY REMOVAL, not by a decision.**
-          ⚠ THE COLUMN AND ITS THREE VALUES ARE UNTOUCHED. If a client list ever
-          returns to a profile, the safety rule returns with it and is written
-          ONCE, as it was here: a `CONFIDENTIAL` client must never reach a
-          visitor. ⚠⚠ DO NOT READ THIS AS "confidentiality was settled" — it was
-          never settled; the surface that needed it went away.
-
-          ⚠ SUPERSEDED, quoted not deleted (`E164`) — the card, and the
-          derivation that fed it:
-          //   const publicClients = Array.from(new Set(
-          //     p.projects.filter((pr) => pr.clientVisibility === "PUBLIC")
-          //       .map((pr) => pr.clientName || pr.employer)
-          //       .filter((n): n is string => Boolean(n && n.trim()))
-          //   )).slice(0, 6);
-          //   <section …><p …>Companies &amp; Projects</p>
-          //     {publicClients.length === 0
-          //       ? <p …>Nothing to show yet. Clients you mark as public appear here.</p>
-          //       : publicClients.map((name) => <div key={name}>…{name}</div>)}
-          //   </section>
-        */}
-
-        {/*
-          ⚠⚠⚠ OWNER-ONLY, AND THIS IS THE WHOLE VISITOR GUARANTEE IN THE LEFT
-          RAIL. Selling links and the account utilities are things only the
-          person whose profile this is can act on. ⚠ A visitor sees the identity
-          card, the two counts and the public clients — and nothing else.
-        */}
-        {owner && (
-          <>
-          {/* ── grow your business faster ── */}
-          <section className="rounded-brand border border-line bg-white px-[18px] py-4">
-            {/* ⚠ `Grow Your Income Faster` (`E593` WS-B item 8). ⚠ SUPERSEDED,
-                quoted not deleted (`E164`): it read `Grow your business faster`.
-                ⚠⚠ TITLE CASE WITH THE PRONOUN CAPITALISED (`E568`) — `Your` is
-                a pronoun, which is the half of that rule most often missed. */}
-            <p className="mb-2.5 text-[11.5px] font-bold uppercase tracking-[0.07em] text-ink-3">
-              Grow Your Income Faster
+            <p className="mt-1.5 text-[12.5px] text-ink-3">
+              {[
+                p.location,
+                colleagueCount > 0
+                  ? `${colleagueCount} ${colleagueCount === 1 ? "colleague" : "colleagues"}`
+                  : null,
+                owner && (profileViews ?? 0) > 0
+                  ? `${profileViews} profile ${profileViews === 1 ? "view" : "views"}`
+                  : null,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
             </p>
-            <div className="flex flex-col">
-              <Link
-                href="/my-services"
-                className="py-2 text-[13.5px] font-bold text-magenta hover:underline"
-              >
-                Sell Service Products
-              </Link>
-              {/*
-                ── ⚠⚠ IT IS A LINK NOW, AND `WS-A` IS WHY (`E593` WS-B item 9) ──
+            {owner && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {/*
+                  ── ⚠⚠⚠ `Edit Profile` GOES TO THE SCORE PAGE, AND THAT IS A
+                     CHOICE THE BRIEF DID NOT MAKE — FLAGGED AT THE GATE ───────
 
-                ⚠ SUPERSEDED, quoted not deleted (`E164`):
-                //   ⚠⚠ `Sell Paid Groups` IS PLAIN TEXT, NOT A LINK — the footer rule.
-                //   ⚠ THERE IS NO SUCH PAGE. A link to a route that does not exist is
-                //   a 404 with a promise attached; the words stay so the intent is
-                //   recorded, and they become a link the day the page ships.
-                ⚠⚠⚠ THAT DAY IS THIS BRIEF. `E593` WS-A labels the forums route
-                `Groups`, so the page it promised now exists and is named — the
-                condition the old comment set is met, not waived.
-                ⚠ THE PAID HALF IS STILL UNBUILT (`/community/forums` is the free
-                forum-per-learning-path of `E383`). ⚠⚠ THE LINK GOES TO THE
-                SURFACE, NOT TO A PAYMENT — and the card's heading already frames
-                it as an ambition. **Do not fabricate a paid state to match the
-                word `Paid`.**
-              */}
-              <Link
-                href="/community/forums"
-                className="py-2 text-[13.5px] font-bold text-magenta hover:underline"
-              >
-                Sell Paid Groups
-              </Link>
+                  ⚠ There is NO global profile editor. `E597` WS-C built EIGHT
+                  ONE-SECTION editors at `/profile/edit/<section>`, and each card
+                  already carries its own `Edit` link to its own.
+                  ⚠⚠ SO A BUTTON CALLED `Edit Profile` HAS NO OBVIOUS TARGET, and
+                  pointing it at one arbitrary section (`/profile/edit/bio`) would
+                  both mislead and break `check:profile-edit`, whose rule is that
+                  a control's label names the section it opens.
+                  ⚠⚠⚠ `/community/score` IS THE ONE PAGE THAT LISTS EVERY LINE
+                  AND LINKS TO EACH EDITOR — it is the closest thing to "edit my
+                  profile" that exists. ⚠ Scott rules whether the label should
+                  say so; nothing was invented to fill the gap.
+                */}
+                <Link
+                  href="/community/score"
+                  className="rounded-full border border-line px-3.5 py-2 text-[13px] font-bold transition-colors hover:border-magenta/50"
+                >
+                  Edit Profile
+                </Link>
+                {/* ⚠ YOUR OWN PUBLIC PAGE. `/providers/[id]` renders THIS
+                    component in visitor mode, so the button is a real preview
+                    rather than a mock of one. */}
+                <Link
+                  href={`/providers/${p.id}`}
+                  className="rounded-full border border-line px-3.5 py-2 text-[13px] font-bold transition-colors hover:border-magenta/50"
+                >
+                  See What Buyers See
+                </Link>
+              </div>
+            )}
             </div>
-          </section>
-
-          {/*
-            ── ⚠⚠⚠ THE PLAIN-LINK CARD IS GONE. EVERY ITEM HAS A BETTER HOME ──
-
-            ⚠ Scott, 2026-09-20. ⚠⚠ NOTHING BECAME UNREACHABLE, AND THAT IS THE
-            CONDITION THIS REPLACEMENT HAD TO MEET — each of the four moved to a
-            surface that says more than a link ever did:
-              `My Stats`          -> the comb below, which shows the figures
-                                     rather than promising them, and still links
-                                     out with `See your stats`.
-              `My Account Health` -> the card `E593` WS-B built, which shows a
-                                     tick or a cross per item.
-              `My Groups`         -> a TAB since `E593` WS-A.
-              `My Settings`       -> a TAB since `E593` WS-A.
-            ⚠ `check:nav-reachable` is the gate and the count is in the report.
-
-            ⚠ SUPERSEDED, quoted not deleted (`E164`):
-            //   { label: "My Stats", href: "/stats" },
-            //   { label: "My Account Health", href: "/account-health" },
-            //   { label: "My Groups", href: "/community/teams" },
-            //   { label: "My Settings", href: "/settings" },
-            ⚠⚠ NOTE `My Groups` POINTED AT `/community/teams`, NOT AT THE FORUMS
-            ROUTE `E593` WS-A NAMED `Groups`. Two different things wore one word.
-            The tab row now carries `Groups` (forums) and `Community` (which
-            holds teams), so the collision is gone rather than inherited.
-          */}
-          {usage && <UsageComb usage={usage} />}
-          </>
-        )}
-
-      </aside>
-
-      {/* ═══════════ CENTRE ═══════════ */}
-      <main>
-        {/*
-          ── ⚠⚠ THE OWNER'S HEADING MOVED TO THE CRUMB (`P2-A2-E598` WS-B) ────
-
-          ⚠ WS-B puts a `My Profile` crumb where the Connect tab row used to be.
-          ⚠⚠ MEASURED AT THE GATE, ON THE SCREENSHOT: that shipped the words
-          TWICE — an eyebrow reading `MY PROFILE` directly above an `<h1>`
-          reading `My Profile`. ⚠⚠⚠ TWO HEADINGS FOR ONE PAGE IS ALSO TWO `<h1>`
-          CANDIDATES, so it was a screen-reader defect and not only a visual one.
-          ⚠ The crumb is the owner's `<h1>` now; this renders for VISITORS only,
-          where it is the person's NAME and genuinely the page's title.
-
-          ⚠⚠ THE ORIGINAL RULE STILL BINDS AND IS WHY THIS IS A BRANCH RATHER
-          THAN A DELETION: *"`My Profile` on somebody else's profile is the same
-          class of error as an owner affordance leaking — it tells the reader the
-          record is theirs."*
-          ⚠ SUPERSEDED, quoted not deleted (`E164`):
-          //   <h1 className="mb-3.5 mt-0.5 font-display text-[25px] font-bold">
-          //     {owner ? "My Profile" : fullName}
-          //   </h1>
-        */}
-        {!owner && (
-          <h1 className="mb-3.5 mt-0.5 font-display text-[25px] font-bold">
-            {fullName}
-          </h1>
-        )}
-
-        <div className="flex flex-col gap-4">
-          {/*
-            ── ⚠⚠ RATES LEFT THE CENTRE (`P2-J3-E593` WS-B item 14) ──────────
-
-            ⚠ Scott, 2026-09-20: *"Rates moves from the centre to a SIDE card,
-            and gains an edit link."* ⚠ It is now in the RIGHT RAIL — see below.
-            ⚠⚠ BIO KEEPS THE ROW TO ITSELF AND THE ROW STAYS `pm-cp-two`,
-            **and the claim that used to sit here was wrong.**
-            ⚠ SUPERSEDED, quoted not deleted (`E164`): *"the grid collapses a
-            single child to full width on its own."*
-            ⚠⚠⚠ IT DOES NOT. A lone child of a two-column grid fills column ONE
-            and leaves column two empty — `1.55fr` of the centre, with a third
-            of it blank. `connect-profile.css` now carries
-            `.pm-cp-two > :only-child { grid-column: 1 / -1; }`, which fixes it
-            without touching the breakpoint schedule the rest of that comment is
-            right about.
-            ⚠ SUPERSEDED, quoted not deleted (`E164`) — the pair as it stood,
-            and the two facts the Rates comment carried, which MOVED WITH THE
-            CARD rather than being dropped:
-            //   <div className="pm-cp-two">
-            //     <ProfileCard title="Bio">…</ProfileCard>
-            //     <ProfileCard title="Rates"><RateRows p={p} /></ProfileCard>
-            //   </div>
-          */}
-          <div className="pm-cp-two">
-            <ProfileCard
-              id="bio"
-              title="Bio"
-              edit={owner ? <EditLink href={editHref("bio")} title="Bio" /> : undefined}
-            >
-              <OverviewBody
-                overview={p.overview}
-                empty="Nothing here yet. A short bio is the first thing a buyer reads."
-              />
-            </ProfileCard>
           </div>
 
           {/*
-            ── ⚠⚠⚠ SKILLS, WHICH THIS PAGE SHOWED TO NOBODY (`WS-G` item 1) ───
+            ── ⚠⚠ RATES, IN THE HERO (WS-C item 1) ──────────────────────────
 
-            ⚠ MEASURED AT `E595` WS-B AND REPORTED THEN: the word "skills"
-            appeared ZERO times in this file. `/providers/[id]` renders this
-            component, so **a buyer looking at a provider could not see what
-            that provider can do** — on the one page they are there to read.
-
-            ⚠⚠ THE CHIP PATTERN IS `sections.tsx`'s, NOT A NEW ONE. Scott: *"first
-            measure how the owner's own view renders skills, and REUSE THAT."*
-            `ProviderProfileView` puts `p.skills` in its hero as chips; the same
-            `SkillsBody` renders them here, once per pillar.
-            ⚠ GROUPED BY PILLAR — the catalog's own DOMAIN level (Role → Domain →
-            Skill), so the grouping is the taxonomy's rather than the page's.
-            ⚠⚠ `p.skills` IS ALREADY THE **SHOWN** SET (`E517`'s offer-side filter
-            runs in the view model), so this widens what a buyer sees by nothing
-            — it stops hiding what they were always entitled to see.
-            ⚠⚠⚠ NO EMPTY CARD. A provider with no skills renders nothing here
-            rather than a heading over a blank box — the `Rates` lesson, applied
-            before it could bite a second time.
+            ⚠⚠⚠ RENDERED FOR BOTH PERSONAS AND THAT IS THE ONE THING NOT TO GET
+            WRONG. `/providers/[id]` renders this component in visitor mode, so
+            putting the block inside the `owner` branch would SILENTLY REMOVE
+            RATES FROM THE BUYER'S PAGE — the rule is the VIEW MODEL's
+            (`isOwner || hasCapability(viewer, "canHireTalent")`), and `p.rates`
+            is already `null` for anyone who may not see it.
+            ⚠ THE WHOLE BLOCK IS GATED, NOT JUST ITS BODY: an empty box headed
+            `Rates` tells a visitor a rate exists and is being withheld.
           */}
-          {p.skills.length > 0 && (
-            <div className="pm-cp-two">
-              <ProfileCard
-                id="skills"
-                title="Skills"
-                edit={owner ? <EditLink href={editHref("skills")} title="Skills" /> : undefined}
-              >
-                {groupSkillsByPillar(p.skills).map((g) => (
-                  <div key={g.pillar ?? "__none"} className="mb-3 last:mb-0">
-                    {/* ⚠ THE HEADING IS THE PILLAR'S NAME VERBATIM — catalog data
-                        is never re-cased (`E568`). ⚠ A skill whose pillar is null
-                        gets one honest heading rather than an invented domain. */}
-                    <p className="mb-1.5 font-display text-[11px] font-bold uppercase tracking-[0.1em] text-ink-3">
-                      {g.pillar ?? "Other"}
-                    </p>
-                    <SkillsBody skills={g.skills} />
-                  </div>
-                ))}
-              </ProfileCard>
+          {p.rates && (
+            <div className="pm-cp2-rates">
+              <div className="flex items-baseline justify-between gap-3">
+                <p className="font-display text-[11px] font-bold uppercase tracking-[0.1em] text-ink-3">
+                  Rates
+                </p>
+                {owner && <EditLink href={editHref("rates")} title="Rates" />}
+              </div>
+              <div className="mt-2">
+                <RateRows p={p} />
+              </div>
             </div>
           )}
+        </div>
+      </section>
 
-          {/* ⚠ THE VISITOR'S BUYING SURFACE, DIRECTLY UNDER BIO AND RATES. */}
+      <div className="pm-cp2-body">
+        {/* ═══════════ MAIN ═══════════ */}
+        <main className="pm-cp2-main">
+          <ProfileCard
+            id="bio"
+            title="About"
+            edit={owner ? <EditLink href={editHref("bio")} title="Bio" /> : undefined}
+          >
+            <OverviewBody
+              overview={p.overview}
+              empty="Nothing here yet. A short bio is the first thing a buyer reads."
+            />
+          </ProfileCard>
+
+          {/* ⚠ THE VISITOR'S BUYING SURFACE, HIGH UP — a buyer is here to buy. */}
           {!owner && serviceProducts}
 
+          {/*
+            ── ⚠⚠ SKILLS AND SPECIALIZATIONS ARE ONE CARD (WS-C item 2) ──────
+
+            ⚠ The mockup's note: *"Skills and Specializations are one card."*
+            They are the same question asked at two grains, and two headings for
+            it cost a card's worth of height each.
+            ⚠⚠ BOTH KEEP THEIR OWN `Edit` LINK AND THEIR OWN ANCHOR `id` —
+            `E597`'s editors are per-section and the profile is scrolled back to
+            `#specializations` after saving one. ⚠⚠⚠ MERGING THE CARDS MUST NOT
+            MERGE THE EDITORS: that would be the second save path `E595` exists
+            to prevent.
+            ⚠ SUPERSEDED, quoted not deleted (`E164`) — two cards, in two rows:
+            //   {p.skills.length > 0 && (<div className="pm-cp-two"><ProfileCard id="skills" …/></div>)}
+            //   <div className="pm-cp-three"><ProfileCard id="specializations" …/> … </div>
+            ⚠⚠ THE CARD RENDERS EVEN WITH NO SKILLS NOW, because Specializations
+            lives inside it and an owner needs the door. The old `skills.length
+            > 0` guard existed so a heading never sat over a blank box; that is
+            preserved by the inner `SkillsBody` being conditional instead.
+          */}
+          <ProfileCard
+            id="skills"
+            title="Skills"
+            edit={owner ? <EditLink href={editHref("skills")} title="Skills" /> : undefined}
+          >
+            {p.skills.length > 0 ? (
+              groupSkillsByPillar(p.skills).map((g) => (
+                <div key={g.pillar ?? "__none"} className="mb-3 last:mb-0">
+                  {/* ⚠ THE HEADING IS THE PILLAR'S NAME VERBATIM — catalog data
+                      is never re-cased (`E568`). ⚠ A skill whose pillar is null
+                      gets one honest heading rather than an invented domain. */}
+                  <p className="mb-1.5 font-display text-[11px] font-bold uppercase tracking-[0.1em] text-ink-3">
+                    {g.pillar ?? "Other"}
+                  </p>
+                  <SkillsBody skills={g.skills} />
+                </div>
+              ))
+            ) : (
+              <p className="text-[13.5px] text-ink-2">
+                No skills listed yet.{" "}
+                {owner && (
+                  <Link href={editHref("skills")} className="font-bold text-magenta hover:underline">
+                    Add your skills
+                  </Link>
+                )}
+              </p>
+            )}
+            {/* ⚠ SPECIALIZATIONS, INSIDE THE SAME CARD, WITH ITS OWN ANCHOR AND
+                ITS OWN EDITOR. The divider is what keeps them legible as two
+                facts rather than one list. */}
+            <div id="specializations" className="mt-4 border-t border-line pt-3.5">
+              <div className="mb-1.5 flex items-baseline justify-between gap-3">
+                <p className="font-display text-[11px] font-bold uppercase tracking-[0.1em] text-ink-3">
+                  Specializations
+                </p>
+                {owner && (
+                  <EditLink href={editHref("specializations")} title="Specializations" />
+                )}
+              </div>
+              <SpecializationsBody specializations={p.specializations} />
+            </div>
+          </ProfileCard>
+
+          {/*
+            ── ⚠⚠ EXPERIENCE: WORK HISTORY AND SOLO PROJECTS IN ONE CARD ─────
+
+            ⚠ The mockup: *"Work History and Solo Projects are one Experience
+            card."* ⚠⚠ BOTH KEEP THEIR ANCHOR AND THEIR EDITOR, for the same
+            reason Specializations does — `E597` routes `/profile/edit/work-history`
+            and `/profile/edit/solo-projects` to the SAME shared editor through
+            two slugs, precisely so each card can return to its own place.
+            ⚠ SUPERSEDED, quoted not deleted (`E164`) — two full-width cards:
+            //   <ProfileCard id="work-history" title="Work History" …>…</ProfileCard>
+            //   <ProfileCard id="solo-projects" title="Solo Projects" …>…</ProfileCard>
+          */}
+          <ProfileCard
+            id="work-history"
+            title="Experience"
+            edit={owner ? <EditLink href={editHref("work-history")} title="Work History" /> : undefined}
+          >
+            <WorkHistoryBody
+              employers={p.employers}
+              projects={p.projects}
+              isOwner={owner}
+              empty="No work history yet."
+            />
+            <div id="solo-projects" className="mt-4 border-t border-line pt-3.5">
+              <div className="mb-1.5 flex items-baseline justify-between gap-3">
+                <p className="font-display text-[11px] font-bold uppercase tracking-[0.1em] text-ink-3">
+                  Solo Projects
+                </p>
+                {owner && (
+                  <EditLink href={editHref("solo-projects")} title="Solo Projects" />
+                )}
+              </div>
+              <SoloProjectsBody
+                projects={soloProjects}
+                isOwner={owner}
+                empty="No solo projects yet. Employee projects sit under their employer."
+              />
+            </div>
+          </ProfileCard>
+
+          {/*
+            ── ⚠⚠ ONE ROW SHARES CERTIFICATIONS, EDUCATION AND SERVICE PRODUCTS
+
+            ⚠ The mockup: *"Certifications, Education and Service Products share
+            one row."* ⚠⚠ `serviceProducts` FOR AN OWNER ONLY — the visitor gets
+            it high up, above the record, because a buyer is here to buy.
+            ⚠⚠⚠ EMPTY STATES ARE DOORS (`E593` item 16), and `Grow Your Income
+            Faster`'s two links land HERE, in the Service Products empty state,
+            exactly as the mockup's note says.
+          */}
           <div className="pm-cp-three">
             <ProfileCard
-            id="specializations"
-            title="Specializations"
-            edit={owner ? <EditLink href={editHref("specializations")} title="Specializations" /> : undefined}
-          >
-              <SpecializationsBody specializations={p.specializations} />
-            </ProfileCard>
-            <ProfileCard
-            id="certifications"
-            title="Certifications"
-            edit={owner ? <EditLink href={editHref("certifications")} title="Certifications" /> : undefined}
-          >
+              id="certifications"
+              title="Certifications"
+              edit={owner ? <EditLink href={editHref("certifications")} title="Certifications" /> : undefined}
+            >
               {/*
-                ── ⚠⚠ AN EMPTY SECTION OFFERS A ROUTE (`E593` WS-C item 16) ──
-
-                ⚠ Owner-only: a visitor cannot act on it, and *"Browse Learning
-                Paths"* on somebody else's profile is an instruction aimed at
-                the wrong person.
-                ⚠⚠ IT SAYS WHERE TO GET ONE, NOT WHAT IS MISSING. `/community/score`
-                owns the second sentence — see the ruling recorded on
-                `CertificationsBody`.
+                ⚠ Owner-only action: a visitor cannot act on it, and *"Earn One
+                in Learn"* on somebody else's profile aims an instruction at the
+                wrong person. ⚠⚠ IT SAYS WHERE TO GET ONE, NOT WHAT IS MISSING —
+                `/community/score` owns the second sentence.
               */}
               <CertificationsBody
                 certifications={p.certifications}
@@ -807,10 +711,10 @@ export function ConnectProfile({
               />
             </ProfileCard>
             <ProfileCard
-            id="education"
-            title="Education"
-            edit={owner ? <EditLink href={editHref("education")} title="Education" /> : undefined}
-          >
+              id="education"
+              title="Education"
+              edit={owner ? <EditLink href={editHref("education")} title="Education" /> : undefined}
+            >
               <EducationBody
                 education={p.education}
                 emptyAction={
@@ -825,67 +729,9 @@ export function ConnectProfile({
                 }
               />
             </ProfileCard>
+            {owner && serviceProducts}
           </div>
 
-          <ProfileCard
-            id="work-history"
-            title="Work History"
-            edit={owner ? <EditLink href={editHref("work-history")} title="Work History" /> : undefined}
-          >
-            <WorkHistoryBody
-              employers={p.employers}
-              projects={p.projects}
-              isOwner={owner}
-              empty="No work history yet."
-            />
-          </ProfileCard>
-
-          <ProfileCard
-            id="solo-projects"
-            title="Solo Projects"
-            edit={owner ? <EditLink href={editHref("solo-projects")} title="Solo Projects" /> : undefined}
-          >
-            <SoloProjectsBody
-              projects={soloProjects}
-              isOwner={owner}
-              empty="No solo projects yet."
-            />
-          </ProfileCard>
-
-          {/*
-            ⚠⚠ SERVICE PRODUCTS SITS HERE FOR AN OWNER — an inventory item in
-            the natural reading order, after the work. ⚠ FOR A VISITOR IT MOVED
-            UP, beneath Bio/Rates: a buyer is here to buy, and the thing that
-            can be bought should not be below eleven cards of history.
-            ⚠ ONE `serviceProducts` NODE, RENDERED IN ONE OF TWO PLACES — not
-            two copies that can drift.
-          */}
-          {owner && serviceProducts}
-
-          {/*
-            ⚠ `Learning Paths` RENDERS THE PATHS THIS PERSON TEACHES
-            (`getPathsTaughtByProfile`). ⚠⚠ THAT IS THE ONLY PATH RELATION THE
-            PROFILE HAS — there is no "paths I am enrolled in" on this surface,
-            and inventing one would mean a query nobody asked for.
-          */}
-          {/*
-            ── ⚠⚠ CREATED vs TAKEN, NAMED (`P2-J3-E593` WS-B item 17) ────────
-
-            ⚠ Scott, 2026-09-20: *"Distinguish learning paths CREATED from paths
-            TAKEN."* ⚠⚠ THE CARD SHOWED ONLY THE TAUGHT SET UNDER THE NEUTRAL
-            TITLE `Learning Paths`, so a reader could not tell which it was —
-            and *"you aren't teaching any yet"* was the only clue, visible only
-            when the list was empty.
-            ⚠ SUPERSEDED, quoted not deleted (`E164`): one flat list of
-            `taughtPaths` under the title `Learning Paths`.
-            ⚠⚠⚠ THEY ARE DIFFERENT TABLES, NOT A FLAG: teaching is
-            `teachesPathWhere` over `LearningPath`; taking is a `LearnEnrollment`
-            row. ⚠ A PATH CAN BE BOTH — an author may enrol in their own — and
-            each group lists it rather than the card picking a winner.
-            ⚠⚠ EACH GROUP RENDERS ONLY WHEN IT HAS ROWS. An empty "Taking"
-            heading on a provider who teaches is an absence dressed as a
-            section; the card's own empty state covers the both-empty case.
-          */}
           <ProfileCard title="Learning Paths">
             {taughtPaths.length === 0 && takenPaths.length === 0 ? (
               <p className="text-[13.5px] leading-relaxed text-ink-2">
@@ -992,99 +838,217 @@ export function ConnectProfile({
               </div>
             )}
           </ProfileCard>
-          {/* ⚠⚠ FORUM INVOLVEMENT. Renders NOTHING when the signal is null,
-              which is every profile today. ⚠ Carried over so the owner's page
-              does not silently lose what `/profile` used to show — see the prop
-              note above and `check:community` GUARD 3. */}
+
+          {/*
+            ⚠⚠ FORUM INVOLVEMENT — "groups", in the brief's words. Renders
+            NOTHING when the signal is null, which is every profile today.
+            ⚠⚠⚠ RESTORED AT THE WS-C GATE AFTER THE REDESIGN DROPPED IT. It was
+            not removed on purpose: the whole left rail went, and this went with
+            it. ⚠ LINT IS WHAT CAUGHT IT — `CommunitySignalBlock` and `community`
+            both went unused, +6 warnings against a freshly measured baseline,
+            and two of the six were real losses rather than dead code.
+            ⚠ WS-D requires it: *"The visitor still sees skills, experience,
+            colleague count and groups (`E593` item 13)."* And `check:community`
+            GUARD 3 asserts this page supplies the signal.
+          */}
           <CommunitySignalBlock
             signal={community}
             firstName={p.person.firstName ?? ""}
             isOwner={owner}
           />
-        </div>
-      </main>
+        </main>
 
-      {/* ═══════════ RIGHT RAIL ═══════════ */}
-      <aside className="pm-cp-rail-r">
+        {/* ═══════════ RAIL ═══════════ */}
+        <aside className="pm-cp2-rail">
+          {owner ? (
+            <>
+              {/*
+                ⚠⚠⚠ THE COMPLETION RING IS OWNER-ONLY AND THAT IS A JUDGEMENT,
+                NOT A LAYOUT CHOICE: **never show a stranger how incomplete
+                someone is.**
+                ⚠ THE WHOLE CARD IS A LINK (`E590` WS-C) — a real anchor, never
+                an `onClick` on a div.
+                ⚠⚠ WS-C ADDS THE TWO NEXT LINES WITH THEIR MINUTES, and the
+                mockup's *"See all N →"*. The lines come from `score.lines`,
+                which `/community/score` renders in full — ⚠⚠⚠ ONE COMPUTATION,
+                TWO RENDERINGS, so the card and the page cannot disagree.
+              */}
+              {score && (
+                <Link
+                  href="/community/score"
+                  className="group block rounded-brand border border-line bg-white px-[18px] py-4 transition-colors hover:border-magenta/40"
+                >
+                  <CompletionRing score={score} />
+                  <p className="mt-2 text-center text-[12.5px] font-bold text-ink-2">
+                    Complete Profiles Sell Services
+                  </p>
+                  {/* ⚠⚠ COMPUTED, NOT HARD-CODED, and it says something else at
+                      100% rather than printing "0 lines left". */}
+                  <p className="mt-1.5 text-center text-[12px] leading-snug text-ink-3">
+                    {completionHook(score)}
+                  </p>
+                  {nextLines.length > 0 && (
+                    <ul className="mt-3 border-t border-line pt-2.5">
+                      {nextLines.map((l) => (
+                        <li
+                          key={l.key}
+                          className="flex items-center justify-between gap-2 py-1 text-[12.5px]"
+                        >
+                          <span className="min-w-0 truncate text-ink-2">{l.label}</span>
+                          {/* ⚠ `E433` — a figure is INK, never magenta. */}
+                          <span className="flex-none font-semibold tabular-nums text-ink-3">
+                            {l.minutes} min
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {/* ⚠ `E433` — the one magenta thing in the card is the
+                      affordance that says it is a link. */}
+                  <p className="mt-2 text-center text-[12.5px] font-bold text-magenta group-hover:underline">
+                    {remainingLines > 0 ? `See all ${remainingLines} \u2192` : "See your score"}
+                  </p>
+                </Link>
+              )}
 
-        {owner ? (
-          <>
-            {/*
-              ⚠⚠⚠ THE COMPLETION RING IS OWNER-ONLY AND THAT IS A JUDGEMENT, NOT
-              A LAYOUT CHOICE: **never show a stranger how incomplete someone
-              is.** A percentage on somebody else's profile is a score a buyer
-              did not ask for and a provider cannot answer.
+              {/*
+                ── ⚠⚠ `Grow`: THREE CARDS BECAME THREE ROWS (WS-C item 2) ──────
 
-              ── ⚠⚠ THE WHOLE CARD IS A LINK (`P2-J3-E590` WS-C) ─────────────
+                ⚠ The mockup's note: *"Invite, Recommendation and Mentor are
+                rows in one Grow card."* ⚠ SUPERSEDED, quoted not deleted
+                (`E164`) — three separate `ActionCard`s, each its own box:
+                //   <ActionCard title="Invite a Colleague" label="Invite Colleague to Register" href="/invite-colleague" />
+                //   <ActionCard title="Request Recommendation" label="Request a Recommendation" href="/recommendations" />
+                //   <ActionCard title="Request a Mentor" label="Request a Mentor" href="/community/mentors" />
+                ⚠⚠ EVERY DESTINATION IS UNCHANGED. This is three boxes becoming
+                three rows, not three links becoming something else.
+                ⚠⚠⚠ `Request a Recommendation` ARRIVES HERE AND LEAVES THE
+                ACCOUNT MENU IN THE SAME CHANGE (`E598` WS-A kept it there until
+                this card existed), so the page never has two doors to it and
+                never has none.
+              */}
+              <section className="rounded-brand border border-line bg-white px-[18px] py-4">
+                <h2 className="mb-2 font-display text-[15px] font-bold">Grow</h2>
+                <div className="flex flex-col">
+                  {[
+                    { label: "Invite a Colleague", href: "/invite-colleague", hint: "Join = 50 points" },
+                    { label: "Request a Recommendation", href: "/recommendations", hint: null },
+                    { label: "Request a Mentor", href: "/community/mentors", hint: null },
+                  ].map((a) => (
+                    <Link
+                      key={a.href}
+                      href={a.href}
+                      className="-mx-2 flex items-center justify-between gap-2 rounded-[10px] px-2 py-2 transition-colors hover:bg-black/[0.03]"
+                    >
+                      <span className="min-w-0">
+                        <span className="block truncate text-[13.5px] font-semibold">
+                          {a.label}
+                        </span>
+                        {a.hint && (
+                          <span className="block text-[12px] text-ink-3">{a.hint}</span>
+                        )}
+                      </span>
+                      <span aria-hidden className="flex-none text-ink-3">
+                        &rsaquo;
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </section>
 
-              ⚠ Scott, 2026-09-20: *"The image is the thing that will show on the
-              main profile...the baiot to have the user click it."*
-              ⚠⚠⚠ A REAL ANCHOR, NEVER AN `onClick` ON A DIV. An anchor opens in
-              a new tab on middle-click, offers "copy link", takes focus from the
-              keyboard and is announced as a link. A div with a handler does none
-              of those and looks identical until somebody needs one of them.
-              ⚠ It is also why this stays a SERVER component: there is no state
-              and no handler here, only a link.
+              {/*
+                ── ⚠⚠ ONE CARD OF ONE-LINERS (WS-C item 2) ────────────────────
 
-              ── ⚠⚠ IT REPLACES THE OLD BLOCK. IT DOES NOT SIT BESIDE IT. ────
+                ⚠ The mockup's note: *"Network, Usage Stats and Account Health
+                are one line each with a link, because each already has its own
+                page."*
+                ⚠ SUPERSEDED, quoted not deleted (`E164`) — the full Account
+                Health card, four ticked rows deep:
+                //   <ProfileCard title="Account Health" edit={<EditLink href="/account-health" … label="Manage" />}>
+                //     {[{ label: "Sign in and manage your profile", ok: … }, … ].map(…)}
+                //   </ProfileCard>
+                ⚠⚠ THE PAGE REMAINS THE AUTHORITY and always did — that card
+                already carried *"no score, no count and no verdict of its own"*.
+                This keeps the verdict and drops the four rows, which is what the
+                card was already saying it was for.
+                ⚠⚠⚠ `Network` IS SPECIFIED AND IS **NOT** HERE. Scott, 2026-09-22:
+                *"The Network one-liner has no destination yet, so leave it out
+                rather than linking nowhere."* ⚠ MEASURED AT `E598` WS-A: `/grow`
+                and `/community/grow` both 404 and the string `Grow Your Network`
+                appears nowhere in `src/`.
+                ⚠ THE `Usage Stats` COMB AND THE `Grow Your Network` MINI-WEB ARE
+                GONE FROM THE PAGE (WS-C item 3) — `/stats` is where they live.
+              */}
+              <section className="rounded-brand border border-line bg-white px-[18px] py-4">
+                <div className="flex flex-col">
+                  <div className="flex items-center justify-between gap-2 py-1.5 text-[13px]">
+                    <span className="min-w-0 truncate">
+                      <b className="font-bold">Usage</b>
+                      <span className="text-ink-2">
+                        {" \u00b7 "}
+                        {/* ⚠ `usage.learn`, NOT a `lessons` field — `UsageStats`
+                            counts the SIX APPLICATIONS (`connect · learn · work
+                            · sell · orders` + `earnedCents`). The mockup's line
+                            said "16 lessons"; the figure that exists is the
+                            Learn count, so that is what is printed. */}
+                        {usage?.learn ?? 0} {(usage?.learn ?? 0) === 1 ? "lesson" : "lessons"}
+                      </span>
+                    </span>
+                    <Link
+                      href="/stats"
+                      className="flex-none text-[12.5px] font-bold text-magenta hover:underline"
+                    >
+                      Stats &rarr;
+                    </Link>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 py-1.5 text-[13px]">
+                    <span className="min-w-0 truncate">
+                      <b className="font-bold">Account</b>
+                      <span className="text-ink-2">{" \u00b7 "}</span>
+                      {/* ⚠ `E433` does not apply — this is a STATE, not a figure.
+                          ⚠⚠ Green for good, ink for a problem, never red: a
+                          pending verification is a to-do, not an alarm. */}
+                      <span
+                        className={
+                          accountAllGood ? "font-semibold text-emerald-600" : "font-semibold text-ink-2"
+                        }
+                      >
+                        {accountAllGood ? "\u2713 All good" : "Needs attention"}
+                      </span>
+                    </span>
+                    <Link
+                      href="/account-health"
+                      className="flex-none text-[12.5px] font-bold text-magenta hover:underline"
+                    >
+                      Manage &rarr;
+                    </Link>
+                  </div>
+                </div>
+              </section>
+            </>
+          ) : (
+            <>
+              {/*
+                ── ⚠⚠ `You Both Know` — MUTUAL COLLEAGUES (visitor only) ───────
 
-              ⚠ `E588` WS-A ruled ONE summary of completeness per page and that
-              ruling stands. ⚠ SUPERSEDED, quoted not deleted (`E164`) — the
-              `enrichmentGaps` list that used to live under the ring:
-              //  {p.enrichmentGaps.length > 0 && (
-              //    <>
-              //      <p …>What To Do Next:</p>
-              //      <ul …>{p.enrichmentGaps.map((g) => <li key={g}>{g}</li>)}</ul>
-              //    </>
-              //  )}
-              ⚠⚠ IT WAS A SECOND, WEAKER COMPLETENESS SUMMARY — five fixed
-              prompts from `profileEnrichmentGaps`, with no points, no "I have
-              none" and no way to finish. `/community/score` is that list done
-              properly, so the hook links to it instead of half-repeating it here.
-              ⚠ **`profileEnrichmentGaps` IS STILL EXPORTED AND STILL USED
-              ELSEWHERE — this removes a RENDER, not the function.**
-            */}
-            {score && (
-            <Link
-              href="/community/score"
-              className="group block rounded-brand border border-line bg-white px-[18px] py-4 transition-colors hover:border-magenta/40"
-            >
-              <CompletionRing score={score} />
-              <p className="mt-2 text-center text-[12.5px] font-bold text-ink-2">
-                Complete Profiles Sell Services
-              </p>
-              {/* ⚠⚠ COMPUTED, NOT HARD-CODED, and it says something else at
-                  100% rather than printing "0 lines left". */}
-              <p className="mt-1.5 text-center text-[12px] leading-snug text-ink-3">
-                {completionHook(score)}
-              </p>
-              {/* ⚠ `E433` — the one magenta thing in the card is the affordance
-                  that says it is a link. The ring is magenta too, and that is
-                  the same rule: both are interactive now. */}
-              <p className="mt-2.5 text-center text-[12.5px] font-bold text-magenta group-hover:underline">
-                See your score
-              </p>
-            </Link>
-            )}
-
-            <ActionCard
-              title="Invite a Colleague"
-              label="Invite Colleague to Register"
-              href="/invite-colleague"
-            />
-            <ActionCard
-              title="Request Recommendation"
-              label="Request a Recommendation"
-              href="/recommendations"
-            />
-            <ActionCard
-              title="Request a Mentor"
-              label="Request a Mentor"
-              href="/community/mentors"
-            />
-          </>
-        ) : (
-          <>
+                ⚠⚠⚠ RESTORED AT THE WS-C GATE. It lived in the left rail's
+                colleague card, which the redesign removed whole; `youBothKnow`
+                went unused and lint reported it.
+                ⚠ A REAL QUERY (`mutualColleagueCount`) — accepted colleague
+                edges on BOTH sides — unlike `Viewing Me`, which is the owner's.
+                ⚠⚠ `null` ON THE OWNER'S OWN PAGE, where the question is
+                meaningless, which is why it sits in the visitor branch.
+                ⚠ The hero already carries the profile's own colleague COUNT for
+                both personas; this is the overlap with the VIEWER, a different
+                fact.
+              */}
+              <section className="rounded-brand border border-line bg-white px-[18px] py-4">
+                <div className="flex items-center justify-between gap-2.5 text-[13.5px]">
+                  <span className="text-ink-2">You Both Know</span>
+                  {/* ⚠ `E433` — a figure is INK. */}
+                  <b className="text-ink">{youBothKnow ?? 0}</b>
+                </div>
+              </section>
             {/*
               ── ⚠⚠ THE TRUST CARD. FACTS THE RECORD HOLDS, NOTHING DERIVED. ──
               ⚠ Every row renders only when its value exists. A missing rate is
@@ -1248,111 +1212,10 @@ export function ConnectProfile({
                 </>
               )}
             </section>
-          </>
-        )}
-        {/*
-          ── ⚠⚠⚠ THESE TWO SIT **BELOW** THE COMPLETION RING, AND ON A PHONE
-             THAT IS THE WHOLE POINT (`P2-J3-E593` WS-B) ────────────────────
-
-          ⚠ `connect-profile.css` gives this rail `order: -1` at ≤1060px —
-          `E588` WS-A's ruling, because burying the ring and the actions under
-          eleven cards of work history *"put the completion ring roughly 5,000px
-          down on a real profile."*
-          ⚠⚠ SO THE RAIL IS THE FIRST THING ON A PHONE, and anything added to
-          the TOP of it pushes the ring down. ⚠⚠⚠ MEASURED: with Rates and
-          Account Health inserted above, the ring — which Scott called *"the
-          baiot to have the user click it"* — became the THIRD card on a phone.
-          ⚠ That is `E588` WS-A's defect re-created at a smaller scale, so the
-          two new cards go after it instead.
-        */}
-        {/*
-          ── ⚠⚠ RATES, AS A SIDE CARD (`P2-J3-E593` WS-B item 14) ───────────
-
-          ⚠⚠⚠ RENDERED FOR BOTH PERSONAS, DELIBERATELY, AND THIS IS THE ONE
-          THING TO NOT GET WRONG HERE. `/providers/[id]` renders this same
-          component in visitor mode (`E588` WS-B), so putting this card inside
-          the owner branch below would have SILENTLY REMOVED RATES FROM THE
-          VISITOR PAGE — which is `WS-C`'s item 13, with its own gate and its own
-          proof about the RSC payload. ⚠ WS-B moves the card; it does not change
-          who can see what.
-
-          ⚠⚠ RATES CARRIES ENGAGEMENT RATES ONLY (Scott's ruling 3, 2026-09-19).
-          The mockup lists `Mentoring $75.00` and `Office Hours $4.99` here AND
-          as Service Products — the exact duplication `E562`/`E563` removed.
-          Those are PRODUCTS and carry their price in the Service Products card.
-          ⚠⚠⚠ AND `Hybrid` HAS NO COLUMN: `ProviderProfile` carries
-          `onsite_rate_cents` and `remote_rate_cents` and nothing else. (`HYBRID`
-          in the schema is a `WorksiteType` on a WORK REQUEST, a different
-          model.) ⚠ So the mockup's three rows are two. **Reported, not invented.**
-        */}
-        {/* ⚠ THE RATES CARD MOVED TO THE LEFT RAIL (`P2-A3-E596` WS-G item 4).
-            Scott, 2026-09-21: *"Rate sits with who you are, not with the action
-            cards."* ⚠ SUPERSEDED, quoted not deleted (`E164`) — `E593` item 14
-            put it in a SIDE card on the right:
-            //   {p.rates && (
-            //     <ProfileCard title="Rates" edit={…}><RateRows p={p} /></ProfileCard>
-            //   )}
-            ⚠⚠ THE TWO FACTS THE OLD COMMENT CARRIED MOVED WITH THE CARD and are
-            restated at its new site: the WHOLE card is gated, not just its body,
-            and an empty card titled `Rates` is worse than no card. */}
-
-        {/*
-          ── ⚠⚠ ACCOUNT HEALTH, AS A CARD (`P2-J3-E593` WS-B item 12) ───────
-
-          ⚠ Scott, 2026-09-20: a tick/cross per item, *"to let someone manage
-          the strikes against their user account."*
-          ⚠⚠ IT IS A SUMMARY OF `/account-health`, NOT A NEW SUBSYSTEM — the
-          brief says so in capitals. The same four checks that page runs, off
-          the same columns, computed in ONE place (`provider-profile-view.ts`)
-          so the two cannot drift into two different answers.
-          ⚠⚠⚠ AND THE PAGE REMAINS THE AUTHORITY: this card carries no score, no
-          count and no verdict of its own, and its title links there. If they
-          ever disagree, the page is right and this is stale.
-
-          ⚠ OWNER-ONLY, AND NOT A LAYOUT CHOICE: account standing is between a
-          member and Panameer. ⚠⚠ A VISITOR SEEING SOMEBODY'S ACCOUNT STATUS IS
-          THE SAME MISTAKE AS THE COMPLETION RING — a verdict a stranger did not
-          ask for and the subject cannot answer.
-        */}
-        {owner && (
-          <ProfileCard
-            title="Account Health"
-            edit={<EditLink href="/account-health" title="Account Health" label="Manage" icon="" />}
-          >
-            <div className="flex flex-col">
-              {[
-                { label: "Sign in and manage your profile", ok: p.accountHealth.canSignIn },
-                { label: "Receive messages from buyers", ok: p.accountHealth.receivesMessages },
-                { label: "Account status", ok: p.accountHealth.statusActive },
-                { label: "Email verified", ok: p.accountHealth.emailVerified },
-              ].map((r) => (
-                <div
-                  key={r.label}
-                  className="flex items-center justify-between gap-2.5 py-2 text-[13.5px]"
-                >
-                  <span className="text-ink-2">{r.label}</span>
-                  {/*
-                    ⚠⚠ THE MARK CARRIES A TEXT LABEL FOR ASSISTIVE TECH. A tick
-                    and a cross are COLOUR AND SHAPE, and neither reaches a
-                    screen reader — `aria-label` is what makes the row readable
-                    at all. ⚠ `E433` does not apply: these are STATES, not
-                    figures, and not interactive.
-                  */}
-                  <span
-                    aria-label={r.ok ? "Yes" : "Needs attention"}
-                    className={
-                      "flex-none text-[14px] font-bold " +
-                      (r.ok ? "text-emerald-600" : "text-amber-600")
-                    }
-                  >
-                    {r.ok ? "\u2713" : "\u2717"}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </ProfileCard>
-        )}
-      </aside>
+            </>
+          )}
+        </aside>
+      </div>
     </div>
   );
 }
@@ -1385,67 +1248,77 @@ export function ConnectProfile({
  * reader does not "fix" it back to ink**, and so the exception cannot spread:
  * it applies to this one cell, for the reason Scott gave, and nowhere else.
  */
-function UsageComb({ usage }: { usage: UsageStats }) {
-  /* ⚠ BAND ORDER, and the labels are the band's own words. */
-  const cells: { label: string; value: string; pay?: boolean }[] = [
-    { label: "Connect", value: String(usage.connect) },
-    { label: "Learn", value: String(usage.learn) },
-    { label: "Work", value: String(usage.work) },
-    { label: "Sell", value: String(usage.sell) },
-    { label: "Orders", value: String(usage.orders) },
-    {
-      label: "Get Paid",
-      /*
-        ⚠⚠⚠ THE DASH CONVENTION WHEN IT IS NOT MEASURABLE, exactly as
-        `Viewing Me` does. `earnedCents` is `null` the moment a work order
-        exists, because earnings are not modelled and a number would then be a
-        guess. ⚠ Until then `$0` is not a placeholder — it is entailed by having
-        zero orders. See `lib/usage-stats.ts`.
-      */
-      value: usage.earnedCents === null ? "—" : money(usage.earnedCents, "USD"),
-      pay: true,
-    },
-  ];
-
-  return (
-    <section className="rounded-brand border border-line bg-white px-[18px] py-4">
-      <p className="mb-3 text-[11.5px] font-bold uppercase tracking-[0.07em] text-ink-3">
-        Usage Stats
-      </p>
-      <div className="grid grid-cols-3 gap-y-3">
-        {cells.map((c) => (
-          <div key={c.label} className="text-center">
-            <p
-              className={
-                "font-display text-[19px] font-bold leading-none tabular-nums " +
-                (c.pay ? "text-magenta" : "text-ink")
-              }
-            >
-              {c.value}
-            </p>
-            {/* ⚠ SMALL ON PURPOSE — Scott: *"Keep it small; the full Stats page
-                carries the detail."* The label names the application, it does
-                not explain the figure. */}
-            <p className="mt-1 text-[10.5px] leading-tight text-ink-3">{c.label}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* ⚠⚠ THE LINE NAMES WHAT WOULD FILL IT (Scott's WS-B stats ruling), so a
-          row of zeroes reads as a beginning rather than a failure. ⚠ NO
-          projected, estimated, potential or example figure — anywhere. */}
-      <p className="mt-3.5 text-[12px] leading-relaxed text-ink-2">
-        This is where your earnings land.
-      </p>
-      <Link
-        href="/stats"
-        className="mt-1 inline-block text-[13px] font-bold text-magenta hover:underline"
-      >
-        See your stats &rarr;
-      </Link>
-    </section>
-  );
-}
+// ── ⚠⚠⚠ THE USAGE COMB IS GONE FROM THE PROFILE (`P2-A2-E598` WS-C item 3) ──
+// 
+// ⚠ Scott's brief: *"Removed from the profile: … The Usage Stats comb."* It is
+// one line in the rail now — *"Usage · N lessons · Stats →"* — because `/stats`
+// already owns the surface.
+// ⚠⚠ QUOTED, NOT DELETED (`E164`). The component is preserved in full below; it
+// is commented out rather than left live because an unused export is a lint
+// warning against a freshly measured baseline, and the rule is 0 NEW.
+// ⚠ `getUsageStats` IS UNTOUCHED and still feeds the one-liner.
+// 
+  // function UsageComb({ usage }: { usage: UsageStats }) {
+  //   /* ⚠ BAND ORDER, and the labels are the band's own words. */
+  //   const cells: { label: string; value: string; pay?: boolean }[] = [
+  //     { label: "Connect", value: String(usage.connect) },
+  //     { label: "Learn", value: String(usage.learn) },
+  //     { label: "Work", value: String(usage.work) },
+  //     { label: "Sell", value: String(usage.sell) },
+  //     { label: "Orders", value: String(usage.orders) },
+  //     {
+  //       label: "Get Paid",
+  //       /*
+  //         ⚠⚠⚠ THE DASH CONVENTION WHEN IT IS NOT MEASURABLE, exactly as
+  //         `Viewing Me` does. `earnedCents` is `null` the moment a work order
+  //         exists, because earnings are not modelled and a number would then be a
+  //         guess. ⚠ Until then `$0` is not a placeholder — it is entailed by having
+  //         zero orders. See `lib/usage-stats.ts`.
+  //       */
+  //       value: usage.earnedCents === null ? "—" : money(usage.earnedCents, "USD"),
+  //       pay: true,
+  //     },
+  //   ];
+  //
+  //   return (
+  //     <section className="rounded-brand border border-line bg-white px-[18px] py-4">
+  //       <p className="mb-3 text-[11.5px] font-bold uppercase tracking-[0.07em] text-ink-3">
+  //         Usage Stats
+  //       </p>
+  //       <div className="grid grid-cols-3 gap-y-3">
+  //         {cells.map((c) => (
+  //           <div key={c.label} className="text-center">
+  //             <p
+  //               className={
+  //                 "font-display text-[19px] font-bold leading-none tabular-nums " +
+  //                 (c.pay ? "text-magenta" : "text-ink")
+  //               }
+  //             >
+  //               {c.value}
+  //             </p>
+  //             {/* ⚠ SMALL ON PURPOSE — Scott: *"Keep it small; the full Stats page
+  //                 carries the detail."* The label names the application, it does
+  //                 not explain the figure. */}
+  //             <p className="mt-1 text-[10.5px] leading-tight text-ink-3">{c.label}</p>
+  //           </div>
+  //         ))}
+  //       </div>
+  //
+  //       {/* ⚠⚠ THE LINE NAMES WHAT WOULD FILL IT (Scott's WS-B stats ruling), so a
+  //           row of zeroes reads as a beginning rather than a failure. ⚠ NO
+  //           projected, estimated, potential or example figure — anywhere. */}
+  //       <p className="mt-3.5 text-[12px] leading-relaxed text-ink-2">
+  //         This is where your earnings land.
+  //       </p>
+  //       <Link
+  //         href="/stats"
+  //         className="mt-1 inline-block text-[13px] font-bold text-magenta hover:underline"
+  //       >
+  //         See your stats &rarr;
+  //       </Link>
+  //     </section>
+  //   );
+  // }
 
 /**
  * ⚠⚠ GROUPED BY THE CATALOG'S OWN DOMAIN LEVEL (`P2-A3-E596` WS-G item 1).

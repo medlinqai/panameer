@@ -163,3 +163,135 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⚠⚠⚠ THE OPTION-B GEOMETRY — HERO + TWO COLUMNS (`P2-A2-E598` WS-C)
+   ═══════════════════════════════════════════════════════════════════════════
+
+   ⚠ Scott, on the option-B mockup: *"Yeah...that is much better."* Earlier the
+   same day: *"way too much on this page."*
+   ⚠⚠ THREE COLUMNS BECAME TWO, with identity and rates lifted into one hero
+   card across the top — the mockup's own reason: *"so the first screen answers
+   'who is this, and what does he cost.'"*
+
+   ⚠ THE `.pm-cp` RULES ABOVE ARE LEFT IN PLACE, NOT DELETED (`E164`). They are
+   the three-column geometry this replaces; nothing renders them today.
+
+   ⚠⚠ THE BREAKPOINTS ARE THE ONES ALREADY MEASURED IN THIS FILE, not the
+   mockup's. The arithmetic at the top of the file still holds: the shell's
+   `<main>` carries 64px of horizontal padding, so a viewport breakpoint is the
+   content width plus 64.
+   ⚠⚠⚠ ONE STEP, NOT TWO. With no left rail there is no middle state where a
+   272px column plus a usable centre stops fitting — the two-column layout goes
+   straight to one at 900px, where a 248px+ rail beside a ~600px main would
+   start squeezing both.
+*/
+.pm-cp2 {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+/* ⚠ The hero's two halves: identity grows, rates take what they need. */
+.pm-cp2-heroin {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+.pm-cp2-rates {
+  flex: 0 0 auto;
+  min-width: 190px;
+  /* ⚠ It sits BELOW the cover, level with the name — not floated over the
+     gradient, which would put a price on top of a photo. */
+  padding-top: 14px;
+}
+
+.pm-cp2-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 286px;
+  gap: 16px;
+  align-items: start;
+}
+.pm-cp2-main,
+.pm-cp2-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+/*
+  ⚠⚠ THE RAIL STICKS, THE MAIN SCROLLS — and `align-items: start` above is what
+  makes that possible: a stretched grid item is as tall as the row, and a sticky
+  element inside a full-height box has nothing to stick against.
+  ⚠⚠⚠ IT CLEARS THE PINNED BAND (`E587`). `top: 16px` would put it UNDERNEATH —
+  that exact mistake was made once already and is recorded at the top of this
+  file. `--pm-band-h` is `E587`'s custom property; this is a consumer of it.
+*/
+.pm-cp2-rail {
+  position: sticky;
+  top: calc(var(--pm-band-h) + 16px);
+}
+
+/*
+  ── ⚠⚠⚠ ONE COLUMN, AND THE RAIL SPLITS AROUND THE MAIN ────────────────────
+
+  ⚠ SCOTT'S PHONE ORDER (WS-C item 5): *"hero, Score, main, then the rest of the
+  rail."*
+  ⚠⚠ THAT IS `E588` WS-A's RULING, NARROWED. Its defect was burying the
+  completion ring *"roughly 5,000px down"* under eleven cards of work history,
+  and its fix — `order: -1` on the whole rail — lifted the ring AND everything
+  with it, so the actions sat above the profile too.
+  ⚠⚠⚠ ONLY THE SCORE CARD RISES NOW. `Grow` and the one-liners are things you do
+  AFTER reading your profile, so they stay below it. The score card is the one
+  the ring is the bait for.
+  ⚠ THE DOM ORDER IS UNCHANGED — the rail still comes last in the markup, so a
+  screen reader and the keyboard still reach the profile before the actions on
+  it. Only the painted position moves.
+*/
+@media (max-width: 900px) {
+  .pm-cp2-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .pm-cp2-rail {
+    position: static;
+    /* ⚠ `display: contents` lets the rail's CHILDREN become grid items, which
+       is what allows ONE of them to be ordered above the main. A wrapper that
+       stayed a single item could only move as a block — the `E588` problem. */
+    display: contents;
+  }
+  /* ⚠⚠ THE SCORE CARD ONLY. It is the rail's first child for an owner; for a
+     visitor the rail's children are the trust and message cards, which are not
+     lifted — a visitor has no ring and nothing to finish. */
+  .pm-cp2-rail > :first-child {
+    order: -1;
+  }
+  .pm-cp2-main {
+    display: contents;
+  }
+  /* ⚠ With both wrappers dissolved, the grid's own `gap` spaces every card
+     uniformly — otherwise the two flex columns would each keep their own. */
+  .pm-cp2-body {
+    gap: 14px;
+  }
+}
+
+/*
+  ⚠⚠ THE HERO STACKS BEFORE THE PAGE DOES. Rates beside a name needs roughly
+  190 + 24 + 300 of content; below that the price wraps under the title rather
+  than squeezing the headline to two words.
+*/
+@media (max-width: 620px) {
+  .pm-cp2-heroin {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .pm-cp2-rates {
+    padding-top: 0;
+    width: 100%;
+    border-top: 1px solid var(--line, #e7e5ea);
+    padding-top: 12px;
+  }
+}

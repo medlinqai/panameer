@@ -119,6 +119,18 @@ export default async function MyProfilePage() {
           is why this note sits here rather than beside the prop. */}
       {/* ⚠ The comb is OWNER-ONLY, so it is computed here — on the owner's own
           page — and never passed to `/providers/[id]` (`E593`). */}
+      {/* ⚠ `colleagueFaces` IS NO LONGER PASSED (`P2-A2-E598` WS-C) — the hero
+          line carries the colleague COUNT and nothing renders avatars.
+          ⚠ SUPERSEDED, quoted not deleted (`E164`) — the seven faces, sliced
+          from the SAME `mine.colleagues` the count comes from:
+          //   colleagueFaces={mine.colleagues
+          //     .filter((c) => c.person)
+          //     .slice(0, 7)
+          //     .map((c) => ({ personId: c.person!.personId, name: …, photoUrl: … }))}
+          ⚠⚠ A JSX COMMENT IS ONLY LEGAL IN CHILDREN POSITION, NEVER BETWEEN
+          ATTRIBUTES — this file already carried that warning and I put one
+          among the props anyway; `tsc` caught it.
+          ⚠ `getMyCommunity` STILL RUNS — `colleagueCount` is its length. */}
       <ConnectProfile
         p={profile}
         /* ⚠⚠ `Viewing Me`, WITH DATA BEHIND IT AT LAST (`P0-E595` A2). One row
@@ -130,17 +142,7 @@ export default async function MyProfilePage() {
            with a door; `/community/colleagues` is the list. ⚠ Sliced from the
            SAME `mine.colleagues` the count above comes from, so the faces and
            the number can never describe different sets. */
-        colleagueFaces={mine.colleagues
-          /* ⚠ A colleague row whose `person` could not be resolved has no face
-             and no name — it is dropped rather than drawn as an anonymous
-             silhouette, which would imply a person we cannot identify. */
-          .filter((c) => c.person)
-          .slice(0, 7)
-          .map((c) => ({
-            personId: c.person!.personId,
-            name: c.person!.name,
-            photoUrl: c.person!.photoUrl,
-          }))}
+
         taughtPaths={taughtPathsList}
         takenPaths={takenPaths}
         usage={await getUsageStats(

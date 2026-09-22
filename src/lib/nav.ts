@@ -1083,7 +1083,28 @@ export const PERSONA_NAV_SECONDARY: NavItem[] = [
     and reversible in ONE LINE once something on Connect links the page.
     ⚠ DO NOT ADD THAT LINK HERE — Connect surfaces are `E557`/`E558`.
   */
-  { label: "Request Recommendations", href: "/recommendations" },
+  /*
+    ── ⚠⚠⚠ `Request Recommendations` LEFT THE MENU FOR THE PROFILE'S `Grow`
+       CARD (`P2-A2-E598` WS-C) ──────────────────────────────────────────────
+
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   { label: "Request Recommendations", href: "/recommendations" },
+
+    ⚠⚠ IT LEAVES AND ARRIVES IN THE SAME COMMIT, WHICH IS THE WHOLE POINT.
+    `E598` WS-A deliberately KEPT it here — Scott: *"Keep it until WS-C rehomes
+    it"* — so the page never had two doors to `/recommendations` and never had
+    none. WS-C builds the `Grow` card; this line goes in that same change.
+
+    ⚠⚠⚠ THE REASON IT SURVIVED `E559` WS-D IS NOW ANSWERED, NOT IGNORED. That
+    brief tried to remove it and the premise check refused: *"`E558` gave the
+    ACTION a home on Connect… but it NEVER LINKS THE `/recommendations` PAGE"*,
+    and the only two inbound links were this entry and the (since deleted)
+    `ProviderProfileView`. ⚠ The owner profile's `Grow` card is that missing
+    link, so the condition `E559` named is finally met.
+    ⚠ MEASURED BEFORE REMOVING, exactly as `E559` did: the `Grow` card renders
+    it for every owner, unconditionally, in the same file that renders the
+    profile.
+  */
   /*
     ── ⚠ `Invite a Colleague` REMOVED (`P2-ALL-E559` WS-D) ─────────────────────
 
