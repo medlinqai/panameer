@@ -11,6 +11,7 @@ import {
   type ScoreLine,
 } from "@/lib/completeness";
 import { SCORE_LINE_COPY, DECLARED_NONE_RIDER } from "@/lib/profile-score-copy";
+import { editHref } from "@/lib/profile-sections";
 import "./profile-score.css";
 
 /**
@@ -55,6 +56,27 @@ export function ProfileScoreView({ score }: { score: ProfileScore }) {
     [score.lines]
   );
   const missingPoints = open.reduce((a, l) => a + l.points, 0);
+  /* ⚠ `done` IS THE COMPLEMENT OF `open`, BY THE SAME RULE — `lineCounts`,
+     which is what makes *"I have none"* count (`E590`). Two independent
+     filters could disagree; this cannot. */
+  const done = useMemo(() => score.lines.filter((l) => lineCounts(l.state)), [score.lines]);
+  /*
+    ⚠⚠ THE NEXT LINE IS `open[0]` — the list is already sorted biggest-points
+    first, so the next thing worth doing is the head of it. ⚠⚠⚠ COMPUTED, NEVER
+    NAMED: a hardcoded "next" would go stale the moment a provider answers it.
+    ⚠ `href` PREFERS THE `E597` ONE-SECTION EDITOR and falls back to the line's
+    own — 9 of 16 lines have one.
+  */
+  const next = useMemo(() => {
+    const l = open[0];
+    if (!l) return null;
+    const copy = SCORE_LINE_COPY[l.key];
+    return {
+      line: l,
+      copy,
+      href: copy.editorSlug ? editHref(copy.editorSlug) : copy.href,
+    };
+  }, [open]);
   const minutes = open.reduce((a, l) => a + SCORE_LINE_COPY[l.key].minutes, 0);
 
   /* ── the dial ─────────────────────────────────────────────────────────── */
@@ -149,9 +171,18 @@ export function ProfileScoreView({ score }: { score: ProfileScore }) {
 
   return (
     <div className="mx-auto max-w-5xl">
+      {/*
+        ── ⚠⚠⚠ THE PAGE TITLE (`E006`) ────────────────────────────────────
+
+        ⚠ SCOTT, 2026-09-22: *"Your Profile Score"* → **Supercharge Your
+        Exposure to Buyers**. ⚠⚠ IT NAMES WHAT THE PAGE IS FOR rather than what
+        it displays — the score is the instrument, the exposure is the point.
+        ⚠ SUPERSEDED, quoted not deleted (`E164`):
+        //   <h1 …>Your Profile Score</h1>
+      */}
       <header className="mb-3.5 flex flex-wrap items-baseline justify-between gap-4">
         <h1 className="font-display text-[22px] font-bold tracking-[-0.3px]">
-          Your Profile Score
+          Supercharge Your Exposure to Buyers
         </h1>
         {/* ⚠ COPY IS SCOTT'S, VERBATIM. */}
         <p className="text-[13px] text-ink-3">
@@ -160,53 +191,154 @@ export function ProfileScoreView({ score }: { score: ProfileScore }) {
         </p>
       </header>
 
+      {/*
+        ── ⚠⚠⚠ THE WIDE TWO-PART HEADER (`E001`), AND IT **REPLACES** THE RING
+           CARD — ONE RING ON THE PAGE, NOT TWO ───────────────────────────────
+
+        ⚠ SCOTT: *"It replaces today's ring card: one ring on the page, not
+        two."* ⚠⚠ THE LEFT HALF IS THE RING, MOVED HERE WHOLE — it is not a
+        second, smaller copy, which is exactly what *"not two"* forbids.
+        ⚠ THE PAGE RULE (2026-09-22) PUTS THIS HEADER ON **Score, Grow and
+        Statistics** and keeps it OFF My Profile, where the score appears only
+        as a side card with its ring. Both halves of that rule now hold.
+        ⚠⚠ THE MOTION AND ITS COUNTDOWN ARE **WS-D**, not this workstream —
+        Scott: *"a still ring is fine here."*
+      */}
+      <section className="pm-score-hero mb-4 overflow-hidden rounded-brand border border-line bg-white">
+        <div className="pm-score-hero-left p-6 text-center">
+          <h2 className="mb-3 font-display text-[15px] font-bold">
+            Components of Your Score
+          </h2>
+          <div className="pm-score-dial">
+            <svg viewBox="0 0 300 300" className="pm-score-svg" role="img" aria-label={`${score.total} of 100`}>
+              <circle cx="150" cy="150" r={R} fill="none" className="stroke-line-2" strokeWidth="22" />
+              {segments.map((s) => (
+                <circle
+                  key={s.line.key}
+                  cx="150"
+                  cy="150"
+                  r={R}
+                  fill="none"
+                  strokeWidth={hover === s.line.key ? 30 : 22}
+                  strokeLinecap="butt"
+                  strokeDasharray={`${s.len} ${C - s.len}`}
+                  strokeDashoffset={s.offset}
+                  className={
+                    "pm-score-seg " +
+                    paintClass(s.line.state) +
+                    (hover && hover !== s.line.key ? " pm-score-dim" : "")
+                  }
+                  onMouseEnter={() => setHover(s.line.key)}
+                  onMouseLeave={() => setHover(null)}
+                />
+              ))}
+            </svg>
+            <div className="pm-score-core">
+              {/* ⚠ `E433` — the FIGURE is a figure, so ink. The ring itself is
+                  magenta because it is hovered and clicked (`E590` ruling 1). */}
+              <div className="font-display text-[56px] font-bold leading-none tracking-[-2px] text-ink">
+                {score.total}
+              </div>
+              <div className="mt-1 text-[11.5px] font-bold uppercase tracking-[0.11em] text-ink-3">
+                of 100
+              </div>
+              <p className="mt-2 min-h-[34px] text-[11.5px] leading-snug text-ink-2">
+                {caption}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="pm-score-hero-right flex flex-col justify-center gap-3 p-6">
+          {/*
+            ⚠⚠ THE TWO COUNTS, IN THE SAME WORDS AS THE CARDS BELOW (`E008`).
+            ⚠ THEY ARE COUNTS OF **COMPONENTS**, NOT POINTS — the ring already
+            carries the points, and two different numbers claiming to be "your
+            score" is the defect `E582` recorded.
+          */}
+          <div className="flex gap-6">
+            <div>
+              <div className="font-display text-[30px] font-bold leading-none text-ink">
+                {done.length}
+              </div>
+              <p className="mt-1 text-[12px] font-bold uppercase tracking-[0.08em] text-ink-3">
+                Components Completed
+              </p>
+            </div>
+            <div>
+              <div className="font-display text-[30px] font-bold leading-none text-ink">
+                {open.length}
+              </div>
+              <p className="mt-1 text-[12px] font-bold uppercase tracking-[0.08em] text-ink-3">
+                Needing Completion or Acknowledgment
+              </p>
+            </div>
+          </div>
+
+          {/*
+            ── ⚠⚠⚠ THE NEXT LINE, AND A BUTTON THAT OPENS **ITS** EDITOR ──────
+
+            ⚠ `open` is sorted biggest-points-first, so `open[0]` IS the next
+            line worth doing — computed, never named.
+            ⚠⚠ THE BUTTON PREFERS THE `E597` ONE-SECTION EDITOR and falls back
+            to the line's own `href`. ⚠⚠⚠ MEASURED: **9 of the 16 lines have an
+            editor; 7 do not** — `headline`, `field`, `photo`, `identity`,
+            `location`, `languages` and `workMethod` still point into
+            `/join/provider`, because the profile renders no Edit control for
+            any of them. ⚠ That is `E597`'s complaint surviving on this page,
+            reported rather than papered over.
+          */}
+          {next ? (
+            <div className="rounded-[12px] border border-line-2 bg-bg-soft p-3.5">
+              <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-ink-3">
+                Next
+              </p>
+              <p className="mt-0.5 text-[15px] font-bold">
+                {next.line.label}{" "}
+                <span className="font-display text-[13px] text-magenta-dark">
+                  +{next.line.points}
+                </span>
+              </p>
+              <Link
+                href={next.href}
+                className="mt-2.5 inline-block rounded-full bg-magenta px-4 py-2 text-[13px] font-bold text-white transition-colors hover:bg-magenta-dark"
+              >
+                {next.copy.action}
+              </Link>
+            </div>
+          ) : (
+            <p className="text-[13.5px] text-ink-2">
+              Every component is answered. Nothing is waiting on you.
+            </p>
+          )}
+        </div>
+      </section>
+
       {/* ⚠⚠ 50/50. Scott: *"split. 50/50"*. */}
       <div className="pm-score-layout">
         {/* ═══════ LEFT — the circle, and what is left, directly beneath ═══ */}
         <div className="flex flex-col gap-5">
-          <section className="rounded-brand border border-line bg-white p-6 text-center">
-            <div className="pm-score-dial">
-              <svg viewBox="0 0 300 300" className="pm-score-svg" role="img" aria-label={`${score.total} of 100`}>
-                <circle cx="150" cy="150" r={R} fill="none" className="stroke-line-2" strokeWidth="22" />
-                {segments.map((s) => (
-                  <circle
-                    key={s.line.key}
-                    cx="150"
-                    cy="150"
-                    r={R}
-                    fill="none"
-                    strokeWidth={hover === s.line.key ? 30 : 22}
-                    strokeLinecap="butt"
-                    strokeDasharray={`${s.len} ${C - s.len}`}
-                    strokeDashoffset={s.offset}
-                    className={
-                      "pm-score-seg " +
-                      paintClass(s.line.state) +
-                      (hover && hover !== s.line.key ? " pm-score-dim" : "")
-                    }
-                    onMouseEnter={() => setHover(s.line.key)}
-                    onMouseLeave={() => setHover(null)}
-                  />
-                ))}
-              </svg>
-              <div className="pm-score-core">
-                {/* ⚠ `E433` — the FIGURE is a figure, so ink. The ring itself is
-                    magenta because it is hovered and clicked (`E590` ruling 1). */}
-                <div className="font-display text-[56px] font-bold leading-none tracking-[-2px] text-ink">
-                  {score.total}
-                </div>
-                <div className="mt-1 text-[11.5px] font-bold uppercase tracking-[0.11em] text-ink-3">
-                  of 100
-                </div>
-                <p className="mt-2 min-h-[34px] text-[11.5px] leading-snug text-ink-2">
-                  {caption}
-                </p>
-              </div>
-            </div>
-          </section>
+          {/*
+            ⚠⚠⚠ THE RING CARD IS GONE FROM HERE — IT **MOVED** INTO THE WIDE
+            HEADER ABOVE (`E001`). Scott: *"It replaces today's ring card: one
+            ring on the page, not two."*
+            ⚠ SUPERSEDED, quoted not deleted (`E164`) — the card that stood
+            here, whose BODY is now the header's left half unchanged:
+            //   <section className="rounded-brand border border-line bg-white p-6 text-center">
+            //     <div className="pm-score-dial"> … the svg, the segments, the core … </div>
+            //   </section>
+          */}
+
 
           <section className="rounded-brand border border-line bg-white p-6">
-            <h2 className="font-display text-[17px] font-bold">What&rsquo;s left</h2>
+            {/* ⚠ `E008`: *"What's left"* → **Needing Completion or
+                Acknowledgment**. ⚠⚠ THE SECOND WORD IS THE POINT — a line
+                answered *"I have none"* is ACKNOWLEDGED, not completed, and the
+                old title implied everything here was work. ⚠ SUPERSEDED,
+                quoted not deleted (`E164`):
+                //   <h2 …>What&rsquo;s left</h2> */}
+            <h2 className="font-display text-[17px] font-bold">
+              Needing Completion or Acknowledgment
+            </h2>
             <p className="mt-1 text-[12.5px] text-ink-3">
               {open.length > 0
                 ? `${open.length} line${open.length === 1 ? "" : "s"} · ${missingPoints} points · about ${minutes} minutes`
@@ -252,8 +384,12 @@ export function ProfileScoreView({ score }: { score: ProfileScore }) {
                       <span className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
                         <b className="text-[14px]">{l.label}</b>
                         <span className="flex flex-wrap items-center gap-2 text-[12.5px]">
+                        {/* ⚠⚠ THE ROW'S ACTION PREFERS THE `E597` ONE-SECTION
+                            EDITOR, exactly as the header's button does — one
+                            rule, both places. ⚠ 7 of 16 lines have none and
+                            keep their wizard href; reported at the gate. */}
                         <Link
-                          href={copy.href}
+                          href={copy.editorSlug ? editHref(copy.editorSlug) : copy.href}
                           className="font-bold text-magenta hover:underline"
                         >
                           {copy.action}
@@ -273,16 +409,37 @@ export function ProfileScoreView({ score }: { score: ProfileScore }) {
                               disabled={busy === l.key}
                               className="font-bold text-magenta hover:underline disabled:opacity-60"
                             >
-                              {busy === l.key ? "Saving…" : "I have none"}
+                              {/* ⚠ `E005` — Title Case on every link. ⚠ SUPERSEDED (`E164`):
+                                  //   "I have none" */}
+                              {busy === l.key ? "Saving…" : "I Have None"}
                             </button>
                           </>
                         )}
                         </span>
                       </span>
-                      {/* ⚠ LINE TWO — the reason, under the title and its actions. */}
-                      <span className="mt-0.5 block text-[11.5px] leading-snug text-ink-3">
-                        {copy.why}
-                      </span>
+                      {/*
+                        ── ⚠⚠⚠ THE EXPLANATION LINE IS GONE (`E004`) ──────────
+
+                        ⚠ SCOTT, 2026-09-22: *"Remove the explanation line under
+                        every Needing item, e.g. 'Proof somebody else checked
+                        your work'. The row keeps its name, its links and its
+                        points."*
+                        ⚠⚠ `copy.why` IS STILL IN THE TABLE AND STILL TYPED — it
+                        is the RENDER that goes, not the data. The Components
+                        Completed card does not show it either, so nothing reads
+                        it today; it is kept because it is real copy somebody
+                        wrote and a future surface may want it.
+                        ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                        //   <span className="mt-0.5 block text-[11.5px] leading-snug text-ink-3">
+                        //     {copy.why}
+                        //   </span>
+                        ⚠⚠⚠ AND THIS UNDOES `E596` WS-B's COMPRESSION FIX BY
+                        REMOVING ITS SUBJECT: that brief squeezed three lines
+                        into two because the card ran 611px below the fold. With
+                        the `why` gone the row is ONE line, which is shorter
+                        still — the measurement that motivated it is honoured,
+                        not reversed.
+                      */}
                     </span>
                     <span className="flex-none font-display text-[13px] font-bold text-magenta-dark">
                       +{l.points}
@@ -303,8 +460,11 @@ export function ProfileScoreView({ score }: { score: ProfileScore }) {
         {/* ═══════ RIGHT — what is already done ═══════════════════════════ */}
         <section className="rounded-brand border border-line bg-white p-6">
           <div className="flex items-baseline justify-between gap-3">
+            {/* ⚠ `E008`: *"What you've done"* → **Components Completed**, the
+                same words the header's count uses. ⚠ SUPERSEDED, quoted not
+                deleted (`E164`): //   What you&rsquo;ve done */}
             <h2 className="font-display text-[17px] font-bold">
-              What you&rsquo;ve done
+              Components Completed
             </h2>
             <span className="font-display text-[14px] font-bold text-ink-3">
               {score.total} of 100

@@ -1,4 +1,5 @@
 import type { ScoreLine } from "@/lib/completeness";
+import type { SectionSlug } from "@/lib/profile-sections";
 
 /**
  * ── ⚠⚠ THE SCORE PAGE'S PER-LINE COPY, IN ONE PLACE (`P2-J3-E590` WS-B) ────
@@ -22,43 +23,61 @@ export type LineCopy = {
   action: string;
   href: string;
   minutes: number;
+  /**
+   * ⚠⚠⚠ THE `E597` ONE-SECTION EDITOR FOR THIS LINE, WHERE ONE EXISTS.
+   *
+   * ⚠ MEASURED 2026-09-22: **every `href` in this table still points into
+   * `/join/provider`** — the registration wizard — which is the exact complaint
+   * `E597` was written to fix: *"I clicked the edit hyperlink and it takes me
+   * back to the registration walk. This is wrong."*
+   * ⚠⚠ `E597` WS-C BUILT EIGHT ONE-SECTION EDITORS at `/profile/edit/<slug>`,
+   * and this maps each score line onto one WHERE THERE IS ONE.
+   * ⚠⚠⚠ THE LINES WITH NO EDITOR KEEP THEIR `href`: `headline`, `field`,
+   * `photo`, `identity`, `location`, `languages` and `work_method`. The profile
+   * renders no Edit control for any of them — `E597` WS-C measured that there
+   * is no `Edit Title` link — so there is nothing to point at, and inventing an
+   * editor is not this brief. ⚠ **Reported at the WS-C gate.**
+   */
+  editorSlug?: SectionSlug;
 };
 
 export const SCORE_LINE_COPY: Record<ScoreLine["key"], LineCopy> = {
   // ── So Buyers Can Find You ────────────────────────────────────────────────
   headline: {
     why: "The one line buyers scan before anything else",
-    action: "Add a title",
+    action: "Add a Title",
     href: "/join/provider?step=finish",
     minutes: 1,
   },
   field: {
     why: "It decides which searches you appear in",
-    action: "Pick your role",
+    action: "Pick Your Role",
     href: "/join/provider?step=finish",
     minutes: 1,
   },
   skills: {
     why: "Buyers filter on skills more than on any other field",
-    action: "Add your skills",
+    action: "Add Your Skills",
     href: "/join/provider?step=catalog&return=review",
     minutes: 3,
+    editorSlug: "skills",
   },
   rate: {
     why: "A profile with no rate is filtered out before it is read",
-    action: "Set your rate",
+    action: "Set Your Rate",
     href: "/join/provider?step=finish",
     minutes: 1,
+    editorSlug: "rates",
   },
   photo: {
     why: "A face is the difference between a record and a person",
-    action: "Add a photo",
+    action: "Add a Photo",
     href: "/join/provider?step=finish",
     minutes: 1,
   },
   identity: {
     why: "Your address and phone — how work reaches you",
-    action: "Add your contact details",
+    action: "Add Your Contact Details",
     href: "/join/provider?step=finish",
     minutes: 2,
   },
@@ -66,31 +85,33 @@ export const SCORE_LINE_COPY: Record<ScoreLine["key"], LineCopy> = {
   // ── Who You Are ──────────────────────────────────────────────────────────
   overview: {
     why: "Your own words, where a buyer decides whether to read on",
-    action: "Write your bio",
+    action: "Write Your Bio",
     href: "/join/provider?step=finish",
     minutes: 4,
+    editorSlug: "bio",
   },
   location: {
     why: "Buyers filter by where you are, even for remote work",
-    action: "Say where you're based",
+    action: "Say Where You're Based",
     href: "/join/provider?step=finish",
     minutes: 1,
   },
   languages: {
     why: "It decides which buyers can work with you",
-    action: "Add a language",
+    action: "Add a Language",
     href: "/join/provider?step=education&return=review",
     minutes: 1,
   },
   experienceYears: {
     why: "Dates on your work are what turn a list into a career",
-    action: "Date a job or a project",
+    action: "Date a Job or a Project",
     href: "/join/provider?step=tell_us&return=review",
     minutes: 2,
+    editorSlug: "work-history",
   },
   workMethod: {
     why: "Buyers filter on this more than anything after rate",
-    action: "Say how you work",
+    action: "Say How You Work",
     href: "/join/provider?step=finish",
     minutes: 1,
   },
@@ -98,33 +119,38 @@ export const SCORE_LINE_COPY: Record<ScoreLine["key"], LineCopy> = {
   // ── What You've Done — every line declarable ─────────────────────────────
   workHistory: {
     why: "The first thing a buyer reads on your profile",
-    action: "Add a job",
+    action: "Add a Job",
     href: "/join/provider?step=tell_us&return=review",
     minutes: 4,
+    editorSlug: "work-history",
   },
   education: {
     why: "A qualification, if you hold one",
-    action: "Add a qualification",
+    action: "Add a Qualification",
     href: "/join/provider?step=education&return=review",
     minutes: 2,
+    editorSlug: "education",
   },
   specializations: {
     why: "The systems and processes you know best",
-    action: "Pick your specializations",
+    action: "Pick Your Specializations",
     href: "/join/provider?step=specializations&return=review",
     minutes: 2,
+    editorSlug: "specializations",
   },
   certifications: {
     why: "Proof somebody else checked your work",
-    action: "Add a certification",
+    action: "Add a Certification",
     href: "/join/provider?step=finish",
     minutes: 2,
+    editorSlug: "certifications",
   },
   soloProjects: {
     why: "Work you did on your own account, outside a job",
-    action: "Add a project",
+    action: "Add a Project",
     href: "/join/provider?step=tell_us&return=review",
     minutes: 3,
+    editorSlug: "solo-projects",
   },
 };
 
