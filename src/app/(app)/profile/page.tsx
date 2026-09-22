@@ -1,14 +1,20 @@
 import { redirect } from "next/navigation";
 import { getSessionViewer } from "@/lib/session";
 import { EmployeeProfile } from "@/components/profile/EmployeeProfile";
+import { PageTabs } from "@/components/casing/PageTabs";
+import { tabSequenceFor } from "@/lib/nav";
+import { profileTabs } from "@/lib/profile-tabs";
 import { ConnectProfile } from "@/components/community/ConnectProfile";
 import { getOwnProviderProfileView } from "@/lib/provider-profile-view";
 import { getPathsTaughtByProfile, getPathsTakenBy } from "@/lib/learn-home";
-import { getUsageStats } from "@/lib/usage-stats";
-import { countProfileViews } from "@/lib/profile-views";
+/* ⚠ `getUsageStats` AND `countProfileViews` ARE NO LONGER CALLED HERE
+   (`P2-A2-E600` WS-B) — the page rule keeps usage and statistics off My
+   Profile. ⚠ Both functions are untouched and still serve their own pages.
+   ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   import { getUsageStats } from "@/lib/usage-stats";
+   //   import { countProfileViews } from "@/lib/profile-views"; */
 import { publicTestimonials } from "@/lib/recommendations";
 import { getCommunitySignalForProfile } from "@/lib/community-signal";
-import { getMyCommunity } from "@/lib/connections";
 import { buildCompletenessInput } from "@/lib/onboarding";
 import { computeProfileScore } from "@/lib/completeness";
 /* ⚠ `P2-A3-E599` WS-C 4 — the `Grow` card's one-liner shows the owner's own
@@ -82,12 +88,21 @@ export default async function MyProfilePage() {
   /* ⚠ Fetched once and reused: the comb needs the same colleague count and the
      same path lists the cards render, and asking twice for one answer is two
      round trips for nothing. */
-  const [taughtPathsList, takenPaths, mine] = await Promise.all([
+  /* ⚠ `mine` IS NO LONGER DESTRUCTURED (`P2-A2-E600` WS-B) — its only reader
+     was the colleague count, which Layout A does not render. ⚠ `getMyCommunity`
+     is NOT called any more on this page; `growthBoard` does its own reads.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   const [taughtPathsList, takenPaths, mine] = await Promise.all([
+     //     …, getMyCommunity(viewer),
+     //   ]); */
+  const [taughtPathsList, takenPaths] = await Promise.all([
     getPathsTaughtByProfile(profile.id),
     getPathsTakenBy(viewer.userId),
-    getMyCommunity(viewer),
   ]);
-  const colleagues = mine.colleagues.length;
+  /* ⚠ `colleagues` IS NO LONGER RENDERED (`P2-A2-E600` WS-B). `getMyCommunity`
+     still runs — `growthBoard` and the community signal need it — but the count
+     has no surface on Layout A. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   const colleagues = mine.colleagues.length; */
 
   /* ⚠⚠ ONE SCORE, ONE BOARD — the same two calls `/community/grow` makes, so
      the card and the page cannot quote different figures (`E585`). */
@@ -121,9 +136,26 @@ export default async function MyProfilePage() {
           paragraph left the page with `ConnectProfile`'s own `My Profile`
           heading as well — the same words twice, and two `<h1>` candidates for
           one page. ⚠ That heading is now visitor-only; this is the owner's. */}
-      <h1 className="mb-3 text-[13px] font-bold uppercase tracking-[0.08em] text-ink-2">
-        My Profile
-      </h1>
+      {/*
+        ── ⚠⚠⚠ THE CRUMB BECAME THE TAB ROW (`P2-A2-E600` WS-A) ───────────────
+
+        ⚠ `E598` WS-B put a `My Profile` crumb where Connect's tab row had been,
+        because the page had no row of its own and needed to say where it was.
+        ⚠⚠ IT NOW HAS ONE, AND THE ROW SAYS IT TWICE OVER — an eyebrow reading
+        `MY PROFILE` above a tab reading `My Profile`. ⚠⚠⚠ KEEPING THE CRUMB
+        WOULD REPEAT THE `E598` WS-B DEFECT EXACTLY: the same words twice, and
+        two `<h1>` candidates for one page. `PageTabs` supplies the heading now.
+        ⚠ SUPERSEDED, quoted not deleted (`E164`):
+        //   <h1 className="mb-3 text-[13px] font-bold uppercase tracking-[0.08em] text-ink-2">
+        //     My Profile
+        //   </h1>
+      */}
+      <PageTabs
+        eyebrow="MY PROFILE"
+        sequence={tabSequenceFor("/profile")}
+        tabs={profileTabs(viewer)}
+        current="/profile"
+      />
       {/* ⚠ `takenPaths` IS KEYED ON THE **USER**, not the person —
           `LearnEnrollment.user_id` (`E593` WS-B item 17). ⚠⚠ A JSX comment
           is only legal in CHILDREN position, never between attributes, which
@@ -142,13 +174,28 @@ export default async function MyProfilePage() {
           ATTRIBUTES — this file already carried that warning and I put one
           among the props anyway; `tsc` caught it.
           ⚠ `getMyCommunity` STILL RUNS — `colleagueCount` is its length. */}
+      {/* ⚠⚠⚠ `profileViews`, `usage` AND `colleagueCount` ARE NO LONGER PASSED
+              (`P2-A2-E600` WS-B). Scott's page rule: *"No growth numbers, usage
+              or statistics on My Profile beyond the score side card and the Rank
+              Higher card's links."* Layout A's name card is photo, name, title,
+              location and two buttons.
+              ⚠ THE DOORS SURVIVE as TABS — `/stats` and `/account-health` are in
+              the profile row (`E600` WS-A).
+              ⚠⚠ REPORTED, NOT BURIED: `recordProfileView` still WRITES a row on
+              every non-owner render and nothing displays the count now. It is
+              Statistics' figure to show when that page is built.
+              ⚠ SUPERSEDED, quoted not deleted (`E164`):
+              //   profileViews={await countProfileViews(profile.id)}
+              //   usage={await getUsageStats(profile.person.personId, profile.id,
+              //     taughtPathsList.length + takenPaths.length, colleagues)}
+              //   colleagueCount={colleagues}
+          */}
       <ConnectProfile
         p={profile}
         /* ⚠⚠ `Viewing Me`, WITH DATA BEHIND IT AT LAST (`P0-E595` A2). One row
            per viewer per day, counted all time — the `Counters` decision, not a
            window nobody ruled on. ⚠ This is the OWNER's own page, which is the
            only place the figure is shown. */
-        profileViews={await countProfileViews(profile.id)}
         /* ⚠⚠ SEVEN, NOT ALL OF THEM (`P2-A3-E596` WS-D). The card is a summary
            with a door; `/community/colleagues` is the list. ⚠ Sliced from the
            SAME `mine.colleagues` the count above comes from, so the faces and
@@ -156,15 +203,8 @@ export default async function MyProfilePage() {
 
         taughtPaths={taughtPathsList}
         takenPaths={takenPaths}
-        usage={await getUsageStats(
-          profile.person.personId,
-          profile.id,
-          taughtPathsList.length + takenPaths.length,
-          colleagues
-        )}
         testimonials={await publicTestimonials(profile.id)}
         community={await getCommunitySignalForProfile(profile.id)}
-        colleagueCount={colleagues}
         growth={{
           points: growthMe.points,
           /*

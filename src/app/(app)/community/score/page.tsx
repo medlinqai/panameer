@@ -3,8 +3,7 @@ import { guardPage } from "@/lib/guard";
 import { getSessionViewer } from "@/lib/session";
 import { PageTabs } from "@/components/casing/PageTabs";
 import { tabSequenceFor } from "@/lib/nav";
-import { connectTabs } from "@/lib/connect-tabs";
-import { unreadCount } from "@/lib/messages";
+import { profileTabs } from "@/lib/profile-tabs";
 import { ownedProviderProfile } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { buildCompletenessInput } from "@/lib/onboarding";
@@ -63,18 +62,40 @@ export default async function ProfileScorePage() {
   const input = await buildCompletenessInput(profile.id);
   if (!input) redirect("/connect");
 
-  const unread = await unreadCount(viewer);
 
   return (
     <>
+      {/*
+        ── ⚠⚠⚠ THE SCORE PAGE IS A PROFILE PAGE NOW (`P2-A2-E600` WS-A 1) ─────
+
+        ⚠ SCOTT: *"The Score page stops showing Connect's tab row (today it
+        shows Community · Groups · Service Products · Settings). It's a profile
+        page now."*
+        ⚠⚠ THE ROUTE DOES NOT MOVE. `/community/score` stays where it is — it
+        still lights `Connect` in the band, because `bandPrefixesFor` resolves
+        `/community` through Connect, and that is why it is the ONE tab of the
+        six with no `BAND_KNOWN_OPEN` entry. ⚠⚠⚠ A ROW IS NOT A ROUTE: what
+        changed is which set of siblings this page claims, not where it lives.
+        ⚠ `unreadCount` WENT WITH THE ROW — it existed only to badge Connect's
+        Messages tab. One fewer query on this page.
+        ⚠ SUPERSEDED, quoted not deleted (`E164`), including the `current`
+        reasoning it carried:
+        //   <PageTabs
+        //     eyebrow="CONNECT"
+        //     sequence={tabSequenceFor("/connect")}
+        //     tabs={connectTabs(viewer, unread)}
+        //     ⚠ THE SCORE IS THE PROFILE'S, so `Home` (`/connect`) is the
+        //       active tab, not `Community` (`E591` WS-A).
+        //     current="/connect"
+        //   />
+        ⚠⚠ THAT REASONING IS NOT WRONG, IT IS SUPERSEDED: the score still
+        belongs to the profile — the profile simply has its own row now.
+      */}
       <PageTabs
-        eyebrow="CONNECT"
-        sequence={tabSequenceFor("/connect")}
-        tabs={connectTabs(viewer, unread)}
-        /* ⚠ THE SCORE IS THE PROFILE'S, so `Home` (`/connect`) is the active
-           tab, not `Community` (`E591` WS-A). ⚠ SUPERSEDED (`E164`):
-           //   current="/community" */
-        current="/connect"
+        eyebrow="MY PROFILE"
+        sequence={tabSequenceFor("/profile")}
+        tabs={profileTabs(viewer)}
+        current="/community/score"
       />
       <ProfileScoreView score={computeProfileScore(input)} />
     </>

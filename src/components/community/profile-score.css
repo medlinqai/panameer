@@ -129,3 +129,82 @@
 .pm-score-empty {
   stroke: #ece9f2;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⚠⚠⚠ THE WIDE TWO-PART HEADER (`P2-A2-E600` WS-C, `E001`)
+   ═══════════════════════════════════════════════════════════════════════════
+
+   ⚠ SCOTT'S PAGE RULE, 2026-09-22: *"Score · Grow · Statistics — the wide
+   two-part header across the screen: a moving picture on the left, the story on
+   the right."* ⚠⚠ **MY PROFILE DOES NOT GET ONE**, which is why this lives here
+   and not in `connect-profile.css`.
+
+   ⚠⚠⚠ IT REPLACES THE RING CARD RATHER THAN SITTING ABOVE IT — one ring on the
+   page, not two. The ring's own `.pm-score-dial` rules are unchanged and are
+   reused verbatim; only the box around them moved.
+*/
+.pm-score-hero {
+  display: grid;
+  /* ⚠ The picture is the anchor, so it takes the smaller fixed share and the
+     story takes the rest — the opposite of a 50/50 split, which would have made
+     the ring bigger than it needs to be to be read. */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  align-items: center;
+}
+.pm-score-hero-left {
+  border-right: 1px solid var(--line, #e7e5ea);
+}
+
+/*
+  ⚠⚠ IT STACKS BEFORE THE PAGE DOES. A ring beside two counts and a button needs
+  roughly 300 + 360 of content; below that the story's numbers wrap onto three
+  lines each and stop reading as a pair.
+  ⚠ THE BORDER MOVES WITH THE SPLIT — a right border on a stacked panel is a
+  line down the middle of nothing.
+*/
+@media (max-width: 760px) {
+  .pm-score-hero {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .pm-score-hero-left {
+    border-right: 0;
+    border-bottom: 1px solid var(--line, #e7e5ea);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⚠⚠⚠ THE REBUILD DRAW (`P2-A2-E600` WS-D)
+   ═══════════════════════════════════════════════════════════════════════════
+
+   ⚠ SCOTT: *"every 15 seconds the picture redraws (the ring's segments fill in
+   turn)"*.
+   ⚠⚠ IT IS CSS, NOT A JS ANIMATION LOOP. React re-keys the group, the browser
+   remounts the circles, and this replays — so there is no per-frame state, no
+   `requestAnimationFrame`, and nothing to leak when the tab is hidden.
+   ⚠⚠⚠ **ONLY THE DRAWING MOVES.** The segments' lengths and offsets are
+   untouched; this animates OPACITY and stroke width, so a rebuild cannot
+   change what the ring says.
+*/
+@keyframes pm-rebuild-seg {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.pm-rebuild-draw > circle {
+  animation: pm-rebuild-seg 420ms ease-out both;
+}
+
+/*
+  ⚠⚠ REDUCED MOTION STOPS IT HERE TOO, NOT ONLY IN JS. `useRebuild` already
+  stops the clock, but a reader who changes the setting mid-animation should see
+  it stop immediately rather than after the current pass. ⚠ Belt and braces on
+  an accessibility preference is the right amount.
+*/
+@media (prefers-reduced-motion: reduce) {
+  .pm-rebuild-draw > circle {
+    animation: none;
+  }
+}

@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { PageTabs } from "@/components/casing/PageTabs";
+import { tabSequenceFor } from "@/lib/nav";
+import { profileTabs } from "@/lib/profile-tabs";
 import { prisma } from "@/lib/prisma";
 import { guardPage } from "@/lib/guard";
 import { ownedProviderProfile, providerMeetsRequired } from "@/lib/access";
@@ -377,6 +380,15 @@ export default async function MyStatsPage() {
   const metCount = criteria.filter((c) => c.met).length;
 
   return (
+    <>
+      {/* ⚠⚠ THE PROFILE TAB ROW (`P2-A2-E600` WS-A) — one row for every page
+          under the avatar, using the same words as the menu. */}
+      <PageTabs
+        eyebrow="MY PROFILE"
+        sequence={tabSequenceFor("/profile")}
+        tabs={profileTabs(viewer)}
+        current="/stats"
+      />
     <div className="mx-auto max-w-5xl">
       <p className="mb-5 max-w-2xl text-[14.5px] leading-relaxed text-ink-2">
         How your profile is performing. Anything marked “—” isn&apos;t being
@@ -734,5 +746,6 @@ export default async function MyStatsPage() {
         .
       </p>
     </div>
+    </>
   );
 }

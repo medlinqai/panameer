@@ -134,7 +134,8 @@
     "reset:wipe": "npx esbuild prisma/reset/02-wipe.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/reset-wipe.cjs --log-level=error && node -r dotenv/config .harness/reset-wipe.cjs dotenv_config_path=.env.local",
     "check:console": "playwright test --config=playwright.console.config.ts",
     "check:wizard-contract": "playwright test --config=playwright.wizard-contract.config.ts",
-    "check:profile-edit": "playwright test --config=playwright.profile-edit.config.ts"
+    "check:profile-edit": "playwright test --config=playwright.profile-edit.config.ts",
+    "check:match-rank": "npx esbuild scripts/check-match-rank.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/match-rank.cjs --log-level=error && node .harness/match-rank.cjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",

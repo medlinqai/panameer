@@ -1,4 +1,7 @@
 import { redirect } from "next/navigation";
+import { PageTabs } from "@/components/casing/PageTabs";
+import { tabSequenceFor } from "@/lib/nav";
+import { profileTabs } from "@/lib/profile-tabs";
 import Link from "next/link";
 import { getSessionViewer } from "@/lib/session";
 import { getCompanyBinding, getPendingRequests } from "@/lib/company";
@@ -74,6 +77,19 @@ export default async function CompanyPage({
   const binding = await getCompanyBinding(viewer);
   if (!binding) {
     return (
+      <>
+        {/* ⚠⚠⚠ THE ROW GOES ON **BOTH** BRANCHES (`P2-A2-E600` WS-A). Measured:
+            the gate persona has no company binding, so this early return is
+            what she actually sees — and it rendered with NO TAB ROW while the
+            main branch had one. ⚠ A page that shows its siblings only once you
+            have set something up is a row that vanishes exactly when you most
+            need a way out of it. */}
+        <PageTabs
+          eyebrow="MY PROFILE"
+          sequence={tabSequenceFor("/profile")}
+          tabs={profileTabs(viewer)}
+          current="/company"
+        />
       <div className="mx-auto w-full max-w-3xl space-y-6">
         {blockedMessage && (
           <Card>
@@ -93,6 +109,7 @@ export default async function CompanyPage({
           </div>
         </Card>
       </div>
+      </>
     );
   }
 
@@ -135,6 +152,15 @@ export default async function CompanyPage({
     !!me?.tos_accepted_at && me.tos_version === USER_TOS_VERSION;
 
   return (
+    <>
+      {/* ⚠⚠ THE PROFILE TAB ROW (`P2-A2-E600` WS-A) — one row for every page
+          under the avatar, using the same words as the menu. */}
+      <PageTabs
+        eyebrow="MY PROFILE"
+        sequence={tabSequenceFor("/profile")}
+        tabs={profileTabs(viewer)}
+        current="/company"
+      />
     <div className="mx-auto w-full max-w-3xl space-y-6">
       {blockedMessage && (
         <Card>
@@ -324,5 +350,6 @@ export default async function CompanyPage({
         </p>
       </Card>
     </div>
+    </>
   );
 }

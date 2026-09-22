@@ -214,7 +214,11 @@ export default async function PublicProviderPage({
   });
 
   const ownerUserId = profile.person.userId;
-  const [colleagueCount, youBothKnow, messagePermission] = profile.isOwner
+  /* ⚠ `colleagueCount` IS NO LONGER RENDERED (`P2-A2-E600` WS-B) — Layout A's
+     name card is name, title and location. ⚠ The other two are unchanged.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   const [colleagueCount, youBothKnow, messagePermission] = … */
+  const [, youBothKnow, messagePermission] = profile.isOwner
     ? [(await getMyCommunity(viewer)).colleagues.length, null, null]
     : await Promise.all([
         providerColleagueCount(ownerUserId),
@@ -269,13 +273,16 @@ export default async function PublicProviderPage({
         here as well would print it twice.
       */}
       <main className="flex-1">
+        {/* ⚠ `colleagueCount` IS NO LONGER A PROP (`P2-A2-E600` WS-B) — the
+              name card carries name, title and location only. ⚠ SUPERSEDED,
+              quoted not deleted (`E164`):
+              //   colleagueCount={colleagueCount} */}
         <ConnectProfile
           p={profile}
           taughtPaths={taughtPaths}
           takenPaths={takenPaths}
           testimonials={testimonials}
           community={await getCommunitySignalForProfile(profile.id)}
-          colleagueCount={colleagueCount}
           youBothKnow={youBothKnow}
           messagePermission={messagePermission}
           {...(await connectSlot(viewer, profile.person.userId, profile.isOwner))}

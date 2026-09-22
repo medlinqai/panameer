@@ -221,16 +221,29 @@ test.describe("⚠ THE VISITOR PROFILE — P2-J3-E593 WS-C", () => {
       ticked rows went, `/account-health` remains the authority, and a reader
       must still be able to reach it.
     */
-    await expect(
-      page.locator('a[href="/account-health"]'),
+    /*
+      ── ⚠⚠⚠ THE RULE IS REACHABILITY, NOT EXACTLY-ONE (`P2-A2-E600` WS-A) ────
+
+      ⚠ These asserted `toHaveCount(1)` and FAILED when `E600` gave the profile
+      a tab row — the page now has the row's `Account Health` tab AND the
+      one-liner's `Manage →`. ⚠⚠ THAT IS A SECOND DOOR, NOT A LOST ONE, and the
+      message said the opposite: *"the owner lost their door to
+      /account-health"*.
+      ⚠⚠⚠ AN ASSERTION THAT COUNTS DOORS FAILS WHENEVER A PAGE GAINS ONE, which
+      is the wrong direction to be strict in — the defect it exists to catch is
+      ZERO. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+      //   .toHaveCount(1);
+    */
+    expect(
+      await page.locator('a[href="/account-health"]').count(),
       "the owner lost their door to /account-health"
-    ).toHaveCount(1);
+    ).toBeGreaterThan(0);
     /* ⚠ AND THE USAGE ONE-LINER'S DOOR TO `/stats`. The comb is gone (WS-C item
        3); the page it summarised is not. */
-    await expect(
-      page.locator('a[href="/stats"]'),
+    expect(
+      await page.locator('a[href="/stats"]').count(),
       "the owner lost their door to /stats"
-    ).toHaveCount(1);
+    ).toBeGreaterThan(0);
     /*
       ⚠ AND THE OWNER STILL HAS THEIR OWN RATES CARD — the rule is *"not the
       viewer's own"*, not *"never"*. ⚠⚠ ASSERTED ON THE CARD, NOT ON A FIELD

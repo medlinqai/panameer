@@ -30,15 +30,19 @@ import { Avatar } from "@/components/Avatar";
 */
 import { editHref } from "@/lib/profile-sections";
 import { SCORE_LINE_COPY } from "@/lib/profile-score-copy";
+import { completionHook } from "@/lib/completion-hook";
 import { GROWTH_WEIGHTS } from "@/lib/growth-score";
 import { lineCounts } from "@/lib/completeness";
 import {
   CompletionRing,
-  completionHook,
 } from "@/components/community/CompletionRing";
 import type { ProviderProfileView } from "@/lib/provider-profile-view";
 import type { TaughtPath, TakenPath } from "@/lib/learn-home";
-import type { UsageStats } from "@/lib/usage-stats";
+/* ⚠ `UsageStats` IS NO LONGER IMPORTED (`P2-A2-E600` WS-B) — the comb and the
+   usage one-liner both left this component. ⚠ `lib/usage-stats.ts` is
+   untouched and still serves `/stats`. ⚠ SUPERSEDED, quoted not deleted
+   (`E164`):
+   //   import type { UsageStats } from "@/lib/usage-stats"; */
 import type { Testimonial } from "@/lib/recommendations";
 import type { CommunitySignal } from "@/lib/community-signal";
 import type { ProfileScore } from "@/lib/completeness";
@@ -112,11 +116,26 @@ export function ConnectProfile({
   p,
   taughtPaths = [],
   takenPaths = [],
-  usage = null,
+  /* ⚠⚠⚠ `usage`, `colleagueCount` and `profileViews` ARE NO LONGER RENDERED
+     HERE (`P2-A2-E600` WS-B), and that is THE PAGE RULE, not an omission.
+     ⚠ Scott, 2026-09-22: *"No growth numbers, usage or statistics on My Profile
+     beyond the score side card and the Rank Higher card's links."* Layout A's
+     name card is photo, name, title, location and two buttons — nothing else.
+     ⚠⚠ THE DOORS SURVIVE: `/stats` and `/account-health` are TABS in the
+     profile row (`E600` WS-A), which is why `check:visitor-profile`'s door
+     assertions still pass.
+     ⚠⚠⚠ ONE CONSEQUENCE TO REPORT RATHER THAN BURY: `recordProfileView` still
+     WRITES a row on every non-owner render, and **no surface displays the
+     count any more**. The figure is Statistics' to show when that page is
+     built; until then it is collected and unread.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   usage = null,
+     //   colleagueCount,
+     //   profileViews = null,
+  */
   testimonials = [],
   community = null,
   score = null,
-  colleagueCount,
   /* ⚠ `colleagueFaces` REMOVED (`P2-A2-E598` WS-C) — the hero carries the
      COUNT now and nothing renders the avatars. ⚠ SUPERSEDED, quoted not
      deleted (`E164`):
@@ -124,7 +143,6 @@ export function ConnectProfile({
      ⚠⚠ THE CALLER STOPPED PASSING IT IN THE SAME COMMIT, so no dead prop is
      left being computed for nobody — `(app)/profile/page.tsx` no longer slices
      `mine.colleagues`. */
-  profileViews = null,
   /* ⚠ The owner's growth score and rank, for the `Grow` card's one-liner
      (`P2-A3-E599` WS-C 4). `null` for a visitor and for a member with none. */
   growth = null,
@@ -136,9 +154,12 @@ export function ConnectProfile({
   taughtPaths?: TaughtPath[];
   /** ⚠ `LearnEnrollment` rows — paths TAKEN, not taught (`E593` WS-B 17). */
   takenPaths?: TakenPath[];
-  /** ⚠ The six applications, counted. Owner-only — a visitor is passed none
-   *  and the comb does not render (`E593`). */
-  usage?: UsageStats | null;
+  /* ⚠ SUPERSEDED, quoted not deleted (`E164`) — the prop and its note:
+     //   /** ⚠ The six applications, counted. Owner-only — a visitor is passed
+     //    *  none and the comb does not render (`E593`). *\/
+     //   usage?: UsageStats | null;
+     ⚠ Removed by `P2-A2-E600` WS-B's page rule — see the note on the
+     destructure above. */
   testimonials?: Testimonial[];
   /**
    * ⚠⚠ FORUM INVOLVEMENT — CARRIED OVER DELIBERATELY, NOT IN THE MOCKUP.
@@ -167,7 +188,6 @@ export function ConnectProfile({
   /** ⚠ A REAL COUNT of accepted COLLEAGUE connections. The Counters decision is
    *  locked — *"count it and print it, seeded rows included."* The seeded graph
    *  is small, so the number is small. That is correct, not a bug. */
-  colleagueCount: number;
   /**
    * ⚠⚠ OWNER ONLY — up to seven colleague faces for the row under the count
    * (`P2-A3-E596` WS-D). ⚠ The CARD is the summary; `/community/colleagues` is
@@ -187,7 +207,6 @@ export function ConnectProfile({
    * `Counters` decision is locked — *"count it and print it"* — and a trailing
    * 30-day window is a product choice nobody has made.
    */
-  profileViews?: number | null;
   /**
    * ⚠ VISITOR ONLY — accepted colleagues the viewer and this provider share.
    * A REAL QUERY (`mutualColleagueCount`), unlike `Viewing Me`, which has no
@@ -300,11 +319,13 @@ export function ConnectProfile({
     real tidy-up, but it would change what the menu claims, and that is a
     ruling, not a refactor.
   */
-  const accountAllGood =
-    p.accountHealth.canSignIn &&
-    p.accountHealth.receivesMessages &&
-    p.accountHealth.statusActive &&
-    p.accountHealth.emailVerified;
+  /* ⚠⚠ THE `Account` ONE-LINER WENT WITH THE ONE-LINERS CARD (`E600` WS-B).
+     `/account-health` is a TAB now, and the page remains the authority.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   const accountAllGood =
+     //     p.accountHealth.canSignIn && p.accountHealth.receivesMessages &&
+     //     p.accountHealth.statusActive && p.accountHealth.emailVerified;
+  */
 
   const soloProjects = p.projects.filter(
     (pr) => !p.employers.some((e) => (e.projects ?? []).some((n) => n.id === pr.id))
@@ -323,7 +344,7 @@ export function ConnectProfile({
     would be the worst kind of dead control: it looks like the product works.
   */
   const serviceProducts = (
-    <ProfileCard title="Service Products">
+    <ProfileCard title="Service Products I Offer">
       {p.packages.length === 0 ? (
         <p className="text-[13.5px] leading-relaxed text-ink-2">
           {owner ? (
@@ -401,37 +422,29 @@ export function ConnectProfile({
   );
 
   return (
-    <div className="pm-cp2">
+    <div className="pm-cp3">
       {/*
-        ── ⚠⚠⚠ THE HERO: WHO THIS IS, AND WHAT THEY COST (`P2-A2-E598` WS-C) ──
+        ── ⚠⚠⚠ SCOTT'S LAYOUT A — NO WIDE HEADER (`P2-A2-E600` WS-B) ─────────
 
-        ⚠ Scott, on the option-B mockup: *"way too much on this page."* The
-        mockup's own note says why this card exists: *"Identity and rates moved
-        into one hero card across the top, so the first screen answers 'who is
-        this, and what does he cost.'"*
-        ⚠⚠ THREE COLUMNS BECAME TWO. Identity was a left-rail card and Rates was
-        a second card beneath it; both are here now, side by side.
-        ⚠ SUPERSEDED, quoted not deleted (`E164`) — identity as a rail card:
-        //   <aside className="pm-cp-rail-l">
-        //     <section className="overflow-hidden rounded-brand border border-line bg-white">
-        //       <div className="h-[76px] bg-gradient-to-br …" />   // the cover
-        //       …Avatar 64, name, headline, location…
-        //     </section>
+        ⚠ THE PAGE RULE, 2026-09-22: *"This is a My Profile page… different from
+        profile scoring, network growth, and usage statistics. Those last three
+        will have the dual cards crossing the entire screen… My Profile will not
+        have that card."*
+        ⚠⚠ SO `E598` WS-C's HERO IS REPLACED, AND THE RATES COME OUT OF IT into
+        their own side card (`E014`). ⚠ SUPERSEDED, quoted not deleted (`E164`):
+        //   <section className="pm-cp2-hero …">
+        //     <div className="pm-cp2-heroin …"> … identity … <div className="pm-cp2-rates"> … </div>
+        //   </section>
+        ⚠⚠⚠ THE HERO WAS RIGHT FOR OPTION B AND IS WRONG HERE, and that is a
+        RULING rather than a regression: option B answered *"who is this and what
+        do they cost"* in one band; Layout A puts identity, rates, score and
+        growth down one rail and gives the whole width to the record.
       */}
-      <section className="pm-cp2-hero overflow-hidden rounded-brand border border-line bg-white">
-        {/* ⚠ The cover is a brand gradient, not an uploaded image — there is no
-            cover-image column on `ProviderProfile`, and inventing one is not
-            this brief. */}
-        <div className="h-[84px] bg-gradient-to-br from-ink via-[#4b2d63] to-magenta-dark" />
-        <div className="pm-cp2-heroin px-[18px] pb-4">
-          {/* ⚠⚠ THE PHOTO SITS **BESIDE** THE NAME, not above it — the mockup's
-              `.idt` is a row. ⚠ Stacking them left a column of empty space to
-              the left of the name at desktop width; caught on the screenshot. */}
-          <div className="flex min-w-0 items-start gap-3.5">
-            {/* ⚠ The white ring lifts the photo off the cover gradient. It is a
-                WRAPPER because `Avatar` takes no `className` — widening its
-                props for one caller is a change six surfaces share. */}
-            <span className="-mt-[34px] inline-block flex-none overflow-hidden rounded-full ring-[3px] ring-white">
+      <aside className="pm-cp3-rail">
+        <section className="overflow-hidden rounded-brand border border-line bg-white">
+          <div className="h-[72px] bg-gradient-to-br from-ink via-[#4b2d63] to-magenta-dark" />
+          <div className="px-[18px] pb-4">
+            <span className="-mt-[34px] inline-block overflow-hidden rounded-full ring-[3px] ring-white">
               <Avatar
                 firstName={p.person.firstName ?? ""}
                 lastName={p.person.lastName ?? ""}
@@ -439,24 +452,17 @@ export function ConnectProfile({
                 size={72}
               />
             </span>
-            <div className="min-w-0 pt-1">
-            <div className="flex items-center gap-1.5">
-              {/*
-                ⚠⚠ THE NAME IS AN `<h2>` FOR AN OWNER AND THE `<h1>` FOR A
-                VISITOR. `(app)/profile/page.tsx` owns the owner's `<h1>` (`My
-                Profile`, the WS-B crumb); a second one here would be two page
-                titles. ⚠ On `/providers/[id]` there is no crumb, so the name IS
-                the title. ⚠⚠⚠ MEASURED AT THE WS-B GATE — shipping both gave
-                one page two `<h1>`s and the same words twice.
-              */}
+            <div className="mt-2 flex items-center gap-1.5">
+              {/* ⚠ The OWNER's `<h1>` is the tab row's (`E600` WS-A); a visitor
+                  has no row, so the name is the page's title there. */}
               {owner ? (
-                <h2 className="font-display text-[22px] font-bold">{fullName}</h2>
+                <h2 className="font-display text-[20px] font-bold">{fullName}</h2>
               ) : (
-                <h1 className="font-display text-[22px] font-bold">{fullName}</h1>
+                <h1 className="font-display text-[20px] font-bold">{fullName}</h1>
               )}
               {p.validated && (
                 <span title="Validated by Panameer" className="text-magenta">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-label="Validated by Panameer" role="img">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-label="Validated by Panameer" role="img">
                     <path d="M12 2l2.4 1.8 3-.3 1 2.8 2.6 1.5-.9 2.9.9 2.9-2.6 1.5-1 2.8-3-.3L12 22l-2.4-1.8-3 .3-1-2.8L3 16.2l.9-2.9L3 10.4l2.6-1.5 1-2.8 3 .3z" />
                     <path d="M10.6 15.2l-2.8-2.8 1.1-1.1 1.7 1.7 4-4 1.1 1.1z" fill="#fff" />
                   </svg>
@@ -464,621 +470,193 @@ export function ConnectProfile({
               )}
             </div>
             {p.headline && (
-              <p className="mt-1 text-[14px] leading-snug text-ink-2">{p.headline}</p>
+              <p className="mt-1 text-[13px] leading-snug text-ink-2">{p.headline}</p>
             )}
+            {p.location && <p className="mt-1 text-[12.5px] text-ink-3">{p.location}</p>}
             {/*
-              ── ⚠⚠⚠ ONE LINE REPLACES THE COLLEAGUE FACES ROW (WS-C item 3) ──
+              ── ⚠⚠⚠ THE IDENTITY CARD GROWS ITS EDIT CONTROLS (`E600` WS-F) ──
 
-              ⚠ SCOTT: *"The colleague faces row (`E596` WS-D) is replaced by the
-              count in the hero line. Say so at the gate."*
-              ⚠ SUPERSEDED, quoted not deleted (`E164`) — seven avatars, stacked
-              with negative margins, plus a `Viewing Me` row beneath them:
-              //   {owner && colleagueFaces.length > 0 && (
-              //     … colleagueFaces.map((c, i) => <Avatar … style={{ marginLeft: i === 0 ? 0 : -9 }} />)
-              //   )}
-              //   <span className="text-ink-2">Viewing Me</span>
-              ⚠⚠ `colleagueFaces` IS STILL A PROP AND STILL PASSED. It is unused
-              by this layout; the prop is kept so `(app)/profile/page.tsx` does
-              not change shape in the same commit that changes the layout, and
-              removing it is its own small job.
-              ⚠⚠⚠ THE COUNTS ARE THE SAME TWO QUERIES AS BEFORE — `colleagueCount`
-              (`mine.colleagues.length`) and `profileViews` (`countProfileViews`,
-              one row per viewer per day, all time). ⚠ NOTHING NEW IS COMPUTED
-              AND NOTHING IS ESTIMATED: the wording says *"profile views"* with
-              no window, because the figure has none.
+              ⚠ Scott: *"The profile grows an Edit control for each of these
+              where one is missing."* ⚠⚠ THESE FOUR FACTS ARE ALL RENDERED IN
+              THIS CARD — photo, name/title, location and how you work — and
+              none of them had a way to edit from the profile. `E597` WS-C
+              measured exactly that: *"No Edit Title link exists."*
+              ⚠⚠⚠ `check:profile-edit` COLLECTS THEM BY SHAPE, so each one's
+              destination is asserted to render in the profile's frame and to
+              show the section its label names.
+              ⚠ `Contact` COVERS TWO SCORE LINES — identity and location — one
+              address, one editor, one save (`E595`).
             */}
-            <p className="mt-1.5 text-[12.5px] text-ink-3">
-              {[
-                p.location,
-                colleagueCount > 0
-                  ? `${colleagueCount} ${colleagueCount === 1 ? "colleague" : "colleagues"}`
-                  : null,
-                owner && (profileViews ?? 0) > 0
-                  ? `${profileViews} profile ${profileViews === 1 ? "view" : "views"}`
-                  : null,
-              ]
-                .filter(Boolean)
-                .join(" · ")}
-            </p>
             {owner && (
-              <div className="mt-3 flex flex-wrap gap-2">
-                {/*
-                  ── ⚠⚠⚠ `Edit Profile` GOES TO THE SCORE PAGE, AND THAT IS A
-                     CHOICE THE BRIEF DID NOT MAKE — FLAGGED AT THE GATE ───────
-
-                  ⚠ There is NO global profile editor. `E597` WS-C built EIGHT
-                  ONE-SECTION editors at `/profile/edit/<section>`, and each card
-                  already carries its own `Edit` link to its own.
-                  ⚠⚠ SO A BUTTON CALLED `Edit Profile` HAS NO OBVIOUS TARGET, and
-                  pointing it at one arbitrary section (`/profile/edit/bio`) would
-                  both mislead and break `check:profile-edit`, whose rule is that
-                  a control's label names the section it opens.
-                  ⚠⚠⚠ `/community/score` IS THE ONE PAGE THAT LISTS EVERY LINE
-                  AND LINKS TO EACH EDITOR — it is the closest thing to "edit my
-                  profile" that exists. ⚠ Scott rules whether the label should
-                  say so; nothing was invented to fill the gap.
-                */}
+              <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1">
+                <EditLink href={editHref("title")} title="Title" />
+                <EditLink href={editHref("photo")} title="Photo" />
+                <EditLink href={editHref("contact")} title="Contact Details" />
+                <EditLink href={editHref("role")} title="Role" />
+                <EditLink href={editHref("languages")} title="Languages" />
+                <EditLink href={editHref("work-method")} title="How You Work" />
+              </div>
+            )}
+            {owner && (
+              <div className="mt-3 flex flex-col gap-2">
                 <Link
                   href="/community/score"
-                  className="rounded-full border border-line px-3.5 py-2 text-[13px] font-bold transition-colors hover:border-magenta/50"
+                  className="rounded-full bg-magenta px-3.5 py-2 text-center text-[13px] font-bold text-white transition-colors hover:bg-magenta-dark"
                 >
-                  {/* ⚠ RENAMED BY SCOTT AT THE WS-C GATE, 2026-09-22: *"The
-                      'Edit Profile' button becomes 'Complete Your Profile',
-                      still pointing to /community/score."*
-                      ⚠⚠ IT NAMES WHAT THE PAGE ACTUALLY DOES — lists every line
-                      you have not answered, with a door to each editor — rather
-                      than promising a global editor that does not exist.
-                      ⚠ TITLE CASE WITH THE PRONOUN CAPITALISED (`E568`) —
-                      `Your` is a pronoun, the half of that rule most often
-                      missed.
-                      ⚠ SUPERSEDED, quoted not deleted (`E164`):
-                      //   Edit Profile */}
                   Complete Your Profile
                 </Link>
-                {/* ⚠ YOUR OWN PUBLIC PAGE. `/providers/[id]` renders THIS
-                    component in visitor mode, so the button is a real preview
-                    rather than a mock of one. */}
                 <Link
                   href={`/providers/${p.id}`}
-                  className="rounded-full border border-line px-3.5 py-2 text-[13px] font-bold transition-colors hover:border-magenta/50"
+                  className="rounded-full border border-line px-3.5 py-2 text-center text-[13px] font-bold transition-colors hover:border-magenta/50"
                 >
                   See What Buyers See
                 </Link>
               </div>
             )}
-            </div>
           </div>
+        </section>
 
-          {/*
-            ── ⚠⚠ RATES, IN THE HERO (WS-C item 1) ──────────────────────────
+        {/*
+          ── ⚠⚠ RATES, ITS OWN SIDE CARD AGAIN (`E014`) ────────────────────
 
-            ⚠⚠⚠ RENDERED FOR BOTH PERSONAS AND THAT IS THE ONE THING NOT TO GET
-            WRONG. `/providers/[id]` renders this component in visitor mode, so
-            putting the block inside the `owner` branch would SILENTLY REMOVE
-            RATES FROM THE BUYER'S PAGE — the rule is the VIEW MODEL's
-            (`isOwner || hasCapability(viewer, "canHireTalent")`), and `p.rates`
-            is already `null` for anyone who may not see it.
-            ⚠ THE WHOLE BLOCK IS GATED, NOT JUST ITS BODY: an empty box headed
-            `Rates` tells a visitor a rate exists and is being withheld.
-          */}
-          {p.rates && (
-            <div className="pm-cp2-rates">
-              <div className="flex items-baseline justify-between gap-3">
-                <p className="font-display text-[11px] font-bold uppercase tracking-[0.1em] text-ink-3">
-                  Rates
-                </p>
-                {owner && <EditLink href={editHref("rates")} title="Rates" />}
-              </div>
-              <div className="mt-2">
-                <RateRows p={p} />
-              </div>
-            </div>
-          )}
-        </div>
-      </section>
-
-      <div className="pm-cp2-body">
-        {/* ═══════════ MAIN ═══════════ */}
-        <main className="pm-cp2-main">
+          ⚠⚠⚠ RENDERED FOR BOTH PERSONAS, AND THIS IS THE ONE THING NOT TO GET
+          WRONG. `/providers/[id]` renders this component in visitor mode, so
+          putting it inside the `owner` branch would SILENTLY REMOVE RATES FROM
+          THE BUYER'S PAGE. The rule is the VIEW MODEL's — `isOwner ||
+          hasCapability(viewer, "canHireTalent")` — and `p.rates` is already
+          `null` for anyone who may not see it.
+          ⚠ THE WHOLE CARD IS GATED, NOT JUST ITS BODY.
+        */}
+        {p.rates && (
           <ProfileCard
-            id="bio"
-            title="About"
-            edit={owner ? <EditLink href={editHref("bio")} title="Bio" /> : undefined}
+            id="rates"
+            title="Rates"
+            edit={owner ? <EditLink href={editHref("rates")} title="Rates" /> : undefined}
           >
-            <OverviewBody
-              overview={p.overview}
-              empty="Nothing here yet. A short bio is the first thing a buyer reads."
-            />
+            <RateRows p={p} />
           </ProfileCard>
+        )}
 
-          {/* ⚠ THE VISITOR'S BUYING SURFACE, HIGH UP — a buyer is here to buy. */}
-          {!owner && serviceProducts}
-
-          {/*
-            ── ⚠⚠ SKILLS AND SPECIALIZATIONS ARE ONE CARD (WS-C item 2) ──────
-
-            ⚠ The mockup's note: *"Skills and Specializations are one card."*
-            They are the same question asked at two grains, and two headings for
-            it cost a card's worth of height each.
-            ⚠⚠ BOTH KEEP THEIR OWN `Edit` LINK AND THEIR OWN ANCHOR `id` —
-            `E597`'s editors are per-section and the profile is scrolled back to
-            `#specializations` after saving one. ⚠⚠⚠ MERGING THE CARDS MUST NOT
-            MERGE THE EDITORS: that would be the second save path `E595` exists
-            to prevent.
-            ⚠ SUPERSEDED, quoted not deleted (`E164`) — two cards, in two rows:
-            //   {p.skills.length > 0 && (<div className="pm-cp-two"><ProfileCard id="skills" …/></div>)}
-            //   <div className="pm-cp-three"><ProfileCard id="specializations" …/> … </div>
-            ⚠⚠ THE CARD RENDERS EVEN WITH NO SKILLS NOW, because Specializations
-            lives inside it and an owner needs the door. The old `skills.length
-            > 0` guard existed so a heading never sat over a blank box; that is
-            preserved by the inner `SkillsBody` being conditional instead.
-          */}
-          <ProfileCard
-            id="skills"
-            title="Skills"
-            edit={owner ? <EditLink href={editHref("skills")} title="Skills" /> : undefined}
-          >
-            {p.skills.length > 0 ? (
-              groupSkillsByPillar(p.skills).map((g) => (
-                <div key={g.pillar ?? "__none"} className="mb-3 last:mb-0">
-                  {/* ⚠ THE HEADING IS THE PILLAR'S NAME VERBATIM — catalog data
-                      is never re-cased (`E568`). ⚠ A skill whose pillar is null
-                      gets one honest heading rather than an invented domain. */}
-                  <p className="mb-1.5 font-display text-[11px] font-bold uppercase tracking-[0.1em] text-ink-3">
-                    {g.pillar ?? "Other"}
-                  </p>
-                  <SkillsBody skills={g.skills} />
-                </div>
-              ))
-            ) : (
-              <p className="text-[13.5px] text-ink-2">
-                No skills listed yet.{" "}
-                {owner && (
-                  <Link href={editHref("skills")} className="font-bold text-magenta hover:underline">
-                    Add your skills
-                  </Link>
-                )}
-              </p>
-            )}
-            {/* ⚠ SPECIALIZATIONS, INSIDE THE SAME CARD, WITH ITS OWN ANCHOR AND
-                ITS OWN EDITOR. The divider is what keeps them legible as two
-                facts rather than one list. */}
-            <div id="specializations" className="mt-4 border-t border-line pt-3.5">
-              <div className="mb-1.5 flex items-baseline justify-between gap-3">
-                <p className="font-display text-[11px] font-bold uppercase tracking-[0.1em] text-ink-3">
-                  Specializations
+        {owner ? (
+          <>
+            {score && (
+              <Link
+                href="/community/score"
+                className="group block rounded-brand border border-line bg-white px-[18px] py-4 transition-colors hover:border-magenta/40"
+              >
+                <CompletionRing score={score} />
+                <p className="mt-2 text-center text-[12.5px] font-bold text-ink-2">
+                  Complete Profiles Sell Services
                 </p>
-                {owner && (
-                  <EditLink href={editHref("specializations")} title="Specializations" />
-                )}
-              </div>
-              <SpecializationsBody specializations={p.specializations} />
-            </div>
-          </ProfileCard>
-
-          {/*
-            ── ⚠⚠ EXPERIENCE: WORK HISTORY AND SOLO PROJECTS IN ONE CARD ─────
-
-            ⚠ The mockup: *"Work History and Solo Projects are one Experience
-            card."* ⚠⚠ BOTH KEEP THEIR ANCHOR AND THEIR EDITOR, for the same
-            reason Specializations does — `E597` routes `/profile/edit/work-history`
-            and `/profile/edit/solo-projects` to the SAME shared editor through
-            two slugs, precisely so each card can return to its own place.
-            ⚠ SUPERSEDED, quoted not deleted (`E164`) — two full-width cards:
-            //   <ProfileCard id="work-history" title="Work History" …>…</ProfileCard>
-            //   <ProfileCard id="solo-projects" title="Solo Projects" …>…</ProfileCard>
-          */}
-          <ProfileCard
-            id="work-history"
-            title="Experience"
-            edit={owner ? <EditLink href={editHref("work-history")} title="Work History" /> : undefined}
-          >
-            <WorkHistoryBody
-              employers={p.employers}
-              projects={p.projects}
-              isOwner={owner}
-              empty="No work history yet."
-            />
-            <div id="solo-projects" className="mt-4 border-t border-line pt-3.5">
-              <div className="mb-1.5 flex items-baseline justify-between gap-3">
-                <p className="font-display text-[11px] font-bold uppercase tracking-[0.1em] text-ink-3">
-                  Solo Projects
+                {/* ⚠⚠ COMPUTED, NOT HARD-CODED, and it says something else at
+                    100% rather than printing "0 lines left". */}
+                <p className="mt-1.5 text-center text-[12px] leading-snug text-ink-3">
+                  {completionHook(score)}
                 </p>
-                {owner && (
-                  <EditLink href={editHref("solo-projects")} title="Solo Projects" />
-                )}
-              </div>
-              <SoloProjectsBody
-                projects={soloProjects}
-                isOwner={owner}
-                empty="No solo projects yet. Employee projects sit under their employer."
-              />
-            </div>
-          </ProfileCard>
-
-          {/*
-            ── ⚠⚠ ONE ROW SHARES CERTIFICATIONS, EDUCATION AND SERVICE PRODUCTS
-
-            ⚠ The mockup: *"Certifications, Education and Service Products share
-            one row."* ⚠⚠ `serviceProducts` FOR AN OWNER ONLY — the visitor gets
-            it high up, above the record, because a buyer is here to buy.
-            ⚠⚠⚠ EMPTY STATES ARE DOORS (`E593` item 16), and `Grow Your Income
-            Faster`'s two links land HERE, in the Service Products empty state,
-            exactly as the mockup's note says.
-          */}
-          <div className="pm-cp-three">
-            <ProfileCard
-              id="certifications"
-              title="Certifications"
-              edit={owner ? <EditLink href={editHref("certifications")} title="Certifications" /> : undefined}
-            >
-              {/*
-                ⚠ Owner-only action: a visitor cannot act on it, and *"Earn One
-                in Learn"* on somebody else's profile aims an instruction at the
-                wrong person. ⚠⚠ IT SAYS WHERE TO GET ONE, NOT WHAT IS MISSING —
-                `/community/score` owns the second sentence.
-              */}
-              <CertificationsBody
-                certifications={p.certifications}
-                empty="No certifications yet."
-                emptyAction={
-                  owner ? (
-                    <Link
-                      href="/learn"
-                      className="mt-2 inline-block text-[13.5px] font-bold text-magenta hover:underline"
-                    >
-                      Earn One in Learn
-                    </Link>
-                  ) : undefined
-                }
-              />
-            </ProfileCard>
-            <ProfileCard
-              id="education"
-              title="Education"
-              edit={owner ? <EditLink href={editHref("education")} title="Education" /> : undefined}
-            >
-              <EducationBody
-                education={p.education}
-                emptyAction={
-                  owner ? (
-                    <Link
-                      href="/learn"
-                      className="mt-2 inline-block text-[13.5px] font-bold text-magenta hover:underline"
-                    >
-                      Browse Learning Paths
-                    </Link>
-                  ) : undefined
-                }
-              />
-            </ProfileCard>
-            {owner && serviceProducts}
-          </div>
-
-          <ProfileCard title="Learning Paths">
-            {taughtPaths.length === 0 && takenPaths.length === 0 ? (
-              <p className="text-[13.5px] leading-relaxed text-ink-2">
-                {owner
-                  ? "You aren\u2019t teaching or taking any learning paths yet."
-                  : "No learning paths yet."}
-              </p>
-            ) : (
-              <div className="flex flex-col gap-3.5">
-                {taughtPaths.length > 0 && (
-                  <div>
-                    <p className="mb-2 text-[11.5px] font-bold uppercase tracking-[0.07em] text-ink-3">
-                      {owner ? "You Teach" : "Teaches"}
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {taughtPaths.map((t) => (
-                        <Link
-                          key={t.slug}
-                          href={`/learn/${t.slug}`}
-                          className="rounded-full border border-magenta/25 bg-magenta/[0.06] px-3.5 py-1.5 text-[13px] font-bold text-magenta-dark hover:underline"
-                        >
-                          {t.title}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {takenPaths.length > 0 && (
-                  <div>
-                    <p className="mb-2 text-[11.5px] font-bold uppercase tracking-[0.07em] text-ink-3">
-                      {owner ? "You&rsquo;re Taking" : "Taking"}
-                    </p>
-                    {/* ⚠ INK, NOT MAGENTA — `E433`. These are still links, so
-                        they keep the underline on hover, but a taken path is
-                        not an offer and must not read as one beside the set
-                        this person actually teaches. */}
-                    <div className="flex flex-wrap gap-2">
-                      {takenPaths.map((t) => (
-                        <Link
-                          key={t.slug}
-                          href={`/learn/${t.slug}`}
-                          className="rounded-full border border-line bg-white px-3.5 py-1.5 text-[13px] font-bold text-ink-2 hover:underline"
-                        >
-                          {t.title}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </ProfileCard>
-
-          <ProfileCard title="Recommendations">
-            {testimonials.length === 0 ? (
-              <p className="text-[13.5px] leading-relaxed text-ink-2">
-                {owner ? (
-                  <>
-                    No recommendations yet.{" "}
-                    {/* ⚠ OWNER-ONLY — a visitor cannot request recommendations
-                        on somebody else's behalf. */}
-                    <Link
-                      href="/recommendations"
-                      className="font-bold text-magenta hover:underline"
-                    >
-                      Request a Recommendation
-                    </Link>
-                  </>
-                ) : (
-                  "No recommendations yet."
-                )}
-              </p>
-            ) : (
-              <div className="flex flex-col">
-                {testimonials.map((t) => (
-                  <div
-                    key={t.id}
-                    className={
-                      "flex items-start gap-3 py-3" +
-                      ""
-                    }
-                  >
-                    <Avatar
-                      firstName={t.author.split(" ")[0] ?? ""}
-                      lastName={t.author.split(" ").slice(1).join(" ")}
-                      photoUrl={null}
-                      size={40}
-                    />
-                    <div className="min-w-0 flex-1">
-                      <span className="text-[14.5px] font-bold">{t.author}</span>
-                      {(t.title || t.company) && (
-                        <p className="text-[12.5px] text-ink-2">
-                          {[t.title, t.company].filter(Boolean).join(" · ")}
-                        </p>
-                      )}
-                      {t.body && (
-                        <p className="mt-1 text-[13.5px] leading-relaxed text-ink-2">
-                          {t.body}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </ProfileCard>
-
-          {/*
-            ⚠⚠ FORUM INVOLVEMENT — "groups", in the brief's words. Renders
-            NOTHING when the signal is null, which is every profile today.
-            ⚠⚠⚠ RESTORED AT THE WS-C GATE AFTER THE REDESIGN DROPPED IT. It was
-            not removed on purpose: the whole left rail went, and this went with
-            it. ⚠ LINT IS WHAT CAUGHT IT — `CommunitySignalBlock` and `community`
-            both went unused, +6 warnings against a freshly measured baseline,
-            and two of the six were real losses rather than dead code.
-            ⚠ WS-D requires it: *"The visitor still sees skills, experience,
-            colleague count and groups (`E593` item 13)."* And `check:community`
-            GUARD 3 asserts this page supplies the signal.
-          */}
-          <CommunitySignalBlock
-            signal={community}
-            firstName={p.person.firstName ?? ""}
-            isOwner={owner}
-          />
-        </main>
-
-        {/* ═══════════ RAIL ═══════════ */}
-        <aside className="pm-cp2-rail">
-          {owner ? (
-            <>
-              {/*
-                ⚠⚠⚠ THE COMPLETION RING IS OWNER-ONLY AND THAT IS A JUDGEMENT,
-                NOT A LAYOUT CHOICE: **never show a stranger how incomplete
-                someone is.**
-                ⚠ THE WHOLE CARD IS A LINK (`E590` WS-C) — a real anchor, never
-                an `onClick` on a div.
-                ⚠⚠ WS-C ADDS THE TWO NEXT LINES WITH THEIR MINUTES, and the
-                mockup's *"See all N →"*. The lines come from `score.lines`,
-                which `/community/score` renders in full — ⚠⚠⚠ ONE COMPUTATION,
-                TWO RENDERINGS, so the card and the page cannot disagree.
-              */}
-              {score && (
-                <Link
-                  href="/community/score"
-                  className="group block rounded-brand border border-line bg-white px-[18px] py-4 transition-colors hover:border-magenta/40"
-                >
-                  <CompletionRing score={score} />
-                  <p className="mt-2 text-center text-[12.5px] font-bold text-ink-2">
-                    Complete Profiles Sell Services
-                  </p>
-                  {/* ⚠⚠ COMPUTED, NOT HARD-CODED, and it says something else at
-                      100% rather than printing "0 lines left". */}
-                  <p className="mt-1.5 text-center text-[12px] leading-snug text-ink-3">
-                    {completionHook(score)}
-                  </p>
-                  {nextLines.length > 0 && (
-                    <ul className="mt-3 border-t border-line pt-2.5">
-                      {nextLines.map((l) => (
-                        <li
-                          key={l.key}
-                          className="flex items-center justify-between gap-2 py-1 text-[12.5px]"
-                        >
-                          <span className="min-w-0 truncate text-ink-2">{l.label}</span>
-                          {/* ⚠ `E433` — a figure is INK, never magenta. */}
-                          <span className="flex-none font-semibold tabular-nums text-ink-3">
-                            {l.minutes} min
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  {/* ⚠ `E433` — the one magenta thing in the card is the
-                      affordance that says it is a link. */}
-                  <p className="mt-2 text-center text-[12.5px] font-bold text-magenta group-hover:underline">
-                    {remainingLines > 0 ? `See all ${remainingLines} \u2192` : "See your score"}
-                  </p>
-                </Link>
-              )}
-
-              {/*
-                ── ⚠⚠ `Grow`: THREE CARDS BECAME THREE ROWS (WS-C item 2) ──────
-
-                ⚠ The mockup's note: *"Invite, Recommendation and Mentor are
-                rows in one Grow card."* ⚠ SUPERSEDED, quoted not deleted
-                (`E164`) — three separate `ActionCard`s, each its own box:
-                //   <ActionCard title="Invite a Colleague" label="Invite Colleague to Register" href="/invite-colleague" />
-                //   <ActionCard title="Request Recommendation" label="Request a Recommendation" href="/recommendations" />
-                //   <ActionCard title="Request a Mentor" label="Request a Mentor" href="/community/mentors" />
-                ⚠⚠ EVERY DESTINATION IS UNCHANGED. This is three boxes becoming
-                three rows, not three links becoming something else.
-                ⚠⚠⚠ `Request a Recommendation` ARRIVES HERE AND LEAVES THE
-                ACCOUNT MENU IN THE SAME CHANGE (`E598` WS-A kept it there until
-                this card existed), so the page never has two doors to it and
-                never has none.
-              */}
-              <section className="rounded-brand border border-line bg-white px-[18px] py-4">
-                {/*
-                  ⚠⚠ THE TITLE STAYS `Grow` FOR NOW (Scott, 2026-09-22, at the
-                  `E599` WS-B gate): *"keep its title 'Grow' for now. The
-                  profile-pages brief renames it once search ranking makes the
-                  new title true."* ⚠ A title that promises ranking before
-                  ranking exists is the `E579` shape in copy.
-                */}
-                <h2 className="mb-2 font-display text-[15px] font-bold">Grow</h2>
-                <div className="flex flex-col">
-                  {[
-                    /*
-                      ⚠⚠⚠ THE ONE-LINER IS **ADDED**, NOT SWAPPED IN (`E599`
-                      WS-C 4): *"the profile's Grow card gets its one-liner:
-                      your score and rank, linking here."*
-                      ⚠⚠ THE FIRST BUILD REPLACED `Invite a Colleague` WITH IT
-                      AND LOST A DOOR. `check:visitor-profile` caught it —
-                      *"'Invite a Colleague' vanished from the OWNER's page"* —
-                      which is exactly the assertion `E598` WS-C added for this
-                      class of removal. ⚠ Both rows stand: one invites, the
-                      other reports.
-                      ⚠ The hint is the SCORE, computed by `growthScore`, not a
-                      canned number, and the weight it quotes comes from
-                      `GROWTH_WEIGHTS` — a tuning change moves this line too.
-                    */
-                    {
-                      label: "Grow the Network",
-                      href: "/community/grow",
-                      hint: growth
-                        ? `${growth.points} points${growth.rank ? ` · #${growth.rank} this month` : ""}`
-                        : `A colleague who joins is worth ${GROWTH_WEIGHTS.JOINED} points`,
-                    },
-                    { label: "Invite a Colleague", href: "/invite-colleague", hint: "Join = 50 points" },
-                    { label: "Request a Recommendation", href: "/recommendations", hint: null },
-                    { label: "Request a Mentor", href: "/community/mentors", hint: null },
-                  ].map((a) => (
-                    <Link
-                      key={a.href}
-                      href={a.href}
-                      className="-mx-2 flex items-center justify-between gap-2 rounded-[10px] px-2 py-2 transition-colors hover:bg-black/[0.03]"
-                    >
-                      <span className="min-w-0">
-                        <span className="block truncate text-[13.5px] font-semibold">
-                          {a.label}
-                        </span>
-                        {a.hint && (
-                          <span className="block text-[12px] text-ink-3">{a.hint}</span>
-                        )}
-                      </span>
-                      <span aria-hidden className="flex-none text-ink-3">
-                        &rsaquo;
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-              </section>
-
-              {/*
-                ── ⚠⚠ ONE CARD OF ONE-LINERS (WS-C item 2) ────────────────────
-
-                ⚠ The mockup's note: *"Network, Usage Stats and Account Health
-                are one line each with a link, because each already has its own
-                page."*
-                ⚠ SUPERSEDED, quoted not deleted (`E164`) — the full Account
-                Health card, four ticked rows deep:
-                //   <ProfileCard title="Account Health" edit={<EditLink href="/account-health" … label="Manage" />}>
-                //     {[{ label: "Sign in and manage your profile", ok: … }, … ].map(…)}
-                //   </ProfileCard>
-                ⚠⚠ THE PAGE REMAINS THE AUTHORITY and always did — that card
-                already carried *"no score, no count and no verdict of its own"*.
-                This keeps the verdict and drops the four rows, which is what the
-                card was already saying it was for.
-                ⚠⚠⚠ `Network` IS SPECIFIED AND IS **NOT** HERE. Scott, 2026-09-22:
-                *"The Network one-liner has no destination yet, so leave it out
-                rather than linking nowhere."* ⚠ MEASURED AT `E598` WS-A: `/grow`
-                and `/community/grow` both 404 and the string `Grow Your Network`
-                appears nowhere in `src/`.
-                ⚠ THE `Usage Stats` COMB AND THE `Grow Your Network` MINI-WEB ARE
-                GONE FROM THE PAGE (WS-C item 3) — `/stats` is where they live.
-              */}
-              <section className="rounded-brand border border-line bg-white px-[18px] py-4">
-                <div className="flex flex-col">
-                  <div className="flex items-center justify-between gap-2 py-1.5 text-[13px]">
-                    <span className="min-w-0 truncate">
-                      <b className="font-bold">Usage</b>
-                      <span className="text-ink-2">
-                        {" \u00b7 "}
-                        {/* ⚠ `usage.learn`, NOT a `lessons` field — `UsageStats`
-                            counts the SIX APPLICATIONS (`connect · learn · work
-                            · sell · orders` + `earnedCents`). The mockup's line
-                            said "16 lessons"; the figure that exists is the
-                            Learn count, so that is what is printed. */}
-                        {usage?.learn ?? 0} {(usage?.learn ?? 0) === 1 ? "lesson" : "lessons"}
-                      </span>
-                    </span>
-                    <Link
-                      href="/stats"
-                      className="flex-none text-[12.5px] font-bold text-magenta hover:underline"
-                    >
-                      Stats &rarr;
-                    </Link>
-                  </div>
-                  <div className="flex items-center justify-between gap-2 py-1.5 text-[13px]">
-                    <span className="min-w-0 truncate">
-                      <b className="font-bold">Account</b>
-                      <span className="text-ink-2">{" \u00b7 "}</span>
-                      {/* ⚠ `E433` does not apply — this is a STATE, not a figure.
-                          ⚠⚠ Green for good, ink for a problem, never red: a
-                          pending verification is a to-do, not an alarm. */}
-                      <span
-                        className={
-                          accountAllGood ? "font-semibold text-emerald-600" : "font-semibold text-ink-2"
-                        }
+                {nextLines.length > 0 && (
+                  <ul className="mt-3 border-t border-line pt-2.5">
+                    {nextLines.map((l) => (
+                      <li
+                        key={l.key}
+                        className="flex items-center justify-between gap-2 py-1 text-[12.5px]"
                       >
-                        {accountAllGood ? "\u2713 All good" : "Needs attention"}
-                      </span>
-                    </span>
-                    <Link
-                      href="/account-health"
-                      className="flex-none text-[12.5px] font-bold text-magenta hover:underline"
-                    >
-                      Manage &rarr;
-                    </Link>
-                  </div>
-                </div>
-              </section>
-            </>
-          ) : (
-            <>
+                        <span className="min-w-0 truncate text-ink-2">{l.label}</span>
+                        {/* ⚠ `E433` — a figure is INK, never magenta. */}
+                        <span className="flex-none font-semibold tabular-nums text-ink-3">
+                          {l.minutes} min
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {/* ⚠ `E433` — the one magenta thing in the card is the
+                    affordance that says it is a link. */}
+                <p className="mt-2 text-center text-[12.5px] font-bold text-magenta group-hover:underline">
+                  {remainingLines > 0 ? `See all ${remainingLines} \u2192` : "See your score"}
+                </p>
+              </Link>
+            )}
+
+            <section className="rounded-brand border border-line bg-white px-[18px] py-4">
+                            {/*
+                              ⚠⚠ THE TITLE STAYS `Grow` FOR NOW (Scott, 2026-09-22, at the
+                              `E599` WS-B gate): *"keep its title 'Grow' for now. The
+                              profile-pages brief renames it once search ranking makes the
+                              new title true."* ⚠ A title that promises ranking before
+                              ranking exists is the `E579` shape in copy.
+                            */}
+                            {/*
+                  ── ⚠⚠⚠ `Rank Higher in Search Results` (`E013`) ─────────────
+
+                  ⚠ `E598` WS-C and `E600` WS-B both kept the title `Grow`
+                  DELIBERATELY, because the new one promised something the
+                  product did not do. ⚠⚠ `E600` WS-E MAKES IT TRUE and ships the
+                  rename in the same merge, which is the condition Scott set.
+                  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                  //   <h2 …>Grow</h2>
+
+                  ⚠⚠⚠ IT IS TRUE ON ONE SURFACE TODAY — `Invite More` on a work
+                  request, where `growthScore` breaks the tie below match weight
+                  and skill overlap. ⚠ Scott, 2026-09-22: *"it is mostly
+                  marketing… but it is important to give the younger users a
+                  fighting chance to rank."*
+                  ⚠ KNOWN-OPEN, recorded in the brief: the title is FULLY true
+                  once Shop and Work search exist, and both must use growth the
+                  same way — after relevance.
+                */}
+                <h2 className="mb-2 font-display text-[15px] font-bold">
+                  Rank Higher in Search Results
+                </h2>
+                            <div className="flex flex-col">
+                              {[
+                                /*
+                                  ⚠⚠⚠ THE ONE-LINER IS **ADDED**, NOT SWAPPED IN (`E599`
+                                  WS-C 4): *"the profile's Grow card gets its one-liner:
+                                  your score and rank, linking here."*
+                                  ⚠⚠ THE FIRST BUILD REPLACED `Invite a Colleague` WITH IT
+                                  AND LOST A DOOR. `check:visitor-profile` caught it —
+                                  *"'Invite a Colleague' vanished from the OWNER's page"* —
+                                  which is exactly the assertion `E598` WS-C added for this
+                                  class of removal. ⚠ Both rows stand: one invites, the
+                                  other reports.
+                                  ⚠ The hint is the SCORE, computed by `growthScore`, not a
+                                  canned number, and the weight it quotes comes from
+                                  `GROWTH_WEIGHTS` — a tuning change moves this line too.
+                                */
+                                {
+                                  label: "Grow the Network",
+                                  href: "/community/grow",
+                                  hint: growth
+                                    ? `${growth.points} points${growth.rank ? ` · #${growth.rank} this month` : ""}`
+                                    : `A colleague who joins is worth ${GROWTH_WEIGHTS.JOINED} points`,
+                                },
+                                { label: "Invite a Colleague", href: "/invite-colleague", hint: "Join = 50 points" },
+                                { label: "Request a Recommendation", href: "/recommendations", hint: null },
+                                { label: "Request a Mentor", href: "/community/mentors", hint: null },
+                              ].map((a) => (
+                                <Link
+                                  key={a.href}
+                                  href={a.href}
+                                  className="-mx-2 flex items-center justify-between gap-2 rounded-[10px] px-2 py-2 transition-colors hover:bg-black/[0.03]"
+                                >
+                                  <span className="min-w-0">
+                                    <span className="block truncate text-[13.5px] font-semibold">
+                                      {a.label}
+                                    </span>
+                                    {a.hint && (
+                                      <span className="block text-[12px] text-ink-3">{a.hint}</span>
+                                    )}
+                                  </span>
+                                  <span aria-hidden className="flex-none text-ink-3">
+                                    &rsaquo;
+                                  </span>
+                                </Link>
+                              ))}
+                            </div>
+                          </section>
+          </>
+        ) : (
+          <>
               {/*
                 ── ⚠⚠ `You Both Know` — MUTUAL COLLEAGUES (visitor only) ───────
 
@@ -1263,14 +841,254 @@ export function ConnectProfile({
                 </>
               )}
             </section>
-            </>
+          </>
+        )}
+      </aside>
+
+      <main className="pm-cp3-main">
+        {/* ⚠ `About` IS `Bio` AGAIN (WS-B 5). Anchor and editor unchanged. */}
+        <ProfileCard
+          id="bio"
+          title="Bio"
+          edit={owner ? <EditLink href={editHref("bio")} title="Bio" /> : undefined}
+        >
+          <OverviewBody
+            overview={p.overview}
+            empty="Nothing here yet. A short bio is the first thing a buyer reads."
+          />
+        </ProfileCard>
+
+        {/* ⚠ THE VISITOR'S BUYING SURFACE, HIGH UP — a buyer is here to buy. */}
+        {!owner && serviceProducts}
+
+        {/*
+          ── ⚠⚠⚠ SKILLS AND SPECIALIZATIONS ARE TWO CARDS AGAIN (WS-B) ───────
+
+          ⚠ `E598` WS-C merged them on the option-B mockup's instruction.
+          Layout A separates them: Skills is full width, Specializations joins
+          Certifications and Education in a three-across row.
+          ⚠⚠ THIS IS A RULING CHANGE, NOT DRIFT — and the anchors and editors
+          are untouched either way, which is what `E597`'s one-section editors
+          need. ⚠ SUPERSEDED, quoted not deleted (`E164`): the merged card, with
+          `<div id="specializations" className="mt-4 border-t …">` inside it.
+        */}
+        <ProfileCard
+          id="skills"
+          title="Skills"
+          edit={owner ? <EditLink href={editHref("skills")} title="Skills" /> : undefined}
+        >
+          {p.skills.length > 0 ? (
+            groupSkillsByPillar(p.skills).map((g) => (
+              <div key={g.pillar ?? "__none"} className="mb-3 last:mb-0">
+                <p className="mb-1.5 font-display text-[11px] font-bold uppercase tracking-[0.1em] text-ink-3">
+                  {g.pillar ?? "Other"}
+                </p>
+                <SkillsBody skills={g.skills} />
+              </div>
+            ))
+          ) : (
+            <p className="text-[13.5px] text-ink-2">
+              No skills listed yet.{" "}
+              {owner && (
+                <Link href={editHref("skills")} className="font-bold text-magenta hover:underline">
+                  Add your skills
+                </Link>
+              )}
+            </p>
           )}
-        </aside>
-      </div>
+        </ProfileCard>
+
+        <div className="pm-cp-three">
+          <ProfileCard
+            id="specializations"
+            title="Specializations"
+            edit={owner ? <EditLink href={editHref("specializations")} title="Specializations" /> : undefined}
+          >
+            <SpecializationsBody specializations={p.specializations} />
+          </ProfileCard>
+          <ProfileCard
+            id="certifications"
+            title="Certifications"
+            edit={owner ? <EditLink href={editHref("certifications")} title="Certifications" /> : undefined}
+          >
+            <CertificationsBody
+              certifications={p.certifications}
+              empty="No certifications yet."
+              emptyAction={
+                owner ? (
+                  <Link href="/learn" className="mt-2 inline-block text-[13.5px] font-bold text-magenta hover:underline">
+                    Earn One in Learn
+                  </Link>
+                ) : undefined
+              }
+            />
+          </ProfileCard>
+          <ProfileCard
+            id="education"
+            title="Education"
+            edit={owner ? <EditLink href={editHref("education")} title="Education" /> : undefined}
+          >
+            <EducationBody
+              education={p.education}
+              emptyAction={
+                owner ? (
+                  <Link href="/learn" className="mt-2 inline-block text-[13.5px] font-bold text-magenta hover:underline">
+                    Browse Learning Paths
+                  </Link>
+                ) : undefined
+              }
+            />
+          </ProfileCard>
+        </div>
+
+        {/* ⚠⚠ WORK HISTORY AND SOLO PROJECTS ARE TWO CARDS AGAIN (WS-B). They
+            were merged as `Experience` by `E598` WS-C; Layout A separates them,
+            and each keeps its own anchor and its own editor. */}
+        <ProfileCard
+          id="work-history"
+          title="Work History"
+          edit={owner ? <EditLink href={editHref("work-history")} title="Work History" /> : undefined}
+        >
+          <WorkHistoryBody
+            employers={p.employers}
+            projects={p.projects}
+            isOwner={owner}
+            empty="No work history yet."
+          />
+        </ProfileCard>
+
+        <ProfileCard
+          id="solo-projects"
+          title="Solo Projects"
+          edit={owner ? <EditLink href={editHref("solo-projects")} title="Solo Projects" /> : undefined}
+        >
+          <SoloProjectsBody
+            projects={soloProjects}
+            isOwner={owner}
+            empty="Employee projects sit under their employer in Work History. No solo projects yet."
+          />
+        </ProfileCard>
+
+        {owner && serviceProducts}
+
+        <ProfileCard title="Learning Paths I Offer">
+          {taughtPaths.length === 0 && takenPaths.length === 0 ? (
+            <p className="text-[13.5px] leading-relaxed text-ink-2">
+              {owner
+                ? "You aren\u2019t teaching or taking any learning paths yet."
+                : "No learning paths yet."}
+            </p>
+          ) : (
+            <div className="flex flex-col gap-3.5">
+              {taughtPaths.length > 0 && (
+                <div>
+                  <p className="mb-2 text-[11.5px] font-bold uppercase tracking-[0.07em] text-ink-3">
+                    {owner ? "You Teach" : "Teaches"}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {taughtPaths.map((t) => (
+                      <Link
+                        key={t.slug}
+                        href={`/learn/${t.slug}`}
+                        className="rounded-full border border-magenta/25 bg-magenta/[0.06] px-3.5 py-1.5 text-[13px] font-bold text-magenta-dark hover:underline"
+                      >
+                        {t.title}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {takenPaths.length > 0 && (
+                <div>
+                  <p className="mb-2 text-[11.5px] font-bold uppercase tracking-[0.07em] text-ink-3">
+                    {owner ? "You&rsquo;re Taking" : "Taking"}
+                  </p>
+                  {/* ⚠ INK, NOT MAGENTA — `E433`. These are still links, so
+                      they keep the underline on hover, but a taken path is
+                      not an offer and must not read as one beside the set
+                      this person actually teaches. */}
+                  <div className="flex flex-wrap gap-2">
+                    {takenPaths.map((t) => (
+                      <Link
+                        key={t.slug}
+                        href={`/learn/${t.slug}`}
+                        className="rounded-full border border-line bg-white px-3.5 py-1.5 text-[13px] font-bold text-ink-2 hover:underline"
+                      >
+                        {t.title}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </ProfileCard>
+
+        <ProfileCard title="Recommendations">
+          {testimonials.length === 0 ? (
+            <p className="text-[13.5px] leading-relaxed text-ink-2">
+              {owner ? (
+                <>
+                  No recommendations yet.{" "}
+                  {/* ⚠ OWNER-ONLY — a visitor cannot request recommendations
+                      on somebody else's behalf. */}
+                  <Link
+                    href="/recommendations"
+                    className="font-bold text-magenta hover:underline"
+                  >
+                    Request a Recommendation
+                  </Link>
+                </>
+              ) : (
+                "No recommendations yet."
+              )}
+            </p>
+          ) : (
+            <div className="flex flex-col">
+              {testimonials.map((t) => (
+                <div
+                  key={t.id}
+                  className={
+                    "flex items-start gap-3 py-3" +
+                    ""
+                  }
+                >
+                  <Avatar
+                    firstName={t.author.split(" ")[0] ?? ""}
+                    lastName={t.author.split(" ").slice(1).join(" ")}
+                    photoUrl={null}
+                    size={40}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <span className="text-[14.5px] font-bold">{t.author}</span>
+                    {(t.title || t.company) && (
+                      <p className="text-[12.5px] text-ink-2">
+                        {[t.title, t.company].filter(Boolean).join(" · ")}
+                      </p>
+                    )}
+                    {t.body && (
+                      <p className="mt-1 text-[13.5px] leading-relaxed text-ink-2">
+                        {t.body}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </ProfileCard>
+        {/* ⚠⚠ FORUM INVOLVEMENT — "groups". Renders nothing when the signal is
+            null, which is every profile today. `check:community` GUARD 3
+            asserts this page supplies it. */}
+        <CommunitySignalBlock
+          signal={community}
+          firstName={p.person.firstName ?? ""}
+          isOwner={owner}
+        />
+      </main>
     </div>
   );
 }
-
 
 /**
  * ── ⚠⚠ THE USAGE COMB — SIX APPLICATIONS, SIX FIGURES (`P2-J3-E593`) ──────

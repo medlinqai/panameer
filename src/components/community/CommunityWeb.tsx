@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { RebuildBadge, useRebuild } from "@/components/motion/Rebuild";
 import type { CommunityWeb as WebData } from "@/lib/community-web";
 import { layoutWeb, VIEW, NODE_R, type PlacedNode } from "@/lib/community-web-layout";
 
@@ -38,6 +39,21 @@ import { layoutWeb, VIEW, NODE_R, type PlacedNode } from "@/lib/community-web-la
  */
 export function CommunityWeb({ initial }: { initial: WebData }) {
   const [data, setData] = useState<WebData>(initial);
+  /*
+    ── ⚠⚠⚠ TWO CLOCKS, AND THAT IS THE POINT (`P2-A2-E600` WS-D) ────────────
+
+    ⚠ SCOTT: *"the Community/Grow network picture: from 60 seconds to 15,
+    keeping the moving dashes"* — AND rule 3, *"Only the drawing moves. The
+    numbers never change on a rebuild."*
+    ⚠⚠ THOSE TWO TOGETHER FORBID THE OBVIOUS CHANGE. The 60-second timer below
+    does not redraw — it **re-fetches `/api/community/web` and replaces the
+    counts**. ⚠⚠⚠ TURNING IT INTO A 15-SECOND TIMER WOULD HAVE QUADRUPLED A REAL
+    QUERY *AND* MOVED THE NUMBERS UNDER THE READER FOUR TIMES A MINUTE.
+    ⚠ So the REDRAW is the shared 15-second rebuild and the REFRESH stays on its
+    own 60-second clock. `drawCycle` moves the picture; `cycle` still moves when
+    real data arrives, exactly as before.
+  */
+  const { cycle: drawCycle, secondsLeft } = useRebuild();
   const [cycle, setCycle] = useState(0);
   const [animate, setAnimate] = useState(false);
   const calm = useRef(false);
@@ -129,7 +145,15 @@ export function CommunityWeb({ initial }: { initial: WebData }) {
     joined: data.joined,
     invited: data.invited,
     reachable: data.reachable,
-    cycle,
+    /*
+      ⚠⚠⚠ BOTH CLOCKS SEED THE LAYOUT, AND ONLY THE LAYOUT. `cycle` advances
+      when real data arrives; `drawCycle` every 15 seconds. `layoutWeb` takes
+      the seed and the THREE LISTS — the lists are untouched here, so a rebuild
+      re-arranges the same people and cannot change a count.
+      ⚠ SUPERSEDED, quoted not deleted (`E164`):
+      //   cycle,
+    */
+    cycle: cycle + drawCycle,
   });
 
   const nJ = data.joined.length;
@@ -231,6 +255,10 @@ export function CommunityWeb({ initial }: { initial: WebData }) {
           capped web that said nothing would be under-reporting somebody's
           network, which is worse than a smaller picture. */}
       {overflowText(data) && <p className="pm-web-more">{overflowText(data)}</p>}
+
+      {/* ⚠ The same caption as both rings, from the same component — one
+          wording, three pictures (`P2-A2-E600` WS-D). */}
+      <RebuildBadge secondsLeft={secondsLeft} />
 
       {nJ + nI + nR === 0 && (
         /* ⚠ THE EMPTY STATE STATES THE MECHANISM. "No colleagues" on its own

@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { PageTabs } from "@/components/casing/PageTabs";
+import { tabSequenceFor } from "@/lib/nav";
+import { profileTabs } from "@/lib/profile-tabs";
 import { prisma } from "@/lib/prisma";
 import { guardPage } from "@/lib/guard";
 /* ⚠ `isMarketplaceVisible` AND `VISIBILITY_THRESHOLD` ARE NO LONGER IMPORTED
@@ -142,6 +145,15 @@ export default async function AccountHealthPage() {
   });
 
   return (
+    <>
+      {/* ⚠⚠ THE PROFILE TAB ROW (`P2-A2-E600` WS-A) — one row for every page
+          under the avatar, using the same words as the menu. */}
+      <PageTabs
+        eyebrow="MY PROFILE"
+        sequence={tabSequenceFor("/profile")}
+        tabs={profileTabs(viewer)}
+        current="/account-health"
+      />
     <div className="mx-auto max-w-4xl space-y-4">
       <div className="grid gap-4 md:grid-cols-2">
         <section className="rounded-brand border border-line bg-white p-5">
@@ -251,6 +263,7 @@ export default async function AccountHealthPage() {
         </div>
       </section>
     </div>
+    </>
   );
 }
 

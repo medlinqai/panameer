@@ -50,6 +50,7 @@ import {
   ALL_STEPS,
   emptyDraft as emptyProfile,
   draftFromStatus,
+  WORK_METHOD_OPTIONS,
 } from "@/lib/onboarding-draft";
 import { CertificationCards } from "@/components/onboarding/CertificationCards";
 import {
@@ -240,15 +241,9 @@ const GOAL_OPTIONS = [
   ⚠ SCOTT'S WORDING, VERBATIM — including the "and/or" and the "hour/month"
   slash. Do not tidy either.
 */
-const WORK_METHOD_OPTIONS = [
-  {
-    value: "SERVICES",
-    title: "I Sell Services and/or Service Products",
-    description:
-      "You sell your time by the hour/month or pre-defined deliverables.",
-  },
-  { value: "RECRUITER", title: "I Sell the Services of Others (Recruiter)", description: "You represent other providers and place them on work." },
-];
+/* ⚠ MOVED TO `lib/onboarding-draft.ts` (`P2-A2-E600` WS-F) so
+   `/profile/edit/work-method` asks the SAME question with the SAME options.
+   ⚠ SUPERSEDED, quoted not deleted (`E164`): the array lived here. */
 
 const LANGUAGE_LEVELS = [
   { value: "BASIC", label: "Basic" },

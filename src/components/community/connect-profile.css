@@ -295,3 +295,81 @@
     padding-top: 12px;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⚠⚠⚠ LAYOUT A — A LEFT RAIL AND THE RECORD (`P2-A2-E600` WS-B)
+   ═══════════════════════════════════════════════════════════════════════════
+
+   ⚠ SCOTT'S PAGE RULE, 2026-09-22: *"This is a My Profile page… My Profile will
+   not have that card"* — the wide two-part header belongs to Score, Grow and
+   Statistics, not here.
+   ⚠⚠ SO THE `pm-cp2` HERO IS GONE and identity, rates, the score ring and the
+   growth card run down ONE RAIL, with the whole remaining width given to the
+   record. ⚠ The `.pm-cp2*` rules above are left in place, not deleted (`E164`);
+   nothing renders them.
+
+   ⚠⚠ THE BREAKPOINT IS THE ONE ALREADY MEASURED IN THIS FILE. The arithmetic at
+   the top still holds: the shell's `<main>` carries 64px of horizontal padding,
+   so a viewport breakpoint is the content width plus 64. A 300px rail beside a
+   usable ~600px main needs ~900 of content → ~964 viewport, rounded to 980 so
+   the step lands just before the main gets tight rather than just after.
+*/
+.pm-cp3 {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+.pm-cp3-rail,
+.pm-cp3-main {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+/*
+  ⚠⚠ THE RAIL STICKS, THE RECORD SCROLLS. `align-items: start` above is what
+  makes that possible — a stretched grid item is as tall as the row, and a
+  sticky element inside a full-height box has nothing to stick against.
+  ⚠⚠⚠ IT CLEARS THE PINNED BAND (`E587`); `top: 16px` would put it underneath,
+  a mistake this file already records being made once.
+*/
+.pm-cp3-rail {
+  position: sticky;
+  top: calc(var(--pm-band-h) + 16px);
+}
+
+/*
+  ── ⚠⚠⚠ ONE COLUMN, AND SCOTT'S PHONE ORDER (WS-B 8) ──────────────────────
+
+  ⚠ *"Phone order: name card → Rates → the right-hand content → Profile
+  Completion → Rank Higher."*
+  ⚠⚠ SO THE RAIL SPLITS AROUND THE RECORD: its first two cards stay on top, the
+  record follows, and the score and growth cards drop BELOW it. ⚠⚠⚠ THAT IS THE
+  OPPOSITE OF `E588` WS-A's RULING, AND DELIBERATELY SO — that brief lifted the
+  whole rail above the record because the ring was *"roughly 5,000px down"*.
+  Here the ring is **fourth on the page**, not buried, because identity and
+  rates are two short cards; lifting it further would push the record itself
+  below three cards of scaffolding.
+  ⚠ `display: contents` dissolves both wrappers so their CHILDREN become grid
+  items and can be ordered independently. The DOM order is unchanged, so a
+  screen reader and the keyboard still meet the profile in its written order.
+*/
+@media (max-width: 980px) {
+  .pm-cp3 {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+  .pm-cp3-rail,
+  .pm-cp3-main {
+    display: contents;
+  }
+  /* ⚠ identity (1st) and Rates (2nd) stay above the record; everything else in
+     the rail — the score ring and the growth card — falls below it. */
+  .pm-cp3-rail > :nth-child(1) { order: -3; }
+  .pm-cp3-rail > :nth-child(2) { order: -2; }
+  .pm-cp3-rail > :nth-child(n + 3) { order: 1; }
+  .pm-cp3-main > * { order: 0; }
+}

@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { PAGE_TABS } from "@/lib/nav";
 import { stripComments } from "./lib/strip-comments";
 
 /**
@@ -333,9 +334,20 @@ check(
   ⚠ SUPERSEDED, quoted not deleted (`E164`):
   //   /\{p\.rates && \(\s*<ProfileCard/.test(CARDS_PROFILE)
 */
+/*
+  ⚠⚠ RATES IS A SIDE CARD AGAIN (`P2-A2-E600` WS-B, `E014`). Scott's Layout A
+  takes it OUT of the header and puts it in the left rail under the name card.
+  ⚠⚠⚠ THE RULE IS UNCHANGED AND IS THE WHOLE POINT: the WHOLE BLOCK is gated on
+  `p.rates`, not just its rows, because a heading reading `Rates` over an empty
+  box tells a visitor a rate exists and is being withheld. Only the element it
+  gates changed — again.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`), both previous shapes:
+  //   /\{p\.rates && \(\s*<ProfileCard/            (E593 — a centre card)
+  //   /\{p\.rates && \(\s*<div className="pm-cp2-rates"/   (E598 — in the hero)
+*/
 check(
   "9 — ⚠ the Rates BLOCK is gated, not only its rows",
-  /\{p\.rates && \(\s*<div className="pm-cp2-rates"/.test(CARDS_PROFILE)
+  /\{p\.rates && \(\s*<ProfileCard\s*\n\s*id="rates"/.test(CARDS_PROFILE)
 );
 check(
   "9 — ⚠ both rate consumers handle the null",
@@ -389,9 +401,29 @@ check(
   "10 — ⚠⚠ the comb no longer renders on the profile",
   !/<UsageComb usage=\{usage\} \/>/.test(RAIL_L)
 );
+/*
+  ── ⚠⚠⚠ USAGE HAS LEFT THE PROFILE ENTIRELY (`P2-A2-E600` WS-B) ────────────
+
+  ⚠ SCOTT'S PAGE RULE, 2026-09-22: *"No growth numbers, usage or statistics on
+  My Profile beyond the score side card and the Rank Higher card's links."*
+  ⚠⚠ THE COMB WENT AT `E598` AND THE ONE-LINER THAT REPLACED IT GOES NOW. This
+  is the second time this assertion has followed a ruling rather than a defect
+  — `check:rollup`'s case both times.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   check("10 — ⚠ the Usage one-liner replaced it, and names the Learn count",
+  //     /<b className="font-bold">Usage<\/b>/.test(RAIL_L) && /usage\?\.learn/.test(RAIL_L));
+  ⚠⚠⚠ WHAT REPLACED IT IS ASSERTED, NOT ASSUMED: the DOOR survives as a TAB in
+  the profile row (`E600` WS-A), and that is what this now holds. Deleting the
+  assertion would stop the gate failing and stop it saying anything.
+*/
 check(
-  "10 — ⚠ the Usage one-liner replaced it, and names the Learn count",
-  /<b className="font-bold">Usage<\/b>/.test(RAIL_L) && /usage\?\.learn/.test(RAIL_L)
+  "10 — ⚠⚠ usage does not render on the profile at all",
+  !/<b className="font-bold">Usage<\/b>/.test(RAIL_L) && !/<UsageComb/.test(RAIL_L)
+);
+check(
+  "10 — ⚠⚠⚠ and `/stats` is still reachable — as a TAB in the profile row",
+  (PAGE_TABS["/profile"] ?? []).some((t) => t.href === "/stats"),
+  (PAGE_TABS["/profile"] ?? []).map((t) => t.href).join(" · ")
 );
 /*
   ⚠⚠ AND THE EARNINGS RULE SURVIVES WHERE IT ACTUALLY LIVES. The `$0` was never
