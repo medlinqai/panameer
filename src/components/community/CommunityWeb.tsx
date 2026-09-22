@@ -156,9 +156,34 @@ export function CommunityWeb({ initial }: { initial: WebData }) {
     cycle: cycle + drawCycle,
   });
 
-  const nJ = data.joined.length;
-  const nI = data.invited.length;
-  const nR = data.reachable.length;
+  /*
+    ── ⚠⚠⚠ THE LEGEND IS THE NETWORK. THE LINE BELOW IT IS THE PICTURE ───────
+
+    ⚠ SCOTT, 2026-09-22 (`P2-A3-E601` WS-A): *"The hero's three numerals become
+    the totals, and the picture's own line says how many of them it drew."*
+
+    ⚠⚠ THE DEFECT: these three numbers were the DRAWN, CAPPED subset, and they
+    were the only place the page stated a size. ⚠⚠⚠ SO THE LEGEND SILENTLY
+    UNDER-REPORTED EVERY NETWORK BIG ENOUGH TO HIT THE CAP — one number doing
+    two jobs, and losing the more important one exactly when it mattered most.
+    ⚠ IT WAS INVISIBLE BECAUSE NOBODY SEEDED IS CAPPED: for the gate persona
+    8/1/4 are both the drawn counts and the totals, so every reading agreed.
+
+    ⚠⚠ `overflow` IS THE REMAINDER PER KIND (`community-web.ts`), so the TOTAL
+    is drawn + overflow. ⚠ Computed here rather than sent as a fourth field:
+    the two facts must not be able to disagree, and a derived total cannot.
+
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   const nJ = data.joined.length;
+    //   const nI = data.invited.length;
+    //   const nR = data.reachable.length;
+  */
+  const drawnJ = data.joined.length;
+  const drawnI = data.invited.length;
+  const drawnR = data.reachable.length;
+  const nJ = drawnJ + data.overflow.joined;
+  const nI = drawnI + data.overflow.invited;
+  const nR = drawnR + data.overflow.reachable;
 
   /*
     ⚠⚠ A PICTURE OF A NETWORK IS NOT A NETWORK TO A SCREEN READER (WS-B item 5).
@@ -254,7 +279,13 @@ export function CommunityWeb({ initial }: { initial: WebData }) {
       {/* ⚠⚠ THE OVERFLOW IS TOLD, NOT SWALLOWED. A ring has a circumference; a
           capped web that said nothing would be under-reporting somebody's
           network, which is worse than a smaller picture. */}
-      {overflowText(data) && <p className="pm-web-more">{overflowText(data)}</p>}
+      {/* ⚠⚠ THE PICTURE STATES WHAT IT DREW, ALWAYS — not only when it ran out
+          of room. ⚠ A line that appears only on overflow makes "how much of my
+          network is this?" a question the page answers sometimes, and the
+          reader cannot tell the difference between "all of it" and "nobody
+          told me". ⚠⚠⚠ NOW THE LEGEND IS THE NETWORK AND THIS IS THE DRAWING;
+          the two facts never share a numeral again. */}
+      {drawnText(data) && <p className="pm-web-more">{drawnText(data)}</p>}
 
       {/* ⚠ The same caption as both rings, from the same component — one
           wording, three pictures (`P2-A2-E600` WS-D). */}
@@ -300,16 +331,31 @@ function plural(n: number, one: string, many = ""): string {
  * took an ARBITRARY sixteen that could differ between two renders. **A label
  * naming a selection the code does not make is worse than no label.**
  */
-function overflowText(d: WebData): string | null {
+function drawnText(d: WebData): string | null {
   const o = d.overflow;
   const hidden = o.joined + o.invited + o.reachable;
-  if (hidden <= 0) return null;
   const shown = d.joined.length + d.invited.length + d.reachable.length;
+  /* ⚠ NOTHING TO SAY ABOUT AN EMPTY PICTURE — the empty state below says it
+     properly, and "0 of 0 drawn" beside it would be a second, worse answer. */
+  if (shown === 0) return null;
+  /* ⚠⚠ RENAMED FROM `overflowText` AND NO LONGER RETURNS null WHEN NOTHING IS
+     HIDDEN (`E601` WS-A). ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   function overflowText(d: WebData): string | null {
+     //     const hidden = o.joined + o.invited + o.reachable;
+     //     if (hidden <= 0) return null;
+     ⚠⚠⚠ THE OLD EARLY RETURN IS THE WHOLE DEFECT: the one sentence that told a
+     reader how much of their network they were looking at was suppressed in
+     precisely the case where the answer was reassuring. */
+  if (hidden <= 0) return `All ${shown} drawn`;
   /* ⚠ `toLocaleString` with NO locale argument would format differently on the
      server and in the browser and hydrate mismatched. `en-US` is pinned for the
      same reason `date-range-label.ts` refuses `toLocaleDateString`. */
   const total = (shown + hidden).toLocaleString("en-US");
-  return `${shown} of ${total} shown · most recent`;
+  /* ⚠ "drawn", matching the all-drawn case above — one verb for one fact, so
+     the two states read as the same sentence answering the same question.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   return `${shown} of ${total} shown · most recent`; */
+  return `${shown} of ${total} drawn · most recent`;
 }
 
 /** ⚠ `invited` has no person and therefore never a face. That is the model. */

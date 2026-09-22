@@ -128,6 +128,7 @@
     "wipe:test3-community": "npx esbuild prisma/wipe-test3-community.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/wipe-test3-community.cjs --log-level=error && node -r dotenv/config .harness/wipe-test3-community.cjs dotenv_config_path=.env.local",
     "check:community-page": "npx esbuild scripts/check-community-page.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/community-page.cjs --log-level=error && node .harness/community-page.cjs",
     "check:community-page-ui": "playwright test --config=playwright.community-page.config.ts",
+    "check:community-figures": "playwright test --config=playwright.community-figures.config.ts",
     "check:profile-height": "playwright test --config=playwright.profile-height.config.ts",
     "check:visitor-profile": "playwright test --config=playwright.visitor-profile.config.ts",
     "reset:titles": "npx esbuild prisma/reset/01-titles.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/reset-titles.cjs --log-level=error && node -r dotenv/config .harness/reset-titles.cjs dotenv_config_path=.env.local",
