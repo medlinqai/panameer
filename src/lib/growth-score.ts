@@ -72,8 +72,18 @@ export const GROWTH_WEIGHTS = {
   */
 } as const;
 
-/** The scoring window. `month` resets on the 1st (ruling 2). */
-export type GrowthWindow = "month" | "all";
+/**
+ * The scoring window. `month` resets on the 1st (ruling 2).
+ *
+ * ⚠⚠ `last-month` EXISTS SO MOVEMENT CAN BE COMPUTED (WS-B 2). Scott,
+ * 2026-09-22: *"the score comes from dated invite and join rows, so last
+ * month's rank can be computed from the same data."* ⚠ It is the SAME function
+ * over a different range — not a second scorer, and not a stored snapshot.
+ * ⚠⚠⚠ A STORED RANK WOULD HAVE BEEN THE WRONG ANSWER: nothing writes one today,
+ * so it could only start from now, and every member's first month would show no
+ * movement for a reason that is about our bookkeeping rather than about them.
+ */
+export type GrowthWindow = "month" | "last-month" | "all";
 
 export type GrowthScore = {
   personId: string;
@@ -85,13 +95,40 @@ export type GrowthScore = {
 };
 
 /**
- * ⚠⚠ THE WINDOW'S FLOOR, IN UTC. The month resets on the 1st; `all` has no
- * floor. ⚠ UTC so the reset does not depend on who is asking or where the
+ * ⚠⚠ THE WINDOW'S RANGE, IN UTC. The month resets on the 1st; `all` is
+ * unbounded. ⚠ UTC so the reset does not depend on who is asking or where the
  * server is — the same discipline `profile-views.ts` uses for its day key.
+ *
+ * ⚠⚠⚠ `last-month` NEEDS A CEILING AS WELL AS A FLOOR, which is why this
+ * returns a RANGE. ⚠ SUPERSEDED, quoted not deleted (`E164`) — it returned only
+ * a floor, which is all `month` and `all` ever needed:
+ * //   export function windowStart(window: GrowthWindow, now = new Date()): Date | null {
+ * //     if (window === "all") return null;
+ * //     return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+ * //   }
  */
-export function windowStart(window: GrowthWindow, now = new Date()): Date | null {
-  if (window === "all") return null;
-  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+export function windowRange(
+  window: GrowthWindow,
+  now = new Date()
+): { from: Date | null; to: Date | null } {
+  if (window === "all") return { from: null, to: null };
+  const y = now.getUTCFullYear();
+  const m = now.getUTCMonth();
+  if (window === "last-month") {
+    return {
+      from: new Date(Date.UTC(y, m - 1, 1)),
+      /* ⚠ EXCLUSIVE — the 1st of this month, used as `lt`. An inclusive end of
+         "the 31st" is wrong in every month that is not 31 days. */
+      to: new Date(Date.UTC(y, m, 1)),
+    };
+  }
+  return { from: new Date(Date.UTC(y, m, 1)), to: null };
+}
+
+/** ⚠ Prisma's date filter for a window, or `{}` for unbounded. */
+function dateFilter(from: Date | null, to: Date | null) {
+  if (!from && !to) return undefined;
+  return { ...(from ? { gte: from } : {}), ...(to ? { lt: to } : {}) };
 }
 
 /** Days remaining in the current UTC month, for the board's reset line. */
@@ -117,10 +154,11 @@ export async function growthScore(
   window: GrowthWindow = "month",
   now = new Date()
 ): Promise<GrowthScore> {
-  const from = windowStart(window, now);
+  const { from, to } = windowRange(window, now);
+  const range = dateFilter(from, to);
 
   const invited = await prisma.colleagueInvite.count({
-    where: { inviter_person_id: personId, ...(from ? { created_at: { gte: from } } : {}) },
+    where: { inviter_person_id: personId, ...(range ? { created_at: range } : {}) },
   });
 
   /*
@@ -135,7 +173,7 @@ export async function growthScore(
   const joined = await prisma.colleagueInvite.count({
     where: {
       inviter_person_id: personId,
-      accepted_at: { not: null, ...(from ? { gte: from } : {}) },
+      accepted_at: { not: null, ...(range ?? {}) },
     },
   });
 
@@ -180,7 +218,8 @@ export async function growthBoard(
   window: GrowthWindow = "month",
   now = new Date()
 ): Promise<GrowthRow[]> {
-  const from = windowStart(window, now);
+  const { from, to } = windowRange(window, now);
+  const range = dateFilter(from, to);
 
   /* ⚠ ONE QUERY FOR THE CANDIDATES — every person who has sent an invite in the
      window. Nobody else can have a score, because every term above counts
@@ -189,7 +228,7 @@ export async function growthBoard(
     by: ["inviter_person_id"],
     where: {
       inviter_person_id: { not: null },
-      ...(from ? { created_at: { gte: from } } : {}),
+      ...(range ? { created_at: range } : {}),
     },
   });
   const ids = senders.map((s) => s.inviter_person_id).filter((x): x is string => !!x);
@@ -244,4 +283,107 @@ export function nextMove(
     text: `${gap} points to #${above.rank}.`,
     reachable: false,
   };
+}
+
+/**
+ * ── ⚠⚠⚠ MOVEMENT SINCE LAST MONTH (WS-B 2) ───────────────────────────────
+ *
+ * ⚠ SCOTT, 2026-09-22: *"the score comes from dated invite and join rows, so
+ * last month's rank can be computed from the same data. Build it."*
+ * ⚠⚠ THE BRIEF ALLOWED THE COLUMN TO BE DROPPED — *"Movement only if last month
+ * can be computed; otherwise leave the column out"* — AND IT CAN BE, so it is
+ * built. Both ends of every term are dated: `created_at` for an invite and
+ * `accepted_at` for a join.
+ *
+ * ⚠⚠⚠ `null` MEANS "NO PREVIOUS RANK", WHICH IS NOT THE SAME AS "DID NOT MOVE".
+ * Somebody who was not on last month's board has not held station — they are
+ * new, and the page says `NEW` rather than a dash. ⚠ This is the same rule the
+ * `Active` row follows: a missing measurement never renders as a neutral value.
+ */
+export type Movement = { delta: number | null };
+
+export async function movementFor(
+  board: GrowthRow[],
+  now = new Date()
+): Promise<Map<string, Movement>> {
+  const previous = await growthBoard("last-month", now);
+  /* ⚠ RANK, NOT POINTS. A member can earn more than last month and still fall,
+     and the column is about position — the arrow has to agree with the number
+     beside it. */
+  const was = new Map(previous.map((r) => [r.personId, r.rank]));
+  const out = new Map<string, Movement>();
+  for (const row of board) {
+    const before = was.get(row.personId);
+    /* ⚠⚠ POSITIVE IS UP: rank 5 → rank 2 is +3. Subtracting the other way round
+       would draw ▲ for a fall, which is the kind of sign error nobody notices
+       until a member complains. */
+    out.set(row.personId, { delta: before == null ? null : before - row.rank });
+  }
+  return out;
+}
+
+/**
+ * ── ⚠⚠ MY NETWORK — THE PEOPLE YOU BROUGHT IN (WS-B 1) ───────────────────
+ *
+ * ⚠ SCOTT: *"list the people you brought in, with whether each has joined. Real
+ * data today is likely just the one attributed invite. Show what exists."*
+ *
+ * ⚠⚠⚠ IT IS NOT A BOARD AND IT IS NOT SCORED. It lists `colleague_invites`
+ * rows, which carry an EMAIL and an optional name — **not a person**. ⚠ Nothing
+ * links an accepted invite to the account it created, so this cannot name who
+ * joined or link to their profile. **That is `WS-C` item 6**, recorded in the
+ * brief at this gate; until it lands, `joined` here means *"this invitation was
+ * accepted"*, which is the honest claim the data supports.
+ */
+export type NetworkRow = {
+  id: string;
+  email: string;
+  name: string | null;
+  invitedAt: Date;
+  joinedAt: Date | null;
+};
+
+export async function myNetwork(personId: string): Promise<NetworkRow[]> {
+  const rows = await prisma.colleagueInvite.findMany({
+    where: { inviter_person_id: personId },
+    select: {
+      id: true,
+      invitee_email: true,
+      invitee_first_name: true,
+      invitee_last_name: true,
+      created_at: true,
+      accepted_at: true,
+    },
+    /* ⚠ Joined first, then most recently invited — the useful order is "what
+       came of this", not "what I did most recently". */
+    orderBy: [{ accepted_at: { sort: "desc", nulls: "last" } }, { created_at: "desc" }],
+  });
+  return rows.map((r) => ({
+    id: r.id,
+    email: r.invitee_email,
+    name:
+      `${r.invitee_first_name ?? ""} ${r.invitee_last_name ?? ""}`.trim() || null,
+    invitedAt: r.created_at,
+    joinedAt: r.accepted_at,
+  }));
+}
+
+/**
+ * ⚠⚠ THE PROVIDER PAGE FOR EACH RANKED PERSON, WHERE ONE EXISTS.
+ *
+ * ⚠ The brief asks rows to link *"via `/people/[personId]` if that brief has
+ * landed, else the provider page"*. ⚠⚠ MEASURED 2026-09-22: **there is no
+ * `/people` route on disk**, so it is the provider page.
+ * ⚠⚠⚠ AND NOT EVERY RANKED MEMBER HAS ONE — a buyer or a requester can invite
+ * colleagues and rank, with no `ProviderProfile` at all. Their name renders as
+ * PLAIN TEXT rather than a link to nowhere, which is `E579`'s rule: an entry
+ * that looks like a door and is not.
+ */
+export async function providerHrefs(personIds: string[]): Promise<Map<string, string>> {
+  if (personIds.length === 0) return new Map();
+  const profiles = await prisma.providerProfile.findMany({
+    where: { person_id: { in: personIds } },
+    select: { id: true, person_id: true },
+  });
+  return new Map(profiles.map((p) => [p.person_id, `/providers/${p.id}`]));
 }

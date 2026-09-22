@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Avatar } from "@/components/Avatar";
 import { redirect } from "next/navigation";
 import { guardPage } from "@/lib/guard";
 import { prisma } from "@/lib/prisma";
@@ -12,7 +13,11 @@ import {
   daysLeftInMonth,
   growthBoard,
   growthScore,
+  movementFor,
+  myNetwork,
   nextMove,
+  providerHrefs,
+  type GrowthWindow,
 } from "@/lib/growth-score";
 
 /**
@@ -38,7 +43,26 @@ import {
  * exist and Scott ruled against linking nowhere.** ⚠⚠ WIRING THEM UP IS
  * **WS-C**, not this workstream — the page has to exist and be walked first.
  */
-export default async function GrowPage() {
+/**
+ * ⚠⚠ THE TAB IS A QUERY STRING, NOT THREE ROUTES. All three show the same
+ * person the same thing through a different window, so they are one page — and
+ * `?tab=` keeps the board linkable and the back button honest.
+ * ⚠ AN UNKNOWN VALUE FALLS BACK TO `month` rather than 404ing: a mistyped tab
+ * is not a missing page.
+ */
+const TABS: { key: string; label: string; window: GrowthWindow }[] = [
+  { key: "month", label: "This Month", window: "month" },
+  { key: "all", label: "All Time", window: "all" },
+  /* ⚠ `My Network` IS NOT A WINDOW — it lists invitations, not scores. Its
+     `window` is unused and set to `all` so the type stays honest. */
+  { key: "network", label: "My Network", window: "all" },
+];
+
+export default async function GrowPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
   await guardPage("authenticated");
   const viewer = await getSessionViewer();
   if (!viewer) redirect("/login?callbackUrl=%2Fcommunity%2Fgrow");
@@ -59,13 +83,27 @@ export default async function GrowPage() {
   if (!person) redirect("/community");
   const personId = person.id;
 
+  const { tab: rawTab } = await searchParams;
+  const tab = TABS.find((t) => t.key === rawTab) ?? TABS[0];
+
   const unread = await unreadCount(viewer);
-  const [me, board] = await Promise.all([
+  /* ⚠ The SCORE CARD is always THIS MONTH — it is "what you have done this
+     month", and it does not follow the board's tab. The rank line below it
+     does, because that is what the tab is about. */
+  const [me, board, network] = await Promise.all([
     growthScore(personId, "month"),
-    growthBoard("month"),
+    growthBoard(tab.window),
+    tab.key === "network" ? myNetwork(personId) : Promise.resolve([]),
   ]);
   const myRow = board.find((r) => r.personId === personId) ?? null;
   const move = nextMove(board, me);
+  /*
+    ⚠⚠ MOVEMENT ONLY ON `This Month`. Comparing an ALL-TIME board to last month
+    is a comparison of two different questions, and it would draw an arrow that
+    means nothing.
+  */
+  const movement = tab.key === "month" ? await movementFor(board) : null;
+  const hrefs = await providerHrefs(board.map((r) => r.personId));
 
   /*
     ⚠⚠⚠ FEWER THAN THREE SCORERS MEANS NO BOARD (ruling 6). Scott: *"If the
@@ -194,40 +232,177 @@ export default async function GrowPage() {
         </section>
 
         {/* ── the board ──────────────────────────────────────────────── */}
-        {showBoard ? (
+        {/*
+          ── ⚠⚠ THE THREE TABS (WS-B 1) ──────────────────────────────────────
+
+          ⚠ Plain links, not buttons: each is a real URL, so a board is
+          shareable, opens in a new tab on middle-click and is announced as a
+          link. ⚠⚠ THE SAME REASONING THE COMPLETION-RING CARD RECORDS — *"a div
+          with a handler does none of those and looks identical until somebody
+          needs one of them."*
+          ⚠⚠⚠ THIS IS NOT A `PageTabs` ROW. That component is the APPLICATION's
+          tab row (`CONNECT · Community · Groups · …`), already rendered above;
+          a second one would say this page is a second application.
+        */}
+        <nav aria-label="Leaderboard" className="mt-5 flex gap-1.5 border-b border-line">
+          {TABS.map((t) => (
+            <Link
+              key={t.key}
+              href={t.key === "month" ? "/community/grow" : `/community/grow?tab=${t.key}`}
+              aria-current={t.key === tab.key ? "page" : undefined}
+              className={
+                "-mb-px border-b-2 px-3 py-2 text-[13.5px] font-bold transition-colors " +
+                (t.key === tab.key
+                  ? "border-magenta text-magenta"
+                  : "border-transparent text-ink-2 hover:text-ink")
+              }
+            >
+              {t.label}
+            </Link>
+          ))}
+        </nav>
+
+        {tab.key === "network" ? (
           /*
-            ⚠⚠ THE FULL BOARD, ITS TABS AND THE MOVEMENT COLUMN ARE **WS-B**.
-            What renders here is the ordered rows for THIS MONTH, from the same
-            `growthBoard` WS-B will tab over — so WS-B adds tabs to a list that
-            is already proven, rather than introducing the list and the tabs at
-            once.
+            ── ⚠⚠ MY NETWORK — INVITATIONS, NOT SCORES ──────────────────────
+
+            ⚠ Scott: *"list the people you brought in, with whether each has
+            joined… Show what exists."*
+            ⚠⚠⚠ IT NAMES AN EMAIL, NOT A PERSON, AND CANNOT LINK TO A PROFILE.
+            `colleague_invites` carries `invitee_email` and an optional name;
+            **nothing links an accepted invite to the account it created.** That
+            is `WS-C` item 6. Until it lands, "Joined" here means *"this
+            invitation was accepted"* — the honest claim the data supports.
           */
-          <section className="mt-3.5 rounded-brand border border-line bg-white px-[18px] py-4">
-            <h2 className="mb-2 font-display text-[15px] font-bold">This Month</h2>
+          <section className="mt-3.5">
+            {network.length === 0 ? (
+              <p className="text-[13px] text-ink-3">
+                You haven&rsquo;t invited anyone yet. Everyone you invite appears
+                here, whether or not they join.
+              </p>
+            ) : (
+              <ul className="flex flex-col rounded-brand border border-line bg-white px-[18px]">
+                {network.map((n) => (
+                  <li
+                    key={n.id}
+                    className="flex items-center justify-between gap-2.5 border-t border-line py-2.5 text-[13.5px] first:border-t-0"
+                  >
+                    <span className="min-w-0">
+                      <span className="block truncate font-semibold">
+                        {n.name ?? n.email}
+                      </span>
+                      {n.name && (
+                        <span className="block truncate text-[12px] text-ink-3">
+                          {n.email}
+                        </span>
+                      )}
+                    </span>
+                    {/* ⚠ Green for joined, ink for pending — never red. A
+                        colleague who has not joined yet is a to-do, not a
+                        failure. */}
+                    <span
+                      className={
+                        "flex-none text-[12.5px] font-bold " +
+                        (n.joinedAt ? "text-emerald-600" : "text-ink-3")
+                      }
+                    >
+                      {n.joinedAt ? "Joined" : "Invited"}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        ) : showBoard ? (
+          <section className="mt-3.5 rounded-brand border border-line bg-white px-[18px] py-1">
             <ol className="flex flex-col">
-              {board.map((r) => (
-                <li
-                  key={r.personId}
-                  className={
-                    "flex items-center justify-between gap-2.5 border-t border-line py-2 text-[13.5px] first:border-t-0 " +
-                    /* ⚠ YOUR ROW IS ALWAYS VISIBLE AND HIGHLIGHTED (WS-B 3),
-                       built here because the rule costs one class. */
-                    (r.personId === personId ? "font-bold" : "")
-                  }
-                >
-                  <span className="min-w-0 truncate">
-                    <span className="mr-2 tabular-nums text-ink-3">#{r.rank}</span>
-                    {r.name}
-                  </span>
-                  <span className="flex-none tabular-nums">{r.points}</span>
-                </li>
-              ))}
+              {board.map((r) => {
+                const href = hrefs.get(r.personId);
+                const mv = movement?.get(r.personId);
+                return (
+                  <li
+                    key={r.personId}
+                    className={
+                      "flex items-center justify-between gap-2.5 border-t border-line py-2.5 text-[13.5px] first:border-t-0 " +
+                      /* ⚠⚠ YOUR ROW IS ALWAYS VISIBLE AND HIGHLIGHTED (WS-B 3).
+                         Every scorer is rendered today, so "always visible"
+                         costs nothing yet — it becomes a slice-plus-your-row
+                         when the board is long enough to need one. */
+                      (r.personId === personId ? "bg-magenta/[0.04] font-bold" : "")
+                    }
+                  >
+                    <span className="flex min-w-0 items-center gap-2.5">
+                      <span className="w-7 flex-none tabular-nums text-ink-3">
+                        #{r.rank}
+                      </span>
+                      <Avatar
+                        firstName={r.name.split(" ")[0] ?? ""}
+                        lastName={r.name.split(" ").slice(1).join(" ")}
+                        photoUrl={r.photoUrl}
+                        size={28}
+                      />
+                      <span className="min-w-0">
+                        {/* ⚠ A LINK ONLY WHERE THERE IS SOMEWHERE TO GO. A ranked
+                            buyer has no provider page, and a link to nowhere is
+                            `E579`'s defect. */}
+                        {href ? (
+                          <Link href={href} className="block truncate hover:underline">
+                            {r.name}
+                          </Link>
+                        ) : (
+                          <span className="block truncate">{r.name}</span>
+                        )}
+                        <span className="block truncate text-[12px] text-ink-3">
+                          {r.invited} invited &middot; {r.joined} joined
+                        </span>
+                      </span>
+                    </span>
+                    <span className="flex flex-none items-center gap-2.5">
+                      {/*
+                        ⚠⚠⚠ MOVEMENT: `null` IS `NEW`, NOT A DASH. Somebody who
+                        was not on last month's board has not held station.
+                        ⚠ A dash means "same rank as last month", which is a
+                        different statement and a real one.
+                      */}
+                      {movement && (
+                        <span
+                          className={
+                            "w-10 text-right text-[12px] font-bold tabular-nums " +
+                            (mv?.delta == null
+                              ? "text-ink-3"
+                              : mv.delta > 0
+                                ? "text-emerald-600"
+                                : mv.delta < 0
+                                  ? "text-ink-2"
+                                  : "text-ink-3")
+                          }
+                          aria-label={
+                            mv?.delta == null
+                              ? "New this month"
+                              : mv.delta === 0
+                                ? "No change since last month"
+                                : `${Math.abs(mv.delta)} ${mv.delta > 0 ? "up" : "down"} since last month`
+                          }
+                        >
+                          {mv?.delta == null
+                            ? "NEW"
+                            : mv.delta === 0
+                              ? "—"
+                              : `${mv.delta > 0 ? "\u25b2" : "\u25bc"}${Math.abs(mv.delta)}`}
+                        </span>
+                      )}
+                      <span className="w-10 text-right tabular-nums">{r.points}</span>
+                    </span>
+                  </li>
+                );
+              })}
             </ol>
           </section>
         ) : (
           <p className="mt-3.5 text-[13px] text-ink-3">
             {/* ⚠ RULING 6, SAID OUT LOUD RATHER THAN RENDERED AS AN EMPTY BOX. */}
-            No board yet — it appears once three members have a score this month.
+            No board yet — it appears once three members have a score
+            {tab.key === "month" ? " this month" : ""}.
           </p>
         )}
       </div>
