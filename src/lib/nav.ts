@@ -996,19 +996,42 @@ export const PROVIDER_NAV: NavItem[] = [
   themselves: everything in PRIMARY renders above the theme row, everything in
   SECONDARY below it.
 */
+/*
+  ── ⚠⚠⚠ REGROUPED FOR THE AVATAR MENU (`P2-A2-E598` WS-A, option B) ────────
+
+  ⚠ SCOTT, on the option-B mockup: *"Yeah...that is much better. It belongs back
+  there."* The profile moves under the avatar like LinkedIn's "Me", and the menu
+  becomes the door to the surfaces that describe YOU rather than a flat list.
+
+  ⚠⚠ `My Profile` LEFT THIS LIST AND BECAME THE HEADER'S `View Profile` BUTTON,
+  beside your photo, name and title — it is the menu's subject, not one of its
+  errands. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   { label: "My Profile", href: "/profile" },
+
+  ⚠⚠ THE `My ` PREFIXES ARE GONE, WHICH REVERSES PART OF `P2-ALL-E559` WS-D.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   { label: "My Stats", href: "/stats" },
+  //   { label: "My Account", href: "/account-health" },
+  //   { label: "My Settings", href: "/settings" },
+  ⚠⚠⚠ RULE 13, NOT DRIFT: `E559` renamed these on 2026-09-17/18; the option-B
+  mockup and its brief are 2026-09-21 and name them `Usage Stats`, `Account
+  Health` and `Settings`. The newest dated statement from Scott is the live one.
+  ⚠ THE ROUTES ARE UNCHANGED in every case — this is a rename, exactly as
+  `E559`'s own was.
+
+  ⚠⚠ `Grow Your Network` IS SPECIFIED AND IS **NOT** HERE. The brief's premise
+  said Score, Network and Stats *"already have pages"*. ⚠⚠⚠ MEASURED AT THE
+  PREMISE CHECK AND THAT IS FALSE FOR NETWORK: `/grow` and `/community/grow`
+  both 404, and the string `Grow Your Network` appears NOWHERE in `src/`.
+  ⚠ Scott ruled it omitted until a page exists rather than pointed at a
+  near-miss — WS-A's own rule is that every item goes somewhere that exists.
+*/
 export const PERSONA_NAV_PRIMARY: NavItem[] = [
-  { label: "My Profile", href: "/profile" },
-  { label: "My Stats", href: "/stats" },
-  /* ⚠⚠ `P2-ALL-E559` WS-D — SCOTT, 2026-09-17. ⚠ SUPERSEDED, quoted not
-     deleted (`E164`): `{ label: "Account Health Checklist", href: "/account-health" }`.
-     ⚠⚠ A RENAME, NOT A DELETION — THE ROUTE IS UNCHANGED and the page is not
-     touched. `E563` folds only its DUPLICATED marketplace-visibility checks into
-     the stats Profile tile; what stays here is what is genuinely account — plan,
-     account status, email verified. ⚠ DO NOT EMPTY THE PAGE.
-     ⚠ THIS LIST IS `PERSONA_NAV_PRIMARY`, and the brief said the rename lived in
-     `PERSONA_NAV_SECONDARY`. It does not; measured at the premise check and
-     corrected in the brief. */
-  { label: "My Account", href: "/account-health" },
+  /* ⚠ `/community/score` — shipped by `P2-J3-E590` WS-B. The menu shows the
+     percentage beside it, fetched when the menu OPENS (see
+     `/api/me/menu-summary`), never on every page render. */
+  { label: "Profile Score", href: "/community/score" },
+  { label: "Usage Stats", href: "/stats" },
 ];
 
 export const PERSONA_NAV_SECONDARY: NavItem[] = [
@@ -1067,7 +1090,23 @@ export const PERSONA_NAV_SECONDARY: NavItem[] = [
      (`E164`): `{ label: "Settings", href: "/settings" }`. ⚠⚠ A RENAME ONLY —
      the route is unchanged, and `settings-nav.ts` (the `/settings` SUB-NAV) is a
      DIFFERENT list and is not in scope. */
-  { label: "My Settings", href: "/settings" },
+  { label: "Settings", href: "/settings" },
+  /* ⚠⚠ MOVED DOWN FROM `PERSONA_NAV_PRIMARY` (`P2-A2-E598` WS-A) — option B
+     groups it with Settings and Help, because all three are about the ACCOUNT
+     rather than about how you are doing. ⚠ The route is unchanged. */
+  { label: "Account Health", href: "/account-health" },
+  /*
+    ── ⚠⚠⚠ `Help` POINTS AT `/support/tickets`, AND THAT IS A RULING ─────────
+
+    ⚠ MEASURED AT THE PREMISE CHECK: there is NO `/help` route and NO `/support`
+    index — both 404. The only live pages under support are `/support/bug` and
+    `/support/tickets`.
+    ⚠⚠ Scott ruled it points at `/support/tickets` rather than a new page being
+    built inside a menu brief. ⚠⚠⚠ IT IS THE NEAREST THING THAT EXISTS, NOT THE
+    right long-run answer — a real help surface would list "Report a Bug"
+    alongside "My Tickets", and `/support/bug` currently has no menu door at all.
+  */
+  { label: "Help", href: "/support/tickets" },
 ];
 
 /** The whole persona list, for `pageTitleFor` and anything that wants it flat. */
