@@ -2,10 +2,39 @@ import { getLearnHome, groupChips } from "@/lib/learn-home";
 import { getSessionViewer } from "@/lib/session";
 import { LearnHome } from "@/components/learn/LearnHome";
 
-export const metadata = {
-  title: "All Learning Paths — Panameer Learn",
-  description: "Every Panameer learning path, searchable by name, domain and instructor.",
-};
+/**
+ * ── ⚠⚠ THE TITLE SAYS WHICH VIEW THIS IS (`P2-A4-E606` R6) ───────────────
+ *
+ * ⚠ THE REPORTED DEFECT WAS AN ARTIFACT, AND THE REAL ONE IS NARROWER.
+ * `/learn/courses` and `/learn/my-courses` do not render a title at all — they
+ * are a **308** and a **302** to this route, so a browser that follows them
+ * shows THIS page's title. Three routes did not share a title; two of them
+ * were redirects and the third had only one title for **two views**.
+ * ⚠⚠ THAT IS THE PART WORTH FIXING: `?tab=mine` is the destination of
+ * `/learn/my-courses`, and it showed *"All Learning Paths"* — the opposite of
+ * what the member asked for.
+ * ⚠ SUPERSEDED, quoted not deleted (`E164`):
+ * //   export const metadata = {
+ * //     title: "All Learning Paths — Panameer Learn",
+ * //     description: "Every Panameer learning path, searchable by name, domain and instructor.",
+ * //   };
+ */
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
+  const mine = (await searchParams).tab === "mine";
+  return mine
+    ? {
+        title: "My Learning Paths — Panameer Learn",
+        description: "The Panameer learning paths you are enrolled in.",
+      }
+    : {
+        title: "All Learning Paths — Panameer Learn",
+        description: "Every Panameer learning path, searchable by name, domain and instructor.",
+      };
+}
 
 /**
  * THE CATALOG BROWSER — what `/learn` was before it became a dashboard.

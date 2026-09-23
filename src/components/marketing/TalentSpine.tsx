@@ -5,7 +5,7 @@ import {
   ProviderProfileShot,
   ServiceProductsShot,
 } from "@/components/marketing/talent-shots";
-import { TALENT_STEPS, TALENT_SPINE_HEADING } from "@/lib/talent-steps";
+import { talentSteps, TALENT_SPINE_HEADING } from "@/lib/talent-steps";
 
 /**
  * `/hire-talent`'s FIVE-STEP SPINE (`P1-J1-E012`).
@@ -79,7 +79,11 @@ const GRAPHICS: Record<number, ReactNode> = {
   /* 5 — none. No buyer can browse or buy; the `(app)` browse routes are ComingSoon. */
 };
 
-export function TalentSpine() {
+/* ⚠ ASYNC NOW (`E606` R4) — the catalogue counts inside `talentSteps()` are
+   computed from the database rather than read from a literal. TalentSpine is a
+   server component, so awaiting costs one query on a marketing page. */
+export async function TalentSpine() {
+  const TALENT_STEPS = await talentSteps();
   return (
     <>
       {/* ⚠ `pb-[80px]` ARRIVES WITH THE HEADLINE (`P1-J0-E319`) — /optimize's

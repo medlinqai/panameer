@@ -55,10 +55,24 @@ export function DevBanner() {
         />
         <p className="min-w-0 flex-1 text-[13px] leading-snug">
           <span className="font-bold">Panameer is in active development</span>
+          {/*
+            ── ⚠⚠⚠ THE RESET PROMISE IS GONE (`P2-A4-E606` R5) ────────────────
+
+            ⚠ IT READ: *"accounts and data may be reset while we build."*
+            ⚠⚠ A REAL EXTERNAL TESTER STARTS TODAY AND HAS BEEN TOLD HIS DATA
+            WILL NOT BE WIPED. The banner contradicted that promise on every
+            page he would open, and **the promise to the person governs.**
+            ⚠⚠⚠ THE REPLACEMENT PROMISES NOTHING ABOUT DATA IN EITHER
+            DIRECTION — not "may be reset", and not "your data is safe" either.
+            Scott: *"no absolutes and no promise about data either way."* The
+            honest thing to say is that the product is early.
+            ⚠ SUPERSEDED, quoted not deleted (`E164`):
+            //   — you&apos;re early. Look around, but accounts and data may be reset
+            //   while we build.
+          */}
           <span className="text-ink-2">
             {" "}
-            — you&apos;re early. Look around, but accounts and data may be reset
-            while we build.
+            — you&apos;re early, so expect rough edges.
           </span>
         </p>
         <button

@@ -44,7 +44,7 @@
  * know add no marketplace value — the value is the expert who can teach you.
  */
 
-import { CATALOG_COUNTS } from "@/lib/learn-catalog-counts";
+import { getCatalogCounts } from "@/lib/learn-catalog-counts";
 
 /**
  * ⚠ THE CATALOG NUMBERS ARE DERIVED, NEVER RETYPED (`chat_kickoff.md`).
@@ -59,10 +59,19 @@ import { CATALOG_COUNTS } from "@/lib/learn-catalog-counts";
  * silently swap "54 learning paths" in here; a missing label throws at module load
  * instead, which is the failure you want.
  */
-const count = (label: string): string => {
-  const hit = CATALOG_COUNTS.find((c) => c.label === label);
-  if (!hit)
-    throw new Error(`talent-steps: no catalog count labelled "${label}"`);
+/* ⚠ SUPERSEDED, quoted not deleted (`E164`) — `CATALOG_COUNTS` was a literal:
+   //   const count = (label: string): string => {
+   //     const hit = CATALOG_COUNTS.find((c) => c.label === label);
+   //     if (!hit) throw new Error(`talent-steps: no catalog count labelled "${label}"`);
+   //     return hit.value;
+   //   };
+   ⚠⚠ THE THROW-ON-MISSING-LABEL BEHAVIOUR IS KEPT ON PURPOSE. Its comment
+   argued for it — *"a missing label throws at module load instead, which is the
+   failure you want"* — and that is still right: a renamed label must break
+   loudly, not print the wrong number or silently drop a tile. */
+const countIn = (counts: { value: string; label: string }[], label: string): string => {
+  const hit = counts.find((c) => c.label === label);
+  if (!hit) throw new Error(`talent-steps: no catalog count labelled "${label}"`);
   return hit.value;
 };
 
@@ -126,7 +135,16 @@ export type TalentStepLabel = {
   description: string;
 };
 
-export const TALENT_STEPS: TalentStepLabel[] = [
+/**
+ * ⚠⚠⚠ A FUNCTION, NOT A CONST (`E606` R4). The counts are computed from the
+ * database now, so this cannot be evaluated at module load.
+ * ⚠ SUPERSEDED, quoted not deleted (`E164`):
+ * //   export const TALENT_STEPS: TalentStepLabel[] = [ … ];
+ */
+export async function talentSteps(): Promise<TalentStepLabel[]> {
+  const counts = await getCatalogCounts();
+  const count = (label: string) => countIn(counts, label);
+  return [
   {
     n: 1,
     /* ⚠ WAS `Join Panameer` (`P1-J1-E034`). It is the hero's CTA label now, reused
@@ -167,7 +185,13 @@ export const TALENT_STEPS: TalentStepLabel[] = [
       today. The sentence stops at the training, which is entirely free and entirely
       real. ⚠ DO NOT ADD THE CERTIFICATE CLAUSE until a path can actually be sat.
     */
-    description: `Work through the catalog for free — ${count("Learning Paths")} learning paths, ${count("Courses")} courses and ${count("Lessons")} lessons, taught by the people who implement this software.`,
+    /* ⚠⚠ THE SENTENCE NAMES WHAT IT COUNTS (R4). *"23 learning paths"* and
+       *"12 learning paths"* were both true of the same catalogue and neither
+       said which question it answered.
+       ⚠ SUPERSEDED, quoted not deleted (`E164`):
+       //   `Work through the catalog for free — ${count("Learning Paths")} learning paths,
+       //    ${count("Courses")} courses and ${count("Lessons")} lessons, taught by …` */
+    description: `Work through the catalog for free — ${count("Paths You Can Start")} paths you can start today, ${count("Courses With Video")} courses with video and ${count("Lessons You Can Watch")} lessons you can watch, taught by the people who implement this software.`,
   },
   {
     n: 3,
@@ -269,7 +293,8 @@ export const TALENT_STEPS: TalentStepLabel[] = [
     description:
       "Put your products in front of the organizations running Oracle — searchable by the systems you actually know, without a recruiter in between.",
   },
-];
+  ];
+}
 
 /**
  * ⚠⚠ WHAT IS ACTUALLY BUILT BEHIND EACH STEP. Verified 2026-08-24; do not soften.

@@ -12,7 +12,7 @@ import Link from "next/link";
 import { HeroVideoBackdrop } from "@/components/media/HeroVideoBackdrop";
 import { HeroBox } from "@/components/marketing/HeroBox";
 import { HeroTwoUp } from "@/components/marketing/HeroTwoUp";
-import { CATALOG_COUNTS } from "@/lib/learn-catalog-counts";
+import { getCatalogCounts } from "@/lib/learn-catalog-counts";
 import { StepDisclosures } from "@/components/marketing/StepDisclosures";
 import type { LearnStepLabel } from "@/lib/learn-steps";
 import {
@@ -719,10 +719,14 @@ function InstructorTiers() {
  * `lib/learn-catalog-counts.ts` with their measured-on date; `check:learn` GUARD 3c
  * is untouched and still asserts this component imports rather than inlines them.
  */
-function LearnStats() {
+/* ⚠ ASYNC (`E606` R4) — computed counts, and each label says what it counts.
+   ⚠⚠ THIS IS THE SURFACE THAT PRINTED 23 · 54 · 522 while `/learn/paths`
+   printed 12 · 305. One definition now feeds both. */
+async function LearnStats() {
+  const counts = await getCatalogCounts();
   return (
     <dl className="mt-[26px] grid grid-cols-3 gap-[14px]">
-      {CATALOG_COUNTS.map((s) => (
+      {counts.map((s) => (
         <div
           key={s.label}
           className="rounded-[14px] border border-white/[0.13] bg-white/[0.06] px-4 py-[18px]"
