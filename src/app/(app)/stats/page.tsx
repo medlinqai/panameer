@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { PageTabs } from "@/components/casing/PageTabs";
+import { StatisticsCards, BuyerStatistics } from "@/components/console/StatisticsCards";
+import { getStatistics, type StatWindow } from "@/lib/statistics";
 import { tabSequenceFor } from "@/lib/nav";
 import { profileTabs } from "@/lib/profile-tabs";
 import { prisma } from "@/lib/prisma";
@@ -41,7 +43,20 @@ import {
  */
 export const metadata = { title: "My Stats · Panameer" };
 
-export default async function MyStatsPage() {
+/* ⚠⚠ ONE READING OF THE PARAM, AND ANYTHING UNRECOGNISED IS `month`. A URL is
+   user input: `?period=banana` must not throw and must not silently become
+   "all time", which would quietly widen every figure on the page. */
+function periodOf(sp: { period?: string }): StatWindow {
+  return sp.period === "all" ? "all" : "month";
+}
+
+export default async function MyStatsPage({
+  searchParams,
+}: {
+  /* ⚠ The period is a URL param, so a view is shareable and survives a
+     refresh (`E603` WS-A item 3). */
+  searchParams: Promise<{ period?: string }>;
+}) {
   /* ⚠ `authenticated` (`P2-J1.1-E040`) — ⚠ SUPERSEDED, quoted:
      `guardPage("canProvideServices")`. The null-profile empty state below is
      what makes this safe, and it was already here. */
@@ -110,16 +125,66 @@ export default async function MyStatsPage() {
     unchanged for a provider — only the order of a check that already existed.
   */
   if (!profile) {
+    /*
+      ── ⚠⚠⚠ A BUYER HAS STATISTICS TOO (`E603` WS-A item 5) ────────────────
+
+      ⚠ MEASURED AT THE PREMISE CHECK: this branch rendered ONE SENTENCE and no
+      tab row, for every member without a provider profile. ⚠⚠ THAT WAS WRONG
+      IN THE OTHER DIRECTION — a buyer HAS colleagues, sends invites and takes
+      lessons, and was shown none of it.
+      ⚠ SUPERSEDED, quoted not deleted (`E164`):
+      //   return (
+      //     <p className="text-ink-2">
+      //       This account has no provider profile, so there is nothing to measure yet.
+      //     </p>
+      //   );
+      ⚠⚠ THE SELLER CARDS BELOW STILL DO NOT RENDER — they need the profile this
+      branch does not have, which is the rule stated in `StatisticsCards`: a
+      card renders when the viewer HAS the thing it measures.
+    */
+    const person = await prisma.person.findFirst({
+      where: { user_id: viewer.userId },
+      select: { id: true },
+    });
+    if (!person) {
+      return (
+        <p className="text-ink-2">
+          This account has no profile yet, so there is nothing to measure.
+        </p>
+      );
+    }
+    const s = await getStatistics(person.id, viewer.userId, null, periodOf(await searchParams));
     return (
-      <p className="text-ink-2">
-        This account has no provider profile, so there is nothing to measure yet.
-      </p>
+      <>
+        <PageTabs
+          eyebrow="MY PROFILE"
+          sequence={tabSequenceFor("/profile")}
+          tabs={profileTabs(viewer)}
+          current="/stats"
+        />
+        <div className="mx-auto max-w-5xl space-y-4">
+          <p className="max-w-2xl text-[14.5px] leading-relaxed text-ink-2">
+            How your account is doing. Anything marked &ldquo;&mdash;&rdquo;
+            isn&apos;t being counted yet, and says why.
+          </p>
+          <BuyerStatistics s={s} />
+        </div>
+      </>
     );
   }
 
   const certificationCount = await prisma.certification.count({
     where: { user_id: viewer.userId },
   });
+
+  /* ⚠ ONE CALL, THE SAME MODULE THE BUYER BRANCH USES — two shapes of this page
+     asking two different questions is how the figures start to disagree. */
+  const stats = await getStatistics(
+    profile.person_id,
+    viewer.userId,
+    profile.id,
+    periodOf(await searchParams)
+  );
 
   /* ⚠ OWNER-SCOPED INSIDE THE HELPER — the profile is resolved from the
      session, never from a parameter (`E563` WS-B item 8). */
@@ -736,6 +801,16 @@ export default async function MyStatsPage() {
           something absent.
           ⚠ The COUNT survives as the `{metCount} of {criteria.length} met` line.
         */}
+      </div>
+
+      {/*
+        ── ⚠⚠ THE CARDS `E600` FOLDED IN (`E603` WS-A) ────────────────────────
+        ⚠ Usage is part of Statistics — one tab, one page. Network, Learning and
+        Teaching sit BELOW the seller tiles above, which are this page's
+        existing subject and are untouched.
+      */}
+      <div className="mt-6 space-y-4">
+        <StatisticsCards s={stats} />
       </div>
 
       <p className="mt-6 text-[13px] text-ink-2">
